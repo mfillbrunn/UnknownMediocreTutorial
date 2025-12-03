@@ -4,10 +4,7 @@
   <meta charset="UTF-8">
   <title>Competitive Wordle – Powers Edition (Multiplayer)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Styles will be replaced in Part 4 -->
   <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
 
@@ -15,18 +12,18 @@
 
   <h1 class="title">Competitive Wordle – Powers Edition</h1>
 
-  <!-- ========= TURN POPUP (big overlay) ========= -->
+  <!-- TURN POPUP -->
   <div id="turnPopup" class="turn-popup"></div>
 
-  <!-- ========= TOAST NOTIFICATION ========= -->
+  <!-- TOAST -->
   <div id="toast" class="toast"></div>
 
-  <!-- ========= ANIMATION HOLDERS (flip animations) ========= -->
+  <!-- Flip animation holders -->
   <div id="guessAnim" class="flip-holder"></div>
   <div id="feedbackAnim" class="flip-holder"></div>
 
   <!-- ===================================================== -->
-  <!-- LOBBY / CONNECTION -->
+  <!-- LOBBY -->
   <!-- ===================================================== -->
   <div id="lobby" class="screen active">
     <h2>Online Lobby</h2>
@@ -41,7 +38,7 @@
 
     <p id="lobbyStatus" class="status"></p>
 
-    <!-- Role selection (ONLY for joiner) -->
+    <!-- Role selection -->
     <div id="rolePicker" class="role-picker"></div>
 
     <div id="roomInfo" style="display:none; margin-top:10px;">
@@ -55,7 +52,7 @@
   </div>
 
   <!-- ===================================================== -->
-  <!-- MAIN MENU -->
+  <!-- MENU -->
   <!-- ===================================================== -->
   <div id="menu" class="screen">
     <h2>Game Menu</h2>
@@ -67,8 +64,8 @@
     <p><b>Setup:</b> <span id="roleLabel"></span></p>
     <p><b>Turn:</b> <span id="turnLabel"></span></p>
 
-    <button id="btnSetter" class="turn-button">Setter Screen <span id="setterWho"></span></button>
-    <button id="btnGuesser" class="turn-button">Guesser Screen <span id="guesserWho"></span></button>
+    <button id="btnSetter" class="turn-button">Setter Screen</button>
+    <button id="btnGuesser" class="turn-button">Guesser Screen</button>
 
     <p><b>Guesses so far:</b> <span id="guessCountMenu">0</span></p>
 
@@ -85,10 +82,8 @@
     <h2>Setter <span id="setterRoleTag" class="badge badge-a">A</span></h2>
     <p>You see full feedback. The guesser sees hidden tiles.</p>
 
-    <!-- hypothetical feedback preview -->
     <div id="hypotheticalBox" class="box hypo-box"></div>
 
-    <!-- constraints -->
     <div class="constraints-box">
       <p><b>Pattern:</b> <span id="knownPatternSetter">- - - - -</span></p>
       <p><b>Must contain:</b> <span id="mustContainSetter">none</span></p>
@@ -105,13 +100,14 @@
     <button id="submitSetterSameBtn" class="primary-btn">Keep SAME Secret</button>
     <button id="setterBackToMenuBtn" class="secondary-btn small">Back</button>
 
-    <h3>Setter Power</h3>
-    <button id="btnHideTile" class="power-btn">❓ Hide Tile</button>
+    <h3>Setter Powers</h3>
+    <!-- Dynamic setter powers inserted here -->
+    <div id="setterPowerContainer"></div>
 
-    <!-- Wordle keyboard -->
+    <!-- Setter keyboard -->
     <div id="keyboardSetter" class="keyboard"></div>
 
-    <!-- history -->
+    <!-- History -->
     <h3>History</h3>
     <div id="historySetter" class="history-box">No guesses yet.</div>
   </div>
@@ -133,8 +129,8 @@
     <button id="guesserBackToMenuBtn" class="secondary-btn small">Back</button>
 
     <h3>Powers</h3>
-    <button id="btnRevealGreen" class="power-btn">🟩 Reveal Green</button>
-    <button id="btnFreezeSecret" class="power-btn">🔒 Freeze Secret</button>
+    <!-- Dynamic guesser powers go here -->
+    <div id="guesserPowerContainer"></div>
 
     <div id="keyboardGuesser" class="keyboard"></div>
 
@@ -142,12 +138,14 @@
     <div id="historyGuesser" class="history-box">No guesses yet.</div>
   </div>
 
-</div>
+</div> <!-- end #appContainer -->
 
+<!-- Socket.IO must be loaded BEFORE client.js -->
 <script src="/socket.io/socket.io.js"></script>
-<script src="client.js"></script>
 
-<!-- No-script fallback -->
+<!-- Client becomes an ES module -->
+<script type="module" src="client.js"></script>
+
 <noscript><p style="color:red;">This game requires JavaScript.</p></noscript>
 
 </body>

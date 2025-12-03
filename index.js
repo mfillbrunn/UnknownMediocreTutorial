@@ -1,8 +1,12 @@
-// index.js - Node server with Socket.IO for multiplayer Wordle (Improved + Fixed)
+// index.js — Updated Server with Modular Powers + Wordlist Support
 
 const express = require("express");
 const http = require("http");
+const fs = require("fs");
 const { Server } = require("socket.io");
+
+const { applySetterPower, applyGuesserPower } = require("./powers/applyPowers");
+const { modifyFeedbackForGuesser } = require("./powers/modifyFeedback");
 
 const app = express();
 const server = http.createServer(app);
@@ -13,9 +17,33 @@ const io = new Server(server, {
 // Serve static files from /public
 app.use(express.static("public"));
 
-// -------------------------------------------
+// ---------------------------------------------------------
+// Load allowed words (TXT, one per line)
+// ---------------------------------------------------------
+let ALLOWED_GUESSES = [];
+try {
+  const raw = fs.readFileSync("./public/wordlists/allowed_guesses.txt", "utf8");
+  ALLOWED_GUESSES = raw
+    .split(/\r?\n/)
+    .map(w => w.trim().toLowerCase())
+    .filter(w => w.length === 5);
+  console.log("Loaded allowed guesses:", ALLOWED_GUESSES.length);
+} catch (e) {
+  console.log("No allowed wordlist found or error reading it.", e);
+}
+
+// ---------------------------------------------------------
+// Utility — check validity of secret / guess
+// ---------------------------------------------------------
+function isValidWord(w) {
+  if (!w || w.length !== 5) return false;
+  if (ALLOWED_GUESSES.length === 0) return true; // allow all if no list
+  return ALLOWED_GUESSES.includes(w.toLowerCase());
+}
+
+// ---------------------------------------------------------
 // ROOM STATE
-// -------------------------------------------
+// ---------------------------------------------------------
 const rooms = {};
 
 function createInitialState() {
@@ -37,12 +65,23 @@ function createInitialState() {
       2: { guesser: null, guesses: null }
     },
 
+    // All powers (old + new)
     powers: {
       hideTileUsed: false,
       hideTilePendingCount: 0,
+
       revealGreenUsed: false,
       freezeSecretUsed: false,
-      freezeActive: false
+      freezeActive: false,
+
+      reuseLettersUsed: false,
+      reuseLettersPool: [],
+
+      confuseColorsUsed: false,
+      confuseColorsActive: false,
+
+      countOnlyUsed: false,
+      countOnlyActive: false
     },
 
     revealGreenInfo: null
@@ -58,9 +97,9 @@ function generateRoomId() {
   return id;
 }
 
-// -------------------------------------------
+// ---------------------------------------------------------
 // WORDLE SCORING
-// -------------------------------------------
+// ---------------------------------------------------------
 function scoreGuess(secretWord, guess) {
   const fb = ["","","","",""];
   const rem = secretWord.split("");
@@ -73,7 +112,7 @@ function scoreGuess(secretWord, guess) {
     }
   }
 
-  // yellows + blacks
+  // yellows / blacks
   for (let i = 0; i < 5; i++) {
     if (fb[i] === "") {
       const pos = rem.indexOf(guess[i]);
@@ -91,44 +130,120 @@ function scoreGuess(secretWord, guess) {
 function isConsistentWithHistory(state, word) {
   for (const h of state.history) {
     const expected = scoreGuess(word, h.guess).join("");
-    const actual   = h.fb.join("");
+    const actual = h.fb.join("");
     if (expected !== actual) return false;
   }
   return true;
 }
 
-// -------------------------------------------
+// ---------------------------------------------------------
 // ROUND HELPERS
-// -------------------------------------------
+// ---------------------------------------------------------
 function resetRoundState(state) {
   state.secret = "";
   state.pendingGuess = "";
   state.guessCount = 0;
   state.firstSecretSet = false;
   state.history = [];
+
+  // Reset all powers
   state.powers = {
     hideTileUsed: false,
     hideTilePendingCount: 0,
+
     revealGreenUsed: false,
     freezeSecretUsed: false,
-    freezeActive: false
+    freezeActive: false,
+
+    reuseLettersUsed: false,
+    reuseLettersPool: [],
+
+    confuseColorsUsed: false,
+    confuseColorsActive: false,
+
+    countOnlyUsed: false,
+    countOnlyActive: false
   };
+
   state.revealGreenInfo = null;
   state.turn = state.setter;
-}
-
-function pushPowerNotification(roomId, player, type) {
-  io.to(roomId).emit("powerUsed", { player, type });
 }
 
 function pushTurnAnimation(roomId, type) {
   io.to(roomId).emit("animateTurn", { type });
 }
 
-// -------------------------------------------
+// ---------------------------------------------------------
+// FINALIZE FEEDBACK
+// ---------------------------------------------------------
+function finalizeFeedback(state, roomId) {
+  if (!state.pendingGuess) return;
+  const guess = state.pendingGuess.toLowerCase();
+
+  // Score guess
+  const fb = scoreGuess(state.secret, guess);
+
+  // ---------------------------
+  // APPLY POWER FEEDBACK MODS
+  // ---------------------------
+  const { fbForGuesser, extraInfo } = modifyFeedbackForGuesser(state, fb);
+
+  // hidden tile logic (Hide Tile power)
+  const hidden = [];
+  let toHide = state.powers.hideTilePendingCount;
+  const used = new Set();
+
+  while (toHide > 0 && used.size < 5) {
+    const idx = Math.floor(Math.random() * 5);
+    if (!used.has(idx)) {
+      used.add(idx);
+      hidden.push(idx);
+    }
+    toHide--;
+  }
+
+  state.powers.hideTilePendingCount = 0;
+
+  // Push history (true feedback for setter)
+  state.history.push({
+    guess,
+    fb,                // actual feedback for setter
+    fbGuesser: fbForGuesser,
+    hiddenIndices: hidden,
+    extraInfo
+  });
+
+  state.guessCount++;
+  if (!state.roundStats[state.roundNumber].guesser) {
+    state.roundStats[state.roundNumber].guesser = state.guesser;
+  }
+
+  // Turn passes back
+  state.pendingGuess = "";
+  state.powers.freezeActive = false;
+  state.powers.confuseColorsActive = false;
+  state.powers.countOnlyActive = false;
+
+  state.turn = state.guesser;
+  pushTurnAnimation(roomId, "setterSubmitted");
+}
+
+// ---------------------------------------------------------
 // ACTION HANDLER
-// -------------------------------------------
+// ---------------------------------------------------------
 function applyAction(state, action, role, roomId) {
+  // -------------------------
+  // Powers (setter or guesser)
+  // -------------------------
+  if (action.type.startsWith("USE_")) {
+    if (role === state.setter) {
+      applySetterPower(state, action, role, roomId, io);
+    } else if (role === state.guesser) {
+      applyGuesserPower(state, action, role, roomId, io);
+    }
+    return;
+  }
+
   switch (action.type) {
 
     case "NEW_MATCH":
@@ -138,23 +253,30 @@ function applyAction(state, action, role, roomId) {
     case "START_ROUND_2":
       if (state.roundNumber !== 1) break;
       if (!state.roundStats[1].guesser || state.roundStats[1].guesses == null) break;
+
       state.roundNumber = 2;
       state.setter = "B";
       state.guesser = "A";
       resetRoundState(state);
       break;
 
+    // -------------------------
+    // SET SECRET (NEW)
+    // -------------------------
     case "SET_SECRET_NEW": {
       if (role !== state.setter) break;
       if (state.turn !== state.setter) break;
 
       const w = (action.secret || "").toLowerCase();
-      if (w.length !== 5) break;
+      if (!isValidWord(w)) break;
 
       if (state.powers.freezeActive && state.firstSecretSet) break;
       if (state.firstSecretSet && !isConsistentWithHistory(state, w)) break;
 
       state.secret = w;
+
+      // Use-up reuse-pool
+      state.powers.reuseLettersPool = [];
 
       if (!state.firstSecretSet) {
         state.firstSecretSet = true;
@@ -167,9 +289,13 @@ function applyAction(state, action, role, roomId) {
       break;
     }
 
+    // -------------------------
+    // KEEP SAME SECRET
+    // -------------------------
     case "SET_SECRET_SAME": {
       if (role !== state.setter) break;
       if (state.turn !== state.setter) break;
+
       if (!state.firstSecretSet) break;
       if (!isConsistentWithHistory(state, state.secret)) break;
 
@@ -177,32 +303,20 @@ function applyAction(state, action, role, roomId) {
       break;
     }
 
-    case "USE_HIDE_TILE": {
-      if (role !== state.setter) break;
-
-      // allow up to 2 uses
-      if (state.powers.hideTileUsed && state.powers.hideTilePendingCount === 0) break;
-
-      state.powers.hideTileUsed = true;
-      state.powers.hideTilePendingCount = Math.min(
-        2,
-        state.powers.hideTilePendingCount + 1
-      );
-
-      pushPowerNotification(roomId, role, "USE_HIDE_TILE");
-      break;
-    }
-
+    // -------------------------
+    // SUBMIT GUESS
+    // -------------------------
     case "SUBMIT_GUESS": {
       if (role !== state.guesser) break;
       if (state.turn !== state.guesser) break;
 
       const g = (action.guess || "").toLowerCase();
-      if (g.length !== 5) break;
+      if (!isValidWord(g)) break;
 
-      // instant win
+      // Instant win
       if (state.secret && g === state.secret) {
         state.guessCount++;
+
         if (!state.roundStats[state.roundNumber].guesser) {
           state.roundStats[state.roundNumber].guesser = state.guesser;
         }
@@ -211,12 +325,17 @@ function applyAction(state, action, role, roomId) {
         state.history.push({
           guess: g,
           fb: ["🟩","🟩","🟩","🟩","🟩"],
-          hiddenIndices: []
+          fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
+          hiddenIndices: [],
+          extraInfo: null
         });
 
         state.turn = "none";
         state.pendingGuess = "";
         state.powers.freezeActive = false;
+        state.powers.confuseColorsActive = false;
+        state.powers.countOnlyActive = false;
+
         pushTurnAnimation(roomId, "guesserSubmitted");
         break;
       }
@@ -227,85 +346,17 @@ function applyAction(state, action, role, roomId) {
       break;
     }
 
-    case "USE_REVEAL_GREEN": {
-      if (role !== state.guesser) break;
-      if (state.powers.revealGreenUsed) break;
-      if (!state.secret) break;
-
-      const pos = Math.floor(Math.random() * 5);
-      const letter = state.secret[pos].toUpperCase();
-
-      state.revealGreenInfo = { pos, letter };
-      state.powers.revealGreenUsed = true;
-      pushPowerNotification(roomId, role, "USE_REVEAL_GREEN");
-      break;
-    }
-
-    case "USE_FREEZE_SECRET": {
-      if (role !== state.guesser) break;
-      if (state.powers.freezeSecretUsed) break;
-      if (!state.firstSecretSet) break;
-
-      state.powers.freezeSecretUsed = true;
-      state.powers.freezeActive = true;
-      pushPowerNotification(roomId, role, "USE_FREEZE_SECRET");
-      break;
-    }
-
     default:
       break;
   }
 }
 
-// -------------------------------------------
-// FINALIZE FEEDBACK
-// -------------------------------------------
-function finalizeFeedback(state, roomId) {
-  if (!state.pendingGuess) return;
+// ---------------------------------------------------------
+// SOCKET EVENTS
+// ---------------------------------------------------------
+io.on("connection", socket => {
 
-  const fb = scoreGuess(state.secret, state.pendingGuess);
-
-  // hidden indices
-  const hidden = [];
-  let count = state.powers.hideTilePendingCount;
-  const used = new Set();
-  while (count > 0 && used.size < 5) {
-    const idx = Math.floor(Math.random() * 5);
-    if (!used.has(idx)) {
-      used.add(idx);
-      hidden.push(idx);
-    }
-    count--;
-  }
-  state.powers.hideTilePendingCount = 0;
-
-  state.history.push({
-    guess: state.pendingGuess,
-    fb,
-    hiddenIndices: hidden
-  });
-
-  state.guessCount++;
-  if (!state.roundStats[state.roundNumber].guesser) {
-    state.roundStats[state.roundNumber].guesser = state.guesser;
-  }
-
-  state.pendingGuess = "";
-  state.powers.freezeActive = false;
-  state.turn = state.guesser;
-
-  pushTurnAnimation(roomId, "setterSubmitted");
-}
-
-// -------------------------------------------
-// SOCKET CONNECTION HANDLING
-// -------------------------------------------
-io.on("connection", (socket) => {
-  console.log("connection", socket.id);
-
-  // --------------------------
-  // Create Room
-  // --------------------------
+  // Create room
   socket.on("createRoom", (cb) => {
     let roomId;
     do {
@@ -328,9 +379,7 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("stateUpdate", rooms[roomId].state);
   });
 
-  // --------------------------
-  // Join Room
-  // --------------------------
+  // Join room
   socket.on("joinRoom", (roomId, cb) => {
     const room = rooms[roomId];
     if (!room) return cb({ ok: false, error: "Room not found" });
@@ -347,49 +396,38 @@ io.on("connection", (socket) => {
     });
   });
 
-  // --------------------------
-  // Choose Role
-  // --------------------------
+  // Choose role
   socket.on("chooseRole", ({ roomId, role }, cb) => {
     const room = rooms[roomId];
     if (!room) return cb({ ok: false });
 
     room.players[socket.id] = role;
-
     cb({ ok: true, role });
 
     io.to(roomId).emit("stateUpdate", room.state);
   });
 
-  // --------------------------
-  // Rejoin room after reconnect
-  // --------------------------
   socket.on("rejoinRoom", ({ roomId, role }) => {
     const room = rooms[roomId];
     if (!room) return;
+
     socket.join(roomId);
     room.players[socket.id] = role;
     io.to(roomId).emit("stateUpdate", room.state);
   });
 
-  // --------------------------
-  // Game Actions
-  // --------------------------
+  // Gameplay actions
   socket.on("gameAction", ({ roomId, action }) => {
     const room = rooms[roomId];
     if (!room) return;
 
-    const state = room.state;
     const role = room.players[socket.id] || "spectator";
+    applyAction(room.state, action, role, roomId);
 
-    applyAction(state, action, role, roomId);
-
-    io.to(roomId).emit("stateUpdate", state);
+    io.to(roomId).emit("stateUpdate", room.state);
   });
 
-  // --------------------------
   // Disconnect
-  // --------------------------
   socket.on("disconnect", () => {
     for (const [roomId, room] of Object.entries(rooms)) {
       if (room.players[socket.id]) {
@@ -402,8 +440,8 @@ io.on("connection", (socket) => {
   });
 });
 
-// -------------------------------------------
+// ---------------------------------------------------------
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log("Server listening on port", PORT);
+  console.log("Server running on port", PORT);
 });
