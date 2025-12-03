@@ -16,6 +16,29 @@ app.use(express.static("public"));
 // -----------------------------------------------------
 // ROOM + GAME STATE
 // -----------------------------------------------------
+socket.on("createRoom", (cb) => {
+  let roomId;
+  do {
+    roomId = generateRoomId();
+  } while (rooms[roomId]);
+
+  rooms[roomId] = {
+    state: createInitialState(),
+    players: {}
+  };
+
+  // creator joins but has NO ROLE yet
+  socket.join(roomId);
+
+  cb({
+    ok: true,
+    roomId,
+    availableRoles: ["A", "B", "spectator"]
+  });
+
+  // Note: do NOT assign role automatically
+  io.to(roomId).emit("stateUpdate", rooms[roomId].state);
+});
 
 const rooms = {};
 

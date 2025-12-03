@@ -1,4 +1,5 @@
 // client.js — Updated Multiplayer Front-End Logic (Improved UI + Sync + Powers + Animations)
+// With Corrected Lobby Flow: Create/Join Room → Show Code → Choose Role → Enter Game
 
 // =============================================================
 // SOCKET INITIALIZATION
@@ -78,19 +79,44 @@ const roomInfoDiv = $("roomInfo");
 const roomCodeLabel = $("roomCodeLabel");
 const playerRoleLabel = $("playerRoleLabel");
 
-// Create room
+/* -------------------------------------------------------------
+   CREATE ROOM — new logic: NO auto-assign, show code + role picker
+------------------------------------------------------------- */
 $("createRoomBtn").onclick = () => {
   socket.emit("createRoom", (res) => {
+    if (!res.ok) {
+      lobbyStatus.innerText = "Error creating room.";
+      return;
+    }
+
     roomId = res.roomId;
-    myPlayerRole = res.playerRole;
-    lobbyStatus.innerText = `Room created. Share this code:\n${roomId}`;
+
+    // Show room code and role picker
+    lobbyStatus.innerText = `Room created! Share this code:\n${roomId}`;
     roomCodeLabel.innerText = roomId;
-    playerRoleLabel.innerText = `Player ${myPlayerRole}`;
     roomInfoDiv.style.display = "block";
+
+    // Role picker for the creator
+    $("rolePicker").innerHTML = "";
+    res.availableRoles.forEach(r => {
+      const btn = document.createElement("button");
+      btn.innerText = r.toUpperCase();
+      btn.onclick = () => {
+        socket.emit("chooseRole", { roomId, role: r }, (cRes) => {
+          if (cRes.ok) {
+            myPlayerRole = r;
+            playerRoleLabel.innerText = `Player ${myPlayerRole}`;
+          }
+        });
+      };
+      $("rolePicker").appendChild(btn);
+    });
   });
 };
 
-// Join room → now user MUST pick a role explicitly
+/* -------------------------------------------------------------
+   JOIN ROOM — new logic: NO auto-assign, show code + role picker
+------------------------------------------------------------- */
 $("joinRoomBtn").onclick = () => {
   const input = $("joinRoomInput").value.trim().toUpperCase();
   if (!input) return;
@@ -102,24 +128,20 @@ $("joinRoomBtn").onclick = () => {
     }
 
     roomId = res.roomId;
-    lobbyStatus.innerText = `Joined room ${roomId}. Choose your role:`;
 
-    // show role picker
-    $("rolePicker").innerHTML = "";
+    lobbyStatus.innerText = `Joined room ${roomId}. Pick your role:`;
     roomCodeLabel.innerText = roomId;
+    roomInfoDiv.style.display = "block";
 
+    $("rolePicker").innerHTML = "";
     res.availableRoles.forEach(r => {
       const btn = document.createElement("button");
       btn.innerText = r.toUpperCase();
       btn.onclick = () => {
-        socket.emit("chooseRole", { roomId, role: r }, (cbRes) => {
-          if (cbRes.ok) {
-            myPlayerRole = cbRes.role;
-            playerRoleLabel.innerText = (myPlayerRole === "spectator")
-              ? "Spectator"
-              : `Player ${myPlayerRole}`;
-            roomInfoDiv.style.display = "block";
-            $("rolePicker").innerHTML = "";
+        socket.emit("chooseRole", { roomId, role: r }, (cRes) => {
+          if (cRes.ok) {
+            myPlayerRole = r;
+            playerRoleLabel.innerText = `Player ${myPlayerRole}`;
           }
         });
       };
@@ -128,8 +150,18 @@ $("joinRoomBtn").onclick = () => {
   });
 };
 
+/* 
+   ENTER GAME — allowed only after room chosen + role chosen
+*/
 $("enterGameBtn").onclick = () => {
-  if (!roomId) return alert("Create or join a room first.");
+  if (!roomId) {
+    alert("Create or join a room first.");
+    return;
+  }
+  if (!myPlayerRole) {
+    alert("Pick a role first.");
+    return;
+  }
   showScreen("menu");
   renderAll();
 };
@@ -140,7 +172,7 @@ $("backToLobbyBtn").onclick = () => showScreen("lobby");
 // SOCKET EVENTS
 // =============================================================
 
-// full state sync
+// Full state from server
 socket.on("stateUpdate", (s) => {
   roundNumber = s.roundNumber;
   setter = s.setter;
@@ -160,7 +192,7 @@ socket.on("stateUpdate", (s) => {
   handleTurnChange();
 });
 
-// e.g., “Player B used REVEAL GREEN!”
+// Power notifications → toast
 socket.on("powerUsed", ({ player, type }) => {
   const nice = {
     "USE_HIDE_TILE": "Hide Tile",
@@ -171,13 +203,13 @@ socket.on("powerUsed", ({ player, type }) => {
   showToast(`Player ${player} used ${nice}!`);
 });
 
-// animations (flip tiles etc.)
+// Flip animations
 socket.on("animateTurn", ({ type }) => {
   if (type === "guesserSubmitted") animateGuessRow();
   if (type === "setterSubmitted") animateFeedbackRow();
 });
 
-// reconnect handler
+// Rejoin after tab minimizing / reconnection
 socket.on("reconnect", () => {
   if (roomId && myPlayerRole) {
     socket.emit("rejoinRoom", { roomId, role: myPlayerRole });
@@ -187,6 +219,7 @@ socket.on("reconnect", () => {
 // =============================================================
 // TURN LOGIC
 // =============================================================
+
 let lastTurn = null;
 
 function handleTurnChange() {
@@ -197,10 +230,8 @@ function handleTurnChange() {
 
   if (turn === myPlayerRole) {
     showPopup("YOUR TURN!", 1200);
-
     if (myPlayerRole === setter) showScreen("setterScreen");
     else if (myPlayerRole === guesser) showScreen("guesserScreen");
-
   } else if (turn === "none") {
     showPopup("Round Finished", 1500);
   } else {
@@ -235,12 +266,10 @@ function computeConstraints() {
   for (const h of history) {
     const guess = h.guess.toUpperCase();
     const fb = h.fb;
-
-    // keyboard should NOT reveal hidden indices
     const hidden = h.hiddenIndices || [];
 
     for (let i = 0; i < 5; i++) {
-      if (hidden.includes(i)) continue; // tile hidden → no keyboard update
+      if (hidden.includes(i)) continue;
 
       const ch = guess[i];
       const idx = idxFromLetter(ch);
@@ -248,11 +277,9 @@ function computeConstraints() {
       if (fb[i] === "🟩") {
         positionGreens[i] = ch;
         if (statePriority(letterStates[idx]) < 3) letterStates[idx] = "green";
-
       } else if (fb[i] === "🟨") {
         if (statePriority(letterStates[idx]) < 2) letterStates[idx] = "yellow";
         letterNotPositions[idx].add(i);
-
       } else if (fb[i] === "⬛") {
         if (letterStates[idx] === "unknown" || letterStates[idx] === "gray") {
           letterStates[idx] = "gray";
@@ -273,7 +300,6 @@ function computeConstraints() {
 // =============================================================
 // RENDERING
 // =============================================================
-
 function renderPatterns() {
   const patternArr = [];
   for (let i = 0; i < 5; i++) {
@@ -515,7 +541,6 @@ function renderAll() {
 // =============================================================
 // ANIMATIONS (Wordle-like flip)
 // =============================================================
-
 function animateGuessRow() {
   const popup = $("guessAnim");
   popup.classList.add("flip");
