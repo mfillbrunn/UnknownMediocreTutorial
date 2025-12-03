@@ -1,4 +1,4 @@
-// index.js - Node server with Socket.IO for multiplayer Wordle
+// index.js - Node server with Socket.IO for multiplayer Wordle (Improved Version)
 
 const express = require("express");
 const http = require("http");
@@ -7,17 +7,16 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: {
-    origin: "*"
-  }
+  cors: { origin: "*" }
 });
 
 // Serve static files from /public
 app.use(express.static("public"));
 
-// ----------------- GAME STATE / ROOMS -----------------
+// -----------------------------------------------------
+// ROOM + GAME STATE
+// -----------------------------------------------------
 
-// rooms = { [roomId]: { state, players: {socketId: "A"|"B"|"spectator"} } }
 const rooms = {};
 
 function createInitialState() {
@@ -25,14 +24,13 @@ function createInitialState() {
     roundNumber: 1,
     setter: "A",
     guesser: "B",
-    turn: "A", // "A" or "B" or "none"
+    turn: "A",
 
     secret: "",
     pendingGuess: "",
     guessCount: 0,
     firstSecretSet: false,
 
-    // history entries: { guess: "abcde", fb: ["🟩","⬛",...], hiddenIndex: number|null }
     history: [],
 
     roundStats: {
@@ -42,14 +40,13 @@ function createInitialState() {
 
     powers: {
       hideTileUsed: false,
-      hideTilePending: false,
+      hideTilePendingCount: 0,      // CHANGED: up to 2 tiles
       revealGreenUsed: false,
       freezeSecretUsed: false,
       freezeActive: false
     },
 
-    // extra info for reveal-green power (optional, not fully used in UI)
-    revealGreenInfo: null // { pos, letter } or null
+    revealGreenInfo: null
   };
 }
 
@@ -62,19 +59,22 @@ function generateRoomId() {
   return id;
 }
 
-// ---- Wordle scoring ----
+// -----------------------------------------------------
+// WORDLE SCORING
+// -----------------------------------------------------
+
 function scoreGuess(secretWord, guess) {
   const fb = ["", "", "", "", ""];
   const rem = secretWord.split("");
 
-  // Greens
+  // greens
   for (let i = 0; i < 5; i++) {
     if (guess[i] === secretWord[i]) {
       fb[i] = "🟩";
       rem[i] = null;
     }
   }
-  // Yellows / Blacks
+  // yellows / blacks
   for (let i = 0; i < 5; i++) {
     if (fb[i] === "") {
       const pos = rem.indexOf(guess[i]);
@@ -98,7 +98,9 @@ function isConsistentWithHistory(state, word) {
   return true;
 }
 
-// ---- Round transitions ----
+// -----------------------------------------------------
+// ROUND TRANSITION HELPERS
+// -----------------------------------------------------
 
 function resetRoundState(state) {
   state.secret = "";
@@ -108,33 +110,45 @@ function resetRoundState(state) {
   state.history = [];
   state.powers = {
     hideTileUsed: false,
-    hideTilePending: false,
+    hideTilePendingCount: 0,
     revealGreenUsed: false,
     freezeSecretUsed: false,
     freezeActive: false
   };
   state.revealGreenInfo = null;
-  // Turn goes to setter at round start
   state.turn = state.setter;
 }
 
-// central action handler
-function applyAction(state, action, role) {
-  // role is "A", "B", or "spectator"
+function pushPowerNotification(roomId, player, type) {
+  io.to(roomId).emit("powerUsed", { player, type });
+}
+
+function pushTurnAnimation(roomId, type) {
+  io.to(roomId).emit("animateTurn", { type });
+}
+
+// -----------------------------------------------------
+// MAIN ACTION HANDLER
+// -----------------------------------------------------
+
+function applyAction(state, action, role, roomId) {
   const actingPlayer = role;
 
   switch (action.type) {
-    // ---- Setup / meta ----
+
+    // ---------------------------------------------------
+    // NEW MATCH
+    // ---------------------------------------------------
     case "NEW_MATCH": {
-      // allow anyone for now
-      const fresh = createInitialState();
-      Object.assign(state, fresh);
+      Object.assign(state, createInitialState());
       break;
     }
 
+    // ---------------------------------------------------
+    // ROUND 2 START
+    // ---------------------------------------------------
     case "START_ROUND_2": {
       if (state.roundNumber !== 1) break;
-      // only proceed if round 1 has stats
       if (!state.roundStats[1].guesser || state.roundStats[1].guesses == null) break;
 
       state.roundNumber = 2;
@@ -144,7 +158,9 @@ function applyAction(state, action, role) {
       break;
     }
 
-    // ---- Setter actions ----
+    // ---------------------------------------------------
+    // SET SECRET (NEW)
+    // ---------------------------------------------------
     case "SET_SECRET_NEW": {
       if (actingPlayer !== state.setter) break;
       if (state.turn !== state.setter) break;
@@ -152,31 +168,27 @@ function applyAction(state, action, role) {
       const w = (action.secret || "").toLowerCase();
       if (w.length !== 5) break;
 
-      // if freeze secret is active and this is NOT the first secret, cannot change
-      if (state.powers.freezeActive && state.firstSecretSet) {
-        // ignore attempt to change
-        break;
-      }
+      // freeze active => cannot change secret (beyond first)
+      if (state.powers.freezeActive && state.firstSecretSet) break;
 
-      if (state.firstSecretSet && !isConsistentWithHistory(state, w)) {
-        // new secret inconsistent with previous feedback, ignore
-        break;
-      }
+      if (state.firstSecretSet && !isConsistentWithHistory(state, w)) break;
 
       state.secret = w;
 
       if (!state.firstSecretSet) {
         state.firstSecretSet = true;
-        // first secret: no feedback yet, pass to guesser
         state.turn = state.guesser;
+        pushTurnAnimation(roomId, "setterSubmitted");
         break;
       }
 
-      // otherwise normal feedback finalization
-      finalizeFeedback(state);
+      finalizeFeedback(state, roomId);
       break;
     }
 
+    // ---------------------------------------------------
+    // SET SECRET (SAME)
+    // ---------------------------------------------------
     case "SET_SECRET_SAME": {
       if (actingPlayer !== state.setter) break;
       if (state.turn !== state.setter) break;
@@ -184,20 +196,30 @@ function applyAction(state, action, role) {
       if (!state.firstSecretSet) break;
       if (!isConsistentWithHistory(state, state.secret)) break;
 
-      finalizeFeedback(state);
+      finalizeFeedback(state, roomId);
       break;
     }
 
+    // ---------------------------------------------------
+    // HIDE TILE POWER (UP TO TWO)
+    // ---------------------------------------------------
     case "USE_HIDE_TILE": {
       if (actingPlayer !== state.setter) break;
-      if (state.powers.hideTileUsed) break;
-      // can be used anytime by setter (we don't strictly gate by turn)
+      if (state.powers.hideTileUsed && state.powers.hideTilePendingCount === 0) break;
+
       state.powers.hideTileUsed = true;
-      state.powers.hideTilePending = true;
+      state.powers.hideTilePendingCount = Math.min(
+        2,
+        state.powers.hideTilePendingCount + 1
+      );
+
+      pushPowerNotification(roomId, actingPlayer, "USE_HIDE_TILE");
       break;
     }
 
-    // ---- Guesser actions ----
+    // ---------------------------------------------------
+    // SUBMIT GUESS
+    // ---------------------------------------------------
     case "SUBMIT_GUESS": {
       if (actingPlayer !== state.guesser) break;
       if (state.turn !== state.guesser) break;
@@ -205,7 +227,7 @@ function applyAction(state, action, role) {
       const g = (action.guess || "").toLowerCase();
       if (g.length !== 5) break;
 
-      // instant win check
+      // WIN check
       if (state.secret && g === state.secret) {
         state.guessCount++;
         if (!state.roundStats[state.roundNumber].guesser) {
@@ -214,35 +236,45 @@ function applyAction(state, action, role) {
         state.roundStats[state.roundNumber].guesses = state.guessCount;
 
         const fb = ["🟩","🟩","🟩","🟩","🟩"];
-        state.history.push({ guess: g, fb, hiddenIndex: null });
+        state.history.push({ guess: g, fb, hiddenIndices: [] });
 
         state.turn = "none";
         state.pendingGuess = "";
         state.powers.freezeActive = false;
+
+        pushTurnAnimation(roomId, "guesserSubmitted");
         break;
       }
 
-      // normal guess: store and pass to setter
+      // normal guess
       state.pendingGuess = g;
       state.turn = state.setter;
+
+      pushTurnAnimation(roomId, "guesserSubmitted");
       break;
     }
 
+    // ---------------------------------------------------
+    // REVEAL GREEN
+    // ---------------------------------------------------
     case "USE_REVEAL_GREEN": {
       if (actingPlayer !== state.guesser) break;
       if (state.powers.revealGreenUsed) break;
       if (!state.secret || state.secret.length !== 5) break;
 
-      // pick random position
-      const positions = [0,1,2,3,4];
-      const pos = positions[Math.floor(Math.random() * positions.length)];
+      const pos = Math.floor(Math.random() * 5);
       const letter = state.secret[pos].toUpperCase();
 
       state.revealGreenInfo = { pos, letter };
       state.powers.revealGreenUsed = true;
+
+      pushPowerNotification(roomId, actingPlayer, "USE_REVEAL_GREEN");
       break;
     }
 
+    // ---------------------------------------------------
+    // FREEZE SECRET
+    // ---------------------------------------------------
     case "USE_FREEZE_SECRET": {
       if (actingPlayer !== state.guesser) break;
       if (state.powers.freezeSecretUsed) break;
@@ -250,6 +282,8 @@ function applyAction(state, action, role) {
 
       state.powers.freezeSecretUsed = true;
       state.powers.freezeActive = true;
+
+      pushPowerNotification(roomId, actingPlayer, "USE_FREEZE_SECRET");
       break;
     }
 
@@ -258,28 +292,37 @@ function applyAction(state, action, role) {
   }
 }
 
-function finalizeFeedback(state) {
-  if (!state.pendingGuess) {
-    return;
-  }
+// -----------------------------------------------------
+// FINALIZE FEEDBACK (setter resolves guess)
+// -----------------------------------------------------
 
-  const fbFull = scoreGuess(state.secret, state.pendingGuess);
-  let hiddenIndex = null;
+function finalizeFeedback(state, roomId) {
+  if (!state.pendingGuess) return;
 
-  if (state.powers.hideTilePending) {
-    const positions = [0,1,2,3,4];
-    hiddenIndex = positions[Math.floor(Math.random() * positions.length)];
-    state.powers.hideTilePending = false;
+  const fb = scoreGuess(state.secret, state.pendingGuess);
+
+  // pick hidden indices
+  let hiddenIndices = [];
+  let count = state.powers.hideTilePendingCount;
+  const used = new Set();
+  while (count > 0 && used.size < 5) {
+    const idx = Math.floor(Math.random() * 5);
+    if (!used.has(idx)) {
+      used.add(idx);
+      hiddenIndices.push(idx);
+    }
+    count--;
   }
+  state.powers.hideTilePendingCount = 0;
 
   state.history.push({
     guess: state.pendingGuess,
-    fb: fbFull,
-    hiddenIndex
+    fb,
+    hiddenIndices
   });
 
   state.guessCount++;
-  // register guesser if missing (e.g., round where this is first completed guess)
+
   if (!state.roundStats[state.roundNumber].guesser) {
     state.roundStats[state.roundNumber].guesser = state.guesser;
   }
@@ -287,13 +330,20 @@ function finalizeFeedback(state) {
   state.pendingGuess = "";
   state.powers.freezeActive = false;
   state.turn = state.guesser;
+
+  pushTurnAnimation(roomId, "setterSubmitted");
 }
 
-// ----------------- SOCKET.IO -----------------
+// -----------------------------------------------------
+// SOCKET.IO
+// -----------------------------------------------------
 
 io.on("connection", (socket) => {
-  console.log("new connection", socket.id);
+  console.log("connection", socket.id);
 
+  // --------------------------
+  // Create room
+  // --------------------------
   socket.on("createRoom", (cb) => {
     let roomId;
     do {
@@ -302,48 +352,60 @@ io.on("connection", (socket) => {
 
     rooms[roomId] = {
       state: createInitialState(),
-      players: {}
+      players: {} // socketId: "A"|"B"|"spectator"
     };
 
     socket.join(roomId);
-    rooms[roomId].players[socket.id] = "A"; // first player = Player A
+    rooms[roomId].players[socket.id] = "A";
 
-    console.log(`Room ${roomId} created by ${socket.id}`);
+    cb({ roomId, playerRole: "A", availableRoles: ["A","B","spectator"] });
 
-    if (cb) {
-      cb({ roomId, playerRole: "A" });
-    }
-
-    // send initial state
     io.to(roomId).emit("stateUpdate", rooms[roomId].state);
   });
 
+  // --------------------------
+  // Join room
+  // --------------------------
   socket.on("joinRoom", (roomId, cb) => {
     const room = rooms[roomId];
-    if (!room) {
-      if (cb) cb({ ok: false, error: "Room not found" });
-      return;
-    }
+    if (!room) return cb({ ok: false, error: "Room not found" });
 
     socket.join(roomId);
 
-    // assign B if free, otherwise spectator
-    let role = "B";
-    const takenRoles = Object.values(room.players);
-    if (takenRoles.includes("B")) {
-      role = "spectator";
-    }
+    const taken = Object.values(room.players);
+    const available = ["A","B","spectator"].filter(r => !taken.includes(r) || r === "spectator");
+
+    cb({ ok: true, roomId, availableRoles: available });
+  });
+
+  // --------------------------
+  // Choose explicit role
+  // --------------------------
+  socket.on("chooseRole", ({ roomId, role }, cb) => {
+    const room = rooms[roomId];
+    if (!room) return cb && cb({ ok: false });
+
     room.players[socket.id] = role;
 
-    console.log(`Socket ${socket.id} joined room ${roomId} as ${role}`);
-
-    if (cb) {
-      cb({ ok: true, roomId, playerRole: role });
-    }
+    cb && cb({ ok: true, role });
 
     io.to(roomId).emit("stateUpdate", room.state);
   });
 
+  // --------------------------
+  // Rejoin room after reconnect
+  // --------------------------
+  socket.on("rejoinRoom", ({ roomId, role }) => {
+    const room = rooms[roomId];
+    if (!room) return;
+    socket.join(roomId);
+    room.players[socket.id] = role;
+    io.to(roomId).emit("stateUpdate", room.state);
+  });
+
+  // --------------------------
+  // Game actions
+  // --------------------------
   socket.on("gameAction", ({ roomId, action }) => {
     const room = rooms[roomId];
     if (!room) return;
@@ -351,21 +413,20 @@ io.on("connection", (socket) => {
     const state = room.state;
     const role = room.players[socket.id] || "spectator";
 
-    applyAction(state, action, role);
+    applyAction(state, action, role, roomId);
 
     io.to(roomId).emit("stateUpdate", state);
   });
 
+  // --------------------------
+  // Disconnect
+  // --------------------------
   socket.on("disconnect", () => {
-    console.log("disconnect", socket.id);
-    // clean up rooms
     for (const [roomId, room] of Object.entries(rooms)) {
       if (room.players[socket.id]) {
         delete room.players[socket.id];
-        // if room empty, delete
         if (Object.keys(room.players).length === 0) {
           delete rooms[roomId];
-          console.log(`Deleted empty room ${roomId}`);
         }
       }
     }
@@ -374,5 +435,5 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log("Server listening on port", PORT);
+  console.log("Server listening on", PORT);
 });

@@ -1,4 +1,335 @@
-html {
-  height: 100%;
+/* ==========================================================
+   GLOBAL LAYOUT — MOBILE FIRST
+   ========================================================== */
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #fafafa;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #222;
+}
+
+#appContainer {
+  max-width: 540px;
+  margin: auto;
+  padding: 16px;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* ==========================================================
+   SCREENS
+   ========================================================== */
+
+.screen {
+  display: none;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  margin-top: 12px;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* ==========================================================
+   BUTTONS
+   ========================================================== */
+
+.primary-btn,
+.secondary-btn,
+.turn-button,
+.power-btn {
+  display: block;
   width: 100%;
+  text-align: center;
+  padding: 12px;
+  font-size: 16px;
+  margin: 6px 0;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background: #1a73e8;
+  color: white;
+}
+
+.secondary-btn {
+  background: #ddd;
+  color: #333;
+}
+
+.secondary-btn.small,
+.primary-btn.small {
+  width: auto;
+  display: inline-block;
+  padding: 8px 12px;
+}
+
+.turn-button {
+  background: #e0e0e0;
+}
+
+.turn-button.turn-active {
+  background: #4caf50;
+  color: white;
+  font-weight: bold;
+}
+
+/* Powers */
+
+.power-btn {
+  background: #ffe38a;
+  border: 1px solid #d7b859;
+  font-size: 18px;
+}
+
+.power-btn.power-used {
+  background: #ccc !important;
+  color: #666 !important;
+  border-color: #bbb;
+}
+
+.power-btn.disabled {
+  background: #ddd !important;
+  color: #aaa !important;
+}
+
+.highlight-green {
+  background: #4caf50 !important;
+  color: white !important;
+}
+
+/* ==========================================================
+   INPUTS
+   ========================================================== */
+
+input[type="text"],
+input[type="number"],
+.letter-input {
+  width: 100%;
+  padding: 12px;
+  font-size: 20px;
+  text-transform: uppercase;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+/* ==========================================================
+   POPUP — YOUR TURN
+   ========================================================== */
+
+.turn-popup {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.8);
+  background: #222;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 22px;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 2000;
+  pointer-events: none;
+}
+
+.turn-popup.show {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* ==========================================================
+   TOAST NOTIFICATION
+   ========================================================== */
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(40px);
+  background: #333;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 16px;
+  opacity: 0;
+  transition: all 0.35s ease;
+  z-index: 2000;
+  pointer-events: none;
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* ==========================================================
+   Animations — Wordle-like flips
+   ========================================================== */
+
+.flip-holder {
+  position: fixed;
+  left: -9999px; /* off-screen */
+  top: -9999px;
+}
+
+.flip {
+  animation: flipAnim 0.6s ease-out;
+}
+
+@keyframes flipAnim {
+  0%   { transform: rotateX(0deg); }
+  40%  { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+/* ==========================================================
+   CONSTRAINT BOXES
+   ========================================================== */
+
+.constraints-box,
+.history-box,
+.hypo-box,
+.summary-box {
+  background: #f3f3f3;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.hypo-box {
+  background: #fff4c4;
+}
+
+.constraints-box {
+  background: #eaf3ff;
+}
+
+.summary-box {
+  background: #fef3ff;
+}
+
+/* ==========================================================
+   HISTORY
+   ========================================================== */
+
+.history-box {
+  white-space: pre-line;
+  font-family: "Courier New", monospace;
+  background: #eee;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+/* ==========================================================
+   KEYBOARD
+   ========================================================== */
+
+.keyboard {
+  text-align: center;
+  margin-top: 12px;
+}
+
+.key-row {
+  margin-bottom: 6px;
+}
+
+.key {
+  display: inline-block;
+  min-width: 32px;
+  padding: 10px 6px;
+  margin: 2px;
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: bold;
+  background: #ddd;
+  border: 2px solid transparent;
+  user-select: none;
+  cursor: pointer;
+}
+
+.key-special {
+  min-width: 50px;
+}
+
+.key-green {
+  background: #6aaa64 !important;
+  color: white;
+}
+
+.key-yellow {
+  background: #c9b458 !important;
+  color: white;
+}
+
+.key-gray {
+  background: #787c7e !important;
+  color: white;
+}
+
+/* Outline for illegal setter keys */
+.key-red-outline {
+  border-color: red !important;
+}
+
+/* ==========================================================
+   BADGES
+   ========================================================== */
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.badge-a {
+  background: #bbdefb;
+}
+
+.badge-b {
+  background: #ffcdd2;
+}
+
+/* ==========================================================
+   MISC
+   ========================================================== */
+
+.room-code {
+  font-weight: bold;
+  font-size: 22px;
+}
+
+.status {
+  margin-top: 6px;
+  font-size: 14px;
+  white-space: pre-line;
+}
+
+.note {
+  font-size: 13px;
+  color: #777;
+}
+
+.role-picker button {
+  margin: 6px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  background: #ddd;
+  border: none;
+  cursor: pointer;
 }

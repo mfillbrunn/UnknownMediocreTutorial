@@ -4,283 +4,151 @@
   <meta charset="UTF-8">
   <title>Competitive Wordle – Powers Edition (Multiplayer)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      background: #f8f8f8;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    h1, h2, h3 {
-      margin-top: 0;
-    }
-    .screen {
-      display: none;
-      margin-top: 20px;
-      padding: 20px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 0 10px #ccc;
-    }
-    .active { display: block; }
-    input, select {
-      padding: 8px;
-      font-size: 16px;
-      margin: 4px 0;
-    }
-    input[type="text"], input[type="number"] {
-      width: 180px;
-    }
-    button {
-      padding: 8px 14px;
-      margin: 4px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .turn-button {
-      font-size: 18px;
-      padding: 10px 18px;
-      background: #e0e0e0;
-      border-radius: 6px;
-      border: none;
-    }
-    .turn-active {
-      background: #4caf50;
-      color: white;
-      font-weight: bold;
-    }
-    .history-box {
-      background: #f0f0f0;
-      padding: 10px;
-      border-radius: 6px;
-      margin-top: 10px;
-      white-space: pre-line;
-    }
-    .hypo-box {
-      background: #fff4c2;
-      padding: 10px;
-      border-radius: 6px;
-      margin-bottom: 15px;
-      border: 1px solid #e0c96a;
-      font-size: 16px;
-    }
-    .constraints-box {
-      background: #e9f5ff;
-      padding: 10px;
-      border-radius: 6px;
-      margin-bottom: 10px;
-      border: 1px solid #9ec8ff;
-    }
-    .keyboard {
-      margin-top: 10px;
-    }
-    .key-row {
-      margin-bottom: 5px;
-    }
-    .key {
-      display: inline-block;
-      min-width: 28px;
-      padding: 6px 8px;
-      margin: 2px;
-      border-radius: 4px;
-      background: #ddd;
-      text-align: center;
-      font-weight: bold;
-      user-select: none;
-      border: 2px solid transparent;
-    }
-    .key-green {
-      background: #6aaa64;
-      color: white;
-    }
-    .key-yellow {
-      background: #c9b458;
-      color: white;
-    }
-    .key-gray {
-      background: #787c7e;
-      color: white;
-    }
-    .key-special {
-      min-width: 48px;
-    }
-    .key-red-outline {
-      border: 2px solid red !important;
-    }
-    .power-btn {
-      border-radius: 6px;
-    }
-    .power-used {
-      background: #cccccc !important;
-      color: #666 !important;
-    }
-    .summary-box {
-      background: #fef3ff;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #f0b3ff;
-      margin-top: 10px;
-      white-space: pre-line;
-    }
-    .role-label-inline {
-      font-size: 14px;
-      color: #555;
-    }
-    .room-code {
-      font-size: 20px;
-      font-weight: bold;
-      letter-spacing: 3px;
-    }
-    .status {
-      margin-top: 6px;
-      font-size: 14px;
-      color: #555;
-      white-space: pre-line;
-    }
-    .badge {
-      display: inline-block;
-      padding: 2px 6px;
-      font-size: 12px;
-      border-radius: 4px;
-      background: #eee;
-      margin-left: 6px;
-    }
-    .badge-a { background: #bbdefb; }
-    .badge-b { background: #ffcdd2; }
-    .badge-spectator { background: #e0e0e0; }
-  </style>
+
+  <!-- Styles will be replaced in Part 4 -->
+  <link rel="stylesheet" href="style.css">
+
 </head>
 <body>
 
-<h1>Competitive Wordle – Powers Edition</h1>
+<div id="appContainer">
 
-<!-- LOBBY / CONNECTION SECTION -->
-<div id="lobby" class="screen active">
-  <h2>Online Lobby</h2>
-  <p>Play on multiple phones by sharing a room code.</p>
+  <h1 class="title">Competitive Wordle – Powers Edition</h1>
 
-  <div>
-    <button id="createRoomBtn">Create Room</button>
+  <!-- ========= TURN POPUP (big overlay) ========= -->
+  <div id="turnPopup" class="turn-popup"></div>
+
+  <!-- ========= TOAST NOTIFICATION ========= -->
+  <div id="toast" class="toast"></div>
+
+  <!-- ========= ANIMATION HOLDERS (flip animations) ========= -->
+  <div id="guessAnim" class="flip-holder"></div>
+  <div id="feedbackAnim" class="flip-holder"></div>
+
+  <!-- ===================================================== -->
+  <!-- LOBBY / CONNECTION -->
+  <!-- ===================================================== -->
+  <div id="lobby" class="screen active">
+    <h2>Online Lobby</h2>
+    <p>Play on multiple phones by sharing a room code.</p>
+
+    <button id="createRoomBtn" class="primary-btn">Create Room</button>
+
+    <div class="join-block">
+      <input id="joinRoomInput" type="text" maxlength="8" placeholder="Room code">
+      <button id="joinRoomBtn" class="primary-btn small">Join</button>
+    </div>
+
+    <p id="lobbyStatus" class="status"></p>
+
+    <!-- Role selection (ONLY for joiner) -->
+    <div id="rolePicker" class="role-picker"></div>
+
+    <div id="roomInfo" style="display:none; margin-top:10px;">
+      <p><b>Room:</b> <span id="roomCodeLabel" class="room-code"></span></p>
+      <p><b>You are:</b> <span id="playerRoleLabel"></span></p>
+      <button id="enterGameBtn" class="primary-btn">Enter Game</button>
+    </div>
+
+    <hr>
+    <p class="note">Both players open this page on their phones, one creates a room, shares code, the other joins.</p>
   </div>
 
-  <div style="margin-top: 10px;">
-    <input id="joinRoomInput" type="text" maxlength="8" placeholder="Room code">
-    <button id="joinRoomBtn">Join Room</button>
+  <!-- ===================================================== -->
+  <!-- MAIN MENU -->
+  <!-- ===================================================== -->
+  <div id="menu" class="screen">
+    <h2>Game Menu</h2>
+
+    <p><b>Room:</b> <span id="menuRoomCode"></span></p>
+    <p><b>You are:</b> <span id="menuPlayerRole"></span></p>
+
+    <p><b>Round:</b> <span id="roundLabel">1</span> / 2</p>
+    <p><b>Setup:</b> <span id="roleLabel"></span></p>
+    <p><b>Turn:</b> <span id="turnLabel"></span></p>
+
+    <button id="btnSetter" class="turn-button">Setter Screen <span id="setterWho"></span></button>
+    <button id="btnGuesser" class="turn-button">Guesser Screen <span id="guesserWho"></span></button>
+
+    <p><b>Guesses so far:</b> <span id="guessCountMenu">0</span></p>
+
+    <div id="roundSummary" class="summary-box"></div>
+
+    <button id="newMatchBtn" class="primary-btn">New Match</button>
+    <button id="backToLobbyBtn" class="secondary-btn">Back to Lobby</button>
   </div>
 
-  <p id="lobbyStatus" class="status"></p>
+  <!-- ===================================================== -->
+  <!-- SETTER SCREEN -->
+  <!-- ===================================================== -->
+  <div id="setterScreen" class="screen">
+    <h2>Setter <span id="setterRoleTag" class="badge badge-a">A</span></h2>
+    <p>You see full feedback. The guesser sees hidden tiles.</p>
 
-  <div id="roomInfo" style="display:none; margin-top:10px;">
-    <p><b>Room:</b> <span id="roomCodeLabel" class="room-code"></span></p>
-    <p><b>You are:</b> <span id="playerRoleLabel"></span></p>
-    <button id="enterGameBtn">Enter Game</button>
+    <!-- hypothetical feedback preview -->
+    <div id="hypotheticalBox" class="box hypo-box"></div>
+
+    <!-- constraints -->
+    <div class="constraints-box">
+      <p><b>Pattern:</b> <span id="knownPatternSetter">- - - - -</span></p>
+      <p><b>Must contain:</b> <span id="mustContainSetter">none</span></p>
+    </div>
+
+    <p><b>Current Secret:</b> <span id="secretWordDisplay">NONE</span></p>
+    <p><b>Latest Guess:</b> <span id="pendingGuessDisplay">-</span></p>
+
+    <hr>
+
+    <h3>Choose Secret</h3>
+    <input id="newSecretInput" maxlength="5" autocomplete="off" class="letter-input">
+    <button id="submitSetterNewBtn" class="primary-btn">Submit NEW Secret</button>
+    <button id="submitSetterSameBtn" class="primary-btn">Keep SAME Secret</button>
+    <button id="setterBackToMenuBtn" class="secondary-btn small">Back</button>
+
+    <h3>Setter Power</h3>
+    <button id="btnHideTile" class="power-btn">❓ Hide Tile</button>
+
+    <!-- Wordle keyboard -->
+    <div id="keyboardSetter" class="keyboard"></div>
+
+    <!-- history -->
+    <h3>History</h3>
+    <div id="historySetter" class="history-box">No guesses yet.</div>
   </div>
 
-  <hr>
+  <!-- ===================================================== -->
+  <!-- GUESSER SCREEN -->
+  <!-- ===================================================== -->
+  <div id="guesserScreen" class="screen">
+    <h2>Guesser <span id="guesserRoleTag" class="badge badge-b">B</span></h2>
 
-  <p style="font-size:13px; color:#777;">
-    Note: This is a multiplayer experiment. Both players open this page on their phones,
-    one creates a room and shares the code, the other joins.
-  </p>
+    <div class="constraints-box">
+      <p><b>Pattern:</b> <span id="knownPatternGuesser">- - - - -</span></p>
+      <p><b>Must contain:</b> <span id="mustContainGuesser">none</span></p>
+    </div>
+
+    <h3>Make a Guess</h3>
+    <input id="guessInput" maxlength="5" autocomplete="off" class="letter-input">
+    <button id="submitGuessBtn" class="primary-btn">Submit Guess</button>
+    <button id="guesserBackToMenuBtn" class="secondary-btn small">Back</button>
+
+    <h3>Powers</h3>
+    <button id="btnRevealGreen" class="power-btn">🟩 Reveal Green</button>
+    <button id="btnFreezeSecret" class="power-btn">🔒 Freeze Secret</button>
+
+    <div id="keyboardGuesser" class="keyboard"></div>
+
+    <h3>History</h3>
+    <div id="historyGuesser" class="history-box">No guesses yet.</div>
+  </div>
+
 </div>
 
-<!-- MAIN MENU / STATUS -->
-<div id="menu" class="screen">
-  <h2>Game Menu</h2>
-  <p><b>Room:</b> <span id="menuRoomCode" class="room-code"></span></p>
-  <p><b>You are:</b> <span id="menuPlayerRole"></span></p>
-
-  <p><b>Round:</b> <span id="roundLabel">1</span> / 2</p>
-  <p><b>Current Role Setup:</b> <span id="roleLabel">Round 1: Player A = Setter, Player B = Guesser</span></p>
-  <p><b>Current Turn:</b> <span id="turnLabel">Setter (Player A)</span></p>
-
-  <button id="btnSetter" class="turn-button">
-    Setter Screen <span id="setterWho" class="role-label-inline">(Player A)</span>
-  </button>
-  <button id="btnGuesser" class="turn-button">
-    Guesser Screen <span id="guesserWho" class="role-label-inline">(Player B)</span>
-  </button>
-
-  <p><b>Guess Count (this round):</b> <span id="guessCountMenu">0</span></p>
-
-  <div id="roundSummary" class="summary-box" style="display:none;"></div>
-
-  <button id="newMatchBtn">New Match</button>
-  <button id="backToLobbyBtn">Back to Lobby</button>
-</div>
-
-<!-- SETTER SCREEN -->
-<div id="setterScreen" class="screen">
-  <h2>Setter Screen <span id="setterRoleTag" class="badge badge-a">Player A (Setter)</span></h2>
-
-  <p class="role-label-inline">You see full feedback. The guesser will only see partially hidden tiles.</p>
-
-  <div id="hypotheticalBox" class="hypo-box" style="display:none;"></div>
-
-  <div class="constraints-box">
-    <p><b>Known pattern:</b> <span id="knownPatternSetter">- - - - -</span></p>
-    <p><b>Must contain:</b> <span id="mustContainSetter">none</span></p>
-  </div>
-
-  <p><b>Current Secret:</b> <span id="secretWordDisplay">NONE</span></p>
-  <p><b>Latest Guess by Guesser:</b> <span id="pendingGuessDisplay">-</span></p>
-
-  <hr>
-
-  <h3>Choose Secret</h3>
-  <p>Enter NEW secret (5 letters):</p>
-  <input id="newSecretInput" maxlength="5" autocomplete="off"><br>
-  <button id="submitSetterNewBtn">Submit NEW Secret</button>
-  <button id="submitSetterSameBtn">Keep SAME Secret</button>
-  <button class="secondary" id="setterBackToMenuBtn">Back to Menu</button>
-
-  <h3>Setter Power</h3>
-  <button id="btnHideTile" class="power-btn">
-    Hide one feedback tile (once/round)
-  </button>
-
-  <div id="keyboardSetter" class="keyboard"></div>
-
-  <h3>Guess History</h3>
-  <div id="historySetter" class="history-box">No guesses yet.</div>
-</div>
-
-<!-- GUESSER SCREEN -->
-<div id="guesserScreen" class="screen">
-  <h2>Guesser Screen <span id="guesserRoleTag" class="badge badge-b">Player B (Guesser)</span></h2>
-
-  <div class="constraints-box">
-    <p><b>Known pattern:</b> <span id="knownPatternGuesser">- - - - -</span></p>
-    <p><b>Must contain:</b> <span id="mustContainGuesser">none</span></p>
-  </div>
-
-  <h3>Make a Guess</h3>
-  <p>Enter your guess (5 letters):</p>
-  <input id="guessInput" maxlength="5" autocomplete="off"><br>
-  <button id="submitGuessBtn">Submit Guess</button>
-  <button class="secondary" id="guesserBackToMenuBtn">Back to Menu</button>
-
-  <h3>Guesser Powers</h3>
-  <button id="btnRevealGreen" class="power-btn">
-    Reveal one green (once/round)
-  </button>
-  <button id="btnFreezeSecret" class="power-btn">
-    Force secret stay (once/round)
-  </button>
-
-  <div id="keyboardGuesser" class="keyboard"></div>
-
-  <h3>Guess History</h3>
-  <div id="historyGuesser" class="history-box">No guesses yet.</div>
-</div>
-
-<!-- JS: Socket.IO + client logic -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="client.js"></script>
-<noscript>
-  <p style="color:red;">This game requires JavaScript to run.</p>
-</noscript>
+
+<!-- No-script fallback -->
+<noscript><p style="color:red;">This game requires JavaScript.</p></noscript>
 
 </body>
 </html>

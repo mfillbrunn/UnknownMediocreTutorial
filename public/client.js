@@ -1,14 +1,14 @@
-// client.js - front-end multiplayer logic for Competitive Wordle – Powers Edition
+// client.js — Updated Multiplayer Front-End Logic (Improved UI + Sync + Powers + Animations)
 
-// ----------------- SOCKET & LOBBY STATE -----------------
+// =============================================================
+// SOCKET INITIALIZATION
+// =============================================================
+const socket = io({ autoConnect: true, reconnection: true });
 
-const socket = io();
-
-// room info
 let roomId = null;
-let myPlayerRole = null; // "A", "B", or "spectator"
+let myPlayerRole = null; // "A", "B", "spectator"
 
-// authoritative game state from server
+// authoritative server-side state
 let roundNumber = 1;
 let setter = "A";
 let guesser = "B";
@@ -19,22 +19,25 @@ let pendingGuess = "";
 let guessCount = 0;
 let firstSecretSet = false;
 let history = [];
+
 let roundStats = {
   1: { guesser: null, guesses: null },
   2: { guesser: null, guesses: null }
 };
+
 let powers = {
   hideTileUsed: false,
-  hideTilePending: false,
+  hideTilePendingCount: 0,
   revealGreenUsed: false,
   freezeSecretUsed: false,
   freezeActive: false
 };
+
 let revealGreenInfo = null;
 
-// derived constraint structures
+// constraint helpers
 const KEY_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
-let letterStates = new Array(26).fill("unknown"); // unknown, gray, yellow, green
+let letterStates = new Array(26).fill("unknown");
 let positionGreens = new Array(5).fill(null);
 let letterNotPositions = Array.from({ length: 26 }, () => new Set());
 
@@ -42,24 +45,40 @@ function idxFromLetter(ch) {
   return ch.charCodeAt(0) - 65;
 }
 
-// ----------------- DOM HELPERS -----------------
-
-function $(id) {
-  return document.getElementById(id);
-}
+// =============================================================
+// DOM HELPERS
+// =============================================================
+function $(id) { return document.getElementById(id); }
 
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   $(id).classList.add("active");
 }
 
-// ----------------- LOBBY UI -----------------
+function showPopup(message, duration = 1200) {
+  const box = $("turnPopup");
+  box.innerText = message;
+  box.classList.add("show");
+  setTimeout(() => box.classList.remove("show"), duration);
+}
+
+function showToast(msg) {
+  const t = $("toast");
+  t.innerText = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2000);
+}
+
+// =============================================================
+// LOBBY LOGIC
+// =============================================================
 
 const lobbyStatus = $("lobbyStatus");
 const roomInfoDiv = $("roomInfo");
 const roomCodeLabel = $("roomCodeLabel");
 const playerRoleLabel = $("playerRoleLabel");
 
+// Create room
 $("createRoomBtn").onclick = () => {
   socket.emit("createRoom", (res) => {
     roomId = res.roomId;
@@ -71,73 +90,135 @@ $("createRoomBtn").onclick = () => {
   });
 };
 
+// Join room → now user MUST pick a role explicitly
 $("joinRoomBtn").onclick = () => {
   const input = $("joinRoomInput").value.trim().toUpperCase();
   if (!input) return;
+
   socket.emit("joinRoom", input, (res) => {
     if (!res.ok) {
       lobbyStatus.innerText = res.error;
       return;
     }
+
     roomId = res.roomId;
-    myPlayerRole = res.playerRole;
-    lobbyStatus.innerText = `Joined room ${roomId}.`;
+    lobbyStatus.innerText = `Joined room ${roomId}. Choose your role:`;
+
+    // show role picker
+    $("rolePicker").innerHTML = "";
     roomCodeLabel.innerText = roomId;
-    playerRoleLabel.innerText = (myPlayerRole === "spectator")
-      ? "Spectator"
-      : `Player ${myPlayerRole}`;
-    roomInfoDiv.style.display = "block";
+
+    res.availableRoles.forEach(r => {
+      const btn = document.createElement("button");
+      btn.innerText = r.toUpperCase();
+      btn.onclick = () => {
+        socket.emit("chooseRole", { roomId, role: r }, (cbRes) => {
+          if (cbRes.ok) {
+            myPlayerRole = cbRes.role;
+            playerRoleLabel.innerText = (myPlayerRole === "spectator")
+              ? "Spectator"
+              : `Player ${myPlayerRole}`;
+            roomInfoDiv.style.display = "block";
+            $("rolePicker").innerHTML = "";
+          }
+        });
+      };
+      $("rolePicker").appendChild(btn);
+    });
   });
 };
 
 $("enterGameBtn").onclick = () => {
-  if (!roomId) {
-    alert("Create or join a room first.");
-    return;
-  }
+  if (!roomId) return alert("Create or join a room first.");
   showScreen("menu");
   renderAll();
 };
 
-$("backToLobbyBtn").onclick = () => {
-  showScreen("lobby");
-};
+$("backToLobbyBtn").onclick = () => showScreen("lobby");
 
-// ----------------- STATE UPDATE FROM SERVER -----------------
+// =============================================================
+// SOCKET EVENTS
+// =============================================================
 
-socket.on("stateUpdate", (serverState) => {
-  roundNumber = serverState.roundNumber;
-  setter = serverState.setter;
-  guesser = serverState.guesser;
-  turn = serverState.turn;
+// full state sync
+socket.on("stateUpdate", (s) => {
+  roundNumber = s.roundNumber;
+  setter = s.setter;
+  guesser = s.guesser;
+  turn = s.turn;
 
-  secret = serverState.secret;
-  pendingGuess = serverState.pendingGuess;
-  guessCount = serverState.guessCount;
-  firstSecretSet = serverState.firstSecretSet;
-  history = serverState.history || [];
-  roundStats = serverState.roundStats || roundStats;
-  powers = serverState.powers || powers;
-  revealGreenInfo = serverState.revealGreenInfo || null;
+  secret = s.secret;
+  pendingGuess = s.pendingGuess;
+  guessCount = s.guessCount;
+  firstSecretSet = s.firstSecretSet;
+  history = s.history || [];
+  roundStats = s.roundStats || roundStats;
+  powers = s.powers || powers;
+  revealGreenInfo = s.revealGreenInfo || null;
 
   renderAll();
+  handleTurnChange();
 });
 
-// ----------------- ACTION SENDER -----------------
+// e.g., “Player B used REVEAL GREEN!”
+socket.on("powerUsed", ({ player, type }) => {
+  const nice = {
+    "USE_HIDE_TILE": "Hide Tile",
+    "USE_REVEAL_GREEN": "Reveal Green",
+    "USE_FREEZE_SECRET": "Freeze Secret"
+  }[type] || type;
 
-function sendAction(type, extra = {}) {
-  if (!roomId) {
-    alert("Not in a room.");
-    return;
+  showToast(`Player ${player} used ${nice}!`);
+});
+
+// animations (flip tiles etc.)
+socket.on("animateTurn", ({ type }) => {
+  if (type === "guesserSubmitted") animateGuessRow();
+  if (type === "setterSubmitted") animateFeedbackRow();
+});
+
+// reconnect handler
+socket.on("reconnect", () => {
+  if (roomId && myPlayerRole) {
+    socket.emit("rejoinRoom", { roomId, role: myPlayerRole });
   }
-  socket.emit("gameAction", {
-    roomId,
-    action: { type, ...extra }
-  });
+});
+
+// =============================================================
+// TURN LOGIC
+// =============================================================
+let lastTurn = null;
+
+function handleTurnChange() {
+  if (turn === lastTurn) return;
+  lastTurn = turn;
+
+  if (!myPlayerRole) return;
+
+  if (turn === myPlayerRole) {
+    showPopup("YOUR TURN!", 1200);
+
+    if (myPlayerRole === setter) showScreen("setterScreen");
+    else if (myPlayerRole === guesser) showScreen("guesserScreen");
+
+  } else if (turn === "none") {
+    showPopup("Round Finished", 1500);
+  } else {
+    showPopup("Waiting for opponent…", 1000);
+  }
 }
 
-// ----------------- GAME RENDERING -----------------
+// =============================================================
+// SEND ACTION
+// =============================================================
+function sendAction(type, extra = {}) {
+  if (!roomId) return alert("Not in a room.");
+  socket.emit("gameAction", { roomId, action: { type, ...extra } });
+}
 
+// =============================================================
+// CONSTRAINT LOGIC
+// =============================================================
 function resetConstraints() {
   letterStates = new Array(26).fill("unknown");
   positionGreens = new Array(5).fill(null);
@@ -145,11 +226,7 @@ function resetConstraints() {
 }
 
 function statePriority(s) {
-  if (s === "unknown") return 0;
-  if (s === "gray") return 1;
-  if (s === "yellow") return 2;
-  if (s === "green") return 3;
-  return 0;
+  return { unknown: 0, gray: 1, yellow: 2, green: 3 }[s] ?? 0;
 }
 
 function computeConstraints() {
@@ -158,19 +235,24 @@ function computeConstraints() {
   for (const h of history) {
     const guess = h.guess.toUpperCase();
     const fb = h.fb;
+
+    // keyboard should NOT reveal hidden indices
+    const hidden = h.hiddenIndices || [];
+
     for (let i = 0; i < 5; i++) {
+      if (hidden.includes(i)) continue; // tile hidden → no keyboard update
+
       const ch = guess[i];
       const idx = idxFromLetter(ch);
+
       if (fb[i] === "🟩") {
         positionGreens[i] = ch;
-        if (statePriority(letterStates[idx]) < statePriority("green")) {
-          letterStates[idx] = "green";
-        }
+        if (statePriority(letterStates[idx]) < 3) letterStates[idx] = "green";
+
       } else if (fb[i] === "🟨") {
-        if (statePriority(letterStates[idx]) < statePriority("yellow")) {
-          letterStates[idx] = "yellow";
-        }
+        if (statePriority(letterStates[idx]) < 2) letterStates[idx] = "yellow";
         letterNotPositions[idx].add(i);
+
       } else if (fb[i] === "⬛") {
         if (letterStates[idx] === "unknown" || letterStates[idx] === "gray") {
           letterStates[idx] = "gray";
@@ -179,17 +261,18 @@ function computeConstraints() {
     }
   }
 
-  // incorporate reveal-green info (optional)
-  if (revealGreenInfo && revealGreenInfo.letter && typeof revealGreenInfo.pos === "number") {
+  if (revealGreenInfo) {
     const pos = revealGreenInfo.pos;
     const letter = revealGreenInfo.letter;
     positionGreens[pos] = letter;
     const idx = idxFromLetter(letter);
-    if (statePriority(letterStates[idx]) < statePriority("green")) {
-      letterStates[idx] = "green";
-    }
+    if (statePriority(letterStates[idx]) < 3) letterStates[idx] = "green";
   }
 }
+
+// =============================================================
+// RENDERING
+// =============================================================
 
 function renderPatterns() {
   const patternArr = [];
@@ -206,18 +289,13 @@ function renderPatterns() {
     if (letterStates[idx] === "yellow") {
       const letter = String.fromCharCode(65 + idx);
       const notPos = Array.from(letterNotPositions[idx]).map(p => p + 1);
-      if (notPos.length)
-        parts.push(`${letter} (not ${notPos.join(", ")})`);
-      else
-        parts.push(letter);
+      parts.push(notPos.length ? `${letter} (not ${notPos.join(", ")})` : letter);
     }
   }
-  const must = parts.length ? parts.join(", ") : "none";
-  $("mustContainSetter").innerText = must;
-  $("mustContainGuesser").innerText = must;
+  $("mustContainSetter").innerText = parts.length ? parts.join(", ") : "none";
+  $("mustContainGuesser").innerText = parts.length ? parts.join(", ") : "none";
 }
 
-// used only for setter hypothetical
 function scoreGuessLocal(secretWord, guess) {
   const fb = ["", "", "", "", ""];
   const rem = secretWord.split("");
@@ -231,12 +309,8 @@ function scoreGuessLocal(secretWord, guess) {
   for (let i = 0; i < 5; i++) {
     if (fb[i] === "") {
       const pos = rem.indexOf(guess[i]);
-      if (pos !== -1) {
-        fb[i] = "🟨";
-        rem[pos] = null;
-      } else {
-        fb[i] = "⬛";
-      }
+      fb[i] = pos !== -1 ? "🟨" : "⬛";
+      if (pos !== -1) rem[pos] = null;
     }
   }
   return fb;
@@ -264,12 +338,14 @@ function renderHistory() {
   const guesserLines = [];
 
   for (const h of history) {
-    const fullFB = h.fb.join("");
     const guessUp = h.guess.toUpperCase();
-    setterLines.push(`${guessUp}   ${fullFB}`);
+    const fb = h.fb;
+    const hi = h.hiddenIndices || [];
 
-    const fbArr = h.fb.map((x, i) => (h.hiddenIndex === i ? "❔" : x));
-    guesserLines.push(`${guessUp}   ${fbArr.join("")}`);
+    setterLines.push(`${guessUp}   ${fb.join("")}`);
+
+    const masked = fb.map((x, i) => (hi.includes(i) ? "❔" : x));
+    guesserLines.push(`${guessUp}   ${masked.join("")}`);
   }
 
   $("historySetter").innerText = setterLines.join("\n");
@@ -277,24 +353,17 @@ function renderHistory() {
 }
 
 function handleKeyPress(target, key) {
-  const inputId = target === "setter" ? "newSecretInput" : "guessInput";
-  const input = $(inputId);
-
+  const id = target === "setter" ? "newSecretInput" : "guessInput";
+  const input = $(id);
   if (!input) return;
 
-  if (key === "BACK") {
-    input.value = input.value.slice(0, -1);
-    return;
-  }
-  if (input.value.length >= 5) return;
-  input.value += key;
+  if (key === "BACK") input.value = input.value.slice(0, -1);
+  else if (input.value.length < 5) input.value += key;
 }
 
-function renderKeyboard(containerId, target) {
-  const container = $(containerId);
+function renderKeyboard(id, target) {
+  const container = $(id);
   container.innerHTML = "";
-
-  const guessLetters = pendingGuess ? pendingGuess.toUpperCase().split("") : [];
 
   KEY_ROWS.forEach((row, rowIndex) => {
     const rowDiv = document.createElement("div");
@@ -303,23 +372,20 @@ function renderKeyboard(containerId, target) {
     row.split("").forEach(ch => {
       const btn = document.createElement("span");
       btn.className = "key";
+
       const idx = idxFromLetter(ch);
-      const state = letterStates[idx];
+      const st = letterStates[idx];
 
-      if (state === "green") btn.classList.add("key-green");
-      else if (state === "yellow") btn.classList.add("key-yellow");
-      else if (state === "gray") btn.classList.add("key-gray");
-
-      if (target === "setter" && guessLetters.includes(ch)) {
-        btn.classList.add("key-red-outline");
-      }
+      if (st === "green") btn.classList.add("key-green");
+      else if (st === "yellow") btn.classList.add("key-yellow");
+      else if (st === "gray") btn.classList.add("key-gray");
 
       btn.innerText = ch;
       btn.onclick = () => handleKeyPress(target, ch);
       rowDiv.appendChild(btn);
     });
 
-    if (rowIndex === KEY_ROWS.length - 1) {
+    if (rowIndex === 2) {
       const back = document.createElement("span");
       back.className = "key key-special";
       back.innerText = "⌫";
@@ -332,75 +398,69 @@ function renderKeyboard(containerId, target) {
 }
 
 function updatePowerButtons() {
-  const hideBtn = $("btnHideTile");
-  const revealBtn = $("btnRevealGreen");
-  const freezeBtn = $("btnFreezeSecret");
+  $("btnHideTile").classList.toggle("power-used", powers.hideTileUsed);
+  $("btnRevealGreen").classList.toggle("power-used", powers.revealGreenUsed);
+  $("btnFreezeSecret").classList.toggle("power-used", powers.freezeSecretUsed);
 
-  hideBtn.classList.toggle("power-used", powers.hideTileUsed);
-  revealBtn.classList.toggle("power-used", powers.revealGreenUsed);
-  freezeBtn.classList.toggle("power-used", powers.freezeSecretUsed);
+  // Freeze secret → lock setter UI
+  if (powers.freezeActive && myPlayerRole === setter) {
+    $("submitSetterNewBtn").disabled = true;
+    $("submitSetterNewBtn").classList.add("disabled");
+
+    $("submitSetterSameBtn").disabled = false;
+    $("submitSetterSameBtn").classList.add("highlight-green");
+  } else {
+    $("submitSetterNewBtn").disabled = false;
+    $("submitSetterNewBtn").classList.remove("disabled");
+    $("submitSetterSameBtn").classList.remove("highlight-green");
+  }
 }
 
 function renderMenu() {
   $("menuRoomCode").innerText = roomId || "-";
-  $("menuPlayerRole").innerText = myPlayerRole
-    ? (myPlayerRole === "spectator" ? "Spectator" : `Player ${myPlayerRole}`)
-    : "-";
+  $("menuPlayerRole").innerText = myPlayerRole ? `Player ${myPlayerRole}` : "-";
 
-  $("roundLabel").innerText = String(roundNumber);
-  const roleLabelText =
+  $("roundLabel").innerText = roundNumber;
+  $("roleLabel").innerText =
     `Round ${roundNumber}: Player ${setter} = Setter, Player ${guesser} = Guesser`;
-  $("roleLabel").innerText = roleLabelText;
 
-  const turnText =
+  $("turnLabel").innerText =
     turn === setter
       ? `Setter (Player ${setter})`
       : (turn === guesser ? `Guesser (Player ${guesser})` : "Round finished");
-  $("turnLabel").innerText = turnText;
 
   $("setterWho").innerText = `(Player ${setter})`;
   $("guesserWho").innerText = `(Player ${guesser})`;
-  $("guessCountMenu").innerText = String(guessCount);
+  $("guessCountMenu").innerText = guessCount;
 
-  // highlight active turn button
   $("btnSetter").classList.remove("turn-active");
   $("btnGuesser").classList.remove("turn-active");
   if (turn === setter) $("btnSetter").classList.add("turn-active");
-  else if (turn === guesser) $("btnGuesser").classList.add("turn-active");
+  if (turn === guesser) $("btnGuesser").classList.add("turn-active");
 
-  // badges on screens
-  $("setterRoleTag").innerText = `Player ${setter} (Setter)`;
-  $("guesserRoleTag").innerText = `Player ${guesser} (Guesser)`;
-
-  // round summary
   renderRoundSummary();
 }
 
 function renderRoundSummary() {
   const box = $("roundSummary");
   box.style.display = "none";
-  box.innerHTML = "";
 
-  // Round considered over if turn === "none" and stats exist for this round
   const stats = roundStats[roundNumber];
-  if (!stats || stats.guesses == null || turn !== "none") {
-    return;
-  }
+  if (!stats || stats.guesses == null || turn !== "none") return;
 
   box.style.display = "block";
 
   if (roundNumber === 1) {
     box.innerText =
-      `Round 1 complete.\nGuesser (Player ${stats.guesser}) needed ${stats.guesses} guesses.\nPress "Start Round 2" to swap roles.`;
+      `Round 1 complete.\nGuesser (Player ${stats.guesser}) needed ${stats.guesses} guesses.\nPress below to start round 2.`;
 
     const br = document.createElement("br");
     const btn = document.createElement("button");
     btn.innerText = "Start Round 2";
-    btn.onclick = () => {
-      sendAction("START_ROUND_2");
-    };
+    btn.onclick = () => sendAction("START_ROUND_2");
     box.appendChild(br);
     box.appendChild(btn);
+
   } else {
     const g1 = roundStats[1].guesses;
     const g2 = roundStats[2].guesses;
@@ -408,24 +468,21 @@ function renderRoundSummary() {
     const guesser2 = roundStats[2].guesser;
 
     let txt =
-      `Round 1: Guesser Player ${guesser1} – ${g1} guesses\n` +
-      `Round 2: Guesser Player ${guesser2} – ${g2} guesses\n`;
+      `Round 1: Player ${guesser1} – ${g1} guesses\n` +
+      `Round 2: Player ${guesser2} – ${g2} guesses\n`;
 
-    if (g1 < g2) {
-      txt += `Winner: Player ${guesser1}`;
-    } else if (g2 < g1) {
-      txt += `Winner: Player ${guesser2}`;
-    } else {
-      txt += "Result: Draw (same number of guesses).";
-    }
+    txt += (g1 < g2)
+      ? `Winner: Player ${guesser1}`
+      : (g2 < g1)
+      ? `Winner: Player ${guesser2}`
+      : "Draw!";
 
     box.innerText = txt;
+
     const br = document.createElement("br");
     const btn = document.createElement("button");
     btn.innerText = "Start New Match";
-    btn.onclick = () => {
-      sendAction("NEW_MATCH");
-    };
+    btn.onclick = () => sendAction("NEW_MATCH");
     box.appendChild(br);
     box.appendChild(btn);
   }
@@ -444,6 +501,7 @@ function renderGuesserScreen() {
   renderKeyboard("keyboardGuesser", "guesser");
 }
 
+// Full update
 function renderAll() {
   computeConstraints();
   renderPatterns();
@@ -454,143 +512,93 @@ function renderAll() {
   updatePowerButtons();
 }
 
-// ----------------- BUTTON HANDLERS -----------------
+// =============================================================
+// ANIMATIONS (Wordle-like flip)
+// =============================================================
 
-// Menu "Setter Screen" button
+function animateGuessRow() {
+  const popup = $("guessAnim");
+  popup.classList.add("flip");
+  setTimeout(() => popup.classList.remove("flip"), 700);
+}
+
+function animateFeedbackRow() {
+  const popup = $("feedbackAnim");
+  popup.classList.add("flip");
+  setTimeout(() => popup.classList.remove("flip"), 700);
+}
+
+// =============================================================
+// BUTTON HANDLERS
+// =============================================================
+
 $("btnSetter").onclick = () => {
-  if (!myPlayerRole || myPlayerRole === "spectator") {
-    alert("You are not a player.");
-    return;
-  }
-  if (setter !== myPlayerRole) {
-    alert(`You are Player ${myPlayerRole}, but Player ${setter} is the setter this round.`);
-    return;
-  }
+  if (myPlayerRole !== setter) return alert("You are not the setter.");
   showScreen("setterScreen");
 };
 
-// Menu "Guesser Screen" button
 $("btnGuesser").onclick = () => {
-  if (!myPlayerRole || myPlayerRole === "spectator") {
-    alert("You are not a player.");
-    return;
-  }
-  if (guesser !== myPlayerRole) {
-    alert(`You are Player ${myPlayerRole}, but Player ${guesser} is the guesser this round.`);
-    return;
-  }
+  if (myPlayerRole !== guesser) return alert("You are not the guesser.");
   showScreen("guesserScreen");
 };
 
-$("setterBackToMenuBtn").onclick = () => {
-  showScreen("menu");
-};
+$("setterBackToMenuBtn").onclick = () => showScreen("menu");
+$("guesserBackToMenuBtn").onclick = () => showScreen("menu");
 
-$("guesserBackToMenuBtn").onclick = () => {
-  showScreen("menu");
-};
-
-// Guess submission
+// Guess
 $("submitGuessBtn").onclick = () => {
-  if (myPlayerRole !== guesser) {
-    alert("You are not the guesser this round.");
-    return;
-  }
-  if (turn !== guesser) {
-    alert("It's not the guesser's turn.");
-    return;
-  }
+  if (myPlayerRole !== guesser) return alert("Not the guesser.");
+  if (turn !== guesser) return alert("Not your turn.");
 
   const g = $("guessInput").value.trim().toLowerCase();
-  if (g.length !== 5) {
-    alert("Guess must be 5 letters.");
-    return;
-  }
-  $("guessInput").value = "";
+  if (g.length !== 5) return alert("Guess must be 5 letters.");
 
+  $("guessInput").value = "";
   sendAction("SUBMIT_GUESS", { guess: g });
 };
 
-// Setter new secret
+// Setter
 $("submitSetterNewBtn").onclick = () => {
-  if (myPlayerRole !== setter) {
-    alert("You are not the setter this round.");
-    return;
-  }
-  if (turn !== setter) {
-    alert("It's not the setter's turn.");
-    return;
-  }
-  const w = $("newSecretInput").value.trim().toLowerCase();
-  if (w.length !== 5) {
-    alert("Secret must be 5 letters.");
-    return;
-  }
-  $("newSecretInput").value = "";
+  if (myPlayerRole !== setter) return alert("Not the setter.");
+  if (turn !== setter) return alert("Not your turn.");
 
+  const w = $("newSecretInput").value.trim().toLowerCase();
+  if (w.length !== 5) return alert("Secret must be 5 letters.");
+
+  $("newSecretInput").value = "";
   sendAction("SET_SECRET_NEW", { secret: w });
 };
 
-// Setter same secret
 $("submitSetterSameBtn").onclick = () => {
-  if (myPlayerRole !== setter) {
-    alert("You are not the setter this round.");
-    return;
-  }
-  if (turn !== setter) {
-    alert("It's not the setter's turn.");
-    return;
-  }
-  if (!firstSecretSet) {
-    alert("You must set the first secret first.");
-    return;
-  }
+  if (myPlayerRole !== setter) return alert("Not the setter.");
+  if (turn !== setter) return alert("Not your turn.");
+  if (!firstSecretSet) return alert("You must set a first secret.");
+
   sendAction("SET_SECRET_SAME");
 };
 
 // Powers
 $("btnHideTile").onclick = () => {
-  if (myPlayerRole !== setter) {
-    alert("Only the setter can use this power.");
-    return;
-  }
-  if (powers.hideTileUsed) {
-    alert("Hide-tile power already used this round.");
-    return;
+  if (myPlayerRole !== setter) return alert("Only setter.");
+  if (powers.hideTileUsed && powers.hideTilePendingCount === 0) {
+    return alert("Hide tile already fully used.");
   }
   sendAction("USE_HIDE_TILE");
 };
 
 $("btnRevealGreen").onclick = () => {
-  if (myPlayerRole !== guesser) {
-    alert("Only the guesser can use this power.");
-    return;
-  }
-  if (powers.revealGreenUsed) {
-    alert("Reveal-green power already used this round.");
-    return;
-  }
+  if (myPlayerRole !== guesser) return alert("Only guesser.");
+  if (powers.revealGreenUsed) return alert("Already used.");
   sendAction("USE_REVEAL_GREEN");
 };
 
 $("btnFreezeSecret").onclick = () => {
-  if (myPlayerRole !== guesser) {
-    alert("Only the guesser can use this power.");
-    return;
-  }
-  if (powers.freezeSecretUsed) {
-    alert("Freeze-secret power already used this round.");
-    return;
-  }
+  if (myPlayerRole !== guesser) return alert("Only guesser.");
+  if (powers.freezeSecretUsed) return alert("Already used.");
   sendAction("USE_FREEZE_SECRET");
 };
 
-// New match from menu (hard reset)
-$("newMatchBtn").onclick = () => {
-  sendAction("NEW_MATCH");
-};
+// Menu new match
+$("newMatchBtn").onclick = () => sendAction("NEW_MATCH");
 
-// ----------------- INIT -----------------
-
-// initial render for lobby
 renderAll();
