@@ -1,7 +1,5 @@
 // /public/powers/powers.js
-// Shared metadata for all powers (dynamic UI generation)
 
-// Power categories
 export const SETTER_POWERS = {
   hideTile: {
     id: "hideTile",
@@ -37,12 +35,3 @@ export const GUESSER_POWERS = {
     once: true
   }
 };
-
-// Helper: return list for UI
-export function getPowersForRole(role) {
-  return role === "A" || role === "B"
-    ? role === "setter"
-      ? SETTER_POWERS
-      : GUESSER_POWERS
-    : {};
-}

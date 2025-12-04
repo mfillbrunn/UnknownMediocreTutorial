@@ -313,3 +313,31 @@ input[type="number"],
   font-size: 13px;
   color: #777;
 }
+.preview-box {
+  margin: 6px 0;
+  padding: 6px;
+  background: #f3f3f3;
+  border-radius: 6px;
+  font-size: 20px;
+}
+.turn-indicator {
+  margin: 10px 0;
+  padding: 6px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 22px;
+  border-radius: 6px;
+  display: none;
+}
+
+.turn-indicator.your-turn {
+  background: #2ecc71;
+  color: white;
+  display: block;
+}
+
+.turn-indicator.wait-turn {
+  background: #e67e22;
+  color: white;
+  display: block;
+}

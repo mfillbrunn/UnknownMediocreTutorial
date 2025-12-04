@@ -1,67 +1,31 @@
-// /powers/modifyFeedback.js
-// SERVER-SIDE — modifies feedback sent to the GUESSER
+// /game-engine/modifyFeedback.js
 //
-// These functions run after scoreGuess() inside finalizeFeedback().
-// They convert the true feedback into masked or recolored versions,
-// depending on which powers are active.
-//
+// Called inside server: applyFeedbackPowers()
 
-// Convert both greens and yellows to BLUE for guesser when confuseColors is active
-function applyConfuseColors(fb) {
-  return fb.map(tile =>
-    (tile === "🟩" || tile === "🟨") ? "🟦" : tile
-  );
-}
+export function modifyFeedback(fbGuesser, state, guess) {
+  let result = [...fbGuesser];
 
-// Replace all tiles with "?" and report counts separately
-function applyCountOnly(fb) {
-  return ["?", "?", "?", "?", "?"];
-}
-
-// Extract counts for count-only mode
-function getCounts(fb) {
-  return {
-    greens: fb.filter(f => f === "🟩").length,
-    yellows: fb.filter(f => f === "🟨").length
-  };
-}
-
-/**
- * Main exported function:
- * Transform feedback for a GUESSER based on active powers.
- *
- * Returns:
- * {
- *   fbForGuesser: [...],   // tiles the guesser sees
- *   extraInfo: { ... }     // optional text info (green/yellow counts)
- * }
- */
-function modifyFeedbackForGuesser(state, fb) {
-
-  // COUNT-ONLY power (strongest override)
-  if (state.powers.countOnlyActive) {
-    const counts = getCounts(fb);
-    return {
-      fbForGuesser: applyCountOnly(fb),
-      extraInfo: counts
-    };
+  // --- Reveal Green
+  if (state.powers.revealGreenUsed && state.powers.revealGreenPos != null) {
+    const i = state.powers.revealGreenPos;
+    result[i] = "🟩";
   }
 
-  // CONFUSE-COLORS power (medium override)
+  // --- Confuse Colors (blue mode)
   if (state.powers.confuseColorsActive) {
+    result = result.map(v => v === "🟨" || v === "⬛" ? "🟦" : v);
+  }
+
+  // --- Count Only Mode
+  if (state.powers.countOnlyActive) {
+    const greens = result.filter(v => v === "🟩").length;
+    const yellows = result.filter(v => v === "🟨").length;
+
     return {
-      fbForGuesser: applyConfuseColors(fb),
-      extraInfo: null
+      fbGuesser: ["❓","❓","❓","❓","❓"],
+      extraInfo: { greens, yellows }
     };
   }
 
-  // No power active → normal feedback
-  return {
-    fbForGuesser: fb,
-    extraInfo: null
-  };
+  return { fbGuesser: result, extraInfo: null };
 }
-
-module.exports = {
-  modifyFeedbackForGuesser
-};

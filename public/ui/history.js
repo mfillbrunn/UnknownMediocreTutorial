@@ -1,47 +1,47 @@
 // /public/ui/history.js
 
 /**
- * Render guess history.
+ * Render guess history for either setter or guesser.
  *
  * Setter sees:
- *   GUESS   true fb (🟩🟨⬛)
+ *   GUESS + true feedback (🟩🟨⬛🟦)
  *
  * Guesser sees:
- *   GUESS   fbGuesser (with ❓ for hidden) + optional "Feedback: X green, Y yellow"
- *
- * @param {Object} state - full game state
- * @param {HTMLElement} container - history DOM element
- * @param {boolean} isSetter - true for setter view, false for guesser view
+ *   GUESS + fbGuesser (with ❓ for hidden tiles)
+ *   + optional count-only info:
+ *        "Feedback: X green, Y yellow"
  */
 export function renderHistory(state, container, isSetter) {
   container.innerHTML = "";
 
-  if (!state || !state.history || !state.history.length) {
+  if (!state?.history?.length) {
     container.textContent = "No guesses yet.";
     return;
   }
 
   for (const h of state.history) {
     const div = document.createElement("div");
-    div.style.marginBottom = "6px";
+    div.className = "history-row";
 
     const guess = h.guess.toUpperCase();
-
     let tiles = "";
+
     if (isSetter) {
-      // Setter sees true feedback
+      // Setter sees true fb including blue mode
       for (const f of h.fb) tiles += f;
     } else {
-      // Guesser sees transformed feedback
+      // Guesser sees altered fbGuesser
       for (let i = 0; i < 5; i++) {
-        if (h.hiddenIndices.includes(i)) {
+        if (h.hiddenIndices?.includes(i)) {
           tiles += "❓";
         } else {
           tiles += h.fbGuesser[i];
         }
       }
+
+      // Count-only info
       if (h.extraInfo) {
-        tiles += `   Feedback: ${h.extraInfo.greens} green, ${h.extraInfo.yellows} yellow`;
+        tiles += `  (${h.extraInfo.greens}🟩, ${h.extraInfo.yellows}🟨)`;
       }
     }
 

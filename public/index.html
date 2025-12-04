@@ -82,8 +82,11 @@
 
     <p><b>Current Secret:</b> <span id="secretWordDisplay">NONE</span></p>
     <p><b>Latest Guess:</b> <span id="pendingGuessDisplay">-</span></p>
+    <h3>Preview Feedback</h3>
+    <div id="setterPreview" class="preview-box"></div>
 
     <hr>
+    <div id="turnIndicator" class="turn-indicator"></div>
 
     <h3>Enter Secret</h3>
     <input id="newSecretInput" maxlength="5" autocomplete="off" class="letter-input">
@@ -110,6 +113,7 @@
       <p><b>Pattern:</b> <span id="knownPatternGuesser">- - - - -</span></p>
       <p><b>Must contain:</b> <span id="mustContainGuesser">none</span></p>
     </div>
+    <div id="turnIndicator" class="turn-indicator"></div>
 
     <h3>Make a Guess</h3>
     <input id="guessInput" maxlength="5" autocomplete="off" class="letter-input">

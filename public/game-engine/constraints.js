@@ -1,45 +1,53 @@
 // /public/game-engine/constraints.js
-// Safe client-side game logic
 
 /**
- * Compute known pattern based on green tiles only.
+ * Compute known pattern from history.
+ *
+ * isSetterView = true → use fb (true feedback)
+ * isSetterView = false → use fbGuesser
+ *
+ * Returns "A--E-" form string.
  */
-export function getKnownPattern(history, fbKey = "fbGuesser") {
-  let result = ["-", "-", "-", "-", "-"];
+export function getPattern(state, isSetterView) {
+  const pattern = ["-", "-", "-", "-", "-"];
+  if (!state?.history?.length) return pattern.join("");
 
-  if (!history || history.length === 0) return result.join("");
-
-  for (const h of history) {
-    const fb = h[fbKey];
-    if (!fb) continue;
+  for (const h of state.history) {
+    const fbArr = isSetterView ? h.fb : h.fbGuesser;
+    if (!fbArr) continue;
 
     for (let i = 0; i < 5; i++) {
-      if (fb[i] === "🟩") {
-        result[i] = h.guess[i].toUpperCase();
+      if (fbArr[i] === "🟩") {
+        pattern[i] = h.guess[i].toUpperCase();
       }
     }
   }
 
-  return result.join("");
+  return pattern.join("");
 }
 
 /**
- * Letters known to be in the word (safe because server reveals 🟨 and 🟩 info)
+ * Compute letters that MUST appear
+ * Uses TRUE feedback only — fb
  */
-export function getMustContain(history) {
+export function getMustContainLetters(state) {
   const set = new Set();
-  if (!history || history.length === 0) return [];
+  if (!state?.history?.length) return [];
 
-  for (const h of history) {
+  for (const h of state.history) {
     for (let i = 0; i < 5; i++) {
       if (h.fb[i] === "🟩" || h.fb[i] === "🟨") {
         set.add(h.guess[i].toUpperCase());
       }
     }
   }
-  return Array.from(set);
+
+  return [...set];
 }
 
-export function spacedPattern(p) {
-  return p.split("").join(" ");
+/**
+ * Format "A--E-" as "A - - E -"
+ */
+export function formatPattern(patternString) {
+  return patternString.split("").join(" ");
 }

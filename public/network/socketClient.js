@@ -1,8 +1,7 @@
 // /public/network/socketClient.js
-// FINAL Railway + Metal Edge compatible client socket config
 
 const socket = io({
-  path: "/socket.io/",             // REQUIRED for Railway Metal Edge
+  path: "/socket.io/",
   transports: ["websocket", "polling"],
   upgrade: true,
   reconnection: true,
@@ -38,6 +37,10 @@ export function onPowerUsed(handler) {
   socket.on("powerUsed", handler);
 }
 
-socket.on("connect_error", (err) => {
+export function onLobbyEvent(handler) {
+  socket.on("lobbyEvent", handler);
+}
+
+socket.on("connect_error", err => {
   console.warn("Socket connection error:", err.message);
 });

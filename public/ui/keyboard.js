@@ -1,25 +1,61 @@
 // /public/ui/keyboard.js
 
-// Layout for the on-screen keyboard
-export const KEYBOARD_ROWS = [
-  "QWERTYUIOP",
-  "ASDFGHJKL",
-  "ZXCVBNM"
+// Keyboard layout including Backspace + Enter
+export const KEYBOARD_LAYOUT = [
+  ["Q","W","E","R","T","Y","U","I","O","P"],
+  ["A","S","D","F","G","H","J","K","L"],
+  ["⌫","Z","X","C","V","B","N","M","ENTER"]
 ];
 
 /**
- * Render the keyboard for either the setter or guesser.
+ * Determine the highest-priority final color for a letter
+ * from the full game history.
  *
- * @param {Object} state - full game state from server
- * @param {HTMLElement} container - DOM element to render into
- * @param {"setter"|"guesser"} target
- * @param {Function} onKeyClick - callback(letter) when a key is clicked
+ * Priority: green > yellow > gray > blue
+ */
+function getLetterStatusFromHistory(letter, state, isGuesser) {
+  if (!state?.history) return null;
+
+  let best = null;
+  const fbKey = isGuesser ? "fbGuesser" : "fb";
+
+  for (const h of state.history) {
+    const guess = h.guess.toUpperCase();
+    const fbArr = h[fbKey];
+    if (!fbArr) continue;
+
+    for (let i = 0; i < 5; i++) {
+      if (guess[i] !== letter) continue;
+
+      const fb = fbArr[i];
+
+      // Sorted by priority
+      if (fb === "🟩") best = "green";
+      else if (fb === "🟨" && best !== "green") best = "yellow";
+      else if (fb === "⬛" && !best) best = "gray";
+      else if (fb === "🟦") best = "blue"; // confuseColors
+    }
+  }
+
+  return best;
+}
+
+/**
+ * Render the on-screen keyboard for either setter or guesser.
+ * 
+ * onKeyClick(letter, special)
+ *   letter = actual character (A-Z)
+ *   special = "BACKSPACE" or "ENTER" or null
  */
 export function renderKeyboard(state, container, target, onKeyClick) {
   container.innerHTML = "";
 
+  const isGuesser = target === "guesser";
   const usedLetters = new Set();
-  if (state && state.history) {
+  const reusePool = state?.powers?.reuseLettersPool || [];
+
+  // Setter sees letters guesser used (red outline)
+  if (state?.history) {
     for (const h of state.history) {
       for (const ch of h.guess.toUpperCase()) {
         usedLetters.add(ch);
@@ -27,51 +63,60 @@ export function renderKeyboard(state, container, target, onKeyClick) {
     }
   }
 
-  const reusePool = state?.powers?.reuseLettersPool || [];
-
-  KEYBOARD_ROWS.forEach(row => {
+  KEYBOARD_LAYOUT.forEach(row => {
     const rowDiv = document.createElement("div");
     rowDiv.className = "key-row";
 
-    for (const ch of row) {
+    row.forEach(symbol => {
       const key = document.createElement("div");
       key.className = "key";
-      key.textContent = ch;
+      key.textContent = symbol;
 
-      // Red outline: letters the guesser has used (setter view only)
-      if (target === "setter" && usedLetters.has(ch)) {
-        key.classList.add("key-red-outline");
+      // Special keys — handled separately
+      if (symbol === "⌫") {
+        key.classList.add("key-special");
+        key.addEventListener("click", () => onKeyClick(null, "BACKSPACE"));
+        rowDiv.appendChild(key);
+        return;
       }
 
-      // Reuse pool (setter special power: greyed letters available again)
-      if (target === "setter" && reusePool.includes(ch)) {
-        key.style.background = "#bbb";
+      if (symbol === "ENTER") {
+        key.classList.add("key-special");
+        key.addEventListener("click", () => onKeyClick(null, "ENTER"));
+        rowDiv.appendChild(key);
+        return;
       }
 
-      // Keyboard coloring for guesser based on fbGuesser from last guess
-      if (target === "guesser" && state?.history?.length > 0) {
-        const last = state.history[state.history.length - 1];
-        if (last && last.fbGuesser) {
-          const guess = last.guess.toUpperCase();
-          const f = last.fbGuesser;
+      // Letter keys
+      const letter = symbol;
+      const isLetter = /^[A-Z]$/.test(letter);
 
-          for (let i = 0; i < 5; i++) {
-            if (guess[i] === ch) {
-              if (f[i] === "🟩") key.classList.add("key-green");
-              if (f[i] === "🟨") key.classList.add("key-yellow");
-              if (f[i] === "⬛") key.classList.add("key-gray");
-              if (f[i] === "🟦") {
-                key.style.background = "#75a7ff";
-                key.style.color = "white";
-              }
-            }
-          }
+      if (isLetter) {
+        // Setter sees outline for letters guesser has used
+        if (target === "setter" && usedLetters.has(letter)) {
+          key.classList.add("key-red-outline");
         }
+
+        // reuseLetters pool overrides greying (setter only)
+        if (target === "setter" && reusePool.includes(letter)) {
+          key.style.background = "#bbb";
+        }
+
+        // Determine best status from all history
+        const best = getLetterStatusFromHistory(letter, state, isGuesser);
+        if (best === "green")  key.classList.add("key-green");
+        if (best === "yellow") key.classList.add("key-yellow");
+        if (best === "gray")   key.classList.add("key-gray");
+        if (best === "blue") {
+          key.style.background = "#75a7ff";
+          key.style.color = "white";
+        }
+
+        key.addEventListener("click", () => onKeyClick(letter, null));
       }
 
-      key.addEventListener("click", () => onKeyClick(ch));
       rowDiv.appendChild(key);
-    }
+    });
 
     container.appendChild(rowDiv);
   });
