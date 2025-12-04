@@ -1,10 +1,16 @@
 // /public/network/socketClient.js
-// Thin wrapper around Socket.IO so the rest of the app
-// doesn’t talk to socket.io directly.
+// FINAL Railway + Metal Edge compatible client socket config
 
-const socket = io(); // from <script src="/socket.io/socket.io.js">
+const socket = io({
+  path: "/socket.io/",             // REQUIRED for Railway Metal Edge
+  transports: ["websocket", "polling"],
+  upgrade: true,
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 500
+});
 
-// ---- Outgoing ----
+// ---- OUTGOING ----
 
 export function createRoom(cb) {
   socket.emit("createRoom", cb);
@@ -18,7 +24,7 @@ export function sendGameAction(roomId, action) {
   socket.emit("gameAction", { roomId, action });
 }
 
-// ---- Incoming ----
+// ---- INCOMING ----
 
 export function onStateUpdate(handler) {
   socket.on("stateUpdate", handler);
@@ -31,3 +37,7 @@ export function onAnimateTurn(handler) {
 export function onPowerUsed(handler) {
   socket.on("powerUsed", handler);
 }
+
+socket.on("connect_error", (err) => {
+  console.warn("Socket connection error:", err.message);
+});
