@@ -2,6 +2,7 @@
 // Client-side logic for GUESSER powers
 
 import { GUESSER_POWERS } from "./powers.js";
+import { sendGameAction } from "../network/socketClient.js";
 
 // Track guesser power usage
 export const guesserPowerStatus = {
@@ -9,16 +10,12 @@ export const guesserPowerStatus = {
   freezeSecret: { used: false }
 };
 
-// Called by client.js when a guesser presses a power button
-export function activateGuesserPower(powerId, roomId, socket) {
+export function activateGuesserPower(powerId, roomId) {
   if (!GUESSER_POWERS[powerId]) return;
   if (guesserPowerStatus[powerId].used && GUESSER_POWERS[powerId].once) return;
 
-  socket.emit("gameAction", {
-    roomId,
-    action: {
-      type: `USE_${powerId.toUpperCase()}`
-    }
+  sendGameAction(roomId, {
+    type: `USE_${powerId.toUpperCase()}`
   });
 
   if (GUESSER_POWERS[powerId].once) {
@@ -59,7 +56,6 @@ export function renderGuesserPowerButtons(container) {
     btn.textContent = p.label;
     btn.className = "power-btn";
 
-    // Handlers will be attached in client.js
     container.appendChild(btn);
   }
 }

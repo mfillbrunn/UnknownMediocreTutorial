@@ -2,6 +2,7 @@
 // Client-side logic for SETTER powers
 
 import { SETTER_POWERS } from "./powers.js";
+import { sendGameAction } from "../network/socketClient.js";
 
 // Track which powers have been used
 export const setterPowerStatus = {
@@ -11,20 +12,14 @@ export const setterPowerStatus = {
   countOnly: { used: false }
 };
 
-// This function is called by client.js when a power button is pressed
-export function activateSetterPower(powerId, roomId, socket) {
+export function activateSetterPower(powerId, roomId) {
   if (!SETTER_POWERS[powerId]) return;
   if (setterPowerStatus[powerId].used && SETTER_POWERS[powerId].once) return;
 
-  // Emit to server
-  socket.emit("gameAction", {
-    roomId,
-    action: {
-      type: `USE_${powerId.toUpperCase()}`
-    }
+  sendGameAction(roomId, {
+    type: `USE_${powerId.toUpperCase()}`
   });
 
-  // Mark as used (if one-time)
   if (SETTER_POWERS[powerId].once) {
     setterPowerStatus[powerId].used = true;
     disablePowerButton(powerId);
@@ -63,7 +58,6 @@ export function renderSetterPowerButtons(container) {
     btn.textContent = p.label;
     btn.className = "power-btn";
 
-    // Attach handler later in client.js
     container.appendChild(btn);
   }
 }

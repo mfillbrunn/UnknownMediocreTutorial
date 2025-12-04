@@ -1,0 +1,16 @@
+// /game-engine/history.js
+
+import { scoreGuess } from "./scoring.js";
+
+/**
+ * Verify that a word fits all previous feedback.
+ * Used when setter chooses a new secret mid-round.
+ */
+export function isConsistentWithHistory(history, proposedSecret) {
+  for (const entry of history) {
+    const expected = scoreGuess(proposedSecret, entry.guess).join("");
+    const actual = entry.fb.join("");
+    if (expected !== actual) return false;
+  }
+  return true;
+}

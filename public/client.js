@@ -1,5 +1,4 @@
-// client.js — FULL MODERN REWRITE
-// Uses ES modules and imports dynamic power systems
+// client.js — modular client using UI + game-engine + socketClient
 
 import { SETTER_POWERS, GUESSER_POWERS } from "./powers/powers.js";
 import {
@@ -13,16 +12,32 @@ import {
   resetGuesserPowers
 } from "./powers/guesserPowers.js";
 
-// -----------------------------------------------------
-// SOCKET SETUP
-// -----------------------------------------------------
-const socket = io();
-let roomId = null;
-let myRole = null;          // "A", "B", or "spectator"
-let state = null;           // entire game state snapshot from server
+import { renderKeyboard } from "./ui/keyboard.js";
+import { renderHistory } from "./ui/history.js";
+import {
+  getKnownPattern,
+  getMustContain,
+  spacedPattern
+} from "./game-engine/constraints.js";
+
+import {
+  createRoom,
+  joinRoom,
+  sendGameAction,
+  onStateUpdate,
+  onAnimateTurn,
+  onPowerUsed
+} from "./network/socketClient.js";
 
 // -----------------------------------------------------
-// SIMPLE DOM HELPERS
+// STATE
+// -----------------------------------------------------
+let roomId = null;
+let myRole = "-";  // Display only for now
+let state = null;
+
+// -----------------------------------------------------
+// DOM HELPERS
 // -----------------------------------------------------
 function $(id) {
   return document.getElementById(id);
@@ -41,9 +56,9 @@ function toast(msg) {
 }
 
 // -----------------------------------------------------
-// TURN POPUP
+// SOCKET EVENT HOOKS (via socketClient)
 // -----------------------------------------------------
-socket.on("animateTurn", ({ type }) => {
+onAnimateTurn(({ type }) => {
   const tp = $("turnPopup");
   let msg = "";
 
@@ -57,10 +72,7 @@ socket.on("animateTurn", ({ type }) => {
   }
 });
 
-// -----------------------------------------------------
-// POWER NOTIFICATIONS
-// -----------------------------------------------------
-socket.on("powerUsed", ({ player, type, letters, pos, letter }) => {
+onPowerUsed(({ player, type, letters, pos, letter }) => {
   if (type === "reuseLetters") {
     toast(`Setter gained reusable letters: ${letters.join(", ")}`);
   }
@@ -81,218 +93,67 @@ socket.on("powerUsed", ({ player, type, letters, pos, letter }) => {
   }
 });
 
-// -----------------------------------------------------
-// KEYBOARD LAYOUT
-// -----------------------------------------------------
-const KEYBOARD_ROWS = [
-  "QWERTYUIOP",
-  "ASDFGHJKL",
-  "ZXCVBNM"
-];
-
-// -----------------------------------------------------
-// KEYBOARD RENDERING
-// -----------------------------------------------------
-function renderKeyboard(containerId, target) {
-  const cont = $(containerId);
-  cont.innerHTML = "";
-
-  const usedLetters = new Set();
-  if (state && state.history) {
-    for (const h of state.history) {
-      for (const ch of h.guess.toUpperCase()) {
-        usedLetters.add(ch);
-      }
-    }
-  }
-
-  const reusePool = state?.powers?.reuseLettersPool || [];
-
-  KEYBOARD_ROWS.forEach(row => {
-    const rowDiv = document.createElement("div");
-    rowDiv.className = "key-row";
-
-    for (const ch of row) {
-      const key = document.createElement("div");
-      key.className = "key";
-      key.textContent = ch;
-
-      // Red outline for letters guesser previously used (setter sees this)
-      if (target === "setter" && usedLetters.has(ch)) {
-        key.classList.add("key-red-outline");
-      }
-
-      // Reuse pool letters (setter special effect)
-      if (target === "setter" && reusePool.includes(ch)) {
-        key.style.background = "#bbb"; // grey-out
-      }
-
-      // Keyboard coloring for guesser
-      if (target === "guesser") {
-        if (state?.history?.length > 0) {
-          // last feedback
-          const last = state.history[state.history.length - 1];
-          if (last && last.fbGuesser) {
-            const guess = last.guess.toUpperCase();
-            const f = last.fbGuesser;
-
-            for (let i = 0; i < 5; i++) {
-              if (guess[i] === ch) {
-                if (f[i] === "🟩") key.classList.add("key-green");
-                if (f[i] === "🟨") key.classList.add("key-yellow");
-                if (f[i] === "⬛") key.classList.add("key-gray");
-                if (f[i] === "🟦") key.style.background = "#75a7ff";
-              }
-            }
-          }
-        }
-      }
-
-      key.addEventListener("click", () => {
-        if (target === "setter") {
-          $("newSecretInput").value += ch;
-        } else {
-          $("guessInput").value += ch;
-        }
-      });
-
-      rowDiv.appendChild(key);
-    }
-
-    cont.appendChild(rowDiv);
-  });
-}
-
-// -----------------------------------------------------
-// HISTORY RENDERING
-// -----------------------------------------------------
-function renderHistory(containerId, isSetter) {
-  const box = $(containerId);
-  box.innerHTML = "";
-
-  if (!state || !state.history.length) {
-    box.textContent = "No guesses yet.";
-    return;
-  }
-
-  for (const h of state.history) {
-    const div = document.createElement("div");
-    div.style.marginBottom = "6px";
-
-    const guess = h.guess.toUpperCase();
-
-    let tiles = "";
-    if (isSetter) {
-      // setter sees full real feedback
-      for (const f of h.fb) {
-        tiles += f;
-      }
-    } else {
-      // guesser sees transformed feedback
-      for (let i = 0; i < 5; i++) {
-        if (h.hiddenIndices.includes(i)) {
-          tiles += "❓";
-        } else {
-          tiles += h.fbGuesser[i];
-        }
-      }
-      if (h.extraInfo) {
-        tiles += `   Feedback: ${h.extraInfo.greens} green, ${h.extraInfo.yellows} yellow`;
-      }
-    }
-
-    div.textContent = `${guess}   ${tiles}`;
-    box.appendChild(div);
-  }
-}
-
-// -----------------------------------------------------
-// SCREEN RENDERING
-// -----------------------------------------------------
-function render() {
-  if (!state) return;
-
-  // Update menu info
-  $("menuRoomCode").textContent = roomId;
-  $("menuPlayerRole").textContent = myRole;
-  $("roundLabel").textContent = state.roundNumber;
-  $("roleLabel").textContent =
-    state.setter === myRole ? "Setter" :
-    state.guesser === myRole ? "Guesser" :
-    "Spectator";
-  $("turnLabel").textContent = state.turn;
-
-  $("guessCountMenu").textContent = state.guessCount;
-
-  // Update setter-specific fields
-  $("secretWordDisplay").textContent = state.secret.toUpperCase() || "----";
-  $("pendingGuessDisplay").textContent = state.pendingGuess.toUpperCase() || "-";
-
-  // History for both screens
-  renderHistory("historySetter", true);
-  renderHistory("historyGuesser", false);
-
-  // Re-render keyboards
-  renderKeyboard("keyboardSetter", "setter");
-  renderKeyboard("keyboardGuesser", "guesser");
-
-  // Update constraints text
-  const patternSetter = patternFromHistory(true);
-  $("knownPatternSetter").textContent = patternSetter.split("").join(" ");
-  $("mustContainSetter").textContent = mustContainLetters().join(", ") || "none";
-
-  const patternGuesser = patternFromHistory(false);
-  $("knownPatternGuesser").textContent = patternGuesser.split("").join(" ");
-  $("mustContainGuesser").textContent = mustContainLetters().join(", ") || "none";
-}
-
-// -----------------------------------------------------
-// CONSTRAINTS (known pattern + must-contain)
-// -----------------------------------------------------
-function patternFromHistory(isSetterView) {
-  let res = ["-", "-", "-", "-", "-"];
-
-  if (!state || !state.history.length) return res.join("");
-
-  for (const h of state.history) {
-    for (let i = 0; i < 5; i++) {
-      const f = isSetterView ? h.fb[i] : h.fbGuesser[i];
-
-      if (f === "🟩") {
-        res[i] = h.guess[i].toUpperCase();
-      }
-    }
-  }
-  return res.join("");
-}
-
-function mustContainLetters() {
-  const s = new Set();
-  if (!state || !state.history.length) return [];
-
-  for (const h of state.history) {
-    for (let i = 0; i < 5; i++) {
-      if (h.fb[i] === "🟩" || h.fb[i] === "🟨") {
-        s.add(h.guess[i].toUpperCase());
-      }
-    }
-  }
-  return Array.from(s);
-}
-
-// -----------------------------------------------------
-// STATE UPDATE FROM SERVER
-// -----------------------------------------------------
-socket.on("stateUpdate", newState => {
+onStateUpdate(newState => {
   state = newState;
   render();
 });
 
 // -----------------------------------------------------
-// LOBBY
+// RENDERING
+// -----------------------------------------------------
+function render() {
+  if (!state) return;
+
+  // Menu info
+  $("menuRoomCode").textContent = roomId || "-";
+  $("menuPlayerRole").textContent = myRole || "-";
+
+  $("roundLabel").textContent = state.roundNumber;
+  $("roleLabel").textContent =
+    state.setter === myRole ? "Setter" :
+    state.guesser === myRole ? "Guesser" :
+    "Spectator";
+
+  $("turnLabel").textContent = state.turn;
+  $("guessCountMenu").textContent = state.guessCount;
+
+  // Setter info
+  $("secretWordDisplay").textContent = state.secret
+    ? state.secret.toUpperCase()
+    : "NONE";
+  $("pendingGuessDisplay").textContent = state.pendingGuess
+    ? state.pendingGuess.toUpperCase()
+    : "-";
+
+  // History
+  renderHistory(state, $("historySetter"), true);
+  renderHistory(state, $("historyGuesser"), false);
+
+  // Keyboards
+  renderKeyboard(state, $("keyboardSetter"), "setter", (ch) => {
+    $("newSecretInput").value += ch;
+  });
+  renderKeyboard(state, $("keyboardGuesser"), "guesser", (ch) => {
+    $("guessInput").value += ch;
+  });
+
+  // Constraints (using safe client-side game-engine logic)
+  const patSetter = getKnownPattern(state.history, "fb");
+  $("knownPatternSetter").textContent = spacedPattern(patSetter);
+
+  const patGuesser = getKnownPattern(state.history, "fbGuesser");
+  $("knownPatternGuesser").textContent = spacedPattern(patGuesser);
+
+  const mustContain = getMustContain(state.history);
+  $("mustContainSetter").textContent = mustContain.length ? mustContain.join(", ") : "none";
+  $("mustContainGuesser").textContent = mustContain.length ? mustContain.join(", ") : "none";
+}
+
+// -----------------------------------------------------
+// LOBBY / MENU
 // -----------------------------------------------------
 $("createRoomBtn").onclick = () => {
-  socket.emit("createRoom", (resp) => {
+  createRoom((resp) => {
     if (!resp.ok) return;
     roomId = resp.roomId;
     $("roomInfo").style.display = "block";
@@ -306,8 +167,8 @@ $("joinRoomBtn").onclick = () => {
   const code = $("joinRoomInput").value.trim().toUpperCase();
   if (!code) return;
 
-  socket.emit("joinRoom", code, (resp) => {
-    if (!resp.ok) return toast(resp.error);
+  joinRoom(code, (resp) => {
+    if (!resp.ok) return toast(resp.error || "Error joining room");
     roomId = code;
     $("roomInfo").style.display = "block";
     $("roomCodeLabel").textContent = roomId;
@@ -316,9 +177,6 @@ $("joinRoomBtn").onclick = () => {
   });
 };
 
-// -----------------------------------------------------
-// ENTER GAME BUTTONS
-// -----------------------------------------------------
 $("btnSetter").onclick = () => {
   hide("menu");
   show("setterScreen");
@@ -326,87 +184,6 @@ $("btnSetter").onclick = () => {
 $("btnGuesser").onclick = () => {
   hide("menu");
   show("guesserScreen");
-};
-
-// -----------------------------------------------------
-// SUBMIT GUESS
-// -----------------------------------------------------
-$("submitGuessBtn").onclick = () => {
-  const g = $("guessInput").value.trim().toLowerCase();
-  $("guessInput").value = "";
-  if (g.length !== 5) return toast("5 letters required");
-
-  socket.emit("gameAction", {
-    roomId,
-    action: {
-      type: "SUBMIT_GUESS",
-      guess: g
-    }
-  });
-};
-
-// -----------------------------------------------------
-// SET SECRET (NEW)
-// -----------------------------------------------------
-$("submitSetterNewBtn").onclick = () => {
-  const w = $("newSecretInput").value.trim().toLowerCase();
-  $("newSecretInput").value = "";
-  if (w.length !== 5) return toast("5 letters required");
-
-  socket.emit("gameAction", {
-    roomId,
-    action: {
-      type: "SET_SECRET_NEW",
-      secret: w
-    }
-  });
-};
-
-// KEEP SAME SECRET
-$("submitSetterSameBtn").onclick = () => {
-  socket.emit("gameAction", {
-    roomId,
-    action: { type: "SET_SECRET_SAME" }
-  });
-};
-
-// -----------------------------------------------------
-// POWER BUTTON DYNAMIC RENDERING
-// -----------------------------------------------------
-function setupPowerButtons() {
-  // Setter
-  renderSetterPowerButtons($("setterPowerContainer"));
-  for (const key of Object.keys(SETTER_POWERS)) {
-    $("power_" + key).onclick = () =>
-      activateSetterPower(key, roomId, socket);
-  }
-
-  // Guesser
-  renderGuesserPowerButtons($("guesserPowerContainer"));
-  for (const key of Object.keys(GUESSER_POWERS)) {
-    $("power_" + key).onclick = () =>
-      activateGuesserPower(key, roomId, socket);
-  }
-}
-
-// Render them once the DOM is ready
-setupPowerButtons();
-
-// -----------------------------------------------------
-// NEW MATCH
-// -----------------------------------------------------
-$("newMatchBtn").onclick = () => {
-  socket.emit("gameAction", {
-    roomId,
-    action: { type: "NEW_MATCH" }
-  });
-
-  resetSetterPowers();
-  resetGuesserPowers();
-
-  hide("setterScreen");
-  hide("guesserScreen");
-  show("menu");
 };
 
 // Back buttons
@@ -418,8 +195,78 @@ $("setterBackToMenuBtn").onclick = () => {
   hide("setterScreen");
   show("menu");
 };
-
 $("backToLobbyBtn").onclick = () => {
   hide("menu");
   show("lobby");
+};
+
+// -----------------------------------------------------
+// GUESSER ACTIONS
+// -----------------------------------------------------
+$("submitGuessBtn").onclick = () => {
+  const g = $("guessInput").value.trim().toLowerCase();
+  $("guessInput").value = "";
+  if (g.length !== 5) return toast("5 letters required");
+
+  sendGameAction(roomId, {
+    type: "SUBMIT_GUESS",
+    guess: g
+  });
+};
+
+// -----------------------------------------------------
+// SETTER ACTIONS
+// -----------------------------------------------------
+$("submitSetterNewBtn").onclick = () => {
+  const w = $("newSecretInput").value.trim().toLowerCase();
+  $("newSecretInput").value = "";
+  if (w.length !== 5) return toast("5 letters required");
+
+  sendGameAction(roomId, {
+    type: "SET_SECRET_NEW",
+    secret: w
+  });
+};
+
+$("submitSetterSameBtn").onclick = () => {
+  sendGameAction(roomId, {
+    type: "SET_SECRET_SAME"
+  });
+};
+
+// -----------------------------------------------------
+// POWERS — dynamic buttons
+// -----------------------------------------------------
+function setupPowerButtons() {
+  // Setter powers
+  renderSetterPowerButtons($("setterPowerContainer"));
+  for (const key of Object.keys(SETTER_POWERS)) {
+    const btn = $("power_" + key);
+    if (!btn) continue;
+    btn.onclick = () => activateSetterPower(key, roomId);
+  }
+
+  // Guesser powers
+  renderGuesserPowerButtons($("guesserPowerContainer"));
+  for (const key of Object.keys(GUESSER_POWERS)) {
+    const btn = $("power_" + key);
+    if (!btn) continue;
+    btn.onclick = () => activateGuesserPower(key, roomId);
+  }
+}
+
+setupPowerButtons();
+
+// -----------------------------------------------------
+// NEW MATCH
+// -----------------------------------------------------
+$("newMatchBtn").onclick = () => {
+  sendGameAction(roomId, { type: "NEW_MATCH" });
+
+  resetSetterPowers();
+  resetGuesserPowers();
+
+  hide("setterScreen");
+  hide("guesserScreen");
+  show("menu");
 };
