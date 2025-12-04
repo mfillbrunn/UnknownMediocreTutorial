@@ -1,6 +1,7 @@
 // /public/network/socketClient.js
+// FIXED VERSION FOR RAILWAY DEPLOYMENT
 
-const socket = io({
+const socket = io(window.location.origin, {
   path: "/socket.io/",
   transports: ["websocket", "polling"],
   upgrade: true,
@@ -41,6 +42,10 @@ export function onLobbyEvent(handler) {
   socket.on("lobbyEvent", handler);
 }
 
+socket.on("connect", () => {
+  console.log("🔌 Socket connected to:", window.location.origin);
+});
+
 socket.on("connect_error", err => {
-  console.warn("Socket connection error:", err.message);
+  console.warn("❌ Socket connection error:", err.message);
 });
