@@ -1,13 +1,12 @@
 // /public/network/socketClient.js
-// FIXED VERSION FOR RAILWAY DEPLOYMENT
 
-const socket = io(window.location.origin, {
+// IMPORTANT: Replace with your actual Railway backend URL
+const BACKEND_URL = "https://YOUR-APP.up.railway.app";
+
+const socket = io(BACKEND_URL, {
   path: "/socket.io/",
   transports: ["websocket", "polling"],
-  upgrade: true,
-  reconnection: true,
-  reconnectionAttempts: 5,
-  reconnectionDelay: 500
+  upgrade: true
 });
 
 // ---- OUTGOING ----
@@ -43,9 +42,9 @@ export function onLobbyEvent(handler) {
 }
 
 socket.on("connect", () => {
-  console.log("🔌 Socket connected to:", window.location.origin);
+  console.log("🔌 Connected to backend:", BACKEND_URL);
 });
 
 socket.on("connect_error", err => {
-  console.warn("❌ Socket connection error:", err.message);
+  console.warn("❌ Connection error:", err.message);
 });
