@@ -1,16 +1,15 @@
 // /public/network/socketClient.js
 
-// IMPORTANT: Replace with your actual Railway backend URL
-const BACKEND_URL = "https://YOUR-APP.up.railway.app";
+// Use your real Railway backend URL:
+const BACKEND_URL = "https://surprising-renewal.up.railway.app";
 
 const socket = io(BACKEND_URL, {
   path: "/socket.io/",
   transports: ["websocket", "polling"],
-  upgrade: true
+  withCredentials: false
 });
 
 // ---- OUTGOING ----
-
 export function createRoom(cb) {
   socket.emit("createRoom", cb);
 }
@@ -24,7 +23,6 @@ export function sendGameAction(roomId, action) {
 }
 
 // ---- INCOMING ----
-
 export function onStateUpdate(handler) {
   socket.on("stateUpdate", handler);
 }
@@ -42,7 +40,7 @@ export function onLobbyEvent(handler) {
 }
 
 socket.on("connect", () => {
-  console.log("🔌 Connected to backend:", BACKEND_URL);
+  console.log("🔌 Connected to:", BACKEND_URL);
 });
 
 socket.on("connect_error", err => {
