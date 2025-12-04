@@ -18,7 +18,36 @@ body {
 
 .title {
   text-align: center;
-  margin-bottom: 10px;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  font-size: 28px;
+}
+
+/* ==========================================================
+   WAIT FOR TURN OVERLAY
+   ========================================================== */
+
+.wait-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(20, 20, 20, 0.7);
+  color: white;
+  font-size: 32px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.wait-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* ==========================================================
@@ -45,7 +74,8 @@ body {
 .primary-btn,
 .secondary-btn,
 .turn-button,
-.power-btn {
+.power-btn,
+.role-btn {
   display: block;
   width: 100%;
   text-align: center;
@@ -60,6 +90,11 @@ body {
 .primary-btn {
   background: #1a73e8;
   color: white;
+}
+
+.primary-btn.disabled {
+  background: #8fb9f5 !important;
+  cursor: not-allowed !important;
 }
 
 .secondary-btn {
@@ -84,8 +119,20 @@ body {
   font-weight: bold;
 }
 
-/* Powers */
+/* Role picker buttons */
+.role-btn {
+  background: #e3e3e3;
+  color: #222;
+  border: 1px solid #aaa;
+  font-size: 18px;
+}
 
+.role-btn.selected {
+  background: #4caf50 !important;
+  color: white !important;
+}
+
+/* Powers */
 .power-btn {
   background: #ffe38a;
   border: 1px solid #d7b859;
@@ -96,16 +143,6 @@ body {
   background: #ccc !important;
   color: #666 !important;
   border-color: #bbb;
-}
-
-.power-btn.disabled {
-  background: #ddd !important;
-  color: #aaa !important;
-}
-
-.highlight-green {
-  background: #4caf50 !important;
-  color: white !important;
 }
 
 /* ==========================================================
@@ -126,7 +163,7 @@ input[type="number"],
 }
 
 /* ==========================================================
-   POPUP — YOUR TURN
+   POPUPS / TOAST
    ========================================================== */
 
 .turn-popup {
@@ -150,10 +187,6 @@ input[type="number"],
   transform: translateX(-50%) scale(1);
 }
 
-/* ==========================================================
-   TOAST NOTIFICATION
-   ========================================================== */
-
 .toast {
   position: fixed;
   bottom: 24px;
@@ -176,32 +209,11 @@ input[type="number"],
 }
 
 /* ==========================================================
-   Animations — Wordle-like flips
-   ========================================================== */
-
-.flip-holder {
-  position: fixed;
-  left: -9999px; /* off-screen */
-  top: -9999px;
-}
-
-.flip {
-  animation: flipAnim 0.6s ease-out;
-}
-
-@keyframes flipAnim {
-  0%   { transform: rotateX(0deg); }
-  40%  { transform: rotateX(90deg); }
-  100% { transform: rotateX(0deg); }
-}
-
-/* ==========================================================
-   CONSTRAINT BOXES
+   HISTORY + BOXES
    ========================================================== */
 
 .constraints-box,
 .history-box,
-.hypo-box,
 .summary-box {
   background: #f3f3f3;
   padding: 12px;
@@ -211,28 +223,10 @@ input[type="number"],
   line-height: 1.4;
 }
 
-.hypo-box {
-  background: #fff4c4;
-}
-
-.constraints-box {
-  background: #eaf3ff;
-}
-
-.summary-box {
-  background: #fef3ff;
-}
-
-/* ==========================================================
-   HISTORY
-   ========================================================== */
-
 .history-box {
-  white-space: pre-line;
   font-family: "Courier New", monospace;
+  white-space: pre-line;
   background: #eee;
-  padding: 12px;
-  border-radius: 8px;
 }
 
 /* ==========================================================
@@ -262,10 +256,6 @@ input[type="number"],
   cursor: pointer;
 }
 
-.key-special {
-  min-width: 50px;
-}
-
 .key-green {
   background: #6aaa64 !important;
   color: white;
@@ -281,7 +271,7 @@ input[type="number"],
   color: white;
 }
 
-/* Outline for illegal setter keys */
+/* Red outline for guessed letters (setter only) */
 .key-red-outline {
   border-color: red !important;
 }
@@ -310,7 +300,7 @@ input[type="number"],
 
 .room-code {
   font-weight: bold;
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .status {
@@ -322,14 +312,4 @@ input[type="number"],
 .note {
   font-size: 13px;
   color: #777;
-}
-
-.role-picker button {
-  margin: 6px;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 16px;
-  background: #ddd;
-  border: none;
-  cursor: pointer;
 }

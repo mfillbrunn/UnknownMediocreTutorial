@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Competitive Wordle – Powers Edition (Multiplayer)</title>
+  <title>VS Wordle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -10,7 +10,7 @@
 
 <div id="appContainer">
 
-  <h1 class="title">Competitive Wordle – Powers Edition</h1>
+  <h1 class="title">VS Wordle</h1>
 
   <!-- TURN POPUP -->
   <div id="turnPopup" class="turn-popup"></div>
@@ -18,16 +18,14 @@
   <!-- TOAST -->
   <div id="toast" class="toast"></div>
 
-  <!-- Flip animation holders -->
-  <div id="guessAnim" class="flip-holder"></div>
-  <div id="feedbackAnim" class="flip-holder"></div>
+  <!-- WAIT OVERLAY -->
+  <div id="waitOverlay" class="wait-overlay hidden">WAIT FOR YOUR TURN</div>
 
   <!-- ===================================================== -->
   <!-- LOBBY -->
   <!-- ===================================================== -->
   <div id="lobby" class="screen active">
     <h2>Online Lobby</h2>
-    <p>Play on multiple phones by sharing a room code.</p>
 
     <button id="createRoomBtn" class="primary-btn">Create Room</button>
 
@@ -36,38 +34,34 @@
       <button id="joinRoomBtn" class="primary-btn small">Join</button>
     </div>
 
-    <p id="lobbyStatus" class="status"></p>
-
-    <!-- Role selection -->
-    <div id="rolePicker" class="role-picker"></div>
-
     <div id="roomInfo" style="display:none; margin-top:10px;">
       <p><b>Room:</b> <span id="roomCodeLabel" class="room-code"></span></p>
-      <p><b>You are:</b> <span id="playerRoleLabel"></span></p>
-      <button id="enterGameBtn" class="primary-btn">Enter Game</button>
+
+      <h3>Select Role</h3>
+      <div id="rolePicker" class="role-picker">
+        <button id="pickRoleA" class="role-btn">Play as A (Setter First)</button>
+        <button id="pickRoleB" class="role-btn">Play as B (Guesser First)</button>
+      </div>
+
+      <button id="startGameBtn" class="primary-btn disabled" disabled>Start Game</button>
     </div>
 
-    <hr>
-    <p class="note">Both players open this page on their phones, one creates a room, shares code, the other joins.</p>
+    <p id="lobbyStatus" class="status"></p>
   </div>
 
   <!-- ===================================================== -->
-  <!-- MENU -->
+  <!-- MENU (summary + navigation) -->
   <!-- ===================================================== -->
   <div id="menu" class="screen">
     <h2>Game Menu</h2>
 
     <p><b>Room:</b> <span id="menuRoomCode"></span></p>
     <p><b>You are:</b> <span id="menuPlayerRole"></span></p>
-
-    <p><b>Round:</b> <span id="roundLabel">1</span> / 2</p>
-    <p><b>Setup:</b> <span id="roleLabel"></span></p>
+    <p><b>Phase:</b> <span id="phaseLabel"></span></p>
     <p><b>Turn:</b> <span id="turnLabel"></span></p>
 
     <button id="btnSetter" class="turn-button">Setter Screen</button>
     <button id="btnGuesser" class="turn-button">Guesser Screen</button>
-
-    <p><b>Guesses so far:</b> <span id="guessCountMenu">0</span></p>
 
     <div id="roundSummary" class="summary-box"></div>
 
@@ -79,10 +73,7 @@
   <!-- SETTER SCREEN -->
   <!-- ===================================================== -->
   <div id="setterScreen" class="screen">
-    <h2>Setter <span id="setterRoleTag" class="badge badge-a">A</span></h2>
-    <p>You see full feedback. The guesser sees hidden tiles.</p>
-
-    <div id="hypotheticalBox" class="box hypo-box"></div>
+    <h2>Setter <span class="badge badge-a">A</span></h2>
 
     <div class="constraints-box">
       <p><b>Pattern:</b> <span id="knownPatternSetter">- - - - -</span></p>
@@ -94,20 +85,17 @@
 
     <hr>
 
-    <h3>Choose Secret</h3>
+    <h3>Enter Secret</h3>
     <input id="newSecretInput" maxlength="5" autocomplete="off" class="letter-input">
     <button id="submitSetterNewBtn" class="primary-btn">Submit NEW Secret</button>
     <button id="submitSetterSameBtn" class="primary-btn">Keep SAME Secret</button>
     <button id="setterBackToMenuBtn" class="secondary-btn small">Back</button>
 
     <h3>Setter Powers</h3>
-    <!-- Dynamic setter powers inserted here -->
     <div id="setterPowerContainer"></div>
 
-    <!-- Setter keyboard -->
     <div id="keyboardSetter" class="keyboard"></div>
 
-    <!-- History -->
     <h3>History</h3>
     <div id="historySetter" class="history-box">No guesses yet.</div>
   </div>
@@ -116,7 +104,7 @@
   <!-- GUESSER SCREEN -->
   <!-- ===================================================== -->
   <div id="guesserScreen" class="screen">
-    <h2>Guesser <span id="guesserRoleTag" class="badge badge-b">B</span></h2>
+    <h2>Guesser <span class="badge badge-b">B</span></h2>
 
     <div class="constraints-box">
       <p><b>Pattern:</b> <span id="knownPatternGuesser">- - - - -</span></p>
@@ -129,7 +117,6 @@
     <button id="guesserBackToMenuBtn" class="secondary-btn small">Back</button>
 
     <h3>Powers</h3>
-    <!-- Dynamic guesser powers go here -->
     <div id="guesserPowerContainer"></div>
 
     <div id="keyboardGuesser" class="keyboard"></div>
@@ -138,15 +125,10 @@
     <div id="historyGuesser" class="history-box">No guesses yet.</div>
   </div>
 
-</div> <!-- end #appContainer -->
+</div>
 
-<!-- Socket.IO must be loaded BEFORE client.js -->
 <script src="/socket.io/socket.io.js"></script>
-
-<!-- Client becomes an ES module -->
 <script type="module" src="client.js"></script>
-
-<noscript><p style="color:red;">This game requires JavaScript.</p></noscript>
 
 </body>
 </html>
