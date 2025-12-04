@@ -36,7 +36,6 @@ const io = new Server(server, {
 });
 
 // Fix reverse proxies
-app.get("/socket.io/", (req, res) => res.sendStatus(200));
 app.use(express.static("public"));
 
 // --------------------------------------
