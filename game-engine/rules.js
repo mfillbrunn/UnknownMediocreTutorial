@@ -1,37 +1,17 @@
 // /game-engine/rules.js
+// CLEAN VERSION: server should NOT handle power feedback here anymore.
+// All feedback modification now happens inside modifyFeedback.js.
 
-import { confuseColors, countOnly, getCounts } from "./powers.js";
+function applyFeedbackPowers(fb, powers) {
+  // This function is kept only for backward compatibility
+  // but no longer transforms feedback. All transformations
+  // (count-only, confuse colors, reveal green, etc.)
+  // are handled inside /game-engine/modifyFeedback.js.
 
-/**
- * Apply power-based transformations to feedback.
- *
- * Returns:
- * {
- *   fbGuesser: [...],  // what guesser sees
- *   extraInfo: {...}   // for count-only, the green/yellow totals
- * }
- */
-export function applyFeedbackPowers(fb, powers) {
-
-  // COUNT-ONLY overrides everything
-  if (powers.countOnlyActive) {
-    return {
-      fbGuesser: countOnly(fb),
-      extraInfo: getCounts(fb)
-    };
-  }
-
-  // CONFUSE-COLORS (Blue Mode)
-  if (powers.confuseColorsActive) {
-    return {
-      fbGuesser: confuseColors(fb),
-      extraInfo: null
-    };
-  }
-
-  // Default case — no power modifies feedback
   return {
     fbGuesser: fb,
     extraInfo: null
   };
 }
+
+module.exports = { applyFeedbackPowers };
