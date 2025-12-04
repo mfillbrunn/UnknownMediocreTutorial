@@ -1,7 +1,7 @@
 // /public/network/socketClient.js
 
 // Use your real Railway backend URL:
-const BACKEND_URL = "https://surprising-renewal.up.railway.app";
+const BACKEND_URL = "https://unknownmediocretutorial-production.up.railway.app";
 
 const socket = io(BACKEND_URL, {
   path: "/socket.io/",
