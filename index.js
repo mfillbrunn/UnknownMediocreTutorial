@@ -178,9 +178,11 @@ function applyAction(state, action, role, roomId) {
   // --------------------------------------------------
   // Role picking
   // --------------------------------------------------
+
   if (action.type === "SET_ROLE") {
-    state.ready[role] = false;
-    // Assign setter/guesser exclusively
+    room.players[socket.id] = action.role;
+
+    // Re-evaluate setter/guesser based on roles
     if (action.role === "A") {
       state.setter = "A";
       state.guesser = "B";
@@ -188,9 +190,12 @@ function applyAction(state, action, role, roomId) {
       state.setter = "B";
       state.guesser = "A";
     }
+
+    // Broadcast updated state to everyone
+    io.to(roomId).emit("stateUpdate", state);
     return;
   }
-
+  
   // --------------------------------------------------
   // Ready up
   // --------------------------------------------------

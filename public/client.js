@@ -1,11 +1,12 @@
 //
-// client.js — Final modular implementation with:
-// - Role selection
-// - Double-ready start system
-// - Simultaneous first turn
+// client.js — Final version with:
+// - Role selection (sync to all players)
+// - Double-ready start
+// - Automatic navigation out of lobby/menu
+// - Simultaneous phase
 // - Setter decision phase
-// - WAIT overlay
-// - Summary on game end
+// - Wait overlay fixes
+// - Game-over summary
 //
 
 // -----------------------------------------------------
@@ -74,7 +75,7 @@ function toast(msg) {
 
 
 // -----------------------------------------------------
-// WAIT OVERLAY CONTROL
+// WAIT OVERLAY
 // -----------------------------------------------------
 
 function showWaitOverlay() {
@@ -86,7 +87,7 @@ function hideWaitOverlay() {
 
 
 // -----------------------------------------------------
-// SOCKET-INBOUND EVENTS
+// SOCKET EVENTS
 // -----------------------------------------------------
 
 onAnimateTurn(({ type }) => {
@@ -112,14 +113,50 @@ onPowerUsed(({ type, letters, pos, letter }) => {
   if (type === "freezeSecret") toast("Guesser froze secret");
 });
 
+
+// -----------------------------------------------------
+// STATE UPDATE HANDLER (main entry point)
+// -----------------------------------------------------
+
 onStateUpdate(newState => {
   state = newState;
+
+  //
+  // 🚀 AUTO-NAVIGATION WHEN GAME BEGINS
+  //
+  if (state.phase === "simultaneous" ||
+      state.phase === "setterDecision" ||
+      state.phase === "normal") {
+
+    hide("lobby");
+    hide("menu");
+
+    if (myRole === state.setter) {
+      hide("guesserScreen");
+      show("setterScreen");
+    } else if (myRole === state.guesser) {
+      hide("setterScreen");
+      show("guesserScreen");
+    }
+
+    hideWaitOverlay(); // reset
+  }
+
+  //
+  // 🚀 SETTER-DECISION AUTO-NAVIGATION
+  //
+  if (state.phase === "setterDecision" && myRole === state.setter) {
+    hide("guesserScreen");
+    show("setterScreen");
+    hideWaitOverlay();
+  }
+
   updateUI();
 });
 
 
 // -----------------------------------------------------
-// RENDERING LOGIC
+// RENDERING
 // -----------------------------------------------------
 
 function updateUI() {
@@ -138,24 +175,19 @@ function updateMenu() {
   $("turnLabel").textContent = state.turn || "-";
 }
 
-// Controls which screen is visible based on role + phase
 function updateScreens() {
-  // Reset visibility
   hide("setterScreen");
   hide("guesserScreen");
 
-  // If game hasn't started, only menu/lobby visible
   if (!state.phase || state.phase === "lobby") return;
 
-  if (myRole === "A") {
-    show("setterScreen");
-  } else if (myRole === "B") {
-    show("guesserScreen");
-  }
+  if (myRole === state.setter) show("setterScreen");
+  if (myRole === state.guesser) show("guesserScreen");
 
   updateSetterScreen();
   updateGuesserScreen();
 }
+
 
 function updateSetterScreen() {
   $("secretWordDisplay").textContent = state.secret
@@ -166,15 +198,11 @@ function updateSetterScreen() {
     ? state.pendingGuess.toUpperCase()
     : "-";
 
-  // History
   renderHistory(state, $("historySetter"), true);
-
-  // Keyboard
   renderKeyboard(state, $("keyboardSetter"), "setter", ch => {
     $("newSecretInput").value += ch;
   });
 
-  // Constraints
   const pat = getKnownPattern(state.history, "fb");
   $("knownPatternSetter").textContent = spacedPattern(pat);
 
@@ -184,7 +212,6 @@ function updateSetterScreen() {
 
 function updateGuesserScreen() {
   renderHistory(state, $("historyGuesser"), false);
-
   renderKeyboard(state, $("keyboardGuesser"), "guesser", ch => {
     $("guessInput").value += ch;
   });
@@ -197,9 +224,8 @@ function updateGuesserScreen() {
 }
 
 
-
 // -----------------------------------------------------
-// WAIT-STATE / TURN BLOCKER
+// WAIT OVERLAY LOGIC (fixed)
 // -----------------------------------------------------
 
 function updateWaitState() {
@@ -209,7 +235,7 @@ function updateWaitState() {
   }
 
   if (state.phase === "simultaneous") {
-    hideWaitOverlay(); // both act at same time
+    hideWaitOverlay();
     return;
   }
 
@@ -230,7 +256,7 @@ function updateWaitState() {
 
 
 // -----------------------------------------------------
-// SUMMARY WHEN GAME ENDS
+// GAME SUMMARY
 // -----------------------------------------------------
 
 function updateSummaryIfGameOver() {
@@ -241,10 +267,9 @@ function updateSummaryIfGameOver() {
   }
 
   let text = `Total guesses: ${state.guessCount}\n\n`;
-
   state.history.forEach((h, i) => {
     const idx = i + 1;
-    const secret = h.finalSecret || h.secret || "(unknown)";
+    const secret = h.finalSecret || "(unknown)";
     const guess = h.guess.toUpperCase();
     const fb = h.fb.join("");
     text += `${idx}) Secret: ${secret.toUpperCase()} | Guess: ${guess} | Feedback: ${fb}\n`;
@@ -255,7 +280,7 @@ function updateSummaryIfGameOver() {
 
 
 // -----------------------------------------------------
-// LOBBY ACTIONS
+// LOBBY BUTTONS
 // -----------------------------------------------------
 
 $("createRoomBtn").onclick = () => {
@@ -264,9 +289,7 @@ $("createRoomBtn").onclick = () => {
     roomId = resp.roomId;
     $("roomInfo").style.display = "block";
     $("roomCodeLabel").textContent = roomId;
-    state = { phase: "lobby" };
-    hide("lobby");
-    show("lobby");
+    state = { phase: "lobby", ready: { A: false, B: false } };
   });
 };
 
@@ -279,13 +302,13 @@ $("joinRoomBtn").onclick = () => {
     roomId = code;
     $("roomInfo").style.display = "block";
     $("roomCodeLabel").textContent = roomId;
-    state = { phase: "lobby" };
+    state = { phase: "lobby", ready: { A: false, B: false } };
   });
 };
 
 
 // -----------------------------------------------------
-// ROLE PICKING
+// ROLE PICKING (broadcasts correctly now)
 // -----------------------------------------------------
 
 $("pickRoleA").onclick = () => chooseRole("A");
@@ -293,21 +316,17 @@ $("pickRoleB").onclick = () => chooseRole("B");
 
 function chooseRole(role) {
   myRole = role;
-  toast(`You selected role ${role}`);
 
-  // Highlight selection
   $("pickRoleA").classList.toggle("selected", role === "A");
   $("pickRoleB").classList.toggle("selected", role === "B");
 
   sendGameAction(roomId, { type: "SET_ROLE", role });
-
-  // Try enabling start game if possible
   updateStartButton();
 }
 
 
 // -----------------------------------------------------
-// START GAME READINESS
+// START GAME — DOUBLE-READY
 // -----------------------------------------------------
 
 $("startGameBtn").onclick = () => {
@@ -329,14 +348,7 @@ function updateStartButton() {
 
   const bothReady = state.ready.A && state.ready.B;
 
-  if (!myRole) {
-    disableStartButton();
-    return;
-  }
-
-  if (iAmReady) {
-    $("startGameBtn").textContent = "Waiting…";
-  }
+  if (iAmReady) $("startGameBtn").textContent = "Waiting…";
 
   $("startGameBtn").disabled = bothReady;
   $("startGameBtn").classList.toggle("disabled", bothReady);
@@ -348,58 +360,45 @@ function disableStartButton() {
 }
 
 
-
 // -----------------------------------------------------
-// GAMEPLAY INPUTS
+// GAMEPLAY BUTTONS
 // -----------------------------------------------------
 
-// Submit guess
 $("submitGuessBtn").onclick = () => {
   const g = $("guessInput").value.trim().toLowerCase();
   $("guessInput").value = "";
   if (g.length !== 5) return toast("5 letters required");
 
-  sendGameAction(roomId, {
-    type: "SUBMIT_GUESS",
-    guess: g
-  });
+  sendGameAction(roomId, { type: "SUBMIT_GUESS", guess: g });
 };
 
-// Submit new secret
 $("submitSetterNewBtn").onclick = () => {
   const w = $("newSecretInput").value.trim().toLowerCase();
   $("newSecretInput").value = "";
   if (w.length !== 5) return toast("5 letters!");
 
-  sendGameAction(roomId, {
-    type: "SET_SECRET_NEW",
-    secret: w
-  });
+  sendGameAction(roomId, { type: "SET_SECRET_NEW", secret: w });
 };
 
-// Keep same secret
-$("submitSetterSameBtn").onclick = () => {
+$("submitSetterSameBtn").onclick = () =>
   sendGameAction(roomId, { type: "SET_SECRET_SAME" });
-};
 
 
 // -----------------------------------------------------
-// POWER BUTTONS
+// POWERS
 // -----------------------------------------------------
 
 function setupPowerButtons() {
   renderSetterPowerButtons($("setterPowerContainer"));
   for (const key of Object.keys(SETTER_POWERS)) {
     const btn = $("power_" + key);
-    if (!btn) continue;
-    btn.onclick = () => activateSetterPower(key, roomId);
+    if (btn) btn.onclick = () => activateSetterPower(key, roomId);
   }
 
   renderGuesserPowerButtons($("guesserPowerContainer"));
   for (const key of Object.keys(GUESSER_POWERS)) {
     const btn = $("power_" + key);
-    if (!btn) continue;
-    btn.onclick = () => activateGuesserPower(key, roomId);
+    if (btn) btn.onclick = () => activateGuesserPower(key, roomId);
   }
 }
 
@@ -422,15 +421,9 @@ $("newMatchBtn").onclick = () => {
   show("menu");
 };
 
-// Back buttons
 $("backToLobbyBtn").onclick = () => {
-  hide("menu");
+  hide("setterScreen");
+  hide("guesserScreen");
   show("lobby");
 };
 
-$("guesserBackToMenuBtn").onclick =
-$("setterBackToMenuBtn").onclick = () => {
-  hide("setterScreen");
-  hide("guesserScreen");
-  show("menu");
-};
