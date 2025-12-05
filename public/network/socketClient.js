@@ -4,7 +4,7 @@
 const BACKEND_URL = "https://unknownmediocretutorial-production.up.railway.app";
 
 const socket = io(BACKEND_URL, {
-  path: "/socket.io",
+  path: "/socket.io/",
   transports: ["websocket", "polling"],
   withCredentials: false
 });
