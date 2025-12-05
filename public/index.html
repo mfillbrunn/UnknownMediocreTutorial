@@ -6,11 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>
-  eruda.init();
-</script>
+
 <div id="appContainer">
 
   <h1 class="title">VS Wordle</h1>
@@ -53,7 +51,7 @@
   </div>
 
   <!-- ===================================================== -->
-  <!-- MENU (summary + navigation) -->
+  <!-- MENU -->
   <!-- ===================================================== -->
   <div id="menu" class="screen">
     <h2>Game Menu</h2>
@@ -71,6 +69,7 @@
     <button id="newMatchBtn" class="primary-btn">New Match</button>
     <button id="backToLobbyBtn" class="secondary-btn">Back to Lobby</button>
   </div>
+
 
   <!-- ===================================================== -->
   <!-- SETTER SCREEN -->
@@ -106,6 +105,7 @@
     <div id="historySetter" class="history-box">No guesses yet.</div>
   </div>
 
+
   <!-- ===================================================== -->
   <!-- GUESSER SCREEN -->
   <!-- ===================================================== -->
@@ -133,8 +133,13 @@
   </div>
 
 </div>
+
+<!-- ⭐ Load ALL scripts at the very bottom (Safari-safe) ⭐ -->
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script> eruda.init(); </script>
+
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<script type="module" src="client.js"></script>
+<script type="module" src="./client.js"></script>
 
 </body>
 </html>
