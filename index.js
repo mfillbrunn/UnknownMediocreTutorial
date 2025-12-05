@@ -27,16 +27,23 @@ const server = http.createServer(app);
 
 // ------------------------------
 // Socket.IO Config (Railway Safe)
+// ------------------------------// ------------------------------
+// Socket.IO Config (Railway Safe)
 // ------------------------------
 const io = new Server(server, {
-  path: "/socket.io/",
-  cors: { origin: "*", methods: ["GET", "POST"], credentials: true },
+  path: "/socket.io",
+  cors: {
+    origin: [
+      "https://unknownmediocretutorial-production.up.railway.app",
+      "https://<your-repl-frontend>.repl.co",
+      "https://<your-repl-preview-url>.repl.co"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
+  },
   transports: ["websocket", "polling"],
   allowEIO3: true
 });
-
-// Fix reverse proxies
-app.use(express.static("public"));
 
 // --------------------------------------
 // WORD LIST
