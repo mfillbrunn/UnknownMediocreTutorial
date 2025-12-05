@@ -1,15 +1,23 @@
-// /public/network/socketClient.js
+//
+// socketClient.js — Clean Railway Version
+//
 
-// Use your real Railway backend URL:
-const BACKEND_URL = "https://unknownmediocretutorial-production.up.railway.app";
+// Because frontend + backend are on the SAME Railway domain,
+// leave BACKEND_URL empty → socket.io connects to the same origin.
+const BACKEND_URL = "";
 
+// Create Socket.IO client
 const socket = io(BACKEND_URL, {
   path: "/socket.io/",
   transports: ["websocket", "polling"],
   withCredentials: false
 });
 
-// ---- OUTGOING ----
+
+// -----------------------------------------------------
+// OUTGOING EVENTS
+// -----------------------------------------------------
+
 export function createRoom(cb) {
   socket.emit("createRoom", cb);
 }
@@ -22,7 +30,11 @@ export function sendGameAction(roomId, action) {
   socket.emit("gameAction", { roomId, action });
 }
 
-// ---- INCOMING ----
+
+// -----------------------------------------------------
+// INCOMING EVENTS
+// -----------------------------------------------------
+
 export function onStateUpdate(handler) {
   socket.on("stateUpdate", handler);
 }
@@ -39,8 +51,13 @@ export function onLobbyEvent(handler) {
   socket.on("lobbyEvent", handler);
 }
 
+
+// -----------------------------------------------------
+// CONNECTION EVENTS
+// -----------------------------------------------------
+
 socket.on("connect", () => {
-  console.log("🔌 Connected to:", BACKEND_URL);
+  console.log("🔌 Connected to backend");
 });
 
 socket.on("connect_error", err => {
