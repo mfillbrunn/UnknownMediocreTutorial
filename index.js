@@ -31,7 +31,7 @@ const server = http.createServer(app);
 // Socket.IO Config (Railway Safe)
 // ------------------------------
 const io = new Server(server, {
-  path: "/socket.io",
+  path: "/socket.io/",
   cors: {
     origin: [
       "https://unknownmediocretutorial-production.up.railway.app",
