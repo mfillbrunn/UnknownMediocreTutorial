@@ -33,13 +33,8 @@ const server = http.createServer(app);
 const io = new Server(server, {
   path: "/socket.io/",
   cors: {
-    origin: [
-      "https://unknownmediocretutorial-production.up.railway.app",
-      "https://<your-repl-frontend>.repl.co",
-      "https://<your-repl-preview-url>.repl.co"
-    ],
-    methods: ["GET", "POST"],
-    credentials: true
+  origin: "*",
+  methods: ["GET", "POST"]
   },
   transports: ["websocket", "polling"],
   allowEIO3: true
