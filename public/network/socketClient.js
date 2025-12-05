@@ -1,7 +1,9 @@
 //
 // socketClient.js — Clean Railway Version
 //
-
+if (typeof io === "undefined") {
+  alert("Socket.IO failed to load!");
+}
 // Because frontend + backend are on the SAME Railway domain,
 // leave BACKEND_URL empty → socket.io connects to the same origin.
 const BACKEND_URL = "";
