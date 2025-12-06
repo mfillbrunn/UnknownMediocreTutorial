@@ -192,7 +192,14 @@ function updateTurnIndicators() {
   $("turnIndicatorGuesser").className = "turn-indicator your-turn";
   return;
 }
+if (state.phase === "setterDecision") {
+  $("turnIndicatorSetter").textContent = "YOUR TURN";
+  $("turnIndicatorGuesser").textContent = "WAIT";
 
+  $("turnIndicatorSetter").className = "turn-indicator your-turn";
+  $("turnIndicatorGuesser").className = "turn-indicator wait-turn";
+  return;
+}
 
   $("turnIndicatorSetter").className =
     "turn-indicator " + (state.turn === "A" ? "your-turn" : "wait-turn");
@@ -216,14 +223,19 @@ function updateSetterScreen() {
   const guess = state.pendingGuess;
   const secretInput = $("newSecretInput").value.trim().toLowerCase();
 
-  if (guess && secretInput.length === 5 && state.phase === "setterDecision") {
+  if (guess && state.phase === "setterDecision") {
+  // If setter typed a new secret → preview NEW secret
+  if (secretInput.length === 5) {
     const fb = predictFeedback(secretInput, guess);
-    previewBox.textContent = `Preview: ${fb.join("")}`;
-}
-if (guess && state.secret && state.phase === "setterDecision") {
+    previewBox.textContent = `Preview (new): ${fb.join("")}`;
+  }
+  // Otherwise → preview SAME secret
+  else if (state.secret.length === 5) {
     const fbSame = predictFeedback(state.secret, guess);
     previewBox.textContent = `Preview: ${fbSame.join("")}`;
+  }
 }
+
 
   const locked = state.powers.freezeActive;
   $("newSecretInput").disabled = locked;
