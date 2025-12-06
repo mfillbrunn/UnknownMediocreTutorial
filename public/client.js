@@ -279,44 +279,45 @@ function updateSetterScreen() {
   const guess = state.pendingGuess;
   const typedSecret = $("newSecretInput").value.trim().toLowerCase();
 
+  // BASIC ROLE CHECK
   const isSetterTurn = myRole === state.setter;
 
   // PHASE CHECKS
   const isSimultaneous = state.phase === "simultaneous";
+
+  // Setter is deciding on a guess (previous setterDecision)
   const isDecisionStep =
       state.phase === "normal" &&
       !!state.pendingGuess &&
       isSetterTurn;
 
+  // Setter's own normal turn (after they respond to guess)
   const isSetterNormalTurn =
       state.phase === "normal" &&
       !state.pendingGuess &&
       isSetterTurn;
 
-// ---------------------------------------------------------------------
-// PREVIEW LOGIC (shows only when setter must decide on pending guess)
-// ---------------------------------------------------------------------
-const isSetterTurn =
-  state.phase === "normal" &&
-  !!state.pendingGuess &&
-  myRole === state.setter;
+  // ---------------------------------------------------------------------
+  // PREVIEW LOGIC
+  // ---------------------------------------------------------------------
+  if (isDecisionStep && guess) {
 
-previewBox.innerHTML = ""; // clear each render
+    // If setter typed a NEW secret, preview that
+    if (typedSecret.length === 5) {
+      const fb = predictFeedback(typedSecret, guess);
+      previewBox.textContent = `Preview (new): ${fb.join("")}`;
+    }
 
-if (isSetterTurn) {
-  // NEW secret typed
-  if (typedSecret.length === 5) {
-    const fb = predictFeedback(typedSecret, state.pendingGuess);
-    previewBox.textContent = `Preview (new): ${fb.join("")}`;
+    // Otherwise preview SAME secret
+    else if (state.secret.length === 5) {
+      const fbSame = predictFeedback(state.secret, guess);
+      previewBox.textContent = `Preview: ${fbSame.join("")}`;
+    }
   }
-  // SAME secret fallback preview
-  else if (state.secret.length === 5) {
-    const fbSame = predictFeedback(state.secret, state.pendingGuess);
-    previewBox.textContent = `Preview: ${fbSame.join("")}`;
-  }
-}
 
-  // CORRECT LOCKING LOGIC
+  // ---------------------------------------------------------------------
+  // INPUT LOCKING LOGIC
+  // ---------------------------------------------------------------------
   const shouldLock =
       state.phase === "gameOver" ||
       state.powers.freezeActive ||
@@ -324,20 +325,31 @@ if (isSetterTurn) {
 
   $("newSecretInput").disabled = shouldLock;
   $("submitSetterNewBtn").disabled = shouldLock;
-  $("submitSetterSameBtn").disabled = (!isDecisionStep);  // SAME only during decision
 
+  // SAME is only allowed when deciding
+  $("submitSetterSameBtn").disabled = !isDecisionStep;
+
+  // ---------------------------------------------------------------------
+  // KEYBOARD
+  // ---------------------------------------------------------------------
   renderKeyboard(state, $("keyboardSetter"), "setter", (letter, special) => {
     if (shouldLock) return;
 
     const box = $("newSecretInput");
+
     if (special === "BACKSPACE") box.value = box.value.slice(0, -1);
     else if (special === "ENTER") $("submitSetterNewBtn").click();
     else if (letter) box.value += letter;
+
     updateSetterScreen();
   });
 
+  // ---------------------------------------------------------------------
+  // CONSTRAINT RENDER
+  // ---------------------------------------------------------------------
   $("knownPatternSetter").textContent =
     formatPattern(getPattern(state, true));
+
   $("mustContainSetter").textContent =
     getMustContainLetters(state).join(", ") || "none";
 }
