@@ -203,24 +203,35 @@ function updateGuesserScreen() {
 function updateWaitState() {
   if (!state) return hideWaitOverlay();
 
-  const myTurn =
-    (state.phase === "simultaneous") ||
-    (state.phase === "setterDecision" && myRole === "A") ||
-    (state.phase === "normal" && myRole === state.turn);
+  // ✅ NEW FIX: Never block players in lobby
+  if (state.phase === "lobby") {
+    hideWaitOverlay();
+    return;
+  }
 
-  if (myTurn) hideWaitOverlay();
-  else showWaitOverlay("WAIT FOR YOUR TURN");
+  // Simultaneous = both players can act
+  if (state.phase === "simultaneous") {
+    hideWaitOverlay();
+    return;
+  }
+
+  // SetterDecision = setter only
+  if (state.phase === "setterDecision") {
+    if (myRole === "A") hideWaitOverlay();
+    else showWaitOverlay("WAIT FOR SETTER");
+    return;
+  }
+
+  // Normal = alternate turns
+  if (state.phase === "normal") {
+    if (myRole === state.turn) hideWaitOverlay();
+    else showWaitOverlay("WAIT FOR YOUR TURN");
+    return;
+  }
+
+  hideWaitOverlay();
 }
 
-function showWaitOverlay(msg = "WAIT") {
-  const o = $("waitOverlay");
-  o.textContent = msg;
-  o.classList.remove("hidden");
-}
-
-function hideWaitOverlay() {
-  $("waitOverlay").classList.add("hidden");
-}
 
 // -----------------------------------------------------
 // SUMMARY
