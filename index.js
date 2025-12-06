@@ -434,29 +434,18 @@ socket.on("gameAction", ({ roomId, action }) => {
   action.playerId = socket.id;
   action.role = role;
 
-  const prevPhase = room.state.phase;
-  const prevSecret = room.state.secret;
-  const prevGuess = room.state.pendingGuess;
-
   applyAction(room, room.state, action, role, roomId);
 
-// After applyAction, check updated phase
-if (room.state.phase === "simultaneous") {
-  // Don't broadcast until both have acted
-  if (!(room.state.secret && room.state.pendingGuess)) {
-    return; // suppress broadcast
+  // ⭐ SUPPRESS BROADCAST DURING SIMULTANEOUS PHASE until BOTH players act
+  if (room.state.phase === "simultaneous") {
+    if (!(room.state.secret && room.state.pendingGuess)) {
+      return; // do NOT broadcast yet
+    }
   }
-}
 
-// NOW broadcast for normal or gameOver phase
-io.to(roomId).emit("stateUpdate", room.state);
-
-
-
-  // ⭐ NORMAL / GAMEOVER: BROADCAST
+  // ⭐ Only ONE broadcast
   io.to(roomId).emit("stateUpdate", room.state);
 });
-
 
   // DISCONNECT
   socket.on("disconnect", () => {
