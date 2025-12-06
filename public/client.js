@@ -181,31 +181,86 @@ function updateRoleLabels() {
 // TURN INDICATORS
 // -----------------------------------------------------
 function updateTurnIndicators() {
-  $("turnIndicatorSetter").textContent =
-    state.turn === "A" ? "YOUR TURN" : "WAIT";
+  const setterBar = $("turnIndicatorSetter");
+  const guesserBar = $("turnIndicatorGuesser");
 
-  if (state.phase === "simultaneous") {
-  $("turnIndicatorSetter").textContent = "YOUR TURN";
-  $("turnIndicatorGuesser").textContent = "YOUR TURN";
+  // Hide in lobby
+  if (state.phase === "lobby") {
+    setterBar.textContent = "";
+    guesserBar.textContent = "";
+    setterBar.className = "turn-indicator";
+    guesserBar.className = "turn-indicator";
+    return;
+  }
 
-  $("turnIndicatorSetter").className = "turn-indicator your-turn";
-  $("turnIndicatorGuesser").className = "turn-indicator your-turn";
+  // SIMULTANEOUS → both act, but once a player submits, they WAIT
+if (state.phase === "simultaneous") {
+
+  const setterSubmitted = !!state.secret;
+  const guesserSubmitted = !!state.pendingGuess;
+
+  // Setter's bar:
+  if (!setterSubmitted) {
+    $("turnIndicatorSetter").textContent = "YOUR TURN";
+    $("turnIndicatorSetter").className = "turn-indicator your-turn";
+  } else {
+    $("turnIndicatorSetter").textContent = "WAIT";
+    $("turnIndicatorSetter").className = "turn-indicator wait-turn";
+  }
+
+  // Guesser's bar:
+  if (!guesserSubmitted) {
+    $("turnIndicatorGuesser").textContent = "YOUR TURN";
+    $("turnIndicatorGuesser").className = "turn-indicator your-turn";
+  } else {
+    $("turnIndicatorGuesser").textContent = "WAIT";
+    $("turnIndicatorGuesser").className = "turn-indicator wait-turn";
+  }
+
   return;
 }
-if (state.phase === "setterDecision") {
-  $("turnIndicatorSetter").textContent = "YOUR TURN";
-  $("turnIndicatorGuesser").textContent = "WAIT";
 
-  $("turnIndicatorSetter").className = "turn-indicator your-turn";
-  $("turnIndicatorGuesser").className = "turn-indicator wait-turn";
-  return;
-}
 
-  $("turnIndicatorSetter").className =
-    "turn-indicator " + (state.turn === "A" ? "your-turn" : "wait-turn");
+  // GAME OVER → both wait
+  if (state.phase === "gameOver") {
+    setterBar.textContent = "WAIT";
+    guesserBar.textContent = "WAIT";
 
-  $("turnIndicatorGuesser").className =
-    "turn-indicator " + (state.turn === "B" ? "your-turn" : "wait-turn");
+    setterBar.className = "turn-indicator wait-turn";
+    guesserBar.className = "turn-indicator wait-turn";
+    return;
+  }
+
+  // NORMAL PHASE
+  const isSetterTurn =
+    state.phase === "normal" &&
+    !!state.pendingGuess;    // setter must respond
+
+  const isGuesserTurn =
+    state.phase === "normal" &&
+    !state.pendingGuess;     // guesser must guess
+
+  if (isSetterTurn) {
+    // Setter → YOUR TURN
+    setterBar.textContent = "YOUR TURN";
+    setterBar.className = "turn-indicator your-turn";
+
+    // Guesser → WAIT
+    guesserBar.textContent = "WAIT";
+    guesserBar.className = "turn-indicator wait-turn";
+    return;
+  }
+
+  if (isGuesserTurn) {
+    // Guesser → YOUR TURN
+    guesserBar.textContent = "YOUR TURN";
+    guesserBar.className = "turn-indicator your-turn";
+
+    // Setter → WAIT
+    setterBar.textContent = "WAIT";
+    setterBar.className = "turn-indicator wait-turn";
+    return;
+  }
 }
 
 // -----------------------------------------------------
@@ -213,7 +268,6 @@ if (state.phase === "setterDecision") {
 // -----------------------------------------------------
 function updateSetterScreen() {
 
-  // --- BASIC INFO ---
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   $("pendingGuessDisplay").textContent = state.pendingGuess?.toUpperCase() || "-";
 
@@ -225,78 +279,65 @@ function updateSetterScreen() {
   const guess = state.pendingGuess;
   const typedSecret = $("newSecretInput").value.trim().toLowerCase();
 
+  const isSetterTurn = myRole === state.setter;
 
-  // ---------------------------------------------------------------------
-  // ⭐ NEW LOGIC:
-  // Setter is in the "decision step" when:
-  //  - phase is normal
-  //  - a pending guess exists (waiting for setter choice)
-  //  - it's the setter's turn
-  // ---------------------------------------------------------------------
-  const isSetterDecision =
-    state.phase === "normal" &&
-    !!state.pendingGuess &&
-    myRole === state.setter;
+  // PHASE CHECKS
+  const isSimultaneous = state.phase === "simultaneous";
+  const isDecisionStep =
+      state.phase === "normal" &&
+      !!state.pendingGuess &&
+      isSetterTurn;
 
+  const isSetterNormalTurn =
+      state.phase === "normal" &&
+      !state.pendingGuess &&
+      isSetterTurn;
 
-  // ---------------------------------------------------------------------
-  // ⭐ PREVIEW LOGIC
-  // ---------------------------------------------------------------------
-  if (isSetterDecision && guess) {
+// ---------------------------------------------------------------------
+// PREVIEW LOGIC (shows only when setter must decide on pending guess)
+// ---------------------------------------------------------------------
+const isSetterTurn =
+  state.phase === "normal" &&
+  !!state.pendingGuess &&
+  myRole === state.setter;
 
-    // Case 1: Setter typed a NEW secret
-    if (typedSecret.length === 5) {
-      const fbNew = predictFeedback(typedSecret, guess);
-      previewBox.textContent = `Preview (new): ${fbNew.join("")}`;
-    }
+previewBox.innerHTML = ""; // clear each render
 
-    // Case 2: Fallback — preview SAME existing secret
-    else if (state.secret.length === 5) {
-      const fbSame = predictFeedback(state.secret, guess);
-      previewBox.textContent = `Preview: ${fbSame.join("")}`;
-    }
+if (isSetterTurn) {
+  // NEW secret typed
+  if (typedSecret.length === 5) {
+    const fb = predictFeedback(typedSecret, state.pendingGuess);
+    previewBox.textContent = `Preview (new): ${fb.join("")}`;
   }
+  // SAME secret fallback preview
+  else if (state.secret.length === 5) {
+    const fbSame = predictFeedback(state.secret, state.pendingGuess);
+    previewBox.textContent = `Preview: ${fbSame.join("")}`;
+  }
+}
 
-
-  // ---------------------------------------------------------------------
-  // ⭐ INPUT LOCKING
-  // Setter can type ONLY when:
-  //   - It is setterDecision (i.e., isSetterDecision == true)
-  //   - freezeSecret is NOT active
-  // ---------------------------------------------------------------------
+  // CORRECT LOCKING LOGIC
   const shouldLock =
-    state.phase !== "normal" ||
-    !isSetterDecision ||
-    state.powers.freezeActive;
+      state.phase === "gameOver" ||
+      state.powers.freezeActive ||
+      (!isSimultaneous && !isDecisionStep && !isSetterNormalTurn);
 
   $("newSecretInput").disabled = shouldLock;
   $("submitSetterNewBtn").disabled = shouldLock;
-  $("submitSetterSameBtn").disabled = shouldLock;
+  $("submitSetterSameBtn").disabled = (!isDecisionStep);  // SAME only during decision
 
-
-  // ---------------------------------------------------------------------
-  // ⭐ KEYBOARD RENDERING
-  // (Keyboard disabled or active based on shouldLock)
-  // ---------------------------------------------------------------------
   renderKeyboard(state, $("keyboardSetter"), "setter", (letter, special) => {
     if (shouldLock) return;
 
     const box = $("newSecretInput");
-
     if (special === "BACKSPACE") box.value = box.value.slice(0, -1);
     else if (special === "ENTER") $("submitSetterNewBtn").click();
     else if (letter) box.value += letter;
-
     updateSetterScreen();
   });
 
-
-  // ---------------------------------------------------------------------
-  // ⭐ CONSTRAINTS DISPLAY (pattern + must-contain letters)
-  // ---------------------------------------------------------------------
   $("knownPatternSetter").textContent =
     formatPattern(getPattern(state, true));
-
   $("mustContainSetter").textContent =
     getMustContainLetters(state).join(", ") || "none";
 }
@@ -306,19 +347,66 @@ function updateSetterScreen() {
 // GUESSER SCREEN
 // -----------------------------------------------------
 function updateGuesserScreen() {
+
+  // Render history (guesser sees modified feedback)
   renderHistory(state, $("historyGuesser"), false);
 
-  renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
-    const box = $("guessInput");
-    if (special === "BACKSPACE") box.value = box.value.slice(0, -1);
-    else if (special === "ENTER") $("submitGuessBtn").click();
-    else if (letter) box.value += letter;
+  const guessBox = $("guessInput");
+  const kbContainer = $("keyboardGuesser");
+
+  const isGuesser = myRole === state.guesser;
+  const isSimultaneous = state.phase === "simultaneous";
+  const isGameOver = state.phase === "gameOver";
+
+  // Guesser can make a guess if:
+  //
+  // 1. simultaneous phase, or
+  // 2. normal phase AND (no pending guess yet) AND it's guesser's turn
+  //
+  const canGuess =
+    (isSimultaneous && isGuesser) ||
+    (
+      state.phase === "normal" &&
+      isGuesser &&
+      !state.pendingGuess &&       // no unresolved guess
+      state.turn === state.guesser // explicitly their turn
+    );
+
+  // ---------------------------
+  // ENABLE / DISABLE INPUT
+  // ---------------------------
+  guessBox.disabled = !canGuess;
+  $("submitGuessBtn").disabled = !canGuess;
+
+  // ---------------------------
+  // RENDER KEYBOARD
+  // ---------------------------
+  renderKeyboard(state, kbContainer, "guesser", (letter, special) => {
+    if (!canGuess) return;
+
+    if (special === "BACKSPACE") {
+      guessBox.value = guessBox.value.slice(0, -1);
+    }
+    else if (special === "ENTER") {
+      $("submitGuessBtn").click();
+    }
+    else if (letter) {
+      if (guessBox.value.length < 5) {
+        guessBox.value += letter;
+      }
+    }
   });
 
-  $("knownPatternGuesser").textContent = formatPattern(getPattern(state, false));
+  // ---------------------------
+  // DISPLAY KNOWN PATTERN + LETTER CONSTRAINTS
+  // ---------------------------
+  $("knownPatternGuesser").textContent =
+    formatPattern(getPattern(state, false));
+
   $("mustContainGuesser").textContent =
     getMustContainLetters(state).join(", ") || "none";
 }
+
 
 // -----------------------------------------------------
 // SUMMARY
