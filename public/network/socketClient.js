@@ -9,7 +9,7 @@ const BACKEND_URL = "";
 
 // Create Socket.IO client
 const socket = io(BACKEND_URL, {
-  path: "/socket.io/",             // ⭐ MUST match server exactly (with trailing slash)
+  path: "/socket.io",             // ⭐ MUST match server exactly (with trailing slash)
   transports: ["polling", "websocket"],  // ⭐ polling first fixes Railway upgrade issues
   withCredentials: false
 });
