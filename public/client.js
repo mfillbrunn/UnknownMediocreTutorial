@@ -22,6 +22,18 @@ function toast(msg) {
   t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 1500);
 }
+function shakeInput(element) {
+  element.classList.add("shake");
+  setTimeout(() => element.classList.remove("shake"), 300);
+}
+// WORD LIST — loaded for local validation
+window.ALLOWED_GUESSES = new Set();
+
+fetch("wordlists/allowed_guesses.txt")
+  .then(r => r.text())
+  .then(t => {
+    t.split(/\s+/).forEach(w => window.ALLOWED_GUESSES.add(w.trim().toLowerCase()));
+  });
 
 // -----------------------------------------------------
 // AUTO REJOIN
@@ -527,17 +539,45 @@ $("readyBtn").onclick = () => {
 
 $("submitGuessBtn").onclick = () => {
   const g = $("guessInput").value.trim().toLowerCase();
+
+  if (g.length !== 5) {
+    toast("5 letters required");
+    shakeInput($("guessInput"));
+    return;
+  }
+
+  if (!window.ALLOWED_GUESSES || !window.ALLOWED_GUESSES.has(g)) {
+    toast("Word not in dictionary");
+    shakeInput($("guessInput"));
+    return;
+  }
+
   $("guessInput").value = "";
-  if (g.length !== 5) return toast("5 letters required");
   sendGameAction(roomId, { type: "SUBMIT_GUESS", guess: g });
 };
 
+
+
 $("submitSetterNewBtn").onclick = () => {
   const w = $("newSecretInput").value.trim().toLowerCase();
+
+  if (w.length !== 5) {
+    toast("5 letters!");
+    shakeInput($("newSecretInput"));
+    return;
+  }
+
+  if (!window.ALLOWED_GUESSES || !window.ALLOWED_GUESSES.has(w)) {
+    toast("Word not in dictionary");
+    shakeInput($("newSecretInput"));
+    return;
+  }
+
   $("newSecretInput").value = "";
-  if (w.length !== 5) return toast("5 letters!");
   sendGameAction(roomId, { type: "SET_SECRET_NEW", secret: w });
 };
+
+
 
 $("submitSetterSameBtn").onclick = () => {
   sendGameAction(roomId, { type: "SET_SECRET_SAME" });
