@@ -100,7 +100,9 @@ onLobbyEvent(evt => {
 
   if (evt.type === "hideLobby") {
     hide("lobby");
-    show("menu");
+    hide("menu");
+    if (myRole === "A") show("setterScreen");
+    if (myRole === "B") show("guesserScreen");
   }
 });
 
@@ -154,7 +156,9 @@ function updateScreens() {
   hide("guesserScreen");
 
   if (state.phase === "lobby") return;
-
+  if (state.phase !== "lobby") {
+    hide("menu");     // Hides menu during all gameplay phases
+  }
   if (myRole === "A") show("setterScreen");
   if (myRole === "B") show("guesserScreen");
 
