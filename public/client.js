@@ -104,6 +104,17 @@ onLobbyEvent(evt => {
     if (myRole === "A") show("setterScreen");
     if (myRole === "B") show("guesserScreen");
   }
+  if (evt.type === "gameOverShowMenu") {
+  hide("setterScreen");
+  hide("guesserScreen");
+  show("menu");
+
+  // enable READY button for next round
+  $("readyBtn").disabled = false;
+  $("readyBtn").classList.remove("disabled");
+  $("readyBtn").textContent = "I'm Ready";
+}
+
 });
 
 // Role assignment from the server
