@@ -321,3 +321,15 @@ $("backToLobbyBtn").onclick = () => {
   hide("setterScreen");
   hide("guesserScreen");
   show("lobby");
+};
+
+// -----------------------------------------------------
+// WAIT OVERLAY HELPERS (MISSING IN YOUR FILE — NOW ADDED)
+// -----------------------------------------------------
+function showWaitOverlay() {
+  $("waitOverlay").classList.remove("hidden");
+}
+
+function hideWaitOverlay() {
+  $("waitOverlay").classList.add("hidden");
+}
