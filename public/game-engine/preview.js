@@ -1,13 +1,12 @@
-// /public/game-engine/preview.js
-//
-// Predicts the feedback the guesser will receive
-// if the setter submits a given secret.
+// preview.js — NON-MODULE VERSION
 
-import { scoreGuess } from "./scoring.js";
-
-export function predictFeedback(proposedSecret, pendingGuess) {
+window.predictFeedback = function (proposedSecret, pendingGuess) {
   if (!proposedSecret || !pendingGuess) return null;
   if (proposedSecret.length !== 5 || pendingGuess.length !== 5) return null;
 
-  return scoreGuess(proposedSecret.toLowerCase(), pendingGuess.toLowerCase());
-}
+  // scoreGuess MUST be global (ensure scoring.js provides window.scoreGuess)
+  return window.scoreGuess(
+    proposedSecret.toLowerCase(),
+    pendingGuess.toLowerCase()
+  );
+};
