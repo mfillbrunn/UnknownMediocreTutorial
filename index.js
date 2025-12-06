@@ -188,9 +188,18 @@ function applyAction(room, state, action, role, roomId) {
       state.simultaneousGuessSubmitted = false;
       state.simultaneousSecretSubmitted = false;
       emitLobby(roomId, { type: "hideLobby" });
-      io.to(roomId).emit("stateUpdate", state);
-    }
-    return;
+      for (const [playerId, playerRole] of Object.entries(room.players)) {
+        const safe = JSON.parse(JSON.stringify(room.state));
+        if (playerRole === room.state.guesser) {
+          safe.secret = "";                // never reveal secret
+        }
+        if (playerRole === room.state.setter && safe.phase === "simultaneous") {
+          safe.pendingGuess = "";          // hide guess during simultaneous
+        }
+        io.to(playerId).emit("stateUpdate", safe);
+      }
+       }
+          return;
   }
 
   // ---------------------
