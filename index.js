@@ -218,7 +218,7 @@ function applyAction(room, state, action, role, roomId) {
 
       if (simultaneousComplete(state))
         state.phase = "setterDecision";
-
+        emitLobby(roomId, { type: "enterSetterDecision" });
       return;
     }
 
