@@ -129,7 +129,6 @@ function finalizeFeedback(state) {
 
 function enterNormalPhase(state, roomId) {
   finalizeFeedback(state);
-  state.powers.freezeActive = false;
   state.phase = "normal";
   state.turn = state.guesser;
   io.to(roomId).emit("animateTurn", { type: "setterSubmitted" });
@@ -354,7 +353,7 @@ else if (action.type === "SET_SECRET_SAME") {
 
       // Score guess & update history
       finalizeFeedback(state);
-
+      state.powers.freezeActive = false;  
       // Next → guesser's turn
       state.turn = state.guesser;
       state.powerUsedThisTurn = false;
