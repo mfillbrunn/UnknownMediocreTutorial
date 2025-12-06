@@ -1,11 +1,10 @@
-//
-// socketClient.js — Clean Railway Version
-//
+// socketClient.js — Non-module version for Railway deployment
+
 if (typeof io === "undefined") {
   alert("Socket.IO failed to load!");
 }
-// Because frontend + backend are on the SAME Railway domain,
-// leave BACKEND_URL empty → socket.io connects to the same origin.
+
+// Empty BACKEND_URL = connect to same origin (Railway correct)
 const BACKEND_URL = "";
 
 // Create Socket.IO client
@@ -15,53 +14,44 @@ const socket = io(BACKEND_URL, {
   withCredentials: false
 });
 
-
-// -----------------------------------------------------
-// OUTGOING EVENTS
-// -----------------------------------------------------
-
-export function createRoom(cb) {
+// ------------------------------
+// OUTGOING METHODS (GLOBAL)
+// ------------------------------
+window.createRoom = function(cb) {
   socket.emit("createRoom", cb);
-}
+};
 
-export function joinRoom(roomCode, cb) {
+window.joinRoom = function(roomCode, cb) {
   socket.emit("joinRoom", roomCode, cb);
-}
+};
 
-export function sendGameAction(roomId, action) {
+window.sendGameAction = function(roomId, action) {
   socket.emit("gameAction", { roomId, action });
-}
+};
 
-
-// -----------------------------------------------------
-// INCOMING EVENTS
-// -----------------------------------------------------
-
-export function onStateUpdate(handler) {
+// ------------------------------
+// INCOMING EVENTS (GLOBAL)
+// ------------------------------
+window.onStateUpdate = function(handler) {
   socket.on("stateUpdate", handler);
-}
+};
 
-export function onAnimateTurn(handler) {
+window.onAnimateTurn = function(handler) {
   socket.on("animateTurn", handler);
-}
+};
 
-export function onPowerUsed(handler) {
+window.onPowerUsed = function(handler) {
   socket.on("powerUsed", handler);
-}
+};
 
-export function onLobbyEvent(handler) {
+window.onLobbyEvent = function(handler) {
   socket.on("lobbyEvent", handler);
-}
+};
 
-
-// -----------------------------------------------------
-// CONNECTION EVENTS
-// -----------------------------------------------------
-
-socket.on("connect", () => {
-  console.log("🔌 Connected to backend");
-});
-
-socket.on("connect_error", err => {
-  console.warn("❌ Connection error:", err.message);
-});
+// ------------------------------
+// CONNECTION LOGS
+// ------------------------------
+socket.on("connect", () => console.log("🔌 Connected"));
+socket.on("connect_error", err =>
+  console.warn("❌ Connection error:", err.message)
+);
