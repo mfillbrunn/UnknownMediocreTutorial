@@ -212,6 +212,8 @@ if (state.phase === "setterDecision") {
 // SETTER SCREEN
 // -----------------------------------------------------
 function updateSetterScreen() {
+
+  // --- BASIC INFO ---
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   $("pendingGuessDisplay").textContent = state.pendingGuess?.toUpperCase() || "-";
 
@@ -221,39 +223,84 @@ function updateSetterScreen() {
   previewBox.innerHTML = "";
 
   const guess = state.pendingGuess;
-  const secretInput = $("newSecretInput").value.trim().toLowerCase();
+  const typedSecret = $("newSecretInput").value.trim().toLowerCase();
 
-  if (guess && state.phase === "setterDecision") {
-  // If setter typed a new secret → preview NEW secret
-  if (secretInput.length === 5) {
-    const fb = predictFeedback(secretInput, guess);
-    previewBox.textContent = `Preview (new): ${fb.join("")}`;
+
+  // ---------------------------------------------------------------------
+  // ⭐ NEW LOGIC:
+  // Setter is in the "decision step" when:
+  //  - phase is normal
+  //  - a pending guess exists (waiting for setter choice)
+  //  - it's the setter's turn
+  // ---------------------------------------------------------------------
+  const isSetterDecision =
+    state.phase === "normal" &&
+    !!state.pendingGuess &&
+    myRole === state.setter;
+
+
+  // ---------------------------------------------------------------------
+  // ⭐ PREVIEW LOGIC
+  // ---------------------------------------------------------------------
+  if (isSetterDecision && guess) {
+
+    // Case 1: Setter typed a NEW secret
+    if (typedSecret.length === 5) {
+      const fbNew = predictFeedback(typedSecret, guess);
+      previewBox.textContent = `Preview (new): ${fbNew.join("")}`;
+    }
+
+    // Case 2: Fallback — preview SAME existing secret
+    else if (state.secret.length === 5) {
+      const fbSame = predictFeedback(state.secret, guess);
+      previewBox.textContent = `Preview: ${fbSame.join("")}`;
+    }
   }
-  // Otherwise → preview SAME secret
-  else if (state.secret.length === 5) {
-    const fbSame = predictFeedback(state.secret, guess);
-    previewBox.textContent = `Preview: ${fbSame.join("")}`;
-  }
-}
 
 
-  const locked = state.powers.freezeActive;
-  $("newSecretInput").disabled = locked;
-  $("submitSetterNewBtn").disabled = locked;
-  $("submitSetterSameBtn").disabled = locked;
+  // ---------------------------------------------------------------------
+  // ⭐ INPUT LOCKING
+  // Setter can type ONLY when:
+  //   - It is setterDecision (i.e., isSetterDecision == true)
+  //   - freezeSecret is NOT active
+  // ---------------------------------------------------------------------
+  const shouldLock =
+    state.phase !== "normal" ||
+    !isSetterDecision ||
+    state.powers.freezeActive;
 
+  $("newSecretInput").disabled = shouldLock;
+  $("submitSetterNewBtn").disabled = shouldLock;
+  $("submitSetterSameBtn").disabled = shouldLock;
+
+
+  // ---------------------------------------------------------------------
+  // ⭐ KEYBOARD RENDERING
+  // (Keyboard disabled or active based on shouldLock)
+  // ---------------------------------------------------------------------
   renderKeyboard(state, $("keyboardSetter"), "setter", (letter, special) => {
+    if (shouldLock) return;
+
     const box = $("newSecretInput");
+
     if (special === "BACKSPACE") box.value = box.value.slice(0, -1);
     else if (special === "ENTER") $("submitSetterNewBtn").click();
     else if (letter) box.value += letter;
+
     updateSetterScreen();
   });
 
-  $("knownPatternSetter").textContent = formatPattern(getPattern(state, true));
+
+  // ---------------------------------------------------------------------
+  // ⭐ CONSTRAINTS DISPLAY (pattern + must-contain letters)
+  // ---------------------------------------------------------------------
+  $("knownPatternSetter").textContent =
+    formatPattern(getPattern(state, true));
+
   $("mustContainSetter").textContent =
     getMustContainLetters(state).join(", ") || "none";
 }
+
 
 // -----------------------------------------------------
 // GUESSER SCREEN
