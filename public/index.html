@@ -5,6 +5,15 @@
   <title>VS Wordle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
+
+  <style>
+    /* Role button marked as taken */
+    .role-btn.taken {
+      border: 2px solid red !important;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+  </style>
 </head>
 
 <body>
@@ -44,7 +53,8 @@
         <button id="pickRoleB" class="role-btn">Play as B (Guesser First)</button>
       </div>
 
-      <button id="startGameBtn" class="primary-btn disabled" disabled>Start Game</button>
+      <!-- NEW READY BUTTON replaces Start Game button -->
+      <button id="readyBtn" class="primary-btn disabled" disabled>I'm Ready</button>
     </div>
 
     <p id="lobbyStatus" class="status"></p>
@@ -136,10 +146,8 @@
 <!-- ===============  SCRIPT LOAD ORDER (CRITICAL) ======== -->
 <!-- ===================================================== -->
 
-<!-- Load Socket.IO FROM YOUR BACKEND (do NOT use CDN) -->
 <script src="/socket.io/socket.io.js"></script>
 
-<!-- Load all dependency scripts BEFORE client.js -->
 <script src="game-engine/constraints.js"></script>
 <script src="game-engine/preview.js"></script>
 
@@ -152,7 +160,6 @@
 <script src="powers/setterPowers.js"></script>
 <script src="powers/guesserPowers.js"></script>
 
-<!-- Finally load the main controller -->
 <script src="client.js"></script>
 
 <noscript>
