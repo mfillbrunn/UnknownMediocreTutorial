@@ -487,7 +487,7 @@ function updateSummaryIfGameOver() {
   }
 
   let html = `<h3>Round Summary</h3>`;
-  html += `<p><b>Total guesses:</b> ${state.guessCount}</p>`;
+  html += `<p><b>Total guesses:</b> ${state.guessCount +1}</p>`;
 
   html += `<table class="summary-table">`;
   html += `<tr><th>#</th><th>Secret</th><th>Guess</th><th>Feedback</th></tr>`;
