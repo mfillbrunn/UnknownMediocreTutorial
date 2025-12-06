@@ -9,42 +9,42 @@ const BACKEND_URL = "";
 
 // Create Socket.IO client
 const socket = io(BACKEND_URL, {
-  path: "/socket.io",            // ⭐ no trailing slash
-  transports: ["polling", "websocket"], // ⭐ polling first
+  path: "/socket.io/",             // ⭐ MUST match server exactly (with trailing slash)
+  transports: ["polling", "websocket"],  // ⭐ polling first fixes Railway upgrade issues
   withCredentials: false
 });
 
 // ------------------------------
 // OUTGOING METHODS (GLOBAL)
 // ------------------------------
-window.createRoom = function(cb) {
+window.createRoom = function (cb) {
   socket.emit("createRoom", cb);
 };
 
-window.joinRoom = function(roomCode, cb) {
+window.joinRoom = function (roomCode, cb) {
   socket.emit("joinRoom", roomCode, cb);
 };
 
-window.sendGameAction = function(roomId, action) {
+window.sendGameAction = function (roomId, action) {
   socket.emit("gameAction", { roomId, action });
 };
 
 // ------------------------------
 // INCOMING EVENTS (GLOBAL)
 // ------------------------------
-window.onStateUpdate = function(handler) {
+window.onStateUpdate = function (handler) {
   socket.on("stateUpdate", handler);
 };
 
-window.onAnimateTurn = function(handler) {
+window.onAnimateTurn = function (handler) {
   socket.on("animateTurn", handler);
 };
 
-window.onPowerUsed = function(handler) {
+window.onPowerUsed = function (handler) {
   socket.on("powerUsed", handler);
 };
 
-window.onLobbyEvent = function(handler) {
+window.onLobbyEvent = function (handler) {
   socket.on("lobbyEvent", handler);
 };
 
