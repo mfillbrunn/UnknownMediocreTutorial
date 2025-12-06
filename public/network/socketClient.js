@@ -9,8 +9,8 @@ const BACKEND_URL = "";
 
 // Create Socket.IO client
 const socket = io(BACKEND_URL, {
-  path: "/socket.io/",
-  transports: ["websocket", "polling"],
+  path: "/socket.io",            // ⭐ no trailing slash
+  transports: ["polling", "websocket"], // ⭐ polling first
   withCredentials: false
 });
 
