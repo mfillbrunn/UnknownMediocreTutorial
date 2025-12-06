@@ -1,9 +1,6 @@
-// /public/game-engine/letters.js
+// letters.js — NON-MODULE VERSION
 
-/**
- * Extract all letters that have been guessed so far.
- */
-export function getUsedLetters(history) {
+window.getUsedLetters = function (history) {
   const set = new Set();
   if (!history) return set;
 
@@ -13,12 +10,9 @@ export function getUsedLetters(history) {
     }
   }
   return set;
-}
+};
 
-/**
- * Extract last feedback for keyboard coloring.
- */
-export function getLastFeedback(history) {
+window.getLastFeedback = function (history) {
   if (!history || history.length === 0) return null;
   return history[history.length - 1];
-}
+};
