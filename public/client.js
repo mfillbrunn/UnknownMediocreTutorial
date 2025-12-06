@@ -167,9 +167,6 @@ function updateMenu() {
   $("menuPlayerRole").textContent =
     myRole === "A" ? "Setter" :
     myRole === "B" ? "Guesser" : "-";
-
-  $("phaseLabel").textContent = state.phase || "-";
-  $("turnLabel").textContent = state.turn || "-";
 }
 
 // Update UI screens
@@ -621,8 +618,4 @@ $("newMatchBtn").onclick = () => {
   show("menu");
 };
 
-$("backToLobbyBtn").onclick = () => {
-  hide("setterScreen");
-  hide("guesserScreen");
-  show("lobby");
-};
+
