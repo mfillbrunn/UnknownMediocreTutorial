@@ -1,11 +1,10 @@
-// /game-engine/scoring.js
-// Pure scoring logic for Wordle-style feedback
+// /game-engine/scoring.js — UNIVERSAL VERSION (Browser + Node)
 
 /**
  * Score a guess against a secret word.
- * Produces an array of 5 emojis: 🟩 🟨 ⬛
+ * Produces array: ["🟩","🟨","⬛",...]
  */
-export function scoreGuess(secret, guess) {
+function scoreGuess(secret, guess) {
   const fb = ["", "", "", "", ""];
   const rem = secret.split("");
 
@@ -17,7 +16,7 @@ export function scoreGuess(secret, guess) {
     }
   }
 
-  // Yellows + Blacks
+  // Yellows / Blacks
   for (let i = 0; i < 5; i++) {
     if (fb[i] === "") {
       const pos = rem.indexOf(guess[i]);
@@ -31,4 +30,14 @@ export function scoreGuess(secret, guess) {
   }
 
   return fb;
+}
+
+// Expose for browser
+if (typeof window !== "undefined") {
+  window.scoreGuess = scoreGuess;
+}
+
+// Export for Node.js backend
+if (typeof module !== "undefined") {
+  module.exports = { scoreGuess };
 }
