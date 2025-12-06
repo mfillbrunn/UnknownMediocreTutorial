@@ -196,7 +196,7 @@ function updateScreens() {
   hide("lobby");
   hide("menu");
 
-  if (myRole === "A") {
+ if (myRole === state.setter) {
     show("setterScreen");
     hide("guesserScreen");
   } else {
