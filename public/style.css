@@ -271,11 +271,26 @@ input[type="number"],
   color: white;
 }
 
-/* Red outline for guessed letters (setter only) */
+/* Red outline for current guess letters */
 .key-red-outline {
-  outline: 3px solid red;
-  outline-offset: -2px;
+  outline: 3px solid #ff4d4d;
+  outline-offset: -3px;
+  border-radius: 6px;
+  animation: pulseRed 0.8s infinite alternate ease-in-out;
 }
+
+/* Animation */
+@keyframes pulseRed {
+  from {
+    box-shadow: 0 0 4px #ff4d4d;
+    transform: scale(1.0);
+  }
+  to {
+    box-shadow: 0 0 12px #ff1a1a;
+    transform: scale(1.07);
+  }
+}
+
 
 /* Invisible spacer keys to align the keyboard rows */
 .spacer-key {
