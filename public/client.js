@@ -151,14 +151,13 @@ function updateMenu() {
 
 // Update UI screens
 function updateScreens() {
+  if (state.phase === "lobby") {
   hide("setterScreen");
   hide("guesserScreen");
-
-  if (state.phase === "lobby") return;
-  if (state.phase !== "lobby") {
-    hide("menu");     // Hides menu during all gameplay phases
+  return;
   }
-  if (myRole === "A") show("setterScreen");
+  hide("menu");
+   if (myRole === "A") show("setterScreen");
   if (myRole === "B") show("guesserScreen");
 
   updateSetterScreen();
