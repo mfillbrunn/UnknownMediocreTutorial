@@ -275,6 +275,18 @@ input[type="number"],
 .key-red-outline {
   border-color: red !important;
 }
+/* Invisible spacer keys to align the keyboard rows */
+.spacer-key {
+  min-width: 32px;      /* same as .key min-width */
+  height: 44px;         /* approximate key height */
+  margin: 2px;
+  display: inline-block;
+  visibility: hidden;   /* takes space but invisible */
+}
+.key-row {
+  display: flex;
+  justify-content: center;
+}
 
 /* ==========================================================
    BADGES
