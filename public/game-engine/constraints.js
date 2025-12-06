@@ -92,3 +92,4 @@ window.getMustContainLetters = function(state) {
   return result;
 };
 
+window.formatPattern = arr => arr.join(" ");
