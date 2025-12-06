@@ -134,6 +134,7 @@ function updateUI() {
   updateTurnIndicators();
   updateWaitState();
   updateSummaryIfGameOver();
+  if (state.phase !== "lobby") hide("lobby");
 }
 
 // Update menu info
