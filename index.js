@@ -49,10 +49,11 @@ function createInitialState() {
     ready: { A: false, B: false },
     secret: "",
     pendingGuess: "",
-    firstSecretSet: false,
     guessCount: 0,
     gameOver: false,
     history: [],
+    simultaneousGuessSubmitted: false,
+    simultaneousSecretSubmitted: false,
     powers: {
       hideTileUsed: false,
       hideTilePendingCount: 0,
@@ -184,7 +185,8 @@ function applyAction(room, state, action, role, roomId) {
       state.phase = "simultaneous";
       state.turn = null;
       state.pendingGuess = "";
-      state.firstSecretSet = false;
+      state.simultaneousGuessSubmitted = false;
+      state.simultaneousSecretSubmitted = false;
       emitLobby(roomId, { type: "hideLobby" });
       io.to(roomId).emit("stateUpdate", state);
     }
@@ -235,21 +237,22 @@ function applyAction(room, state, action, role, roomId) {
 
     // Setter submits initial secret
     if (action.type === "SET_SECRET_NEW" && role === state.setter) {
+      if (state.simultaneousSecretSubmitted) return;
       const w = action.secret.toLowerCase();
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
 
       state.secret = w;
-      state.firstSecretSet = true;
+      state.simultaneousSecretSubmitted = true;
     }
 
     // Guesser submits initial guess
     if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
-      if (state.pendingGuess) return;
+      if (state.simultaneousGuessSubmitted) return;
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
 
       state.pendingGuess = g;
-
+      state.simultaneousGuessSubmitted = true;
     }
 
     // When both have acted → move to start of NORMAL phase
