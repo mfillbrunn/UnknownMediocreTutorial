@@ -385,15 +385,24 @@ socket.on("gameAction", ({ roomId, action }) => {
   const room = rooms[roomId];
   if (!room) return;
 
-  const role = room.players[socket.id];  // "A" or "B"
-  if (!role) return;                     // safety
+  const role = room.players[socket.id];
+  if (!role) return;
 
   action.playerId = socket.id;
   action.role = role;
 
+  const prevPhase = room.state.phase;
+  const prevSecret = room.state.secret;
+  const prevGuess = room.state.pendingGuess;
+
   applyAction(room, room.state, action, role, roomId);
 
-  // 🔁 ALWAYS broadcast the updated state after applying an action
+  // ⭐ SIMULTANEOUS PHASE: DO NOT BROADCAST YET
+  if (room.state.phase === "simultaneous") {
+    return;
+  }
+
+  // ⭐ NORMAL / GAMEOVER: BROADCAST
   io.to(roomId).emit("stateUpdate", room.state);
 });
 
