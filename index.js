@@ -186,6 +186,7 @@ function applyAction(room, state, action, role, roomId) {
       state.pendingGuess = "";
       state.firstSecretSet = false;
       emitLobby(roomId, { type: "hideLobby" });
+      io.to(roomId).emit("stateUpdate", state);
     }
     return;
   }
