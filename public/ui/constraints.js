@@ -1,12 +1,6 @@
-// /public/ui/constraints.js
+// /public/ui/constraints.js — NON-MODULE VERSION
 
-/**
- * Compute known pattern from history.
- * Setter view uses actual fb; guesser view uses fbGuesser.
- *
- * Returns a string like "A--E-".
- */
-export function getPattern(state, isSetterView) {
+window.getPattern = function (state, isSetterView) {
   let res = ["-", "-", "-", "-", "-"];
 
   if (!state || !state.history || !state.history.length) {
@@ -25,12 +19,9 @@ export function getPattern(state, isSetterView) {
   }
 
   return res.join("");
-}
+};
 
-/**
- * Compute the list of letters that must be contained (based on true fb).
- */
-export function getMustContainLetters(state) {
+window.getMustContainLetters = function (state) {
   const s = new Set();
   if (!state || !state.history || !state.history.length) return [];
 
@@ -42,11 +33,8 @@ export function getMustContainLetters(state) {
     }
   }
   return Array.from(s);
-}
+};
 
-/**
- * Format the pattern with spaces: "A - - E -"
- */
-export function formatPattern(pattern) {
+window.formatPattern = function (pattern) {
   return pattern.split("").join(" ");
-}
+};
