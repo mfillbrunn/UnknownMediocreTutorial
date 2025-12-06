@@ -74,6 +74,8 @@ function createInitialState() {
     guessCount: 0,
     gameOver: false,
     history: [],
+    firstSecretSet: false,  // PATCHED: used by freezeSecret
+
     powers: {
       hideTileUsed: false,
       hideTilePendingCount: 0,
@@ -152,6 +154,7 @@ function applyAction(state, action, role, roomId) {
   if (action.type === "SET_ROLE") {
     state.ready.A = false;
     state.ready.B = false;
+
     if (action.role === "A") {
       state.setter = "A"; state.guesser = "B";
     } else {
@@ -164,6 +167,7 @@ function applyAction(state, action, role, roomId) {
   if (action.type === "PLAYER_READY") {
     state.ready[action.role] = true;
     emitLobby(roomId, { type: "playerReady", role: action.role });
+
     if (state.ready.A && state.ready.B) {
       state.phase = "simultaneous";
       state.turn = null;
@@ -174,10 +178,12 @@ function applyAction(state, action, role, roomId) {
   }
 
   if (action.type === "NEW_MATCH") {
-    Object.assign(state, createInitialState());
+    const fresh = createInitialState();
+    Object.assign(state, fresh);
     return;
   }
 
+  // Powers
   if (action.type.startsWith("USE_")) {
     if (role === state.setter) applySetterPower(state, action, role, roomId, io);
     if (role === state.guesser) applyGuesserPower(state, action, role, roomId, io);
@@ -186,17 +192,26 @@ function applyAction(state, action, role, roomId) {
 
   if (state.gameOver) return;
 
+  // Simultaneous secret + guess phase
   if (state.phase === "simultaneous") {
+
     if (action.type === "SET_SECRET_NEW") {
       const w = action.secret.toLowerCase();
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
+
       state.secret = w;
+      state.firstSecretSet = true; // PATCHED: required for freezeSecret
+
       if (simultaneousComplete(state)) state.phase = "setterDecision";
       return;
     }
+
     if (action.type === "SUBMIT_GUESS") {
+      if (!state.firstSecretSet) return; // PATCHED: freezeSecret protection
+
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
+
       state.pendingGuess = g;
       if (simultaneousComplete(state)) state.phase = "setterDecision";
       return;
@@ -204,6 +219,7 @@ function applyAction(state, action, role, roomId) {
     return;
   }
 
+  // Setter decision phase
   if (state.phase === "setterDecision") {
     if (role !== state.setter) return;
 
@@ -211,6 +227,7 @@ function applyAction(state, action, role, roomId) {
       const w = action.secret.toLowerCase();
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
       if (!isConsistentWithHistory(state.history, w)) return;
+
       state.secret = w;
       enterNormalPhase(state, roomId);
       return;
@@ -218,6 +235,7 @@ function applyAction(state, action, role, roomId) {
 
     if (action.type === "SET_SECRET_SAME") {
       if (!isConsistentWithHistory(state.history, state.secret)) return;
+
       enterNormalPhase(state, roomId);
       return;
     }
@@ -225,7 +243,9 @@ function applyAction(state, action, role, roomId) {
     return;
   }
 
+  // Normal turns
   if (state.phase === "normal") {
+
     if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
@@ -259,6 +279,7 @@ function applyAction(state, action, role, roomId) {
         const w = action.secret.toLowerCase();
         if (!isValidWord(w, ALLOWED_GUESSES)) return;
         if (!isConsistentWithHistory(state.history, w)) return;
+
         state.secret = w;
       } else {
         if (!isConsistentWithHistory(state.history, state.secret)) return;
@@ -275,6 +296,9 @@ function applyAction(state, action, role, roomId) {
 // --------------------------------------
 io.on("connection", socket => {
 
+  // ------------------------
+  // CREATE ROOM
+  // ------------------------
   socket.on("createRoom", cb => {
     let roomId;
     do roomId = generateRoomId(); while (rooms[roomId]);
@@ -291,9 +315,17 @@ io.on("connection", socket => {
     io.to(roomId).emit("stateUpdate", rooms[roomId].state);
   });
 
+  // ------------------------
+  // JOIN ROOM  (PATCHED — MAX 2 PLAYERS)
+  // ------------------------
   socket.on("joinRoom", (roomId, cb) => {
     const room = rooms[roomId];
     if (!room) return cb({ ok: false, error: "Room not found" });
+
+    // PATCHED: enforce max players
+    if (Object.keys(room.players).length >= 2) {
+      return cb({ ok: false, error: "Room is full" });
+    }
 
     socket.join(roomId);
     room.players[socket.id] = null;
@@ -303,11 +335,15 @@ io.on("connection", socket => {
     io.to(roomId).emit("stateUpdate", room.state);
   });
 
+  // ------------------------
+  // GAME ACTION
+  // ------------------------
   socket.on("gameAction", ({ roomId, action }) => {
     const room = rooms[roomId];
     if (!room) return;
 
     const role = room.players[socket.id] || null;
+
     if (action.type === "SET_ROLE") {
       room.players[socket.id] = action.role;
     }
@@ -316,9 +352,12 @@ io.on("connection", socket => {
     io.to(roomId).emit("stateUpdate", room.state);
   });
 
+  // ------------------------
+  // DISCONNECT
+  // ------------------------
   socket.on("disconnect", () => {
     for (const [roomId, room] of Object.entries(rooms)) {
-      if (room.players[socket.id]) delete room.players[socket.id];
+      delete room.players[socket.id];
     }
   });
 });
