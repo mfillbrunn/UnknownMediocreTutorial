@@ -374,9 +374,9 @@ io.on("connection", socket => {
     const room = rooms[roomId];
     if (!room) return;
 
-    const role = room.players[socket.id];
+    const role = room.players[socket.id];  // guaranteed to be "A" or "B"
     action.playerId = socket.id;
-
+    action.role = role;                    // ⭐ pass role explicitly to applyAction
     applyAction(room, room.state, action, role, roomId);
     io.to(roomId).emit("stateUpdate", room.state);
   });
