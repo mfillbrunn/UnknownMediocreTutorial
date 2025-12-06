@@ -440,17 +440,17 @@ socket.on("gameAction", ({ roomId, action }) => {
 
   applyAction(room, room.state, action, role, roomId);
 
-  // ⭐ SIMULTANEOUS PHASE: DO NOT BROADCAST YET
- // ⭐ During simultaneous: only broadcast when BOTH have submitted
+// After applyAction, check updated phase
 if (room.state.phase === "simultaneous") {
-  // If both secret + guess are submitted → allow stateUpdate broadcast
-  if (room.state.secret && room.state.pendingGuess) {
-    // normal broadcasting allowed below
-  } else {
-    // suppress broadcast for partial submissions
-    return;
+  // Don't broadcast until both have acted
+  if (!(room.state.secret && room.state.pendingGuess)) {
+    return; // suppress broadcast
   }
 }
+
+// NOW broadcast for normal or gameOver phase
+io.to(roomId).emit("stateUpdate", room.state);
+
 
 
   // ⭐ NORMAL / GAMEOVER: BROADCAST
