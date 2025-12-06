@@ -69,6 +69,14 @@ function createInitialState() {
     }
   };
 }
+function generateRoomId() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let id = "";
+  for (let i = 0; i < 4; i++) {
+    id += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return id;
+}
 
 function emitLobby(roomId, payload) {
   io.to(roomId).emit("lobbyEvent", payload);
