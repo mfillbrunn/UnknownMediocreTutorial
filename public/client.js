@@ -4,18 +4,6 @@
 //
 
 // -----------------------------------------------------
-// GLOBALS (populated by included scripts)
-// -----------------------------------------------------
-//
-// SETTER_POWERS, GUESSER_POWERS from powers/powers.js
-// renderSetterPowerButtons, activateSetterPower, resetSetterPowers
-// renderGuesserPowerButtons, activateGuesserPower, resetGuesserPowers
-// renderKeyboard, renderHistory, getPattern, getMustContainLetters, formatPattern
-// createRoom, joinRoom, sendGameAction, onStateUpdate, onAnimateTurn, onPowerUsed, onLobbyEvent
-// predictFeedback
-//
-
-// -----------------------------------------------------
 // LOCAL CLIENT STATE
 // -----------------------------------------------------
 let roomId = null;
@@ -50,6 +38,7 @@ window.addEventListener("load", () => {
         $("roomInfo").style.display = "block";
         $("roomCodeLabel").textContent = roomId;
 
+        // Re-apply role on reconnect
         if (myRole) {
           sendGameAction(roomId, { type: "SET_ROLE", role: myRole });
         }
@@ -63,11 +52,9 @@ window.addEventListener("load", () => {
 // -----------------------------------------------------
 onAnimateTurn(({ type }) => {
   const tp = $("turnPopup");
-  let msg = type === "setterSubmitted"
-    ? "Setter Submitted"
-    : type === "guesserSubmitted"
-    ? "Guesser Submitted"
-    : "";
+  const msg =
+    type === "setterSubmitted" ? "Setter Submitted" :
+    type === "guesserSubmitted" ? "Guesser Submitted" : "";
 
   if (msg) {
     tp.textContent = msg;
@@ -82,13 +69,32 @@ onPowerUsed(({ type, letters, pos, letter }) => {
   if (type === "countOnly") toast("Setter used Count-Only");
   if (type === "hideTile") toast("Setter hid a tile");
   if (type === "revealGreen") toast(`Guesser sees Green ${pos+1}: ${letter}`);
-  if (type === "freezeSecret") toast("Guesser froze secret");
+  if (type === "freezeSecret") toast("Guesser froze the secret");
 });
 
 onLobbyEvent(evt => {
   if (evt.type === "playerJoined") toast("A player joined your room.");
-  if (evt.type === "rolePicked") toast(`Player picked role ${evt.role}.`);
-  if (evt.type === "playerReady") toast(`Player ${evt.role} is READY.`);
+
+  if (evt.type === "rolePicked") {
+    toast(`Player picked role ${evt.role}.`);
+
+    // Mark role buttons as taken
+    if (evt.role === "A") {
+      $("pickRoleA").classList.add("taken");
+      $("pickRoleA").disabled = true;
+      $("pickRoleB").disabled = false;
+      $("pickRoleB").classList.remove("taken");
+    } else {
+      $("pickRoleB").classList.add("taken");
+      $("pickRoleB").disabled = true;
+      $("pickRoleA").disabled = false;
+      $("pickRoleA").classList.remove("taken");
+    }
+  }
+
+  if (evt.type === "playerReady") {
+    toast(`Player ${evt.role} is READY.`);
+  }
 });
 
 // -----------------------------------------------------
@@ -122,26 +128,21 @@ function detectLobbyChanges(oldS, newS) {
 // -----------------------------------------------------
 function updateUI() {
   if (!state) return;
-
   updateMenu();
   updateScreens();
   updateWaitState();
   updateSummaryIfGameOver();
 }
 
-// ----------------
 function updateMenu() {
   $("menuRoomCode").textContent = roomId || "-";
-
   $("menuPlayerRole").textContent =
-    !myRole ? "-" :
-    myRole === state.setter ? "Setter" : "Guesser";
+    !myRole ? "-" : (myRole === state.setter ? "Setter" : "Guesser");
 
   $("phaseLabel").textContent = state.phase || "-";
   $("turnLabel").textContent = state.turn || "-";
 }
 
-// ----------------
 function updateScreens() {
   hide("setterScreen");
   hide("guesserScreen");
@@ -155,7 +156,9 @@ function updateScreens() {
   updateGuesserScreen();
 }
 
-// ----------------
+// -----------------------------------------------------
+// SETTER SCREEN
+// -----------------------------------------------------
 function updateSetterScreen() {
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   $("pendingGuessDisplay").textContent = state.pendingGuess?.toUpperCase() || "-";
@@ -189,7 +192,9 @@ function updateSetterScreen() {
   $("mustContainSetter").textContent = must.length ? must.join(", ") : "none";
 }
 
-// ----------------
+// -----------------------------------------------------
+// GUESSER SCREEN
+// -----------------------------------------------------
 function updateGuesserScreen() {
   renderHistory(state, $("historyGuesser"), false);
 
@@ -205,20 +210,33 @@ function updateGuesserScreen() {
   $("mustContainGuesser").textContent = must.length ? must.join(", ") : "none";
 }
 
-// ----------------
+// -----------------------------------------------------
+// WAIT OVERLAY
+// -----------------------------------------------------
 function updateWaitState() {
   if (!state) return hideWaitOverlay();
 
   if (state.phase === "simultaneous") return hideWaitOverlay();
   if (state.phase === "setterDecision")
     return myRole === state.setter ? hideWaitOverlay() : showWaitOverlay();
+
   if (state.phase === "normal")
     return myRole === state.turn ? hideWaitOverlay() : showWaitOverlay();
 
   hideWaitOverlay();
 }
 
-// ----------------
+function showWaitOverlay() {
+  $("waitOverlay").classList.remove("hidden");
+}
+
+function hideWaitOverlay() {
+  $("waitOverlay").classList.add("hidden");
+}
+
+// -----------------------------------------------------
+// SUMMARY
+// -----------------------------------------------------
 function updateSummaryIfGameOver() {
   const box = $("roundSummary");
   if (!state?.gameOver) {
@@ -237,9 +255,8 @@ function updateSummaryIfGameOver() {
 // -----------------------------------------------------
 $("createRoomBtn").onclick = () => {
   createRoom(resp => {
-    if (!resp.ok) return;
+    if (!resp.ok) return toast(resp.error);
     roomId = resp.roomId;
-    localStorage.setItem("vswordle_room", roomId);
     $("roomInfo").style.display = "block";
     $("roomCodeLabel").textContent = roomId;
   });
@@ -248,33 +265,49 @@ $("createRoomBtn").onclick = () => {
 $("joinRoomBtn").onclick = () => {
   const code = $("joinRoomInput").value.trim().toUpperCase();
   if (!code) return toast("Enter a code");
+
   joinRoom(code, resp => {
     if (!resp.ok) return toast(resp.error);
     roomId = code;
-    localStorage.setItem("vswordle_room", roomId);
     $("roomInfo").style.display = "block";
     $("roomCodeLabel").textContent = roomId;
   });
 };
 
+// ----------------------
+// ROLE SELECTION
+// ----------------------
 $("pickRoleA").onclick = () => chooseRole("A");
 $("pickRoleB").onclick = () => chooseRole("B");
 
 function chooseRole(role) {
   myRole = role;
+
   $("pickRoleA").classList.toggle("selected", role === "A");
   $("pickRoleB").classList.toggle("selected", role === "B");
+
+  // Enable ready button
+  $("readyBtn").disabled = false;
+  $("readyBtn").classList.remove("disabled");
+
   sendGameAction(roomId, { type: "SET_ROLE", role });
   localStorage.setItem("vswordle_role", role);
 }
 
-$("startGameBtn").onclick = () => {
+// ----------------------
+// READY BUTTON
+// ----------------------
+$("readyBtn").onclick = () => {
   if (!myRole) return toast("Choose a role first!");
+
   iAmReady = true;
-  toast("You are READY. Waiting for other player…");
+  $("readyBtn").disabled = true;
+  $("readyBtn").textContent = "Waiting...";
+
   sendGameAction(roomId, { type: "PLAYER_READY", role: myRole });
 };
 
+// ----------------------
 $("submitGuessBtn").onclick = () => {
   const g = $("guessInput").value.trim().toLowerCase();
   $("guessInput").value = "";
@@ -299,6 +332,7 @@ function setupPowerButtons() {
     const btn = $("power_" + key);
     if (btn) btn.onclick = () => activateSetterPower(key, roomId);
   });
+
   renderGuesserPowerButtons($("guesserPowerContainer"));
   Object.keys(GUESSER_POWERS).forEach(key => {
     const btn = $("power_" + key);
@@ -322,14 +356,3 @@ $("backToLobbyBtn").onclick = () => {
   hide("guesserScreen");
   show("lobby");
 };
-
-// -----------------------------------------------------
-// WAIT OVERLAY HELPERS (MISSING IN YOUR FILE — NOW ADDED)
-// -----------------------------------------------------
-function showWaitOverlay() {
-  $("waitOverlay").classList.remove("hidden");
-}
-
-function hideWaitOverlay() {
-  $("waitOverlay").classList.add("hidden");
-}
