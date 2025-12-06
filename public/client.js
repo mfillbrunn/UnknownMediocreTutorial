@@ -484,17 +484,32 @@ const canGuess =
 // -----------------------------------------------------
 function updateSummaryIfGameOver() {
   const box = $("roundSummary");
-  if (!state.gameOver) return box.textContent = "";
+  if (!state.gameOver) {
+    box.innerHTML = "";
+    return;
+  }
 
-  let text = `Total guesses: ${state.guessCount}\n\n`;
+  let html = `<h3>Round Summary</h3>`;
+  html += `<p><b>Total guesses:</b> ${state.guessCount}</p>`;
+
+  html += `<table class="summary-table">`;
+  html += `<tr><th>#</th><th>Secret</th><th>Guess</th><th>Feedback</th></tr>`;
+
   state.history.forEach((h, i) => {
-    text += `${i + 1}) Secret: ${h.finalSecret?.toUpperCase()} | `;
-    text += `Guess: ${h.guess.toUpperCase()} | `;
-    text += `FB: ${h.fb.join("")}\n`;
+    html += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${h.finalSecret.toUpperCase()}</td>
+        <td>${h.guess.toUpperCase()}</td>
+        <td>${h.fb.join("")}</td>
+      </tr>
+    `;
   });
 
-  box.textContent = text;
+  html += `</table>`;
+  box.innerHTML = html;
 }
+
 
 // -----------------------------------------------------
 // BUTTONS
