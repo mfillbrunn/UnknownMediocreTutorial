@@ -319,19 +319,23 @@ function updateSetterScreen() {
   // INPUT LOCKING LOGIC
   // ---------------------------------------------------------------------
   const setterSubmittedSimultaneous =
-    state.phase === "simultaneous" && !!state.secret;
+  state.phase === "simultaneous" && !!state.secret;
 
-  const shouldLock =
-    state.phase === "gameOver" ||
-    state.powers.freezeActive ||
-    setterSubmittedSimultaneous ||   // NEW: lock setter after first submission
-    (!isSimultaneous && !isDecisionStep && !isSetterNormalTurn);
+const shouldLock =
+  state.phase === "gameOver" ||
+  state.powers.freezeActive ||
 
-  $("newSecretInput").disabled = shouldLock;
-  $("submitSetterNewBtn").disabled = shouldLock;
+  // 🚫 Lock setter in simultaneous phase *only after* first submission
+  (state.phase === "simultaneous" && setterSubmittedSimultaneous) ||
 
-  // SAME is only allowed when deciding
-  $("submitSetterSameBtn").disabled = !isDecisionStep;
+  // 🚫 In normal phase: lock except when setter must act (decision or new secret)
+  (!isSimultaneous && !isDecisionStep && !isSetterNormalTurn);
+
+$("newSecretInput").disabled = shouldLock;
+$("submitSetterNewBtn").disabled = shouldLock;
+
+// SAME is only allowed when deciding
+$("submitSetterSameBtn").disabled = !isDecisionStep;
 
   // ---------------------------------------------------------------------
   // KEYBOARD
@@ -379,14 +383,18 @@ function updateGuesserScreen() {
   // 1. simultaneous phase, or
   // 2. normal phase AND (no pending guess yet) AND it's guesser's turn
   //
- const canGuess =
-  (state.phase === "simultaneous" && isGuesser) || 
-  (
-    state.phase === "normal" &&
-    isGuesser &&
-    !state.pendingGuess &&
-    state.turn === state.guesser
-  );
+const hasSubmittedSimultaneousGuess =
+  state.phase === "simultaneous" && !!state.pendingGuess;
+
+const canGuess =
+  (state.phase === "simultaneous" &&
+   isGuesser &&
+   !hasSubmittedSimultaneousGuess) ||
+
+  (state.phase === "normal" &&
+   isGuesser &&
+   !state.pendingGuess &&
+   state.turn === state.guesser);
 
 
 
