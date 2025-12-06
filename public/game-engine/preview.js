@@ -1,12 +1,7 @@
-// Load scoring
-import { scoreGuess } from "./scoring.js";
+// preview.js — NON-MODULE VERSION
 
-// ⭐ Make scoreGuess available globally for UI preview logic
-window.scoreGuess = scoreGuess;
-
-// ⭐ This is the preview function used by updateSetterScreen()
+// scoreGuess is now loaded BEFORE this file
 window.predictFeedback = function (proposedSecret, pendingGuess) {
-
   if (!proposedSecret || !pendingGuess) return null;
   if (proposedSecret.length !== 5 || pendingGuess.length !== 5) return null;
 
