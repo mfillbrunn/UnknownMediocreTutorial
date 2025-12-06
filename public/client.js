@@ -67,8 +67,15 @@ onPowerUsed(({ type, letters, pos, letter }) => {
 });
 
 // LOBBY EVENTS
-onLobbyEvent(evt => {
-  if (evt.type === "playerJoined") toast("A player joined.");
+if (evt.type === "playerJoined") {
+  toast("A player joined.");
+
+  // Enable Ready button for the joining player AND the room creator
+  $("readyBtn").disabled = false;
+  $("readyBtn").classList.remove("disabled");
+  $("readyBtn").textContent = "I'm Ready";
+}
+
 
   // Server-driven role switching
   if (evt.type === "rolesSwitched") {
@@ -296,6 +303,9 @@ $("createRoomBtn").onclick = () => {
     roomId = resp.roomId;
     $("roomInfo").style.display = "block";
     $("roomCodeLabel").textContent = roomId;
+    $("readyBtn").disabled = false;
+    $("readyBtn").classList.remove("disabled");
+    $("readyBtn").textContent = "I'm Ready";
   });
 };
 
@@ -307,6 +317,9 @@ $("joinRoomBtn").onclick = () => {
     roomId = code;
     $("roomInfo").style.display = "block";
     $("roomCodeLabel").textContent = roomId;
+    $("readyBtn").disabled = false;
+    $("readyBtn").classList.remove("disabled");
+    $("readyBtn").textContent = "I'm Ready";
   });
 };
 
