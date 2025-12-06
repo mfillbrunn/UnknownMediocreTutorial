@@ -1,14 +1,6 @@
-// /public/game-engine/constraints.js
+// constraints.js — NON-MODULE VERSION
 
-/**
- * Compute known pattern from history.
- *
- * isSetterView = true → use fb (true feedback)
- * isSetterView = false → use fbGuesser
- *
- * Returns "A--E-" form string.
- */
-export function getPattern(state, isSetterView) {
+window.getPattern = function (state, isSetterView) {
   const pattern = ["-", "-", "-", "-", "-"];
   if (!state?.history?.length) return pattern.join("");
 
@@ -22,15 +14,10 @@ export function getPattern(state, isSetterView) {
       }
     }
   }
-
   return pattern.join("");
-}
+};
 
-/**
- * Compute letters that MUST appear
- * Uses TRUE feedback only — fb
- */
-export function getMustContainLetters(state) {
+window.getMustContainLetters = function (state) {
   const set = new Set();
   if (!state?.history?.length) return [];
 
@@ -41,13 +28,9 @@ export function getMustContainLetters(state) {
       }
     }
   }
-
   return [...set];
-}
+};
 
-/**
- * Format "A--E-" as "A - - E -"
- */
-export function formatPattern(patternString) {
+window.formatPattern = function (patternString) {
   return patternString.split("").join(" ");
-}
+};
