@@ -1,0 +1,84 @@
+// powerRules.js — CENTRALIZED POWER RULE ENGINE
+
+window.POWER_RULES = {
+
+  // ======================
+  // SETTER POWERS
+  // ======================
+
+  hideTile: {
+    once: false,
+    allowed(state, role) {
+      return (
+        state.phase === "normal" &&
+        role === state.setter &&
+        !state.powerUsedThisTurn
+      );
+    }
+  },
+
+  reuseLetters: {
+    once: true,
+    allowed(state, role) {
+      return (
+        state.phase === "normal" &&
+        role === state.setter &&
+        !state.powerUsedThisTurn
+      );
+    }
+  },
+
+  confuseColors: {
+    once: true,
+    allowed(state, role) {
+      return (
+        state.phase === "normal" &&
+        role === state.setter &&
+        !state.powerUsedThisTurn
+      );
+    }
+  },
+
+  countOnly: {
+    once: true,
+    allowed(state, role) {
+      return (
+        state.phase === "normal" &&
+        role === state.setter &&
+        !state.powerUsedThisTurn
+      );
+    }
+  },
+
+  // ======================
+  // GUESSER POWERS
+  // ======================
+
+  revealGreen: {
+    once: true,
+    allowed(state, role) {
+      return (
+        state.phase === "normal" &&
+        role === state.guesser &&
+        !state.powerUsedThisTurn &&
+        state.secret                  // secret exists
+      );
+    }
+  },
+
+  freezeSecret: {
+    once: true,
+    allowed(state, role) {
+      return (
+        state.phase === "normal" &&
+        role === state.guesser &&
+        !state.powerUsedThisTurn &&
+        state.firstSecretSet          // setter has set at least one secret
+      );
+    },
+    effects: {
+      setterNewDisabled: true,
+      setterFrozenBar: true
+    }
+  }
+};
