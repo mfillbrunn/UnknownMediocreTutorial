@@ -151,7 +151,6 @@ function updateMenu() {
 
 // Update UI screens
 function updateScreens() {
-
   // LOBBY → only lobby visible
   if (state.phase === "lobby") {
     show("lobby");
@@ -161,12 +160,11 @@ function updateScreens() {
     return;
   }
 
-  // Any non-lobby phase → hide menu, hide lobby
+  // For all gameplay phases (INCLUDING simultaneous)
   hide("lobby");
   hide("menu");
 
-  // ALWAYS show the correct screen for this player,
-  // even in simultaneous BEFORE setter/guesser acts
+  // Ensure ONLY the correct role screen is active
   if (myRole === "A") {
     show("setterScreen");
     hide("guesserScreen");
@@ -175,9 +173,11 @@ function updateScreens() {
     hide("setterScreen");
   }
 
+  // Now both screens will be active correctly
   updateSetterScreen();
   updateGuesserScreen();
 }
+
 
 
 // -----------------------------------------------------
