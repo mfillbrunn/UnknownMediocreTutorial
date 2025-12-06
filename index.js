@@ -319,20 +319,22 @@ io.on("connection", socket => {
   // CREATE ROOM
   socket.on("createRoom", cb => {
     let roomId;
-    do roomId = generateRoomId(); while (rooms[roomId]);
-
+    do {
+      roomId = generateRoomId();
+    } while (rooms[roomId]);
+  
     rooms[roomId] = { state: createInitialState(), players: {} };
-
     socket.join(roomId);
-
-    rooms[roomId].players[socket.id] = "A";   // First always Setter
-    assignRoles(rooms[roomId]);               // Ensure stability
-
+  
+    rooms[roomId].players[socket.id] = "A";
+    assignRoles(rooms[roomId]);
+  
     socket.emit("roleAssigned", { role: "A" });
-
     cb({ ok: true, roomId });
+  
     io.to(roomId).emit("stateUpdate", rooms[roomId].state);
   });
+
 
   // JOIN ROOM
   socket.on("joinRoom", (roomId, cb) => {
