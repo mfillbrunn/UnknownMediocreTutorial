@@ -81,6 +81,9 @@ onLobbyEvent(evt => {
 
     $("switchRolesBtn").classList.add("switch-active");
     setTimeout(() => $("switchRolesBtn").classList.remove("switch-active"), 800);
+     $("readyBtn").disabled = false;
+      $("readyBtn").classList.remove("disabled");
+      $("readyBtn").textContent = "I'm Ready";
   }
 
   if (evt.type === "playerReady") {
@@ -97,7 +100,13 @@ onLobbyEvent(evt => {
 socket.on("roleAssigned", ({ role, setterId, guesserId }) => {
   myRole = role;
   updateRoleLabels();
+
+  // ENABLE READY BUTTON HERE
+  $("readyBtn").disabled = false;
+  $("readyBtn").classList.remove("disabled");
+  $("readyBtn").textContent = "I'm Ready";
 });
+
 
 // -----------------------------------------------------
 // STATE UPDATE FROM SERVER
