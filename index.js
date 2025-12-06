@@ -465,6 +465,7 @@ socket.on("gameAction", ({ roomId, action }) => {
 
   // ⭐ SUPPRESS BROADCAST DURING SIMULTANEOUS PHASE until BOTH players act
   if (room.state.phase === "simultaneous") {
+    io.to(roomId).emit("stateUpdate", room.state);
     if (!(room.state.secret && room.state.pendingGuess)) {
       return; // do NOT broadcast yet
     }
