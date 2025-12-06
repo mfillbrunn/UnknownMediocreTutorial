@@ -1,17 +1,6 @@
-// /public/ui/history.js
+// /public/ui/history.js — NON-MODULE VERSION
 
-/**
- * Render guess history for either setter or guesser.
- *
- * Setter sees:
- *   GUESS + true feedback (🟩🟨⬛🟦)
- *
- * Guesser sees:
- *   GUESS + fbGuesser (with ❓ for hidden tiles)
- *   + optional count-only info:
- *        "Feedback: X green, Y yellow"
- */
-export function renderHistory(state, container, isSetter) {
+window.renderHistory = function (state, container, isSetter) {
   container.innerHTML = "";
 
   if (!state?.history?.length) {
@@ -27,10 +16,10 @@ export function renderHistory(state, container, isSetter) {
     let tiles = "";
 
     if (isSetter) {
-      // Setter sees true fb including blue mode
+      // Setter sees full true feedback
       for (const f of h.fb) tiles += f;
     } else {
-      // Guesser sees altered fbGuesser
+      // Guesser sees masked & modified feedback
       for (let i = 0; i < 5; i++) {
         if (h.hiddenIndices?.includes(i)) {
           tiles += "❓";
@@ -39,7 +28,7 @@ export function renderHistory(state, container, isSetter) {
         }
       }
 
-      // Count-only info
+      // Count-only mode info
       if (h.extraInfo) {
         tiles += `  (${h.extraInfo.greens}🟩, ${h.extraInfo.yellows}🟨)`;
       }
@@ -48,4 +37,4 @@ export function renderHistory(state, container, isSetter) {
     div.textContent = `${guess}   ${tiles}`;
     container.appendChild(div);
   }
-}
+};
