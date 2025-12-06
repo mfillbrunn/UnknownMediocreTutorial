@@ -390,4 +390,21 @@ input[type="number"],
   80%  { transform: translateX(6px); }
   100% { transform: translateX(0); }
 }
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-family: "Courier New", monospace;
+}
+
+.summary-table th {
+  text-align: left;
+  padding: 4px;
+  border-bottom: 2px solid #ccc;
+}
+
+.summary-table td {
+  padding: 4px;
+  border-bottom: 1px solid #ddd;
+}
 
