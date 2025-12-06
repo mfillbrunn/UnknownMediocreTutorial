@@ -1,9 +1,9 @@
-// /public/ui/keyboard.js — NON-MODULE VERSION
+// /public/ui/keyboard.js — NON-MODULE VERSION (Patched with row centering)
 
-// Make keyboard layout global
+// Updated keyboard layout: add "" spacers left + right of row 2
 window.KEYBOARD_LAYOUT = [
   ["Q","W","E","R","T","Y","U","I","O","P"],
-  ["A","S","D","F","G","H","J","K","L"],
+  ["","A","S","D","F","G","H","J","K","L",""],  // Added two spacers
   ["⌫","Z","X","C","V","B","N","M","ENTER"]
 ];
 
@@ -26,7 +26,6 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
 
       const fb = fbArr[i];
 
-      // Priority: green > yellow > gray > blue
       if (fb === "🟩") best = "green";
       else if (fb === "🟨" && best !== "green") best = "yellow";
       else if (fb === "⬛" && !best) best = "gray";
@@ -38,7 +37,7 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
 }
 
 // --------------------------------------------
-// Render keyboard (global function)
+// Render keyboard (with spacers for centering)
 // --------------------------------------------
 window.renderKeyboard = function (state, container, target, onKeyClick) {
   container.innerHTML = "";
@@ -47,12 +46,10 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
   const usedLetters = new Set();
   const reusePool = state?.powers?.reuseLettersPool || [];
 
-  // Track letters guessed so far
+  // Track used letters from history
   if (state?.history) {
     for (const h of state.history) {
-      for (const ch of h.guess.toUpperCase()) {
-        usedLetters.add(ch);
-      }
+      for (const ch of h.guess.toUpperCase()) usedLetters.add(ch);
     }
   }
 
@@ -61,13 +58,23 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
     rowDiv.className = "key-row";
 
     row.forEach(symbol => {
+
+      // ----------------------------------
+      // Spacer keys ("") — invisible padding
+      // ----------------------------------
+      if (symbol === "") {
+        const spacer = document.createElement("div");
+        spacer.className = "key spacer-key";
+        spacer.style.visibility = "hidden"; // invisible but keeps spacing
+        rowDiv.appendChild(spacer);
+        return;
+      }
+
       const key = document.createElement("div");
       key.className = "key";
       key.textContent = symbol;
 
-      // -----------------
       // Special keys
-      // -----------------
       if (symbol === "⌫") {
         key.classList.add("key-special");
         key.addEventListener("click", () => onKeyClick(null, "BACKSPACE"));
@@ -82,28 +89,25 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
         return;
       }
 
-      // -----------------
       // Normal letter keys
-      // -----------------
-      const letter = symbol;
+      if (/^[A-Z]$/.test(symbol)) {
+        const letter = symbol;
 
-      if (/^[A-Z]$/.test(letter)) {
-        // Setter sees red outline on letters guesser used
+        // Setter outline for letters guesser used
         if (target === "setter" && usedLetters.has(letter)) {
           key.classList.add("key-red-outline");
         }
 
-        // Setter sees reuse pool letters as light gray
+        // Reuse pool highlight
         if (target === "setter" && reusePool.includes(letter)) {
           key.style.background = "#bbb";
         }
 
-        // Determine best color from history
+        // Keyboard coloring from history
         const best = getLetterStatusFromHistory(letter, state, isGuesser);
-        if (best === "green")  key.classList.add("key-green");
+        if (best === "green") key.classList.add("key-green");
         if (best === "yellow") key.classList.add("key-yellow");
-        if (best === "gray")   key.classList.add("key-gray");
-
+        if (best === "gray") key.classList.add("key-gray");
         if (best === "blue") {
           key.style.background = "#75a7ff";
           key.style.color = "white";
