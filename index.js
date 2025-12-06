@@ -1,4 +1,4 @@
-// index.js — Updated for Railway Full Deployment (Frontend + Backend)
+// index.js — Patched with Auto Roles, Switch Roles, Proper Flow, Max Players
 
 const express = require("express");
 const path = require("path");
@@ -7,74 +7,59 @@ const fs = require("fs");
 const { Server } = require("socket.io");
 
 // ------------------------------
-// Serve FRONTEND (important!)
-// ------------------------------
 const app = express();
 const server = http.createServer(app);
 
-// Serve static files from /public
+// Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
-// Fallback: any unknown route returns index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // ------------------------------
-// Socket.IO Config (Railway safe)
-// ------------------------------
 const io = new Server(server, {
   path: "/socket.io/",
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  },
+  cors: { origin: "*", methods: ["GET", "POST"] },
   transports: ["websocket", "polling"]
 });
 
-// ------------------------------
-// Game-engine imports
 // ------------------------------
 const { scoreGuess } = require("./game-engine/scoring.js");
 const { isConsistentWithHistory } = require("./game-engine/history.js");
 const { isValidWord, parseWordlist } = require("./game-engine/validation.js");
 const { modifyFeedback } = require("./game-engine/modifyFeedback.js");
 
-// Power handlers
-const {
-  applySetterPower,
-  applyGuesserPower
-} = require("./powers/applyPowers");
+const { applySetterPower, applyGuesserPower } = require("./powers/applyPowers");
 
-// --------------------------------------
-// WORD LIST
 // --------------------------------------
 let ALLOWED_GUESSES = [];
 try {
   const raw = fs.readFileSync("./public/wordlists/allowed_guesses.txt", "utf8");
   ALLOWED_GUESSES = parseWordlist(raw);
-} catch (err) {
+} catch {
   console.log("Wordlist missing → allowing all guesses.");
 }
 
-// --------------------------------------
-// ROOM STATE
 // --------------------------------------
 const rooms = {};
 
 function createInitialState() {
   return {
     phase: "lobby",
+    turn: null,
     setter: "A",
     guesser: "B",
-    turn: null,
     ready: { A: false, B: false },
+
     secret: "",
     pendingGuess: "",
+    firstSecretSet: false,
+
     guessCount: 0,
     gameOver: false,
+
     history: [],
-    firstSecretSet: false,  // PATCHED: used by freezeSecret
 
     powers: {
       hideTileUsed: false,
@@ -96,12 +81,8 @@ function createInitialState() {
 function generateRoomId() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let id = "";
-  for (let i = 0; i < 4; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 4; i++) id += chars[Math.floor(Math.random()*chars.length)];
   return id;
-}
-
-function pushTurnAnimation(roomId, type) {
-  io.to(roomId).emit("animateTurn", { type });
 }
 
 function emitLobby(roomId, payload) {
@@ -109,117 +90,141 @@ function emitLobby(roomId, payload) {
 }
 
 // --------------------------------------
-// FEEDBACK
-// --------------------------------------
 function finalizeFeedback(state) {
-  const guess = state.pendingGuess.toLowerCase();
+  const guess = state.pendingGuess;
   const fb = scoreGuess(state.secret, guess);
 
   const powered = modifyFeedback(fb, state, guess);
   const fbFinal = powered.fbGuesser;
-  const extraInfo = powered.extraInfo;
 
   state.history.push({
     guess,
     fb,
     fbGuesser: fbFinal,
-    hiddenIndices: [],
-    extraInfo,
+    extraInfo: powered.extraInfo,
     finalSecret: state.secret
   });
 
   state.guessCount++;
   state.pendingGuess = "";
   state.powers.freezeActive = false;
-  state.powers.countOnlyActive = false;
   state.powers.confuseColorsActive = false;
+  state.powers.countOnlyActive = false;
 }
 
 function enterNormalPhase(state, roomId) {
   finalizeFeedback(state);
   state.phase = "normal";
-  state.turn = state.guesser;
-  pushTurnAnimation(roomId, "setterSubmitted");
+  state.turn = state.guesser;  // guesser's turn next
+  io.to(roomId).emit("animateTurn", { type: "setterSubmitted" });
 }
 
+// --------------------------------------
 function simultaneousComplete(state) {
   return state.secret && state.pendingGuess;
 }
 
 // --------------------------------------
-// APPLY ACTION
+// APPLY ACTIONS
 // --------------------------------------
-function applyAction(state, action, role, roomId) {
+function applyAction(room, state, action, role, roomId) {
 
-  if (action.type === "SET_ROLE") {
-    state.ready.A = false;
-    state.ready.B = false;
+  // ---------------------
+  // SWITCH ROLES (Lobby only)
+  // ---------------------
+  if (action.type === "SWITCH_ROLES") {
+    if (state.phase !== "lobby") return;
 
-    if (action.role === "A") {
-      state.setter = "A"; state.guesser = "B";
-    } else {
-      state.setter = "B"; state.guesser = "A";
+    // Swap setter & guesser
+    const oldSetter = state.setter;
+    const oldGuesser = state.guesser;
+    state.setter = oldGuesser;
+    state.guesser = oldSetter;
+
+    // Update all player roles
+    for (const [sid, r] of Object.entries(room.players)) {
+      room.players[sid] = (r === "A" ? "B" : "A");
     }
-    emitLobby(roomId, { type: "rolePicked", role: action.role });
+
+    emitLobby(roomId, { type: "rolesSwitched" });
     return;
   }
 
+  // ---------------------
+  // READY
+  // ---------------------
   if (action.type === "PLAYER_READY") {
-    state.ready[action.role] = true;
-    emitLobby(roomId, { type: "playerReady", role: action.role });
+    const r = room.players[action.playerId];
+    state.ready[r] = true;
 
+    emitLobby(roomId, { type: "playerReady", role: r });
+
+    // If both ready → start simultaneous phase
     if (state.ready.A && state.ready.B) {
       state.phase = "simultaneous";
-      state.turn = null;
-      state.secret = "";
-      state.pendingGuess = "";
+      emitLobby(roomId, { type: "hideLobby" });
     }
     return;
   }
 
+  // ---------------------
+  // NEW MATCH
+  // ---------------------
   if (action.type === "NEW_MATCH") {
     const fresh = createInitialState();
     Object.assign(state, fresh);
     return;
   }
 
-  // Powers
+  // ---------------------
+  // POWERS
+  // ---------------------
   if (action.type.startsWith("USE_")) {
     if (role === state.setter) applySetterPower(state, action, role, roomId, io);
     if (role === state.guesser) applyGuesserPower(state, action, role, roomId, io);
     return;
   }
 
-  if (state.gameOver) return;
-
-  // Simultaneous secret + guess phase
+  // ---------------------
+  // SIMULTANEOUS PHASE (first round)
+  // ---------------------
   if (state.phase === "simultaneous") {
 
+    // Setter chooses NEW secret
     if (action.type === "SET_SECRET_NEW") {
       const w = action.secret.toLowerCase();
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
 
       state.secret = w;
-      state.firstSecretSet = true; // PATCHED: required for freezeSecret
+      state.firstSecretSet = true;
 
-      if (simultaneousComplete(state)) state.phase = "setterDecision";
+      if (simultaneousComplete(state)) {
+        state.phase = "setterDecision";
+      }
       return;
     }
 
+    // Guesser submits first guess
     if (action.type === "SUBMIT_GUESS") {
-      if (!state.firstSecretSet) return; // PATCHED: freezeSecret protection
+      if (!state.firstSecretSet) return;
 
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
 
       state.pendingGuess = g;
-      if (simultaneousComplete(state)) state.phase = "setterDecision";
+
+      if (simultaneousComplete(state)) {
+        state.phase = "setterDecision";
+      }
       return;
     }
+
     return;
   }
 
-  // Setter decision phase
+  // ---------------------
+  // SETTER DECISION PHASE
+  // ---------------------
   if (state.phase === "setterDecision") {
     if (role !== state.setter) return;
 
@@ -227,7 +232,6 @@ function applyAction(state, action, role, roomId) {
       const w = action.secret.toLowerCase();
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
       if (!isConsistentWithHistory(state.history, w)) return;
-
       state.secret = w;
       enterNormalPhase(state, roomId);
       return;
@@ -235,7 +239,6 @@ function applyAction(state, action, role, roomId) {
 
     if (action.type === "SET_SECRET_SAME") {
       if (!isConsistentWithHistory(state.history, state.secret)) return;
-
       enterNormalPhase(state, roomId);
       return;
     }
@@ -243,13 +246,17 @@ function applyAction(state, action, role, roomId) {
     return;
   }
 
-  // Normal turns
+  // ---------------------
+  // NORMAL (alternating turns)
+  // ---------------------
   if (state.phase === "normal") {
 
+    // Guesser turn
     if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
 
+      // Win condition
       if (g === state.secret) {
         state.history.push({
           guess: g,
@@ -262,8 +269,7 @@ function applyAction(state, action, role, roomId) {
         state.phase = "gameOver";
         state.gameOver = true;
         state.turn = null;
-        state.guessCount++;
-        pushTurnAnimation(roomId, "guesserSubmitted");
+        io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
         return;
       }
 
@@ -272,8 +278,9 @@ function applyAction(state, action, role, roomId) {
       return;
     }
 
-    if ((action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME")
-      && role === state.setter) {
+    // Setter turn
+    if ((action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME") &&
+        role === state.setter) {
 
       if (action.type === "SET_SECRET_NEW") {
         const w = action.secret.toLowerCase();
@@ -296,65 +303,57 @@ function applyAction(state, action, role, roomId) {
 // --------------------------------------
 io.on("connection", socket => {
 
-  // ------------------------
   // CREATE ROOM
-  // ------------------------
   socket.on("createRoom", cb => {
     let roomId;
     do roomId = generateRoomId(); while (rooms[roomId]);
 
-    rooms[roomId] = {
-      state: createInitialState(),
-      players: {}
-    };
+    rooms[roomId] = { state: createInitialState(), players: {} };
 
     socket.join(roomId);
-    rooms[roomId].players[socket.id] = null;
+    rooms[roomId].players[socket.id] = "A";   // First player auto = A
 
     cb({ ok: true, roomId });
     io.to(roomId).emit("stateUpdate", rooms[roomId].state);
   });
 
-  // ------------------------
-  // JOIN ROOM  (PATCHED — MAX 2 PLAYERS)
-  // ------------------------
+  // JOIN ROOM
   socket.on("joinRoom", (roomId, cb) => {
     const room = rooms[roomId];
     if (!room) return cb({ ok: false, error: "Room not found" });
 
-    // PATCHED: enforce max players
-    if (Object.keys(room.players).length >= 2) {
+    if (Object.keys(room.players).length >= 2)
       return cb({ ok: false, error: "Room is full" });
-    }
 
     socket.join(roomId);
-    room.players[socket.id] = null;
+
+    // Assign role automatically
+    const assignedRole = Object.values(room.players).includes("A") ? "B" : "A";
+    room.players[socket.id] = assignedRole;
 
     cb({ ok: true, roomId });
     emitLobby(roomId, { type: "playerJoined" });
+
     io.to(roomId).emit("stateUpdate", room.state);
   });
 
-  // ------------------------
   // GAME ACTION
-  // ------------------------
   socket.on("gameAction", ({ roomId, action }) => {
     const room = rooms[roomId];
     if (!room) return;
 
-    const role = room.players[socket.id] || null;
+    const playerRole = room.players[socket.id];
 
-    if (action.type === "SET_ROLE") {
-      room.players[socket.id] = action.role;
+    // Add playerId for READY logic
+    if (action.type === "PLAYER_READY") {
+      action.playerId = socket.id;
     }
 
-    applyAction(room.state, action, role, roomId);
+    applyAction(room, room.state, action, playerRole, roomId);
     io.to(roomId).emit("stateUpdate", room.state);
   });
 
-  // ------------------------
   // DISCONNECT
-  // ------------------------
   socket.on("disconnect", () => {
     for (const [roomId, room] of Object.entries(rooms)) {
       delete room.players[socket.id];
@@ -364,6 +363,4 @@ io.on("connection", socket => {
 
 // --------------------------------------
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log("VS Wordle server running on", PORT);
-});
+server.listen(PORT, () => console.log("VS Wordle server running on", PORT));
