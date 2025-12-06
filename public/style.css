@@ -408,3 +408,43 @@ input[type="number"],
   border-bottom: 1px solid #ddd;
 }
 
+.frozen-turn {
+  background: linear-gradient(135deg, #b6e6ff 0%, #d4f1ff 50%, #a5d9ff 100%);
+  color: #004a7c;
+  border: 2px solid #6bb8e8;
+  position: relative;
+  overflow: hidden;
+}
+
+/* shimmer frost sweep */
+.frozen-turn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0.1) 0%,
+    rgba(255,255,255,0.4) 50%,
+    rgba(255,255,255,0.1) 100%
+  );
+  animation: frostSweep 2.4s linear infinite;
+}
+
+/* subtle icy noise */
+.frozen-turn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAECAIAAABZf3c0AAAAEklEQVQI12P4z8DwHwAEvwL+eKVpFwAAAABJRU5ErkJggg==");
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+@keyframes frostSweep {
+  0%   { left: -150%; }
+  50%  { left: 100%; }
+  100% { left: 150%; }
+}
