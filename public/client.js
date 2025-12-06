@@ -67,17 +67,17 @@ onPowerUsed(({ type, letters, pos, letter }) => {
 });
 
 // LOBBY EVENTS
-if (evt.type === "playerJoined") {
-  toast("A player joined.");
+onLobbyEvent(evt => {
 
-  // Enable Ready button for the joining player AND the room creator
-  $("readyBtn").disabled = false;
-  $("readyBtn").classList.remove("disabled");
-  $("readyBtn").textContent = "I'm Ready";
-}
+  if (evt.type === "playerJoined") {
+    toast("A player joined.");
 
+    // Enable Ready button
+    $("readyBtn").disabled = false;
+    $("readyBtn").classList.remove("disabled");
+    $("readyBtn").textContent = "I'm Ready";
+  }
 
-  // Server-driven role switching
   if (evt.type === "rolesSwitched") {
     const { setterId, guesserId } = evt;
 
@@ -88,9 +88,10 @@ if (evt.type === "playerJoined") {
 
     $("switchRolesBtn").classList.add("switch-active");
     setTimeout(() => $("switchRolesBtn").classList.remove("switch-active"), 800);
-     $("readyBtn").disabled = false;
-      $("readyBtn").classList.remove("disabled");
-      $("readyBtn").textContent = "I'm Ready";
+
+    $("readyBtn").disabled = false;
+    $("readyBtn").classList.remove("disabled");
+    $("readyBtn").textContent = "I'm Ready";
   }
 
   if (evt.type === "playerReady") {
