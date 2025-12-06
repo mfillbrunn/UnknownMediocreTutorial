@@ -1,4 +1,9 @@
-// /public/game-engine/utils.js
+// utils.js — NON-MODULE VERSION
 
-export const formatGuess = g => g.toUpperCase();
-export const formatList = arr => (arr.length ? arr.join(", ") : "none");
+window.formatGuess = function (g) {
+  return g.toUpperCase();
+};
+
+window.formatList = function (arr) {
+  return arr.length ? arr.join(", ") : "none";
+};
