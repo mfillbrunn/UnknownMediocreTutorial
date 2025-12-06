@@ -43,15 +43,22 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
   container.innerHTML = "";
 
   const isGuesser = target === "guesser";
-  const usedLetters = new Set();
-  const reusePool = state?.powers?.reuseLettersPool || [];
+const usedLetters = new Set();
+const reusePool = state?.powers?.reuseLettersPool || [];
 
-  // Track used letters from history
-  if (state?.history) {
-    for (const h of state.history) {
-      for (const ch of h.guess.toUpperCase()) usedLetters.add(ch);
-    }
+// ⭐ Only animate the letters from the CURRENT pending guess
+const isDecisionStep =
+  state.phase === "normal" &&
+  !!state.pendingGuess &&
+  target === "setter";
+
+if (isDecisionStep) {
+  for (const ch of state.pendingGuess.toUpperCase()) {
+    usedLetters.add(ch);
   }
+}
+
+
 
   window.KEYBOARD_LAYOUT.forEach(row => {
     const rowDiv = document.createElement("div");
