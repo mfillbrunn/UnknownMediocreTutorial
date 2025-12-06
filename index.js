@@ -225,8 +225,6 @@ function applyAction(room, state, action, role, roomId) {
 
     // Guesser submits initial guess
     if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
-      if (!state.firstSecretSet) return;
-
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
 
