@@ -7,11 +7,11 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    /* Role button marked as taken */
-    .role-btn.taken {
-      border: 2px solid red !important;
-      opacity: 0.6;
-      pointer-events: none;
+    /* Switch button active (user pressed switch) */
+    .switch-active {
+      background-color: #28a745 !important;
+      border-color: #1e7e34 !important;
+      color: white !important;
     }
   </style>
 </head>
@@ -47,13 +47,10 @@
     <div id="roomInfo" style="display:none; margin-top:10px;">
       <p><b>Room:</b> <span id="roomCodeLabel" class="room-code"></span></p>
 
-      <h3>Select Role</h3>
-      <div id="rolePicker" class="role-picker">
-        <button id="pickRoleA" class="role-btn">Play as A (Setter First)</button>
-        <button id="pickRoleB" class="role-btn">Play as B (Guesser First)</button>
-      </div>
+      <!-- NEW: Switch Roles Button -->
+      <button id="switchRolesBtn" class="primary-btn">Switch Roles</button>
 
-      <!-- NEW READY BUTTON replaces Start Game button -->
+      <!-- READY BUTTON -->
       <button id="readyBtn" class="primary-btn disabled" disabled>I'm Ready</button>
     </div>
 
@@ -97,7 +94,7 @@
     <div id="setterPreview" class="preview-box"></div>
 
     <hr>
-    <div id="turnIndicator" class="turn-indicator"></div>
+    <div id="turnIndicatorSetter" class="turn-indicator"></div>
 
     <h3>Enter Secret</h3>
     <input id="newSecretInput" maxlength="5" autocomplete="off" class="letter-input">
@@ -124,7 +121,8 @@
       <p><b>Pattern:</b> <span id="knownPatternGuesser">- - - - -</span></p>
       <p><b>Must contain:</b> <span id="mustContainGuesser">none</span></p>
     </div>
-    <div id="turnIndicator" class="turn-indicator"></div>
+
+    <div id="turnIndicatorGuesser" class="turn-indicator"></div>
 
     <h3>Make a Guess</h3>
     <input id="guessInput" maxlength="5" autocomplete="off" class="letter-input">
