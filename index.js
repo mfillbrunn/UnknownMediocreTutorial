@@ -195,9 +195,29 @@ function applyAction(room, state, action, role, roomId) {
   // NEW MATCH
   // ---------------------
   if (action.type === "NEW_MATCH") {
-    Object.assign(state, createInitialState());
-    return;
-  }
+  // Reset game state but KEEP roles A/B
+  const oldSetter = state.setter;
+  const oldGuesser = state.guesser;
+
+  Object.assign(state, createInitialState());
+
+  // Restore manual roles
+  state.setter = oldSetter;
+  state.guesser = oldGuesser;
+
+  // Reset ready flags
+  state.ready = { A: false, B: false };
+
+  // Return to lobby phase
+  state.phase = "lobby";
+
+  // Tell clients to show lobby UI again
+  emitLobby(roomId, { type: "showLobby" });
+
+  io.to(roomId).emit("stateUpdate", state);
+  return;
+}
+
 
   // ---------------------
   // POWERS
@@ -301,6 +321,7 @@ function applyAction(room, state, action, role, roomId) {
 
         io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
         io.to(roomId).emit("stateUpdate", state);
+        emitLobby(roomId, { type: "gameOverShowMenu" });
         return;
       }
 
