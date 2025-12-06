@@ -216,10 +216,14 @@ function applyAction(room, state, action, role, roomId) {
       state.secret = w;
       state.firstSecretSet = true;
 
-      if (simultaneousComplete(state))
+     if (simultaneousComplete(state)) {
         state.phase = "setterDecision";
-        emitLobby(roomId, { type: "enterSetterDecision" });
-      return;
+        io.to(roomId).emit("stateUpdate", state);
+        return;         // return only inside the if
+      }
+
+return;
+
     }
 
     if (action.type === "SUBMIT_GUESS") {
@@ -230,10 +234,11 @@ function applyAction(room, state, action, role, roomId) {
 
       state.pendingGuess = g;
 
-      if (simultaneousComplete(state))
+      if (simultaneousComplete(state)) {
         state.phase = "setterDecision";
-
-      return;
+        io.to(roomId).emit("stateUpdate", state);
+        return;
+      }
     }
 
     return;
