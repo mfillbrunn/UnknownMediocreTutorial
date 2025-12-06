@@ -1,22 +1,29 @@
-// guesserPowers.js — NON-MODULE VERSION
+// guesserPowers.js — CLEAN VERSION (no turn logic, no state reads)
 
 window.guesserPowerStatus = {
   revealGreen: { used: false },
   freezeSecret: { used: false }
 };
 
+// Called when clicking a guesser power button
 window.activateGuesserPower = function (powerId, roomId) {
-  if (!window.GUESSER_POWERS[powerId]) return;
-  if (guesserPowerStatus[powerId].used && window.GUESSER_POWERS[powerId].once) return;
+  const power = window.GUESSER_POWERS[powerId];
+  if (!power) return;
 
+  // Once-per-game restriction (visual only)
+  if (power.once && guesserPowerStatus[powerId].used) return;
+
+  // Send to server
   window.sendGameAction(roomId, { type: `USE_${powerId.toUpperCase()}` });
 
-  if (window.GUESSER_POWERS[powerId].once) {
+  // Mark visually used if once-only
+  if (power.once) {
     guesserPowerStatus[powerId].used = true;
     window.disableGuesserPowerButton(powerId);
   }
 };
 
+// Disable visually
 window.disableGuesserPowerButton = function (powerId) {
   const btn = document.getElementById(`power_${powerId}`);
   if (btn) {
@@ -25,6 +32,7 @@ window.disableGuesserPowerButton = function (powerId) {
   }
 };
 
+// Reset visually (between new matches)
 window.resetGuesserPowers = function () {
   for (const key in guesserPowerStatus) {
     guesserPowerStatus[key].used = false;
@@ -36,8 +44,11 @@ window.resetGuesserPowers = function () {
   }
 };
 
+// Render guesser power buttons once
 window.renderGuesserPowerButtons = function (container) {
+  if (!container) return;
   container.innerHTML = "";
+
   for (const key in window.GUESSER_POWERS) {
     const p = window.GUESSER_POWERS[key];
     const btn = document.createElement("button");
