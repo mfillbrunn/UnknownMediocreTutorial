@@ -379,17 +379,15 @@ function updateGuesserScreen() {
   // 1. simultaneous phase, or
   // 2. normal phase AND (no pending guess yet) AND it's guesser's turn
   //
- const hasSubmittedSimultaneousGuess = !!state.pendingGuess && state.phase === "simultaneous";
+ const canGuess =
+  (state.phase === "simultaneous" && isGuesser) || 
+  (
+    state.phase === "normal" &&
+    isGuesser &&
+    !state.pendingGuess &&
+    state.turn === state.guesser
+  );
 
-const canGuess =
-  (state.phase === "simultaneous" &&
-   isGuesser &&
-   !hasSubmittedSimultaneousGuess) ||
-
-  (state.phase === "normal" &&
-   isGuesser &&
-   !state.pendingGuess &&
-   state.turn === state.guesser);
 
 
   // ---------------------------
