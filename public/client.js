@@ -151,18 +151,34 @@ function updateMenu() {
 
 // Update UI screens
 function updateScreens() {
+
+  // LOBBY → only lobby visible
   if (state.phase === "lobby") {
-  hide("setterScreen");
-  hide("guesserScreen");
-  return;
+    show("lobby");
+    hide("menu");
+    hide("setterScreen");
+    hide("guesserScreen");
+    return;
   }
+
+  // Any non-lobby phase → hide menu, hide lobby
+  hide("lobby");
   hide("menu");
-   if (myRole === "A") show("setterScreen");
-  if (myRole === "B") show("guesserScreen");
+
+  // ALWAYS show the correct screen for this player,
+  // even in simultaneous BEFORE setter/guesser acts
+  if (myRole === "A") {
+    show("setterScreen");
+    hide("guesserScreen");
+  } else {
+    show("guesserScreen");
+    hide("setterScreen");
+  }
 
   updateSetterScreen();
   updateGuesserScreen();
 }
+
 
 // -----------------------------------------------------
 // ROLE LABEL UPDATER
