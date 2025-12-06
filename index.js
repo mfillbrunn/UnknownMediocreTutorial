@@ -329,7 +329,12 @@ io.on("connection", socket => {
     rooms[roomId].players[socket.id] = "A";
     assignRoles(rooms[roomId]);
   
-    socket.emit("roleAssigned", { role: "A" });
+    socket.emit("roleAssigned", {
+      role: "A",
+      setterId: socket.id,
+      guesserId: null
+    });
+
     cb({ ok: true, roomId });
   
     io.to(roomId).emit("stateUpdate", rooms[roomId].state);
@@ -349,7 +354,16 @@ io.on("connection", socket => {
     room.players[socket.id] = "B";   // Second always Guesser
     assignRoles(room);
 
-    socket.emit("roleAssigned", { role: room.players[socket.id] });
+    // find setter + guesser sockets
+    const setterId = Object.keys(room.players).find(id => room.players[id] === "A");
+    const guesserId = Object.keys(room.players).find(id => room.players[id] === "B");
+    
+    socket.emit("roleAssigned", {
+      role: room.players[socket.id],
+      setterId,
+      guesserId
+    });
+
 
     cb({ ok:true, roomId });
     io.to(roomId).emit("stateUpdate", room.state);
