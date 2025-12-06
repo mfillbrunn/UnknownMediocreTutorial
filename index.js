@@ -230,7 +230,6 @@ function applyAction(room, state, action, role, roomId) {
 
       state.pendingGuess = g;
 
-      io.to(roomId).emit("stateUpdate", state);
     }
 
     // When both have acted → move to start of NORMAL phase
