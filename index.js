@@ -16,16 +16,12 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// ------------------------------
-// ⭐ RAILWAY-SAFE SOCKET.IO CONFIG
-// ------------------------------
 const io = new Server(server, {
-  path: "/socket.io",               // ⭐ removed trailing slash
+  path: "/socket.io/",
   cors: { origin: "*", methods: ["GET", "POST"] },
-  transports: ["polling", "websocket"],  // ⭐ swapped order: polling first
-  allowEIO3: true                       // ⭐ improves compatibility on Railway proxies
-});/ ------------------------------
-
+  transports: ["polling", "websocket"],
+  allowEIO3: true
+});
 
 // ------------------------------
 const { scoreGuess } = require("./game-engine/scoring.js");
