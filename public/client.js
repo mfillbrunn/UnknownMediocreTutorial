@@ -608,15 +608,48 @@ $("submitSetterSameBtn").onclick = () => {
 function setupPowerButtons() {
   renderSetterPowerButtons($("setterPowerContainer"));
   Object.keys(SETTER_POWERS).forEach(key => {
-    const btn = $("power_" + key);
-    if (btn) btn.onclick = () => activateSetterPower(key, roomId);
-  });
+  const btn = $("power_" + key);
+  if (!btn) return;
+
+  const disableBecauseSimultaneous = state.phase === "simultaneous";
+  const disableBecauseUsed = state.powerUsedThisTurn;
+  const isMyTurn = myRole === state.setter && state.turn === state.setter;
+
+  const shouldDisable = disableBecauseSimultaneous || disableBecauseUsed || !isMyTurn;
+
+  btn.disabled = shouldDisable;
+  btn.classList.toggle("power-used", shouldDisable);
+
+  if (!shouldDisable) {
+    btn.onclick = () => activateSetterPower(key, roomId);
+  } else {
+    btn.onclick = null;
+  }
+});
+
 
   renderGuesserPowerButtons($("guesserPowerContainer"));
   Object.keys(GUESSER_POWERS).forEach(key => {
-    const btn = $("power_" + key);
-    if (btn) btn.onclick = () => activateGuesserPower(key, roomId);
-  });
+  const btn = $("power_" + key);
+  if (!btn) return;
+
+  const disableBecauseSimultaneous = state.phase === "simultaneous";
+  const disableBecauseUsed = state.powerUsedThisTurn;
+  const isMyTurn = myRole === state.setter && state.turn === state.setter;
+
+  const shouldDisable = disableBecauseSimultaneous || disableBecauseUsed || !isMyTurn;
+
+  btn.disabled = shouldDisable;
+  btn.classList.toggle("power-used", shouldDisable);
+
+  if (!shouldDisable) {
+    btn.onclick = () => activateGuesserPower(key, roomId);
+  } else {
+    btn.onclick = null;
+  }
+});
+
+
 }
 setupPowerButtons();
 
