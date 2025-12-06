@@ -277,12 +277,33 @@ function applyAction(room, state, action, role, roomId) {
       if (role !== state.setter) return;
 
       // Setter chooses NEW secret
-      if (action.type === "SET_SECRET_NEW") {
-        const w = action.secret.toLowerCase();
-        if (!isValidWord(w, ALLOWED_GUESSES)) return;
-        if (!isConsistentWithHistory(state.history, w)) return;
-        state.secret = w;
+         if (action.type === "SET_SECRET_NEW") {
+      const w = action.secret.toLowerCase();
+      if (!isValidWord(w, ALLOWED_GUESSES)) return;
+      if (!isConsistentWithHistory(state.history, w)) return;
+      state.secret = w;
+    
+      // ⭐ NEW: If setter picks secret == guess → instant win
+      if (state.pendingGuess === w) {
+        state.history.push({
+          guess: w,
+          fb: ["🟩","🟩","🟩","🟩","🟩"],
+          fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
+          extraInfo: null,
+          finalSecret: w
+        });
+    
+        state.phase = "gameOver";
+        state.turn = null;
+        state.gameOver = true;
+    
+        io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
+        io.to(roomId).emit("stateUpdate", state);
+        emitLobby(roomId, { type: "gameOverShowMenu" });
+        return;
       }
+    }
+
 
       // Setter chooses SAME secret
       // Setter chooses SAME secret
