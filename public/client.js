@@ -299,8 +299,14 @@ if (state.phase === "simultaneous") {
     guesserBar.className = "turn-indicator your-turn";
 
     // Setter → WAIT
-    setterBar.textContent = "WAIT";
-    setterBar.className = "turn-indicator wait-turn";
+    if (state.powers.freezeActive) {
+  // ⭐ SECRET FROZEN BAR
+  setterBar.textContent = "SECRET FROZEN";
+  setterBar.className = "turn-indicator frozen-turn";
+} else {
+  setterBar.textContent = "WAIT";
+  setterBar.className = "turn-indicator wait-turn";
+}
     return;
   }
 }
