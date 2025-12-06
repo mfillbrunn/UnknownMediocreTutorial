@@ -258,6 +258,7 @@ return;
 
       state.secret = w;
       enterNormalPhase(state, roomId);
+      io.to(roomId).emit("stateUpdate", state);
       return;
     }
 
@@ -294,6 +295,7 @@ return;
 
       state.pendingGuess = g;
       state.phase = "setterDecision";
+      io.to(roomId).emit("stateUpdate", state);
       return;
     }
 
@@ -311,6 +313,7 @@ return;
       }
 
       enterNormalPhase(state, roomId);
+      io.to(roomId).emit("stateUpdate", state);
       return;
     }
   }
@@ -383,7 +386,6 @@ io.on("connection", socket => {
     action.playerId = socket.id;
     action.role = role;                    // ⭐ pass role explicitly to applyAction
     applyAction(room, room.state, action, role, roomId);
-    io.to(roomId).emit("stateUpdate", room.state);
   });
 
   // DISCONNECT
