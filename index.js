@@ -285,9 +285,31 @@ function applyAction(room, state, action, role, roomId) {
       }
 
       // Setter chooses SAME secret
-      else if (action.type === "SET_SECRET_SAME") {
-        if (!isConsistentWithHistory(state.history, state.secret)) return;
-      }
+      // Setter chooses SAME secret
+else if (action.type === "SET_SECRET_SAME") {
+  if (!isConsistentWithHistory(state.history, state.secret)) return;
+
+  // ⭐ If SAME = guess → instant win
+  if (state.pendingGuess === state.secret) {
+    state.history.push({
+      guess: state.secret,
+      fb: ["🟩","🟩","🟩","🟩","🟩"],
+      fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
+      extraInfo: null,
+      finalSecret: state.secret
+    });
+
+    state.phase = "gameOver";
+    state.turn = null;
+    state.gameOver = true;
+
+    io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
+    io.to(roomId).emit("stateUpdate", state);
+    emitLobby(roomId, { type: "gameOverShowMenu" });
+    return;
+  }
+}
+
 
       // Score guess & update history
       finalizeFeedback(state);
