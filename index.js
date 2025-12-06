@@ -204,45 +204,53 @@ function applyAction(room, state, action, role, roomId) {
     return;
   }
 
-  // ---------------------
-  // SIMULTANEOUS PHASE
-  // ---------------------
-  if (state.phase === "simultaneous") {
+ // ---------------------
+// SIMULTANEOUS PHASE
+// ---------------------
+if (state.phase === "simultaneous") {
 
-    if (action.type === "SET_SECRET_NEW") {
-      const w = action.secret.toLowerCase();
-      if (!isValidWord(w, ALLOWED_GUESSES)) return;
+  // Setter submits first secret
+  if (action.type === "SET_SECRET_NEW") {
+    const w = action.secret.toLowerCase();
+    if (!isValidWord(w, ALLOWED_GUESSES)) return;
 
-      state.secret = w;
-      state.firstSecretSet = true;
+    state.secret = w;
+    state.firstSecretSet = true;
 
-     if (simultaneousComplete(state)) {
-        state.phase = "setterDecision";
-        io.to(roomId).emit("stateUpdate", state);
-        return;         // return only inside the if
-      }
-
-return;
-
+    if (simultaneousComplete(state)) {
+      state.phase = "setterDecision";
+      state.turn = state.setter;   // ⭐ setter now decides
+      io.to(roomId).emit("stateUpdate", state);
+      return;
     }
 
-    if (action.type === "SUBMIT_GUESS") {
-      if (!state.firstSecretSet) return;
-
-      const g = action.guess.toLowerCase();
-      if (!isValidWord(g, ALLOWED_GUESSES)) return;
-
-      state.pendingGuess = g;
-
-      if (simultaneousComplete(state)) {
-        state.phase = "setterDecision";
-        io.to(roomId).emit("stateUpdate", state);
-        return;
-      }
-    }
-
+    io.to(roomId).emit("stateUpdate", state);  // ⭐ setter sees their secret
     return;
   }
+
+  // Guesser submits first guess
+  if (action.type === "SUBMIT_GUESS") {
+    if (!state.firstSecretSet) return;   // must wait for setter's secret
+
+    const g = action.guess.toLowerCase();
+    if (!isValidWord(g, ALLOWED_GUESSES)) return;
+
+    state.pendingGuess = g;
+
+    if (simultaneousComplete(state)) {
+      state.phase = "setterDecision";
+      state.turn = state.setter;   // ⭐ setter now decides
+      io.to(roomId).emit("stateUpdate", state);
+      return;
+    }
+
+    io.to(roomId).emit("stateUpdate", state);  // ⭐ guesser sees their guess
+    return;
+  }
+
+  return;
+}
+
 
   // ---------------------
   // SETTER DECISION
@@ -294,7 +302,14 @@ return;
       }
 
       state.pendingGuess = g;
+
+      // ⭐ Score the guess immediately so keyboard + history update
+      finalizeFeedback(state);
+      
+      // ⭐ Now enter setterDecision
       state.phase = "setterDecision";
+      state.turn = state.setter;     // setter must act next
+      
       io.to(roomId).emit("stateUpdate", state);
       return;
     }
