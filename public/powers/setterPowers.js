@@ -1,4 +1,4 @@
-// setterPowers.js — NON-MODULE VERSION
+// setterPowers.js — CLEAN VERSION (no turn logic, no state reads)
 
 window.setterPowerStatus = {
   hideTile: { used: false },
@@ -7,18 +7,25 @@ window.setterPowerStatus = {
   countOnly: { used: false }
 };
 
+// Called when clicking a setter power button
 window.activateSetterPower = function (powerId, roomId) {
-  if (!window.SETTER_POWERS[powerId]) return;
-  if (setterPowerStatus[powerId].used && window.SETTER_POWERS[powerId].once) return;
+  const power = window.SETTER_POWERS[powerId];
+  if (!power) return;
 
+  // Prevent using "once" powers more than once (visual-side only)
+  if (power.once && setterPowerStatus[powerId].used) return;
+
+  // Send to server
   window.sendGameAction(roomId, { type: `USE_${powerId.toUpperCase()}` });
 
-  if (window.SETTER_POWERS[powerId].once) {
+  // Mark visually used if once-only
+  if (power.once) {
     setterPowerStatus[powerId].used = true;
     window.disableSetterPowerButton(powerId);
   }
 };
 
+// Disable a setter power button visually
 window.disableSetterPowerButton = function (powerId) {
   const btn = document.getElementById(`power_${powerId}`);
   if (btn) {
@@ -27,6 +34,7 @@ window.disableSetterPowerButton = function (powerId) {
   }
 };
 
+// Reset all setter powers (visually) between rounds
 window.resetSetterPowers = function () {
   for (const key in setterPowerStatus) {
     setterPowerStatus[key].used = false;
@@ -38,8 +46,11 @@ window.resetSetterPowers = function () {
   }
 };
 
+// Render setter power buttons once
 window.renderSetterPowerButtons = function (container) {
+  if (!container) return;
   container.innerHTML = "";
+
   for (const key in window.SETTER_POWERS) {
     const p = window.SETTER_POWERS[key];
     const btn = document.createElement("button");
