@@ -311,7 +311,10 @@ if (state.phase === "simultaneous") {
 function updateSetterScreen() {
 
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
-  $("pendingGuessDisplay").textContent = state.pendingGuess?.toUpperCase() || "-";
+  $("pendingGuessDisplay").textContent =
+  state.phase === "simultaneous"
+    ? "-"                      // hide during simultaneous
+    : (state.pendingGuess?.toUpperCase() || "-");
 
   renderHistory(state, $("historySetter"), true);
 
