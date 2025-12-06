@@ -54,6 +54,7 @@ function createInitialState() {
     history: [],
     simultaneousGuessSubmitted: false,
     simultaneousSecretSubmitted: false,
+    powerUsedThisTurn: false,
     powers: {
       hideTileUsed: false,
       hideTilePendingCount: 0,
@@ -234,6 +235,9 @@ function applyAction(room, state, action, role, roomId) {
   // POWERS
   // ---------------------
   if (action.type.startsWith("USE_")) {
+    if (state.phase === "simultaneous") return;
+    if (state.powerUsedThisTurn) return;
+    state.powerUsedThisTurn = true;
     if (role === state.setter) applySetterPower(state, action, role, roomId, io);
     if (role === state.guesser) applyGuesserPower(state, action, role, roomId, io);
     return;
@@ -293,6 +297,7 @@ function applyAction(room, state, action, role, roomId) {
 
       // Setter chooses NEW secret
          if (action.type === "SET_SECRET_NEW") {
+           if (state.powers.freezeActive) return;
       const w = action.secret.toLowerCase();
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
       if (!isConsistentWithHistory(state.history, w)) return;
@@ -352,6 +357,7 @@ else if (action.type === "SET_SECRET_SAME") {
 
       // Next → guesser's turn
       state.turn = state.guesser;
+      state.powerUsedThisTurn = false;
       io.to(roomId).emit("stateUpdate", state);
       return;
     }
@@ -386,7 +392,7 @@ else if (action.type === "SET_SECRET_SAME") {
       // Otherwise → store pending guess, setter must decide
       state.pendingGuess = g;
       state.turn = state.setter;
-
+      state.powerUsedThisTurn = false;
       io.to(roomId).emit("stateUpdate", state);
       return;
     }
