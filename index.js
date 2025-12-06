@@ -123,13 +123,13 @@ function finalizeFeedback(state) {
 
   state.pendingGuess = "";
   state.guessCount++;
-  state.powers.freezeActive = false;
   state.powers.confuseColorsActive = false;
   state.powers.countOnlyActive = false;
 }
 
 function enterNormalPhase(state, roomId) {
   finalizeFeedback(state);
+  state.powers.freezeActive = false;
   state.phase = "normal";
   state.turn = state.guesser;
   io.to(roomId).emit("animateTurn", { type: "setterSubmitted" });
