@@ -1,5 +1,6 @@
 //
-// client.js — Non-module version for Railway (No imports)
+// client.js — FINAL PATCHED VERSION FOR VS Wordle
+// Non-module version (no imports)
 //
 
 // -----------------------------------------------------
@@ -10,7 +11,7 @@ let myRole = null;      // Assigned by server: "A" or "B"
 let state = null;
 let iAmReady = false;
 
-// Helpers
+// DOM helpers
 function $(id) { return document.getElementById(id); }
 function show(id) { $(id).classList.add("active"); }
 function hide(id) { $(id).classList.remove("active"); }
@@ -55,7 +56,7 @@ onAnimateTurn(({ type }) => {
   }
 });
 
-// POWERS
+// POWER notifications
 onPowerUsed(({ type, letters, pos, letter }) => {
   if (type === "reuseLetters") toast(`Setter reusable letters: ${letters.join(", ")}`);
   if (type === "confuseColors") toast("Setter used Blue Mode");
@@ -69,14 +70,14 @@ onPowerUsed(({ type, letters, pos, letter }) => {
 onLobbyEvent(evt => {
   if (evt.type === "playerJoined") toast("A player joined.");
 
+  // Server-driven role switching
   if (evt.type === "rolesSwitched") {
-    myRole = (myRole === "A" ? "B" : "A");
+    const { setterId, guesserId } = evt;
 
-    $("lobbyRoleLabel").textContent =
-      myRole === "A" ? "Setter" : "Guesser";
+    if (socket.id === setterId) myRole = "A";
+    if (socket.id === guesserId) myRole = "B";
 
-    $("menuPlayerRole").textContent =
-      myRole === "A" ? "Setter" : "Guesser";
+    updateRoleLabels();
 
     $("switchRolesBtn").classList.add("switch-active");
     setTimeout(() => $("switchRolesBtn").classList.remove("switch-active"), 800);
@@ -92,19 +93,14 @@ onLobbyEvent(evt => {
   }
 });
 
-// NEW — ROLE ASSIGNMENT FROM SERVER
-socket.on("roleAssigned", ({ role }) => {
+// Role assignment from the server
+socket.on("roleAssigned", ({ role, setterId, guesserId }) => {
   myRole = role;
-
-  $("lobbyRoleLabel").textContent =
-    role === "A" ? "Setter" : "Guesser";
-
-  $("menuPlayerRole").textContent =
-    role === "A" ? "Setter" : "Guesser";
+  updateRoleLabels();
 });
 
 // -----------------------------------------------------
-// STATE UPDATE
+// STATE UPDATE FROM SERVER
 // -----------------------------------------------------
 onStateUpdate(newState => {
   state = newState;
@@ -112,7 +108,7 @@ onStateUpdate(newState => {
 });
 
 // -----------------------------------------------------
-// UI UPDATE
+// UI UPDATE LOGIC
 // -----------------------------------------------------
 function updateUI() {
   if (!state) return;
@@ -123,6 +119,7 @@ function updateUI() {
   updateSummaryIfGameOver();
 }
 
+// Update menu info
 function updateMenu() {
   $("menuRoomCode").textContent = roomId || "-";
   $("menuPlayerRole").textContent =
@@ -133,6 +130,7 @@ function updateMenu() {
   $("turnLabel").textContent = state.turn || "-";
 }
 
+// Update UI screens
 function updateScreens() {
   hide("setterScreen");
   hide("guesserScreen");
@@ -147,6 +145,18 @@ function updateScreens() {
 }
 
 // -----------------------------------------------------
+// ROLE LABEL UPDATER
+// -----------------------------------------------------
+function updateRoleLabels() {
+  const label = myRole === "A" ? "Setter" : "Guesser";
+
+  $("lobbyRoleLabel").textContent = label;
+  $("lobbyRoleLabel").classList.add("big-role");
+
+  $("menuPlayerRole").textContent = label;
+}
+
+// -----------------------------------------------------
 // TURN INDICATORS
 // -----------------------------------------------------
 function updateTurnIndicators() {
@@ -155,6 +165,12 @@ function updateTurnIndicators() {
 
   $("turnIndicatorGuesser").textContent =
     state.turn === "B" ? "YOUR TURN" : "WAIT";
+
+  $("turnIndicatorSetter").className =
+    "turn-indicator " + (state.turn === "A" ? "your-turn" : "wait-turn");
+
+  $("turnIndicatorGuesser").className =
+    "turn-indicator " + (state.turn === "B" ? "your-turn" : "wait-turn");
 }
 
 // -----------------------------------------------------
@@ -208,42 +224,33 @@ function updateGuesserScreen() {
     else if (letter) box.value += letter;
   });
 
-  $("knownPatternGuesser").textContent =
-    formatPattern(getPattern(state, false));
+  $("knownPatternGuesser").textContent = formatPattern(getPattern(state, false));
   $("mustContainGuesser").textContent =
     getMustContainLetters(state).join(", ") || "none";
 }
 
 // -----------------------------------------------------
-// WAIT OVERLAY
+// WAIT OVERLAY MANAGEMENT
 // -----------------------------------------------------
 function updateWaitState() {
   if (!state) return hideWaitOverlay();
 
-  // Never block lobby
   if (state.phase === "lobby") return hideWaitOverlay();
-
-  // Both act in simultaneous
   if (state.phase === "simultaneous") return hideWaitOverlay();
 
-  // SetterDecision → setter only
   if (state.phase === "setterDecision") {
-    if (myRole === "A") hideWaitOverlay();
-    else showWaitOverlay("WAIT FOR SETTER");
-    return;
+    if (myRole === "A") return hideWaitOverlay();
+    return showWaitOverlay("WAIT FOR SETTER");
   }
 
-  // Normal alternating
   if (state.phase === "normal") {
-    if (myRole === state.turn) hideWaitOverlay();
-    else showWaitOverlay("WAIT FOR YOUR TURN");
-    return;
+    if (myRole === state.turn) return hideWaitOverlay();
+    return showWaitOverlay("WAIT FOR YOUR TURN");
   }
 
   hideWaitOverlay();
 }
 
-// Helper
 function showWaitOverlay(text = "WAIT FOR YOUR TURN") {
   const o = $("waitOverlay");
   o.textContent = text;
@@ -271,14 +278,13 @@ function updateSummaryIfGameOver() {
 }
 
 // -----------------------------------------------------
-// BUTTON BINDS
+// BUTTONS
 // -----------------------------------------------------
 
 $("createRoomBtn").onclick = () => {
   createRoom(resp => {
     if (!resp.ok) return toast(resp.error);
     roomId = resp.roomId;
-
     $("roomInfo").style.display = "block";
     $("roomCodeLabel").textContent = roomId;
   });
@@ -289,7 +295,6 @@ $("joinRoomBtn").onclick = () => {
   if (!code) return toast("Enter a code");
   joinRoom(code, resp => {
     if (!resp.ok) return toast(resp.error);
-
     roomId = code;
     $("roomInfo").style.display = "block";
     $("roomCodeLabel").textContent = roomId;
@@ -343,9 +348,13 @@ setupPowerButtons();
 
 $("newMatchBtn").onclick = () => {
   sendGameAction(roomId, { type: "NEW_MATCH" });
+  hide("setterScreen");
+  hide("guesserScreen");
   show("menu");
 };
 
 $("backToLobbyBtn").onclick = () => {
+  hide("setterScreen");
+  hide("guesserScreen");
   show("lobby");
 };
