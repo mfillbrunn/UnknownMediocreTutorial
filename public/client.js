@@ -134,7 +134,6 @@ function updateUI() {
   updateMenu();
   updateScreens();
   updateTurnIndicators();
-  updateWaitState();
   updateSummaryIfGameOver();
   if (state.phase !== "lobby") hide("lobby");
 }
@@ -185,8 +184,15 @@ function updateTurnIndicators() {
   $("turnIndicatorSetter").textContent =
     state.turn === "A" ? "YOUR TURN" : "WAIT";
 
-  $("turnIndicatorGuesser").textContent =
-    state.turn === "B" ? "YOUR TURN" : "WAIT";
+  if (state.phase === "simultaneous") {
+  $("turnIndicatorSetter").textContent = "YOUR TURN";
+  $("turnIndicatorGuesser").textContent = "YOUR TURN";
+
+  $("turnIndicatorSetter").className = "turn-indicator your-turn";
+  $("turnIndicatorGuesser").className = "turn-indicator your-turn";
+  return;
+}
+
 
   $("turnIndicatorSetter").className =
     "turn-indicator " + (state.turn === "A" ? "your-turn" : "wait-turn");
@@ -210,10 +216,14 @@ function updateSetterScreen() {
   const guess = state.pendingGuess;
   const secretInput = $("newSecretInput").value.trim().toLowerCase();
 
-  if (guess && secretInput.length === 5) {
+  if (guess && secretInput.length === 5 && state.phase === "setterDecision") {
     const fb = predictFeedback(secretInput, guess);
     previewBox.textContent = `Preview: ${fb.join("")}`;
-  }
+}
+if (guess && state.secret && state.phase === "setterDecision") {
+    const fbSame = predictFeedback(state.secret, guess);
+    previewBox.textContent = `Preview: ${fbSame.join("")}`;
+}
 
   const locked = state.powers.freezeActive;
   $("newSecretInput").disabled = locked;
@@ -249,37 +259,6 @@ function updateGuesserScreen() {
   $("knownPatternGuesser").textContent = formatPattern(getPattern(state, false));
   $("mustContainGuesser").textContent =
     getMustContainLetters(state).join(", ") || "none";
-}
-
-// -----------------------------------------------------
-// WAIT OVERLAY MANAGEMENT
-// -----------------------------------------------------
-function updateWaitState() {
-  if (!state) return hideWaitOverlay();
-
-  if (state.phase === "lobby") return hideWaitOverlay();
-  if (state.phase === "simultaneous") return hideWaitOverlay();
-
-  if (state.phase === "setterDecision") {
-    if (myRole === "A") return hideWaitOverlay();
-    return showWaitOverlay("WAIT FOR SETTER");
-  }
-
-  if (state.phase === "normal") {
-    if (myRole === state.turn) return hideWaitOverlay();
-    return showWaitOverlay("WAIT FOR YOUR TURN");
-  }
-
-  hideWaitOverlay();
-}
-
-function showWaitOverlay(text = "WAIT FOR YOUR TURN") {
-  const o = $("waitOverlay");
-  o.textContent = text;
-  o.classList.remove("hidden");
-}
-function hideWaitOverlay() {
-  $("waitOverlay").classList.add("hidden");
 }
 
 // -----------------------------------------------------
