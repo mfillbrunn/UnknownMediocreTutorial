@@ -17,7 +17,7 @@ app.get("*", (req, res) => {
 });
 
 const io = new Server(server, {
-  path: "/socket.io/",
+  path: "/socket.io",
   cors: { origin: "*", methods: ["GET", "POST"] },
   transports: ["polling", "websocket"],
   allowEIO3: true
