@@ -219,12 +219,11 @@ function applyAction(room, state, action, role, roomId) {
 
       state.secret = w;
       state.firstSecretSet = true;
-
-      io.to(roomId).emit("stateUpdate", state);
     }
 
     // Guesser submits initial guess
     if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
+      if (state.pendingGuess) return;
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
 
