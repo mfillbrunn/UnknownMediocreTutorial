@@ -309,6 +309,11 @@ input[type="number"],
 /* ==========================================================
    MISC
    ========================================================== */
+.big-role {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1a73e8;
+}
 
 .room-code {
   font-weight: bold;
