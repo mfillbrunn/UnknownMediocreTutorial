@@ -143,12 +143,11 @@ function simultaneousComplete(state) {
 function applyAction(room, state, action, role, roomId) {
 
   // ---------------------
-  // SWITCH ROLES
+  // SWITCH ROLES (LOBBY ONLY)
   // ---------------------
   if (action.type === "SWITCH_ROLES") {
     if (state.phase !== "lobby") return;
 
-    // swap A <-> B
     const ids = Object.keys(room.players);
     if (ids.length === 2) {
       const idA = ids.find(id => room.players[id] === "A");
@@ -157,10 +156,10 @@ function applyAction(room, state, action, role, roomId) {
       room.players[idA] = "B";
       room.players[idB] = "A";
 
-      // swap in state too
-      let temp = state.setter;
+      // also swap logical setter/guesser labels if you want
+      const tmp = state.setter;
       state.setter = state.guesser;
-      state.guesser = temp;
+      state.guesser = tmp;
 
       emitLobby(roomId, {
         type: "rolesSwitched",
@@ -172,23 +171,29 @@ function applyAction(room, state, action, role, roomId) {
   }
 
   // ---------------------
-  // PLAYER READY
+  // PLAYER READY (LOBBY)
   // ---------------------
   if (action.type === "PLAYER_READY") {
-    const r = role;   // ★ FIX: role already known from socket
+    if (state.phase !== "lobby") return;
+
+    const r = role; // "A" or "B"
     state.ready[r] = true;
 
     emitLobby(roomId, { type: "playerReady", role: r });
 
     if (state.ready.A && state.ready.B) {
+      // start first round: both act in parallel
       state.phase = "simultaneous";
+      state.turn = null;           // simultaneous → no single turn owner
+      state.firstSecretSet = false;
+      state.pendingGuess = "";
       emitLobby(roomId, { type: "hideLobby" });
     }
     return;
   }
 
   // ---------------------
-  // NEW MATCH
+  // NEW MATCH (ANY PHASE)
   // ---------------------
   if (action.type === "NEW_MATCH") {
     Object.assign(state, createInitialState());
@@ -196,7 +201,7 @@ function applyAction(room, state, action, role, roomId) {
   }
 
   // ---------------------
-  // POWERS
+  // POWERS (ANY PHASE)
   // ---------------------
   if (action.type.startsWith("USE_")) {
     if (role === state.setter) applySetterPower(state, action, role, roomId, io);
@@ -204,135 +209,115 @@ function applyAction(room, state, action, role, roomId) {
     return;
   }
 
- // ---------------------
-// SIMULTANEOUS PHASE
-// ---------------------
-if (state.phase === "simultaneous") {
+  // ===================================================================
+  // PHASE: SIMULTANEOUS
+  //   - Setter: SET_SECRET_NEW
+  //   - Guesser: SUBMIT_GUESS
+  //   When both are present → move to NORMAL with setter's turn.
+  // ===================================================================
+  if (state.phase === "simultaneous") {
 
-  // Setter submits first secret
-  if (action.type === "SET_SECRET_NEW") {
-    const w = action.secret.toLowerCase();
-    if (!isValidWord(w, ALLOWED_GUESSES)) return;
-
-    state.secret = w;
-    state.firstSecretSet = true;
-
-    if (simultaneousComplete(state)) {
-      state.phase = "setterDecision";
-      state.turn = state.setter;   // ⭐ setter now decides
-      io.to(roomId).emit("stateUpdate", state);
-      return;
-    }
-
-    io.to(roomId).emit("stateUpdate", state);  // ⭐ setter sees their secret
-    return;
-  }
-
-  // Guesser submits first guess
-  if (action.type === "SUBMIT_GUESS") {
-    if (!state.firstSecretSet) return;   // must wait for setter's secret
-
-    const g = action.guess.toLowerCase();
-    if (!isValidWord(g, ALLOWED_GUESSES)) return;
-
-    state.pendingGuess = g;
-
-    if (simultaneousComplete(state)) {
-      state.phase = "setterDecision";
-      state.turn = state.setter;   // ⭐ setter now decides
-      io.to(roomId).emit("stateUpdate", state);
-      return;
-    }
-
-    io.to(roomId).emit("stateUpdate", state);  // ⭐ guesser sees their guess
-    return;
-  }
-
-  return;
-}
-
-
-  // ---------------------
-  // SETTER DECISION
-  // ---------------------
-  if (state.phase === "setterDecision") {
-    if (role !== state.setter) return;
-
-    if (action.type === "SET_SECRET_NEW") {
+    // Setter chooses initial secret
+    if (action.type === "SET_SECRET_NEW" && role === state.setter) {
       const w = action.secret.toLowerCase();
-
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
-      if (!isConsistentWithHistory(state.history, w)) return;
 
       state.secret = w;
-      enterNormalPhase(state, roomId);
-      io.to(roomId).emit("stateUpdate", state);
-      return;
+      state.firstSecretSet = true;
     }
 
-    if (action.type === "SET_SECRET_SAME") {
-      if (!isConsistentWithHistory(state.history, state.secret)) return;
-
-      enterNormalPhase(state, roomId);
-      return;
-    }
-
-    return;
-  }
-
-  // ---------------------
-  // NORMAL
-  // ---------------------
-  if (state.phase === "normal") {
-
+    // Guesser submits initial guess (only allowed after secret exists)
     if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
+      if (!state.firstSecretSet) return;
+
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
 
-      if (g === state.secret) {
-        state.history.push({
-          guess: g,
-          fb: ["🟩","🟩","🟩","🟩","🟩"],
-          fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
-          finalSecret: state.secret
-        });
-        state.phase = "gameOver";
-        state.turn = null;
-        return;
-      }
-
       state.pendingGuess = g;
-
-      // ⭐ Score the guess immediately so keyboard + history update
-      finalizeFeedback(state);
-      
-      // ⭐ Now enter setterDecision
-      state.phase = "setterDecision";
-      state.turn = state.setter;     // setter must act next
-      
-      io.to(roomId).emit("stateUpdate", state);
-      return;
     }
 
-    if ((action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME") &&
-        role === state.setter) {
+    // If both sides have acted → move to normal, setter decides first
+    if (state.secret && state.pendingGuess) {
+      state.phase = "normal";
+      state.turn = state.setter; // Setter decides SAME/NEW
+    }
+
+    return;
+  }
+
+  // ===================================================================
+  // PHASE: NORMAL
+  //   We encode "setterDecision" vs "guesserTurn" using:
+  //   - state.pendingGuess present  → setter is deciding (turn = setter)
+  //   - state.pendingGuess empty    → guesser is guessing (turn = guesser)
+  // ===================================================================
+  if (state.phase === "normal") {
+
+    // --- CASE 1: Setter's decision step (pendingGuess exists) ---
+    if (state.pendingGuess) {
+
+      // Only setter may resolve the pending guess
+      if (role !== state.setter) return;
 
       if (action.type === "SET_SECRET_NEW") {
         const w = action.secret.toLowerCase();
         if (!isValidWord(w, ALLOWED_GUESSES)) return;
         if (!isConsistentWithHistory(state.history, w)) return;
-
         state.secret = w;
-      } else {
+      } else if (action.type === "SET_SECRET_SAME") {
         if (!isConsistentWithHistory(state.history, state.secret)) return;
+        // keep same secret
+      } else {
+        // Other actions during setter decision ignored
+        return;
       }
 
-      enterNormalPhase(state, roomId);
-      io.to(roomId).emit("stateUpdate", state);
+      // Resolve feedback + move to guesser turn
+      finalizeFeedback(state);
+      state.turn = state.guesser;   // next: guesser guesses again
       return;
     }
+
+    // --- CASE 2: Guesser turn (no pendingGuess yet) ---
+    if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
+      const g = action.guess.toLowerCase();
+      if (!isValidWord(g, ALLOWED_GUESSES)) return;
+
+      // Win condition
+      if (g === state.secret) {
+        state.history.push({
+          guess: g,
+          fb: ["🟩","🟩","🟩","🟩","🟩"],
+          fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
+          extraInfo: null,
+          finalSecret: state.secret
+        });
+        state.phase = "gameOver";
+        state.turn = null;
+        state.gameOver = true;
+        io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
+        return;
+      }
+
+      // Otherwise, we store the guess and pass turn to setter
+      state.pendingGuess = g;
+      state.turn = state.setter; // setter decides SAME/NEW next
+      return;
+    }
+
+    return;
+  }
+
+  // ===================================================================
+  // PHASE: gameOver
+  //   Only NEW_MATCH is really meaningful (handled above).
+  // ===================================================================
+  if (state.phase === "gameOver") {
+    // nothing special here (NEW_MATCH already handled)
+    return;
   }
 }
+
 
 // --------------------------------------
 // SOCKET CONNECTIONS
@@ -393,15 +378,22 @@ io.on("connection", socket => {
   });
 
   // GAME ACTION
-  socket.on("gameAction", ({ roomId, action }) => {
-    const room = rooms[roomId];
-    if (!room) return;
+socket.on("gameAction", ({ roomId, action }) => {
+  const room = rooms[roomId];
+  if (!room) return;
 
-    const role = room.players[socket.id];  // guaranteed to be "A" or "B"
-    action.playerId = socket.id;
-    action.role = role;                    // ⭐ pass role explicitly to applyAction
-    applyAction(room, room.state, action, role, roomId);
-  });
+  const role = room.players[socket.id];  // "A" or "B"
+  if (!role) return;                     // safety
+
+  action.playerId = socket.id;
+  action.role = role;
+
+  applyAction(room, room.state, action, role, roomId);
+
+  // 🔁 ALWAYS broadcast the updated state after applying an action
+  io.to(roomId).emit("stateUpdate", room.state);
+});
+
 
   // DISCONNECT
   socket.on("disconnect", () => {
