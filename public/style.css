@@ -273,8 +273,10 @@ input[type="number"],
 
 /* Red outline for guessed letters (setter only) */
 .key-red-outline {
-  border-color: red !important;
+  outline: 3px solid red;
+  outline-offset: -2px;
 }
+
 /* Invisible spacer keys to align the keyboard rows */
 .spacer-key {
   min-width: 32px;      /* same as .key min-width */
