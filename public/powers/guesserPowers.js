@@ -1,34 +1,31 @@
-// /public/powers/guesserPowers.js
+// guesserPowers.js — NON-MODULE VERSION
 
-import { GUESSER_POWERS } from "./powers.js";
-import { sendGameAction } from "../network/socketClient.js";
-
-export const guesserPowerStatus = {
+window.guesserPowerStatus = {
   revealGreen: { used: false },
   freezeSecret: { used: false }
 };
 
-export function activateGuesserPower(powerId, roomId) {
-  if (!GUESSER_POWERS[powerId]) return;
-  if (guesserPowerStatus[powerId].used && GUESSER_POWERS[powerId].once) return;
+window.activateGuesserPower = function (powerId, roomId) {
+  if (!window.GUESSER_POWERS[powerId]) return;
+  if (guesserPowerStatus[powerId].used && window.GUESSER_POWERS[powerId].once) return;
 
-  sendGameAction(roomId, { type: `USE_${powerId.toUpperCase()}` });
+  window.sendGameAction(roomId, { type: `USE_${powerId.toUpperCase()}` });
 
-  if (GUESSER_POWERS[powerId].once) {
+  if (window.GUESSER_POWERS[powerId].once) {
     guesserPowerStatus[powerId].used = true;
-    disableGuesserPowerButton(powerId);
+    window.disableGuesserPowerButton(powerId);
   }
-}
+};
 
-export function disableGuesserPowerButton(powerId) {
+window.disableGuesserPowerButton = function (powerId) {
   const btn = document.getElementById(`power_${powerId}`);
   if (btn) {
     btn.disabled = true;
     btn.classList.add("power-used");
   }
-}
+};
 
-export function resetGuesserPowers() {
+window.resetGuesserPowers = function () {
   for (const key in guesserPowerStatus) {
     guesserPowerStatus[key].used = false;
     const btn = document.getElementById(`power_${key}`);
@@ -37,16 +34,16 @@ export function resetGuesserPowers() {
       btn.classList.remove("power-used");
     }
   }
-}
+};
 
-export function renderGuesserPowerButtons(container) {
+window.renderGuesserPowerButtons = function (container) {
   container.innerHTML = "";
-  for (const key in GUESSER_POWERS) {
-    const p = GUESSER_POWERS[key];
+  for (const key in window.GUESSER_POWERS) {
+    const p = window.GUESSER_POWERS[key];
     const btn = document.createElement("button");
     btn.id = `power_${key}`;
     btn.textContent = p.label;
     btn.className = "power-btn";
     container.appendChild(btn);
   }
-}
+};
