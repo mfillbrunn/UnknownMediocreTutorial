@@ -14,10 +14,16 @@ PowerEngine.register("revealGreen", {
   },
 
   activate(roomId) {
-    window.sendGameAction(roomId, { type: "USE_REVEALGREEN" });
+    sendGameAction(roomId, { type: "USE_REVEALGREEN" });
   },
 
-  renderButton(roomId) {
+  effects: {
+    onPowerUsed({ pos, letter }) {
+      toast(`Green revealed: ${letter} at ${pos + 1}`);
+    }
+  },
+
+  renderButton() {
     const c = $("guesserPowerContainer");
     const btn = document.createElement("button");
     btn.id = "power_revealGreen";
