@@ -122,22 +122,31 @@ function assignRoles(room) {
 // --------------------------------------
 function finalizeFeedback(state) {
   const guess = state.pendingGuess;
+
+  // 1) Let powers modify BEFORE scoring
+  powerEngine.preScore(state, guess);
+
+  // 2) Base scoring
   const fb = scoreGuess(state.secret, guess);
 
-  const powered = modifyFeedback(fb, state, guess);
-
-  state.history.push({
+  // 3) Build history entry
+  const entry = {
     guess,
     fb,
-    fbGuesser: powered.fbGuesser,
-    extraInfo: powered.extraInfo,
+    fbGuesser: [...fb], // default identical
+    extraInfo: null,
     finalSecret: state.secret
-  });
+  };
 
+  // 4) Let powers modify AFTER scoring (feedback/entry edits)
+  powerEngine.postScore(state, entry);
+
+  // 5) Save entry
+  state.history.push(entry);
+
+  // 6) Cleanup
   state.pendingGuess = "";
   state.guessCount++;
-  state.powers.confuseColorsActive = false;
-  state.powers.countOnlyActive = false;
 }
 
 function enterNormalPhase(state, roomId) {
