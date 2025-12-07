@@ -1,43 +1,39 @@
 // /powers/powers/reuseLettersServer.js
 // Server-side logic for Reuse Letters power (setter ability)
-
 const engine = require("../powerEngineServer");
 
-function pickRandomLettersFromHistory(state, max = 4) {
-  const letters = new Set();
+function pickBlackLetters(state) {
+  const black = new Set();
 
-  for (const h of state.history) {
-    for (const ch of h.guess.toUpperCase()) {
-      letters.add(ch);
-    }
+  for (const row of state.history) {
+    row.fb.forEach((tile, i) => {
+      const letter = row.guess[i].toUpperCase();
+      if (tile === "⬛") black.add(letter);
+    });
   }
 
-  const arr = Array.from(letters);
-  if (arr.length <= max) return arr;
-
-  const chosen = [];
-  while (chosen.length < max && arr.length > 0) {
-    const idx = Math.floor(Math.random() * arr.length);
-    chosen.push(arr[idx]);
-    arr.splice(idx, 1);
-  }
-  return chosen;
+  return Array.from(black);
 }
 
 engine.registerPower("reuseletters", {
   apply(state, action, roomId, io) {
-    // One use per match
     if (state.powers.reuseLettersUsed) return;
 
+    const blackLetters = pickBlackLetters(state);
+    const pool = [];
+
+    while (pool.length < 4 && blackLetters.length > 0) {
+      const idx = Math.floor(Math.random() * blackLetters.length);
+      pool.push(blackLetters[idx]);
+      blackLetters.splice(idx, 1);
+    }
+
     state.powers.reuseLettersUsed = true;
+    state.powers.reuseLettersPool = pool;
 
-    // Build pool
-    state.powers.reuseLettersPool = pickRandomLettersFromHistory(state, 4);
-
-    // Notify clients
     io.to(roomId).emit("powerUsed", {
       type: "reuseLetters",
-      letters: state.powers.reuseLettersPool
+      letters: pool
     });
   }
 });
