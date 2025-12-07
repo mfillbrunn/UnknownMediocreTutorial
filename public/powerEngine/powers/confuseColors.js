@@ -1,13 +1,22 @@
 PowerEngine.register("confuseColors", {
-  uiEffects(state, role) {
-    // nothing UI-only needed
+
+  renderButton(roomId) {
+    const btn = document.createElement("button");
+    btn.id = "power_confuseColors";
+    btn.className = "power-btn";
+    btn.textContent = "Blue Mode";
+
+    // Setter-only power → add to setter container
+    $("setterPowerContainer").appendChild(btn);
+
+    btn.onclick = () => sendGameAction(roomId, { type: "USE_CONFUSECOLORS" });
   },
+
+  uiEffects(state, role) {},
 
   historyEffects(entry, isSetter) {
     if (!entry.fbGuesser) return;
 
-    // Blue Mode:
-    // Green & Yellow → Blue
     if (entry.confuseApplied) return;
 
     entry.fbGuesser = entry.fbGuesser.map(tile => {
