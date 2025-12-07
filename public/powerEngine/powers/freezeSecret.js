@@ -1,14 +1,24 @@
 PowerEngine.register("freezeSecret", {
+
+  renderButton(roomId) {
+    const btn = document.createElement("button");
+    btn.id = "power_freezeSecret";
+    btn.className = "power-btn";
+    btn.textContent = "Freeze Secret";
+    $("guesserPowerContainer").appendChild(btn);
+
+    btn.onclick = () =>
+      sendGameAction(roomId, { type: "USE_FREEZESECRET" });
+  },
+
   uiEffects(state, role) {
     if (!state.powers.freezeActive) return;
 
-    if (role === state.setter) {
-      $("newSecretInput").disabled = true;
-      $("submitSetterNewBtn").disabled = true;
+    $("newSecretInput").disabled = true;
+    $("submitSetterNewBtn").disabled = true;
 
-      const bar = $("turnIndicatorSetter");
-      bar.textContent = "SECRET FROZEN";
-      bar.className = "turn-indicator frozen-turn";
-    }
+    const bar = $("turnIndicatorSetter");
+    bar.className = "turn-indicator frozen-turn";
+    bar.textContent = "SECRET FROZEN";
   }
 });
