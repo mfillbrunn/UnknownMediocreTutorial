@@ -1,3 +1,6 @@
+// /powers/powers/reuseLettersServer.js
+// Server-side logic for Reuse Letters power (setter ability)
+
 const engine = require("../powerEngineServer");
 
 function pickRandomLettersFromHistory(state, max = 4) {
@@ -21,13 +24,17 @@ function pickRandomLettersFromHistory(state, max = 4) {
   return chosen;
 }
 
-engine.registerPower("reuseLetters", {
+engine.registerPower("reuseletters", {
   apply(state, action, roomId, io) {
+    // One use per match
     if (state.powers.reuseLettersUsed) return;
 
     state.powers.reuseLettersUsed = true;
+
+    // Build pool
     state.powers.reuseLettersPool = pickRandomLettersFromHistory(state, 4);
 
+    // Notify clients
     io.to(roomId).emit("powerUsed", {
       type: "reuseLetters",
       letters: state.powers.reuseLettersPool
