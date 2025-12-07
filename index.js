@@ -75,8 +75,6 @@ function createInitialState() {
       hideTilePendingCount: 0,
       revealGreenUsed: false,
       revealGreenPos: null,
-      freezeSecretUsed: false,
-      freezeActive: false,
       reuseLettersUsed: false,
       reuseLettersPool: [],
       confuseColorsUsed: false,
@@ -309,7 +307,6 @@ function applyAction(room, state, action, role, roomId) {
 
       // Setter chooses NEW secret
          if (action.type === "SET_SECRET_NEW") {
-           if (state.powers.freezeActive) return;
       const w = action.secret.toLowerCase();
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
       if (!isConsistentWithHistory(state.history, w)) return;
@@ -363,7 +360,6 @@ else if (action.type === "SET_SECRET_SAME") {
 
       // Score guess & update history
       finalizeFeedback(state);
-      state.powers.freezeActive = false;  
       // Next → guesser's turn
       state.turn = state.guesser;
       state.powerUsedThisTurn = false;
