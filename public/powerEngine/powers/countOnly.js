@@ -1,33 +1,16 @@
 PowerEngine.register("countOnly", {
-  label: "Count-Only",
-  once: true,
+  uiEffects(state, role) {
+    if (role !== state.guesser) return;
+    if (!state.powers.countOnlyActive) return;
 
-  allowed(state, role) {
-    return (
-      state.phase === "normal" &&
-      role === state.setter &&
-      state.turn === state.setter &&
-      !state.powerUsedThisTurn &&
-      !state.powers.countOnlyUsed
-    );
+    $("knownPatternGuesser").textContent = "?????";
+    $("mustContainGuesser").textContent = "hidden";
   },
 
-  activate(roomId) {
-    sendGameAction(roomId, { type: "USE_COUNTONLY" });
-  },
+  historyEffects(entry, isSetter) {
+    if (!entry.extraInfo) return;
+    if (isSetter) return;
 
-  effects: {
-    onPowerUsed() {
-      toast("Setter used Count-Only");
-    }
-  },
-
-  renderButton() {
-    const c = $("setterPowerContainer");
-    const btn = document.createElement("button");
-    btn.id = "power_countOnly";
-    btn.className = "power-btn";
-    btn.textContent = this.label;
-    c.appendChild(btn);
+    entry.fbGuesser = ["❓","❓","❓","❓","❓"];
   }
 });
