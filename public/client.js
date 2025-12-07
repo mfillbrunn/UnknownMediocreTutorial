@@ -307,7 +307,13 @@ if (state.phase === "simultaneous") {
 }
 
 function updateSetterScreen() {
-
+if (state.turn !== state.setter) {
+  // NOT setter turn → lock everything immediately
+  $("newSecretInput").disabled = true;
+  $("submitSetterNewBtn").disabled = true;
+  $("submitSetterSameBtn").disabled = true;
+  return;
+}
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   $("pendingGuessDisplay").textContent =
     state.phase === "simultaneous"
