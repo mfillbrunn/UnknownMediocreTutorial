@@ -57,7 +57,6 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
   container.innerHTML = "";
 
   const isGuesser = target === "guesser";
-  console.log("Rendering keyboard. target =", target, "isGuesser =", isGuesser);
   
   KEYBOARD_LAYOUT.forEach(row => {
     const rowDiv = document.createElement("div");
