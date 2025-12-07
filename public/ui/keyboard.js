@@ -26,31 +26,28 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
       const fb = fbArr[i];
 
       // PRIORITY SYSTEM
-      if (fb === "🟩") {
-        // Green beats everything, final result
-        return "green";
-      }
-
       if (fb === "🟦") {
-        // Blue beats yellow/gray/unknown, but NOT green
-        if (strongest !== "green") {
-          strongest = "blue";
+          if (strongest !== "green") strongest = "blue";
+          continue;   // Do NOT check deeper states for this round
         }
-      }
-
-      if (fb === "🟨") {
-        // Yellow beats gray/unknown
-        if (strongest !== "green" && strongest !== "blue") {
-          strongest = "yellow";
+        
+        // GREEN always overrides *everything except blue in this same round*
+        if (fb === "🟩") {
+          strongest = "green";
+          continue;
         }
-      }
-
-      if (fb === "⬛") {
-        // Gray beats unknown
-        if (!strongest) strongest = "gray";
+        
+        if (fb === "🟨") {
+          if (strongest !== "green" && strongest !== "blue") {
+            strongest = "yellow";
+          }
+        }
+        
+        if (fb === "⬛") {
+          if (!strongest) strongest = "gray";
+        }
       }
     }
-  }
 
   return strongest;
 }
