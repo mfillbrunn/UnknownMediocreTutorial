@@ -1,3 +1,5 @@
+//FREEZE 
+
 const engine = require("../powerEngineServer");
 
 engine.registerPower("freezesecret", {
