@@ -1,39 +1,75 @@
-// /public/ui/constraints.js — NON-MODULE VERSION
+// /public/ui/constraints.js — MODULAR VERSION (no power logic inside)
 
 window.getPattern = function (state, isSetterView) {
-  let res = ["-", "-", "-", "-", "-"];
+  let pattern = ["-", "-", "-", "-", "-"];
 
-  if (!state || !state.history || !state.history.length) {
-    return res.join("");
+  if (!state?.history?.length) {
+    // Allow powers to override even when empty
+    return applyPatternPowers(pattern, state, isSetterView);
   }
 
-  for (const h of state.history) {
-    const fbArray = isSetterView ? h.fb : h.fbGuesser;
+  for (const entry of state.history) {
+    const fbArray = isSetterView ? entry.fb : entry.fbGuesser;
     if (!fbArray) continue;
 
     for (let i = 0; i < 5; i++) {
       if (fbArray[i] === "🟩") {
-        res[i] = h.guess[i].toUpperCase();
+        pattern[i] = entry.guess[i].toUpperCase();
       }
     }
   }
 
-  return res.join("");
+  return applyPatternPowers(pattern, state, isSetterView);
 };
+
+// ------- APPLY POWER MODS -------
+function applyPatternPowers(pattern, state, isSetterView) {
+  // Let power modules rewrite / hide / modify pattern
+  if (window.PowerEngine) {
+    for (const id in PowerEngine.powers) {
+      const mod = PowerEngine.powers[id];
+      if (mod.patternEffects) {
+        mod.patternEffects(state, isSetterView, pattern);
+      }
+    }
+  }
+  return pattern.join("");
+}
+
+// ----------------------------------------------------------
 
 window.getMustContainLetters = function (state) {
-  const s = new Set();
-  if (!state || !state.history || !state.history.length) return [];
+  const must = new Set();
+  if (!state?.history?.length) {
+    return applyMustContainPowers([], state);
+  }
 
-  for (const h of state.history) {
+  for (const entry of state.history) {
     for (let i = 0; i < 5; i++) {
-      if (h.fb[i] === "🟩" || h.fb[i] === "🟨") {
-        s.add(h.guess[i].toUpperCase());
+      const fb = entry.fb[i]; // Always judge true feedback
+      if (fb === "🟩" || fb === "🟨") {
+        must.add(entry.guess[i].toUpperCase());
       }
     }
   }
-  return Array.from(s);
+
+  return applyMustContainPowers(Array.from(must), state);
 };
+
+// ------- APPLY POWER MODS -------
+function applyMustContainPowers(arr, state) {
+  if (window.PowerEngine) {
+    for (const id in PowerEngine.powers) {
+      const mod = PowerEngine.powers[id];
+      if (mod.mustContainEffects) {
+        mod.mustContainEffects(state, arr);
+      }
+    }
+  }
+  return arr;
+}
+
+// ----------------------------------------------------------
 
 window.formatPattern = function (pattern) {
   return pattern.split("").join(" ");
