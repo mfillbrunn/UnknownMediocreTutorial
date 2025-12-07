@@ -28,8 +28,7 @@ const { scoreGuess } = require("./game-engine/scoring.js");
 const { isConsistentWithHistory } = require("./game-engine/history.js");
 const { isValidWord, parseWordlist } = require("./game-engine/validation.js");
 const { modifyFeedback } = require("./game-engine/modifyFeedback.js");
-const { applySetterPower, applyGuesserPower } = require("./powers/applyPowers");
-
+const powerEngine = require("./powers/powerEngineServer");
 // --------------------------------------
 let ALLOWED_GUESSES = [];
 try {
@@ -228,24 +227,17 @@ function applyAction(room, state, action, role, roomId) {
   io.to(roomId).emit("stateUpdate", state);
   return;
 }
-
-
   // ---------------------
   // POWERS
   // ---------------------
  if (action.type.startsWith("USE_")) {
   const powerId = action.type.replace("USE_", "").toLowerCase();
-
   if (state.phase === "simultaneous") return;
   if (state.powerUsedThisTurn) return;
-
   state.powerUsedThisTurn = true;
-
   powerEngine.applyPower(powerId, state, action, roomId, io);
   return;
 }
-
-
   // ===================================================================
   // ⭐ PHASE: SIMULTANEOUS
   // ===================================================================
@@ -327,8 +319,6 @@ function applyAction(room, state, action, role, roomId) {
       }
     }
 
-
-      // Setter chooses SAME secret
       // Setter chooses SAME secret
 else if (action.type === "SET_SECRET_SAME") {
   if (!isConsistentWithHistory(state.history, state.secret)) return;
@@ -353,7 +343,6 @@ else if (action.type === "SET_SECRET_SAME") {
     return;
   }
 }
-
 
       // Score guess & update history
       finalizeFeedback(state);
@@ -408,7 +397,6 @@ else if (action.type === "SET_SECRET_SAME") {
   // ===================================================================
   if (state.phase === "gameOver") return;
 }
-
 
 // --------------------------------------
 // SOCKET CONNECTIONS
