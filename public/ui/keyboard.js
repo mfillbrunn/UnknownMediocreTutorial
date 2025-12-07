@@ -10,7 +10,9 @@ window.KEYBOARD_LAYOUT = [
 function getLetterStatusFromHistory(letter, state, isGuesser) {
   if (!state?.history) return null;
 
-  let best = null;
+  // Track the strongest signal seen so far
+  let strongest = null;
+
   const fbKey = isGuesser ? "fbGuesser" : "fb";
 
   for (const h of state.history) {
@@ -22,15 +24,37 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
       if (guess[i] !== letter) continue;
 
       const fb = fbArr[i];
-      if (fb === "🟩") best = "green";
-      else if (fb === "🟨" && best !== "green") best = "yellow";
-      else if (fb === "⬛" && !best) best = "gray";
-      else if (fb === "🟦" ) best = "blue";
+
+      // PRIORITY SYSTEM
+      if (fb === "🟩") {
+        // Green beats everything, final result
+        return "green";
+      }
+
+      if (fb === "🟦") {
+        // Blue beats yellow/gray/unknown, but NOT green
+        if (strongest !== "green") {
+          strongest = "blue";
+        }
+      }
+
+      if (fb === "🟨") {
+        // Yellow beats gray/unknown
+        if (strongest !== "green" && strongest !== "blue") {
+          strongest = "yellow";
+        }
+      }
+
+      if (fb === "⬛") {
+        // Gray beats unknown
+        if (!strongest) strongest = "gray";
+      }
     }
   }
 
-  return best;
+  return strongest;
 }
+
 
 window.renderKeyboard = function (state, container, target, onKeyClick) {
   container.innerHTML = "";
