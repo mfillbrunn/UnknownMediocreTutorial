@@ -293,7 +293,6 @@ function applyAction(room, state, action, role, roomId) {
       
       state.phase = "normal";
       state.turn = state.setter;   // setter must decide first
-      io.to(roomId).emit("stateUpdate", state);
     }
 
     return;
