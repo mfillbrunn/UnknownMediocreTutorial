@@ -492,15 +492,19 @@ socket.on("gameAction", ({ roomId, action }) => {
   applyAction(room, room.state, action, role, roomId);
 
   // ⭐ SUPPRESS BROADCAST DURING SIMULTANEOUS PHASE until BOTH players act
-  if (room.state.phase === "simultaneous") {
-    io.to(roomId).emit("stateUpdate", room.state);
-    if (!(room.state.secret && room.state.pendingGuess)) {
-      return; // do NOT broadcast yet
+  // --- Simultaneous phase — only send state when BOTH actions are submitted
+    if (room.state.phase === "simultaneous") {
+    
+      // Always send update to keep inputs reactive
+      io.to(roomId).emit("stateUpdate", room.state);
+    
+      // If both players have not submitted, stop here → NO second broadcast
+      if (!(room.state.secret && room.state.pendingGuess)) return;
     }
-  }
+    
+    // Normal phase → single broadcast
+    io.to(roomId).emit("stateUpdate", room.state);
 
-  // ⭐ Only ONE broadcast
-  io.to(roomId).emit("stateUpdate", room.state);
 });
 
   // DISCONNECT
@@ -514,4 +518,12 @@ socket.on("gameAction", ({ roomId, action }) => {
 
 // --------------------------------------
 const PORT = process.env.PORT || 3000;
+setInterval(() => {
+  for (const [roomId, room] of Object.entries(rooms)) {
+    if (Object.keys(room.players).length === 0) {
+      console.log("Cleaning empty room:", roomId);
+      delete rooms[roomId];
+    }
+  }
+}, 1000 * 60 * 10); // every 10 minutes
 server.listen(PORT, () => console.log("VS Wordle server running on", PORT));
