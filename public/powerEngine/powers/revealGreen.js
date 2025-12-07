@@ -1,23 +1,26 @@
-// /public/powerEngine/powers/revealGreen.js
-
 PowerEngine.register("revealGreen", {
-  
-  // When showing history, force the revealed green
+
+  renderButton(roomId) {
+    const btn = document.createElement("button");
+    btn.id = "power_revealGreen";
+    btn.className = "power-btn";
+    btn.textContent = "Reveal Green";
+    $("guesserPowerContainer").appendChild(btn);
+
+    btn.onclick = () =>
+      sendGameAction(roomId, { type: "USE_REVEALGREEN" });
+  },
+
   historyEffects(entry, isSetter) {
     if (isSetter) return;
-    if (!entry || !entry.fbGuesser) return;
-
-    // The position comes from state.revealGreenInfo, NOT from the entry
     const st = window.state;
+
     if (!st?.revealGreenInfo) return;
 
-    const { pos, letter } = st.revealGreenInfo;
-    if (pos == null) return;
-
+    const { pos } = st.revealGreenInfo;
     entry.fbGuesser[pos] = "🟩";
   },
 
-  // When rendering the pattern at top
   patternEffects(state, isSetterView, pattern) {
     if (isSetterView) return;
     if (!state.revealGreenInfo) return;
