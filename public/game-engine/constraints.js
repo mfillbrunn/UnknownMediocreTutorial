@@ -10,6 +10,7 @@ window.getPattern = function(state, isSetter) {
 
   // Use ONLY greens from history
   for (const h of state.history) {
+    if (h.ignoreConstraints) continue;
     for (let i = 0; i < 5; i++) {
       if (h.fb[i] === "🟩") {
         pattern[i] = h.guess[i].toUpperCase();
@@ -35,8 +36,9 @@ window.getMustContainLetters = function(state) {
 
   // 1. Collect information from history
   for (const h of state.history) {
+    if (h.ignoreConstraints) continue;
     const guess = h.guess.toUpperCase();
-
+    
     // First pass — identify green positions
     for (let i = 0; i < 5; i++) {
       if (h.fb[i] === "🟩") {
