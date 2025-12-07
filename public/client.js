@@ -34,7 +34,7 @@ fetch("wordlists/allowed_guesses.txt")
   .then(t => {
     t.split(/\s+/).forEach(w => window.ALLOWED_GUESSES.add(w.trim().toLowerCase()));
   });
-
+PowerEngine.renderButtons(roomId);
 // -----------------------------------------------------
 // AUTO REJOIN
 // -----------------------------------------------------
@@ -68,14 +68,11 @@ onAnimateTurn(({ type }) => {
   }
 });
 
-// POWER notifications
-onPowerUsed(({ type, letters, pos, letter }) => {
-  if (type === "reuseLetters") toast(`Setter reusable letters: ${letters.join(", ")}`);
-  if (type === "confuseColors") toast("Setter used Blue Mode");
-  if (type === "countOnly") toast("Setter used Count-Only");
-  if (type === "hideTile") toast("Setter hid a tile");
-  if (type === "revealGreen") toast(`Green revealed: ${letter} at ${pos+1}`);
-  if (type === "freezeSecret") toast("Guesser froze the secret");
+onPowerUsed((data) => {
+  const mod = PowerEngine.powers[data.type];
+  if (mod?.effects?.onPowerUsed) {
+    mod.effects.onPowerUsed(data);
+  }
 });
 
 // LOBBY EVENTS
@@ -297,16 +294,6 @@ if (state.phase === "simultaneous") {
     // Guesser → YOUR TURN
     guesserBar.textContent = "YOUR TURN";
     guesserBar.className = "turn-indicator your-turn";
-
-    // Setter → WAIT
-    if (state.powers.freezeActive) {
-  // ⭐ SECRET FROZEN BAR
-  setterBar.textContent = "SECRET FROZEN";
-  setterBar.className = "turn-indicator frozen-turn";
-} else {
-  setterBar.textContent = "WAIT";
-  setterBar.className = "turn-indicator wait-turn";
-}
     return;
   }
 }
@@ -365,21 +352,9 @@ function updateSetterScreen() {
       previewBox.textContent = `Preview: ${fbSame.join("")}`;
     }
   }
-  Object.keys(SETTER_POWERS).forEach(key => {
-  const btn = $("power_" + key);
-  if (!btn) return;
 
-  const shouldDisable =
-    state.phase === "simultaneous" ||
-    state.powerUsedThisTurn ||
-    !(myRole === state.setter && state.turn === state.setter);
-
-  btn.disabled = shouldDisable;
-  btn.classList.toggle("power-used", shouldDisable);
-    btn.onclick = shouldDisable
-    ? null
-    : () => activateSetterPower(key, roomId);
-});
+// APPLY POWER UI EFFECTS
+  PowerEngine.applyUI(state, myRole, roomId);
   // ---------------------------------------------------------------------
   // INPUT LOCKING LOGIC
   // ---------------------------------------------------------------------
@@ -387,8 +362,7 @@ function updateSetterScreen() {
   state.phase === "simultaneous" && !!state.secret;
 
 const shouldLock =
-  state.phase === "gameOver" ||
-  state.powers.freezeActive ||
+  state.phase === "gameOver" 
 
   // 🚫 Lock setter in simultaneous phase *only after* first submission
   (state.phase === "simultaneous" && setterSubmittedSimultaneous) ||
@@ -461,21 +435,7 @@ const canGuess =
    !state.pendingGuess &&
    state.turn === state.guesser);
 
-    Object.keys(GUESSER_POWERS).forEach(key => {
-  const btn = $("power_" + key);
-  if (!btn) return;
-
-  const shouldDisable =
-    state.phase === "simultaneous" ||
-    state.powerUsedThisTurn ||
-    !(myRole === state.guesser && state.turn === state.guesser);
-
-  btn.disabled = shouldDisable;
-  btn.classList.toggle("power-used", shouldDisable);
-      btn.onclick = shouldDisable
-    ? null
-    : () => activateGuesserPower(key, roomId);
-});
+    PowerEngine.applyUI(state, myRole, roomId);
 
   // ---------------------------
   // ENABLE / DISABLE INPUT
@@ -632,22 +592,7 @@ $("submitSetterSameBtn").onclick = () => {
   sendGameAction(roomId, { type: "SET_SECRET_SAME" });
 };
 
-// Powers
-function setupPowerButtons() {
-  renderSetterPowerButtons($("setterPowerContainer"));
-  Object.keys(SETTER_POWERS).forEach(key => {
-    const btn = $("power_" + key);
-    if (btn) btn.onclick = () => activateSetterPower(key, roomId);
-  });
 
-  renderGuesserPowerButtons($("guesserPowerContainer"));
-  Object.keys(GUESSER_POWERS).forEach(key => {
-    const btn = $("power_" + key);
-    if (btn) btn.onclick = () => activateGuesserPower(key, roomId);
-  });
-}
-
-setupPowerButtons();
 
 $("newMatchBtn").onclick = () => {
   sendGameAction(roomId, { type: "NEW_MATCH" });
