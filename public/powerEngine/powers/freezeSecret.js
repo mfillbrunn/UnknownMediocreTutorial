@@ -14,7 +14,7 @@ PowerEngine.register("freezeSecret", {
   },
 
   activate(roomId) {
-    window.sendGameAction(roomId, { type: "USE_FREEZESECRET" });
+    sendGameAction(roomId, { type: "USE_FREEZESECRET" });
   },
 
   effects: {
@@ -27,10 +27,14 @@ PowerEngine.register("freezeSecret", {
         bar.textContent = "SECRET FROZEN";
         bar.className = "turn-indicator frozen-turn";
       }
+    },
+
+    onPowerUsed() {
+      toast("Guesser froze the secret");
     }
   },
 
-  renderButton(roomId) {
+  renderButton() {
     const c = $("guesserPowerContainer");
     const btn = document.createElement("button");
     btn.id = "power_freezeSecret";
