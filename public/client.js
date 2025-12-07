@@ -161,6 +161,7 @@ function updateUI() {
   updateTurnIndicators();
   updateSummaryIfGameOver();
   if (state.phase !== "lobby") hide("lobby");
+  PowerEngine.applyUI(state, myRole, roomId);
 }
 
 // Update menu info
@@ -301,7 +302,6 @@ if (state.phase === "simultaneous") {
     guesserBar.className = "turn-indicator your-turn";
     return;
   }
-  PowerEngine.applyUI(state, myRole, roomId);
 }
 
 // -----------------------------------------------------
@@ -401,7 +401,6 @@ $("submitSetterSameBtn").disabled = !isDecisionStep;
 
   $("mustContainSetter").textContent =
     getMustContainLetters(state).join(", ") || "none";
-  PowerEngine.applyUI(state, myRole, roomId);
 }
 
 
@@ -471,7 +470,6 @@ const canGuess =
 
   $("mustContainGuesser").textContent =
     getMustContainLetters(state).join(", ") || "none";
-  PowerEngine.applyUI(state, myRole, roomId);
 }
 
 
