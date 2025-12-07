@@ -457,19 +457,20 @@ input[type="number"],
   color: black !important;
 }
 
-/* Temporary Disabled (wrong turn, simultaneous, etc.) */
+/* Temporary disabled (wrong turn, simultaneous, etc.) */
 .disabled-btn {
   opacity: 0.5;
   filter: grayscale(50%);
   cursor: not-allowed;
 }
 
-/* Permanent USED — U3 style */
+/* Permanently USED (U3) */
 .power-used {
-  background: #dcdcdc !important;      /* light grey */
-  color: #555 !important;              /* darker text */
-  text-decoration: line-through;       /* strike-through */
-  opacity: 0.85;
+  background: #dcdcdc !important;
+  color: #555 !important;
+  text-decoration: line-through;
+  opacity: 0.9;
   cursor: not-allowed;
 }
+
 
