@@ -34,7 +34,7 @@ fetch("wordlists/allowed_guesses.txt")
   .then(t => {
     t.split(/\s+/).forEach(w => window.ALLOWED_GUESSES.add(w.trim().toLowerCase()));
   });
-PowerEngine.renderButtons(roomId);
+
 // -----------------------------------------------------
 // AUTO REJOIN
 // -----------------------------------------------------
@@ -150,7 +150,12 @@ onStateUpdate(newState => {
 // UI UPDATE LOGIC
 // -----------------------------------------------------
 function updateUI() {
+  // Render power buttons once AFTER DOM + state exists
   if (!state) return;
+  if (!PowerEngine._initialized && roomId) {
+    PowerEngine.renderButtons(roomId);
+    PowerEngine._initialized = true;
+  }
   updateMenu();
   updateScreens();
   updateTurnIndicators();
@@ -296,6 +301,7 @@ if (state.phase === "simultaneous") {
     guesserBar.className = "turn-indicator your-turn";
     return;
   }
+  PowerEngine.applyUI(state, myRole, roomId);
 }
 
 // -----------------------------------------------------
@@ -353,8 +359,7 @@ function updateSetterScreen() {
     }
   }
 
-// APPLY POWER UI EFFECTS
-  PowerEngine.applyUI(state, myRole, roomId);
+
   // ---------------------------------------------------------------------
   // INPUT LOCKING LOGIC
   // ---------------------------------------------------------------------
@@ -362,13 +367,10 @@ function updateSetterScreen() {
   state.phase === "simultaneous" && !!state.secret;
 
 const shouldLock =
-  state.phase === "gameOver" 
-
-  // 🚫 Lock setter in simultaneous phase *only after* first submission
+  state.phase === "gameOver" ||
   (state.phase === "simultaneous" && setterSubmittedSimultaneous) ||
-
-  // 🚫 In normal phase: lock except when setter must act (decision or new secret)
   (!isSimultaneous && !isDecisionStep && !isSetterNormalTurn);
+
 
 $("newSecretInput").disabled = shouldLock;
 $("submitSetterNewBtn").disabled = shouldLock;
@@ -399,6 +401,7 @@ $("submitSetterSameBtn").disabled = !isDecisionStep;
 
   $("mustContainSetter").textContent =
     getMustContainLetters(state).join(", ") || "none";
+  PowerEngine.applyUI(state, myRole, roomId);
 }
 
 
@@ -435,8 +438,6 @@ const canGuess =
    !state.pendingGuess &&
    state.turn === state.guesser);
 
-    PowerEngine.applyUI(state, myRole, roomId);
-
   // ---------------------------
   // ENABLE / DISABLE INPUT
   // ---------------------------
@@ -470,6 +471,7 @@ const canGuess =
 
   $("mustContainGuesser").textContent =
     getMustContainLetters(state).join(", ") || "none";
+  PowerEngine.applyUI(state, myRole, roomId);
 }
 
 
