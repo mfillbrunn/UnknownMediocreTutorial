@@ -10,7 +10,7 @@ window.renderHistory = function (state, container, isSetter) {
 
   for (const entry of state.history) {
     // Let power modules transform this entry if needed
-    PowerEngine.applyHistory(entry, isSetter);
+    PowerEngine.applyHistoryEffects(entry, isSetter);
 
     const row = document.createElement("div");
     row.className = "history-row";
