@@ -12,14 +12,18 @@ engine.registerPower("freezesecret", {
     io.to(roomId).emit("powerUsed", { type: "freezeSecret" });
   },
 
-  // Setter cannot change secret while freeze is active
+  // NEW: block actions here
+  beforeSetterSecretChange(state, action) {
+    if (state.powers.freezeActive) return true;
+    return false;
+  },
+
   postScore(state, entry) {
     if (state.powers.freezeActive) {
       entry.freezeApplied = true;
     }
   },
 
-  // Freeze ends when the setter finishes their decision turn
   turnStart(state, role) {
     if (state.phase === "normal" && role === state.guesser) {
       state.powers.freezeActive = false;
