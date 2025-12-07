@@ -14,10 +14,16 @@ PowerEngine.register("reuseLetters", {
   },
 
   activate(roomId) {
-    window.sendGameAction(roomId, { type: "USE_REUSELETTERS" });
+    sendGameAction(roomId, { type: "USE_REUSELETTERS" });
   },
 
-  renderButton(roomId) {
+  effects: {
+    onPowerUsed({ letters }) {
+      toast(`Setter reusable letters: ${letters.join(", ")}`);
+    }
+  },
+
+  renderButton() {
     const c = $("setterPowerContainer");
     const btn = document.createElement("button");
     btn.id = "power_reuseLetters";
