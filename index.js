@@ -42,7 +42,6 @@ const io = new Server(server, {
 const { scoreGuess } = require("./game-engine/scoring.js");
 const { isConsistentWithHistory } = require("./game-engine/history.js");
 const { isValidWord, parseWordlist } = require("./game-engine/validation.js");
-const { modifyFeedback } = require("./game-engine/modifyFeedback.js");
 
 // --------------------------------------
 let ALLOWED_GUESSES = [];
