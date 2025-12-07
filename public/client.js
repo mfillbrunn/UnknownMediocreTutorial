@@ -363,8 +363,7 @@ function updateSetterScreen() {
   // ---------------------------------------------------------------------
   // INPUT LOCKING LOGIC
   // ---------------------------------------------------------------------
-  const setterSubmittedSimultaneous =
-  state.phase === "simultaneous" && !!state.secret;
+  const setterSubmittedSimultaneous = state.simultaneousSecretSubmitted;
 
 const shouldLock =
   state.phase === "gameOver" ||
@@ -424,8 +423,7 @@ function updateGuesserScreen() {
   // 1. simultaneous phase, or
   // 2. normal phase AND (no pending guess yet) AND it's guesser's turn
   //
-const hasSubmittedSimultaneousGuess =
-  state.phase === "simultaneous" && !!state.pendingGuess;
+onst hasSubmittedSimultaneousGuess = state.simultaneousGuessSubmitted;
 
 const canGuess =
   (state.phase === "simultaneous" &&
