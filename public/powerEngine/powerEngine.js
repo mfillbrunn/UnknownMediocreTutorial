@@ -1,14 +1,6 @@
+//
 // /public/powerEngine/powerEngine.js
-//
-// Central client-side power engine.
-// Each power module may define:
-//
-//   renderButton(roomId)
-//   uiEffects(state, role)
-//   keyboardEffects(state, role, keyEl, letter)
-//   historyEffects(entry, isSetter)
-//   patternEffects(state, isSetterView, patternArray)
-//   mustContainEffects(state, mustContainArray)
+// FINAL VERSION — Option A (Two disabled states) with U3 permanent USED styling
 //
 
 window.PowerEngine = {
@@ -19,7 +11,7 @@ window.PowerEngine = {
     this.powers[id] = mod;
   },
 
-  // Render all power buttons (each module handles its own UI)
+  // Render power buttons once
   renderButtons(roomId) {
     for (const id in this.powers) {
       const mod = this.powers[id];
@@ -27,38 +19,73 @@ window.PowerEngine = {
     }
   },
 
+  // Called on each stateUpdate
   applyUI(state, role) {
+    // run module-specific visuals first
     for (const id in this.powers) {
       const mod = this.powers[id];
       if (mod.uiEffects) mod.uiEffects(state, role);
     }
+
+    // then run global power availability
+    this.updateButtonStates(state, role);
   },
 
-  applyKeyboard(state, role, keyEl, letter) {
-    for (const id in this.powers) {
-      const mod = this.powers[id];
-      if (mod.keyboardEffects) mod.keyboardEffects(state, role, keyEl, letter);
-    }
-  },
+  // -------------------------------------------------------------
+  // ⭐ CENTRAL BUTTON LOGIC (3 states: active, disabled, used)
+  // -------------------------------------------------------------
+  updateButtonStates(state, role) {
+    const isSetter = (role === state.setter);
+    const isGuesser = (role === state.guesser);
+    const isMyTurn = (state.phase === "normal" && state.turn === role);
 
-  applyHistoryEffects(entry, isSetter) {
-    for (const id in this.powers) {
-      const mod = this.powers[id];
-      if (mod.historyEffects) mod.historyEffects(entry, isSetter);
-    }
-  },
+    const temporaryLock =
+      state.phase !== "normal" ||      // simultaneous, gameOver, lobby
+      state.powerUsedThisTurn;         // another power was used this turn
 
-  applyPattern(state, isSetterView, patternArray) {
     for (const id in this.powers) {
       const mod = this.powers[id];
-      if (mod.patternEffects) mod.patternEffects(state, isSetterView, patternArray);
-    }
-  },
+      const btn = mod.buttonEl;
+      if (!btn) continue;
 
-  applyMustContain(state, arr) {
-    for (const id in this.powers) {
-      const mod = this.powers[id];
-      if (mod.mustContainEffects) mod.mustContainEffects(state, arr);
+      // Determine permanent vs temporary disable
+      const isPermanentlyUsed = state.powers[id + "Used"] === true;
+
+      const wrongRole =
+        (mod.role === "setter" && !isSetter) ||
+        (mod.role === "guesser" && !isGuesser);
+
+      const isTemporarilyDisabled =
+        !isPermanentlyUsed && (
+          temporaryLock ||
+          !isMyTurn ||
+          wrongRole
+        );
+
+      // ------------------------------------------------------
+      // APPLY VISUAL STATES
+      // ------------------------------------------------------
+
+      // 1. Permanent USED (U3 Style)
+      if (isPermanentlyUsed) {
+        btn.disabled = true;
+        btn.classList.add("power-used");     // strike-through + grey
+        btn.classList.remove("disabled-btn");
+        continue; // nothing else applied
+      }
+
+      // 2. Temporary Disabled
+      if (isTemporarilyDisabled) {
+        btn.disabled = true;
+        btn.classList.add("disabled-btn");
+        btn.classList.remove("power-used");
+        continue;
+      }
+
+      // 3. Active (usable)
+      btn.disabled = false;
+      btn.classList.remove("disabled-btn");
+      btn.classList.remove("power-used");
     }
   }
 };
