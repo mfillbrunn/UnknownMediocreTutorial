@@ -270,7 +270,10 @@ input[type="number"],
   background: #787c7e !important;
   color: white;
 }
-
+.key-blue {
+  background: #4da3ff !important;
+  color: white !important;
+}
 /* Red outline for current guess letters */
 .key-red-outline {
   outline: 3px solid #ff4d4d;
