@@ -1,4 +1,4 @@
-// /public/ui/history.js — NON-MODULE VERSION
+// /public/ui/history.js — MODULAR VERSION
 
 window.renderHistory = function (state, container, isSetter) {
   container.innerHTML = "";
@@ -8,33 +8,27 @@ window.renderHistory = function (state, container, isSetter) {
     return;
   }
 
-  for (const h of state.history) {
-    const div = document.createElement("div");
-    div.className = "history-row";
+  for (const entry of state.history) {
+    // Let power modules transform this entry if needed
+    PowerEngine.applyHistory(entry, isSetter);
 
-    const guess = h.guess.toUpperCase();
+    const row = document.createElement("div");
+    row.className = "history-row";
+
+    const guess = entry.guess.toUpperCase();
     let tiles = "";
 
-    if (isSetter) {
-      // Setter sees full true feedback
-      for (const f of h.fb) tiles += f;
-    } else {
-      // Guesser sees masked & modified feedback
-      for (let i = 0; i < 5; i++) {
-        if (h.hiddenIndices?.includes(i)) {
-          tiles += "❓";
-        } else {
-          tiles += h.fbGuesser[i];
-        }
-      }
+    const fbArray = isSetter ? entry.fb : entry.fbGuesser;
 
-      // Count-only mode info
-      if (h.extraInfo) {
-        tiles += `  (${h.extraInfo.greens}🟩, ${h.extraInfo.yellows}🟨)`;
-      }
+    for (let i = 0; i < 5; i++) {
+      tiles += fbArray[i];
     }
 
-    div.textContent = `${guess}   ${tiles}`;
-    container.appendChild(div);
+    if (!isSetter && entry.extraInfo) {
+      tiles += ` (${entry.extraInfo.greens}🟩, ${entry.extraInfo.yellows}🟨)`;
+    }
+
+    row.textContent = `${guess}   ${tiles}`;
+    container.appendChild(row);
   }
 };
