@@ -13,10 +13,16 @@ PowerEngine.register("confuseColors", {
   },
 
   activate(roomId) {
-    window.sendGameAction(roomId, { type: "USE_CONFUSECOLORS" });
+    sendGameAction(roomId, { type: "USE_CONFUSECOLORS" });
   },
 
-  renderButton(roomId) {
+  effects: {
+    onPowerUsed() {
+      toast("Setter used Blue Mode");
+    }
+  },
+
+  renderButton() {
     const c = $("setterPowerContainer");
     const btn = document.createElement("button");
     btn.id = "power_confuseColors";
