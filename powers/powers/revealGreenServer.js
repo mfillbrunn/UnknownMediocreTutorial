@@ -1,5 +1,4 @@
 // /powers/powers/revealGreenServer.js
-// Server-side logic for Reveal Green power (guesser ability)
 const engine = require("../powerEngineServer");
 
 engine.registerPower("revealgreen", {
@@ -17,8 +16,16 @@ engine.registerPower("revealgreen", {
     io.to(roomId).emit("powerUsed", { type: "revealGreen", pos, letter });
   },
 
-  postScore(state) {
-    // only applies once
+  postScore(state, entry) {
+    if (state.powers.revealGreenPos !== null) {
+      entry.revealGreen = {
+        pos: state.powers.revealGreenPos,
+        letter: state.powers.revealGreenLetter
+      };
+    }
+
+    // one-shot
     state.powers.revealGreenPos = null;
+    state.powers.revealGreenLetter = null;
   }
 });
