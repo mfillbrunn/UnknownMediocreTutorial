@@ -1,5 +1,4 @@
-//FREEZE 
-
+// /powers/powers/freezeSecretServer.js
 const engine = require("../powerEngineServer");
 
 engine.registerPower("freezesecret", {
@@ -13,8 +12,15 @@ engine.registerPower("freezesecret", {
     io.to(roomId).emit("powerUsed", { type: "freezeSecret" });
   },
 
+  // Setter cannot change secret while freeze is active
+  postScore(state, entry) {
+    if (state.powers.freezeActive) {
+      entry.freezeApplied = true;
+    }
+  },
+
+  // Freeze ends when the setter finishes their decision turn
   turnStart(state, role) {
-    // When setter's decision turn ends, freeze ends.
     if (state.phase === "normal" && role === state.guesser) {
       state.powers.freezeActive = false;
     }
