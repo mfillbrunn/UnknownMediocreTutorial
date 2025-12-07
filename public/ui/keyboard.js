@@ -25,7 +25,6 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
       if (fb === "🟩") best = "green";
       else if (fb === "🟨" && best !== "green") best = "yellow";
       else if (fb === "⬛" && !best) best = "gray";
-      else if (fb === "🟦") best = "blue";
     }
   }
 
