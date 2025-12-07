@@ -1,41 +1,42 @@
-
-// ==========================================================
-// CLIENT POWER ENGINE — single source of truth for all powers
-// ==========================================================
+// /public/powerEngine/powerEngine.js
+//
+// Central client-side power engine.
+// Each power module registers:
+//   uiEffects(state, role)
+//   keyboardEffects(state, role, keyElement, letter)
+//   historyEffects(entry, isSetter)
+//
+// client.js calls:
+//   PowerEngine.applyUI(state, myRole)
+//   PowerEngine.applyKeyboard(state, myRole, keyEl, letter)
+//   PowerEngine.applyHistory(entry, isSetter)
+//
 
 window.PowerEngine = {
   powers: {},
 
-  // Register a power during load from each power file
-  register(powerId, module) {
-    this.powers[powerId] = module;
+  register(id, mod) {
+    this.powers[id] = mod;
   },
 
-  // Render all buttons (called once during setup)
-  renderButtons(roomId) {
+  applyUI(state, role) {
     for (const id in this.powers) {
-      this.powers[id].renderButton(roomId);
+      const p = this.powers[id];
+      if (p.uiEffects) p.uiEffects(state, role);
     }
   },
 
-  // Apply UI effects (called every updateUI())
-  applyUI(state, myRole, roomId) {
+  applyKeyboard(state, role, keyEl, letter) {
     for (const id in this.powers) {
-      const mod = this.powers[id];
+      const p = this.powers[id];
+      if (p.keyboardEffects) p.keyboardEffects(state, role, keyEl, letter);
+    }
+  },
 
-      // Enable/disable button
-      const btn = document.getElementById("power_" + id);
-      if (btn) {
-        const allowed = mod.allowed(state, myRole);
-        btn.disabled = !allowed;
-        btn.classList.toggle("power-used", !allowed);
-        btn.onclick = allowed ? () => mod.activate(roomId) : null;
-      }
-
-      // Apply optional UI effects declaratively
-      if (mod.effects && mod.effects.applyUI) {
-        mod.effects.applyUI(state, myRole);
-      }
+  applyHistory(entry, isSetter) {
+    for (const id in this.powers) {
+      const p = this.powers[id];
+      if (p.historyEffects) p.historyEffects(entry, isSetter);
     }
   }
 };
