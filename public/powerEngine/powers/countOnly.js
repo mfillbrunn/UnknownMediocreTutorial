@@ -1,5 +1,5 @@
 PowerEngine.register("countOnly", {
-  label: "Count Only",
+  label: "Count-Only",
   once: true,
 
   allowed(state, role) {
@@ -13,10 +13,16 @@ PowerEngine.register("countOnly", {
   },
 
   activate(roomId) {
-    window.sendGameAction(roomId, { type: "USE_COUNTONLY" });
+    sendGameAction(roomId, { type: "USE_COUNTONLY" });
   },
 
-  renderButton(roomId) {
+  effects: {
+    onPowerUsed() {
+      toast("Setter used Count-Only");
+    }
+  },
+
+  renderButton() {
     const c = $("setterPowerContainer");
     const btn = document.createElement("button");
     btn.id = "power_countOnly";
