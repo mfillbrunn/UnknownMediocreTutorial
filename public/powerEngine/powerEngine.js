@@ -41,7 +41,7 @@ window.PowerEngine = {
     }
   },
 
-  applyHistory(entry, isSetter) {
+  applyHistoryEffects(entry, isSetter) {
     for (const id in this.powers) {
       const mod = this.powers[id];
       if (mod.historyEffects) mod.historyEffects(entry, isSetter);
