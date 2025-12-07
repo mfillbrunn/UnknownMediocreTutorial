@@ -144,6 +144,8 @@ socket.on("roleAssigned", ({ role, setterId, guesserId }) => {
 onStateUpdate(newState => {
   state = newState;
   updateUI();
+  updateGuesserScreen();   // 🔥 ADD THIS
+  updateSetterScreen();    // optional, but consistent
 });
 
 // -----------------------------------------------------
