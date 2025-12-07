@@ -57,6 +57,7 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
 
 
 window.renderKeyboard = function (state, container, target, onKeyClick) {
+  console.log("KB HISTORY:", JSON.stringify(state.history[state.history.length - 1], null, 2));
   container.innerHTML = "";
 
   const isGuesser = target === "guesser";
