@@ -13,4 +13,17 @@ PowerEngine.register("countOnly", {
 
     entry.fbGuesser = ["❓","❓","❓","❓","❓"];
   }
+  patternEffects(state, isSetterView, pattern) {
+  if (!state.powers.countOnlyActive && !state.powers.countOnlyUsed) return;
+  if (isSetterView) return; // setter still sees greens
+
+  // hide everything
+  for (let i = 0; i < 5; i++) pattern[i] = "?";
+},
+
+mustContainEffects(state, arr) {
+  if (!state.powers.countOnlyActive && !state.powers.countOnlyUsed) return;
+  return arr.length = 0;
+}
+
 });
