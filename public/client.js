@@ -279,13 +279,8 @@ if (state.phase === "simultaneous") {
   }
 
   // NORMAL PHASE
-  const isSetterTurn =
-    state.phase === "normal" &&
-    !!state.pendingGuess;    // setter must respond
-
-  const isGuesserTurn =
-    state.phase === "normal" &&
-    !state.pendingGuess;     // guesser must guess
+  const isSetterTurn = (state.turn === state.setter);
+  const isGuesserTurn = (state.turn === state.guesser);
 
   if (isSetterTurn) {
     // Setter → YOUR TURN
@@ -303,17 +298,14 @@ if (state.phase === "simultaneous") {
     guesserBar.textContent = "YOUR TURN";
     guesserBar.className = "turn-indicator your-turn";
     return;
+
+    // Setter → WAIT
+    setterBar.textContent = "WAIT";
+    setterBar.className =  "turn-indicator wait-turn";
   }
 }
 
 function updateSetterScreen() {
-if (state.turn !== state.setter && state.phase !== "simultaneous") {
-  // NOT setter turn → lock everything immediately
-  $("newSecretInput").disabled = true;
-  $("submitSetterNewBtn").disabled = true;
-  $("submitSetterSameBtn").disabled = true;
-  return;
-}
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   $("pendingGuessDisplay").textContent =
     state.phase === "simultaneous"
@@ -334,8 +326,7 @@ if (state.turn !== state.setter && state.phase !== "simultaneous") {
   const isSetter = (myRole === state.setter);
   const isSetterTurnNow = (state.turn === state.setter);
   const isGuesserTurnNow = (state.turn === state.guesser);
-
-  const isSimultaneous = (state.phase === "simultaneous");
+  
 
   // Setter decision step (after guesser submits)
   const isDecisionStep =
@@ -366,12 +357,12 @@ if (state.turn !== state.setter && state.phase !== "simultaneous") {
   // INPUT LOCKING LOGIC (FIXED)
   // ---------------------------------------------------------------------
   const setterSubmittedSimultaneous = state.simultaneousSecretSubmitted;
-
+  const isSimultaneous = (state.phase === "simultaneous");
   const shouldLock =
     state.phase === "gameOver" ||
     isGuesserTurnNow ||                     // 🔥 FIX: do not allow setter typing on guesser turn
     (isSimultaneous && setterSubmittedSimultaneous) ||
-    (!isSimultaneous && !isDecisionStep && !isSetterNormalTurn);
+    (!isSimultaneous && state.turn !== state.setter);
 
   $("newSecretInput").disabled = shouldLock;
   $("submitSetterNewBtn").disabled = shouldLock;
