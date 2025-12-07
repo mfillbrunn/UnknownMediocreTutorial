@@ -17,7 +17,7 @@ PowerEngine.register("confuseColors", {
   historyEffects(entry, isSetter) {
     if (!entry.fbGuesser) return;
 
-    if (entry.confuseApplied) return;
+    if (!entry.confuseApplied) return;
 
     entry.fbGuesser = entry.fbGuesser.map(tile => {
       if (tile === "🟩" || tile === "🟨") return "🟦";
