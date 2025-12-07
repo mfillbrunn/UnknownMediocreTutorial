@@ -12,8 +12,12 @@ engine.registerPower("confusecolors", {
     io.to(roomId).emit("powerUsed", { type: "confuseColors" });
   },
 
-  postScore(state) {
-    // effect lasts exactly 1 feedback
-    state.powers.confuseColorsActive = false;
+ postScore(state, entry) {
+  if (state.powers.confuseColorsActive) {
+    entry.confuseApplied = true;
   }
+  // effect ends after one feedback
+  state.powers.confuseColorsActive = false;
+}
+
 });
