@@ -5,7 +5,7 @@ const path = require("path");
 const http = require("http");
 const fs = require("fs");
 const { Server } = require("socket.io");
-
+const powerEngine = require("./powers/powerEngineServer");
 // ------------------------------
 const app = express();
 const server = http.createServer(app);
@@ -233,14 +233,18 @@ function applyAction(room, state, action, role, roomId) {
   // ---------------------
   // POWERS
   // ---------------------
-  if (action.type.startsWith("USE_")) {
-    if (state.phase === "simultaneous") return;
-    if (state.powerUsedThisTurn) return;
-    state.powerUsedThisTurn = true;
-    if (role === state.setter) applySetterPower(state, action, role, roomId, io);
-    if (role === state.guesser) applyGuesserPower(state, action, role, roomId, io);
-    return;
-  }
+ if (action.type.startsWith("USE_")) {
+  const powerId = action.type.replace("USE_", "").toLowerCase();
+
+  if (state.phase === "simultaneous") return;
+  if (state.powerUsedThisTurn) return;
+
+  state.powerUsedThisTurn = true;
+
+  powerEngine.applyPower(powerId, state, action, roomId, io);
+  return;
+}
+
 
   // ===================================================================
   // ⭐ PHASE: SIMULTANEOUS
