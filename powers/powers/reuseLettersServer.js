@@ -1,5 +1,4 @@
 // /powers/powers/reuseLettersServer.js
-// Server-side logic for Reuse Letters power (setter ability)
 const engine = require("../powerEngineServer");
 
 function pickBlackLetters(state) {
@@ -7,8 +6,9 @@ function pickBlackLetters(state) {
 
   for (const row of state.history) {
     row.fb.forEach((tile, i) => {
-      const letter = row.guess[i].toUpperCase();
-      if (tile === "⬛") black.add(letter);
+      if (tile === "⬛") {
+        black.add(row.guess[i].toUpperCase());
+      }
     });
   }
 
@@ -35,5 +35,11 @@ engine.registerPower("reuseletters", {
       type: "reuseLetters",
       letters: pool
     });
+  },
+
+  postScore(state, entry) {
+    if (state.powers.reuseLettersUsed) {
+      entry.reuseLetters = [...state.powers.reuseLettersPool];
+    }
   }
 });
