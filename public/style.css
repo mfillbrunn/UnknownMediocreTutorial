@@ -448,3 +448,8 @@ input[type="number"],
   50%  { left: 100%; }
   100% { left: 150%; }
 }
+.key-reusable {
+  background: #bde0fe !important;
+  border-color: #74c0fc !important;
+  color: black !important;
+}
