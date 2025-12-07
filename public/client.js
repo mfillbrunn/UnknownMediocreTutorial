@@ -307,7 +307,7 @@ if (state.phase === "simultaneous") {
 }
 
 function updateSetterScreen() {
-if (state.turn !== state.setter) {
+if (state.turn !== state.setter && state.phase === "simultaneous") {
   // NOT setter turn → lock everything immediately
   $("newSecretInput").disabled = true;
   $("submitSetterNewBtn").disabled = true;
