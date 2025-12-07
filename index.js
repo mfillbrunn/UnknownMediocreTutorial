@@ -1,11 +1,24 @@
-// index.js — Patched for Automatic Roles, Stable Assignment, Correct Switching, Ready Logic, Max Players
+// index.js — Updated for Modular Power Engine
 
 const express = require("express");
 const path = require("path");
 const http = require("http");
 const fs = require("fs");
 const { Server } = require("socket.io");
+
+// ------------------------------
+// Load server power engine
+// ------------------------------
 const powerEngine = require("./powers/powerEngineServer");
+
+// Register all server-side powers
+require("./powers/powers/hideTileServer");
+require("./powers/powers/reuseLettersServer");
+require("./powers/powers/confuseColorsServer");
+require("./powers/powers/countOnlyServer");
+require("./powers/powers/revealGreenServer");
+require("./powers/powers/freezeSecretServer");
+
 // ------------------------------
 const app = express();
 const server = http.createServer(app);
@@ -24,11 +37,13 @@ const io = new Server(server, {
 });
 
 // ------------------------------
+// Game engine modules
+// ------------------------------
 const { scoreGuess } = require("./game-engine/scoring.js");
 const { isConsistentWithHistory } = require("./game-engine/history.js");
 const { isValidWord, parseWordlist } = require("./game-engine/validation.js");
 const { modifyFeedback } = require("./game-engine/modifyFeedback.js");
-const powerEngine = require("./powers/powerEngineServer");
+
 // --------------------------------------
 let ALLOWED_GUESSES = [];
 try {
@@ -37,6 +52,7 @@ try {
 } catch {}
 
 const rooms = {};
+
 
 // --------------------------------------
 function createInitialState() {
