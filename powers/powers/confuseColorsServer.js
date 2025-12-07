@@ -21,6 +21,7 @@ engine.registerPower("confusecolors", {
     });
   }
   state.powers.confuseColorsActive = false;
+  entry.hideFromConstraints = true;
 }
 
 
