@@ -31,7 +31,9 @@ engine.registerPower("hidetile", {
   },
 
   postScore(state, entry) {
-    entry.hiddenIndices = state.powers.currentHiddenIndices || null;
-    state.powers.currentHiddenIndices = null;
-  }
+  entry.hiddenIndices = state.powers.currentHiddenIndices || null;
+  if (entry.hiddenIndices) entry.hideTileApplied = true;
+  state.powers.currentHiddenIndices = null;
+}
+
 });
