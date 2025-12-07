@@ -1,7 +1,4 @@
 // /powers/powerEngineServer.js
-//
-// Central registry for server-side powers.
-// Each power module registers itself via engine.registerPower().
 
 const engine = {
   powers: {},
@@ -16,7 +13,18 @@ const engine = {
     p.apply(state, action, roomId, io);
   },
 
-  // Called BEFORE scoring a guess (setter or guesser)
+  // NEW HOOK: allow powers to block setter secret changes
+  beforeSetterSecretChange(state, action) {
+    for (const id in this.powers) {
+      const p = this.powers[id];
+      if (typeof p.beforeSetterSecretChange === "function") {
+        const blocked = p.beforeSetterSecretChange(state, action);
+        if (blocked) return true;
+      }
+    }
+    return false;
+  },
+
   preScore(state, guess) {
     for (const id in this.powers) {
       if (typeof this.powers[id].preScore === "function") {
@@ -25,16 +33,14 @@ const engine = {
     }
   },
 
-  // Called AFTER scoring + feedback creation
-  postScore(state, historyEntry) {
+  postScore(state, entry) {
     for (const id in this.powers) {
       if (typeof this.powers[id].postScore === "function") {
-        this.powers[id].postScore(state, historyEntry);
+        this.powers[id].postScore(state, entry);
       }
     }
   },
 
-  // Called when a new turn begins
   turnStart(state, role) {
     for (const id in this.powers) {
       if (typeof this.powers[id].turnStart === "function") {
