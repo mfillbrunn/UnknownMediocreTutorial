@@ -12,8 +12,13 @@ engine.registerPower("countonly", {
     io.to(roomId).emit("powerUsed", { type: "countOnly" });
   },
 
-  postScore(state) {
-    // effect lasts exactly 1 feedback
-    state.powers.countOnlyActive = false;
+postScore(state, entry) {
+  if (state.powers.countOnlyActive) {
+    entry.countOnlyApplied = true;
+    // You may want to blank out fbGuesser entirely:
+    entry.fbGuesser = ["⬛","⬛","⬛","⬛","⬛"];
   }
+  state.powers.countOnlyActive = false;
+}
+
 });
