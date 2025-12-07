@@ -1,29 +1,43 @@
+// /public/powerEngine/powers/countOnly.js
+
 PowerEngine.register("countOnly", {
+
+  // -------- UI EFFECTS (optional overlay hiding) --------
   uiEffects(state, role) {
-    if (role !== state.guesser) return;
     if (!state.powers.countOnlyActive) return;
 
-    $("knownPatternGuesser").textContent = "?????";
-    $("mustContainGuesser").textContent = "hidden";
+    if (role === state.guesser) {
+      $("knownPatternGuesser").textContent = "?????";
+      $("mustContainGuesser").textContent = "hidden";
+    }
   },
 
+  // -------- HISTORY MODIFICATIONS --------
   historyEffects(entry, isSetter) {
-    if (!entry.extraInfo) return;
-    if (isSetter) return;
+    if (!entry.extraInfo) return;   // countOnly data comes from server
+    if (isSetter) return;           // setter should still see everything
 
+    // Hide position feedback:
     entry.fbGuesser = ["❓","❓","❓","❓","❓"];
-  }
+    // BUT keep extraInfo (greens, yellows count)
+  },
+
+  // -------- PATTERN MODIFICATION (constraints.js) --------
   patternEffects(state, isSetterView, pattern) {
-  if (!state.powers.countOnlyActive && !state.powers.countOnlyUsed) return;
-  if (isSetterView) return; // setter still sees greens
+    if (!state.powers.countOnlyActive) return;
+    if (isSetterView) return;   // setter sees true greens
 
-  // hide everything
-  for (let i = 0; i < 5; i++) pattern[i] = "?";
-},
+    // Completely hide pattern
+    for (let i = 0; i < 5; i++) {
+      pattern[i] = "?";
+    }
+  },
 
-mustContainEffects(state, arr) {
-  if (!state.powers.countOnlyActive && !state.powers.countOnlyUsed) return;
-  return arr.length = 0;
-}
+  // -------- MUST CONTAIN MODIFICATION (constraints.js) --------
+  mustContainEffects(state, arr) {
+    if (!state.powers.countOnlyActive) return;
 
+    // Empty must contain list
+    arr.length = 0;
+  }
 });
