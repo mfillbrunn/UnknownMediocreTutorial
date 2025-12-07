@@ -15,13 +15,14 @@ engine.registerPower("confusecolors", {
  postScore(state, entry) {
   if (state.powers.confuseColorsActive) {
     entry.confuseApplied = true;
+    entry.ignoreConstraints = true;
     entry.fbGuesser = entry.fbGuesser.map(t => {
       if (t === "🟩" || t === "🟨") return "🟦";
       return t;
     });
   }
   state.powers.confuseColorsActive = false;
-  entry.ignoreConstraints = true;
+  
 }
 
 
