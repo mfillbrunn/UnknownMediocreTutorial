@@ -57,7 +57,6 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
 
 
 window.renderKeyboard = function (state, container, target, onKeyClick) {
-  console.log("KB HISTORY:", JSON.stringify(state.history[state.history.length - 1], null, 2));
   container.innerHTML = "";
 
   const isGuesser = target === "guesser";
@@ -98,6 +97,10 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
         const letter = symbol;
 
         // Apply base history color:
+        // RESET ALL COLOR CLASSES so new state can overwrite old ones
+        keyEl.classList.remove("key-green", "key-yellow", "key-gray", "key-blue");
+        
+        // Apply updated color state
         const status = getLetterStatusFromHistory(letter, state, isGuesser);
         if (status === "green") keyEl.classList.add("key-green");
         else if (status === "yellow") keyEl.classList.add("key-yellow");
