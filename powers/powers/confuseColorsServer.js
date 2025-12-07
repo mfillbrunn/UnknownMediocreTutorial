@@ -15,9 +15,13 @@ engine.registerPower("confusecolors", {
  postScore(state, entry) {
   if (state.powers.confuseColorsActive) {
     entry.confuseApplied = true;
+    entry.fbGuesser = entry.fbGuesser.map(t => {
+      if (t === "🟩" || t === "🟨") return "🟦";
+      return t;
+    });
   }
-  // effect ends after one feedback
   state.powers.confuseColorsActive = false;
 }
+
 
 });
