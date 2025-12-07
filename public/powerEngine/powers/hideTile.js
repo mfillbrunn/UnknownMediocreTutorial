@@ -1,4 +1,3 @@
-
 PowerEngine.register("hideTile", {
   label: "Hide Tile",
   once: false,
@@ -13,10 +12,16 @@ PowerEngine.register("hideTile", {
   },
 
   activate(roomId) {
-    window.sendGameAction(roomId, { type: "USE_HIDETILE" });
+    sendGameAction(roomId, { type: "USE_HIDETILE" });
   },
 
-  renderButton(roomId) {
+  effects: {
+    onPowerUsed() {
+      toast("Setter hid a tile");
+    }
+  },
+
+  renderButton() {
     const c = $("setterPowerContainer");
     const btn = document.createElement("button");
     btn.id = "power_hideTile";
