@@ -316,6 +316,7 @@ function applyAction(room, state, action, role, roomId) {
 
       // Setter chooses NEW secret
          if (action.type === "SET_SECRET_NEW") {
+           if (powerEngine.beforeSetterSecretChange(state, action)) return;
       const w = action.secret.toLowerCase();
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
       if (!isConsistentWithHistory(state.history, w)) return;
@@ -344,6 +345,7 @@ function applyAction(room, state, action, role, roomId) {
 
       // Setter chooses SAME secret
 else if (action.type === "SET_SECRET_SAME") {
+  if (powerEngine.beforeSetterSecretChange(state, action)) return;
   if (!isConsistentWithHistory(state.history, state.secret)) return;
 
   // ⭐ If SAME = guess → instant win
