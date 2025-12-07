@@ -456,3 +456,20 @@ input[type="number"],
   border-color: #74c0fc !important;
   color: black !important;
 }
+
+/* Temporary Disabled (wrong turn, simultaneous, etc.) */
+.disabled-btn {
+  opacity: 0.5;
+  filter: grayscale(50%);
+  cursor: not-allowed;
+}
+
+/* Permanent USED — U3 style */
+.power-used {
+  background: #dcdcdc !important;      /* light grey */
+  color: #555 !important;              /* darker text */
+  text-decoration: line-through;       /* strike-through */
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
