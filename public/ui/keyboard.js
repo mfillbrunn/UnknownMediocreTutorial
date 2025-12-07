@@ -57,11 +57,11 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
 
 
 window.renderKeyboard = function (state, container, target, onKeyClick) {
-  console.log("Rendering keyboard. target =", target, "isGuesser =", isGuesser);
   container.innerHTML = "";
 
   const isGuesser = target === "guesser";
-
+  console.log("Rendering keyboard. target =", target, "isGuesser =", isGuesser);
+  
   KEYBOARD_LAYOUT.forEach(row => {
     const rowDiv = document.createElement("div");
     rowDiv.className = "key-row";
