@@ -267,6 +267,7 @@ function applyAction(room, state, action, role, roomId) {
 
       state.secret = w;
       state.simultaneousSecretSubmitted = true;
+      state.firstSecretSet = true;  
     }
 
     // Guesser submits initial guess
