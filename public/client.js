@@ -306,16 +306,13 @@ if (state.phase === "simultaneous") {
   }
 }
 
-// -----------------------------------------------------
-// SETTER SCREEN
-// -----------------------------------------------------
 function updateSetterScreen() {
 
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   $("pendingGuessDisplay").textContent =
-  state.phase === "simultaneous"
-    ? "-"                      // hide during simultaneous
-    : (state.pendingGuess?.toUpperCase() || "-");
+    state.phase === "simultaneous"
+      ? "-"
+      : (state.pendingGuess?.toUpperCase() || "-");
 
   renderHistory(state, $("historySetter"), true);
 
@@ -325,59 +322,56 @@ function updateSetterScreen() {
   const guess = state.pendingGuess;
   const typedSecret = $("newSecretInput").value.trim().toLowerCase();
 
-  // BASIC ROLE CHECK
-  const isSetterTurn = myRole === state.setter;
+  // -------------------------------------------
+  // FIXED: ROLE vs TURN
+  // -------------------------------------------
+  const isSetter = (myRole === state.setter);
+  const isSetterTurnNow = (state.turn === state.setter);
+  const isGuesserTurnNow = (state.turn === state.guesser);
 
-  // PHASE CHECKS
-  const isSimultaneous = state.phase === "simultaneous";
+  const isSimultaneous = (state.phase === "simultaneous");
 
-  // Setter is deciding on a guess (previous setterDecision)
+  // Setter decision step (after guesser submits)
   const isDecisionStep =
-      state.phase === "normal" &&
-      !!state.pendingGuess &&
-      isSetterTurn;
+    state.phase === "normal" &&
+    !!state.pendingGuess &&
+    isSetterTurnNow;
 
-  // Setter's own normal turn (after they respond to guess)
+  // Setter's own normal turn (after decision, before next guess)
   const isSetterNormalTurn =
-      state.phase === "normal" &&
-      !state.pendingGuess &&
-      isSetterTurn;
+    state.phase === "normal" &&
+    !state.pendingGuess &&
+    isSetterTurnNow;
 
   // ---------------------------------------------------------------------
   // PREVIEW LOGIC
   // ---------------------------------------------------------------------
   if (isDecisionStep && guess) {
-
-    // If setter typed a NEW secret, preview that
     if (typedSecret.length === 5) {
       const fb = predictFeedback(typedSecret, guess);
       previewBox.textContent = `Preview (new): ${fb.join("")}`;
-    }
-
-    // Otherwise preview SAME secret
-    else if (state.secret.length === 5) {
+    } else if (state.secret.length === 5) {
       const fbSame = predictFeedback(state.secret, guess);
       previewBox.textContent = `Preview: ${fbSame.join("")}`;
     }
   }
 
-
   // ---------------------------------------------------------------------
-  // INPUT LOCKING LOGIC
+  // INPUT LOCKING LOGIC (FIXED)
   // ---------------------------------------------------------------------
   const setterSubmittedSimultaneous = state.simultaneousSecretSubmitted;
 
-const shouldLock =
-  state.phase === "gameOver" ||
-  (state.phase === "simultaneous" && setterSubmittedSimultaneous) ||
-  (!isSimultaneous && !isDecisionStep && !isSetterNormalTurn);
+  const shouldLock =
+    state.phase === "gameOver" ||
+    isGuesserTurnNow ||                     // 🔥 FIX: do not allow setter typing on guesser turn
+    (isSimultaneous && setterSubmittedSimultaneous) ||
+    (!isSimultaneous && !isDecisionStep && !isSetterNormalTurn);
 
+  $("newSecretInput").disabled = shouldLock;
+  $("submitSetterNewBtn").disabled = shouldLock;
 
-$("newSecretInput").disabled = shouldLock;
-$("submitSetterNewBtn").disabled = shouldLock;
-
-// SAME is only allowed when deciding
-$("submitSetterSameBtn").disabled = !isDecisionStep;
+  // SAME only allowed during decision step
+  $("submitSetterSameBtn").disabled = !isDecisionStep;
 
   // ---------------------------------------------------------------------
   // KEYBOARD
@@ -403,6 +397,7 @@ $("submitSetterSameBtn").disabled = !isDecisionStep;
   $("mustContainSetter").textContent =
     getMustContainLetters(state).join(", ") || "none";
 }
+
 
 
 // -----------------------------------------------------
