@@ -146,6 +146,9 @@ onStateUpdate(newState => {
   updateUI();
   updateGuesserScreen();   // 🔥 ADD THIS
   updateSetterScreen();    // optional, but consistent
+  if (state.phase === "normal" && $("guessInput").disabled) {
+  $("guessInput").value = "";
+  }
 });
 
 // -----------------------------------------------------
@@ -297,11 +300,10 @@ if (state.phase === "simultaneous") {
     // Guesser → YOUR TURN
     guesserBar.textContent = "YOUR TURN";
     guesserBar.className = "turn-indicator your-turn";
-    return;
-
-    // Setter → WAIT
+  
     setterBar.textContent = "WAIT";
     setterBar.className =  "turn-indicator wait-turn";
+    return;
   }
 }
 
@@ -360,9 +362,8 @@ function updateSetterScreen() {
   const isSimultaneous = (state.phase === "simultaneous");
   const shouldLock =
     state.phase === "gameOver" ||
-    isGuesserTurnNow ||                     // 🔥 FIX: do not allow setter typing on guesser turn
-    (isSimultaneous && setterSubmittedSimultaneous) ||
-    (!isSimultaneous && state.turn !== state.setter);
+    (state.phase === "simultaneous" && setterSubmittedSimultaneous) ||
+    (state.phase === "normal" && state.turn !== state.setter);
 
   $("newSecretInput").disabled = shouldLock;
   $("submitSetterNewBtn").disabled = shouldLock;
@@ -419,15 +420,12 @@ function updateGuesserScreen() {
   //
 const hasSubmittedSimultaneousGuess = state.simultaneousGuessSubmitted;
 
-const canGuess =
-  (state.phase === "simultaneous" &&
-   isGuesser &&
-   !hasSubmittedSimultaneousGuess) ||
+const inSim = (state.phase === "simultaneous");
+const guessSubmitted = state.simultaneousGuessSubmitted;
 
-  (state.phase === "normal" &&
-   isGuesser &&
-   !state.pendingGuess &&
-   state.turn === state.guesser);
+const canGuess =
+  (inSim && isGuesser && !guessSubmitted) ||
+  (!inSim && isGuesser && !state.pendingGuess && state.turn === state.guesser);
 
   // ---------------------------
   // ENABLE / DISABLE INPUT
