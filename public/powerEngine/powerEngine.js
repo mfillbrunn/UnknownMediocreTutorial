@@ -1,16 +1,3 @@
-// /public/powerEngine/powerEngine.js
-//
-// Central client-side power engine.
-// Each power module may define:
-//
-//   renderButton(roomId)
-//   uiEffects(state, role)
-//   keyboardEffects(state, role, keyEl, letter)
-//   historyEffects(entry, isSetter)
-//   patternEffects(state, isSetterView, patternArray)
-//   mustContainEffects(state, mustContainArray)
-//
-
 window.PowerEngine = {
   powers: {},
   _initialized: false,
@@ -19,7 +6,6 @@ window.PowerEngine = {
     this.powers[id] = mod;
   },
 
-  // Render all power buttons (each module handles its own UI)
   renderButtons(roomId) {
     for (const id in this.powers) {
       const mod = this.powers[id];
@@ -28,10 +14,14 @@ window.PowerEngine = {
   },
 
   applyUI(state, role) {
+    // First run module-specific UI
     for (const id in this.powers) {
       const mod = this.powers[id];
       if (mod.uiEffects) mod.uiEffects(state, role);
     }
+
+    // Then globally update enabled/disabled state of buttons
+    this.updateButtonStates(state, role);
   },
 
   applyKeyboard(state, role, keyEl, letter) {
@@ -59,6 +49,47 @@ window.PowerEngine = {
     for (const id in this.powers) {
       const mod = this.powers[id];
       if (mod.mustContainEffects) mod.mustContainEffects(state, arr);
+    }
+  },
+
+  // --------------------------------------------------------
+  // ⭐ NEW SECTION: Button availability logic
+  // --------------------------------------------------------
+  updateButtonStates(state, role) {
+    const isSetter = (role === state.setter);
+    const isGuesser = (role === state.guesser);
+
+    const turnIsMine =
+      (state.phase === "normal" && state.turn === role);
+
+    const lockAll =
+      state.phase === "gameOver" ||
+      state.phase === "simultaneous" ||
+      state.powerUsedThisTurn;
+
+    for (const id in this.powers) {
+      const mod = this.powers[id];
+      if (!mod.buttonEl) continue;
+
+      // Default: enable or disable based on conditions
+      let disabled = false;
+
+      // Global locks
+      if (lockAll) disabled = true;
+
+      // Power already used this match?
+      if (state.powers[id + "Used"] === true) disabled = true;
+
+      // Turn mismatch?
+      if (state.phase === "normal" && !turnIsMine) disabled = true;
+
+      // Wrong role (Setter-only or Guesser-only)
+      if (mod.role === "setter" && !isSetter) disabled = true;
+      if (mod.role === "guesser" && !isGuesser) disabled = true;
+
+      // Apply to DOM
+      mod.buttonEl.disabled = disabled;
+      mod.buttonEl.classList.toggle("disabled-btn", disabled);
     }
   }
 };
