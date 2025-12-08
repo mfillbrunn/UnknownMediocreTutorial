@@ -113,6 +113,8 @@ onLobbyEvent(evt => {
     hide("menu");
     if (myRole === "A") show("setterScreen");
     if (myRole === "B") show("guesserScreen");
+    $("readyBtn").disabled = true;
+     $("readyBtn").classList.add("disabled");
   }
   if (evt.type === "gameOverShowMenu") {
   hide("setterScreen");
@@ -120,9 +122,8 @@ onLobbyEvent(evt => {
   show("menu");
 
   // enable READY button for next round
-  $("readyBtn").disabled = false;
-  $("readyBtn").classList.remove("disabled");
-  $("readyBtn").textContent = "I'm Ready";
+ $("readyBtn").disabled = true;
+$("readyBtn").classList.add("disabled");
 }
 
 });
@@ -131,11 +132,11 @@ onLobbyEvent(evt => {
 socket.on("roleAssigned", ({ role, setterId, guesserId }) => {
   myRole = role;
   updateRoleLabels();
-
+  
   // ENABLE READY BUTTON HERE
-  $("readyBtn").disabled = false;
-  $("readyBtn").classList.remove("disabled");
-  $("readyBtn").textContent = "I'm Ready";
+  //$("readyBtn").disabled = false;
+  //$("readyBtn").classList.remove("disabled");
+  //$("readyBtn").textContent = "I'm Ready";
 });
 
 
@@ -186,9 +187,13 @@ function updateScreens() {
     hide("menu");
     hide("setterScreen");
     hide("guesserScreen");
+    $("readyBtn").disabled = false;
+    $("readyBtn").classList.remove("disabled");
+    $("readyBtn").textContent = "I'm Ready";
     return;
   }
-
+ $("readyBtn").disabled = true;
+ $("readyBtn").classList.add("disabled");
   // GAME OVER → show menu + summary, hide gameplay screens
   if (state.phase === "gameOver") {
     hide("setterScreen");
