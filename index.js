@@ -259,7 +259,8 @@ function applyAction(room, state, action, role, roomId) {
   // Tell clients to show lobby UI again
   emitLobby(roomId, { type: "showLobby" });
 
-  io.to(roomId).emit("stateUpdate", state);
+  emitStateForAllPlayers(roomId, room, io);
+
   return;
 }
   // ---------------------
@@ -348,7 +349,8 @@ function applyAction(room, state, action, role, roomId) {
         state.gameOver = true;
     
         io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
-        io.to(roomId).emit("stateUpdate", state);
+        emitStateForAllPlayers(roomId, room, io);
+
         emitLobby(roomId, { type: "gameOverShowMenu" });
         return;
       }
@@ -374,7 +376,8 @@ else if (action.type === "SET_SECRET_SAME") {
     state.gameOver = true;
 
     io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
-    io.to(roomId).emit("stateUpdate", state);
+    emitStateForAllPlayers(roomId, room, io);
+
     emitLobby(roomId, { type: "gameOverShowMenu" });
     return;
   }
@@ -385,7 +388,7 @@ else if (action.type === "SET_SECRET_SAME") {
       // Next → guesser's turn
       state.turn = state.guesser;
       state.powerUsedThisTurn = false;
-      io.to(roomId).emit("stateUpdate", state);
+      emitStateForAllPlayers(roomId, room, io);
       return;
     }
 
@@ -411,7 +414,7 @@ else if (action.type === "SET_SECRET_SAME") {
         state.gameOver = true;
 
         io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
-        io.to(roomId).emit("stateUpdate", state);
+        emitStateForAllPlayers(roomId, room, io);
         emitLobby(roomId, { type: "gameOverShowMenu" });
         return;
       }
@@ -420,7 +423,7 @@ else if (action.type === "SET_SECRET_SAME") {
       state.pendingGuess = g;
       state.turn = state.setter;
       state.powerUsedThisTurn = false;
-      io.to(roomId).emit("stateUpdate", state);
+      emitStateForAllPlayers(roomId, room, io);
       return;
     }
 
@@ -459,7 +462,7 @@ io.on("connection", socket => {
 
     cb({ ok: true, roomId });
   
-    io.to(roomId).emit("stateUpdate", rooms[roomId].state);
+    emitStateForAllPlayers(roomId, room, io);
   });
 
 
