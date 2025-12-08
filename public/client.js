@@ -29,10 +29,10 @@ function shakeInput(element) {
 // WORD LIST — loaded for local validation
 window.ALLOWED_GUESSES = new Set();
 
-fetch("wordlists/allowed_guesses.txt")
-  .then(r => r.text())
-  .then(t => {
-    t.split(/\s+/).forEach(w => window.ALLOWED_GUESSES.add(w.trim().toLowerCase()));
+fetch("/api/allowed-guesses")
+  .then(r => r.json())
+  .then(words => {
+    words.forEach(w => window.ALLOWED_GUESSES.add(w));
   });
 
 // -----------------------------------------------------
