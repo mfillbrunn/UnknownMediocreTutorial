@@ -339,7 +339,7 @@ function handleSetterKeyboard(letter, special) {
 }
 
 function updateSetterScreen() {
-
+  $("newSecretInput").value = "";
   // Secret + Guess UI --------------------------------------------
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   $("pendingGuessDisplay").textContent =
