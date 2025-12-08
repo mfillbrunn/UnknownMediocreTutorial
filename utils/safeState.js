@@ -61,7 +61,7 @@ function buildSafeStateForPlayer(state, role) {
     delete e.revealGreen;
 
     // If player is GUESSER → hide true feedback
-    if (role === safe.guesser) {
+    if (role === state.guesser) {
       delete e.fb;              // setter-only info
       // e.fbGuesser is already the modified/obfuscated version
     }
