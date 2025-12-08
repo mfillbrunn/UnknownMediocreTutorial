@@ -259,7 +259,6 @@ function applyAction(room, state, action, role, roomId) {
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
       state.secret = w;
       state.simultaneousSecretSubmitted = true;
-      state.firstSecretSet = true;  
     }
     // Guesser submits initial guess
     if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
@@ -269,8 +268,12 @@ function applyAction(room, state, action, role, roomId) {
       state.pendingGuess = g;
       state.simultaneousGuessSubmitted = true;
     }
-    // When both have acted → move to start of NORMAL phase
-  if (state.secret && state.pendingGuess) {
+    if (state.secret && state.pendingGuess) {
+      console.log("[NORMAL PHASE ENTERING]", {
+      phase: state.phase,
+        pendingGuess: state.pendingGuess,
+      secret: state.secret
+      });
     state.phase = "normal";
     state.turn = state.setter;   // setter must decide first
     emitStateForAllPlayers(roomId, room, io);
@@ -499,7 +502,7 @@ socket.on("gameAction", ({ roomId, action }) => {
     }
     
     // Normal phase → single broadcast
-    emitStateForAllPlayers(roomId, room, io);
+    //DELETED THIS HERE emitStateForAllPlayers(roomId, room, io);
 
 });
 
