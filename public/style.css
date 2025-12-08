@@ -471,5 +471,7 @@ input[type="number"],
   opacity: 0.9;
   cursor: not-allowed;
 }
-
+#newSecretInput:-webkit-autofill {
+  transition: background-color 50000s ease-in-out 0s;
+}
 
