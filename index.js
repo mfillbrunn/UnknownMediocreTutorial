@@ -283,7 +283,8 @@ function applyAction(room, state, action, role, roomId) {
   //   pendingGuess empty → guesser submits new guess
   // ===================================================================
   if (state.phase === "normal") {
-    if (state.turn === state.setter) {
+     const hasPendingGuess = !!state.pendingGuess;
+    if (hasPendingGuess && state.turn === state.setter) {
   console.log("[SETTER ACTION RECEIVED]", action.type, {
     role,
     turn: state.turn,
@@ -365,7 +366,7 @@ function applyAction(room, state, action, role, roomId) {
     // ------------------------------------------------
     // ⭐ CASE 2 — GUESSER'S TURN (NO pendingGuess)
     // ------------------------------------------------
-    if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
+    if (!hasPendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
       // Win
