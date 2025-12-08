@@ -1,3 +1,4 @@
+//server side emitState.js 
 const { buildSafeStateForPlayer } = require("./safeState");
 
 function emitStateForAllPlayers(roomId, room, io) {
