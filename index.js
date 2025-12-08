@@ -29,6 +29,9 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+app.get("/api/allowed-guesses", (req, res) => {
+  res.json(ALLOWED_GUESSES);
+});
 const io = new Server(server, {
   path: "/socket.io",
   cors: { origin: "*", methods: ["GET", "POST"] },
