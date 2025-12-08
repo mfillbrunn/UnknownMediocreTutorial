@@ -222,16 +222,7 @@ function applyAction(room, state, action, role, roomId) {
       state.simultaneousGuessSubmitted = false;
       state.simultaneousSecretSubmitted = false;
       emitLobby(roomId, { type: "hideLobby" });
-      for (const [playerId, playerRole] of Object.entries(room.players)) {
-        const safe = JSON.parse(JSON.stringify(room.state));
-        if (playerRole === room.state.guesser) {
-          safe.secret = "";                // never reveal secret
-        }
-        if (playerRole === room.state.setter && safe.phase === "simultaneous") {
-          safe.pendingGuess = "";          // hide guess during simultaneous
-        }
-        io.to(playerId).emit("stateUpdate", safe);
-      }
+      emitStateForAllPlayers(roomId, room, io);
        }
           return;
   }
@@ -258,9 +249,7 @@ function applyAction(room, state, action, role, roomId) {
 
   // Tell clients to show lobby UI again
   emitLobby(roomId, { type: "showLobby" });
-
   emitStateForAllPlayers(roomId, room, io);
-
   return;
 }
   // ---------------------
@@ -461,8 +450,7 @@ io.on("connection", socket => {
     });
 
     cb({ ok: true, roomId });
-  
-    emitStateForAllPlayers(roomId, room, io);
+    emitStateForAllPlayers(roomId, rooms[roomId], io);
   });
 
 
@@ -506,9 +494,7 @@ socket.on("gameAction", ({ roomId, action }) => {
   action.role = role;
 
   applyAction(room, room.state, action, role, roomId);
-
-  // ⭐ SUPPRESS BROADCAST DURING SIMULTANEOUS PHASE until BOTH players act
-  // --- Simultaneous phase — only send state when BOTH actions are submitted
+   // --- Simultaneous phase — only send state when BOTH actions are submitted
     if (room.state.phase === "simultaneous") {
     
       // Always send update to keep inputs reactive
