@@ -89,7 +89,13 @@
     <div id="turnIndicatorSetter" class="turn-indicator"></div>
 
     <h3>Enter Secret</h3>
-    <input id="newSecretInput" maxlength="5" autocomplete="off" class="letter-input">
+   <input id="newSecretInput"
+       maxlength="5"
+       autocomplete="new-password"
+       autocapitalize="none"
+       autocorrect="off"
+       spellcheck="false"
+       class="letter-input">
     <button id="submitSetterNewBtn" class="primary-btn">Submit NEW Secret</button>
     <button id="submitSetterSameBtn" class="primary-btn">Keep SAME Secret</button>
 
