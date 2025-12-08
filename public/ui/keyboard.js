@@ -104,7 +104,13 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
         else if (status === "yellow") keyEl.classList.add("key-yellow");
         else if (status === "gray") keyEl.classList.add("key-gray");
         else if (status === "blue") keyEl.classList.add("key-blue");
-
+        // Setter sees guesser's current guess highlighted
+        if (!isGuesser && state.pendingGuess) {
+          const pending = state.pendingGuess.toUpperCase();
+          if (pending.includes(letter)) {
+            keyEl.classList.add("key-current"); // you may style this red in CSS
+          }
+        }
         // NOW allow power modules to modify this key:
         PowerEngine.applyKeyboard(state, target, keyEl, letter);
 
