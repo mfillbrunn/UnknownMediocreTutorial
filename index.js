@@ -296,11 +296,12 @@ function applyAction(room, state, action, role, roomId) {
 
     // When both have acted → move to start of NORMAL phase
   if (state.secret && state.pendingGuess) {
-  state.simultaneousGuessSubmitted = false;
-  state.simultaneousSecretSubmitted = false;
+    state.simultaneousGuessSubmitted = false;
+    state.simultaneousSecretSubmitted = false;
   
-  state.phase = "normal";
-  state.turn = state.setter;   // setter must decide first
+    state.phase = "normal";
+    state.turn = state.setter;   // setter must decide first
+     emitStateForAllPlayers(roomId, room, io);
 }
 
 
