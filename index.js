@@ -169,6 +169,12 @@ function simultaneousComplete(state) {
 // APPLY ACTIONS
 // --------------------------------------
 function applyAction(room, state, action, role, roomId) {
+  console.log(">> ACTION RECEIVED", action.type, {
+  role,
+  phase: state.phase,
+  turn: state.turn,
+  pendingGuess: state.pendingGuess
+});
   // ---------------------
   // SWITCH ROLES (LOBBY ONLY)
   // ---------------------
