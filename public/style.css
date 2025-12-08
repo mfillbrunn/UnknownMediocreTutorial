@@ -274,8 +274,7 @@ input[type="number"],
   background: #4da3ff !important;
   color: white !important;
 }
-/* Red outline for current guess letters */
-.key-red-outline {
+.key-current {
   outline: 3px solid #ff4d4d;
   outline-offset: -3px;
   border-radius: 6px;
