@@ -460,6 +460,7 @@ io.on("connection", socket => {
 
   // GAME ACTION
 socket.on("gameAction", ({ roomId, action }) => {
+  console.log(">>> SERVER RECEIVED ACTION:", action);
   const room = rooms[roomId];
   if (!room) return;
 
