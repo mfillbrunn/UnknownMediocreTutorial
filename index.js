@@ -295,25 +295,12 @@ function applyAction(room, state, action, role, roomId) {
     }
 
     // When both have acted → move to start of NORMAL phase
-   if (state.secret && state.pendingGuess) {
-
-    state.simultaneousGuessSubmitted = false;
-    state.simultaneousSecretSubmitted = false;
-
-    // >>> Critical: resolve the initial guess like a normal round
-    finalizeFeedback(state);
-
-    state.phase = "normal";
-
-    // After simultaneous move, setter decides SAME/NEW next
-    state.turn = state.setter;
-
-    state.powerUsedThisTurn = false;
-
-    io.to(roomId).emit("animateTurn", { type: "simultaneousResolved" });
-
-    emitStateForAllPlayers(roomId, room, io);
-    return;
+  if (state.secret && state.pendingGuess) {
+  state.simultaneousGuessSubmitted = false;
+  state.simultaneousSecretSubmitted = false;
+  
+  state.phase = "normal";
+  state.turn = state.setter;   // setter must decide first
 }
 
 
