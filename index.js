@@ -95,6 +95,19 @@ function generateRoomId() {
 function emitLobby(roomId, payload) {
   io.to(roomId).emit("lobbyEvent", payload);
 }
+//---
+// Security leaks
+//---
+const { buildSafeStateForPlayer } = require("./utils/safeState");
+
+function emitStateForAllPlayers(roomId, room, io) {
+  for (const [playerId, role] of Object.entries(room.players)) {
+    const safe = buildSafeStateForPlayer(room.state, role);
+    io.to(playerId).emit("stateUpdate", safe);
+  }
+}
+
+
 
 // ------------------------------------------------------------------
 // STABLE ROLE ASSIGNMENT (OPTION A)
@@ -475,7 +488,7 @@ io.on("connection", socket => {
 
 
     cb({ ok:true, roomId });
-    io.to(roomId).emit("stateUpdate", room.state);
+    emitStateForAllPlayers(roomId, room, io);
   });
 
   // GAME ACTION
@@ -496,14 +509,14 @@ socket.on("gameAction", ({ roomId, action }) => {
     if (room.state.phase === "simultaneous") {
     
       // Always send update to keep inputs reactive
-      io.to(roomId).emit("stateUpdate", room.state);
+     emitStateForAllPlayers(roomId, room, io);
     
       // If both players have not submitted, stop here → NO second broadcast
       if (!(room.state.secret && room.state.pendingGuess)) return;
     }
     
     // Normal phase → single broadcast
-    io.to(roomId).emit("stateUpdate", room.state);
+    emitStateForAllPlayers(roomId, room, io);
 
 });
 
