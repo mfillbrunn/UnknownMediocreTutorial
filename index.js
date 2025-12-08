@@ -21,18 +21,18 @@ require("./powers/powers/freezeSecretServer");
 
 // ------------------------------
 
-app.get("/api/allowed-guesses", (req, res) => {
-  res.json(ALLOWED_GUESSES);
-});
+
 const app = express();
 const server = http.createServer(app);
 
+app.get("/api/allowed-guesses", (req, res) => {
+  res.json(ALLOWED_GUESSES);
+});
 // Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-
 
 const io = new Server(server, {
   path: "/socket.io",
