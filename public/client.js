@@ -10,6 +10,7 @@ let roomId = null;
 let myRole = null;      // Assigned by server: "A" or "B"
 let state = null;
 let iAmReady = false;
+let setterKeyboardInitialized = false;
 
 // DOM helpers
 function $(id) { return document.getElementById(id); }
@@ -307,7 +308,39 @@ if (state.phase === "simultaneous") {
   }
 }
 
+function handleSetterKeyboard(letter, special) {
+  const box = $("newSecretInput");
+
+  const isSetterTurnNow = (state.turn === state.setter);
+
+  // Decision step: the moment setter must choose SAME or NEW
+  const isDecisionStep =
+    state.phase === "normal" &&
+    !!state.pendingGuess &&
+    isSetterTurnNow;
+
+  // Ignore typing when setter shouldn't act
+  if (!isSetterTurnNow || state.phase !== "normal") return;
+
+  if (special === "BACKSPACE") {
+    box.value = box.value.slice(0, -1);
+    return;
+  }
+
+  if (special === "ENTER") {
+    // Only submit NEW during decision step
+    if (isDecisionStep) $("submitSetterNewBtn").click();
+    return;
+  }
+
+  if (letter && box.value.length < 5) {
+    box.value += letter;
+  }
+}
+
 function updateSetterScreen() {
+
+  // Secret + Guess UI --------------------------------------------
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   $("pendingGuessDisplay").textContent =
     state.phase === "simultaneous"
@@ -322,29 +355,14 @@ function updateSetterScreen() {
   const guess = state.pendingGuess;
   const typedSecret = $("newSecretInput").value.trim().toLowerCase();
 
-  // -------------------------------------------
-  // FIXED: ROLE vs TURN
-  // -------------------------------------------
-  const isSetter = (myRole === state.setter);
   const isSetterTurnNow = (state.turn === state.setter);
-  const isGuesserTurnNow = (state.turn === state.guesser);
-  
 
-  // Setter decision step (after guesser submits)
   const isDecisionStep =
     state.phase === "normal" &&
     !!state.pendingGuess &&
     isSetterTurnNow;
 
-  // Setter's own normal turn (after decision, before next guess)
-  const isSetterNormalTurn =
-    state.phase === "normal" &&
-    !state.pendingGuess &&
-    isSetterTurnNow;
-
-  // ---------------------------------------------------------------------
-  // PREVIEW LOGIC
-  // ---------------------------------------------------------------------
+  // Preview feedback ----------------------------------------------
   if (isDecisionStep && guess) {
     if (typedSecret.length === 5) {
       const fb = predictFeedback(typedSecret, guess);
@@ -355,11 +373,9 @@ function updateSetterScreen() {
     }
   }
 
-  // ---------------------------------------------------------------------
-  // INPUT LOCKING LOGIC (FIXED)
-  // ---------------------------------------------------------------------
+  // Input Locking --------------------------------------------------
   const setterSubmittedSimultaneous = state.simultaneousSecretSubmitted;
-  const isSimultaneous = (state.phase === "simultaneous");
+
   const shouldLock =
     state.phase === "gameOver" ||
     (state.phase === "simultaneous" && setterSubmittedSimultaneous) ||
@@ -367,40 +383,15 @@ function updateSetterScreen() {
 
   $("newSecretInput").disabled = shouldLock;
   $("submitSetterNewBtn").disabled = shouldLock;
-
-  // SAME only allowed during decision step
   $("submitSetterSameBtn").disabled = !isDecisionStep;
 
-  // ---------------------------------------------------------------------
-  // KEYBOARD
-  // ---------------------------------------------------------------------
-  renderKeyboard(state, $("keyboardSetter"), "setter", (letter, special) => {
-  if (shouldLock) return;
-
-  const box = $("newSecretInput");
-
-  if (special === "BACKSPACE") {
-    box.value = box.value.slice(0, -1);
-    return;
+  // Keyboard (render ONCE only) ------------------------------------
+  if (!setterKeyboardInitialized) {
+    renderKeyboard(state, $("keyboardSetter"), "setter", handleSetterKeyboard);
+    setterKeyboardInitialized = true;
   }
 
-  if (special === "ENTER") {
-    // ENTER should only submit during the decision step (after guess)
-    if (isDecisionStep) {
-      $("submitSetterNewBtn").click();
-    }
-    return;
-  }
-
-  if (letter) {
-    if (box.value.length < 5) box.value += letter;
-    return;
-  }
-});
-
-  // ---------------------------------------------------------------------
-  // CONSTRAINT RENDER
-  // ---------------------------------------------------------------------
+  // Constraint rendering -------------------------------------------
   $("knownPatternSetter").textContent =
     formatPattern(getPattern(state, true));
 
