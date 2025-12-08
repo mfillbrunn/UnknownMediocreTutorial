@@ -96,7 +96,6 @@ function generateRoomId() {
   }
   return id;
 }
-
 function emitLobby(roomId, payload) {
   io.to(roomId).emit("lobbyEvent", payload);
 }
@@ -104,16 +103,12 @@ function emitLobby(roomId, payload) {
 // Security leaks
 //---
 const { buildSafeStateForPlayer } = require("./utils/safeState");
-
 function emitStateForAllPlayers(roomId, room, io) {
   for (const [playerId, role] of Object.entries(room.players)) {
     const safe = buildSafeStateForPlayer(room.state, role);
     io.to(playerId).emit("stateUpdate", safe);
   }
 }
-
-
-
 // ------------------------------------------------------------------
 // STABLE ROLE ASSIGNMENT (OPTION A)
 // ------------------------------------------------------------------
@@ -127,7 +122,6 @@ function assignRoles(room) {
     room.players[ids[0]] = "A";
     return;
   }
-
   if (ids.length === 2) {
     // second player always B / Guesser
     room.players[ids[0]] = "A";
@@ -139,13 +133,10 @@ function assignRoles(room) {
 // --------------------------------------
 function finalizeFeedback(state) {
   const guess = state.pendingGuess;
-
   // 1) Let powers modify BEFORE scoring
   powerEngine.preScore(state, guess);
-
   // 2) Base scoring
   const fb = scoreGuess(state.secret, guess);
-
   // 3) Build history entry
   const entry = {
     guess,
@@ -154,13 +145,10 @@ function finalizeFeedback(state) {
     extraInfo: null,
     finalSecret: state.secret
   };
-
   // 4) Let powers modify AFTER scoring (feedback/entry edits)
   powerEngine.postScore(state, entry);
-
   // 5) Save entry
   state.history.push(entry);
-
   // 6) Cleanup
   state.pendingGuess = "";
   state.guessCount++;
@@ -181,25 +169,20 @@ function simultaneousComplete(state) {
 // APPLY ACTIONS
 // --------------------------------------
 function applyAction(room, state, action, role, roomId) {
-
   // ---------------------
   // SWITCH ROLES (LOBBY ONLY)
   // ---------------------
   if (action.type === "SWITCH_ROLES") {
     if (state.phase !== "lobby") return;
-
     const ids = Object.keys(room.players);
     if (ids.length === 2) {
       const idA = ids.find(id => room.players[id] === "A");
       const idB = ids.find(id => room.players[id] === "B");
-
       room.players[idA] = "B";
       room.players[idB] = "A";
-
       const tmp = state.setter;
       state.setter = state.guesser;
       state.guesser = tmp;
-
       emitLobby(roomId, {
         type: "rolesSwitched",
         setterId: idA,
@@ -214,12 +197,9 @@ function applyAction(room, state, action, role, roomId) {
   // ---------------------
   if (action.type === "PLAYER_READY") {
     if (state.phase !== "lobby") return;
-
     const r = role;
     state.ready[r] = true;
-
     emitLobby(roomId, { type: "playerReady", role: r });
-
     if (state.ready.A && state.ready.B) {
       state.phase = "simultaneous";
       state.turn = null;
@@ -231,7 +211,6 @@ function applyAction(room, state, action, role, roomId) {
        }
           return;
   }
-
   // ---------------------
   // NEW MATCH
   // ---------------------
@@ -239,19 +218,14 @@ function applyAction(room, state, action, role, roomId) {
   // Reset game state but KEEP roles A/B
   const oldSetter = state.setter;
   const oldGuesser = state.guesser;
-
   Object.assign(state, createInitialState());
-
   // Restore manual roles
   state.setter = oldSetter;
   state.guesser = oldGuesser;
-
   // Reset ready flags
   state.ready = { A: false, B: false };
-
   // Return to lobby phase
   state.phase = "lobby";
-
   // Tell clients to show lobby UI again
   emitLobby(roomId, { type: "showLobby" });
   emitStateForAllPlayers(roomId, room, io);
@@ -269,116 +243,91 @@ function applyAction(room, state, action, role, roomId) {
   return;
 }
   // ===================================================================
-  // ⭐ PHASE: SIMULTANEOUS
+  // PHASE: SIMULTANEOUS
   // ===================================================================
   if (state.phase === "simultaneous") {
-
     // Setter submits initial secret
     if (action.type === "SET_SECRET_NEW" && role === state.setter) {
       if (state.simultaneousSecretSubmitted) return;
       const w = action.secret.toLowerCase();
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
-
       state.secret = w;
       state.simultaneousSecretSubmitted = true;
       state.firstSecretSet = true;  
     }
-
     // Guesser submits initial guess
     if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
       if (state.simultaneousGuessSubmitted) return;
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
-
       state.pendingGuess = g;
       state.simultaneousGuessSubmitted = true;
     }
-
     // When both have acted → move to start of NORMAL phase
   if (state.secret && state.pendingGuess) {
-    state.simultaneousGuessSubmitted = false;
-    state.simultaneousSecretSubmitted = false;
-  
     state.phase = "normal";
     state.turn = state.setter;   // setter must decide first
-     emitStateForAllPlayers(roomId, room, io);
+    emitStateForAllPlayers(roomId, room, io);
 }
-
-
     return;
   }
-
   // ===================================================================
-  // ⭐ PHASE: NORMAL
+  // PHASE: NORMAL
   //   pendingGuess exists → setter responds SAME/NEW
   //   pendingGuess empty → guesser submits new guess
   // ===================================================================
   if (state.phase === "normal") {
-
     // ------------------------------------------------
-    // ⭐ CASE 1 — SETTER DECISION STEP
+    //  CASE 1 — SETTER DECISION STEP
     // ------------------------------------------------
-    if (state.pendingGuess) {
-
-      if (role !== state.setter) return;
-
+    if (state.turn === state.setter) {
       // Setter chooses NEW secret
          if (action.type === "SET_SECRET_NEW") {
            if (powerEngine.beforeSetterSecretChange(state, action)) return;
-      const w = action.secret.toLowerCase();
-      if (!isValidWord(w, ALLOWED_GUESSES)) return;
-      if (!isConsistentWithHistory(state.history, w)) return;
-      state.secret = w;
-    
-      // ⭐ NEW: If setter picks secret == guess → instant win
-      if (state.pendingGuess === w) {
-        state.history.push({
-          guess: w,
-          fb: ["🟩","🟩","🟩","🟩","🟩"],
-          fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
-          extraInfo: null,
-          finalSecret: w
-        });
-    
-        state.phase = "gameOver";
-        state.turn = null;
-        state.gameOver = true;
-    
-        io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
-        emitStateForAllPlayers(roomId, room, io);
-
-        emitLobby(roomId, { type: "gameOverShowMenu" });
-        return;
-      }
-    }
-
+            const w = action.secret.toLowerCase();
+            if (!isValidWord(w, ALLOWED_GUESSES)) return;
+            if (!isConsistentWithHistory(state.history, w)) return;
+            state.secret = w;    
+            // If setter picks secret == guess → instant win
+            if (state.pendingGuess === w) {
+              state.history.push({
+                guess: w,
+                fb: ["🟩","🟩","🟩","🟩","🟩"],
+                fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
+                extraInfo: null,
+                finalSecret: w
+              });          
+              state.phase = "gameOver";
+              state.turn = null;
+              state.gameOver = true;
+              io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
+              emitStateForAllPlayers(roomId, room, io);
+              emitLobby(roomId, { type: "gameOverShowMenu" });
+              return;
+            }
+        }
       // Setter chooses SAME secret
-else if (action.type === "SET_SECRET_SAME") {
-  if (powerEngine.beforeSetterSecretChange(state, action)) return;
-  if (!isConsistentWithHistory(state.history, state.secret)) return;
-
-  // ⭐ If SAME = guess → instant win
-  if (state.pendingGuess === state.secret) {
-    state.history.push({
-      guess: state.secret,
-      fb: ["🟩","🟩","🟩","🟩","🟩"],
-      fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
-      extraInfo: null,
-      finalSecret: state.secret
-    });
-
-    state.phase = "gameOver";
-    state.turn = null;
-    state.gameOver = true;
-
-    io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
-    emitStateForAllPlayers(roomId, room, io);
-
-    emitLobby(roomId, { type: "gameOverShowMenu" });
-    return;
-  }
-}
-
+      else if (action.type === "SET_SECRET_SAME") {
+        if (powerEngine.beforeSetterSecretChange(state, action)) return;
+        if (!isConsistentWithHistory(state.history, state.secret)) return;
+        // If SAME = guess → instant win
+        if (state.pendingGuess === state.secret) {
+          state.history.push({
+            guess: state.secret,
+            fb: ["🟩","🟩","🟩","🟩","🟩"],
+            fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
+            extraInfo: null,
+            finalSecret: state.secret
+          });      
+          state.phase = "gameOver";
+          state.turn = null;
+          state.gameOver = true;      
+          io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
+          emitStateForAllPlayers(roomId, room, io);      
+          emitLobby(roomId, { type: "gameOverShowMenu" });
+          return;
+        }
+      }
       // Score guess & update history
       finalizeFeedback(state);
       // Next → guesser's turn
@@ -392,10 +341,8 @@ else if (action.type === "SET_SECRET_SAME") {
     // ⭐ CASE 2 — GUESSER'S TURN (NO pendingGuess)
     // ------------------------------------------------
     if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
-
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
-
       // Win
       if (g === state.secret) {
         state.history.push({
@@ -408,13 +355,11 @@ else if (action.type === "SET_SECRET_SAME") {
         state.phase = "gameOver";
         state.turn = null;
         state.gameOver = true;
-
         io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
         emitStateForAllPlayers(roomId, room, io);
         emitLobby(roomId, { type: "gameOverShowMenu" });
         return;
       }
-
       // Otherwise → store pending guess, setter must decide
       state.pendingGuess = g;
       state.turn = state.setter;
@@ -422,7 +367,6 @@ else if (action.type === "SET_SECRET_SAME") {
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
-
     return;
   }
 
