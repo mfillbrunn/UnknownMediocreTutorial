@@ -277,16 +277,35 @@ function applyAction(room, state, action, role, roomId) {
   //   pendingGuess empty → guesser submits new guess
   // ===================================================================
   if (state.phase === "normal") {
+    if (state.turn === state.setter) {
+  console.log("[SETTER ACTION RECEIVED]", action.type, {
+    role,
+    turn: state.turn,
+    setter: state.setter,
+    secret: state.secret,
+    pendingGuess: state.pendingGuess,
+    historyLen: state.history.length
+  });
+}
     // ------------------------------------------------
     //  CASE 1 — SETTER DECISION STEP
     // ------------------------------------------------
     if (state.turn === state.setter) {
       // Setter chooses NEW secret
          if (action.type === "SET_SECRET_NEW") {
-           if (powerEngine.beforeSetterSecretChange(state, action)) return;
+           if (powerEngine.beforeSetterSecretChange(state, action)) {
+  console.log("[BLOCKED] beforeSetterSecretChange");
+  return;
+}
             const w = action.secret.toLowerCase();
-            if (!isValidWord(w, ALLOWED_GUESSES)) return;
-            if (!isConsistentWithHistory(state.history, w)) return;
+            if (!isValidWord(w, ALLOWED_GUESSES)) {
+  console.log("[BLOCKED] invalid word", w);
+  return;
+}
+           if (!isConsistentWithHistory(state.history, w)) {
+  console.log("[BLOCKED] inconsistent with history", w, state.history);
+  return;
+}
             state.secret = w;    
             // If setter picks secret == guess → instant win
             if (state.pendingGuess === w) {
