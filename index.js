@@ -46,7 +46,7 @@ const { isValidWord, parseWordlist } = require("./game-engine/validation.js");
 // --------------------------------------
 let ALLOWED_GUESSES = [];
 try {
-  const raw = fs.readFileSync("./public/wordlists/allowed_guesses.txt", "utf8");
+  const raw = fs.readFileSync("./wordlists/allowed_guesses.txt", "utf8");
   ALLOWED_GUESSES = parseWordlist(raw);
 } catch {}
 
