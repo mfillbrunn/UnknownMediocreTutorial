@@ -375,16 +375,28 @@ function updateSetterScreen() {
   // KEYBOARD
   // ---------------------------------------------------------------------
   renderKeyboard(state, $("keyboardSetter"), "setter", (letter, special) => {
-    if (shouldLock) return;
+  if (shouldLock) return;
 
-    const box = $("newSecretInput");
+  const box = $("newSecretInput");
 
-    if (special === "BACKSPACE") box.value = box.value.slice(0, -1);
-    else if (special === "ENTER") $("submitSetterNewBtn").click();
-    else if (letter) box.value += letter;
+  if (special === "BACKSPACE") {
+    box.value = box.value.slice(0, -1);
+    return;
+  }
 
-    updateSetterScreen();
-  });
+  if (special === "ENTER") {
+    // ENTER should only submit during the decision step (after guess)
+    if (isDecisionStep) {
+      $("submitSetterNewBtn").click();
+    }
+    return;
+  }
+
+  if (letter) {
+    if (box.value.length < 5) box.value += letter;
+    return;
+  }
+});
 
   // ---------------------------------------------------------------------
   // CONSTRAINT RENDER
