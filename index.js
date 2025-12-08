@@ -283,8 +283,13 @@ function applyAction(room, state, action, role, roomId) {
   //   pendingGuess empty → guesser submits new guess
   // ===================================================================
   if (state.phase === "normal") {
-     const hasPendingGuess = !!state.pendingGuess;
-    if (hasPendingGuess && state.turn === state.setter) {
+    console.log("[NORMAL PHASE ENTRY]", {
+    turn: state.turn,
+    setter: state.setter,
+    pendingGuess: state.pendingGuess,
+    secret: state.secret
+  });
+    if (state.pendingGuess && state.turn === state.setter) {
   console.log("[SETTER ACTION RECEIVED]", action.type, {
     role,
     turn: state.turn,
@@ -297,7 +302,11 @@ function applyAction(room, state, action, role, roomId) {
     // ------------------------------------------------
     //  CASE 1 — SETTER DECISION STEP
     // ------------------------------------------------
-    if (state.turn === state.setter) {
+    if (state.turn === state.setter && state.pendingGuess) {
+      console.log("[SETTER DECISION BLOCK ENTERED]", action.type, {
+      secret: state.secret,
+      pendingGuess: state.pendingGuess
+        });
       // Setter chooses NEW secret
          if (action.type === "SET_SECRET_NEW") {
            if (powerEngine.beforeSetterSecretChange(state, action)) {
@@ -373,7 +382,7 @@ console.log("[AFTER SETTER DECISION]", {
     // ------------------------------------------------
     // ⭐ CASE 2 — GUESSER'S TURN (NO pendingGuess)
     // ------------------------------------------------
-    if (!hasPendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
+    if (!state.pendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
       // Win
