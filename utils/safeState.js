@@ -1,3 +1,5 @@
+// server side safeState.js
+
 function buildSafeStateForPlayer(state, role) {
   const safe = JSON.parse(JSON.stringify(state));
 
