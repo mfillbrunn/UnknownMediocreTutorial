@@ -6,16 +6,16 @@ function buildSafeStateForPlayer(state, role) {
   // -----------------------------------------------------
   // 1. Hide SECRET from guesser
   // -----------------------------------------------------
-  if (role === safe.guesser) {
+  if (role === state.guesser) {
     safe.secret = "";
   }
 
   // -----------------------------------------------------
   // 2. Hide GUESS from setter during simultaneous phase
   // -----------------------------------------------------
-  if (role === safe.setter && safe.phase === "simultaneous") {
-    safe.pendingGuess = "";
-  }
+  if (role === state.setter && state.phase === "simultaneous") {
+  safe.pendingGuess = "";
+}
 
   // -----------------------------------------------------
   // 3. Clean INTERNAL power state (never exposed)
