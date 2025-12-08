@@ -356,6 +356,13 @@ function applyAction(room, state, action, role, roomId) {
       }
       // Score guess & update history
       finalizeFeedback(state);
+      // DEBUG: confirm state after setter decision
+console.log("[AFTER SETTER DECISION]", {
+  phase: state.phase,
+  turn: state.turn,
+  pendingGuess: state.pendingGuess,
+  guessCount: state.guessCount
+});
       // Next → guesser's turn
       state.turn = state.guesser;
       state.powerUsedThisTurn = false;
