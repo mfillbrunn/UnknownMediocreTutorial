@@ -10,9 +10,7 @@ window.KEYBOARD_LAYOUT = [
 function getLetterStatusFromHistory(letter, state, isGuesser) {
   if (!state?.history) return null;
 
-  // Track the strongest signal seen so far
   let strongest = null;
-
   const fbKey = isGuesser ? "fbGuesser" : "fb";
 
   for (const h of state.history) {
@@ -25,32 +23,35 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
 
       const fb = fbArr[i];
 
-      // PRIORITY SYSTEM
+      // BLUE IS TEMPORARY — only applies to this one history entry
       if (fb === "🟦") {
-          if (strongest !== "green") strongest = "blue";
-          continue;   // Do NOT check deeper states for this round
+        // only mark as blue if we don't already have green or yellow from ANY turn
+        if (!strongest || strongest === "gray" || strongest === "blue") {
+          strongest = "blue";
         }
-        
-        // GREEN always overrides *everything except blue in this same round*
-        if (fb === "🟩") {
-          strongest = "green";
-          continue;
-        }
-        
-        if (fb === "🟨") {
-          if (strongest !== "green" && strongest !== "blue") {
-            strongest = "yellow";
-          }
-        }
-        
-        if (fb === "⬛") {
-          if (!strongest) strongest = "gray";
-        }
+        continue;
+      }
+
+      // TRUE COLORS override blue
+      if (fb === "🟩") {
+        strongest = "green";
+        continue;
+      }
+
+      if (fb === "🟨") {
+        if (strongest !== "green") strongest = "yellow";
+        continue;
+      }
+
+      if (fb === "⬛") {
+        if (!strongest) strongest = "gray";
       }
     }
+  }
 
   return strongest;
 }
+
 
 
 window.renderKeyboard = function (state, container, target, onKeyClick) {
