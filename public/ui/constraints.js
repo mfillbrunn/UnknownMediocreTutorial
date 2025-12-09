@@ -8,7 +8,9 @@ window.getPattern = function (state, isSetterView) {
   }
 
   for (const entry of state.history) {
+    console.log("ENTRY RECEIVED BY CONSTRAINTS:", entry);
     const fbArray = isSetterView ? entry.fb : entry.fbGuesser;
+    console.log("FB ARRAY SELECTED:", fbArray);
 
     if (!Array.isArray(fbArray) || fbArray.length !== 5) {
       console.warn("Skipping invalid history entry (pattern):", entry);
