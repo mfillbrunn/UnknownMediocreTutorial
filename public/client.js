@@ -1,17 +1,17 @@
-// client.js — main client file
 // -----------------------------------------------------
 // LOCAL CLIENT STATE
 // -----------------------------------------------------
 let roomId = null;
 let myRole = null;      
 let state = null;
-let iAmReady = false;
 let setterKeyboardInitialized = false;
 
-// DOM helpers
-function $(id) { return document.getElementById(id); }
-function show(id) { $(id).classList.add("active"); }
-function hide(id) { $(id).classList.remove("active"); }
+// -----------------------------------------------------
+// DOM HELPERS
+// -----------------------------------------------------
+const $ = id => document.getElementById(id);
+const show = id => $(id).classList.add("active");
+const hide = id => $(id).classList.remove("active");
 
 function toast(msg) {
   const t = $("toast");
@@ -19,190 +19,167 @@ function toast(msg) {
   t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 1500);
 }
-function shakeInput(element) {
+
+function shake(element) {
   element.classList.add("shake");
   setTimeout(() => element.classList.remove("shake"), 300);
 }
-// WORD LIST — loaded for local validation
+
+// -----------------------------------------------------
+// LOAD WORD LIST FOR CLIENT-SIDE VALIDATION
+// -----------------------------------------------------
 window.ALLOWED_GUESSES = new Set();
 fetch("/api/allowed-guesses")
   .then(r => r.json())
-  .then(words => {
-    words.forEach(w => window.ALLOWED_GUESSES.add(w));
-  });
+  .then(words => words.forEach(w => window.ALLOWED_GUESSES.add(w)));
 
 // -----------------------------------------------------
-// AUTO REJOIN
+// AUTO-REJOIN
 // -----------------------------------------------------
 window.addEventListener("load", () => {
   const savedRoom = localStorage.getItem("vswordle_room");
-  if (savedRoom) {
-    joinRoom(savedRoom, resp => {
-      if (resp.ok) {
-        roomId = savedRoom;
-        $("roomInfo").style.display = "block";
-        $("roomCodeLabel").textContent = roomId;
-      }
-    });
-  }
+  if (!savedRoom) return;
+
+  joinRoom(savedRoom, resp => {
+    if (resp.ok) {
+      roomId = savedRoom;
+      $("roomInfo").style.display = "block";
+      $("roomCodeLabel").textContent = roomId;
+    }
+  });
 });
 
 // -----------------------------------------------------
-// SOCKET EVENTS
+// SOCKET EVENT HANDLERS
 // -----------------------------------------------------
 
-// TURN POPUP
+// Turn animation
 onAnimateTurn(({ type }) => {
   const tp = $("turnPopup");
-  const msg =
-    type === "setterSubmitted" ? "Setter Submitted" :
-    type === "guesserSubmitted" ? "Guesser Submitted" : "";
-  if (msg) {
-    tp.textContent = msg;
-    tp.classList.add("show");
-    setTimeout(() => tp.classList.remove("show"), 800);
-  }
+  const msg = type === "setterSubmitted"
+    ? "Setter Submitted"
+    : type === "guesserSubmitted"
+    ? "Guesser Submitted"
+    : "";
+
+  if (!msg) return;
+
+  tp.textContent = msg;
+  tp.classList.add("show");
+  setTimeout(() => tp.classList.remove("show"), 800);
 });
 
-onPowerUsed((data) => {
+// Power UI hook (client-side effects)
+onPowerUsed(data => {
   const mod = PowerEngine.powers[data.type];
-  if (mod?.effects?.onPowerUsed) {
-    mod.effects.onPowerUsed(data);
-  }
+  mod?.effects?.onPowerUsed?.(data);
 });
 
-// LOBBY EVENTS
+// Lobby events
 onLobbyEvent(evt => {
+  switch (evt.type) {
 
-  if (evt.type === "playerJoined") {
-    toast("A player joined.");
+    case "playerJoined":
+      toast("A player joined.");
+      enableReadyButton(true);
+      break;
 
-    // Enable Ready button
-    $("readyBtn").disabled = false;
-    $("readyBtn").classList.remove("disabled");
-    $("readyBtn").textContent = "I'm Ready";
+    case "rolesSwitched":
+      updateRolesAfterSwitch(evt);
+      break;
+
+    case "playerReady":
+      toast(`Player ${evt.role} is READY`);
+      break;
+
+    case "hideLobby":
+      hide("lobby");
+      hide("menu");
+      show(myRole === "A" ? "setterScreen" : "guesserScreen");
+      enableReadyButton(false);
+      break;
+
+    case "gameOverShowMenu":
+      hide("setterScreen");
+      hide("guesserScreen");
+      show("menu");
+      enableReadyButton(false);
+      break;
   }
-
-  if (evt.type === "rolesSwitched") {
-    const { setterId, guesserId } = evt;
-
-    if (socket.id === setterId) myRole = "A";
-    if (socket.id === guesserId) myRole = "B";
-
-    updateRoleLabels();
-
-    $("switchRolesBtn").classList.add("switch-active");
-    setTimeout(() => $("switchRolesBtn").classList.remove("switch-active"), 800);
-
-    $("readyBtn").disabled = false;
-    $("readyBtn").classList.remove("disabled");
-    $("readyBtn").textContent = "I'm Ready";
-  }
-
-  if (evt.type === "playerReady") {
-    toast(`Player ${evt.role} is READY`);
-  }
-
-  if (evt.type === "hideLobby") {
-    hide("lobby");
-    hide("menu");
-    if (myRole === "A") show("setterScreen");
-    if (myRole === "B") show("guesserScreen");
-    $("readyBtn").disabled = true;
-     $("readyBtn").classList.add("disabled");
-  }
-  if (evt.type === "gameOverShowMenu") {
-  hide("setterScreen");
-  hide("guesserScreen");
-  show("menu");
-
-  // enable READY button for next round
- $("readyBtn").disabled = true;
-$("readyBtn").classList.add("disabled");
-}
-
 });
 
-// Role assignment from the server
-socket.on("roleAssigned", ({ role, setterId, guesserId }) => {
+// Role assignment from server
+socket.on("roleAssigned", ({ role }) => {
   myRole = role;
   updateRoleLabels();
-  
-  // ENABLE READY BUTTON HERE
-  //$("readyBtn").disabled = false;
-  //$("readyBtn").classList.remove("disabled");
-  //$("readyBtn").textContent = "I'm Ready";
 });
 
-
-// -----------------------------------------------------
-// STATE UPDATE FROM SERVER
-// -----------------------------------------------------
+// State updates
 onStateUpdate(newState => {
   state = newState;
   updateUI();
-  updateGuesserScreen();   // 🔥 ADD THIS
-  updateSetterScreen();    // optional, but consistent
+
+  // Reset guess input if locked on transition
   if (state.phase === "normal" && $("guessInput").disabled) {
-  $("guessInput").value = "";
+    $("guessInput").value = "";
   }
 });
 
 // -----------------------------------------------------
-// UI UPDATE LOGIC
+// UI UPDATE PIPELINE
 // -----------------------------------------------------
 function updateUI() {
-  // Render power buttons once AFTER DOM + state exists
   if (!state) return;
+
+  // Render power buttons once
   if (!PowerEngine._initialized && roomId) {
     PowerEngine.renderButtons(roomId);
     PowerEngine._initialized = true;
   }
+
   updateMenu();
   updateScreens();
   updateTurnIndicators();
-  updateSummaryIfGameOver();
+  updateSummary();
   if (state.phase !== "lobby") hide("lobby");
+
   PowerEngine.applyUI(state, myRole, roomId);
 }
 
-// Update menu info
+// -----------------------------------------------------
+// Update Menu
+// -----------------------------------------------------
 function updateMenu() {
   $("menuRoomCode").textContent = roomId || "-";
-  $("menuPlayerRole").textContent =
-    myRole === "A" ? "Setter" :
-    myRole === "B" ? "Guesser" : "-";
+  $("menuPlayerRole").textContent = myRole === "A" ? "Setter" : "Guesser";
 }
 
-// Update UI screens
+// -----------------------------------------------------
+// Screen Visibility
+// -----------------------------------------------------
 function updateScreens() {
-  // LOBBY
   if (state.phase === "lobby") {
     show("lobby");
     hide("menu");
     hide("setterScreen");
     hide("guesserScreen");
-    $("readyBtn").disabled = false;
-    $("readyBtn").classList.remove("disabled");
-    $("readyBtn").textContent = "I'm Ready";
+    enableReadyButton(true);
     return;
   }
- $("readyBtn").disabled = true;
- $("readyBtn").classList.add("disabled");
-  // GAME OVER → show menu + summary, hide gameplay screens
+
+  enableReadyButton(false);
+  hide("lobby");
+
   if (state.phase === "gameOver") {
     hide("setterScreen");
     hide("guesserScreen");
-    hide("lobby");
     show("menu");
     return;
   }
 
-  // ALL OTHER PHASES (simultaneous + normal)
-  hide("lobby");
   hide("menu");
 
- if (myRole === state.setter) {
+  if (myRole === state.setter) {
     show("setterScreen");
     hide("guesserScreen");
   } else {
@@ -214,28 +191,13 @@ function updateScreens() {
   updateGuesserScreen();
 }
 
-
-
 // -----------------------------------------------------
-// ROLE LABEL UPDATER
-// -----------------------------------------------------
-function updateRoleLabels() {
-  const label = myRole === "A" ? "Setter" : "Guesser";
-
-  $("lobbyRoleLabel").textContent = label;
-  $("lobbyRoleLabel").classList.add("big-role");
-
-  $("menuPlayerRole").textContent = label;
-}
-
-// -----------------------------------------------------
-// TURN INDICATORS
+// Turn Indicator Bar
 // -----------------------------------------------------
 function updateTurnIndicators() {
   const setterBar = $("turnIndicatorSetter");
   const guesserBar = $("turnIndicatorGuesser");
 
-  // Hide in lobby
   if (state.phase === "lobby") {
     setterBar.textContent = "";
     guesserBar.textContent = "";
@@ -244,263 +206,218 @@ function updateTurnIndicators() {
     return;
   }
 
-  // SIMULTANEOUS → both act, but once a player submits, they WAIT
-if (state.phase === "simultaneous") {
+  if (state.phase === "simultaneous") {
+    updateSimultaneousIndicators();
+    return;
+  }
+
+  if (state.phase === "gameOver") {
+    setToWait(setterBar);
+    setToWait(guesserBar);
+    return;
+  }
+
+  updateNormalTurnIndicators();
+}
+
+function updateSimultaneousIndicators() {
+  const setterBar = $("turnIndicatorSetter");
+  const guesserBar = $("turnIndicatorGuesser");
 
   const setterSubmitted = !!state.secret;
   const guesserSubmitted = !!state.pendingGuess;
 
-  // Setter's bar:
-  if (!setterSubmitted) {
-    $("turnIndicatorSetter").textContent = "YOUR TURN";
-    $("turnIndicatorSetter").className = "turn-indicator your-turn";
+  updateIndicator(setterBar, !setterSubmitted);
+  updateIndicator(guesserBar, !guesserSubmitted);
+}
+
+function updateNormalTurnIndicators() {
+  const setterBar = $("turnIndicatorSetter");
+  const guesserBar = $("turnIndicatorGuesser");
+
+  const setterTurn = state.turn === state.setter;
+
+  updateIndicator(setterBar, setterTurn);
+  updateIndicator(guesserBar, !setterTurn);
+}
+
+function updateIndicator(element, isActiveTurn) {
+  if (isActiveTurn) {
+    element.textContent = "YOUR TURN";
+    element.className = "turn-indicator your-turn";
   } else {
-    $("turnIndicatorSetter").textContent = "WAIT";
-    $("turnIndicatorSetter").className = "turn-indicator wait-turn";
-  }
-
-  // Guesser's bar:
-  if (!guesserSubmitted) {
-    $("turnIndicatorGuesser").textContent = "YOUR TURN";
-    $("turnIndicatorGuesser").className = "turn-indicator your-turn";
-  } else {
-    $("turnIndicatorGuesser").textContent = "WAIT";
-    $("turnIndicatorGuesser").className = "turn-indicator wait-turn";
-  }
-
-  return;
-}
-
-
-  // GAME OVER → both wait
-  if (state.phase === "gameOver") {
-    setterBar.textContent = "WAIT";
-    guesserBar.textContent = "WAIT";
-
-    setterBar.className = "turn-indicator wait-turn";
-    guesserBar.className = "turn-indicator wait-turn";
-    return;
-  }
-
-  // NORMAL PHASE
-  const isSetterTurn = (state.turn === state.setter);
-  const isGuesserTurn = (state.turn === state.guesser);
-
-  if (isSetterTurn) {
-    // Setter → YOUR TURN
-    setterBar.textContent = "YOUR TURN";
-    setterBar.className = "turn-indicator your-turn";
-
-    // Guesser → WAIT
-    guesserBar.textContent = "WAIT";
-    guesserBar.className = "turn-indicator wait-turn";
-    return;
-  }
-
-  if (isGuesserTurn) {
-    // Guesser → YOUR TURN
-    guesserBar.textContent = "YOUR TURN";
-    guesserBar.className = "turn-indicator your-turn";
-  
-    setterBar.textContent = "WAIT";
-    setterBar.className =  "turn-indicator wait-turn";
-    return;
+    element.textContent = "WAIT";
+    element.className = "turn-indicator wait-turn";
   }
 }
 
-function handleSetterKeyboard(letter, special) {
-  const box = $("newSecretInput");
-
-  const isSetterTurnNow = (state.turn === state.setter);
-
-  // Decision step: the moment setter must choose SAME or NEW
-  const isDecisionStep =
-    state.phase === "normal" &&
-    !!state.pendingGuess &&
-    isSetterTurnNow;
-
-  // Ignore typing when setter shouldn't act
-  if (!isSetterTurnNow || state.phase !== "normal") return;
-
-  if (special === "BACKSPACE") {
-    box.value = box.value.slice(0, -1);
-    return;
-  }
-
-  if (special === "ENTER") {
-    // Only submit NEW during decision step
-    if (isDecisionStep) $("submitSetterNewBtn").click();
-    return;
-  }
-
-  if (letter && box.value.length < 5) {
-    box.value += letter;
-  }
+function setToWait(element) {
+  element.textContent = "WAIT";
+  element.className = "turn-indicator wait-turn";
 }
 
+// -----------------------------------------------------
+// ROLE LABEL
+// -----------------------------------------------------
+function updateRoleLabels() {
+  const label = myRole === "A" ? "Setter" : "Guesser";
+  $("lobbyRoleLabel").textContent = label;
+  $("menuPlayerRole").textContent = label;
+}
+
+// -----------------------------------------------------
+// SETTER UI
+// -----------------------------------------------------
 function updateSetterScreen() {
   $("newSecretInput").value = "";
-  // Secret + Guess UI --------------------------------------------
+
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   $("pendingGuessDisplay").textContent =
-    state.phase === "simultaneous"
-      ? "-"
-      : (state.pendingGuess?.toUpperCase() || "-");
+    state.phase === "simultaneous" ? "-" : (state.pendingGuess?.toUpperCase() || "-");
 
   renderHistory(state, $("historySetter"), true);
 
-  const previewBox = $("setterPreview");
-  previewBox.innerHTML = "";
+  const isSetterTurn = state.turn === state.setter;
+  const isDecisionStep = isSetterTurn && !!state.pendingGuess && state.phase === "normal";
 
-  const guess = state.pendingGuess;
-  const typedSecret = $("newSecretInput").value.trim().toLowerCase();
+  $("submitSetterSameBtn").disabled = !isDecisionStep;
 
-  const isSetterTurnNow = (state.turn === state.setter);
-
-  const isDecisionStep =
-    state.phase === "normal" &&
-    !!state.pendingGuess &&
-    isSetterTurnNow;
-
-  // Preview feedback ----------------------------------------------
-  if (isDecisionStep && guess) {
-    if (typedSecret.length === 5) {
-      const fb = predictFeedback(typedSecret, guess);
-      previewBox.textContent = `Preview (new): ${fb.join("")}`;
-    } else if (state.secret.length === 5) {
-      const fbSame = predictFeedback(state.secret, guess);
-      previewBox.textContent = `Preview: ${fbSame.join("")}`;
-    }
-  }
-
-  // Input Locking --------------------------------------------------
-  const setterSubmittedSimultaneous = state.simultaneousSecretSubmitted;
-
+  // Lock inputs
   const shouldLock =
     state.phase === "gameOver" ||
-    (state.phase === "simultaneous" && setterSubmittedSimultaneous) ||
-    (state.phase === "normal" && state.turn !== state.setter);
+    (state.phase === "simultaneous" && state.simultaneousSecretSubmitted) ||
+    (state.phase === "normal" && !isSetterTurn);
 
   $("newSecretInput").disabled = shouldLock;
   $("submitSetterNewBtn").disabled = shouldLock;
-  $("submitSetterSameBtn").disabled = !isDecisionStep;
 
-  // Keyboard (render ONCE only) ------------------------------------
+  // Render keyboard once
   if (!setterKeyboardInitialized) {
     renderKeyboard(state, $("keyboardSetter"), "setter", handleSetterKeyboard);
     setterKeyboardInitialized = true;
   }
 
-  // Constraint rendering -------------------------------------------
-  $("knownPatternSetter").textContent =
-    formatPattern(getPattern(state, true));
-
+  // Pattern / constraints
+  $("knownPatternSetter").textContent = formatPattern(getPattern(state, true));
   $("mustContainSetter").textContent =
     getMustContainLetters(state).join(", ") || "none";
+
+  updateSetterPreview();
 }
 
+function updateSetterPreview() {
+  const preview = $("setterPreview");
+  preview.innerHTML = "";
 
+  const guess = state.pendingGuess;
+  if (!guess) return;
+
+  const typed = $("newSecretInput").value.trim().toLowerCase();
+  const isSetterTurn = state.turn === state.setter;
+
+  if (!isSetterTurn) return;
+
+  if (typed.length === 5) {
+    const fb = predictFeedback(typed, guess);
+    preview.textContent = `Preview (new): ${fb.join("")}`;
+  } else if (state.secret.length === 5) {
+    const fbSame = predictFeedback(state.secret, guess);
+    preview.textContent = `Preview: ${fbSame.join("")}`;
+  }
+}
+
+function handleSetterKeyboard(letter, special) {
+  const input = $("newSecretInput");
+
+  if (state.turn !== state.setter || state.phase !== "normal") return;
+
+  if (special === "BACKSPACE") {
+    input.value = input.value.slice(0, -1);
+    return;
+  }
+  if (special === "ENTER") {
+    if (state.pendingGuess) $("submitSetterNewBtn").click();
+    return;
+  }
+  if (letter && input.value.length < 5) {
+    input.value += letter;
+  }
+}
 
 // -----------------------------------------------------
-// GUESSER SCREEN
+// GUESSER UI
 // -----------------------------------------------------
 function updateGuesserScreen() {
-
-  // Render history (guesser sees modified feedback)
   renderHistory(state, $("historyGuesser"), false);
 
   const guessBox = $("guessInput");
-  const kbContainer = $("keyboardGuesser");
 
-  const isGuesser = myRole === state.guesser;
-  const isSimultaneous = state.phase === "simultaneous";
-  const isGameOver = state.phase === "gameOver";
+  const canGuess =
+    (state.phase === "simultaneous" && !state.simultaneousGuessSubmitted) ||
+    (state.phase === "normal" &&
+      myRole === state.guesser &&
+      !state.pendingGuess &&
+      state.turn === state.guesser);
 
-  // Guesser can make a guess if:
-  //
-  // 1. simultaneous phase, or
-  // 2. normal phase AND (no pending guess yet) AND it's guesser's turn
-  //
-const hasSubmittedSimultaneousGuess = state.simultaneousGuessSubmitted;
-
-const inSim = (state.phase === "simultaneous");
-const guessSubmitted = state.simultaneousGuessSubmitted;
-
-const canGuess =
-  (inSim && isGuesser && !guessSubmitted) ||
-  (!inSim && isGuesser && !state.pendingGuess && state.turn === state.guesser);
-
-  // ---------------------------
-  // ENABLE / DISABLE INPUT
-  // ---------------------------
   guessBox.disabled = !canGuess;
   $("submitGuessBtn").disabled = !canGuess;
 
-  // ---------------------------
-  // RENDER KEYBOARD
-  // ---------------------------
-  renderKeyboard(state, kbContainer, "guesser", (letter, special) => {
+  // Keyboard
+  renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
     if (!canGuess) return;
 
     if (special === "BACKSPACE") {
       guessBox.value = guessBox.value.slice(0, -1);
-    }
-    else if (special === "ENTER") {
+    } else if (special === "ENTER") {
       $("submitGuessBtn").click();
-    }
-    else if (letter) {
-      if (guessBox.value.length < 5) {
-        guessBox.value += letter;
-      }
+    } else if (letter && guessBox.value.length < 5) {
+      guessBox.value += letter;
     }
   });
 
-  // ---------------------------
-  // DISPLAY KNOWN PATTERN + LETTER CONSTRAINTS
-  // ---------------------------
-  $("knownPatternGuesser").textContent =
-    formatPattern(getPattern(state, false));
-
+  $("knownPatternGuesser").textContent = formatPattern(getPattern(state, false));
   $("mustContainGuesser").textContent =
     getMustContainLetters(state).join(", ") || "none";
 }
 
-
 // -----------------------------------------------------
 // SUMMARY
 // -----------------------------------------------------
-function updateSummaryIfGameOver() {
-  const box = $("roundSummary");
+function updateSummary() {
+  const container = $("roundSummary");
   if (!state.gameOver) {
-    box.innerHTML = "";
+    container.innerHTML = "";
     return;
   }
 
   let html = `<h3>Round Summary</h3>`;
-  html += `<p><b>Total guesses:</b> ${state.guessCount +1}</p>`;
-
+  html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
   html += `<table class="summary-table">`;
   html += `<tr><th>#</th><th>Secret</th><th>Guess</th><th>Feedback</th></tr>`;
 
-  state.history.forEach((h, i) => {
+  for (let i = 0; i < state.history.length; i++) {
+    const h = state.history[i];
     html += `
       <tr>
         <td>${i + 1}</td>
         <td>${h.finalSecret.toUpperCase()}</td>
         <td>${h.guess.toUpperCase()}</td>
         <td>${h.fb.join("")}</td>
-      </tr>
-    `;
-  });
+      </tr>`;
+  }
 
   html += `</table>`;
-  box.innerHTML = html;
+  container.innerHTML = html;
 }
-
 
 // -----------------------------------------------------
 // BUTTONS
 // -----------------------------------------------------
+function enableReadyButton(enabled) {
+  $("readyBtn").disabled = !enabled;
+  $("readyBtn").classList.toggle("disabled", !enabled);
+  $("readyBtn").textContent = enabled ? "I'm Ready" : "Waiting...";
+}
 
 $("createRoomBtn").onclick = () => {
   createRoom(resp => {
@@ -508,84 +425,53 @@ $("createRoomBtn").onclick = () => {
     roomId = resp.roomId;
     $("roomInfo").style.display = "block";
     $("roomCodeLabel").textContent = roomId;
-    $("readyBtn").disabled = false;
-    $("readyBtn").classList.remove("disabled");
-    $("readyBtn").textContent = "I'm Ready";
+    enableReadyButton(true);
   });
 };
 
 $("joinRoomBtn").onclick = () => {
   const code = $("joinRoomInput").value.trim().toUpperCase();
   if (!code) return toast("Enter a code");
+
   joinRoom(code, resp => {
     if (!resp.ok) return toast(resp.error);
     roomId = code;
     $("roomInfo").style.display = "block";
     $("roomCodeLabel").textContent = roomId;
-    $("readyBtn").disabled = false;
-    $("readyBtn").classList.remove("disabled");
-    $("readyBtn").textContent = "I'm Ready";
+    enableReadyButton(true);
   });
 };
 
-$("switchRolesBtn").onclick = () => {
+$("switchRolesBtn").onclick = () =>
   sendGameAction(roomId, { type: "SWITCH_ROLES" });
-};
 
-$("readyBtn").onclick = () => {
-  iAmReady = true;
-  $("readyBtn").disabled = true;
-  $("readyBtn").textContent = "Waiting...";
+$("readyBtn").onclick = () =>
   sendGameAction(roomId, { type: "PLAYER_READY" });
-};
 
 $("submitGuessBtn").onclick = () => {
   const g = $("guessInput").value.trim().toLowerCase();
 
-  if (g.length !== 5) {
-    toast("5 letters required");
-    shakeInput($("guessInput"));
-    return;
-  }
-
-  if (!window.ALLOWED_GUESSES || !window.ALLOWED_GUESSES.has(g)) {
-    toast("Word not in dictionary");
-    shakeInput($("guessInput"));
-    return;
-  }
+  if (g.length !== 5) return shake($("guessInput")), toast("5 letters required");
+  if (!window.ALLOWED_GUESSES?.has(g))
+    return shake($("guessInput")), toast("Word not in dictionary");
 
   $("guessInput").value = "";
   sendGameAction(roomId, { type: "SUBMIT_GUESS", guess: g });
 };
 
-
-
 $("submitSetterNewBtn").onclick = () => {
   const w = $("newSecretInput").value.trim().toLowerCase();
 
-  if (w.length !== 5) {
-    toast("5 letters!");
-    shakeInput($("newSecretInput"));
-    return;
-  }
-
-  if (!window.ALLOWED_GUESSES || !window.ALLOWED_GUESSES.has(w)) {
-    toast("Word not in dictionary");
-    shakeInput($("newSecretInput"));
-    return;
-  }
+  if (w.length !== 5) return shake($("newSecretInput")), toast("5 letters!");
+  if (!window.ALLOWED_GUESSES?.has(w))
+    return shake($("newSecretInput")), toast("Word not in dictionary");
 
   $("newSecretInput").value = "";
   sendGameAction(roomId, { type: "SET_SECRET_NEW", secret: w });
 };
 
-
-
-$("submitSetterSameBtn").onclick = () => {
+$("submitSetterSameBtn").onclick = () =>
   sendGameAction(roomId, { type: "SET_SECRET_SAME" });
-};
-
-
 
 $("newMatchBtn").onclick = () => {
   sendGameAction(roomId, { type: "NEW_MATCH" });
@@ -593,5 +479,3 @@ $("newMatchBtn").onclick = () => {
   hide("guesserScreen");
   show("menu");
 };
-
-
