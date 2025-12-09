@@ -302,11 +302,32 @@ function updateSetterScreen() {
 
   $("submitSetterSameBtn").disabled = !isDecisionStep;
 
-  // NEW CORRECT LOCKING LOGIC:
-  $("newSecretInput").disabled = !isSetterTurn;
-  $("submitSetterNewBtn").disabled = !isSetterTurn;
+  // -------------------------------------------------------
+  // CORRECT INPUT LOCKING LOGIC
+  // -------------------------------------------------------
+  let setterInputEnabled = false;
 
-  // Render keyboard once
+  // SIMULTANEOUS PHASE — setter can enter secret until THEY submit
+  if (state.phase === "simultaneous") {
+    setterInputEnabled = !state.simultaneousSecretSubmitted;
+  }
+
+  // NORMAL PHASE — setter can only enter secret when it's their turn
+  else if (state.phase === "normal") {
+    setterInputEnabled = isSetterTurn;
+  }
+
+  // GAMEOVER / LOBBY — input locked
+  else {
+    setterInputEnabled = false;
+  }
+
+  $("newSecretInput").disabled = !setterInputEnabled;
+  $("submitSetterNewBtn").disabled = !setterInputEnabled;
+
+  // -------------------------------------------------------
+  // INITIALIZE KEYBOARD (you had removed this part by accident)
+  // -------------------------------------------------------
   if (!setterKeyboardInitialized) {
     renderKeyboard(state, $("keyboardSetter"), "setter", handleSetterKeyboard);
     setterKeyboardInitialized = true;
@@ -319,6 +340,7 @@ function updateSetterScreen() {
 
   updateSetterPreview();
 }
+
 
 
 function updateSetterPreview() {
