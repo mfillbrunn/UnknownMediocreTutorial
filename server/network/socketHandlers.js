@@ -54,6 +54,7 @@ module.exports = function registerSocketHandlers(io, context) {
 
     // GAME ACTION -----------------------------
     socket.on("gameAction", ({ roomId, action }) => {
+      console.log("SERVER RECEIVED GAME ACTION:", action);
       const room = rooms[roomId];
       if (!room) return;
 
