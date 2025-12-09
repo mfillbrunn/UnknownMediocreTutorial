@@ -36,7 +36,7 @@ function handleLobbyPhase(room, state, action, role, roomId, context) {
   if (action.type === "PLAYER_READY") {
     state.ready[role] = true;
 
-    emitLobbyEvent(io, roomId, {
+    emitToOtherPlayer(io, roomId, {
       type: "playerReady",
       role
     });
