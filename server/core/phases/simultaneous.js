@@ -37,7 +37,10 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   // PARTIAL UPDATE (just one submitted)
   // Always update UI to show “WAIT” indicators.
   // ---------------------------------------------
-  emitStateForAllPlayers(roomId, room, io);
+  io.to(roomId).emit("simulProgress", {
+    secretSubmitted: state.simultaneousSecretSubmitted,
+    guessSubmitted: state.simultaneousGuessSubmitted
+    });
 
   // ---------------------------------------------
   // If BOTH submitted → transition to NORMAL phase
@@ -49,16 +52,12 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     state.simultaneousGuessSubmitted;
 
   if (!bothSubmitted) return;
-
-  // Transition to normal gameplay
-  state.phase = "normal";
-  state.turn = state.setter; // setter must decide SAME or NEW first
-
-  // Emit full state update in new phase
-  io.to(roomId).emit("simulProgress", {
-  secretSubmitted: state.simultaneousSecretSubmitted,
-  guessSubmitted: state.simultaneousGuessSubmitted
-});
+  if (bothSubmitted) {
+    state.phase = "normal";
+    state.turn = state.setter;
+    emitStateForAllPlayers(roomId, room, io);
+  }
+   
 }
 
 module.exports = handleSimultaneousPhase;
