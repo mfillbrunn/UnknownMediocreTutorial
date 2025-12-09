@@ -14,8 +14,8 @@ function emitToPlayer(io, playerId, payload) {
 }
 
 // NEW: emit to the other player automatically
-function emitToOtherPlayer(io, room, triggeringPlayerId, payload) {
-  const playerIds = Object.keys(room.players);
+function emitToOtherPlayer(io, roomId, triggeringPlayerId, payload) {
+  const playerIds = Object.keys(roomId.players);
   const other = playerIds.find(id => id !== triggeringPlayerId);
   if (other) {
     io.to(other).emit("lobbyEvent", payload);
