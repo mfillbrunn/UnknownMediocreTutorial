@@ -1,8 +1,7 @@
 // core/phases/lobby.js
 
 const { emitLobbyEvent } = require("../../utils/emitLobby");
-const { emitStateForAllPlayers } = require("../../utils/safeState");
-
+const { emitStateForAllPlayers } = require("../../utils/emitState");
 function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
 
