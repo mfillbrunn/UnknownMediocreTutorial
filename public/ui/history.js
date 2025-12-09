@@ -15,7 +15,10 @@ window.renderHistory = function (state, container, isSetter) {
 
     // Apply client-side power effects to the safe copy
     PowerEngine.applyHistoryEffects(safeEntry, isSetter);
-
+    console.log("ROLE:", isSetter ? "SETTER" : "GUESSER");
+  console.log("ENTRY:", safeEntry);
+  console.log("fb:", safeEntry.fb);
+  console.log("fbGuesser:", safeEntry.fbGuesser);
     // Choose which feedback array to display
     const fbArray = isSetter ? safeEntry.fb : safeEntry.fbGuesser;
 
