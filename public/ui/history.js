@@ -1,7 +1,6 @@
 window.renderHistory = function (state, container, isSetter) {
   container.innerHTML = "";
 
-  // Ensure history exists and is an array
   const history = state?.history;
   if (!Array.isArray(history) || history.length === 0) {
     container.textContent = "No guesses yet.";
@@ -9,35 +8,34 @@ window.renderHistory = function (state, container, isSetter) {
   }
 
   for (const entry of history) {
-    // Skip broken / incomplete entries
     if (!entry || !entry.guess) continue;
 
-    // Setter sees actual fb; guesser sees fbGuesser
-    const fbArray = isSetter ? entry.fb : entry.fbGuesser;
+    // Clone entry to prevent mutations to state.history
+    const safeEntry = JSON.parse(JSON.stringify(entry));
 
-    // fbArray must be a valid array of length 5 to render it
+    // Apply client-side power effects to the safe copy
+    PowerEngine.applyHistoryEffects(safeEntry, isSetter);
+
+    // Choose which feedback array to display
+    const fbArray = isSetter ? safeEntry.fb : safeEntry.fbGuesser;
+
     if (!Array.isArray(fbArray) || fbArray.length < 5) {
-      console.warn("Skipping invalid history entry:", entry);
+      console.warn("Skipping invalid history entry:", safeEntry);
       continue;
     }
-
-    // Allow powers to modify entry before displaying
-    const safeEntry = JSON.parse(JSON.stringify(entry));
-    PowerEngine.applyHistoryEffects(safeEntry, isSetter);
 
     const row = document.createElement("div");
     row.className = "history-row";
 
-    const guess = entry.guess.toUpperCase();
+    const guess = safeEntry.guess.toUpperCase();
 
     let tiles = "";
     for (let i = 0; i < 5; i++) {
       tiles += fbArray[i];
     }
 
-    // Show extra info only to guesser
-    if (!isSetter && entry.extraInfo) {
-      const { greens, yellows } = entry.extraInfo;
+    if (!isSetter && safeEntry.extraInfo) {
+      const { greens, yellows } = safeEntry.extraInfo;
       tiles += ` (${greens}🟩, ${yellows}🟨)`;
     }
 
