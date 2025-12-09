@@ -304,9 +304,10 @@ function updateSetterScreen() {
     state.phase === "gameOver" ||
     (state.phase === "simultaneous" && state.simultaneousSecretSubmitted) ||
     (state.phase === "normal" && !isSetterTurn);
-
-  $("newSecretInput").disabled = shouldLock;
-  $("submitSetterNewBtn").disabled = shouldLock;
+  
+  const isSetterTurn = state.turn === state.setter;
+  $("newSecretInput").disabled = !isSetterTurn;
+  $("submitSetterNewBtn").disabled = !isSetterTurn;
 
   // Render keyboard once
   if (!setterKeyboardInitialized) {
@@ -483,7 +484,6 @@ $("submitSetterNewBtn").onclick = () => {
   if (!window.ALLOWED_GUESSES?.has(w))
     return shake($("newSecretInput")), toast("Word not in dictionary");
 
-  $("newSecretInput").value = "";
   sendGameAction(roomId, { type: "SET_SECRET_NEW", secret: w });
 };
 
