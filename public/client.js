@@ -5,6 +5,9 @@ let roomId = null;
 let myRole = null;      
 let state = null;
 let setterKeyboardInitialized = false;
+let pendingState = null;
+let roleAssigned = false;
+
 
 // -----------------------------------------------------
 // DOM HELPERS
@@ -112,12 +115,23 @@ onLobbyEvent(evt => {
 socket.on("roleAssigned", ({ role }) => {
   console.log("CLIENT RECEIVED ROLE FROM SERVER:", role);
   myRole = role;
+  roleAssigned = true;
+
+  if (pendingState) {
+    state = pendingState;
+    pendingState = null;
+    updateUI();
+  }
   updateRoleLabels();
 });
 
 // State updates
 onStateUpdate(newState => {
-  console.log("RAW STATE FROM SERVER:", JSON.stringify(newState, null, 2));
+  if (!roleAssigned) {
+    console.log("State received before role — buffering...");
+    pendingState = JSON.parse(JSON.stringify(newState));
+    return;
+  }
   state = JSON.parse(JSON.stringify(newState));
   updateUI();
 
