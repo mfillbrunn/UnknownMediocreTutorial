@@ -97,7 +97,7 @@ function generateRoomId() {
   return id;
 }
 function emitLobby(roomId, payload) {
-  io.to(roomId).emit("lobbyEvent", payload);
+  emitLobbyEvent(io, roomId, payload);
 }
 //---
 // Security leaks
