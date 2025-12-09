@@ -30,70 +30,61 @@ window.getPattern = function(state, isSetter) {
 
 
 
-window.getMustContainLetters = function(state) {
+window.getMustContainLetters = function(state, isSetter) {
   if (!state.history) return [];
 
-  // Track minimum required count for each letter
-  const requiredCounts = {};
-  
-  // Track forbidden positions for each letter
-  const forbiddenPositions = {};
+  const fbKey = isSetter ? "fb" : "fbGuesser";
 
-  // Track greens to filter forbidden positions later
+  const requiredCounts = {};
+  const forbiddenPositions = {};
   const greenPositions = {};
 
-  // 1. Collect information from history
   for (const h of state.history) {
     if (h.ignoreConstraints) continue;
+
+    const fb = h[fbKey];
+    if (!Array.isArray(fb) || fb.length !== 5) continue;
+
     const guess = h.guess.toUpperCase();
-    
-    // First pass — identify green positions
+
+    // First pass — greens
     for (let i = 0; i < 5; i++) {
-      if (h.fb[i] === "🟩") {
+      if (fb[i] === "🟩") {
         const L = guess[i];
         greenPositions[L] = greenPositions[L] || new Set();
         greenPositions[L].add(i);
       }
     }
 
-    // Second pass — collect yellows
+    // Second pass — yellows
     for (let i = 0; i < 5; i++) {
       const L = guess[i];
-      if (h.fb[i] === "🟨") {
+      if (fb[i] === "🟨") {
         requiredCounts[L] = (requiredCounts[L] || 0) + 1;
-
         forbiddenPositions[L] = forbiddenPositions[L] || new Set();
         forbiddenPositions[L].add(i);
       }
     }
   }
 
-  // 2. Build display list
+  // Build list
   const result = [];
-
   Object.keys(requiredCounts).forEach(letter => {
     const countNeeded = requiredCounts[letter];
+    const greens = greenPositions[letter]?.size || 0;
 
-    // Handle multiples
     let entry = letter;
-    if ((greenPositions[letter]?.size || 0) >= countNeeded) {
-        // Enough greens already satisfy requirement
-        // BUT we might need "another O"
-        const diff = countNeeded - (greenPositions[letter]?.size || 0);
-        if (diff > 0) {
-          entry = `${letter} (another ${letter})`;
-        } else {
-          // All occurrences accounted for — no need to list
-          return;
-        }
+
+    if (greens >= countNeeded) {
+      const diff = countNeeded - greens;
+      if (diff > 0) entry = `${letter} (another ${letter})`;
+      else return;
     }
 
-    // Forbidden positions, filtered so we don’t list greens
     const forb = [...(forbiddenPositions[letter] || [])]
       .filter(pos => !(greenPositions[letter]?.has(pos)));
-
     if (forb.length > 0) {
-      entry += ` (not ${forb.map(x => x+1).join(", ")})`;
+      entry += ` (not ${forb.map(x => x + 1).join(", ")})`;
     }
 
     result.push(entry);
@@ -101,5 +92,6 @@ window.getMustContainLetters = function(state) {
 
   return result;
 };
+
 
 window.formatPattern = arr => arr.join(" ");
