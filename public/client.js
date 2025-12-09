@@ -116,7 +116,7 @@ socket.on("roleAssigned", ({ role }) => {
 
 // State updates
 onStateUpdate(newState => {
-  state = newState;
+  state = JSON.parse(JSON.stringify(newState));
   updateUI();
 
   // Reset guess input if locked on transition
