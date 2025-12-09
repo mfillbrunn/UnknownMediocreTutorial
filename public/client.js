@@ -110,6 +110,7 @@ onLobbyEvent(evt => {
 
 // Role assignment from server
 socket.on("roleAssigned", ({ role }) => {
+  console.log("CLIENT RECEIVED ROLE FROM SERVER:", role);
   myRole = role;
   updateRoleLabels();
 });
