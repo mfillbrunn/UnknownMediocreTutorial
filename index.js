@@ -1,481 +1,64 @@
-// -----------------------------------------------------
-// LOCAL CLIENT STATE
-// -----------------------------------------------------
-let roomId = null;
-let myRole = null;      
-let state = null;
-let setterKeyboardInitialized = false;
+// server/index.js
+const express = require("express");
+const path = require("path");
+const http = require("http");
+const fs = require("fs");
+const { Server } = require("socket.io");
 
-// -----------------------------------------------------
-// DOM HELPERS
-// -----------------------------------------------------
-const $ = id => document.getElementById(id);
-const show = id => $(id).classList.add("active");
-const hide = id => $(id).classList.remove("active");
+const { createRoom, joinRoom, rooms, cleanupEmptyRooms } = require("./core/rooms");
+const registerSocketHandlers = require("./network/socketHandlers");
 
-function toast(msg) {
-  const t = $("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 1500);
+// ------------------------------
+// Load power engine + all plugin powers
+// ------------------------------
+const powerEngine = require("./powers/powerEngineServer");
+require("./powers/powers/hideTileServer");
+require("./powers/powers/reuseLettersServer");
+require("./powers/powers/confuseColorsServer");
+require("./powers/powers/countOnlyServer");
+require("./powers/powers/revealGreenServer");
+require("./powers/powers/freezeSecretServer");
+
+// ------------------------------
+const app = express();
+const server = http.createServer(app);
+
+// Load allowed guesses on startup
+const { parseWordlist } = require("./game-engine/validation");
+let ALLOWED_GUESSES = [];
+try {
+  const raw = fs.readFileSync("./wordlists/allowed_guesses.txt", "utf8");
+  ALLOWED_GUESSES = parseWordlist(raw);
+} catch {
+  console.warn("Could not load allowed guesses.");
 }
 
-function shake(element) {
-  element.classList.add("shake");
-  setTimeout(() => element.classList.remove("shake"), 300);
-}
+app.get("/api/allowed-guesses", (req, res) => res.json(ALLOWED_GUESSES));
+app.use(express.static(path.join(__dirname, "..", "public")));
+app.get("*", (req, res) =>
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"))
+);
 
-// -----------------------------------------------------
-// LOAD WORD LIST FOR CLIENT-SIDE VALIDATION
-// -----------------------------------------------------
-window.ALLOWED_GUESSES = new Set();
-fetch("/api/allowed-guesses")
-  .then(r => r.json())
-  .then(words => words.forEach(w => window.ALLOWED_GUESSES.add(w)));
-
-// -----------------------------------------------------
-// AUTO-REJOIN
-// -----------------------------------------------------
-window.addEventListener("load", () => {
-  const savedRoom = localStorage.getItem("vswordle_room");
-  if (!savedRoom) return;
-
-  joinRoom(savedRoom, resp => {
-    if (resp.ok) {
-      roomId = savedRoom;
-      $("roomInfo").style.display = "block";
-      $("roomCodeLabel").textContent = roomId;
-    }
-  });
+// ------------------------------
+const io = new Server(server, {
+  path: "/socket.io",
+  cors: { origin: "*", methods: ["GET", "POST"] },
+  transports: ["polling", "websocket"],
+  allowEIO3: true
 });
 
-// -----------------------------------------------------
-// SOCKET EVENT HANDLERS
-// -----------------------------------------------------
-
-// Turn animation
-onAnimateTurn(({ type }) => {
-  const tp = $("turnPopup");
-  const msg = type === "setterSubmitted"
-    ? "Setter Submitted"
-    : type === "guesserSubmitted"
-    ? "Guesser Submitted"
-    : "";
-
-  if (!msg) return;
-
-  tp.textContent = msg;
-  tp.classList.add("show");
-  setTimeout(() => tp.classList.remove("show"), 800);
-});
-
-// Power UI hook (client-side effects)
-onPowerUsed(data => {
-  const mod = PowerEngine.powers[data.type];
-  mod?.effects?.onPowerUsed?.(data);
-});
-
-// Lobby events
-onLobbyEvent(evt => {
-  switch (evt.type) {
-
-    case "playerJoined":
-      toast("A player joined.");
-      enableReadyButton(true);
-      break;
-
-    case "rolesSwitched":
-      updateRolesAfterSwitch(evt);
-      break;
-
-    case "playerReady":
-      toast(`Player ${evt.role} is READY`);
-      break;
-
-    case "hideLobby":
-      hide("lobby");
-      hide("menu");
-      show(myRole === "A" ? "setterScreen" : "guesserScreen");
-      enableReadyButton(false);
-      break;
-
-    case "gameOverShowMenu":
-      hide("setterScreen");
-      hide("guesserScreen");
-      show("menu");
-      enableReadyButton(false);
-      break;
-  }
-});
-
-// Role assignment from server
-socket.on("roleAssigned", ({ role }) => {
-  myRole = role;
-  updateRoleLabels();
-});
-
-// State updates
-onStateUpdate(newState => {
-  state = newState;
-  updateUI();
-
-  // Reset guess input if locked on transition
-  if (state.phase === "normal" && $("guessInput").disabled) {
-    $("guessInput").value = "";
-  }
-});
-
-// -----------------------------------------------------
-// UI UPDATE PIPELINE
-// -----------------------------------------------------
-function updateUI() {
-  if (!state) return;
-
-  // Render power buttons once
-  if (!PowerEngine._initialized && roomId) {
-    PowerEngine.renderButtons(roomId);
-    PowerEngine._initialized = true;
-  }
-
-  updateMenu();
-  updateScreens();
-  updateTurnIndicators();
-  updateSummary();
-  if (state.phase !== "lobby") hide("lobby");
-
-  PowerEngine.applyUI(state, myRole, roomId);
-}
-
-// -----------------------------------------------------
-// Update Menu
-// -----------------------------------------------------
-function updateMenu() {
-  $("menuRoomCode").textContent = roomId || "-";
-  $("menuPlayerRole").textContent = myRole === "A" ? "Setter" : "Guesser";
-}
-
-// -----------------------------------------------------
-// Screen Visibility
-// -----------------------------------------------------
-function updateScreens() {
-  if (state.phase === "lobby") {
-    show("lobby");
-    hide("menu");
-    hide("setterScreen");
-    hide("guesserScreen");
-    enableReadyButton(true);
-    return;
-  }
-
-  enableReadyButton(false);
-  hide("lobby");
-
-  if (state.phase === "gameOver") {
-    hide("setterScreen");
-    hide("guesserScreen");
-    show("menu");
-    return;
-  }
-
-  hide("menu");
-
-  if (myRole === state.setter) {
-    show("setterScreen");
-    hide("guesserScreen");
-  } else {
-    show("guesserScreen");
-    hide("setterScreen");
-  }
-
-  updateSetterScreen();
-  updateGuesserScreen();
-}
-
-// -----------------------------------------------------
-// Turn Indicator Bar
-// -----------------------------------------------------
-function updateTurnIndicators() {
-  const setterBar = $("turnIndicatorSetter");
-  const guesserBar = $("turnIndicatorGuesser");
-
-  if (state.phase === "lobby") {
-    setterBar.textContent = "";
-    guesserBar.textContent = "";
-    setterBar.className = "turn-indicator";
-    guesserBar.className = "turn-indicator";
-    return;
-  }
-
-  if (state.phase === "simultaneous") {
-    updateSimultaneousIndicators();
-    return;
-  }
-
-  if (state.phase === "gameOver") {
-    setToWait(setterBar);
-    setToWait(guesserBar);
-    return;
-  }
-
-  updateNormalTurnIndicators();
-}
-
-function updateSimultaneousIndicators() {
-  const setterBar = $("turnIndicatorSetter");
-  const guesserBar = $("turnIndicatorGuesser");
-
-  const setterSubmitted = !!state.secret;
-  const guesserSubmitted = !!state.pendingGuess;
-
-  updateIndicator(setterBar, !setterSubmitted);
-  updateIndicator(guesserBar, !guesserSubmitted);
-}
-
-function updateNormalTurnIndicators() {
-  const setterBar = $("turnIndicatorSetter");
-  const guesserBar = $("turnIndicatorGuesser");
-
-  const setterTurn = state.turn === state.setter;
-
-  updateIndicator(setterBar, setterTurn);
-  updateIndicator(guesserBar, !setterTurn);
-}
-
-function updateIndicator(element, isActiveTurn) {
-  if (isActiveTurn) {
-    element.textContent = "YOUR TURN";
-    element.className = "turn-indicator your-turn";
-  } else {
-    element.textContent = "WAIT";
-    element.className = "turn-indicator wait-turn";
-  }
-}
-
-function setToWait(element) {
-  element.textContent = "WAIT";
-  element.className = "turn-indicator wait-turn";
-}
-
-// -----------------------------------------------------
-// ROLE LABEL
-// -----------------------------------------------------
-function updateRoleLabels() {
-  const label = myRole === "A" ? "Setter" : "Guesser";
-  $("lobbyRoleLabel").textContent = label;
-  $("menuPlayerRole").textContent = label;
-}
-
-// -----------------------------------------------------
-// SETTER UI
-// -----------------------------------------------------
-function updateSetterScreen() {
-  $("newSecretInput").value = "";
-
-  $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
-  $("pendingGuessDisplay").textContent =
-    state.phase === "simultaneous" ? "-" : (state.pendingGuess?.toUpperCase() || "-");
-
-  renderHistory(state, $("historySetter"), true);
-
-  const isSetterTurn = state.turn === state.setter;
-  const isDecisionStep = isSetterTurn && !!state.pendingGuess && state.phase === "normal";
-
-  $("submitSetterSameBtn").disabled = !isDecisionStep;
-
-  // Lock inputs
-  const shouldLock =
-    state.phase === "gameOver" ||
-    (state.phase === "simultaneous" && state.simultaneousSecretSubmitted) ||
-    (state.phase === "normal" && !isSetterTurn);
-
-  $("newSecretInput").disabled = shouldLock;
-  $("submitSetterNewBtn").disabled = shouldLock;
-
-  // Render keyboard once
-  if (!setterKeyboardInitialized) {
-    renderKeyboard(state, $("keyboardSetter"), "setter", handleSetterKeyboard);
-    setterKeyboardInitialized = true;
-  }
-
-  // Pattern / constraints
-  $("knownPatternSetter").textContent = formatPattern(getPattern(state, true));
-  $("mustContainSetter").textContent =
-    getMustContainLetters(state).join(", ") || "none";
-
-  updateSetterPreview();
-}
-
-function updateSetterPreview() {
-  const preview = $("setterPreview");
-  preview.innerHTML = "";
-
-  const guess = state.pendingGuess;
-  if (!guess) return;
-
-  const typed = $("newSecretInput").value.trim().toLowerCase();
-  const isSetterTurn = state.turn === state.setter;
-
-  if (!isSetterTurn) return;
-
-  if (typed.length === 5) {
-    const fb = predictFeedback(typed, guess);
-    preview.textContent = `Preview (new): ${fb.join("")}`;
-  } else if (state.secret.length === 5) {
-    const fbSame = predictFeedback(state.secret, guess);
-    preview.textContent = `Preview: ${fbSame.join("")}`;
-  }
-}
-
-function handleSetterKeyboard(letter, special) {
-  const input = $("newSecretInput");
-
-  if (state.turn !== state.setter || state.phase !== "normal") return;
-
-  if (special === "BACKSPACE") {
-    input.value = input.value.slice(0, -1);
-    return;
-  }
-  if (special === "ENTER") {
-    if (state.pendingGuess) $("submitSetterNewBtn").click();
-    return;
-  }
-  if (letter && input.value.length < 5) {
-    input.value += letter;
-  }
-}
-
-// -----------------------------------------------------
-// GUESSER UI
-// -----------------------------------------------------
-function updateGuesserScreen() {
-  renderHistory(state, $("historyGuesser"), false);
-
-  const guessBox = $("guessInput");
-
-  const canGuess =
-    (state.phase === "simultaneous" && !state.simultaneousGuessSubmitted) ||
-    (state.phase === "normal" &&
-      myRole === state.guesser &&
-      !state.pendingGuess &&
-      state.turn === state.guesser);
-
-  guessBox.disabled = !canGuess;
-  $("submitGuessBtn").disabled = !canGuess;
-
-  // Keyboard
-  renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
-    if (!canGuess) return;
-
-    if (special === "BACKSPACE") {
-      guessBox.value = guessBox.value.slice(0, -1);
-    } else if (special === "ENTER") {
-      $("submitGuessBtn").click();
-    } else if (letter && guessBox.value.length < 5) {
-      guessBox.value += letter;
-    }
-  });
-
-  $("knownPatternGuesser").textContent = formatPattern(getPattern(state, false));
-  $("mustContainGuesser").textContent =
-    getMustContainLetters(state).join(", ") || "none";
-}
-
-// -----------------------------------------------------
-// SUMMARY
-// -----------------------------------------------------
-function updateSummary() {
-  const container = $("roundSummary");
-  if (!state.gameOver) {
-    container.innerHTML = "";
-    return;
-  }
-
-  let html = `<h3>Round Summary</h3>`;
-  html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
-  html += `<table class="summary-table">`;
-  html += `<tr><th>#</th><th>Secret</th><th>Guess</th><th>Feedback</th></tr>`;
-
-  for (let i = 0; i < state.history.length; i++) {
-    const h = state.history[i];
-    html += `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${h.finalSecret.toUpperCase()}</td>
-        <td>${h.guess.toUpperCase()}</td>
-        <td>${h.fb.join("")}</td>
-      </tr>`;
-  }
-
-  html += `</table>`;
-  container.innerHTML = html;
-}
-
-// -----------------------------------------------------
-// BUTTONS
-// -----------------------------------------------------
-function enableReadyButton(enabled) {
-  $("readyBtn").disabled = !enabled;
-  $("readyBtn").classList.toggle("disabled", !enabled);
-  $("readyBtn").textContent = enabled ? "I'm Ready" : "Waiting...";
-}
-
-$("createRoomBtn").onclick = () => {
-  createRoom(resp => {
-    if (!resp.ok) return toast(resp.error);
-    roomId = resp.roomId;
-    $("roomInfo").style.display = "block";
-    $("roomCodeLabel").textContent = roomId;
-    enableReadyButton(true);
-  });
+// Attach global engine objects so modules can use them
+const context = {
+  io,
+  powerEngine,
+  ALLOWED_GUESSES
 };
 
-$("joinRoomBtn").onclick = () => {
-  const code = $("joinRoomInput").value.trim().toUpperCase();
-  if (!code) return toast("Enter a code");
+// Register socket event handlers (create/join room, game actions)
+registerSocketHandlers(io, context);
 
-  joinRoom(code, resp => {
-    if (!resp.ok) return toast(resp.error);
-    roomId = code;
-    $("roomInfo").style.display = "block";
-    $("roomCodeLabel").textContent = roomId;
-    enableReadyButton(true);
-  });
-};
+// Cleanup stale rooms every 10 minutes
+setInterval(cleanupEmptyRooms, 10 * 60 * 1000);
 
-$("switchRolesBtn").onclick = () =>
-  sendGameAction(roomId, { type: "SWITCH_ROLES" });
-
-$("readyBtn").onclick = () =>
-  sendGameAction(roomId, { type: "PLAYER_READY" });
-
-$("submitGuessBtn").onclick = () => {
-  const g = $("guessInput").value.trim().toLowerCase();
-
-  if (g.length !== 5) return shake($("guessInput")), toast("5 letters required");
-  if (!window.ALLOWED_GUESSES?.has(g))
-    return shake($("guessInput")), toast("Word not in dictionary");
-
-  $("guessInput").value = "";
-  sendGameAction(roomId, { type: "SUBMIT_GUESS", guess: g });
-};
-
-$("submitSetterNewBtn").onclick = () => {
-  const w = $("newSecretInput").value.trim().toLowerCase();
-
-  if (w.length !== 5) return shake($("newSecretInput")), toast("5 letters!");
-  if (!window.ALLOWED_GUESSES?.has(w))
-    return shake($("newSecretInput")), toast("Word not in dictionary");
-
-  $("newSecretInput").value = "";
-  sendGameAction(roomId, { type: "SET_SECRET_NEW", secret: w });
-};
-
-$("submitSetterSameBtn").onclick = () =>
-  sendGameAction(roomId, { type: "SET_SECRET_SAME" });
-
-$("newMatchBtn").onclick = () => {
-  sendGameAction(roomId, { type: "NEW_MATCH" });
-  hide("setterScreen");
-  hide("guesserScreen");
-  show("menu");
-};
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log("VS Wordle server running on", PORT));
