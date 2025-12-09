@@ -14,7 +14,7 @@ module.exports = function registerSocketHandlers(io, context) {
     socket.on("createRoom", cb => {
       const roomId = createRoom(socket);
       const room = rooms[roomId];
-
+      console.log("SERVER ASSIGNING ROLE TO NEW ROOM CREATOR:", socket.id, "ROLE: A");
       socket.emit("roleAssigned", {
         role: "A",
         setterId: socket.id,
@@ -40,7 +40,7 @@ module.exports = function registerSocketHandlers(io, context) {
         .find(id => room.players[id] === "A");
       const guesserId = Object.keys(room.players)
         .find(id => room.players[id] === "B");
-
+      console.log("SERVER ASSIGNING ROLE TO JOINER:", socket.id, "ROLE:", room.players[socket.id]);
       socket.emit("roleAssigned", {
         role: room.players[socket.id],
         setterId,
