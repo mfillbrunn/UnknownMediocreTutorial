@@ -4,13 +4,16 @@ window.getPattern = function (state, isSetterView) {
   let pattern = ["-", "-", "-", "-", "-"];
 
   if (!state?.history?.length) {
-    // Allow powers to override even when empty
-    return applyPatternPowers(pattern, state, isSetterView);
+    return pattern;
   }
 
   for (const entry of state.history) {
     const fbArray = isSetterView ? entry.fb : entry.fbGuesser;
-    if (!fbArray) continue;
+
+    if (!Array.isArray(fbArray) || fbArray.length !== 5) {
+      console.warn("Skipping invalid history entry (pattern):", entry);
+      continue;
+    }
 
     for (let i = 0; i < 5; i++) {
       if (fbArray[i] === "🟩") {
@@ -19,8 +22,9 @@ window.getPattern = function (state, isSetterView) {
     }
   }
 
-  return applyPatternPowers(pattern, state, isSetterView);
+  return pattern;
 };
+
 
 // ------- APPLY POWER MODS -------
 function applyPatternPowers(pattern, state, isSetterView) {
@@ -40,21 +44,27 @@ function applyPatternPowers(pattern, state, isSetterView) {
 
 window.getMustContainLetters = function (state) {
   const must = new Set();
-  if (!state?.history?.length) {
-    return applyMustContainPowers([], state);
-  }
+  if (!state?.history?.length) return [];
 
   for (const entry of state.history) {
+    const fbArray = entry.fb ?? entry.fbGuesser;
+
+    if (!Array.isArray(fbArray) || fbArray.length !== 5) {
+      console.warn("Skipping invalid history entry (mustContain):", entry);
+      continue;
+    }
+
     for (let i = 0; i < 5; i++) {
-      const fb = entry.fb[i]; // Always judge true feedback
+      const fb = fbArray[i];
       if (fb === "🟩" || fb === "🟨") {
         must.add(entry.guess[i].toUpperCase());
       }
     }
   }
 
-  return applyMustContainPowers(Array.from(must), state);
+  return Array.from(must);
 };
+
 
 // ------- APPLY POWER MODS -------
 function applyMustContainPowers(arr, state) {
