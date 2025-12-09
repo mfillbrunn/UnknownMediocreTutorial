@@ -459,7 +459,7 @@ io.on("connection", socket => {
       return cb({ ok:false, error:"Room is full" });
 
     socket.join(roomId);
-    io.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
+    socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
     room.players[socket.id] = "B";   // Second always Guesser
     assignRoles(room);
 
