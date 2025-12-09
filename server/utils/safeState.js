@@ -39,41 +39,42 @@ function buildSafeStateForPlayer(state, role) {
   // 5. Filter & sanitize HISTORY
   // -----------------------------------------------------
   safe.history = safe.history
-    .map(entry => {
-      // Skip malformed entries entirely
-      if (!entry || (!entry.fb && !entry.fbGuesser)) {
-        console.warn("Dropping malformed history entry:", entry);
-        return null;
+  .map(entry => {
+    if (!entry) return null;
+
+    const e = JSON.parse(JSON.stringify(entry));
+
+    // GUESSER sees fbGuesser only
+    if (role === state.guesser) {
+      delete e.fb;
+      if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
+        console.warn("Repairing missing fbGuesser:", e);
+        e.fbGuesser = ["?", "?", "?", "?", "?"];
       }
+    }
 
-      const e = JSON.parse(JSON.stringify(entry));
-
-      // Never reveal final secret
-      delete e.finalSecret;
-
-      // Remove internal power metadata
-      delete e.confuseApplied;
-      delete e.ignoreConstraints;
-      delete e.countOnlyApplied;
-      delete e.freezeApplied;
-      delete e.hideTileApplied;
-      delete e.reuseLetters;
-      delete e.revealGreen;
-
-      // If GUESSER → hide true fb
-      if (role === state.guesser) {
-        delete e.fb;
-
-        // Ensure fbGuesser is always valid
-        if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
-          console.warn("Repairing missing fbGuesser:", e);
-          e.fbGuesser = ["?", "?", "?", "?", "?"];
-        }
+    // SETTER sees fb only
+    if (role === state.setter) {
+      delete e.fbGuesser;
+      if (!Array.isArray(e.fb) || e.fb.length !== 5) {
+        console.warn("Repairing missing fb:", e);
+        e.fb = ["?", "?", "?", "?", "?"];
       }
+    }
 
-      return e;
-    })
-    .filter(e => e !== null);
+    // Delete internal metadata
+    delete e.finalSecret;
+    delete e.confuseApplied;
+    delete e.ignoreConstraints;
+    delete e.countOnlyApplied;
+    delete e.freezeApplied;
+    delete e.hideTileApplied;
+    delete e.reuseLetters;
+    delete e.revealGreen;
+
+    return e;
+  })
+  .filter(e => e !== null);
 
   return safe;
 }
