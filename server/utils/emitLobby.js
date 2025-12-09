@@ -9,5 +9,21 @@
 function emitLobbyEvent(io, roomId, payload) {
   io.to(roomId).emit("lobbyEvent", payload);
 }
+function emitToPlayer(io, playerId, payload) {
+  io.to(playerId).emit("lobbyEvent", payload);
+}
 
-module.exports = { emitLobbyEvent };
+// NEW: emit to the other player automatically
+function emitToOtherPlayer(io, room, triggeringPlayerId, payload) {
+  const playerIds = Object.keys(room.players);
+  const other = playerIds.find(id => id !== triggeringPlayerId);
+  if (other) {
+    io.to(other).emit("lobbyEvent", payload);
+  }
+}
+
+module.exports = {
+  emitLobbyEvent,
+  emitToPlayer,
+  emitToOtherPlayer
+};
