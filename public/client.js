@@ -131,6 +131,7 @@ onStateUpdate(newState => {
 // UI UPDATE PIPELINE
 // -----------------------------------------------------
 function updateUI() {
+  console.log("UPDATE UI — CURRENT ROLE:", myRole);
   if (!state) return;
 
   // Render power buttons once
