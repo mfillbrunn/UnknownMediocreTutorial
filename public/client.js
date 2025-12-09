@@ -199,13 +199,13 @@ function updateScreens() {
   if (myRole === state.setter) {
     show("setterScreen");
     hide("guesserScreen");
+    updateSetterScreen();
   } else {
     show("guesserScreen");
     hide("setterScreen");
+    updateGuesserScreen();
   }
 
-  updateSetterScreen();
-  updateGuesserScreen();
 }
 
 // -----------------------------------------------------
