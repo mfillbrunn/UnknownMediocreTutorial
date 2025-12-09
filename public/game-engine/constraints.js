@@ -2,17 +2,24 @@
 
 window.getPattern = function(state, isSetter) {
   if (!state.history || state.history.length === 0) {
-    return ["-","-","-","-","-"];
+    return ["-", "-", "-", "-", "-"];
   }
 
-  // Start empty
-  const pattern = ["-","-","-","-","-"];
+  const pattern = ["-", "-", "-", "-", "-"];
 
-  // Use ONLY greens from history
+  // Pick the right feedback array depending on role
+  const fbKey = isSetter ? "fb" : "fbGuesser";
+
   for (const h of state.history) {
     if (h.ignoreConstraints) continue;
+
+    const fb = h[fbKey];
+
+    // Skip invalid feedback entries
+    if (!Array.isArray(fb) || fb.length !== 5) continue;
+
     for (let i = 0; i < 5; i++) {
-      if (h.fb[i] === "🟩") {
+      if (fb[i] === "🟩") {
         pattern[i] = h.guess[i].toUpperCase();
       }
     }
@@ -20,6 +27,7 @@ window.getPattern = function(state, isSetter) {
 
   return pattern;
 };
+
 
 
 window.getMustContainLetters = function(state) {
