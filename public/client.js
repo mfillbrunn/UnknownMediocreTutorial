@@ -116,6 +116,7 @@ socket.on("roleAssigned", ({ role }) => {
 
 // State updates
 onStateUpdate(newState => {
+  console.log("RAW STATE FROM SERVER:", JSON.stringify(newState, null, 2));
   state = JSON.parse(JSON.stringify(newState));
   updateUI();
 
