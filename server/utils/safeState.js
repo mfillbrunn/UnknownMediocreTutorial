@@ -1,5 +1,3 @@
-// server side safeState.js
-
 function buildSafeStateForPlayer(state, role) {
   const safe = JSON.parse(JSON.stringify(state));
 
@@ -14,8 +12,8 @@ function buildSafeStateForPlayer(state, role) {
   // 2. Hide GUESS from setter during simultaneous phase
   // -----------------------------------------------------
   if (role === state.setter && state.phase === "simultaneous") {
-  safe.pendingGuess = "";
-}
+    safe.pendingGuess = "";
+  }
 
   // -----------------------------------------------------
   // 3. Clean INTERNAL power state (never exposed)
@@ -38,36 +36,44 @@ function buildSafeStateForPlayer(state, role) {
   delete safe.firstSecretSet;
 
   // -----------------------------------------------------
-  // 5. Filter HISTORY by role
+  // 5. Filter & sanitize HISTORY
   // -----------------------------------------------------
-  safe.history = safe.history.map(entry => {
-    const e = JSON.parse(JSON.stringify(entry));
+  safe.history = safe.history
+    .map(entry => {
+      // Skip malformed entries entirely
+      if (!entry || (!entry.fb && !entry.fbGuesser)) {
+        console.warn("Dropping malformed history entry:", entry);
+        return null;
+      }
 
-    // NEVER reveal finalSecret to guesser (leaks secret)
-    delete e.finalSecret;
+      const e = JSON.parse(JSON.stringify(entry));
 
-    // Remove power metadata that gives away decisions
-    delete e.confuseApplied;
-    delete e.ignoreConstraints;
-    delete e.countOnlyApplied;
-    delete e.freezeApplied;
-    delete e.hideTileApplied;
+      // Never reveal final secret
+      delete e.finalSecret;
 
-    // Reuse letters – setter already knows; guesser should also see?
-    // Up to you — but safest is to send only what was sent via powerUsed.
-    delete e.reuseLetters;
+      // Remove internal power metadata
+      delete e.confuseApplied;
+      delete e.ignoreConstraints;
+      delete e.countOnlyApplied;
+      delete e.freezeApplied;
+      delete e.hideTileApplied;
+      delete e.reuseLetters;
+      delete e.revealGreen;
 
-    // Reveal green – guesser sees via powerUsed event, not here
-    delete e.revealGreen;
+      // If GUESSER → hide true fb
+      if (role === state.guesser) {
+        delete e.fb;
 
-    // If player is GUESSER → hide true feedback
-    if (role === state.guesser) {
-      delete e.fb;              // setter-only info
-      // e.fbGuesser is already the modified/obfuscated version
-    }
+        // Ensure fbGuesser is always valid
+        if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
+          console.warn("Repairing missing fbGuesser:", e);
+          e.fbGuesser = ["?", "?", "?", "?", "?"];
+        }
+      }
 
-    return e;
-  });
+      return e;
+    })
+    .filter(e => e !== null);
 
   return safe;
 }
