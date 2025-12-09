@@ -294,18 +294,15 @@ function updateSetterScreen() {
 
   renderHistory(state, $("historySetter"), true);
 
-  const isSetterTurn = state.turn === state.setter;
-  const isDecisionStep = isSetterTurn && !!state.pendingGuess && state.phase === "normal";
+  const isSetterTurn = (state.turn === state.setter);
+  const isDecisionStep =
+    isSetterTurn &&
+    !!state.pendingGuess &&
+    state.phase === "normal";
 
   $("submitSetterSameBtn").disabled = !isDecisionStep;
 
-  // Lock inputs
-  const shouldLock =
-    state.phase === "gameOver" ||
-    (state.phase === "simultaneous" && state.simultaneousSecretSubmitted) ||
-    (state.phase === "normal" && !isSetterTurn);
-  
-  const isSetterTurn = state.turn === state.setter;
+  // NEW CORRECT LOCKING LOGIC:
   $("newSecretInput").disabled = !isSetterTurn;
   $("submitSetterNewBtn").disabled = !isSetterTurn;
 
@@ -322,6 +319,7 @@ function updateSetterScreen() {
 
   updateSetterPreview();
 }
+
 
 function updateSetterPreview() {
   const preview = $("setterPreview");
