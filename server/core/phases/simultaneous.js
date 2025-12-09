@@ -1,6 +1,6 @@
 // core/phases/simultaneous.js
 
-const { emitStateForAllPlayers } = require("../../utils/safeState");
+const { emitStateForAllPlayers } = require("../../utils/emitState");
 
 function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const io = context.io;
