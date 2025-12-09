@@ -40,6 +40,7 @@ function buildSafeStateForPlayer(state, role) {
   // -----------------------------------------------------
   safe.history = safe.history
   .map(entry => {
+    console.log("SERVER SAFE ENTRY BEFORE CLEAN:", entry);
     if (!entry) return null;
 
     const e = JSON.parse(JSON.stringify(entry));
@@ -71,11 +72,11 @@ function buildSafeStateForPlayer(state, role) {
     delete e.hideTileApplied;
     delete e.reuseLetters;
     delete e.revealGreen;
-
+    
+    console.log("SERVER SAFE ENTRY AFTER CLEAN:", e);
     return e;
   })
   .filter(e => e !== null);
-
   return safe;
 }
 
