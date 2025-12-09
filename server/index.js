@@ -27,7 +27,8 @@ const server = http.createServer(app);
 const { parseWordlist } = require("./game-engine/validation");
 let ALLOWED_GUESSES = [];
 try {
-  const raw = fs.readFileSync("./wordlists/allowed_guesses.txt", "utf8");
+  const allowedPath = path.join(__dirname, "wordlists", "allowed_guesses.txt");
+  const raw = fs.readFileSync(allowedPath, "utf8");
   ALLOWED_GUESSES = parseWordlist(raw);
 } catch {
   console.warn("Could not load allowed guesses.");
