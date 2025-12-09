@@ -55,7 +55,10 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   state.turn = state.setter; // setter must decide SAME or NEW first
 
   // Emit full state update in new phase
-  emitStateForAllPlayers(roomId, room, io);
+  io.to(roomId).emit("simulProgress", {
+  secretSubmitted: state.simultaneousSecretSubmitted,
+  guessSubmitted: state.simultaneousGuessSubmitted
+});
 }
 
 module.exports = handleSimultaneousPhase;
