@@ -22,7 +22,8 @@ window.renderHistory = function (state, container, isSetter) {
     }
 
     // Allow powers to modify entry before displaying
-    PowerEngine.applyHistoryEffects(entry, isSetter);
+    const safeEntry = JSON.parse(JSON.stringify(entry));
+    PowerEngine.applyHistoryEffects(safeEntry, isSetter);
 
     const row = document.createElement("div");
     row.className = "history-row";
