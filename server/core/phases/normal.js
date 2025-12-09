@@ -1,6 +1,6 @@
 // core/phases/normal.js
 
-const { emitStateForAllPlayers } = require("../../utils/safeState");
+const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { finalizeFeedback } = require("../stateFactory");
 const { isValidWord, parseWordlist } = require("../../game-engine/validation");
