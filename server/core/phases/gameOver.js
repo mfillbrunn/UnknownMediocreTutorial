@@ -1,6 +1,6 @@
 // core/phases/gameOver.js
 
-const { emitStateForAllPlayers } = require("../../utils/safeState");
+const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { createInitialState } = require("../stateFactory");
 
