@@ -1,13 +1,9 @@
-//
-// client.js — FINAL PATCHED VERSION FOR VS Wordle
-// Non-module version (no imports)
-//
-
+// client.js — main client file
 // -----------------------------------------------------
 // LOCAL CLIENT STATE
 // -----------------------------------------------------
 let roomId = null;
-let myRole = null;      // Assigned by server: "A" or "B"
+let myRole = null;      
 let state = null;
 let iAmReady = false;
 let setterKeyboardInitialized = false;
@@ -29,7 +25,6 @@ function shakeInput(element) {
 }
 // WORD LIST — loaded for local validation
 window.ALLOWED_GUESSES = new Set();
-
 fetch("/api/allowed-guesses")
   .then(r => r.json())
   .then(words => {
