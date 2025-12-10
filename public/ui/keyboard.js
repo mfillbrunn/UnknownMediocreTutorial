@@ -99,6 +99,13 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
         keyEl.classList.remove("key-green", "key-yellow", "key-gray", "key-blue");
         
         // Apply updated color state
+        if (state.history && state.history.length > 0) {
+          const last = state.history[state.history.length - 1];
+          if (last.countOnlyApplied) {
+              console.log("[COUNT ONLY] Keyboard update skipped this turn");
+              return; 
+          }
+        }
         const status = getLetterStatusFromHistory(letter, state, isGuesser);
         if (status === "green") keyEl.classList.add("key-green");
         else if (status === "yellow") keyEl.classList.add("key-yellow");
