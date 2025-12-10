@@ -5,15 +5,12 @@ const engine = require("../powerEngineServer.js");
 engine.registerPower("hidetile", {
   apply(state, action, roomId, io) {
     const maxTiles = 2;
-    console.log("APPLYING POWER:", "reuseletters", "state.turn=", state.turn);
     if (state.powers.hideTileUsed && state.powers.hideTilePendingCount === 0) return;
-
     state.powers.hideTileUsed = true;
     state.powers.hideTilePendingCount = Math.min(
       maxTiles,
       state.powers.hideTilePendingCount + 1
     );
-
     io.to(roomId).emit("powerUsed", { type: "hideTile" });
   },
 
@@ -21,7 +18,6 @@ engine.registerPower("hidetile", {
     if (state.powers.hideTilePendingCount > 0) {
       const count = state.powers.hideTilePendingCount;
       state.powers.hideTilePendingCount = 0;
-
       const hidden = new Set();
       while (hidden.size < count) {
         hidden.add(Math.floor(Math.random() * 5));
