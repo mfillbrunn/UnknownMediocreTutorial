@@ -26,6 +26,7 @@ function buildSafeStateForPlayer(state, role) {
   delete safe.powers.revealGreenLetter;
   delete safe.powers.reuseLettersPool;
   delete safe.powers.hideTilePendingCount;
+  
 
   // -----------------------------------------------------
   // 4. Clean internal machine flags
@@ -65,14 +66,8 @@ function buildSafeStateForPlayer(state, role) {
 
     // Delete internal metadata
     delete e.finalSecret;
-    delete e.confuseApplied;
     delete e.ignoreConstraints;
-    delete e.countOnlyApplied;
-    delete e.freezeApplied;
-    delete e.hideTileApplied;
-    delete e.reuseLetters;
-    delete e.revealGreen;
-    
+        
     console.log("SERVER SAFE ENTRY AFTER CLEAN:", e);
     return e;
   })
