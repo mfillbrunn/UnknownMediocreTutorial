@@ -17,6 +17,7 @@ function pickBlackLetters(state) {
 
 engine.registerPower("reuseletters", {
   apply(state, action, roomId, io) {
+    console.log("[DEBUG] reuseletters APPLY reached!");
     if (state.powers.reuseLettersUsed) return;
 
     const blackLetters = pickBlackLetters(state);
