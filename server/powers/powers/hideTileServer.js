@@ -1,6 +1,6 @@
 // /powers/powers/hideTileServer.js
 // Server-side logic for Hide Tile power (setter ability)
-const engine = require("../../powerEngineServer.js");
+const engine = require("../powerEngineServer.js");
 
 engine.registerPower("hidetile", {
   apply(state, action, roomId, io) {
