@@ -133,6 +133,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   // CASE 3: POWERS
   // =====================================================================================
   if (action.type.startsWith("USE_")) {
+    console.log("[SERVER] Processing power:", action.type, "turn:", state.turn, "role:", role, "phase:", state.phase);
     const powerId = action.type.replace("USE_", "").toLowerCase();
     if (state.powerUsedThisTurn) return;
 
