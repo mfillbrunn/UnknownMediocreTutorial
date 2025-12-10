@@ -41,12 +41,26 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   // =====================================================================================
   if (
     !state.pendingGuess &&
+    action.type.startsWith("USE_") &&
+    role === state.guesser
+  ) {
+    const powerId = action.type.replace("USE_", "").toLowerCase();
+    console.log("[DEBUG] Guesser power before guessing:", powerId);
+    if (!state.powerUsedThisTurn) {
+        state.powerUsedThisTurn = true;
+        powerEngine.applyPower(powerId, state, action, roomId, io);
+    }
+    emitStateForAllPlayers(roomId, room, io);
+    return;
+}
+  
+  if (
+    !state.pendingGuess &&
     action.type === "SUBMIT_GUESS" &&
     role === state.guesser
   ) {
     const g = action.guess.toLowerCase();
     if (!isValidWord(g, ALLOWED_GUESSES)) return;
-
     // Immediate win
     if (g === state.secret) {
       pushWinEntry(state, g);
@@ -67,13 +81,21 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   // CASE 2: SETTER DECISION STEP (pendingGuess exists)
   // =====================================================================================
   if (state.pendingGuess && state.turn === state.setter) {
+    if (action.type.startsWith("USE_") && role === state.setter) {
+      const powerId = action.type.replace("USE_", "").toLowerCase();
+      if (!state.powerUsedThisTurn) {
+        state.powerUsedThisTurn = true;
+        powerEngine.applyPower(powerId, state, action, roomId, io);
+        emitStateForAllPlayers(roomId, room, io);
+      }
+      return;
+    }
     // -------------------------------------------
     // SET_SECRET_NEW
     // -------------------------------------------
     if (action.type === "SET_SECRET_NEW") {
       // Power hook may block
       if (powerEngine.beforeSetterSecretChange(state, action)) return;
-
       const w = action.secret.toLowerCase();
 
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
@@ -81,9 +103,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
         io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
         return;
       }
-
       state.secret = w;
-
       // Instant win if SAME
       if (state.pendingGuess === w) {
         pushWinEntry(state, w);
@@ -99,15 +119,12 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
-
-    // -------------------------------------------
+   // -------------------------------------------
     // SET_SECRET_SAME
     // -------------------------------------------
     if (action.type === "SET_SECRET_SAME") {
       if (powerEngine.beforeSetterSecretChange(state, action)) return;
-
       if (!isConsistentWithHistory(state.history, state.secret)) return;
-
       // Instant win
       if (state.pendingGuess === state.secret) {
         pushWinEntry(state, state.secret);
@@ -125,7 +142,6 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
-
     return; // setter turn but action not for setter
   }
 
