@@ -5,7 +5,7 @@ const engine = require("../powerEngineServer.js");
 engine.registerPower("hidetile", {
   apply(state, action, roomId, io) {
     const maxTiles = 2;
-
+    console.log("APPLYING POWER:", "reuseletters", "state.turn=", state.turn);
     if (state.powers.hideTileUsed && state.powers.hideTilePendingCount === 0) return;
 
     state.powers.hideTileUsed = true;
