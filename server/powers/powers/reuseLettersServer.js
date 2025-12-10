@@ -1,5 +1,5 @@
 // /powers/powers/reuseLettersServer.js
-const engine = require("../powerEngineServer");
+const engine = require("../powerEngineServer.js");
 
 function pickBlackLetters(state) {
   const black = new Set();
