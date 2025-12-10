@@ -55,6 +55,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   if (bothSubmitted) {
     state.phase = "normal";
     state.turn = state.setter;
+    state.powerUsedThisTurn = false;
     emitStateForAllPlayers(roomId, room, io);
   }
    
