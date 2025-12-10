@@ -4,7 +4,6 @@
 let roomId = null;
 let myRole = null;      
 let state = null;
-let setterKeyboardInitialized = false;
 let pendingState = null;
 let roleAssigned = false;
 
@@ -286,7 +285,7 @@ function updateRoleLabels() {
 // SETTER UI
 // -----------------------------------------------------
 function updateSetterScreen() {
-  $("newSecretInput").value = "";
+  
 
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   $("pendingGuessDisplay").textContent =
@@ -328,15 +327,13 @@ function updateSetterScreen() {
   // -------------------------------------------------------
   // INITIALIZE KEYBOARD (you had removed this part by accident)
   // -------------------------------------------------------
-  if (!setterKeyboardInitialized) {
-    renderKeyboard(state, $("keyboardSetter"), "setter", handleSetterKeyboard);
-    setterKeyboardInitialized = true;
-  }
+  renderKeyboard(state, $("keyboardSetter"), "setter", handleSetterKeyboard);
 
   // Pattern / constraints
-  $("knownPatternSetter").textContent = formatPattern(getPattern(state, true));
-  $("mustContainSetter").textContent =
-    getMustContainLetters(state).join(", ") || "none";
+    const pat = getPattern(state, true);
+    $("knownPatternSetter").textContent = formatPattern(pat);
+    const must = getMustContainLetters(state);
+    $("mustContainSetter").textContent = must.length ? must.join(", ") : "none";
 
   updateSetterPreview();
 }
@@ -396,10 +393,13 @@ function updateGuesserScreen() {
       myRole === state.guesser &&
       !state.pendingGuess &&
       state.turn === state.guesser);
-
+  
   guessBox.disabled = !canGuess;
   $("submitGuessBtn").disabled = !canGuess;
-
+  if (state.phase === "simultaneous" && state.simultaneousGuessSubmitted) {
+    guessBox.disabled = true;
+    $("submitGuessBtn").disabled = true;
+  }
   // Keyboard
   renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
     if (!canGuess) return;
@@ -505,6 +505,7 @@ $("submitSetterNewBtn").onclick = () => {
     return shake($("newSecretInput")), toast("Word not in dictionary");
 
   sendGameAction(roomId, { type: "SET_SECRET_NEW", secret: w });
+  $("newSecretInput").value = "";
 };
 
 $("submitSetterSameBtn").onclick = () =>
