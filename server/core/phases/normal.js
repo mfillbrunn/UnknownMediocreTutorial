@@ -77,7 +77,10 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       const w = action.secret.toLowerCase();
 
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
-      if (!isConsistentWithHistory(state.history, w)) return;
+      if (!isConsistentWithHistory(state.history, w)) {
+        io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
+        return;
+      }
 
       state.secret = w;
 
