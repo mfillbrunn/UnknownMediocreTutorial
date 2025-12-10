@@ -28,6 +28,7 @@ engine.registerPower("countonly", {
 
     entry.countOnlyApplied = true;
     state.powers.countOnlyActive = false;
+    entry.powerUsed = "countOnly";
   }
 }
 });
