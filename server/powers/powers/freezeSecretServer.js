@@ -1,5 +1,5 @@
 // /powers/powers/freezeSecretServer.js
-const engine = require("../powerEngineServer");
+const engine = require("../powerEngineServer.js");
 
 engine.registerPower("freezesecret", {
   apply(state, action, roomId, io) {
