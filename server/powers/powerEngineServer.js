@@ -9,7 +9,9 @@ const engine = {
 
   applyPower(id, state, action, roomId, io) {
     const p = this.powers[id];
+    console.log("[DEBUG] applyPower called with id =", id, "→ handler exists?", !!p);
     if (!p || typeof p.apply !== "function") return;
+    console.log("[DEBUG] Running apply() for power:", id);
     p.apply(state, action, roomId, io);
   },
 
