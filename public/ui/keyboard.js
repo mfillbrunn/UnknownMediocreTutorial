@@ -62,10 +62,18 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
   if (state.history && state.history.length > 0) {
     const last = state.history[state.history.length - 1];
 
-    if (last.countOnlyApplied || last.hideTileApplied) {
-      console.log("[POWER] Keyboard coloring suppressed this turn.");
-      suppressColoring = true;
-    }
+    if (last.countOnlyApplied) {
+    suppressColoring = true;
+      }
+      
+      // HIDE TILE suppresses ONLY the letters at hidden positions
+      let hiddenLetters = new Set();
+      if (last.hideTileApplied && Array.isArray(last.hiddenIndices)) {
+          const guess = last.guess.toUpperCase();
+          last.hiddenIndices.forEach(i => {
+              hiddenLetters.add(guess[i]); // letters whose feedback should be ignored
+          });
+      }
   }
 
   KEYBOARD_LAYOUT.forEach(row => {
@@ -111,11 +119,15 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
         // SUPPRESS COLORING on CountOnly / HideTile turn
         // =============================================
         if (!suppressColoring) {
-          const status = getLetterStatusFromHistory(letter, state, isGuesser);
-          if (status === "green") keyEl.classList.add("key-green");
-          else if (status === "yellow") keyEl.classList.add("key-yellow");
-          else if (status === "gray") keyEl.classList.add("key-gray");
-          else if (status === "blue") keyEl.classList.add("key-blue");
+
+            // HIDE TILE: skip only this specific letter
+            if (!hiddenLetters.has(letter)) {
+                const status = getLetterStatusFromHistory(letter, state, isGuesser);
+                if (status === "green") keyEl.classList.add("key-green");
+                else if (status === "yellow") keyEl.classList.add("key-yellow");
+                else if (status === "gray") keyEl.classList.add("key-gray");
+                else if (status === "blue") keyEl.classList.add("key-blue");
+            }
         }
 
         // Setter: highlight letters in pending guess
