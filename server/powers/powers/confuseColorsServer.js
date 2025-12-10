@@ -1,6 +1,7 @@
 // /powers/powers/confuseColorsServer.js
 // Server-side logic for Blue Mode (Confuse Colors)
-const engine = require("../powerEngineServer");
+const engine = require("../powerEngineServer.js");
+
 
 engine.registerPower("confusecolors", {
   apply(state, action, roomId, io) {
