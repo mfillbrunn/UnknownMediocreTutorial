@@ -1,5 +1,5 @@
 // /powers/powers/revealGreenServer.js
-const engine = require("../powerEngineServer.js");
+const engine = require("../../powerEngineServer.js");
 
 engine.registerPower("revealgreen", {
   apply(state, action, roomId, io) {
