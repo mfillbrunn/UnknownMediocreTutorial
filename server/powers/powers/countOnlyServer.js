@@ -10,24 +10,24 @@ engine.registerPower("countonly", {
   },
 
   postScore(state, entry) {
-    if (state.powers.countOnlyActive) {
+  if (state.powers.countOnlyActive) {
 
-      // Compute count: greens + yellows
-      const greens = entry.fb.filter(c => c === "🟩").length;
-      const yellows = entry.fb.filter(c => c === "🟨").length;
-      const totalMatches = greens + yellows;
+    const greens = entry.fb.filter(c => c === "🟩").length;
+    const yellows = entry.fb.filter(c => c === "🟨").length;
+    const totalMatches = greens + yellows;
 
-      // Store number for guesser ONLY
-      entry.countOnlyTotal = totalMatches;  // <— THIS IS NEW
+    // Provide structured information for the guesser UI
+    entry.extraInfo = {
+      greens,
+      yellows,
+      total: totalMatches
+    };
 
-      // Replace fbGuesser with all black tiles
-      entry.fbGuesser = ["⬛","⬛","⬛","⬛","⬛"];
+    // Replace guesser feedback with black tiles
+    entry.fbGuesser = ["⬛","⬛","⬛","⬛","⬛"];
 
-      // Mark that this entry used count-only
-      entry.countOnlyApplied = true;
-
-      // Reset active state
-      state.powers.countOnlyActive = false;
-    }
+    entry.countOnlyApplied = true;
+    state.powers.countOnlyActive = false;
   }
+}
 });
