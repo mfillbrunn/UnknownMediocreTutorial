@@ -55,26 +55,28 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
   const isGuesser = target === "guesser";
 
   // ========================================================
-  // Determine whether to skip ALL keyboard coloring this turn
-  // (CountOnly & HideTile both suppress keyboard updates)
+  // Determine suppression behavior for this turn
   // ========================================================
   let suppressColoring = false;
+  let hiddenLetters = new Set();     // <--- DEFINE HERE (GLOBAL TO FUNCTION)
+
   if (state.history && state.history.length > 0) {
     const last = state.history[state.history.length - 1];
 
+    // COUNT ONLY suppresses ALL keyboard coloring
     if (last.countOnlyApplied) {
-    suppressColoring = true;
-      }
-      
-      // HIDE TILE suppresses ONLY the letters at hidden positions
-      let hiddenLetters = new Set();
-      if (last.hideTileApplied && Array.isArray(last.hiddenIndices)) {
-          const guess = last.guess.toUpperCase();
-          last.hiddenIndices.forEach(i => {
-              hiddenLetters.add(guess[i]); // letters whose feedback should be ignored
-          });
-      }
+      suppressColoring = true;
+    }
+
+    // HIDE TILE suppresses only letters in hidden positions
+    if (last.hideTileApplied && Array.isArray(last.hiddenIndices)) {
+      const guess = last.guess.toUpperCase();
+      last.hiddenIndices.forEach(i => {
+        hiddenLetters.add(guess[i]);   // <--- add letters to suppress
+      });
+    }
   }
+
 
   KEYBOARD_LAYOUT.forEach(row => {
     const rowDiv = document.createElement("div");
