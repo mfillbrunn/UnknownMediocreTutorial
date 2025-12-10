@@ -94,8 +94,13 @@ onLobbyEvent(evt => {
       break;
 
     case "playerReady":
-      toast(`Player ${evt.role} is READY`);
-      break;
+    toast(`Player ${evt.role} is READY`);
+  
+    // If this is ME → freeze my button
+    if (evt.role === myRole) {
+      enableReadyButton(false);
+    }
+    break;
 
     case "hideLobby":
       hide("lobby");
