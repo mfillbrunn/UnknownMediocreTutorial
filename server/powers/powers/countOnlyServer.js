@@ -1,6 +1,6 @@
 // /powers/powers/countOnlyServer.js
 // Server-side logic for Count-Only power
-const engine = require("../../powerEngineServer.js");
+const engine = require("../powerEngineServer.js");
 
 
 engine.registerPower("countonly", {
