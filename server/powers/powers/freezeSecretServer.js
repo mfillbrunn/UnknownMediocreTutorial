@@ -21,6 +21,7 @@ engine.registerPower("freezesecret", {
   postScore(state, entry) {
     if (state.powers.freezeActive) {
       entry.freezeApplied = true;
+      entry.powerUsed = "FreezeSecret";
     }
   },
 
