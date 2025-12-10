@@ -16,6 +16,7 @@ PowerEngine.register("confuseColors", {
     this.buttonEl = btn;
 
     btn.onclick = () =>
+      console.log("POWER CLICKED: USE_CONFUSECOLORS"); 
       sendGameAction(roomId, { type: "USE_CONFUSECOLORS" });
   },
 
