@@ -16,16 +16,22 @@ engine.registerPower("revealgreen", {
     io.to(roomId).emit("powerUsed", { type: "revealGreen", pos, letter });
   },
 
-  postScore(state, entry) {
-    if (state.powers.revealGreenPos !== null) {
-      entry.revealGreen = {
-        pos: state.powers.revealGreenPos,
-        letter: state.powers.revealGreenLetter
-      };
-    }
+ postScore(state, entry) {
+  if (state.powers.revealGreenPos !== null) {
 
-    // one-shot
-    state.powers.revealGreenPos = null;
-    state.powers.revealGreenLetter = null;
+    // Attach the revealed info to the history entry
+    entry.revealGreen = {
+      pos: state.powers.revealGreenPos,
+      letter: state.powers.revealGreenLetter
+    };
+
+    // Announce this power in the history
+    entry.powerUsed = "RevealGreen";
   }
+
+  // One-shot reset
+  state.powers.revealGreenPos = null;
+  state.powers.revealGreenLetter = null;
+}
+
 });
