@@ -23,16 +23,13 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
 
       const fb = fbArr[i];
 
-      // BLUE IS TEMPORARY — only applies to this one history entry
       if (fb === "🟦") {
-        // only mark as blue if we don't already have green or yellow from ANY turn
         if (!strongest || strongest === "gray" || strongest === "blue") {
           strongest = "blue";
         }
         continue;
       }
 
-      // TRUE COLORS override blue
       if (fb === "🟩") {
         strongest = "green";
         continue;
@@ -52,13 +49,25 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
   return strongest;
 }
 
-
-
 window.renderKeyboard = function (state, container, target, onKeyClick) {
   container.innerHTML = "";
 
   const isGuesser = target === "guesser";
-  
+
+  // ========================================================
+  // Determine whether to skip ALL keyboard coloring this turn
+  // (CountOnly & HideTile both suppress keyboard updates)
+  // ========================================================
+  let suppressColoring = false;
+  if (state.history && state.history.length > 0) {
+    const last = state.history[state.history.length - 1];
+
+    if (last.countOnlyApplied || last.hideTileApplied) {
+      console.log("[POWER] Keyboard coloring suppressed this turn.");
+      suppressColoring = true;
+    }
+  }
+
   KEYBOARD_LAYOUT.forEach(row => {
     const rowDiv = document.createElement("div");
     rowDiv.className = "key-row";
@@ -84,41 +93,40 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
         rowDiv.appendChild(keyEl);
         return;
       }
+
       if (symbol === "ENTER") {
         keyEl.addEventListener("click", () => onKeyClick(null, "ENTER"));
         rowDiv.appendChild(keyEl);
         return;
       }
 
-      // Letter keys
+      // LETTER KEYS
       if (/^[A-Z]$/.test(symbol)) {
         const letter = symbol;
 
-        // Apply base history color:
-        // RESET ALL COLOR CLASSES so new state can overwrite old ones
-        keyEl.classList.remove("key-green", "key-yellow", "key-gray", "key-blue");
-        
-        // Apply updated color state
-        if (state.history && state.history.length > 0) {
-          const last = state.history[state.history.length - 1];
-          if (last.countOnlyApplied) {
-              console.log("[COUNT ONLY] Keyboard update skipped this turn");
-              return; 
-          }
+        // Reset previous color classes
+        keyEl.classList.remove("key-green", "key-yellow", "key-gray", "key-blue", "key-current");
+
+        // =============================================
+        // SUPPRESS COLORING on CountOnly / HideTile turn
+        // =============================================
+        if (!suppressColoring) {
+          const status = getLetterStatusFromHistory(letter, state, isGuesser);
+          if (status === "green") keyEl.classList.add("key-green");
+          else if (status === "yellow") keyEl.classList.add("key-yellow");
+          else if (status === "gray") keyEl.classList.add("key-gray");
+          else if (status === "blue") keyEl.classList.add("key-blue");
         }
-        const status = getLetterStatusFromHistory(letter, state, isGuesser);
-        if (status === "green") keyEl.classList.add("key-green");
-        else if (status === "yellow") keyEl.classList.add("key-yellow");
-        else if (status === "gray") keyEl.classList.add("key-gray");
-        else if (status === "blue") keyEl.classList.add("key-blue");
-        // Setter sees guesser's current guess highlighted
+
+        // Setter: highlight letters in pending guess
         if (!isGuesser && state.pendingGuess) {
           const pending = state.pendingGuess.toUpperCase();
           if (pending.includes(letter)) {
-            keyEl.classList.add("key-current"); // you may style this red in CSS
+            keyEl.classList.add("key-current");
           }
         }
-        // NOW allow power modules to modify this key:
+
+        // Allow power modules to adjust the key
         PowerEngine.applyKeyboard(state, target, keyEl, letter);
 
         keyEl.addEventListener("click", () => onKeyClick(letter, null));
