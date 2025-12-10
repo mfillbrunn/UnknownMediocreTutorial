@@ -29,7 +29,9 @@ engine.registerPower("reuseletters", {
       blackLetters.splice(idx, 1);
     }
 
+    // Mark active
     state.powers.reuseLettersUsed = true;
+    state.powers.reuseLettersJustApplied = true;   // <--- IMPORTANT
     state.powers.reuseLettersPool = pool;
 
     io.to(roomId).emit("powerUsed", {
@@ -40,7 +42,15 @@ engine.registerPower("reuseletters", {
 
   postScore(state, entry) {
     if (state.powers.reuseLettersUsed) {
+
+      // Always include the pool so UI knows what letters can be reused
       entry.reuseLetters = [...state.powers.reuseLettersPool];
+
+      // But only tag the turn when power was first used
+      if (state.powers.reuseLettersJustApplied) {
+        entry.powerUsed = "ReuseLetters";
+        state.powers.reuseLettersJustApplied = false;  // <--- RESET
+      }
     }
   }
 });
