@@ -120,16 +120,16 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
         // =============================================
         // SUPPRESS COLORING on CountOnly / HideTile turn
         // =============================================
-        if (!suppressColoring) {
-
-            // HIDE TILE: skip only this specific letter
-            if (!hiddenLetters.has(letter)) {
-                const status = getLetterStatusFromHistory(letter, state, isGuesser);
-                if (status === "green") keyEl.classList.add("key-green");
-                else if (status === "yellow") keyEl.classList.add("key-yellow");
-                else if (status === "gray") keyEl.classList.add("key-gray");
-                else if (status === "blue") keyEl.classList.add("key-blue");
-            }
+                if (!suppressColoring) {
+          
+              // HIDE TILE: skip coloring ONLY for hidden letters
+              if (!hiddenLetters.has(letter)) {
+                  const status = getLetterStatusFromHistory(letter, state, isGuesser);
+                  if (status === "green") keyEl.classList.add("key-green");
+                  else if (status === "yellow") keyEl.classList.add("key-yellow");
+                  else if (status === "gray") keyEl.classList.add("key-gray");
+                  else if (status === "blue") keyEl.classList.add("key-blue");
+              }
         }
 
         // Setter: highlight letters in pending guess
