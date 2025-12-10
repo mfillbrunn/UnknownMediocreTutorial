@@ -10,10 +10,16 @@ window.renderHistory = function (state, container, isSetter) {
   for (const entry of history) {
     if (!entry || !entry.guess) continue;
 
+    // Clone entry to prevent mutations to state.history
     const safeEntry = JSON.parse(JSON.stringify(entry));
 
+    // Apply client-side power effects to the safe copy
     PowerEngine.applyHistoryEffects(safeEntry, isSetter);
-
+    console.log("ROLE:", isSetter ? "SETTER" : "GUESSER");
+  console.log("ENTRY:", safeEntry);
+  console.log("fb:", safeEntry.fb);
+  console.log("fbGuesser:", safeEntry.fbGuesser);
+    // Choose which feedback array to display
     const fbArray = isSetter ? safeEntry.fb : safeEntry.fbGuesser;
 
     if (!Array.isArray(fbArray) || fbArray.length < 5) {
@@ -31,19 +37,9 @@ window.renderHistory = function (state, container, isSetter) {
       tiles += fbArray[i];
     }
 
-    // --------------------------------------------------------
-    // CountOnly summary for BOTH players
-    // --------------------------------------------------------
-    if (safeEntry.extraInfo) {
+    if (!isSetter && safeEntry.extraInfo) {
       const { greens, yellows } = safeEntry.extraInfo;
       tiles += ` (${greens}🟩, ${yellows}🟨)`;
-    }
-
-    // --------------------------------------------------------
-    // PowerUsed tag for BOTH players
-    // --------------------------------------------------------
-    if (safeEntry.powerUsed) {
-      tiles += `   [${safeEntry.powerUsed}]`;
     }
 
     row.textContent = `${guess}   ${tiles}`;
