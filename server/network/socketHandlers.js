@@ -7,7 +7,7 @@ const { emitLobbyEvent } = require("../utils/emitLobby");
 
 module.exports = function registerSocketHandlers(io, context) {
   const { ALLOWED_GUESSES } = context;
-
+  
   io.on("connection", socket => {
 
     // CREATE ROOM ----------------------------
@@ -62,7 +62,7 @@ module.exports = function registerSocketHandlers(io, context) {
 
       action.playerId = socket.id;
       action.role = role;
-
+      console.log("[SERVER] RECEIVED ACTION:", action);
       applyAction(room, room.state, action, role, roomId, context);
 
       emitStateForAllPlayers(roomId, room, io);
