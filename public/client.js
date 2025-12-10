@@ -26,7 +26,10 @@ function shake(element) {
   element.classList.add("shake");
   setTimeout(() => element.classList.remove("shake"), 300);
 }
-
+socket.on("errorMessage", msg => {
+  shake($("newSecretInput"));
+  toast(msg);
+});
 // -----------------------------------------------------
 // LOAD WORD LIST FOR CLIENT-SIDE VALIDATION
 // -----------------------------------------------------
