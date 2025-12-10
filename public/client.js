@@ -166,8 +166,6 @@ function updateUI() {
   updateTurnIndicators();
   updateSummary();
   if (state.phase !== "lobby") hide("lobby");
-
-  PowerEngine.applyUI(state, myRole, roomId);
 }
 
 // -----------------------------------------------------
@@ -188,20 +186,21 @@ function updateScreens() {
     hide("setterScreen");
     hide("guesserScreen");
     enableReadyButton(true);
+    PowerEngine.applyUI(state, myRole, roomId);
     return;
   }
 
   enableReadyButton(false);
   hide("lobby");
-
+  hide("menu");
+  
   if (state.phase === "gameOver") {
     hide("setterScreen");
     hide("guesserScreen");
     show("menu");
+    PowerEngine.applyUI(state, myRole, roomId);
     return;
   }
-
-  hide("menu");
 
   if (myRole === state.setter) {
     show("setterScreen");
@@ -212,7 +211,7 @@ function updateScreens() {
     hide("setterScreen");
     updateGuesserScreen();
   }
-
+PowerEngine.applyUI(state, myRole, roomId);
 }
 
 // -----------------------------------------------------
