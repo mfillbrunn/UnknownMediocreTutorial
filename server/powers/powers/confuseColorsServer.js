@@ -21,9 +21,9 @@ engine.registerPower("confusecolors", {
       if (t === "🟩" || t === "🟨") return "🟦";
       return t;
     });
+    entry.powerUsed = "ConfuseColors";
   }
   state.powers.confuseColorsActive = false;
-  entry.powerUsed = "ConfuseColors";
 }
 
 
