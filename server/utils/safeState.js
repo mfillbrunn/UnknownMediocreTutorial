@@ -1,6 +1,12 @@
 function buildSafeStateForPlayer(state, role) {
   const safe = JSON.parse(JSON.stringify(state));
 
+  if (state.revealGreenInfo) {
+    safe.revealGreenInfo = state.revealGreenInfo;
+    } else {
+    delete safe.revealGreenInfo;
+  }
+  
   // -----------------------------------------------------
   // 1. Hide SECRET from guesser
   // -----------------------------------------------------
@@ -22,8 +28,6 @@ function buildSafeStateForPlayer(state, role) {
   delete safe.powers.countOnlyActive;
   delete safe.powers.freezeActive;
   delete safe.powers.currentHiddenIndices;
-  delete safe.powers.revealGreenPos;
-  delete safe.powers.revealGreenLetter;
   delete safe.powers.reuseLettersPool;
   delete safe.powers.hideTilePendingCount;
   
