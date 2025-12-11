@@ -15,8 +15,7 @@ PowerEngine.register("confuseColors", {
     // ⭐ REQUIRED: engine uses this to enable/disable/show USED
     this.buttonEl = btn;
 
-    btn.onclick = () =>
-      console.log("POWER CLICKED: USE_CONFUSECOLORS"); 
+    btn.onclick = () =>{
       sendGameAction(roomId, { type: "USE_CONFUSECOLORS" });
   },
 
