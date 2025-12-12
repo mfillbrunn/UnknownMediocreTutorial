@@ -26,6 +26,26 @@ function shake(element) {
   element.classList.add("shake");
   setTimeout(() => element.classList.remove("shake"), 300);
 }
+// -----------------------------------------------------
+// Pattern Renderer for Pretty Styling (Reveal Green, etc.)
+// -----------------------------------------------------
+window.renderPatternInto = function (el, pattern, revealInfo = null) {
+  let html = "";
+
+  for (let i = 0; i < pattern.length; i++) {
+    const letter = pattern[i] === "-" ? "" : pattern[i];
+    const isReveal = revealInfo && revealInfo.pos === i;
+
+    if (isReveal) {
+      html += `<span class="pattern-letter reveal-green-letter">${letter}</span> `;
+    } else {
+      html += `<span class="pattern-letter">${letter || "-"}</span> `;
+    }
+  }
+
+  el.innerHTML = html.trim();
+};
+
 socket.on("errorMessage", msg => {
   shake($("newSecretInput"));
   toast(msg);
@@ -420,7 +440,13 @@ function updateGuesserScreen() {
     }
   });
 
-  $("knownPatternGuesser").textContent = formatPattern(getPattern(state, false));
+  const pattern = getPattern(state, false);
+renderPatternInto(
+  $("knownPatternGuesser"),
+  pattern,
+  state.revealGreenInfo || null
+);
+
   $("mustContainGuesser").textContent =
     getMustContainLetters(state).join(", ") || "none";
 }
