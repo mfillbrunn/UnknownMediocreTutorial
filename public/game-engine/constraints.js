@@ -1,4 +1,20 @@
 // constraints.js — NON-MODULE VERSION
+function renderPatternInto(el, pattern, revealInfo = null) {
+  let html = "";
+
+  for (let i = 0; i < pattern.length; i++) {
+    const letter = pattern[i] === "-" ? "" : pattern[i];
+    const isReveal = revealInfo && revealInfo.pos === i;
+
+    if (isReveal) {
+      html += `<span class="pattern-letter reveal-green-letter">${letter}</span> `;
+    } else {
+      html += `<span class="pattern-letter">${letter || "-"}</span> `;
+    }
+  }
+
+  el.innerHTML = html.trim();
+}
 
 window.getPattern = function(state, isSetter) {
   if (!state.history || state.history.length === 0) {
