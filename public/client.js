@@ -33,18 +33,27 @@ window.renderPatternInto = function (el, pattern, revealInfo = null) {
   let html = "";
 
   for (let i = 0; i < pattern.length; i++) {
-    const letter = pattern[i] === "-" ? "-" : pattern[i];
     const isReveal = revealInfo && revealInfo.pos === i;
+
+    // Use the revealed letter only on the reveal position
+    let letter;
+    if (isReveal) {
+      letter = revealInfo.letter.toUpperCase();  
+    } else {
+      // Default: show dash for unknowns
+      letter = pattern[i] === "-" ? "-" : pattern[i];
+    }
 
     if (isReveal) {
       html += `<span class="pattern-letter reveal-green-letter">${letter}</span> `;
     } else {
-      html += `<span class="pattern-letter">${letter || "-"}</span> `;
+      html += `<span class="pattern-letter">${letter}</span> `;
     }
   }
 
   el.innerHTML = html.trim();
 };
+
 
 socket.on("errorMessage", msg => {
   shake($("newSecretInput"));
