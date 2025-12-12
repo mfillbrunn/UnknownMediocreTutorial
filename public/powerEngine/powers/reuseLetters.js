@@ -1,6 +1,6 @@
 PowerEngine.register("reuseLetters", {
 
-  // ⭐ REQ: Setter is the one who activates this power
+  // Setter activates this power
   role: "setter",
 
   renderButton(roomId) {
@@ -11,20 +11,20 @@ PowerEngine.register("reuseLetters", {
 
     $("setterPowerContainer").appendChild(btn);
 
-    // ⭐ REQ: Needed for powerEngine.js to control disabled / used states
     this.buttonEl = btn;
 
-    btn.onclick = () =>
+    btn.onclick = () => {
       sendGameAction(roomId, { type: "USE_REUSELETTERS" });
+    };
   },
 
-  // Highlight letters the setter chooses to reuse
+  // Highlight letters the setter can reuse
   keyboardEffects(state, role, keyEl, letter) {
     const pool = state.powers?.reuseLettersPool || [];
 
     if (pool.includes(letter)) {
       keyEl.classList.remove("key-gray");
-      keyEl.style.background = "#bbb";  // highlight unlocked letter
+      keyEl.style.background = "#bbb";
     }
   }
 });
