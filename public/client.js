@@ -6,7 +6,7 @@ let myRole = null;
 let state = null;
 let pendingState = null;
 let roleAssigned = false;
-
+window.state = null;
 
 // -----------------------------------------------------
 // DOM HELPERS
@@ -146,6 +146,7 @@ socket.on("roleAssigned", ({ role }) => {
 
   if (pendingState) {
     state = pendingState;
+    window.state = state;
     pendingState = null;
     updateUI();
   }
@@ -160,6 +161,7 @@ onStateUpdate(newState => {
     return;
   }
   state = JSON.parse(JSON.stringify(newState));
+  window.state = state; // ⭐ Makes global for powers
   updateUI();
 
   // Reset guess input if locked on transition
