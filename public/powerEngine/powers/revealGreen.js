@@ -17,27 +17,29 @@ PowerEngine.register("revealGreen", {
 
   // ⭐ LIVE visual feedback when the power triggers
   effects: {
-    onPowerUsed({ pos, letter }) {
-      toast(`Green revealed: Position ${pos + 1} = ${letter}`);
+  onPowerUsed({ pos, letter }) {
+    toast(`Green revealed: Position ${pos + 1} = ${letter}`);
 
-      // highlight keyboard key
-      const key = document.querySelector(`[data-key="${letter}"]`);
-      if (key) key.classList.add("power-green-highlight");
+    const key = document.querySelector(`[data-key="${letter}"]`);
+    if (key) key.classList.add("power-green-highlight");
 
-      // force immediate pattern update on screen
-      const patEl = $("knownPatternGuesser");
-      const pat = patEl.textContent.split(" ");
-      pat[pos] = letter.toUpperCase();
-      patEl.textContent = pat.join(" ");
-    }
-  },
+    // Render pattern with special styling
+    const st = window.state; // your client keeps state globally
+    st.revealGreenInfo = { pos, letter }; // update local state for re-renders
 
- // ⭐ Pattern update used by guesser’s constraint UI
-  patternEffects(state, isSetterView, pattern) {
-    if (isSetterView) return;
-    if (!state.revealGreenInfo) return;
-
-    const { pos, letter } = state.revealGreenInfo;
-    pattern[pos] = letter.toUpperCase();
+    renderPatternInto(
+      $("knownPatternGuesser"),
+      $("knownPatternGuesser").textContent.split(" "),
+      st.revealGreenInfo
+    );
   }
+},
+
+patternEffects(state, isSetterView, pattern) {
+  if (isSetterView) return;
+  if (!state.revealGreenInfo) return;
+
+  // Nothing needed here — we render visually in updateUI
+}
+
 });
