@@ -33,7 +33,7 @@ window.renderPatternInto = function (el, pattern, revealInfo = null) {
   let html = "";
 
   for (let i = 0; i < pattern.length; i++) {
-    const letter = pattern[i] === "-" ? "" : pattern[i];
+    const letter = pattern[i] === "-" ? "-" : pattern[i];
     const isReveal = revealInfo && revealInfo.pos === i;
 
     if (isReveal) {
