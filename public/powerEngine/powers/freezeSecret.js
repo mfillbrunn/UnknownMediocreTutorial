@@ -15,9 +15,9 @@ PowerEngine.register("freezeSecret", {
     // ⭐ REQUIRED for engine: track reference to this button
     this.buttonEl = btn;
 
-    btn.onclick = () =>
-      sendGameAction(roomId, { type: "USE_FREEZESECRET" });
-  },
+  btn.onclick = () =>{
+  sendGameAction(roomId, { type: "USE_FREEZESECRET" });
+},
 
   // When active, this power affects the setter’s ability to change secret
   uiEffects(state, role) {
