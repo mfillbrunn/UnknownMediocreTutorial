@@ -43,7 +43,7 @@ engine.registerPower("revealgreen", {
   state.powers.revealGreenUsed = true;
   state.powers.revealGreenPos = pos;
   state.powers.revealGreenLetter = letter;
-
+  state.revealGreenInfo = { pos, letter };
   io.to(roomId).emit("powerUsed", { type: "revealGreen", pos, letter });
 },
 
@@ -68,8 +68,10 @@ postScore(state, entry) {
   }
 
   // One-shot reset of power state
-  state.powers.revealGreenPos = null;
-  state.powers.revealGreenLetter = null;
+state.powers.revealGreenPos = null;
+state.powers.revealGreenLetter = null;
+// DO NOT clear state.revealGreenInfo here
+
 }
 
 
