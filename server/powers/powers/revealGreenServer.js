@@ -3,18 +3,50 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("revealgreen", {
   apply(state, action, roomId, io) {
-    if (state.powers.revealGreenUsed) return;
-    if (!state.secret) return;
+  if (state.powers.revealGreenUsed) return;
+  if (!state.secret) return;
 
-    const pos = Math.floor(Math.random() * 5);
-    const letter = state.secret[pos].toUpperCase();
+  const secret = state.secret.toUpperCase();
 
-    state.powers.revealGreenUsed = true;
-    state.powers.revealGreenPos = pos;
-    state.powers.revealGreenLetter = letter;
+  // 1. Build a list of positions the guesser DOES NOT already know
+  const unknownPositions = [];
 
-    io.to(roomId).emit("powerUsed", { type: "revealGreen", pos, letter });
-  },
+  for (let i = 0; i < 5; i++) {
+    const letter = secret[i];
+
+    // Skip positions already revealed by feedback (true green)
+    const lastEntry = state.history[state.history.length - 1];
+    const greenKnown =
+      lastEntry &&
+      Array.isArray(lastEntry.fbGuesser) &&
+      lastEntry.fbGuesser[i] === "🟩";
+
+    // Skip positions already revealed by this power
+    const alreadyRevealedByPower =
+      state.powers.revealGreenPos === i;
+
+    if (!greenKnown && !alreadyRevealedByPower) {
+      unknownPositions.push(i);
+    }
+  }
+
+  // 2. If everything is known, do nothing
+  if (unknownPositions.length === 0) {
+    console.log("RevealGreen: No unknown positions left");
+    return;
+  }
+
+  // 3. Choose a random unknown position
+  const pos = unknownPositions[Math.floor(Math.random() * unknownPositions.length)];
+  const letter = secret[pos];
+
+  state.powers.revealGreenUsed = true;
+  state.powers.revealGreenPos = pos;
+  state.powers.revealGreenLetter = letter;
+
+  io.to(roomId).emit("powerUsed", { type: "revealGreen", pos, letter });
+},
+
 
 postScore(state, entry) {
   if (state.powers.revealGreenPos !== null) {
