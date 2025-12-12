@@ -73,6 +73,12 @@ state.powers.revealGreenLetter = null;
 // DO NOT clear state.revealGreenInfo here
 
 }
+turnStart(state, role) {
+  // Clear reveal info at the start of any NEW turn
+  if (state.revealGreenInfo) {
+    state.revealGreenInfo = null;
+  }
+}
 
 
 });
