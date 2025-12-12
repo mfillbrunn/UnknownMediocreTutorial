@@ -28,7 +28,9 @@ function buildSafeStateForPlayer(state, role) {
   delete safe.powers.countOnlyActive;
   delete safe.powers.freezeActive;
   delete safe.powers.currentHiddenIndices;
-  delete safe.powers.reuseLettersPool;
+  if (role !== state.guesser) {
+    delete safe.powers.reuseLettersPool;
+  }
   delete safe.powers.hideTilePendingCount;
   
 
