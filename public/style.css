@@ -474,4 +474,17 @@ input[type="number"],
 #newSecretInput:-webkit-autofill {
   transition: background-color 50000s ease-in-out 0s;
 }
+.pattern-letter {
+  display: inline-block;
+  width: 1.2em;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.reveal-green-letter {
+  color: #4caf50;
+  opacity: 0.7;     /* slightly faded → indicates “power reveal” */
+  font-style: italic;
+}
 
