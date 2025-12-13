@@ -17,6 +17,8 @@ require("./powers/powers/confuseColorsServer");
 require("./powers/powers/countOnlyServer");
 require("./powers/powers/revealGreenServer");
 require("./powers/powers/freezeSecretServer");
+require("./powers/powers/suggestGuessServer");
+require("./powers/powers/suggestSecretServer");
 
 // ------------------------------
 const app = express();
