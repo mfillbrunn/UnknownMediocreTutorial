@@ -18,6 +18,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
 
     state.secret = w;
     state.currentSecret = w;              // ⭐ Required for correct scoring
+    state.firstSecretSet = true;
     state.simultaneousSecretSubmitted = true;
   }
 
