@@ -1,11 +1,10 @@
 // /powers/powers/freezeSecretServer.js
 const engine = require("../powerEngineServer.js");
 
-console.log("Freeze Secret power loaded");
 engine.registerPower("freezeSecret", {
   apply(state, action, roomId, io) {
     if (state.powers.freezeSecretUsed) return;
-    if (!state.firstSecretSet) return;
+    if (!state.firstSecretSet) return;   // only after at least one secret
 
     state.powers.freezeSecretUsed = true;
     state.powers.freezeActive = true;
@@ -13,29 +12,25 @@ engine.registerPower("freezeSecret", {
     io.to(roomId).emit("powerUsed", { type: "freezeSecret" });
   },
 
-  // NEW: block actions here
-    beforeSetterSecretChange(state, action) {
+  // Block only NEW secret while frozen; SAME is allowed
+  beforeSetterSecretChange(state, action) {
     if (!state.powers.freezeActive) return false;
 
-    // Block only NEW secret while frozen; SAME is allowed
     if (action.type === "SET_SECRET_NEW") {
-      return true; // block
+      return true;               // block NEW while frozen
     }
-
-    return false;  // allow SET_SECRET_SAME etc.
+    return false;                // allow SAME, etc.
   },
-
 
   postScore(state, entry) {
     if (state.powers.freezeActive) {
       entry.freezeApplied = true;
       entry.powerUsed = "FreezeSecret";
-    }
-  },
 
-  turnStart(state, role) {
-    if (state.phase === "normal" && role === state.setter && !state.pendingGuess) {
-    state.powers.freezeActive = false;
+      // ❗ Freeze is consumed AFTER this decision’s scoring
+      state.powers.freezeActive = false;
+    }
   }
-  }
+
+  // NOTE: no turnStart hook needed – freeze ends in postScore.
 });
