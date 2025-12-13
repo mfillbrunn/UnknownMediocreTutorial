@@ -111,6 +111,7 @@ if (action.type === "NEW_MATCH") {
       }
       state.secret = w;
       state.currentSecret = w;
+      state.firstSecretSet = true;
       // Instant win if SAME
       if (state.pendingGuess === w) {
         state.currentSecret = w;
