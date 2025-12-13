@@ -94,8 +94,6 @@ safe.history = safe.history
     }
 
     delete e.ignoreConstraints;
-
-    console.log("SERVER SAFE ENTRY AFTER CLEAN:", e);
     return e;
   })
   .filter(e => e !== null);
