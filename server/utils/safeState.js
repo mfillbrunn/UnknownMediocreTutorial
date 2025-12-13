@@ -42,8 +42,6 @@ if (role !== state.guesser) {
   // -----------------------------------------------------
   // 4. Clean internal machine flags
   // -----------------------------------------------------
-  delete safe.simultaneousGuessSubmitted;
-  delete safe.simultaneousSecretSubmitted;
   delete safe.powerUsedThisTurn;
   delete safe.firstSecretSet;
 
