@@ -14,7 +14,7 @@ PowerEngine.register("reuseLetters", {
     this.buttonEl = btn;
 
     btn.onclick = () => {
-      sendGameAction(roomId, { type: "USE_REUSELETTERS" });
+      sendGameAction(roomId, { type: "USE_REUSE_LETTERS" });
     };
   },
 
