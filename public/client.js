@@ -60,7 +60,7 @@ socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
     toast("Setter submitted their secret!");
   }
   // Guesser submitted (notify setter)
-  if (!secretSubmitted && !guessSubmitted && myRole === state.setter) {
+  if (!secretSubmitted && guessSubmitted && myRole === state.setter) {
     toast("Guesser submitted their guess!");
   }
 });
