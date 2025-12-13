@@ -178,7 +178,6 @@ onLobbyEvent(evt => {
 
 // Role assignment from server
 socket.on("roleAssigned", ({ role }) => {
-  console.log("CLIENT RECEIVED ROLE FROM SERVER:", role);
   myRole = role;
   roleAssigned = true;
 
@@ -194,7 +193,6 @@ socket.on("roleAssigned", ({ role }) => {
 // State updates
 onStateUpdate(newState => {
   if (!roleAssigned) {
-    console.log("State received before role — buffering...");
     pendingState = JSON.parse(JSON.stringify(newState));
     return;
   }
@@ -212,7 +210,6 @@ onStateUpdate(newState => {
 // UI UPDATE PIPELINE
 // -----------------------------------------------------
 function updateUI() {
-  console.log("UPDATE UI — CURRENT ROLE:", myRole);
   if (!state) return;
   if (state.phase === "simultaneous") {
     lastSimulSecret = false;
