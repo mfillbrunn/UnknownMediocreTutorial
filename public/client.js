@@ -6,8 +6,6 @@ let myRole = null;
 let state = null;
 let pendingState = null;
 let roleAssigned = false;
-let lastSimulSecret = false;
-let lastSimulGuess = false;
 window.state = null;
 
 // -----------------------------------------------------
@@ -58,17 +56,13 @@ window.renderPatternInto = function (el, pattern, revealInfo = null) {
 
 socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
   // Setter submitted (notify guesser)
-  if (secretSubmitted && !lastSimulSecret && myRole === state.guesser) {
+  if (secretSubmitted && !guessSubmitted && myRole === state.guesser) {
     toast("Setter submitted their secret!");
   }
-
   // Guesser submitted (notify setter)
-  if (guessSubmitted && !lastSimulGuess && myRole === state.setter) {
+  if (!secretSubmitted && !guessSubmitted && myRole === state.setter) {
     toast("Guesser submitted their guess!");
   }
-  // Update last-seen state
-  lastSimulSecret = secretSubmitted;
-  lastSimulGuess = guessSubmitted;
 });
 
 
@@ -213,10 +207,6 @@ onStateUpdate(newState => {
 function updateUI() {
   console.log("UPDATE UI — CURRENT ROLE:", myRole);
   if (!state) return;
-  if (state.phase === "simultaneous") {
-    lastSimulSecret = false;
-    lastSimulGuess = false;
-    }
   // Render power buttons once
   if (!PowerEngine._initialized && roomId) {
     PowerEngine.renderButtons(roomId);
