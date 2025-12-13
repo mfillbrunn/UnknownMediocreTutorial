@@ -24,13 +24,19 @@ function buildSafeStateForPlayer(state, role) {
   // -----------------------------------------------------
   // 3. Clean INTERNAL power state (never exposed)
   // -----------------------------------------------------
-  delete safe.powers.confuseColorsActive;
-  delete safe.powers.countOnlyActive;
-  delete safe.powers.currentHiddenIndices;
-  if (role !== state.guesser) {
-    delete safe.powers.reuseLettersPool;
-  }
-  delete safe.powers.hideTilePendingCount;
+ // 3. Clean INTERNAL power state (never exposed)
+// DO NOT delete freezeActive — client needs this!
+delete safe.powers.confuseColorsActive;
+delete safe.powers.countOnlyActive;
+delete safe.powers.currentHiddenIndices;
+delete safe.powers.hideTilePendingCount;
+
+if (role !== state.guesser) {
+  delete safe.powers.reuseLettersPool;
+}
+
+// freezeActive is intentionally kept
+
   
 
   // -----------------------------------------------------
