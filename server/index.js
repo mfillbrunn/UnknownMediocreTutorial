@@ -13,7 +13,6 @@ const registerSocketHandlers = require("./network/socketHandlers");
 // ------------------------------
 const powerEngine = require("./powers/powerEngineServer");
 require("./powers/powers/hideTileServer");
-require("./powers/powers/reuseLettersServer");
 require("./powers/powers/confuseColorsServer");
 require("./powers/powers/countOnlyServer");
 require("./powers/powers/revealGreenServer");
