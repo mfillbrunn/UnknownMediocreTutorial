@@ -16,7 +16,7 @@ PowerEngine.register("countOnly", {
     this.buttonEl = btn;
 
     btn.onclick = () =>
-      sendGameAction(roomId, { type: "USE_COUNTONLY" });
+      sendGameAction(roomId, { type: "USE_COUNT_ONLY" });
   },
 
   // Guesser sees a modified UI when power is active
