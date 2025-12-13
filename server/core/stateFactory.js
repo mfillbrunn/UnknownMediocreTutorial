@@ -27,18 +27,28 @@ function createInitialState() {
     powerUsedThisTurn: false,
 
     powers: {
+      // HIDE TILE
       hideTileUsed: false,
       hideTilePendingCount: 0,
 
+      // REVEAL GREEN
       revealGreenUsed: false,
       revealGreenPos: null,
+      revealGreenLetter: null,
 
+      // FREEZE SECRET
+      freezeSecretUsed: false,
+      freezeActive: false,
+
+      // REUSE LETTERS
       reuseLettersUsed: false,
       reuseLettersPool: [],
 
+      // CONFUSE COLORS
       confuseColorsUsed: false,
       confuseColorsActive: false,
 
+      // COUNT ONLY
       countOnlyUsed: false,
       countOnlyActive: false
     }
