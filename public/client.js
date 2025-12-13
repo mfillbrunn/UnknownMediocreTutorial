@@ -483,10 +483,14 @@ function updateSummary() {
   for (let i = 0; i < state.history.length; i++) {
     const h = state.history[i];
 
-    // SAFE VALUES
-    const secretCell = h.finalSecret ? h.finalSecret.toUpperCase() : "???";
-    const guessCell = h.guess ? h.guess.toUpperCase() : "";
-    const fbCell = Array.isArray(h.fb) ? h.fb.join("") : "";
+    const secretCell =
+      h.finalSecret ? h.finalSecret.toUpperCase() : "???";
+
+    const guessCell =
+      h.guess ? h.guess.toUpperCase() : "";
+
+    const fbCell =
+      Array.isArray(h.fb) ? h.fb.join("") : "";
 
     html += `
       <tr>
@@ -500,6 +504,7 @@ function updateSummary() {
   html += `</table>`;
   container.innerHTML = html;
 }
+
 
 // -----------------------------------------------------
 // BUTTONS
