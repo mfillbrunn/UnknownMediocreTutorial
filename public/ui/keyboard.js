@@ -13,7 +13,13 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
   let strongest = null;
   const fbKey = isGuesser ? "fbGuesser" : "fb";
 
-  for (const h of state.history) {
+  for (let idx = 0; idx < state.history.length; idx++) {
+    const h = state.history[idx];
+
+    // ⭐ Skip the LAST entry if CountOnly applied AND this is the guesser
+    if (isGuesser && idx === state.history.length - 1 && h.countOnlyApplied) {
+        continue;
+    }
     const guess = h.guess.toUpperCase();
     const fbArr = h[fbKey];
     if (!fbArr) continue;
@@ -62,13 +68,7 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
 
   if (state.history && state.history.length > 0) {
     const last = state.history[state.history.length - 1];
-
-    // COUNT ONLY suppresses ALL keyboard coloring
-    if (last.countOnlyApplied) {
-      suppressColoring = true;
-    }
-
-    // HIDE TILE suppresses only letters in hidden positions
+       // HIDE TILE suppresses only letters in hidden positions
     if (last.hideTileApplied && Array.isArray(last.hiddenIndices)) {
       const guess = last.guess.toUpperCase();
       last.hiddenIndices.forEach(i => {
