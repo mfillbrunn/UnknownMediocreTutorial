@@ -14,7 +14,6 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
   for (let idx = 0; idx < state.history.length; idx++) {
     const h = state.history[idx];
    if (h.countOnlyApplied) continue;
-    if (h.hideTileApplied) continue;
     const guess = h.guess.toUpperCase();
     const fbArr = h[fbKey];
     if (!fbArr) continue;
