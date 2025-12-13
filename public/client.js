@@ -371,8 +371,12 @@ function updateSetterScreen() {
   }
 
   $("newSecretInput").disabled = !setterInputEnabled;
-  $("submitSetterNewBtn").disabled = !setterInputEnabled;
-
+  if (state.phase === "simultaneous") {
+    $("submitSetterSameBtn").disabled = true;
+    $("submitSetterSameBtn").classList.add("disabled-btn");   // visual styling
+  } else {
+    $("submitSetterNewBtn").disabled = !setterInputEnabled;
+  }
   // -------------------------------------------------------
   // INITIALIZE KEYBOARD (you had removed this part by accident)
   // -------------------------------------------------------
