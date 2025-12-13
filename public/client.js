@@ -227,7 +227,7 @@ function updateScreens() {
     hide("menu");
     hide("setterScreen");
     hide("guesserScreen");
-    enableReadyButton(true);
+    enableReadyButton(!state.ready[myRole]);
     PowerEngine.applyUI(state, myRole, roomId);
     return;
   }
