@@ -51,7 +51,11 @@ function createInitialState() {
 
       // COUNT ONLY
       countOnlyUsed: false,
-      countOnlyActive: false
+      countOnlyActive: false,
+
+      suggestGuessUsed: false,
+      suggestSecretUsed: false,
+
     }
   };
 }
