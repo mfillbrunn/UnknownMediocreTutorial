@@ -3,7 +3,7 @@
 const engine = require("../powerEngineServer.js");
 
 
-engine.registerPower("confusecolors", {
+engine.registerPower("confuseColors", {
   apply(state, action, roomId, io) {
     if (state.powers.confuseColorsUsed) return;
 
