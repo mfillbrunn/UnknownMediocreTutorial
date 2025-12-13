@@ -13,7 +13,7 @@ PowerEngine.register("confuseColors", {
     this.buttonEl = btn;
 
     btn.onclick = () => {
-      sendGameAction(roomId, { type: "USE_CONFUSECOLORS" });
+      sendGameAction(roomId, { type: "USE_CONFUSE_COLORS" });
     };
   },
 
