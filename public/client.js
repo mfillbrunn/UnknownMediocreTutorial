@@ -6,6 +6,8 @@ let myRole = null;
 let state = null;
 let pendingState = null;
 let roleAssigned = false;
+let lastSimulSecret = false;
+let lastSimulGuess = false;
 window.state = null;
 
 // -----------------------------------------------------
@@ -55,17 +57,20 @@ window.renderPatternInto = function (el, pattern, revealInfo = null) {
 };
 
 socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
-  
-  // If setter submitted AND I am the guesser
-  if (secretSubmitted && myRole === state.guesser) {
+  // Setter submitted (notify guesser)
+  if (secretSubmitted && !lastSimulSecret && myRole === state.guesser) {
     toast("Setter submitted their secret!");
   }
 
-  // If guesser submitted AND I am the setter
-  if (guessSubmitted && myRole === state.setter) {
+  // Guesser submitted (notify setter)
+  if (guessSubmitted && !lastSimulGuess && myRole === state.setter) {
     toast("Guesser submitted their guess!");
   }
+  // Update last-seen state
+  lastSimulSecret = secretSubmitted;
+  lastSimulGuess = guessSubmitted;
 });
+
 
 socket.on("errorMessage", msg => {
   shake($("newSecretInput"));
