@@ -372,11 +372,21 @@ function updateSetterScreen() {
 
   $("newSecretInput").disabled = !setterInputEnabled;
   if (state.phase === "simultaneous") {
+    // SAME must *always* be disabled during simultaneous phase
     $("submitSetterSameBtn").disabled = true;
-    $("submitSetterSameBtn").classList.add("disabled-btn");   // visual styling
-  } else {
-    $("submitSetterNewBtn").disabled = !setterInputEnabled;
-  }
+    $("submitSetterSameBtn").classList.add("disabled-btn");
+} else {
+    // NORMAL PHASE: SAME is allowed only during the decision step
+    const allowSame = isDecisionStep;
+    $("submitSetterSameBtn").disabled = !allowSame;
+
+    if (allowSame) {
+        $("submitSetterSameBtn").classList.remove("disabled-btn");
+    } else {
+        $("submitSetterSameBtn").classList.add("disabled-btn");
+    }
+}
+
   // -------------------------------------------------------
   // INITIALIZE KEYBOARD (you had removed this part by accident)
   // -------------------------------------------------------
