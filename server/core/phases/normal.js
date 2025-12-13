@@ -110,8 +110,10 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
         return;
       }
       state.secret = w;
+      state.currentSecret = w;
       // Instant win if SAME
       if (state.pendingGuess === w) {
+        state.currentSecret = w;
         pushWinEntry(state, w);
         endGame(state, roomId, room, io);
         return;
@@ -135,12 +137,14 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       if (!isConsistentWithHistory(state.history, state.secret)) return;
       // Instant win
       if (state.pendingGuess === state.secret) {
+        state.currentSecret = w;
         pushWinEntry(state, state.secret);
         endGame(state, roomId, room, io);
         return;
       }
 
       // Score guess
+       state.currentSecret = state.secret; 
       finalizeFeedback(state, powerEngine);
 
       state.turn = state.guesser;
