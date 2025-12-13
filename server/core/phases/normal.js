@@ -6,6 +6,11 @@ const { finalizeFeedback } = require("../stateFactory");
 const { isValidWord, parseWordlist } = require("../../game-engine/validation");
 const { isConsistentWithHistory } = require("../../game-engine/history");
 
+function normalizePowerId(actionType) {
+  const raw = actionType.replace("USE_", "").toLowerCase();
+  return raw.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+}
+
 function handleNormalPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   const { ALLOWED_GUESSES, powerEngine } = context;
@@ -44,8 +49,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     action.type.startsWith("USE_") &&
     role === state.guesser
   ) {
-    const raw = action.type.replace("USE_", "");
-    const powerId = raw.charAt(0).toLowerCase() + raw.slice(1);
+    const powerId = normalizePowerId(action.type);
     console.log("[DEBUG] Guesser power before guessing:", powerId);
     if (!state.powerUsedThisTurn) {
         state.powerUsedThisTurn = true;
@@ -84,7 +88,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   // =====================================================================================
   if (state.pendingGuess && state.turn === state.setter) {
     if (action.type.startsWith("USE_") && role === state.setter) {
-      const powerId = action.type.replace("USE_", "").toLowerCase();
+      const powerId = normalizePowerId(action.type);
       if (!state.powerUsedThisTurn) {
         state.powerUsedThisTurn = true;
         powerEngine.applyPower(powerId, state, action, roomId, io);
@@ -154,7 +158,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   // CASE 3: POWERS
   // =====================================================================================
   if (action.type.startsWith("USE_")) {
-    const powerId = action.type.replace("USE_", "").toLowerCase();
+   const powerId = normalizePowerId(action.type);
     console.log("[DEBUG] POWER ACTION RECEIVED:", action.type, "→ powerId =", powerId);
     console.log("[DEBUG] Registered engine powers:", Object.keys(powerEngine.powers));
     if (state.powerUsedThisTurn) return;
