@@ -146,6 +146,7 @@ if (action.type === "NEW_MATCH") {
 
       // Score guess
        state.currentSecret = state.secret; 
+      state.firstSecretSet = true;
       finalizeFeedback(state, powerEngine);
 
       state.turn = state.guesser;
