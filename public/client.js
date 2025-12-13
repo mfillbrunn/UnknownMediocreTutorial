@@ -118,12 +118,20 @@ onLobbyEvent(evt => {
       enableReadyButton(true);
       break;
 
-    case "rolesSwitched":
-      const me = myRole;
-      const newRole = (evt.setter === me) ? "Setter" : "Guesser";
-      toast("You are now the " + newRole + "!");
-      updateRoleLabels();
-      break;
+   case "rolesSwitched":
+  const myId = socket.id;
+
+  if (evt.setterId === myId) {
+    myRole = "A";
+    toast("You are now the Setter!");
+  } else if (evt.guesserId === myId) {
+    myRole = "B";
+    toast("You are now the Guesser!");
+  }
+
+  updateRoleLabels();
+  break;
+
 
     case "playerReady":
     toast(`Player ${evt.role} is READY`);
