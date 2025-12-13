@@ -213,7 +213,10 @@ onStateUpdate(newState => {
 function updateUI() {
   console.log("UPDATE UI — CURRENT ROLE:", myRole);
   if (!state) return;
-
+  if (state.phase === "simultaneous") {
+    lastSimulSecret = false;
+    lastSimulGuess = false;
+    }
   // Render power buttons once
   if (!PowerEngine._initialized && roomId) {
     PowerEngine.renderButtons(roomId);
