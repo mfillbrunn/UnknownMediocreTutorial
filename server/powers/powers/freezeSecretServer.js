@@ -27,8 +27,8 @@ engine.registerPower("freezeSecret", {
   },
 
   turnStart(state, role) {
-    if (state.phase === "normal" && role === state.guesser) {
-      state.powers.freezeActive = false;
-    }
+    if (state.phase === "normal" && role === state.setter) {
+    state.powers.freezeActive = false;
+}
   }
 });
