@@ -15,7 +15,7 @@ PowerEngine.register("freezeSecret", {
 
     // FIX 1: Properly scoped onclick handler
     btn.onclick = () => {
-      sendGameAction(roomId, { type: "USE_FREEZESECRET" });
+      sendGameAction(roomId, { type: "USE_FREEZE_SECRET" });
     };
   },
 
