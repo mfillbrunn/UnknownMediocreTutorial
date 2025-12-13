@@ -68,6 +68,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     if (!isValidWord(g, ALLOWED_GUESSES)) return;
     // Immediate win
     if (g === state.secret) {
+      state.currentSecret = state.secret; 
       pushWinEntry(state, g);
       endGame(state, roomId, room, io);
       return;
@@ -137,7 +138,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       if (!isConsistentWithHistory(state.history, state.secret)) return;
       // Instant win
       if (state.pendingGuess === state.secret) {
-        state.currentSecret = w;
+        state.currentSecret = state.secret;   
         pushWinEntry(state, state.secret);
         endGame(state, roomId, room, io);
         return;
