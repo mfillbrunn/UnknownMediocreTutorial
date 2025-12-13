@@ -1,7 +1,8 @@
 // /powers/powers/freezeSecretServer.js
 const engine = require("../powerEngineServer.js");
 
-engine.registerPower("freezesecret", {
+engine.registerPower("freezeSecret", {
+
   apply(state, action, roomId, io) {
     if (state.powers.freezeSecretUsed) return;
     if (!state.firstSecretSet) return;
