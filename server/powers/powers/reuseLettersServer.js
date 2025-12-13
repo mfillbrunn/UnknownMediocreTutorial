@@ -15,7 +15,7 @@ function pickBlackLetters(state) {
   return Array.from(black);
 }
 
-engine.registerPower("reuseletters", {
+engine.registerPower("reuseLetters", {
   apply(state, action, roomId, io) {
     console.log("[DEBUG] reuseletters APPLY reached!");
     if (state.powers.reuseLettersUsed) return;
