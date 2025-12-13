@@ -2,7 +2,7 @@
 // Server-side logic for Hide Tile power (setter ability)
 const engine = require("../powerEngineServer.js");
 
-engine.registerPower("hidetile", {
+engine.registerPower("hideTile", {
   apply(state, action, roomId, io) {
     const maxTiles = 2;
     if (state.powers.hideTileUsed && state.powers.hideTilePendingCount === 0) return;
