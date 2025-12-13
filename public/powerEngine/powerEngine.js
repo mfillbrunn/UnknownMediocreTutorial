@@ -68,8 +68,7 @@ window.PowerEngine = {
         wrongRole ||
         isPermanentlyUsed ||
         anotherPowerUsedThisTurn ||
-        notNormalPhase ||
-        notMyTurn;
+        notNormalPhase
 
       // ------------------------------------------------------
       // VISUAL STATES
