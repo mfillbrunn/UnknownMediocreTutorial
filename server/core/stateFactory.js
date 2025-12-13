@@ -15,6 +15,7 @@ function createInitialState() {
     ready: { A: false, B: false },
 
     secret: "",
+    currentSecret: null,
     pendingGuess: "",
     guessCount: 0,
     gameOver: false,
@@ -77,7 +78,7 @@ function finalizeFeedback(state, powerEngine) {
     fb,
     fbGuesser: [...fb], // will be modified by powers later if needed
     extraInfo: null,
-    finalSecret: state.secret
+    finalSecret: state.currentSecret
   };
 
   // Step 3: allow powers to modify feedback entry
