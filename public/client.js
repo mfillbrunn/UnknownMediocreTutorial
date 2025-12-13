@@ -478,8 +478,13 @@ function updateSetterPreview() {
 
 function handleSetterKeyboard(letter, special) {
   const input = $("newSecretInput");
-
-  if (state.turn !== state.setter || state.phase !== "normal") return;
+  if (
+    state.phase !== "normal" ||
+    state.turn !== state.setter ||
+    (state.powers && state.powers.freezeActive)
+  ) {
+    return;
+  }
 
   if (special === "BACKSPACE") {
     input.value = input.value.slice(0, -1);
