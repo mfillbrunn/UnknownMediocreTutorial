@@ -1,4 +1,4 @@
-PowerEngine.register("reuseLetters", {
+/*PowerEngine.register("reuseLetters", {
 
   // Setter activates this power
   role: "setter",
