@@ -16,9 +16,15 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
    if (h.countOnlyApplied) continue;
     const guess = h.guess.toUpperCase();
     const fbArr = h[fbKey];
-    if (!fbArr) continue;
     for (let i = 0; i < 5; i++) {
+    
+      // Skip this tile ONLY if it was hidden by HideTile
+      if (h.hideTileApplied && Array.isArray(h.hiddenIndices)) {
+        if (h.hiddenIndices.includes(i)) continue;
+      }
+    
       if (guess[i] !== letter) continue;
+    
       const fb = fbArr[i];
       if (fb === "🟦") {
         if (!strongest || strongest === "gray" || strongest === "blue") {
