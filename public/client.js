@@ -71,6 +71,14 @@ socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
   lastSimulGuess = guessSubmitted;
 });
 
+socket.on("suggestWord", ({ word }) => {
+  if (myRole === state.guesser) {
+    $("guessInput").value = word.toUpperCase();
+  }
+  if (myRole === state.setter) {
+    $("newSecretInput").value = word.toUpperCase();
+  }
+});
 
 
 socket.on("errorMessage", msg => {
