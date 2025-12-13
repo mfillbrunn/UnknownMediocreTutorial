@@ -334,10 +334,11 @@ function updateRoleLabels() {
 // SETTER UI
 // -----------------------------------------------------
 function updateSetterScreen() {
-
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   $("pendingGuessDisplay").textContent =
-    state.phase === "simultaneous" ? "-" : (state.pendingGuess?.toUpperCase() || "-");
+    state.phase === "simultaneous"
+      ? "-"
+      : (state.pendingGuess?.toUpperCase() || "-");
 
   renderHistory(state, $("historySetter"), true);
 
@@ -347,57 +348,52 @@ function updateSetterScreen() {
     !!state.pendingGuess &&
     state.phase === "normal";
 
-  // Freeze flag from server
-  const freezeActive = !!(state.powers && state.powers.freezeActive);
+  const freezeActive =
+    !!(state.powers && state.powers.freezeActive);
 
-  // -------------------------------------------------------
-  // CORRECT INPUT LOCKING LOGIC
-  // -------------------------------------------------------
   let setterInputEnabled = false;
 
-  // =======================================================
-  // SIMULTANEOUS PHASE — setter can enter secret until submit
-  // =======================================================
+  // -------------------------------------------------------
+  // PHASE-SPECIFIC BUTTON / INPUT LOGIC
+  // -------------------------------------------------------
+
+  // SIMULTANEOUS PHASE — only initial secret allowed, once
   if (state.phase === "simultaneous") {
+    const secretSubmitted =
+      !!state.secret || state.simultaneousSecretSubmitted;
 
-    setterInputEnabled = !state.simultaneousSecretSubmitted;
+    setterInputEnabled = !secretSubmitted;
 
-    // SAME always disabled in simultaneous
+    // SAME is never allowed in simultaneous
     $("submitSetterSameBtn").disabled = true;
     $("submitSetterSameBtn").classList.add("disabled-btn");
 
-    // NEW only allowed until secret submitted
+    // NEW allowed only until secret is submitted
     $("submitSetterNewBtn").disabled = !setterInputEnabled;
-    $("submitSetterNewBtn").classList.toggle("disabled-btn", !setterInputEnabled);
+    $("submitSetterNewBtn").classList.toggle(
+      "disabled-btn",
+      !setterInputEnabled
+    );
   }
 
-  // =======================================================
-  // NORMAL PHASE — setter can only act in decision step
-  // =======================================================
+  // NORMAL PHASE — decision step only
   else if (state.phase === "normal") {
+    setterInputEnabled = isDecisionStep;
 
-    // Setter may type only during decision step AND not frozen
-    setterInputEnabled = isDecisionStep && !freezeActive;
+    $("submitSetterSameBtn").disabled = !isDecisionStep;
+    $("submitSetterSameBtn").classList.toggle(
+      "disabled-btn",
+      !isDecisionStep
+    );
 
-    // NEW Secret:
-    //   Allowed only during decision step
-    //   AND NOT allowed when frozen
-    const canUseNew = isDecisionStep && !freezeActive;
-    $("submitSetterNewBtn").disabled = !canUseNew;
-    $("submitSetterNewBtn").classList.toggle("disabled-btn", !canUseNew);
-
-    // SAME Secret:
-    //   Allowed during decision step (even when frozen)
-    const canUseSame = isDecisionStep;
-    $("submitSetterSameBtn").disabled = !canUseSame;
-    $("submitSetterSameBtn").classList.toggle("disabled-btn", !canUseSame);
-
-    // When frozen, setterInputEnabled is false but SAME stays enabled
+    $("submitSetterNewBtn").disabled = !isDecisionStep;
+    $("submitSetterNewBtn").classList.toggle(
+      "disabled-btn",
+      !isDecisionStep
+    );
   }
 
-  // =======================================================
-  // LOBBY / GAMEOVER
-  // =======================================================
+  // LOBBY / GAMEOVER — everything off
   else {
     setterInputEnabled = false;
 
@@ -408,22 +404,36 @@ function updateSetterScreen() {
     $("submitSetterNewBtn").classList.add("disabled-btn");
   }
 
-  // FINAL: enable/disable input
+  // -------------------------------------------------------
+  // FREEZE SECRET OVERRIDE (normal phase)
+  // -------------------------------------------------------
+  if (freezeActive && state.phase === "normal") {
+    // Setter cannot type or set NEW secret
+    setterInputEnabled = false;
+
+    $("submitSetterNewBtn").disabled = true;
+    $("submitSetterNewBtn").classList.add("disabled-btn");
+
+    // SAME button stays as configured above (still allowed in decision step)
+  }
+
+  // FINAL: enable/disable input box
   $("newSecretInput").disabled = !setterInputEnabled;
 
   // -------------------------------------------------------
-  // KEYBOARD
+  // KEYBOARD + PATTERN / PREVIEW
   // -------------------------------------------------------
   renderKeyboard(state, $("keyboardSetter"), "setter", handleSetterKeyboard);
 
-  // Pattern / constraints
   const pat = getPattern(state, true);
   $("knownPatternSetter").textContent = formatPattern(pat);
   const must = getMustContainLetters(state);
-  $("mustContainSetter").textContent = must.length ? must.join(", ") : "none";
+  $("mustContainSetter").textContent =
+    must.length ? must.join(", ") : "none";
 
   updateSetterPreview();
 }
+
 
 
 
