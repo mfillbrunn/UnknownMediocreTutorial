@@ -1,6 +1,5 @@
 PowerEngine.register("freezeSecret", {
 
-  // This is a GUESSER power
   role: "guesser",
 
   renderButton(roomId) {
@@ -10,24 +9,32 @@ PowerEngine.register("freezeSecret", {
     btn.textContent = "Freeze Secret";
 
     $("guesserPowerContainer").appendChild(btn);
-
     this.buttonEl = btn;
 
-    // FIX 1: Properly scoped onclick handler
     btn.onclick = () => {
       sendGameAction(roomId, { type: "USE_FREEZE_SECRET" });
     };
   },
 
+  // This handles ongoing frozen UI
   uiEffects(state, role) {
     if (!state.powers.freezeActive) return;
 
-    // Disable setter input while frozen
     $("newSecretInput").disabled = true;
     $("submitSetterNewBtn").disabled = true;
 
     const bar = $("turnIndicatorSetter");
     bar.className = "turn-indicator frozen-turn";
     bar.textContent = "SECRET FROZEN";
+  },
+
+  // ⭐ ADD THIS — visual confirmation when clicked
+  effects: {
+    onPowerUsed(data) {
+      if (data.type !== "freezeSecret") return;
+      const btn = PowerEngine.powers.freezeSecret.buttonEl;
+      btn.disabled = true;
+      btn.classList.add("power-used");
+    }
   }
 });
