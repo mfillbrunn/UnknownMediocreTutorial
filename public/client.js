@@ -54,6 +54,18 @@ window.renderPatternInto = function (el, pattern, revealInfo = null) {
   el.innerHTML = html.trim();
 };
 
+socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
+  
+  // If setter submitted AND I am the guesser
+  if (secretSubmitted && myRole === state.guesser) {
+    toast("Setter submitted their secret!");
+  }
+
+  // If guesser submitted AND I am the setter
+  if (guessSubmitted && myRole === state.setter) {
+    toast("Guesser submitted their guess!");
+  }
+});
 
 socket.on("errorMessage", msg => {
   shake($("newSecretInput"));
