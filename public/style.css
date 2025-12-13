@@ -487,4 +487,9 @@ input[type="number"],
   opacity: 0.7;     /* slightly faded → indicates “power reveal” */
   font-style: italic;
 }
+.primary-btn.waiting {
+  background: #4caf50 !important;
+  color: white !important;
+  cursor: not-allowed !important;
+}
 
