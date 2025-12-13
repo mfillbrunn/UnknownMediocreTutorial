@@ -485,9 +485,16 @@ function updateSummary() {
     html += `
       <tr>
         <td>${i + 1}</td>
-        <td>${h.finalSecret.toUpperCase()}</td>
-        <td>${h.guess.toUpperCase()}</td>
-        <td>${h.fb.join("")}</td>
+            const secretCell = h.finalSecret ? h.finalSecret.toUpperCase() : "???";
+    const guessCell = h.guess ? h.guess.toUpperCase() : "";
+    const fbCell = Array.isArray(h.fb) ? h.fb.join("") : "";
+    
+    html += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${secretCell}</td>
+        <td>${guessCell}</td>
+        <td>${fbCell}</td>
       </tr>`;
   }
 
