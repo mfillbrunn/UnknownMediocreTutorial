@@ -14,10 +14,17 @@ engine.registerPower("freezeSecret", {
   },
 
   // NEW: block actions here
-  beforeSetterSecretChange(state, action) {
-    if (state.powers.freezeActive) return true;
-    return false;
+    beforeSetterSecretChange(state, action) {
+    if (!state.powers.freezeActive) return false;
+
+    // Block only NEW secret while frozen; SAME is allowed
+    if (action.type === "SET_SECRET_NEW") {
+      return true; // block
+    }
+
+    return false;  // allow SET_SECRET_SAME etc.
   },
+
 
   postScore(state, entry) {
     if (state.powers.freezeActive) {
