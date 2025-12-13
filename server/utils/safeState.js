@@ -66,7 +66,15 @@ safe.history = safe.history
           e.fbGuesser = ["?", "?", "?", "?", "?"];
         }
       }
-
+      if (role === state.setter && e.stealthApplied) {
+        e.guess = "?????";
+      }
+      if (e.blindSpotApplied != null) {
+        e.powerUsed = (e.powerUsed || "") + " BlindSpot";
+      }
+      if (e.revealedOldSecret) {
+        e.powerUsed = (e.powerUsed || "") + ` Reveal(${e.revealedOldSecret.toUpperCase()})`;
+      }
       // Setter sees real feedback only
       if (role === state.setter) {
         delete e.fbGuesser;
