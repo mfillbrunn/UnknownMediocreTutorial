@@ -353,39 +353,47 @@ function updateSetterScreen() {
   // -------------------------------------------------------
   // CORRECT INPUT LOCKING LOGIC
   // -------------------------------------------------------
-  let setterInputEnabled = false;
+let setterInputEnabled = false;
 
-  // SIMULTANEOUS PHASE — setter can enter secret until THEY submit
-  if (state.phase === "simultaneous") {
+// SIMULTANEOUS PHASE — setter can enter secret until THEY submit
+if (state.phase === "simultaneous") {
     setterInputEnabled = !state.simultaneousSecretSubmitted;
-  }
 
-  // NORMAL PHASE — setter can only enter secret when it's their turn
-  else if (state.phase === "normal") {
-    setterInputEnabled = isSetterTurn;
-  }
-
-  // GAMEOVER / LOBBY — input locked
-  else {
-    setterInputEnabled = false;
-  }
-
-  $("newSecretInput").disabled = !setterInputEnabled;
-  if (state.phase === "simultaneous") {
-    // SAME must *always* be disabled during simultaneous phase
+    // SAME is always disabled in simultaneous
     $("submitSetterSameBtn").disabled = true;
     $("submitSetterSameBtn").classList.add("disabled-btn");
-} else {
-    // NORMAL PHASE: SAME is allowed only during the decision step
-    const allowSame = isDecisionStep;
-    $("submitSetterSameBtn").disabled = !allowSame;
 
-    if (allowSame) {
-        $("submitSetterSameBtn").classList.remove("disabled-btn");
-    } else {
-        $("submitSetterSameBtn").classList.add("disabled-btn");
-    }
+    // NEW follows simultaneous rule
+    $("submitSetterNewBtn").disabled = !setterInputEnabled;
+    $("submitSetterNewBtn").classList.toggle("disabled-btn", !setterInputEnabled);
+} 
+
+// NORMAL PHASE — setter can only enter secret in decision step
+else if (state.phase === "normal") {
+    setterInputEnabled = isDecisionStep;
+
+    // Disable/enable buttons based on decision step
+    $("submitSetterSameBtn").disabled = !isDecisionStep;
+    $("submitSetterSameBtn").classList.toggle("disabled-btn", !isDecisionStep);
+
+    $("submitSetterNewBtn").disabled = !isDecisionStep;
+    $("submitSetterNewBtn").classList.toggle("disabled-btn", !isDecisionStep);
 }
+
+// LOBBY / GAMEOVER
+else {
+    setterInputEnabled = false;
+
+    $("submitSetterSameBtn").disabled = true;
+    $("submitSetterSameBtn").classList.add("disabled-btn");
+
+    $("submitSetterNewBtn").disabled = true;
+    $("submitSetterNewBtn").classList.add("disabled-btn");
+}
+
+// FINAL: enable/disable input box
+$("newSecretInput").disabled = !setterInputEnabled;
+
 
   // -------------------------------------------------------
   // INITIALIZE KEYBOARD (you had removed this part by accident)
