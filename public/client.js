@@ -482,13 +482,12 @@ function updateSummary() {
 
   for (let i = 0; i < state.history.length; i++) {
     const h = state.history[i];
-    html += `
-      <tr>
-        <td>${i + 1}</td>
-            const secretCell = h.finalSecret ? h.finalSecret.toUpperCase() : "???";
+
+    // SAFE VALUES
+    const secretCell = h.finalSecret ? h.finalSecret.toUpperCase() : "???";
     const guessCell = h.guess ? h.guess.toUpperCase() : "";
     const fbCell = Array.isArray(h.fb) ? h.fb.join("") : "";
-    
+
     html += `
       <tr>
         <td>${i + 1}</td>
