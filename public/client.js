@@ -119,7 +119,9 @@ onLobbyEvent(evt => {
       break;
 
     case "rolesSwitched":
-      toast("Players have switched roles!");
+      const me = myRole;
+      const newRole = (evt.setter === me) ? "Setter" : "Guesser";
+      toast("You are now the " + newRole + "!");
       updateRoleLabels();
       break;
 
