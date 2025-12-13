@@ -16,7 +16,7 @@ PowerEngine.register("hideTile", {
     this.buttonEl = btn;
 
     btn.onclick = () =>
-      sendGameAction(roomId, { type: "USE_HIDETILE" });
+      sendGameAction(roomId, { type: "USE_HIDE_TILE" });
   },
 
   // Guesser sees hidden tiles in the history
