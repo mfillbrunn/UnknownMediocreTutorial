@@ -2,7 +2,7 @@
 const engine = require("../powerEngineServer.js");
 
 engine.registerPower("freezeSecret", {
-
+console.log("Freeze Secret power loaded");
   apply(state, action, roomId, io) {
     if (state.powers.freezeSecretUsed) return;
     if (!state.firstSecretSet) return;
