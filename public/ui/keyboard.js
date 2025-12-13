@@ -17,7 +17,7 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
     const h = state.history[idx];
 
     // ⭐ Skip the LAST entry if CountOnly applied AND this is the guesser
-    if (isGuesser && idx === state.history.length - 1 && h.countOnlyApplied) {
+       if (h.countOnlyApplied) {
         continue;
     }
     const guess = h.guess.toUpperCase();
