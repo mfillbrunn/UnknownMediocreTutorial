@@ -518,10 +518,17 @@ function updateSummary() {
 // BUTTONS
 // -----------------------------------------------------
 function enableReadyButton(enabled) {
-  $("readyBtn").disabled = !enabled;
-  $("readyBtn").classList.toggle("disabled", !enabled);
-  $("readyBtn").textContent = enabled ? "I'm Ready" : "Waiting...";
+  const btn = $("readyBtn");
+  btn.disabled = !enabled;
+  if (!enabled) {
+    btn.classList.add("waiting");
+    btn.textContent = "Waiting...";
+  } else {
+    btn.classList.remove("waiting");
+    btn.textContent = "I'm Ready";
+  }
 }
+
 
 $("createRoomBtn").onclick = () => {
   createRoom(resp => {
