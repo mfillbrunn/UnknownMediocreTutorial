@@ -9,49 +9,37 @@ window.KEYBOARD_LAYOUT = [
 // Determine best letter status for color assignment
 function getLetterStatusFromHistory(letter, state, isGuesser) {
   if (!state?.history) return null;
-
   let strongest = null;
   const fbKey = isGuesser ? "fbGuesser" : "fb";
-
   for (let idx = 0; idx < state.history.length; idx++) {
     const h = state.history[idx];
-
-    // ⭐ Skip the LAST entry if CountOnly applied AND this is the guesser
-       if (h.countOnlyApplied) {
-        continue;
-    }
+   if (h.countOnlyApplied) continue;
+    if (h.hideTileApplied) continue;
     const guess = h.guess.toUpperCase();
     const fbArr = h[fbKey];
     if (!fbArr) continue;
-
     for (let i = 0; i < 5; i++) {
       if (guess[i] !== letter) continue;
-
       const fb = fbArr[i];
-
       if (fb === "🟦") {
         if (!strongest || strongest === "gray" || strongest === "blue") {
           strongest = "blue";
         }
         continue;
       }
-
       if (fb === "🟩") {
         strongest = "green";
         continue;
       }
-
       if (fb === "🟨") {
         if (strongest !== "green") strongest = "yellow";
         continue;
       }
-
       if (fb === "⬛") {
         if (!strongest) strongest = "gray";
       }
     }
   }
-
   return strongest;
 }
 
