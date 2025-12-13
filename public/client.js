@@ -334,7 +334,6 @@ function updateRoleLabels() {
 // SETTER UI
 // -----------------------------------------------------
 function updateSetterScreen() {
-  
 
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   $("pendingGuessDisplay").textContent =
@@ -348,40 +347,58 @@ function updateSetterScreen() {
     !!state.pendingGuess &&
     state.phase === "normal";
 
-  $("submitSetterSameBtn").disabled = !isDecisionStep;
+  // Freeze flag from server
+  const freezeActive = !!(state.powers && state.powers.freezeActive);
 
   // -------------------------------------------------------
   // CORRECT INPUT LOCKING LOGIC
   // -------------------------------------------------------
-let setterInputEnabled = false;
+  let setterInputEnabled = false;
 
-// SIMULTANEOUS PHASE — setter can enter secret until THEY submit
-if (state.phase === "simultaneous") {
+  // =======================================================
+  // SIMULTANEOUS PHASE — setter can enter secret until submit
+  // =======================================================
+  if (state.phase === "simultaneous") {
+
     setterInputEnabled = !state.simultaneousSecretSubmitted;
 
-    // SAME is always disabled in simultaneous
+    // SAME always disabled in simultaneous
     $("submitSetterSameBtn").disabled = true;
     $("submitSetterSameBtn").classList.add("disabled-btn");
 
-    // NEW follows simultaneous rule
+    // NEW only allowed until secret submitted
     $("submitSetterNewBtn").disabled = !setterInputEnabled;
     $("submitSetterNewBtn").classList.toggle("disabled-btn", !setterInputEnabled);
-} 
+  }
 
-// NORMAL PHASE — setter can only enter secret in decision step
-else if (state.phase === "normal") {
-    setterInputEnabled = isDecisionStep;
+  // =======================================================
+  // NORMAL PHASE — setter can only act in decision step
+  // =======================================================
+  else if (state.phase === "normal") {
 
-    // Disable/enable buttons based on decision step
-    $("submitSetterSameBtn").disabled = !isDecisionStep;
-    $("submitSetterSameBtn").classList.toggle("disabled-btn", !isDecisionStep);
+    // Setter may type only during decision step AND not frozen
+    setterInputEnabled = isDecisionStep && !freezeActive;
 
-    $("submitSetterNewBtn").disabled = !isDecisionStep;
-    $("submitSetterNewBtn").classList.toggle("disabled-btn", !isDecisionStep);
-}
+    // NEW Secret:
+    //   Allowed only during decision step
+    //   AND NOT allowed when frozen
+    const canUseNew = isDecisionStep && !freezeActive;
+    $("submitSetterNewBtn").disabled = !canUseNew;
+    $("submitSetterNewBtn").classList.toggle("disabled-btn", !canUseNew);
 
-// LOBBY / GAMEOVER
-else {
+    // SAME Secret:
+    //   Allowed during decision step (even when frozen)
+    const canUseSame = isDecisionStep;
+    $("submitSetterSameBtn").disabled = !canUseSame;
+    $("submitSetterSameBtn").classList.toggle("disabled-btn", !canUseSame);
+
+    // When frozen, setterInputEnabled is false but SAME stays enabled
+  }
+
+  // =======================================================
+  // LOBBY / GAMEOVER
+  // =======================================================
+  else {
     setterInputEnabled = false;
 
     $("submitSetterSameBtn").disabled = true;
@@ -389,22 +406,21 @@ else {
 
     $("submitSetterNewBtn").disabled = true;
     $("submitSetterNewBtn").classList.add("disabled-btn");
-}
+  }
 
-// FINAL: enable/disable input box
-$("newSecretInput").disabled = !setterInputEnabled;
-
+  // FINAL: enable/disable input
+  $("newSecretInput").disabled = !setterInputEnabled;
 
   // -------------------------------------------------------
-  // INITIALIZE KEYBOARD (you had removed this part by accident)
+  // KEYBOARD
   // -------------------------------------------------------
   renderKeyboard(state, $("keyboardSetter"), "setter", handleSetterKeyboard);
 
   // Pattern / constraints
-    const pat = getPattern(state, true);
-    $("knownPatternSetter").textContent = formatPattern(pat);
-    const must = getMustContainLetters(state);
-    $("mustContainSetter").textContent = must.length ? must.join(", ") : "none";
+  const pat = getPattern(state, true);
+  $("knownPatternSetter").textContent = formatPattern(pat);
+  const must = getMustContainLetters(state);
+  $("mustContainSetter").textContent = must.length ? must.join(", ") : "none";
 
   updateSetterPreview();
 }
