@@ -54,7 +54,13 @@ if (action.type === "SWITCH_ROLES") {
 
    emitToOtherPlayer(io, room, action.playerId, {
       type: "playerReady",
-      role
+      role,
+     playerId: action.playerId
+    });
+    emitToPlayer(io, action.playerId, {
+      type: "playerReady",
+      role,
+      playerId: action.playerId
     });
 
     // If both ready → enter simultaneous phase
