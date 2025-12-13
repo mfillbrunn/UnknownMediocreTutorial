@@ -8,27 +8,43 @@ function handleLobbyPhase(room, state, action, role, roomId, context) {
   // -------------------------------
   // SWITCH ROLES
   // -------------------------------
-  if (action.type === "SWITCH_ROLES") {
-    const ids = Object.keys(room.players);
-    if (ids.length === 2) {
-      const idA = ids.find(id => room.players[id] === "A");
-      const idB = ids.find(id => room.players[id] === "B");
+if (action.type === "SWITCH_ROLES") {
+  const ids = Object.keys(room.players);
+  if (ids.length === 2) {
+    const idA = ids.find(id => room.players[id] === "A");
+    const idB = ids.find(id => room.players[id] === "B");
 
-      room.players[idA] = "B";
-      room.players[idB] = "A";
+    // Swap roles
+    room.players[idA] = "B";
+    room.players[idB] = "A";
 
-      const tmp = state.setter;
-      state.setter = state.guesser;
-      state.guesser = tmp;
+    // Server-side state (A = setter, B = guesser)
+    state.setter = "A";
+    state.guesser = "B";
 
-      emitLobbyEvent(io, roomId, {
-        type: "rolesSwitched",
-        setterId: idA,
-        guesserId: idB
-      });
-    }
-    return;
+    // Notify BOTH players with correct role assignment
+    io.to(idA).emit("roleAssigned", {
+      role: "B",
+      setterId: idB,
+      guesserId: idA
+    });
+
+    io.to(idB).emit("roleAssigned", {
+      role: "A",
+      setterId: idB,
+      guesserId: idA
+    });
+
+    // UI event — optional, but still allowed
+    emitLobbyEvent(io, roomId, {
+      type: "rolesSwitched",
+      setterId: idB,
+      guesserId: idA
+    });
   }
+  return;
+}
+
 
   // -------------------------------
   // PLAYER READY
