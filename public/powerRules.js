@@ -17,16 +17,28 @@ window.POWER_RULES = {
     }
   },
 
-  /*reuseLetters: {
-    once: true,
-    allowed(state, role) {
-      return (
-        state.phase === "normal" &&
-        role === state.setter &&
-        !state.powerUsedThisTurn
-      );
-    }
-  },*/
+suggestGuess: {
+  once: true,
+  allowed(state, role) {
+    return (
+      state.phase === "normal" &&
+      role === state.guesser &&
+      !state.powerUsedThisTurn
+    );
+  }
+},
+
+suggestSecret: {
+  once: true,
+  allowed(state, role) {
+    return (
+      state.phase === "normal" &&
+      role === state.setter &&
+      !state.powerUsedThisTurn &&
+      !state.powers.freezeActive       // cannot be used while frozen
+    );
+  }
+},
 
   confuseColors: {
     once: true,
