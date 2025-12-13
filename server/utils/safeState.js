@@ -50,7 +50,6 @@ if (role !== state.guesser) {
 // -----------------------------------------------------
 safe.history = safe.history
   .map(entry => {
-    console.log("SERVER SAFE ENTRY BEFORE CLEAN:", entry);
     if (!entry) return null;
 
     const e = JSON.parse(JSON.stringify(entry));
