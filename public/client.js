@@ -119,7 +119,8 @@ onLobbyEvent(evt => {
       break;
 
     case "rolesSwitched":
-      updateRolesAfterSwitch(evt);
+      toast("Players have switched roles!");
+      updateRoleLabels();
       break;
 
     case "playerReady":
