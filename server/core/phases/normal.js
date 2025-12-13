@@ -21,25 +21,24 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   // =====================================================================================
   // SPECIAL CASE: NEW_MATCH
   // =====================================================================================
-  if (action.type === "NEW_MATCH") {
-    const createInitialState = require("../stateFactory").createInitialState;
+if (action.type === "NEW_MATCH") {
+  const createInitialState = require("../stateFactory").createInitialState;
+  
+  const newState = createInitialState();
+  Object.assign(state, newState);
 
-    // Preserve roles
-    const oldSetter = state.setter;
-    const oldGuesser = state.guesser;
+  // Setter is always "A", guesser is always "B"
+  state.setter = "A";
+  state.guesser = "B";
 
-    const newState = createInitialState();
-    Object.assign(state, newState);
+  state.ready = { A: false, B: false };
+  state.phase = "lobby";
 
-    state.setter = oldSetter;
-    state.guesser = oldGuesser;
-    state.ready = { A: false, B: false };
-    state.phase = "lobby";
+  emitLobbyEvent(io, roomId, { type: "showLobby" });
+  emitStateForAllPlayers(roomId, room, io);
+  return;
+}
 
-    emitLobbyEvent(io, roomId, { type: "showLobby" });
-    emitStateForAllPlayers(roomId, room, io);
-    return;
-  }
 
   // =====================================================================================
   // CASE 1: GUESSER SUBMITS A GUESS (when no pendingGuess)
