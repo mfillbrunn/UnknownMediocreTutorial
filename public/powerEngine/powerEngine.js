@@ -41,8 +41,6 @@ window.PowerEngine = {
   updateButtonStates(state, role) {
     const isSetter = (role === state.setter);
     const isGuesser = (role === state.guesser);
-    const isMyTurn = (state.phase === "normal" && state.turn === role);
-
     for (const id in this.powers) {
       const mod = this.powers[id];
       const btn = mod.buttonEl;
@@ -59,8 +57,7 @@ window.PowerEngine = {
       // Global / turn-based conditions that should make it non-usable this turn
       const anotherPowerUsedThisTurn = state.powerUsedThisTurn;
       const notNormalPhase = state.phase !== "normal";
-      const notMyTurn = !isMyTurn;
-
+      
       // Your rule:
       // a power should be "used"/disabled if:
       //  - this or another power used this turn
