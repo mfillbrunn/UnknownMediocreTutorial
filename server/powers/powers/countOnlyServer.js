@@ -1,7 +1,7 @@
 // /powers/powers/countOnlyServer.js
 const engine = require("../powerEngineServer.js");
 
-engine.registerPower("countonly", {
+engine.registerPower("countOnly", {
   apply(state, action, roomId, io) {
     if (state.powers.countOnlyUsed) return;
     state.powers.countOnlyUsed = true;
