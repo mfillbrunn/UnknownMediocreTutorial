@@ -17,7 +17,7 @@ window.POWER_RULES = {
     }
   },
 
-  reuseLetters: {
+  /*reuseLetters: {
     once: true,
     allowed(state, role) {
       return (
@@ -26,7 +26,7 @@ window.POWER_RULES = {
         !state.powerUsedThisTurn
       );
     }
-  },
+  },*/
 
   confuseColors: {
     once: true,
