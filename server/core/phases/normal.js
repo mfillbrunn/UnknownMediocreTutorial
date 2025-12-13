@@ -71,8 +71,9 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     // Otherwise → store guess, setter must decide SAME or NEW
     state.pendingGuess = g;
     state.turn = state.setter;
+    powerEngine.turnStart(state, state.turn);
     state.powerUsedThisTurn = false;
-
+    
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
@@ -115,7 +116,9 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       finalizeFeedback(state, powerEngine);
 
       state.turn = state.guesser;
+      powerEngine.turnStart(state, state.turn);
       state.powerUsedThisTurn = false;
+      
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
@@ -135,12 +138,13 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       // Score guess
       finalizeFeedback(state, powerEngine);
 
-      // Next turn
       state.turn = state.guesser;
+      powerEngine.turnStart(state, state.turn);
       state.powerUsedThisTurn = false;
-
+      
       emitStateForAllPlayers(roomId, room, io);
       return;
+
     }
     return; // setter turn but action not for setter
   }
