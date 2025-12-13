@@ -137,8 +137,8 @@ onLobbyEvent(evt => {
     toast(`Player ${evt.role} is READY`);
   
     // If this is ME → freeze my button
-    if (evt.role === myRole) {
-      enableReadyButton(false);
+    if (evt.playerId === socket.id) {
+      enableReadyButton(false);  
     }
     break;
 
