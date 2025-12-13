@@ -1,7 +1,7 @@
 // /powers/powers/revealGreenServer.js
 const engine = require("../powerEngineServer.js");
 
-engine.registerPower("revealgreen", {
+engine.registerPower("revealGreen", {
   apply(state, action, roomId, io) {
   if (state.powers.revealGreenUsed) return;
   if (!state.secret) return;
