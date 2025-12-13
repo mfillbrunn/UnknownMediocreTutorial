@@ -1,208 +1,120 @@
-// core/phases/normal.js
-
 const { emitStateForAllPlayers } = require("../../utils/emitState");
-const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { finalizeFeedback } = require("../stateFactory");
-const { isValidWord, parseWordlist } = require("../../game-engine/validation");
-const { isConsistentWithHistory } = require("../../game-engine/history");
+const { scoreGuess } = require("../../game-engine/scoring");
 
-function normalizePowerId(actionType) {
-  const raw = actionType.replace("USE_", "").toLowerCase();
-  return raw.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-}
-
-function handleNormalPhase(room, state, action, role, roomId, context) {
+function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   const { ALLOWED_GUESSES, powerEngine } = context;
+  const { isValidWord } = require("../../game-engine/validation");
 
-  // Debug logging (optional)
-  // console.log("[NORMAL PHASE]", { action, role, turn: state.turn, pendingGuess: state.pendingGuess });
+  // ---------------------------------------------
+  // SETTER submits initial secret
+  // ---------------------------------------------
+  if (action.type === "SET_SECRET_NEW" && role === state.setter) {
+    if (state.simultaneousSecretSubmitted) return;
 
-  // =====================================================================================
-  // SPECIAL CASE: NEW_MATCH
-  // =====================================================================================
-if (action.type === "NEW_MATCH") {
-  const createInitialState = require("../stateFactory").createInitialState;
-  
-  const newState = createInitialState();
-  Object.assign(state, newState);
+    const w = action.secret.toLowerCase();
+    if (!isValidWord(w, ALLOWED_GUESSES)) return;
 
-  // Setter is always "A", guesser is always "B"
-  state.setter = "A";
-  state.guesser = "B";
+    state.secret = w;
+    state.currentSecret = w;              // ⭐ Required for correct scoring
+    state.simultaneousSecretSubmitted = true;
+  }
 
-  state.ready = { A: false, B: false };
-  state.phase = "lobby";
+  // ---------------------------------------------
+  // GUESSER submits initial guess
+  // ---------------------------------------------
+  if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
+    if (state.simultaneousGuessSubmitted) return;
 
-  emitLobbyEvent(io, roomId, { type: "showLobby" });
-  emitStateForAllPlayers(roomId, room, io);
-  return;
-}
-
-
-  // =====================================================================================
-  // CASE 1: GUESSER SUBMITS A GUESS (when no pendingGuess)
-  // =====================================================================================
-  if (
-    !state.pendingGuess &&
-    action.type.startsWith("USE_") &&
-    role === state.guesser
-  ) {
-    const powerId = normalizePowerId(action.type);
-    console.log("[DEBUG] Guesser power before guessing:", powerId);
-    if (!state.powerUsedThisTurn) {
-        state.powerUsedThisTurn = true;
-        powerEngine.applyPower(powerId, state, action, roomId, io);
-    }
-    emitStateForAllPlayers(roomId, room, io);
-    return;
-}
-  
-  if (
-    !state.pendingGuess &&
-    action.type === "SUBMIT_GUESS" &&
-    role === state.guesser
-  ) {
     const g = action.guess.toLowerCase();
     if (!isValidWord(g, ALLOWED_GUESSES)) return;
-    // Immediate win
-    if (g === state.secret) {
-      state.currentSecret = state.secret; 
-      pushWinEntry(state, g);
-      endGame(state, roomId, room, io);
-      return;
-    }
 
-    // Otherwise → store guess, setter must decide SAME or NEW
     state.pendingGuess = g;
-    state.turn = state.setter;
-    powerEngine.turnStart(state, state.turn);
-    state.powerUsedThisTurn = false;
-    
+    state.simultaneousGuessSubmitted = true;
+  }
+
+  // ---------------------------------------------
+  // PROGRESS UPDATE
+  // ---------------------------------------------
+  io.to(roomId).emit("simulProgress", {
+    secretSubmitted: state.simultaneousSecretSubmitted,
+    guessSubmitted: state.simultaneousGuessSubmitted
+  });
+
+  // ---------------------------------------------
+  // CHECK: Both submitted?
+  // ---------------------------------------------
+  const bothSubmitted =
+    state.secret &&
+    state.pendingGuess &&
+    state.simultaneousSecretSubmitted &&
+    state.simultaneousGuessSubmitted;
+
+  if (!bothSubmitted) return;
+
+  // BOTH ARE SUBMITTED → SCORE THE SIMULTANEOUS ROUND
+  const guess = state.pendingGuess;
+  const secret = state.secret;
+
+  // Pre-score hooks
+  powerEngine.preScore(state, guess);
+
+  // Base scoring
+  const fb = scoreGuess(secret, guess);
+
+  // Perfect match? → End game immediately
+  const isWin = fb.every(tile => tile === "🟩");
+  if (isWin) {
+    state.history.push({
+      guess,
+      fb,
+      fbGuesser: [...fb],
+      extraInfo: null,
+      finalSecret: secret
+    });
+
+    state.pendingGuess = "";
+    state.gameOver = true;
+    state.phase = "gameOver";
+
+    io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
     emitStateForAllPlayers(roomId, room, io);
+    require("../../utils/emitLobby").emitLobbyEvent(io, roomId, {
+      type: "gameOverShowMenu"
+    });
     return;
   }
 
-  // =====================================================================================
-  // CASE 2: SETTER DECISION STEP (pendingGuess exists)
-  // =====================================================================================
-  if (state.pendingGuess && state.turn === state.setter) {
-    if (action.type.startsWith("USE_") && role === state.setter) {
-      const powerId = normalizePowerId(action.type);
-      if (!state.powerUsedThisTurn) {
-        state.powerUsedThisTurn = true;
-        powerEngine.applyPower(powerId, state, action, roomId, io);
-        emitStateForAllPlayers(roomId, room, io);
-      }
-      return;
-    }
-    // -------------------------------------------
-    // SET_SECRET_NEW
-    // -------------------------------------------
-    if (action.type === "SET_SECRET_NEW") {
-      // Power hook may block
-      if (powerEngine.beforeSetterSecretChange(state, action)) return;
-      const w = action.secret.toLowerCase();
-
-      if (!isValidWord(w, ALLOWED_GUESSES)) return;
-      if (!isConsistentWithHistory(state.history, w)) {
-        io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
-        return;
-      }
-      state.secret = w;
-      state.currentSecret = w;
-      // Instant win if SAME
-      if (state.pendingGuess === w) {
-        state.currentSecret = w;
-        pushWinEntry(state, w);
-        endGame(state, roomId, room, io);
-        return;
-      }
-
-      // Otherwise score guess normally
-      finalizeFeedback(state, powerEngine);
-
-      state.turn = state.guesser;
-      powerEngine.turnStart(state, state.turn);
-      state.powerUsedThisTurn = false;
-      
-      emitStateForAllPlayers(roomId, room, io);
-      return;
-    }
-   // -------------------------------------------
-    // SET_SECRET_SAME
-    // -------------------------------------------
-    if (action.type === "SET_SECRET_SAME") {
-      if (powerEngine.beforeSetterSecretChange(state, action)) return;
-      if (!isConsistentWithHistory(state.history, state.secret)) return;
-      // Instant win
-      if (state.pendingGuess === state.secret) {
-        state.currentSecret = state.secret;   
-        pushWinEntry(state, state.secret);
-        endGame(state, roomId, room, io);
-        return;
-      }
-
-      // Score guess
-       state.currentSecret = state.secret; 
-      finalizeFeedback(state, powerEngine);
-
-      state.turn = state.guesser;
-      powerEngine.turnStart(state, state.turn);
-      state.powerUsedThisTurn = false;
-      
-      emitStateForAllPlayers(roomId, room, io);
-      return;
-
-    }
-    return; // setter turn but action not for setter
-  }
-
-  // =====================================================================================
-  // CASE 3: POWERS
-  // =====================================================================================
-  if (action.type.startsWith("USE_")) {
-   const powerId = normalizePowerId(action.type);
-    console.log("[DEBUG] POWER ACTION RECEIVED:", action.type, "→ powerId =", powerId);
-    console.log("[DEBUG] Registered engine powers:", Object.keys(powerEngine.powers));
-    if (state.powerUsedThisTurn) return;
-
-    state.powerUsedThisTurn = true;
-    powerEngine.applyPower(powerId, state, action, roomId, io);
-
-    emitStateForAllPlayers(roomId, room, io);
-    return;
-  }
-
-  // =====================================================================================
-  // Otherwise ignore the action
-  // =====================================================================================
-}
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-function pushWinEntry(state, word) {
-  state.history.push({
-    guess: word,
-    fb: ["🟩", "🟩", "🟩", "🟩", "🟩"],
-    fbGuesser: ["🟩", "🟩", "🟩", "🟩", "🟩"],
+  // Build entry BEFORE postScore so powers can alter like in normal scoring
+  const entry = {
+    guess,
+    fb,
+    fbGuesser: [...fb],
     extraInfo: null,
-    finalSecret: word
-  });
-}
+    finalSecret: secret
+  };
 
-function endGame(state, roomId, room, io) {
-  state.phase = "gameOver";
-  state.turn = null;
-  state.gameOver = true;
+  // Post-score power effects
+  powerEngine.postScore(state, entry);
 
-  io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
+  // Save history entry
+  state.history.push(entry);
+
+  // CLEAN UP
+  state.pendingGuess = "";
+  state.guessCount++;
+
+  // ---------------------------------------------
+  // TRANSITION TO NORMAL PHASE WITH GUESSER TURN
+  // ---------------------------------------------
+  state.phase = "normal";
+  state.turn = state.guesser;       // ⭐ Important: skip setter decision step
+  state.powerUsedThisTurn = false;
+
+  powerEngine.turnStart(state, state.turn);
+
   emitStateForAllPlayers(roomId, room, io);
-  require("../../utils/emitLobby").emitLobbyEvent(io, roomId, {
-    type: "gameOverShowMenu"
-  });
 }
 
-module.exports = handleNormalPhase;
+module.exports = handleSimultaneousPhase;
