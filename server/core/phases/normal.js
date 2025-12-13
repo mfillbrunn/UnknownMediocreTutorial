@@ -96,6 +96,13 @@ if (action.type === "NEW_MATCH") {
       }
       return;
     }
+    // AUTO-SUBMIT SECRET IF FORCED TIMER EXPIRES
+    if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
+      if (Date.now() > state.powers.forceTimerDeadline) {
+        action = { type: "SET_SECRET_SAME", playerId: role === "A" ? room.setter : room.guesser };
+        console.log("FORCE TIMER: auto-submitting SAME secret");
+      }
+    }
     // -------------------------------------------
     // SET_SECRET_NEW
     // -------------------------------------------
