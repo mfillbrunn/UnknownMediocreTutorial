@@ -44,7 +44,8 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     action.type.startsWith("USE_") &&
     role === state.guesser
   ) {
-    const powerId = action.type.replace("USE_", "").toLowerCase();
+    const raw = action.type.replace("USE_", "");
+    const powerId = raw.charAt(0).toLowerCase() + raw.slice(1);
     console.log("[DEBUG] Guesser power before guessing:", powerId);
     if (!state.powerUsedThisTurn) {
         state.powerUsedThisTurn = true;
