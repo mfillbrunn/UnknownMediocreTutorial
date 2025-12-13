@@ -556,8 +556,13 @@ $("joinRoomBtn").onclick = () => {
 $("switchRolesBtn").onclick = () =>
   sendGameAction(roomId, { type: "SWITCH_ROLES" });
 
-$("readyBtn").onclick = () =>
+$("readyBtn").onclick = () => {
+  // Send to server
   sendGameAction(roomId, { type: "PLAYER_READY" });
+
+  // Immediately update UI locally
+  enableReadyButton(false);
+};
 
 $("submitGuessBtn").onclick = () => {
   const g = $("guessInput").value.trim().toLowerCase();
