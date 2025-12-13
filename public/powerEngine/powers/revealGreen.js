@@ -12,7 +12,7 @@ PowerEngine.register("revealGreen", {
     $("guesserPowerContainer").appendChild(btn);
 
     btn.onclick = () =>
-      sendGameAction(roomId, { type: "USE_REVEALGREEN" });
+      sendGameAction(roomId, { type: "USE_REVEAL_GREEN" });
   },
 
   // ⭐ LIVE visual feedback when the power triggers
