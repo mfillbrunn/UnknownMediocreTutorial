@@ -45,39 +45,49 @@ function buildSafeStateForPlayer(state, role) {
   // -----------------------------------------------------
   // 5. Filter & sanitize HISTORY
   // -----------------------------------------------------
-  safe.history = safe.history
+safe.history = safe.history
   .map(entry => {
     console.log("SERVER SAFE ENTRY BEFORE CLEAN:", entry);
     if (!entry) return null;
 
     const e = JSON.parse(JSON.stringify(entry));
 
-    // GUESSER sees fbGuesser only
-    if (role === state.guesser) {
-      delete e.fb;
-      if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
-        console.warn("Repairing missing fbGuesser:", e);
-        e.fbGuesser = ["?", "?", "?", "?", "?"];
+    // DURING GAME → hide secrets from guesser
+    if (!state.gameOver) {
+      if (role === state.guesser) {
+        delete e.fb;             // guesser sees masked feedback
+        if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
+          e.fbGuesser = ["?", "?", "?", "?", "?"];
+        }
       }
+
+      if (role === state.setter) {
+        delete e.fbGuesser;      // setter sees real feedback
+        if (!Array.isArray(e.fb) || e.fb.length !== 5) {
+          e.fb = ["?", "?", "?", "?", "?"];
+        }
+      }
+
+      // ALWAYS hide final secret during gameplay
+      delete e.finalSecret;
     }
 
-    // SETTER sees fb only
-    if (role === state.setter) {
-      delete e.fbGuesser;
-      if (!Array.isArray(e.fb) || e.fb.length !== 5) {
-        console.warn("Repairing missing fb:", e);
-        e.fb = ["?", "?", "?", "?", "?"];
-      }
+    // AFTER GAME OVER → REVEAL EVERYTHING
+    else {
+      delete e.fbGuesser;     // setter and guesser both see real fb
+      // keep:
+      // e.fb
+      // e.finalSecret
     }
 
-    // Delete internal metadata
-    delete e.finalSecret;
+    // Delete other internal metadata
     delete e.ignoreConstraints;
-        
+
     console.log("SERVER SAFE ENTRY AFTER CLEAN:", e);
     return e;
   })
   .filter(e => e !== null);
+
   return safe;
 }
 
