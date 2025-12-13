@@ -11,15 +11,13 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
   // The only valid action in gameOver is NEW_MATCH
   // --------------------------------------------------------------------
   if (action.type === "NEW_MATCH") {
-    const oldSetter = state.setter;
-    const oldGuesser = state.guesser;
+     const fresh = createInitialState();
+  Object.assign(state, fresh);
+  
+  // Assign setter/guesser based on current room.players roles (A/B)
+  state.setter = "A";
+  state.guesser = "B";
 
-    const fresh = createInitialState();
-    Object.assign(state, fresh);
-
-    // Preserve switchable roles
-    state.setter = oldSetter;
-    state.guesser = oldGuesser;
 
     // Re-enter lobby
     state.phase = "lobby";
