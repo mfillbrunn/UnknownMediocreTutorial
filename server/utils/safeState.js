@@ -43,9 +43,6 @@ function buildSafeStateForPlayer(state, role) {
   delete safe.firstSecretSet;
 
   // -----------------------------------------------------
-  // 5. Filter & sanitize HISTORY
-  // -----------------------------------------------------
-// -----------------------------------------------------
 // 5. Filter & sanitize HISTORY
 // -----------------------------------------------------
 safe.history = safe.history
@@ -56,44 +53,51 @@ safe.history = safe.history
     const e = JSON.parse(JSON.stringify(entry));
 
     // ================================================
-    // DURING MATCH (NOT gameOver)
+    // DURING GAMEPLAY (NOT gameOver)
     // ================================================
     if (!state.gameOver) {
+
+      // Guesser sees masked feedback only
       if (role === state.guesser) {
-        delete e.fb;   // Guesser sees masked feedback only
+        delete e.fb;
         if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
           e.fbGuesser = ["?", "?", "?", "?", "?"];
         }
       }
 
+      // Setter sees real feedback only
       if (role === state.setter) {
-        delete e.fbGuesser;   // Setter sees full fb
+        delete e.fbGuesser;
         if (!Array.isArray(e.fb) || e.fb.length !== 5) {
           e.fb = ["?", "?", "?", "?", "?"];
         }
       }
 
-      // Hide secret during gameplay
+      // Always hide finalSecret during gameplay
       delete e.finalSecret;
     }
 
     // ================================================
-    // AFTER GAME OVER → Reveal secret + full feedback
+    // AFTER GAME OVER → REVEAL SECRET & TRUE FEEDBACK
     // ================================================
     else {
-      delete e.fbGuesser;   // Everyone sees real fb
-      // Keep:
-      //   e.fb
-      //   e.finalSecret
+
+      // Everyone sees true feedback
+      delete e.fbGuesser;
+
+      // KEEP:
+      //  e.fb
+      //  e.finalSecret
+      // do NOT delete finalSecret here
     }
 
-    // Remove other internal-only fields
     delete e.ignoreConstraints;
 
     console.log("SERVER SAFE ENTRY AFTER CLEAN:", e);
     return e;
   })
   .filter(e => e !== null);
+
 
 
   return safe;
