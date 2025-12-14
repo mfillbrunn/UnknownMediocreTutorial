@@ -37,6 +37,7 @@ function startForceTimer(roomId, state, io) {
     type: "SET_SECRET_SAME",
     playerId: room[state.setter]  // setter's socket ID
     }
+      handleNormalPhase(room, state, autoAction, state.setter, roomId, { io, ALLOWED_GUESSES, powerEngine });
   }, 250);
 }
 
