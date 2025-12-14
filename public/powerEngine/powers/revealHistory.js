@@ -11,7 +11,7 @@ PowerEngine.register("revealHistory", {
 
     // Disable until the rules say it's allowed
     const updateEnabledState = () => {
-      const canUse = POWER_RULES.revealHistory.allowed(window.state, window.myRole);
+      const canUse = window.POWER_RULES.revealHistory.allowed(window.state, window.myRole);
       btn.disabled = !canUse;
       btn.classList.toggle("disabled-btn", !canUse);
     };
