@@ -13,7 +13,8 @@ function createInitialState() {
     setter: "A",
     guesser: "B",
     ready: { A: false, B: false },
-
+    secretPoolSize: 2,       // NEW: number chosen in lobby
+    secretPools: { A: [], B: [] },  // NEW: each player’s random secrets
     secret: "",
     currentSecret: null,
     pendingGuess: "",
