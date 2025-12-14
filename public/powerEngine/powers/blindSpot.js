@@ -24,7 +24,9 @@ PowerEngine.register("blindSpot", {
 
   historyEffects(entry, isSetter) {
     if (entry.blindSpotApplied != null) {
-      entry.fbGuesser[entry.blindSpotApplied] = "⬛";
+      if (entry.fbGuesser && typeof entry.blindSpotApplied === "number") {
+        entry.fbGuesser[entry.blindSpotApplied] = "⬛";
+      }
     }
   }
 });
