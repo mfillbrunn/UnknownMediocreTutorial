@@ -514,7 +514,11 @@ if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
 
 
 function updateSetterPreview() {
-  const preview = $("setterPreview");
+  if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
+    preview.textContent = "(guess hidden this round)";
+    return;
+}
+const preview = $("setterPreview");
   preview.innerHTML = "";
 
   const guess = state.pendingGuess;
