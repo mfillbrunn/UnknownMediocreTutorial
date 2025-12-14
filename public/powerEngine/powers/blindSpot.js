@@ -17,22 +17,24 @@ PowerEngine.register("blindSpot", {
 
   effects: {
     onPowerUsed(data) {
-  const btn = this.buttonEl;
-  if (!btn) return;         // ← prevents crash
-  btn.disabled = true;
-  btn.classList.add("power-used");
+      const btn = this.buttonEl;
+      if (!btn) return;
+      btn.disabled = true;
+      btn.classList.add("power-used");
     }
   },
 
   historyEffects(entry, isSetter) {
-    if (entry.blindSpotApplied != null) {
-if (typeof entry.blindSpotApplied === "number") {
-  const i = entry.blindSpotApplied;
+    if (typeof entry.blindSpotApplied === "number") {
+      const i = entry.blindSpotApplied;
 
-  if (entry.fbGuesser) entry.fbGuesser[i] = "🟪";
-  if (entry.fb)        entry.fb[i]        = "🟪";
-}
+      if (!isSetter && entry.fbGuesser) {
+        entry.fbGuesser[i] = "🟪";
+      }
 
+      if (isSetter && entry.fb) {
+        entry.fb[i] = "🟪";
+      }
     }
   }
 });
