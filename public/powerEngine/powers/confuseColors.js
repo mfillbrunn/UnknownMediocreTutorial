@@ -26,6 +26,7 @@ PowerEngine.register("confuseColors", {
     if (!entry.confuseApplied) return;
 
     entry.fbGuesser = entry.fbGuesser.map(tile => {
+      if (tile === "🟪") return tile;
       if (tile === "🟩" || tile === "🟨") return "🟦";
       return tile;
     });
