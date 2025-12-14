@@ -19,6 +19,10 @@ require("./powers/powers/revealGreenServer");
 require("./powers/powers/freezeSecretServer");
 require("./powers/powers/suggestGuessServer");
 require("./powers/powers/suggestSecretServer");
+require("./powers/powers/forceTimerServer");
+require("./powers/powers/revealHistoryServer");
+require("./powers/powers/blindSpotServer");
+require("./powers/powers/stealthGuessServer");
 
 // ------------------------------
 const app = express();
