@@ -595,12 +595,20 @@ function updateGuesserScreen() {
     }
   });
 
-  const pattern = getPattern(state, false);
+  let pattern = getPattern(state, false);
+
+// ⭐ Remove blind spot information for guesser
+const blindIdx = state.powers?.blindSpotIndex;
+if (typeof blindIdx === "number") {
+  pattern[blindIdx] = "🟪";  // unknown, masked slot
+}
+
 renderPatternInto(
   $("knownPatternGuesser"),
   pattern,
   state.revealGreenInfo || null
 );
+
 
   $("mustContainGuesser").textContent =
     getMustContainLetters(state).join(", ") || "none";
