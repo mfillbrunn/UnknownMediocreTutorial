@@ -74,9 +74,14 @@ safe.history = safe.history
           e.fbGuesser = ["?", "?", "?", "?", "?"];
         }
       }
-      if (role === state.setter && e.stealthApplied) {
+      // STEALTH GUESS — hide ONLY while stealth is active this round
+      if (role === state.setter && state.powers.stealthGuessActive && e.stealthApplied) {
         e.guess = "?????";
+        if (Array.isArray(e.fb)) {
+          e.fb = ["?", "?", "?", "?", "?"];
+        }
       }
+
       if (e.blindSpotApplied != null) {
         e.powerUsed = (e.powerUsed || "") + " BlindSpot";
       }
