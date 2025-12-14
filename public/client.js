@@ -85,6 +85,9 @@ socket.on("suggestWord", ({ word }) => {
   }
 });
 
+socket.on("forceTimerExpired", () => {
+  toast("Time ran out — old secret was kept!");
+});
 
 socket.on("errorMessage", msg => {
   shake($("newSecretInput"));
