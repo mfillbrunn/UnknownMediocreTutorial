@@ -44,6 +44,12 @@ if (action.type === "SWITCH_ROLES") {
   }
   return;
 }
+if (action.type === "SET_POOL_SIZE") {
+    if (role !== state.setter) return; // only setter/host can change it
+    state.secretPoolSize = Math.max(1, Math.min(10, action.size));
+    emitStateForAllPlayers(roomId, room, io);
+    return;
+}
 
 
   // -------------------------------
