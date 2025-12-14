@@ -229,10 +229,11 @@ function updateUI() {
     lastSimulGuess = false;
   }
   // Render power buttons once
-  if (!PowerEngine._initialized && roomId) {
+if (!PowerEngine._initialized && roomId && roleAssigned) {
     PowerEngine.renderButtons(roomId);
     PowerEngine._initialized = true;
-  }
+}
+
 
   updateMenu();
   updateScreens();
