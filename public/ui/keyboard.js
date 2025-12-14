@@ -31,7 +31,7 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
        typeof bsIdx === "number" &&
           bsIdx === i &&
             typeof h.roundIndex === "number" &&
-           h.roundIndex > bsRound
+           h.roundIndex >= bsRound
           ) {
             // Skip feedback for this tile
             continue;
