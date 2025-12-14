@@ -93,10 +93,19 @@ socket.on("forceTimerTick", ({ remaining }) => {
   bar.textContent = `TIME LEFT: ${sec}s`;
 });
 
-// Timer expired
 socket.on("forceTimerExpired", () => {
   $("turnIndicatorSetter").textContent = "TIME LEFT: 0s";
+
+  // 1. Clear setter's input field
+  $("newSecretInput").value = "";
+
+  // 2. Disable NEW SECRET button (only SAME allowed)
+  $("submitSetterNewBtn").disabled = true;
+  $("submitSetterNewBtn").classList.add("disabled-btn");
+
+  // SAME button stays enabled automatically
 });
+
 
 socket.on("suggestWord", ({ word }) => {
   if (myRole === state.guesser) {
