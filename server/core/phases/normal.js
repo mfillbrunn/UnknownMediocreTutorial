@@ -6,6 +6,49 @@ const { finalizeFeedback } = require("../stateFactory");
 const { isValidWord, parseWordlist } = require("../../game-engine/validation");
 const { isConsistentWithHistory } = require("../../game-engine/history");
 
+const FORCE_TIMER_INTERVALS = {};
+
+function startForceTimer(roomId, state, io) {
+  const deadline = Date.now() + 30000;
+
+  state.powers.forceTimerActive = true;
+  state.powers.forceTimerDeadline = deadline;
+  state.powers.forceTimerExpiredFlag = false;
+
+  io.to(roomId).emit("forceTimerStarted", { deadline });
+
+  if (FORCE_TIMER_INTERVALS[roomId]) {
+    clearInterval(FORCE_TIMER_INTERVALS[roomId]);
+  }
+
+  FORCE_TIMER_INTERVALS[roomId] = setInterval(() => {
+    const remaining = deadline - Date.now();
+    io.to(roomId).emit("forceTimerTick", { remaining });
+
+    if (remaining <= 0) {
+      clearInterval(FORCE_TIMER_INTERVALS[roomId]);
+      delete FORCE_TIMER_INTERVALS[roomId];
+
+      state.powers.forceTimerExpiredFlag = true;
+      io.to(roomId).emit("forceTimerExpired");
+    }
+  }, 250);
+}
+
+function clearForceTimer(roomId, state) {
+  if (FORCE_TIMER_INTERVALS[roomId]) {
+    clearInterval(FORCE_TIMER_INTERVALS[roomId]);
+    delete FORCE_TIMER_INTERVALS[roomId];
+  }
+
+  delete state.powers.forceTimerActive;
+  delete state.powers.forceTimerDeadline;
+  delete state.powers.forceTimerExpiredFlag;
+  delete state.powers.forceTimerArmed;
+}
+
+
+
 function normalizePowerId(actionType) {
   const raw = actionType.replace("USE_", "").toLowerCase();
   return raw.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
@@ -76,6 +119,9 @@ if (action.type === "NEW_MATCH") {
     // Otherwise → store guess, setter must decide SAME or NEW
     state.pendingGuess = g;
     state.turn = state.setter;
+    if (state.powers.forceTimerArmed) {
+        startForceTimer(roomId, state, io);
+    }
     powerEngine.turnStart(state, state.turn);
     state.powerUsedThisTurn = false;
     
@@ -133,7 +179,7 @@ if (action.type === "NEW_MATCH") {
 
       // Otherwise score guess normally
       finalizeFeedback(state, powerEngine);
-
+      clearForceTimer(roomId, state);
       state.turn = state.guesser;
       powerEngine.turnStart(state, state.turn);
       state.powerUsedThisTurn = false;
@@ -159,7 +205,7 @@ if (action.type === "NEW_MATCH") {
        state.currentSecret = state.secret; 
       state.firstSecretSet = true;
       finalizeFeedback(state, powerEngine);
-
+      clearForceTimer(roomId, state);
       state.turn = state.guesser;
       powerEngine.turnStart(state, state.turn);
       state.powerUsedThisTurn = false;
