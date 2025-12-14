@@ -75,6 +75,28 @@ socket.on("revealOldSecret", ({ secret }) => {
   toast(`Secret two rounds ago was: ${secret.toUpperCase()}`);
 });
 
+// ========================
+// Force Timer Events
+// ========================
+
+// Timer begins
+socket.on("forceTimerStarted", ({ deadline }) => {
+  const bar = $("turnIndicatorSetter");
+  bar.classList.add("your-turn");
+  bar.textContent = "TIME LEFT: 30s";
+});
+
+// Timer tick (250ms)
+socket.on("forceTimerTick", ({ remaining }) => {
+  const bar = $("turnIndicatorSetter");
+  const sec = Math.max(0, Math.ceil(remaining / 1000));
+  bar.textContent = `TIME LEFT: ${sec}s`;
+});
+
+// Timer expired
+socket.on("forceTimerExpired", () => {
+  $("turnIndicatorSetter").textContent = "TIME LEFT: 0s";
+});
 
 socket.on("suggestWord", ({ word }) => {
   if (myRole === state.guesser) {
