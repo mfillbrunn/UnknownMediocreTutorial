@@ -25,8 +25,10 @@ PowerEngine.register("forceTimer", {
 
   effects: {
     onPowerUsed() {
-      this.buttonEl.disabled = true;
-      this.buttonEl.classList.add("power-used");
+  const btn = this.buttonEl;
+  if (!btn) return;         // ← prevents crash
+  btn.disabled = true;
+  btn.classList.add("power-used");
     }
   }
 });
