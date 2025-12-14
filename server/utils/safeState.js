@@ -20,10 +20,13 @@ function buildSafeStateForPlayer(state, role) {
   if (role === state.setter && state.phase === "simultaneous") {
     safe.pendingGuess = "";
   }
-  // STEALTH GUESS — hide guess from setter in NORMAL phase
+// STEALTH GUESS: hide the current pending guess ONLY DURING decision step
 if (role === state.setter && state.powers.stealthGuessActive) {
-  safe.pendingGuess = "?????";
+  if (state.pendingGuess) {
+    safe.pendingGuess = "?????";   // placeholder
+  }
 }
+
 
 
   // -----------------------------------------------------
