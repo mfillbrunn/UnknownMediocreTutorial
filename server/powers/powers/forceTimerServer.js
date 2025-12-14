@@ -1,6 +1,8 @@
 // powers/powers/forceTimerServer.js
-
 const engine = require("../powerEngineServer.js");
+
+// Global map: roomId → interval handle
+const FORCE_TIMER_HANDLES = {};
 
 engine.registerPower("forceTimer", {
   apply(state, action, roomId, io) {
@@ -9,55 +11,51 @@ engine.registerPower("forceTimer", {
     state.powers.forceTimerUsed = true;
     state.powers.forceTimerActive = true;
 
-    // 30 seconds from now
     const deadline = Date.now() + 30000;
     state.powers.forceTimerDeadline = deadline;
 
-    // Tell clients the timer started
+    // Notify clients timer began
     io.to(roomId).emit("forceTimerStarted", { deadline });
 
-    // ---------------------------------------
-    // SERVER TICK LOOP (250ms)
-    // ---------------------------------------
-    if (state.powers.forceTimerInterval) {
-      clearInterval(state.powers.forceTimerInterval);
+    // If an old handle exists, clear it
+    if (FORCE_TIMER_HANDLES[roomId]) {
+      clearInterval(FORCE_TIMER_HANDLES[roomId]);
     }
 
-    state.powers.forceTimerInterval = setInterval(() => {
+    // ----------------------------
+    // Run countdown externally (NOT inside state)
+    // ----------------------------
+    FORCE_TIMER_HANDLES[roomId] = setInterval(() => {
       const now = Date.now();
       const remaining = deadline - now;
 
-      // Send ticking updates to UI
       io.to(roomId).emit("forceTimerTick", { remaining });
 
-      // Deadline passed → force submit
       if (remaining <= 0) {
-        clearInterval(state.powers.forceTimerInterval);
-        delete state.powers.forceTimerInterval;
+        clearInterval(FORCE_TIMER_HANDLES[roomId]);
+        delete FORCE_TIMER_HANDLES[roomId];
 
-        // Mark expired so normal.js picks up the SET_SECRET_SAME action immediately
+        // mark expired so normal.js executes SET_SECRET_SAME
         state.powers.forceTimerExpiredFlag = true;
 
         io.to(roomId).emit("forceTimerExpired");
-
-        // We DO NOT call scoring here — normal.js already handles it cleanly.
       }
     }, 250);
 
     io.to(roomId).emit("powerUsed", { type: "forceTimer" });
   },
 
-  // Cleanup after decision resolves (normal.js calls finalizeFeedback)
-  postScore(state, entry) {
+  postScore(state, entry, roomId) {
     state.powers.forceTimerActive = false;
     state.powers.forceTimerSetterPhase = false;
 
     delete state.powers.forceTimerDeadline;
     delete state.powers.forceTimerExpiredFlag;
 
-    if (state.powers.forceTimerInterval) {
-      clearInterval(state.powers.forceTimerInterval);
-      delete state.powers.forceTimerInterval;
+    // Stop the countdown loop if still running
+    if (FORCE_TIMER_HANDLES[roomId]) {
+      clearInterval(FORCE_TIMER_HANDLES[roomId]);
+      delete FORCE_TIMER_HANDLES[roomId];
     }
   }
 });
