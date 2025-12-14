@@ -87,6 +87,21 @@ if (action.type === "NEW_MATCH") {
   // CASE 2: SETTER DECISION STEP (pendingGuess exists)
   // =====================================================================================
   if (state.pendingGuess && state.turn === state.setter) {
+    // -------------------------------------------
+    // FORCE TIMER: auto-submit SAME secret
+    // -------------------------------------------
+    if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
+      if (Date.now() > state.powers.forceTimerDeadline) {
+        console.log("FORCE TIMER EXPIRED — auto-submitting SAME secret");
+    
+        // Notify clients
+        io.to(roomId).emit("forceTimerExpired");
+    
+        // Act as if the setter pressed SAME
+        action = { type: "SET_SECRET_SAME", playerId: action.playerId };
+      }
+    }
+
     if (action.type.startsWith("USE_") && role === state.setter) {
       const powerId = normalizePowerId(action.type);
       if (!state.powerUsedThisTurn) {
