@@ -390,10 +390,14 @@ function updateRoleLabels() {
 // -----------------------------------------------------
 function updateSetterScreen() {
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
-  $("pendingGuessDisplay").textContent =
-    state.phase === "simultaneous"
-      ? "-"
-      : (state.pendingGuess?.toUpperCase() || "-");
+  let guessForSetter = state.pendingGuess;
+
+if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
+  guessForSetter = "";
+}
+
+$("pendingGuessDisplay").textContent =
+  guessForSetter ? guessForSetter.toUpperCase() : "-";
 
   renderHistory(state, $("historySetter"), true);
  // FORCE TIMER COUNTDOWN VISUAL
@@ -520,6 +524,10 @@ function updateSetterPreview() {
   const isSetterTurn = state.turn === state.setter;
 
   if (!isSetterTurn) return;
+  if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
+    preview.textContent = "(hidden this round)";
+    return;
+  }
 
   if (typed.length === 5) {
     const fb = predictFeedback(typed, guess);
