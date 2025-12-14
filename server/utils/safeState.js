@@ -51,7 +51,6 @@ if (role !== state.guesser) {
   // 4. Clean internal machine flags
   // -----------------------------------------------------
   delete safe.powerUsedThisTurn;
-  delete safe.firstSecretSet;
 
   // -----------------------------------------------------
 // 5. Filter & sanitize HISTORY
