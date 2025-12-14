@@ -31,6 +31,11 @@ function startForceTimer(roomId, state, io) {
 
       state.powers.forceTimerExpiredFlag = true;
       io.to(roomId).emit("forceTimerExpired");
+      const handleNormalPhase = require("../core/phases/normal");
+
+  const autoAction = {
+    type: "SET_SECRET_SAME",
+    playerId: room[state.setter]  // setter's socket ID
     }
   }, 250);
 }
