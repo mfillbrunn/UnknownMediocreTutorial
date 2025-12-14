@@ -1,6 +1,7 @@
 function buildSafeStateForPlayer(state, role) {
   const safe = JSON.parse(JSON.stringify(state));
-
+  safe.secretPools = state.secretPools;
+  safe.secretPoolSize = state.secretPoolSize;
   if (state.revealGreenInfo) {
     safe.revealGreenInfo = state.revealGreenInfo;
     } else {
@@ -118,7 +119,7 @@ safe.history = safe.history
   })
   .filter(e => e !== null);
 
-
+  
 
   return safe;
 }
