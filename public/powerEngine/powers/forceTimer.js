@@ -5,8 +5,8 @@ PowerEngine.register("forceTimer", {
     const btn = document.createElement("button");
     btn.className = "power-btn";
     btn.textContent = "Force Timer";
-    this.buttonEl = btn;
 
+    this.buttonEl = btn;
     $("guesserPowerContainer").appendChild(btn);
 
     btn.onclick = () => {
@@ -15,20 +15,24 @@ PowerEngine.register("forceTimer", {
     };
   },
 
-  uiEffects(state, role) {
-    if (state.powers.forceTimerSetterPhase) {
-      const remaining = ((state.powers.forceTimerDeadline - Date.now()) / 1000) | 0;
-      $("turnIndicatorSetter").textContent = `TIMER: ${remaining}s`;
-      $("turnIndicatorSetter").classList.add("your-turn");
+  effects: {
+    onPowerUsed() {
+      const btn = this.buttonEl;
+      if (!btn) return;
+      btn.disabled = true;
+      btn.classList.add("power-used");
     }
   },
 
-  effects: {
-    onPowerUsed() {
-  const btn = this.buttonEl;
-  if (!btn) return;         // ← prevents crash
-  btn.disabled = true;
-  btn.classList.add("power-used");
+  historyEffects() {},
+
+  uiEffects(state, role) {
+    // State-based fallback only (not actual timer!)
+    if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
+      const remaining = Math.max(0,
+        Math.floor((state.powers.forceTimerDeadline - Date.now()) / 1000)
+      );
+      $("turnIndicatorSetter").textContent = `TIME LEFT: ${remaining}s`;
     }
   }
 });
