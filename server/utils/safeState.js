@@ -22,7 +22,7 @@ function buildSafeStateForPlayer(state, role) {
   }
   // STEALTH GUESS — hide guess from setter in NORMAL phase
 if (role === state.setter && state.powers.stealthGuessActive) {
-  safe.pendingGuess = "";
+  safe.pendingGuess = "?????";
 }
 
 
