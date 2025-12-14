@@ -372,6 +372,11 @@ function updateSetterScreen() {
       : (state.pendingGuess?.toUpperCase() || "-");
 
   renderHistory(state, $("historySetter"), true);
+  // ForceTimer countdown
+    if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
+      const left = Math.max(0, Math.floor((state.powers.forceTimerDeadline - Date.now()) / 1000));
+      $("turnIndicatorSetter").textContent = `Timer: ${left}s`;
+    }
 
   const isSetterTurn = (state.turn === state.setter);
   const isDecisionStep =
