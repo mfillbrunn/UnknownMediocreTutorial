@@ -6,25 +6,27 @@ engine.registerPower("forceTimer", {
     if (state.powers.forceTimerUsed) return;
     state.powers.forceTimerUsed = true;
 
-    // Activate force timer machinery
+    // Power active — wait for setter turn
     state.powers.forceTimerActive = true;
-    state.powers.forceTimerDeadline = Date.now() + 30000; // 30 sec
 
     io.to(roomId).emit("powerUsed", { type: "forceTimer" });
   },
 
   turnStart(state, role) {
-    // Only matters when setter's turn begins during normal phase
-    if (!state.powers.forceTimerActive) return;
-    if (state.phase !== "normal") return;
-    if (role !== state.setter) return;
+    // When setter's turn starts in a normal turn
+    if (state.powers.forceTimerActive &&
+        state.phase === "normal" &&
+        role === state.setter &&
+        state.pendingGuess) {
 
-    // When setter's decision step begins, broadcast countdown
-    state.powers.forceTimerSetterPhase = true;
+      // Activate countdown
+      state.powers.forceTimerSetterPhase = true;
+      state.powers.forceTimerDeadline = Date.now() + 30000;
+    }
   },
 
   postScore(state, entry) {
-    // When decision concludes (guess scored), timer expires
+    // Timer ends after decision resolves
     if (state.powers.forceTimerActive) {
       state.powers.forceTimerActive = false;
       state.powers.forceTimerSetterPhase = false;
