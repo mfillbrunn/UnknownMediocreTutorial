@@ -96,7 +96,6 @@ if (action.type === "NEW_MATCH") {
         console.log("FORCE TIMER EXPIRED — auto-submitting SAME secret");
         action = { type: "SET_SECRET_SAME", playerId: action.playerId };
       }
-
     }
 
     if (action.type.startsWith("USE_") && role === state.setter) {
@@ -107,14 +106,6 @@ if (action.type === "NEW_MATCH") {
         emitStateForAllPlayers(roomId, room, io);
       }
       return;
-    }
-    // AUTO-SUBMIT SECRET IF FORCED TIMER EXPIRES
-    if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
-      if (state.powers.forceTimerExpiredFlag) {
-        console.log("FORCE TIMER EXPIRED — auto-submitting SAME secret");
-        action = { type: "SET_SECRET_SAME", playerId: action.playerId };
-      }
-
     }
     // -------------------------------------------
     // SET_SECRET_NEW
