@@ -32,9 +32,9 @@ engine.registerPower("blindSpot", {
     if (entry.fb[idx] === "🟩") return;
 
     // Mask both feedbacks
-    entry.fb[idx] = "⬛";
-    entry.fbGuesser[idx] = "⬛";
+entry.fb[idx] = "🟪";        // purple tile
+entry.fbGuesser[idx] = "🟪";
+entry.blindSpotApplied = idx;
 
-    entry.blindSpotApplied = idx;
   }
 });
