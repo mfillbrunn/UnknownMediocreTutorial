@@ -61,6 +61,42 @@ suggestSecret: {
       );
     }
   },
+forceTimer: {
+  once: true,
+  allowed(state, role) {
+    return state.phase === "normal" &&
+           role === state.guesser &&
+           !state.powerUsedThisTurn;
+  }
+},
+
+revealHistory: {
+  once: true,
+  allowed(state, role) {
+    return state.phase === "normal" &&
+           role === state.guesser &&
+           state.history.length >= 2 &&
+           !state.powerUsedThisTurn;
+  }
+},
+
+blindSpot: {
+  once: true,
+  allowed(state, role) {
+    return state.phase === "normal" &&
+           role === state.setter &&
+           !state.powerUsedThisTurn;
+  }
+},
+
+stealthGuess: {
+  once: true,
+  allowed(state, role) {
+    return state.phase === "normal" &&
+           role === state.guesser &&
+           !state.powerUsedThisTurn;
+  }
+}
 
   // ======================
   // GUESSER POWERS
