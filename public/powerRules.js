@@ -108,8 +108,7 @@ stealthGuess: {
       return (
         state.phase === "normal" &&
         role === state.guesser &&
-        !state.powerUsedThisTurn &&
-        state.secret                  // secret exists
+        !state.powerUsedThisTurn 
       );
     }
   },
