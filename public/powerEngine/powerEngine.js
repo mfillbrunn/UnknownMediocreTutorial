@@ -42,6 +42,10 @@ window.PowerEngine = {
     const isSetter = (role === state.setter);
     const isGuesser = (role === state.guesser);
     const isMyTurn = (state.phase === "normal" && state.turn === role);
+    const rule = window.POWER_RULES?.[id];
+    const notAllowedByRule =
+    rule && typeof rule.allowed === "function" && !rule.allowed(state, role);
+
     for (const id in this.powers) {
       const mod = this.powers[id];
       const btn = mod.buttonEl;
@@ -70,7 +74,8 @@ window.PowerEngine = {
         isPermanentlyUsed ||
         anotherPowerUsedThisTurn ||
         notNormalPhase ||
-        !isMyTurn;
+        !isMyTurn ||
+        notAllowedByRule;;
 
       // ------------------------------------------------------
       // VISUAL STATES
