@@ -398,7 +398,10 @@ if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) 
 
 $("pendingGuessDisplay").textContent =
   guessForSetter ? guessForSetter.toUpperCase() : "-";
-
+  // Hide guess during stealth
+if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
+  $("pendingGuessDisplay").textContent = "?????";
+}
   renderHistory(state, $("historySetter"), true);
  // FORCE TIMER COUNTDOWN VISUAL
 if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
@@ -514,10 +517,12 @@ if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
 
 
 function updateSetterPreview() {
-  if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
-    preview.textContent = "(guess hidden this round)";
+ // If stealth is active, hide preview entirely
+if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
+    $("setterPreview").textContent = "(guess hidden this round)";
     return;
-}
+  }
+
 const preview = $("setterPreview");
   preview.innerHTML = "";
 
