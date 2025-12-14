@@ -93,7 +93,8 @@ function finalizeFeedback(state, powerEngine) {
     fb,
     fbGuesser: [...fb], // will be modified by powers later if needed
     extraInfo: null,
-    finalSecret: state.currentSecret
+    finalSecret: state.currentSecret,
+    roundIndex: state.history.length
   };
 
   // Step 3: allow powers to modify feedback entry
