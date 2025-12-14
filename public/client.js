@@ -90,21 +90,35 @@ socket.on("forceTimerStarted", ({ deadline }) => {
 socket.on("forceTimerTick", ({ remaining }) => {
   const bar = $("turnIndicatorSetter");
   const sec = Math.max(0, Math.ceil(remaining / 1000));
+
   bar.textContent = `TIME LEFT: ${sec}s`;
+  bar.classList.add("your-turn");
+
+  // --- NEW: Flash red when 5 seconds or less ---
+  if (sec <= 5) {
+    bar.classList.add("flash-warning");
+  } else {
+    bar.classList.remove("flash-warning");
+  }
 });
 
+
 socket.on("forceTimerExpired", () => {
-  $("turnIndicatorSetter").textContent = "TIME LEFT: 0s";
+  const bar = $("turnIndicatorSetter");
 
-  // 1. Clear setter's input field
-  $("newSecretInput").value = "";
+  bar.textContent = "TIME LEFT: 0s";
 
-  // 2. Disable NEW SECRET button (only SAME allowed)
+  // Stop flashing
+  bar.classList.remove("flash-warning");
+
+  // Disable NEW secret (only SAME allowed)
   $("submitSetterNewBtn").disabled = true;
   $("submitSetterNewBtn").classList.add("disabled-btn");
 
-  // SAME button stays enabled automatically
+  // Clear input field
+  $("newSecretInput").value = "";
 });
+
 
 
 socket.on("suggestWord", ({ word }) => {
@@ -423,33 +437,37 @@ function updateSetterScreen() {
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   let guessForSetter = state.pendingGuess;
 
-if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
-  guessForSetter = "";
-}
+    if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
+      guessForSetter = "?????";
+    }
 
 $("pendingGuessDisplay").textContent =
   guessForSetter ? guessForSetter.toUpperCase() : "-";
-  // Hide guess during stealth
-if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
-  $("pendingGuessDisplay").textContent = "?????";
-}
   renderHistory(state, $("historySetter"), true);
  // FORCE TIMER COUNTDOWN VISUAL
-if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
-  const remaining = Math.max(0, Math.floor(
-    (state.powers.forceTimerDeadline - Date.now()) / 1000
-  ));
-
+// --- FORCE TIMER: STATE-LEVEL CHECK (not ticking UI) ---
   const bar = $("turnIndicatorSetter");
-  bar.textContent = `TIME LEFT: ${remaining}s`;
-  bar.classList.add("your-turn");
 
-  // Disable NEW SECRET while forced
-  $("submitSetterNewBtn").disabled = true;
-  $("submitSetterNewBtn").classList.add("disabled-btn");
-
-  // Let SAME remain enabled
-}
+  if (state.powers.forceTimerActive) {
+    // Show fallback text in case timerTick hasn't fired yet
+    if (state.powers.forceTimerDeadline) {
+      const remaining = Math.max(
+        0,
+        Math.floor((state.powers.forceTimerDeadline - Date.now()) / 1000)
+      );
+      bar.textContent = `TIME LEFT: ${remaining}s`;
+      bar.classList.add("your-turn");
+    }
+  } else {
+    // Timer is not active → follow normal UI
+    if (state.turn === state.setter && state.phase === "normal") {
+      bar.textContent = "YOUR TURN";
+      bar.classList.add("your-turn");
+    } else {
+      bar.textContent = "WAIT";
+      bar.classList.add("wait-turn");
+    }
+  }
 
 
   const isSetterTurn = (state.turn === state.setter);
