@@ -29,6 +29,11 @@ window.PowerEngine = {
     for (const id in this.powers) {
       const mod = this.powers[id];
       if (mod.uiEffects) mod.uiEffects(state, role);
+       if (mod.buttonEl && window.POWER_RULES[id]) {
+           const allowed = window.POWER_RULES[id].allowed(state, role);
+           mod.buttonEl.disabled = !allowed;
+           mod.buttonEl.classList.toggle("disabled-btn", !allowed);
+       }
     }
 
     // Then centralise button enabling / "used" logic
