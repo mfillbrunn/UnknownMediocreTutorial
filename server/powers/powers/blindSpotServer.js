@@ -1,4 +1,3 @@
-// /powers/powers/blindSpotServer.js
 const engine = require("../powerEngineServer.js");
 
 engine.registerPower("blindSpot", {
@@ -28,13 +27,7 @@ engine.registerPower("blindSpot", {
     const idx = state.powers.blindSpotIndex;
     if (idx == null) return;
 
-    // Do not override greens
-    if (entry.fb[idx] === "🟩") return;
-
-    // Mask both feedbacks
-entry.fb[idx] = "🟪";        // purple tile
-entry.fbGuesser[idx] = "🟪";
-entry.blindSpotApplied = idx;
-
+    // Do NOT touch true feedback!
+    entry.blindSpotApplied = idx;
   }
 });
