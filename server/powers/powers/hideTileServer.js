@@ -89,13 +89,23 @@ engine.registerPower("hideTile", {
 
 
   postScore(state, entry) {
-    // Hidden indices applied this turn?
-    entry.hiddenIndices = state.powers.currentHiddenIndices || null;
-    if (entry.hiddenIndices) {
-      entry.hideTileApplied = true;
-      entry.powerUsed = "HideTile";
-    }
-    state.powers.currentHiddenIndices = null;
+  if (!state.powers.currentHiddenIndices) {
+    entry.hiddenIndices = null;
+    return;
+  }
+
+  entry.hiddenIndices = [...state.powers.currentHiddenIndices];
+  entry.hideTileApplied = true;
+  entry.powerUsed = "HideTile";
+
+  // Mask feedback server-side
+  entry.fbGuesser = entry.fbGuesser.slice();
+  entry.hiddenIndices.forEach(i => {
+    entry.fbGuesser[i] = "❓";     // this MUST match the client symbol
+  });
+
+  state.powers.currentHiddenIndices = null;
 }
+
 
 });
