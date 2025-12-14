@@ -9,16 +9,33 @@ PowerEngine.register("revealHistory", {
 
     $("guesserPowerContainer").appendChild(btn);
 
+    // Disable until the rules say it's allowed
+    const updateEnabledState = () => {
+      const canUse = POWER_RULES.revealHistory.allowed(window.state, window.myRole);
+      btn.disabled = !canUse;
+      btn.classList.toggle("disabled-btn", !canUse);
+    };
+
+    // Run once on render
+    updateEnabledState();
+
+    // Re-run on every UI update
+    PowerEngine.hooks.afterUIUpdate.push(updateEnabledState);
+
     btn.onclick = () => {
+      // Safety check: never send if disallowed
       if (btn.disabled) return;
+
       sendGameAction(roomId, { type: "USE_REVEAL_HISTORY" });
     };
   },
 
   effects: {
     onPowerUsed() {
-      this.buttonEl.disabled = true;
-      this.buttonEl.classList.add("power-used");
+      const btn = this.buttonEl;
+      if (!btn) return;
+      btn.disabled = true;
+      btn.classList.add("power-used");
     }
   }
 });
