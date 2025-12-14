@@ -492,4 +492,14 @@ input[type="number"],
   color: white !important;
   cursor: not-allowed !important;
 }
+/* Flashing effect when <5 seconds remain */
+.flash-warning {
+  animation: flashRed 0.7s infinite;
+}
+
+@keyframes flashRed {
+  0%   { background-color: #ff0000; color: white; }
+  50%  { background-color: #660000; color: white; }
+  100% { background-color: #ff0000; color: white; }
+}
 
