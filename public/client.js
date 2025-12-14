@@ -762,6 +762,11 @@ $("readyBtn").onclick = () => {
   // Immediately update UI locally
   enableReadyButton(false);
 };
+$("applyPoolSizeBtn").onclick = () => {
+  const n = parseInt($("secretPoolSizeInput").value, 10);
+  if (isNaN(n) || n < 1 || n > 10) return;
+  sendGameAction(roomId, { type: "SET_POOL_SIZE", size: n });
+};
 
 $("submitGuessBtn").onclick = () => {
   const g = $("guessInput").value.trim().toLowerCase();
