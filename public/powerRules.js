@@ -96,7 +96,7 @@ stealthGuess: {
            role === state.guesser &&
            !state.powerUsedThisTurn;
   }
-}
+},
 
   // ======================
   // GUESSER POWERS
