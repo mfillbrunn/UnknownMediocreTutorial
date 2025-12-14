@@ -19,7 +19,7 @@ engine.registerPower("blindSpot", {
 
     state.powers.blindSpotUsed = true;
     state.powers.blindSpotIndex = idx;
-
+    state.powers.blindSpotRoundIndex = state.history.length;
     io.to(roomId).emit("powerUsed", { type: "blindSpot", index: idx });
   },
 
