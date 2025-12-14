@@ -393,11 +393,23 @@ function updateSetterScreen() {
       : (state.pendingGuess?.toUpperCase() || "-");
 
   renderHistory(state, $("historySetter"), true);
-  // ForceTimer countdown
-    if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
-      const left = Math.max(0, Math.floor((state.powers.forceTimerDeadline - Date.now()) / 1000));
-      $("turnIndicatorSetter").textContent = `Timer: ${left}s`;
-    }
+ // FORCE TIMER COUNTDOWN VISUAL
+if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
+  const remaining = Math.max(0, Math.floor(
+    (state.powers.forceTimerDeadline - Date.now()) / 1000
+  ));
+
+  const bar = $("turnIndicatorSetter");
+  bar.textContent = `TIME LEFT: ${remaining}s`;
+  bar.classList.add("your-turn");
+
+  // Disable NEW SECRET while forced
+  $("submitSetterNewBtn").disabled = true;
+  $("submitSetterNewBtn").classList.add("disabled-btn");
+
+  // Let SAME remain enabled
+}
+
 
   const isSetterTurn = (state.turn === state.setter);
   const isDecisionStep =
