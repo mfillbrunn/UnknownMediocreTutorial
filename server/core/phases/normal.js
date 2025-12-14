@@ -8,7 +8,8 @@ const { isConsistentWithHistory } = require("../../game-engine/history");
 
 const FORCE_TIMER_INTERVALS = {};
 
-function startForceTimer(roomId, state, io) {
+function startForceTimer(roomId, room, state, io, context) {
+  const { ALLOWED_GUESSES, powerEngine } = context;
   const deadline = Date.now() + 30000;
 
   state.powers.forceTimerActive = true;
@@ -17,6 +18,7 @@ function startForceTimer(roomId, state, io) {
 
   io.to(roomId).emit("forceTimerStarted", { deadline });
 
+  // Clear old interval
   if (FORCE_TIMER_INTERVALS[roomId]) {
     clearInterval(FORCE_TIMER_INTERVALS[roomId]);
   }
@@ -31,15 +33,27 @@ function startForceTimer(roomId, state, io) {
 
       state.powers.forceTimerExpiredFlag = true;
       io.to(roomId).emit("forceTimerExpired");
-      const handleNormalPhase = require("../core/phases/normal");
 
-  const autoAction = {
-    type: "SET_SECRET_SAME",
-    playerId: room[state.setter]  // setter's socket ID
+      // ⭐ AUTO-RESOLVE SAME SECRET IMMEDIATELY
+      const handleNormalPhase = require("./normal");  // correct path since already in core/phases/
+
+      const autoAction = {
+        type: "SET_SECRET_SAME",
+        playerId: room[state.setter]  // setter's socket ID
+      };
+
+      handleNormalPhase(
+        room,
+        state,
+        autoAction,
+        state.setter,  // role
+        roomId,
+        context
+      );
     }
-      handleNormalPhase(room, state, autoAction, state.setter, roomId, { io, ALLOWED_GUESSES, powerEngine });
   }, 250);
 }
+
 
 function clearForceTimer(roomId, state) {
   if (FORCE_TIMER_INTERVALS[roomId]) {
@@ -126,7 +140,7 @@ if (action.type === "NEW_MATCH") {
     state.pendingGuess = g;
     state.turn = state.setter;
     if (state.powers.forceTimerArmed) {
-        startForceTimer(roomId, state, io);
+        startForceTimer(roomId, room, state, io, context);
     }
     powerEngine.turnStart(state, state.turn);
     state.powerUsedThisTurn = false;
