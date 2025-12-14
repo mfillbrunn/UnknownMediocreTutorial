@@ -90,32 +90,22 @@ socket.on("forceTimerStarted", ({ deadline }) => {
 socket.on("forceTimerTick", ({ remaining }) => {
   const bar = $("turnIndicatorSetter");
   const sec = Math.max(0, Math.ceil(remaining / 1000));
-
   bar.textContent = `TIME LEFT: ${sec}s`;
-  bar.classList.add("your-turn");
-
-  // --- NEW: Flash red when 5 seconds or less ---
-  if (sec <= 5) {
-    bar.classList.add("flash-warning");
-  } else {
-    bar.classList.remove("flash-warning");
-  }
 });
+
 socket.on("forceTimerExpired", () => {
-  const bar = $("turnIndicatorSetter");
+  $("turnIndicatorSetter").textContent = "TIME LEFT: 0s";
 
-  bar.textContent = "TIME LEFT: 0s";
+  // 1. Clear setter's input field
+  $("newSecretInput").value = "";
 
-  // Stop flashing
-  bar.classList.remove("flash-warning");
-
-  // Disable NEW secret (only SAME allowed)
+  // 2. Disable NEW SECRET button (only SAME allowed)
   $("submitSetterNewBtn").disabled = true;
   $("submitSetterNewBtn").classList.add("disabled-btn");
 
-  // Clear input field
-  $("newSecretInput").value = "";
+  // SAME button stays enabled automatically
 });
+
 
 socket.on("suggestWord", ({ word }) => {
   if (myRole === state.guesser) {
@@ -431,79 +421,125 @@ function updateRoleLabels() {
 // -----------------------------------------------------
 function updateSetterScreen() {
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
-  if (!state.powers.forceTimerActive) {
-    $("turnIndicatorSetter").classList.remove("flash-warning");
-  }
-  // Stealth guess masking
   let guessForSetter = state.pendingGuess;
-  if (state.powers?.stealthGuessActive && myRole === state.setter) {
-    guessForSetter = "?????";
-  }
-  $("pendingGuessDisplay").textContent = guessForSetter ? guessForSetter.toUpperCase() : "-";
 
+if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
+  guessForSetter = "";
+}
+
+$("pendingGuessDisplay").textContent =
+  guessForSetter ? guessForSetter.toUpperCase() : "-";
+  // Hide guess during stealth
+if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
+  $("pendingGuessDisplay").textContent = "?????";
+}
   renderHistory(state, $("historySetter"), true);
+ // FORCE TIMER COUNTDOWN VISUAL
+if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
+  const remaining = Math.max(0, Math.floor(
+    (state.powers.forceTimerDeadline - Date.now()) / 1000
+  ));
 
-  // --- FORCE TIMER: STATE-LEVEL CHECK (not ticking UI) ---
   const bar = $("turnIndicatorSetter");
+  bar.textContent = `TIME LEFT: ${remaining}s`;
+  bar.classList.add("your-turn");
 
-  if (state.powers.forceTimerActive) {
-    // Show fallback text in case timerTick hasn't fired yet
-    if (state.powers.forceTimerDeadline) {
-      const remaining = Math.max(
-        0,
-        Math.floor((state.powers.forceTimerDeadline - Date.now()) / 1000)
-      );
-      bar.textContent = `TIME LEFT: ${remaining}s`;
-      bar.classList.add("your-turn");
-    }
-  } else {
-    // Timer is not active → follow normal UI
-    if (state.turn === state.setter && state.phase === "normal") {
-      bar.textContent = "YOUR TURN";
-      bar.classList.add("your-turn");
-    } else {
-      bar.textContent = "WAIT";
-      bar.classList.add("wait-turn");
-    }
-  }
+  // Disable NEW SECRET while forced
+  $("submitSetterNewBtn").disabled = true;
+  $("submitSetterNewBtn").classList.add("disabled-btn");
 
-  // --- BUTTON ENABLE/DISABLE LOGIC ---
-  const isSetterTurn = state.turn === state.setter;
-  const isDecisionStep = isSetterTurn && !!state.pendingGuess && state.phase === "normal";
-  const freezeActive = !!state.powers?.freezeActive;
+  // Let SAME remain enabled
+}
+
+
+  const isSetterTurn = (state.turn === state.setter);
+  const isDecisionStep =
+    isSetterTurn &&
+    !!state.pendingGuess &&
+    state.phase === "normal";
+
+  const freezeActive =
+    !!(state.powers && state.powers.freezeActive);
 
   let setterInputEnabled = false;
 
-  if (state.phase === "normal") {
+  // -------------------------------------------------------
+  // PHASE-SPECIFIC BUTTON / INPUT LOGIC
+  // -------------------------------------------------------
+
+  // SIMULTANEOUS PHASE — only initial secret allowed, once
+  if (state.phase === "simultaneous") {
+    const secretSubmitted =
+      !!state.secret || state.simultaneousSecretSubmitted;
+
+    setterInputEnabled = !secretSubmitted;
+
+    // SAME is never allowed in simultaneous
+    $("submitSetterSameBtn").disabled = true;
+    $("submitSetterSameBtn").classList.add("disabled-btn");
+
+    // NEW allowed only until secret is submitted
+    $("submitSetterNewBtn").disabled = !setterInputEnabled;
+    $("submitSetterNewBtn").classList.toggle(
+      "disabled-btn",
+      !setterInputEnabled
+    );
+  }
+
+  // NORMAL PHASE — decision step only
+  else if (state.phase === "normal") {
     setterInputEnabled = isDecisionStep;
 
-    // SAME button
     $("submitSetterSameBtn").disabled = !isDecisionStep;
-    $("submitSetterSameBtn").classList.toggle("disabled-btn", !isDecisionStep);
+    $("submitSetterSameBtn").classList.toggle(
+      "disabled-btn",
+      !isDecisionStep
+    );
 
-    // NEW button — normal logic (NOT disabled during timer)
     $("submitSetterNewBtn").disabled = !isDecisionStep;
-    $("submitSetterNewBtn").classList.toggle("disabled-btn", !isDecisionStep);
-  } 
+    $("submitSetterNewBtn").classList.toggle(
+      "disabled-btn",
+      !isDecisionStep
+    );
+  }
 
-  // FREEZE SECRET overrides NEW
-  if (freezeActive && state.phase === "normal") {
+  // LOBBY / GAMEOVER — everything off
+  else {
     setterInputEnabled = false;
+
+    $("submitSetterSameBtn").disabled = true;
+    $("submitSetterSameBtn").classList.add("disabled-btn");
+
     $("submitSetterNewBtn").disabled = true;
     $("submitSetterNewBtn").classList.add("disabled-btn");
   }
 
-  // Final input enablement
+  // -------------------------------------------------------
+  // FREEZE SECRET OVERRIDE (normal phase)
+  // -------------------------------------------------------
+  if (freezeActive && state.phase === "normal") {
+    // Setter cannot type or set NEW secret
+    setterInputEnabled = false;
+
+    $("submitSetterNewBtn").disabled = true;
+    $("submitSetterNewBtn").classList.add("disabled-btn");
+
+    // SAME button stays as configured above (still allowed in decision step)
+  }
+
+  // FINAL: enable/disable input box
   $("newSecretInput").disabled = !setterInputEnabled;
 
-  // Pattern / preview
+  // -------------------------------------------------------
+  // KEYBOARD + PATTERN / PREVIEW
+  // -------------------------------------------------------
   renderKeyboard(state, $("keyboardSetter"), "setter", handleSetterKeyboard);
 
   const pat = getPattern(state, true);
   $("knownPatternSetter").textContent = formatPattern(pat);
-
+  const must = getMustContainLetters(state);
   $("mustContainSetter").textContent =
-    getMustContainLetters(state).join(", ") || "none";
+    must.length ? must.join(", ") : "none";
 
   updateSetterPreview();
 }
