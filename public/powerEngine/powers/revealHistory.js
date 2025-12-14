@@ -19,9 +19,6 @@ PowerEngine.register("revealHistory", {
     // Run once on render
     updateEnabledState();
 
-    // Re-run on every UI update
-    PowerEngine.hooks.afterUIUpdate.push(updateEnabledState);
-
     btn.onclick = () => {
       // Safety check: never send if disallowed
       if (btn.disabled) return;
