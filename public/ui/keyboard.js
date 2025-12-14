@@ -23,7 +23,19 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
       if (h.hideTileApplied && Array.isArray(h.hiddenIndices)) {
         if (h.hiddenIndices.includes(i)) continue;
       }
-      if (isGuesser && blindIdx === i) continue;
+      // BLIND SPOT: ignore this tile for ALL FUTURE ROUNDS after blindSpotRoundIndex
+      const bsIdx = state.powers?.blindSpotIndex;
+      const bsRound = state.powers?.blindSpotRoundIndex;
+      if (
+       isGuesser &&
+       typeof bsIdx === "number" &&
+          bsIdx === i &&
+            typeof h.roundIndex === "number" &&
+           h.roundIndex > bsRound
+          ) {
+            // Skip feedback for this tile
+            continue;
+          }
       if (guess[i] !== letter) continue;
     
       const fb = fbArr[i];
