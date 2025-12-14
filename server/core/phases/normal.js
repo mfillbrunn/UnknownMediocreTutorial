@@ -89,6 +89,20 @@ if (action.type === "NEW_MATCH") {
   
   const newState = createInitialState();
   Object.assign(state, newState);
+  // Generate random secret pools for both players
+    const ALLOWED_GUESSES = context.ALLOWED_GUESSES;
+    
+    state.secretPools = {
+      A: [],
+      B: []
+    };
+    
+    for (let role of ["A", "B"]) {
+      for (let i = 0; i < state.secretPoolSize; i++) {
+        const randomWord = ALLOWED_GUESSES[Math.floor(Math.random() * ALLOWED_GUESSES.length)];
+        state.secretPools[role].push(randomWord);
+      }
+    }
 
   // Setter is always "A", guesser is always "B"
   state.setter = "A";
