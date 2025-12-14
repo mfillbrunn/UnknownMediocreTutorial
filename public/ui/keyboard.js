@@ -9,6 +9,7 @@ window.KEYBOARD_LAYOUT = [
 // Determine best letter status for color assignment
 function getLetterStatusFromHistory(letter, state, isGuesser) {
   if (!state?.history) return null;
+  const blindIdx = state.powers?.blindSpotIndex;
   let strongest = null;
   const fbKey = isGuesser ? "fbGuesser" : "fb";
   for (let idx = 0; idx < state.history.length; idx++) {
@@ -22,7 +23,7 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
       if (h.hideTileApplied && Array.isArray(h.hiddenIndices)) {
         if (h.hiddenIndices.includes(i)) continue;
       }
-    
+      if (isGuesser && blindIdx === i) continue;
       if (guess[i] !== letter) continue;
     
       const fb = fbArr[i];
