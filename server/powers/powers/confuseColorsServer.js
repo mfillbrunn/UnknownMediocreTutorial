@@ -18,8 +18,12 @@ engine.registerPower("confuseColors", {
     entry.confuseApplied = true;
     entry.ignoreConstraints = true;
     entry.fbGuesser = entry.fbGuesser.map(t => {
+      // Do NOT recolor blind-spot purple
+    if (t === "🟪") return t;
+        // Recolor only true green/yellow
       if (t === "🟩" || t === "🟨") return "🟦";
       return t;
+
     });
     entry.powerUsed = "ConfuseColors";
   }
