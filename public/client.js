@@ -135,10 +135,30 @@ onAnimateTurn(({ type }) => {
 });
 
 // Power UI hook (client-side effects)
+let powerQueue = [];
+
 onPowerUsed(data => {
+  if (!PowerEngine._initialized) {
+    powerQueue.push(data);
+    return;
+  }
   const mod = PowerEngine.powers[data.type];
   mod?.effects?.onPowerUsed?.(data);
 });
+
+// After renderButtons is called:
+if (!PowerEngine._initialized && roomId && roleAssigned) {
+  PowerEngine.renderButtons(roomId);
+  PowerEngine._initialized = true;
+
+  // flush queue
+  for (const p of powerQueue) {
+    const mod = PowerEngine.powers[p.type];
+    mod?.effects?.onPowerUsed?.(p);
+  }
+  powerQueue = [];
+}
+
 
 // Lobby events
 onLobbyEvent(evt => {
