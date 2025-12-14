@@ -55,6 +55,17 @@ function createInitialState() {
 
       suggestGuessUsed: false,
       suggestSecretUsed: false,
+      forceTimerUsed: false,
+      revealHistoryUsed: false,
+      blindSpotUsed: false,
+      stealthGuessUsed: false,
+      
+      forceTimerActive: false,
+      forceTimerSetterPhase: false,
+      forceTimerDeadline: null,
+      
+      blindSpotIndex: null,
+      stealthGuessActive: false,
 
     }
   };
