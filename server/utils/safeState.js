@@ -1,7 +1,8 @@
 function buildSafeStateForPlayer(state, role) {
   const safe = JSON.parse(JSON.stringify(state));
-  safe.secretPools = state.secretPools;
-  safe.secretPoolSize = state.secretPoolSize;
+ safe.activePowers = state.activePowers;
+safe.powerCount = state.powerCount;
+
   if (state.revealGreenInfo) {
     safe.revealGreenInfo = state.revealGreenInfo;
     } else {
