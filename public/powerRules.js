@@ -39,17 +39,18 @@ suggestSecret: {
     );
   }
 },
+confuseColors: {
+  once: true,
+  allowed(state, role) {
+    return (
+      state.phase === "normal" &&
+      role === state.setter &&
+      !state.powerUsedThisTurn &&
+      !state.powers.magicModeJustUsed
+    );
+  }
+},
 
-  confuseColors: {
-    once: true,
-    allowed(state, role) {
-      return (
-        state.phase === "normal" &&
-        role === state.setter &&
-        !state.powerUsedThisTurn
-      );
-    }
-  },
 
   countOnly: {
     once: true,
