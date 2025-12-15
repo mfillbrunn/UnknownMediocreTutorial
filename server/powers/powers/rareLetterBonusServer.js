@@ -3,6 +3,9 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("rareLetterBonus", {
   apply(state) {
+    if (state.powers.rareLetterBonusUsed) return;
+  state.powers.rareLetterBonusUsed = true;
+  state.powerUsedThisTurn = true;
     state.powers.rareLetterBonusActive = true;
   },
 
