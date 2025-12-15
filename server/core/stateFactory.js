@@ -106,7 +106,7 @@ function finalizeFeedback(state, powerEngine) {
   const guess = state.pendingGuess;
 
   // Step 1: allow powers to hook BEFORE scoring
-  powerEngine.preScore(state, guess);
+ powerEngine.preScore(state, guess, state.roomId, state.room, io);
 
   // Step 2: base scoring
   const fb = scoreGuess(state.secret, guess);
@@ -122,7 +122,7 @@ function finalizeFeedback(state, powerEngine) {
   };
 
   // Step 3: allow powers to modify feedback entry
-  powerEngine.postScore(state, entry);
+  powerEngine.postScore(state, entry, state.roomId, state.room, io);
 
   // Step 4: commit entry to history
   state.history.push(entry);
