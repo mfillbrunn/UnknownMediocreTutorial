@@ -762,11 +762,12 @@ $("readyBtn").onclick = () => {
   // Immediately update UI locally
   enableReadyButton(false);
 };
-$("applyPoolSizeBtn").onclick = () => {
-  const n = parseInt($("secretPoolSizeInput").value, 10);
-  if (isNaN(n) || n < 1 || n > 10) return;
-  sendGameAction(roomId, { type: "SET_POOL_SIZE", size: n });
-};
+$("applyPowerCountBtn").onclick = () => {
+   const n = parseInt($("powerCountInput").value, 10);
+   if (!isNaN(n) && n > 0 && n <= 10) {
+     sendGameAction(roomId, { type: "SET_POWER_COUNT", count: n });
+   }
+ };
 
 $("submitGuessBtn").onclick = () => {
   const g = $("guessInput").value.trim().toLowerCase();
