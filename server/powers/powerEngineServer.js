@@ -44,13 +44,15 @@ postScore(state, entry, roomId, room, io) {
 },
 
 
-  turnStart(state, role) {
-    for (const id in this.powers) {
-      if (typeof this.powers[id].turnStart === "function") {
-        this.powers[id].turnStart(state, role);
-      }
+  turnStart(state, role, roomId, room, io) {
+  for (const id in this.powers) {
+    const p = this.powers[id];
+    if (typeof p.turnStart === "function") {
+      p.turnStart(state, role, roomId, room, io);
     }
   }
+}
+
 };
 
 module.exports = engine;
