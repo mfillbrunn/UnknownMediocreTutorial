@@ -51,6 +51,14 @@ window.PowerEngine = {
       const mod = this.powers[id];
       const btn = mod.buttonEl;
       if (!btn) continue;
+            // Hide powers that are not active this match
+      if (state.activePowers && !state.activePowers.includes(id)) {
+          btn.style.display = "none";
+          continue;
+      } else {
+          btn.style.display = "";
+      }
+
        const rule = window.POWER_RULES?.[id];
       const notAllowedByRule =
       rule && typeof rule.allowed === "function" && !rule.allowed(state, role);
