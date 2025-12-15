@@ -5,20 +5,6 @@ const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { finalizeFeedback } = require("../stateFactory");
 const { isValidWord, parseWordlist } = require("../../game-engine/validation");
 const { isConsistentWithHistory } = require("../../game-engine/history");
-const ALL_POWERS = [
-  "hideTile",
-  "suggestGuess",
-  "suggestSecret",
-  "confuseColors",
-  "countOnly",
-  "forceTimer",
-  "revealHistory",
-  "blindSpot",
-  "stealthGuess",
-  "revealGreen",
-  "freezeSecret"
-];
-
 const FORCE_TIMER_INTERVALS = {};
 
 function startForceTimer(roomId, room, state, io, context) {
@@ -99,15 +85,9 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   // =====================================================================================
 if (action.type === "NEW_MATCH") {
   const createInitialState = require("../stateFactory").createInitialState;
-  const prevPowerCount = state.powerCount || 2;
-  const newState = createInitialState();
+   const newState = createInitialState();
   Object.assign(state, newState);
-  state.powerCount = prevPowerCount;
-   // Pick random powers according to powerCount
-const shuffled = ALL_POWERS.slice().sort(() => Math.random() - 0.5);
-state.activePowers = shuffled.slice(0, state.powerCount);
-
-  // Setter is always "A", guesser is always "B"
+    // Setter is always "A", guesser is always "B"
   state.setter = "A";
   state.guesser = "B";
 
@@ -259,8 +239,7 @@ state.activePowers = shuffled.slice(0, state.powerCount);
   // =====================================================================================
   if (action.type.startsWith("USE_")) {
    const powerId = normalizePowerId(action.type);
-    console.log("[DEBUG] POWER ACTION RECEIVED:", action.type, "→ powerId =", powerId);
-    console.log("[DEBUG] Registered engine powers:", Object.keys(powerEngine.powers));
+
     if (state.powerUsedThisTurn) return;
 
     state.powerUsedThisTurn = true;
