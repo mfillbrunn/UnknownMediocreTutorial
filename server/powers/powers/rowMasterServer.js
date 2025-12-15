@@ -3,6 +3,9 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("rowMaster", {
   apply(state) {
+    if (state.powers.rowMasterUsed) return;
+  state.powers.rowMasterUsed = true;
+  state.powerUsedThisTurn = true;
     state.powers.rowMasterActive = true;
   },
 
