@@ -2,27 +2,7 @@
 
 const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
-const SETTER_POWERS = [
-        "hideTile",
-        "suggestSecret",
-        "confuseColors",
-        "countOnly",
-        "blindSpot",
-        "vowelRefresh",
-        "assassinWord"
-      ];
-      
-      const GUESSER_POWERS = [
-        "suggestGuess",
-        "forceTimer",
-        "revealHistory",
-        "stealthGuess",
-        "revealGreen",
-        "freezeSecret",
-        "magicMode",
-"rareLetterBonus",
-"rowMaster"
-      ];
+
 function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
 
@@ -98,7 +78,28 @@ if (action.type === "SET_POWER_COUNT") {
     // If both ready → enter simultaneous phase
     if (state.ready.A && state.ready.B) {
              +   // pick N setter powers and N guesser powers
-  const N = state.powerCount || 2;
+  const SETTER_POWERS = [
+        "hideTile",
+        "suggestSecret",
+        "confuseColors",
+        "countOnly",
+        "blindSpot",
+        "vowelRefresh",
+        "assassinWord"
+      ];
+      
+      const GUESSER_POWERS = [
+        "suggestGuess",
+        "forceTimer",
+        "revealHistory",
+        "stealthGuess",
+        "revealGreen",
+        "freezeSecret",
+        "magicMode",
+"rareLetterBonus",
+"rowMaster"
+      ];
+            const N = state.powerCount || 2;
   const sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
   const gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
   state.activePowers = [...sP, ...gP];
