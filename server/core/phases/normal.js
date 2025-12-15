@@ -5,6 +5,19 @@ const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { finalizeFeedback } = require("../stateFactory");
 const { isValidWord, parseWordlist } = require("../../game-engine/validation");
 const { isConsistentWithHistory } = require("../../game-engine/history");
+const ALL_POWERS = [
+  "hideTile",
+  "suggestGuess",
+  "suggestSecret",
+  "confuseColors",
+  "countOnly",
+  "forceTimer",
+  "revealHistory",
+  "blindSpot",
+  "stealthGuess",
+  "revealGreen",
+  "freezeSecret"
+];
 
 const FORCE_TIMER_INTERVALS = {};
 
@@ -89,20 +102,9 @@ if (action.type === "NEW_MATCH") {
   
   const newState = createInitialState();
   Object.assign(state, newState);
-  // Generate random secret pools for both players
-    const ALLOWED_GUESSES = context.ALLOWED_GUESSES;
-    
-    state.secretPools = {
-      A: [],
-      B: []
-    };
-    
-    for (let role of ["A", "B"]) {
-      for (let i = 0; i < state.secretPoolSize; i++) {
-        const randomWord = ALLOWED_GUESSES[Math.floor(Math.random() * ALLOWED_GUESSES.length)];
-        state.secretPools[role].push(randomWord);
-      }
-    }
+   // Pick random powers according to powerCount
+const shuffled = ALL_POWERS.slice().sort(() => Math.random() - 0.5);
+state.activePowers = shuffled.slice(0, state.powerCount);
 
   // Setter is always "A", guesser is always "B"
   state.setter = "A";
