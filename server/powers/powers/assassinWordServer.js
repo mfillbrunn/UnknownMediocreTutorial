@@ -2,7 +2,7 @@ const engine = require("../powerEngineServer.js");
 const { endGame, pushWinEntry } = require("../../core/phases/normal");
 
 engine.registerPower("assassinWord", {
-  apply(state, action, roomId, io, room) {
+  apply(state, action, roomId, io) {
     if (state.powers.assassinWordUsed) return;
     if (!action.word) return;
 
@@ -15,7 +15,7 @@ engine.registerPower("assassinWord", {
     state.powers.assassinWord = w;
   },
 
-  postScore(state, entry, roomId, io, room) {
+  postScore(state, entry, roomId, io) {
     const w = state.powers.assassinWord;
     if (!w) return;
 
@@ -26,7 +26,9 @@ engine.registerPower("assassinWord", {
 
       state.currentSecret = state.secret;
       pushWinEntry(state, state.secret);
-      endGame(state, roomId, room, io);
+
+      // Only pass what the power should control
+      endGame(state, roomId, io);
     }
   }
 });
