@@ -15,13 +15,14 @@ PowerEngine.register("vowelRefresh", {
   },
 
   historyEffects(entry, isSetter) {
-    if (!entry.vowelRefreshApplied) return;
     if (!entry.vowelRefreshLetters) return;
 
-    const letters = entry.vowelRefreshLetters;
+const letters = entry.vowelRefreshLetters || [];
+if (!Array.isArray(letters)) return;
 
-    entry.fbGuesser = entry.fbGuesser.slice();
-    entry.fb = entry.fb.slice();
+entry.fbGuesser = entry.fbGuesser ? entry.fbGuesser.slice() : [" "," "," "," "," "];
+entry.fb = entry.fb ? entry.fb.slice() : [" "," "," "," "," "];
+
 
     for (let i = 0; i < 5; i++) {
       const L = entry.guess[i].toUpperCase();
