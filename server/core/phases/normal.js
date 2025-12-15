@@ -89,7 +89,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     const powerId = normalizePowerId(action.type);
     if (!state.powerUsedThisTurn) {
       state.powerUsedThisTurn = true;
-      powerEngine.applyPower(powerId, state, action, roomId, room, io);
+      powerEngine.applyPower(powerId, state, action, roomId, io);
     }
     emitStateForAllPlayers(roomId, room, io);
     return;
@@ -117,7 +117,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     }
 
     state.powerUsedThisTurn = false;
-    powerEngine.turnStart(state, state.turn, roomId, room, io);
+    powerEngine.turnStart(state, state.turn, roomId, io);
 
     emitStateForAllPlayers(roomId, room, io);
     return;
@@ -135,7 +135,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       const powerId = normalizePowerId(action.type);
       if (!state.powerUsedThisTurn) {
         state.powerUsedThisTurn = true;
-        powerEngine.applyPower(powerId, state, action, roomId, room, io);
+        powerEngine.applyPower(powerId, state, action, roomId, io);
         emitStateForAllPlayers(roomId, room, io);
       }
       return;
@@ -159,16 +159,16 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       if (state.pendingGuess === w) {
         state.currentSecret = w;
         pushWinEntry(state, w);
-        endGame(state, roomId, room, io);
+        endGame(state, roomId, io, room);
         return;
       }
 
-      finalizeFeedback(state, powerEngine, roomId, room, io);
+      finalizeFeedback(state, powerEngine, roomId, io);
       clearForceTimer(roomId, state);
 
       state.turn = state.guesser;
       state.powerUsedThisTurn = false;
-      powerEngine.turnStart(state, state.guesser, roomId, room, io);
+      powerEngine.turnStart(state, state.guesser, roomId, io);
 
 
       emitStateForAllPlayers(roomId, room, io);
@@ -190,11 +190,11 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       state.currentSecret = state.secret;
       state.firstSecretSet = true;
 
-      finalizeFeedback(state, powerEngine, roomId, room, io);
+      finalizeFeedback(state, powerEngine, roomId, io);
       clearForceTimer(roomId, state);
 
       state.turn = state.guesser;
-      powerEngine.turnStart(state, state.guesser, roomId, room, io);
+      powerEngine.turnStart(state, state.guesser, roomId, io);
 
       state.powerUsedThisTurn = false;
 
@@ -211,7 +211,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     if (state.powerUsedThisTurn) return;
 
     state.powerUsedThisTurn = true;
-    powerEngine.applyPower(powerId, state, action, roomId, room, io);
+    powerEngine.applyPower(powerId, state, action, roomId, io);
 
     emitStateForAllPlayers(roomId, room, io);
     return;
@@ -228,7 +228,7 @@ function pushWinEntry(state, word) {
   });
 }
 
-function endGame(state, roomId, room, io) {
+function endGame(state, roomId, io, room) {
   state.phase = "gameOver";
   state.turn = null;
   state.gameOver = true;
