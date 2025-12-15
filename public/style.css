@@ -240,6 +240,8 @@ input[type="number"],
 
 .key-row {
   margin-bottom: 6px;
+   display: flex;
+  justify-content: center;
 }
 
 .key {
