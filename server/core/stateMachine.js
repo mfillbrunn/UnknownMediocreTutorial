@@ -7,7 +7,10 @@ const handleGameOverPhase = require("./phases/gameOver");
 
 function applyAction(room, state, action, role, roomId, context) {
   const { powerEngine } = context;
-
+  if (action.type === "NEW_MATCH") {
+      const handleNormalPhase = require("./phases/normal");
+      return handleNormalPhase(room, state, action, role, roomId, context);
+  }
   switch (state.phase) {
     case "lobby":
       return handleLobbyPhase(room, state, action, role, roomId, context);
