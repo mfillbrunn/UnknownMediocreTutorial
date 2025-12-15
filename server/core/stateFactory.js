@@ -102,11 +102,11 @@ assassinWord: null,
  *   3. postScore power hooks
  *   4. create history entry
  */
-function finalizeFeedback(state, powerEngine) {
+function finalizeFeedback(state, powerEngine, roomId, room, io) {
   const guess = state.pendingGuess;
 
   // Step 1: allow powers to hook BEFORE scoring
- powerEngine.preScore(state, guess, state.roomId, state.room, io);
+ powerEngine.preScore(state, guess, roomId, room, io);
 
   // Step 2: base scoring
   const fb = scoreGuess(state.secret, guess);
@@ -122,7 +122,7 @@ function finalizeFeedback(state, powerEngine) {
   };
 
   // Step 3: allow powers to modify feedback entry
-  powerEngine.postScore(state, entry, state.roomId, state.room, io);
+  powerEngine.postScore(state, entry, roomId, room, io);
 
   // Step 4: commit entry to history
   state.history.push(entry);
