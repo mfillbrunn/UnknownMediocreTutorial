@@ -44,6 +44,9 @@ delete safe.powers.hideTilePendingCount;
 if (role !== state.guesser) {
   delete safe.powers.reuseLettersPool;
 }
+if (role === state.guesser) {
+  delete safe.powers.assassinWord;
+}
 
 // freezeActive is intentionally kept
 
