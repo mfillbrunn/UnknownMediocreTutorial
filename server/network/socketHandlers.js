@@ -40,7 +40,6 @@ module.exports = function registerSocketHandlers(io, context) {
         .find(id => room.players[id] === "A");
       const guesserId = Object.keys(room.players)
         .find(id => room.players[id] === "B");
-      console.log("SERVER ASSIGNING ROLE TO JOINER:", socket.id, "ROLE:", room.players[socket.id]);
       socket.emit("roleAssigned", {
         role: room.players[socket.id],
         setterId,
