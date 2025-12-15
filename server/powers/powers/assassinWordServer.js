@@ -27,9 +27,7 @@ engine.registerPower("assassinWord", {
       state.currentSecret = state.secret;
       pushWinEntry(state, state.secret);
 
-      // MUST BE CALLED IN NEW ORDER
-      const room = require("../../core/rooms").get(roomId);
-      endGame(state, roomId, io, room);
+     state.triggerEndGame = true;
     }
   }
 });
