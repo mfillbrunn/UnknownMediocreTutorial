@@ -10,7 +10,7 @@ const engine = {
   applyPower(id, state, action, roomId, room, io) {
     const p = this.powers[id];
     if (!p || typeof p.apply !== "function") return;
-    p.apply(state, action, roomId, io, room);
+    p.apply(state, action, roomId, room, io);
   },
 
   // NEW HOOK: allow powers to block setter secret changes
