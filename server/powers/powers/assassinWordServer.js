@@ -17,10 +17,11 @@ engine.registerPower("assassinWord", {
     const w = state.powers.assassinWord;
     if (!w) return;
 
-    if (state.pendingGuess.toUpperCase() === w) {
-      entry.assassinTriggered = true;
-      const { endGame } = require("../../core/phases/normal"); // adjust path
-endGame(state, roomId, room, io);
-    }
+if (state.pendingGuess.toUpperCase() === w) {
+  entry.assassinTriggered = true;
+  state.currentSecret = state.secret; // reveal
+  pushWinEntry(state, w);             // make win entry
+  endGame(state, roomId, room, io);   // transition
+}
   }
 });
