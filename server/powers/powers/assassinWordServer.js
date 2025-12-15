@@ -1,6 +1,3 @@
-const engine = require("../powerEngineServer.js");
-const { endGame, pushWinEntry } = require("../../core/phases/normal");
-
 engine.registerPower("assassinWord", {
   apply(state, action, roomId, io) {
     if (state.powers.assassinWordUsed) return;
@@ -11,7 +8,6 @@ engine.registerPower("assassinWord", {
     if (state.pendingGuess && w === state.pendingGuess.toUpperCase()) return;
 
     state.powers.assassinWordUsed = true;
-    state.powerUsedThisTurn = true;
     state.powers.assassinWord = w;
   },
 
@@ -27,8 +23,9 @@ engine.registerPower("assassinWord", {
       state.currentSecret = state.secret;
       pushWinEntry(state, state.secret);
 
-      // Only pass what the power should control
-      endGame(state, roomId, io);
+      // MUST BE CALLED IN NEW ORDER
+      const room = require("../../core/rooms").get(roomId);
+      endGame(state, roomId, io, room);
     }
   }
 });
