@@ -2,7 +2,27 @@
 
 const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
-
+const SETTER_POWERS = [
+        "hideTile",
+        "suggestSecret",
+        "confuseColors",
+        "countOnly",
+        "blindSpot",
+        "vowelRefresh",
+        "assassinWord",
+      ];
+      
+      const GUESSER_POWERS = [
+        "suggestGuess",
+        "forceTimer",
+        "revealHistory",
+        "stealthGuess",
+        "revealGreen",
+        "freezeSecret",
+        "magicMode",
+"rareLetterBonus",
+"rowMaster",
+      ];
 function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
 
@@ -85,7 +105,7 @@ if (action.type === "SET_POWER_COUNT") {
         "countOnly",
         "blindSpot",
         "vowelRefresh",
-        "assassinWord"
+        "assassinWord",
       ];
       
       const GUESSER_POWERS = [
@@ -97,7 +117,7 @@ if (action.type === "SET_POWER_COUNT") {
         "freezeSecret",
         "magicMode",
 "rareLetterBonus",
-"rowMaster"
+"rowMaster",
       ];
             const N = state.powerCount || 2;
   const sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
