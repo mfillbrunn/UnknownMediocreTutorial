@@ -26,7 +26,12 @@ engine.registerPower("vowelRefresh", {
 
     entry.vowelRefreshApplied = true;
     entry.vowelRefreshLetters = state.powers.vowelRefreshLetters.slice();
-
+      entry.fb = entry.fb.map((fb, i) => {
+    const L = entry.guess[i].toUpperCase();
+    return entry.vowelRefreshLetters.includes(L) ? null : fb;
+  });
+  
+  entry.ignoreConstraints = true;   // constraints engine should skip this entry
     state.powers.vowelRefreshPending = false;
   },
 
