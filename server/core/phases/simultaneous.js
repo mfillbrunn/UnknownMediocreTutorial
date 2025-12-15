@@ -96,7 +96,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   };
 
   // Post-score power effects
-  powerEngine.postScore(state, entry, roomId, room, io);
+  powerEngine.postScore(state, entry, roomId, io);
 
   // Save history entry
   state.history.push(entry);
@@ -112,7 +112,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   state.turn = state.guesser;       // ⭐ Important: skip setter decision step
   state.powerUsedThisTurn = false;
 
-  powerEngine.turnStart(state, state.guesser, roomId, room, io);
+  powerEngine.turnStart(state, state.guesser, roomId, io);
 
   emitStateForAllPlayers(roomId, room, io);
 }
