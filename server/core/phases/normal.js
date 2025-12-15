@@ -89,7 +89,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     const powerId = normalizePowerId(action.type);
     if (!state.powerUsedThisTurn) {
       state.powerUsedThisTurn = true;
-      powerEngine.applyPower(powerId, state, action, roomId, io, room);
+      powerEngine.applyPower(powerId, state, action, roomId, room, io);
     }
     emitStateForAllPlayers(roomId, room, io);
     return;
@@ -135,7 +135,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       const powerId = normalizePowerId(action.type);
       if (!state.powerUsedThisTurn) {
         state.powerUsedThisTurn = true;
-        powerEngine.applyPower(powerId, state, action, roomId, io, room);
+        powerEngine.applyPower(powerId, state, action, roomId, room, io);
         emitStateForAllPlayers(roomId, room, io);
       }
       return;
@@ -211,7 +211,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     if (state.powerUsedThisTurn) return;
 
     state.powerUsedThisTurn = true;
-    powerEngine.applyPower(powerId, state, action, roomId, io, room);
+    powerEngine.applyPower(powerId, state, action, roomId, room, io);
 
     emitStateForAllPlayers(roomId, room, io);
     return;
