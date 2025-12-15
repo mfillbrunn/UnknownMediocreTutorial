@@ -19,8 +19,8 @@ engine.registerPower("assassinWord", {
 
     if (state.pendingGuess.toUpperCase() === w) {
       entry.assassinTriggered = true;
-      state.gameOver = true;
-      state.endRound = Math.max(7, state.roundIndex + 2);
+      const { endGame } = require("../../core/phases/normal"); // adjust path
+endGame(state, roomId, room, io);
     }
   }
 });
