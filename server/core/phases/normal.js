@@ -196,6 +196,7 @@ if (action.type === "NEW_MATCH") {
 
       // Otherwise score guess normally
       finalizeFeedback(state, powerEngine);
+      powerEngine.turnStart(state, state.guesser);
       clearForceTimer(roomId, state);
       state.turn = state.guesser;
       powerEngine.turnStart(state, state.turn);
