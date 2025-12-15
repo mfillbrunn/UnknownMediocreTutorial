@@ -3,6 +3,8 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("magicMode", {
   apply(state) {
+    state.powers.magicModeUsed = true;
+  state.powerUsedThisTurn = true;
     state.powers.magicModeActive = true;
     state.powers.magicModeJustUsed = true;     // used to block confuseColors next turn
   },
