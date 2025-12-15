@@ -61,8 +61,8 @@ if (action.type === "SWITCH_ROLES") {
   return;
 }
 if (action.type === "SET_POWER_COUNT") {
-        console.log("SET_POWER_COUNT received:", n);
     let n = parseInt(action.count, 10);
+        console.log("SET_POWER_COUNT received:", n);
     if (isNaN(n)) return;
     n = Math.max(1, Math.min(10, n));
 
