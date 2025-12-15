@@ -12,7 +12,7 @@ const engine = {
     console.log("[DEBUG] applyPower called with id =", id, "→ handler exists?", !!p);
     if (!p || typeof p.apply !== "function") return;
     console.log("[DEBUG] Running apply() for power:", id);
-    p.apply(state, action, roomId, io);
+    p.apply(state, action, roomId, io, room);
   },
 
   // NEW HOOK: allow powers to block setter secret changes
@@ -38,7 +38,7 @@ const engine = {
   postScore(state, entry) {
     for (const id in this.powers) {
       if (typeof this.powers[id].postScore === "function") {
-        this.powers[id].postScore(state, entry);
+        this.powers[id].postScore(state, entry, roomId, io, room)
       }
     }
   },
