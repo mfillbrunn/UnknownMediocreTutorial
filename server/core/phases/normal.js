@@ -116,8 +116,8 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       startForceTimer(roomId, room, state, io, context);
     }
 
-    powerEngine.turnStart(state, state.turn);
     state.powerUsedThisTurn = false;
+    powerEngine.turnStart(state, state.turn);
 
     emitStateForAllPlayers(roomId, room, io);
     return;
