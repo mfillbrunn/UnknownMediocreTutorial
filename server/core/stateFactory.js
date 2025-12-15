@@ -68,6 +68,29 @@ function createInitialState() {
       blindSpotIndex: null,
       stealthGuessActive: false,
 
+      // MAGIC MODE
+magicModeUsed: false,
+magicModeActive: false,
+magicModeJustUsed: false,
+
+// VOWEL REFRESH
+vowelRefreshUsed: false,
+vowelRefreshLetters: null,
+vowelRefreshPending: false,
+
+// RARE LETTER BONUS
+rareLetterBonusUsed: false,
+rareLetterBonusActive: false,
+guesserLockedGreens: [],
+
+// ROW MASTER
+rowMasterUsed: false,
+rowMasterActive: false,
+
+// ASSASSIN WORD
+assassinWordUsed: false,
+assassinWord: null,
+
     }
   };
 }
