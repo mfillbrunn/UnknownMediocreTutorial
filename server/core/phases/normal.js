@@ -281,4 +281,8 @@ function endGame(state, roomId, room, io) {
   });
 }
 
-module.exports = handleNormalPhase;
+module.exports = {
+  handleNormalPhase,
+  endGame,
+  pushWinEntry
+};
