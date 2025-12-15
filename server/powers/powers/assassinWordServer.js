@@ -1,27 +1,31 @@
-// /powers/powers/assassinWordServer.js
 const engine = require("../powerEngineServer.js");
+const { endGame } = require("../../core/phases/normal");
 
 engine.registerPower("assassinWord", {
-  apply(state, action) {
-      if (state.powers.assassinWordUsed) return;   // prevent reuse
-    state.powers.assassinWordUsed = true;        // mark USED
-    state.powerUsedThisTurn = true;
+  apply(state, action, roomId, io, room) {
+    if (state.powers.assassinWordUsed) return;
     if (!action.word) return;
+
     const w = action.word.toUpperCase();
     if (w === state.secret.toUpperCase()) return;
     if (state.pendingGuess && w === state.pendingGuess.toUpperCase()) return;
+
+    state.powers.assassinWordUsed = true;
+    state.powerUsedThisTurn = true;
     state.powers.assassinWord = w;
   },
 
-  postScore(state, entry) {
+  postScore(state, entry, roomId, io, room) {
     const w = state.powers.assassinWord;
     if (!w) return;
 
-if (state.pendingGuess.toUpperCase() === w) {
-  entry.assassinTriggered = true;
-  state.currentSecret = state.secret; // reveal
-  pushWinEntry(state, w);             // make win entry
-  endGame(state, roomId, room, io);   // transition
-}
+    if (state.pendingGuess.toUpperCase() === w) {
+      entry.assassinTriggered = true;
+      entry.fb = ["💀","💀","💀","💀","💀"];
+      entry.fbGuesser = ["💀","💀","💀","💀","💀"];
+
+      state.currentSecret = state.secret;
+      endGame(state, roomId, room, io);
+    }
   }
 });
