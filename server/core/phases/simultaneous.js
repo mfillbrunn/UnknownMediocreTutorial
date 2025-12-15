@@ -113,7 +113,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   state.turn = state.guesser;       // ⭐ Important: skip setter decision step
   state.powerUsedThisTurn = false;
 
-  powerEngine.turnStart(state, state.turn);
+  powerEngine.turnStart(state, state.guesser);
 
   emitStateForAllPlayers(roomId, room, io);
 }
