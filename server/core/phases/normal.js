@@ -163,7 +163,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
         return;
       }
 
-      finalizeFeedback(state, powerEngine);
+      finalizeFeedback(state, powerEngine, roomId, room, io);
       clearForceTimer(roomId, state);
 
       state.turn = state.guesser;
