@@ -23,6 +23,11 @@ require("./powers/powers/forceTimerServer");
 require("./powers/powers/revealHistoryServer");
 require("./powers/powers/blindSpotServer");
 require("./powers/powers/stealthGuessServer");
+require("./powers/powers/magicModeServer.js");
+require("./powers/powers/vowelRefreshServer.js");
+require("./powers/powers/rareLetterBonusServer.js");
+require("./powers/powers/rowMasterServer.js");
+require("./powers/powers/assassinWordServer.js");
 
 // ------------------------------
 const app = express();
