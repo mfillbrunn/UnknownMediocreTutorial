@@ -3,6 +3,9 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("vowelRefresh", {
   apply(state) {
+    if (state.powers.vowelRefreshUsed) return;
+  state.powers.vowelRefreshUsed = true;
+  state.powerUsedThisTurn = true;
     const last = state.history[state.history.length - 1];
     if (!last) return;
 
