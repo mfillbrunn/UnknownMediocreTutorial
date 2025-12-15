@@ -27,21 +27,24 @@ const engine = {
     return false;
   },
 
-  preScore(state, guess) {
-    for (const id in this.powers) {
-      if (typeof this.powers[id].preScore === "function") {
-        this.powers[id].preScore(state, guess);
-      }
+  preScore(state, guess, roomId, room, io) {
+  for (const id in this.powers) {
+    const p = this.powers[id];
+    if (typeof p.preScore === "function") {
+      p.preScore(state, guess, roomId, room, io);
     }
-  },
+  }
+},
 
-  postScore(state, entry) {
-    for (const id in this.powers) {
-      if (typeof this.powers[id].postScore === "function") {
-        this.powers[id].postScore(state, entry, roomId, io, room)
-      }
+postScore(state, entry, roomId, room, io) {
+  for (const id in this.powers) {
+    const p = this.powers[id];
+    if (typeof p.postScore === "function") {
+      p.postScore(state, entry, roomId, room, io);
     }
-  },
+  }
+},
+
 
   turnStart(state, role) {
     for (const id in this.powers) {
