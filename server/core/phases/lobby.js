@@ -75,6 +75,24 @@ if (action.type === "SET_POWER_COUNT") {
 
     // If both ready → enter simultaneous phase
     if (state.ready.A && state.ready.B) {
+      +   // ⭐ RANDOMIZE ACTIVE POWERS FOR THIS MATCH
+  const ALL_POWERS = [
+     "hideTile",
+     "suggestGuess",
+     "suggestSecret",
+     "confuseColors",
+     "countOnly",
+     "forceTimer",
+     "revealHistory",
+     "blindSpot",
+     "stealthGuess",
+     "revealGreen",
+     "freezeSecret"
+   ];
+
+   const powerCount = state.powerCount || 2;
+   const shuffled = ALL_POWERS.slice().sort(() => Math.random() - 0.5);
+   state.activePowers = shuffled.slice(0, powerCount);
       state.phase = "simultaneous";
       state.turn = null;
       state.simultaneousGuessSubmitted = false;
