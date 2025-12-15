@@ -8,6 +8,7 @@ const { scoreGuess } = require("./scoring.js");
  */
 function isConsistentWithHistory(history, proposedSecret) {
   for (const entry of history) {
+    if (entry.ignoreConstraints) continue;
     const expected = scoreGuess(proposedSecret, entry.guess).join("");
     const actual = entry.fb.join("");
     if (expected !== actual) return false;
