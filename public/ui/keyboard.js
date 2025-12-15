@@ -70,20 +70,6 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
   // Determine suppression behavior for this turn
   // ========================================================
   let suppressColoring = false;
-  let hiddenLetters = new Set();     // <--- DEFINE HERE (GLOBAL TO FUNCTION)
-
-  if (state.history && state.history.length > 0) {
-    const last = state.history[state.history.length - 1];
-       // HIDE TILE suppresses only letters in hidden positions
-    if (last.hideTileApplied && Array.isArray(last.hiddenIndices)) {
-      const guess = last.guess.toUpperCase();
-      last.hiddenIndices.forEach(i => {
-        hiddenLetters.add(guess[i]);   // <--- add letters to suppress
-      });
-    }
-  }
-
-
   KEYBOARD_LAYOUT.forEach(row => {
     const rowDiv = document.createElement("div");
     rowDiv.className = "key-row";
@@ -129,13 +115,11 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
                 if (!suppressColoring) {
           
               // HIDE TILE: skip coloring ONLY for hidden letters
-              if (!hiddenLetters.has(letter)) {
-                  const status = getLetterStatusFromHistory(letter, state, isGuesser);
-                  if (status === "green") keyEl.classList.add("key-green");
-                  else if (status === "yellow") keyEl.classList.add("key-yellow");
-                  else if (status === "gray") keyEl.classList.add("key-gray");
-                  else if (status === "blue") keyEl.classList.add("key-blue");
-              }
+      const status = getLetterStatusFromHistory(letter, state, isGuesser);
+      if (status === "green") keyEl.classList.add("key-green");
+      else if (status === "yellow") keyEl.classList.add("key-yellow");
+      else if (status === "gray") keyEl.classList.add("key-gray");
+      else if (status === "blue") keyEl.classList.add("key-blue");
         }
 
         // Setter: highlight letters in pending guess
