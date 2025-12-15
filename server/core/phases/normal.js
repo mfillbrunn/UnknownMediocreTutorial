@@ -98,9 +98,20 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   if (!state.pendingGuess &&
       action.type === "SUBMIT_GUESS" &&
       role === state.guesser) {
-
+    
     const g = action.guess.toLowerCase();
     if (!isValidWord(g, ALLOWED_GUESSES)) return;
+    // If assassin word was set, check immediately on guess submission
+    const assassin = state.powers.assassinWord;
+    if (assassin && g.toUpperCase() === assassin.toUpperCase()) {
+      
+      // mark win entry (death)
+      pushWinEntry(state, state.secret);
+    
+      // end immediately, skipping setter choice
+      endGame(state, roomId, io, room);
+      return;
+    }
 
     if (g === state.secret) {
       state.currentSecret = state.secret;
@@ -108,29 +119,22 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       endGame(state, roomId, io, room);
       return;
     }
-
     state.pendingGuess = g;
     state.turn = state.setter;
-
     if (state.powers.forceTimerArmed) {
       startForceTimer(roomId, room, state, io, context);
     }
-
     state.powerUsedThisTurn = false;
     powerEngine.turnStart(state, state.turn, roomId, io);
-
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
-
   if (state.pendingGuess && state.turn === state.setter) {
     if (state.powers.forceTimerActive &&
         state.powers.forceTimerDeadline &&
         state.powers.forceTimerExpiredFlag) {
-
       action = { type: "SET_SECRET_SAME", playerId: action.playerId };
     }
-
     if (action.type.startsWith("USE_") && role === state.setter) {
       const powerId = normalizePowerId(action.type);
       if (!state.powerUsedThisTurn) {
@@ -143,61 +147,45 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
 
     if (action.type === "SET_SECRET_NEW") {
       if (powerEngine.beforeSetterSecretChange(state, action)) return;
-
       const w = action.secret.toLowerCase();
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
-
       if (!isConsistentWithHistory(state.history, w)) {
         io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
         return;
       }
-
       state.secret = w;
       state.currentSecret = w;
       state.firstSecretSet = true;
-
       if (state.pendingGuess === w) {
         state.currentSecret = w;
         pushWinEntry(state, w);
         endGame(state, roomId, io, room);
         return;
       }
-
       finalizeFeedback(state, powerEngine, roomId, io);
       clearForceTimer(roomId, state);
-
       state.turn = state.guesser;
       state.powerUsedThisTurn = false;
       powerEngine.turnStart(state, state.guesser, roomId, io);
-
-
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
-
     if (action.type === "SET_SECRET_SAME") {
       if (powerEngine.beforeSetterSecretChange(state, action)) return;
-
       if (!isConsistentWithHistory(state.history, state.secret)) return;
-
       if (state.pendingGuess === state.secret) {
         state.currentSecret = state.secret;
         pushWinEntry(state, state.secret);
         endGame(state, roomId, io, room);
         return;
       }
-
       state.currentSecret = state.secret;
       state.firstSecretSet = true;
-
       finalizeFeedback(state, powerEngine, roomId, io);
       clearForceTimer(roomId, state);
-
       state.turn = state.guesser;
       powerEngine.turnStart(state, state.guesser, roomId, io);
-
       state.powerUsedThisTurn = false;
-
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
@@ -207,12 +195,9 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
 
   if (action.type.startsWith("USE_")) {
     const powerId = normalizePowerId(action.type);
-
     if (state.powerUsedThisTurn) return;
-
     state.powerUsedThisTurn = true;
     powerEngine.applyPower(powerId, state, action, roomId, io);
-
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
@@ -232,10 +217,8 @@ function endGame(state, roomId, io, room) {
   state.phase = "gameOver";
   state.turn = null;
   state.gameOver = true;
-
   io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
   emitStateForAllPlayers(roomId, room, io);
-
   emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
 }
 
