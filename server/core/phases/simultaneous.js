@@ -1,5 +1,4 @@
 const { emitStateForAllPlayers } = require("../../utils/emitState");
-const { finalizeFeedback } = require("../stateFactory");
 const { scoreGuess } = require("../../game-engine/scoring");
 
 function handleSimultaneousPhase(room, state, action, role, roomId, context) {
