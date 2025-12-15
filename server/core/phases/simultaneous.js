@@ -96,7 +96,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   };
 
   // Post-score power effects
-  powerEngine.postScore(state, entry);
+  powerEngine.postScore(state, entry, roomId, room, io);
 
   // Save history entry
   state.history.push(entry);
