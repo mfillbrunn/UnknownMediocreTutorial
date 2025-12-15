@@ -2,6 +2,22 @@
 
 const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
+const SETTER_POWERS = [
+        "hideTile",
+        "suggestSecret",
+        "confuseColors",
+        "countOnly",
+        "blindSpot"
+      ];
+      
+      const GUESSER_POWERS = [
+        "suggestGuess",
+        "forceTimer",
+        "revealHistory",
+        "stealthGuess",
+        "revealGreen",
+        "freezeSecret"
+      ];
 function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
 
@@ -75,25 +91,7 @@ if (action.type === "SET_POWER_COUNT") {
 
     // If both ready → enter simultaneous phase
     if (state.ready.A && state.ready.B) {
-      +   // ⭐ RANDOMIZE ACTIVE POWERS FOR THIS MATCH
-      const SETTER_POWERS = [
-        "hideTile",
-        "suggestSecret",
-        "confuseColors",
-        "countOnly",
-        "blindSpot"
-      ];
-      
-      const GUESSER_POWERS = [
-        "suggestGuess",
-        "forceTimer",
-        "revealHistory",
-        "stealthGuess",
-        "revealGreen",
-        "freezeSecret"
-      ];
-
-      // ⭐ Choose exactly 2 random setter powers
+           // ⭐ Choose exactly 2 random setter powers
    const setterShuffled = SETTER_POWERS.slice().sort(() => Math.random() - 0.5);
    const pickerSetter = setterShuffled.slice(0, 2);
 
