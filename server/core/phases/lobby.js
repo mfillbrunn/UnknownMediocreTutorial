@@ -92,6 +92,9 @@ if (action.type === "SET_POWER_COUNT") {
 
     // If both ready → enter simultaneous phase
     if (state.ready.A && state.ready.B) {
+             console.log("🔥 Starting game. Current powerCount =", state.powerCount);
+
+ console.log("🔥 BEFORE randomization, activePowers =", state.activePowers);
            // ⭐ Choose exactly 2 random setter powers
    const setterShuffled = SETTER_POWERS.slice().sort(() => Math.random() - 0.5);
    const pickerSetter = setterShuffled.slice(0, 2);
@@ -102,6 +105,7 @@ if (action.type === "SET_POWER_COUNT") {
 
    // ⭐ Combine them into activePowers
    state.activePowers = [...pickerSetter, ...pickerGuesser];
+            console.log("🔥 AFTER randomization, activePowers =", state.activePowers);
       state.phase = "simultaneous";
       state.turn = null;
       state.simultaneousGuessSubmitted = false;
