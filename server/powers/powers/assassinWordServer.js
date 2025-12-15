@@ -3,9 +3,13 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("assassinWord", {
   apply(state, action) {
+      if (state.powers.assassinWordUsed) return;   // prevent reuse
+    state.powers.assassinWordUsed = true;        // mark USED
+    state.powerUsedThisTurn = true;
     if (!action.word) return;
     const w = action.word.toUpperCase();
     if (w === state.secret.toUpperCase()) return;
+    if (state.pendingGuess && w === state.pendingGuess.toUpperCase()) return;
     state.powers.assassinWord = w;
   },
 
