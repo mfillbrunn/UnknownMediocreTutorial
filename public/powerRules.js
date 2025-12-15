@@ -16,13 +16,14 @@ window.POWER_RULES = {
       );
     }
   },
-  rowMaster: {
+ rowMaster: {
   once: true,
   allowed(state, role) {
     return (
       state.phase === "normal" &&
       role === state.guesser &&
-      !state.powerUsedThisTurn
+      !state.powerUsedThisTurn &&
+      state.powers.rowMasterReady   // new condition
     );
   }
 },
@@ -33,10 +34,12 @@ rareLetterBonus: {
     return (
       state.phase === "normal" &&
       role === state.guesser &&
-      !state.powerUsedThisTurn
+      !state.powerUsedThisTurn &&
+      state.powers.rareLetterBonusReady   // new condition
     );
   }
 },
+
 assassinWord: {
   once: true,
   allowed(state, role) {
