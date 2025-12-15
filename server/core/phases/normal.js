@@ -167,9 +167,9 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       clearForceTimer(roomId, state);
 
       state.turn = state.guesser;
+      state.powerUsedThisTurn = false;
       powerEngine.turnStart(state, state.guesser);
 
-      state.powerUsedThisTurn = false;
 
       emitStateForAllPlayers(roomId, room, io);
       return;
