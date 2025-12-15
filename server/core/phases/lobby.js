@@ -76,23 +76,33 @@ if (action.type === "SET_POWER_COUNT") {
     // If both ready → enter simultaneous phase
     if (state.ready.A && state.ready.B) {
       +   // ⭐ RANDOMIZE ACTIVE POWERS FOR THIS MATCH
-  const ALL_POWERS = [
-     "hideTile",
-     "suggestGuess",
-     "suggestSecret",
-     "confuseColors",
-     "countOnly",
-     "forceTimer",
-     "revealHistory",
-     "blindSpot",
-     "stealthGuess",
-     "revealGreen",
-     "freezeSecret"
-   ];
+      const SETTER_POWERS = [
+        "hideTile",
+        "suggestSecret",
+        "confuseColors",
+        "countOnly",
+        "blindSpot"
+      ];
+      
+      const GUESSER_POWERS = [
+        "suggestGuess",
+        "forceTimer",
+        "revealHistory",
+        "stealthGuess",
+        "revealGreen",
+        "freezeSecret"
+      ];
 
-   const powerCount = state.powerCount || 2;
-   const shuffled = ALL_POWERS.slice().sort(() => Math.random() - 0.5);
-   state.activePowers = shuffled.slice(0, powerCount);
+      // ⭐ Choose exactly 2 random setter powers
+   const setterShuffled = SETTER_POWERS.slice().sort(() => Math.random() - 0.5);
+   const pickerSetter = setterShuffled.slice(0, 2);
+
+   // ⭐ Choose exactly 2 random guesser powers
+   const guesserShuffled = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5);
+   const pickerGuesser = guesserShuffled.slice(0, 2);
+
+   // ⭐ Combine them into activePowers
+   state.activePowers = [...pickerSetter, ...pickerGuesser];
       state.phase = "simultaneous";
       state.turn = null;
       state.simultaneousGuessSubmitted = false;
