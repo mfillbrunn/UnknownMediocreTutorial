@@ -16,6 +16,16 @@ window.POWER_RULES = {
       );
     }
   },
+rareLetterBonus: {
+  once: true,
+  allowed(state, role) {
+    return (
+      state.phase === "normal" &&
+      role === state.guesser &&
+      !state.powerUsedThisTurn
+    );
+  }
+},
 
 suggestGuess: {
   once: true,
