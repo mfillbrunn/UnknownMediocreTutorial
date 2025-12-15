@@ -1,5 +1,5 @@
 const engine = require("../powerEngineServer.js");
-const { endGame } = require("../../core/phases/normal");
+const { endGame, pushWinEntry } = require("../../core/phases/normal");
 
 engine.registerPower("assassinWord", {
   apply(state, action, roomId, io, room) {
@@ -25,6 +25,7 @@ engine.registerPower("assassinWord", {
       entry.fbGuesser = ["💀","💀","💀","💀","💀"];
 
       state.currentSecret = state.secret;
+      pushWinEntry(state, state.secret);
       endGame(state, roomId, room, io);
     }
   }
