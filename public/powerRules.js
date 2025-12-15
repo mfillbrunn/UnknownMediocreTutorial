@@ -27,6 +27,16 @@ suggestGuess: {
     );
   }
 },
+vowelRefresh: {
+  once: true,
+  allowed(state, role) {
+    return (
+      state.phase === "normal" &&
+      role === state.setter &&
+      !state.powerUsedThisTurn
+    );
+  }
+},
 
 suggestSecret: {
   once: true,
