@@ -1,14 +1,11 @@
-// core/phases/normal.js
-
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { finalizeFeedback } = require("../stateFactory");
-const { isValidWord, parseWordlist } = require("../../game-engine/validation");
+const { isValidWord } = require("../../game-engine/validation");
 const { isConsistentWithHistory } = require("../../game-engine/history");
 const FORCE_TIMER_INTERVALS = {};
 
 function startForceTimer(roomId, room, state, io, context) {
-  const { ALLOWED_GUESSES, powerEngine } = context;
   const deadline = Date.now() + 30000;
 
   state.powers.forceTimerActive = true;
@@ -17,7 +14,6 @@ function startForceTimer(roomId, room, state, io, context) {
 
   io.to(roomId).emit("forceTimerStarted", { deadline });
 
-  // Clear old interval
   if (FORCE_TIMER_INTERVALS[roomId]) {
     clearInterval(FORCE_TIMER_INTERVALS[roomId]);
   }
@@ -33,26 +29,23 @@ function startForceTimer(roomId, room, state, io, context) {
       state.powers.forceTimerExpiredFlag = true;
       io.to(roomId).emit("forceTimerExpired");
 
-      // ⭐ AUTO-RESOLVE SAME SECRET IMMEDIATELY
-      const handleNormalPhase = require("./normal");  // correct path since already in core/phases/
-
+      const handleNormalPhase = require("./normal");
       const autoAction = {
         type: "SET_SECRET_SAME",
-        playerId: room[state.setter]  // setter's socket ID
+        playerId: room[state.setter]
       };
 
       handleNormalPhase(
         room,
         state,
         autoAction,
-        state.setter,  // role
+        state.setter,
         roomId,
         context
       );
     }
   }, 250);
 }
-
 
 function clearForceTimer(roomId, state) {
   if (FORCE_TIMER_INTERVALS[roomId]) {
@@ -66,10 +59,8 @@ function clearForceTimer(roomId, state) {
   delete state.powers.forceTimerArmed;
 }
 
-
-
-function normalizePowerId(actionType) {
-  const raw = actionType.replace("USE_", "").toLowerCase();
+function normalizePowerId(type) {
+  const raw = type.replace("USE_", "").toLowerCase();
   return raw.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
 
@@ -77,116 +68,94 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   const { ALLOWED_GUESSES, powerEngine } = context;
 
-  // Debug logging (optional)
-  // console.log("[NORMAL PHASE]", { action, role, turn: state.turn, pendingGuess: state.pendingGuess });
+  if (action.type === "NEW_MATCH") {
+    const createInitialState = require("../stateFactory").createInitialState;
+    const newState = createInitialState();
+    Object.assign(state, newState);
+    state.setter = "A";
+    state.guesser = "B";
+    state.ready = { A: false, B: false };
+    state.phase = "lobby";
 
-  // =====================================================================================
-  // SPECIAL CASE: NEW_MATCH
-  // =====================================================================================
-if (action.type === "NEW_MATCH") {
-  const createInitialState = require("../stateFactory").createInitialState;
-   const newState = createInitialState();
-  Object.assign(state, newState);
-    // Setter is always "A", guesser is always "B"
-  state.setter = "A";
-  state.guesser = "B";
+    emitLobbyEvent(io, roomId, { type: "showLobby" });
+    emitStateForAllPlayers(roomId, room, io);
+    return;
+  }
 
-  state.ready = { A: false, B: false };
-  state.phase = "lobby";
+  if (!state.pendingGuess &&
+      action.type.startsWith("USE_") &&
+      role === state.guesser) {
 
-  emitLobbyEvent(io, roomId, { type: "showLobby" });
-  emitStateForAllPlayers(roomId, room, io);
-  return;
-}
-
-
-  // =====================================================================================
-  // CASE 1: GUESSER SUBMITS A GUESS (when no pendingGuess)
-  // =====================================================================================
-  if (
-    !state.pendingGuess &&
-    action.type.startsWith("USE_") &&
-    role === state.guesser
-  ) {
     const powerId = normalizePowerId(action.type);
-    console.log("[DEBUG] Guesser power before guessing:", powerId);
     if (!state.powerUsedThisTurn) {
-        state.powerUsedThisTurn = true;
-        powerEngine.applyPower(powerId, state, action, roomId, io);
+      state.powerUsedThisTurn = true;
+      powerEngine.applyPower(powerId, state, action, roomId, io, room);
     }
     emitStateForAllPlayers(roomId, room, io);
     return;
-}
-  
-  if (
-    !state.pendingGuess &&
-    action.type === "SUBMIT_GUESS" &&
-    role === state.guesser
-  ) {
+  }
+
+  if (!state.pendingGuess &&
+      action.type === "SUBMIT_GUESS" &&
+      role === state.guesser) {
+
     const g = action.guess.toLowerCase();
     if (!isValidWord(g, ALLOWED_GUESSES)) return;
-    // Immediate win
+
     if (g === state.secret) {
-      state.currentSecret = state.secret; 
+      state.currentSecret = state.secret;
       pushWinEntry(state, g);
       endGame(state, roomId, room, io);
       return;
     }
 
-    // Otherwise → store guess, setter must decide SAME or NEW
     state.pendingGuess = g;
     state.turn = state.setter;
+
     if (state.powers.forceTimerArmed) {
-        startForceTimer(roomId, room, state, io, context);
+      startForceTimer(roomId, room, state, io, context);
     }
+
     powerEngine.turnStart(state, state.turn);
     state.powerUsedThisTurn = false;
-    
+
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
 
-  // =====================================================================================
-  // CASE 2: SETTER DECISION STEP (pendingGuess exists)
-  // =====================================================================================
   if (state.pendingGuess && state.turn === state.setter) {
-    // -------------------------------------------
-    // FORCE TIMER: auto-submit SAME secret
-    // -------------------------------------------
-    if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
-      // NEW: Use the explicit expired flag set by the server’s interval
-      if (state.powers.forceTimerExpiredFlag) {
-        console.log("FORCE TIMER EXPIRED — auto-submitting SAME secret");
-        action = { type: "SET_SECRET_SAME", playerId: action.playerId };
-      }
+    if (state.powers.forceTimerActive &&
+        state.powers.forceTimerDeadline &&
+        state.powers.forceTimerExpiredFlag) {
+
+      action = { type: "SET_SECRET_SAME", playerId: action.playerId };
     }
 
     if (action.type.startsWith("USE_") && role === state.setter) {
       const powerId = normalizePowerId(action.type);
       if (!state.powerUsedThisTurn) {
         state.powerUsedThisTurn = true;
-        powerEngine.applyPower(powerId, state, action, roomId, io);
+        powerEngine.applyPower(powerId, state, action, roomId, io, room);
         emitStateForAllPlayers(roomId, room, io);
       }
       return;
     }
-    // -------------------------------------------
-    // SET_SECRET_NEW
-    // -------------------------------------------
-    if (action.type === "SET_SECRET_NEW") {
-      // Power hook may block
-      if (powerEngine.beforeSetterSecretChange(state, action)) return;
-      const w = action.secret.toLowerCase();
 
+    if (action.type === "SET_SECRET_NEW") {
+      if (powerEngine.beforeSetterSecretChange(state, action)) return;
+
+      const w = action.secret.toLowerCase();
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
+
       if (!isConsistentWithHistory(state.history, w)) {
         io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
         return;
       }
+
       state.secret = w;
       state.currentSecret = w;
       state.firstSecretSet = true;
-      // Instant win if SAME
+
       if (state.pendingGuess === w) {
         state.currentSecret = w;
         pushWinEntry(state, w);
@@ -194,75 +163,66 @@ if (action.type === "NEW_MATCH") {
         return;
       }
 
-      // Otherwise score guess normally
       finalizeFeedback(state, powerEngine);
       clearForceTimer(roomId, state);
+
       state.turn = state.guesser;
-      powerEngine.turnStart(state, state.turn);
+      powerEngine.turnStart(state, state.guesser);
+
       state.powerUsedThisTurn = false;
-      
+
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
-   // -------------------------------------------
-    // SET_SECRET_SAME
-    // -------------------------------------------
+
     if (action.type === "SET_SECRET_SAME") {
       if (powerEngine.beforeSetterSecretChange(state, action)) return;
+
       if (!isConsistentWithHistory(state.history, state.secret)) return;
-      // Instant win
+
       if (state.pendingGuess === state.secret) {
-        state.currentSecret = state.secret;   
+        state.currentSecret = state.secret;
         pushWinEntry(state, state.secret);
         endGame(state, roomId, room, io);
         return;
       }
 
-      // Score guess
-       state.currentSecret = state.secret; 
+      state.currentSecret = state.secret;
       state.firstSecretSet = true;
+
       finalizeFeedback(state, powerEngine);
       clearForceTimer(roomId, state);
+
       state.turn = state.guesser;
-      powerEngine.turnStart(state, state.turn);
+      powerEngine.turnStart(state, state.guesser);
+
       state.powerUsedThisTurn = false;
-      
+
       emitStateForAllPlayers(roomId, room, io);
       return;
-
     }
-    return; // setter turn but action not for setter
+
+    return;
   }
 
-  // =====================================================================================
-  // CASE 3: POWERS
-  // =====================================================================================
   if (action.type.startsWith("USE_")) {
-   const powerId = normalizePowerId(action.type);
+    const powerId = normalizePowerId(action.type);
 
     if (state.powerUsedThisTurn) return;
 
     state.powerUsedThisTurn = true;
-    powerEngine.applyPower(powerId, state, action, roomId, io);
+    powerEngine.applyPower(powerId, state, action, roomId, io, room);
 
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
-
-  // =====================================================================================
-  // Otherwise ignore the action
-  // =====================================================================================
 }
-
-// ============================================================================
-// HELPERS
-// ============================================================================
 
 function pushWinEntry(state, word) {
   state.history.push({
     guess: word,
-    fb: ["🟩", "🟩", "🟩", "🟩", "🟩"],
-    fbGuesser: ["🟩", "🟩", "🟩", "🟩", "🟩"],
+    fb: ["🟩","🟩","🟩","🟩","🟩"],
+    fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
     extraInfo: null,
     finalSecret: word
   });
@@ -275,9 +235,8 @@ function endGame(state, roomId, room, io) {
 
   io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
   emitStateForAllPlayers(roomId, room, io);
-  require("../../utils/emitLobby").emitLobbyEvent(io, roomId, {
-    type: "gameOverShowMenu"
-  });
+
+  emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
 }
 
 module.exports = {
