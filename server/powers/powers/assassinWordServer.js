@@ -1,3 +1,7 @@
+const engine = require("../powerEngineServer.js");
+const { endGame, pushWinEntry } = require("../../core/phases/normal");
+
+
 engine.registerPower("assassinWord", {
   apply(state, action, roomId, io) {
     if (state.powers.assassinWordUsed) return;
