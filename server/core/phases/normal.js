@@ -99,9 +99,10 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   // =====================================================================================
 if (action.type === "NEW_MATCH") {
   const createInitialState = require("../stateFactory").createInitialState;
-  
+  const prevPowerCount = state.powerCount || 2;
   const newState = createInitialState();
   Object.assign(state, newState);
+  state.powerCount = prevPowerCount;
    // Pick random powers according to powerCount
 const shuffled = ALL_POWERS.slice().sort(() => Math.random() - 0.5);
 state.activePowers = shuffled.slice(0, state.powerCount);
