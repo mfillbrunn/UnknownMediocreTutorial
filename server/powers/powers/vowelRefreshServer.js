@@ -11,21 +11,20 @@ engine.registerPower("vowelRefresh", {
 
     const vowels = new Set(["A","E","I","O","U"]);
     const guess = last.guess.toUpperCase();
-
     const out = [];
-    for (let i = 0; i < 5; i++) {
-      if (vowels.has(guess[i])) out.push(guess[i]);
-    }
+
+    for (let i = 0; i < 5; i++) if (vowels.has(guess[i])) out.push(guess[i]);
 
     state.powers.vowelRefreshLetters = out;
     state.powers.vowelRefreshPending = true;
 
     for (const h of state.history) {
+      h.vowelRefreshLetters = out.slice();
       h.ignoreConstraints = true;
-      h.fb = h.fb.map((fb, i) => {
-        const L = h.guess[i].toUpperCase();
-        return out.includes(L) ? null : fb;
-      });
+
+      h.fb = h.fb.map((fb, i) =>
+        out.includes(h.guess[i].toUpperCase()) ? null : fb
+      );
     }
   },
 
@@ -35,10 +34,11 @@ engine.registerPower("vowelRefresh", {
     entry.vowelRefreshApplied = true;
     entry.vowelRefreshLetters = state.powers.vowelRefreshLetters.slice();
 
-    entry.fb = entry.fb.map((fb, i) => {
-      const L = entry.guess[i].toUpperCase();
-      return entry.vowelRefreshLetters.includes(L) ? null : fb;
-    });
+    entry.fb = entry.fb.map((fb, i) =>
+      entry.vowelRefreshLetters.includes(entry.guess[i].toUpperCase())
+        ? null
+        : fb
+    );
 
     entry.ignoreConstraints = true;
     state.powers.vowelRefreshPending = false;
