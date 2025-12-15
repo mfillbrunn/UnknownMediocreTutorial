@@ -112,6 +112,16 @@ stealthGuess: {
       );
     }
   },
+magicMode: {
+  once: true,
+  allowed(state, role) {
+    return (
+      state.phase === "normal" &&
+      role === state.guesser &&
+      !state.powerUsedThisTurn
+    );
+  }
+},
 
   freezeSecret: {
     once: true,
