@@ -44,7 +44,13 @@
     <div id="roomInfo" style="display:none; margin-top:10px;">
 
       <p><b>Room:</b> <span id="roomCodeLabel" class="room-code"></span></p>
-      
+      <div style="margin-top: 10px;">
+  <label>
+    <b>Powers this match:</b>
+    <input id="powerCountInput" type="number" min="1" max="10" value="2" style="width:80px;">
+  </label>
+  <button id="applyPowerCountBtn" class="primary-btn small">Apply</button>
+</div>
       <!-- NEW: SHOW YOUR ROLE HERE -->
       <p><b>You are:</b> <span id="lobbyRoleLabel">-</span></p>
 
@@ -54,13 +60,7 @@
       <!-- READY BUTTON -->
       <button id="readyBtn" class="primary-btn">I'm Ready</button>
     </div>
-<div style="margin-top: 10px;">
-  <label>
-    <b>Powers this match:</b>
-    <input id="powerCountInput" type="number" min="1" max="10" value="2" style="width:80px;">
-  </label>
-  <button id="applyPowerCountBtn" class="primary-btn small">Apply</button>
-</div>
+
 
     <p id="lobbyStatus" class="status"></p>
   </div>
