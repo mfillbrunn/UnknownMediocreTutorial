@@ -2,34 +2,39 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("assassinWord", {
   apply(state, action, roomId, io) {
+
+    // Do NOT block if the previous attempt was invalid
+    // Only block if assassinWord was actually SET
     if (state.powers.assassinWordUsed) return;
+
     if (!action.word) return;
 
     const w = action.word.toUpperCase();
 
-    // 1) Cannot be current secret
+    // Reject: cannot equal current secret
     if (state.secret && w === state.secret.toUpperCase()) {
       io.to(action.playerId).emit(
         "errorMessage",
-        "Assassin word cannot be the current secret."
+        "Assassin word cannot match current secret."
       );
-      return;
+      return; // IMPORTANT: DO NOT mark power used
     }
 
-    // 2) Cannot be current pending guess
+    // Reject: cannot equal current guess
     if (state.pendingGuess && w === state.pendingGuess.toUpperCase()) {
       io.to(action.playerId).emit(
         "errorMessage",
-        "Assassin word cannot be the current guess."
+        "Assassin word cannot match current guess."
       );
-      return;
+      return; // IMPORTANT: DO NOT mark power used
     }
 
-    // All good: lock in assassin word
+    // VALID → now lock it in
     state.powers.assassinWordUsed = true;
     state.powers.assassinWord = w;
 
-    // Optional: confirm to setter that assassin word is set
+    // Optional: confirm success
     io.to(action.playerId).emit("assassinSet", { word: w });
   }
 });
+
