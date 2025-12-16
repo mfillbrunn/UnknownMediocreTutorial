@@ -59,34 +59,42 @@ engine.registerPower("rowMaster", {
 
   // NEW: Unlock RowMaster after every guess if conditions are met
   turnStart(state, role, roomId, io) {
-    if (role !== state.guesser) return;
+  if (role !== state.guesser) return;
 
-    const last = state.history[state.history.length - 1];
-    if (!last) return;
+  // Already used or already unlocked → stop
+  if (state.powers.rowMasterUsed || state.powers.rowMasterReady) return;
 
-    const guess = last.guess.toUpperCase();
-    const rows = [
-      new Set("QWERTYUIOP".split("")),
-      new Set("ASDFGHJKL".split("")),
-      new Set("ZXCVBNM".split(""))
-    ];
+  // No guesses yet → cannot unlock
+  if (state.history.length === 0) return;
 
-    let triggered = false;
-    for (let r of rows) {
-      let count = 0;
-      for (let c of guess) if (r.has(c)) count++;
-      if (count >= 6) {
-        triggered = true;
-        break;
+  const rows = [
+    new Set("QWERTYUIOP".split("")),
+    new Set("ASDFGHJKL".split("")),
+    new Set("ZXCVBNM".split(""))
+  ];
+
+  // Cumulative row counters
+  let rowTotals = [0, 0, 0];
+
+  // Count ALL letters across ALL previous guesses
+  for (const entry of state.history) {
+    const guess = entry.guess.toUpperCase();
+    for (const c of guess) {
+      for (let r = 0; r < rows.length; r++) {
+        if (rows[r].has(c)) {
+          rowTotals[r]++;
+        }
       }
     }
-
-    // Unlock only once & only if unused
-    if (triggered && !state.powers.rowMasterUsed && !state.powers.rowMasterReady) {
-      state.powers.rowMasterReady = true;
-
-      // Notify guesser they unlocked the power
-      io.to(roomId).emit("toast", "Row Master unlocked!");
-    }
   }
+
+  // Unlock if ANY row has 6 or more letters total
+  const unlocked = rowTotals.some(total => total >= 6);
+
+  if (unlocked) {
+    state.powers.rowMasterReady = true;
+    io.to(roomId).emit("toast", "Row Master unlocked!");
+  }
+}
+
 });
