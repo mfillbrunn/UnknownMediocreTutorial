@@ -288,6 +288,9 @@ onStateUpdate(newState => {
     return;
   }
   state = JSON.parse(JSON.stringify(newState));
+  if (state.powers.assassinWord) {
+    $("assassinModal").classList.remove("active");
+  }
   window.state = state; // ⭐ Makes global for powers
   updateUI();
 
@@ -811,4 +814,33 @@ if (el) el.textContent = "";
   hide("setterScreen");
   hide("guesserScreen");
   show("menu");
+};
+$("assassinSubmitBtn").onclick = () => {
+  const roomId = $("assassinSubmitBtn").dataset.roomId;
+  let w = $("assassinInput").value.trim().toLowerCase();
+
+  if (w.length !== 5) {
+    shake($("assassinInput"));
+    toast("5 letters required");
+    $("assassinInput").value = "";
+    return;
+  }
+
+  if (!window.ALLOWED_GUESSES.has(w)) {
+    shake($("assassinInput"));
+    toast("Not in dictionary");
+    $("assassinInput").value = "";
+    return;
+  }
+
+  sendGameAction(roomId, {
+    type: "USE_ASSASSIN_WORD",
+    word: w,
+    playerId: socket.id
+  });
+};
+
+$("assassinCancelBtn").onclick = () => {
+  $("assassinModal").classList.remove("active");
+  $("assassinInput").value = "";
 };
