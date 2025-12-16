@@ -38,18 +38,27 @@ engine.registerPower("rareLetterBonus", {
   },
 
   turnStart(state, role, roomId, io) {
-    if (role !== state.guesser) return;
-    const last = state.history[state.history.length - 1];
-    if (!last || state.powers.rareLetterBonusUsed || state.powers.rareLetterBonusReady) return;
+  if (role !== state.guesser) return;
 
-    const guess = last.guess.toUpperCase();
-    const rare = new Set(["Q","J","X","Z","W","K"]);
-    let count = 0;
-    for (let c of guess) if (rare.has(c)) count++;
+  // Already used or already unlocked → nothing to do
+  if (state.powers.rareLetterBonusUsed || state.powers.rareLetterBonusReady) return;
 
-    if (count >= 4) {
-      state.powers.rareLetterBonusReady = true;
-      io.to(roomId).emit("toast", "Rare Letter Bonus unlocked!");
+  const rare = new Set(["Q","J","X","Z","W","K"]);
+  let totalRare = 0;
+
+  // Count ALL rare letters across ALL previous guesses
+  for (const entry of state.history) {
+    const guess = entry.guess.toUpperCase();
+    for (const c of guess) {
+      if (rare.has(c)) totalRare++;
     }
   }
+
+  // Unlock if 4+ rare letters have been used cumulatively
+  if (totalRare >= 4) {
+    state.powers.rareLetterBonusReady = true;
+    io.to(roomId).emit("toast", "Rare Letter Bonus unlocked!");
+  }
+}
+
 });
