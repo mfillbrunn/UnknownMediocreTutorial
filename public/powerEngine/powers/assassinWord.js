@@ -3,45 +3,34 @@
 PowerEngine.register("assassinWord", {
   role: "setter",
 
- renderButton(roomId, state, role) {
-  // 1. Only setter should see button
-  if (role !== state.setter) return;
+  // No (state, role) parameters -> Option B
+  renderButton(roomId) {
+    const btn = document.createElement("button");
+    btn.className = "power-btn";
+    btn.textContent = "Assassin Word";
+    this.buttonEl = btn;
 
-  // 2. Only show if assassinWord is in active powers
-  if (!state.activePowers.includes("assassinWord")) return;
+    $("setterPowerContainer").appendChild(btn);
 
-  // 3. Only show if power is allowed right now
-  const rule = POWER_RULES.assassinWord;
-  if (!rule.allowed(state, role)) return;
+    btn.onclick = () => {
+      // Open modal — but this does NOT mean power will succeed yet
+      $("assassinInput").value = "";
+      $("assassinModal").classList.add("active");
+      $("assassinInput").focus();
 
-  // 4. Build button normally
-  const btn = document.createElement("button");
-  btn.className = "power-btn";
-  btn.textContent = "Assassin Word";
-  $("setterPowerContainer").appendChild(btn);
-
-  btn.onclick = () => {
-    $("assassinInput").value = "";
-    $("assassinModal").classList.add("active");
-    $("assassinInput").focus();
-
-    $("assassinSubmitBtn").dataset.roomId = roomId;
-  };
-},
-
+      $("assassinSubmitBtn").dataset.roomId = roomId;
+    };
+  },
 
   uiEffects(state, role) {
-    if (role !== state.setter) return;
-
+    // Option B: hide/update the DISPLAY only, not the button
     let el = document.getElementById("assassinWordDisplay");
     if (!el) {
       el = document.createElement("div");
       el.id = "assassinWordDisplay";
       el.style.marginTop = "8px";
       el.style.fontWeight = "bold";
-      document
-        .getElementById("setterSecretArea")
-        .appendChild(el);
+      document.getElementById("setterSecretArea").appendChild(el);
     }
 
     if (state.powers.assassinWord) {
