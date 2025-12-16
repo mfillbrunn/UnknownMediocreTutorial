@@ -22,6 +22,31 @@ PowerEngine.register("rareLetterBonus", {
       entry.fbGuesser[i] = "🟩";
     }
   },
+  uiEffects(state, role) {
+  if (!this.buttonEl) return;            // button not created yet
+  if (role !== "guesser") {              
+    this.buttonEl.style.display = "none";
+    return;
+  }
+
+  // Always show for guesser (Option B), but disable unless ready
+  this.buttonEl.style.display = "";
+
+  const ready = state.powers.rareLetterBonusReady;
+  const used = state.powers.rareLetterBonusUsed;
+  const turn = state.turn === state.guesser;
+  const phase = state.phase === "normal";
+
+  if (ready && !used && turn && phase) {
+    // ENABLE BUTTON
+    this.buttonEl.disabled = false;
+    this.buttonEl.classList.remove("disabled-btn");
+  } else {
+    // DISABLE BUTTON
+    this.buttonEl.disabled = true;
+    this.buttonEl.classList.add("disabled-btn");
+  }
+},
 
   keyboardEffects(state, role, keyEl, letter) {
     const set = state.powers.guesserLockedGreens;
