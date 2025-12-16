@@ -19,6 +19,10 @@ PowerEngine.register("rowMaster", {
     this.buttonEl.style.display = "none";
     return;
   }
+  if (!state.activePowers.includes("rareLetterBonus")) {
+   this.buttonEl.style.display = "none";
+   return;
+}
 
   this.buttonEl.style.display = "";
 
