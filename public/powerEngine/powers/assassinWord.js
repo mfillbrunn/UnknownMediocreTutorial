@@ -1,51 +1,32 @@
-// /powers/powers/assassinWord.js
-PowerEngine.register("assassinWord", {
-  role: "setter",
+const engine = require("../powerEngineServer.js");
 
-  renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.className = "power-btn";
-    btn.textContent = "Assassin Word";
-    this.buttonEl = btn;
-    $("setterPowerContainer").appendChild(btn);
+engine.registerPower("assassinWord", {
+  apply(state, action, roomId, io) {
+    if (state.powers.assassinWordUsed) return;
+    if (!action.word) return;
 
-    btn.onclick = () => {
-      const w = prompt("Enter assassin word:");
-      if (!w) return;
-      sendGameAction(roomId, {
-  type: "USE_ASSASSIN_WORD",
-  word: w,
-  playerId: socket.id   // IMPORTANT
-});
-    };
-  },
+    const w = action.word.toUpperCase();
 
-  uiEffects(state, role) {
-    if (role !== state.setter) return;
-
-    const area = document.getElementById("setterSecretArea");
-    if (!area) return;
-
-    let el = document.getElementById("assassinWordDisplay");
-    if (!el) {
-      el = document.createElement("div");
-      el.id = "assassinWordDisplay";
-      el.style.marginTop = "8px";
-      el.style.fontWeight = "bold";
-      area.appendChild(el);
+    // Reject: cannot equal current secret
+    if (state.secret && w === state.secret.toUpperCase()) {
+      io.to(action.playerId).emit(
+        "errorMessage",
+        "Assassin word cannot be the current secret."
+      );
+      return;
     }
 
-    if (state.powers.assassinWord) {
-      el.textContent = "Assassin Word: " + state.powers.assassinWord;
-    } else {
-      el.textContent = "";
+    // Reject: cannot equal current guess
+    if (state.pendingGuess && w === state.pendingGuess.toUpperCase()) {
+      io.to(action.playerId).emit(
+        "errorMessage",
+        "Assassin word cannot be the current guess."
+      );
+      return;
     }
-  },
 
-  historyEffects(entry, isSetter) {
-    if (entry.assassinTriggered && isSetter) {
-      entry.fb = ["💀","💀","💀","💀","💀"];
-      entry.fbGuesser = ["💀","💀","💀","💀","💀"];
-    }
+    // VALID: lock in assassin word
+    state.powers.assassinWordUsed = true;
+    state.powers.assassinWord = w;
   }
 });
