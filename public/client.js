@@ -134,20 +134,20 @@ socket.on("forceTimerExpired", () => {
   toast("Time ran out — old secret was kept!");
 });
 socket.on("errorMessage", msg => {
-  const input = $("assassinInput");   // TRY ASSASSIN FIRST
-
-  if (document.getElementById("assassinModal").classList.contains("active")) {
-    shake(input);
+  if ($("assassinModal").classList.contains("active")) {
+    const inp = $("assassinInput");
+    shake(inp);
     toast(msg);
-    input.value = "";
-    if (navigator.vibrate) navigator.vibrate(150);
+    inp.value = "";
+    inp.focus(); // IMPORTANT to avoid “freeze”
     return;
   }
 
-  // fallback for secret input
+  // fallback for secret errors
   shake($("newSecretInput"));
   toast(msg);
 });
+
 // -----------------------------------------------------
 // LOAD WORD LIST FOR CLIENT-SIDE VALIDATION
 // -----------------------------------------------------
