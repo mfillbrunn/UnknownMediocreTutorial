@@ -81,11 +81,13 @@ vowelRefreshPending: false,
 // RARE LETTER BONUS
 rareLetterBonusUsed: false,
 rareLetterBonusActive: false,
+rareLetterBonusReady: false,
 guesserLockedGreens: [],
 
 // ROW MASTER
 rowMasterUsed: false,
 rowMasterActive: false,
+rowMasterReady: false,
 
 // ASSASSIN WORD
 assassinWordUsed: false,
