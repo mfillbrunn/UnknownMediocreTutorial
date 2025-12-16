@@ -13,6 +13,7 @@ engine.registerPower("assassinWord", {
 
     // Reject: cannot equal current secret
     if (state.secret && w === state.secret.toUpperCase()) {
+       state.powerUsedThisTurn = false;
       io.to(action.playerId).emit(
         "errorMessage",
         "Assassin word cannot match current secret."
@@ -22,6 +23,7 @@ engine.registerPower("assassinWord", {
 
     // Reject: cannot equal current guess
     if (state.pendingGuess && w === state.pendingGuess.toUpperCase()) {
+       state.powerUsedThisTurn = false;
       io.to(action.playerId).emit(
         "errorMessage",
         "Assassin word cannot match current guess."
