@@ -135,8 +135,12 @@ socket.on("forceTimerExpired", () => {
 });
 
 socket.on("errorMessage", msg => {
-  shake($("newSecretInput"));
+  const inp = $("newSecretInput");
+
+  shake(inp);
   toast(msg);
+  inp.value = "";        // CLEAR INPUT
+  if (navigator.vibrate) navigator.vibrate(150); // vibrate if supported
 });
 // -----------------------------------------------------
 // LOAD WORD LIST FOR CLIENT-SIDE VALIDATION
