@@ -46,7 +46,8 @@ assassinWord: {
     return (
       state.phase === "normal" &&
       role === state.setter &&
-      !state.powerUsedThisTurn
+      !state.powerUsedThisTurn &&
+      !state.powers.assassinWordUsed
     );
   }
 },
