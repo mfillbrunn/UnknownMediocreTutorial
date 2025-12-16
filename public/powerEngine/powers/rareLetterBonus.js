@@ -28,6 +28,10 @@ PowerEngine.register("rareLetterBonus", {
     this.buttonEl.style.display = "none";
     return;
   }
+  if (!state.activePowers.includes("rareLetterBonus")) {
+   this.buttonEl.style.display = "none";
+   return;
+}
 
   // Always show for guesser (Option B), but disable unless ready
   this.buttonEl.style.display = "";
