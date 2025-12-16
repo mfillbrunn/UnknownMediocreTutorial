@@ -3,21 +3,32 @@
 PowerEngine.register("assassinWord", {
   role: "setter",
 
-  renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.className = "power-btn";
-    btn.textContent = "Assassin Word";
-    $("setterPowerContainer").appendChild(btn);
+ renderButton(roomId, state, role) {
+  // 1. Only setter should see button
+  if (role !== state.setter) return;
 
-    btn.onclick = () => {
-      $("assassinInput").value = "";
-      $("assassinModal").classList.add("active");
-      $("assassinInput").focus();
+  // 2. Only show if assassinWord is in active powers
+  if (!state.activePowers.includes("assassinWord")) return;
 
-      // Save roomId so submit button knows where to send
-      $("assassinSubmitBtn").dataset.roomId = roomId;
-    };
-  },
+  // 3. Only show if power is allowed right now
+  const rule = POWER_RULES.assassinWord;
+  if (!rule.allowed(state, role)) return;
+
+  // 4. Build button normally
+  const btn = document.createElement("button");
+  btn.className = "power-btn";
+  btn.textContent = "Assassin Word";
+  $("setterPowerContainer").appendChild(btn);
+
+  btn.onclick = () => {
+    $("assassinInput").value = "";
+    $("assassinModal").classList.add("active");
+    $("assassinInput").focus();
+
+    $("assassinSubmitBtn").dataset.roomId = roomId;
+  };
+},
+
 
   uiEffects(state, role) {
     if (role !== state.setter) return;
