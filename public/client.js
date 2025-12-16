@@ -133,14 +133,20 @@ socket.on("suggestWord", ({ word }) => {
 socket.on("forceTimerExpired", () => {
   toast("Time ran out — old secret was kept!");
 });
-
 socket.on("errorMessage", msg => {
-  const inp = $("newSecretInput");
+  const input = $("assassinInput");   // TRY ASSASSIN FIRST
 
-  shake(inp);
+  if (document.getElementById("assassinModal").classList.contains("active")) {
+    shake(input);
+    toast(msg);
+    input.value = "";
+    if (navigator.vibrate) navigator.vibrate(150);
+    return;
+  }
+
+  // fallback for secret input
+  shake($("newSecretInput"));
   toast(msg);
-  inp.value = "";        // CLEAR INPUT
-  if (navigator.vibrate) navigator.vibrate(150); // vibrate if supported
 });
 // -----------------------------------------------------
 // LOAD WORD LIST FOR CLIENT-SIDE VALIDATION
