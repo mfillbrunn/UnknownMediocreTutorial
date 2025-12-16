@@ -12,7 +12,11 @@ PowerEngine.register("assassinWord", {
     btn.onclick = () => {
       const w = prompt("Enter assassin word:");
       if (!w) return;
-      sendGameAction(roomId, { type: "USE_ASSASSIN_WORD", word: w });
+      sendGameAction(roomId, {
+  type: "USE_ASSASSIN_WORD",
+  word: w,
+  playerId: socket.id   // IMPORTANT
+});
     };
   },
 
