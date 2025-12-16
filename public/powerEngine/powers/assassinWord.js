@@ -14,7 +14,7 @@ PowerEngine.register("assassinWord", {
       $("assassinModal").classList.add("active");
       $("assassinInput").focus();
 
-      // Save roomId into DOM so submit button knows what to send
+      // Save roomId so submit button knows where to send
       $("assassinSubmitBtn").dataset.roomId = roomId;
     };
   },
@@ -28,15 +28,17 @@ PowerEngine.register("assassinWord", {
       el.id = "assassinWordDisplay";
       el.style.marginTop = "8px";
       el.style.fontWeight = "bold";
-      document.getElementById("setterSecretArea").appendChild(el);
+      document
+        .getElementById("setterSecretArea")
+        .appendChild(el);
     }
 
-    el.textContent = state.powers.assassinWord
-      ? "Assassin Word: " + state.powers.assassinWord
-      : "";
-  }
-});
-
+    if (state.powers.assassinWord) {
+      el.textContent = "Assassin Word: " + state.powers.assassinWord;
+    } else {
+      el.textContent = "";
+    }
+  },
 
   historyEffects(entry, isSetter) {
     if (entry.assassinTriggered && isSetter) {
