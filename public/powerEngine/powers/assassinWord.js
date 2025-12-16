@@ -7,17 +7,15 @@ PowerEngine.register("assassinWord", {
     const btn = document.createElement("button");
     btn.className = "power-btn";
     btn.textContent = "Assassin Word";
-    this.buttonEl = btn;
     $("setterPowerContainer").appendChild(btn);
 
     btn.onclick = () => {
-      const w = prompt("Enter assassin word:");
-      if (!w) return;
-      sendGameAction(roomId, {
-        type: "USE_ASSASSIN_WORD",
-        word: w,
-        playerId: socket.id   // IMPORTANT
-      });
+      $("assassinInput").value = "";
+      $("assassinModal").classList.add("active");
+      $("assassinInput").focus();
+
+      // Save roomId into DOM so submit button knows what to send
+      $("assassinSubmitBtn").dataset.roomId = roomId;
     };
   },
 
@@ -33,12 +31,12 @@ PowerEngine.register("assassinWord", {
       document.getElementById("setterSecretArea").appendChild(el);
     }
 
-    if (state.powers.assassinWord) {
-      el.textContent = "Assassin Word: " + state.powers.assassinWord;
-    } else {
-      el.textContent = "";
-    }
-  },
+    el.textContent = state.powers.assassinWord
+      ? "Assassin Word: " + state.powers.assassinWord
+      : "";
+  }
+});
+
 
   historyEffects(entry, isSetter) {
     if (entry.assassinTriggered && isSetter) {
