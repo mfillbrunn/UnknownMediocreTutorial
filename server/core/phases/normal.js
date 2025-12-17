@@ -149,7 +149,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       if (powerEngine.beforeSetterSecretChange(state, action)) return;
       const w = action.secret.toLowerCase();
       if (!isValidWord(w, ALLOWED_GUESSES)) return;
-      if (!isConsistentWithHistory(state.history, w)) {
+      if (!isConsistentWithHistory(state.history, w, state)) {
         io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
         return;
       }
@@ -188,7 +188,7 @@ if (state.powers.forcedGreens) {
     if (action.type === "SET_SECRET_SAME") {
       if (powerEngine.beforeSetterSecretChange(state, action)) return;
       const w = state.secret;
-       if (!isConsistentWithHistory(state.history, w)) {
+       if (!isConsistentWithHistory(state.history, w, state)) {
         io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
         return;
       }      
