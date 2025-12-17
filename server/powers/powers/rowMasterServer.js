@@ -21,7 +21,7 @@ engine.registerPower("rowMaster", {
   },
 
   postScore(state, entry, roomId, io) {
-    const guess = state.pendingGuess.toUpperCase();
+    const guess = entry.guess.toUpperCase();
 
     // Do NOT run unless power was actively used
     if (!state.powers.rowMasterActive) return;
