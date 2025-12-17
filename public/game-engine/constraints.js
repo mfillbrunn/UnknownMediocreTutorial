@@ -1,5 +1,6 @@
 // constraints.js — NON-MODULE VERSION
-function renderPatternInto(el, pattern, revealInfo = null) {
+
+window.renderPatternInto = function (el, pattern, revealInfo = null) {
   let html = "";
 
   for (let i = 0; i < pattern.length; i++) {
@@ -14,37 +15,57 @@ function renderPatternInto(el, pattern, revealInfo = null) {
   }
 
   el.innerHTML = html.trim();
+};
+
+
+// Helper: should this tile be ignored due to vowelRefresh?
+function isVowelRefreshDrop(state, pos, roundIndex) {
+  const eff = state.powers?.vowelRefreshEffect;
+  return (
+    eff &&
+    eff.guessIndex === roundIndex &&
+    eff.indices.includes(pos)
+  );
 }
 
-window.getPattern = function(state, isSetter) {
+
+// ============================================================
+// PATTERN LOGIC
+// ============================================================
+window.getPattern = function (state, isSetter) {
+
   if (!state.history || state.history.length === 0) {
     return ["-", "-", "-", "-", "-"];
   }
-  if (isVowelRefreshDrop(i, h.roundIndex)) continue;
 
   const pattern = ["-", "-", "-", "-", "-"];
-if (state.powers?.forcedGreens) {
-  for (const pos in state.powers.forcedGreens) {
-    pattern[pos] = state.powers.forcedGreens[pos];
-  }
-}
 
-  // Pick the right feedback array depending on role
+  // 1. Insert forced greens (revealLetter)
+  const forced = state.powers?.forcedGreens || {};
+  for (const pos in forced) {
+    pattern[pos] = forced[pos];
+  }
+
+  // 2. Normal greens from history, except vowelRefresh drops
   const fbKey = isSetter ? "fb" : "fbGuesser";
 
   for (const h of state.history) {
     if (h.ignoreConstraints) continue;
 
     const fb = h[fbKey];
-
-    // Skip invalid feedback entries
     if (!Array.isArray(fb) || fb.length !== 5) continue;
+    const guess = h.guess.toUpperCase();
 
     for (let i = 0; i < 5; i++) {
+
+      // VowelRefresh drops constraints for that tile
+      if (isVowelRefreshDrop(state, i, h.roundIndex)) continue;
+
       if (fb[i] === "🟩") {
-         if (pattern[i] === "-") {  // only fill if not forced
-    pattern[i] = h.guess[i].toUpperCase();
-  }
+        // Do not overwrite forced greens
+        if (pattern[i] === "-") {
+          pattern[i] = guess[i];
+        }
       }
     }
   }
@@ -53,17 +74,20 @@ if (state.powers?.forcedGreens) {
 };
 
 
-
-window.getMustContainLetters = function(state, isSetter) {
+// ============================================================
+// MUST-CONTAIN LOGIC
+// ============================================================
+window.getMustContainLetters = function (state, isSetter) {
   if (!state.history) return [];
+
   const forced = state.powers?.forcedGreens || {};
   const fbKey = isSetter ? "fb" : "fbGuesser";
 
   const requiredCounts = {};
   const forbiddenPositions = {};
   const greenPositions = {};
-  if (isVowelRefreshDrop(i, h.roundIndex)) continue;
 
+  // 1. Scan history for yellows (but skip vowelRefresh positions)
   for (const h of state.history) {
     if (h.ignoreConstraints) continue;
 
@@ -72,8 +96,11 @@ window.getMustContainLetters = function(state, isSetter) {
 
     const guess = h.guess.toUpperCase();
 
-    // First pass — greens
+    // Greens for letter counting
     for (let i = 0; i < 5; i++) {
+
+      if (isVowelRefreshDrop(state, i, h.roundIndex)) continue;
+
       if (fb[i] === "🟩") {
         const L = guess[i];
         greenPositions[L] = greenPositions[L] || new Set();
@@ -81,8 +108,11 @@ window.getMustContainLetters = function(state, isSetter) {
       }
     }
 
-    // Second pass — yellows
+    // Yellows
     for (let i = 0; i < 5; i++) {
+
+      if (isVowelRefreshDrop(state, i, h.roundIndex)) continue;
+
       const L = guess[i];
       if (fb[i] === "🟨") {
         requiredCounts[L] = (requiredCounts[L] || 0) + 1;
@@ -92,8 +122,9 @@ window.getMustContainLetters = function(state, isSetter) {
     }
   }
 
-  // Build list
+  // Build results
   const result = [];
+
   Object.keys(requiredCounts).forEach(letter => {
     const countNeeded = requiredCounts[letter];
     const greens = greenPositions[letter]?.size || 0;
@@ -108,24 +139,22 @@ window.getMustContainLetters = function(state, isSetter) {
 
     const forb = [...(forbiddenPositions[letter] || [])]
       .filter(pos => !(greenPositions[letter]?.has(pos)));
+
     if (forb.length > 0) {
       entry += ` (not ${forb.map(x => x + 1).join(", ")})`;
     }
 
     result.push(entry);
   });
-  // Insert forced greens into mustContain list
+
+  // Add forced greens to mustContain (fixed letters)
   for (const pos in forced) {
-    const letter = forced[pos];
-    result.push(`${letter} (${parseInt(pos)+1})`); // shows correct position
+    const L = forced[pos];
+    result.push(`${L} (${parseInt(pos) + 1})`);
   }
 
   return result;
 };
-function isVowelRefreshDrop(pos, roundIndex) {
-  const eff = state.powers?.vowelRefreshEffect;
-  return eff && eff.guessIndex === roundIndex && eff.indices.includes(pos);
-}
 
 
 window.formatPattern = arr => arr.join(" ");
