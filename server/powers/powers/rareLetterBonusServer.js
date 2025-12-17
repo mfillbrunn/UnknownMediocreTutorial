@@ -25,7 +25,7 @@ state.powers.rareLetterBonusAppliedThisTurn = {
 };
 
   // Send reveal to guesser
-  io.to(room[state.guesser]).emit("rareLetterReveal", {
+  io.to(roomId).emit("rareLetterReveal", {
     index: i,
     letter
   });
