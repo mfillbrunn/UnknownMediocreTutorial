@@ -181,6 +181,12 @@ if (state.powers.forcedGreens) {
       clearForceTimer(roomId, state);
       state.turn = state.guesser;
       state.powerUsedThisTurn = false;
+      // Vowel refresh affects ONLY the last guess where it was used
+      if (state.powers.vowelRefreshEffect &&
+          state.history.length - 1 > state.powers.vowelRefreshEffect.guessIndex) {
+          state.powers.vowelRefreshEffect = null;
+      }
+
       powerEngine.turnStart(state, state.guesser, roomId, io);
       emitStateForAllPlayers(roomId, room, io);
       return;
@@ -217,6 +223,11 @@ if (state.powers.forcedGreens) {
       finalizeFeedback(state, powerEngine, roomId, io);
       clearForceTimer(roomId, state);
       state.turn = state.guesser;
+            // Vowel refresh affects ONLY the last guess where it was used
+      if (state.powers.vowelRefreshEffect &&
+          state.history.length - 1 > state.powers.vowelRefreshEffect.guessIndex) {
+          state.powers.vowelRefreshEffect = null;
+      }
       powerEngine.turnStart(state, state.guesser, roomId, io);
       state.powerUsedThisTurn = false;
       emitStateForAllPlayers(roomId, room, io);
