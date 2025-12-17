@@ -1,4 +1,4 @@
-// /public/powerEngine/powers/vowelRefresh.js
+// /powers/powers/vowelRefresh.js
 PowerEngine.register("vowelRefresh", {
   role: "setter",
 
@@ -7,40 +7,40 @@ PowerEngine.register("vowelRefresh", {
     btn.className = "power-btn";
     btn.textContent = "Vowel Refresh";
     this.buttonEl = btn;
-    $("guesserPowerContainer").appendChild(btn);
+    $("setterPowerContainer").appendChild(btn);
 
     btn.onclick = () => {
       sendGameAction(roomId, { type: "USE_VOWEL_REFRESH" });
     };
   },
-
-  uiEffects(state, role) {
+ uiEffects(state, role) {
     if (!this.buttonEl) return;
 
+    // Hide if this power isn't active this match
     if (!state.activePowers.includes("vowelRefresh")) {
       this.buttonEl.style.display = "none";
       return;
     }
 
-    if (role !== state.guesser) {
+    // Show only to setter
+    if (role !== state.setter) {
       this.buttonEl.style.display = "none";
       return;
     }
 
     this.buttonEl.style.display = "";
 
+    // Enable only when allowed
     const used = state.powers.vowelRefreshUsed;
-    const turn = state.turn === state.guesser;
+    const turn = state.turn === state.setter;
     const phase = state.phase === "normal";
 
-    // Button enabled only when allowed
     this.buttonEl.disabled = used || !turn || !phase;
     this.buttonEl.classList.toggle("disabled-btn", this.buttonEl.disabled);
   },
+  historyEffects(entry, isSetter) {
+  },
 
-  // No historyEffects: vowelRefresh does NOT modify feedback display
-  historyEffects() {},
-
-  // No keyboardEffects: keyboard.js handles vowel reset logic
-  keyboardEffects() {}
+  keyboardEffects(state, role, keyEl, letter) {
+  }
 });
