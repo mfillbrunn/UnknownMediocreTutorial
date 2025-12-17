@@ -10,7 +10,16 @@ window.KEYBOARD_LAYOUT = [
 function getLetterStatusFromHistory(letter, state, isGuesser) {
   if (!state?.history) return null;
   // ⭐ NEW: forced greens take absolute precedence
-  
+  // vowelRefresh turns these letters "new" again
+const eff = state.powers?.vowelRefreshEffect;
+if (eff) {
+  for (const pos of eff.indices) {
+    if (state.history[eff.guessIndex]?.guess[pos].toUpperCase() === letter) {
+      return null;  // treat as unused
+    }
+  }
+}
+
 const forcedGreens = state.powers?.forcedGreens || {};
   // Skip reading history if this letter forced green
 if (Object.values(forcedGreens).includes(letter))
