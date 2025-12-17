@@ -10,7 +10,29 @@ engine.registerPower("revealLetter", {
     p.ready = false;
 
     // 1. Choose index to reveal
-    const index = Math.floor(Math.random() * 5);
+    
+    // Step 1: find non-green positions
+    const greenPositions = new Set();
+    
+    for (const entry of state.history) {
+      if (!entry || !entry.fbGuesser) continue;
+      for (let i = 0; i < 5; i++) {
+        if (entry.fbGuesser[i] === "🟩") {
+          greenPositions.add(i);
+        }
+      }
+    }
+    
+    // Step 2: choose from positions that are NOT already green
+    let options = [0,1,2,3,4].filter(i => !greenPositions.has(i));
+    
+    // fallback if all 5 positions are green (rare but safe)
+    if (options.length === 0) options = [0,1,2,3,4];
+    
+    const index = options[Math.floor(Math.random() * options.length)];
+    const letter = state.secret[index].toUpperCase();
+
+    
     const letter = state.secret[index].toUpperCase();
 
     // 2. Save PERMANENT enforced reveal
