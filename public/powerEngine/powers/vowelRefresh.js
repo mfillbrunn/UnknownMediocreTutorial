@@ -1,6 +1,6 @@
 // /public/powerEngine/powers/vowelRefresh.js
 PowerEngine.register("vowelRefresh", {
-  role: "guesser",
+  role: "setter",
 
   renderButton(roomId) {
     const btn = document.createElement("button");
