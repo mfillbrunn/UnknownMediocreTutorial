@@ -15,14 +15,6 @@ const forcedGreens = state.powers?.forcedGreens || {};
   // Skip reading history if this letter forced green
 if (Object.values(forcedGreens).includes(letter))
     return "green";
-
-for (const pos in forcedGreens) {
-    const forcedLetter = forcedGreens[pos];
-    if (forcedLetter === letter) {
-        return "green";
-    }
-}
-
   const blindIdx = state.powers?.blindSpotIndex;
   let strongest = null;
   const fbKey = isGuesser ? "fbGuesser" : "fb";
