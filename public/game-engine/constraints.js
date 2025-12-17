@@ -20,7 +20,8 @@ window.getPattern = function(state, isSetter) {
   if (!state.history || state.history.length === 0) {
     return ["-", "-", "-", "-", "-"];
   }
-  
+  if (isVowelRefreshDrop(i, h.roundIndex)) continue;
+
   const pattern = ["-", "-", "-", "-", "-"];
 if (state.powers?.forcedGreens) {
   for (const pos in state.powers.forcedGreens) {
@@ -120,6 +121,10 @@ window.getMustContainLetters = function(state, isSetter) {
 
   return result;
 };
+function isVowelRefreshDrop(pos, roundIndex) {
+  const eff = state.powers?.vowelRefreshEffect;
+  return eff && eff.guessIndex === roundIndex && eff.indices.includes(pos);
+}
 
 
 window.formatPattern = arr => arr.join(" ");
