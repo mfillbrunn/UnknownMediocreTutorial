@@ -48,41 +48,46 @@ PowerEngine.register("revealLetter", {
   },
 
   // History decoration: ensure the revealed index is green in guesser view
-  historyEffects(entry, isSetter) {
-    if (!entry.revealPowerApplied) return;
+ historyEffects(entry, isSetter) {
+  if (!entry.revealPowerApplied) return;
 
-    // server can store either a number or { index, mode }
-    const idx = typeof entry.revealPowerApplied === "number"
+  const idx =
+    typeof entry.revealPowerApplied === "number"
       ? entry.revealPowerApplied
       : entry.revealPowerApplied.index;
 
-    if (!isSetter && Array.isArray(entry.fbGuesser)) {
-      // Ensure fbGuesser exists
-if (!Array.isArray(entry.fbGuesser)) {
-  // If setter view, fallback to fb instead
-  if (Array.isArray(entry.fb)) {
-    entry.fbGuesser = entry.fb.slice();
-  } else {
-    entry.fbGuesser = ["⬛","⬛","⬛","⬛","⬛"];
-  }
-} else {
-  // clone to avoid mutating original
-  entry.fbGuesser = entry.fbGuesser.slice();
-}
-
-// Apply the forced green
-entry.fbGuesser[idx] = "🟩";
-
-// Also apply for setter view (important!)
-if (Array.isArray(entry.fb)) {
-  entry.fb = entry.fb.slice();
-  entry.fb[idx] = "🟩";
-}
-
-entry.fb[idx] = "🟩";         // setter sees it too
-
+  //
+  // ⭐ 1. Ensure fbGuesser exists
+  //
+  if (!Array.isArray(entry.fbGuesser)) {
+    if (Array.isArray(entry.fb)) {
+      entry.fbGuesser = entry.fb.slice();  // clone from fb
+    } else {
+      entry.fbGuesser = ["⬛","⬛","⬛","⬛","⬛"];
     }
-  },
+  } else {
+    entry.fbGuesser = entry.fbGuesser.slice();  // clone
+  }
+
+  //
+  // ⭐ 2. Apply forced green to guesser view
+  //
+  entry.fbGuesser[idx] = "🟩";
+
+  //
+  // ⭐ 3. Ensure fb exists for setter too
+  //
+  if (!Array.isArray(entry.fb)) {
+    entry.fb = entry.fbGuesser.slice();  // fallback: use guesser fb
+  } else {
+    entry.fb = entry.fb.slice();
+  }
+
+  //
+  // ⭐ 4. Apply forced green to setter view
+  //
+  entry.fb[idx] = "🟩";
+},
 
   // Keyboard decoration: lock revealed letters as green
   keyboardEffects(state, role, keyEl, letter) {
