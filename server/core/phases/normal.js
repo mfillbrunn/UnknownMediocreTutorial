@@ -153,6 +153,20 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
         io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
         return;
       }
+      // Enforce Rare Letter Bonus revealed green
+      if (typeof state.powers.rareLetterBonusGreenIndex === "number") {
+        const pos = state.powers.rareLetterBonusGreenIndex;
+        const requiredLetter = state.secret[pos].toUpperCase();
+      
+        if (w[pos].toUpperCase() !== requiredLetter) {
+          io.to(action.playerId).emit(
+            "errorMessage",
+            `Secret must keep the revealed green letter ${requiredLetter} at position ${pos + 1}!`
+          );
+          return;
+        }
+      }
+
       state.secret = w;
       state.currentSecret = w;
       state.firstSecretSet = true;
@@ -172,7 +186,22 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     }
     if (action.type === "SET_SECRET_SAME") {
       if (powerEngine.beforeSetterSecretChange(state, action)) return;
-      if (!isConsistentWithHistory(state.history, state.secret)) return;
+       if (!isConsistentWithHistory(state.history, w)) {
+        io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
+        return;
+      }      
+            if (typeof state.powers.rareLetterBonusGreenIndex === "number") {
+        const pos = state.powers.rareLetterBonusGreenIndex;
+        const requiredLetter = state.secret[pos].toUpperCase();
+      
+        if (w[pos].toUpperCase() !== requiredLetter) {
+          io.to(action.playerId).emit(
+            "errorMessage",
+            `Secret must keep the revealed green letter ${requiredLetter} at position ${pos + 1}!`
+          );
+          return;
+        }
+      }
       if (state.pendingGuess === state.secret) {
         state.currentSecret = state.secret;
         pushWinEntry(state, state.secret);
