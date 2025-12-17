@@ -1,3 +1,5 @@
+const engine = require("../powerEngineServer.js");
+
 engine.registerPower("revealLetter", {
   apply(state, action, roomId, io) {
     const p = state.powers.revealLetter;
