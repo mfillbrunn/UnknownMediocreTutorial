@@ -41,7 +41,9 @@ if (state.powers?.forcedGreens) {
 
     for (let i = 0; i < 5; i++) {
       if (fb[i] === "🟩") {
-        pattern[i] = h.guess[i].toUpperCase();
+         if (pattern[i] === "-") {  // only fill if not forced
+    pattern[i] = h.guess[i].toUpperCase();
+  }
       }
     }
   }
