@@ -11,6 +11,15 @@ function isConsistentWithHistory(history, proposedSecret) {
     if (entry.ignoreConstraints) continue;
     const expected = scoreGuess(proposedSecret, entry.guess).join("");
     const actual = entry.fb.join("");
+    const eff = state?.powers?.vowelRefreshEffect;
+
+    if (eff && eff.guessIndex === entry.roundIndex) {
+        // Ignore vowel-constrained positions for consistency
+        for (const pos of eff.indices) {
+            continue; // do not enforce constraint for this position
+        }
+    }
+
     if (expected !== actual) return false;
   }
   return true;
