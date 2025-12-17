@@ -9,14 +9,25 @@ window.KEYBOARD_LAYOUT = [
 // Determine best letter status for color assignment
 function getLetterStatusFromHistory(letter, state, isGuesser) {
   if (!state?.history) return null;
+  // ⭐ NEW: forced greens take absolute precedence
+const forcedGreens = state.powers?.forcedGreens || {};
+for (const pos in forcedGreens) {
+    const forcedLetter = forcedGreens[pos];
+    if (forcedLetter === letter) {
+        return "green";
+    }
+}
+
   const blindIdx = state.powers?.blindSpotIndex;
   let strongest = null;
   const fbKey = isGuesser ? "fbGuesser" : "fb";
   for (let idx = 0; idx < state.history.length; idx++) {
     const h = state.history[idx];
+     if (!h || !h.guess) continue; 
    if (h.countOnlyApplied) continue;
     const guess = h.guess.toUpperCase();
     const fbArr = h[fbKey];
+    if (!Array.isArray(fbArr)) continue;
     for (let i = 0; i < 5; i++) {
     
       // Skip this tile ONLY if it was hidden by HideTile
@@ -37,6 +48,7 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
             continue;
           }
       if (guess[i] !== letter) continue;
+
     
       const fb = fbArr[i];
       if (fb === "🟦") {
