@@ -19,14 +19,16 @@ window.POWER_RULES = {
 revealLetter: {
   once: true,
   allowed(state, role) {
-    const p = state.powers || {};
+    const p = state.powers.revealLetter;
+    if (!p) return false;
+
     return (
       state.phase === "normal" &&
       role === state.guesser &&
       !state.powerUsedThisTurn &&
       state.activePowers?.includes("revealLetter") &&
-      p.revealLetterReady === true &&
-      p.revealLetterUsed !== true
+      p.ready === true &&
+      p.used !== true
     );
   }
 },
