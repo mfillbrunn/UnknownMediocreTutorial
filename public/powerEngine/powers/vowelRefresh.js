@@ -1,43 +1,39 @@
-// /powers/powers/vowelRefresh.js
-PowerEngine.register("vowelRefresh", {
-  role: "setter",
+const engine = require("../powerEngineServer.js");
 
-  renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.className = "power-btn";
-    btn.textContent = "Vowel Refresh";
-    this.buttonEl = btn;
-    $("setterPowerContainer").appendChild(btn);
+engine.registerPower("vowelRefresh", {
+  apply(state) {
+    if (state.powers.vowelRefreshUsed) return;
+    state.powers.vowelRefreshUsed = true;
+    state.powerUsedThisTurn = true;
 
-    btn.onclick = () => {
-      sendGameAction(roomId, { type: "USE_VOWEL_REFRESH" });
+    const lastIndex = state.history.length - 1;
+    const last = state.history[lastIndex];
+    if (!last) return;
+
+    const vowels = new Set(["A","E","I","O","U"]);  // Y is NOT a vowel
+    const guess = last.guess.toUpperCase();
+
+    // Find vowel positions in last guess
+    const indices = [];
+    for (let i = 0; i < 5; i++) {
+      if (vowels.has(guess[i])) {
+        indices.push(i);
+      }
+    }
+
+    // Store vowel refresh effect (does NOT mutate feedback)
+    state.powers.vowelRefreshEffect = {
+      guessIndex: lastIndex,
+      indices     // positions whose constraints are erased
     };
   },
 
-  historyEffects(entry, isSetter) {
-    if (!entry.vowelRefreshLetters) return;
-
-const letters = entry.vowelRefreshLetters || [];
-if (!Array.isArray(letters)) return;
-
-entry.fbGuesser = entry.fbGuesser ? entry.fbGuesser.slice() : [" "," "," "," "," "];
-entry.fb = entry.fb ? entry.fb.slice() : [" "," "," "," "," "];
-
-
-    for (let i = 0; i < 5; i++) {
-      const L = entry.guess[i].toUpperCase();
-      if (letters.includes(L)) {
-        entry.fbGuesser[i] = " ";
-        entry.fb[i] = " ";
-      }
-    }
+  postScore() {
+    // Do NOT change feedback tiles
+    return;
   },
 
-  keyboardEffects(state, role, keyEl, letter) {
-    const arr = state.powers.vowelRefreshLetters;
-    if (!arr) return;
-    if (arr.includes(letter)) {
-      keyEl.classList.remove("key-green", "key-yellow", "key-gray", "key-blue");
-    }
+  turnStart(state, role) {
+    // Optional cleanup logic if needed later
   }
 });
