@@ -63,13 +63,7 @@ engine.registerPower("revealLetter", {
     // Ensure fbGuesser array exists
     entry.fbGuesser = entry.fbGuesser || Array(5).fill("⬛");
 
-    // FORCE GREEN for both setter & guesser feedback
-    entry.fbGuesser[index] = "🟩";
-    entry.fb = entry.fb || Array(5).fill("⬛");
-    entry.fb[index] = "🟩";
-
-    // Stores forced reveal in history for rendering
-    entry.revealPowerApplied = { index, letter };
+entry.revealPowerApplied = { index, letter };
 
     // Clear pending reveal
     p.pendingReveal = null;
