@@ -7,12 +7,17 @@ const { scoreGuess } = require("./scoring.js");
  * Used when setter chooses a new secret mid-round.
  */
 function isConsistentWithHistory(history, proposedSecret, state){
+   const eff = state?.powers?.vowelRefreshEffect;
   for (const entry of history) {
     if (entry.ignoreConstraints) continue;
     const expected = scoreGuess(proposedSecret, entry.guess).join("");
     const actual = entry.fb.join("");
-    const eff = state?.powers?.vowelRefreshEffect;
-
+       // Apply vowelRefresh erase effect to expected feedback
+    if (eff && entry.roundIndex === eff.guessIndex) {
+      for (const pos of eff.indices) {
+        expected[pos] = actual[pos];  // neutralize mismatch
+      }
+    }
     for (let i = 0; i < 5; i++) {
 
       // Skip vowel positions of refreshed round
