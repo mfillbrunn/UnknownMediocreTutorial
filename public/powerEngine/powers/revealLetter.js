@@ -58,7 +58,9 @@ PowerEngine.register("revealLetter", {
 
     if (!isSetter && Array.isArray(entry.fbGuesser)) {
       entry.fbGuesser = entry.fbGuesser.slice();
-      entry.fbGuesser[idx] = "🟩";
+      entry.fbGuesser[idx] = "🟩";  // correct
+entry.fb[idx] = "🟩";         // setter sees it too
+
     }
   },
 
