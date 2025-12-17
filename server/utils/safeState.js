@@ -74,9 +74,13 @@ safe.history = safe.history
       // Guesser sees masked feedback only
       if (role === state.guesser) {
         delete e.fb;
-        if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
-          e.fbGuesser = ["?", "?", "?", "?", "?"];
-        }
+        if (role === state.guesser) {
+  // If the guesser should see feedback, use actual fbGuesser
+  if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
+    e.fbGuesser = e.fbGuesser || ["?", "?", "?", "?", "?"];
+  }
+}
+
       }
       // STEALTH GUESS — hide ONLY while stealth is active this round
       if (role === state.setter && state.powers.stealthGuessActive && e.stealthApplied) {
@@ -92,13 +96,21 @@ safe.history = safe.history
       if (e.revealedOldSecret) {
         e.powerUsed = (e.powerUsed || "") + ` Reveal(${e.revealedOldSecret.toUpperCase()})`;
       }
-      // Setter sees real feedback only
-      if (role === state.setter) {
-        delete e.fbGuesser;
-        if (!Array.isArray(e.fb) || e.fb.length !== 5) {
-          e.fb = ["?", "?", "?", "?", "?"];
-        }
-      }
+  // Setter sees full feedback INCLUDING power effects in fbGuesser if present
+if (role === state.setter) {
+  if (!Array.isArray(e.fb) || e.fb.length !== 5) {
+    // If fb missing, fall back to fbGuesser (power-modified)
+    if (Array.isArray(e.fbGuesser)) {
+      e.fb = e.fbGuesser;
+    } else {
+      e.fb = ["?", "?", "?", "?", "?"];
+    }
+  }
+
+  // Keep fbGuesser if it contains power modifications
+  // DO NOT delete it!
+}
+
 
       // Always hide finalSecret during gameplay
       delete e.finalSecret;
