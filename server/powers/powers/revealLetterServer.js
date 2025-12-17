@@ -3,27 +3,35 @@ const engine = require("../powerEngineServer.js");
 engine.registerPower("revealLetter", {
   apply(state, action, roomId, io) {
     const p = state.powers.revealLetter;
-
     if (!p.ready || p.used) return;
 
     p.used = true;
     state.powerUsedThisTurn = true;
     p.ready = false;
 
-    // Pick reveal index
-    const i = Math.floor(Math.random() * 5);
-    const letter = state.secret[i].toUpperCase();
+    // 1. Choose index to reveal
+    const index = Math.floor(Math.random() * 5);
+    const letter = state.secret[index].toUpperCase();
 
-    // Store for injection
-    p.pendingReveal = { index: i, letter, mode: p.mode };
+    // 2. Save PERMANENT enforced reveal
+    if (!state.powers.forcedGreens) state.powers.forcedGreens = {};
+    state.powers.forcedGreens[index] = letter;
 
-    // Send client reveal animation
-    io.to(roomId).emit("rareLetterReveal", {   // same event works
-      index: i,
+    // 3. For keyboard effects
+    if (!state.powers.guesserLockedGreens) state.powers.guesserLockedGreens = [];
+    if (!state.powers.guesserLockedGreens.includes(letter))
+      state.powers.guesserLockedGreens.push(letter);
+
+    // 4. Save pending reveal for next scoring entry
+    p.pendingReveal = { index, letter };
+
+    // 5. Notify UI (both players receive the event; only guesser reacts)
+    io.to(roomId).emit("rareLetterReveal", { 
+      index,
       letter
     });
 
-    io.to(roomId).emit("toast", `${p.mode} letter revealed!`);
+    io.to(roomId).emit("toast", `Revealed letter ${letter} at position ${index+1}!`);
   },
 
   postScore(state, entry, roomId, io) {
@@ -31,14 +39,20 @@ engine.registerPower("revealLetter", {
     const pr = p.pendingReveal;
     if (!pr) return;
 
-    const { index, letter, mode } = pr;
+    const { index, letter } = pr;
 
+    // Ensure fbGuesser array exists
     entry.fbGuesser = entry.fbGuesser || Array(5).fill("⬛");
-    entry.fbGuesser[index] = "🟩";   // unified green behavior
 
-    entry.revealPowerApplied = { index, mode };
+    // FORCE GREEN for both setter & guesser feedback
+    entry.fbGuesser[index] = "🟩";
+    entry.fb = entry.fb || Array(5).fill("⬛");
+    entry.fb[index] = "🟩";
 
-    // clear for next turn
+    // Stores forced reveal in history for rendering
+    entry.revealPowerApplied = { index, letter };
+
+    // Clear pending reveal
     p.pendingReveal = null;
   },
 
@@ -46,21 +60,20 @@ engine.registerPower("revealLetter", {
     if (role !== state.guesser) return;
 
     const p = state.powers.revealLetter;
-
     if (p.used || p.ready) return;
 
-    // UNLOCK CONDITIONS
+    // === UNLOCK CONDITIONS ===
     if (p.mode === "RARE") {
       const rare = new Set(["Q","J","X","Z","W","K"]);
-      let totalRare = 0;
+      let total = 0;
       for (const h of state.history) {
         for (const c of h.guess.toUpperCase()) {
-          if (rare.has(c)) totalRare++;
+          if (rare.has(c)) total++;
         }
       }
-      if (totalRare >= 4) {
+      if (total >= 4) {
         p.ready = true;
-        io.to(roomId).emit("toast", "Rare Bonus unlocked!");
+        io.to(roomId).emit("toast", "Rare Letter Reveal unlocked!");
       }
     }
 
@@ -70,15 +83,13 @@ engine.registerPower("revealLetter", {
         new Set("ASDFGHJKL"),
         new Set("ZXCVBNM")
       ];
-      let totals = [0, 0, 0];
+      let totals = [0,0,0];
       for (const h of state.history) {
         for (const c of h.guess.toUpperCase()) {
-          rows.forEach((r, idx) => {
-            if (r.has(c)) totals[idx]++;
-          });
+          rows.forEach((r,i)=>{ if(r.has(c)) totals[i]++; });
         }
       }
-      if (totals.some(x => x >= 6)) {
+      if (totals.some(x=>x>=6)) {
         p.ready = true;
         io.to(roomId).emit("toast", "Row Master unlocked!");
       }
