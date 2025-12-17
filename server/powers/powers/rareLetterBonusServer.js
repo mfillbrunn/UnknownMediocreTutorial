@@ -14,7 +14,7 @@ engine.registerPower("rareLetterBonus", {
   postScore(state, entry) {
     if (!state.powers.rareLetterBonusActive) return;
 
-    const guess = state.pendingGuess.toUpperCase();
+    const guess = entry.guess.toUpperCase();
     const fb = entry.fb;
 
     const pos = [];
