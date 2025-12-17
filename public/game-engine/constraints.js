@@ -20,7 +20,11 @@ window.getPattern = function(state, isSetter) {
   if (!state.history || state.history.length === 0) {
     return ["-", "-", "-", "-", "-"];
   }
-
+if (state.powers?.forcedGreens) {
+  for (const pos in state.powers.forcedGreens) {
+    pattern[pos] = state.powers.forcedGreens[pos];
+  }
+}
   const pattern = ["-", "-", "-", "-", "-"];
 
   // Pick the right feedback array depending on role
