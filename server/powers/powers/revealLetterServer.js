@@ -1,6 +1,6 @@
-engine.registerPower("revealLetterPower", {
+engine.registerPower("revealLetter", {
   apply(state, action, roomId, io) {
-    const p = state.powers.revealLetterPower;
+    const p = state.powers.revealLetter;
 
     if (!p.ready || p.used) return;
 
@@ -25,7 +25,7 @@ engine.registerPower("revealLetterPower", {
   },
 
   postScore(state, entry, roomId, io) {
-    const p = state.powers.revealLetterPower;
+    const p = state.powers.revealLetter;
     const pr = p.pendingReveal;
     if (!pr) return;
 
@@ -43,7 +43,7 @@ engine.registerPower("revealLetterPower", {
   turnStart(state, role, roomId, io) {
     if (role !== state.guesser) return;
 
-    const p = state.powers.revealLetterPower;
+    const p = state.powers.revealLetter;
 
     if (p.used || p.ready) return;
 
