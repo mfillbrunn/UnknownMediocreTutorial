@@ -32,9 +32,6 @@ engine.registerPower("revealLetter", {
     const index = options[Math.floor(Math.random() * options.length)];
     const letter = state.secret[index].toUpperCase();
 
-    
-    const letter = state.secret[index].toUpperCase();
-
     // 2. Save PERMANENT enforced reveal
     if (!state.powers.forcedGreens) state.powers.forcedGreens = {};
     state.powers.forcedGreens[index] = letter;
