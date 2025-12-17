@@ -2,40 +2,32 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("rareLetterBonus", {
   apply(state, action, roomId, io) {
-    if (!state.powers.rareLetterBonusReady) return;
-    if (state.powers.rareLetterBonusUsed) return;
-    state.powers.rareLetterBonusUsed = true;
-    state.powerUsedThisTurn = true;
-    state.powers.rareLetterBonusActive = true;
-    state.powers.rareLetterBonusReady = false;
-    io.to(roomId).emit("powerUsed", { type: "rareLetterBonus" });
-  },
+  if (!state.powers.rareLetterBonusReady) return;
+  if (state.powers.rareLetterBonusUsed) return;
 
-  postScore(state, entry) {
-    if (!state.powers.rareLetterBonusActive) return;
+  // Mark as used
+  state.powers.rareLetterBonusUsed = true;
+  state.powerUsedThisTurn = true;
+  state.powers.rareLetterBonusReady = false;
 
-    const guess = entry.guess.toUpperCase();
-    const fb = entry.fb;
+  // Pick a random position from true secret
+  const positions = [0,1,2,3,4];
+  const i = positions[Math.floor(Math.random() * 5)];
+  const letter = state.secret[i].toUpperCase();
 
-    const pos = [];
-    for (let i = 0; i < 5; i++) if (fb[i] === "🟩") pos.push(i);
+  // Store revealed info
+  state.powers.guesserLockedGreens.push(letter);
+  state.powers.rareLetterBonusGreenIndex = i;
 
-    if (pos.length > 0) {
-      const i = pos[Math.floor(Math.random() * pos.length)];
-      entry.rareBonusApplied = i;
+  // Send reveal to guesser
+  io.to(room[state.guesser]).emit("rareLetterReveal", {
+    index: i,
+    letter
+  });
 
-      entry.fbGuesser = entry.fbGuesser.slice();
-      entry.fbGuesser[i] = "🟩";
-
-      const L = state.secret[i].toUpperCase();
-      state.powers.guesserLockedGreens = state.powers.guesserLockedGreens || [];
-      if (!state.powers.guesserLockedGreens.includes(L)) {
-        state.powers.guesserLockedGreens.push(L);
-      }
-    }
-
-    state.powers.rareLetterBonusActive = false;
-  },
+  // They get a toast too
+  io.to(roomId).emit("toast", "A green letter has been revealed!");
+},
 
   turnStart(state, role, roomId, io) {
   if (role !== state.guesser) return;
