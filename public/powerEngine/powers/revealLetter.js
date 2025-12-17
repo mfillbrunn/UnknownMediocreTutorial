@@ -70,11 +70,6 @@ PowerEngine.register("revealLetter", {
   }
 
   //
-  // ⭐ 2. Apply forced green to guesser view
-  //
-  entry.fbGuesser[idx] = "🟩";
-
-  //
   // ⭐ 3. Ensure fb exists for setter too
   //
   if (!Array.isArray(entry.fb)) {
@@ -83,10 +78,7 @@ PowerEngine.register("revealLetter", {
     entry.fb = entry.fb.slice();
   }
 
-  //
-  // ⭐ 4. Apply forced green to setter view
-  //
-  entry.fb[idx] = "🟩";
+ 
 },
 
   // Keyboard decoration: lock revealed letters as green
