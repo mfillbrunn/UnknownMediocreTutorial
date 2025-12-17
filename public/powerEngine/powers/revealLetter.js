@@ -57,8 +57,28 @@ PowerEngine.register("revealLetter", {
       : entry.revealPowerApplied.index;
 
     if (!isSetter && Array.isArray(entry.fbGuesser)) {
-      entry.fbGuesser = entry.fbGuesser.slice();
-      entry.fbGuesser[idx] = "🟩";  // correct
+      // Ensure fbGuesser exists
+if (!Array.isArray(entry.fbGuesser)) {
+  // If setter view, fallback to fb instead
+  if (Array.isArray(entry.fb)) {
+    entry.fbGuesser = entry.fb.slice();
+  } else {
+    entry.fbGuesser = ["⬛","⬛","⬛","⬛","⬛"];
+  }
+} else {
+  // clone to avoid mutating original
+  entry.fbGuesser = entry.fbGuesser.slice();
+}
+
+// Apply the forced green
+entry.fbGuesser[idx] = "🟩";
+
+// Also apply for setter view (important!)
+if (Array.isArray(entry.fb)) {
+  entry.fb = entry.fb.slice();
+  entry.fb[idx] = "🟩";
+}
+
 entry.fb[idx] = "🟩";         // setter sees it too
 
     }
