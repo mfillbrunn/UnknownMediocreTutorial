@@ -16,29 +16,21 @@ window.POWER_RULES = {
       );
     }
   },
- rowMaster: {
+revealLetter: {
   once: true,
   allowed(state, role) {
+    const p = state.powers || {};
     return (
       state.phase === "normal" &&
       role === state.guesser &&
       !state.powerUsedThisTurn &&
-      state.powers.rowMasterReady   // new condition
+      state.activePowers?.includes("revealLetter") &&
+      p.revealLetterReady === true &&
+      p.revealLetterUsed !== true
     );
   }
 },
 
-rareLetterBonus: {
-  once: true,
-  allowed(state, role) {
-    return (
-      state.phase === "normal" &&
-      role === state.guesser &&
-      !state.powerUsedThisTurn &&
-      state.powers.rareLetterBonusReady   // new condition
-    );
-  }
-},
 
 assassinWord: {
   once: true,
