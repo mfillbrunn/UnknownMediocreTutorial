@@ -47,38 +47,10 @@ PowerEngine.register("revealLetter", {
     // based on POWER_RULES["revealLetter"].allowed(...)
   },
 
-  // History decoration: ensure the revealed index is green in guesser view
  historyEffects(entry, isSetter) {
-  if (!entry.revealPowerApplied) return;
-
-  const idx =
-    typeof entry.revealPowerApplied === "number"
-      ? entry.revealPowerApplied
-      : entry.revealPowerApplied.index;
-
-  //
-  // ⭐ 1. Ensure fbGuesser exists
-  //
-  if (!Array.isArray(entry.fbGuesser)) {
-    if (Array.isArray(entry.fb)) {
-      entry.fbGuesser = entry.fb.slice();  // clone from fb
-    } else {
-      entry.fbGuesser = ["⬛","⬛","⬛","⬛","⬛"];
-    }
-  } else {
-    entry.fbGuesser = entry.fbGuesser.slice();  // clone
-  }
-
-  //
-  // ⭐ 3. Ensure fb exists for setter too
-  //
-  if (!Array.isArray(entry.fb)) {
-    entry.fb = entry.fbGuesser.slice();  // fallback: use guesser fb
-  } else {
-    entry.fb = entry.fb.slice();
-  }
-
- 
+  // Do NOT modify fb or fbGuesser
+  // revealLetter ONLY affects pattern and mustContain
+  return;
 },
 
   // Keyboard decoration: lock revealed letters as green
