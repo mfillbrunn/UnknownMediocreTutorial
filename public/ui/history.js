@@ -14,7 +14,18 @@ window.renderHistory = function (state, container, isSetter) {
 
     PowerEngine.applyHistoryEffects(safeEntry, isSetter);
 
-    const fbArray = isSetter ? safeEntry.fb : safeEntry.fbGuesser;
+    let fbArray;
+
+// Prefer server-provided / power-modified arrays if available
+if (!isSetter && Array.isArray(safeEntry.fbGuesser)) {
+  fbArray = safeEntry.fbGuesser;
+} else if (Array.isArray(safeEntry.fb)) {
+  fbArray = safeEntry.fb;
+} else {
+  // Fallback: should never happen but avoids crashes
+  fbArray = ["⬛","⬛","⬛","⬛","⬛"];
+}
+
 
     if (!Array.isArray(fbArray) || fbArray.length < 5) {
       console.warn("Skipping invalid history entry:", safeEntry);
