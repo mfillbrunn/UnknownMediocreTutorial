@@ -52,7 +52,7 @@ if (state.powers?.forcedGreens) {
 
 window.getMustContainLetters = function(state, isSetter) {
   if (!state.history) return [];
-
+  const forced = state.powers?.forcedGreens || {};
   const fbKey = isSetter ? "fb" : "fbGuesser";
 
   const requiredCounts = {};
@@ -109,6 +109,11 @@ window.getMustContainLetters = function(state, isSetter) {
 
     result.push(entry);
   });
+  // Insert forced greens into mustContain list
+  for (const pos in forced) {
+    const letter = forced[pos];
+    result.push(`${letter} (${parseInt(pos)+1})`); // shows correct position
+  }
 
   return result;
 };
