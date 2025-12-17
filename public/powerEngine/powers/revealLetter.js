@@ -34,7 +34,7 @@ PowerEngine.register("revealLetter", {
     btn.style.display = "";
 
     // Button label depends on mode
-    const mode = state.powers?.revealLetterMode;
+    const mode = state.powers?.revealLetter?.mode;
     if (mode === "RARE") {
       btn.textContent = "Rare Letter Bonus";
     } else if (mode === "ROW") {
