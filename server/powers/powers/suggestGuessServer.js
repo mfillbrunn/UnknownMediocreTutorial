@@ -17,7 +17,7 @@ engine.registerPower("suggestGuess", {
     state.powers.suggestGuessUsed = true;
 
     const feasible = WORDS.filter(w =>
-      isConsistentWithHistory(state.history, w)
+      isConsistentWithHistory(state.history, w, state)
     );
 
     if (feasible.length === 0) {
