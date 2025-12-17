@@ -10,8 +10,8 @@ function isConsistentWithHistory(history, proposedSecret, state){
    const eff = state?.powers?.vowelRefreshEffect;
   for (const entry of history) {
     if (entry.ignoreConstraints) continue;
-    const expected = scoreGuess(proposedSecret, entry.guess).join("");
-    const actual = entry.fb.join("");
+    const expected = scoreGuess(proposedSecret, entry.guess);
+    const actual = entry.fb;
        // Apply vowelRefresh erase effect to expected feedback
     if (eff && entry.roundIndex === eff.guessIndex) {
       for (const pos of eff.indices) {
