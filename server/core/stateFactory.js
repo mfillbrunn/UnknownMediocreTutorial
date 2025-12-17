@@ -78,20 +78,18 @@ vowelRefreshUsed: false,
 vowelRefreshLetters: null,
 vowelRefreshPending: false,
 
-// RARE LETTER BONUS
-rareLetterBonusUsed: false,
-rareLetterBonusActive: false,
-rareLetterBonusReady: false,
-guesserLockedGreens: [],
 
-// ROW MASTER
-rowMasterUsed: false,
-rowMasterActive: false,
-rowMasterReady: false,
 
 // ASSASSIN WORD
 assassinWordUsed: false,
 assassinWord: null,
+// UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
+revealLetter: {
+  mode: null,            // "RARE" or "ROW" — set at match start
+  ready: false,          // power is unlocked
+  used: false,           // power has been consumed
+  pendingReveal: null    // { index, letter, mode }
+},
 
     }
   };
