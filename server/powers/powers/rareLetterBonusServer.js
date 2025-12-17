@@ -18,15 +18,38 @@ engine.registerPower("rareLetterBonus", {
   // Store revealed info
   state.powers.guesserLockedGreens.push(letter);
   state.powers.rareLetterBonusGreenIndex = i;
+// Flag that this power must modify the next feedback entry
+state.powers.rareLetterBonusAppliedThisTurn = {
+  index: i,
+  letter: letter
+};
 
   // Send reveal to guesser
   io.to(room[state.guesser]).emit("rareLetterReveal", {
     index: i,
     letter
   });
-
+  
   // They get a toast too
   io.to(roomId).emit("toast", "A green letter has been revealed!");
+},
+postScore(state, entry, roomId, io) {
+  const applied = state.powers.rareLetterBonusAppliedThisTurn;
+  if (!applied) return;
+
+  const { index, letter } = applied;
+
+  // ensure fbGuesser exists
+  if (!entry.fbGuesser) {
+    entry.fbGuesser = Array(5).fill("⬛");
+  }
+
+  // Inject the green feedback
+  entry.fbGuesser[index] = "🟩";
+  entry.rareBonusApplied = index;
+
+  // Clean flag so it doesn't affect next turn
+  state.powers.rareLetterBonusAppliedThisTurn = null;
 },
 
   turnStart(state, role, roomId, io) {
