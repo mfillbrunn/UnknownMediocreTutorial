@@ -1,39 +1,46 @@
-const engine = require("../powerEngineServer.js");
+// /public/powerEngine/powers/vowelRefresh.js
+PowerEngine.register("vowelRefresh", {
+  role: "guesser",
 
-engine.registerPower("vowelRefresh", {
-  apply(state) {
-    if (state.powers.vowelRefreshUsed) return;
-    state.powers.vowelRefreshUsed = true;
-    state.powerUsedThisTurn = true;
+  renderButton(roomId) {
+    const btn = document.createElement("button");
+    btn.className = "power-btn";
+    btn.textContent = "Vowel Refresh";
+    this.buttonEl = btn;
+    $("guesserPowerContainer").appendChild(btn);
 
-    const lastIndex = state.history.length - 1;
-    const last = state.history[lastIndex];
-    if (!last) return;
-
-    const vowels = new Set(["A","E","I","O","U"]);  // Y is NOT a vowel
-    const guess = last.guess.toUpperCase();
-
-    // Find vowel positions in last guess
-    const indices = [];
-    for (let i = 0; i < 5; i++) {
-      if (vowels.has(guess[i])) {
-        indices.push(i);
-      }
-    }
-
-    // Store vowel refresh effect (does NOT mutate feedback)
-    state.powers.vowelRefreshEffect = {
-      guessIndex: lastIndex,
-      indices     // positions whose constraints are erased
+    btn.onclick = () => {
+      sendGameAction(roomId, { type: "USE_VOWEL_REFRESH" });
     };
   },
 
-  postScore() {
-    // Do NOT change feedback tiles
-    return;
+  uiEffects(state, role) {
+    if (!this.buttonEl) return;
+
+    if (!state.activePowers.includes("vowelRefresh")) {
+      this.buttonEl.style.display = "none";
+      return;
+    }
+
+    if (role !== state.guesser) {
+      this.buttonEl.style.display = "none";
+      return;
+    }
+
+    this.buttonEl.style.display = "";
+
+    const used = state.powers.vowelRefreshUsed;
+    const turn = state.turn === state.guesser;
+    const phase = state.phase === "normal";
+
+    // Button enabled only when allowed
+    this.buttonEl.disabled = used || !turn || !phase;
+    this.buttonEl.classList.toggle("disabled-btn", this.buttonEl.disabled);
   },
 
-  turnStart(state, role) {
-    // Optional cleanup logic if needed later
-  }
+  // No historyEffects: vowelRefresh does NOT modify feedback display
+  historyEffects() {},
+
+  // No keyboardEffects: keyboard.js handles vowel reset logic
+  keyboardEffects() {}
 });
