@@ -62,6 +62,7 @@ window.getMustContainLetters = function(state, isSetter) {
   const requiredCounts = {};
   const forbiddenPositions = {};
   const greenPositions = {};
+  if (isVowelRefreshDrop(i, h.roundIndex)) continue;
 
   for (const h of state.history) {
     if (h.ignoreConstraints) continue;
