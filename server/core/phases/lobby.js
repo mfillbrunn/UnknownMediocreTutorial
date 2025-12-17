@@ -20,8 +20,7 @@ const SETTER_POWERS = [
         "revealGreen",
         "freezeSecret",
         "magicMode",
-"rareLetterBonus",
-"rowMaster",
+"revealLetter",
       ];
 function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
@@ -102,12 +101,19 @@ if (action.type === "SET_POWER_COUNT") {
   const sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
   const gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
   state.activePowers = [...sP, ...gP];
+            // Initialize unified revealLetter power mode
+if (state.activePowers.includes("revealLetter")) {
+  state.powers.revealLetter.mode =
+    Math.random() < 0.5 ? "RARE" : "ROW";
+}
+
       state.phase = "simultaneous";
       state.turn = null;
       state.simultaneousGuessSubmitted = false;
       state.simultaneousSecretSubmitted = false;
 
       emitLobbyEvent(io, roomId, { type: "hideLobby" });
+            
       emitStateForAllPlayers(roomId, room, io);
     }
     return;
