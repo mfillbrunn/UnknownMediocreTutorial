@@ -2,12 +2,17 @@
  * Normalize emoji feedback so comparisons are consistent
  */
 function normalizeFB(fbArr) {
+  if (!Array.isArray(fbArr)) {
+    // Treat missing feedback as all black tiles
+    return ["⬛","⬛","⬛","⬛","⬛"];
+  }
   return fbArr.map(fb => {
     if (fb === "🟩") return "🟩";
     if (fb === "🟨") return "🟨";
     return "⬛";
   });
 }
+
 
 /**
  * Browser version of isConsistentWithHistory
