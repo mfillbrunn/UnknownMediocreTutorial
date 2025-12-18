@@ -36,7 +36,7 @@ function categorizeRemainingWords(count) {
   return "none"; // edge-case: impossible or broken history
 }
 function computeRemainingWords() {
-  const words = window.ALLOWED_GUESSES;
+  const words = window.ALLOWED_SECRETS;
   if (!state || !state.history) return 0;
 
   let count = 0;
@@ -62,7 +62,7 @@ function updateRemainingWords() {
 }
 
 function computeRemainingAfterIndex(idx) {
-  const words = window.ALLOWED_GUESSES;
+  const words = window.ALLOWED_SECRETS;
   let count = 0;
 
   // Build a sliced history up to idx (inclusive)
@@ -216,6 +216,11 @@ window.ALLOWED_GUESSES = new Set();
 fetch("/api/allowed-guesses")
   .then(r => r.json())
   .then(words => words.forEach(w => window.ALLOWED_GUESSES.add(w)));
+// Load allowed secrets (solutions list)
+window.ALLOWED_SECRETS = new Set();
+fetch("/api/allowed-secrets")
+  .then(r => r.json())
+  .then(words => words.forEach(w => window.ALLOWED_SECRETS.add(w)));
 
 // -----------------------------------------------------
 // AUTO-REJOIN
