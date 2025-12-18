@@ -98,7 +98,9 @@ window.applyPreviewColorsWhileTyping = function () {
   if (guess.length === 0) return;
   if (!window.currentSecret || window.currentSecret.length !== 5) return;
 
-  if (guess.length < BOARD_COLS) return; // Only color full previews
+  if (!window.currentSecret) return;
+   let preview = window.predictFeedback(window.currentSecret, guess.padEnd(5, "-"));
+
 
   let preview = window.predictFeedback(window.currentSecret, guess);
   if (!preview) return;
