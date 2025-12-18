@@ -641,3 +641,58 @@ input[type="number"],
 .summary-table tr:last-child td:nth-child(5) {
   color: #27ae60; /* green when only 1 word left */
 }
+/* Base styling */
+.remainingMeter {
+  font-weight: 800;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+/* Color themes */
+.rm-many {
+  color: #3498db;      /* blue */
+  opacity: 0.7;
+}
+
+.rm-plenty {
+  color: #16a085;      /* teal */
+  animation: rm-softpulse 1.8s infinite;
+}
+
+.rm-some {
+  color: #f1c40f;      /* gold */
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+}
+
+.rm-few {
+  color: #e67e22;      /* orange */
+  animation: rm-medpulse 1.2s infinite;
+}
+
+.rm-one {
+  color: #e74c3c;      /* red */
+  font-size: 1.4em;
+  animation: rm-bigpulse 0.9s infinite, rm-shake 0.25s infinite;
+}
+
+/* Animations */
+@keyframes rm-softpulse {
+  0%,100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes rm-medpulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes rm-bigpulse {
+  0%,100% { transform: scale(1.25); }
+  50% { transform: scale(1.45); }
+}
+
+@keyframes rm-shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
