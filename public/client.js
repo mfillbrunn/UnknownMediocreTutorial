@@ -50,7 +50,7 @@ function computeRemainingWords() {
 }
 function updateRemainingWords() {
   if (state.phase === "lobby" || state.phase === "gameOver") {
-    $("remainingWordsSetter").textContent = "-";
+    $("remainingWordsSetter").className = "remaining-" + category.replace(" ", "-");
     $("remainingWordsGuesser").textContent = "-";
     return;
   }
