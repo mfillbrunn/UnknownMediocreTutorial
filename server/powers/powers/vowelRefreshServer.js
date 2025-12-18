@@ -25,7 +25,13 @@ engine.registerPower("vowelRefresh", {
     };
   },
 
-  postScore() {}, // NO CHANGE TO FEEDBACK
+  postScore() {const eff = state.powers.vowelRefreshEffect;
+    if (!eff) return;
+
+    // Once the target round has been scored, clear the effect
+    if (entry.roundIndex === eff.guessIndex) {
+      state.powers.vowelRefreshEffect = null;
+    }}, // NO CHANGE TO FEEDBACK
 
   turnStart(state, role) {
     if (role !== state.guesser) return;
