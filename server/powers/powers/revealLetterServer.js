@@ -60,18 +60,25 @@ engine.registerPower("revealLetter", {
     if (p.used || p.ready) return;
 
     // Unlocking logic
-    if (p.mode === "RARE") {
-      const rare = new Set("QJXZWK");
-      let count = 0;
-      for (const h of state.history) {
-        for (const c of h.guess.toUpperCase())
-          if (rare.has(c)) count++;
-      }
-      if (count >= 4) {
-        p.ready = true;
-        io.to(roomId).emit("toast", "Rare Letter Reveal unlocked!");
+if (p.mode === "RARE") {
+  const rare = new Set("QJXZWK");
+  const seen = new Set();
+
+  for (const h of state.history) {
+    for (const c of h.guess.toUpperCase()) {
+      if (rare.has(c)) {
+        seen.add(c);
       }
     }
+  }
+
+  // e.g., require at least 2 or 3 unique rare letters
+  if (seen.size >= 4) {   // adjust threshold as desired
+    p.ready = true;
+    io.to(roomId).emit("toast", "Rare Letter Reveal unlocked!");
+  }
+}
+
 
     if (p.mode === "ROW") {
       const rows = [
