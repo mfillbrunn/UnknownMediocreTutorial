@@ -934,11 +934,6 @@ $("applyPowerCountBtn").onclick = () => {
    }
  };
 
-$("submitGuessBtn").onclick = () => {
-  window.handleEnterKey();
-};
-
-
 $("submitSetterNewBtn").onclick = () => {
   const w = $("newSecretInput").value.trim().toLowerCase();
 
