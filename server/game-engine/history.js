@@ -34,7 +34,7 @@ function isConsistentWithHistory(history, proposedSecret, state) {
     if (entry.ignoreConstraints) continue;
 
     const guess = entry.guess.toUpperCase();
-    const actual = normalizeFB(entry.fbGuesser || entry.fb);
+    const actual = normalizeFB(entry.fb);
 
     // 2 — raw scoring result from canonical Wordle logic
     const expected = scoreGuess(proposedSecret, guess);
