@@ -42,7 +42,9 @@ function isConsistentWithHistory(history, proposedSecret, state) {
     // 3 — apply forced greens to scoring
     for (const pos in forced) {
       const idx = Number(pos);
-      expected[idx] = "🟩";
+      if (!(eff && entry.roundIndex === eff.guessIndex && eff.indices.includes(idx))) {
+    expected[idx] = "🟩";
+}
     }
 
     // 4 — vowelRefresh erases specific positions
