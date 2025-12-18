@@ -42,6 +42,18 @@ try {
 } catch {
   console.warn("Could not load allowed guesses.");
 }
+// Load allowed secrets
+let ALLOWED_SECRETS = [];
+try {
+  const secretPath = path.join(__dirname, "wordlists", "allowed_secrets.txt");
+  const raw = fs.readFileSync(secretPath, "utf8");
+  ALLOWED_SECRETS = parseWordlist(raw);
+} catch {
+  console.warn("Could not load allowed secrets. Using allowed guesses fallback.");
+  ALLOWED_SECRETS = ALLOWED_GUESSES;
+}
+
+app.get("/api/allowed-secrets", (req, res) => res.json(ALLOWED_SECRETS));
 
 app.get("/api/allowed-guesses", (req, res) => res.json(ALLOWED_GUESSES));
 app.use(express.static(path.join(__dirname, "..", "public")));
