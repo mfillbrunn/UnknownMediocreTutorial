@@ -28,6 +28,44 @@ function shake(element) {
   element.classList.add("shake");
   setTimeout(() => element.classList.remove("shake"), 300);
 }
+function categorizeRemainingWords(count) {
+  if (count >= 200) return "many";
+  if (count >= 50) return "plenty";
+  if (count >= 10) return "some";
+  if (count >= 2) return "few";
+  if (count === 1) return "only one";
+  return "none"; // edge-case: impossible or broken history
+}
+function computeRemainingWords() {
+  const words = window.ALLOWED_GUESSES;
+  if (!state || !state.history) return 0;
+
+  let count = 0;
+  for (const w of words) {
+    if (isConsistentWithHistory(state.history, w, state)) {
+      count++;
+    }
+  }
+  return count;
+}
+function updateRemainingWords() {
+  if (state.phase === "lobby" || state.phase === "gameOver") {
+    $("remainingWordsSetter").textContent = "-";
+    $("remainingWordsGuesser").textContent = "-";
+    return;
+  }
+
+  const n = computeRemainingWords();
+
+  // Guesser sees exact number
+  $("remainingWordsGuesser").textContent = n;
+
+  // Setter sees only category
+  const category = categorizeRemainingWords(n);
+  $("remainingWordsSetter").textContent = category;
+}
+
+
 // -----------------------------------------------------
 // Pattern Renderer for Pretty Styling (Reveal Green, etc.)
 // -----------------------------------------------------
@@ -331,6 +369,7 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
   updateScreens();
   updateTurnIndicators();
   updateSummary();
+  updateRemainingWords();
   if (state.phase !== "lobby") hide("lobby");
 }
 
