@@ -628,3 +628,16 @@ input[type="number"],
 .remaining-few { color: #e74c3c; }
 .remaining-one { color: #8e44ad; }
 
+.summary-table th:nth-child(5),
+.summary-table td:nth-child(5) {
+  text-align: center;
+  font-weight: bold;
+}
+
+.summary-table td:nth-child(5) {
+  color: #2c7be5;
+}
+
+.summary-table tr:last-child td:nth-child(5) {
+  color: #27ae60; /* green when only 1 word left */
+}
