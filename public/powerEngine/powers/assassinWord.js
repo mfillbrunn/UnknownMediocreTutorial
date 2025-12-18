@@ -21,24 +21,37 @@ PowerEngine.register("assassinWord", {
       $("assassinSubmitBtn").dataset.roomId = roomId;
     };
   },
+uiEffects(state, role) {
+  let el = document.getElementById("assassinWordDisplay");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "assassinWordDisplay";
 
-  uiEffects(state, role) {
-    // Option B: hide/update the DISPLAY only, not the button
-    let el = document.getElementById("assassinWordDisplay");
-    if (!el) {
-      el = document.createElement("div");
-      el.id = "assassinWordDisplay";
-      el.style.marginTop = "8px";
-      el.style.fontWeight = "bold";
-      document.getElementById("setterSecretArea").appendChild(el);
-    }
+    // Pretty styling
+    el.style.marginTop = "8px";
+    el.style.padding = "6px 10px";
+    el.style.borderRadius = "8px";
+    el.style.fontWeight = "600";
+    el.style.display = "inline-block";
+    el.style.fontSize = "14px";
+    el.style.color = "white";
+    el.style.background = "linear-gradient(135deg, #8b0000, #cc0000)";
+    el.style.boxShadow = "0 1px 4px rgba(0,0,0,0.25)";
+    el.style.letterSpacing = "0.5px";
+    el.style.opacity = "0";           // fade in when active
+    el.style.transition = "opacity 0.3s";
 
-    if (state.powers.assassinWord) {
-      el.textContent = "Assassin Word: " + state.powers.assassinWord;
-    } else {
-      el.textContent = "";
-    }
-  },
+    document.getElementById("setterSecretArea").appendChild(el);
+  }
+
+  if (state.powers.assassinWord) {
+    el.textContent = "☠ Assassin Word: " + state.powers.assassinWord.toUpperCase();
+    el.style.opacity = "1";
+  } else {
+    el.textContent = "";
+    el.style.opacity = "0";
+  }
+},
 
   historyEffects(entry, isSetter) {
     if (entry.assassinTriggered && isSetter) {
