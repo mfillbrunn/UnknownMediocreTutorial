@@ -37,6 +37,10 @@ engine.registerPower("assassinWord", {
 
     // Optional: confirm success
     io.to(action.playerId).emit("assassinSet", { word: w });
+    io.to(roomId).emit("assassinUsed", {
+  word: action.word.toUpperCase()
+});
+
   }
 });
 
