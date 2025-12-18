@@ -144,7 +144,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       }
       return;
     }
-
+///SECRET NEW
     if (action.type === "SET_SECRET_NEW") {
       if (powerEngine.beforeSetterSecretChange(state, action)) return;
       const w = action.secret.toLowerCase();
@@ -153,6 +153,14 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
         io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
         return;
       }
+         if (state.powers.assassinWord &&
+    w.toUpperCase() === state.powers.assassinWord.toUpperCase()) {
+  io.to(action.playerId).emit(
+    "errorMessage",
+    "Secret cannot match assassin word!"
+  );
+  return;
+}
 // Force setter to obey revealed green
 if (state.powers.forcedGreens) {
   for (const pos in state.powers.forcedGreens) {
@@ -166,8 +174,7 @@ if (state.powers.forcedGreens) {
     }
   }
 }
-
-
+       
       state.secret = w;
       state.currentSecret = w;
       state.firstSecretSet = true;
@@ -180,13 +187,14 @@ if (state.powers.forcedGreens) {
       finalizeFeedback(state, powerEngine, roomId, io);
       clearForceTimer(roomId, state);
       state.turn = state.guesser;
-      state.powerUsedThisTurn = false;
-     
+      state.powerUsedThisTurn = false;  
 
       powerEngine.turnStart(state, state.guesser, roomId, io);
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
+
+    ///SECRET SAME
     if (action.type === "SET_SECRET_SAME") {
       if (powerEngine.beforeSetterSecretChange(state, action)) return;
       const w = state.secret;
@@ -194,6 +202,14 @@ if (state.powers.forcedGreens) {
         io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
         return;
       }      
+      if (state.powers.assassinWord &&
+    w.toUpperCase() === state.powers.assassinWord.toUpperCase()) {
+  io.to(action.playerId).emit(
+    "errorMessage",
+    "Secret cannot match assassin word!"
+  );
+  return;
+}
   // Force setter to obey revealed green
 if (state.powers.forcedGreens) {
   for (const pos in state.powers.forcedGreens) {
@@ -207,6 +223,8 @@ if (state.powers.forcedGreens) {
     }
   }
 }
+// Reject if secret equals assassin word
+
 
       if (state.pendingGuess === state.secret) {
         state.currentSecret = state.secret;
