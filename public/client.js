@@ -538,6 +538,10 @@ function updateRoleLabels() {
 // SETTER UI
 // -----------------------------------------------------
 function updateSetterScreen() {
+  if (!document.querySelector(".board-row")) {
+    window.currentSecret = state.secret?.toLowerCase() || null;
+    initBoard();
+}
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   let guessForSetter = state.pendingGuess;
 
@@ -547,7 +551,6 @@ function updateSetterScreen() {
 
 $("pendingGuessDisplay").textContent =
   guessForSetter ? guessForSetter.toUpperCase() : "-";
-  renderHistory(state, $("historySetter"), true);
  // FORCE TIMER COUNTDOWN VISUAL
 // --- FORCE TIMER: STATE-LEVEL CHECK (not ticking UI) ---
   const bar = $("turnIndicatorSetter");
@@ -851,7 +854,7 @@ html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
 // BUTTONS
 // -----------------------------------------------------
 window.handleEnterKey = function () {
-  const guess = boardState[activeRow];
+  const guess = boardState[activeRow].toLowerCase();
 
   if (guess.length !== 5) {
     shakeRow(activeRow);
