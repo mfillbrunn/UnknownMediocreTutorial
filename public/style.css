@@ -22,6 +22,10 @@ body {
   margin-bottom: 4px;
   font-size: 28px;
 }
+.toast-warning {
+  background: #c0392b !important;
+  color: white !important;
+}
 
 /* ==========================================================
    WAIT FOR TURN OVERLAY
