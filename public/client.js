@@ -13,7 +13,6 @@ window.state = null;
 // -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
-const $ = id => document.getElementById(id);
 const show = id => $(id).classList.add("active");
 const hide = id => $(id).classList.remove("active");
 
