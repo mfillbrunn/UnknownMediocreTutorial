@@ -618,4 +618,13 @@ input[type="number"],
   color: white !important;
   display: inline-block;
 }
+#remainingWordsSetter {
+  font-weight: bold;
+}
+
+.remaining-many { color: #666; }
+.remaining-plenty { color: #2c7be5; }
+.remaining-some { color: #f6c23e; }
+.remaining-few { color: #e74c3c; }
+.remaining-one { color: #8e44ad; }
 
