@@ -47,19 +47,39 @@ function computeRemainingWords() {
   }
   return count;
 }
+function styleRemaining(element, label) {
+  element.className = "remainingMeter"; // reset
+
+  if (label === "many") element.classList.add("rm-many");
+  else if (label === "plenty") element.classList.add("rm-plenty");
+  else if (label === "some") element.classList.add("rm-some");
+  else if (label === "few") element.classList.add("rm-few");
+  else if (label === "only one") element.classList.add("rm-one");
+}
+
 function updateRemainingWords() {
   if (!state || state.phase === "lobby" || state.phase === "gameOver") {
     $("remainingWordsSetter").textContent = "-";
     $("remainingWordsGuesser").textContent = "-";
+    styleRemaining($("remainingWordsSetter"), null);
+    styleRemaining($("remainingWordsGuesser"), null);
     return;
   }
 
-  const n = computeRemainingWords();            // FIRST: compute number
-  const category = categorizeRemainingWords(n); // SECOND: compute category
+  const n = computeRemainingWords();
+  const category = categorizeRemainingWords(n);
 
-  $("remainingWordsGuesser").textContent = n;   // use number
-  $("remainingWordsSetter").textContent = category; // use category
+  // Guesser sees exact number + animation
+  const g = $("remainingWordsGuesser");
+  g.textContent = n;
+  styleRemaining(g, category);
+
+  // Setter sees category + animation
+  const s = $("remainingWordsSetter");
+  s.textContent = category;
+  styleRemaining(s, category);
 }
+
 
 function computeRemainingAfterIndex(idx) {
   const words = window.ALLOWED_SECRETS;
