@@ -21,13 +21,16 @@ function normalizeFB(fbArr) {
 function isConsistentWithHistory(history, proposedSecret, state) {
   const eff = state?.powers?.vowelRefreshEffect || null;
   const forced = state?.powers?.forcedGreens || {};
-
+  const revealRound = state?.powers?.revealLetterRound ?? Infinity;
   proposedSecret = proposedSecret.toUpperCase();
 
   // 1 — MUST obey forced green letters
-  for (const pos in forced) {
-    const idx = Number(pos);
-    if (proposedSecret[idx] !== forced[pos]) return false;
+  function applyForcedGreens(expected, entry) {
+    if (entry.roundIndex < revealRound) return;   // Do NOT modify past rounds
+    for (const pos in forced) {
+      const idx = Number(pos);
+      expected[idx] = "🟩";
+    }
   }
 
   for (const entry of history) {
@@ -35,19 +38,10 @@ function isConsistentWithHistory(history, proposedSecret, state) {
 
     const guess = entry.guess.toUpperCase();
     const actual = normalizeFB(entry.fb);
+     let expected = scoreGuess(proposedSecret, guess);
+    applyForcedGreens(expected, entry);
 
-    // 2 — raw scoring result from canonical Wordle logic
-    const expected = scoreGuess(proposedSecret, guess);
-
-    // 3 — apply forced greens to scoring
-    for (const pos in forced) {
-      const idx = Number(pos);
-      if (!(eff && entry.roundIndex === eff.guessIndex && eff.indices.includes(idx))) {
-    expected[idx] = "🟩";
-}
-    }
-
-    // 4 — vowelRefresh erases specific positions
+     // 4 — vowelRefresh erases specific positions
     if (eff && entry.roundIndex === eff.guessIndex) {
       for (const pos of eff.indices) {
         expected[pos] = actual[pos];
