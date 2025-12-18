@@ -62,3 +62,7 @@ function isConsistentWithHistory(history, proposedSecret, state) {
 }
 
 module.exports = { isConsistentWithHistory };
+if (typeof window !== "undefined") {
+  window.isConsistentWithHistory = isConsistentWithHistory;
+}
+
