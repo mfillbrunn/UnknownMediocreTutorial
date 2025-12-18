@@ -706,8 +706,26 @@ function updateSummary() {
     return;
   }
 
-  let html = `<h3>Round Summary</h3>`;
-  html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
+let html = `<h3>Round Summary</h3>`;
+
+// 🔥 NEW: Detect assassin kill
+const lastEntry = state.history[state.history.length - 1];
+if (lastEntry && lastEntry.assassinTriggered) {
+  html += `
+    <p class="assassin-summary" style="
+      color: #e74c3c;
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 10px;
+    ">
+      ☠ The guesser guessed the assassin word 
+      "${lastEntry.guess.toUpperCase()}" and was assassinated!
+    </p>
+  `;
+}
+
+html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
+
   html += `<table class="summary-table">`;
   html += `<tr><th>#</th><th>Secret</th><th>Guess</th><th>Feedback</th></tr>`;
 
