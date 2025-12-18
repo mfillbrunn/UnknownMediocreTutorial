@@ -39,6 +39,7 @@ engine.registerPower("revealLetter", {
 
     io.to(roomId).emit("rareLetterReveal", { index, letter });
     io.to(roomId).emit("toast", `Revealed letter ${letter} in position ${index+1}!`);
+    p.pendingReveal = null;
   },
 
   // IMPORTANT: revealLetter MUST NOT change fb/fbGuesser
