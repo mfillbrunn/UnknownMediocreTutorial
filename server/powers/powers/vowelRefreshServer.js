@@ -25,7 +25,7 @@ engine.registerPower("vowelRefresh", {
     };
   },
 
-  postScore() {const eff = state.powers.vowelRefreshEffect;
+  postScore(state, entry) {const eff = state.powers.vowelRefreshEffect;
     if (!eff) return;
 
     // Once the target round has been scored, clear the effect
