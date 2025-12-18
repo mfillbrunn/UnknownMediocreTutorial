@@ -49,21 +49,19 @@ function computeRemainingWords() {
   return count;
 }
 function updateRemainingWords() {
-  if (state.phase === "lobby" || state.phase === "gameOver") {
-    $("remainingWordsSetter").className = "remaining-" + category.replace(" ", "-");
+  if (!state || state.phase === "lobby" || state.phase === "gameOver") {
+    $("remainingWordsSetter").textContent = "-";
     $("remainingWordsGuesser").textContent = "-";
     return;
   }
 
-  const n = computeRemainingWords();
+  const n = computeRemainingWords();            // FIRST: compute number
+  const category = categorizeRemainingWords(n); // SECOND: compute category
 
-  // Guesser sees exact number
-  $("remainingWordsGuesser").textContent = n;
-
-  // Setter sees only category
-  const category = categorizeRemainingWords(n);
-  $("remainingWordsSetter").textContent = category;
+  $("remainingWordsGuesser").textContent = n;   // use number
+  $("remainingWordsSetter").textContent = category; // use category
 }
+
 function computeRemainingAfterIndex(idx) {
   const words = window.ALLOWED_GUESSES;
   let count = 0;
