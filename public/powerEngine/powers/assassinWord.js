@@ -60,3 +60,19 @@ uiEffects(state, role) {
     }
   }
 });
+// Attach once when the script loads
+$("assassinSubmitBtn").onclick = () => {
+    const roomId = $("assassinSubmitBtn").dataset.roomId;
+    const word = $("assassinInput").value.trim();
+
+    if (!word) return;
+
+    // Send power action to server
+    socket.emit("action", {
+        type: "USE_ASSASSIN_WORD",
+        word
+    });
+
+    // Close modal
+    $("assassinModal").classList.remove("active");
+};
