@@ -453,6 +453,8 @@ function updateScreens() {
   } else {
     show("guesserScreen");
     hide("setterScreen");
+     window.currentSecret = state.secret?.toLowerCase() || null;
+    initBoard();
     updateGuesserScreen();
   }
 PowerEngine.applyUI(state, myRole, roomId);
@@ -725,54 +727,69 @@ function handleSetterKeyboard(letter, special) {
 // GUESSER UI
 // -----------------------------------------------------
 function updateGuesserScreen() {
-  renderHistory(state, $("historyGuesser"), false);
 
-  const guessBox = $("guessInput");
-
+  // -----------------------------------------------------
+  // 1. Determine if the guesser is allowed to type
+  // -----------------------------------------------------
   const canGuess =
     (state.phase === "simultaneous" && !state.simultaneousGuessSubmitted) ||
     (state.phase === "normal" &&
       myRole === state.guesser &&
       !state.pendingGuess &&
       state.turn === state.guesser);
-  
-  guessBox.disabled = !canGuess;
-  $("submitGuessBtn").disabled = !canGuess;
-  if (state.phase === "simultaneous" && state.simultaneousGuessSubmitted) {
-    guessBox.disabled = true;
-    $("submitGuessBtn").disabled = true;
-  }
-  // Keyboard
+
+  // -----------------------------------------------------
+  // 2. Disable old guessInput + hide old submit button
+  // -----------------------------------------------------
+  if ($("guessInput")) $("guessInput").style.display = "none";
+  if ($("submitGuessBtn")) $("submitGuessBtn").style.display = "none";
+
+  // -----------------------------------------------------
+  // 3. Keyboard now writes letters into the board (addLetter(), removeLetter(), handleEnterKey())
+  // -----------------------------------------------------
   renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
     if (!canGuess) return;
 
     if (special === "BACKSPACE") {
-      guessBox.value = guessBox.value.slice(0, -1);
-    } else if (special === "ENTER") {
-      $("submitGuessBtn").click();
-    } else if (letter && guessBox.value.length < 5) {
-      guessBox.value += letter;
+      window.removeLetter();
+      return;
+    }
+
+    if (special === "ENTER") {
+      window.handleEnterKey();
+      return;
+    }
+
+    if (letter) {
+      window.addLetter(letter);
+      return;
     }
   });
 
+  // -----------------------------------------------------
+  // 4. Update the bottom constraint box (pattern + must contain)
+  // -----------------------------------------------------
   let pattern = getPattern(state, false);
 
-// ⭐ Remove blind spot information for guesser
-const blindIdx = state.powers?.blindSpotIndex;
-if (typeof blindIdx === "number") {
-  pattern[blindIdx] = "🟪";  // unknown, masked slot
-}
+  // Remove blind-spot feedback
+  const blindIdx = state.powers?.blindSpotIndex;
+  if (typeof blindIdx === "number") {
+    pattern[blindIdx] = "🟪";
+  }
 
-renderPatternInto(
-  $("knownPatternGuesser"),
-  pattern,
-  state.revealGreenInfo || null
-);
-
+  renderPatternInto(
+    $("knownPatternGuesser"),
+    pattern,
+    state.revealGreenInfo || null
+  );
 
   $("mustContainGuesser").textContent =
     getMustContainLetters(state).join(", ") || "none";
+
+  // Update remaining words count
+  updateRemainingWords();
 }
+
 
 // -----------------------------------------------------
 // SUMMARY
@@ -833,6 +850,37 @@ html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
 // -----------------------------------------------------
 // BUTTONS
 // -----------------------------------------------------
+window.handleEnterKey = function () {
+  const guess = boardState[activeRow];
+
+  if (guess.length !== 5) {
+    shakeRow(activeRow);
+    return;
+  }
+
+  if (!window.ALLOWED_GUESSES?.has(guess)) {
+    toast("Word not in dictionary");
+    shakeRow(activeRow);
+    return;
+  }
+
+  // Compute feedback using server logic locally
+  const feedback = window.scoreGuess(window.currentSecret, guess);
+
+  // Wordle reveal animation
+  revealRowAnimation(activeRow, feedback);
+
+  // Send guess to server
+  sendGameAction(roomId, {
+    type: "SUBMIT_GUESS",
+    guess
+  });
+
+  setTimeout(() => {
+    advanceRow();
+  }, 900);
+};
+
 function enableReadyButton(enabled) {
   const btn = $("readyBtn");
   btn.disabled = !enabled;
@@ -887,15 +935,9 @@ $("applyPowerCountBtn").onclick = () => {
  };
 
 $("submitGuessBtn").onclick = () => {
-  const g = $("guessInput").value.trim().toLowerCase();
-
-  if (g.length !== 5) return shake($("guessInput")), toast("5 letters required");
-  if (!window.ALLOWED_GUESSES?.has(g))
-    return shake($("guessInput")), toast("Word not in dictionary");
-
-  $("guessInput").value = "";
-  sendGameAction(roomId, { type: "SUBMIT_GUESS", guess: g });
+  window.handleEnterKey();
 };
+
 
 $("submitSetterNewBtn").onclick = () => {
   const w = $("newSecretInput").value.trim().toLowerCase();
