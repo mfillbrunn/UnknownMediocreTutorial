@@ -611,3 +611,11 @@ input[type="number"],
   background: #555;
   color: white;
 }
+.assassin-summary {
+  background: linear-gradient(135deg, #8b0000, #cc0000);
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: white !important;
+  display: inline-block;
+}
+
