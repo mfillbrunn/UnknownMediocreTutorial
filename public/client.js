@@ -102,6 +102,17 @@ socket.on("forceTimerTick", ({ remaining }) => {
   }
 });
 
+socket.on("assassinUsed", ({ setter, word }) => {
+  // Notify guesser only
+  if (myRole === state.guesser) {
+    toast("☠ The setter has armed an Assassin Word!");
+  }
+
+  // Optional: setter feedback (if you want)
+  if (myRole === state.setter) {
+    toast("Assassin Word set: " + word.toUpperCase());
+  }
+});
 
 socket.on("forceTimerExpired", () => {
   const bar = $("turnIndicatorSetter");
