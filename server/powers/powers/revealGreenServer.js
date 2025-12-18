@@ -39,12 +39,13 @@ engine.registerPower("revealGreen", {
   // 3. Choose a random unknown position
   const pos = unknownPositions[Math.floor(Math.random() * unknownPositions.length)];
   const letter = secret[pos];
-
+  state.powers.revealLetterRound = state.history.length;
   state.powers.revealGreenUsed = true;
   state.powers.revealGreenPos = pos;
   state.powers.revealGreenLetter = letter;
   state.revealGreenInfo = { pos, letter };
   io.to(roomId).emit("powerUsed", { type: "revealGreen", pos, letter });
+    
 },
 
 
