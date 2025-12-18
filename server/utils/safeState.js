@@ -1,14 +1,16 @@
 function buildSafeStateForPlayer(state, role) {
   const safe = JSON.parse(JSON.stringify(state));
- safe.activePowers = state.activePowers;
-safe.powerCount = state.powerCount;
+
+  // Preserve externally-visible values explicitly
+  safe.activePowers = state.activePowers;
+  safe.powerCount = state.powerCount;
 
   if (state.revealGreenInfo) {
     safe.revealGreenInfo = state.revealGreenInfo;
-    } else {
+  } else {
     delete safe.revealGreenInfo;
   }
-  
+
   // -----------------------------------------------------
   // 1. Hide SECRET from guesser
   // -----------------------------------------------------
@@ -22,35 +24,31 @@ safe.powerCount = state.powerCount;
   if (role === state.setter && state.phase === "simultaneous") {
     safe.pendingGuess = "";
   }
-// STEALTH GUESS: hide the current pending guess ONLY DURING decision step
-if (role === state.setter && state.powers.stealthGuessActive) {
-  if (state.pendingGuess) {
-    safe.pendingGuess = "?????";   // placeholder
+
+  // STEALTH GUESS: hide the current pending guess ONLY DURING decision step
+  if (role === state.setter && state.powers.stealthGuessActive) {
+    if (state.pendingGuess) {
+      safe.pendingGuess = "?????";   // placeholder
+    }
   }
-}
-
-
 
   // -----------------------------------------------------
   // 3. Clean INTERNAL power state (never exposed)
   // -----------------------------------------------------
- // 3. Clean INTERNAL power state (never exposed)
-// DO NOT delete freezeActive — client needs this!
-delete safe.powers.confuseColorsActive;
-delete safe.powers.countOnlyActive;
-delete safe.powers.currentHiddenIndices;
-delete safe.powers.hideTilePendingCount;
 
-if (role !== state.guesser) {
-  delete safe.powers.reuseLettersPool;
-}
-if (role === state.guesser) {
-  delete safe.powers.assassinWord;
-}
+  // DO NOT delete freezeActive — client needs this!
+  delete safe.powers.confuseColorsActive;
+  delete safe.powers.countOnlyActive;
+  delete safe.powers.currentHiddenIndices;
+  delete safe.powers.hideTilePendingCount;
 
-// freezeActive is intentionally kept
+  if (role !== state.guesser) {
+    delete safe.powers.reuseLettersPool;
+  }
 
-  
+  if (role === state.guesser) {
+    delete safe.powers.assassinWord;
+  }
 
   // -----------------------------------------------------
   // 4. Clean internal machine flags
@@ -58,84 +56,99 @@ if (role === state.guesser) {
   delete safe.powerUsedThisTurn;
 
   // -----------------------------------------------------
-// 5. Filter & sanitize HISTORY
-// -----------------------------------------------------
-safe.history = safe.history
-  .map(entry => {
-    if (!entry) return null;
+  // 5. Filter & sanitize HISTORY
+  // -----------------------------------------------------
+  safe.history = safe.history
+    .map(entry => {
+      if (!entry) return null;
 
-    const e = JSON.parse(JSON.stringify(entry));
+      const e = JSON.parse(JSON.stringify(entry));
 
-    // ================================================
-    // DURING GAMEPLAY (NOT gameOver)
-    // ================================================
-    if (!state.gameOver) {
+      // ================================================
+      // DURING GAMEPLAY (NOT gameOver)
+      // ================================================
+      if (!state.gameOver) {
 
-      // Guesser sees masked feedback only
-      if (role === state.guesser) {
-        delete e.fb;
+        // --------------------------------------------------
+        // GUESSER VIEW — masked feedback logic
+        // --------------------------------------------------
         if (role === state.guesser) {
-  // If the guesser should see feedback, use actual fbGuesser
-  if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
-    e.fbGuesser = e.fbGuesser || ["?", "?", "?", "?", "?"];
-  }
-}
+          delete e.fb;
 
-      }
-      // STEALTH GUESS — hide ONLY while stealth is active this round
-      if (role === state.setter && state.powers.stealthGuessActive && e.stealthApplied) {
-        e.guess = "?????";
-        if (Array.isArray(e.fb)) {
-          e.fb = ["?", "?", "?", "?", "?"];
+          // Ensure fbGuesser exists
+          if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
+            e.fbGuesser = ["?", "?", "?", "?", "?"];
+          } else {
+            // APPLY VOWEL REFRESH MASK FOR CONSTRAINTS ONLY
+            const eff = state.powers?.vowelRefreshEffect;
+
+            if (eff && e.roundIndex === eff.guessIndex) {
+              e.fbGuesser = e.fbGuesser.map((tile, pos) =>
+                eff.indices.includes(pos) ? "?" : tile
+              );
+            }
+          }
         }
+
+        // --------------------------------------------------
+        // STEALTH GUESS masking
+        // --------------------------------------------------
+        if (
+          role === state.setter &&
+          state.powers.stealthGuessActive &&
+          e.stealthApplied
+        ) {
+          e.guess = "?????";
+          if (Array.isArray(e.fb)) {
+            e.fb = ["?", "?", "?", "?", "?"];
+          }
+        }
+
+        // --------------------------------------------------
+        // Tag applied powers
+        // --------------------------------------------------
+        if (e.blindSpotApplied != null) {
+          e.powerUsed = (e.powerUsed || "") + " BlindSpot";
+        }
+        if (e.revealedOldSecret) {
+          e.powerUsed =
+            (e.powerUsed || "") +
+            ` Reveal(${e.revealedOldSecret.toUpperCase()})`;
+        }
+
+        // --------------------------------------------------
+        // SETTER VIEW — always sees true feedback
+        // --------------------------------------------------
+        if (role === state.setter) {
+          if (!Array.isArray(e.fb) || e.fb.length !== 5) {
+            if (Array.isArray(e.fbGuesser)) {
+              e.fb = e.fbGuesser;
+            } else {
+              e.fb = ["?", "?", "?", "?", "?"];
+            }
+          }
+          // DO NOT delete fbGuesser; client-side patterns may inspect it
+        }
+
+        // Hide finalSecret until after gameOver
+        delete e.finalSecret;
       }
 
-      if (e.blindSpotApplied != null) {
-        e.powerUsed = (e.powerUsed || "") + " BlindSpot";
+      // ================================================
+      // AFTER GAME OVER → true reveal
+      // ================================================
+      else {
+        // Everyone sees true fb now; fbGuesser no longer needed
+        delete e.fbGuesser;
+
+        // keep fb, guess, finalSecret
       }
-      if (e.revealedOldSecret) {
-        e.powerUsed = (e.powerUsed || "") + ` Reveal(${e.revealedOldSecret.toUpperCase()})`;
-      }
-  // Setter sees full feedback INCLUDING power effects in fbGuesser if present
-if (role === state.setter) {
-  if (!Array.isArray(e.fb) || e.fb.length !== 5) {
-    // If fb missing, fall back to fbGuesser (power-modified)
-    if (Array.isArray(e.fbGuesser)) {
-      e.fb = e.fbGuesser;
-    } else {
-      e.fb = ["?", "?", "?", "?", "?"];
-    }
-  }
 
-  // Keep fbGuesser if it contains power modifications
-  // DO NOT delete it!
-}
+      delete e.ignoreConstraints;
 
-
-      // Always hide finalSecret during gameplay
-      delete e.finalSecret;
-    }
-
-    // ================================================
-    // AFTER GAME OVER → REVEAL SECRET & TRUE FEEDBACK
-    // ================================================
-    else {
-
-      // Everyone sees true feedback
-      delete e.fbGuesser;
-
-      // KEEP:
-      //  e.fb
-      //  e.finalSecret
-      // do NOT delete finalSecret here
-    }
-
-    delete e.ignoreConstraints;
-    return e;
-  })
-  .filter(e => e !== null);
-
-  
+      return e;
+    })
+    .filter(e => e !== null);
 
   return safe;
 }
