@@ -64,6 +64,21 @@ function updateRemainingWords() {
   const category = categorizeRemainingWords(n);
   $("remainingWordsSetter").textContent = category;
 }
+function computeRemainingAfterIndex(idx) {
+  const words = window.ALLOWED_GUESSES;
+  let count = 0;
+
+  // Build a sliced history up to idx (inclusive)
+  const partialHistory = state.history.slice(0, idx + 1);
+
+  for (const w of words) {
+    if (isConsistentWithHistory(partialHistory, w, state)) {
+      count++;
+    }
+  }
+
+  return count;
+}
 
 
 // -----------------------------------------------------
@@ -761,7 +776,7 @@ if (lastEntry && lastEntry.assassinTriggered) {
 html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
 
   html += `<table class="summary-table">`;
-  html += `<tr><th>#</th><th>Secret</th><th>Guess</th><th>Feedback</th></tr>`;
+  html += `<tr><th>#</th><th>Secret</th><th>Guess</th><th>Feedback</th><th>Remaining</th></tr>`;
 
   for (let i = 0; i < state.history.length; i++) {
     const h = state.history[i];
@@ -774,13 +789,14 @@ html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
 
     const fbCell =
       Array.isArray(h.fb) ? h.fb.join("") : "";
-
+     const remaining = computeRemainingAfterIndex(i);
     html += `
       <tr>
         <td>${i + 1}</td>
         <td>${secretCell}</td>
         <td>${guessCell}</td>
         <td>${fbCell}</td>
+        <td>${remaining}</td>
       </tr>`;
   }
 
