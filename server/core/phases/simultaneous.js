@@ -71,7 +71,8 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
       fb,
       fbGuesser: [...fb],
       extraInfo: null,
-      finalSecret: secret
+      finalSecret: secret,
+      roundIndex: state.history.length
     });
 
     state.pendingGuess = "";
@@ -92,7 +93,8 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     fb,
     fbGuesser: [...fb],
     extraInfo: null,
-    finalSecret: secret
+    finalSecret: secret,
+    roundIndex: state.history.length
   };
 
   // Post-score power effects
