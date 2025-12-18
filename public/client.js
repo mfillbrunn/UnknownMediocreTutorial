@@ -712,12 +712,7 @@ let html = `<h3>Round Summary</h3>`;
 const lastEntry = state.history[state.history.length - 1];
 if (lastEntry && lastEntry.assassinTriggered) {
   html += `
-    <p class="assassin-summary" style="
-      color: #e74c3c;
-      font-weight: bold;
-      font-size: 18px;
-      margin-bottom: 10px;
-    ">
+    <p class="assassin-summary">
       ☠ The guesser guessed the assassin word 
       "${lastEntry.guess.toUpperCase()}" and was assassinated!
     </p>
