@@ -81,11 +81,13 @@
     <div id="keyboardSetter" class="keyboard"></div>
 
     <!-- INPUT -->
-    <div class="inline-input-group guess-input-area">
-      <input id="newSecretInput" maxlength="5" autocomplete="off" autocapitalize="none" class="letter-input">
-      <button id="submitSetterNewBtn" class="primary-btn small">New</button>
-      <button id="submitSetterSameBtn" class="secondary-btn small">Same</button>
-    </div>
+  <div class="guess-input-area">
+  <input id="newSecretInput" class="letter-input">
+  <div class="guess-btn-row">
+    <button id="submitSetterNewBtn" class="primary-btn small">New</button>
+    <button id="submitSetterSameBtn" class="secondary-btn small">Same</button>
+  </div>
+</div>
 
     <!-- POWERS -->
     <div id="setterPowerContainer" class="power-container"></div>
@@ -131,10 +133,14 @@
     <div id="keyboardGuesser" class="keyboard"></div>
 
     <!-- INPUT -->
-    <div class="inline-input-group guess-input-area">
-      <input id="guessInput" maxlength="5" autocomplete="off" class="letter-input">
-      <button id="submitGuessBtn" class="primary-btn small">Guess</button>
-    </div>
+   <div class="guess-input-area">
+  <input id="guessInput" maxlength="5" autocomplete="off" class="letter-input">
+
+  <div class="guess-btn-row">
+    <button id="submitGuessBtn" class="primary-btn small">Guess</button>
+  </div>
+</div>
+
 
     <div id="guesserPowerContainer" class="power-container"></div>
 
