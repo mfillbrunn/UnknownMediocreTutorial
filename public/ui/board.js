@@ -98,26 +98,28 @@ window.applyPreviewColorsWhileTyping = function () {
   if (guess.length === 0) return;
   if (!window.currentSecret || window.currentSecret.length !== 5) return;
 
-  if (!window.currentSecret) return;
-   let preview = window.predictFeedback(window.currentSecret, guess.padEnd(5, "-"));
+  // Only run preview when all letters typed
+  if (guess.length < BOARD_COLS) return;
 
+  // Get predicted feedback
+  let previewResult = window.predictFeedback(window.currentSecret, guess);
+  if (!previewResult) return;
 
-  let preview = window.predictFeedback(window.currentSecret, guess);
-  if (!preview) return;
-
-  // Normalize scoreGuess results into our tile classes
-  preview = preview.map(p => {
+  // Normalize feedback results
+  previewResult = previewResult.map(p => {
     if (p === "correct" || p === "g" || p === "green") return "correct";
     if (p === "present" || p === "y" || p === "yellow") return "present";
     return "absent";
   });
 
+  // Apply preview colors to tiles
   for (let c = 0; c < BOARD_COLS; c++) {
     const tile = getTile(activeRow, c);
     tile.classList.remove("correct", "present", "absent");
-    tile.classList.add(preview[c]);
+    tile.classList.add(previewResult[c]);
   }
 };
+
 
 /* ==========================================================
    Shake animation (invalid)
