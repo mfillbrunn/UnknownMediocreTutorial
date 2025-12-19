@@ -77,21 +77,26 @@
   <div id="setterScreen" class="screen theme-setter">
     <h2 class="screen-title">Setter <span class="badge badge-a">A</span></h2>
 
-    <div class="panel">
-      <p><b>Pattern:</b> <span id="knownPatternSetter">- - - - -</span></p>
-      <p><b>Must contain:</b> <span id="mustContainSetter">none</span></p>
-      <p><b>Remaining Secrets:</b> <span id="remainingWordsSetter" class="remainingMeter">-</span></p>
-      <p><b>Current Secret:</b> <span id="secretWordDisplay">NONE</span></p>
-      <div id="setterSecretArea"></div>
-      <p><b>Latest Guess:</b> <span id="pendingGuessDisplay">-</span></p>
-    </div>
+    <div class="info-grid">
+  <div class="info-col">
+    <p><b>Pattern:</b> <span id="knownPatternSetter">- - - - -</span></p>
+    <p><b>Must contain:</b> <span id="mustContainSetter">none</span></p>
+    <p><b>Latest Guess:</b> <span id="pendingGuessDisplay">-</span></p>
+  </div>
+
+  <div class="info-col">
+    <p><b>Remaining:</b> <span id="remainingWordsSetter" class="remainingMeter">-</span></p>
+    <p><b>Current Secret:</b> <span id="secretWordDisplay">NONE</span></p>
+    <div id="setterSecretArea"></div>
+  </div>
+</div>
+
 
     <h3 class="sub-title">Preview Feedback</h3>
     <div id="setterPreview" class="preview-box"></div>
 
     <div id="turnIndicatorSetter" class="turn-indicator"></div>
 
-    <h3 class="sub-title">Enter Secret</h3>
     <div class="inline-input-group">
       <input id="newSecretInput" maxlength="5" autocapitalize="none" autocomplete="off" class="letter-input">
       <button id="submitSetterNewBtn" class="primary-btn small">New Secret</button>
@@ -108,7 +113,6 @@
       </div>
     </div>
 
-    <h3 class="sub-title">Setter Powers</h3>
     <div id="setterPowerContainer" class="power-container"></div>
 
     <div id="keyboardSetter" class="keyboard"></div>
@@ -128,16 +132,17 @@
       <p><b>Must contain:</b> <span id="mustContainGuesser">none</span></p>
       <p><b>Remaining Words:</b> <span id="remainingWordsGuesser" class="remainingMeter">-</span></p>
     </div>
+<div id="turnIndicatorGuesser" class="turn-indicator"></div>
 
-    <div id="turnIndicatorGuesser" class="turn-indicator"></div>
+<h3 class="sub-title">History</h3>
+<div id="historyGuesser" class="history-box history-tiles"></div>
 
-    <h3 class="sub-title">Enter Guess</h3>
-    <div class="inline-input-group">
+<div class="inline-input-group guess-input-area">
+
       <input id="guessInput" maxlength="5" class="letter-input" autocomplete="off">
       <button id="submitGuessBtn" class="primary-btn small">Guess</button>
     </div>
 
-    <h3 class="sub-title">Guesser Powers</h3>
     <div id="guesserPowerContainer" class="power-container"></div>
 
     <div id="keyboardGuesser" class="keyboard"></div>
