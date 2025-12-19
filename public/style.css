@@ -9,6 +9,37 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.45;
 }
+/* Unify lobby styles */
+.screen-lobby,
+.screen-lobby input,
+.screen-lobby button,
+.screen-lobby p,
+.screen-lobby label,
+.screen-lobby span {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+}
+.hidden {
+  display: none !important;
+}
+#roomInfo {
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+#roomInfo:not(.hidden) {
+  opacity: 1;
+}
+
+.screen-lobby input {
+  font-weight: 600;
+}
+
+.screen-lobby button {
+  font-size: 16px;
+  font-weight: 700;
+}
 
 #appContainer {
   max-width: 600px;
