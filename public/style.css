@@ -7,6 +7,13 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.45;
 }
+.keyboard {
+  pointer-events: auto !important;
+  z-index: 9999;
+}
+.key {
+  pointer-events: auto !important;
+}
 
 #appContainer {
   max-width: 600px;
