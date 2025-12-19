@@ -20,6 +20,23 @@ body {
   margin: auto;
   padding: 20px;
 }
+/* Fix overflow of setter input */
+.guess-input-area {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.letter-input {
+  width: 150px;
+  max-width: 90%;
+  font-size: 1.4rem;
+  padding: 8px;
+  box-sizing: border-box;
+}
 
 .title {
   text-align: center;
@@ -270,36 +287,51 @@ input:focus {
   gap: 4px;
   transform: translateX(var(--row-offset, 0));
 }
+#setterSecretArea:empty {
+  display: none;
+}
 
 .key {
-  min-width: 34px;
-  padding: 10px 6px;
-  margin: 3px;
+  min-width: 38px;
+  padding: 12px 8px;
+  margin: 4px;
   border-radius: 6px;
+
   font-size: 18px;
   font-weight: 700;
+  letter-spacing: 1px;
+
   background: var(--kb-neutral);
-  border: 1px solid var(--kb-border);
-  transition: .15s;
-  pointer-events: auto !important;
+  border: 1px solid #00000055;
+
+  color: #f2f2f2;                 /* FIX: readable neutral color */
   cursor: pointer !important;
+  pointer-events: auto !important;
+
+  transition: background 0.15s, color 0.15s, transform 0.1s;
 }
 
 .key:hover {
   background: var(--kb-hover);
+  transform: translateY(-2px);
 }
+
 
 .key-green { background: var(--tile-green) !important; color: var(--tile-green-text) }
 .key-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text) }
 .key-gray { background: var(--tile-gray) !important; color: var(--tile-gray-text) }
 
 .key.used {
-  background: var(--kb-used);
-  color: #777;
-  border-color: #111;
-  opacity: .6;
+  background: #2e2e30 !important;   /* darker, clearer */
+  border-color: #000 !important;
+  color: #7d7d7d !important;
+  opacity: 1 !important;            /* FIX: remove washed-out look */
 }
 
+/* Optional: slight press animation */
+.key:active {
+  transform: scale(0.94);
+}
 /* Info grid */
 .info-grid {
   display: grid;
