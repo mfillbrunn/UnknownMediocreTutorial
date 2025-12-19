@@ -1,4 +1,6 @@
-/* Base layout */
+/* =========================================
+   BASE LAYOUT
+   ========================================= */
 body {
   margin: 0;
   padding: 0;
@@ -7,35 +9,11 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.45;
 }
-.keyboard {
-  pointer-events: auto !important;
-  z-index: 9999;
-}
-.key {
-  pointer-events: auto !important;
-}
 
 #appContainer {
   max-width: 600px;
   margin: auto;
   padding: 20px;
-}
-/* Fix overflow of setter input */
-.guess-input-area {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.letter-input {
-  width: 150px;
-  max-width: 90%;
-  font-size: 1.4rem;
-  padding: 8px;
-  box-sizing: border-box;
 }
 
 .title {
@@ -47,7 +25,29 @@ body {
   color: var(--title);
 }
 
-/* Screens */
+/* =========================================
+   INPUT AREA FIX
+   ========================================= */
+.guess-input-area {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 500px;
+  margin: 20px auto 0;
+}
+
+.letter-input {
+  width: 150px;
+  max-width: 90%;
+  font-size: 1.4rem;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+/* =========================================
+   SCREEN PANELS
+   ========================================= */
 .screen {
   display: none;
   background: var(--screen-bg);
@@ -74,7 +74,6 @@ body {
   margin-bottom: 16px;
 }
 
-/* Panels */
 .panel, .constraints-box, .history-box, .summary-box, .preview-box {
   background: var(--panel-bg);
   color: var(--panel-text);
@@ -89,8 +88,10 @@ body {
   font-family: "Courier New", monospace;
 }
 
-/* Buttons */
-.primary-btn, .secondary-btn, .power-btn, .turn-button, .role-btn {
+/* =========================================
+   BUTTONS
+   ========================================= */
+.primary-btn, .secondary-btn, .power-btn {
   padding: 12px 16px;
   border-radius: 10px;
   border: none;
@@ -121,27 +122,10 @@ body {
   background: var(--btn-secondary-hover);
 }
 
-.primary-btn.small, .secondary-btn.small {
-  width: auto;
-  padding: 8px 12px;
-}
-
-/* Power buttons */
 .power-container {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-}
-
-.power-btn {
-  background: var(--power-bg);
-  color: #000;
-  flex: 1 1 calc(50% - 10px);
-  box-shadow: 0 0 8px var(--power-glow);
-}
-
-.power-btn:hover {
-  box-shadow: 0 0 14px var(--power-glow);
 }
 
 .power-btn.power-used {
@@ -150,145 +134,21 @@ body {
   box-shadow: none;
 }
 
-/* Inputs */
-.letter-input, input[type="text"], input[type="number"] {
-  width: 100%;
-  padding: 12px;
-  font-size: 20px;
-  text-transform: uppercase;
-  border: 2px solid var(--input-border);
-  border-radius: 8px;
-  background: var(--input-bg);
-  color: var(--input-text);
-  margin-bottom: 10px;
-  transition: .15s;
-}
-
-input:focus {
-  border-color: var(--focus-border);
-  box-shadow: 0 0 10px var(--focus-glow);
-}
-
-/* Toast + Turn Popup */
-.toast, .turn-popup {
-  position: fixed;
-  border-radius: 12px;
-  color: white;
-  padding: 12px 20px;
-  z-index: 2000;
-  opacity: 0;
-  transition: .3s ease;
-}
-
-.toast {
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(40px);
-  background: var(--toast-bg);
-  border: 1px solid var(--toast-border);
-}
-
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.turn-popup {
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%) scale(.8);
-  background: var(--popup-bg);
-  border: 2px solid var(--popup-border);
-}
-
-.turn-popup.show {
-  opacity: 1;
-  transform: translateX(-50%) scale(1);
-}
-
-/* Turn indicator */
-.turn-indicator {
-  margin: 10px 0;
-  padding: 8px;
-  font-weight: bold;
-  font-size: 20px;
-  text-align: center;
-  border-radius: 8px;
-  display: none;
-}
-
-.turn-indicator.your-turn {
-  display: block;
-  background: var(--your-turn-bg);
-  box-shadow: 0 0 18px var(--your-turn-glow);
-}
-
-/* HISTORY ROWS */
-.history-tiles {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px 0;
-}
-
-/* Each row: 5 tiles horizontally */
-.history-row {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-/* Tiles identical to keyboard keys */
-.history-tile {
-  width: 40px;
-  height: 48px;
-  border-radius: 6px;
-  font-size: 20px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border: 1px solid #222;
-  box-shadow: 0 2px 4px rgba(0,0,0,.4);
-}
-
-/* Colors matching keyboard */
-.history-tile.green {
-  background: #00cf4d;
-  color: #053d1a;
-  box-shadow: 0 0 12px rgba(0,255,80,.75);
-}
-
-.history-tile.yellow {
-  background: #ffbb33;
-  color: #4a3200;
-  box-shadow: 0 0 12px rgba(255,200,50,.75);
-}
-
-.history-tile.gray {
-  background: #2e2f34;
-  color: #ddd;
-}
-
-
-/* Keyboard */
+/* =========================================
+   KEYBOARD
+   ========================================= */
 .keyboard {
   text-align: center;
   margin-top: 16px;
-   position: relative;
+  position: relative;
   z-index: 5;
   pointer-events: auto !important;
 }
+
 .key-row {
   display: flex;
   justify-content: center;
   gap: 4px;
-  transform: translateX(var(--row-offset, 0));
-}
-#setterSecretArea:empty {
-  display: none;
 }
 
 .key {
@@ -304,11 +164,11 @@ input:focus {
   background: var(--kb-neutral);
   border: 1px solid #00000055;
 
-  color: #f2f2f2;                 /* FIX: readable neutral color */
+  color: #f2f2f2;
   cursor: pointer !important;
   pointer-events: auto !important;
 
-  transition: background 0.15s, color 0.15s, transform 0.1s;
+  transition: background .15s, color .15s, transform .1s;
 }
 
 .key:hover {
@@ -316,23 +176,95 @@ input:focus {
   transform: translateY(-2px);
 }
 
-
-.key-green { background: var(--tile-green) !important; color: var(--tile-green-text) }
-.key-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text) }
-.key-gray { background: var(--tile-gray) !important; color: var(--tile-gray-text) }
+.key-green { background: var(--tile-green)  !important; color: var(--tile-green-text)  !important; }
+.key-yellow{ background: var(--tile-yellow) !important; color: var(--tile-yellow-text) !important; }
+.key-gray  { background: var(--tile-gray)   !important; color: var(--tile-gray-text)   !important; }
 
 .key.used {
-  background: #2e2e30 !important;   /* darker, clearer */
+  background: #2e2e30 !important;
   border-color: #000 !important;
   color: #7d7d7d !important;
-  opacity: 1 !important;            /* FIX: remove washed-out look */
+  opacity: 1 !important;
 }
 
-/* Optional: slight press animation */
 .key:active {
   transform: scale(0.94);
 }
-/* Info grid */
+
+/* =========================================
+   HISTORY — TILE STYLE (Wordle Style)
+   ========================================= */
+.history-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.history-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Base tile */
+.history-tile {
+  width: 42px;
+  height: 48px;
+  border-radius: 6px;
+
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+
+  border: 1px solid #00000055;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+
+  /* Animation start position */
+  transform-style: preserve-3d;
+  perspective: 600px;
+  animation: flip-in 0.6s ease forwards;
+}
+
+/* Wordle-style feedback colors */
+.tile-green  { background: var(--tile-green)  !important; color: var(--tile-green-text) !important; }
+.tile-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text)!important; }
+.tile-gray   { background: var(--tile-gray)   !important; color: var(--tile-gray-text)  !important; }
+
+/* Optional: blue if you use it */
+.tile-blue { background: #4ea3ff !important; color: #000 !important; }
+
+/* =========================================
+   WORDLE FLIP ANIMATION
+   ========================================= */
+@keyframes flip-in {
+  0%   { transform: rotateX(90deg); opacity: 0; }
+  40%  { transform: rotateX(20deg); opacity: .6; }
+  70%  { transform: rotateX(0deg); opacity: 1; }
+  100% { transform: rotateX(0deg); opacity: 1; }
+}
+
+/* Stagger tiles automatically */
+.history-row .history-tile:nth-child(1) { animation-delay: 0.00s; }
+.history-row .history-tile:nth-child(2) { animation-delay: 0.08s; }
+.history-row .history-tile:nth-child(3) { animation-delay: 0.16s; }
+.history-row .history-tile:nth-child(4) { animation-delay: 0.24s; }
+.history-row .history-tile:nth-child(5) { animation-delay: 0.32s; }
+
+/* =========================================
+   HIDE EMPTY ASSASSIN AREA
+   ========================================= */
+#setterSecretArea:empty {
+  display: none;
+}
+
+/* =========================================
+   INFO GRID
+   ========================================= */
 .info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -340,15 +272,11 @@ input:focus {
   margin-top: 20px;
 }
 
-.info-col p {
-  margin: 6px 0;
-}
+.info-col p { margin: 6px 0; }
 
-/* Input area spacing */
-.guess-input-area {
-  margin-top: 20px;
-}
-/* ========== ESports Red (Guesser) ========== */
+/* =========================================
+   THEMES (ESports)
+   ========================================= */
 .theme-guesser {
   background: #130203 !important;
   border: 2px solid #ff1e33;
@@ -365,7 +293,6 @@ input:focus {
   box-shadow: 0 0 25px rgba(255,40,60,.9);
 }
 
-/* ========== ESports Blue (Setter) ========== */
 .theme-setter {
   background: #031122 !important;
   border: 2px solid #2c6bff;
@@ -381,4 +308,3 @@ input:focus {
   background: #2c6bff;
   box-shadow: 0 0 25px rgba(70,120,255,.9);
 }
-
