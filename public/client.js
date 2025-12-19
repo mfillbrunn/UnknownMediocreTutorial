@@ -704,25 +704,27 @@ const preview = $("setterPreview");
 
 function handleSetterKeyboard(letter, special) {
   const input = $("newSecretInput");
-  if (
-    state.phase !== "normal" ||
-    state.turn !== state.setter ||
-    (state.powers && state.powers.freezeActive)
-  ) {
-    return;
-  }
+
+  // Only block typing if the input is disabled (you already manage this)
+  if (!input || input.disabled) return;
 
   if (special === "BACKSPACE") {
     input.value = input.value.slice(0, -1);
     return;
   }
+
   if (special === "ENTER") {
-    if (state.pendingGuess) $("submitSetterNewBtn").click();
+    if (state.pendingGuess && !$("submitSetterNewBtn").disabled) {
+      $("submitSetterNewBtn").click();
+    }
     return;
   }
+
   if (letter && input.value.length < 5) {
     input.value += letter;
   }
+
+  input.focus();
 }
 
 // -----------------------------------------------------
