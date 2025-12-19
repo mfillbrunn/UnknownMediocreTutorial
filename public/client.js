@@ -662,6 +662,10 @@ $("pendingGuessDisplay").textContent =
     must.length ? must.join(", ") : "none";
 
   updateSetterPreview();
+  setTimeout(() => {
+  renderKeyboard(state, $("keyboardSetter"), "setter", handleSetterKeyboard);
+}, 0);
+
 }
 
 
