@@ -170,29 +170,6 @@ body {
   margin: 20px auto 0 auto;
   padding: 0;
 }
-/* ENTER key: replace text with symbol */
-.key[data-key="ENTER"] {
-  position: relative;
-  color: transparent;       /* hide original text */
-   background: var(--btn-primary);
-  box-shadow: 0 0 8px var(--btn-primary-glow);
-}
-
-/* Draw ⏎ on top */
-.key[data-key="ENTER"]::before {
-  content: "⏎";
-  position: absolute;
-  inset: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color: white;
-  font-size: 22px;
-  font-weight: 800;
-}
-
 
 /* KEY ROW — stays horizontal, never wraps */
 .key-row {
@@ -226,11 +203,6 @@ body {
   transition: background .15s, transform .1s;
 }
 
-/* Special width for ENTER key */
-/* ENTER key width */
-.key-row:last-child .key:last-child {
-  width: 78px;
-}
 
 
 /* Special width for backspace */
