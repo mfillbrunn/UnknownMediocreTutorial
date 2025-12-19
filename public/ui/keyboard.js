@@ -108,17 +108,18 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
       keyEl.textContent = symbol;
 
       // Special keys
-           if (symbol === "⌫") {
-        keyEl.addEventListener("click", () => window.removeLetter());
+      if (symbol === "⌫") {
+        keyEl.addEventListener("click", () => onKeyClick(null, "BACKSPACE"));
         rowDiv.appendChild(keyEl);
         return;
       }
-      
+
       if (symbol === "ENTER") {
-        keyEl.addEventListener("click", () => window.handleEnterKey());
+        keyEl.addEventListener("click", () => onKeyClick(null, "ENTER"));
         rowDiv.appendChild(keyEl);
         return;
       }
+
       // LETTER KEYS
       if (/^[A-Z]$/.test(symbol)) {
         const letter = symbol;
@@ -150,8 +151,7 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
         // Allow power modules to adjust the key
         PowerEngine.applyKeyboard(state, target, keyEl, letter);
 
-        keyEl.addEventListener("click", () => window.addLetter(letter));
-
+        keyEl.addEventListener("click", () => onKeyClick(letter, null));
       }
 
       rowDiv.appendChild(keyEl);
