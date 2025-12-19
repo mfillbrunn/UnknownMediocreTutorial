@@ -329,9 +329,15 @@ body {
 }
 
 .theme-setter {
-  background: #031122 !important;
+  background: ##140203;
   border: 2px solid #2c6bff;
   box-shadow: 0 0 25px rgba(50,120,255,0.35), inset 0 0 25px rgba(50,120,255,0.2);
+}
+.theme-setter .remainingMeter {
+  font-size: 26px;
+  font-weight: 900;
+  color: #ff4b5c;
+  animation: setter-pulse 1.4s infinite;
 }
 
 .theme-setter h2 {
@@ -340,9 +346,48 @@ body {
 }
 
 .theme-setter .turn-indicator.your-turn {
-  background: #2c6bff;
+  background: #ff1e33;
+  animation: setter-turn-pulse 1s infinite;
   box-shadow: 0 0 25px rgba(70,120,255,.9);
 }
+.theme-setter .panel,
+.theme-setter .history-box,
+.theme-setter .preview-box {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.theme-setter .history-box { margin-bottom: 6px; }
+.theme-setter .keyboard { margin-top: 10px; }
+.theme-setter .info-grid { margin-top: 12px; }
+
+.theme-setter .history-tile {
+  border: 1px solid rgba(255,80,80,0.4);
+  box-shadow: 0 0 6px rgba(255,80,80,0.3);
+}
+
+.theme-setter .letter-input {
+  max-width: 160px;
+  font-size: 1.3rem;
+  border: 1px solid #ff3a3a;
+}
+.theme-setter .power-btn {
+  background: #250404;
+  border: 1px solid #ff2a2a;
+}
+.theme-setter::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 80px rgba(255,0,0,0.15);
+}
+
+.theme-setter .power-btn.power-used {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
 /* TOAST (bottom UI popup) */
 .toast {
   position: fixed;
@@ -409,4 +454,6 @@ body {
   justify-content: center;
   gap: 12px;
   margin-top: 10px;
+   flex: 1;
+  min-width: 120px;
 }
