@@ -813,8 +813,14 @@ html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
 
     const fbCell =
       Array.isArray(h.fb) ? h.fb.join("") : "";
-     const remaining = computeRemainingAfterIndex(i);
-      if (i===state.history.length) {remaining=0};
+     let remaining;
+
+if (i === state.history.length - 1) {
+  // Last guess always shows 0 remaining
+  remaining = 0;
+} else {
+  remaining = computeRemainingAfterIndex(i);
+}
     html += `
       <tr>
         <td>${i + 1}</td>
