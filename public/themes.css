@@ -1,0 +1,84 @@
+/* Default = Esports */
+:root {
+  --bg:#0c0c0e;
+  --text:#e5e5e5;
+  --title:#fff;
+  --screen-bg:#111216;
+
+  --panel-bg:#16171c;
+  --panel-text:#e4e4e4;
+  --history-bg:#1c1d22;
+
+  --btn-primary:#0f5fff;
+  --btn-primary-hover:#2f74ff;
+  --btn-primary-glow:rgba(15,95,255,.5);
+
+  --btn-secondary:#2b2c30;
+  --btn-secondary-text:#ccc;
+  --btn-secondary-hover:#3a3c42;
+
+  --power-bg:#e0b858;
+  --power-glow:rgba(224,184,88,.5);
+
+  --input-bg:#101115;
+  --input-text:#eee;
+  --input-border:#333;
+
+  --focus-border:#1a73e8;
+  --focus-glow:rgba(26,115,232,.6);
+
+  --toast-bg:#0f0f11;
+  --toast-border:#444;
+
+  --popup-bg:#000;
+  --popup-border:#ff1a1a;
+
+  --your-turn-bg:#0066ff;
+  --your-turn-glow:rgba(0,102,255,.8);
+
+  --tile-green:#00c851;
+  --tile-green-text:#003d1a;
+  --tile-yellow:#ffbb33;
+  --tile-yellow-text:#4a2c00;
+  --tile-gray:#3c3d42;
+  --tile-gray-text:#ccc;
+
+  --kb-neutral:#222328;
+  --kb-border:#333;
+  --kb-hover:#2f3036;
+  --kb-used:#2a2a2c;
+}
+
+/* Light theme */
+body.theme-light {
+  --bg:#f6f6f6;
+  --text:#222;
+  --title:#000;
+  --screen-bg:#fff;
+  --panel-bg:#f0f0f0;
+  --panel-text:#222;
+  --history-bg:#eee;
+
+  --btn-primary:#0066ff;
+  --btn-primary-hover:#0052cc;
+
+  --kb-neutral:#ddd;
+  --kb-hover:#ccc;
+
+  --tile-green:#6aaa64;
+  --tile-yellow:#c9b458;
+  --tile-gray:#787c7e;
+}
+
+/* Dark theme */
+body.theme-dark {
+  --bg:#000;
+  --screen-bg:#111;
+  --panel-bg:#181818;
+  --kb-neutral:#333;
+}
+
+/* Esports theme */
+body.theme-esports {
+  /* Uses root defaults */
+}
