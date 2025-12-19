@@ -57,7 +57,46 @@ if (!isSetter && Array.isArray(safeEntry.fbGuesser)) {
       tiles += `   [${safeEntry.powerUsed}]`;
     }
 
-    row.textContent = `${guess}   ${tiles}`;
+    // Clear row, we will build tiles inside it
+row.innerHTML = "";
+
+// ----- BUILD TILES FOR THIS GUESS -----
+for (let i = 0; i < 5; i++) {
+  const tile = document.createElement("div");
+  tile.className = "history-tile";
+
+  // Letter inside the tile
+  tile.textContent = guess[i];
+
+  // Color class depending on fbArray[i]
+  const fb = fbArray[i];
+  if (fb === "🟩") tile.classList.add("tile-green");
+  else if (fb === "🟨") tile.classList.add("tile-yellow");
+  else if (fb === "🟦") tile.classList.add("tile-blue");   // optional support
+  else tile.classList.add("tile-gray");
+
+  row.appendChild(tile);
+}
+
+// ----- OPTIONAL EXTRA INFO (CountOnly summary) -----
+if (safeEntry.extraInfo) {
+  const { greens, yellows } = safeEntry.extraInfo;
+  const extra = document.createElement("span");
+  extra.className = "history-extra";
+  extra.textContent = ` (${greens}🟩, ${yellows}🟨)`;
+  row.appendChild(extra);
+}
+
+// ----- OPTIONAL POWER USED TAG -----
+if (safeEntry.powerUsed) {
+  const tag = document.createElement("span");
+  tag.className = "history-power";
+  tag.textContent = ` [${safeEntry.powerUsed}]`;
+  row.appendChild(tag);
+}
+
+container.appendChild(row);
+
     container.appendChild(row);
   }
 };
