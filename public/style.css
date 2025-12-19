@@ -172,12 +172,18 @@ body {
   position: relative;
   z-index: 5;
   pointer-events: auto !important;
+     max-width: 520px;
+  margin: 16px auto 0 auto;
+  padding: 0 10px;
+  overflow: hidden;
 }
 
 .key-row {
   display: flex;
   justify-content: center;
   gap: 4px;
+     flex: 1 0 0;
+  max-width: 46px;
 }
 
 .key {
@@ -190,14 +196,17 @@ body {
   font-weight: 700;
   letter-spacing: 1px;
 
-  background: var(--kb-neutral);
+  background: #56575A;
+  color: #FFFFFF;
   border: 1px solid #00000055;
 
-  color: #f2f2f2;
   cursor: pointer !important;
   pointer-events: auto !important;
 
   transition: background .15s, color .15s, transform .1s;
+     display: flex;
+  justify-content: center;
+  gap: 6px;
 }
 
 .key:hover {
@@ -207,13 +216,15 @@ body {
 
 .key-green { background: var(--tile-green)  !important; color: var(--tile-green-text)  !important; }
 .key-yellow{ background: var(--tile-yellow) !important; color: var(--tile-yellow-text) !important; }
-.key-gray  { background: var(--tile-gray)   !important; color: var(--tile-gray-text)   !important; }
-
+.key-gray {
+  background: #3A3A3C !important;
+  border-color: #111 !important;
+  color: #C2C2C2 !important;
+}
 .key.used {
-  background: #2e2e30 !important;
+  background: #1E1E20 !important;
+  color: #6A6A6A !important;
   border-color: #000 !important;
-  color: #7d7d7d !important;
-  opacity: 1 !important;
 }
 
 .key:active {
@@ -337,3 +348,71 @@ body {
   background: #2c6bff;
   box-shadow: 0 0 25px rgba(70,120,255,.9);
 }
+/* TOAST (bottom UI popup) */
+.toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(40px);
+  opacity: 0;
+
+  padding: 12px 22px;
+  font-size: 18px;
+  font-weight: 700;
+
+  border-radius: 10px;
+  background: var(--toast-bg);
+  border: 1px solid var(--toast-border);
+  color: white;
+
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 99999;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* TURN POPUP (center, mid-top like classic VS-UI) */
+.turn-popup {
+  position: fixed;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%) scale(.9);
+  opacity: 0;
+
+  padding: 14px 26px;
+  font-size: 22px;
+  font-weight: 800;
+
+  border-radius: 12px;
+  background: var(--popup-bg);
+  border: 2px solid var(--popup-border);
+
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 99999;
+}
+
+.turn-popup.show {
+  opacity: 1;
+  transform: transl
+.guess-input-area {
+  width: 100%;
+  max-width: 520px;
+  margin: 20px auto 0 auto;
+}
+
+.letter-input {
+  width: 100%;
+  font-size: 1.6rem;
+  text-align: center;
+}
+
+.guess-btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
