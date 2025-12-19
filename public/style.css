@@ -163,73 +163,68 @@ body {
   box-shadow: none;
 }
 
-/* =========================================
-   KEYBOARD
-   ========================================= */
+/* KEYBOARD CONTAINER */
 .keyboard {
-  text-align: center;
-  margin-top: 16px;
-  position: relative;
-  z-index: 5;
-  pointer-events: auto !important;
-     max-width: 520px;
-  margin: 16px auto 0 auto;
-  padding: 0 10px;
-  overflow: hidden;
+  width: 100%;
+  max-width: 520px;     /* matches Wordle width */
+  margin: 20px auto 0 auto;
+  padding: 0;
 }
 
+/* KEY ROW — stays horizontal, never wraps */
 .key-row {
   display: flex;
   justify-content: center;
-  gap: 4px;
-     flex: 1 0 0;
-  max-width: 46px;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-wrap: nowrap;
 }
 
+/* KEY TILE */
 .key {
-  min-width: 38px;
-  padding: 12px 8px;
-  margin: 4px;
-  border-radius: 6px;
+  width: 44px;           /* FIXED width (Wordle 2022 desktop spec) */
+  height: 56px;          /* FIXED height */
+  padding: 0;
 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 6px;
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 1px;
 
-  background: #56575A;
-  color: #FFFFFF;
+  background: var(--kb-neutral);
   border: 1px solid #00000055;
+  color: white;
 
-  cursor: pointer !important;
-  pointer-events: auto !important;
-
-  transition: background .15s, color .15s, transform .1s;
-     display: flex;
-  justify-content: center;
-  gap: 6px;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
 }
 
+/* Special width for ENTER key */
+.key[data-key="ENTER"],
+.key:contains("ENTER") {
+  width: 78px; /* longer key, like Wordle */
+}
+
+/* Special width for backspace */
+.key[data-key="⌫"] {
+  width: 58px;
+}
+
+/* Hover */
 .key:hover {
   background: var(--kb-hover);
   transform: translateY(-2px);
 }
 
-.key-green { background: var(--tile-green)  !important; color: var(--tile-green-text)  !important; }
-.key-yellow{ background: var(--tile-yellow) !important; color: var(--tile-yellow-text) !important; }
-.key-gray {
-  background: #3A3A3C !important;
-  border-color: #111 !important;
-  color: #C2C2C2 !important;
-}
-.key.used {
-  background: #1E1E20 !important;
-  color: #6A6A6A !important;
-  border-color: #000 !important;
+/* ACTIVE */
+.key:active {
+  transform: scale(0.95);
 }
 
-.key:active {
-  transform: scale(0.94);
-}
 
 /* =========================================
    HISTORY — TILE STYLE (Wordle Style)
