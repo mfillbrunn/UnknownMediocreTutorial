@@ -1,129 +1,412 @@
-:root {
-  --alabaster-grey: #d3d4d9;
-  --air-force-blue: #4b88a2;
-  --brick-red: #bb0a21;
-  --carbon-black: #252627;
-  --snow: #fff9fb;
-}
-
-/* BASE */
+/* =========================================
+   BASE LAYOUT
+   ========================================= */
 body {
   margin: 0;
-  background: var(--carbon-black);
-  color: var(--snow);
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.45;
+}
+/* Unify lobby styles */
+.screen-lobby,
+.screen-lobby input,
+.screen-lobby button,
+.screen-lobby p,
+.screen-lobby label,
+.screen-lobby span {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+}
+
+#roomInfo {
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+#roomInfo:not(.hidden) {
+  opacity: 1;
+}
+
+.screen-lobby input {
+  font-weight: 600;
+}
+
+.screen-lobby button {
+  font-size: 16px;
+  font-weight: 700;
 }
 
 #appContainer {
-  max-width: 560px;
+  max-width: 600px;
   margin: auto;
-  padding: 12px;
+  padding: 20px;
 }
 
-/* SCREENS */
-.screen {
-  display: none;
-  padding: 14px;
-  border-radius: 14px;
-  background: #121314;
-}
-
-.screen.active { display: block; }
-.default-screen {
-  display: block !important;
-  opacity: 1 !important;
-  transform: none !important;
-}
-
-.screen-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 18px;
-  font-weight: 800;
-  margin-bottom: 8px;
-}
-
-/* ROLE THEMES */
-.theme-setter {
-  --accent: var(--air-force-blue);
-  --accent-glow: rgba(75,136,162,.6);
-}
-
-.theme-guesser {
-  --accent: var(--brick-red);
-  --accent-glow: rgba(187,10,33,.6);
-}
-
-/* TITLES */
 .title {
   text-align: center;
-  font-size: 32px;
-  margin: 6px 0 10px;
+  margin: 10px 0 20px;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: var(--title);
 }
 
-/* BUTTONS */
-.primary-btn {
-  background: var(--accent);
-  color: white;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-weight: 700;
-  border: none;
-  box-shadow: 0 0 12px var(--accent-glow);
-}
-
-.secondary-btn {
-  background: #333;
-  color: var(--alabaster-grey);
-}
-
-.small { font-size: 13px; }
-
-/* INPUT */
-.guess-input-area.inline {
+/* =========================================
+   INPUT AREA FIX
+   ========================================= */
+.guess-input-area {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 500px;
+  margin: 20px auto 0;
 }
 
 .letter-input {
-  flex: 1;
+  width: 150px;
+  max-width: 90%;
   font-size: 1.4rem;
-  padding: 6px;
-  text-align: center;
+  padding: 8px;
+  box-sizing: border-box;
 }
 
-/* PANELS */
-.panel, .history-box {
-  background: #1a1c1d;
-  padding: 10px;
+/* =========================================
+   SCREEN PANELS
+   ========================================= */
+.screen {
+  display: none;
+  background: var(--screen-bg);
+  border-radius: 14px;
+  padding: 20px;
+  margin-top: 16px;
+  box-shadow:
+    0 0 12px rgba(0,0,0,.4),
+    0 0 18px rgba(0,0,0,.25) inset;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: .25s ease;
+}
+
+.screen.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.screen-title {
+  font-size: 24px;
+  color: var(--heading);
+  margin-bottom: 16px;
+}
+
+.panel, .constraints-box, .history-box, .summary-box, .preview-box {
+  background: var(--panel-bg);
+  color: var(--panel-text);
   border-radius: 10px;
-  margin-top: 8px;
+  padding: 14px;
+  margin-top: 14px;
+  box-shadow: 0 0 6px rgba(0,0,0,.4) inset;
 }
 
-/* INFO */
+.history-box {
+  background: var(--history-bg);
+  font-family: "Courier New", monospace;
+}
+
+/* =========================================
+   BUTTONS
+   ========================================= */
+.primary-btn, .secondary-btn, .power-btn {
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: none;
+  margin: 10px 0;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  transition: .15s ease;
+}
+
+.primary-btn {
+  background: var(--btn-primary);
+  color: #fff;
+  box-shadow: 0 0 10px var(--btn-primary-glow);
+}
+
+.primary-btn:hover {
+  background: var(--btn-primary-hover);
+}
+
+.secondary-btn {
+  background: var(--btn-secondary);
+  color: var(--btn-secondary-text);
+}
+
+.secondary-btn:hover {
+  background: var(--btn-secondary-hover);
+}
+
+.power-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.power-btn.power-used {
+  background: #444 !important;
+  color: #999 !important;
+  box-shadow: none;
+}
+
+/* KEYBOARD CONTAINER */
+.keyboard {
+  width: 100%;
+  max-width: 520px;     /* matches Wordle width */
+  margin: 20px auto 0 auto;
+  padding: 0;
+}
+
+/* KEY ROW — stays horizontal, never wraps */
+.key-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-wrap: nowrap;
+}
+
+/* KEY TILE */
+.key {
+  width: 44px;           /* FIXED width (Wordle 2022 desktop spec) */
+  height: 56px;          /* FIXED height */
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+
+  background: var(--kb-neutral);
+  border: 1px solid #00000055;
+  color: white;
+
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+
+/* Special width for ENTER key */
+.key[data-key="ENTER"],
+.key:contains("ENTER") {
+  width: 78px; /* longer key, like Wordle */
+}
+
+/* Special width for backspace */
+.key[data-key="⌫"] {
+  width: 58px;
+}
+
+/* Hover */
+.key:hover {
+  background: var(--kb-hover);
+  transform: translateY(-2px);
+}
+
+/* ACTIVE */
+.key:active {
+  transform: scale(0.95);
+}
+
+
+/* =========================================
+   HISTORY — TILE STYLE (Wordle Style)
+   ========================================= */
+.history-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.history-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Base tile */
+.history-tile {
+  width: 42px;
+  height: 48px;
+  border-radius: 6px;
+
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+
+  border: 1px solid #00000055;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+
+  /* Animation start position */
+  transform-style: preserve-3d;
+  perspective: 600px;
+  animation: flip-in 0.6s ease forwards;
+}
+
+/* Wordle-style feedback colors */
+.tile-green  { background: var(--tile-green)  !important; color: var(--tile-green-text) !important; }
+.tile-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text)!important; }
+.tile-gray   { background: var(--tile-gray)   !important; color: var(--tile-gray-text)  !important; }
+
+/* Optional: blue if you use it */
+.tile-blue { background: #4ea3ff !important; color: #000 !important; }
+
+/* =========================================
+   WORDLE FLIP ANIMATION
+   ========================================= */
+@keyframes flip-in {
+  0%   { transform: rotateX(90deg); opacity: 0; }
+  40%  { transform: rotateX(20deg); opacity: .6; }
+  70%  { transform: rotateX(0deg); opacity: 1; }
+  100% { transform: rotateX(0deg); opacity: 1; }
+}
+
+/* Stagger tiles automatically */
+.history-row .history-tile:nth-child(1) { animation-delay: 0.00s; }
+.history-row .history-tile:nth-child(2) { animation-delay: 0.08s; }
+.history-row .history-tile:nth-child(3) { animation-delay: 0.16s; }
+.history-row .history-tile:nth-child(4) { animation-delay: 0.24s; }
+.history-row .history-tile:nth-child(5) { animation-delay: 0.32s; }
+
+/* =========================================
+   HIDE EMPTY ASSASSIN AREA
+   ========================================= */
+#setterSecretArea:empty {
+  display: none;
+}
+
+/* =========================================
+   INFO GRID
+   ========================================= */
 .info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 20px;
 }
 
-.info-row {
+.info-col p { margin: 6px 0; }
+
+/* =========================================
+   THEMES (ESports)
+   ========================================= */
+.theme-guesser {
+  background: #130203 !important;
+  border: 2px solid #ff1e33;
+  box-shadow: 0 0 25px rgba(255,0,25,0.35), inset 0 0 25px rgba(255,0,25,0.2);
+}
+
+.theme-guesser h2 {
+  color: #ff4b5c;
+  text-shadow: 0 0 18px rgba(255,40,60,0.9);
+}
+
+.theme-guesser .turn-indicator.your-turn {
+  background: #ff1e33;
+  box-shadow: 0 0 25px rgba(255,40,60,.9);
+}
+
+.theme-setter {
+  background: #031122 !important;
+  border: 2px solid #2c6bff;
+  box-shadow: 0 0 25px rgba(50,120,255,0.35), inset 0 0 25px rgba(50,120,255,0.2);
+}
+
+.theme-setter h2 {
+  color: #4da3ff;
+  text-shadow: 0 0 18px rgba(70,140,255,0.9);
+}
+
+.theme-setter .turn-indicator.your-turn {
+  background: #2c6bff;
+  box-shadow: 0 0 25px rgba(70,120,255,.9);
+}
+/* TOAST (bottom UI popup) */
+.toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(40px);
+  opacity: 0;
+
+  padding: 12px 22px;
+  font-size: 18px;
+  font-weight: 700;
+
+  border-radius: 10px;
+  background: var(--toast-bg);
+  border: 1px solid var(--toast-border);
+  color: white;
+
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 99999;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* TURN POPUP (center, mid-top like classic VS-UI) */
+.turn-popup {
+  position: fixed;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%) scale(.9);
+  opacity: 0;
+
+  padding: 14px 26px;
+  font-size: 22px;
+  font-weight: 800;
+
+  border-radius: 12px;
+  background: var(--popup-bg);
+  border: 2px solid var(--popup-border);
+
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 99999;
+}
+
+.turn-popup.show {
+  opacity: 1;
+  transform: transl
+.guess-input-area {
+  width: 100%;
+  max-width: 520px;
+  margin: 20px auto 0 auto;
+}
+
+.letter-input {
+  width: 100%;
+  font-size: 1.6rem;
+  text-align: center;
+}
+
+.guess-btn-row {
   display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-}
-
-/* KEYBOARD */
-.keyboard {
-  margin-top: 10px;
-}
-
-/* TURN */
-.turn-indicator {
-  height: 4px;
-  background: var(--accent);
-  box-shadow: 0 0 18px var(--accent-glow);
+  justify-content: center;
+  gap: 12px;
   margin-top: 10px;
 }
