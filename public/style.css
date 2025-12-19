@@ -360,7 +360,7 @@ body {
 }
 
 .theme-setter {
-  background: ##140203;
+  background: #140203;
   border: 2px solid #2c6bff;
   box-shadow: 0 0 25px rgba(50,120,255,0.35), inset 0 0 25px rgba(50,120,255,0.2);
 }
@@ -397,11 +397,7 @@ body {
   box-shadow: 0 0 6px rgba(255,80,80,0.3);
 }
 
-.theme-setter .letter-input {
-  max-width: 160px;
-  font-size: 1.3rem;
-  border: 1px solid #ff3a3a;
-}
+
 .theme-setter .power-btn {
   background: #250404;
   border: 1px solid #ff2a2a;
@@ -583,4 +579,34 @@ body {
   box-shadow:
     inset 0 0 0 2px var(--btn-primary),
     0 0 8px var(--btn-primary-glow);
+}
+
+   /* FORCE ENTER SYMBOL — structural match */
+.key-row:last-child .key:first-child {
+  position: relative;
+  color: transparent;
+  background: var(--btn-primary);
+  box-shadow: 0 0 8px var(--btn-primary-glow);
+}
+
+/* Overlay ⏎ */
+.key-row:last-child .key:first-child::before {
+  content: "⏎";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+/* If ANY turn-indicator has your-turn, show overlay */
+.turn-indicator.your-turn ~ .turn-overlay,
+.turn-indicator.your-turn + .turn-overlay {
+  opacity: 1;
+}
+body:has(.turn-indicator.your-turn) .turn-overlay {
+  opacity: 1;
 }
