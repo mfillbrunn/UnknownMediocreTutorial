@@ -71,9 +71,10 @@ function updateRemainingWords() {
 
   // Guesser sees exact number + animation
   const g = $("remainingWordsGuesser");
-  g.textContent = n;
+  if (g) {
+    g.textContent = `${Number(n).toLocaleString()} words remaining`;;
   styleRemaining(g, category);
-
+  }
   // Setter sees category + animation
   const s = $("remainingWordsSetter");
   s.textContent = category;
