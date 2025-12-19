@@ -129,26 +129,28 @@
   <!-- ===================================================== -->
   <!-- GUESSER SCREEN -->
   <!-- ===================================================== -->
- <div id="guesserScreen" class="screen theme-guesser">
+  <div id="guesserScreen" class="screen theme-guesser">
+    <h2>Guesser <span class="badge badge-b">B</span></h2>
 
-  <h2>Guesser <span class="badge badge-b">B</span></h2>
-
-  <!-- HISTORY / WORDLE BOARD -->
-  <div id="boardGuesser" class="board-container">
-    <!-- JS will fill 6 rows of 5 tiles -->
-  </div>
-
-  <!-- KEYBOARD -->
-  <div id="keyboardGuesser" class="keyboard"></div>
-
-  <!-- CONSTRAINTS moved to bottom -->
-  <div class="constraints-box constraints-bottom">
-    <p><b>Pattern:</b> <span id="knownPatternGuesser">- - - - -</span></p>
-    <p><b>Must contain:</b> <span id="mustContainGuesser">none</span></p>
+    <div class="constraints-box">
+      <p><b>Pattern:</b> <span id="knownPatternGuesser">- - - - -</span></p>
+      <p><b>Must contain:</b> <span id="mustContainGuesser">none</span></p>
+    </div>
     <p><b>Remaining Words:</b> <span id="remainingWordsGuesser" class="remainingMeter">-</span></p>
+    <div id="turnIndicatorGuesser" class="turn-indicator"></div>
+
+    <h3>Make a Guess</h3>
+    <input id="guessInput" maxlength="5" autocomplete="off" class="letter-input">
+    <button id="submitGuessBtn" class="primary-btn">Submit Guess</button>
+
+    <h3>Guesser Powers</h3>
+    <div id="guesserPowerContainer"></div>
+
+    <div id="keyboardGuesser" class="keyboard"></div>
+
+    <h3>History</h3>
+    <div id="historyGuesser" class="history-box">No guesses yet.</div>
   </div>
-  <div id="guesserPowerContainer"></div>
-  <div id="turnIndicatorGuesser" class="turn-indicator"></div>
 
 </div>
 
@@ -166,7 +168,6 @@
 <script src="network/socketClient.js"></script>
 
 <script src="ui/keyboard.js"></script>
-  <script src="ui/board.js"></script>
 <script src="ui/history.js"></script>
 <!-- Power Engine Core -->
 <script src="powerEngine/powerEngine.js"></script>
