@@ -29,6 +29,11 @@ body {
 }
 
 .screen.active { display: block; }
+.default-screen {
+  display: block !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
 
 .screen-header {
   display: flex;
