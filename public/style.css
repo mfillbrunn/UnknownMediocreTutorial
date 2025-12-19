@@ -267,8 +267,10 @@ input:focus {
 .keyboard {
   text-align: center;
   margin-top: 16px;
+   position: relative;
+  z-index: 5;
+  pointer-events: auto !important;
 }
-
 .key-row {
   display: flex;
   justify-content: center;
@@ -286,6 +288,8 @@ input:focus {
   background: var(--kb-neutral);
   border: 1px solid var(--kb-border);
   transition: .15s;
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }
 
 .key:hover {
