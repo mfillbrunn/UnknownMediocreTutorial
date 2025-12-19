@@ -20,9 +20,7 @@ body {
   font-size: 18px;
   letter-spacing: 0.5px;
 }
-.hidden {
-  display: none !important;
-}
+
 #roomInfo {
   opacity: 0;
   transition: opacity .25s ease;
