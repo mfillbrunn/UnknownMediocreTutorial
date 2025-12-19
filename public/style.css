@@ -313,6 +313,25 @@ body {
   border: 2px solid #ff1e33;
   box-shadow: 0 0 25px rgba(255,0,25,0.35), inset 0 0 25px rgba(255,0,25,0.2);
 }
+/* ===== GUESSER HEADER ===== */
+.guesser-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+/* Remaining words (top-right) */
+.theme-guesser .guesser-remaining {
+  font-size: 14px;              /* smaller */
+  font-weight: 600;
+  letter-spacing: 0.5px;
+
+  color: #ff4b5c;               /* same as Guesser heading */
+  opacity: 0.9;
+text-transform: uppercase;
+  font-size: 13px;
+  white-space: nowrap;
+}
 
 .theme-guesser h2 {
   color: #ff4b5c;
