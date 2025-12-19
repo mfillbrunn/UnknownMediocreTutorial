@@ -73,7 +73,7 @@
   <!-- ========== SETTER ========== -->
   <div id="setterScreen" class="screen theme-setter">
 
-    <h2 class="screen-title">Setter <span class="badge badge-a">A</span></h2>
+    <h2 class="screen-title">Setter </h2>
 
     <!-- HISTORY AT TOP -->
     <div class="play-area setter-play">
@@ -129,7 +129,7 @@
   <!-- ========== GUESSER ========== -->
   <div id="guesserScreen" class="screen theme-guesser">
 
-    <h2 class="screen-title">Guesser <span class="badge badge-b">B</span></h2>
+    <h2 class="screen-title">Guesser</h2> <p><b>Remaining:</b> <span id="remainingWordsGuesser" class="remainingMeter">-</span></p>
 
     <!-- HISTORY TOP -->
     <div id="historyGuesser" class="history-box history-tiles"></div>
@@ -140,7 +140,7 @@
     <!-- INPUT -->
    <div class="guess-input-area">
   <input id="guessInput" maxlength="5" autocomplete="off" class="letter-input">
-
+  <br>
   <div class="guess-btn-row">
     <button id="submitGuessBtn" class="primary-btn small">Guess</button>
   </div>
@@ -148,20 +148,6 @@
 
 
     <div id="guesserPowerContainer" class="power-container"></div>
-
-    <!-- INFO PANEL BOTTOM -->
-    <div class="info-grid">
-      <div class="info-col">
-        <p><b>Pattern:</b> <span id="knownPatternGuesser">- - - - -</span></p>
-        <p><b>Must contain:</b> <span id="mustContainGuesser">none</span></p>
-      </div>
-      <div class="info-col">
-        <p><b>Remaining:</b> <span id="remainingWordsGuesser" class="remainingMeter">-</span></p>
-      </div>
-    </div>
-
-    <div id="turnIndicatorGuesser" class="turn-indicator"></div>
-
   </div>
 
 </div>
