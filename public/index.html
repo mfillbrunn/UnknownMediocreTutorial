@@ -129,7 +129,13 @@
   <!-- ========== GUESSER ========== -->
   <div id="guesserScreen" class="screen theme-guesser">
 
-    <h2 class="screen-title">Guesser</h2> <p><b>Remaining:</b> <span id="remainingWordsGuesser" class="remainingMeter">-</span></p>
+    <div class="guesser-header">
+  <h2 class="screen-title">Guesser</h2>
+
+  <div class="guesser-remaining">
+    <span id="remainingWordsGuesser">-</span> words remaining
+  </div>
+</div>
 
     <!-- HISTORY TOP -->
     <div id="historyGuesser" class="history-box history-tiles"></div>
@@ -148,17 +154,6 @@
 
 
     <div id="guesserPowerContainer" class="power-container"></div>
-
-     <!-- INFO PANEL BOTTOM -->
-    <div class="info-grid">
-      <div class="info-col">
-        <p><b>Pattern:</b> <span id="knownPatternGuesser">- - - - -</span></p>
-        <p><b>Must contain:</b> <span id="mustContainGuesser">none</span></p>
-      </div>
-      <div class="info-col">
-        <p><b>Remaining:</b> <span id="remainingWordsGuesser" class="remainingMeter">-</span></p>
-      </div>
-    </div>
 
     <div id="turnIndicatorGuesser" class="turn-indicator"></div>
   </div>
