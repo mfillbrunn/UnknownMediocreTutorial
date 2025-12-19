@@ -2,198 +2,128 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>VS Wordle — Competitive Mode</title>
+  <title>VS Wordle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="themes.css">
 </head>
 
 <body class="theme-esports">
 
 <script>
-  /* Required by your JS */
   const $ = id => document.getElementById(id);
 </script>
 
 <div id="appContainer">
 
-  <h1 class="title">VS WORDLE</h1>
+  <!-- LOBBY -->
+  <div id="lobby" class="screen screen-lobby active">
+    <h1 class="title">VS WORDLE</h1>
 
-  <div id="turnPopup" class="turn-popup"></div>
-  <div id="toast" class="toast"></div>
+    <div class="lobby-actions">
+      <button id="createRoomBtn" class="primary-btn">Create Room</button>
 
-  <!-- ========== LOBBY ========== -->
-  <div id="lobby" class="screen active screen-lobby">
-    <h2 class="screen-title">Online Lobby</h2>
-
-    <button id="createRoomBtn" class="primary-btn">Create Room</button>
-
-    <div class="join-block">
-      <input id="joinRoomInput" type="text" maxlength="8" placeholder="Room Code">
-      <button id="joinRoomBtn" class="primary-btn small">Join</button>
+      <div class="join-block">
+        <input id="joinRoomInput" maxlength="8" placeholder="Room Code">
+        <button id="joinRoomBtn" class="primary-btn small">Join</button>
+      </div>
     </div>
 
-    <div id="roomInfo" class="panel" style="display:none;">
-
-      <p><b>Room:</b> <span id="roomCodeLabel" class="room-code"></span></p>
-
-      <div class="panel-section">
-        <label><b>Powers:</b>
-          <input id="powerCountInput" type="number" min="1" max="10" value="2" class="short-input">
-        </label>
-        <button id="applyPowerCountBtn" class="primary-btn small">Apply</button>
+    <div id="roomInfo" class="panel hidden">
+      <div class="info-row">
+        <span class="label">Room</span>
+        <span id="roomCodeLabel" class="room-code"></span>
       </div>
 
-      <p><b>You are:</b> <span id="lobbyRoleLabel">-</span></p>
+      <div class="info-row">
+        <span class="label">Role</span>
+        <span id="lobbyRoleLabel">-</span>
+      </div>
+
+      <div class="info-row">
+        <span class="label">Powers</span>
+        <input id="powerCountInput" type="number" min="1" max="10" value="2">
+        <button id="applyPowerCountBtn" class="secondary-btn small">Apply</button>
+      </div>
 
       <button id="switchRolesBtn" class="secondary-btn">Switch Roles</button>
-
-      <button id="readyBtn" class="primary-btn">I'm Ready</button>
-
+      <button id="readyBtn" class="primary-btn">Ready</button>
     </div>
 
     <p id="lobbyStatus" class="status"></p>
   </div>
 
-  <!-- ========== MENU ========== -->
-  <div id="menu" class="screen">
-    <h2 class="screen-title">Game Menu</h2>
-
-    <div class="panel">
-      <p><b>Room:</b> <span id="menuRoomCode"></span></p>
-      <p><b>You are:</b> <span id="menuPlayerRole"></span></p>
-      <div id="roundSummary" class="summary-box"></div>
+  <!-- SETTER -->
+  <div id="setterScreen" class="screen theme-setter">
+    <div class="screen-header">
+      <span>Setter</span>
+      <span class="badge badge-a">A</span>
     </div>
 
-    <button id="newMatchBtn" class="primary-btn">New Match</button>
-  </div>
-
-  <!-- ========== SETTER ========== -->
-  <div id="setterScreen" class="screen theme-setter">
-
-    <h2 class="screen-title">Setter <span class="badge badge-a">A</span></h2>
-
-    <!-- HISTORY AT TOP -->
     <div id="historySetter" class="history-box history-tiles"></div>
 
-    <!-- KEYBOARD -->
-    <div id="keyboardSetter" class="keyboard"></div>
+    <div class="play-zone">
+      <div id="keyboardSetter" class="keyboard"></div>
 
-    <!-- INPUT -->
-  <div class="guess-input-area">
-  <input id="newSecretInput" class="letter-input">
-  <div class="guess-btn-row">
-    <button id="submitSetterNewBtn" class="primary-btn small">New</button>
-    <button id="submitSetterSameBtn" class="secondary-btn small">Same</button>
-  </div>
-</div>
+      <div class="guess-input-area inline">
+        <input id="newSecretInput" class="letter-input">
+        <button id="submitSetterNewBtn" class="primary-btn small">New</button>
+        <button id="submitSetterSameBtn" class="secondary-btn small">Same</button>
+      </div>
+    </div>
 
-    <!-- POWERS -->
     <div id="setterPowerContainer" class="power-container"></div>
-<div id="setterPreview" class="preview-box" style="display:none;"></div>
 
-    <!-- INFO PANEL AT BOTTOM -->
-    <div class="info-grid">
+    <div class="info-grid compact">
       <div class="info-col">
-        <p><b>Pattern:</b> <span id="knownPatternSetter">- - - - -</span></p>
-        <p><b>Must contain:</b> <span id="mustContainSetter">none</span></p>
-        <p><b>Last Guess:</b> <span id="pendingGuessDisplay">-</span></p>
+        <div class="info-row"><span>Pattern</span><span id="knownPatternSetter">- - - - -</span></div>
+        <div class="info-row"><span>Must</span><span id="mustContainSetter">none</span></div>
       </div>
       <div class="info-col">
-        <p><b>Remaining:</b> <span id="remainingWordsSetter" class="remainingMeter">-</span></p>
-        <p><b>Secret:</b> <span id="secretWordDisplay">NONE</span></p>
-        <div id="setterSecretArea"></div>
+        <div class="info-row"><span>Remaining</span><span id="remainingWordsSetter">-</span></div>
+        <div class="info-row"><span>Secret</span><span id="secretWordDisplay">NONE</span></div>
       </div>
     </div>
 
     <div id="turnIndicatorSetter" class="turn-indicator"></div>
+  </div>
 
-    <!-- Assassin Modal -->
-    <div id="assassinModal" class="modal">
-      <div class="modal-content">
-        <h3>Assassin Word</h3>
-        <input id="assassinInput" maxlength="5" autocomplete="off">
-        <button id="assassinSubmitBtn">Set</button>
-        <button id="assassinCancelBtn">Cancel</button>
+  <!-- GUESSER -->
+  <div id="guesserScreen" class="screen theme-guesser">
+    <div class="screen-header">
+      <span>Guesser</span>
+      <span class="badge badge-b">B</span>
+    </div>
+
+    <div id="historyGuesser" class="history-box history-tiles"></div>
+
+    <div class="play-zone">
+      <div id="keyboardGuesser" class="keyboard"></div>
+
+      <div class="guess-input-area inline">
+        <input id="guessInput" maxlength="5" class="letter-input">
+        <button id="submitGuessBtn" class="primary-btn small">Guess</button>
       </div>
     </div>
 
-  </div>
-
-  <!-- ========== GUESSER ========== -->
-  <div id="guesserScreen" class="screen theme-guesser">
-
-    <h2 class="screen-title">Guesser <span class="badge badge-b">B</span></h2>
-
-    <!-- HISTORY TOP -->
-    <div id="historyGuesser" class="history-box history-tiles"></div>
-
-    <!-- KEYBOARD -->
-    <div id="keyboardGuesser" class="keyboard"></div>
-
-    <!-- INPUT -->
-   <div class="guess-input-area">
-  <input id="guessInput" maxlength="5" autocomplete="off" class="letter-input">
-
-  <div class="guess-btn-row">
-    <button id="submitGuessBtn" class="primary-btn small">Guess</button>
-  </div>
-</div>
-
-
     <div id="guesserPowerContainer" class="power-container"></div>
 
-    <!-- INFO PANEL BOTTOM -->
-    <div class="info-grid">
+    <div class="info-grid compact">
       <div class="info-col">
-        <p><b>Pattern:</b> <span id="knownPatternGuesser">- - - - -</span></p>
-        <p><b>Must contain:</b> <span id="mustContainGuesser">none</span></p>
+        <div class="info-row"><span>Pattern</span><span id="knownPatternGuesser">- - - - -</span></div>
+        <div class="info-row"><span>Must</span><span id="mustContainGuesser">none</span></div>
       </div>
       <div class="info-col">
-        <p><b>Remaining:</b> <span id="remainingWordsGuesser" class="remainingMeter">-</span></p>
+        <div class="info-row"><span>Remaining</span><span id="remainingWordsGuesser">-</span></div>
       </div>
     </div>
 
     <div id="turnIndicatorGuesser" class="turn-indicator"></div>
-
   </div>
 
 </div>
 
-
-<!-- ========== JS (unchanged) ========== -->
 <script src="/socket.io/socket.io.js"></script>
-
-<script src="/game-engine/constraints.js"></script>
-<script src="/game-engine/scoring.js"></script>
-<script src="/game-engine/history.js"></script>
-<script src="/game-engine/preview.js"></script>
-
-<script src="network/socketClient.js"></script>
-
-<script src="ui/keyboard.js"></script>
-<script src="ui/history.js"></script>
-
-<script src="powerEngine/powerEngine.js"></script>
-<script src="powerRules.js"></script>
-
-<script src="powerEngine/powers/hideTile.js"></script>
-<script src="powerEngine/powers/confuseColors.js"></script>
-<script src="powerEngine/powers/countOnly.js"></script>
-<script src="powerEngine/powers/revealGreen.js"></script>
-<script src="powerEngine/powers/freezeSecret.js"></script>
-<script src="powerEngine/powers/suggestGuess.js"></script>
-<script src="powerEngine/powers/suggestSecret.js"></script>
-<script src="powerEngine/powers/forceTimer.js"></script>
-<script src="powerEngine/powers/revealHistory.js"></script>
-<script src="powerEngine/powers/blindSpot.js"></script>
-<script src="powerEngine/powers/stealthGuess.js"></script>
-<script src="powerEngine/powers/magicMode.js"></script>
-<script src="powerEngine/powers/vowelRefresh.js"></script>
-<script src="powerEngine/powers/revealLetter.js"></script>
-<script src="powerEngine/powers/assassinWord.js"></script>
-
 <script src="client.js"></script>
 </body>
 </html>
