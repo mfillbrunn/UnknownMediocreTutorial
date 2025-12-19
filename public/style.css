@@ -199,69 +199,55 @@ input:focus {
   box-shadow: 0 0 18px var(--your-turn-glow);
 }
 
-/* History (Wordle-style) */
+/* HISTORY ROWS */
 .history-tiles {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  padding: 10px 0;
 }
 
-.history-box > div {
-  display: flex !important;
+/* Each row: 5 tiles horizontally */
+.history-row {
+  display: flex;
+  justify-content: center;
   gap: 6px;
-  align-items: center;
 }
 
-.history-box span:first-child {
-  /* hide original text */
-  font-size: 0;
-  opacity: 0;
-}
-
-/* Tiles */
-.history-box .key-green,
-.history-box .key-yellow,
-.history-box .key-gray {
-  width: 42px;
-  height: 42px;
-  border-radius: 4px;
-  font-size: 22px;
-  font-weight: 900;
+/* Tiles identical to keyboard keys */
+.history-tile {
+  width: 40px;
+  height: 48px;
+  border-radius: 6px;
+  font-size: 20px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  animation: none;
+  border: 1px solid #222;
+  box-shadow: 0 2px 4px rgba(0,0,0,.4);
 }
 
-/* Esports tile colors */
-.history-box .key-green {
-  background: var(--tile-green);
-  color: var(--tile-green-text);
+/* Colors matching keyboard */
+.history-tile.green {
+  background: #00cf4d;
+  color: #053d1a;
+  box-shadow: 0 0 12px rgba(0,255,80,.75);
 }
 
-.history-box .key-yellow {
-  background: var(--tile-yellow);
-  color: var(--tile-yellow-text);
+.history-tile.yellow {
+  background: #ffbb33;
+  color: #4a3200;
+  box-shadow: 0 0 12px rgba(255,200,50,.75);
 }
 
-.history-box .key-gray {
-  background: var(--tile-gray);
-  color: var(--tile-gray-text);
+.history-tile.gray {
+  background: #2e2f34;
+  color: #ddd;
 }
 
-/* Flip animation (only finalized rows) */
-.history-box.finalized .key-green,
-.history-box.finalized .key-yellow,
-.history-box.finalized .key-gray {
-  animation: esportsFlip .35s ease forwards;
-}
-
-@keyframes esportsFlip {
-  0% { transform: rotateX(0); }
-  50% { transform: rotateX(90deg); }
-  100% { transform: rotateX(0); }
-}
 
 /* Keyboard */
 .keyboard {
@@ -323,3 +309,37 @@ input:focus {
 .guess-input-area {
   margin-top: 20px;
 }
+/* ========== ESports Red (Guesser) ========== */
+.theme-guesser {
+  background: #130203 !important;
+  border: 2px solid #ff1e33;
+  box-shadow: 0 0 25px rgba(255,0,25,0.35), inset 0 0 25px rgba(255,0,25,0.2);
+}
+
+.theme-guesser h2 {
+  color: #ff4b5c;
+  text-shadow: 0 0 18px rgba(255,40,60,0.9);
+}
+
+.theme-guesser .turn-indicator.your-turn {
+  background: #ff1e33;
+  box-shadow: 0 0 25px rgba(255,40,60,.9);
+}
+
+/* ========== ESports Blue (Setter) ========== */
+.theme-setter {
+  background: #031122 !important;
+  border: 2px solid #2c6bff;
+  box-shadow: 0 0 25px rgba(50,120,255,0.35), inset 0 0 25px rgba(50,120,255,0.2);
+}
+
+.theme-setter h2 {
+  color: #4da3ff;
+  text-shadow: 0 0 18px rgba(70,140,255,0.9);
+}
+
+.theme-setter .turn-indicator.your-turn {
+  background: #2c6bff;
+  box-shadow: 0 0 25px rgba(70,120,255,.9);
+}
+
