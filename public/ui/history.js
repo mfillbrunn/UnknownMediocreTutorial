@@ -62,7 +62,7 @@ window.renderHistory = function (state, container, isSetter, draftGuess = null) 
   }
 
   // ------------------ DRAFT ROW ------------------
-  if (!isSetter && Array.isArray(draftGuess)) {
+  if (!isSetter && Array.isArray(draftGuess) && !draftSubmitted) {
     const row = document.createElement("div");
     row.className = "history-row draft-row";
 
@@ -81,4 +81,18 @@ window.renderHistory = function (state, container, isSetter, draftGuess = null) 
 
     container.appendChild(row);
   }
+  if (!isSetter && draftSubmitted && Array.isArray(draftGuess)) {
+  const row = document.createElement("div");
+  row.className = "history-row submitted-row";
+
+  for (let i = 0; i < 5; i++) {
+    const tile = document.createElement("div");
+    tile.className = "history-tile submitted-tile";
+    tile.textContent = draftGuess[i];
+    row.appendChild(tile);
+  }
+
+  container.appendChild(row);
+}
+
 };
