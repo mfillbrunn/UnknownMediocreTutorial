@@ -590,8 +590,6 @@ function updateGuesserScreen() {
   $("mustContainGuesser").textContent =
     getMustContainLetters(state).join(", ") || "none";
 }
-
-});
 // -----------------------------------------------------
 // SUMMARY
 // -----------------------------------------------------
