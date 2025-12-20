@@ -5,6 +5,12 @@
   --title:#fff;
   --screen-bg:#111216;
 
+ --alabaster-grey: #d8dbe2;
+  --ebony:          #575c55;
+  --old-gold:       #e2c044;
+  --blue-bell:      #2892d7;
+  --vibrant-coral:  #fe5f55;
+  
   --panel-bg:#16171c;
   --panel-text:#e4e4e4;
   --history-bg:#1c1d22;
@@ -82,3 +88,71 @@ body.theme-dark {
 body.theme-esports {
   /* Uses root defaults */
 }
+
+/* =====================================
+   Alabaster theme
+   ===================================== */
+body.theme-alabaster {
+
+  /* -------- Core surfaces -------- */
+  --bg: var(--alabaster-grey);
+  --text: var(--ebony);
+  --title: var(--ebony);
+  --screen-bg: #ffffff;
+
+  /* -------- Panels -------- */
+  --panel-bg: #f2f3f6;
+  --panel-text: var(--ebony);
+  --history-bg: #eceef2;
+
+  /* -------- Buttons -------- */
+  --btn-primary: var(--blue-bell);
+  --btn-primary-hover: #1f7bb8;
+  --btn-primary-glow: rgba(40, 146, 215, 0.45);
+
+  --btn-secondary: #e4e6eb;
+  --btn-secondary-text: var(--ebony);
+  --btn-secondary-hover: #d3d6dd;
+
+  /* -------- Powers -------- */
+  --power-bg: var(--old-gold);
+  --power-glow: rgba(226, 192, 68, 0.45);
+
+  /* -------- Inputs -------- */
+  --input-bg: #ffffff;
+  --input-text: var(--ebony);
+  --input-border: #b7bcc6;
+
+  /* -------- Focus / accessibility -------- */
+  --focus-border: var(--blue-bell);
+  --focus-glow: rgba(40, 146, 215, 0.6);
+
+  /* -------- Toasts -------- */
+  --toast-bg: #ffffff;
+  --toast-border: #c8ccd6;
+
+  /* -------- Popups / alerts -------- */
+  --popup-bg: #ffffff;
+  --popup-border: var(--vibrant-coral);
+
+  /* -------- Turn indicators -------- */
+  --your-turn-bg: var(--vibrant-coral);
+  --your-turn-glow: rgba(254, 95, 85, 0.7);
+
+  /* -------- Tiles -------- */
+  --tile-green: var(--blue-bell);
+  --tile-green-text: #ffffff;
+
+  --tile-yellow: var(--old-gold);
+  --tile-yellow-text: #4a3a00;
+
+  --tile-gray: #b3b7c2;
+  --tile-gray-text: #3f4248;
+
+  /* -------- Keyboard -------- */
+  --kb-neutral: #e1e3e8;
+  --kb-border: #c5c9d2;
+  --kb-hover: #d1d5de;
+  --kb-used: #c2c6cf;
+}
+
