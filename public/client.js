@@ -440,7 +440,7 @@ $("newSecretInput").disabled = true;
   // -------------------------------------------------------
   // KEYBOARD + PATTERN / PREVIEW
   // -------------------------------------------------------
-  if (myRole === state.setter) {
+  if (myRole === state.setter && setterInputEnabled) {
     renderKeyboard({
     state,
     container: $("keyboardSetter"),
@@ -483,7 +483,7 @@ const preview = $("setterPreview");
   }
 }
 function handleSetterInput(event) {
-  if (!state) return;
+  if (!setterInputEnabled) return;
   const draft = state.setterDraft || "";
   if (event.type === "BACKSPACE") {
     state.setterDraft = draft.slice(0, -1);
@@ -556,7 +556,7 @@ function updateGuesserScreen() {
       !state.pendingGuess &&
       state.turn === state.guesser);
   const displayGuess = state.pendingGuess || localGuesserDraft;
- if (myRole === state.guesser && canGuess) {
+ if (myRole === state.guesser) {
   renderKeyboard({
     state,
     container: $("keyboardGuesser"),
