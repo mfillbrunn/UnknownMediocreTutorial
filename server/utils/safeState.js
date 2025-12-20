@@ -13,18 +13,16 @@ function buildSafeStateForPlayer(state, role) {
 // -----------------------------------------------------
 // LIVE DRAFT VISIBILITY (STEALTH-AWARE)
 // -----------------------------------------------------
- if (role === state.guesser) {
-   safe.guesserDraft = state.guesserDraft || "";
- }
-
- if (role === state.setter) {
-   if (state.powers.stealthGuessActive) {
-     safe.guesserDraft = "?????";
-   } else {
-     safe.guesserDraft = state.guesserDraft || "";
-   }
- }
-
+delete safe.guesserDraft;
+const stealthActive = !!state.powers?.stealthGuessActive;
+if (role === state.guesser) {
+  safe.guesserDraft = state.guesserDraft || "";
+}
+if (role === state.setter) {
+  safe.guesserDraft = stealthActive
+    ? "?????"
+    : (state.guesserDraft || "");
+}
   // -----------------------------------------------------
   // 1. Hide SECRET from guesser
   // -----------------------------------------------------
