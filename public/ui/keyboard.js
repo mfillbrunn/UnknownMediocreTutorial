@@ -112,7 +112,7 @@ window.renderKeyboard = function ({
 }) {
 
   if (!container.__keys) {
-    buildKeyboard(container, onKeyClick);
+    buildKeyboard(container);
   }
     // ========================================================
   // Determine suppression behavior for this turn
@@ -138,7 +138,7 @@ window.renderKeyboard = function ({
   }
 
   if (symbol === "ENTER") {
-    eyEl.onclick = () => onInput({ type: "ENTER" });
+    keyEl.onclick = () => onInput({ type: "ENTER" });
     continue;
   }
 
