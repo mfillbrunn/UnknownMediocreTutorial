@@ -1,4 +1,4 @@
-window.renderHistory = function (state, container, isSetter, draftGuess = null) {
+window.renderHistory = function (state, container, role) {
   container.innerHTML = "";
 
   const history = state?.history;
@@ -13,6 +13,7 @@ window.renderHistory = function (state, container, isSetter, draftGuess = null) 
     PowerEngine.applyHistoryEffects(safeEntry, isSetter);
 
     let fbArray;
+    const isSetter = role === "setter";
     if (!isSetter && Array.isArray(safeEntry.fbGuesser)) {
       fbArray = safeEntry.fbGuesser;
     } else if (Array.isArray(safeEntry.fb)) {
@@ -60,39 +61,36 @@ window.renderHistory = function (state, container, isSetter, draftGuess = null) 
 
     container.appendChild(row);
   }
+// ------------------ DRAFT ROWS ------------------
+const guesserDraft = (state.uiDraftGuesser || "").toUpperCase();
+const setterDraft  = (state.uiDraftSetter  || "").toUpperCase();
 
-  // ------------------ DRAFT ROW ------------------
-  if (!isSetter && Array.isArray(draftGuess) && !draftSubmitted) {
-    const row = document.createElement("div");
-    row.className = "history-row draft-row";
+// Guesser sees THEIR own draft
+if (role === "guesser" && guesserDraft && !draftSubmitted) {
+  renderDraftRow(guesserDraft, container, "draft-row");
+}
 
-    for (let i = 0; i < 5; i++) {
-      const tile = document.createElement("div");
-      tile.className = "history-tile draft-tile";
+// Setter sees guesser's draft (live, read-only)
+if (role === "setter" && guesserDraft) {
+  renderDraftRow(guesserDraft, container, "draft-row guesser-draft");
+}
 
-      tile.textContent = draftGuess[i] || "";
+// Setter also sees THEIR OWN secret draft
+if (role === "setter" && setterDraft) {
+  renderDraftRow(setterDraft, container, "draft-row setter-draft");
+}
+};
 
-      if (draftGuess[i]) {
-        tile.classList.add("draft-filled");
-      }
-
-      row.appendChild(tile);
-    }
-
-    container.appendChild(row);
-  }
-  if (!isSetter && draftSubmitted && Array.isArray(draftGuess)) {
+function renderDraftRow(word, container, className) {
   const row = document.createElement("div");
-  row.className = "history-row submitted-row";
+  row.className = `history-row ${className}`;
 
   for (let i = 0; i < 5; i++) {
     const tile = document.createElement("div");
-    tile.className = "history-tile submitted-tile";
-    tile.textContent = draftGuess[i];
+    tile.className = "history-tile draft-tile";
+    tile.textContent = word[i] || "";
     row.appendChild(tile);
   }
 
   container.appendChild(row);
 }
-
-};
