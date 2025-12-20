@@ -389,13 +389,16 @@ if (
 ) {
   draftGuess = [];
   draftSubmitted = false;
+  state.uiDraft = "";
 }
 
   updateUI();
   // Clear draft if guess was accepted
 if (myRole === state.guesser && !state.pendingGuess) {
   draftGuess = [];
+  state.uiDraft = "";
 }
+
 
   // Reset guess input if locked on transition
   if (state.phase === "normal" && $("guessInput").disabled) {
@@ -723,10 +726,12 @@ function handleSetterKeyboard(letter, special) {
   // Only block typing if the input is disabled (you already manage this)
   if (!input || input.disabled) return;
 
-  if (special === "BACKSPACE") {
-  draftGuess.pop();
-  state.uiDraft = draftGuess.join("");
+ if (special === "BACKSPACE") {
+  input.value = input.value.slice(0, -1);
+  state.uiDraft = input.value.toUpperCase();
+  return;
 }
+
 
   if (special === "ENTER") {
     if (state.pendingGuess && !$("submitSetterNewBtn").disabled) {
@@ -735,9 +740,10 @@ function handleSetterKeyboard(letter, special) {
     return;
   }
 
-  if (letter && input.value.length < 5) {
-    input.value += letter;
-  }
+ if (letter && input.value.length < 5) {
+  input.value += letter;
+  state.uiDraft = input.value.toUpperCase();
+}
 
   input.focus();
 }
@@ -775,10 +781,9 @@ renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
   // ENTER
 else if (special === "ENTER") {
   if (draftGuess.length !== 5) return;
-
   const guess = draftGuess.join("").toLowerCase();
-
   draftSubmitted = true;   // freeze draft visually
+  state.uiDraft = "";     // ← ADD THIS LINE
   sendGameAction(roomId, { type: "SUBMIT_GUESS", guess });
 }
 
@@ -933,12 +938,12 @@ $("applyPowerCountBtn").onclick = () => {
 
 $("submitGuessBtn").onclick = () => {
   const g = $("guessInput").value.trim().toLowerCase();
-
   if (g.length !== 5) return shake($("guessInput")), toast("5 letters required");
   if (!window.ALLOWED_GUESSES?.has(g))
     return shake($("guessInput")), toast("Word not in dictionary");
-
   $("guessInput").value = "";
+  draftSubmitted = true;   
+  state.uiDraft = "";     
   sendGameAction(roomId, { type: "SUBMIT_GUESS", guess: g });
 };
 
