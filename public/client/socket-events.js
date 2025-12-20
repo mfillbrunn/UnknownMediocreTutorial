@@ -11,10 +11,7 @@ socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
   // Save previous values so we don't re-toast
   lastSimulSecret = secretSubmitted;
   lastSimulGuess = guessSubmitted;
-  if (guessSubmitted) {
-    localGuesserDraft = "";
-    }
-});
+  });
 
 socket.on("revealOldSecret", ({ secret }) => {
   toast(`Secret two rounds ago was: ${secret.toUpperCase()}`);
