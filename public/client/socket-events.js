@@ -1,4 +1,3 @@
-
 socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
 
   // Notify BOTH players when setter submits (first time)
@@ -12,6 +11,9 @@ socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
   // Save previous values so we don't re-toast
   lastSimulSecret = secretSubmitted;
   lastSimulGuess = guessSubmitted;
+  if (guessSubmitted) {
+    localGuesserDraft = "";
+    }
 });
 
 socket.on("revealOldSecret", ({ secret }) => {
@@ -93,7 +95,7 @@ socket.on("errorMessage", msg => {
 socket.on("roleAssigned", ({ role }) => {
   myRole = role;
   roleAssigned = true;
-  resetKeyboards();
+     localGuesserDraft = "";
   if (pendingState) {
     state = pendingState;
     window.state = state;
