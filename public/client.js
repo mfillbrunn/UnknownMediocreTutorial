@@ -84,8 +84,6 @@ function updateRemainingWords() {
   s.textContent = category;
   styleRemaining(s, category);
 }
-
-
 function computeRemainingAfterIndex(idx) {
   const words = window.ALLOWED_SECRETS;
   let count = 0;
@@ -101,8 +99,6 @@ function computeRemainingAfterIndex(idx) {
 
   return count;
 }
-
-
 // -----------------------------------------------------
 // Pattern Renderer for Pretty Styling (Reveal Green, etc.)
 // -----------------------------------------------------
@@ -130,104 +126,6 @@ window.renderPatternInto = function (el, pattern, revealInfo = null) {
 
   el.innerHTML = html.trim();
 };
-
-socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
-
-  // Notify BOTH players when setter submits (first time)
-  if (secretSubmitted && !lastSimulSecret) {
-    toast("Setter submitted their secret!");
-  }
-  // Notify BOTH players when guesser submits (first time)
-  if (guessSubmitted && !lastSimulGuess) {
-    toast("Guesser submitted their guess!");
-  }
-  // Save previous values so we don't re-toast
-  lastSimulSecret = secretSubmitted;
-  lastSimulGuess = guessSubmitted;
-});
-
-socket.on("revealOldSecret", ({ secret }) => {
-  toast(`Secret two rounds ago was: ${secret.toUpperCase()}`);
-});
-
-// ========================
-// Force Timer Events
-// ========================
-
-// Timer begins
-socket.on("forceTimerStarted", ({ deadline }) => {
-  const bar = $("turnIndicatorSetter");
-  bar.classList.add("your-turn");
-  bar.textContent = "TIME LEFT: 30s";
-});
-
-// Timer tick (250ms)
-socket.on("forceTimerTick", ({ remaining }) => {
-  const bar = $("turnIndicatorSetter");
-  const sec = Math.max(0, Math.ceil(remaining / 1000));
-
-  bar.textContent = `TIME LEFT: ${sec}s`;
-  bar.classList.add("your-turn");
-
-  // --- NEW: Flash red when 5 seconds or less ---
-  if (sec <= 5) {
-    bar.classList.add("flash-warning");
-  } else {
-    bar.classList.remove("flash-warning");
-  }
-});
-
-socket.on("assassinUsed", ({ setter, word }) => {
-  // Notify guesser only
-  if (myRole === state.guesser) {
-    toast("☠ The setter has armed an Assassin Word!");
-  }
-
-  // Optional: setter feedback (if you want)
-  if (myRole === state.setter) {
-    toast("Assassin Word set: " + word.toUpperCase());
-  }
-});
-
-socket.on("forceTimerExpired", () => {
-  const bar = $("turnIndicatorSetter");
-  bar.textContent = "TIME LEFT: 0s";
-  bar.classList.remove("flash-warning");
-
-  $("submitSetterNewBtn").disabled = true;
-  $("submitSetterNewBtn").classList.add("disabled-btn");
-  $("newSecretInput").value = "";
-
-  toast("Time ran out — old secret was kept!");
-});
-
-
-
-
-socket.on("suggestWord", ({ word }) => {
-  if (myRole === state.guesser) {
-    $("guessInput").value = word.toUpperCase();
-  }
-  if (myRole === state.setter) {
-    $("newSecretInput").value = word.toUpperCase();
-  }
-});
-
-socket.on("errorMessage", msg => {
-  if ($("assassinModal").classList.contains("active")) {
-    const inp = $("assassinInput");
-    shake(inp);
-    toast(msg);
-    inp.value = "";
-    inp.focus(); // IMPORTANT to avoid “freeze”
-    return;
-  }
-
-  // fallback for secret errors
-  shake($("newSecretInput"));
-  toast(msg);
-});
-
 // -----------------------------------------------------
 // LOAD WORD LIST FOR CLIENT-SIDE VALIDATION
 // -----------------------------------------------------
@@ -241,7 +139,6 @@ window.ALLOWED_SECRETS = new Set();
 fetch("/api/allowed-secrets")
   .then(r => r.json())
   .then(words => words.forEach(w => window.ALLOWED_SECRETS.add(w)));
-
 
 // -----------------------------------------------------
 // AUTO-REJOIN
@@ -304,7 +201,6 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
   powerQueue = [];
 }
 
-
 // Lobby events
 onLobbyEvent(evt => {
   switch (evt.type) {
@@ -327,8 +223,6 @@ onLobbyEvent(evt => {
 
   updateRoleLabels();
   break;
-
-
     case "playerReady":
     toast(`Player ${evt.role} is READY`);
   
@@ -355,18 +249,6 @@ onLobbyEvent(evt => {
 });
 
 // Role assignment from server
-socket.on("roleAssigned", ({ role }) => {
-  myRole = role;
-  roleAssigned = true;
-
-  if (pendingState) {
-    state = pendingState;
-    window.state = state;
-    pendingState = null;
-    updateUI();
-  }
-  updateRoleLabels();
-});
 
 // State updates
 onStateUpdate(newState => {
@@ -398,8 +280,6 @@ if (myRole === state.guesser && !state.pendingGuess) {
   draftGuess = [];
   state.uiDraft = "";
 }
-
-
   // Reset guess input if locked on transition
   if (state.phase === "normal" && $("guessInput").disabled) {
     $("guessInput").value = "";
@@ -587,8 +467,6 @@ $("pendingGuessDisplay").textContent =
       bar.classList.add("wait-turn");
     }
   }
-
-
   const isSetterTurn = (state.turn === state.setter);
   const isDecisionStep =
     isSetterTurn &&
@@ -603,7 +481,6 @@ $("pendingGuessDisplay").textContent =
   // -------------------------------------------------------
   // PHASE-SPECIFIC BUTTON / INPUT LOGIC
   // -------------------------------------------------------
-
   // SIMULTANEOUS PHASE — only initial secret allowed, once
   if (state.phase === "simultaneous") {
     const secretSubmitted =
@@ -711,9 +588,7 @@ if (secretDraft.length) {
     must.length ? must.join(", ") : "none";
 
   updateSetterPreview();
- 
-
-}
+ }
 
 function renderDraftRow(word, container) {
   const row = document.createElement("div");
@@ -728,8 +603,6 @@ function renderDraftRow(word, container) {
 
   container.appendChild(row);
 }
-
-
 
 function updateSetterPreview() {
  // If stealth is active, hide preview entirely
@@ -773,8 +646,6 @@ function handleSetterKeyboard(letter, special) {
   state.uiDraft = input.value.toUpperCase();
   return;
 }
-
-
   if (special === "ENTER") {
     if (state.pendingGuess && !$("submitSetterNewBtn").disabled) {
       $("submitSetterNewBtn").click();
@@ -786,10 +657,8 @@ function handleSetterKeyboard(letter, special) {
   input.value += letter;
   state.uiDraft = input.value.toUpperCase();
 }
-
   input.focus();
 }
-
 // -----------------------------------------------------
 // GUESSER UI
 // -----------------------------------------------------
@@ -822,7 +691,6 @@ if (special === "BACKSPACE") {
   state.guesserDraft = draftGuess.join("");
 }
 
-
   // ENTER
 else if (special === "ENTER") {
   if (draftGuess.length !== 5) return;
@@ -832,21 +700,15 @@ else if (special === "ENTER") {
   state.guesserDraft = "";
   sendGameAction(roomId, { type: "SUBMIT_GUESS", guess });
 }
-
-
   // LETTER
 else if (letter && draftGuess.length < 5) {
   draftGuess.push(letter);
   state.uiDraft = draftGuess.join("");
   state.guesserDraft = draftGuess.join("");
 }
-
-
   // Re-render history with updated draft
   renderHistory(state, $("historyGuesser"), false, draftGuess);
 });
-
-
   let pattern = getPattern(state, false);
 
 // ⭐ Remove blind spot information for guesser
@@ -860,12 +722,9 @@ renderPatternInto(
   pattern,
   state.revealGreenInfo || null
 );
-
-
   $("mustContainGuesser").textContent =
     getMustContainLetters(state).join(", ") || "none";
 }
-
 // -----------------------------------------------------
 // SUMMARY
 // -----------------------------------------------------
@@ -926,7 +785,6 @@ if (i === state.history.length - 1) {
   html += `</table>`;
   container.innerHTML = html;
 }
-
 
 // -----------------------------------------------------
 // BUTTONS
@@ -1034,7 +892,6 @@ $("assassinSubmitBtn").onclick = () => {
     $("assassinInput").value = "";
     return;
   }
-
   sendGameAction(roomId, {
     type: "USE_ASSASSIN_WORD",
     word: w,
