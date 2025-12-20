@@ -9,6 +9,10 @@ let roleAssigned = false;
 let lastSimulSecret = false;
 let lastSimulGuess = false;
 window.state = null;
+// -----------------------------------------------------
+// DRAFT GUESS (client-side only)
+// -----------------------------------------------------
+let draftGuess = [];
 
 // -----------------------------------------------------
 // DOM HELPERS
