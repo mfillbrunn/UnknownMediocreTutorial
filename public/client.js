@@ -35,7 +35,6 @@ function resetKeyboards() {
   if (kg) delete kg.__keys;
 }
 
-
 // -----------------------------------------------------
 // Pattern Renderer for Pretty Styling (Reveal Green, etc.)
 // -----------------------------------------------------
@@ -254,9 +253,19 @@ onStateUpdate(newState => {
   state = JSON.parse(JSON.stringify(newState));
   // restore client-only draft
   state.setterDraft = prevSetterDraft;
-  if (state.turn !== state.guesser || state.pendingGuess) {
-    localGuesserDraft = "";
-  }
+  // Clear guesser draft once it is no longer editable
+if (
+  // Normal mode: guess accepted or turn passed
+  (state.phase === "normal" &&
+    (state.pendingGuess || state.turn !== state.guesser)) ||
+
+  // Simultaneous mode: guess submitted
+  (state.phase === "simultaneous" &&
+    state.simultaneousGuessSubmitted)
+) {
+  localGuesserDraft = "";
+}
+
   if (state.powers.assassinWord) {
     $("assassinModal").classList.remove("active");
   }
@@ -510,16 +519,13 @@ function handleSetterInput(event) {
     return;
   }
   if (event.type === "ENTER") {
-    // Prefer SAME if allowed
-    if (!$("submitSetterSameBtn").disabled) {
-      $("submitSetterSameBtn").click();
-      return;
-    }
-    // Otherwise fall back to NEW if allowed
     if (!$("submitSetterNewBtn").disabled) {
       $("submitSetterNewBtn").click();
       return;
     }
+        shake($("keyboardSetter"));
+        toast("Can't submit new secret");
+      return;      
   }
 }
 function handleGuesserInput(event) {
