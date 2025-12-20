@@ -591,33 +591,7 @@ function updateGuesserScreen() {
     getMustContainLetters(state).join(", ") || "none";
 }
 
-
-  // Re-render history with updated draft
-  renderHistory({
-  state,
-  container: $("historyGuesser"),
-  role: "guesser",
-  guesserDraft: state.guesserDraft || "",
-  setterDraft: null
 });
-
-});
-  let pattern = getPattern(state, false);
-
-// ⭐ Remove blind spot information for guesser
-const blindIdx = state.powers?.blindSpotIndex;
-if (typeof blindIdx === "number") {
-  pattern[blindIdx] = "🟪";  // unknown, masked slot
-}
-
-renderPatternInto(
-  $("knownPatternGuesser"),
-  pattern,
-  state.revealGreenInfo || null
-);
-  $("mustContainGuesser").textContent =
-    getMustContainLetters(state).join(", ") || "none";
-}
 // -----------------------------------------------------
 // SUMMARY
 // -----------------------------------------------------
