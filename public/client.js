@@ -724,9 +724,9 @@ function handleSetterKeyboard(letter, special) {
   if (!input || input.disabled) return;
 
   if (special === "BACKSPACE") {
-    input.value = input.value.slice(0, -1);
-    return;
-  }
+  draftGuess.pop();
+  state.uiDraft = draftGuess.join("");
+}
 
   if (special === "ENTER") {
     if (state.pendingGuess && !$("submitSetterNewBtn").disabled) {
@@ -784,9 +784,10 @@ else if (special === "ENTER") {
 
 
   // LETTER
-  else if (letter && draftGuess.length < 5) {
-    draftGuess.push(letter);
-  }
+ else if (letter && draftGuess.length < 5) {
+  draftGuess.push(letter);
+  state.uiDraft = draftGuess.join("");
+}
 
   // Re-render history with updated draft
   renderHistory(state, $("historyGuesser"), false, draftGuess);
