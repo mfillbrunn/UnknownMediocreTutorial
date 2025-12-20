@@ -68,6 +68,12 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   const { ALLOWED_GUESSES, powerEngine } = context;
 
+ if (action.type === "UPDATE_DRAFT" && role === state.guesser) {
+   state.guesserDraft = (action.draft || "").toUpperCase();
+   emitStateForAllPlayers(roomId, room, io);
+   return;
+ }
+  
   if (action.type === "NEW_MATCH") {
     const createInitialState = require("../stateFactory").createInitialState;
     const newState = createInitialState();
@@ -120,6 +126,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       return;
     }
     state.pendingGuess = g;
+    state.guesserDraft = "";   // clear live draft immediately
     state.turn = state.setter;
     if (state.powers.forceTimerArmed) {
       startForceTimer(roomId, room, state, io, context);
