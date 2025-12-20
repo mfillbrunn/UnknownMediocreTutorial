@@ -76,31 +76,30 @@
     <h2 class="screen-title">Setter </h2>
 
     <div class="play-area setter-play">
-
+<div class="setter-stack">
    <!-- FULL GUESSER HISTORY (EXPANDS OVER TIME) -->
   <div id="setterGuesserSubmitted" class="history-box history-tiles"></div>
-
   <!-- GUESSER CURRENT DRAFT (LIVE, READ-ONLY) -->
   <div id="setterGuesserDraft" class="history-box history-tiles draft-box"></div>
-
   <!-- SETTER SECRET DRAFT (WHAT SETTER IS TYPING) -->
   <div id="setterSecretDraft" class="history-box history-tiles draft-box setter-draft"></div>
-
+</div>
   <!-- KEYBOARD -->
   <div id="keyboardSetter" class="keyboard"></div>
 </div>
 
     <!-- INPUT -->
-  <div class="guess-input-area">
-  <input id="newSecretInput" class="letter-input">
-  <div class="guess-btn-row">
-    <div class="decision-row">
-    <button id="submitSetterNewBtn" class="primary-btn small">New</button>
-    <button id="submitSetterSameBtn" class="secondary-btn small">Same</button>
-      </div>
+  <p hidden> 
+        <div class="guess-input-area">
+      <input id="newSecretInput" class="letter-input">
+        <div class="guess-btn-row">
+          <div class="decision-row">
+          <button id="submitSetterNewBtn" class="primary-btn small">New</button>
+          <button id="submitSetterSameBtn" class="secondary-btn small">Same</button>
+          </div>
+        </div>
     </div>
-</div>
-
+  </p>
     <!-- POWERS -->
     <div id="setterPowerContainer" class="power-container"></div>
 <div id="setterPreview" class="preview-box" style="display:none;"></div>
