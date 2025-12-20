@@ -182,7 +182,11 @@ onStateUpdate(newState => {
     pendingState = JSON.parse(JSON.stringify(newState));
     return;
   }
+  const prevSetterDraft = state?.setterDraft || "";
   state = JSON.parse(JSON.stringify(newState));
+  // restore client-only draft
+  state.setterDraft = prevSetterDraft;
+
   if (state.powers.assassinWord) {
     $("assassinModal").classList.remove("active");
   }
