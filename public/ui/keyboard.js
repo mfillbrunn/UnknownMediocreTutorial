@@ -1,23 +1,6 @@
 // /public/ui/keyboard.js — MODULAR VERSION
 function buildKeyboard(container, onKeyClick) {
   container.innerHTML = "";
-
-  KEYBOARD_LAYOUT.forEach(row => {
-    const rowDiv = document.createElement("div");
-    rowDiv.className = "key-row";
-
-    row.forEach(symbol => {
-      const keyEl = document.createElement("div");
-      keyEl.className = "key";
-      keyEl.dataset.key = symbol;
-      keyEl.textContent = symbol === "ENTER" ? "⏎" : symbol;
-
-      rowDiv.appendChild(keyEl);
-    });
-
-    container.appendChild(rowDiv);
-  });
-
   container.__keys = [...container.querySelectorAll(".key")];
 }
 
@@ -105,115 +88,71 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
   if (!container.__keys) {
     buildKeyboard(container, onKeyClick);
   }
-
-  if (!container.__built) {
-  container.__built = true;
-} else {
-  // Do NOT rebuild keys
-}
-
-
   const isGuesser = target === "guesser";
 
   // ========================================================
   // Determine suppression behavior for this turn
   // ========================================================
   let suppressColoring = false;
-  KEYBOARD_LAYOUT.forEach(row => {
-    const rowDiv = document.createElement("div");
-    rowDiv.className = "key-row";
+  for (const keyEl of container.__keys) {
+  const symbol = keyEl.dataset.key;
 
-    row.forEach(symbol => {
+  // Clear dynamic classes
+  keyEl.classList.remove(
+    "key-green",
+    "key-yellow",
+    "key-gray",
+    "key-blue",
+    "key-current",
+    "key-animate"
+  );
 
-      // Invisible spacing
-      if (symbol === "") {
-        const spacer = document.createElement("div");
-        spacer.className = "key spacer-key";
-        spacer.style.visibility = "hidden";
-        rowDiv.appendChild(spacer);
-        return;
-      }
-
-      const keyEl = document.createElement("div");
-      keyEl.className = "key";
-      keyEl.textContent = symbol;
-
-      // Special keys
-      if (symbol === "⌫") {
-        keyEl.addEventListener("click", () => onKeyClick(null, "BACKSPACE"));
-        rowDiv.appendChild(keyEl);
-        return;
-      }
-
-      if (symbol === "ENTER") {
-        keyEl.textContent = "⏎";
-        keyEl.addEventListener("click", () => onKeyClick(null, "ENTER"));
-        rowDiv.appendChild(keyEl);
-        return;
-      }
-
-      // LETTER KEYS
-      if (/^[A-Z]$/.test(symbol)) {
-        const letter = symbol;
-
-        // Reset previous color classes
-        keyEl.classList.remove("key-green", "key-yellow", "key-gray", "key-blue", "key-current");
-    // =====================================
-// Unified draft-based key animation
-// =====================================
-const draft = (state.uiDraft || "").toUpperCase();
-
-const wasInLast = lastDraft.includes(letter);
-const isInNow = draft.includes(letter);
-
-if (isInNow) {
-  keyEl.classList.add("key-current");
-
-  // Animate ONLY newly added letters
-  if (!wasInLast) {
-    keyEl.classList.add("key-animate");
-    keyEl.addEventListener(
-      "animationend",
-      () => keyEl.classList.remove("key-animate"),
-      { once: true }
-    );
+  // Special keys
+  if (symbol === "⌫") {
+    keyEl.onclick = () => onKeyClick(null, "BACKSPACE");
+    continue;
   }
-} else {
-  keyEl.classList.remove("key-current", "key-animate");
-}
 
-        // =============================================
-        // SUPPRESS COLORING on CountOnly / HideTile turn
-        // =============================================
-                if (!suppressColoring) {
-          
-              // HIDE TILE: skip coloring ONLY for hidden letters
+  if (symbol === "ENTER") {
+    keyEl.onclick = () => onKeyClick(null, "ENTER");
+    continue;
+  }
+
+  // Letter keys
+  if (/^[A-Z]$/.test(symbol)) {
+    const letter = symbol;
+
+    // --- History coloring ---
+    if (!suppressColoring) {
       const status = getLetterStatusFromHistory(letter, state, isGuesser);
       if (status === "green") keyEl.classList.add("key-green");
       else if (status === "yellow") keyEl.classList.add("key-yellow");
       else if (status === "gray") keyEl.classList.add("key-gray");
       else if (status === "blue") keyEl.classList.add("key-blue");
-        }
-/*
-        // Setter: highlight letters in pending guess
-        if (!isGuesser && state.pendingGuess) {
-          const pending = state.pendingGuess.toUpperCase();
-          if (pending.includes(letter)) {
-            keyEl.classList.add("key-current");
-          }
-        }
-*/
-        // Allow power modules to adjust the key
-        PowerEngine.applyKeyboard(state, target, keyEl, letter);
+    }
 
-        keyEl.addEventListener("click", () => onKeyClick(letter, null));
+    // --- Unified draft animation ---
+    const draft = (state.uiDraft || "").toUpperCase();
+    const wasInLast = lastDraft.includes(letter);
+    const isInNow = draft.includes(letter);
+
+    if (isInNow) {
+      keyEl.classList.add("key-current");
+
+      if (!wasInLast) {
+        keyEl.classList.add("key-animate");
+        keyEl.addEventListener(
+          "animationend",
+          () => keyEl.classList.remove("key-animate"),
+          { once: true }
+        );
       }
+    }
 
-      rowDiv.appendChild(keyEl);
-    });
+    keyEl.onclick = () => onKeyClick(letter, null);
+  }
+}
 
-    container.appendChild(rowDiv);
-  });
   lastDraft = (state.uiDraft || "").toUpperCase();
 
 };
