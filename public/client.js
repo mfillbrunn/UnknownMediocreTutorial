@@ -449,8 +449,6 @@ $("pendingGuessDisplay").textContent =
     // SAME button stays as configured above (still allowed in decision step)
   }
 
-  // FINAL: enable/disable input box
-  $("newSecretInput").disabled = !setterInputEnabled;
   // ----------------------------------------
 // SETTER VIEW: FULL GUESSER HISTORY
 // (this EXPANDS every submitted guess)
@@ -496,7 +494,7 @@ const preview = $("setterPreview");
   const guess = state.pendingGuess;
   if (!guess) return;
 
-  const typed = $("newSecretInput").value.trim().toLowerCase();
+  const typed = (state.setterDraft || "").toLowerCase();
   const isSetterTurn = state.turn === state.setter;
 
   if (!isSetterTurn) return;
@@ -543,13 +541,12 @@ function handleSetterInput(event) {
 // -----------------------------------------------------
 function updateGuesserScreen() {
   renderHistory({
-  state,
-  container: $("historyGuesser"),
-  role: "guesser",
-  guesserDraft: state.guesserDraft || "",
-  setterDraft: null
-});
-
+    state,
+    container: $("historyGuesser"),
+    role: "guesser",
+    guesserDraft: state.guesserDraft || "",
+    setterDraft: null
+  });
 
   const guessBox = $("guessInput");
 
@@ -559,50 +556,41 @@ function updateGuesserScreen() {
       myRole === state.guesser &&
       !state.pendingGuess &&
       state.turn === state.guesser);
-  
+
   guessBox.disabled = !canGuess;
   $("submitGuessBtn").disabled = !canGuess;
+
   if (state.phase === "simultaneous" && state.simultaneousGuessSubmitted) {
     guessBox.disabled = true;
     $("submitGuessBtn").disabled = true;
   }
-  // Keyboard
-renderKeyboard({
-  state,
-  container: $("keyboardGuesser"),
-  draft: state.guesserDraft || "",
-  isGuesser: true,
-  onInput: handleGuesserInput
-});
-  // BACKSPACE
-  if (special === "BACKSPACE") {
-    const next = currentDraft.slice(0, -1);
-    sendGameAction(roomId, {
-      type: "UPDATE_DRAFT",
-      draft: next
-    });
-    return;
+
+  // Keyboard (this is correct)
+  renderKeyboard({
+    state,
+    container: $("keyboardGuesser"),
+    draft: state.guesserDraft || "",
+    isGuesser: true,
+    onInput: handleGuesserInput
+  });
+
+  let pattern = getPattern(state, false);
+
+  const blindIdx = state.powers?.blindSpotIndex;
+  if (typeof blindIdx === "number") {
+    pattern[blindIdx] = "🟪";
   }
 
-  // ENTER
-  if (special === "ENTER") {
-    if (currentDraft.length !== 5) return;
-    sendGameAction(roomId, {
-      type: "SUBMIT_GUESS",
-      guess: currentDraft.toLowerCase()
-    });
-    return;
-  }
+  renderPatternInto(
+    $("knownPatternGuesser"),
+    pattern,
+    state.revealGreenInfo || null
+  );
 
-  // LETTER
-  if (letter && currentDraft.length < 5) {
-    const next = currentDraft + letter;
-    sendGameAction(roomId, {
-      type: "UPDATE_DRAFT",
-      draft: next
-    });
-  }
-});
+  $("mustContainGuesser").textContent =
+    getMustContainLetters(state).join(", ") || "none";
+}
+
 
   // Re-render history with updated draft
   renderHistory({
