@@ -616,7 +616,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 }
 
    /* Completely hide legacy Guesser UI */
-.guesser-legacyxxx {
+.guesser-legacyxx {
   display: none !important;
 }
 /* === HIDE ALL GUESSER CONSTRAINT OUTPUT (CSS-ONLY) === */
