@@ -385,6 +385,18 @@ onStateUpdate(newState => {
     $("assassinModal").classList.remove("active");
   }
   window.state = state; // ⭐ Makes global for powers
+  // Server accepted the guess → clear draft
+if (
+  myRole === state.guesser &&
+  draftSubmitted &&
+  state.history?.length &&
+  state.history[state.history.length - 1]?.guess?.toLowerCase() ===
+    draftGuess.join("").toLowerCase()
+) {
+  draftGuess = [];
+  draftSubmitted = false;
+}
+
   updateUI();
   // Clear draft if guess was accepted
 if (myRole === state.guesser && !state.pendingGuess) {
