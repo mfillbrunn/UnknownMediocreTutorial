@@ -202,14 +202,14 @@ if (
 ) {
   draftGuess = [];
   draftSubmitted = false;
-  state.uiDraft = "";
+  state.uiDraftGuesser = "";
 }
 
   updateUI();
   // Clear draft if guess was accepted
 if (myRole === state.guesser && !state.pendingGuess) {
   draftGuess = [];
-  state.uiDraft = "";
+  state.uiDraftGuesser = "";
 }
   // Reset guess input if locked on transition
   if (state.phase === "normal" && $("guessInput").disabled) {
@@ -499,7 +499,7 @@ if (state.guesserDraft && state.guesserDraft.length) {
 // SETTER VIEW: SETTER SECRET DRAFT (LIVE)
 // ----------------------------------------
 $("setterSecretDraft").innerHTML = "";
-const secretDraft = $("newSecretInput").value || "";
+const secretDraft = state.uiDraftSetter || "";
 if (secretDraft.length) {
   renderDraftRow(
     secretDraft,
@@ -574,7 +574,7 @@ function handleSetterKeyboard(letter, special) {
 
  if (special === "BACKSPACE") {
   input.value = input.value.slice(0, -1);
-  state.uiDraft = input.value.toUpperCase();
+  state.uiDraftSetter = input.value.toUpperCase();
   return;
 }
   if (special === "ENTER") {
@@ -586,7 +586,7 @@ function handleSetterKeyboard(letter, special) {
 
  if (letter && input.value.length < 5) {
   input.value += letter;
-  state.uiDraft = input.value.toUpperCase();
+  state.uiDraftSetter = input.value.toUpperCase();
 }
   input.focus();
 }
@@ -617,24 +617,25 @@ renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
 
   // BACKSPACE
 if (special === "BACKSPACE") {
-  draftGuess.pop();
-  state.uiDraft = draftGuess.join("");
-  state.guesserDraft = draftGuess.join("");
+draftGuess.pop();
+state.uiDraftGuesser = draftGuess.join("");
+state.guesserDraft = draftGuess.join("");
+
 }
 
   // ENTER
 else if (special === "ENTER") {
   if (draftGuess.length !== 5) return;
   const guess = draftGuess.join("").toLowerCase();
-  draftSubmitted = true;   // freeze draft visually
-  state.uiDraft = "";     // ← ADD THIS LINE
-  state.guesserDraft = "";
+  draftSubmitted = true;
+state.uiDraftGuesser = "";
+state.guesserDraft = "";
   sendGameAction(roomId, { type: "SUBMIT_GUESS", guess });
 }
   // LETTER
 else if (letter && draftGuess.length < 5) {
   draftGuess.push(letter);
-  state.uiDraft = draftGuess.join("");
+  state.uiDraftGuesser = draftGuess.join("");
   state.guesserDraft = draftGuess.join("");
 }
   // Re-render history with updated draft
@@ -774,13 +775,15 @@ $("applyPowerCountBtn").onclick = () => {
  };
 
 $("submitGuessBtn").onclick = () => {
+  if (myRole !== state.guesser) return;
   const g = $("guessInput").value.trim().toLowerCase();
   if (g.length !== 5) return shake($("guessInput")), toast("5 letters required");
   if (!window.ALLOWED_GUESSES?.has(g))
     return shake($("guessInput")), toast("Word not in dictionary");
   $("guessInput").value = "";
   draftSubmitted = true;   
-  state.uiDraft = "";     
+  state.uiDraftGuesser = "";  
+  state.guesserDraft = "";     
   sendGameAction(roomId, { type: "SUBMIT_GUESS", guess: g });
 };
 
@@ -793,6 +796,7 @@ $("submitSetterNewBtn").onclick = () => {
 
   sendGameAction(roomId, { type: "SET_SECRET_NEW", secret: w });
   $("newSecretInput").value = "";
+  state.uiDraftSetter = "";
 };
 
 $("submitSetterSameBtn").onclick = () =>
