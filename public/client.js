@@ -5,6 +5,7 @@ let roomId = null;
 let myRole = null;      
 let state = null;
 let pendingState = null;
+let setterDraft = "";
 let roleAssigned = false;
 let lastSimulSecret = false;
 let lastSimulGuess = false;
@@ -499,30 +500,24 @@ const preview = $("setterPreview");
     preview.textContent = `Preview: ${fbSame.join("")}`;
   }
 }
-
 function handleSetterKeyboard(letter, special) {
-  const input = $("newSecretInput");
-
-  // Only block typing if the input is disabled (you already manage this)
-  if (!input || input.disabled) return;
-
- if (special === "BACKSPACE") {
-  input.value = input.value.slice(0, -1);
-  state.uiDraftSetter = input.value.toUpperCase();
-  return;
-}
+  if (special === "BACKSPACE") {
+    setterDraft = setterDraft.slice(0, -1);
+    state.uiDraftSetter = setterDraft.toUpperCase();
+    updateUI();
+    return;
+  }
   if (special === "ENTER") {
-    if (state.pendingGuess && !$("submitSetterNewBtn").disabled) {
-      $("submitSetterNewBtn").click();
+    if (state.pendingGuess && !$("submitSetterSameBtn").disabled) {
+      $("submitSetterSameBtn").click();
     }
     return;
   }
-
- if (letter && input.value.length < 5) {
-  input.value += letter;
-  state.uiDraftSetter = input.value.toUpperCase();
-}
-  input.focus();
+  if (letter && setterDraft.length < 5) {
+    setterDraft += letter;
+    state.uiDraftSetter = setterDraft.toUpperCase();
+    updateUI();
+  }
 }
 // -----------------------------------------------------
 // GUESSER UI
@@ -722,13 +717,12 @@ $("applyPowerCountBtn").onclick = () => {
 
 $("submitSetterNewBtn").onclick = () => {
   const w = $("newSecretInput").value.trim().toLowerCase();
-
   if (w.length !== 5) return shake($("newSecretInput")), toast("5 letters!");
   if (!window.ALLOWED_GUESSES?.has(w))
     return shake($("newSecretInput")), toast("Word not in dictionary");
-
   sendGameAction(roomId, { type: "SET_SECRET_NEW", secret: w });
   $("newSecretInput").value = "";
+  setterDraft = "";
   state.uiDraftSetter = "";
 };
 
