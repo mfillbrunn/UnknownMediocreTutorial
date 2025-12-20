@@ -587,6 +587,21 @@ text-transform: uppercase;
   font-weight: 800;
 }
 
+.key-animate {
+  animation: key-shine 180ms ease-out;
+}
+
+@keyframes key-shine {
+  0%   { box-shadow: 0 0 0 rgba(255,255,255,0); }
+  50%  { box-shadow: 0 0 12px rgba(255,255,255,.35); }
+  100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+}
+.key[data-key="⌫"],
+.key[data-key="ENTER"] {
+  animation: none !important;
+}
+
+   
 /* If ANY turn-indicator has your-turn, show overlay */
 .turn-indicator.your-turn ~ .turn-overlay,
 .turn-indicator.your-turn + .turn-overlay {
