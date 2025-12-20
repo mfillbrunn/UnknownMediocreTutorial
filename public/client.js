@@ -442,7 +442,8 @@ renderHistory({
   state,
   container: $("setterGuesserSubmitted"),
   role: "setter",
-  setterDraft: state.setterDraft
+  setterDraft: state.setterDraft,
+  localGuesserDraft: state.pendingGuess
 });
 $("newSecretInput").value = state.setterDraft || "";
 $("newSecretInput").disabled = true;
@@ -571,7 +572,7 @@ function updateGuesserScreen() {
     state,
     container: $("historyGuesser"),
     role: "guesser",
-    localGuesserDraft: localGuesserDraft
+    localGuesserDraft: state.pendingGuess || localGuesserDraft
   });
 
   const guessBox = $("guessInput");
