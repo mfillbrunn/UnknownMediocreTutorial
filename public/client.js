@@ -484,15 +484,12 @@ const preview = $("setterPreview");
 }
 function handleSetterInput(event) {
   if (!state) return;
-
   const draft = state.setterDraft || "";
-
   if (event.type === "BACKSPACE") {
     state.setterDraft = draft.slice(0, -1);
     updateUI();
     return;
   }
-
   if (event.type === "LETTER") {
     if (draft.length < 5) {
       state.setterDraft = draft + event.value;
@@ -500,16 +497,12 @@ function handleSetterInput(event) {
     }
     return;
   }
-
   if (event.type === "ENTER") {
-    if (!state.pendingGuess) return;
-
     // Prefer SAME if allowed
     if (!$("submitSetterSameBtn").disabled) {
       $("submitSetterSameBtn").click();
       return;
     }
-
     // Otherwise fall back to NEW if allowed
     if (!$("submitSetterNewBtn").disabled) {
       $("submitSetterNewBtn").click();
@@ -518,6 +511,7 @@ function handleSetterInput(event) {
   }
 }
 function handleGuesserInput(event) {
+  if (state.pendingGuess) return;
   if (event.type === "BACKSPACE") {
     localGuesserDraft = localGuesserDraft.slice(0, -1);
     updateUI();
@@ -561,12 +555,12 @@ function updateGuesserScreen() {
       myRole === state.guesser &&
       !state.pendingGuess &&
       state.turn === state.guesser);
-
- if (myRole === state.guesser) {
+  const displayGuess = state.pendingGuess || localGuesserDraft;
+ if (myRole === state.guesser && canGuess) {
   renderKeyboard({
     state,
     container: $("keyboardGuesser"),
-    pendingGuess: localGuesserDraft,
+    pendingGuess: displayGuess,
     isGuesser: true,
     onInput: handleGuesserInput
   });
