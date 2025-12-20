@@ -677,3 +677,17 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 .history-box:not(:has(.history-row)) {
   color: #e5e5e5;
 }
+/* Draft guess row (Guesser typing) */
+.draft-row .draft-tile {
+  background: #2a2d33;
+  color: #bbb;
+  border: 1px solid #00000055;
+
+  /* Slightly muted */
+  opacity: 0.85;
+}
+
+/* No flip animation on existing draft tiles */
+.draft-tile {
+  animation: none;
+}
