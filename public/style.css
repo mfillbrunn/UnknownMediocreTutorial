@@ -619,4 +619,15 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 .guesser-legacyxxx {
   display: none !important;
 }
+/* === HIDE ALL GUESSER CONSTRAINT OUTPUT (CSS-ONLY) === */
+
+/* Hide the "none" text */
+#guesserScreen #mustContainGuesser {
+  display: none !important;
+}
+
+/* Hide the pattern letters (- - - - -) */
+#guesserScreen .pattern-letter {
+  display: none !important;
+}
 
