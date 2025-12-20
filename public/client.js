@@ -5,6 +5,7 @@ let roomId = null;
 let myRole = null;      
 let state = null;
 let pendingState = null;
+let localGuesserDraft = "";
 let roleAssigned = false;
 let lastSimulSecret = false;
 let lastSimulGuess = false;
@@ -30,20 +31,10 @@ function resetKeyboards() {
   const ks = $("keyboardSetter");
   const kg = $("keyboardGuesser");
 
-  if (ks) {
-    delete ks.__keys;
-    if (window.lastDraftMap) {
-      lastDraftMap.delete(ks);
-    }
-  }
-
-  if (kg) {
-    delete kg.__keys;
-    if (window.lastDraftMap) {
-      lastDraftMap.delete(kg);
-    }
-  }
+  if (ks) delete ks.__keys;
+  if (kg) delete kg.__keys;
 }
+
 
 // -----------------------------------------------------
 // Pattern Renderer for Pretty Styling (Reveal Green, etc.)
@@ -114,7 +105,6 @@ onAnimateTurn(({ type }) => {
     : "";
 
   if (!msg) return;
-
   tp.textContent = msg;
   tp.classList.add("show");
   setTimeout(() => tp.classList.remove("show"), 800);
@@ -154,28 +144,29 @@ onLobbyEvent(evt => {
       enableReadyButton(true);
       break;
 
-   case "rolesSwitched":
-  const myId = socket.id;
+    case "rolesSwitched": {
+      const myId = socket.id;
 
-  if (evt.setterId === myId) {
-    myRole = "A";
-    toast("You are now the Setter!");
-  } else if (evt.guesserId === myId) {
-    myRole = "B";
-    toast("You are now the Guesser!");
-  }
-  resetKeyboards();
-  updateRoleLabels();
-       updateUI();
-  break;
-    case "playerReady":
-    toast(`Player ${evt.role} is READY`);
-  
-    // If this is ME → freeze my button
-    if (evt.playerId === socket.id) {
-      enableReadyButton(false);  
+      if (evt.setterId === myId) {
+        myRole = "A";
+        toast("You are now the Setter!");
+      } else if (evt.guesserId === myId) {
+        myRole = "B";
+        toast("You are now the Guesser!");
+      }
+
+      resetKeyboards();
+      updateRoleLabels();
+      updateUI();
+      break;
     }
-    break;
+
+    case "playerReady":
+      toast(`Player ${evt.role} is READY`);
+      if (evt.playerId === socket.id) {
+        enableReadyButton(false);
+      }
+      break;
 
     case "hideLobby":
       hide("lobby");
@@ -193,6 +184,64 @@ onLobbyEvent(evt => {
   }
 });
 
+function updateTurnIndicators() {
+  const setterBar = $("turnIndicatorSetter");
+  const guesserBar = $("turnIndicatorGuesser");
+
+  if (state.phase === "lobby") {
+    setterBar.textContent = "";
+    guesserBar.textContent = "";
+    setterBar.className = "turn-indicator";
+    guesserBar.className = "turn-indicator";
+    return;
+  }
+  if (state.phase === "simultaneous") {
+    updateSimultaneousIndicators();
+    return;
+  }
+  if (state.phase === "gameOver") {
+    setToWait(setterBar);
+    setToWait(guesserBar);
+    return;
+  }
+  updateNormalTurnIndicators();
+}
+
+function updateSimultaneousIndicators() {
+  const setterBar = $("turnIndicatorSetter");
+  const guesserBar = $("turnIndicatorGuesser");
+
+  const setterSubmitted = !!state.secret;
+  const guesserSubmitted = !!state.pendingGuess;
+
+  updateIndicator(setterBar, !setterSubmitted);
+  updateIndicator(guesserBar, !guesserSubmitted);
+}
+
+function updateNormalTurnIndicators() {
+  const setterBar = $("turnIndicatorSetter");
+  const guesserBar = $("turnIndicatorGuesser");
+
+  const setterTurn = state.turn === state.setter;
+
+  updateIndicator(setterBar, setterTurn);
+  updateIndicator(guesserBar, !setterTurn);
+}
+
+function updateIndicator(element, isActiveTurn) {
+  if (isActiveTurn) {
+    element.textContent = "YOUR TURN";
+    element.className = "turn-indicator your-turn";
+  } else {
+    element.textContent = "WAIT";
+    element.className = "turn-indicator wait-turn";
+  }
+}
+
+function setToWait(element) {
+  element.textContent = "WAIT";
+  element.className = "turn-indicator wait-turn";
+}
 // Role assignment from server
 
 // State updates
@@ -205,7 +254,9 @@ onStateUpdate(newState => {
   state = JSON.parse(JSON.stringify(newState));
   // restore client-only draft
   state.setterDraft = prevSetterDraft;
-
+  if (state.turn !== state.guesser || state.pendingGuess) {
+    localGuesserDraft = "";
+  }
   if (state.powers.assassinWord) {
     $("assassinModal").classList.remove("active");
   }
@@ -231,8 +282,6 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
     PowerEngine.renderButtons(roomId);
     PowerEngine._initialized = true;
 }
-
-
   updateMenu();
   updateScreens();
   updateTurnIndicators();
@@ -288,71 +337,6 @@ PowerEngine.applyUI(state, myRole, roomId);
 }
 
 // -----------------------------------------------------
-// Turn Indicator Bar
-// -----------------------------------------------------
-function updateTurnIndicators() {
-  const setterBar = $("turnIndicatorSetter");
-  const guesserBar = $("turnIndicatorGuesser");
-
-  if (state.phase === "lobby") {
-    setterBar.textContent = "";
-    guesserBar.textContent = "";
-    setterBar.className = "turn-indicator";
-    guesserBar.className = "turn-indicator";
-    return;
-  }
-
-  if (state.phase === "simultaneous") {
-    updateSimultaneousIndicators();
-    return;
-  }
-
-  if (state.phase === "gameOver") {
-    setToWait(setterBar);
-    setToWait(guesserBar);
-    return;
-  }
-
-  updateNormalTurnIndicators();
-}
-
-function updateSimultaneousIndicators() {
-  const setterBar = $("turnIndicatorSetter");
-  const guesserBar = $("turnIndicatorGuesser");
-
-  const setterSubmitted = !!state.secret;
-  const guesserSubmitted = !!state.pendingGuess;
-
-  updateIndicator(setterBar, !setterSubmitted);
-  updateIndicator(guesserBar, !guesserSubmitted);
-}
-
-function updateNormalTurnIndicators() {
-  const setterBar = $("turnIndicatorSetter");
-  const guesserBar = $("turnIndicatorGuesser");
-
-  const setterTurn = state.turn === state.setter;
-
-  updateIndicator(setterBar, setterTurn);
-  updateIndicator(guesserBar, !setterTurn);
-}
-
-function updateIndicator(element, isActiveTurn) {
-  if (isActiveTurn) {
-    element.textContent = "YOUR TURN";
-    element.className = "turn-indicator your-turn";
-  } else {
-    element.textContent = "WAIT";
-    element.className = "turn-indicator wait-turn";
-  }
-}
-
-function setToWait(element) {
-  element.textContent = "WAIT";
-  element.className = "turn-indicator wait-turn";
-}
-
-// -----------------------------------------------------
 // ROLE LABEL
 // -----------------------------------------------------
 function updateRoleLabels() {
@@ -366,17 +350,14 @@ function updateRoleLabels() {
 // -----------------------------------------------------
 function updateSetterScreen() {
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
-  let guessForSetter = state.pendingGuess;
-    if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
-      guessForSetter = "?????";
-    }
-
-$("pendingGuessDisplay").textContent =
-  guessForSetter ? guessForSetter.toUpperCase() : "-";
- // FORCE TIMER COUNTDOWN VISUAL
+    const displayGuess =
+  state.powers?.stealthGuessActive
+    ? "?????"
+    : state.pendingGuess;
+ $("pendingGuessDisplay").textContent =
+  displayGuess ? displayGuess.toUpperCase() : "-";
 // --- FORCE TIMER: STATE-LEVEL CHECK (not ticking UI) ---
   const bar = $("turnIndicatorSetter");
-
   if (state.powers.forceTimerActive) {
     // Show fallback text in case timerTick hasn't fired yet
     if (state.powers.forceTimerDeadline) {
@@ -400,7 +381,7 @@ $("pendingGuessDisplay").textContent =
   const isSetterTurn = (state.turn === state.setter);
   const isDecisionStep =
     isSetterTurn &&
-    !!state.pendingGuess &&
+    !!displayGuess &&
     state.phase === "normal";
 
   const freezeActive =
@@ -415,21 +396,12 @@ $("pendingGuessDisplay").textContent =
   if (state.phase === "simultaneous") {
     const secretSubmitted =
       !!state.secret || state.simultaneousSecretSubmitted;
-
     setterInputEnabled = !secretSubmitted;
 
     // SAME is never allowed in simultaneous
     $("submitSetterSameBtn").disabled = true;
     $("submitSetterSameBtn").classList.add("disabled-btn");
-
-    // NEW allowed only until secret is submitted
-    $("submitSetterNewBtn").disabled = !setterInputEnabled;
-    $("submitSetterNewBtn").classList.toggle(
-      "disabled-btn",
-      !setterInputEnabled
-    );
   }
-
   // NORMAL PHASE — decision step only
   else if (state.phase === "normal") {
     setterInputEnabled = isDecisionStep;
@@ -439,36 +411,20 @@ $("pendingGuessDisplay").textContent =
       "disabled-btn",
       !isDecisionStep
     );
-
-    $("submitSetterNewBtn").disabled = !isDecisionStep;
-    $("submitSetterNewBtn").classList.toggle(
-      "disabled-btn",
-      !isDecisionStep
-    );
   }
-
   // LOBBY / GAMEOVER — everything off
   else {
     setterInputEnabled = false;
 
     $("submitSetterSameBtn").disabled = true;
     $("submitSetterSameBtn").classList.add("disabled-btn");
-
-    $("submitSetterNewBtn").disabled = true;
-    $("submitSetterNewBtn").classList.add("disabled-btn");
   }
-
   // -------------------------------------------------------
   // FREEZE SECRET OVERRIDE (normal phase)
   // -------------------------------------------------------
   if (freezeActive && state.phase === "normal") {
     // Setter cannot type or set NEW secret
     setterInputEnabled = false;
-
-    $("submitSetterNewBtn").disabled = true;
-    $("submitSetterNewBtn").classList.add("disabled-btn");
-
-    // SAME button stays as configured above (still allowed in decision step)
   }
   // ----------------------------------------
 // SETTER VIEW:
@@ -477,9 +433,7 @@ renderHistory({
   state,
   container: $("setterGuesserSubmitted"),
   role: "setter",
-  guesserDraft:
-    state.powers?.stealthGuessActive ? null : state.guesserDraft,
-  setterDraft: state.setterDraft || ""
+  setterDraft: state.setterDraft
 });
 $("newSecretInput").value = state.setterDraft || "";
 $("newSecretInput").disabled = true;
@@ -490,7 +444,7 @@ $("newSecretInput").disabled = true;
     renderKeyboard({
     state,
     container: $("keyboardSetter"),
-    draft: state.setterDraft || "",
+    pendingGuess: state.pendingGuess || "",
     isGuesser: false,
     onInput: handleSetterInput
   });
@@ -509,22 +463,17 @@ if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) 
     $("setterPreview").textContent = "(guess hidden this round)";
     return;
   }
-
 const preview = $("setterPreview");
   preview.innerHTML = "";
-
   const guess = state.pendingGuess;
   if (!guess) return;
-
   const typed = (state.setterDraft || "").toLowerCase();
   const isSetterTurn = state.turn === state.setter;
-
   if (!isSetterTurn) return;
   if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
     preview.textContent = "(hidden this round)";
     return;
   }
-
   if (typed.length === 5) {
     const fb = predictFeedback(typed, guess);
     preview.textContent = `Preview (new): ${fb.join("")}`;
@@ -552,22 +501,46 @@ function handleSetterInput(event) {
     return;
   }
 
-if (event.type === "ENTER") {
-  if (!state.pendingGuess) return;
+  if (event.type === "ENTER") {
+    if (!state.pendingGuess) return;
 
-  // Prefer SAME if allowed
-  if (!$("submitSetterSameBtn").disabled) {
-    $("submitSetterSameBtn").click();
-    return;
-  }
+    // Prefer SAME if allowed
+    if (!$("submitSetterSameBtn").disabled) {
+      $("submitSetterSameBtn").click();
+      return;
+    }
 
-  // Otherwise fall back to NEW if allowed
-  if (!$("submitSetterNewBtn").disabled) {
-    $("submitSetterNewBtn").click();
-    return;
+    // Otherwise fall back to NEW if allowed
+    if (!$("submitSetterNewBtn").disabled) {
+      $("submitSetterNewBtn").click();
+      return;
+    }
   }
 }
+function handleGuesserInput(event) {
+  if (event.type === "BACKSPACE") {
+    localGuesserDraft = localGuesserDraft.slice(0, -1);
+    updateUI();
+    return;
+  }
 
+  if (event.type === "LETTER") {
+    if (localGuesserDraft.length < 5) {
+      localGuesserDraft += event.value;
+      updateUI();
+    }
+    return;
+  }
+
+  if (event.type === "ENTER") {
+    if (localGuesserDraft.length === 5) {
+      sendGameAction(roomId, {
+        type: "SUBMIT_GUESS",
+        guess: localGuesserDraft.toLowerCase()
+      });
+      localGuesserDraft = "";
+    }
+  }
 }
 // -----------------------------------------------------
 // GUESSER UI
@@ -577,8 +550,7 @@ function updateGuesserScreen() {
     state,
     container: $("historyGuesser"),
     role: "guesser",
-    guesserDraft: state.guesserDraft || "",
-    setterDraft: null
+    localGuesserDraft: localGuesserDraft
   });
 
   const guessBox = $("guessInput");
@@ -590,18 +562,11 @@ function updateGuesserScreen() {
       !state.pendingGuess &&
       state.turn === state.guesser);
 
-  guessBox.disabled = !canGuess;
-  $("submitGuessBtn").disabled = !canGuess;
-
-  if (state.phase === "simultaneous" && state.simultaneousGuessSubmitted) {
-    guessBox.disabled = true;
-    $("submitGuessBtn").disabled = true;
-  }
-if (myRole === state.guesser) {
+ if (myRole === state.guesser) {
   renderKeyboard({
     state,
     container: $("keyboardGuesser"),
-    draft: state.guesserDraft || "",
+    pendingGuess: localGuesserDraft,
     isGuesser: true,
     onInput: handleGuesserInput
   });
@@ -622,6 +587,7 @@ if (myRole === state.guesser) {
   $("mustContainGuesser").textContent =
     getMustContainLetters(state).join(", ") || "none";
 }
+
 // -----------------------------------------------------
 // SUMMARY
 // -----------------------------------------------------
@@ -631,7 +597,9 @@ function updateSummary() {
     container.innerHTML = "";
     return;
   }
-
+if (state.gameOver || state.turn !== state.guesser || state.pendingGuess) {
+  localGuesserDraft = "";
+}
 let html = `<h3>Round Summary</h3>`;
 
 // 🔥 NEW: Detect assassin kill
@@ -696,36 +664,7 @@ function enableReadyButton(enabled) {
     btn.textContent = "I'm Ready";
   }
 }
-function handleGuesserInput(event) {
-  const draft = state.guesserDraft || "";
 
-  if (event.type === "BACKSPACE") {
-    sendGameAction(roomId, {
-      type: "UPDATE_DRAFT",
-      draft: draft.slice(0, -1)
-    });
-    return;
-  }
-
-  if (event.type === "LETTER") {
-    if (draft.length < 5) {
-      sendGameAction(roomId, {
-        type: "UPDATE_DRAFT",
-        draft: draft + event.value
-      });
-    }
-    return;
-  }
-
-  if (event.type === "ENTER") {
-    if (draft.length === 5) {
-      sendGameAction(roomId, {
-        type: "SUBMIT_GUESS",
-        guess: draft.toLowerCase()
-      });
-    }
-  }
-}
 
 
 $("createRoomBtn").onclick = () => {
