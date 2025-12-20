@@ -26,7 +26,19 @@ function shake(element) {
   element.classList.add("shake");
   setTimeout(() => element.classList.remove("shake"), 300);
 }
+function resetKeyboards() {
+  const ks = $("keyboardSetter");
+  const kg = $("keyboardGuesser");
 
+  if (ks) {
+    delete ks.__keys;
+    lastDraftMap.delete(ks);
+  }
+  if (kg) {
+    delete kg.__keys;
+    lastDraftMap.delete(kg);
+  }
+}
 // -----------------------------------------------------
 // Pattern Renderer for Pretty Styling (Reveal Green, etc.)
 // -----------------------------------------------------
@@ -146,8 +158,9 @@ onLobbyEvent(evt => {
     myRole = "B";
     toast("You are now the Guesser!");
   }
-
+  resetKeyboards();
   updateRoleLabels();
+       updateUI();
   break;
     case "playerReady":
     toast(`Player ${evt.role} is READY`);
@@ -663,7 +676,6 @@ if (i === state.history.length - 1) {
   html += `</table>`;
   container.innerHTML = html;
 }
-
 // -----------------------------------------------------
 // BUTTONS
 // -----------------------------------------------------
