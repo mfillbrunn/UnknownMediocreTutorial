@@ -348,7 +348,6 @@ function updateRoleLabels() {
 function updateSetterScreen() {
   $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
   let guessForSetter = state.pendingGuess;
-
     if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
       guessForSetter = "?????";
     }
@@ -452,10 +451,8 @@ $("pendingGuessDisplay").textContent =
 
     // SAME button stays as configured above (still allowed in decision step)
   }
-
   // ----------------------------------------
-// SETTER VIEW: FULL GUESSER HISTORY
-// (this EXPANDS every submitted guess)
+// SETTER VIEW:
 // ----------------------------------------
 renderHistory({
   state,
@@ -470,13 +467,15 @@ $("newSecretInput").disabled = true;
   // -------------------------------------------------------
   // KEYBOARD + PATTERN / PREVIEW
   // -------------------------------------------------------
-  renderKeyboard({
-  state,
-  container: $("keyboardSetter"),
-  draft: state.setterDraft || "",
-  isGuesser: false,
-  onInput: handleSetterInput
-});
+  if (myRole === state.setter) {
+    renderKeyboard({
+    state,
+    container: $("keyboardSetter"),
+    draft: state.setterDraft || "",
+    isGuesser: false,
+    onInput: handleSetterInput
+  });
+  }
   const pat = getPattern(state, true);
   $("knownPatternSetter").textContent = formatPattern(pat);
   const must = getMustContainLetters(state);
@@ -579,8 +578,7 @@ function updateGuesserScreen() {
     guessBox.disabled = true;
     $("submitGuessBtn").disabled = true;
   }
-
-  // Keyboard (this is correct)
+if (myRole === state.guesser) {
   renderKeyboard({
     state,
     container: $("keyboardGuesser"),
@@ -588,7 +586,7 @@ function updateGuesserScreen() {
     isGuesser: true,
     onInput: handleGuesserInput
   });
-
+}
   let pattern = getPattern(state, false);
 
   const blindIdx = state.powers?.blindSpotIndex;
