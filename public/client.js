@@ -73,11 +73,7 @@ function updateRemainingWords() {
   const g = $("remainingWordsGuesser");
   if (g) {
     g.textContent = `${Number(n).toLocaleString()} words remaining`;;
-    g.classList.remove("pulse");
-    void g.offsetWidth; // reflow
-    g.classList.add("pulse");
-
-  styleRemaining(g, category);
+    styleRemaining(g, category);
   }
   // Setter sees category + animation
   const s = $("remainingWordsSetter");
