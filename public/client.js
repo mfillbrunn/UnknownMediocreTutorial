@@ -731,9 +731,18 @@ $("submitSetterNewBtn").onclick = () => {
     return;
   }
 
-  if (!window.ALLOWED_GUESSES?.has(w)) {
+  if (!window.ALLOWED_GUESSES.has(w)) {
     shake($("submitSetterNewBtn"));
     toast("Word not in dictionary");
+    return;
+  }
+
+  if (
+    typeof window.isConsistentWithHistory === "function" &&
+    !window.isConsistentWithHistory(state.history, w, state)
+  ) {
+    shake($("submitSetterNewBtn"));
+    toast("Incompatible with previous feedback");
     return;
   }
 
@@ -742,10 +751,10 @@ $("submitSetterNewBtn").onclick = () => {
     secret: w
   });
 
-  // Clear setter draft after submission
   state.setterDraft = "";
   updateUI();
 };
+
 
 
 $("submitSetterSameBtn").onclick = () =>
