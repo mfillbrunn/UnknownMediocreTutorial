@@ -32,13 +32,19 @@ function resetKeyboards() {
 
   if (ks) {
     delete ks.__keys;
-    lastDraftMap.delete(ks);
+    if (window.lastDraftMap) {
+      lastDraftMap.delete(ks);
+    }
   }
+
   if (kg) {
     delete kg.__keys;
-    lastDraftMap.delete(kg);
+    if (window.lastDraftMap) {
+      lastDraftMap.delete(kg);
+    }
   }
 }
+
 // -----------------------------------------------------
 // Pattern Renderer for Pretty Styling (Reveal Green, etc.)
 // -----------------------------------------------------
