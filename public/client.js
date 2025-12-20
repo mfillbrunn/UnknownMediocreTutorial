@@ -440,7 +440,7 @@ $("newSecretInput").disabled = true;
   // -------------------------------------------------------
   // KEYBOARD + PATTERN / PREVIEW
   // -------------------------------------------------------
-  if (myRole === state.setter && setterInputEnabled) {
+  if (myRole === state.setter) {
     renderKeyboard({
     state,
     container: $("keyboardSetter"),
