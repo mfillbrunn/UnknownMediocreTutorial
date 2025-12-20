@@ -1,8 +1,27 @@
 // /public/ui/keyboard.js — MODULAR VERSION
-function buildKeyboard(container, onKeyClick) {
+function buildKeyboard(container) {
   container.innerHTML = "";
+
+  KEYBOARD_LAYOUT.forEach(row => {
+    const rowDiv = document.createElement("div");
+    rowDiv.className = "key-row";
+
+    row.forEach(symbol => {
+      const keyEl = document.createElement("div");
+      keyEl.className = "key";
+      keyEl.dataset.key = symbol;
+      keyEl.textContent = symbol === "ENTER" ? "⏎" : symbol;
+
+      rowDiv.appendChild(keyEl);
+    });
+
+    container.appendChild(rowDiv);
+  });
+
+  // store references for future updates
   container.__keys = [...container.querySelectorAll(".key")];
 }
+
 
 let lastDraft = "";
 window.KEYBOARD_LAYOUT = [
