@@ -23,7 +23,8 @@ function buildKeyboard(container) {
 }
 
 
-let lastDraft = "";
+const lastDraftMap = new WeakMap();
+
 window.KEYBOARD_LAYOUT = [
   ["Q","W","E","R","T","Y","U","I","O","P"],
   ["A","S","D","F","G","H","J","K","L"],
@@ -151,8 +152,15 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
     }
 
     // --- Unified draft animation ---
-    const draft = (state.uiDraft || "").toUpperCase();
+    const draft =
+      (target === "guesser"
+        ? state.uiDraftGuesser
+        : state.uiDraftSetter || ""
+      ).toUpperCase();
+
+    const lastDraft = lastDraftMap.get(container) || "";
     const wasInLast = lastDraft.includes(letter);
+
     const isInNow = draft.includes(letter);
 
     if (isInNow) {
@@ -171,7 +179,6 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
     keyEl.onclick = () => onKeyClick(letter, null);
   }
 }
-
-  lastDraft = (state.uiDraft || "").toUpperCase();
+  lastDraftMap.set(container, draft);
 
 };
