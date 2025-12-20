@@ -463,7 +463,8 @@ renderHistory({
     state.powers?.stealthGuessActive ? null : state.guesserDraft,
   setterDraft: state.setterDraft || ""
 });
-
+$("newSecretInput").value = state.setterDraft || "";
+$("newSecretInput").disabled = true;
   // -------------------------------------------------------
   // KEYBOARD + PATTERN / PREVIEW
   // -------------------------------------------------------
