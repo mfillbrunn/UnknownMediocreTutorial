@@ -1,11 +1,15 @@
-window.renderHistory = function (state, container, role) {
+window.renderHistory = function ({
+  state,
+  container,
+  role,
+  guesserDraft,
+  setterDraft
+}) {
   container.innerHTML = "";
+  guesserDraft = guesserDraft?.toUpperCase() || "";
+  setterDraft  = setterDraft?.toUpperCase()  || "";
   const isSetter = role === "setter";
   const history = state?.history;
-  if (!Array.isArray(history) || history.length === 0) {
-    container.textContent = "";
-  }
-
   for (const entry of history || []) {
     if (!entry || !entry.guess) continue;
 
@@ -60,21 +64,14 @@ window.renderHistory = function (state, container, role) {
 
     container.appendChild(row);
   }
-// ------------------ DRAFT ROWS ------------------
-const guesserDraft = (state.uiDraftGuesser || "").toUpperCase();
-const setterDraft  = (state.uiDraftSetter  || "").toUpperCase();
-
-// Guesser sees THEIR own draft
-if (role === "guesser" && guesserDraft && !draftSubmitted) {
+  if (role === "guesser" && guesserDraft) {
   renderDraftRow(guesserDraft, container, "draft-row");
 }
 
-// Setter sees guesser's draft (live, read-only)
 if (role === "setter" && guesserDraft) {
   renderDraftRow(guesserDraft, container, "draft-row guesser-draft");
 }
 
-// Setter also sees THEIR OWN secret draft
 if (role === "setter" && setterDraft) {
   renderDraftRow(setterDraft, container, "draft-row setter-draft");
 }
