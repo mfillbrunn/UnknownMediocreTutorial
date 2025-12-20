@@ -63,22 +63,14 @@ window.renderHistory = function ({
 
     container.appendChild(row);
   }
-  // Guesser sees ONLY their own local draft
   if (role === "guesser" && localGuesserDraft) {
-    renderDraftRow(
-      localGuesserDraft.toUpperCase(),
-      container,
-      "draft-row"
-    );
+    renderDraftRow(localGuesserDraft.toUpperCase(),container,"draft-row");
   }
-
-  // Setter sees ONLY their own secret draft
+  if (role === "setter" && localGuesserDraft) {
+  renderDraftRow(localGuesserDraft.toUpperCase(), container, "draft-row guesser-pending");
+  }
   if (role === "setter" && setterDraft) {
-    renderDraftRow(
-      setterDraft.toUpperCase(),
-      container,
-      "draft-row setter-draft"
-    );
+    renderDraftRow(setterDraft.toUpperCase(),container,"draft-row setter-draft");
   }
 
 };
