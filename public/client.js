@@ -13,7 +13,7 @@ window.state = null;
 // DRAFT GUESS (client-side only)
 // -----------------------------------------------------
 let draftGuess = [];
-
+let draftSubmitted = false;
 // -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
@@ -767,14 +767,15 @@ renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
   }
 
   // ENTER
-  else if (special === "ENTER") {
-    if (draftGuess.length !== 5) return;
+else if (special === "ENTER") {
+  if (draftGuess.length !== 5) return;
 
-    const guess = draftGuess.join("").toLowerCase();
-    draftGuess = [];
+  const guess = draftGuess.join("").toLowerCase();
 
-    sendGameAction(roomId, { type: "SUBMIT_GUESS", guess });
-  }
+  draftSubmitted = true;   // freeze draft visually
+  sendGameAction(roomId, { type: "SUBMIT_GUESS", guess });
+}
+
 
   // LETTER
   else if (letter && draftGuess.length < 5) {
