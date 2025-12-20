@@ -10,33 +10,18 @@ function buildSafeStateForPlayer(state, role) {
   } else {
     delete safe.revealGreenInfo;
   }
-// -----------------------------------------------------
-// LIVE DRAFT VISIBILITY (STEALTH-AWARE)
-// -----------------------------------------------------
-delete safe.guesserDraft;
-const stealthActive = !!state.powers?.stealthGuessActive;
-if (role === state.guesser) {
-  safe.guesserDraft = state.guesserDraft || "";
-}
-if (role === state.setter) {
-  safe.guesserDraft = stealthActive
-    ? "?????"
-    : (state.guesserDraft || "");
-}
   // -----------------------------------------------------
   // 1. Hide SECRET from guesser
   // -----------------------------------------------------
   if (role === state.guesser) {
     safe.secret = "";
   }
-
   // -----------------------------------------------------
   // 2. Hide GUESS from setter during simultaneous phase
   // -----------------------------------------------------
   if (role === state.setter && state.phase === "simultaneous") {
     safe.pendingGuess = "";
   }
-
   // STEALTH GUESS: hide the current pending guess ONLY DURING decision step
   if (role === state.setter && state.powers.stealthGuessActive) {
     if (state.pendingGuess) {
