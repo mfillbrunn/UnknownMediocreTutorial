@@ -103,18 +103,18 @@ if (Object.values(forcedGreens).includes(letter))
   }
   return strongest;
 }
-window.renderKeyboard = function (state, container, target, onKeyClick) {
+window.renderKeyboard = function ({
+  state,
+  container,
+  draft,
+  isGuesser,
+  onInput
+}) {
+
   if (!container.__keys) {
     buildKeyboard(container, onKeyClick);
   }
-  const isGuesser = target === "guesser";
-  const draft = (
-    target === "guesser"
-      ? state.uiDraftGuesser || ""
-      : state.uiDraftSetter || ""
-  ).toUpperCase();
-
-  // ========================================================
+    // ========================================================
   // Determine suppression behavior for this turn
   // ========================================================
   let suppressColoring = false;
@@ -133,12 +133,12 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
 
   // Special keys
   if (symbol === "⌫") {
-    keyEl.onclick = () => onKeyClick(null, "BACKSPACE");
+    keyEl.onclick = () => onInput({ type: "BACKSPACE" });
     continue;
   }
 
   if (symbol === "ENTER") {
-    keyEl.onclick = () => onKeyClick(null, "ENTER");
+    eyEl.onclick = () => onInput({ type: "ENTER" });
     continue;
   }
 
@@ -170,7 +170,7 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
       }
     }
 
-    keyEl.onclick = () => onKeyClick(letter, null);
+    keyEl.onclick = () => onInput({ type: "LETTER", value: letter });
   }
 }
   lastDraftMap.set(container, draft);
