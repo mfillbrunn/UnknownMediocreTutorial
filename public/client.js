@@ -386,6 +386,10 @@ onStateUpdate(newState => {
   }
   window.state = state; // ⭐ Makes global for powers
   updateUI();
+  // Clear draft if guess was accepted
+if (myRole === state.guesser && !state.pendingGuess) {
+  draftGuess = [];
+}
 
   // Reset guess input if locked on transition
   if (state.phase === "normal" && $("guessInput").disabled) {
@@ -736,7 +740,7 @@ function handleSetterKeyboard(letter, special) {
 // GUESSER UI
 // -----------------------------------------------------
 function updateGuesserScreen() {
-  renderHistory(state, $("historyGuesser"), false);
+  renderHistory(state, $("historyGuesser"), false, draftGuess);
 
   const guessBox = $("guessInput");
 
@@ -754,17 +758,33 @@ function updateGuesserScreen() {
     $("submitGuessBtn").disabled = true;
   }
   // Keyboard
-  renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
-    if (!canGuess) return;
+renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
+  if (!canGuess) return;
 
-    if (special === "BACKSPACE") {
-      guessBox.value = guessBox.value.slice(0, -1);
-    } else if (special === "ENTER") {
-      $("submitGuessBtn").click();
-    } else if (letter && guessBox.value.length < 5) {
-      guessBox.value += letter;
-    }
-  });
+  // BACKSPACE
+  if (special === "BACKSPACE") {
+    draftGuess.pop();
+  }
+
+  // ENTER
+  else if (special === "ENTER") {
+    if (draftGuess.length !== 5) return;
+
+    const guess = draftGuess.join("").toLowerCase();
+    draftGuess = [];
+
+    sendGameAction(roomId, { type: "SUBMIT_GUESS", guess });
+  }
+
+  // LETTER
+  else if (letter && draftGuess.length < 5) {
+    draftGuess.push(letter);
+  }
+
+  // Re-render history with updated draft
+  renderHistory(state, $("historyGuesser"), false, draftGuess);
+});
+
 
   let pattern = getPattern(state, false);
 
