@@ -1,4 +1,27 @@
 // /public/ui/keyboard.js — MODULAR VERSION
+function buildKeyboard(container, onKeyClick) {
+  container.innerHTML = "";
+
+  KEYBOARD_LAYOUT.forEach(row => {
+    const rowDiv = document.createElement("div");
+    rowDiv.className = "key-row";
+
+    row.forEach(symbol => {
+      const keyEl = document.createElement("div");
+      keyEl.className = "key";
+      keyEl.dataset.key = symbol;
+      keyEl.textContent = symbol === "ENTER" ? "⏎" : symbol;
+
+      rowDiv.appendChild(keyEl);
+    });
+
+    container.appendChild(rowDiv);
+  });
+
+  container.__keys = [...container.querySelectorAll(".key")];
+}
+
+let lastDraft = "";
 window.KEYBOARD_LAYOUT = [
   ["Q","W","E","R","T","Y","U","I","O","P"],
   ["A","S","D","F","G","H","J","K","L"],
@@ -79,7 +102,16 @@ if (Object.values(forcedGreens).includes(letter))
 }
 
 window.renderKeyboard = function (state, container, target, onKeyClick) {
-  container.innerHTML = "";
+  if (!container.__keys) {
+    buildKeyboard(container, onKeyClick);
+  }
+
+  if (!container.__built) {
+  container.__built = true;
+} else {
+  // Do NOT rebuild keys
+}
+
 
   const isGuesser = target === "guesser";
 
@@ -126,6 +158,29 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
 
         // Reset previous color classes
         keyEl.classList.remove("key-green", "key-yellow", "key-gray", "key-blue", "key-current");
+    // =====================================
+// Unified draft-based key animation
+// =====================================
+const draft = (state.uiDraft || "").toUpperCase();
+
+const wasInLast = lastDraft.includes(letter);
+const isInNow = draft.includes(letter);
+
+if (isInNow) {
+  keyEl.classList.add("key-current");
+
+  // Animate ONLY newly added letters
+  if (!wasInLast) {
+    keyEl.classList.add("key-animate");
+    keyEl.addEventListener(
+      "animationend",
+      () => keyEl.classList.remove("key-animate"),
+      { once: true }
+    );
+  }
+} else {
+  keyEl.classList.remove("key-current", "key-animate");
+}
 
         // =============================================
         // SUPPRESS COLORING on CountOnly / HideTile turn
@@ -139,7 +194,7 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
       else if (status === "gray") keyEl.classList.add("key-gray");
       else if (status === "blue") keyEl.classList.add("key-blue");
         }
-
+/*
         // Setter: highlight letters in pending guess
         if (!isGuesser && state.pendingGuess) {
           const pending = state.pendingGuess.toUpperCase();
@@ -147,7 +202,7 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
             keyEl.classList.add("key-current");
           }
         }
-
+*/
         // Allow power modules to adjust the key
         PowerEngine.applyKeyboard(state, target, keyEl, letter);
 
@@ -159,4 +214,6 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
 
     container.appendChild(rowDiv);
   });
+  lastDraft = (state.uiDraft || "").toUpperCase();
+
 };
