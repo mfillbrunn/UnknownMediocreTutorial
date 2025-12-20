@@ -1,101 +1,83 @@
-window.renderHistory = function (state, container, isSetter) {
+window.renderHistory = function (state, container, isSetter, draftGuess = null) {
   container.innerHTML = "";
 
   const history = state?.history;
   if (!Array.isArray(history) || history.length === 0) {
-    container.textContent = "No guesses yet.";
-    return;
+    container.textContent = "";
   }
 
-  for (const entry of history) {
+  for (const entry of history || []) {
     if (!entry || !entry.guess) continue;
 
     const safeEntry = JSON.parse(JSON.stringify(entry));
-
     PowerEngine.applyHistoryEffects(safeEntry, isSetter);
 
     let fbArray;
-
-// Prefer server-provided / power-modified arrays if available
-if (!isSetter && Array.isArray(safeEntry.fbGuesser)) {
-  fbArray = safeEntry.fbGuesser;
-} else if (Array.isArray(safeEntry.fb)) {
-  fbArray = safeEntry.fb;
-} else {
-  // Fallback: should never happen but avoids crashes
-  fbArray = ["⬛","⬛","⬛","⬛","⬛"];
-}
-
-
-    if (!Array.isArray(fbArray) || fbArray.length < 5) {
-      console.warn("Skipping invalid history entry:", safeEntry);
-      continue;
+    if (!isSetter && Array.isArray(safeEntry.fbGuesser)) {
+      fbArray = safeEntry.fbGuesser;
+    } else if (Array.isArray(safeEntry.fb)) {
+      fbArray = safeEntry.fb;
+    } else {
+      fbArray = ["⬛","⬛","⬛","⬛","⬛"];
     }
+
+    if (!Array.isArray(fbArray) || fbArray.length < 5) continue;
 
     const row = document.createElement("div");
     row.className = "history-row";
 
     const guess = safeEntry.guess.toUpperCase();
 
-    let tiles = "";
     for (let i = 0; i < 5; i++) {
-      tiles += fbArray[i];
+      const tile = document.createElement("div");
+      tile.className = "history-tile";
+
+      tile.textContent = guess[i];
+
+      const fb = fbArray[i];
+      if (fb === "🟩") tile.classList.add("tile-green");
+      else if (fb === "🟨") tile.classList.add("tile-yellow");
+      else if (fb === "🟦") tile.classList.add("tile-blue");
+      else tile.classList.add("tile-gray");
+
+      row.appendChild(tile);
     }
 
-    // --------------------------------------------------------
-    // CountOnly summary for BOTH players
-    // --------------------------------------------------------
     if (safeEntry.extraInfo) {
       const { greens, yellows } = safeEntry.extraInfo;
-      tiles += ` (${greens}🟩, ${yellows}🟨)`;
+      const extra = document.createElement("span");
+      extra.className = "history-extra";
+      extra.textContent = ` (${greens}🟩, ${yellows}🟨)`;
+      row.appendChild(extra);
     }
 
-    // --------------------------------------------------------
-    // PowerUsed tag for BOTH players
-    // --------------------------------------------------------
     if (safeEntry.powerUsed) {
-      tiles += `   [${safeEntry.powerUsed}]`;
+      const tag = document.createElement("span");
+      tag.className = "history-power";
+      tag.textContent = ` [${safeEntry.powerUsed}]`;
+      row.appendChild(tag);
     }
 
-    // Clear row, we will build tiles inside it
-row.innerHTML = "";
+    container.appendChild(row);
+  }
 
-// ----- BUILD TILES FOR THIS GUESS -----
-for (let i = 0; i < 5; i++) {
-  const tile = document.createElement("div");
-  tile.className = "history-tile";
+  // ------------------ DRAFT ROW ------------------
+  if (!isSetter && Array.isArray(draftGuess)) {
+    const row = document.createElement("div");
+    row.className = "history-row draft-row";
 
-  // Letter inside the tile
-  tile.textContent = guess[i];
+    for (let i = 0; i < 5; i++) {
+      const tile = document.createElement("div");
+      tile.className = "history-tile draft-tile";
 
-  // Color class depending on fbArray[i]
-  const fb = fbArray[i];
-  if (fb === "🟩") tile.classList.add("tile-green");
-  else if (fb === "🟨") tile.classList.add("tile-yellow");
-  else if (fb === "🟦") tile.classList.add("tile-blue");   // optional support
-  else tile.classList.add("tile-gray");
+      tile.textContent = draftGuess[i] || "";
 
-  row.appendChild(tile);
-}
+      if (draftGuess[i]) {
+        tile.classList.add("draft-filled");
+      }
 
-// ----- OPTIONAL EXTRA INFO (CountOnly summary) -----
-if (safeEntry.extraInfo) {
-  const { greens, yellows } = safeEntry.extraInfo;
-  const extra = document.createElement("span");
-  extra.className = "history-extra";
-  extra.textContent = ` (${greens}🟩, ${yellows}🟨)`;
-  row.appendChild(extra);
-}
-
-// ----- OPTIONAL POWER USED TAG -----
-if (safeEntry.powerUsed) {
-  const tag = document.createElement("span");
-  tag.className = "history-power";
-  tag.textContent = ` [${safeEntry.powerUsed}]`;
-  row.appendChild(tag);
-}
-
-container.appendChild(row);
+      row.appendChild(tile);
+    }
 
     container.appendChild(row);
   }
