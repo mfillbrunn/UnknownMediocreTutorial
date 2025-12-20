@@ -93,7 +93,7 @@ socket.on("errorMessage", msg => {
 socket.on("roleAssigned", ({ role }) => {
   myRole = role;
   roleAssigned = true;
-
+  resetKeyboards();
   if (pendingState) {
     state = pendingState;
     window.state = state;
