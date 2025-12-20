@@ -1,6 +1,6 @@
 window.renderHistory = function (state, container, role) {
   container.innerHTML = "";
-
+  const isSetter = role === "setter";
   const history = state?.history;
   if (!Array.isArray(history) || history.length === 0) {
     container.textContent = "";
@@ -13,7 +13,6 @@ window.renderHistory = function (state, container, role) {
     PowerEngine.applyHistoryEffects(safeEntry, isSetter);
 
     let fbArray;
-    const isSetter = role === "setter";
     if (!isSetter && Array.isArray(safeEntry.fbGuesser)) {
       fbArray = safeEntry.fbGuesser;
     } else if (Array.isArray(safeEntry.fb)) {
