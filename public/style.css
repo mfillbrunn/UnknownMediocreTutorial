@@ -610,3 +610,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   font-size: 22px;
   font-weight: 800;
 }
+/* Hidden but JS-safe */
+.guesser-hidden {
+  display: none;
+}
