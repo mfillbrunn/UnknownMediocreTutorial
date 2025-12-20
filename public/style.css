@@ -713,3 +713,24 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   opacity: 0.95;
 }
 
+.word-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.word-row.draft .history-tile {
+  background: #2a2d33;
+  color: #bbb;
+  border: 1px solid #00000055;
+}
+
+.word-row.guesser-draft {
+  opacity: 0.85;
+}
+
+.word-row.setter-draft .history-tile {
+  border: 1px solid #4da3ff;
+  box-shadow: 0 0 6px rgba(70,140,255,0.35);
+}
