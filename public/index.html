@@ -75,19 +75,21 @@
 
     <h2 class="screen-title">Setter </h2>
 
-    <!-- HISTORY AT TOP -->
     <div class="play-area setter-play">
-    <div id="historySetter" class="history-box history-tiles"></div>
-    
-      <div class="setter-word-stack">
-        <div id="setterGuesserSubmitted" class="word-row submitted"></div>
-        <div id="setterGuesserDraft" class="word-row draft guesser-draft"></div>
-        <div id="setterSecretDraft" class="word-row draft setter-draft"></div>
-      </div>
 
-    <!-- KEYBOARD -->
-    <div id="keyboardSetter" class="keyboard"></div>
-  </div>
+  <!-- Guesser: last submitted guess -->
+  <div id="setterGuesserSubmitted" class="history-box history-tiles"></div>
+
+  <!-- Guesser: current draft guess -->
+  <div id="setterGuesserDraft" class="history-box history-tiles draft-box"></div>
+
+  <!-- Setter: current secret draft -->
+  <div id="setterSecretDraft" class="history-box history-tiles draft-box setter-draft"></div>
+
+  <!-- KEYBOARD -->
+  <div id="keyboardSetter" class="keyboard"></div>
+</div>
+
     <!-- INPUT -->
   <div class="guess-input-area">
   <input id="newSecretInput" class="letter-input">
