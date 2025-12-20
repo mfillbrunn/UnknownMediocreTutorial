@@ -563,7 +563,6 @@ function updateSetterScreen() {
 
 $("pendingGuessDisplay").textContent =
   guessForSetter ? guessForSetter.toUpperCase() : "-";
-  renderHistory(state, $("historySetter"), true);
  // FORCE TIMER COUNTDOWN VISUAL
 // --- FORCE TIMER: STATE-LEVEL CHECK (not ticking UI) ---
   const bar = $("turnIndicatorSetter");
@@ -667,6 +666,38 @@ $("pendingGuessDisplay").textContent =
 
   // FINAL: enable/disable input box
   $("newSecretInput").disabled = !setterInputEnabled;
+  // ----------------------------------------
+// SETTER VIEW: FULL GUESSER HISTORY
+// (this EXPANDS every submitted guess)
+// ----------------------------------------
+renderHistory(
+  state,
+  $("setterGuesserSubmitted"),
+  true
+);
+
+// ----------------------------------------
+// SETTER VIEW: GUESSER CURRENT DRAFT (LIVE)
+// ----------------------------------------
+$("setterGuesserDraft").innerHTML = "";
+if (state.guesserDraft && state.guesserDraft.length) {
+  renderDraftRow(
+    state.guesserDraft,
+    $("setterGuesserDraft")
+  );
+}
+
+// ----------------------------------------
+// SETTER VIEW: SETTER SECRET DRAFT (LIVE)
+// ----------------------------------------
+$("setterSecretDraft").innerHTML = "";
+const secretDraft = $("newSecretInput").value || "";
+if (secretDraft.length) {
+  renderDraftRow(
+    secretDraft,
+    $("setterSecretDraft")
+  );
+}
 
   // -------------------------------------------------------
   // KEYBOARD + PATTERN / PREVIEW
@@ -684,6 +715,19 @@ $("pendingGuessDisplay").textContent =
 
 }
 
+function renderDraftRow(word, container) {
+  const row = document.createElement("div");
+  row.className = "history-row";
+
+  for (let i = 0; i < 5; i++) {
+    const tile = document.createElement("div");
+    tile.className = "history-tile draft-tile";
+    tile.textContent = word[i]?.toUpperCase() || "";
+    row.appendChild(tile);
+  }
+
+  container.appendChild(row);
+}
 
 
 
@@ -772,9 +816,12 @@ renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
   if (!canGuess) return;
 
   // BACKSPACE
-  if (special === "BACKSPACE") {
-    draftGuess.pop();
-  }
+if (special === "BACKSPACE") {
+  draftGuess.pop();
+  state.uiDraft = draftGuess.join("");
+  state.guesserDraft = draftGuess.join("");
+}
+
 
   // ENTER
 else if (special === "ENTER") {
@@ -782,15 +829,18 @@ else if (special === "ENTER") {
   const guess = draftGuess.join("").toLowerCase();
   draftSubmitted = true;   // freeze draft visually
   state.uiDraft = "";     // ← ADD THIS LINE
+  state.guesserDraft = "";
   sendGameAction(roomId, { type: "SUBMIT_GUESS", guess });
 }
 
 
   // LETTER
- else if (letter && draftGuess.length < 5) {
+else if (letter && draftGuess.length < 5) {
   draftGuess.push(letter);
   state.uiDraft = draftGuess.join("");
+  state.guesserDraft = draftGuess.join("");
 }
+
 
   // Re-render history with updated draft
   renderHistory(state, $("historyGuesser"), false, draftGuess);
