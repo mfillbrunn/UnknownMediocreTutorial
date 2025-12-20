@@ -691,3 +691,10 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 .draft-tile {
   animation: none;
 }
+   .submitted-row .submitted-tile {
+  background: #3a3d44;
+  color: #eee;
+  border: 1px solid #00000066;
+  opacity: 0.95;
+}
+
