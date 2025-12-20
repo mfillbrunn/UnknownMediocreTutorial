@@ -24,7 +24,7 @@ function buildKeyboard(container) {
 
 
 const lastDraftMap = new WeakMap();
-
+window.lastDraftMap = lastDraftMap;
 window.KEYBOARD_LAYOUT = [
   ["Q","W","E","R","T","Y","U","I","O","P"],
   ["A","S","D","F","G","H","J","K","L"],
