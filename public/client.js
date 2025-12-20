@@ -777,15 +777,30 @@ $("applyPowerCountBtn").onclick = () => {
  };
 
 $("submitSetterNewBtn").onclick = () => {
-  const w = $("newSecretInput").value.trim().toLowerCase();
-  if (w.length !== 5) return shake($("newSecretInput")), toast("5 letters!");
-  if (!window.ALLOWED_GUESSES?.has(w))
-    return shake($("newSecretInput")), toast("Word not in dictionary");
-  sendGameAction(roomId, { type: "SET_SECRET_NEW", secret: w });
-  $("newSecretInput").value = "";
-  setterDraft = "";
-  state.uiDraftSetter = "";
+  const w = (state.setterDraft || "").toLowerCase();
+
+  if (w.length !== 5) {
+    shake($("submitSetterNewBtn"));
+    toast("5 letters!");
+    return;
+  }
+
+  if (!window.ALLOWED_GUESSES?.has(w)) {
+    shake($("submitSetterNewBtn"));
+    toast("Word not in dictionary");
+    return;
+  }
+
+  sendGameAction(roomId, {
+    type: "SET_SECRET_NEW",
+    secret: w
+  });
+
+  // Clear setter draft after submission
+  state.setterDraft = "";
+  updateUI();
 };
+
 
 $("submitSetterSameBtn").onclick = () =>
   sendGameAction(roomId, { type: "SET_SECRET_SAME" });
