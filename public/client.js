@@ -10,11 +10,6 @@ let lastSimulSecret = false;
 let lastSimulGuess = false;
 window.state = null;
 // -----------------------------------------------------
-// DRAFT GUESS (client-side only)
-// -----------------------------------------------------
-let draftGuess = [];
-let draftSubmitted = false;
-// -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
 const show = id => $(id).classList.add("active");
@@ -192,26 +187,8 @@ onStateUpdate(newState => {
     $("assassinModal").classList.remove("active");
   }
   window.state = state; // ⭐ Makes global for powers
-  // Server accepted the guess → clear draft
-if (
-  myRole === state.guesser &&
-  draftSubmitted &&
-  state.history?.length &&
-  state.history[state.history.length - 1]?.guess?.toLowerCase() ===
-    draftGuess.join("").toLowerCase()
-) {
-  draftGuess = [];
-  draftSubmitted = false;
-  state.uiDraftGuesser = "";
-}
-
   updateUI();
-  // Clear draft if guess was accepted
-if (myRole === state.guesser && !state.pendingGuess) {
-  draftGuess = [];
-  state.uiDraftGuesser = "";
-}
-  // Reset guess input if locked on transition
+   // Reset guess input if locked on transition
   if (state.phase === "normal" && $("guessInput").disabled) {
     $("guessInput").value = "";
   }
@@ -572,30 +549,41 @@ function updateGuesserScreen() {
 renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
   if (!canGuess) return;
 
+ renderKeyboard(state, $("keyboardGuesser"), "guesser", (letter, special) => {
+  if (!canGuess) return;
+
+  const currentDraft = state.guesserDraft || "";
+
   // BACKSPACE
-if (special === "BACKSPACE") {
-draftGuess.pop();
-state.uiDraftGuesser = draftGuess.join("");
-state.guesserDraft = draftGuess.join("");
-updateUI(); // 👈 add this
-}
+  if (special === "BACKSPACE") {
+    const next = currentDraft.slice(0, -1);
+    sendGameAction(roomId, {
+      type: "UPDATE_DRAFT",
+      draft: next
+    });
+    return;
+  }
 
   // ENTER
-else if (special === "ENTER") {
-  if (draftGuess.length !== 5) return;
-  const guess = draftGuess.join("").toLowerCase();
-  draftSubmitted = true;
-state.uiDraftGuesser = "";
-state.guesserDraft = "";
-  sendGameAction(roomId, { type: "SUBMIT_GUESS", guess });
-}
+  if (special === "ENTER") {
+    if (currentDraft.length !== 5) return;
+    sendGameAction(roomId, {
+      type: "SUBMIT_GUESS",
+      guess: currentDraft.toLowerCase()
+    });
+    return;
+  }
+
   // LETTER
-else if (letter && draftGuess.length < 5) {
-  draftGuess.push(letter);
-  state.uiDraftGuesser = draftGuess.join("");
-  state.guesserDraft = draftGuess.join("");
-  updateUI(); // 👈 add this
-}
+  if (letter && currentDraft.length < 5) {
+    const next = currentDraft + letter;
+    sendGameAction(roomId, {
+      type: "UPDATE_DRAFT",
+      draft: next
+    });
+  }
+});
+
   // Re-render history with updated draft
   renderHistory(state, $("historyGuesser"), "guesser");
 });
@@ -731,19 +719,6 @@ $("applyPowerCountBtn").onclick = () => {
      sendGameAction(roomId, { type: "SET_POWER_COUNT", count: n });
    }
  };
-
-$("submitGuessBtn").onclick = () => {
-  if (myRole !== state.guesser) return;
-  const g = (state.uiDraftGuesser || "").toLowerCase();
-  if (g.length !== 5) return toast("5 letters required");
-  if (!window.ALLOWED_GUESSES?.has(g))
-    return toast("Word not in dictionary");
-  draftSubmitted = true;
-  state.uiDraftGuesser = "";
-  state.guesserDraft = "";
-  sendGameAction(roomId, { type: "SUBMIT_GUESS", guess: g });
-};
-
 
 $("submitSetterNewBtn").onclick = () => {
   const w = $("newSecretInput").value.trim().toLowerCase();
