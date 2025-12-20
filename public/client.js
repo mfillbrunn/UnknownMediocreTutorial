@@ -539,12 +539,22 @@ function handleGuesserInput(event) {
   }
 
   if (event.type === "ENTER") {
-    if (localGuesserDraft.length === 5) {
+      if (localGuesserDraft.length !== 5) {
+        shake($("keyboardGuesser"));
+        toast("5 letters!");
+        return;
+      }
+    if (!window.ALLOWED_GUESSES.has(localGuesserDraft.toLowerCase())) {
+      shake($("keyboardGuesser"));
+      toast("Not in dictionary");
+      return;
+    }    
+    
       sendGameAction(roomId, {
         type: "SUBMIT_GUESS",
         guess: localGuesserDraft.toLowerCase()
       });
-    }
+    
   }
 }
 // -----------------------------------------------------
