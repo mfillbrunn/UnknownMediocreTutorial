@@ -103,12 +103,16 @@ if (Object.values(forcedGreens).includes(letter))
   }
   return strongest;
 }
-
 window.renderKeyboard = function (state, container, target, onKeyClick) {
   if (!container.__keys) {
     buildKeyboard(container, onKeyClick);
   }
   const isGuesser = target === "guesser";
+  const draft = (
+    target === "guesser"
+      ? state.uiDraftGuesser || ""
+      : state.uiDraftSetter || ""
+  ).toUpperCase();
 
   // ========================================================
   // Determine suppression behavior for this turn
@@ -150,19 +154,9 @@ window.renderKeyboard = function (state, container, target, onKeyClick) {
       else if (status === "gray") keyEl.classList.add("key-gray");
       else if (status === "blue") keyEl.classList.add("key-blue");
     }
-
-    // --- Unified draft animation ---
-    const draft =
-      (target === "guesser"
-        ? state.uiDraftGuesser
-        : state.uiDraftSetter || ""
-      ).toUpperCase();
-
     const lastDraft = lastDraftMap.get(container) || "";
     const wasInLast = lastDraft.includes(letter);
-
     const isInNow = draft.includes(letter);
-
     if (isInNow) {
       keyEl.classList.add("key-current");
 
