@@ -10,6 +10,20 @@ function buildSafeStateForPlayer(state, role) {
   } else {
     delete safe.revealGreenInfo;
   }
+// -----------------------------------------------------
+// LIVE DRAFT VISIBILITY (STEALTH-AWARE)
+// -----------------------------------------------------
+ if (role === state.guesser) {
+   safe.guesserDraft = state.guesserDraft || "";
+ }
+
+ if (role === state.setter) {
+   if (state.powers.stealthGuessActive) {
+     safe.guesserDraft = "?????";
+   } else {
+     safe.guesserDraft = state.guesserDraft || "";
+   }
+ }
 
   // -----------------------------------------------------
   // 1. Hide SECRET from guesser
