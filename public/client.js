@@ -478,35 +478,7 @@ $("pendingGuessDisplay").textContent =
 // SETTER VIEW: FULL GUESSER HISTORY
 // (this EXPANDS every submitted guess)
 // ----------------------------------------
-renderHistory(
-  state,
-  $("setterGuesserSubmitted"),
-  true
-);
-
-// ----------------------------------------
-// SETTER VIEW: GUESSER CURRENT DRAFT (LIVE)
-// ----------------------------------------
-$("setterGuesserDraft").innerHTML = "";
-if (state.guesserDraft && state.guesserDraft.length) {
-  renderDraftRow(
-    state.guesserDraft,
-    $("setterGuesserDraft")
-  );
-}
-
-// ----------------------------------------
-// SETTER VIEW: SETTER SECRET DRAFT (LIVE)
-// ----------------------------------------
-$("setterSecretDraft").innerHTML = "";
-const secretDraft = state.uiDraftSetter || "";
-if (secretDraft.length) {
-  renderDraftRow(
-    secretDraft,
-    $("setterSecretDraft")
-  );
-}
-
+renderHistory(state, $("setterGuesserSubmitted"), "setter");
   // -------------------------------------------------------
   // KEYBOARD + PATTERN / PREVIEW
   // -------------------------------------------------------
@@ -520,21 +492,6 @@ if (secretDraft.length) {
 
   updateSetterPreview();
  }
-
-function renderDraftRow(word, container) {
-  const row = document.createElement("div");
-  row.className = "history-row";
-
-  for (let i = 0; i < 5; i++) {
-    const tile = document.createElement("div");
-    tile.className = "history-tile draft-tile";
-    tile.textContent = word[i]?.toUpperCase() || "";
-    row.appendChild(tile);
-  }
-
-  container.appendChild(row);
-}
-
 function updateSetterPreview() {
  // If stealth is active, hide preview entirely
 if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
@@ -594,7 +551,7 @@ function handleSetterKeyboard(letter, special) {
 // GUESSER UI
 // -----------------------------------------------------
 function updateGuesserScreen() {
-  renderHistory(state, $("historyGuesser"), false, draftGuess);
+  renderHistory(state, $("historyGuesser"), "guesser");
 
   const guessBox = $("guessInput");
 
@@ -620,7 +577,7 @@ if (special === "BACKSPACE") {
 draftGuess.pop();
 state.uiDraftGuesser = draftGuess.join("");
 state.guesserDraft = draftGuess.join("");
-
+updateUI(); // 👈 add this
 }
 
   // ENTER
@@ -637,9 +594,10 @@ else if (letter && draftGuess.length < 5) {
   draftGuess.push(letter);
   state.uiDraftGuesser = draftGuess.join("");
   state.guesserDraft = draftGuess.join("");
+  updateUI(); // 👈 add this
 }
   // Re-render history with updated draft
-  renderHistory(state, $("historyGuesser"), false, draftGuess);
+  renderHistory(state, $("historyGuesser"), "guesser");
 });
   let pattern = getPattern(state, false);
 
@@ -776,16 +734,16 @@ $("applyPowerCountBtn").onclick = () => {
 
 $("submitGuessBtn").onclick = () => {
   if (myRole !== state.guesser) return;
-  const g = $("guessInput").value.trim().toLowerCase();
-  if (g.length !== 5) return shake($("guessInput")), toast("5 letters required");
+  const g = (state.uiDraftGuesser || "").toLowerCase();
+  if (g.length !== 5) return toast("5 letters required");
   if (!window.ALLOWED_GUESSES?.has(g))
-    return shake($("guessInput")), toast("Word not in dictionary");
-  $("guessInput").value = "";
-  draftSubmitted = true;   
-  state.uiDraftGuesser = "";  
-  state.guesserDraft = "";     
+    return toast("Word not in dictionary");
+  draftSubmitted = true;
+  state.uiDraftGuesser = "";
+  state.guesserDraft = "";
   sendGameAction(roomId, { type: "SUBMIT_GUESS", guess: g });
 };
+
 
 $("submitSetterNewBtn").onclick = () => {
   const w = $("newSecretInput").value.trim().toLowerCase();
