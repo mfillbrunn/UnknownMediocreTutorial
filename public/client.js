@@ -191,19 +191,16 @@ socket.on("assassinUsed", ({ setter, word }) => {
 
 socket.on("forceTimerExpired", () => {
   const bar = $("turnIndicatorSetter");
-
   bar.textContent = "TIME LEFT: 0s";
-
-  // Stop flashing
   bar.classList.remove("flash-warning");
 
-  // Disable NEW secret (only SAME allowed)
   $("submitSetterNewBtn").disabled = true;
   $("submitSetterNewBtn").classList.add("disabled-btn");
-
-  // Clear input field
   $("newSecretInput").value = "";
+
+  toast("Time ran out — old secret was kept!");
 });
+
 
 
 
@@ -216,9 +213,6 @@ socket.on("suggestWord", ({ word }) => {
   }
 });
 
-socket.on("forceTimerExpired", () => {
-  toast("Time ran out — old secret was kept!");
-});
 socket.on("errorMessage", msg => {
   if ($("assassinModal").classList.contains("active")) {
     const inp = $("assassinInput");
