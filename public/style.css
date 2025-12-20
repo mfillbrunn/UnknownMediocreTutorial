@@ -664,3 +664,8 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   margin: 0 !important;
 }
 
+/* Empty history message */
+.history-box:empty,
+.history-box:not(:has(.history-row)) {
+  color: #e5e5e5;
+}
