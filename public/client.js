@@ -56,7 +56,6 @@ window.renderPatternInto = function (el, pattern, revealInfo = null) {
       html += `<span class="pattern-letter">${letter}</span> `;
     }
   }
-
   el.innerHTML = html.trim();
 };
 // -----------------------------------------------------
@@ -88,7 +87,6 @@ window.addEventListener("load", () => {
     }
   });
 });
-
 // -----------------------------------------------------
 // SOCKET EVENT HANDLERS
 // -----------------------------------------------------
