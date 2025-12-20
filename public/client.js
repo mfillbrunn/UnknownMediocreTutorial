@@ -455,7 +455,15 @@ $("pendingGuessDisplay").textContent =
 // SETTER VIEW: FULL GUESSER HISTORY
 // (this EXPANDS every submitted guess)
 // ----------------------------------------
-renderHistory(state, $("setterGuesserSubmitted"), "setter");
+renderHistory({
+  state,
+  container: $("setterGuesserSubmitted"),
+  role: "setter",
+  guesserDraft:
+    state.powers?.stealthGuessActive ? null : state.guesserDraft,
+  setterDraft: state.setterDraft || ""
+});
+
   // -------------------------------------------------------
   // KEYBOARD + PATTERN / PREVIEW
   // -------------------------------------------------------
@@ -533,7 +541,14 @@ function handleSetterInput(event) {
 // GUESSER UI
 // -----------------------------------------------------
 function updateGuesserScreen() {
-  renderHistory(state, $("historyGuesser"), "guesser");
+  renderHistory({
+  state,
+  container: $("historyGuesser"),
+  role: "guesser",
+  guesserDraft: state.guesserDraft || "",
+  setterDraft: null
+});
+
 
   const guessBox = $("guessInput");
 
@@ -589,7 +604,14 @@ renderKeyboard({
 });
 
   // Re-render history with updated draft
-  renderHistory(state, $("historyGuesser"), "guesser");
+  renderHistory({
+  state,
+  container: $("historyGuesser"),
+  role: "guesser",
+  guesserDraft: state.guesserDraft || "",
+  setterDraft: null
+});
+
 });
   let pattern = getPattern(state, false);
 
