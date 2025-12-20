@@ -530,11 +530,22 @@ function handleSetterInput(event) {
     return;
   }
 
-  if (event.type === "ENTER") {
-    if (state.pendingGuess && !$("submitSetterSameBtn").disabled) {
-      $("submitSetterSameBtn").click();
-    }
+if (event.type === "ENTER") {
+  if (!state.pendingGuess) return;
+
+  // Prefer SAME if allowed
+  if (!$("submitSetterSameBtn").disabled) {
+    $("submitSetterSameBtn").click();
+    return;
   }
+
+  // Otherwise fall back to NEW if allowed
+  if (!$("submitSetterNewBtn").disabled) {
+    $("submitSetterNewBtn").click();
+    return;
+  }
+}
+
 }
 // -----------------------------------------------------
 // GUESSER UI
