@@ -483,7 +483,19 @@ const preview = $("setterPreview");
   }
 }
 function handleSetterInput(event) {
-  if (!setterInputEnabled) return;
+  const isNormalSetterTurn =
+    myRole === state.setter &&
+    state.phase === "normal" &&
+    state.turn === state.setter &&
+    !state.powers?.freezeActive &&
+    !!state.pendingGuess;
+  const isSimultaneousSecretEntry =
+    state.phase === "simultaneous" &&
+    !state.secret &&
+    !state.simultaneousSecretSubmitted;
+
+  if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
+  
   const draft = state.setterDraft || "";
   if (event.type === "BACKSPACE") {
     state.setterDraft = draft.slice(0, -1);
@@ -532,7 +544,6 @@ function handleGuesserInput(event) {
         type: "SUBMIT_GUESS",
         guess: localGuesserDraft.toLowerCase()
       });
-      localGuesserDraft = "";
     }
   }
 }
