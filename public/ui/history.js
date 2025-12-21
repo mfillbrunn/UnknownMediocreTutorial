@@ -27,7 +27,10 @@ window.renderHistory = function ({
 
     const row = document.createElement("div");
     row.className = "history-row";
-
+    if (safeEntry.extraInfo) {
+      row.classList.add("evaluated-row");
+    }
+    
     const guess = safeEntry.guess.toUpperCase();
 
     for (let i = 0; i < 5; i++) {
