@@ -155,4 +155,22 @@ body.theme-alabaster {
   --kb-hover: #d1d5de;
   --kb-used: #c2c6cf;
 }
+/* =========================================
+   LASER OUTLINE PRIMITIVE
+   ========================================= */
+.laser-outline {
+  position: relative;
+  border: 1.5px solid currentColor;
+  background: transparent;
+}
+
+.laser-outline::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1px solid currentColor;
+  opacity: 0.35;
+  pointer-events: none;
+}
 
