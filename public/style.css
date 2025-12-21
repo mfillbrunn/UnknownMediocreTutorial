@@ -447,7 +447,10 @@ text-transform: uppercase;
   border: 1px solid rgba(255,80,80,0.4);
   box-shadow: 0 0 6px rgba(255,80,80,0.3);
 }
-
+.theme-guesser .history-tile {
+  border: 1px solid rgba(255,80,80,0.4);
+  box-shadow: 0 0 6px rgba(70,140,255,.35);
+}
 .theme-guesser .panel,
 .theme-guesser .history-box,
 .theme-guesser .preview-box {
@@ -989,24 +992,10 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 /* =====================================================
    REMOVE INVALID BLUE FROM SETTER POWER RULES
    ===================================================== */
-
 .theme-setter .power-btn {
   color: #ff4b5c;
 }
 
 .theme-guesser .power-btn {
   color: #4da3ff;
-}
-/* =========================================
-   DRAFT ROW TILE OUTLINES (ROLE-INDEPENDENT)
-   ========================================= */
-
-/* Draft tiles — blue outline for BOTH roles */
-.draft-layer {
-  border: 2px solid #4da3ff !important;
-  box-shadow:
-    0 0 6px rgba(70, 140, 255, 0.35) !important;
-}
-.draft-layer {
-  border: 1.5px solid #4da3ff !important;
 }
