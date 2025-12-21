@@ -770,7 +770,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 }
 /* Draft guess row (Guesser typing) */
 .draft-row .draft-tile {
-  background: #2a2d33;
+  background: #4da3ff;
   color: #bbb;
   border: 1px solid #00000055;
 
@@ -790,7 +790,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 }
 /* Draft rows (shared) */
 .draft-box .history-tile {
-  background: #2a2d33;
+  background: #4da3ff;
   color: #bbb;
   border: 1px solid #00000055;
   opacity: 0.85;
