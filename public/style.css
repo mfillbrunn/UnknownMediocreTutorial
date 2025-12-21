@@ -1002,20 +1002,11 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
    ========================================= */
 
 /* Draft tiles — blue outline for BOTH roles */
-.draft-layer .history-tile {
+.draft-layer {
   border: 2px solid #4da3ff !important;
   box-shadow:
     0 0 6px rgba(70, 140, 255, 0.35) !important;
 }
-.draft-layer .history-tile {
-  border: 1.5px solid #4da3ff !important;
-}
-/* =========================================
-   DRAFT CONTAINER — FULLY INVISIBLE
-   ========================================= */
-
 .draft-layer {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+  border: 1.5px solid #4da3ff !important;
 }
