@@ -74,4 +74,14 @@ window.renderDraftRows = function ({
     }
   }
 };
-function renderDraftRow(word, container, className) { const row = document.createElement("div"); row.className = history-row ${className}; for (let i = 0; i < 5; i++) { const tile = document.createElement("div"); tile.className = "history-tile draft-tile"; tile.textContent = word[i] || ""; row.appendChild(tile); } container.appendChild(row); }
+function renderDraftRow(word, container, className) {
+  const row = document.createElement("div"); 
+  row.className = history-row ${className}; 
+  for (let i = 0; i < 5; i++) { 
+    const tile = document.createElement("div"); 
+    tile.className = "history-tile draft-tile"; 
+    tile.textContent = word[i] || ""; 
+    row.appendChild(tile); 
+  } 
+  container.appendChild(row); 
+};
