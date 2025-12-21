@@ -734,3 +734,16 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 .draft-row.ghost-secret .history-tile {
   opacity: 0.35;
 }
+.pending-guess .history-tile {
+  border: 2px solid rgba(255,255,255,0.4);
+}
+
+.ghost-secret .history-tile {
+  opacity: 0.35;
+  filter: grayscale(100%);
+  border: 1px dashed rgba(255,255,255,0.35);
+}
+
+.setter-draft .history-tile {
+  opacity: 1;
+}
