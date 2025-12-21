@@ -213,15 +213,26 @@ body {
 /* Keyboard key color states */
 .key.key-green  { background: var(--tile-green) !important;  color: var(--tile-green-text) !important; }
 .key.key-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text) !important; }
-.key.key-gray   { background: var(--tile-gray) !important;   color: var(--tile-gray-text) !important; }
+.key.key-gray   { background:
+    repeating-linear-gradient(
+      135deg,
+      #121417,
+      #121417 6px,
+      #0e1013 6px,
+      #0e1013 12px
+    ) !important;
+  color: #7a7f88 !important;
+  border-color: #000000aa !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    inset 0 -2px 4px rgba(0,0,0,.6);
+  opacity: 0.85; }
 .key.key-blue   { background: #4ea3ff !important;            color: #000 !important; }
 
 /* Optional: highlight keys used in current draft without overriding solved colors */
 .key.key-current {
   box-shadow: 0 0 0 2px rgba(255,255,255,.35) inset;
 }
-
-
 
 /* Special width for backspace */
 .key[data-key="⌫"] {
@@ -239,7 +250,14 @@ body {
   transform: scale(0.95);
 }
 
-
+.key.key-gray:hover,
+.key.key-gray:active {
+  background: #121417 !important;
+  transform: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    inset 0 -2px 4px rgba(0,0,0,.6);
+}
 /* =========================================
    HISTORY — TILE STYLE (Wordle Style)
    ========================================= */
