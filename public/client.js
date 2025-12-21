@@ -517,7 +517,13 @@ function handleSetterInput(event) {
     !state.simultaneousSecretSubmitted;
 
   if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
-  
+  const isEditing =
+  event.type === "LETTER" || event.type === "BACKSPACE";
+    // First edit: clear ghosted secret
+    if (isEditing && !state.setterDraft) {
+      state.setterDraft = "";
+    }
+
   const draft = state.setterDraft || "";
   if (event.type === "BACKSPACE") {
     state.setterDraft = draft.slice(0, -1);
@@ -584,7 +590,7 @@ function updateGuesserScreen() {
     state,
     container: $("historyGuesser"),
     role: "guesser",
-    localGuesserDraft: state.pendingGuess || localGuesserDraft
+    localGuesserDraft: state.pendingGuess || localGuesserDraft  || (canGuess ? "" : null)
   });
 
   const guessBox = $("guessInput");
