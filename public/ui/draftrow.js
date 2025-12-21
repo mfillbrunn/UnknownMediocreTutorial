@@ -1,28 +1,18 @@
-/**
- * Draft row resolution
- * -------------------
- * Decides which "input-like" rows should be rendered
- * WITHOUT mutating state or touching the DOM.
- *
- * Output is declarative and consumed by renderHistory().
- */
-
-window.getDraftRows = function ({
+window.renderDraftRows = function ({
   state,
-  role
+  role,
+  container,
+  localGuesserDraft = ""
 }) {
-  const rows = [];
+  container.innerHTML = "";
 
   /* ============================
    * GUESSER
    * ============================ */
   if (role === "guesser") {
-    // Once submitted, guess is no longer a draft
-    if (state.pendingGuess) {
-      return rows; // no draft row
-    }
+    // No draft once submitted
+    if (state.pendingGuess) return;
 
-    // Always show empty tiles when guessing is allowed
     const canGuess =
       (state.phase === "simultaneous" &&
         !state.simultaneousGuessSubmitted) ||
@@ -30,13 +20,10 @@ window.getDraftRows = function ({
         state.turn === state.guesser);
 
     if (canGuess) {
-      rows.push({
-        type: "guesser-draft",
-        word: "" // always empty tiles
-      });
+      renderDraftRow("", container, "draft-row guesser-draft");
     }
 
-    return rows;
+    return;
   }
 
   /* ============================
@@ -46,47 +33,44 @@ window.getDraftRows = function ({
     const setterCanEdit =
       !state.powers?.freezeActive &&
       (
-        // Simultaneous: setter has not submitted yet
         (state.phase === "simultaneous" &&
           !state.secret &&
           !state.simultaneousSecretSubmitted) ||
-
-        // Normal: setter responding to a guess
         (state.phase === "normal" &&
           state.turn === state.setter &&
           !!state.pendingGuess)
       );
 
-    if (!setterCanEdit) {
-      return rows;
+    // Pending guess is NOT draft → render separately if you want
+    if (state.pendingGuess) {
+      renderDraftRow(
+        state.pendingGuess.toUpperCase(),
+        container,
+        "draft-row pending-guess"
+      );
     }
 
-    // --- SIMULTANEOUS PHASE ---
+    if (!setterCanEdit) return;
+
+    // Simultaneous: empty tiles
     if (state.phase === "simultaneous") {
-      rows.push({
-        type: "setter-draft",
-        word: "" // empty tiles
-      });
-      return rows;
+      renderDraftRow("", container, "draft-row setter-draft");
+      return;
     }
 
-    // --- NORMAL PHASE ---
+    // Normal: ghost or real draft
     if (state.setterDraft) {
-      // Actively typing → real draft
-      rows.push({
-        type: "setter-draft",
-        word: state.setterDraft
-      });
+      renderDraftRow(
+        state.setterDraft.toUpperCase(),
+        container,
+        "draft-row setter-draft"
+      );
     } else if (state.secret) {
-      // Default: ghost current secret
-      rows.push({
-        type: "ghost-secret",
-        word: state.secret
-      });
+      renderDraftRow(
+        state.secret.toUpperCase(),
+        container,
+        "draft-row ghost-secret"
+      );
     }
-
-    return rows;
   }
-
-  return rows;
 };
