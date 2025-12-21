@@ -465,7 +465,7 @@ function updateSetterScreen() {
       ghostSecret: ""
     });
   }
-  if *state.phase === "normal")}
+  if (state.phase === "normal")}
       renderHistory({
       state,
       container: $("setterGuesserSubmitted"),
