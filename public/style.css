@@ -260,9 +260,20 @@ body {
 }
 .theme-setter .key.key-current {
   color: #fff !important;
-   box-shadow: 0 0 15px rgba(255, 15, 15, 0.45);
+  outline-offset: -2px; /* keeps outline tight to key */
+  animation: setter-used-outline 1.4s infinite;
 }
-
+@keyframes setter-used-outline {
+  0% {
+    outline: 2px solid rgba(255, 40, 60, 0);
+  }
+  50% {
+    outline: 2px solid rgba(255, 40, 60, 0.9);
+  }
+  100% {
+    outline: 2px solid rgba(255, 40, 60, 0);
+  }
+}
 
 /* =========================================
    HISTORY — TILE STYLE (Wordle Style)
