@@ -67,7 +67,7 @@ window.renderHistory = function ({
   if (role === "setter" && localGuesserDraft) {
   renderDraftRow(localGuesserDraft.toUpperCase(),    container,    "draft-row pending-guess"  );
 }
-  if (role === "setter" && ghostSecret) {
+  if (role === "setter" &&  ghostSecret !== null &&  ghostSecret !== undefined) {
   renderDraftRow(    ghostSecret.toUpperCase(),    container,    "draft-row ghost-secret"  );
 }
   if (role === "setter" && setterDraft) {
