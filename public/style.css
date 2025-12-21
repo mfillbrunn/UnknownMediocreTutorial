@@ -774,20 +774,3 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   z-index: 1;
 }
 
-/* Ensure rows are visible */
-.history-row {
-  display: flex;
-  gap: 6px;
-}
-
-/* Draft tiles must not be transparent */
-.draft-tile {
-  opacity: 1;
-  visibility: visible;
-}
-.draft-row {
-  animation: none !important;
-  transform: none !important;
-  opacity: 1 !important;
-}
-
