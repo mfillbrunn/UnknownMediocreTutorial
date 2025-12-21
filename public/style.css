@@ -785,4 +785,9 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   opacity: 1;
   visibility: visible;
 }
+.draft-row {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
 
