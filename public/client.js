@@ -586,6 +586,12 @@ function handleGuesserInput(event) {
 // GUESSER UI
 // -----------------------------------------------------
 function updateGuesserScreen() {
+  const canGuess =
+    (state.phase === "simultaneous" && !state.simultaneousGuessSubmitted) ||
+    (state.phase === "normal" &&
+      myRole === state.guesser &&
+      !state.pendingGuess &&
+      state.turn === state.guesser);
   renderHistory({
     state,
     container: $("historyGuesser"),
@@ -595,12 +601,7 @@ function updateGuesserScreen() {
 
   const guessBox = $("guessInput");
 
-  const canGuess =
-    (state.phase === "simultaneous" && !state.simultaneousGuessSubmitted) ||
-    (state.phase === "normal" &&
-      myRole === state.guesser &&
-      !state.pendingGuess &&
-      state.turn === state.guesser);
+  
   const displayGuess = state.pendingGuess || localGuesserDraft;
  if (myRole === state.guesser) {
   renderKeyboard({
