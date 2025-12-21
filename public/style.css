@@ -731,3 +731,6 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   letter-spacing: 0.15em;
 }
 
+.draft-row.ghost-secret .history-tile {
+  opacity: 0.35;
+}
