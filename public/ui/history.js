@@ -63,14 +63,14 @@ window.renderHistory = function ({
 
     container.appendChild(row);
   }
-  if (role === "guesser" && localGuesserDraft) {
+  if (role === "guesser" && localGuesserDraft!==null && localGuesserDraft !== undefined) {
     renderDraftRow(localGuesserDraft.toUpperCase(),container,"draft-row");
   }
   if (role === "setter" && localGuesserDraft) {
   renderDraftRow(localGuesserDraft.toUpperCase(), container, "draft-row guesser-pending");
   }
-  if (role === "setter" && setterDraft) {
-    renderDraftRow(setterDraft.toUpperCase(),container,"draft-row setter-draft");
+  if (role === "setter" && setterDraft !== null && setterDraft !== undefined) {
+    renderDraftRow(setterDraft.toUpperCase(),container,setterDraft ? "draft-row setter-draft" : "draft-row ghost-secret");
   }
 
 };
