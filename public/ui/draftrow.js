@@ -1,8 +1,7 @@
 window.renderDraftRows = function ({
   state,
   role,
-  container,
-  localGuesserDraft = ""
+  container
 }) {
   container.innerHTML = "";
 
