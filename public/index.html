@@ -72,30 +72,20 @@
 
   <!-- ========== SETTER ========== -->
   <div id="setterScreen" class="screen theme-setter">
-
     <h2 class="screen-title">Setter </h2>
-
     <div class="play-area setter-play">
-<div class="setter-stack">
-  <div id="setterGuesserSubmitted"
-       class="history-box history-tiles history-scroll">
-  </div>
-</div>
-
+      <div class="setter-stack">
+        <div id="setterGuesserSubmitted" class="history-box history-tiles history-scroll"> </div>
+        <div id="draftSetter" class="history-box history-tiles draft-layer"></div>
+      </div>
   <!-- KEYBOARD -->
-  <div id="keyboardSetter" class="keyboard"></div>
-</div>
-
+      <div id="keyboardSetter" class="keyboard"></div>
+    </div>
     <!-- INPUT -->
       <button id="submitSetterSameBtn" class="secondary-btn small">Same</button>
-        <div class="guess-input-area" hidden>
-      <input id="newSecretInput" class="letter-input" hidden>
-        <div class="guess-btn-row" hidden>
-          <div class="decision-row" hidden>
-          <button id="submitSetterNewBtn" class="primary-btn small" >New</button>
-          </div>
-        </div>
-    </div>
+        <div class="guess-input-area" hidden><input id="newSecretInput" class="letter-input" hidden><div class="guess-btn-row" hidden>
+          <div class="decision-row" hidden> <button id="submitSetterNewBtn" class="primary-btn small" >New</button>
+          </div></div></div>
     <!-- POWERS -->
     <div id="setterPowerContainer" class="power-container"></div>
 <div id="setterPreview" class="preview-box" style="display:none;"></div>
@@ -144,7 +134,7 @@
 
     <!-- HISTORY TOP -->
     <div id="historyGuesser" class="history-box history-tiles"></div>
-
+    <div id="draftGuesser" class="history-box history-tiles draft-layer"></div>
     <!-- KEYBOARD -->
     <div id="keyboardGuesser" class="keyboard"></div>
 
