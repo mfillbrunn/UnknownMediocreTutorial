@@ -1,58 +1,45 @@
 window.renderDraftRows = function ({
   state,
   role,
-  container
+  container,
+  localGuesserDraft = ""
 }) {
   container.innerHTML = "";
   /* ============================
    * GUESSER
    * ============================ */
   if (role === "guesser") {
-    const canGuess =
-      (state.phase === "simultaneous" &&
-        !state.simultaneousGuessSubmitted) ||
-      (state.phase === "normal" &&
-        state.turn === state.guesser);
-    if (!canGuess){
-      renderDraftRow(state.pendingGuess, container, "draft-row guesser-draft");  
-    }
-    if (canGuess) {
-      renderDraftRow("", container, "draft-row guesser-draft");
+    const canGuess =     (state.phase === "simultaneous" &&   !state.simultaneousGuessSubmitted) ||
+      (state.phase === "normal" &&   state.turn === state.guesser);
+    if (!canGuess) {
+    // Submitted → show pending guess (static)
+    if (state.pendingGuess) {
+      renderDraftRow(        state.pendingGuess.toUpperCase(),        container,        "draft-row pending-guess"      );
     }
     return;
   }
+  // Actively typing → show typed letters
+  renderDraftRow( localGuesserDraft.toUpperCase(),   container,    "draft-row guesser-draft"  );
+  return;
+}
   /* ============================
    * SETTER
    * ============================ */
   if (role === "setter") {
-    const setterCanEdit =
-      !state.powers?.freezeActive &&
-      (
-        (state.phase === "simultaneous" &&
-          !state.secret &&
-          !state.simultaneousSecretSubmitted) ||
-        (state.phase === "normal" &&
-          state.turn === state.setter &&
-          !!state.pendingGuess)
-      );
-
+    const setterCanEdit =!state.powers?.freezeActive &&((state.phase === "simultaneous" &&!state.secret && !state.simultaneousSecretSubmitted) ||
+        (state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess));
+    if (state.pendingGuess) {renderDraftRow(state.pendingGuess.toUpperCase(),container,"draft-row pending-guess"); }
+    if (!setterCanEdit) {renderDraftRow("",container,"draft-row setter-draft");return;}
     if (setterCanEdit) {
-      if (state.phase === "simultaneous"){
-      renderDraftRow("",container,"draft-row setter-draft");
-    }
+      if (state.phase === "simultaneous"){ 
+        if (state.setterDraft) {renderDraftRow(state.setterDraft.toUpperCase(),container,"draft-row setter-draft");} 
+          else {renderDraftRow("",container,"draft-row setter-draft");}
+      }
       if (state.phase === "normal"){
-          if (state.setterDraft) {
-            renderDraftRow(state.setterDraft.toUpperCase(),container,"draft-row setter-draft");
-          } else if (state.secret) {
-            renderDraftRow(state.secret.toUpperCase(),container,"draft-row ghost-secret");
-          }
+          if (state.setterDraft) {renderDraftRow(state.setterDraft.toUpperCase(),container,"draft-row setter-draft");} 
+          else {renderDraftRow(state.secret.toUpperCase(),container,"draft-row ghost-secret");}
         }
       }
-    if (!setterCanEdit) {
-      renderDraftRow("",container,"draft-row setter-draft"); 
-                         return;
-    }
-
     }
 };
 function renderDraftRow(word, container, className) {
