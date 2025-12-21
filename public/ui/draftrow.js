@@ -1,84 +1,93 @@
-function getDraftRowsForRole({ state, role, localGuesserDraft }) {
+/**
+ * Draft row resolution
+ * -------------------
+ * Decides which "input-like" rows should be rendered
+ * WITHOUT mutating state or touching the DOM.
+ *
+ * Output is declarative and consumed by renderHistory().
+ */
+
+window.getDraftRows = function ({
+  state,
+  role,
+  localGuesserDraft = ""
+}) {
   const rows = [];
 
-  // =========================
-  // GUESSER
-  // =========================
+  /* ============================
+   * GUESSER
+   * ============================ */
   if (role === "guesser") {
-    const canGuess =
-      (state.phase === "simultaneous" && !state.simultaneousGuessSubmitted) ||
-      (state.phase === "normal" &&
-        state.turn === state.guesser &&
-        !state.pendingGuess);
-
-    // Pending guess (normal phase only)
-    if (state.phase === "normal" && state.pendingGuess) {
-      rows.push({
-        type: "pending-guess",
-        word: state.pendingGuess
-      });
-      return rows;
+    // Once submitted, guess is no longer a draft
+    if (state.pendingGuess) {
+      return rows; // no draft row
     }
 
-    // Draft (real or empty)
+    // Always show empty tiles when guessing is allowed
+    const canGuess =
+      (state.phase === "simultaneous" &&
+        !state.simultaneousGuessSubmitted) ||
+      (state.phase === "normal" &&
+        state.turn === state.guesser);
+
     if (canGuess) {
       rows.push({
-        type: "draft",
-        word: localGuesserDraft ?? ""
+        type: "guesser-draft",
+        word: "" // always empty tiles
       });
     }
 
     return rows;
   }
 
-  // =========================
-  // SETTER
-  // =========================
+  /* ============================
+   * SETTER
+   * ============================ */
   if (role === "setter") {
     const setterCanEdit =
       !state.powers?.freezeActive &&
       (
-        // Normal phase
-        (state.phase === "normal" &&
-          state.turn === state.setter &&
-          !!state.pendingGuess) ||
-
-        // Simultaneous phase
+        // Simultaneous: setter has not submitted yet
         (state.phase === "simultaneous" &&
           !state.secret &&
-          !state.simultaneousSecretSubmitted)
+          !state.simultaneousSecretSubmitted) ||
+
+        // Normal: setter responding to a guess
+        (state.phase === "normal" &&
+          state.turn === state.setter &&
+          !!state.pendingGuess)
       );
 
-    // 1. Pending guess from guesser
-    if (state.pendingGuess) {
-      rows.push({
-        type: "pending-guess",
-        word: state.pendingGuess
-      });
+    if (!setterCanEdit) {
+      return rows;
     }
 
-    // 2. Secret input row
-    if (setterCanEdit) {
-      if (state.setterDraft) {
-        rows.push({
-          type: "setter-draft",
-          word: state.setterDraft
-        });
-      } else if (state.secret) {
-        rows.push({
-          type: "ghost-secret",
-          word: state.secret
-        });
-      } else {
-        rows.push({
-          type: "setter-draft",
-          word: ""
-        });
-      }
+    // --- SIMULTANEOUS PHASE ---
+    if (state.phase === "simultaneous") {
+      rows.push({
+        type: "setter-draft",
+        word: "" // empty tiles
+      });
+      return rows;
+    }
+
+    // --- NORMAL PHASE ---
+    if (state.setterDraft) {
+      // Actively typing → real draft
+      rows.push({
+        type: "setter-draft",
+        word: state.setterDraft
+      });
+    } else if (state.secret) {
+      // Default: ghost current secret
+      rows.push({
+        type: "ghost-secret",
+        word: state.secret
+      });
     }
 
     return rows;
   }
 
   return rows;
-}
+};
