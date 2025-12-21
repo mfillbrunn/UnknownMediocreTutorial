@@ -438,12 +438,16 @@ function updateSetterScreen() {
   // ----------------------------------------
 // SETTER VIEW:
 // ----------------------------------------
-renderHistory({
+const ghostSecret =
+  state.secret && !state.setterDraft
+    ? state.secret
+    : null;
+  renderHistory({
   state,
   container: $("setterGuesserSubmitted"),
   role: "setter",
   setterDraft: state.setterDraft,
-  localGuesserDraft: state.pendingGuess
+  localGuesserDraft: ghostSecret
 });
 const input = $("newSecretInput");
 
