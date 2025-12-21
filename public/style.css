@@ -889,3 +889,100 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   filter: grayscale(1);
   box-shadow: none !important;
 }
+/* =====================================================
+   FINAL ROLE COLOR FIX — AUTHORITATIVE
+   ===================================================== */
+
+/* -------- SETTER = RED -------- */
+.theme-setter {
+  border: 2px solid #ff1e33 !important;
+  box-shadow:
+    0 0 25px rgba(255,30,50,.35),
+    inset 0 0 25px rgba(255,30,50,.2) !important;
+  color: #ff4b5c;
+}
+
+.theme-setter h2 {
+  color: #ff4b5c;
+  text-shadow: 0 0 18px rgba(255,40,60,.9);
+}
+
+/* -------- GUESSER = BLUE -------- */
+.theme-guesser {
+  border: 2px solid #4da3ff !important;
+  box-shadow:
+    0 0 25px rgba(70,140,255,.35),
+    inset 0 0 25px rgba(70,140,255,.2) !important;
+  color: #4da3ff;
+}
+
+.theme-guesser h2 {
+  color: #4da3ff;
+  text-shadow: 0 0 18px rgba(70,140,255,.9);
+}
+
+/* =====================================================
+   POWER BUTTONS — LASER OUTLINE, BIGGER, CENTERED
+   ===================================================== */
+
+.power-btn {
+  background: transparent !important;
+  border: 2px solid currentColor !important;
+  border-radius: 12px;
+
+  font-size: 17px;          /* ⬅ bigger */
+  font-weight: 800;
+  letter-spacing: 0.6px;
+
+  padding: 14px 18px;
+  min-height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  position: relative;
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+
+/* Outer laser frame */
+.power-btn::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 1px solid currentColor;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* Glow on hover */
+.power-btn:hover {
+  box-shadow: 0 0 16px currentColor;
+  transform: translateY(-2px);
+}
+
+.power-btn:active {
+  transform: scale(.97);
+}
+
+/* Used powers */
+.power-btn.power-used {
+  opacity: 0.35;
+  filter: grayscale(1);
+  pointer-events: none;
+  box-shadow: none !important;
+}
+
+/* =====================================================
+   REMOVE INVALID BLUE FROM SETTER POWER RULES
+   ===================================================== */
+
+.theme-setter .power-btn {
+  color: #ff4b5c;
+}
+
+.theme-guesser .power-btn {
+  color: #4da3ff;
+}
