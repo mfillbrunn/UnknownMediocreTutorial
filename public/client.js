@@ -245,13 +245,18 @@ function setToWait(element) {
 
 // State updates
 onStateUpdate(newState => {
+  
   if (!roleAssigned) {
     pendingState = JSON.parse(JSON.stringify(newState));
     return;
   }
   const prevSetterDraft = state?.setterDraft || "";
+  const prevPhase = state?.phase;
   state = JSON.parse(JSON.stringify(newState));
   // restore client-only draft
+  if (prevPhase === "simultaneous" && state.phase === "normal") {
+    localGuesserDraft = "";
+  }
   const setterCanEdit =
   myRole === state.setter &&
   state.phase === "normal" &&
@@ -265,9 +270,9 @@ if (setterCanEdit) {
   state.setterDraft = "";
 }
   // Clear guesser draft once it is no longer editable
-if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {
-  localGuesserDraft = "";
-}
+  if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {
+    localGuesserDraft = "";
+  }
 
   if (state.powers.assassinWord) {
     $("assassinModal").classList.remove("active");
