@@ -446,7 +446,6 @@ text-transform: uppercase;
 .theme-setter .draft-layer .history-tile {
   border: 1px solid rgba(255,80,80,0.4);
   box-shadow: 0 0 6px rgba(255,80,80,0.3);
-   font-style: italic;
 }
 .theme-guesser .draft-layer .history-tile {
   border: 1px solid rgba(70,140,255,.35);
