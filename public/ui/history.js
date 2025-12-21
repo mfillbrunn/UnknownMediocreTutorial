@@ -2,9 +2,7 @@ window.renderHistory = function ({
   state,
   container,
   role,
-  ghostSecret = null,
-  setterDraft = null,
-  localGuesserDraft = null
+  draftRows = []
 }) {
   container.innerHTML = "";
   
@@ -64,18 +62,17 @@ window.renderHistory = function ({
 
     container.appendChild(row);
   }
-  if (role === "setter" && localGuesserDraft) {
-  renderDraftRow(localGuesserDraft.toUpperCase(),    container,    "draft-row pending-guess"  );
+  // ============================
+// Draft rows (order matters)
+// ============================
+for (const row of draftRows) {
+  renderDraftRow(
+    row.word.toUpperCase(),
+    container,
+    `draft-row ${row.type}`
+  );
 }
-  if (role === "setter" &&  ghostSecret !== null &&  ghostSecret !== undefined) {
-  renderDraftRow(    ghostSecret.toUpperCase(),    container,    "draft-row ghost-secret"  );
-}
-  if (role === "setter" && setterDraft) {
-  renderDraftRow(    setterDraft.toUpperCase(),    container,    "draft-row setter-draft"  );
-}
-  if (role === "guesser" && localGuesserDraft!==null && localGuesserDraft !== undefined) {
-    renderDraftRow(localGuesserDraft.toUpperCase(),container,"draft-row");
-  }
+
 };
 
 function renderDraftRow(word, container, className) {
