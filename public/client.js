@@ -257,18 +257,27 @@ onStateUpdate(newState => {
   if (prevPhase === "simultaneous" && state.phase === "normal") {
     localGuesserDraft = "";
   }
-  const setterCanEdit =
+const setterCanEdit =
   myRole === state.setter &&
-  state.phase === "normal" &&
-  state.turn === state.setter &&
   !state.powers?.freezeActive &&
-  !!state.pendingGuess;
+  (
+    // Normal phase: setter’s turn with pending guess
+    (state.phase === "normal" &&
+      state.turn === state.setter &&
+      !!state.pendingGuess) ||
+
+    // Simultaneous phase: setter has not submitted yet
+    (state.phase === "simultaneous" &&
+      !state.secret &&
+      !state.simultaneousSecretSubmitted)
+  );
 
 if (setterCanEdit) {
   state.setterDraft = prevSetterDraft;
 } else {
   state.setterDraft = "";
 }
+
   // Clear guesser draft once it is no longer editable
   if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {
     localGuesserDraft = "";
