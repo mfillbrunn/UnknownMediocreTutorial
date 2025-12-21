@@ -443,11 +443,11 @@ text-transform: uppercase;
 .theme-setter .keyboard { margin-top: 10px; }
 .theme-setter .info-grid { margin-top: 12px; }
 
-.theme-setter .history-tile {
+.theme-setter .draft-layer .history-tile {
   border: 1px solid rgba(255,80,80,0.4);
   box-shadow: 0 0 6px rgba(255,80,80,0.3);
 }
-.theme-guesser .history-tile {
+.theme-guesser .draft-layer .history-tile {
   border: 1px solid rgba(70,140,255,.35);
   box-shadow: 0 0 6px rgba(70,140,255,.35);
 }
