@@ -252,7 +252,18 @@ onStateUpdate(newState => {
   const prevSetterDraft = state?.setterDraft || "";
   state = JSON.parse(JSON.stringify(newState));
   // restore client-only draft
+  const setterCanEdit =
+  myRole === state.setter &&
+  state.phase === "normal" &&
+  state.turn === state.setter &&
+  !state.powers?.freezeActive &&
+  !!state.pendingGuess;
+
+if (setterCanEdit) {
   state.setterDraft = prevSetterDraft;
+} else {
+  state.setterDraft = "";
+}
   // Clear guesser draft once it is no longer editable
 if (
   // Normal mode: guess accepted or turn passed
@@ -438,11 +449,22 @@ function updateSetterScreen() {
   // ----------------------------------------
 // SETTER VIEW:
 // ----------------------------------------
+ const setterCanEdit =
+  (state.phase === "simultaneous" &&
+    !state.secret &&
+    !state.simultaneousSecretSubmitted) ||
+  (state.phase === "normal" &&
+    myRole === state.setter &&
+    state.turn === state.setter &&
+    !state.powers?.freezeActive &&
+    !!state.pendingGuess);
+
   renderHistory({
   state,
   container: $("setterGuesserSubmitted"),
   role: "setter",
-  setterDraft: state.setterDraft,
+  setterDraft: state.setterDraft ||
+    (setterCanEdit && !state.secret ? "" : null),
   localGuesserDraft: displayGuess,
   ghostSecret: (!state.setterDraft && state.secret) ? state.secret : null
 });
@@ -784,8 +806,13 @@ $("submitSetterNewBtn").onclick = () => {
 
 
 
-$("submitSetterSameBtn").onclick = () =>
+$("submitSetterSameBtn").onclick = () => {
+  state.setterDraft = "";
+  updateUI();
+
   sendGameAction(roomId, { type: "SET_SECRET_SAME" });
+};
+
 
 $("newMatchBtn").onclick = () => {
   sendGameAction(roomId, { type: "NEW_MATCH" });
