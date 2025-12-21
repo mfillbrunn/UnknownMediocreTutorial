@@ -1,14 +1,14 @@
 window.renderHistory = function ({
   state,
   container,
-  role,
-  draftRows = []
+  role
 }) {
   container.innerHTML = "";
-  
+
   const isSetter = role === "setter";
-  const history = state?.history;
-  for (const entry of history || []) {
+  const history = state?.history || [];
+
+  for (const entry of history) {
     if (!entry || !entry.guess) continue;
 
     const safeEntry = JSON.parse(JSON.stringify(entry));
@@ -20,10 +20,10 @@ window.renderHistory = function ({
     } else if (Array.isArray(safeEntry.fb)) {
       fbArray = safeEntry.fb;
     } else {
-      fbArray = ["⬛","⬛","⬛","⬛","⬛"];
+      fbArray = ["⬛", "⬛", "⬛", "⬛", "⬛"];
     }
 
-    if (!Array.isArray(fbArray) || fbArray.length < 5) continue;
+    if (!Array.isArray(fbArray) || fbArray.length !== 5) continue;
 
     const row = document.createElement("div");
     row.className = "history-row";
@@ -62,29 +62,4 @@ window.renderHistory = function ({
 
     container.appendChild(row);
   }
-  // ============================
-// Draft rows (order matters)
-// ============================
-for (const row of draftRows) {
-  renderDraftRow(
-    row.word.toUpperCase(),
-    container,
-    `draft-row ${row.type}`
-  );
-}
-
 };
-
-function renderDraftRow(word, container, className) {
-  const row = document.createElement("div");
-  row.className = `history-row ${className}`;
-
-  for (let i = 0; i < 5; i++) {
-    const tile = document.createElement("div");
-    tile.className = "history-tile draft-tile";
-    tile.textContent = word[i] || "";
-    row.appendChild(tile);
-  }
-
-  container.appendChild(row);
-}
