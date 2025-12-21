@@ -847,3 +847,45 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   z-index: 1;
 }
 
+   .theme-setter {
+  --btn-primary: #ff1e33;
+  --btn-primary-hover: #ff3b4d;
+  --btn-primary-glow: rgba(255,30,50,.7);
+
+  --your-turn-bg: #ff1e33;
+  --your-turn-glow: rgba(255,30,50,.9);
+
+  color: #ff4b5c;
+}
+
+.laser-outline {
+  position: relative;
+  border: 1.5px solid currentColor;
+  background: transparent;
+}
+
+.laser-outline::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1px solid currentColor;
+  opacity: 0.35;
+  pointer-events: none;
+}
+/* Glow on hover / active */
+.power-btn:hover {
+  box-shadow: 0 0 16px currentColor;
+  transform: translateY(-2px);
+}
+
+.power-btn:active {
+  transform: scale(0.97);
+}
+
+/* Used powers */
+.power-btn.power-used {
+  opacity: 0.35;
+  filter: grayscale(1);
+  box-shadow: none !important;
+}
