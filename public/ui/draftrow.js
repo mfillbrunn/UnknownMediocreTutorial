@@ -9,8 +9,7 @@
 
 window.getDraftRows = function ({
   state,
-  role,
-  localGuesserDraft = ""
+  role
 }) {
   const rows = [];
 
