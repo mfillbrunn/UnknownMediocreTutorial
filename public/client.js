@@ -445,7 +445,19 @@ renderHistory({
   setterDraft: state.setterDraft,
   localGuesserDraft: state.pendingGuess
 });
-$("newSecretInput").value = state.setterDraft || "";
+const input = $("newSecretInput");
+
+if (state.setterDraft) {
+  input.value = state.setterDraft.toUpperCase();
+  input.classList.remove("ghost-secret");
+} else if (state.secret) {
+  input.value = state.secret.toUpperCase();
+  input.classList.add("ghost-secret");
+} else {
+  input.value = "";
+  input.classList.remove("ghost-secret");
+}
+
 $("newSecretInput").disabled = true;
   // -------------------------------------------------------
   // KEYBOARD + PATTERN / PREVIEW
