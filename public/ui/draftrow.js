@@ -4,27 +4,23 @@ window.renderDraftRows = function ({
   container
 }) {
   container.innerHTML = "";
-
   /* ============================
    * GUESSER
    * ============================ */
   if (role === "guesser") {
-    // No draft once submitted
-    if (state.pendingGuess) return;
-
     const canGuess =
       (state.phase === "simultaneous" &&
         !state.simultaneousGuessSubmitted) ||
       (state.phase === "normal" &&
         state.turn === state.guesser);
-
+    if (!canGuess){
+      renderDraftRow(state.pendingGuess, container, "draft-row guesser-draft");  
+    }
     if (canGuess) {
       renderDraftRow("", container, "draft-row guesser-draft");
     }
-
     return;
   }
-
   /* ============================
    * SETTER
    * ============================ */
@@ -40,38 +36,24 @@ window.renderDraftRows = function ({
           !!state.pendingGuess)
       );
 
-    // Pending guess is NOT draft → render separately if you want
-    if (state.pendingGuess) {
-      renderDraftRow(
-        state.pendingGuess.toUpperCase(),
-        container,
-        "draft-row pending-guess"
-      );
+    if (setterCanEdit) {
+      if (state.phase === "simultaneous"){
+      renderDraftRow("",container,"draft-row setter-draft");
+    }
+      if (state.phase === "normal"){
+          if (state.setterDraft) {
+            renderDraftRow(state.setterDraft.toUpperCase(),container,"draft-row setter-draft");
+          } else if (state.secret) {
+            renderDraftRow(state.secret.toUpperCase(),container,"draft-row ghost-secret");
+          }
+        }
+      }
+    if (!setterCanEdit) {
+      renderDraftRow("",container,"draft-row setter-draft"); 
+                         return;
     }
 
-    if (!setterCanEdit) return;
-
-    // Simultaneous: empty tiles
-    if (state.phase === "simultaneous") {
-      renderDraftRow("", container, "draft-row setter-draft");
-      return;
     }
-
-    // Normal: ghost or real draft
-    if (state.setterDraft) {
-      renderDraftRow(
-        state.setterDraft.toUpperCase(),
-        container,
-        "draft-row setter-draft"
-      );
-    } else if (state.secret) {
-      renderDraftRow(
-        state.secret.toUpperCase(),
-        container,
-        "draft-row ghost-secret"
-      );
-    }
-  }
 };
 function renderDraftRow(word, container, className) {
   const row = document.createElement("div"); 
