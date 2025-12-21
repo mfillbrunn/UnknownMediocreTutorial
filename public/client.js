@@ -455,35 +455,18 @@ function updateSetterScreen() {
   // ----------------------------------------
 // SETTER VIEW:
 // ----------------------------------------
- const setterCanEdit =
-  (state.phase === "simultaneous" &&
-    !state.secret &&
-    !state.simultaneousSecretSubmitted) ||
-  (state.phase === "normal" &&
-    myRole === state.setter &&
-    state.turn === state.setter &&
-    !state.powers?.freezeActive &&
-    !!state.pendingGuess);
-  if (state.phase === "simultaneous" && !state.setterDraft){
-    renderHistory({
-      state,
-      container: $("setterGuesserSubmitted"),
-      role: "setter",
-      setterDraft: "",
-      localGuesserDraft: "",
-      ghostSecret: ""
-    });
-  } else {
-      renderHistory({
-      state,
-      container: $("setterGuesserSubmitted"),
-      role: "setter",
-      setterDraft: state.setterDraft ||
-        (setterCanEdit && !state.secret ? "" : null),
-      localGuesserDraft: displayGuess,
-      ghostSecret: (!state.setterDraft && state.secret) ? state.secret : null
-    });
-}
+ renderHistory({
+  state,
+  container: $("setterGuesserSubmitted"),
+  role: "setter"
+});
+
+renderDraftRows({
+  state,
+  role: "setter",
+  container: $("draftSetter")
+});
+
 const input = $("newSecretInput");
 
 if (state.setterDraft) {
@@ -625,18 +608,19 @@ function handleGuesserInput(event) {
 // GUESSER UI
 // -----------------------------------------------------
 function updateGuesserScreen() {
-  const canGuess =
-    (state.phase === "simultaneous" && !state.simultaneousGuessSubmitted) ||
-    (state.phase === "normal" &&
-      myRole === state.guesser &&
-      !state.pendingGuess &&
-      state.turn === state.guesser);
   renderHistory({
-    state,
-    container: $("historyGuesser"),
-    role: "guesser",
-    localGuesserDraft: state.pendingGuess || localGuesserDraft  || (canGuess ? "" : null)
-  });
+  state,
+  container: $("historyGuesser"),
+  role: "guesser"
+});
+
+renderDraftRows({
+  state,
+  role: "guesser",
+  container: $("draftGuesser"),
+  localGuesserDraft
+});
+
 
   const guessBox = $("guessInput");
 
