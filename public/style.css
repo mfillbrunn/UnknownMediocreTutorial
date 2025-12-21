@@ -760,3 +760,29 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 .pending-guess .history-tile {
   border: 2px solid rgba(255,255,255,0.5);
 }
+
+   /* Draft layer must be visible */
+.draft-layer {
+  position: relative;
+  min-height: 70px;          /* enough for 1 row */
+  z-index: 20;               /* above history */
+  pointer-events: none;      /* draft is visual only */
+}
+
+/* History should not overlap drafts */
+.history-scroll {
+  z-index: 1;
+}
+
+/* Ensure rows are visible */
+.history-row {
+  display: flex;
+  gap: 6px;
+}
+
+/* Draft tiles must not be transparent */
+.draft-tile {
+  opacity: 1;
+  visibility: visible;
+}
+
