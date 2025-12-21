@@ -1002,3 +1002,12 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 .draft-layer .history-tile {
   border: 1.5px solid #4da3ff !important;
 }
+/* =========================================
+   DRAFT CONTAINER — FULLY INVISIBLE
+   ========================================= */
+
+.draft-layer {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
