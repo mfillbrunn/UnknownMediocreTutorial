@@ -989,3 +989,16 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 .theme-guesser .power-btn {
   color: #4da3ff;
 }
+/* =========================================
+   DRAFT ROW TILE OUTLINES (ROLE-INDEPENDENT)
+   ========================================= */
+
+/* Draft tiles — blue outline for BOTH roles */
+.draft-layer .history-tile {
+  border: 2px solid #4da3ff !important;
+  box-shadow:
+    0 0 6px rgba(70, 140, 255, 0.35) !important;
+}
+.draft-layer .history-tile {
+  border: 1.5px solid #4da3ff !important;
+}
