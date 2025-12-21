@@ -726,4 +726,8 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   border: 1px solid #4da3ff;
   box-shadow: 0 0 6px rgba(70,140,255,0.35);
 }
+.ghost-secret {
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.15em;
+}
 
