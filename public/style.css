@@ -268,35 +268,38 @@ body {
   flex-direction: column;
   gap: 10px;
   padding: 10px 0;
-}
-
-.history-row {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-/* Base tile */
-.history-tile {
-  width: 42px;
+    width: 42px;
   height: 48px;
   border-radius: 6px;
-
   font-size: 20px;
   font-weight: 800;
   letter-spacing: 1px;
   text-transform: uppercase;
-
   border: 1px solid #00000055;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-
   /* Animation start position */
   transform-style: preserve-3d;
-  perspective: 600px;
+  perspective: 600px;  
+}
+.evaluated-row .history-tile {
   animation: flip-in 0.6s ease forwards;
+}
+.history-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+@keyframes draft-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.draft-row .history-tile {
+  animation: draft-pop 120ms ease-out;
 }
 
 /* Wordle-style feedback colors */
