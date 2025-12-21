@@ -265,15 +265,7 @@ if (setterCanEdit) {
   state.setterDraft = "";
 }
   // Clear guesser draft once it is no longer editable
-if (
-  // Normal mode: guess accepted or turn passed
-  (state.phase === "normal" &&
-    (state.pendingGuess || state.turn !== state.guesser)) ||
-
-  // Simultaneous mode: guess submitted
-  (state.phase === "simultaneous" &&
-    state.simultaneousGuessSubmitted)
-) {
+if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {
   localGuesserDraft = "";
 }
 
