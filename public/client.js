@@ -455,16 +455,27 @@ function updateSetterScreen() {
     state.turn === state.setter &&
     !state.powers?.freezeActive &&
     !!state.pendingGuess);
-
-  renderHistory({
-  state,
-  container: $("setterGuesserSubmitted"),
-  role: "setter",
-  setterDraft: state.setterDraft ||
-    (setterCanEdit && !state.secret ? "" : null),
-  localGuesserDraft: displayGuess,
-  ghostSecret: (!state.setterDraft && state.secret) ? state.secret : null
-});
+  if (state.phase === "simultaneous"){
+    renderHistory({
+      state,
+      container: $("setterGuesserSubmitted"),
+      role: "setter",
+      setterDraft: "",
+      localGuesserDraft: "",
+      ghostSecret: ""
+    });
+  }
+  if *state.phase === "normal")}
+      renderHistory({
+      state,
+      container: $("setterGuesserSubmitted"),
+      role: "setter",
+      setterDraft: state.setterDraft ||
+        (setterCanEdit && !state.secret ? "" : null),
+      localGuesserDraft: displayGuess,
+      ghostSecret: (!state.setterDraft && state.secret) ? state.secret : null
+    });
+}
 const input = $("newSecretInput");
 
 if (state.setterDraft) {
