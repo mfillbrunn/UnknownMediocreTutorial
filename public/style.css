@@ -423,8 +423,8 @@ text-transform: uppercase;
 }
 
 .theme-setter h2 {
-  color: #140203;
-  text-shadow: 0 0 18px rgba(70,140,255,0.9);
+  color: #ff4b5c;
+  text-shadow: 0 0 18px rgba(255, 40, 60, 0.9);
 }
 
 .theme-setter .turn-indicator.your-turn {
