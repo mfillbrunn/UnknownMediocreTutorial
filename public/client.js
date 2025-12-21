@@ -455,7 +455,7 @@ function updateSetterScreen() {
     state.turn === state.setter &&
     !state.powers?.freezeActive &&
     !!state.pendingGuess);
-  if (state.phase === "simultaneous"){
+  if (state.phase === "simultaneous" && !state.setterDraft){
     renderHistory({
       state,
       container: $("setterGuesserSubmitted"),
@@ -464,8 +464,7 @@ function updateSetterScreen() {
       localGuesserDraft: "",
       ghostSecret: ""
     });
-  }
-  if (state.phase === "normal"){
+  } else {
       renderHistory({
       state,
       container: $("setterGuesserSubmitted"),
