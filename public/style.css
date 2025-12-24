@@ -1000,7 +1000,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 .modal {
   position: fixed;
   inset: 0;
-  display: none;              /* 🔴 THIS is missing */
+  display: none;              
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.6);
