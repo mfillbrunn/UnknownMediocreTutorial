@@ -349,13 +349,6 @@ body {
 .history-row .history-tile:nth-child(5) { animation-delay: 0.32s; }
 
 /* =========================================
-   HIDE EMPTY ASSASSIN AREA
-   ========================================= */
-#setterSecretArea:empty {
-  display: none;
-}
-
-/* =========================================
    INFO GRID
    ========================================= */
 .info-grid {
