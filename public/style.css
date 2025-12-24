@@ -992,3 +992,24 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 .theme-guesser .power-btn {
   color: #4da3ff;
 }
+
+
+/* =========================
+   MODAL BASE (HIDDEN)
+   ========================= */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;              /* 🔴 THIS is missing */
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100000;
+}
+
+/* =========================
+   MODAL ACTIVE (VISIBLE)
+   ========================= */
+.modal.active {
+  display: flex;
+}
