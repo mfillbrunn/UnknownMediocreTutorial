@@ -74,15 +74,19 @@
   <div id="setterScreen" class="screen theme-setter">
     <h2 class="screen-title">Setter </h2>
     <div class="play-area setter-play">
-      <div class="setter-stack">
-        <div id="setterGuesserSubmitted" class="history-box history-tiles history-scroll"> </div>
-        <div id="draftSetter" class="history-box history-tiles draft-layer"></div>
+      <div class="secret-row">
+        <div class="secret-spacer"></div>
+        <div class="setter-stack">
+          <div id="setterGuesserSubmitted" class="history-box history-tiles history-scroll"> </div>
+          <div id="draftSetter" class="history-box history-tiles draft-layer"></div>
+        </div>
+        <button id="submitSetterSameBtn" class="secondary-btn small">Same</button>
       </div>
   <!-- KEYBOARD -->
       <div id="keyboardSetter" class="keyboard"></div>
     </div>
     <!-- INPUT -->
-      <button id="submitSetterSameBtn" class="secondary-btn small">Same</button>
+      
         <div class="guess-input-area" hidden><input id="newSecretInput" class="letter-input" hidden><div class="guess-btn-row" hidden>
           <div class="decision-row" hidden> <button id="submitSetterNewBtn" class="primary-btn small" >New</button>
           </div></div></div>
