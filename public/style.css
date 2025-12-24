@@ -897,6 +897,21 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   filter: grayscale(1);
   box-shadow: none !important;
 }
+
+.secret-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.same-btn {
+  margin-left: 12px;
+  white-space: nowrap;
+   opacity: 0.9;
+}
+   .same-btn:hover {
+  opacity: 1;
+}
 /* =====================================================
    FINAL ROLE COLOR FIX — AUTHORITATIVE
    ===================================================== */
