@@ -897,7 +897,10 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   filter: grayscale(1);
   box-shadow: none !important;
 }
-
+#draftSetter.history-tiles {
+  flex-direction: row;
+  gap: 6px;
+}
 .secret-row {
   display: flex;
   justify-content: center;
@@ -921,6 +924,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
    .same-btn:hover {
   opacity: 1;
 }
+   
 /* =====================================================
    FINAL ROLE COLOR FIX — AUTHORITATIVE
    ===================================================== */
