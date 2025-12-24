@@ -5,10 +5,9 @@ engine.registerPower("assassinWord", {
 
     // Do NOT block if the previous attempt was invalid
     // Only block if assassinWord was actually SET
+    if (!state.activePowers?.includes("assassinWord")) return;
     if (state.powers.assassinWordUsed) return;
-
     if (!action.word) return;
-
     const w = action.word.toUpperCase();
 
     // Reject: cannot equal current secret
