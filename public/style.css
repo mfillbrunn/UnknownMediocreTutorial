@@ -899,10 +899,19 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 }
 
 .secret-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
+  display: flex;
+  justify-content: center;
   margin-bottom: 12px;
+}
+.secret-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+#draftSetter {
+  width: fit-content;
+  padding-left: 0;
+  padding-right: 0;
 }
 .same-btn {
   margin-left: 12px;
