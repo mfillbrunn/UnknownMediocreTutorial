@@ -386,11 +386,11 @@ body {
 
 /* Remaining words (top-right) */
 .theme-guesser .guesser-remaining {
-  font-size: 14px;              /* smaller */
+  font-size: 14px;              
   font-weight: 600;
   letter-spacing: 0.5px;
 
-  color:#4da3ff;               /* same as Guesser heading */
+  color:#4da3ff;               
   opacity: 0.9;
 text-transform: uppercase;
   font-size: 13px;
@@ -920,11 +920,18 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   margin-left: 12px;
   white-space: nowrap;
    opacity: 0.9;
+   border-radius: 999px;
+  padding: 10px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 50%;
 }
    .same-btn:hover {
   opacity: 1;
 }
-   
+.same-btn svg {
+  display: block;
+}
 /* =====================================================
    FINAL ROLE COLOR FIX — AUTHORITATIVE
    ===================================================== */
