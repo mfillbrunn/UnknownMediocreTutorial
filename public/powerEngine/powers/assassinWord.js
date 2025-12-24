@@ -8,6 +8,7 @@ PowerEngine.register("assassinWord", {
     const btn = document.createElement("button");
     btn.className = "power-btn";
     btn.textContent = "Assassin Word";
+    btn.style.display = "none"; // ← CRITICAL LINE
     this.buttonEl = btn;
 
     $("setterPowerContainer").appendChild(btn);
