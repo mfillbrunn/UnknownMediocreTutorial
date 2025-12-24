@@ -925,6 +925,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   min-width: 40px;
   min-height: 40px;
   border-radius: 50%;
+   background: transparent !important;
 }
    .same-btn:hover {
   opacity: 1;
