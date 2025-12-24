@@ -899,6 +899,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
 }
 #draftSetter.history-tiles {
   flex-direction: row;
+   justify-content: center;
   gap: 6px;
 }
 .secret-row {
@@ -915,6 +916,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay {
   width: fit-content;
   padding-left: 0;
   padding-right: 0;
+  margin-top: 0;   /* removes history spacing */
 }
 .same-btn {
   margin-left: 12px;
