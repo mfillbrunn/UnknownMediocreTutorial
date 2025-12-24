@@ -383,6 +383,11 @@ body {
   align-items: baseline;
   justify-content: space-between;
 }
+.setter-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
 
 /* Remaining words (top-right) */
 .theme-guesser .guesser-remaining {
@@ -409,11 +414,16 @@ text-transform: uppercase;
     inset 0 0 25px rgba(255,30,50,.2);
    color: #ff4b5c;
 }
-.theme-setter .remainingMeter {
-  font-size: 26px;
-  font-weight: 900;
-  color: #ff4b5c;
-  animation: setter-pulse 1.4s infinite;
+
+.theme-setter .setter-remaining {
+  font-size: 14px;              
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color:#4da3ff;               
+  opacity: 0.9;
+text-transform: uppercase;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .theme-setter h2 {
