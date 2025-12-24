@@ -90,7 +90,24 @@
     <div id="setterPowerContainer" class="power-container laser-scope"></div>
 <div id="setterPreview" class="preview-box" style="display:none;"></div>
 
-   <!-- Assassin Modal -->
+    <!-- INFO PANEL AT BOTTOM -->
+    <div class="setter-hud" hidden>
+      <div class="info-grid">
+          <div class="info-col">
+            <p><b>Pattern:</b> <span id="knownPatternSetter">- - - - -</span></p>
+            <p><b>Must contain:</b> <span id="mustContainSetter">none</span></p>
+            <p><b>Last Guess:</b> <span id="pendingGuessDisplay">-</span></p>
+          </div>
+          <div class="info-col">
+            <p><b>Remaining:</b> <span id="remainingWordsSetter" class="remainingMeter">-</span></p>
+            <p><b>Secret:</b> <span id="secretWordDisplay">NONE</span></p>
+            <div id="setterSecretArea"></div>
+          </div>
+        </div>
+    </div>
+    <div id="turnIndicatorSetter" class="turn-indicator"></div>
+
+    <!-- Assassin Modal -->
     <div id="assassinModal" class="modal">
       <div class="modal-content">
         <h3>Assassin Word</h3>
