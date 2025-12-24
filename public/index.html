@@ -72,7 +72,13 @@
 
   <!-- ========== SETTER ========== -->
   <div id="setterScreen" class="screen theme-setter">
-    <h2 class="screen-title">Setter </h2>
+     <!-- HEADER -->
+    <div class="setter-header">
+      <h2 class="screen-title">Setter</h2>
+      <div class="setter-remaining"><span id="remainingWordsSetter">-</span> words remaining
+      </div>
+    </div>
+     <!-- HISTORY TOP -->
     <div class="play-area setter-play">
       <div class="setter-stack">
         <div id="setterGuesserSubmitted" class="history-box history-tiles history-scroll"> </div>
@@ -129,17 +135,14 @@
   <!-- ========== GUESSER ========== -->
 
   <div id="guesserScreen" class="screen theme-guesser">
-
-
+  <!-- HEADER -->
     <div class="guesser-header">
-  <h2 class="screen-title">Guesser</h2>
-
-  <div class="guesser-remaining">
-    <span id="remainingWordsGuesser">-</span> words remaining
-  </div>
-</div>
-    <div class="guesser-stack">
+      <h2 class="screen-title">Guesser</h2>
+      <div class="guesser-remaining"><span id="remainingWordsGuesser">-</span> words remaining
+      </div>
+    </div>
       <!-- HISTORY TOP -->
+    <div class="guesser-stack">
       <div id="historyGuesser" class="history-box history-tiles"></div>
       <div id="draftGuesser" class="history-box history-tiles draft-layer"></div>
     </div>
