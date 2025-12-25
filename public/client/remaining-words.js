@@ -25,14 +25,11 @@ window.computeRemainingAfterIndexForRole = function (idx) {
 function computeRemainingWordsForRole() {
   const words = window.ALLOWED_SECRETS;
   if (!state || !state.history) return 0;
-
-  let count = 0;
-  for (const w of words) {
-    if (isConsistentWithHistory(state.history, w, state)) {
-      count++;
-    }
-  }
-  return count;
+    const remaining =
+      i === state.history.length
+        ? 0
+        : computeRemainingAfterIndexForRole(i);
+  return remaining;
 }
 
 function styleRemaining(element, label) {
