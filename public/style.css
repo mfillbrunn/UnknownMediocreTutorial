@@ -1160,23 +1160,24 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   margin-top: 8px;
 }
 
-/* Constraint row using history tile language */
+/* ----------------------------------
+Constraint row using history tile language 
+--------------------------------------*/
 .constraint-row {
   position: relative;
   padding: 6px;
   border-radius: 10px;
-
   border: 1.5px solid color-mix(
     in srgb,
     var(--role-accent) 60%,
     transparent
   );
-
   box-shadow:
     0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent),
     inset 0 0 6px color-mix(in srgb, var(--role-accent) 18%, transparent);
    margin-top: 6px 0;
 }
+
 .constraint-row::before {
   content: "";
   position: absolute;
@@ -1189,7 +1190,14 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   );
   pointer-events: none;
 }
-/* Constraint tile: true 2x2 quadrants */
+
+.constraint-row .history-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .constraint-tile {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1198,9 +1206,24 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   padding: 0;      /* IMPORTANT */
   gap: 0;          /* IMPORTANT */
 }
-
-
-/* ❌ Forbidden letter = full quadrant */
+.constraint-row .history-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.constraint-row .history-tile .quadrants {
+  position: absolute;
+  inset: 4px;              /* gives a little breathing room */
+  pointer-events: none;
+}
+.constraint-row .history-tile > .main-letter {
+  position: relative;
+  z-index: 2;
+}
+.constraint-row .history-tile .quadrants {
+  z-index: 1;
+}
 .constraint-letter.forbidden {
   width: 100%;
   height: 100%;
