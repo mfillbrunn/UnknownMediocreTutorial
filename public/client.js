@@ -289,8 +289,9 @@ if (setterCanEdit) {
   window.state = state; // ⭐ Makes global for powers
   updateUI();
    // Reset guess input if locked on transition
-  if (state.phase === "normal" && $("guessInput").disabled) {
-    $("guessInput").value = "";
+  const guessInput = $("guessInput");
+  if (state.phase === "normal" && guessInput && guessInput.disabled) {
+    guessInput.value = "";
   }
 });
 
