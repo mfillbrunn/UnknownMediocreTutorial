@@ -864,3 +864,5 @@ $("assassinCancelBtn").onclick = () => {
   $("assassinModal").classList.remove("active");
   $("assassinInput").value = "";
 };
+$("submitSetterSameBtnMobile").onclick =
+  $("submitSetterSameBtn").onclick;
