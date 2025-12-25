@@ -1018,6 +1018,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
 /* Ghost secret row: same strong outline as active draft rows */
 .ghost-secret .history-tile {
   border-width: 2px;
-  box-shadow: 0 0 8px rgba(255,255,255,0.45);
+  border-color: var(--role-accent);
+  box-shadow:  0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
 }
 
