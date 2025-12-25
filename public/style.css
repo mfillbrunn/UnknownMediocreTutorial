@@ -1162,9 +1162,33 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
 
 /* Constraint row using history tile language */
 .constraint-row {
-  margin-top: 4px;
-}
+  position: relative;
+  padding: 6px;
+  border-radius: 10px;
 
+  border: 1.5px solid color-mix(
+    in srgb,
+    var(--role-accent) 60%,
+    transparent
+  );
+
+  box-shadow:
+    0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent),
+    inset 0 0 6px color-mix(in srgb, var(--role-accent) 18%, transparent);
+   margin-top: 6px 0;
+}
+.constraint-row::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--role-accent) 40%,
+    transparent
+  );
+  pointer-events: none;
+}
 /* Constraint tile: 2x2 grid for annotations */
 .constraint-tile {
   display: grid;
