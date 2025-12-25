@@ -936,7 +936,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   position: absolute;
   left: calc(100% + 12px); 
   bottom: 0;               
-   translateY(-2px);
+  transform: translateY(-50%) translateY(-2px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
