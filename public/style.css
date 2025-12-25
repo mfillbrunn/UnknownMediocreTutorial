@@ -981,32 +981,31 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   justify-content: center;
 }
 
-/* Strong, static outline for important tiles (power-style) */
-.tile-strong {
-  border-width: 2px;
-  box-shadow: 0 0 8px rgba(70,140,255,0.45);
-}
 .theme-setter
 #draftSetter:has(.history-row:nth-child(2))
 .history-row:last-child
 .history-tile {
-  border-color: rgba(70,140,255,0.8);
-  box-shadow: 0 0 8px rgba(70,140,255,0.45);
+  border-color: var(--role-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
+   border-width: 2px;
 }
+/* Setter: exactly one draft row → it is active */
+.theme-setter
+#draftSetter:not(:has(.history-row:nth-child(2)))
+.history-row
+.history-tile {
+  border-width: 2px;
+  border-color: var(--role-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
+}
+
 .theme-guesser #draftGuesser .history-tile {
   border-width: 2px;
-  border-color: rgba(70,140,255,0.8);
-  box-shadow: 0 0 8px rgba(70,140,255,0.45);
+  border-color: var(--role-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
 }
-.ghost-secret .history-tile {
-  border-width: 2px;
-  box-shadow: 0 0 8px rgba(70,140,255,0.35);
-}
-.ghost-secret .history-tile {
-  opacity: 0.35;
-  filter: grayscale(100%);
-  border-style: dashed;
-}
+
+
 /* Draft tiles when unusable */
 .theme-setter:not(:has(.turn-indicator.your-turn))
 #draftSetter .history-tile,
