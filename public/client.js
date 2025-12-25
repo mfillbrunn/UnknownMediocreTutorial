@@ -300,36 +300,45 @@ if (setterCanEdit) {
 // -----------------------------------------------------
 
 const colorPicker = $("playerColorPicker");
+const useCustomColor = $("useCustomColor");
 
-// Load saved color
+// Load saved preference
 const savedColor = localStorage.getItem("vswordle_player_color");
+const savedUseCustom = localStorage.getItem("vswordle_use_custom_color") === "true";
+
+useCustomColor.checked = savedUseCustom;
+colorPicker.disabled = !savedUseCustom;
+
 if (savedColor) {
   colorPicker.value = savedColor;
+}
+
+if (savedUseCustom && savedColor) {
   applyPlayerColor(savedColor);
 }
 
-// Live update
+// Toggle custom color on/off
+useCustomColor.onchange = () => {
+  const enabled = useCustomColor.checked;
+  localStorage.setItem("vswordle_use_custom_color", enabled);
+  colorPicker.disabled = !enabled;
+
+  if (!enabled) {
+    resetPlayerColor();   // 👈 back to defaults
+  } else {
+    applyPlayerColor(colorPicker.value);
+  }
+};
+
+// Live color updates
 colorPicker.oninput = e => {
   const color = e.target.value;
   localStorage.setItem("vswordle_player_color", color);
-  applyPlayerColor(color);
+  if (useCustomColor.checked) {
+    applyPlayerColor(color);
+  }
 };
 
-function applyPlayerColor(color) {
-  // Apply only to the active role screen
-  const target =
-    myRole === "A"
-      ? $("setterScreen")
-      : $("guesserScreen");
-
-  if (!target) return;
-
-  target.style.setProperty("--role-accent", color);
-  target.style.setProperty("--role-accent-strong", color);
-  target.style.setProperty("--btn-primary", color);
-  target.style.setProperty("--btn-primary-hover", color);
-  target.style.setProperty("--btn-primary-glow", color + "aa");
-}
 
 
 // -----------------------------------------------------
