@@ -315,7 +315,7 @@ body {
 .keyboard {
   width: 100%;
   max-width: 520px;
-  margin: 10px auto 0;
+  margin: auto 0;
   padding: 0;
 }
 
@@ -417,6 +417,11 @@ body {
 #guesserScreen:not(:has(#turnIndicatorGuesser.your-turn)) #keyboardGuesser .key {
   transform: none !important;
   box-shadow: none !important;
+}
+/* Force consistent spacing before keyboards for both roles */
+#keyboardSetter,
+#keyboardGuesser {
+  margin-top: 12px;   /* pick one value and lock it */
 }
 
 
@@ -930,7 +935,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
 .center-col {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
