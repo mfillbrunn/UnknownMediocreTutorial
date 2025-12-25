@@ -73,28 +73,25 @@
     </div>
      <!-- HISTORY TOP -->    
 <div class="play-area setter-play">
-  <!-- MAIN ROW -->
+   <!-- LEFT: powers -->
   <div class="play-row">
     <div id="setterPowerContainer"
          class="power-container laser-scope play-col powers-col"></div>
-
+<!-- CENTER: history + drafts -->
     <div class="play-col center-col">
       <div id="setterGuesserSubmitted"
            class="history-tiles history-scroll"></div>
-    
-      <div class="draft-stack">
-        <div id="draftSetter"
-             class="history-tiles draft-layer"></div>
-    
-        <div id="newSecretDraft"
-             class="history-tiles draft-layer"></div>
-      </div>
+     <!-- draft + keep are aligned via this row -->
+      <div class="draft-row-wrap">
+      <div id="draftSetter"
+           class="history-tiles draft-layer"></div>
     </div>
+  </div>
 
-    <div class="play-col side-col">
-      <button id="submitSetterSameBtn"
-              class="power-btn laser-outline same-btn">...</button>
-    </div>
+  <!-- RIGHT: KEEP button -->
+  <div class="play-col side-col">
+    <button id="keepSecretBtn"
+            class="keep-btn">KEEP</button>
   </div>
 
   <!-- KEYBOARD -->
