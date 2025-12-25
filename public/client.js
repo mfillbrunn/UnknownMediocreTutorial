@@ -763,26 +763,37 @@ function updateSummary() {
     container.innerHTML = "";
     return;
   }
-if (state.gameOver || state.turn !== state.guesser || state.pendingGuess) {
-  localGuesserDraft = "";
-}
-let html = `<h3>Round Summary</h3>`;
 
-// 🔥 NEW: Detect assassin kill
-const lastEntry = state.history[state.history.length - 1];
-if (lastEntry && lastEntry.assassinTriggered) {
+  // Clear drafts once summary is shown
+  if (state.gameOver || state.turn !== state.guesser || state.pendingGuess) {
+    localGuesserDraft = "";
+  }
+
+  let html = `<h3>Round Summary</h3>`;
+
+  // Assassin kill notice
+  const lastEntry = state.history[state.history.length - 1];
+  if (lastEntry && lastEntry.assassinTriggered) {
+    html += `
+      <p class="assassin-summary">
+        ☠ The guesser guessed the assassin word 
+        "${lastEntry.guess.toUpperCase()}" and was assassinated!
+      </p>
+    `;
+  }
+
+  html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
+
   html += `
-    <p class="assassin-summary">
-      ☠ The guesser guessed the assassin word 
-      "${lastEntry.guess.toUpperCase()}" and was assassinated!
-    </p>
+    <table class="summary-table">
+      <tr>
+        <th>#</th>
+        <th>Secret</th>
+        <th>Guess</th>
+        <th>Feedback</th>
+        <th>Remaining</th>
+      </tr>
   `;
-}
-
-html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
-
-  html += `<table class="summary-table">`;
-  html += `<tr><th>#</th><th>Secret</th><th>Guess</th><th>Feedback</th><th>Remaining</th></tr>`;
 
   for (let i = 0; i < state.history.length; i++) {
     const h = state.history[i];
@@ -795,14 +806,13 @@ html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
 
     const fbCell =
       Array.isArray(h.fb) ? h.fb.join("") : "";
-     let remaining;
 
-if (i === state.history.length - 1) {
-  // Last guess always shows 0 remaining
-  remaining = 0;
-} else {
-  remaining = computeRemainingAfterIndex(i);
-}
+    // Remaining words from GUESSER perspective
+    const remaining =
+      i === state.history.length - 1
+        ? 0
+        : computeRemainingAfterIndexForRole(i, "guesser");
+
     html += `
       <tr>
         <td>${i + 1}</td>
@@ -810,12 +820,14 @@ if (i === state.history.length - 1) {
         <td>${guessCell}</td>
         <td>${fbCell}</td>
         <td>${remaining}</td>
-      </tr>`;
+      </tr>
+    `;
   }
 
   html += `</table>`;
   container.innerHTML = html;
 }
+
 // -----------------------------------------------------
 // BUTTONS
 // -----------------------------------------------------
