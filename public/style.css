@@ -467,6 +467,13 @@ body {
 }
 .draft-row .history-tile { animation: draft-pop 120ms ease-out; }
 
+/* Draft rows should not have a panel box */
+.draft-layer {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
 /* Wordle-style feedback colors */
 .tile-green  { background: var(--tile-green)  !important; color: var(--tile-green-text) !important; }
 .tile-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text)!important; }
