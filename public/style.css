@@ -1248,10 +1248,11 @@ Constraint row using history tile language
   );
 
   box-shadow: none;
-}
-.constraint-row .history-tile.tile-green {
-  font-weight: 900;
-  letter-spacing: 0.5px;
+     text-shadow: 0 0 6px color-mix(
+    in srgb,
+    var(--role-accent) 30%,
+    transparent
+  );
 }
 
 
