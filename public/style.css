@@ -567,8 +567,20 @@ body {
    animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
+/* Authoritative setter draft layout */
+#draftSetter {
+  display: flex;
+  flex-direction: column;   /* critical: stack rows vertically */
+  align-items: center;      /* keep rows centered */
+  justify-content: center;
 
-/* Special setter draft layout */
+  width: fit-content;       /* critical: shrink-wrap to tiles */
+  margin: 0 auto;           /* belt + suspenders */
+  padding: 0;
+  gap: 6px;
+}
+
+/* Special setter draft layout
 #draftSetter.history-tiles {
   display: flex;
    flex-direction: column;
@@ -584,7 +596,7 @@ body {
   margin-top: 0;
    gap: 6px
 }
-
+ */
 /* =========================================
    INFO GRID
    ========================================= */
