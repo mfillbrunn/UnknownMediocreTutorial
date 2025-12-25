@@ -923,22 +923,24 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
 }
 /* Stack setter draft rows vertically */
 .draft-stack {
+  position: relative;   /* ← NEW anchor */
   display: flex;
   flex-direction: column;
   gap: 6px;
   align-items: center;
 }
+
 .draft-row-wrap {
-  position: relative;
   display: flex;
-  justify-content: center; /* center ONLY the draft stack */
+  justify-content: center;
   width: 100%;
 }
 
+
 .keep-btn {
   position: absolute;
-  right: -64px; /* tweak if needed */
-  bottom: 0;    /* aligns with bottom draft row */
+  left: calc(100% + 12px); /* sits right next to tiles */
+  bottom: 0;               /* aligns with bottom draft row */
 
   display: inline-flex;
   align-items: center;
@@ -956,12 +958,11 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   line-height: 1;
 
   padding: 7px 12px;
-  min-width: 0;
-
   cursor: pointer;
   opacity: 0.9;
   transition: opacity .15s ease, box-shadow .15s ease;
 }
+
 
 
 .keep-btn:hover {
