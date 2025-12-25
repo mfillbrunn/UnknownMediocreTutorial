@@ -933,6 +933,10 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   align-items: center;
 }
 .keep-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
   background: transparent;
   border: 1.5px solid currentColor;
   color: var(--role-accent);
@@ -942,14 +946,16 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   font-weight: 700;
   letter-spacing: 0.6px;
   text-transform: uppercase;
+  line-height: 1;
 
-  padding: 6px 10px;
+  padding: 7px 12px;
   min-width: 0;
 
   cursor: pointer;
   opacity: 0.9;
   transition: opacity .15s ease, box-shadow .15s ease;
 }
+
 
 .keep-btn:hover {
   opacity: 1;
