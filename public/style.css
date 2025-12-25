@@ -315,7 +315,7 @@ body {
 .keyboard {
   width: 100%;
   max-width: 520px;
-  margin: 20px auto 0;
+  margin: 10px auto 0;
   padding: 0;
 }
 
@@ -700,7 +700,6 @@ body {
 }
 :where(.theme-setter, .theme-guesser) .history-box { margin-bottom: 6px; }
 
-.theme-setter .keyboard { margin-top: 10px; }
 .theme-setter .info-grid { margin-top: 12px; }
 
 /* Power button color ties to theme */
