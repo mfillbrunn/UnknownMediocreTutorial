@@ -973,7 +973,6 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   box-shadow: none;
 }
 
-
 .side-col {
   width: auto;
   min-width: 40px;
@@ -981,3 +980,69 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   align-items: center;
   justify-content: center;
 }
+
+/* Shared laser-outline language (same as power buttons) */
+.draft-layer .history-row,
+.ghost-secret {
+  position: relative;
+}
+/* Static laser frame for important rows */
+.draft-layer .history-row::before,
+.ghost-secret::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 8px;
+  border: 1px solid rgba(70,140,255,0.6);
+  opacity: 0.6;
+  pointer-events: none;
+}
+/* Inner outline (matches power button main border weight) */
+.draft-layer .history-row .history-tile,
+.ghost-secret .history-tile {
+  border-width: 2px;
+}
+.theme-setter
+#draftSetter:has(.history-row:nth-child(2))
+.history-row:last-child::before {
+  border-color: rgba(70,140,255,0.7);
+}
+/* Guesser draft row: same laser-frame highlight as powers */
+.theme-guesser #draftGuesser .history-row {
+  position: relative;
+}
+
+.theme-guesser #draftGuesser .history-row::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 8px;
+  border: 1px solid rgba(70,140,255,0.6);
+  opacity: 0.6;
+  pointer-events: none;
+}
+/* Visually dead / unusable state */
+.is-dead {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+.theme-setter:not(:has(.turn-indicator.your-turn))
+#draftSetter .history-row {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+.theme-guesser:not(:has(.turn-indicator.your-turn))
+#draftGuesser .history-row {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+/* No laser frame when dead */
+.theme-setter:not(:has(.turn-indicator.your-turn))
+#draftSetter .history-row::before,
+.theme-guesser:not(:has(.turn-indicator.your-turn))
+#draftGuesser .history-row::before,
+.ghost-secret.is-dead::before {
+  opacity: 0;
+}
+opacity: 0.28;
+
