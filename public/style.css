@@ -671,6 +671,9 @@ body {
 #setterScreen [hidden] {
   display: none !important;
 }
+#setterGuesser [hidden] {
+  display: none !important;
+}
 
 
 .theme-setter h2 {
