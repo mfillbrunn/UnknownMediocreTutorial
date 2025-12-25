@@ -899,4 +899,37 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   gap: 6px;
   align-items: center;
 }
+.draft-row-wrap {
+  display: flex;
+  align-items: center;
+}
+.keep-btn {
+  background: transparent;
+  border: 1.5px solid currentColor;
+  color: var(--role-accent);
+  border-radius: 8px;
 
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+
+  padding: 6px 10px;
+  min-width: 0;
+
+  cursor: pointer;
+  opacity: 0.9;
+  transition: opacity .15s ease, box-shadow .15s ease;
+}
+
+.keep-btn:hover {
+  opacity: 1;
+  box-shadow: 0 0 6px currentColor;
+}
+.side-col {
+  width: auto;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
