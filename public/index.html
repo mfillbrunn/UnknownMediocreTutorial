@@ -8,25 +8,6 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="themes.css">
 </head>
-<script>
-  const syncHeaderRoomCodes = () => {
-    const src = document.getElementById("roomCodeLabel");
-    if (!src) return;
-
-    document
-      .querySelectorAll(".header-room-code")
-      .forEach(el => el.textContent = src.textContent);
-  };
-
-  const observer = new MutationObserver(syncHeaderRoomCodes);
-  const src = document.getElementById("roomCodeLabel");
-
-  if (src) {
-    observer.observe(src, { childList: true });
-    syncHeaderRoomCodes();
-  }
-</script>
-
 <body>
 
 <script>
@@ -237,5 +218,23 @@
 <script src="client/remaining-words.js"></script>
 <script src="client.js"></script>  
 <script src="client/socket-events.js"></script>
+  <script>
+  const syncHeaderRoomCodes = () => {
+    const src = document.getElementById("roomCodeLabel");
+    if (!src) return;
+
+    document
+      .querySelectorAll(".header-room-code")
+      .forEach(el => el.textContent = src.textContent);
+  };
+
+  const observer = new MutationObserver(syncHeaderRoomCodes);
+  const src = document.getElementById("roomCodeLabel");
+
+  if (src) {
+    observer.observe(src, { childList: true });
+    syncHeaderRoomCodes();
+  }
+</script>
 </body>
 </html>
