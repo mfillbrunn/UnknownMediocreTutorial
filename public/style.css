@@ -741,15 +741,15 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   50% {    box-shadow: 0 0 10px rgba(70,140,255,0.8);  }
 }
 @keyframes blue-outline-pulse {
-  0% {    outline: 2px solid rgba(70,140,255,0);  }
-  50% {    outline: 2px solid rgba(70,140,255,0.9);  }
-  100% {    outline: 2px solid rgba(70,140,255,0);  }
-  50% {    outline: 2px solid rgba(70,140,255,0.9);  }
+  0% {    outline: 4px solid rgba(70,140,255,0);  }
+  50% {    outline: 4px solid rgba(70,140,255,0.9);  }
+  100% {    outline: 4px solid rgba(70,140,255,0);  }
+  50% {    outline: 4px solid rgba(70,140,255,0.9);  }
 }
 
 /* Outline animation (theme-setter current key) */
 .theme-setter .key.key-current {
-  color: #4da3ff !important;
+  color: #fff !important;
   outline-offset: -2px;
   animation: blue-outline-pulse 1.4s infinite;
 }
