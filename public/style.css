@@ -1005,3 +1005,25 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   filter: grayscale(1);
   box-shadow: none;
 }
+
+.role-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.room-tag {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+
+  padding: 4px 8px;
+  border-radius: 6px;
+
+  color: currentColor;
+  border: 1.5px solid currentColor;
+  opacity: 0.9;
+  line-height: 1;
+}
+
