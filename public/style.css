@@ -644,13 +644,6 @@ body {
   --btn-primary: #4da3ff;
   --btn-primary-hover: #6ab4ff;
   --btn-primary-glow: rgba(70,140,255,.7);
-
-  background: #0b1220;
-  border: 2px solid var(--role-accent) !important;
-  box-shadow:
-    0 0 25px rgba(70,140,255,.35),
-    inset 0 0 25px rgba(70,140,255,.2) !important;
-  color: var(--role-accent);
 }
 
 .theme-guesser h2 {
@@ -665,11 +658,17 @@ body {
   --btn-primary: #ff1e33;
   --btn-primary-hover: #ff3b4d;
   --btn-primary-glow: rgba(255,30,50,.7);
-  background: #140203;
-  border: 2px solid var(--role-accent-strong) !important;
+   }
+.theme-setter,
+.theme-guesser {
+  /* Defaults still exist, but will be overridden by JS color picker */
+  background: color-mix(in srgb, #000 75%, var(--role-accent) 25%);
+  border: 2px solid var(--role-accent) !important;
+
   box-shadow:
-    0 0 25px rgba(255,30,50,.35),
-    inset 0 0 25px rgba(255,30,50,.2) !important;
+    0 0 25px color-mix(in srgb, var(--role-accent) 35%, transparent),
+    inset 0 0 25px color-mix(in srgb, var(--role-accent) 20%, transparent) !important;
+
   color: var(--role-accent);
 }
 
