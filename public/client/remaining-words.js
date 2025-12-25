@@ -1,26 +1,28 @@
-
 function categorizeRemainingWords(count) {
   if (count >= 200) return "many";
   if (count >= 50) return "plenty";
   if (count >= 10) return "some";
   if (count >= 2) return "few";
   if (count === 1) return "only one";
-  return "none"; // edge-case: impossible or broken history
+  return "none";
 }
-function computeRemainingWords() {
+
+function computeRemainingWordsForRole(role) {
   const words = window.ALLOWED_SECRETS;
   if (!state || !state.history) return 0;
 
   let count = 0;
   for (const w of words) {
-    if (isConsistentWithHistory(state.history, w, state)) {
+    if (isConsistentWithHistory(state.history, w, state, role)) {
       count++;
     }
   }
   return count;
 }
+
 function styleRemaining(element, label) {
-  element.className = "remainingMeter"; // reset
+  element.className = "remainingMeter";
+  if (!label) return;
 
   if (label === "many") element.classList.add("rm-many");
   else if (label === "plenty") element.classList.add("rm-plenty");
@@ -28,6 +30,12 @@ function styleRemaining(element, label) {
   else if (label === "few") element.classList.add("rm-few");
   else if (label === "only one") element.classList.add("rm-one");
 }
+
+// cache lives outside, but is reset on state updates
+const remainingCache = {
+  setter: null,
+  guesser: null
+};
 
 function updateRemainingWords() {
   if (!state || state.phase === "lobby" || state.phase === "gameOver") {
@@ -38,32 +46,31 @@ function updateRemainingWords() {
     return;
   }
 
-  const n = computeRemainingWords();
-  const category = categorizeRemainingWords(n);
+  // compute once per update
+  if (remainingCache.guesser === null) {
+    remainingCache.guesser = computeRemainingWordsForRole("guesser");
+  }
+  if (remainingCache.setter === null) {
+    remainingCache.setter = computeRemainingWordsForRole("setter");
+  }
 
-  // Guesser sees exact number + animation
+  const nGuesser = remainingCache.guesser;
+  const nSetter  = remainingCache.setter;
+
+  const categoryGuesser = categorizeRemainingWords(nGuesser);
+  const categorySetter  = categorizeRemainingWords(nSetter);
+
+  // Guesser sees exact number
   const g = $("remainingWordsGuesser");
   if (g) {
-    g.textContent = `${Number(n).toLocaleString()}`;;
-    styleRemaining(g, category);
+    g.textContent = Number(nGuesser).toLocaleString();
+    styleRemaining(g, categoryGuesser);
   }
-  // Setter sees category + animation
+
+  // Setter sees category
   const s = $("remainingWordsSetter");
-  s.textContent = category;
-  styleRemaining(s, category);
-}
-function computeRemainingAfterIndex(idx) {
-  const words = window.ALLOWED_SECRETS;
-  let count = 0;
-
-  // Build a sliced history up to idx (inclusive)
-  const partialHistory = state.history.slice(0, idx + 1);
-
-  for (const w of words) {
-    if (isConsistentWithHistory(partialHistory, w, state)) {
-      count++;
-    }
+  if (s) {
+    s.textContent = categorySetter;
+    styleRemaining(s, categorySetter);
   }
-
-  return count;
 }
