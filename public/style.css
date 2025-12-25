@@ -666,8 +666,8 @@ background: color-mix(in srgb, #000 82%, var(--role-accent) 18%);
   border: 2px solid var(--role-accent) !important;
 
   box-shadow:
-    0 0 14px color-mix(in srgb, var(--role-accent) 18%, transparent),
-    inset 0 0 10px color-mix(in srgb, var(--role-accent) 10%, transparent) !important;
+    0 0 6px color-mix(in srgb, var(--role-accent) 18%, transparent),
+    inset 0 0 4px color-mix(in srgb, var(--role-accent) 10%, transparent) !important;
 
   color: var(--role-accent);
 }
