@@ -613,6 +613,12 @@ body {
 .theme-setter .play-area {
   margin-bottom: 0;
 }
+#setterScreen [hidden] {
+  display: none !important;
+}
+#guesserScreen [hidden] {
+  display: none !important;
+}
 
 
 
