@@ -300,7 +300,7 @@ body {
   cursor: not-allowed;
 }
 /* Compact powers in play area */
- {
+ .play-area .power-btn {
   font-size: 13px;
   padding: 8px 12px;
   min-height: 32px;
@@ -744,13 +744,11 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   0% {    box-shadow: 0 0 0 rgba(70,140,255,0);  }
   50% {    box-shadow: 0 0 10px rgba(70,140,255,0.8);  }
   100% {    box-shadow: 0 0 0 rgba(70,140,255,0);  }
-  50% {    box-shadow: 0 0 10px rgba(70,140,255,0.8);  }
 }
 @keyframes blue-outline-pulse {
   0% {    outline: 3px solid rgba(70,140,255,0);  }
   50% {    outline: 3px solid rgba(70,140,255,0.9);  }
   100% {    outline: 3px solid rgba(70,140,255,0);  }
-  50% {    outline: 3px solid rgba(70,140,255,0.9);  }
 }
 
 /* Outline animation (theme-setter current key) */
