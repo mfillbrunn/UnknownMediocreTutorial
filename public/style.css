@@ -1117,4 +1117,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
 
     cursor: not-allowed;
   }
+  .keep-btn.mobile-keep:disabled:active {
+    transform: none;
+  }
 }
