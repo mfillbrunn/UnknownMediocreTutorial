@@ -293,6 +293,9 @@ if (setterCanEdit) {
   if (state.phase === "normal" && guessInput && guessInput.disabled) {
     guessInput.value = "";
   }
+  remainingCache.setter = null;
+remainingCache.guesser = null;
+
 });
 
 // -----------------------------------------------------
