@@ -959,13 +959,13 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   justify-content: center;
   width: 100%;
 }
-
-
 .keep-btn {
   position: absolute;
-  left: calc(100% + 12px); 
-  bottom: 0;               
-  transform: translateY(-50%) translateY(5px);
+  left: calc(100% + 12px);
+
+  top: 50%;
+  transform: translateY(-50%);
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -985,6 +985,11 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   cursor: pointer;
   opacity: 0.9;
   transition: opacity .15s ease, box-shadow .15s ease;
+}
+
+/* Bottom draft row becomes the anchor */
+.draft-stack .history-row:last-child {
+  position: relative;
 }
 
 
