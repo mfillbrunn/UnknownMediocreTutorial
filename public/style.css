@@ -545,7 +545,7 @@ body {
 
 /* Ghost secret (single consolidated definition) */
 .ghost-secret {
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.35) !important;
   letter-spacing: 0.15em;
 }
 .ghost-secret .history-tile {
