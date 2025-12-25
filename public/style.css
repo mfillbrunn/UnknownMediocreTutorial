@@ -1,76 +1,51 @@
 /* =========================================
    BASE LAYOUT
    ========================================= */
-:root {
-  /* Provide sensible fallbacks if vars are missing */
-  --text: #eaeaea;
-  --heading: #fff;
-
-  --screen-bg: rgba(255,255,255,0.04);
-  --panel-bg: rgba(255,255,255,0.05);
-  --panel-text: #eaeaea;
-  --history-bg: rgba(0,0,0,0.25);
-
-  --kb-neutral: #2b2f36;
-  --kb-hover: #3a3f48;
-
-  --tile-green: #3aa85a;
-  --tile-green-text: #fff;
-  --tile-yellow: #d4b23c;
-  --tile-yellow-text: #000;
-  --tile-gray: #3a3d44;
-  --tile-gray-text: #eee;
-
-  --toast-bg: rgba(20,20,22,0.95);
-  --toast-border: rgba(255,255,255,0.12);
-
-  --popup-bg: rgba(20,20,22,0.95);
-  --popup-border: rgba(255,255,255,0.16);
-
-  /* Theme “role” tokens (overridden by .theme-*) */
-  --role-accent: #4da3ff;
-  --role-accent-strong: #4da3ff;
-
-  --btn-primary: #4da3ff;
-  --btn-primary-hover: #6ab4ff;
-  --btn-primary-glow: rgba(70,140,255,.7);
-}
-
 body {
   margin: 0;
   padding: 0;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.45;
-
+}
+body {
   background:
-    radial-gradient(circle at top center, rgba(255, 0, 0, 0.08), transparent 60%),
+    radial-gradient(
+      circle at top center,
+      rgba(255, 0, 0, 0.08),
+      transparent 60%
+    ),
     #0c0c0e;
 }
-
-/* =========================================
-   LOBBY TYPOGRAPHY
-   ========================================= */
-/* Low-specificity grouping to avoid clashes */
-.screen-lobby :where(input, button, p, label, span),
-.screen-lobby {
+/* Unify lobby styles */
+.screen-lobby,
+.screen-lobby input,
+.screen-lobby button,
+.screen-lobby p,
+.screen-lobby label,
+.screen-lobby span {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 18px;
   letter-spacing: 0.5px;
-}
-
-.screen-lobby input { font-weight: 600; }
-
-.screen-lobby button {
-  font-size: 16px;
-  font-weight: 700;
 }
 
 #roomInfo {
   opacity: 0;
   transition: opacity .25s ease;
 }
-#roomInfo:not(.hidden) { opacity: 1; }
+
+#roomInfo:not(.hidden) {
+  opacity: 1;
+}
+
+.screen-lobby input {
+  font-weight: 600;
+}
+
+.screen-lobby button {
+  font-size: 16px;
+  font-weight: 700;
+}
 
 #appContainer {
   max-width: 600px;
@@ -80,78 +55,23 @@ body {
 
 .title {
   margin: 6px 0 10px;
-  font-size: 20px;
+  font-size: 20px;        /* was 34px */
   font-weight: 800;
   letter-spacing: 2px;
   opacity: 0.85;
-  text-transform: uppercase;
+   text-transform: uppercase;
 }
 
 /* =========================================
-   INPUT AREA
+   INPUT AREA FIX
    ========================================= */
 .guess-input-area {
   display: flex;
-  flex-direction: column; /* authoritative */
-  align-items: center;
-  gap: 10px;
-
-  width: 100%;
-  max-width: 520px;
-  margin: 20px auto 0;
-}
-
-.guess-btn-row {
-  display: flex;
   justify-content: center;
   gap: 12px;
-  margin-top: 10px;
-
-  flex: 1;
-  min-width: 120px;
-}
-
-.play-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.decision-row {
-  display: flex;
-  gap: 12px;
-  width: 100%;
-  max-width: 360px;
-}
-.decision-row button { flex: 1; }
-
-/* Authoritative input style */
-.letter-input {
-  width: 100%;
-  max-width: 360px;
-
-  background: #e6e6e6;
-  color: #000;
-
-  border: none;
-  border-radius: 8px;
-  padding: 10px 12px;
-
-  font-size: 1.4rem;
-  font-weight: 700;
-  letter-spacing: 6px; /* keep only one */
-  text-transform: uppercase;
-  text-align: center;
-
-  box-shadow: inset 0 0 0 1px #bbb;
-}
-
-.letter-input:focus {
-  outline: none;
-  box-shadow:
-    inset 0 0 0 2px var(--btn-primary),
-    0 0 8px var(--btn-primary-glow);
+  flex-wrap: wrap;
+  max-width: 500px;
+  margin: 20px auto 0;
 }
 
 /* =========================================
@@ -159,20 +79,17 @@ body {
    ========================================= */
 .screen {
   display: none;
-  position: relative;
-
   background: var(--screen-bg);
   border-radius: 14px;
   padding: 20px;
   margin-top: 16px;
-
   box-shadow:
     0 0 12px rgba(0,0,0,.4),
     0 0 18px rgba(0,0,0,.25) inset;
-
   opacity: 0;
   transform: translateY(10px);
   transition: .25s ease;
+   position: relative;
 }
 
 .screen.active {
@@ -187,8 +104,7 @@ body {
   margin-bottom: 16px;
 }
 
-/* Shared panel styling */
-:where(.panel, .constraints-box, .history-box, .summary-box, .preview-box) {
+.panel, .constraints-box, .history-box, .summary-box, .preview-box {
   background: var(--panel-bg);
   color: var(--panel-text);
   border-radius: 10px;
@@ -202,5 +118,948 @@ body {
   font-family: "Courier New", monospace;
 }
 
+/* =========================================
+   BUTTONS
+   ========================================= */
+.primary-btn, .secondary-btn {
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: none;
+  margin: 10px 0;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  transition: .15s ease;
+}
+.power-btn {
+  background: transparent !important;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  transition: transform .15s ease, opacity .15s ease;
+}
+
+.primary-btn {
+  background: var(--btn-primary);
+  color: #fff;
+  box-shadow: 0 0 10px var(--btn-primary-glow);
+}
+
+.primary-btn:hover {
+  background: var(--btn-primary-hover);
+}
+
+.secondary-btn {
+  background: var(--btn-secondary);
+  color: var(--btn-secondary-text);
+}
+
+.secondary-btn:hover {
+  background: var(--btn-secondary-hover);
+}
+
+.power-container {
+ display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.power-btn.power-used {
+  opacity: 0.35;
+  filter: grayscale(1);
+  pointer-events: none;
+}
+
+/* KEYBOARD CONTAINER */
+.keyboard {
+  width: 100%;
+  max-width: 520px;     /* matches Wordle width */
+  margin: 20px auto 0 auto;
+  padding: 0;
+}
+
+/* KEY ROW — stays horizontal, never wraps */
+.key-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-wrap: nowrap;
+}
+
+/* KEY TILE */
+.key {
+  width: 44px;           /* FIXED width (Wordle 2022 desktop spec) */
+  height: 56px;          /* FIXED height */
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+
+  background: var(--kb-neutral);
+  border: 1px solid #00000055;
+  color: white;
+
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+/* Keyboard key color states */
+.key.key-green  { background: var(--tile-green) !important;  color: var(--tile-green-text) !important; }
+.key.key-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text) !important; }
+.key.key-gray   { background:
+    repeating-linear-gradient(
+      135deg,
+      #121417,
+      #121417 6px,
+      #0e1013 6px,
+      #0e1013 12px
+    ) !important;
+  color: #7a7f88 !important;
+  border-color: #000000aa !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    inset 0 -2px 4px rgba(0,0,0,.6);
+  opacity: 0.85; }
+.key.key-blue   { background: #4ea3ff !important;            color: #000 !important; }
+
+/* Optional: highlight keys used in current draft without overriding solved colors */
+.key.key-current {
+  box-shadow: 0 0 0 2px rgba(255,255,255,.35) inset;
+}
+
+/* Special width for backspace */
+.key[data-key="⌫"] {
+  width: 58px;
+}
+
+/* Hover */
+.key:hover {
+  background: var(--kb-hover);
+  transform: translateY(-2px);
+}
+
+/* ACTIVE */
+.key:active {
+  transform: scale(0.95);
+}
+
+.key.key-gray:hover,
+.key.key-gray:active {
+  background: #121417 !important;
+  transform: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    inset 0 -2px 4px rgba(0,0,0,.6);
+}
+.theme-setter .key.key-current {
+  color: #fff !important;
+  outline-offset: -2px; /* keeps outline tight to key */
+  animation: setter-used-outline 1.4s infinite;
+}
+@keyframes setter-used-outline {
+  0% {
+    outline: 2px solid rgba(255, 40, 60, 0);
+  }
+  50% {
+    outline: 2px solid rgba(255, 40, 60, 0.9);
+  }
+  100% {
+    outline: 2px solid rgba(255, 40, 60, 0);
+  }
+}
+
+/* =========================================
+   HISTORY — TILE STYLE (Wordle Style)
+   ========================================= */
+.history-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0;
+}
+.history-tile {
+  width: 42px;
+  height: 48px;
+  border-radius: 6px;
+
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
+
+  border: 1px solid #00000055;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+
+  transform-style: preserve-3d;
+  perspective: 600px;
+
+  animation: none; /* IMPORTANT */
+}
+
+.evaluated-row .history-tile {
+  animation: flip-in 0.6s ease forwards;
+}
+.history-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+@keyframes draft-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.draft-row .history-tile {
+  animation: draft-pop 120ms ease-out;
+}
+
+/* Wordle-style feedback colors */
+.tile-green  { background: var(--tile-green)  !important; color: var(--tile-green-text) !important; }
+.tile-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text)!important; }
+.tile-gray   { background: var(--tile-gray)   !important; color: var(--tile-gray-text)  !important; }
+
+/* Optional: blue if you use it */
+.tile-blue { background: #4ea3ff !important; color: #000 !important; }
+
+/* =========================================
+   WORDLE FLIP ANIMATION
+   ========================================= */
+@keyframes flip-in {
+  0%   { transform: rotateX(90deg); opacity: 0; }
+  40%  { transform: rotateX(20deg); opacity: .6; }
+  70%  { transform: rotateX(0deg); opacity: 1; }
+  100% { transform: rotateX(0deg); opacity: 1; }
+}
+
+/* Stagger tiles automatically */
+.history-row .history-tile:nth-child(1) { animation-delay: 0.00s; }
+.history-row .history-tile:nth-child(2) { animation-delay: 0.08s; }
+.history-row .history-tile:nth-child(3) { animation-delay: 0.16s; }
+.history-row .history-tile:nth-child(4) { animation-delay: 0.24s; }
+.history-row .history-tile:nth-child(5) { animation-delay: 0.32s; }
+
+/* =========================================
+   INFO GRID
+   ========================================= */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.info-col p { margin: 6px 0; }
+
+/* =========================================
+   THEMES (ESports)
+   ========================================= */
+.theme-guesser {
+  background: #0b1220;
+  border: 2px solid #4da3ff;
+  box-shadow:
+    0 0 25px rgba(70,140,255,.35),
+    inset 0 0 25px rgba(70,140,255,.2);
+  color: #4da3ff;
+}
+
+.theme-guesser h2 {
+  color: #4da3ff;
+  text-shadow: 0 0 18px rgba(70,140,255,.9);
+}
+
+.guesser-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.setter-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+/* Remaining words (top-right) */
+.theme-guesser .guesser-remaining {
+  font-size: 14px;              
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color:#4da3ff;               
+  opacity: 0.9;
+text-transform: uppercase;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.theme-guesser .turn-indicator.your-turn {
+  background: #4da3ff;
+  box-shadow: 0 0 25px rgba(70,140,255,.9);
+}
+
+.theme-setter {
+  background: #140203;
+  border: 2px solid #ff1e33;
+   box-shadow:
+    0 0 25px rgba(255,30,50,.35),
+    inset 0 0 25px rgba(255,30,50,.2);
+   color: #ff4b5c;
+}
+
+.theme-setter .setter-remaining {
+  font-size: 14px;              
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color:#ff4b5c;               
+  opacity: 0.9;
+text-transform: uppercase;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.theme-setter h2 {
+  color: #ff4b5c;
+  text-shadow: 0 0 18px rgba(255, 40, 60, 0.9);
+}
+
+.theme-setter .turn-indicator.your-turn {
+  background: #ff1e33;
+  animation: setter-turn-pulse 1s infinite;
+  box-shadow: 0 0 25px rgba(70,120,255,.9);
+}
+.theme-setter .panel,
+.theme-setter .history-box,
+.theme-setter .preview-box {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.theme-setter .history-box { margin-bottom: 6px; }
+.theme-setter .keyboard { margin-top: 10px; }
+.theme-setter .info-grid { margin-top: 12px; }
+
+.theme-setter .draft-layer .history-tile {
+  border: 1px solid rgba(255,80,80,0.4);
+  box-shadow: 0 0 6px rgba(255,80,80,0.3);
+}
+.theme-guesser .draft-layer .history-tile {
+  border: 1px solid rgba(70,140,255,.35);
+  box-shadow: 0 0 6px rgba(70,140,255,.35);
+}
+.theme-guesser .panel,
+.theme-guesser .history-box,
+.theme-guesser .preview-box {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.theme-guesser .history-box { margin-bottom: 6px; }
+
+.theme-setter .power-btn {
+  color: #ff4b5c;
+  border: none;
+}
+
+.theme-setter .power-btn.laser-outline {
+  border: 1.5px solid #ff1e33;
+}
+
+.theme-setter .power-btn.laser-outline::before {
+  border-color: #ff1e33;
+}
+
+.theme-setter::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 80px rgba(255,0,0,0.15);
+}
+
+.theme-setter .turn-overlay.your-turn {
+  opacity: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,30,50,0.55),
+    rgba(255,30,50,0)
+  );
+
+  animation: setter-overlay-pulse 1.2s infinite;
+}
+.turn-indicator {
+  display: none;
+}
+
+@keyframes setter-overlay-pulse {
+  0%   { filter: brightness(1); }
+  50%  { filter: brightness(1.3); }
+  100% { filter: brightness(1); }
+}
+.theme-guesser .power-btn {
+  color: #4da3ff;
+  border: none;
+}
+
+.theme-guesser .power-btn.laser-outline {
+  border: 1.5px solid #4da3ff;
+}
+
+.theme-guesser .power-btn.laser-outline::before {
+  border-color: #4da3ff;
+}
+
+/* TOAST (bottom UI popup) */
+.toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(40px);
+  opacity: 0;
+
+  padding: 12px 22px;
+  font-size: 18px;
+  font-weight: 700;
+
+  border-radius: 10px;
+  background: var(--toast-bg);
+  border: 1px solid var(--toast-border);
+  color: white;
+
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 99999;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* TURN POPUP (center, mid-top like classic VS-UI) */
+.turn-popup {
+  position: fixed;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%) scale(.9);
+  opacity: 0;
+
+  padding: 14px 26px;
+  font-size: 22px;
+  font-weight: 800;
+
+  border-radius: 12px;
+  background: var(--popup-bg);
+  border: 2px solid var(--popup-border);
+
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 99999;
+}
+
+.turn-popup.show {
+  opacity: 1;
+  transform: transl
+.guess-input-area {
+  display: flex;
+  flex-direction: column; /* CRITICAL */
+  align-items: center;
+  gap: 10px;
+
+  width: 100%;
+  max-width: 520px;
+  margin: 20px auto 0;
+}
+
+
+.letter-input:focus {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 2px var(--btn-primary),
+    0 0 8px var(--btn-primary-glow);
+}
+
+
+.guess-btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+   flex: 1;
+  min-width: 120px;
+}
+
+.play-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.decision-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.decision-row button {
+  flex: 1;
+}
+.turn-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 72px;
+
+  pointer-events: none;
+  opacity: 0;
+
+  transition: opacity .25s ease;
+  z-index: 9999;
+}
+
+/* === FINAL INPUT OVERRIDE (INTENTIONAL) === */
+/* === FINAL INPUT STYLE (AUTHORITATIVE) === */
+.letter-input {
+  width: 100%;
+  max-width: 360px;
+
+  background: #e6e6e6;
+  color: #000;
+
+  border: none;
+  border-radius: 8px;
+  padding: 10px 12px;
+
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-align: center;
+   letter-spacing: 6px;
+  box-shadow: inset 0 0 0 1px #bbb;
+}
+
+.letter-input:focus {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 2px var(--btn-primary),
+    0 0 8px var(--btn-primary-glow);
+}
+
+
+   /* FORCE ENTER SYMBOL — structural match */
+.key-row:last-child .key:first-child {
+  position: relative;
+  color: transparent;
+  background: var(--btn-primary);
+  box-shadow: 0 0 8px var(--btn-primary-glow);
+}
+.key-row:last-child .key:first-child {
+  width: 58px;
+}
+/* Overlay ⏎ */
+.key-row:last-child .key:first-child::before {
+  content: "⏎";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.key-animate {
+  animation: key-shine 180ms ease-out;
+}
+
+@keyframes key-shine {
+  0%   { box-shadow: 0 0 0 rgba(255,255,255,0); }
+  50%  { box-shadow: 0 0 12px rgba(255,255,255,.35); }
+  100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+}
+.key[data-key="⌫"],
+.key[data-key="ENTER"] {
+  animation: none !important;
+}
+
+   
+/* If ANY turn-indicator has your-turn, show overlay */
+.turn-indicator.your-turn ~ .turn-overlay,
+.turn-indicator.your-turn + .turn-overlay {
+  opacity: 1;
+}
+body:has(.turn-indicator.your-turn) .turn-overlay {
+  opacity: 1;
+}
+/* === ENTER KEY (last key of last row) === */
+.key-row:last-child .key:last-child {
+  position: relative;
+  color: transparent; /* hide "ENTER" text */
+
+  background: var(--btn-primary);
+  box-shadow: 0 0 8px var(--btn-primary-glow);
+}
+
+/* Overlay return symbol */
+.key-row:last-child .key:last-child::before {
+  content: "⏎";
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: white;
+  font-size: 22px;
+  font-weight: 800;
+}
+/* Hidden but JS-safe */
+.guesser-hidden {
+  display: none;
+}
+
+   /* Completely hide legacy Guesser UI */
+.guesser-legacyxx {
+  display: none !important;
+}
+/* === HIDE ALL GUESSER CONSTRAINT OUTPUT (CSS-ONLY) === */
+
+/* Hide the "none" text */
+#guesserScreen #mustContainGuesser {
+  display: none !important;
+}
+
+/* Hide the pattern letters (- - - - -) */
+#guesserScreen .pattern-letter {
+  display: none !important;
+}
+/* =========================================
+   FORCE-HIDE GUESSER CONSTRAINT OUTPUT
+   (JS-SAFE, REWRITE-PROOF)
+   ========================================= */
+
+/* Pattern dashes */
+#guesserScreen .pattern-letter {
+  display: inline-block !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+
+  font-size: 0 !important;
+  line-height: 0 !important;
+  letter-spacing: 0 !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* "none" must-contain text */
+#guesserScreen #mustContainGuesser {
+  display: inline-block !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+
+  font-size: 0 !important;
+  line-height: 0 !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
 /* Empty history message */
-.history-box:
+.history-box:empty,
+.history-box:not(:has(.history-row)) {
+  color: #e5e5e5;
+}
+/* Draft guess row (Guesser typing) */
+.draft-row .draft-tile {
+  background: #4da3ff;
+  color: #bbb;
+  border: 1px solid #00000055;
+
+  /* Slightly muted */
+  opacity: 0.85;
+}
+
+/* No flip animation on existing draft tiles */
+.draft-tile {
+  animation: none;
+}
+   .submitted-row .submitted-tile {
+  background: #3a3d44;
+  color: #eee;
+  border: 1px solid #00000066;
+  opacity: 0.95;
+}
+/* Draft rows (shared) */
+.draft-box .history-tile {
+  background: #4da3ff;
+  color: #bbb;
+  border: 1px solid #00000055;
+  opacity: 0.85;
+  animation: none;
+}
+
+/* Setter draft accent */
+.setter-draft .history-tile {
+  border: 1px solid #4da3ff;
+  box-shadow: 0 0 6px rgba(70,140,255,0.35);
+}
+.ghost-secret {
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.15em;
+}
+
+.draft-row.ghost-secret .history-tile {
+  opacity: 0.35;
+}
+.pending-guess .history-tile {
+  border: 2px solid rgba(255,255,255,0.4);
+}
+
+.ghost-secret .history-tile {
+  opacity: 0.35;
+  filter: grayscale(100%);
+  border: 1px dashed rgba(255,255,255,0.35);
+}
+
+.setter-draft .history-tile {
+  opacity: 1;
+}
+.ghost-secret .history-tile {
+  opacity: 0.35;
+  border: 1px dashed rgba(255,255,255,0.35);
+}
+
+.guesser-draft .history-tile,
+.setter-draft .history-tile {
+  opacity: 1;
+}
+
+.pending-guess .history-tile {
+  border: 2px solid rgba(255,255,255,0.5);
+}
+
+   /* Draft layer must be visible */
+.draft-layer {
+  position: relative;
+  min-height: 70px;          /* enough for 1 row */
+  z-index: 20;               /* above history */
+  pointer-events: none;      /* draft is visual only */
+}
+
+/* History should not overlap drafts */
+.history-scroll {
+  z-index: 1;
+}
+
+   .theme-setter {
+  --btn-primary: #ff1e33;
+  --btn-primary-hover: #ff3b4d;
+  --btn-primary-glow: rgba(255,30,50,.7);
+
+  --your-turn-bg: #ff1e33;
+  --your-turn-glow: rgba(255,30,50,.9);
+
+  color: #ff4b5c;
+}
+
+.laser-outline {
+  position: relative;
+  border: 1.5px solid currentColor;
+  background: transparent;
+}
+
+.laser-outline::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1px solid currentColor;
+  opacity: 0.35;
+  pointer-events: none;
+}
+/* Glow on hover / active */
+.power-btn:hover {
+  box-shadow: 0 0 16px currentColor;
+  transform: translateY(-2px);
+}
+
+.power-btn:active {
+  transform: scale(0.97);
+}
+
+/* Used powers */
+.power-btn.power-used {
+  opacity: 0.35;
+  filter: grayscale(1);
+  box-shadow: none !important;
+}
+#draftSetter.history-tiles {
+  flex-direction: row;
+   justify-content: center;
+  gap: 6px;
+}
+.secret-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.secret-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+#draftSetter {
+  width: fit-content;
+  padding-left: 0;
+  padding-right: 0;
+  margin-top: 0;   /* removes history spacing */
+}
+.same-btn {
+  margin-left: 12px;
+  white-space: nowrap;
+   opacity: 0.9;
+   border-radius: 999px;
+  padding: 10px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 50%;
+   background: transparent !important;
+}
+   .same-btn:hover {
+  opacity: 1;
+}
+.same-btn svg {
+  display: block;
+}
+/* =====================================================
+   FINAL ROLE COLOR FIX — AUTHORITATIVE
+   ===================================================== */
+
+/* -------- SETTER = RED -------- */
+.theme-setter {
+  border: 2px solid #ff1e33 !important;
+  box-shadow:
+    0 0 25px rgba(255,30,50,.35),
+    inset 0 0 25px rgba(255,30,50,.2) !important;
+  color: #ff4b5c;
+}
+
+.theme-setter h2 {
+  color: #ff4b5c;
+  text-shadow: 0 0 18px rgba(255,40,60,.9);
+}
+
+/* -------- GUESSER = BLUE -------- */
+.theme-guesser {
+  border: 2px solid #4da3ff !important;
+  box-shadow:
+    0 0 25px rgba(70,140,255,.35),
+    inset 0 0 25px rgba(70,140,255,.2) !important;
+  color: #4da3ff;
+}
+
+.theme-guesser h2 {
+  color: #4da3ff;
+  text-shadow: 0 0 18px rgba(70,140,255,.9);
+}
+
+/* =====================================================
+   POWER BUTTONS — LASER OUTLINE, BIGGER, CENTERED
+   ===================================================== */
+
+.power-btn {
+  background: transparent !important;
+  border: 2px solid currentColor !important;
+  border-radius: 12px;
+
+  font-size: 17px;          /* ⬅ bigger */
+  font-weight: 800;
+  letter-spacing: 0.6px;
+
+  padding: 14px 18px;
+  min-height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  position: relative;
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+
+/* Outer laser frame */
+.power-btn::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 1px solid currentColor;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* Glow on hover */
+.power-btn:hover {
+  box-shadow: 0 0 16px currentColor;
+  transform: translateY(-2px);
+}
+
+.power-btn:active {
+  transform: scale(.97);
+}
+
+/* Used powers */
+.power-btn.power-used {
+  opacity: 0.35;
+  filter: grayscale(1);
+  pointer-events: none;
+  box-shadow: none !important;
+}
+
+/* =====================================================
+   REMOVE INVALID BLUE FROM SETTER POWER RULES
+   ===================================================== */
+.theme-setter .power-btn {
+  color: #ff4b5c;
+}
+
+.theme-guesser .power-btn {
+  color: #4da3ff;
+}
+
+
+/* =========================
+   MODAL BASE (HIDDEN)
+   ========================= */
+.modal {
+  position: absolute;        /* ⬅️ was fixed */
+  inset: 0;
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.6);
+
+  z-index: 1000;             /* relative to screen */
+  pointer-events: none;
+}
+
+.modal.active {
+  display: flex;
+  pointer-events: auto;
+}
