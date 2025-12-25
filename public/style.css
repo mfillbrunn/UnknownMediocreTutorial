@@ -1206,12 +1206,20 @@ Constraint row using history tile language
   padding: 0;      /* IMPORTANT */
   gap: 0;          /* IMPORTANT */
 }
-.constraint-row .history-tile {
+
+.history-row .history-tile {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
+/* Constraint tiles: grid layout (NOT flex) */
+.constraint-row .history-tile {
+  position: relative;
+  display: grid; /* IMPORTANT */
+}
+
 .constraint-row .history-tile .quadrants {
   position: absolute;
   inset: 4px;              /* gives a little breathing room */
@@ -1235,7 +1243,7 @@ Constraint row using history tile language
   background: rgba(192, 57, 43, 0.9);
   color: #fff;
 
-  font-size: 13px;      /* slightly larger */
+  font-size: 13px;      
   font-weight: 900;
   line-height: 1;
 
