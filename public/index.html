@@ -66,16 +66,17 @@
   <!-- ========== SETTER ========== -->
   <div id="setterScreen" class="screen theme-setter">
      <!-- HEADER -->
-    <div class="setter-header">
-      <div class="role-title">
-        <h2 class="screen-title">Setter</h2>
-        <span class="room-tag">
-          <span id="menuRoomCode"></span>
-        </span>
+          <div class="setter-header">
+        <div class="role-title">
+          <h2 class="screen-title">Setter</h2>
+          <span class="room-tag" id="setterRoomTag"></span>
+        </div>
+      
+        <div class="setter-remaining">
+          <span id="remainingWordsSetter">-</span> words remaining
+        </div>
       </div>
-      <div class="setter-remaining"><span id="remainingWordsSetter">-</span> words remaining
-      </div>
-    </div>
+
      <!-- HISTORY TOP -->    
 <div class="play-area setter-play">
    <!-- LEFT: powers -->
@@ -141,15 +142,17 @@
 
   <div id="guesserScreen" class="screen theme-guesser">
   <!-- HEADER -->
-    <div class="guesser-header">
+        <div class="guesser-header">
       <div class="role-title">
         <h2 class="screen-title">Guesser</h2>
-        <span class="room-tag">
-          <span id="menuRoomCode"></span>
-        </span>
-      <div class="guesser-remaining"><span id="remainingWordsGuesser">-</span> words remaining
+        <span class="room-tag" id="guesserRoomTag"></span>
+      </div>
+    
+      <div class="guesser-remaining">
+        <span id="remainingWordsGuesser">-</span> words remaining
       </div>
     </div>
+
       <!-- HISTORY TOP -->
     <div class="play-area guesser-play">
 
