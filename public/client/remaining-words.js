@@ -60,13 +60,19 @@ function updateRemainingWords() {
     styleRemaining($("remainingWordsGuesser"), null);
     return;
   }
-
+  const lastIdx = state.history.length - 1;
   // compute once per update
   if (remainingCache.guesser === null) {
-    remainingCache.guesser = computeRemainingWordsForRole("guesser");
+    remainingCache.guesser =
+  lastIdx >= 0
+    ? computeRemainingAfterIndexForRole(lastIdx, "guesser")
+    : window.ALLOWED_SECRETS.size;
   }
   if (remainingCache.setter === null) {
-    remainingCache.setter = computeRemainingWordsForRole("setter");
+    remainingCache.setter =
+  lastIdx >= 0
+    ? computeRemainingAfterIndexForRole(lastIdx, "setter")
+    : window.ALLOWED_SECRETS.size;
   }
 
   const nGuesser = remainingCache.guesser;
