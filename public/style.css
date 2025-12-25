@@ -846,3 +846,46 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   display: flex;
   pointer-events: auto;
 }
+
+
+/* =========================================
+   3 column layout
+   ========================================= */
+
+/* 3-column play layout */
+.play-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 14px;
+  width: 100%;
+}
+
+/* Left column: powers */
+.powers-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Center column: history + draft */
+.center-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Right column: same button */
+.side-col {
+  width: 48px;
+  display: flex;
+  justify-content: center;
+}
+.center-col .history-tiles,
+.draft-layer {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
