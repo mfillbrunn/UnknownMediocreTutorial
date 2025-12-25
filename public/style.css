@@ -608,6 +608,9 @@ body {
 #setterScreen,
 #guesserScreen {
   min-height: auto;
+     display: flex;
+  flex-direction: column;
+  padding-bottom: 10px; 
 }
 
 .theme-setter .play-area {
@@ -618,6 +621,12 @@ body {
 }
 #guesserScreen [hidden] {
   display: none !important;
+}
+.theme-setter .keyboard {
+  margin-top: 10px; /* match guesser visual weight */
+}
+.theme-setter.screen {
+  padding-bottom: 8px;
 }
 
 
