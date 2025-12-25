@@ -124,4 +124,42 @@ window.getConstraintGrid = function (state, isSetterView) {
 
   return grid;
 };
+window.renderConstraintRow = function ({
+  state,
+  container,
+  isSetterView
+}) {
+  container.innerHTML = "";
+
+  const grid = getConstraintGrid(state, isSetterView);
+
+  for (let i = 0; i < 5; i++) {
+    const tile = document.createElement("div");
+    tile.className = "history-tile";
+
+    const cell = grid[i];
+
+    if (cell.green) {
+      tile.classList.add("tile-green");
+      tile.textContent = cell.green;
+    }
+    else if (cell.yellows.size > 0) {
+      tile.classList.add("tile-yellow");
+      tile.classList.add("constraint-yellow");
+
+      const letters = Array.from(cell.yellows).slice(0, 4);
+      for (const letter of letters) {
+        const span = document.createElement("span");
+        span.className = "constraint-letter";
+        span.textContent = letter;
+        tile.appendChild(span);
+      }
+    }
+    else {
+      tile.classList.add("tile-gray");
+    }
+
+    container.appendChild(tile);
+  }
+};
 
