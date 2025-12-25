@@ -97,15 +97,12 @@ window.formatPattern = function (pattern) {
 window.getConstraintGrid = function (state, isSetterView) {
   const grid = Array.from({ length: 5 }, () => ({
     green: null,
-    forbidden: new Set(),   // red ❌
-    possible: new Set()     // yellow ✅
+    forbidden: new Set()
   }));
 
   if (!state) return grid;
 
-  // 1️⃣ Collect global must-contain letters
-  const mustContain = new Set();
-
+  // 1️⃣ Greens and forbidden letters from history
   if (state.history?.length) {
     for (const entry of state.history) {
       const fbArray = isSetterView ? entry.fb : entry.fbGuesser;
@@ -116,17 +113,16 @@ window.getConstraintGrid = function (state, isSetterView) {
       for (let i = 0; i < 5; i++) {
         if (fbArray[i] === "🟩") {
           grid[i].green = guess[i];
-          mustContain.add(guess[i]);
+          grid[i].forbidden.clear(); // green overrides everything
         }
-        else if (fbArray[i] === "🟨") {
-          mustContain.add(guess[i]);
+        else if (fbArray[i] === "🟨" && !grid[i].green) {
           grid[i].forbidden.add(guess[i]);
         }
       }
     }
   }
 
-  // 2️⃣ Apply forced greens from powers (override)
+  // 2️⃣ Forced greens from powers (override)
   if (state.powers?.forcedGreens) {
     for (const [i, letter] of Object.entries(state.powers.forcedGreens)) {
       const idx = Number(i);
@@ -135,19 +131,9 @@ window.getConstraintGrid = function (state, isSetterView) {
     }
   }
 
-  // 3️⃣ Derive possible positions
-  for (let i = 0; i < 5; i++) {
-    if (grid[i].green) continue;
-
-    for (const letter of mustContain) {
-      if (!grid[i].forbidden.has(letter)) {
-        grid[i].possible.add(letter);
-      }
-    }
-  }
-
   return grid;
 };
+
 
 
 window.renderConstraintRow = function ({
@@ -173,7 +159,7 @@ window.renderConstraintRow = function ({
       continue;
     }
 
-    // ❌ Forbidden (red)
+    // ❌ Forbidden letters only
     for (const letter of cell.forbidden) {
       const span = document.createElement("span");
       span.className = "constraint-letter forbidden";
@@ -181,15 +167,13 @@ window.renderConstraintRow = function ({
       tile.appendChild(span);
     }
 
-    // ✅ Possible (yellow)
-    for (const letter of cell.possible) {
-      const span = document.createElement("span");
-      span.className = "constraint-letter possible";
-      span.textContent = letter;
-      tile.appendChild(span);
+    // If nothing known, show plain gray
+    if (cell.forbidden.size === 0) {
+      tile.classList.add("tile-gray");
     }
 
     container.appendChild(tile);
   }
 };
+
 
