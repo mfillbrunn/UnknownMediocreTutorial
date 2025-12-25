@@ -558,12 +558,17 @@ body {
   border: 1px solid rgba(70,140,255,.35);
   box-shadow: 0 0 6px rgba(70,140,255,.35);
 }
-/* Guesser guess shown on setter screen */
-.theme-setter #setterGuesserSubmitted .history-tile {
+/* Only when there are TWO draft rows:
+   style the TOP one as guesser-owned */
+.theme-setter
+#draftSetter:has(.history-row:nth-child(2))
+.history-row:first-child
+.history-tile {
   border-color: rgba(70,140,255,0.7);
   box-shadow: 0 0 6px rgba(70,140,255,0.35);
   color: #4da3ff;
 }
+
 
 /* Special setter draft layout */
 #draftSetter.history-tiles {
