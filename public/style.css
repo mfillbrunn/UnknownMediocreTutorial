@@ -502,8 +502,6 @@ body {
 
 .draft-row .draft-tile,
 .draft-box .history-tile {
-  background: #4ea3ff;
-  color: #bbb;
   border: 1px solid #00000055;
   opacity: 0.85;
 }
