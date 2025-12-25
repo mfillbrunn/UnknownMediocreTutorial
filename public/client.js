@@ -537,12 +537,17 @@ if (keepBtn) keepBtn.disabled = !isDecisionStep;
   container: $("setterGuesserSubmitted"),
   role: "setter"
 });
-
+renderConstraintRow({
+  state,
+  container: $("constraintRow"),
+  isSetterView: true
+});
 renderDraftRows({
   state,
   role: "setter",
   container: $("draftSetter")
 });
+
 
 const input = $("newSecretInput");
 
@@ -701,6 +706,12 @@ function updateGuesserScreen() {
   container: $("historyGuesser"),
   role: "guesser"
 });
+renderConstraintRow({
+  state,
+  container: $("constraintRow"),
+  isSetterView: false
+});
+
 
 renderDraftRows({
   state,
