@@ -25,8 +25,12 @@ window.renderHistory = function ({
 
     if (!Array.isArray(fbArray) || fbArray.length !== 5) continue;
 
+   const rowWrap = document.createElement("div");
+    rowWrap.className = "history-row-wrap";
+    
     const row = document.createElement("div");
     row.className = "history-row";
+
     if (safeEntry.extraInfo) {
       row.classList.add("evaluated-row");
     }
@@ -46,6 +50,12 @@ window.renderHistory = function ({
 
       row.appendChild(tile);
     }
+    const meta = document.createElement("div");
+      meta.className = "history-meta";
+      
+      if (safeEntry.powerUsed) {
+        meta.textContent = safeEntry.powerUsed;
+      }
 
     if (safeEntry.extraInfo) {
       const { greens, yellows } = safeEntry.extraInfo;
@@ -54,14 +64,8 @@ window.renderHistory = function ({
       extra.textContent = ` (${greens}🟩, ${yellows}🟨)`;
       row.appendChild(extra);
     }
-
-    if (safeEntry.powerUsed) {
-      const tag = document.createElement("span");
-      tag.className = "history-power";
-      tag.textContent = ` [${safeEntry.powerUsed}]`;
-      row.appendChild(tag);
-    }
-
+    rowWrap.appendChild(row);
+    rowWrap.appendChild(meta);
     container.appendChild(row);
   }
 };
