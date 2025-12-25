@@ -952,6 +952,15 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   opacity: 1;
   box-shadow: 0 0 6px currentColor;
 }
+/* KEEP button disabled state */
+.keep-btn:disabled {
+  opacity: 0.35;
+  filter: grayscale(1);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+
 .side-col {
   width: auto;
   min-width: 40px;
