@@ -44,9 +44,14 @@
       </div>
       <p><b>You are:</b> <span id="lobbyRoleLabel">-</span></p>
        <label class="color-picker-row">
-        <span>Accent color</span>
-        <input type="color" id="playerColorPicker">
-      </label>
+          <input type="checkbox" id="useCustomColor">
+          <span>Use custom accent color</span>
+        </label>
+      
+        <label class="color-picker-row">
+          <span>Accent color</span>
+          <input type="color" id="playerColorPicker" disabled>
+        </label>
       <button id="switchRolesBtn" class="secondary-btn">Switch Roles</button>
       <button id="readyBtn" class="primary-btn">I'm Ready</button>
     </div>
