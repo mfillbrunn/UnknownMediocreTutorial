@@ -601,6 +601,12 @@ body {
   animation: blue-pulse 2.2s infinite;
    animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
+.theme-setter:has(.turn-indicator.your-turn),
+.theme-guesser:has(.turn-indicator.your-turn) {
+  box-shadow:
+    0 0 40px color-mix(in srgb, var(--role-accent) 50%, transparent),
+    inset 0 0 30px color-mix(in srgb, var(--role-accent) 25%, transparent) !important;
+}
 
 /* Authoritative setter draft layout */
 #draftSetter {
