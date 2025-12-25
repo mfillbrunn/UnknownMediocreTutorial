@@ -389,6 +389,15 @@ body {
     inset 0 -2px 4px rgba(0,0,0,.6);
   opacity: 0.85;
 }
+/* Setter: gray keys are inert */
+.theme-setter .key.key-gray:hover,
+.theme-setter .key.key-gray:active {
+  background: #121417 !important;
+  transform: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    inset 0 -2px 4px rgba(0,0,0,.6);
+}
 
 /* Optional: highlight current draft keys without overriding solved colors */
 .key.key-current {
