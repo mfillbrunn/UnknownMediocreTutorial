@@ -1,825 +1,359 @@
-/* =========================================
-   TOKENS
-   ========================================= */
-:root {
-  /* Typography */
-  --font-sans: -apple-system, BlinkMacSystemFont, sans-serif;
+/* =====================================================
+   CASCADE LAYERS — AUTHORITATIVE ORDER
+   ===================================================== */
+@layer base, components, themes, utilities;
 
-  /* Base colors */
-  --bg-base: #0c0c0e;
-  --text: #eaeaea;
-  --heading: #ffffff;
+/* =====================================================
+   BASE — GLOBAL DEFAULTS & LAYOUT
+   ===================================================== */
+@layer base {
 
-  /* Surfaces */
-  --screen-bg: rgba(255,255,255,0.04);
-  --panel-bg: rgba(255,255,255,0.05);
-  --panel-text: #eaeaea;
-  --history-bg: rgba(0,0,0,0.25);
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, sans-serif;
 
-  /* Shadows */
-  --shadow-screen: 0 0 12px rgba(0,0,0,.4), 0 0 18px rgba(0,0,0,.25) inset;
-  --shadow-panel: 0 0 6px rgba(0,0,0,.4) inset;
+    --bg-base: #0c0c0e;
+    --bg-glow:
+      radial-gradient(circle at top center, rgba(255, 0, 0, 0.08), transparent 60%);
+
+    --text: #eaeaea;
+    --heading: #ffffff;
+
+    --screen-bg: rgba(255,255,255,0.04);
+    --panel-bg: rgba(255,255,255,0.05);
+    --panel-text: #eaeaea;
+    --history-bg: rgba(0,0,0,0.25);
+
+    --shadow-screen:
+      0 0 12px rgba(0,0,0,.4),
+      0 0 18px rgba(0,0,0,.25) inset;
+
+    --shadow-panel:
+      0 0 6px rgba(0,0,0,.4) inset;
+
+    --kb-neutral: #2b2f36;
+    --kb-hover: #3a3f48;
+
+    --tile-green: #3aa85a;
+    --tile-green-text: #fff;
+    --tile-yellow: #d4b23c;
+    --tile-yellow-text: #000;
+    --tile-gray: #3a3d44;
+    --tile-gray-text: #eee;
+    --tile-blue: #4ea3ff;
+    --tile-blue-text: #000;
+
+    --toast-bg: rgba(20,20,22,0.95);
+    --toast-border: rgba(255,255,255,0.12);
+
+    --popup-bg: rgba(20,20,22,0.95);
+    --popup-border: rgba(255,255,255,0.16);
+
+    /* Role defaults (overridden in themes) */
+    --role-accent: #4da3ff;
+    --role-accent-strong: #4da3ff;
+
+    --btn-primary: var(--role-accent-strong);
+    --btn-primary-hover: #6ab4ff;
+    --btn-primary-glow: rgba(70,140,255,.7);
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-sans);
+    line-height: 1.45;
+    color: var(--text);
+    background: var(--bg-glow), var(--bg-base);
+  }
+
+  #appContainer {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+  }
+
+  .title {
+    margin: 6px 0 10px;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    opacity: 0.85;
+    text-transform: uppercase;
+  }
+
+  .screen {
+    display: none;
+    position: relative;
+    background: var(--screen-bg);
+    border-radius: 14px;
+    padding: 20px;
+    margin-top: 16px;
+    box-shadow: var(--shadow-screen);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: .25s ease;
+  }
+
+  .screen.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .screen-title {
+    font-size: 24px;
+    color: var(--heading);
+    margin-bottom: 16px;
+  }
+
+  /* Lobby typography */
+  .screen-lobby { font-family: var(--font-sans); }
+
+  .screen-lobby :where(input, button, p, label, span) {
+    font-size: 18px;
+    letter-spacing: 0.5px;
+  }
+
+  #roomInfo {
+    opacity: 0;
+    transition: opacity .25s ease;
+  }
+
+  #roomInfo:not(.hidden) { opacity: 1; }
+}
+
+/* =====================================================
+   COMPONENTS — REUSABLE UI PIECES
+   ===================================================== */
+@layer components {
+
+  /* Panels */
+  :where(.panel, .constraints-box, .history-box, .summary-box, .preview-box) {
+    background: var(--panel-bg);
+    color: var(--panel-text);
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 14px;
+    box-shadow: var(--shadow-panel);
+  }
+
+  .history-box {
+    background: var(--history-bg);
+    font-family: "Courier New", monospace;
+  }
+
+  .history-box:empty,
+  .history-box:not(:has(.history-row)) {
+    color: #e5e5e5;
+  }
+
+  /* Input area */
+  .guess-input-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    max-width: 520px;
+    margin: 20px auto 0;
+  }
+
+  .letter-input {
+    width: 100%;
+    max-width: 360px;
+    background: #e6e6e6;
+    color: #000;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    text-align: center;
+    box-shadow: inset 0 0 0 1px #bbb;
+  }
+
+  .letter-input:focus {
+    outline: none;
+    box-shadow:
+      inset 0 0 0 2px var(--btn-primary),
+      0 0 8px var(--btn-primary-glow);
+  }
+
+  /* Buttons */
+  .primary-btn, .secondary-btn {
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .primary-btn {
+    background: var(--btn-primary);
+    color: #fff;
+    box-shadow: 0 0 10px var(--btn-primary-glow);
+  }
+
+  .primary-btn:hover {
+    background: var(--btn-primary-hover);
+  }
+
+  /* Power buttons */
+  .power-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .power-btn {
+    background: transparent;
+    border: 2px solid currentColor;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 800;
+    padding: 14px 18px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform .15s ease, box-shadow .2s ease, opacity .15s ease;
+  }
+
+  .power-btn::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    border: 1px solid currentColor;
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .power-btn:hover {
+    box-shadow: 0 0 16px currentColor;
+    transform: translateY(-2px);
+  }
+
+  .power-btn.power-used {
+    opacity: 0.35;
+    filter: grayscale(1);
+    pointer-events: none;
+  }
 
   /* Keyboard */
-  --kb-neutral: #2b2f36;
-  --kb-hover: #3a3f48;
-
-  /* Tiles */
-  --tile-green: #3aa85a;
-  --tile-green-text: #fff;
-  --tile-yellow: #d4b23c;
-  --tile-yellow-text: #000;
-  --tile-gray: #3a3d44;
-  --tile-gray-text: #eee;
-  --tile-blue: #4ea3ff;
-  --tile-blue-text: #000;
-
-  /* UI chrome */
-  --toast-bg: rgba(20,20,22,0.95);
-  --toast-border: rgba(255,255,255,0.12);
-
-  --popup-bg: rgba(20,20,22,0.95);
-  --popup-border: rgba(255,255,255,0.16);
-
-  /* App gradient */
-  --bg-glow: radial-gradient(circle at top center, rgba(255, 0, 0, 0.08), transparent 60%);
-
-  /* -------------------------------------------------
-     ROLE TOKENS (defaults; overridden by theme classes)
-     ------------------------------------------------- */
-  --role-accent: #4da3ff;
-  --role-accent-strong: #4da3ff;
-
-  --btn-primary: var(--role-accent-strong);
-  --btn-primary-hover: #6ab4ff;
-  --btn-primary-glow: rgba(70,140,255,.7);
-}
-
-/* Theme: Guesser (Blue) */
-.theme-guesser {
-  --role-accent: #4da3ff;
-  --role-accent-strong: #4da3ff;
-
-  --btn-primary: var(--role-accent-strong);
-  --btn-primary-hover: #6ab4ff;
-  --btn-primary-glow: rgba(70,140,255,.7);
-
-  --role-glow-outer: rgba(70,140,255,.35);
-  --role-glow-inner: rgba(70,140,255,.2);
-  --role-text-shadow: rgba(70,140,255,.9);
-
-  --setter-vignette: rgba(255,0,0,0); /* off */
-}
-
-/* Theme: Setter (Red) */
-.theme-setter {
-  --role-accent: #ff4b5c;
-  --role-accent-strong: #ff1e33;
-
-  --btn-primary: var(--role-accent-strong);
-  --btn-primary-hover: #ff3b4d;
-  --btn-primary-glow: rgba(255,30,50,.7);
-
-  --role-glow-outer: rgba(255,30,50,.35);
-  --role-glow-inner: rgba(255,30,50,.2);
-  --role-text-shadow: rgba(255,40,60,.9);
-
-  --setter-vignette: rgba(255,0,0,0.15);
-}
-
-/* =========================================
-   BASE LAYOUT
-   ========================================= */
-body {
-  margin: 0;
-  padding: 0;
-
-  color: var(--text);
-  font-family: var(--font-sans);
-  line-height: 1.45;
-
-  background: var(--bg-glow), var(--bg-base);
-}
-
-#appContainer {
-  max-width: 600px;
-  margin: auto;
-  padding: 20px;
-}
-
-.title {
-  margin: 6px 0 10px;
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  opacity: 0.85;
-  text-transform: uppercase;
-}
-
-/* =========================================
-   LOBBY TYPOGRAPHY (LOW SPECIFICITY)
-   ========================================= */
-.screen-lobby { font-family: var(--font-sans); }
-
-.screen-lobby :where(input, button, p, label, span) {
-  font-family: inherit;
-  font-size: 18px;
-  letter-spacing: 0.5px;
-}
-
-.screen-lobby input { font-weight: 600; }
-
-.screen-lobby button {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-#roomInfo {
-  opacity: 0;
-  transition: opacity .25s ease;
-}
-#roomInfo:not(.hidden) { opacity: 1; }
-
-/* =========================================
-   SCREENS + PANELS
-   ========================================= */
-.screen {
-  display: none;
-  position: relative;
-
-  background: var(--screen-bg);
-  border-radius: 14px;
-  padding: 20px;
-  margin-top: 16px;
-
-  box-shadow: var(--shadow-screen);
-
-  opacity: 0;
-  transform: translateY(10px);
-  transition: .25s ease;
-}
-
-.screen.active {
-  display: block;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.screen-title {
-  font-size: 24px;
-  color: var(--heading);
-  margin-bottom: 16px;
-}
-
-:where(.panel, .constraints-box, .history-box, .summary-box, .preview-box) {
-  background: var(--panel-bg);
-  color: var(--panel-text);
-  border-radius: 10px;
-  padding: 14px;
-  margin-top: 14px;
-  box-shadow: var(--shadow-panel);
-}
-
-.history-box {
-  background: var(--history-bg);
-  font-family: "Courier New", monospace;
-}
-
-.history-box:empty,
-.history-box:not(:has(.history-row)) {
-  color: #e5e5e5;
-}
-
-/* =========================================
-   INPUT AREA
-   ========================================= */
-.guess-input-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-
-  width: 100%;
-  max-width: 520px;
-  margin: 20px auto 0;
-}
-
-.letter-input {
-  width: 100%;
-  max-width: 360px;
-
-  background: #e6e6e6;
-  color: #000;
-
-  border: none;
-  border-radius: 8px;
-  padding: 10px 12px;
-
-  font-size: 1.4rem;
-  font-weight: 700;
-  letter-spacing: 6px;
-
-  text-transform: uppercase;
-  text-align: center;
-
-  box-shadow: inset 0 0 0 1px #bbb;
-}
-
-.letter-input:focus {
-  outline: none;
-  box-shadow:
-    inset 0 0 0 2px var(--btn-primary),
-    0 0 8px var(--btn-primary-glow);
-}
-
-.guess-btn-row {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 10px;
-
-  flex: 1;
-  min-width: 120px;
-}
-
-.play-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.decision-row {
-  display: flex;
-  gap: 12px;
-  width: 100%;
-  max-width: 360px;
-}
-.decision-row button { flex: 1; }
-
-/* =========================================
-   BUTTONS
-   ========================================= */
-:where(.primary-btn, .secondary-btn) {
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: none;
-  margin: 10px 0;
-  cursor: pointer;
-
-  text-transform: uppercase;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-
-  transition: .15s ease;
-}
-
-.primary-btn {
-  background: var(--btn-primary);
-  color: #fff;
-  box-shadow: 0 0 10px var(--btn-primary-glow);
-}
-.primary-btn:hover { background: var(--btn-primary-hover); }
-
-.secondary-btn {
-  background: var(--btn-secondary);
-  color: var(--btn-secondary-text);
-}
-.secondary-btn:hover { background: var(--btn-secondary-hover); }
-
-/* Power buttons */
-.power-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 10px;
-}
-
-.power-btn {
-  background: transparent;
-  border: 2px solid currentColor;
-  border-radius: 12px;
-
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-
-  padding: 14px 18px;
-  min-height: 44px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-
-  position: relative;
-  cursor: pointer;
-
-  transition: transform .15s ease, box-shadow .2s ease, opacity .15s ease;
-}
-
-.power-btn::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: inherit;
-  border: 1px solid currentColor;
-  opacity: 0.35;
-  pointer-events: none;
-}
-
-.power-btn:hover {
-  box-shadow: 0 0 16px currentColor;
-  transform: translateY(-2px);
-}
-.power-btn:active { transform: scale(.97); }
-
-.power-btn.power-used {
-  opacity: 0.35;
-  filter: grayscale(1);
-  pointer-events: none;
-  box-shadow: none;
-}
-
-/* Bind role accent to theme */
-:where(.theme-setter, .theme-guesser) .power-btn { color: var(--role-accent); }
-
-/* =========================================
-   KEYBOARD
-   ========================================= */
-.keyboard {
-  width: 100%;
-  max-width: 520px;
-  margin: 20px auto 0;
-  padding: 0;
-}
-
-.key-row {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 6px;
-  flex-wrap: nowrap;
-}
-
-.key {
-  width: 44px;
-  height: 56px;
-  padding: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 6px;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 1px;
-
-  background: var(--kb-neutral);
-  border: 1px solid #00000055;
-  color: #fff;
-
-  cursor: pointer;
-  transition: background .15s, transform .1s, box-shadow .15s;
-}
-
-.key[data-key="⌫"] { width: 58px; }
-
-.key:hover {
-  background: var(--kb-hover);
-  transform: translateY(-2px);
-}
-.key:active { transform: scale(0.95); }
-
-/* Key color states */
-.key.key-green  { background: var(--tile-green);  color: var(--tile-green-text); }
-.key.key-yellow { background: var(--tile-yellow); color: var(--tile-yellow-text); }
-.key.key-blue   { background: var(--tile-blue);   color: var(--tile-blue-text); }
-
-/* “Gray” special visuals */
-.key.key-gray {
-  background:
-    repeating-linear-gradient(
-      135deg,
-      #121417,
-      #121417 6px,
-      #0e1013 6px,
-      #0e1013 12px
-    );
-  color: #7a7f88;
-  border-color: #000000aa;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.03),
-    inset 0 -2px 4px rgba(0,0,0,.6);
-  opacity: 0.85;
-}
-
-.key.key-gray:hover,
-.key.key-gray:active {
-  background: #121417;
-  transform: none;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.03),
-    inset 0 -2px 4px rgba(0,0,0,.6);
-}
-
-/* Draft highlight */
-.key.key-current {
-  box-shadow: 0 0 0 2px rgba(255,255,255,.35) inset;
-}
-
-/* Enter key (single canonical implementation: last key of last row) */
-.key-row:last-child .key:last-child {
-  position: relative;
-  color: transparent;
-
-  background: var(--btn-primary);
-  box-shadow: 0 0 8px var(--btn-primary-glow);
-}
-.key-row:last-child .key:last-child::before {
-  content: "⏎";
-  position: absolute;
-  inset: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color: #fff;
-  font-size: 22px;
-  font-weight: 800;
-}
-
-/* Key shine animation */
-.key-animate { animation: key-shine 180ms ease-out; }
-@keyframes key-shine {
-  0%   { box-shadow: 0 0 0 rgba(255,255,255,0); }
-  50%  { box-shadow: 0 0 12px rgba(255,255,255,.35); }
-  100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
-}
-.key[data-key="⌫"],
-.key[data-key="ENTER"] {
-  animation: none;
-}
-
-/* =========================================
-   HISTORY TILES
-   ========================================= */
-.history-tiles {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px 0;
-}
-
-.history-row {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-.history-tile {
-  width: 42px;
-  height: 48px;
-  border-radius: 6px;
-
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 1px;
-
-  border: 1px solid #00000055;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color: #fff;
-
-  transform-style: preserve-3d;
-  perspective: 600px;
-
-  animation: none;
-}
-
-/* Evaluated flip */
-.evaluated-row .history-tile { animation: flip-in 0.6s ease forwards; }
-
-/* Draft pop */
-@keyframes draft-pop {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.08); }
-  100% { transform: scale(1); }
-}
-.draft-row .history-tile { animation: draft-pop 120ms ease-out; }
-
-/* Tile state colors */
-.tile-green  { background: var(--tile-green);  color: var(--tile-green-text); }
-.tile-yellow { background: var(--tile-yellow); color: var(--tile-yellow-text); }
-.tile-gray   { background: var(--tile-gray);   color: var(--tile-gray-text); }
-.tile-blue   { background: var(--tile-blue);   color: var(--tile-blue-text); }
-
-/* Flip animation */
-@keyframes flip-in {
-  0%   { transform: rotateX(90deg); opacity: 0; }
-  40%  { transform: rotateX(20deg); opacity: .6; }
-  70%  { transform: rotateX(0deg); opacity: 1; }
-  100% { transform: rotateX(0deg); opacity: 1; }
-}
-
-/* Stagger */
-.history-row .history-tile:nth-child(1) { animation-delay: 0.00s; }
-.history-row .history-tile:nth-child(2) { animation-delay: 0.08s; }
-.history-row .history-tile:nth-child(3) { animation-delay: 0.16s; }
-.history-row .history-tile:nth-child(4) { animation-delay: 0.24s; }
-.history-row .history-tile:nth-child(5) { animation-delay: 0.32s; }
-
-/* Draft / submitted / pending */
-.draft-tile { animation: none; }
-
-:where(.draft-row .draft-tile, .draft-box .history-tile) {
-  background: var(--tile-blue);
-  color: #bbb;
-  border: 1px solid #00000055;
-  opacity: 0.85;
-}
-
-.submitted-row .submitted-tile {
-  background: var(--tile-gray);
-  color: var(--tile-gray-text);
-  border: 1px solid #00000066;
-  opacity: 0.95;
-}
-
-.pending-guess .history-tile { border: 2px solid rgba(255,255,255,0.5); }
-
-/* Draft layers */
-.draft-layer {
-  position: relative;
-  min-height: 70px;
-  z-index: 20;
-  pointer-events: none;
-}
-.history-scroll { z-index: 1; }
-
-/* Ghost secret */
-.ghost-secret {
-  color: rgba(255,255,255,0.35);
-  letter-spacing: 0.15em;
-}
-.ghost-secret .history-tile {
-  opacity: 0.35;
-  filter: grayscale(100%);
-  border: 1px dashed rgba(255,255,255,0.35);
-}
-
-/* Theme-specific draft accents */
-.theme-setter .draft-layer .history-tile {
-  border: 1px solid rgba(255,80,80,0.4);
-  box-shadow: 0 0 6px rgba(255,80,80,0.3);
-}
-.theme-guesser .draft-layer .history-tile {
-  border: 1px solid rgba(70,140,255,.35);
-  box-shadow: 0 0 6px rgba(70,140,255,.35);
-}
-
-/* Setter draft layout */
-#draftSetter.history-tiles {
-  flex-direction: row;
-  justify-content: center;
-  gap: 6px;
-}
-#draftSetter {
-  width: fit-content;
-  padding-left: 0;
-  padding-right: 0;
-  margin-top: 0;
-}
-
-/* =========================================
-   INFO GRID
-   ========================================= */
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 20px;
-}
-.info-col p { margin: 6px 0; }
-
-/* =========================================
-   THEME CHROME (BORDERS / GLOWS / HEADERS)
-   ========================================= */
-:where(.theme-guesser, .theme-setter) {
-  border: 2px solid var(--role-accent-strong);
-  box-shadow:
-    0 0 25px var(--role-glow-outer),
-    inset 0 0 25px var(--role-glow-inner);
-  color: var(--role-accent);
-}
-
-:where(.theme-guesser, .theme-setter) h2 {
-  color: var(--role-accent);
-  text-shadow: 0 0 18px var(--role-text-shadow);
-}
-
-/* Remaining words */
-:where(.theme-guesser .guesser-remaining, .theme-setter .setter-remaining) {
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  opacity: 0.9;
-  text-transform: uppercase;
-  font-size: 13px;
-  white-space: nowrap;
-  color: var(--role-accent);
-}
-
-/* Panels transparent in both themes */
-:where(.theme-guesser, .theme-setter) :where(.panel, .history-box, .preview-box) {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-:where(.theme-guesser, .theme-setter) .history-box { margin-bottom: 6px; }
-
-.theme-setter .keyboard { margin-top: 10px; }
-.theme-setter .info-grid { margin-top: 12px; }
-
-/* Setter vignette */
-.theme-setter::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  box-shadow: inset 0 0 80px var(--setter-vignette);
-}
-
-/* =========================================
-   TURN OVERLAY
-   ========================================= */
-.turn-indicator { display: none; }
-
-.turn-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 72px;
-
-  pointer-events: none;
-  opacity: 0;
-
-  transition: opacity .25s ease;
-  z-index: 9999;
-}
-
-/* If any indicator has your-turn, show overlay */
-body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
-
-/* Setter overlay pulse */
-.theme-setter .turn-overlay.your-turn {
-  opacity: 1;
-  background: linear-gradient(
-    to bottom,
-    rgba(255,30,50,0.55),
-    rgba(255,30,50,0)
-  );
-  animation: setter-overlay-pulse 1.2s infinite;
-}
-@keyframes setter-overlay-pulse {
-  0%   { filter: brightness(1); }
-  50%  { filter: brightness(1.3); }
-  100% { filter: brightness(1); }
-}
-
-/* Setter current-key outline pulse */
-.theme-setter .key.key-current {
-  color: #fff;
-  outline-offset: -2px;
-  animation: setter-used-outline 1.4s infinite;
-}
-@keyframes setter-used-outline {
-  0%   { outline: 2px solid rgba(255, 40, 60, 0); }
-  50%  { outline: 2px solid rgba(255, 40, 60, 0.9); }
-  100% { outline: 2px solid rgba(255, 40, 60, 0); }
-}
-
-/* =========================================
-   TOAST + TURN POPUP
-   ========================================= */
-.toast {
-  position: fixed;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%) translateY(40px);
-  opacity: 0;
-
-  padding: 12px 22px;
-  font-size: 18px;
-  font-weight: 700;
-
-  border-radius: 10px;
-  background: var(--toast-bg);
-  border: 1px solid var(--toast-border);
-  color: #fff;
-
-  transition: opacity .25s ease, transform .25s ease;
-  z-index: 99999;
-}
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.turn-popup {
-  position: fixed;
-  top: 100px;
-  left: 50%;
-  transform: translateX(-50%) scale(.9);
-  opacity: 0;
-
-  padding: 14px 26px;
-  font-size: 22px;
-  font-weight: 800;
-
-  border-radius: 12px;
-  background: var(--popup-bg);
-  border: 2px solid var(--popup-border);
-
-  transition: opacity .25s ease, transform .25s ease;
-  z-index: 99999;
-}
-.turn-popup.show {
-  opacity: 1;
-  transform: translateX(-50%) scale(1);
-}
-
-/* =========================================
-   GUESSER CONSTRAINT OUTPUT HIDING (KEEP IMPORTANT)
-   ========================================= */
-/* Keep !important here only if JS/rewrites keep reintroducing visible content */
-#guesserScreen .pattern-letter,
-#guesserScreen #mustContainGuesser {
-  display: inline-block !important;
-  width: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  letter-spacing: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-/* Legacy / hidden helpers */
-.guesser-hidden { display: none; }
-.guesser-legacyxx { display: none; }
-
-/* =========================================
-   SECRET ROW / SAME BUTTON
-   ========================================= */
-.secret-row {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-.secret-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.same-btn {
-  margin-left: 12px;
-  white-space: nowrap;
-  opacity: 0.9;
-
-  padding: 10px;
-  min-width: 40px;
-  min-height: 40px;
-
-  border-radius: 50%;
-  background: transparent;
-}
-.same-btn:hover { opacity: 1; }
-.same-btn svg { display: block; }
-
-/* =========================================
-   MODAL
-   ========================================= */
-.modal {
-  position: absolute;
-  inset: 0;
-
-  display: none;
-  align-items: center;
-  justify-content: center;
-
-  background: rgba(0, 0, 0, 0.6);
-
-  z-index: 1000;
-  pointer-events: none;
-}
-
-.modal.active {
-  display: flex;
-  pointer-events: auto;
+  .keyboard {
+    max-width: 520px;
+    margin: 20px auto 0;
+  }
+
+  .key {
+    width: 44px;
+    height: 56px;
+    border-radius: 6px;
+    font-size: 18px;
+    font-weight: 700;
+    background: var(--kb-neutral);
+    color: #fff;
+    border: 1px solid #00000055;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, transform .1s;
+  }
+
+  .key:hover {
+    background: var(--kb-hover);
+    transform: translateY(-2px);
+  }
+
+  .key:active { transform: scale(.95); }
+
+  .key.key-green  { background: var(--tile-green);  color: var(--tile-green-text); }
+  .key.key-yellow { background: var(--tile-yellow); color: var(--tile-yellow-text); }
+  .key.key-gray   { background: var(--tile-gray);   color: var(--tile-gray-text); }
+  .key.key-blue   { background: var(--tile-blue);   color: var(--tile-blue-text); }
+
+  /* History tiles */
+  .history-tiles {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 0;
+  }
+
+  .history-row {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .history-tile {
+    width: 42px;
+    height: 48px;
+    border-radius: 6px;
+    font-size: 20px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #00000055;
+    color: #fff;
+  }
+
+  .evaluated-row .history-tile {
+    animation: flip-in 0.6s ease forwards;
+  }
+
+  @keyframes flip-in {
+    0%   { transform: rotateX(90deg); opacity: 0; }
+    100% { transform: rotateX(0deg);  opacity: 1; }
+  }
+}
+
+/* =====================================================
+   THEMES — ROLE-BASED OVERRIDES
+   ===================================================== */
+@layer themes {
+
+  .theme-guesser {
+    --role-accent: #4da3ff;
+    --role-accent-strong: #4da3ff;
+  }
+
+  .theme-setter {
+    --role-accent: #ff4b5c;
+    --role-accent-strong: #ff1e33;
+  }
+
+  :where(.theme-guesser, .theme-setter) {
+    border: 2px solid var(--role-accent-strong);
+    color: var(--role-accent);
+  }
+
+  :where(.theme-guesser, .theme-setter) .power-btn {
+    color: var(--role-accent);
+  }
+}
+
+/* =====================================================
+   UTILITIES — INTENTIONAL FORCE OVERRIDES
+   ===================================================== */
+@layer utilities {
+
+  /* Force-hide guesser constraint output */
+  #guesserScreen .pattern-letter,
+  #guesserScreen #mustContainGuesser {
+    display: inline-block !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .guesser-hidden { display: none; }
 }
