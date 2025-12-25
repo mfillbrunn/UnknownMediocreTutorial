@@ -812,6 +812,15 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
 .same-btn:hover { opacity: 1; }
 .same-btn svg { display: block; }
 
+
+/* Remove panel boxes for guesser + setter inline strip */
+.theme-guesser .history-box,
+.theme-setter .secret-inline {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
 /* =========================================
    MODAL BASE (HIDDEN)
    ========================================= */
