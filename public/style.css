@@ -934,9 +934,9 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
 
 .keep-btn {
   position: absolute;
-  left: calc(100% + 12px); /* sits right next to tiles */
-  bottom: 0;               /* aligns with bottom draft row */
-   transform: translateY(-50%); /* ← vertical centering */
+  left: calc(100% + 12px); 
+  bottom: 0;               
+   translateY(-2px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
