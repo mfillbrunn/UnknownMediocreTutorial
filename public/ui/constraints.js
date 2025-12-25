@@ -94,16 +94,18 @@ window.formatPattern = function (pattern) {
   return "";
 };
 
-
 window.getConstraintGrid = function (state, isSetterView) {
   const grid = Array.from({ length: 5 }, () => ({
     green: null,
-    yellows: new Set()
+    forbidden: new Set(),   // red ❌
+    possible: new Set()     // yellow ✅
   }));
 
   if (!state) return grid;
 
-  // 1️⃣ Greens from scoring history
+  // 1️⃣ Collect global must-contain letters
+  const mustContain = new Set();
+
   if (state.history?.length) {
     for (const entry of state.history) {
       const fbArray = isSetterView ? entry.fb : entry.fbGuesser;
@@ -114,24 +116,40 @@ window.getConstraintGrid = function (state, isSetterView) {
       for (let i = 0; i < 5; i++) {
         if (fbArray[i] === "🟩") {
           grid[i].green = guess[i];
-        } else if (fbArray[i] === "🟨") {
-          grid[i].yellows.add(guess[i]);
+          mustContain.add(guess[i]);
+        }
+        else if (fbArray[i] === "🟨") {
+          mustContain.add(guess[i]);
+          grid[i].forbidden.add(guess[i]);
         }
       }
     }
   }
 
-  // 2️⃣ Greens forced by powers (OVERRIDE)
+  // 2️⃣ Apply forced greens from powers (override)
   if (state.powers?.forcedGreens) {
     for (const [i, letter] of Object.entries(state.powers.forcedGreens)) {
       const idx = Number(i);
       grid[idx].green = letter.toUpperCase();
-      grid[idx].yellows.clear(); // once green, yellows here are irrelevant
+      grid[idx].forbidden.clear();
+    }
+  }
+
+  // 3️⃣ Derive possible positions
+  for (let i = 0; i < 5; i++) {
+    if (grid[i].green) continue;
+
+    for (const letter of mustContain) {
+      if (!grid[i].forbidden.has(letter)) {
+        grid[i].possible.add(letter);
+      }
     }
   }
 
   return grid;
 };
+
+
 window.renderConstraintRow = function ({
   state,
   container,
@@ -143,28 +161,32 @@ window.renderConstraintRow = function ({
 
   for (let i = 0; i < 5; i++) {
     const tile = document.createElement("div");
-    tile.className = "history-tile";
+    tile.className = "history-tile constraint-tile";
 
     const cell = grid[i];
 
+    // 🟩 Green
     if (cell.green) {
       tile.classList.add("tile-green");
       tile.textContent = cell.green;
+      container.appendChild(tile);
+      continue;
     }
-    else if (cell.yellows.size > 0) {
-      tile.classList.add("tile-yellow");
-      tile.classList.add("constraint-yellow");
 
-      const letters = Array.from(cell.yellows).slice(0, 4);
-      for (const letter of letters) {
-        const span = document.createElement("span");
-        span.className = "constraint-letter";
-        span.textContent = letter;
-        tile.appendChild(span);
-      }
+    // ❌ Forbidden (red)
+    for (const letter of cell.forbidden) {
+      const span = document.createElement("span");
+      span.className = "constraint-letter forbidden";
+      span.textContent = letter;
+      tile.appendChild(span);
     }
-    else {
-      tile.classList.add("tile-gray");
+
+    // ✅ Possible (yellow)
+    for (const letter of cell.possible) {
+      const span = document.createElement("span");
+      span.className = "constraint-letter possible";
+      span.textContent = letter;
+      tile.appendChild(span);
     }
 
     container.appendChild(tile);
