@@ -616,11 +616,19 @@ body {
 }
 
 .theme-setter.screen {
-  padding-bottom: 8px;
+  padding-bottom: 10px;
 }
 
 .theme-setter .keyboard {
   margin-top: 10px;
+}
+#setterScreen,
+#guesserScreen {
+  min-height: auto;
+}
+
+.theme-setter .play-area {
+  margin-bottom: 0;
 }
 
 
