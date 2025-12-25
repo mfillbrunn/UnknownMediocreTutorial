@@ -337,6 +337,7 @@ body {
 
 /* Special widths */
 .key[data-key="⌫"] { width: 58px; }
+.key[data-key="ENTER"] {width: 58px;}
 
 /* Hover / active */
 .key:hover {
@@ -383,13 +384,15 @@ body {
 }
 
 /* Enter key styling (keep one approach: last key of last row) */
-.key-row:last-child .key:last-child {
+/* ENTER key — semantic, not positional */
+.key[data-key="ENTER"] {
   position: relative;
-  color: transparent; /* hide label text */
+  color: transparent; /* hide text */
   background: var(--btn-primary);
   box-shadow: 0 0 8px var(--btn-primary-glow);
 }
-.key-row:last-child .key:last-child::before {
+
+.key[data-key="ENTER"]::before {
   content: "⏎";
   position: absolute;
   inset: 0;
