@@ -6,6 +6,21 @@ function categorizeRemainingWords(count) {
   if (count === 1) return "only one";
   return "none";
 }
+window.computeRemainingAfterIndexForRole = function (idx, role) {
+  const words = window.ALLOWED_SECRETS;
+  if (!state || !state.history) return 0;
+
+  const partialHistory = state.history.slice(0, idx + 1);
+
+  let count = 0;
+  for (const w of words) {
+    if (isConsistentWithHistory(partialHistory, w, state, role)) {
+      count++;
+    }
+  }
+
+  return count;
+};
 
 function computeRemainingWordsForRole(role) {
   const words = window.ALLOWED_SECRETS;
