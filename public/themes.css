@@ -42,15 +42,14 @@
   --your-turn-bg:#0066ff;
   --your-turn-glow:rgba(0,102,255,.8);
 
-   --tile-green: #cfffb0;
-  --tile-green-text: #000;
-  --tile-yellow: #fff689;
-  --tile-yellow-text: #000;
-  --tile-gray: #3a3d44;
-  --tile-gray-text: #eee;
-  --tile-purple: #58355e;
-  --tile-purple-text: #fff;
 
+ --tile-green:#00c851;
+  --tile-green-text:#003d1a;
+  --tile-yellow:#ffbb33;
+  --tile-yellow-text:#4a2c00;
+  --tile-gray:#3c3d42;
+  --tile-gray-text:#ccc;
+  
   --kb-neutral:#1f232a;
   --kb-border:#2b303a;
   --kb-hover:#2f3036;
@@ -89,6 +88,14 @@ body.theme-dark {
 /* Esports theme */
 body.theme-esports {
   /* Uses root defaults */
+     --tile-green: #cfffb0;
+  --tile-green-text: #000;
+  --tile-yellow: #fff689;
+  --tile-yellow-text: #000;
+  --tile-gray: #3a3d44;
+  --tile-gray-text: #eee;
+  --tile-purple: #58355e;
+  --tile-purple-text: #fff;
 }
 
 /* =====================================
