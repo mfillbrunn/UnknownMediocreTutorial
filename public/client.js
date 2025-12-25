@@ -539,7 +539,7 @@ if (keepBtn) keepBtn.disabled = !isDecisionStep;
 });
 renderConstraintRow({
   state,
-  container: $("constraintRow"),
+  container: $("constraintRowSetter"),
   isSetterView: true
 });
 renderDraftRows({
@@ -708,7 +708,7 @@ function updateGuesserScreen() {
 });
 renderConstraintRow({
   state,
-  container: $("constraintRow"),
+  container: $("constraintRowGuesser"),
   isSetterView: false
 });
 
