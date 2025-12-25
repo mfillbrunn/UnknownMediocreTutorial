@@ -160,12 +160,19 @@ window.renderConstraintRow = function ({
     }
 
     // ❌ Forbidden letters only
-    for (const letter of cell.forbidden) {
-      const span = document.createElement("span");
-      span.className = "constraint-letter forbidden";
-      span.textContent = letter;
-      tile.appendChild(span);
-    }
+    // ❌ Forbidden letters only (alphabetically ordered)
+const letters = Array
+  .from(cell.forbidden)
+  .sort()        // ← alphabetical
+  .slice(0, 4);  // ← cap to quadrants
+
+for (const letter of letters) {
+  const span = document.createElement("span");
+  span.className = "constraint-letter forbidden";
+  span.textContent = letter;
+  tile.appendChild(span);
+}
+
 
     // If nothing known, show plain gray
     if (cell.forbidden.size === 0) {
