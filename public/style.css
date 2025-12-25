@@ -1189,27 +1189,36 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   );
   pointer-events: none;
 }
-/* Constraint tile: 2x2 grid for annotations */
+/* Constraint tile: true 2x2 quadrants */
 .constraint-tile {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 2px;
-  padding: 4px;
+
+  padding: 0;      /* IMPORTANT */
+  gap: 0;          /* IMPORTANT */
 }
 
 
-/* ❌ Forbidden letter: quarter-tile annotation */
+/* ❌ Forbidden letter = full quadrant */
 .constraint-letter.forbidden {
+  width: 100%;
+  height: 100%;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(192, 57, 43, 0.9); /* deep red, not neon */
+
+  background: rgba(192, 57, 43, 0.9);
   color: #fff;
-  font-size: 11px;
-  font-weight: 800;
+
+  font-size: 13px;      /* slightly larger */
+  font-weight: 900;
   line-height: 1;
-  border-radius: 3px;
+
+  text-decoration: line-through;
+  border-radius: 2px;
 }
+
 
 
