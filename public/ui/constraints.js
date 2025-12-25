@@ -84,8 +84,16 @@ function applyMustContainPowers(arr, state) {
 // ----------------------------------------------------------
 
 window.formatPattern = function (pattern) {
-  return pattern.split("").join(" ");
+  // Accept array or string
+  if (Array.isArray(pattern)) {
+    return pattern.join(" ");
+  }
+  if (typeof pattern === "string") {
+    return pattern.split("").join(" ");
+  }
+  return "";
 };
+
 
 window.getConstraintGrid = function (state, isSetterView) {
   const grid = Array.from({ length: 5 }, () => ({
