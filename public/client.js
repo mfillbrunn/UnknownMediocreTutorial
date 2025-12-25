@@ -339,8 +339,36 @@ colorPicker.oninput = e => {
   }
 };
 
+function resetPlayerColor() {
+  const target =
+    myRole === "A"
+      ? $("setterScreen")
+      : $("guesserScreen");
 
+  if (!target) return;
 
+  // Remove overrides → CSS defaults apply again
+  target.style.removeProperty("--role-accent");
+  target.style.removeProperty("--role-accent-strong");
+  target.style.removeProperty("--btn-primary");
+  target.style.removeProperty("--btn-primary-hover");
+  target.style.removeProperty("--btn-primary-glow");
+}
+
+function applyPlayerColor(color) {
+  const target =
+    myRole === "A"
+      ? $("setterScreen")
+      : $("guesserScreen");
+
+  if (!target) return;
+
+  target.style.setProperty("--role-accent", color);
+  target.style.setProperty("--role-accent-strong", color);
+  target.style.setProperty("--btn-primary", color);
+  target.style.setProperty("--btn-primary-hover", color);
+  target.style.setProperty("--btn-primary-glow", color + "aa");
+}
 // -----------------------------------------------------
 // UI UPDATE PIPELINE
 // -----------------------------------------------------
