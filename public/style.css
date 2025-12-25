@@ -605,6 +605,17 @@ body {
   --btn-primary-hover: #ff3b4d;
   --btn-primary-glow: rgba(255,30,50,.7);
 
+#setterScreen,
+#guesserScreen {
+  min-height: auto;
+}
+
+.theme-setter .play-area {
+  margin-bottom: 0;
+}
+
+
+
   background: #140203;
   border: 2px solid var(--role-accent-strong) !important;
   box-shadow:
