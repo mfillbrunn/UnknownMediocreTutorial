@@ -981,68 +981,39 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   justify-content: center;
 }
 
-/* Shared laser-outline language (same as power buttons) */
-.draft-layer .history-row,
-.ghost-secret {
-  position: relative;
-}
-/* Static laser frame for important rows */
-.draft-layer .history-row::before,
-.ghost-secret::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 8px;
-  border: 1px solid rgba(70,140,255,0.6);
-  opacity: 0.6;
-  pointer-events: none;
-}
-/* Inner outline (matches power button main border weight) */
-.draft-layer .history-row .history-tile,
-.ghost-secret .history-tile {
+/* Strong, static outline for important tiles (power-style) */
+.tile-strong {
   border-width: 2px;
+  box-shadow: 0 0 8px rgba(70,140,255,0.45);
 }
 .theme-setter
 #draftSetter:has(.history-row:nth-child(2))
-.history-row:last-child::before {
-  border-color: rgba(70,140,255,0.7);
+.history-row:last-child
+.history-tile {
+  border-color: rgba(70,140,255,0.8);
+  box-shadow: 0 0 8px rgba(70,140,255,0.45);
 }
-/* Guesser draft row: same laser-frame highlight as powers */
-.theme-guesser #draftGuesser .history-row {
-  position: relative;
+.theme-guesser #draftGuesser .history-tile {
+  border-width: 2px;
+  border-color: rgba(70,140,255,0.8);
+  box-shadow: 0 0 8px rgba(70,140,255,0.45);
 }
-
-.theme-guesser #draftGuesser .history-row::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 8px;
-  border: 1px solid rgba(70,140,255,0.6);
-  opacity: 0.6;
-  pointer-events: none;
+.ghost-secret .history-tile {
+  border-width: 2px;
+  box-shadow: 0 0 8px rgba(70,140,255,0.35);
 }
-/* Visually dead / unusable state */
-.is-dead {
+.ghost-secret .history-tile {
   opacity: 0.35;
-  filter: grayscale(1);
+  filter: grayscale(100%);
+  border-style: dashed;
 }
+/* Draft tiles when unusable */
 .theme-setter:not(:has(.turn-indicator.your-turn))
-#draftSetter .history-row {
-  opacity: 0.35;
-  filter: grayscale(1);
-}
+#draftSetter .history-tile,
 .theme-guesser:not(:has(.turn-indicator.your-turn))
-#draftGuesser .history-row {
-  opacity: 0.35;
+#draftGuesser .history-tile {
+  opacity: 0.28;
   filter: grayscale(1);
+  box-shadow: none;
 }
-/* No laser frame when dead */
-.theme-setter:not(:has(.turn-indicator.your-turn))
-#draftSetter .history-row::before,
-.theme-guesser:not(:has(.turn-indicator.your-turn))
-#draftGuesser .history-row::before,
-.ghost-secret.is-dead::before {
-  opacity: 0;
-}
-opacity: 0.28;
 
