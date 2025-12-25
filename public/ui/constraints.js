@@ -103,24 +103,42 @@ window.getConstraintGrid = function (state, isSetterView) {
   if (!state) return grid;
 
   // 1️⃣ Greens and forbidden letters from history
-  if (state.history?.length) {
-    for (const entry of state.history) {
-      const fbArray = isSetterView ? entry.fb : entry.fbGuesser;
-      if (!Array.isArray(fbArray)) continue;
+// 1️⃣ Greens and forbidden letters from history
+if (state.history?.length) {
+  for (const entry of state.history) {
+    const fbArray = isSetterView ? entry.fb : entry.fbGuesser;
+    if (!Array.isArray(fbArray)) continue;
 
-      const guess = entry.guess.toUpperCase();
+    const guess = entry.guess.toUpperCase();
 
-      for (let i = 0; i < 5; i++) {
-        if (fbArray[i] === "🟩") {
-          grid[i].green = guess[i];
-          grid[i].forbidden.clear(); // green overrides everything
-        }
-        else if (fbArray[i] === "🟨" && !grid[i].green) {
-          grid[i].forbidden.add(guess[i]);
-        }
+    // First pass: which letters are known to be in the word?
+    const knownInWord = new Set();
+    for (let i = 0; i < 5; i++) {
+      if (fbArray[i] === "🟩" || fbArray[i] === "🟨") {
+        knownInWord.add(guess[i]);
+      }
+    }
+
+    // Second pass: apply positional constraints
+    for (let i = 0; i < 5; i++) {
+      const letter = guess[i];
+      const fb = fbArray[i];
+
+      if (fb === "🟩") {
+        grid[i].green = letter;
+        grid[i].forbidden.clear();
+      }
+      else if (fb === "🟨") {
+        grid[i].forbidden.add(letter);
+      }
+      else if (fb === "⬛" && knownInWord.has(letter)) {
+        // 🔥 THIS IS THE MISSING RULE
+        grid[i].forbidden.add(letter);
       }
     }
   }
+}
+
 
   // 2️⃣ Forced greens from powers (override)
   if (state.powers?.forcedGreens) {
