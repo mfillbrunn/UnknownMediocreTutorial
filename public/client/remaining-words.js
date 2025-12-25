@@ -6,7 +6,7 @@ function categorizeRemainingWords(count) {
   if (count === 1) return "only one";
   return "none";
 }
-window.computeRemainingAfterIndexForRole = function (idx, role) {
+window.computeRemainingAfterIndexForRole = function (idx) {
   const words = window.ALLOWED_SECRETS;
   if (!state || !state.history) return 0;
 
@@ -14,7 +14,7 @@ window.computeRemainingAfterIndexForRole = function (idx, role) {
 
   let count = 0;
   for (const w of words) {
-    if (isConsistentWithHistory(partialHistory, w, state, role)) {
+    if (isConsistentWithHistory(partialHistory, w, state)) {
       count++;
     }
   }
@@ -22,13 +22,13 @@ window.computeRemainingAfterIndexForRole = function (idx, role) {
   return count;
 };
 
-function computeRemainingWordsForRole(role) {
+function computeRemainingWordsForRole() {
   const words = window.ALLOWED_SECRETS;
   if (!state || !state.history) return 0;
 
   let count = 0;
   for (const w of words) {
-    if (isConsistentWithHistory(state.history, w, state, role)) {
+    if (isConsistentWithHistory(state.history, w, state)) {
       count++;
     }
   }
@@ -65,13 +65,13 @@ function updateRemainingWords() {
   if (remainingCache.guesser === null) {
     remainingCache.guesser =
   lastIdx >= 0
-    ? computeRemainingAfterIndexForRole(lastIdx, "guesser")
+    ? computeRemainingAfterIndexForRole(lastIdx)
     : window.ALLOWED_SECRETS.size;
   }
   if (remainingCache.setter === null) {
     remainingCache.setter =
   lastIdx >= 0
-    ? computeRemainingAfterIndexForRole(lastIdx, "setter")
+    ? computeRemainingAfterIndexForRole(lastIdx)
     : window.ALLOWED_SECRETS.size;
   }
 
