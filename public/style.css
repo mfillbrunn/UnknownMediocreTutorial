@@ -133,7 +133,7 @@ body {
 
   font-size: 1.4rem;
   font-weight: 700;
-  letter-spacing: 6px; /* keep only one */
+  letter-spacing: 6px;
   text-transform: uppercase;
   text-align: center;
 
@@ -391,7 +391,7 @@ body {
   box-shadow: 0 0 0 2px rgba(255,255,255,.35) inset;
 }
 
-/* Enter key styling (keep one approach: last key of last row) */
+/* Enter key styling  */
 /* ENTER key — semantic, not positional */
 .key[data-key="ENTER"] {
   position: relative;
@@ -803,7 +803,6 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
 /* =========================================
    GUESSER CONSTRAINT OUTPUT HIDING (DEDUPED)
    ========================================= */
-/* If you truly need “JS-safe rewrite-proof”, keep the zero-size approach */
 #guesserScreen .pattern-letter,
 #guesserScreen #mustContainGuesser {
   display: inline-block !important;
@@ -1002,5 +1001,10 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
 .history-scroll .history-tile {
   opacity: 0.85;
   filter: saturate(0.9);
+}
+.draft-row-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
