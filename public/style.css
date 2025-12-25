@@ -1126,3 +1126,11 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
     transform: none;
   }
 }
+
+.color-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
