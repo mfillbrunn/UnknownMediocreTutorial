@@ -973,14 +973,6 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   box-shadow: none;
 }
 
-.side-col {
-  width: auto;
-  min-width: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .theme-setter
 #draftSetter:has(.history-row:nth-child(2))
 .history-row:last-child
