@@ -1011,10 +1011,3 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   filter: grayscale(1);
   box-shadow: none;
 }
-
-.history-scroll .history-tile {
-  opacity: 0.85;
-  filter: saturate(0.9);
-}
-
-
