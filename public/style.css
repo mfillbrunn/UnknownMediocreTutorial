@@ -14,13 +14,15 @@
   --kb-neutral: #2b2f36;
   --kb-hover: #3a3f48;
 
-  --tile-green: #3aa85a;
-  --tile-green-text: #fff;
-  --tile-yellow: #d4b23c;
+  --tile-green: #cfffb0;
+  --tile-green-text: #000;
+  --tile-yellow: #fff689;
   --tile-yellow-text: #000;
   --tile-gray: #3a3d44;
   --tile-gray-text: #eee;
-
+  --tile-purple: #58355e;
+  --tile-purple-text: #fff;
+   
   --toast-bg: rgba(20,20,22,0.95);
   --toast-border: rgba(255,255,255,0.12);
 
@@ -364,6 +366,7 @@ body {
 .key.key-green  { background: var(--tile-green) !important;  color: var(--tile-green-text) !important; }
 .key.key-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text) !important; }
 .key.key-blue   { background: #4ea3ff !important;            color: #000 !important; }
+.key.key-purple { background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important;}
 
 /* “Gray” state has custom styling */
 .key.key-gray {
@@ -493,6 +496,8 @@ body {
 .tile-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text)!important; }
 .tile-gray   { background: var(--tile-gray)   !important; color: var(--tile-gray-text)  !important; }
 .tile-blue   { background: #4ea3ff !important; color: #000 !important; }
+.tile-purple {  background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important;}
+
 
 /* Flip animation */
 @keyframes flip-in {
@@ -742,10 +747,10 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   50% {    box-shadow: 0 0 10px rgba(70,140,255,0.8);  }
 }
 @keyframes blue-outline-pulse {
-  0% {    outline: 4px solid rgba(70,140,255,0);  }
-  50% {    outline: 4px solid rgba(70,140,255,0.9);  }
-  100% {    outline: 4px solid rgba(70,140,255,0);  }
-  50% {    outline: 4px solid rgba(70,140,255,0.9);  }
+  0% {    outline: 3px solid rgba(70,140,255,0);  }
+  50% {    outline: 3px solid rgba(70,140,255,0.9);  }
+  100% {    outline: 3px solid rgba(70,140,255,0);  }
+  50% {    outline: 3px solid rgba(70,140,255,0.9);  }
 }
 
 /* Outline animation (theme-setter current key) */
