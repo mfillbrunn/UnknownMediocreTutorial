@@ -1223,15 +1223,19 @@ Constraint row using history tile language
 .constraint-row .history-tile .quadrants {
   position: absolute;
   inset: 4px;              /* gives a little breathing room */
+  z-index: 1;
   pointer-events: none;
 }
 .constraint-row .history-tile > .main-letter {
   position: relative;
   z-index: 2;
 }
-.constraint-row .history-tile .quadrants {
-  z-index: 1;
+.constraint-row .history-tile.tile-green {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
 .constraint-letter.forbidden {
   width: 100%;
   height: 100%;
