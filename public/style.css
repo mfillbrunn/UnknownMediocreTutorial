@@ -397,11 +397,23 @@ body {
 .key.key-current {
   box-shadow: 0 0 0 2px rgba(255,255,255,.35) inset;
 }
-/* Keyboard inactive when not your turn */
-body:not(:has(.turn-indicator.your-turn)) .keyboard {
+/* Setter keyboard dead unless SETTER screen has your-turn */
+#setterScreen:not(:has(#turnIndicatorSetter.your-turn)) #keyboardSetter {
   opacity: 0.35;
   filter: grayscale(0.9);
   pointer-events: none;
+}
+
+/* Guesser keyboard dead unless GUESSER screen has your-turn */
+#guesserScreen:not(:has(#turnIndicatorGuesser.your-turn)) #keyboardGuesser {
+  opacity: 0.35;
+  filter: grayscale(0.9);
+  pointer-events: none;
+}
+#setterScreen:not(:has(#turnIndicatorSetter.your-turn)) #keyboardSetter .key,
+#guesserScreen:not(:has(#turnIndicatorGuesser.your-turn)) #keyboardGuesser .key {
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 
