@@ -866,3 +866,23 @@ $("assassinCancelBtn").onclick = () => {
 };
 $("submitSetterSameBtnMobile").onclick =
   $("submitSetterSameBtn").onclick;
+
+const desktopKeep = $("submitSetterSameBtn");
+const mobileKeep = $("submitSetterSameBtnMobile");
+
+if (desktopKeep && mobileKeep) {
+  const sync = () => {
+    mobileKeep.disabled = desktopKeep.disabled;
+    mobileKeep.classList.toggle(
+      "disabled-btn",
+      desktopKeep.classList.contains("disabled-btn")
+    );
+  };
+
+  new MutationObserver(sync).observe(desktopKeep, {
+    attributes: true,
+    attributeFilter: ["disabled", "class"]
+  });
+
+  sync();
+}
