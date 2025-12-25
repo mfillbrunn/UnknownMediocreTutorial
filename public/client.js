@@ -563,8 +563,19 @@ function handleSetterInput(event) {
     return;
   }
   if (event.type === "ENTER") {
-    if (!$("submitSetterNewBtn").disabled) {
-      $("submitSetterNewBtn").click();
+    const draft = (state.setterDraft || "").trim();
+    const keepBtn = $("submitSetterSameBtn");
+    const newBtn = $("submitSetterNewBtn");
+
+    if (draft.length === 0) {
+      if (keepBtn && !keepBtn.disabled) {
+        keepBtn.click();
+        return;
+      }
+    }
+    
+    if (newBtn && !newBtn.disabled) {
+      newBtn.click();
       return;
     }
         shake($("keyboardSetter"));
