@@ -567,7 +567,8 @@ body {
   border-color: rgba(70,140,255,0.7);
   box-shadow: 0 0 6px rgba(70,140,255,0.35);
   color: #4da3ff;
-  animation: blue-pulse 1.4s infinite;
+  animation: blue-pulse 2.2s infinite;
+   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 
@@ -751,7 +752,8 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
 .theme-setter .key.key-current {
   color: #fff !important;
   outline-offset: -2px;
-  animation: blue-outline-pulse 1.4s infinite;
+  animation: blue-outline-pulse 2.2s infinite;
+   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 /* =========================================
