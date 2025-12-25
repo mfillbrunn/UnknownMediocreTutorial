@@ -296,6 +296,43 @@ if (setterCanEdit) {
 });
 
 // -----------------------------------------------------
+// COLOR PICKER
+// -----------------------------------------------------
+
+const colorPicker = $("playerColorPicker");
+
+// Load saved color
+const savedColor = localStorage.getItem("vswordle_player_color");
+if (savedColor) {
+  colorPicker.value = savedColor;
+  applyPlayerColor(savedColor);
+}
+
+// Live update
+colorPicker.oninput = e => {
+  const color = e.target.value;
+  localStorage.setItem("vswordle_player_color", color);
+  applyPlayerColor(color);
+};
+
+function applyPlayerColor(color) {
+  // Apply only to the active role screen
+  const target =
+    myRole === "A"
+      ? $("setterScreen")
+      : $("guesserScreen");
+
+  if (!target) return;
+
+  target.style.setProperty("--role-accent", color);
+  target.style.setProperty("--role-accent-strong", color);
+  target.style.setProperty("--btn-primary", color);
+  target.style.setProperty("--btn-primary-hover", color);
+  target.style.setProperty("--btn-primary-glow", color + "aa");
+}
+
+
+// -----------------------------------------------------
 // UI UPDATE PIPELINE
 // -----------------------------------------------------
 function updateUI() {
