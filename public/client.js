@@ -425,14 +425,15 @@ function updateSetterScreen() {
     setterInputEnabled = !secretSubmitted;
 
     // SAME is never allowed in simultaneous
-    $("submitSetterSameBtn").disabled = true;
+    const keepBtn = $('submitSetterSameBtn');
+    if (keepBtn) keepBtn.disabled = true;
     $("submitSetterSameBtn").classList.add("disabled-btn");
   }
   // NORMAL PHASE — decision step only
   else if (state.phase === "normal") {
     setterInputEnabled = isDecisionStep;
-
-    $("submitSetterSameBtn").disabled = !isDecisionStep;
+    const keepBtn = $('submitSetterSameBtn');
+if (keepBtn) keepBtn.disabled = !isDecisionStep;
     $("submitSetterSameBtn").classList.toggle(
       "disabled-btn",
       !isDecisionStep
@@ -442,7 +443,8 @@ function updateSetterScreen() {
   else {
     setterInputEnabled = false;
 
-    $("submitSetterSameBtn").disabled = true;
+    const keepBtn = $('submitSetterSameBtn');
+    if (keepBtn) keepBtn.disabled = true;
     $("submitSetterSameBtn").classList.add("disabled-btn");
   }
   // -------------------------------------------------------
