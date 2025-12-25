@@ -286,10 +286,24 @@ body {
 .power-btn:active { transform: scale(.97); }
 
 .power-btn.power-used {
-  opacity: 0.35;
+  opacity: 0.28;
   filter: grayscale(1);
-  pointer-events: none;
+  text-decoration: line-through;
+  cursor: not-allowed;
   box-shadow: none !important;
+}
+.power-btn.disabled-btn {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  cursor: not-allowed;
+}
+/* Compact powers in play area */
+ {
+  font-size: 13px;
+  padding: 8px 12px;
+  min-height: 32px;
+  border-radius: 10px;
+  letter-spacing: 0.4px;
 }
 
 /* Utility outline */
@@ -543,6 +557,12 @@ body {
 .theme-guesser .draft-layer .history-tile {
   border: 1px solid rgba(70,140,255,.35);
   box-shadow: 0 0 6px rgba(70,140,255,.35);
+}
+/* Guesser guess shown on setter screen */
+.theme-setter #setterGuesserSubmitted .history-tile {
+  border-color: rgba(70,140,255,0.7);
+  box-shadow: 0 0 6px rgba(70,140,255,0.35);
+  color: #4da3ff;
 }
 
 /* Special setter draft layout */
@@ -884,7 +904,8 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
 .side-col {
   width: 48px;
   display: flex;
-  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 6px; /* fine tune */
 }
 .center-col .history-tiles,
 .draft-layer {
