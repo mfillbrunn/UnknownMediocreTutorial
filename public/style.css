@@ -888,4 +888,11 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   box-shadow: none;
   padding: 0;
 }
+/* Stack setter draft rows vertically */
+.draft-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
 
