@@ -272,11 +272,18 @@ body {
   pointer-events: none;
 }
 
-.power-btn:hover {
+.power-btn:not(.power-used):not(.disabled-btn):hover {
   box-shadow: 0 0 16px currentColor;
   transform: translateY(-2px);
 }
-.power-btn:active { transform: scale(.97); }
+
+.power-btn:not(.power-used):not(.disabled-btn):active {
+  transform: scale(.97);
+}
+.power-btn.power-used,
+.power-btn.disabled-btn {
+  pointer-events: none;
+}
 
 .power-btn.power-used {
   opacity: 0.28;
@@ -390,6 +397,13 @@ body {
 .key.key-current {
   box-shadow: 0 0 0 2px rgba(255,255,255,.35) inset;
 }
+/* Keyboard inactive when not your turn */
+body:not(:has(.turn-indicator.your-turn)) .keyboard {
+  opacity: 0.35;
+  filter: grayscale(0.9);
+  pointer-events: none;
+}
+
 
 /* Enter key styling  */
 /* ENTER key — semantic, not positional */
