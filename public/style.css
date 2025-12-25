@@ -1064,3 +1064,47 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   line-height: 1;
 }
 
+.keep-btn.mobile-keep {
+  display: none;
+}
+
+@media (max-width: 520px) {
+  .keep-btn {
+    position: static;      /* remove absolute positioning */
+    transform: none;
+    left: auto;
+    top: auto;
+    bottom: auto;
+    margin: 0;
+  }
+   .draft-row-wrap .keep-btn {
+    display: none;
+  }
+   .keep-btn.mobile-keep {
+    display: flex;
+    width: 100%;
+    margin-top: 10px;
+      background: var(--role-accent);
+    border: none;
+
+    color: transparent;
+    -webkit-text-stroke: 1.5px #000;
+    text-stroke: 1.5px #000;
+
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 1px;
+
+    padding: 14px 16px;
+    border-radius: 12px;
+
+    box-shadow:
+      0 0 12px color-mix(in srgb, var(--role-accent) 60%, transparent),
+      inset 0 0 0 2px rgba(0,0,0,0.35);
+  }
+   .keep-btn.mobile-keep:active {
+    transform: scale(0.97);
+    box-shadow:
+      0 0 6px color-mix(in srgb, var(--role-accent) 50%, transparent);
+  }
+}
