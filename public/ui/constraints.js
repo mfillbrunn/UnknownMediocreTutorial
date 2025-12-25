@@ -86,3 +86,42 @@ function applyMustContainPowers(arr, state) {
 window.formatPattern = function (pattern) {
   return pattern.split("").join(" ");
 };
+
+window.getConstraintGrid = function (state, isSetterView) {
+  const grid = Array.from({ length: 5 }, () => ({
+    green: null,
+    yellows: new Set()
+  }));
+
+  if (!state) return grid;
+
+  // 1️⃣ Greens from scoring history
+  if (state.history?.length) {
+    for (const entry of state.history) {
+      const fbArray = isSetterView ? entry.fb : entry.fbGuesser;
+      if (!Array.isArray(fbArray)) continue;
+
+      const guess = entry.guess.toUpperCase();
+
+      for (let i = 0; i < 5; i++) {
+        if (fbArray[i] === "🟩") {
+          grid[i].green = guess[i];
+        } else if (fbArray[i] === "🟨") {
+          grid[i].yellows.add(guess[i]);
+        }
+      }
+    }
+  }
+
+  // 2️⃣ Greens forced by powers (OVERRIDE)
+  if (state.powers?.forcedGreens) {
+    for (const [i, letter] of Object.entries(state.powers.forcedGreens)) {
+      const idx = Number(i);
+      grid[idx].green = letter.toUpperCase();
+      grid[idx].yellows.clear(); // once green, yellows here are irrelevant
+    }
+  }
+
+  return grid;
+};
+
