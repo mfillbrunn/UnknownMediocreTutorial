@@ -4,11 +4,7 @@
 window.predictFeedback = function (proposedSecret, pendingGuess) {
   if (!proposedSecret || !pendingGuess) return null;
   if (proposedSecret.length !== 5 || pendingGuess.length !== 5) return null;
-
-  return window.scoreGuess(
-    proposedSecret.toLowerCase(),
-    pendingGuess.toLowerCase()
-  );
+  return window.scoreGuess(proposedSecret.toLowerCase(),pendingGuess.toLowerCase());
 }
 
 window.predictFeedbackIncomplete = function (proposedSecret, pendingGuess) {
