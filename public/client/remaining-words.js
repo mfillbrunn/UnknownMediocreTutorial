@@ -21,8 +21,7 @@ function updateRemainingWords() {
     styleRemaining($("remainingWordsGuesser"), null);
     return;
   }
-  const lastIdx = state.history.length;
-  console.log(state.history);
+  const lastIdx = state.history.length;;
   // compute once per update
   if (remainingCache.guesser === null) {
     remainingCache.guesser =computeRemainingAfterIndex(lastIdx);
