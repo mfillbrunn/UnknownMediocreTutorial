@@ -67,10 +67,10 @@ socket.on("forceTimerExpired", () => {
 
 socket.on("suggestWord", ({ word }) => {
   if (myRole === state.guesser) {
-    $("guessInput").value = word.toUpperCase();
+    $("draftGuesser").value = word.toUpperCase();
   }
   if (myRole === state.setter) {
-    $("newSecretInput").value = word.toUpperCase();
+    $("draftSetter").value = word.toUpperCase();
   }
 });
 
