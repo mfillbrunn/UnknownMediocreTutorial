@@ -10,11 +10,6 @@ socket.on("suggestWord", ({ word }) => {
     updateUI();
   }
 });
-// Freezze secret
-function setKeyboardDisabled(container, disabled) {
-  if (!container) return;
-  container.classList.toggle("keyboard-disabled", disabled);
-}
 
 
 
