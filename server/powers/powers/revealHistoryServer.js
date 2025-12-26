@@ -4,11 +4,11 @@ const engine = require("../powerEngineServer.js");
 engine.registerPower("revealHistory", {
   apply(state, action, roomId, io) {
     if (state.powers.revealHistoryUsed) return;
-    if (state.history.length < 2) return; // must have at least 2 completed rounds
+    if (state.history.length < 3) return; // must have at least 2 completed rounds
 
     state.powers.revealHistoryUsed = true;
 
-    const entry = state.history[state.history.length - 2];
+    const entry = state.history[state.history.length - 3];
     const secret = entry.finalSecret;
 
     // Broadcast popup to both players
