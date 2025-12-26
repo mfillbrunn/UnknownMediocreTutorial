@@ -25,9 +25,6 @@ PowerEngine.register("freezeSecret", {
     state.phase === "normal" &&
     state.turn === state.setter;
 
-    const keyboard = $("keyboardSetter");
-  keyboard.classList.toggle("keyboard-frozen", frozen);
-
   const bar = $("turnIndicatorSetter");
   if (frozen) {
     bar.className = "turn-indicator frozen-turn";
