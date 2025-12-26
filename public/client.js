@@ -615,14 +615,12 @@ const preview = $("setterPreview");
     isIncomplete = true;
   }
   if (isIncomplete) {
-    const tiles = document.querySelectorAll("#setterGuesserSubmitted .pending-guess .history-tile");
+    const tiles = document.querySelectorAll("#draftSetter .pending-guess .history-tile");
     tiles.forEach(t => t.classList.add("preview-incomplete"));
   }
 }
 function clearSetterPreview() {
-  const tiles = document.querySelectorAll(
-    "#setterGuesserSubmitted .pending-guess .history-tile"
-  );
+  const tiles = document.querySelectorAll("#draftSetter .pending-guess .history-tile");
   tiles.forEach(t => {
     t.classList.remove(
       "preview-green",
@@ -634,9 +632,7 @@ function clearSetterPreview() {
 }
 
 function applyPreviewFeedback(fbArray) {
-  const tiles = document.querySelectorAll(
-    "#setterGuesserSubmitted .pending-guess .history-tile"
-  );
+  const tiles = document.querySelectorAll("#draftSetter .pending-guess .history-tile");
 
   fbArray.forEach((fb, i) => {
     const tile = tiles[i];
