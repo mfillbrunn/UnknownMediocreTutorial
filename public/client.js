@@ -840,7 +840,7 @@ function updateSummary() {
     const remaining =
       i === state.history.length - 1
         ? 0
-        : computeRemainingAfterIndexForRole(i);
+        : computeRemainingAfterIndex(i);
 
     html += `
       <tr>
