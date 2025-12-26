@@ -65,45 +65,6 @@ socket.on("forceTimerExpired", () => {
   toast("Time ran out — old secret was kept!");
 });
 
-socket.on("suggestWord", ({ word }) => {
-  const upper = word.toUpperCase();
-  if (myRole === state.setter) {
-    state.setterDraft = upper;
-    updateUI();
-  }
-  if (myRole === state.guesser) {
-    localGuesserDraft = upper.toLowerCase();
-    updateUI();
-  }
-});
-
-
-function fillDraftTiles(containerId, word) {
-  const container = document.getElementById(containerId);
-  if (!container) {
-    console.warn("[fillDraftTiles] container not found:", containerId);
-    return;
-  }
-
-  // If container already has a single child, it’s usually the row wrapper.
-  // Otherwise, fall back to container itself.
-  const target =
-    container.children.length === 1 ? container.children[0] : container;
-
-  // Clear only the target content
-  target.innerHTML = "";
-
-  word = (word || "").toUpperCase();
-
-  for (let i = 0; i < 5; i++) {
-    const tile = document.createElement("div");
-    tile.className = "tile";
-    tile.textContent = word[i] || "";
-    target.appendChild(tile);
-  }
-
-  console.log("[fillDraftTiles] wrote tiles into:", target, "word:", word);
-}
 
 socket.on("errorMessage", msg => {
   if ($("assassinModal").classList.contains("active")) {
