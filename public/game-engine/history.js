@@ -2,13 +2,11 @@
  * Normalize emoji feedback so comparisons are consistent
  */
 function normalizeFB(fbArr) {
-  if (!Array.isArray(fbArr)) {
-    // Treat missing feedback as all black tiles
-    return ["⬛","⬛","⬛","⬛","⬛"];
-  }
+ if (!Array.isArray(fbArr)) return null;
   return fbArr.map(fb => {
     if (fb === "🟩") return "🟩";
     if (fb === "🟨") return "🟨";
+    if (fb === "?") return "?";
     return "⬛";
   });
 }
@@ -37,7 +35,8 @@ function isConsistentWithHistory(history, proposedSecret, state) {
     if (entry.ignoreConstraints) continue;
 
     const guess = entry.guess.toUpperCase();
-    const actual = normalizeFB(entry.fb);
+    const rawFb =  entry.fb ?? entry.fbGuesser;
+    const actual = normalizeFB(entry.rawFb);
 
     // IMPORTANT: browser scoreGuess comes from scoring.js (already loaded)
     let expected = window.scoreGuess(proposedSecret, guess);
@@ -56,6 +55,7 @@ function isConsistentWithHistory(history, proposedSecret, state) {
           eff.indices.includes(i)) {
         continue;
       }
+      if (actual[i] === "?") continue;
       if (expected[i] !== actual[i]) return false;
     }
   }
