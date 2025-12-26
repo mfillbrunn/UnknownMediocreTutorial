@@ -41,18 +41,20 @@ window.renderHistory = function ({
       tile.className = "history-tile";
 
       tile.textContent = guess[i];
-
+      
       const fb = fbArray[i];
-      if (fb === "🟩") tile.classList.add("tile-green");
-      else if (fb === "🟨") tile.classList.add("tile-yellow");
-      else if (fb === "🟦") tile.classList.add("tile-blue");
-      else tile.classList.add("tile-gray");
-      if (
-        !isSetter &&
-        Array.isArray(safeEntry.hiddenIndices) &&
-        safeEntry.hiddenIndices.includes(i)
-      ) {
+      const isHiddenCycling =
+      !isSetter &&
+      Array.isArray(safeEntry.hiddenIndices) &&
+      safeEntry.hiddenIndices.includes(i);
+
+      if (isHiddenCycling) {
         tile.classList.add("tile-hidden-cycle");
+      } else {
+        if (fb === "🟩") tile.classList.add("tile-green");
+        else if (fb === "🟨") tile.classList.add("tile-yellow");
+        else if (fb === "🟦") tile.classList.add("tile-blue");
+        else tile.classList.add("tile-gray");
       }
       row.appendChild(tile);
     }
