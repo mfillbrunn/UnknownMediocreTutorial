@@ -1331,11 +1331,15 @@ Constraint row using history tile language
   opacity: 0.8;
 }
 
+/* Preview tiles: green & yellow use black text */
 .theme-setter
 #draftSetter
 .pending-guess
-.history-tile.preview-incomplete {
-  opacity: 0.45;
+.history-tile.preview-green,
+.theme-setter
+#draftSetter
+.pending-guess
+.history-tile.preview-yellow {
+  color: #000;
 }
-
 
