@@ -76,11 +76,15 @@ socket.on("suggestWord", ({ word }) => {
 
 function fillDraftTiles(containerId, word) {
   const el = document.getElementById(containerId);
-  if (!el) return;
+  if (!el) {
+    console.warn("Missing container:", containerId);
+    return;
+  }
 
-  el.innerHTML = ""; // clear existing tiles
+  el.innerHTML = "";
+  el.style.opacity = "1";
 
-  word = word.toUpperCase();
+  word = (word || "").toUpperCase();
 
   for (let i = 0; i < 5; i++) {
     const tile = document.createElement("div");
@@ -89,6 +93,7 @@ function fillDraftTiles(containerId, word) {
     el.appendChild(tile);
   }
 }
+
 
 
 socket.on("errorMessage", msg => {
