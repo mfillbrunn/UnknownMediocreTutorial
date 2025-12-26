@@ -75,7 +75,7 @@ socket.on("suggestWord", ({ word }) => {
 });
 
 function fillDraftTiles(containerId, word) {
-  const el = $(containerId);
+  const el = document.getElementById(containerId);
   if (!el) return;
 
   el.innerHTML = ""; // clear existing tiles
