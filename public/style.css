@@ -1415,8 +1415,3 @@ body.hide-constraints .constraint-row {
   background-color: rgba(120, 180, 255, 0.15);
   border-radius: 6px;
 }
-.keyboard-frozen .key-letter,
-.keyboard-frozen .key-backspace {
-  pointer-events: none;
-  opacity: 0.35;
-}
