@@ -596,19 +596,49 @@ const preview = $("setterPreview");
   if (!guess) return;
   const isSetterTurn = state.turn === state.setter;
   if (!isSetterTurn) return;
-  if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
-    preview.textContent = "(hidden this round)";
-    return;
-  }
+  if (state.powers?.stealthGuessActive && myRole === state.setter) {return;}
+  
   const typed = (state.setterDraft || "").toLowerCase();
+  const pendingRow = document.querySelector("#setterGuesserSubmitted .pending-guess");
+  clearSetterPreview();
   if (typed.length === 5) {
     const fb = predictFeedback(typed, guess);
-    preview.textContent = `Preview (new): ${fb.join("")}`;
-  } else if (state.secret.length === 5) {
+    applyPreviewFeedback(fb);
+  } else if (typed.length === 0) {
     const fbSame = predictFeedback(state.secret, guess);
-    preview.textContent = `Preview: ${fbSame.join("")}`;
+    applyPreviewFeedback(fbSame);
+  } else if (typed.length >= 1) {
+    const fbIncomplete = predictFeedbackIncomplete(typed, guess);
+    applyPreviewFeedback(fbIncomplete);
   }
 }
+function clearSetterPreview() {
+  const tiles = document.querySelectorAll(
+    "#setterGuesserSubmitted .pending-guess .history-tile"
+  );
+  tiles.forEach(t => {
+    t.classList.remove(
+      "preview-green",
+      "preview-yellow",
+      "preview-gray"
+    );
+  });
+}
+function applyPreviewFeedback(fbArray) {
+  const tiles = document.querySelectorAll(
+    "#setterGuesserSubmitted .pending-guess .history-tile"
+  );
+
+  fbArray.forEach((fb, i) => {
+    const tile = tiles[i];
+    if (!tile) return;
+
+    if (fb === "🟩") tile.classList.add("preview-green");
+    else if (fb === "🟨") tile.classList.add("preview-yellow");
+    else tile.classList.add("preview-gray");
+  });
+}
+
 function handleSetterInput(event) {
   const isNormalSetterTurn =
     myRole === state.setter &&
