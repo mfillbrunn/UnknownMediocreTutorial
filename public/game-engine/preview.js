@@ -11,8 +11,8 @@ window.predictFeedback = function (proposedSecret, pendingGuess) {
   );
 }
 
-window.predictFeedbackincomplete = function (proposedSecret, pendingGuess) {
+window.predictFeedbackIncomplete = function (proposedSecret, pendingGuess) {
   if (!proposedSecret || !pendingGuess) return null;
   const letterslength= proposedSecret.length;
-  return window.scoreGuess(proposedSecret.toLowerCase(),pendingGuess.toLowerCase());
+  return window.scoreGuessIncomplete(proposedSecret.toLowerCase(),pendingGuess.toLowerCase(), letterslength);
 };
