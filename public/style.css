@@ -1415,3 +1415,7 @@ body.hide-constraints .constraint-row {
   background-color: rgba(120, 180, 255, 0.15);
   border-radius: 6px;
 }
+.keyboard-disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
