@@ -747,11 +747,12 @@ renderConstraintRow({
   container: $("constraintRowGuesser"),
   isSetterView: false
 });
+  const effectiveDraft = applyRevealGreenDraft(localGuesserDraft,state);
 renderDraftRows({
   state,
   role: "guesser",
   container: $("draftGuesser"),
-  localGuesserDraft
+  effectiveDraft
 });
 
   const guessBox = $("guessInput");
