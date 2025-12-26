@@ -75,14 +75,13 @@ socket.on("suggestWord", ({ word }) => {
 });
 
 function fillDraftTiles(containerId, word) {
-  const el = document.getElementById(containerId);
-  if (!el) {
-    console.warn("Missing container:", containerId);
-    return;
-  }
+  const container = document.getElementById(containerId);
+  if (!container) return;
 
-  el.innerHTML = "";
-  el.style.opacity = "1";
+  const row = container.querySelector(".history-row");
+  if (!row) return;
+
+  row.innerHTML = "";
 
   word = (word || "").toUpperCase();
 
@@ -90,12 +89,9 @@ function fillDraftTiles(containerId, word) {
     const tile = document.createElement("div");
     tile.className = "tile";
     tile.textContent = word[i] || "";
-    el.appendChild(tile);
+    row.appendChild(tile);
   }
 }
-
-
-
 socket.on("errorMessage", msg => {
   if ($("assassinModal").classList.contains("active")) {
     const inp = $("assassinInput");
