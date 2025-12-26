@@ -1175,6 +1175,11 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   pointer-events: none;
 }
 
+.history-meta-count {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+}
 
 
 
