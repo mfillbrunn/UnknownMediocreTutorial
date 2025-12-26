@@ -634,36 +634,38 @@ function applyPreviewFeedback(fbArray) {
 }
 
 function handleSetterInput(event) {
-  const isNormalSetterTurn =
-    myRole === state.setter &&
-    state.phase === "normal" &&
-    state.turn === state.setter &&
-    !!state.pendingGuess;
-  const isSimultaneousSecretEntry =
-    state.phase === "simultaneous" &&
-    !state.secret &&
-    !state.simultaneousSecretSubmitted;
-
-  if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
-  const isEditing =
-  event.type === "LETTER" || event.type === "BACKSPACE";
-    // First edit: clear ghosted secret
-    if (isEditing && !state.setterDraft) {
-      state.setterDraft = "";
-    }
-
-  const draft = state.setterDraft || "";
-  if (event.type === "BACKSPACE") {
-    state.setterDraft = draft.slice(0, -1);
-    updateUI();
-    return;
-  }
-  if (event.type === "LETTER") {
-    if (draft.length < 5) {
-      state.setterDraft = draft + event.value;
+  if (!state.powers?.freezeActive){
+    const isNormalSetterTurn =
+      myRole === state.setter &&
+      state.phase === "normal" &&
+      state.turn === state.setter &&
+      !!state.pendingGuess;
+    const isSimultaneousSecretEntry =
+      state.phase === "simultaneous" &&
+      !state.secret &&
+      !state.simultaneousSecretSubmitted;
+  
+    if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
+    const isEditing =
+    event.type === "LETTER" || event.type === "BACKSPACE";
+      // First edit: clear ghosted secret
+      if (isEditing && !state.setterDraft) {
+        state.setterDraft = "";
+      }
+  
+    const draft = state.setterDraft || "";
+    if (event.type === "BACKSPACE") {
+      state.setterDraft = draft.slice(0, -1);
       updateUI();
+      return;
     }
-    return;
+    if (event.type === "LETTER") {
+      if (draft.length < 5) {
+        state.setterDraft = draft + event.value;
+        updateUI();
+      }
+      return;
+    }
   }
   if (event.type === "ENTER") {
     const draft = (state.setterDraft || "").trim();
