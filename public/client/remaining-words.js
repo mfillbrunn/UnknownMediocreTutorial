@@ -38,13 +38,13 @@ function updateRemainingWords() {
   // Guesser sees exact number
   const g = $("remainingWordsGuesser");
   if (g) {
-    g.textContent = Number(nGuesser).toLocaleString();
+    renderRemaining(g, nGuesser);
   }
   // Setter sees category
   const s = $("remainingWordsSetter");
   if (s) {
-    s.textContent = categorySetter;
     styleRemaining(s, categorySetter);
+     renderRemaining(s, nSetter);
   }
 }
   // Setter labeling
@@ -72,3 +72,11 @@ const remainingCache = {
   setter: null,
   guesser: null
 };
+
+function renderRemaining(element, count) {
+  if (!element) return;
+
+  element.textContent =
+    `${Number(count).toLocaleString()} word${count === 1 ? "" : "s"}`;
+}
+
