@@ -598,8 +598,7 @@ body {
   border-color: color-mix(in srgb, var(--opponent-accent) 70%, transparent);
   box-shadow: 0 0 6px color-mix(in srgb, var(--opponent-accent) 40%, transparent);
   color: var(--opponent-accent);
-  animation: opponent-pulse 2.2s infinite;
-   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+  
 }
 
 /* Authoritative setter draft layout */
