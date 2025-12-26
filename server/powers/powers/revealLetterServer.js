@@ -61,7 +61,7 @@ engine.registerPower("revealLetter", {
 
     // Unlocking logic
 if (p.mode === "RARE") {
-  const rare = new Set("QJXZWK");
+  const rare = new Set("QJXZWKV");
   const seen = new Set();
 
   for (const h of state.history) {
@@ -73,7 +73,7 @@ if (p.mode === "RARE") {
   }
 
   // e.g., require at least 2 or 3 unique rare letters
-  if (seen.size >= 4) {   // adjust threshold as desired
+  if (seen.size >= 5) {   // adjust threshold as desired
     p.ready = true;
     io.to(roomId).emit("toast", "Rare Letter Reveal unlocked!");
   }
@@ -82,17 +82,30 @@ if (p.mode === "RARE") {
 
     if (p.mode === "ROW") {
       const rows = [
-        new Set("QWERTYUIOP"),
-        new Set("ASDFGHJKL"),
-        new Set("ZXCVBNM")
+        new Set("QWERTYUIOP"), // 10 letters
+        new Set("ASDFGHJKL"),  // 9 letters
+        new Set("ZXCVBNM")     // 7 letters
       ];
-      let totals = [0,0,0];
+    
+      // Track which letters have been used per row
+      const used = rows.map(() => new Set());
+    
       for (const h of state.history) {
         for (const c of h.guess.toUpperCase()) {
-          rows.forEach((r,i)=>{ if(r.has(c)) totals[i]++; });
+          rows.forEach((row, i) => {
+            if (row.has(c)) {
+              used[i].add(c);
+            }
+          });
         }
       }
-      if (totals.some(x=>x>=6)) {
+    
+      // Unlock if any row is fully exhausted
+      const exhausted = rows.some((row, i) => {
+        return used[i].size === row.size;
+      });
+    
+      if (exhausted) {
         p.ready = true;
         io.to(roomId).emit("toast", "Row Master unlocked!");
       }
