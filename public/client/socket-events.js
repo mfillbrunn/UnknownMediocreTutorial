@@ -76,12 +76,18 @@ socket.on("suggestWord", ({ word }) => {
 
 function fillDraftTiles(containerId, word) {
   const container = document.getElementById(containerId);
-  if (!container) return;
+  if (!container) {
+    console.warn("[fillDraftTiles] container not found:", containerId);
+    return;
+  }
 
-  const row = container.querySelector(".history-row");
-  if (!row) return;
+  // If container already has a single child, it’s usually the row wrapper.
+  // Otherwise, fall back to container itself.
+  const target =
+    container.children.length === 1 ? container.children[0] : container;
 
-  row.innerHTML = "";
+  // Clear only the target content
+  target.innerHTML = "";
 
   word = (word || "").toUpperCase();
 
@@ -89,9 +95,12 @@ function fillDraftTiles(containerId, word) {
     const tile = document.createElement("div");
     tile.className = "tile";
     tile.textContent = word[i] || "";
-    row.appendChild(tile);
+    target.appendChild(tile);
   }
+
+  console.log("[fillDraftTiles] wrote tiles into:", target, "word:", word);
 }
+
 socket.on("errorMessage", msg => {
   if ($("assassinModal").classList.contains("active")) {
     const inp = $("assassinInput");
