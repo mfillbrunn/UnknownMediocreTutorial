@@ -25,10 +25,7 @@ window.renderDraftRows = function ({
   /* ============================
    * SETTER
    * ============================ */
-  if (role === "setter") {
-    if (state.powers?.freezeActive ) {
-      row.classList.add("freeze-draft");
-    }    
+  if (role === "setter") {    
     const setterCanEdit =!state.powers?.freezeActive &&((state.phase === "simultaneous" &&!state.secret && !state.simultaneousSecretSubmitted) ||
         (state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess));
     if (state.pendingGuess) {renderDraftRow(state.pendingGuess.toUpperCase(),container,"draft-row pending-guess"); }
@@ -53,6 +50,9 @@ window.renderDraftRows = function ({
 };
 function renderDraftRow(word, container, className) {
   const row = document.createElement("div"); 
+  if (state.powers?.freezeActive ) {
+      row.classList.add("freeze-draft");
+    }    
   row.className = `history-row ${className}`;
   for (let i = 0; i < 5; i++) { 
     const tile = document.createElement("div"); 
