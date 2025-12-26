@@ -861,20 +861,26 @@ function updateSummary() {
 // BUTTONS
 // -----------------------------------------------------
 (function setupConstraintToggle() {
-  const btn = $("toggleConstraintsBtn");
-  if (!btn) return;
+  const buttons = document.querySelectorAll(".constraint-toggle-btn");
+  if (!buttons.length) return;
 
   // Load saved preference (default: visible)
   const hidden = localStorage.getItem("hideConstraints") === "true";
   document.body.classList.toggle("hide-constraints", hidden);
-  btn.classList.toggle("off", hidden);
 
-  btn.onclick = () => {
-    const isHidden = document.body.classList.toggle("hide-constraints");
-    btn.classList.toggle("off", isHidden);
-    localStorage.setItem("hideConstraints", isHidden);
-  };
+  buttons.forEach(btn => {
+    btn.classList.toggle("off", hidden);
+
+    btn.onclick = () => {
+      const isHidden = document.body.classList.toggle("hide-constraints");
+      localStorage.setItem("hideConstraints", isHidden);
+
+      // Keep all buttons in sync
+      buttons.forEach(b => b.classList.toggle("off", isHidden));
+    };
+  });
 })();
+
 
 
 function enableReadyButton(enabled) {
