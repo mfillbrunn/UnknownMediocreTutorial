@@ -25,7 +25,7 @@ function updateRemainingWords() {
   console.log(state.history);
   // compute once per update
   if (remainingCache.guesser === null) {
-    remainingCache.setter =computeRemainingAfterIndexForRole(lastIdx);
+    remainingCache.guesser =computeRemainingAfterIndexForRole(lastIdx);
   }
   if (remainingCache.setter === null) {
     remainingCache.setter =computeRemainingAfterIndexForRole(lastIdx);
