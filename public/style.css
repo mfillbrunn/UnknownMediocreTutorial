@@ -1305,7 +1305,8 @@ Constraint row using history tile language
   border: none;
   box-shadow: none;
   opacity: 0.9;
-   animation: preview-green-pulse 1.4s ease-in-out infinite;
+   animation: preview-green-pulse 2.2s  ease-in-out infinite;
+   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .theme-setter
@@ -1316,7 +1317,8 @@ Constraint row using history tile language
   border: none;
   box-shadow: none;
   opacity: 0.9;
-   animation: preview-yellow-pulse 1.4s ease-in-out infinite;
+   animation: preview-yellow-pulse 2.2s ease-in-out infinite;
+   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .theme-setter
