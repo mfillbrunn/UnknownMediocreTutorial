@@ -71,8 +71,11 @@ window.renderHistory = function ({
       const { greens, yellows } = safeEntry.extraInfo;
       meta.textContent = `${greens}🟩 ${yellows}🟨`;
     }
-    rowWrap.appendChild(row);
-    rowWrap.appendChild(meta);
+    const rowAnchor = document.createElement("div");
+    rowAnchor.className = "history-row-anchor";
+    rowAnchor.appendChild(row);
+    rowAnchor.appendChild(meta);
+    rowWrap.appendChild(rowAnchor);
     container.appendChild(rowWrap);
   }
 };
