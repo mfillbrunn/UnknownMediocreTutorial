@@ -45,9 +45,10 @@ window.renderDraftRows = function ({
 function renderDraftRow(word, container, className) {
   const row = document.createElement("div"); 
   if (state.powers?.freezeActive ) {
-      row.classList.add("freeze-draft");
-    }    
-  row.className = `history-row ${className}`;
+      row.className = `history-row ${className} freeze-draft`;
+    } else{    
+    row.className = `history-row ${className}`;
+  }
   for (let i = 0; i < 5; i++) { 
     const tile = document.createElement("div"); 
     tile.className = "history-tile draft-tile"; 
