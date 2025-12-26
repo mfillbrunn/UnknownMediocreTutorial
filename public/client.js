@@ -600,6 +600,8 @@ const preview = $("setterPreview");
   
   const typed = (state.setterDraft || "").toLowerCase();
   const pendingRow = document.querySelector("#setterGuesserSubmitted .pending-guess");
+  let fb = null;
+  let isIncomplete = false;
   clearSetterPreview();
   if (typed.length === 5) {
     const fb = predictFeedback(typed, guess);
@@ -610,6 +612,11 @@ const preview = $("setterPreview");
   } else if (typed.length >= 1) {
     const fbIncomplete = predictFeedbackIncomplete(typed, guess);
     applyPreviewFeedback(fbIncomplete);
+    isIncomplete = true;
+  }
+  if (isIncomplete) {
+    const tiles = document.querySelectorAll("#setterGuesserSubmitted .pending-guess .history-tile");
+    tiles.forEach(t => t.classList.add("preview-incomplete"));
   }
 }
 function clearSetterPreview() {
@@ -620,10 +627,12 @@ function clearSetterPreview() {
     t.classList.remove(
       "preview-green",
       "preview-yellow",
-      "preview-gray"
+      "preview-gray",
+      "preview-incomplete"
     );
   });
 }
+
 function applyPreviewFeedback(fbArray) {
   const tiles = document.querySelectorAll(
     "#setterGuesserSubmitted .pending-guess .history-tile"
