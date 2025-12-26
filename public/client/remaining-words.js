@@ -1,5 +1,5 @@
 
-window.computeRemainingAfterIndexForRole = function (idx) {
+window.computeRemainingAfterIndex = function (idx) {
   const words = window.ALLOWED_SECRETS;
   if (!state || !state.history) return 0;
   const partialHistory = state.history.slice(0, idx + 1);
@@ -25,10 +25,10 @@ function updateRemainingWords() {
   console.log(state.history);
   // compute once per update
   if (remainingCache.guesser === null) {
-    remainingCache.guesser =computeRemainingAfterIndexForRole(lastIdx);
+    remainingCache.guesser =computeRemainingAfterIndex(lastIdx);
   }
   if (remainingCache.setter === null) {
-    remainingCache.setter =computeRemainingAfterIndexForRole(lastIdx);
+    remainingCache.setter =computeRemainingAfterIndex(lastIdx);
   }
 
   const nGuesser = remainingCache.guesser;
