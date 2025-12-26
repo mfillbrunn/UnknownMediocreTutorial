@@ -577,7 +577,7 @@ body {
   border-width: 2px;
   border-color: var(--role-accent);
   box-shadow:  0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
- opacity: 0.2;
+   color: rgba(255, 255, 255, 0.45);
 }
 
 /* Setter draft accent vs guesser draft accent */
