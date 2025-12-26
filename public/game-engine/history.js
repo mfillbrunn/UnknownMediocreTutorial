@@ -6,7 +6,6 @@ function normalizeFB(fbArr) {
   return fbArr.map(fb => {
     if (fb === "🟩") return "🟩";
     if (fb === "🟨") return "🟨";
-    if (fb === "?") return "?";
     return "⬛";
   });
 }
@@ -55,7 +54,6 @@ function isConsistentWithHistory(history, proposedSecret, state) {
           eff.indices.includes(i)) {
         continue;
       }
-      if (actual[i] === "?") continue;
       if (expected[i] !== actual[i]) return false;
     }
   }
