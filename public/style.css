@@ -1410,8 +1410,43 @@ body.hide-constraints .constraint-row {
   FROZEN
    =============================== */
 
-/* Draft row frozen state */
+/* ===============================
+   FREEZE — Draft Row Overlay
+   =============================== */
+
 .history-row.freeze-draft {
-  background-color: rgba(120, 180, 255, 0.15);
-  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ice overlay */
+.history-row.freeze-draft::after {
+  content: "";
+  position: absolute;
+  inset: -2px; /* slightly bigger than row */
+  border-radius: 8px;
+
+  background:
+    linear-gradient(
+      120deg,
+      rgba(180, 220, 255, 0.25),
+      rgba(120, 180, 255, 0.35),
+      rgba(180, 220, 255, 0.25)
+    );
+
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+
+  box-shadow:
+    inset 0 0 12px rgba(120,180,255,0.35),
+    inset 0 0 24px rgba(120,180,255,0.15);
+
+  pointer-events: none; /* critical */
+  z-index: 2;
+}
+
+/* Ensure tiles are below the overlay */
+.history-row.freeze-draft .history-tile {
+  position: relative;
+  z-index: 1;
 }
