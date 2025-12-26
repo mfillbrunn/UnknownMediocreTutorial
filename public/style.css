@@ -923,6 +923,15 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   width: 100%;
    pointer-events: none;
 }
+.play-area button,
+.play-area .power-btn,
+.play-area .history-tile,
+.play-area .constraint-row,
+.play-area .draft-stack,
+.play-area .keyboard,
+.play-area .key {
+  pointer-events: auto;
+}
 
 /* Left column: powers */
 .powers-col {
