@@ -19,10 +19,6 @@ PowerEngine.register("freezeSecret", {
   // This handles ongoing frozen UI
   uiEffects(state, role) {
     if (!state.powers.freezeActive) return;
-
-    $("newSecretInput").disabled = true;
-    $("submitSetterNewBtn").disabled = true;
-
     const bar = $("turnIndicatorSetter");
     bar.className = "turn-indicator frozen-turn";
     bar.textContent = "SECRET FROZEN";
