@@ -29,13 +29,7 @@ window.renderDraftRows = function ({
     const setterCanEdit =!state.powers?.freezeActive &&((state.phase === "simultaneous" &&!state.secret && !state.simultaneousSecretSubmitted) ||
         (state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess));
     if (state.pendingGuess) {renderDraftRow(state.pendingGuess.toUpperCase(),container,"draft-row pending-guess"); }
-    if (!setterCanEdit) {renderDraftRow(
-          state.secret.toUpperCase(),
-          container,
-          "draft-row ghost-secret"
-            );
-              return;
-      }
+    if (!setterCanEdit) {renderDraftRow(state.secret.toUpperCase(),container,"draft-row ghost-secret"); return;}
     if (setterCanEdit) {
       if (state.phase === "simultaneous"){ 
         if (state.setterDraft) {renderDraftRow(state.setterDraft.toUpperCase(),container,"draft-row setter-draft");} 
