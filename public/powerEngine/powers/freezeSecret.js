@@ -17,12 +17,23 @@ PowerEngine.register("freezeSecret", {
   },
 
   // This handles ongoing frozen UI
-  uiEffects(state, role) {
-    if (!state.powers.freezeActive) return;
-    const bar = $("turnIndicatorSetter");
+ uiEffects(state, role) {
+  if (role !== state.setter) return;
+
+  const frozen =
+    state.powers.freezeActive &&
+    state.phase === "normal" &&
+    state.turn === state.setter;
+
+  setKeyboardDisabled($("keyboardSetter"), frozen);
+
+  const bar = $("turnIndicatorSetter");
+  if (frozen) {
     bar.className = "turn-indicator frozen-turn";
     bar.textContent = "SECRET FROZEN";
-  },
+  }
+}
+,
 
   // ⭐ ADD THIS — visual confirmation when clicked
   effects: {
