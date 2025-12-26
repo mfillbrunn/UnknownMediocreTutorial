@@ -1379,10 +1379,6 @@ Constraint row using history tile language
   box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 60%, transparent);
 }
 
-.constraint-toggle-btn.off {
-  opacity: 0.35;
-}
-
 body.hide-constraints .constraint-row {
   display: none;
 }
