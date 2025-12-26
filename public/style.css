@@ -1387,6 +1387,12 @@ body.hide-constraints .constraint-row {
 /* ===============================
   HIDE TILE
    =============================== */
+.history-tile.tile-gray {
+  background: var(--tile-gray);
+  color: var(--tile-gray-text);
+}
+
+
 @keyframes hiddenTileCycle {
   0%   { background-color: var(--tile-gray); }
   33%  { background-color: var(--tile-yellow); }
