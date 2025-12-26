@@ -963,7 +963,8 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
 .draft-row-wrap {
   display: flex;
   justify-content: center;
-  width: 100%;
+  width: 100%;   
+  pointer-events: none;
 }
 .keep-btn {
   position: absolute;
