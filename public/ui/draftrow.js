@@ -45,7 +45,7 @@ window.renderDraftRows = function ({
 function renderDraftRow(word, container, className) {
   const row = document.createElement("div"); 
   if (state.turn === state.setter && state.powers?.freezeActive ) {
-      row.className = `history-row ${className} freeze-draft`;
+      row.className = `history-row draft-row freeze-draft`;
     } else{    
     row.className = `history-row ${className}`;
   }
