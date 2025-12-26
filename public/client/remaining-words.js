@@ -9,28 +9,15 @@ function categorizeRemainingWords(count) {
 window.computeRemainingAfterIndexForRole = function (idx) {
   const words = window.ALLOWED_SECRETS;
   if (!state || !state.history) return 0;
-
   const partialHistory = state.history.slice(0, idx + 1);
-
   let count = 0;
   for (const w of words) {
     if (isConsistentWithHistory(partialHistory, w, state)) {
       count++;
     }
   }
-
   return count;
 };
-
-function computeRemainingWordsForRole() {
-  const words = window.ALLOWED_SECRETS;
-  if (!state || !state.history) return 0;
-    const remaining =
-      i === state.history.length
-        ? 0
-        : computeRemainingAfterIndexForRole(i);
-  return remaining;
-}
 
 function styleRemaining(element, label) {
   element.className = "remainingMeter";
@@ -57,34 +44,24 @@ function updateRemainingWords() {
     styleRemaining($("remainingWordsGuesser"), null);
     return;
   }
-  const lastIdx = state.history.length - 1;
+  const lastIdx = state.history.length;
   // compute once per update
   if (remainingCache.guesser === null) {
-    remainingCache.guesser =
-  lastIdx >= 0
-    ? computeRemainingAfterIndexForRole(lastIdx)
-    : window.ALLOWED_SECRETS.size;
+    remainingCache.setter =computeRemainingAfterIndexForRole(lastIdx);
   }
   if (remainingCache.setter === null) {
-    remainingCache.setter =
-  lastIdx >= 0
-    ? computeRemainingAfterIndexForRole(lastIdx)
-    : window.ALLOWED_SECRETS.size;
+    remainingCache.setter =computeRemainingAfterIndexForRole(lastIdx);
   }
 
   const nGuesser = remainingCache.guesser;
   const nSetter  = remainingCache.setter;
-
-  const categoryGuesser = categorizeRemainingWords(nGuesser);
   const categorySetter  = categorizeRemainingWords(nSetter);
 
   // Guesser sees exact number
   const g = $("remainingWordsGuesser");
   if (g) {
     g.textContent = Number(nGuesser).toLocaleString();
-    styleRemaining(g, categoryGuesser);
   }
-
   // Setter sees category
   const s = $("remainingWordsSetter");
   if (s) {
