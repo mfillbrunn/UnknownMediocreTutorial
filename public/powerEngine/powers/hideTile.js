@@ -22,8 +22,6 @@ PowerEngine.register("hideTile", {
 
     entry.hiddenIndices.forEach(idx => {
       entry.fbGuesser[idx] = "❓";
-      entry._animatedHidden = entry._animatedHidden || [];
-      entry._animatedHidden.push(idx);
     });
   }
 });
