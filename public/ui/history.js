@@ -31,6 +31,9 @@ window.renderHistory = function ({
     const row = document.createElement("div");
     row.className = "history-row";
 
+    const meta = document.createElement("div");
+      meta.className = "history-meta";
+
     if (safeEntry.extraInfo) {
       row.classList.add("evaluated-row");
     }
@@ -58,8 +61,7 @@ window.renderHistory = function ({
       }
       row.appendChild(tile);
     }
-    const meta = document.createElement("div");
-      meta.className = "history-meta";
+    
       
       if (safeEntry.powerUsed) {
         meta.textContent = safeEntry.powerUsed;
@@ -67,13 +69,10 @@ window.renderHistory = function ({
 
     if (safeEntry.extraInfo) {
       const { greens, yellows } = safeEntry.extraInfo;
-      const extra = document.createElement("span");
-      extra.className = "history-extra";
-      extra.textContent = ` (${greens}🟩, ${yellows}🟨)`;
-      row.appendChild(extra);
+      meta.textContent = `${greens}🟩 ${yellows}🟨`;
     }
     rowWrap.appendChild(row);
     rowWrap.appendChild(meta);
-    container.appendChild(row);
+    container.appendChild(rowWrap);
   }
 };
