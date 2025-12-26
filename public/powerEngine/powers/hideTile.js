@@ -1,6 +1,5 @@
 PowerEngine.register("hideTile", {
 
-  // ⭐ REQUIRED: Setter is the one who can activate this power.
   role: "setter",
 
   renderButton(roomId) {
@@ -11,10 +10,7 @@ PowerEngine.register("hideTile", {
 
     // Goes into the Setter’s power container
     $("setterPowerContainer").appendChild(btn);
-
-    // ⭐ REQUIRED for powerEngine.js to control disabled / used states
     this.buttonEl = btn;
-
     btn.onclick = () =>
       sendGameAction(roomId, { type: "USE_HIDE_TILE" });
   },
@@ -26,6 +22,8 @@ PowerEngine.register("hideTile", {
 
     entry.hiddenIndices.forEach(idx => {
       entry.fbGuesser[idx] = "❓";
+      entry._animatedHidden = entry._animatedHidden || [];
+      entry._animatedHidden.push(idx);
     });
   }
 });
