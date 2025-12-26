@@ -22,6 +22,7 @@ function updateRemainingWords() {
     return;
   }
   const lastIdx = state.history.length;
+  console.log(state.history);
   // compute once per update
   if (remainingCache.guesser === null) {
     remainingCache.setter =computeRemainingAfterIndexForRole(lastIdx);
