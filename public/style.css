@@ -920,6 +920,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   align-items: start;
   gap: 14px;
   width: 100%;
+   pointer-events: none;
 }
 
 /* Left column: powers */
