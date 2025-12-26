@@ -1383,3 +1383,18 @@ body.hide-constraints .constraint-row {
   display: none;
 }
 
+
+/* ===============================
+  HIDE TILE
+   =============================== */
+@keyframes hiddenTileCycle {
+  0%   { background-color: var(--tile-gray); }
+  33%  { background-color: var(--tile-yellow); }
+  66%  { background-color: var(--tile-green); }
+  100% { background-color: var(--tile-gray); }
+}
+
+.history-tile.tile-hidden-cycle {
+  animation: hiddenTileCycle 1.8s linear infinite;
+  color: white;
+}
