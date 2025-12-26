@@ -7,7 +7,7 @@ window.getPattern = function (state, isSetterView) {
     return pattern;
   }
 
-  for (const entry of state.history) 
+  for (const entry of state.history) {
     const fbArray = isSetterView ? entry.fb : entry.fbGuesser;
     if (!Array.isArray(fbArray) || fbArray.length !== 5) {
       continue;
