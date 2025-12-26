@@ -935,6 +935,7 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   flex-direction: column;
   gap: 6px;
   align-items: center;
+   pointer-events: none;
 }
 
 /* Right column: same button */
