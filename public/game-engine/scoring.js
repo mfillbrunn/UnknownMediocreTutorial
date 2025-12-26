@@ -32,6 +32,31 @@ function scoreGuess(secret, guess) {
   return fb;
 }
 
+function scoreGuessIncomplete(secret, guess, secretlength) {
+  const fb = ["", "", "", "", ""];
+  const rem = secret.split("");
+  // Greens
+  for (let i = 0; i < secretlength; i++) {
+    if (guess[i] === secret[i]) {
+      fb[i] = "🟩";
+      rem[i] = null;
+    }
+  }
+  // Yellows / Blacks
+  for (let i = 0; i < 5; i++) {
+    if (fb[i] === "") {
+      const pos = rem.indexOf(guess[i]);
+      if (pos !== -1) {
+        fb[i] = "🟨";
+        rem[pos] = null;
+      } else {
+        fb[i] = "⬛";
+      }
+    }
+  }
+  return fb;
+}
+
 // Expose for browser
 if (typeof window !== "undefined") {
   window.scoreGuess = scoreGuess;
