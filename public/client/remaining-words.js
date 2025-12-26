@@ -1,11 +1,4 @@
-function categorizeRemainingWords(count) {
-  if (count >= 200) return "many";
-  if (count >= 50) return "plenty";
-  if (count >= 10) return "some";
-  if (count >= 2) return "few";
-  if (count === 1) return "only one";
-  return "none";
-}
+
 window.computeRemainingAfterIndexForRole = function (idx) {
   const words = window.ALLOWED_SECRETS;
   if (!state || !state.history) return 0;
@@ -19,22 +12,6 @@ window.computeRemainingAfterIndexForRole = function (idx) {
   return count;
 };
 
-function styleRemaining(element, label) {
-  element.className = "remainingMeter";
-  if (!label) return;
-
-  if (label === "many") element.classList.add("rm-many");
-  else if (label === "plenty") element.classList.add("rm-plenty");
-  else if (label === "some") element.classList.add("rm-some");
-  else if (label === "few") element.classList.add("rm-few");
-  else if (label === "only one") element.classList.add("rm-one");
-}
-
-// cache lives outside, but is reset on state updates
-const remainingCache = {
-  setter: null,
-  guesser: null
-};
 
 function updateRemainingWords() {
   if (!state || state.phase === "lobby" || state.phase === "gameOver") {
@@ -69,3 +46,28 @@ function updateRemainingWords() {
     styleRemaining(s, categorySetter);
   }
 }
+  // Setter labeling
+function categorizeRemainingWords(count) {
+  if (count >= 200) return "many";
+  if (count >= 50) return "plenty";
+  if (count >= 10) return "some";
+  if (count >= 2) return "few";
+  if (count === 1) return "only one";
+  return "none";
+}
+function styleRemaining(element, label) {
+  element.className = "remainingMeter";
+  if (!label) return;
+
+  if (label === "many") element.classList.add("rm-many");
+  else if (label === "plenty") element.classList.add("rm-plenty");
+  else if (label === "some") element.classList.add("rm-some");
+  else if (label === "few") element.classList.add("rm-few");
+  else if (label === "only one") element.classList.add("rm-one");
+}
+
+// cache lives outside, but is reset on state updates
+const remainingCache = {
+  setter: null,
+  guesser: null
+};
