@@ -47,7 +47,13 @@ window.renderHistory = function ({
       else if (fb === "🟨") tile.classList.add("tile-yellow");
       else if (fb === "🟦") tile.classList.add("tile-blue");
       else tile.classList.add("tile-gray");
-
+      if (
+        !isSetter &&
+        Array.isArray(safeEntry.hiddenIndices) &&
+        safeEntry.hiddenIndices.includes(i)
+      ) {
+        tile.classList.add("tile-hidden-cycle");
+      }
       row.appendChild(tile);
     }
     const meta = document.createElement("div");
