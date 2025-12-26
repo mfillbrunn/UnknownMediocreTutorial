@@ -1303,7 +1303,7 @@ Constraint row using history tile language
 .pending-guess
 .history-tile.preview-green {
   background: var(--tile-green);
-  color: var(--tile-green-text);
+  color: var(--tile-green-text) !important;
   border: none;
   box-shadow: none;
   opacity: 0.9;
@@ -1314,7 +1314,7 @@ Constraint row using history tile language
 .pending-guess
 .history-tile.preview-yellow {
   background: var(--tile-yellow);
-  color: var(--tile-yellow-text);
+  color: var(--tile-yellow-text) !important;
   border: none;
   box-shadow: none;
   opacity: 0.9;
@@ -1330,16 +1330,3 @@ Constraint row using history tile language
   box-shadow: none;
   opacity: 0.8;
 }
-
-/* Preview tiles: green & yellow use black text */
-.theme-setter
-#draftSetter
-.pending-guess
-.history-tile.preview-green,
-.theme-setter
-#draftSetter
-.pending-guess
-.history-tile.preview-yellow {
-  color: #000;
-}
-
