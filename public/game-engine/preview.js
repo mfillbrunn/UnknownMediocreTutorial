@@ -9,4 +9,14 @@ window.predictFeedback = function (proposedSecret, pendingGuess) {
     proposedSecret.toLowerCase(),
     pendingGuess.toLowerCase()
   );
+}
+
+window.predictFeedbackincomplete = function (proposedSecret, pendingGuess) {
+  if (!proposedSecret || !pendingGuess) return null;
+  const letterslength= proposedSecret.length;
+   
+  return window.scoreGuess(
+    proposedSecret.toLowerCase(),
+    pendingGuess.toLowerCase()
+  );
 };
