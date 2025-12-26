@@ -551,7 +551,6 @@ renderDraftRows({
   container: $("draftSetter")
 });
 
-
 const input = $("newSecretInput");
 
 if (state.setterDraft) {
@@ -583,7 +582,6 @@ $("newSecretInput").disabled = true;
   const must = getMustContainLetters(state);
   $("mustContainSetter").textContent =
     must.length ? must.join(", ") : "none";
-
   updateSetterPreview();
  }
 function updateSetterPreview() {
@@ -596,13 +594,13 @@ const preview = $("setterPreview");
   preview.innerHTML = "";
   const guess = state.pendingGuess;
   if (!guess) return;
-  const typed = (state.setterDraft || "").toLowerCase();
   const isSetterTurn = state.turn === state.setter;
   if (!isSetterTurn) return;
   if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
     preview.textContent = "(hidden this round)";
     return;
   }
+  const typed = (state.setterDraft || "").toLowerCase();
   if (typed.length === 5) {
     const fb = predictFeedback(typed, guess);
     preview.textContent = `Preview (new): ${fb.join("")}`;
@@ -714,8 +712,6 @@ renderConstraintRow({
   container: $("constraintRowGuesser"),
   isSetterView: false
 });
-
-
 renderDraftRows({
   state,
   role: "guesser",
@@ -723,9 +719,7 @@ renderDraftRows({
   localGuesserDraft
 });
 
-
   const guessBox = $("guessInput");
-
   
   const displayGuess = state.pendingGuess || localGuesserDraft;
  if (myRole === state.guesser) {
