@@ -1383,7 +1383,9 @@ body.hide-constraints .constraint-row {
   display: none;
 }
 
-
+/* ===============================
+  POWERS
+   =============================== */
 /* ===============================
   HIDE TILE
    =============================== */
@@ -1403,4 +1405,13 @@ body.hide-constraints .constraint-row {
 .history-tile.tile-hidden-cycle {
   animation: hiddenTileCycle 1.8s linear infinite;
   color: white;
+}
+/* ===============================
+  FROZEN
+   =============================== */
+
+/* Draft row frozen state */
+.history-row.freeze-draft {
+  background-color: rgba(120, 180, 255, 0.15);
+  border-radius: 6px;
 }
