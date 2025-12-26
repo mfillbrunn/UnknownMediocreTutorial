@@ -66,13 +66,17 @@ socket.on("forceTimerExpired", () => {
 });
 
 socket.on("suggestWord", ({ word }) => {
-  if (myRole === state.guesser) {
-    fillDraftTiles("draftGuesser", word);
-  }
+  const upper = word.toUpperCase();
   if (myRole === state.setter) {
-    fillDraftTiles("draftSetter", word);
+    state.setterDraft = upper;
+    updateUI();
+  }
+  if (myRole === state.guesser) {
+    localGuesserDraft = upper.toLowerCase();
+    updateUI();
   }
 });
+
 
 function fillDraftTiles(containerId, word) {
   const container = document.getElementById(containerId);
