@@ -7,13 +7,9 @@ window.getPattern = function (state, isSetterView) {
     return pattern;
   }
 
-  for (const entry of state.history) {
-    console.log("ENTRY RECEIVED BY CONSTRAINTS:", entry);
+  for (const entry of state.history) 
     const fbArray = isSetterView ? entry.fb : entry.fbGuesser;
-    console.log("FB ARRAY SELECTED:", fbArray);
-
     if (!Array.isArray(fbArray) || fbArray.length !== 5) {
-      console.warn("Skipping invalid history entry (pattern):", entry);
       continue;
     }
 
@@ -52,7 +48,6 @@ window.getMustContainLetters = function (state) {
     const fbArray = entry.fb ?? entry.fbGuesser;
 
     if (!Array.isArray(fbArray) || fbArray.length !== 5) {
-      console.warn("Skipping invalid history entry (mustContain):", entry);
       continue;
     }
 
