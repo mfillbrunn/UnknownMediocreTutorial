@@ -1145,9 +1145,21 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   gap: 6px;
 }
 
+.history-row-wrap {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.history-row-anchor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .history-meta {
   position: absolute;
-  left: calc(100% + 12px);   /* space to the right of tiles */
+  left: calc(100% + 12px);   /* now relative to tiles only */
   top: 50%;
   transform: translateY(-50%);
 
@@ -1160,7 +1172,9 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   text-transform: uppercase;
   opacity: 0.8;
   white-space: nowrap;
+  pointer-events: none;
 }
+
 
 
 
