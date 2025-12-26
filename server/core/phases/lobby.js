@@ -97,7 +97,7 @@ if (action.type === "SET_POWER_COUNT") {
     // If both ready → enter simultaneous phase
     if (state.ready.A && state.ready.B) {
           
-            const N = state.powerCount || 2;
+            const N = state.powerCount || 10;
   const sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
   const gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
   state.activePowers = [...sP, ...gP];
