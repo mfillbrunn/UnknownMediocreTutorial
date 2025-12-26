@@ -67,12 +67,29 @@ socket.on("forceTimerExpired", () => {
 
 socket.on("suggestWord", ({ word }) => {
   if (myRole === state.guesser) {
-    $("draftGuesser").value = word.toUpperCase();
+    fillDraftTiles("draftGuesser", word);
   }
   if (myRole === state.setter) {
-    $("draftSetter").value = word.toUpperCase();
+    fillDraftTiles("draftSetter", word);
   }
 });
+
+function fillDraftTiles(containerId, word) {
+  const el = $(containerId);
+  if (!el) return;
+
+  el.innerHTML = ""; // clear existing tiles
+
+  word = word.toUpperCase();
+
+  for (let i = 0; i < 5; i++) {
+    const tile = document.createElement("div");
+    tile.className = "tile";
+    tile.textContent = word[i] || "";
+    el.appendChild(tile);
+  }
+}
+
 
 socket.on("errorMessage", msg => {
   if ($("assassinModal").classList.contains("active")) {
