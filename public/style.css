@@ -1302,22 +1302,22 @@ Constraint row using history tile language
 #draftSetter
 .pending-guess
 .history-tile.preview-green {
-  background: var(--tile-green);
   color: var(--tile-green-text) !important;
   border: none;
   box-shadow: none;
   opacity: 0.9;
+   animation: preview-green-pulse 1.4s ease-in-out infinite;
 }
 
 .theme-setter
 #draftSetter
 .pending-guess
 .history-tile.preview-yellow {
-  background: var(--tile-yellow);
   color: var(--tile-yellow-text) !important;
   border: none;
   box-shadow: none;
   opacity: 0.9;
+   animation: preview-yellow-pulse 1.4s ease-in-out infinite;
 }
 
 .theme-setter
@@ -1329,4 +1329,27 @@ Constraint row using history tile language
   border: none;
   box-shadow: none;
   opacity: 0.8;
+}
+@keyframes preview-green-pulse {
+  0% {
+    background-color: color-mix(in srgb, var(--tile-green) 35%, #000);
+  }
+  50% {
+    background-color: var(--tile-green);
+  }
+  100% {
+    background-color: color-mix(in srgb, var(--tile-green) 35%, #000);
+  }
+}
+
+@keyframes preview-yellow-pulse {
+  0% {
+    background-color: color-mix(in srgb, var(--tile-yellow) 35%, #000);
+  }
+  50% {
+    background-color: var(--tile-yellow);
+  }
+  100% {
+    background-color: color-mix(in srgb, var(--tile-yellow) 35%, #000);
+  }
 }
