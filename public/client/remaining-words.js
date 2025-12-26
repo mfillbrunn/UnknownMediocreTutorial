@@ -43,9 +43,8 @@ function updateRemainingWords() {
   // Setter sees category
   const s = $("remainingWordsSetter");
   if (s) {
-    s.textContent = Number(nSetter).toLocaleString();
-    //s.textContent = categorySetter;
-    //styleRemaining(s, categorySetter);
+    s.textContent = categorySetter;
+    styleRemaining(s, categorySetter);
   }
 }
   // Setter labeling
