@@ -1394,10 +1394,10 @@ body.hide-constraints .constraint-row {
 
 
 @keyframes hiddenTileCycle {
-  0%   { background-color: var(--tile-gray); }
-  33%  { background-color: var(--tile-yellow); }
-  66%  { background-color: var(--tile-green); }
-  100% { background-color: var(--tile-gray); }
+  0%   { background: var(--tile-gray); }
+  33%  { background: var(--tile-yellow); }
+  66%  { background: var(--tile-green); }
+  100% { background: var(--tile-gray); }
 }
 
 .history-tile.tile-hidden-cycle {
