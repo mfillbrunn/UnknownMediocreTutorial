@@ -1450,3 +1450,17 @@ body.hide-constraints .constraint-row {
   position: relative;
   z-index: 1;
 }
+@media (prefers-reduced-motion: reduce) {
+  .history-row.freeze-draft::after {
+    animation: none;
+  }
+}
+@keyframes ice-shimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.history-row.freeze-draft::after {
+  background-size: 200% 200%;
+  animation: ice-shimmer 3.5s linear infinite;
+}
