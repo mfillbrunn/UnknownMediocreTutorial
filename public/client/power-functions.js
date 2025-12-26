@@ -12,21 +12,3 @@ socket.on("suggestWord", ({ word }) => {
 });
 
 
-// REVEAL GREEN
-function applyRevealGreenDraft(draft, state) {
-  if (!state.revealGreenInfo) return draft;
-
-  const { pos, letter } = state.revealGreenInfo;
-
-  draft = (draft || "").toUpperCase().padEnd(5, "");
-
-  // Only re-insert if the tile is empty
-  if (!draft[pos]) {
-    draft =
-      draft.slice(0, pos) +
-      letter +
-      draft.slice(pos + 1);
-  }
-
-  return draft;
-}
