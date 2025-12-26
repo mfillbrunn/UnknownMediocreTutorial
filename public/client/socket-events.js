@@ -14,7 +14,7 @@ socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
   });
 
 socket.on("revealOldSecret", ({ secret }) => {
-  toast(`Secret two rounds ago was: ${secret.toUpperCase()}`);
+  toast(`Secret three rounds ago was: ${secret.toUpperCase()}`);
 });
 
 
