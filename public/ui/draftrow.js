@@ -26,6 +26,9 @@ window.renderDraftRows = function ({
    * SETTER
    * ============================ */
   if (role === "setter") {
+    if (state.powers?.freezeActive ) {
+      row.classList.add("freeze-draft");
+    }    
     const setterCanEdit =!state.powers?.freezeActive &&((state.phase === "simultaneous" &&!state.secret && !state.simultaneousSecretSubmitted) ||
         (state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess));
     if (state.pendingGuess) {renderDraftRow(state.pendingGuess.toUpperCase(),container,"draft-row pending-guess"); }
