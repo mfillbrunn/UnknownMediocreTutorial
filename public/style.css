@@ -1279,21 +1279,22 @@ Constraint row using history tile language
   }
 }
 
-/* Setter preview colors (overlay only) */
-.history-tile.preview-green {
+/* Setter preview overrides history coloring */
+#setterGuesserSubmitted .pending-guess .history-tile.preview-green {
   background: var(--tile-green);
   color: var(--tile-green-text);
 }
 
-.history-tile.preview-yellow {
+#setterGuesserSubmitted .pending-guess .history-tile.preview-yellow {
   background: var(--tile-yellow);
   color: var(--tile-yellow-text);
 }
 
-.history-tile.preview-gray {
+#setterGuesserSubmitted .pending-guess .history-tile.preview-gray {
   background: var(--tile-gray);
   color: var(--tile-gray-text);
 }
+
 /* Base preview look */
 .history-tile.preview-green,
 .history-tile.preview-yellow,
