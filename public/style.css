@@ -1138,14 +1138,6 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   }
 }
 
-/* History rows with meta column */
-.history-row-wrap {
-  display: grid;
-  grid-template-columns: auto 90px;
-  align-items: center;
-  gap: 10px;
-}
-
 /* Existing tiles row */
 .history-row {
   display: flex;
@@ -1153,16 +1145,23 @@ body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
   gap: 6px;
 }
 
-/* Right column for power name */
 .history-meta {
+  position: absolute;
+  left: calc(100% + 12px);   /* space to the right of tiles */
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 90px;
+  text-align: left;
+
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   opacity: 0.8;
   white-space: nowrap;
-  text-align: left;
 }
+
 
 
 .color-picker-row {
