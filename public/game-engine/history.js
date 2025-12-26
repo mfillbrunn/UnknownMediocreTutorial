@@ -2,7 +2,10 @@
  * Normalize emoji feedback so comparisons are consistent
  */
 function normalizeFB(fbArr) {
- if (!Array.isArray(fbArr)) return null;
+  if (!Array.isArray(fbArr)) {
+    // Treat missing feedback as all black tiles
+    return ["⬛","⬛","⬛","⬛","⬛"];
+  }
   return fbArr.map(fb => {
     if (fb === "🟩") return "🟩";
     if (fb === "🟨") return "🟨";
@@ -35,7 +38,8 @@ function isConsistentWithHistory(history, proposedSecret, state) {
 
     const guess = entry.guess.toUpperCase();
     const rawFb =  entry.fb ?? entry.fbGuesser;
-    const actual = normalizeFB(entry.rawFb);
+
+    const actual = normalizeFB(rawFb);
 
     // IMPORTANT: browser scoreGuess comes from scoring.js (already loaded)
     let expected = window.scoreGuess(proposedSecret, guess);
