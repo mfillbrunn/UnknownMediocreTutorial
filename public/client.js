@@ -259,7 +259,6 @@ onStateUpdate(newState => {
   }
 const setterCanEdit =
   myRole === state.setter &&
-  !state.powers?.freezeActive &&
   (
     // Normal phase: setter’s turn with pending guess
     (state.phase === "normal" &&
@@ -487,10 +486,6 @@ function updateSetterScreen() {
     isSetterTurn &&
     !!displayGuess &&
     state.phase === "normal";
-
-  const freezeActive =
-    !!(state.powers && state.powers.freezeActive);
-
   let setterInputEnabled = false;
 
   // -------------------------------------------------------
@@ -525,13 +520,7 @@ if (keepBtn) keepBtn.disabled = !isDecisionStep;
     if (keepBtn) keepBtn.disabled = true;
     $("submitSetterSameBtn").classList.add("disabled-btn");
   }
-  // -------------------------------------------------------
-  // FREEZE SECRET OVERRIDE (normal phase)
-  // -------------------------------------------------------
-  if (freezeActive && state.phase === "normal") {
-    // Setter cannot type or set NEW secret
-    setterInputEnabled = false;
-  }
+
   // ----------------------------------------
 // SETTER VIEW:
 // ----------------------------------------
@@ -649,7 +638,6 @@ function handleSetterInput(event) {
     myRole === state.setter &&
     state.phase === "normal" &&
     state.turn === state.setter &&
-    !state.powers?.freezeActive &&
     !!state.pendingGuess;
   const isSimultaneousSecretEntry =
     state.phase === "simultaneous" &&
