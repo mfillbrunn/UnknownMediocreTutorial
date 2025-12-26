@@ -1354,3 +1354,35 @@ Constraint row using history tile language
     background-color: color-mix(in srgb, var(--tile-yellow) 35%, #000);
   }
 }
+
+/* ===============================
+   Remove constraint preview button
+   =============================== */
+.constraint-toggle-btn {
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+
+  padding: 4px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.constraint-toggle-btn:hover {
+  opacity: 1;
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* Optional: “off” state */
+.constraint-toggle-btn.off {
+  opacity: 0.35;
+}
+body.hide-constraints .constraint-row {
+  display: none;
+}
+
