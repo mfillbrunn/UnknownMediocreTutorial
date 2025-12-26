@@ -79,7 +79,6 @@ if (p.mode === "RARE") {
   }
 }
 
-
     if (p.mode === "ROW") {
       const rows = [
         new Set("QWERTYUIOP"), // 10 letters
