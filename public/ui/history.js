@@ -70,6 +70,7 @@ window.renderHistory = function ({
     if (safeEntry.extraInfo) {
       const { greens, yellows } = safeEntry.extraInfo;
       meta.textContent = `${greens}🟩 ${yellows}🟨`;
+      meta.classList.add("history-meta-count");
     }
     const rowAnchor = document.createElement("div");
     rowAnchor.className = "history-row-anchor";
