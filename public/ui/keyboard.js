@@ -30,6 +30,13 @@ window.KEYBOARD_LAYOUT = [
 // Determine best letter status for color assignment
 function getLetterStatusFromHistory(letter, state, isGuesser) {
   if (!state?.history) return null;
+  
+  const extraGreens = state.extraConstraints
+  ?.filter(c => c.type === "GREEN")
+  .map(c => c.letter);
+  if (extraGreens?.includes(letter)) {
+    return "green";
+  }
 
   const eff = state.powers?.vowelRefreshEffect;
   if (eff) {
@@ -39,9 +46,6 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
       }
     }
   }
-
-  const forcedGreens = state.powers?.forcedGreens || {};
-  if (Object.values(forcedGreens).includes(letter)) return "green";
 
   let strongest = null;
   const fbKey = isGuesser ? "fbGuesser" : "fb";
