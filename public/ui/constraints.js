@@ -185,19 +185,21 @@ window.renderConstraintRow = function ({
     tile.className = "history-tile constraint-tile";
 
     const cell = grid[i];
-// 🟪 Blind Spot (persistent from activation onward)
-      if (
-        typeof bsIdx === "number" &&
-        i === bsIdx
-      ) {
-        tile.classList.add("tile-blindspot");
-          if (!isSetterView) {
-          tile.textContent = "";
-        }
-         container.appendChild(tile);
-        continue;
-      }
 
+    if (
+      typeof bsIdx === "number" &&
+      i === bsIdx
+        ) {
+      tile.classList.add("tile-blindspot");
+    
+      if (!isSetterView) {
+        // Guesser: hide the letter completely
+        tile.textContent = "";
+        container.appendChild(tile);
+        continue; // ⬅️ stop here ONLY for guesser
+      }  
+    }
+    
     // 🟩 Green
     if (cell.green) {
       tile.classList.add("tile-green");
@@ -205,7 +207,7 @@ window.renderConstraintRow = function ({
       container.appendChild(tile);
       continue;
     }
-
+     
     // ❌ Forbidden letters only
     // ❌ Forbidden letters only (alphabetically ordered)
 const letters = Array
