@@ -964,6 +964,15 @@ $("submitSetterSameBtn").onclick = () => {
   sendGameAction(roomId, { type: "SET_SECRET_SAME" });
 };
 
+$("playerNameInput").onchange = () => {
+  const name = $("playerNameInput").value.trim();
+  if (!name) return;
+
+  sendGameAction(roomId, {
+    type: "SET_PLAYER_NAME",
+    name
+  });
+};
 
 $("newMatchBtn").onclick = () => {
   sendGameAction(roomId, { type: "NEW_MATCH" });
