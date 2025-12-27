@@ -10,6 +10,7 @@ PowerEngine.register("assassinWord", {
     $("setterPowerContainer").appendChild(btn);
 
     btn.onclick = () => {
+      console.log("Assassin Word clicked");
       $("assassinInput").value = "";
       $("assassinModal").classList.add("active");
       $("assassinInput").focus();
