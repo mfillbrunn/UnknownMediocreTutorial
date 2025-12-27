@@ -19,7 +19,6 @@ function normalizeFB(fbArr) {
  * PURE LOGIC — mirrors server implementation but does NOT use require()
  */
 function isConsistentWithHistory(history, proposedSecret, state) {
-  const eff = state?.powers?.vowelRefreshEffect || null;
   proposedSecret = proposedSecret.toUpperCase();
   // Enforce extraConstraints (timeless secret constraints)
   if (state?.extraConstraints?.length) {
@@ -34,27 +33,15 @@ function isConsistentWithHistory(history, proposedSecret, state) {
 
   for (const entry of history) {
     if (entry.ignoreConstraints) continue;
-
     const guess = entry.guess.toUpperCase();
     const rawFb =  entry.fb ?? entry.fbGuesser;
-
     const actual = normalizeFB(rawFb);
 
     // IMPORTANT: browser scoreGuess comes from scoring.js (already loaded)
     let expected = window.scoreGuess(proposedSecret, guess);
-
-    if (eff && entry.roundIndex === eff.guessIndex) {
-      for (const pos of eff.indices) {
-        expected[pos] = actual[pos];
-      }
-    }
+ 
 
     for (let i = 0; i < 5; i++) {
-      if (eff &&
-          entry.roundIndex === eff.guessIndex &&
-          eff.indices.includes(i)) {
-        continue;
-      }
       if (expected[i] !== actual[i]) return false;
     }
   }
