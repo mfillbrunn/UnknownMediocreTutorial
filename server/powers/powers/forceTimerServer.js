@@ -16,6 +16,7 @@ engine.registerPower("forceTimer", {
     state.powers.forceTimerUsed = true;
     state.powers.forceTimerArmed = true;
     state.powerUsedThisTurn = true;
+    console.log("[SERVER] ForceTimer armed", state.powers);
 
     io.to(roomId).emit(
       "toast",
