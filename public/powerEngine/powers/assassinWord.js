@@ -70,7 +70,7 @@ PowerEngine.register("assassinWord", {
     }
   }
 });
-
+document.addEventListener("DOMContentLoaded", () => {
 // Modal handlers (OWNED BY THIS POWER)
 $("assassinSubmitBtn").onclick = () => {
   const roomId = $("assassinSubmitBtn").dataset.roomId;
@@ -89,3 +89,4 @@ $("assassinCancelBtn").onclick = () => {
   $("assassinModal").classList.remove("active");
   $("assassinInput").value = "";
 };
+});
