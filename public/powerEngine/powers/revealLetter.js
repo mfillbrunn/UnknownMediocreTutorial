@@ -45,19 +45,5 @@ PowerEngine.register("revealLetter", {
 
     // ENABLE/DISABLE is handled centrally in powerEngine.updateButtonStates
     // based on POWER_RULES["revealLetter"].allowed(...)
-  },
-
-keyboardEffects(state, role, keyEl, letter) {
-  if (role !== "guesser") return;
-
-  const greens = state.extraConstraints
-    ?.filter(c => c.type === "GREEN")
-    .map(c => c.letter);
-
-  if (!greens || !greens.includes(letter.toUpperCase())) return;
-
-  keyEl.classList.remove("key-yellow", "key-gray", "key-blue");
-  keyEl.classList.add("key-green");
-}
-
+  }
 });
