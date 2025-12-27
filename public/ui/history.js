@@ -3,8 +3,8 @@ window.renderHistory = function ({
   container,
   role
 }) {
+  if (state.powers?.blindGuessActive) {return;}
   container.innerHTML = "";
-
   const isSetter = role === "setter";
   const bsIdx   = state?.powers?.blindSpotIndex;
   const bsRound = state?.powers?.blindSpotRoundIndex;
