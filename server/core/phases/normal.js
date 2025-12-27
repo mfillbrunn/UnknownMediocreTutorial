@@ -274,6 +274,7 @@ function pushWinEntry(state, word) {
     fb: ["🟩","🟩","🟩","🟩","🟩"],
     fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
     extraInfo: null,
+    extraConstraints: null,
     finalSecret: word
   });
 }
