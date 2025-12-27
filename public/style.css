@@ -720,6 +720,13 @@ background: #0c0c0e;
 /* Turn overlay */
 .turn-indicator {
   display: none;
+  padding: 12px 18px;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
 }
 
 .turn-indicator.your-turn {
