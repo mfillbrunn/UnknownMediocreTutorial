@@ -23,6 +23,7 @@ function finalizeFeedback(state, powerEngine, roomId, room, io) {
     fb,
     fbGuesser: [...fb],
     extraInfo: null,
+    extraConstraints: null,
     finalSecret: state.currentSecret,
     roundIndex: state.history.length
   };
