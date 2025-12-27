@@ -93,7 +93,6 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     fb,
     fbGuesser: [...fb],
     extraInfo: null,
-    extraConstraints: null,
     finalSecret: secret,
     roundIndex: state.history.length
   };
