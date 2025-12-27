@@ -132,7 +132,7 @@
 
     <!-- INFO PANEL AT BOTTOM -->
     <div id="turnIndicatorSetter" class="turn-indicator"></div>
-    <div id="setterSecretArea"></div>
+    <div id="setterSecretArea" hidden></div>
     <!-- Assassin Modal -->
     <div id="assassinModal" class="modal">
       <div class="modal-content">
@@ -143,6 +143,19 @@
       </div>
     </div>
   </div>
+  <!-- Force Guesser Modal -->
+  <div id="forceGuessModal" class="modal">
+  <div class="modal-content">
+    <h3>Force Guess</h3>
+    <p id="forceGuessPrompt"></p>
+    <div class="decision-row">
+      <button id="fgContains"></button>
+      <button id="fgStarts"></button>
+      <button id="fgEnds"></button>
+      <button id="fgDouble">Double Letter</button>
+    </div>
+  </div>
+</div>
 
   <!-- ========== GUESSER ========== -->
 
