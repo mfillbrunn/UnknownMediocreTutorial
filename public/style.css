@@ -718,7 +718,14 @@ background: #0c0c0e;
 }
 
 /* Turn overlay */
-.turn-indicator { display: block; }
+.turn-indicator {
+  display: none;
+}
+
+.turn-indicator.your-turn {
+  display: block;
+}
+
 
 .turn-overlay {
   position: fixed;
