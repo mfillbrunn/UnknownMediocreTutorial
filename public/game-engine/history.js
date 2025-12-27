@@ -20,16 +20,15 @@ function normalizeFB(fbArr) {
  */
 function isConsistentWithHistory(history, proposedSecret, state) {
   const eff = state?.powers?.vowelRefreshEffect || null;
-  const forced = state?.powers?.forcedGreens || {};
-  const revealRound = state?.powers?.revealLetterRound ?? Infinity;
-
   proposedSecret = proposedSecret.toUpperCase();
-
-  function applyForcedGreens(expected, entry) {
-    if (entry.roundIndex < revealRound) return;
-    for (const pos in forced) {
-      const idx = Number(pos);
-      expected[idx] = "🟩";
+  // Enforce extraConstraints (timeless secret constraints)
+  if (state?.extraConstraints?.length) {
+    for (const c of state.extraConstraints) {
+      if (c.type === "GREEN") {
+        if (proposedSecret[c.index] !== c.letter) {
+          return false;
+        }
+      }
     }
   }
 
@@ -43,8 +42,6 @@ function isConsistentWithHistory(history, proposedSecret, state) {
 
     // IMPORTANT: browser scoreGuess comes from scoring.js (already loaded)
     let expected = window.scoreGuess(proposedSecret, guess);
-
-    applyForcedGreens(expected, entry);
 
     if (eff && entry.roundIndex === eff.guessIndex) {
       for (const pos of eff.indices) {
