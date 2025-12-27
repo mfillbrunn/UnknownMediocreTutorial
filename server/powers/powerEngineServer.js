@@ -10,7 +10,22 @@ const engine = {
   applyPower(id, state, action, roomId, io) {
     const p = this.powers[id];
     if (!p || typeof p.apply !== "function") return;
+    if (!Array.isArray(state.powersUsedThisRoundGuesser)) {
+      state.powersUsedThisRoundGuesser = [];
+      }
+    if (!Array.isArray(state.powersUsedThisRoundSetter)) {
+      state.powersUsedThisRoundSetter = [];
+    }
+
     p.apply(state, action, roomId, io);
+    const role = action?.role;
+    const label = p.label || id; // allow nice labels per power
+  
+    if (role === state.guesser) {
+      state.powersUsedThisRoundGuesser.push(label);
+    } else if (role === state.setter) {
+      state.powersUsedThisRoundSetter.push(label);
+    }
   },
 
   beforeSetterSecretChange(state, action) {
