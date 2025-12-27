@@ -186,7 +186,11 @@ onLobbyEvent(evt => {
 function updateTurnIndicators() {
   const setterBar = $("turnIndicatorSetter");
   const guesserBar = $("turnIndicatorGuesser");
-
+   if (state.powers?.forceTimerActive) {
+    // Do NOT touch indicators here
+    // ForceTimer power renders its own UI
+    return;
+  }
   if (state.phase === "lobby") {
     setterBar.textContent = "";
     guesserBar.textContent = "";
