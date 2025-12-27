@@ -6,6 +6,8 @@ window.renderHistory = function ({
   container.innerHTML = "";
 
   const isSetter = role === "setter";
+  const bsIdx   = state?.powers?.blindSpotIndex;
+  const bsRound = state?.powers?.blindSpotRoundIndex;
   const history = state?.history || [];
 
   for (const entry of history) {
@@ -46,19 +48,33 @@ window.renderHistory = function ({
       tile.textContent = guess[i];
       
       const fb = fbArray[i];
-      const isHiddenCycling =
-      !isSetter &&
-      Array.isArray(safeEntry.hiddenIndices) &&
-      safeEntry.hiddenIndices.includes(i);
-
-      if (isHiddenCycling) {
-        tile.classList.add("tile-hidden-cycle");
-      } else {
-        if (fb === "🟩") tile.classList.add("tile-green");
-        else if (fb === "🟨") tile.classList.add("tile-yellow");
-        else if (fb === "🟦") tile.classList.add("tile-blue");
-        else tile.classList.add("tile-gray");
+      const isBlindSpot =
+        !isSetter &&
+        typeof bsIdx === "number" &&
+        typeof bsRound === "number" &&
+        i === bsIdx &&
+        entry.roundIndex >= bsRound;
+      
+      if (isBlindSpot) {
+        tile.classList.add("tile-purple");
+        tile.textContent = "?"; // or keep guess[i] if you prefer
       }
+      else {
+        const isHiddenCycling =
+          !isSetter &&
+          Array.isArray(safeEntry.hiddenIndices) &&
+          safeEntry.hiddenIndices.includes(i);
+      
+        if (isHiddenCycling) {
+          tile.classList.add("tile-hidden-cycle");
+        } else {
+          if (fb === "🟩") tile.classList.add("tile-green");
+          else if (fb === "🟨") tile.classList.add("tile-yellow");
+          else if (fb === "🟦") tile.classList.add("tile-blue");
+          else tile.classList.add("tile-gray");
+        }
+      }
+
       row.appendChild(tile);
     }
     
