@@ -75,8 +75,7 @@ function createInitialState() {
       vowelRefreshLetters: null,
       vowelRefreshPending: false,
 
-
-      
+    
       // ASSASSIN WORD
       assassinWordUsed: false,
       assassinWord: null,
