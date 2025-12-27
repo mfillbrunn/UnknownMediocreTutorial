@@ -30,10 +30,28 @@ engine.registerPower("suggestSecret", {
       return;
     }
 
-    const suggestion = feasible[Math.floor(Math.random() * feasible.length)];
+    let candidates = feasible;
+
+    // Only filter if there is more than one option
+    if (feasible.length > 1 && state.pendingGuess) {
+      const upperPending = state.pendingGuess.toUpperCase();
+
+      const filtered = feasible.filter(
+        w => w.toUpperCase() !== upperPending
+      );
+
+      // Only use filtered list if it doesn't eliminate everything
+      if (filtered.length > 0) {
+        candidates = filtered;
+      }
+    }
+
+    const suggestion =
+      candidates[Math.floor(Math.random() * candidates.length)];
 
     io.to(action.playerId).emit("suggestWord", {
       word: suggestion
     });
   }
 });
+
