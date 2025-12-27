@@ -1611,4 +1611,28 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   box-shadow: 0 0 12px var(--btn-primary-glow) !important;
   transform: translateY(-2px);
 }
+/* ===============================
+   ASSASSIN WORD BADGE
+   =============================== */
+
+.assassin-badge {
+  margin-top: 10px;
+  padding: 8px 14px;
+
+  width: fit-content;
+
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+
+  color: #fff;
+  background: linear-gradient(135deg, #8b0000, #cc0000);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+
+  box-shadow:
+    0 0 10px rgba(204, 0, 0, 0.45),
+    inset 0 0 6px rgba(255, 255, 255, 0.15);
+}
 
