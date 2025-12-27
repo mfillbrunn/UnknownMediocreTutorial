@@ -12,15 +12,5 @@ PowerEngine.register("magicMode", {
     btn.onclick = () => {
       sendGameAction(roomId, { type: "USE_MAGIC_MODE" });
     };
-  },
-
-  historyEffects(entry, isSetter) {
-    if (!entry.magicModeApplied) return;
-    if (!isSetter && entry.fbGuesser) {
-      entry.fbGuesser = entry.fbGuesser.slice();
-      for (let i = 0; i < 5; i++) {
-        if (entry.fbGuesser[i] === "🟨") entry.fbGuesser[i] = "🟩";
-      }
-    }
   }
 });
