@@ -13,10 +13,10 @@ function createInitialState() {
     setter: "A",
     guesser: "B",
     ready: { A: false, B: false },
-    powerCount: 2,       // NEW: number chosen in lobby
+    powerCount: 10,       // NEW: number chosen in lobby
     activePowers: [],  // NEW: each player’s random secrets
     secret: "",
-    currentSecret: null,
+    currentSecret: "",
     pendingGuess: "",
     guessCount: 0,
     gameOver: false,
@@ -42,10 +42,6 @@ function createInitialState() {
       freezeSecretUsed: false,
       freezeActive: false,
 
-      // REUSE LETTERS
-      reuseLettersUsed: false,
-      reuseLettersPool: [],
-
       // CONFUSE COLORS
       confuseColorsUsed: false,
       confuseColorsActive: false,
@@ -56,9 +52,13 @@ function createInitialState() {
 
       suggestGuessUsed: false,
       suggestSecretUsed: false,
+      
       forceTimerUsed: false,
+      
       revealHistoryUsed: false,
+      
       blindSpotUsed: false,
+      
       stealthGuessUsed: false,
       
       forceTimerActive: false,
@@ -69,28 +69,27 @@ function createInitialState() {
       stealthGuessActive: false,
 
       // MAGIC MODE
-magicModeUsed: false,
-magicModeActive: false,
-magicModeJustUsed: false,
+      magicModeUsed: false,
+      magicModeActive: false,
+      magicModeJustUsed: false,
+      
+      // VOWEL REFRESH
+      vowelRefreshUsed: false,
+      vowelRefreshLetters: null,
+      vowelRefreshPending: false,
 
-// VOWEL REFRESH
-vowelRefreshUsed: false,
-vowelRefreshLetters: null,
-vowelRefreshPending: false,
 
-
-
-// ASSASSIN WORD
-assassinWordUsed: false,
-assassinWord: null,
-// UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
-revealLetter: {
-  mode: null,            // "RARE" or "ROW" — set at match start
-  ready: false,          // power is unlocked
-  used: false,           // power has been consumed
-  pendingReveal: null    // { index, letter, mode }
-},
-
+      
+      // ASSASSIN WORD
+      assassinWordUsed: false,
+      assassinWord: null,
+      // UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
+      revealLetter: {
+        mode: null,            // "RARE" or "ROW" — set at match start
+        ready: false,          // power is unlocked
+        used: false,           // power has been consumed
+        pendingReveal: null    // { index, letter, mode }
+      },
     }
   };
 }
@@ -120,7 +119,7 @@ function finalizeFeedback(state, powerEngine, roomId, room, io) {
     finalSecret: state.currentSecret,
     roundIndex: state.history.length
   };
-  // ❤️ Rare Letter Bonus scoring override
+
   if (typeof state.powers.rareLetterBonusGreenIndex === "number") {
     const pos = state.powers.rareLetterBonusGreenIndex;
     const revealedLetter = state.secret[pos].toUpperCase();
