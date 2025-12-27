@@ -10,7 +10,9 @@ engine.registerPower("forceTimer", {
   apply(state, action, roomId, io) {
     // One-time use
     console.log("[SERVER] ForceTimer apply called");
+    console.log("[SERVER] powerUsedThisTurn:", state.powers.forceTimerUsed);
     if (state.powers.forceTimerUsed) return;
+    console.log("[SERVER] powerUsedThisTurn:", state.powerUsedThisTurn);
     if (state.powerUsedThisTurn) return;
 
     state.powers.forceTimerUsed = true;
