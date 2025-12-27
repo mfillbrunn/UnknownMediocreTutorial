@@ -39,10 +39,6 @@ function buildSafeStateForPlayer(state, role) {
   delete safe.powers.currentHiddenIndices;
   delete safe.powers.hideTilePendingCount;
 
-  if (role !== state.guesser) {
-    delete safe.powers.reuseLettersPool;
-  }
-
   if (role === state.guesser) {
     delete safe.powers.assassinWord;
   }
@@ -124,7 +120,6 @@ function buildSafeStateForPlayer(state, role) {
               e.fb = ["?", "?", "?", "?", "?"];
             }
           }
-          // DO NOT delete fbGuesser; client-side patterns may inspect it
         }
 
         // Hide finalSecret until after gameOver
