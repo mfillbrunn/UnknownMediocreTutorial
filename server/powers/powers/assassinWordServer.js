@@ -21,7 +21,14 @@ engine.registerPower("assassinWord", {
     if (state.powers.assassinWordUsed) return;
     if (!action.word) return;
     const w = action.word.toUpperCase();
-
+       if (w.length !==5) {
+            io.to(action.playerId).emit(
+              "errorMessage",
+              "5 letters!"
+            );
+            return; // DO NOT consume the power
+          }
+    
           if (!/^[A-Z]{5}$/.test(w)) {
         io.to(action.playerId).emit(
           "errorMessage",
