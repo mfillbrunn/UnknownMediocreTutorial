@@ -1670,6 +1670,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   border-left: 3px solid rgba(155, 80, 255, 0.95);
   border-top: 3px solid rgba(155, 80, 255, 0.95);
   border-bottom: 3px solid rgba(155, 80, 255, 0.95);
+  border-right: 3px solid rgba(155, 80, 255, 0.95);
 
 
   pointer-events: none;
