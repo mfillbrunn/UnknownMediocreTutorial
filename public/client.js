@@ -550,12 +550,7 @@ renderDraftRows({
     isGuesser: false,
     onInput: handleSetterInput
   });
-  }
-  const pat = getPattern(state, true);
-  $("knownPatternSetter").textContent = formatPattern(pat);
-  const must = getMustContainLetters(state);
-  $("mustContainSetter").textContent =
-    must.length ? must.join(", ") : "none";
+  }  
   updateSetterPreview();
  }
 function updateSetterPreview() {
