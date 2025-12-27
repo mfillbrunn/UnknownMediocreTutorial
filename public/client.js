@@ -706,21 +706,26 @@ renderDraftRows({
   container: $("draftGuesser"),
   localGuesserDraft
 });
+const badge = $("guesserForcedGuessBadge");
+
+if (!badge) return; // ← CRITICAL GUARD
+
 if (state.powers?.forcedGuess && myRole === state.guesser) {
   const fg = state.powers.forcedGuess;
-  let text = "";
 
+  let text = "";
   if (fg.type === "doubleLetter") {
-    text = "Forced Guess: double letter";
+    text = "Forced Guess: Double Letter";
   } else {
     text = `Forced Guess: ${fg.type} ${fg.letter}`;
   }
 
-  $("guesserConstraintBadge").textContent = text;
-  $("guesserConstraintBadge").style.display = "block";
+  badge.textContent = text;
+  badge.hidden = false;
 } else {
-  $("guesserConstraintBadge").style.display = "none";
+  badge.hidden = true;
 }
+
 
   const displayGuess = state.pendingGuess || localGuesserDraft;
  if (myRole === state.guesser) {
