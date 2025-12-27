@@ -454,28 +454,15 @@ function updateSetterScreen() {
   state.powers?.stealthGuessActive
     ? "?????"
     : state.pendingGuess;
- 
-// --- FORCE TIMER: STATE-LEVEL CHECK (not ticking UI) ---
   const bar = $("turnIndicatorSetter");
-  if (state.powers.forceTimerActive) {
-    // Show fallback text in case timerTick hasn't fired yet
-    if (state.powers.forceTimerDeadline) {
-      const remaining = Math.max(
-        0,
-        Math.floor((state.powers.forceTimerDeadline - Date.now()) / 1000)
-      );
-      bar.textContent = `TIME LEFT: ${remaining}s`;
-      bar.classList.add("your-turn");
-    }
+  bar.classList.remove("your-turn", "wait-turn");
+  
+  if (state.turn === state.setter && state.phase === "normal") {
+    bar.textContent = "YOUR TURN";
+    bar.classList.add("your-turn");
   } else {
-    // Timer is not active → follow normal UI
-    if (state.turn === state.setter && state.phase === "normal") {
-      bar.textContent = "YOUR TURN";
-      bar.classList.add("your-turn");
-    } else {
-      bar.textContent = "WAIT";
-      bar.classList.add("wait-turn");
-    }
+    bar.textContent = "WAIT";
+    bar.classList.add("wait-turn");
   }
   const isSetterTurn = (state.turn === state.setter);
   const isDecisionStep =
