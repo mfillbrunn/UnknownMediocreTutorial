@@ -10,7 +10,8 @@ function startForceTimer(roomId, room, state, io, context) {
 
   state.powers.forceTimerActive = true;
   state.powers.forceTimerDeadline = deadline;
-
+  state.powers.forceTimerArmed = false;
+  
   io.to(roomId).emit("forceTimerStarted", { deadline });
 
   if (FORCE_TIMER_INTERVALS[roomId]) {
@@ -24,8 +25,7 @@ function startForceTimer(roomId, room, state, io, context) {
     if (remaining <= 0) {
       clearInterval(FORCE_TIMER_INTERVALS[roomId]);
       delete FORCE_TIMER_INTERVALS[roomId];
-
-      const handleNormalPhase = require("./normal");
+    state.powerUsedThisTurn = false;
       handleNormalPhase(
         room,
         state,
@@ -68,6 +68,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
  }
   
   if (action.type === "NEW_MATCH") {
+    clearForceTimer(roomId, state); // IMPORTANT
     const createInitialState = require("../stateFactory").createInitialState;
     const newState = createInitialState();
     Object.assign(state, newState);
