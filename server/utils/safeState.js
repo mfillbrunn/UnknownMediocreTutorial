@@ -71,16 +71,7 @@ function buildSafeStateForPlayer(state, role) {
           // Ensure fbGuesser exists
           if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
             e.fbGuesser = ["?", "?", "?", "?", "?"];
-          } else {
-            // APPLY VOWEL REFRESH MASK FOR CONSTRAINTS ONLY
-            const eff = state.powers?.vowelRefreshEffect;
-
-            if (eff && e.roundIndex === eff.guessIndex) {
-              e.fbGuesser = e.fbGuesser.map((tile, pos) =>
-                eff.indices.includes(pos) ? "?" : tile
-              );
-            }
-          }
+          } 
         }
 
         // --------------------------------------------------
