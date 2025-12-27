@@ -20,7 +20,7 @@ engine.registerPower("suggestGuess", {
     const feasible = WORDS.filter(w =>
       isConsistentWithHistory(state.history, w, state)
     );
-
+    console.log(feasible);
     if (feasible.length === 0) {
       io.to(action.playerId).emit("toast", "No valid suggestions!");
       return;
