@@ -12,7 +12,10 @@ function startForceTimer(roomId, room, state, io, context) {
   state.powers.forceTimerDeadline = deadline;
   state.powers.forceTimerArmed = false;
   
-  io.to(roomId).emit("forceTimerStarted", { deadline });
+  io.to(roomId).emit("forceTimerStarted", {
+  deadline,
+  durationMs
+});
 
   if (FORCE_TIMER_INTERVALS[roomId]) {
     clearInterval(FORCE_TIMER_INTERVALS[roomId]);
