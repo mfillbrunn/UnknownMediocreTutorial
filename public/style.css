@@ -1532,13 +1532,36 @@ body.blind-guess .history-tiles {
   display: none !important;
 }
 
-/* Keyboard: all purple, ignore history */
+/* ===============================
+   BLIND GUESS — keyboard hard mask
+   =============================== */
+
 body.blind-guess .key {
-  background: #7b3fe4 !important; /* purple */
-  color: #fff !important;
-  border-color: #3a1a75 !important;
+  /* Color */
+  background: #7b3fe4 !important;
+  color: #ffffff !important;
+
+  /* Remove all visual memory */
+  border: none !important;
   box-shadow: none !important;
+  outline: none !important;
+
+  /* Normalize lighting */
+  filter: none !important;
+  opacity: 1 !important;
+
+  /* Prevent hover / active artifacts */
+  transform: none !important;
+  transition: none !important;
 }
+
+/* Also kill pseudo-elements if any */
+body.blind-guess .key::before,
+body.blind-guess .key::after {
+  display: none !important;
+  content: none !important;
+}
+
 
 /* Disable hover feedback */
 body.blind-guess .key:hover {
