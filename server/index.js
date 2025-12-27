@@ -15,6 +15,8 @@ const powerEngine = require("./powers/powerEngineServer");
 require("./powers/powers/hideTileServer");
 require("./powers/powers/confuseColorsServer");
 require("./powers/powers/countOnlyServer");
+require("./powers/powers/forceGuessServer");
+require("./powers/powers/blindGuessServer");
 require("./powers/powers/revealGreenServer");
 require("./powers/powers/freezeSecretServer");
 require("./powers/powers/suggestGuessServer");
