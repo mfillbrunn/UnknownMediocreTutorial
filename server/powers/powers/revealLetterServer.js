@@ -19,7 +19,12 @@ engine.registerPower("revealLetter", {
       if (entry.fbGuesser[i] === "🟩") greenPositions.add(i);
     }
   }
-
+  for (const c of state.extraConstraints) {
+    if (c.type === "GREEN") {
+      greenPositions.add(c.index);
+    }
+  }
+    
   const options = [0,1,2,3,4].filter(i => !greenPositions.has(i));
   if (!options.length) return;
 
