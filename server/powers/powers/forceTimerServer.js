@@ -9,6 +9,7 @@ const engine = require("../powerEngineServer.js");
 engine.registerPower("forceTimer", {
   apply(state, action, roomId, io) {
     // One-time use
+    console.log("[SERVER] ForceTimer apply called");
     if (state.powers.forceTimerUsed) return;
     if (state.powerUsedThisTurn) return;
 
