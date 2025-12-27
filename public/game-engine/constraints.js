@@ -40,11 +40,15 @@ window.getPattern = function (state, isSetter) {
 
   const pattern = ["-", "-", "-", "-", "-"];
 
-  // 1. Insert forced greens (revealLetter)
-  const forced = state.powers?.forcedGreens || {};
-  for (const pos in forced) {
-    pattern[pos] = forced[pos];
+ // 1. Insert forced greens from extraConstraints
+if (state.extraConstraints?.length) {
+  for (const c of state.extraConstraints) {
+    if (c.type === "GREEN") {
+      pattern[c.index] = c.letter;
+    }
   }
+}
+
 
   // 2. Normal greens from history, except vowelRefresh drops
   const fbKey = isSetter ? "fb" : "fbGuesser";
@@ -80,7 +84,6 @@ window.getPattern = function (state, isSetter) {
 window.getMustContainLetters = function (state, isSetter) {
   if (!state.history) return [];
 
-  const forced = state.powers?.forcedGreens || {};
   const fbKey = isSetter ? "fb" : "fbGuesser";
 
   const requiredCounts = {};
@@ -146,13 +149,16 @@ window.getMustContainLetters = function (state, isSetter) {
 
     result.push(entry);
   });
+    // Add forced greens from extraConstraints
+    if (state.extraConstraints?.length) {
+      for (const c of state.extraConstraints) {
+        if (c.type === "GREEN") {
+          result.push(`${c.letter} (${c.index + 1})`);
+        }
+      }
+    }
 
   // Add forced greens to mustContain (fixed letters)
-  for (const pos in forced) {
-    const L = forced[pos];
-    result.push(`${L} (${parseInt(pos) + 1})`);
-  }
-
   return result;
 };
 
