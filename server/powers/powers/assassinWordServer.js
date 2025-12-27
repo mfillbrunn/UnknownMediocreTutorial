@@ -22,6 +22,7 @@ engine.registerPower("assassinWord", {
     if (!action.word) return;
     const w = action.word.toUpperCase();
        if (w.length !==5) {
+       state.powerUsedThisTurn = false;
             io.to(action.playerId).emit(
               "errorMessage",
               "5 letters!"
@@ -30,6 +31,7 @@ engine.registerPower("assassinWord", {
           }
     
           if (!/^[A-Z]{5}$/.test(w)) {
+       state.powerUsedThisTurn = false;
         io.to(action.playerId).emit(
           "errorMessage",
           "Assassin word must be exactly 5 letters."
@@ -38,6 +40,7 @@ engine.registerPower("assassinWord", {
       }
     
         if (!ALLOWED_WORDS.has(w)) {
+       state.powerUsedThisTurn = false;
       io.to(action.playerId).emit(
         "errorMessage",
         "Assassin word must be a valid dictionary word."
@@ -67,7 +70,7 @@ engine.registerPower("assassinWord", {
     // VALID → now lock it in
     state.powers.assassinWordUsed = true;
     state.powers.assassinWord = w;
-
+    
     // Optional: confirm success
     io.to(action.playerId).emit("assassinSet", { word: w });
     io.to(roomId).emit("assassinUsed", {
