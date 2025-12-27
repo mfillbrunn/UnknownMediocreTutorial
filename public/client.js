@@ -457,8 +457,7 @@ function updateSetterScreen() {
   state.powers?.stealthGuessActive
     ? "?????"
     : state.pendingGuess;
- $("pendingGuessDisplay").textContent =
-  displayGuess ? displayGuess.toUpperCase() : "-";
+ 
 // --- FORCE TIMER: STATE-LEVEL CHECK (not ticking UI) ---
   const bar = $("turnIndicatorSetter");
   if (state.powers.forceTimerActive) {
@@ -540,20 +539,6 @@ renderDraftRows({
   container: $("draftSetter")
 });
 
-const input = $("newSecretInput");
-
-if (state.setterDraft) {
-  input.value = state.setterDraft.toUpperCase();
-  input.classList.remove("ghost-secret");
-} else if (state.secret) {
-  input.value = state.secret.toUpperCase();
-  input.classList.add("ghost-secret");
-} else {
-  input.value = "";
-  input.classList.remove("ghost-secret");
-}
-
-$("newSecretInput").disabled = true;
   // -------------------------------------------------------
   // KEYBOARD + PATTERN / PREVIEW
   // -------------------------------------------------------
@@ -576,11 +561,9 @@ $("newSecretInput").disabled = true;
 function updateSetterPreview() {
  // If stealth is active, hide preview entirely
 if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
-    $("setterPreview").textContent = "(guess hidden this round)";
     return;
   }
-const preview = $("setterPreview");
-  preview.innerHTML = "";
+
   const guess = state.pendingGuess;
   if (!guess) return;
   const isSetterTurn = state.turn === state.setter;
@@ -744,8 +727,6 @@ renderDraftRows({
   localGuesserDraft
 });
 
-  const guessBox = $("guessInput");
-  
   const displayGuess = state.pendingGuess || localGuesserDraft;
  if (myRole === state.guesser) {
   renderKeyboard({
@@ -762,15 +743,6 @@ renderDraftRows({
   if (typeof blindIdx === "number") {
     pattern[blindIdx] = "🟪";
   }
-
-  renderPatternInto(
-    $("knownPatternGuesser"),
-    pattern,
-    state.revealGreenInfo || null
-  );
-
-  $("mustContainGuesser").textContent =
-    getMustContainLetters(state).join(", ") || "none";
 }
 
 // -----------------------------------------------------
