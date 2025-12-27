@@ -722,7 +722,13 @@ if (state.powers?.forcedGuess && myRole === state.guesser) {
   if (fg.type === "doubleLetter") {
     text = "Forced Guess: Double Letter";
   } else {
-    text = `Forced Guess: ${fg.type} ${fg.letter}`;
+    const LABELS = {
+  contains: "Contains",
+  startsWith: "Starts with",
+  endsWith: "Ends with"
+    };
+    text = `Forced Guess: ${LABELS[fg.type]} ${fg.letter}`;
+
   }
 
   badge.textContent = text;
