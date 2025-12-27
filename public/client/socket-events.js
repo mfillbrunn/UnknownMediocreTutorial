@@ -75,33 +75,29 @@ socket.on("roleAssigned", ({ role }) => {
 
 ///FORCE GUESS
 socket.on("forceGuessOptions", ({ options }) => {
-  // 🔒 Only the setter should see the modal
   if (myRole !== state.setter) return;
 
   const modal = $("forceGuessModal");
-  const p = $("forceGuessPrompt");
+  const container = $("forceGuessOptionsContainer");
+  container.innerHTML = "";
 
-  if (!modal || !p) return;
+  options.forEach(o => {
+    const btn = document.createElement("button");
+    btn.className = "primary-btn small";
 
-  p.textContent = "Choose a forced guess condition:";
+    btn.textContent = formatForceGuessOption(o);
 
-  $("fgContains").textContent = `Contains ${options.contains}`;
-  $("fgStarts").textContent   = `Starts with ${options.startsWith}`;
-  $("fgEnds").textContent     = `Ends with ${options.endsWith}`;
-  $("fgDouble").textContent   = "Double Letter";
+    btn.onclick = () => {
+      sendGameAction(roomId, {
+        type: "CONFIRM_FORCE_GUESS",
+        mode: o.type
+      });
+    };
 
-  $("fgContains").onclick = () =>
-    sendGameAction(roomId, { type: "CONFIRM_FORCE_GUESS", mode: "contains" });
-
-  $("fgStarts").onclick = () =>
-    sendGameAction(roomId, { type: "CONFIRM_FORCE_GUESS", mode: "startsWith" });
-
-  $("fgEnds").onclick = () =>
-    sendGameAction(roomId, { type: "CONFIRM_FORCE_GUESS", mode: "endsWith" });
-
-  $("fgDouble").onclick = () =>
-    sendGameAction(roomId, { type: "CONFIRM_FORCE_GUESS", mode: "doubleLetter" });
+    container.appendChild(btn);
+  });
 
   modal.classList.add("active");
 });
+
 
