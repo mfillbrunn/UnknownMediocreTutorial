@@ -1635,4 +1635,16 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
     0 0 10px rgba(204, 0, 0, 0.45),
     inset 0 0 6px rgba(255, 255, 255, 0.15);
 }
+.summary-powers {
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.summary-powers-guesser {
+  color: #4da3ff;
+}
+
+.summary-powers-setter {
+  color: #ff4b5c;
+}
 
