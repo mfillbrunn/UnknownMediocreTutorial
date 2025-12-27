@@ -951,6 +951,6 @@ if (desktopKeep && mobileKeep) {
 // ---------------------------------------
 setInterval(() => {
   if (window.state?.powers?.forceTimerActive) {
-    PowerEngine.runUiEffects(window.state, myRole);
+    updateUI(); // <-- this already triggers power uiEffects
   }
 }, 250);
