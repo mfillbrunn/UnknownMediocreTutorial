@@ -1648,3 +1648,36 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   color: #ff4b5c;
 }
 
+/* ===============================
+   BLIND SPOT — half-hidden tile
+   =============================== */
+
+.tile-blindspot {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Purple overlay on LEFT half */
+.tile-blindspot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: linear-gradient(
+    to right,
+    rgba(155, 80, 255, 0.85) 0%,
+    rgba(155, 80, 255, 0.85) 50%,
+    transparent 50%,
+    transparent 100%
+  );
+
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Keep letter above overlay */
+.tile-blindspot {
+  z-index: 1;
+}
+
+
