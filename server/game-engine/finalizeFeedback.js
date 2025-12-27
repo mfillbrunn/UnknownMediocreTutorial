@@ -55,6 +55,5 @@ function finalizeFeedback(state, powerEngine, roomId, room, io) {
 
 
 module.exports = {
-  createInitialState,
   finalizeFeedback
 };
