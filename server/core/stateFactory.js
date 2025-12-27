@@ -10,7 +10,7 @@ function createInitialState() {
     setter: "A",
     guesser: "B",
     ready: { A: false, B: false },
-    powerCount: 10,       // NEW: number chosen in lobby
+    powerCount: 2,       // NEW: number chosen in lobby
     activePowers: [],  // NEW: each player’s random secrets
     secret: "",
     currentSecret: "",
