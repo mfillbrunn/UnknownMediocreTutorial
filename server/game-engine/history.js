@@ -11,27 +11,16 @@ function normalizeFB(fbArr) {
   });
 }
 
-/**
- * MAIN LOGICAL CHECK FOR SECRET CONSISTENCY.
- * Handles:
- *  - normal scoring
- *  - revealLetter (forcedGreens)
- *  - vowelRefresh erased positions
- */
 function isConsistentWithHistory(history, proposedSecret, state) {
-  const eff = state?.powers?.vowelRefreshEffect || null;
-  const forced = state?.powers?.forcedGreens || {};
-  const revealRound = state?.powers?.revealLetterRound ?? Infinity;
-  proposedSecret = proposedSecret.toUpperCase();
-
-  // 1 — MUST obey forced green letters
-  function applyForcedGreens(expected, entry) {
-    if (entry.roundIndex < revealRound) return;   // Do NOT modify past rounds
-    for (const pos in forced) {
-      const idx = Number(pos);
-      expected[idx] = "🟩";
+  const extra = state?.extraConstraints ?? [];
+  const forcedGreens = extra.filter(c => c.type === "GREEN");
+  for (const c of forcedGreens) {
+    if (proposedSecret[c.index] !== c.letter) {
+      return false;
     }
   }
+  const eff = state?.powers?.vowelRefreshEffect || null;
+  proposedSecret = proposedSecret.toUpperCase();
 
   for (const entry of history) {
     if (entry.ignoreConstraints) continue;
@@ -39,7 +28,6 @@ function isConsistentWithHistory(history, proposedSecret, state) {
     const guess = entry.guess.toUpperCase();
     const actual = normalizeFB(entry.fb);
      let expected = scoreGuess(proposedSecret, guess);
-    applyForcedGreens(expected, entry);
 
      // 4 — vowelRefresh erases specific positions
     if (eff && entry.roundIndex === eff.guessIndex) {
