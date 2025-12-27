@@ -74,24 +74,31 @@ socket.on("roleAssigned", ({ role }) => {
 
 
 ///FORCE GUESS
-
 socket.on("forceGuessOptions", ({ options }) => {
-  socket.on("forceGuessOptions",
+  // 🔒 Only the setter should see the modal
+  if (myRole !== state.setter) return;
+
   const modal = $("forceGuessModal");
   const p = $("forceGuessPrompt");
+
+  if (!modal || !p) return;
 
   p.textContent = "Choose a forced guess condition:";
 
   $("fgContains").textContent = `Contains ${options.contains}`;
   $("fgStarts").textContent   = `Starts with ${options.startsWith}`;
   $("fgEnds").textContent     = `Ends with ${options.endsWith}`;
+  $("fgDouble").textContent   = "Double Letter";
 
   $("fgContains").onclick = () =>
     sendGameAction(roomId, { type: "CONFIRM_FORCE_GUESS", mode: "contains" });
+
   $("fgStarts").onclick = () =>
     sendGameAction(roomId, { type: "CONFIRM_FORCE_GUESS", mode: "startsWith" });
+
   $("fgEnds").onclick = () =>
     sendGameAction(roomId, { type: "CONFIRM_FORCE_GUESS", mode: "endsWith" });
+
   $("fgDouble").onclick = () =>
     sendGameAction(roomId, { type: "CONFIRM_FORCE_GUESS", mode: "doubleLetter" });
 
