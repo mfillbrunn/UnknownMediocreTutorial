@@ -116,7 +116,7 @@ revealHistory: {
   allowed(state, role) {
     return state.phase === "normal" &&
            role === state.guesser &&
-           state.history.length >= 2 &&
+           state.history.length >= 3 &&
            !state.powerUsedThisTurn;
   }
 },
