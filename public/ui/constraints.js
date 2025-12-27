@@ -175,12 +175,25 @@ window.renderConstraintRow = function ({
   container.innerHTML = "";
 
   const grid = getConstraintGrid(state, isSetterView);
+  const bsIdx   = state.powers?.blindSpotIndex;
+  const bsRound = state.powers?.blindSpotRoundIndex;
 
   for (let i = 0; i < 5; i++) {
     const tile = document.createElement("div");
     tile.className = "history-tile constraint-tile";
 
     const cell = grid[i];
+    // 🟪 Blind Spot (guesser only, persistent)
+      if (
+        !isSetterView &&
+        typeof bsIdx === "number" &&
+        i === bsIdx
+      ) {
+        tile.classList.add("tile-purple");
+        tile.textContent = "?"; // or leave empty
+        container.appendChild(tile);
+        continue;
+      }
 
     // 🟩 Green
     if (cell.green) {
