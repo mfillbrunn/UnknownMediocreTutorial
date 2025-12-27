@@ -26,13 +26,16 @@ PowerEngine.register("forceTimer", {
 
   historyEffects() {},
 
-  uiEffects(state, role) {
-    // State-based fallback only (not actual timer!)
-    if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
-      const remaining = Math.max(0,
-        Math.floor((state.powers.forceTimerDeadline - Date.now()) / 1000)
-      );
-      $("turnIndicatorSetter").textContent = `TIME LEFT: ${remaining}s`;
-    }
+uiEffects(state, role) {
+  if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
+    const remaining = Math.max(
+      0,
+      Math.ceil((state.powers.forceTimerDeadline - Date.now()) / 1000)
+    );
+
+    $("turnIndicatorSetter").textContent = `TIME LEFT: ${remaining}s`;
+    $("turnIndicatorSetter").classList.add("your-turn");
   }
+}
+
 });
