@@ -946,3 +946,11 @@ if (desktopKeep && mobileKeep) {
 
   sync();
 }
+// ---------------------------------------
+// Force Timer UI tick (client-only)
+// ---------------------------------------
+setInterval(() => {
+  if (window.state?.powers?.forceTimerActive) {
+    PowerEngine.runUiEffects(window.state, myRole);
+  }
+}, 250);
