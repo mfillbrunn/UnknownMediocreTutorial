@@ -6,8 +6,9 @@ const { isConsistentWithHistory } = require("../../game-engine/history");
 const FORCE_TIMER_INTERVALS = {};
 
 function startForceTimer(roomId, room, state, io, context) {
-  const deadline = Date.now() + 30000;
-
+  const durationMs = 30000;
+  const deadline = Date.now() + durationMs;
+  
   state.powers.forceTimerActive = true;
   state.powers.forceTimerDeadline = deadline;
   state.powers.forceTimerArmed = false;
