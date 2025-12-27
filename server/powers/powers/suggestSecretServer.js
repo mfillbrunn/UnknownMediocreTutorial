@@ -19,6 +19,7 @@ engine.registerPower("suggestSecret", {
     if (state.powers.freezeActive) return;
 
     state.powers.suggestSecretUsed = true;
+    state.powerUsedThisTurn = true;
 
     const feasible = WORDS.filter(w =>
       isConsistentWithHistory(state.history, w, state)
