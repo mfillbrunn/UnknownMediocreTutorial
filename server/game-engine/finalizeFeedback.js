@@ -27,22 +27,6 @@ function finalizeFeedback(state, powerEngine, roomId, room, io) {
     roundIndex: state.history.length
   };
 
-  if (typeof state.powers.rareLetterBonusGreenIndex === "number") {
-    const pos = state.powers.rareLetterBonusGreenIndex;
-    const revealedLetter = state.secret[pos].toUpperCase();
-  
-    // Force green in both setter & guesser views
-    entry.fb[pos] = "🟩";
-    entry.fbGuesser[pos] = "🟩";
-  
-    // Ensure consistency: if guesser didn't guess that letter yet,
-    // we still enforce the tile as known green
-    if (entry.guess[pos].toUpperCase() !== revealedLetter) {
-      // override guesser view, but keep guess intact
-      entry.fbGuesser[pos] = "🟩";
-    }
-  }
-
   // Step 3: allow powers to modify feedback entry
   powerEngine.postScore(state, entry, roomId, io);
 
