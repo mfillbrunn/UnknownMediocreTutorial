@@ -1593,4 +1593,22 @@ body.blind-guess .key:hover {
     0 0 8px rgba(123, 63, 228, 0.35),
     inset 0 0 6px rgba(123, 63, 228, 0.25);
 }
+/* ===============================
+   BLIND GUESS — preserve ENTER key styling
+   =============================== */
+
+/* Base ENTER key */
+body.blind-guess #keyboardGuesser .key[data-key="ENTER"] {
+  background: var(--btn-primary) !important;
+  color: #fff !important;
+  box-shadow: 0 0 8px var(--btn-primary-glow) !important;
+}
+
+/* Hover / active ENTER key */
+body.blind-guess #keyboardGuesser .key[data-key="ENTER"]:hover,
+body.blind-guess #keyboardGuesser .key[data-key="ENTER"]:active {
+  background: var(--btn-primary-hover) !important;
+  box-shadow: 0 0 12px var(--btn-primary-glow) !important;
+  transform: translateY(-2px);
+}
 
