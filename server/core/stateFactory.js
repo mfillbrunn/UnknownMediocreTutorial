@@ -17,6 +17,7 @@ function createInitialState() {
     pendingGuess: "",
     guessCount: 0,
     gameOver: false,
+    extraConstraints: [],
 
     history: [],
 
