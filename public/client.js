@@ -731,14 +731,7 @@ renderDraftRows({
     isGuesser: true,
     onInput: handleGuesserInput
   });
-}
-  let pattern = getPattern(state, false);
-
-  const blindIdx = state.powers?.blindSpotIndex;
-  if (typeof blindIdx === "number") {
-    pattern[blindIdx] = "🟪";
-  }
-}
+}  
 
 // -----------------------------------------------------
 // SUMMARY
