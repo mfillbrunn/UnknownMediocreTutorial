@@ -1444,16 +1444,24 @@ body.hide-constraints .constraint-row {
 }
 
 
-@keyframes hiddenTileCycle {
-  0%   { background: var(--tile-gray); }
-  33%  { background: var(--tile-yellow); }
-  66%  { background: var(--tile-green); }
-  100% { background: var(--tile-gray); }
-}
+.history-tile.tile-hidden-split {
+  background: linear-gradient(
+    to bottom,
+    var(--tile-gray) 0%,
+    var(--tile-gray) 33.33%,
+    var(--tile-yellow) 33.33%,
+    var(--tile-yellow) 66.66%,
+    var(--tile-green) 66.66%,
+    var(--tile-green) 100%
+  ) !important;
 
-.history-tile.tile-hidden-cycle {
-  animation: hiddenTileCycle 1.8s linear infinite;
-  color: white;
+  color: #fff;
+  font-weight: 900;
+
+  border: 1.5px solid #00000066;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.08),
+    inset 0 -4px 8px rgba(0,0,0,.4);
 }
 /* ===============================
   FROZEN
