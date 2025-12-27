@@ -80,7 +80,8 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     state.guesser = "B";
     state.ready = { A: false, B: false };
     state.phase = "lobby";
-
+    delete state.powers.blindGuessArmed;
+    delete state.powers.blindGuessActive;
     emitLobbyEvent(io, roomId, { type: "showLobby" });
     emitStateForAllPlayers(roomId, room, io);
     return;
@@ -103,17 +104,17 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       action.type === "SUBMIT_GUESS" &&
       role === state.guesser) {
     
-    const g = action.guess.toLowerCase();
-    if (!isValidWord(g, ALLOWED_GUESSES)) return;
-    // If assassin word was set, check immediately on guess submission
-    const assassin = state.powers.assassinWord;
-    if (assassin && g.toUpperCase() === assassin.toUpperCase()) {
+      const g = action.guess.toLowerCase();
+      if (!isValidWord(g, ALLOWED_GUESSES)) return;
       
+          // If assassin word was set, check immediately on guess submission
+      const assassin = state.powers.assassinWord;
+      if (assassin && g.toUpperCase() === assassin.toUpperCase()) {
       // mark win entry (death)
       pushWinEntry(state, state.secret);
-    
       // end immediately, skipping setter choice
       endGame(state, roomId, io, room);
+      if (state.powers.blindGuessActive) {delete state.powers.blindGuessActive;}
       return;
     }
 
@@ -121,9 +122,11 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       state.currentSecret = state.secret;
       pushWinEntry(state, g);
       endGame(state, roomId, io, room);
+      if (state.powers.blindGuessActive) {delete state.powers.blindGuessActive;}
       return;
     }
     state.pendingGuess = g;
+    if (state.powers.blindGuessActive) {delete state.powers.blindGuessActive;}
     state.guesserDraft = "";   // clear live draft immediately
     state.turn = state.setter;
     if (state.powers.forceTimerArmed) {
