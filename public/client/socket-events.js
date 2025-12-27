@@ -19,9 +19,11 @@ socket.on("revealOldSecret", ({ secret }) => {
 
 
 // Timer begins
-socket.on("forceTimerStarted", () => {
-  toast("⏱ Setter is now timed - 30 secs to make a guess!");
+socket.on("forceTimerStarted", ({ durationMs }) => {
+  const seconds = Math.ceil(durationMs / 1000);
+  toast(`⏱ Setter is now timed — ${seconds} seconds to make a guess!`);
 });
+
 
 
 
