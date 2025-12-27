@@ -19,6 +19,14 @@ window.getPattern = function (state, isSetterView) {
       }
     }
   }
+  // Apply forced greens from extraConstraints
+  if (state.extraConstraints?.length) {
+    for (const c of state.extraConstraints) {
+      if (c.type === "GREEN") {
+        pattern[c.index] = c.letter;
+      }
+    }
+  }
 
   return pattern;
 };
@@ -55,6 +63,14 @@ window.getMustContainLetters = function (state) {
       const fb = fbArray[i];
       if (fb === "🟩" || fb === "🟨") {
         must.add(entry.guess[i].toUpperCase());
+      }
+    }
+  }
+  // Apply extraConstraints
+  if (state.extraConstraints?.length) {
+    for (const c of state.extraConstraints) {
+      if (c.type === "GREEN") {
+        must.add(c.letter);
       }
     }
   }
@@ -134,15 +150,17 @@ if (state.history?.length) {
   }
 }
 
+// 2️⃣ Forced greens from extraConstraints (override)
+if (state.extraConstraints?.length) {
+  for (const c of state.extraConstraints) {
+    if (c.type !== "GREEN") continue;
 
-  // 2️⃣ Forced greens from powers (override)
-  if (state.powers?.forcedGreens) {
-    for (const [i, letter] of Object.entries(state.powers.forcedGreens)) {
-      const idx = Number(i);
-      grid[idx].green = letter.toUpperCase();
-      grid[idx].forbidden.clear();
-    }
+    const idx = c.index;
+    grid[idx].green = c.letter;
+    grid[idx].forbidden.clear();
   }
+}
+
 
   return grid;
 };
