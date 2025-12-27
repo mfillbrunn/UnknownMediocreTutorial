@@ -1444,7 +1444,7 @@ body.hide-constraints .constraint-row {
 }
 
 
-.history-tile.tile-hidden-split {
+.history-tile.tile-hidden-cycle {
   background: linear-gradient(
     to bottom,
     var(--tile-gray) 0%,
@@ -1459,9 +1459,11 @@ body.hide-constraints .constraint-row {
   font-weight: 900;
 
   border: 1.5px solid #00000066;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.08),
-    inset 0 -4px 8px rgba(0,0,0,.4);
+    inset 0 1px 0 rgba(255,255,255,.15),
+    inset 0 -1px 0 rgba(0,0,0,.4);
 }
 /* ===============================
   FROZEN
