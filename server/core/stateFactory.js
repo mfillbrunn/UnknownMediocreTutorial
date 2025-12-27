@@ -90,4 +90,4 @@ function createInitialState() {
     }
   };
 }
-
+module.exports = {  createInitialState};
