@@ -1680,4 +1680,14 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   z-index: 1;
 }
 
+.tile-blindspot::after {
+  background:
+    linear-gradient(
+      to right,
+      rgba(155, 80, 255, 0.85) 0%,
+      rgba(155, 80, 255, 0.85) 48%,
+      rgba(255,255,255,0.3) 50%,
+      transparent 52%
+    );
+}
 
