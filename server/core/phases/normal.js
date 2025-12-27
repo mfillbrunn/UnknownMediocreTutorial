@@ -83,12 +83,35 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     delete state.powers.blindGuessUsed;
     delete state.powers.blindGuessArmed;
     delete state.powers.blindGuessActive;
+    delete state.powers.forceGuessUsed;
+    delete state.powers.forcedGuess;
+    delete state.powers.forcedGuessOptions;
+
 
     emitLobbyEvent(io, roomId, { type: "showLobby" });
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
+  
+  if (action.type === "CONFIRM_FORCE_GUESS" && role === state.setter) {
+  const opts = state.powers.forcedGuessOptions;
+  if (!opts) return;
 
+  const mode = action.mode; // "contains" | "startsWith" | "endsWith" | "doubleLetter"
+
+  state.powers.forcedGuess = {
+    type: mode,
+    letter: mode === "doubleLetter" ? null : opts[mode]
+  };
+
+  state.powers.forcedGuessOptions = null;
+  state.powerUsedThisTurn = false; // allow normal flow
+
+  emitStateForAllPlayers(roomId, room, io);
+  return;
+}
+
+  /// POWER
   if (!state.pendingGuess &&
       action.type.startsWith("USE_") &&
       role === state.guesser) {
@@ -101,14 +124,39 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
-
+  /// GUESSER
   if (!state.pendingGuess &&
       action.type === "SUBMIT_GUESS" &&
       role === state.guesser) {
     
       const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
+      if (state.powers.forcedGuess) {
+        const g = action.guess.toLowerCase();
+        const fg = state.powers.forcedGuess;
       
+        let ok = true;
+        let msg = "";
+      
+        if (fg.type === "contains") {
+          ok = g.includes(fg.letter.toLowerCase());
+          msg = `Your guess must contain ${fg.letter}`;
+        } else if (fg.type === "startsWith") {
+          ok = g.startsWith(fg.letter.toLowerCase());
+          msg = `Your guess must start with ${fg.letter}`;
+        } else if (fg.type === "endsWith") {
+          ok = g.endsWith(fg.letter.toLowerCase());
+          msg = `Your guess must end with ${fg.letter}`;
+        } else if (fg.type === "doubleLetter") {
+          ok = /(.)\1/.test(g);
+          msg = "Your guess must contain a double letter";
+        }
+      
+        if (!ok) {
+          io.to(action.playerId).emit("errorMessage", msg);
+          return;
+        }
+      }
           // If assassin word was set, check immediately on guess submission
       const assassin = state.powers.assassinWord;
       if (assassin && g.toUpperCase() === assassin.toUpperCase()) {
@@ -117,6 +165,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       // end immediately, skipping setter choice
       endGame(state, roomId, io, room);
       if (state.powers.blindGuessActive) { state.powers.blindGuessActive = false;}
+        state.powers.forcedGuess = null;
       return;
     }
 
@@ -125,10 +174,12 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       pushWinEntry(state, g);
       endGame(state, roomId, io, room);
       if (state.powers.blindGuessActive) { state.powers.blindGuessActive = false;}
+      state.powers.forcedGuess = null;
       return;
     }
     state.pendingGuess = g;
     if (state.powers.blindGuessActive) { state.powers.blindGuessActive = false;}
+    state.powers.forcedGuess = null;
     state.guesserDraft = "";   // clear live draft immediately
     state.turn = state.setter;
     if (state.powers.forceTimerArmed) {
@@ -139,6 +190,8 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
+
+  /// SETTER
   if (state.pendingGuess && state.turn === state.setter) {
     if (action.type.startsWith("USE_") && role === state.setter) {
       const powerId = normalizePowerId(action.type);
