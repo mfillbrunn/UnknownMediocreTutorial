@@ -452,7 +452,7 @@ function updateRoleLabels() {
 // SETTER UI
 // -----------------------------------------------------
 function updateSetterScreen() {
-  $("secretWordDisplay").textContent = state.secret?.toUpperCase() || "NONE";
+
     const displayGuess =
   state.powers?.stealthGuessActive
     ? "?????"
