@@ -1,4 +1,16 @@
 const engine = require("../powerEngineServer.js");
+const fs = require("fs");
+const path = require("path");
+
+const ALLOWED_WORDS = new Set(
+  fs.readFileSync(
+    path.join(__dirname, "../../wordlists/allowed_guesses.txt"),
+    "utf8"
+  )
+  .trim()
+  .split(/\r?\n/)
+  .map(w => w.toUpperCase())
+);
 
 engine.registerPower("assassinWord", {
   apply(state, action, roomId, io) {
@@ -10,6 +22,21 @@ engine.registerPower("assassinWord", {
     if (!action.word) return;
     const w = action.word.toUpperCase();
 
+          if (!/^[A-Z]{5}$/.test(w)) {
+        io.to(action.playerId).emit(
+          "errorMessage",
+          "Assassin word must be exactly 5 letters."
+        );
+        return;
+      }
+    
+        if (!ALLOWED_WORDS.has(w)) {
+      io.to(action.playerId).emit(
+        "errorMessage",
+        "Assassin word must be a valid dictionary word."
+      );
+      return; // DO NOT consume the power
+    }
     // Reject: cannot equal current secret
     if (state.secret && w === state.secret.toUpperCase()) {
        state.powerUsedThisTurn = false;
