@@ -32,7 +32,7 @@ engine.registerPower("revealLetter", {
   // Prevent duplicate reveals
   if (!state.extraConstraints.some(c => c.type === "GREEN_REVEAL" && c.index === index)) {
     state.extraConstraints.push({
-      type: "GREEN_REVEAL",
+      type: "GREEN",
       index,
       letter
     });
