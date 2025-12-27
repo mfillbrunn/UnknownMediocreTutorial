@@ -4,11 +4,20 @@ engine.registerPower("blindSpot", {
   apply(state, action, roomId, io) {
     if (state.powers.blindSpotUsed) return;
 
-    // Pick random non-green position
+    // Collect green positions from history
     const greens = new Set();
+
     for (const entry of state.history) {
+      if (!entry.fb) continue;
       for (let i = 0; i < 5; i++) {
-        if (entry.fb && entry.fb[i] === "🟩") greens.add(i);
+        if (entry.fb[i] === "🟩") greens.add(i);
+      }
+    }
+
+    // ALSO respect extraConstraints
+    for (const c of state.extraConstraints || []) {
+      if (c.type === "GREEN") {
+        greens.add(c.index);
       }
     }
 
@@ -19,15 +28,13 @@ engine.registerPower("blindSpot", {
 
     state.powers.blindSpotUsed = true;
     state.powers.blindSpotIndex = idx;
+
+    // Applies from THIS round onward
     state.powers.blindSpotRoundIndex = state.history.length;
-    io.to(roomId).emit("powerUsed", { type: "blindSpot", index: idx });
-  },
 
-  postScore(state, entry) {
-    const idx = state.powers.blindSpotIndex;
-    if (idx == null) return;
-
-    // Do NOT touch true feedback!
-    entry.blindSpotApplied = idx;
+    io.to(roomId).emit(
+      "toast",
+      `Blind Spot activated on position ${idx + 1}`
+    );
   }
 });
