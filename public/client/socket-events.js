@@ -72,3 +72,28 @@ socket.on("roleAssigned", ({ role }) => {
   updateRoleLabels();
 });
 
+
+///FORCE GUESS
+
+socket.on("forceGuessOptions", ({ options }) => {
+  const modal = $("forceGuessModal");
+  const p = $("forceGuessPrompt");
+
+  p.textContent = "Choose a forced guess condition:";
+
+  $("fgContains").textContent = `Contains ${options.contains}`;
+  $("fgStarts").textContent   = `Starts with ${options.startsWith}`;
+  $("fgEnds").textContent     = `Ends with ${options.endsWith}`;
+
+  $("fgContains").onclick = () =>
+    sendGameAction(roomId, { type: "CONFIRM_FORCE_GUESS", mode: "contains" });
+  $("fgStarts").onclick = () =>
+    sendGameAction(roomId, { type: "CONFIRM_FORCE_GUESS", mode: "startsWith" });
+  $("fgEnds").onclick = () =>
+    sendGameAction(roomId, { type: "CONFIRM_FORCE_GUESS", mode: "endsWith" });
+  $("fgDouble").onclick = () =>
+    sendGameAction(roomId, { type: "CONFIRM_FORCE_GUESS", mode: "doubleLetter" });
+
+  modal.classList.add("active");
+});
+
