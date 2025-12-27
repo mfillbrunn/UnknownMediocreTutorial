@@ -17,17 +17,22 @@ PowerEngine.register("forceTimer", {
 
   effects: {
     onPowerUsed() {
-      const btn = this.buttonEl;
-      if (!btn) return;
-      btn.disabled = true;
-      btn.classList.add("power-used");
+      if (!this.buttonEl) return;
+      this.buttonEl.disabled = true;
+      this.buttonEl.classList.add("power-used");
     }
   },
 
   uiEffects(state, role) {
-    // Countdown display (derived from server deadline)
+    // Only setter sees timer UI
+    if (role !== state.setter) return;
+
+    const bar = $("turnIndicatorSetter");
+
+    // Clear any normal state first
+    bar.classList.remove("your-turn", "wait-turn");
+
     if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
-      const bar = $("turnIndicatorSetter");
       const remaining = Math.max(
         0,
         Math.ceil((state.powers.forceTimerDeadline - Date.now()) / 1000)
@@ -35,6 +40,15 @@ PowerEngine.register("forceTimer", {
 
       bar.textContent = `TIME LEFT: ${remaining}s`;
       bar.classList.add("your-turn");
+
+      // Disable setter inputs while timer runs
+      const newBtn = $("submitSetterNewBtn");
+      const sameBtn = $("submitSetterSameBtn");
+      const input = $("newSecretInput");
+
+      if (newBtn) newBtn.disabled = false;
+      if (sameBtn) sameBtn.disabled = false;
+      if (input) input.disabled = false;
     }
   }
 });
