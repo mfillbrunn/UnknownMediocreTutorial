@@ -9,7 +9,7 @@ engine.registerPower("freezeSecret", {
     state.powers.freezeSecretUsed = true;
     state.powers.freezeActive = true;
 
-    io.to(roomId).emit("powerUsed", { type: "freezeSecret" });
+    io.to(roomId).emit("toast", "Secret is frozen for a turn!");
   },
 
   // Block only NEW secret while frozen; SAME is allowed
