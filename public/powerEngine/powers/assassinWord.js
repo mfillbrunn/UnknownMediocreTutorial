@@ -27,7 +27,7 @@ PowerEngine.register("assassinWord", {
       return;
     }
     btn.style.display = "";
-
+    btn.disabled = !!state.powers.assassinWordUsed;
     // Display assassin word for setter
     let el = document.getElementById("assassinWordDisplay");
     if (!el) {
