@@ -453,6 +453,11 @@ function updateRoleLabels() {
 // SETTER UI
 // -----------------------------------------------------
 function updateSetterScreen() {
+  const name = state.playerNames?.[state.setter] || "Setter";
+    $("setterScreen")
+      .querySelector(".screen-title")
+      .textContent = name;
+
   const fgModal = $("forceGuessModal");
     if (fgModal) {
       if (!state.powers?.forcedGuessOptions) {
@@ -711,6 +716,11 @@ renderDraftRows({
   container: $("draftGuesser"),
   localGuesserDraft
 });
+  const name = state.playerNames?.[state.guesser] || "Guesser";
+  $("guesserScreen")
+    .querySelector(".screen-title")
+    .textContent = name;
+
 const badge = $("guesserForcedGuessBadge");
 if (!badge) return;
 
