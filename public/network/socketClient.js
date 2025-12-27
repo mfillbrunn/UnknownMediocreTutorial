@@ -9,8 +9,8 @@ const BACKEND_URL = "";
 
 // Create Socket.IO client
 const socket = io(BACKEND_URL, {
-  path: "/socket.io",             // ⭐ MUST match server exactly (with trailing slash)
-  transports: ["polling", "websocket"],  // ⭐ polling first fixes Railway upgrade issues
+  path: "/socket.io",             
+  transports: ["polling", "websocket"],  
   withCredentials: false
 });
 
@@ -26,6 +26,7 @@ window.joinRoom = function (roomCode, cb) {
 };
 
 window.sendGameAction = function (roomId, action) {
+  console.log("[CLIENT] sendGameAction", action);
   socket.emit("gameAction", { roomId, action });
 };
 
