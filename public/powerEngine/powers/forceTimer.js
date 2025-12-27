@@ -24,41 +24,26 @@ PowerEngine.register("forceTimer", {
     }
   },
 
-  uiEffects(state, role) {
-    // Only setter sees timer UI
-    console.log("[CLIENT] ForceTimer uiEffects", {
-    active: state.powers.forceTimerActive,
-    role
-  });
-    if (role !== state.setter) return;
+uiEffects(state, role) {
+  const bar = $("turnIndicatorSetter");
+  if (!bar) return;
 
-    const bar = $("turnIndicatorSetter");
+  // Always clean up first
+  bar.classList.remove("force-timer");
 
-    // Clear any normal state first
-    bar.classList.remove("your-turn", "wait-turn");
+  if (
+    role === state.setter &&
+    state.powers.forceTimerActive &&
+    state.powers.forceTimerDeadline
+  ) {
+    const remaining = Math.max(
+      0,
+      Math.ceil((state.powers.forceTimerDeadline - Date.now()) / 1000)
+    );
 
-    if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
-      const remaining = Math.max(
-        0,
-        Math.ceil((state.powers.forceTimerDeadline - Date.now()) / 1000)
-      );
-          if (remaining <= 5) {
-            bar.classList.add("flash-warning");
-          } else {
-            bar.classList.remove("flash-warning");
-          }
-
-      bar.textContent = `TIME LEFT: ${remaining}s`;
-      bar.classList.add("your-turn");
-
-      // Disable setter inputs while timer runs
-      const newBtn = $("submitSetterNewBtn");
-      const sameBtn = $("submitSetterSameBtn");
-      const input = $("newSecretInput");
-
-      if (newBtn) newBtn.disabled = false;
-      if (sameBtn) sameBtn.disabled = false;
-      if (input) input.disabled = false;
-    }
+    bar.textContent = `⏱ ${remaining}s`;
+    bar.classList.add("force-timer");
   }
+}
+
 });
