@@ -450,10 +450,10 @@ PowerEngine.applyUI(state, myRole, roomId);
 // ROLE LABEL
 // -----------------------------------------------------
 function updateRoleLabels() {
-  const label = myRole === "A" ? "Setter" : "Guesser";
+  const roleLabel = myRole === "A" ? "Setter" : "Guesser";
   const name = state.playerNames?.[role];
-  $("lobbyRoleLabel").textContent = role;
-  $("menuPlayerRole").textContent = label;
+  $("lobbyRoleLabel").textContent = roleLabel;
+  $("menuPlayerRole").textContent = roleLabel;
 }
 
 // -----------------------------------------------------
