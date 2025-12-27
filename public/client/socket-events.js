@@ -76,6 +76,7 @@ socket.on("roleAssigned", ({ role }) => {
 ///FORCE GUESS
 
 socket.on("forceGuessOptions", ({ options }) => {
+  socket.on("forceGuessOptions",
   const modal = $("forceGuessModal");
   const p = $("forceGuessPrompt");
 
