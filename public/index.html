@@ -134,14 +134,32 @@
     <div id="turnIndicatorSetter" class="turn-indicator"></div>
     <div id="setterSecretArea" hidden></div>
     <!-- Assassin Modal -->
-    <div id="assassinModal" class="modal">
-      <div class="modal-content">
-        <h3>Assassin Word</h3>
-        <input id="assassinInput" maxlength="5" autocomplete="off">
-        <button id="assassinSubmitBtn">Set</button>
-        <button id="assassinCancelBtn">Cancel</button>
-      </div>
+   <div id="assassinModal" class="modal">
+  <div class="modal-content">
+    <h3>Assassin Word</h3>
+
+    <p class="modal-instruction">
+      Choose a word that instantly ends the game if guessed.
+    </p>
+
+    <input
+      id="assassinInput"
+      class="modal-input"
+      maxlength="5"
+      autocomplete="off"
+    />
+
+    <div class="decision-row">
+      <button id="assassinSubmitBtn" class="primary-btn small">
+        Confirm
+      </button>
+      <button id="assassinCancelBtn" class="secondary-btn small">
+        Cancel
+      </button>
     </div>
+  </div>
+</div>
+
   </div>
   <!-- Force Guesser Modal -->
   <div id="forceGuessModal" class="modal">
