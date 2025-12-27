@@ -453,7 +453,12 @@ function updateRoleLabels() {
 // SETTER UI
 // -----------------------------------------------------
 function updateSetterScreen() {
-
+  const fgModal = $("forceGuessModal");
+    if (fgModal) {
+      if (!state.powers?.forcedGuessOptions) {
+        fgModal.classList.remove("active");
+      }
+    }
     const displayGuess =
   state.powers?.stealthGuessActive
     ? "?????"
