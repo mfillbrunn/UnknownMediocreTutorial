@@ -729,6 +729,7 @@ renderDraftRows({
     onInput: handleGuesserInput
   });
 }  
+}
 
 // -----------------------------------------------------
 // SUMMARY
