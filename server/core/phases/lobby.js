@@ -10,6 +10,8 @@ const SETTER_POWERS = [
         "blindSpot",
         "vowelRefresh",
         "assassinWord",
+        "forceGuess",
+        "blindGuess",
       ];
       
       const GUESSER_POWERS = [
