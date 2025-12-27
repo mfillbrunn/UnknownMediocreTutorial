@@ -460,10 +460,13 @@ function updateRoleLabels() {
 // SETTER UI
 // -----------------------------------------------------
 function updateSetterScreen() {
-  const name = state.playerNames?.[state.setter] || "Setter";
-    $("setterScreen")
-      .querySelector(".screen-title")
-      .textContent = name;
+  const setterName =
+  state.playerNames?.[state.setter] || "Setter";
+
+$("setterScreen")
+  .querySelector(".screen-title")
+  .textContent = setterName;
+$("setterRoleBadge").textContent = "Setter";
 
   const fgModal = $("forceGuessModal");
     if (fgModal) {
@@ -559,7 +562,7 @@ function updateSetterPreview() {
 if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
     return;
   }
-
+  
   const guess = state.pendingGuess;
   if (!guess) return;
   const isSetterTurn = state.turn === state.setter;
@@ -723,10 +726,11 @@ renderDraftRows({
   container: $("draftGuesser"),
   localGuesserDraft
 });
-  const name = state.playerNames?.[state.guesser] || "Guesser";
-  $("guesserScreen")
-    .querySelector(".screen-title")
-    .textContent = name;
+  const guesserName =  state.playerNames?.[state.guesser] || "Guesser";
+$("guesserScreen")
+  .querySelector(".screen-title")
+  .textContent = guesserName;
+$("guesserRoleBadge").textContent = "Guesser";
 
 const badge = $("guesserForcedGuessBadge");
 if (!badge) return;
