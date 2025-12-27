@@ -47,22 +47,17 @@ PowerEngine.register("revealLetter", {
     // based on POWER_RULES["revealLetter"].allowed(...)
   },
 
- historyEffects(entry, isSetter) {
-  // Do NOT modify fb or fbGuesser
-  // revealLetter ONLY affects pattern and mustContain
-  return;
-},
+keyboardEffects(state, role, keyEl, letter) {
+  if (role !== "guesser") return;
 
-  // Keyboard decoration: lock revealed letters as green
-  keyboardEffects(state, role, keyEl, letter) {
-    if (role !== "guesser") return;
+  const greens = state.extraConstraints
+    ?.filter(c => c.type === "GREEN")
+    .map(c => c.letter);
 
-    const locked = state.powers?.guesserLockedGreens;
-    if (!Array.isArray(locked)) return;
+  if (!greens || !greens.includes(letter.toUpperCase())) return;
 
-    if (locked.includes(letter.toUpperCase())) {
-      keyEl.classList.remove("key-yellow", "key-gray", "key-blue");
-      keyEl.classList.add("key-green");
-    }
-  }
+  keyEl.classList.remove("key-yellow", "key-gray", "key-blue");
+  keyEl.classList.add("key-green");
+}
+
 });
