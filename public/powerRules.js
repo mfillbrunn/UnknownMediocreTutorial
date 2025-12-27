@@ -27,6 +27,17 @@ window.POWER_RULES = {
     );
   }
 },
+forceGuess: {
+  once: true,
+  allowed(state, role) {
+    return (
+      state.phase === "normal" &&
+      role === state.setter &&
+      !state.powerUsedThisTurn &&
+      !state.powers.forceGuessUsed
+    );
+  }
+},
 
 revealLetter: {
   once: true,
