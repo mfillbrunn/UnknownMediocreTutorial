@@ -1528,7 +1528,7 @@ body.hide-constraints .constraint-row {
    =============================== */
 
 body.blind-guess .constraint-row,
-body.blind-guess .history-tiles {
+body.blind-guess .history-scroll {
   display: none !important;
 }
 
