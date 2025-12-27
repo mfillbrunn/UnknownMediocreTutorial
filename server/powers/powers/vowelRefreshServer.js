@@ -7,36 +7,46 @@ engine.registerPower("vowelRefresh", {
     state.powerUsedThisTurn = true;
 
     const lastIndex = state.history.length - 1;
-    const last = state.history[lastIndex];
-    if (!last) return;
+    const entry = state.history[lastIndex];
+    if (!entry) return;
 
-    const vowels = new Set(["A","E","I","O","U"]);
-    const guess = last.guess.toUpperCase();
+    const vowels = new Set(["A", "E", "I", "O", "U"]);
+    const guess = entry.guess.toUpperCase();
 
-    // Identify which positions must be "erased" logically.
-    const indices = [];
-    for (let i = 0; i < 5; i++) {
-      if (vowels.has(guess[i])) indices.push(i);
+    // Collect letters known to be present BEFORE this round
+    const knownPresent = new Set();
+
+    for (let r = 0; r < lastIndex; r++) {
+      const h = state.history[r];
+      const fb = h.fb ?? h.fbGuesser;
+      if (!Array.isArray(fb)) continue;
+
+      const g = h.guess.toUpperCase();
+      for (let i = 0; i < 5; i++) {
+        if (fb[i] === "🟩" || fb[i] === "🟨") {
+          knownPresent.add(g[i]);
+        }
+      }
     }
 
-    state.powers.vowelRefreshEffect = {
-      guessIndex: lastIndex,
-      indices    // positions of vowels in that guess
-    };
+    // Rewrite feedback for the last round
+    for (let i = 0; i < 5; i++) {
+      const letter = guess[i];
+      if (!vowels.has(letter)) continue;
+
+      // Do NOT erase if this vowel was previously confirmed
+      if (knownPresent.has(letter)) continue;
+
+      if (Array.isArray(entry.fb)) {
+        entry.fb[i] = "⬛";
+      }
+      if (Array.isArray(entry.fbGuesser)) {
+        entry.fbGuesser[i] = "⬛";
+      }
+    }
   },
 
-  postScore(state, entry) {const eff = state.powers.vowelRefreshEffect;
-    if (!eff) return;
-
-    // Once the target round has been scored, clear the effect
-    if (entry.roundIndex === eff.guessIndex) {
-      state.powers.vowelRefreshEffect = null;
-    }}, // NO CHANGE TO FEEDBACK
-
-  turnStart(state, role) {
-    if (role !== state.guesser) return;
-    // Optional cleanup between rounds if needed:
-    // state.powers.vowelRefreshEffect = null;
-  }
+  postScore() {},
+  turnStart() {}
 });
 
