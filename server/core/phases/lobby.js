@@ -77,6 +77,23 @@ if (action.type === "SET_POWER_COUNT") {
     return;
 }
 
+// -------------------------------
+  // Set name
+  // -------------------------------
+if (action.type === "SET_PLAYER_NAME") {
+  const role = action.role;
+  if (!role) return;
+
+  // sanitize
+  const name = String(action.name)
+    .trim()
+    .slice(0, 16);
+
+  state.playerNames[role] = name;
+
+  emitStateForAllPlayers(roomId, room, io);
+  return;
+}
 
 
   // -------------------------------
