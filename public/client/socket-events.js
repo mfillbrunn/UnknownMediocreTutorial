@@ -20,7 +20,7 @@ socket.on("revealOldSecret", ({ secret }) => {
 
 // Timer begins
 socket.on("forceTimerStarted", () => {
-  toast("⏱ Setter is now timed!");
+  toast("⏱ Setter is now timed - 30 secs to make a guess!");
 });
 
 
