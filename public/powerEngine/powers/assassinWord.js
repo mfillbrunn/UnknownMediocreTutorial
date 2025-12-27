@@ -18,42 +18,38 @@ PowerEngine.register("assassinWord", {
     };
   },
 
-  uiEffects(state) {
-    const btn = this.buttonEl;
-    if (!btn) return;
+  uiEffects(state, role) {
+  const btn = this.buttonEl;
+  if (!btn) return;
 
-    // Gate visibility
-    if (!state.activePowers?.includes("assassinWord")) {
-      btn.style.display = "none";
-      return;
-    }
-    btn.style.display = "";
-    btn.disabled = !!state.powers.assassinWordUsed;
-    // Display assassin word for setter
-    let el = document.getElementById("assassinWordDisplay");
-    if (!el) {
-      el = document.createElement("div");
-      el.id = "assassinWordDisplay";
-      el.style.marginTop = "8px";
-      el.style.padding = "6px 10px";
-      el.style.borderRadius = "8px";
-      el.style.fontWeight = "600";
-      el.style.fontSize = "14px";
-      el.style.color = "white";
-      el.style.background = "linear-gradient(135deg, #8b0000, #cc0000)";
-      el.style.opacity = "0";
-      el.style.transition = "opacity 0.3s";
-      document.getElementById("setterSecretArea").appendChild(el);
-    }
+  // Gate power button
+  if (!state.activePowers?.includes("assassinWord")) {
+    btn.style.display = "none";
+    return;
+  }
 
-    if (state.powers.assassinWord) {
-      el.textContent = "☠ Assassin Word: " + state.powers.assassinWord.toUpperCase();
-      el.style.opacity = "1";
-    } else {
-      el.textContent = "";
-      el.style.opacity = "0";
-    }
-  },
+  btn.style.display = "";
+  btn.disabled = !!state.powers.assassinWordUsed;
+
+  // -----------------------------
+  // Assassin badge (setter only)
+  // -----------------------------
+  const badge = $("assassinWordBadge");
+  if (!badge) return;
+
+  if (
+    role === state.setter &&
+    state.powers.assassinWord
+  ) {
+    badge.textContent =
+      "☠ Assassin Word: " +
+      state.powers.assassinWord.toUpperCase();
+    badge.hidden = false;
+  } else {
+    badge.hidden = true;
+  }
+}
+,
 
   effects: {
     onPowerUsed() {
