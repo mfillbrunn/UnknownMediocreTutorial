@@ -34,6 +34,12 @@ function resetKeyboards() {
   if (ks) delete ks.__keys;
   if (kg) delete kg.__keys;
 }
+document.addEventListener("DOMContentLoaded", () => {
+  const saved = localStorage.getItem("playerName");
+  if (saved && $("playerNameInput")) {
+    $("playerNameInput").value = saved;
+  }
+});
 
 // -----------------------------------------------------
 // Pattern Renderer for Pretty Styling (Reveal Green, etc.)
@@ -992,7 +998,7 @@ $("submitSetterSameBtn").onclick = () => {
 $("playerNameInput").onchange = () => {
   const name = $("playerNameInput").value.trim();
   if (!name) return;
-
+  localStorage.setItem("playerName", name);
   sendGameAction(roomId, {
     type: "SET_PLAYER_NAME",
     name
