@@ -172,6 +172,8 @@ window.renderConstraintRow = function ({
   container,
   isSetterView
 }) {
+  if (state.powers?.blindGuessActive) {return;}
+
   container.innerHTML = "";
 
   const grid = getConstraintGrid(state, isSetterView);
