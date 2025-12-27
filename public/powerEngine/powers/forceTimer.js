@@ -26,6 +26,10 @@ PowerEngine.register("forceTimer", {
 
   uiEffects(state, role) {
     // Only setter sees timer UI
+    console.log("[CLIENT] ForceTimer uiEffects", {
+    active: state.powers.forceTimerActive,
+    role
+  });
     if (role !== state.setter) return;
 
     const bar = $("turnIndicatorSetter");
