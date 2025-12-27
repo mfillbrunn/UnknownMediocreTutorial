@@ -1523,3 +1523,25 @@ body.hide-constraints .constraint-row {
   background-size: 200% 200%;
   animation: ice-shimmer 3.5s linear infinite;
 }
+/* ===============================
+   BLIND GUESS (UI-only power)
+   =============================== */
+
+body.blind-guess .constraint-row,
+body.blind-guess .history-tiles {
+  display: none !important;
+}
+
+/* Keyboard: all purple, ignore history */
+body.blind-guess .key {
+  background: #7b3fe4 !important; /* purple */
+  color: #fff !important;
+  border-color: #3a1a75 !important;
+  box-shadow: none !important;
+}
+
+/* Disable hover feedback */
+body.blind-guess .key:hover {
+  transform: none;
+  box-shadow: none;
+}
