@@ -7,14 +7,10 @@ const FORCE_TIMER_INTERVALS = {};
 
 function startForceTimer(roomId, room, state, io, context) {
   const deadline = Date.now() + 30000;
-  if (!state.powers.forceTimerActive) {
-    clearInterval(FORCE_TIMER_INTERVALS[roomId]);
-    delete FORCE_TIMER_INTERVALS[roomId];
-    return;
-  }
 
   state.powers.forceTimerActive = true;
-  state.powers.forceTimerDeadline = deadline
+  state.powers.forceTimerDeadline = deadline;
+
   io.to(roomId).emit("forceTimerStarted", { deadline });
 
   if (FORCE_TIMER_INTERVALS[roomId]) {
@@ -28,25 +24,22 @@ function startForceTimer(roomId, room, state, io, context) {
     if (remaining <= 0) {
       clearInterval(FORCE_TIMER_INTERVALS[roomId]);
       delete FORCE_TIMER_INTERVALS[roomId];
-      io.to(roomId).emit("forceTimerExpired");
 
       const handleNormalPhase = require("./normal");
-      const autoAction = {
-        type: "SET_SECRET_SAME",
-        playerId: room[state.setter]
-      };
-
       handleNormalPhase(
         room,
         state,
-        autoAction,
+        { type: "SET_SECRET_SAME", playerId: room[state.setter] },
         state.setter,
         roomId,
         context
       );
+
+      io.to(roomId).emit("forceTimerExpired");
     }
   }, 250);
 }
+
 
 function clearForceTimer(roomId, state) {
   if (FORCE_TIMER_INTERVALS[roomId]) {
@@ -137,10 +130,6 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     return;
   }
   if (state.pendingGuess && state.turn === state.setter) {
-    if (state.powers.forceTimerActive &&
-        state.powers.forceTimerDeadline) {
-      action = { type: "SET_SECRET_SAME", playerId: action.playerId };
-    }
     if (action.type.startsWith("USE_") && role === state.setter) {
       const powerId = normalizePowerId(action.type);
       if (!state.powerUsedThisTurn) {
