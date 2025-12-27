@@ -24,18 +24,17 @@ PowerEngine.register("forceTimer", {
     }
   },
 
-  historyEffects() {},
+  uiEffects(state, role) {
+    // Countdown display (derived from server deadline)
+    if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
+      const bar = $("turnIndicatorSetter");
+      const remaining = Math.max(
+        0,
+        Math.ceil((state.powers.forceTimerDeadline - Date.now()) / 1000)
+      );
 
-uiEffects(state, role) {
-  if (state.powers.forceTimerActive && state.powers.forceTimerDeadline) {
-    const remaining = Math.max(
-      0,
-      Math.ceil((state.powers.forceTimerDeadline - Date.now()) / 1000)
-    );
-
-    $("turnIndicatorSetter").textContent = `TIME LEFT: ${remaining}s`;
-    $("turnIndicatorSetter").classList.add("your-turn");
+      bar.textContent = `TIME LEFT: ${remaining}s`;
+      bar.classList.add("your-turn");
+    }
   }
-}
-
 });
