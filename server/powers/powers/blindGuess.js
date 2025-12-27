@@ -2,9 +2,9 @@ const engine = require("../powerEngineServer");
 
 engine.registerPower("blindGuess", {
   apply(state, action, roomId, io) {
-    // No stacking
-    if (state.powers.blindGuessArmed || state.powers.blindGuessActive) return;
+    if (state.powers.blindGuessUsed) return;
 
+    state.powers.blindGuessUsed = true;
     state.powers.blindGuessArmed = true;
 
     io.to(roomId).emit(
@@ -14,7 +14,6 @@ engine.registerPower("blindGuess", {
   },
 
   turnStart(state, role) {
-    // Activate only when guesser turn begins
     if (role === state.guesser && state.powers.blindGuessArmed) {
       state.powers.blindGuessArmed = false;
       state.powers.blindGuessActive = true;
