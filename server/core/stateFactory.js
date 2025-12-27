@@ -30,7 +30,10 @@ function createInitialState() {
       // HIDE TILE
       hideTileUsed: false,
       hideTilePendingCount: 0,
-
+      // BLIND GUESS
+      blindGuessUsed: false,
+      blindGuessArmed: false,
+      blindGuessActive: false,
       // REVEAL GREEN
       revealGreenUsed: false,
       revealGreenPos: null,
