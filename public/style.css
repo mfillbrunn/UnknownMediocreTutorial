@@ -1598,15 +1598,15 @@ body.blind-guess .key:hover {
    =============================== */
 
 /* Base ENTER key */
-body.blind-guess #keyboardGuesser .key[data-key="ENTER"] {
+body #keyboardGuesser .key[data-key="ENTER"] {
   background: var(--btn-primary) !important;
   color: #fff !important;
   box-shadow: 0 0 8px var(--btn-primary-glow) !important;
 }
 
 /* Hover / active ENTER key */
-body.blind-guess #keyboardGuesser .key[data-key="ENTER"]:hover,
-body.blind-guess #keyboardGuesser .key[data-key="ENTER"]:active {
+body #keyboardGuesser .key[data-key="ENTER"]:hover,
+body #keyboardGuesser .key[data-key="ENTER"]:active {
   background: var(--btn-primary-hover) !important;
   box-shadow: 0 0 12px var(--btn-primary-glow) !important;
   transform: translateY(-2px);
