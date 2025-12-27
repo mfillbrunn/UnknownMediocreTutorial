@@ -8,6 +8,7 @@ const COMMON = [
   "doubleLetter",
   "firstLastSame"
 ];
+const MIN_DOUBLE_LETTER_SOLUTIONS = 25;
 
 const UNCOMMON = [
   "minVowels",
@@ -49,8 +50,7 @@ function generateForceGuessOptions(state) {
 
   return types.map(type => {
     if (type === "containsTwo") {
-      const [a, b] = pickLetters(state, 2);
-      return { type, letters: [a, b] };
+      return generateSafeDoubleLetter(ALLOWED_GUESSES);
     }
     if (type === "startsWith" || type === "endsWith") {
       const [l] = pickLetters(state, 1);
@@ -103,6 +103,36 @@ function randomDistinctLetters(n = 3) {
   return letters;
 }
 
+function countDoubleLetterSolutions(letter, allowedGuesses) {
+  const target = (letter + letter).toLowerCase();
+  let count = 0;
+
+  for (const w of allowedGuesses) {
+    if (w.includes(target)) {
+      count++;
+      if (count >= MIN_DOUBLE_LETTER_SOLUTIONS) {
+        return count; // early exit
+      }
+    }
+  }
+  return count;
+}
+
+function generateSafeDoubleLetter(allowedGuesses) {
+  const letters = shuffle(ALPHABET);
+
+  for (const l of letters) {
+    const solutions = countDoubleLetterSolutions(l, allowedGuesses);
+    if (solutions >= MIN_DOUBLE_LETTER_SOLUTIONS) {
+      return { type: "doubleLetter", letter: l };
+    }
+  }
+
+  // Fallback (should be extremely rare)
+  return { type: "doubleLetter", letter: "L" };
+}
+
+
 engine.registerPower("forceGuess", {
   apply(state, action, roomId, io) {
     if (state.powers.forceGuessUsed) return;
@@ -115,4 +145,7 @@ engine.registerPower("forceGuess", {
     });
   }
 });
-;
+
+
+
+
