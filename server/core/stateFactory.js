@@ -18,6 +18,10 @@ function createInitialState() {
     guessCount: 0,
     gameOver: false,
     extraConstraints: [],
+    playerNames: {
+      A: "",
+      B: ""
+    },
 
     history: [],
     powersUsedThisRoundGuesser: [],
