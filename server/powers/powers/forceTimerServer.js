@@ -13,7 +13,6 @@ engine.registerPower("forceTimer", {
     console.log("[SERVER] powerUsedThisTurn:", state.powers.forceTimerUsed);
     if (state.powers.forceTimerUsed) return;
     console.log("[SERVER] powerUsedThisTurn:", state.powerUsedThisTurn);
-    if (state.powerUsedThisTurn) return;
 
     state.powers.forceTimerUsed = true;
     state.powers.forceTimerArmed = true;
