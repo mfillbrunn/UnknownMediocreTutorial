@@ -34,6 +34,10 @@ function createInitialState() {
       blindGuessUsed: false,
       blindGuessArmed: false,
       blindGuessActive: false,
+      // FORCE GUESS
+      forceGuessUsed: false,
+      forcedGuess: null,          // active constraint
+      forcedGuessOptions: null,    // temporary options shown in setter modal
       // REVEAL GREEN
       revealGreenUsed: false,
       revealGreenPos: null,
