@@ -14,12 +14,12 @@ function normalizeFB(fbArr) {
 function isConsistentWithHistory(history, proposedSecret, state) {
   const extra = state?.extraConstraints ?? [];
   const forcedGreens = extra.filter(c => c.type === "GREEN");
+  proposedSecret = proposedSecret.toUpperCase();
   for (const c of forcedGreens) {
     if (proposedSecret[c.index] !== c.letter) {
       return false;
     }
   }
-  proposedSecret = proposedSecret.toUpperCase();
 
   for (const entry of history) {
     if (entry.ignoreConstraints) continue;
