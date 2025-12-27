@@ -191,22 +191,12 @@ window.renderConstraintRow = function ({
         i === bsIdx
       ) {
         tile.classList.add("tile-blindspot");
-      
-        if (isSetterView) {
-          // Setter sees the real letter (if known)
-          if (cell.green) {
-            tile.textContent = cell.green;
-          }
-        } else {
-          // Guesser sees masked letter
-          tile.textContent = "?";
+          if (!isSetterView) {
+          tile.textContent = "";
         }
-      
-        container.appendChild(tile);
+         container.appendChild(tile);
         continue;
       }
-
-
 
     // 🟩 Green
     if (cell.green) {
