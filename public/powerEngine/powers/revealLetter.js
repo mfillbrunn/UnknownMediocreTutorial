@@ -42,8 +42,5 @@ PowerEngine.register("revealLetter", {
     } else {
       btn.textContent = "Reveal Letter";
     }
-
-    // ENABLE/DISABLE is handled centrally in powerEngine.updateButtonStates
-    // based on POWER_RULES["revealLetter"].allowed(...)
   }
 });
