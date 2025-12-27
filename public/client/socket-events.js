@@ -69,11 +69,4 @@ socket.on("roleAssigned", ({ role }) => {
   }
   updateRoleLabels();
 });
-// ---------------------------------------
-// Force Timer UI tick (client-only)
-// ---------------------------------------
-setInterval(() => {
-  if (window.state?.powers?.forceTimerActive) {
-    PowerEngine.runUiEffects(window.state, myRole);
-  }
-}, 250);
+
