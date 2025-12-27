@@ -10,6 +10,7 @@ PowerEngine.register("forceTimer", {
     $("guesserPowerContainer").appendChild(btn);
 
     btn.onclick = () => {
+      console.log("[CLIENT] ForceTimer button clicked");
       if (btn.disabled) return;
       sendGameAction(roomId, { type: "USE_FORCE_TIMER" });
     };
