@@ -38,15 +38,6 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
     return "green";
   }
 
-  const eff = state.powers?.vowelRefreshEffect;
-  if (eff) {
-    for (const pos of eff.indices) {
-      if (state.history[eff.guessIndex]?.guess[pos].toUpperCase() === letter) {
-        return null;
-      }
-    }
-  }
-
   let strongest = null;
   const fbKey = isGuesser ? "fbGuesser" : "fb";
 
