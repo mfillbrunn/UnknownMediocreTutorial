@@ -22,19 +22,5 @@ PowerEngine.register("blindSpot", {
       btn.disabled = true;
       btn.classList.add("power-used");
     }
-  },
-
-  historyEffects(entry, isSetter) {
-    if (typeof entry.blindSpotApplied === "number") {
-      const i = entry.blindSpotApplied;
-
-      if (!isSetter && entry.fbGuesser) {
-        entry.fbGuesser[i] = "🟪";
-      }
-
-      if (isSetter && entry.fb) {
-        entry.fb[i] = "🟪";
-      }
-    }
   }
 });
