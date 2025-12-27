@@ -755,7 +755,7 @@ function updateSummary() {
 
   // Assassin kill notice
   const lastEntry = state.history[state.history.length - 1];
-  if (lastEntry && lastEntry.assassinTriggered) {
+  if (state.pendingGuess === state.powers.assassinword ) {
     html += `
       <p class="assassin-summary">
         ☠ The guesser guessed the assassin word 
@@ -773,6 +773,7 @@ function updateSummary() {
         <th>Secret</th>
         <th>Guess</th>
         <th>Feedback</th>
+        <th>Powers Used</th>
         <th>Remaining</th>
       </tr>
   `;
@@ -789,18 +790,49 @@ function updateSummary() {
     const fbCell =
       Array.isArray(h.fb) ? h.fb.join("") : "";
 
+    const guesserPowers = h.powersGuesser || [];
+    const setterPowers  = h.powersSetter  || [];
+    
+    let powersCell = "";
+    
+    if (guesserPowers.length || setterPowers.length) {
+      powersCell += `<div class="summary-powers">`;
+    
+      if (guesserPowers.length) {
+        powersCell += `
+          <div class="summary-powers-guesser">
+            <b>Guesser:</b> ${guesserPowers.join(", ")}
+          </div>
+        `;
+      }
+    
+      if (setterPowers.length) {
+        powersCell += `
+          <div class="summary-powers-setter">
+            <b>Setter:</b> ${setterPowers.join(", ")}
+          </div>
+        `;
+      }
+    
+      powersCell += `</div>`;
+    } else {
+      powersCell = "—";
+    }
+
+    
     // Remaining words from GUESSER perspective
     const remaining =
       i === state.history.length - 1
         ? 0
         : computeRemainingAfterIndex(i);
-
+      
     html += `
       <tr>
         <td>${i + 1}</td>
         <td>${secretCell}</td>
         <td>${guessCell}</td>
         <td>${fbCell}</td>
+        <td>${powersCell}</td>
         <td>${remaining}</td>
       </tr>
     `;
