@@ -720,15 +720,31 @@ background: #0c0c0e;
 /* Turn overlay */
 .turn-indicator {
   display: none;
-  padding: 12px 18px;
-  font-size: 16px;
-  font-weight: 800;
-  text-align: center;
-  letter-spacing: 1px;
 }
 
-.turn-indicator.your-turn {
+/* ===============================
+   Force Timer Indicator
+   =============================== */
+
+.turn-indicator.force-timer {
   display: block;
+
+  margin-top: 10px;
+  padding: 10px 16px;
+
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-align: center;
+
+  color: #fff;
+  background: rgba(255, 30, 50, 0.15);
+  border: 1.5px solid var(--role-accent);
+  border-radius: 10px;
+
+  box-shadow:
+    0 0 12px color-mix(in srgb, var(--role-accent) 40%, transparent),
+    inset 0 0 8px color-mix(in srgb, var(--role-accent) 20%, transparent);
 }
 
 
@@ -745,7 +761,10 @@ background: #0c0c0e;
 }
 
 /* Show overlay if any indicator has your-turn */
-body:has(.turn-indicator.your-turn) .turn-overlay { opacity: 1; }
+body:has(.turn-indicator.force-timer) .turn-overlay {
+  opacity: 1;
+}
+
 
 .theme-guesser .turn-indicator.your-turn {
   background: var(--role-accent);
