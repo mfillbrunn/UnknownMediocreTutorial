@@ -17,6 +17,14 @@ const UNCOMMON = [
 const RARE = [
   "palindrome"
 ];
+function shuffle(arr) {
+  const a = arr.slice(); // do NOT mutate original
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 function generateForceGuessOptions(state) {
   const roll = Math.random();
