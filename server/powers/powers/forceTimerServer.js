@@ -33,5 +33,6 @@ engine.registerPower("forceTimer", {
 
       io.to(roomId).emit("forceTimerExpired");
     }, FORCE_TIMER_MS);
+    emitStateForAllPlayers(roomId, room, io);
   }
 });
