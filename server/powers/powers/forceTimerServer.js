@@ -9,7 +9,7 @@ engine.registerPower("forceTimer", {
 
     state.powers.forceTimerUsed = true;
     state.powerUsedThisTurn = true;
-
+    io.to(roomId).emit("toast", "⏱ Force Timer armed — setter will be timed next turn.");
     const deadline = Date.now() + FORCE_TIMER_MS;
 
     state.powers.forceTimerActive = true;
