@@ -80,8 +80,10 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     state.guesser = "B";
     state.ready = { A: false, B: false };
     state.phase = "lobby";
+    delete state.powers.blindGuessUsed;
     delete state.powers.blindGuessArmed;
     delete state.powers.blindGuessActive;
+
     emitLobbyEvent(io, roomId, { type: "showLobby" });
     emitStateForAllPlayers(roomId, room, io);
     return;
@@ -114,7 +116,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       pushWinEntry(state, state.secret);
       // end immediately, skipping setter choice
       endGame(state, roomId, io, room);
-      if (state.powers.blindGuessActive) {delete state.powers.blindGuessActive;}
+      if (state.powers.blindGuessActive) { state.powers.blindGuessActive = false;}
       return;
     }
 
@@ -122,11 +124,11 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       state.currentSecret = state.secret;
       pushWinEntry(state, g);
       endGame(state, roomId, io, room);
-      if (state.powers.blindGuessActive) {delete state.powers.blindGuessActive;}
+      if (state.powers.blindGuessActive) { state.powers.blindGuessActive = false;}
       return;
     }
     state.pendingGuess = g;
-    if (state.powers.blindGuessActive) {delete state.powers.blindGuessActive;}
+    if (state.powers.blindGuessActive) { state.powers.blindGuessActive = false;}
     state.guesserDraft = "";   // clear live draft immediately
     state.turn = state.setter;
     if (state.powers.forceTimerArmed) {
