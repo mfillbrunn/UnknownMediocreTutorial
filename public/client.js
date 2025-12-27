@@ -765,17 +765,29 @@ function updateSummary() {
   }
 
   let html = `<h3>Round Summary</h3>`;
+    const setterName =
+      state.playerNames?.[state.setter] || "Setter";
+    const guesserName =
+      state.playerNames?.[state.guesser] || "Guesser";
+    
+    html += `
+      <p class="summary-players">
+        <b>${setterName}</b> (Setter) vs <b>${guesserName}</b> (Guesser)
+      </p>
+    `;
 
   // Assassin kill notice
   const lastEntry = state.history[state.history.length - 1];
   if (state.pendingGuess === state.powers.assassinword ) {
-    html += `
-      <p class="assassin-summary">
-        ☠ The guesser guessed the assassin word 
-        "${lastEntry.guess.toUpperCase()}" and was assassinated!
-      </p>
-    `;
-  }
+     const guesserName =
+    state.playerNames?.[state.guesser] || "The guesser";
+  html += `
+    <p class="assassin-summary">
+      ☠ ${guesserName} guessed the assassin word 
+      "${lastEntry.guess.toUpperCase()}" and was assassinated!
+    </p>
+  `;
+}
 
   html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
 
