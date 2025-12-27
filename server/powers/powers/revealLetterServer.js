@@ -2,56 +2,48 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("revealLetter", {
   apply(state, action, roomId, io) {
-    const p = state.powers.revealLetter;
-    if (!p.ready || p.used) return;
+  const p = state.powers.revealLetter;
+  if (!p.ready || p.used) return;
 
-    p.used = true;
-    p.ready = false;
-    state.powerUsedThisTurn = true;
+  if (!state.history.length) return;
 
-    // Step 1 — find all green positions from scoring history
-    const greenPositions = new Set();
-    for (const entry of state.history) {
-      if (!entry || !entry.fbGuesser) continue;
-      for (let i = 0; i < 5; i++) {
-        if (entry.fbGuesser[i] === "🟩") greenPositions.add(i);
-      }
+  p.used = true;
+  p.ready = false;
+  state.powerUsedThisTurn = true;
+
+  // Collect known green positions
+  const greenPositions = new Set();
+  for (const entry of state.history) {
+    if (!entry?.fbGuesser) continue;
+    for (let i = 0; i < 5; i++) {
+      if (entry.fbGuesser[i] === "🟩") greenPositions.add(i);
     }
+  }
 
-    // Step 2 — pick ONLY non-green positions
-    let options = [0,1,2,3,4].filter(i => !greenPositions.has(i));
-    if (options.length === 0) options = [0,1,2,3,4];
+  const options = [0,1,2,3,4].filter(i => !greenPositions.has(i));
+  if (!options.length) return;
 
-    const index = options[Math.floor(Math.random() * options.length)];
-    const letter = state.secret[index].toUpperCase();
+  const index = options[Math.floor(Math.random() * options.length)];
+  const letter = state.secret[index].toUpperCase();
 
-    // Step 3 — store forced green constraint permanently
-    if (!state.powers.forcedGreens) state.powers.forcedGreens = {};
-    state.powers.forcedGreens[index] = letter;
+  // Ensure constraints container exists
+  state.extraConstraints ??= [];
 
-    // Step 4 — keyboard coloring support
-    if (!state.powers.guesserLockedGreens) state.powers.guesserLockedGreens = [];
-    if (!state.powers.guesserLockedGreens.includes(letter))
-      state.powers.guesserLockedGreens.push(letter);
+  // Prevent duplicate reveals
+  if (!state.extraConstraints.some(c => c.type === "GREEN_REVEAL" && c.index === index)) {
+    state.extraConstraints.push({
+      type: "GREEN_REVEAL",
+      index,
+      letter
+    });
+  }
 
-    // Step 5 — reveal info (client uses this for animation)
-    p.pendingReveal = { index, letter };
-
-    io.to(roomId).emit("rareLetterReveal", { index, letter });
-    io.to(roomId).emit("toast", `Revealed letter ${letter} in position ${index+1}!`);
-    p.pendingReveal = null;
-  },
-
-  // IMPORTANT: revealLetter MUST NOT change fb/fbGuesser
+  io.to(roomId).emit("rareLetterReveal", { index, letter });
+  io.to(roomId).emit("toast", `Revealed letter ${letter} in position ${index + 1}!`);
+}
+,
+   
   postScore(state, entry, roomId, io) {
-    const p = state.powers.revealLetter;
-    if (!p.pendingReveal) return;
-
-    // Only store metadata for UI
-    const { index, letter } = p.pendingReveal;
-    entry.revealPowerApplied = { index, letter };
-
-    p.pendingReveal = null;
   },
 
   turnStart(state, role, roomId, io) {
@@ -60,17 +52,17 @@ engine.registerPower("revealLetter", {
     if (p.used || p.ready) return;
 
     // Unlocking logic
-if (p.mode === "RARE") {
-  const rare = new Set("QJXZWKV");
-  const seen = new Set();
-
-  for (const h of state.history) {
-    for (const c of h.guess.toUpperCase()) {
-      if (rare.has(c)) {
-        seen.add(c);
+    if (p.mode === "RARE") {
+      const rare = new Set("QJXZWKV");
+      const seen = new Set();
+    
+      for (const h of state.history) {
+        for (const c of h.guess.toUpperCase()) {
+          if (rare.has(c)) {
+            seen.add(c);
+          }
+        }
       }
-    }
-  }
 
   // e.g., require at least 2 or 3 unique rare letters
   if (seen.size >= 5) {   // adjust threshold as desired
