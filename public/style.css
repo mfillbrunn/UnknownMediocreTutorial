@@ -1545,3 +1545,29 @@ body.blind-guess .key:hover {
   transform: none;
   box-shadow: none;
 }
+
+/* ===============================
+   FORCE GUESS — Guesser Badge
+   =============================== */
+
+.forced-guess-badge {
+  margin: 10px auto 6px;
+  padding: 8px 14px;
+
+  width: fit-content;
+
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+
+  color: #fff;
+  background: rgba(123, 63, 228, 0.25);
+  border: 1.5px solid #7b3fe4;
+  border-radius: 999px;
+
+  box-shadow:
+    0 0 8px rgba(123, 63, 228, 0.35),
+    inset 0 0 6px rgba(123, 63, 228, 0.25);
+}
+
