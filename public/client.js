@@ -712,26 +712,12 @@ renderDraftRows({
   localGuesserDraft
 });
 const badge = $("guesserForcedGuessBadge");
-
-if (!badge) return; // ← CRITICAL GUARD
+if (!badge) return;
 
 if (state.powers?.forcedGuess && myRole === state.guesser) {
   const fg = state.powers.forcedGuess;
 
-  let text = "";
-  if (fg.type === "doubleLetter") {
-    text = "Forced Guess: Double Letter";
-  } else {
-    const LABELS = {
-  contains: "Contains",
-  startsWith: "Starts with",
-  endsWith: "Ends with"
-    };
-    text = `Forced Guess: ${LABELS[fg.type]} ${fg.letter}`;
-
-  }
-
-  badge.textContent = text;
+  badge.textContent = `Forced Guess: ${formatForceGuessOption(fg)}`;
   badge.hidden = false;
 } else {
   badge.hidden = true;
@@ -978,6 +964,31 @@ if (desktopKeep && mobileKeep) {
 
   sync();
 }
+
+function formatForceGuessOption(o) {
+  switch (o.type) {
+    case "containsTwo":
+      return `Contains ${o.letters.join(" + ")}`;
+    case "startsWith":
+      return `Starts with ${o.letter}`;
+    case "endsWith":
+      return `Ends with ${o.letter}`;
+    case "doubleLetter":
+      return "Double letter";
+    case "minVowels":
+      return "At least 3 vowels";
+    case "maxVowels":
+      return "At most 1 vowel";
+    case "firstLastSame":
+      return "First = Last";
+    case "palindrome":
+      return "Palindrome";
+  }
+}
+function formatForceGuessBadge(o) {
+  return formatForceGuessOption(o);
+}
+
 // ---------------------------------------
 // Force Timer UI tick (client-only)
 // ---------------------------------------
