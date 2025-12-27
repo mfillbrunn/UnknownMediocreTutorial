@@ -186,27 +186,26 @@ window.renderConstraintRow = function ({
 
     const cell = grid[i];
 // 🟪 Blind Spot (persistent from activation onward)
-    if (
-      typeof bsIdx === "number" &&
-      i === bsIdx
-    ) {
-      tile.classList.add("tile-purple");
-    
-      if (isSetterView) {
-        // Setter sees the real letter (if known)
-        if (cell.green) {
-          tile.textContent = cell.green;
+      if (
+        typeof bsIdx === "number" &&
+        i === bsIdx
+      ) {
+        tile.classList.add("tile-blindspot");
+      
+        if (isSetterView) {
+          // Setter sees the real letter (if known)
+          if (cell.green) {
+            tile.textContent = cell.green;
+          }
         } else {
-          tile.textContent = ""; // unknown but marked
+          // Guesser sees masked letter
+          tile.textContent = "?";
         }
-      } else {
-        // Guesser sees nothing / ?
-        tile.textContent = "?";
+      
+        container.appendChild(tile);
+        continue;
       }
-    
-      container.appendChild(tile);
-      continue;
-    }
+
 
 
     // 🟩 Green
