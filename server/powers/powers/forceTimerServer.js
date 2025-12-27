@@ -9,15 +9,11 @@ const engine = require("../powerEngineServer.js");
 engine.registerPower("forceTimer", {
   apply(state, action, roomId, io) {
     // One-time use
-    console.log("[SERVER] ForceTimer apply called");
-    console.log("[SERVER] powerUsedThisTurn:", state.powers.forceTimerUsed);
     if (state.powers.forceTimerUsed) return;
-    console.log("[SERVER] powerUsedThisTurn:", state.powerUsedThisTurn);
 
     state.powers.forceTimerUsed = true;
     state.powers.forceTimerArmed = true;
     state.powerUsedThisTurn = true;
-    console.log("[SERVER] ForceTimer armed", state.powers);
 
     io.to(roomId).emit(
       "toast",
