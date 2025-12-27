@@ -526,10 +526,6 @@ renderDraftRows({
   role: "setter",
   container: $("draftSetter")
 });
-
-  // -------------------------------------------------------
-  // KEYBOARD + PATTERN / PREVIEW
-  // -------------------------------------------------------
   if (myRole === state.setter) {
     renderKeyboard({
     state,
@@ -598,7 +594,7 @@ function applyPreviewFeedback(fbArray) {
     else tile.classList.add("preview-gray");
   });
 }
-
+///SETTER INPUT
 function handleSetterInput(event) {
   if (!state.powers?.freezeActive){
     const isNormalSetterTurn =
@@ -654,6 +650,7 @@ function handleSetterInput(event) {
       return;      
   }
 }
+///GUESSER INPUT
 function handleGuesserInput(event) {
   if (state.pendingGuess) return;
   if (event.type === "BACKSPACE") {
@@ -709,6 +706,21 @@ renderDraftRows({
   container: $("draftGuesser"),
   localGuesserDraft
 });
+if (state.powers?.forcedGuess && myRole === state.guesser) {
+  const fg = state.powers.forcedGuess;
+  let text = "";
+
+  if (fg.type === "doubleLetter") {
+    text = "Forced Guess: double letter";
+  } else {
+    text = `Forced Guess: ${fg.type} ${fg.letter}`;
+  }
+
+  $("guesserConstraintBadge").textContent = text;
+  $("guesserConstraintBadge").style.display = "block";
+} else {
+  $("guesserConstraintBadge").style.display = "none";
+}
 
   const displayGuess = state.pendingGuess || localGuesserDraft;
  if (myRole === state.guesser) {
