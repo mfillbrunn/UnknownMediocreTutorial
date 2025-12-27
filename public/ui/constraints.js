@@ -185,17 +185,29 @@ window.renderConstraintRow = function ({
     tile.className = "history-tile constraint-tile";
 
     const cell = grid[i];
-    // 🟪 Blind Spot (guesser only, persistent)
-      if (
-        !isSetterView &&
-        typeof bsIdx === "number" &&
-        i === bsIdx
-      ) {
-        tile.classList.add("tile-purple");
-        tile.textContent = "?"; // or leave empty
-        container.appendChild(tile);
-        continue;
+// 🟪 Blind Spot (persistent from activation onward)
+    if (
+      typeof bsIdx === "number" &&
+      i === bsIdx
+    ) {
+      tile.classList.add("tile-purple");
+    
+      if (isSetterView) {
+        // Setter sees the real letter (if known)
+        if (cell.green) {
+          tile.textContent = cell.green;
+        } else {
+          tile.textContent = ""; // unknown but marked
+        }
+      } else {
+        // Guesser sees nothing / ?
+        tile.textContent = "?";
       }
+    
+      container.appendChild(tile);
+      continue;
+    }
+
 
     // 🟩 Green
     if (cell.green) {
