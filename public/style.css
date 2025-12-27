@@ -1671,8 +1671,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   border-top: 3px solid rgba(155, 80, 255, 0.95);
   border-bottom: 3px solid rgba(155, 80, 255, 0.95);
 
-  /* Clip to left half only */
-  clip-path: inset(0 50% 0 0);
 
   pointer-events: none;
   z-index: 3;
