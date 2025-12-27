@@ -19,11 +19,10 @@ socket.on("revealOldSecret", ({ secret }) => {
 
 
 // Timer begins
-socket.on("forceTimerStarted", ({ deadline }) => {
-  const bar = $("turnIndicatorSetter");
-  bar.classList.add("your-turn");
-  bar.textContent = "TIME LEFT: 30s";
+socket.on("forceTimerStarted", () => {
+  toast("⏱ Setter is now timed!");
 });
+
 
 
 socket.on("assassinUsed", ({ setter, word }) => {
@@ -39,14 +38,6 @@ socket.on("assassinUsed", ({ setter, word }) => {
 });
 
 socket.on("forceTimerExpired", () => {
-  const bar = $("turnIndicatorSetter");
-  bar.textContent = "TIME LEFT: 0s";
-  bar.classList.remove("flash-warning");
-
-  $("submitSetterNewBtn").disabled = true;
-  $("submitSetterNewBtn").classList.add("disabled-btn");
-  $("newSecretInput").value = "";
-
   toast("Time ran out — old secret was kept!");
 });
 
