@@ -7,11 +7,14 @@ const FORCE_TIMER_INTERVALS = {};
 
 function startForceTimer(roomId, room, state, io, context) {
   const deadline = Date.now() + 30000;
+  if (!state.powers.forceTimerActive) {
+    clearInterval(FORCE_TIMER_INTERVALS[roomId]);
+    delete FORCE_TIMER_INTERVALS[roomId];
+    return;
+  }
 
   state.powers.forceTimerActive = true;
-  state.powers.forceTimerDeadline = deadline;
-  state.powers.forceTimerExpiredFlag = false;
-
+  state.powers.forceTimerDeadline = deadline
   io.to(roomId).emit("forceTimerStarted", { deadline });
 
   if (FORCE_TIMER_INTERVALS[roomId]) {
@@ -25,8 +28,6 @@ function startForceTimer(roomId, room, state, io, context) {
     if (remaining <= 0) {
       clearInterval(FORCE_TIMER_INTERVALS[roomId]);
       delete FORCE_TIMER_INTERVALS[roomId];
-
-      state.powers.forceTimerExpiredFlag = true;
       io.to(roomId).emit("forceTimerExpired");
 
       const handleNormalPhase = require("./normal");
@@ -55,7 +56,6 @@ function clearForceTimer(roomId, state) {
 
   delete state.powers.forceTimerActive;
   delete state.powers.forceTimerDeadline;
-  delete state.powers.forceTimerExpiredFlag;
   delete state.powers.forceTimerArmed;
 }
 
@@ -138,8 +138,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   }
   if (state.pendingGuess && state.turn === state.setter) {
     if (state.powers.forceTimerActive &&
-        state.powers.forceTimerDeadline &&
-        state.powers.forceTimerExpiredFlag) {
+        state.powers.forceTimerDeadline) {
       action = { type: "SET_SECRET_SAME", playerId: action.playerId };
     }
     if (action.type.startsWith("USE_") && role === state.setter) {
@@ -192,8 +191,8 @@ if (state.powers.forcedGreens) {
         endGame(state, roomId, io, room);
         return;
       }
-      finalizeFeedback(state, powerEngine, roomId, io);
       clearForceTimer(roomId, state);
+      finalizeFeedback(state, powerEngine, roomId, io);
       state.turn = state.guesser;
       state.powerUsedThisTurn = false;  
 
@@ -245,8 +244,8 @@ if (state.powers.forcedGreens) {
       }
       state.currentSecret = state.secret;
       state.firstSecretSet = true;
-      finalizeFeedback(state, powerEngine, roomId, io);
       clearForceTimer(roomId, state);
+      finalizeFeedback(state, powerEngine, roomId, io);
       state.turn = state.guesser;
   
       powerEngine.turnStart(state, state.guesser, roomId, io);
