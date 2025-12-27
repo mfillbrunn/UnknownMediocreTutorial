@@ -37,6 +37,11 @@ PowerEngine.register("forceTimer", {
         0,
         Math.ceil((state.powers.forceTimerDeadline - Date.now()) / 1000)
       );
+          if (remaining <= 5) {
+            bar.classList.add("flash-warning");
+          } else {
+            bar.classList.remove("flash-warning");
+          }
 
       bar.textContent = `TIME LEFT: ${remaining}s`;
       bar.classList.add("your-turn");
