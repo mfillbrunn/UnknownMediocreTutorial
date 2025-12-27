@@ -20,7 +20,8 @@ function createInitialState() {
     extraConstraints: [],
 
     history: [],
-
+    powersUsedThisRoundGuesser: [],
+    powersUsedThisRoundSetter: [],
     simultaneousGuessSubmitted: false,
     simultaneousSecretSubmitted: false,
 
