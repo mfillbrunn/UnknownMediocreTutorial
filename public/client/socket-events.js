@@ -25,21 +25,6 @@ socket.on("forceTimerStarted", ({ deadline }) => {
   bar.textContent = "TIME LEFT: 30s";
 });
 
-// Timer tick (250ms)
-socket.on("forceTimerTick", ({ remaining }) => {
-  const bar = $("turnIndicatorSetter");
-  const sec = Math.max(0, Math.ceil(remaining / 1000));
-
-  bar.textContent = `TIME LEFT: ${sec}s`;
-  bar.classList.add("your-turn");
-
-  // --- NEW: Flash red when 5 seconds or less ---
-  if (sec <= 5) {
-    bar.classList.add("flash-warning");
-  } else {
-    bar.classList.remove("flash-warning");
-  }
-});
 
 socket.on("assassinUsed", ({ setter, word }) => {
   // Notify guesser only
