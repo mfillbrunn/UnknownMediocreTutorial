@@ -1753,7 +1753,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   opacity: 0.9;
 }
 .power-container {
-  gap: 0;
+  gap: 2px;
 }
 
 .power-btn-wrapper {
