@@ -1,6 +1,10 @@
 // /powers/powers/magicMode.js
 PowerEngine.register("magicMode", {
   role: "guesser",
+  tooltip: {
+  title: this.label,
+  desc: "Next round, one green is revealed for every yellow in the feedback."
+},
 
   renderButton(roomId) {
     const btn = document.createElement("button");
