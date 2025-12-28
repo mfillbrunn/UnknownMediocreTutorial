@@ -426,11 +426,10 @@ function updateScreens() {
   hide("lobby");
   hide("menu");
   
-  if (state.phase === "gameOver") {
+  if (state.phase === "gameOver" || state.phase === "roundSummary") {
     hide("setterScreen");
     hide("guesserScreen");
     show("menu");
-    PowerEngine.applyUI(state, myRole, roomId);
     return;
   }
 
