@@ -963,7 +963,7 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
 .powers-col {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
 }
 
 /* Center column: history + draft */
