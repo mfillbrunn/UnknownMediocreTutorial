@@ -5,12 +5,9 @@ PowerEngine.register("assassinWord", {
     desc: window.POWER_METADATA.assassinWord.desc
   },
   renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.className = "power-btn";
-    btn.textContent = "Assassin Word";
-    this.buttonEl = btn;
-
-    $("setterPowerContainer").appendChild(btn);
+  const { wrapper, btn } =    PowerEngine.createPowerButton("assassinWord", "Assassin Word");
+  this.buttonEl = btn;
+  $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
       console.log("Assassin Word clicked");
