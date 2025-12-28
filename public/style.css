@@ -1755,7 +1755,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 }
 .power-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, 120px);
+  grid-template-columns: repeat(auto-fit, minmax(120px, max-content));
   gap: 10px;
   justify-content: start;
    max-width: 260px;
