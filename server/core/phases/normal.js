@@ -358,6 +358,7 @@ function endGame(state, roomId, io, room) {
        time: {
     A: state.timeRemaining.A,
     B: state.timeRemaining.B,
+       },
          timeoutLoser: state.timeoutLoser || null,
     history: JSON.parse(JSON.stringify(state.history)),
     powers: JSON.parse(JSON.stringify(state.activePowers || [])),
