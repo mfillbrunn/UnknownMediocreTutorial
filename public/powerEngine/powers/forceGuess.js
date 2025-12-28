@@ -1,5 +1,10 @@
 PowerEngine.register("forceGuess", {
   role: "setter",
+  tooltip: {
+  title: this.label,
+  desc: "Forces guess to adhere to restrictions for a round."
+},
+
 
   renderButton(roomId) {
     const btn = document.createElement("button");
