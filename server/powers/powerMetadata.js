@@ -22,4 +22,5 @@ module.exports = {
   vowelRefresh: { label: "Vowel Refresh" },
   assassinWord: { label: "Assassin Word" },
   blindGuess:{ label: "Blind Guess" },
+  blindSpot:{ label: "Blind Spot" },
 };
