@@ -1,6 +1,5 @@
-const tooltip = $("tooltip");
-
 function showTooltip(target, { title, desc }) {
+  const tooltip = document.getElementById("tooltip");
   if (!tooltip) return;
 
   tooltip.innerHTML = `
@@ -20,10 +19,13 @@ function showTooltip(target, { title, desc }) {
 }
 
 function hideTooltip() {
+  const tooltip = document.getElementById("tooltip");
   if (!tooltip) return;
+
   tooltip.classList.remove("show");
   tooltip.hidden = true;
 }
+
 
 // powerEngine.js (or a shared client helper)
 window.getPowerMeta = function (id, variant) {
