@@ -1,3 +1,7 @@
+import POWER_METADATA from "../shared/powerMetadata";
+
+const meta = POWER_METADATA.assassinWord;
+
 PowerEngine.register("assassinWord", {
   role: "setter",
   tooltip: {
