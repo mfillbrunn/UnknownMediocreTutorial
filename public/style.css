@@ -964,6 +964,11 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   display: flex;
   flex-direction: column;
   gap: 0;
+  min-width: 0;
+  width: max-content;
+}
+.powers-col > .keep-btn {
+  position: fixed;   /* removes it from grid sizing entirely */
 }
 
 /* Center column: history + draft */
