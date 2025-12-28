@@ -31,6 +31,20 @@ const SETTER_POWERS = [
 function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
 
+if (action.type === "SET_TIME_CONTROL") {
+  const sec = parseInt(action.seconds, 10);
+  if (!Number.isFinite(sec) || sec <= 0) return;
+
+  state.timeControl.initialSeconds = sec;
+
+  // Reset clocks visually in lobby
+  state.timeRemaining.A = sec;
+  state.timeRemaining.B = sec;
+
+  emitStateForAllPlayers(roomId, room, io);
+  return;
+}
+
   // -------------------------------
   // SWITCH ROLES
   // -------------------------------
