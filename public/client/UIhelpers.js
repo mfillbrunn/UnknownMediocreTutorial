@@ -52,3 +52,23 @@ window.getPowerMeta = function (id, variant) {
   }
   return base;
 };
+
+document.addEventListener("mousemove", (e) => {
+  if (!activeTooltipTarget) return;
+
+  const rect = activeTooltipTarget.getBoundingClientRect();
+  const inside =
+    e.clientX >= rect.left &&
+    e.clientX <= rect.right &&
+    e.clientY >= rect.top &&
+    e.clientY <= rect.bottom;
+
+  if (!inside) {
+    hideTooltip();
+  }
+});
+
+window.addEventListener("scroll", hideTooltip);
+window.addEventListener("resize", hideTooltip);
+
+
