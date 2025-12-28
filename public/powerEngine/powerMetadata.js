@@ -51,11 +51,11 @@ window.POWER_METADATA = {
     variants: {
       ROW: {
         label: "Row Master",
-        desc: "Reveal a green letter by fully solving a row."
+        desc: "Reveal a green letter by having used all letters in a row."
       },
       RARE: {
         label: "Rare Letter Bonus",
-        desc: "Reveal a rare green letter by meeting a special condition."
+        desc: "Reveal a rare green letter by having used at least 5 out of QWYJKXV."
       }
     }
   },
