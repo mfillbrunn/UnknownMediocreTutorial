@@ -1752,4 +1752,8 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 .tooltip-desc {
   opacity: 0.9;
 }
+.power-btn-wrapper {
+  display: inline-block;
+  position: relative;
+}
 
