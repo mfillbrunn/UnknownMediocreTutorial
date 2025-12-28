@@ -13,6 +13,25 @@ PowerEngine.register("revealLetter", {
       // Normalized by powerEngineServer.normalizePowerId → "revealLetter"
       sendGameAction(roomId, { type: "USE_REVEAL_LETTER" });
     };
+  
+// Tooltip hooks (variant-aware)
+    const showVariantTooltip = () => {
+      const mode = window.state?.powers?.revealLetter?.mode;
+      const meta =
+        window.POWER_METADATA?.revealLetter?.variants?.[mode];
+
+      if (!meta) return;
+
+      showTooltip(btn, {
+        title: meta.label,
+        desc: meta.desc
+      });
+    };
+
+    btn.addEventListener("mouseenter", showVariantTooltip);
+    btn.addEventListener("focus", showVariantTooltip);
+    btn.addEventListener("mouseleave", hideTooltip);
+    btn.addEventListener("blur", hideTooltip);
   },
 
   uiEffects(state, role) {

@@ -2,9 +2,9 @@ PowerEngine.register("confuseColors", {
 
   role: "setter",
 tooltip: {
-  title: this.label,
-  desc: "Turns all green and yellow feedback blue for one round."
-},
+    title: window.POWER_METADATA.confuseColors.label,
+    desc: window.POWER_METADATA.confuseColors.desc
+  },
 
   renderButton(roomId) {
     const btn = document.createElement("button");

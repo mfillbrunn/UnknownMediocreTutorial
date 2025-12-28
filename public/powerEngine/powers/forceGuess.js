@@ -1,9 +1,9 @@
 PowerEngine.register("forceGuess", {
   role: "setter",
-  tooltip: {
-  title: this.label,
-  desc: "Forces the next guess to satisfy a special restriction."
-},
+tooltip: {
+    title: window.POWER_METADATA.forceGuess.label,
+    desc: window.POWER_METADATA.forceGuess.desc
+  },
 
 
   renderButton(roomId) {

@@ -24,3 +24,14 @@ function hideTooltip() {
   tooltip.classList.remove("show");
   tooltip.hidden = true;
 }
+
+// powerEngine.js (or a shared client helper)
+window.getPowerMeta = function (id, variant) {
+  const base = window.POWER_METADATA[id];
+  if (!base) return null;
+
+  if (variant && base.variants?.[variant]) {
+    return base.variants[variant];
+  }
+  return base;
+};

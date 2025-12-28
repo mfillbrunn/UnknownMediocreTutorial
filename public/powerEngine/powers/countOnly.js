@@ -1,10 +1,10 @@
 PowerEngine.register("countOnly", {
 
   role: "setter",
-  tooltip: {
-  title: this.label, 
-  desc: "Shows only the total number of greens and yellows this round, not their positions."
-},
+tooltip: {
+    title: window.POWER_METADATA.countOnly.label,
+    desc: window.POWER_METADATA.countOnly.desc
+  },
 
 
   renderButton(roomId) {

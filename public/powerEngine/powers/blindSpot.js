@@ -1,9 +1,9 @@
 PowerEngine.register("blindSpot", {
   role: "setter",
-  tooltip: {
-  title: "Blind Spot",
-  desc: "Hides one position from the guesser for the rest of the game."
-},
+tooltip: {
+    title: window.POWER_METADATA.blindSpot.label,
+    desc: window.POWER_METADATA.blindSpot.desc
+  },
 
 
   renderButton(roomId) {

@@ -1,11 +1,10 @@
 PowerEngine.register("freezeSecret", {
 
   role: "guesser",
-  tooltip: {
-  title: this.label,
-  desc: "Prevents the setter from changing the secret next round."
-},
-
+tooltip: {
+    title: window.POWER_METADATA.freezeSecret.label,
+    desc: window.POWER_METADATA.freezeSecret.desc
+  },
   renderButton(roomId) {
     const btn = document.createElement("button");
     btn.id = "power_freezeSecret";

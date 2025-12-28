@@ -1,9 +1,9 @@
 PowerEngine.register("suggestGuess", {
   role: "guesser",
 tooltip: {
-  title: this.label,
-  desc: "Suggest a valid guess that fits all known constraints."
-},
+    title: window.POWER_METADATA.suggestGuess.label,
+    desc: window.POWER_METADATA.suggestGuess.desc
+  },
   renderButton(roomId) {
     const btn = document.createElement("button");
     btn.id = "power_suggestGuess";

@@ -1,12 +1,8 @@
-import POWER_METADATA from "../shared/powerMetadata";
-
-const meta = POWER_METADATA.assassinWord;
-
 PowerEngine.register("assassinWord", {
   role: "setter",
   tooltip: {
-    title: "Assassin Word",
-    desc: "Choose a word that instantly ends the game if guessed."
+    title: window.POWER_METADATA.assassinWord.label,
+    desc: window.POWER_METADATA.assassinWord.desc
   },
   renderButton(roomId) {
     const btn = document.createElement("button");

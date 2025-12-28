@@ -1,10 +1,10 @@
 PowerEngine.register("hideTile", {
 
   role: "setter",
-  tooltip: {
-  title: this.label,
-  desc: "Hides the feedback on one random tile for one round."
-},
+tooltip: {
+    title: window.POWER_METADATA.hideTile.label,
+    desc: window.POWER_METADATA.hideTile.desc
+  },
 
   renderButton(roomId) {
     const btn = document.createElement("button");

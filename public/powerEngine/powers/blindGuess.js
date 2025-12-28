@@ -1,9 +1,9 @@
 PowerEngine.register("blindGuess", {
   role: "setter",
-  tooltip: {
-  title: "Blind Guess",
-  desc: "Hides all feedback and keyboard colors for the next guess."
-},
+tooltip: {
+    title: window.POWER_METADATA.blindGuess.label,
+    desc: window.POWER_METADATA.blindGuess.desc
+  },
 
   renderButton(roomId) {
     const btn = document.createElement("button");

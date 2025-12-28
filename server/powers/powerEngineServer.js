@@ -1,5 +1,5 @@
 // /powers/powerEngineServer.js
-
+const POWER_METADATA = require("./powerMetadata");
 const engine = {
   powers: {},
 
@@ -19,8 +19,11 @@ const engine = {
 
     p.apply(state, action, roomId, io);
     const role = action?.role;
-    const label = p.label || id; // allow nice labels per power
-  
+    const meta = POWER_METADATA[id];
+    const label = meta?.label;
+    if (!label || id === "forceGuess" || id === "revealLetter") {
+      return;
+    }
     if (role === state.guesser) {
       state.powersUsedThisRoundGuesser.push(label);
     } else if (role === state.setter) {

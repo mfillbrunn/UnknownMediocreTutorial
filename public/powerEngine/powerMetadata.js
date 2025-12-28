@@ -1,4 +1,4 @@
-const POWER_METADATA = {
+window.POWER_METADATA = {
   blueMode: {
     label: "Blue Mode",
     desc: "Turns all green and yellow feedback blue for one round."
@@ -84,6 +84,11 @@ const POWER_METADATA = {
     label: "Assassin Word",
     desc: "Choose a word that instantly ends the game if guessed."
   }
+  ,
+
+  blindGuess: {
+    label: "Blind Guess",
+    desc: "Hides all feedback and keyboard colors for the next guess."
+  }
 };
 
-module.exports = POWER_METADATA;
