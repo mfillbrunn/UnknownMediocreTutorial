@@ -112,7 +112,7 @@ window.updateSummary = function updateSummary() {
   html += `</table>`;
 
   // Competitive mode: Next Round button
-  if (state.phase === "roundSummary") {
+  if (state.gameOverView === "round" && state.canNextRound) {
     html += `
       <div class="summary-actions">
         <button id="nextRoundBtn" class="primary-btn">
