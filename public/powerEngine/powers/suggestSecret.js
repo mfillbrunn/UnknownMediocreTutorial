@@ -5,13 +5,9 @@ tooltip: {
     desc: window.POWER_METADATA.suggestSecret.desc
   },
   renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.id = "power_suggestSecret";
-    btn.className = "power-btn";
-    btn.textContent = "Suggest Secret";
-
-    $("setterPowerContainer").appendChild(btn);
+     const { wrapper, btn } =    PowerEngine.createPowerButton("suggestSecret", "Suggest Secret");
     this.buttonEl = btn;
+    $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
       if (btn.disabled) return;
