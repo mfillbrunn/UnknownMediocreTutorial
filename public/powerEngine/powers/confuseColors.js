@@ -2,8 +2,8 @@ PowerEngine.register("confuseColors", {
 
   role: "setter",
 tooltip: {
-  title: "Blue Mode",
-  desc: "Turns all greens and yellows into blues for one round."
+  title: this.label,
+  desc: "Turns all green and yellow feedback blue for one round."
 },
 
   renderButton(roomId) {
