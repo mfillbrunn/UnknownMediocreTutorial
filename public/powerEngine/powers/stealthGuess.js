@@ -1,6 +1,9 @@
 PowerEngine.register("stealthGuess", {
   role: "guesser",
-
+tooltip: {
+  title: this.label,
+  desc: "The setter cannot see the next guess."
+},
   renderButton(roomId) {
     const btn = document.createElement("button");
     btn.className = "power-btn";
