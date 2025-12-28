@@ -49,22 +49,38 @@ function renderChessClocks() {
   const setterEl = $("timerSetter");
   const guesserEl = $("timerGuesser");
 
-  if (setterEl) {
-    setterEl.textContent = formatTime(state.timeRemaining[setter]);
-    setterEl.classList.toggle(
-      "active",
-      state.activeTimer === setter
-    );
+  function applyTimer(el, seconds, isActive) {
+    if (!el) return;
+
+    el.textContent = formatTime(seconds);
+
+    // Active highlight
+    el.classList.toggle("active", isActive);
+
+    // Clear warnings
+    el.classList.remove("warn-30", "warn-10");
+
+    // Apply warnings
+    if (seconds <= 10) {
+      el.classList.add("warn-10");
+    } else if (seconds <= 30) {
+      el.classList.add("warn-30");
+    }
   }
 
-  if (guesserEl) {
-    guesserEl.textContent = formatTime(state.timeRemaining[guesser]);
-    guesserEl.classList.toggle(
-      "active",
-      state.activeTimer === guesser
-    );
-  }
+  applyTimer(
+    setterEl,
+    state.timeRemaining[setter],
+    state.activeTimer === setter
+  );
+
+  applyTimer(
+    guesserEl,
+    state.timeRemaining[guesser],
+    state.activeTimer === guesser
+  );
 }
+
 
 // -----------------------------------------------------
 // Pattern Renderer for Pretty Styling (Reveal Green, etc.)
