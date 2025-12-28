@@ -201,7 +201,6 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     state.powerUsedThisTurn = false;
     powerEngine.turnStart(state, state.turn, roomId, io);
     state.activeTimer = state.setter;
-    startTimer(roomId, state, io);    
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
@@ -263,8 +262,6 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       state.powerUsedThisTurn = false;  
       powerEngine.turnStart(state, state.guesser, roomId, io);
       state.activeTimer = state.guesser;
-      startTimer(roomId, state, io);
-
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
@@ -319,8 +316,6 @@ if (state.powers.forcedGreens) {
       state.powerUsedThisTurn = false;
       powerEngine.turnStart(state, state.guesser, roomId, io);
       state.activeTimer = state.guesser;
-      startTimer(roomId, state, io);
-
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
