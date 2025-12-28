@@ -1753,8 +1753,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   opacity: 0.9;
 }
 .power-btn-wrapper {
-  display: inline-block;
-  position: relative;
    gap: 0 !important;
    margin:0;
 }
