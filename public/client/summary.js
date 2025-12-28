@@ -1,19 +1,139 @@
 // client/summary.js
-// Global summary renderer (NO modules)
 
+///SUMMARY SCREEN ROUTER
 window.updateSummary = function updateSummary() {
   const container = $("roundSummary");
-
-  if (  !state || (state.phase !== "roundSummary" && state.phase !== "gameOver")) {
+  if (  !state || state.phase !== "gameOver") {
     container.innerHTML = "";
     return;
   }
+  if (state.gameOverView === "round") {
+    renderRoundSummary(container);
+    return;
+  }
+  if (state.gameOverView === "match") {
+    renderMatchSummary(container);
+    return;
+  }
+  return;
+}
 
-  // Clear drafts once summary is shown
-  if (state.gameOver || state.turn !== state.guesser || state.pendingGuess) {
-    localGuesserDraft = "";
+///MATCH SUMMARY
+
+function renderMatchSummary(container) {
+  const rounds = state.matchRounds || [];
+  const names = state.playerNames || { A: "A", B: "B" };
+
+  // ----------------------------
+  // Compute points + time
+  // ----------------------------
+  const points = { A: 0, B: 0 };
+  const time = { A: 0, B: 0 };
+
+  rounds.forEach(r => {
+    points[r.setter] += r.guessCount;
+
+    time.A += r.time?.A || 0;
+    time.B += r.time?.B || 0;
+  });
+
+  let winner;
+  let winReason = "points";
+
+  if (points.A > points.B) winner = "A";
+  else if (points.B > points.A) winner = "B";
+  else {
+    winner = time.A <= time.B ? "A" : "B";
+    winReason = "time";
   }
 
+  // ----------------------------
+  // Header
+  // ----------------------------
+  let html = `
+    <div class="match-header">
+      <h2>🏆 Winner: ${names[winner]}</h2>
+      <h3>Score: ${points.A} – ${points.B}</h3>
+      ${
+        winReason === "time"
+          ? `<p class="tie-breaker">
+               Tie on points. Winner by lower total time.
+             </p>`
+          : ""
+      }
+    </div>
+  `;
+
+  // ----------------------------
+  //COMPETITIVE  Match summary table
+  // ----------------------------
+  html += `
+    <table class="match-summary-table">
+      <tr>
+        <th>Round</th>
+        <th>Setter</th>
+        <th>Guesser</th>
+        <th>Guesses</th>
+        <th>Time (Setter)</th>
+        <th>Time (Guesser)</th>
+      </tr>
+  `;
+
+  rounds.forEach((r, i) => {
+    html += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${names[r.setter]}</td>
+        <td>${names[r.guesser]}</td>
+        <td>${r.guessCount}</td>
+        <td>${r.time?.[r.setter] || 0}</td>
+        <td>${r.time?.[r.guesser] || 0}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      <tr class="total-row">
+        <td><b>Total</b></td>
+        <td colspan="2"></td>
+        <td></td>
+        <td><b>${time.A} (A)</b></td>
+        <td><b>${time.B} (B)</b></td>
+      </tr>
+    </table>
+  `;
+
+  // ----------------------------
+  // Toggle round details
+  // ----------------------------
+  html += `
+    <div class="round-details-toggle">
+      <button id="toggleRoundsBtn" class="secondary-btn">
+        Show Round Details
+      </button>
+    </div>
+
+    <div id="roundDetails" hidden>
+      ${rounds.map((r, i) => renderStoredRoundSummary(r, i)).join("")}
+    </div>
+  `;
+
+  container.innerHTML = html;
+
+  // Toggle logic
+  $("toggleRoundsBtn").onclick = () => {
+    const details = $("roundDetails");
+    const btn = $("toggleRoundsBtn");
+    const open = details.hasAttribute("hidden");
+
+    details.toggleAttribute("hidden");
+    btn.textContent = open ? "Hide Round Details" : "Show Round Details";
+  };
+}
+
+
+///COMPETITIVE  ROUND SUMMARY
+function renderRoundSummary(container) {
   let html = `<h3>Round Summary</h3>`;
 
   const setterName =
@@ -131,3 +251,35 @@ window.updateSummary = function updateSummary() {
     };
   }
 };
+
+/// STORED ROUND DETAILS
+function renderStoredRoundSummary(round, index) {
+  const names = state.playerNames || { A: "A", B: "B" };
+
+  let html = `
+    <div class="stored-round">
+      <h4>Round ${index + 1} – ${names[round.setter]} was Setter</h4>
+      <table class="summary-table">
+        <tr>
+          <th>#</th>
+          <th>Secret</th>
+          <th>Guess</th>
+          <th>Feedback</th>
+        </tr>
+  `;
+
+  round.history.forEach((h, i) => {
+    html += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${h.finalSecret?.toUpperCase() || "???"}</td>
+        <td>${h.guess?.toUpperCase() || ""}</td>
+        <td>${Array.isArray(h.fb) ? h.fb.join("") : ""}</td>
+      </tr>
+    `;
+  });
+
+  html += `</table></div>`;
+  return html;
+}
+
