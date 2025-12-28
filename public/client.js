@@ -10,7 +10,6 @@ let roleAssigned = false;
 let lastSimulSecret = false;
 let lastSimulGuess = false;
 window.state = null;
-
 // -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
@@ -396,7 +395,7 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
   updateMenu();
   updateScreens();
   updateTurnIndicators();
-  updateSummary(state, {$,computeRemainingAfterIndex});
+  updateSummary();
   updateRemainingWords();
   if (state.phase !== "lobby") hide("lobby");
 }
@@ -762,6 +761,124 @@ if (state.powers?.forcedGuess && myRole === state.guesser) {
     onInput: handleGuesserInput
   });
 }  
+}
+
+// -----------------------------------------------------
+// SUMMARY
+// -----------------------------------------------------
+function updateSummary() {
+  const container = $("roundSummary");
+  if (!state.gameOver) {
+    container.innerHTML = "";
+    return;
+  }
+
+  // Clear drafts once summary is shown
+  if (state.gameOver || state.turn !== state.guesser || state.pendingGuess) {
+    localGuesserDraft = "";
+  }
+
+  let html = `<h3>Round Summary</h3>`;
+    const setterName =
+      state.playerNames?.[state.setter] || "Setter";
+    const guesserName =
+      state.playerNames?.[state.guesser] || "Guesser";
+    
+    html += `
+      <p class="summary-players">
+        <b>${setterName}</b> (Setter) vs <b>${guesserName}</b> (Guesser)
+      </p>
+    `;
+
+  // Assassin kill notice
+  const lastEntry = state.history[state.history.length - 1];
+  if (state.pendingGuess === state.powers.assassinword ) {
+     const guesserName =
+    state.playerNames?.[state.guesser] || "The guesser";
+  html += `
+    <p class="assassin-summary">
+      ☠ ${guesserName} guessed the assassin word 
+      "${lastEntry.guess.toUpperCase()}" and was assassinated!
+    </p>
+  `;
+}
+
+  html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
+
+  html += `
+    <table class="summary-table">
+      <tr>
+        <th>#</th>
+        <th>Secret</th>
+        <th>Guess</th>
+        <th>Feedback</th>
+        <th>Powers Used</th>
+        <th>Remaining</th>
+      </tr>
+  `;
+
+  for (let i = 0; i < state.history.length; i++) {
+    const h = state.history[i];
+
+    const secretCell =
+      h.finalSecret ? h.finalSecret.toUpperCase() : "???";
+
+    const guessCell =
+      h.guess ? h.guess.toUpperCase() : "";
+
+    const fbCell =
+      Array.isArray(h.fb) ? h.fb.join("") : "";
+
+    const guesserPowers = h.powersGuesser || [];
+    const setterPowers  = h.powersSetter  || [];
+    
+    let powersCell = "";
+    
+    if (guesserPowers.length || setterPowers.length) {
+      powersCell += `<div class="summary-powers">`;
+    
+      if (guesserPowers.length) {
+        powersCell += `
+          <div class="summary-powers-guesser">
+            <b>Guesser:</b> ${guesserPowers.join(", ")}
+          </div>
+        `;
+      }
+    
+      if (setterPowers.length) {
+        powersCell += `
+          <div class="summary-powers-setter">
+            <b>Setter:</b> ${setterPowers.join(", ")}
+          </div>
+        `;
+      }
+    
+      powersCell += `</div>`;
+    } else {
+      powersCell = "—";
+    }
+
+    
+    // Remaining words from GUESSER perspective
+    const remaining =
+      i === state.history.length - 1
+        ? 0
+        : computeRemainingAfterIndex(i);
+      
+    html += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${secretCell}</td>
+        <td>${guessCell}</td>
+        <td>${fbCell}</td>
+        <td>${powersCell}</td>
+        <td>${remaining}</td>
+      </tr>
+    `;
+  }
+
+  html += `</table>`;
+  container.innerHTML = html;
 }
 
 // -----------------------------------------------------
