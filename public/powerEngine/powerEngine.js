@@ -10,63 +10,39 @@
 window.PowerEngine = {
   powers: {},
   _initialized: false,
+  _buttonsRendered: false,
 
-  // -------------------------------------------------------------
-  // Centralized power button wrapper + tooltip binding
-  // -------------------------------------------------------------
-  wrapButton(id, btn) {
+  register(id, mod) {
+    this.powers[id] = mod;
+  },
+createPowerButton(id, label) {
     const wrapper = document.createElement("div");
     wrapper.className = "power-btn-wrapper";
 
-    wrapper.appendChild(btn);
-
-    const mod = this.powers[id];
-    const meta = mod.tooltip;
-
+    const btn = document.createElement("button");
+    btn.className = "power-btn";
+    btn.textContent = label;
+    const meta = this.powers[id]?.tooltip;
     if (meta) {
       wrapper.addEventListener("mouseenter", () => {
         showTooltip(wrapper, meta);
       });
-
       wrapper.addEventListener("mouseleave", hideTooltip);
-
-      wrapper.addEventListener("focusin", () => {
-        showTooltip(wrapper, meta);
-      });
-
-      wrapper.addEventListener("focusout", hideTooltip);
     }
 
-    return wrapper;
-  },
-  
-  register(id, mod) {
-    this.powers[id] = mod;
+    wrapper.appendChild(btn);
+    return { wrapper, btn };
   },
 
+  
   // Render all power buttons once
   renderButtons(roomId) {
     if (this._buttonsRendered) return;
     this._buttonsRendered = true;
     for (const id in this.powers) {
       const mod = this.powers[id];
-      if (!mod.renderButton) continue;
+       if (mod.renderButton) {
       mod.renderButton(roomId);
-      if (mod.buttonEl) {
-        const btn = mod.buttonEl;
-        const parent = btn.parentNode;
-        if (!parent) return;
-
-       const wrapper = this.wrapButton(id, btn);
-
-        // Insert wrapper where button currently is
-        parent.insertBefore(wrapper, btn);
-
-        // Move button into wrapper (wrapButton already appends it)
-        // Then remove original button node position
-        if (btn.parentNode === parent) {
-          parent.removeChild(btn);
-        }
       }
     }
   },
