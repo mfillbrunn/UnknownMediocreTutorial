@@ -20,6 +20,10 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     state.currentSecret = w;              // ⭐ Required for correct scoring
     state.firstSecretSet = true;
     state.simultaneousSecretSubmitted = true;
+    if (state.activeTimer === "both") {
+        state.activeTimer = state.guesser;   
+    }
+    addIncrement(state, role);
   }
 
   // ---------------------------------------------
@@ -33,6 +37,10 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
 
     state.pendingGuess = g;
     state.simultaneousGuessSubmitted = true;
+    if (state.activeTimer === "both") {
+        state.activeTimer = state.setter;   
+    }
+    addIncrement(state, role);
   }
 
   // ---------------------------------------------
