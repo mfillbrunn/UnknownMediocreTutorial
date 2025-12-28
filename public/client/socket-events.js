@@ -103,10 +103,11 @@ socket.on("forceGuessOptions", ({ options }) => {
 socket.on("timerTick", ({ timeRemaining }) => {
   if (!window.state) return;
 
-  // Update local state with authoritative server values
+  // Update authoritative values
   window.state.timeRemaining = timeRemaining;
 
-  // Re-render UI (lightweight, already optimized)
-  updateUI();
+  // Re-render ONLY the clocks
+  renderChessClocks();
 });
+
 
