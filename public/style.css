@@ -232,11 +232,7 @@ body {
 .secondary-btn:hover { background: var(--btn-secondary-hover); }
 
 /* Power buttons (single authoritative definition) */
-.power-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 10px;
-}
+
 
 .power-btn {
   background: transparent !important;
@@ -1753,9 +1749,10 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   opacity: 0.9;
 }
 .power-container {
-  gap: 2px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
 }
-
 .power-btn-wrapper {
   margin: 0;
   display: inline-block;
