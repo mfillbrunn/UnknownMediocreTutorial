@@ -4,6 +4,7 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { createInitialState } = require("../stateFactory");
 const resetRoundState = require("../../utils/resetRoundState");
+const resetRoundTimer = require("../../utils/chessTimer");
 
 function handleGameOverPhase(room, state, action, role, roomId, context) {
   const io = context.io;
@@ -34,7 +35,7 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     state.canNextRound = false;
     state.phase = res.phase || "simultaneous";
     state.turn = null;
-
+    resetRoundTimer(state);
     emitLobbyEvent(io, roomId, { type: "hideLobby" });
     emitStateForAllPlayers(roomId, room, io);
     return;
