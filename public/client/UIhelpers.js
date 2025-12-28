@@ -15,15 +15,17 @@ function showTooltip(target, { title, desc }) {
   tooltip.style.transform = "translate(-50%, -100%)";
 
   tooltip.hidden = false;
-  requestAnimationFrame(() => tooltip.classList.add("show"));
+  requestAnimationFrame(() => { tooltip.classList.add("show");});
 }
 
 function hideTooltip() {
   const tooltip = document.getElementById("tooltip");
   if (!tooltip) return;
-
+  if (!title && !desc) return;
   tooltip.classList.remove("show");
-  tooltip.hidden = true;
+   setTimeout(() => {
+    tooltip.hidden = true;
+  }, 150);
 }
 
 
