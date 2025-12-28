@@ -3,7 +3,7 @@ PowerEngine.register("revealGreen", {
   role: "guesser",
   tooltip: {
   title: this.label,
-  desc: "One letter in the current secret is revealed - but the setter can still change it."
+  desc: "Reveal one letter from the current secret. Beware - the setter can still change it."
   }
 
 
