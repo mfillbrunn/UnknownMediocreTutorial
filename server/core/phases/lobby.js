@@ -137,6 +137,11 @@ if (state.activePowers.includes("revealLetter")) {
       state.turn = null;
       state.simultaneousGuessSubmitted = false;
       state.simultaneousSecretSubmitted = false;
+        state.timeRemaining.A = state.timeControl.initialSeconds;
+        state.timeRemaining.B = state.timeControl.initialSeconds;
+        state.timeExpired = null;
+        state.timeoutLoser = null;
+
         state.activeTimer = "both";
       emitLobbyEvent(io, roomId, { type: "hideLobby" });            
       emitStateForAllPlayers(roomId, room, io);
