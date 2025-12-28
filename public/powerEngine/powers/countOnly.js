@@ -3,7 +3,7 @@ PowerEngine.register("countOnly", {
   role: "setter",
   tooltip: {
   title: this.label, 
-  desc: "Shows only the total number of greens and yellows, not their positions."
+  desc: "Shows only the total number of greens and yellows this round, not their positions."
 },
 
 
