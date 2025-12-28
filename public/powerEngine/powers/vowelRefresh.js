@@ -1,6 +1,10 @@
 // /powers/powers/vowelRefresh.js
 PowerEngine.register("vowelRefresh", {
   role: "setter",
+  tooltip: {
+  title: this.label,
+  desc: "Resets all vowels used in the last round if they were unused before."
+},
 
   renderButton(roomId) {
     const btn = document.createElement("button");
