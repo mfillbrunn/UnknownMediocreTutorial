@@ -18,6 +18,19 @@ function createInitialState() {
     B: 0
     },
 
+    ///TIMER
+    timeControl: {
+    initialSeconds: 300,  // default 5 min
+    incrementSeconds: 10
+  },
+  
+  timeRemaining: {
+    A: 300,
+    B: 300
+  },
+  
+  timeExpired: null, // "A" | "B" | null
+  activeTimer: null, // "A" | "B" | "both" | null
 
     
     turn: null,
