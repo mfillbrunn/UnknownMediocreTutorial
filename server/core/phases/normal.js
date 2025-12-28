@@ -199,6 +199,9 @@ if (state.powers.forcedGuess) {
     }
     state.powerUsedThisTurn = false;
     powerEngine.turnStart(state, state.turn, roomId, io);
+    state.activeTimer = state.setter;
+    startTimer(roomId, state, io);
+
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
@@ -257,8 +260,10 @@ if (state.powers.forcedGuess) {
       finalizeFeedback(state, powerEngine, roomId, io);
       state.turn = state.guesser;
       state.powerUsedThisTurn = false;  
-
       powerEngine.turnStart(state, state.guesser, roomId, io);
+      state.activeTimer = state.guesser;
+      startTimer(roomId, state, io);
+
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
@@ -308,10 +313,12 @@ if (state.powers.forcedGreens) {
       state.firstSecretSet = true;
       clearForceTimer(roomId, state);
       finalizeFeedback(state, powerEngine, roomId, io);
-      state.turn = state.guesser;
-  
-      powerEngine.turnStart(state, state.guesser, roomId, io);
+      state.turn = state.guesser;  
       state.powerUsedThisTurn = false;
+      powerEngine.turnStart(state, state.guesser, roomId, io);
+      state.activeTimer = state.guesser;
+      startTimer(roomId, state, io);
+
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
