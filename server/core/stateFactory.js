@@ -13,6 +13,12 @@ function createInitialState() {
     gameOverView: "match",
     canNextRound: false,
     matchRounds: [],
+    timeUsed: {
+    A: 0,
+    B: 0
+    },
+
+
     
     turn: null,
     setter: "A",
