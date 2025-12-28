@@ -9,7 +9,7 @@ tooltip: {
   renderButton(roomId) {
      const { wrapper, btn } =    PowerEngine.createPowerButton("magicMode", "Magic Mode");
     this.buttonEl = btn;
-    $("setterPowerContainer").appendChild(wrapper);
+        $("guesserPowerContainer").appendChild(wrapper)
 
     btn.onclick = () => {
       sendGameAction(roomId, { type: "USE_MAGIC_MODE" });
