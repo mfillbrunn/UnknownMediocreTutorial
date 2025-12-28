@@ -2,8 +2,8 @@ PowerEngine.register("countOnly", {
 
   role: "setter",
   tooltip: {
-  title: "Count Only",
-  desc: "The total number of greens and yellows will be shown, not their positions."
+  title: this.label, 
+  desc: "Shows only the total number of greens and yellows, not their positions."
 },
 
 
