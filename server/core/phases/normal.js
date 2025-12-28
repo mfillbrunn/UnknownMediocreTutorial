@@ -71,43 +71,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
    emitStateForAllPlayers(roomId, room, io);
    return;
  }
-  ///
-  /// NEW MATCH
-  ///
-  if (action.type === "NEW_MATCH") {
-    clearForceTimer(roomId, state); // IMPORTANT
-    const createInitialState = require("../stateFactory").createInitialState;
-    const newState = createInitialState();
-    Object.assign(state, newState);
-    state.setter = "A";
-    state.guesser = "B";
-    state.ready = { A: false, B: false };
-    state.phase = "lobby";
-    delete state.powers.blindGuessUsed;
-    delete state.powers.blindGuessArmed;
-    delete state.powers.blindGuessActive;
-    delete state.powers.forceGuessUsed;
-    delete state.powers.forcedGuess;
-    delete state.powers.forcedGuessOptions;
-    emitLobbyEvent(io, roomId, { type: "showLobby" });
-    emitStateForAllPlayers(roomId, room, io);
-    return;
-  }
-  ///
-  /// NEXT ROUND
-  ///
- if (action.type === "NEXT_ROUND") {
-   const res = state.mode?.onNextRound(state);
-   if (!res) return;
-   if (res.resetRound) {
-     resetRoundState(state);
-   }
-   state.gameOver = false;
-   state.phase = res.phase;
-   emitStateForAllPlayers(roomId, room, io);
-   return;
- }
-  
+
  if (action.type === "CONFIRM_FORCE_GUESS" && role === state.setter) {
   const opts = state.powers.forcedGuessOptions;
   if (!opts) return;
