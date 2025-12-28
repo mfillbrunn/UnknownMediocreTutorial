@@ -40,46 +40,57 @@ document.addEventListener("DOMContentLoaded", () => {
     $("playerNameInput").value = saved;
   }
 });
+let lastTimeRemaining = { A: null, B: null };
+
 function renderChessClocks() {
-  if (!window.state || !state.timeRemaining) return;
+  if (!state || !state.timeRemaining) return;
 
   const setter = state.setter;
   const guesser = state.guesser;
 
-  const setterEl = $("timerSetter");
-  const guesserEl = $("timerGuesser");
+  applyTimer("timerSetter", setter);
+  applyTimer("timerGuesser", guesser);
+}
 
-  function applyTimer(el, seconds, isActive) {
-    if (!el) return;
+function applyTimer(elementId, role) {
+  const el = $(elementId);
+  if (!el) return;
 
-    el.textContent = formatTime(seconds);
+  const seconds = state.timeRemaining[role];
+  el.textContent = formatTime(seconds);
 
-    // Active highlight
-    el.classList.toggle("active", isActive);
+  // Active highlight
+  el.classList.toggle("active", state.activeTimer === role);
 
-    // Clear warnings
-    el.classList.remove("warn-30", "warn-10");
+  // Warnings
+  el.classList.remove("warn-30", "warn-10");
+  if (seconds <= 10) el.classList.add("warn-10");
+  else if (seconds <= 30) el.classList.add("warn-30");
 
-    // Apply warnings
-    if (seconds <= 10) {
-      el.classList.add("warn-10");
-    } else if (seconds <= 30) {
-      el.classList.add("warn-30");
-    }
+  // Increment detection
+  const prev = lastTimeRemaining[role];
+  if (prev !== null && seconds > prev) {
+    triggerIncrementEffect(el, seconds - prev);
   }
 
-  applyTimer(
-    setterEl,
-    state.timeRemaining[setter],
-    state.activeTimer === setter
-  );
-
-  applyTimer(
-    guesserEl,
-    state.timeRemaining[guesser],
-    state.activeTimer === guesser
-  );
+  lastTimeRemaining[role] = seconds;
 }
+function triggerIncrementEffect(el, delta) {
+  // Flash the timer
+  el.classList.add("increment");
+  setTimeout(() => el.classList.remove("increment"), 400);
+
+  // Floating +Xs
+  const badge = document.createElement("div");
+  badge.className = "timer-increment-badge";
+  badge.textContent = `+${delta}s`;
+
+  el.parentElement.style.position = "relative";
+  el.parentElement.appendChild(badge);
+
+  setTimeout(() => badge.remove(), 800);
+}
+
 
 
 // -----------------------------------------------------
