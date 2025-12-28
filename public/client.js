@@ -11,6 +11,7 @@ let lastSimulSecret = false;
 let lastSimulGuess = false;
 window.state = null;
 import { updateSummary } from "./ui/summary.js";
+import "./socket-events.js";
 // -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
