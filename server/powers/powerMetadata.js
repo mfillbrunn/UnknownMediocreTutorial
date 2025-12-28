@@ -1,13 +1,13 @@
 // server/powerMetadata.js
 module.exports = {
-  blueMode: { label: "Blue Mode" },
+  confuseColors: { label: "Blue Mode" },
   countOnly: { label: "Count Only" },
   forceGuess: { label: "Force Guess" },
   forceTimer: { label: "Force Timer" },
   freezeSecret: { label: "Freeze Secret" },
   hideTile: { label: "Hide Tile" },
   magicMode: { label: "Magic Mode" },
-  sneakLetter: { label: "Sneak Letter" },
+  revealGreen: { label: "Sneak Letter" },
   revealHistory: { label: "Reveal History" },
   revealLetter: {
     label: "Reveal Letter",
