@@ -1,6 +1,9 @@
 PowerEngine.register("suggestGuess", {
   role: "guesser",
-
+tooltip: {
+  title: this.label,
+  desc: "Suggest a valid secret consistent with all feedback."
+},
   renderButton(roomId) {
     const btn = document.createElement("button");
     btn.id = "power_suggestGuess";
