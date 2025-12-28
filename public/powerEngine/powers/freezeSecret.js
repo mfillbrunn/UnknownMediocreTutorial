@@ -6,13 +6,10 @@ tooltip: {
     desc: window.POWER_METADATA.freezeSecret.desc
   },
   renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.id = "power_freezeSecret";
-    btn.className = "power-btn";
-    btn.textContent = "Freeze Secret";
-
-    $("guesserPowerContainer").appendChild(btn);
+     const { wrapper, btn } =    PowerEngine.createPowerButton("freezeSecret", "Freeze Secret");
     this.buttonEl = btn;
+    $("setterPowerContainer").appendChild(wrapper);
+
 
     btn.onclick = () => {
       sendGameAction(roomId, { type: "USE_FREEZE_SECRET" });
