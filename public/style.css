@@ -1781,7 +1781,30 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   font-weight: 800;
   letter-spacing: 0.5px;
   color: var(--role-accent);
+   transition: color 0.2s ease, text-shadow 0.2s ease;
 }
+}
+
+
+/* 30s warning */
+.chess-timer.warn-30 {
+  color: #ffb347; /* amber */
+  text-shadow: 0 0 6px rgba(255, 179, 71, 0.6);
+}
+
+/* 10s critical */
+.chess-timer.warn-10 {
+  color: #ff4b4b; /* red */
+  text-shadow: 0 0 10px rgba(255, 75, 75, 0.9);
+  animation: pulse-critical 0.9s infinite;
+}
+
+@keyframes pulse-critical {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
 
 .remaining-label {
   font-size: 11px;
