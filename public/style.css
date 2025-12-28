@@ -1755,9 +1755,10 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 }
 .power-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, max-content));
+  grid-template-columns: repeat(auto-fit, 120px);
   gap: 10px;
   justify-content: start;
+   max-width: 260px;
 }
 .power-btn-wrapper {
   margin: 0;
