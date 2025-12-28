@@ -3,6 +3,8 @@
 const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const CompetitiveMode = require("../modes/competitiveMode");
+const { startTimer } = require("../../utils/chessTimer");
+const { endGame } = require("./normal");
 
 const SETTER_POWERS = [
         "hideTile",
@@ -136,8 +138,11 @@ if (state.activePowers.includes("revealLetter")) {
       state.simultaneousGuessSubmitted = false;
       state.simultaneousSecretSubmitted = false;
         state.activeTimer = "both";
-        startTimer(roomId, state, io);
-
+        startTimer(roomId, state, io, timedOutRole => {
+          state.timeExpired = timedOutRole;
+          state.timeoutLoser = timedOutRole;
+          endGame(state, roomId, io, room);
+        });
 
       emitLobbyEvent(io, roomId, { type: "hideLobby" });
             
