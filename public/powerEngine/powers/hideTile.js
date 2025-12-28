@@ -3,7 +3,7 @@ PowerEngine.register("hideTile", {
   role: "setter",
   tooltip: {
   title: this.label,
-  desc: "Hide the feedback on one random tile next round."
+  desc: "Hides the feedback on one random tile for one round."
 },
 
   renderButton(roomId) {
