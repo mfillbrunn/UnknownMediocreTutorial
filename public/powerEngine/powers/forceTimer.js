@@ -2,7 +2,7 @@ PowerEngine.register("forceTimer", {
   role: "guesser",
   tooltip: {
   title: this.label,
-  desc: "The setter will only have a short time to come up with a new secret."
+  desc: "The setter has only a short time to submit a new secret."
 },
 
   renderButton(roomId) {
