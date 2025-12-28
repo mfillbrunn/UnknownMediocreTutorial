@@ -964,9 +964,7 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   display: flex;
   flex-direction: column;
   gap: 0;
-  min-width: 0;
-  width: max-content;
-}
+  }
 .powers-col > .keep-btn {
   position: fixed;   /* removes it from grid sizing entirely */
 }
@@ -1755,10 +1753,8 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 }
 .power-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, max-content));
-  gap: 10px;
+    gap: 10px;
   justify-content: start;
-   max-width: 260px;
 }
 .power-btn-wrapper {
   margin: 0;
