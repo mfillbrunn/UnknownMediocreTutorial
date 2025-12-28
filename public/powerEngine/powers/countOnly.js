@@ -8,16 +8,10 @@ tooltip: {
 
 
   renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.id = "power_countOnly";
-    btn.className = "power-btn";
-    btn.textContent = "Count Only";
-
-    // Add to the Setter's UI container
-    $("setterPowerContainer").appendChild(btn);
-
-    // ⭐ REQUIRED for PowerEngine disabling + used logic
+ const { wrapper, btn } =    PowerEngine.createPowerButton("countOnly", "Count Only");
     this.buttonEl = btn;
+    $("setterPowerContainer").appendChild(wrapper);
+
 
     btn.onclick = () =>
       sendGameAction(roomId, { type: "USE_COUNT_ONLY" });
