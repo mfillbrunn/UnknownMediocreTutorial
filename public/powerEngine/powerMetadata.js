@@ -79,7 +79,10 @@ window.POWER_METADATA = {
     label: "Vowel Refresh",
     desc: "Resets all vowels used in the last round if they were unused before."
   },
-
+  blindSpot: {
+    label: "Blind Spot",
+    desc: "Hides feedback for one tile for the rest of the round."
+  },
   assassinWord: {
     label: "Assassin Word",
     desc: "Choose a word that instantly ends the game if guessed."
