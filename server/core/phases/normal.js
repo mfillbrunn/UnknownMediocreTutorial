@@ -3,6 +3,7 @@ const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { isValidWord } = require("../../game-engine/validation");
 const { isConsistentWithHistory } = require("../../game-engine/history");
+const resetRoundState = require("../utils/resetRoundState");
 const FORCE_TIMER_INTERVALS = {};
 
 function startForceTimer(roomId, room, state, io, context) {
@@ -257,6 +258,21 @@ if (state.powers.forcedGuess) {
         io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
         return;
       }
+
+ if (action.type === "NEXT_ROUND") {
+   const res = state.mode?.onNextRound(state);
+   if (!res) return;
+
+   if (res.resetRound) {
+     resetRoundState(state);
+   }
+
+   state.gameOver = false;
+   state.phase = res.phase;
+
+   emitStateForAllPlayers(roomId, room, io);
+   return;
+ }
       
 // Force setter to obey revealed green
 if (state.powers.forcedGreens) {
@@ -368,12 +384,19 @@ function pushWinEntry(state, word) {
 }
 
 function endGame(state, roomId, io, room) {
-  state.phase = "gameOver";
-  state.turn = null;
-  state.gameOver = true;
   io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
-  emitStateForAllPlayers(roomId, room, io);
-  emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
+  emitStateForAllPlayers(roomId, room, io)
+   state.turn = null;
+   state.gameOver = true;
+  
+   const res = state.mode?.onRoundEnd(state);
+   state.phase = res?.nextPhase || "gameOver";
+  
+   if (state.phase === "gameOver") {
+     emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
+   } else {
+     emitLobbyEvent(io, roomId, { type: "roundOver" });
+   }
 }
 
 module.exports = {
