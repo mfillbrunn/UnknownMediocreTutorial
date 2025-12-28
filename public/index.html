@@ -88,15 +88,23 @@
             </span>
         </div>
       
-        <div class="setter-remaining">
-          <span id="remainingWordsSetter">-</span> remaining
-        <button
-              id="toggleConstraintsBtn"
-              class="constraint-toggle-btn"
-              title="Toggle constraints"
-            >
-              ⧉
-            </button></div>
+       <div class="setter-remaining">
+          <div class="timer-block">
+            <span id="timerSetter" class="chess-timer">5:00</span>
+            <span class="remaining-label">
+              <span id="remainingWordsSetter">-</span> remaining
+            </span>
+          </div>
+        
+          <button
+            id="toggleConstraintsBtn"
+            class="constraint-toggle-btn"
+            title="Toggle constraints"
+          >
+            ⧉
+          </button>
+        </div>
+
       </div>
 
      <!-- HISTORY TOP -->    
@@ -197,14 +205,18 @@
       </div>
     
       <div class="guesser-remaining">
-        <span id="remainingWordsGuesser" hidden></span>
-      <button
-  class="constraint-toggle-btn"
-  title="Toggle constraints"
->
-  ⧉
-</button>
-</div>
+        <div class="timer-block">
+          <span id="timerGuesser" class="chess-timer">5:00</span>
+        </div>
+      
+        <button
+          class="constraint-toggle-btn"
+          title="Toggle constraints"
+        >
+          ⧉
+        </button>
+      </div>
+
     </div>
 
       <!-- HISTORY TOP -->
