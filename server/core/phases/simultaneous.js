@@ -1,5 +1,6 @@
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { scoreGuess } = require("../../game-engine/scoring");
+const { endGame } = require("./normal");
 
 function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const io = context.io;
@@ -76,14 +77,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     });
 
     state.pendingGuess = "";
-    state.gameOver = true;
-    state.phase = "gameOver";
-
-    io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
-    emitStateForAllPlayers(roomId, room, io);
-    require("../../utils/emitLobby").emitLobbyEvent(io, roomId, {
-      type: "gameOverShowMenu"
-    });
+    endGame(state, roomId, io, room);
     return;
   }
 
