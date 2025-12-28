@@ -13,7 +13,9 @@ tooltip: {
     this.buttonEl = btn;
 
     $("setterPowerContainer").appendChild(btn);
-
+    btn.addEventListener("mouseenter", () => {
+      console.log("hovering reveal letter");
+    });
     btn.onclick = () => {
       if (btn.disabled) return;
       sendGameAction(roomId, { type: "USE_BLIND_SPOT" });
