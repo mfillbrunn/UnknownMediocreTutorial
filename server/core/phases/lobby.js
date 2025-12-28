@@ -3,7 +3,7 @@
 const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const CompetitiveMode = require("../modes/competitiveMode");
-const { startTimer } = require("../../utils/chessTimer");
+const { startTimer,resetRoundTimer } = require("../../utils/chessTimer");
 const { endGame } = require("./normal");
 
 const SETTER_POWERS = [
@@ -137,10 +137,7 @@ if (state.activePowers.includes("revealLetter")) {
       state.turn = null;
       state.simultaneousGuessSubmitted = false;
       state.simultaneousSecretSubmitted = false;
-        state.timeRemaining.A = state.timeControl.initialSeconds;
-        state.timeRemaining.B = state.timeControl.initialSeconds;
-        state.timeExpired = null;
-        state.timeoutLoser = null;
+        resetRoundTimer(state);
 
         state.activeTimer = "both";
       emitLobbyEvent(io, roomId, { type: "hideLobby" });            
