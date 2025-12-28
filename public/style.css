@@ -1708,4 +1708,48 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   color: var(--role-accent);
 }
 
+/* ===============================
+   TOOLTIP
+   =============================== */
+
+.tooltip {
+  position: fixed;
+  z-index: 100000;
+
+  max-width: 260px;
+  padding: 10px 14px;
+
+  background: rgba(20, 20, 22, 0.95);
+  color: #fff;
+
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+
+  font-size: 13px;
+  line-height: 1.35;
+
+  box-shadow:
+    0 0 14px rgba(0,0,0,.6),
+    inset 0 0 6px rgba(255,255,255,.05);
+
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .15s ease, transform .15s ease;
+}
+
+.tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tooltip-title {
+  font-weight: 900;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.tooltip-desc {
+  opacity: 0.9;
+}
 
