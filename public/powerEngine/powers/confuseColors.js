@@ -7,14 +7,9 @@ tooltip: {
   },
 
   renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.id = "power_confuseColors";
-    btn.className = "power-btn";
-    btn.textContent = "Blue Mode";
-
-    $("setterPowerContainer").appendChild(btn);
-
+  const { wrapper, btn } =    PowerEngine.createPowerButton("confuseColors", "Blue Mode");
     this.buttonEl = btn;
+    $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
       sendGameAction(roomId, { type: "USE_CONFUSE_COLORS" });
