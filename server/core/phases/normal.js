@@ -84,14 +84,6 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
-if (state.timeExpired) {
-  // End game immediately
-  state.timeExpired = timedOutRole;
-  
-  endGame(state, roomId, io, room);
-  return;
-}
-
   /// GUESSER POWERs
   if (!state.pendingGuess && action.type.startsWith("USE_") && role === state.guesser) {
 
