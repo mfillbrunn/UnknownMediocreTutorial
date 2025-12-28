@@ -7,14 +7,10 @@ tooltip: {
   },
 
   renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.id = "power_hideTile";
-    btn.className = "power-btn";
-    btn.textContent = "Hide Tile";
-
-    // Goes into the Setter’s power container
-    $("setterPowerContainer").appendChild(btn);
+     const { wrapper, btn } =    PowerEngine.createPowerButton("hideTile", "Hide Tile");
     this.buttonEl = btn;
+    $("setterPowerContainer").appendChild(wrapper);
+
     btn.onclick = () =>
       sendGameAction(roomId, { type: "USE_HIDE_TILE" });
   },
