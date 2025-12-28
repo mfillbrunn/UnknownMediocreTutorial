@@ -3,7 +3,7 @@ PowerEngine.register("freezeSecret", {
   role: "guesser",
   tooltip: {
   title: this.label,
-  desc: "The setter won't be able to change secret next round."
+  desc: "Prevents the setter from changing the secret next round."
 },
 
   renderButton(roomId) {
