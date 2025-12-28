@@ -16,25 +16,42 @@ class CompetitiveMode extends BaseMode {
       guesser: guesserPowers
     };
 
+    // Round 1 powers
     state.activePowers = [...setterPowers, ...guesserPowers];
   }
 
+  /**
+   * Called when a round ends.
+   * Decides WHAT kind of gameOver we are in.
+   */
   onRoundEnd(state) {
+    // More rounds to play → round summary
     if (state.roundIndex < state.roundsTotal - 1) {
-      return { nextPhase: "roundSummary" };
+      return {
+        view: "round",
+        canNextRound: true
+      };
     }
 
+    // Final round → match summary
     state.matchOver = true;
-    return { nextPhase: "gameOver" };
+    return {
+      view: "match",
+      canNextRound: false
+    };
   }
 
+  /**
+   * Called when NEXT_ROUND is clicked during gameOver (round view).
+   * Performs role swap and prepares next round.
+   */
   onNextRound(state) {
     state.roundIndex += 1;
 
     // swap roles
     [state.setter, state.guesser] = [state.guesser, state.setter];
 
-    // swap powers
+    // swap powers (same powers, reversed roles)
     state.activePowers = [
       ...state.initialPowers.guesser,
       ...state.initialPowers.setter
