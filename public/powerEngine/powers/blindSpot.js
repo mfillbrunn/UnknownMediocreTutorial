@@ -1,5 +1,10 @@
 PowerEngine.register("blindSpot", {
   role: "setter",
+  tooltip: {
+  title: "Blind Spot",
+  desc: "Hides one position from the guesser for the rest of the game."
+},
+
 
   renderButton(roomId) {
     const btn = document.createElement("button");
