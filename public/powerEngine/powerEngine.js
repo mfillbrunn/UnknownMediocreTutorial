@@ -11,6 +11,35 @@ window.PowerEngine = {
   powers: {},
   _initialized: false,
 
+  // -------------------------------------------------------------
+  // Centralized power button wrapper + tooltip binding
+  // -------------------------------------------------------------
+  wrapButton(id, btn) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "power-btn-wrapper";
+
+    wrapper.appendChild(btn);
+
+    const mod = this.powers[id];
+    const meta = mod.tooltip;
+
+    if (meta) {
+      wrapper.addEventListener("mouseenter", () => {
+        showTooltip(wrapper, meta);
+      });
+
+      wrapper.addEventListener("mouseleave", hideTooltip);
+
+      wrapper.addEventListener("focusin", () => {
+        showTooltip(wrapper, meta);
+      });
+
+      wrapper.addEventListener("focusout", hideTooltip);
+    }
+
+    return wrapper;
+  },
+  
   register(id, mod) {
     this.powers[id] = mod;
   },
@@ -19,7 +48,12 @@ window.PowerEngine = {
   renderButtons(roomId) {
     for (const id in this.powers) {
       const mod = this.powers[id];
-      if (mod.renderButton) mod.renderButton(roomId);
+      if (!mod.renderButton) continue;
+      mod.renderButton(roomId);
+      if (mod.buttonEl) {
+        const wrapped = this.wrapButton(id, mod.buttonEl);
+        mod.buttonEl.replaceWith(wrapped);
+      }
     }
   },
 
