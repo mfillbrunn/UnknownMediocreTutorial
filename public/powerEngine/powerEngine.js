@@ -51,8 +51,20 @@ window.PowerEngine = {
       if (!mod.renderButton) continue;
       mod.renderButton(roomId);
       if (mod.buttonEl) {
-        const wrapped = this.wrapButton(id, mod.buttonEl);
-        mod.buttonEl.replaceWith(wrapped);
+        const btn = mod.buttonEl;
+        const parent = btn.parentNode;
+        if (!parent) return;
+
+       const wrapper = this.wrapButton(id, btn);
+
+        // Insert wrapper where button currently is
+        parent.insertBefore(wrapper, btn);
+
+        // Move button into wrapper (wrapButton already appends it)
+        // Then remove original button node position
+        if (btn.parentNode === parent) {
+          parent.removeChild(btn);
+        }
       }
     }
   },
