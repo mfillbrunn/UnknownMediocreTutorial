@@ -2,7 +2,7 @@ PowerEngine.register("revealHistory", {
   role: "guesser",
   tooltip: {
   title: this.label,
-  desc: "Reveal the secret from a few rounds ago."
+  desc: "Reveals a secret from several rounds ago."
 },
 
 
