@@ -86,6 +86,8 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
 }
 if (state.timeExpired) {
   // End game immediately
+  state.timeExpired = timedOutRole;
+  
   endGame(state, roomId, io, room);
   return;
 }
@@ -361,8 +363,12 @@ function endGame(state, roomId, io, room) {
     setter: state.setter,
     guesser: state.guesser,
     guessCount: state.guessCount,
+       time: {
+    A: state.timeRemaining.A,
+    B: state.timeRemaining.B,
+         timeoutLoser: state.timeoutLoser || null,
     history: JSON.parse(JSON.stringify(state.history)),
-    powers: JSON.parse(JSON.stringify(state.activePowers || []))
+    powers: JSON.parse(JSON.stringify(state.activePowers || [])),
   });
     const res = state.mode?.onRoundEnd?.(state) || { view: "match", canNextRound: false };
     state.phase = "gameOver";
