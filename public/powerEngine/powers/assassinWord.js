@@ -1,6 +1,9 @@
 PowerEngine.register("assassinWord", {
   role: "setter",
-
+  tooltip: {
+    title: "Assassin Word",
+    desc: "Choose a word that instantly ends the game if guessed."
+  },
   renderButton(roomId) {
     const btn = document.createElement("button");
     btn.className = "power-btn";
