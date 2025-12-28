@@ -1,6 +1,10 @@
+let activeTooltipTarget = null;
+
 function showTooltip(target, { title, desc }) {
   const tooltip = document.getElementById("tooltip");
   if (!tooltip) return;
+
+  activeTooltipTarget = target;
 
   tooltip.innerHTML = `
     <div class="tooltip-title">${title}</div>
@@ -12,21 +16,30 @@ function showTooltip(target, { title, desc }) {
 
   tooltip.style.left = `${rect.left + rect.width / 2}px`;
   tooltip.style.top = `${rect.top - padding}px`;
-  tooltip.style.transform = "translate(-50%, -100%)";
 
   tooltip.hidden = false;
-  requestAnimationFrame(() => { tooltip.classList.add("show");});
+
+  requestAnimationFrame(() => {
+    tooltip.classList.add("show");
+  });
 }
 
 function hideTooltip() {
   const tooltip = document.getElementById("tooltip");
   if (!tooltip) return;
-  if (!title && !desc) return;
+
+  activeTooltipTarget = null;
+
   tooltip.classList.remove("show");
-   setTimeout(() => {
-    tooltip.hidden = true;
-  }, 150);
+
+  setTimeout(() => {
+    // Only hide if nothing else reactivated it
+    if (!activeTooltipTarget) {
+      tooltip.hidden = true;
+    }
+  }, 150); // must match CSS transition
 }
+
 
 
 // powerEngine.js (or a shared client helper)
