@@ -71,4 +71,13 @@ document.addEventListener("mousemove", (e) => {
 window.addEventListener("scroll", hideTooltip);
 window.addEventListener("resize", hideTooltip);
 
+$("timeControlSelect").onchange = () => {
+  const seconds = parseInt($("timeControlSelect").value, 10);
+  if (!isNaN(seconds)) {
+    sendGameAction(roomId, {
+      type: "SET_TIME_CONTROL",
+      seconds
+    });
+  }
+};
 
