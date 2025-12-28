@@ -1763,3 +1763,37 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 .keep-btn {
   display: none !important;
 }
+
+
+
+///TIMER
+.timer-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin-right: 6px;
+}
+
+.chess-timer {
+  font-family: "Courier New", monospace;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--role-accent);
+}
+
+.remaining-label {
+  font-size: 11px;
+  opacity: 0.85;
+  text-transform: uppercase;
+}
+.chess-timer.active {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
