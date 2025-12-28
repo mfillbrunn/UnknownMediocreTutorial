@@ -2,7 +2,7 @@ PowerEngine.register("suggestGuess", {
   role: "guesser",
 tooltip: {
   title: this.label,
-  desc: "Suggest a valid secret consistent with all feedback."
+  desc: "Suggest a valid guess that fits all known constraints."
 },
   renderButton(roomId) {
     const btn = document.createElement("button");
