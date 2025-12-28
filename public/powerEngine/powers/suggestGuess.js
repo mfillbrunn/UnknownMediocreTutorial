@@ -5,13 +5,9 @@ tooltip: {
     desc: window.POWER_METADATA.suggestGuess.desc
   },
   renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.id = "power_suggestGuess";
-    btn.className = "power-btn";
-    btn.textContent = "Suggest Guess";
-
-    $("guesserPowerContainer").appendChild(btn);
+     const { wrapper, btn } =    PowerEngine.createPowerButton("suggestGuess", "Suggest Guess");
     this.buttonEl = btn;
+    $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
       if (btn.disabled) return;
