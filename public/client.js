@@ -40,6 +40,31 @@ document.addEventListener("DOMContentLoaded", () => {
     $("playerNameInput").value = saved;
   }
 });
+function renderChessClocks() {
+  if (!window.state || !state.timeRemaining) return;
+
+  const setter = state.setter;
+  const guesser = state.guesser;
+
+  const setterEl = $("timerSetter");
+  const guesserEl = $("timerGuesser");
+
+  if (setterEl) {
+    setterEl.textContent = formatTime(state.timeRemaining[setter]);
+    setterEl.classList.toggle(
+      "active",
+      state.activeTimer === setter
+    );
+  }
+
+  if (guesserEl) {
+    guesserEl.textContent = formatTime(state.timeRemaining[guesser]);
+    guesserEl.classList.toggle(
+      "active",
+      state.activeTimer === guesser
+    );
+  }
+}
 
 // -----------------------------------------------------
 // Pattern Renderer for Pretty Styling (Reveal Green, etc.)
