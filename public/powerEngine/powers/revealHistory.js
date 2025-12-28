@@ -6,12 +6,9 @@ tooltip: {
   },
 
   renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.className = "power-btn";
-    btn.textContent = "Reveal Old Secret";
+     const { wrapper, btn } =    PowerEngine.createPowerButton("revealHistory", "Reveal History");
     this.buttonEl = btn;
-
-    $("guesserPowerContainer").appendChild(btn);
+    $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
       if (btn.disabled) return; // ensure safety
