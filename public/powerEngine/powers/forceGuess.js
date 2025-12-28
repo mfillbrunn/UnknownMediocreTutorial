@@ -7,12 +7,10 @@ tooltip: {
 
 
   renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.className = "power-btn";
-    btn.textContent = "Force Guess";
-
+  const { wrapper, btn } =    PowerEngine.createPowerButton("foceGuess", "Force Guess");
     this.buttonEl = btn;
-    $("setterPowerContainer").appendChild(btn);
+    $("setterPowerContainer").appendChild(wrapper);
+
 
     btn.onclick = () => {
       if (btn.disabled) return;
