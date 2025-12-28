@@ -3,7 +3,7 @@ const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { isValidWord } = require("../../game-engine/validation");
 const { isConsistentWithHistory } = require("../../game-engine/history");
-const resetRoundState = require("../utils/resetRoundState");
+const resetRoundState = require("../../utils/resetRoundState");
 const FORCE_TIMER_INTERVALS = {};
 
 function startForceTimer(roomId, room, state, io, context) {
