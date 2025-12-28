@@ -8,13 +8,9 @@ tooltip: {
 
 
   renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.id = "power_revealGreen";
-    btn.className = "power-btn";
-    btn.textContent = "Reveal Green";
+     const { wrapper, btn } =    PowerEngine.createPowerButton("revealGreen", "Sneak Letter");
     this.buttonEl = btn;
-
-    $("guesserPowerContainer").appendChild(btn);
+    $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () =>
       sendGameAction(roomId, { type: "USE_REVEAL_GREEN" });
