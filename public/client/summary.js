@@ -4,7 +4,7 @@
 window.updateSummary = function updateSummary() {
   const container = $("roundSummary");
 
-  if (  !state || (state.phase !== "roundSummary" && state.phase !== "gameOver")( {
+  if (  !state || (state.phase !== "roundSummary" && state.phase !== "gameOver")) {
     container.innerHTML = "";
     return;
   }
