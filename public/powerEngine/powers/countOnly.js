@@ -1,7 +1,11 @@
 PowerEngine.register("countOnly", {
 
-  // ⭐ REQUIRED: This is a SETTER power (setter presses the button)
   role: "setter",
+  tooltip: {
+  title: "Count Only",
+  desc: "The total number of greens and yellows will be shown, not their positions."
+},
+
 
   renderButton(roomId) {
     const btn = document.createElement("button");
