@@ -3,7 +3,7 @@ PowerEngine.register("magicMode", {
   role: "guesser",
   tooltip: {
   title: this.label,
-  desc: "Next round, one green is revealed for every yellow in the feedback."
+  desc: "Each yellow tile reveals one green letter next round."
 },
 
   renderButton(roomId) {
