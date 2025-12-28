@@ -100,4 +100,13 @@ socket.on("forceGuessOptions", ({ options }) => {
   modal.classList.add("active");
 });
 
+socket.on("timerTick", ({ timeRemaining }) => {
+  if (!window.state) return;
+
+  // Update local state with authoritative server values
+  window.state.timeRemaining = timeRemaining;
+
+  // Re-render UI (lightweight, already optimized)
+  updateUI();
+});
 
