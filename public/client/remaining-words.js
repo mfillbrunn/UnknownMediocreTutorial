@@ -16,29 +16,29 @@ window.computeRemainingAfterIndex = function (idx) {
 function updateRemainingWords() {
   if (!state || state.phase === "lobby" || state.phase === "gameOver") {
     $("remainingWordsSetter").textContent = "-";
-    $("remainingWordsGuesser").textContent = "-";
+    //$("remainingWordsGuesser").textContent = "-";
     styleRemaining($("remainingWordsSetter"), null);
-    styleRemaining($("remainingWordsGuesser"), null);
+    //styleRemaining($("remainingWordsGuesser"), null);
     return;
   }
   const lastIdx = state.history.length;;
   // compute once per update
-  if (remainingCache.guesser === null) {
-    remainingCache.guesser =computeRemainingAfterIndex(lastIdx);
-  }
+  //if (remainingCache.guesser === null) {
+    //remainingCache.guesser =computeRemainingAfterIndex(lastIdx);
+  //}
   if (remainingCache.setter === null) {
     remainingCache.setter =computeRemainingAfterIndex(lastIdx);
   }
 
-  const nGuesser = remainingCache.guesser;
+  //const nGuesser = remainingCache.guesser;
   const nSetter  = remainingCache.setter;
   const categorySetter  = categorizeRemainingWords(nSetter);
 
   // Guesser sees exact number
-  const g = $("remainingWordsGuesser");
-  if (g) {
-    renderRemaining(g, nGuesser);
-  }
+  //const g = $("remainingWordsGuesser");
+ // if (g) {
+    //renderRemaining(g, nGuesser);
+  //}
   // Setter sees category
   const s = $("remainingWordsSetter");
   if (s) {
