@@ -1,6 +1,11 @@
 PowerEngine.register("revealGreen", {
 
   role: "guesser",
+  tooltip: {
+  title: this.label,
+  desc: "One letter in the current secret is revealed - but the setter can still change it."
+  }
+
 
   renderButton(roomId) {
     const btn = document.createElement("button");
