@@ -10,6 +10,9 @@ function createInitialState() {
   // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
     mode: null,          // instance of mode controller
     matchMeta: {},       // owned entirely by the mode
+    gameOverView: "match",
+    canNextRound: false,
+    matchRounds: [],
     
     turn: null,
     setter: "A",
