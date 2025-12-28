@@ -7,12 +7,10 @@ tooltip: {
 
 
   renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.className = "power-btn";
-    btn.textContent = "Blind Spot";
+     const { wrapper, btn } =    PowerEngine.createPowerButton("blindSpot", "Blind Spot");
     this.buttonEl = btn;
+    $("setterPowerContainer").appendChild(wrapper);
 
-    $("setterPowerContainer").appendChild(btn);
        
     btn.onclick = () => {
       if (btn.disabled) return;
