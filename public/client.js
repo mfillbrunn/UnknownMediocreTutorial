@@ -392,6 +392,37 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
     PowerEngine.renderButtons(roomId);
     PowerEngine._initialized = true;
 }
+  // Update chess clocks
+    if (state.timeRemaining) {
+      const setterTimer = $("timerSetter");
+      const guesserTimer = $("timerGuesser");
+    
+      if (setterTimer) {
+        setterTimer.textContent =
+          formatTime(state.timeRemaining[state.setter]);
+        setterTimer.classList.toggle(
+          "active",
+          state.activeTimer === state.setter
+        );
+      }
+    
+      if (guesserTimer) {
+        guesserTimer.textContent =
+          formatTime(state.timeRemaining[state.guesser]);
+        guesserTimer.classList.toggle(
+          "active",
+          state.activeTimer === state.guesser
+        );
+      }
+    }
+  if (state.phase === "lobby") {
+    $("timerSetter")?.classList.add("hidden");
+    $("timerGuesser")?.classList.add("hidden");
+  } else {
+    $("timerSetter")?.classList.remove("hidden");
+    $("timerGuesser")?.classList.remove("hidden");
+  }
+
   updateMenu();
   updateScreens();
   updateTurnIndicators();
@@ -958,3 +989,9 @@ setInterval(() => {
     updateUI(); // <-- this already triggers power uiEffects
   }
 }, 250);
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
