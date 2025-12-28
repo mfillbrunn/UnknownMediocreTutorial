@@ -1,5 +1,10 @@
 PowerEngine.register("revealHistory", {
   role: "guesser",
+  tooltip: {
+  title: this.label,
+  desc: "Reveal the secret from a few rounds ago."
+},
+
 
   renderButton(roomId) {
     const btn = document.createElement("button");
