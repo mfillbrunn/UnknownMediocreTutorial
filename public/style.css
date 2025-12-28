@@ -1755,6 +1755,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 }
 .power-btn-wrapper {
   margin: 0;
-  display: inline-block;
+  display: block;
 }
 
