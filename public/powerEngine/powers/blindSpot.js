@@ -15,7 +15,12 @@ tooltip: {
     $("setterPowerContainer").appendChild(btn);
     btn.addEventListener("mouseenter", () => {
       console.log("hovering reveal letter");
+      showTooltip(btn, {
+        title: "TEST",
+        desc: "If you see this, tooltips work."
+      });
     });
+    
     btn.onclick = () => {
       if (btn.disabled) return;
       sendGameAction(roomId, { type: "USE_BLIND_SPOT" });
