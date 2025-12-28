@@ -2,6 +2,8 @@
 
 const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
+const CompetitiveMode = require("../modes/competitiveMode");
+
 const SETTER_POWERS = [
         "hideTile",
         "suggestSecret",
@@ -117,9 +119,12 @@ if (action.type === "SET_PLAYER_NAME") {
     if (state.ready.A && state.ready.B) {
           
             const N = state.powerCount || 2;
-  const sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
-  const gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
-  state.activePowers = [...sP, ...gP];
+ const sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
+ const gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
+
+ state.mode = new CompetitiveMode();
+ state.mode.initMatch(state);
+ state.mode.onLobbyReady(state, sP, gP);
             // Initialize unified revealLetter power mode
 if (state.activePowers.includes("revealLetter")) {
   state.powers.revealLetter.mode =
