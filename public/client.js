@@ -10,8 +10,7 @@ let roleAssigned = false;
 let lastSimulSecret = false;
 let lastSimulGuess = false;
 window.state = null;
-import { updateSummary } from "./ui/summary.js";
-import "./client/socket-events.js";
+
 // -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
