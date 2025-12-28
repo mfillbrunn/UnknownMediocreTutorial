@@ -2,7 +2,7 @@ PowerEngine.register("forceGuess", {
   role: "setter",
   tooltip: {
   title: this.label,
-  desc: "Force next guess to adhere to restrictions."
+  desc: "Forces the next guess to satisfy a special restriction."
 },
 
 
