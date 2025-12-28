@@ -71,7 +71,9 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
    emitStateForAllPlayers(roomId, room, io);
    return;
  }
-  
+  ///
+  /// NEW MATCH
+  ///
   if (action.type === "NEW_MATCH") {
     clearForceTimer(roomId, state); // IMPORTANT
     const createInitialState = require("../stateFactory").createInitialState;
@@ -87,12 +89,24 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     delete state.powers.forceGuessUsed;
     delete state.powers.forcedGuess;
     delete state.powers.forcedGuessOptions;
-
-
     emitLobbyEvent(io, roomId, { type: "showLobby" });
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
+  ///
+  /// NEXT ROUND
+  ///
+ if (action.type === "NEXT_ROUND") {
+   const res = state.mode?.onNextRound(state);
+   if (!res) return;
+   if (res.resetRound) {
+     resetRoundState(state);
+   }
+   state.gameOver = false;
+   state.phase = res.phase;
+   emitStateForAllPlayers(roomId, room, io);
+   return;
+ }
   
  if (action.type === "CONFIRM_FORCE_GUESS" && role === state.setter) {
   const opts = state.powers.forcedGuessOptions;
@@ -108,11 +122,8 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   return;
 }
 
-
-  /// POWER
-  if (!state.pendingGuess &&
-      action.type.startsWith("USE_") &&
-      role === state.guesser) {
+  /// GUESSER POWERs
+  if (!state.pendingGuess && action.type.startsWith("USE_") && role === state.guesser) {
 
     const powerId = normalizePowerId(action.type);
     if (!state.powerUsedThisTurn) {
@@ -122,12 +133,11 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
-  /// GUESSER
-  if (!state.pendingGuess &&
-      action.type === "SUBMIT_GUESS" &&
-      role === state.guesser) {
-    
-      const g = action.guess.toLowerCase();
+  ///
+  /// GUESSER SUBMIT
+  ///
+  if (!state.pendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
+          const g = action.guess.toLowerCase();
       if (!isValidWord(g, ALLOWED_GUESSES)) return;
 function countVowels(word) {
   return [...word].filter(c => VOWELS.has(c.toUpperCase())).length;
@@ -257,38 +267,21 @@ if (state.powers.forcedGuess) {
       if (!isConsistentWithHistory(state.history, w, state)) {
         io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
         return;
+      }      
+      // Force setter to obey revealed green
+      if (state.powers.forcedGreens) {
+        for (const pos in state.powers.forcedGreens) {
+          const required = state.powers.forcedGreens[pos];
+          if (w[pos].toUpperCase() !== required) {
+            io.to(action.playerId).emit(
+              "errorMessage",
+              `Secret must contain ${required} in position ${parseInt(pos)+1}!`
+            );
+            return;
+          }
+        }
       }
-
- if (action.type === "NEXT_ROUND") {
-   const res = state.mode?.onNextRound(state);
-   if (!res) return;
-
-   if (res.resetRound) {
-     resetRoundState(state);
-   }
-
-   state.gameOver = false;
-   state.phase = res.phase;
-
-   emitStateForAllPlayers(roomId, room, io);
-   return;
- }
-      
-// Force setter to obey revealed green
-if (state.powers.forcedGreens) {
-  for (const pos in state.powers.forcedGreens) {
-    const required = state.powers.forcedGreens[pos];
-    if (w[pos].toUpperCase() !== required) {
-      io.to(action.playerId).emit(
-        "errorMessage",
-        `Secret must contain ${required} in position ${parseInt(pos)+1}!`
-      );
-      return;
-    }
-  }
-}
-       
-      state.secret = w;
+       state.secret = w;
       state.currentSecret = w;
       state.firstSecretSet = true;
       if (state.pendingGuess === w) {
