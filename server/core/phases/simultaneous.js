@@ -1,12 +1,12 @@
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { scoreGuess } = require("../../game-engine/scoring");
 const { endGame } = require("./normal");
+const { addIncrement } = require("../../utils/chessTimer");
 
 function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   const { ALLOWED_GUESSES, powerEngine } = context;
   const { isValidWord } = require("../../game-engine/validation");
-}
 
   // ---------------------------------------------
   // SETTER submits initial secret
