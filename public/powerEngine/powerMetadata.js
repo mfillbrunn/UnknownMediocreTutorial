@@ -1,5 +1,5 @@
 window.POWER_METADATA = {
-  blueMode: {
+  confuseColors: {
     label: "Blue Mode",
     desc: "Turns all green and yellow feedback blue for one round."
   },
@@ -34,7 +34,7 @@ window.POWER_METADATA = {
     desc: "Each yellow tile reveals one green letter next round."
   },
 
-  sneakLetter: {
+  revealGreen: {
     label: "Sneak Letter",
     desc: "Reveals one letter of the current secret — the setter may still change it."
   },
