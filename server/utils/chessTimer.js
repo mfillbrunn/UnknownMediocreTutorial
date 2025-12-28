@@ -52,8 +52,16 @@ function addIncrement(state, role) {
   state.timeRemaining[role] += state.timeControl.incrementSeconds;
 }
 
+function resetRoundTimer(state) {
+  state.timeRemaining.A = state.timeControl.initialSeconds;
+  state.timeRemaining.B = state.timeControl.initialSeconds;
+  state.timeExpired = null;
+  state.timeoutLoser = null;
+}
+
 module.exports = {
   startTimer,
   stopTimer,
-  addIncrement
+  addIncrement,
+  resetRoundTimer
 };
