@@ -384,11 +384,8 @@ function pushWinEntry(state, word) {
 }
 
 function endGame(state, roomId, io, room) {
-  io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
-  emitStateForAllPlayers(roomId, room, io)
    state.turn = null;
    state.gameOver = true;
-  
    const res = state.mode?.onRoundEnd(state);
    state.phase = res?.nextPhase || "gameOver";
   
@@ -396,7 +393,9 @@ function endGame(state, roomId, io, room) {
      emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
    } else {
      emitLobbyEvent(io, roomId, { type: "roundOver" });
-   }
+   } 
+  io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
+  emitStateForAllPlayers(roomId, room, io)
 }
 
 module.exports = {
