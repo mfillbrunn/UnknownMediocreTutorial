@@ -1,6 +1,10 @@
 PowerEngine.register("confuseColors", {
 
   role: "setter",
+tooltip: {
+  title: "Blue Mode",
+  desc: "Turns all greens and yellows into blues for one round."
+},
 
   renderButton(roomId) {
     const btn = document.createElement("button");
