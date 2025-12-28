@@ -55,7 +55,7 @@ window.POWER_METADATA = {
       },
       RARE: {
         label: "Rare Letter Bonus",
-        desc: "Reveal a rare green letter by having used at least 5 out of QWYJKXV."
+        desc: "Reveal a rare green letter by having used at least 5 out of QWYJKXVZ."
       }
     }
   },
