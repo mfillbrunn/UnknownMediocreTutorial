@@ -1762,4 +1762,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   margin: 0;
   display: block;
 }
-
+.keep-btn {
+  display: none !important;
+}
