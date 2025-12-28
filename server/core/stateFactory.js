@@ -6,6 +6,11 @@
 function createInitialState() {
   return {
     phase: "lobby",
+
+  // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
+    mode: null,          // instance of mode controller
+    matchMeta: {},       // owned entirely by the mode
+    
     turn: null,
     setter: "A",
     guesser: "B",
