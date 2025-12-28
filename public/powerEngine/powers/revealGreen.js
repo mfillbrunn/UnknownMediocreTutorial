@@ -10,7 +10,7 @@ tooltip: {
   renderButton(roomId) {
      const { wrapper, btn } =    PowerEngine.createPowerButton("revealGreen", "Sneak Letter");
     this.buttonEl = btn;
-    $("setterPowerContainer").appendChild(wrapper);
+        $("guesserPowerContainer").appendChild(wrapper)
 
     btn.onclick = () =>
       sendGameAction(roomId, { type: "USE_REVEAL_GREEN" });
