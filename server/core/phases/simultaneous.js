@@ -6,11 +6,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   const { ALLOWED_GUESSES, powerEngine } = context;
   const { isValidWord } = require("../../game-engine/validation");
-  if (state.timeExpired) {
-    // End game immediately
-    endGame(state, roomId, io, room);
-    return;
-  }
+}
 
   // ---------------------------------------------
   // SETTER submits initial secret
