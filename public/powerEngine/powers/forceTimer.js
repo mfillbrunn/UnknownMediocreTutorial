@@ -1,5 +1,9 @@
 PowerEngine.register("forceTimer", {
   role: "guesser",
+  tooltip: {
+  title: this.label,
+  desc: "The setter will only have a short time to come up with a new secret."
+},
 
   renderButton(roomId) {
     const btn = document.createElement("button");
