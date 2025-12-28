@@ -2,35 +2,36 @@
 
 const INTERVALS = {};
 
-function startTimer(roomId, state, io, players) {
+function startTimer(roomId, state, io, onTimeout) {
   if (INTERVALS[roomId]) return;
 
-  const lastTick = { t: Date.now() };
+  let lastTick = Date.now();
 
   INTERVALS[roomId] = setInterval(() => {
     const now = Date.now();
-    const dt = Math.floor((now - lastTick.t) / 1000);
+    const dt = Math.floor((now - lastTick) / 1000);
     if (dt <= 0) return;
 
-    lastTick.t = now;
+    lastTick = now;
 
-    if (state.activeTimer === "both") {
-      for (const r of ["A", "B"]) {
-        state.timeRemaining[r] -= dt;
-        if (state.timeRemaining[r] <= 0) {
-          state.timeRemaining[r] = 0;
-          state.timeExpired = r;
-          return;
-        }
+    const tickRole = state.activeTimer;
+
+    const applyTick = role => {
+      state.timeRemaining[role] -= dt;
+      if (state.timeRemaining[role] <= 0) {
+        state.timeRemaining[role] = 0;
+        stopTimer(roomId);
+        onTimeout(role);
+        return true;
       }
-    } else if (state.activeTimer) {
-      const r = state.activeTimer;
-      state.timeRemaining[r] -= dt;
-      if (state.timeRemaining[r] <= 0) {
-        state.timeRemaining[r] = 0;
-        state.timeExpired = r;
-        return;
-      }
+      return false;
+    };
+
+    if (tickRole === "both") {
+      if (applyTick("A")) return;
+      if (applyTick("B")) return;
+    } else if (tickRole) {
+      applyTick(tickRole);
     }
 
     io.to(roomId).emit("timerTick", {
@@ -38,6 +39,7 @@ function startTimer(roomId, state, io, players) {
     });
   }, 250);
 }
+
 
 function stopTimer(roomId) {
   if (INTERVALS[roomId]) {
