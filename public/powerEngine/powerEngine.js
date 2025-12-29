@@ -46,6 +46,30 @@ createPowerButton(id, label) {
       }
     }
   },
+  function buildPowerInfoPanel(state) {
+  const panel = document.getElementById("powerInfoPanel");
+  if (!panel) return;
+
+  panel.innerHTML = "";
+
+  for (const id in PowerEngine.powers) {
+    // Respect active powers for this match
+    if (state?.activePowers && !state.activePowers.includes(id)) continue;
+
+    const meta = getPowerMeta(id);
+    if (!meta) continue;
+
+    const row = document.createElement("div");
+    row.className = "power-info-row";
+
+    row.innerHTML = `
+      <div class="power-info-title">${meta.label}</div>
+      <div class="power-info-desc">${meta.desc}</div>
+    `;
+
+    panel.appendChild(row);
+  }
+}
 
   // Called on every stateUpdate from the server
   applyUI(state, role) {
