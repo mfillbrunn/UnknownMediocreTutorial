@@ -51,18 +51,29 @@ function renderMatchSummary(container) {
   // Header
   // ----------------------------
   let html = `
-    <div class="match-header">
-      <h2>🏆 Winner: ${names[winner]}</h2>
-      <h3>Score: ${points.A} – ${points.B}</h3>
+  <div class="match-header">
+    <h2>🏆 Winner: ${names[winner]}</h2>
+    <h3>Score: ${points.A} – ${points.B}</h3>
+
+    <p class="match-meta">
+      Time control:
       ${
-        winReason === "time"
-          ? `<p class="tie-breaker">
-               Tie on points. Winner by lower total time.
-             </p>`
-          : ""
+        state.timeControl?.enabled
+          ? `${state.timeControl.initialSeconds / 60} min +${state.timeControl.incrementSeconds}s`
+          : "No time"
       }
-    </div>
-  `;
+    </p>
+
+    ${
+      winReason === "time"
+        ? `<p class="tie-breaker">
+             Tie on points. Winner by lower total time.
+           </p>`
+        : ""
+    }
+  </div>
+`;
+
 
   // ----------------------------
   //COMPETITIVE  Match summary table
