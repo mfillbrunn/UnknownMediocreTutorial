@@ -108,11 +108,7 @@
             </span>
           </div>
         
-          <button
-            id="toggleConstraintsBtn"
-            class="constraint-toggle-btn"
-            title="Toggle constraints"
-          >
+          <button  id="toggleConstraintsBtn"  class="constraint-toggle-btn"   title="Toggle constraints">
             ⧉
           </button>
         </div>
@@ -123,7 +119,8 @@
 <div class="play-area setter-play">
    <!-- LEFT: powers -->
   <div class="play-row">
-    <button id="powerInfoBtn"  class="power-info-btn"  aria-label="Power descriptions">?</button>
+    <div class="power-info-row">
+    <button id="powerInfoBtn"  class="power-info-btn"  aria-label="Power descriptions">?</button> </div>
     <div id="powerInfoPanel" class="power-info-panel" hidden></div>    
     <div class="play-col powers-col">
           <div id="setterPowerContainer" class="power-container laser-scope"></div>
@@ -142,9 +139,7 @@
 </div>
 
     </div>
-    <div class="side-col">  <button class="keep-btn mobile-keep" id="submitSetterSameBtnMobile" hidden>
-        KEEP OLD
-          </button></div>
+    <div class="side-col">  <button class="keep-btn mobile-keep" id="submitSetterSameBtnMobile" hidden> KEEP OLD </button></div>
   </div>
   <!-- KEYBOARD -->
   <div id="keyboardSetter" class="keyboard"></div>
@@ -222,12 +217,7 @@
           <span id="timerGuesser" class="chess-timer">5:00</span>
         </div>
       
-        <button
-          class="constraint-toggle-btn"
-          title="Toggle constraints"
-        >
-          ⧉
-        </button>
+        <button class="constraint-toggle-btn" title="Toggle constraints"> ⧉ </button>
       </div>
 
     </div>
@@ -237,8 +227,10 @@
 
   <div class="play-row">
     <div class="play-col powers-col">
-    <div id="guesserPowerContainer"
-         class="power-container laser-scope"></div>
+        <div class="power-info-row">
+    <button id="powerInfoBtnGuesser" class="power-info-btn" aria-label="Guesser power descriptions">?</button>
+  </div>
+    <div id="guesserPowerContainer" class="power-container laser-scope"></div>
     </div>
     <div class="play-col center-col">
       <div id="constraintRowGuesser" class="history-row constraint-row"></div>
