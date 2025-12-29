@@ -38,10 +38,10 @@ engine.registerPower("vowelRefresh", {
       if (knownPresent.has(letter)) continue;
 
       if (Array.isArray(entry.fb)) {
-        entry.fb[i] = "⬛";
+        entry.fb[i] = "";
       }
       if (Array.isArray(entry.fbGuesser)) {
-        entry.fbGuesser[i] = "⬛";
+        entry.fbGuesser[i] = "";
       }
     }
   },
