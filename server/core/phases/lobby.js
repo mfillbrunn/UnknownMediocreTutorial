@@ -158,11 +158,13 @@ if (state.activePowers.includes("revealLetter")) {
       emitLobbyEvent(io, roomId, { type: "hideLobby" });            
       emitStateForAllPlayers(roomId, room, io);
             stopTimer(roomId);
+            if (state.timeControl.enabled) {
         startTimer(roomId, state, io, timedOutRole => {
           state.timeExpired = timedOutRole;
           state.timeoutLoser = timedOutRole;
           endGame(state, roomId, io, room);
         });
+            }
     }
     return;
   }
