@@ -1,168 +1,46 @@
-/* =========================================
-   BASE LAYOUT
-   ========================================= */
+/* ===============================
+   BASE TOKENS
+   =============================== */
+
 :root {
-  /* Provide sensible fallbacks if vars are missing */
   --text: #eaeaea;
   --heading: #fff;
 
   --screen-bg: rgba(255,255,255,0.04);
   --panel-bg: rgba(255,255,255,0.05);
-  --panel-text: #eaeaea;
-  --history-bg: rgba(0,0,0,0.25);
 
   --kb-neutral: #2b2f36;
   --kb-hover: #3a3f48;
 
-   --toast-bg: rgba(20,20,22,0.95);
-  --toast-border: rgba(255,255,255,0.12);
-
-  --popup-bg: rgba(20,20,22,0.95);
-  --popup-border: rgba(255,255,255,0.16);
-
-  /* Theme “role” tokens (overridden by .theme-*) */
-  --role-accent: #4da3ff;
-  --role-accent-strong: #4da3ff;
-
-  --btn-primary: #4da3ff;
-  --btn-primary-hover: #6ab4ff;
-  --btn-primary-glow: rgba(70,140,255,.7);
+  --toast-bg: rgba(20,20,22,.95);
+  --toast-border: rgba(255,255,255,.12);
 }
+
+/* ===============================
+   GLOBAL
+   =============================== */
 
 body {
   margin: 0;
-  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  line-height: 1.45;
-  background:
-    radial-gradient(circle at top center, rgba(255, 0, 0, 0.08), transparent 60%),
-    #0c0c0e;
+  background: #0c0c0e;
 }
 
-/* =========================================
-   LOBBY TYPOGRAPHY
-   ========================================= */
-/* Low-specificity grouping to avoid clashes */
-.screen-lobby :where(input, button, p, label, span),
-.screen-lobby {
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 18px;
-  letter-spacing: 0.5px;
+.hidden,
+[hidden] {
+  display: none !important;
 }
 
-.screen-lobby input { font-weight: 600; }
+/* ===============================
+   SCREENS
+   =============================== */
 
-.screen-lobby button {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-#roomInfo {
-  opacity: 0;
-  transition: opacity .25s ease;
-}
-#roomInfo:not(.hidden) { opacity: 1; }
-
-#appContainer {
-  max-width: 600px;
-  margin: auto;
-  padding: 20px;
-}
-
-.title {
-  margin: 6px 0 10px;
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  opacity: 0.85;
-  text-transform: uppercase;
-}
-
-/* =========================================
-   INPUT AREA
-   ========================================= */
-.guess-input-area {
-  display: flex;
-  flex-direction: column; /* authoritative */
-  align-items: center;
-  gap: 10px;
-
-  width: 100%;
-  max-width: 520px;
-  margin: 20px auto 0;
-}
-
-.guess-btn-row {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 10px;
-
-  flex: 1;
-  min-width: 120px;
-}
-
-.play-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-   pointer-events: none;
-}
-
-.decision-row {
-  display: flex;
-  gap: 12px;
-  width: 100%;
-  max-width: 360px;
-}
-.decision-row button { flex: 1; }
-
-/* Authoritative input style */
-.letter-input {
-  width: 100%;
-  max-width: 360px;
-
-  background: #e6e6e6;
-  color: #000;
-
-  border: none;
-  border-radius: 8px;
-  padding: 10px 12px;
-
-  font-size: 1.4rem;
-  font-weight: 700;
-  letter-spacing: 6px;
-  text-transform: uppercase;
-  text-align: center;
-
-  box-shadow: inset 0 0 0 1px #bbb;
-}
-
-.letter-input:focus {
-  outline: none;
-  box-shadow:
-    inset 0 0 0 2px var(--btn-primary),
-    0 0 8px var(--btn-primary-glow);
-}
-
-/* =========================================
-   SCREEN PANELS
-   ========================================= */
 .screen {
   display: none;
-  position: relative;
-
   background: var(--screen-bg);
-  border-radius: 14px;
   padding: 20px;
-  margin-top: 16px;
-
-  box-shadow:
-    0 0 12px rgba(0,0,0,.4),
-    0 0 18px rgba(0,0,0,.25) inset;
-
+  border-radius: 14px;
   opacity: 0;
   transform: translateY(10px);
   transition: .25s ease;
@@ -176,292 +54,43 @@ body {
 
 .screen-title {
   font-size: 24px;
-  color: var(--heading);
   margin-bottom: 16px;
 }
 
-/* Shared panel styling */
-:where(.panel, .constraints-box, .history-box, .summary-box, .preview-box) {
+/* ===============================
+   PANELS
+   =============================== */
+
+.panel,
+.history-box,
+.preview-box,
+.summary-box {
   background: var(--panel-bg);
-  color: var(--panel-text);
   border-radius: 10px;
   padding: 14px;
-  margin-top: 14px;
-  box-shadow: 0 0 6px rgba(0,0,0,.4) inset;
 }
 
-.history-box {
-  background: var(--history-bg);
-  font-family: "Courier New", monospace;
-}
+/* ===============================
+   LAYOUT HELPERS
+   =============================== */
 
-/* Empty history message */
-.history-box:empty,
-.history-box:not(:has(.history-row)) {
-  color: #e5e5e5;
-}
-
-/* =========================================
-   BUTTONS
-   ========================================= */
-:where(.primary-btn, .secondary-btn) {
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: none;
-  margin: 10px 0;
-  cursor: pointer;
-
-  text-transform: uppercase;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-
-  transition: .15s ease;
-}
-
-.primary-btn {
-  background: var(--btn-primary);
-  color: #fff;
-  box-shadow: 0 0 10px var(--btn-primary-glow);
-}
-.primary-btn:hover { background: var(--btn-primary-hover); }
-
-.secondary-btn {
-  background: var(--btn-secondary);
-  color: var(--btn-secondary-text);
-}
-.secondary-btn:hover { background: var(--btn-secondary-hover); }
-
-/* Power buttons (single authoritative definition) */
-
-
-.power-btn {
-  background: transparent !important;
-  border: 2px solid currentColor !important;
-  border-radius: 12px;
-
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-
-  padding: 14px 18px;
-  min-height: 44px;
-
+.center {
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-
-  position: relative;
-  cursor: pointer;
-
-  transition: transform .15s ease, box-shadow .2s ease, opacity .15s ease;
 }
 
-/* Outer laser frame */
-.power-btn::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: inherit;
-  border: 1px solid currentColor;
-  opacity: 0.35;
-  pointer-events: none;
-}
+.pe-none { pointer-events: none; }
+.pe-auto { pointer-events: auto; }
 
-.power-btn:not(.power-used):not(.disabled-btn):hover {
-  box-shadow: 0 0 16px currentColor;
-  transform: translateY(-2px);
-}
+/* ===============================
+   HISTORY STRUCTURE
+   =============================== */
 
-.power-btn:not(.power-used):not(.disabled-btn):active {
-  transform: scale(.97);
-}
-.power-btn.power-used,
-.power-btn.disabled-btn {
-  pointer-events: none;
-}
-
-.power-btn.power-used {
-  opacity: 0.28;
-  filter: grayscale(1);
-  text-decoration: line-through;
-  cursor: not-allowed;
-  box-shadow: none !important;
-}
-.power-btn.disabled-btn {
-  opacity: 0.45;
-  filter: grayscale(0.6);
-  cursor: not-allowed;
-}
-/* Compact powers in play area */
- .play-area .power-btn {
-  font-size: 13px;
-  padding: 8px 12px;
-  min-height: 32px;
-  border-radius: 10px;
-  letter-spacing: 0.4px;
-}
-
-/* Utility outline */
-.laser-outline { border: 1.5px solid currentColor; }
-
-/* =========================================
-   KEYBOARD
-   ========================================= */
-.keyboard {
-  width: 100%;
-  max-width: 520px;
-  margin: auto 0;
-  padding: 0;
-}
-
-.key-row {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 6px;
-  flex-wrap: nowrap;
-}
-
-.key {
-  width: 44px;
-  height: 56px;
-  padding: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 6px;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 1px;
-
-  background: var(--kb-neutral);
-  border: 1px solid #00000055;
-  color: #fff;
-
-  cursor: pointer;
-  transition: background .15s, transform .1s, box-shadow .15s;
-}
-
-/* Special widths */
-.key[data-key="⌫"] { width: 58px; }
-.key[data-key="ENTER"] {width: 58px;}
-
-/* Hover / active */
-.key:hover {
-  background: var(--kb-hover);
-  transform: translateY(-2px);
-}
-.key:active { transform: scale(0.95); }
-/* Guesser: all keys can still hover (including used ones) */
-.theme-guesser .key:hover {
-  background: var(--kb-hover);
-  transform: translateY(-2px);
-}
-
-
-/* Keyboard key color states */
-.key.key-green  { background: var(--tile-green) !important;  color: var(--tile-green-text) !important; }
-.key.key-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text) !important; }
-.key.key-blue   { background: #4ea3ff !important;            color: #000 !important; }
-.key.key-purple { background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important;}
-
-/* “Gray” state has custom styling */
-.key.key-gray {
-  background:
-    repeating-linear-gradient(
-      135deg,
-      #121417,
-      #121417 6px,
-      #0e1013 6px,
-      #0e1013 12px
-    ) !important;
-  color: #7a7f88 !important;
-  border-color: #000000aa !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.03),
-    inset 0 -2px 4px rgba(0,0,0,.6);
-  opacity: 0.85;
-}
-/* Setter: gray keys are inert */
-.theme-setter .key.key-gray:hover,
-.theme-setter .key.key-gray:active {
- transform: none;
-  box-shadow: none;
-}
-
-/* Optional: highlight current draft keys without overriding solved colors */
-.key.key-current {
-  box-shadow: 0 0 0 2px rgba(255,255,255,.35) inset;
-}
-/* Setter keyboard dead unless SETTER screen has your-turn */
-#setterScreen:not(:has(#turnIndicatorSetter.your-turn)) #keyboardSetter {
-  opacity: 0.35;
-  filter: grayscale(0.9);
-  pointer-events: none;
-}
-
-/* Guesser keyboard dead unless GUESSER screen has your-turn */
-#guesserScreen:not(:has(#turnIndicatorGuesser.your-turn)) #keyboardGuesser {
-  opacity: 0.35;
-  filter: grayscale(0.9);
-  pointer-events: none;
-}
-#setterScreen:not(:has(#turnIndicatorSetter.your-turn)) #keyboardSetter .key,
-#guesserScreen:not(:has(#turnIndicatorGuesser.your-turn)) #keyboardGuesser .key {
-  transform: none !important;
-  box-shadow: none !important;
-}
-/* Force consistent spacing before keyboards for both roles */
-#keyboardSetter,
-#keyboardGuesser {
-  margin-top: 12px;   /* pick one value and lock it */
-}
-
-
-/* Enter key styling  */
-/* ENTER key — semantic, not positional */
-.key[data-key="ENTER"] {
-  position: relative;
-  color: transparent; /* hide text */
-  background: var(--btn-primary);
-  box-shadow: 0 0 8px var(--btn-primary-glow);
-}
-
-.key[data-key="ENTER"]::before {
-  content: "⏎";
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 22px;
-  font-weight: 800;
-}
-
-/* Key animation */
-.key-animate { animation: key-shine 180ms ease-out; }
-@keyframes key-shine {
-  0%   { box-shadow: 0 0 0 rgba(255,255,255,0); }
-  50%  { box-shadow: 0 0 12px rgba(255,255,255,.35); }
-  100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
-}
-.key[data-key="⌫"],
-.key[data-key="ENTER"] {
-  animation: none !important;
-}
-
-/* =========================================
-   HISTORY — TILE STYLE
-   ========================================= */
 .history-tiles {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 10px 0;
 }
 
 .history-row {
@@ -474,1399 +103,132 @@ body {
   width: 42px;
   height: 48px;
   border-radius: 6px;
-
   font-size: 20px;
   font-weight: 800;
-  letter-spacing: 1px;
-
-  border: 1px solid #00000055;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  color: #fff;
-
-  transform-style: preserve-3d;
-  perspective: 600px;
-
-  animation: none; /* baseline */
-}
-
-/* Evaluated flip */
-.evaluated-row .history-tile {
-  animation: flip-in 0.6s ease forwards;
-}
-
-/* Draft pop */
-@keyframes draft-pop {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.08); }
-  100% { transform: scale(1); }
-}
-.draft-row .history-tile { animation: draft-pop 120ms ease-out; }
-
-/* Draft rows should not have a panel box */
-.draft-layer {
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-}
-
-/* Wordle-style feedback colors */
-.tile-green  { background: var(--tile-green)  !important; color: var(--tile-green-text) !important; }
-.tile-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text)!important; }
-.tile-gray   { background: var(--tile-gray)   !important; color: var(--tile-gray-text)  !important; }
-.tile-blue   { background: #4ea3ff !important; color: #000 !important; }
-.tile-purple {  background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important;}
-
-
-/* Flip animation */
-@keyframes flip-in {
-  0%   { transform: rotateX(90deg); opacity: 0; }
-  40%  { transform: rotateX(20deg); opacity: .6; }
-  70%  { transform: rotateX(0deg); opacity: 1; }
-  100% { transform: rotateX(0deg); opacity: 1; }
-}
-
-/* Stagger tiles automatically */
-.history-row .history-tile:nth-child(1) { animation-delay: 0.00s; }
-.history-row .history-tile:nth-child(2) { animation-delay: 0.08s; }
-.history-row .history-tile:nth-child(3) { animation-delay: 0.16s; }
-.history-row .history-tile:nth-child(4) { animation-delay: 0.24s; }
-.history-row .history-tile:nth-child(5) { animation-delay: 0.32s; }
-
-/* Draft layer behavior */
-.draft-layer {
-  position: relative;
-  min-height: 70px;
-  z-index: 20;
-  pointer-events: none;
-}
-.history-scroll { z-index: 1; }
-
-/* Draft / submitted / pending states (deduped) */
-.draft-tile { animation: none; }
-
-.draft-row .draft-tile,
-.draft-box .history-tile {
-  border: 1px solid #00000055;
-  opacity: 0.85;
-}
-
-.submitted-row .submitted-tile {
-  background: #3a3d44;
-  color: #eee;
-  border: 1px solid #00000066;
-  opacity: 0.95;
-}
-
-.pending-guess .history-tile {
-  border: 2px solid rgba(255,255,255,0.5);
-}
-
-/* Ghost secret (single consolidated definition) */
-.theme-setter .ghost-secret {
-  color: rgba(255,255,255,0.35) !important;
-  letter-spacing: 0.15em;
-}
-.theme-setter .ghost-secret .history-tile {
-  border-width: 2px;
-  border-color: var(--role-accent);
-  box-shadow:  0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
-   color: rgba(255, 255, 255, 0.45);
-}
-
-/* Setter draft accent vs guesser draft accent */
-.theme-setter .draft-layer .history-tile {
-  border: 1px solid rgba(255,80,80,0.4);
-  box-shadow: 0 0 6px rgba(255,80,80,0.3);
-}
-.theme-guesser .draft-layer .history-tile {
-  border: 1px solid rgba(70,140,255,.35);
-  box-shadow: 0 0 6px rgba(70,140,255,.35);
-}
-/* Only when there are TWO draft rows:
-   style the TOP one as guesser-owned */
-.theme-setter
-#draftSetter:has(.history-row:nth-child(2))
-.history-row:first-child
-.history-tile {
-  border-color: color-mix(in srgb, var(--opponent-accent) 70%, transparent);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--opponent-accent) 40%, transparent);
-  color: var(--opponent-accent);
-  
-}
-
-/* Authoritative setter draft layout */
-#draftSetter {
-  display: flex;
-  flex-direction: column;   /* critical: stack rows vertically */
-  align-items: center;      /* keep rows centered */
-  justify-content: center;
-
-  width: fit-content;       /* critical: shrink-wrap to tiles */
-  margin: 0 auto;           /* belt + suspenders */
-  padding: 0;
-  gap: 6px;
-}
-
-/* =========================================
-   INFO GRID
-   ========================================= */
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 20px;
-}
-.info-col p { margin: 6px 0; }
-
-/* =========================================
-   THEMES (Role-based via variables)
-   ========================================= */
-.guesser-header,
-.setter-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-/* Theme: Guesser (Blue) */
-.theme-guesser {
-  --role-accent: #4da3ff;
-  --role-accent-strong: #4da3ff;
-
-  --btn-primary: #4da3ff;
-  --btn-primary-hover: #6ab4ff;
-  --btn-primary-glow: rgba(70,140,255,.7);
-   --opponent-accent: #ff4b5c;
-}
-
-.theme-guesser h2 {
-  color: var(--role-accent);
-}
-
-/* Theme: Setter (Red) */
-.theme-setter {
-  --role-accent: #ff4b5c;
-  --role-accent-strong: #ff1e33;
-  --btn-primary: #ff1e33;
-  --btn-primary-hover: #ff3b4d;
-  --btn-primary-glow: rgba(255,30,50,.7);
-    --opponent-accent: #4da3ff;
-   }
-.theme-setter,
-.theme-guesser {
-  /* Defaults still exist, but will be overridden by JS color picker */
-background: #0c0c0e;
-  border: 2px solid var(--role-accent) !important;
-
-  box-shadow:
-    0 0 18px color-mix(in srgb, var(--role-accent) 22%, transparent),
-    inset 0 0 14px color-mix(in srgb, var(--role-accent) 12%, transparent) !important;
-
-  color: var(--role-accent);
-}
-
-#setterScreen [hidden] {
-  display: none !important;
-}
-#setterGuesser [hidden] {
-  display: none !important;
-}
-
-
-.theme-setter h2 {
-  color: var(--role-accent);
-}
-
-/* Remaining words (top-right) */
-:where(.theme-guesser .guesser-remaining, .theme-setter .setter-remaining) {
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  opacity: 0.9;
-  text-transform: uppercase;
-  font-size: 13px;
-  white-space: nowrap;
-  color: var(--role-accent);
-}
-
-/* Panels transparent in both themes */
-:where(.theme-setter, .theme-guesser) :where(.panel, .history-box, .preview-box) {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-:where(.theme-setter, .theme-guesser) .history-box { margin-bottom: 6px; }
-
-.theme-setter .info-grid { margin-top: 12px; }
-
-/* Power button color ties to theme */
-:where(.theme-setter, .theme-guesser) .power-btn { color: var(--role-accent); }
-
-/* Setter ambient vignette */
-.theme-setter::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  box-shadow:    inset 0 0 80px color-mix(in srgb, var(--role-accent) 15%, transparent);
-}
-
-/* Turn overlay */
-.turn-indicator {
-  display: none;
 }
 
 /* ===============================
-   Force Timer Indicator
+   MODALS / OVERLAYS
    =============================== */
 
-.turn-indicator.force-timer {
-  display: block;
-
-  margin-top: 10px;
-  padding: 10px 16px;
-
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-align: center;
-
-  color: #fff;
-  background: rgba(255, 30, 50, 0.15);
-  border: 1.5px solid var(--role-accent);
-  border-radius: 10px;
-
-  box-shadow:
-    0 0 12px color-mix(in srgb, var(--role-accent) 40%, transparent),
-    inset 0 0 8px color-mix(in srgb, var(--role-accent) 20%, transparent);
-}
-
-
-.turn-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 72px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .25s ease;
-  z-index: 9999;
-}
-
-/* Show overlay if any indicator has your-turn */
-body:has(.turn-indicator.force-timer) .turn-overlay {
-  opacity: 1;
-}
-
-
-.theme-guesser .turn-indicator.your-turn {
-  background: var(--role-accent);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--role-accent) 45%, transparent);
-}
-
-.theme-setter .turn-indicator.your-turn {
-  background: var(--role-accent-strong);
-  animation: setter-turn-pulse 1s infinite;
-}
-
-/* Overlay gradient / pulse (setter) */
-.theme-setter .turn-overlay.your-turn {
-  opacity: 1;
-  background: linear-gradient(
-    to bottom,
-    rgba(255,30,50,0.55),
-    rgba(255,30,50,0)
-  );
-  animation: setter-overlay-pulse 1.2s infinite;
-}
-
-@keyframes setter-overlay-pulse {
-  0%   { filter: brightness(1); }
-  50%  { filter: brightness(1.3); }
-  100% { filter: brightness(1); }
-}
-@keyframes opponent-pulse {
-  0%   { box-shadow: 0 0 0 color-mix(in srgb, var(--opponent-accent) 0%, transparent); }
-  50%  { box-shadow: 0 0 10px color-mix(in srgb, var(--opponent-accent) 70%, transparent); }
-  100% { box-shadow: 0 0 0 color-mix(in srgb, var(--opponent-accent) 0%, transparent); }
-}
-@keyframes blue-outline-pulse {
-  0% {    outline: 3px solid rgba(70,140,255,0);  }
-  50% {    outline: 3px solid rgba(70,140,255,0.9);  }
-  100% {    outline: 3px solid rgba(70,140,255,0);  }
-}
-
-/* Outline animation (theme-setter current key) */
-.theme-setter .key.key-current {
-  outline-offset: -2px;
-  animation: blue-outline-pulse 2.2s infinite;
-   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
-}
-
-/* =========================================
-   TOAST + TURN POPUP
-   ========================================= */
-.toast {
-  position: fixed;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%) translateY(40px);
-  opacity: 0;
-
-  padding: 12px 22px;
-  font-size: 18px;
-  font-weight: 700;
-
-  border-radius: 10px;
-  background: var(--toast-bg);
-  border: 1px solid var(--toast-border);
-  color: #fff;
-
-  transition: opacity .25s ease, transform .25s ease;
-  z-index: 99999;
-}
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.turn-popup {
-  position: fixed;
-  top: 100px;
-  left: 50%;
-  transform: translateX(-50%) scale(.9);
-  opacity: 0;
-
-  padding: 14px 26px;
-  font-size: 22px;
-  font-weight: 800;
-
-  border-radius: 12px;
-  background: var(--popup-bg);
-  border: 2px solid var(--popup-border);
-
-  transition: opacity .25s ease, transform .25s ease;
-  z-index: 99999;
-}
-.turn-popup.show {
-  opacity: 1;
-  transform: translateX(-50%) scale(1);
-}
-
-/* =========================================
-   GUESSER CONSTRAINT OUTPUT HIDING (DEDUPED)
-   ========================================= */
-#guesserScreen .pattern-letter,
-#guesserScreen #mustContainGuesser {
-  display: inline-block !important;
-  width: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  letter-spacing: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-/* Legacy / hidden helpers */
-.guesser-hidden { display: none; }
-.guesser-legacyxx { display: none !important; }
-
-/* =========================================
-   SECRET ROW / SAME BUTTON
-   ========================================= */
-.secret-row {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-.secret-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.same-btn {
-  margin-left: 12px;
-  white-space: nowrap;
-  opacity: 0.9;
-
-  padding: 10px;
-  min-width: 40px;
-  min-height: 40px;
-
-  border-radius: 50%;
-  background: transparent !important;
-}
-.same-btn:hover { opacity: 1; }
-.same-btn svg { display: block; }
-
-
-/* Remove panel boxes for guesser + setter inline strip */
-.theme-guesser .history-box,
-.theme-setter .secret-inline {
-  background: transparent;
-  box-shadow: none;
-  border: none;
-}
-
-/* =========================================
-   MODAL BASE (HIDDEN)
-   ========================================= */
 .modal {
-  position: absolute;
+  position: fixed;
   inset: 0;
-
   display: none;
   align-items: center;
   justify-content: center;
-
-  background: rgba(0, 0, 0, 0.6);
-
-  z-index: 1000;
-  pointer-events: none;
+  background: rgba(0,0,0,.6);
 }
+
 .modal.active {
   display: flex;
-  pointer-events: auto;
 }
 
 
-/* =========================================
-   3 column layout
-   ========================================= */
+/* ===============================
+   BUTTON SYSTEM
+   =============================== */
 
-/* 3-column play layout */
-.play-row {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: start;
-  gap: 14px;
-  width: 100%;
-   pointer-events: none;
-}
-.play-area button,
-.play-area .power-btn,
-.play-area .history-tile,
-.play-area .constraint-row,
-.play-area .draft-stack,
-.play-area .keyboard,
-.play-area .key {
-  pointer-events: auto;
-}
-
-/* Left column: powers */
-.powers-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  }
-.powers-col > .keep-btn {
-  position: fixed;   /* removes it from grid sizing entirely */
-}
-
-/* Center column: history + draft */
-.center-col {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: center;
-   pointer-events: none;
-}
-
-/* Right column: same button */
-.side-col {
-  width: 48px;
-  display: flex;
-  align-items: flex-end;
-  padding-bottom: 6px; /* fine tune */
-}
-.center-col .history-tiles,
-.draft-layer {
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-}
-/* Stack setter draft rows vertically */
-.draft-stack {
-  position: relative;   /* ← NEW anchor */
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: center;
-  pointer-events: none;
-}
-
-.draft-row-wrap {
-  display: flex;
-  justify-content: center;
-  width: 100%;   
-  pointer-events: none;
-}
-.keep-btn {
-  position: absolute;
-  left: calc(100% + 12px);
-
-  top: 50%;
-  transform: translateY(-50%);
-
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
-  background: transparent;
-  border: 1.5px solid currentColor;
-  color: var(--role-accent);
-  border-radius: 8px;
-
-  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: .6px;
   text-transform: uppercase;
-  line-height: 1;
-
-  padding: 7px 12px;
-  cursor: pointer;
-  opacity: 0.9;
-  transition: opacity .15s ease, box-shadow .15s ease;
-}
-
-/* Bottom draft row becomes the anchor */
-.draft-stack .history-row:last-child {
-  position: relative;
-}
-
-
-
-.keep-btn:hover {
-  opacity: 1;
-  box-shadow: 0 0 6px currentColor;
-}
-/* KEEP button disabled state */
-.keep-btn:disabled {
-  opacity: 0.35;
-  filter: grayscale(1);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.theme-setter
-#draftSetter:has(.history-row:nth-child(2))
-.history-row:last-child
-.history-tile {
-  border-color: var(--role-accent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
-   border-width: 2px;
-}
-/* Setter: exactly one draft row → it is active */
-.theme-setter
-#draftSetter:not(:has(.history-row:nth-child(2)))
-.history-row
-.history-tile {
-  border-width: 2px;
-  border-color: var(--role-accent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
-}
-
-.theme-guesser #draftGuesser .history-tile {
-  border-width: 2px;
-  border-color: var(--role-accent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
-}
-
-
-/* Draft tiles when unusable */
-.theme-setter:not(:has(.turn-indicator.your-turn))
-#draftSetter .history-tile,
-.theme-guesser:not(:has(.turn-indicator.your-turn))
-#draftGuesser .history-tile {
-  opacity: 0.28;
-  filter: grayscale(1);
-  box-shadow: none;
-}
-
-.role-title {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.room-tag {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-
-  padding: 4px 8px;
-  border-radius: 6px;
-
-  color: currentColor;
-  border: 1.5px solid currentColor;
-  opacity: 0.9;
-  line-height: 1;
-}
-
-.keep-btn.mobile-keep {
-  display: none;
-}
-
-@media (max-width: 520px) {
-  .keep-btn {
-    position: static;      /* remove absolute positioning */
-    transform: none;
-    left: auto;
-    top: auto;
-    bottom: auto;
-    margin: 0;
-  }
-   .draft-row-wrap .keep-btn {
-    display: none;
-  }
-   .keep-btn.mobile-keep {
-    display: flex;
-    width: 100%;
-    margin-top: 10px;
-
-    background: var(--btn-primary);
-    color: #fff;
-
-    border: none;
-    border-radius: 12px;
-
-    font-size: 14px;
-    font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-
-    padding: 14px 16px;
-
-    box-shadow: 0 0 10px var(--btn-primary-glow);
-
-    justify-content: center;
-  }
-   .keep-btn.mobile-keep:active {
-    transform: scale(0.97);
-    box-shadow:
-      0 0 6px color-mix(in srgb, var(--role-accent) 50%, transparent);
-  }
-    .keep-btn.mobile-keep:disabled {
-    background: rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.45);
-
-    box-shadow: none;
-    filter: grayscale(0.6);
-    opacity: 0.6;
-
-    cursor: not-allowed;
-  }
-  .keep-btn.mobile-keep:disabled:active {
-    transform: none;
-  }
-}
-
-/* Existing tiles row */
-.history-row {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-.history-row-wrap {
-  display: flex;
-  justify-content: center;
-  position: relative;
-}
-
-.history-row-anchor {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.history-meta {
-  position: absolute;
-  left: calc(100% + 12px);   /* now relative to tiles only */
-  top: 50%;
-  transform: translateY(-50%);
-
-  width: 90px;
-  text-align: left;
-
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  opacity: 0.8;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.history-meta-count {
-  font-size: 14px;
-  font-weight: 900;
-  letter-spacing: 0.4px;
-}
-
-
-
-.color-picker-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-/* ----------------------------------
-Constraint row using history tile language 
---------------------------------------*/
-.constraint-row {
-  position: relative;
-  padding: 6px;
   border-radius: 10px;
-  border: 1.5px solid color-mix(
-    in srgb,
-    var(--role-accent) 60%,
-    transparent
-  );
-  box-shadow:
-    0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent),
-    inset 0 0 6px color-mix(in srgb, var(--role-accent) 18%, transparent);
-   margin-top: 6px 0;
-}
-
-.constraint-row::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  border-radius: inherit;
-  border: 1px solid color-mix(
-    in srgb,
-    var(--role-accent) 40%,
-    transparent
-  );
-  pointer-events: none;
-}
-
-.constraint-row .history-tile {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.constraint-tile {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-
-  padding: 0;      /* IMPORTANT */
-  gap: 0;          /* IMPORTANT */
-}
-
-.history-row .history-tile {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Constraint tiles: grid layout (NOT flex) */
-.constraint-row .history-tile {
-  position: relative;
-  display: grid; /* IMPORTANT */
-}
-
-.constraint-row .history-tile .quadrants {
-  position: absolute;
-  inset: 4px;              /* gives a little breathing room */
-  z-index: 1;
-  pointer-events: none;
-}
-.constraint-row .history-tile > .main-letter {
-  position: relative;
-  z-index: 2;
-}
-.constraint-row .history-tile.tile-green {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Constraint row: solved (green) positions look neutral */
-.constraint-row .history-tile.tile-green {
-  background: transparent !important;
-  color: #fff !important;
-
-  font-weight: 900;
-  letter-spacing: 0.5px;
-}
-
-
-.constraint-letter.forbidden {
-  width: 100%;
-  height: 100%;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: rgba(192, 57, 43, 0.9);
-  color: #fff;
-
-  font-size: 13px;      
-  font-weight: 900;
-  line-height: 1;
-
-  border-radius: 2px;
-   animation: forbidden-pop 160ms cubic-bezier(0.2, 0.9, 0.2, 1);
-}
-
-@keyframes forbidden-pop {
-  0% {
-    transform: scale(0.6);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* === Setter preview overrides (MUST beat draft-layer styles) === */
-/* ===============================
-   Setter preview — correct scope
-   =============================== */
-
-.theme-setter
-#draftSetter
-.pending-guess
-.history-tile.preview-green {
-  color: var(--tile-green-text) !important;
-  border: none;
-  box-shadow: none;
-  opacity: 0.9;
-   animation: preview-green-pulse 2.2s  ease-in-out infinite;
-   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
-}
-
-.theme-setter
-#draftSetter
-.pending-guess
-.history-tile.preview-yellow {
-  color: var(--tile-yellow-text) !important;
-  border: none;
-  box-shadow: none;
-  opacity: 0.9;
-   animation: preview-yellow-pulse 2.2s ease-in-out infinite;
-   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
-}
-
-.theme-setter
-#draftSetter
-.pending-guess
-.history-tile.preview-gray {
-  background: var(--tile-gray);
-  color: var(--tile-gray-text);
-  border: none;
-  box-shadow: none;
-  opacity: 0.8;
-}
-@keyframes preview-green-pulse {
-  0% {
-    background-color: color-mix(in srgb, var(--tile-green) 35%, #000);
-  }
-  50% {
-    background-color: var(--tile-green);
-  }
-  100% {
-    background-color: color-mix(in srgb, var(--tile-green) 35%, #000);
-  }
-}
-
-@keyframes preview-yellow-pulse {
-  0% {
-    background-color: color-mix(in srgb, var(--tile-yellow) 35%, #000);
-  }
-  50% {
-    background-color: var(--tile-yellow);
-  }
-  100% {
-    background-color: color-mix(in srgb, var(--tile-yellow) 35%, #000);
-  }
-}
-
-/* ===============================
-   Remove constraint preview button
-   =============================== */
-.constraint-toggle-btn {
-  background: transparent;
-  border: 1px solid var(--role-accent);
-  color: var(--role-accent);
-
-  border-radius: 6px;
-  padding: 4px 6px;
-
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-
   cursor: pointer;
-  opacity: 0.7;
+  transition: .15s ease;
 }
 
-.constraint-toggle-btn:hover {
-  opacity: 1;
-  box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 60%, transparent);
-}
-
-body.hide-constraints .constraint-row {
-  display: none;
-}
-
-/* ===============================
-  POWERS
-   =============================== */
-/* ===============================
-  HIDE TILE
-   =============================== */
-.history-tile.tile-gray {
-  background: var(--tile-gray);
-  color: var(--tile-gray-text);
-}
-
-
-.history-tile.tile-hidden-cycle {
-  background: linear-gradient(
-    to bottom,
-    var(--tile-gray) 0%,
-    var(--tile-gray) 33.33%,
-    var(--tile-yellow) 33.33%,
-    var(--tile-yellow) 66.66%,
-    var(--tile-green) 66.66%,
-    var(--tile-green) 100%
-  ) !important;
-
+.primary-btn {
+  background: var(--btn-primary);
   color: #fff;
-  font-weight: 900;
-
-  border: 1.5px solid #00000066;
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.15),
-    inset 0 -1px 0 rgba(0,0,0,.4);
-}
-/* ===============================
-  FROZEN
-   =============================== */
-
-/* ===============================
-   FREEZE — Draft Row Overlay
-   =============================== */
-
-.history-row.freeze-draft {
-  position: relative;
-  overflow: hidden;
 }
 
-/* Ice overlay */
-.history-row.freeze-draft::after {
-  content: "";
-  position: absolute;
-  inset: -2px; /* slightly bigger than row */
-  border-radius: 8px;
-
-  background:
-    linear-gradient(
-      120deg,
-      rgba(180, 220, 255, 0.25),
-      rgba(120, 180, 255, 0.35),
-      rgba(180, 220, 255, 0.25)
-    );
-
-  backdrop-filter: blur(1.5px);
-  -webkit-backdrop-filter: blur(1.5px);
-
-  box-shadow:
-    inset 0 0 12px rgba(120,180,255,0.35),
-    inset 0 0 24px rgba(120,180,255,0.15);
-
-  pointer-events: none; /* critical */
-  z-index: 2;
+.secondary-btn {
+  background: transparent;
+  border: 1.5px solid currentColor;
 }
 
-/* Ensure tiles are below the overlay */
-.history-row.freeze-draft .history-tile {
-  position: relative;
-  z-index: 1;
-}
-@media (prefers-reduced-motion: reduce) {
-  .history-row.freeze-draft::after {
-    animation: none;
-  }
-}
-@keyframes ice-shimmer {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
-}
-
-.history-row.freeze-draft::after {
-  background-size: 200% 200%;
-  animation: ice-shimmer 3.5s linear infinite;
-}
-/* ===============================
-   BLIND GUESS (UI-only power)
-   =============================== */
-
-body.blind-guess .constraint-row,
-body.blind-guess .history-scroll {
-  display: none !important;
+/* Power / Keep buttons */
+.power-btn,
+.keep-btn {
+  composes: btn;
+  border: 2px solid currentColor;
+  background: transparent;
 }
 
 /* ===============================
-   BLIND GUESS — keyboard hard mask
+   KEYBOARD
    =============================== */
 
-body.blind-guess .key {
-  /* Color */
-  background: #7b3fe4 !important;
-  color: #ffffff !important;
-
-  /* Remove all visual memory */
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-
-  /* Normalize lighting */
-  filter: none !important;
-  opacity: 1 !important;
-
-  /* Prevent hover / active artifacts */
-  transform: none !important;
-  transition: none !important;
+.keyboard {
+  max-width: 520px;
+  margin: auto;
 }
 
-/* Also kill pseudo-elements if any */
-body.blind-guess .key::before,
-body.blind-guess .key::after {
-  display: none !important;
-  content: none !important;
+.key-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
 }
 
-
-/* Disable hover feedback */
-body.blind-guess .key:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-/* ===============================
-   FORCE GUESS — Guesser Badge
-   =============================== */
-
-.forced-guess-badge {
-  margin: 10px auto 6px;
-  padding: 8px 14px;
-
-  width: fit-content;
-
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-
+.key {
+  width: 44px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--kb-neutral);
   color: #fff;
-  background: rgba(123, 63, 228, 0.25);
-  border: 1.5px solid #7b3fe4;
-  border-radius: 999px;
-
-  box-shadow:
-    0 0 8px rgba(123, 63, 228, 0.35),
-    inset 0 0 6px rgba(123, 63, 228, 0.25);
-}
-/* ===============================
-   BLIND GUESS — preserve ENTER key styling
-   =============================== */
-
-/* Base ENTER key */
-body #keyboardGuesser .key[data-key="ENTER"] {
-  background: var(--btn-primary) !important;
-  color: #fff !important;
-  box-shadow: 0 0 8px var(--btn-primary-glow) !important;
+  border-radius: 6px;
+  font-weight: 700;
+  transition: .15s ease;
 }
 
-/* Hover / active ENTER key */
-body #keyboardGuesser .key[data-key="ENTER"]:hover,
-body #keyboardGuesser .key[data-key="ENTER"]:active {
-  background: var(--btn-primary-hover) !important;
-  box-shadow: 0 0 12px var(--btn-primary-glow) !important;
+.key:hover {
+  background: var(--kb-hover);
   transform: translateY(-2px);
 }
-/* ===============================
-   ASSASSIN WORD BADGE
-   =============================== */
-
-.assassin-badge {
-  margin-top: 10px;
-  padding: 8px 14px;
-
-  width: fit-content;
-
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-
-  color: #fff;
-  background: linear-gradient(135deg, #8b0000, #cc0000);
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  border-radius: 999px;
-
-  box-shadow:
-    0 0 10px rgba(204, 0, 0, 0.45),
-    inset 0 0 6px rgba(255, 255, 255, 0.15);
-}
-.summary-powers {
-  font-size: 12px;
-  line-height: 1.3;
-}
-
-.summary-powers-guesser {
-  color: #4da3ff;
-}
-
-.summary-powers-setter {
-  color: #ff4b5c;
-}
 
 /* ===============================
-   BLIND SPOT — half-hidden tile
+   STATE COLORS (shared)
    =============================== */
+
+.state-green  { background: var(--tile-green);  color: var(--tile-green-text); }
+.state-yellow { background: var(--tile-yellow); color: var(--tile-yellow-text); }
+.state-gray   { background: var(--tile-gray);   color: var(--tile-gray-text); }
+
+/* Map legacy classes */
+.key.key-green,
+.history-tile.tile-green { composes: state-green; }
+
+.key.key-yellow,
+.history-tile.tile-yellow { composes: state-yellow; }
+
+.key.key-gray,
+.history-tile.tile-gray { composes: state-gray; }
 
 /* ===============================
-   BLIND SPOT — half outline
+   ANIMATIONS
    =============================== */
-
-.tile-blindspot {
-  position: relative;
-  overflow: hidden;
-}
-
-/* Left-half purple outline */
-.tile-blindspot::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-
-  border-left: 3px solid rgba(155, 80, 255, 0.95);
-  border-top: 3px solid rgba(155, 80, 255, 0.95);
-  border-bottom: 3px solid rgba(155, 80, 255, 0.95);
-  border-right: 3px solid rgba(155, 80, 255, 0.95);
-
-
-  pointer-events: none;
-  z-index: 3;
-}
-/* ===============================
-   ROLE BADGE (next to Room ID)
-   =============================== */
-
-.room-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.role-badge {
-  padding: 2px 8px;
-  border-radius: 999px;
-
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-
-  border: 1.5px solid currentColor;
-  opacity: 0.9;
-}
-
-/* Color follows theme */
-.theme-setter .role-badge {
-  color: var(--role-accent);
-}
-
-.theme-guesser .role-badge {
-  color: var(--role-accent);
-}
-
-/* ===============================
-   TOOLTIP
-   =============================== */
-
-.tooltip {
-  position: fixed;
-  z-index: 100000;
-
-  max-width: 260px;
-  padding: 10px 14px;
-
-  background: rgba(20, 20, 22, 0.95);
-  color: #fff;
-
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.15);
-
-  font-size: 13px;
-  line-height: 1.35;
-
-  box-shadow:
-    0 0 14px rgba(0,0,0,.6),
-    inset 0 0 6px rgba(255,255,255,.05);
-
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity .15s ease, transform .15s ease;
-}
-
-.tooltip.show {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.tooltip-title {
-  font-weight: 900;
-  margin-bottom: 4px;
-  letter-spacing: 0.5px;
-}
-
-.tooltip-desc {
-  opacity: 0.9;
-}
-.power-container {
-  display: grid;
-    gap: 10px;
-   justify-content: center;
-}
-.power-btn-wrapper {
-  margin: 0;
-  display: block;
-}
-.keep-btn {
-  display: none !important;
-}
-
-
-
-///TIMER
-.timer-block {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  margin-right: 6px;
-}
-
-.chess-timer {
-  font-family: "Courier New", monospace;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  color: var(--role-accent);
-   transition: color 0.2s ease, text-shadow 0.2s ease;
-}
-}
-
-
-/* 30s warning */
-.chess-timer.warn-30 {
-  color: #ffb347; /* amber */
-  text-shadow: 0 0 6px rgba(255, 179, 71, 0.6);
-}
-
-/* 10s critical */
-.chess-timer.warn-10 {
-  color: #ff4b4b; /* red */
-  text-shadow: 0 0 10px rgba(255, 75, 75, 0.9);
-  animation: pulse-critical 0.9s infinite;
-}
-
-@keyframes pulse-critical {
-  0%   { opacity: 1; }
-  50%  { opacity: 0.6; }
-  100% { opacity: 1; }
-}
-
-
-.remaining-label {
-  font-size: 11px;
-  opacity: 0.85;
-  text-transform: uppercase;
-}
-.chess-timer.active {
-  animation: pulse 1s infinite;
-}
 
 @keyframes pulse {
   0% { opacity: 1; }
-  50% { opacity: 0.6; }
+  50% { opacity: .6; }
   100% { opacity: 1; }
 }
 
-/* Increment flash */
-.chess-timer.increment {
-  animation: timer-increment-flash 0.4s ease-out;
+@keyframes flip {
+  from { transform: rotateX(90deg); }
+  to { transform: rotateX(0); }
 }
 
-@keyframes timer-increment-flash {
-  0% {
-    transform: scale(1);
-    text-shadow: 0 0 0 rgba(255,255,255,0);
-  }
-  50% {
-    transform: scale(1.15);
-    text-shadow: 0 0 12px rgba(255,255,255,0.9);
-  }
-  100% {
-    transform: scale(1);
-    text-shadow: 0 0 0 rgba(255,255,255,0);
-  }
-}
-
-/* Floating +10 indicator */
-.timer-increment-badge {
-  position: absolute;
-  right: 0;
-  top: -10px;
-
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-
-  color: #6aff6a;
-  opacity: 0;
-
-  pointer-events: none;
-  animation: float-plus 0.8s ease-out forwards;
-}
-
-@keyframes float-plus {
-  0%   { transform: translateY(6px); opacity: 0; }
-  20%  { opacity: 1; }
-  100% { transform: translateY(-12px); opacity: 0; }
-}
-.match-meta {
-  font-size: 12px;
-  opacity: 0.85;
-  margin-top: 4px;
-  letter-spacing: 0.3px;
+.evaluated-row .history-tile {
+  animation: flip .6s ease forwards;
 }
 
