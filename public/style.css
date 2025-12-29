@@ -1878,24 +1878,22 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 /* Mobile only */
 @media (hover: none) and (pointer: coarse) {
   .power-info-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  background: transparent;
 
-    width: 28px;
-    height: 28px;
+  font-weight: 900;
+  font-size: 14px;
+  line-height: 1;
 
-    border-radius: 50%;
-    border: 1.5px solid currentColor;
-    background: transparent;
+  opacity: 0.85;
+}
 
-    font-weight: 900;
-    font-size: 14px;
-    line-height: 1;
-
-    cursor: pointer;
-    opacity: 0.85;
-  }
+.power-info-btn:hover {
+  opacity: 1;
+}
 }
 
 /* Panel */
@@ -1925,4 +1923,12 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   font-size: 13px;
   opacity: 0.9;
 }
+
+.power-info-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+
 
