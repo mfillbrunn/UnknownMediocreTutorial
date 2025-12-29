@@ -81,3 +81,29 @@ $("timeControlSelect").onchange = () => {
   }
 };
 
+const infoBtn = document.getElementById("powerInfoBtn");
+const panel = document.getElementById("powerInfoPanel");
+
+if (infoBtn && panel) {
+  infoBtn.addEventListener("click", () => {
+    const isOpen = !panel.hidden;
+    panel.hidden = isOpen;
+
+    if (!isOpen) {
+      // Use latest game state
+      buildPowerInfoPanel(window.currentGameState);
+    }
+  });
+}
+
+// Close when tapping outside
+document.addEventListener("click", (e) => {
+  if (
+    panel &&
+    !panel.hidden &&
+    !panel.contains(e.target) &&
+    e.target !== infoBtn
+  ) {
+    panel.hidden = true;
+  }
+});
