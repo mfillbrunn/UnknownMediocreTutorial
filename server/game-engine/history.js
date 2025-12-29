@@ -8,7 +8,7 @@ function normalizeFB(fbArr) {
     if (fb === "🟩") return "🟩";
     if (fb === "🟨") return "🟨";
     if (fb === "⬛") return "⬛"; // includes ⬜ treated as black
-    if (fb === "") return ""
+    if (fb === "") return "";
   });
 }
 
