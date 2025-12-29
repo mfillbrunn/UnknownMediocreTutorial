@@ -30,7 +30,7 @@ function isConsistentWithHistory(history, proposedSecret, state) {
      let expected = scoreGuess(proposedSecret, guess);
     // 5 — final comparison
     for (let i = 0; i < 5; i++) {
-      if (expected[i] !== actual[i]) return false;
+      if ((expected[i] !== actual[i]) && actual[i] !=="") return false;
     }
   }
 
