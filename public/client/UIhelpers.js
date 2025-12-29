@@ -5,16 +5,26 @@ window.updatePowerInfoState = function (state) {
   latestPowerInfoState = state;
 };
 
-  function buildPowerInfoPanel(state) {
-  const panel = document.getElementById("powerInfoPanel");
-  if (!panel) return;
+function buildPowerInfoPanel(state, role) {
+  const panel = document.getElementById(
+    role === "setter"
+      ? "powerInfoPanelSetter"
+      : "powerInfoPanelGuesser"
+  );
+
+  if (!panel || !state) return;
 
   panel.innerHTML = "";
 
-  for (const id in PowerEngine.powers) {
-    // Respect active powers for this match
-    if (state?.activePowers && !state.activePowers.includes(id)) continue;
+  const sections = {
+    setter: [],
+    guesser: []
+  };
 
+  for (const id in PowerEngine.powers) {
+    if (state.activePowers && !state.activePowers.includes(id)) continue;
+
+    const mod = PowerEngine.powers[id];
     const meta = getPowerMeta(id);
     if (!meta) continue;
 
@@ -26,9 +36,28 @@ window.updatePowerInfoState = function (state) {
       <div class="power-info-desc">${meta.desc}</div>
     `;
 
-    panel.appendChild(row);
+    const powerRole = mod.role || "guesser";
+    sections[powerRole]?.push(row);
+  }
+
+  if (sections.setter.length) {
+    panel.appendChild(makeInfoHeader("Setter Powers"));
+    sections.setter.forEach(r => panel.appendChild(r));
+  }
+
+  if (sections.guesser.length) {
+    panel.appendChild(makeInfoHeader("Guesser Powers"));
+    sections.guesser.forEach(r => panel.appendChild(r));
   }
 }
+
+function makeInfoHeader(text) {
+  const h = document.createElement("div");
+  h.className = "power-info-header";
+  h.textContent = text;
+  return h;
+}
+
 
 function showTooltip(target, { title, desc }) {
   const tooltip = document.getElementById("tooltip");
