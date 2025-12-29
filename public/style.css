@@ -971,9 +971,6 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
 
   position: relative;
 }
-.powers-col > .keep-btn {
-  position: fixed;   /* removes it from grid sizing entirely */
-}
 
 /* Center column: history + draft */
 .center-col {
@@ -1776,10 +1773,11 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 .powers-col::after {
   content: "";
   width: 1px;
-  flex-grow: 1;
+  height: 100%;
   background: rgba(255,255,255,0.06);
   margin-top: 8px;
 }
+
 
 
 
