@@ -1863,4 +1863,10 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   20%  { opacity: 1; }
   100% { transform: translateY(-12px); opacity: 0; }
 }
+.match-meta {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+}
 
