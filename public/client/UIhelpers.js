@@ -170,3 +170,35 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+function initPowerInfoButton(buttonId, role) {
+  const btn = document.getElementById(buttonId);
+  const panel = document.getElementById(
+    role === "setter"
+      ? "powerInfoPanelSetter"
+      : "powerInfoPanelGuesser"
+  );
+
+  if (!btn || !panel) return;
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    const isOpen = !panel.hidden;
+    panel.hidden = isOpen;
+
+    if (!isOpen && latestPowerInfoState) {
+      buildPowerInfoPanel(latestPowerInfoState, role);
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) {
+      panel.hidden = true;
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initPowerInfoButton("powerInfoBtnSetter", "setter");
+  initPowerInfoButton("powerInfoBtnGuesser", "guesser");
+});
