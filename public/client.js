@@ -44,7 +44,14 @@ let lastTimeRemaining = { A: null, B: null };
 
 function renderChessClocks() {
   if (!state || !state.timeRemaining) return;
-
+    if (!state.timeControl?.enabled) {
+      $("timerSetter")?.classList.add("hidden");
+      $("timerGuesser")?.classList.add("hidden");
+      return;
+    } else {
+      $("timerSetter")?.classList.remove("hidden");
+      $("timerGuesser")?.classList.remove("hidden");
+    }
   const setter = state.setter;
   const guesser = state.guesser;
 
