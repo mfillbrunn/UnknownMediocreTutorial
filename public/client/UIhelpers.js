@@ -99,7 +99,9 @@ document.addEventListener("DOMContentLoaded", () => {
     panel.hidden = isOpen;
 
     if (!isOpen) {
-      buildPowerInfoPanel(window.currentGameState);
+      if (latestPowerInfoState) {
+        buildPowerInfoPanel(latestPowerInfoState);
+      }
     }
   });
 
