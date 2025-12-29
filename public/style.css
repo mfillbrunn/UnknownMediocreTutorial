@@ -1912,4 +1912,17 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   padding: 14px;
   z-index: 100000;
 }
+.power-info-row {
+  margin-bottom: 12px;
+}
+
+.power-info-title {
+  font-weight: 900;
+  margin-bottom: 2px;
+}
+
+.power-info-desc {
+  font-size: 13px;
+  opacity: 0.9;
+}
 
