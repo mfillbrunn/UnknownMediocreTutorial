@@ -1,4 +1,9 @@
 let activeTooltipTarget = null;
+let latestPowerInfoState = null;
+
+window.updatePowerInfoState = function (state) {
+  latestPowerInfoState = state;
+};
 
 function showTooltip(target, { title, desc }) {
   const tooltip = document.getElementById("tooltip");
@@ -81,29 +86,31 @@ $("timeControlSelect").onchange = () => {
   }
 };
 
-const infoBtn = document.getElementById("powerInfoBtn");
-const panel = document.getElementById("powerInfoPanel");
+document.addEventListener("DOMContentLoaded", () => {
+  const infoBtn = document.getElementById("powerInfoBtn");
+  const panel = document.getElementById("powerInfoPanel");
 
-if (infoBtn && panel) {
-  infoBtn.addEventListener("click", () => {
+  if (!infoBtn || !panel) return;
+
+  infoBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+
     const isOpen = !panel.hidden;
     panel.hidden = isOpen;
 
     if (!isOpen) {
-      // Use latest game state
       buildPowerInfoPanel(window.currentGameState);
     }
   });
-}
 
-// Close when tapping outside
-document.addEventListener("click", (e) => {
-  if (
-    panel &&
-    !panel.hidden &&
-    !panel.contains(e.target) &&
-    e.target !== infoBtn
-  ) {
-    panel.hidden = true;
-  }
+  // Close when tapping outside
+  document.addEventListener("click", (e) => {
+    if (
+      !panel.hidden &&
+      !panel.contains(e.target) &&
+      e.target !== infoBtn
+    ) {
+      panel.hidden = true;
+    }
+  });
 });
