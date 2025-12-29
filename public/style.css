@@ -1929,6 +1929,14 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   justify-content: center;
   margin-bottom: 6px;
 }
+.power-info-header {
+  margin: 10px 0 6px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
 
 
 
