@@ -532,6 +532,7 @@ function updateScreens() {
     hide("setterScreen");
     updateGuesserScreen();
   }
+updatePowerInfoState(state);  
 PowerEngine.applyUI(state, myRole, roomId);
 }
 
