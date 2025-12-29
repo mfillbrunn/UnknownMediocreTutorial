@@ -1869,3 +1869,47 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   margin-top: 4px;
   letter-spacing: 0.3px;
 }
+
+/* Hidden on desktop */
+.power-info-btn {
+  display: none;
+}
+
+/* Mobile only */
+@media (hover: none) and (pointer: coarse) {
+  .power-info-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 28px;
+    height: 28px;
+
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    background: transparent;
+
+    font-weight: 900;
+    font-size: 14px;
+    line-height: 1;
+
+    cursor: pointer;
+    opacity: 0.85;
+  }
+}
+
+/* Panel */
+.power-info-panel {
+  position: fixed;
+  inset: auto 12px 12px 12px;
+  max-height: 60vh;
+  overflow-y: auto;
+
+  background: rgba(20,20,22,.97);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 14px;
+
+  padding: 14px;
+  z-index: 100000;
+}
+
