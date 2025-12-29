@@ -21,7 +21,8 @@ function createInitialState() {
     ///TIMER
     timeControl: {
     initialSeconds: 300,  // default 5 min
-    incrementSeconds: 10
+    incrementSeconds: 10,
+      enabled: true
   },
   
   timeRemaining: {
