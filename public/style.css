@@ -963,13 +963,10 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
 .powers-col {
   display: flex;
   flex-direction: column;
-  align-items: center;
-
-  gap: 10px;              /* controls spacing consistently */
-  width: 96px;            /* lock width so center column doesn't jitter */
-  flex-shrink: 0;
-
-  position: relative;
+  gap: 0;
+  }
+.powers-col > .keep-btn {
+  position: fixed;   /* removes it from grid sizing entirely */
 }
 
 /* Center column: history + draft */
@@ -1010,18 +1007,41 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   width: 100%;   
   pointer-events: none;
 }
+.keep-btn {
+  position: absolute;
+  left: calc(100% + 12px);
 
+  top: 50%;
+  transform: translateY(-50%);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: 1.5px solid currentColor;
+  color: var(--role-accent);
+  border-radius: 8px;
+
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  line-height: 1;
+
+  padding: 7px 12px;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: opacity .15s ease, box-shadow .15s ease;
+}
 
 /* Bottom draft row becomes the anchor */
 .draft-stack .history-row:last-child {
   position: relative;
 }
 
-.keep-btn {
-  opacity: 0;
-  pointer-events: none;
-  visibility: hidden;
-}
+
+
 .keep-btn:hover {
   opacity: 1;
   box-shadow: 0 0 6px currentColor;
@@ -1093,8 +1113,60 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
 .keep-btn.mobile-keep {
   display: none;
 }
- 
-  
+
+@media (max-width: 520px) {
+  .keep-btn {
+    position: static;      /* remove absolute positioning */
+    transform: none;
+    left: auto;
+    top: auto;
+    bottom: auto;
+    margin: 0;
+  }
+   .draft-row-wrap .keep-btn {
+    display: none;
+  }
+   .keep-btn.mobile-keep {
+    display: flex;
+    width: 100%;
+    margin-top: 10px;
+
+    background: var(--btn-primary);
+    color: #fff;
+
+    border: none;
+    border-radius: 12px;
+
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+
+    padding: 14px 16px;
+
+    box-shadow: 0 0 10px var(--btn-primary-glow);
+
+    justify-content: center;
+  }
+   .keep-btn.mobile-keep:active {
+    transform: scale(0.97);
+    box-shadow:
+      0 0 6px color-mix(in srgb, var(--role-accent) 50%, transparent);
+  }
+    .keep-btn.mobile-keep:disabled {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.45);
+
+    box-shadow: none;
+    filter: grayscale(0.6);
+    opacity: 0.6;
+
+    cursor: not-allowed;
+  }
+  .keep-btn.mobile-keep:disabled:active {
+    transform: none;
+  }
+}
 
 /* Existing tiles row */
 .history-row {
@@ -1681,26 +1753,16 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 }
 .power-container {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-
-  width: 100%;
-  padding-top: 4px;
+    gap: 10px;
+   justify-content: center;
 }
-
 .power-btn-wrapper {
   margin: 0;
   display: block;
 }
-
-.powers-col::after {
-  content: "";
-  width: 1px;
-  height: 100%;
-  background: rgba(255,255,255,0.06);
-  margin-top: 8px;
+.keep-btn {
+  display: none !important;
 }
-
 
 
 
@@ -1836,16 +1898,20 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 
 /* Panel */
 .power-info-panel {
-  position: absolute;
-  top: 36px;              /* just below the ? button */
-  left: 100%;
-  margin-left: 8px;
-
-  width: 220px;
-  max-height: 260px;
+  position: fixed;
+  inset: auto 12px 12px 12px;
+  max-height: 60vh;
   overflow-y: auto;
 
-  z-index: 50;
+  background: rgba(20,20,22,.97);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 14px;
+
+  padding: 14px;
+  z-index: 100000;
+}
+.power-info-row {
+  margin-bottom: 12px;
 }
 
 .power-info-title {
@@ -1861,7 +1927,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 .power-info-row {
   display: flex;
   justify-content: center;
-  width: 100%;
+  margin-bottom: 6px;
 }
 .power-info-header {
   margin: 10px 0 6px;
@@ -1871,6 +1937,5 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   text-transform: uppercase;
   opacity: 0.85;
 }
-
 
 
