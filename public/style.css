@@ -20,7 +20,13 @@
   --popup-bg: rgba(20,20,22,0.95);
   --popup-border: rgba(255,255,255,0.16);
 
-  /
+  /* Theme “role” tokens (overridden by .theme-*) */
+  --role-accent: #4da3ff;
+  --role-accent-strong: #4da3ff;
+
+  --btn-primary: #4da3ff;
+  --btn-primary-hover: #6ab4ff;
+  --btn-primary-glow: rgba(70,140,255,.7);
 }
 
 body {
@@ -350,7 +356,10 @@ body {
 }
 .key:active { transform: scale(0.95); }
 /* Guesser: all keys can still hover (including used ones) */
-
+.theme-guesser .key:hover {
+  background: var(--kb-hover);
+  transform: translateY(-2px);
+}
 
 
 /* Keyboard key color states */
@@ -376,7 +385,12 @@ body {
     inset 0 -2px 4px rgba(0,0,0,.6);
   opacity: 0.85;
 }
-
+/* Setter: gray keys are inert */
+.theme-setter .key.key-gray:hover,
+.theme-setter .key.key-gray:active {
+ transform: none;
+  box-shadow: none;
+}
 
 /* Optional: highlight current draft keys without overriding solved colors */
 .key.key-current {
@@ -550,6 +564,39 @@ body {
   border: 2px solid rgba(255,255,255,0.5);
 }
 
+/* Ghost secret (single consolidated definition) */
+.theme-setter .ghost-secret {
+  color: rgba(255,255,255,0.35) !important;
+  letter-spacing: 0.15em;
+}
+.theme-setter .ghost-secret .history-tile {
+  border-width: 2px;
+  border-color: var(--role-accent);
+  box-shadow:  0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
+   color: rgba(255, 255, 255, 0.45);
+}
+
+/* Setter draft accent vs guesser draft accent */
+.theme-setter .draft-layer .history-tile {
+  border: 1px solid rgba(255,80,80,0.4);
+  box-shadow: 0 0 6px rgba(255,80,80,0.3);
+}
+.theme-guesser .draft-layer .history-tile {
+  border: 1px solid rgba(70,140,255,.35);
+  box-shadow: 0 0 6px rgba(70,140,255,.35);
+}
+/* Only when there are TWO draft rows:
+   style the TOP one as guesser-owned */
+.theme-setter
+#draftSetter:has(.history-row:nth-child(2))
+.history-row:first-child
+.history-tile {
+  border-color: color-mix(in srgb, var(--opponent-accent) 70%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--opponent-accent) 40%, transparent);
+  color: var(--opponent-accent);
+  
+}
+
 /* Authoritative setter draft layout */
 #draftSetter {
   display: flex;
@@ -584,11 +631,86 @@ body {
   justify-content: space-between;
 }
 
+/* Theme: Guesser (Blue) */
+.theme-guesser {
+  --role-accent: #4da3ff;
+  --role-accent-strong: #4da3ff;
+
+  --btn-primary: #4da3ff;
+  --btn-primary-hover: #6ab4ff;
+  --btn-primary-glow: rgba(70,140,255,.7);
+   --opponent-accent: #ff4b5c;
+}
+
+.theme-guesser h2 {
+  color: var(--role-accent);
+}
+
+/* Theme: Setter (Red) */
+.theme-setter {
+  --role-accent: #ff4b5c;
+  --role-accent-strong: #ff1e33;
+  --btn-primary: #ff1e33;
+  --btn-primary-hover: #ff3b4d;
+  --btn-primary-glow: rgba(255,30,50,.7);
+    --opponent-accent: #4da3ff;
+   }
+.theme-setter,
+.theme-guesser {
+  /* Defaults still exist, but will be overridden by JS color picker */
+background: #0c0c0e;
+  border: 2px solid var(--role-accent) !important;
+
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--role-accent) 22%, transparent),
+    inset 0 0 14px color-mix(in srgb, var(--role-accent) 12%, transparent) !important;
+
+  color: var(--role-accent);
+}
+
 #setterScreen [hidden] {
   display: none !important;
 }
 #setterGuesser [hidden] {
   display: none !important;
+}
+
+
+.theme-setter h2 {
+  color: var(--role-accent);
+}
+
+/* Remaining words (top-right) */
+:where(.theme-guesser .guesser-remaining, .theme-setter .setter-remaining) {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--role-accent);
+}
+
+/* Panels transparent in both themes */
+:where(.theme-setter, .theme-guesser) :where(.panel, .history-box, .preview-box) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+:where(.theme-setter, .theme-guesser) .history-box { margin-bottom: 6px; }
+
+.theme-setter .info-grid { margin-top: 12px; }
+
+/* Power button color ties to theme */
+:where(.theme-setter, .theme-guesser) .power-btn { color: var(--role-accent); }
+
+/* Setter ambient vignette */
+.theme-setter::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow:    inset 0 0 80px color-mix(in srgb, var(--role-accent) 15%, transparent);
 }
 
 /* Turn overlay */
@@ -640,6 +762,27 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
 }
 
 
+.theme-guesser .turn-indicator.your-turn {
+  background: var(--role-accent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--role-accent) 45%, transparent);
+}
+
+.theme-setter .turn-indicator.your-turn {
+  background: var(--role-accent-strong);
+  animation: setter-turn-pulse 1s infinite;
+}
+
+/* Overlay gradient / pulse (setter) */
+.theme-setter .turn-overlay.your-turn {
+  opacity: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,30,50,0.55),
+    rgba(255,30,50,0)
+  );
+  animation: setter-overlay-pulse 1.2s infinite;
+}
+
 @keyframes setter-overlay-pulse {
   0%   { filter: brightness(1); }
   50%  { filter: brightness(1.3); }
@@ -656,6 +799,12 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   100% {    outline: 3px solid rgba(70,140,255,0);  }
 }
 
+/* Outline animation (theme-setter current key) */
+.theme-setter .key.key-current {
+  outline-offset: -2px;
+  animation: blue-outline-pulse 2.2s infinite;
+   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+}
 
 /* =========================================
    TOAST + TURN POPUP
@@ -757,6 +906,13 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
 .same-btn svg { display: block; }
 
 
+/* Remove panel boxes for guesser + setter inline strip */
+.theme-guesser .history-box,
+.theme-setter .secret-inline {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
 
 /* =========================================
    MODAL BASE (HIDDEN)
@@ -898,6 +1054,41 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   box-shadow: none;
 }
 
+.theme-setter
+#draftSetter:has(.history-row:nth-child(2))
+.history-row:last-child
+.history-tile {
+  border-color: var(--role-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
+   border-width: 2px;
+}
+/* Setter: exactly one draft row → it is active */
+.theme-setter
+#draftSetter:not(:has(.history-row:nth-child(2)))
+.history-row
+.history-tile {
+  border-width: 2px;
+  border-color: var(--role-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
+}
+
+.theme-guesser #draftGuesser .history-tile {
+  border-width: 2px;
+  border-color: var(--role-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
+}
+
+
+/* Draft tiles when unusable */
+.theme-setter:not(:has(.turn-indicator.your-turn))
+#draftSetter .history-tile,
+.theme-guesser:not(:has(.turn-indicator.your-turn))
+#draftGuesser .history-tile {
+  opacity: 0.28;
+  filter: grayscale(1);
+  box-shadow: none;
+}
+
 .role-title {
   display: inline-flex;
   align-items: baseline;
@@ -975,6 +1166,13 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   .keep-btn.mobile-keep:disabled:active {
     transform: none;
   }
+}
+
+/* Existing tiles row */
+.history-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
 }
 
 .history-row-wrap {
@@ -1147,6 +1345,40 @@ Constraint row using history tile language
    Setter preview — correct scope
    =============================== */
 
+.theme-setter
+#draftSetter
+.pending-guess
+.history-tile.preview-green {
+  color: var(--tile-green-text) !important;
+  border: none;
+  box-shadow: none;
+  opacity: 0.9;
+   animation: preview-green-pulse 2.2s  ease-in-out infinite;
+   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.theme-setter
+#draftSetter
+.pending-guess
+.history-tile.preview-yellow {
+  color: var(--tile-yellow-text) !important;
+  border: none;
+  box-shadow: none;
+  opacity: 0.9;
+   animation: preview-yellow-pulse 2.2s ease-in-out infinite;
+   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.theme-setter
+#draftSetter
+.pending-guess
+.history-tile.preview-gray {
+  background: var(--tile-gray);
+  color: var(--tile-gray-text);
+  border: none;
+  box-shadow: none;
+  opacity: 0.8;
+}
 @keyframes preview-green-pulse {
   0% {
     background-color: color-mix(in srgb, var(--tile-green) 35%, #000);
@@ -1239,6 +1471,11 @@ body.hide-constraints .constraint-row {
 /* ===============================
    FREEZE — Draft Row Overlay
    =============================== */
+
+.history-row.freeze-draft {
+  position: relative;
+  overflow: hidden;
+}
 
 /* Ice overlay */
 .history-row.freeze-draft::after {
@@ -1461,6 +1698,15 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   opacity: 0.9;
 }
 
+/* Color follows theme */
+.theme-setter .role-badge {
+  color: var(--role-accent);
+}
+
+.theme-guesser .role-badge {
+  color: var(--role-accent);
+}
+
 /* ===============================
    TOOLTIP
    =============================== */
@@ -1623,4 +1869,3 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   margin-top: 4px;
   letter-spacing: 0.3px;
 }
-
