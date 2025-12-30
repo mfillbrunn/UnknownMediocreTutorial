@@ -398,13 +398,15 @@ body {
 }
 /* Setter keyboard dead unless SETTER screen has your-turn */
 
-#setterScreen.is-not-your-turn #keyboardSetter {
+#setterScreen.is-not-your-turn #keyboardSetter,
+#guesserScreen.is-not-your-turn #keyboardGuesser{
   filter: grayscale(0.9);
   opacity: 0.35;
   pointer-events: none;
 }
 
-#setterScreen.is-your-turn #keyboardSetter {
+#setterScreen.is-your-turn #keyboardSetter,
+#guesserScreen.is-your-turn #keyboardGuesser{
   filter: none;
   opacity: 1;
   pointer-events: auto;
@@ -802,21 +804,6 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   transform: translateX(-50%) translateY(0);
 }
 
-/* =========================================
-   GUESSER CONSTRAINT OUTPUT HIDING (DEDUPED)
-   ========================================= */
-#guesserScreen .pattern-letter,
-#guesserScreen #mustContainGuesser {
-  display: inline-block !important;
-  width: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  letter-spacing: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
 /* =========================================
    SECRET ROW / SAME BUTTON
    ========================================= */
