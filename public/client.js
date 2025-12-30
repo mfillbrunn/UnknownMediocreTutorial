@@ -100,6 +100,14 @@ function triggerIncrementEffect(el, delta) {
   setTimeout(() => badge.remove(), 800);
 }
 
+///Simplified turn indicator
+function setTurn(screenId, isYourTurn) {
+  const screen = document.getElementById(screenId);
+  if (!screen) return;
+
+  screen.classList.toggle("is-your-turn", isYourTurn);
+  screen.classList.toggle("is-not-your-turn", !isYourTurn);
+}
 
 
 // -----------------------------------------------------
@@ -251,8 +259,7 @@ onStateUpdate(newState => {
     localGuesserDraft = "";
   }
 const setterCanEdit =
-  myRole === state.setter &&
-  (
+  myRole === state.setter &&  (
     // Normal phase: setter’s turn with pending guess
     (state.phase === "normal" &&
       state.turn === state.setter &&
@@ -491,6 +498,7 @@ $("setterRoleBadge").textContent = "Setter";
     }
     const displayGuess =state.powers?.stealthGuessActive? "?????": state.pendingGuess;
   const isSetterTurn = (state.turn === state.setter);
+    setTurn("setterScreen", isSetterTurn);    
   const isDecisionStep =isSetterTurn &&!!displayGuess &&state.phase === "normal";
   let setterInputEnabled = false;
   // -------------------------------------------------------
@@ -683,7 +691,9 @@ renderDraftRows({
   localGuesserDraft
 });
   const guesserName =  state.playerNames?.[state.guesser] || "Guesser";
-$("guesserScreen").querySelector(".screen-title").textContent = guesserName;
+  const isGuesserTurn = state.turn === state.guesser;
+  setTurn("guesserScreen", isGuesserTurn);
+  $("guesserScreen").querySelector(".screen-title").textContent = guesserName;
 $("guesserRoleBadge").textContent = "Guesser";
 
 const badge = $("guesserForcedGuessBadge");
