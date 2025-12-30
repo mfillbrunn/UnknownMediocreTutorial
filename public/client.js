@@ -160,22 +160,6 @@ window.addEventListener("load", () => {
 // -----------------------------------------------------
 // SOCKET EVENT HANDLERS
 // -----------------------------------------------------
-
-// Turn animation
-onAnimateTurn(({ type }) => {
-  const tp = $("turnPopup");
-  const msg = type === "setterSubmitted"
-    ? "Setter Submitted"
-    : type === "guesserSubmitted"
-    ? "Guesser Submitted"
-    : "";
-
-  if (!msg) return;
-  tp.textContent = msg;
-  tp.classList.add("show");
-  setTimeout(() => tp.classList.remove("show"), 800);
-});
-
 // Power UI hook (client-side effects)
 let powerQueue = [];
 
