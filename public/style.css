@@ -166,21 +166,18 @@ body {
   opacity: 0;
   transform: translateY(10px);
   transition: .25s ease;
-   pointer-events: none;
 }
 
 .screen.active {
   display: block;
   opacity: 1;
   transform: translateY(0);
-   pointer-events: none;
 }
 
 .screen-title {
   font-size: 24px;
   color: var(--heading);
   margin-bottom: 16px;
-   pointer-events: none;
 }
 
 /* Shared panel styling */
