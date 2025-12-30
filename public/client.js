@@ -510,7 +510,7 @@ $("setterRoleBadge").textContent = "Setter";
     setterInputEnabled = !secretSubmitted;    
     KeepEnabled=false;
     NewEnabled=setterInputEnabled;
-    setTurn("setterScreen", setterInputEnabled); 
+    setTurn("setterScreen", !state.secret); 
   }
   // NORMAL PHASE — decision step only
   else if (state.phase === "normal") {
@@ -697,11 +697,8 @@ renderDraftRows({
   $("guesserScreen").querySelector(".screen-title").textContent = guesserName;
 $("guesserRoleBadge").textContent = "Guesser";
 setTurn("guesserScreen", false);
-if (state.phase === "simultaneous") {
-    const guessSubmitted =!!state.pendingGuess || state.simultaneousSecretSubmitted;
-    setTurn("guesserScreen", !guessSubmitted); 
-  }
-if (state.phase === "normal" && state.turn === state.guesser) {setTurn("setterScreen", true);} 
+if (state.phase === "simultaneous") {setTurn("guesserScreen", !state.pendingGuess);}
+if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserScreen", true);} 
   
 const badge = $("guesserForcedGuessBadge");
 if (!badge) return;
