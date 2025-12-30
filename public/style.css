@@ -689,17 +689,6 @@ background: #0c0c0e;
   color: var(--role-accent);
 }
 
-/* Remaining words (top-right) */
-:where(.theme-guesser .guesser-remaining, .theme-setter .setter-remaining) {
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  opacity: 0.9;
-  text-transform: uppercase;
-  font-size: 13px;
-  white-space: nowrap;
-  color: var(--role-accent);
-}
-
 /* Panels transparent in both themes */
 :where(.theme-setter, .theme-guesser) :where(.panel, .history-box, .preview-box) {
   background: transparent;
@@ -1657,12 +1646,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   100% { opacity: 1; }
 }
 
-
-.remaining-label {
-  font-size: 11px;
-  opacity: 0.85;
-  text-transform: uppercase;
-}
 .chess-timer.active {
   animation: pulse 1s infinite;
 }
@@ -1791,4 +1774,40 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   opacity: 0.85;
 }
 
+/* =========================================
+   Shared role header layout
+   ========================================= */
 
+.role-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.header-right,
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.header-status .timer-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
