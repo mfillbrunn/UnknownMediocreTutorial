@@ -81,7 +81,7 @@
     <!-- ========== SETTER ========== -->
     <section id="setterScreen" class="screen theme-setter">
        <!-- HEADER -->
-         <div class="setter-header">
+         <header class="setter-header">
             <div class="role-title">
                <h2 class="screen-title"></h2>
                <span class="room-meta">
@@ -98,9 +98,9 @@
                   <button id="toggleConstraintsBtn" class="constraint-toggle-btn" title="Toggle constraints" >⧉</button>
                </div>
             </div>
-         </div>
+         </header>
          <!-- PLAY AREA -->    
-         <div class="play-area setter-play">
+         <main class="play-area setter-play">
             <div class="play-row">
                 <!-- LEFT: powers -->
                <div class="power-info-panel"> <button id="powerInfoBtnSetter"  class="power-info-btn"  aria-label="Power descriptions">?</button> 
@@ -124,9 +124,9 @@
                </div>
             </div>
             <!-- KEYBOARD AREA-->
+            <div id="assassinWordBadge" class="assassin-badge" hidden></div>
             <div id="keyboardSetter" class="keyboard"></div>
-            <div id="assassinWordBadge" class="assassin-badge" hidden ></div>
-         </div>
+         </main>
          <!---Modals--->   
          <!-- Assassin Modal -->
          <div id="assassinModal" class="modal">
@@ -156,7 +156,7 @@
     
      <section id="guesserScreen" class="screen theme-guesser">
        <!-- HEADER -->
-       <div class="guesser-header">
+       <header class="guesser-header">
           <div class="role-title">
              <h2 class="screen-title"></h2>
              <span class="room-meta">
@@ -170,9 +170,9 @@
              </div>
              <button class="constraint-toggle-btn" title="Toggle constraints"> ⧉ </button>
           </div>
-       </div>
+       </header>
        <!--- PLAY AREA---> 
-       <div class="play-area guesser-play">
+       <main class="play-area guesser-play">
           <div class="play-row">
              <!-- LEFT: POWERS -->
              <div class="play-col powers-col">
@@ -191,7 +191,7 @@
           <!--- KEYBOARD AREA---> 
           <div id="guesserForcedGuessBadge" class="forced-guess-badge" hidden></div>
           <div id="keyboardGuesser" class="keyboard"></div>
-       </div>
+       </main>
     </section>
   </div>
   <div id="tooltip" class="tooltip" hidden></div>
