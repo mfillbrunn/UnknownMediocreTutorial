@@ -627,8 +627,18 @@ body {
 .guesser-header,
 .setter-header {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
+}
+
+.header-right {
+  display: flex;
+  align-items: flex-end;
+}
+
+.timer-block {
+  align-items: flex-end;
+  text-align: right;
 }
 
 /* Theme: Guesser (Blue) */
@@ -921,8 +931,17 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
 .powers-col {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  align-items: stretch;
   }
+
+   .power-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+      padding: 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+}
 
 /* Center column: history + draft */
 .center-col {
@@ -1598,11 +1617,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 .tooltip-desc {
   opacity: 0.9;
 }
-.power-container {
-  display: grid;
-    gap: 10px;
-   justify-content: center;
-}
+
 .power-btn-wrapper {
   margin: 0;
   display: block;
@@ -1744,13 +1759,12 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   inset: auto 12px 12px 12px;
   max-height: 60vh;
   overflow-y: auto;
-
   background: rgba(20,20,22,.97);
   border: 1px solid rgba(255,255,255,.15);
   border-radius: 14px;
-
   padding: 14px;
   z-index: 100000;
+   display: none;
 }
 .power-info-row {
   margin-bottom: 12px;
