@@ -701,11 +701,7 @@ if (state.phase === "simultaneous") {
     const guessSubmitted =!!state.pendingGuess || state.simultaneousSecretSubmitted;
     setTurn("guesserScreen", !guessSubmitted); 
   }
-  // NORMAL PHASE
-  else if (state.phase === "normal") {
-    if (!state.pendingGuess){setTurn("setterScreen", true);} 
-  }
-  
+if (state.phase === "normal" && state.turn === state.guesser) {setTurn("setterScreen", true);} 
   
 const badge = $("guesserForcedGuessBadge");
 if (!badge) return;
