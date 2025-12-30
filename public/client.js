@@ -10,6 +10,7 @@ let roleAssigned = false;
 let lastSimulSecret = false;
 let lastSimulGuess = false;
 let KeepEnabled = true;
+let NewEnabled true;
 window.state = null;
 // -----------------------------------------------------
 // DOM HELPERS
@@ -496,6 +497,7 @@ function updateRoleLabels() {
 function updateSetterScreen() {
   const setterName = state.playerNames?.[state.setter] || "Setter";
   KeepEnabled=true;
+  NewEnabled=true;
 
 $("setterScreen").querySelector(".screen-title").textContent = setterName;
 $("setterRoleBadge").textContent = "Setter";
@@ -517,18 +519,19 @@ $("setterRoleBadge").textContent = "Setter";
     const secretSubmitted =!!state.secret || state.simultaneousSecretSubmitted;
     setterInputEnabled = !secretSubmitted;    
     KeepEnabled=false;
+    NewEnabled=true;
   }
   // NORMAL PHASE — decision step only
   else if (state.phase === "normal") {
     setterInputEnabled = isDecisionStep;
-    const keepBtn = $('submitSetterSameBtn');
     KeepEnabled=isDecisionStep;
+    NewEnabled=isDecisionStep;
   }
   // LOBBY / GAMEOVER — everything off
   else {
     setterInputEnabled = false;
-    const keepBtn = $('submitSetterSameBtn');
     KeepEnabled=false;
+    NewEnabled=false;
   }
 
   // ----------------------------------------
@@ -560,6 +563,7 @@ renderDraftRows({
   }  
   updateSetterPreview();
  }
+///SETTER FEEDBACK PREVIEW FUNCTION
 function updateSetterPreview() {
  // If stealth is active, hide preview entirely
   if (!state.pendingGuess) return;
@@ -598,7 +602,6 @@ function clearSetterPreview() {
     );
   });
 }
-
 function applyPreviewFeedback(fbArray) {
   const tiles = document.querySelectorAll("#draftSetter .pending-guess .history-tile");
   fbArray.forEach((fb, i) => {
@@ -614,7 +617,6 @@ function handleSetterInput(event) {
   if (!state.powers?.freezeActive){
     const isNormalSetterTurn =  myRole === state.setter && state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess;
     const isSimultaneousSecretEntry = state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted;
-  
     if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
     const isEditing = event.type === "LETTER" || event.type === "BACKSPACE";
       // First edit: clear ghosted secret
@@ -645,51 +647,43 @@ function handleSetterInput(event) {
         return;
       }
     }
-    const newBtn = $("submitSetterNewBtn");
-    if (newBtn && !newBtn.disabled) {
-      newBtn.click();
+    if (NewEnabled) {
+      submitSetterNew();
       return;
     }
-        shake($("keyboardSetter"));
-        toast("Can't submit new secret");
+      shake($("keyboardSetter"));
+      toast("Can't submit new secret");
       return;      
   }
 }
-///GUESSER INPUT
-function handleGuesserInput(event) {
-  if (state.pendingGuess) return;
-  if (event.type === "BACKSPACE") {
-    localGuesserDraft = localGuesserDraft.slice(0, -1);
-    updateUI();
+
+/// SUBMIT NEW SECRET FUNCTIN
+function submitSetterNew() {
+  const w = (state.setterDraft || "").toLowerCase();
+  if (w.length !== 5) {
+    shake($("keyboardSetter"));
+    toast("5 letters!");
     return;
   }
-
-  if (event.type === "LETTER") {
-    if (localGuesserDraft.length < 5) {
-      localGuesserDraft += event.value;
-      updateUI();
-    }
+  if (!window.ALLOWED_GUESSES.has(w)) {
+    shake($("keyboardSetter"));
+    toast("Word not in dictionary");
     return;
   }
-
-  if (event.type === "ENTER") {
-      if (localGuesserDraft.length !== 5) {
-        shake($("keyboardGuesser"));
-        toast("5 letters!");
-        return;
-      }
-    if (!window.ALLOWED_GUESSES.has(localGuesserDraft.toLowerCase())) {
-      shake($("keyboardGuesser"));
-      toast("Not in dictionary");
-      return;
-    }    
-    sendGameAction(roomId, {
-        type: "SUBMIT_GUESS",
-        guess: localGuesserDraft.toLowerCase()
-      });
-    
-  }
+  if (
+    typeof window.isConsistentWithHistory === "function" &&
+    !window.isConsistentWithHistory(state.history, w, state)
+  ) {
+    shake($("keyboardSetter"));
+    toast("Incompatible with previous feedback");
+    return;
+  
+  sendGameAction(roomId, {type: "SET_SECRET_NEW",secret: w});
+  state.setterDraft = "";
+  updateUI();
 }
+
+
 // -----------------------------------------------------
 // GUESSER UI
 // -----------------------------------------------------
@@ -735,6 +729,41 @@ if (state.powers?.forcedGuess && myRole === state.guesser) {
 }  
 }
 
+///GUESSER INPUT
+function handleGuesserInput(event) {
+  if (state.pendingGuess) return;
+  if (event.type === "BACKSPACE") {
+    localGuesserDraft = localGuesserDraft.slice(0, -1);
+    updateUI();
+    return;
+  }
+
+  if (event.type === "LETTER") {
+    if (localGuesserDraft.length < 5) {
+      localGuesserDraft += event.value;
+      updateUI();
+    }
+    return;
+  }
+
+  if (event.type === "ENTER") {
+      if (localGuesserDraft.length !== 5) {
+        shake($("keyboardGuesser"));
+        toast("5 letters!");
+        return;
+      }
+    if (!window.ALLOWED_GUESSES.has(localGuesserDraft.toLowerCase())) {
+      shake($("keyboardGuesser"));
+      toast("Not in dictionary");
+      return;
+    }    
+    sendGameAction(roomId, {
+        type: "SUBMIT_GUESS",
+        guess: localGuesserDraft.toLowerCase()
+      });
+    
+  }
+}
 // -----------------------------------------------------
 // BUTTONS
 // -----------------------------------------------------
@@ -811,36 +840,8 @@ $("applyPowerCountBtn").onclick = () => {
    }
  };
 
-$("submitSetterNewBtn").onclick = () => {
-  const w = (state.setterDraft || "").toLowerCase();
 
-  if (w.length !== 5) {
-    shake($("submitSetterNewBtn"));
-    toast("5 letters!");
-    return;
-  }
 
-  if (!window.ALLOWED_GUESSES.has(w)) {
-    shake($("submitSetterNewBtn"));
-    toast("Word not in dictionary");
-    return;
-  }
-
-  if (
-    typeof window.isConsistentWithHistory === "function" &&
-    !window.isConsistentWithHistory(state.history, w, state)
-  ) {
-    shake($("submitSetterNewBtn"));
-    toast("Incompatible with previous feedback");
-    return;
-  }
-  sendGameAction(roomId, {
-    type: "SET_SECRET_NEW",
-    secret: w
-  });
-  state.setterDraft = "";
-  updateUI();
-};
 
 $("playerNameInput").onchange = () => {
   const name = $("playerNameInput").value.trim();
