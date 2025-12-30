@@ -1755,10 +1755,3 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   align-items: flex-end;
   text-align: right;
 }
-
-.powers-col {
-  align-self: stretch;   /* override grid default */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
