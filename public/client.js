@@ -497,7 +497,7 @@ $("setterRoleBadge").textContent = "Setter";
       }
     }
     const displayGuess =state.powers?.stealthGuessActive? "?????": state.pendingGuess;
-   
+   const isSetterTurn = state.turn === state.setter;
   const isDecisionStep =isSetterTurn &&!!displayGuess &&state.phase === "normal";
   let setterInputEnabled = false;
   // -------------------------------------------------------
