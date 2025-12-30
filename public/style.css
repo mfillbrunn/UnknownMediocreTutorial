@@ -816,11 +816,6 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   padding: 0 !important;
   margin: 0 !important;
 }
-
-/* Legacy / hidden helpers */
-.guesser-hidden { display: none; }
-.guesser-legacyxx { display: none !important; }
-
 /* =========================================
    SECRET ROW / SAME BUTTON
    ========================================= */
@@ -834,22 +829,6 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   align-items: center;
   gap: 12px;
 }
-
-.same-btn {
-  margin-left: 12px;
-  white-space: nowrap;
-  opacity: 0.9;
-
-  padding: 10px;
-  min-width: 40px;
-  min-height: 40px;
-
-  border-radius: 50%;
-  background: transparent !important;
-}
-.same-btn:hover { opacity: 1; }
-.same-btn svg { display: block; }
-
 
 /* Remove panel boxes for guesser + setter inline strip */
 .theme-guesser .history-box,
@@ -993,27 +972,6 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   opacity: 0.28;
   filter: grayscale(1);
   box-shadow: none;
-}
-
-.role-title {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.room-tag {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-
-  padding: 4px 8px;
-  border-radius: 6px;
-
-  color: currentColor;
-  border: 1.5px solid currentColor;
-  opacity: 0.9;
-  line-height: 1;
 }
 
 /* Existing tiles row */
