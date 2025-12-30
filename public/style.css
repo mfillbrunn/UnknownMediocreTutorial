@@ -938,9 +938,6 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   display: flex;
   flex-direction: column;
   gap: 8px;
-      padding: 6px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.03);
 }
 
 /* Center column: history + draft */
