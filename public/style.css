@@ -680,10 +680,7 @@ background: #0c0c0e;
   color: var(--role-accent);
 }
 
-#setterScreen [hidden] {
-  display: none !important;
-}
-#guesserScreen [hidden] {
+.hidden {
   display: none !important;
 }
 
@@ -1452,10 +1449,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 .summary-powers-setter {
   color: #ff4b5c;
 }
-
-/* ===============================
-   BLIND SPOT — half-hidden tile
-   =============================== */
 
 /* ===============================
    BLIND SPOT — half outline
