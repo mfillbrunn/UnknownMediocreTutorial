@@ -661,7 +661,7 @@ background: #0c0c0e;
 
   box-shadow:
     0 0 18px color-mix(in srgb, var(--role-accent) 22%, transparent),
-    inset 0 0 14px color-mix(in srgb, var(--role-accent) 12%, transparent) !important;
+    inset 0 0 14px color-mix(in srgb, var(--role-accent) 12%, transparent);
 
   color: var(--role-accent);
 }
