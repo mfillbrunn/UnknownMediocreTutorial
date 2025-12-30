@@ -9,6 +9,7 @@ let localGuesserDraft = "";
 let roleAssigned = false;
 let lastSimulSecret = false;
 let lastSimulGuess = false;
+let KeepEnabled = true;
 window.state = null;
 // -----------------------------------------------------
 // DOM HELPERS
@@ -248,68 +249,6 @@ onLobbyEvent(evt => {
   }
 });
 
-function updateTurnIndicators() {
-  const setterBar = $("turnIndicatorSetter");
-  const guesserBar = $("turnIndicatorGuesser");
-   if (state.powers?.forceTimerActive) {
-    // Do NOT touch indicators here
-    // ForceTimer power renders its own UI
-    return;
-  }
-  if (state.phase === "lobby") {
-    setterBar.textContent = "";
-    guesserBar.textContent = "";
-    setterBar.className = "turn-indicator";
-    guesserBar.className = "turn-indicator";
-    return;
-  }
-  if (state.phase === "simultaneous") {
-    updateSimultaneousIndicators();
-    return;
-  }
-  if (state.phase === "gameOver") {
-    setToWait(setterBar);
-    setToWait(guesserBar);
-    return;
-  }
-  updateNormalTurnIndicators();
-}
-
-function updateSimultaneousIndicators() {
-  const setterBar = $("turnIndicatorSetter");
-  const guesserBar = $("turnIndicatorGuesser");
-
-  const setterSubmitted = !!state.secret;
-  const guesserSubmitted = !!state.pendingGuess;
-
-  updateIndicator(setterBar, !setterSubmitted);
-  updateIndicator(guesserBar, !guesserSubmitted);
-}
-
-function updateNormalTurnIndicators() {
-  const setterBar = $("turnIndicatorSetter");
-  const guesserBar = $("turnIndicatorGuesser");
-
-  const setterTurn = state.turn === state.setter;
-
-  updateIndicator(setterBar, setterTurn);
-  updateIndicator(guesserBar, !setterTurn);
-}
-
-function updateIndicator(element, isActiveTurn) {
-  if (isActiveTurn) {
-    element.textContent = "YOUR TURN";
-    element.className = "turn-indicator your-turn";
-  } else {
-    element.textContent = "WAIT";
-    element.className = "turn-indicator wait-turn";
-  }
-}
-
-function setToWait(element) {
-  element.textContent = "WAIT";
-  element.className = "turn-indicator wait-turn";
-}
 // Role assignment from server
 
 // State updates
@@ -351,7 +290,7 @@ if (setterCanEdit) {
     localGuesserDraft = "";
   }
 
-  window.state = state; // ⭐ Makes global for powers
+  window.state = state; // 
   updateUI();
    // Reset guess input if locked on transition
   const guessInput = $("guessInput");
@@ -484,7 +423,6 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
 
   updateMenu();
   updateScreens();
-  updateTurnIndicators();
   updateSummary();
   updateRemainingWords();
   if (state.phase !== "lobby") hide("lobby");
@@ -556,72 +494,41 @@ function updateRoleLabels() {
 // SETTER UI
 // -----------------------------------------------------
 function updateSetterScreen() {
-  const setterName =
-  state.playerNames?.[state.setter] || "Setter";
+  const setterName = state.playerNames?.[state.setter] || "Setter";
+  KeepEnabled=true;
 
-$("setterScreen")
-  .querySelector(".screen-title")
-  .textContent = setterName;
+$("setterScreen").querySelector(".screen-title").textContent = setterName;
 $("setterRoleBadge").textContent = "Setter";
-
   const fgModal = $("forceGuessModal");
     if (fgModal) {
       if (!state.powers?.forcedGuessOptions) {
         fgModal.classList.remove("active");
       }
     }
-    const displayGuess =
-  state.powers?.stealthGuessActive
-    ? "?????"
-    : state.pendingGuess;
-  const bar = $("turnIndicatorSetter");
-  bar.classList.remove("your-turn", "wait-turn");
-  
-  if (state.turn === state.setter && state.phase === "normal") {
-    bar.textContent = "YOUR TURN";
-    bar.classList.add("your-turn");
-  } else {
-    bar.textContent = "WAIT";
-    bar.classList.add("wait-turn");
-  }
+    const displayGuess =state.powers?.stealthGuessActive? "?????": state.pendingGuess;
   const isSetterTurn = (state.turn === state.setter);
-  const isDecisionStep =
-    isSetterTurn &&
-    !!displayGuess &&
-    state.phase === "normal";
+  const isDecisionStep =isSetterTurn &&!!displayGuess &&state.phase === "normal";
   let setterInputEnabled = false;
-
   // -------------------------------------------------------
   // PHASE-SPECIFIC BUTTON / INPUT LOGIC
   // -------------------------------------------------------
   // SIMULTANEOUS PHASE — only initial secret allowed, once
   if (state.phase === "simultaneous") {
-    const secretSubmitted =
-      !!state.secret || state.simultaneousSecretSubmitted;
-    setterInputEnabled = !secretSubmitted;
-
-    // SAME is never allowed in simultaneous
-    const keepBtn = $('submitSetterSameBtn');
-    if (keepBtn) keepBtn.disabled = true;
-    $("submitSetterSameBtn").classList.add("disabled-btn");
+    const secretSubmitted =!!state.secret || state.simultaneousSecretSubmitted;
+    setterInputEnabled = !secretSubmitted;    
+    KeepEnabled=false;
   }
   // NORMAL PHASE — decision step only
   else if (state.phase === "normal") {
     setterInputEnabled = isDecisionStep;
     const keepBtn = $('submitSetterSameBtn');
-if (keepBtn) keepBtn.disabled = !isDecisionStep;
-    $("submitSetterSameBtn").classList.toggle(
-      "disabled-btn",
-      !isDecisionStep
-    );
+    KeepEnabled=isDecisionStep;
   }
   // LOBBY / GAMEOVER — everything off
   else {
     setterInputEnabled = false;
-
     const keepBtn = $('submitSetterSameBtn');
-    if (keepBtn) keepBtn.disabled = true;
-    $("submitSetterSameBtn").classList.add("disabled-btn");
+    KeepEnabled=false;
   }
 
   // ----------------------------------------
@@ -655,16 +562,10 @@ renderDraftRows({
  }
 function updateSetterPreview() {
  // If stealth is active, hide preview entirely
-if (state.powers && state.powers.stealthGuessActive && myRole === state.setter) {
-    return;
-  }
-  
-  const guess = state.pendingGuess;
-  if (!guess) return;
+  if (!state.pendingGuess) return;
   const isSetterTurn = state.turn === state.setter;
   if (!isSetterTurn) return;
   if (state.powers?.stealthGuessActive && myRole === state.setter) {return;}
-  
   const typed = (state.setterDraft || "").toLowerCase();
   const pendingRow = document.querySelector("#setterGuesserSubmitted .pending-guess");
   let fb = null;
@@ -700,11 +601,9 @@ function clearSetterPreview() {
 
 function applyPreviewFeedback(fbArray) {
   const tiles = document.querySelectorAll("#draftSetter .pending-guess .history-tile");
-
   fbArray.forEach((fb, i) => {
     const tile = tiles[i];
     if (!tile) return;
-
     if (fb === "🟩") tile.classList.add("preview-green");
     else if (fb === "🟨") tile.classList.add("preview-yellow");
     else tile.classList.add("preview-gray");
@@ -713,24 +612,15 @@ function applyPreviewFeedback(fbArray) {
 ///SETTER INPUT
 function handleSetterInput(event) {
   if (!state.powers?.freezeActive){
-    const isNormalSetterTurn =
-      myRole === state.setter &&
-      state.phase === "normal" &&
-      state.turn === state.setter &&
-      !!state.pendingGuess;
-    const isSimultaneousSecretEntry =
-      state.phase === "simultaneous" &&
-      !state.secret &&
-      !state.simultaneousSecretSubmitted;
+    const isNormalSetterTurn =  myRole === state.setter && state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess;
+    const isSimultaneousSecretEntry = state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted;
   
     if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
-    const isEditing =
-    event.type === "LETTER" || event.type === "BACKSPACE";
+    const isEditing = event.type === "LETTER" || event.type === "BACKSPACE";
       // First edit: clear ghosted secret
       if (isEditing && !state.setterDraft) {
         state.setterDraft = "";
       }
-  
     const draft = state.setterDraft || "";
     if (event.type === "BACKSPACE") {
       state.setterDraft = draft.slice(0, -1);
@@ -747,16 +637,15 @@ function handleSetterInput(event) {
   }
   if (event.type === "ENTER") {
     const draft = (state.setterDraft || "").trim();
-    const keepBtn = $("submitSetterSameBtn");
-    const newBtn = $("submitSetterNewBtn");
-
     if (draft.length === 0) {
-      if (keepBtn && !keepBtn.disabled) {
-        keepBtn.click();
+      if (KeepEnabled) {
+        state.setterDraft = "";        
+        sendGameAction(roomId, { type: "SET_SECRET_SAME" });
+        updateUI();
         return;
       }
     }
-    
+    const newBtn = $("submitSetterNewBtn");
     if (newBtn && !newBtn.disabled) {
       newBtn.click();
       return;
@@ -794,8 +683,7 @@ function handleGuesserInput(event) {
       toast("Not in dictionary");
       return;
     }    
-    
-      sendGameAction(roomId, {
+    sendGameAction(roomId, {
         type: "SUBMIT_GUESS",
         guess: localGuesserDraft.toLowerCase()
       });
@@ -823,24 +711,18 @@ renderDraftRows({
   localGuesserDraft
 });
   const guesserName =  state.playerNames?.[state.guesser] || "Guesser";
-$("guesserScreen")
-  .querySelector(".screen-title")
-  .textContent = guesserName;
+$("guesserScreen").querySelector(".screen-title").textContent = guesserName;
 $("guesserRoleBadge").textContent = "Guesser";
 
 const badge = $("guesserForcedGuessBadge");
 if (!badge) return;
-
 if (state.powers?.forcedGuess && myRole === state.guesser) {
   const fg = state.powers.forcedGuess;
-
   badge.textContent = `Forced Guess: ${formatForceGuessOption(fg)}`;
   badge.hidden = false;
 } else {
   badge.hidden = true;
 }
-
-
   const displayGuess = state.pendingGuess || localGuesserDraft;
  if (myRole === state.guesser) {
   renderKeyboard({
@@ -877,8 +759,6 @@ if (state.powers?.forcedGuess && myRole === state.guesser) {
   });
 })();
 
-
-
 function enableReadyButton(enabled) {
   const btn = $("readyBtn");
   btn.disabled = !enabled;
@@ -890,8 +770,6 @@ function enableReadyButton(enabled) {
     btn.textContent = "I'm Ready";
   }
 }
-
-
 
 $("createRoomBtn").onclick = () => {
   createRoom(resp => {
@@ -956,23 +834,12 @@ $("submitSetterNewBtn").onclick = () => {
     toast("Incompatible with previous feedback");
     return;
   }
-
   sendGameAction(roomId, {
     type: "SET_SECRET_NEW",
     secret: w
   });
-
   state.setterDraft = "";
   updateUI();
-};
-
-
-
-$("submitSetterSameBtn").onclick = () => {
-  state.setterDraft = "";
-  updateUI();
-
-  sendGameAction(roomId, { type: "SET_SECRET_SAME" });
 };
 
 $("playerNameInput").onchange = () => {
@@ -993,29 +860,6 @@ if (el) el.textContent = "";
   hide("guesserScreen");
   show("menu");
 };
-
-$("submitSetterSameBtnMobile").onclick =
-  $("submitSetterSameBtn").onclick;
-
-const desktopKeep = $("submitSetterSameBtn");
-const mobileKeep = $("submitSetterSameBtnMobile");
-
-if (desktopKeep && mobileKeep) {
-  const sync = () => {
-    mobileKeep.disabled = desktopKeep.disabled;
-    mobileKeep.classList.toggle(
-      "disabled-btn",
-      desktopKeep.classList.contains("disabled-btn")
-    );
-  };
-
-  new MutationObserver(sync).observe(desktopKeep, {
-    attributes: true,
-    attributeFilter: ["disabled", "class"]
-  });
-
-  sync();
-}
 
 function formatForceGuessOption(o) {
   switch (o.type) {
