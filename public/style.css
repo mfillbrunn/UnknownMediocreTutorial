@@ -884,11 +884,11 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   flex-direction: column;
   gap: 8px;
 }
-.power-container > button {
+.power-btn-wrapper {
   margin-bottom: 8px;
 }
 
-.power-container > button:last-child {
+.power-btn-wrapper > button:last-child {
   margin-bottom: 0;
 }
 /* Center column: history + draft */
