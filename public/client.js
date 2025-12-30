@@ -657,7 +657,7 @@ function handleSetterInput(event) {
   }
 }
 
-/// SUBMIT NEW SECRET FUNCTIN
+/// SUBMIT NEW SECRET FUNCTION
 function submitSetterNew() {
   const w = (state.setterDraft || "").toLowerCase();
   if (w.length !== 5) {
@@ -670,14 +670,11 @@ function submitSetterNew() {
     toast("Word not in dictionary");
     return;
   }
-  if (
-    typeof window.isConsistentWithHistory === "function" &&
-    !window.isConsistentWithHistory(state.history, w, state)
-  ) {
+  if (typeof window.isConsistentWithHistory === "function" && !window.isConsistentWithHistory(state.history, w, state)) {
     shake($("keyboardSetter"));
     toast("Incompatible with previous feedback");
     return;
-  
+  }  
   sendGameAction(roomId, {type: "SET_SECRET_NEW",secret: w});
   state.setterDraft = "";
   updateUI();
