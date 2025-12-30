@@ -480,6 +480,8 @@ body {
   display: flex;
   justify-content: center;
   gap: 6px;
+  min-height: 48px;   
+
 }
 
 .history-tile {
