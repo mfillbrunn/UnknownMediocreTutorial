@@ -1729,7 +1729,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-   border:non;
+   border:none;
   width: 100%;
   flex-wrap: nowrap;
 }
