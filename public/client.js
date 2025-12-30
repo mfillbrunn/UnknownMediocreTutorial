@@ -10,7 +10,7 @@ let roleAssigned = false;
 let lastSimulSecret = false;
 let lastSimulGuess = false;
 let KeepEnabled = true;
-let NewEnabled true;
+let NewEnabled = true;
 window.state = null;
 // -----------------------------------------------------
 // DOM HELPERS
