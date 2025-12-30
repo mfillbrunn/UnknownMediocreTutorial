@@ -882,7 +882,6 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
 
    .power-container {
   flex-direction: column;
-  display: grid;
   row-gap: 4px;
 }
 
