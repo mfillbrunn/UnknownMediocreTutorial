@@ -40,6 +40,14 @@ body {
     #0c0c0e;
 }
 
+#appMain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;        /* horizontal centering */
+  justify-content: center;    /* vertical centering */
+  min-height: calc(100vh - 80px); /* subtract header height */
+}
+
 /* =========================================
    LOBBY TYPOGRAPHY
    ========================================= */
@@ -712,11 +720,6 @@ background: #0c0c0e;
   box-shadow:    inset 0 0 80px color-mix(in srgb, var(--role-accent) 15%, transparent);
 }
 
-/* Turn overlay */
-.turn-indicator {
-  display: none;
-}
-
 /* ===============================
    Force Timer Indicator
    =============================== */
@@ -740,19 +743,6 @@ background: #0c0c0e;
   box-shadow:
     0 0 12px color-mix(in srgb, var(--role-accent) 40%, transparent),
     inset 0 0 8px color-mix(in srgb, var(--role-accent) 20%, transparent);
-}
-
-
-.turn-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 72px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .25s ease;
-  z-index: 9999;
 }
 
 /* Show overlay if any indicator has your-turn */
@@ -830,29 +820,6 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
 .toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
-}
-
-.turn-popup {
-  position: fixed;
-  top: 100px;
-  left: 50%;
-  transform: translateX(-50%) scale(.9);
-  opacity: 0;
-
-  padding: 14px 26px;
-  font-size: 22px;
-  font-weight: 800;
-
-  border-radius: 12px;
-  background: var(--popup-bg);
-  border: 2px solid var(--popup-border);
-
-  transition: opacity .25s ease, transform .25s ease;
-  z-index: 99999;
-}
-.turn-popup.show {
-  opacity: 1;
-  transform: translateX(-50%) scale(1);
 }
 
 /* =========================================
