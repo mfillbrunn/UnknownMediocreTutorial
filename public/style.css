@@ -397,23 +397,33 @@ body {
   box-shadow: 0 0 0 2px rgba(255,255,255,.35) inset;
 }
 /* Setter keyboard dead unless SETTER screen has your-turn */
-#setterScreen:not(:has(#turnIndicatorSetter.your-turn)) #keyboardSetter {
-  opacity: 0.35;
+
+#setterScreen.is-not-your-turn #keyboardSetter {
   filter: grayscale(0.9);
+  opacity: 0.35;
   pointer-events: none;
 }
 
-/* Guesser keyboard dead unless GUESSER screen has your-turn */
-#guesserScreen:not(:has(#turnIndicatorGuesser.your-turn)) #keyboardGuesser {
-  opacity: 0.35;
-  filter: grayscale(0.9);
-  pointer-events: none;
+#setterScreen.is-your-turn #keyboardSetter {
+  filter: none;
+  opacity: 1;
+  pointer-events: auto;
 }
-#setterScreen:not(:has(#turnIndicatorSetter.your-turn)) #keyboardSetter .key,
-#guesserScreen:not(:has(#turnIndicatorGuesser.your-turn)) #keyboardGuesser .key {
+
+/* Disable key interaction visuals when NOT your turn */
+#setterScreen.is-not-your-turn #keyboardSetter .key,
+#guesserScreen.is-not-your-turn #keyboardGuesser .key {
   transform: none !important;
   box-shadow: none !important;
 }
+
+/* Optional: restore explicitly when it IS your turn */
+#setterScreen.is-your-turn #keyboardSetter .key,
+#guesserScreen.is-your-turn #keyboardGuesser .key {
+  transform: unset;
+  box-shadow: unset;
+}
+
 /* Force consistent spacing before keyboards for both roles */
 #keyboardSetter,
 #keyboardGuesser {
@@ -956,14 +966,21 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
 
 
 /* Draft tiles when unusable */
-.theme-setter:not(:has(.turn-indicator.your-turn))
-#draftSetter .history-tile,
-.theme-guesser:not(:has(.turn-indicator.your-turn))
-#draftGuesser .history-tile {
+/* Draft tiles inactive when NOT your turn */
+#setterScreen.is-not-your-turn #draftSetter .history-tile,
+#guesserScreen.is-not-your-turn #draftGuesser .history-tile {
   opacity: 0.28;
   filter: grayscale(1);
   box-shadow: none;
 }
+
+/* Optional: explicit restore when it IS your turn */
+#setterScreen.is-your-turn #draftSetter .history-tile,
+#guesserScreen.is-your-turn #draftGuesser .history-tile {
+  opacity: 1;
+  filter: none;
+}
+
 
 /* Existing tiles row */
 .history-row {
