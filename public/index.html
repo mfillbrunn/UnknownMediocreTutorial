@@ -82,28 +82,25 @@
     <!-- ========== SETTER ========== -->
     <section id="setterScreen" class="screen theme-setter">
        <!-- HEADER -->
-         <header class="setter-header">
-           <div class="header-left">
-              <div class="role-title">
-               <h2 class="screen-title"></h2>
-               <span class="room-meta">
-               <span class="room-code header-room-code"></span>
-               <span class="role-badge" id="setterRoleBadge">Setter</span>
-               </span>
-              </div>
+        <header class="role-header theme-setter">
+          <div class="header-left">
+            <h2 class="screen-title"></h2>
+            <span class="room-meta">
+              <span class="room-code header-room-code"></span>
+              <span class="role-badge" id="setterRoleBadge">Setter</span>
+            </span>
+          </div>
+        
+          <div class="header-right header-status">
+            <div class="timer-block">
+              <span id="timerSetter" class="chess-timer">5:00</span>
+              <span class="remaining-label">
+                <span id="remainingWordsSetter">-</span> words remaining
+              </span>
             </div>
-            <div class="header-right">
-             <div class="setter-remaining">
-                    <div class="timer-block">
-                       <span id="timerSetter" class="chess-timer">5:00</span>
-                       <span class="remaining-label">
-                       <span id="remainingWordsSetter">-</span> remaining
-                       </span>
-                    </div>
-                    <button id="toggleConstraintsBtn" class="constraint-toggle-btn" title="Toggle constraints" >⧉</button>
-                 </div>
-            </div>
-         </header>
+            <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
+          </div>
+        </header>
          <!-- PLAY AREA -->    
          <main class="play-area setter-play">
             <div class="play-row">
@@ -163,21 +160,21 @@
     
      <section id="guesserScreen" class="screen theme-guesser">
        <!-- HEADER -->
-       <header class="guesser-header">
-          <div class="role-title">
-             <h2 class="screen-title"></h2>
-             <span class="room-meta">
-             <span class="room-code header-room-code"></span>
-             <span class="role-badge" id="guesserRoleBadge">Guesser</span>
-             </span>
+        <header class="role-header theme-guesser">
+          <div class="header-left">
+            <h2 class="screen-title"></h2>
+            <span class="room-meta">
+              <span class="room-code header-room-code"></span>
+              <span class="role-badge" id="guesserRoleBadge">Guesser</span>
+            </span>
+          </div>        
+          <div class="header-right header-status">
+            <div class="timer-block">
+              <span id="timerGuesser" class="chess-timer">5:00</span>
+            </div>
+            <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
           </div>
-          <div class="guesser-remaining">
-             <div class="timer-block">
-                <span id="timerGuesser" class="chess-timer">5:00</span>
-             </div>
-             <button class="constraint-toggle-btn" title="Toggle constraints"> ⧉ </button>
-          </div>
-       </header>
+        </header>
        <!--- PLAY AREA---> 
        <main class="play-area guesser-play">
           <div class="play-row">
