@@ -1732,6 +1732,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
    border:none;
   width: 100%;
   flex-wrap: nowrap;
+   box-shadow: none;
 }
 
 .header-left {
