@@ -497,25 +497,27 @@ $("setterRoleBadge").textContent = "Setter";
       }
     }
     const displayGuess =state.powers?.stealthGuessActive? "?????": state.pendingGuess;
-  const isSetterTurn = (state.turn === state.setter);
-    setTurn("setterScreen", isSetterTurn);    
+   
   const isDecisionStep =isSetterTurn &&!!displayGuess &&state.phase === "normal";
   let setterInputEnabled = false;
   // -------------------------------------------------------
   // PHASE-SPECIFIC BUTTON / INPUT LOGIC
   // -------------------------------------------------------
   // SIMULTANEOUS PHASE — only initial secret allowed, once
+  setTurn("setterScreen", false); 
   if (state.phase === "simultaneous") {
     const secretSubmitted =!!state.secret || state.simultaneousSecretSubmitted;
     setterInputEnabled = !secretSubmitted;    
     KeepEnabled=false;
-    NewEnabled=true;
+    NewEnabled=setterInputEnabled;
+    setTurn("setterScreen", setterInputEnabled); 
   }
   // NORMAL PHASE — decision step only
   else if (state.phase === "normal") {
     setterInputEnabled = isDecisionStep;
     KeepEnabled=isDecisionStep;
     NewEnabled=isDecisionStep;
+    setTurn("setterScreen", isDecisionStep); 
   }
   // LOBBY / GAMEOVER — everything off
   else {
@@ -691,11 +693,20 @@ renderDraftRows({
   localGuesserDraft
 });
   const guesserName =  state.playerNames?.[state.guesser] || "Guesser";
-  const isGuesserTurn = state.turn === state.guesser;
-  setTurn("guesserScreen", isGuesserTurn);
+  
   $("guesserScreen").querySelector(".screen-title").textContent = guesserName;
 $("guesserRoleBadge").textContent = "Guesser";
-
+setTurn("guesserScreen", false);
+if (state.phase === "simultaneous") {
+    const guessSubmitted =!!state.pendingGuess || state.simultaneousSecretSubmitted;
+    setTurn("guesserScreen", !guessSubmitted); 
+  }
+  // NORMAL PHASE
+  else if (state.phase === "normal") {
+    if (!state.pendingGuess){setTurn("setterScreen", true);} 
+  }
+  
+  
 const badge = $("guesserForcedGuessBadge");
 if (!badge) return;
 if (state.powers?.forcedGuess && myRole === state.guesser) {
