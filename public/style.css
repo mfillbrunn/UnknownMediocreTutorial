@@ -657,7 +657,7 @@ body {
 .theme-guesser {
   /* Defaults still exist, but will be overridden by JS color picker */
 background: #0c0c0e;
-  border: 2px solid var(--role-accent) !important;
+  border: 2px solid var(--role-accent);
 
   box-shadow:
     0 0 18px color-mix(in srgb, var(--role-accent) 22%, transparent),
