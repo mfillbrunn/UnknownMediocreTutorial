@@ -883,7 +883,11 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
    .power-container {
   flex-direction: column;
   display: grid;
-  row-gap: 8px;
+  row-gap: 4px;
+}
+
+.power-btn-wrapper {
+  margin-bottom: 8px;
 }
 
 /* Center column: history + draft */
@@ -1545,11 +1549,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 
 .tooltip-desc {
   opacity: 0.9;
-}
-
-.power-btn-wrapper {
-  margin: 0;
-  display: block;
 }
 
 ///TIMER
