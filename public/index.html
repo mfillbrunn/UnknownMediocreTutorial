@@ -2,6 +2,7 @@
 <html lang="en">
   <!---- INFO -->
 <head>
+  <title>VS Wordle — Competitive Mode</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
@@ -127,30 +128,32 @@
             <div id="assassinWordBadge" class="assassin-badge" hidden></div>
             <div id="keyboardSetter" class="keyboard"></div>
          </main>
-         <!---Modals--->   
-         <!-- Assassin Modal -->
-         <div id="assassinModal" class="modal">
-            <div class="modal-content">
-               <h3>Assassin Word</h3>
-               <p class="modal-instruction">
-                  Choose a word that instantly ends the game if guessed.
-               </p>
-               <input id="assassinInput" class="modal-input" maxlength="5" autocomplete="off"
-                  />
-               <div class="decision-row">
-                  <button id="assassinSubmitBtn" class="primary-btn small">Confirm</button>
-                  <button id="assassinCancelBtn" class="secondary-btn small">Cancel</button>
-               </div>
-            </div>
-         </div>
-         <!-- Force Guesser Modal -->
-         <div id="forceGuessModal" class="modal">
-            <div class="modal-content">
-               <h3>Force Guess</h3>
-               <p id="forceGuessPrompt"></p>
-               <div id="forceGuessOptionsContainer"  class="decision-row"></div>
-            </div>
-         </div>
+         <!---Modals--->
+        <section id="globalOverlays">
+           <!-- Assassin Modal -->
+           <div id="assassinModal" class="modal">
+              <div class="modal-content">
+                 <h3>Assassin Word</h3>
+                 <p class="modal-instruction">
+                    Choose a word that instantly ends the game if guessed.
+                 </p>
+                 <input id="assassinInput" class="modal-input" maxlength="5" autocomplete="off"
+                    />
+                 <div class="decision-row">
+                    <button id="assassinSubmitBtn" class="primary-btn small">Confirm</button>
+                    <button id="assassinCancelBtn" class="secondary-btn small">Cancel</button>
+                 </div>
+              </div>
+           </div>
+           <!-- Force Guesser Modal -->
+           <div id="forceGuessModal" class="modal">
+              <div class="modal-content">
+                 <h3>Force Guess</h3>
+                 <p id="forceGuessPrompt"></p>
+                 <div id="forceGuessOptionsContainer"  class="decision-row"></div>
+              </div>
+           </div>
+        </section>
       </section>
       <!-- ========== GUESSER ========== -->
     
