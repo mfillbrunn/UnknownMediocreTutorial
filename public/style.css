@@ -671,10 +671,9 @@ background: #0c0c0e;
 #setterScreen [hidden] {
   display: none !important;
 }
-#setterGuesser [hidden] {
+#guesserScreen [hidden] {
   display: none !important;
 }
-
 
 .theme-setter h2 {
   color: var(--role-accent);
@@ -965,9 +964,6 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   flex-direction: column;
   gap: 0;
   }
-.powers-col > .keep-btn {
-  position: fixed;   /* removes it from grid sizing entirely */
-}
 
 /* Center column: history + draft */
 .center-col {
@@ -1007,51 +1003,9 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   width: 100%;   
   pointer-events: none;
 }
-.keep-btn {
-  position: absolute;
-  left: calc(100% + 12px);
-
-  top: 50%;
-  transform: translateY(-50%);
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  background: transparent;
-  border: 1.5px solid currentColor;
-  color: var(--role-accent);
-  border-radius: 8px;
-
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  line-height: 1;
-
-  padding: 7px 12px;
-  cursor: pointer;
-  opacity: 0.9;
-  transition: opacity .15s ease, box-shadow .15s ease;
-}
-
 /* Bottom draft row becomes the anchor */
 .draft-stack .history-row:last-child {
   position: relative;
-}
-
-
-
-.keep-btn:hover {
-  opacity: 1;
-  box-shadow: 0 0 6px currentColor;
-}
-/* KEEP button disabled state */
-.keep-btn:disabled {
-  opacity: 0.35;
-  filter: grayscale(1);
-  cursor: not-allowed;
-  box-shadow: none;
 }
 
 .theme-setter
@@ -1108,64 +1062,6 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   border: 1.5px solid currentColor;
   opacity: 0.9;
   line-height: 1;
-}
-
-.keep-btn.mobile-keep {
-  display: none;
-}
-
-@media (max-width: 520px) {
-  .keep-btn {
-    position: static;      /* remove absolute positioning */
-    transform: none;
-    left: auto;
-    top: auto;
-    bottom: auto;
-    margin: 0;
-  }
-   .draft-row-wrap .keep-btn {
-    display: none;
-  }
-   .keep-btn.mobile-keep {
-    display: flex;
-    width: 100%;
-    margin-top: 10px;
-
-    background: var(--btn-primary);
-    color: #fff;
-
-    border: none;
-    border-radius: 12px;
-
-    font-size: 14px;
-    font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-
-    padding: 14px 16px;
-
-    box-shadow: 0 0 10px var(--btn-primary-glow);
-
-    justify-content: center;
-  }
-   .keep-btn.mobile-keep:active {
-    transform: scale(0.97);
-    box-shadow:
-      0 0 6px color-mix(in srgb, var(--role-accent) 50%, transparent);
-  }
-    .keep-btn.mobile-keep:disabled {
-    background: rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.45);
-
-    box-shadow: none;
-    filter: grayscale(0.6);
-    opacity: 0.6;
-
-    cursor: not-allowed;
-  }
-  .keep-btn.mobile-keep:disabled:active {
-    transform: none;
-  }
 }
 
 /* Existing tiles row */
@@ -1235,7 +1131,7 @@ Constraint row using history tile language
   box-shadow:
     0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent),
     inset 0 0 6px color-mix(in srgb, var(--role-accent) 18%, transparent);
-   margin-top: 6px 0;
+   margin: 6px 0;
 }
 
 .constraint-row::before {
@@ -1696,15 +1592,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 
   border: 1.5px solid currentColor;
   opacity: 0.9;
-}
-
-/* Color follows theme */
-.theme-setter .role-badge {
-  color: var(--role-accent);
-}
-
-.theme-guesser .role-badge {
-  color: var(--role-accent);
+   color: var(--role-accent);
 }
 
 /* ===============================
@@ -1760,11 +1648,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   margin: 0;
   display: block;
 }
-.keep-btn {
-  display: none !important;
-}
-
-
 
 ///TIMER
 .timer-block {
@@ -1783,8 +1666,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   color: var(--role-accent);
    transition: color 0.2s ease, text-shadow 0.2s ease;
 }
-}
-
 
 /* 30s warning */
 .chess-timer.warn-30 {
@@ -1875,9 +1756,11 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   display: none;
 }
 
+.power-info-btn { display: none; }
 /* Mobile only */
 @media (hover: none) and (pointer: coarse) {
   .power-info-btn {
+  display: flex;
   width: 26px;
   height: 26px;
   border-radius: 50%;
