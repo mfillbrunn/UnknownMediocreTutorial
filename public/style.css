@@ -40,14 +40,6 @@ body {
     #0c0c0e;
 }
 
-#appMain {
-  display: flex;
-  flex-direction: column;
-  align-items: center;        /* horizontal centering */
-  justify-content: center;    /* vertical centering */
-  min-height: calc(100vh - 80px); /* subtract header height */
-}
-
 /* =========================================
    LOBBY TYPOGRAPHY
    ========================================= */
