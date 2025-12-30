@@ -881,11 +881,16 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   }
 
    .power-container {
-  display: flex;
   flex-direction: column;
   gap: 8px;
 }
+.power-container > button {
+  margin-bottom: 8px;
+}
 
+.power-container > button:last-child {
+  margin-bottom: 0;
+}
 /* Center column: history + draft */
 .center-col {
   display: flex;
