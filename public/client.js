@@ -299,8 +299,6 @@ if (setterCanEdit) {
     guessInput.value = "";
   }
   remainingCache.setter = null;
-remainingCache.guesser = null;
-
 });
 
 // -----------------------------------------------------
@@ -566,13 +564,12 @@ renderDraftRows({
 ///SETTER FEEDBACK PREVIEW FUNCTION
 function updateSetterPreview() {
  // If stealth is active, hide preview entirely
-  if (!state.pendingGuess) return;
+  const guess = state.pendingGuess;
+  if (!guess) return;
   const isSetterTurn = state.turn === state.setter;
   if (!isSetterTurn) return;
   if (state.powers?.stealthGuessActive && myRole === state.setter) {return;}
   const typed = (state.setterDraft || "").toLowerCase();
-  const pendingRow = document.querySelector("#setterGuesserSubmitted .pending-guess");
-  let fb = null;
   let isIncomplete = false;
   clearSetterPreview();
   if (typed.length === 5) {
