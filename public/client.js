@@ -44,6 +44,19 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 let lastTimeRemaining = { A: null, B: null };
 
+function shakeDraftRow() {
+  const row = document.querySelector(
+    "#draftSetter .pending-guess"
+  );
+
+  if (!row) return;
+
+  row.classList.remove("draft-shake"); // reset if already animating
+  void row.offsetWidth;                // force reflow
+  row.classList.add("draft-shake");
+}
+
+
 function renderChessClocks() {
   if (!state || !state.timeRemaining) return;
     if (!state.timeControl?.enabled) {
@@ -639,7 +652,7 @@ function handleSetterInput(event) {
       submitSetterNew();
       return;
     }
-      shake($("keyboardSetter"));
+      shakeDraftRow();
       toast("Can't submit new secret");
       return;      
   }
@@ -649,17 +662,17 @@ function handleSetterInput(event) {
 function submitSetterNew() {
   const w = (state.setterDraft || "").toLowerCase();
   if (w.length !== 5) {
-    shake($("keyboardSetter"));
+    shakeDraftRow();
     toast("5 letters!");
     return;
   }
   if (!window.ALLOWED_GUESSES.has(w)) {
-    shake($("keyboardSetter"));
+    shakeDraftRow();
     toast("Word not in dictionary");
     return;
   }
   if (typeof window.isConsistentWithHistory === "function" && !window.isConsistentWithHistory(state.history, w, state)) {
-    shake($("keyboardSetter"));
+    shakeDraftRow();
     toast("Incompatible with previous feedback");
     return;
   }  
