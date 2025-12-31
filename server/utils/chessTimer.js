@@ -1,5 +1,3 @@
-// server/utils/chessTimer.js
-
 const INTERVALS = {};
 
 function startTimer(roomId, state, io, onTimeout) {
@@ -24,7 +22,7 @@ function startTimer(roomId, state, io, onTimeout) {
       if (state.timeRemaining[role] <= 0) {
         state.timeRemaining[role] = 0;
         stopTimer(roomId);
-        onTimeout(role); // 🔴 behavior differs by mode
+        onTimeout(role);
         return;
       }
     }
@@ -34,7 +32,6 @@ function startTimer(roomId, state, io, onTimeout) {
     });
   }, 250);
 }
-
 
 function stopTimer(roomId) {
   if (INTERVALS[roomId]) {
@@ -48,10 +45,13 @@ function addIncrement(state, role) {
 }
 
 function resetRoundTimer(state) {
-  state.timeRemaining.A = state.timeControl.initialSeconds;
-  state.timeRemaining.B = state.timeControl.initialSeconds;
-  state.timeExpired = null;
-  state.timeoutLoser = null;
+  const secs =
+    state.timeControl.mode === "round"
+      ? state.timeControl.roundSeconds
+      : state.timeControl.initialSeconds;
+
+  state.timeRemaining.A = secs;
+  state.timeRemaining.B = secs;
 }
 
 module.exports = {
