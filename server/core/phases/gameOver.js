@@ -62,6 +62,7 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
       state.activeTimer = "both";
       resetRoundTimer(state);
       startGameTimer(room, state, roomId, context);
+      state.roundStartTime = Date.now();
     }
     emitLobbyEvent(io, roomId, { type: "showLobby" });
     emitStateForAllPlayers(roomId, room, io);
