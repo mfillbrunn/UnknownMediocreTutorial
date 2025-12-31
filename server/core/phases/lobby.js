@@ -3,7 +3,8 @@
 const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const CompetitiveMode = require("../modes/competitiveMode");
-const { stopTimer,startTimer,resetRoundTimer,handleRoundTimeout } = require("../../utils/chessTimer");
+const { stopTimer,startTimer,resetRoundTimer } = require("../../utils/chessTimer");
+const {handleRoundTimeout} = require("../../utils/roundTimer");
 const { endGame } = require("./normal");
 
 const SETTER_POWERS = [
