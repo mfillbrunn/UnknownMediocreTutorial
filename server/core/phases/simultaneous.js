@@ -1,6 +1,6 @@
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { scoreGuess } = require("../../game-engine/scoring");
-const { endGame } = require("./normal");
+const { endGame } = require("./gameOver");
 const { addIncrement,resetRoundTimer } = require("../../utils/chessTimer");
 
 function handleSimultaneousPhase(room, state, action, role, roomId, context) {
