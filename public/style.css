@@ -1727,7 +1727,8 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   width: 100%;
   flex-wrap: nowrap;
    box-shadow: none;
-   line-height: 1.2;
+   line-height: 1;
+   margin-bottom: 8px;
 }
 
 .header-left {
