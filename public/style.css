@@ -1739,7 +1739,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 .header-row.header-sub {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
 }
 
 /* Left cluster: title + room */
@@ -1796,12 +1796,6 @@ margin:0;
   animation: pulse-good 280ms cubic-bezier(0.4, 0, 0.2, 1) 2;
 }
 
-/* Optional: slightly de-emphasize the worse option */
-.remaining-old:not(.better),
-.remaining-new:not(.better) {
-  opacity: 0.75;
-}
-  
 @keyframes pulse-good {
   0% {
     transform: scale(1);
