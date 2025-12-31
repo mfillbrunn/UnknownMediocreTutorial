@@ -133,7 +133,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
 
   /// SETTER
 if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME") ) {
-    const w = null;
+    let w = null;
     if (action.type === "SET_SECRET_NEW") {
        w = action.secret.toLowerCase();
     } else if (action.type === "SET_SECRET_SAME"){
