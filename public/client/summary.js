@@ -46,6 +46,17 @@ function renderMatchSummary(container) {
     winner = time.A <= time.B ? "A" : "B";
     winReason = "time";
   }
+  const timeoutRound = rounds.find(r => r.timeoutLoser);
+
+    let timeoutNote = "";
+    if (timeoutRound) {
+      const loserName = names[timeoutRound.timeoutLoser];
+      timeoutNote = `
+        <p class="timeout-note">
+          ⏱ ${loserName} lost on time
+        </p>
+      `;
+    }
 
   // ----------------------------
   // Header
@@ -59,8 +70,11 @@ function renderMatchSummary(container) {
       Time control:
       ${
         state.timeControl?.enabled
-          ? `${state.timeControl.initialSeconds / 60} min +${state.timeControl.incrementSeconds}s`
-          : "No time"
+        ? state.timeControl.mode === "round"
+          ? `Round timer: ${state.timeControl.roundSeconds}s / round`
+          : `${state.timeControl.initialSeconds / 60} min +${state.timeControl.incrementSeconds}s`
+        : "No time"
+
       }
     </p>
 
@@ -96,7 +110,14 @@ function renderMatchSummary(container) {
         <td>${i + 1}</td>
         <td>${names[r.setter]}</td>
         <td>${names[r.guesser]}</td>
-        <td>${r.guessCount}</td>
+        <td>
+          ${r.guessCount}
+          ${
+            r.timeoutLoser
+              ? `<span class="timeout-badge">⏱</span>`
+              : ""
+          }
+        </td>
         <td>${r.time?.[r.setter] || 0}</td>
         <td>${r.time?.[r.guesser] || 0}</td>
       </tr>
@@ -145,6 +166,25 @@ function renderMatchSummary(container) {
 
 ///COMPETITIVE  ROUND SUMMARY
 function renderRoundSummary(container) {
+  if (state.timeoutLoser) {
+  const loser =
+    state.timeoutLoser === state.setter
+      ? setterName
+      : guesserName;
+
+  html += `
+    <p class="timeout-summary">
+      ⏱ ${loser} lost on time
+      ${
+        state.phase === "gameOver" && state.history.length === 0
+          ? "(simultaneous round timeout)"
+          : ""
+      }
+    </p>
+  `;
+}
+
+  
   let html = `<h3>Round Summary</h3>`;
 
   const setterName =
