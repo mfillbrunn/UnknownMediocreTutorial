@@ -101,4 +101,4 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
   return;
 }
 
-module.exports = handleGameOverPhase;
+module.exports = {handleGameOverPhase, endGame};
