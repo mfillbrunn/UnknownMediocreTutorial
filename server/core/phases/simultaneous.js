@@ -124,6 +124,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
       resetRoundTimer(state);
     }
   state.activeTimer = state.guesser; 
+  state.roundStartTime = Date.now();
   powerEngine.turnStart(state, state.guesser, roomId, io);
 
   emitStateForAllPlayers(roomId, room, io);
