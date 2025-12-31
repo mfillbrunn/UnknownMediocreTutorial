@@ -33,46 +33,44 @@ window.computeRemainingNew = function (newWord, Guess) {
 
 function updateRemainingWords() {
   if (!state || state.phase === "lobby" || state.phase === "gameOver") {
-    $("remainingWordsSetter").textContent = "-";
-    styleRemaining($("remainingWordsSetter"), null);
+    const el = $("remainingInfoSetter");
+    if (el) el.innerHTML = "";
     return;
   }
-  const lastIdx = state.history.length;
-  if (remainingCache.setter === null) {
-    remainingCache.setter =computeRemainingAfterIndex(lastIdx);
-  }
-  const nSetter  = remainingCache.setter;
-  const categorySetter  = categorizeRemainingWords(nSetter);
-  const s = $("remainingWordsSetter");
-  if (s) {
-    styleRemaining(s, categorySetter);
-     renderRemaining(s, nSetter);
-  }
-}
-  // Setter labeling
-function categorizeRemainingWords(count) {
-  if (count >= 200) return "many";
-  if (count >= 50) return "plenty";
-  if (count >= 10) return "some";
-  if (count >= 2) return "few";
-  if (count === 1) return "only one";
-  return "none";
-}
-function styleRemaining(element, label) {
-  element.className = "remainingMeter";
-  if (!label) return;
 
-  if (label === "many") element.classList.add("rm-many");
-  else if (label === "plenty") element.classList.add("rm-plenty");
-  else if (label === "some") element.classList.add("rm-some");
-  else if (label === "few") element.classList.add("rm-few");
-  else if (label === "only one") element.classList.add("rm-one");
+  const el = $("remainingInfoSetter");
+  if (!el) return;
+
+  const lastIdx = state.history.length - 1;
+  if (lastIdx < 0) return;
+
+  // Current remaining (after last confirmed history)
+  if (remainingCache.setter == null) {
+    remainingCache.setter = computeRemainingAfterIndex(lastIdx);
+  }
+  const countCurrent = remainingCache.setter;
+
+  // Old = before last guess
+  const countOld =
+    lastIdx > 0
+      ? computeRemainingAfterIndex(lastIdx - 1)
+      : window.ALLOWED_SECRETS.length;
+
+  // New = hypothetical alternative (if applicable)
+  let countNew = null;
+  if (state.pendingNewGuess) {
+    countNew = computeRemainingNew(
+      state.pendingNewGuess,
+      state.history[lastIdx].guess
+    );
+  }
+
+  renderRemaining(el, countCurrent, countOld, countNew);
 }
 
 // cache lives outside, but is reset on state updates
 const remainingCache = {
-  setter: null,
-  guesser: null
+  setter: null
 };
 
 function renderRemaining(element, countcurrent, countold, countnew) {
