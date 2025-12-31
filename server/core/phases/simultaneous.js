@@ -23,9 +23,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     state.simultaneousSecretSubmitted = true;
     if (state.timeControl.mode === "chess") {
       addIncrement(state, role);
-    } else if (state.timeControl.mode === "round") {
-      resetRoundTimer(state);
-    }
+    } 
     if (state.activeTimer === "both") {
       state.activeTimer = state.guesser;   
     }
@@ -44,9 +42,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     state.simultaneousGuessSubmitted = true;
     if (state.timeControl.mode === "chess") {
       addIncrement(state, role);
-    } else if (state.timeControl.mode === "round") {
-      resetRoundTimer(state);
-    }
+    } 
     if (state.activeTimer === "both") {
         state.activeTimer = state.setter;   
     }
@@ -124,7 +120,10 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   state.phase = "normal";
   state.turn = state.guesser;       // ⭐ Important: skip setter decision step
   state.powerUsedThisTurn = false;
-
+  if (state.timeControl.mode === "round") {
+      resetRoundTimer(state);
+    }
+  state.activeTimer = state.guesser; 
   powerEngine.turnStart(state, state.guesser, roomId, io);
 
   emitStateForAllPlayers(roomId, room, io);
