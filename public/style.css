@@ -1726,10 +1726,17 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   display: flex;
   flex-direction: column;
   gap: 6px;
+   border: none;
+   box-shadow:none;
 }
 
 /* Top row */
 .header-row.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-row.header-sub {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1777,14 +1784,8 @@ margin:0;
 .remaining-old,
 .remaining-new {
   transition: color 0.2s ease, opacity 0.2s ease;
-  font-family: "Courier New", monospace;
-}
+  }
 
-/* Unknown / unavailable */
-.remaining-new {
-  opacity: 0.55;
-  font-style: italic;
-}
 
 /* Better option */
 .remaining-old.better,
