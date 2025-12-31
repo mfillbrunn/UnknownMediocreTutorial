@@ -34,7 +34,7 @@ function createInitialState() {
         A: 0,
         B: 0
       },
-  
+    roundstarttime:null,
   timeExpired: null, // "A" | "B" | null
   activeTimer: null, // "A" | "B" | "both" | null
   timeoutLoser: null,
