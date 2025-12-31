@@ -17,8 +17,8 @@ function endGame(state, roomId, io, room) {
     guesser: state.guesser,
     guessCount: state.guessCount,
        time: {
-    A: state.timeRemaining.A,
-    B: state.timeRemaining.B,
+    A: state.timeUsed.A,
+    B: state.timeUsed.B,
        },
          timeoutLoser: state.timeoutLoser || null,
     history: JSON.parse(JSON.stringify(state.history)),
