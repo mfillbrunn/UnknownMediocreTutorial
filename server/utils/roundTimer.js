@@ -46,7 +46,7 @@ function handleRoundTimeout(room, state, roomId, role, context) {
     );
   }
   emitStateForAllPlayers(roomId, room, io);
-
+  startGameTimer(roomId, room, state, context);
   if (state.roundTimeouts[role] >= 3) {
     state.timeoutLoser = role;
     endGame(state, roomId, io, room);
