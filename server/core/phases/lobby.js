@@ -34,17 +34,27 @@ function handleLobbyPhase(room, state, action, role, roomId, context) {
 
 if (action.type === "SET_TIME_CONTROL") {
   const sec = parseInt(action.seconds, 10);
+  const mode = action.mode || "round";
+
   if (!Number.isFinite(sec) || sec < 0) return;
 
-  state.timeControl.initialSeconds = sec;
+  state.timeControl.mode = mode;
   state.timeControl.enabled = sec > 0;
 
-  state.timeRemaining.A = sec;
-  state.timeRemaining.B = sec;
+  if (mode === "round") {
+    state.timeControl.roundSeconds = sec;
+    state.timeRemaining.A = sec;
+    state.timeRemaining.B = sec;
+  } else {
+    state.timeControl.initialSeconds = sec;
+    state.timeRemaining.A = sec;
+    state.timeRemaining.B = sec;
+  }
 
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
+
 
 
   // -------------------------------
