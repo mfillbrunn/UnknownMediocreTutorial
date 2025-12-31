@@ -271,25 +271,19 @@ const setterCanEdit =
       !state.simultaneousSecretSubmitted)
   );
 
-if (setterCanEdit) {
-  state.setterDraft = prevSetterDraft;
-} else {
-  state.setterDraft = "";
-}
-
+  if (setterCanEdit) {
+    state.setterDraft = prevSetterDraft;
+  } else {
+    state.setterDraft = "";
+  }
   // Clear guesser draft once it is no longer editable
   if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {
     localGuesserDraft = "";
   }
-
-  window.state = state; // 
+  window.state = state; 
   updateUI();
-   // Reset guess input if locked on transition
-  const guessInput = $("guessInput");
-  if (state.phase === "normal" && guessInput && guessInput.disabled) {
-    guessInput.value = "";
-  }
-  remainingCache.setter = null;
+  remainingCache.setterOld = null;
+  remainingCache.setterCurrent = null;
 });
 
 // -----------------------------------------------------
@@ -410,11 +404,9 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
     $("timerSetter")?.classList.remove("hidden");
     $("timerGuesser")?.classList.remove("hidden");
   }
-
   updateMenu();
   updateScreens();
   updateSummary();
-  updateRemainingWords();
   if (state.phase !== "lobby") hide("lobby");
 }
 
@@ -488,8 +480,8 @@ function updateSetterScreen() {
   KeepEnabled=true;
   NewEnabled=true;
 
-$("setterScreen").querySelector(".screen-title").textContent = setterName;
-$("setterRoleBadge").textContent = "Setter";
+  $("setterScreen").querySelector(".screen-title").textContent = setterName;
+  $("setterRoleBadge").textContent = "Setter";
   const fgModal = $("forceGuessModal");
     if (fgModal) {
       if (!state.powers?.forcedGuessOptions) {
@@ -544,6 +536,7 @@ renderDraftRows({
   role: "setter",
   container: $("draftSetter")
 });
+  
   if (myRole === state.setter) {
     renderKeyboard({
     state,
@@ -555,6 +548,7 @@ renderDraftRows({
   }  
   updateSetterPreview();
  }
+
 ///SETTER FEEDBACK PREVIEW FUNCTION
 function updateSetterPreview() {
  // If stealth is active, hide preview entirely
@@ -562,7 +556,10 @@ function updateSetterPreview() {
   if (!guess) return;
   const isSetterTurn = state.turn === state.setter;
   if (!isSetterTurn) return;
-  if (state.powers?.stealthGuessActive && myRole === state.setter) {return;}
+  updateRemainingWords(typed);
+  if (state.powers?.stealthGuessActive && myRole === state.setter) {
+    return;
+  }
   const typed = (state.setterDraft || "").toLowerCase();
   let isIncomplete = false;
   clearSetterPreview();
