@@ -3,7 +3,7 @@
 const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const CompetitiveMode = require("../modes/competitiveMode");
-const { stopTimer,startTimer,resetRoundTimer } = require("../../utils/chessTimer");
+const { stopTimer,startTimer,resetRoundTimer,handleRoundTimeout } = require("../../utils/chessTimer");
 const { endGame } = require("./normal");
 
 const SETTER_POWERS = [
@@ -160,10 +160,16 @@ if (state.activePowers.includes("revealLetter")) {
             stopTimer(roomId);
             if (state.timeControl.enabled) {
         startTimer(roomId, state, io, timedOutRole => {
-          state.timeExpired = timedOutRole;
-          state.timeoutLoser = timedOutRole;
-          endGame(state, roomId, io, room);
+  if (state.timeControl.mode === "chess") {
+    state.timeExpired = timedOutRole;
+    state.timeoutLoser = timedOutRole;
+    endGame(state, roomId, io, room);
+    return;
+  }
+  // ROUND TIMER MODE
+  handleRoundTimeout(state, roomId, io, room, timedOutRole);
         });
+
             }
     }
     return;
