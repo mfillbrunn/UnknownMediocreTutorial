@@ -24,11 +24,16 @@
         <!-- ========== LOBBY ========== -->
         <section id="lobby" class="screen active screen-lobby">
            <h2 class="screen-title">Online Lobby</h2>
-           <button id="createRoomBtn" class="primary-btn">Create Room</button>      
-           <div class="join-block">
+           <!-- Primary actions -->
+            <div class="lobby-actions">
+              <button id="createRoomBtn" class="primary-btn">Create Room</button>
+              <button id="quickJoinBtn" class="secondary-btn">Quick Join</button>
+            </div>     
+           <!-- Manual join -->
+            <div class="join-block">
               <input id="joinRoomInput" type="text" maxlength="8" placeholder="Room Code">
               <button id="joinRoomBtn" class="primary-btn small">Join</button>
-           </div>
+            </div>
            <div id="roomInfo" class="panel" hidden>
               <p><b>Room:</b> <span id="roomCodeLabel" class="room-code"></span></p>
               <div class="panel-section">
