@@ -105,10 +105,10 @@ function renderRemaining(element, countcurrent, countold, countnew) {
       Words remaining: ${current.toLocaleString()}
     </span>,
     <span class="remaining-old">
-      Keep: ${hasOld ? oldLoss.toLocaleString() : "?"}
+      Keep: ${hasOld ? oldLoss.toLocaleString() : "-"}
     </span>,
     <span class="remaining-new">
-      New: ${hasNew ? newLoss.toLocaleString() : "?"}
+      New: ${hasNew ? newLoss.toLocaleString() : "-"}
     </span>
   `;
 
