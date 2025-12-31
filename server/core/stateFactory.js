@@ -20,7 +20,7 @@ function createInitialState() {
     roundTimeouts: {
     A: 0,
     B: 0
-    };
+    },
     ///TIMER
     timeControl: {
     initialSeconds: 300,  // default 5 min
@@ -31,8 +31,8 @@ function createInitialState() {
       },
       
       timeRemaining: {
-        A: 300,
-        B: 300
+        A: 0,
+        B: 0
       },
   
   timeExpired: null, // "A" | "B" | null
