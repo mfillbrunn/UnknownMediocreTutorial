@@ -28,7 +28,7 @@ const SETTER_POWERS = [
         "revealGreen",
         "freezeSecret",
         "magicMode",
-"revealLetter",
+        "revealLetter",
       ];
 function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
@@ -51,8 +51,6 @@ if (action.type === "SET_TIME_CONTROL") {
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
-
-
 
   // -------------------------------
   // SWITCH ROLES
@@ -108,9 +106,7 @@ if (action.type === "SET_POWER_COUNT") {
   // Set name
   // -------------------------------
 if (action.type === "SET_PLAYER_NAME") {
-  const role = action.role;
   if (!role) return;
-
   // sanitize
   const name = String(action.name)
     .trim()
@@ -121,7 +117,6 @@ if (action.type === "SET_PLAYER_NAME") {
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
-
 
   // -------------------------------
   // PLAYER READY
