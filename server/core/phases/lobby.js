@@ -155,6 +155,7 @@ if (action.type === "SET_PLAYER_NAME") {
         if (state.timeControl.enabled) {
         resetRoundTimer(state);
         state.activeTimer = "both";
+        state.roundStartTime = Date.now();
         stopTimer(roomId);
         startGameTimer(room, state, roomId, context);
         }
