@@ -22,13 +22,15 @@ function createInitialState() {
     timeControl: {
     initialSeconds: 300,  // default 5 min
     incrementSeconds: 10,
-      enabled: true
-  },
-  
-  timeRemaining: {
-    A: 300,
-    B: 300
-  },
+      enabled: true,
+      roundSeconds: 60,
+      mode: "round",
+      },
+      
+      timeRemaining: {
+        A: 300,
+        B: 300
+      },
   
   timeExpired: null, // "A" | "B" | null
   activeTimer: null, // "A" | "B" | "both" | null
