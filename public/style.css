@@ -528,6 +528,9 @@ body {
   background: transparent;
   box-shadow: none;
   padding: 0;
+   position: relative;
+   z-index: 20;
+  pointer-events: none;
 }
 
 /* Wordle-style feedback colors */
@@ -553,13 +556,6 @@ body {
 .history-row .history-tile:nth-child(4) { animation-delay: 0.24s; }
 .history-row .history-tile:nth-child(5) { animation-delay: 0.32s; }
 
-/* Draft layer behavior */
-.draft-layer {
-  position: relative;
-  min-height: 70px;
-  z-index: 20;
-  pointer-events: none;
-}
 .history-scroll { z-index: 1; }
 
 /* Draft / submitted / pending states (deduped) */
