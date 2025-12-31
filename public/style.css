@@ -1754,3 +1754,25 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 .role-header h2{
 margin:0;
 }
+
+/* SETTER REMAINING WORDS */
+.remaining-old,
+.remaining-new {
+  transition: color 0.2s ease;
+}
+
+.remaining-old.better,
+.remaining-new.better {
+  color: #2ecc71; /* green */
+  font-weight: 700;
+  animation: vibrate 0.25s ease-in-out 2;
+}
+
+@keyframes vibrate {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-1px); }
+  50%  { transform: translateX(1px); }
+  75%  { transform: translateX(-1px); }
+  100% { transform: translateX(0); }
+}
+
