@@ -46,7 +46,7 @@ let lastTimeRemaining = { A: null, B: null };
 
 function shakeDraftRow() {
   const row = document.querySelector(
-    "#draftSetter .pending-guess"
+    "#draftSetter .setter-draft"
   );
 
   if (!row) return;
