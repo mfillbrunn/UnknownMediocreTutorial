@@ -45,11 +45,13 @@ document.addEventListener("DOMContentLoaded", () => {
 let lastTimeRemaining = { A: null, B: null };
 
 function shakeDraftRow(role) {
+  let row = null;
   if (role === "guesser"){
-    const row = document.querySelector("#draftSetter .guesser-draft");
-  }
-  if (role === "setter"){
+    const row = document.querySelector("#draftSetter.guesser-draft");
+  } else if (role === "setter"){
     const row = document.querySelector("#draftSetter .setter-draft");
+    } else {
+    return;
     }
   if (!row) return;
 
