@@ -822,20 +822,16 @@ function validateGuesserGuess(word, forcedGuess, allowedGuesses) {
   }
 
   const g = word.toLowerCase();
-
   // Dictionary check
   if (!allowedGuesses.has(g)) {
     return { ok: false, message: "Word not in dictionary" };
   }
-
   // No forced constraint → valid
   if (!forcedGuess) {
     return { ok: true, message: null };
   }
-
   let ok = true;
   let msg = "";
-
   switch (forcedGuess.type) {
     case "containsTwo":
       ok = forcedGuess.letters.every(l =>
@@ -848,37 +844,30 @@ function validateGuesserGuess(word, forcedGuess, allowedGuesses) {
       ok = g.startsWith(forcedGuess.letter.toLowerCase());
       msg = `Must start with ${forcedGuess.letter}`;
       break;
-
     case "endsWith":
       ok = g.endsWith(forcedGuess.letter.toLowerCase());
       msg = `Must end with ${forcedGuess.letter}`;
       break;
-
     case "doubleLetter":
       ok = hasDoubleLetter(g);
       msg = "Must contain a double letter";
       break;
-
     case "minVowels":
       ok = countVowels(g) >= forcedGuess.count;
       msg = `Must contain at least ${forcedGuess.count} vowels`;
       break;
-
     case "maxVowels":
       ok = countVowels(g) <= forcedGuess.count;
       msg = `Must contain at most ${forcedGuess.count} vowels`;
       break;
-
     case "firstLastSame":
       ok = g[0] === g[g.length - 1];
       msg = "First and last letter must match";
       break;
-
     case "palindrome":
       ok = isPalindrome(g);
       msg = "Must be a palindrome";
       break;
-
     default:
       // Unknown constraint → fail safe
       return { ok: false, message: "Invalid forced guess rule" };
@@ -887,6 +876,19 @@ function validateGuesserGuess(word, forcedGuess, allowedGuesses) {
   return ok
     ? { ok: true, message: null }
     : { ok: false, message: msg };
+}
+const VOWELS = new Set(["A", "E", "I", "O", "U"]);
+
+function countVowels(word) {
+  return [...word].filter(c => VOWELS.has(c.toUpperCase())).length;
+}
+
+function isPalindrome(word) {
+  return word === word.split("").reverse().join("");
+}
+
+function hasDoubleLetter(word) {
+  return /(.)\1/.test(word);
 }
 
 
