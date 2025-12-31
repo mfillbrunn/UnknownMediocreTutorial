@@ -98,10 +98,10 @@ function renderRemaining(element, countcurrent, countold, countnew) {
   const current = Number(countcurrent);
 
   const hasOld = typeof countold === "number";
-  const oldLoss = hasOld ? countold - current : null;
+  const oldLoss = hasOld ? countold : null;
 
   const hasNew = typeof countnew === "number";
-  const newLoss = hasNew ? countnew - current : null;
+  const newLoss = hasNew ? countnew : null;
 
   element.innerHTML = `
     <span class="remaining-current">
