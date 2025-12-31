@@ -1,3 +1,6 @@
+const { handleRoundTimeout,startTimer } = require("./chessTimer");
+const { endGame } = require("../core/phases/normal");
+
 function startGameTimer(roomId, room, state, context) {
   const io = context.io;
 
@@ -7,7 +10,6 @@ function startGameTimer(roomId, room, state, context) {
       endGame(state, roomId, io, room);
       return;
     }
-
     handleRoundTimeout(room, state, roomId, context, timedOutRole);
   });
 }
