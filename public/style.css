@@ -1780,7 +1780,17 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 margin:0;
 }
 
+
+
 /* SETTER REMAINING WORDS */
+.remaining-label {
+  display: flex;
+  align-items: center;
+  gap: 16px;          /* ← THIS is your “tab” spacing */
+  white-space: nowrap;
+}
+
+
 .remaining-old,
 .remaining-new {
   transition: color 0.2s ease, opacity 0.2s ease;
