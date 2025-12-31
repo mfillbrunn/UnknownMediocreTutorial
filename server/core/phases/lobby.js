@@ -102,28 +102,17 @@ if (action.type === "SET_POWER_COUNT") {
     return;
 }
 
-// -------------------------------
-  // Set name
-  // -------------------------------
-if (action.type === "SET_PLAYER_NAME") {
-  if (!role) return;
-  // sanitize
-  const name = String(action.name)
-    .trim()
-    .slice(0, 16);
-
-  state.playerNames[role] = name;
-
-  emitStateForAllPlayers(roomId, room, io);
-  return;
-}
-
   // -------------------------------
   // PLAYER READY
   // -------------------------------
   if (action.type === "PLAYER_READY") {
     state.ready[role] = true;
 
+          if (role.name) {
+            state.playerNames[role] = String(role.name)
+              .trim()
+              .slice(0, 16);
+          }
    emitToOtherPlayer(io, room, action.playerId, { type: "playerReady",role,playerId: action.playerId});
    emitToPlayer(io, action.playerId, {type: "playerReady",role,playerId: action.playerId});
 
