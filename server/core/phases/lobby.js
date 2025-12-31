@@ -152,14 +152,15 @@ if (action.type === "SET_PLAYER_NAME") {
       state.turn = null;
       state.simultaneousGuessSubmitted = false;
       state.simultaneousSecretSubmitted = false;
+        if (state.timeControl.enabled) {
         resetRoundTimer(state);
         state.activeTimer = "both";
+        stopTimer(roomId);
+        startGameTimer(room, state, roomId, context);
+        }
       emitLobbyEvent(io, roomId, { type: "hideLobby" });            
       emitStateForAllPlayers(roomId, room, io);
-      stopTimer(roomId);
-      if (state.timeControl.enabled) {
-           startGameTimer(room, state, roomId, context);
-        }
+
     }
     return;
   }
