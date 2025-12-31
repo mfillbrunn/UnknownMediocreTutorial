@@ -1,5 +1,7 @@
-///server/utils/roundTimer.js
-
+const applyAction = require("../core/stateMachine");
+const { emitStateForAllPlayers } = require("./emitState");
+const { endGame } = require("../core/phases/normal");
+const { resetRoundTimer } = require("./chessTimer");
 
 function handleRoundTimeout(state, roomId, io, room, role) {
   state.roundTimeouts[role]++;
@@ -12,7 +14,6 @@ function handleRoundTimeout(state, roomId, io, room, role) {
     return;
   }
 
-  // Auto-submit previous action
   applyAction(
     room,
     state,
@@ -32,3 +33,5 @@ function handleRoundTimeout(state, roomId, io, room, role) {
     endGame(state, roomId, io, room);
   }
 }
+
+module.exports = { handleRoundTimeout };
