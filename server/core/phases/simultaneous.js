@@ -1,7 +1,7 @@
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { scoreGuess } = require("../../game-engine/scoring");
 const { endGame } = require("./normal");
-const { addIncrement } = require("../../utils/chessTimer");
+const { addIncrement,resetRoundTimer } = require("../../utils/chessTimer");
 
 function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const io = context.io;
@@ -21,10 +21,14 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     state.currentSecret = w;              // ⭐ Required for correct scoring
     state.firstSecretSet = true;
     state.simultaneousSecretSubmitted = true;
-    if (state.activeTimer === "both") {
-        state.activeTimer = state.guesser;   
+    if (state.timeControl.mode === "chess") {
+      addIncrement(state, role);
+    } else if (state.timeControl.mode === "round") {
+      resetRoundTimer(state);
     }
-    addIncrement(state, role);
+    if (state.activeTimer === "both") {
+      state.activeTimer = state.guesser;   
+    }
   }
 
   // ---------------------------------------------
@@ -38,10 +42,14 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
 
     state.pendingGuess = g;
     state.simultaneousGuessSubmitted = true;
+    if (state.timeControl.mode === "chess") {
+      addIncrement(state, role);
+    } else if (state.timeControl.mode === "round") {
+      resetRoundTimer(state);
+    }
     if (state.activeTimer === "both") {
         state.activeTimer = state.setter;   
     }
-    addIncrement(state, role);
   }
 
   // ---------------------------------------------
