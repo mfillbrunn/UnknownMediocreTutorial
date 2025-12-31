@@ -17,6 +17,8 @@ function handleRoundTimeout(room, state, roomId, role, context) {
 
   const last = state.history[state.history.length - 1];
   // Auto-resubmit based on role
+    resetRoundTimer(state);
+  state.activeTimer = role === "A" ? "B" : "A";
   if (role === state.guesser) {
     handleNormalPhase(
       room,
@@ -43,10 +45,6 @@ function handleRoundTimeout(room, state, roomId, role, context) {
       context
     );
   }
-
-  resetRoundTimer(state);
-  state.activeTimer = role === "A" ? "B" : "A";
-
   emitStateForAllPlayers(roomId, room, io);
 
   if (state.roundTimeouts[role] >= 3) {
