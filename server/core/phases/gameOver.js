@@ -56,11 +56,13 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
 
     // Re-enter lobby
     state.phase = "lobby";
-    state.ready = { A: false, B: false };
-    resetRoundTimer(state);
-    stopTimer(roomId);
+    state.ready = { A: false, B: false };   
+    
     if (state.timeControl.enabled) {
-       startGameTimer(room, state, roomId, context);
+      state.activeTimer = "both";
+      resetRoundTimer(state);
+      stopTimer(roomId); 
+      startGameTimer(room, state, roomId, context);
     }
     emitLobbyEvent(io, roomId, { type: "showLobby" });
     emitStateForAllPlayers(roomId, room, io);
