@@ -178,7 +178,7 @@ if (state.activePowers.includes("revealLetter")) {
     return;
   }
   // ROUND TIMER MODE
-  handleRoundTimeout(state, roomId, io, room, timedOutRole,context);
+  handleRoundTimeout(room, state, roomId, timedOutRole,context);
         });
 
             }
