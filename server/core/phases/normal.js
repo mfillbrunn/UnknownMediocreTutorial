@@ -100,74 +100,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   /// GUESSER SUBMIT
   ///
   if (!state.pendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
-          const g = action.guess.toLowerCase();
-      if (!isValidWord(g, ALLOWED_GUESSES)) return;
-      function countVowels(word) {
-        return [...word].filter(c => VOWELS.has(c.toUpperCase())).length;
-      }
-      
-      function isPalindrome(word) {
-        return word === word.split("").reverse().join("");
-      }
-      
-      function hasDoubleLetter(word) {
-        return /(.)\1/.test(word);
-      }
-      
-      if (state.powers.forcedGuess) {
-        const g = action.guess.toLowerCase();
-        const fg = state.powers.forcedGuess;
-      
-        let ok = true;
-        let msg = "";
-      
-        switch (fg.type) {
-          case "containsTwo":
-            ok = fg.letters.every(l => g.includes(l.toLowerCase()));
-            msg = `Must contain ${fg.letters.join(" + ")}`;
-            break;
-      
-          case "startsWith":
-            ok = g.startsWith(fg.letter.toLowerCase());
-            msg = `Must start with ${fg.letter}`;
-            break;
-      
-          case "endsWith":
-            ok = g.endsWith(fg.letter.toLowerCase());
-            msg = `Must end with ${fg.letter}`;
-            break;
-      
-          case "doubleLetter":
-            ok = hasDoubleLetter(g);
-            msg = "Must contain a double letter";
-            break;
-      
-          case "minVowels":
-            ok = countVowels(g) >= fg.count;
-            msg = "Must contain at least 3 vowels";
-            break;
-      
-          case "maxVowels":
-            ok = countVowels(g) <= fg.count;
-            msg = "Must contain at most 1 vowel";
-            break;
-      
-          case "firstLastSame":
-            ok = g[0] === g[g.length - 1];
-            msg = "First and last letter must match";
-            break;
-      
-          case "palindrome":
-            ok = isPalindrome(g);
-            msg = "Must be a palindrome";
-            break;
-        }
-      
-        if (!ok) {
-          io.to(action.playerId).emit("errorMessage", msg);
-          return;
-        }
-      }
+          const g = action.guess.toLowerCase();    
 
           // If assassin word was set, check immediately on guess submission
       const assassin = state.powers.assassinWord;
