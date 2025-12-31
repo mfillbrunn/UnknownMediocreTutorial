@@ -7,6 +7,32 @@ const resetRoundState = require("../../utils/resetRoundState");
 const {resetRoundTimer,stopTimer} = require("../../utils/chessTimer");
 const {startGameTimer} = require("../../utils/startGameTimer");
 
+function endGame(state, roomId, io, room) {
+   state.turn = null;
+   state.gameOver = true;
+   resetRoundTimer(state);
+   state.matchRounds = state.matchRounds || []; 
+   state.matchRounds.push({
+    setter: state.setter,
+    guesser: state.guesser,
+    guessCount: state.guessCount,
+       time: {
+    A: state.timeRemaining.A,
+    B: state.timeRemaining.B,
+       },
+         timeoutLoser: state.timeoutLoser || null,
+    history: JSON.parse(JSON.stringify(state.history)),
+    powers: JSON.parse(JSON.stringify(state.activePowers || [])),
+  });
+    const res = state.mode?.onRoundEnd?.(state) || { view: "match", canNextRound: false };
+    state.phase = "gameOver";
+    state.gameOverView = res.view || "match"; 
+    state.canNextRound = !!res.canNextRound;
+    emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
+    io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
+    emitStateForAllPlayers(roomId, room, io)
+}
+
 function handleGameOverPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   if (state.timeControl.enabled) {stopTimer(roomId);} 
