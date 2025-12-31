@@ -66,28 +66,18 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   const { ALLOWED_GUESSES, powerEngine } = context;
 
- if (action.type === "UPDATE_DRAFT" && role === state.guesser) {
-   state.guesserDraft = (action.draft || "").toUpperCase();
-   emitStateForAllPlayers(roomId, room, io);
-   return;
- }
-
  if (action.type === "CONFIRM_FORCE_GUESS" && role === state.setter) {
   const opts = state.powers.forcedGuessOptions;
   if (!opts) return;
-
   const chosen = opts.find(o => o.type === action.mode);
   if (!chosen) return;
-
   state.powers.forcedGuess = chosen;
   state.powers.forcedGuessOptions = null;
-
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
-  /// GUESSER POWERs
-  if (!state.pendingGuess && action.type.startsWith("USE_") && role === state.guesser) {
-
+  /// POWERs
+  if (action.type.startsWith("USE_")) {
     const powerId = normalizePowerId(action.type);
     if (!state.powerUsedThisTurn) {
       state.powerUsedThisTurn = true;
@@ -113,7 +103,6 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
           state.powers.forcedGuess = null;
         return;
       }
-
     if (g === state.secret) {
       state.currentSecret = state.secret;
       pushWinEntry(state, g);
@@ -125,7 +114,6 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     state.pendingGuess = g;
     if (state.powers.blindGuessActive) { state.powers.blindGuessActive = false;}
     state.powers.forcedGuess = null;
-    state.guesserDraft = "";   // clear live draft immediately
     
     if (state.timeControl.mode === "chess") {
       addIncrement(state, role);
@@ -133,51 +121,32 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       resetRoundTimer(state);
     }
     state.activeTimer = state.setter;
-    
     state.turn = state.setter;
     if (state.powers.forceTimerArmed) {
       startForceTimer(roomId, room, state, io, context);
     }
     state.powerUsedThisTurn = false;
     powerEngine.turnStart(state, state.turn, roomId, io);
-    
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
 
   /// SETTER
-  if (state.pendingGuess && state.turn === state.setter) {
-    if (action.type.startsWith("USE_") && role === state.setter) {
-      const powerId = normalizePowerId(action.type);
-      if (!state.powerUsedThisTurn) {
-        state.powerUsedThisTurn = true;
-        powerEngine.applyPower(powerId, state, action, roomId, io);
-        emitStateForAllPlayers(roomId, room, io);
-      }
+if (state.pendingGuess && state.turn === state.setter) {
+    if (action.type === "SET_SECRET_NEW") {
+      const w = action.secret.toLowerCase();
+    } else if (action.type === "SET_SECRET_SAME"){
+      const w = state.secret;
+    }
+    if (powerEngine.beforeSetterSecretChange(state, action)) return;
+    if (state.powers.assassinWord && w.toUpperCase() === state.powers.assassinWord.toUpperCase()) {
+      io.to(action.playerId).emit("errorMessage", "Secret cannot match assassin word!");
       return;
     }
-///SECRET NEW
-    if (action.type === "SET_SECRET_NEW") {
-      if (powerEngine.beforeSetterSecretChange(state, action)) return;
-      const w = action.secret.toLowerCase();
-      if (!isValidWord(w, ALLOWED_GUESSES)) return;
-         if (state.powers.assassinWord &&
-            w.toUpperCase() === state.powers.assassinWord.toUpperCase()) {
-          io.to(action.playerId).emit(
-            "errorMessage",
-            "Secret cannot match assassin word!"
-          );
-          return;
-        }
-      if (!isConsistentWithHistory(state.history, w, state)) {
-        io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
-        return;
-      }      
       state.secret = w;
       state.currentSecret = w;
       state.firstSecretSet = true;
       if (state.pendingGuess === w) {
-        state.currentSecret = w;
         pushWinEntry(state, w);
         endGame(state, roomId, io, room);
         return;
@@ -196,58 +165,6 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
-
-    ///SECRET SAME
-    if (action.type === "SET_SECRET_SAME") {
-      if (powerEngine.beforeSetterSecretChange(state, action)) return;
-      const w = state.secret;
-       if (state.powers.assassinWord &&
-            w.toUpperCase() === state.powers.assassinWord.toUpperCase()) {
-          io.to(action.playerId).emit(
-            "errorMessage",
-            "Secret cannot match assassin word!"
-          );
-          return;
-        }      
-       if (!isConsistentWithHistory(state.history, w, state)) {
-        io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
-        return;
-      }      
-      // Reject if secret equals assassin word
-      if (state.pendingGuess === state.secret) {
-        state.currentSecret = state.secret;
-        pushWinEntry(state, state.secret);
-        endGame(state, roomId, io, room);
-        return;
-      }
-      state.currentSecret = state.secret;
-      state.firstSecretSet = true;
-      clearForceTimer(roomId, state);
-      finalizeFeedback(state, powerEngine, roomId, io);
-          if (state.timeControl.mode === "chess") {
-            addIncrement(state, role);
-          } else if (state.timeControl.mode === "round") {
-            resetRoundTimer(state);
-          }
-      state.turn = state.guesser;  
-      state.powerUsedThisTurn = false;
-      powerEngine.turnStart(state, state.guesser, roomId, io);
-      state.activeTimer = state.guesser;
-      emitStateForAllPlayers(roomId, room, io);
-      return;
-    }
-
-    return;
-  }
-
-  if (action.type.startsWith("USE_")) {
-    const powerId = normalizePowerId(action.type);
-    if (state.powerUsedThisTurn) return;
-    state.powerUsedThisTurn = true;
-    powerEngine.applyPower(powerId, state, action, roomId, io);
-    emitStateForAllPlayers(roomId, room, io);
-    return;
-  }
 }
 
 function pushWinEntry(state, word) {
@@ -263,8 +180,9 @@ function pushWinEntry(state, word) {
 function endGame(state, roomId, io, room) {
    state.turn = null;
    state.gameOver = true;
+   resetRoundTimer(state);
    state.matchRounds = state.matchRounds || []; 
-    state.matchRounds.push({
+   state.matchRounds.push({
     setter: state.setter,
     guesser: state.guesser,
     guessCount: state.guessCount,
