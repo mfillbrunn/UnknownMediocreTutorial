@@ -12,31 +12,35 @@ function updateRemainingWords(newSecret) {
   const lastIdx = state.history.length - 1;
   if (lastIdx < 0) return;
 
-  // Current remaining
+  // Always compute current
   if (remainingCache.setterCurrent == null) {
     remainingCache.setterCurrent = computeRemainingAfterIndex(lastIdx);
   }
-  const countCurrent = remainingCache.setter;
+  const countCurrent = remainingCache.setterCurrent;
 
-  // Old (keep current secret)
-  if (remainingCache.setterOld == null) {
-    remainingCache.setterOld = computeRemainingNew(state.secret);;
-  }
-  const countOld = remainingCache.setterOld;
-  
-  // New (hypothetical) — default to null
+  // Default: unknown
+  let countOld = null;
   let countNew = null;
-  if (
-    typeof newSecret === "string" &&
-    newSecret.length === 5 &&
-    !newSecret.includes("?") &&
-    state.pendingGuess
-  ) {
-    countNew = computeRemainingNew(newSecret);
+
+  const guess = state.pendingGuess;
+
+  // Only compute old/new if guess is fully known
+  const guessIsComplete = !guess.includes("?");
+
+  if (guessIsComplete) {
+    if (remainingCache.setterOld == null) {
+      remainingCache.setterOld = computeRemainingNew(state.secret);
+    }
+    countOld = remainingCache.setterOld;
+
+    if (newSecret.length === 5) {
+      countNew = computeRemainingNew(newSecret);
+    }
   }
 
   renderRemaining(el, countCurrent, countOld, countNew);
 }
+
 
 
 ///Calculate remaining words
@@ -56,8 +60,9 @@ window.computeRemainingAfterIndex = function (idx) {
 window.computeRemainingNew = function (newWord) {
   const words = window.ALLOWED_SECRETS;
   const Guess = state.pendingGuess;
-  if (!state || !state.history || !Guess) return 0;
-
+  if (!state || !state.history || !guess || guess.includes("?")) {
+    return null;
+  }
   const fb = scoreGuess(
     Guess.toLowerCase(),
     newWord.toLowerCase()
@@ -68,7 +73,7 @@ window.computeRemainingNew = function (newWord) {
     fb,
     ignoreConstraints: false
   };
-
+  
   const testHistory = [...state.history, newHistory];
 
   let count = 0;
@@ -88,10 +93,12 @@ const remainingCache = {
 
 ///Render remaining words
 function renderRemaining(element, countcurrent, countold, countnew) {
-  if (!element || countcurrent == null || countold == null) return;
+  if (!element || countcurrent == null) return;
 
   const current = Number(countcurrent);
-  const oldLoss = Number(countold) - current;
+
+  const hasOld = typeof countold === "number";
+  const oldLoss = hasOld ? countold - current : null;
 
   const hasNew = typeof countnew === "number";
   const newLoss = hasNew ? countnew - current : null;
@@ -101,14 +108,14 @@ function renderRemaining(element, countcurrent, countold, countnew) {
       Words remaining: ${current.toLocaleString()}
     </span>,
     <span class="remaining-old">
-      Keep: ${oldLoss.toLocaleString()}
+      Keep: ${hasOld ? oldLoss.toLocaleString() : "?"}
     </span>,
     <span class="remaining-new">
       New: ${hasNew ? newLoss.toLocaleString() : "?"}
     </span>
   `;
 
-  if (!hasNew) return;
+  if (!hasOld || !hasNew) return;
 
   const oldEl = element.querySelector(".remaining-old");
   const newEl = element.querySelector(".remaining-new");
@@ -119,4 +126,5 @@ function renderRemaining(element, countcurrent, countold, countnew) {
     newEl.classList.add("better");
   }
 }
+
 
