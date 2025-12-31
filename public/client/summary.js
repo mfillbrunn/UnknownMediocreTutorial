@@ -166,6 +166,13 @@ function renderMatchSummary(container) {
 
 ///COMPETITIVE  ROUND SUMMARY
 function renderRoundSummary(container) {
+   
+  let html = `<h3>Round Summary</h3>`;
+
+  const setterName =
+    state.playerNames?.[state.setter] || "Setter";
+  const guesserName =
+    state.playerNames?.[state.guesser] || "Guesser";
   if (state.timeoutLoser) {
   const loser =
     state.timeoutLoser === state.setter
@@ -184,13 +191,7 @@ function renderRoundSummary(container) {
   `;
 }
 
-  
-  let html = `<h3>Round Summary</h3>`;
-
-  const setterName =
-    state.playerNames?.[state.setter] || "Setter";
-  const guesserName =
-    state.playerNames?.[state.guesser] || "Guesser";
+ 
 
   html += `
     <p class="summary-players">
