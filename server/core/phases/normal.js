@@ -173,20 +173,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
         io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
         return;
       }      
-      // Force setter to obey revealed green
-      if (state.powers.forcedGreens) {
-        for (const pos in state.powers.forcedGreens) {
-          const required = state.powers.forcedGreens[pos];
-          if (w[pos].toUpperCase() !== required) {
-            io.to(action.playerId).emit(
-              "errorMessage",
-              `Secret must contain ${required} in position ${parseInt(pos)+1}!`
-            );
-            return;
-          }
-        }
-      }
-       state.secret = w;
+      state.secret = w;
       state.currentSecret = w;
       state.firstSecretSet = true;
       if (state.pendingGuess === w) {
@@ -197,11 +184,11 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       }
       clearForceTimer(roomId, state);
       finalizeFeedback(state, powerEngine, roomId, io);
-          if (state.timeControl.mode === "chess") {
-            addIncrement(state, role);
-          } else if (state.timeControl.mode === "round") {
-            resetRoundTimer(state);
-          }
+      if (state.timeControl.mode === "chess") {
+        addIncrement(state, role);
+      } else if (state.timeControl.mode === "round") {
+        resetRoundTimer(state);
+      }
       state.turn = state.guesser;
       state.powerUsedThisTurn = false;  
       powerEngine.turnStart(state, state.guesser, roomId, io);
@@ -221,30 +208,12 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
             "Secret cannot match assassin word!"
           );
           return;
-        }
-
-      
+        }      
        if (!isConsistentWithHistory(state.history, w, state)) {
         io.to(action.playerId).emit("errorMessage", "Secret inconsistent with history!");
         return;
       }      
-     
-  // Force setter to obey revealed green
-if (state.powers.forcedGreens) {
-  for (const pos in state.powers.forcedGreens) {
-    const required = state.powers.forcedGreens[pos];
-    if (w[pos].toUpperCase() !== required) {
-      io.to(action.playerId).emit(
-        "errorMessage",
-        `Secret must contain ${required} in position ${parseInt(pos)+1}!`
-      );
-      return;
-    }
-  }
-}
-// Reject if secret equals assassin word
-
-
+      // Reject if secret equals assassin word
       if (state.pendingGuess === state.secret) {
         state.currentSecret = state.secret;
         pushWinEntry(state, state.secret);
