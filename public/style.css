@@ -176,8 +176,9 @@ body {
 .screen-title {
   font-size: 24px;
   color: var(--heading);
-  margin-bottom: 16px;
+   margin: 0;
 }
+
 
 /* Shared panel styling */
 :where(.panel, .constraints-box, .history-box, .summary-box, .preview-box) {
@@ -1253,7 +1254,8 @@ body.hide-constraints .constraint-row {
     var(--tile-yellow) 33.33%,
     var(--tile-yellow) 66.66%,
     var(--tile-green) 66.66%,
-    var(--tile-green) 100%
+    var(--tile-green) 99.99%,
+     var(--tile-gray) 100%
   ) !important;
 
   color: #fff;
@@ -1744,4 +1746,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   flex-direction: column;
   align-items: flex-end;
   text-align: right;
+}
+.role-header h2{
+margin:0;
 }
