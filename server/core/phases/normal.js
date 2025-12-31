@@ -126,14 +126,21 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     if (state.powers.blindGuessActive) { state.powers.blindGuessActive = false;}
     state.powers.forcedGuess = null;
     state.guesserDraft = "";   // clear live draft immediately
-    addIncrement(state, role);
+    
+    if (state.timeControl.mode === "chess") {
+      addIncrement(state, role);
+    } else if (state.timeControl.mode === "round") {
+      resetRoundTimer(state);
+    }
+    state.activeTimer = state.setter;
+    
     state.turn = state.setter;
     if (state.powers.forceTimerArmed) {
       startForceTimer(roomId, room, state, io, context);
     }
     state.powerUsedThisTurn = false;
     powerEngine.turnStart(state, state.turn, roomId, io);
-    state.activeTimer = state.setter;
+    
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
@@ -190,7 +197,11 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       }
       clearForceTimer(roomId, state);
       finalizeFeedback(state, powerEngine, roomId, io);
-      addIncrement(state, role);
+          if (state.timeControl.mode === "chess") {
+            addIncrement(state, role);
+          } else if (state.timeControl.mode === "round") {
+            resetRoundTimer(state);
+          }
       state.turn = state.guesser;
       state.powerUsedThisTurn = false;  
       powerEngine.turnStart(state, state.guesser, roomId, io);
@@ -244,7 +255,11 @@ if (state.powers.forcedGreens) {
       state.firstSecretSet = true;
       clearForceTimer(roomId, state);
       finalizeFeedback(state, powerEngine, roomId, io);
-      addIncrement(state, role);
+          if (state.timeControl.mode === "chess") {
+            addIncrement(state, role);
+          } else if (state.timeControl.mode === "round") {
+            resetRoundTimer(state);
+          }
       state.turn = state.guesser;  
       state.powerUsedThisTurn = false;
       powerEngine.turnStart(state, state.guesser, roomId, io);
