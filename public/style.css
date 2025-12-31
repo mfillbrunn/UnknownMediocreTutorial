@@ -174,7 +174,11 @@ body {
 }
 
 .screen-title {
-  font-size: 24px;
+  margin: 0;
+   line-height: 1; 
+   display: inline-flex;
+   align-items: center;
+   font-size: 24px;
   color: var(--heading);
    margin-bottom: 8px;
 }
@@ -1483,6 +1487,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+   line-height: 1;
 }
 
 .role-badge {
