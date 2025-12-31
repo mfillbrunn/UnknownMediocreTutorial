@@ -1,6 +1,6 @@
 // network/socketHandlers.js
 
-const { rooms, createRoom, joinRoom } = require("../core/rooms");
+const { rooms, createRoom, joinRoom, findLastOpenRoom  } = require("../core/rooms");
 const applyAction = require("../core/stateMachine");
 const { emitStateForAllPlayers } = require("../utils/emitState");
 const { emitLobbyEvent } = require("../utils/emitLobby");
@@ -46,6 +46,37 @@ module.exports = function registerSocketHandlers(io, context) {
         guesserId
       });
 
+      cb({ ok: true, roomId });
+      emitStateForAllPlayers(roomId, room, io);
+    });
+
+    // QUICK JOIN ------------------------------
+    socket.on("quickJoin", cb => {
+      const roomId = findLastOpenRoom();
+    
+      if (!roomId) {
+        return cb({ ok: false, error: "No open rooms available" });
+      }
+    
+      const result = joinRoom(socket, roomId);
+      if (!result.ok) return cb(result);
+    
+      const room = rooms[roomId];
+    
+      // Notify host
+      socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
+    
+      const setterId = Object.keys(room.players)
+        .find(id => room.players[id] === "A");
+      const guesserId = Object.keys(room.players)
+        .find(id => room.players[id] === "B");
+    
+      socket.emit("roleAssigned", {
+        role: room.players[socket.id],
+        setterId,
+        guesserId
+      });
+    
       cb({ ok: true, roomId });
       emitStateForAllPlayers(roomId, room, io);
     });
