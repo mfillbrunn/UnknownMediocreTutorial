@@ -68,10 +68,25 @@ function cleanupEmptyRooms() {
   }
 }
 
+function findLastOpenRoom() {
+  const roomIds = Object.keys(rooms);
+
+  for (let i = roomIds.length - 1; i >= 0; i--) {
+    const roomId = roomIds[i];
+    const room = rooms[roomId];
+    if (room && Object.keys(room.players).length === 1) {
+      return roomId;
+    }
+  }
+  return null;
+}
+
+
 module.exports = {
   rooms,
   createRoom,
   joinRoom,
   assignRoles,
-  cleanupEmptyRooms
+  cleanupEmptyRooms,
+  findLastOpenRoom
 };
