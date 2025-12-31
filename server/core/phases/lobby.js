@@ -6,6 +6,7 @@ const CompetitiveMode = require("../modes/competitiveMode");
 const { stopTimer,startTimer,resetRoundTimer } = require("../../utils/chessTimer");
 const {handleRoundTimeout} = require("../../utils/roundTimer");
 const { endGame } = require("./normal");
+const {startGameTimer} = require("../../utils/startGameTimer");
 
 const SETTER_POWERS = [
         "hideTile",
@@ -35,12 +36,9 @@ function handleLobbyPhase(room, state, action, role, roomId, context) {
 if (action.type === "SET_TIME_CONTROL") {
   const sec = parseInt(action.seconds, 10);
   const mode = action.mode || "round";
-
   if (!Number.isFinite(sec) || sec < 0) return;
-
   state.timeControl.mode = mode;
   state.timeControl.enabled = sec > 0;
-
   if (mode === "round") {
     state.timeControl.roundSeconds = sec;
     state.timeRemaining.A = sec;
@@ -50,7 +48,6 @@ if (action.type === "SET_TIME_CONTROL") {
     state.timeRemaining.A = sec;
     state.timeRemaining.B = sec;
   }
-
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
@@ -132,61 +129,40 @@ if (action.type === "SET_PLAYER_NAME") {
   if (action.type === "PLAYER_READY") {
     state.ready[role] = true;
 
-   emitToOtherPlayer(io, room, action.playerId, {
-      type: "playerReady",
-      role,
-     playerId: action.playerId
-    });
-    emitToPlayer(io, action.playerId, {
-      type: "playerReady",
-      role,
-      playerId: action.playerId
-    });
+   emitToOtherPlayer(io, room, action.playerId, { type: "playerReady",role,playerId: action.playerId});
+   emitToPlayer(io, action.playerId, {type: "playerReady",role,playerId: action.playerId});
 
     // If both ready → enter simultaneous phase
     if (state.ready.A && state.ready.B) {
           
             const N = state.powerCount || 2;
- const sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
- const gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
-
- state.mode = new CompetitiveMode();
- state.mode.initMatch(state);
- state.mode.onLobbyReady(state, sP, gP);
-            // Initialize unified revealLetter power mode
-if (state.activePowers.includes("revealLetter")) {
-  state.powers.revealLetter.mode =
-    Math.random() < 0.5 ? "RARE" : "ROW";
-}
+         const sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
+         const gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
+        
+         state.mode = new CompetitiveMode();
+         state.mode.initMatch(state);
+         state.mode.onLobbyReady(state, sP, gP);
+                    // Initialize unified revealLetter power mode
+        if (state.activePowers.includes("revealLetter")) {
+          state.powers.revealLetter.mode =
+            Math.random() < 0.5 ? "RARE" : "ROW";
+        }
 
       state.phase = "simultaneous";
       state.turn = null;
       state.simultaneousGuessSubmitted = false;
       state.simultaneousSecretSubmitted = false;
         resetRoundTimer(state);
-
         state.activeTimer = "both";
       emitLobbyEvent(io, roomId, { type: "hideLobby" });            
       emitStateForAllPlayers(roomId, room, io);
-            stopTimer(roomId);
-            if (state.timeControl.enabled) {
-        startTimer(roomId, state, io, timedOutRole => {
-  if (state.timeControl.mode === "chess") {
-    state.timeExpired = timedOutRole;
-    state.timeoutLoser = timedOutRole;
-    endGame(state, roomId, io, room);
-    return;
-  }
-  // ROUND TIMER MODE
-  handleRoundTimeout(room, state, roomId, timedOutRole,context);
-        });
-
-            }
+      stopTimer(roomId);
+      if (state.timeControl.enabled) {
+           startGameTimer(roomId, room, state, context);
+              }
     }
     return;
   }
-
-  // NEW_MATCH during lobby does nothing here
 }
 
 module.exports = handleLobbyPhase;
