@@ -915,6 +915,22 @@ $("joinRoomBtn").onclick = () => {
   });
 };
 
+window.quickJoin = function (cb) {
+  socket.emit("quickJoin", cb);
+};
+
+$("quickJoinBtn").onclick = () => {
+  quickJoin(resp => {
+    if (!resp.ok) return toast(resp.error);
+
+    roomId = resp.roomId;
+    $("roomInfo").style.display = "block";
+    $("roomCodeLabel").textContent = roomId;
+    enableReadyButton(true);
+  });
+};
+
+
 $("switchRolesBtn").onclick = () =>
   sendGameAction(roomId, { type: "SWITCH_ROLES" });
 
