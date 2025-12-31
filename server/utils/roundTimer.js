@@ -1,10 +1,10 @@
 const applyAction = require("../core/stateMachine");
 const { emitStateForAllPlayers } = require("./emitState");
-const { endGame } = require("../core/phases/normal");
+const { endGame,handleNormalPhase  } = require("../core/phases/normal");
 const { resetRoundTimer } = require("./chessTimer");
 
 function handleRoundTimeout(state, roomId, io, room, role) {
-  // 🔴 Rule: timeout during simultaneous phase = immediate game over
+  // Rule: timeout during simultaneous phase = immediate game over
   if (state.phase === "simultaneous") {
     state.timeoutLoser = role;
     endGame(state, roomId, io, room);
@@ -15,38 +15,31 @@ function handleRoundTimeout(state, roomId, io, room, role) {
   state.roundTimeouts[role]++;
 
   const last = state.history[state.history.length - 1];
-
-  // No prior completed round to repeat
-  if (!last) {
-    resetRoundTimer(state);
-    state.activeTimer = role === "A" ? "B" : "A";
-    emitStateForAllPlayers(roomId, room, io);
-
-    if (state.roundTimeouts[role] >= 3) {
-      state.timeoutLoser = role;
-      endGame(state, roomId, io, room);
-    }
-    return;
-  }
-
   // Auto-resubmit based on role
   if (role === state.guesser) {
-    applyAction(
+    handleNormalPhase(
       room,
       state,
-      { type: "SUBMIT_GUESS", guess: last.guess, timedOut: true },
-      role,
+      {
+        type: "SUBMIT_GUESS",
+        guess: last.guess,
+        timedOut: true
+      },
+      state.guesser,
       roomId,
-      { io }
+      context
     );
   } else if (role === state.setter) {
-    applyAction(
+    handleNormalPhase(
       room,
       state,
-      { type: "SET_SECRET_SAME", timedOut: true },
-      role,
+      {
+        type: "SET_SECRET_SAME",
+        timedOut: true
+      },
+      state.setter,
       roomId,
-      { io }
+      context
     );
   }
 
