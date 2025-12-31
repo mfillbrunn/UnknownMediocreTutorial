@@ -25,7 +25,8 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
       addIncrement(state, role);
     } 
     if (state.activeTimer === "both") {
-      state.activeTimer = state.guesser;   
+      state.activeTimer = state.guesser;
+      state.timeUsed[state.setter] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
     }
   }
 
@@ -45,6 +46,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     } 
     if (state.activeTimer === "both") {
         state.activeTimer = state.setter;   
+        state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
     }
   }
 
