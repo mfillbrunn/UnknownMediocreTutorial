@@ -13,14 +13,17 @@ function updateRemainingWords(newSecret) {
   if (lastIdx < 0) return;
 
   // Current remaining
-  if (remainingCache.setter == null) {
-    remainingCache.setter = computeRemainingAfterIndex(lastIdx);
+  if (remainingCache.setterCurrent == null) {
+    remainingCache.setterCurrent = computeRemainingAfterIndex(lastIdx);
   }
   const countCurrent = remainingCache.setter;
 
   // Old (keep current secret)
-  const countOld = computeRemainingNew(state.secret);
-
+  if (remainingCache.setterOld == null) {
+    remainingCache.setterOld = computeRemainingNew(state.secret);;
+  }
+  const countOld = remainingCache.setterOld;
+  
   // New (hypothetical) — default to null
   let countNew = null;
   if (
@@ -79,7 +82,8 @@ window.computeRemainingNew = function (newWord) {
 
 // cache lives outside, but is reset on state updates
 const remainingCache = {
-  setter: null
+  setterCurrent: null,
+  setterOld: null
 };
 
 ///Render remaining words
