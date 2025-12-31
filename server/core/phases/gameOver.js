@@ -9,7 +9,7 @@ const {startGameTimer} = require("../../utils/startGameTimer");
 
 function handleGameOverPhase(room, state, action, role, roomId, context) {
   const io = context.io;
-
+  if (state.timeControl.enabled) {stopTimer(roomId);} 
   // --------------------------------------------------------------------
   // The only valid action in gameOver is NEW_MATCH
   // --------------------------------------------------------------------
@@ -39,7 +39,6 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     if (state.timeControl.enabled) {
       state.activeTimer = "both";
       resetRoundTimer(state);
-      stopTimer(roomId); 
       startGameTimer(room, state, roomId, context);
     }
     emitLobbyEvent(io, roomId, { type: "hideLobby" });
@@ -62,7 +61,6 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     if (state.timeControl.enabled) {
       state.activeTimer = "both";
       resetRoundTimer(state);
-      stopTimer(roomId); 
       startGameTimer(room, state, roomId, context);
     }
     emitLobbyEvent(io, roomId, { type: "showLobby" });
