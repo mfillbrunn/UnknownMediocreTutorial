@@ -2,14 +2,11 @@
  * Normalize emoji feedback so comparisons are consistent
  */
 function normalizeFB(fbArr) {
-  if (!Array.isArray(fbArr)) {
-    // Treat missing feedback as all black tiles
-    return ["⬛","⬛","⬛","⬛","⬛"];
-  }
   return fbArr.map(fb => {
     if (fb === "🟩") return "🟩";
     if (fb === "🟨") return "🟨";
-    return "⬛";
+    if (fb == "⬛") return "⬛";
+    if (fb == "") return "";
   });
 }
 
@@ -42,7 +39,7 @@ function isConsistentWithHistory(history, proposedSecret, state) {
  
 
     for (let i = 0; i < 5; i++) {
-      if (expected[i] !== actual[i]) return false;
+      if ((expected[i] !== actual[i]) && actual[i] !=="") return false;
     }
   }
 
