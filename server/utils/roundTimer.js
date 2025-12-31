@@ -5,6 +5,7 @@ const { resetRoundTimer } = require("./chessTimer");
 
 function handleRoundTimeout(room, state, roomId, role, context) {
   // Rule: timeout during simultaneous phase = immediate game over
+  const io = context.io;
   if (state.phase === "simultaneous") {
     state.timeoutLoser = role;
     endGame(state, roomId, io, room);
