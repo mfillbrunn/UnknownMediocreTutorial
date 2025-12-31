@@ -936,7 +936,12 @@ $("switchRolesBtn").onclick = () =>
 
 $("readyBtn").onclick = () => {
   // Send to server
-  sendGameAction(roomId, { type: "PLAYER_READY" });
+  const name = $("playerNameInput")?.value?.trim() || "";
+
+  sendGameAction(roomId, {
+    type: "PLAYER_READY",
+    name
+  });
 
   // Immediately update UI locally
   enableReadyButton(false);
