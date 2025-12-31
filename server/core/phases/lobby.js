@@ -158,8 +158,8 @@ if (action.type === "SET_PLAYER_NAME") {
       emitStateForAllPlayers(roomId, room, io);
       stopTimer(roomId);
       if (state.timeControl.enabled) {
-           startGameTimer(roomId, room, state, context);
-              }
+           startGameTimer(room, state, roomId, context);
+        }
     }
     return;
   }
