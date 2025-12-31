@@ -36,10 +36,11 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     state.canNextRound = false;
     state.phase = res.phase || "simultaneous";
     state.turn = null;
-    resetRoundTimer(state);
-    stopTimer(roomId);
     if (state.timeControl.enabled) {
-       startGameTimer(room, state, roomId, context);
+      state.activeTimer = "both";
+      resetRoundTimer(state);
+      stopTimer(roomId); 
+      startGameTimer(room, state, roomId, context);
     }
     emitLobbyEvent(io, roomId, { type: "hideLobby" });
     emitStateForAllPlayers(roomId, room, io);
