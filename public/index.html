@@ -81,25 +81,34 @@
   
     <!-- ========== SETTER ========== -->
     <section id="setterScreen" class="screen theme-setter">
-       <!-- HEADER -->
-        <header class="role-header theme-setter">
-          <div class="header-left">
-            <h2 class="screen-title"></h2>
-            <span class="room-meta">
-              <span class="room-code header-room-code"></span>
-              <span class="role-badge" id="setterRoleBadge">Setter</span>
-            </span>
-          </div>
-        
-          <div class="header-right header-status">
-            <div class="timer-block">
-              <span id="timerSetter" class="chess-timer">5:00</span>
+       <!-- HEADER TOP ROW-->
+          <header class="role-header theme-setter">
+            <!-- TOP ROW: identity + timer -->
+            <div class="header-row header-top">
+              <div class="header-left">
+                <h2 class="screen-title">Setter</h2>
+                <span class="room-meta">
+                  <span class="room-code header-room-code"></span>
+                  <span class="role-badge" id="setterRoleBadge">SETTER</span>
+                </span>
+              </div>
+          
+              <div class="header-right">
+                <span id="timerSetter" class="chess-timer">5:00</span>
+                <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
+                <button
+                  id="powerInfoBtnSetter"
+                  class="power-info-btn"
+                  aria-label="Power descriptions"
+                >?</button>
+              </div>
+            </div>
+          
+            <!-- SECOND ROW: analysis -->
+            <div class="header-row header-sub">
               <span id="remainingInfoSetter" class="remaining-label"></span>
             </div>
-            <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
-            <button id="powerInfoBtnSetter"  class="power-info-btn"  aria-label="Power descriptions">?</button>
-          </div>
-        </header>
+          </header>
          <!-- PLAY AREA -->    
          <main class="play-area setter-play">
             <div class="play-row">
@@ -159,19 +168,30 @@
      <section id="guesserScreen" class="screen theme-guesser">
        <!-- HEADER -->
         <header class="role-header theme-guesser">
-          <div class="header-left">
-            <h2 class="screen-title"></h2>
-            <span class="room-meta">
-              <span class="room-code header-room-code"></span>
-              <span class="role-badge" id="guesserRoleBadge">Guesser</span>
-            </span>
-          </div>        
-          <div class="header-right header-status">
-            <div class="timer-block">
-              <span id="timerGuesser" class="chess-timer">5:00</span>
+          <!-- TOP ROW: identity + timer -->
+          <div class="header-row header-top">
+            <div class="header-left">
+              <h2 class="screen-title">Guesser</h2>
+              <span class="room-meta">
+                <span class="room-code header-room-code"></span>
+                <span class="role-badge" id="guesserRoleBadge">GUESSER</span>
+              </span>
             </div>
-            <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
-            <button id="powerInfoBtnGuesser" class="power-info-btn" aria-label="Guesser power descriptions">?</button>
+        
+            <div class="header-right">
+              <span id="timerGuesser" class="chess-timer">5:00</span>
+              <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
+              <button
+                id="powerInfoBtnGuesser"
+                class="power-info-btn"
+                aria-label="Power descriptions"
+              >?</button>
+            </div>
+          </div>
+        
+          <!-- SECOND ROW: analysis -->
+          <div class="header-row header-sub">
+            <span id="remainingInfoGuesser" class="remaining-label"></span>
           </div>
         </header>
        <!--- PLAY AREA---> 
