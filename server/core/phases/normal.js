@@ -121,6 +121,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       resetRoundTimer(state);
     }
     state.activeTimer = state.setter;
+    state.roundStartTime = Date.now();
     state.turn = state.setter;
     if (state.powers.forceTimerArmed) {
       startForceTimer(roomId, room, state, io, context);
@@ -163,6 +164,7 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
       state.powerUsedThisTurn = false;  
       powerEngine.turnStart(state, state.guesser, roomId, io);
       state.activeTimer = state.guesser;
+      state.roundStartTime = Date.now();
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
