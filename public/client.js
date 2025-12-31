@@ -44,11 +44,13 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 let lastTimeRemaining = { A: null, B: null };
 
-function shakeDraftRow() {
-  const row = document.querySelector(
-    "#draftSetter .setter-draft"
-  );
-
+function shakeDraftRow(role) {
+  if (role === "guesser"){
+    const row = document.querySelector("#draftSetter .guesser-draft");
+  }
+  if (role === "setter"){
+    const row = document.querySelector("#draftSetter .setter-draft");
+    }
   if (!row) return;
 
   row.classList.remove("draft-shake"); // reset if already animating
@@ -652,7 +654,7 @@ function handleSetterInput(event) {
       submitSetterNew();
       return;
     }
-      shakeDraftRow();
+      shakeDraftRow("setter");
       toast("Can't submit new secret");
       return;      
   }
@@ -662,17 +664,17 @@ function handleSetterInput(event) {
 function submitSetterNew() {
   const w = (state.setterDraft || "").toLowerCase();
   if (w.length !== 5) {
-    shakeDraftRow();
+    shakeDraftRow("setter");
     toast("5 letters!");
     return;
   }
   if (!window.ALLOWED_GUESSES.has(w)) {
-    shakeDraftRow();
+    shakeDraftRow("setter");
     toast("Word not in dictionary");
     return;
   }
   if (typeof window.isConsistentWithHistory === "function" && !window.isConsistentWithHistory(state.history, w, state)) {
-    shakeDraftRow();
+    shakeDraftRow("setter");
     toast("Incompatible with previous feedback");
     return;
   }  
@@ -750,12 +752,12 @@ function handleGuesserInput(event) {
 
   if (event.type === "ENTER") {
       if (localGuesserDraft.length !== 5) {
-        shake($("keyboardGuesser"));
+        shakeDraftRow("guesser");
         toast("5 letters!");
         return;
       }
     if (!window.ALLOWED_GUESSES.has(localGuesserDraft.toLowerCase())) {
-      shake($("keyboardGuesser"));
+      shakeDraftRow("guesser");
       toast("Not in dictionary");
       return;
     }    
