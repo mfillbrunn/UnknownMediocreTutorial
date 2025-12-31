@@ -11,7 +11,7 @@ function startGameTimer(room, state, roomId, context) {
       endGame(state, roomId, io, room);
       return;
     }
-    handleRoundTimeout(room, state, roomId, context, timedOutRole);
+    handleRoundTimeout(room, state, roomId,  timedOutRole,context);
   });
 }
 
