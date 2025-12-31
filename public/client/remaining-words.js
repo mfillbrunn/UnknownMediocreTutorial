@@ -60,7 +60,7 @@ window.computeRemainingAfterIndex = function (idx) {
 window.computeRemainingNew = function (newWord) {
   const words = window.ALLOWED_SECRETS;
   const Guess = state.pendingGuess;
-  if (!state || !state.history || !guess || guess.includes("?")) {
+  if (!state || !state.history || !Guess || Guess.includes("?")) {
     return null;
   }
   const fb = scoreGuess(
