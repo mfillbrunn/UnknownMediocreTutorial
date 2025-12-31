@@ -2,6 +2,7 @@ const applyAction = require("../core/stateMachine");
 const { emitStateForAllPlayers } = require("./emitState");
 const { endGame,handleNormalPhase  } = require("../core/phases/normal");
 const { resetRoundTimer } = require("./chessTimer");
+const {startGameTimer } = require("./startGameTimer");
 
 function handleRoundTimeout(room, state, roomId, role, context) {
   // Rule: timeout during simultaneous phase = immediate game over
