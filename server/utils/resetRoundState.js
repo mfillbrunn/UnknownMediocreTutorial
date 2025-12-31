@@ -9,7 +9,8 @@ function resetRoundState(state) {
   state.simultaneousSecretSubmitted = false;
 
   state.powerUsedThisTurn = false;
-
+  state.timeUsed.A = 0,
+    state.timeUsed.B = 0,
   state.powersUsedThisRoundGuesser = [];
   state.powersUsedThisRoundSetter = [];
 
