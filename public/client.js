@@ -556,11 +556,11 @@ function updateSetterPreview() {
   if (!guess) return;
   const isSetterTurn = state.turn === state.setter;
   if (!isSetterTurn) return;
+  const typed = (state.setterDraft || "").toLowerCase();
   updateRemainingWords(typed);
   if (state.powers?.stealthGuessActive && myRole === state.setter) {
     return;
-  }
-  const typed = (state.setterDraft || "").toLowerCase();
+  }  
   let isIncomplete = false;
   clearSetterPreview();
   if (typed.length === 5) {
