@@ -1485,9 +1485,12 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 
 .room-meta {
   display: inline-flex;
-  align-items: center;
-  gap: 8px;
    line-height: 1;
+   flex-direction: column;
+   gap: 8px;
+   align-items: center;
+   font-size: 14px;
+  font-weight: 700;
 }
 
 .role-badge {
@@ -1742,7 +1745,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 .header-status {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 
   margin-left: auto;
   white-space: nowrap;
