@@ -11,27 +11,22 @@ function startTimer(roomId, state, io, onTimeout) {
     const now = Date.now();
     const dt = Math.floor((now - lastTick) / 1000);
     if (dt <= 0) return;
-
     lastTick = now;
 
-    const tickRole = state.activeTimer;
+    const roles =
+      state.activeTimer === "both"
+        ? ["A", "B"]
+        : [state.activeTimer];
 
-    const applyTick = role => {
+    for (const role of roles) {
       state.timeRemaining[role] -= dt;
+
       if (state.timeRemaining[role] <= 0) {
         state.timeRemaining[role] = 0;
         stopTimer(roomId);
-        onTimeout(role);
-        return true;
+        onTimeout(role); // 🔴 behavior differs by mode
+        return;
       }
-      return false;
-    };
-
-    if (tickRole === "both") {
-      if (applyTick("A")) return;
-      if (applyTick("B")) return;
-    } else if (tickRole) {
-      applyTick(tickRole);
     }
 
     io.to(roomId).emit("timerTick", {
