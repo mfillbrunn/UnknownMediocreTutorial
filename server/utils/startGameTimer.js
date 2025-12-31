@@ -11,10 +11,20 @@ function startGameTimer(room, state, roomId, context) {
       endGame(state, roomId, io, room);
       return;
     }
-    handleRoundTimeout(room, state, roomId,  timedOutRole,context);
+
+    const res = handleRoundTimeout(
+      room,
+      state,
+      roomId,
+      timedOutRole,
+      context
+    );
+
+    // 🔁 restart timer only if game continues
+    if (res?.shouldContinue) {
+      startGameTimer(room, state, roomId, context);
+    }
   });
 }
 
-module.exports = {
-  startGameTimer
-};
+module.exports = { startGameTimer };;
