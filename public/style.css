@@ -109,7 +109,9 @@ body {
   align-items: center;
    pointer-events: none;
 }
-
+.play-area > * + * {
+  margin-top: 8px;
+}
 .decision-row {
   display: flex;
   gap: 12px;
@@ -317,6 +319,7 @@ body {
   max-width: 520px;
   margin: auto 0;
   padding: 0;
+   margin-top: 14px;
 }
 
 .key-row {
@@ -875,6 +878,8 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+   padding-right: 10px;
+  border-right: 1px solid rgba(255,255,255,0.08);
   }
 
    .power-container {
@@ -953,6 +958,9 @@ body:has(.turn-indicator.force-timer) .turn-overlay {
   box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
 }
 
+.history-tile.empty {
+  opacity: 0.35;
+}
 
 /* Draft tiles when unusable */
 /* Draft tiles inactive when NOT your turn */
@@ -1716,39 +1724,50 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 
 .role-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-   border:none;
-  width: 100%;
-  flex-wrap: nowrap;
-   box-shadow: none;
-   line-height: 1;
-   margin-bottom: 8px;
+  flex-direction: column;
+  gap: 6px;
 }
 
+/* Top row */
+.header-row.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Left cluster: title + room */
 .header-left {
   display: flex;
   align-items: center;
   gap: 10px;
-  white-space: nowrap;
 }
 
-.header-right,
-.header-status {
+/* Normalize heading */
+.screen-title {
+  margin: 0;
+  line-height: 1;
+  font-size: 20px;
+}
+
+/* Room + badge stacked */
+.room-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1;
+}
+
+/* Right cluster: timer + icons */
+.header-right {
   display: flex;
   align-items: center;
   gap: 8px;
-
-  margin-left: auto;
-  white-space: nowrap;
 }
 
-.header-status .timer-block {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
+/* Timer */
+.chess-timer {
+  font-family: "Courier New", monospace;
+  font-weight: 800;
 }
 .role-header h2{
 margin:0;
@@ -1757,16 +1776,31 @@ margin:0;
 /* SETTER REMAINING WORDS */
 .remaining-old,
 .remaining-new {
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, opacity 0.2s ease;
+  font-family: "Courier New", monospace;
 }
 
+/* Unknown / unavailable */
+.remaining-new {
+  opacity: 0.55;
+  font-style: italic;
+}
+
+/* Better option */
 .remaining-old.better,
 .remaining-new.better {
-  color: #2ecc71; /* green */
+  color: #2ecc71;
   font-weight: 700;
+  opacity: 1;
   animation: vibrate 0.25s ease-in-out 2;
 }
 
+/* Optional: slightly de-emphasize the worse option */
+.remaining-old:not(.better),
+.remaining-new:not(.better) {
+  opacity: 0.75;
+}
+  
 @keyframes vibrate {
   0%   { transform: translateX(0); }
   25%  { transform: translateX(-1px); }
