@@ -1483,7 +1483,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   display: inline-flex;
    line-height: 1;
    flex-direction: column;
-   gap: 8px;
    align-items: center;
    font-size: 14px;
   font-weight: 700;
