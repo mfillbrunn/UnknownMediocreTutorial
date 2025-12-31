@@ -937,7 +937,7 @@ $("switchRolesBtn").onclick = () =>
 $("readyBtn").onclick = () => {
   // Send to server
   const name = $("playerNameInput")?.value?.trim() || "";
-
+  
   sendGameAction(roomId, {
     type: "PLAYER_READY",
     name
@@ -952,9 +952,6 @@ $("applyPowerCountBtn").onclick = () => {
      sendGameAction(roomId, { type: "SET_POWER_COUNT", count: n });
    }
  };
-
-
-
 
 $("playerNameInput").onchange = () => {
   const name = $("playerNameInput").value.trim();
