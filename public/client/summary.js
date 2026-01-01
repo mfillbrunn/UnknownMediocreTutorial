@@ -50,15 +50,6 @@ function renderMatchSummary(container) {
     time.B += r.time?.B || 0;
   });
 
- const points = { A: 0, B: 0 };
-  const time = { A: 0, B: 0 };
-
-  rounds.forEach(r => {
-    points[r.setter] += r.guessCount;
-    time.A += r.time?.A || 0;
-    time.B += r.time?.B || 0;
-  });
-
   let winner;
   let winReason = "points";
   let winnerPoints = 0;
