@@ -1,13 +1,19 @@
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { scoreGuess } = require("../../game-engine/scoring");
 const { endGame } = require("./gameOver");
-const { addIncrement,resetRoundTimer } = require("../../utils/chessTimer");
+const { addIncrement,resetRoundTimer,isTimerRunning } = require("../../utils/chessTimer");
 
 function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   const { ALLOWED_GUESSES, powerEngine } = context;
   const { isValidWord } = require("../../game-engine/validation");
 
+if (state.timeControl.enabled && !isTimerRunning(roomId)) {
+    state.activeTimer = "both";
+    resetRoundTimer(state);
+    state.roundStartTime = Date.now();
+    startGameTimer(room, state, roomId, context);
+  }
   // ---------------------------------------------
   // SETTER submits initial secret
   // ---------------------------------------------
