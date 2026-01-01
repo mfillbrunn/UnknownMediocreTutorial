@@ -5,7 +5,9 @@ let activeTooltipTarget = null;
 let latestPowerInfoState = null;
 
 window.updatePowerInfoState = function (state) {
-  latestPowerInfoState = state;
+  if (state && state.activePowers) {
+    latestPowerInfoState = state;
+  }
 };
 
 function buildPowerInfoPanel(state, role) {
