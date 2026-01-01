@@ -369,12 +369,24 @@ function buildShareText(state, myRole) {
 
   let winner;
   let winReason = "points";
+  let winnerPoints = 0;
+  let loserPoints = 0;
 
-  if (points.A > points.B) winner = "A";
-  else if (points.B > points.A) winner = "B";
+  if (points.A < points.B) {
+    winner = "A";
+    winnerPoints = points.A;
+    loserPoints = points.B;
+  }
+  else if (points.B < points.A) {
+    winner = "B";
+    winnerPoints = points.B;
+    loserPoints = points.A;
+  }
   else {
     winner = time.A <= time.B ? "A" : "B";
     winReason = "time";
+    winnerPoints = points.B;
+    loserPoints = points.A;
   }
 
   const winnerName = names[winner];
@@ -439,8 +451,7 @@ if (setter.length || guesser.length) {
   // -----------------------
   const lines = [
     "VS Wordle result",
-    `🏆 ${winnerLabel} ${points.A}–${points.B} ${loserName}`,
-    `⏱ ${timeLine}`,
+    `🏆 ${winnerLabel} ${winnerPoints}–${loserPoints} ${loserName} ⏱ ${timeLine}`,
     powersLine,
     ...roundLines
   ].filter(Boolean);
@@ -461,7 +472,7 @@ function getActivePowersByRole(activePowers = []) {
 
     const role = power.role; // "setter" | "guesser"
     if (byRole[role]) {
-      byRole[role].push(meta.label);
+      byRole[role].push(id);
     }
   });
 
