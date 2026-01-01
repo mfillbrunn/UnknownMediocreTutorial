@@ -156,6 +156,7 @@ if (action.type === "SET_POWER_COUNT") {
         state.roundStartTime = Date.now();
         stopTimer(roomId);
         startGameTimer(room, state, roomId, context);
+        isTimerRunning=true;
         }
       emitLobbyEvent(io, roomId, { type: "hideLobby" });            
       emitStateForAllPlayers(roomId, room, io);
