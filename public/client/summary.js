@@ -1,5 +1,18 @@
 // client/summary.js
 
+function powerToInlineIcon(powerId) {
+  const meta = window.POWER_METADATA?.[powerId];
+  if (!meta) return powerId;
+
+  // Emoji-first for share text
+  if (meta.emoji) return meta.emoji;
+
+  // Fallback: short label
+  return meta.label;
+}
+
+
+
 ///SUMMARY SCREEN ROUTER
 window.updateSummary = function updateSummary() {
   const container = $("roundSummary");
@@ -387,15 +400,24 @@ function buildShareText(state, myRole) {
   // -----------------------
   // Powers (points)
   // -----------------------
- const { setter, guesser } =
+const { setter, guesser } =
   getActivePowersByRole(state.activePowers);
 
 let powersLine = null;
 if (setter.length || guesser.length) {
+  const setterIcons = setter.length
+    ? setter.map(powerToInlineIcon).join(" ")
+    : "—";
+
+  const guesserIcons = guesser.length
+    ? guesser.map(powerToInlineIcon).join(" ")
+    : "—";
+
   powersLine =
-    `Setter powers: ${setter.join(", ") || "—"} | ` +
-    `Guesser powers: ${guesser.join(", ") || "—"}`;
+    `Setter powers: ${setterIcons} | ` +
+    `Guesser powers: ${guesserIcons}`;
 }
+
 
 
   // -----------------------
