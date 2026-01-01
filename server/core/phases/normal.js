@@ -184,7 +184,60 @@ function pushWinEntry(state, word) {
   });
 }
 
+function handleRoundTimeout(room, state, roomId, role, context) {
+  const io = context.io;
+
+  // Simultaneous → immediate loss
+  if (state.phase === "simultaneous") {
+    state.timeoutLoser = role;
+    endGame(state, roomId, io, room);
+    return false;
+  }
+
+  state.roundTimeouts[role]++;
+
+  const last = state.history.at(-1);
+
+  resetRoundTimer(state);
+  state.activeTimer = role === "A" ? "B" : "A";
+
+  if (last) {
+    if (role === state.guesser) {
+      handleNormalPhase(
+        room,
+        state,
+        { type: "SUBMIT_GUESS", guess: last.guess, timedOut: true },
+        state.guesser,
+        roomId,
+        context
+      );
+    } else {
+      handleNormalPhase(
+        room,
+        state,
+        { type: "SET_SECRET_SAME", timedOut: true },
+        state.setter,
+        roomId,
+        context
+      );
+    }
+  }
+
+  emitStateForAllPlayers(roomId, room, io);
+
+  if (state.roundTimeouts[role] >= 3) {
+    state.timeoutLoser = role;
+    endGame(state, roomId, io, room);
+    return false;
+  }
+
+  return true;
+}
+
+
+
 module.exports = {
   handleNormalPhase,
-  pushWinEntry
+  pushWinEntry,
+  handleRoundTimeout
 };
