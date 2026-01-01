@@ -1710,7 +1710,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   font-weight: 900;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  opacity: 0.8;
+  opacity: 0.9;
   text-align: left;
 }
 
@@ -1719,7 +1719,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 ---------------------------------- */
 
 .power-info-row {
-  display: block;            /* ✅ not flex */
+  display: block;
   margin-bottom: 10px;
 }
 
@@ -1735,7 +1735,15 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   line-height: 1.35;
   opacity: 0.85;
 }
+/* Setter powers header (red) */
+.power-info-header-setter {
+  color: var(--role-accent); /* setter theme color */
+}
 
+/* Guesser powers header (blue) */
+.power-info-header-guesser {
+  color: var(--opponent-accent); /* guesser theme color */
+}
 /* =========================================
    Shared role header layout
    ========================================= */
