@@ -50,18 +50,49 @@ function renderMatchSummary(container) {
     time.B += r.time?.B || 0;
   });
 
+ const points = { A: 0, B: 0 };
+  const time = { A: 0, B: 0 };
+
+  rounds.forEach(r => {
+    points[r.setter] += r.guessCount;
+    time.A += r.time?.A || 0;
+    time.B += r.time?.B || 0;
+  });
+
   let winner;
   let winReason = "points";
+  let winnerPoints = 0;
+  let loserPoints = 0;
 
-  if (points.A > points.B) winner = "A";
-  else if (points.B > points.A) winner = "B";
+  if (points.A < points.B) {
+    winner = "A";
+    winnerPoints = points.A;
+    loserPoints = points.B;
+  }
+  else if (points.B < points.A) {
+    winner = "B";
+    winnerPoints = points.B;
+    loserPoints = points.A;
+  }
   else {
     winner = time.A <= time.B ? "A" : "B";
     winReason = "time";
+    winnerPoints = points.B;
+    loserPoints = points.A;
   }
   const didWin = myRole === winner;
-  const resultText = didWin ? "🏆 You won" : "❌ You lost";
-
+  let resultText = didWin ? "🏆 You won" : "❌ You lost";
+  if (time.A ==== time.B && points.A === points.B){
+  resultText = "🤝 You tied";  
+    winReason = "tie";
+  }
+  let scoreText = null;
+  if (didWin){
+    scoreText = `Score: ${winnerPoints} – ${loserPoints}`;
+  } else{
+    scoreText = `Score: ${loserPoints} – ${winnerPoints}`;
+  }
+  
   const timeoutRound = rounds.find(r => r.timeoutLoser);
 
     let timeoutNote = "";
@@ -80,7 +111,7 @@ function renderMatchSummary(container) {
   let html = `
   <div class="match-header">
     <h2>${resultText}</h2>
-    <h3>Score: ${points.A} – ${points.B}</h3>
+    <h3>${scoreText}</h3>
 
     <p class="match-meta">
       Time control:
@@ -388,6 +419,12 @@ function buildShareText(state, myRole) {
     winnerPoints = points.B;
     loserPoints = points.A;
   }
+  const didWin = myRole === winner;
+  let resultText = "🏆";
+  if (time.A ==== time.B && points.A === points.B){
+  resultText = "🤝";  
+    winReason = "tie";
+  }
 
   const winnerName = names[winner];
   const loserName = names[winner === "A" ? "B" : "A"];
@@ -451,7 +488,7 @@ if (setter.length || guesser.length) {
   // -----------------------
   const lines = [
     "VS Wordle result",
-    `🏆 ${winnerLabel} ${winnerPoints}–${loserPoints} ${loserName} ⏱ ${timeLine}`,
+    `${resultText} ${winnerLabel} ${winnerPoints}–${loserPoints} ${loserName} ⏱ ${timeLine}`,
     powersLine,
     ...roundLines
   ].filter(Boolean);
