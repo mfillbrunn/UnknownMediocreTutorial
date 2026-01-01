@@ -387,14 +387,16 @@ function buildShareText(state, myRole) {
   // -----------------------
   // Powers (points)
   // -----------------------
-  const setterPowers = rounds[0]?.powersSetter || [];
-  const guesserPowers = rounds[0]?.powersGuesser || [];
+ const { setter, guesser } =
+  getActivePowersByRole(state.activePowers);
 
-  const powersLine =
-    setterPowers.length || guesserPowers.length
-      ? `Setter powers: ${setterPowers.join(", ") || "—"} | ` +
-        `Guesser powers: ${guesserPowers.join(", ") || "—"}`
-      : null;
+let powersLine = null;
+if (setter.length || guesser.length) {
+  powersLine =
+    `Setter powers: ${setter.join(", ") || "—"} | ` +
+    `Guesser powers: ${guesser.join(", ") || "—"}`;
+}
+
 
   // -----------------------
   // Per-round lines
@@ -424,10 +426,24 @@ function buildShareText(state, myRole) {
   return lines.join("\n");
 }
 
-function getPowerLabels(powerIds = []) {
-  return powerIds
-    .map(id => window.POWER_METADATA?.[id]?.label)
-    .filter(Boolean);
+function getActivePowersByRole(activePowers = []) {
+  const byRole = {
+    setter: [],
+    guesser: []
+  };
+
+  activePowers.forEach(id => {
+    const power = PowerEngine.powers?.[id];
+    const meta = window.POWER_METADATA?.[id];
+    if (!power || !meta) return;
+
+    const role = power.role; // "setter" | "guesser"
+    if (byRole[role]) {
+      byRole[role].push(meta.label);
+    }
+  });
+
+  return byRole;
 }
 
 
