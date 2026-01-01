@@ -46,6 +46,9 @@ function renderMatchSummary(container) {
     winner = time.A <= time.B ? "A" : "B";
     winReason = "time";
   }
+  const didWin = myRole === winner;
+  const resultText = didWin ? "🏆 You won" : "❌ You lost";
+
   const timeoutRound = rounds.find(r => r.timeoutLoser);
 
     let timeoutNote = "";
@@ -63,7 +66,7 @@ function renderMatchSummary(container) {
   // ----------------------------
   let html = `
   <div class="match-header">
-    <h2>🏆 Winner: ${names[winner]}</h2>
+    <h2>${resultText}</h2>
     <h3>Score: ${points.A} – ${points.B}</h3>
 
     <p class="match-meta">
