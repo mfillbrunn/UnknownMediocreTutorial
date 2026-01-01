@@ -6,6 +6,9 @@
   --text: #eaeaea;
   --heading: #fff;
 
+   --setter-color: #ff4b5c;
+  --guesser-color: #4da3ff;
+
   --screen-bg: rgba(255,255,255,0.04);
   --panel-bg: rgba(255,255,255,0.05);
   --panel-text: #eaeaea;
@@ -1735,14 +1738,12 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   line-height: 1.35;
   opacity: 0.85;
 }
-/* Setter powers header (red) */
 .power-info-header-setter {
-  color: var(--role-accent); /* setter theme color */
+  color: var(--setter-color);
 }
 
-/* Guesser powers header (blue) */
 .power-info-header-guesser {
-  color: var(--opponent-accent); /* guesser theme color */
+  color: var(--guesser-color);
 }
 /* =========================================
    Shared role header layout
