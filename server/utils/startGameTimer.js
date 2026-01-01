@@ -1,5 +1,5 @@
 const { startTimer } = require("./chessTimer");
-const {  endGame, handleRoundTimeout} = require("../core/phases/normal");
+const { handleRoundTimeout} = require("../core/phases/normal");
 
 function startGameTimer(room, state, roomId, context) {
   const io = context.io;
