@@ -46,22 +46,23 @@ function buildPowerInfoPanel(state, role) {
   }
 
   if (sections.setter.length) {
-    panel.appendChild(makeInfoHeader("Setter Powers"));
+    panel.appendChild(makeInfoHeader("Setter Powers", "setter"));
     sections.setter.forEach(r => panel.appendChild(r));
   }
 
   if (sections.guesser.length) {
-    panel.appendChild(makeInfoHeader("Guesser Powers"));
+    panel.appendChild(makeInfoHeader("Guesser Powers", "guesser"));
     sections.guesser.forEach(r => panel.appendChild(r));
   }
 }
 
-function makeInfoHeader(text) {
+function makeInfoHeader(text, role) {
   const h = document.createElement("div");
-  h.className = "power-info-header";
+  h.className = `power-info-header power-info-header-${role}`;
   h.textContent = text;
   return h;
 }
+
 
 
 function showTooltip(target, { title, desc }) {
