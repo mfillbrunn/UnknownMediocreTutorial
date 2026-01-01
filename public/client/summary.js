@@ -17,9 +17,9 @@ function computeMatchResult(state, myRole) {
   let winner = null;
   let winReason = "points";
 
-  if (points.A < points.B) {
+  if (points.A > points.B) {
     winner = "A";
-  } else if (points.B < points.A) {
+  } else if (points.B > points.A) {
     winner = "B";
   } else if (time.A !== time.B) {
     winner = time.A <= time.B ? "A" : "B";
@@ -40,7 +40,7 @@ function computeMatchResult(state, myRole) {
     points,
     time,
     winner,
-    winReason,        // "points" | "time" | "tie"
+    winReason,        
     didWin,
     winnerPoints,
     loserPoints,
@@ -253,8 +253,6 @@ function renderRoundSummary(container) {
   `;
 }
 
- 
-
   html += `
     <p class="summary-players">
       <b>${setterName}</b> (Setter) vs
@@ -287,7 +285,7 @@ function renderRoundSummary(container) {
         <th>Guess</th>
         <th>Feedback</th>
         <th>Powers</th>
-        <th>Remaining</th>
+        <th># Words remaining</th>
       </tr>
     </thead>
     <tbody>
