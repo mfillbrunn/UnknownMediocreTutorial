@@ -60,6 +60,15 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     if (res.resetRound) {
       resetRoundState(state);
     }
+   if (state.timeControl.enabled && !state.isTimerRunning) {
+        resetRoundTimer(state);
+        state.activeTimer = "both";
+        state.roundStartTime = Date.now();
+        stopTimer(roomId);
+        startGameTimerSim(room, state, roomId, context)
+        state.isTimerRunning=true;
+      }
+     
     state.gameOver = false;
     state.gameOverView = "match";
     state.canNextRound = false;
@@ -88,6 +97,15 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
   // All other actions are ignored during gameOver
   // --------------------------------------------------------------------
   return;
+}
+
+function startGameTimerSim(room, state, roomId, context) {
+  const io = context.io;
+  startTimer(roomId, state, io, timedOutRole => {
+      state.timeoutLoser = timedOutRole;
+      endGame(state, roomId, io, room);
+      return;
+  });
 }
 
 module.exports = {handleGameOverPhase, endGame};
