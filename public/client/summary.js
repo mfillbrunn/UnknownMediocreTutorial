@@ -1,5 +1,54 @@
 // client/summary.js
 
+///CALCULATE WINNER
+
+function computeMatchResult(state, myRole) {
+  const rounds = state.matchRounds || [];
+
+  const points = { A: 0, B: 0 };
+  const time = { A: 0, B: 0 };
+
+  rounds.forEach(r => {
+    points[r.setter] += r.guessCount;
+    time.A += r.time?.A || 0;
+    time.B += r.time?.B || 0;
+  });
+
+  let winner = null;
+  let winReason = "points";
+
+  if (points.A < points.B) {
+    winner = "A";
+  } else if (points.B < points.A) {
+    winner = "B";
+  } else if (time.A !== time.B) {
+    winner = time.A <= time.B ? "A" : "B";
+    winReason = "time";
+  } else {
+    winReason = "tie";
+  }
+
+  const didWin = winner && myRole === winner;
+
+  const winnerPoints = winner ? points[winner] : points.A;
+  const loserPoints = winner ? points[winner === "A" ? "B" : "A"] : points.A;
+
+  const resultIcon =
+    winReason === "tie" ? "↔️" : didWin ? "🏆" : "❌";
+
+  return {
+    points,
+    time,
+    winner,
+    winReason,        // "points" | "time" | "tie"
+    didWin,
+    winnerPoints,
+    loserPoints,
+    resultIcon
+  };
+}
+
+
 function powerToInlineIcon(powerId) {
   const meta = window.POWER_METADATA?.[powerId];
   if (!meta) return powerId;
@@ -40,51 +89,26 @@ function renderMatchSummary(container) {
   // ----------------------------
   // Compute points + time
   // ----------------------------
-  const points = { A: 0, B: 0 };
-  const time = { A: 0, B: 0 };
+ const {
+  points,
+  time,
+  winner,
+  winReason,
+  didWin,
+  winnerPoints,
+  loserPoints,
+  resultIcon
+} = computeMatchResult(state, myRole);
 
-  rounds.forEach(r => {
-    points[r.setter] += r.guessCount;
+let resultText =
+  winReason === "tie"
+    ? `${resultIcon} You tied`
+    : didWin
+      ? `${resultIcon} You won`
+      : `${resultIcon} You lost`;
 
-    time.A += r.time?.A || 0;
-    time.B += r.time?.B || 0;
-  });
-
-  let winner;
-  let winReason = "points";
-  let winnerPoints = 0;
-  let loserPoints = 0;
-
-  if (points.A < points.B) {
-    winner = "A";
-    winnerPoints = points.A;
-    loserPoints = points.B;
-  }
-  else if (points.B < points.A) {
-    winner = "B";
-    winnerPoints = points.B;
-    loserPoints = points.A;
-  }
-  else {
-    winner = time.A <= time.B ? "A" : "B";
-    winReason = "time";
-    winnerPoints = points.B;
-    loserPoints = points.A;
-  }
-  const didWin = myRole === winner;
-  let resultText = didWin ? "🏆 You won" : "❌ You lost";
-  if (time.A === time.B && points.A === points.B){
-  resultText = "🤝 You tied";  
-    winReason = "tie";
-  }
-  let scoreText = null;
-  if (didWin){
-    scoreText = `Score: ${winnerPoints} – ${loserPoints}`;
-  } else{
-    scoreText = `Score: ${loserPoints} – ${winnerPoints}`;
-  }
-  
-  const timeoutRound = rounds.find(r => r.timeoutLoser);
+const scoreText = `Score: ${winnerPoints} – ${loserPoints}`;
+const timeoutRound = rounds.find(r => r.timeoutLoser);
 
     let timeoutNote = "";
     if (timeoutRound) {
@@ -255,71 +279,74 @@ function renderRoundSummary(container) {
   html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
 
   html += `
-    <table class="summary-table">
+  <table class="summary-table summary-table--round">
+    <thead>
       <tr>
         <th>#</th>
         <th>Secret</th>
         <th>Guess</th>
         <th>Feedback</th>
-        <th>Powers Used</th>
+        <th>Powers</th>
         <th>Remaining</th>
       </tr>
-  `;
+    </thead>
+    <tbody>
+`;
 
-  for (let i = 0; i < state.history.length; i++) {
-    const h = state.history[i];
+for (let i = 0; i < state.history.length; i++) {
+  const h = state.history[i];
+  const isFinal = i === state.history.length - 1;
 
-    const secretCell = h.finalSecret
-      ? h.finalSecret.toUpperCase()
-      : "???";
+  const secretCell = h.finalSecret
+    ? h.finalSecret.toUpperCase()
+    : "???";
 
-    const guessCell = h.guess
-      ? h.guess.toUpperCase()
-      : "";
+  const guessCell = h.guess
+    ? h.guess.toUpperCase()
+    : "";
 
-    const fbCell = Array.isArray(h.fb)
-      ? h.fb.join("")
-      : "";
+  const fbCell = Array.isArray(h.fb)
+    ? h.fb.join("")
+    : "";
 
-    const gp = h.powersGuesser || [];
-    const sp = h.powersSetter || [];
+  const gp = h.powersGuesser || [];
+  const sp = h.powersSetter || [];
 
-    let powersCell = "—";
-    if (gp.length || sp.length) {
-      powersCell = `<div class="summary-powers">`;
-      if (gp.length) {
-        powersCell += `
-          <div class="summary-powers-guesser">
-            <b>Guesser:</b> ${gp.join(", ")}
-          </div>`;
-      }
-      if (sp.length) {
-        powersCell += `
-          <div class="summary-powers-setter">
-            <b>Setter:</b> ${sp.join(", ")}
-          </div>`;
-      }
-      powersCell += `</div>`;
-    }
-
-    const remaining =
-      i === state.history.length - 1
-        ? 0
-        : computeRemainingAfterIndex(i);
-
-    html += `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${secretCell}</td>
-        <td>${guessCell}</td>
-        <td>${fbCell}</td>
-        <td>${powersCell}</td>
-        <td>${remaining}</td>
-      </tr>
+  let powersCell = "—";
+  if (gp.length || sp.length) {
+    powersCell = `
+      <div class="summary-powers compact">
+        ${gp.length ? `
+          <div class="powers-row guesser">
+            ${gp.map(powerToInlineIcon).join("")}
+          </div>` : ""}
+        ${sp.length ? `
+          <div class="powers-row setter">
+            ${sp.map(powerToInlineIcon).join("")}
+          </div>` : ""}
+      </div>
     `;
   }
 
-  html += `</table>`;
+  const remaining =
+    isFinal ? 0 : computeRemainingAfterIndex(i);
+
+  html += `
+    <tr class="${isFinal ? "final-row" : ""}">
+      <td class="turn-index">${i + 1}</td>
+      <td class="secret-cell">${secretCell}</td>
+      <td class="guess-cell">${guessCell}</td>
+      <td class="feedback-cell">${fbCell}</td>
+      <td class="powers-cell">${powersCell}</td>
+      <td class="remaining-cell">${remaining}</td>
+    </tr>
+  `;
+}
+
+html += `
+    </tbody>
+  </table>
+`;
 
   // Competitive mode: Next Round button
   if (state.gameOverView === "round" && state.canNextRound) {
@@ -380,51 +407,31 @@ function buildShareText(state, myRole) {
   // -----------------------
   // Determine winner
   // -----------------------
-  const points = { A: 0, B: 0 };
-  const time = { A: 0, B: 0 };
+  const {
+  points,
+  time,
+  winner,
+  winReason,
+  winnerPoints,
+  loserPoints,
+  resultIcon
+} = computeMatchResult(state, myRole);
 
-  rounds.forEach(r => {
-    points[r.setter] += r.guessCount;
-    time.A += r.time?.A || 0;
-    time.B += r.time?.B || 0;
-  });
+  const winnerName =
+  winReason === "tie"
+    ? names.A
+    : names[winner];
 
-  let winner;
-  let winReason = "points";
-  let winnerPoints = 0;
-  let loserPoints = 0;
+const loserName =
+  winReason === "tie"
+    ? names.B
+    : names[winner === "A" ? "B" : "A"];
 
-  if (points.A < points.B) {
-    winner = "A";
-    winnerPoints = points.A;
-    loserPoints = points.B;
-  }
-  else if (points.B < points.A) {
-    winner = "B";
-    winnerPoints = points.B;
-    loserPoints = points.A;
-  }
-  else {
-    winner = time.A <= time.B ? "A" : "B";
-    winReason = "time";
-    winnerPoints = points.B;
-    loserPoints = points.A;
-  }
-  
-  let resultText = "🏆";
-  if (time.A === time.B && points.A === points.B){
-  resultText = "🤝";  
-    winReason = "tie";
-  }
+const winnerLabel =
+  winReason === "time"
+    ? `**${winnerName} (win by tiebreaker)**`
+    : `**${winnerName}**`;
 
-  const winnerName = names[winner];
-  const loserName = names[winner === "A" ? "B" : "A"];
-  const didWin = myRole === winner;
-
-  const winnerLabel =
-    winReason === "time"
-      ? `**${winnerName} (win by tiebreaker)**`
-      : `**${winnerName}**`;
 
   // -----------------------
   // Time control line
@@ -476,7 +483,7 @@ if (setter.length || guesser.length) {
   // -----------------------
   const lines = [
     "VS Wordle result",
-    `${resultText} ${winnerLabel} ${winnerPoints}–${loserPoints} ${loserName} ⏱ ${timeLine}`,
+    `${resultIcon} ${winnerLabel} ${winnerPoints}–${loserPoints} ${loserName} ⏱ ${timeLine}`,
     powersLine,
     ...roundLines
   ].filter(Boolean);
