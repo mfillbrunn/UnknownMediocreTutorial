@@ -257,5 +257,6 @@ function startGameTimer(room, state, roomId, context) {
 module.exports = {
   handleNormalPhase,
   pushWinEntry,
-  handleRoundTimeout
+  handleRoundTimeout,
+  startGameTimer
 };
