@@ -3,7 +3,7 @@ const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { isValidWord } = require("../../game-engine/validation");
 const { isConsistentWithHistory } = require("../../game-engine/history");
-const { addIncrement, resetRoundTimer} = require("../../utils/chessTimer");
+const { addIncrement, resetRoundTimer, startTimer} = require("../../utils/chessTimer");
 const { endGame } = require("./gameOver");
 const FORCE_TIMER_INTERVALS = {};
 
