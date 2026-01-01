@@ -1677,10 +1677,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 }
 
 /* Hidden on desktop */
-.power-info-btn {
-  display: none;
-}
-
 .power-info-btn { display: none; }
 /* Mobile only */
 @media (hover: none) and (pointer: coarse) {
