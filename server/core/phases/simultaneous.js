@@ -78,25 +78,8 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
 
   // Base scoring
   const fb = scoreGuess(secret, guess);
-
-  // Perfect match? → End game immediately
-  const isWin = fb.every(tile => tile === "🟩");
-  if (isWin) {
-    state.history.push({
-      guess,
-      fb,
-      fbGuesser: [...fb],
-      extraInfo: null,
-      finalSecret: secret,
-      roundIndex: state.history.length
-    });
-
-    state.pendingGuess = "";
-    endGame(state, roomId, io, room);
-    return;
-  }
-
-  // Build entry BEFORE postScore so powers can alter like in normal scoring
+  state.guessCount++;
+  state.pendingGuess = "";
   const entry = {
     guess,
     fb,
@@ -105,17 +88,14 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     finalSecret: secret,
     roundIndex: state.history.length
   };
-
-  // Post-score power effects
+  const isWin = fb.every(tile => tile === "🟩");
+    if (isWin) {
+    state.history.push(entry);
+    endGame(state, roomId, io, room);
+    return;
+  }
   powerEngine.postScore(state, entry, roomId, io);
-
-  // Save history entry
   state.history.push(entry);
-
-  // CLEAN UP
-  state.pendingGuess = "";
-  state.guessCount++;
-
   // ---------------------------------------------
   // TRANSITION TO NORMAL PHASE WITH GUESSER TURN
   // ---------------------------------------------
@@ -128,7 +108,6 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   state.activeTimer = state.guesser; 
   state.roundStartTime = Date.now();
   powerEngine.turnStart(state, state.guesser, roomId, io);
-
   emitStateForAllPlayers(roomId, room, io);
 }
 
