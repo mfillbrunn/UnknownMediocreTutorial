@@ -1000,3 +1000,15 @@ function formatTime(sec) {
   const s = sec % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
 }
+
+$("shareResultBtn").onclick = async () => {
+  try {
+    const text = buildShareText(state, myRole);
+    await navigator.clipboard.writeText(text);
+    toast("Result copied to clipboard");
+  } catch (err) {
+    console.error("Clipboard copy failed:", err);
+    toast("Could not copy result");
+  }
+};
+
