@@ -108,7 +108,7 @@ if (action.type === "SET_POWER_COUNT") {
   if (action.type === "PLAYER_READY") {
     state.ready[role] = true;
 
-          if (role.name) {
+          if (action.name) {
             state.playerNames[role] = String(action.name)
               .trim()
               .slice(0, 16);
