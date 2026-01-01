@@ -3,7 +3,7 @@
 const handleLobbyPhase = require("./phases/lobby");
 const handleSimultaneousPhase = require("./phases/simultaneous");
 const { handleNormalPhase } = require("./phases/normal");
-const handleGameOverPhase = require("./phases/gameOver");
+const {handleGameOverPhase} = require("./phases/gameOver");
 
 function applyAction(room, state, action, role, roomId, context) {
   const { powerEngine } = context;
