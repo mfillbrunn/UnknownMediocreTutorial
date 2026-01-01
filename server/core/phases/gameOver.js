@@ -9,7 +9,10 @@ const {resetRoundTimer,stopTimer} = require("../../utils/chessTimer");
 function endGame(state, roomId, io, room) {
    state.turn = null;
    state.gameOver = true;
-   if (state.timeControl.enabled) {stopTimer(roomId);} 
+   if (state.timeControl.enabled) {
+      stopTimer(roomId);
+      state.isTimerRunning = false;
+   } 
    state.matchRounds = state.matchRounds || []; 
    state.matchRounds.push({
     setter: state.setter,
@@ -34,7 +37,10 @@ function endGame(state, roomId, io, room) {
 
 function handleGameOverPhase(room, state, action, role, roomId, context) {
   const io = context.io;
-  if (state.timeControl.enabled) {stopTimer(roomId);} 
+     if (state.timeControl.enabled) {
+      stopTimer(roomId);
+      state.isTimerRunning = false;
+   } 
   // --------------------------------------------------------------------
   // The only valid action in gameOver is NEW_MATCH
   // --------------------------------------------------------------------
