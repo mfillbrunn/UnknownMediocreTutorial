@@ -34,11 +34,24 @@ function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
 
 if (action.type === "SET_TIME_CONTROL") {
+  if (action.enabled === false) {
+    state.timeControl.enabled = false;
+    state.activeTimer = null;
+    state.timeRemaining.A = 0;
+    state.timeRemaining.B = 0;
+
+    emitStateForAllPlayers(roomId, room, io);
+    return;
+  }
+
   const sec = parseInt(action.seconds, 10);
   const mode = action.mode || "round";
-  if (!Number.isFinite(sec) || sec < 0) return;
+
+  if (!Number.isFinite(sec) || sec <= 0) return;
+
+  state.timeControl.enabled = true;
   state.timeControl.mode = mode;
-  state.timeControl.enabled = sec > 0;
+
   if (mode === "round") {
     state.timeControl.roundSeconds = sec;
     state.timeRemaining.A = sec;
@@ -48,9 +61,11 @@ if (action.type === "SET_TIME_CONTROL") {
     state.timeRemaining.A = sec;
     state.timeRemaining.B = sec;
   }
+
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
+
 
   // -------------------------------
   // SWITCH ROLES
@@ -108,11 +123,11 @@ if (action.type === "SET_POWER_COUNT") {
   if (action.type === "PLAYER_READY") {
     state.ready[role] = true;
 
-          if (action.name) {
-            state.playerNames[role] = String(action.name)
-              .trim()
-              .slice(0, 16);
-          }
+        if (action.name) {
+        state.playerNames[role] = String(action.name)
+        .trim()
+        .slice(0, 16);
+        }
    emitToOtherPlayer(io, room, action.playerId, { type: "playerReady",role,playerId: action.playerId});
    emitToPlayer(io, action.playerId, {type: "playerReady",role,playerId: action.playerId});
 
