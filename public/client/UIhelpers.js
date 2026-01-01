@@ -162,36 +162,6 @@ $("timeControlSelect").onchange = () => {
 };
 
 
-document.addEventListener("DOMContentLoaded", () => {
-  const infoBtn = document.getElementById("powerInfoBtn");
-  const panel = document.getElementById("powerInfoPanel");
-
-  if (!infoBtn || !panel) return;
-
-  infoBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-
-    const isOpen = !panel.hidden;
-    panel.hidden = isOpen;
-
-    if (!isOpen) {
-      if (latestPowerInfoState) {
-        buildPowerInfoPanel(latestPowerInfoState);
-      }
-    }
-  });
-
-  // Close when tapping outside
-  document.addEventListener("click", (e) => {
-    if (
-      !panel.hidden &&
-      !panel.contains(e.target) &&
-      e.target !== infoBtn
-    ) {
-      panel.hidden = true;
-    }
-  });
-});
 function initPowerInfoButton(buttonId, role) {
   const btn = document.getElementById(buttonId);
   const panel = document.getElementById(
@@ -201,7 +171,8 @@ function initPowerInfoButton(buttonId, role) {
   );
 
   if (!btn || !panel) return;
-
+  if (btn.dataset.bound) return;
+  btn.dataset.bound = "true";
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
 
@@ -219,3 +190,9 @@ function initPowerInfoButton(buttonId, role) {
     }
   });
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  initPowerInfoButton("powerInfoBtnSetter", "setter");
+  initPowerInfoButton("powerInfoBtnGuesser", "guesser");
+});
+
