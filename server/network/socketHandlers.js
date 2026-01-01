@@ -14,7 +14,6 @@ module.exports = function registerSocketHandlers(io, context) {
     socket.on("createRoom", cb => {
       const roomId = createRoom(socket);
       const room = rooms[roomId];
-      console.log("SERVER ASSIGNING ROLE TO NEW ROOM CREATOR:", socket.id, "ROLE: A");
       socket.emit("roleAssigned", {
         role: "A",
         setterId: socket.id,
@@ -92,7 +91,6 @@ module.exports = function registerSocketHandlers(io, context) {
 
       action.playerId = socket.id;
       action.role = role;
-      console.log("[SERVER] RECEIVED ACTION:", action);
       applyAction(room, room.state, action, role, roomId, context);
 
       emitStateForAllPlayers(roomId, room, io);
