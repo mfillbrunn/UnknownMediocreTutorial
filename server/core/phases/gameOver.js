@@ -9,7 +9,7 @@ const {resetRoundTimer,stopTimer} = require("../../utils/chessTimer");
 function endGame(state, roomId, io, room) {
    state.turn = null;
    state.gameOver = true;
-   resetRoundTimer(state);
+   if (state.timeControl.enabled) {stopTimer(roomId);} 
    state.matchRounds = state.matchRounds || []; 
    state.matchRounds.push({
     setter: state.setter,
@@ -43,7 +43,6 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     if (!state.canNextRound || state.gameOverView !== "round") {
       return; // ignore if not allowed
     }
-
     // Let the mode decide role swapping, power persistence, next phase, etc.
     // Expected return shape:
     // { phase: "simultaneous"|"normal", resetRound: true|false }
@@ -55,39 +54,25 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     if (res.resetRound) {
       resetRoundState(state);
     }
-
     state.gameOver = false;
     state.gameOverView = "match";
     state.canNextRound = false;
     state.phase = res.phase || "simultaneous";
     state.turn = null;
-    if (state.timeControl.enabled) {
-      state.activeTimer = "both";
-      resetRoundTimer(state);
-    }
     emitLobbyEvent(io, roomId, { type: "hideLobby" });
     emitStateForAllPlayers(roomId, room, io);
     return;
   }  
-  if (action.type === "NEW_MATCH") {
-     const fresh = createInitialState();
-  Object.assign(state, fresh);
+     if (action.type === "NEW_MATCH") {
+      const fresh = createInitialState();
+     Object.assign(state, fresh);
   
-  // Assign setter/guesser based on current room.players roles (A/B)
-  state.setter = "A";
-  state.guesser = "B";
-
-
+     // Assign setter/guesser based on current room.players roles (A/B)
+     state.setter = "A";
+     state.guesser = "B";
     // Re-enter lobby
     state.phase = "lobby";
     state.ready = { A: false, B: false };   
-    
-    if (state.timeControl.enabled) {
-      state.activeTimer = "both";
-      resetRoundTimer(state);
-      startGameTimer(room, state, roomId, context);
-      state.roundStartTime = Date.now();
-    }
     emitLobbyEvent(io, roomId, { type: "showLobby" });
     emitStateForAllPlayers(roomId, room, io);
     return;
