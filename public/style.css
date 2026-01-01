@@ -1676,8 +1676,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   letter-spacing: 0.3px;
 }
 
-/* Hidden on desktop */
-.power-info-btn { display: none; }
 /* Mobile only */
 @media (hover: none) and (pointer: coarse) {
   .power-info-btn {
@@ -1711,7 +1709,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   border-radius: 14px;
   padding: 14px;
   z-index: 100000;
-   display: none;
 }
 .power-info-row {
   margin-bottom: 12px;
