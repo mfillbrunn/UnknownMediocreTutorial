@@ -1,6 +1,5 @@
-const {startTimer } = require("./chessTimer");
-const { endGame } = require("../core/phases/normal");
-const { handleRoundTimeout } = require("./roundTimer");
+const { startTimer } = require("./chessTimer");
+const {  endGame, handleRoundTimeout} = require("../core/phases/normal");
 
 function startGameTimer(room, state, roomId, context) {
   const io = context.io;
@@ -12,19 +11,13 @@ function startGameTimer(room, state, roomId, context) {
       return;
     }
 
-    const res = handleRoundTimeout(
-      room,
-      state,
-      roomId,
-      timedOutRole,
-      context
-    );
+    const shouldContinue =
+      handleRoundTimeout(room, state, roomId, timedOutRole, context);
 
-    // 🔁 restart timer only if game continues
-    if (res?.shouldContinue) {
+    if (shouldContinue) {
       startGameTimer(room, state, roomId, context);
     }
   });
 }
 
-module.exports = { startGameTimer };;
+module.exports = { startGameTimer };
