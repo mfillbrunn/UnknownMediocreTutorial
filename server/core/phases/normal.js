@@ -104,6 +104,10 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
           state.powers.forcedGuess = null;
         return;
       }
+    
+    state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
+    state.roundStartTime = Date.now();
+    
     if (g === state.secret) {
       state.currentSecret = state.secret;
       pushWinEntry(state, g);
@@ -115,15 +119,12 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     state.pendingGuess = g;
     if (state.powers.blindGuessActive) { state.powers.blindGuessActive = false;}
     state.powers.forcedGuess = null;
-    
+    state.activeTimer = state.setter;
     if (state.timeControl.mode === "chess") {
       addIncrement(state, state.guesser);
     } else if (state.timeControl.mode === "round") {
       resetRoundTimer(state);
     }
-    state.activeTimer = state.setter;
-    state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
-    state.roundStartTime = Date.now();
     state.turn = state.setter;
     if (state.powers.forceTimerArmed) {
       startForceTimer(roomId, room, state, io, context);
@@ -150,6 +151,8 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
       state.secret = w;
       state.currentSecret = w;
       state.firstSecretSet = true;
+      state.timeUsed[state.setter] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
+      state.roundStartTime = Date.now();
       if (state.pendingGuess === w) {
         pushWinEntry(state, w);
         endGame(state, roomId, io, room);
@@ -163,11 +166,9 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
         resetRoundTimer(state);
       }
       state.turn = state.guesser;
-      state.timeUsed[state.setter] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
       state.powerUsedThisTurn = false;  
       powerEngine.turnStart(state, state.guesser, roomId, io);
       state.activeTimer = state.guesser;
-      state.roundStartTime = Date.now();
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
