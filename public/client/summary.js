@@ -73,7 +73,7 @@ function renderMatchSummary(container) {
   }
   const didWin = myRole === winner;
   let resultText = didWin ? "🏆 You won" : "❌ You lost";
-  if (time.A ==== time.B && points.A === points.B){
+  if (time.A === time.B && points.A === points.B){
   resultText = "🤝 You tied";  
     winReason = "tie";
   }
