@@ -5,7 +5,6 @@ const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { createInitialState } = require("../stateFactory");
 const resetRoundState = require("../../utils/resetRoundState");
 const {resetRoundTimer,stopTimer} = require("../../utils/chessTimer");
-const {startGameTimer} = require("../../utils/startGameTimer");
 
 function endGame(state, roomId, io, room) {
    state.turn = null;
@@ -65,7 +64,6 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     if (state.timeControl.enabled) {
       state.activeTimer = "both";
       resetRoundTimer(state);
-      startGameTimer(room, state, roomId, context);
     }
     emitLobbyEvent(io, roomId, { type: "hideLobby" });
     emitStateForAllPlayers(roomId, room, io);
