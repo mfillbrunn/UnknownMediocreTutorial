@@ -436,7 +436,6 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
 // -----------------------------------------------------
 function updateMenu() {
   $("menuRoomCode").textContent = roomId || "-";
-  $("menuPlayerRole").textContent = myRole === "A" ? "Setter" : "Guesser";
 }
 
 // -----------------------------------------------------
