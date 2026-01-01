@@ -78,11 +78,6 @@ window.renderHistory = function ({
       row.appendChild(tile);
     }
     
-      
-      if (safeEntry.powerUsed) {
-        meta.textContent = safeEntry.powerUsed;
-      }
-
     if (safeEntry.extraInfo) {
       const { greens, yellows } = safeEntry.extraInfo;
       meta.textContent = `${greens}🟩 ${yellows}🟨`;
