@@ -219,11 +219,3 @@ function initPowerInfoButton(buttonId, role) {
     }
   });
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  initPowerInfoButton("powerInfoBtnSetter", "setter");
-  initPowerInfoButton("powerInfoBtnGuesser", "guesser");
-});
-
-
-
