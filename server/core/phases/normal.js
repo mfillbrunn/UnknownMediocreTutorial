@@ -117,7 +117,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     state.powers.forcedGuess = null;
     
     if (state.timeControl.mode === "chess") {
-      addIncrement(state, role);
+      addIncrement(state, state.guesser);
     } else if (state.timeControl.mode === "round") {
       resetRoundTimer(state);
     }
@@ -158,7 +158,7 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
       clearForceTimer(roomId, state);
       finalizeFeedback(state, powerEngine, roomId, io);
       if (state.timeControl.mode === "chess") {
-        addIncrement(state, role);
+        addIncrement(state, state.setter);
       } else if (state.timeControl.mode === "round") {
         resetRoundTimer(state);
       }
