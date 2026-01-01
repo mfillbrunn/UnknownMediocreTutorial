@@ -412,7 +412,7 @@ function buildShareText(state, myRole) {
   }
   const didWin = myRole === winner;
   let resultText = "🏆";
-  if (time.A ==== time.B && points.A === points.B){
+  if (time.A === time.B && points.A === points.B){
   resultText = "🤝";  
     winReason = "tie";
   }
