@@ -16,7 +16,7 @@ if (state.timeControl.enabled && !state.isTimerRunning) {
         stopTimer(roomId);
         startGameTimer(room, state, roomId, context);
         state.isTimerRunning=true;
-        }}
+      }
   // ---------------------------------------------
   // SETTER submits initial secret
   // ---------------------------------------------
