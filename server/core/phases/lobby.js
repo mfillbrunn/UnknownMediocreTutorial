@@ -5,7 +5,7 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const CompetitiveMode = require("../modes/competitiveMode");
 const { stopTimer,startTimer,resetRoundTimer } = require("../../utils/chessTimer");
 const { endGame } = require("./gameOver");
-const {handleRoundTimeout, startGameTimer} = require("../../utils/startGameTimer");
+const {handleRoundTimeout, startGameTimer} = require("./normal");
 
 const SETTER_POWERS = [
         "hideTile",
