@@ -424,4 +424,10 @@ function buildShareText(state, myRole) {
   return lines.join("\n");
 }
 
+function getPowerLabels(powerIds = []) {
+  return powerIds
+    .map(id => window.POWER_METADATA?.[id]?.label)
+    .filter(Boolean);
+}
+
 
