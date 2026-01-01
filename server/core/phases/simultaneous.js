@@ -9,14 +9,6 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const { ALLOWED_GUESSES, powerEngine } = context;
   const { isValidWord } = require("../../game-engine/validation");
 
-if (state.timeControl.enabled && !state.isTimerRunning) {
-        resetRoundTimer(state);
-        state.activeTimer = "both";
-        state.roundStartTime = Date.now();
-        stopTimer(roomId);
-        startGameTimer(room, state, roomId, context);
-        state.isTimerRunning=true;
-      }
   // ---------------------------------------------
   // SETTER submits initial secret
   // ---------------------------------------------
