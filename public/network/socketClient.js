@@ -26,7 +26,6 @@ window.joinRoom = function (roomCode, cb) {
 };
 
 window.sendGameAction = function (roomId, action) {
-  console.log("[CLIENT] sendGameAction", action);
   socket.emit("gameAction", { roomId, action });
 };
 
