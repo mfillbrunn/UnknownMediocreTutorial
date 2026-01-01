@@ -4,7 +4,7 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { createInitialState } = require("../stateFactory");
 const resetRoundState = require("../../utils/resetRoundState");
-const {resetRoundTimer,stopTimer} = require("../../utils/chessTimer");
+const {resetRoundTimer,stopTimer, startTimer} = require("../../utils/chessTimer");
 
 function endGame(state, roomId, io, room) {
    state.turn = null;
