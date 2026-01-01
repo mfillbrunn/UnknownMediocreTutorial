@@ -22,7 +22,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     state.firstSecretSet = true;
     state.simultaneousSecretSubmitted = true;
     if (state.timeControl.mode === "chess") {
-      addIncrement(state, role);
+      addIncrement(state, state.setter);
     } 
     if (state.activeTimer === "both") {
       state.activeTimer = state.guesser;
@@ -42,7 +42,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     state.pendingGuess = g;
     state.simultaneousGuessSubmitted = true;
     if (state.timeControl.mode === "chess") {
-      addIncrement(state, role);
+      addIncrement(state, state.guesser);
     } 
     if (state.activeTimer === "both") {
         state.activeTimer = state.setter;   
