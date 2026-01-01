@@ -5,6 +5,7 @@ const { isValidWord } = require("../../game-engine/validation");
 const { isConsistentWithHistory } = require("../../game-engine/history");
 const { addIncrement, resetRoundTimer} = require("../../utils/chessTimer");
 const { endGame } = require("./gameOver");
+const {startGameTimer} = require("../../utils/startGameTimer");
 const FORCE_TIMER_INTERVALS = {};
 
 function startForceTimer(roomId, room, state, io, context) {
