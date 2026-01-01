@@ -5,7 +5,6 @@ const { isValidWord } = require("../../game-engine/validation");
 const { isConsistentWithHistory } = require("../../game-engine/history");
 const { addIncrement, resetRoundTimer} = require("../../utils/chessTimer");
 const { endGame } = require("./gameOver");
-const {startGameTimer} = require("../../utils/startGameTimer");
 const FORCE_TIMER_INTERVALS = {};
 
 function startForceTimer(roomId, room, state, io, context) {
@@ -235,6 +234,24 @@ function handleRoundTimeout(room, state, roomId, role, context) {
   return true;
 }
 
+function startGameTimer(room, state, roomId, context) {
+  const io = context.io;
+
+  startTimer(roomId, state, io, timedOutRole => {
+    if (state.timeControl.mode === "chess") {
+      state.timeoutLoser = timedOutRole;
+      endGame(state, roomId, io, room);
+      return;
+    }
+
+    const shouldContinue =
+      handleRoundTimeout(room, state, roomId, timedOutRole, context);
+
+    if (shouldContinue) {
+      startGameTimer(room, state, roomId, context);
+    }
+  });
+}
 
 
 module.exports = {
