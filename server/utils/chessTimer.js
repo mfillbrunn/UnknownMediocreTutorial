@@ -53,14 +53,11 @@ function resetRoundTimer(state) {
   state.timeRemaining.A = secs;
   state.timeRemaining.B = secs;
 }
-function isTimerRunning(roomId) {
-  return !!INTERVALS[roomId];
-}
+
 
 module.exports = {
   startTimer,
   stopTimer,
   addIncrement,
-  resetRoundTimer,
-  isTimerRunning
+  resetRoundTimer
 };
