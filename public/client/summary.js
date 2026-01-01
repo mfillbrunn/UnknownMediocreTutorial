@@ -338,3 +338,90 @@ function renderStoredRoundSummary(round, index) {
   return html;
 }
 
+function buildShareText(state, myRole) {
+  const rounds = state.matchRounds || [];
+  const names = state.playerNames || { A: "A", B: "B" };
+
+  // -----------------------
+  // Determine winner
+  // -----------------------
+  const points = { A: 0, B: 0 };
+  const time = { A: 0, B: 0 };
+
+  rounds.forEach(r => {
+    points[r.setter] += r.guessCount;
+    time.A += r.time?.A || 0;
+    time.B += r.time?.B || 0;
+  });
+
+  let winner;
+  let winReason = "points";
+
+  if (points.A > points.B) winner = "A";
+  else if (points.B > points.A) winner = "B";
+  else {
+    winner = time.A <= time.B ? "A" : "B";
+    winReason = "time";
+  }
+
+  const winnerName = names[winner];
+  const loserName = names[winner === "A" ? "B" : "A"];
+  const didWin = myRole === winner;
+
+  const winnerLabel =
+    winReason === "time"
+      ? `**${winnerName} (win by tiebreaker)**`
+      : `**${winnerName}**`;
+
+  // -----------------------
+  // Time control line
+  // -----------------------
+  let timeLine = "No time";
+  if (state.timeControl?.enabled) {
+    timeLine =
+      state.timeControl.mode === "round"
+        ? `${state.timeControl.roundSeconds}s/round`
+        : `${state.timeControl.initialSeconds / 60}min total`;
+  }
+
+  // -----------------------
+  // Powers (points)
+  // -----------------------
+  const setterPowers = rounds[0]?.powersSetter || [];
+  const guesserPowers = rounds[0]?.powersGuesser || [];
+
+  const powersLine =
+    setterPowers.length || guesserPowers.length
+      ? `Setter powers: ${setterPowers.join(", ") || "—"} | ` +
+        `Guesser powers: ${guesserPowers.join(", ") || "—"}`
+      : null;
+
+  // -----------------------
+  // Per-round lines
+  // -----------------------
+  const roundLines = rounds.map((r, i) => {
+    const winnerOfRound = names[r.guesser]; // guesser always "wins" the round
+    const secret =
+      r.history?.[r.history.length - 1]?.finalSecret?.toUpperCase() || "?????";
+    const guesses = r.guessCount;
+
+    const timeoutMark = r.timeoutLoser ? " ⏱" : "";
+
+    return `R${i + 1}: ${winnerOfRound} — ${secret} (${guesses})${timeoutMark}`;
+  });
+
+  // -----------------------
+  // Assemble final text
+  // -----------------------
+  const lines = [
+    "VS Wordle result",
+    `🏆 ${winnerLabel} ${points.A}–${points.B} ${loserName}`,
+    `⏱ ${timeLine}`,
+    powersLine,
+    ...roundLines
+  ].filter(Boolean);
+
+  return lines.join("\n");
+}
+
+
