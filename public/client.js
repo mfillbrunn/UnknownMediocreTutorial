@@ -953,16 +953,6 @@ $("applyPowerCountBtn").onclick = () => {
    }
  };
 
-$("playerNameInput").onchange = () => {
-  const name = $("playerNameInput").value.trim();
-  if (!name) return;
-  localStorage.setItem("playerName", name);
-  sendGameAction(roomId, {
-    type: "SET_PLAYER_NAME",
-    name
-  });
-};
-
 $("newMatchBtn").onclick = () => {
   sendGameAction(roomId, { type: "NEW_MATCH" });
   const el = $("assassinWordDisplay");
