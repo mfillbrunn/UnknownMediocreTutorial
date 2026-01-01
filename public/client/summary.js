@@ -454,11 +454,8 @@ if (setter.length || guesser.length) {
     : "—";
 
   powersLine =
-    `Setter powers: ${setterIcons} | ` +
-    `Guesser powers: ${guesserIcons}`;
+    `Powers: ${setterIcons} | ${guesserIcons}`;
 }
-
-
 
   // -----------------------
   // Per-round lines
