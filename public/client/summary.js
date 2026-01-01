@@ -99,8 +99,8 @@ function renderMatchSummary(container) {
         <th>Setter</th>
         <th>Guesser</th>
         <th>Guesses</th>
-        <th>Time (Setter)</th>
-        <th>Time (Guesser)</th>
+        <th>Time (${names.A})</th>
+        <th>Time (${names.B})</th>
       </tr>
   `;
 
@@ -118,8 +118,8 @@ function renderMatchSummary(container) {
               : ""
           }
         </td>
-        <td>${r.time?.[r.setter] || 0}</td>
-        <td>${r.time?.[r.guesser] || 0}</td>
+      <td>${r.time?.A || 0}</td>
+      <td>${r.time?.B || 0}</td>
       </tr>
     `;
   });
@@ -129,8 +129,8 @@ function renderMatchSummary(container) {
         <td><b>Total</b></td>
         <td colspan="2"></td>
         <td></td>
-        <td><b>${time.A} (A)</b></td>
-        <td><b>${time.B} (B)</b></td>
+        <td><b>${time.A} (${names.A})</b></td>
+        <td><b>${time.B} (${names.B})</b></td>
       </tr>
     </table>
   `;
