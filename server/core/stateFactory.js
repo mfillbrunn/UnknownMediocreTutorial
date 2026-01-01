@@ -38,7 +38,7 @@ function createInitialState() {
   timeExpired: null, // "A" | "B" | null
   activeTimer: null, // "A" | "B" | "both" | null
   timeoutLoser: null,
-    isTimerRunning: 0,
+    isTimerRunning: false,
     
     turn: null,
     setter: "A",
