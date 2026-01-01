@@ -390,6 +390,7 @@ function updateUI() {
     lastSimulSecret = false;
     lastSimulGuess = false;
   }
+updatePowerInfoState(state);  
   // Render power buttons once
 if (!PowerEngine._initialized && roomId && roleAssigned) {
     PowerEngine.renderButtons(roomId);
@@ -472,7 +473,6 @@ function updateScreens() {
     hide("setterScreen");
     updateGuesserScreen();
   }
-updatePowerInfoState(state);  
 PowerEngine.applyUI(state, myRole, roomId);
 }
 
