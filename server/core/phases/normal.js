@@ -14,8 +14,6 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   if (!state.pendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
     const g = action.guess.toLowerCase();    
     state.guessCount=state.guessCount+ 1;
-    console.log(state.countGuess);
-    console.log("Guesser submited");
     state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
     state.roundStartTime = Date.now();
     // ASSASSIN
@@ -55,8 +53,6 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   /// SETTER
 if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME") ) {
     let w = null;
-    console.log(state.guessCount);
-    console.log("Setter submited");
     if (action.type === "SET_SECRET_NEW") {
        w = action.secret.toLowerCase();
     } else if (action.type === "SET_SECRET_SAME"){
