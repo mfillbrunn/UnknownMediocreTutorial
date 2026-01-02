@@ -33,7 +33,7 @@ InfoBadgeEngine.register((state, role) => {
   const meta = POWER_METADATA.suggestGuess;
 
   // Power has been used this match
- if (!state.powers?.suggestedGuessActive) return null;
+ if (!state.powers?.suggestGuessActive) return null;
 
   // -----------------------------
   // GUESSER: show word
