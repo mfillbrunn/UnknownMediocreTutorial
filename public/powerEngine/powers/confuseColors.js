@@ -31,3 +31,17 @@ tooltip: {
     });
   }
 });
+
+InfoBadgeEngine.register((state, role) => {
+  if (!state.powers?.confuseColorsActive) return null;
+  const meta = POWER_METADATA.confuseColors;
+  return {
+    id: "confuseColors",
+    emoji: meta.emoji,
+    text: meta.label,
+    color: meta.color,
+    priority: 20,
+    screen: "both"
+  };
+});
+
