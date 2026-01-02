@@ -33,6 +33,32 @@ function updateRemainingWords(newSecret) {
   return { current, oldCount, newCount };
 }
 
+InfoBadgeEngine.register((state, role) => {
+  if (role !== state.setter) return null;
+
+  const data = updateRemainingWords(state.secret);
+  if (!data) return null;
+
+  const { current, oldCount, newCount } = data;
+
+  let text = `Words remaining: ${current.toLocaleString()}`;
+
+  if (typeof oldCount === "number") {
+    text += ` | Keep: ${oldCount.toLocaleString()}`;
+  }
+
+  if (typeof newCount === "number") {
+    text += ` | New: ${newCount.toLocaleString()}`;
+  }
+
+  return {
+    id: "remainingWords",
+    emoji: "",
+    text,
+    priority: 50,          // high, but below critical alerts
+    screen: "setter"
+  };
+});
 
 
 
