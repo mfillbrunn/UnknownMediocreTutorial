@@ -7,6 +7,7 @@ engine.registerPower("hideTile", {
     const maxTiles = 2;
     if (state.powers.hideTileUsed && state.powers.hideTilePendingCount === 0) return;
     state.powers.hideTileUsed = true;
+    state.powers.hideTileActive = true;
     state.powers.hideTilePendingCount = Math.min(
       maxTiles,
       state.powers.hideTilePendingCount + 1
