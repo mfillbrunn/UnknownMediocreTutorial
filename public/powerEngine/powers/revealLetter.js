@@ -70,6 +70,7 @@ PowerEngine.register("revealLetter", {
 
 InfoBadgeEngine.register((state, role) => {
   const meta = POWER_METADATA.revealLetter;
+  if (!state.powers?.revealLetterActive) return null;
   const greens = state.extraConstraints?.filter(
     c => c.type === "GREEN" && typeof c.index === "number"
   );
