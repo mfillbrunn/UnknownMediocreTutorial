@@ -45,3 +45,33 @@ tooltip: {
   keyboardEffects(state, role, keyEl, letter) {
   }
 });
+// --------------------------------------------------
+// Vowel Refresh — info badge (both players)
+// --------------------------------------------------
+
+InfoBadgeEngine.register((state, role) => {
+  if (!state.powers?.vowelRefreshUsed) return null;
+
+  const vowels = window.uiState?.vowelRefreshVowels;
+  if (!Array.isArray(vowels) || vowels.length === 0) {
+    return {
+      id: "vowelRefresh-used",
+      emoji: POWER_METADATA.vowelRefresh.emoji,
+      text: `${POWER_METADATA.vowelRefresh.label} used`,
+      color: POWER_METADATA.vowelRefresh.color,
+      priority: 30,
+      screen: "both",
+      details: POWER_METADATA.vowelRefresh.desc
+    };
+  }
+
+  return {
+    id: "vowelRefresh-detail",
+    emoji: POWER_METADATA.vowelRefresh.emoji,
+    text: `${POWER_METADATA.vowelRefresh.label}: ${vowels.join(", ")}`,
+    color: POWER_METADATA.vowelRefresh.color,
+    priority: 30,
+    screen: "both",
+    details: `Reset vowels: ${vowels.join(", ")}`
+  };
+});
