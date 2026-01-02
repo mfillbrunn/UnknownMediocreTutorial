@@ -12,7 +12,7 @@ engine.registerPower("vowelRefresh", {
 
     const vowels = new Set(["A", "E", "I", "O", "U"]);
     const guess = entry.guess.toUpperCase();
-
+    const resetVowels = new Set();
     // Collect letters known to be present BEFORE this round
     const knownPresent = new Set();
 
@@ -36,7 +36,7 @@ engine.registerPower("vowelRefresh", {
 
       // Do NOT erase if this vowel was previously confirmed
       if (knownPresent.has(letter)) continue;
-
+      resetVowels.add(letter);
       if (Array.isArray(entry.fb)) {
         entry.fb[i] = "";
       }
@@ -44,6 +44,10 @@ engine.registerPower("vowelRefresh", {
         entry.fbGuesser[i] = "";
       }
     }
+    // Emit UI-only info to both players
+    io.to(roomId).emit("vowelRefreshInfo", {
+      vowels: Array.from(resetVowels)
+    });
   },
 
   postScore() {},
