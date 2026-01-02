@@ -28,6 +28,7 @@ engine.registerPower("blindSpot", {
 
     state.powers.blindSpotUsed = true;
     state.powers.blindSpotIndex = idx;
+    state.powers.blindSpotActive = true;
 
     // Applies from THIS round onward
     state.powers.blindSpotRoundIndex = state.history.length;
