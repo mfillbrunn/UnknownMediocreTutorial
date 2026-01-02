@@ -154,19 +154,5 @@ createPowerButton(id, label) {
       const mod = this.powers[id];
       if (mod.historyEffects) mod.historyEffects(entry, isSetter);
     }
-  },
-
-  applyPattern(state, isSetterView, patternArray) {
-    for (const id in this.powers) {
-      const mod = this.powers[id];
-      if (mod.patternEffects) mod.patternEffects(state, isSetterView, patternArray);
-    }
-  },
-
-  applyMustContain(state, arr) {
-    for (const id in this.powers) {
-      const mod = this.powers[id];
-      if (mod.mustContainEffects) mod.mustContainEffects(state, arr);
-    }
   }
 };
