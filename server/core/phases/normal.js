@@ -32,7 +32,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     }
     state.pendingGuess = g;
     // Round moving on
-    if (state.powers.blindGuessActive) { state.powers.blindGuessActive = false;}
+    clearActivePowers(state);
     state.powers.forcedGuess = null;
     state.activeTimer = state.setter;
     if (state.timeControl.mode === "chess") {
@@ -243,6 +243,28 @@ function clearForceTimer(roomId, state) {
   delete state.powers.forceTimerDeadline;
   delete state.powers.forceTimerArmed;
 }
+
+const ROUND_SCOPED_ACTIVE_POWERS = new Set([
+  "freezeActive"
+]);
+
+function clearActivePowers(state) {
+  if (!state?.powers || !Array.isArray(state.activePowers)) return;
+
+  for (const power of state.activePowers) {
+    const key = `${power}Active`;
+
+    if (!(key in state.powers)) continue;
+    if (ROUND_SCOPED_ACTIVE_POWERS.has(key)) continue;
+
+    const val = state.powers[key];
+    if (!val) continue;
+
+    state.powers[key] = typeof val === "boolean" ? false : null;
+  }
+}
+
+
 
 module.exports = {
   handleNormalPhase,
