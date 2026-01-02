@@ -45,7 +45,7 @@ tooltip: {
 });
 
 InfoBadgeEngine.register((state, role) => {
-  if (!state.powers?.freezeSecretActive) return null;
+  if (!state.powers?.freezeActive) return null;
   const meta = POWER_METADATA.freezeSecret;
   return {
     id: "freezeSecret",
