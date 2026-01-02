@@ -70,7 +70,7 @@ if (oldCount !== -1 && newCount !== -1) {
       text: share,
       priority: 0,
       screen: "setter"
-    };
+    }
   ];
 });
 
