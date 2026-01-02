@@ -253,7 +253,7 @@ function clearActivePowers(state) {
 
   for (const power of state.activePowers) {
     const key = `${power}Active`;
-
+    console.log(key);
     if (!(key in state.powers)) continue;
     if (ROUND_SCOPED_ACTIVE_POWERS.has(key)) continue;
 
