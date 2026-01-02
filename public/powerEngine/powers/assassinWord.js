@@ -79,17 +79,35 @@ InfoBadgeEngine.register((state, role) => {
   const assassin = state.powers?.assassinWord;
   if (!assassin) return null;
 
-  // Show ONLY to setter
-  if (role !== state.setter) return null;
+  // -----------------------------
+  // SETTER: show the actual word
+  // -----------------------------
+  if (role === state.setter) {
+    return {
+      id: "assassinWord-setter",
+      emoji: meta.emoji,
+      text: `${meta.label}: ${assassin.toUpperCase()}`,
+      color: meta.color,
+      priority: 2,
+      screen: "setter",
+      details: meta.desc
+    };
+  }
 
-  return {
-    id: "assassinWord",
-    emoji: meta.emoji,
-    text: `${meta.label}: ${assassin.toUpperCase()}`,
-    color: meta.color,
-    priority: 2,            // very high priority
-    screen: "setter",
-    details: meta.desc
-  };
+  // -----------------------------
+  // GUESSER: generic warning only
+  // -----------------------------
+  if (role === state.guesser) {
+    return {
+      id: "assassinWord-guesser",
+      emoji: meta.emoji,
+      text: `${meta.label} active`,
+      color: meta.color,
+      priority: 8,
+      screen: "guesser",
+      details: "One word will instantly end the game if guessed."
+    };
+  }
+
+  return null;
 });
-
