@@ -33,15 +33,13 @@ InfoBadgeEngine.register((state, role) => {
   const meta = POWER_METADATA.suggestGuess;
 
   // Power has been used this match
-  if (!state.powers?.suggestGuessUsed) return null;
+ if (!state.powers?.suggestedGuessActive) return null;
 
   // -----------------------------
   // GUESSER: show word
   // -----------------------------
   if (role === state.guesser) {
     const guess = window.uiState?.suggestedGuess;
-    if (!guess) return null;
-
     return {
       id: "suggestGuess-word",
       emoji: meta.emoji,
