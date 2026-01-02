@@ -35,3 +35,18 @@ tooltip: {
     }
   }
 });
+
+InfoBadgeEngine.register((state, role) => {
+  if (!state.powers?.blindGuessActive) return null;
+
+  const meta = POWER_METADATA.blindSpot;
+
+  return {
+    id: "blindGuess",
+    emoji: meta.emoji,
+    text: meta.label,
+    color: meta.color,
+    priority: 20,
+    screen: "both"
+  };
+});
