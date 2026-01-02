@@ -2,11 +2,12 @@
 socket.on("suggestWord", ({ word }) => {
   const upper = word.toUpperCase();
   window.uiState = window.uiState || {};
-  window.uiState.suggestedGuess = upper;
   if (myRole === state.setter) {
+    window.uiState.suggestedSecret = upper;
     state.setterDraft = upper;
   }
   if (myRole === state.guesser) {
+    window.uiState.suggestedGuess = upper;
     localGuesserDraft = upper.toLowerCase();
   }  
     updateUI();
