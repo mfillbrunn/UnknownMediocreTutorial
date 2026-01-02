@@ -1,45 +1,38 @@
 ///Main updating function
 function updateRemainingWords(newSecret) {
   if (!state || state.phase === "lobby" || state.phase === "gameOver") {
-    const el = $("SetterInfoBadge");
-    if (el) el.innerHTML = "";
-    return;
+    return null;
   }
 
-  const el = $("SetterInfoBadge");
-  if (!el) return;
-
   const lastIdx = state.history.length - 1;
-  if (lastIdx < 0) return;
+  if (lastIdx < 0) return null;
 
-  // Always compute current
   if (remainingCache.setterCurrent == null) {
     remainingCache.setterCurrent = computeRemainingAfterIndex(lastIdx);
   }
-  const countCurrent = remainingCache.setterCurrent;
 
-  // Default: unknown
-  let countOld = null;
-  let countNew = null;
+  const current = remainingCache.setterCurrent;
+
+  let oldCount = null;
+  let newCount = null;
 
   const guess = state.pendingGuess;
-
-  // Only compute old/new if guess is fully known
-  const guessIsComplete = !guess.includes("?");
+  const guessIsComplete = guess && !guess.includes("?");
 
   if (guessIsComplete) {
     if (remainingCache.setterOld == null) {
       remainingCache.setterOld = computeRemainingNew(state.secret);
     }
-    countOld = remainingCache.setterOld;
+    oldCount = remainingCache.setterOld;
 
-    if (newSecret.length === 5) {
-      countNew = computeRemainingNew(newSecret);
+    if (newSecret && newSecret.length === 5) {
+      newCount = computeRemainingNew(newSecret);
     }
   }
 
-  renderRemaining(el, countCurrent, countOld, countNew);
+  return { current, oldCount, newCount };
 }
+
 
 
 
