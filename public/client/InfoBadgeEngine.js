@@ -45,46 +45,13 @@ window.InfoBadgeEngine = {
       return;
     }
 
-    const primary = messages.filter(m => m.row === "primary");
-    const secondary = messages.filter(m => m.row !== "primary");
-
-    badge.innerHTML = `
-      ${primary.length ? `
-        <div class="badge-row badge-row-primary">
-          ${primary.map(m => `
-            <div class="badge-line">
-              ${m.emoji ? `${m.emoji} ` : ""}${m.text}
-            </div>
-          `).join("")}
-        </div>
-      ` : ""}
-
-      ${secondary.length ? `
-        <div class="badge-row badge-row-secondary">
-          ${secondary.map(m => {
-            // --- Special case: remaining words comparison ---
-            if ("keep" in m || "new" in m) {
-              return `
-                <span class="badge-item ${m.compare === "old" ? "better" : ""}">
-                  Keep: ${m.keep ?? "-"}
-                </span>
-                <span class="badge-sep">•</span>
-                <span class="badge-item ${m.compare === "new" ? "better" : ""}">
-                  New: ${m.new ?? "-"}
-                </span>
-              `;
-            }
-
-            // --- Default power badge ---
-            return `
-              <span class="badge-item">
-                ${m.emoji ? `${m.emoji} ` : ""}${m.text}
-              </span>
-            `;
-          }).join('<span class="badge-sep">•</span>')}
-        </div>
-      ` : ""}
-    `;
+    badge.innerHTML = messages
+      .map(m => `
+        <span class="badge-item" style="color:${m.color ?? "var(--role-accent)"}">
+          ${m.emoji ? `${m.emoji} ` : ""}${m.text}
+        </span>
+      `)
+      .join(`<span class="badge-sep">•</span>`);
 
     badge.classList.add("show");
   }
