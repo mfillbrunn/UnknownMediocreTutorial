@@ -73,9 +73,6 @@ if (oldCount !== -1 && newCount !== -1) {
     };
 });
 
-
-
-
 ///Calculate remaining words
 window.computeRemainingAfterIndex = function (idx) {
   const words = window.ALLOWED_SECRETS;
