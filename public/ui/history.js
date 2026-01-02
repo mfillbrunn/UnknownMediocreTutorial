@@ -9,7 +9,6 @@ window.renderHistory = function ({
   const bsIdx   = state?.powers?.blindSpotIndex;
   const bsRound = state?.powers?.blindSpotRoundIndex;
   const history = state?.history || [];
-  const shlength = state.history.length;
   let j=0;
   for (const entry of history) {
     if (!entry || !entry.guess) continue;
@@ -76,7 +75,7 @@ window.renderHistory = function ({
         }
       }
           
-      if ( !isSetter && state.powers.countOnlyActive && j === shlength && state.turn === state.guesser) {
+      if ( !isSetter && state.powers.countOnlyUsed && j === shlength && state.turn === state.guesser) {
         tile.classList.add("tile-hidden-cycle");  // THIS SHOULD APPLY ONLY TO LAST ONE OF HISTORY
       }
       row.appendChild(tile);
