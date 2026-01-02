@@ -1,47 +1,4 @@
 ///Main updating function
-function updateRemainingWords(newSecret) {
-  if (!state || state.phase === "lobby" || state.phase === "gameOver") {
-    const el = $("SetterInfoBadge");
-    if (el) el.innerHTML = "";
-    return;
-  }
-
-  const el = $("SetterInfoBadge");
-  if (!el) return;
-
-  const lastIdx = state.history.length - 1;
-  if (lastIdx < 0) return;
-
-  // Always compute current
-  if (remainingCache.setterCurrent == null) {
-    remainingCache.setterCurrent = computeRemainingAfterIndex(lastIdx);
-  }
-  const countCurrent = remainingCache.setterCurrent;
-
-  // Default: unknown
-  let countOld = null;
-  let countNew = null;
-
-  const guess = state.pendingGuess;
-
-  // Only compute old/new if guess is fully known
-  const guessIsComplete = !guess.includes("?");
-
-  if (guessIsComplete) {
-    if (remainingCache.setterOld == null) {
-      remainingCache.setterOld = computeRemainingNew(state.secret);
-    }
-    countOld = remainingCache.setterOld;
-
-    if (newSecret.length === 5) {
-      countNew = computeRemainingNew(newSecret);
-    }
-  }
-
-  renderRemaining(el, countCurrent, countOld, countNew);
-}
-
-
 
 ///Calculate remaining words
 window.computeRemainingAfterIndex = function (idx) {
@@ -88,39 +45,90 @@ const remainingCache = {
   setterOld: null
 };
 
-///Render remaining words
-function renderRemaining(element, countcurrent, countold, countnew) {
-  if (!element || countcurrent == null) return;
-
-  const current = Number(countcurrent);
-
-  const hasOld = typeof countold === "number";
-  const oldLoss = hasOld ? countold : null;
-
-  const hasNew = typeof countnew === "number";
-  const newLoss = hasNew ? countnew : null;
-
-  element.innerHTML = `
-    <span class="remaining-current">
-      Words remaining: ${current.toLocaleString()}
-    </span>
-    <span class="remaining-old">
-      Keep: ${hasOld ? oldLoss.toLocaleString() : "-"}
-    </span>
-    <span class="remaining-new">
-      New: ${hasNew ? newLoss.toLocaleString() : "-"}
-    </span>
-  `;
-
-  if (!hasOld || !hasNew) return;
-
-  const oldEl = element.querySelector(".remaining-old");
-  const newEl = element.querySelector(".remaining-new");
-
-  if (oldLoss > newLoss) {
-    oldEl.classList.add("better");
-  } else if (newLoss > oldLoss) {
-    newEl.classList.add("better");
+function getRemainingWordInfo(state, newSecret) {
+  if (!state || state.phase === "lobby" || state.phase === "gameOver") {
+    return null;
   }
+
+  const lastIdx = state.history.length - 1;
+  if (lastIdx < 0) return null;
+
+  // current
+  if (remainingCache.setterCurrent == null) {
+    remainingCache.setterCurrent = computeRemainingAfterIndex(lastIdx);
+  }
+  const current = remainingCache.setterCurrent;
+
+  let oldCount = null;
+  let newCount = null;
+
+  const guess = state.pendingGuess;
+  const guessIsComplete = guess && !guess.includes("?");
+
+  if (guessIsComplete) {
+    if (remainingCache.setterOld == null) {
+      remainingCache.setterOld = computeRemainingNew(state.secret);
+    }
+    oldCount = remainingCache.setterOld;
+
+    if (newSecret && newSecret.length === 5) {
+      newCount = computeRemainingNew(newSecret);
+    }
+  }
+
+  return {
+    current,
+    old: oldCount,
+    new: newCount
+  };
 }
+
+InfoBadgeEngine.register(function remainingWordsCollector(state, role) {
+  if (role !== state.setter) return null;
+
+  const info = getRemainingWordInfo(state, state.pendingSecret);
+  if (!info || info.current == null) return null;
+
+  const msgs = [];
+
+  // Current always shown
+  msgs.push({
+    screen: "setter",
+    priority: 10,
+    text: `Words remaining: ${info.current.toLocaleString()}`
+  });
+
+  const hasOld = typeof info.old === "number";
+  const hasNew = typeof info.new === "number";
+
+  let oldColor;
+  let newColor;
+
+  if (hasOld && hasNew) {
+    if (info.old > info.new) {
+      oldColor = "var(--tile-green)";
+    } else if (info.new > info.old) {
+      newColor = "var(--tile-green)";
+    }
+    // equal → no color
+  }
+
+  msgs.push({
+    screen: "setter",
+    priority: 20,
+    text: `Keep: ${hasOld ? info.old.toLocaleString() : "-"}`,
+    color: oldColor
+  });
+
+  msgs.push({
+    screen: "setter",
+    priority: 20,
+    text: `New: ${hasNew ? info.new.toLocaleString() : "-"}`,
+    color: newColor
+  });
+
+  return msgs;
+});
+
+
 
