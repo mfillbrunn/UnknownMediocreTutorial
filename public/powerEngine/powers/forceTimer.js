@@ -46,6 +46,7 @@ uiEffects(state, role) {
     bar.classList.add("force-timer");
   }
 }
+});
 
   InfoBadgeEngine.register((state, role) => {
   const deadline = state.powers?.forceTimerDeadline;
@@ -64,13 +65,9 @@ uiEffects(state, role) {
   return {
     id: "forceTimer",
     emoji: meta.emoji,
-    text: `${meta.label}: ${timeText}`
+    text: `${meta.label}: ${timeText}`,
     color: meta.color,
     priority: 1,          // very high priority
     screen: "both",
     details: meta.desc
   };
-});
-
-
-});
