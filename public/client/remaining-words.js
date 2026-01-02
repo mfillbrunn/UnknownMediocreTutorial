@@ -13,8 +13,8 @@ function updateRemainingWords(newSecret) {
 
   const current = remainingCache.setterCurrent;
 
-  let oldCount = null;
-  let newCount = null;
+  let oldCount = -1;
+  let newCount = -1;
 
   const guess = state.pendingGuess;
   const guessIsComplete = guess && !guess.includes("?");
@@ -25,7 +25,6 @@ function updateRemainingWords(newSecret) {
       newCount = computeRemainingNew(newSecret);
     }
   }
-
   return { current, oldCount, newCount };
 }
 
@@ -33,11 +32,16 @@ InfoBadgeEngine.register((state, role) => {
   if (role !== state.setter) return null;
   const { current, oldCount, newCount } = updateRemainingWords(state.secret);
 
-  let compare = null;
-  if (typeof newCount === "number" && oldCount !== newCount) {
+  let compare = "neither";
+  if (oldCount !== newCount) {
     compare = newCount > oldCount ? "new" : "old";
   }
-
+  if (oldCount === -1){
+    oldCount = "-";
+  }
+  if (newCount === -1){
+    newCount = "-";
+  }
   return [
     {
       id: "remaining-primary",
@@ -48,7 +52,7 @@ InfoBadgeEngine.register((state, role) => {
     },
     {
       id: "remaining-secondary",
-      text: `Keep: ${oldCount ?? "-"} | New: ${newCount ?? "-"}`,
+      text: `Keep: ${oldCount} | New: ${newCount}`,
       priority: 1,
       screen: "setter",
       row: "secondary",
