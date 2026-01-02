@@ -24,3 +24,50 @@ tooltip: {
     }
   }
 });
+
+// --------------------------------------------------
+// Suggest Secret — info badge (reverse of Suggest Guess)
+// --------------------------------------------------
+
+InfoBadgeEngine.register((state, role) => {
+  const meta = POWER_METADATA.suggestSecret;
+
+  // Power used this match?
+  if (!state.powers?.suggestSecretUsed) return null;
+
+  // -----------------------------
+  // SETTER: show word
+  // -----------------------------
+  if (role === state.setter) {
+    const secret = window.uiState?.suggestedSecret;
+    if (!secret) return null;
+
+    return {
+      id: "suggestSecret-word",
+      emoji: meta.emoji,
+      text: `${meta.label}: ${secret}`,
+      color: meta.color,
+      priority: 15,
+      screen: "setter",
+      details: meta.desc
+    };
+  }
+
+  // -----------------------------
+  // GUESSER: generic notice only
+  // -----------------------------
+  if (role === state.guesser) {
+    return {
+      id: "suggestSecret-used",
+      emoji: meta.emoji,
+      text: `${meta.label} used`,
+      color: meta.color,
+      priority: 40,
+      screen: "guesser",
+      details: "The setter received a suggested secret."
+    };
+  }
+
+  return null;
+});
+
