@@ -102,7 +102,7 @@ window.computeRemainingNew = function (newWord) {
 };
 
 // cache lives outside, but is reset on state updates
-const remainingCache = {
+window.remainingCache = {
   setterCurrent: null,
   setterOld: null
 };
