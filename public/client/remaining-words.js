@@ -32,41 +32,45 @@ function updateRemainingWords(newSecret) {
 
 InfoBadgeEngine.register((state, role) => {
   if (role !== state.setter) return null;
-
   const data = updateRemainingWords(state.secret);
   if (!data) return null;
-
   let { current, oldCount, newCount } = data;
-
-  let compare = "neither";
-  if (
-    oldCount !== -1 &&
-    newCount !== -1 &&
-    oldCount !== newCount
-  ) {
-    compare = newCount > oldCount ? "new" : "old";
+  let share = "";
+if (oldCount !== -1 && newCount !== -1) {
+    if (oldCount > newCount) {
+      share = `# Words: ${current.toLocaleString()}, 
+        Keep: <span style="color: var(--tile-green); font-weight:900;">
+          ${oldCount.toLocaleString()}
+        </span>, 
+        New: ${newCount.toLocaleString()}`;
+    } else if (newCount > oldCount) {
+      share = `# Words: ${current.toLocaleString()}, 
+        Keep: ${oldCount.toLocaleString()}, 
+        New: <span style="color: var(--tile-green); font-weight:900;">
+          ${newCount.toLocaleString()}
+        </span>`;
+    } else {
+      share = `# Words: ${current.toLocaleString()}, 
+        Keep: ${oldCount.toLocaleString()}, 
+        New: ${newCount.toLocaleString()}`;
+    }
+  } else if (oldCount !== -1 && newCount === -1) {
+    share = `# Words: ${current.toLocaleString()}, 
+      Keep: ${oldCount.toLocaleString()}, 
+      New: -`;
+  } else {
+    share = `# Words: ${current.toLocaleString()}, 
+      Keep: -, 
+      New: -`;
   }
-
-  const oldText = oldCount === -1 ? "-" : oldCount;
-  const newText = newCount === -1 ? "-" : newCount;
 
   return [
     {
-      id: "remaining-primary",
-      text: `Words remaining: ${current.toLocaleString()}`,
+      id: "remaining-words",
+      text: share,
       priority: 0,
-      screen: "setter",
-      row: "primary"
-    },
-    {
-      id: "remaining-secondary",
-      text: `Keep: ${oldText} | New: ${newText}`,
-      priority: 1,
-      screen: "setter",
-      row: "secondary",
-      compare
-    }
-  ];
+      screen: "setter"
+    };
 });
 
 
