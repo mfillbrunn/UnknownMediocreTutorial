@@ -52,9 +52,6 @@ InfoBadgeEngine.register((state, role) => {
   const info = state.revealGreenInfo;
   if (!info) return null;
 
-  // Only the guesser should see it
-  if (role !== state.guesser) return null;
-
   const meta = POWER_METADATA.revealGreen;
   const { pos, letter } = info;
 
@@ -64,7 +61,7 @@ InfoBadgeEngine.register((state, role) => {
     text: `${meta.label}: position ${pos + 1} = ${letter}`,
     color: meta.color,
     priority: 10,
-    screen: "guesser",
+    screen: "both",
     details: meta.desc
   };
 });
