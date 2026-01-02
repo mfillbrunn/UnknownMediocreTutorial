@@ -1,79 +1,47 @@
 ///Main updating function
 function updateRemainingWords(newSecret) {
   if (!state || state.phase === "lobby" || state.phase === "gameOver") {
-    return null;
+    const el = $("SetterInfoBadge");
+    if (el) el.innerHTML = "";
+    return;
   }
 
-  const lastIdx = (state.history?.length ?? 0) - 1;
+  const el = $("SetterInfoBadge");
+  if (!el) return;
 
+  const lastIdx = state.history.length - 1;
+  if (lastIdx < 0) return;
+
+  // Always compute current
   if (remainingCache.setterCurrent == null) {
     remainingCache.setterCurrent = computeRemainingAfterIndex(lastIdx);
   }
+  const countCurrent = remainingCache.setterCurrent;
 
-  const current = remainingCache.setterCurrent;
-
-  let oldCount = -1;
-  let newCount = -1;
+  // Default: unknown
+  let countOld = null;
+  let countNew = null;
 
   const guess = state.pendingGuess;
-  const guessIsComplete = typeof guess === "string" && !guess.includes("?");
+
+  // Only compute old/new if guess is fully known
+  const guessIsComplete = !guess.includes("?");
 
   if (guessIsComplete) {
-    oldCount = computeRemainingNew(state.secret);
+    if (remainingCache.setterOld == null) {
+      remainingCache.setterOld = computeRemainingNew(state.secret);
+    }
+    countOld = remainingCache.setterOld;
 
-    if (typeof newSecret === "string" && newSecret.length === 5) {
-      newCount = computeRemainingNew(newSecret);
+    if (newSecret.length === 5) {
+      countNew = computeRemainingNew(newSecret);
     }
   }
-  if (oldCount === null){oldCount = -1};
-  if (newCount === null){newCount = -1};
-  return { current, oldCount, newCount };
+
+  renderRemaining(el, countCurrent, countOld, countNew);
 }
 
 
-InfoBadgeEngine.register((state, role) => {
-  if (role !== state.setter) return null;
-  const data = updateRemainingWords(state.secret);
-  if (!data) return null;
-  let { current, oldCount, newCount } = data;
-  let share = "";
-if (oldCount !== -1 && newCount !== -1) {
-    if (oldCount > newCount) {
-      share = `# Words: ${current.toLocaleString()}, 
-        Keep: <span style="color: var(--tile-green); font-weight:900;">
-          ${oldCount.toLocaleString()}
-        </span>, 
-        New: ${newCount.toLocaleString()}`;
-    } else if (newCount > oldCount) {
-      share = `# Words: ${current.toLocaleString()}, 
-        Keep: ${oldCount.toLocaleString()}, 
-        New: <span style="color: var(--tile-green); font-weight:900;">
-          ${newCount.toLocaleString()}
-        </span>`;
-    } else {
-      share = `# Words: ${current.toLocaleString()}, 
-        Keep: ${oldCount.toLocaleString()}, 
-        New: ${newCount.toLocaleString()}`;
-    }
-  } else if (oldCount !== -1 && newCount === -1) {
-    share = `# Words: ${current.toLocaleString()}, 
-      Keep: ${oldCount.toLocaleString()}, 
-      New: -`;
-  } else {
-    share = `# Words: ${current.toLocaleString()}, 
-      Keep: -, 
-      New: -`;
-  }
-
-  return [
-    {
-      id: "remaining-words",
-      text: share,
-      priority: 0,
-      screen: "setter"
-    }
-  ];
-});
 
 ///Calculate remaining words
 window.computeRemainingAfterIndex = function (idx) {
@@ -115,7 +83,7 @@ window.computeRemainingNew = function (newWord) {
 };
 
 // cache lives outside, but is reset on state updates
-window.remainingCache = {
+const remainingCache = {
   setterCurrent: null,
   setterOld: null
 };
@@ -155,5 +123,4 @@ function renderRemaining(element, countcurrent, countold, countnew) {
     newEl.classList.add("better");
   }
 }
-
 
