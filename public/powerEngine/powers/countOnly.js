@@ -27,8 +27,8 @@ tooltip: {
   historyEffects(entry, isSetter) {
     if (isSetter) return;
     if (!entry.extraInfo) return;
-
-    entry.fbGuesser = ["❓","❓","❓","❓","❓"];
+    entry._useHiddenCycle = true;
+    //entry.fbGuesser = ["❓","❓","❓","❓","❓"];
   }
 });
 
