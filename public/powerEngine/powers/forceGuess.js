@@ -26,3 +26,19 @@ tooltip: {
     }
   }
 });
+
+InfoBadgeEngine.register((state, role) => {
+  const fg = state.powers?.forcedGuess;
+  if (!fg) return null;
+
+  const meta = POWER_METADATA.forceGuess;
+
+  return {
+    id: "forceGuess",
+    emoji: meta.emoji,
+    text: `${meta.label}: ${formatForceGuessOption(fg)}`,
+    color: meta.color,
+    priority: 20,
+    screen: "both"
+  };
+});
