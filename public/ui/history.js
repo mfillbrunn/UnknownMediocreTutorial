@@ -9,7 +9,7 @@ window.renderHistory = function ({
   const bsIdx   = state?.powers?.blindSpotIndex;
   const bsRound = state?.powers?.blindSpotRoundIndex;
   const history = state?.history || [];
-  let j=0;
+  let j=-1;
   for (const entry of history) {
     if (!entry || !entry.guess) continue;
     j = j + 1;
