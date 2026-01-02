@@ -25,3 +25,16 @@ tooltip: {
     });
   }
 });
+
+InfoBadgeEngine.register((state, role) => {
+  if (!state.powers?.hideTileActive) return null;
+  const meta = POWER_METADATA.hideTile;
+  return {
+    id: "hideTile",
+    emoji: meta.emoji,
+    text: meta.label,
+    color: meta.color,
+    priority: 20,
+    screen: "both"
+  };
+});
