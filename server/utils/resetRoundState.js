@@ -13,7 +13,7 @@ function resetRoundState(state) {
     state.timeUsed.B = 0,
   state.powersUsedThisRoundGuesser = [];
   state.powersUsedThisRoundSetter = [];
-
+  state.powers.countOnlyRound= 0;
     state.powers.blindSpotUsed = false;
     state.powers.blindSpotIndex = null;
 
