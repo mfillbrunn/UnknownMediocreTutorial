@@ -34,14 +34,9 @@ tooltip: {
       st.revealGreenInfo
     );
   }
-},
-
-patternEffects(state, isSetterView, pattern) {
-  if (isSetterView) return;
-  if (!state.revealGreenInfo) return;
-
-  // Nothing needed here — we render visually in updateUI
 }
+});
+
 
   // --------------------------------------------------
 // Reveal Green — info badge (guesser-only)
@@ -64,7 +59,4 @@ InfoBadgeEngine.register((state, role) => {
     screen: "both",
     details: meta.desc
   };
-});
-
-
 });
