@@ -279,18 +279,7 @@ onStateUpdate(newState => {
   if (prevPhase === "simultaneous" && state.phase === "normal") {
     localGuesserDraft = "";
   }
-const setterCanEdit =
-  myRole === state.setter &&  (
-    // Normal phase: setter’s turn with pending guess
-    (state.phase === "normal" &&
-      state.turn === state.setter &&
-      !!state.pendingGuess) ||
-
-    // Simultaneous phase: setter has not submitted yet
-    (state.phase === "simultaneous" &&
-      !state.secret &&
-      !state.simultaneousSecretSubmitted)
-  );
+const setterCanEdit =  myRole === state.setter &&  ((state.phase === "normal" && state.turn === state.setter &&!!state.pendingGuess) || (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
 
   if (setterCanEdit) {
     state.setterDraft = prevSetterDraft;
@@ -298,10 +287,9 @@ const setterCanEdit =
     state.setterDraft = "";
   }
   // Clear guesser draft once it is no longer editable
-  if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {
-    localGuesserDraft = "";
-  }
+  if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {localGuesserDraft = "";}
   window.state = state; 
+  resetEphemeralUIState();
   updateUI();
   remainingCache.setterOld = null;
   remainingCache.setterCurrent = null;
@@ -651,10 +639,7 @@ function handleSetterInput(event) {
     if (draft.length === 0) {
       if (KeepEnabled) {
         state.setterDraft = "";        
-        sendGameAction(roomId, { type: "SET_SECRET_SAME" });
-         if (window.uiState) {
-          window.uiState.suggestedSecret = null;
-        }    
+        sendGameAction(roomId, { type: "SET_SECRET_SAME" });  
         updateUI();
         return;
       }
@@ -689,9 +674,6 @@ function submitSetterNew() {
   }  
   sendGameAction(roomId, {type: "SET_SECRET_NEW",secret: w});
   state.setterDraft = "";
-  if (window.uiState) {
-    window.uiState.suggestedSecret = null;
-  } 
   updateUI();
 }
 
@@ -774,9 +756,6 @@ function handleGuesserInput(event) {
         type: "SUBMIT_GUESS",
         guess: localGuesserDraft.toLowerCase()
       });
-    if (window.uiState) {
-      window.uiState.suggestedGuess = null;
-    }    
   }
 }
 // -----------------------------------------------------
