@@ -94,6 +94,7 @@ function createInitialState() {
       countOnlyUsed: false,
       countOnlyWord: "",
       countOnlyActive: false,
+      countOnlyRound: 0,
       // SUGGEST POWERS
       suggestGuessUsed: false,
       suggestGuessActive: false,
