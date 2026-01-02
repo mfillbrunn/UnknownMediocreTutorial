@@ -46,7 +46,51 @@ createPowerButton(id, label) {
       }
     }
   },
+  // What powers emit
+  updateInfoBadge(state, role) {
+  const badge =
+    role === state.setter
+      ? $("SetterInfoBadge")
+      : $("GuesserInfoBadge");
 
+  if (!badge) return;
+
+  const items = [];
+
+  for (const id in this.powers) {
+    const mod = this.powers[id];
+    if (typeof mod.getInfoBadge !== "function") continue;
+
+    const active = mod.getInfoBadge(state, role);
+    if (!active) continue;
+
+    const meta = window.POWER_METADATA[id];
+    if (!meta) continue;
+
+    items.push({
+      id,
+      text: meta.emoji ? `${meta.emoji} ${meta.label}` : meta.label,
+      color: meta.color || "currentColor"
+    });
+  }
+
+  if (items.length === 0) {
+    badge.textContent = "";
+    badge.style.display = "none";
+    return;
+  }
+
+  badge.innerHTML = items
+    .map(
+      i =>
+        `<span style="color:${i.color}">${i.text}</span>`
+    )
+    .join(" • ");
+
+  badge.style.display = "block";
+},
+
+  
   // Called on every stateUpdate from the server
   applyUI(state, role) {
     // Let each power do its own extra visuals if needed
