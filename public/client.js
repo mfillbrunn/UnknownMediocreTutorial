@@ -209,7 +209,6 @@ onStateUpdate(newState => {
   window.state = state; 
   updateUI();
   remainingCache.setterOld = null;
-  remainingCache.setterCurrent = null;
 });
 
 // -----------------------------------------------------
@@ -469,6 +468,7 @@ function handleSetterInput(event) {
       return;
     }
     if (event.type === "LETTER") {
+      remainingCache.setterCurrent = null;
       if (draft.length < 5) {
         state.setterDraft = draft + event.value;
         updateUI();
