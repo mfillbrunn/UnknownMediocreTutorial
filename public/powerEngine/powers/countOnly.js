@@ -54,7 +54,7 @@ InfoBadgeEngine.register((state, role) => {
   return {
     id: "countOnly",
     emoji: meta.emoji,
-    text: `${meta.label}: ${greens}🟩 ${yellows}🟨 (total ${total})`,
+    text: `${meta.label}: ${greens}🟩 ${yellows}🟨`,
     color: meta.color,
     priority: 16,
     screen: "both",
