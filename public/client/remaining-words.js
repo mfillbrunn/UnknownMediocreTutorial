@@ -57,8 +57,9 @@ InfoBadgeEngine.register((state, role) => {
     id: "remainingWords",
     emoji: "",
     text,
-    priority: 50,          
-    screen: "setter"
+    priority: 0,          
+    screen: "setter",
+    row: "primary"
   };
 });
 
