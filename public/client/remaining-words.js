@@ -44,18 +44,20 @@ InfoBadgeEngine.register((state, role) => {
   let text = `Words remaining: ${current.toLocaleString()}`;
 
   if (typeof oldCount === "number") {
-    text += ` | Keep: ${oldCount.toLocaleString()}`;
+    text += `  Keep: ${oldCount.toLocaleString()}`;
   }
 
   if (typeof newCount === "number") {
-    text += ` | New: ${newCount.toLocaleString()}`;
+    text += `  New: ${newCount.toLocaleString()}`;
+  } else {
+    text += `  New: -`;
   }
 
   return {
     id: "remainingWords",
     emoji: "",
     text,
-    priority: 50,          // high, but below critical alerts
+    priority: 50,          
     screen: "setter"
   };
 });
