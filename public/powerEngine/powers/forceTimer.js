@@ -71,3 +71,4 @@ uiEffects(state, role) {
     screen: "both",
     details: meta.desc
   };
+    });
