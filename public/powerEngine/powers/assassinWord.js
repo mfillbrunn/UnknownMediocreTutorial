@@ -27,29 +27,9 @@ PowerEngine.register("assassinWord", {
     btn.style.display = "none";
     return;
   }
-
   btn.style.display = "";
   btn.disabled = !!state.powers.assassinWordUsed;
-
-  // -----------------------------
-  // Assassin badge (setter only)
-  // -----------------------------
-  const badge = $("assassinWordBadge");
-  if (!badge) return;
-
-  if (
-    role === state.setter &&
-    state.powers.assassinWord
-  ) {
-    badge.textContent =
-      "☠ Assassin Word: " +
-      state.powers.assassinWord.toUpperCase();
-    badge.hidden = false;
-  } else {
-    badge.hidden = true;
-  }
-}
-,
+},
 
   effects: {
     onPowerUsed() {
@@ -87,3 +67,29 @@ $("assassinCancelBtn").onclick = () => {
   $("assassinInput").value = "";
 };
 });
+
+// --------------------------------------------------
+// Assassin Word — info badge (setter-only, persistent)
+// --------------------------------------------------
+
+InfoBadgeEngine.register((state, role) => {
+  const meta = POWER_METADATA.assassinWord;
+
+  // Assassin word exists?
+  const assassin = state.powers?.assassinWord;
+  if (!assassin) return null;
+
+  // Show ONLY to setter
+  if (role !== state.setter) return null;
+
+  return {
+    id: "assassinWord",
+    emoji: meta.emoji,
+    text: `${meta.label}: ${assassin.toUpperCase()}`,
+    color: meta.color,
+    priority: 2,            // very high priority
+    screen: "setter",
+    details: meta.desc
+  };
+});
+
