@@ -73,8 +73,9 @@ $("assassinCancelBtn").onclick = () => {
 // --------------------------------------------------
 
 InfoBadgeEngine.register((state, role) => {
+  if (!state.powers?.assassinWordUsed) {return null;}
   const meta = POWER_METADATA.assassinWord;
-
+  
   // Assassin word exists?
   const assassin = state.powers?.assassinWord;
 
