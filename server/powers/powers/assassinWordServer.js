@@ -1,3 +1,17 @@
+const engine = require("../powerEngineServer.js");
+const fs = require("fs");
+const path = require("path");
+
+const ALLOWED_WORDS = new Set(
+  fs.readFileSync(
+    path.join(__dirname, "../../wordlists/allowed_guesses.txt"),
+    "utf8"
+  )
+  .trim()
+  .split(/\r?\n/)
+  .map(w => w.toUpperCase())
+);
+
 engine.registerPower("assassinWord", {
   apply(state, action, roomId, io) {
 
