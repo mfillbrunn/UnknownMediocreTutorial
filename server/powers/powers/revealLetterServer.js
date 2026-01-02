@@ -33,7 +33,7 @@ engine.registerPower("revealLetter", {
 
   // Ensure constraints container exists
   state.extraConstraints ??= [];
-
+  state.powers.revealLetterActive = true;
   // Prevent duplicate reveals
   if (!state.extraConstraints.some(c => c.type === "GREEN" && c.index === index)) {
     state.extraConstraints.push({
