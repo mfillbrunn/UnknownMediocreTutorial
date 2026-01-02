@@ -45,13 +45,13 @@ InfoBadgeEngine.register((state, role) => {
     .find(e => e.countOnlyApplied && e.extraInfo);
 
   if (!entry) return null;
-
+  
   const { greens, yellows, total } = entry.extraInfo;
-
+  const word = state.powers.countOnlyWord; 
   return {
     id: "countOnly",
     emoji: meta.emoji,
-    text: `${meta.label}: ${greens}🟩 ${yellows}🟨`,
+    text: `${meta.label}: ${word} ${greens}🟩 ${yellows}🟨`,
     color: meta.color,
     priority: 16,
     screen: "both",
