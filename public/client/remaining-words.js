@@ -25,7 +25,8 @@ function updateRemainingWords(newSecret) {
       newCount = computeRemainingNew(newSecret);
     }
   }
-
+  if (oldCount === null){oldCount = -1};
+  if (newCount === null){newCount = -1};
   return { current, oldCount, newCount };
 }
 
