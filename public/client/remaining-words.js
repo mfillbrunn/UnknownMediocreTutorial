@@ -71,6 +71,7 @@ if (oldCount !== -1 && newCount !== -1) {
       priority: 0,
       screen: "setter"
     };
+  ];
 });
 
 ///Calculate remaining words
