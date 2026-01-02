@@ -1,6 +1,6 @@
 const path = require("path");
 const fs = require("fs");
-const { parseWordlist } = require("./game-engine/validation");
+const { parseWordlist } = require("../../game-engine/validation");
 const engine = require("../powerEngineServer");
 let ALLOWED_GUESSES = [];
 try {
