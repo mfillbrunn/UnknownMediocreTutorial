@@ -21,9 +21,6 @@ tooltip: {
   uiEffects(state, role) {
     if (role !== state.guesser) return;
     if (!state.powers.countOnlyActive) return;
-
-    $("knownPatternGuesser").textContent = "?????";
-    $("mustContainGuesser").textContent = "hidden";
   },
 
   // Hide feedback from the guesser
