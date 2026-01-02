@@ -768,7 +768,9 @@ function handleGuesserInput(event) {
         type: "SUBMIT_GUESS",
         guess: localGuesserDraft.toLowerCase()
       });
-    
+    if (window.uiState) {
+      window.uiState.suggestedGuess = null;
+    }    
   }
 }
 // -----------------------------------------------------
