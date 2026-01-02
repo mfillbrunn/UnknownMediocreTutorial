@@ -74,7 +74,7 @@ window.renderHistory = function ({
           else tile.classList.add("tile-gray");
         }
       }
-      if (state.?powers.countOnlyActive) {
+      if (state.powers.countOnlyActive) {
         tile.classList.add("tile-hidden-cycle");
       }
       row.appendChild(tile);
