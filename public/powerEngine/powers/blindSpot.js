@@ -29,7 +29,6 @@ tooltip: {
 });
 
 InfoBadgeEngine.register((state, role) => {
-  if (role !== state.setter) return null;
   if (!state.powers?.blindSpotActive) return null;
 
   const meta = POWER_METADATA.blindSpot;
@@ -39,6 +38,7 @@ InfoBadgeEngine.register((state, role) => {
     emoji: meta.emoji,
     text: meta.label,
     color: meta.color,
-    priority: 20
+    priority: 20,
+    screen: "both"
   };
-});
+});;
