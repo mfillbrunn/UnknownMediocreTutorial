@@ -37,18 +37,12 @@ InfoBadgeEngine.register((state, role) => {
   if (!state.powers?.revealHistoryActive) return null;
 
   // Find the most recent history entry with a revealed secret
-  const revealedEntry = [...state.history]
-    .reverse()
-    .find(e => e.revealedOldSecret);
-
-  if (!revealedEntry) return null;
-
-  const secret = revealedEntry.revealedOldSecret.toUpperCase();
+  const revealedEntry = state.powers.revealHistoryPending.toUpperCase();
 
   return {
     id: "revealHistory",
     emoji: meta.emoji,
-    text: `${meta.label}: ${secret}`,
+    text: `${meta.label}: ${revealedEntry}`,
     color: meta.color,
     priority: 18,
     screen: "both",
