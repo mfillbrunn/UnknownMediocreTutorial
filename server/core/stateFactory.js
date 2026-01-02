@@ -69,6 +69,7 @@ function createInitialState() {
       // HIDE TILE
       hideTileUsed: false,
       hideTilePendingCount: 0,
+      hideTileActive: 0,
       // BLIND GUESS
       blindGuessUsed: false,
       blindGuessArmed: false,
@@ -77,55 +78,54 @@ function createInitialState() {
       forceGuessUsed: false,
       forcedGuess: null,          // active constraint
       forcedGuessOptions: null,    // temporary options shown in setter modal
+      forcedGuessActive: false,    
       // REVEAL GREEN
       revealGreenUsed: false,
       revealGreenPos: null,
       revealGreenLetter: null,
-
+      revealGreenActive: false,
       // FREEZE SECRET
       freezeSecretUsed: false,
       freezeActive: false,
-
       // CONFUSE COLORS
       confuseColorsUsed: false,
       confuseColorsActive: false,
-
       // COUNT ONLY
       countOnlyUsed: false,
       countOnlyActive: false,
-
+      // SUGGEST POWERS
       suggestGuessUsed: false,
+      suggestGuessActive: false,
       suggestSecretUsed: false,
-      
-      forceTimerUsed: false,
-      
+      suggestSecretActive: false,
+      // REVEAL HISTORY
       revealHistoryUsed: false,
-      
+      revealHistoryActive: false,
+      // BLIND SPOT
       blindSpotUsed: false,
-      
+      blindSpotActive: false,
+      blindSpotIndex: null,
+      // STEALTH GUESS
       stealthGuessUsed: false,
-      
+      stealthGuessActive: false,
+      // FORCE TIMER
+      forceTimerUsed: false,
       forceTimerActive: false,
       forceTimerSetterPhase: false,
       forceTimerDeadline: null,
-      
-      blindSpotIndex: null,
-      stealthGuessActive: false,
-
       // MAGIC MODE
       magicModeUsed: false,
       magicModeActive: false,
       magicModeJustUsed: false,
-      
       // VOWEL REFRESH
       vowelRefreshUsed: false,
       vowelRefreshLetters: null,
       vowelRefreshPending: false,
-
-    
+      vowelRefreshActive: false,
       // ASSASSIN WORD
       assassinWordUsed: false,
       assassinWord: null,
+      assassinWordActive: false,
       // UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
       revealLetter: {
         mode: null,            // "RARE" or "ROW" — set at match start
@@ -133,6 +133,7 @@ function createInitialState() {
         used: false,           // power has been consumed
         pendingReveal: null    // { index, letter, mode }
       },
+      revealLetterActive: false,
     }
   };
 }
