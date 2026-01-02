@@ -15,6 +15,12 @@ socket.on("suggestWord", ({ word }) => {
     updateUI();
 });
 
+// Vowel Refresh — UI-only info
+socket.on("vowelRefreshInfo", ({ vowels }) => {
+  window.uiState = window.uiState || {};
+  window.uiState.vowelRefreshVowels = vowels; // e.g. ["A", "O"]
+  updateUI();
+});
 
 
 //--------------------------------------------------
