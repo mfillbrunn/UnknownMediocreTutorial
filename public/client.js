@@ -198,8 +198,7 @@ onStateUpdate(newState => {
   if (prevPhase === "simultaneous" && state.phase === "normal") {
     localGuesserDraft = "";
   }
-const setterCanEdit =  myRole === state.setter &&  ((state.phase === "normal" && state.turn === state.setter &&!!state.pendingGuess) || (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
-
+  const setterCanEdit =  myRole === state.setter &&  ((state.phase === "normal" && state.turn === state.setter &&!!state.pendingGuess) || (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
   if (setterCanEdit) {
     state.setterDraft = prevSetterDraft;
   } else {
@@ -208,7 +207,6 @@ const setterCanEdit =  myRole === state.setter &&  ((state.phase === "normal" &&
   // Clear guesser draft once it is no longer editable
   if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {localGuesserDraft = "";}
   window.state = state; 
-  resetEphemeralUIState();
   updateUI();
   remainingCache.setterOld = null;
   remainingCache.setterCurrent = null;
@@ -484,6 +482,7 @@ function handleSetterInput(event) {
       if (KeepEnabled) {
         state.setterDraft = "";        
         sendGameAction(roomId, { type: "SET_SECRET_SAME" });  
+        resetEphemeralUIState();
         updateUI();
         return;
       }
@@ -517,7 +516,8 @@ function submitSetterNew() {
     return;
   }  
   sendGameAction(roomId, {type: "SET_SECRET_NEW",secret: w});
-  state.setterDraft = "";
+  state.setterDraft = "";  
+  resetEphemeralUIState();
   updateUI();
 }
 
@@ -596,10 +596,8 @@ function handleGuesserInput(event) {
       shakeDraftRow("guesser");
       return;
     }
-    sendGameAction(roomId, {
-        type: "SUBMIT_GUESS",
-        guess: localGuesserDraft.toLowerCase()
-      });
+    sendGameAction(roomId, {type: "SUBMIT_GUESS",guess: localGuesserDraft.toLowerCase()});
+    resetEphemeralUIState();
   }
 }
 // -----------------------------------------------------
