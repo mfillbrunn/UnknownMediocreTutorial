@@ -1,4 +1,5 @@
 const engine = require("../powerEngineServer");
+const { ALLOWED_GUESSES } = require("../../wordlists");
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 const COMMON = [
