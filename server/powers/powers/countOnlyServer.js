@@ -6,6 +6,7 @@ engine.registerPower("countOnly", {
     if (state.powers.countOnlyUsed) return;
     state.powers.countOnlyUsed = true;
     state.powers.countOnlyActive = true;
+    state.powers.countOnlyWord = state.pendingGuess;
     io.to(roomId).emit("powerUsed", { type: "countOnly" });
   },
 
