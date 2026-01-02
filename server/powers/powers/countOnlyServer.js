@@ -28,7 +28,6 @@ engine.registerPower("countOnly", {
     entry.fbGuesser = ["⬛","⬛","⬛","⬛","⬛"];
 
     entry.countOnlyApplied = true;
-    state.powers.countOnlyActive = false;
     entry.powerUsed = "countOnly";
   }
 }
