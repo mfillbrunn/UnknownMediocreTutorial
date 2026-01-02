@@ -1,12 +1,12 @@
 ///Main updating function
 function updateRemainingWords(newSecret) {
   if (!state || state.phase === "lobby" || state.phase === "gameOver") {
-    const el = $("remainingInfoSetter");
+    const el = $("SetterInfoBadge");
     if (el) el.innerHTML = "";
     return;
   }
 
-  const el = $("remainingInfoSetter");
+  const el = $("SetterInfoBadge");
   if (!el) return;
 
   const lastIdx = state.history.length - 1;
