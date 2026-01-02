@@ -39,7 +39,7 @@ tooltip: {
 InfoBadgeEngine.register((state, role) => {
   if (!state.powers?.blindGuessActive) return null;
 
-  const meta = POWER_METADATA.blindSpot;
+  const meta = POWER_METADATA.blindGuess;
 
   return {
     id: "blindGuess",
