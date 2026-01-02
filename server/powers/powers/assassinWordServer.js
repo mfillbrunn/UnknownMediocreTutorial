@@ -63,6 +63,7 @@ engine.registerPower("assassinWord", {
     state.powers.assassinWordUsed = true;
     state.powers.assassinWord = w;
     state.powerUsedThisTurn = true;
+    state.powers.assassinWordActive = true;
 
     // Setter-only confirmation
     io.to(action.playerId).emit("assassinSet", { word: w });
