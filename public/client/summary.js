@@ -290,7 +290,7 @@ function renderRoundSummary(container) {
         <th>Guess</th>
         <th>Feedback</th>
         <th>Powers</th>
-        <th># Words remaining</th>
+        <th># Words</th>
       </tr>
     </thead>
     <tbody>
