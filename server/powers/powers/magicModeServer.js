@@ -47,9 +47,6 @@ engine.registerPower("magicMode", {
         "Magic Mode found no new positions to lock in."
       );
     }
-
-    // One-shot power
-    state.powers.magicModeActive = false;
   },
 
   turnStart() {}
