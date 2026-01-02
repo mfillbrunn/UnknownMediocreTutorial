@@ -34,7 +34,7 @@ InfoBadgeEngine.register((state, role) => {
   const meta = POWER_METADATA.revealHistory;
 
   // Power must have been used
-  if (!state.powers?.revealHistoryUsed) return null;
+  if (!state.powers?.revealHistoryActive) return null;
 
   // Find the most recent history entry with a revealed secret
   const revealedEntry = [...state.history]
