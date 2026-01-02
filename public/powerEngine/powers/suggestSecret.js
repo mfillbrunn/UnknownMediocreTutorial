@@ -33,15 +33,12 @@ InfoBadgeEngine.register((state, role) => {
   const meta = POWER_METADATA.suggestSecret;
 
   // Power used this match?
-  if (!state.powers?.suggestSecretUsed) return null;
-
+  if (!state.powers?.suggestSecretActive) return null;
   // -----------------------------
   // SETTER: show word
   // -----------------------------
   if (role === state.setter) {
     const secret = window.uiState?.suggestedSecret;
-    if (!state.powers?.suggestedSecretActive) return null;
-
     return {
       id: "suggestSecret-word",
       emoji: meta.emoji,
