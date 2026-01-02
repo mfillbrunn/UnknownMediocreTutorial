@@ -34,7 +34,6 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     // Round moving on
     clearActivePowers(state);
     if (state.powers && state.powers.confuseColorsActive) {state.powers.confuseColorsActive = false;}
-    if (state.powers && state.powers.magicModeActive) {state.powers.magicModeActive = false;}
     state.powers.forcedGuess = null;
     state.activeTimer = state.setter;
     if (state.timeControl.mode === "chess") {
@@ -79,6 +78,7 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
       finalizeFeedback(state, powerEngine, roomId, io);
       clearActivePowers(state);
       if (state.powers && state.powers.stealthGuessActive) {state.powers.stealthGuessActive = false;}
+      if (state.powers && state.powers.magicModeActive) {state.powers.magicModeActive = false;}
       state.activeTimer = state.guesser;
       if (state.timeControl.mode === "chess") {
         addIncrement(state, state.setter);
