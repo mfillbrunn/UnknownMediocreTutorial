@@ -34,7 +34,7 @@ tooltip: {
 InfoBadgeEngine.register((state, role) => {
   // Only show if the reveal exists
   const info = state.revealGreenInfo;
-  if (!info) return null;
+  if (!revealGreenActive) return null;
 
   const meta = POWER_METADATA.revealGreen;
   const { pos, letter } = info;
