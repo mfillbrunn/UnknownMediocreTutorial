@@ -24,14 +24,7 @@ tooltip: {
     state.powers.freezeActive &&
     state.phase === "normal" &&
     state.turn === state.setter;
-
-  const bar = $("turnIndicatorSetter");
-  if (frozen) {
-    bar.className = "turn-indicator frozen-turn";
-    bar.textContent = "SECRET FROZEN";
-  }
-}
-,
+},
 
   // ⭐ ADD THIS — visual confirmation when clicked
   effects: {
