@@ -47,4 +47,30 @@ uiEffects(state, role) {
   }
 }
 
+  InfoBadgeEngine.register((state, role) => {
+  const deadline = state.powers?.forceTimerDeadline;
+  if (!state.powers?.forceTimerActive || !deadline) return null;
+
+  // Show to BOTH players (it affects both)
+  const meta = POWER_METADATA.forceTimer;
+
+  const remaining = Math.max(
+    0,
+    Math.ceil((deadline - Date.now()) / 1000)
+  );
+  const timeText =
+  remaining <= 10 ? `⚠ ${remaining}s` : `${remaining}s`;
+
+  return {
+    id: "forceTimer",
+    emoji: meta.emoji,
+    text: `${meta.label}: ${timeText}`
+    color: meta.color,
+    priority: 1,          // very high priority
+    screen: "both",
+    details: meta.desc
+  };
+});
+
+
 });
