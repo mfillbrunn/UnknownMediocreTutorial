@@ -41,12 +41,7 @@ InfoBadgeEngine.register((state, role) => {
 
   const { current, oldCount, newCount } = data;
 
-  let text = `Words remaining: ${current.toLocaleString()}`;
-
-  if (typeof oldCount === "number") {
-    text += `  Keep: ${oldCount.toLocaleString()}`;
-  }
-
+  let text = `Words remaining: ${current.toLocaleString()}   Keep: ${oldCount.toLocaleString()}`;
   if (typeof newCount === "number") {
     text += `  New: ${newCount.toLocaleString()}`;
   } else {
