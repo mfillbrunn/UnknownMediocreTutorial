@@ -5,8 +5,8 @@
 function resetEphemeralUIState() {
   if (!window.uiState) return;
 
-  //delete window.uiState.suggestedGuess;
-  //delete window.uiState.suggestedSecret;
+  delete window.uiState.suggestedGuess;
+  delete window.uiState.suggestedSecret;
   delete window.uiState.vowelRefreshVowels;
 
   // future-safe: add more here as needed
