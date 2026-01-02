@@ -75,6 +75,7 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
       }
       clearForceTimer(roomId, state);
       finalizeFeedback(state, powerEngine, roomId, io);
+      clearActivePowers(state);
       state.activeTimer = state.guesser;
       if (state.timeControl.mode === "chess") {
         addIncrement(state, state.setter);
