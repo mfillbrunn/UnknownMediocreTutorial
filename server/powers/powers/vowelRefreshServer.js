@@ -1,7 +1,7 @@
 const engine = require("../powerEngineServer.js");
 
 engine.registerPower("vowelRefresh", {
-  apply(state) {
+  apply(state, action, roomId, io) {
     if (state.powers.vowelRefreshUsed) return;
     state.powers.vowelRefreshUsed = true;
     state.powerUsedThisTurn = true;
