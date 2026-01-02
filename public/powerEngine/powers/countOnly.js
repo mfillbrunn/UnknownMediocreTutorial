@@ -47,7 +47,7 @@ InfoBadgeEngine.register((state, role) => {
   if (!entry) return null;
   
   const { greens, yellows, total } = entry.extraInfo;
-  const word = state.powers.countOnlyWord; 
+  const word = state.powers.countOnlyWord.toUpperCase(); 
   return {
     id: "countOnly",
     emoji: meta.emoji,
