@@ -37,8 +37,6 @@ socket.on("vowelRefreshInfo", ({ vowels }) => {
 // RARE LETTER BONUS (client receives letter reveal)
 //--------------------------------------------------
 socket.on("rareLetterReveal", ({ index, letter }) => {
-  console.log("[CLIENT] RareLetterBonus reveal:", index, letter);
-
   // Ensure powers structure exists
   if (state && state.powers) {
     if (!state.powers.guesserLockedGreens) {
