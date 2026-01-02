@@ -641,18 +641,6 @@ body {
   padding: 0;
   gap: 6px;
 }
-
-/* =========================================
-   INFO GRID
-   ========================================= */
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 20px;
-}
-.info-col p { margin: 6px 0; }
-
 /* =========================================
    THEMES (Role-based via variables)
    ========================================= */
@@ -713,8 +701,6 @@ background: #0c0c0e;
   box-shadow: none;
 }
 :where(.theme-setter, .theme-guesser) .history-box { margin-bottom: 6px; }
-
-.theme-setter .info-grid { margin-top: 12px; }
 
 /* Power button color ties to theme */
 :where(.theme-setter, .theme-guesser) .power-btn { color: var(--role-accent); }
@@ -1916,7 +1902,8 @@ $("timerModeSelect").onchange = () => {
    ========================================= */
 
 .info.badge {
-  display: none; /* controlled by JS */
+  display: none;
+
   width: fit-content;
   max-width: 100%;
 
@@ -1948,8 +1935,8 @@ $("timerModeSelect").onchange = () => {
   opacity: 0;
   transform: translateY(-4px);
   transition:
-    opacity .2s ease,
-    transform .2s ease;
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 /* Visible state */
