@@ -429,6 +429,7 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
   updateMenu();
   updateScreens();
   updateSummary();
+  InfoBadgeEngine.render(state, myRole);
   if (state.phase !== "lobby") hide("lobby");
 }
 
@@ -716,16 +717,7 @@ $("guesserRoleBadge").textContent = "Guesser";
 setTurn("guesserScreen", false);
 if (state.phase === "simultaneous") {setTurn("guesserScreen", !state.pendingGuess);}
 if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserScreen", true);} 
-  
-const badge = $("guesserForcedGuessBadge");
-if (!badge) return;
-if (state.powers?.forcedGuess && myRole === state.guesser) {
-  const fg = state.powers.forcedGuess;
-  badge.textContent = `Forced Guess: ${formatForceGuessOption(fg)}`;
-  badge.hidden = false;
-} else {
-  badge.hidden = true;
-}
+
   const displayGuess = state.pendingGuess || localGuesserDraft;
  if (myRole === state.guesser) {
   renderKeyboard({
@@ -980,9 +972,6 @@ function formatForceGuessOption(o) {
     case "palindrome":
       return "Palindrome";
   }
-}
-function formatForceGuessBadge(o) {
-  return formatForceGuessOption(o);
 }
 
 // ---------------------------------------
