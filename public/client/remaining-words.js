@@ -41,22 +41,34 @@ InfoBadgeEngine.register((state, role) => {
 
   const { current, oldCount, newCount } = data;
 
-  let text = `Words remaining: ${current.toLocaleString()}   Keep: ${oldCount.toLocaleString()}`;
-  if (typeof newCount === "number") {
-    text += `  New: ${newCount.toLocaleString()}`;
-  } else {
-    text += `  New: -`;
+  let compare = null;
+  if (
+    typeof oldCount === "number" &&
+    typeof newCount === "number" &&
+    oldCount !== newCount
+  ) {
+    compare = newCount > oldCount ? "new" : "old";
   }
 
-  return {
-    id: "remainingWords",
-    emoji: "",
-    text,
-    priority: 0,          
-    screen: "setter",
-    row: "primary"
-  };
+  return [
+    {
+      id: "remaining-primary",
+      text: `Words remaining: ${current.toLocaleString()}`,
+      priority: 0,
+      screen: "setter",
+      row: "primary"
+    },
+    {
+      id: "remaining-secondary",
+      text: `Keep: ${oldCount ?? "-"} | New: ${newCount ?? "-"}`,
+      priority: 1,
+      screen: "setter",
+      row: "secondary",
+      compare   
+    }
+  ];
 });
+
 
 
 
