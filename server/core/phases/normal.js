@@ -34,6 +34,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     // Round moving on
     clearActivePowers(state);
     if (state.powers && state.powers.confuseColorsActive) {state.powers.confuseColorsActive = false;}
+    if (state.powers && state.powers.countOnlyActive) {state.powers.countOnlyActive = false;}
     state.powers.forcedGuess = null;
     state.activeTimer = state.setter;
     if (state.timeControl.mode === "chess") {
@@ -249,7 +250,7 @@ function clearForceTimer(roomId, state) {
 }
 
 const ROUND_SCOPED_ACTIVE_POWERS = new Set([
-  "freezeActive", "stealthGuessActive", "confuseColorsActive","magicModeActive"
+  "freezeActive", "stealthGuessActive", "confuseColorsActive","magicModeActive",  "countOnlyActive"
 ]);
 
 function clearActivePowers(state) {
