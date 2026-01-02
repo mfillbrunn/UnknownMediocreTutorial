@@ -50,7 +50,9 @@ tooltip: {
 // --------------------------------------------------
 
 InfoBadgeEngine.register((state, role) => {
-  if (!state.powers?.vowelRefreshActive) return null;
+  const vowelsActive = state.powers.vowelRefreshActive;
+  if (!vowelsActive) return null;
+
 
   const vowels = window.uiState?.vowelRefreshVowels;
   if (!Array.isArray(vowels) || vowels.length === 0) {
