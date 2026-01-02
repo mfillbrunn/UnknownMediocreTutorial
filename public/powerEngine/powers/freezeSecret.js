@@ -43,3 +43,17 @@ tooltip: {
     }
   }
 });
+
+InfoBadgeEngine.register((state, role) => {
+  if (!state.powers?.freezeSecretActive) return null;
+  const meta = POWER_METADATA.freezeSecret;
+  return {
+    id: "freezeSecret",
+    emoji: meta.emoji,
+    text: meta.label,
+    color: meta.color,
+    priority: 20,
+    screen: "both"
+  };
+});
+
