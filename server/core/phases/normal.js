@@ -248,7 +248,7 @@ function clearForceTimer(roomId, state) {
 }
 
 const ROUND_SCOPED_ACTIVE_POWERS = new Set([
-  "freezeActive", "stealthGuessActive", "confuseColorActive"
+  "freezeActive", "stealthGuessActive", "confuseColorsActive"
 ]);
 
 function clearActivePowers(state) {
