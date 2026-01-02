@@ -4,8 +4,7 @@ function updateRemainingWords(newSecret) {
     return null;
   }
 
-  const lastIdx = state.history.length - 1;
-  if (lastIdx < 0) return null;
+  const lastIdx = (state.history?.length ?? 0) - 1;
 
   if (remainingCache.setterCurrent == null) {
     remainingCache.setterCurrent = computeRemainingAfterIndex(lastIdx);
@@ -17,31 +16,40 @@ function updateRemainingWords(newSecret) {
   let newCount = -1;
 
   const guess = state.pendingGuess;
-  const guessIsComplete = guess && !guess.includes("?");
+  const guessIsComplete = typeof guess === "string" && !guess.includes("?");
 
   if (guessIsComplete) {
     oldCount = computeRemainingNew(state.secret);
-    if (newSecret && newSecret.length === 5) {
+
+    if (typeof newSecret === "string" && newSecret.length === 5) {
       newCount = computeRemainingNew(newSecret);
     }
   }
+
   return { current, oldCount, newCount };
 }
 
+
 InfoBadgeEngine.register((state, role) => {
   if (role !== state.setter) return null;
-  const { current, oldCount, newCount } = updateRemainingWords(state.secret);
+
+  const data = updateRemainingWords(state.secret);
+  if (!data) return null;
+
+  let { current, oldCount, newCount } = data;
 
   let compare = "neither";
-  if (oldCount !== newCount) {
+  if (
+    oldCount !== -1 &&
+    newCount !== -1 &&
+    oldCount !== newCount
+  ) {
     compare = newCount > oldCount ? "new" : "old";
   }
-  if (oldCount === -1){
-    oldCount = "-";
-  }
-  if (newCount === -1){
-    newCount = "-";
-  }
+
+  const oldText = oldCount === -1 ? "-" : oldCount;
+  const newText = newCount === -1 ? "-" : newCount;
+
   return [
     {
       id: "remaining-primary",
@@ -52,11 +60,11 @@ InfoBadgeEngine.register((state, role) => {
     },
     {
       id: "remaining-secondary",
-      text: `Keep: ${oldCount} | New: ${newCount}`,
+      text: `Keep: ${oldText} | New: ${newText}`,
       priority: 1,
       screen: "setter",
       row: "secondary",
-      compare   
+      compare
     }
   ];
 });
