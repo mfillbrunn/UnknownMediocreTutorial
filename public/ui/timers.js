@@ -30,14 +30,20 @@ function applyTimer(elementId, role) {
   if (seconds <= 10) el.classList.add("warn-10");
   else if (seconds <= 30) el.classList.add("warn-30");
 
-  // Increment detection
-  if (state.timeControl?.mode === "chess" &&prev !== null && seconds > prev) {
+  // Increment detection (CHESS MODE ONLY)
+  const prev = lastTimeRemaining[role];
+  if (
+    state.timeControl?.mode === "chess" &&
+    typeof prev === "number" &&
+    seconds > prev
+  ) {
     triggerIncrementEffect(el, seconds - prev);
-}
+  }
 
-
+  // Store current as previous for next tick
   lastTimeRemaining[role] = seconds;
 }
+
 
 function triggerIncrementEffect(el, delta) {
   // Flash the timer
