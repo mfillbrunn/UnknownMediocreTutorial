@@ -1911,4 +1911,52 @@ $("timerModeSelect").onchange = () => {
   });
 };
 
+/* =========================================
+   INFO BADGE (Power status)
+   ========================================= */
+
+.info.badge {
+  display: none; /* controlled by JS */
+  width: fit-content;
+  max-width: 100%;
+
+  margin: 6px auto 0;
+  padding: 6px 12px;
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  line-height: 1.2;
+
+  color: var(--panel-text);
+  text-align: center;
+  white-space: nowrap;
+
+  background: var(--panel-bg);
+  border-radius: 999px;
+
+  border: 1.5px solid color-mix(
+    in srgb,
+    var(--role-accent) 55%,
+    transparent
+  );
+
+  box-shadow:
+    0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent),
+    inset 0 0 6px rgba(255,255,255,0.05);
+
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity .2s ease,
+    transform .2s ease;
+}
+
+/* Visible state */
+.info.badge.show {
+  display: block;
+  opacity: 0.95;
+  transform: translateY(0);
+}
+
 
