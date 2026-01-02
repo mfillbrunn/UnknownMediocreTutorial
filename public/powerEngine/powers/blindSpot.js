@@ -25,9 +25,20 @@ tooltip: {
       btn.disabled = true;
       btn.classList.add("power-used");
     }
-  },
-
-  getInfoBadge(state, role) {
-    return role === state.setter && state.powers?.blindSpotActive;
   }
+});
+
+InfoBadgeEngine.register((state, role) => {
+  if (role !== state.setter) return null;
+  if (!state.powers?.blindSpotActive) return null;
+
+  const meta = POWER_METADATA.blindSpot;
+
+  return {
+    id: "blindSpot",
+    emoji: meta.emoji,
+    text: meta.label,
+    color: meta.color,
+    priority: 20
+  };
 });
