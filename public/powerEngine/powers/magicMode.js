@@ -16,3 +16,17 @@ tooltip: {
     };
   }
 });
+
+
+InfoBadgeEngine.register((state, role) => {
+  if (!state.powers?.magicModeActive) return null;
+  const meta = POWER_METADATA.magicMode;
+  return {
+    id: "magicMode",
+    emoji: meta.emoji,
+    text: meta.label,
+    color: meta.color,
+    priority: 20,
+    screen: "both"
+  };
+});
