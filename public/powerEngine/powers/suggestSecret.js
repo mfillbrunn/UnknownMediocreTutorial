@@ -40,7 +40,7 @@ InfoBadgeEngine.register((state, role) => {
   // -----------------------------
   if (role === state.setter) {
     const secret = window.uiState?.suggestedSecret;
-    if (!secret) return null;
+    if (!state.powers?.suggestedSecretActive) return null;
 
     return {
       id: "suggestSecret-word",
