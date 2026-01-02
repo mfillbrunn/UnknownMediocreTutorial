@@ -63,3 +63,27 @@ PowerEngine.register("revealLetter", {
     }
   }
 });
+
+// --------------------------------------------------
+// Reveal Letter — info badge (both players)
+// --------------------------------------------------
+
+InfoBadgeEngine.register((state, role) => {
+  const meta = POWER_METADATA.revealLetter;
+  const greens = state.extraConstraints?.filter(
+    c => c.type === "GREEN" && typeof c.index === "number"
+  );
+
+  if (!greens || greens.length === 0) return null;
+   const last = greens[greens.length - 1];
+  return {
+    id: "revealLetter",
+    emoji: meta.emoji ?? "🟩",
+    text: `${meta.label}: position ${last.index + 1} = ${last.letter}`,
+    color: meta.color,
+    priority: 12,
+    screen: "both",
+    details: meta.desc
+  };
+});
+
