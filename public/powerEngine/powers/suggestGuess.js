@@ -18,7 +18,7 @@ tooltip: {
   effects: {
     onPowerUsed() {
   const btn = this.buttonEl;
-  if (!btn) return;         // ← prevents crash
+  if (!btn) return;         
   btn.disabled = true;
   btn.classList.add("power-used");
     }
