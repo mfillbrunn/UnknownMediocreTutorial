@@ -1,5 +1,15 @@
+const path = require("path");
+const fs = require("fs");
+const { parseWordlist } = require("./game-engine/validation");
 const engine = require("../powerEngineServer");
-const { ALLOWED_GUESSES } = require("../../wordlists");
+let ALLOWED_GUESSES = [];
+try {
+  const allowedPath = path.join(__dirname, "wordlists", "allowed_guesses.txt");
+  const raw = fs.readFileSync(allowedPath, "utf8");
+  ALLOWED_GUESSES = parseWordlist(raw);
+} catch (err) {
+  console.warn("Could not load allowed guesses for forceGuess:", err.message);
+}
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 const COMMON = [
