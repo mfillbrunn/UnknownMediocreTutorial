@@ -10,10 +10,10 @@ window.renderHistory = function ({
   const bsRound = state?.powers?.blindSpotRoundIndex;
   const history = state?.history || [];
   const shlength = state.history.length;
-  let i=0;
+  let j=0;
   for (const entry of history) {
     if (!entry || !entry.guess) continue;
-    i = i + 1;
+    j = j + 1;
     const safeEntry = JSON.parse(JSON.stringify(entry));
     PowerEngine.applyHistoryEffects(safeEntry, isSetter);
 
@@ -76,7 +76,7 @@ window.renderHistory = function ({
         }
       }
           
-      if ( !isSetter && state.powers.countOnlyActive && i === shlength && state.turn === state.guesser) {
+      if ( !isSetter && state.powers.countOnlyActive && j === shlength && state.turn === state.guesser) {
         tile.classList.add("tile-hidden-cycle");  // THIS SHOULD APPLY ONLY TO LAST ONE OF HISTORY
       }
       row.appendChild(tile);
