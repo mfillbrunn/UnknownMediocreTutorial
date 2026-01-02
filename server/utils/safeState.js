@@ -34,8 +34,6 @@ function buildSafeStateForPlayer(state, role) {
   // -----------------------------------------------------
 
   // DO NOT delete freezeActive — client needs this!
-  delete safe.powers.confuseColorsActive;
-  delete safe.powers.countOnlyActive;
   delete safe.powers.currentHiddenIndices;
   delete safe.powers.hideTilePendingCount;
 
