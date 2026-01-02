@@ -39,19 +39,35 @@ window.InfoBadgeEngine = {
 
     const messages = this.collect(state, role);
 
+    const primary = messages.filter(m => m.row === "primary");
+    const secondary = messages.filter(m => m.row !== "primary");
     if (!messages.length) {
       badge.classList.remove("show");
       badge.innerHTML = "";
       return;
     }
 
-    badge.innerHTML = messages
-      .map(m => `
-        <span class="badge-item" style="color:${m.color ?? "var(--role-accent)"}">
-          ${m.emoji ? `${m.emoji} ` : ""}${m.text}
-        </span>
-      `)
-      .join(`<span class="badge-sep">•</span>`);
+    badge.innerHTML = `
+      ${primary.length ? `
+        <div class="badge-row badge-row-primary">
+          ${primary.map(m => `
+            <div class="badge-line">
+              ${m.emoji ? `${m.emoji} ` : ""}${m.text}
+            </div>
+          `).join("")}
+        </div>
+      ` : ""}
+    
+      ${secondary.length ? `
+        <div class="badge-row badge-row-secondary">
+          ${secondary.map(m => `
+            <span class="badge-item">
+              ${m.emoji ? `${m.emoji} ` : ""}${m.text}
+            </span>
+          `).join(" • ")}
+        </div>
+      ` : ""}
+    `;
 
     badge.classList.add("show");
   }
