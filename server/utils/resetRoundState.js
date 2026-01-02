@@ -14,6 +14,7 @@ function resetRoundState(state) {
   state.powersUsedThisRoundGuesser = [];
   state.powersUsedThisRoundSetter = [];
   state.powers.countOnlyRound= 0;
+  state.powers.countOnlyWord = "";
     state.powers.blindSpotUsed = false;
     state.powers.blindSpotIndex = null;
 
