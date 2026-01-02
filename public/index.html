@@ -19,8 +19,8 @@
         <h1 class="title">VS WORDLE</h1>
         <div id="toast" class="toast"></div>
       </header>
-      <main id="appMain">
     <!-- ========== MAIN ========== -->
+      <main id="appMain">
         <!-- ========== LOBBY ========== -->
         <section id="lobby" class="screen active screen-lobby">
            <h2 class="screen-title">Online Lobby</h2>
@@ -51,10 +51,10 @@
                   <select id="timeControlSelect" class="short-input">
                     <option value="0">No time</option>
                     <!-- Round timer values (seconds per round) -->
-                    <option value="30" selected>30 secs</option>
+                    <option value="30">30 secs</option>
                     <option value="60" selected>1 min</option>
                     <option value="90">1.5 min</option>
-                    <option value="120">2 min/option>       
+                    <option value="120">2 min</option>       
                     <option value="300" data-mode="chess">5 min</option>
                     <option value="600" data-mode="chess">10 min</option>
                   </select>
@@ -230,6 +230,7 @@
           <div id="keyboardGuesser" class="keyboard"></div>
        </main>
     </section>
+    </main>
   </div>
   <div id="tooltip" class="tooltip" hidden></div>
   <!-- ========== JS (unchanged) ========== -->
