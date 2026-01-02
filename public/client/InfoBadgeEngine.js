@@ -60,11 +60,13 @@ window.InfoBadgeEngine = {
     
       ${secondary.length ? `
         <div class="badge-row badge-row-secondary">
-          ${secondary.map(m => `
-            <span class="badge-item">
-              ${m.emoji ? `${m.emoji} ` : ""}${m.text}
-            </span>
-          `).join(" • ")}
+          <span class="badge-item ${m.compare === "old" ? "better" : ""}">
+            Keep: ${m.keep ?? "-"}
+          </span>
+          •
+          <span class="badge-item ${m.compare === "new" ? "better" : ""}">
+            New: ${m.new ?? "-"}
+          </span>
         </div>
       ` : ""}
     `;
