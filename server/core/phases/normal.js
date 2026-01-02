@@ -36,7 +36,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   ///
   if (!state.pendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
           const g = action.guess.toLowerCase();    
-          state.countGuess+=1;
+          state.countGuess=state.countGuess + 1;
           // If assassin word was set, check immediately on guess submission
       const assassin = state.powers.assassinWord;
       if (assassin && g.toUpperCase() === assassin.toUpperCase()) {
