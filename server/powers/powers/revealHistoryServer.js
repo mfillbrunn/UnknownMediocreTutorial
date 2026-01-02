@@ -7,6 +7,7 @@ engine.registerPower("revealHistory", {
     if (state.history.length < 3) return; // must have at least 2 completed rounds
 
     state.powers.revealHistoryUsed = true;
+    state.powers.revealHistoryActive = true;
 
     const entry = state.history[state.history.length - 3];
     const secret = entry.finalSecret;
