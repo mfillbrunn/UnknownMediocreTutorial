@@ -9,10 +9,11 @@ window.renderHistory = function ({
   const bsIdx   = state?.powers?.blindSpotIndex;
   const bsRound = state?.powers?.blindSpotRoundIndex;
   const history = state?.history || [];
-
+  const shlength = state.history.length;
+  let i=0;
   for (const entry of history) {
     if (!entry || !entry.guess) continue;
-
+    i = i + 1;
     const safeEntry = JSON.parse(JSON.stringify(entry));
     PowerEngine.applyHistoryEffects(safeEntry, isSetter);
 
@@ -74,8 +75,9 @@ window.renderHistory = function ({
           else tile.classList.add("tile-gray");
         }
       }
-      if (state.powers.countOnlyActive) {
-        tile.classList.add("tile-hidden-cycle");
+          
+      if ( !isSetter && state.powers.countOnlyActive && i === shlength) {
+        tile.classList.add("tile-hidden-cycle");  // THIS SHOULD APPLY ONLY TO LAST ONE OF HISTORY
       }
       row.appendChild(tile);
     }
