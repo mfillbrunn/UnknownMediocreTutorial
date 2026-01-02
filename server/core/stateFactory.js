@@ -92,6 +92,7 @@ function createInitialState() {
       confuseColorsActive: false,
       // COUNT ONLY
       countOnlyUsed: false,
+      countOnlyWord: "",
       countOnlyActive: false,
       // SUGGEST POWERS
       suggestGuessUsed: false,
