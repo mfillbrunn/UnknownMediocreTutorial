@@ -43,6 +43,7 @@ engine.registerPower("revealGreen", {
   state.powers.revealGreenUsed = true;
   state.powers.revealGreenPos = pos;
   state.powers.revealGreenLetter = letter;
+    state.powers.revealGreenActive = true;
   state.revealGreenInfo = { pos, letter };
   io.to(roomId).emit("powerUsed", { type: "revealGreen", pos, letter });
     
