@@ -29,7 +29,7 @@ tooltip: {
 
 InfoBadgeEngine.register((state, role) => {
   const fg = state.powers?.forcedGuess;
-  if (!forcedGuessActive) return null;
+  if (!state.powers?.forcedGuessActive) return null;
 
   const meta = POWER_METADATA.forceGuess;
 
