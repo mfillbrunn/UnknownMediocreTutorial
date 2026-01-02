@@ -76,7 +76,7 @@ window.renderHistory = function ({
         }
       }
           
-      if ( !isSetter && state.powers.countOnlyActive && i === shlength) {
+      if ( !isSetter && state.powers.countOnlyActive && i === shlength && state.turn === state.guesser) {
         tile.classList.add("tile-hidden-cycle");  // THIS SHOULD APPLY ONLY TO LAST ONE OF HISTORY
       }
       row.appendChild(tile);
