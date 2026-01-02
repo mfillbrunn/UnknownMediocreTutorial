@@ -1877,49 +1877,49 @@ $("timerModeSelect").onchange = () => {
    INFO BADGE (Power status)
    ========================================= */
 
+
 .info.badge {
   display: none;
-
-  width: fit-content;
-  max-width: 100%;
-
-  margin: 6px auto 0;
-  padding: 6px 12px;
-
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.4px;
-  line-height: 1.2;
-
-  color: var(--panel-text);
-  text-align: center;
-  white-space: nowrap;
-
-  background: var(--panel-bg);
-  border-radius: 999px;
-
-  border: 1.5px solid color-mix(
-    in srgb,
-    var(--role-accent) 55%,
-    transparent
-  );
-
-  box-shadow:
-    0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent),
-    inset 0 0 6px rgba(255,255,255,0.05);
-
-  opacity: 0;
-  transform: translateY(-4px);
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+    position: relative;
+  isolation: isolate; /* ensures pseudo-elements layer correctly */
+   
 }
 
-/* Visible state */
 .info.badge.show {
-  display: block;
-  opacity: 0.95;
-  transform: translateY(0);
+  display: flex;
+}
+
+.badge-row-primary {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.badge-row-secondary {
+  font-size: 11px;
+  font-weight: 800;
+  opacity: 0.85;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.info.badge::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+
+  border-radius: 999px;
+  border: 1.5px solid var(--role-accent);
+
+  opacity: 0.45;
+  pointer-events: none;
+
+  box-shadow:
+    0 0 10px color-mix(in srgb, var(--role-accent) 55%, transparent),
+    inset 0 0 6px color-mix(in srgb, var(--role-accent) 25%, transparent);
 }
 
 
