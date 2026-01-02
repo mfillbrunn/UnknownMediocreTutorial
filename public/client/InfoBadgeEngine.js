@@ -29,37 +29,39 @@ window.InfoBadgeEngine = {
     );
   },
 
-  render(state, role) {
-    const badge =
-      role === state.setter
-        ? $("SetterInfoBadge")
-        : $("GuesserInfoBadge");
+render(state, role) {
+  const badge =
+    role === state.setter
+      ? $("SetterInfoBadge")
+      : $("GuesserInfoBadge");
 
-    if (!badge) return;
+  if (!badge) return;
 
-    const messages = this.collect(state, role);
+  const messages = this.collect(state, role);
 
-    const primary = messages.filter(m => m.row === "primary");
-    const secondary = messages.filter(m => m.row !== "primary");
-    if (!messages.length) {
-      badge.classList.remove("show");
-      badge.innerHTML = "";
-      return;
-    }
+  if (!messages.length) {
+    badge.classList.remove("show");
+    badge.innerHTML = "";
+    return;
+  }
 
-    badge.innerHTML = `
-      ${primary.length ? `
-        <div class="badge-row badge-row-primary">
-          ${primary.map(m => `
-            <div class="badge-line">
-              ${m.emoji ? `${m.emoji} ` : ""}${m.text}
-            </div>
-          `).join("")}
-        </div>
-      ` : ""}
-    
-      ${secondary.length ? `
-        <div class="badge-row badge-row-secondary">
+  const primary = messages.filter(m => m.row === "primary");
+  const secondary = messages.filter(m => m.row !== "primary");
+
+  badge.innerHTML = `
+    ${primary.length ? `
+      <div class="badge-row badge-row-primary">
+        ${primary.map(m => `
+          <div class="badge-line">
+            ${m.emoji ? `${m.emoji} ` : ""}${m.text}
+          </div>
+        `).join("")}
+      </div>
+    ` : ""}
+
+    ${secondary.length ? `
+      <div class="badge-row badge-row-secondary">
+        ${secondary.map(m => `
           <span class="badge-item ${m.compare === "old" ? "better" : ""}">
             Keep: ${m.keep ?? "-"}
           </span>
@@ -67,10 +69,12 @@ window.InfoBadgeEngine = {
           <span class="badge-item ${m.compare === "new" ? "better" : ""}">
             New: ${m.new ?? "-"}
           </span>
-        </div>
-      ` : ""}
-    `;
+        `).join(" • ")}
+      </div>
+    ` : ""}
+  `;
 
-    badge.classList.add("show");
-  }
+  badge.classList.add("show");
+}
+
 };
