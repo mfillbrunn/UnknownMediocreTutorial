@@ -43,4 +43,31 @@ patternEffects(state, isSetterView, pattern) {
   // Nothing needed here — we render visually in updateUI
 }
 
+  // --------------------------------------------------
+// Reveal Green — info badge (guesser-only)
+// --------------------------------------------------
+
+InfoBadgeEngine.register((state, role) => {
+  // Only show if the reveal exists
+  const info = state.revealGreenInfo;
+  if (!info) return null;
+
+  // Only the guesser should see it
+  if (role !== state.guesser) return null;
+
+  const meta = POWER_METADATA.revealGreen;
+  const { pos, letter } = info;
+
+  return {
+    id: "revealGreen",
+    emoji: meta.emoji,
+    text: `${meta.label}: position ${pos + 1} = ${letter}`,
+    color: meta.color,
+    priority: 10,
+    screen: "guesser",
+    details: meta.desc
+  };
+});
+
+
 });
