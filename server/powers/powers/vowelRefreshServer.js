@@ -4,6 +4,7 @@ engine.registerPower("vowelRefresh", {
   apply(state, action, roomId, io) {
     if (state.powers.vowelRefreshUsed) return;
     state.powers.vowelRefreshUsed = true;
+    state.powers.vowelRefreshActive = true;
     state.powerUsedThisTurn = true;
 
     const lastIndex = state.history.length - 1;
