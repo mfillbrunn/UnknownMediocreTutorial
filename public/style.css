@@ -1883,8 +1883,6 @@ $("timerModeSelect").onchange = () => {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-    position: relative;
-  isolation: isolate; /* ensures pseudo-elements layer correctly */
    
 }
 
@@ -1905,21 +1903,6 @@ $("timerModeSelect").onchange = () => {
   gap: 6px;
   flex-wrap: wrap;
   justify-content: center;
-}
-.info.badge::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-
-  border-radius: 999px;
-  border: 1.5px solid var(--role-accent);
-
-  opacity: 0.45;
-  pointer-events: none;
-
-  box-shadow:
-    0 0 10px color-mix(in srgb, var(--role-accent) 55%, transparent),
-    inset 0 0 6px color-mix(in srgb, var(--role-accent) 25%, transparent);
 }
 
 
