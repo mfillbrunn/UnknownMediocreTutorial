@@ -5,19 +5,29 @@ window.InfoBadgeEngine = {
     this.collectors.push(fn);
   },
 
-  collect(state, role) {
-    const messages = [];
+collect(state, role) {
+  const messages = [];
 
-    for (const fn of this.collectors) {
-      const result = fn(state, role);
-      if (!result) continue;
+  for (const fn of this.collectors) {
+    const result = fn(state, role);
+    if (!result) continue;
 
-      if (Array.isArray(result)) messages.push(...result);
-      else messages.push(result);
+    const arr = Array.isArray(result) ? result : [result];
+
+    for (const msg of arr) {
+      if (!msg) continue;
+
+      // Screen filtering
+      if (msg.screen === "setter" && role !== state.setter) continue;
+      if (msg.screen === "guesser" && role !== state.guesser) continue;
+
+      messages.push(msg);
     }
-
-    return messages
-      .filter(Boolean)
-      .sort((a, b) => (a.priority ?? 50) - (b.priority ?? 50));
   }
+
+  return messages.sort(
+    (a, b) => (a.priority ?? 50) - (b.priority ?? 50)
+  );
+}
+
 };
