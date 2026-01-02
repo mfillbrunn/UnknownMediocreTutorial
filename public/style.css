@@ -1882,8 +1882,7 @@ $("timerModeSelect").onchange = () => {
   display: none;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-   
+  gap: 4px;   
 }
 
 .info.badge.show {
@@ -1893,6 +1892,7 @@ $("timerModeSelect").onchange = () => {
 .badge-row-primary {
   font-size: 13px;
   font-weight: 900;
+  text-align: center;
 }
 
 .badge-row-secondary {
@@ -1905,4 +1905,5 @@ $("timerModeSelect").onchange = () => {
   justify-content: center;
 }
 
+  text-align: center;
 
