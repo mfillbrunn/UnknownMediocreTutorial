@@ -138,6 +138,7 @@ engine.registerPower("forceGuess", {
     if (state.powers.forceGuessUsed) return;
 
     state.powers.forceGuessUsed = true;
+    state.powers.forceGuessActive = true;
     state.powers.forcedGuessOptions = generateForceGuessOptions(state);
 
     io.to(roomId).emit("forceGuessOptions", {
