@@ -77,7 +77,7 @@ InfoBadgeEngine.register((state, role) => {
 
   // Assassin word exists?
   const assassin = state.powers?.assassinWord;
-  if (!assassin) return null;
+  if (!assassinWordUsed) return null;
 
   // -----------------------------
   // SETTER: show the actual word
