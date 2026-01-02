@@ -25,5 +25,9 @@ tooltip: {
       btn.disabled = true;
       btn.classList.add("power-used");
     }
+  },
+
+  getInfoBadge(state, role) {
+    return role === state.setter && state.powers?.blindSpotActive;
   }
 });
