@@ -24,21 +24,6 @@ socket.on("forceTimerStarted", ({ durationMs }) => {
   toast(`⏱ Setter is now timed — ${seconds} seconds to make a guess!`);
 });
 
-
-
-
-socket.on("assassinUsed", ({ setter, word }) => {
-  // Notify guesser only
-  if (myRole === state.guesser) {
-    toast("☠ The setter has armed an Assassin Word!");
-  }
-
-  // Optional: setter feedback (if you want)
-  if (myRole === state.setter) {
-    toast("Assassin Word set: " + word.toUpperCase());
-  }
-});
-
 socket.on("forceTimerExpired", () => {
   toast("Time ran out — old secret was kept!");
 });
