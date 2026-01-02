@@ -14,6 +14,9 @@ function resetRoundState(state) {
   state.powersUsedThisRoundGuesser = [];
   state.powersUsedThisRoundSetter = [];
 
+    state.powers.blindSpotUsed = false;
+    state.powers.blindSpotIndex = null;
+
   // clear transient power effects
   for (const k in state.powers) {
     if (typeof state.powers[k] === "boolean") {
