@@ -34,3 +34,30 @@ tooltip: {
     entry.fbGuesser = ["❓","❓","❓","❓","❓"];
   }
 });
+
+// --------------------------------------------------
+// Count Only — info badge (both players)
+// --------------------------------------------------
+
+InfoBadgeEngine.register((state, role) => {
+  const meta = POWER_METADATA.countOnly;
+
+  // Find the most recent history entry where Count Only applied
+  const entry = [...state.history]
+    .reverse()
+    .find(e => e.countOnlyApplied && e.extraInfo);
+
+  if (!entry) return null;
+
+  const { greens, yellows, total } = entry.extraInfo;
+
+  return {
+    id: "countOnly",
+    emoji: meta.emoji,
+    text: `${meta.label}: ${greens}🟩 ${yellows}🟨 (total ${total})`,
+    color: meta.color,
+    priority: 16,
+    screen: "both",
+    details: meta.desc
+  };
+});
