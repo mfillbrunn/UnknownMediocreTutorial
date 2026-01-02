@@ -173,3 +173,8 @@ function isPalindrome(word) {
 function hasDoubleLetter(word) {
   return /(.)\1/.test(word);
 }
+
+///ASSASSIN LISTENER
+socket.on("assassinUsed", () => {
+  updateUI();
+});
