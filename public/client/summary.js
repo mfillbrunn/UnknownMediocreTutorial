@@ -107,7 +107,12 @@ let resultText =
       ? `${resultIcon} You won`
       : `${resultIcon} You lost`;
 
-const scoreText = `Score: ${winnerPoints} – ${loserPoints}`;
+let scoreText;
+if (didWin===true){
+  const scoreText = `Score: ${winnerPoints} – ${loserPoints}`;
+} else if (didWin===false){
+  const scoreText = `Score: ${loserPoints} – ${winnerPoints}`;
+}
 const timeoutRound = rounds.find(r => r.timeoutLoser);
 
     let timeoutNote = "";
@@ -459,21 +464,21 @@ if (setter.length || guesser.length) {
     : "—";
 
   powersLine =
-    `Powers: ${setterIcons} | ${guesserIcons}`;
+    `${setterIcons} | ${guesserIcons}`;
 }
 
   // -----------------------
   // Per-round lines
   // -----------------------
   const roundLines = rounds.map((r, i) => {
-    const winnerOfRound = names[r.guesser]; // guesser always "wins" the round
+    const winnerOfRound = names[r.guesser];
     const secret =
       r.history?.[r.history.length - 1]?.finalSecret?.toUpperCase() || "?????";
     const guesses = r.guessCount;
 
     const timeoutMark = r.timeoutLoser ? " ⏱" : "";
 
-    return `R${i + 1}: ${winnerOfRound} — ${secret} (${guesses})${timeoutMark}`;
+    return `R${i + 1}: ${winnerOfRound} guessed ${secret} (${guesses})${timeoutMark}`;
   });
 
   // -----------------------
@@ -481,8 +486,8 @@ if (setter.length || guesser.length) {
   // -----------------------
   const lines = [
     "VS Wordle result",
-    `${resultIcon} ${winnerLabel} ${winnerPoints}–${loserPoints} ${loserName} ⏱ ${timeLine}`,
-    powersLine,
+    `${resultIcon} ${winnerLabel} ${winnerPoints}–${loserPoints} ${loserName}`,
+    `${powersLine} ⏱ ${timeLine}`,
     ...roundLines
   ].filter(Boolean);
 
