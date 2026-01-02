@@ -9,6 +9,7 @@ engine.registerPower("confuseColors", {
 
     state.powers.confuseColorsUsed = true;
     state.powers.confuseColorsActive = true;
+
     io.to(roomId).emit("powerUsed", { type: "confuseColors" });
   },
 
