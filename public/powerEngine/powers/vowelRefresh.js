@@ -50,14 +50,14 @@ tooltip: {
 // --------------------------------------------------
 
 InfoBadgeEngine.register((state, role) => {
-  if (!state.powers?.vowelRefreshUsed) return null;
+  if (!state.powers?.vowelRefreshActive) return null;
 
   const vowels = window.uiState?.vowelRefreshVowels;
   if (!Array.isArray(vowels) || vowels.length === 0) {
     return {
       id: "vowelRefresh-used",
       emoji: POWER_METADATA.vowelRefresh.emoji,
-      text: `${POWER_METADATA.vowelRefresh.label} used`,
+      text: `${POWER_METADATA.vowelRefresh.label} used but to no effect`,
       color: POWER_METADATA.vowelRefresh.color,
       priority: 30,
       screen: "both",
