@@ -652,6 +652,9 @@ function handleSetterInput(event) {
       if (KeepEnabled) {
         state.setterDraft = "";        
         sendGameAction(roomId, { type: "SET_SECRET_SAME" });
+         if (window.uiState) {
+          window.uiState.suggestedSecret = null;
+        }    
         updateUI();
         return;
       }
@@ -686,6 +689,9 @@ function submitSetterNew() {
   }  
   sendGameAction(roomId, {type: "SET_SECRET_NEW",secret: w});
   state.setterDraft = "";
+  if (window.uiState) {
+    window.uiState.suggestedSecret = null;
+  } 
   updateUI();
 }
 
