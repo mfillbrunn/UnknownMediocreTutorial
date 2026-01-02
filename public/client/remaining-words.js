@@ -20,11 +20,7 @@ function updateRemainingWords(newSecret) {
   const guessIsComplete = guess && !guess.includes("?");
 
   if (guessIsComplete) {
-    if (remainingCache.setterOld == null) {
-      remainingCache.setterOld = computeRemainingNew(state.secret);
-    }
-    oldCount = remainingCache.setterOld;
-
+    oldCount = computeRemainingNew(state.secret);
     if (newSecret && newSecret.length === 5) {
       newCount = computeRemainingNew(newSecret);
     }
@@ -35,18 +31,10 @@ function updateRemainingWords(newSecret) {
 
 InfoBadgeEngine.register((state, role) => {
   if (role !== state.setter) return null;
-
-  const data = updateRemainingWords(state.secret);
-  if (!data) return null;
-
-  const { current, oldCount, newCount } = data;
+  const { current, oldCount, newCount } = updateRemainingWords(state.secret);
 
   let compare = null;
-  if (
-    typeof oldCount === "number" &&
-    typeof newCount === "number" &&
-    oldCount !== newCount
-  ) {
+  if (typeof newCount === "number" && oldCount !== newCount) {
     compare = newCount > oldCount ? "new" : "old";
   }
 
