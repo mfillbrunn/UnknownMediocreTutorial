@@ -42,41 +42,46 @@ function findConsistencyViolations(history, proposedSecret, state) {
 
 function flashConsistencyViolations({ secretIndices, history }) {
   // --- Setter draft ---
-  const draftRow = document.querySelector(
-    ".history-row.setter-draft"
-  );
+  const draftRow = document.querySelector(".history-row.setter-draft");
   if (draftRow) {
-    [...draftRow.children].forEach((tile, i) => {
+    const tiles = draftRow.querySelectorAll(".history-tile");
+    tiles.forEach((tile, i) => {
       if (secretIndices.has(i)) {
-        tile.classList.add("violation");
-        tile.addEventListener(
-          "animationend",
-          () => tile.classList.remove("violation"),
-          { once: true }
-        );
+        flashTile(tile);
       }
     });
   }
 
   // --- History rows ---
+  const rowWraps = document.querySelectorAll(
+    "#historySetter .history-row-wrap, #historyGuesser .history-row-wrap"
+  );
+
   history.forEach(({ roundIndex, indices }) => {
-    const rows = document.querySelectorAll(
-      "#historyGuesser .history-row, #historySetter .history-row"
-    );
-    const row = rows[roundIndex];
+    const wrap = rowWraps[roundIndex];
+    if (!wrap) return;
+
+    const row = wrap.querySelector(".history-row");
     if (!row) return;
 
-    indices.forEach(i => {
-      const tile = row.children[i];
-      if (!tile) return;
+    const tiles = row.querySelectorAll(".history-tile");
 
-      tile.classList.add("violation");
-      tile.addEventListener(
-        "animationend",
-        () => tile.classList.remove("violation"),
-        { once: true }
-      );
+    indices.forEach(i => {
+      const tile = tiles[i];
+      if (tile) {
+        flashTile(tile);
+      }
     });
   });
 }
+
+function flashTile(tile) {
+  tile.classList.add("violation");
+  tile.addEventListener(
+    "animationend",
+    () => tile.classList.remove("violation"),
+    { once: true }
+  );
+}
+
 
