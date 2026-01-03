@@ -40,7 +40,7 @@ window.computeRemainingNew = function (newWord) {
 };
 
 // cache lives outside, but is reset on state updates
-const remainingCache = {
+window.remainingCache = {
   setterCurrent: null,
   setterOld: null
 };
@@ -59,23 +59,23 @@ function getRemainingWordInfo(state, newSecret) {
   }
   const current = remainingCache.setterCurrent;
 
-  let oldCount = null;
-  let newCount = null;
+  let oldCount = -1;
+  let newCount = -1;
 
   const guess = state.pendingGuess;
   const guessIsComplete = guess && !guess.includes("?");
 
   if (guessIsComplete) {
-    if (remainingCache.setterOld == null) {
-      remainingCache.setterOld = computeRemainingNew(state.secret);
-    }
-    oldCount = remainingCache.setterOld;
-
+    oldCount = computeRemainingNew(state.secret);
     if (newSecret && newSecret.length === 5) {
       newCount = computeRemainingNew(newSecret);
+    } else {
+      newCount = -1;
     }
+  } else if (!guessIsComplete){
+    oldCount = -1;
+    newCount = -1;
   }
-
   return {
     current,
     old: oldCount,
@@ -86,7 +86,7 @@ function getRemainingWordInfo(state, newSecret) {
 InfoBadgeEngine.register(function remainingWordsCollector(state, role) {
   if (role !== state.setter) return null;
 
-  const info = getRemainingWordInfo(state, state.pendingSecret);
+  const info = getRemainingWordInfo(state, state.setterDraft);
   if (!info || info.current == null) return null;
 
   const msgs = [];
@@ -98,8 +98,8 @@ InfoBadgeEngine.register(function remainingWordsCollector(state, role) {
     text: `Words remaining: ${info.current.toLocaleString()}`
   });
 
-  const hasOld = typeof info.old === "number";
-  const hasNew = typeof info.new === "number";
+  const hasOld = info.old > -1;
+  const hasNew = info.new > -1;
 
   let oldColor;
   let newColor;
