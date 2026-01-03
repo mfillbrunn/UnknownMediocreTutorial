@@ -28,6 +28,7 @@ function toast(msg) {
 }
 
 function shake(element) {
+  if (!element) return;
   element.classList.add("shake");
   setTimeout(() => element.classList.remove("shake"), 300);
 }
