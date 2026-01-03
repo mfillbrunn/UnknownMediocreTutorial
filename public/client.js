@@ -194,6 +194,7 @@ onStateUpdate(newState => {
   // Clear guesser draft once it is no longer editable
   if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {localGuesserDraft = "";}
   window.state = state; 
+  updatePowerInfoState(state);
   updateUI();
   remainingCache.setterOld = null;
 });
