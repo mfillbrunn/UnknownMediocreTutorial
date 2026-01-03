@@ -120,7 +120,7 @@ InfoBadgeEngine.register(function remainingWordsCollector(state, role) {
   msgs.push({
     screen: "setter",
     priority: 2,
-    text: `New: ${hasNew ? info.new.toLocaleString() : "-"}<br>`,
+    text: `New: ${hasNew ? info.new.toLocaleString() : "-"}`,
     color: newColor
   });
 
