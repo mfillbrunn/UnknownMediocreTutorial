@@ -45,6 +45,7 @@ InfoBadgeEngine.register((state, role) => {
     .find(e => e.countOnlyApplied && e.extraInfo);
 
   if (!entry) return null;
+  if (role === state.setter && countOnlyActive===false) { return null};
   
   const { greens, yellows, total } = entry.extraInfo;
   const word = state.powers.countOnlyWord.toUpperCase(); 
