@@ -14,11 +14,10 @@ const ALLOWED_WORDS = new Set(
 
 engine.registerPower("assassinWord", {
   apply(state, action, roomId, io) {
-
+    state.powers.assassinWordActive = true;
     if (!state.activePowers?.includes("assassinWord")) return;
-    if (state.powers.assassinWordUsed) return;
-    if (!action.word) return;
-
+    if (state.powers.assassinWordUsed && !state.powers.assassinWordActive) return;
+    
     const w = action.word.toUpperCase();
 
     // --- Validation ---
@@ -62,8 +61,7 @@ engine.registerPower("assassinWord", {
     // --- VALID → commit ---
     state.powers.assassinWordUsed = true;
     state.powers.assassinWord = w;
-    state.powerUsedThisTurn = true;
-    state.powers.assassinWordActive = true;
+    state.powerUsedThisTurn = true;    
 
     // Setter-only confirmation
     io.to(action.playerId).emit("assassinSet", { word: w });
