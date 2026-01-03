@@ -279,7 +279,7 @@ function renderRoundSummary(container) {
     `;
   }
 
-  html += `<p><b>Total guesses:</b> ${state.guessCount + 1}</p>`;
+  html += `<p><b>Total guesses:</b> ${state.guessCount}</p>`;
 
   html += `
   <table class="summary-table summary-table--round">
