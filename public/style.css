@@ -2122,7 +2122,6 @@ body.in-match #bgOverlay {
   display: block;
 }
 #lobby.screen-lobby {
-  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
