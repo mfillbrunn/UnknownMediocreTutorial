@@ -543,16 +543,36 @@ body {
 }
 .draft-row .history-tile { animation: draft-pop 120ms ease-out; }
 
-.history-tile.violation {
-  animation: violation-flash 420ms ease-in-out;
-   animation-delay: 0 !important;
+/* VIOLATION FLASH */
+.history-tile {
+  position: relative;
 }
 
-@keyframes violation-flash {
-  0%   { background-color: #7f1d1d; color: #fff; }
-  40%  { background-color: #dc2626; }
-  100% { background-color: inherit; color: inherit; }
+/* Red flash overlay that sits above existing tile colors */
+.history-tile.violation::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: rgba(220, 38, 38, 0.85); /* strong red overlay */
+  box-shadow: 0 0 14px rgba(220, 38, 38, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  animation: violation-overlay-flash 420ms ease-in-out;
 }
+
+/* Optional: make text pop during flash */
+.history-tile.violation {
+  color: #fff !important;
+}
+
+@keyframes violation-overlay-flash {
+  0%   { opacity: 0; }
+  25%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 
 
 /* Draft rows should not have a panel box */
