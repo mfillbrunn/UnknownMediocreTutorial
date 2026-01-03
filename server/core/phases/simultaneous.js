@@ -79,7 +79,6 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
 
   // Base scoring
   const fb = scoreGuess(secret, guess);
-  state.guessCount=1;
   state.pendingGuess = "";
   const entry = {
     guess,
