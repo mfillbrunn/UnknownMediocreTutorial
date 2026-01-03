@@ -1109,7 +1109,7 @@ Constraint row using history tile language
 }
 
 
-.constraint-letter.forbidden {
+.constraint-letter.forbidden.animate {
   width: 100%;
   height: 100%;
 
