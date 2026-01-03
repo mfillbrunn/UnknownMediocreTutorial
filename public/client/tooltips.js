@@ -136,33 +136,6 @@ document.addEventListener("mousemove", (e) => {
 window.addEventListener("scroll", hideTooltip);
 window.addEventListener("resize", hideTooltip);
 
-$("timeControlSelect").onchange = () => {
-  const select = $("timeControlSelect");
-  const seconds = parseInt(select.value, 10);
-
-  if (!Number.isFinite(seconds)) return;
-
-  // No time selected
-  if (seconds === 0) {
-    sendGameAction(roomId, {
-      type: "SET_TIME_CONTROL",
-      enabled: false
-    });
-    return;
-  }
-
-  const mode =
-    select.selectedOptions[0].dataset.mode || "round";
-
-  sendGameAction(roomId, {
-    type: "SET_TIME_CONTROL",
-    enabled: true,
-    mode,
-    seconds
-  });
-};
-
-
 function initPowerInfoButton(buttonId, role) {
   const btn = document.getElementById(buttonId);
   const panel = document.getElementById(
