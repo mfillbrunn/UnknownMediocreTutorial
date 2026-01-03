@@ -22,16 +22,14 @@ createPowerButton(id, label) {
     const btn = document.createElement("button");
     btn.className = "power-btn";
     btn.textContent = label;
-   const meta = getPowerMeta(id);
+    const meta = this.powers[id]?.tooltip;
     if (meta) {
       wrapper.addEventListener("mouseenter", () => {
-        showTooltip(wrapper, {
-          title: meta.label,
-          desc: meta.desc
-        });
+        showTooltip(wrapper, meta);
       });
       wrapper.addEventListener("mouseleave", hideTooltip);
     }
+
     wrapper.appendChild(btn);
     return { wrapper, btn };
   },
