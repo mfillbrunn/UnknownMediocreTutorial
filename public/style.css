@@ -2076,7 +2076,6 @@ body.in-match #bgOverlay {
 }
 
 #lobby.screen-lobby {
-  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
