@@ -19,14 +19,14 @@ function findConsistencyViolations(history, proposedSecret, state) {
     if (entry.ignoreConstraints) return;
 
     const guess = entry.guess.toUpperCase();
-    const rawFb = entry.fb ?? entry.fbGuesser;
+    const rawFb = entry.fb;
     const actual = normalizeFB(rawFb);
     const expected = window.scoreGuess(proposedSecret, guess);
 
     const bad = [];
 
     for (let i = 0; i < 5; i++) {
-      if (actual[i] !== "" && expected[i] !== actual[i]) {
+      if (expected[i] !== actual[i]) {
         violations.secretIndices.add(i);
         bad.push(i);
       }
