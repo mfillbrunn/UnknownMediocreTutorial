@@ -1261,29 +1261,28 @@ body.hide-constraints .constraint-row {
   justify-content: center;
 
   font-family: "Courier New", monospace;
-  font-weight: 900;
+  font-weight: 1000;
   font-size: 20px;
-  line-height: 1;
 
-  color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.32);
 
-  /* Tile the question mark using shadows */
   text-shadow:
-    -18px -18px rgba(255,255,255,0.12),
-     0px  -18px rgba(255,255,255,0.16),
-     18px -18px rgba(255,255,255,0.12),
+    -18px -18px rgba(255,255,255,0.18),
+     0px  -18px rgba(255,255,255,0.22),
+     18px -18px rgba(255,255,255,0.18),
 
-    -18px   0px rgba(255,255,255,0.16),
-     18px   0px rgba(255,255,255,0.16),
+    -18px   0px rgba(255,255,255,0.22),
+     18px   0px rgba(255,255,255,0.22),
 
-    -18px  18px rgba(255,255,255,0.12),
-     0px   18px rgba(255,255,255,0.16),
-     18px  18px rgba(255,255,255,0.12);
+    -18px  18px rgba(255,255,255,0.18),
+     0px   18px rgba(255,255,255,0.22),
+     18px  18px rgba(255,255,255,0.18);
+
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.35));
 
   pointer-events: none;
-
-  animation: hidden-question-drift 7s ease-in-out infinite;
 }
+
 
 /* Smooth drifting animation (no scale, no jitter) */
 @keyframes hidden-question-drift {
