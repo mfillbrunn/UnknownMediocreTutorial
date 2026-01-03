@@ -25,7 +25,10 @@ createPowerButton(id, label) {
     const meta = this.powers[id]?.tooltip;
     if (meta) {
       wrapper.addEventListener("mouseenter", () => {
-        showTooltip(wrapper, meta);
+        showTooltip(wrapper, {
+        title: meta.label,
+        desc: meta.desc
+      });
       });
       wrapper.addEventListener("mouseleave", hideTooltip);
     }
