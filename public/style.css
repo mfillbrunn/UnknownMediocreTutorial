@@ -1879,7 +1879,7 @@ $("timerModeSelect").onchange = () => {
 #SetterInfoBadge,
 #GuesserInfoBadge {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   align-items: center;
 
