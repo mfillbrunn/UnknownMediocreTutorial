@@ -92,7 +92,7 @@ InfoBadgeEngine.register(function remainingWordsCollector(state, role) {
   msgs.push({
     screen: "setter",
     priority: 10,
-    text: `Words remaining: ${info.current.toLocaleString()}`
+    text: `Words: ${info.current.toLocaleString()}`
   });
 
   const hasOld = info.old > -1;
