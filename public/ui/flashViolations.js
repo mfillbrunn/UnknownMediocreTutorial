@@ -39,3 +39,44 @@ function findConsistencyViolations(history, proposedSecret, state) {
 
   return violations;
 }
+
+function flashConsistencyViolations({ secretIndices, history }) {
+  // --- Setter draft ---
+  const draftRow = document.querySelector(
+    ".history-row.setter-draft"
+  );
+  if (draftRow) {
+    [...draftRow.children].forEach((tile, i) => {
+      if (secretIndices.has(i)) {
+        tile.classList.add("violation");
+        tile.addEventListener(
+          "animationend",
+          () => tile.classList.remove("violation"),
+          { once: true }
+        );
+      }
+    });
+  }
+
+  // --- History rows ---
+  history.forEach(({ roundIndex, indices }) => {
+    const rows = document.querySelectorAll(
+      "#historyGuesser .history-row, #historySetter .history-row"
+    );
+    const row = rows[roundIndex];
+    if (!row) return;
+
+    indices.forEach(i => {
+      const tile = row.children[i];
+      if (!tile) return;
+
+      tile.classList.add("violation");
+      tile.addEventListener(
+        "animationend",
+        () => tile.classList.remove("violation"),
+        { once: true }
+      );
+    });
+  });
+}
+
