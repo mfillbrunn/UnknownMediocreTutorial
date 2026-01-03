@@ -109,9 +109,9 @@ let resultText =
 
 let scoreText;
 if (didWin===true){
-  const scoreText = `Score: ${winnerPoints} – ${loserPoints}`;
+  scoreText = `Score: ${winnerPoints} – ${loserPoints}`;
 } else if (didWin===false){
-  const scoreText = `Score: ${loserPoints} – ${winnerPoints}`;
+  scoreText = `Score: ${loserPoints} – ${winnerPoints}`;
 }
 const timeoutRound = rounds.find(r => r.timeoutLoser);
 
