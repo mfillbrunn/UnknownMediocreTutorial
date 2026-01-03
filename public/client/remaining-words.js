@@ -54,10 +54,7 @@ function getRemainingWordInfo(state, newSecret) {
   if (lastIdx < 0) return null;
 
   // current
-  if (remainingCache.setterCurrent == null) {
-    remainingCache.setterCurrent = computeRemainingAfterIndex(lastIdx);
-  }
-  const current = remainingCache.setterCurrent;
+ const current = computeRemainingAfterIndex(lastIdx);
 
   let oldCount = -1;
   let newCount = -1;
