@@ -1245,54 +1245,68 @@ body.hide-constraints .constraint-row {
   color: var(--tile-gray-text);
 }
 
-
 .history-tile.tile-hidden-cycle {
   position: relative;
   overflow: hidden;
 
   background:
-    repeating-linear-gradient(
-      90deg,
-      #2a2d33 0px,
-      #2a2d33 3px,
-      #1e2025 3px,
-      #1e2025 6px
-    ),
+    /* horizontal noise */
     repeating-linear-gradient(
       0deg,
-      #26292f 0px,
-      #26292f 3px,
-      #1c1e23 3px,
-      #1c1e23 6px
+      #0f1115 0px,
+      #0f1115 2px,
+      #2e323a 2px,
+      #2e323a 4px
+    ),
+    /* vertical noise */
+    repeating-linear-gradient(
+      90deg,
+      #1a1d23 0px,
+      #1a1d23 2px,
+      #3a3f48 2px,
+      #3a3f48 4px
     );
 
-  color: var(--tile-gray-text);
-  border: 1.5px solid #00000066;
+  color: #9aa0aa;
+  border: 1.5px solid #000000aa;
 
-  animation: hidden-pixel-flicker 1.2s steps(6) infinite;
+  animation:
+    glitch-static 0.35s steps(8) infinite,
+    glitch-shift 0.18s steps(3) infinite;
 }
-@keyframes hidden-pixel-flicker {
+
+@keyframes glitch-static {
   0% {
-    filter: brightness(0.9);
     background-position: 0 0, 0 0;
+    filter: contrast(1.6) brightness(0.9);
   }
-  25% {
-    filter: brightness(1.05);
-    background-position: 2px 1px, -1px 2px;
+  20% {
+    background-position: 3px -2px, -2px 3px;
   }
-  50% {
-    filter: brightness(0.85);
-    background-position: -2px -1px, 1px -2px;
+  40% {
+    background-position: -4px 2px, 3px -3px;
+    filter: contrast(2.1) brightness(1.15);
   }
-  75% {
-    filter: brightness(1);
-    background-position: 1px -1px, -2px 1px;
+  60% {
+    background-position: 2px 4px, -3px 2px;
+  }
+  80% {
+    background-position: -3px -4px, 4px -2px;
+    filter: contrast(1.9) brightness(0.85);
   }
   100% {
-    filter: brightness(0.9);
     background-position: 0 0, 0 0;
   }
 }
+
+@keyframes glitch-shift {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-1px, 1px); }
+  50%  { transform: translate(1px, -1px); }
+  75%  { transform: translate(-2px, 0); }
+  100% { transform: translate(0, 0); }
+}
+
 
 /* ===============================
    FREEZE — Draft Row Overlay
