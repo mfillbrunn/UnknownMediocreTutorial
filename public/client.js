@@ -474,7 +474,7 @@ function handleSetterInput(event) {
         return;
       }
     }
-    if (NewEnabled) {
+    if (NewEnabled) {      
       submitSetterNew();
       return;
     }
@@ -500,6 +500,11 @@ function submitSetterNew() {
   if (typeof window.isConsistentWithHistory === "function" && !window.isConsistentWithHistory(state.history, w, state)) {
     shakeDraftRow("setter");
     toast("Incompatible with previous feedback");
+    //Check violations
+    const violations = findConsistencyViolations(state.history,w.toUpperCase(),state);
+    if (violations.secretIndices.size > 0 ||violations.history.length > 0) {
+      flashConsistencyViolations(violations);
+    }
     return;
   }  
   sendGameAction(roomId, {type: "SET_SECRET_NEW",secret: w});
