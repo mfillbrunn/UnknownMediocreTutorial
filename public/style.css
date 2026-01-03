@@ -2036,4 +2036,11 @@ $("timerModeSelect").onchange = () => {
   pointer-events: auto;
 }
 
+body.game-started #menuBg {
+  transform: scale(1.06);
+}
+
+body.game-started #bgOverlay {
+  opacity: 0.6;
+}
 
