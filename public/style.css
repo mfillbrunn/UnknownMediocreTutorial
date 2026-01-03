@@ -1237,108 +1237,102 @@ body.hide-constraints .constraint-row {
 /* ===============================
   POWERS
    =============================== */
-/* ===============================
-  HIDE TILE
-   =============================== */
-.history-tile.tile-gray {
-  background: var(--tile-gray);
-  color: var(--tile-gray-text);
-}
+/* =========================================
+   HIDDEN TILE — drifting question marks
+   ========================================= */
 
 .history-tile.tile-hidden-cycle {
   position: relative;
   overflow: hidden;
 
-  /* Pixel noise base */
-  background:
-    repeating-linear-gradient(
-      0deg,
-      #0b0d11 0px,
-      #0b0d11 2px,
-      #2b2f36 2px,
-      #2b2f36 4px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      #14171d 0px,
-      #14171d 2px,
-      #3a3f48 2px,
-      #3a3f48 4px
-    );
-
-  color: #9aa0aa;
-  border: 1.5px solid #000000aa;
-
-  animation:
-    tile-glitch-static 0.32s steps(8) infinite,
-    tile-glitch-jitter 0.18s steps(2) infinite;
-
-  will-change: transform, filter, background-position;
-}
-@keyframes tile-glitch-static {
-  0% {
-    background-position: 0 0, 0 0;
-    filter: contrast(1.9) brightness(0.85);
-  }
-  20% {
-    background-position: 3px -2px, -2px 3px;
-  }
-  40% {
-    background-position: -4px 2px, 3px -3px;
-    filter: contrast(2.6) brightness(1.25);
-  }
-  60% {
-    background-position: 2px 4px, -3px 2px;
-  }
-  80% {
-    background-position: -3px -4px, 4px -2px;
-    filter: contrast(2.2) brightness(0.75);
-  }
-  100% {
-    background-position: 0 0, 0 0;
-  }
+  background: var(--tile-gray);
+  color: var(--tile-gray-text);
+  border: 1.5px solid #00000066;
 }
 
-@keyframes tile-glitch-jitter {
-  0%   { transform: translate(0, 0); }
-  25%  { transform: translate(-2px, 1px); }
-  50%  { transform: translate(2px, -1px); }
-  75%  { transform: translate(-3px, 0); }
-  100% { transform: translate(0, 0); }
-}
-.history-tile.tile-hidden-cycle::after {
-  content: "";
+/* Question-mark pattern overlay */
+.history-tile.tile-hidden-cycle::before {
+  content: "?";
   position: absolute;
   inset: 0;
 
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.05),
-    rgba(255,255,255,0.05) 1px,
-    rgba(0,0,0,0.12) 1px,
-    rgba(0,0,0,0.12) 2px
-  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  mix-blend-mode: overlay;
+  font-family: "Courier New", monospace;
+  font-weight: 900;
+  font-size: 14px;
+  line-height: 1;
+
+  color: rgba(255, 255, 255, 0.18);
+
+  /* Tile the question mark using shadows */
+  text-shadow:
+    -18px -18px rgba(255,255,255,0.12),
+     0px  -18px rgba(255,255,255,0.16),
+     18px -18px rgba(255,255,255,0.12),
+
+    -18px   0px rgba(255,255,255,0.16),
+     18px   0px rgba(255,255,255,0.16),
+
+    -18px  18px rgba(255,255,255,0.12),
+     0px   18px rgba(255,255,255,0.16),
+     18px  18px rgba(255,255,255,0.12);
+
   pointer-events: none;
-}
-.history-row .history-tile.tile-hidden-cycle:nth-child(1) {
-  animation-delay: -0.11s, -0.04s;
-}
-.history-row .history-tile.tile-hidden-cycle:nth-child(2) {
-  animation-delay: -0.27s, -0.09s;
-}
-.history-row .history-tile.tile-hidden-cycle:nth-child(3) {
-  animation-delay: -0.43s, -0.15s;
-}
-.history-row .history-tile.tile-hidden-cycle:nth-child(4) {
-  animation-delay: -0.19s, -0.07s;
-}
-.history-row .history-tile.tile-hidden-cycle:nth-child(5) {
-  animation-delay: -0.36s, -0.12s;
+
+  animation: hidden-question-drift 7s ease-in-out infinite;
 }
 
+/* Smooth drifting animation (no scale, no jitter) */
+@keyframes hidden-question-drift {
+  0% {
+    transform: translate(-2px, -1px);
+    opacity: 0.65;
+  }
+  25% {
+    transform: translate(2px, -2px);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translate(3px, 2px);
+    opacity: 0.85;
+  }
+  75% {
+    transform: translate(-1px, 3px);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate(-2px, -1px);
+    opacity: 0.65;
+  }
+}
 
+/* Gentle phase desync per tile (prevents lockstep motion) */
+.history-row .history-tile.tile-hidden-cycle:nth-child(1)::before {
+  animation-delay: -0.8s;
+}
+.history-row .history-tile.tile-hidden-cycle:nth-child(2)::before {
+  animation-delay: -1.6s;
+}
+.history-row .history-tile.tile-hidden-cycle:nth-child(3)::before {
+  animation-delay: -2.4s;
+}
+.history-row .history-tile.tile-hidden-cycle:nth-child(4)::before {
+  animation-delay: -1.2s;
+}
+.history-row .history-tile.tile-hidden-cycle:nth-child(5)::before {
+  animation-delay: -2.0s;
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .history-tile.tile-hidden-cycle::before {
+    animation: none;
+    opacity: 0.7;
+  }
+}
 
 /* ===============================
    FREEZE — Draft Row Overlay
