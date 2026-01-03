@@ -138,7 +138,7 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
       ${
         state.timeControl?.enabled
         ? state.timeControl.mode === "round"
-          ? `Round timer: ${formatDuration(state.timeControl.roundSeconds)} / round`
+          ? `${formatDuration(state.timeControl.roundSeconds)} / round`
           : `${formatDuration(state.timeControl.initialSeconds)} +${formatDuration(state.timeControl.incrementSeconds)}`
         : "No time"
 
