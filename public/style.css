@@ -2138,7 +2138,8 @@ body.in-match #bgOverlay {
 #guesserScreen .play-area {
   margin-top: 0;
 }
-
+.screen { display: none; }
+.screen.active { display: block; }
 
 
 
