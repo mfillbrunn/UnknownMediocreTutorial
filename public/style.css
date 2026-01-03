@@ -1262,7 +1262,7 @@ body.hide-constraints .constraint-row {
 
   font-family: "Courier New", monospace;
   font-weight: 900;
-  font-size: 14px;
+  font-size: 20px;
   line-height: 1;
 
   color: rgba(255, 255, 255, 0.18);
@@ -1366,7 +1366,7 @@ body.hide-constraints .constraint-row {
     inset 0 0 24px rgba(120,180,255,0.15);
 
   pointer-events: none; /* critical */
-  z-index: 2;
+  z-index: 10;
 }
 
 /* Ensure tiles are below the overlay */
