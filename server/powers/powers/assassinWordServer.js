@@ -23,6 +23,7 @@ engine.registerPower("assassinWord", {
     // --- Validation ---
     if (w.length !== 5) {
       io.to(action.playerId).emit("errorMessage", "5 letters!");
+      state.powerUsedThisTurn = false; 
       return;
     }
 
@@ -31,6 +32,7 @@ engine.registerPower("assassinWord", {
         "errorMessage",
         "Assassin word must be exactly 5 letters."
       );
+      state.powerUsedThisTurn = false; 
       return;
     }
 
@@ -39,6 +41,7 @@ engine.registerPower("assassinWord", {
         "errorMessage",
         "Assassin word must be a valid dictionary word."
       );
+      state.powerUsedThisTurn = false; 
       return;
     }
 
@@ -47,6 +50,7 @@ engine.registerPower("assassinWord", {
         "errorMessage",
         "Assassin word cannot match current secret."
       );
+      state.powerUsedThisTurn = false; 
       return;
     }
 
@@ -55,6 +59,7 @@ engine.registerPower("assassinWord", {
         "errorMessage",
         "Assassin word cannot match current guess."
       );
+      state.powerUsedThisTurn = false; 
       return;
     }
 
