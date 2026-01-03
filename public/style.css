@@ -543,6 +543,17 @@ body {
 }
 .draft-row .history-tile { animation: draft-pop 120ms ease-out; }
 
+.history-tile.violation {
+  animation: violation-flash 420ms ease-in-out;
+}
+
+@keyframes violation-flash {
+  0%   { background-color: #7f1d1d; color: #fff; }
+  40%  { background-color: #dc2626; }
+  100% { background-color: inherit; color: inherit; }
+}
+
+
 /* Draft rows should not have a panel box */
 .draft-layer {
   background: transparent;
