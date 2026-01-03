@@ -516,13 +516,18 @@ function getActivePowersByRole(activePowers = []) {
 }
 
 function formatDuration(seconds) {
-  if (!Number.isFinite(seconds)) return "0s";
+  if (!Number.isFinite(seconds) || seconds <= 0) return "0s";
 
   if (seconds < 60) {
     return `${seconds}s`;
   }
 
-  const mins = Math.round(seconds / 60);
-  return `${mins}m`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+
+  return secs === 0
+    ? `${mins}m`
+    : `${mins}m ${secs}s`;
 }
+
 
