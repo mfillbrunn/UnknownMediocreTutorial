@@ -545,7 +545,7 @@ body {
 
 .history-tile.violation {
   animation: violation-flash 420ms ease-in-out;
-   animation-delay: 0;
+   animation-delay: 0 !important;
 }
 
 @keyframes violation-flash {
