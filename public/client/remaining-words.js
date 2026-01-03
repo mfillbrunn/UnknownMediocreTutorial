@@ -112,14 +112,14 @@ InfoBadgeEngine.register(function remainingWordsCollector(state, role) {
 
   msgs.push({
     screen: "setter",
-    priority: 1,
+    priority: 0.001,
     text: `Keep: ${hasOld ? info.old.toLocaleString() : "?"}`,
     color: oldColor
   });
 
   msgs.push({
     screen: "setter",
-    priority: 2,
+    priority: 0.002,
     text: `New: ${hasNew ? info.new.toLocaleString() : "?"}`,
     color: newColor
   });
