@@ -8,86 +8,54 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   const { ALLOWED_GUESSES, powerEngine } = context;
   const { isValidWord } = require("../../game-engine/validation");
-
   // ---------------------------------------------
   // SETTER submits initial secret
   // ---------------------------------------------
   if (action.type === "SET_SECRET_NEW" && role === state.setter) {
     if (state.simultaneousSecretSubmitted) return;
-
     const w = action.secret.toLowerCase();
     if (!isValidWord(w, ALLOWED_GUESSES)) return;
-
     state.secret = w;
-    state.currentSecret = w;              // ⭐ Required for correct scoring
+    state.currentSecret = w;
     state.firstSecretSet = true;
     state.simultaneousSecretSubmitted = true;
-    if (state.timeControl.mode === "chess") {
-      addIncrement(state, state.setter);
-    } 
-    if (state.activeTimer === "both") {
-      state.activeTimer = state.guesser;      
-    }
+    if (state.timeControl.mode === "chess") {addIncrement(state, state.setter);} 
+    if (state.activeTimer === "both") {state.activeTimer = state.guesser;}
     state.timeUsed[state.setter] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
   }
-
   // ---------------------------------------------
   // GUESSER submits initial guess
   // ---------------------------------------------
   if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
     if (state.simultaneousGuessSubmitted) return;
-
     const g = action.guess.toLowerCase();
     if (!isValidWord(g, ALLOWED_GUESSES)) return;
-
     state.pendingGuess = g;
     state.simultaneousGuessSubmitted = true;
-    if (state.timeControl.mode === "chess") {
-      addIncrement(state, state.guesser);
-    } 
-    if (state.activeTimer === "both") {
-        state.activeTimer = state.setter;   
-    }
+    state.guessCount=state.guessCount+ 1;
+    if (state.timeControl.mode === "chess") {addIncrement(state, state.guesser);} 
+    if (state.activeTimer === "both") {state.activeTimer = state.setter;}
     state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
   }
-
-  // ---------------------------------------------
-  // PROGRESS UPDATE
-  // ---------------------------------------------
-  io.to(roomId).emit("simulProgress", {
-    secretSubmitted: state.simultaneousSecretSubmitted,
-    guessSubmitted: state.simultaneousGuessSubmitted
-  });
-
+  io.to(roomId).emit("simulProgress", {secretSubmitted: state.simultaneousSecretSubmitted, guessSubmitted: state.simultaneousGuessSubmitted});
   // ---------------------------------------------
   // CHECK: Both submitted?
   // ---------------------------------------------
-  const bothSubmitted =
-    state.secret &&
-    state.pendingGuess &&
-    state.simultaneousSecretSubmitted &&
-    state.simultaneousGuessSubmitted;
-
+  const bothSubmitted = state.secret && state.pendingGuess && state.simultaneousSecretSubmitted && state.simultaneousGuessSubmitted;
   if (!bothSubmitted) return;
-
-  // BOTH ARE SUBMITTED → SCORE THE SIMULTANEOUS ROUND
-  const guess = state.pendingGuess;
-  const secret = state.secret;
-
   // Pre-score hooks
-  powerEngine.preScore(state, guess);
-
+  powerEngine.preScore(state, state.pendingGuess);
   // Base scoring
-  const fb = scoreGuess(secret, guess);
-  state.pendingGuess = "";
+  const fb = scoreGuess(state.secret, state.pendingGuess);  
   const entry = {
-    guess,
+    guess: state.pendingGuess,
     fb,
     fbGuesser: [...fb],
     extraInfo: null,
-    finalSecret: secret,
+    finalSecret: state.secret,
     roundIndex: state.history.length
   };
+  state.pendingGuess = "";
   const isWin = fb.every(tile => tile === "🟩");
     if (isWin) {
     state.history.push(entry);
@@ -100,7 +68,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   // TRANSITION TO NORMAL PHASE WITH GUESSER TURN
   // ---------------------------------------------
   state.phase = "normal";
-  state.turn = state.guesser;       // ⭐ Important: skip setter decision step
+  state.turn = state.guesser;
   state.powerUsedThisTurn = false;
   if (state.timeControl.mode === "round") {
       resetRoundTimer(state);
@@ -110,5 +78,4 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   powerEngine.turnStart(state, state.guesser, roomId, io);
   emitStateForAllPlayers(roomId, room, io);
 }
-
 module.exports = handleSimultaneousPhase;
