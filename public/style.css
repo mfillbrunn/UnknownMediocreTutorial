@@ -531,7 +531,7 @@ body {
 }
 
 /* Evaluated flip */
-.evaluated-row .history-tile {
+.evaluated-row.animate .history-tile {
   animation: flip-in 0.6s ease forwards;
 }
 
