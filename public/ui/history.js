@@ -80,12 +80,6 @@ window.renderHistory = function ({
       }
       row.appendChild(tile);
     }
-    
-    if (safeEntry.extraInfo) {
-      const { greens, yellows } = safeEntry.extraInfo;
-      meta.textContent = `${greens}🟩 ${yellows}🟨`;
-      meta.classList.add("history-meta-count");
-    }
     const rowAnchor = document.createElement("div");
     rowAnchor.className = "history-row-anchor";
     rowAnchor.appendChild(row);
