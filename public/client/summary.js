@@ -138,8 +138,8 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
       ${
         state.timeControl?.enabled
         ? state.timeControl.mode === "round"
-          ? `Round timer: ${state.timeControl.roundSeconds}s / round`
-          : `${state.timeControl.initialSeconds / 60} min +${state.timeControl.incrementSeconds}s`
+          ? `Round timer: ${formatDuration(state.timeControl.roundSeconds)} / round`
+          : `${formatDuration(state.timeControl.initialSeconds)} +${formatDuration(state.timeControl.incrementSeconds)}`
         : "No time"
 
       }
@@ -185,8 +185,8 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
               : ""
           }
         </td>
-      <td>${r.time?.A || 0}</td>
-      <td>${r.time?.B || 0}</td>
+      <td>${formatDuration(r.time?.A || 0)}</td>
+      <td>${formatDuration(r.time?.B || 0)}</td>
       </tr>
     `;
   });
@@ -196,8 +196,8 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
         <td><b>Total</b></td>
         <td colspan="2"></td>
         <td></td>
-        <td><b>${time.A} (${names.A})</b></td>
-        <td><b>${time.B} (${names.B})</b></td>
+        <td><b>${formatDuration(time.A)} (${names.A})</b></td>
+        <td><b>${formatDuration(time.B)} (${names.B})</b></td>
       </tr>
     </table>
   `;
@@ -443,8 +443,9 @@ const winnerLabel =
   if (state.timeControl?.enabled) {
     timeLine =
       state.timeControl.mode === "round"
-        ? `${state.timeControl.roundSeconds}s/round`
-        : `${state.timeControl.initialSeconds / 60}min total`;
+        ? `${formatDuration(state.timeControl.roundSeconds)}/round`
+        : `${formatDuration(state.timeControl.initialSeconds)} total`;
+
   }
 
   // -----------------------
@@ -514,4 +515,14 @@ function getActivePowersByRole(activePowers = []) {
   return byRole;
 }
 
+function formatDuration(seconds) {
+  if (!Number.isFinite(seconds)) return "0s";
+
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+
+  const mins = Math.round(seconds / 60);
+  return `${mins}m`;
+}
 
