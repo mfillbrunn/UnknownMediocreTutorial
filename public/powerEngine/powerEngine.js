@@ -98,8 +98,7 @@ createPowerButton(id, label) {
       // Global / turn-based conditions that should make it non-usable this turn
       const anotherPowerUsedThisTurn = state.powerUsedThisTurn;
       const notNormalPhase = state.phase !== "normal";
-      
-      // Your rule:
+    
       // a power should be "used"/disabled if:
       //  - this or another power used this turn
       //  - OR it was used before in the match
