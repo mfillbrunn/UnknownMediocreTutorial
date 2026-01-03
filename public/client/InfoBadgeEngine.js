@@ -51,7 +51,7 @@ window.InfoBadgeEngine = {
           ${m.emoji ? `${m.emoji} ` : ""}${m.text}
         </span>
       `)
-      .join(`<span class="badge-sep">  </span>`);
+      .join(`<span class="badge-sep">··</span>`);
 
     badge.classList.add("show");
   }
