@@ -91,7 +91,7 @@ InfoBadgeEngine.register(function remainingWordsCollector(state, role) {
   // Current always shown
   msgs.push({
     screen: "setter",
-    priority: 10,
+    priority: 0,
     text: `Words: ${info.current.toLocaleString()}`
   });
 
