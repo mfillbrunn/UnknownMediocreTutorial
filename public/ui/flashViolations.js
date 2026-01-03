@@ -41,20 +41,18 @@ function findConsistencyViolations(history, proposedSecret, state) {
 }
 
 function flashConsistencyViolations({ secretIndices, history }) {
-  // --- Setter draft ---
+  // --- Setter draft row tiles ---
   const draftRow = document.querySelector(".history-row.setter-draft");
   if (draftRow) {
-    const tiles = draftRow.querySelectorAll(".history-tile");
-    tiles.forEach((tile, i) => {
-      if (secretIndices.has(i)) {
-        flashTile(tile);
-      }
+    const draftTiles = draftRow.querySelectorAll(".history-tile");
+    draftTiles.forEach((tile, i) => {
+      if (secretIndices.has(i)) flashTile(tile);
     });
   }
 
-  // --- History rows ---
+  // --- History rows: setter + guesser ---
   const rowWraps = document.querySelectorAll(
-    "#historySetter .history-row-wrap, #historyGuesser .history-row-wrap"
+    "#setterGuesserSubmitted .history-row-wrap, #historyGuesser .history-row-wrap"
   );
 
   history.forEach(({ roundIndex, indices }) => {
@@ -65,23 +63,25 @@ function flashConsistencyViolations({ secretIndices, history }) {
     if (!row) return;
 
     const tiles = row.querySelectorAll(".history-tile");
-
     indices.forEach(i => {
       const tile = tiles[i];
-      if (tile) {
-        flashTile(tile);
-      }
+      if (tile) flashTile(tile);
     });
   });
 }
 
 function flashTile(tile) {
+  // restart animation reliably even if it was just applied
+  tile.classList.remove("violation");
+  void tile.offsetWidth; // force reflow
   tile.classList.add("violation");
+
   tile.addEventListener(
     "animationend",
     () => tile.classList.remove("violation"),
     { once: true }
   );
 }
+
 
 
