@@ -37,26 +37,10 @@ function endGame(state, roomId, io, room) {
 
 function handleGameOverPhase(room, state, action, role, roomId, context) {
   const io = context.io;
-     if (state.timeControl.enabled) {
-      stopTimer(roomId);
-      state.isTimerRunning = false;
-   } 
-  // --------------------------------------------------------------------
-  // The only valid action in gameOver is NEW_MATCH
-  // --------------------------------------------------------------------
-  
+   ///NEXT ROUND
   if (action.type === "NEXT_ROUND") {
-    if (!state.canNextRound || state.gameOverView !== "round") {
-      return; // ignore if not allowed
-    }
-    // Let the mode decide role swapping, power persistence, next phase, etc.
-    // Expected return shape:
-    // { phase: "simultaneous"|"normal", resetRound: true|false }
-    const res = state.mode?.onNextRound?.(state) || {
-      phase: "simultaneous",
-      resetRound: true
-    };
-
+    if (!state.canNextRound || state.gameOverView !== "round") {return;}
+    const res = state.mode?.onNextRound?.(state) || {phase: "simultaneous",resetRound: true};
     if (res.resetRound) {
       resetRoundState(state);
     }
@@ -68,7 +52,6 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
         startGameTimerSim(room, state, roomId, context)
         state.isTimerRunning=true;
       }
-     
     state.gameOver = false;
     state.gameOverView = "match";
     state.canNextRound = false;
@@ -78,24 +61,18 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     emitStateForAllPlayers(roomId, room, io);
     return;
   }  
+        ///NEW MATCH
      if (action.type === "NEW_MATCH") {
-      const fresh = createInitialState();
-     Object.assign(state, fresh);
-  
-     // Assign setter/guesser based on current room.players roles (A/B)
-     state.setter = "A";
-     state.guesser = "B";
-    // Re-enter lobby
-    state.phase = "lobby";
-    state.ready = { A: false, B: false };   
-    emitLobbyEvent(io, roomId, { type: "showLobby" });
-    emitStateForAllPlayers(roomId, room, io);
-    return;
-  }
-
-  // --------------------------------------------------------------------
-  // All other actions are ignored during gameOver
-  // --------------------------------------------------------------------
+        const fresh = createInitialState();
+        Object.assign(state, fresh);  
+        state.setter = "A";
+        state.guesser = "B";
+        state.phase = "lobby";
+        state.ready = { A: false, B: false };   
+        emitLobbyEvent(io, roomId, { type: "showLobby" });
+        emitStateForAllPlayers(roomId, room, io);
+        return;
+     }
   return;
 }
 
@@ -107,5 +84,4 @@ function startGameTimerSim(room, state, roomId, context) {
       return;
   });
 }
-
 module.exports = {handleGameOverPhase, endGame};
