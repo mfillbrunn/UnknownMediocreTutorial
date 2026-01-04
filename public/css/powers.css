@@ -39,14 +39,6 @@
 
   pointer-events: none;
 }
-/* Reduced motion accessibility */
-@media (prefers-reduced-motion: reduce) {
-  .history-tile.tile-hidden-cycle::before {
-    animation: none;
-    opacity: 0.7;
-  }
-}
-
 /* ===============================
    FREEZE — Draft Row Overlay
    =============================== */
@@ -88,12 +80,6 @@
   position: relative;
   z-index: 1;
 }
-@media (prefers-reduced-motion: reduce) {
-  .history-row.freeze-draft::after {
-    animation: none;
-  }
-}
-
 /* ===============================
    BLIND GUESS (UI-only power)
    =============================== */
