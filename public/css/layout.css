@@ -17,7 +17,13 @@
   transition: opacity 0.25s var(--ease-ui, ease),
               transform 0.25s var(--ease-ui, ease);
 }
-@media (max-width: 600px) { .screen { padding: var(--sp-12); } }
+@media (max-width: 600px) { 
+   .screen { padding: var(--sp-8);        
+           }
+   .panel {
+    padding: var(--sp-12);
+  }
+}
 
 .screen.active {
   display: block;
@@ -88,7 +94,9 @@ display: grid;
 
 @media (max-width: 600px) {
   .play-row {
-    display: block;
+     display: flex;
+    flex-direction: column;
+    gap: var(--sp-8);
   }
 }
 @media (max-width: 600px) {
@@ -100,12 +108,19 @@ display: grid;
 
 @media (max-width: 600px) {
   .powers-col {
-    flex-direction: row;
+    display: flex;
+     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
     gap: var(--sp-6);
      padding-right: 0;
      margin-top: 0;
+  }
+   .power-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--sp-6);
   }
 }
 /* Left column: powers */
