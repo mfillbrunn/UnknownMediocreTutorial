@@ -82,7 +82,7 @@
   border: 2px solid currentColor !important;
   border-radius: var(--r-10);
 
-  ont-size: var(--fs-16);
+  font-size: var(--fs-16);
   font-weight: 800;
   letter-spacing: 0.5px;
 
@@ -270,7 +270,7 @@
   opacity: 0;
 
   padding: var(--sp-12) var(--sp-22);
-  ont-size: var(--fs-18);
+  font-size: var(--fs-18);
   font-weight: 700;
 
   border-radius: var(--r-10);
@@ -323,7 +323,7 @@
   border-radius: var(--r-10);
   border: 1px solid rgba(255,255,255,0.15);
 
-  ont-size: var(--fs-13);
+  font-size: var(--fs-13);
   line-height: 1.35;
 
   box-shadow:
@@ -357,8 +357,8 @@
 .role-badge {
   padding: var(--sp-2) var(--sp-8);
   border-radius: 999px;
-
-  ont-size: var(--fs-14);
+  line-height: 1;
+  font-size: var(--fs-14);
   font-weight: 800;
   letter-spacing: 0.6px;
   text-transform: uppercase;
@@ -379,7 +379,7 @@
   gap: var(--sp-4) var(--sp-10);
   margin-top: var(--sp-6);
 
-  ont-size: var(--fs-12);
+  font-size: var(--fs-12);
   font-weight: 800;
   letter-spacing: 0.4px;
   text-align: center;
@@ -420,7 +420,9 @@
 
 .chess-timer {
   font-family: var(--font-mono);
-  ont-size: var(--fs-15);
+  font-variant-numeric: tabular-nums;
+  min-width: 3.5ch;
+  font-size: var(--fs-15);
   font-weight: 800;
   letter-spacing: 0.5px;
   color: var(--role-accent);
@@ -454,7 +456,7 @@
   right: 0;
   top: -10px;
 
-  ont-size: var(--fs-11);
+  font-size: var(--fs-11);
   font-weight: 900;
   letter-spacing: 0.5px;
 
@@ -491,7 +493,7 @@
 }
 .power-info-header {
   margin: var(--sp-12) 0 var(--sp-8);
-  ont-size: var(--fs-12);
+  font-size: var(--fs-12);
   font-weight: 900;
   letter-spacing: 0.6px;
   text-transform: uppercase;
@@ -543,13 +545,13 @@
 
 .power-info-title {
   font-weight: 900;
-  ont-size: var(--fs-14);
+  font-size: var(--fs-14);
   margin-bottom: var(--sp-2);
   text-align: left;
 }
 
 .power-info-desc {
-  ont-size: var(--fs-13);
+  font-size: var(--fs-13);
   line-height: 1.35;
   opacity: 0.85;
 }
@@ -585,7 +587,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 
 
 .summary-powers {
-  ont-size: var(--fs-12);
+  font-size: var(--fs-12);
   line-height: 1.3;
 }
 
@@ -597,7 +599,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   color: #ff4b5c;
 }
 .match-meta {
-  ont-size: var(--fs-12);
+  font-size: var(--fs-12);
   opacity: 0.85;
   margin-top: var(--sp-4);
   letter-spacing: 0.3px;
