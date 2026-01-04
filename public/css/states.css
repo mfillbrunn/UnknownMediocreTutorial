@@ -2,7 +2,7 @@
 #setterScreen.is-not-your-turn #keyboardSetter,
 #guesserScreen.is-not-your-turn #keyboardGuesser{
   filter: grayscale(0.9);
-  opacity: 0.35;
+  opacity: 0.45;
   pointer-events: none;
 }
 
