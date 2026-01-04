@@ -80,7 +80,7 @@
   }
 }
 
-.key-animate { animation: key-shine 180ms ease-out; }
+.key-animate { animation: key-shine 180ms var(--ease-ui); }
 @keyframes key-shine {
   0%   { box-shadow: 0 0 0 rgba(255,255,255,0); }
   50%  { box-shadow: 0 0 12px rgba(255,255,255,.35); }
