@@ -247,6 +247,7 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
   updateScreens();
   updateSummary();
   InfoBadgeEngine.render(state, myRole);
+  renderSetterRemainingBox(state);
   if (state.phase !== "lobby") hide("lobby");
 }
 
