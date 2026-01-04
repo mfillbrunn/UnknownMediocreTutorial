@@ -79,53 +79,56 @@ function getRemainingWordInfo(state, newSecret) {
     new: newCount
   };
 }
+function renderSetterRemainingBox(state) {
+  const box = document.getElementById("SetterRemainingBox");
+  if (!box) return;
 
-InfoBadgeEngine.register(function remainingWordsCollector(state, role) {
-  if (role !== state.setter) return null;
+  if (!state || state.phase !== "playing") {
+    box.innerHTML = "";
+    return;
+  }
+
+  // Only setter sees it
+  if (state.self !== state.setter) {
+    box.innerHTML = "";
+    return;
+  }
 
   const info = getRemainingWordInfo(state, state.setterDraft);
-  if (!info || info.current == null) return null;
-
-  const msgs = [];
-
-  // Current always shown
-  msgs.push({
-    screen: "setter",
-    priority: 0,
-    text: `Words: ${info.current.toLocaleString()}`
-  });
+  if (!info || info.current == null) {
+    box.innerHTML = "";
+    return;
+  }
 
   const hasOld = info.old > -1;
   const hasNew = info.new > -1;
 
-  let oldColor;
-  let newColor;
+  let oldStyle = "";
+  let newStyle = "";
 
   if (hasOld && hasNew) {
-    if (info.old > info.new) {
-      oldColor = "var(--tile-green)";
-    } else if (info.new > info.old) {
-      newColor = "var(--tile-green)";
-    }
-    // equal → no color
+    if (info.old > info.new) oldStyle = "color: var(--tile-green)";
+    else if (info.new > info.old) newStyle = "color: var(--tile-green)";
   }
 
-  msgs.push({
-    screen: "setter",
-    priority: 0.001,
-    text: `Keep: ${hasOld ? info.old.toLocaleString() : "?"}`,
-    color: oldColor
-  });
-
-  msgs.push({
-    screen: "setter",
-    priority: 0.002,
-    text: `New: ${hasNew ? info.new.toLocaleString() : "?"}`,
-    color: newColor
-  });
-
-  return msgs;
-});
-
+  box.innerHTML = `
+    <div class="line">
+      <span class="label">Words</span>
+      <span class="value">${info.current.toLocaleString()}</span>
+    </div>
+    <div class="line">
+      <span class="label">Keep</span>
+      <span class="value" style="${oldStyle}">
+        ${hasOld ? info.old.toLocaleString() : "?"}
+      </span>
+    </div>
+    <div class="line">
+      <span class="label">New</span>
+      <span class="value" style="${newStyle}">
+        ${hasNew ? info.new.toLocaleString() : "?"}
+      </span>
+    </div>
+  `;
+}
 
 
