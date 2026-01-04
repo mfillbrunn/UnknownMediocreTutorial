@@ -536,7 +536,7 @@
 }
 
 /*--- POWER INFO button */
-.power-info-btn {
+.power-info-btn, .constraint-toggle-btn {
   all: unset;
   cursor: pointer;
 
@@ -554,9 +554,7 @@
     var(--role-accent) 65%,
     transparent
   );
-
   opacity: 0.7;
-
   transition:
     opacity 0.15s var(--ease-ui),
     transform 0.15s var(--ease-ui),
@@ -571,7 +569,7 @@
   pointer-events: none;
 }
 
-.power-info-btn:hover {
+.power-info-btn:hover, .constraint-toggle-btn:hover {
   opacity: 1;
   box-shadow: 0 0 6px color-mix(
     in srgb,
@@ -580,10 +578,10 @@
   );
 }
 
-.power-info-btn:active {
+.power-info-btn:active, .constraint-toggle-btn:active  {
   transform: scale(0.95);
 }
-.power-info-btn:focus-visible {
+.power-info-btn:focus-visible, .constraint-toggle-btn:focus-visible {
   outline: 2px solid color-mix(
     in srgb,
     var(--role-accent) 70%,
