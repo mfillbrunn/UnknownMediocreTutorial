@@ -316,8 +316,7 @@ function updateRoleLabels() {
 function updateSetterScreen() {
   const setterName = state.playerNames?.[state.setter] || "Setter";
   KeepEnabled=true;
-  NewEnabled=true;
-  renderSetterRemainingBox(state);
+  NewEnabled=true;  
   $("setterScreen").querySelector(".screen-title").textContent = setterName;
   $("setterRoleBadge").textContent = "Setter";
   const fgModal = $("forceGuessModal");
@@ -451,6 +450,7 @@ function handleSetterInput(event) {
     const draft = state.setterDraft || "";
     if (event.type === "BACKSPACE") {
       state.setterDraft = draft.slice(0, -1);
+      renderSetterRemainingBox(state, myRole, draft);
       updateUI();
       return;
     }
@@ -458,6 +458,7 @@ function handleSetterInput(event) {
       remainingCache.setterCurrent = null;
       if (draft.length < 5) {
         state.setterDraft = draft + event.value;
+        renderSetterRemainingBox(state, myRole, draft);
         updateUI();
       }
       return;
@@ -470,11 +471,13 @@ function handleSetterInput(event) {
         state.setterDraft = "";        
         sendGameAction(roomId, { type: "SET_SECRET_SAME" });  
         resetEphemeralUIState();
+        renderSetterRemainingBox(state, myRole, state.secret);
         updateUI();
         return;
       }
     }
-    if (NewEnabled) {      
+    if (NewEnabled) {
+      renderSetterRemainingBox(state, myRole, draft);
       submitSetterNew();
       return;
     }
