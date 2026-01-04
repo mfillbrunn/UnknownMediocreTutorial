@@ -54,6 +54,9 @@
    .history-tiles{
       gap: var(--sp-6);
    }
+   .history-row{
+      min-height:0;
+   }
    .play-area > * + *{
       margin-top: var(--sp-6);
    }
@@ -62,20 +65,13 @@
     align-items: center;
     justify-content: flex-start;   
     gap: var(--sp-10);
-
     padding: var(--sp-6) var(--sp-8);
     font-size: var(--fs-12);
     width: fit-content;          
     max-width: 100%;
   }
-
   .remaining-box .line {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-4);
-    margin: 0;
-    border: none;
-    padding: 0;
+    display: none;
   }
 }
 
