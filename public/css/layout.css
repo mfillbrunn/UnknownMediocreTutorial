@@ -95,7 +95,8 @@ display: grid;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--sp-6);
+  row-gap: var(--sp-6);
+   margin-top: var(--sp-6);
   }
 
 /* Center column: history + draft */
@@ -105,6 +106,8 @@ display: grid;
   align-items: center;
    pointer-events: none;
    max-width: 100%;
+   row-gap: var(--sp-6);
+   margin-top: var(--sp-6);
 }
 
 
@@ -184,32 +187,26 @@ margin:0;
   pointer-events: none;
 }
 /* =========================================
-   SECRET ROW / SAME BUTTON
+   SECRET ROW 
    ========================================= */
 .secret-row {
   display: flex;
   justify-content: center;
-  margin-bottom: var(--sp-12);
 }
 .secret-inline {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-12);
-}
+ }
 
 /* =========================================
    3 column layout
    ========================================= */
-
    .power-container {
   flex-direction: column;
-  row-gap: var(--sp-4);
-}
-
+  }
 .power-btn-wrapper {
-  margin-bottom: var(--sp-8);
+  margin-bottom: 0;
 }
-
 .center-col .history-tiles,
 .draft-layer {
   background: transparent;
