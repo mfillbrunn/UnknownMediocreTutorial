@@ -74,6 +74,9 @@
     order: 2;
     margin-top: var(--sp-8);
   }
+.theme-guesser .powers-col {
+  margin-top: 0;
+}
 
   .center-col {
     order: 1;
