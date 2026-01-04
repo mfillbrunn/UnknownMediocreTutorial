@@ -48,6 +48,8 @@
    --tile-blue:#4ea3ff;
   --tile-blue-text:#000;
    --warning-accent: #ffb347; 
+    --guesser-color:  #4da3ff;
+   --setter-color:#ff4b5c;
 /*----SIZING ---*/
    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
