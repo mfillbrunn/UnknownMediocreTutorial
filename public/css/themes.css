@@ -57,6 +57,51 @@
   --kb-border:#2b303a;
   --kb-hover:#2f3036;
   --kb-used:#2a2a2c;
+
+/*----SIZING ---*/
+   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+
+  /* Type scale */
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-18: 18px;
+  --fs-20: 20px;
+  --fs-24: 24px;
+
+  /* Line heights */
+  --lh-tight: 1.1;
+  --lh-base: 1.45;
+
+  /* Spacing scale */
+  --sp-2: 2px;
+  --sp-4: 4px;
+  --sp-6: 6px;
+  --sp-8: 8px;
+  --sp-10: 10px;
+  --sp-12: 12px;
+  --sp-14: 14px;
+  --sp-16: 16px;
+  --sp-20: 20px;
+  --sp-24: 24px;
+
+  /* Radii */
+  --r-6: 6px;
+  --r-8: 8px;
+  --r-10: 10px;
+  --r-12: 12px;
+  --r-14: 14px;
+  --r-pill: 999px;
+
+  /* Control heights */
+  --h-control: 44px;
+  --h-control-sm: 36px;
+
+  /* Shadows (keep it minimal) */
+  --shadow-inset: 0 0 6px rgba(0,0,0,.35) inset;
+  --shadow-card: 0 0 12px rgba(0,0,0,.35);
 }
 
 /* Light theme */
