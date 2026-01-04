@@ -57,8 +57,7 @@
   .powers-col .power-btn {
     flex: 1 1 48%;
     padding: 0 var(--sp-6);       
-    min-height: 32px;           
-    font-size: var(--fs-10);      
+    min-height: 32px;              
     letter-spacing: 0.3px;
 }
    .history-tiles{
