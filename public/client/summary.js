@@ -196,8 +196,8 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
         <td><b>Total</b></td>
         <td colspan="2"></td>
         <td></td>
-        <td><b>${formatDuration(time.A)} (${names.A})</b></td>
-        <td><b>${formatDuration(time.B)} (${names.B})</b></td>
+        <td><b>${formatDuration(time.A)} </b></td>
+        <td><b>${formatDuration(time.B)} </b></td>
       </tr>
     </table>
   `;
