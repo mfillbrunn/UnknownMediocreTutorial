@@ -717,3 +717,19 @@
 .theme-guesser .remaining-box {
   display: none;
 }
+.remaining-box .line:first-child {
+  padding-bottom: var(--sp-4);
+  margin-bottom: var(--sp-4);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.remaining-box .line:first-child .label {
+  font-weight: 900;
+  opacity: 0.9;
+}
+
+.remaining-box .line:first-child .value {
+  font-size: var(--fs-14);
+  font-weight: 900;
+}
+
