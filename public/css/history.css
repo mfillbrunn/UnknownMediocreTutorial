@@ -297,6 +297,10 @@ position: absolute;
   opacity: 1;
   box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 60%, transparent);
 }
+.power-info-btn,
+.constraint-toggle-btn {
++  align-self: baseline;
+}
 
 body.hide-constraints .constraint-row {
   display: none;
