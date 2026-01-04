@@ -194,7 +194,6 @@ Constraint row using history tile language
   box-shadow:
     0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent),
     inset 0 0 var(--sp-6) color-mix(in srgb, var(--role-accent) 18%, transparent);
-   margin: var(--sp-6) 0;
 }
 
 .constraint-row::before {
