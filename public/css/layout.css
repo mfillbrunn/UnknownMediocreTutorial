@@ -68,19 +68,19 @@
   .play-row {
     grid-template-columns: 1fr;
   }
-
-  .powers-col,
-  .side-col {
-    order: 2;
+  .powers-col {
+    order: 2 !important;
     margin-top: var(--sp-8);
   }
 .theme-guesser .powers-col {
   margin-top: 0;
 }
-
   .center-col {
-    order: 1;
+    order: 1 !important;
   }
+   .keyboard{
+   order: 3 !important;
+   }
 }
 
 /* 3-column play layout */
