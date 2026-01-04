@@ -2,10 +2,10 @@
 :where(.panel, .constraints-box, .history-box, .summary-box, .preview-box) {
   background: var(--panel-bg);
   color: var(--panel-text);
-  border-radius: 10px;
-  padding: 14px;
+  border-radius: var(--r-10);
+  padding: var(--sp-16);
   margin-top: 14px;
-  box-shadow: 0 0 6px rgba(0,0,0,.4) inset;
+  box-shadow: var(--shadow-inset-soft);
 }
 
 .summary-table {
@@ -49,9 +49,11 @@
 .primary-btn {
   background: var(--btn-primary);
   color: #fff;
-  box-shadow: 0 0 10px var(--btn-primary-glow);
+  box-shadow: var(--shadow-soft);
 }
-.primary-btn:hover { background: var(--btn-primary-hover); }
+.primary-btn:hover { 
+  background: var(--btn-primary-hover);
+  box-shadow: 0 0 14px var(--btn-primary-glow);}
 
 .secondary-btn {
   background: var(--btn-secondary);
