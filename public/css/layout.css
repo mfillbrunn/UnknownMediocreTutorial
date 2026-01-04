@@ -17,7 +17,7 @@
   transition: opacity 0.25s var(--ease-ui, ease),
               transform 0.25s var(--ease-ui, ease);
 }
-@media (max-width: 420px) { .screen { padding: var(--sp-12); } }
+@media (max-width: 600px) { .screen { padding: var(--sp-12); } }
 
 .screen.active {
   display: block;
@@ -64,24 +64,6 @@
   pointer-events: auto;
 }
 
-@media (max-width: 420px) {
-  .play-row {
-    grid-template-columns: 1fr;
-  }
-  .powers-col {
-    order: 2 !important;
-    margin-top: var(--sp-8);
-  }
-.theme-guesser .powers-col {
-  margin-top: 0;
-}
-  .center-col {
-    order: 1 !important;
-  }
-   .keyboard{
-   order: 3 !important;
-   }
-}
 
 /* 3-column play layout */
 .play-row {
@@ -92,6 +74,17 @@ display: grid;
   pointer-events: none;
 }
 
+@media (max-width: 600px) {
+  .powers-col {
+    order: 2 !important;
+  }
+  .center-col {
+    order: 1 !important;
+  }
+   .keyboard{
+   order: 3 !important;
+   }
+}
 
 @media (max-width: 600px) {
   .play-row {
@@ -104,17 +97,15 @@ display: grid;
     margin-bottom: var(--sp-8);
   }
 }
-@media (max-width: 600px) {
-  .powers-col {
-    padding-right: 0;
-  }
-}
+
 @media (max-width: 600px) {
   .powers-col {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
     gap: var(--sp-6);
+     padding-right: 0;
+     margin-top: 0;
   }
 }
 /* Left column: powers */
