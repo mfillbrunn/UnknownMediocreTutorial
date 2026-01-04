@@ -154,7 +154,7 @@
   align-items: center;
   justify-content: center;
 
-  border-radius: 6px;
+  border-radius: var(--r-6);
   font-weight: 700;
   letter-spacing: 1px;
 
