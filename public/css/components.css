@@ -6,6 +6,7 @@
   padding: var(--sp-16);
   margin-top: var(--sp-14);
   box-shadow: var(--shadow-inset-soft);
+  border: none;
 }
 
 .summary-table {
