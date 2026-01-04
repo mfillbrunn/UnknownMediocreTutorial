@@ -1,1 +1,55 @@
+body {
+  margin: 0;
+  padding: 0;
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.45;
+  background:
+    radial-gradient(circle at top center, rgba(255, 0, 0, 0.08), transparent 60%),
+    #0c0c0e;
+}
+* {
+  box-sizing: border-box;
+}
 
+/* =========================================
+   LOBBY TYPOGRAPHY
+   ========================================= */
+/* Low-specificity grouping to avoid clashes */
+.screen-lobby :where(input, button, p, label, span),
+.screen-lobby {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+}
+
+.screen-lobby input { font-weight: 600; }
+
+.screen-lobby button {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.title {
+  margin: 6px 0 10px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  opacity: 0.85;
+  text-transform: uppercase;
+}
+
+.screen-title {
+  margin: 0;
+   line-height: 1; 
+   display: inline-flex;
+   align-items: center;
+   font-size: 24px;
+  color: var(--heading);
+   margin-bottom: 8px;
+}
+
+
+.hidden {
+  display: none !important;
+}
