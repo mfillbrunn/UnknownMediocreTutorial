@@ -95,14 +95,13 @@ display: grid;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-   padding-right: var(--sp-10);
+  gap: var(--sp-6);
   }
 
 /* Center column: history + draft */
 .center-col {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-6);
   align-items: center;
    pointer-events: none;
    max-width: 100%;
