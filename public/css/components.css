@@ -28,17 +28,22 @@
    BUTTONS
    ========================================= */
 :where(.primary-btn, .secondary-btn) {
-  padding: 12px 16px;
-  border-radius: 10px;
   border: none;
   margin: 10px 0;
   cursor: pointer;
-
   text-transform: uppercase;
   font-weight: 700;
-  letter-spacing: 0.5px;
-
   transition: .15s ease;
+  min-height: var(--h-control);
+  padding: 0 var(--sp-16);
+  border-radius: var(--r-10);
+  letter-spacing: 0.5px;
+}
+:where(.primary-btn.small, .secondary-btn.small) {
+  min-height: var(--h-control-sm);
+  padding: 0 var(--sp-12);
+  border-radius: var(--r-8);
+  font-size: var(--fs-14);
 }
 
 .primary-btn {
