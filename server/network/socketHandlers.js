@@ -57,11 +57,25 @@ module.exports = function registerSocketHandlers(io, context) {
         return cb({ ok: false, error: "No open rooms available" });
       }
     
-      const result = joinRoom(socket, roomId);
-      if (!result.ok) return cb(result);
+      //const result = joinRoom(socket, roomId);
+      //if (!result.ok) return cb(result);
     
       const room = rooms[roomId];
-    
+       if (!room || !room.players) {
+        return cb({ ok: false, error: "Room not found" });
+      }
+      const occupiedRoles = new Set(Object.values(room.players));
+      let assignedRole;
+      if (!occupiedRoles.has("A")) {
+        assignedRole = "A"; // Setter
+      } else if (!occupiedRoles.has("B")) {
+        assignedRole = "B"; // Guesser
+      } else {
+        return cb({ ok: false, error: "Room is full" });
+      }
+      socket.join(roomId);
+      room.players[socket.id] = assignedRole;
+      
       // Notify host
       socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
     
@@ -71,7 +85,7 @@ module.exports = function registerSocketHandlers(io, context) {
         .find(id => room.players[id] === "B");
     
       socket.emit("roleAssigned", {
-        role: room.players[socket.id],
+        role: assignedRole,
         setterId,
         guesserId
       });
