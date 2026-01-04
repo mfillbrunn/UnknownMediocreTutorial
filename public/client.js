@@ -184,7 +184,6 @@ onStateUpdate(newState => {
   // restore client-only draft
   if (prevPhase === "simultaneous" && state.phase === "normal") {
     localGuesserDraft = "";
-    document.body.classList.add("in-match");
   }
   const setterCanEdit =  myRole === state.setter &&  ((state.phase === "normal" && state.turn === state.setter &&!!state.pendingGuess) || (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
   if (setterCanEdit) {
