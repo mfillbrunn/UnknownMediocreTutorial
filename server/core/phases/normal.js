@@ -13,6 +13,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   /// GUESSER SUBMIT
   if (!state.pendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
     const g = action.guess.toLowerCase(); 
+    state.guessCount=+1;
     state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
     state.roundStartTime = Date.now();
     // ASSASSIN
