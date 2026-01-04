@@ -246,12 +246,22 @@
 
 
 /* ENTER key — semantic, not positional */
+/* ENTER key — both roles */
 .key[data-key="ENTER"] {
   position: relative;
-  color: transparent; /* hide text */
+  color: transparent;
   background: var(--btn-primary);
   box-shadow: 0 0 8px var(--btn-primary-glow);
 }
+
+/* Hover / active ENTER key */
+.key[data-key="ENTER"]:hover,
+.key[data-key="ENTER"]:active {
+  background: var(--btn-primary-hover);
+  box-shadow: 0 0 12px var(--btn-primary-glow);
+  transform: translateY(-1px);
+}
+
 
 .key[data-key="ENTER"]::before {
   content: "⏎";
@@ -580,22 +590,6 @@
 #keyboardSetter,
 #keyboardGuesser {
   margin-top: var(--sp-12);  
-}
-
-
-/* Base ENTER key */
-body #keyboardGuesser .key[data-key="ENTER"] {
-  background: var(--btn-primary) !important;
-  color: #fff !important;
-  box-shadow: 0 0 8px var(--btn-primary-glow) !important;
-}
-
-/* Hover / active ENTER key */
-body #keyboardGuesser .key[data-key="ENTER"]:hover,
-body #keyboardGuesser .key[data-key="ENTER"]:active {
-  background: var(--btn-primary-hover) !important;
-  box-shadow: 0 0 12px var(--btn-primary-glow) !important;
-  transform: translateY(-1px);
 }
 
 .theme-setter .key.key-gray:hover,
