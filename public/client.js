@@ -196,7 +196,11 @@ onStateUpdate(newState => {
   window.state = state; 
   updatePowerInfoState(state);
   updateUI();
-  if (state.secret){renderSetterRemainingBox(state, myRole, state.secret);}
+  if (state.phase === "normal"){
+    renderSetterRemainingBox(state, myRole, state.secret);
+  } else if (state.phase === "simultaneous"){
+    renderSetterRemainingBox(state, myRole, "");
+  }
   remainingCache.setterOld = null;
 });
 
