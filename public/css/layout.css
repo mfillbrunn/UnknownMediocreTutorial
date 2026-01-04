@@ -130,6 +130,7 @@
   align-items: center;
   justify-content: space-between;
    margin-bottom: var(--sp-8);
+   min-height: 40px;
 }
 .header-row.header-sub {
   display: flex;
@@ -141,7 +142,7 @@
 /* Left cluster: title + room */
 .header-left {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--sp-10);
 }
 
@@ -161,7 +162,7 @@
 /* Right cluster: timer + icons */
 .header-right {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--sp-8);
 }
 .role-header h2{
