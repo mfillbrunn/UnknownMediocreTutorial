@@ -723,13 +723,7 @@
 }
 
 .remaining-box .line:first-child .label {
-  font-weight: 900;
   opacity: 0.9;
-}
-
-.remaining-box .line:first-child .value {
-  font-size: var(--fs-14);
-  font-weight: 900;
 }
 
 @media (max-width: 600px) {
@@ -752,12 +746,6 @@
     margin: 0;
     border: none;
     padding: 0;
-  }
-
-  .remaining-box .line:first-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
   }
 }
 
