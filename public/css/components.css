@@ -358,12 +358,7 @@
   transform: translateY(4px);
   transition: opacity .15s var(--ease-ui), transform .15s var(--ease-ui);
 }
-@media (prefers-reduced-motion: reduce) {
-  .tooltip {
-    transition: none;
-    transform: none;
-  }
-}
+
 .tooltip.show {
   opacity: 1;
   transform: translateY(0);
@@ -725,28 +720,3 @@
 .remaining-box .line:first-child .label {
   opacity: 0.9;
 }
-
-@media (max-width: 600px) {
-  .remaining-box {
-    display: inline-flex;         
-    align-items: center;
-    justify-content: flex-start;   
-    gap: var(--sp-10);
-
-    padding: var(--sp-6) var(--sp-8);
-    font-size: var(--fs-12);
-    width: fit-content;          
-    max-width: 100%;
-  }
-
-  .remaining-box .line {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-4);
-    margin: 0;
-    border: none;
-    padding: 0;
-  }
-}
-
-
