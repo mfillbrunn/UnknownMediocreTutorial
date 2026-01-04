@@ -91,18 +91,21 @@
   display: inline-flex; /* or flex, whatever you’re using */
 }
  .header-row.header-top {
-    flex-wrap: wrap;             
-    justify-content: flex-start;  
-    gap: var(--sp-6);            
-  }
-    .header-row.header-top {
-    flex-wrap: wrap;              
-    justify-content: flex-start;  
-    gap: var(--sp-6);             
-  }
-   .header-row.header-top {
+   flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--sp-6);
     margin-left: 0;
-    margin-right: 0;
+    margin-right: 0;         
+  }
+  .header-left,
+  .header-right {
+    flex: 1 1 100%;
+  }
+   .header-left {
+    justify-content: flex-start;
+  }
+   .header-right {
+    justify-content: flex-end;
   }
 }
 
