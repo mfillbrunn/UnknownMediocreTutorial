@@ -675,7 +675,7 @@
 
   background: color-mix(in srgb, var(--role-accent) 6%, transparent);
 
-  border: 1px solid color-mix(in srgb,var(--role-accent) 20%,transparent);
+  border: 1px solid color-mix(in srgb,var(--role-accent) 15%,transparent);
   border-radius: var(--r-8);
 
   color: color-mix(
