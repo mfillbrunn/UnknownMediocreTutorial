@@ -85,18 +85,21 @@ function renderSetterRemainingBox(state, role, draft) {
  
   if (!state || state.phase === "simultaneous" || state.phase === "lobby" || state.phase === "gameOver") {
     box.innerHTML = "";
+    box.hidden = true;
     return;
   }
 
   // Only setter sees it
   if (role !== state.setter) {
     box.innerHTML = "";
+    box.hidden = true;
     return;
   }
 
   const info = getRemainingWordInfo(state, draft);
   if (!info || info.current == null) {
     box.innerHTML = "";
+    box.hidden = true;
     return;
   }
 
