@@ -62,7 +62,7 @@ function findConsistencyViolations(history, proposedSecret) {
 
 
 
-function flashConsistencyViolations({ secretIndices, history }) {
+function flashConsistencyViolations(secretIndices) {
   // --- Setter draft row tiles ---
   const draftRow = document.querySelector(".history-row.setter-draft");
   if (draftRow) {
@@ -70,26 +70,7 @@ function flashConsistencyViolations({ secretIndices, history }) {
     draftTiles.forEach((tile, i) => {
       if (secretIndices.has(i)) flashTile(tile);
     });
-  }
-
-  // --- History rows: setter + guesser ---
-  const rowWraps = document.querySelectorAll(
-    "#setterGuesserSubmitted .history-row-wrap, #historyGuesser .history-row-wrap"
-  );
-
-  history.forEach(({ roundIndex, indices }) => {
-    const wrap = rowWraps[roundIndex];
-    if (!wrap) return;
-
-    const row = wrap.querySelector(".history-row");
-    if (!row) return;
-
-    const tiles = row.querySelectorAll(".history-tile");
-    indices.forEach(i => {
-      const tile = tiles[i];
-      if (tile) flashTile(tile);
-    });
-  });
+  } 
 }
 
 function flashTile(tile) {
