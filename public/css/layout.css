@@ -118,7 +118,7 @@
 .role-header {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--sp-6);
    border: none;
    box-shadow:none;
 }
@@ -141,7 +141,7 @@
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-10);
 }
 
 
