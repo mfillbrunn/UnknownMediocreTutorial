@@ -128,7 +128,8 @@ display: grid;
   display: flex;
   align-items: center;
   justify-content: space-between;
-   margin-bottom: var(--sp-8);
+   margin-left: var(--sp-8);
+   margin-right: var(--sp-8);
    min-height: var(--h-control);
 }
 .header-row.header-sub {
@@ -141,7 +142,7 @@ display: grid;
 /* Left cluster: title + room */
 .header-left {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--sp-10);
 }
 
