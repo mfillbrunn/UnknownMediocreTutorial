@@ -271,35 +271,9 @@ position: absolute;
   line-height: 1;
   border-radius: 2px;
 }
-
-.constraint-toggle-btn {
-  background: transparent;
-  border: 1px solid var(--role-accent);
-  color: var(--role-accent);
-  height: 28px;
-  width: 28px;
-  border-radius: var(--r-6);
-  padding: var(--sp-4) var(--sp-6);
-
-  font-size: var(--fs-12);
-  font-weight: 700;
-  line-height: 1;
-
-  cursor: pointer;
-  opacity: 0.7;
-}
-
-.constraint-toggle-btn:hover {
-  opacity: 1;
-  box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 60%, transparent);
-}
-
-
 body.hide-constraints .constraint-row {
   display: none;
 }
-
-
 
 /* Ghost secret (single consolidated definition) */
 .theme-setter .ghost-secret {
