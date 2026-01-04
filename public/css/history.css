@@ -4,8 +4,6 @@
 .history-tiles {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-10);
-  padding: var(--sp-10) 0;
 }
 
 .history-row {
@@ -339,7 +337,6 @@ body.hide-constraints .constraint-row {
 .draft-layer {
   background: transparent;
   box-shadow: none;
-  padding: 0;
    position: relative;
    z-index: 20;
   pointer-events: none;
