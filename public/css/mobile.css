@@ -23,7 +23,12 @@
    order: 3 !important;
    margin-top: var(--sp-2);
    }
-
+   .play-area > * + * {
+     margin-top: var(--sp-8);
+   }
+   .power-container > * + * {
+     margin-top: 0;
+   }
   .play-row {
      display: flex;
     flex-direction: column;
