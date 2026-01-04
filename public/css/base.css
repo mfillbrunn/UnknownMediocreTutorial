@@ -82,6 +82,6 @@ textarea {
 #roomInfo:not(.hidden) { opacity: 1; }
 
 .laser-outline {
-  border: 1.5px solid currentColor;
+  border: 1.5px solid var(--role-accent);
   border-radius: var(--r-6);
 }
