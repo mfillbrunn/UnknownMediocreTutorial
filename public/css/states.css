@@ -34,8 +34,10 @@
   box-shadow: none;
   border: none;
 }
+
 .theme-setter .key.key-current {
+  outline: 2px dashed var(--warning-accent);
   outline-offset: -2px;
-  animation: blue-outline-pulse 2.2s infinite;
-   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+
+  animation: setter-warning-pulse 2.6s var(--ease-ui) infinite;
 }
