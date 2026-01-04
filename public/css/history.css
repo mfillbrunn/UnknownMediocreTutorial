@@ -66,14 +66,8 @@
 #draftSetter:has(.history-row:nth-child(2))
 .history-row:first-child
 .history-tile {
-  background: color-mix(
-    in srgb,
-    var(--tile-gray) 85%,
-    #000
-  ) ;
-
-  color: var(--tile-gray-text);
-
+  background: color-mix(in srgb, var(--tile-gray) 85%, #000) !important;
+  color: var(--tile-gray-text) !important;
   border-color: rgba(255,255,255,0.18);
   box-shadow: none;
 }
