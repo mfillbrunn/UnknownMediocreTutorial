@@ -77,9 +77,10 @@
 
 
 .power-btn {
-  background: transparent !important;
-  border: 2px solid currentColor !important;
+  background: transparent;
+  border: 2px solid var(--role-accent);
   border-radius: var(--r-10);
+  color: var(--role-accent);
 
   font-size: var(--fs-16);
   font-weight: 800;
@@ -111,7 +112,7 @@
 }
 
 .power-btn:not(.power-used):not(.disabled-btn):hover {
-  box-shadow: 0 0 14px currentColor;
+  box-shadow: 0 0 14px var(--role-accent);
   transform: translateY(-1px);
 }
 
