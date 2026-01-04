@@ -107,7 +107,8 @@
   --btn-primary-hover: #6ab4ff;
   --btn-primary-glow: rgba(70,140,255,.7);
    --opponent-accent: #ff4b5c;
-  --guesser-color: var(--role-accent);
+  --guesser-color: #4da3ff;
+   --setter-color:#ff4b5c;
 }
 .theme-setter {
   --role-accent: #ff4b5c;
@@ -116,7 +117,8 @@
   --btn-primary-hover: #ff3b4d;
   --btn-primary-glow: rgba(255,30,50,.7);
     --opponent-accent: #4da3ff;
- --setter-color: var(--role-accent);
+ --guesser-color:  #4da3ff;
+   --setter-color:#ff4b5c;
    }
 :where(.theme-setter, .theme-guesser) {
   background: #0c0c0e;
