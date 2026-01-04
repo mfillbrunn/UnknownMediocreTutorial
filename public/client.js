@@ -452,16 +452,16 @@ function handleSetterInput(event) {
     const draft = state.setterDraft || "";
     if (event.type === "BACKSPACE") {
       state.setterDraft = draft.slice(0, -1);
-      renderSetterRemainingBox(state, myRole, draft);
       updateUI();
+      renderSetterRemainingBox(state, myRole, draft);
       return;
     }
     if (event.type === "LETTER") {
       remainingCache.setterCurrent = null;
       if (draft.length < 5) {
         state.setterDraft = draft + event.value;
-        renderSetterRemainingBox(state, myRole, draft);
         updateUI();
+        renderSetterRemainingBox(state, myRole, draft);
       }
       return;
     }
@@ -473,8 +473,8 @@ function handleSetterInput(event) {
         state.setterDraft = "";        
         sendGameAction(roomId, { type: "SET_SECRET_SAME" });  
         resetEphemeralUIState();
-        renderSetterRemainingBox(state, myRole, state.secret);
         updateUI();
+        renderSetterRemainingBox(state, myRole, state.secret);
         return;
       }
     }
