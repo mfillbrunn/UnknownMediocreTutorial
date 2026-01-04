@@ -377,3 +377,25 @@ body.hide-constraints .constraint-row {
 .pending-guess .history-tile {
   border: 2px solid rgba(255,255,255,0.5);
 }
+ /*----REMAINING WORDS ---*/
+/* SETTER REMAINING WORDS */
+.remaining-label {
+  display: flex;
+  align-items: center;
+  gap: 16px;          /* ← THIS is your “tab” spacing */
+  white-space: nowrap;
+}
+
+.remaining-old,
+.remaining-new {
+  transition: color 0.2s ease, opacity 0.2s ease;
+  }
+
+/* Better option */
+.remaining-old.better,
+.remaining-new.better {
+  color: #2ecc71;
+  font-weight: 700;
+  opacity: 1;
+  animation: pulse-good 280ms cubic-bezier(0.4, 0, 0.2, 1) 2;
+}
