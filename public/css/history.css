@@ -1,1 +1,402 @@
+/* =========================================
+   HISTORY — TILE STYLE
+   ========================================= */
+.history-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0;
+}
 
+.history-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;   
+
+}
+
+.history-tile {
+  width: clamp(30px, 8vw, 42px);
+  height: clamp(36px, 9vw, 48px);
+  font-size: clamp(14px, 3.5vw, 20px);
+  border-radius: 6px;
+  font-weight: 800;
+  letter-spacing: 1px;
+
+  border: 1px solid #00000055;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+   box-sizing: border-box;
+  color: #fff;
+
+  transform-style: preserve-3d;
+  perspective: 600px;
+  position: relative;
+  animation: none; /* baseline */
+}
+
+/* Red flash overlay that sits above existing tile colors */
+.history-tile.violation::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: rgba(220, 38, 38, 0.85); /* strong red overlay */
+  box-shadow: 0 0 14px rgba(220, 38, 38, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  animation: violation-overlay-flash 420ms ease-in-out;
+}
+
+/* Optional: make text pop during flash */
+.history-tile.violation {
+  color: #fff !important;
+}
+/* Stagger tiles automatically */
+.history-row .history-tile:nth-child(1) { animation-delay: 0.00s; }
+.history-row .history-tile:nth-child(2) { animation-delay: 0.08s; }
+.history-row .history-tile:nth-child(3) { animation-delay: 0.16s; }
+.history-row .history-tile:nth-child(4) { animation-delay: 0.24s; }
+.history-row .history-tile:nth-child(5) { animation-delay: 0.32s; }
+
+/* Only when there are TWO draft rows:
+   style the TOP one as guesser-owned */
+.theme-setter
+#draftSetter:has(.history-row:nth-child(2))
+.history-row:first-child
+.history-tile {
+  border-color: color-mix(in srgb, var(--opponent-accent) 70%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--opponent-accent) 40%, transparent);
+  color: var(--opponent-accent);
+  
+}
+
+.history-tile.empty {
+  opacity: 0.35;
+}
+
+.history-tile.tile-hidden-cycle {
+  position: relative;
+  overflow: hidden;
+
+  background: var(--tile-gray);
+  color: var(--tile-gray-text);
+  border: 1.5px solid #00000066;
+}
+
+/* Question-mark pattern overlay */
+.history-tile.tile-hidden-cycle::before {
+  content: "?";
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: "Courier New", monospace;
+  font-weight: 1000;
+  font-size: 20px;
+
+  color: rgba(255, 255, 255, 0.32);
+
+  text-shadow:
+    -18px -18px rgba(255,255,255,0.18),
+     0px  -18px rgba(255,255,255,0.22),
+     18px -18px rgba(255,255,255,0.18),
+
+    -18px   0px rgba(255,255,255,0.22),
+     18px   0px rgba(255,255,255,0.22),
+
+    -18px  18px rgba(255,255,255,0.18),
+     0px   18px rgba(255,255,255,0.22),
+     18px  18px rgba(255,255,255,0.18);
+
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.35));
+
+  pointer-events: none;
+}
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .history-tile.tile-hidden-cycle::before {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+/* Existing tiles row */
+.history-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.history-row-wrap {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.history-row-anchor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.history-row .history-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Gentle phase desync per tile (prevents lockstep motion) */
+.history-row .history-tile.tile-hidden-cycle:nth-child(1)::before {
+  animation-delay: -0.8s;
+}
+.history-row .history-tile.tile-hidden-cycle:nth-child(2)::before {
+  animation-delay: -1.6s;
+}
+.history-row .history-tile.tile-hidden-cycle:nth-child(3)::before {
+  animation-delay: -2.4s;
+}
+.history-row .history-tile.tile-hidden-cycle:nth-child(4)::before {
+  animation-delay: -1.2s;
+}
+.history-row .history-tile.tile-hidden-cycle:nth-child(5)::before {
+  animation-delay: -2.0s;
+}
+
+
+
+.theme-setter
+#draftSetter:has(.history-row:nth-child(2))
+.history-row:last-child
+.history-tile {
+  border-color: var(--role-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
+   border-width: 2px;
+}
+/* Setter: exactly one draft row → it is active */
+.theme-setter
+#draftSetter:not(:has(.history-row:nth-child(2)))
+.history-row
+.history-tile {
+  border-width: 2px;
+  border-color: var(--role-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
+}
+
+.theme-guesser #draftGuesser .history-tile {
+  border-width: 2px;
+  border-color: var(--role-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
+}
+
+/* Draft tiles when unusable */
+/* Draft tiles inactive when NOT your turn */
+#setterScreen.is-not-your-turn #draftSetter .history-tile,
+#guesserScreen.is-not-your-turn #draftGuesser .history-tile {
+  opacity: 0.28;
+  filter: grayscale(1);
+  box-shadow: none;
+}
+
+/* Optional: explicit restore when it IS your turn */
+#setterScreen.is-your-turn #draftSetter .history-tile,
+#guesserScreen.is-your-turn #draftGuesser .history-tile {
+  opacity: 1;
+  filter: none;
+}
+
+.theme-setter
+#draftSetter
+.pending-guess
+.history-tile.preview-green {
+  color: var(--tile-green-text) !important;
+  border: none;
+  box-shadow: none;
+  opacity: 0.9;
+   animation: preview-green-pulse 2.2s  ease-in-out infinite;
+   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.theme-setter
+#draftSetter
+.pending-guess
+.history-tile.preview-yellow {
+  color: var(--tile-yellow-text) !important;
+  border: none;
+  box-shadow: none;
+  opacity: 0.9;
+   animation: preview-yellow-pulse 2.2s ease-in-out infinite;
+   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.theme-setter
+#draftSetter
+.pending-guess
+.history-tile.preview-gray {
+  background: var(--tile-gray);
+  color: var(--tile-gray-text);
+  border: none;
+  box-shadow: none;
+  opacity: 0.8;
+}
+#draftSetter {
+  display: flex;
+  flex-direction: column;   /* critical: stack rows vertically */
+  align-items: center;      /* keep rows centered */
+  justify-content: center;
+
+  width: fit-content;       /* critical: shrink-wrap to tiles */
+  margin: 0 auto;           /* belt + suspenders */
+  padding: 0;
+  gap: 6px;
+}
+/* ----------------------------------
+Constraint row using history tile language 
+--------------------------------------*/
+.constraint-row {
+  position: relative;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1.5px solid color-mix(
+    in srgb,
+    var(--role-accent) 60%,
+    transparent
+  );
+  box-shadow:
+    0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent),
+    inset 0 0 6px color-mix(in srgb, var(--role-accent) 18%, transparent);
+   margin: 6px 0;
+}
+
+.constraint-row::before {
+  content: "";
+position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--role-accent) 40%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.constraint-row .history-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.constraint-tile {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+
+  padding: 0;      /* IMPORTANT */
+  gap: 0;          /* IMPORTANT */
+}
+
+/* Constraint tiles: grid layout (NOT flex) */
+.constraint-row .history-tile {
+  position: relative;
+  display: grid; /* IMPORTANT */
+}
+
+.constraint-row .history-tile .quadrants {
+  position: absolute;
+  inset: 4px;              /* gives a little breathing room */
+  z-index: 1;
+  pointer-events: none;
+}
+.constraint-row .history-tile > .main-letter {
+  position: relative;
+  z-index: 2;
+}
+.constraint-row .history-tile.tile-green {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Constraint row: solved (green) positions look neutral */
+.constraint-row .history-tile.tile-green {
+  background: transparent !important;
+  color: #fff !important;
+
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+
+.constraint-letter.forbidden {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(192, 57, 43, 0.9);
+  color: #fff;
+
+  font-size: 13px;      
+  font-weight: 900;
+  line-height: 1;
+
+  border-radius: 2px;
+   animation: forbidden-pop 160ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+.constraint-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--role-accent);
+  color: var(--role-accent);
+
+  border-radius: 6px;
+  padding: 4px 6px;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.constraint-toggle-btn:hover {
+  opacity: 1;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 60%, transparent);
+}
+
+body.hide-constraints .constraint-row {
+  display: none;
+}
+
+
+
+/* Ghost secret (single consolidated definition) */
+.theme-setter .ghost-secret {
+  color: rgba(255,255,255,0.35) !important;
+  letter-spacing: 0.15em;
+}
+.theme-setter .ghost-secret .history-tile {
+  border-width: 2px;
+  border-color: var(--role-accent);
+  box-shadow:  0 0 8px color-mix(in srgb, var(--role-accent) 70%, transparent);
+   color: rgba(255, 255, 255, 0.45);
+}
+
+/* Setter draft accent vs guesser draft accent */
+.theme-setter .draft-layer .history-tile {
+  border: 1px solid rgba(255,80,80,0.4);
+  box-shadow: 0 0 6px rgba(255,80,80,0.3);
+}
+.theme-guesser .draft-layer .history-tile {
+  border: 1px solid rgba(70,140,255,.35);
+  box-shadow: 0 0 6px rgba(70,140,255,.35);
+}
