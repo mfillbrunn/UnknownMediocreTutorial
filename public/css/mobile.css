@@ -90,7 +90,23 @@
 .remaining-box:not([hidden]) {
   display: inline-flex; /* or flex, whatever you’re using */
 }
+ .header-row.header-top {
+    flex-wrap: wrap;             
+    justify-content: flex-start;  
+    gap: var(--sp-6);            
+  }
+    .header-row.header-top {
+    flex-wrap: wrap;              
+    justify-content: flex-start;  
+    gap: var(--sp-6);             
+  }
+   .header-row.header-top {
+    margin-left: 0;
+    margin-right: 0;
+  }
 }
+
+/*------- REDUCED MOTION --------------*/
 
 @media (prefers-reduced-motion: reduce) {
   .tooltip {
