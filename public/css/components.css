@@ -734,17 +734,19 @@
 
 @media (max-width: 600px) {
   .remaining-box {
-    display: flex;
+    display: inline-flex;         
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;   
     gap: var(--sp-10);
 
     padding: var(--sp-6) var(--sp-8);
     font-size: var(--fs-12);
+    width: fit-content;          
+    max-width: 100%;
   }
 
   .remaining-box .line {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: var(--sp-4);
     margin: 0;
@@ -752,11 +754,11 @@
     padding: 0;
   }
 
-  /* Remove the desktop divider under "Words" */
   .remaining-box .line:first-child {
     margin-bottom: 0;
     padding-bottom: 0;
     border-bottom: none;
   }
 }
+
 
