@@ -46,7 +46,6 @@ function finalizeFeedback(state, powerEngine, roomId, room, io) {
   state.powersUsedThisRoundGuesser = [];
   state.powersUsedThisRoundSetter = [];
   state.pendingGuess = "";
-  state.guessCount=+1;
 }
 
 
