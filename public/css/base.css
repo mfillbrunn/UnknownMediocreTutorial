@@ -2,14 +2,20 @@ body {
   margin: 0;
   padding: 0;
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  line-height: 1.45;
+  font-family: var(--font-sans);
+  line-height: var(--lh-base);
   background:
     radial-gradient(circle at top center, rgba(255, 0, 0, 0.08), transparent 60%),
     #0c0c0e;
 }
 * {
   box-sizing: border-box;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 /* =========================================
