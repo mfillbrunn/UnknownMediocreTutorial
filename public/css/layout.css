@@ -227,3 +227,20 @@ margin:0;
 .constraint-toggle-btn {
 align-self: baseline;
 }
+
+@media (max-width: 600px) {
+  .play-row {
+    display: block;
+  }
+}
+@media (max-width: 600px) {
+  .powers-col,
+  .center-col {
+    margin-bottom: var(--sp-8);
+  }
+}
+@media (max-width: 600px) {
+  .powers-col {
+    padding-right: 0;
+  }
+}
