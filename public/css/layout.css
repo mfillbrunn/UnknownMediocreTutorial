@@ -185,3 +185,41 @@ margin:0;
   width: 100%;   
   pointer-events: none;
 }
+/* =========================================
+   SECRET ROW / SAME BUTTON
+   ========================================= */
+.secret-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.secret-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* =========================================
+   3 column layout
+   ========================================= */
+
+   .power-container {
+  flex-direction: column;
+  row-gap: 4px;
+}
+
+.power-btn-wrapper {
+  margin-bottom: 8px;
+}
+
+.center-col .history-tiles,
+.draft-layer {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* Bottom draft row becomes the anchor */
+.draft-stack .history-row:last-child {
+  position: relative;
+}
