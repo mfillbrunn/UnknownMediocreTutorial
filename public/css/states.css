@@ -29,3 +29,19 @@
 .draft-shake {
   animation: draft-shake 220ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+.theme-setter .key.key-gray:hover,
+.theme-setter .key.key-gray:active {
+ transform: none;
+  box-shadow: none;
+}
+.theme-guesser .history-box,
+.theme-setter .secret-inline {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+.theme-setter .key.key-current {
+  outline-offset: -2px;
+  animation: blue-outline-pulse 2.2s infinite;
+   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+}
