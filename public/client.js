@@ -196,6 +196,7 @@ onStateUpdate(newState => {
   window.state = state; 
   updatePowerInfoState(state);
   updateUI();
+  if (state.secret){renderSetterRemainingBox(state, myRole, state.secret);}
   remainingCache.setterOld = null;
 });
 
