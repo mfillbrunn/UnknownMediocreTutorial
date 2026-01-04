@@ -276,7 +276,8 @@ position: absolute;
   background: transparent;
   border: 1px solid var(--role-accent);
   color: var(--role-accent);
-
+  height: 28px;
+  width: 28px;
   border-radius: var(--r-6);
   padding: var(--sp-4) var(--sp-6);
 
