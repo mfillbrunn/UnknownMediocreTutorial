@@ -16,8 +16,8 @@
 /* Disable key interaction visuals when NOT your turn */
 #setterScreen.is-not-your-turn #keyboardSetter .key,
 #guesserScreen.is-not-your-turn #keyboardGuesser .key {
-  transform: none;
-  box-shadow: none;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .draft-shake {
