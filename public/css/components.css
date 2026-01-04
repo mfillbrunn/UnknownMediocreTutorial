@@ -693,7 +693,6 @@
 .powers-col .remaining-box {
   margin-top: auto;
   align-self: stretch;
-  margin-bottom: var(--sp-8);
   text-align: left;
 }
 .remaining-box .line {
