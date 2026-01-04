@@ -87,7 +87,7 @@ display: grid;
    pointer-events: none;
    max-width: 100%;
    row-gap: var(--sp-6);
-   margin-top: var(--sp-6);
+   margin-top: var(--sp-12);
 }
 /*---- HEADERS ---*/
 
