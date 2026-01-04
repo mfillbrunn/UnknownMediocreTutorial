@@ -109,13 +109,13 @@
 .history-tile {
   border-width: 2px;
   border-color: var(--role-accent);
-  box-shadow: 0 0 6px color-mix(...)(in srgb, var(--role-accent) 70%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 70%, transparent);
 }
 
 .theme-guesser #draftGuesser .history-tile {
   border-width: 2px;
   border-color: var(--role-accent);
-  box-shadow: 0 0 6px color-mix(...)(in srgb, var(--role-accent) 70%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 70%, transparent);
 }
 
 /* Draft tiles when unusable */
@@ -184,8 +184,8 @@ Constraint row using history tile language
 --------------------------------------*/
 .constraint-row {
   position: relative;
-  padding: var(--sp-6;
-  border-radius: 10px;
+  padding: var(--sp-6);
+  border-radius: var(--r-10);
   border: 1.5px solid color-mix(
     in srgb,
     var(--role-accent) 60%,
@@ -297,10 +297,7 @@ position: absolute;
   opacity: 1;
   box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 60%, transparent);
 }
-.power-info-btn,
-.constraint-toggle-btn {
-+  align-self: baseline;
-}
+
 
 body.hide-constraints .constraint-row {
   display: none;
