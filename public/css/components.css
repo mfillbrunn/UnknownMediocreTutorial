@@ -228,6 +228,17 @@
   opacity: 0.75;
 }
 
+.theme-guesser .key.key-gray:hover {
+  background:
+    repeating-linear-gradient(
+      135deg,
+      #181c22,
+      #181c22 6px,
+      #12161c 6px,
+      #12161c 12px
+    );
+  transform: translateY(-1px);
+}
 /* Optional: highlight current draft keys without overriding solved colors */
 .key.key-current {
   box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35);
@@ -587,6 +598,11 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
   transform: translateY(-1px);
 }
 
+.theme-setter .key.key-gray:hover,
+.theme-setter .key.key-gray:active {
+  transform: none;
+  box-shadow: none;
+}
 
 .summary-powers {
   font-size: var(--fs-12);
