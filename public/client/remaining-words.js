@@ -102,7 +102,8 @@ function renderSetterRemainingBox(state, role, draft) {
     box.hidden = true;
     return;
   }
-
+  
+  box.hidden = false;
   const hasOld = info.old > -1;
   const hasNew = info.new > -1;
 
