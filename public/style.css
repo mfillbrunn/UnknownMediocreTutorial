@@ -1074,7 +1074,8 @@ Constraint row using history tile language
 }
 
 .constraint-row::before {
-  position: absolute;
+  content: "";
+position: absolute;
   inset: -3px;
   border-radius: inherit;
   border: 1px solid color-mix(
@@ -1375,7 +1376,8 @@ body.hide-constraints .constraint-row {
 
 /* Ice overlay */
 .history-row.freeze-draft::after {
-  position: absolute;
+  content: "";
+   position: absolute;
   inset: -2px; /* slightly bigger than row */
   border-radius: 8px;
 
