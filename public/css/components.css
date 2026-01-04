@@ -732,3 +732,31 @@
   font-weight: 900;
 }
 
+@media (max-width: 600px) {
+  .remaining-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-10);
+
+    padding: var(--sp-6) var(--sp-8);
+    font-size: var(--fs-12);
+  }
+
+  .remaining-box .line {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    margin: 0;
+    border: none;
+    padding: 0;
+  }
+
+  /* Remove the desktop divider under "Words" */
+  .remaining-box .line:first-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+}
+
