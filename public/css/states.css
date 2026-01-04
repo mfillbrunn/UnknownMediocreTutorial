@@ -1,1 +1,31 @@
 
+#setterScreen.is-not-your-turn #keyboardSetter,
+#guesserScreen.is-not-your-turn #keyboardGuesser{
+  filter: grayscale(0.9);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+#setterScreen.is-your-turn #keyboardSetter,
+#guesserScreen.is-your-turn #keyboardGuesser{
+  filter: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Disable key interaction visuals when NOT your turn */
+#setterScreen.is-not-your-turn #keyboardSetter .key,
+#guesserScreen.is-not-your-turn #keyboardGuesser .key {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Optional: restore explicitly when it IS your turn */
+#setterScreen.is-your-turn #keyboardSetter .key,
+#guesserScreen.is-your-turn #keyboardGuesser .key {
+  transform: unset;
+  box-shadow: unset;
+}
+.draft-shake {
+  animation: draft-shake 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
