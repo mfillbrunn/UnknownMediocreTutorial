@@ -82,24 +82,26 @@ function getRemainingWordInfo(state, newSecret) {
 function renderSetterRemainingBox(state, role, draft) {
   const box = document.getElementById("SetterRemainingBox");
   if (!box) return;
-
-  if (!state || state.phase !== "normal") {
+  console.log("STOP 1");
+  if (!state || state.phase === "simultaneous" || state.phase === "lobby" || state.phase === "gameOver") {
     box.innerHTML = "";
     return;
   }
-
+console.log("STOP 2");
+console.log(state, role, draft);
   // Only setter sees it
   if (role !== state.setter) {
     box.innerHTML = "";
     return;
   }
-
+console.log(state.setter);
+console.log("STOP 3");
   const info = getRemainingWordInfo(state, draft);
   if (!info || info.current == null) {
     box.innerHTML = "";
     return;
   }
-
+console.log("STOP 4");
   const hasOld = info.old > -1;
   const hasNew = info.new > -1;
 
@@ -110,7 +112,7 @@ function renderSetterRemainingBox(state, role, draft) {
     if (info.old > info.new) oldStyle = "color: var(--tile-green)";
     else if (info.new > info.old) newStyle = "color: var(--tile-green)";
   }
-
+console.log(hasOld, hasNew);
   box.innerHTML = `
     <div class="line">
       <span class="label">Words</span>
