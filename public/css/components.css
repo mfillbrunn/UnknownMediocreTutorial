@@ -1,1 +1,536 @@
+/* Shared panel styling */
+:where(.panel, .constraints-box, .history-box, .summary-box, .preview-box) {
+  background: var(--panel-bg);
+  color: var(--panel-text);
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 14px;
+  box-shadow: 0 0 6px rgba(0,0,0,.4) inset;
+}
 
+.summary-table {
+  text-align: center;
+}
+.history-box {
+  background: var(--history-bg);
+  font-family: "Courier New", monospace;
+}
+
+/* Panels transparent in both themes */
+:where(.theme-setter, .theme-guesser) :where(.panel, .history-box, .preview-box) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+:where(.theme-setter, .theme-guesser) .history-box { margin-bottom: 6px; }
+
+/* =========================================
+   BUTTONS
+   ========================================= */
+:where(.primary-btn, .secondary-btn) {
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: none;
+  margin: 10px 0;
+  cursor: pointer;
+
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+
+  transition: .15s ease;
+}
+
+.primary-btn {
+  background: var(--btn-primary);
+  color: #fff;
+  box-shadow: 0 0 10px var(--btn-primary-glow);
+}
+.primary-btn:hover { background: var(--btn-primary-hover); }
+
+.secondary-btn {
+  background: var(--btn-secondary);
+  color: var(--btn-secondary-text);
+}
+.secondary-btn:hover { background: var(--btn-secondary-hover); }
+/*----POWER BTNS ---*/
+
+/* Power buttons (single authoritative definition) */
+
+
+.power-btn {
+  background: transparent !important;
+  border: 2px solid currentColor !important;
+  border-radius: 12px;
+
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+
+  padding: 14px 18px;
+  min-height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  position: relative;
+  cursor: pointer;
+
+  transition: transform .15s ease, box-shadow .2s ease, opacity .15s ease;
+}
+
+/* Outer laser frame */
+.power-btn::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 1px solid currentColor;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.power-btn:not(.power-used):not(.disabled-btn):hover {
+  box-shadow: 0 0 16px currentColor;
+  transform: translateY(-2px);
+}
+
+.power-btn:not(.power-used):not(.disabled-btn):active {
+  transform: scale(.97);
+}
+.power-btn.power-used,
+.power-btn.disabled-btn {
+  pointer-events: none;
+}
+
+.power-btn.power-used {
+  opacity: 0.28;
+  filter: grayscale(1);
+  text-decoration: line-through;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+.power-btn.disabled-btn {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  cursor: not-allowed;
+}
+
+/* =========================================
+   KEYBOARD
+   ========================================= */
+.keyboard {
+  width: 100%;
+  max-width: 520px;
+  margin: auto 0;
+  padding: 0;
+   margin-top: 14px;
+}
+
+.key-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-wrap: nowrap;
+}
+
+.key {
+  width: clamp(28px, 9vw, 44px);
+  height: clamp(36px, 11vw, 56px);
+  font-size: clamp(12px, 3.5vw, 18px);
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 6px;
+  font-weight: 700;
+  letter-spacing: 1px;
+
+  background: var(--kb-neutral);
+  border: 1px solid #00000055;
+  color: #fff;
+
+  cursor: pointer;
+  transition: background .15s, transform .1s, box-shadow .15s;
+}
+
+/* Special widths */
+.key[data-key="ENTER"],
+.key[data-key="⌫"] {
+  width: clamp(40px, 14vw, 58px);
+}
+
+/* Hover / active */
+.key:hover {
+  background: var(--kb-hover);
+  transform: translateY(-2px);
+}
+.key:active { transform: scale(0.95); }
+/* Guesser: all keys can still hover (including used ones) */
+.theme-guesser .key:hover {
+  background: var(--kb-hover);
+  transform: translateY(-2px);
+}
+
+
+/* Keyboard key color states */
+.key.key-green  { background: var(--tile-green) !important;  color: var(--tile-green-text) !important; }
+.key.key-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text) !important; }
+.key.key-blue   { background: #4ea3ff !important;            color: #000 !important; }
+.key.key-purple { background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important;}
+
+/* “Gray” state has custom styling */
+.key.key-gray {
+  background:
+    repeating-linear-gradient(
+      135deg,
+      #121417,
+      #121417 6px,
+      #0e1013 6px,
+      #0e1013 12px
+    ) !important;
+  color: #7a7f88 !important;
+  border-color: #000000aa !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    inset 0 -2px 4px rgba(0,0,0,.6);
+  opacity: 0.85;
+}
+
+/* Optional: highlight current draft keys without overriding solved colors */
+.key.key-current {
+  box-shadow: 0 0 0 2px rgba(255,255,255,.35) inset;
+}
+
+
+/* ENTER key — semantic, not positional */
+.key[data-key="ENTER"] {
+  position: relative;
+  color: transparent; /* hide text */
+  background: var(--btn-primary);
+  box-shadow: 0 0 8px var(--btn-primary-glow);
+}
+
+.key[data-key="ENTER"]::before {
+  content: "⏎";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+}
+.key[data-key="⌫"],
+.key[data-key="ENTER"] {
+  animation: none !important;
+}
+
+
+/* =========================================
+   TOAST + TURN POPUP
+   ========================================= */
+.toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(40px);
+  opacity: 0;
+
+  padding: 12px 22px;
+  font-size: 18px;
+  font-weight: 700;
+
+  border-radius: 10px;
+  background: var(--toast-bg);
+  border: 1px solid var(--toast-border);
+  color: #fff;
+
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 99999;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+/* =========================================
+   MODAL BASE (HIDDEN)
+   ========================================= */
+.modal {
+  position: absolute;
+  inset: 0;
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.6);
+
+  z-index: 1000;
+  pointer-events: none;
+}
+.modal.active {
+  display: flex;
+  pointer-events: auto;
+}
+
+/* ===============================
+   TOOLTIP
+   =============================== */
+
+.tooltip {
+  position: fixed;
+  z-index: 100000;
+
+  max-width: 260px;
+  padding: 10px 14px;
+
+  background: rgba(20, 20, 22, 0.95);
+  color: #fff;
+
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+
+  font-size: 13px;
+  line-height: 1.35;
+
+  box-shadow:
+    0 0 14px rgba(0,0,0,.6),
+    inset 0 0 6px rgba(255,255,255,.05);
+
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .15s ease, transform .15s ease;
+}
+
+.tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tooltip-title {
+  font-weight: 900;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.tooltip-desc {
+  opacity: 0.9;
+}
+
+/* ===============================
+   ROLE BADGE (next to Room ID)
+   =============================== */
+.role-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  opacity: 0.9;
+   color: var(--role-accent);
+}
+
+
+/* =========================================
+   INFO BADGE (Power status)
+   ========================================= */
+#SetterInfoBadge,
+#GuesserInfoBadge {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  gap: 4px 10px;
+  margin-top: 6px;
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-align: center;
+}
+
+.badge-item {
+  opacity: 0.9;
+}
+
+.badge-item:first-child,
+.badge-item:second-child
+.badge-item:third-child{
+  font-size: 13px;
+  font-weight: 900;
+  opacity: 1;
+}
+
+.badge-sep {
+  width: 0.75rem;
+  opacity: 0.4;
+  user-select: none;
+}
+
+.badge-item[style*="--tile-green"] {
+  animation: pulse-good 280ms cubic-bezier(0.4, 0, 0.2, 1) 2;
+}
+
+/*----TIMER ---*/
+
+.timer-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin-right: 6px;
+  text-align: right;
+}
+
+.chess-timer {
+  font-family: "Courier New", monospace;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--role-accent);
+   transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+/* 30s warning */
+.chess-timer.warn-30 {
+  color: #ffb347; /* amber */
+  text-shadow: 0 0 6px rgba(255, 179, 71, 0.6);
+}
+
+/* 10s critical */
+.chess-timer.warn-10 {
+  color: #ff4b4b; /* red */
+  text-shadow: 0 0 10px rgba(255, 75, 75, 0.9);
+  animation: pulse-critical 0.9s infinite;
+}
+
+/* Increment flash */
+.chess-timer.increment {
+  animation: timer-increment-flash 0.4s ease-out;
+}
+.chess-timer.active {
+  animation: pulse 1s infinite;
+}
+
+/* Floating +10 indicator */
+.timer-increment-badge {
+  position: absolute;
+  right: 0;
+  top: -10px;
+
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+
+  color: #6aff6a;
+  opacity: 0;
+
+  pointer-events: none;
+  animation: float-plus 0.8s ease-out forwards;
+}
+
+
+/* ----------------------------------
+   Power info panel (desktop + mobile)
+---------------------------------- */
+
+.power-info-panel {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: calc(100vw - 24px);
+  max-width: 520px;
+
+  max-height: 60vh;
+  overflow-y: auto;
+
+  background: rgba(20, 20, 22, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 14px 16px;
+
+  z-index: 100000;
+}
+.power-info-header {
+  margin: 12px 0 8px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  opacity: 0.9;
+  text-align: left;
+}
+
+/*--- POWER INFO button */
+.power-info-btn {
+  all: unset;                 
+  cursor: pointer;
+
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: currentColor;
+  border: 1.5px solid currentColor;
+  opacity: 0.75;
+
+  transition: opacity .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+
+.power-info-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+.power-info-btn:hover {
+  opacity: 1;
+  box-shadow: 0 0 6px color-mix(in srgb, currentColor 50%, transparent);
+}
+
+.power-info-btn:active {
+  transform: scale(0.95);
+}
+
+.power-info-row {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.power-info-title {
+  font-weight: 900;
+  font-size: 14px;
+  margin-bottom: 2px;
+  text-align: left;
+}
+
+.power-info-desc {
+  font-size: 13px;
+  line-height: 1.35;
+  opacity: 0.85;
+}
+.power-info-header-setter {
+  color: var(--setter-color);
+}
+
+.power-info-header-guesser {
+  color: var(--guesser-color);
+}
