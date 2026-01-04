@@ -32,7 +32,6 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     if (!isValidWord(g, ALLOWED_GUESSES)) return;
     state.pendingGuess = g;
     state.simultaneousGuessSubmitted = true;
-    state.guessCount=state.guessCount+ 1;
     if (state.timeControl.mode === "chess") {addIncrement(state, state.guesser);} 
     if (state.activeTimer === "both") {state.activeTimer = state.setter;}
     state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
