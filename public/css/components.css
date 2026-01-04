@@ -33,9 +33,9 @@
   text-transform: uppercase;
   font-weight: 700;
   transition:
-    background 0.15s var(--ease-ui, ease),
-    box-shadow 0.15s var(--ease-ui, ease),
-    transform 0.1s var(--ease-ui, ease);
+    background 0.15s var(--ease-ui,
+    box-shadow 0.15s var(--ease-ui),
+    transform 0.1s var(--ease-ui);
   min-height: var(--h-control);
   padding: 0 var(--sp-16);
   border-radius: var(--r-10);
@@ -97,7 +97,7 @@
   position: relative;
   cursor: pointer;
 
-  transition: transform .15s ease, box-shadow .2s ease, opacity .15s ease;
+  transition: transform .15s var(--ease-ui), box-shadow .2s var(--ease-ui), opacity .15s var(--ease-ui);
 }
 
 /* Outer laser frame */
@@ -178,9 +178,9 @@
 
   cursor: pointer;
   transition:
-    background .15s var(--ease-ui, ease),
-    transform .1s var(--ease-ui, ease),
-    box-shadow .15s var(--ease-ui, ease);
+    background .15s var(--ease-ui),
+    transform .1s var(--ease-ui),
+    box-shadow .15s var(--ease-ui);
 }
 
 /* Special widths */
@@ -300,8 +300,8 @@
   color: #fff;
 
   transition:
-  opacity 0.25s var(--ease-ui, ease),
-  transform 0.25s var(--ease-ui, ease);
+  opacity 0.25s var(--ease-ui),
+  transform 0.25s var(--ease-ui);
   z-index: 99999;
 }
 .toast.show {
@@ -347,18 +347,23 @@
   border: 1px solid rgba(255,255,255,0.15);
 
   font-size: var(--fs-13);
-  line-height: 1.35;
+  line-height: var(--lh-base);
 
   box-shadow:
-    0 0 14px rgba(0,0,0,.6),
-    inset 0 0 6px rgba(255,255,255,.05);
+    0 0 12px rgba(0,0,0,.5),
+    inset 0 0 4px rgba(255,255,255,.04);
 
   pointer-events: none;
   opacity: 0;
   transform: translateY(4px);
-  transition: opacity .15s ease, transform .15s ease;
+  transition: opacity .15s var(--ease-ui), transform .15s var(--ease-ui);
 }
-
+@media (prefers-reduced-motion: reduce) {
+  .tooltip {
+    transition: none;
+    transform: none;
+  }
+}
 .tooltip.show {
   opacity: 1;
   transform: translateY(0);
@@ -449,7 +454,7 @@
   font-weight: 800;
   letter-spacing: 0.5px;
   color: var(--role-accent);
-   transition: color 0.2s ease, text-shadow 0.2s ease;
+   transition: color 0.2s var(--ease-ui), text-shadow 0.2s var(--ease-ui);
 }
 
 /* 30s warning */
@@ -467,7 +472,7 @@
 
 /* Increment flash */
 .chess-timer.increment {
-  animation: timer-increment-flash 0.4s ease-out;
+  animation: timer-increment-flash 0.4s var(--ease-ui);
 }
 .chess-timer.active {
   animation: pulse 1s infinite;
@@ -487,7 +492,7 @@
   opacity: 0;
 
   pointer-events: none;
-  animation: float-plus 0.8s ease-out forwards;
+  animation: float-plus 0.8s var(--ease-ui) forwards;
 }
 
 
@@ -504,14 +509,16 @@
   width: calc(100vw - 24px);
   max-width: 520px;
 
-  max-height: 60vh;
+  max-height: 55vh;
   overflow-y: auto;
 
-  background: rgba(20, 20, 22, 0.97);
+  background: rgba(20, 20, 22, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--r-14);
   padding: var(--sp-14) var(--sp-16);
-
+    transition:
+    opacity 0.2s var(--ease-ui),
+    transform 0.2s var(--ease-ui);
   z-index: 100000;
 }
 .power-info-header {
@@ -520,13 +527,22 @@
   font-weight: 900;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  opacity: 0.9;
+  opacity: 0.85;
   text-align: left;
+}
+.power-info-panel:not([hidden]) {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.power-info-panel[hidden] {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
 }
 
 /*--- POWER INFO button */
 .power-info-btn {
-  all: unset;                 
+  all: unset;
   cursor: pointer;
 
   width: 28px;
@@ -538,28 +554,49 @@
   justify-content: center;
 
   color: var(--role-accent);
-  border: 1.5px solid var(--role-accent);
-  opacity: 0.75;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--role-accent) 65%,
+    transparent
+  );
 
-  transition: opacity .15s ease, transform .15s ease, box-shadow .15s ease;
+  opacity: 0.7;
+
+  transition:
+    opacity 0.15s var(--ease-ui),
+    transform 0.15s var(--ease-ui),
+    box-shadow 0.15s var(--ease-ui);
 }
-
-.power-info-btn svg {
-  width: 16px;
-  height: 16px;
-  stroke: var(--role-accent);
-  stroke-width: 2;
-  fill: none;
+.power-info-icon {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+  transform: translateY(-0.5px); /* optical centering */
+  pointer-events: none;
 }
 
 .power-info-btn:hover {
   opacity: 1;
-  box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 50%, transparent);
+  box-shadow: 0 0 6px color-mix(
+    in srgb,
+    var(--role-accent) 50%,
+    transparent
+  );
 }
 
 .power-info-btn:active {
   transform: scale(0.95);
 }
+.power-info-btn:focus-visible {
+  outline: 2px solid color-mix(
+    in srgb,
+    var(--role-accent) 70%,
+    transparent
+  );
+  outline-offset: 2px;
+}
+
 
 .power-info-row {
   display: block;
@@ -579,11 +616,11 @@
   opacity: 0.85;
 }
 .power-info-header-setter {
-  color: var(--role-accent);
+  color: var(--setter-color);
 }
 
 .power-info-header-guesser {
-  color: var(--role-accent);
+  color: var(--guesser-color);
 }
 
 /* Force consistent spacing before keyboards for both roles */
