@@ -335,3 +335,12 @@ body.hide-constraints .constraint-row {
   border: 1px solid rgba(70,140,255,.35);
   box-shadow: 0 0 6px rgba(70,140,255,.35);
 }
+
+/* Wordle-style feedback colors */
+.tile-green  { background: var(--tile-green)  !important; color: var(--tile-green-text) !important; }
+.tile-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text)!important; }
+.tile-gray   { background: var(--tile-gray)   !important; color: var(--tile-gray-text)  !important; }
+.tile-blue   { background: #4ea3ff !important; color: #000 !important; }
+.tile-purple {  background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important;}
+
+
