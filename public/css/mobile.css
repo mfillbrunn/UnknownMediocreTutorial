@@ -53,6 +53,10 @@
       transparent
     );
 }
+   .power-btn-wrapper{
+      margin-left: var(--sp-2); 
+      margin-right: var(--sp-2); 
+   }
   .power-btn::before {
     display: none;
   }  
