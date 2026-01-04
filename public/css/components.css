@@ -220,7 +220,7 @@
       #0e1013 6px,
       #0e1013 12px
     ) !important;
-  color: var(--tile-gray-text); !important;
+  color: var(--tile-gray-text) !important;
   border-color: #000000aa !important;
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,.03),
