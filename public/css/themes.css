@@ -53,9 +53,11 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
 
   /* Type scale */
+   --fs-11: 11px;
   --fs-12: 12px;
   --fs-13: 13px;
   --fs-14: 14px;
+   --fs-15: 15px;
   --fs-16: 16px;
   --fs-18: 18px;
   --fs-20: 20px;
@@ -75,6 +77,7 @@
   --sp-14: 14px;
   --sp-16: 16px;
   --sp-20: 20px;
+   --sp-22: 22px;
   --sp-24: 24px;
 
   /* Radii */
