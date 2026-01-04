@@ -77,10 +77,10 @@ createPowerButton(id, label) {
       if (!btn) continue;
             // Hide powers that are not active this match
       if (state.activePowers && !state.activePowers.includes(id)) {
-          btn.style.display = "none";
+          mod.wrapperEl.style.display = "none";
           continue;
       } else {
-          btn.style.display = "";
+          mod.wrapperEl.style.display = "";
       }
 
        const rule = window.POWER_RULES?.[id];
