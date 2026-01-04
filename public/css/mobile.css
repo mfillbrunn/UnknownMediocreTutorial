@@ -28,9 +28,10 @@
      flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    gap: var(--sp-6);
+    gap: var(--sp-2);
      padding-right: 0;
      margin-top: 0;
+     align-items: stretch;
   }
    .power-container {
     display: flex;
@@ -38,4 +39,14 @@
     flex-wrap: wrap;
     gap: var(--sp-6);
   }
+  .power-btn::before {
+    display: none;
+  }  
+  .powers-col .power-btn {
+    flex: 1 1 48%;
+    padding: 0 var(--sp-8);       
+    min-height: 32px;           
+    font-size: var(--fs-12);      
+    letter-spacing: 0.3px;
+}
 }
