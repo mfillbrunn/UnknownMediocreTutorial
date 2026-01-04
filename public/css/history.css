@@ -11,7 +11,7 @@
 .history-row {
   display: flex;
   justify-content: center;
-  gap: 6px;
+  gap: var(--sp-6);
   min-height: 48px;   
 
 }
@@ -20,7 +20,7 @@
   width: clamp(30px, 8vw, 42px);
   height: clamp(36px, 9vw, 48px);
   font-size: clamp(14px, 3.5vw, 20px);
-  border-radius: 6px;
+  border-radius: var(--r-6);
   font-weight: 800;
   letter-spacing: 1px;
 
@@ -83,7 +83,7 @@
 .history-row {
   display: flex;
   justify-content: center;
-  gap: 6px;
+  gap: var(--sp-6);
 }
 
 .history-row-wrap {
@@ -187,7 +187,7 @@
   width: fit-content;       /* critical: shrink-wrap to tiles */
   margin: 0 auto;           /* belt + suspenders */
   padding: 0;
-  gap: 6px;
+  gap: var(--sp-6);
 }
 /* ----------------------------------
 Constraint row using history tile language 
@@ -292,7 +292,7 @@ position: absolute;
   border: 1px solid var(--role-accent);
   color: var(--role-accent);
 
-  border-radius: 6px;
+  border-radius: var(--r-6);
   padding: 4px 6px;
 
   font-size: 12px;
@@ -364,7 +364,7 @@ body.hide-constraints .constraint-row {
 .draft-row .draft-tile,
 .draft-box .history-tile {
   border: 1px solid #00000055;
-  opacity: 0.85;
+  opacity: 0.75;
 }
 
 .submitted-row .submitted-tile {
