@@ -1074,7 +1074,6 @@ Constraint row using history tile language
 }
 
 .constraint-row::before {
-  content: "";
   position: absolute;
   inset: -3px;
   border-radius: inherit;
@@ -1376,7 +1375,6 @@ body.hide-constraints .constraint-row {
 
 /* Ice overlay */
 .history-row.freeze-draft::after {
-  content: "";
   position: absolute;
   inset: -2px; /* slightly bigger than row */
   border-radius: 8px;
@@ -1555,7 +1553,6 @@ body #keyboardGuesser .key[data-key="ENTER"]:active {
 
 /* Left-half purple outline */
 .tile-blindspot::after {
-  content: "";
   position: absolute;
   inset: 0;
 
