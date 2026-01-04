@@ -679,13 +679,23 @@
   line-height: 1.3;
   font-weight: 700;
 
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: color-mix(in srgb, var(--role-accent) 6%, transparent);
+
+  border: 1px solid color-mix(in srgb,var(--role-accent) 20%,transparent);
   border-radius: var(--r-8);
 
-  color: var(--text);
+  color: color-mix(
+    in srgb,
+    var(--text) 85%,
+    transparent
+  );
 }
-
+.powers-col .remaining-box {
+  margin-top: auto;
+  align-self: stretch;
+  margin-bottom: var(--sp-8);
+  text-align: left;
+}
 .remaining-box .line {
   display: flex;
   justify-content: space-between;
@@ -698,5 +708,12 @@
 
 .remaining-box .value {
   font-variant-numeric: tabular-nums;
+    font-weight: 800;
+  color: var(--text);
 }
-
+.powers-col .remaining-box .line {
+  justify-content: space-between;
+}
+.theme-guesser .remaining-box {
+  display: none;
+}
