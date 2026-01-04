@@ -83,6 +83,9 @@ function renderSetterRemainingBox(state, role, draft) {
   const box = document.getElementById("SetterRemainingBox");
   if (!box) return;
   console.log("STOP 1");
+    console.log(state.phase);
+    console.log(state);
+    console.log(!state || state.phase === "simultaneous" || state.phase === "lobby" || state.phase === "gameOver");
   if (!state || state.phase === "simultaneous" || state.phase === "lobby" || state.phase === "gameOver") {
     box.innerHTML = "";
     return;
