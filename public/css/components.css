@@ -33,7 +33,10 @@
   cursor: pointer;
   text-transform: uppercase;
   font-weight: 700;
-  transition: .15s ease;
+  transition:
+    background 0.15s var(--ease-ui, ease),
+    box-shadow 0.15s var(--ease-ui, ease),
+    transform 0.1s var(--ease-ui, ease);
   min-height: var(--h-control);
   padding: 0 var(--sp-16);
   border-radius: var(--r-10);
@@ -53,13 +56,22 @@
 }
 .primary-btn:hover { 
   background: var(--btn-primary-hover);
-  box-shadow: 0 0 14px var(--btn-primary-glow);}
-
+  box-shadow: 0 0 14px var(--btn-primary-glow);
+  transform: translateY(-1px);
+}
+.primary-btn:active,
+.secondary-btn:active {
+  transform: translateY(0) scale(0.98);
+}
 .secondary-btn {
   background: var(--btn-secondary);
   color: var(--btn-secondary-text);
+  box-shadow: none;
 }
-.secondary-btn:hover { background: var(--btn-secondary-hover); }
+.secondary-btn:hover { 
+  background: var(--btn-secondary-hover); 
+  box-shadow: none;
+}
 /*----POWER BTNS ---*/
 
 /* Power buttons (single authoritative definition) */
@@ -68,14 +80,14 @@
 .power-btn {
   background: transparent !important;
   border: 2px solid currentColor !important;
-  border-radius: var(--r-12);
+  border-radius: var(--r-10);
 
-  ont-size: var(--fs-17);
+  ont-size: var(--fs-16);
   font-weight: 800;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.5px;
 
-  padding: var(--sp-14) var(--sp-18);
-  min-height: 44px;
+  padding: 0 var(--sp-16);
+  min-height: var(--h-control);;
 
   display: flex;
   align-items: center;
@@ -95,17 +107,17 @@
   inset: -4px;
   border-radius: inherit;
   border: 1px solid currentColor;
-  opacity: 0.35;
+  opacity: 0.25;
   pointer-events: none;
 }
 
 .power-btn:not(.power-used):not(.disabled-btn):hover {
-  box-shadow: 0 0 16px currentColor;
-  transform: translateY(-2px);
+  box-shadow: 0 0 14px currentColor;
+  transform: translateY(-1px);
 }
 
 .power-btn:not(.power-used):not(.disabled-btn):active {
-  transform: scale(.97);
+  transform: translateY(0) scale(0.97);
 }
 .power-btn.power-used,
 .power-btn.disabled-btn {
@@ -116,6 +128,7 @@
   opacity: 0.28;
   filter: grayscale(1);
   text-decoration: line-through;
+  text-decoration-thickness: 2px;
   cursor: not-allowed;
   box-shadow: none !important;
 }
