@@ -101,13 +101,16 @@
   
     <!-- ========== MENU ========== -->
     <section id="menu" class="screen">
-       <h2 class="screen-title">Game Menu</h2>
+       <div></div><h2 class="screen-title">Summary</h2><p><b>Room:</b> <span id="menuRoomCode"></span></p></div>
        <div class="panel">          
-         <button id="shareResultBtn" class="secondary-btn">Share</button> 
+         <div class ="end game buttons">
+           <button id="newMatchBtn" class="primary-btn">New Match</button>
+           <button id="shareResultBtn" class="secondary-btn">Share</button> 
+         </div>
          <div id="roundSummary" class="summary-box"></div>
-          <p><b>Room:</b> <span id="menuRoomCode"></span></p>
+          
        </div>
-       <button id="newMatchBtn" class="primary-btn">New Match</button>
+       
     </section>
   
     <!-- ========== SETTER ========== -->
