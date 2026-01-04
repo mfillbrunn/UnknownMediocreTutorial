@@ -46,7 +46,7 @@ window.remainingCache = {
 };
 
 function getRemainingWordInfo(state, newSecret) {
-  if (!state || state.phase === "lobby" || state.phase === "gameOver") {
+  if (!state || state.phase === "simultaneous" || state.phase === "lobby" || state.phase === "gameOver") {
     return null;
   }
 
@@ -79,22 +79,22 @@ function getRemainingWordInfo(state, newSecret) {
     new: newCount
   };
 }
-function renderSetterRemainingBox(state) {
+function renderSetterRemainingBox(state, role, draft) {
   const box = document.getElementById("SetterRemainingBox");
   if (!box) return;
 
-  if (!state || state.phase !== "playing") {
+  if (!state || state.phase !== "normal") {
     box.innerHTML = "";
     return;
   }
 
   // Only setter sees it
-  if (state.self !== state.setter) {
+  if (role !== state.setter) {
     box.innerHTML = "";
     return;
   }
 
-  const info = getRemainingWordInfo(state, state.setterDraft);
+  const info = getRemainingWordInfo(state, draft);
   if (!info || info.current == null) {
     box.innerHTML = "";
     return;
