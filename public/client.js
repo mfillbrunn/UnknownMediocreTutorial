@@ -247,7 +247,6 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
   updateScreens();
   updateSummary();
   InfoBadgeEngine.render(state, myRole);
-  renderSetterRemainingBox(state);
   if (state.phase !== "lobby") hide("lobby");
 }
 
@@ -318,7 +317,7 @@ function updateSetterScreen() {
   const setterName = state.playerNames?.[state.setter] || "Setter";
   KeepEnabled=true;
   NewEnabled=true;
-
+  renderSetterRemainingBox(state);
   $("setterScreen").querySelector(".screen-title").textContent = setterName;
   $("setterRoleBadge").textContent = "Setter";
   const fgModal = $("forceGuessModal");
