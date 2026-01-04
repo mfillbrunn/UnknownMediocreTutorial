@@ -41,6 +41,13 @@
     flex-wrap: wrap;
     gap: var(--sp-6);
   }
+.power-btn {
+   border: 1.5px solid color-mix(
+      in srgb,
+      var(--role-accent) 60%,
+      transparent
+    );
+}
   .power-btn::before {
     display: none;
   }  
