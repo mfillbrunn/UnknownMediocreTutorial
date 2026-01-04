@@ -33,7 +33,7 @@
   text-transform: uppercase;
   font-weight: 700;
   transition:
-    background 0.15s var(--ease-ui,
+    background 0.15s var(--ease-ui),
     box-shadow 0.15s var(--ease-ui),
     transform 0.1s var(--ease-ui);
   min-height: var(--h-control);
@@ -87,7 +87,7 @@
   letter-spacing: 0.5px;
 
   padding: 0 var(--sp-16);
-  min-height: var(--h-control);;
+  min-height: var(--h-control);
 
   display: flex;
   align-items: center;
@@ -97,7 +97,7 @@
   position: relative;
   cursor: pointer;
 
-  transition: transform .15s var(--ease-ui), box-shadow .2s var(--ease-ui), opacity .15s var(--ease-ui);
+  transition: transform .15s var(--ease-ui), box-shadow .15s var(--ease-ui), opacity .15s var(--ease-ui);
 }
 
 /* Outer laser frame */
@@ -207,7 +207,7 @@
 /* Keyboard key color states */
 .key.key-green  { background: var(--tile-green) !important;  color: var(--tile-green-text) !important; box-shadow: none !important;}
 .key.key-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text) !important; box-shadow: none !important;}
-.key.key-blue   { background: var(--tile-blue) !important;            color: var(--tile-yellow-blue) !important; box-shadow: none !important;}
+.key.key-blue   { background: var(--tile-blue) !important;            color: var(--tile-blue) !important; box-shadow: none !important;}
 .key.key-purple { background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important; box-shadow: none !important;}
 
 /* “Gray” state has custom styling */
