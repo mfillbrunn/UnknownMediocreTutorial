@@ -57,7 +57,6 @@ window.renderHistory = function ({
       
       if (isBlindSpot) {
         tile.classList.add("tile-purple");
-        tile.textContent = "?"; // or keep guess[i] if you prefer
       }
       else {
         const isHiddenCycling =
