@@ -53,3 +53,14 @@ body {
 .hidden {
   display: none !important;
 }
+
+#roomInfo {
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+#roomInfo:not(.hidden) { opacity: 1; }
+
+
+/* Utility outline */
+.laser-outline { border: 1.5px solid currentColor; }
+
