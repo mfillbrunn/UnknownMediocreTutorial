@@ -59,12 +59,11 @@ textarea {
 .screen-title {
   margin: 0 0 var(--sp-8);
 
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
 
   font-size: var(--fs-20);
   font-weight: 800;
-  line-height: var(--lh-tight);
+  line-height: 1;
 
   color: var(--title);
 }
