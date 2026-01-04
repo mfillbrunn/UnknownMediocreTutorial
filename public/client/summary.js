@@ -131,7 +131,14 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
   let html = `
   <div class="match-header">
     <h2>${resultText}</h2>
-    <h3>${scoreText}</h3>
+    <div> <h3>${scoreText}</h3> ${
+      winReason === "time"
+        ? `<p class="tie-breaker">
+             Tie on points. Winner by lower total time.
+           </p>`
+        : ""
+    }
+    </div>
 
     <p class="match-meta">
       Time control:
@@ -145,13 +152,7 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
       }
     </p>
 
-    ${
-      winReason === "time"
-        ? `<p class="tie-breaker">
-             Tie on points. Winner by lower total time.
-           </p>`
-        : ""
-    }
+    
   </div>
 `;
 
