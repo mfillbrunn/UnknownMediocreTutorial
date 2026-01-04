@@ -343,4 +343,37 @@ body.hide-constraints .constraint-row {
 .tile-blue   { background: #4ea3ff !important; color: #000 !important; }
 .tile-purple {  background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important;}
 
+.evaluated-row.animate .history-tile {
+  animation: flip-in 0.6s ease forwards;
+}
+.draft-row .history-tile { animation: draft-pop 120ms ease-out; }
 
+.draft-layer {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+   position: relative;
+   z-index: 20;
+  pointer-events: none;
+}
+
+.history-scroll { z-index: 1; 
+
+.draft-tile { animation: none; }
+
+.draft-row .draft-tile,
+.draft-box .history-tile {
+  border: 1px solid #00000055;
+  opacity: 0.85;
+}
+
+.submitted-row .submitted-tile {
+  background: #3a3d44;
+  color: #eee;
+  border: 1px solid #00000066;
+  opacity: 0.95;
+}
+
+.pending-guess .history-tile {
+  border: 2px solid rgba(255,255,255,0.5);
+}
