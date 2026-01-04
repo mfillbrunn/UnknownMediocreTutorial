@@ -82,12 +82,11 @@
 
 /* 3-column play layout */
 .play-row {
-    display: grid;
-  grid-template-columns: auto 1fr auto;
+display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: var(--sp-14);
   width: 100%;
   pointer-events: none;
-   /*align-items: start;*/
 }
 
 
@@ -130,7 +129,7 @@
   align-items: center;
   justify-content: space-between;
    margin-bottom: var(--sp-8);
-   min-height: 40px;
+   min-height: var(--h-control);
 }
 .header-row.header-sub {
   display: flex;
@@ -221,4 +220,9 @@ margin:0;
 /* Bottom draft row becomes the anchor */
 .draft-stack .history-row:last-child {
   position: relative;
+}
+
+.power-info-btn,
+.constraint-toggle-btn {
+align-self: baseline;
 }
