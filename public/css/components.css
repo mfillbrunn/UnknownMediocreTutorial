@@ -106,7 +106,7 @@
   position: absolute;
   inset: -4px;
   border-radius: inherit;
-  border: 1px solid currentColor;
+  border: 1px solid var(--role-accent);
   opacity: 0.25;
   pointer-events: none;
 }
@@ -537,8 +537,8 @@
   align-items: center;
   justify-content: center;
 
-  color: currentColor;
-  border: 1.5px solid currentColor;
+  color: var(--role-accent);
+  border: 1.5px solid var(--role-accent);
   opacity: 0.75;
 
   transition: opacity .15s ease, transform .15s ease, box-shadow .15s ease;
@@ -547,14 +547,14 @@
 .power-info-btn svg {
   width: 16px;
   height: 16px;
-  stroke: currentColor;
+  stroke: var(--role-accent);
   stroke-width: 2;
   fill: none;
 }
 
 .power-info-btn:hover {
   opacity: 1;
-  box-shadow: 0 0 6px color-mix(in srgb, currentColor 50%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 50%, transparent);
 }
 
 .power-info-btn:active {
