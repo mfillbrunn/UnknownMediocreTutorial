@@ -17,14 +17,6 @@
   transition: opacity 0.25s var(--ease-ui, ease),
               transform 0.25s var(--ease-ui, ease);
 }
-@media (max-width: 600px) { 
-   .screen { padding: var(--sp-8);        
-           }
-   .panel {
-    padding: var(--sp-12);
-  }
-}
-
 .screen.active {
   display: block;
   opacity: 1;
@@ -35,9 +27,6 @@
   margin: 0 auto;
   padding: var(--sp-20);
 }
-
-
-
 /* --- PLAY AREA --- */
 
 .play-area {
@@ -80,49 +69,7 @@ display: grid;
   pointer-events: none;
 }
 
-@media (max-width: 600px) {
-  .powers-col {
-    order: 2 !important;
-  }
-  .center-col {
-    order: 1 !important;
-  }
-   .keyboard{
-   order: 3 !important;
-   }
-}
 
-@media (max-width: 600px) {
-  .play-row {
-     display: flex;
-    flex-direction: column;
-    gap: var(--sp-8);
-  }
-}
-@media (max-width: 600px) {
-  .powers-col,
-  .center-col {
-    margin-bottom: var(--sp-8);
-  }
-}
-
-@media (max-width: 600px) {
-  .powers-col {
-    display: flex;
-     flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--sp-6);
-     padding-right: 0;
-     margin-top: 0;
-  }
-   .power-container {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: var(--sp-6);
-  }
-}
 /* Left column: powers */
 .powers-col {
   display: flex;
@@ -131,9 +78,6 @@ display: grid;
   row-gap: var(--sp-6);
    margin-top: var(--sp-6);
   }
-
-
-
 
 /* Center column: history + draft */
 .center-col {
@@ -145,8 +89,6 @@ display: grid;
    row-gap: var(--sp-6);
    margin-top: var(--sp-6);
 }
-
-
 /*---- HEADERS ---*/
 
 /* =========================================
@@ -176,16 +118,12 @@ display: grid;
   justify-content: center;
 }
 
-   
-/* Left cluster: title + room */
+   /* Left cluster: title + room */
 .header-left {
   display: flex;
   align-items: center;
   gap: var(--sp-10);
 }
-
-
-
 /* Room + badge stacked */
 .room-meta {
    display: inline-flex;
