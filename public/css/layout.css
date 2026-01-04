@@ -1,1 +1,187 @@
+/* =========================================
+   SCREEN PANELS
+   ========================================= */
+.screen {
+  display: none;
+  position: relative;
 
+  background: var(--screen-bg);
+  border-radius: 14px;
+  padding: 20px;
+  margin-top: 16px;
+
+  box-shadow:
+    0 0 12px rgba(0,0,0,.4),
+    0 0 18px rgba(0,0,0,.25) inset;
+
+  opacity: 0;
+  transform: translateY(10px);
+  transition: .25s ease;
+}
+@media (max-width: 420px) {
+  .screen {
+    padding: 10px;
+  }
+}
+.screen.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+#appContainer {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
+
+
+/* --- PLAY AREA --- */
+
+.play-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+   pointer-events: none;
+     max-width: 100vw;
+  overflow-x: hidden;
+}
+.play-area > * + * {
+  margin-top: 8px;
+}
+
+ .play-area .power-btn {
+  font-size: 13px;
+  padding: 8px 12px;
+  min-height: 32px;
+  border-radius: 10px;
+  letter-spacing: 0.4px;
+}
+.play-area button,
+.play-area .power-btn,
+.play-area .history-tile,
+.play-area .constraint-row,
+.play-area .draft-stack,
+.play-area .keyboard,
+.play-area .key {
+  pointer-events: auto;
+}
+
+@media (max-width: 420px) {
+  .play-row {
+    grid-template-columns: 1fr;
+  }
+
+  .powers-col,
+  .side-col {
+    order: 2;
+    margin-top: 8px;
+  }
+
+  .center-col {
+    order: 1;
+  }
+}
+
+/* 3-column play layout */
+.play-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 14px;
+  width: 100%;
+   pointer-events: none;
+}
+
+
+/* Left column: powers */
+.powers-col {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+   padding-right: 10px;
+  }
+
+/* Center column: history + draft */
+.center-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+   pointer-events: none;
+   max-width: 100%;
+}
+
+
+/*---- HEADERS ---*/
+
+/* =========================================
+   Shared role header layout
+   ========================================= */
+
+.role-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+   border: none;
+   box-shadow:none;
+}
+
+/* Top row */
+.header-row.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+   margin-bottom: 8px;
+}
+.header-row.header-sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+   
+/* Left cluster: title + room */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+
+/* Room + badge stacked */
+.room-meta {
+   display: inline-flex;
+     flex-direction: column;
+  gap: 2px;
+  line-height: 1;
+   align-items: center;
+   font-size: 14px;
+  font-weight: 700;
+}
+
+/* Right cluster: timer + icons */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.role-header h2{
+margin:0;
+}
+
+/*---DRAFT STACK */
+.draft-stack {
+  position: relative;   /* ← NEW anchor */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  pointer-events: none;
+}
+.draft-row-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;   
+  pointer-events: none;
+}
