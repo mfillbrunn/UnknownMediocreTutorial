@@ -29,7 +29,6 @@
    ========================================= */
 :where(.primary-btn, .secondary-btn) {
   border: none;
-  margin: var(--sp-10) 0;
   cursor: pointer;
   text-transform: uppercase;
   font-weight: 700;
@@ -200,14 +199,14 @@
 /* Guesser: all keys can still hover (including used ones) */
 .theme-guesser .key:hover {
   background: var(--kb-hover);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 
 /* Keyboard key color states */
 .key.key-green  { background: var(--tile-green) !important;  color: var(--tile-green-text) !important; box-shadow: none !important;}
 .key.key-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text) !important; box-shadow: none !important;}
-.key.key-blue   { background: #4ea3ff !important;            color: #000 !important; box-shadow: none !important;}
+.key.key-blue   { background: var(--tile-blue) !important;            color: var(--tile-yellow-blue) !important; box-shadow: none !important;}
 .key.key-purple { background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important; box-shadow: none !important;}
 
 /* “Gray” state has custom styling */
@@ -278,7 +277,9 @@
   border: 1px solid var(--toast-border);
   color: #fff;
 
-  transition: opacity .25s ease, transform .25s ease;
+  transition:
+  opacity 0.25s var(--ease-ui, ease),
+  transform 0.25s var(--ease-ui, ease);
   z-index: 99999;
 }
 .toast.show {
@@ -356,7 +357,7 @@
    =============================== */
 .role-badge {
   padding: var(--sp-2) var(--sp-8);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   line-height: 1;
   font-size: var(--fs-14);
   font-weight: 800;
@@ -582,7 +583,7 @@ body #keyboardGuesser .key[data-key="ENTER"]:hover,
 body #keyboardGuesser .key[data-key="ENTER"]:active {
   background: var(--btn-primary-hover) !important;
   box-shadow: 0 0 12px var(--btn-primary-glow) !important;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 
