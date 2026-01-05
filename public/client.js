@@ -611,7 +611,7 @@ function enableReadyButton(enabled) {
   }
 }
 
-$("createRoomBtn").onclick = () => {
+$("createRoomBtn")?.addEventListener("click", () => {
   createRoom(resp => {
     if (!resp.ok) return toast(resp.error);
     roomId = resp.roomId;
@@ -619,7 +619,7 @@ $("createRoomBtn").onclick = () => {
     $("roomCodeLabel").textContent = roomId;
     enableReadyButton(true);
   });
-};
+});
 
 $("joinRoomBtn").onclick = () => {
   const code = $("joinRoomInput").value.trim().toUpperCase();
