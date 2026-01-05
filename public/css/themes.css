@@ -122,18 +122,4 @@
  --guesser-color:  #4da3ff;
    --setter-color:#ff4b5c;
    }
-:where(.theme-setter, .theme-guesser) {
-  background: #0c0c0e;
-  border: 2px solid var(--role-accent);
-  color: var(--role-accent);
-  box-shadow:
-    0 0 18px color-mix(in srgb, var(--role-accent) 22%, transparent),
-    inset 0 0 14px color-mix(in srgb, var(--role-accent) 12%, transparent);
-}
-/*
-.theme-guesser h2 {
-  color: var(--role-accent);
-}
-.theme-setter h2 {
-  color: var(--role-accent);
-}*/
+
