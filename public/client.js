@@ -453,7 +453,7 @@ function handleSetterInput(event) {
     if (event.type === "BACKSPACE") {
       state.setterDraft = draft.slice(0, -1);
       updateUI();
-      renderSetterRemainingBox(state, myRole, draft);
+      renderSetterRemainingBox(state, myRole, state.setterDraft);
       return;
     }
     if (event.type === "LETTER") {
@@ -461,7 +461,7 @@ function handleSetterInput(event) {
       if (draft.length < 5) {
         state.setterDraft = draft + event.value;
         updateUI();
-        renderSetterRemainingBox(state, myRole, draft);
+        renderSetterRemainingBox(state, myRole, state.setterDraft);
       }
       return;
     }
