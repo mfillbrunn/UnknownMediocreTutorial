@@ -7,12 +7,7 @@ function renderChessClocks() {
     $("timerSetterOpponent")?.classList.add("hidden");
     $("timerGuesserOpponent")?.classList.add("hidden");
     return;
-  } else if(state.phase === "simultaneous"){
-    $("timerSetter")?.classList.remove("hidden");
-    $("timerGuesser")?.classList.remove("hidden");
-    $("timerSetterOpponent")?.classList.add("hidden");
-    $("timerGuesserOpponent")?.classList.add("hidden");
-  }
+  } 
   const setter = state.setter;
   const guesser = state.guesser;
 
