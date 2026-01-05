@@ -442,6 +442,14 @@
   margin-right: var(--sp-6);
   text-align: right;
 }
+.timer-label {
+  font-size: var(--fs-15);
+  min-width: 3.5ch;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  opacity: 0.6;
+}
+
 
 .chess-timer {
   font-family: var(--font-mono);
@@ -499,15 +507,7 @@
   justify-content: flex-end;
   gap: var(--sp-2);
 }
-
-.timer-label {
-  font-size: var(--fs-10);
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  opacity: 0.6;
-}
-
-.chess-timer.active {
+.timer-row.active {
   background: color-mix(in srgb, var(--role-accent), var(--text) 70%);
 }
 
