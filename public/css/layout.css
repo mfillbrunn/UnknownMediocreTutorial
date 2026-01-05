@@ -1,22 +1,30 @@
 /* =========================================
    SCREEN PANELS
    ========================================= */
-.screen {
-  display: none;
+#appMain {
   position: relative;
+  min-height: 70vh;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+
+  display: none;
 
   background: var(--screen-bg);
   border-radius: var(--r-14);
   padding: var(--sp-20);
-  margin-top: var(--sp-16);
 
   box-shadow: var(--shadow-soft);
 
   opacity: 0;
   transform: translateY(8px);
-  transition: opacity 0.25s var(--ease-ui, ease),
-              transform 0.25s var(--ease-ui, ease);
+  transition:
+    opacity 0.25s var(--ease-ui, ease),
+    transform 0.25s var(--ease-ui, ease);
 }
+
 .screen.active {
   display: block;
   opacity: 1;
