@@ -649,8 +649,10 @@ $("quickJoinBtn")?.addEventListener("click", () => {
   });
 });
 
-$("switchRolesBtn")?.addEventListener("click", () =>
-  sendGameAction(roomId, { type: "SWITCH_ROLES" }););
+$("switchRolesBtn")?.addEventListener("click", () => {
+  sendGameAction(roomId, { type: "SWITCH_ROLES" });
+});
+
 
 $("readyBtn")?.addEventListener("click", () => {
   // Send to server
@@ -680,7 +682,7 @@ if (el) el.textContent = "";
   show("menu");
 });
 
-$("shareResultBtn").onclick = async () => {
+$("shareResultBtn")?.addEventListener("click", async () => {
   try {
     const text = buildShareText(state, myRole);
     await navigator.clipboard.writeText(text);
@@ -689,5 +691,5 @@ $("shareResultBtn").onclick = async () => {
     console.error("Clipboard copy failed:", err);
     toast("Could not copy result");
   }
-};
+});
 
