@@ -8,7 +8,6 @@
   background: var(--screen-bg);
   border-radius: var(--r-14);
   padding: var(--sp-20);
-  margin-top: var(--sp-16);
 
   box-shadow: var(--shadow-soft);
 
@@ -21,6 +20,7 @@
   display: block;
   opacity: 1;
   transform: translateY(0);
+  margin-top: var(--sp-16);
 }
 #appContainer {
   max-width: 600px;
