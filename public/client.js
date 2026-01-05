@@ -82,6 +82,7 @@ function setTurn(screenId, isYourTurn) {
 // -----------------------------------------------------
 window.addEventListener("load", () => {
   const savedRoom = localStorage.getItem("vswordle_room");
+  document.body.classList.add("menu-mode");
   if (!savedRoom) return;
 
   joinRoom(savedRoom, resp => {
@@ -158,6 +159,7 @@ onLobbyEvent(evt => {
     case "hideLobby":
       hide("lobby");
       hide("menu");
+      document.body.classList.remove("menu-mode");
       show(myRole === "A" ? "setterScreen" : "guesserScreen");
       enableReadyButton(false);
       break;
