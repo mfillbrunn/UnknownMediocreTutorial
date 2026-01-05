@@ -217,15 +217,6 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
     PowerEngine.renderButtons(roomId);
     PowerEngine._initialized = true;
 }
-  // Update chess clocks
-
-  if (state.phase === "lobby" || !state.timeControl.enabled) {
-    $("timerSetter")?.classList.add("hidden");
-    $("timerGuesser")?.classList.add("hidden");
-  } else {
-    $("timerSetter")?.classList.remove("hidden");
-    $("timerGuesser")?.classList.remove("hidden");
-  }
   updateMenu();
   updateScreens();
   updateSummary();
