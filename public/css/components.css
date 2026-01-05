@@ -508,7 +508,7 @@
   justify-content: flex-end;
   gap: var(--sp-2);
 }
-.timer-row:has(.chess-timer.active) { {
+.timer-row:has(.chess-timer.active) { 
   background: color-mix(in srgb, var(--role-accent), var(--text) 70%);
 }
 
