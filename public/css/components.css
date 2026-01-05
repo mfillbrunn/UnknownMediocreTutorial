@@ -448,6 +448,7 @@
   letter-spacing: 0.08em;
   font-weight: 800;
   opacity: 0.6;
+  font-family: var(--font-mono);
 }
 
 
@@ -507,7 +508,7 @@
   justify-content: flex-end;
   gap: var(--sp-2);
 }
-.timer-row.active {
+.timer-row:has(.chess-timer.active) { {
   background: color-mix(in srgb, var(--role-accent), var(--text) 70%);
 }
 
