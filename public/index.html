@@ -56,19 +56,82 @@
         </section>
 
         <!-- ========== LOBBY ========== -->
-    <section id="lobby" class="screen active screen-lobby">
-      <div class="menu-center">
-        <h1 class="menu-title">VS WORDLE</h1>
-    
-        <div class="menu-buttons">
-          <button class="menu-btn primary">Quick Play</button>
-          <button class="menu-btn">Play</button>
-          <button class="menu-btn">Options</button>
-          <button class="menu-btn">How to Play</button>
-          <button class="menu-btn">Account</button>
-        </div>
+<!-- ========== LOBBY ========== -->
+<section id="lobby" class="screen screen-lobby">
+  <div class="panel lobby-panel">
+
+    <!-- Header -->
+    <div class="lobby-header">
+      <h2 class="screen-title">Lobby</h2>
+      <div class="room-code-wrap">
+        <span class="room-label">Room</span>
+        <span id="roomCodeLabel" class="room-code">----</span>
       </div>
-    </section>
+    </div>
+
+    <!-- Waiting state -->
+    <div id="waitingForPlayer" class="waiting-block">
+      <div class="spinner"></div>
+      <p>Waiting for player…</p>
+    </div>
+
+    <!-- Player controls -->
+    <div class="lobby-controls">
+
+      <!-- Role info -->
+      <p class="lobby-role">
+        You are: <strong><span id="lobbyRoleLabel">—</span></strong>
+      </p>
+
+      <!-- Player name -->
+      <label class="lobby-field">
+        <span>Name</span>
+        <input
+          id="playerNameInput"
+          type="text"
+          maxlength="16"
+          placeholder="Your name"
+          class="short-input"
+        />
+      </label>
+
+      <!-- Timer controls -->
+      <div class="lobby-timer">
+        <label>
+          <span>Timer mode</span>
+          <select id="timerModeSelect" class="short-input">
+            <option value="round" selected>Round timer</option>
+            <option value="chess">Chess timer</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Time</span>
+          <select id="timeControlSelect" class="short-input">
+            <option value="0">No time</option>
+            <option value="30">30 sec</option>
+            <option value="60" selected>1 min</option>
+            <option value="120">2 min</option>
+            <option value="300">5 min</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Actions -->
+      <div class="lobby-actions">
+        <button id="switchRolesBtn" class="secondary-btn">
+          Switch Roles
+        </button>
+
+        <button id="readyBtn" class="primary-btn">
+          I’m Ready
+        </button>
+      </div>
+
+    </div>
+  </div>
+</section>
+
       
     <!-- ========== MENU ========== -->
     <section id="menu" class="screen">
