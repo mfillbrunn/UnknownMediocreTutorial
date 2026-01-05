@@ -1,7 +1,0 @@
-.waiting-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-12);
-  opacity: 0.8;
-}
