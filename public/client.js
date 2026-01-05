@@ -120,8 +120,22 @@ function showLobby() {
   uiPhase = "lobby";
   hide("startupScreen");
   show("lobby");
-  $("waitingForPlayer")?.classList.remove("hidden");
+  updateWaitingIndicator(); 
   document.body.classList.remove("menu-mode");
+}
+function updateWaitingIndicator() {
+  const el = $("waitingForPlayer");
+  if (!el || !state || state.phase !== "lobby") return;
+
+  const playerCount =
+    Object.values(state.players || {}).length ||
+    Object.values(state.ready || {}).length;
+
+  if (playerCount >= 2) {
+    el.classList.add("hidden");
+  } else {
+    el.classList.remove("hidden");
+  }
 }
 
 // -----------------------------------------------------
@@ -230,6 +244,7 @@ onStateUpdate(newState => {
   // Clear guesser draft once it is no longer editable
   if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {localGuesserDraft = "";}
   window.state = state; 
+  updateWaitingIndicator();
   updatePowerInfoState(state);
   updateUI();
   if (state.phase === "simultaneous"){renderSetterRemainingBox(state, myRole, "");}
