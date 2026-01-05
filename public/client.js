@@ -134,9 +134,11 @@ onLobbyEvent(evt => {
 
       if (evt.setterId === myId) {
         myRole = "A";
+        window.myRole = "A"; 
         toast("You are now the Setter!");
       } else if (evt.guesserId === myId) {
         myRole = "B";
+        window.myRole = "B"; 
         toast("You are now the Guesser!");
       }
 
@@ -169,11 +171,13 @@ onLobbyEvent(evt => {
   }
 });
 
-// Role assignment from server
-
 // State updates
 onStateUpdate(newState => {
-  
+  if (!window.myRole) {
+    const myId = socket.id;
+    if (state.setter === myId) window.myRole = "A";
+    else if (state.guesser === myId) window.myRole = "B";
+  }
   if (!roleAssigned) {
     pendingState = JSON.parse(JSON.stringify(newState));
     return;
