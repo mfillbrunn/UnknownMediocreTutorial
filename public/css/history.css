@@ -4,6 +4,7 @@
 .history-tiles {
   display: flex;
   flex-direction: column;
+   gap: var(--sp-6);
 }
 
 .history-row {
