@@ -769,8 +769,5 @@ $("quickPlayBtn")?.addEventListener("click", () => {
   });
 });
 function enterLobbyAfterJoin() {
-  $("roomInfo").style.display = "block";
-  $("roomCodeLabel").textContent = roomId;
-  enableReadyButton(true);
   showLobby();
 }
