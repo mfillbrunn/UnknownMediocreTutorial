@@ -18,7 +18,11 @@ let uiPhase = "startup";
 // -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
-const show = id => $(id).classList.add("active");
+const show = id => {
+  const el = $(id);
+  if (!el) {console.warn(`show(): element #${id} not found`); return;}
+  el.classList.add("active");
+};
 const hide = id => $(id).classList.remove("active");
 
 function toast(msg) {
