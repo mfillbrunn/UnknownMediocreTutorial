@@ -9,7 +9,8 @@ tooltip: {
 
   renderButton(roomId) {
      const { wrapper, btn } =    PowerEngine.createPowerButton("revealGreen", "Sneak Letter");
-    this.buttonEl = btn;
+    this.wrapperEl = wrapper;
+     this.buttonEl = btn;
         $("guesserPowerContainer").appendChild(wrapper)
 
     btn.onclick = () =>

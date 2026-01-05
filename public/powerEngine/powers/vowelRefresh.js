@@ -8,7 +8,8 @@ tooltip: {
 
   renderButton(roomId) {
      const { wrapper, btn } =    PowerEngine.createPowerButton("vowelRefresh", "Vowel Refresh");
-    this.buttonEl = btn;
+    this.wrapperEl = wrapper;
+     this.buttonEl = btn;
     $("setterPowerContainer").appendChild(wrapper);
     btn.onclick = () => {
       sendGameAction(roomId, { type: "USE_VOWEL_REFRESH" });

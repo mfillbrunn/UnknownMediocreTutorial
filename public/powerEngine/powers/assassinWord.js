@@ -6,6 +6,7 @@ PowerEngine.register("assassinWord", {
   },
   renderButton(roomId) {
   const { wrapper, btn } =    PowerEngine.createPowerButton("assassinWord", "Assassin Word");
+  this.wrapperEl = wrapper;
   this.buttonEl = btn;
   $("setterPowerContainer").appendChild(wrapper);
 

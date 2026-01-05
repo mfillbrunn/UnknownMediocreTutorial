@@ -8,7 +8,8 @@ tooltip: {
 
   renderButton(roomId) {
   const { wrapper, btn } =    PowerEngine.createPowerButton("confuseColors", "Blue Mode");
-    this.buttonEl = btn;
+  this.wrapperEl = wrapper;  
+  this.buttonEl = btn;
     $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {

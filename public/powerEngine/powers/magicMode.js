@@ -8,7 +8,8 @@ tooltip: {
 
   renderButton(roomId) {
      const { wrapper, btn } =    PowerEngine.createPowerButton("magicMode", "Magic Mode");
-    this.buttonEl = btn;
+    this.wrapperEl = wrapper;
+     this.buttonEl = btn;
         $("guesserPowerContainer").appendChild(wrapper)
 
     btn.onclick = () => {

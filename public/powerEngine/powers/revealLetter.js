@@ -3,11 +3,12 @@ PowerEngine.register("revealLetter", {
   role: "guesser",
 
   renderButton(roomId) {
-    const btn = document.createElement("button");
-    btn.className = "power-btn";
-    btn.textContent = "Reveal Letter";  // will be renamed based on mode
-    this.buttonEl = btn;
-    $("guesserPowerContainer").appendChild(btn);
+    const { wrapper, btn } =
+    PowerEngine.createPowerButton("revealLetter", "Reveal Letter");
+
+  this.wrapperEl = wrapper;
+  this.buttonEl = btn;
+    $("guesserPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
       // Normalized by powerEngineServer.normalizePowerId → "revealLetter"

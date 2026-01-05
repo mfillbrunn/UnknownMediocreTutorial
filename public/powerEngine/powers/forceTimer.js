@@ -7,7 +7,8 @@ tooltip: {
 
   renderButton(roomId) {
      const { wrapper, btn } =    PowerEngine.createPowerButton("forceTimer", "Force Timer");
-    this.buttonEl = btn;
+    this.wrapperEl = wrapper;
+     this.buttonEl = btn;
     $("guesserPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
