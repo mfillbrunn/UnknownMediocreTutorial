@@ -632,7 +632,7 @@ $("joinRoomBtn")?.addEventListener("click", () => {
     $("roomCodeLabel").textContent = roomId;
     enableReadyButton(true);
   });
-};
+});
 
 window.quickJoin = function (cb) {
   socket.emit("quickJoin", cb);
@@ -647,7 +647,7 @@ $("quickJoinBtn")?.addEventListener("click", () => {
     $("roomCodeLabel").textContent = roomId;
     enableReadyButton(true);
   });
-};
+});
 
 $("switchRolesBtn").onclick = () =>
   sendGameAction(roomId, { type: "SWITCH_ROLES" });
@@ -663,13 +663,13 @@ $("readyBtn")?.addEventListener("click", () => {
 
   // Immediately update UI locally
   enableReadyButton(false);
-};
+});
 $("applyPowerCountBtn")?.addEventListener("click", () => {
    const n = parseInt($("powerCountInput").value, 10);
    if (!isNaN(n) && n > 0 && n <= 10) {
      sendGameAction(roomId, { type: "SET_POWER_COUNT", count: n });
    }
- };
+});
 
 $("newMatchBtn")?.addEventListener("click", () => {
   sendGameAction(roomId, { type: "NEW_MATCH" });
@@ -678,7 +678,7 @@ if (el) el.textContent = "";
   hide("setterScreen");
   hide("guesserScreen");
   show("menu");
-};
+});
 
 $("shareResultBtn").onclick = async () => {
   try {
