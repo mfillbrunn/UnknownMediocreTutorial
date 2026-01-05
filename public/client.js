@@ -621,7 +621,7 @@ $("createRoomBtn")?.addEventListener("click", () => {
   });
 });
 
-$("joinRoomBtn").onclick = () => {
+$("joinRoomBtn")?.addEventListener("click", () => {
   const code = $("joinRoomInput").value.trim().toUpperCase();
   if (!code) return toast("Enter a code");
 
@@ -638,7 +638,7 @@ window.quickJoin = function (cb) {
   socket.emit("quickJoin", cb);
 };
 
-$("quickJoinBtn").onclick = () => {
+$("quickJoinBtn")?.addEventListener("click", () => {
   quickJoin(resp => {
     if (!resp.ok) return toast(resp.error);
 
@@ -652,7 +652,7 @@ $("quickJoinBtn").onclick = () => {
 $("switchRolesBtn").onclick = () =>
   sendGameAction(roomId, { type: "SWITCH_ROLES" });
 
-$("readyBtn").onclick = () => {
+$("readyBtn")?.addEventListener("click", () => {
   // Send to server
   const name = $("playerNameInput")?.value?.trim() || "";
   
@@ -664,14 +664,14 @@ $("readyBtn").onclick = () => {
   // Immediately update UI locally
   enableReadyButton(false);
 };
-$("applyPowerCountBtn").onclick = () => {
+$("applyPowerCountBtn")?.addEventListener("click", () => {
    const n = parseInt($("powerCountInput").value, 10);
    if (!isNaN(n) && n > 0 && n <= 10) {
      sendGameAction(roomId, { type: "SET_POWER_COUNT", count: n });
    }
  };
 
-$("newMatchBtn").onclick = () => {
+$("newMatchBtn")?.addEventListener("click", () => {
   sendGameAction(roomId, { type: "NEW_MATCH" });
   const el = $("assassinWordDisplay");
 if (el) el.textContent = "";
