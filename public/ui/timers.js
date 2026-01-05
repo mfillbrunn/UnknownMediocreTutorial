@@ -1,19 +1,18 @@
 function renderChessClocks() {
   if (!state || !state.timeRemaining) return;
 
-  if (!state.timeControl?.enabled) {
+  if (state.phase === "lobby" || !state.timeControl?.enabled) {
     $("timerSetter")?.classList.add("hidden");
     $("timerGuesser")?.classList.add("hidden");
     $("timerSetterOpponent")?.classList.add("hidden");
     $("timerGuesserOpponent")?.classList.add("hidden");
     return;
+  } else if(state.phase === "simultaneous"){
+    $("timerSetter")?.classList.remove("hidden");
+    $("timerGuesser")?.classList.remove("hidden");
+    $("timerSetterOpponent")?.classList.add("hidden");
+    $("timerGuesserOpponent")?.classList.add("hidden");
   }
-
-  $("timerSetter")?.classList.remove("hidden");
-  $("timerGuesser")?.classList.remove("hidden");
-  $("timerSetterOpponent")?.classList.remove("hidden");
-  $("timerGuesserOpponent")?.classList.remove("hidden");
-
   const setter = state.setter;
   const guesser = state.guesser;
 
@@ -23,6 +22,11 @@ function renderChessClocks() {
 
   applyTimer("timerGuesser", guesser);
   applyTimer("timerGuesserOpponent", guesser);
+  
+  $("timerSetter")?.classList.remove("hidden");
+  $("timerGuesser")?.classList.remove("hidden");
+  $("timerSetterOpponent")?.classList.remove("hidden");
+  $("timerGuesserOpponent")?.classList.remove("hidden");
 }
 
 
