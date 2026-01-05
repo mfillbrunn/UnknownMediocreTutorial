@@ -649,8 +649,8 @@ $("quickJoinBtn")?.addEventListener("click", () => {
   });
 });
 
-$("switchRolesBtn").onclick = () =>
-  sendGameAction(roomId, { type: "SWITCH_ROLES" });
+$("switchRolesBtn")?.addEventListener("click", () =>
+  sendGameAction(roomId, { type: "SWITCH_ROLES" }););
 
 $("readyBtn")?.addEventListener("click", () => {
   // Send to server
