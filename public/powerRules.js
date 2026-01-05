@@ -31,6 +31,7 @@ forceGuess: {
   once: true,
   allowed(state, role) {
     return (
+      computeRemainingAfterIndex(state.history.length - 1)>=10 &&
       state.phase === "normal" &&
       role === state.setter &&
       !state.powerUsedThisTurn &&
