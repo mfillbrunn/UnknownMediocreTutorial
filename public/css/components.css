@@ -461,26 +461,26 @@
   color: var(--role-accent);
    transition: color 0.2s var(--ease-ui), text-shadow 0.2s var(--ease-ui);
 }
-
+.chess-timer.active {
+  animation: pulse 1s infinite;
+  color: var(--role-accent);
+}
 /* 30s warning */
 .chess-timer.warn-30 {
-  animation: pulse-critical 0.7s infinite;
+  animation: pulse-light 0.9s infinite;
 }
 
 /* 10s critical */
 .chess-timer.warn-10 {
-  animation: pulse-critical 0.5s infinite;
+  animation: pulse-critical 0.45s infinite;
 }
+
+
 
 /* Increment flash */
 .chess-timer.increment {
   animation: timer-increment-flash 0.4s var(--ease-ui);
 }
-.chess-timer.active {
-  animation: pulse 1s infinite;
-  color: var(--role-accent);
-}
-
 /* Floating +10 indicator */
 .timer-increment-badge {
   position: absolute;
@@ -503,6 +503,8 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--sp-2);
+  padding-right: var(--sp-2);
+  padding-left:  var(--sp-2);
 }
 .timer-row:has(.chess-timer.active) { 
   background: color-mix(in srgb, var(--role-accent), black 65%);
