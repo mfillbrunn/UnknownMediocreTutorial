@@ -13,6 +13,7 @@ let KeepEnabled = true;
 let NewEnabled = true;
 window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
+let uiPhase = "startup";
 
 // -----------------------------------------------------
 // DOM HELPERS
@@ -44,6 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (saved && $("playerNameInput")) {
     $("playerNameInput").value = saved;
   }
+  showStartup();
 });
 let lastTimeRemaining = { A: null, B: null };
 
@@ -96,6 +98,28 @@ window.addEventListener("load", () => {
     }
   });
 });
+
+// -----------------------------------------------------
+// Start up
+// -----------------------------------------------------
+function showStartup() {
+  uiPhase = "startup";
+  show("startupScreen");
+  hide("lobby");
+  hide("menu");
+  hide("setterScreen");
+  hide("guesserScreen");
+  document.body.classList.add("menu-mode");
+}
+
+function showLobby() {
+  uiPhase = "lobby";
+  hide("startupScreen");
+  show("lobby");
+  $("waitingForPlayer")?.classList.remove("hidden");
+  document.body.classList.remove("menu-mode");
+}
+
 // -----------------------------------------------------
 // SOCKET EVENT HANDLERS
 // -----------------------------------------------------
@@ -130,6 +154,7 @@ onLobbyEvent(evt => {
 
     case "playerJoined":
       toast("A player joined.");
+      $("waitingForPlayer")?.classList.add("hidden");
       enableReadyButton(true);
       break;
 
@@ -160,6 +185,7 @@ onLobbyEvent(evt => {
       break;
 
     case "hideLobby":
+      $("waitingForPlayer")?.classList.add("hidden");
       hide("lobby");
       hide("menu");
       show(myRole === "A" ? "setterScreen" : "guesserScreen");
@@ -717,3 +743,30 @@ $("timeControlSelect")?.addEventListener("change", () => {
     seconds
   });
 });
+
+$("quickPlayBtn")?.addEventListener("click", () => {
+  quickJoin(resp => {
+    if (resp.ok) {
+      roomId = resp.roomId;
+      enterLobbyAfterJoin();
+      return;
+    }
+
+    // No room available → create one
+    createRoom(resp2 => {
+      if (!resp2.ok) {
+        toast(resp2.error || "Could not start game");
+        return;
+      }
+
+      roomId = resp2.roomId;
+      enterLobbyAfterJoin();
+    });
+  });
+});
+function enterLobbyAfterJoin() {
+  $("roomInfo").style.display = "block";
+  $("roomCodeLabel").textContent = roomId;
+  enableReadyButton(true);
+  showLobby();
+}
