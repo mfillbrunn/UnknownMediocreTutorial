@@ -127,8 +127,17 @@
               </div>
           
               <div class="header-right">
-                <span id="timerSetter" class="chess-timer">5:00</span>
-                <span id="timerGuesserOpponent" class="chess-timer">5:00</span>
+                <div class="timer-block">
+                  <div class="timer-row self">
+                    <span class="timer-label">YOU</span>
+                    <span id="timerSetter" class="chess-timer"></span>
+                  </div>
+                
+                  <div class="timer-row opponent">
+                    <span class="timer-label">OPP</span>
+                    <span id="timerGuesserOpponent" class="chess-timer opponent"></span>
+                  </div>
+                </div>
                 <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
                 <button id="powerInfoBtnSetter" class="power-info-btn" aria-label="Power descriptions"> <span class="power-info-icon">?</span></button>
               </div>
@@ -200,8 +209,16 @@
               </span>
             </div>        
             <div class="header-right">
-              <span id="timerGuesser" class="chess-timer">5:00</span>
-              <span id="timerSetterOpponent" class="chess-timer">5:00</span>
+                <div class="timer-block">
+                  <div class="timer-row self">
+                    <span class="timer-label">YOU</span>
+                    <span id="timerGuesser" class="chess-timer"></span>
+                  </div>                
+                  <div class="timer-row opponent">
+                    <span class="timer-label">OPP</span>
+                    <span id="timerSetterOpponent" class="chess-timer opponent"></span>
+                  </div>
+                </div>              
               <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
               <button id="powerInfoBtnGuesser" class="power-info-btn" aria-label="Power descriptions"><span class="power-info-icon">?</span></button>
             </div>
