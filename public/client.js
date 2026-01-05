@@ -174,9 +174,7 @@ onLobbyEvent(evt => {
 // State updates
 onStateUpdate(newState => {
   if (!window.myRole) {
-    const myId = socket.id;
-    if (state.setter === myId) window.myRole = "A";
-    else if (state.guesser === myId) window.myRole = "B";
+    window.myRole = myRole;
   }
   if (!roleAssigned) {
     pendingState = JSON.parse(JSON.stringify(newState));
