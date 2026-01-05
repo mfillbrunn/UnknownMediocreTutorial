@@ -4,25 +4,25 @@ function renderChessClocks() {
   if (!state.timeControl?.enabled) {
     $("timerSetter")?.classList.add("hidden");
     $("timerGuesser")?.classList.add("hidden");
-    $("timerSetterOpp")?.classList.add("hidden");
-    $("timerGuesserOpp")?.classList.add("hidden");
+    $("timerSetterOpponent")?.classList.add("hidden");
+    $("timerGuesserOpponent")?.classList.add("hidden");
     return;
   }
 
   $("timerSetter")?.classList.remove("hidden");
   $("timerGuesser")?.classList.remove("hidden");
-  $("timerSetterOpp")?.classList.remove("hidden");
-  $("timerGuesserOpp")?.classList.remove("hidden");
+  $("timerSetterOpponent")?.classList.remove("hidden");
+  $("timerGuesserOpponent")?.classList.remove("hidden");
 
   const setter = state.setter;
   const guesser = state.guesser;
 
   // Always render both role times into all relevant elements
   applyTimer("timerSetter", setter);
-  applyTimer("timerSetterOpp", setter);
+  applyTimer("timerSetterOpponent", setter);
 
   applyTimer("timerGuesser", guesser);
-  applyTimer("timerGuesserOpp", guesser);
+  applyTimer("timerGuesserOpponent", guesser);
 }
 
 
