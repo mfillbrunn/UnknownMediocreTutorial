@@ -492,12 +492,7 @@
   pointer-events: none;
   animation: float-plus 0.8s var(--ease-ui) forwards;
 }
-.chess-timer.opponent {
-  font-size: var(--fs-13);
-  font-weight: 600;
-  opacity: 0.65;
-  color: var(--text-muted);
-}
+
 .timer-row {
   display: flex;
   align-items: center;
@@ -505,14 +500,6 @@
   gap: var(--sp-2);
 }
 
-.timer-row.self {
-  font-size: 1em;
-}
-
-.timer-row.opponent {
-  font-size: 0.9em;
-  opacity: 0.75;
-}
 .timer-label {
   font-size: var(--fs-10);
   letter-spacing: 0.08em;
@@ -520,16 +507,8 @@
   opacity: 0.6;
 }
 
-.timer-row.self .timer-label {
-  opacity: 0.9;
-}
-.timer-row.self .chess-timer {
-  padding: 2px 6px;
-  border-radius: 6px;
-}
-
-.timer-row.self .chess-timer.active {
-  box-shadow: 0 0 8px var(--role-accent);
+.chess-timer.active {
+  background: color-mix(in srgb, var(--role-accent), var(--text) 70%);
 }
 
 
