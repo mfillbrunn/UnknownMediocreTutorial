@@ -62,3 +62,8 @@
   background: var(--btn-primary-hover);
 }
 
+body.menu-mode .app-header {
+  display: none;
+}
+
+
