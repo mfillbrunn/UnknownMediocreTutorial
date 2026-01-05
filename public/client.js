@@ -631,6 +631,7 @@ function handleGuesserInput(event) {
 
 function enableReadyButton(enabled) {
   const btn = $("readyBtn");
+  if (!btn) return;
   btn.disabled = !enabled;
   if (!enabled) {
     btn.classList.add("waiting");
