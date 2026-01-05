@@ -218,31 +218,7 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
     PowerEngine._initialized = true;
 }
   // Update chess clocks
-    if (state.timeRemaining) {
-      const isSetter = myRole === state.setter;
-      const myId = isSetter ? state.setter : state.guesser;
-      const oppId = isSetter ? state.guesser : state.setter;
-    
-      const myTimer = isSetter
-        ? $("timerSetter")
-        : $("timerGuesser");
-    
-      const oppTimer = isSetter
-        ? $("timerGuesserOpp")
-        : $("timerSetterOpp");
-    
-      if (myTimer) {
-        myTimer.textContent = formatTime(state.timeRemaining[myId]);
-        myTimer.classList.toggle("active", state.activeTimer === myId);
-        myTimer.classList.remove("hidden");
-      }
-    
-      if (oppTimer) {
-        oppTimer.textContent = formatTime(state.timeRemaining[oppId]);
-        oppTimer.classList.toggle("active", state.activeTimer === oppId);
-        oppTimer.classList.remove("hidden");
-      }
-    }
+
   if (state.phase === "lobby" || !state.timeControl.enabled) {
     $("timerSetter")?.classList.add("hidden");
     $("timerGuesser")?.classList.add("hidden");
