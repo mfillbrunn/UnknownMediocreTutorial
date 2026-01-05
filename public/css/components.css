@@ -445,12 +445,11 @@
 .timer-label {
   font-size: var(--fs-15);
   min-width: 3.5ch;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.5px;
   font-weight: 800;
-  opacity: 0.6;
   font-family: var(--font-mono);
+  margin-right: var(--sp-2);
 }
-
 
 .chess-timer {
   font-family: var(--font-mono);
@@ -465,15 +464,14 @@
 
 /* 30s warning */
 .chess-timer.warn-30 {
-  color: #ffb347; /* amber */
-  text-shadow: 0 0 6px rgba(255, 179, 71, 0.6);
+  color: #ffb347 !important; /* amber */
+  animation: pulse-critical 0.7s infinite;
 }
 
 /* 10s critical */
 .chess-timer.warn-10 {
-  color: #ff4b4b; /* red */
-  text-shadow: 0 0 10px rgba(255, 75, 75, 0.9);
-  animation: pulse-critical 0.9s infinite;
+  color: #ff4b4b !important; /* red */
+  animation: pulse-critical 0.5s infinite;
 }
 
 /* Increment flash */
