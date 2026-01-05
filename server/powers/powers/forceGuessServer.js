@@ -3,19 +3,11 @@ const fs = require("fs");
 const { parseWordlist } = require("../../game-engine/validation");
 const engine = require("../powerEngineServer");
 let ALLOWED_GUESSES = [];
-try {
-  const allowedPath = path.join(
-    __dirname,
-    "../../wordlists/allowed_guesses.txt"
-  );
+try {const allowedPath = path.join(__dirname, "../../wordlists/allowed_guesses.txt");
   const raw = fs.readFileSync(allowedPath, "utf8");
   ALLOWED_GUESSES = parseWordlist(raw);
-} catch (err) {
-  console.warn(
-    "Could not load allowed guesses for forceGuess:",
-    err.message
-  );
-}
+} catch (err) {console.warn("Could not load allowed guesses for forceGuess:",err.message);}
+
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 const COMMON = [
@@ -26,12 +18,10 @@ const COMMON = [
   "firstLastSame"
 ];
 const MIN_DOUBLE_LETTER_SOLUTIONS = 25;
-
 const UNCOMMON = [
   "minVowels",
   "maxVowels"
 ];
-
 const RARE = [
   "palindrome"
 ];
@@ -43,6 +33,12 @@ function shuffle(arr) {
   }
   return a;
 }
+
+function getFeasibleWords(words, state){
+  const feasible = words.filter(w =>isConsistentWithHistory(state.history, w, state));
+  return feasible;
+}
+
 
 function generateForceGuessOptions(state) {
   const roll = Math.random();
@@ -153,7 +149,10 @@ function generateSafeDoubleLetter(allowedGuesses) {
 engine.registerPower("forceGuess", {
   apply(state, action, roomId, io) {
     if (state.powers.forceGuessUsed) return;
-
+    let feasible = getFeasibleWords(ALLOWED_GUESSES,state);
+    if (feasible.length < 5) {
+      io.to(action.playerId).emit("toast", "Warning - only few possible words remaining, this might help more than it hurts!");
+    }
     state.powers.forceGuessUsed = true;
     state.powers.forceGuessActive = true;
     state.powers.forcedGuessOptions = generateForceGuessOptions(state);
