@@ -153,12 +153,7 @@ function generateSafeDoubleLetter(allowedGuesses) {
 engine.registerPower("forceGuess", {
   apply(state, action, roomId, io) {
     if (state.powers.forceGuessUsed) return;
-    const feasible = ALLOWED_GUESSES.filter(w => isConsistentWithHistory(state.history, w, state));
-    
-    if (feasible<10) {
-      io.to(action.playerId).emit("toast", "Less than 10 feasible words left - you used this too late!");
-      return;
-    }
+
     state.powers.forceGuessUsed = true;
     state.powers.forceGuessActive = true;
     state.powers.forcedGuessOptions = generateForceGuessOptions(state);
