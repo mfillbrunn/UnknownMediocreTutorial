@@ -65,9 +65,6 @@ function shakeDraftRow(role) {
   void row.offsetWidth; // force reflow
   row.classList.add("draft-shake");
 }
-
-
-
 ///Simplified turn indicator
 function setTurn(screenId, isYourTurn) {
   const screen = document.getElementById(screenId);
@@ -77,12 +74,18 @@ function setTurn(screenId, isYourTurn) {
   screen.classList.toggle("is-not-your-turn", !isYourTurn);
 }
 
+function enterMenuMode() {
+  document.body.classList.add("menu-mode");
+}
+function exitMenuMode() {
+  document.body.classList.remove("menu-mode");
+}
+
 // -----------------------------------------------------
 // AUTO-REJOIN
 // -----------------------------------------------------
 window.addEventListener("load", () => {
   const savedRoom = localStorage.getItem("vswordle_room");
-  document.body.classList.add("menu-mode");
   if (!savedRoom) return;
 
   joinRoom(savedRoom, resp => {
@@ -159,7 +162,6 @@ onLobbyEvent(evt => {
     case "hideLobby":
       hide("lobby");
       hide("menu");
-      document.body.classList.remove("menu-mode");
       show(myRole === "A" ? "setterScreen" : "guesserScreen");
       enableReadyButton(false);
       break;
@@ -238,6 +240,7 @@ function updateMenu() {
 // -----------------------------------------------------
 function updateScreens() {
   if (state.phase === "lobby") {
+    enterMenuMode(); 
     show("lobby");
     hide("menu");
     hide("setterScreen");
@@ -246,8 +249,8 @@ function updateScreens() {
     PowerEngine.applyUI(state, myRole, roomId);
     return;
   }
-
   enableReadyButton(false);
+  exitMenuMode();
   hide("lobby");
   hide("menu");
   
