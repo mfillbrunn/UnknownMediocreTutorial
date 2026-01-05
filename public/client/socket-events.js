@@ -95,28 +95,6 @@ socket.on("timerTick", ({ timeRemaining }) => {
   renderChessClocks();
 });
 
-$("timeControlSelect").onchange = () => {
-  const select = $("timeControlSelect");
-  const seconds = parseInt(select.value, 10);
 
-  if (!Number.isFinite(seconds)) return;
 
-  // No time selected
-  if (seconds === 0) {
-    sendGameAction(roomId, {
-      type: "SET_TIME_CONTROL",
-      enabled: false
-    });
-    return;
-  }
-
-  const mode = $("timerModeSelect")?.value || "round";
-
-  sendGameAction(roomId, {
-    type: "SET_TIME_CONTROL",
-    enabled: true,
-    mode,
-    seconds
-  });
-};
 
