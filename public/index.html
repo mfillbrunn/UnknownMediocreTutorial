@@ -21,8 +21,11 @@
   <link rel="stylesheet" href="css/animations.css">
   <!-- 8. Power-specific effects -->
   <link rel="stylesheet" href="css/powers.css">
-  <!-- 9. Mobile phone adjustments-->
+  <!-- 9. Lobby-->
+  <link rel="stylesheet" href="css/game-menu.css">
+  <!-- Last. Mobile phone adjustments-->
   <link rel="stylesheet" href="css/mobile.css">
+
 </head>
 <body>
   <script>
@@ -38,69 +41,20 @@
     <!-- ========== MAIN ========== -->
       <main id="appMain">
         <!-- ========== LOBBY ========== -->
-        <section id="lobby" class="screen active screen-lobby">
-           <h2 class="screen-title">Online Lobby</h2>
-           <!-- Primary actions -->
-            <div class="lobby-actions">
-              <button id="createRoomBtn" class="primary-btn">Create Room</button>
-              <button id="quickJoinBtn" class="secondary-btn">Quick Join</button>
-            </div>     
-           <!-- Manual join -->
-            <div class="join-block">
-              <input id="joinRoomInput" type="text" maxlength="8" placeholder="Room Code">
-              <button id="joinRoomBtn" class="primary-btn small">Join</button>
-            </div>
-           <div id="roomInfo" class="panel" hidden>
-              <p><b>Room:</b> <span id="roomCodeLabel" class="room-code"></span></p>
-              <div class="panel-section">
-                <label>
-                  <b>Timer mode:</b>
-                  <select id="timerModeSelect" class="short-input">
-                    <option value="round" selected>Round timer (time per round)</option>
-                    <option value="chess">Chess timer (total time per match)</option>
-                  </select>
-                </label>
-              </div>              
-              <div class="panel-section">
-                <label>
-                  <b>Time:</b>
-                  <select id="timeControlSelect" class="short-input">
-                    <option value="0">No time</option>
-                    <!-- Round timer values (seconds per round) -->
-                    <option value="30">30 secs</option>
-                    <option value="60" selected>1 min</option>
-                    <option value="90">1.5 min</option>
-                    <option value="120">2 min</option>       
-                    <option value="300">5 min</option>
-                    <option value="600">10 min</option>
-                  </select>
-                </label>
-              </div>
-              <div class="panel-section">
-                 <label><b>Powers:</b>
-                 <input id="powerCountInput" type="number" min="1" max="10" value="2" class="short-input">
-                 </label>
-                 <button id="applyPowerCountBtn" class="primary-btn small">Apply</button>
-              </div>
-              <p><b>You are:</b> <span id="lobbyRoleLabel">-</span></p>
-              <label>
-              <b>Name:</b>
-              <input id="playerNameInput" type="text" maxlength="16" placeholder="Your name" class="short-input"/>
-              </label>      
-              <label class="color-picker-row">
-              <input type="checkbox" id="useCustomColor">
-              <span>Use custom accent color</span>
-              </label>            
-              <label class="color-picker-row">
-              <span>Accent color</span>
-              <input type="color" id="playerColorPicker" disabled>
-              </label>
-              <button id="switchRolesBtn" class="secondary-btn">Switch Roles</button>
-              <button id="readyBtn" class="primary-btn">I'm Ready</button>
-           </div>
-           <p id="lobbyStatus" class="status"></p>
-        </section>
-  
+    <section id="lobby" class="screen active screen-lobby game-menu">
+      <div class="menu-center">
+        <h1 class="menu-title">VS WORDLE</h1>
+    
+        <div class="menu-buttons">
+          <button class="menu-btn primary">Quick Play</button>
+          <button class="menu-btn">Play</button>
+          <button class="menu-btn">Options</button>
+          <button class="menu-btn">How to Play</button>
+          <button class="menu-btn">Account</button>
+        </div>
+      </div>
+    </section>
+      
     <!-- ========== MENU ========== -->
     <section id="menu" class="screen">
        <h2 class="screen-title">Summary</h2>
