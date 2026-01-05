@@ -464,13 +464,11 @@
 
 /* 30s warning */
 .chess-timer.warn-30 {
-  color: #ffb347 !important; /* amber */
   animation: pulse-critical 0.7s infinite;
 }
 
 /* 10s critical */
 .chess-timer.warn-10 {
-  color: #ff4b4b !important; /* red */
   animation: pulse-critical 0.5s infinite;
 }
 
@@ -507,7 +505,7 @@
   gap: var(--sp-2);
 }
 .timer-row:has(.chess-timer.active) { 
-  background: color-mix(in srgb, var(--role-accent), var(--text) 70%);
+  background: color-mix(in srgb, var(--role-accent), black 65%);
 }
 
 
