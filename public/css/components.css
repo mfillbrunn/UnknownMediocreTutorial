@@ -319,7 +319,8 @@
   display: none;
   align-items: center;
   justify-content: center;
-
+  gap: var(--sp-8);        
+  flex-direction: column; 
   background: rgba(0, 0, 0, 0.6);
 
   z-index: 1000;
