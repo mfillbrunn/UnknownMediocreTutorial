@@ -100,17 +100,21 @@ function getPlayerName() {
 }
 
 function updateRoleCards() {
-  if (!state || !state.playerNames) return;
- const setterEl = $("setterName");
-  if (setterEl) {
-    setterEl.textContent = state.playerNames[state.setter] || "—";
-  }
+  if (!state || !state.roles || !state.playerNames) return;
 
-  const guesserEl = $("guesserName");
-  if (guesserEl) {
-    guesserEl.textContent = state.playerNames[state.guesser] || "—";
-  }
+  const setterPlayerId = Object.keys(state.roles)
+    .find(id => state.roles[id] === "A");
+
+  const guesserPlayerId = Object.keys(state.roles)
+    .find(id => state.roles[id] === "B");
+
+  $("setterName")?.textContent =
+    setterPlayerId ? state.playerNames[setterPlayerId] : "—";
+
+  $("guesserName")?.textContent =
+    guesserPlayerId ? state.playerNames[guesserPlayerId] : "—";
 }
+
 
 function enterLobbyAfterJoin() {
   showLobby();
