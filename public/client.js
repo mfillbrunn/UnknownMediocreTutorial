@@ -108,12 +108,19 @@ function updateRoleCards() {
   const guesserPlayerId = Object.keys(state.roles)
     .find(id => state.roles[id] === "B");
 
-  $("setterName")?.textContent =
-    setterPlayerId ? state.playerNames[setterPlayerId] : "—";
+  const setterEl = $("setterName");
+  if (setterEl) {
+    setterEl.textContent =
+      setterPlayerId ? state.playerNames[setterPlayerId] : "—";
+  }
 
-  $("guesserName")?.textContent =
-    guesserPlayerId ? state.playerNames[guesserPlayerId] : "—";
+  const guesserEl = $("guesserName");
+  if (guesserEl) {
+    guesserEl.textContent =
+      guesserPlayerId ? state.playerNames[guesserPlayerId] : "—";
+  }
 }
+
 
 
 function enterLobbyAfterJoin() {
