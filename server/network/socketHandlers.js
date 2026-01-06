@@ -120,11 +120,7 @@ module.exports = function registerSocketHandlers(io, context) {
         delete room.players[socket.id];
       }
     });
-
-  });
-};
-
-// LEAVE ROOM ------------------------------
+    // LEAVE ROOM ------------------------------
 socket.on("leaveRoom", cb => {
   for (const [roomId, room] of Object.entries(rooms)) {
     const role = room.players[socket.id];
@@ -197,3 +193,7 @@ socket.on("kickPlayer", ({ roomId }, cb) => {
 
   cb?.({ ok: true });
 });
+  });
+};
+
+
