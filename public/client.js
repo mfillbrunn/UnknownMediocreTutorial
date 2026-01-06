@@ -121,6 +121,14 @@ function updateRoleCards() {
   }
 }
 
+function getPlayerNameByRole(role) {
+  if (!state || !state.roles || !state.playerNames) return "—";
+
+  const playerId = Object.keys(state.roles)
+    .find(id => state.roles[id] === role);
+
+  return playerId ? state.playerNames[playerId] || "—" : "—";
+}
 
 
 function enterLobbyAfterJoin() {
@@ -164,7 +172,7 @@ function updateWaitingIndicator() {
   const el = $("waitingForPlayer");
   if (!el || !state || state.phase !== "lobby") return;
 
-  const playerCount = state.players ? Object.keys(state.players).length : 0;
+  const playerCount = Object.keys(state.roles || {}).length;
 
   if (playerCount >= 2) {
     el.classList.add("hidden");
@@ -172,6 +180,7 @@ function updateWaitingIndicator() {
     el.classList.remove("hidden");
   }
 }
+
 
 // -----------------------------------------------------
 // SOCKET EVENT HANDLERS
@@ -371,7 +380,7 @@ function updateRoleLabels() {
 // SETTER UI
 // -----------------------------------------------------
 function updateSetterScreen() {
-  const setterName = state.playerNames?.[state.setter] || "Setter";
+  const setterName = getPlayerNameByRole("A");
   KeepEnabled=true;
   NewEnabled=true;  
   $("setterScreen").querySelector(".screen-title").textContent = setterName;
@@ -595,7 +604,7 @@ renderDraftRows({
   container: $("draftGuesser"),
   localGuesserDraft
 });
-  const guesserName =  state.playerNames?.[state.guesser] || "Guesser";
+  const guesserName = getPlayerNameByRole("B");
   
   $("guesserScreen").querySelector(".screen-title").textContent = guesserName;
 $("guesserRoleBadge").textContent = "Guesser";
@@ -726,20 +735,23 @@ function updateHostControls() {
 }
 
 function updateTimerAccess() {
-  const host = state.host;
+  if (!state) return;
+
+  const meHost = isHost();
 
   document
     .querySelectorAll('input[name="timePreset"]')
     .forEach(input => {
-      input.disabled = !host;
+      input.disabled = !meHost;
     });
 
   document
     .querySelectorAll('.timer-option')
     .forEach(opt => {
-      opt.classList.toggle("disabled", !host);
+      opt.classList.toggle("disabled", !meHost);
     });
 }
+
 
 // -----------------------------------------------------
 // BUTTONS
