@@ -14,19 +14,6 @@ function generateRoomId() {
   return id;
 }
 
-function assignRoles(room) {
-  const ids = Object.keys(room.players);
-
-  if (ids.length === 1) {
-    room.players[ids[0]] = "A"; // first player always Setter
-  }
-
-  if (ids.length === 2) {
-    room.players[ids[0]] = "A";
-    room.players[ids[1]] = "B";
-  }
-}
-
 function createRoom(socket) {
   let roomId;
   do {
@@ -39,8 +26,10 @@ function createRoom(socket) {
   };
 
   socket.join(roomId);
-  rooms[roomId].players[socket.id] = "A";
-  assignRoles(rooms[roomId]);
+  const room = rooms[roomId];
+  room.players[socket.id] = "A";
+  room.state.roles[socket.id] = "A";
+  room.state.host = socket.id;
 
   return roomId;
 }
@@ -54,6 +43,7 @@ function joinRoom(socket, roomId) {
 
   socket.join(roomId);
   room.players[socket.id] = "B";
+  room.state.roles[socket.id] = "B";
   assignRoles(room);
 
   return { ok: true };
@@ -86,7 +76,6 @@ module.exports = {
   rooms,
   createRoom,
   joinRoom,
-  assignRoles,
   cleanupEmptyRooms,
   findLastOpenRoom
 };
