@@ -336,3 +336,16 @@ function updateHostControls() {
   );
 }
 
+$("kickSetterBtn")?.addEventListener("click", () => {
+  sendGameAction(roomId, { type: "KICK_PLAYER" });
+});
+
+$("kickGuesserBtn")?.addEventListener("click", () => {
+  sendGameAction(roomId, { type: "KICK_PLAYER" });
+});
+$("leaveRoomBtn")?.addEventListener("click", () => {
+  socket.emit("leaveRoom", {}, () => {
+    roomId = null;
+    showStartup();
+  });
+});
