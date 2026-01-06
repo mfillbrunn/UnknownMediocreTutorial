@@ -6,7 +6,7 @@
 function createInitialState() {
   return {
     phase: "lobby",
-    host:"A",
+    host:"",
 
   // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
     mode: null,          // instance of mode controller
