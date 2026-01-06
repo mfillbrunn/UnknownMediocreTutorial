@@ -663,3 +663,145 @@ $("quickPlayBtn")?.addEventListener("click", () => {
     });
   });
 });
+function updateHostControls() {
+  if (!state) return;
+
+  const hostRole = state.host;
+  const meHost = isHost();
+
+  // Host badge
+  $("setterHostBadge")?.classList.toggle(
+    "hidden",
+    hostRole !== "A"
+  );
+  $("guesserHostBadge")?.classList.toggle(
+    "hidden",
+    hostRole !== "B"
+  );
+
+  // Kick buttons (host only, opponent only)
+  $("kickSetterBtn")?.classList.toggle(
+    "hidden",
+    !meHost || hostRole === "A"
+  );
+  $("kickGuesserBtn")?.classList.toggle(
+    "hidden",
+    !meHost || hostRole === "B"
+  );
+}
+function updateTimerAccess() {
+  const host = state.host;
+
+  document
+    .querySelectorAll('input[name="timePreset"]')
+    .forEach(input => {
+      input.disabled = !host;
+    });
+
+  document
+    .querySelectorAll('.timer-option')
+    .forEach(opt => {
+      opt.classList.toggle("disabled", !host);
+    });
+}
+
+// -----------------------------------------------------
+// BUTTONS
+// -----------------------------------------------------
+(function setupConstraintToggle() {
+  const buttons = document.querySelectorAll(".constraint-toggle-btn");
+  if (!buttons.length) return;
+
+  // Load saved preference (default: visible)
+  const hidden = localStorage.getItem("hideConstraints") === "true";
+  document.body.classList.toggle("hide-constraints", hidden);
+
+  buttons.forEach(btn => {
+    btn.classList.toggle("off", hidden);
+
+    btn.onclick = () => {
+      const isHidden = document.body.classList.toggle("hide-constraints");
+      localStorage.setItem("hideConstraints", isHidden);
+
+      // Keep all buttons in sync
+      buttons.forEach(b => b.classList.toggle("off", isHidden));
+    };
+  });
+})();
+
+
+function isHost() {
+  return state && state.host === myRole;
+}
+function updateTimerPresetUI() {
+  if (!state?.timeControl) return;
+
+  const { enabled, mode, seconds } = state.timeControl;
+
+  let preset = "none";
+  if (enabled && mode === "round" && seconds === 60) preset = "bullet";
+  if (enabled && mode === "round" && seconds === 180) preset = "blitz";
+  if (enabled && mode === "chess" && seconds === 900) preset = "deep";
+
+  document
+    .querySelectorAll('input[name="timePreset"]')
+    .forEach(r => {
+      r.checked = r.value === preset;
+    });
+}
+function enableReadyButton(enabled) {
+  const btn = $("readyBtn");
+  if (!btn) return;
+  btn.disabled = !enabled;
+  if (!enabled) {
+    btn.classList.add("waiting");
+    btn.textContent = "Waiting...";
+  } else {
+    btn.classList.remove("waiting");
+    btn.textContent = "I'm Ready";
+  }
+}
+
+
+document
+  .querySelectorAll('input[name="timePreset"]')
+  .forEach(radio => {
+    radio.addEventListener("change", () => {
+      const v = radio.value;
+
+      if (v === "none") {
+        sendGameAction(roomId, {
+          type: "SET_TIME_CONTROL",
+          enabled: false
+        });
+      }
+
+      if (v === "bullet") {
+        sendGameAction(roomId, {
+          type: "SET_TIME_CONTROL",
+          enabled: true,
+          mode: "round",
+          seconds: 60
+        });
+      }
+
+      if (v === "blitz") {
+        sendGameAction(roomId, {
+          type: "SET_TIME_CONTROL",
+          enabled: true,
+          mode: "round",
+          seconds: 180
+        });
+      }
+
+      if (v === "deep") {
+        sendGameAction(roomId, {
+          type: "SET_TIME_CONTROL",
+          enabled: true,
+          mode: "chess",
+          seconds: 900
+        });
+      }
+    });
+  });
+
