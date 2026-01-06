@@ -97,7 +97,6 @@ window.addEventListener("load", () => {
   joinRoom(savedRoom, resp => {
     if (resp.ok) {
       roomId = savedRoom;
-      $("roomInfo").style.display = "block";
       $("roomCodeLabel").textContent = roomId;
     }
   });
