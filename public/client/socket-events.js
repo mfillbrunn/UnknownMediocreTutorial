@@ -133,12 +133,7 @@ socket.on("roleAssigned", ({ role }) => {
   myRole = role;
   roleAssigned = true;
      localGuesserDraft = "";
-  if (pendingState) {
-    state = pendingState;
-    window.state = state;
-    pendingState = null;
     updateUI();
-  }
   updateRoleLabels();
 });
 
