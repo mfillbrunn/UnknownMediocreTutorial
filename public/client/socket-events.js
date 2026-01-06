@@ -248,26 +248,6 @@ $("shareResultBtn")?.addEventListener("click", async () => {
   }
 });
 
-$("quickPlayBtn")?.addEventListener("click", () => {
-  quickJoin(resp => {
-    if (resp.ok) {
-      roomId = resp.roomId;
-      enterLobbyAfterJoin();
-      return;
-    }
-
-    // No room available → create one
-    createRoom(resp2 => {
-      if (!resp2.ok) {
-        toast(resp2.error || "Could not start game");
-        return;
-      }
-
-      roomId = resp2.roomId;
-      enterLobbyAfterJoin();
-    });
-  });
-});
 
 function isHost() {
   return state && state.host === myRole;
