@@ -285,6 +285,7 @@ onStateUpdate(newState => {
   window.state = state;   
   updateRoleCards();
   updateHostControls();
+  updateTimerAccess(); 
   updateWaitingIndicator();
   updatePowerInfoState(state);
   updateTimerPresetUI();
