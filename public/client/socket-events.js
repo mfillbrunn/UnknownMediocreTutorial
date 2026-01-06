@@ -86,49 +86,6 @@ socket.on("timerTick", ({ timeRemaining }) => {
 ////         LOBBY 
 ///////////////////////////////////////////////
 
-document
-  .querySelectorAll('input[name="timePreset"]')
-  .forEach(radio => {
-    radio.addEventListener("change", () => {
-      const v = radio.value;
-
-      if (v === "none") {
-        sendGameAction(roomId, {
-          type: "SET_TIME_CONTROL",
-          enabled: false
-        });
-      }
-
-      if (v === "bullet") {
-        sendGameAction(roomId, {
-          type: "SET_TIME_CONTROL",
-          enabled: true,
-          mode: "round",
-          seconds: 60
-        });
-      }
-
-      if (v === "blitz") {
-        sendGameAction(roomId, {
-          type: "SET_TIME_CONTROL",
-          enabled: true,
-          mode: "round",
-          seconds: 180
-        });
-      }
-
-      if (v === "deep") {
-        sendGameAction(roomId, {
-          type: "SET_TIME_CONTROL",
-          enabled: true,
-          mode: "chess",
-          seconds: 900
-        });
-      }
-    });
-  });
-
-
 socket.on("roleAssigned", ({ role }) => {
   myRole = role;
   roleAssigned = true;
