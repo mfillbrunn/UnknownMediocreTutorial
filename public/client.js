@@ -4,7 +4,6 @@
 let roomId = null;
 let myRole = null;      
 let state = null;
-let pendingState = null;
 let localGuesserDraft = "";
 let roleAssigned = false;
 let lastSimulSecret = false;
@@ -102,8 +101,15 @@ function getPlayerName() {
 
 function updateRoleCards() {
   if (!state || !state.playerNames) return;
-  $("setterName")?.textContent = state.playerNames[state.setter] || "—";
-  $("guesserName")?.textContent = state.playerNames[state.guesser] || "—";
+ const setterEl = $("setterName");
+  if (setterEl) {
+    setterEl.textContent = state.playerNames[state.setter] || "—";
+  }
+
+  const guesserEl = $("guesserName");
+  if (guesserEl) {
+    guesserEl.textContent = state.playerNames[state.guesser] || "—";
+  }
 }
 
 function enterLobbyAfterJoin() {
@@ -240,10 +246,6 @@ onLobbyEvent(evt => {
 onStateUpdate(newState => {
   if (!window.myRole) {
     window.myRole = myRole;
-  }
-  if (!roleAssigned) {
-    pendingState = JSON.parse(JSON.stringify(newState));
-    return;
   }
   const prevSetterDraft = state?.setterDraft || "";
   const prevPhase = state?.phase;
