@@ -86,7 +86,24 @@ function enterMenuMode() {
 function exitMenuMode() {
   document.body.classList.remove("menu-mode");
 }
+function getPlayerName() {
+  const saved = localStorage.getItem("playerName");
+  if (saved) return saved;
 
+  const generated =
+    "Player-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+
+  localStorage.setItem("playerName", generated);
+  return generated;
+}
+
+function updateRoleCards() {
+  $("setterName").textContent =
+    state.playerNames?.[state.setter] || "—";
+
+  $("guesserName").textContent =
+    state.playerNames?.[state.guesser] || "—";
+}
 // -----------------------------------------------------
 // AUTO-REJOIN
 // -----------------------------------------------------
@@ -187,7 +204,7 @@ onLobbyEvent(evt => {
         window.myRole = "B"; 
         toast("You are now the Guesser!");
       }
-
+      updateRoleCards()
       resetKeyboards();
       updateRoleLabels();
       updateUI();
@@ -705,7 +722,7 @@ $("readyBtn")?.addEventListener("click", () => {
   
   sendGameAction(roomId, {
     type: "PLAYER_READY",
-    name
+    name: getPlayerName()
   });
 
   // Immediately update UI locally
