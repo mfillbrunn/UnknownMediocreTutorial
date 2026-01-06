@@ -276,7 +276,7 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
 // Update Menu
 // -----------------------------------------------------
 function updateMenu() {
-  $("menuRoomCode").textContent = roomId || "-";
+  $("roomCodeLabel").textContent = roomId;
 }
 
 // -----------------------------------------------------
