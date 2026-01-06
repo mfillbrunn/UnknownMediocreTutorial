@@ -6,7 +6,8 @@
 function createInitialState() {
   return {
     phase: "lobby",
-    host:"",
+    host:null,
+    roles:{},
 
   // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
     mode: null,          // instance of mode controller
@@ -53,10 +54,7 @@ function createInitialState() {
     guessCount: 0,
     gameOver: false,
     extraConstraints: [],
-    playerNames: {
-      A: "",
-      B: ""
-    },
+    playerNames: {},
 
     history: [],
     powersUsedThisRoundGuesser: [],
