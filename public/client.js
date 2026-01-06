@@ -13,7 +13,6 @@ let KeepEnabled = true;
 let NewEnabled = true;
 window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
-let uiPhase = "startup";
 
 // -----------------------------------------------------
 // DOM HELPERS
@@ -102,12 +101,15 @@ function getPlayerName() {
 }
 
 function updateRoleCards() {
-  $("setterName").textContent =
-    state.playerNames?.[state.setter] || "—";
+  if (!state || !state.playerNames) return;
 
-  $("guesserName").textContent =
-    state.playerNames?.[state.guesser] || "—";
+  $("setterName")?.textContent =
+    state.playerNames[state.setter] || "—";
+
+  $("guesserName")?.textContent =
+    state.playerNames[state.guesser] || "—";
 }
+
 function enterLobbyAfterJoin() {
   showLobby();
 }
@@ -131,7 +133,6 @@ window.addEventListener("load", () => {
 // Start up
 // -----------------------------------------------------
 function showStartup() {
-  uiPhase = "startup";
   show("startupScreen");
   hide("lobby");
   hide("menu");
@@ -141,7 +142,6 @@ function showStartup() {
 }
 
 function showLobby() {
-  uiPhase = "lobby";
   hide("startupScreen");
   show("lobby");
   updateWaitingIndicator(); 
@@ -151,9 +151,7 @@ function updateWaitingIndicator() {
   const el = $("waitingForPlayer");
   if (!el || !state || state.phase !== "lobby") return;
 
-  const playerCount =
-    Object.values(state.players || {}).length ||
-    Object.values(state.ready || {}).length;
+  const playerCount = state.players ? Object.keys(state.players).length : 0;
 
   if (playerCount >= 2) {
     el.classList.add("hidden");
@@ -197,7 +195,6 @@ onLobbyEvent(evt => {
     case "playerJoined":
       toast("A player joined.");
       $("waitingForPlayer")?.classList.add("hidden");
-      enableReadyButton(true);
       break;
 
     case "rolesSwitched": {
@@ -271,6 +268,7 @@ onStateUpdate(newState => {
   updateRoleCards();
   updateWaitingIndicator();
   updatePowerInfoState(state);
+  updateTimerPresetUI();
   updateUI();
   if (state.phase === "simultaneous"){renderSetterRemainingBox(state, myRole, "");}
   if (state.phase === "normal"){renderSetterRemainingBox(state, myRole, state.secret);}
@@ -291,7 +289,7 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
     PowerEngine.renderButtons(roomId);
     PowerEngine._initialized = true;
 }
-  updateMenu();
+  updateLobbyHeader();
   updateScreens();
   updateSummary();
   InfoBadgeEngine.render(state, myRole);
@@ -299,9 +297,9 @@ if (!PowerEngine._initialized && roomId && roleAssigned) {
 }
 
 // -----------------------------------------------------
-// Update Menu
+// Update updateLobbyHeader
 // -----------------------------------------------------
-function updateMenu() {
+function updateLobbyHeader() {
   $("roomCodeLabel").textContent = roomId;
 }
 
