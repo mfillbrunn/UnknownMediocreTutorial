@@ -309,4 +309,30 @@ function updateTimerAccess() {
       opt.classList.toggle("disabled", !host);
     });
 }
+function updateHostControls() {
+  if (!state) return;
+
+  const hostRole = state.host;
+  const meHost = isHost();
+
+  // Host badge
+  $("setterHostBadge")?.classList.toggle(
+    "hidden",
+    hostRole !== "A"
+  );
+  $("guesserHostBadge")?.classList.toggle(
+    "hidden",
+    hostRole !== "B"
+  );
+
+  // Kick buttons (host only, opponent only)
+  $("kickSetterBtn")?.classList.toggle(
+    "hidden",
+    !meHost || hostRole === "A"
+  );
+  $("kickGuesserBtn")?.classList.toggle(
+    "hidden",
+    !meHost || hostRole === "B"
+  );
+}
 
