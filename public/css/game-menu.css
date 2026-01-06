@@ -183,3 +183,68 @@ body.menu-mode .app-header {
   opacity: 0.4;
   pointer-events: none;
 }
+.lobby-role-header{
+   display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.role-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-8);
+  margin-top: var(--sp-6);
+}
+
+.host-badge {
+  font-size: var(--fs-11);
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  padding: 2px 6px;
+  border-radius: var(--r-6);
+  opacity: 0.9;
+}
+
+.role-card.setter .host-badge {
+  background: var(--setter-color);
+  color: #000;
+}
+
+.role-card.guesser .host-badge {
+  background: var(--guesser-color);
+  color: #000;
+}
+.kick-btn {
+  background: none;
+  border: none;
+  color: var(--warning-accent);
+  font-size: var(--fs-18);
+  font-weight: 900;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.kick-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.leave-btn {
+  background: none;
+  border: 1px solid var(--btn-secondary);
+  color: var(--btn-secondary-text);
+  padding: 6px 10px;
+  border-radius: var(--r-8);
+  font-size: var(--fs-13);
+}
+
+.leave-btn:hover {
+  background: var(--btn-secondary-hover);
+}
+.lobby-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--sp-16);
+}
