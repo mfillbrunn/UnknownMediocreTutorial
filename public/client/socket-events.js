@@ -138,7 +138,7 @@ $("readyBtn")?.addEventListener("click", () => {
   });
 
   // Immediately update UI locally
-  enableReadyButton(false);
+  //enableReadyButton(false);
 });
 $("applyPowerCountBtn")?.addEventListener("click", () => {
    const n = parseInt($("powerCountInput").value, 10);
@@ -168,12 +168,13 @@ $("shareResultBtn")?.addEventListener("click", async () => {
 });
 
 $("kickSetterBtn")?.addEventListener("click", () => {
-  sendGameAction(roomId, { type: "KICK_PLAYER" });
+  socket.emit("kickPlayer", { roomId });
 });
 
 $("kickGuesserBtn")?.addEventListener("click", () => {
-  sendGameAction(roomId, { type: "KICK_PLAYER" });
+  socket.emit("kickPlayer", { roomId });
 });
+
 $("leaveRoomBtn")?.addEventListener("click", () => {
   socket.emit("leaveRoom", {}, () => {
     roomId = null;
