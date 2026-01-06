@@ -102,12 +102,8 @@ function getPlayerName() {
 
 function updateRoleCards() {
   if (!state || !state.playerNames) return;
-
-  $("setterName")?.textContent =
-    state.playerNames[state.setter] || "—";
-
-  $("guesserName")?.textContent =
-    state.playerNames[state.guesser] || "—";
+  $("setterName")?.textContent = state.playerNames[state.setter] || "—";
+  $("guesserName")?.textContent = state.playerNames[state.guesser] || "—";
 }
 
 function enterLobbyAfterJoin() {
