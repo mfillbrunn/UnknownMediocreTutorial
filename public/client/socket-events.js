@@ -94,9 +94,6 @@ socket.on("roleAssigned", ({ role }) => {
   updateRoleLabels();
 });
 
-
-
-
 $("createRoomBtn")?.addEventListener("click", () => {
   createRoom(resp => {
     if (!resp.ok) return toast(resp.error);
