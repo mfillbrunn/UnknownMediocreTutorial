@@ -806,5 +806,5 @@ $("quickPlayBtn")?.addEventListener("click", () => {
 });
 function enterLobbyAfterJoin() {
   showLobby();
-  updateRoleCards()
+  updateRoleCards();
 }
