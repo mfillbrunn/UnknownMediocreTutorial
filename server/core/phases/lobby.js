@@ -33,7 +33,8 @@ function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
 
 if (action.type === "SET_TIME_CONTROL") {
-  if (action.enabled === false) {
+  if (state.host !== role) return state;
+   if (action.enabled === false) {
     state.timeControl.enabled = false;
     state.activeTimer = null;
     state.timeRemaining.A = 0;
