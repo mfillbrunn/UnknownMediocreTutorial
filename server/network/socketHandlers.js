@@ -17,10 +17,9 @@ module.exports = function registerSocketHandlers(io, context) {
       socket.emit("roleAssigned", {
         role: "A",
         setterId: socket.id,
-        guesserId: null,
-        host: "A"
+        guesserId: null
       });
-
+      state.host = "A";
       cb({ ok: true, roomId });
       emitStateForAllPlayers(roomId, room, io);
     });
