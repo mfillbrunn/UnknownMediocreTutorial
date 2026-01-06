@@ -675,37 +675,54 @@ $("quickPlayBtn")?.addEventListener("click", () => {
   });
 });
 function updateHostControls() {
-  if (!state) return;
+  if (!state || !state.roles || !state.playerNames) return;
 
   const meHost = isHost();
-  const players = Object.keys(state.players || {});
-  const twoPlayers = players.length === 2;
 
-  const setterPlayerId = Object.keys(state.players)
-    .find(id => state.players[id] === "A");
-  const guesserPlayerId = Object.keys(state.players)
-    .find(id => state.players[id] === "B");
+  // Player count (by playerId)
+  const playerIds = Object.keys(state.playerNames);
+  const twoPlayers = playerIds.length === 2;
 
-  // Host badge
-  $("setterHostBadge")?.classList.toggle(
-    "hidden",
-    state.host !== setterPlayerId
-  );
-  $("guesserHostBadge")?.classList.toggle(
-    "hidden",
-    state.host !== guesserPlayerId
-  );
+  // Resolve role → playerId
+  const setterPlayerId = Object.keys(state.roles)
+    .find(id => state.roles[id] === "A");
 
-  // Kick buttons
-  $("kickSetterBtn")?.classList.toggle(
-    "hidden",
-    !meHost || !twoPlayers || setterPlayerId === socket.id
-  );
+  const guesserPlayerId = Object.keys(state.roles)
+    .find(id => state.roles[id] === "B");
 
-  $("kickGuesserBtn")?.classList.toggle(
-    "hidden",
-    !meHost || !twoPlayers || guesserPlayerId === socket.id
-  );
+  // Host badges
+  const setterHostBadge = $("setterHostBadge");
+  if (setterHostBadge) {
+    setterHostBadge.classList.toggle(
+      "hidden",
+      state.host !== setterPlayerId
+    );
+  }
+
+  const guesserHostBadge = $("guesserHostBadge");
+  if (guesserHostBadge) {
+    guesserHostBadge.classList.toggle(
+      "hidden",
+      state.host !== guesserPlayerId
+    );
+  }
+
+  // Kick buttons (host only, opponent only, only if 2 players)
+  const kickSetterBtn = $("kickSetterBtn");
+  if (kickSetterBtn) {
+    kickSetterBtn.classList.toggle(
+      "hidden",
+      !meHost || !twoPlayers || setterPlayerId === socket.id
+    );
+  }
+
+  const kickGuesserBtn = $("kickGuesserBtn");
+  if (kickGuesserBtn) {
+    kickGuesserBtn.classList.toggle(
+      "hidden",
+      !meHost || !twoPlayers || guesserPlayerId === socket.id
+    );
+  }
 }
 
 function updateTimerAccess() {
