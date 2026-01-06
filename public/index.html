@@ -54,85 +54,86 @@
             </div>
           </div>
         </section>
-
-        <!-- ========== LOBBY ========== -->
 <!-- ========== LOBBY ========== -->
-<section id="lobby" class="screen screen-lobby">
-  <div class="panel lobby-panel">
+<div class="panel lobby-panel">
 
-    <!-- Header -->
-    <div class="lobby-header">
-      <h2 class="screen-title">Lobby</h2>
-      <div class="room-code-wrap">
-        <span class="room-label">Room</span>
-        <span id="roomCodeLabel" class="room-code">----</span>
-      </div>
-    </div>
+  <!-- Header -->
+  <div class="lobby-header">
+    <h2 class="screen-title">Lobby</h2>
 
-    <!-- Waiting state -->
-    <div id="waitingForPlayer" class="waiting-block">
-      <div class="spinner"></div>
-      <p>Waiting for player…</p>
-    </div>
-
-    <!-- Player controls -->
-    <div class="lobby-controls">
-
-      <!-- Role info -->
-      <p class="lobby-role">
-        You are: <strong><span id="lobbyRoleLabel">—</span></strong>
-      </p>
-
-      <!-- Player name -->
-      <label class="lobby-field">
-        <span>Name</span>
-        <input
-          id="playerNameInput"
-          type="text"
-          maxlength="16"
-          placeholder="Your name"
-          class="short-input"
-        />
-      </label>
-
-      <!-- Timer controls -->
-      <div class="lobby-timer">
-        <label>
-          <span>Timer mode</span>
-          <select id="timerModeSelect" class="short-input">
-            <option value="round" selected>Round timer</option>
-            <option value="chess">Chess timer</option>
-          </select>
-        </label>
-
-        <label>
-          <span>Time</span>
-          <select id="timeControlSelect" class="short-input">
-            <option value="0">No time</option>
-            <option value="30">30 sec</option>
-            <option value="60" selected>1 min</option>
-            <option value="120">2 min</option>
-            <option value="300">5 min</option>
-          </select>
-        </label>
-      </div>
-
-      <!-- Actions -->
-      <div class="lobby-actions">
-        <button id="switchRolesBtn" class="secondary-btn">
-          Switch Roles
-        </button>
-
-        <button id="readyBtn" class="primary-btn">
-          I’m Ready
-        </button>
-      </div>
-
+    <div class="room-code-wrap">
+      <span class="room-label">Room</span>
+      <span id="roomCodeLabel" class="room-code">----</span>
     </div>
   </div>
-</section>
 
-      
+  <!-- Waiting indicator -->
+  <div id="waitingForPlayer" class="waiting-block">
+    <div class="spinner"></div>
+    <p>Waiting for player…</p>
+  </div>
+
+  <!-- ROLE SELECTION -->
+  <div class="role-select">
+
+    <div class="role-card setter">
+      <span class="role-title">Setter</span>
+      <div class="role-name" id="setterName">—</div>
+    </div>
+
+    <!-- Switch roles control -->
+    <button
+      id="switchRolesBtn"
+      class="role-switch"
+      aria-label="Switch roles"
+    >
+      <span class="arrow setter-arrow">⇄</span>
+      <span class="arrow guesser-arrow">⇄</span>
+    </button>
+
+    <div class="role-card guesser">
+      <span class="role-title">Guesser</span>
+      <div class="role-name" id="guesserName">—</div>
+    </div>
+
+  </div>
+
+  <!-- TIMER OPTIONS -->
+  <div class="timer-select">
+
+    <label class="timer-option">
+      <input type="radio" name="timePreset" value="none" checked />
+      <span>No Time</span>
+    </label>
+
+    <label class="timer-option">
+      <input type="radio" name="timePreset" value="bullet" />
+      <span>Bullet</span>
+      <small>1 min / round</small>
+    </label>
+
+    <label class="timer-option">
+      <input type="radio" name="timePreset" value="blitz" />
+      <span>Blitz</span>
+      <small>3 min / round</small>
+    </label>
+
+    <label class="timer-option">
+      <input type="radio" name="timePreset" value="deep" />
+      <span>Deep</span>
+      <small>15 min total</small>
+    </label>
+
+  </div>
+
+  <!-- Ready -->
+  <div class="lobby-actions">
+    <button id="readyBtn" class="primary-btn">
+      I’m Ready
+    </button>
+  </div>
+
+</div>
     <!-- ========== MENU ========== -->
     <section id="menu" class="screen">
        <h2 class="screen-title">Summary</h2>
