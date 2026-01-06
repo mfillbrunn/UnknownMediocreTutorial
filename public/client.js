@@ -266,6 +266,7 @@ onStateUpdate(newState => {
   if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {localGuesserDraft = "";}
   window.state = state;   
   updateRoleCards();
+  updateHostControls();
   updateWaitingIndicator();
   updatePowerInfoState(state);
   updateTimerPresetUI();
