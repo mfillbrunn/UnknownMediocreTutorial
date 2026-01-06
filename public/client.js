@@ -312,7 +312,7 @@ function updateScreens() {
     hide("menu");
     hide("setterScreen");
     hide("guesserScreen");
-    enableReadyButton(!state.ready[myRole]);
+    enableReadyButton(!state.ready?.[socket.id]);
     PowerEngine.applyUI(state, myRole, roomId);
     return;
   }
@@ -666,29 +666,37 @@ $("quickPlayBtn")?.addEventListener("click", () => {
 function updateHostControls() {
   if (!state) return;
 
-  const hostRole = state.host;
   const meHost = isHost();
+  const players = Object.keys(state.players || {});
+  const twoPlayers = players.length === 2;
+
+  const setterPlayerId = Object.keys(state.players)
+    .find(id => state.players[id] === "A");
+  const guesserPlayerId = Object.keys(state.players)
+    .find(id => state.players[id] === "B");
 
   // Host badge
   $("setterHostBadge")?.classList.toggle(
     "hidden",
-    hostRole !== "A"
+    state.host !== setterPlayerId
   );
   $("guesserHostBadge")?.classList.toggle(
     "hidden",
-    hostRole !== "B"
+    state.host !== guesserPlayerId
   );
 
-  // Kick buttons (host only, opponent only)
+  // Kick buttons
   $("kickSetterBtn")?.classList.toggle(
     "hidden",
-    !meHost || hostRole === "A"
+    !meHost || !twoPlayers || setterPlayerId === socket.id
   );
+
   $("kickGuesserBtn")?.classList.toggle(
     "hidden",
-    !meHost || hostRole === "B"
+    !meHost || !twoPlayers || guesserPlayerId === socket.id
   );
 }
+
 function updateTimerAccess() {
   const host = state.host;
 
@@ -731,7 +739,7 @@ function updateTimerAccess() {
 
 
 function isHost() {
-  return state && state.host === myRole;
+  return state && state.host === socket.id;
 }
 function updateTimerPresetUI() {
   if (!state?.timeControl) return;
