@@ -49,10 +49,10 @@ function resetKeyboards() {
   if (kg) delete kg.__keys;
 }
 document.addEventListener("DOMContentLoaded", () => {
-  const saved = localStorage.getItem("playerName");
+/*  const saved = localStorage.getItem("playerName");
   if (saved && $("playerNameInput")) {
     $("playerNameInput").value = saved;
-  }
+  }*/
   showStartup();
 });
 let lastTimeRemaining = { A: null, B: null };
@@ -722,7 +722,7 @@ $("switchRolesBtn")?.addEventListener("click", () => {
 
 $("readyBtn")?.addEventListener("click", () => {
   // Send to server
-  const name = $("playerNameInput")?.value?.trim() || "";
+  //const name = $("playerNameInput")?.value?.trim() || "";
   
   sendGameAction(roomId, {
     type: "PLAYER_READY",
@@ -806,4 +806,5 @@ $("quickPlayBtn")?.addEventListener("click", () => {
 });
 function enterLobbyAfterJoin() {
   showLobby();
+  updateRoleCards()
 }
