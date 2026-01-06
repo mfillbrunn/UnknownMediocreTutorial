@@ -73,6 +73,9 @@ module.exports = function registerSocketHandlers(io, context) {
       } else {
         return cb({ ok: false, error: "Room is full" });
       }
+      if (!room.state.host) {
+        room.state.host = assignedRole;
+      }
       socket.join(roomId);
       room.players[socket.id] = assignedRole;
       
@@ -120,3 +123,77 @@ module.exports = function registerSocketHandlers(io, context) {
 
   });
 };
+
+// LEAVE ROOM ------------------------------
+socket.on("leaveRoom", cb => {
+  for (const [roomId, room] of Object.entries(rooms)) {
+    const role = room.players[socket.id];
+    if (!role) continue;
+
+    // Remove player
+    delete room.players[socket.id];
+    socket.leave(roomId);
+
+    // If host left, transfer host
+    if (room.state.host === role) {
+      const remainingRole = Object.values(room.players)[0];
+      room.state.host = remainingRole || null;
+    }
+
+    // Notify remaining player
+    socket.to(roomId).emit("lobbyEvent", {
+      type: "playerLeft",
+      role
+    });
+
+    emitStateForAllPlayers(roomId, room, io);
+
+    cb?.({ ok: true });
+    return;
+  }
+
+  cb?.({ ok: false, error: "Not in a room" });
+});
+
+// KICK PLAYER ------------------------------
+socket.on("kickPlayer", ({ roomId }, cb) => {
+  const room = rooms[roomId];
+  if (!room) return cb?.({ ok: false });
+
+  const role = room.players[socket.id];
+  if (!role) return cb?.({ ok: false });
+
+  // Host check
+  if (room.state.host !== role) {
+    return cb?.({ ok: false, error: "Not host" });
+  }
+
+  // Find the other player
+  const targetEntry = Object.entries(room.players)
+    .find(([id, r]) => r !== role);
+
+  if (!targetEntry) {
+    return cb?.({ ok: false, error: "No player to kick" });
+  }
+
+  const [targetSocketId, targetRole] = targetEntry;
+
+  // Remove target
+  delete room.players[targetSocketId];
+  io.sockets.sockets.get(targetSocketId)?.leave(roomId);
+
+  // Notify kicked player
+  io.to(targetSocketId).emit("lobbyEvent", {
+    type: "kicked"
+  });
+
+  // Notify host
+  socket.emit("lobbyEvent", {
+    type: "playerKicked",
+    role: targetRole
+  });
+
+  emitStateForAllPlayers(roomId, room, io);
+
+  cb?.({ ok: true });
+});
