@@ -104,5 +104,79 @@ body.menu-mode .app-header {
   gap: var(--sp-10);
   justify-content: center;
 }
+.role-select {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--sp-12);
+  align-items: center;
+  margin-top: var(--sp-16);
+}
 
+.role-card {
+  padding: var(--sp-12);
+  border-radius: var(--r-10);
+  text-align: center;
+  font-weight: 800;
+  background: var(--panel-bg);
+  box-shadow: var(--shadow-card);
+}
+
+.role-card.setter {
+  border: 2px solid var(--setter-color);
+  color: var(--setter-color);
+}
+
+.role-card.guesser {
+  border: 2px solid var(--guesser-color);
+  color: var(--guesser-color);
+}
+
+.role-title {
+  font-size: var(--fs-13);
+  opacity: 0.75;
+  letter-spacing: 0.6px;
+}
+
+.role-name {
+  margin-top: var(--sp-6);
+  font-size: var(--fs-18);
+}
+
+.timer-select {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-10);
+  margin-top: var(--sp-20);
+}
+
+.timer-option {
+  position: relative;
+  padding: var(--sp-10);
+  border-radius: var(--r-8);
+  background: var(--panel-bg);
+  cursor: pointer;
+  text-align: center;
+  font-weight: 700;
+}
+
+.timer-option input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.timer-option input:checked + span {
+  color: var(--role-accent);
+}
+
+.timer-option input:checked ~ * {
+  box-shadow: 0 0 12px var(--btn-primary-glow);
+}
+
+.timer-option small {
+  display: block;
+  margin-top: var(--sp-4);
+  font-size: var(--fs-12);
+  opacity: 0.7;
+}
 
