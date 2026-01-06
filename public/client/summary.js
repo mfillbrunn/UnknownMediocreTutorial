@@ -237,10 +237,17 @@ function renderRoundSummary(container) {
    
   let html = `<h3>Round Summary</h3>`;
 
-  const setterName =
-    state.playerNames?.[state.setter] || "Setter";
-  const guesserName =
-    state.playerNames?.[state.guesser] || "Guesser";
+  const setterPlayerId = Object.keys(state.roles || {})
+  .find(id => state.roles[id] === "A");
+
+const guesserPlayerId = Object.keys(state.roles || {})
+  .find(id => state.roles[id] === "B");
+
+const setterName =
+  setterPlayerId ? state.playerNames[setterPlayerId] : "—";
+
+const guesserName =
+  guesserPlayerId ? state.playerNames[guesserPlayerId] : "—";
   if (state.timeoutLoser) {
   const loser =
     state.timeoutLoser === state.setter
