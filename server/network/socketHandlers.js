@@ -14,13 +14,13 @@ module.exports = function registerSocketHandlers(io, context) {
     socket.on("createRoom", cb => {
       const roomId = createRoom(socket);
       const room = rooms[roomId];
+      room.state.host = "A";
       socket.emit("roleAssigned", {
         role: "A",
         setterId: socket.id,
         guesserId: null,
         host: "A"
       });
-      state.host = "A";
       cb({ ok: true, roomId });
       emitStateForAllPlayers(roomId, room, io);
     });
