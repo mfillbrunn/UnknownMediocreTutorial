@@ -120,51 +120,74 @@ if (action.type === "SET_POWER_COUNT") {
   // -------------------------------
   // PLAYER READY
   // -------------------------------
-  if (action.type === "PLAYER_READY") {
-    state.ready[role] = true;
-
-        if (action.name) {
-        state.playerNames[role] = String(action.name)
-        .trim()
-        .slice(0, 16);
-        }
-   emitToOtherPlayer(io, room, action.playerId, { type: "playerReady",role,playerId: action.playerId});
-   emitToPlayer(io, action.playerId, {type: "playerReady",role,playerId: action.playerId});
-
-    // If both ready → enter simultaneous phase
-    if (state.ready.A && state.ready.B) {
-          
-            const N = state.powerCount || 2;
-         const sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
-         const gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
+        if (action.type === "PLAYER_READY") {
         
-         state.mode = new CompetitiveMode();
-         state.mode.initMatch(state);
-         state.mode.onLobbyReady(state, sP, gP);
-                    // Initialize unified revealLetter power mode
-        if (state.activePowers.includes("revealLetter")) {
-          state.powers.revealLetter.mode =
-            Math.random() < 0.5 ? "RARE" : "ROW";
+          // Ready is per PLAYER (socket.id), not role
+          state.ready[action.playerId] = true;
+        
+          if (action.name) {
+            state.playerNames[action.playerId] = String(action.name)
+              .trim()
+              .slice(0, 16);
+          }
+        
+          emitToOtherPlayer(io, room, action.playerId, {
+            type: "playerReady",
+            playerId: action.playerId
+          });
+          emitToPlayer(io, action.playerId, {
+            type: "playerReady",
+            playerId: action.playerId
+          });
+        
+          // ✅ Check readiness by PLAYER COUNT
+          const readyPlayers = Object.values(state.ready).filter(Boolean).length;
+          const playerCount = Object.keys(room.players).length;
+        
+          if (readyPlayers === playerCount && playerCount === 2) {
+        
+            const N = state.powerCount || 2;
+        
+            const sP = SETTER_POWERS
+              .slice()
+              .sort(() => Math.random() - 0.5)
+              .slice(0, N);
+        
+            const gP = GUESSER_POWERS
+              .slice()
+              .sort(() => Math.random() - 0.5)
+              .slice(0, N);
+        
+            state.mode = new CompetitiveMode();
+            state.mode.initMatch(state);
+            state.mode.onLobbyReady(state, sP, gP);
+        
+            if (state.activePowers.includes("revealLetter")) {
+              state.powers.revealLetter.mode =
+                Math.random() < 0.5 ? "RARE" : "ROW";
+            }
+        
+            state.phase = "simultaneous";
+            state.turn = null;
+            state.simultaneousGuessSubmitted = false;
+            state.simultaneousSecretSubmitted = false;
+        
+            if (state.timeControl.enabled) {
+              resetRoundTimer(state);
+              state.activeTimer = "both";
+              state.roundStartTime = Date.now();
+              stopTimer(roomId);
+              startGameTimer(room, state, roomId, context);
+              state.isTimerRunning = true;
+            }
+        
+            emitLobbyEvent(io, roomId, { type: "hideLobby" });
+            emitStateForAllPlayers(roomId, room, io);
+          }
+        
+          return;
         }
 
-      state.phase = "simultaneous";
-      state.turn = null;
-      state.simultaneousGuessSubmitted = false;
-      state.simultaneousSecretSubmitted = false;
-        if (state.timeControl.enabled) {
-        resetRoundTimer(state);
-        state.activeTimer = "both";
-        state.roundStartTime = Date.now();
-        stopTimer(roomId);
-        startGameTimer(room, state, roomId, context);
-        state.isTimerRunning=true;
-        }
-      emitLobbyEvent(io, roomId, { type: "hideLobby" });            
-      emitStateForAllPlayers(roomId, room, io);
-
-    }
-    return;
-  }
 }
 
 module.exports = handleLobbyPhase;
