@@ -14,7 +14,7 @@ module.exports = function registerSocketHandlers(io, context) {
     socket.on("createRoom", cb => {
       const roomId = createRoom(socket);
       const room = rooms[roomId];
-      room.state.host = "A";
+      room.state.host = socket.id;
       socket.emit("roleAssigned", {
         role: "A",
         setterId: socket.id,
@@ -75,11 +75,11 @@ module.exports = function registerSocketHandlers(io, context) {
         return cb({ ok: false, error: "Room is full" });
       }
       if (!room.state.host) {
-        room.state.host = assignedRole;
+        room.state.host = socket.id;
       }
       socket.join(roomId);
       room.players[socket.id] = assignedRole;
-      
+      room.state.roles[socket.id] = assignedRole;
       // Notify host
       socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
     
@@ -118,7 +118,15 @@ module.exports = function registerSocketHandlers(io, context) {
     // DISCONNECT ------------------------------
     socket.on("disconnect", () => {
       for (const [roomId, room] of Object.entries(rooms)) {
+        if (!room.players[socket.id]) continue;
+    
         delete room.players[socket.id];
+    
+        if (room.state.host === socket.id) {
+          room.state.host = Object.keys(room.players)[0] || null;
+        }
+    
+        emitStateForAllPlayers(roomId, room, io);
       }
     });
     // LEAVE ROOM ------------------------------
@@ -132,9 +140,8 @@ socket.on("leaveRoom", cb => {
     socket.leave(roomId);
 
     // If host left, transfer host
-    if (room.state.host === role) {
-      const remainingRole = Object.values(room.players)[0];
-      room.state.host = remainingRole || null;
+    if (room.state.host === socket.id) {
+      room.state.host = Object.keys(room.players)[0] || null;
     }
 
     // Notify remaining player
@@ -161,7 +168,7 @@ socket.on("kickPlayer", ({ roomId }, cb) => {
   if (!role) return cb?.({ ok: false });
 
   // Host check
-  if (room.state.host !== role) {
+  if (room.state.host !== socket.id) {
     return cb?.({ ok: false, error: "Not host" });
   }
 
