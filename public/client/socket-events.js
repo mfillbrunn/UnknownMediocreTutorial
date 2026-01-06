@@ -308,3 +308,19 @@ $("quickPlayBtn")?.addEventListener("click", () => {
   });
 });
 
+function updateTimerAccess() {
+  const host = isHost();
+
+  document
+    .querySelectorAll('input[name="timePreset"]')
+    .forEach(input => {
+      input.disabled = !host;
+    });
+
+  document
+    .querySelectorAll('.timer-option')
+    .forEach(opt => {
+      opt.classList.toggle("disabled", !host);
+    });
+}
+
