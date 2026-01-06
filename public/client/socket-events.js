@@ -184,9 +184,6 @@ $("createRoomBtn")?.addEventListener("click", () => {
   createRoom(resp => {
     if (!resp.ok) return toast(resp.error);
     roomId = resp.roomId;
-    $("roomInfo").style.display = "block";
-    $("roomCodeLabel").textContent = roomId;
-    enableReadyButton(true);
   });
 });
 
@@ -197,9 +194,6 @@ $("joinRoomBtn")?.addEventListener("click", () => {
   joinRoom(code, resp => {
     if (!resp.ok) return toast(resp.error);
     roomId = code;
-    $("roomInfo").style.display = "block";
-    $("roomCodeLabel").textContent = roomId;
-    enableReadyButton(true);
   });
 });
 
@@ -212,9 +206,6 @@ $("quickJoinBtn")?.addEventListener("click", () => {
     if (!resp.ok) return toast(resp.error);
 
     roomId = resp.roomId;
-    $("roomInfo").style.display = "block";
-    $("roomCodeLabel").textContent = roomId;
-    enableReadyButton(true);
   });
 });
 
@@ -261,31 +252,6 @@ $("shareResultBtn")?.addEventListener("click", async () => {
     toast("Could not copy result");
   }
 });
-$("timeControlSelect")?.addEventListener("change", () => {
-  const select = $("timeControlSelect");
-  if (!select) return;
-
-  const seconds = parseInt(select.value, 10);
-  if (!Number.isFinite(seconds)) return;
-
-  // No time selected
-  if (seconds === 0) {
-    sendGameAction(roomId, {
-      type: "SET_TIME_CONTROL",
-      enabled: false
-    });
-    return;
-  }
-
-  const mode = $("timerModeSelect")?.value || "round";
-
-  sendGameAction(roomId, {
-    type: "SET_TIME_CONTROL",
-    enabled: true,
-    mode,
-    seconds
-  });
-});
 
 $("quickPlayBtn")?.addEventListener("click", () => {
   quickJoin(resp => {
@@ -308,8 +274,28 @@ $("quickPlayBtn")?.addEventListener("click", () => {
   });
 });
 
+function isHost() {
+  return state && state.host === myRole;
+}
+function updateTimerPresetUI() {
+  if (!state?.timeControl) return;
+
+  const { enabled, mode, seconds } = state.timeControl;
+
+  let preset = "none";
+  if (enabled && mode === "round" && seconds === 60) preset = "bullet";
+  if (enabled && mode === "round" && seconds === 180) preset = "blitz";
+  if (enabled && mode === "chess" && seconds === 900) preset = "deep";
+
+  document
+    .querySelectorAll('input[name="timePreset"]')
+    .forEach(r => {
+      r.checked = r.value === preset;
+    });
+}
+
 function updateTimerAccess() {
-  const host = isHost();
+  const host = state.host;
 
   document
     .querySelectorAll('input[name="timePreset"]')
