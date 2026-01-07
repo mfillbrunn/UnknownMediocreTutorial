@@ -152,7 +152,7 @@ $("readyBtn")?.addEventListener("click", () => {
   
   sendGameAction(roomId, {
     type: "PLAYER_READY",
-    name: getPlayerName(),
+    name: window.myProfile.username,
     userId: window.currentUser.id
   });
 
