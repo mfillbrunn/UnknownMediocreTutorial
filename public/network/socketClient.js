@@ -18,12 +18,17 @@ const socket = io(BACKEND_URL, {
 // ------------------------------
 // OUTGOING METHODS (GLOBAL)
 // ------------------------------
-window.createRoom = function (cb) {
-  socket.emit("createRoom", cb);
+
+window.createRoom = function (payload, cb) {
+  socket.emit("createRoom", payload, cb);
 };
 
-window.joinRoom = function (roomCode, cb) {
-  socket.emit("joinRoom", roomCode, cb);
+window.joinRoom = function (roomCode, payload, cb) {
+  socket.emit("joinRoom", { roomId: roomCode, ...payload }, cb);
+};
+
+window.quickJoin = function (payload, cb) {
+  socket.emit("quickJoin", payload, cb);
 };
 
 window.sendGameAction = function (roomId, action) {
