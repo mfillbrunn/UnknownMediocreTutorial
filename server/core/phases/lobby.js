@@ -38,6 +38,7 @@ if (action.type === "PLAYER_JOINED") {
       .slice(0, 16);
   }
   emitStateForAllPlayers(roomId, room, io);
+    emitLobbyEvent(io, roomId, { type: "player_joined" });
   return;
 }
 if (action.type === "SET_TIME_CONTROL") {
