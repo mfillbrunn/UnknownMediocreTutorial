@@ -12,7 +12,6 @@ let KeepEnabled = true;
 let NewEnabled = true;
 window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
-import { supabase } from "./authentication/supabaseClient.js";
 window.lastTimeRemaining ??= { A: null, B: null };
 // -----------------------------------------------------
 // DOM HELPERS
@@ -150,7 +149,7 @@ window.addEventListener("load", async () => {
   const savedRoom = localStorage.getItem("vswordle_room");
   if (!savedRoom) return;
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await window.supabase.auth.getSession();
   if (!session) return;
 
   joinRoom(savedRoom, resp => {
