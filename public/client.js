@@ -135,6 +135,15 @@ function enterLobbyAfterJoin() {
   showLobby();
 }
 
+function requireAuth(actionName = "continue") {
+  if (!window.currentUser) {
+    toast(`Please log in to ${actionName}`);
+    showScreen("accountScreen");
+    return false;
+  }
+  return true;
+}
+
 // -----------------------------------------------------
 // AUTO-REJOIN
 // -----------------------------------------------------
