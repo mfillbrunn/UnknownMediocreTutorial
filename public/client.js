@@ -13,6 +13,7 @@ let NewEnabled = true;
 window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 import { supabase } from "./authentication/supabaseClient.js";
+window.lastTimeRemaining ??= { A: null, B: null };
 // -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
