@@ -107,17 +107,14 @@ socket.on("roleAssigned", ({ role }) => {
 $("createRoomBtn")?.addEventListener("click", () => {
   if (!requireAuth("create a room")) return;
 
-  createRoom(resp => {
-    if (!resp.ok) return toast(resp.error);
+createRoom(resp => {
+  if (!resp.ok) return toast(resp.error);
+  roomId = resp.roomId;
+}, {
+  userId: window.currentUser.id,
+  name: window.myProfile.username
+});
 
-    roomId = resp.roomId;
-
-    sendGameAction(roomId, {
-      type: "PLAYER_JOINED",
-      userId: window.currentUser.id,
-      name: window.myProfile.username
-    });
-  });
 });
 
 
@@ -128,17 +125,14 @@ $("joinRoomBtn")?.addEventListener("click", () => {
   const code = $("joinRoomInput").value.trim().toUpperCase();
   if (!code) return toast("Enter a code");
 
-  joinRoom(code, resp => {
-    if (!resp.ok) return toast(resp.error);
+joinRoom(code, resp => {
+  if (!resp.ok) return toast(resp.error);
+  roomId = code;
+}, {
+  userId: window.currentUser.id,
+  name: window.myProfile.username
+});
 
-    roomId = code;
-
-    sendGameAction(roomId, {
-      type: "PLAYER_JOINED",
-      userId: window.currentUser.id,
-      name: window.myProfile.username
-    });
-  });
 });
 
 
