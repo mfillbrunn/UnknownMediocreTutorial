@@ -130,7 +130,7 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
       }
     });
     // LEAVE ROOM ------------------------------
-socket.on("leaveRoom", cb => {
+socket.on("leaveRoom", (_payload, cb) => {
   for (const [roomId, room] of Object.entries(rooms)) {
     const role = room.players[socket.id];
     if (!role) continue;
