@@ -96,6 +96,38 @@ async function loadMyProfile() {
 
   if (!error) {
     window.myProfile = data;
+
+    const input = $("usernameInput");
+    if (input && data.username) {
+      input.value = data.username;
+    }
   }
 }
+
+$("saveUsernameBtn").onclick = async () => {
+  if (!window.currentUser) {
+    status.textContent = "Not logged in";
+    return;
+  }
+
+  const username = $("usernameInput").value.trim();
+
+  if (username.length < 3) {
+    status.textContent = "Username too short";
+    return;
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ username })
+    .eq("id", window.currentUser.id);
+
+  if (error) {
+    status.textContent = error.message;
+  } else {
+    status.textContent = "Username saved";
+    window.myProfile.username = username;
+  }
+};
+
 
