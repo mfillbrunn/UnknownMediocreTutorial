@@ -53,7 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }*/
   showStartup();
 });
-let lastTimeRemaining = { A: null, B: null };
 
 function shakeDraftRow(role) {
   let row;
