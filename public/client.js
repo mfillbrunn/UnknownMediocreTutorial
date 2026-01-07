@@ -151,14 +151,23 @@ window.addEventListener("load", async () => {
 
   const { data: { session } } = await window.supabase.auth.getSession();
   if (!session) return;
+  if (!window.myProfile) return;
 
-  joinRoom(savedRoom, resp => {
-    if (resp.ok) {
+  joinRoom(
+    savedRoom,
+    {
+      userId: window.currentUser.id,
+      name: window.myProfile.username
+    },
+    resp => {
+      if (!resp.ok) return;
+
       roomId = savedRoom;
       $("roomCodeLabel").textContent = roomId;
     }
-  });
+  );
 });
+
 
 
 window.showScreen = (id) => {
