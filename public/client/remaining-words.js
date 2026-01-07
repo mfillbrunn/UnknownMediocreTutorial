@@ -131,14 +131,10 @@ function renderSetterRemainingBox(state, role, draft) {
       </span>
     </div>
     <div class="line">
+      <span class="label">New</span>
       <span class="value" style="${newStyle}">
-      ${
-        hasDraft && !isConsistent
-          ? `<span class="inconsistent-x">✕</span>`
-          : hasNew
-            ? info.new.toLocaleString()
-            : "?"
-      }
+      ${hasDraft && !isConsistent ? `<span class="inconsistent-x">✕</span>`
+          : hasNew ? info.new.toLocaleString(): "?"}
     </span>
     </div>
   `;
