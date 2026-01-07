@@ -81,6 +81,16 @@ socket.on("timerTick", ({ timeRemaining }) => {
   renderChessClocks();
 });
 
+socket.on("connect", () => {
+  if (window.currentUser) {
+    socket.emit("identify", {
+      userId: window.currentUser.id,
+      email: window.currentUser.email
+    });
+  }
+});
+
+
 
 /////////////////////////////////////////////////
 ////         LOBBY 
@@ -95,13 +105,18 @@ socket.on("roleAssigned", ({ role }) => {
 });
 
 $("createRoomBtn")?.addEventListener("click", () => {
+  if (!requireAuth("create a room")) return;
+
   createRoom(resp => {
     if (!resp.ok) return toast(resp.error);
     roomId = resp.roomId;
   });
 });
 
+
 $("joinRoomBtn")?.addEventListener("click", () => {
+  if (!requireAuth("join a room")) return;
+
   const code = $("joinRoomInput").value.trim().toUpperCase();
   if (!code) return toast("Enter a code");
 
@@ -111,17 +126,20 @@ $("joinRoomBtn")?.addEventListener("click", () => {
   });
 });
 
+
 window.quickJoin = function (cb) {
   socket.emit("quickJoin", cb);
 };
 
 $("quickJoinBtn")?.addEventListener("click", () => {
+  if (!requireAuth("quick play")) return;
+
   quickJoin(resp => {
     if (!resp.ok) return toast(resp.error);
-
     roomId = resp.roomId;
   });
 });
+
 
 $("switchRolesBtn")?.addEventListener("click", () => {
   sendGameAction(roomId, { type: "SWITCH_ROLES" });
@@ -134,7 +152,8 @@ $("readyBtn")?.addEventListener("click", () => {
   
   sendGameAction(roomId, {
     type: "PLAYER_READY",
-    name: getPlayerName()
+    name: getPlayerName(),
+    userId: window.currentUser.id
   });
 
   // Immediately update UI locally
