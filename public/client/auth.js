@@ -1,8 +1,13 @@
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const supabase = createClient(
+  "https://zskbwatoxvghyouqjuxi.supabase.co",
+  "sb_publishable_XXXXXXXXXXXXXXXX"
+);
 const emailInput = $("authEmail");
 const passwordInput = $("authPassword");
 const status = $("authStatus");
 const logoutBtn = $("logoutBtn");
-const supabase = window.supabase;
 
 $("signupBtn").onclick = async () => {
   const email = emailInput.value.trim();
