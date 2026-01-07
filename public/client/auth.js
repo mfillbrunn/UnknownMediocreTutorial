@@ -2,33 +2,62 @@ const emailInput = $("authEmail");
 const passwordInput = $("authPassword");
 const status = $("authStatus");
 const logoutBtn = $("logoutBtn");
+const supabase = window.supabase;
 
 $("signupBtn").onclick = async () => {
-  const { data, error } = await supabase.auth.signUp({
-  email,
-  password
-});
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
 
-if (!error) {
-  await supabase.from("profiles").insert({
-    id: data.user.id,
-    username: email.split("@")[0],
-    rating_bullet: 1200,
-    rating_blitz: 1200,
-    rating_notime: 1200,
-    rating_deep: 1200,
-    games_played_bullet: 0,
-    games_played_blitz: 0,
-    games_played_notime: 0,
-    games_played_deep: 0,
-    wins_bullet: 0,
-    wins_blitz: 0,
-    wins_notime: 0,
-    wins_deep: 0
+  if (!email || !password) {
+    status.textContent = "Enter email and password";
+    return;
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password
   });
-}
-  status.textContent = error ? error.message : "Account created!";
+
+  console.log("SIGNUP:", { data, error });
+
+  if (error) {
+    status.textContent = error.message;
+    return;
+  }
+
+  status.textContent = "Account created!";
+
+  if (data?.user) {
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert({
+        id: data.user.id,
+        username: email.split("@")[0],
+
+        rating_bullet: 1200,
+        rating_blitz: 1200,
+        rating_notime: 1200,
+        rating_deep: 1200,
+
+        games_played_bullet: 0,
+        games_played_blitz: 0,
+        games_played_notime: 0,
+        games_played_deep: 0,
+
+        wins_bullet: 0,
+        wins_blitz: 0,
+        wins_notime: 0,
+        wins_deep: 0
+      });
+
+    console.log("PROFILE INSERT:", profileError);
+
+    if (profileError) {
+      status.textContent = "Profile creation failed";
+    }
+  }
 };
+
 
 $("loginBtn").onclick = async () => {
   const { error } = await supabase.auth.signInWithPassword({
