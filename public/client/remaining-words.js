@@ -102,7 +102,11 @@ function renderSetterRemainingBox(state, role, draft) {
     box.hidden = true;
     return;
   }
-  
+  const hasDraft = typeof draft === "string" && draft.length === 5;
+  let isConsistent = true;
+  if (hasDraft) {
+    isConsistent = isConsistentWithHistory(state.history, draft, state);
+  }
   box.hidden = false;
   const hasOld = info.old > -1;
   const hasNew = info.new > -1;
@@ -127,10 +131,15 @@ function renderSetterRemainingBox(state, role, draft) {
       </span>
     </div>
     <div class="line">
-      <span class="label">New</span>
       <span class="value" style="${newStyle}">
-        ${hasNew ? info.new.toLocaleString() : "?"}
-      </span>
+      ${
+        hasDraft && !isConsistent
+          ? `<span class="inconsistent-x">✕</span>`
+          : hasNew
+            ? info.new.toLocaleString()
+            : "?"
+      }
+    </span>
     </div>
   `;
 }
