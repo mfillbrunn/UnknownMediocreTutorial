@@ -42,7 +42,7 @@ if (action.type === "PLAYER_JOINED") {
   return;
 }
 if (action.type === "SET_TIME_CONTROL") {
-  if (state.host !== role) return state;
+  if (state.host !== action.playerId) return state;
    if (action.enabled === false) {
     state.timeControl.enabled = false;
     state.activeTimer = null;
