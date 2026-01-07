@@ -738,3 +738,7 @@
 .remaining-box .line:first-child .label {
   opacity: 0.9;
 }
+.inconsistent-x {
+  color: #ff4b5c;
+  font-weight: 700;
+}
