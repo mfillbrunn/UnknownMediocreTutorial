@@ -46,21 +46,13 @@ if (action.type === "SET_TIME_CONTROL") {
 
  if (action.enabled === false) {
     state.timeControl.enabled = false;
+    state.timeControl.preset = "none";
     state.activeTimer = null;
     state.timeRemaining.A = 0;
     state.timeRemaining.B = 0;
-
     emitStateForAllPlayers(roomId, room, io);
     return;
-  }
-        state.timeControl.enabled = true;
-        state.timeControl.mode = mode;
-        
-        state.timeControl.preset =
-          sec === 60 ? "bullet" :
-          sec === 180 ? "blitz" :
-          sec === 900 ? "deep" :
-          "custom";
+  }        
   const sec = parseInt(action.seconds, 10);
   const mode = action.mode || "round";
 
@@ -68,7 +60,13 @@ if (action.type === "SET_TIME_CONTROL") {
 
   state.timeControl.enabled = true;
   state.timeControl.mode = mode;
-
+       
+        state.timeControl.preset =
+          sec === 60 ? "bullet" :
+          sec === 180 ? "blitz" :
+          sec === 900 ? "deep" :
+          "custom";
+        
   if (mode === "round") {
     state.timeControl.roundSeconds = sec;
     state.timeRemaining.A = sec;
