@@ -11,44 +11,41 @@ module.exports = function registerSocketHandlers(io, context) {
   io.on("connection", socket => {
 
     // CREATE ROOM ----------------------------
-    socket.on("createRoom", cb => {
-      const roomId = createRoom(socket);
-      const room = rooms[roomId];
-      room.state.host = socket.id;
-      socket.emit("roleAssigned", {
-        role: "A",
-        setterId: socket.id,
-        guesserId: null,
-        host: "A"
-      });
-      cb({ ok: true, roomId });
-      emitStateForAllPlayers(roomId, room, io);
-    });
+socket.on("createRoom", ({ userId, name }, cb) => {
+  const roomId = createRoom(socket);
+  const room = rooms[roomId];
+
+  room.state.host = socket.id;
+
+  if (name) {
+    room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
+  }
+
+  socket.emit("roleAssigned", { role: "A" });
+  cb({ ok: true, roomId });
+
+  emitStateForAllPlayers(roomId, room, io);
+});
+
 
 
     // JOIN ROOM ------------------------------
-    socket.on("joinRoom", (roomId, cb) => {
-      const result = joinRoom(socket, roomId);
-      if (!result.ok) return cb(result);
+socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
+  const result = joinRoom(socket, roomId);
+  if (!result.ok) return cb(result);
 
-      const room = rooms[roomId];
+  const room = rooms[roomId];
 
-      // Notify other player (not the joiner)
-      socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
+  if (name) {
+    room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
+  }
 
-      const setterId = Object.keys(room.players)
-        .find(id => room.players[id] === "A");
-      const guesserId = Object.keys(room.players)
-        .find(id => room.players[id] === "B");
-      socket.emit("roleAssigned", {
-        role: room.players[socket.id],
-        setterId,
-        guesserId
-      });
+  socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
+  cb({ ok: true, roomId });
 
-      cb({ ok: true, roomId });
-      emitStateForAllPlayers(roomId, room, io);
-    });
+  emitStateForAllPlayers(roomId, room, io);
+});
+
 
     // QUICK JOIN ------------------------------
     socket.on("quickJoin", cb => {
