@@ -89,15 +89,14 @@ function exitMenuMode() {
   document.body.classList.remove("menu-mode");
 }
 function getPlayerName() {
-  const saved = localStorage.getItem("playerName");
-  if (saved) return saved;
+  if (window.myProfile?.username) {
+    return window.myProfile.username;
+  }
 
-  const generated =
-    "Player-" + Math.random().toString(36).slice(2, 6).toUpperCase();
-
-  localStorage.setItem("playerName", generated);
-  return generated;
+  // Fallback (should rarely happen)
+  return "Player";
 }
+
 
 function updateRoleCards() {
   if (!state || !state.roles || !state.playerNames) return;
@@ -147,9 +146,12 @@ function requireAuth(actionName = "continue") {
 // -----------------------------------------------------
 // AUTO-REJOIN
 // -----------------------------------------------------
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
   const savedRoom = localStorage.getItem("vswordle_room");
   if (!savedRoom) return;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
 
   joinRoom(savedRoom, resp => {
     if (resp.ok) {
@@ -158,6 +160,7 @@ window.addEventListener("load", () => {
     }
   });
 });
+
 
 window.showScreen = (id) => {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
@@ -679,6 +682,7 @@ function handleGuesserInput(event) {
 }
 
 $("quickPlayBtn")?.addEventListener("click", () => {
+  if (!requireAuth("quick play")) return;
   quickJoin(resp => {
     if (resp.ok) {
       roomId = resp.roomId;
