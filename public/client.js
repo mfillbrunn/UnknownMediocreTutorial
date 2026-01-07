@@ -314,6 +314,7 @@ onStateUpdate(newState => {
   updateTimerPresetUI();
   updateWaitingIndicator();
   updatePowerInfoState(state);
+  updateTimerVisibility();
   updateUI();
   if (state.phase === "simultaneous"){renderSetterRemainingBox(state, myRole, "");}
   if (state.phase === "normal"){renderSetterRemainingBox(state, myRole, state.secret);}
