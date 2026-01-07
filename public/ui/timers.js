@@ -1,4 +1,3 @@
-let lastTimeRemaining = { A: null, B: null };
 function renderChessClocks() {
   if (!state || !state.timeRemaining) return;
 
@@ -42,7 +41,7 @@ function applyTimer(elementId, role) {
   else if (seconds <= 30) el.classList.add("warn-30");
 
   // Increment detection (CHESS MODE ONLY)
-  const prev = lastTimeRemaining[role];
+  const prev = window.lastTimeRemaining[role];
   if (
     state.timeControl?.mode === "chess" &&
     typeof prev === "number" &&
@@ -71,7 +70,6 @@ function triggerIncrementEffect(el, delta) {
 
   setTimeout(() => badge.remove(), 800);
 }
-
 
 function formatTime(sec) {
   const m = Math.floor(sec / 60);
