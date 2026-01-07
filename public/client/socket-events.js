@@ -135,26 +135,25 @@ joinRoom(code, resp => {
 
 });
 
-
-
-window.quickJoin = function (cb) {
-  socket.emit("quickJoin", cb);
+window.quickJoin = function (payload, cb) {
+  socket.emit("quickJoin", payload, cb);
 };
 
 $("quickJoinBtn")?.addEventListener("click", () => {
   if (!requireAuth("quick play")) return;
 
-  quickJoin(resp => {
-    if (!resp.ok) return toast(resp.error);
-    roomId = resp.roomId;
-  });
-  sendGameAction(roomId, {
-  type: "PLAYER_JOINED",
-  userId: window.currentUser.id,
-  name: window.myProfile.username
+  quickJoin(
+    {
+      userId: window.currentUser.id,
+      name: window.myProfile.username
+    },
+    resp => {
+      if (!resp.ok) return toast(resp.error);
+      roomId = resp.roomId;
+    }
+  );
 });
 
-});
 
 
 $("switchRolesBtn")?.addEventListener("click", () => {
