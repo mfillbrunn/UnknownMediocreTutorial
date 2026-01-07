@@ -31,7 +31,15 @@ const SETTER_POWERS = [
       ];
 function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
-
+if (action.type === "PLAYER_JOINED") {
+  if (action.name) {
+    state.playerNames[action.playerId] = String(action.name)
+      .trim()
+      .slice(0, 16);
+  }
+  emitStateForAllPlayers(roomId, room, io);
+  return;
+}
 if (action.type === "SET_TIME_CONTROL") {
   if (state.host !== role) return state;
    if (action.enabled === false) {
@@ -124,13 +132,7 @@ if (action.type === "SET_POWER_COUNT") {
         
           // Ready is per PLAYER (socket.id), not role
           state.ready[action.playerId] = true;
-        
-          if (action.name) {
-            state.playerNames[action.playerId] = String(action.name)
-              .trim()
-              .slice(0, 16);
-          }
-        
+               
           emitToOtherPlayer(io, room, action.playerId, {
             type: "playerReady",
             playerId: action.playerId
