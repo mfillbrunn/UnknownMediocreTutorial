@@ -442,6 +442,9 @@
   margin-right: var(--sp-6);
   text-align: right;
 }
+.timer-block.hidden {
+  display: none;
+}
 .timer-label {
   font-size: var(--fs-15);
   min-width: 3.5ch;
