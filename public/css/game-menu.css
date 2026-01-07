@@ -218,7 +218,7 @@ body.menu-mode .app-header {
 .kick-btn {
   background: none;
   border: none;
-  color: var(--warning-accent);
+  color: var(--kick-btn);
   font-size: var(--fs-18);
   font-weight: 900;
   cursor: pointer;
