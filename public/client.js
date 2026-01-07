@@ -221,7 +221,7 @@ onLobbyEvent(evt => {
 
     case "rolesSwitched": {
       const myId = socket.id;
-
+    
       if (evt.setterId === myId) {
         myRole = "A";
         window.myRole = "A"; 
@@ -231,12 +231,12 @@ onLobbyEvent(evt => {
         window.myRole = "B"; 
         toast("You are now the Guesser!");
       }
-      updateRoleCards()
+    
+      // ❗ Do NOT update lobby UI here
       resetKeyboards();
-      updateRoleLabels();
-      updateUI();
       break;
     }
+
 
     case "playerReady":
       toast(`Player ${evt.role} is READY`);
@@ -286,9 +286,9 @@ onStateUpdate(newState => {
   updateRoleCards();
   updateHostControls();
   updateTimerAccess(); 
+  updateTimerPresetUI();
   updateWaitingIndicator();
   updatePowerInfoState(state);
-  updateTimerPresetUI();
   updateUI();
   if (state.phase === "simultaneous"){renderSetterRemainingBox(state, myRole, "");}
   if (state.phase === "normal"){renderSetterRemainingBox(state, myRole, state.secret);}
