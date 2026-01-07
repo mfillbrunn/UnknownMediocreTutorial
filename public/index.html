@@ -28,6 +28,13 @@
 
 </head>
 <body>
+  <script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+  window.supabase = createClient(
+    "https://zskbwatoxvghyouqjuxi.supabase.co",
+    "sb_publishable_1ubwHN-WJJcvYRQb9c5Y9g_1FdOPGAP"
+  );
+</script>
   <script>
     /* Required by your JS */
     const $ = id => document.getElementById(id);
@@ -50,10 +57,29 @@
               <button id="playBtn" class="menu-btn">Play</button>
               <button class="menu-btn">Options</button>
               <button class="menu-btn">How to Play</button>
-              <button class="menu-btn">Account</button>
+              <button id="accountBtn" class="menu-btn">Account</button>
             </div>
           </div>
         </section>
+<!-- ========== ACCOUNT ========== -->
+<section id="accountScreen" class="screen game-menu">
+  <div class="menu-center">
+    <h2 class="menu-title">Account</h2>
+
+    <input id="authEmail" type="email" placeholder="Email" />
+    <input id="authPassword" type="password" placeholder="Password" />
+
+    <div class="menu-buttons">
+      <button id="signupBtn" class="menu-btn primary">Sign Up</button>
+      <button id="loginBtn" class="menu-btn">Log In</button>
+      <button id="logoutBtn" class="menu-btn hidden">Log Out</button>
+      <button id="backBtn" class="menu-btn">Back</button>
+    </div>
+
+    <p id="authStatus" class="auth-status"></p>
+  </div>
+</section>
+
 <!-- ========== LOBBY ========== -->
 <section id="lobby" class="screen screen-lobby">
   <div class="panel lobby-panel">
