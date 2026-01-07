@@ -682,7 +682,13 @@ function handleGuesserInput(event) {
 
 $("quickPlayBtn")?.addEventListener("click", () => {
   if (!requireAuth("quick play")) return;
-  quickJoin(resp => {
+
+  const payload = {
+    userId: window.currentUser.id,
+    name: window.myProfile.username
+  };
+
+  quickJoin(payload, resp => {
     if (resp.ok) {
       roomId = resp.roomId;
       enterLobbyAfterJoin();
@@ -690,7 +696,7 @@ $("quickPlayBtn")?.addEventListener("click", () => {
     }
 
     // No room available → create one
-    createRoom(resp2 => {
+    createRoom(payload, resp2 => {
       if (!resp2.ok) {
         toast(resp2.error || "Could not start game");
         return;
@@ -701,6 +707,7 @@ $("quickPlayBtn")?.addEventListener("click", () => {
     });
   });
 });
+
 function updateHostControls() {
   if (!state || !state.roles || !state.playerNames) return;
 
