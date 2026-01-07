@@ -82,3 +82,15 @@ setInterval(() => {
     updateUI(); // <-- this already triggers power uiEffects
   }
 }, 250);
+
+function updateTimerVisibility() {
+  const blocks = document.querySelectorAll(".timer-block");
+  if (!blocks.length || !state?.timeControl) return;
+
+  const hasTimer = state.timeControl.enabled === true;
+
+  blocks.forEach(block => {
+    block.classList.toggle("hidden", !hasTimer);
+  });
+}
+
