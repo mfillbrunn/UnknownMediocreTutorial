@@ -12,7 +12,7 @@ let KeepEnabled = true;
 let NewEnabled = true;
 window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
-
+import { supabase } from "./supabaseClient.js";
 // -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
