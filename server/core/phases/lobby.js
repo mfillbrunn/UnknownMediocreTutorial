@@ -43,7 +43,9 @@ if (action.type === "PLAYER_JOINED") {
 }
 if (action.type === "SET_TIME_CONTROL") {
   if (state.host !== action.playerId) return state;
-   if (action.enabled === false) {
+  console.log("STOP 1"); 
+console.log(action.enabled);
+        if (action.enabled === false) {
     state.timeControl.enabled = false;
     state.activeTimer = null;
     state.timeRemaining.A = 0;
@@ -52,7 +54,7 @@ if (action.type === "SET_TIME_CONTROL") {
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
-
+console.log("STOP 2"); 
   const sec = parseInt(action.seconds, 10);
   const mode = action.mode || "round";
 
@@ -70,7 +72,7 @@ if (action.type === "SET_TIME_CONTROL") {
     state.timeRemaining.A = sec;
     state.timeRemaining.B = sec;
   }
-
+console.log("STOP 3"); 
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
