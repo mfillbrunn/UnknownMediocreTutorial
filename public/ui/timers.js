@@ -1,3 +1,4 @@
+let lastTimeRemaining = { A: null, B: null };
 function renderChessClocks() {
   if (!state || !state.timeRemaining) return;
 
