@@ -109,15 +109,17 @@ $("createRoomBtn")?.addEventListener("click", () => {
 
   createRoom(resp => {
     if (!resp.ok) return toast(resp.error);
+
     roomId = resp.roomId;
+
+    sendGameAction(roomId, {
+      type: "PLAYER_JOINED",
+      userId: window.currentUser.id,
+      name: window.myProfile.username
+    });
   });
-  sendGameAction(roomId, {
-  type: "PLAYER_JOINED",
-  userId: window.currentUser.id,
-  name: window.myProfile.username
 });
 
-});
 
 
 $("joinRoomBtn")?.addEventListener("click", () => {
@@ -128,15 +130,17 @@ $("joinRoomBtn")?.addEventListener("click", () => {
 
   joinRoom(code, resp => {
     if (!resp.ok) return toast(resp.error);
+
     roomId = code;
+
+    sendGameAction(roomId, {
+      type: "PLAYER_JOINED",
+      userId: window.currentUser.id,
+      name: window.myProfile.username
+    });
   });
-  sendGameAction(roomId, {
-  type: "PLAYER_JOINED",
-  userId: window.currentUser.id,
-  name: window.myProfile.username
 });
 
-});
 
 
 window.quickJoin = function (cb) {
