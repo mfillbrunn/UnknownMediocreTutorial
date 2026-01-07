@@ -818,19 +818,15 @@ function isHost() {
 function updateTimerPresetUI() {
   if (!state?.timeControl) return;
 
-  const { enabled, mode, seconds } = state.timeControl;
-
-  let preset = "none";
-  if (enabled && mode === "round" && seconds === 60) preset = "bullet";
-  if (enabled && mode === "round" && seconds === 180) preset = "blitz";
-  if (enabled && mode === "chess" && seconds === 900) preset = "deep";
+  const preset = state.timeControl.preset || "none";
 
   document
     .querySelectorAll('input[name="timePreset"]')
-    .forEach(r => {
-      r.checked = r.value === preset;
+    .forEach(radio => {
+      radio.checked = radio.value === preset;
     });
 }
+
 function enableReadyButton(enabled) {
   const btn = $("readyBtn");
   if (!btn) return;
