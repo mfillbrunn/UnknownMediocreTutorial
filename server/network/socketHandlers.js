@@ -48,19 +48,22 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
 
 
     // QUICK JOIN ------------------------------
-    socket.on("quickJoin", cb => {
+    socket.on("quickJoin", ({ userId, name }, cb) => {
       const roomId = findLastOpenRoom();
-    
+      
       if (!roomId) {
         return cb({ ok: false, error: "No open rooms available" });
       }
-    
       //const result = joinRoom(socket, roomId);
       //if (!result.ok) return cb(result);
     
       const room = rooms[roomId];
        if (!room || !room.players) {
         return cb({ ok: false, error: "Room not found" });
+      }
+      if (name) {
+        room.state.playerNames[socket.id] =
+          String(name).trim().slice(0, 16);
       }
       const occupiedRoles = new Set(Object.values(room.players));
       let assignedRole;
