@@ -181,3 +181,6 @@ $("leaveRoomBtn")?.addEventListener("click", () => {
     showStartup();
   });
 });
+
+$("accountBtn").onclick = () => showScreen("accountScreen");
+$("backBtn").onclick = () => showScreen("startupScreen");
