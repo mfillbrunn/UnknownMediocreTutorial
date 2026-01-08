@@ -202,7 +202,7 @@ socket.on("kickPlayer", ({ roomId }, cb) => {
     io.to(targetSocketId).emit("lobbyEvent", {
       type: "kicked"
     });
-
+    io.to(targetSocketId).emit("forceLeaveRoom");
   // Notify host
   socket.emit("lobbyEvent", {
     type: "playerKicked",
