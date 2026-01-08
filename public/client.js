@@ -244,20 +244,9 @@ onLobbyEvent(evt => {
       $("waitingForPlayer")?.classList.add("hidden");
       break;
 
-    case "rolesSwitched": {
-      const myId = socket.id;
-    
-      if (evt.setterId === myId) {
-        myRole = "A";
-        window.myRole = "A"; 
-        toast("You are now the Setter!");
-      } else if (evt.guesserId === myId) {
-        myRole = "B";
-        window.myRole = "B"; 
-        toast("You are now the Guesser!");
-      }
-      break;
-    }
+  case "rolesSwitched":
+    toast("Roles have been switched.");
+    break;
 
 case "playerLeft": {
       const msg =
@@ -297,12 +286,12 @@ case "playerLeft": {
 
 // State updates
 onStateUpdate(newState => {
-  if (!window.myRole) {
-    window.myRole = myRole;
-  }
+  state = JSON.parse(JSON.stringify(newState));
+  myRole = state.roles?.[socket.id] ?? null;
+  window.myRole = myRole;
   const prevSetterDraft = state?.setterDraft || "";
   const prevPhase = state?.phase;
-  state = JSON.parse(JSON.stringify(newState));
+  
   // restore client-only draft
   if (prevPhase === "simultaneous" && state.phase === "normal") {
     localGuesserDraft = "";
