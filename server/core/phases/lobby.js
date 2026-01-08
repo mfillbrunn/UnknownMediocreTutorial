@@ -86,31 +86,31 @@ if (action.type === "SET_TIME_CONTROL") {
   // -------------------------------
 if (action.type === "SWITCH_ROLES") {
   const ids = Object.keys(room.players);
-  if (ids.length === 2) {
-    const idA = ids.find(id => room.players[id] === "A");
-    const idB = ids.find(id => room.players[id] === "B");
-    if (!idA || !idB) return;
+  if (ids.length !== 2) return;
 
-    // Swap runtime roles
-    room.players[idA] = "B";
-    room.players[idB] = "A";
+  const idA = ids.find(id => room.players[id] === "A");
+  const idB = ids.find(id => room.players[id] === "B");
+  if (!idA || !idB) return;
 
-    // ✅ Swap authoritative roles in state
-    state.roles[idA] = "B";
-    state.roles[idB] = "A";
+  // Swap runtime roles
+  room.players[idA] = "B";
+  room.players[idB] = "A";
 
-    // (These are constants in your system; leaving them is fine)
-    state.setter = "A";
-    state.guesser = "B";
+  // Swap authoritative roles
+  state.roles[idA] = "B";
+  state.roles[idB] = "A";
 
-    // Tell clients their new personal role
-    io.to(idA).emit("roleAssigned", { role: "B" });
-    io.to(idB).emit("roleAssigned", { role: "A" });
+  state.setter = "A";
+  state.guesser = "B";
 
-    emitLobbyEvent(io, roomId, { type: "rolesSwitched" });
+  // Notify players (UX only)
+  for (const playerId of ids) {
+    io.to(playerId).emit("lobbyEvent", { type: "rolesSwitched" });
   }
+
   return;
 }
+
 
 if (action.type === "SET_POWER_COUNT") {
     let n = parseInt(action.count, 10);
