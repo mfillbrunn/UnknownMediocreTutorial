@@ -60,6 +60,14 @@ function powerToInlineIcon(powerId) {
   return meta.label;
 }
 
+function powerToInlineLabel(powerId) {
+  const meta = window.POWER_METADATA?.[powerId];
+  if (!meta) return powerId;
+
+  // Emoji-first for share text
+  if (meta.label) return meta.label;
+}
+
 
 
 ///SUMMARY SCREEN ROUTER
@@ -124,6 +132,29 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
       `;
     }
 
+//----------------------------
+  // POWERS
+  //----------------------
+
+  const { setter, guesser } =
+  getActivePowersByRole(state.activePowers);
+
+let powersLine = null;
+if (setter.length || guesser.length) {
+  const setterPowers = setter.length
+    ? setter.map(powerToInlineLabel).join(" and ")
+    : "—";
+
+  const guesserPowers = guesser.length
+    ? guesser.map(powerToInlineLabel).join(" and ")
+    : "—";
+
+  powersLine =
+    `${setterPowers} | ${guesserPowers}`;
+}
+
+
+  
   // ----------------------------
   // Header
   // ----------------------------
@@ -164,10 +195,9 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
       <tr>
         <th>Round</th>
         <th>Setter</th>
-        <th>Guesser</th>
         <th>Guesses</th>
-        <th>Time (${getNameByRole("A")})</th>
-        <th>Time (${getNameByRole("B")})</th>
+        <th>Setter Time</th>
+        <th>Guesser Time</th>
       </tr>
   `;
 
@@ -176,7 +206,6 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
       <tr>
         <td>${i + 1}</td>
         <td>${getNameByRole(r.setter)}</td>
-        <td>${getNameByRole(r.guesser)}</td>
         <td>
           ${r.guessCount}
           ${
