@@ -295,8 +295,9 @@ onStateUpdate(newState => {
   myRole = state.roles?.[socket.id] ?? null;
   window.myRole = myRole;
   const prevSetterDraft = state?.setterDraft || "";
-  const prevPhase = state?.phase;
-  localGuesserDraft = "";
+  if (state.guessCount==1){
+    localGuesserDraft = "";
+  }
   const setterCanEdit =  myRole === state.setter &&  ((state.phase === "normal" && state.turn === state.setter &&!!state.pendingGuess) || (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
   if (setterCanEdit) {
     state.setterDraft = prevSetterDraft;
