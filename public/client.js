@@ -51,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (saved && $("playerNameInput")) {
     $("playerNameInput").value = saved;
   }*/
+  renderMenuAccountStatus();
   showStartup();
 });
 
