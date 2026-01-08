@@ -690,10 +690,13 @@ function handleGuesserInput(event) {
 
 $("quickPlayBtn")?.addEventListener("click", () => {
   if (!requireAuth("quick play")) return;
-
+  const username =
+  window.myProfile?.username ||
+  window.currentUser?.email ||
+  "Player";
   const payload = {
     userId: window.currentUser.id,
-    name: window.myProfile.username
+    name: username
   };
 
   quickJoin(payload, resp => {
