@@ -17,7 +17,7 @@ window.POWER_METADATA = {
 
   forceGuess: {
     label: "Force Guess",
-    desc: "Forces the next guess to satisfy a special restriction.",
+    desc: "Forces the next guess to satisfy a special restriction. Can only be used with at least 10 words remaining!",
     icon: "lock-input",
     emoji: "🔒",
     color: "#F97316"
@@ -65,7 +65,7 @@ window.POWER_METADATA = {
 
   revealHistory: {
     label: "Reveal History",
-    desc: "Reveals a secret from several rounds ago.",
+    desc: "Reveals a secret from several rounds ago. Can only be used after 3 rounds.",
     icon: "rewind",
     emoji: "⏪",
     color: "#64748B"
