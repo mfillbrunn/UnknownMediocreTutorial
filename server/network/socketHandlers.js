@@ -116,33 +116,40 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
 
 
     // DISCONNECT ------------------------------
-    socket.on("disconnect", () => {
-      for (const [roomId, room] of Object.entries(rooms)) {
-        if (!room.players[socket.id]) continue;
-    
-        delete room.players[socket.id];
-    
-        if (room.state.host === socket.id) {
-          room.state.host = Object.keys(room.players)[0] || null;
+      socket.on("disconnect", () => {
+        for (const [roomId, room] of Object.entries(rooms)) {
+          if (!room.players[socket.id]) continue;
+      
+          const role = room.state.roles[socket.id];
+      
+          removePlayerFromRoom({
+            room,
+            socketId: socket.id
+          });
+      
+          socket.to(roomId).emit("lobbyEvent", {
+            type: "playerLeft",
+            role
+          });
+      
+          emitStateForAllPlayers(roomId, room, io);
         }
-    
-        emitStateForAllPlayers(roomId, room, io);
-      }
-    });
+      });
+
+
     // LEAVE ROOM ------------------------------
 socket.on("leaveRoom", (_payload, cb) => {
   for (const [roomId, room] of Object.entries(rooms)) {
-    const role = room.players[socket.id];
-    if (!role) continue;
+    if (!room.players[socket.id]) continue;
 
-    // Remove player
-    delete room.players[socket.id];
+    const role = room.state.roles[socket.id];
+
+    removePlayerFromRoom({
+      room,
+      socketId: socket.id
+    });
+
     socket.leave(roomId);
-
-    // If host left, transfer host
-    if (room.state.host === socket.id) {
-      room.state.host = Object.keys(room.players)[0] || null;
-    }
 
     // Notify remaining player
     socket.to(roomId).emit("lobbyEvent", {
@@ -158,6 +165,8 @@ socket.on("leaveRoom", (_payload, cb) => {
 
   cb?.({ ok: false, error: "Not in a room" });
 });
+
+
 
 // KICK PLAYER ------------------------------
 socket.on("kickPlayer", ({ roomId }, cb) => {
@@ -183,13 +192,16 @@ socket.on("kickPlayer", ({ roomId }, cb) => {
   const [targetSocketId, targetRole] = targetEntry;
 
   // Remove target
-  delete room.players[targetSocketId];
-  io.sockets.sockets.get(targetSocketId)?.leave(roomId);
-
-  // Notify kicked player
-  io.to(targetSocketId).emit("lobbyEvent", {
-    type: "kicked"
-  });
+    removePlayerFromRoom({
+      room,
+      socketId: targetSocketId
+    });
+    
+    io.sockets.sockets.get(targetSocketId)?.leave(roomId);
+    
+    io.to(targetSocketId).emit("lobbyEvent", {
+      type: "kicked"
+    });
 
   // Notify host
   socket.emit("lobbyEvent", {
@@ -204,4 +216,34 @@ socket.on("kickPlayer", ({ roomId }, cb) => {
   });
 };
 
+
+////helper
+function removePlayerFromRoom({ room, socketId }) {
+  if (!room.players[socketId]) return false;
+
+  // Remove from runtime player map
+  delete room.players[socketId];
+
+  // Remove from authoritative state
+  delete room.state.roles[socketId];
+  delete room.state.playerNames[socketId];
+  delete room.state.ready?.[socketId];
+
+  // Transfer host if needed
+  if (room.state.host === socketId) {
+    room.state.host = Object.keys(room.players)[0] || null;
+  }
+
+  // If fewer than 2 players remain, force lobby reset
+  const remainingPlayers = Object.keys(room.players).length;
+  if (remainingPlayers < 2) {
+    room.state.phase = "lobby";
+    room.state.turn = null;
+    room.state.pendingGuess = null;
+    room.state.secret = null;
+    room.state.simultaneousSecretSubmitted = false;
+  }
+
+  return true;
+}
 
