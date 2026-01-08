@@ -166,8 +166,8 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
         <th>Setter</th>
         <th>Guesser</th>
         <th>Guesses</th>
-        <th>Time (${names.A})</th>
-        <th>Time (${names.B})</th>
+        <th>Time (${getNameByRole("A")})</th>
+        <th>Time (${getNameByRole("B")})</th>
       </tr>
   `;
 
@@ -381,11 +381,10 @@ html += `
 
 /// STORED ROUND DETAILS
 function renderStoredRoundSummary(round, index) {
-  const names = state.playerNames || { A: "A", B: "B" };
 
   let html = `
     <div class="stored-round">
-      <h4>Round ${index + 1} – ${names[round.setter]} was Setter</h4>
+      <h4>Round ${index + 1} – ${getNameByRole(round.setter)} was Setter</h4>
       <table class="summary-table">
         <tr>
           <th>#</th>
@@ -412,7 +411,6 @@ function renderStoredRoundSummary(round, index) {
 
 function buildShareText(state, myRole) {
   const rounds = state.matchRounds || [];
-  const names = state.playerNames || { A: "A", B: "B" };
 
   // -----------------------
   // Determine winner
