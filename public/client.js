@@ -263,9 +263,10 @@ onLobbyEvent(evt => {
     }
 
     case "playerLeft":
-      toast("The other player left.");
-      setTimeout(() => updateUI(), 0);
-      break;
+      setTimeout(() => {
+        toast("The other player left.");
+      }, 0);
+  break;
     case "playerReady":
       toast(`Player ${evt.role} is READY`);
       if (evt.playerId === socket.id) {
