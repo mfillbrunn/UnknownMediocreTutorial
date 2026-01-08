@@ -84,7 +84,6 @@ window.updateSummary = function updateSummary() {
 
 function renderMatchSummary(container) {
   const rounds = state.matchRounds || [];
-  const names = state.playerNames || { A: "A", B: "B" };
 
   // ----------------------------
   // Compute points + time
@@ -117,7 +116,7 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
 
     let timeoutNote = "";
     if (timeoutRound) {
-      const loserName = names[timeoutRound.timeoutLoser];
+      const loserName = getNameByRole(timeoutRound.timeoutLoser);
       timeoutNote = `
         <p class="timeout-note">
           ⏱ ${loserName} lost on time
@@ -176,8 +175,8 @@ const timeoutRound = rounds.find(r => r.timeoutLoser);
     html += `
       <tr>
         <td>${i + 1}</td>
-        <td>${names[r.setter]}</td>
-        <td>${names[r.guesser]}</td>
+        <td>${getNameByRole(r.setter)}</td>
+        <td>${getNameByRole(r.guesser)}</td>
         <td>
           ${r.guessCount}
           ${
@@ -428,15 +427,15 @@ function buildShareText(state, myRole) {
   resultIcon
 } = computeMatchResult(state, myRole);
 
-  const winnerName =
+const winnerName =
   winReason === "tie"
-    ? names.A
-    : names[winner];
+    ? getNameByRole("A")
+    : getNameByRole(winner);
 
 const loserName =
   winReason === "tie"
-    ? names.B
-    : names[winner === "A" ? "B" : "A"];
+    ? getNameByRole("B")
+    : getNameByRole(winner === "A" ? "B" : "A");
 
 const winnerLabel =
   winReason === "time"
@@ -480,7 +479,7 @@ if (setter.length || guesser.length) {
   // Per-round lines
   // -----------------------
   const roundLines = rounds.map((r, i) => {
-    const winnerOfRound = names[r.guesser];
+    const winnerOfRound = getNameByRole(r.guesser);
     const secret =
       r.history?.[r.history.length - 1]?.finalSecret?.toUpperCase() || "?????";
     const guesses = r.guessCount;
@@ -538,4 +537,9 @@ function formatDuration(seconds) {
     : `${mins}m ${secs}s`;
 }
 
+function getNameByRole(role) {
+  const id = Object.keys(state.roles || {})
+    .find(pid => state.roles[pid] === role);
+  return id ? state.playerNames?.[id] || "—" : "—";
+}
 
