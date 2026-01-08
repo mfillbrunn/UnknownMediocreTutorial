@@ -12,6 +12,25 @@
 .summary-table {
   text-align: center;
 }
+.match-summary-table th,
+.match-summary-table td {
+  text-align: center;
+}
+
+.match-summary-table td:nth-child(2),
+.match-summary-table th:nth-child(2) {
+  text-align: left; /* Setter name column */
+}
+.match-summary-table th {
+  font-weight: 600;
+  opacity: 0.85;
+}
+.match-summary-table td,
+.match-summary-table th {
+  padding: 8px 12px;
+}
+
+
 .history-box {
   background: var(--history-bg);
   font-family: var(--font-mono);
