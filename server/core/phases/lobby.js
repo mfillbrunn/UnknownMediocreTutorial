@@ -90,6 +90,7 @@ if (action.type === "SET_TIME_CONTROL") {
   // SWITCH ROLES
   // -------------------------------
 if (action.type === "SWITCH_ROLES") {
+   if (state.ranked) return; // silently ignore
   const ids = Object.keys(room.players);
   if (ids.length !== 2) return;
 
