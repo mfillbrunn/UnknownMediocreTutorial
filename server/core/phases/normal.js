@@ -1,8 +1,5 @@
 const { emitStateForAllPlayers } = require("../../utils/emitState");
-const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
-const { isValidWord } = require("../../game-engine/validation");
-const { isConsistentWithHistory } = require("../../game-engine/history");
 const { addIncrement, resetRoundTimer, startTimer} = require("../../utils/chessTimer");
 const { endGame } = require("./gameOver");
 const FORCE_TIMER_INTERVALS = {};
@@ -13,7 +10,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   /// GUESSER SUBMIT
   if (!state.pendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
     const g = action.guess.toLowerCase(); 
-    state.guessCount=+1;
+    state.guessCount= state.guessCount + 1;
     state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
     state.roundStartTime = Date.now();
     // ASSASSIN
