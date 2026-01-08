@@ -41,6 +41,11 @@ if (action.type === "PLAYER_JOINED") {
     emitLobbyEvent(io, roomId, { type: "playerJoined" });
   return;
 }
+if (action.type === "SET_RANKED") {
+  if (room.state.host !== action.playerId) return;
+  state.ranked = !!action.ranked;
+}
+
 if (action.type === "SET_TIME_CONTROL") {
   if (state.host !== action.playerId) return state;
 
