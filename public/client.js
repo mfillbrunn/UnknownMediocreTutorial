@@ -262,11 +262,18 @@ onLobbyEvent(evt => {
       break;
     }
 
-    case "playerLeft":
-      setTimeout(() => {
-        toast("The other player left.");
-      }, 0);
-  break;
+case "playerLeft": {
+      const msg =
+        evt.reason === "kicked"
+          ? "Your opponent was kicked."
+          : evt.reason === "disconnect"
+          ? "Your opponent disconnected."
+          : "Your opponent left the room.";
+    
+      toast(msg);
+      break;
+    }
+
     case "playerReady":
       toast(`Player ${evt.role} is READY`);
       if (evt.playerId === socket.id) {
