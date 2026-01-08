@@ -257,8 +257,7 @@ onLobbyEvent(evt => {
         toast("You are now the Guesser!");
       }
     
-      // ❗ Do NOT update lobby UI here
-      resetKeyboards();
+      updateUI();
       break;
     }
 
