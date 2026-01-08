@@ -296,11 +296,7 @@ onStateUpdate(newState => {
   window.myRole = myRole;
   const prevSetterDraft = state?.setterDraft || "";
   const prevPhase = state?.phase;
-  
-  // restore client-only draft
-  if (prevPhase === "simultaneous" && state.phase === "normal") {
-    localGuesserDraft = "";
-  }
+  localGuesserDraft = "";
   const setterCanEdit =  myRole === state.setter &&  ((state.phase === "normal" && state.turn === state.setter &&!!state.pendingGuess) || (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
   if (setterCanEdit) {
     state.setterDraft = prevSetterDraft;
