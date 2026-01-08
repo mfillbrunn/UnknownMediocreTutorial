@@ -291,11 +291,12 @@ case "playerLeft": {
 
 // State updates
 onStateUpdate(newState => {
+  prevPhase= state?.phase;
   state = JSON.parse(JSON.stringify(newState));
   myRole = state.roles?.[socket.id] ?? null;
   window.myRole = myRole;
   const prevSetterDraft = state?.setterDraft || "";
-  if (state.guessCount==1){
+  if (prevPhase === "simultaneous" && state.phase=== "normal"){
     localGuesserDraft = "";
   }
   const setterCanEdit =  myRole === state.setter &&  ((state.phase === "normal" && state.turn === state.setter &&!!state.pendingGuess) || (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
