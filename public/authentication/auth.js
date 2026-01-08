@@ -78,8 +78,11 @@ window.supabase.auth.onAuthStateChange(async (_event, session) => {
 
 
 
+let profileLoadInProgress = false;
+
 async function loadMyProfile() {
-  if (!window.currentUser) return null;
+  if (!window.currentUser || profileLoadInProgress) return null;
+  profileLoadInProgress = true;
 
   try {
     const { data, error } = await window.supabase
@@ -91,19 +94,19 @@ async function loadMyProfile() {
     if (error) throw error;
 
     window.myProfile = data;
-
-    // 🔴 IMPORTANT: re-render UI AFTER profile loads
     renderMenuAccountStatus();
-    updateRoleLabels?.(); // optional, if username shown elsewhere
-
+    updateRoleLabels?.();
     return data;
   } catch (err) {
-    if (err.name !== "AbortError") {
+    if (err?.name !== "AbortError") {
       console.error("Profile load failed:", err);
     }
     return null;
+  } finally {
+    profileLoadInProgress = false;
   }
 }
+
 
 
 function renderMenuAccountStatus() {
