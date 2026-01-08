@@ -31,7 +31,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     const g = action.guess.toLowerCase();
     if (!isValidWord(g, ALLOWED_GUESSES)) return;
     state.pendingGuess = g;
-    state.guessCount=+1;
+    state.guessCount=state.guessCount + 1;
     state.simultaneousGuessSubmitted = true;
     if (state.timeControl.mode === "chess") {addIncrement(state, state.guesser);} 
     if (state.activeTimer === "both") {state.activeTimer = state.setter;}
