@@ -153,12 +153,16 @@ window.addEventListener("load", async () => {
   const { data: { session } } = await window.supabase.auth.getSession();
   if (!session) return;
   if (!window.myProfile) return;
+    const username =
+  window.myProfile?.username ||
+  window.currentUser?.email ||
+  "Player";
 
   joinRoom(
     savedRoom,
     {
       userId: window.currentUser.id,
-      name: window.myProfile.username
+      name: username
     },
     resp => {
       if (!resp.ok) return;
