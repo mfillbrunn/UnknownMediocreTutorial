@@ -218,3 +218,11 @@ $("leaveRoomBtn")?.addEventListener("click", () => {
 
 $("accountBtn").onclick = () => showScreen("accountScreen");
 $("backBtn").onclick = () => showScreen("startupScreen");
+
+socket.on("forceLeaveRoom", () => {
+  roomId = null;
+  state = null;
+  showStartup();
+  toast("You were removed from the room.");
+});
+
