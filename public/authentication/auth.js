@@ -64,10 +64,17 @@ logoutBtn.onclick = async () => {
   status.textContent = "Logged out";
 };
 
-window.supabase.auth.onAuthStateChange((_event, session) => {
+window.supabase.auth.onAuthStateChange(async (_event, session) => {
   window.currentUser = session?.user || null;
-  if (window.currentUser) loadMyProfile();
+  window.myProfile = null;
+
+  if (window.currentUser) {
+    await loadMyProfile();
+  }
+
+  renderMenuAccountStatus();
 });
+
 
 async function loadMyProfile() {
   if (!window.currentUser) return;
@@ -80,3 +87,39 @@ async function loadMyProfile() {
 
   window.myProfile = data;
 }
+
+function renderMenuAccountStatus() {
+  const el = $("menuAccountStatus");
+  if (!el) return;
+
+  // Not logged in
+  if (!window.currentUser) {
+    el.innerHTML = `
+      <span class="account-logged-out">
+        Not logged in —
+        <button class="link-btn" id="menuLoginBtn">Log in</button>
+      </span>
+    `;
+
+    $("menuLoginBtn").onclick = () => {
+      showScreen("accountScreen");
+    };
+
+    return;
+  }
+
+  // Logged in
+  const name = window.myProfile?.username || window.currentUser.email;
+
+  el.innerHTML = `
+    <span class="account-logged-in">
+      Logged in as <strong>${name}</strong>
+      <button class="link-btn" id="menuLogoutBtn">Log out</button>
+    </span>
+  `;
+
+  $("menuLogoutBtn").onclick = async () => {
+    await window.supabase.auth.signOut();
+  };
+}
+
