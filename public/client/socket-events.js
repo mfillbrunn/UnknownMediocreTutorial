@@ -106,13 +106,16 @@ socket.on("roleAssigned", ({ role }) => {
 
 $("createRoomBtn")?.addEventListener("click", () => {
   if (!requireAuth("create a room")) return;
-
+  const username =
+  window.myProfile?.username ||
+  window.currentUser?.email ||
+  "Player";
 createRoom(resp => {
   if (!resp.ok) return toast(resp.error);
   roomId = resp.roomId;
 }, {
   userId: window.currentUser.id,
-  name: window.myProfile.username
+  name: username
 });
 
 });
@@ -124,13 +127,16 @@ $("joinRoomBtn")?.addEventListener("click", () => {
 
   const code = $("joinRoomInput").value.trim().toUpperCase();
   if (!code) return toast("Enter a code");
-
+const username =
+  window.myProfile?.username ||
+  window.currentUser?.email ||
+  "Player";
 joinRoom(code, resp => {
   if (!resp.ok) return toast(resp.error);
   roomId = code;
 }, {
   userId: window.currentUser.id,
-  name: window.myProfile.username
+  name: username
 });
 
 });
@@ -141,11 +147,14 @@ window.quickJoin = function (payload, cb) {
 
 $("quickJoinBtn")?.addEventListener("click", () => {
   if (!requireAuth("quick play")) return;
-
+const username =
+  window.myProfile?.username ||
+  window.currentUser?.email ||
+  "Player";
   quickJoin(
     {
       userId: window.currentUser.id,
-      name: window.myProfile.username
+      name: username
     },
     resp => {
       if (!resp.ok) return toast(resp.error);
