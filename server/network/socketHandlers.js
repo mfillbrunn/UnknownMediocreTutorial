@@ -129,6 +129,7 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
       
           socket.to(roomId).emit("lobbyEvent", {
             type: "playerLeft",
+            reason: "disconnect",
             role
           });
       
@@ -154,7 +155,8 @@ socket.on("leaveRoom", (_payload, cb) => {
     // Notify remaining player
     socket.to(roomId).emit("lobbyEvent", {
       type: "playerLeft",
-      role
+      role,
+        reason: "leave"
     });
 
     emitStateForAllPlayers(roomId, room, io);
@@ -200,7 +202,8 @@ socket.on("kickPlayer", ({ roomId }, cb) => {
     io.sockets.sockets.get(targetSocketId)?.leave(roomId);
     
     io.to(targetSocketId).emit("lobbyEvent", {
-      type: "kicked"
+      type: "playerLeft",
+      reason: "kicked"
     });
     io.to(targetSocketId).emit("forceLeaveRoom");
   // Notify host
