@@ -89,37 +89,29 @@ if (action.type === "SWITCH_ROLES") {
   if (ids.length === 2) {
     const idA = ids.find(id => room.players[id] === "A");
     const idB = ids.find(id => room.players[id] === "B");
+    if (!idA || !idB) return;
 
-    // Swap roles
+    // Swap runtime roles
     room.players[idA] = "B";
     room.players[idB] = "A";
 
-    // Server-side state (A = setter, B = guesser)
+    // ✅ Swap authoritative roles in state
+    state.roles[idA] = "B";
+    state.roles[idB] = "A";
+
+    // (These are constants in your system; leaving them is fine)
     state.setter = "A";
     state.guesser = "B";
 
-    // Notify BOTH players with correct role assignment
-    io.to(idA).emit("roleAssigned", {
-      role: "B",
-      setterId: idB,
-      guesserId: idA
-    });
+    // Tell clients their new personal role
+    io.to(idA).emit("roleAssigned", { role: "B" });
+    io.to(idB).emit("roleAssigned", { role: "A" });
 
-    io.to(idB).emit("roleAssigned", {
-      role: "A",
-      setterId: idB,
-      guesserId: idA
-    });
-
-    // UI event — optional, but still allowed
-    emitLobbyEvent(io, roomId, {
-      type: "rolesSwitched",
-      setterId: idB,
-      guesserId: idA
-    });
+    emitLobbyEvent(io, roomId, { type: "rolesSwitched" });
   }
   return;
 }
+
 if (action.type === "SET_POWER_COUNT") {
     let n = parseInt(action.count, 10);
         console.log("SET_POWER_COUNT received:", n);
