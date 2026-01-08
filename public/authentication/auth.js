@@ -68,25 +68,43 @@ window.supabase.auth.onAuthStateChange(async (_event, session) => {
   window.currentUser = session?.user || null;
   window.myProfile = null;
 
-  if (window.currentUser) {
-    await loadMyProfile();
-  }
-
+  // Initial render (email fallback is OK here)
   renderMenuAccountStatus();
+
+  if (window.currentUser) {
+    await loadMyProfile(); // will re-render when done
+  }
 });
 
 
+
 async function loadMyProfile() {
-  if (!window.currentUser) return;
+  if (!window.currentUser) return null;
 
-  const { data } = await window.supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", window.currentUser.id)
-    .single();
+  try {
+    const { data, error } = await window.supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", window.currentUser.id)
+      .single();
 
-  window.myProfile = data;
+    if (error) throw error;
+
+    window.myProfile = data;
+
+    // 🔴 IMPORTANT: re-render UI AFTER profile loads
+    renderMenuAccountStatus();
+    updateRoleLabels?.(); // optional, if username shown elsewhere
+
+    return data;
+  } catch (err) {
+    if (err.name !== "AbortError") {
+      console.error("Profile load failed:", err);
+    }
+    return null;
+  }
 }
+
 
 function renderMenuAccountStatus() {
   const el = $("menuAccountStatus");
