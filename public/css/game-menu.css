@@ -248,3 +248,23 @@ body.menu-mode .app-header {
   align-items: center;
   margin-top: var(--sp-16);
 }
+
+.menu-account-status {
+  margin: 12px 0 20px;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.menu-account-status .link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+.menu-account-status .link-btn:hover {
+  text-decoration: underline;
+}
+
