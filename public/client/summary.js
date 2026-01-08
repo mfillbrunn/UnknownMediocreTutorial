@@ -63,8 +63,6 @@ function powerToInlineIcon(powerId) {
 function powerToInlineLabel(powerId) {
   const meta = window.POWER_METADATA?.[powerId];
   if (!meta) return powerId;
-
-  // Emoji-first for share text
   if (meta.label) return meta.label;
 }
 
@@ -181,7 +179,13 @@ if (setter.length || guesser.length) {
 
       }
     </p>
-
+    ${
+      powersLine
+        ? `<p class="match-powers">
+             <strong>Powers:</strong> ${powersLine}
+           </p>`
+        : ""
+    }
     
   </div>
 `;
