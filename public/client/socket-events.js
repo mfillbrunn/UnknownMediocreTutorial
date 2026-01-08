@@ -164,10 +164,13 @@ $("switchRolesBtn")?.addEventListener("click", () => {
 $("readyBtn")?.addEventListener("click", () => {
   // Send to server
   //const name = $("playerNameInput")?.value?.trim() || "";
-  
+  const username =
+  window.myProfile?.username ||
+  window.currentUser?.email ||
+  "Player";
   sendGameAction(roomId, {
     type: "PLAYER_READY",
-    name: window.myProfile.username,
+    name: username,
     userId: window.currentUser.id
   });
 
