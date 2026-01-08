@@ -256,8 +256,6 @@ onLobbyEvent(evt => {
         window.myRole = "B"; 
         toast("You are now the Guesser!");
       }
-    
-      updateUI();
       break;
     }
 
