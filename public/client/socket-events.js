@@ -244,4 +244,17 @@ $("rankedToggle").onchange = e => {
     ranked: e.target.checked
   });
 };
+function updateRankedToggle() {
+  const wrapper = $("rankedToggleWrapper");
+  const toggle = $("rankedToggle");
+  if (!wrapper || !toggle || !state) return;
+
+  const isHost = state.host === socket.id;
+
+  wrapper.classList.toggle("hidden", !isHost);
+  toggle.disabled = !isHost;
+
+  // Sync UI with state
+  toggle.checked = !!state.ranked;
+}
 
