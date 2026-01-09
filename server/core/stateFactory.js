@@ -12,7 +12,7 @@ function createInitialState() {
   // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
     mode: null,          // instance of mode controller
     matchMeta: {},       // owned entirely by the mode
-    state.ranked = false,
+    state.ranked : false,
     gameOverView: "match",
     canNextRound: false,
     matchRounds: [],
