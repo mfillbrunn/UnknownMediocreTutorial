@@ -8,6 +8,7 @@ const {resetRoundTimer,stopTimer, startTimer} = require("../../utils/chessTimer"
 const {applyRankedElo} = require("../../utils/elo");
 
 function endGame(state, roomId, io, room, context) {
+   const { supabase } = context; 
    state.turn = null;
    state.gameOver = true;
    if (state.timeControl.enabled) {
