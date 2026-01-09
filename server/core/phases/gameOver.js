@@ -32,11 +32,20 @@ function endGame(state, roomId, io, room, context) {
     state.phase = "gameOver";
     state.gameOverView = res.view || "match"; 
     state.canNextRound = !!res.canNextRound;
+    let ratingChange = null;
   if (!state.canNextRound) {
     if (state.ranked) {
       applyRankedElo({ state, room, supabase })
-        .catch(err => console.error("Elo update failed:", err));
-    }
+        .then(ratingChange => {
+          return writeMatchHistory({
+            state,
+            room,
+            supabase,
+            ratingChange
+          });
+        })
+        .catch(err => console.error("Ranked match persistence failed:", err));
+    }else {
        writeMatchHistory({ state, room, supabase })
       .catch(err => console.error("Match history write failed:", err));
      }
@@ -146,7 +155,7 @@ function computeMatchResult(state, myRole) {
     resultIcon
   };
 }
-async function writeMatchHistory({ state, room, supabase }) {
+async function writeMatchHistory({ state, room, supabase, ratingChange }) {
   const playerA = Object.keys(room.players).find(id => room.players[id] === "A");
   const playerB = Object.keys(room.players).find(id => room.players[id] === "B");
   if (!playerA || !playerB) return;
@@ -181,8 +190,12 @@ async function writeMatchHistory({ state, room, supabase }) {
 
     score_a: scoreA,
     score_b: scoreB,
-
-    time_control: {
+    rating_a_before: ratingChange?.rating_a_before ?? null,
+    rating_b_before: ratingChange?.rating_b_before ?? null,
+    rating_a_after: ratingChange?.rating_a_after ?? null,
+    rating_b_after: ratingChange?.rating_b_after ?? null,
+    
+     time_control: {
       enabled: state.timeControl?.enabled,
       mode: state.timeControl?.mode,
       roundSeconds: state.timeControl?.roundSeconds,
