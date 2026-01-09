@@ -95,7 +95,7 @@ function startGameTimerSim(room, state, roomId, context) {
   const io = context.io;
   startTimer(roomId, state, io, timedOutRole => {
       state.timeoutLoser = timedOutRole;
-      endGame(state, roomId, io, room);
+      endGame(state, roomId, io, room,context);
       return;
   });
 }
