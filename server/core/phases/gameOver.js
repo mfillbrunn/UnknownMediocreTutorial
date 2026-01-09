@@ -31,25 +31,14 @@ function endGame(state, roomId, io, room) {
     state.phase = "gameOver";
     state.gameOverView = res.view || "match"; 
     state.canNextRound = !!res.canNextRound;
-    if (!state.canNextRound && state.ranked === true){
-      applyRankedElo({ state, room, supabase }).catch(err => console.error("Elo update failed:", err));
-   } 
-   if (!state.canNextRound){
-      async function writeMatchHistory({ state, room, supabase }) {
-        const playerA = Object.keys(room.players).find(id => room.players[id] === "A");
-        const playerB = Object.keys(room.players).find(id => room.players[id] === "B");
-        if (!playerA || !playerB) return;
-         const { winner, winReason, winnerPoints, loserPoints} = computeMatchResult(state, null);
-        const winnerId =  winner === "A" ? playerA :  winner === "B" ? playerB : null;
-        const scoreA =   winner === "A" ? winnerPoints :   winner === "B" ? loserPoints :  winnerPoints;
-        const scoreB =winner === "B" ? winnerPoints : winner === "A" ? loserPoints : winnerPoints;
-        await supabase.from("matches").insert({mode: state.rankMode,ranked: state.ranked,player_a: playerA,player_b: playerB,winner: winnerId,win_reason: winReason,
-          score_a: scoreA,score_b: scoreB, time_control: {enabled: state.timeControl?.enabled,mode: state.timeControl?.mode,roundSeconds: state.timeControl?.roundSeconds,
-            initialSeconds: state.timeControl?.initialSeconds,incrementSeconds: state.timeControl?.incrementSeconds,rankMode: state.rankMode},rounds: JSON.parse(JSON.stringify(state.matchRounds))
-        });
-      }
-   }
+  if (!state.canNextRound) {
+    if (state.ranked) {
+      applyRankedElo({ state, room, supabase })
+        .catch(err => console.error("Elo update failed:", err));
     }
+       writeMatchHistory({ state, room, supabase })
+      .catch(err => console.error("Match history write failed:", err));
+     }
     emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
     io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
     emitStateForAllPlayers(roomId, room, io)
@@ -156,5 +145,54 @@ function computeMatchResult(state, myRole) {
     resultIcon
   };
 }
+async function writeMatchHistory({ state, room, supabase }) {
+  const playerA = Object.keys(room.players).find(id => room.players[id] === "A");
+  const playerB = Object.keys(room.players).find(id => room.players[id] === "B");
+  if (!playerA || !playerB) return;
+
+  const { winner, winReason, winnerPoints, loserPoints } =
+    computeMatchResult(state, null);
+
+  const winnerId =
+    winner === "A" ? playerA :
+    winner === "B" ? playerB :
+    null;
+
+  const scoreA =
+    winner === "A" ? winnerPoints :
+    winner === "B" ? loserPoints :
+    winnerPoints;
+
+  const scoreB =
+    winner === "B" ? winnerPoints :
+    winner === "A" ? loserPoints :
+    winnerPoints;
+
+  await supabase.from("matches").insert({
+    mode: state.rankMode,
+    ranked: state.ranked,
+
+    player_a: playerA,
+    player_b: playerB,
+
+    winner: winnerId,
+    win_reason: winReason,
+
+    score_a: scoreA,
+    score_b: scoreB,
+
+    time_control: {
+      enabled: state.timeControl?.enabled,
+      mode: state.timeControl?.mode,
+      roundSeconds: state.timeControl?.roundSeconds,
+      initialSeconds: state.timeControl?.initialSeconds,
+      incrementSeconds: state.timeControl?.incrementSeconds,
+      rankMode: state.rankMode
+    },
+
+    rounds: JSON.parse(JSON.stringify(state.matchRounds))
+  });
+}
+
 
 module.exports = {handleGameOverPhase, endGame};
