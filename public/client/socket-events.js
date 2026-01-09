@@ -244,17 +244,25 @@ $("rankedToggle").onchange = e => {
     ranked: e.target.checked
   });
 };
-function updateRankedToggle() {
-  const wrapper = $("rankedToggleWrapper");
+function updateRankedUI() {
+  const badge = $("rankedBadge");
   const toggle = $("rankedToggle");
-  if (!wrapper || !toggle || !state) return;
+  const wrapper = $("rankedToggleWrapper");
+  if (!badge || !toggle || !state) return;
 
+  const isRanked = !!state.ranked;
   const isHost = state.host === socket.id;
 
-  wrapper.classList.toggle("hidden", !isHost);
+  // 🔹 Everyone sees the status
+  badge.textContent = isRanked ? "🏆 Ranked" : "🎮 Casual";
+  badge.className = isRanked ? "ranked-on" : "ranked-off";
+
+  // 🔹 Only host can interact
+  toggle.checked = isRanked;
   toggle.disabled = !isHost;
 
-  // Sync UI with state
-  toggle.checked = !!state.ranked;
+  // Optional: visually dim toggle for non-hosts
+  wrapper.classList.toggle("readonly", !isHost);
 }
+
 
