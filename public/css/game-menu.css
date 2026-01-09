@@ -267,4 +267,22 @@ body.menu-mode .app-header {
 .menu-account-status .link-btn:hover {
   text-decoration: underline;
 }
+.ranked-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#rankedBadge.ranked-on {
+  color: gold;
+  font-weight: 600;
+}
+
+#rankedBadge.ranked-off {
+  opacity: 0.7;
+}
+
+#rankedToggleWrapper.readonly {
+  opacity: 0.5;
+}
 
