@@ -10,7 +10,7 @@ const registerSocketHandlers = require("./network/socketHandlers");
 const { createClient } = require("@supabase/supabase-js");
 
 const supabase = createClient(
-  "https://zskbwatoxvghyouqjuxi.supabase.co",
+  process.env.SUPABASE_URL,,
   process.env.SUPABASE_SERVICE_ROLE_KEY // IMPORTANT: service role
 );
 // ------------------------------
