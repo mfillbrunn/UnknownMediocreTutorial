@@ -136,7 +136,7 @@ function renderMenuAccountStatus() {
 }
 
 
-// Fetch match history
+// Fetch past games
 $("showPastGamesBtn")?.addEventListener("click", async () => {
   if (!window.currentUser) return;
 
@@ -158,18 +158,9 @@ function renderPastGames(matches) {
   const myId = window.currentUser.id;
 
   container.innerHTML = matches.map(m => {
-    // -----------------------
-    // Opponent
-    // -----------------------
-    const opponentId =
-      m.player_a === myId ? m.player_b : m.player_a;
-
     const opponentName =
-      m.opponent_name || "Opponent"; // best if you join names server-side
+      m.opponent_name || "Opponent";
 
-    // -----------------------
-    // Result
-    // -----------------------
     let resultLabel = "Tie";
     let resultIcon = "↔️";
 
@@ -179,42 +170,35 @@ function renderPastGames(matches) {
       resultIcon = didWin ? "🏆" : "❌";
     }
 
-    // -----------------------
-    // Score
-    // -----------------------
     const score =
       m.player_a === myId
         ? `${m.score_a}–${m.score_b}`
         : `${m.score_b}–${m.score_a}`;
 
-    // -----------------------
-    // Time mode
-    // -----------------------
     const timeMode = formatTimeMode(m.time_control);
-
-    // -----------------------
-    // Powers
-    // -----------------------
-    const powers = summarizeMatchPowers(m.rounds);
+    const powers = summarizeMatchPowers(m.rounds || []);
 
     return `
-      <div class="history-row" onclick="openSummary('${m.id}')">
-        <div class="history-main">
-          <div class="history-opponent">
+      <div class="past-game-row" tabindex="0"
+           onclick="openSummary('${m.id}')"
+           onkeydown="if(event.key==='Enter') openSummary('${m.id}')">
+
+        <div class="past-game-main">
+          <div class="past-game-opponent">
             vs <strong>${opponentName}</strong>
           </div>
 
-          <div class="history-meta">
-            <span class="history-date">
+          <div class="past-game-meta">
+            <span class="past-game-date">
               ${new Date(m.created_at).toLocaleDateString()}
             </span>
-            <span class="history-mode">
+            <span class="past-game-mode">
               ${m.ranked ? "🏆 Ranked" : "🎮 Casual"} · ${timeMode}
             </span>
           </div>
         </div>
 
-        <div class="history-result">
+        <div class="past-game-result">
           <span class="result-icon">${resultIcon}</span>
           <span class="result-text">${resultLabel}</span>
           <span class="result-score">${score}</span>
@@ -222,7 +206,7 @@ function renderPastGames(matches) {
 
         ${
           powers
-            ? `<div class="history-powers">${powers}</div>`
+            ? `<div class="past-game-powers">${powers}</div>`
             : ""
         }
       </div>
@@ -230,11 +214,12 @@ function renderPastGames(matches) {
   }).join("");
 }
 
+
 function summarizeMatchPowers(rounds = []) {
   const used = new Set();
 
   rounds.forEach(r => {
-    r.history?.forEach(h => {
+    r.past-game?.forEach(h => {
       (h.powersSetter || []).forEach(p => used.add(p));
       (h.powersGuesser || []).forEach(p => used.add(p));
     });
