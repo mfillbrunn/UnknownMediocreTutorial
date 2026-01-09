@@ -59,7 +59,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const isWin = fb.every(tile => tile === "🟩");
     if (isWin) {
     state.history.push(entry);
-    endGame(state, roomId, io, room);
+    endGame(state, roomId, io, room,context);
     return;
   }
   powerEngine.postScore(state, entry, roomId, io);
