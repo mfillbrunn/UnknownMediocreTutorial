@@ -27,7 +27,7 @@ $("signupBtn").onclick = async () => {
   if (data?.user) {
     const { error: profileError } = await window.supabase
       .from("profiles")
-      .insert({
+      .upsert({
         id: data.user.id,
         username: email.split("@")[0],
         rating_bullet: 1200,
@@ -62,6 +62,7 @@ $("loginBtn").onclick = async () => {
 logoutBtn.onclick = async () => {
   await window.supabase.auth.signOut();
   status.textContent = "Logged out";
+  
 };
 
 window.supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -113,7 +114,6 @@ function renderMenuAccountStatus() {
   const el = $("menuAccountStatus");
   if (!el) return;
 
-  // Not logged in
   if (!window.currentUser) {
     el.innerHTML = `
       <span class="account-logged-out">
@@ -121,15 +121,10 @@ function renderMenuAccountStatus() {
         <button class="link-btn" id="menuLoginBtn">Log in</button>
       </span>
     `;
-
-    $("menuLoginBtn").onclick = () => {
-      showScreen("accountScreen");
-    };
-
+    $("menuLoginBtn").onclick = () => showScreen("accountScreen");
     return;
   }
 
-  // Logged in
   const name = window.myProfile?.username || window.currentUser.email;
 
   el.innerHTML = `
@@ -138,9 +133,37 @@ function renderMenuAccountStatus() {
       <button class="link-btn" id="menuLogoutBtn">Log out</button>
     </span>
   `;
-
-  $("menuLogoutBtn").onclick = async () => {
-    await window.supabase.auth.signOut();
-  };
 }
+
+
+// Fetch match history
+$("showHistoryBtn")?.addEventListener("click", async () => {
+  if (!window.currentUser) return;
+
+  const { data, error } = await window.supabase
+    .from("matches")
+    .select("*")
+    .or(`player_a.eq.${window.currentUser.id},player_b.eq.${window.currentUser.id}`)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (!error) renderMatchHistory(data);
+});
+
+
+function renderMatchHistory(matches) {
+  const container = $("historyContainer");
+  if (!container) return;
+
+  container.innerHTML = matches.map(m => `
+    <div class="history-row">
+      ${new Date(m.created_at).toLocaleDateString()}
+      ${m.ranked ? "🏆" : "🎮"}
+      ${m.mode}
+      <button onclick="openSummary('${m.id}')">View</button>
+    </div>
+  `).join("");
+}
+
+
 
