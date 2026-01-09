@@ -310,7 +310,7 @@ onStateUpdate(newState => {
   window.state = state;   
   updateRoleCards();
   updateHostControls();
-  updateRankedToggle();
+  updateRankedUI();
   updateTimerAccess(); 
   updateTimerPresetUI();
   updateWaitingIndicator();
