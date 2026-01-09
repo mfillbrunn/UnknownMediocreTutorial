@@ -291,11 +291,11 @@ case "playerLeft": {
 
 // State updates
 onStateUpdate(newState => {
-  prevPhase= state?.phase;
+  const prevPhase = state?.phase;
+  const prevSetterDraft = state?.setterDraft || "";
   state = JSON.parse(JSON.stringify(newState));
   myRole = state.roles?.[socket.id] ?? null;
   window.myRole = myRole;
-  const prevSetterDraft = state?.setterDraft || "";
   if (prevPhase === "simultaneous" && state.phase=== "normal"){
     localGuesserDraft = "";
   }
@@ -657,14 +657,14 @@ function handleGuesserInput(event) {
   if (state.pendingGuess) return;
   if (event.type === "BACKSPACE") {
     localGuesserDraft = localGuesserDraft.slice(0, -1);
-    updateUI();
+    renderGuesserDraftOnly();
     return;
   }
 
   if (event.type === "LETTER") {
     if (localGuesserDraft.length < 5) {
       localGuesserDraft += event.value;
-      updateUI();
+      renderGuesserDraftOnly();
     }
     return;
   }
@@ -887,3 +887,22 @@ document
       }
     });
   });
+
+function renderGuesserDraftOnly() {
+  renderDraftRows({
+    state,
+    role: "guesser",
+    container: $("draftGuesser"),
+    localGuesserDraft
+  });
+
+  // Optionally update keyboard highlights only
+  renderKeyboard({
+    state,
+    container: $("keyboardGuesser"),
+    pendingGuess: localGuesserDraft,
+    isGuesser: true,
+    onInput: handleGuesserInput
+  });
+}
+
