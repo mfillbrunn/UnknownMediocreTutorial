@@ -32,25 +32,33 @@ window.renderDraftRows = function ({
   // Cache values
   // ----------------------------
   const upperDraft = localGuesserDraft.toUpperCase();
+  const upperSetterDraft = (state.setterDraft || "").toUpperCase();
   const upperPending = state.pendingGuess?.toUpperCase() || "";
   const upperSecret = state.secret?.toUpperCase() || "";
 
   // Skip no-op renders
   if (
-    container.__lastDraft === upperDraft &&
     container.__lastPending === upperPending &&
     container.__lastSecret === upperSecret &&
     container.__lastRole === role &&
-    container.__lastPhase === state.phase
+    container.__lastPhase === state.phase &&
+    (
+      role === "guesser"
+        ? container.__lastGuesserDraft === upperGuesserDraft
+        : container.__lastSetterDraft === upperSetterDraft
+    )
   ) {
     return;
   }
 
-  container.__lastDraft = upperDraft;
+
+  container.__lastGuesserDraft = upperGuesserDraft;
+  container.__lastSetterDraft = upperSetterDraft;
   container.__lastPending = upperPending;
   container.__lastSecret = upperSecret;
   container.__lastRole = role;
   container.__lastPhase = state.phase;
+
 
   // ----------------------------
   // GUESSER
