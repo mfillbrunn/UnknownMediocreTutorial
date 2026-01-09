@@ -17,14 +17,14 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     const assassin = state.powers.assassinWord;
       if (assassin && g.toUpperCase() === assassin.toUpperCase()) {
         pushWinEntry(state, state.secret);
-        endGame(state, roomId, io, room);
+        endGame(state, roomId, io, room,context);
         return;
       }  
     // CORRECT GUESS
     if (g === state.secret) {
       state.currentSecret = state.secret;
       pushWinEntry(state, g);
-      endGame(state, roomId, io, room);
+      endGame(state, roomId, io, room,context);
       return;
     }
     state.pendingGuess = g;
@@ -69,7 +69,7 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
       state.roundStartTime = Date.now();
       if (state.pendingGuess === w) {
         pushWinEntry(state, w);
-        endGame(state, roomId, io, room);
+        endGame(state, roomId, io, room,context);
         return;
       }
       clearForceTimer(roomId, state);
@@ -127,7 +127,7 @@ function handleRoundTimeout(room, state, roomId, role, context) {
   // Simultaneous → immediate loss
   if (state.phase === "simultaneous") {
     state.timeoutLoser = role;
-    endGame(state, roomId, io, room);
+    endGame(state, roomId, io, room,context);
     return false;
   }
 
@@ -164,7 +164,7 @@ function handleRoundTimeout(room, state, roomId, role, context) {
 
   if (state.roundTimeouts[role] >= 3) {
     state.timeoutLoser = role;
-    endGame(state, roomId, io, room);
+    endGame(state, roomId, io, room,context);
     return false;
   }
 
@@ -177,7 +177,7 @@ function startGameTimer(room, state, roomId, context) {
   startTimer(roomId, state, io, timedOutRole => {
     if (state.timeControl.mode === "chess") {
       state.timeoutLoser = timedOutRole;
-      endGame(state, roomId, io, room);
+      endGame(state, roomId, io, room,context);
       return;
     }
 
