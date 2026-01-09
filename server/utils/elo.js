@@ -47,6 +47,14 @@ async function applyRankedElo({
       [`wins_${mode}`]: pb.data[`wins_${mode}`] + (scoreB === 1 ? 1 : 0)
     }).eq("id", playerB)
   ]);
+  return {
+    playerA,
+    playerB,
+    rating_a_before: rA,
+    rating_b_before: rB,
+    rating_a_after: rA + deltaA,
+    rating_b_after: rB + deltaB
+  };
 }
 
 
