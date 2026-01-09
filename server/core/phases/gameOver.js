@@ -33,7 +33,24 @@ function endGame(state, roomId, io, room) {
     state.canNextRound = !!res.canNextRound;
     if (!state.canNextRound && state.ranked === true){
       await applyRankedElo({ state, room, supabase });
-   }   
+   } else if (!state.canNextRound){
+      async function writeMatchHistory({ state, room, supabase }) {
+        const playerA = Object.keys(room.players).find(id => room.players[id] === "A");
+        const playerB = Object.keys(room.players).find(id => room.players[id] === "B");
+        if (!playerA || !playerB) return;
+         const { winner, winReason, winnerPoints, loserPoints} = computeMatchResult(state, null);
+        const winnerId =  winner === "A" ? playerA :  winner === "B" ? playerB : null;
+        const scoreA =   winner === "A" ? winnerPoints :   winner === "B" ? loserPoints :  winnerPoints;
+        const scoreB =winner === "B" ? winnerPoints : winner === "A" ? loserPoints : winnerPoints;
+        await supabase.from("matches").insert({mode: state.rankMode,ranked: state.ranked,player_a: playerA,player_b: playerB,winner: winnerId,win_reason: winReason,
+          score_a: scoreA,score_b: scoreB, time_control: {enabled: state.timeControl?.enabled,mode: state.timeControl?.mode,roundSeconds: state.timeControl?.roundSeconds,
+            initialSeconds: state.timeControl?.initialSeconds,incrementSeconds: state.timeControl?.incrementSeconds,rankMode: state.rankMode},rounds: JSON.parse(JSON.stringify(state.matchRounds))
+        });
+}
+
+}
+
+    }
     emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
     io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
     emitStateForAllPlayers(roomId, room, io)
@@ -95,9 +112,50 @@ function startGameTimerSim(room, state, roomId, context) {
   });
 }
 
+function computeMatchResult(state, myRole) {
+  const rounds = state.matchRounds || [];
 
+  const points = { A: 0, B: 0 };
+  const time = { A: 0, B: 0 };
 
+  rounds.forEach(r => {
+    points[r.setter] += r.guessCount;
+    time.A += r.time?.A || 0;
+    time.B += r.time?.B || 0;
+  });
+
+  let winner = null;
+  let winReason = "points";
+
+  if (points.A > points.B) {
+    winner = "A";
+  } else if (points.B > points.A) {
+    winner = "B";
+  } else if (time.A !== time.B) {
+    winner = time.A <= time.B ? "A" : "B";
+    winReason = "time";
+  } else {
+    winReason = "tie";
+  }
+
+  const didWin = winner && myRole === winner;
+
+  const winnerPoints = winner ? points[winner] : points.A;
+  const loserPoints = winner ? points[winner === "A" ? "B" : "A"] : points.A;
+
+  const resultIcon =
+    winReason === "tie" ? "↔️" : didWin ? "🏆" : "❌";
+
+  return {
+    points,
+    time,
+    winner,
+    winReason,        
+    didWin,
+    winnerPoints,
+    loserPoints,
+    resultIcon
+  };
+}
 
 module.exports = {handleGameOverPhase, endGame};
-
-
