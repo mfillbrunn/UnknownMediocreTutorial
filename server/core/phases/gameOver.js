@@ -32,8 +32,9 @@ function endGame(state, roomId, io, room) {
     state.gameOverView = res.view || "match"; 
     state.canNextRound = !!res.canNextRound;
     if (!state.canNextRound && state.ranked === true){
-      await applyRankedElo({ state, room, supabase });
-   } else if (!state.canNextRound){
+      applyRankedElo({ state, room, supabase }).catch(err => console.error("Elo update failed:", err));
+   } 
+   if (!state.canNextRound){
       async function writeMatchHistory({ state, room, supabase }) {
         const playerA = Object.keys(room.players).find(id => room.players[id] === "A");
         const playerB = Object.keys(room.players).find(id => room.players[id] === "B");
@@ -46,10 +47,8 @@ function endGame(state, roomId, io, room) {
           score_a: scoreA,score_b: scoreB, time_control: {enabled: state.timeControl?.enabled,mode: state.timeControl?.mode,roundSeconds: state.timeControl?.roundSeconds,
             initialSeconds: state.timeControl?.initialSeconds,incrementSeconds: state.timeControl?.incrementSeconds,rankMode: state.rankMode},rounds: JSON.parse(JSON.stringify(state.matchRounds))
         });
-}
-
-}
-
+      }
+   }
     }
     emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
     io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
