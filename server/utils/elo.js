@@ -4,6 +4,10 @@ async function applyRankedElo({
   supabase
 }) {
   if (!state.ranked) return;
+  const mode = state.rankMode;
+  if (!mode) {
+    throw new Error("applyRankedElo called without rankMode");
+  }
 
   const ids = Object.keys(room.players);
   if (ids.length !== 2) return;
