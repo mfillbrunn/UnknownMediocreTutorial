@@ -31,6 +31,7 @@ function createInitialState() {
       enabled: true,
       roundSeconds: 60,
       mode: "round",
+      preset: "bullet"
       },
       
       timeRemaining: {
