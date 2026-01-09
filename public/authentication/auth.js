@@ -137,7 +137,7 @@ function renderMenuAccountStatus() {
 
 
 // Fetch match history
-$("showHistoryBtn")?.addEventListener("click", async () => {
+$("showPastGamesBtn")?.addEventListener("click", async () => {
   if (!window.currentUser) return;
 
   const { data, error } = await window.supabase
@@ -147,12 +147,12 @@ $("showHistoryBtn")?.addEventListener("click", async () => {
     .order("created_at", { ascending: false })
     .limit(20);
 
-  if (!error) renderMatchHistory(data);
+  if (!error) renderPastGames(data);
 });
 
 
-function renderMatchHistory(matches) {
-  const container = $("historyContainer");
+function renderPastGames(matches) {
+  const container = $("pastGamesContainer");
   if (!container) return;
 
   const myId = window.currentUser.id;
