@@ -4,44 +4,125 @@ window.renderDraftRows = function ({
   container,
   localGuesserDraft = ""
 }) {
-  container.innerHTML = "";
-  /* ============================
-   * GUESSER
-   * ============================ */
-  if (role === "guesser") {
-    const canGuess =     (state.phase === "simultaneous" &&   !state.simultaneousGuessSubmitted) ||
-      (state.phase === "normal" &&   state.turn === state.guesser);
-    if (!canGuess) {
-    // Submitted → show pending guess (static)
-    if (state.pendingGuess) {
-      renderDraftRow(        state.pendingGuess.toUpperCase(),        container,        "draft-row pending-guess"      );
+  if (!container) return;
+
+  // ----------------------------
+  // Build draft row ONCE
+  // ----------------------------
+  if (!container.__draftRow) {
+    const row = document.createElement("div");
+    row.className = "history-row draft-row";
+    row.__tiles = [];
+
+    for (let i = 0; i < 5; i++) {
+      const tile = document.createElement("div");
+      tile.className = "history-tile draft-tile";
+      row.__tiles.push(tile);
+      row.appendChild(tile);
     }
+
+    container.innerHTML = "";
+    container.appendChild(row);
+    container.__draftRow = row;
+  }
+
+  const row = container.__draftRow;
+
+  // ----------------------------
+  // Cache values
+  // ----------------------------
+  const upperDraft = localGuesserDraft.toUpperCase();
+  const upperPending = state.pendingGuess?.toUpperCase() || "";
+  const upperSecret = state.secret?.toUpperCase() || "";
+
+  // Skip no-op renders
+  if (
+    container.__lastDraft === upperDraft &&
+    container.__lastPending === upperPending &&
+    container.__lastSecret === upperSecret &&
+    container.__lastRole === role &&
+    container.__lastPhase === state.phase
+  ) {
     return;
   }
-  // Actively typing → show typed letters
-  renderDraftRow( localGuesserDraft.toUpperCase(),   container,    "draft-row guesser-draft"  );
-  return;
-}
-  /* ============================
-   * SETTER
-   * ============================ */
-  if (role === "setter") {    
-    const setterCanEdit =!state.powers?.freezeActive &&((state.phase === "simultaneous" &&!state.secret && !state.simultaneousSecretSubmitted) ||
-        (state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess));
-    if (state.pendingGuess) {renderDraftRow(state.pendingGuess.toUpperCase(),container,"draft-row pending-guess"); }
-    if (!setterCanEdit) {renderDraftRow(state.secret.toUpperCase(),container,"draft-row ghost-secret"); return;}
-    if (setterCanEdit) {
-      if (state.phase === "simultaneous"){ 
-        if (state.setterDraft) {renderDraftRow(state.setterDraft.toUpperCase(),container,"draft-row setter-draft");} 
-          else {renderDraftRow("",container,"draft-row setter-draft");}
+
+  container.__lastDraft = upperDraft;
+  container.__lastPending = upperPending;
+  container.__lastSecret = upperSecret;
+  container.__lastRole = role;
+  container.__lastPhase = state.phase;
+
+  // ----------------------------
+  // GUESSER
+  // ----------------------------
+  if (role === "guesser") {
+    const canGuess =
+      (state.phase === "simultaneous" && !state.simultaneousGuessSubmitted) ||
+      (state.phase === "normal" && state.turn === state.guesser);
+
+    if (!canGuess) {
+      if (upperPending) {
+        updateDraftRow(row, upperPending, "draft-row pending-guess", state);
       }
-      if (state.phase === "normal"){
-          if (state.setterDraft) {renderDraftRow(state.setterDraft.toUpperCase(),container,"draft-row setter-draft");} 
-          else {renderDraftRow(state.secret.toUpperCase(),container,"draft-row ghost-secret");}
-        }
-      }
+      return;
     }
+
+    updateDraftRow(row, upperDraft, "draft-row guesser-draft", state);
+    return;
+  }
+
+  // ----------------------------
+  // SETTER
+  // ----------------------------
+  const setterCanEdit =
+    !state.powers?.freezeActive &&
+    (
+      (state.phase === "simultaneous" &&
+        !state.secret &&
+        !state.simultaneousSecretSubmitted) ||
+      (state.phase === "normal" &&
+        state.turn === state.setter &&
+        !!state.pendingGuess)
+    );
+
+  if (upperPending) {
+    updateDraftRow(row, upperPending, "draft-row pending-guess", state);
+  }
+
+  if (!setterCanEdit) {
+    updateDraftRow(row, upperSecret, "draft-row ghost-secret", state);
+    return;
+  }
+
+  if (state.phase === "simultaneous") {
+    updateDraftRow(row, upperDraft || "", "draft-row setter-draft", state);
+    return;
+  }
+
+  if (state.phase === "normal") {
+    updateDraftRow(
+      row,
+      upperDraft || upperSecret,
+      upperDraft ? "draft-row setter-draft" : "draft-row ghost-secret",
+      state
+    );
+  }
 };
+
+function updateDraftRow(row, word, className, state) {
+  const frozen =
+    state.turn === state.setter &&
+    state.powers?.freezeActive;
+
+  row.className = frozen
+    ? "history-row draft-row freeze-draft"
+    : `history-row ${className}`;
+
+  for (let i = 0; i < 5; i++) {
+    row.__tiles[i].textContent = word[i] || "";
+  }
+}
+
 function renderDraftRow(word, container, className) {
   const row = document.createElement("div"); 
   if (state.turn === state.setter && state.powers?.freezeActive ) {
@@ -57,3 +138,5 @@ function renderDraftRow(word, container, className) {
   } 
   container.appendChild(row); 
 };
+
+
