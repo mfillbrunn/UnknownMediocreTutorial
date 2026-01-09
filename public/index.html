@@ -65,7 +65,18 @@
 <section id="accountScreen" class="screen game-menu">
   <div class="menu-center">
     <h2 class="menu-title">Account</h2>
-
+    <div class="rating-block">
+    <h3>Your Ratings</h3>
+    <ul>
+      <li>Bullet: <span id="eloBullet"></span></li>
+      <li>Blitz: <span id="eloBlitz"></span></li>
+      <li>Deep: <span id="eloDeep"></span></li>
+      <li>No time: <span id="eloNoTime"></span></li>
+    </ul>
+  </div>
+  <button id="showHistoryBtn" class="menu-btn">
+    Match History
+  </button>
     <input id="authEmail" type="email" placeholder="Email" />
     <input id="authPassword" type="password" placeholder="Password" />
 <input id="usernameInput" type="text" placeholder="Username" maxlength="16"/>
