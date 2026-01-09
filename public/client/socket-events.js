@@ -264,5 +264,11 @@ function updateRankedUI() {
   // Optional: visually dim toggle for non-hosts
   wrapper.classList.toggle("readonly", !isHost);
 }
+$("rankedToggle")?.addEventListener("change", e => {
+  sendGameAction(roomId, {
+    type: "SET_RANKED",
+    ranked: e.target.checked
+  });
+});
 
 
