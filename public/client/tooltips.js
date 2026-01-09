@@ -1,6 +1,6 @@
 /// TOOLTIPS
 ///
-
+const ENABLE_POWER_TOOLTIPS = false;
 let activeTooltipTarget = null;
 let latestPowerInfoState = null;
 
@@ -66,6 +66,7 @@ function makeInfoHeader(text, role) {
 
 
 function showTooltip(target, { title, desc }) {
+  if (!ENABLE_POWER_TOOLTIPS) return;
   const tooltip = document.getElementById("tooltip");
   if (!tooltip) return;
 
