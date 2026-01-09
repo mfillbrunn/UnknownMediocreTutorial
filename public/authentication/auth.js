@@ -155,15 +155,96 @@ function renderMatchHistory(matches) {
   const container = $("historyContainer");
   if (!container) return;
 
-  container.innerHTML = matches.map(m => `
-    <div class="history-row">
-      ${new Date(m.created_at).toLocaleDateString()}
-      ${m.ranked ? "🏆" : "🎮"}
-      ${m.mode}
-      <button onclick="openSummary('${m.id}')">View</button>
-    </div>
-  `).join("");
+  const myId = window.currentUser.id;
+
+  container.innerHTML = matches.map(m => {
+    // -----------------------
+    // Opponent
+    // -----------------------
+    const opponentId =
+      m.player_a === myId ? m.player_b : m.player_a;
+
+    const opponentName =
+      m.opponent_name || "Opponent"; // best if you join names server-side
+
+    // -----------------------
+    // Result
+    // -----------------------
+    let resultLabel = "Tie";
+    let resultIcon = "↔️";
+
+    if (m.winner) {
+      const didWin = m.winner === myId;
+      resultLabel = didWin ? "Win" : "Loss";
+      resultIcon = didWin ? "🏆" : "❌";
+    }
+
+    // -----------------------
+    // Score
+    // -----------------------
+    const score =
+      m.player_a === myId
+        ? `${m.score_a}–${m.score_b}`
+        : `${m.score_b}–${m.score_a}`;
+
+    // -----------------------
+    // Time mode
+    // -----------------------
+    const timeMode = formatTimeMode(m.time_control);
+
+    // -----------------------
+    // Powers
+    // -----------------------
+    const powers = summarizeMatchPowers(m.rounds);
+
+    return `
+      <div class="history-row" onclick="openSummary('${m.id}')">
+        <div class="history-main">
+          <div class="history-opponent">
+            vs <strong>${opponentName}</strong>
+          </div>
+
+          <div class="history-meta">
+            <span class="history-date">
+              ${new Date(m.created_at).toLocaleDateString()}
+            </span>
+            <span class="history-mode">
+              ${m.ranked ? "🏆 Ranked" : "🎮 Casual"} · ${timeMode}
+            </span>
+          </div>
+        </div>
+
+        <div class="history-result">
+          <span class="result-icon">${resultIcon}</span>
+          <span class="result-text">${resultLabel}</span>
+          <span class="result-score">${score}</span>
+        </div>
+
+        ${
+          powers
+            ? `<div class="history-powers">${powers}</div>`
+            : ""
+        }
+      </div>
+    `;
+  }).join("");
 }
 
+function summarizeMatchPowers(rounds = []) {
+  const used = new Set();
+
+  rounds.forEach(r => {
+    r.history?.forEach(h => {
+      (h.powersSetter || []).forEach(p => used.add(p));
+      (h.powersGuesser || []).forEach(p => used.add(p));
+    });
+  });
+
+  if (!used.size) return "";
+
+  return [...used]
+    .map(powerToInlineIcon)
+    .join(" ");
+}
 
 
