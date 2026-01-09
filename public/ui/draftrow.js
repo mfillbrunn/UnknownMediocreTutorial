@@ -7,81 +7,86 @@ window.renderDraftRows = function ({
   if (!container) return;
 
   // ----------------------------
-  // Build draft row ONCE
+  // Build rows ONCE
   // ----------------------------
-  if (!container.__draftRow) {
-    const row = document.createElement("div");
-    row.className = "history-row draft-row";
-    row.__tiles = [];
+  if (!container.__draftRows) {
+    container.innerHTML = "";
+    container.__draftRows = {};
 
-    for (let i = 0; i < 5; i++) {
-      const tile = document.createElement("div");
-      tile.className = "history-tile draft-tile";
-      row.__tiles.push(tile);
-      row.appendChild(tile);
+    function makeRow() {
+      const row = document.createElement("div");
+      row.className = "history-row draft-row";
+      row.__tiles = [];
+      for (let i = 0; i < 5; i++) {
+        const tile = document.createElement("div");
+        tile.className = "history-tile draft-tile";
+        row.__tiles.push(tile);
+        row.appendChild(tile);
+      }
+      return row;
     }
 
-    container.innerHTML = "";
-    container.appendChild(row);
-    container.__draftRow = row;
+    container.__draftRows.pending = makeRow();
+    container.__draftRows.draft = makeRow();
+
+    container.appendChild(container.__draftRows.pending);
+    container.appendChild(container.__draftRows.draft);
   }
 
-  const row = container.__draftRow;
+  const pendingRow = container.__draftRows.pending;
+  const draftRow = container.__draftRows.draft;
 
   // ----------------------------
-  // Cache values (ROLE-AWARE)
+  // Helpers
   // ----------------------------
-  const upperGuesserDraft = localGuesserDraft.toUpperCase();
-  const upperSetterDraft = (state.setterDraft || "").toUpperCase();
   const upperPending = state.pendingGuess?.toUpperCase() || "";
   const upperSecret = state.secret?.toUpperCase() || "";
+  const upperGuesserDraft = localGuesserDraft.toUpperCase();
+  const upperSetterDraft = (state.setterDraft || "").toUpperCase();
 
-  // ----------------------------
-  // Skip no-op renders
-  // ----------------------------
-  if (
-    container.__lastPending === upperPending &&
-    container.__lastSecret === upperSecret &&
-    container.__lastRole === role &&
-    container.__lastPhase === state.phase &&
-    (
-      role === "guesser"
-        ? container.__lastGuesserDraft === upperGuesserDraft
-        : container.__lastSetterDraft === upperSetterDraft
-    )
-  ) {
-    return;
+  function updateRow(row, word, className) {
+    const frozen =
+      state.turn === state.setter &&
+      state.powers?.freezeActive;
+
+    row.className = frozen
+      ? "history-row draft-row freeze-draft"
+      : `history-row ${className}`;
+
+    for (let i = 0; i < 5; i++) {
+      row.__tiles[i].textContent = word[i] || "";
+    }
   }
 
-  container.__lastGuesserDraft = upperGuesserDraft;
-  container.__lastSetterDraft = upperSetterDraft;
-  container.__lastPending = upperPending;
-  container.__lastSecret = upperSecret;
-  container.__lastRole = role;
-  container.__lastPhase = state.phase;
+  // Hide rows by default
+  pendingRow.style.display = "none";
+  draftRow.style.display = "none";
 
-  // ----------------------------
+  // ============================
   // GUESSER
-  // ----------------------------
+  // ============================
   if (role === "guesser") {
     const canGuess =
       (state.phase === "simultaneous" && !state.simultaneousGuessSubmitted) ||
       (state.phase === "normal" && state.turn === state.guesser);
 
-    if (!canGuess) {
-      if (upperPending) {
-        updateDraftRow(row, upperPending, "draft-row pending-guess", state);
-      }
+    if (!canGuess && upperPending) {
+      pendingRow.style.display = "";
+      updateRow(pendingRow, upperPending, "draft-row pending-guess");
       return;
     }
 
-    updateDraftRow(row, upperGuesserDraft, "draft-row guesser-draft", state);
+    if (canGuess) {
+      draftRow.style.display = "";
+      updateRow(draftRow, upperGuesserDraft, "draft-row guesser-draft");
+    }
+
     return;
   }
 
-  // ----------------------------
+  // ============================
   // SETTER
-  // ----------------------------
+  // ============================
   const setterCanEdit =
     !state.powers?.freezeActive &&
     (
@@ -93,31 +98,40 @@ window.renderDraftRows = function ({
         !!state.pendingGuess)
     );
 
+  // Always show pending guess if it exists
   if (upperPending) {
-    updateDraftRow(row, upperPending, "draft-row pending-guess", state);
+    pendingRow.style.display = "";
+    updateRow(pendingRow, upperPending, "draft-row pending-guess");
   }
 
+  // Draft / preview row
+  draftRow.style.display = "";
+
   if (!setterCanEdit) {
-    updateDraftRow(row, upperSecret, "draft-row ghost-secret", state);
+    updateRow(draftRow, upperSecret, "draft-row ghost-secret");
     return;
   }
 
   if (state.phase === "simultaneous") {
-    updateDraftRow(row, upperSetterDraft || "", "draft-row setter-draft", state);
+    updateRow(
+      draftRow,
+      upperSetterDraft || "",
+      "draft-row setter-draft"
+    );
     return;
   }
 
   if (state.phase === "normal") {
-    updateDraftRow(
-      row,
+    updateRow(
+      draftRow,
       upperSetterDraft || upperSecret,
       upperSetterDraft
         ? "draft-row setter-draft"
-        : "draft-row ghost-secret",
-      state
+        : "draft-row ghost-secret"
     );
   }
 };
+
 
 function updateDraftRow(row, word, className, state) {
   const frozen =
