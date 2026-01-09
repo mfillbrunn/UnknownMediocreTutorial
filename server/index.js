@@ -7,7 +7,12 @@ const { Server } = require("socket.io");
 
 const { createRoom, joinRoom, rooms, cleanupEmptyRooms } = require("./core/rooms");
 const registerSocketHandlers = require("./network/socketHandlers");
+const { createClient } = require("@supabase/supabase-js");
 
+const supabase = createClient(
+  https://zskbwatoxvghyouqjuxi.supabase.co,
+  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpza2J3YXRveHZnaHlvdXFqdXhpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzgwMDkxMiwiZXhwIjoyMDgzMzc2OTEyfQ.6Mwc3O2fmkTm3F3LH3Aytg0dbbuNJY-OWPYJYBv7iFw // IMPORTANT: service role
+);
 // ------------------------------
 // Load power engine + all plugin powers
 // ------------------------------
