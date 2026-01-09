@@ -5,6 +5,7 @@ const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { createInitialState } = require("../stateFactory");
 const resetRoundState = require("../../utils/resetRoundState");
 const {resetRoundTimer,stopTimer, startTimer} = require("../../utils/chessTimer");
+const {applyRankedElo} = require("../../utils/elo");
 
 function endGame(state, roomId, io, room) {
    state.turn = null;
@@ -30,6 +31,9 @@ function endGame(state, roomId, io, room) {
     state.phase = "gameOver";
     state.gameOverView = res.view || "match"; 
     state.canNextRound = !!res.canNextRound;
+    if (!state.canNextRound && state.ranked === true){
+      await applyRankedElo({ state, room, supabase });
+   }   
     emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
     io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
     emitStateForAllPlayers(roomId, room, io)
@@ -90,4 +94,10 @@ function startGameTimerSim(room, state, roomId, context) {
       return;
   });
 }
+
+
+
+
 module.exports = {handleGameOverPhase, endGame};
+
+
