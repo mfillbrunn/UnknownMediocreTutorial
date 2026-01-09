@@ -599,9 +599,11 @@ function submitSetterNew() {
     toast("Incompatible with previous feedback");
     //Check violations
     const { secretIndices } =  findConsistencyViolations(state.history, w);
-    flashConsistencyViolations(secretIndices);
-    if (violations.secretIndices.size > 0 ||violations.history.length > 0) {
-      flashConsistencyViolations(violations);
+    if (secretIndices){
+      flashConsistencyViolations(secretIndices);
+      if (violations.secretIndices.size > 0 ||violations.history.length > 0) {
+        flashConsistencyViolations(violations);
+      }
     }
     return;
   }  
