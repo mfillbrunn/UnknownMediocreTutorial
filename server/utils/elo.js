@@ -20,9 +20,6 @@ async function applyRankedElo({
 
   const scoreA = tie ? 0.5 : winner === "A" ? 1 : 0;
   const scoreB = 1 - scoreA;
-
-  const mode = state.rankMode;
-
   const [pa, pb] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", playerA).single(),
     supabase.from("profiles").select("*").eq("id", playerB).single()
