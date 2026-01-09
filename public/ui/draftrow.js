@@ -29,14 +29,16 @@ window.renderDraftRows = function ({
   const row = container.__draftRow;
 
   // ----------------------------
-  // Cache values
+  // Cache values (ROLE-AWARE)
   // ----------------------------
-  const upperDraft = localGuesserDraft.toUpperCase();
+  const upperGuesserDraft = localGuesserDraft.toUpperCase();
   const upperSetterDraft = (state.setterDraft || "").toUpperCase();
   const upperPending = state.pendingGuess?.toUpperCase() || "";
   const upperSecret = state.secret?.toUpperCase() || "";
 
+  // ----------------------------
   // Skip no-op renders
+  // ----------------------------
   if (
     container.__lastPending === upperPending &&
     container.__lastSecret === upperSecret &&
@@ -51,14 +53,12 @@ window.renderDraftRows = function ({
     return;
   }
 
-
   container.__lastGuesserDraft = upperGuesserDraft;
   container.__lastSetterDraft = upperSetterDraft;
   container.__lastPending = upperPending;
   container.__lastSecret = upperSecret;
   container.__lastRole = role;
   container.__lastPhase = state.phase;
-
 
   // ----------------------------
   // GUESSER
@@ -75,7 +75,7 @@ window.renderDraftRows = function ({
       return;
     }
 
-    updateDraftRow(row, upperDraft, "draft-row guesser-draft", state);
+    updateDraftRow(row, upperGuesserDraft, "draft-row guesser-draft", state);
     return;
   }
 
@@ -103,15 +103,17 @@ window.renderDraftRows = function ({
   }
 
   if (state.phase === "simultaneous") {
-    updateDraftRow(row, upperDraft || "", "draft-row setter-draft", state);
+    updateDraftRow(row, upperSetterDraft || "", "draft-row setter-draft", state);
     return;
   }
 
   if (state.phase === "normal") {
     updateDraftRow(
       row,
-      upperDraft || upperSecret,
-      upperDraft ? "draft-row setter-draft" : "draft-row ghost-secret",
+      upperSetterDraft || upperSecret,
+      upperSetterDraft
+        ? "draft-row setter-draft"
+        : "draft-row ghost-secret",
       state
     );
   }
