@@ -54,6 +54,7 @@ if (action.type === "SET_TIME_CONTROL") {
     state.activeTimer = null;
     state.timeRemaining.A = 0;
     state.timeRemaining.B = 0;
+         state.rankMode = "notime";
     emitStateForAllPlayers(roomId, room, io);
     return;
   }        
@@ -80,6 +81,10 @@ if (action.type === "SET_TIME_CONTROL") {
     state.timeRemaining.A = sec;
     state.timeRemaining.B = sec;
   }; 
+    if (action.seconds === 60 && action.mode === "round") state.rankMode = "bullet";
+    else if (action.seconds === 180 && action.mode === "round") state.rankMode = "blitz";
+    else if (action.seconds === 300 && action.mode === "chess") state.rankMode = "blitz"; 
+    else state.rankMode = "custom";
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
