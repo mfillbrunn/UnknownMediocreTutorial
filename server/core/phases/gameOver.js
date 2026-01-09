@@ -11,7 +11,7 @@ function endGame(state, roomId, io, room, context) {
    const { supabase } = context; 
    state.turn = null;
    state.gameOver = true;
-   if (state.timeControl.enabled) {
+   if (state.timeControl?.enabled) {
       stopTimer(roomId);
       state.isTimerRunning = false;
    } 
@@ -32,7 +32,6 @@ function endGame(state, roomId, io, room, context) {
     state.phase = "gameOver";
     state.gameOverView = res.view || "match"; 
     state.canNextRound = !!res.canNextRound;
-    let ratingChange = null;
   if (!state.canNextRound) {
     if (state.ranked) {
       applyRankedElo({ state, room, supabase })
@@ -53,7 +52,7 @@ function endGame(state, roomId, io, room, context) {
     io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
     emitStateForAllPlayers(roomId, room, io)
 }
-
+}
 function handleGameOverPhase(room, state, action, role, roomId, context) {
   const io = context.io;
    ///NEXT ROUND
