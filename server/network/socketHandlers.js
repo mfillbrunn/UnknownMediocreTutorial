@@ -254,7 +254,8 @@ if (!me || room.state.hostUserId !== me.userId) {
 };
 ////helper
 function removePlayerFromRoom({ room, socketId }) {
-  if (!room.players[socketId]) return false;
+  const player = room.players[socketId];
+  if (!player) return false;
 
   // Remove from runtime player map
   delete room.players[socketId];
@@ -264,20 +265,22 @@ function removePlayerFromRoom({ room, socketId }) {
   delete room.state.playerNames[socketId];
   delete room.state.ready?.[socketId];
 
-  // Transfer host if needed
-if (player.userId === room.state.hostUserId) {
-  const remainingPlayers = Object.values(room.players);
-  room.state.hostUserId = remainingPlayers[0]?.userId || null;
-}
-
+  // ✅ Correct host transfer (user-based)
+  if (player.userId === room.state.hostUserId) {
+    const remainingPlayers = Object.values(room.players);
+    room.state.hostUserId = remainingPlayers[0]?.userId || null;
+  }
 
   // If fewer than 2 players remain, force lobby reset
-  const remainingPlayers = Object.keys(room.players).length;
-  if (remainingPlayers < 2) {
+  const remainingPlayersCount = Object.keys(room.players).length;
+  if (remainingPlayersCount < 2) {
     room.state.phase = "lobby";
     room.state.turn = null;
     room.state.pendingGuess = null;
     room.state.secret = null;
     room.state.simultaneousSecretSubmitted = false;
   }
+
+  return true;
 }
+
