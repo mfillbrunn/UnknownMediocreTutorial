@@ -93,36 +93,40 @@ socket.on("timerTick", ({ timeRemaining }) => {
   renderChessClocks();
 });
 
-socket.on("connect", () => {
+socket.on("connect", async () => {
   console.log("🔌 Connected");
 
-  const roomId = localStorage.getItem("roomId");
-  const userId = window.getUserId();
+  const storedRoomId = localStorage.getItem("roomId");
+  const user = window.currentUser;
 
-  // Only auto-rejoin if authenticated
-  if (roomId && userId) {
-    socket.emit(
-      "joinRoom",
-      { roomId, userId },
-      res => {
-        if (!res?.ok) {
-          console.warn("Auto-rejoin failed:", res?.error);
-          clearRoom();
-        } else {
-          console.log(
-            "♻️ Rejoined room",
-            roomId,
-            res.reattached ? "(reattached)" : "(joined)"
-          );
-        }
+  if (!storedRoomId || !user) return;
+
+  const username =
+    window.myProfile?.username ||
+    user.email ||
+    "Player";
+
+  socket.emit(
+    "joinRoom",
+    {
+      roomId: storedRoomId,
+      userId: user.id,
+      name: username
+    },
+    res => {
+      if (!res?.ok) {
+        console.warn("Auto-rejoin failed:", res?.error);
+        localStorage.removeItem("roomId");
+        return;
       }
-    );
-  }
- $("roomCodeLabel").textContent = roomId;
+
+      console.log("♻️ Rejoined room", storedRoomId);
+
+      // IMPORTANT: sync local state
+      window.roomId = storedRoomId;
+    }
+  );
 });
-
-
-
 
 /////////////////////////////////////////////////
 ////         LOBBY 
@@ -149,7 +153,7 @@ createRoom(resp => {
   userId: window.currentUser.id,
   name: username
 });
-
+  localStorage.setItem("roomId", roomId);
 });
 
 
@@ -170,7 +174,7 @@ joinRoom(code, resp => {
   userId: window.currentUser.id,
   name: username
 });
-
+localStorage.setItem("roomId", roomId);
 });
 
 window.quickJoin = function (payload, cb) {
@@ -193,6 +197,7 @@ const username =
       roomId = resp.roomId;
     }
   );
+  localStorage.setItem("roomId", roomId);
 });
 
 
