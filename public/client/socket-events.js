@@ -244,4 +244,31 @@ $("rankedToggle").onchange = e => {
     ranked: e.target.checked
   });
 };
+function updateRankedUI() {
+  const badge = $("rankedBadge");
+  const toggle = $("rankedToggle");
+  const wrapper = $("rankedToggleWrapper");
+  if (!badge || !toggle || !state) return;
+
+  const isRanked = !!state.ranked;
+  const isHost = state.host === socket.id;
+
+  // 🔹 Everyone sees the status
+  badge.textContent = isRanked ? "🏆 Ranked" : "🎮 Casual";
+  badge.className = isRanked ? "ranked-on" : "ranked-off";
+
+  // 🔹 Only host can interact
+  toggle.checked = isRanked;
+  toggle.disabled = !isHost;
+
+  // Optional: visually dim toggle for non-hosts
+  wrapper.classList.toggle("readonly", !isHost);
+}
+$("rankedToggle")?.addEventListener("change", e => {
+  sendGameAction(roomId, {
+    type: "SET_RANKED",
+    ranked: e.target.checked
+  });
+});
+
 

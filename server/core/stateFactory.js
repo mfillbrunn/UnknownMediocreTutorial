@@ -11,6 +11,7 @@ function createInitialState() {
 
   // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
     mode: null,          // instance of mode controller
+    rankMode: "bullet",
     matchMeta: {},       // owned entirely by the mode
     ranked : false,
     gameOverView: "match",
@@ -31,6 +32,7 @@ function createInitialState() {
       enabled: true,
       roundSeconds: 60,
       mode: "round",
+      preset: "bullet"
       },
       
       timeRemaining: {

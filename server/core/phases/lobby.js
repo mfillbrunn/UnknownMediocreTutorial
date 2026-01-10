@@ -54,6 +54,7 @@ if (action.type === "SET_TIME_CONTROL") {
     state.activeTimer = null;
     state.timeRemaining.A = 0;
     state.timeRemaining.B = 0;
+         state.rankMode = "notime";
     emitStateForAllPlayers(roomId, room, io);
     return;
   }        
@@ -80,6 +81,10 @@ if (action.type === "SET_TIME_CONTROL") {
     state.timeRemaining.A = sec;
     state.timeRemaining.B = sec;
   }; 
+    if (action.seconds === 60 && action.mode === "round") state.rankMode = "bullet";
+    else if (action.seconds === 180 && action.mode === "round") state.rankMode = "blitz";
+    else if (action.seconds === 300 && action.mode === "chess") state.rankMode = "blitz"; 
+    else state.rankMode = "custom";
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
@@ -148,19 +153,17 @@ if (action.type === "SET_POWER_COUNT") {
           // ✅ Check readiness by PLAYER COUNT
           const readyPlayers = Object.values(state.ready).filter(Boolean).length;
           const playerCount = Object.keys(room.players).length;
-        if (state.ranked) {
-          const ids = Object.keys(room.players);
-          const shuffled = ids.sort(() => Math.random() - 0.5);
-        
-          room.players[shuffled[0]] = "A";
-          room.players[shuffled[1]] = "B";
-        
-          state.roles[shuffled[0]] = "A";
-          state.roles[shuffled[1]] = "B";
-        }
-
           if (readyPlayers === playerCount && playerCount === 2) {
-        
+                if (state.ranked) {
+                  const ids = Object.keys(room.players);
+                  const shuffled = ids.sort(() => Math.random() - 0.5);
+                
+                  room.players[shuffled[0]] = "A";
+                  room.players[shuffled[1]] = "B";
+                
+                  state.roles[shuffled[0]] = "A";
+                  state.roles[shuffled[1]] = "B";
+                }
             const N = state.powerCount || 2;
         
             const sP = SETTER_POWERS
