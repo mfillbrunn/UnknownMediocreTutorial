@@ -27,7 +27,11 @@ function createRoom(socket) {
 
   socket.join(roomId);
   const room = rooms[roomId];
-  room.players[socket.id] = "A";
+  room.players[socket.id] = {
+    role: "A",
+    connected: true,
+    disconnectedAt: null
+  };
   room.state.roles[socket.id] = "A";
   room.state.host = socket.id;
 
@@ -42,7 +46,11 @@ function joinRoom(socket, roomId) {
     return { ok: false, error: "Room is full" };
 
   socket.join(roomId);
-  room.players[socket.id] = "B";
+  room.players[socket.id] = {
+    role: "B",
+    connected: true,
+    disconnectedAt: null
+  };
   room.state.roles[socket.id] = "B";
   assignRoles(room);
 
