@@ -679,24 +679,23 @@ $("quickPlayBtn")?.addEventListener("click", () => {
   };
   localStorage.removeItem("roomId");
   quickJoin(payload, resp => {
-    if (resp.ok) {
-      roomId = resp.roomId;
-      enterLobbyAfterJoin();
-      return;
-    }
+    if (!resp.ok) return toast(resp.error);
+    roomId = resp.roomId;
+    persistRoom(roomId); // ✅ HERE
+    enterLobbyAfterJoin();
+  });
 
     // No room available → create one
-    createRoom(payload, resp2 => {
-      if (!resp2.ok) {
-        toast(resp2.error || "Could not start game");
-        return;
-      }
+   createRoom(resp => {
+  if (!resp.ok) return toast(resp.error);
+  roomId = resp.roomId;
+  persistRoom(roomId); // ✅ HERE
+  enterLobbyAfterJoin();
+}, {
+  userId: window.currentUser.id,
+  name: username
+});
 
-      roomId = resp2.roomId;
-      enterLobbyAfterJoin();
-    });
-  });
-  localStorage.setItem("roomId", roomId);
 });
 
 function updateHostControls() {
