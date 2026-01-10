@@ -686,15 +686,14 @@ $("quickPlayBtn")?.addEventListener("click", () => {
   });
 
     // No room available → create one
-   createRoom(resp => {
-  if (!resp.ok) return toast(resp.error);
-  roomId = resp.roomId;
-  persistRoom(roomId); // ✅ HERE
-  enterLobbyAfterJoin();
-}, {
-  userId: window.currentUser.id,
-  name: username
-});
+   createRoom({ userId: window.currentUser.id, name: username },
+  resp => { if (!resp.ok) return toast(resp.error);
+        roomId = resp.roomId;
+        persistRoom(roomId);
+        enterLobbyAfterJoin();
+      }
+    );
+
 
 });
 
