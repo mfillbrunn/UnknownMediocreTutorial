@@ -1,3 +1,15 @@
+window.getUserId = function () {
+  return window.currentUser?.id || null;
+};
+function persistRoom(roomId) {
+  localStorage.setItem("roomId", roomId);
+}
+
+function clearRoom() {
+  localStorage.removeItem("roomId");
+}
+
+
 socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
 
   // Notify BOTH players when setter submits (first time)
@@ -82,13 +94,32 @@ socket.on("timerTick", ({ timeRemaining }) => {
 });
 
 socket.on("connect", () => {
-  if (window.currentUser) {
-    socket.emit("identify", {
-      userId: window.currentUser.id,
-      email: window.currentUser.email
-    });
+  console.log("🔌 Connected");
+
+  const roomId = localStorage.getItem("roomId");
+  const userId = window.getUserId();
+
+  // Only auto-rejoin if authenticated
+  if (roomId && userId) {
+    socket.emit(
+      "joinRoom",
+      { roomId, userId },
+      res => {
+        if (!res?.ok) {
+          console.warn("Auto-rejoin failed:", res?.error);
+          clearRoom();
+        } else {
+          console.log(
+            "♻️ Rejoined room",
+            roomId,
+            res.reattached ? "(reattached)" : "(joined)"
+          );
+        }
+      }
+    );
   }
 });
+
 
 
 
