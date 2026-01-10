@@ -4,7 +4,7 @@ const path = require("path");
 const http = require("http");
 const fs = require("fs");
 const { Server } = require("socket.io");
-
+const { cleanupDisconnectedPlayers } = require("./core/rooms");
 const { createRoom, joinRoom, rooms, cleanupEmptyRooms } = require("./core/rooms");
 const registerSocketHandlers = require("./network/socketHandlers");
 const { createClient } = require("@supabase/supabase-js");
@@ -88,9 +88,9 @@ const context = {
 registerSocketHandlers(io, context);
 
 // Cleanup stale rooms every 10 minutes
-setInterval(cleanupEmptyRooms, 10 * 60 * 1000);
+setInterval(() => cleanupEmptyRooms(), 10 * 60 * 1000);
 // Cleanup disconnected players 
-setInterval(cleanupDisconnectedPlayers, 5000);
+setInterval(() => cleanupDisconnectedPlayers(io, 60_000), 5000);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log("VS Wordle server running on", PORT));
