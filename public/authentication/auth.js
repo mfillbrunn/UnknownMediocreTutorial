@@ -68,7 +68,9 @@ logoutBtn.onclick = async () => {
 window.supabase.auth.onAuthStateChange(async (_event, session) => {
   window.currentUser = session?.user || null;
   window.myProfile = null;
-
+  if (session?.user && socket.connected) {
+    socket.emit("connect"); // force reconnect handler logic
+  }
   // Initial render (email fallback is OK here)
   renderMenuAccountStatus();
 
