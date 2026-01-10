@@ -677,7 +677,7 @@ $("quickPlayBtn")?.addEventListener("click", () => {
     userId: window.currentUser.id,
     name: username
   };
-
+  localStorage.removeItem("roomId");
   quickJoin(payload, resp => {
     if (resp.ok) {
       roomId = resp.roomId;
