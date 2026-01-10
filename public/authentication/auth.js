@@ -62,7 +62,7 @@ $("loginBtn").onclick = async () => {
 logoutBtn.onclick = async () => {
   await window.supabase.auth.signOut();
   status.textContent = "Logged out";
-  
+  clearRoom();
 };
 
 window.supabase.auth.onAuthStateChange(async (_event, session) => {
