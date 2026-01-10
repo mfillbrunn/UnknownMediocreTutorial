@@ -753,7 +753,6 @@ $("quickPlayBtn")?.addEventListener("click", () => {
     userId: window.currentUser.id,
     name: username
   };
-  clearRoom();
   quickJoin(
     { userId: window.currentUser.id, name: username },
     resp => {
