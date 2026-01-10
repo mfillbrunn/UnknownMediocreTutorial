@@ -235,33 +235,4 @@ function removePlayerFromRoom({ room, socketId }) {
     room.state.secret = null;
     room.state.simultaneousSecretSubmitted = false;
   }
-    const DISCONNECT_GRACE_MS = 60_000;
-
-function cleanupDisconnectedPlayers() {
-  const now = Date.now();
-
-  for (const [roomId, room] of Object.entries(rooms)) {
-    for (const [socketId, player] of Object.entries(room.players)) {
-      if (
-        !player.connected &&
-        now - player.disconnectedAt > DISCONNECT_GRACE_MS
-      ) {
-        delete room.players[socketId];
-
-        io.to(roomId).emit("lobbyEvent", {
-          type: "playerLeft",
-          reason: "timeout",
-          role: player.role
-        });
-
-        room.state.paused = false;
-        emitStateForAllPlayers(roomId, room, io);
-      }
-    }
-  }
-}
-
-  return true;
-}
-
 
