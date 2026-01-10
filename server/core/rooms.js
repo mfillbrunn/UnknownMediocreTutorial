@@ -41,7 +41,7 @@ function createRoom(socket, userId) {
   };
 
   room.state.roles[socket.id] = "A";
-  room.state.host = socket.id;
+  room.state.hostUserId = userId
 
   return roomId;
 }
@@ -80,12 +80,6 @@ function joinOrReattach(socket, roomId, userId) {
     };
 
     room.state.roles[socket.id] = player.role;
-
-    // Preserve host status if old socket was host
-    if (room.state.host === oldSocketId) {
-      room.state.host = socket.id;
-    }
-
     socket.join(roomId);
     return { ok: true, reattached: true, role: player.role };
   }
@@ -109,12 +103,6 @@ function joinOrReattach(socket, roomId, userId) {
   };
 
   room.state.roles[socket.id] = role;
-
-  // Assign host if missing
-  if (!room.state.host) {
-    room.state.host = socket.id;
-  }
-
   return { ok: true, reattached: false, role };
 }
 
@@ -132,7 +120,12 @@ function findLastOpenRoom() {
   for (let i = roomIds.length - 1; i >= 0; i--) {
     const roomId = roomIds[i];
     const room = rooms[roomId];
-    if (room && Object.keys(room.players).length === 1) return roomId;
+    if (
+  room &&
+  Object.values(room.players).filter(p => p.connected).length === 1
+) {
+  return roomId;
+}
   }
   return null;
 }
@@ -148,12 +141,10 @@ function cleanupDisconnectedPlayers(io, graceMs = 60_000) {
         delete room.state.roles[socketId];
         delete room.state.playerNames[socketId];
         if (room.state.ready) delete room.state.ready[socketId];
-
-        // Host transfer if needed
-        if (room.state.host === socketId) {
-          room.state.host = Object.keys(room.players)[0] || null;
+        if (player.userId === room.state.hostUserId) {
+          const remainingPlayers = Object.values(room.players);
+          room.state.hostUserId = remainingPlayers[0]?.userId || null;
         }
-
         io.to(roomId).emit("lobbyEvent", {
           type: "playerLeft",
           reason: "timeout",
