@@ -261,6 +261,7 @@ $("kickGuesserBtn")?.addEventListener("click", () => {
 $("leaveRoomBtn")?.addEventListener("click", () => {
   socket.emit("leaveRoom", {}, () => {
     roomId = null;
+    clearRoom();
     showStartup();
   });
 });
