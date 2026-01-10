@@ -49,6 +49,7 @@ function joinRoom(socket, roomId) {
   socket.join(roomId);
   room.players[socket.id] = {
     role: "B",
+    userId,
     connected: true,
     disconnectedAt: null
   };
