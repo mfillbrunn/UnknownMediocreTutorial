@@ -219,9 +219,6 @@ $("readyBtn")?.addEventListener("click", () => {
     name: username,
     userId: window.currentUser.id
   });
-
-  // Immediately update UI locally
-  //enableReadyButton(false);
 });
 $("applyPowerCountBtn")?.addEventListener("click", () => {
    const n = parseInt($("powerCountInput").value, 10);
