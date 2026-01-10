@@ -337,6 +337,7 @@ function tryAutoRejoin() {
 
       console.log("✅ Rejoined room", roomId);
       window.roomId = roomId;
+      resetRoomUIState
       onRejoinUI();
     }
   );
@@ -352,4 +353,19 @@ function onRejoinUI() {
   show("lobby");
 }
 
+function resetRoomUIState() {
+  // Reset power engine
+  if (window.PowerEngine) {
+    PowerEngine._initialized = false;
+  }
+
+  // Reset per-room flags
+  roleAssigned = false;
+  localGuesserDraft = "";
+  lastSimulSecret = false;
+  lastSimulGuess = false;
+
+  // Optional: clear any cached UI state
+  resetKeyboards?.();
+}
 
