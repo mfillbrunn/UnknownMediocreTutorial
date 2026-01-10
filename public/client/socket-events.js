@@ -337,8 +337,19 @@ function tryAutoRejoin() {
 
       console.log("✅ Rejoined room", roomId);
       window.roomId = roomId;
+      onRejoinUI();
     }
   );
+}
+function onRejoinUI() {
+  // Always leave startup/menu mode
+  document.body.classList.remove("menu-mode");
+
+  hide("startupScreen");
+  hide("menu");
+
+  // Show lobby or game based on state (stateUpdate will follow)
+  show("lobby");
 }
 
 
