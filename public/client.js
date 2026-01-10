@@ -696,6 +696,7 @@ $("quickPlayBtn")?.addEventListener("click", () => {
       enterLobbyAfterJoin();
     });
   });
+  localStorage.setItem("roomId", roomId);
 });
 
 function updateHostControls() {
