@@ -10,7 +10,7 @@ function startTimer(roomId, state, io, onTimeout) {
     const dt = Math.floor((now - lastTick) / 1000);
     if (dt <= 0) return;
     lastTick = now;
-
+    if (state.paused) return;
     const roles =
       state.activeTimer === "both"
         ? ["A", "B"]
