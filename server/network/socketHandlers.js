@@ -158,8 +158,6 @@ socket.on("leaveRoom", (_payload, cb) => {
 });
 
 
-
-// KICK PLAYER ------------------------------
 // KICK PLAYER ------------------------------
 socket.on("kickPlayer", ({ roomId }, cb) => {
   const room = rooms[roomId];
@@ -215,8 +213,8 @@ socket.on("kickPlayer", ({ roomId }, cb) => {
 
   cb?.({ ok: true });
 });
-
-
+});
+});
 ////helper
 function removePlayerFromRoom({ room, socketId }) {
   if (!room.players[socketId]) return false;
