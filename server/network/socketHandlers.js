@@ -202,13 +202,11 @@ socket.on("kickPlayer", ({ roomId }, cb) => {
   const room = rooms[roomId];
   if (!room) return cb?.({ ok: false, error: "Room not found" });
 
-  const me = room.players[socket.id];
-  if (!me) return cb?.({ ok: false, error: "Not in room" });
+const me = room.players[socket.id];
+if (!me || room.state.hostUserId !== me.userId) {
+  return cb?.({ ok: false, error: "Not host" });
+}
 
-  // Host check
-  if (room.state.host !== socket.id) {
-    return cb?.({ ok: false, error: "Not host" });
-  }
 
   // Find the other player (by socket id)
   const targetEntry = Object.entries(room.players)
@@ -267,9 +265,11 @@ function removePlayerFromRoom({ room, socketId }) {
   delete room.state.ready?.[socketId];
 
   // Transfer host if needed
-  if (room.state.host === socketId) {
-    room.state.host = Object.keys(room.players)[0] || null;
-  }
+if (player.userId === room.state.hostUserId) {
+  const remainingPlayers = Object.values(room.players);
+  room.state.hostUserId = remainingPlayers[0]?.userId || null;
+}
+
 
   // If fewer than 2 players remain, force lobby reset
   const remainingPlayers = Object.keys(room.players).length;
