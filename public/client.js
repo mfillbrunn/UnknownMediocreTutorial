@@ -142,39 +142,6 @@ function requireAuth(actionName = "continue") {
   }
   return true;
 }
-
-// -----------------------------------------------------
-// AUTO-REJOIN
-// -----------------------------------------------------
-window.addEventListener("load", async () => {
-  const savedRoom = localStorage.getItem("vswordle_room");
-  if (!savedRoom) return;
-
-  const { data: { session } } = await window.supabase.auth.getSession();
-  if (!session) return;
-  if (!window.myProfile) return;
-    const username =
-  window.myProfile?.username ||
-  window.currentUser?.email ||
-  "Player";
-
-  joinRoom(
-    savedRoom,
-    {
-      userId: window.currentUser.id,
-      name: username
-    },
-    resp => {
-      if (!resp.ok) return;
-
-      roomId = savedRoom;
-      $("roomCodeLabel").textContent = roomId;
-    }
-  );
-});
-
-
-
 window.showScreen = (id) => {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
@@ -271,6 +238,9 @@ case "playerLeft": {
         enableReadyButton(false);
       }
       break;
+    case "playerDisconnected":
+      toast("Your opponent disconnected. Waiting to reconnect…");
+      break;
 
     case "hideLobby":
       $("waitingForPlayer")?.classList.add("hidden");
@@ -294,8 +264,12 @@ onStateUpdate(newState => {
   const prevPhase = state?.phase;
   const prevSetterDraft = state?.setterDraft || "";
   state = JSON.parse(JSON.stringify(newState));
-  myRole = state.roles?.[socket.id] ?? null;
+  const roleFromState = state.roles?.[socket.id] ?? null;
+  if (roleFromState) myRole = roleFromState;
   window.myRole = myRole;
+  if (myRole && !roleAssigned) {
+    roleAssigned = true;
+  }
   if (prevPhase === "simultaneous" && state.phase=== "normal"){
     localGuesserDraft = "";
   }
@@ -332,7 +306,7 @@ function updateUI() {
     lastSimulGuess = false;
   }
 // Render power buttons once
-if (!PowerEngine._initialized && roomId && roleAssigned) {
+if (!PowerEngine._initialized && roomId && myRole) {
     PowerEngine.renderButtons(roomId);
     PowerEngine._initialized = true;
 }
