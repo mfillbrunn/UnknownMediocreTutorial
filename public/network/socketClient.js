@@ -20,16 +20,45 @@ const socket = io(BACKEND_URL, {
 // ------------------------------
 
 window.createRoom = function (payload, cb) {
-  socket.emit("createRoom", payload, cb);
+  const userId = window.getUserId();
+  if (!userId) return cb?.({ ok: false, error: "Not logged in" });
+
+  socket.emit("createRoom", {
+    ...payload,
+    userId
+  }, res => {
+    if (res?.ok) persistRoom(res.roomId);
+    cb?.(res);
+  });
 };
 
 window.joinRoom = function (roomCode, payload, cb) {
-  socket.emit("joinRoom", { roomId: roomCode, ...payload }, cb);
+  const userId = window.getUserId();
+  if (!userId) return cb?.({ ok: false, error: "Not logged in" });
+
+  socket.emit("joinRoom", {
+    roomId: roomCode,
+    userId,
+    ...payload
+  }, res => {
+    if (res?.ok) persistRoom(roomCode);
+    cb?.(res);
+  });
 };
 
 window.quickJoin = function (payload, cb) {
-  socket.emit("quickJoin", payload, cb);
+  const userId = window.getUserId();
+  if (!userId) return cb?.({ ok: false, error: "Not logged in" });
+
+  socket.emit("quickJoin", {
+    userId,
+    ...payload
+  }, res => {
+    if (res?.ok && res.roomId) persistRoom(res.roomId);
+    cb?.(res);
+  });
 };
+
 
 window.sendGameAction = function (roomId, action) {
   socket.emit("gameAction", { roomId, action });
