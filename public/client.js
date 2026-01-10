@@ -667,39 +667,6 @@ function handleGuesserInput(event) {
   }
 }
 
-$("quickPlayBtn")?.addEventListener("click", () => {
-  if (!requireAuth("quick play")) return;
-  const username =
-  window.myProfile?.username ||
-  window.currentUser?.email ||
-  "Player";
-  const payload = {
-    userId: window.currentUser.id,
-    name: username
-  };
-  clearRoom();
-  quickJoin(
-    { userId: window.currentUser.id, name: username },
-    resp => {
-      if (!resp.ok) return toast(resp.error);
-      roomId = resp.roomId;
-      persistRoom(roomId);
-      enterLobbyAfterJoin();
-    }
-  );
-
-
-    // No room available → create one
-   createRoom({ userId: window.currentUser.id, name: username },
-  resp => { if (!resp.ok) return toast(resp.error);
-        roomId = resp.roomId;
-        persistRoom(roomId);
-        enterLobbyAfterJoin();
-      }
-    );
-
-
-});
 
 function updateHostControls() {
   if (!state || !state.roles || !state.playerNames) return;
@@ -774,6 +741,38 @@ function updateTimerAccess() {
 // -----------------------------------------------------
 // BUTTONS
 // -----------------------------------------------------
+
+
+$("quickPlayBtn")?.addEventListener("click", () => {
+  if (!requireAuth("quick play")) return;
+  const username =
+  window.myProfile?.username ||
+  window.currentUser?.email ||
+  "Player";
+  const payload = {
+    userId: window.currentUser.id,
+    name: username
+  };
+  clearRoom();
+  quickJoin(
+    { userId: window.currentUser.id, name: username },
+    resp => {
+      if (!resp.ok) return toast(resp.error);
+      roomId = resp.roomId;
+      persistRoom(roomId);
+      enterLobbyAfterJoin();
+    }
+  );
+    // No room available → create one
+   createRoom({ userId: window.currentUser.id, name: username },
+  resp => { if (!resp.ok) return toast(resp.error);
+        roomId = resp.roomId;
+        persistRoom(roomId);
+        enterLobbyAfterJoin();
+      }
+    );
+});
+
 (function setupConstraintToggle() {
   const buttons = document.querySelectorAll(".constraint-toggle-btn");
   if (!buttons.length) return;
