@@ -14,7 +14,7 @@ function generateRoomId() {
   return id;
 }
 
-function createRoom(socket) {
+function createRoom(socket, userID) {
   let roomId;
   do {
     roomId = generateRoomId();
@@ -29,6 +29,7 @@ function createRoom(socket) {
   const room = rooms[roomId];
   room.players[socket.id] = {
     role: "A",
+    userID,
     connected: true,
     disconnectedAt: null
   };
