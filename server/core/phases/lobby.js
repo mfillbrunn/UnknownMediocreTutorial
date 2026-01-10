@@ -149,47 +149,40 @@ if (action.type === "SET_POWER_COUNT") {
             type: "playerReady",
             playerId: action.playerId
           });
-        
-          // ✅ Check readiness by PLAYER COUNT
+          if (readyPlayers === 1){
+                emitStateForAllPlayers(roomId, room, io);
+          }
           const readyPlayers = Object.values(state.ready).filter(Boolean).length;
           const playerCount = Object.keys(room.players).length;
           if (readyPlayers === playerCount && playerCount === 2) {
                 if (state.ranked) {
                   const ids = Object.keys(room.players);
-                  const shuffled = ids.sort(() => Math.random() - 0.5);
-                
+                  const shuffled = ids.sort(() => Math.random() - 0.5);                
                   room.players[shuffled[0]] = "A";
-                  room.players[shuffled[1]] = "B";
-                
+                  room.players[shuffled[1]] = "B";                
                   state.roles[shuffled[0]] = "A";
                   state.roles[shuffled[1]] = "B";
                 }
-            const N = state.powerCount || 2;
-        
+            const N = state.powerCount || 2;        
             const sP = SETTER_POWERS
               .slice()
               .sort(() => Math.random() - 0.5)
-              .slice(0, N);
-        
+              .slice(0, N);        
             const gP = GUESSER_POWERS
               .slice()
               .sort(() => Math.random() - 0.5)
-              .slice(0, N);
-        
+              .slice(0, N);        
             state.mode = new CompetitiveMode();
             state.mode.initMatch(state);
-            state.mode.onLobbyReady(state, sP, gP);
-        
+            state.mode.onLobbyReady(state, sP, gP);        
             if (state.activePowers.includes("revealLetter")) {
               state.powers.revealLetter.mode =
                 Math.random() < 0.5 ? "RARE" : "ROW";
-            }
-        
+            }        
             state.phase = "simultaneous";
             state.turn = null;
             state.simultaneousGuessSubmitted = false;
-            state.simultaneousSecretSubmitted = false;
-        
+            state.simultaneousSecretSubmitted = false;        
             if (state.timeControl.enabled) {
               resetRoundTimer(state);
               state.activeTimer = "both";
@@ -197,8 +190,7 @@ if (action.type === "SET_POWER_COUNT") {
               stopTimer(roomId);
               startGameTimer(room, state, roomId, context);
               state.isTimerRunning = true;
-            }
-        
+            }        
             emitLobbyEvent(io, roomId, { type: "hideLobby" });
             emitStateForAllPlayers(roomId, room, io);
           }
