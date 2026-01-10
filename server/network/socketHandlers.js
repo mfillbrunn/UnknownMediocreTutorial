@@ -1,6 +1,6 @@
 // network/socketHandlers.js
 
-const { rooms, createRoom, joinRoom, findLastOpenRoom, joinOrReattach  } = require("../core/rooms");
+const { rooms, createRoom, findLastOpenRoom, joinOrReattach  } = require("../core/rooms");
 const applyAction = require("../core/stateMachine");
 const { emitStateForAllPlayers } = require("../utils/emitState");
 const { emitLobbyEvent } = require("../utils/emitLobby");
@@ -214,7 +214,7 @@ socket.on("kickPlayer", ({ roomId }, cb) => {
   cb?.({ ok: true });
 });
 });
-});
+};
 ////helper
 function removePlayerFromRoom({ room, socketId }) {
   if (!room.players[socketId]) return false;
