@@ -686,20 +686,20 @@ function updateHostControls() {
 
   // Host badges
   const setterHostBadge = $("setterHostBadge");
-  if (setterHostBadge) {
-    setterHostBadge.classList.toggle(
-      "hidden",
-      state.host !== setterPlayerId
-    );
-  }
-
-  const guesserHostBadge = $("guesserHostBadge");
-  if (guesserHostBadge) {
-    guesserHostBadge.classList.toggle(
-      "hidden",
-      state.host !== guesserPlayerId
-    );
-  }
+    if (setterHostBadge) {
+      setterHostBadge.classList.toggle(
+        "hidden",
+        !(meHost && myRole === "A")
+      );
+    }
+    
+    const guesserHostBadge = $("guesserHostBadge");
+    if (guesserHostBadge) {
+      guesserHostBadge.classList.toggle(
+        "hidden",
+        !(meHost && myRole === "B")
+      );
+    }
 
   // Kick buttons (host only, opponent only, only if 2 players)
   const kickSetterBtn = $("kickSetterBtn");
@@ -796,7 +796,7 @@ $("quickPlayBtn")?.addEventListener("click", () => {
 
 
 function isHost() {
-  return state && state.host === socket.id;
+  return state && state.hostUserId === window.currentUser.id;
 }
 function updateTimerPresetUI() {
   if (!state?.timeControl) return;
