@@ -678,12 +678,16 @@ $("quickPlayBtn")?.addEventListener("click", () => {
     name: username
   };
   clearRoom();
-  quickJoin(payload, resp => {
-    if (!resp.ok) return toast(resp.error);
-    roomId = resp.roomId;
-    persistRoom(roomId); // ✅ HERE
-    enterLobbyAfterJoin();
-  });
+  quickJoin(
+    { userId: window.currentUser.id, name: username },
+    resp => {
+      if (!resp.ok) return toast(resp.error);
+      roomId = resp.roomId;
+      persistRoom(roomId);
+      enterLobbyAfterJoin();
+    }
+  );
+
 
     // No room available → create one
    createRoom({ userId: window.currentUser.id, name: username },
