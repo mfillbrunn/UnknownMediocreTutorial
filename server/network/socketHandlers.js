@@ -41,12 +41,16 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
   if (result.reattached) {
     room.state.paused = false;
     room.state.roundStartTime = Date.now();
-    if ( room.state.timeControl?.enabled && room.state.phase !== "lobby" && room.state.phase !== "gameOver" &&
-      room.state.phase !== "roundSummary" &&  room.state.activeTimer) 
-        {
+    if (
+      room.state.timeControl?.enabled &&
+      room.state.phase !== "lobby" &&
+      room.state.phase !== "gameOver" &&
+      room.state.phase !== "roundSummary" &&
+      room.state.activeTimer
+    ) {
       startGameTimer(room, room.state, roomId, context);
       room.state.isTimerRunning = true;
-      }
+    }
     socket.emit("roleAssigned", { role: result.role });
 
     socket.to(roomId).emit("lobbyEvent", {
@@ -72,15 +76,23 @@ socket.on("quickJoin", ({ userId, name }, cb) => {
 
   const result = joinOrReattach(socket, roomId, userId);
   if (!result.ok) return cb?.(result);
+
+  const room = rooms[roomId]; // ✅ MOVE HERE
+
   if (result.reattached) {
     room.state.paused = false;
     room.state.roundStartTime = Date.now();
-    if ( room.state.timeControl?.enabled && room.state.phase !== "lobby" && room.state.phase !== "gameOver" &&
-      room.state.phase !== "roundSummary" &&  room.state.activeTimer // must know whose clock is running) {
+    if (
+      room.state.timeControl?.enabled &&
+      room.state.phase !== "lobby" &&
+      room.state.phase !== "gameOver" &&
+      room.state.phase !== "roundSummary" &&
+      room.state.activeTimer
+    ) {
       startGameTimer(room, room.state, roomId, context);
       room.state.isTimerRunning = true;
-  }
-  const room = rooms[roomId];
+    }
+      }
 
   if (name) {
     room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
