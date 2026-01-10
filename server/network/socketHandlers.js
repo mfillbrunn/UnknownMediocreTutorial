@@ -160,53 +160,61 @@ socket.on("leaveRoom", (_payload, cb) => {
 
 
 // KICK PLAYER ------------------------------
+// KICK PLAYER ------------------------------
 socket.on("kickPlayer", ({ roomId }, cb) => {
   const room = rooms[roomId];
-  if (!room) return cb?.({ ok: false });
+  if (!room) return cb?.({ ok: false, error: "Room not found" });
 
-  const role = room.players[socket.id];
-  if (!role) return cb?.({ ok: false });
+  const me = room.players[socket.id];
+  if (!me) return cb?.({ ok: false, error: "Not in room" });
 
   // Host check
   if (room.state.host !== socket.id) {
     return cb?.({ ok: false, error: "Not host" });
   }
 
-  // Find the other player
+  // Find the other player (by socket id)
   const targetEntry = Object.entries(room.players)
-    .find(([id, r]) => r !== role);
+    .find(([id]) => id !== socket.id);
 
   if (!targetEntry) {
     return cb?.({ ok: false, error: "No player to kick" });
   }
 
-  const [targetSocketId, targetRole] = targetEntry;
+  const [targetSocketId, targetPlayer] = targetEntry;
 
   // Remove target
-    removePlayerFromRoom({
-      room,
-      socketId: targetSocketId
-    });
-    
-    io.sockets.sockets.get(targetSocketId)?.leave(roomId);
-    
-    io.to(targetSocketId).emit("lobbyEvent", {
-      type: "playerLeft",
-      reason: "kicked"
-    });
-    io.to(targetSocketId).emit("forceLeaveRoom");
-  // Notify host
+  removePlayerFromRoom({
+    room,
+    socketId: targetSocketId
+  });
+
+  // Ensure socket leaves the room server-side
+  io.sockets.sockets.get(targetSocketId)?.leave(roomId);
+
+  // Notify the kicked player
+  io.to(targetSocketId).emit("lobbyEvent", {
+    type: "playerLeft",
+    reason: "kicked",
+    role: targetPlayer?.role
+  });
+  io.to(targetSocketId).emit("forceLeaveRoom");
+
+  // Notify the host (kicker)
   socket.emit("lobbyEvent", {
     type: "playerKicked",
-    role: targetRole
+    role: targetPlayer?.role
+  });
+  socket.to(roomId).emit("lobbyEvent", {
+    type: "playerLeft",
+    reason: "kicked",
+    role: targetPlayer?.role
   });
 
   emitStateForAllPlayers(roomId, room, io);
 
   cb?.({ ok: true });
 });
-  });
-};
 
 
 ////helper
