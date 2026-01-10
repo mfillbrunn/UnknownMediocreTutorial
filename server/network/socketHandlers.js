@@ -12,27 +12,26 @@ module.exports = function registerSocketHandlers(io, context) {
 
     // CREATE ROOM ----------------------------
 socket.on("createRoom", ({ userId, name }, cb) => {
-  const roomId = createRoom(socket);
+  const roomId = createRoom(socket, userId);
   const room = rooms[roomId];
-
-  room.state.host = socket.id;
 
   if (name) {
     room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
   }
 
   socket.emit("roleAssigned", { role: "A" });
-  cb({ ok: true, roomId });
+  cb?.({ ok: true, roomId });
 
   emitStateForAllPlayers(roomId, room, io);
 });
 
 
 
+
     // JOIN ROOM ------------------------------
 socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
-  const result = joinRoom(socket, roomId);
-  if (!result.ok) return cb(result);
+  const result = joinOrReattach(socket, roomId, userId);
+  if (!result.ok) return cb?.(result);
 
   const room = rooms[roomId];
 
@@ -40,104 +39,94 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
     room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
   }
 
-  socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
-  cb({ ok: true, roomId });
+  if (result.reattached) {
+    room.state.paused = false;
+    socket.emit("roleAssigned", { role: result.role });
+
+    socket.to(roomId).emit("lobbyEvent", {
+      type: "playerRejoined",
+      role: result.role
+    });
+  } else {
+    socket.emit("roleAssigned", { role: result.role });
+
+    socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
+  }
+
+  cb?.({ ok: true, roomId, reattached: result.reattached });
 
   emitStateForAllPlayers(roomId, room, io);
 });
 
 
+
     // QUICK JOIN ------------------------------
-    socket.on("quickJoin", ({ userId, name }, cb) => {
-      const roomId = findLastOpenRoom();
-      
-      if (!roomId) {
-        return cb({ ok: false, error: "No open rooms available" });
-      }
-      //const result = joinRoom(socket, roomId);
-      //if (!result.ok) return cb(result);
-    
-      const room = rooms[roomId];
-       if (!room || !room.players) {
-        return cb({ ok: false, error: "Room not found" });
-      }
-      if (name) {
-        room.state.playerNames[socket.id] =
-          String(name).trim().slice(0, 16);
-      }
-      const occupiedRoles = new Set(Object.values(room.players));
-      let assignedRole;
-      if (!occupiedRoles.has("A")) {
-        assignedRole = "A"; // Setter
-      } else if (!occupiedRoles.has("B")) {
-        assignedRole = "B"; // Guesser
-      } else {
-        return cb({ ok: false, error: "Room is full" });
-      }
-      if (!room.state.host) {
-        room.state.host = socket.id;
-      }
-      socket.join(roomId);
-      room.players[socket.id] = assignedRole;
-      room.state.roles[socket.id] = assignedRole;
-      // Notify host
-      socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
-    
-      const setterId = Object.keys(room.players)
-        .find(id => room.players[id] === "A");
-      const guesserId = Object.keys(room.players)
-        .find(id => room.players[id] === "B");
-    
-      socket.emit("roleAssigned", {
-        role: assignedRole,
-        setterId,
-        guesserId
-      });
-    
-      cb({ ok: true, roomId });
-      emitStateForAllPlayers(roomId, room, io);
-    });
+socket.on("quickJoin", ({ userId, name }, cb) => {
+  const roomId = findLastOpenRoom();
+  if (!roomId) return cb?.({ ok: false, error: "No open rooms available" });
+
+  const result = joinOrReattach(socket, roomId, userId);
+  if (!result.ok) return cb?.(result);
+
+  const room = rooms[roomId];
+
+  if (name) {
+    room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
+  }
+
+  socket.emit("roleAssigned", { role: result.role });
+
+  socket.to(roomId).emit("lobbyEvent", {
+    type: result.reattached ? "playerRejoined" : "playerJoined",
+    role: result.role
+  });
+
+  cb?.({ ok: true, roomId, reattached: result.reattached });
+  emitStateForAllPlayers(roomId, room, io);
+});
+
 
 
     // GAME ACTION -----------------------------
-    socket.on("gameAction", ({ roomId, action }) => {
-      const room = rooms[roomId];
-      if (!room) return;
+socket.on("gameAction", ({ roomId, action }) => {
+  const room = rooms[roomId];
+  if (!room) return;
 
-      const role = room.players[socket.id];
-      if (!role) return;
+  const player = room.players[socket.id];
+  if (!player || !player.connected) return;
 
-      action.playerId = socket.id;
-      action.role = role;
-      applyAction(room, room.state, action, role, roomId, context);
+  const role = player.role;
+  if (!role) return;
 
-      emitStateForAllPlayers(roomId, room, io);
-    });
+  action.playerId = socket.id;
+  action.role = role;
+
+  applyAction(room, room.state, action, role, roomId, context);
+  emitStateForAllPlayers(roomId, room, io);
+});
+
 
 
     // DISCONNECT ------------------------------
-      socket.on("disconnect", () => {
-        for (const [roomId, room] of Object.entries(rooms)) {
-          if (!room.players[socket.id]) continue;
-      
-          const role = room.state.roles[socket.id];
-      
-          removePlayerFromRoom({
-            room,
-            socketId: socket.id
-          });
-      
-          socket.to(roomId).emit("lobbyEvent", {
-            type: "playerLeft",
-            reason: "disconnect",
-            role
-          });
-      
-          emitStateForAllPlayers(roomId, room, io);
-        }
-      });
-
-
+    socket.on("disconnect", () => {
+      for (const [roomId, room] of Object.entries(rooms)) {
+        const player = room.players[socket.id];
+        if (!player) continue;
+    
+        player.connected = false;
+        player.disconnectedAt = Date.now();
+    
+        // Pause game
+        room.state.paused = true;
+    
+        socket.to(roomId).emit("lobbyEvent", {
+          type: "playerDisconnected",
+          role: player.role
+        });
+    
+        emitStateForAllPlayers(roomId, room, io);
+      }
+    });
     // LEAVE ROOM ------------------------------
 socket.on("leaveRoom", (_payload, cb) => {
   for (const [roomId, room] of Object.entries(rooms)) {
@@ -246,7 +235,33 @@ function removePlayerFromRoom({ room, socketId }) {
     room.state.secret = null;
     room.state.simultaneousSecretSubmitted = false;
   }
+    const DISCONNECT_GRACE_MS = 60_000;
+
+function cleanupDisconnectedPlayers() {
+  const now = Date.now();
+
+  for (const [roomId, room] of Object.entries(rooms)) {
+    for (const [socketId, player] of Object.entries(room.players)) {
+      if (
+        !player.connected &&
+        now - player.disconnectedAt > DISCONNECT_GRACE_MS
+      ) {
+        delete room.players[socketId];
+
+        io.to(roomId).emit("lobbyEvent", {
+          type: "playerLeft",
+          reason: "timeout",
+          role: player.role
+        });
+
+        room.state.paused = false;
+        emitStateForAllPlayers(roomId, room, io);
+      }
+    }
+  }
+}
 
   return true;
 }
+
 
