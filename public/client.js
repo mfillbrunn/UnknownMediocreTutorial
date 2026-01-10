@@ -745,6 +745,7 @@ function updateTimerAccess() {
 
 $("quickPlayBtn")?.addEventListener("click", () => {
   if (!requireAuth("quick play")) return;
+  if (window.roomId) {return;}
   const username =
   window.myProfile?.username ||
   window.currentUser?.email ||
