@@ -286,7 +286,7 @@ function updateRankedUI() {
   if (!badge || !toggle || !state) return;
 
   const isRanked = !!state.ranked;
-  const isHost = state.host === socket.id;
+  const isHost = state.hostUserId === window.currentUser.id;
 
   // 🔹 Everyone sees the status
   badge.textContent = isRanked ? "🏆 Ranked" : "🎮 Casual";
