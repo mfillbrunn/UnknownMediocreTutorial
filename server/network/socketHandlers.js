@@ -1,6 +1,6 @@
 // network/socketHandlers.js
 
-const { rooms, createRoom, joinRoom, findLastOpenRoom  } = require("../core/rooms");
+const { rooms, createRoom, joinRoom, findLastOpenRoom, joinOrReattach  } = require("../core/rooms");
 const applyAction = require("../core/stateMachine");
 const { emitStateForAllPlayers } = require("../utils/emitState");
 const { emitLobbyEvent } = require("../utils/emitLobby");
