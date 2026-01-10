@@ -4,7 +4,8 @@ const { rooms, createRoom, findLastOpenRoom, joinOrReattach  } = require("../cor
 const applyAction = require("../core/stateMachine");
 const { emitStateForAllPlayers } = require("../utils/emitState");
 const { emitLobbyEvent } = require("../utils/emitLobby");
-
+const { stopTimer } = require("../utils/chessTimer");
+const { startGameTimer } = require("../core/phases/normal");
 module.exports = function registerSocketHandlers(io, context) {
   const { ALLOWED_GUESSES } = context;
   
@@ -25,9 +26,6 @@ socket.on("createRoom", ({ userId, name }, cb) => {
   emitStateForAllPlayers(roomId, room, io);
 });
 
-
-
-
     // JOIN ROOM ------------------------------
 socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
   const result = joinOrReattach(socket, roomId, userId);
@@ -41,6 +39,12 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
 
   if (result.reattached) {
     room.state.paused = false;
+    room.state.roundStartTime = Date.now();
+    if ( room.state.timeControl?.enabled && room.state.phase !== "lobby" && room.state.phase !== "gameOver" &&
+      room.state.phase !== "roundSummary" &&  room.state.activeTimer // must know whose clock is running) {
+      startGameTimer(room, room.state, roomId, context);
+      room.state.isTimerRunning = true;
+  }
     socket.emit("roleAssigned", { role: result.role });
 
     socket.to(roomId).emit("lobbyEvent", {
@@ -49,7 +53,6 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
     });
   } else {
     socket.emit("roleAssigned", { role: result.role });
-
     socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
   }
 
@@ -67,7 +70,14 @@ socket.on("quickJoin", ({ userId, name }, cb) => {
 
   const result = joinOrReattach(socket, roomId, userId);
   if (!result.ok) return cb?.(result);
-
+  if (result.reattached) {
+    room.state.paused = false;
+    room.state.roundStartTime = Date.now();
+    if ( room.state.timeControl?.enabled && room.state.phase !== "lobby" && room.state.phase !== "gameOver" &&
+      room.state.phase !== "roundSummary" &&  room.state.activeTimer // must know whose clock is running) {
+      startGameTimer(room, room.state, roomId, context);
+      room.state.isTimerRunning = true;
+  }
   const room = rooms[roomId];
 
   if (name) {
@@ -105,8 +115,6 @@ socket.on("gameAction", ({ roomId, action }) => {
   emitStateForAllPlayers(roomId, room, io);
 });
 
-
-
     // DISCONNECT ------------------------------
 socket.on("disconnect", () => {
   for (const [roomId, room] of Object.entries(rooms)) {
@@ -115,12 +123,24 @@ socket.on("disconnect", () => {
 
     player.connected = false;
     player.disconnectedAt = Date.now();
+    if (room.state.roundStartTime && room.state.activeTimer) {
+      const dt = Math.floor((Date.now() - room.state.roundStartTime) / 1000);    
+      const roles =
+        room.state.activeTimer === "both"
+          ? ["A", "B"]
+          : [room.state.activeTimer];    
+      for (const r of roles) {
+        room.state.timeUsed[r] = (room.state.timeUsed[r] || 0) + Math.max(0, dt);
+      }    
+      // reset baseline so resume doesn't double count
+      room.state.roundStartTime = Date.now();
+    }
 
-    // Pause game
     room.state.paused = true;
-
-    // 🔴 STOP ALL TIMERS IMMEDIATELY
-    stopTimer(room.state);
+    if (room.state.timeControl?.enabled) {
+      stopTimer(roomId);
+      room.state.isTimerRunning = false;
+    };
 
     socket.to(roomId).emit("lobbyEvent", {
       type: "playerDisconnected",
@@ -130,6 +150,7 @@ socket.on("disconnect", () => {
     emitStateForAllPlayers(roomId, room, io);
   }
 });
+
 
     // LEAVE ROOM ------------------------------
 socket.on("leaveRoom", (_payload, cb) => {
