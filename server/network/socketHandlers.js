@@ -235,4 +235,4 @@ function removePlayerFromRoom({ room, socketId }) {
     room.state.secret = null;
     room.state.simultaneousSecretSubmitted = false;
   }
-
+}
