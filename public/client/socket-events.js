@@ -308,4 +308,39 @@ $("rankedToggle")?.addEventListener("change", e => {
   });
 });
 
+//// TRY AUTO REJOIN
+function tryAutoRejoin() {
+  const roomId = localStorage.getItem("roomId");
+  const user = window.currentUser;
+
+  if (!socket.connected) return;
+  if (!roomId || !user) return;
+
+  const username =
+    window.myProfile?.username ||
+    user.email ||
+    "Player";
+
+  console.log("♻️ Attempting auto-rejoin", roomId);
+
+  socket.emit(
+    "joinRoom",
+    {
+      roomId,
+      userId: user.id,
+      name: username
+    },
+    res => {
+      if (!res?.ok) {
+        console.warn("Auto-rejoin failed:", res?.error);
+        localStorage.removeItem("roomId");
+        return;
+      }
+
+      console.log("✅ Rejoined room", roomId);
+      window.roomId = roomId;
+    }
+  );
+}
+
 
