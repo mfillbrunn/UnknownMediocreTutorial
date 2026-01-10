@@ -108,25 +108,29 @@ socket.on("gameAction", ({ roomId, action }) => {
 
 
     // DISCONNECT ------------------------------
-    socket.on("disconnect", () => {
-      for (const [roomId, room] of Object.entries(rooms)) {
-        const player = room.players[socket.id];
-        if (!player) continue;
-    
-        player.connected = false;
-        player.disconnectedAt = Date.now();
-    
-        // Pause game
-        room.state.paused = true;
-    
-        socket.to(roomId).emit("lobbyEvent", {
-          type: "playerDisconnected",
-          role: player.role
-        });
-    
-        emitStateForAllPlayers(roomId, room, io);
-      }
+socket.on("disconnect", () => {
+  for (const [roomId, room] of Object.entries(rooms)) {
+    const player = room.players[socket.id];
+    if (!player) continue;
+
+    player.connected = false;
+    player.disconnectedAt = Date.now();
+
+    // Pause game
+    room.state.paused = true;
+
+    // 🔴 STOP ALL TIMERS IMMEDIATELY
+    stopTimer(room.state);
+
+    socket.to(roomId).emit("lobbyEvent", {
+      type: "playerDisconnected",
+      role: player.role
     });
+
+    emitStateForAllPlayers(roomId, room, io);
+  }
+});
+
     // LEAVE ROOM ------------------------------
 socket.on("leaveRoom", (_payload, cb) => {
   for (const [roomId, room] of Object.entries(rooms)) {
