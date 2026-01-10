@@ -6,6 +6,7 @@ const { emitStateForAllPlayers } = require("../utils/emitState");
 const { emitLobbyEvent } = require("../utils/emitLobby");
 const { stopTimer } = require("../utils/chessTimer");
 const { startGameTimer } = require("../core/phases/normal");
+
 module.exports = function registerSocketHandlers(io, context) {
   const { ALLOWED_GUESSES } = context;
   
@@ -41,10 +42,11 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
     room.state.paused = false;
     room.state.roundStartTime = Date.now();
     if ( room.state.timeControl?.enabled && room.state.phase !== "lobby" && room.state.phase !== "gameOver" &&
-      room.state.phase !== "roundSummary" &&  room.state.activeTimer // must know whose clock is running) {
+      room.state.phase !== "roundSummary" &&  room.state.activeTimer) 
+        {
       startGameTimer(room, room.state, roomId, context);
       room.state.isTimerRunning = true;
-  }
+      }
     socket.emit("roleAssigned", { role: result.role });
 
     socket.to(roomId).emit("lobbyEvent", {
