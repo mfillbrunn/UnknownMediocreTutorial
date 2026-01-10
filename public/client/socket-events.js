@@ -118,6 +118,8 @@ socket.on("connect", () => {
       }
     );
   }
+  roomId = roomIdFromStorage;
+  $("roomCodeLabel").textContent = roomId;
 });
 
 
