@@ -149,11 +149,11 @@ if (action.type === "SET_POWER_COUNT") {
             type: "playerReady",
             playerId: action.playerId
           });
+          const readyPlayers = Object.values(state.ready).filter(Boolean).length;
+          const playerCount = Object.keys(room.players).length;
           if (readyPlayers === 1){
                 emitStateForAllPlayers(roomId, room, io);
           }
-          const readyPlayers = Object.values(state.ready).filter(Boolean).length;
-          const playerCount = Object.keys(room.players).length;
           if (readyPlayers === playerCount && playerCount === 2) {
                 if (state.ranked) {
                   const ids = Object.keys(room.players);
