@@ -274,7 +274,7 @@ onStateUpdate(newState => {
     localGuesserDraft = "";
   }
   const setterCanEdit =  myRole === state.setter &&  ((state.phase === "normal" && state.turn === state.setter &&!!state.pendingGuess) || (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
-  if (setterCanEdit) {
+  if (setterCanEdit && state.phase !== "simultaneous") {
     state.setterDraft = prevSetterDraft;
   } else {
     state.setterDraft = "";
