@@ -745,33 +745,39 @@ function updateTimerAccess() {
 
 $("quickPlayBtn")?.addEventListener("click", () => {
   if (!requireAuth("quick play")) return;
-  if (window.roomId) {return;}
   const username =
-  window.myProfile?.username ||
-  window.currentUser?.email ||
-  "Player";
+    window.myProfile?.username ||
+    window.currentUser?.email ||
+    "Player";
+
   const payload = {
     userId: window.currentUser.id,
     name: username
   };
-  quickJoin(
-    { userId: window.currentUser.id, name: username },
-    resp => {
-      if (!resp.ok) return toast(resp.error);
+
+  quickJoin(payload, resp => {
+    if (resp.ok) {
+      // ✅ Joined an existing open room
       roomId = resp.roomId;
       persistRoom(roomId);
       enterLobbyAfterJoin();
+      return;
     }
-  );
-    // No room available → create one
-   createRoom({ userId: window.currentUser.id, name: username },
-  resp => { if (!resp.ok) return toast(resp.error);
-        roomId = resp.roomId;
-        persistRoom(roomId);
-        enterLobbyAfterJoin();
+
+    // ✅ Only create a room if quickJoin FAILED
+    createRoom(payload, resp2 => {
+      if (!resp2.ok) {
+        toast(resp2.error || "Could not start game");
+        return;
       }
-    );
+
+      roomId = resp2.roomId;
+      persistRoom(roomId);
+      enterLobbyAfterJoin();
+    });
+  });
 });
+
 
 (function setupConstraintToggle() {
   const buttons = document.querySelectorAll(".constraint-toggle-btn");
