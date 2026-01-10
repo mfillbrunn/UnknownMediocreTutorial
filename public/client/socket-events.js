@@ -149,11 +149,13 @@ $("createRoomBtn")?.addEventListener("click", () => {
 createRoom(resp => {
   if (!resp.ok) return toast(resp.error);
   roomId = resp.roomId;
+  persistRoom(roomId); // ✅ HERE
+  enterLobbyAfterJoin();
 }, {
   userId: window.currentUser.id,
   name: username
 });
-  localStorage.setItem("roomId", roomId);
+
 });
 
 
@@ -170,11 +172,13 @@ const username =
 joinRoom(code, resp => {
   if (!resp.ok) return toast(resp.error);
   roomId = code;
+  persistRoom(roomId); // ✅ HERE
+  enterLobbyAfterJoin();
 }, {
   userId: window.currentUser.id,
   name: username
 });
-localStorage.setItem("roomId", roomId);
+
 });
 
 window.quickJoin = function (payload, cb) {
@@ -187,17 +191,13 @@ const username =
   window.myProfile?.username ||
   window.currentUser?.email ||
   "Player";
-  quickJoin(
-    {
-      userId: window.currentUser.id,
-      name: username
-    },
-    resp => {
-      if (!resp.ok) return toast(resp.error);
-      roomId = resp.roomId;
-    }
-  );
-  localStorage.setItem("roomId", roomId);
+  quickJoin(payload, resp => {
+  if (!resp.ok) return toast(resp.error);
+  roomId = resp.roomId;
+  persistRoom(roomId); // ✅ HERE
+  enterLobbyAfterJoin();
+});
+
 });
 
 
