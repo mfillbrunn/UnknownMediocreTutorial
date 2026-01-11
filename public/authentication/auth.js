@@ -237,5 +237,58 @@ function summarizeMatchPowers(rounds = []) {
     .map(powerToInlineIcon)
     .join(" ");
 }
+async function loadLeaderboard(mode) {
+  const list = $("leaderboardList");
+  if (!list) return;
+
+  list.textContent = "Loading…";
+
+  const ratingColumn = `rating_${mode}`;
+
+  const { data, error } = await window.supabase
+    .from("profiles")
+    .select("id, username, " + ratingColumn)
+    .order(ratingColumn, { ascending: false })
+    .limit(10);
+
+  if (error) {
+    console.error("Leaderboard load failed:", error);
+    list.textContent = "Failed to load leaderboard";
+    return;
+  }
+
+  renderLeaderboard(data, mode);
+}
+function renderLeaderboard(rows, mode) {
+  const list = $("leaderboardList");
+  if (!list) return;
+
+  if (!rows.length) {
+    list.textContent = "No data yet";
+    return;
+  }
+
+  list.innerHTML = rows
+    .map((p, i) => `
+      <div class="leaderboard-row">
+        <span class="leaderboard-rank">#${i + 1}</span>
+        <span class="leaderboard-name">${p.username || "Player"}</span>
+        <span class="leaderboard-rating">
+          ${p[`rating_${mode}`]}
+        </span>
+      </div>
+    `)
+    .join("");
+}
+document.querySelectorAll(".leaderboard-tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document
+      .querySelectorAll(".leaderboard-tab")
+      .forEach(b => b.classList.remove("active"));
+
+    btn.classList.add("active");
+    loadLeaderboard(btn.dataset.mode);
+  });
+});
 
 
