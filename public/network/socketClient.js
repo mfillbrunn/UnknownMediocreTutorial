@@ -22,20 +22,19 @@ const socket = io(BACKEND_URL, {
 window.createRoom = function (payload, cb) {
   const userId = window.getUserId();
   if (!userId) return cb?.({ ok: false, error: "Not logged in" });
-  window.roomId = localStorage.getItem("roomId");
   socket.emit("createRoom", {
     ...payload,
     userId
   }, res => {
     if (res?.ok) persistRoom(res.roomId);
     cb?.(res);
-  });
+  });  
+  window.roomId = localStorage.getItem("roomId");
 };
 
 window.joinRoom = function (roomCode, payload, cb) {
   const userId = window.getUserId();
   if (!userId) return cb?.({ ok: false, error: "Not logged in" });
-  window.roomId = localStorage.getItem("roomId");
   socket.emit("joinRoom", {
     roomId: roomCode,
     userId,
@@ -44,12 +43,12 @@ window.joinRoom = function (roomCode, payload, cb) {
     if (res?.ok) persistRoom(roomCode);
     cb?.(res);
   });
+  window.roomId = localStorage.getItem("roomId");
 };
 
 window.quickJoin = function (payload, cb) {
   const userId = window.getUserId();
   if (!userId) return cb?.({ ok: false, error: "Not logged in" });
-  window.roomId = localStorage.getItem("roomId");
   socket.emit("quickJoin", {
     userId,
     ...payload
@@ -57,6 +56,7 @@ window.quickJoin = function (payload, cb) {
     if (res?.ok && res.roomId) persistRoom(res.roomId);
     cb?.(res);
   });
+  window.roomId = localStorage.getItem("roomId");
 };
 
 
