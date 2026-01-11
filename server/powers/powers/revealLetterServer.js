@@ -70,7 +70,7 @@ engine.registerPower("revealLetter", {
       }
 
   // e.g., require at least 2 or 3 unique rare letters
-  if (seen.size >= 5) {   // adjust threshold as desired
+  if (seen.size >= 4) {   // adjust threshold as desired
     p.ready = true;
     io.to(roomId).emit("toast", "Rare Letter Reveal unlocked!");
   }
