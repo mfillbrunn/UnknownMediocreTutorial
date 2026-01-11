@@ -10,7 +10,6 @@ let lastSimulSecret = false;
 let lastSimulGuess = false;
 let KeepEnabled = true;
 let NewEnabled = true;
-window.roomId = localStorage.getItem("roomId");
 window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 window.lastTimeRemaining ??= { A: null, B: null };
