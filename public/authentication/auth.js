@@ -247,9 +247,10 @@ async function loadLeaderboard(mode) {
   const ratingColumn = `rating_${mode}`;
 
   const { data, error } = await window.supabase
-    .from("leaderboard_profiles")
-    .order("rating_bullet", { ascending: false })
-    .limit(10);
+     .from("leaderboard_profiles")
+      .select(`id, username, ${ratingColumn}`)
+      .order(ratingColumn, { ascending: false })
+      .limit(10);
 
   if (error) {
     console.error("Leaderboard load failed:", error);
