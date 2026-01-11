@@ -12,7 +12,16 @@ window.ALLOWED_SECRETS = new Set();
 fetch("/api/allowed-secrets")
   .then(r => r.json())
   .then(words => words.forEach(w => window.ALLOWED_SECRETS.add(w)));
-
+const show = id => {
+  const el = $(id);
+  if (!el) {console.warn(`show(): element #${id} not found`); return;}
+  el.classList.add("active");
+};
+const hide = id => {
+  const el = $(id);
+  if (!el) {console.warn(`hide(): element #${id} not found`); return;}
+  el.classList.remove("active");
+};
 window.showStartup = function () {
   show("startupScreen");
   hide("lobby");
