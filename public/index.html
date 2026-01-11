@@ -56,13 +56,35 @@
             <div id="menuAccountStatus" class="menu-account-status"></div>
             <div class="menu-buttons">
               <button id="quickPlayBtn" class="menu-btn primary">Quick Play</button>
-              <button id="playBtn" class="menu-btn">Play</button>
+              <button id="accountBtn" class="menu-btn">Account</button>
+              <button id="leaderboardBtn" class="menu-btn">Leaderboard</button>
               <button class="menu-btn">Options</button>
               <button class="menu-btn">How to Play</button>
-              <button id="accountBtn" class="menu-btn">Account</button>
             </div>
           </div>
         </section>
+<!-- ========== LEADErbOArD ========== -->
+  <section id="leaderboardScreen" class="screen game-menu">
+  <div class="menu-center">
+    <h2 class="menu-title">Leaderboard</h2>
+
+    <div class="leaderboard-tabs">
+      <button class="leaderboard-tab active" data-mode="bullet">Bullet</button>
+      <button class="leaderboard-tab" data-mode="blitz">Blitz</button>
+      <button class="leaderboard-tab" data-mode="notime">No Time</button>
+      <button class="leaderboard-tab" data-mode="deep">Deep</button>
+    </div>
+
+    <div id="leaderboardList" class="leaderboard-list">
+      Loading…
+    </div>
+
+    <button class="menu-btn" onclick="showScreen('startupScreen')">
+      Back
+    </button>
+  </div>
+</section>
+
 <!-- ========== ACCOUNT ========== -->
 <section id="accountScreen" class="screen game-menu">
   <div class="menu-center">
