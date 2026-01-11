@@ -147,14 +147,6 @@ window.showScreen = (id) => {
 // -----------------------------------------------------
 // Start up
 // -----------------------------------------------------
-window.showStartup = function () {
-  show("startupScreen");
-  hide("lobby");
-  hide("menu");
-  hide("setterScreen");
-  hide("guesserScreen");
-  document.body.classList.add("menu-mode");
-}
 
 function showLobby() {
   hide("startupScreen");
