@@ -94,17 +94,18 @@ if (action.type === "SET_TIME_CONTROL") {
   // SWITCH ROLES
   // -------------------------------
 if (action.type === "SWITCH_ROLES") {
-   if (state.ranked) return; // silently ignore
+  if (state.ranked) return; // silently ignore
+
   const ids = Object.keys(room.players);
   if (ids.length !== 2) return;
 
-  const idA = ids.find(id => room.players[id] === "A");
-  const idB = ids.find(id => room.players[id] === "B");
+  const idA = ids.find(id => room.players[id]?.role === "A");
+  const idB = ids.find(id => room.players[id]?.role === "B");
   if (!idA || !idB) return;
 
   // Swap runtime roles
-  room.players[idA] = "B";
-  room.players[idB] = "A";
+  room.players[idA].role = "B";
+  room.players[idB].role = "A";
 
   // Swap authoritative roles
   state.roles[idA] = "B";
@@ -120,6 +121,7 @@ if (action.type === "SWITCH_ROLES") {
 
   return;
 }
+
 
 
 if (action.type === "SET_POWER_COUNT") {
