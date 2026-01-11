@@ -79,23 +79,23 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     emitStateForAllPlayers(roomId, room, io);
     return;
   }  
-        ///NEW MATCH
-      if (action.type === "NEW_MATCH") {
-        names = state.playerNames;
-        const fresh = createInitialState();
-        Object.assign(state, fresh);
-        state.setter = "A";
-        state.guesser = "B";
-        state.phase = "lobby";
-        state.ready = {};
-         state.playerNames= names;
-        // Re-sync roles with room.players
-        for (const [playerId, role] of Object.entries(room.players)) {
-          state.roles[playerId] = role;
-        }
-        emitStateForAllPlayers(roomId, room, io);
-        return;
-      }
+  ///NEW MATCH
+if (action.type === "NEW_MATCH") {
+  names = state.playerNames;
+  const fresh = createInitialState();
+  Object.assign(state, fresh);
+  state.phase = "lobby";
+  state.ready = {};
+  state.playerNames= names;
+  // Re-sync roles with room.players
+  for (const [playerId, role] of Object.entries(room.players)) {
+    state.roles[playerId] = player.role;
+  }
+  state.setter = "A";
+  state.guesser = "B";
+  emitStateForAllPlayers(roomId, room, io);
+  return;
+}
 
   return;
 }
