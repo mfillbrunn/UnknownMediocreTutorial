@@ -650,7 +650,7 @@ function handleGuesserInput(event) {
       toast("Not in dictionary");
       return;
     }    
-    const result = validateGuesserGuess(localGuesserDraft.toLowerCase(),state.powers?.forcedGuess,window.ALLOWED_GUESSES);
+    const result = validateGuesserGuess(localGuesserDraft.toLowerCase(),state.powers?.forcedGuessOptions,window.ALLOWED_GUESSES);
     if (!result.ok) {
       toast(result.message);
       shakeDraftRow("guesser");
