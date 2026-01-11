@@ -44,7 +44,7 @@ engine.registerPower("assassinWord", {
       state.powerUsedThisTurn = false; 
       return;
     }
-
+    
     if (state.secret) {
       const secret = state.secret.toUpperCase();
       let diffCount = 0;
@@ -75,6 +75,7 @@ engine.registerPower("assassinWord", {
     // --- VALID → commit ---
     state.powers.assassinWordUsed = true;
     state.powers.assassinWord = w;
+    state.powers.assassinPoints = max(7-state.guessCount,1);
     state.powerUsedThisTurn = true;    
 
     // Setter-only confirmation
