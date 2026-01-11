@@ -136,7 +136,7 @@ window.POWER_METADATA = {
 
   assassinWord: {
     label: "Assassin Word",
-    desc: "Choose a word that instantly ends the game if guessed.",
+    desc: "Choose a word that instantly ends the game if guessed - the earlier you do it, the more you gain. But it can't be too similar to your secret!",
     icon: "skull-word",
     emoji: "☠️",
     color: "#991B1B"
