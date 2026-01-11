@@ -229,7 +229,6 @@ if (setter.length || guesser.length) {
       <tr class="total-row">
         <td><b>Total</b></td>
         <td colspan="2"></td>
-        <td></td>
         <td><b>${formatDuration(time.A)} </b></td>
         <td><b>${formatDuration(time.B)} </b></td>
       </tr>
