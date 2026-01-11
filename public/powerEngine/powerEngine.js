@@ -17,8 +17,7 @@ window.PowerEngine = {
   },
 createPowerButton(id, label) {
     const wrapper = document.createElement("div");
-    wrapper.className = "power-btn-wrapper";
-
+    wrapper.className = "power-btn-wrapper";    
     const btn = document.createElement("button");
     btn.className = "power-btn";
     btn.textContent = label;
@@ -37,7 +36,9 @@ createPowerButton(id, label) {
   
   // Render all power buttons once
   renderButtons(roomId) {
+    console.log("createPowerButton called before button rendered");
     if (this._buttonsRendered) return;
+    console.log("createPowerButton rendered");
     container.innerHTML = "";
     this._buttonsRendered = true;
     for (const id in this.powers) {
