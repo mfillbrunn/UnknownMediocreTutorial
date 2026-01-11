@@ -4,13 +4,15 @@ function resetRoundState(state) {
   state.pendingGuess = "";
   state.guessCount = 0;
   state.history = [];
-
+  state.extraConstraints= [];
+  
   state.simultaneousGuessSubmitted = false;
   state.simultaneousSecretSubmitted = false;
 
   state.powerUsedThisTurn = false;
-  state.timeUsed.A = 0,
-    state.timeUsed.B = 0,
+  state.timeUsed.A = 0;
+    state.timeUsed.B = 0;
+  state.powers.assassinated = false;
   state.powersUsedThisRoundGuesser = [];
   state.powersUsedThisRoundSetter = [];
   state.powers.countOnlyRound= 0;
