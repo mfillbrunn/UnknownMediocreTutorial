@@ -49,23 +49,15 @@ function generateForceGuessOptions(state) {
   let types = [];
 
   if (roll < 0.05) {
-    // rare
-    types = [
-      ...shuffle(COMMON).slice(0, 2),
-      "palindrome"
-    ];
+    types = [...shuffle(COMMON).slice(0, 2), "palindrome"];
   } else if (roll < 0.30) {
-    // uncommon
-    types = [
-      ...shuffle(COMMON).slice(0, 2),
-      shuffle(UNCOMMON)[0]
-    ];
+    types = [...shuffle(COMMON).slice(0, 2), shuffle(UNCOMMON)[0]];
   } else {
-    // common
     types = shuffle(COMMON).slice(0, 3);
   }
 
-  return types.map(type => {
+  // Generate initial options
+  const rawOptions = types.map(type => {
     if (type === "containsTwo") {
       return generateSafeDoubleLetter(ALLOWED_GUESSES);
     }
@@ -81,6 +73,47 @@ function generateForceGuessOptions(state) {
     }
     return { type };
   });
+
+  // Deduplicate
+  const seen = new Set();
+  const options = [];
+
+  for (const o of rawOptions) {
+    const key = optionKey(o);
+    if (!seen.has(key)) {
+      seen.add(key);
+      options.push(o);
+    }
+  }
+
+  // Top up to exactly 3 if needed
+  const fallbackTypes = shuffle([...COMMON, ...UNCOMMON, ...RARE]);
+
+  for (const type of fallbackTypes) {
+    if (options.length >= 3) break;
+
+    let o;
+    if (type === "containsTwo" || type === "doubleLetter") {
+      o = generateSafeDoubleLetter(ALLOWED_GUESSES);
+    } else if (type === "startsWith" || type === "endsWith") {
+      const [l] = pickLetters(state, 1);
+      o = { type, letter: l };
+    } else if (type === "minVowels") {
+      o = { type, count: 3 };
+    } else if (type === "maxVowels") {
+      o = { type, count: 1 };
+    } else {
+      o = { type };
+    }
+
+    const key = optionKey(o);
+    if (!seen.has(key)) {
+      seen.add(key);
+      options.push(o);
+    }
+  }
+
+  return options;
 }
 
 
@@ -147,6 +180,19 @@ function generateSafeDoubleLetter(allowedGuesses) {
 
   // Fallback (should be extremely rare)
   return { type: "doubleLetter", letter: "L" };
+}
+function optionKey(o) {
+  switch (o.type) {
+    case "startsWith":
+    case "endsWith":
+    case "doubleLetter":
+      return `${o.type}:${o.letter}`;
+    case "minVowels":
+    case "maxVowels":
+      return `${o.type}:${o.count}`;
+    default:
+      return o.type;
+  }
 }
 
 
