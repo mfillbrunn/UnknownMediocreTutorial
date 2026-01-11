@@ -227,7 +227,7 @@
 /* Keyboard key color states */
 .key.key-green  { background: var(--tile-green) !important;  color: var(--tile-green-text) !important; box-shadow: none !important;}
 .key.key-yellow { background: var(--tile-yellow) !important; color: var(--tile-yellow-text) !important; box-shadow: none !important;}
-.key.key-blue   { background: var(--tile-blue) !important;            color: var(--tile-blue) !important; box-shadow: none !important;}
+.key.key-blue   { background: var(--tile-blue) !important;            color: var(--tile-blue-text) !important; box-shadow: none !important;}
 .key.key-purple { background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important; box-shadow: none !important;}
 
 /* “Gray” state has custom styling */
