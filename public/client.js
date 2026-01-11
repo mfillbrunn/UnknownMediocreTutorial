@@ -270,6 +270,11 @@ onStateUpdate(newState => {
   if (myRole && !roleAssigned) {
     roleAssigned = true;
   }
+    // Render power buttons once
+  if (!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby") {
+      PowerEngine.renderButtons(roomId);
+      PowerEngine._initialized = true;
+  }
   if (prevPhase === "simultaneous" && state.phase=== "normal"){
     localGuesserDraft = "";
   }
@@ -305,11 +310,6 @@ function updateUI() {
     lastSimulSecret = false;
     lastSimulGuess = false;
   }
-// Render power buttons once
-if (!PowerEngine._initialized && roomId && myRole) {
-    PowerEngine.renderButtons(roomId);
-    PowerEngine._initialized = true;
-}
   updateLobbyHeader();
   updateScreens();
   updateSummary();
