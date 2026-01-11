@@ -38,6 +38,7 @@ createPowerButton(id, label) {
   // Render all power buttons once
   renderButtons(roomId) {
     if (this._buttonsRendered) return;
+    container.innerHTML = "";
     this._buttonsRendered = true;
     for (const id in this.powers) {
       const mod = this.powers[id];
