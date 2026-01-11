@@ -574,3 +574,10 @@ function getNameByRole(role) {
   return id ? state.playerNames?.[id] || "—" : "—";
 }
 
+function updateMenuRoomCode() {
+  const el = document.getElementById("menuRoomCode");
+  if (!el) return;
+  if (!window.roomId) return;
+
+  el.textContent = window.roomId;
+}
