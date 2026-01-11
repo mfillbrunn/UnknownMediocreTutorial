@@ -362,14 +362,8 @@ function updateSetterScreen() {
   NewEnabled=true;  
   $("setterScreen").querySelector(".screen-title").textContent = setterName;
   $("setterRoleBadge").textContent = "Setter";
-  const fgModal = $("forceGuessModal");
-    if (fgModal) {
-      if (!state.powers?.forcedGuessOptions) {
-        fgModal.classList.remove("active");
-      }
-    }
-    const displayGuess =state.powers?.stealthGuessActive? "?????": state.pendingGuess;
-   const isSetterTurn = state.turn === state.setter;
+  const displayGuess =state.powers?.stealthGuessActive? "?????": state.pendingGuess;
+  const isSetterTurn = state.turn === state.setter;
   const isDecisionStep =isSetterTurn &&!!displayGuess &&state.phase === "normal";
   let setterInputEnabled = false;
   // -------------------------------------------------------
