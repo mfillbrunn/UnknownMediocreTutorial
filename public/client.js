@@ -663,9 +663,6 @@ function handleGuesserInput(event) {
 
 function updateHostControls() {
   if (!state || !state.roles || !state.playerNames) return;
-
-  const meHost = isHost();
-
   // Player count (by playerId)
   const playerIds = Object.keys(state.playerNames);
   const twoPlayers = playerIds.length === 2;
@@ -682,7 +679,7 @@ function updateHostControls() {
     if (setterHostBadge) {
       setterHostBadge.classList.toggle(
         "hidden",
-        !(meHost && myRole === "A")
+        !(isHost()  && myRole === "A")
       );
     }
     
@@ -690,7 +687,7 @@ function updateHostControls() {
     if (guesserHostBadge) {
       guesserHostBadge.classList.toggle(
         "hidden",
-        !(meHost && myRole === "B")
+        !(isHost()  && myRole === "B")
       );
     }
 
