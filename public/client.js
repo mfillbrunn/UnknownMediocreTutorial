@@ -696,7 +696,7 @@ function updateHostControls() {
   if (kickSetterBtn) {
     kickSetterBtn.classList.toggle(
       "hidden",
-      !meHost || !twoPlayers || setterPlayerId === socket.id
+      !isHost() || !twoPlayers || setterPlayerId === socket.id
     );
   }
 
@@ -704,26 +704,23 @@ function updateHostControls() {
   if (kickGuesserBtn) {
     kickGuesserBtn.classList.toggle(
       "hidden",
-      !meHost || !twoPlayers || guesserPlayerId === socket.id
+      !isHost() || !twoPlayers || guesserPlayerId === socket.id
     );
   }
 }
 
 function updateTimerAccess() {
   if (!state) return;
-
-  const meHost = isHost();
-
   document
     .querySelectorAll('input[name="timePreset"]')
     .forEach(input => {
-      input.disabled = !meHost;
+      input.disabled = !isHost();
     });
 
   document
     .querySelectorAll('.timer-option')
     .forEach(opt => {
-      opt.classList.toggle("disabled", !meHost);
+      opt.classList.toggle("disabled", !isHost());
     });
 }
 
