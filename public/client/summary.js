@@ -75,6 +75,7 @@ window.updateSummary = function updateSummary() {
     container.innerHTML = "";
     return;
   }
+  updateMenuRoomCode();
   if (state.gameOverView === "round") {
     renderRoundSummary(container);
     return;
