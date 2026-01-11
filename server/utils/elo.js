@@ -6,11 +6,24 @@ async function applyRankedElo({ state, room, supabase }) {
     throw new Error("applyRankedElo called without rankMode");
   }
 
-  const ids = Object.keys(room.players);
-  if (ids.length !== 2) return null;
+  const socketIds = Object.keys(room.players);
+  if (socketIds.length !== 2) return null;
 
-  const playerA = ids.find(id => room.players[id] === "A");
-  const playerB = ids.find(id => room.players[id] === "B");
+  // Resolve socket IDs by role
+  const socketA = socketIds.find(
+    id => room.players[id]?.role === "A"
+  );
+  const socketB = socketIds.find(
+    id => room.players[id]?.role === "B"
+  );
+
+  if (!socketA || !socketB) {
+    throw new Error("Could not resolve both players by role");
+  }
+
+  // Resolve USER IDs (this was missing)
+  const userA = room.players[socketA].userId;
+  const userB = room.players[socketB].userId;
 
   const winner = state.matchWinner; // "A" | "B" | null
   const tie = state.matchWinReason === "tie";
@@ -18,33 +31,40 @@ async function applyRankedElo({ state, room, supabase }) {
   const scoreA = tie ? 0.5 : winner === "A" ? 1 : 0;
   const scoreB = 1 - scoreA;
 
-  const [pa, pb] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", playerA).single(),
-    supabase.from("profiles").select("*").eq("id", playerB).single()
+  // Fetch profiles by USER ID
+  const [{ data: pa }, { data: pb }] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", userA).single(),
+    supabase.from("profiles").select("*").eq("id", userB).single()
   ]);
 
-  if (!pa.data || !pb.data) {
+  if (!pa || !pb) {
     throw new Error("Profile not found for Elo update");
   }
 
-  const rA = pa.data[`rating_${mode}`];
-  const rB = pb.data[`rating_${mode}`];
+  const rA = pa[`rating_${mode}`];
+  const rB = pb[`rating_${mode}`];
 
   const deltaA = eloDelta(rA, rB, scoreA);
   const deltaB = -deltaA;
 
   const [resA, resB] = await Promise.all([
-    supabase.from("profiles").update({
-      [`rating_${mode}`]: rA + deltaA,
-      [`games_played_${mode}`]: pa.data[`games_played_${mode}`] + 1,
-      [`wins_${mode}`]: pa.data[`wins_${mode}`] + (scoreA === 1 ? 1 : 0)
-    }).eq("id", playerA),
+    supabase
+      .from("profiles")
+      .update({
+        [`rating_${mode}`]: rA + deltaA,
+        [`games_played_${mode}`]: pa[`games_played_${mode}`] + 1,
+        [`wins_${mode}`]: pa[`wins_${mode}`] + (scoreA === 1 ? 1 : 0)
+      })
+      .eq("id", userA),
 
-    supabase.from("profiles").update({
-      [`rating_${mode}`]: rB + deltaB,
-      [`games_played_${mode}`]: pb.data[`games_played_${mode}`] + 1,
-      [`wins_${mode}`]: pb.data[`wins_${mode}`] + (scoreB === 1 ? 1 : 0)
-    }).eq("id", playerB)
+    supabase
+      .from("profiles")
+      .update({
+        [`rating_${mode}`]: rB + deltaB,
+        [`games_played_${mode}`]: pb[`games_played_${mode}`] + 1,
+        [`wins_${mode}`]: pb[`wins_${mode}`] + (scoreB === 1 ? 1 : 0)
+      })
+      .eq("id", userB)
   ]);
 
   if (resA.error || resB.error) {
@@ -52,8 +72,8 @@ async function applyRankedElo({ state, room, supabase }) {
   }
 
   return {
-    playerA,
-    playerB,
+    userA,
+    userB,
     rating_a_before: rA,
     rating_b_before: rB,
     rating_a_after: rA + deltaA,
