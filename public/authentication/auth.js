@@ -294,6 +294,7 @@ document.querySelectorAll(".leaderboard-tab").forEach(btn => {
 function onProfileReady() {
   renderMenuAccountStatus();
   updateRoleLabels?.();
+  updateUI();
 
   // If leaderboard screen is visible, refresh it
   if (document.getElementById("leaderboardScreen")?.classList.contains("active")) {
