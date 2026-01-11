@@ -125,15 +125,26 @@ function renderMenuAccountStatus() {
     return;
   }
 
-  const name = window.myProfile?.username || window.currentUser.email;
+  const p = window.myProfile;
+  const name = p?.username || window.currentUser.email;
+
+  const elo =
+    p
+      ? `Elo: 
+         ⚡ ${p.rating_bullet}
+         ⚡⚡ ${p.rating_blitz}
+         🧠 ${p.rating_deep}`
+      : "Loading rating…";
 
   el.innerHTML = `
     <span class="account-logged-in">
-      Logged in as <strong>${name}</strong>
+      <strong>${name}</strong><br/>
+      <small>${elo}</small>
       <button class="link-btn" id="menuLogoutBtn">Log out</button>
     </span>
   `;
 }
+
 
 
 // Fetch past games
