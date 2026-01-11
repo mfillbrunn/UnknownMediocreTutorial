@@ -41,12 +41,12 @@ if (action.type === "PLAYER_JOINED") {
   return;
 }
 if (action.type === "SET_RANKED") {
-  if (state.hostUserId !== action.playerId) return;
+  if (state.hostUserId !== action.userId) return;
   state.ranked = !!action.ranked;
 }
 
 if (action.type === "SET_TIME_CONTROL") {
-  if (state.hostUserId !== action.playerId) return state;
+  if (state.hostUserId !== action.userId) return;
 
  if (action.enabled === false) {
     state.timeControl.enabled = false;
