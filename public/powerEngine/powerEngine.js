@@ -39,7 +39,6 @@ createPowerButton(id, label) {
     console.log("createPowerButton called before button rendered");
     if (this._buttonsRendered) return;
     console.log("createPowerButton rendered");
-    container.innerHTML = "";
     this._buttonsRendered = true;
     for (const id in this.powers) {
       const mod = this.powers[id];
