@@ -75,6 +75,7 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     state.canNextRound = false;
     state.phase = res.phase || "simultaneous";
     state.turn = null;
+    state.extraConstraints: [],
     emitLobbyEvent(io, roomId, { type: "hideLobby" });
     emitStateForAllPlayers(roomId, room, io);
     return;
