@@ -16,6 +16,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     // ASSASSIN
     const assassin = state.powers.assassinWord;
       if (assassin && g.toUpperCase() === assassin.toUpperCase()) {
+        state.powers.assassinated = true; 
         pushWinEntry(state, state.secret);
         endGame(state, roomId, io, room,context);
         return;
