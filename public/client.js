@@ -279,10 +279,14 @@ onStateUpdate(newState => {
   } else {
     state.setterDraft = "";
   }
+  console.log(state.phase);
+  console.log("!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby"");
   console.log(!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby");
+  console.log("!!myRole");
   console.log(!!myRole);
-  console.log(!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby");
+  console.log("!!window.roomId");
   console.log(!!window.roomId);
+  console.log("!!state");
   console.log(!!state);
   if (!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby") {
       console.log("Attempt to render");
