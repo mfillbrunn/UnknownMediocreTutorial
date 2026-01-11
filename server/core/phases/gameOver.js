@@ -88,7 +88,7 @@ if (action.type === "NEW_MATCH") {
   state.ready = {};
   state.playerNames= names;
   // Re-sync roles with room.players
-  for (const [playerId, role] of Object.entries(room.players)) {
+  for (const [playerId, player] of Object.entries(room.players)) {
     state.roles[playerId] = player.role;
   }
   state.setter = "A";
