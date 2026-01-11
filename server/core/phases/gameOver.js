@@ -83,6 +83,7 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
 if (action.type === "NEW_MATCH") {
   names = state.playerNames;
   const fresh = createInitialState();
+  localGuesserDraft = "";
   Object.assign(state, fresh);
   state.phase = "lobby";
   state.ready = {};
