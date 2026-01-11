@@ -82,8 +82,7 @@ window.supabase.auth.onAuthStateChange(async (_event, session) => {
 let profileLoadInProgress = false;
 
 async function loadMyProfile() {
-  if (!window.currentUser || profileLoadInProgress) return null;
-  profileLoadInProgress = true;
+  if (!window.currentUser) return null;
 
   try {
     const { data, error } = await window.supabase
@@ -99,12 +98,8 @@ async function loadMyProfile() {
     updateRoleLabels?.();
     return data;
   } catch (err) {
-    if (err?.name !== "AbortError") {
-      console.error("Profile load failed:", err);
-    }
+    console.error("Profile load failed:", err);
     return null;
-  } finally {
-    profileLoadInProgress = false;
   }
 }
 
