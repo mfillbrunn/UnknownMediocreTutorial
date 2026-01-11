@@ -357,6 +357,7 @@ function resetRoomUIState() {
   // Reset power engine
   if (window.PowerEngine) {
     PowerEngine._initialized = false;
+    PowerEngine._buttonsRendered = false;
   }
 
   // Reset per-room flags
