@@ -373,4 +373,8 @@ function resetRoomUIState() {
   // Optional: clear any cached UI state
   resetKeyboards?.();
 }
+$("leaderboardBtn")?.addEventListener("click", () => {
+  showScreen("leaderboardScreen");
+  loadLeaderboard("bullet");
+});
 
