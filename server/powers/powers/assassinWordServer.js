@@ -45,13 +45,22 @@ engine.registerPower("assassinWord", {
       return;
     }
 
-    if (state.secret && w === state.secret.toUpperCase()) {
-      io.to(action.playerId).emit(
-        "errorMessage",
-        "Assassin word cannot match current secret."
-      );
-      state.powerUsedThisTurn = false; 
-      return;
+    if (state.secret) {
+      const secret = state.secret.toUpperCase();
+      let diffCount = 0;
+    
+      for (let i = 0; i < 5; i++) {
+        if (w[i] !== secret[i]) diffCount++;
+      }
+    
+      if (diffCount < 2) {
+        io.to(action.playerId).emit(
+          "errorMessage",
+          "Assassin word must differ from the secret by at least two letters."
+        );
+        state.powerUsedThisTurn = false;
+        return;
+      }
     }
 
     if (state.pendingGuess && w === state.pendingGuess.toUpperCase()) {
