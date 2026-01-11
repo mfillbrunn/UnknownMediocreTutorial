@@ -157,16 +157,32 @@ function computeMatchResult(state, myRole) {
   };
 }
 async function writeMatchHistory({ state, room, supabase, ratingChange }) {
-  const playerA = Object.keys(room.players).find(id => room.players[id] === "A");
-  const playerB = Object.keys(room.players).find(id => room.players[id] === "B");
-  if (!playerA || !playerB) return;
+  const socketIds = Object.keys(room.players);
+  if (socketIds.length !== 2) return;
 
-  const { winner, winReason, winnerPoints, loserPoints } =
-    computeMatchResult(state, null);
+  // Resolve sockets by role
+  const socketA = socketIds.find(
+    id => room.players[id]?.role === "A"
+  );
+  const socketB = socketIds.find(
+    id => room.players[id]?.role === "B"
+  );
+  if (!socketA || !socketB) return;
 
-  const winnerId =
-    winner === "A" ? playerA :
-    winner === "B" ? playerB :
+  // Resolve USER IDs (critical)
+  const userA = room.players[socketA].userId;
+  const userB = room.players[socketB].userId;
+
+  const {
+    winner,
+    winReason,
+    winnerPoints,
+    loserPoints
+  } = computeMatchResult(state, null);
+
+  const winnerUserId =
+    winner === "A" ? userA :
+    winner === "B" ? userB :
     null;
 
   const scoreA =
@@ -179,24 +195,25 @@ async function writeMatchHistory({ state, room, supabase, ratingChange }) {
     winner === "A" ? loserPoints :
     winnerPoints;
 
-  await supabase.from("matches").insert({
+  const { error } = await supabase.from("matches").insert({
     mode: state.rankMode,
     ranked: state.ranked,
 
-    player_a: playerA,
-    player_b: playerB,
+    player_a: userA,
+    player_b: userB,
 
-    winner: winnerId,
+    winner: winnerUserId,
     win_reason: winReason,
 
     score_a: scoreA,
     score_b: scoreB,
+
     rating_a_before: ratingChange?.rating_a_before ?? null,
     rating_b_before: ratingChange?.rating_b_before ?? null,
     rating_a_after: ratingChange?.rating_a_after ?? null,
     rating_b_after: ratingChange?.rating_b_after ?? null,
-    
-     time_control: {
+
+    time_control: {
       enabled: state.timeControl?.enabled,
       mode: state.timeControl?.mode,
       roundSeconds: state.timeControl?.roundSeconds,
@@ -207,7 +224,13 @@ async function writeMatchHistory({ state, room, supabase, ratingChange }) {
 
     rounds: JSON.parse(JSON.stringify(state.matchRounds))
   });
+
+  if (error) {
+    console.error("Match history insert failed:", error);
+    throw error;
+  }
 }
+
 
 
 module.exports = {handleGameOverPhase, endGame};
