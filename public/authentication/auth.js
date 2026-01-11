@@ -94,6 +94,7 @@ async function loadMyProfile() {
     if (error) throw error;
 
     window.myProfile = data;
+    onProfileReady();
     renderMenuAccountStatus();
     updateRoleLabels?.();
     return data;
@@ -290,5 +291,16 @@ document.querySelectorAll(".leaderboard-tab").forEach(btn => {
     loadLeaderboard(btn.dataset.mode);
   });
 });
+function onProfileReady() {
+  renderMenuAccountStatus();
+  updateRoleLabels?.();
+
+  // If leaderboard screen is visible, refresh it
+  if (document.getElementById("leaderboardScreen")?.classList.contains("active")) {
+    const activeTab =
+      document.querySelector(".leaderboard-tab.active")?.dataset.mode;
+    if (activeTab) loadLeaderboard(activeTab);
+  }
+}
 
 
