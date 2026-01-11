@@ -26,7 +26,11 @@ const hide = id => {
   if (!el) {console.warn(`hide(): element #${id} not found`); return;}
   el.classList.remove("active");
 };
-
+document.addEventListener("DOMContentLoaded", () => {
+  if (!roomId) {roomId= localStorage.getItem("roomId");}
+  renderMenuAccountStatus();
+  showStartup();
+});
 function toast(msg) {
   const t = $("toast");
   t.textContent = msg;
@@ -46,14 +50,7 @@ function resetKeyboards() {
   if (ks) delete ks.__keys;
   if (kg) delete kg.__keys;
 }
-document.addEventListener("DOMContentLoaded", () => {
-/*  const saved = localStorage.getItem("playerName");
-  if (saved && $("playerNameInput")) {
-    $("playerNameInput").value = saved;
-  }*/
-  renderMenuAccountStatus();
-  showStartup();
-});
+
 
 function shakeDraftRow(role) {
   let row;
@@ -261,7 +258,6 @@ case "playerLeft": {
 
 // State updates
 onStateUpdate(newState => {
-  if (!roomId) {roomId= localStorage.getItem("roomId");}
   const prevPhase = state?.phase;
   const prevSetterDraft = state?.setterDraft || "";
   state = JSON.parse(JSON.stringify(newState));
