@@ -5,7 +5,7 @@ function resetRoundState(state) {
   state.guessCount = 0;
   state.history = [];
   state.extraConstraints= [];
-  
+  state.turn = null;
   state.simultaneousGuessSubmitted = false;
   state.simultaneousSecretSubmitted = false;
 
