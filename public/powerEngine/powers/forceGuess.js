@@ -29,17 +29,19 @@ tooltip: {
 });
 
 InfoBadgeEngine.register((state, role) => {
-  const fg = state.powers?.forcedGuess;
-  if (!fg) return null;
+  const opts = state.powers?.forcedGuessOptions;
+  if (!opts) return null;
 
   const meta = POWER_METADATA.forceGuess;
 
   return {
-    id: "forceGuess",
-    emoji: meta.emoji,
-    text: `${meta.label}: ${formatForceGuessOption(fg)}`,
-    color: meta.color,
-    priority: 20,
-    screen: "both"
-  };
+  id: "forceGuess",
+  emoji: meta.emoji,
+  text: `${meta.label}: ${opts
+    .map(formatForceGuessOption)
+    .join(" OR ")}`,
+  color: meta.color,
+  priority: 20,
+  screen: "both"
+};
 });
