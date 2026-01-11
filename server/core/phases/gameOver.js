@@ -16,6 +16,7 @@ function endGame(state, roomId, io, room, context) {
       state.isTimerRunning = false;
    } 
    state.matchRounds = state.matchRounds || []; 
+   if (state.powers.assassinated) {state.guessCount = state.guessCount + state.powers.assassinPoints;} 
    state.matchRounds.push({
     setter: state.setter,
     guesser: state.guesser,
