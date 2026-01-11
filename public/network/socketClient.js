@@ -22,7 +22,7 @@ const socket = io(BACKEND_URL, {
 window.createRoom = function (payload, cb) {
   const userId = window.getUserId();
   if (!userId) return cb?.({ ok: false, error: "Not logged in" });
-
+  window.roomId = localStorage.getItem("roomId");
   socket.emit("createRoom", {
     ...payload,
     userId
@@ -35,7 +35,7 @@ window.createRoom = function (payload, cb) {
 window.joinRoom = function (roomCode, payload, cb) {
   const userId = window.getUserId();
   if (!userId) return cb?.({ ok: false, error: "Not logged in" });
-
+  window.roomId = localStorage.getItem("roomId");
   socket.emit("joinRoom", {
     roomId: roomCode,
     userId,
@@ -49,7 +49,7 @@ window.joinRoom = function (roomCode, payload, cb) {
 window.quickJoin = function (payload, cb) {
   const userId = window.getUserId();
   if (!userId) return cb?.({ ok: false, error: "Not logged in" });
-
+  window.roomId = localStorage.getItem("roomId");
   socket.emit("quickJoin", {
     userId,
     ...payload
