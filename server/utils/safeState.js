@@ -24,9 +24,7 @@ function buildSafeStateForPlayer(state, role) {
   }
   // STEALTH GUESS: hide the current pending guess ONLY DURING decision step
   if (role === state.setter && state.powers.stealthGuessActive) {
-    if (state.pendingGuess) {
       safe.pendingGuess = "?????";   // placeholder
-    }
   }
 
   // -----------------------------------------------------
