@@ -270,11 +270,6 @@ onStateUpdate(newState => {
   if (myRole && !roleAssigned) {
     roleAssigned = true;
   }
-    // Render power buttons once
-  if (!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby") {
-      PowerEngine.renderButtons(roomId);
-      PowerEngine._initialized = true;
-  }
   if (prevPhase === "simultaneous" && state.phase=== "normal"){
     localGuesserDraft = "";
   }
@@ -306,9 +301,12 @@ onStateUpdate(newState => {
 // -----------------------------------------------------
 function updateUI() {
   if (!state) return;
-  if (state.phase === "simultaneous") {
-    lastSimulSecret = false;
-    lastSimulGuess = false;
+  // Render power buttons once
+  console.log(PowerEngine._initialized);
+  console.log(PowerEngine._buttonsRendered);
+  if (!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby") {
+      PowerEngine.renderButtons(roomId);
+      PowerEngine._initialized = true;
   }
   updateLobbyHeader();
   updateScreens();
