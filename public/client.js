@@ -280,7 +280,7 @@ onStateUpdate(newState => {
     state.setterDraft = "";
   }
   console.log(state.phase);
-  console.log(!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby");
+  console.log(!PowerEngine._initialized && localStorage.getItem("roomId") && myRole && state && state.phase !== "lobby");
   console.log("!!myRole");
   console.log(!!myRole);
   console.log("!!window.roomId");
