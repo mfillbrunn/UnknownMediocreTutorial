@@ -269,6 +269,7 @@ $("backBtn").onclick = () => showScreen("startupScreen");
 socket.on("forceLeaveRoom", () => {
   roomId = null;
   state = null;
+  clearRoom();
   showStartup();
   toast("You were removed from the room.");
 });
@@ -310,6 +311,7 @@ $("rankedToggle")?.addEventListener("change", e => {
 
 //// TRY AUTO REJOIN
 function tryAutoRejoin() {
+  if (window.roomId) return;
   const roomId = localStorage.getItem("roomId");
   const user = window.currentUser;
 
