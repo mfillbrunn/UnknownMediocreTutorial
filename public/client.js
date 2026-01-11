@@ -662,7 +662,7 @@ function handleGuesserInput(event) {
 
 /// HOst CONtROLS
 function getHostRole() {
-  if (!state?.hostUserId || myRole) return null;
+  if (!state?.hostUserId || !myRole) return null;
    return state?.hostUserId === window.currentUser.id
     ? myRole
     : (myRole === "A" ? "B" : "A");
