@@ -276,7 +276,8 @@ socket.on("forceLeaveRoom", () => {
 $("rankedToggle").onchange = e => {
   sendGameAction(roomId, {
     type: "SET_RANKED",
-    ranked: e.target.checked
+    ranked: e.target.checked,
+  userId: window.currentUser.id
   });
 };
 function updateRankedUI() {
@@ -302,7 +303,8 @@ function updateRankedUI() {
 $("rankedToggle")?.addEventListener("change", e => {
   sendGameAction(roomId, {
     type: "SET_RANKED",
-    ranked: e.target.checked
+    ranked: e.target.checked,
+  userId: window.currentUser.id
   });
 });
 
