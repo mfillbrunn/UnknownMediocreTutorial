@@ -56,33 +56,6 @@ socket.on("errorMessage", msg => {
   toast(msg);
 });
 
-///FORCE GUESS
-socket.on("forceGuessOptions", ({ options }) => {
-  if (myRole !== state.setter) return;
-
-  const modal = $("forceGuessModal");
-  const container = $("forceGuessOptionsContainer");
-  container.innerHTML = "";
-
-  options.forEach(o => {
-    const btn = document.createElement("button");
-    btn.className = "primary-btn small";
-
-    btn.textContent = formatForceGuessOption(o);
-
-    btn.onclick = () => {
-      sendGameAction(roomId, {
-        type: "CONFIRM_FORCE_GUESS",
-        mode: o.type
-      });
-    };
-
-    container.appendChild(btn);
-  });
-
-  modal.classList.add("active");
-});
-
 socket.on("timerTick", ({ timeRemaining }) => {
   if (!window.state) return;
 
