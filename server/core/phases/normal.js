@@ -89,16 +89,6 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
-  if (action.type === "CONFIRM_FORCE_GUESS" && role === state.setter) {
-    const opts = state.powers.forcedGuessOptions;
-    if (!opts) return;
-    const chosen = opts.find(o => o.type === action.mode);
-    if (!chosen) return;
-    state.powers.forcedGuess = chosen;
-    state.powers.forcedGuessOptions = null;
-    emitStateForAllPlayers(roomId, room, io);
-    return;
-  }
   /// POWERs
   if (action.type.startsWith("USE_")) {
     const powerId = normalizePowerId(action.type);
