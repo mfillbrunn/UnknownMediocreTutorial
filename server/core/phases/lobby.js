@@ -159,9 +159,11 @@ if (action.type === "SET_POWER_COUNT") {
           if (readyPlayers === playerCount && playerCount === 2) {
                 if (state.ranked) {
                   const ids = Object.keys(room.players);
-                  const shuffled = ids.sort(() => Math.random() - 0.5);                
-                  room.players[shuffled[0]] = "A";
-                  room.players[shuffled[1]] = "B";                
+                  const shuffled = ids.sort(() => Math.random() - 0.5);
+                
+                  room.players[shuffled[0]].role = "A";
+                  room.players[shuffled[1]].role = "B";
+                
                   state.roles[shuffled[0]] = "A";
                   state.roles[shuffled[1]] = "B";
                 }
