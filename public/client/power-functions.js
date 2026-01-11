@@ -98,67 +98,38 @@ function formatForceGuessOption(o) {
   }
 }
 
-function validateGuesserGuess(word, forcedGuess, allowedGuesses) {
+function validateGuesserGuess(word, forcedGuessOptions, allowedGuesses) {
   if (!word || word.length !== 5) {
     return { ok: false, message: "Guess must be 5 letters" };
   }
 
   const g = word.toLowerCase();
-  // Dictionary check
+
   if (!allowedGuesses.has(g)) {
     return { ok: false, message: "Word not in dictionary" };
   }
+
   // No forced constraint → valid
-  if (!forcedGuess) {
+  if (!forcedGuessOptions || forcedGuessOptions.length === 0) {
     return { ok: true, message: null };
   }
-  let ok = true;
-  let msg = "";
-  switch (forcedGuess.type) {
-    case "containsTwo":
-      ok = forcedGuess.letters.every(l =>
-        g.includes(l.toLowerCase())
-      );
-      msg = `Must contain ${forcedGuess.letters.join(" + ")}`;
-      break;
 
-    case "startsWith":
-      ok = g.startsWith(forcedGuess.letter.toLowerCase());
-      msg = `Must start with ${forcedGuess.letter}`;
-      break;
-    case "endsWith":
-      ok = g.endsWith(forcedGuess.letter.toLowerCase());
-      msg = `Must end with ${forcedGuess.letter}`;
-      break;
-    case "doubleLetter":
-      ok = hasDoubleLetter(g);
-      msg = "Must contain a double letter";
-      break;
-    case "minVowels":
-      ok = countVowels(g) >= forcedGuess.count;
-      msg = `Must contain at least ${forcedGuess.count} vowels`;
-      break;
-    case "maxVowels":
-      ok = countVowels(g) <= forcedGuess.count;
-      msg = `Must contain at most ${forcedGuess.count} vowels`;
-      break;
-    case "firstLastSame":
-      ok = g[0] === g[g.length - 1];
-      msg = "First and last letter must match";
-      break;
-    case "palindrome":
-      ok = isPalindrome(g);
-      msg = "Must be a palindrome";
-      break;
-    default:
-      // Unknown constraint → fail safe
-      return { ok: false, message: "Invalid forced guess rule" };
+  // OR logic
+  const satisfiesOne = forcedGuessOptions.some(opt =>
+    satisfiesForcedGuess(g, opt)
+  );
+
+  if (satisfiesOne) {
+    return { ok: true, message: null };
   }
 
-  return ok
-    ? { ok: true, message: null }
-    : { ok: false, message: msg };
+  return {
+    ok: false,
+    message:
+      "Guess must satisfy at least one forced condition"
+  };
 }
+
 
 function countVowels(word) {
   return [...word].filter(c => VOWELS.has(c.toUpperCase())).length;
