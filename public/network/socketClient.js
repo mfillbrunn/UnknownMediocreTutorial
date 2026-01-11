@@ -28,8 +28,7 @@ window.createRoom = function (payload, cb) {
   }, res => {
     if (res?.ok) persistRoom(res.roomId);
     cb?.(res);
-  });  
-  window.roomId = localStorage.getItem("roomId");
+  });
 };
 
 window.joinRoom = function (roomCode, payload, cb) {
@@ -43,7 +42,6 @@ window.joinRoom = function (roomCode, payload, cb) {
     if (res?.ok) persistRoom(roomCode);
     cb?.(res);
   });
-  window.roomId = localStorage.getItem("roomId");
 };
 
 window.quickJoin = function (payload, cb) {
@@ -56,7 +54,6 @@ window.quickJoin = function (payload, cb) {
     if (res?.ok && res.roomId) persistRoom(res.roomId);
     cb?.(res);
   });
-  window.roomId = localStorage.getItem("roomId");
 };
 
 
