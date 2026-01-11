@@ -829,7 +829,8 @@ document
       if (v === "none") {
         sendGameAction(roomId, {
           type: "SET_TIME_CONTROL",
-          enabled: false
+          enabled: false,
+  userId: window.currentUser.id
         });
       }
 
@@ -838,7 +839,8 @@ document
           type: "SET_TIME_CONTROL",
           enabled: true,
           mode: "round",
-          seconds: 60
+          seconds: 60,
+  userId: window.currentUser.id
         });
       }
 
@@ -847,7 +849,8 @@ document
           type: "SET_TIME_CONTROL",
           enabled: true,
           mode: "round",
-          seconds: 180
+          seconds: 180,
+  userId: window.currentUser.id
         });
       }
 
@@ -856,7 +859,8 @@ document
           type: "SET_TIME_CONTROL",
           enabled: true,
           mode: "chess",
-          seconds: 900
+          seconds: 900,
+  userId: window.currentUser.id
         });
       }
     });
