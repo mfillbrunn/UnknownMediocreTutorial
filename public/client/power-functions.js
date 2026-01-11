@@ -130,6 +130,26 @@ function validateGuesserGuess(word, forcedGuessOptions, allowedGuesses) {
   };
 }
 
+function satisfiesForcedGuess(g, forcedGuess) {
+  switch (forcedGuess.type) {
+    case "startsWith":
+      return g.startsWith(forcedGuess.letter.toLowerCase());
+    case "endsWith":
+      return g.endsWith(forcedGuess.letter.toLowerCase());
+    case "doubleLetter":
+      return hasDoubleLetter(g);
+    case "minVowels":
+      return countVowels(g) >= forcedGuess.count;
+    case "maxVowels":
+      return countVowels(g) <= forcedGuess.count;
+    case "firstLastSame":
+      return g[0] === g[g.length - 1];
+    case "palindrome":
+      return isPalindrome(g);
+    default:
+      return false;
+  }
+}
 
 function countVowels(word) {
   return [...word].filter(c => VOWELS.has(c.toUpperCase())).length;
