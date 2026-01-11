@@ -130,6 +130,8 @@ function createInitialState() {
       assassinWordUsed: false,
       assassinWord: null,
       assassinWordActive: false,
+      assassinated : false,
+      assassinPoints: false,
       // UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
       revealLetter: {
         mode: null,            // "RARE" or "ROW" — set at match start
