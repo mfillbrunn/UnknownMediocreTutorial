@@ -12,3 +12,12 @@ window.ALLOWED_SECRETS = new Set();
 fetch("/api/allowed-secrets")
   .then(r => r.json())
   .then(words => words.forEach(w => window.ALLOWED_SECRETS.add(w)));
+
+window.showStartup = function () {
+  show("startupScreen");
+  hide("lobby");
+  hide("menu");
+  hide("setterScreen");
+  hide("guesserScreen");
+  document.body.classList.add("menu-mode");
+}
