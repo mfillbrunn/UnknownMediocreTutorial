@@ -279,6 +279,16 @@ onStateUpdate(newState => {
   } else {
     state.setterDraft = "";
   }
+  console.log(!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby");
+  console.log(!!myRole);
+  console.log(!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby");
+  console.log(!!window.roomId);
+  console.log(!!state);
+  if (!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby") {
+      console.log("Attempt to render");
+      PowerEngine.renderButtons(roomId);
+      PowerEngine._initialized = true;
+  }
   // Clear guesser draft once it is no longer editable
   if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {localGuesserDraft = "";}
   window.state = state;   
@@ -302,12 +312,6 @@ onStateUpdate(newState => {
 function updateUI() {
   if (!state) return;
   // Render power buttons once
-  console.log(PowerEngine._initialized);
-  console.log(PowerEngine._buttonsRendered);
-  if (!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby") {
-      PowerEngine.renderButtons(roomId);
-      PowerEngine._initialized = true;
-  }
   updateLobbyHeader();
   updateScreens();
   updateSummary();
