@@ -659,18 +659,19 @@ function handleGuesserInput(event) {
     resetEphemeralUIState();
   }
 }
-const hostRole = getHostRole();
 
-$("setterHostBadge")?.classList.toggle(
-  "hidden",
-  hostRole !== "A"
-);
+/// HOst CONtROLS
+function getHostRole() {
+  if (!state?.hostUserId || !state?.roles) return null;
 
-$("guesserHostBadge")?.classList.toggle(
-  "hidden",
-  hostRole !== "B"
-);
+  const hostSocketId = Object.keys(state.roles).find(
+    sid => state.playerUserIds?.[sid] === state.hostUserId
+  );
 
+  if (!hostSocketId) return null;
+
+  return state.roles[hostSocketId]; // "A" or "B"
+}
 
 function updateHostControls() {
   if (!state || !state.roles || !state.playerNames) return;
