@@ -119,12 +119,6 @@
 
 /*----Extra small */
 
-@media (max-width: 420px) {
-  .key-row {
-    flex-wrap: wrap;
-  }
-}
-
 
 /*------- REDUCED MOTION --------------*/
 
