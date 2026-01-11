@@ -662,15 +662,10 @@ function handleGuesserInput(event) {
 
 /// HOst CONtROLS
 function getHostRole() {
-  if (!state?.hostUserId || !state?.roles) return null;
-
-  const hostSocketId = Object.keys(state.roles).find(
-    sid => state.playerUserIds?.[sid] === state.hostUserId
-  );
-
-  if (!hostSocketId) return null;
-
-  return state.roles[hostSocketId]; // "A" or "B"
+  if (!state?.hostUserId || myRole) return null;
+   return state?.hostUserId === window.currentUser.id
+    ? myRole
+    : (myRole === "A" ? "B" : "A");
 }
 
 function updateHostControls() {
