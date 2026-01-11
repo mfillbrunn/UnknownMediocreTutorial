@@ -659,6 +659,17 @@ function handleGuesserInput(event) {
     resetEphemeralUIState();
   }
 }
+const hostRole = getHostRole();
+
+$("setterHostBadge")?.classList.toggle(
+  "hidden",
+  hostRole !== "A"
+);
+
+$("guesserHostBadge")?.classList.toggle(
+  "hidden",
+  hostRole !== "B"
+);
 
 
 function updateHostControls() {
@@ -675,21 +686,15 @@ function updateHostControls() {
     .find(id => state.roles[id] === "B");
 
   // Host badges
-  const setterHostBadge = $("setterHostBadge");
-    if (setterHostBadge) {
-      setterHostBadge.classList.toggle(
-        "hidden",
-        !(isHost()  && myRole === "A")
-      );
-    }
-    
-    const guesserHostBadge = $("guesserHostBadge");
-    if (guesserHostBadge) {
-      guesserHostBadge.classList.toggle(
-        "hidden",
-        !(isHost()  && myRole === "B")
-      );
-    }
+  const hostRole = getHostRole();
+  $("setterHostBadge")?.classList.toggle(
+    "hidden",
+    hostRole !== "A"
+  );
+  $("guesserHostBadge")?.classList.toggle(
+    "hidden",
+    hostRole !== "B"
+  );
 
   // Kick buttons (host only, opponent only, only if 2 players)
   const kickSetterBtn = $("kickSetterBtn");
