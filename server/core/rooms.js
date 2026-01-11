@@ -41,7 +41,7 @@ function createRoom(socket, userId) {
   };
 
   room.state.roles[socket.id] = "A";
-  room.state.hostUserId = userId
+  room.state.hostUserId = userId;
 
   return roomId;
 }
