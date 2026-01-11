@@ -557,6 +557,11 @@ function submitSetterNew() {
     toast("5 letters!");
     return;
   }
+   if (countPositionalDifferences(w, state.secret.toUpperCase()) < 2) {
+    shakeDraftRow("setter");
+    toast("Too similar to assassin word (needs 2 or more different letters)");
+    return;
+  }
   if (!window.ALLOWED_GUESSES.has(w)) {
     shakeDraftRow("setter");
     toast("Word not in dictionary");
@@ -878,5 +883,12 @@ function renderGuesserDraftOnly() {
     isGuesser: true,
     onInput: handleGuesserInput
   });
+}
+function countPositionalDifferences(a, b) {
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) diff++;
+  }
+  return diff;
 }
 
