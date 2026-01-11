@@ -261,6 +261,7 @@ case "playerLeft": {
 
 // State updates
 onStateUpdate(newState => {
+  if (!roomId) {roomId= localStorage.getItem("roomId");}
   const prevPhase = state?.phase;
   const prevSetterDraft = state?.setterDraft || "";
   state = JSON.parse(JSON.stringify(newState));
@@ -280,16 +281,16 @@ onStateUpdate(newState => {
     state.setterDraft = "";
   }
   console.log(state.phase);
-  console.log(!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby");
+  console.log(!PowerEngine._initialized && roomId && myRole && state && state.phase !== "lobby");
   console.log("!!myRole");
   console.log(!!myRole);
   console.log("!!window.roomId");
-  console.log(!!window.roomId);
+  console.log(roomId);
   console.log("!!state");
   console.log(!!state);
-  if (!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby") {
+  if (!PowerEngine._initialized && roomId && myRole && state && state.phase !== "lobby") {
       console.log("Attempt to render");
-      PowerEngine.renderButtons(window.roomId);
+      PowerEngine.renderButtons(roomId);
       PowerEngine._initialized = true;
   }
   // Clear guesser draft once it is no longer editable
@@ -762,20 +763,17 @@ $("quickPlayBtn")?.addEventListener("click", () => {
 
   quickJoin(payload, resp => {
     if (resp.ok) {
-      // ✅ Joined an existing open room
       roomId = resp.roomId;
       persistRoom(roomId);
       enterLobbyAfterJoin();
       return;
     }
 
-    // ✅ Only create a room if quickJoin FAILED
     createRoom(payload, resp2 => {
       if (!resp2.ok) {
         toast(resp2.error || "Could not start game");
         return;
       }
-
       roomId = resp2.roomId;
       persistRoom(roomId);
       enterLobbyAfterJoin();
