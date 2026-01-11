@@ -65,17 +65,27 @@ logoutBtn.onclick = async () => {
   clearRoom();
 };
 
-window.supabase.auth.onAuthStateChange(async (_event, session) => {
+window.supabase.auth.onAuthStateChange(async (event, session) => {
   window.currentUser = session?.user || null;
-  window.myProfile = null;
-   // Initial render (email fallback is OK here)
-  renderMenuAccountStatus();
 
-  if (window.currentUser) {
-    await loadMyProfile(); // will re-render when done
-    tryAutoRejoin();
+  if (event === "SIGNED_OUT") {
+    window.myProfile = null;
+    renderMenuAccountStatus();
+    showStartup();
+    return;
+  }
+
+  if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
+    renderMenuAccountStatus(); // email fallback is fine
+    showStartup();
+
+    if (window.currentUser) {
+      await loadMyProfile();
+      tryAutoRejoin();
+    }
   }
 });
+
 
 
 
@@ -96,7 +106,6 @@ async function loadMyProfile() {
     window.myProfile = data;
     onProfileReady();
     renderMenuAccountStatus();
-    updateRoleLabels?.();
     return data;
   } catch (err) {
     console.error("Profile load failed:", err);
@@ -226,7 +235,7 @@ function summarizeMatchPowers(rounds = []) {
   const used = new Set();
 
   rounds.forEach(r => {
-    r.past-game?.forEach(h => {
+    r.history?.forEach(h => {
       (h.powersSetter || []).forEach(p => used.add(p));
       (h.powersGuesser || []).forEach(p => used.add(p));
     });
@@ -293,10 +302,7 @@ document.querySelectorAll(".leaderboard-tab").forEach(btn => {
 });
 function onProfileReady() {
   renderMenuAccountStatus();
-  updateRoleLabels?.();
-  updateUI();
-
-  // If leaderboard screen is visible, refresh it
+    // If leaderboard screen is visible, refresh it
   if (document.getElementById("leaderboardScreen")?.classList.contains("active")) {
     const activeTab =
       document.querySelector(".leaderboard-tab.active")?.dataset.mode;
