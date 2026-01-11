@@ -16,16 +16,6 @@ window.lastTimeRemaining ??= { A: null, B: null };
 // -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
-const show = id => {
-  const el = $(id);
-  if (!el) {console.warn(`show(): element #${id} not found`); return;}
-  el.classList.add("active");
-};
-const hide = id => {
-  const el = $(id);
-  if (!el) {console.warn(`hide(): element #${id} not found`); return;}
-  el.classList.remove("active");
-};
 document.addEventListener("DOMContentLoaded", () => {
   if (!roomId) {roomId= localStorage.getItem("roomId");}
   renderMenuAccountStatus();
