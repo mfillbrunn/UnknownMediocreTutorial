@@ -36,9 +36,7 @@ createPowerButton(id, label) {
   
   // Render all power buttons once
   renderButtons(roomId) {
-    console.log("createPowerButton called before button rendered");
     if (this._buttonsRendered) return;
-    console.log("createPowerButton rendered");
     this._buttonsRendered = true;
     for (const id in this.powers) {
       const mod = this.powers[id];
