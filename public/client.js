@@ -10,6 +10,7 @@ let lastSimulSecret = false;
 let lastSimulGuess = false;
 let KeepEnabled = true;
 let NewEnabled = true;
+window.roomId = localStorage.getItem("roomId");
 window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 window.lastTimeRemaining ??= { A: null, B: null };
@@ -280,7 +281,7 @@ onStateUpdate(newState => {
     state.setterDraft = "";
   }
   console.log(state.phase);
-  console.log(!PowerEngine._initialized && localStorage.getItem("roomId") && myRole && state && state.phase !== "lobby");
+  console.log(!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby");
   console.log("!!myRole");
   console.log(!!myRole);
   console.log("!!window.roomId");
@@ -289,7 +290,7 @@ onStateUpdate(newState => {
   console.log(!!state);
   if (!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby") {
       console.log("Attempt to render");
-      PowerEngine.renderButtons(roomId);
+      PowerEngine.renderButtons(window.roomId);
       PowerEngine._initialized = true;
   }
   // Clear guesser draft once it is no longer editable
