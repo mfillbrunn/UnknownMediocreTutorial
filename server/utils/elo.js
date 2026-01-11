@@ -1,3 +1,12 @@
+function eloExpected(rA, rB) {
+  return 1 / (1 + Math.pow(10, (rB - rA) / 400));
+}
+
+function eloDelta(rA, rB, scoreA, k = 32) {
+  const expectedA = eloExpected(rA, rB);
+  return Math.round(k * (scoreA - expectedA));
+}
+
 async function applyRankedElo({ state, room, supabase }) {
   if (!state.ranked) return null;
 
