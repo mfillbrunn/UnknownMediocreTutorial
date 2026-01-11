@@ -488,6 +488,7 @@ function clearSetterPreview() {
   });
 }
 function applyPreviewFeedback(fbArray) {
+  if (state.powers.stealthGuessActive){return;}
   const tiles = document.querySelectorAll("#draftSetter .pending-guess .history-tile");
   fbArray.forEach((fb, i) => {
     const tile = tiles[i];
