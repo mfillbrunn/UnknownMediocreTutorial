@@ -73,7 +73,7 @@ window.POWER_METADATA = {
 
   revealLetter: {
     label: "Reveal Letter",
-    desc: "Earn a guaranteed green letter by meeting a condition.",
+    desc: "Earn a guaranteed green letter by having used letters (regardless of color). Row Master: all letters in a keyboard row. Rare Letter Bonus: at least 4 out of QJXZWKV.",
     icon: "letter-plus",
     emoji: "🟩",
     color: "#16A34A",
@@ -87,7 +87,7 @@ window.POWER_METADATA = {
       },
       RARE: {
         label: "Rare Letter Bonus",
-        desc: "Reveal a rare green letter by having used at least 5 out of QWYJKXVZ.",
+        desc: "Reveal a rare green letter by having used at least 4 out of QWYJKXVZ.",
         icon: "diamond-letter",
         emoji: "💎"
       }
