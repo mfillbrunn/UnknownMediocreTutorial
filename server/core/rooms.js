@@ -130,40 +130,47 @@ function findLastOpenRoom() {
   return null;
 }
 
-function cleanupDisconnectedPlayers(io, graceMs = 60_000) {
+function cleanupDisconnectedPlayers(io, graceMs = 30_000) {
   const now = Date.now();
 
   for (const [roomId, room] of Object.entries(rooms)) {
-    for (const [socketId, player] of Object.entries(room.players)) {
-      if (!player.connected && player.disconnectedAt && now - player.disconnectedAt > graceMs) {
-        // Remove the player entirely
+    const players = Object.entries(room.players);
+
+    for (const [socketId, player] of players) {
+      if (
+        !player.connected &&
+        player.disconnectedAt &&
+        now - player.disconnectedAt >= graceMs
+      ) {
+        const role = player.role;
+
+        // Remove the disconnected player
         delete room.players[socketId];
         delete room.state.roles[socketId];
-        delete room.state.playerNames[socketId];
-        if (room.state.ready) delete room.state.ready[socketId];
-        if (player.userId === room.state.hostUserId) {
-          const remainingPlayers = Object.values(room.players);
-          room.state.hostUserId = remainingPlayers[0]?.userId || null;
-        }
-        io.to(roomId).emit("lobbyEvent", {
-          type: "playerLeft",
-          reason: "timeout",
-          role: player.role
-        });
 
-        // If fewer than 2 remain, reset lobby
-        if (Object.keys(room.players).length < 2) {
+        // If one player remains → they win
+        const remaining = Object.values(room.players);
+        if (remaining.length === 1) {
+          const remainingRole = remaining[0].role;
+
+          room.state.timeoutLoser = role;
+          room.state.matchWinReason = "disconnect";
+
+          endGame(room.state, roomId, io, room, { io });
+        } else {
+          // No players left → reset room
           room.state.phase = "lobby";
-          room.state.turn = null;
-          room.state.pendingGuess = null;
-          room.state.secret = null;
-          room.state.simultaneousSecretSubmitted = false;
-          room.state.paused = false;
         }
+
+        io.to(roomId).emit("lobbyEvent", {
+          type: "playerKicked",
+          reason: "disconnect"
+        });
       }
     }
   }
 }
+
 
 module.exports = {
   rooms,
