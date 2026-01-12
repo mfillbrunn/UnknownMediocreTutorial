@@ -534,8 +534,58 @@
 .timer-row:has(.chess-timer.active) { 
   background: color-mix(in srgb, var(--role-accent), black 65%);
 }
+/* =========================================
+   TIMEOUT CLOCK (small SVG indicator)
+   ========================================= */
 
+.timeout-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: var(--sp-4);
+  opacity: 0.85;
+}
 
+.timeout-clock {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.timeout-clock circle {
+  fill: none;
+  stroke-width: 1.8;
+  transition: stroke 0.2s var(--ease-ui), opacity 0.2s var(--ease-ui);
+}
+
+/* Unused timeout rings */
+.timeout-clock .timeout-free {
+  stroke: color-mix(
+    in srgb,
+    var(--role-accent) 30%,
+    transparent
+  );
+  opacity: 0.4;
+}
+
+/* Used timeout rings */
+.timeout-clock .timeout-used {
+  stroke: var(--role-accent);
+  opacity: 0.95;
+}
+
+/* Danger state (2/3 timeouts used) */
+.timeout-clock.danger .timeout-used {
+  stroke: #ff4b5c;
+}
+
+/* Subtle emphasis when it's that player's turn */
+.timer-row:has(.chess-timer.active) .timeout-clock {
+  opacity: 1;
+}
+
+.theme-setter .timeout-used { stroke: var(--setter-color); }
+.theme-guesser .timeout-used { stroke: var(--guesser-color); }
 /* ----------------------------------
    Power info panel (desktop + mobile)
 ---------------------------------- */
