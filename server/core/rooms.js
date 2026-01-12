@@ -154,8 +154,6 @@ function cleanupDisconnectedPlayers(io, graceMs = 30_000) {
           const remainingRole = remaining[0].role;
 
           room.state.timeoutLoser = role;
-          room.state.matchWinReason = "disconnect";
-
           endGame(room.state, roomId, io, room, { io });
         } else {
           // No players left → reset room
