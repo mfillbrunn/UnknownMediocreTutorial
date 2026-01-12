@@ -114,21 +114,39 @@ function pushWinEntry(state, word) {
 
 function handleRoundTimeout(room, state, roomId, role, context) {
   const io = context.io;
-
   // Simultaneous → immediate loss
   if (state.phase === "simultaneous") {
+     const isFirstSimultaneous = !state.matchRounds || state.matchRounds.length === 0;
+    if (isFirstSimultaneous){
+      state.phase = "lobby";
+      state.turn = null;
+      state.secret = null;
+      state.pendingGuess = null;
+      state.simultaneousSecretSubmitted = false;
+      state.activeTimer = null;
+      state.isTimerRunning = false;
+      state.roundTimeouts = { A: 0, B: 0 };
+      emitLobbyEvent(io, roomId, {
+        type: "matchAbandoned",
+        reason: "timeout"
+      });
+      emitStateForAllPlayers(roomId, room, io);
+      return false;
+    } else {
+      state.timeoutLoser = role;
+      endGame(state, roomId, io, room,context);
+      return false;
+    }
+  }
+  state.roundTimeouts[role]++;
+  if (state.roundTimeouts[role] >= 3) {
     state.timeoutLoser = role;
     endGame(state, roomId, io, room,context);
     return false;
   }
-
-  state.roundTimeouts[role]++;
-
-  const last = state.history.at(-1);
-
+    const last = state.history.at(-1);
   resetRoundTimer(state);
   state.activeTimer = role === "A" ? "B" : "A";
-
   if (last) {
     if (role === state.guesser) {
       handleNormalPhase(
@@ -150,31 +168,19 @@ function handleRoundTimeout(room, state, roomId, role, context) {
       );
     }
   }
-
   emitStateForAllPlayers(roomId, room, io);
-
-  if (state.roundTimeouts[role] >= 3) {
-    state.timeoutLoser = role;
-    endGame(state, roomId, io, room,context);
-    return false;
-  }
-
   return true;
 }
 
 function startGameTimer(room, state, roomId, context) {
   const io = context.io;
-
   startTimer(roomId, state, io, timedOutRole => {
     if (state.timeControl.mode === "chess") {
       state.timeoutLoser = timedOutRole;
       endGame(state, roomId, io, room,context);
       return;
     }
-
-    const shouldContinue =
-      handleRoundTimeout(room, state, roomId, timedOutRole, context);
-
+    const shouldContinue =  handleRoundTimeout(room, state, roomId, timedOutRole, context);
     if (shouldContinue) {
       startGameTimer(room, state, roomId, context);
     }
@@ -189,11 +195,9 @@ function normalizePowerId(type) {
 function startForceTimer(roomId, room, state, io, context) {
   const durationMs = 30000;
   const deadline = Date.now() + durationMs;
-  
-  state.powers.forceTimerActive = true;
+    state.powers.forceTimerActive = true;
   state.powers.forceTimerDeadline = deadline;
   state.powers.forceTimerArmed = false;
-  
   io.to(roomId).emit("forceTimerStarted", {
   deadline,
   durationMs
@@ -206,7 +210,6 @@ function startForceTimer(roomId, room, state, io, context) {
   FORCE_TIMER_INTERVALS[roomId] = setInterval(() => {
     const remaining = deadline - Date.now();
     io.to(roomId).emit("forceTimerTick", { remaining });
-
     if (remaining <= 0) {
       clearInterval(FORCE_TIMER_INTERVALS[roomId]);
       delete FORCE_TIMER_INTERVALS[roomId];
@@ -219,7 +222,6 @@ function startForceTimer(roomId, room, state, io, context) {
         roomId,
         context
       );
-
       io.to(roomId).emit("forceTimerExpired");
     }
   }, 250);
@@ -231,19 +233,16 @@ function clearForceTimer(roomId, state) {
     clearInterval(FORCE_TIMER_INTERVALS[roomId]);
     delete FORCE_TIMER_INTERVALS[roomId];
   }
-
   delete state.powers.forceTimerActive;
   delete state.powers.forceTimerDeadline;
   delete state.powers.forceTimerArmed;
 }
-
 const ROUND_SCOPED_ACTIVE_POWERS = new Set([
   "freezeActive", "stealthGuessActive", "confuseColorsActive","magicModeActive",  "countOnlyActive"
 ]);
 
 function clearActivePowers(state) {
   if (!state?.powers || !Array.isArray(state.activePowers)) return;
-
   for (const power of state.activePowers) {
     const key = `${power}Active`;
     if (!(key in state.powers)) continue;
