@@ -11,6 +11,14 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   // ---------------------------------------------
   // SETTER submits initial secret
   // ---------------------------------------------
+  if (action.type === "CONCEDE") {
+    if (role === state.guesser){
+      const CONCEDE_PENALTY = 10;
+      state.guessCount += CONCEDE_PENALTY;
+    }
+      endGame(state, roomId, io, room, context);
+    return;
+  }  
   if (action.type === "SET_SECRET_NEW" && role === state.setter) {
     if (state.simultaneousSecretSubmitted) return;
     const w = action.secret.toLowerCase();
