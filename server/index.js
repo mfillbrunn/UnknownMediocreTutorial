@@ -90,7 +90,7 @@ registerSocketHandlers(io, context);
 // Cleanup stale rooms every 10 minutes
 setInterval(() => cleanupEmptyRooms(), 10 * 60 * 1000);
 // Cleanup disconnected players 
-setInterval(() => cleanupDisconnectedPlayers(io, 60_000), 5000);
+setInterval(() => cleanupDisconnectedPlayers(io), 5_000);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log("VS Wordle server running on", PORT));
