@@ -204,13 +204,6 @@ socket.on("forceLeaveRoom", () => {
   toast("You were removed from the room.");
 });
 
-$("rankedToggle").onchange = e => {
-  sendGameAction(roomId, {
-    type: "SET_RANKED",
-    ranked: e.target.checked,
-  userId: window.currentUser.id
-  });
-};
 function updateRankedUI() {
   const badge = $("rankedBadge");
   const toggle = $("rankedToggle");
