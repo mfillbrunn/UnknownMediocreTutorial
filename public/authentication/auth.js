@@ -395,4 +395,40 @@ function tryAutoRejoin() {
   );
 }
 
+socket.on("connect", async () => {
+  console.log("🔌 Connected");
+
+  const storedRoomId = localStorage.getItem("roomId");
+  const user = window.currentUser;
+
+  if (!storedRoomId || !user) return;
+
+  const username =
+    window.myProfile?.username ||
+    user.email ||
+    "Player";
+
+  socket.emit(
+    "joinRoom",
+    {
+      roomId: storedRoomId,
+      userId: user.id,
+      name: username
+    },
+    res => {
+      if (!res?.ok) {
+        console.warn("Auto-rejoin failed:", res?.error);
+        localStorage.removeItem("roomId");
+        return;
+      }
+
+      console.log("♻️ Rejoined room", storedRoomId);
+
+      // IMPORTANT: sync local state
+      window.roomId = storedRoomId;
+    }
+  );
+  window.socketReady = true;
+  maybeAutoRejoin();
+});
 
