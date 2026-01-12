@@ -146,7 +146,6 @@ function renderMenuAccountStatus() {
         <button class="link-btn" id="menuLoginBtn">Log in</button>
       </span>
     `;
-    $("menuLoginBtn").onclick = () => showScreen("accountScreen");
     return;
   }
 
