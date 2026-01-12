@@ -2,6 +2,10 @@ const emailInput = $("authEmail");
 const passwordInput = $("authPassword");
 const status = $("authStatus");
 const logoutBtn = $("logoutBtn");
+let authReady = false;
+let profileReady = false;
+let socketReady = false;
+let autoRejoinAttempted = false;
 
 $("signupBtn").onclick = async () => {
   const email = emailInput.value.trim();
@@ -65,30 +69,25 @@ window.supabase.auth.onAuthStateChange(async (event, session) => {
   window.currentUser = session?.user || null;
 
   if (event === "SIGNED_OUT") {
-    window.myProfile = null;
+    authReady = false;
+    profileReady = false;
+    autoRejoinAttempted = false;
     renderMenuAccountStatus();
     showStartup();
     return;
   }
 
-  if (event === "SIGNED_IN") {
-    renderMenuAccountStatus(); // email fallback is fine
+  if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
+    authReady = true;
+    renderMenuAccountStatus();
     showStartup();
 
     if (window.currentUser) {
       await loadMyProfile();
-      tryAutoRejoin();
+      profileReady = true;
+      maybeAutoRejoin();
     }
   }
-  if (event === "INITIAL_SESSION") {
-  renderMenuAccountStatus();
-  showStartup();
-
-  if (session?.user) {
-    window.currentUser = session.user;
-    loadMyProfile();
-  }
-}
 });
 
 
@@ -328,4 +327,19 @@ async function logout() {
   renderMenuAccountStatus();
   showStartup();
 }
+
+function maybeAutoRejoin() {
+  if (autoRejoinAttempted) return;
+
+  if (!authReady) return;
+  if (!socketReady) return;
+
+  const roomId = localStorage.getItem("roomId");
+  if (!roomId || !window.currentUser) return;
+
+  autoRejoinAttempted = true;
+  tryAutoRejoin();
+}
+
+
 
