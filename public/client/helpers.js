@@ -23,10 +23,6 @@ const hide = id => {
   el.classList.remove("active");
 };
 window.showStartup = function () {
-  show("startupScreen");
-  hide("lobby");
-  hide("menu");
-  hide("setterScreen");
-  hide("guesserScreen");
+  showScreen("startupScreen");
   document.body.classList.add("menu-mode");
-}
+};
