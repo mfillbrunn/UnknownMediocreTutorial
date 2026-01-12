@@ -3,10 +3,21 @@ const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer, startTimer} = require("../../utils/chessTimer");
 const { endGame } = require("./gameOver");
 const FORCE_TIMER_INTERVALS = {};
-
+///CONCEDE
 function handleNormalPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   const { ALLOWED_GUESSES, powerEngine } = context;
+  if (action.type === "CONCEDE") {
+  const role = room.players[action.playerId]?.role;
+  if (!role) return;
+  // Penalty guesses
+  if (role === state.guesser){
+    const CONCEDE_PENALTY = 10;
+    state.guessCount += CONCEDE_PENALTY;
+  }
+    endGame(state, roomId, io, room, context);
+  return;
+}
   /// GUESSER SUBMIT
   if (!state.pendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
     const g = action.guess.toLowerCase(); 
