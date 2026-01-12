@@ -8,8 +8,6 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   const { ALLOWED_GUESSES, powerEngine } = context;
   if (action.type === "CONCEDE") {
-  const role = room.players[action.playerId]?.role;
-  if (!role) return;
   // Penalty guesses
   if (role === state.guesser){
     const CONCEDE_PENALTY = 10;
