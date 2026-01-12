@@ -371,4 +371,10 @@ body.hide-constraints .constraint-row {
 .match-header h2:has(+ .timeout-note) {
   color: #ff4b5c;
 }
+.timeout-summary {
+  margin: 8px 0;
+  font-weight: 900;
+  color: #ff4b5c;
+  letter-spacing: 0.3px;
+}
 
