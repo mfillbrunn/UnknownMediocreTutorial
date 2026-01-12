@@ -59,11 +59,7 @@ $("loginBtn").onclick = async () => {
   status.textContent = error ? error.message : "Logged in";
 };
 
-logoutBtn.onclick = async () => {
-  await window.supabase.auth.signOut();
-  status.textContent = "Logged out";
-  clearRoom();
-};
+logoutBtn.onclick = logout;
 
 window.supabase.auth.onAuthStateChange(async (event, session) => {
   window.currentUser = session?.user || null;
@@ -75,7 +71,7 @@ window.supabase.auth.onAuthStateChange(async (event, session) => {
     return;
   }
 
-  if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
+  if (event === "SIGNED_IN") {
     renderMenuAccountStatus(); // email fallback is fine
     showStartup();
 
@@ -84,6 +80,15 @@ window.supabase.auth.onAuthStateChange(async (event, session) => {
       tryAutoRejoin();
     }
   }
+  if (event === "INITIAL_SESSION") {
+  renderMenuAccountStatus();
+  showStartup();
+
+  if (session?.user) {
+    window.currentUser = session.user;
+    loadMyProfile();
+  }
+}
 });
 
 
@@ -92,7 +97,9 @@ window.supabase.auth.onAuthStateChange(async (event, session) => {
 let profileLoadInProgress = false;
 
 async function loadMyProfile() {
-  if (!window.currentUser) return null;
+  if (!window.currentUser || profileLoadInProgress) return null;
+
+  profileLoadInProgress = true;
 
   try {
     const { data, error } = await window.supabase
@@ -105,14 +112,15 @@ async function loadMyProfile() {
 
     window.myProfile = data;
     onProfileReady();
-    renderMenuAccountStatus();
     return data;
   } catch (err) {
     console.error("Profile load failed:", err);
     return null;
+  } finally {
+    profileLoadInProgress = false;
+    renderMenuAccountStatus();
   }
 }
-
 
 
 function renderMenuAccountStatus() {
@@ -148,11 +156,7 @@ function renderMenuAccountStatus() {
       <button class="link-btn" id="menuLogoutBtn">Log out</button>
     </span>
   `;
-  $("menuLogoutBtn").onclick = async () => {
-  await window.supabase.auth.signOut();
-  status.textContent = "Logged out";
-  clearRoom();
-};
+  $("menuLogoutBtn").onclick = logout;
 
 }
 
@@ -316,4 +320,12 @@ function onProfileReady() {
   }
 }
 
+async function logout() {
+  await window.supabase.auth.signOut();
+  window.currentUser = null;
+  window.myProfile = null;
+  clearRoom();
+  renderMenuAccountStatus();
+  showStartup();
+}
 
