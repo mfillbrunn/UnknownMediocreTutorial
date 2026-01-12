@@ -36,7 +36,10 @@ async function applyRankedElo({ state, room, supabase }) {
 
   const winner = state.matchWinner; // "A" | "B" | null
   const tie = state.matchWinReason === "tie";
-
+  if (state.timeoutLoser) {
+    winner = state.timeoutLoser === "A" ? "B" : "A";
+    tie = false;
+  }
   const scoreA = tie ? 0.5 : winner === "A" ? 1 : 0;
   const scoreB = 1 - scoreA;
 
