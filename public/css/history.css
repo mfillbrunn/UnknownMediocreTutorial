@@ -360,3 +360,15 @@ body.hide-constraints .constraint-row {
   opacity: 1;
   animation: pulse-good 280ms cubic-bezier(0.4, 0, 0.2, 1) 2;
 }
+
+/* summary */
+
+.timeout-note {
+  margin-top: 6px;
+  font-weight: 800;
+  color: #ff4b5c;
+}
+.match-header h2:has(+ .timeout-note) {
+  color: #ff4b5c;
+}
+
