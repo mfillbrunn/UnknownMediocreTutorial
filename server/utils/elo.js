@@ -7,7 +7,7 @@ function eloDelta(rA, rB, scoreA, k = 32) {
   return Math.round(k * (scoreA - expectedA));
 }
 
-async function applyRankedElo({ state, room, supabase }) {
+async function applyRankedElo({ state, room, supabase,winner,tie }) {
   if (!state.ranked) return null;
 
   const mode = state.rankMode;
@@ -33,13 +33,6 @@ async function applyRankedElo({ state, room, supabase }) {
   // Resolve USER IDs (this was missing)
   const userA = room.players[socketA].userId;
   const userB = room.players[socketB].userId;
-
-  const winner = state.matchWinner; // "A" | "B" | null
-  const tie = state.matchWinReason === "tie";
-  if (state.timeoutLoser) {
-    winner = state.timeoutLoser === "A" ? "B" : "A";
-    tie = false;
-  }
   const scoreA = tie ? 0.5 : winner === "A" ? 1 : 0;
   const scoreB = 1 - scoreA;
 
