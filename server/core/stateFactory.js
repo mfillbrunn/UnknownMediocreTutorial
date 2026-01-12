@@ -8,7 +8,8 @@ function createInitialState() {
     phase: "lobby",
     host:null,
     roles:{},
-    
+    matchWinner:"",
+    matchWinReason:"",
   // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
     mode: null,          // instance of mode controller
     rankMode: "bullet",
