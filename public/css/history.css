@@ -364,17 +364,17 @@ body.hide-constraints .constraint-row {
 /* summary */
 
 .timeout-note {
-  margin-top: 6px;
+  margin-top: var(--sp-6);
   font-weight: 800;
-  color: #ff4b5c;
+  color: var(--setter-color);
 }
 .match-header h2:has(+ .timeout-note) {
-  color: #ff4b5c;
+  color: var(--setter-color);
 }
 .timeout-summary {
-  margin: 8px 0;
+  margin: var(--sp-8) 0;
   font-weight: 900;
-  color: #ff4b5c;
+  color: var(--setter-color);
   letter-spacing: 0.3px;
 }
 
