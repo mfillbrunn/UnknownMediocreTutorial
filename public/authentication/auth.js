@@ -396,7 +396,3 @@ socket.on("connect", () => {
   window.socketReady = true;
   maybeAutoRejoin();
 });
-
-  window.socketReady = true;
-  maybeAutoRejoin();
-});
