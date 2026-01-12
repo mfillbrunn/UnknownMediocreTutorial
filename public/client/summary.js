@@ -158,6 +158,14 @@ if (winReason === "timeout" && state.timeoutLoser) {
     </p>
   `;
 }
+let assassinationNote = "";
+if (state.powers?.assassinated) {
+  assassinationNote = `
+    <p class="assassination-note">
+      ☠ Assassination triggered — instant loss
+    </p>
+  `;
+}
 
 
 //----------------------------
@@ -189,13 +197,16 @@ if (setter.length || guesser.length) {
   let html = `
   <div class="match-header">
     <h2>${resultText}</h2>
-    <div> <h3>${scoreText}</h3> ${
-      winReason === "time"
-        ? `<p class="tie-breaker">
-             Tie on points. Winner by lower total time.
-           </p>`
-        : ""
-    }
+    <h3>${scoreText}</h3>
+      ${timeoutNote}
+      ${assassinationNote}
+      ${
+        winReason === "time"
+          ? `<p class="tie-breaker">
+               Tie on points. Winner by lower total time.
+             </p>`
+          : ""
+      }
     </div>
 
     <p class="match-meta">
@@ -241,13 +252,18 @@ if (setter.length || guesser.length) {
         <td>${i + 1}</td>
         <td>${getNameByRole(r.setter)}</td>
         <td>
-          ${r.guessCount}
-          ${
-            r.timeoutLoser
-              ? `<span class="timeout-badge">⏱</span>`
-              : ""
-          }
-        </td>
+  ${r.guessCount}
+  ${
+    r.timeoutLoser
+      ? `<span class="timeout-badge">⏱</span>`
+      : ""
+  }
+  ${
+    state.powers?.assassinated && isFinal
+      ? `<span class="assassination-badge">☠</span>`
+      : ""
+  }
+</td>
       <td>${formatDuration(r.time?.A || 0)}</td>
       <td>${formatDuration(r.time?.B || 0)}</td>
       </tr>
@@ -491,6 +507,10 @@ function buildShareText(state, myRole) {
 } = computeMatchResult(state, myRole);
 let finalWinner = winner;
 let finalWinReason = winReason;
+let assassinationLine = null;
+if (state.powers?.assassinated) {
+  assassinationLine = "☠ Assassination triggered";
+}
 
 if (state.timeoutLoser) {
   finalWinner = state.timeoutLoser === "A" ? "B" : "A";
@@ -572,6 +592,7 @@ if (setter.length || guesser.length) {
   const lines = [
     "VS Wordle result",
     `${resultIcon} ${winnerLabel} ${winnerPoints}–${loserPoints} ${loserName}`,
+    assassinationLine,
     `${powersLine} ⏱ ${timeLine}`,
     ...roundLines
   ].filter(Boolean);
