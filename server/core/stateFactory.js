@@ -8,7 +8,7 @@ function createInitialState() {
     phase: "lobby",
     host:null,
     roles:{},
-
+    
   // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
     mode: null,          // instance of mode controller
     rankMode: "bullet",
@@ -16,6 +16,7 @@ function createInitialState() {
     ranked : false,
     gameOverView: "match",
     canNextRound: false,
+    conceded: false,
     matchRounds: [],
     timeUsed: {
     A: 0,
