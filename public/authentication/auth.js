@@ -139,37 +139,41 @@ function renderMenuAccountStatus() {
   const el = $("menuAccountStatus");
   if (!el) return;
 
+  el.innerHTML = "";
+
   if (!window.currentUser) {
     el.innerHTML = `
       <span class="account-logged-out">
         Not logged in —
-        <button class="link-btn" id="menuLoginBtn">Log in</button>
+        <button class="link-btn menu-login-btn">Log in</button>
       </span>
     `;
+    el.querySelector(".menu-login-btn").onclick =
+      () => showScreen("accountScreen");
     return;
   }
 
   const p = window.myProfile;
   const name = p?.username || window.currentUser.email;
 
-  const elo =
-    p
-      ? `Elo: 
-         🚀 ${p.rating_bullet}
-         ⚡⚡ ${p.rating_blitz}
-         🧠 ${p.rating_deep}`
-      : "Loading rating…";
+  const elo = p
+    ? `Elo:
+       🚀 ${p.rating_bullet}
+       ⚡⚡ ${p.rating_blitz}
+       🧠 ${p.rating_deep}`
+    : "Loading rating…";
 
   el.innerHTML = `
     <span class="account-logged-in">
       <strong>${name}</strong><br/>
       <small>${elo}</small>
-      <button class="link-btn" id="menuLogoutBtn">Log out</button>
+      <button class="link-btn menu-logout-btn">Log out</button>
     </span>
   `;
-  $("menuLogoutBtn").onclick = logout;
 
+  el.querySelector(".menu-logout-btn").onclick = logout;
 }
+
 
 
 
@@ -423,4 +427,3 @@ socket.on("connect", async () => {
   window.socketReady = true;
   maybeAutoRejoin();
 });
-
