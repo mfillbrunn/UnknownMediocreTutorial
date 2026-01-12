@@ -331,13 +331,22 @@ function onProfileReady() {
 }
 
 async function logout() {
+  autoRejoinAttempted = false;
+  authReady = false;
+  profileReady = false;
+
+  localStorage.removeItem("roomId");
+
   await window.supabase.auth.signOut();
+
   window.currentUser = null;
   window.myProfile = null;
   clearRoom();
+
   renderMenuAccountStatus();
   showStartup();
 }
+
 
 function maybeAutoRejoin() {
   if (autoRejoinAttempted) return;
