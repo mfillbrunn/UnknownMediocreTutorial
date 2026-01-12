@@ -17,15 +17,21 @@ function computeMatchResult(state, myRole) {
   let winner = null;
   let winReason = "points";
 
-  if (points.A > points.B) {
-    winner = "A";
-  } else if (points.B > points.A) {
-    winner = "B";
-  } else if (time.A !== time.B) {
-    winner = time.A <= time.B ? "A" : "B";
-    winReason = "time";
+if (state.timeoutLoser) {
+    winner = state.timeoutLoser === "A" ? "B" : "A";
+    winReason = "timeout";
   } else {
-    winReason = "tie";
+    // Normal resolution
+    if (points.A > points.B) {
+      winner = "A";
+    } else if (points.B > points.A) {
+      winner = "B";
+    } else if (time.A !== time.B) {
+      winner = time.A <= time.B ? "A" : "B";
+      winReason = "time";
+    } else {
+      winReason = "tie";
+    }
   }
 
   const didWin = winner && myRole === winner;
@@ -34,7 +40,13 @@ function computeMatchResult(state, myRole) {
   const loserPoints = winner ? points[winner === "A" ? "B" : "A"] : points.A;
 
   const resultIcon =
-    winReason === "tie" ? "↔️" : didWin ? "🏆" : "❌";
+    winReason === "tie"
+      ? "↔️"
+      : winReason === "timeout"
+      ? "⏱️"
+      : didWin
+      ? "🏆"
+      : "❌";
 
   return {
     points,
@@ -106,30 +118,47 @@ function renderMatchSummary(container) {
   resultIcon
 } = computeMatchResult(state, myRole);
 
-let resultText =
-  winReason === "tie"
-    ? `${resultIcon} You tied`
-    : didWin
-      ? `${resultIcon} You won`
-      : `${resultIcon} You lost`;
-
-let scoreText;
-if (didWin===true){
-  scoreText = `Score: ${winnerPoints} – ${loserPoints}`;
-} else if (didWin===false){
-  scoreText = `Score: ${loserPoints} – ${winnerPoints}`;
+let resultText;
+if (winReason === "timeout") {
+  resultText = didWin
+    ? `⏱️ You won by timeout`
+    : `⏱️ You lost on time`;
+} else if (winReason === "tie") {
+  resultText = `${resultIcon} You tied`;
+} else {
+  resultText = didWin
+    ? `${resultIcon} You won`
+    : `${resultIcon} You lost`;
 }
-const timeoutRound = rounds.find(r => r.timeoutLoser);
 
-    let timeoutNote = "";
-    if (timeoutRound) {
-      const loserName = getNameByRole(timeoutRound.timeoutLoser);
-      timeoutNote = `
-        <p class="timeout-note">
-          ⏱ ${loserName} lost on time
-        </p>
-      `;
-    }
+let scoreText = "";
+if (winner !== null) {
+  if (winReason === "timeout") {
+    scoreText = `Final score (before timeout): ${
+      didWin
+        ? `${winnerPoints} – ${loserPoints}`
+        : `${loserPoints} – ${winnerPoints}`
+    }`;
+  } else {
+    scoreText = `Score: ${
+      didWin
+        ? `${winnerPoints} – ${loserPoints}`
+        : `${loserPoints} – ${winnerPoints}`
+    }`;
+  }
+}
+
+
+let timeoutNote = "";
+if (winReason === "timeout" && state.timeoutLoser) {
+  const loserName = getNameByRole(state.timeoutLoser);
+  timeoutNote = `
+    <p class="timeout-note">
+      ⏱ ${loserName} lost on time
+    </p>
+  `;
+}
+
 
 //----------------------------
   // POWERS
@@ -280,23 +309,21 @@ const setterName =
 
 const guesserName =
   guesserPlayerId ? state.playerNames[guesserPlayerId] : "—";
-  if (state.timeoutLoser) {
-  const loser =
-    state.timeoutLoser === state.setter
-      ? setterName
-      : guesserName;
+if (state.timeoutLoser && state.matchWinReason === "timeout") {
+  const loserName = getNameByRole(state.timeoutLoser);
+
+  const note =
+    state.matchAbandoned
+      ? "(match abandoned during simultaneous round)"
+      : "(lost on time)";
 
   html += `
     <p class="timeout-summary">
-      ⏱ ${loser} lost on time
-      ${
-        state.phase === "gameOver" && state.history.length === 0
-          ? "(simultaneous round timeout)"
-          : ""
-      }
+      ⏱ ${loserName} ${note}
     </p>
   `;
 }
+
 
   html += `
     <p class="summary-players">
@@ -307,7 +334,8 @@ const guesserName =
 
   const lastEntry = state.history[state.history.length - 1];
   if (
-    lastEntry &&
+    !state.timeoutLoser &&
+     lastEntry &&
     state.powers?.assassinWord &&
     lastEntry.guess === state.powers.assassinWord
   ) {
@@ -371,8 +399,12 @@ for (let i = 0; i < state.history.length; i++) {
     `;
   }
 
-  const remaining =
-    isFinal ? 0 : computeRemainingAfterIndex(i);
+ const remaining =
+  state.timeoutLoser
+    ? "—"
+    : isFinal
+      ? 0
+      : computeRemainingAfterIndex(i);
 
   html += `
     <tr class="${isFinal ? "final-row" : ""}">
@@ -457,22 +489,34 @@ function buildShareText(state, myRole) {
   loserPoints,
   resultIcon
 } = computeMatchResult(state, myRole);
+let finalWinner = winner;
+let finalWinReason = winReason;
 
+if (state.timeoutLoser) {
+  finalWinner = state.timeoutLoser === "A" ? "B" : "A";
+  finalWinReason = "timeout";
+}
 const winnerName =
-  winReason === "tie"
+  finalWinReason  === "tie"
     ? getNameByRole("A")
-    : getNameByRole(winner);
+    : getNameByRole(finalWinner);
 
 const loserName =
-  winReason === "tie"
+  finalWinReason === "tie"
     ? getNameByRole("B")
-    : getNameByRole(winner === "A" ? "B" : "A");
+    : getNameByRole(finalWinner === "A" ? "B" : "A");
 
-const winnerLabel =
-  winReason === "time"
-    ? `**${winnerName} (win by tiebreaker)**`
-    : `**${winnerName}**`;
+let winnerLabel;
 
+if (finalWinReason === "timeout") {
+  winnerLabel = `**${winnerName} (win by timeout)**`;
+} else if (finalWinReason === "time") {
+  winnerLabel = `**${winnerName} (win by tiebreaker)**`;
+} else if (finalWinReason === "tie") {
+  winnerLabel = `**${winnerName}**`;
+} else {
+  winnerLabel = `**${winnerName}**`;
+}
 
   // -----------------------
   // Time control line
@@ -510,14 +554,16 @@ if (setter.length || guesser.length) {
   // Per-round lines
   // -----------------------
   const roundLines = rounds.map((r, i) => {
-    const winnerOfRound = getNameByRole(r.guesser);
-    const secret =
+     const secret =
       r.history?.[r.history.length - 1]?.finalSecret?.toUpperCase() || "?????";
     const guesses = r.guessCount;
-
+     if (finalWinReason === "timeout") {
+        return `R${i + 1}: ${secret} (${guesses}) ⏱`;
+      }
+    const roundWinner = getNameByRole(r.guesser);
     const timeoutMark = r.timeoutLoser ? " ⏱" : "";
 
-    return `R${i + 1}: ${winnerOfRound} guessed ${secret} (${guesses})${timeoutMark}`;
+    return `R${i + 1}: ${roundWinner} guessed ${secret} (${guesses})${timeoutMark}`;
   });
 
   // -----------------------
