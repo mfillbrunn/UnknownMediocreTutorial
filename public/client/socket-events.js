@@ -1,13 +1,4 @@
-window.getUserId = function () {
-  return window.currentUser?.id || null;
-};
-function persistRoom(roomId) {
-  localStorage.setItem("roomId", roomId);
-}
 
-function clearRoom() {
-  localStorage.removeItem("roomId");
-}
 
 
 socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
@@ -282,43 +273,6 @@ $("rankedToggle")?.addEventListener("change", e => {
   });
 });
 
-//// TRY AUTO REJOIN
-function tryAutoRejoin() {
-  if (window.roomId) return;
-  const roomId = localStorage.getItem("roomId");
-  const user = window.currentUser;
-
-  if (!socket.connected) return;
-  if (!roomId || !user) return;
-
-  const username =
-    window.myProfile?.username ||
-    user.email ||
-    "Player";
-
-  console.log("♻️ Attempting auto-rejoin", roomId);
-
-  socket.emit(
-    "joinRoom",
-    {
-      roomId,
-      userId: user.id,
-      name: username
-    },
-    res => {
-      if (!res?.ok) {
-        console.warn("Auto-rejoin failed:", res?.error);
-        localStorage.removeItem("roomId");
-        return;
-      }
-
-      console.log("✅ Rejoined room", roomId);
-      window.roomId = roomId;
-      resetRoomUIState();
-      onRejoinUI();
-    }
-  );
-}
 function onRejoinUI() {
   // Always leave startup/menu mode
   document.body.classList.remove("menu-mode");
