@@ -34,8 +34,9 @@ function endGame(state, roomId, io, room, context) {
     state.gameOverView = res.view || "match"; 
     state.canNextRound = !!res.canNextRound;
   if (!state.canNextRound) {
+     const {winner,tie} = computeMatchResult(state, null);
     if (state.ranked) {
-      applyRankedElo({ state, room, supabase })
+      applyRankedElo({ state, room, supabase,winner,tie })
         .then(ratingChange => {
           return writeMatchHistory({
             state,
@@ -125,25 +126,25 @@ function computeMatchResult(state, myRole) {
   let winner = null;
   let winReason = "points";
 
-  if (points.A > points.B) {
-    winner = "A";
-  } else if (points.B > points.A) {
-    winner = "B";
-  } else if (time.A !== time.B) {
-    winner = time.A <= time.B ? "A" : "B";
-    winReason = "time";
+   if (state.timeoutLoser) {
+    winner = state.timeoutLoser === "A" ? "B" : "A";
+    winReason = "timeout";
   } else {
-    winReason = "tie";
+    // Normal resolution
+    if (points.A > points.B) {
+      winner = "A";
+    } else if (points.B > points.A) {
+      winner = "B";
+    } else if (time.A !== time.B) {
+      winner = time.A <= time.B ? "A" : "B";
+      winReason = "time";
+    } else {
+      winReason = "tie";
+    }
   }
-
   const didWin = winner && myRole === winner;
-
   const winnerPoints = winner ? points[winner] : points.A;
   const loserPoints = winner ? points[winner === "A" ? "B" : "A"] : points.A;
-
-  const resultIcon =
-    winReason === "tie" ? "↔️" : didWin ? "🏆" : "❌";
-
   return {
     points,
     time,
@@ -151,8 +152,7 @@ function computeMatchResult(state, myRole) {
     winReason,        
     didWin,
     winnerPoints,
-    loserPoints,
-    resultIcon
+    loserPoints
   };
 }
 async function writeMatchHistory({ state, room, supabase, ratingChange }) {
