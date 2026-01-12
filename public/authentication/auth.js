@@ -7,6 +7,17 @@ let profileReady = false;
 let socketReady = false;
 let autoRejoinAttempted = false;
 
+window.getUserId = function () {
+  return window.currentUser?.id || null;
+};
+function persistRoom(roomId) {
+  localStorage.setItem("roomId", roomId);
+}
+
+function clearRoom() {
+  localStorage.removeItem("roomId");
+}
+
 $("signupBtn").onclick = async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value;
