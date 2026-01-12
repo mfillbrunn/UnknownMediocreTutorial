@@ -325,13 +325,10 @@ const setterName =
 
 const guesserName =
   guesserPlayerId ? state.playerNames[guesserPlayerId] : "—";
-if (state.timeoutLoser && state.matchWinReason === "timeout") {
+if (state.timeoutLoser)  {
   const loserName = getNameByRole(state.timeoutLoser);
 
-  const note =
-    state.matchAbandoned
-      ? "(match abandoned during simultaneous round)"
-      : "(lost on time)";
+  const note ="(lost on time)";
 
   html += `
     <p class="timeout-summary">
