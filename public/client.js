@@ -198,6 +198,9 @@ onLobbyEvent(evt => {
   case "rolesSwitched":
     toast("Roles have been switched.");
     break;
+case "playerKicked":
+  toast("Opponent disconnected too long. You win.");
+  break;
 
 case "playerLeft": {
       const msg =
