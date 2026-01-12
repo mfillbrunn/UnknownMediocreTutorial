@@ -378,3 +378,9 @@ body.hide-constraints .constraint-row {
   letter-spacing: 0.3px;
 }
 
+.assassination-note {
+  margin-top: var(--sp-6);
+  font-weight: 900;
+  color: #7b1fa2; /* or your assassin color */
+  letter-spacing: 0.3px;
+}
