@@ -84,11 +84,6 @@ window.onLobbyEvent = function (handler) {
 // ------------------------------
 // CONNECTION LOGS
 // ------------------------------
-socket.on("connect", () => {
-  console.log("🔌 Connected");
-  socketReady = true;
-  maybeAutoRejoin();
-});
 
 socket.on("connect_error", err =>
   console.warn("❌ Connection error:", err.message)
