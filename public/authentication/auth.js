@@ -148,6 +148,12 @@ function renderMenuAccountStatus() {
       <button class="link-btn" id="menuLogoutBtn">Log out</button>
     </span>
   `;
+  $("menuLogoutBtn").onclick = async () => {
+  await window.supabase.auth.signOut();
+  status.textContent = "Logged out";
+  clearRoom();
+};
+
 }
 
 
