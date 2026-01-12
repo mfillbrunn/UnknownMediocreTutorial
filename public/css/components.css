@@ -817,3 +817,50 @@
   color: #ff4b5c;
   font-weight: 700;
 }
+
+/* concede button*/
+/* Role-themed danger button (Concede) */
+.danger-btn {
+  color: var(--role-accent);
+  border: 1.5px solid color-mix(
+    in srgb,
+    var(--role-accent) 70%,
+    transparent
+  );
+  background: transparent;
+
+  font-weight: 900;
+  letter-spacing: 0.4px;
+
+  transition:
+    background 0.15s var(--ease-ui),
+    box-shadow 0.15s var(--ease-ui),
+    transform 0.1s var(--ease-ui),
+    opacity 0.15s var(--ease-ui);
+}
+
+/* Hover: subtle danger glow in role color */
+.danger-btn:hover {
+  background: color-mix(
+    in srgb,
+    var(--role-accent) 18%,
+    transparent
+  );
+  box-shadow: 0 0 8px color-mix(
+    in srgb,
+    var(--role-accent) 45%,
+    transparent
+  );
+}
+
+/* Active: press feedback */
+.danger-btn:active {
+  transform: scale(0.96);
+}
+
+/* Optional: slightly dim when disabled */
+.danger-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
