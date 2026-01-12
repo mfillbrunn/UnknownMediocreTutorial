@@ -314,7 +314,7 @@ function tryAutoRejoin() {
 
       console.log("✅ Rejoined room", roomId);
       window.roomId = roomId;
-      resetRoomUIState
+      resetRoomUIState();
       onRejoinUI();
     }
   );
