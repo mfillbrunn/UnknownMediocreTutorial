@@ -129,10 +129,7 @@ function requireAuth(actionName = "continue") {
   }
   return true;
 }
-window.showScreen = (id) => {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-};
+
 
 // -----------------------------------------------------
 // Start up
