@@ -351,3 +351,11 @@ $("leaderboardBtn")?.addEventListener("click", () => {
   loadLeaderboard("bullet");
 });
 
+$("concedeBtn")?.addEventListener("click", () => {
+  if (!confirm("Are you sure you want to concede the match?")) return;
+
+  sendGameAction(roomId, {
+    type: "CONCEDE"
+  });
+});
+
