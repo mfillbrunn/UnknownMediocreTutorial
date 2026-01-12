@@ -2,10 +2,12 @@ const emailInput = $("authEmail");
 const passwordInput = $("authPassword");
 const status = $("authStatus");
 const logoutBtn = $("logoutBtn");
-let authReady = false;
-let profileReady = false;
-let socketReady = false;
-let autoRejoinAttempted = false;
+window.socketReady = false;
+window.authReady = false;
+window.profileReady = false;
+window.autoRejoinAttempted = false;
+
+
 
 window.getUserId = function () {
   return window.currentUser?.id || null;
@@ -79,23 +81,23 @@ logoutBtn.onclick = logout;
 window.supabase.auth.onAuthStateChange(async (event, session) => {
   window.currentUser = session?.user || null;
 
-  if (event === "SIGNED_OUT") {
-    authReady = false;
-    profileReady = false;
-    autoRejoinAttempted = false;
+ if (event === "SIGNED_OUT") {
+  window.authReady = false;
+  window.profileReady = false;
+  window.autoRejoinAttempted = false;
     renderMenuAccountStatus();
     showStartup();
     return;
   }
 
   if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
-    authReady = true;
+    window.authReady = true;
     renderMenuAccountStatus();
     showStartup();
 
     if (window.currentUser) {
       await loadMyProfile();
-      profileReady = true;
+      window.profileReady = true;
       maybeAutoRejoin();
     }
   }
@@ -348,52 +350,43 @@ async function logout() {
 }
 
 
-function maybeAutoRejoin() {
-  if (autoRejoinAttempted) return;
 
-  if (!authReady) return;
-  if (!socketReady) return;
+function maybeAutoRejoin() {
+  if (window.autoRejoinAttempted) return;
+  if (!window.socketReady) return;
+  if (!window.authReady) return;
 
   const roomId = localStorage.getItem("roomId");
   if (!roomId || !window.currentUser) return;
 
-  autoRejoinAttempted = true;
+  window.autoRejoinAttempted = true;
   tryAutoRejoin();
 }
 
 function tryAutoRejoin() {
-  const roomId = localStorage.getItem("roomId");
+  const storedRoomId = localStorage.getItem("roomId");
   const user = window.currentUser;
-  if (!roomId || !user) return;
+  if (!storedRoomId || !user) return;
+  if (!socket.connected) return;
 
-  const username =
-    window.myProfile?.username ||
-    user.email ||
-    "Player";
+  const username = window.myProfile?.username || user.email || "Player";
 
-  console.log("♻️ Attempting auto-rejoin", roomId);
-
-  socket.emit(
-    "joinRoom",
-    {
-      roomId,
-      userId: user.id,
-      name: username
-    },
-    res => {
-      if (!res?.ok) {
-        console.warn("Auto-rejoin failed:", res?.error);
-        localStorage.removeItem("roomId");
-        return;
-      }
-
-      console.log("✅ Rejoined room", roomId);
-      window.roomId = roomId;
-      resetRoomUIState();
-      onRejoinUI();
+  socket.emit("joinRoom", { roomId: storedRoomId, userId: user.id, name: username }, res => {
+    if (!res?.ok) {
+      console.warn("Auto-rejoin failed:", res?.error);
+      localStorage.removeItem("roomId");
+      window.autoRejoinAttempted = false; // allow retry on next connect
+      return;
     }
-  );
+
+    window.roomId = storedRoomId;
+
+    resetRoomUIState();
+    onRejoinUI();
+
+  });
 }
+
 
 socket.on("connect", async () => {
   console.log("🔌 Connected");
