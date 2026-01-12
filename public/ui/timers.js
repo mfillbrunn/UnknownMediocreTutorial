@@ -39,7 +39,13 @@ function applyTimer(elementId, role) {
   el.classList.remove("warn-30", "warn-10");
   if (seconds <= 10) el.classList.add("warn-10");
   else if (seconds <= 30) el.classList.add("warn-30");
-
+  // Time out counter
+  const container = el.parentElement?.querySelector(`.timeout-indicator[data-role="${role}"]`);
+  if (container && state.roundTimeouts) {
+    const used = state.roundTimeouts[role] || 0;
+    container.innerHTML = renderTimeoutClock(used, role);
+  }
+  
   // Increment detection (CHESS MODE ONLY)
   const prev = window.lastTimeRemaining[role];
   if (
@@ -92,5 +98,37 @@ function updateTimerVisibility() {
   blocks.forEach(block => {
     block.classList.toggle("hidden", !hasTimer);
   });
+}
+
+function renderTimeoutClock(used, role) {
+  const max = 3;
+  const size = 16;
+  const stroke = 2;
+
+  const segments = Array.from({ length: max }, (_, i) => {
+    const filled = i < used;
+    return `
+      <circle
+        cx="8"
+        cy="8"
+        r="${6 - i}"
+        fill="none"
+        stroke="${filled ? 'var(--timeout-used)' : 'var(--timeout-free)'}"
+        stroke-width="${stroke}"
+      />
+    `;
+  }).join("");
+
+  return `
+    <svg
+      width="${size}"
+      height="${size}"
+      viewBox="0 0 16 16"
+      class="timeout-clock ${used >= 2 ? 'danger' : ''}"
+      aria-label="Timeouts used"
+    >
+      ${segments}
+    </svg>
+  `;
 }
 
