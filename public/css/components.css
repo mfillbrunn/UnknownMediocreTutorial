@@ -839,20 +839,6 @@
     opacity 0.15s var(--ease-ui);
 }
 
-/* Hover: subtle danger glow in role color */
-.danger-btn:hover {
-  background: color-mix(
-    in srgb,
-    var(--role-accent) 18%,
-    transparent
-  );
-  box-shadow: 0 0 8px color-mix(
-    in srgb,
-    var(--role-accent) 45%,
-    transparent
-  );
-}
-
 /* Active: press feedback */
 .danger-btn:active {
   transform: scale(0.96);
