@@ -167,7 +167,7 @@ async function loadMyProfile() {
 
 
 
-window.renderMenuAccountStatus = function () {
+function renderMenuAccountStatus () {
   const el = $("menuAccountStatus");
   if (!el) return;
 
