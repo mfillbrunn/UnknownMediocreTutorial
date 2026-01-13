@@ -327,7 +327,10 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
 e.stopPropagation();
   if (!window.currentUser) return;
   const container = $("pastGamesContainer");
-  if (container) container.textContent = "Loading…";
+   if (container) {
+    container.classList.remove("hidden"); 
+    container.textContent = "Loading…";
+  }
 
 const myId = window.currentUser.id;
 
