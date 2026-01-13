@@ -291,28 +291,55 @@ function summarizeMatchPowers(rounds = []) {
     .map(powerToInlineIcon)
     .join(" ");
 }
+let leaderboardLoadInProgress = false;
+let pendingLeaderboardMode = null;
+
 async function loadLeaderboard(mode) {
   const list = $("leaderboardList");
   if (!list) return;
 
+  // If a load is already running, remember what we want next
+  if (leaderboardLoadInProgress) {
+    pendingLeaderboardMode = mode;
+    return;
+  }
+
+  leaderboardLoadInProgress = true;
+  pendingLeaderboardMode = null;
+
   list.textContent = "Loading…";
 
-  const ratingColumn = `rating_${mode}`;
+  try {
+    const ratingColumn = `rating_${mode}`;
 
-  const { data, error } = await window.supabase
-     .from("leaderboard_profiles")
+    const { data, error } = await window.supabase
+      .from("leaderboard_profiles")
       .select(`id, username, ${ratingColumn}`)
       .order(ratingColumn, { ascending: false })
       .limit(10);
 
-  if (error) {
-    console.error("Leaderboard load failed:", error);
-    list.textContent = "Failed to load leaderboard";
-    return;
-  }
+    if (error) throw error;
 
-  renderLeaderboard(data, mode);
+    renderLeaderboard(data, mode);
+
+  } catch (err) {
+    // ✅ Abort is NOT a failure
+    if (err?.name !== "AbortError") {
+      console.error("Leaderboard load failed:", err);
+      list.textContent = "Failed to load leaderboard";
+    }
+  } finally {
+    leaderboardLoadInProgress = false;
+
+    // 🔁 Retry the most recent request
+    if (pendingLeaderboardMode) {
+      const next = pendingLeaderboardMode;
+      pendingLeaderboardMode = null;
+      loadLeaderboard(next);
+    }
+  }
 }
+
 function renderLeaderboard(rows, mode) {
   const list = $("leaderboardList");
   if (!list) return;
@@ -346,13 +373,7 @@ document.querySelectorAll(".leaderboard-tab").forEach(btn => {
 });
 function onProfileReady() {
   renderMenuAccountStatus();
-    // If leaderboard screen is visible, refresh it
-  if (document.getElementById("leaderboardScreen")?.classList.contains("active")) {
-    const activeTab =
-      document.querySelector(".leaderboard-tab.active")?.dataset.mode;
-    if (activeTab) loadLeaderboard(activeTab);
-  }
-}
+ }
 
 async function logout() {
   localStorage.removeItem("myProfile");
