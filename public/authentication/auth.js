@@ -460,3 +460,6 @@ socket.on("connect", () => {
   window.socketReady = true;
   maybeAutoRejoin();
 });
+window.renderMenuAccountStatus = renderMenuAccountStatus;
+window.onProfileReady = onProfileReady;
+window.logout = logout;
