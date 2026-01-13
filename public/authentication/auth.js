@@ -1,5 +1,3 @@
-const emailInput = $("authEmail");
-const passwordInput = $("authPassword");
 const status = $("authStatus");
 const logoutBtn = $("logoutBtn");
 window.socketReady = false;
@@ -22,6 +20,31 @@ function formatTimeMode(tc) {
   if (!tc || tc.enabled === false || tc.rankMode === "notime") {
     return "No Time";
   }
+
+  switch (tc.rankMode) {
+    case "bullet":
+      return "Bullet (1 min / round)";
+    case "blitz":
+      return "Blitz (3 min / round)";
+    case "deep":
+      return "Deep (15 min total)";
+  }
+
+  if (tc.mode === "round" && Number.isFinite(tc.roundSeconds)) {
+    const min = Math.floor(tc.roundSeconds / 60);
+    return `${min} min / round`;
+  }
+
+  if (tc.mode === "chess" && Number.isFinite(tc.initialSeconds)) {
+    const min = Math.floor(tc.initialSeconds / 60);
+    const inc = Number.isFinite(tc.incrementSeconds)
+      ? ` +${tc.incrementSeconds}s`
+      : "";
+    return `${min} min${inc}`;
+  }
+
+  return "Custom";
+}
 function openSummary(matchId) {
   show("menu");
   hide("setterScreen");
@@ -30,6 +53,9 @@ function openSummary(matchId) {
 
   loadMatchSummary(matchId);
 }
+
+window.openSummary = openSummary;
+
 async function loadMatchSummary(matchId) {
   const { data, error } = await window.supabase
     .from("matches")
@@ -109,11 +135,21 @@ function clearRoom() {
 }
 
 $("signupBtn").onclick = async () => {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
+  const emailEl = $("authEmail");
+  const passwordEl = $("authPassword");
+  const usernameEl = $("usernameInput");
 
-  if (!email || !password) {
-    status.textContent = "Enter email and password";
+  if (!emailEl || !passwordEl || !usernameEl) {
+    status.textContent = "Please enter email, password, and username";
+    return;
+  }
+
+  const email = emailEl.value.trim();
+  const password = passwordEl.value;
+  const username = usernameEl.value.trim();
+
+  if (!email || !password || !username) {
+    status.textContent = "Email, password, and username required";
     return;
   }
 
@@ -156,12 +192,30 @@ $("signupBtn").onclick = async () => {
 };
 
 $("loginBtn").onclick = async () => {
+  const emailEl = $("authEmail");
+  const passwordEl = $("authPassword");
+
+  if (!emailEl || !passwordEl) {
+    status.textContent = "Please enter email and password";
+    return;
+  }
+
+  const email = emailEl.value.trim();
+  const password = passwordEl.value;
+
+  if (!email || !password) {
+    status.textContent = "Email and password required";
+    return;
+  }
+
   const { error } = await window.supabase.auth.signInWithPassword({
-    email: emailInput.value,
-    password: passwordInput.value
+    email,
+    password
   });
+
   status.textContent = error ? error.message : "Logged in";
 };
+
 
 logoutBtn.onclick = logout;
 
