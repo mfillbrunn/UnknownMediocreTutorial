@@ -214,12 +214,15 @@ $("showPastGamesBtn")?.addEventListener("click", async () => {
   const container = $("pastGamesContainer");
   if (container) container.textContent = "Loading…";
 
-  const { data, error } = await window.supabase
-    .from("matches")
-    .select("*")
-    .or(`player_a.eq.${window.currentUser.id},player_b.eq.${window.currentUser.id}`)
-    .order("created_at", { ascending: false })
-    .limit(20);
+const { data, error } = await window.supabase
+  .from("matches")
+  .select("*")
+  .or(`player_a.eq.${window.currentUser.id},player_b.eq.${window.currentUser.id}`)
+  .order("created_at", { ascending: false })
+  .limit(20);
+
+console.log("PAST GAMES RESULT", { data, error });
+
 
  if (error) {
    if (isAbortError(error)) return;
@@ -333,11 +336,14 @@ async function loadLeaderboard(mode) {
   try {
     const ratingColumn = `rating_${mode}`;
 
-    const { data, error } = await window.supabase
-      .from("leaderboard_profiles")
-      .select(`id, username, ${ratingColumn}`)
-      .order(ratingColumn, { ascending: false })
-      .limit(10);
+      const { data, error } = await window.supabase
+        .from("leaderboard_profiles")
+        .select(`id, username, ${ratingColumn}`)
+        .order(ratingColumn, { ascending: false })
+        .limit(10);
+      
+      console.log("LEADERBOARD RESULT", { data, error });
+
 
     if (error) throw error;
 
