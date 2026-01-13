@@ -86,31 +86,30 @@
 <section id="accountScreen" class="screen game-menu">
   <div class="menu-center">
     <h2 class="menu-title">Account</h2>
-  <button id="showPastGamesBtn">Past Games</button>
-    <div id="pastGamesContainer" class="past-games"></div>
-      <div id="authInputs">
-        <input id="authEmail" type="email" placeholder="Email" />
-        <input id="authPassword" type="password" placeholder="Password" />
-        <input id="usernameInput" type="text" placeholder="Username" maxlength="16"/>
-      </div>
-      
-      <button id="signupBtn" class="menu-btn primary">Sign Up</button>
-      <button id="loginBtn" class="menu-btn">Log In</button>
-      
-      <button id="saveUsernameBtn" class="menu-btn primary hidden">
-        Update Username
-      </button>
-      
-      <button id="logoutBtn" class="menu-btn hidden">
-        Log Out
-      </button>
 
-      <button id="backBtn" class="menu-btn">Back</button>
+    <div class="account-actions">
+      <button id="showPastGamesBtn" class="menu-btn">Past Games</button>
+    </div>
 
+    <div id="pastGamesContainer" class="past-games hidden"></div>
+
+    <div id="authInputs">...</div>
+
+    <button id="signupBtn" class="menu-btn primary">Sign Up</button>
+    <button id="loginBtn" class="menu-btn">Log In</button>
+
+    <button id="saveUsernameBtn" class="menu-btn primary hidden">
+      Update Username
+    </button>
+
+    <button id="logoutBtn" class="menu-btn hidden">Log Out</button>
+    <button id="backBtn" class="menu-btn">Back</button>
 
     <p id="authStatus" class="auth-status"></p>
   </div>
 </section>
+
+
 
 <!-- ========== LOBBY ========== -->
 <section id="lobby" class="screen screen-lobby">
