@@ -294,7 +294,17 @@ if (setter.length || guesser.length) {
       ${rounds.map((r, i) => renderStoredRoundSummary(r, i)).join("")}
     </div>
   `;
-
+  
+  html += `
+  <div class="summary-actions">
+    <button id="newMatchBtn" class="primary-btn">
+      New Match
+    </button>
+    <button id="leaveSummaryBtn" class="secondary-btn danger">
+      Leave
+    </button>
+  </div>
+`;
   container.innerHTML = html;
 
   // Toggle logic
@@ -306,6 +316,19 @@ if (setter.length || guesser.length) {
     details.toggleAttribute("hidden");
     btn.textContent = open ? "Hide Round Details" : "Show Round Details";
   };
+  const leaveBtn = $("leaveSummaryBtn");
+if (leaveBtn) {
+  leaveBtn.onclick = () => {
+    socket.emit("leaveRoom", {}, () => {
+      roomId = null;
+      clearRoom();
+      state = null;          // 🔴 important: clear client game state
+      window.state = null;
+      showStartup();
+    });
+  };
+}
+
 }
 
 
@@ -455,6 +478,8 @@ html += `
       sendGameAction(roomId, { type: "NEXT_ROUND" });
     };
   }
+
+  
 };
 
 /// STORED ROUND DETAILS
