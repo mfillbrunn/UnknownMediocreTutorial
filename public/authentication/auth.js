@@ -204,6 +204,11 @@ function renderMenuAccountStatus() {
 $("showPastGamesBtn")?.addEventListener("click", async () => {
   if (!window.currentUser) return;
 
+  showScreen("accountScreen"); // or a dedicated past-games screen
+
+  const container = $("pastGamesContainer");
+  if (container) container.textContent = "Loading…";
+
   const { data, error } = await window.supabase
     .from("matches")
     .select("*")
@@ -211,8 +216,15 @@ $("showPastGamesBtn")?.addEventListener("click", async () => {
     .order("created_at", { ascending: false })
     .limit(20);
 
-  if (!error) renderPastGames(data);
+  if (error) {
+    console.error("Past games load failed:", error);
+    if (container) container.textContent = "Failed to load games";
+    return;
+  }
+
+  renderPastGames(data);
 });
+
 
 
 function renderPastGames(matches) {
