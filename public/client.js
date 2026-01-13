@@ -75,37 +75,28 @@ function enterMenuMode() {
 function exitMenuMode() {
   document.body.classList.remove("menu-mode");
 }
-function getPlayerName() {
-  if (window.myProfile?.username) {
-    return window.myProfile.username;
-  }
-
   // Fallback (should rarely happen)
   return "Player";
 }
-
+function mySocketId() {
+  return socket?.id || null;
+}
 
 function updateRoleCards() {
-  if (!state || !state.roles || !state.playerNames) return;
+  if (!state?.roles || !state.playerNames) return;
 
-  const setterPlayerId = Object.keys(state.roles)
-    .find(id => state.roles[id] === "A");
+  const setterSocketId =
+    Object.keys(state.roles).find(id => state.roles[id] === "A");
+  const guesserSocketId =
+    Object.keys(state.roles).find(id => state.roles[id] === "B");
 
-  const guesserPlayerId = Object.keys(state.roles)
-    .find(id => state.roles[id] === "B");
+  $("setterName").textContent =
+    setterSocketId ? state.playerNames[setterSocketId] : "—";
 
-  const setterEl = $("setterName");
-  if (setterEl) {
-    setterEl.textContent =
-      setterPlayerId ? state.playerNames[setterPlayerId] : "—";
-  }
-
-  const guesserEl = $("guesserName");
-  if (guesserEl) {
-    guesserEl.textContent =
-      guesserPlayerId ? state.playerNames[guesserPlayerId] : "—";
-  }
+  $("guesserName").textContent =
+    guesserSocketId ? state.playerNames[guesserSocketId] : "—";
 }
+
 
 function getPlayerNameByRole(role) {
   if (!state || !state.roles || !state.playerNames) return "—";
