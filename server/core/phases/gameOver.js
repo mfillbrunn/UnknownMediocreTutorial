@@ -17,15 +17,8 @@ function endGame(state, roomId, io, room, context) {
    } 
    state.matchRounds = state.matchRounds || []; 
    if (state.powers.assassinated) {state.guessCount = state.guessCount + state.powers.assassinPoints;} 
-   state.matchRounds.push({
-    setter: state.setter,
-    guesser: state.guesser,
-    guessCount: state.guessCount,
-       time: {
-    A: state.timeUsed.A,
-    B: state.timeUsed.B,
-       },
-         timeoutLoser: state.timeoutLoser || null,
+   state.matchRounds.push({setter: state.setter, guesser: state.guesser, guessCount: state.guessCount,
+       time: { A: state.timeUsed.A, B: state.timeUsed.B,}, timeoutLoser: state.timeoutLoser || null,
     history: JSON.parse(JSON.stringify(state.history)),
     powers: JSON.parse(JSON.stringify(state.activePowers || [])),
   });
@@ -37,14 +30,7 @@ function endGame(state, roomId, io, room, context) {
      const {winner,tie} = computeMatchResult(state, null);
     if (state.ranked) {
       applyRankedElo({ state, room, supabase,winner,tie })
-        .then(ratingChange => {
-          return writeMatchHistory({
-            state,
-            room,
-            supabase,
-            ratingChange
-          });
-        })
+        .then(ratingChange => {return writeMatchHistory({state,room,supabase,ratingChange});})
         .catch(err => console.error("Ranked match persistence failed:", err));
     }else {
        writeMatchHistory({ state, room, supabase })
@@ -55,6 +41,7 @@ function endGame(state, roomId, io, room, context) {
     emitStateForAllPlayers(roomId, room, io)
 }
 }
+
 function handleGameOverPhase(room, state, action, role, roomId, context) {
   const io = context.io;
    ///NEXT ROUND
@@ -76,6 +63,11 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     state.gameOverView = "match";
     state.canNextRound = false;
     state.phase = res.phase || "simultaneous";    
+     for (const sid of Object.keys(state.roles)) {
+        state.roles[sid] = state.roles[sid] === "A" ? "B" : "A";
+      }
+      state.setter = "A";
+      state.guesser = "B";
     emitLobbyEvent(io, roomId, { type: "hideLobby" });
     emitStateForAllPlayers(roomId, room, io);
     return;
@@ -98,7 +90,6 @@ if (action.type === "NEW_MATCH") {
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
-
   return;
 }
 
