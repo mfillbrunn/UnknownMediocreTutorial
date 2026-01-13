@@ -6,6 +6,17 @@ window.socketReady = false;
 window.authReady = false;
 window.profileReady = false;
 window.autoRejoinAttempted = false;
+window.currentUser = null;
+window.myProfile = null;
+
+(async () => {
+  const { data } = await window.supabase.auth.getSession();
+  window.currentUser = data.session?.user || null;
+  updateAccountUI();
+  renderMenuAccountStatus();
+})();
+
+
 
 function formatTimeMode(tc) {
   if (!tc || tc.enabled === false || tc.rankMode === "notime") {
@@ -548,7 +559,10 @@ function updateAccountUI() {
   const root = $("accountScreen");
   if (!root) return;
 
-  const loggedIn = !!window.currentUser;
+  const loggedIn =
+    !!window.currentUser &&
+    !!window.currentUser.id;
+
 
   root.querySelector("#authInputs")
     ?.classList.toggle("hidden", loggedIn);
