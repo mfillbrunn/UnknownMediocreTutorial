@@ -243,22 +243,6 @@ function onRejoinUI() {
   show("lobby");
 }
 
-function resetRoomUIState() {
-  // Reset power engine
-  if (window.PowerEngine) {
-    PowerEngine._initialized = false;
-    PowerEngine._buttonsRendered = false;
-  }
-
-  // Reset per-room flags
-  roleAssigned = false;
-  localGuesserDraft = "";
-  lastSimulSecret = false;
-  lastSimulGuess = false;
-
-  // Optional: clear any cached UI state
-  resetKeyboards?.();
-}
 $("leaderboardBtn")?.addEventListener("click", () => {
   showScreen("leaderboardScreen");
   loadLeaderboard("bullet");
