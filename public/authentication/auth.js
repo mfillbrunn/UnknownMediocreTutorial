@@ -149,7 +149,6 @@ $("loginBtn").onclick = async () => {
     email: emailInput.value,
     password: passwordInput.value
   });
-
   status.textContent = error ? error.message : "Logged in";
 };
 
@@ -162,6 +161,7 @@ window.supabase.auth.onAuthStateChange(async (event, session) => {
   window.authReady = false;
   window.profileReady = false;
   window.autoRejoinAttempted = false;
+   updateAccountUI();
     renderMenuAccountStatus();
     showStartup();
     return;
@@ -169,6 +169,7 @@ window.supabase.auth.onAuthStateChange(async (event, session) => {
 
   if (event === "SIGNED_IN") {
     window.authReady = true;
+    updateAccountUI();
     renderMenuAccountStatus();
     showStartup();
 
@@ -218,21 +219,20 @@ async function loadMyProfile() {
       window.myProfile = created;
       localStorage.setItem("myProfile", JSON.stringify(created));
       onProfileReady();
+      updateAccountUI();
       return created;
     }
 
     window.myProfile = data;
     localStorage.setItem("myProfile", JSON.stringify(data));
     onProfileReady();
+    updateAccountUI();
     return data;
 
   } finally {
     profileLoadInProgress = false;
   }
 }
-
-
-
 
 function renderMenuAccountStatus () {
   const el = $("menuAccountStatus");
@@ -278,10 +278,9 @@ function renderMenuAccountStatus () {
 
 // Fetch past games
 $("showPastGamesBtn")?.addEventListener("click", async () => {
+  e.preventDefault();
+e.stopPropagation();
   if (!window.currentUser) return;
-
-  showScreen("accountScreen"); // or a dedicated past-games screen
-
   const container = $("pastGamesContainer");
   if (container) container.textContent = "Loading…";
 
@@ -505,7 +504,7 @@ async function logout() {
   window.currentUser = null;
   window.myProfile = null;
   clearRoom();
-
+  updateAccountUI();
   renderMenuAccountStatus();
   showStartup();
 }
@@ -544,6 +543,42 @@ function tryAutoRejoin() {
     onRejoinUI();
 
   });
+}
+function updateAccountUI() {
+  const root = $("accountScreen");
+  if (!root) return;
+
+  const loggedIn = !!window.currentUser;
+
+  root.querySelector("#authInputs")
+    ?.classList.toggle("hidden", loggedIn);
+
+  root.querySelector("#signupBtn")
+    ?.classList.toggle("hidden", loggedIn);
+
+  root.querySelector("#loginBtn")
+    ?.classList.toggle("hidden", loggedIn);
+
+  root.querySelector("#logoutBtn")
+    ?.classList.toggle("hidden", !loggedIn);
+
+  root.querySelector("#showPastGamesBtn")
+    ?.classList.toggle("hidden", !loggedIn);
+
+  // Username handling
+  if (loggedIn) {
+    root.querySelector("#saveUsernameBtn")
+      ?.classList.remove("hidden");
+
+    root.querySelector("#usernameInput")
+      ?.classList.add("hidden");
+  } else {
+    root.querySelector("#saveUsernameBtn")
+      ?.classList.add("hidden");
+
+    root.querySelector("#usernameInput")
+      ?.classList.remove("hidden");
+  }
 }
 
 
