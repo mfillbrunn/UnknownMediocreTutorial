@@ -63,11 +63,6 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     state.gameOverView = "match";
     state.canNextRound = false;
     state.phase = res.phase || "simultaneous";    
-     for (const sid of Object.keys(state.roles)) {
-        state.roles[sid] = state.roles[sid] === "A" ? "B" : "A";
-      }
-      state.setter = "A";
-      state.guesser = "B";
     emitLobbyEvent(io, roomId, { type: "hideLobby" });
     emitStateForAllPlayers(roomId, room, io);
     return;
