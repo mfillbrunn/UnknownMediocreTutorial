@@ -7,6 +7,37 @@ window.authReady = false;
 window.profileReady = false;
 window.autoRejoinAttempted = false;
 
+function formatTimeMode(tc) {
+  if (!tc || tc.enabled === false || tc.rankMode === "notime") {
+    return "No Time";
+  }
+
+  // Prefer rankMode (authoritative)
+  switch (tc.rankMode) {
+    case "bullet":
+      return "Bullet (1 min / round)";
+    case "blitz":
+      return "Blitz (3 min / round)";
+    case "deep":
+      return "Deep (15 min total)";
+  }
+
+  // Fallbacks for custom / legacy data
+  if (tc.mode === "round" && Number.isFinite(tc.roundSeconds)) {
+    const min = Math.floor(tc.roundSeconds / 60);
+    return `${min} min / round`;
+  }
+
+  if (tc.mode === "chess" && Number.isFinite(tc.initialSeconds)) {
+    const min = Math.floor(tc.initialSeconds / 60);
+    const inc = Number.isFinite(tc.incrementSeconds)
+      ? ` +${tc.incrementSeconds}s`
+      : "";
+    return `${min} min${inc}`;
+  }
+
+  return "Custom";
+}
 
 function isAbortError(err) {
    return (
