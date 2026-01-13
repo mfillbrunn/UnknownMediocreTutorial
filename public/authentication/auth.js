@@ -6,12 +6,15 @@ window.socketReady = false;
 window.authReady = false;
 window.profileReady = false;
 window.autoRejoinAttempted = false;
-const { data, error } = await window.supabase
-  .from("leaderboard_profiles")
-  .select("id")
-  .limit(1);
 
-console.log({ data, error });
+(async () => {
+  const { data, error } = await window.supabase
+    .from("leaderboard_profiles")
+    .select("id")
+    .limit(1);
+
+  console.log({ data, error });
+})();
 
 // ===== APP BOOTUP =====
 (() => {
@@ -164,7 +167,7 @@ async function loadMyProfile() {
 
 
 
-function renderMenuAccountStatus() {
+window.renderMenuAccountStatus = function () {
   const el = $("menuAccountStatus");
   if (!el) return;
 
