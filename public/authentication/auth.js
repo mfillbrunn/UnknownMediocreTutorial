@@ -9,10 +9,19 @@ window.myProfile = null;
 
 (async () => {
   const { data } = await window.supabase.auth.getSession();
-  window.currentUser = data.session?.user || null;
+
+  if (data.session?.user) {
+    window.currentUser = data.session.user;
+    window.authReady = true; // ✅ THIS WAS MISSING
+  } else {
+    window.currentUser = null;
+    window.authReady = false;
+  }
+
   updateAccountUI();
   renderMenuAccountStatus();
 })();
+
 
 
 
