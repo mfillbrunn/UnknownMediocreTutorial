@@ -7,14 +7,13 @@ window.authReady = false;
 window.profileReady = false;
 window.autoRejoinAttempted = false;
 
-(async () => {
-  const { data, error } = await window.supabase
-    .from("leaderboard_profiles")
-    .select("id")
-    .limit(1);
 
-  console.log({ data, error });
-})();
+function isAbortError(err) {
+   return (
+     err?.name === "AbortError" ||
+     err?.message?.includes("AbortError")
+   );
+ }
 
 // ===== APP BOOTUP =====
 (() => {
@@ -111,7 +110,7 @@ window.supabase.auth.onAuthStateChange(async (event, session) => {
     return;
   }
 
-  if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
+  if (event === "SIGNED_IN") {
     window.authReady = true;
     renderMenuAccountStatus();
     showStartup();
@@ -154,13 +153,10 @@ async function loadMyProfile() {
     onProfileReady(); // renders menu once, with real data
     return data;
   } catch (err) {
-  // ✅ Abort is NOT a real failure
-  if (err?.name === "AbortError") {
-    return null;
-  }
-  console.error("Profile load failed:", err);
-  return null;
-} finally {
+     if (isAbortError(err)) return null;
+     console.error("Profile load failed:", err);
+     return null;
+  } finally {
     profileLoadInProgress = false;
   }
 }
@@ -225,11 +221,12 @@ $("showPastGamesBtn")?.addEventListener("click", async () => {
     .order("created_at", { ascending: false })
     .limit(20);
 
-  if (error) {
-    console.error("Past games load failed:", error);
-    if (container) container.textContent = "Failed to load games";
-    return;
-  }
+ if (error) {
+   if (isAbortError(error)) return;
+   console.error("Past games load failed:", error);
+   if (container) container.textContent = "Failed to load games";
+   return;
+ }
 
   renderPastGames(data);
 });
@@ -347,11 +344,9 @@ async function loadLeaderboard(mode) {
     renderLeaderboard(data, mode);
 
   } catch (err) {
-    // ✅ Abort is expected, ignore it
-    if (err?.name !== "AbortError") {
-      console.error("Leaderboard load failed:", err);
-      list.textContent = "Failed to load leaderboard";
-    }
+     if (isAbortError(err)) return;
+     console.error("Leaderboard load failed:", err);
+     list.textContent = "Failed to load leaderboard";
   } finally {
     leaderboardLoadInProgress = false;
 
