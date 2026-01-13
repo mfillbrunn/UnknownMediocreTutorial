@@ -11,6 +11,32 @@ function formatTimeMode(tc) {
   if (!tc || tc.enabled === false || tc.rankMode === "notime") {
     return "No Time";
   }
+function openSummary(matchId) {
+  show("menu");
+  hide("setterScreen");
+  hide("guesserScreen");
+  hide("lobby");
+
+  loadMatchSummary(matchId);
+}
+async function loadMatchSummary(matchId) {
+  const { data, error } = await window.supabase
+    .from("matches")
+    .select("*")
+    .eq("id", matchId)
+    .single();
+
+  if (error) {
+    console.error("Failed to load match summary:", error);
+    return;
+  }
+
+  $("roundSummary").textContent =
+    `Match ${matchId} — ${data.win_reason || "Completed"}`;
+}
+
+window.openSummary = openSummary;
+
 
   // Prefer rankMode (authoritative)
   switch (tc.rankMode) {
@@ -158,39 +184,53 @@ let profileLoadInProgress = false;
 
 async function loadMyProfile() {
   if (!window.currentUser || profileLoadInProgress) return null;
-
   profileLoadInProgress = true;
 
   try {
     const { data, error } = await window.supabase
       .from("profiles")
-      .select(`
-        id,
-        username,
-        rating_bullet,
-        rating_blitz,
-        rating_notime,
-        rating_deep
-      `)
+      .select("id, username, rating_bullet, rating_blitz, rating_notime, rating_deep")
       .eq("id", window.currentUser.id)
       .maybeSingle();
 
     if (error) throw error;
-    if (!data) return null;
+
+    // ✅ If missing, create it
+    if (!data) {
+      const email = window.currentUser.email || "";
+      const username = email ? email.split("@")[0] : "player";
+
+      const { data: created, error: createErr } = await window.supabase
+        .from("profiles")
+        .insert({
+          id: window.currentUser.id,
+          username,
+          rating_bullet: 1200,
+          rating_blitz: 1200,
+          rating_notime: 1200,
+          rating_deep: 1200
+        })
+        .select("id, username, rating_bullet, rating_blitz, rating_notime, rating_deep")
+        .single();
+
+      if (createErr) throw createErr;
+
+      window.myProfile = created;
+      localStorage.setItem("myProfile", JSON.stringify(created));
+      onProfileReady();
+      return created;
+    }
 
     window.myProfile = data;
     localStorage.setItem("myProfile", JSON.stringify(data));
-
-    onProfileReady(); // renders menu once, with real data
+    onProfileReady();
     return data;
-  } catch (err) {
-     if (isAbortError(err)) return null;
-     console.error("Profile load failed:", err);
-     return null;
+
   } finally {
     profileLoadInProgress = false;
   }
 }
+
 
 
 
@@ -245,12 +285,28 @@ $("showPastGamesBtn")?.addEventListener("click", async () => {
   const container = $("pastGamesContainer");
   if (container) container.textContent = "Loading…";
 
+const myId = window.currentUser.id;
+
 const { data, error } = await window.supabase
   .from("matches")
-  .select("*")
-  .or(`player_a.eq.${window.currentUser.id},player_b.eq.${window.currentUser.id}`)
+  .select(`
+    id,
+    created_at,
+    ranked,
+    time_control,
+    player_a,
+    player_b,
+    winner,
+    score_a,
+    score_b,
+    rounds,
+    player_a_profile:profiles!matches_player_a_fkey(username),
+    player_b_profile:profiles!matches_player_b_fkey(username)
+  `)
+  .or(`player_a.eq.${myId},player_b.eq.${myId}`)
   .order("created_at", { ascending: false })
   .limit(20);
+
 
 console.log("PAST GAMES RESULT", { data, error });
 
@@ -275,7 +331,11 @@ function renderPastGames(matches) {
 
   container.innerHTML = matches.map(m => {
     const opponentName =
-      m.opponent_name || "Opponent";
+  m.player_a === myId
+    ? m.player_b_profile?.username
+    : m.player_a_profile?.username
+  || "Opponent";
+
 
     let resultLabel = "Tie";
     let resultIcon = "↔️";
