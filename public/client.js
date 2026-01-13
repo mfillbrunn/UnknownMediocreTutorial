@@ -75,9 +75,7 @@ function enterMenuMode() {
 function exitMenuMode() {
   document.body.classList.remove("menu-mode");
 }
-  // Fallback (should rarely happen)
-  return "Player";
-}
+
 function mySocketId() {
   return socket?.id || null;
 }
