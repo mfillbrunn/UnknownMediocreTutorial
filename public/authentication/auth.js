@@ -103,9 +103,6 @@ window.supabase.auth.onAuthStateChange(async (event, session) => {
   }
 });
 
-
-
-
 let profileLoadInProgress = false;
 
 async function loadMyProfile() {
@@ -116,23 +113,33 @@ async function loadMyProfile() {
   try {
     const { data, error } = await window.supabase
       .from("profiles")
-      .select("*")
+      .select(`
+        id,
+        username,
+        rating_bullet,
+        rating_blitz,
+        rating_notime,
+        rating_deep
+      `)
       .eq("id", window.currentUser.id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) return null;
 
     window.myProfile = data;
-    onProfileReady();
+    localStorage.setItem("myProfile", JSON.stringify(data));
+
+    onProfileReady(); // renders menu once, with real data
     return data;
   } catch (err) {
     console.error("Profile load failed:", err);
     return null;
   } finally {
     profileLoadInProgress = false;
-    renderMenuAccountStatus();
   }
 }
+
 
 
 function renderMenuAccountStatus() {
@@ -336,6 +343,7 @@ function onProfileReady() {
 }
 
 async function logout() {
+  localStorage.removeItem("myProfile");
   autoRejoinAttempted = false;
   authReady = false;
   profileReady = false;
