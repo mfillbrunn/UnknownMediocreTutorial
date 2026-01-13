@@ -463,3 +463,4 @@ socket.on("connect", () => {
 window.renderMenuAccountStatus = renderMenuAccountStatus;
 window.onProfileReady = onProfileReady;
 window.logout = logout;
+window.showStartup = showStartup;
