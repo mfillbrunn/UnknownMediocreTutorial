@@ -83,21 +83,29 @@ function powerToInlineLabel(powerId) {
 ///SUMMARY SCREEN ROUTER
 window.updateSummary = function updateSummary() {
   const container = $("roundSummary");
-  if (  !state || state.phase !== "gameOver") {
+  const globalNewMatchBtn = $("newMatchBtn");
+
+  if (!state || state.phase !== "gameOver") {
     container.innerHTML = "";
+    if (globalNewMatchBtn) globalNewMatchBtn.classList.remove("hidden");
     return;
   }
+
   updateMenuRoomCode();
+
   if (state.gameOverView === "round") {
+    if (globalNewMatchBtn) globalNewMatchBtn.classList.add("hidden");
     renderRoundSummary(container);
     return;
   }
+
   if (state.gameOverView === "match") {
+    if (globalNewMatchBtn) globalNewMatchBtn.classList.add("hidden");
     renderMatchSummary(container);
     return;
   }
-  return;
-}
+};
+
 
 ///MATCH SUMMARY
 
@@ -477,9 +485,7 @@ html += `
     btn.onclick = () => {
       sendGameAction(roomId, { type: "NEXT_ROUND" });
     };
-  }
-
-  
+  }  
 };
 
 /// STORED ROUND DETAILS
