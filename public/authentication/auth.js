@@ -145,9 +145,13 @@ async function loadMyProfile() {
     onProfileReady(); // renders menu once, with real data
     return data;
   } catch (err) {
-    console.error("Profile load failed:", err);
+  // ✅ Abort is NOT a real failure
+  if (err?.name === "AbortError") {
     return null;
-  } finally {
+  }
+  console.error("Profile load failed:", err);
+  return null;
+} finally {
     profileLoadInProgress = false;
   }
 }
@@ -298,7 +302,6 @@ async function loadLeaderboard(mode) {
   const list = $("leaderboardList");
   if (!list) return;
 
-  // If a load is already running, remember what we want next
   if (leaderboardLoadInProgress) {
     pendingLeaderboardMode = mode;
     return;
@@ -323,7 +326,7 @@ async function loadLeaderboard(mode) {
     renderLeaderboard(data, mode);
 
   } catch (err) {
-    // ✅ Abort is NOT a failure
+    // ✅ Abort is expected, ignore it
     if (err?.name !== "AbortError") {
       console.error("Leaderboard load failed:", err);
       list.textContent = "Failed to load leaderboard";
@@ -339,6 +342,7 @@ async function loadLeaderboard(mode) {
     }
   }
 }
+
 
 function renderLeaderboard(rows, mode) {
   const list = $("leaderboardList");
