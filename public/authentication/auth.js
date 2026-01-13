@@ -586,8 +586,8 @@ function updateAccountUI() {
 
   const loggedIn =
     !!window.currentUser &&
-    !!window.currentUser.id;
-
+    !!window.currentUser.id &&
+    window.authReady;
 
   root.querySelector("#authInputs")
     ?.classList.toggle("hidden", loggedIn);
@@ -603,22 +603,8 @@ function updateAccountUI() {
 
   root.querySelector("#showPastGamesBtn")
     ?.classList.toggle("hidden", !loggedIn);
-
-  // Username handling
-  if (loggedIn) {
-    root.querySelector("#saveUsernameBtn")
-      ?.classList.remove("hidden");
-
-    root.querySelector("#usernameInput")
-      ?.classList.add("hidden");
-  } else {
-    root.querySelector("#saveUsernameBtn")
-      ?.classList.add("hidden");
-
-    root.querySelector("#usernameInput")
-      ?.classList.remove("hidden");
-  }
 }
+
 
 
 socket.on("connect", () => {
