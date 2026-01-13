@@ -403,8 +403,6 @@ function tryAutoRejoin() {
     }
 
     window.roomId = storedRoomId;
-
-    resetRoomUIState();
     onRejoinUI();
 
   });
