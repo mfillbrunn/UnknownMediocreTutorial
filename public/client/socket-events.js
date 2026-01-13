@@ -194,10 +194,13 @@ $("leaveRoomBtn")?.addEventListener("click", () => {
 });
 
 $("accountBtn").onclick = () => {
+  document.body.classList.remove("menu-mode"); 
   showScreen("accountScreen");
   updateAccountUI(); 
 };
-$("backBtn").onclick = () => showScreen("startupScreen");
+$("backBtn").onclick = () => {
+  showStartup(); // re-applies menu-mode correctly
+};
 
 socket.on("forceLeaveRoom", () => {
   roomId = null;
