@@ -81,30 +81,27 @@ function mySocketId() {
 }
 
 function updateRoleCards() {
-  if (!state?.roles || !state.playerNames) return;
-
-  const setterSocketId =
-    Object.keys(state.roles).find(id => state.roles[id] === "A");
-  const guesserSocketId =
-    Object.keys(state.roles).find(id => state.roles[id] === "B");
+  if (!state?.roles || !state?.playerNames) return;
 
   $("setterName").textContent =
-    setterSocketId ? state.playerNames[setterSocketId] : "—";
+    getPlayerNameByCurrentRole(state.setter);
 
   $("guesserName").textContent =
-    guesserSocketId ? state.playerNames[guesserSocketId] : "—";
+    getPlayerNameByCurrentRole(state.guesser);
 }
 
 
-function getPlayerNameByRole(role) {
-  if (!state || !state.roles || !state.playerNames) return "—";
+function getPlayerNameByCurrentRole(targetRole) {
+  if (!state?.roles || !state?.playerNames) return "—";
 
-  const playerId = Object.keys(state.roles)
-    .find(id => state.roles[id] === role);
+  // targetRole is state.setter or state.guesser (e.g. "A" or "B")
+  const socketId = Object.keys(state.roles)
+    .find(id => state.roles[id] === targetRole);
 
-  return playerId ? state.playerNames[playerId] || "—" : "—";
+  return socketId
+    ? state.playerNames[socketId] || "—"
+    : "—";
 }
-
 
 function enterLobbyAfterJoin() {
   showLobby();
@@ -346,7 +343,7 @@ function updateRoleLabels() {
 // SETTER UI
 // -----------------------------------------------------
 function updateSetterScreen() {
-  const setterName = getPlayerNameByRole("A");
+  const setterName = getPlayerNameByCurrentRole(state.setter);
   KeepEnabled=true;
   NewEnabled=true;  
   $("setterScreen").querySelector(".screen-title").textContent = setterName;
@@ -572,7 +569,7 @@ renderDraftRows({
   container: $("draftGuesser"),
   localGuesserDraft
 });
-  const guesserName = getPlayerNameByRole("B");
+ const guesserName = getPlayerNameByCurrentRole(state.guesser);
   
   $("guesserScreen").querySelector(".screen-title").textContent = guesserName;
 $("guesserRoleBadge").textContent = "Guesser";
