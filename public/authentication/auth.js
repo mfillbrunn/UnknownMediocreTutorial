@@ -7,6 +7,18 @@ window.authReady = false;
 window.profileReady = false;
 window.autoRejoinAttempted = false;
 
+// ===== APP BOOTUP =====
+(() => {
+  const cachedProfile = localStorage.getItem("myProfile");
+
+  if (cachedProfile) {
+    try {
+      window.myProfile = JSON.parse(cachedProfile);
+    } catch {
+      localStorage.removeItem("myProfile");
+    }
+  }
+})();
 
 
 window.getUserId = function () {
