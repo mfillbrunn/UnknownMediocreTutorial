@@ -277,7 +277,7 @@ function renderMenuAccountStatus () {
 
 
 // Fetch past games
-$("showPastGamesBtn")?.addEventListener("click", async () => {
+$("showPastGamesBtn")?.addEventListener("click", async (e) => {
   e.preventDefault();
 e.stopPropagation();
   if (!window.currentUser) return;
