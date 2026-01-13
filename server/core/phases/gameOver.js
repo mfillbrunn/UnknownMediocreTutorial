@@ -9,6 +9,7 @@ const {applyRankedElo} = require("../../utils/elo");
 
 function endGame(state, roomId, io, room, context) {
    const { supabase } = context; 
+   localGuesserDraft = "";
    state.turn = null;
    state.gameOver = true;
    if (state.timeControl?.enabled) {
@@ -70,8 +71,7 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
   ///NEW MATCH
 if (action.type === "NEW_MATCH") {
   names = state.playerNames;
-  const fresh = createInitialState();
-  localGuesserDraft = "";
+  const fresh = createInitialState();  
   Object.assign(state, fresh);
   state.phase = "lobby";
   state.ready = {};
