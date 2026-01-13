@@ -193,7 +193,10 @@ $("leaveRoomBtn")?.addEventListener("click", () => {
   });
 });
 
-$("accountBtn").onclick = () => showScreen("accountScreen");
+$("accountBtn").onclick = () => {
+  showScreen("accountScreen");
+  updateAccountUI(); 
+};
 $("backBtn").onclick = () => showScreen("startupScreen");
 
 socket.on("forceLeaveRoom", () => {
