@@ -2,6 +2,35 @@ const emailInput = $("authEmail");
 const passwordInput = $("authPassword");
 const status = $("authStatus");
 const logoutBtn = $("logoutBtn");
+window.socketReady = false;
+window.authReady = false;
+window.profileReady = false;
+window.autoRejoinAttempted = false;
+
+// ===== APP BOOTUP =====
+(() => {
+  const cachedProfile = localStorage.getItem("myProfile");
+
+  if (cachedProfile) {
+    try {
+      window.myProfile = JSON.parse(cachedProfile);
+    } catch {
+      localStorage.removeItem("myProfile");
+    }
+  }
+})();
+
+
+window.getUserId = function () {
+  return window.currentUser?.id || null;
+};
+function persistRoom(roomId) {
+  localStorage.setItem("roomId", roomId);
+}
+
+function clearRoom() {
+  localStorage.removeItem("roomId");
+}
 
 $("signupBtn").onclick = async () => {
   const email = emailInput.value.trim();
@@ -59,57 +88,67 @@ $("loginBtn").onclick = async () => {
   status.textContent = error ? error.message : "Logged in";
 };
 
-logoutBtn.onclick = async () => {
-  await window.supabase.auth.signOut();
-  status.textContent = "Logged out";
-  clearRoom();
-};
+logoutBtn.onclick = logout;
 
 window.supabase.auth.onAuthStateChange(async (event, session) => {
   window.currentUser = session?.user || null;
 
-  if (event === "SIGNED_OUT") {
-    window.myProfile = null;
+ if (event === "SIGNED_OUT") {
+  window.authReady = false;
+  window.profileReady = false;
+  window.autoRejoinAttempted = false;
     renderMenuAccountStatus();
     showStartup();
     return;
   }
 
   if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
-    renderMenuAccountStatus(); // email fallback is fine
+    window.authReady = true;
+    renderMenuAccountStatus();
     showStartup();
 
     if (window.currentUser) {
       await loadMyProfile();
-      tryAutoRejoin();
+      window.profileReady = true;
+      maybeAutoRejoin();
     }
   }
 });
 
-
-
-
 let profileLoadInProgress = false;
 
 async function loadMyProfile() {
-  if (!window.currentUser) return null;
+  if (!window.currentUser || profileLoadInProgress) return null;
+
+  profileLoadInProgress = true;
 
   try {
     const { data, error } = await window.supabase
       .from("profiles")
-      .select("*")
+      .select(`
+        id,
+        username,
+        rating_bullet,
+        rating_blitz,
+        rating_notime,
+        rating_deep
+      `)
       .eq("id", window.currentUser.id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) return null;
 
     window.myProfile = data;
-    onProfileReady();
-    renderMenuAccountStatus();
+    localStorage.setItem("myProfile", JSON.stringify(data));
+
+    onProfileReady(); // renders menu once, with real data
     return data;
   } catch (err) {
     console.error("Profile load failed:", err);
     return null;
+  } finally {
+    profileLoadInProgress = false;
   }
 }
 
@@ -119,36 +158,41 @@ function renderMenuAccountStatus() {
   const el = $("menuAccountStatus");
   if (!el) return;
 
+  el.innerHTML = "";
+
   if (!window.currentUser) {
     el.innerHTML = `
       <span class="account-logged-out">
         Not logged in —
-        <button class="link-btn" id="menuLoginBtn">Log in</button>
+        <button class="link-btn menu-login-btn">Log in</button>
       </span>
     `;
-    $("menuLoginBtn").onclick = () => showScreen("accountScreen");
+    el.querySelector(".menu-login-btn").onclick =
+      () => showScreen("accountScreen");
     return;
   }
 
   const p = window.myProfile;
   const name = p?.username || window.currentUser.email;
 
-  const elo =
-    p
-      ? `Elo: 
-         🚀 ${p.rating_bullet}
-         ⚡⚡ ${p.rating_blitz}
-         🧠 ${p.rating_deep}`
-      : "Loading rating…";
+  const elo = p
+    ? `Elo:
+       🚀 ${p.rating_bullet}
+       ⚡⚡ ${p.rating_blitz}
+       🧠 ${p.rating_deep}`
+    : "Loading rating…";
 
   el.innerHTML = `
     <span class="account-logged-in">
       <strong>${name}</strong><br/>
       <small>${elo}</small>
-      <button class="link-btn" id="menuLogoutBtn">Log out</button>
+      <button class="link-btn menu-logout-btn">Log out</button>
     </span>
   `;
+
+  el.querySelector(".menu-logout-btn").onclick = logout;
 }
+
 
 
 
@@ -310,3 +354,65 @@ function onProfileReady() {
   }
 }
 
+async function logout() {
+  localStorage.removeItem("myProfile");
+  autoRejoinAttempted = false;
+  authReady = false;
+  profileReady = false;
+
+  localStorage.removeItem("roomId");
+
+  await window.supabase.auth.signOut();
+
+  window.currentUser = null;
+  window.myProfile = null;
+  clearRoom();
+
+  renderMenuAccountStatus();
+  showStartup();
+}
+
+
+
+function maybeAutoRejoin() {
+  if (window.autoRejoinAttempted) return;
+  if (!window.socketReady) return;
+  if (!window.authReady) return;
+
+  const roomId = localStorage.getItem("roomId");
+  if (!roomId || !window.currentUser) return;
+
+  window.autoRejoinAttempted = true;
+  tryAutoRejoin();
+}
+
+function tryAutoRejoin() {
+  const storedRoomId = localStorage.getItem("roomId");
+  const user = window.currentUser;
+  if (!storedRoomId || !user) return;
+  if (!socket.connected) return;
+
+  const username = window.myProfile?.username || user.email || "Player";
+
+  socket.emit("joinRoom", { roomId: storedRoomId, userId: user.id, name: username }, res => {
+    if (!res?.ok) {
+      console.warn("Auto-rejoin failed:", res?.error);
+      localStorage.removeItem("roomId");
+      window.autoRejoinAttempted = false; // allow retry on next connect
+      return;
+    }
+
+    window.roomId = storedRoomId;
+
+    resetRoomUIState();
+    onRejoinUI();
+
+  });
+}
+
+
+socket.on("connect", () => {
+  console.log("🔌 Connected");
+  window.socketReady = true;
+  maybeAutoRejoin();
+});
