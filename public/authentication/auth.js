@@ -19,7 +19,6 @@ let pastGamesLoaded = false;
     window.currentUser = null;
     window.authReady = false;
   }
-
   updateAccountUI();
   renderMenuAccountStatus();
 })();
