@@ -612,7 +612,8 @@ function handleGuesserInput(event) {
         toast("5 letters!");
         return;
       }
-    if (!window.ALLOWED_GUESSES.has(localGuesserDraft.toLowerCase())) {
+    const guessMakesSense = state.powers.nonsenseActive || window.ALLOWED_GUESSES.has(localGuesserDraft.toLowerCase());
+    if (guessMakesSense) {
       shakeDraftRow("guesser");
       toast("Not in dictionary");
       return;
