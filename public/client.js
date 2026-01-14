@@ -612,6 +612,7 @@ function handleGuesserInput(event) {
         toast("5 letters!");
         return;
       }
+    console.log(state.powers.nonsenseActive);
     const guessMakesSense = state.powers.nonsenseActive || window.ALLOWED_GUESSES.has(localGuesserDraft.toLowerCase());
     if (!guessMakesSense) {
       shakeDraftRow("guesser");
