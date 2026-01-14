@@ -47,7 +47,11 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
    ///NEXT ROUND
   if (action.type === "NEXT_ROUND") {
     if (!state.canNextRound || state.gameOverView !== "round") {return;}
-     resetRoundState(state);
+     const res = state.mode?.onNextRound?.(state) || {phase: "simultaneous",resetRound: true};
+       if (res.resetRound) {
+         resetRoundState(state);
+       }
+      state.phase = res.phase || "simultaneous";  
     if (state.timeControl.enabled && !state.isTimerRunning) {
         stopTimer(roomId);
         resetRoundTimer(state);
