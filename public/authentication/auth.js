@@ -443,7 +443,8 @@ function summarizeMatchPowers(rounds = []) {
   const used = new Set();
 
   rounds.forEach(r => {
-    r.history?.forEach(h => {
+  if (!r || !Array.isArray(r.history)) return;
+  r.history.forEach(h => {
       (h.powersSetter || []).forEach(p => used.add(p));
       (h.powersGuesser || []).forEach(p => used.add(p));
     });
