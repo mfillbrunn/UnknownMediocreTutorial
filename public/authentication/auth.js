@@ -333,11 +333,17 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
   if (pastGamesVisible) {
     container.classList.add("hidden");
     pastGamesVisible = false;
+    showPastGamesBtn.textContent = pastGamesVisible
+    ? "Hide Past Games"
+    : "Show Past Games";
     return;
   }
   // Toggle ON
   container.classList.remove("hidden");
   pastGamesVisible = true;
+  showPastGamesBtn.textContent = pastGamesVisible
+    ? "Hide Past Games"
+    : "Show Past Games";
   // Already loaded → just show
   if (pastGamesLoaded) return;
   // First-time load
@@ -359,7 +365,7 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
        return;
      }
     renderPastGames(data);
-    pastGamesLoaded = true;
+    pastGamesLoaded = true;  
 });
 
 
