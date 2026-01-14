@@ -15,6 +15,14 @@ window.POWER_METADATA = {
     color: "#6B7280"
   },
 
+  nonsense: {
+    label: "Nonsense Guess",
+    desc: "This round's guess does not have to make sense.",
+     icon: "shuffle",
+    emoji: "🌀",
+    color: "#7C3AED" 
+  },
+  
   forceGuess: {
     label: "Force Guess",
     desc: "Forces the next guess to satisfy a special restriction. Can only be used with at least 10 words remaining!",
