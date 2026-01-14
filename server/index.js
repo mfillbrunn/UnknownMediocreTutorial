@@ -32,6 +32,7 @@ require("./powers/powers/blindSpotServer");
 require("./powers/powers/stealthGuessServer");
 require("./powers/powers/magicModeServer.js");
 require("./powers/powers/vowelRefreshServer.js");
+require("./powers/powers/nonsenseServer.js");
 require("./powers/powers/revealLetterServer.js");
 require("./powers/powers/assassinWordServer.js");
 
