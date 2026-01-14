@@ -258,11 +258,15 @@ $("leaderboardBtn")?.addEventListener("click", () => {
   loadLeaderboard("bullet");
 });
 
-$("concedeBtn")?.addEventListener("click", () => {
-  if (!confirm("Are you sure you want to concede the match?")) return;
+document.querySelectorAll(".concedeBtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (!confirm("Are you sure you want to concede the match?")) return;
 
-  sendGameAction(roomId, {
-    type: "CONCEDE"
+    document.querySelectorAll(".concedeBtn")
+      .forEach(b => b.disabled = true);
+
+    sendGameAction(roomId, { type: "CONCEDE" });
   });
 });
+
 
