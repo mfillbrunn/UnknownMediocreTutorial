@@ -162,7 +162,6 @@ function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
   }
 }
 
-
 function removePlayer({
   roomId,
   socketId,
@@ -178,36 +177,7 @@ function removePlayer({
 
   const role = player.role;
 
-  // Remove runtime player
   delete room.players[socketId];
-
-  // Remove authoritative state
-  delete room.state.roles[socketId];
-  delete room.state.playerNames?.[socketId];
-  delete room.state.ready?.[socketId];
-
-  // Host transfer (user-based)
-  if (player.userId === room.state.hostUserId) {
-    const remaining = Object.values(room.players);
-    room.state.hostUserId = remaining[0]?.userId ?? null;
-  }
-
-  const remainingPlayers = Object.values(room.players);
-
-  // Game resolution logic
-  if (remainingPlayers.length === 1 && room.state.phase !== "lobby") {
-    room.state.timeoutLoser = role;
-    endGame(room.state, roomId, io, room, context);
-  }
-
-  // Reset if empty or single-player lobby
-  if (remainingPlayers.length < 2) {
-    room.state.phase = "lobby";
-    room.state.turn = null;
-    room.state.pendingGuess = null;
-    room.state.secret = null;
-    room.state.simultaneousSecretSubmitted = false;
-  }
 
   io?.to(roomId).emit("lobbyEvent", {
     type: "playerLeft",
@@ -215,8 +185,21 @@ function removePlayer({
     reason
   });
 
-  return { ok: true, role };
+  // 🔥 Always reset state after any leave
+  resetRoomState(room);
+
+  // If one player remains and this was mid-game, you can still award a win
+  if (
+    Object.keys(room.players).length === 1 &&
+    room.state.phase !== "lobby"
+  ) {
+    room.state.timeoutLoser = role;
+    endGame(room.state, roomId, io, room, context);
+  }
+
+  return { ok: true };
 }
+
 function resetRoomState(room) {
   const prevRankMode = room.state.rankMode;
   const prevRanked = room.state.ranked;
