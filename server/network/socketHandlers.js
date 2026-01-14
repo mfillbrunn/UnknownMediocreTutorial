@@ -31,40 +31,23 @@ socket.on("createRoom", ({ userId, name }, cb) => {
 socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
   const result = joinOrReattach(socket, roomId, userId);
   if (!result.ok) return cb?.(result);
-
   const room = rooms[roomId];
-
   if (name) {
     room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
   }
 
-  if (result.reattached) {
+  if (result.reattached && result.shouldResumeGame) {
     room.state.paused = false;
     room.state.roundStartTime = Date.now();
-    if (
-      room.state.timeControl?.enabled &&
-      room.state.phase !== "lobby" &&
-      room.state.phase !== "gameOver" &&
-      room.state.phase !== "roundSummary" &&
-      room.state.activeTimer
-    ) {
+    if (room.state.timeControl?.enabled && room.state.activeTimer) {
       startGameTimer(room, room.state, roomId, context);
       room.state.isTimerRunning = true;
     }
-    socket.emit("roleAssigned", { role: result.role });
-
-    socket.to(roomId).emit("lobbyEvent", {
-      type: "playerRejoined",
-      role: result.role
-    });
-  } else {
+  }
     socket.emit("roleAssigned", { role: result.role });
     socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
-  }
-
-  cb?.({ ok: true, roomId, reattached: result.reattached });
-
-  emitStateForAllPlayers(roomId, room, io);
+    cb?.({ ok: true, roomId, reattached: result.reattached });
+    emitStateForAllPlayers(roomId, room, io);
 });
 
 
@@ -73,38 +56,25 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
 socket.on("quickJoin", ({ userId, name }, cb) => {
   const roomId = findLastOpenRoom();
   if (!roomId) return cb?.({ ok: false, error: "No open rooms available" });
-
   const result = joinOrReattach(socket, roomId, userId);
   if (!result.ok) return cb?.(result);
-
-  const room = rooms[roomId]; // ✅ MOVE HERE
-
-  if (result.reattached) {
+  const room = rooms[roomId];
+  if (result.reattached && result.shouldResumeGame) {
     room.state.paused = false;
     room.state.roundStartTime = Date.now();
-    if (
-      room.state.timeControl?.enabled &&
-      room.state.phase !== "lobby" &&
-      room.state.phase !== "gameOver" &&
-      room.state.phase !== "roundSummary" &&
-      room.state.activeTimer
-    ) {
+    if (room.state.timeControl?.enabled && room.state.activeTimer) {
       startGameTimer(room, room.state, roomId, context);
       room.state.isTimerRunning = true;
     }
-      }
-
+  }
   if (name) {
     room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
   }
-
   socket.emit("roleAssigned", { role: result.role });
-
   socket.to(roomId).emit("lobbyEvent", {
     type: result.reattached ? "playerRejoined" : "playerJoined",
     role: result.role
   });
-
   cb?.({ ok: true, roomId, reattached: result.reattached });
   emitStateForAllPlayers(roomId, room, io);
 });
@@ -149,7 +119,6 @@ socket.on("disconnect", () => {
       // reset baseline so resume doesn't double count
       room.state.roundStartTime = Date.now();
     }
-
     room.state.paused = true;
     if (room.state.timeControl?.enabled) {
       stopTimer(roomId);
@@ -173,9 +142,12 @@ socket.on("leaveRoom", (_payload, cb) => {
 
     const role = room.state.roles[socket.id];
 
-    removePlayerFromRoom({
-      room,
-      socketId: socket.id
+    removePlayer({
+      roomId,
+      socketId,
+      reason: "leave",
+      io,
+      context
     });
 
     socket.leave(roomId);
@@ -219,10 +191,13 @@ if (!me || room.state.hostUserId !== me.userId) {
   const [targetSocketId, targetPlayer] = targetEntry;
 
   // Remove target
-  removePlayerFromRoom({
-    room,
-    socketId: targetSocketId
-  });
+  removePlayer({
+  roomId,
+  socketId,
+  reason: "kicked",
+  io,
+  context
+});
 
   // Ensure socket leaves the room server-side
   io.sockets.sockets.get(targetSocketId)?.leave(roomId);
@@ -252,35 +227,3 @@ if (!me || room.state.hostUserId !== me.userId) {
 });
 });
 };
-////helper
-function removePlayerFromRoom({ room, socketId }) {
-  const player = room.players[socketId];
-  if (!player) return false;
-
-  // Remove from runtime player map
-  delete room.players[socketId];
-
-  // Remove from authoritative state
-  delete room.state.roles[socketId];
-  delete room.state.playerNames[socketId];
-  delete room.state.ready?.[socketId];
-
-  // ✅ Correct host transfer (user-based)
-  if (player.userId === room.state.hostUserId) {
-    const remainingPlayers = Object.values(room.players);
-    room.state.hostUserId = remainingPlayers[0]?.userId || null;
-  }
-
-  // If fewer than 2 players remain, force lobby reset
-  const remainingPlayersCount = Object.keys(room.players).length;
-  if (remainingPlayersCount < 2) {
-    room.state.phase = "lobby";
-    room.state.turn = null;
-    room.state.pendingGuess = null;
-    room.state.secret = null;
-    room.state.simultaneousSecretSubmitted = false;
-  }
-
-  return true;
-}
-
