@@ -17,8 +17,8 @@ return{
       blindGuessActive: false,
       // FORCE GUESS
       forceGuessUsed: false,
-      forcedGuess: null,          // active constraint
-      forcedGuessOptions: null,    // temporary options shown in setter modal
+      forceGuess: null,          // active constraint
+      forceGuessOptions: null,    // temporary options shown in setter modal
       forceGuessActive: false,    
       // REVEAL GREEN
       revealGreenUsed: false,
