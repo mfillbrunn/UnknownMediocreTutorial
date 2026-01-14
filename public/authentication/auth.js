@@ -368,21 +368,59 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
     renderPastGames(data);
     pastGamesLoaded = true;  
 });
+function getPowersByRoleFromRounds(rounds = [], myId, match) {
+  const byRole = {
+    setter: new Set(),
+    guesser: new Set()
+  };
 
+  rounds.forEach(r => {
+    if (!Array.isArray(r.powers)) return;
 
+    const setterRole =
+      (r.setter === "A" && match.player_a === myId) ||
+      (r.setter === "B" && match.player_b === myId)
+        ? "setter"
+        : "guesser";
+
+    const guesserRole = setterRole === "setter" ? "guesser" : "setter";
+
+    r.powers.forEach(pid => {
+      const power = PowerEngine.powers?.[pid];
+      const meta = window.POWER_METADATA?.[pid];
+      if (!power || !meta) return;
+
+      // PowerEngine defines which role can use it
+      if (power.role === "setter") {
+        byRole[setterRole].add(pid);
+      } else if (power.role === "guesser") {
+        byRole[guesserRole].add(pid);
+      }
+    });
+  });
+
+  return {
+    setter: [...byRole.setter],
+    guesser: [...byRole.guesser]
+  };
+}
 
 function renderPastGames(matches) {
   const container = $("pastGamesContainer");
   if (!container || !window.currentUser) return;
+
   const myId = window.currentUser.id;
 
   container.innerHTML = matches.map(m => {
     const opponentName =
-  m.player_a === myId
-    ? m.player_b_profile?.username
-    : m.player_a_profile?.username
-  || "Opponent";
+      m.player_a === myId
+        ? m.player_b_profile?.username
+        : m.player_a_profile?.username
+      || "Opponent";
 
+    // -----------------------
+    // Result
+    // -----------------------
     let resultLabel = "Tie";
     let resultIcon = "↔️";
 
@@ -398,16 +436,39 @@ function renderPastGames(matches) {
         : `${m.score_b}–${m.score_a}`;
 
     const timeMode = formatTimeMode(m.time_control);
-    const powersUsed = summarizeMatchPowers(m.rounds || []);
-     const roundSecrets = (m.rounds || [])
-          .map((r, i) => {
-            const secret =
-              r?.history?.[r.history.length - 1]?.finalSecret;
-            if (!secret) return null;
-            return `R${i + 1}: ${secret.toUpperCase()}`;
-          })
-          .filter(Boolean)
-          .join(" · ");
+
+    // -----------------------
+    // Powers (ROUND-BASED, SPEC-COMPLIANT)
+    // -----------------------
+    const { setter, guesser } =
+      getPowersByRoleFromRounds(m.rounds || [], myId, m);
+
+    let powersLine = null;
+    if (setter.length || guesser.length) {
+      const setterIcons = setter.length
+        ? setter.map(powerToInlineIcon).join(" ")
+        : "—";
+
+      const guesserIcons = guesser.length
+        ? guesser.map(powerToInlineIcon).join(" ")
+        : "—";
+
+      powersLine = `${setterIcons} | ${guesserIcons}`;
+    }
+
+    // -----------------------
+    // Final secrets per round
+    // -----------------------
+    const secretsLine = (m.rounds || [])
+      .map((r, i) => {
+        const secret =
+          r?.history?.[r.history.length - 1]?.finalSecret;
+        if (!secret) return null;
+        return `R${i + 1}: ${secret.toUpperCase()}`;
+      })
+      .filter(Boolean)
+      .join(" · ");
+
     return `
       <div class="past-game-row" tabindex="0"
            onclick="openSummary('${m.id}')"
@@ -435,24 +496,21 @@ function renderPastGames(matches) {
         </div>
 
         ${
-          powersUsed
-            ? `<div class="past-game-powers">
-                 ${powersUsed}
-               </div>`
+          powersLine
+            ? `<div class="past-game-powers">${powersLine}</div>`
             : ""
         }
 
         ${
-          roundSecrets
-            ? `<div class="past-game-rounds">
-                 ${roundSecrets}
-               </div>`
+          secretsLine
+            ? `<div class="past-game-rounds">${secretsLine}</div>`
             : ""
         }
       </div>
     `;
   }).join("");
 }
+
 
 
 function summarizeMatchPowers(rounds = []) {
