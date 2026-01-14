@@ -9,7 +9,7 @@ const {applyRankedElo} = require("../../utils/elo");
 
 function endGame(state, roomId, io, room, context) {
    const { supabase } = context; 
-   localGuesserDraft = "";
+   let localGuesserDraft = "";
    state.turn = null;
    state.gameOver = true;
    if (state.timeControl?.enabled) {
@@ -20,8 +20,8 @@ function endGame(state, roomId, io, room, context) {
    if (state.powers.assassinated) {state.guessCount = state.guessCount + state.powers.assassinPoints;} 
    state.matchRounds.push({setter: state.setter, guesser: state.guesser, guessCount: state.guessCount,
        time: { A: state.timeUsed.A, B: state.timeUsed.B,}, timeoutLoser: state.timeoutLoser || null,
-    history: JSON.parse(JSON.stringify(state.history)),
-    powers: JSON.parse(JSON.stringify(state.activePowers || [])),
+    history: state.history.map(x => ({ ...x })),
+    powers: state.activePowers.map(x => ({ ...x })),
   });
     const res = state.mode?.onRoundEnd?.(state) || { view: "match", canNextRound: false };
     state.phase = "gameOver";
@@ -48,15 +48,11 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
    ///NEXT ROUND
   if (action.type === "NEXT_ROUND") {
     if (!state.canNextRound || state.gameOverView !== "round") {return;}
-    const res = state.mode?.onNextRound?.(state) || {phase: "simultaneous",resetRound: true};
-    if (res.resetRound) {
-      resetRoundState(state);
-    }
-   if (state.timeControl.enabled && !state.isTimerRunning) {
+    if (state.timeControl.enabled && !state.isTimerRunning) {
+        stopTimer(roomId);
         resetRoundTimer(state);
         state.activeTimer = "both";
         state.roundStartTime = Date.now();
-        stopTimer(roomId);
         startGameTimerSim(room, state, roomId, context)
         state.isTimerRunning=true;
       }
@@ -70,9 +66,12 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
   }  
   ///NEW MATCH
 if (action.type === "NEW_MATCH") {
-  names = state.playerNames;
-  const fresh = createInitialState();  
-  Object.assign(state, fresh);
+  const names = state.playerNames;
+  const fresh = createInitialState();
+   for (const key of Object.keys(state)) {
+     delete state[key];
+   }
+   Object.assign(state, fresh);
   state.phase = "lobby";
   state.ready = {};
   state.playerNames= names;
