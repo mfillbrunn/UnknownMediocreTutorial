@@ -217,7 +217,25 @@ function removePlayer({
 
   return { ok: true, role };
 }
+function resetRoomState(room) {
+  const prevRankMode = room.state.rankMode;
+  const prevRanked = room.state.ranked;
 
+  room.state = createInitialState();
+
+  // Optional carry-over
+  room.state.rankMode = prevRankMode;
+  room.state.ranked = prevRanked;
+
+  // Reapply existing players' roles (if any remain)
+  for (const [socketId, player] of Object.entries(room.players)) {
+    room.state.roles[socketId] = player.role;
+  }
+
+  // Reset host if someone remains
+  const remainingPlayers = Object.values(room.players);
+  room.state.hostUserId = remainingPlayers[0]?.userId ?? null;
+}
 
 
 module.exports = {
@@ -227,5 +245,6 @@ module.exports = {
   removePlayer,
   cleanupEmptyRooms,
   findLastOpenRoom,
-  cleanupDisconnectedPlayers
+  cleanupDisconnectedPlayers,
+  resetRoomState
 };
