@@ -126,6 +126,10 @@ function createInitialState() {
       vowelRefreshLetters: null,
       vowelRefreshPending: false,
       vowelRefreshActive: false,
+      //Nonsense 
+      nonsenseActive: false,
+      nonsenseLastTurn: false,
+      nonsenseused: false,
       // ASSASSIN WORD
       assassinWordUsed: false,
       assassinWord: null,
