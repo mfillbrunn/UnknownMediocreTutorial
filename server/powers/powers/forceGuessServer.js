@@ -44,7 +44,7 @@ function shuffle(arr) {
   return a;
 }
 
-function generateForceGuessOptions(state) {
+function generateforceGuessOptions(state) {
   const roll = Math.random();
   let types = [];
 
@@ -202,7 +202,7 @@ engine.registerPower("forceGuess", {
 
     state.powers.forceGuessUsed = true;
     state.powers.forceGuessActive = true;
-    state.powers.forceGuessOptions = generateForceGuessOptions(state);
+    state.powers.forceGuessOptions = generateforceGuessOptions(state);
 
     io.to(action.playerId).emit("forceGuessOptions", {
       options: state.powers.forceGuessOptions

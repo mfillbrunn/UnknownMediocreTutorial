@@ -77,7 +77,7 @@ function highlightRareBonusTile(i, letter) {
 // FORCE GUESS
 //--------------------------------------------------
 
-function formatForceGuessOption(o) {
+function formatforceGuessOption(o) {
   switch (o.type) {
     case "containsTwo":
       return `Contains ${o.letters.join(" + ")}`;
@@ -107,7 +107,7 @@ function validateGuesserGuess(word, forceGuessOptions, allowedGuesses) {
 
   // OR logic
   const satisfiesOne = forceGuessOptions.some(opt =>
-    satisfiesForceGuess(g, opt)
+    satisfiesforceGuess(g, opt)
   );
 
   if (satisfiesOne) {
@@ -121,7 +121,7 @@ function validateGuesserGuess(word, forceGuessOptions, allowedGuesses) {
   };
 }
 
-function satisfiesForceGuess(g, forceGuess) {
+function satisfiesforceGuess(g, forceGuess) {
   switch (forceGuess.type) {
     case "startsWith":
       return g.startsWith(forceGuess.letter.toLowerCase());

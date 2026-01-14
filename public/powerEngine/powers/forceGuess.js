@@ -38,7 +38,7 @@ InfoBadgeEngine.register((state, role) => {
   id: "forceGuess",
   emoji: meta.emoji,
   text: `${meta.label}: ${opts
-    .map(formatForceGuessOption)
+    .map(formatforceGuessOption)
     .join(" OR ")}`,
   color: meta.color,
   priority: 20,
