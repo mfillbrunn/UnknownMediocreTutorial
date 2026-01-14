@@ -373,8 +373,7 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
 
 function renderPastGames(matches) {
   const container = $("pastGamesContainer");
-  if (!container) return;
-
+  if (!container || !window.currentUser) return;
   const myId = window.currentUser.id;
 
   container.innerHTML = matches.map(m => {
@@ -383,7 +382,6 @@ function renderPastGames(matches) {
     ? m.player_b_profile?.username
     : m.player_a_profile?.username
   || "Opponent";
-
 
     let resultLabel = "Tie";
     let resultIcon = "↔️";
@@ -400,8 +398,16 @@ function renderPastGames(matches) {
         : `${m.score_b}–${m.score_a}`;
 
     const timeMode = formatTimeMode(m.time_control);
-    const powers = summarizeMatchPowers(m.rounds || []);
-
+    const powersUsed = summarizeMatchPowers(m.rounds || []);
+     const roundSecrets = (m.rounds || [])
+          .map((r, i) => {
+            const secret =
+              r?.history?.[r.history.length - 1]?.finalSecret;
+            if (!secret) return null;
+            return `R${i + 1}: ${secret.toUpperCase()}`;
+          })
+          .filter(Boolean)
+          .join(" · ");
     return `
       <div class="past-game-row" tabindex="0"
            onclick="openSummary('${m.id}')"
@@ -429,8 +435,18 @@ function renderPastGames(matches) {
         </div>
 
         ${
-          powers
-            ? `<div class="past-game-powers">${powers}</div>`
+          powersUsed
+            ? `<div class="past-game-powers">
+                 ${powersUsed}
+               </div>`
+            : ""
+        }
+
+        ${
+          roundSecrets
+            ? `<div class="past-game-rounds">
+                 ${roundSecrets}
+               </div>`
             : ""
         }
       </div>
