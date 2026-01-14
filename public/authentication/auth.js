@@ -6,6 +6,8 @@ window.profileReady = false;
 window.autoRejoinAttempted = false;
 window.currentUser = null;
 window.myProfile = null;
+let pastGamesVisible = false;
+let pastGamesLoaded = false;
 
 (async () => {
   const { data } = await window.supabase.auth.getSession();
