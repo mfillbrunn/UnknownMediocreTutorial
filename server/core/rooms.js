@@ -107,11 +107,8 @@ function joinOrReattach(socket, roomId, userId) {
   return {
   ok: true,
   reattached: true,
-  role: player.role,
-  shouldResumeGame:
-    room.state.phase !== "lobby" &&
-    room.state.phase !== "gameOver" &&
-    room.state.phase !== "roundSummary"
+  role: role,
+  shouldResumeGame:false
 };
 
 }
@@ -138,28 +135,6 @@ function findLastOpenRoom() {
 }
   }
   return null;
-}
-
-function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
-  const now = Date.now();
-
-  for (const [roomId, room] of Object.entries(rooms)) {
-    for (const [socketId, player] of Object.entries(room.players)) {
-      if (
-        !player.connected &&
-        player.disconnectedAt &&
-        now - player.disconnectedAt >= graceMs
-      ) {
-        removePlayer({
-          roomId,
-          socketId,
-          reason: "disconnect",
-          io,
-          context
-        });
-      }
-    }
-  }
 }
 
 function removePlayer({
@@ -198,6 +173,28 @@ function removePlayer({
   }
 
   return { ok: true };
+}
+
+function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
+  const now = Date.now();
+
+  for (const [roomId, room] of Object.entries(rooms)) {
+    for (const [socketId, player] of Object.entries(room.players)) {
+      if (
+        !player.connected &&
+        player.disconnectedAt &&
+        now - player.disconnectedAt >= graceMs
+      ) {
+        removePlayer({
+          roomId,
+          socketId,
+          reason: "disconnect",
+          io,
+          context
+        });
+      }
+    }
+  }
 }
 
 function resetRoomState(room) {
