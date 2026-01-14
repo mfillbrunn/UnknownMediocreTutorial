@@ -1,3 +1,4 @@
+const {createInitialPowers} = require("../core/stateFactory");
 function resetRoundState(state) {
   state.secret = "";
   state.currentSecret = "";
