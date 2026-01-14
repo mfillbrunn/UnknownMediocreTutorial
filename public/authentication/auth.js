@@ -57,7 +57,7 @@ function formatTimeMode(tc) {
   return "Custom";
 }
 
-function openSummary(matchId) {
+/*function openSummary(matchId) {
   show("menu");
   hide("setterScreen");
   hide("guesserScreen");
@@ -79,11 +79,12 @@ async function loadMatchSummary(matchId) {
     console.error("Failed to load match summary:", error);
     return;
   }
-
+onclick="openSummary('${m.id}')"
+           onkeydown="if(event.key==='Enter') openSummary('${m.id}')"
   $("roundSummary").textContent =
     `Match ${matchId} — ${data.win_reason || "Completed"}`;
 }
-
+*/
 function isAbortError(err) {
    return (
      err?.name === "AbortError" ||
@@ -466,15 +467,11 @@ function renderPastGames(matches) {
       .join(" · ");
 
     return `
-      <div class="past-game-row" tabindex="0"
-           onclick="openSummary('${m.id}')"
-           onkeydown="if(event.key==='Enter') openSummary('${m.id}')">
-
+      <div class="past-game-row" tabindex="0">
         <div class="past-game-main">
           <div class="past-game-opponent">
             vs <strong>${opponentName}</strong>
           </div>
-
           <div class="past-game-meta">
             <span class="past-game-date">
               ${new Date(m.created_at).toLocaleDateString()}
