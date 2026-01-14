@@ -328,6 +328,7 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
   e.preventDefault();
   e.stopPropagation();
   if (!window.currentUser) return;
+  const btn = $("showPastGamesBtn");
   const myId = window.currentUser.id;
   const container = $("pastGamesContainer");
   if (!container) return;
@@ -335,7 +336,7 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
   if (pastGamesVisible) {
     container.classList.add("hidden");
     pastGamesVisible = false;
-    showPastGamesBtn.textContent = pastGamesVisible
+    btn.textContent = pastGamesVisible
     ? "Hide Past Games"
     : "Show Past Games";
     return;
@@ -343,7 +344,7 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
   // Toggle ON
   container.classList.remove("hidden");
   pastGamesVisible = true;
-  showPastGamesBtn.textContent = pastGamesVisible
+  btn.textContent = pastGamesVisible
     ? "Hide Past Games"
     : "Show Past Games";
   // Already loaded → just show
@@ -548,7 +549,13 @@ async function logout() {
   localStorage.removeItem("roomId");
 
   await window.supabase.auth.signOut();
-
+  pastGamesVisible = false;
+  pastGamesLoaded = false;  
+  const container = $("pastGamesContainer");
+  if (container) {
+    container.classList.add("hidden");
+    container.innerHTML = "";
+  }
   window.currentUser = null;
   window.myProfile = null;
   clearRoom();
