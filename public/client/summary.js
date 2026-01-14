@@ -377,12 +377,7 @@ if (state.timeoutLoser)  {
   `;
 
   const lastEntry = state.history[state.history.length - 1];
-  if (
-    !state.timeoutLoser &&
-     lastEntry &&
-    state.powers?.assassinWord &&
-    lastEntry.guess === state.powers.assassinWord
-  ) {
+  if (state.powers.assassinated) {
     html += `
       <p class="assassin-summary">
         ☠ ${guesserName} guessed the assassin word
