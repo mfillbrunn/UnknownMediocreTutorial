@@ -2,6 +2,7 @@ function resetRoundState(state) {
   state.secret = "";
   state.currentSecret = "";
   state.pendingGuess = "";
+  state.gameOver = false;
   state.guessCount = 0;
   state.history = [];
   state.extraConstraints= [];
