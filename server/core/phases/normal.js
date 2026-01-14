@@ -42,7 +42,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     clearActivePowers(state);
     if (state.powers && state.powers.confuseColorsActive) {state.powers.confuseColorsActive = false;}
     if (state.powers && state.powers.countOnlyActive) {state.powers.countOnlyActive = false;}
-    if (state.powers && state.powers.forceGuessOptions)  {state.powers.forceGuessOptions = false;}
+    if (state.powers && state.powers.forceGuessOptions)  {state.powers.forceGuessOptions = null;}
     if (state.powers && state.powers.nonsenseActive)  {state.powers.nonsenseActive = false;}
     state.powers.forceGuess = null;
     state.activeTimer = state.setter;
