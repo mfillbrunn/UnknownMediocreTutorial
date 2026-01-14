@@ -99,16 +99,7 @@ function formatForceGuessOption(o) {
 }
 
 function validateGuesserGuess(word, forcedGuessOptions, allowedGuesses) {
-  if (!word || word.length !== 5) {
-    return { ok: false, message: "Guess must be 5 letters" };
-  }
-
   const g = word.toLowerCase();
-
-  if (!allowedGuesses.has(g)) {
-    return { ok: false, message: "Word not in dictionary" };
-  }
-
   // No forced constraint → valid
   if (!forcedGuessOptions || forcedGuessOptions.length === 0) {
     return { ok: true, message: null };
