@@ -189,6 +189,8 @@ $("leaveRoomBtn")?.addEventListener("click", () => {
   socket.emit("leaveRoom", {}, () => {
     roomId = null;
     clearRoom();
+    state = null;         
+    window.state = null;
     showStartup();
   });
 });
@@ -206,6 +208,8 @@ socket.on("forceLeaveRoom", () => {
   roomId = null;
   state = null;
   clearRoom();
+  state = null;         
+  window.state = null;
   showStartup();
   toast("You were removed from the room.");
 });
