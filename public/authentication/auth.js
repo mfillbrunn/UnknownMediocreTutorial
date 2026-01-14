@@ -347,9 +347,7 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
   // Already loaded → just show
   if (pastGamesLoaded) return;
   // First-time load
-  container.textContent = "Loading…";
-  const myId = window.currentUser.id;
-   
+  container.textContent = "Loading…";   
     const { data, error } = await window.supabase
       .from("matches")
       .select(`id,created_at,ranked,time_control,player_a,player_b,winner,score_a,score_b,rounds, player_a_profile:profiles!matches_player_a_fkey(username),
