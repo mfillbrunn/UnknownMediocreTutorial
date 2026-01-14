@@ -324,48 +324,42 @@ function renderMenuAccountStatus () {
 // Fetch past games
 $("showPastGamesBtn")?.addEventListener("click", async (e) => {
   e.preventDefault();
-e.stopPropagation();
+  e.stopPropagation();
   if (!window.currentUser) return;
+  const myId = window.currentUser.id;
   const container = $("pastGamesContainer");
-   if (container) {
-    container.classList.remove("hidden"); 
-    container.textContent = "Loading…";
+  if (!container) return;
+  
+  if (pastGamesVisible) {
+    container.classList.add("hidden");
+    pastGamesVisible = false;
+    return;
   }
-
-const myId = window.currentUser.id;
-
-const { data, error } = await window.supabase
-  .from("matches")
-  .select(`
-    id,
-    created_at,
-    ranked,
-    time_control,
-    player_a,
-    player_b,
-    winner,
-    score_a,
-    score_b,
-    rounds,
-    player_a_profile:profiles!matches_player_a_fkey(username),
-    player_b_profile:profiles!matches_player_b_fkey(username)
-  `)
-  .or(`player_a.eq.${myId},player_b.eq.${myId}`)
-  .order("created_at", { ascending: false })
-  .limit(20);
-
-
-console.log("PAST GAMES RESULT", { data, error });
-
-
- if (error) {
-   if (isAbortError(error)) return;
-   console.error("Past games load failed:", error);
-   if (container) container.textContent = "Failed to load games";
-   return;
- }
-
-  renderPastGames(data);
+  // Toggle ON
+  container.classList.remove("hidden");
+  pastGamesVisible = true;
+  // Already loaded → just show
+  if (pastGamesLoaded) return;
+  // First-time load
+  container.textContent = "Loading…";
+  const myId = window.currentUser.id;
+   
+    const { data, error } = await window.supabase
+      .from("matches")
+      .select(`id,created_at,ranked,time_control,player_a,player_b,winner,score_a,score_b,rounds, player_a_profile:profiles!matches_player_a_fkey(username),
+        player_b_profile:profiles!matches_player_b_fkey(username)`)
+      .or(`player_a.eq.${myId},player_b.eq.${myId}`)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    console.log("PAST GAMES RESULT", { data, error });
+     if (error) {
+       if (isAbortError(error)) return;
+       console.error("Past games load failed:", error);
+       if (container) container.textContent = "Failed to load games";
+       return;
+     }
+    renderPastGames(data);
+    pastGamesLoaded = true;
 });
 
 
