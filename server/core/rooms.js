@@ -104,7 +104,16 @@ function joinOrReattach(socket, roomId, userId) {
   };
 
   room.state.roles[socket.id] = role;
-  return { ok: true, reattached: false, role };
+  return {
+  ok: true,
+  reattached: true,
+  role: player.role,
+  shouldResumeGame:
+    room.state.phase !== "lobby" &&
+    room.state.phase !== "gameOver" &&
+    room.state.phase !== "roundSummary"
+};
+
 }
 
 function cleanupEmptyRooms() {
@@ -131,39 +140,22 @@ function findLastOpenRoom() {
   return null;
 }
 
-function cleanupDisconnectedPlayers(io, graceMs = 30_000) {
+function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
   const now = Date.now();
 
   for (const [roomId, room] of Object.entries(rooms)) {
-    const players = Object.entries(room.players);
-
-    for (const [socketId, player] of players) {
+    for (const [socketId, player] of Object.entries(room.players)) {
       if (
         !player.connected &&
         player.disconnectedAt &&
         now - player.disconnectedAt >= graceMs
       ) {
-        const role = player.role;
-
-        // Remove the disconnected player
-        delete room.players[socketId];
-        delete room.state.roles[socketId];
-
-        // If one player remains → they win
-        const remaining = Object.values(room.players);
-        if (remaining.length === 1) {
-          const remainingRole = remaining[0].role;
-
-          room.state.timeoutLoser = role;
-          endGame(room.state, roomId, io, room, { io });
-        } else {
-          // No players left → reset room
-          room.state.phase = "lobby";
-        }
-
-        io.to(roomId).emit("lobbyEvent", {
-          type: "playerKicked",
-          reason: "disconnect"
+        removePlayer({
+          roomId,
+          socketId,
+          reason: "disconnect",
+          io,
+          context
         });
       }
     }
@@ -171,10 +163,68 @@ function cleanupDisconnectedPlayers(io, graceMs = 30_000) {
 }
 
 
+function removePlayer({
+  roomId,
+  socketId,
+  reason,
+  io,
+  context
+}) {
+  const room = rooms[roomId];
+  if (!room) return { ok: false };
+
+  const player = room.players[socketId];
+  if (!player) return { ok: false };
+
+  const role = player.role;
+
+  // Remove runtime player
+  delete room.players[socketId];
+
+  // Remove authoritative state
+  delete room.state.roles[socketId];
+  delete room.state.playerNames?.[socketId];
+  delete room.state.ready?.[socketId];
+
+  // Host transfer (user-based)
+  if (player.userId === room.state.hostUserId) {
+    const remaining = Object.values(room.players);
+    room.state.hostUserId = remaining[0]?.userId ?? null;
+  }
+
+  const remainingPlayers = Object.values(room.players);
+
+  // Game resolution logic
+  if (remainingPlayers.length === 1 && room.state.phase !== "lobby") {
+    room.state.timeoutLoser = role;
+    endGame(room.state, roomId, io, room, context);
+  }
+
+  // Reset if empty or single-player lobby
+  if (remainingPlayers.length < 2) {
+    room.state.phase = "lobby";
+    room.state.turn = null;
+    room.state.pendingGuess = null;
+    room.state.secret = null;
+    room.state.simultaneousSecretSubmitted = false;
+  }
+
+  io?.to(roomId).emit("lobbyEvent", {
+    type: "playerLeft",
+    role,
+    reason
+  });
+
+  return { ok: true, role };
+}
+
+
+
 module.exports = {
   rooms,
   createRoom,
   joinOrReattach,
+  removePlayer,
   cleanupEmptyRooms,
   findLastOpenRoom,
   cleanupDisconnectedPlayers
