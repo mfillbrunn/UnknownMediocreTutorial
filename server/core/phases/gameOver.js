@@ -9,7 +9,6 @@ const {applyRankedElo} = require("../../utils/elo");
 
 function endGame(state, roomId, io, room, context) {
    const { supabase } = context; 
-   let localGuesserDraft = "";
    state.turn = null;
    state.gameOver = true;
    if (state.timeControl?.enabled) {
@@ -48,6 +47,7 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
    ///NEXT ROUND
   if (action.type === "NEXT_ROUND") {
     if (!state.canNextRound || state.gameOverView !== "round") {return;}
+     resetRoundState(state);
     if (state.timeControl.enabled && !state.isTimerRunning) {
         stopTimer(roomId);
         resetRoundTimer(state);
