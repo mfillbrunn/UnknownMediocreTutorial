@@ -42,7 +42,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     clearActivePowers(state);
     if (state.powers && state.powers.confuseColorsActive) {state.powers.confuseColorsActive = false;}
     if (state.powers && state.powers.countOnlyActive) {state.powers.countOnlyActive = false;}
-    state.powers.forcedGuess = null;
+    state.powers.forceGuess = null;
     state.activeTimer = state.setter;
     if (state.timeControl.mode === "chess") {
       addIncrement(state, state.guesser);

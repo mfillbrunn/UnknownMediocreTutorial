@@ -98,16 +98,16 @@ function formatForceGuessOption(o) {
   }
 }
 
-function validateGuesserGuess(word, forcedGuessOptions, allowedGuesses) {
+function validateGuesserGuess(word, forceGuessOptions, allowedGuesses) {
   const g = word.toLowerCase();
   // No forced constraint → valid
-  if (!forcedGuessOptions || forcedGuessOptions.length === 0) {
+  if (!forceGuessOptions || forceGuessOptions.length === 0) {
     return { ok: true, message: null };
   }
 
   // OR logic
-  const satisfiesOne = forcedGuessOptions.some(opt =>
-    satisfiesForcedGuess(g, opt)
+  const satisfiesOne = forceGuessOptions.some(opt =>
+    satisfiesForceGuess(g, opt)
   );
 
   if (satisfiesOne) {
@@ -121,18 +121,18 @@ function validateGuesserGuess(word, forcedGuessOptions, allowedGuesses) {
   };
 }
 
-function satisfiesForcedGuess(g, forcedGuess) {
-  switch (forcedGuess.type) {
+function satisfiesForceGuess(g, forceGuess) {
+  switch (forceGuess.type) {
     case "startsWith":
-      return g.startsWith(forcedGuess.letter.toLowerCase());
+      return g.startsWith(forceGuess.letter.toLowerCase());
     case "endsWith":
-      return g.endsWith(forcedGuess.letter.toLowerCase());
+      return g.endsWith(forceGuess.letter.toLowerCase());
     case "doubleLetter":
       return hasDoubleLetter(g);
     case "minVowels":
-      return countVowels(g) >= forcedGuess.count;
+      return countVowels(g) >= forceGuess.count;
     case "maxVowels":
-      return countVowels(g) <= forcedGuess.count;
+      return countVowels(g) <= forceGuess.count;
     case "firstLastSame":
       return g[0] === g[g.length - 1];
     case "palindrome":

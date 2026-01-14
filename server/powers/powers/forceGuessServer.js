@@ -202,10 +202,10 @@ engine.registerPower("forceGuess", {
 
     state.powers.forceGuessUsed = true;
     state.powers.forceGuessActive = true;
-    state.powers.forcedGuessOptions = generateForceGuessOptions(state);
+    state.powers.forceGuessOptions = generateForceGuessOptions(state);
 
     io.to(action.playerId).emit("forceGuessOptions", {
-      options: state.powers.forcedGuessOptions
+      options: state.powers.forceGuessOptions
     });
   }
 });
