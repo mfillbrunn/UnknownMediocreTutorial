@@ -391,11 +391,7 @@ function getPowersByRoleFromRounds(rounds = [], myId, match) {
       if (!power || !meta) return;
 
       // PowerEngine defines which role can use it
-      if (power.role === "setter") {
-        byRole[setterRole].add(pid);
-      } else if (power.role === "guesser") {
-        byRole[guesserRole].add(pid);
-      }
+    byRole[power.role].add(pid);
     });
   });
 
