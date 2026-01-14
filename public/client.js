@@ -613,7 +613,7 @@ function handleGuesserInput(event) {
         return;
       }
     const guessMakesSense = state.powers.nonsenseActive || window.ALLOWED_GUESSES.has(localGuesserDraft.toLowerCase());
-    if (guessMakesSense) {
+    if (!guessMakesSense) {
       shakeDraftRow("guesser");
       toast("Not in dictionary");
       return;
