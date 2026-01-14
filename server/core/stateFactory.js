@@ -129,7 +129,7 @@ function createInitialState() {
       //Nonsense 
       nonsenseActive: false,
       nonsenseLastTurn: false,
-      nonsenseused: false,
+      nonsenseUsed: false,
       // ASSASSIN WORD
       assassinWordUsed: false,
       assassinWord: null,
