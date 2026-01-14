@@ -12,10 +12,10 @@ engine.registerPower("nonsense", {
   },
 
   turnStart(state, role) {
-    if (role === state.guesser && state.powers.nonsenseUsed && state.powers.nonsenseActive) {
+    if (role === state.setter && state.powers.nonsenseUsed && state.powers.nonsenseActive) {
       state.powers.nonsenseActive = false;
       state.powers.nonsenseLastTurn = true;
-    } else if (role === state.guesser && state.powers.nonsenseUsed && state.powers.nonsenseLastTurn){
+    } else if (role === state.setter && state.powers.nonsenseUsed && state.powers.nonsenseLastTurn){
       state.powers.nonsenseLastTurn = false;
     }
     
