@@ -75,7 +75,7 @@ engine.registerPower("assassinWord", {
     // --- VALID → commit ---
     state.powers.assassinWordUsed = true;
     state.powers.assassinWord = w;
-    state.powers.assassinPoints = max(7-state.guessCount,1);
+    state.powers.assassinPoints = Math.max(7-state.guessCount,1);
     state.powerUsedThisTurn = true;    
 
     // Setter-only confirmation
