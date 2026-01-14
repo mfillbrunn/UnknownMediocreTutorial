@@ -3,72 +3,11 @@
 /**
  * Creates the initial game state for a room.
  */
-function createInitialState() {
-  return {
-    phase: "lobby",
-    host:null,
-    roles:{},
-  // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
-    mode: null,          // instance of mode controller
-    rankMode: "bullet",
-    matchMeta: {},       // owned entirely by the mode
-    ranked : false,
-    gameOverView: "match",
-    canNextRound: false,
-    conceded: false,
-    matchRounds: [],
-    timeUsed: {
-    A: 0,
-    B: 0
-    },
-    roundTimeouts: {
-    A: 0,
-    B: 0
-    },
-    ///TIMER
-    timeControl: {
-    initialSeconds: 300,  // default 5 min
-    incrementSeconds: 10,
-      enabled: true,
-      roundSeconds: 60,
-      mode: "round",
-      preset: "bullet"
-      },
-      
-      timeRemaining: {
-        A: 0,
-        B: 0
-      },
-    roundstarttime:null,
-  timeExpired: null, // "A" | "B" | null
-  activeTimer: null, // "A" | "B" | "both" | null
-  timeoutLoser: null,
-    isTimerRunning: false,
-    
-    turn: null,
-    setter: "A",
-    guesser: "B",
-    ready: {},
-    powerCount: 10,       // NEW: number chosen in lobby
-    activePowers: [],  // NEW: each player’s random secrets
-    secret: "",
-    currentSecret: "",
-    pendingGuess: "",
-    guessCount: 0,
-    gameOver: false,
-    extraConstraints: [],
-    playerNames: {},
 
-    history: [],
-    powersUsedThisRoundGuesser: [],
-    powersUsedThisRoundSetter: [],
-    simultaneousGuessSubmitted: false,
-    simultaneousSecretSubmitted: false,
 
-    powerUsedThisTurn: false,
-
-    powers: {
-      // HIDE TILE
+function createInitialPowers(){
+return{
+// HIDE TILE
       hideTileUsed: false,
       hideTilePendingCount: 0,
       hideTileActive: 0,
@@ -143,8 +82,76 @@ function createInitialState() {
         used: false,           // power has been consumed
         pendingReveal: null    // { index, letter, mode }
       },
-      revealLetterActive: false,
-    }
+      revealLetterActive: false
+};
+}
+function createInitialState() {
+  return {
+    phase: "lobby",
+    host:null,
+    roles:{},
+  // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
+    mode: null,          // instance of mode controller
+    rankMode: "bullet",
+    matchMeta: {},       // owned entirely by the mode
+    ranked : false,
+    gameOverView: "match",
+    canNextRound: false,
+    conceded: false,
+    matchRounds: [],
+    timeUsed: {
+    A: 0,
+    B: 0
+    },
+    roundTimeouts: {
+    A: 0,
+    B: 0
+    },
+    ///TIMER
+    timeControl: {
+    initialSeconds: 300,  // default 5 min
+    incrementSeconds: 10,
+      enabled: true,
+      roundSeconds: 60,
+      mode: "round",
+      preset: "bullet"
+      },
+      
+      timeRemaining: {
+        A: 0,
+        B: 0
+      },
+    roundstarttime:null,
+  timeExpired: null, // "A" | "B" | null
+  activeTimer: null, // "A" | "B" | "both" | null
+  timeoutLoser: null,
+    isTimerRunning: false,
+    
+    turn: null,
+    setter: "A",
+    guesser: "B",
+    ready: {},
+    powerCount: 10,       // NEW: number chosen in lobby
+    activePowers: [],  // NEW: each player’s random secrets
+    secret: "",
+    currentSecret: "",
+    pendingGuess: "",
+    guessCount: 0,
+    gameOver: false,
+    extraConstraints: [],
+    playerNames: {},
+
+    history: [],
+    powersUsedThisRoundGuesser: [],
+    powersUsedThisRoundSetter: [],
+    simultaneousGuessSubmitted: false,
+    simultaneousSecretSubmitted: false,
+
+    powerUsedThisTurn: false,
+
+    powers: createInitialPowers()
   };
 }
-module.exports = {  createInitialState};
+
+
+module.exports = {  createInitialState, createInitialPowers};
