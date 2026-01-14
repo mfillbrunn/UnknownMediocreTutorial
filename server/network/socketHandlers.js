@@ -1,6 +1,6 @@
 // network/socketHandlers.js
 
-const { rooms, createRoom, findLastOpenRoom, joinOrReattach  } = require("../core/rooms");
+const { rooms, createRoom,removePlayer, findLastOpenRoom, joinOrReattach  } = require("../core/rooms");
 const applyAction = require("../core/stateMachine");
 const { emitStateForAllPlayers } = require("../utils/emitState");
 const { emitLobbyEvent } = require("../utils/emitLobby");
@@ -144,11 +144,12 @@ socket.on("leaveRoom", (_payload, cb) => {
 
     removePlayer({
       roomId,
-      socketId,
+      socketId: socket.id,
       reason: "leave",
       io,
       context
     });
+
 
     socket.leave(roomId);
 
@@ -191,13 +192,14 @@ if (!me || room.state.hostUserId !== me.userId) {
   const [targetSocketId, targetPlayer] = targetEntry;
 
   // Remove target
-  removePlayer({
-  roomId,
-  socketId,
-  reason: "kicked",
-  io,
-  context
-});
+    removePlayer({
+      roomId,
+      socketId: socket.id,
+      reason: "kicked",
+      io,
+      context
+    });
+
 
   // Ensure socket leaves the room server-side
   io.sockets.sockets.get(targetSocketId)?.leave(roomId);
