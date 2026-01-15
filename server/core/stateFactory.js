@@ -110,7 +110,7 @@ function createInitialState() {
     ///TIMER
     timeControl: {
     initialSeconds: 300,  // default 5 min
-    incrementSeconds: 10,
+    incrementSeconds: 2,
       enabled: true,
       roundSeconds: 60,
       mode: "round",
