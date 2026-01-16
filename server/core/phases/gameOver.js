@@ -52,8 +52,7 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
          resetRoundState(state);
        }
       state.phase = res.phase || "simultaneous";  
-    if (state.timeControl.enabled && !state.isTimerRunning) {
-        stopTimer(roomId);
+    if (state.timeControl.enabled) {
         resetRoundTimer(state);
         state.activeTimer = "both";
         state.roundStartTime = Date.now();
@@ -75,7 +74,7 @@ if (action.type === "NEW_MATCH") {
    for (const key of Object.keys(state)) {
      delete state[key];
    }
-   Object.assign(state, fresh);
+  Object.assign(state, fresh);
   state.phase = "lobby";
   state.ready = {};
   state.playerNames= names;
