@@ -6,6 +6,7 @@ const { createInitialState } = require("../stateFactory");
 const resetRoundState = require("../../utils/resetRoundState");
 const {resetRoundTimer,stopTimer, startTimer} = require("../../utils/chessTimer");
 const {applyRankedElo} = require("../../utils/elo");
+const {  computeMatchResult, writeMatchHistory} =  require("../../utils/writeMatchData");
 
 function endGame(state, roomId, io, room, context) {
    const { supabase } = context; 
