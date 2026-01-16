@@ -10,8 +10,6 @@ const {  computeMatchResult, writeMatchHistory} =  require("../../utils/writeMat
 
 function endGame(state, roomId, io, room, context) {
    const { supabase } = context; 
-   state.turn = null;
-   state.gameOver = true;
    if (state.timeControl?.enabled) {
       stopTimer(roomId);
       state.isTimerRunning = false;
@@ -24,9 +22,11 @@ function endGame(state, roomId, io, room, context) {
     powers: state.activePowers.map(x => ({ ...x })),
   });
     const res = state.mode?.onRoundEnd?.(state) || { view: "match", canNextRound: false };
-    state.phase = "gameOver";
-    state.gameOverView = res.view || "match"; 
-    state.canNextRound = !!res.canNextRound;
+   state.turn = null;
+   state.gameOver = true; 
+   state.phase = "gameOver";
+   state.gameOverView = res.view || "match"; 
+   state.canNextRound = !!res.canNextRound;
   if (!state.canNextRound) {
      const {winner,tie} = computeMatchResult(state, null);
     if (state.ranked) {
@@ -49,23 +49,13 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
   if (action.type === "NEXT_ROUND") {
     if (!state.canNextRound || state.gameOverView !== "round") {return;}
      const res = state.mode?.onNextRound?.(state) || {phase: "simultaneous",resetRound: true};
-       if (res.resetRound) {
-         resetRoundState(state);
-       }
-      state.phase = res.phase || "simultaneous";  
-    if (state.timeControl.enabled) {
-        resetRoundTimer(state);
-        state.activeTimer = "both";
-        state.roundStartTime = Date.now();
-        startGameTimerSim(room, state, roomId, context)
-        state.isTimerRunning=true;
-      }
-    state.gameOver = false;
-    state.gameOverView = "match";
-    state.canNextRound = false;
-    state.phase = "simultaneous";    
-    emitLobbyEvent(io, roomId, { type: "hideLobby" });
-    emitStateForAllPlayers(roomId, room, io);
+     resetRoundState(room, state, roomId, context);
+     state.phase = res.phase || "simultaneous";  
+     state.gameOver = false;
+     state.gameOverView = "match";
+     state.canNextRound = false;   
+     emitLobbyEvent(io, roomId, { type: "hideLobby" });
+     emitStateForAllPlayers(roomId, room, io);
     return;
   }  
   ///NEW MATCH
@@ -90,135 +80,5 @@ if (action.type === "NEW_MATCH") {
 }
   return;
 }
-
-function startGameTimerSim(room, state, roomId, context) {
-  const io = context.io;
-  startTimer(roomId, state, io, timedOutRole => {
-      state.timeoutLoser = timedOutRole;
-      endGame(state, roomId, io, room,context);
-      return;
-  });
-}
-
-function computeMatchResult(state, myRole) {
-  const rounds = state.matchRounds || [];
-
-  const points = { A: 0, B: 0 };
-  const time = { A: 0, B: 0 };
-
-  rounds.forEach(r => {
-    points[r.setter] += r.guessCount;
-    time.A += r.time?.A || 0;
-    time.B += r.time?.B || 0;
-  });
-
-  let winner = null;
-  let winReason = "points";
-
-   if (state.timeoutLoser) {
-    winner = state.timeoutLoser === "A" ? "B" : "A";
-    winReason = "timeout";
-  } else {
-    // Normal resolution
-    if (points.A > points.B) {
-      winner = "A";
-    } else if (points.B > points.A) {
-      winner = "B";
-    } else if (time.A !== time.B) {
-      winner = time.A <= time.B ? "A" : "B";
-      winReason = "time";
-    } else {
-      winReason = "tie";
-    }
-  }
-  const didWin = winner && myRole === winner;
-  const winnerPoints = winner ? points[winner] : points.A;
-  const loserPoints = winner ? points[winner === "A" ? "B" : "A"] : points.A;
-  return {
-    points,
-    time,
-    winner,
-    winReason,        
-    didWin,
-    winnerPoints,
-    loserPoints
-  };
-}
-async function writeMatchHistory({ state, room, supabase, ratingChange }) {
-  const socketIds = Object.keys(room.players);
-  if (socketIds.length !== 2) return;
-
-  // Resolve sockets by role
-  const socketA = socketIds.find(
-    id => room.players[id]?.role === "A"
-  );
-  const socketB = socketIds.find(
-    id => room.players[id]?.role === "B"
-  );
-  if (!socketA || !socketB) return;
-
-  // Resolve USER IDs (critical)
-  const userA = room.players[socketA].userId;
-  const userB = room.players[socketB].userId;
-
-  const {
-    winner,
-    winReason,
-    winnerPoints,
-    loserPoints
-  } = computeMatchResult(state, null);
-
-  const winnerUserId =
-    winner === "A" ? userA :
-    winner === "B" ? userB :
-    null;
-
-  const scoreA =
-    winner === "A" ? winnerPoints :
-    winner === "B" ? loserPoints :
-    winnerPoints;
-
-  const scoreB =
-    winner === "B" ? winnerPoints :
-    winner === "A" ? loserPoints :
-    winnerPoints;
-
-  const { error } = await supabase.from("matches").insert({
-    mode: state.rankMode,
-    ranked: state.ranked,
-
-    player_a: userA,
-    player_b: userB,
-
-    winner: winnerUserId,
-    win_reason: winReason,
-
-    score_a: scoreA,
-    score_b: scoreB,
-
-    rating_a_before: ratingChange?.rating_a_before ?? null,
-    rating_b_before: ratingChange?.rating_b_before ?? null,
-    rating_a_after: ratingChange?.rating_a_after ?? null,
-    rating_b_after: ratingChange?.rating_b_after ?? null,
-
-    time_control: {
-      enabled: state.timeControl?.enabled,
-      mode: state.timeControl?.mode,
-      roundSeconds: state.timeControl?.roundSeconds,
-      initialSeconds: state.timeControl?.initialSeconds,
-      incrementSeconds: state.timeControl?.incrementSeconds,
-      rankMode: state.rankMode
-    },
-
-    rounds: JSON.parse(JSON.stringify(state.matchRounds))
-  });
-
-  if (error) {
-    console.error("Match history insert failed:", error);
-    throw error;
-  }
-}
-
-
 
 module.exports = {handleGameOverPhase, endGame};
