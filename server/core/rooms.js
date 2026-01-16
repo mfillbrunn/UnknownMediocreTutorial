@@ -38,7 +38,8 @@ function createRoom(socket, userId) {
     role: "A",
     userId,
     connected: true,
-    disconnectedAt: null
+    disconnectedAt: null,
+    isAI: false
   };
 
   room.state.roles[socket.id] = "A";
@@ -217,6 +218,22 @@ function resetRoomState(room) {
   room.state.hostUserId = remainingPlayers[0]?.userId ?? null;
 }
 
+function addAIPlayer(room) {
+  const AI_ID = "AI"; // constant fake socket id
+
+  if (room.players[AI_ID]) return;
+
+  room.players[AI_ID] = {
+    role: "B",
+    userId: "AI",
+    connected: true,
+    disconnectedAt: null,
+    isAI: true
+  };
+
+  room.state.roles[AI_ID] = "B";
+}
+
 
 module.exports = {
   rooms,
@@ -226,5 +243,6 @@ module.exports = {
   cleanupEmptyRooms,
   findLastOpenRoom,
   cleanupDisconnectedPlayers,
-  resetRoomState
+  resetRoomState,
+  addAIPlayer
 };
