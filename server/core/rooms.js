@@ -107,7 +107,7 @@ function joinOrReattach(socket, roomId, userId) {
   room.state.roles[socket.id] = role;
   return {
   ok: true,
-  reattached: true,
+  reattached: false,
   role: role,
   shouldResumeGame:false
 };
