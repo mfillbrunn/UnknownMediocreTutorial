@@ -1,5 +1,5 @@
 const {createInitialPowers} = require("../core/stateFactory");
-const {resetRoundTimer, startGameTimerSim} = require("./chessTimer");
+const {resetRoundTimer} = require("./chessTimer");
 function resetRoundState(room, state, roomId, context) {
   state.secret = "";
   state.currentSecret = "";
@@ -26,5 +26,12 @@ function resetRoundState(room, state, roomId, context) {
     state.isTimerRunning=true;
   }
 }
-
+function startGameTimerSim(room, state, roomId, context) {
+  const io = context.io;
+  startTimer(roomId, state, io, timedOutRole => {
+      state.timeoutLoser = timedOutRole;
+      endGame(state, roomId, io, room,context);
+      return;
+  });
+}
 module.exports = resetRoundState;
