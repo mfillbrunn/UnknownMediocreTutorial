@@ -88,6 +88,7 @@ if (action.type === "SET_TIME_CONTROL") {
   // -------------------------------
 if (action.type === "SWITCH_ROLES") {
   if (state.ranked) return; // silently ignore
+  if (Object.values(room.players).some(p => p.isAI)) return;
   const ids = Object.keys(room.players);
   if (ids.length !== 2) return;
   const idA = ids.find(id => room.players[id]?.role === "A");
