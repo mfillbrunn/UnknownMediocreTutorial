@@ -33,12 +33,10 @@ function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
 if (action.type === "PLAYER_JOINED") {
   if (action.name) {
-    state.playerNames[action.playerId] = String(action.name)
-      .trim()
-      .slice(0, 16);
+    state.playerNames[action.playerId] = String(action.name).trim().slice(0, 16);
   }
   emitStateForAllPlayers(roomId, room, io);
-    emitLobbyEvent(io, roomId, { type: "playerJoined" });
+ emitLobbyEvent(io, roomId, { type: "playerJoined" });
   return;
 }
 if (action.type === "SET_RANKED") {
@@ -55,24 +53,20 @@ if (action.type === "SET_TIME_CONTROL") {
     state.activeTimer = null;
     state.timeRemaining.A = 0;
     state.timeRemaining.B = 0;
-         state.rankMode = "notime";
+    state.rankMode = "notime";
     emitStateForAllPlayers(roomId, room, io);
     return;
   }        
   const sec = parseInt(action.seconds, 10);
   const mode = action.mode || "round";
-
   if (!Number.isFinite(sec) || sec <= 0) return;
-
   state.timeControl.enabled = true;
-  state.timeControl.mode = mode;
-       
+  state.timeControl.mode = mode;       
         state.timeControl.preset =
           sec === 60 ? "bullet" :
           sec === 180 ? "blitz" :
           sec === 900 ? "deep" :
           "custom";
-        
   if (mode === "round") {
     state.timeControl.roundSeconds = sec;
     state.timeRemaining.A = sec;
@@ -89,40 +83,62 @@ if (action.type === "SET_TIME_CONTROL") {
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
-
-
   // -------------------------------
   // SWITCH ROLES
   // -------------------------------
 if (action.type === "SWITCH_ROLES") {
   if (state.ranked) return; // silently ignore
-
   const ids = Object.keys(room.players);
   if (ids.length !== 2) return;
-
   const idA = ids.find(id => room.players[id]?.role === "A");
   const idB = ids.find(id => room.players[id]?.role === "B");
   if (!idA || !idB) return;
-
-  // Swap runtime roles
   room.players[idA].role = "B";
   room.players[idB].role = "A";
-
-  // Swap authoritative roles
   state.roles[idA] = "B";
   state.roles[idB] = "A";
-
   state.setter = "A";
   state.guesser = "B";
-
   // Notify players (UX only)
   for (const playerId of ids) {
     io.to(playerId).emit("lobbyEvent", { type: "rolesSwitched" });
   }
-
   return;
 }
 
+if (action.type === "ADD_AI") {
+  // Only host can add AI
+  if (state.hostUserId !== action.userId) return;
+  // Already have 2 players
+  if (Object.keys(room.players).length >= 2) return;
+  // Add AI player
+  const AI_ID = "AI";
+  room.players[AI_ID] = {
+    role: "B",
+    userId: "AI",
+    connected: true,
+    disconnectedAt: null,
+    isAI: true
+  };
+  state.roles[AI_ID] = "B";
+  state.playerNames[AI_ID] = "Computer";
+  // Mark AI as ready immediately
+  state.ready[AI_ID] = true;
+  emitLobbyEvent(io, roomId, {
+    type: "playerJoined",
+    playerId: AI_ID,
+    isAI: true
+  });
+
+  emitLobbyEvent(io, roomId, {
+    type: "playerReady",
+    playerId: AI_ID
+  });
+
+  emitStateForAllPlayers(roomId, room, io);
+
+  return;
+}
 
 
 if (action.type === "SET_POWER_COUNT") {
@@ -130,7 +146,6 @@ if (action.type === "SET_POWER_COUNT") {
         console.log("SET_POWER_COUNT received:", n);
     if (isNaN(n)) return;
     n = Math.max(1, Math.min(10, n));
-
     state.powerCount = n;
     emitStateForAllPlayers(roomId, room, io);
     return;
