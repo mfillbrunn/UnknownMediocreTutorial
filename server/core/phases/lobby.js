@@ -107,7 +107,8 @@ if (action.type === "SWITCH_ROLES") {
 }
 
 if (action.type === "ADD_AI") {
-  // Only host can add AI
+  if (state.ranked) return;
+   // Only host can add AI
   if (state.hostUserId !== action.userId) return;
   // Already have 2 players
   if (Object.keys(room.players).length >= 2) return;
