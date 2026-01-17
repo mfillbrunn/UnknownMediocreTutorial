@@ -111,8 +111,11 @@ if (action.type === "ADD_AI") {
          console.log("the call works");
   if (state.ranked) return;
    // Only host can add AI
+        console.log(state.hostUserId);
+        console.log(action.userId);
   if (state.hostUserId !== action.userId) return;
   // Already have 2 players
+        console.log(Object.keys(room.players).length);
   if (Object.keys(room.players).length >= 2) return;
   // Add AI player
   const AI_ID = "AI";
