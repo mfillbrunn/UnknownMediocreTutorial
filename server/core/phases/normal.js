@@ -2,6 +2,8 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer, startTimer} = require("../../utils/chessTimer");
 const { endGame } = require("./gameOver");
+const { checkSecret, checkGuess } = require("../../game-engine/validation");
+
 const FORCE_TIMER_INTERVALS = {};
 function handleNormalPhase(room, state, action, role, roomId, context) {
   const io = context.io;
@@ -17,6 +19,8 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
 }
   /// GUESSER SUBMIT
   if (!state.pendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
+    const res = checkGuess({guess: action.guess,state,allowedGuesses: context.ALLOWED_GUESSES});
+    if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
     const g = action.guess.toLowerCase(); 
     state.guessCount= state.guessCount + 1;
     state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
@@ -62,6 +66,8 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
 
   /// SETTER
 if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME") ) {
+    const res = checkSecret({secret: action.secret, state, allowedSecrets: context.ALLOWED_SECRETS });
+    if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
     let w = null;
     if (action.type === "SET_SECRET_NEW") {
        w = action.secret.toLowerCase();
