@@ -3,6 +3,7 @@ const { scoreGuess } = require("../../game-engine/scoring");
 const { endGame } = require("./gameOver");
 const { addIncrement,resetRoundTimer, stopTimer } = require("../../utils/chessTimer");
 const { startGameTimer } = require("./normal");
+const {maybeRunAI} = require ("../ai/runAI");
 
 function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const io = context.io;
@@ -30,6 +31,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     if (state.timeControl.mode === "chess") {addIncrement(state, state.setter);} 
     if (state.activeTimer === "both") {state.activeTimer = state.guesser;}
     state.timeUsed[state.setter] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
+    maybeRunAI();
   }
   // ---------------------------------------------
   // GUESSER submits initial guess
@@ -44,6 +46,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     if (state.timeControl.mode === "chess") {addIncrement(state, state.guesser);} 
     if (state.activeTimer === "both") {state.activeTimer = state.setter;}
     state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
+    maybeRunAI();
   }
   io.to(roomId).emit("simulProgress", {secretSubmitted: state.simultaneousSecretSubmitted, guessSubmitted: state.simultaneousGuessSubmitted});
   // ---------------------------------------------
@@ -85,5 +88,6 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   state.roundStartTime = Date.now();
   powerEngine.turnStart(state, state.guesser, roomId, io);
   emitStateForAllPlayers(roomId, room, io);
+  maybeRunAI();
 }
 module.exports = handleSimultaneousPhase;
