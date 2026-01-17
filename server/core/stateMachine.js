@@ -7,25 +7,38 @@ const {handleGameOverPhase} = require("./phases/gameOver");
 const {maybeRunAI} = require("./ai/runAI");
 
 function applyAction(room, state, action, role, roomId, context) {
-  const { powerEngine } = context;
-  maybeRunAI();
   switch (state.phase) {
     case "lobby":
-      return handleLobbyPhase(room, state, action, role, roomId, context);
+      handleLobbyPhase(room, state, action, role, roomId, context);
+      break;
 
     case "simultaneous":
-      return handleSimultaneousPhase(room, state, action, role, roomId, context);
+      handleSimultaneousPhase(room, state, action, role, roomId, context);
+      break;
 
     case "normal":
-      return handleNormalPhase(room, state, action, role, roomId, context);
+      handleNormalPhase(room, state, action, role, roomId, context);
+      break;
 
     case "gameOver":
-      return handleGameOverPhase(room, state, action, role, roomId, context);
+      handleGameOverPhase(room, state, action, role, roomId, context);
+      break;
 
     default:
       console.warn("Unknown phase:", state.phase);
       return;
   }
+
+  if (room && roomId && context) {
+    setTimeout(() => {
+      try {
+        maybeRunAI(room, roomId, context);
+      } catch (err) {
+        console.error("maybeRunAI crashed:", err);
+      }
+    }, 300);
+  }
 }
+
 
 module.exports = applyAction;
