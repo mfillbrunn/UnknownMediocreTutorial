@@ -1,5 +1,5 @@
 const {createInitialPowers} = require("../core/stateFactory");
-const {resetRoundTimer} = require("./chessTimer");
+const {resetRoundTimer, startTimer} = require("./chessTimer");
 function resetRoundState(room, state, roomId, context) {
   state.secret = "";
   state.currentSecret = "";
