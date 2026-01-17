@@ -133,7 +133,7 @@ const username =
 
 
 $("switchRolesBtn")?.addEventListener("click", () => {
-  sendGameAction(roomId, { type: "SWITCH_ROLES" });
+  sendGameAction(roomId, { type: "SWITCH_ROLES" }, userId: window.currentUser.id);
 });
 
 
@@ -265,12 +265,12 @@ document.querySelectorAll(".concedeBtn").forEach(btn => {
     document.querySelectorAll(".concedeBtn")
       .forEach(b => b.disabled = true);
 
-    sendGameAction(roomId, { type: "CONCEDE" });
+    sendGameAction(roomId, { type: "CONCEDE" }, userId: window.currentUser.id);
   });
 });
 
 $("addAiBtn")?.addEventListener("click", () => {
-  sendGameAction(roomId, { type: "ADD_AI" });
+  sendGameAction(roomId, { type: "ADD_AI" }, userId: window.currentUser.id);
   console.log("AI button works");
 });
 
