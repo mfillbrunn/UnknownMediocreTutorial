@@ -97,7 +97,7 @@ function pickAIGuess(state, allWords) {
   }
 }
 function getAIGuessProbs(state) {
-  const feasible = Math.min(0.85, 0.4 + state.history.length * 0.15);
+  const feasible = Math.min(1, 0.4 + state.history.length * 0.15);
 
   const remaining = 1 - feasible;
 
