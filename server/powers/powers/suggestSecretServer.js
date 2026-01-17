@@ -5,7 +5,7 @@ const { parseWordlist } = require("../../game-engine/validation");
 const fs = require("fs");
 const path = require("path");
 
-const WORDS = fs.readFileSync(path.join(__dirname, "../../wordlists/allowed_guesses.txt"), "utf8")
+const WORDS = fs.readFileSync(path.join(__dirname, "../../wordlists/allowed_secrets.txt"), "utf8")
   .trim()
   .split("\n");
 
