@@ -183,17 +183,18 @@ function removePlayer({
 
   return { ok: true };
 }
-
 function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
-  for (const [roomId, room] of Object.entries(rooms)) {
-  if (!hasAnyHumanPlayers(room)) {
-    console.log("Cleaning AI-only room:", roomId);
-    delete rooms[roomId];
-    continue;
-  }
   const now = Date.now();
 
   for (const [roomId, room] of Object.entries(rooms)) {
+    // 🔥 Delete AI-only rooms
+    if (!hasAnyHumanPlayers(room)) {
+      console.log("Cleaning AI-only room:", roomId);
+      delete rooms[roomId];
+      continue;
+    }
+
+    // Handle disconnected human players
     for (const [socketId, player] of Object.entries(room.players)) {
       if (
         !player.connected &&
@@ -211,6 +212,7 @@ function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
     }
   }
 }
+
 
 function resetRoomState(room) {
   const prevRankMode = room.state.rankMode;
