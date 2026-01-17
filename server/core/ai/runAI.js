@@ -2,6 +2,12 @@ const {handleNormalPhase} = require("../phases/normal");
 const handleSimultaneousPhase = require("../phases/simultaneous");
 const { pickGuess, pickSecret } = require("./simpleAI");
 
+function asArray(words) {
+  if (Array.isArray(words)) return words;
+  if (words instanceof Set) return Array.from(words);
+  return [];
+}
+
 function maybeRunAI(room, roomId, context) {
   const state = room.state;
 
@@ -19,7 +25,7 @@ function maybeRunAI(room, roomId, context) {
     if (state.turn !== ai.role) return;
 
     if (ai.role === state.guesser && !state.pendingGuess) {
-      const guess = pickGuess(state, context.ALLOWED_GUESSES);
+      const guess = pickGuess(state, asArray(context.ALLOWED_GUESSES));
 
       handleNormalPhase(
         room,
@@ -50,7 +56,7 @@ function maybeRunAI(room, roomId, context) {
   // -----------------------------
   if (state.phase === "simultaneous") {
     if (ai.role === state.guesser && !state.simultaneousGuessSubmitted) {
-      const guess = pickGuess(state, context.ALLOWED_GUESSES);
+      const guess = pickGuess(state, asArray(context.ALLOWED_GUESSES));
 
       handleSimultaneousPhase(
         room,
@@ -64,7 +70,7 @@ function maybeRunAI(room, roomId, context) {
     }
 
     if (ai.role === state.setter && !state.simultaneousSecretSubmitted) {
-      const secret = pickSecret(context.ALLOWED_SECRETS);
+      const secret = pickSecret(asArray(context.ALLOWED_SECRETS));
 
       handleSimultaneousPhase(
         room,
