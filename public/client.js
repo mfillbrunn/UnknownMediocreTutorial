@@ -524,7 +524,7 @@ function submitSetterNew() {
     toast("Too similar to assassin word (needs 2 or more different letters)");
     return;
   }
-  if (!window.ALLOWED_GUESSES.has(w)) {
+  if (!window.ALLOWED_SECRETS.has(w)) {
     shakeDraftRow("setter");
     toast("Word not in dictionary");
     return;
