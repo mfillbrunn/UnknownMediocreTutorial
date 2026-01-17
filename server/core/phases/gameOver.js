@@ -27,20 +27,23 @@ function endGame(state, roomId, io, room, context) {
    state.phase = "gameOver";
    state.gameOverView = res.view || "match"; 
    state.canNextRound = !!res.canNextRound;
-  if (!state.canNextRound) {
-     const {winner,tie} = computeMatchResult(state, null);
-    if (state.ranked) {
-      applyRankedElo({ state, room, supabase,winner,tie })
-        .then(ratingChange => {return writeMatchHistory({state,room,supabase,ratingChange});})
-        .catch(err => console.error("Ranked match persistence failed:", err));
-    }else {
-       writeMatchHistory({ state, room, supabase })
-      .catch(err => console.error("Match history write failed:", err));
-     }
-    emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
-    io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
-    emitStateForAllPlayers(roomId, room, io)
-}
+   const isAIMatch = Object.values(room.players).some(p => p.isAI);
+   if (!isAIMatch) {
+      if (!state.canNextRound) {
+           const {winner,tie} = computeMatchResult(state, null);
+          if (state.ranked) {
+            applyRankedElo({ state, room, supabase,winner,tie })
+              .then(ratingChange => {return writeMatchHistory({state,room,supabase,ratingChange});})
+              .catch(err => console.error("Ranked match persistence failed:", err));
+          }else {
+             writeMatchHistory({ state, room, supabase })
+            .catch(err => console.error("Match history write failed:", err));
+           }
+          emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
+          io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
+          emitStateForAllPlayers(roomId, room, io)
+      }
+   }
 }
 
 function handleGameOverPhase(room, state, action, role, roomId, context) {
@@ -78,6 +81,11 @@ if (action.type === "NEW_MATCH") {
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
+
+function hasAIPlayer(room) {
+  return Object.values(room.players).some(p => p.isAI);
+}
+
   return;
 }
 
