@@ -27,22 +27,6 @@ function isValidWord(w, allowedList) {
   return allowedList.includes(w.toLowerCase());
 }
 
-function parseWordlist(raw) {
-  return raw
-    .split(/\r?\n/)
-    .map(w => w.trim().toLowerCase())
-    .filter(w => w.length === 5);
-}
-
-if (typeof window !== "undefined") {
-  window.isValidWord = isValidWord;
-  window.parseWordlist = parseWordlist;
-}
-
-if (typeof module !== "undefined") {
-  module.exports = { isValidWord, parseWordlist };
-}
-
 function satisfiesForceGuess(g, forceGuess) {
   switch (forceGuess.type) {
     case "startsWith":
