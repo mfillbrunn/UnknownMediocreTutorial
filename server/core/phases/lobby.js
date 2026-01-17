@@ -108,6 +108,7 @@ if (action.type === "SWITCH_ROLES") {
 }
 
 if (action.type === "ADD_AI") {
+         console.log("the call works");
   if (state.ranked) return;
    // Only host can add AI
   if (state.hostUserId !== action.userId) return;
@@ -138,7 +139,7 @@ if (action.type === "ADD_AI") {
   });
 
   emitStateForAllPlayers(roomId, room, io);
-
+        console.log("the call goes through");
   return;
 }
 
