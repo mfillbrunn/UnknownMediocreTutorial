@@ -193,5 +193,11 @@ function checkGuess({ guess, state, allowedGuesses }) {
   // ✅ Passed all checks
   return { ok: true };
 }
+function parseWordlist(raw) {
+  return raw
+    .split(/\r?\n/)
+    .map(w => w.trim().toLowerCase())
+    .filter(w => w.length === 5);
+}
 
-module.exports = { checkSecret,checkGuess };
+module.exports = { checkSecret,checkGuess, parseWordlist  };
