@@ -1,6 +1,6 @@
 const handleNormalPhase = require("../phases/normal");
 const handleSimultaneousPhase = require("../phases/simultaneous");
-const { pickGuess, pickSecret } = require("./ai/easyAI");
+const { pickGuess, pickSecret } = require("./easyAI");
 
 function maybeRunAI(room, roomId, context) {
   const state = room.state;
