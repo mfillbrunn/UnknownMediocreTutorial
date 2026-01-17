@@ -82,7 +82,8 @@ const context = {
   io,
   supabase,
   powerEngine,
-  ALLOWED_GUESSES
+  ALLOWED_GUESSES,
+  ALLOWED_SECRETS
 };
 
 // Register socket event handlers (create/join room, game actions)
