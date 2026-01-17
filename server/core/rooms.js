@@ -4,6 +4,10 @@ const {endGame }  = require("./phases/gameOver");
 
 const rooms = {};
 
+function hasAnyHumanPlayers(room) {
+  return Object.values(room.players).some(p => !p.isAI);
+}
+
 // Generate a human-friendly room ID
 function generateRoomId() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -161,7 +165,11 @@ function removePlayer({
     reason
   });
 
-  // 🔥 Always reset state after any leave
+  if (!hasAnyHumanPlayers(room)) {
+    console.log("Deleting room with only AI:", roomId);
+    delete rooms[roomId];
+    return { ok: true, deleted: true };
+  }
   resetRoomState(room);
 
   // If one player remains and this was mid-game, you can still award a win
@@ -177,6 +185,12 @@ function removePlayer({
 }
 
 function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
+  for (const [roomId, room] of Object.entries(rooms)) {
+  if (!hasAnyHumanPlayers(room)) {
+    console.log("Cleaning AI-only room:", roomId);
+    delete rooms[roomId];
+    continue;
+  }
   const now = Date.now();
 
   for (const [roomId, room] of Object.entries(rooms)) {
