@@ -1,3 +1,5 @@
+//server simultaneous.js
+
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { scoreGuess } = require("../../game-engine/scoring");
 const { endGame } = require("./gameOver");
