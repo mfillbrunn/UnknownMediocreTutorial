@@ -2,13 +2,13 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer, startTimer} = require("../../utils/chessTimer");
 const { endGame } = require("./gameOver");
+const {maybeRunAI} = require ("../ai/runAI");
 const FORCE_TIMER_INTERVALS = {};
-///CONCEDE
 function handleNormalPhase(room, state, action, role, roomId, context) {
   const io = context.io;
+  //Concede
   const { ALLOWED_GUESSES, powerEngine } = context;
   if (action.type === "CONCEDE") {
-  // Penalty guesses
   if (role === state.guesser){
     const CONCEDE_PENALTY = 10;
     state.guessCount += CONCEDE_PENALTY;
@@ -58,6 +58,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     state.powerUsedThisTurn = false;
     powerEngine.turnStart(state, state.turn, roomId, io);
     emitStateForAllPlayers(roomId, room, io);
+    maybeRunAI();
     return;
   }
 
@@ -99,6 +100,7 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
       state.powerUsedThisTurn = false;  
       powerEngine.turnStart(state, state.guesser, roomId, io);
       emitStateForAllPlayers(roomId, room, io);
+      maybeRunAI();
       return;
     }
   /// POWERs
