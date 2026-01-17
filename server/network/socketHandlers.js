@@ -8,7 +8,7 @@ const { stopTimer } = require("../utils/chessTimer");
 const { startGameTimer } = require("../core/phases/normal");
 
 module.exports = function registerSocketHandlers(io, context) {
-  const { ALLOWED_GUESSES } = context;
+  const { ALLOWED_GUESSES, ALLOWED_SECRETS } = context;
   
   io.on("connection", socket => {
 
