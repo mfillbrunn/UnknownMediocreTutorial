@@ -4,7 +4,7 @@ const path = require("path");
 
 const ALLOWED_WORDS = new Set(
   fs.readFileSync(
-    path.join(__dirname, "../../wordlists/allowed_guesses.txt"),
+    path.join(__dirname, "../../wordlists/allowed_secrets.txt"),
     "utf8"
   )
   .trim()
