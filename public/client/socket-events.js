@@ -65,7 +65,6 @@ socket.on("timerTick", ({ timeRemaining }) => {
 socket.on("roleAssigned", ({ role }) => {
   myRole = role;
   roleAssigned = true;
-     localGuesserDraft = "";
     updateUI();
   updateRoleLabels();
 });
