@@ -64,7 +64,7 @@ function maybeRunAI(room, roomId, context) {
     }
 
     if (ai.role === state.setter && !state.simultaneousSecretSubmitted) {
-      const secret = pickSecret(context.ALLOWED_GUESSES);
+      const secret = pickSecret(context.ALLOWED_SECRETS);
 
       handleSimultaneousPhase(
         room,
