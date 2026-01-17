@@ -1,4 +1,4 @@
-const handleNormalPhase = require("../phases/normal");
+const {handleNormalPhase} = require("../phases/normal");
 const handleSimultaneousPhase = require("../phases/simultaneous");
 const { pickGuess, pickSecret } = require("./easyAI");
 
