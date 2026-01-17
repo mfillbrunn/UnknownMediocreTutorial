@@ -1,4 +1,4 @@
-//server simultaneous.js
+//core/phases/simultaneous.js
 
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { scoreGuess } = require("../../game-engine/scoring");
