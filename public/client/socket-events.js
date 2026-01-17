@@ -271,5 +271,6 @@ document.querySelectorAll(".concedeBtn").forEach(btn => {
 
 $("addAiBtn")?.addEventListener("click", () => {
   sendGameAction(roomId, { type: "ADD_AI" });
+  console.log("AI button works");
 });
 
