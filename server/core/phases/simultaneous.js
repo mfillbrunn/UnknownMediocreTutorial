@@ -3,11 +3,11 @@ const { scoreGuess } = require("../../game-engine/scoring");
 const { endGame } = require("./gameOver");
 const { addIncrement,resetRoundTimer, stopTimer } = require("../../utils/chessTimer");
 const { startGameTimer } = require("./normal");
+const { checkSecret, checkGuess } = require("../../game-engine/validation");
 
 function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const io = context.io;
-  const { ALLOWED_GUESSES, powerEngine } = context;
-  const { isValidWord } = require("../../game-engine/validation");
+  const { powerEngine } = context;
   // ---------------------------------------------
   // SETTER submits initial secret
   // ---------------------------------------------
@@ -20,9 +20,10 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     return;
   }  
   if (action.type === "SET_SECRET_NEW" && role === state.setter) {
+    const res = checkSecret({secret: action.secret, state, allowedSecrets: context.ALLOWED_SECRETS });
+    if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
     if (state.simultaneousSecretSubmitted) return;
     const w = action.secret.toLowerCase();
-    if (!isValidWord(w, ALLOWED_GUESSES)) return;
     state.secret = w;
     state.currentSecret = w;
     state.firstSecretSet = true;
@@ -35,9 +36,10 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   // GUESSER submits initial guess
   // ---------------------------------------------
   if (action.type === "SUBMIT_GUESS" && role === state.guesser) {
+    const res = checkGuess({guess: action.guess,state,allowedGuesses: context.ALLOWED_GUESSES});
+    if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
     if (state.simultaneousGuessSubmitted) return;
     const g = action.guess.toLowerCase();
-    if (!isValidWord(g, ALLOWED_GUESSES)) return;
     state.pendingGuess = g;
     state.guessCount=state.guessCount + 1;
     state.simultaneousGuessSubmitted = true;
