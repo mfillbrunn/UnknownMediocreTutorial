@@ -4,9 +4,11 @@ const handleLobbyPhase = require("./phases/lobby");
 const handleSimultaneousPhase = require("./phases/simultaneous");
 const { handleNormalPhase } = require("./phases/normal");
 const {handleGameOverPhase} = require("./phases/gameOver");
+const {maybeRunAI} = require("./ai/runAI");
 
 function applyAction(room, state, action, role, roomId, context) {
   const { powerEngine } = context;
+  maybeRunAI();
   switch (state.phase) {
     case "lobby":
       return handleLobbyPhase(room, state, action, role, roomId, context);
