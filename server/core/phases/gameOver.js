@@ -52,7 +52,15 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
   if (action.type === "NEXT_ROUND") {
     if (!state.canNextRound || state.gameOverView !== "round") {return;}
      const res = state.mode?.onNextRound?.(state) || {phase: "simultaneous",resetRound: true};
+      //powers not to reset across rounds
+     let saved;
+     if (state.activePowers.includes("revealLetter")) {
+          saved = state.powers.revealLetter.mode;
+      }    
      resetRoundState(room, state, roomId, context);
+     if (state.activePowers.includes("revealLetter")) {
+          state.powers.revealLetter.mode = saved;
+      }    
      state.phase = res.phase || "simultaneous";  
      state.gameOver = false;
      state.gameOverView = "match";
