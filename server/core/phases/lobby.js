@@ -3,9 +3,8 @@
 const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const CompetitiveMode = require("../modes/competitiveMode");
-const { stopTimer,startTimer,resetRoundTimer } = require("../../utils/Timer");
-const {handleRoundTimeout, startGameTimer} = require("./normal");
-const {startGameTimerSim} = require("./gameOver"); 
+const { stopTimer,resetRoundTimer } = require("../../utils/Timer");
+const {startGameTimer} = require("./normal");
 
 const SETTER_POWERS = [
         "hideTile",
@@ -201,7 +200,7 @@ if (action.type === "SET_POWER_COUNT") {
               state.activeTimer = "both";
               state.roundStartTime = Date.now();
               stopTimer(roomId);
-              startGameTimerSim(room, state, roomId, context);
+              startGameTimer(room, state, roomId, context);
               state.isTimerRunning = true;
             }        
              if (state.activePowers.includes("revealLetter")) {
