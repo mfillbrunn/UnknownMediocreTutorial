@@ -33,6 +33,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     if (state.timeControl.mode === "chess") {addIncrement(state, state.setter);} 
     if (state.activeTimer === "both") {state.activeTimer = state.guesser;}
     state.timeUsed[state.setter] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
+    emitStateForAllPlayers(roomId, room, io);
   }
   // ---------------------------------------------
   // GUESSER submits initial guess
@@ -48,6 +49,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     if (state.timeControl.mode === "chess") {addIncrement(state, state.guesser);} 
     if (state.activeTimer === "both") {state.activeTimer = state.setter;}
     state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
+    emitStateForAllPlayers(roomId, room, io);
   }
   io.to(roomId).emit("simulProgress", {secretSubmitted: state.simultaneousSecretSubmitted, guessSubmitted: state.simultaneousGuessSubmitted});
   // ---------------------------------------------
