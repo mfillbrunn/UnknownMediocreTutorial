@@ -152,6 +152,7 @@ function removePlayer({roomId, socketId, reason, io, context}) {
     return { ok: true, deleted: true };
   }
   resetRoomState(room);
+  emitStateForAllPlayers(roomId, room, io);
   return { ok: true };
 }
 
