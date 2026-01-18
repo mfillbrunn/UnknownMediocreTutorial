@@ -27,6 +27,22 @@ function maybeRunAI(room, roomId, context) {
   // NORMAL PHASE
   // -----------------------------
   if (state.phase === "normal" && state.turn === aiPlayer.role) {
+    if (aiLogic.maybeUsePower) {
+      const powerAction = aiLogic.maybeUsePower(state, context);
+      if (powerAction) {
+        actionFn = () => {
+          handleNormalPhase(
+            room,
+            state,
+            { ...powerAction, ai: true },
+            aiPlayer.role,
+            roomId,
+            context
+          );
+        };
+      }
+    }
+
     if (aiPlayer.role === state.guesser && !state.pendingGuess) {
       actionFn = () => {
         const guess = aiLogic.pickGuess(state, context.WORDS.guesses);
