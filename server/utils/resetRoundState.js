@@ -18,20 +18,6 @@ function resetRoundState(room, state, roomId, context) {
   state.powersUsedThisRoundSetter = [];
  // clear transient power effects
    state.powers = createInitialPowers();  
-  if (state.timeControl.enabled) {
-    resetRoundTimer(state);
-    state.activeTimer = "both";
-    state.roundStartTime = Date.now();
-    startGameTimerSim(room, state, roomId, context)
-    state.isTimerRunning=true;
-  }
 }
-function startGameTimerSim(room, state, roomId, context) {
-  const io = context.io;
-  startTimer(roomId, state, io, timedOutRole => {
-      state.timeoutLoser = timedOutRole;
-      endGame(state, roomId, io, room,context);
-      return;
-  });
-}
+
 module.exports = resetRoundState;
