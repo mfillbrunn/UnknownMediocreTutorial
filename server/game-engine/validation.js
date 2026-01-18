@@ -3,78 +3,7 @@ const { isConsistentWithHistory } = require("./history");
 // /game-engine/validation.js — UNIVERSAL VERSION
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 
-//HELPER FCTS
-function hasWord(container, wordUpper) {
-  if (!container) return true; // allow if no dictionary
-  if (container instanceof Set) return container.has(wordUpper);
-  if (Array.isArray(container)) return container.includes(wordUpper.toUpperCase());
-  return false;
-}
 
-function countPositionalDifferences(a, b) {
-  if (
-    typeof a !== "string" ||
-    typeof b !== "string" ||
-    a.length !== b.length
-  ) {
-    throw new Error(
-      "countPositionalDifferences: inputs must be strings of equal length"
-    );
-  }
-
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) diff++;
-  }
-
-  return diff;
-}
-
-function isValidWord(w, allowedList) {
-  if (!w || w.length !== 5) return false;
-  if (!allowedList || allowedList.length === 0) return true;
-  return allowedList.includes(w.toUpperCase());
-}
-
-function satisfiesForceGuess(g, forceGuess) {
-  switch (forceGuess.type) {
-    case "startsWith":
-      return g.startsWith(forceGuess.letter.toUpperCase());
-
-    case "endsWith":
-      return g.endsWith(forceGuess.letter.toUpperCase());
-
-    case "doubleLetter":
-      return hasDoubleLetter(g);
-
-    case "minVowels":
-      return countVowels(g) >= forceGuess.count;
-
-    case "maxVowels":
-      return countVowels(g) <= forceGuess.count;
-
-    case "firstLastSame":
-      return g[0] === g[g.length - 1];
-
-    case "palindrome":
-      return isPalindrome(g);
-
-    default:
-      return false;
-  }
-}
-
-function countVowels(word) {
-  return [...word].filter(c => VOWELS.has(c.toUpperCase())).length;
-}
-
-function isPalindrome(word) {
-  return word === word.split("").reverse().join("");
-}
-
-function hasDoubleLetter(word) {
-  return /(.)\1/.test(word);
-}
 
 // CHECK secret
 
@@ -193,5 +122,76 @@ function parseWordlist(raw) {
     .map(w => w.trim().toUpperCase())
     .filter(w => w.length === 5);
 }
+//HELPER FCTS
+function hasWord(container, wordUpper) {
+  if (!container) return true; // allow if no dictionary
+  if (container instanceof Set) return container.has(wordUpper);
+  if (Array.isArray(container)) return container.includes(wordUpper.toUpperCase());
+  return false;
+}
 
+function countPositionalDifferences(a, b) {
+  if (
+    typeof a !== "string" ||
+    typeof b !== "string" ||
+    a.length !== b.length
+  ) {
+    throw new Error(
+      "countPositionalDifferences: inputs must be strings of equal length"
+    );
+  }
+
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) diff++;
+  }
+
+  return diff;
+}
+
+function isValidWord(w, allowedList) {
+  if (!w || w.length !== 5) return false;
+  if (!allowedList || allowedList.length === 0) return true;
+  return allowedList.includes(w.toUpperCase());
+}
+
+function satisfiesForceGuess(g, forceGuess) {
+  switch (forceGuess.type) {
+    case "startsWith":
+      return g.startsWith(forceGuess.letter.toUpperCase());
+
+    case "endsWith":
+      return g.endsWith(forceGuess.letter.toUpperCase());
+
+    case "doubleLetter":
+      return hasDoubleLetter(g);
+
+    case "minVowels":
+      return countVowels(g) >= forceGuess.count;
+
+    case "maxVowels":
+      return countVowels(g) <= forceGuess.count;
+
+    case "firstLastSame":
+      return g[0] === g[g.length - 1];
+
+    case "palindrome":
+      return isPalindrome(g);
+
+    default:
+      return false;
+  }
+}
+
+function countVowels(word) {
+  return [...word].filter(c => VOWELS.has(c.toUpperCase())).length;
+}
+
+function isPalindrome(word) {
+  return word === word.split("").reverse().join("");
+}
+
+function hasDoubleLetter(word) {
+  return /(.)\1/.test(word);
+}
 module.exports = { checkSecret,checkGuess, parseWordlist  };
