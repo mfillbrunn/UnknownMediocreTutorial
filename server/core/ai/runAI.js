@@ -16,20 +16,20 @@ function aiDelay({ base = 800, variance = 1200 } = {}) {
 
 function maybeRunAI(room, roomId, context) {
   const state = room.state;
-  const ai = getAI(state);
+  const aiLogic = getAI(state);
   const aiEntry = Object.entries(room.players)
     .find(([_, p]) => p.isAI);
   if (!aiEntry) return;
-  const [, ai] = aiEntry;
+  const [, aiPlayer] = aiEntry;
   if (AI_PENDING.has(roomId)) return;
   let actionFn = null;
   // -----------------------------
   // NORMAL PHASE
   // -----------------------------
-  if (state.phase === "normal" && state.turn === ai.role) {
-    if (ai.role === state.guesser && !state.pendingGuess) {
+  if (state.phase === "normal" && state.turn === aiPlayer.role) {
+    if (aiPlayer.role === state.guesser && !state.pendingGuess) {
       actionFn = () => {
-        const guess = ai.pickGuess(state, context.WORDS.guesses);
+        const guess = aiLogic.pickGuess(state, context.WORDS.guesses);
         handleNormalPhase(
           room,
           state,
@@ -41,9 +41,9 @@ function maybeRunAI(room, roomId, context) {
       };
     }
 
-    if (ai.role === state.setter && state.pendingGuess) {
+    if (aiPlayer.role === state.setter && state.pendingGuess) {
       actionFn = () => {
-        const secret = ai.pickSecret(state, context.WORDS.secrets);
+        const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
         handleNormalPhase(
           room,
           state,
@@ -60,9 +60,9 @@ function maybeRunAI(room, roomId, context) {
   // SIMULTANEOUS PHASE
   // -----------------------------
   if (state.phase === "simultaneous") {
-    if (ai.role === state.guesser && !state.simultaneousGuessSubmitted) {
+    if (aiPlayer.role === state.guesser && !state.simultaneousGuessSubmitted) {
       actionFn = () => {
-        const guess = ai.pickGuess(state, context.WORDS.guesses);
+        const guess = aiLogic.pickGuess(state, context.WORDS.guesses);
         handleSimultaneousPhase(
           room,
           state,
@@ -74,9 +74,9 @@ function maybeRunAI(room, roomId, context) {
       };
     }
 
-    if (ai.role === state.setter && !state.simultaneousSecretSubmitted) {
+    if (aiPlayer.role === state.setter && !state.simultaneousSecretSubmitted) {
       actionFn = () => {
-        const secret = ai.pickSecret(state, context.WORDS.secrets);
+        const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
         handleSimultaneousPhase(
           room,
           state,
