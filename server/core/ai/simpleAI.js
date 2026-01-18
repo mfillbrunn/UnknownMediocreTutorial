@@ -85,4 +85,4 @@ function getAIGuessProbs(state) {
     random: remaining * 0.4
   };
 }
-module.exports = { pickGuess, pickSecretFromList };
+module.exports = { pickGuess, pickSecret};
