@@ -22,8 +22,6 @@ function resetRoundState(room, state, roomId, context) {
     if (state.timeControl.enabled) {
     resetRoundTimer(state);
     state.activeTimer = "both";
-    state.roundStartTime = Date.now()
-    state.isTimerRunning=true;
   }
 }
 
