@@ -132,7 +132,7 @@ function pushWinEntry(state, word) {
 
 function startGameTimer(room, state, roomId, context) {
   const io = context.io;
-
+  if (state.isTimerRunning) return;
   startTimer(roomId, state, io, timedOutRole => {
     if (state.timeControl.mode === "chess") {
       state.timeoutLoser = timedOutRole;
