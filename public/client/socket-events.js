@@ -272,7 +272,7 @@ document.querySelectorAll(".ai-option").forEach(btn => {
     const difficulty = Number(btn.dataset.difficulty);
     hideAIDifficultyModal();
     // Tell server to add AI with difficulty
-    sendGameAction(roomId, {type: "ADD_AI", difficulty  , userId: window.currentUser.id});
+    sendGameAction(roomId, {type: "ADD_AI", difficulty: difficulty  , userId: window.currentUser.id});
   });
 });
 
