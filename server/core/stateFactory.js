@@ -134,7 +134,8 @@ function createInitialState() {
     timeoutLoser: null,
     isTimerRunning: false,
     //AI
-    aiSecretChanged: false,      
+    aiSecretChanged: false,
+         aiDifficulty: 1,
     secret: "",
     currentSecret: "",
     pendingGuess: "",
