@@ -207,12 +207,14 @@ function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
 function resetRoomState(room) {
   const prevRankMode = room.state.rankMode;
   const prevRanked = room.state.ranked;
+  const prevNames = room.state.playerNames;
 
   room.state = createInitialState();
 
   // Optional carry-over
   room.state.rankMode = prevRankMode;
   room.state.ranked = prevRanked;
+  room.state.playerNames = prevNames;
 
   // Reapply existing players' roles (if any remain)
   for (const [socketId, player] of Object.entries(room.players)) {
