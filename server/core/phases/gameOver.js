@@ -4,7 +4,7 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { createInitialState } = require("../stateFactory");
 const resetRoundState = require("../../utils/resetRoundState");
-const {resetRoundTimer,stopTimer, startTimer} = require("../../utils/chessTimer");
+const {stopTimer, startTimer} = require("../../utils/chessTimer");
 const {applyRankedElo} = require("../../utils/elo");
 const {  computeMatchResult, writeMatchHistory} =  require("../../utils/writeMatchData");
 
@@ -57,6 +57,7 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
      state.gameOver = false;
      state.gameOverView = "match";
      state.canNextRound = false;   
+     if (state.timeControl?.enabled){startGameTimerSim(room, state, roomId, context);}
      emitLobbyEvent(io, roomId, { type: "hideLobby" });
      emitStateForAllPlayers(roomId, room, io);
     return;
@@ -88,5 +89,13 @@ function hasAIPlayer(room) {
 
   return;
 }
+function startGameTimerSim(room, state, roomId, context) {
+  const io = context.io;
+  startTimer(roomId, state, io, timedOutRole => {
+      state.timeoutLoser = timedOutRole;
+      endGame(state, roomId, io, room,context);
+      return;
+  });
+}
 
-module.exports = {handleGameOverPhase, endGame};
+module.exports = {handleGameOverPhase, endGame, startGameTimerSim};
