@@ -20,15 +20,32 @@ function pickSecret(secretRows) {
 
 //HELPER functions
 function weightedRandom(items, weightFn) {
+  if (!items || items.length === 0) return null;
+
   const total = items.reduce((s, x) => s + weightFn(x), 0);
-  if (total <= 0) return items[Math.floor(Math.random() * items.length)];
+  if (total <= 0) {
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
   let r = Math.random() * total;
   for (const item of items) {
     r -= weightFn(item);
     if (r <= 0) return item;
   }
+
   return items[items.length - 1];
 }
+function weightedChoice(weights) {
+  const total = Object.values(weights).reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+
+  for (const [key, w] of Object.entries(weights)) {
+    r -= w;
+    if (r <= 0) return key;
+  }
+  return Object.keys(weights)[0];
+}
+
 
 function getUsedLetters(state) {
   const used = new Set();
