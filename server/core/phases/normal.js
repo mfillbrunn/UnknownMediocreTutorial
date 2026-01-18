@@ -151,7 +151,7 @@ function startGameTimer(room, state, roomId, context) {
           room,
           state,
           action,
-          state.turn,
+          timedOutRole,
           roomId,
           context
         )
@@ -237,6 +237,5 @@ function clearActivePowers(state) {
 module.exports = {
   handleNormalPhase,
   pushWinEntry,
-  handleRoundTimeout,
   startGameTimer
 };
