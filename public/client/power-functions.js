@@ -22,7 +22,7 @@ socket.on("suggestWord", ({ word }) => {
   }
   if (myRole === state.guesser) {
     window.uiState.suggestedGuess = upper;
-    localGuesserDraft = upper.toLowerCase();
+    localGuesserDraft = upper.toUpperCase();
   }  
     updateUI();
 });
@@ -99,7 +99,7 @@ function formatforceGuessOption(o) {
 }
 
 function validateGuesserGuess(word, forceGuessOptions, allowedGuesses) {
-  const g = word.toLowerCase();
+  const g = word.toUpperCase();
   // No forced constraint → valid
   if (!forceGuessOptions || forceGuessOptions.length === 0) {
     return { ok: true, message: null };
@@ -124,9 +124,9 @@ function validateGuesserGuess(word, forceGuessOptions, allowedGuesses) {
 function satisfiesforceGuess(g, forceGuess) {
   switch (forceGuess.type) {
     case "startsWith":
-      return g.startsWith(forceGuess.letter.toLowerCase());
+      return g.startsWith(forceGuess.letter.toUpperCase());
     case "endsWith":
-      return g.endsWith(forceGuess.letter.toLowerCase());
+      return g.endsWith(forceGuess.letter.toUpperCase());
     case "doubleLetter":
       return hasDoubleLetter(g);
     case "minVowels":
