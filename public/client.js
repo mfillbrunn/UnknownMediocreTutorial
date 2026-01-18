@@ -215,6 +215,11 @@ case "playerLeft": {
       enableReadyButton(false);
       break;
 
+    case "enterLobby":
+      show("lobby");
+      hide("menu");
+      break;
+      
     case "gameOverShowMenu":
       hide("setterScreen");
       hide("guesserScreen");
