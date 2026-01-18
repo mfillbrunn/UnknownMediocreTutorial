@@ -326,6 +326,8 @@
   opacity 0.25s var(--ease-ui),
   transform 0.25s var(--ease-ui);
   z-index: 99999;
+  pointer-events: none;  
+  user-select: none;         
 }
 .toast.show {
   opacity: 1;
