@@ -122,9 +122,9 @@ function createInitialState() {
         B: 0
       },
     roundstarttime:null,
-  timeExpired: null, // "A" | "B" | null
-  activeTimer: null, // "A" | "B" | "both" | null
-  timeoutLoser: null,
+    timeExpired: null, // "A" | "B" | null
+    activeTimer: null, // "A" | "B" | "both" | null
+    timeoutLoser: null,
     isTimerRunning: false,
     
     turn: null,
@@ -140,16 +140,15 @@ function createInitialState() {
     gameOver: false,
     extraConstraints: [],
     playerNames: {},
-
     history: [],
     powersUsedThisRoundGuesser: [],
     powersUsedThisRoundSetter: [],
     simultaneousGuessSubmitted: false,
     simultaneousSecretSubmitted: false,
-
-    powerUsedThisTurn: false,
-
-    powers: createInitialPowers()
+    powerUsedThisTurn: false,    
+    powers: createInitialPowers(),
+    //Round persistent powers:
+    powers.revealLetter.mode:null
   };
 }
 
