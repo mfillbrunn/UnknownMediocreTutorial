@@ -53,6 +53,7 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
       }
       state.setter = "A";
       state.guesser = "B";
+      emitLobbyEvent(io, roomId, { type: "enterLobby" });  
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
