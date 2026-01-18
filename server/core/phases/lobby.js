@@ -168,17 +168,17 @@ if (action.type === "SET_POWER_COUNT") {
           });
           const readyPlayers = Object.values(state.ready).filter(Boolean).length;
           const playerCount = Object.keys(room.players).length;
+          console.log("1 pplayer read");
           if (readyPlayers === 1){
                 emitStateForAllPlayers(roomId, room, io);
           }
           if (readyPlayers === playerCount && playerCount === 2) {
+                  console.log("2 player ready");
                 if (state.ranked) {
                   const ids = Object.keys(room.players);
-                  const shuffled = ids.sort(() => Math.random() - 0.5);
-                
+                  const shuffled = ids.sort(() => Math.random() - 0.5);                
                   room.players[shuffled[0]].role = "A";
-                  room.players[shuffled[1]].role = "B";
-                
+                  room.players[shuffled[1]].role = "B";                
                   state.roles[shuffled[0]] = "A";
                   state.roles[shuffled[1]] = "B";
                 }
@@ -193,7 +193,9 @@ if (action.type === "SET_POWER_COUNT") {
               .slice(0, N);        
             state.mode = new CompetitiveMode();
             state.mode.initMatch(state);
-            state.mode.onLobbyReady(state, sP, gP);        
+            state.mode.onLobbyReady(state, sP, gP);      
+            console.log("reveal letter outside");  
+                  console.log(state.activePowers.includes("revealLetter"));
             if (state.activePowers.includes("revealLetter")) {
               state.powers.revealLetter.mode =
                 Math.random() < 0.5 ? "RARE" : "ROW";
