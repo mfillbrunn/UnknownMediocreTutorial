@@ -22,7 +22,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   if (!state.pendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
     const res = checkGuess({guess: action.guess,state,allowedGuesses: context.ALLOWED_GUESSES});
     if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
-    const g = action.guess.toLowerCase(); 
+    const g = action.guess.toUpperCase(); 
     state.guessCount= state.guessCount + 1;
     state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
     state.roundStartTime = Date.now();
@@ -71,7 +71,7 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
     if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
     let w = null;
     if (action.type === "SET_SECRET_NEW") {
-       w = action.secret.toLowerCase();
+       w = action.secret.toUpperCase();
     } else if (action.type === "SET_SECRET_SAME"){
        w = state.secret;
     }
@@ -205,7 +205,7 @@ function startGameTimer(room, state, roomId, context) {
 }
 
 function normalizePowerId(type) {
-  const raw = type.replace("USE_", "").toLowerCase();
+  const raw = type.replace("USE_", "").toUpperCase();
   return raw.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
 
