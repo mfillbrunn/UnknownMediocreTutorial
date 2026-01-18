@@ -16,8 +16,14 @@ function resetRoundState(room, state, roomId, context) {
   state.timeUsed.B = 0;
   state.powersUsedThisRoundGuesser = [];
   state.powersUsedThisRoundSetter = [];
+  if (state.activePowers.includes("revealLetter")) {
+      const saved_mode = state.powers.revealLetter.mode;
+  }    
  // clear transient power effects
    state.powers = createInitialPowers(); 
+    if (state.activePowers.includes("revealLetter")) {
+      state.powers.revealLetter.mode = saved_mode;
+    }
     if (state.timeControl.enabled) {
     resetRoundTimer(state);
     state.activeTimer = "both";
