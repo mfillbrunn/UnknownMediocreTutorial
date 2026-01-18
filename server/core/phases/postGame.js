@@ -4,8 +4,8 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { createInitialState } = require("../stateFactory");
 const resetRoundState = require("../../utils/resetRoundState");
-const {startTimer} = require("../../utils/Timer");
-const { endGame } = require("./gameOver");
+const {startGameTimer} = require("./normal");
+
 
 function handleGameOverPhase(room, state, action, role, roomId, context) {
     const io = context.io;
@@ -26,7 +26,7 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
        state.gameOver = false;
        state.gameOverView = "match";
        state.canNextRound = false;   
-       if (state.timeControl?.enabled){startGameTimerSim(room, state, roomId, context);}
+       if (state.timeControl?.enabled){startGameTimer(room, state, roomId, context);}
        emitLobbyEvent(io, roomId, { type: "hideLobby" });
        emitStateForAllPlayers(roomId, room, io);
       return;
