@@ -4,7 +4,7 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { createInitialState } = require("../stateFactory");
 const resetRoundState = require("../../utils/resetRoundState");
-const {stopTimer, startTimer} = require("../../utils/chessTimer");
+const {stopTimer, startTimer} = require("../../utils/Timer");
 const {applyRankedElo} = require("../../utils/elo");
 const {  computeMatchResult, writeMatchHistory} =  require("../../utils/writeMatchData");
 
