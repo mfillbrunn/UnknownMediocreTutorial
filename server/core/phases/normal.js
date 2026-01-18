@@ -1,6 +1,6 @@
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
-const { addIncrement, resetRoundTimer, startTimer} = require("../../utils/chessTimer");
+const { addIncrement, resetRoundTimer, startTimer} = require("../../utils/Timer");
 const { endGame } = require("./gameOver");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
