@@ -151,8 +151,6 @@ socket.on("leaveRoom", (_payload, cb) => {
   for (const [roomId, room] of Object.entries(rooms)) {
     if (!room.players[socket.id]) continue;
 
-    const role = room.state.roles[socket.id];
-
     removePlayer({
       roomId,
       socketId: socket.id,
@@ -161,24 +159,13 @@ socket.on("leaveRoom", (_payload, cb) => {
       context
     });
 
-
-    socket.leave(roomId);
-
-    // Notify remaining player
-    socket.to(roomId).emit("lobbyEvent", {
-      type: "playerLeft",
-      role,
-        reason: "leave"
-    });
-
-    emitStateForAllPlayers(roomId, room, io);
-
     cb?.({ ok: true });
     return;
   }
 
   cb?.({ ok: false, error: "Not in a room" });
 });
+
 
 
 // KICK PLAYER ------------------------------
