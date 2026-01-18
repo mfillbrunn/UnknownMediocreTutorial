@@ -8,6 +8,8 @@ const { cleanupDisconnectedPlayers } = require("./core/rooms");
 const { createRoom, joinRoom, rooms, cleanupEmptyRooms } = require("./core/rooms");
 const registerSocketHandlers = require("./network/socketHandlers");
 const { createClient } = require("@supabase/supabase-js");
+const { loadWordList } = require("./utils/wordListLoader");
+
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -60,7 +62,7 @@ try {
   console.warn("Could not load allowed secrets. Using allowed guesses fallback.");
   ALLOWED_SECRETS = ALLOWED_GUESSES;
 }
-
+context.WORDS = loadWordList();
 app.get("/api/allowed-secrets", (req, res) => res.json(ALLOWED_SECRETS));
 
 app.get("/api/allowed-guesses", (req, res) => res.json(ALLOWED_GUESSES));
