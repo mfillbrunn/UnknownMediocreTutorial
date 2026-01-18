@@ -4,6 +4,7 @@ const { addIncrement, resetRoundTimer, startTimer} = require("../../utils/Timer"
 const { endGame } = require("./gameOver");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
+const { handleTimeout } = require("../timeouts/timeoutController");
 
 const FORCE_TIMER_INTERVALS = {};
 function handleNormalPhase(room, state, action, role, roomId, context) {
@@ -129,76 +130,34 @@ function pushWinEntry(state, word) {
   });
 }
 
-function handleRoundTimeout(room, state, roomId, role, context) {
-  const io = context.io;
-  // Simultaneous → immediate loss
-  if (state.phase === "simultaneous") {
-     const isFirstSimultaneous = !state.matchRounds || state.matchRounds.length === 0;
-    if (isFirstSimultaneous){
-      state.phase = "lobby";
-      state.turn = null;
-      state.secret = null;
-      state.pendingGuess = null;
-      state.simultaneousSecretSubmitted = false;
-      state.activeTimer = null;
-      state.isTimerRunning = false;
-      state.roundTimeouts = { A: 0, B: 0 };
-      emitLobbyEvent(io, roomId, {
-        type: "matchAbandoned",
-        reason: "timeout"
-      });
-      emitStateForAllPlayers(roomId, room, io);
-      return false;
-    } else {
-      state.timeoutLoser = role;
-      endGame(state, roomId, io, room,context);
-      return false;
-    }
-  }
-  state.roundTimeouts[role]++;
-  if (state.roundTimeouts[role] >= 3) {
-    state.timeoutLoser = role;
-    endGame(state, roomId, io, room,context);
-    return false;
-  }
-    const last = state.history.at(-1);
-  resetRoundTimer(state);
-  state.activeTimer = role === "A" ? "B" : "A";
-  if (last) {
-    if (role === state.guesser) {
-      handleNormalPhase(
-        room,
-        state,
-        { type: "SUBMIT_GUESS", guess: last.guess, timedOut: true },
-        state.guesser,
-        roomId,
-        context
-      );
-    } else {
-      handleNormalPhase(
-        room,
-        state,
-        { type: "SET_SECRET_SAME", timedOut: true },
-        state.setter,
-        roomId,
-        context
-      );
-    }
-  }
-  emitStateForAllPlayers(roomId, room, io);
-  return true;
-}
-
 function startGameTimer(room, state, roomId, context) {
   const io = context.io;
+
   startTimer(roomId, state, io, timedOutRole => {
     if (state.timeControl.mode === "chess") {
       state.timeoutLoser = timedOutRole;
-      endGame(state, roomId, io, room,context);
+      endGame(state, roomId, io, room, context);
       return;
     }
-    const shouldContinue =  handleRoundTimeout(room, state, roomId, timedOutRole, context);
-    if (shouldContinue) {
+
+    const result = handleTimeout({
+      room,
+      state,
+      roomId,
+      timedOutRole,
+      context,
+      dispatch: action =>
+        handleNormalPhase(
+          room,
+          state,
+          action,
+          state.turn,
+          roomId,
+          context
+        )
+    });
+
+    if (result?.continue) {
       startGameTimer(room, state, roomId, context);
     }
   });
