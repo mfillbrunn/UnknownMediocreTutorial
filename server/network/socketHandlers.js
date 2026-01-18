@@ -114,6 +114,14 @@ socket.on("disconnect", () => {
   for (const [roomId, room] of Object.entries(rooms)) {
     const player = room.players[socket.id];
     if (!player) continue;
+    console.log(
+    "[DISCONNECT]",
+    socket.id,
+    "connected=",
+    player.connected
+  );
+    const stillAuthoritative = room.players[socket.id]?.connected === true;
+    if (!stillAuthoritative) continue;
 
     player.connected = false;
     player.disconnectedAt = Date.now();
