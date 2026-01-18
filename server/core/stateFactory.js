@@ -6,7 +6,7 @@
 
 
 function createInitialPowers(){
-return{
+const state = {
 // HIDE TILE
       hideTileUsed: false,
       hideTilePendingCount: 0,
@@ -83,6 +83,11 @@ return{
       },
       revealLetterActive: false
 };
+      //powers not to reset across rounds
+      if (!state.powers.revealLetter){ 
+      state.powers.revealLetter.mode = null;
+       }
+      return state;
 }
 function createInitialState() {
    const state = {
@@ -147,7 +152,6 @@ function createInitialState() {
     powerUsedThisTurn: false,   
     powers: createInitialPowers()    
   };
-      state.powers.revealLetter.mode = null;
   return state;
 }
 
