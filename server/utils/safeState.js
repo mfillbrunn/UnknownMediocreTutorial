@@ -15,6 +15,7 @@ function buildSafeStateForPlayer(state, role) {
   // -----------------------------------------------------
   if (role === state.guesser) {
     safe.secret = "";
+    safe.aiSecretChanged = "";
   }
   // -----------------------------------------------------
   // 2. Hide GUESS from setter during simultaneous phase
