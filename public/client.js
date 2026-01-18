@@ -516,10 +516,13 @@ function submitSetterNew() {
     toast("5 letters!");
     return;
   }
-   if (countPositionalDifferences(w, state.secret.toUpperCase()) < 2) {
-    shakeDraftRow("setter");
-    toast("Too similar to assassin word (needs 2 or more different letters)");
-    return;
+  if (state?.powers?.assassinWord) {
+    const assassin = state.powers.assassinWord.toUpperCase(); 
+    if (countPositionalDifferences(w, assassin) < 2) {
+      shakeDraftRow("setter");
+      toast("Too similar to assassin word (needs 2 or more different letters)");
+      return;
+    }
   }
   if (!window.ALLOWED_SECRETS.has(w)) {
     shakeDraftRow("setter");
