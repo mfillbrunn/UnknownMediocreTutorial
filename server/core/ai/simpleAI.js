@@ -1,5 +1,6 @@
 // core/ai/simpleAI.js
 const { isConsistentWithHistory } = require("../../game-engine/history");
+const { satisfiesForceGuess } = require("../../game-engine/validation");
 
 const INFO_MIN_NEW_LETTERS = 3;
 
@@ -19,6 +20,12 @@ function pickSecret(secretRows) {
 }
 
 //HELPER functions
+
+function satisfiesAnyForceGuess(word, options = []) {
+  if (!options || options.length === 0) return true;
+  return options.some(opt => satisfiesForceGuess(word, opt));
+}
+
 function weightedRandom(items, weightFn) {
   if (!items || items.length === 0) return null;
 
@@ -71,26 +78,26 @@ function pickAIGuess(state, wordRows) {
   const history = state.history || [];
   const usedGuesses = new Set(history.map(h => h.guess.toUpperCase()));
   const usedLetters = getUsedLetters(state);
-  const remaining = wordRows.filter(
-    r => !usedGuesses.has(r.word)
-  );
-  if (!remaining.length) {
-    return weightedRandom(wordRows, r => r.probability || 1).word;
+  const remaining = wordRows.filter(r => !usedGuesses.has(r.word));
+  if (!remaining.length) {return weightedRandom(wordRows, r => r.probability || 1).word;}
+  const feasible = remaining.filter(r =>isConsistentWithHistory(history, r.word, state));
+  const info = remaining.filter(r =>countNewLetters(r.word, usedLetters) >= INFO_MIN_NEW_LETTERS);
+  const forceOptions = state?.powers?.forceGuessOptions;
+  if (forceOptions && forceOptions.length > 0) {
+    let forced = remaining.filter(r =>satisfiesAnyForceGuess(r.word, forceOptions));  
+    if (forced.length === 0) {forced = wordRows.filter(r =>satisfiesAnyForceGuess(r.word, forceOptions));}
+    const choice = weightedRandom(forced, r => r.probability || 1);
+    return choice?.word ?? null;
+  } else{
+    let strategy = weightedChoice(getAIGuessProbs(state));
+    if (strategy === "feasible" && !feasible.length) strategy = "info";
+    if (strategy === "info" && !info.length) strategy = "random";
+    const pool =
+      strategy === "feasible" ? feasible :
+      strategy === "info" ? info :
+      remaining;
+    return weightedRandom(pool, r => r.probability || 1).word;
   }
-  const feasible = remaining.filter(r =>
-    isConsistentWithHistory(history, r.word, state)
-  );
-  const info = remaining.filter(r =>
-    countNewLetters(r.word, usedLetters) >= INFO_MIN_NEW_LETTERS
-  );
-  let strategy = weightedChoice(getAIGuessProbs(state));
-  if (strategy === "feasible" && !feasible.length) strategy = "info";
-  if (strategy === "info" && !info.length) strategy = "random";
-  const pool =
-    strategy === "feasible" ? feasible :
-    strategy === "info" ? info :
-    remaining;
-  return weightedRandom(pool, r => r.probability || 1).word;
 }
 
 function getAIGuessProbs(state) {
