@@ -205,9 +205,10 @@ function startGameTimer(room, state, roomId, context) {
 }
 
 function normalizePowerId(type) {
-  const raw = type.replace("USE_", "").toUpperCase();
+  const raw = type.replace("USE_", "").toLowerCase();
   return raw.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
+
 
 function startForceTimer(roomId, room, state, io, context) {
   const durationMs = 30000;
