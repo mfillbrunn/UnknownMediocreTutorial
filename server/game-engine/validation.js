@@ -2,9 +2,6 @@ const { isConsistentWithHistory } = require("./history");
 
 // /game-engine/validation.js — UNIVERSAL VERSION
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
-
-
-
 // CHECK secret
 
 function checkSecret({ secret, state, allowedSecrets }) {
@@ -189,4 +186,4 @@ function isPalindrome(word) {
 function hasDoubleLetter(word) {
   return /(.)\1/.test(word);
 }
-module.exports = { checkSecret,checkGuess, parseWordlist  };
+module.exports = { checkSecret,checkGuess, parseWordlist,satisfiesForceGuess  };
