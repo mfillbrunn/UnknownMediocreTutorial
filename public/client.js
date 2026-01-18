@@ -644,10 +644,9 @@ function getHostRole() {
 }
 
 function updateHostControls() {
-  if (!state || !state.roles || !state.players) return;
+  if (!state || !state.roles || !state.playerNames) return;
 
-  const players = state.players; // must include AI entries
-  const playerIds = Object.keys(players);
+  const playerIds = Object.keys(state.playerNames);
   const twoPlayers = playerIds.length === 2;
 
   // Resolve role → playerId
@@ -668,14 +667,14 @@ function updateHostControls() {
     hostRole !== "B"
   );
 
-  // Kick buttons
+  // Kick buttons (host only, opponent only, works for AI)
   const kickSetterBtn = $("kickSetterBtn");
   if (kickSetterBtn) {
     kickSetterBtn.classList.toggle(
       "hidden",
       !isHost() ||
       !twoPlayers ||
-      setterPlayerId === socket.id // hide only if I am the setter
+      setterPlayerId === socket.id
     );
   }
 
@@ -685,10 +684,11 @@ function updateHostControls() {
       "hidden",
       !isHost() ||
       !twoPlayers ||
-      guesserPlayerId === socket.id // hide only if I am the guesser
+      guesserPlayerId === socket.id
     );
   }
 }
+
 
 
 function updateTimerAccess() {
