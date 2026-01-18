@@ -43,7 +43,7 @@ function maybeRunAI(room, roomId, context) {
 
     if (ai.role === state.setter && state.pendingGuess) {
       actionFn = () => {
-        const secret = ai.pickSecret(context.WORDS.secrets);
+        const secret = ai.pickSecret(state, context.WORDS.secrets);
         handleNormalPhase(
           room,
           state,
@@ -76,7 +76,7 @@ function maybeRunAI(room, roomId, context) {
 
     if (ai.role === state.setter && !state.simultaneousSecretSubmitted) {
       actionFn = () => {
-        const secret = ai.pickSecret(context.WORDS.secrets);
+        const secret = ai.pickSecret(state, context.WORDS.secrets);
         handleSimultaneousPhase(
           room,
           state,
