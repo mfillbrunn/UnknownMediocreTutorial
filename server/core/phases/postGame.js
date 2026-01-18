@@ -38,6 +38,7 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
     }  
       ///NEW MATCH
     if (action.type === "NEW_MATCH") {
+        console.log("I'm being pressed");
       const names = state.playerNames;
       const fresh = createInitialState();
        for (const key of Object.keys(state)) {
@@ -53,7 +54,9 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
       }
       state.setter = "A";
       state.guesser = "B";
+        console.log("Go to lobby");
       emitLobbyEvent(io, roomId, { type: "enterLobby" });  
+        console.log("didn't go to lobby?");
       emitStateForAllPlayers(roomId, room, io);
       return;
     }
