@@ -1,4 +1,4 @@
-// core/ai/simpleAI.js
+// core/ai/level1AI.js
 const { isConsistentWithHistory } = require("../../game-engine/history");
 const { satisfiesForceGuess } = require("../../game-engine/validation");
 
@@ -101,7 +101,7 @@ function pickAIGuess(state, wordRows) {
 }
 
 function getAIGuessProbs(state) {
-  const feasible = Math.min(1, 0.4 + state.history.length * 0.15);
+  const feasible = Math.min(1, 0.3 + state.history.length * 0.15);
   const remaining = 1 - feasible;
   return {
     feasible,
