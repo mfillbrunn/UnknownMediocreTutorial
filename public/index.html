@@ -413,6 +413,30 @@
           <div id="keyboardGuesser" class="keyboard"></div>
        </main>
     </section>
+        <div id="aiDifficultyModal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+
+  <div class="modal-content">
+    <h2>Choose AI Difficulty</h2>
+
+    <div class="ai-difficulty-options">
+      <button class="ai-option" data-difficulty="1">
+        🤖 Easy<br />
+        <small>Casual, exploratory</small>
+      </button>
+
+      <button class="ai-option" data-difficulty="2">
+        🧠 Medium<br />
+        <small>Smarter guesses, adaptive secrets</small>
+      </button>
+    </div>
+
+    <div class="modal-actions">
+      <button id="cancelAIModalBtn" class="secondary-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
     </main>
   </div>
   <div id="tooltip" class="tooltip" hidden></div>
