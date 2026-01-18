@@ -1,6 +1,7 @@
 // core/ai/level2AI.js
 const { isConsistentWithHistory } = require("../../game-engine/history");
 const { satisfiesForceGuess } = require("../../game-engine/validation");
+const { scoreGuess } = require("../../game-engine/scoring");
 
 const INFO_MIN_NEW_LETTERS = 3;
 
@@ -90,7 +91,7 @@ function pickAISecret(state, secretRows) {
   }
   const secrets = secretRows.map(r => r.word);
   const before = computeRemainingForNewSecret(state,state.secret,secrets);
-  if (!before || before === 0) return null;  
+  if (!before || before === 0) return state.secret;
   const feasibleSecrets = secrets.filter(candidate =>isConsistentWithHistory(state.history, candidate, state));
   for (const candidate of feasibleSecrets) {
     const after = computeRemainingForNewSecret(state,candidate,secrets);
@@ -105,7 +106,6 @@ function pickAISecret(state, secretRows) {
 }
 
 function pickAIGuess(state, wordRows) {
-  const allWords = wordRows.map(r => r.word);
   if (!state || !state.history) {
     return weightedRandom(wordRows, r => r.probability || 1).word;
   }
