@@ -8,25 +8,31 @@ function pickGuess(state, allowedGuesses) {
   return pickAIGuess(state, allowedGuesses);
 }
 
-function pickSecret(allowedGuesses) {
-  return allowedGuesses[Math.floor(Math.random() * allowedGuesses.length)];
+function pickSecretFromList(secretRows) {
+  const candidates = secretRows.filter(r => r.probability > 0);
+
+  const chosen = weightedRandom(
+    candidates.length ? candidates : secretRows,
+    r => r.probability || 1
+  );
+
+  return chosen.word;
 }
 
 //HELPER functions
 
-function randomChoice(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+function weightedRandom(items, weightFn) {
+  const total = items.reduce((s, x) => s + weightFn(x), 0);
+  if (total <= 0) return items[Math.floor(Math.random() * items.length)];
+
+  let r = Math.random() * total;
+  for (const item of items) {
+    r -= weightFn(item);
+    if (r <= 0) return item;
+  }
+  return items[items.length - 1];
 }
 
-function weightedChoice(weights) {
-  const r = Math.random();
-  let acc = 0;
-  for (const [key, w] of Object.entries(weights)) {
-    acc += w;
-    if (r <= acc) return key;
-  }
-  return Object.keys(weights)[0];
-}
 
 function getUsedLetters(state) {
   const used = new Set();
