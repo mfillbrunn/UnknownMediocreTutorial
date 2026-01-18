@@ -137,14 +137,14 @@ module.exports = {
     })
   },
 
-  assassinWord: {
+ /* assassinWord: {
     role: "setter",
     isUsed: s => s.powers.assassinWordUsed,
     buildAction: () => ({
       type: "USE_POWER",
       power: "assassinWord"
     })
-  },
+  },*/
 
   revealLetter: {
     role: "guesser",
