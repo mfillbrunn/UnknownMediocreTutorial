@@ -25,7 +25,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     const res = checkSecret({secret: action.secret, state, allowedSecrets: context.ALLOWED_SECRETS });
     if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
     if (state.simultaneousSecretSubmitted) return;
-    const w = action.secret.toLowerCase();
+    const w = action.secret.toUpperCase();
     state.secret = w;
     state.currentSecret = w;
     state.firstSecretSet = true;
@@ -41,7 +41,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     const res = checkGuess({guess: action.guess,state,allowedGuesses: context.ALLOWED_GUESSES});
     if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
     if (state.simultaneousGuessSubmitted) return;
-    const g = action.guess.toLowerCase();
+    const g = action.guess.toUpperCase();
     state.pendingGuess = g;
     state.guessCount=state.guessCount + 1;
     state.simultaneousGuessSubmitted = true;
