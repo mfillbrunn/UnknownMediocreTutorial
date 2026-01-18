@@ -20,7 +20,7 @@ window.computeRemainingNew = function (newWord) {
   if (!state || !state.history || !Guess || Guess.includes("?")) {
     return null;
   }
-  const fb = scoreGuess(newWord.toLowerCase(),Guess.toLowerCase());
+  const fb = scoreGuess(newWord.toUpperCase(),Guess.toUpperCase());
 
   const newHistory = {
     guess: Guess,
