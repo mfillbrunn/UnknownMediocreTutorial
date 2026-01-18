@@ -120,24 +120,15 @@ if (action.type === "ADD_AI") {
     isAI: true
   };
   state.roles[AI_ID] = "B";
-  state.playerNames[AI_ID] = "Computer";
-  // Mark AI as ready immediately
-  state.ready[AI_ID] = true;
+  state.playerNames[AI_ID] = "Computer";  
   emitLobbyEvent(io, roomId, {
     type: "playerJoined",
     playerId: AI_ID,
     isAI: true
   });
-
-  emitLobbyEvent(io, roomId, {
-    type: "playerReady",
-    playerId: AI_ID
-  });
-
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
-
 
 if (action.type === "SET_POWER_COUNT") {
     let n = parseInt(action.count, 10);
@@ -165,12 +156,13 @@ if (action.type === "SET_POWER_COUNT") {
             type: "playerReady",
             playerId: action.playerId
           });
-          const readyPlayers = Object.values(state.ready).filter(Boolean).length;
-          const playerCount = Object.keys(room.players).length;
-          if (readyPlayers === 1){
+          const players = Object.entries(room.players);
+          const humanPlayers = players.filter(([_, p]) => !p.isAI);
+          const readyHumans = humanPlayers.filter(([id]) => state.ready[id]);
+          if (readyHumans.length === 1){
                 emitStateForAllPlayers(roomId, room, io);
-          }
-          if (readyPlayers === playerCount && playerCount === 2) {
+          }             
+          if (readyHumans.length === humanPlayers.length) {
                 if (state.ranked) {
                   const ids = Object.keys(room.players);
                   const shuffled = ids.sort(() => Math.random() - 0.5);                
