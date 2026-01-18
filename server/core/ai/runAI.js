@@ -103,43 +103,5 @@ function maybeRunAI(room, roomId, context) {
   }, aiDelay());
 }
 
-  // -----------------------------
-  // SIMULTANEOUS PHASE
-  // -----------------------------
-  if (state.phase === "simultaneous") {
-    if (ai.role === state.guesser && !state.simultaneousGuessSubmitted) {
-      const delay = aiDelay({ base: 600, variance: 1000 });
-      setTimeout(() => {
-        if (state.phase !== "simultaneous") return;      
-        const guess = pickGuess(state, context.WORDS.guesses);      
-        handleSimultaneousPhase(
-          room,
-          state,
-          { type: "SUBMIT_GUESS", guess, ai: true },
-          state.guesser,
-          roomId,
-          context
-        );
-      }, delay);
-      return;
-    }
-
-    if (ai.role === state.setter && !state.simultaneousSecretSubmitted) {
-   setTimeout(() => {
-        if (state.phase !== "simultaneous") return;      
-        const secret = pickSecretFromList(context.WORDS.secrets);      
-        handleSimultaneousPhase(
-          room,
-          state,
-          { type: "SET_SECRET_NEW", secret, ai: true },
-          state.setter,
-          roomId,
-          context
-        );
-      }, delay);
-      return;
-    }
-  }
-}
 
 module.exports = {maybeRunAI};
