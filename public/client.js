@@ -296,21 +296,18 @@ function updateScreens() {
     hide("setterScreen");
     hide("guesserScreen");
     enableReadyButton(!state.ready?.[socket.id]);
-    PowerEngine.applyUI(state, myRole, roomId);
     return;
   }
   enableReadyButton(false);
   exitMenuMode();
   hide("lobby");
-  hide("menu");
-  
+  hide("menu");  
   if (state.phase === "gameOver" || state.phase === "roundSummary") {
     hide("setterScreen");
     hide("guesserScreen");
     show("menu");
     return;
   }
-
   if (myRole === state.setter) {
     show("setterScreen");
     hide("guesserScreen");
