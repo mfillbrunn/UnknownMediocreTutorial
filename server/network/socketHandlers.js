@@ -39,10 +39,16 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
   if (result.reattached && result.shouldResumeGame) {
     room.state.paused = false;
     room.state.roundStartTime = Date.now();
-    if (room.state.timeControl?.enabled && room.state.activeTimer) {
-      startGameTimer(room, room.state, roomId, context);
-      room.state.isTimerRunning = true;
-    }
+  if (
+    room.state.timeControl?.enabled &&
+    !room.state.gameOver &&
+    room.state.phase !== "lobby"
+  ) {
+    // Resume timing from current phase/turn
+    room.state.roundStartTime = Date.now();
+    startGameTimer(room, room.state, roomId, context);
+    room.state.isTimerRunning = true;
+  }
   }
     socket.emit("roleAssigned", { role: result.role });
     socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
@@ -62,10 +68,16 @@ socket.on("quickJoin", ({ userId, name }, cb) => {
   if (result.reattached && result.shouldResumeGame) {
     room.state.paused = false;
     room.state.roundStartTime = Date.now();
-    if (room.state.timeControl?.enabled && room.state.activeTimer) {
-      startGameTimer(room, room.state, roomId, context);
-      room.state.isTimerRunning = true;
-    }
+  if (
+    room.state.timeControl?.enabled &&
+    !room.state.gameOver &&
+    room.state.phase !== "lobby"
+  ) {
+    // Resume timing from current phase/turn
+    room.state.roundStartTime = Date.now();
+    startGameTimer(room, room.state, roomId, context);
+    room.state.isTimerRunning = true;
+  }
   }
   if (name) {
     room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
