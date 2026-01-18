@@ -206,6 +206,7 @@ if (action.type === "SET_POWER_COUNT") {
               state.isTimerRunning = true;
             }        
              if (state.activePowers.includes("revealLetter")) {
+                state.powers.revealLetter ??= {};
                 state.powers.revealLetter.mode =Math.random() < 0.5 ? "RARE" : "ROW";
             }        
             emitLobbyEvent(io, roomId, { type: "hideLobby" });
