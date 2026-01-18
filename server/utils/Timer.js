@@ -32,7 +32,6 @@ function startTimer(roomId, state, io, onTimeout) {
     io.to(roomId).emit("timerTick", {
       timeRemaining: state.timeRemaining
     });
-    console.log(`[TIMER] emit timerTick to ${roomId}`, state.timeRemaining);
   }, 250);
 }
 
