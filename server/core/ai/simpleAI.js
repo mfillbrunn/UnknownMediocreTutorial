@@ -8,7 +8,7 @@ function pickGuess(state, allowedGuesses) {
   return pickAIGuess(state, allowedGuesses);
 }
 
-function pickSecretFromList(secretRows) {
+function pickSecret(secretRows) {
   const candidates = secretRows.filter(r => r.probability > 0);
   const chosen = weightedRandom(
     candidates.length ? candidates : secretRows,
