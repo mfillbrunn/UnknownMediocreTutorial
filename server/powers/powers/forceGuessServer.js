@@ -154,7 +154,7 @@ function randomDistinctLetters(n = 3) {
 }
 
 function countDoubleLetterSolutions(letter, allowedGuesses) {
-  const target = (letter + letter).toLowerCase();
+  const target = (letter + letter).toUpperCase();
   let count = 0;
 
   for (const w of allowedGuesses) {
