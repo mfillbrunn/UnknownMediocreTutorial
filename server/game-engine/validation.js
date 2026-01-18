@@ -1,3 +1,5 @@
+const { isConsistentWithHistory } = require("./history");
+
 // /game-engine/validation.js — UNIVERSAL VERSION
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 
@@ -80,8 +82,9 @@ function checkSecret({ secret, state, allowedSecrets }) {
   if (!secret || typeof secret !== "string") {
     return { ok: false, error: "Missing secret", code: "MISSING_SECRET" };
   }
-
+  
   const w = secret.toLowerCase();
+  console.log(w);
 
   // 1️⃣ Length check
   if (w.length !== 5) {
@@ -91,7 +94,7 @@ function checkSecret({ secret, state, allowedSecrets }) {
       code: "INVALID_LENGTH"
     };
   }
-
+    console.log("5 letters");
   // 2️⃣ Assassin similarity check
   if (state?.powers?.assassinWord) {
     const assassin = state.powers.assassinWord.toUpperCase();
@@ -112,7 +115,7 @@ function checkSecret({ secret, state, allowedSecrets }) {
       };
     }
   }
-
+  console.log("Not assassin");
   // 3️⃣ Dictionary check
   if (!hasWord(allowedSecrets, w.toUpperCase())) {
     return {
@@ -121,7 +124,7 @@ function checkSecret({ secret, state, allowedSecrets }) {
       code: "NOT_IN_DICTIONARY"
     };
   }
-
+  console.log("Not in dict");
   // 4️⃣ History consistency check
   if (!isConsistentWithHistory(state.history, w, state)) {
     return {
