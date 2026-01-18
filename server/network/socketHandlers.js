@@ -173,13 +173,12 @@ socket.on("kickPlayer", ({ roomId }, cb) => {
   const room = rooms[roomId];
   if (!room) return cb?.({ ok: false, error: "Room not found" });
 
-const me = room.players[socket.id];
-if (!me || room.state.hostUserId !== me.userId) {
-  return cb?.({ ok: false, error: "Not host" });
-}
+  const me = room.players[socket.id];
+  if (!me || room.state.hostUserId !== me.userId) {
+    return cb?.({ ok: false, error: "Not host" });
+  }
 
-
-  // Find the other player (by socket id)
+  // Find the other player
   const targetEntry = Object.entries(room.players)
     .find(([id]) => id !== socket.id);
 
@@ -189,41 +188,26 @@ if (!me || room.state.hostUserId !== me.userId) {
 
   const [targetSocketId, targetPlayer] = targetEntry;
 
-  // Remove target
-    removePlayer({
-      roomId,
-      socketId: socket.id,
-      reason: "kicked",
-      io,
-      context
-    });
-
-
-  // Ensure socket leaves the room server-side
-  io.sockets.sockets.get(targetSocketId)?.leave(roomId);
-
-  // Notify the kicked player
-  io.to(targetSocketId).emit("lobbyEvent", {
-    type: "playerLeft",
+  // ✅ REMOVE THE TARGET (not the host)
+  removePlayer({
+    roomId,
+    socketId: targetSocketId,
     reason: "kicked",
-    role: targetPlayer?.role
+    io,
+    context
   });
+
+  // Notify kicked player explicitly
   io.to(targetSocketId).emit("forceLeaveRoom");
 
-  // Notify the host (kicker)
+  // Notify host only (optional UX)
   socket.emit("lobbyEvent", {
     type: "playerKicked",
     role: targetPlayer?.role
   });
-  socket.to(roomId).emit("lobbyEvent", {
-    type: "playerLeft",
-    reason: "kicked",
-    role: targetPlayer?.role
-  });
-
-  emitStateForAllPlayers(roomId, room, io);
 
   cb?.({ ok: true });
 });
+
 });
 };
