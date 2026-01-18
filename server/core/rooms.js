@@ -60,20 +60,13 @@ function joinOrReattach(socket, roomId, userId) {
   if (!room) return { ok: false, error: "Room not found" };
   if (!userId) return { ok: false, error: "Missing userId" };
 
-  // 1) Reattach if user already exists in room
   const existing = getPlayerByUserId(room, userId);
   if (existing) {
     const { socketId: oldSocketId, player } = existing;
-
-    // If already connected, you can either reject or "steal" the session.
-    // For competitive play, "steal" is usually correct (last connection wins).
     if (player.connected && oldSocketId !== socket.id) {
-      // Mark old as disconnected; optionally force it out:
       player.connected = false;
       player.disconnectedAt = Date.now();
     }
-
-    // Migrate authoritative mappings
     delete room.players[oldSocketId];
     delete room.state.roles[oldSocketId];
     delete room.state.playerNames[oldSocketId];
@@ -87,7 +80,10 @@ function joinOrReattach(socket, roomId, userId) {
 
     room.state.roles[socket.id] = player.role;
     socket.join(roomId);
-    return { ok: true, reattached: true, role: player.role };
+    const shouldResumeGame =
+      !room.state.gameOver &&
+      room.state.phase !== "lobby";
+    return { ok: true, reattached: true, role: player.roleshouldResumeGame  };
   }
 
   // 2) Normal join if space
