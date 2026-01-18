@@ -79,12 +79,11 @@ const powers = {
       revealLetter: {
         ready: false,          // power is unlocked
         used: false,           // power has been consumed
-        pendingReveal: null    // { index, letter, mode }
+        pendingReveal: null,    // { index, letter, mode }
+      mode : null
       },
       revealLetterActive: false
 };
-      //powers not to reset across rounds
-      powers.revealLetter.mode ??= null;
       return powers;
 }
 function createInitialState() {
