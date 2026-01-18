@@ -91,6 +91,13 @@ function createInitialState() {
     phase: "lobby",
     host:null,
     roles:{},
+    turn: null,
+    setter: "A",
+    guesser: "B",
+    playerNames: {},
+    ready: {},
+    powerCount: 10,       // NEW: number chosen in lobby
+    activePowers: [],  // NEW: each player’s random secrets
   // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
     mode: null,          // instance of mode controller
     rankMode: "bullet",
@@ -116,8 +123,7 @@ function createInitialState() {
       roundSeconds: 60,
       mode: "round",
       preset: "bullet"
-      },
-      
+      },      
       timeRemaining: {
         A: 0,
         B: 0
@@ -127,20 +133,14 @@ function createInitialState() {
     activeTimer: null, // "A" | "B" | "both" | null
     timeoutLoser: null,
     isTimerRunning: false,
-    
-    turn: null,
-    setter: "A",
-    guesser: "B",
-    ready: {},
-    powerCount: 10,       // NEW: number chosen in lobby
-    activePowers: [],  // NEW: each player’s random secrets
+    //AI
+    aiSecretChanged: false,      
     secret: "",
     currentSecret: "",
     pendingGuess: "",
     guessCount: 0,
     gameOver: false,
-    extraConstraints: [],
-    playerNames: {},
+    extraConstraints: [],    
     history: [],
     powersUsedThisRoundGuesser: [],
     powersUsedThisRoundSetter: [],
