@@ -83,7 +83,7 @@ function joinOrReattach(socket, roomId, userId) {
       const shouldResumeGame =
         !room.state.gameOver &&
         room.state.phase !== "lobby";
-      return { ok: true, reattached: true, role: player.roleshouldResumeGame  };
+      return { ok: true, reattached: true, role: player.role,shouldResumeGame  };
     }
     // 2) Normal join if space
     if (Object.keys(room.players).length >= 2) {
