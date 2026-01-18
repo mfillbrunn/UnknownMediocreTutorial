@@ -135,7 +135,7 @@ function pickAIGuess(state, wordRows) {
 }
 
 function getAIGuessProbs(state) {
-  const feasible = Math.min(1, 0.3 + state.history.length * 0.15);
+  const feasible = Math.min(1, 0.6 + state.history.length * 0.15);
   const remaining = 1 - feasible;
   return {
     feasible,
