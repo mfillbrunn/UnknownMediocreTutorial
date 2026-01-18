@@ -67,14 +67,14 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
 
   /// SETTER
 if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME") ) {
-    const res = checkSecret({secret: action.secret, state, allowedSecrets: context.ALLOWED_SECRETS });
-    if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
     let w = null;
     if (action.type === "SET_SECRET_NEW") {
        w = action.secret.toUpperCase();
     } else if (action.type === "SET_SECRET_SAME"){
        w = state.secret;
     }
+    const res = checkSecret({secret: w, state, allowedSecrets: context.ALLOWED_SECRETS });
+    if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
     if (powerEngine.beforeSetterSecretChange(state, action)) return;
     if (state.powers.assassinWord && w.toUpperCase() === state.powers.assassinWord.toUpperCase()) {
       io.to(action.playerId).emit("errorMessage", "Secret cannot match assassin word!");
