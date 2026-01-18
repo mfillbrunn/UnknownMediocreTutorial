@@ -26,7 +26,10 @@ window.createRoom = function (payload, cb) {
     ...payload,
     userId
   }, res => {
-    if (res?.ok) persistRoom(res.roomId);
+    if (res?.ok) {
+      persistRoom(res.roomId);
+      window.roomId = res.roomId;
+    }
     cb?.(res);
   });
 };
@@ -39,7 +42,10 @@ window.joinRoom = function (roomCode, payload, cb) {
     userId,
     ...payload
   }, res => {
-    if (res?.ok) persistRoom(roomCode);
+    if (res?.ok) {
+        persistRoom(roomCode);
+        window.roomId = roomCode; 
+      }
     cb?.(res);
   });
 };
@@ -51,7 +57,10 @@ window.quickJoin = function (payload, cb) {
     userId,
     ...payload
   }, res => {
-    if (res?.ok && res.roomId) persistRoom(res.roomId);
+    if (res?.ok && res.roomId) {
+        persistRoom(res.roomId);
+        window.roomId = res.roomId;
+      }
     cb?.(res);
   });
 };
