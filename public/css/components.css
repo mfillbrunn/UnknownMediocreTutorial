@@ -851,4 +851,30 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+/* AI*/
+/* AI difficulty modal specifics */
+.ai-difficulty-panel {
+  background: var(--panel-bg);
+  color: var(--panel-text);
+  padding: var(--sp-20);
+  border-radius: var(--r-12);
+  box-shadow: var(--shadow-card);
+  min-width: 280px;
+  text-align: center;
+}
+
+.ai-difficulty-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-10);
+  margin-top: var(--sp-12);
+}
+
+.ai-option small {
+  display: block;
+  margin-top: var(--sp-4);
+  font-size: var(--fs-12);
+  opacity: 0.75;
+}
+
 
