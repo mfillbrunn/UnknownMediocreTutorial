@@ -3,6 +3,7 @@ const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer, startTimer} = require("../../utils/chessTimer");
 const { endGame } = require("./gameOver");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
+const { emitLobbyEvent } = require("../../utils/emitLobby");
 
 const FORCE_TIMER_INTERVALS = {};
 function handleNormalPhase(room, state, action, role, roomId, context) {
