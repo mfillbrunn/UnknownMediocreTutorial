@@ -16,6 +16,7 @@ function maybeUsePower(state) {
   const usable = state.activePowers.filter(pid => {
     const meta = AI_POWER_META[pid];
     if (!meta) return false;
+    if (meta.aiUsable === false) return false;
     if (meta.role !== role) return false;
     if (meta.isUsed(state)) return false;
     return true;
