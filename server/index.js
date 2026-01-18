@@ -62,7 +62,7 @@ try {
   console.warn("Could not load allowed secrets. Using allowed guesses fallback.");
   ALLOWED_SECRETS = ALLOWED_GUESSES;
 }
-context.WORDS = loadWordList();
+WORDS = loadWordList();
 app.get("/api/allowed-secrets", (req, res) => res.json(ALLOWED_SECRETS));
 
 app.get("/api/allowed-guesses", (req, res) => res.json(ALLOWED_GUESSES));
@@ -85,7 +85,8 @@ const context = {
   supabase,
   powerEngine,
   ALLOWED_GUESSES,
-  ALLOWED_SECRETS
+  ALLOWED_SECRETS,
+  WORDS
 };
 
 // Register socket event handlers (create/join room, game actions)
