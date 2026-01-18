@@ -257,11 +257,16 @@ document.querySelectorAll(".concedeBtn").forEach(btn => {
     sendGameAction(roomId, { type: "CONCEDE" , userId: window.currentUser.id});
   });
 });
+function showAIDifficultyModal() {
+  $("aiDifficultyModal")?.classList.add("active");
+}
+
+function hideAIDifficultyModal() {
+  $("aiDifficultyModal")?.classList.remove("active");
+}
 
 $("addAiBtn")?.addEventListener("click", () => {
   showAIDifficultyModal();
-  sendGameAction(roomId, { type: "ADD_AI" , userId: window.currentUser.id});
-  console.log("AI button works");
 });
 document.querySelectorAll(".ai-option").forEach(btn => {
   btn.addEventListener("click", () => {
