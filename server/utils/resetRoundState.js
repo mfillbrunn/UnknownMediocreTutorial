@@ -1,5 +1,5 @@
 const {createInitialPowers} = require("../core/stateFactory");
-const {resetRoundTimer, startTimer} = require("./chessTimer");
+const {resetRoundTimer} = require("./chessTimer");
 function resetRoundState(room, state, roomId, context) {
   state.secret = "";
   state.currentSecret = "";
@@ -17,7 +17,13 @@ function resetRoundState(room, state, roomId, context) {
   state.powersUsedThisRoundGuesser = [];
   state.powersUsedThisRoundSetter = [];
  // clear transient power effects
-   state.powers = createInitialPowers();  
+   state.powers = createInitialPowers(); 
+    if (state.timeControl.enabled) {
+    resetRoundTimer(state);
+    state.activeTimer = "both";
+    state.roundStartTime = Date.now()
+    state.isTimerRunning=true;
+  }
 }
 
 module.exports = resetRoundState;
