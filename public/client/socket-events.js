@@ -153,8 +153,10 @@ $("applyPowerCountBtn")?.addEventListener("click", () => {
    }
 });
 
-$("newMatchBtn")?.addEventListener("click", () => {
-  sendGameAction(roomId, { type: "NEW_MATCH" });
+document.addEventListener("click", e => {
+  if (e.target?.id === "newMatchBtn") {
+    sendGameAction(roomId, { type: "NEW_MATCH" });
+  }
 });
 
 $("shareResultBtn")?.addEventListener("click", async () => {
