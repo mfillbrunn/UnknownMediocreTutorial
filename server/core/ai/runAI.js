@@ -75,7 +75,7 @@ function maybeRunAI(room, roomId, context) {
 
     if (ai.role === state.setter && !state.simultaneousSecretSubmitted) {
       actionFn = () => {
-        const secret = pickSecretFromList(context.WORDS.secrets);
+        const secret = pickSecret(context.WORDS.secrets);
         handleSimultaneousPhase(
           room,
           state,
@@ -94,11 +94,8 @@ function maybeRunAI(room, roomId, context) {
 
   setTimeout(() => {
     AI_PENDING.delete(roomId);
-
-    // 🔍 Re-check state after delay (critical)
     if (room.state !== state) return;
     if (state.gameOver) return;
-
     actionFn();
   }, aiDelay());
 }
