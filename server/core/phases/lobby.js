@@ -5,6 +5,7 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const CompetitiveMode = require("../modes/competitiveMode");
 const { stopTimer,startTimer,resetRoundTimer } = require("../../utils/chessTimer");
 const {handleRoundTimeout, startGameTimer} = require("./normal");
+const {startGameTimerSim} = require("./gameOver"); 
 
 const SETTER_POWERS = [
         "hideTile",
@@ -168,12 +169,10 @@ if (action.type === "SET_POWER_COUNT") {
           });
           const readyPlayers = Object.values(state.ready).filter(Boolean).length;
           const playerCount = Object.keys(room.players).length;
-          console.log("1 pplayer read");
           if (readyPlayers === 1){
                 emitStateForAllPlayers(roomId, room, io);
           }
           if (readyPlayers === playerCount && playerCount === 2) {
-                  console.log("2 player ready");
                 if (state.ranked) {
                   const ids = Object.keys(room.players);
                   const shuffled = ids.sort(() => Math.random() - 0.5);                
@@ -193,13 +192,7 @@ if (action.type === "SET_POWER_COUNT") {
               .slice(0, N);        
             state.mode = new CompetitiveMode();
             state.mode.initMatch(state);
-            state.mode.onLobbyReady(state, sP, gP);      
-            console.log("reveal letter outside");  
-                  console.log(state.activePowers.includes("revealLetter"));
-            if (state.activePowers.includes("revealLetter")) {
-              state.powers.revealLetter.mode =
-                Math.random() < 0.5 ? "RARE" : "ROW";
-            }        
+            state.mode.onLobbyReady(state, sP, gP);   
             state.phase = "simultaneous";
             state.turn = null;
             state.simultaneousGuessSubmitted = false;
@@ -209,8 +202,11 @@ if (action.type === "SET_POWER_COUNT") {
               state.activeTimer = "both";
               state.roundStartTime = Date.now();
               stopTimer(roomId);
-              startGameTimer(room, state, roomId, context);
+              startGameTimerSim(room, state, roomId, context);
               state.isTimerRunning = true;
+            }        
+             if (state.activePowers.includes("revealLetter")) {
+                state.powers.revealLetter.mode =Math.random() < 0.5 ? "RARE" : "ROW";
             }        
             emitLobbyEvent(io, roomId, { type: "hideLobby" });
             emitStateForAllPlayers(roomId, room, io);
