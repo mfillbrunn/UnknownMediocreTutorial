@@ -158,11 +158,6 @@ $("applyPowerCountBtn")?.addEventListener("click", () => {
 
 $("newMatchBtn")?.addEventListener("click", () => {
   sendGameAction(roomId, { type: "NEW_MATCH" });
-  const el = $("assassinWordDisplay");
-if (el) el.textContent = "";
-  hide("setterScreen");
-  hide("guesserScreen");
-  show("menu");
 });
 
 $("shareResultBtn")?.addEventListener("click", async () => {
