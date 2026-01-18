@@ -10,13 +10,15 @@ function pickGuess(state, allowedGuesses) {
 }
 
 function pickSecret(state, secretRows) {
+  if (!state.secret){
   const candidates = secretRows.filter(r => r.probability > 0);
   const chosen = weightedRandom(
     candidates.length ? candidates : secretRows,
     r => r.probability || 1
   );
-
   return chosen.word;
+  }
+  return state.secret;
 }
 
 //HELPER functions
