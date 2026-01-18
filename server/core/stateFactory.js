@@ -77,7 +77,6 @@ return{
       assassinPoints: false,
       // UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
       revealLetter: {
-        mode: null,            // "RARE" or "ROW" — set at match start
         ready: false,          // power is unlocked
         used: false,           // power has been consumed
         pendingReveal: null    // { index, letter, mode }
@@ -86,7 +85,7 @@ return{
 };
 }
 function createInitialState() {
-  return {
+   const state = {
     phase: "lobby",
     host:null,
     roles:{},
@@ -121,7 +120,7 @@ function createInitialState() {
         A: 0,
         B: 0
       },
-    roundstarttime:null,
+    roundStartTime:null,
     timeExpired: null, // "A" | "B" | null
     activeTimer: null, // "A" | "B" | "both" | null
     timeoutLoser: null,
@@ -145,11 +144,11 @@ function createInitialState() {
     powersUsedThisRoundSetter: [],
     simultaneousGuessSubmitted: false,
     simultaneousSecretSubmitted: false,
-    powerUsedThisTurn: false,    
-    powers: createInitialPowers(),
-    //Round persistent powers:
-    powers.revealLetter.mode:null
+    powerUsedThisTurn: false,   
+    powers: createInitialPowers()    
   };
+      state.powers.revealLetter.mode = null;
+  return state;
 }
 
 
