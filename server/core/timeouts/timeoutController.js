@@ -93,6 +93,7 @@ function handleNormalTimeout({
 }) {
   const io = context.io;
 
+  state.roundTimeouts ??= { A: 0, B: 0 };
   state.roundTimeouts[timedOutRole] =
     (state.roundTimeouts[timedOutRole] || 0) + 1;
 
