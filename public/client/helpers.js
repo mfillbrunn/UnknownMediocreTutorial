@@ -30,4 +30,11 @@ window.showStartup = function () {
   showScreen("startupScreen");
   document.body.classList.add("menu-mode");
 };
+function showAIDifficultyModal() {
+  $("aiDifficultyModal")?.classList.remove("hidden");
+}
+
+function hideAIDifficultyModal() {
+  $("aiDifficultyModal")?.classList.add("hidden");
+}
 
