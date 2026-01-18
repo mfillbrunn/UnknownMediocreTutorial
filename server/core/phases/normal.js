@@ -131,6 +131,7 @@ function pushWinEntry(state, word) {
 }
 
 function startGameTimer(room, state, roomId, context) {
+  console.log(`[TIMER] startGameTimer called for room=${roomId} phase=${state.phase} activeTimer=${state.activeTimer} isTimerRunning=${state.isTimerRunning}`);
   const io = context.io;
   if (state.isTimerRunning) return;
   startTimer(roomId, state, io, timedOutRole => {
