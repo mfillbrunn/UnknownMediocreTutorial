@@ -56,62 +56,56 @@ function createRoom(socket, userId) {
  * Join a room OR reattach if userId exists and is disconnected.
  */
 function joinOrReattach(socket, roomId, userId) {
-  const room = rooms[roomId];
-  if (!room) return { ok: false, error: "Room not found" };
-  if (!userId) return { ok: false, error: "Missing userId" };
-
-  const existing = getPlayerByUserId(room, userId);
-  if (existing) {
-    const { socketId: oldSocketId, player } = existing;
-    if (player.connected && oldSocketId !== socket.id) {
-      player.connected = false;
-      player.disconnectedAt = Date.now();
+    const room = rooms[roomId];
+    if (!room) return { ok: false, error: "Room not found" };
+    if (!userId) return { ok: false, error: "Missing userId" };
+    room.currentSocketByUserId ??= {};
+    const existing = getPlayerByUserId(room, userId);
+    if (existing) {
+      const { socketId: oldSocketId, player } = existing;
+      room.currentSocketByUserId[userId] = socket.id;
+      if (oldSocketId !== socket.id) {
+        player.connected = false;
+        player.disconnectedAt = Date.now();
+      }
+      delete room.players[oldSocketId];
+      delete room.state.roles[oldSocketId];
+      delete room.state.playerNames[oldSocketId];
+      if (room.state.ready) delete room.state.ready[oldSocketId];
+      room.players[socket.id] = {
+        ...player,
+        connected: true,
+        disconnectedAt: null
+      };
+      room.currentSocketByUserId[userId] = socket.id;
+      room.state.roles[socket.id] = player.role;
+      socket.join(roomId);
+      const shouldResumeGame =
+        !room.state.gameOver &&
+        room.state.phase !== "lobby";
+      return { ok: true, reattached: true, role: player.roleshouldResumeGame  };
     }
-    delete room.players[oldSocketId];
-    delete room.state.roles[oldSocketId];
-    delete room.state.playerNames[oldSocketId];
-    if (room.state.ready) delete room.state.ready[oldSocketId];
-
+    // 2) Normal join if space
+    if (Object.keys(room.players).length >= 2) {
+      return { ok: false, error: "Room is full" };
+    }
+    socket.join(roomId);
+    // Determine role: first is A, second is B (based on occupancy)
+    const occupiedRoles = new Set(Object.values(room.players).map(p => p.role));
+    const role = occupiedRoles.has("A") ? "B" : "A";
     room.players[socket.id] = {
-      ...player,
+      role,
+      userId,
       connected: true,
       disconnectedAt: null
     };
-
-    room.state.roles[socket.id] = player.role;
-    socket.join(roomId);
-    const shouldResumeGame =
-      !room.state.gameOver &&
-      room.state.phase !== "lobby";
-    return { ok: true, reattached: true, role: player.roleshouldResumeGame  };
-  }
-
-  // 2) Normal join if space
-  if (Object.keys(room.players).length >= 2) {
-    return { ok: false, error: "Room is full" };
-  }
-
-  socket.join(roomId);
-
-  // Determine role: first is A, second is B (based on occupancy)
-  const occupiedRoles = new Set(Object.values(room.players).map(p => p.role));
-  const role = occupiedRoles.has("A") ? "B" : "A";
-
-  room.players[socket.id] = {
-    role,
-    userId,
-    connected: true,
-    disconnectedAt: null
+    room.state.roles[socket.id] = role;
+    return {
+    ok: true,
+    reattached: false,
+    role: role,
+    shouldResumeGame:false
   };
-
-  room.state.roles[socket.id] = role;
-  return {
-  ok: true,
-  reattached: false,
-  role: role,
-  shouldResumeGame:false
-};
-
 }
 
 function cleanupEmptyRooms() {
