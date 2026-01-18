@@ -1,7 +1,6 @@
 const {handleNormalPhase} = require("../phases/normal");
 const handleSimultaneousPhase = require("../phases/simultaneous");
-const { pickGuess, pickSecret } = require("./simpleAI");
-
+const { getAI } = require("./aiDifficulty");
 
 function asArray(words) {
   if (Array.isArray(words)) return words;
@@ -17,6 +16,7 @@ function aiDelay({ base = 800, variance = 1200 } = {}) {
 
 function maybeRunAI(room, roomId, context) {
   const state = room.state;
+  const ai = getAI(state);
   const aiEntry = Object.entries(room.players)
     .find(([_, p]) => p.isAI);
   if (!aiEntry) return;
@@ -29,7 +29,7 @@ function maybeRunAI(room, roomId, context) {
   if (state.phase === "normal" && state.turn === ai.role) {
     if (ai.role === state.guesser && !state.pendingGuess) {
       actionFn = () => {
-        const guess = pickGuess(state, context.WORDS.guesses);
+        const guess = ai.pickGuess(state, context.WORDS.guesses);
         handleNormalPhase(
           room,
           state,
@@ -43,10 +43,11 @@ function maybeRunAI(room, roomId, context) {
 
     if (ai.role === state.setter && state.pendingGuess) {
       actionFn = () => {
+        const secret = ai.pickSecret(context.WORDS.secrets);
         handleNormalPhase(
           room,
           state,
-          { type: "SET_SECRET_SAME", ai: true },
+           { type: "SET_SECRET_NEW", secret, ai: true },
           state.setter,
           roomId,
           context
@@ -61,7 +62,7 @@ function maybeRunAI(room, roomId, context) {
   if (state.phase === "simultaneous") {
     if (ai.role === state.guesser && !state.simultaneousGuessSubmitted) {
       actionFn = () => {
-        const guess = pickGuess(state, context.WORDS.guesses);
+        const guess = ai.pickGuess(state, context.WORDS.guesses);
         handleSimultaneousPhase(
           room,
           state,
@@ -75,7 +76,7 @@ function maybeRunAI(room, roomId, context) {
 
     if (ai.role === state.setter && !state.simultaneousSecretSubmitted) {
       actionFn = () => {
-        const secret = pickSecret(context.WORDS.secrets);
+        const secret = ai.pickSecret(context.WORDS.secrets);
         handleSimultaneousPhase(
           room,
           state,
