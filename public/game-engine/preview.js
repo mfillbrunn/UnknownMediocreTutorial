@@ -4,11 +4,11 @@
 window.predictFeedback = function (proposedSecret, pendingGuess) {
   if (!proposedSecret || !pendingGuess) return null;
   if (proposedSecret.length !== 5 || pendingGuess.length !== 5) return null;
-  return window.scoreGuess(proposedSecret.toLowerCase(),pendingGuess.toLowerCase());
+  return window.scoreGuess(proposedSecret.toUpperCase(),pendingGuess.toUpperCase());
 }
 
 window.predictFeedbackIncomplete = function (proposedSecret, pendingGuess) {
   if (!proposedSecret || !pendingGuess) return null;
   const letterslength= proposedSecret.length;
-  return window.scoreGuessIncomplete(proposedSecret.toLowerCase(),pendingGuess.toLowerCase(), letterslength);
+  return window.scoreGuessIncomplete(proposedSecret.toUpperCase(),pendingGuess.toUpperCase(), letterslength);
 };
