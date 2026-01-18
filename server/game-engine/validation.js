@@ -2,6 +2,13 @@
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 
 //HELPER FCTS
+function hasWord(container, wordUpper) {
+  if (!container) return true; // allow if no dictionary
+  if (container instanceof Set) return container.has(wordUpper);
+  if (Array.isArray(container)) return container.includes(wordUpper.toLowerCase());
+  return false;
+}
+
 function countPositionalDifferences(a, b) {
   if (
     typeof a !== "string" ||
@@ -107,7 +114,7 @@ function checkSecret({ secret, state, allowedSecrets }) {
   }
 
   // 3️⃣ Dictionary check
-  if (!allowedSecrets.has(w.toUpperCase())) {
+  if (!hasWord(allowedSecrets, w.toUpperCase())) {
     return {
       ok: false,
       error: "Word not in dictionary",
@@ -149,7 +156,7 @@ function checkGuess({ guess, state, allowedGuesses }) {
   // 2️⃣ Dictionary check (unless nonsense mode active)
   const nonsenseActive = !!state?.powers?.nonsenseActive;
 
-  if (!nonsenseActive && !allowedGuesses.has(g.toUpperCase())) {
+  if (!nonsenseActive && !hasWord(allowedGuesses, g.toUpperCase())) {
     return {
       ok: false,
       error: "Not in dictionary",
