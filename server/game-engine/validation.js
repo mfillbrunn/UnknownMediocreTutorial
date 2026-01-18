@@ -13,8 +13,6 @@ function checkSecret({ secret, state, allowedSecrets }) {
   }
   
   const w = secret.toUpperCase();
-  console.log(w);
-
   // 1️⃣ Length check
   if (w.length !== 5) {
     return {
@@ -23,7 +21,6 @@ function checkSecret({ secret, state, allowedSecrets }) {
       code: "INVALID_LENGTH"
     };
   }
-    console.log("5 letters");
   // 2️⃣ Assassin similarity check
   if (state?.powers?.assassinWord) {
     const assassin = state.powers.assassinWord.toUpperCase();
@@ -44,7 +41,6 @@ function checkSecret({ secret, state, allowedSecrets }) {
       };
     }
   }
-  console.log("Not assassin");
   // 3️⃣ Dictionary check
   if (!hasWord(allowedSecrets, w.toUpperCase())) {
     return {
@@ -53,8 +49,7 @@ function checkSecret({ secret, state, allowedSecrets }) {
       code: "NOT_IN_DICTIONARY"
     };
   }
-  console.log("Not in dict");
-  // 4️⃣ History consistency check
+    // 4️⃣ History consistency check
   if (!isConsistentWithHistory(state.history, w, state)) {
     return {
       ok: false,
