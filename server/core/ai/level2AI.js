@@ -81,14 +81,14 @@ function countNewLetters(word, usedLetters) {
   return c;
 }
 
-function pickAISecret(state, context) {
+function pickAISecret(state, secretRows) {
   if (state.aiSecretChanged) return state.secret;
   if (!state.history || state.history.length === 0) {
     const candidates = secretRows.filter(r => r.probability > 0);
     const chosen = weightedRandom(candidates.length ? candidates : secretRows,r => r.probability || 1);
     return chosen.word;
   }
-  const secrets = secretRows.secrets.map(r => r.word);
+  const secrets = secretRows.map(r => r.word);
   const before = computeRemainingForNewSecret(state,state.secret,secrets);
   if (!before || before === 0) return null;  
   const feasibleSecrets = secrets.filter(candidate =>isConsistentWithHistory(state.history, candidate, state));
@@ -101,7 +101,7 @@ function pickAISecret(state, context) {
         return candidate;
       }
   }
-  return null;
+  return state.secret;
 }
 
 function pickAIGuess(state, wordRows) {
