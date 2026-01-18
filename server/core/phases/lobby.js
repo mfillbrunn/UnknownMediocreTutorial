@@ -107,8 +107,10 @@ if (action.type === "SWITCH_ROLES") {
 }
 
 if (action.type === "ADD_AI") {
+        console.log("button works");
   if (state.ranked) return;
   if (state.hostUserId !== action.userId) return;
+         console.log("hsot check works");
   if (Object.keys(room.players).length >= 2) return;
   // Add AI player
   const AI_ID = "AI";
