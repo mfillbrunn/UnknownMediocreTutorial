@@ -14,18 +14,18 @@ function loadWordList() {
     const cols = line.split(/\t+/);
     const row = {};
     header.forEach((h, i) => (row[h] = cols[i]));
+
     return {
       word: row["Feasible.Guesses"]?.toUpperCase(),
-      isGuess: row["Feasible.Guesses"] === "TRUE",
+      isGuess: true, // ✅ ALL rows are valid guesses
       isSecret: row["Feasible.Secrets"] === "TRUE",
       probability: Number(row["Probability"]) || 0,
       frequency: Number(row["Frequency"]) || 0
     };
-  });
-
+  }).filter(r => r.word); // safety
   return {
     all: rows,
-    guesses: rows.filter(r => r.isGuess),
+    guesses: rows,                     // ✅ all words
     secrets: rows.filter(r => r.isSecret)
   };
 }
