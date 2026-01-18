@@ -4,7 +4,7 @@ const { rooms, createRoom,removePlayer, findLastOpenRoom, joinOrReattach  } = re
 const applyAction = require("../core/stateMachine");
 const { emitStateForAllPlayers } = require("../utils/emitState");
 const { emitLobbyEvent } = require("../utils/emitLobby");
-const { stopTimer } = require("../utils/chessTimer");
+const { stopTimer } = require("../utils/Timer");
 const { startGameTimer } = require("../core/phases/normal");
 
 module.exports = function registerSocketHandlers(io, context) {
