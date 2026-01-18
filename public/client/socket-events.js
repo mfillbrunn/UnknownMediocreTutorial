@@ -1,6 +1,3 @@
-
-
-
 socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
 
   // Notify BOTH players when setter submits (first time)
