@@ -259,7 +259,23 @@ document.querySelectorAll(".concedeBtn").forEach(btn => {
 });
 
 $("addAiBtn")?.addEventListener("click", () => {
+  showAIDifficultyModal();
   sendGameAction(roomId, { type: "ADD_AI" , userId: window.currentUser.id});
   console.log("AI button works");
 });
+document.querySelectorAll(".ai-option").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const difficulty = Number(btn.dataset.difficulty);
+
+    hideAIDifficultyModal();
+
+    // Tell server to add AI with difficulty
+    sendGameAction(roomId, {
+      type: "ADD_AI",
+      difficulty
+    });
+  });
+});
+
+$("cancelAIModalBtn")?.addEventListener("click", hideAIDifficultyModal);
 
