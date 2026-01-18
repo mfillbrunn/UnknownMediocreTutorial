@@ -416,7 +416,7 @@ function updateSetterPreview() {
   if (!guess) return;
   const isSetterTurn = state.turn === state.setter;
   if (!isSetterTurn) return;
-  const typed = (state.setterDraft || "").toLowerCase();
+  const typed = (state.setterDraft || "").toUpperCase();
   if (state.powers?.stealthGuessActive && myRole === state.setter) {
     return;
   }  
@@ -513,7 +513,7 @@ function handleSetterInput(event) {
 
 /// SUBMIT NEW SECRET FUNCTION
 function submitSetterNew() {
-  const w = (state.setterDraft || "").toLowerCase();
+  const w = (state.setterDraft || "").toUpperCase();
   if (w.length !== 5) {
     shakeDraftRow("setter");
     toast("5 letters!");
@@ -613,19 +613,19 @@ function handleGuesserInput(event) {
         return;
       }
     console.log(state.powers.nonsenseActive);
-    const guessMakesSense = state.powers.nonsenseActive || window.ALLOWED_GUESSES.has(localGuesserDraft.toLowerCase());
+    const guessMakesSense = state.powers.nonsenseActive || window.ALLOWED_GUESSES.has(localGuesserDraft.toUpperCase());
     if (!guessMakesSense) {
       shakeDraftRow("guesser");
       toast("Not in dictionary");
       return;
     }    
-    const result = validateGuesserGuess(localGuesserDraft.toLowerCase(),state.powers?.forceGuessOptions,window.ALLOWED_GUESSES);
+    const result = validateGuesserGuess(localGuesserDraft.toUpperCase(),state.powers?.forceGuessOptions,window.ALLOWED_GUESSES);
     if (!result.ok) {
       toast(result.message);
       shakeDraftRow("guesser");
       return;
     }
-    sendGameAction(roomId, {type: "SUBMIT_GUESS",guess: localGuesserDraft.toLowerCase()});
+    sendGameAction(roomId, {type: "SUBMIT_GUESS",guess: localGuesserDraft.toUpperCase()});
     resetEphemeralUIState();
   }
 }
