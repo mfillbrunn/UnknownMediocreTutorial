@@ -661,7 +661,7 @@ function tryAutoRejoin() {
       return;
     }
 
-    window.roomId = storedRoomId;
+    window.roomId = res.roomId || storedRoomId;
     onRejoinUI();
 
   });
