@@ -3,7 +3,7 @@
 const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const CompetitiveMode = require("../modes/competitiveMode");
-const { stopTimer,startTimer,resetRoundTimer } = require("../../utils/chessTimer");
+const { stopTimer,startTimer,resetRoundTimer } = require("../../utils/Timer");
 const {handleRoundTimeout, startGameTimer} = require("./normal");
 const {startGameTimerSim} = require("./gameOver"); 
 
