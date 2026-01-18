@@ -92,7 +92,9 @@ function handleNormalTimeout({
   dispatch
 }) {
   const io = context.io;
-
+  if (typeof dispatch !== "function") {
+    throw new Error("dispatch is required for normal-phase timeouts");
+  }
   state.roundTimeouts ??= { A: 0, B: 0 };
   state.roundTimeouts[timedOutRole] =
     (state.roundTimeouts[timedOutRole] || 0) + 1;
