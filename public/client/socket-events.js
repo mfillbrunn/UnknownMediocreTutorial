@@ -260,10 +260,6 @@ $("leaderboardBtn")?.addEventListener("click", () => {
 document.querySelectorAll(".concedeBtn").forEach(btn => {
   btn.addEventListener("click", () => {
     if (!confirm("Are you sure you want to concede the match?")) return;
-
-    document.querySelectorAll(".concedeBtn")
-      .forEach(b => b.disabled = true);
-
     sendGameAction(roomId, { type: "CONCEDE" , userId: window.currentUser.id});
   });
 });
