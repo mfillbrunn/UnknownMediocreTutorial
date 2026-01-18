@@ -50,58 +50,46 @@ function countNewLetters(word, usedLetters) {
   return c;
 }
 
-function pickAIGuess(state, allWords) {
+function pickAIGuess(state, wordRows) {
+  const allWords = wordRows.map(r => r.word);
+
   if (!state || !state.history) {
-    return randomChoice(allWords);
+    return weightedRandom(wordRows, r => r.probability || 1).word;
   }
+
   const history = state.history || [];
   const usedGuesses = new Set(history.map(h => h.guess.toUpperCase()));
   const usedLetters = getUsedLetters(state);
 
-  // Filter out already-guessed words
-  const remainingWords = allWords.filter(
-    w => !usedGuesses.has(w.toUpperCase())
+  const remaining = wordRows.filter(
+    r => !usedGuesses.has(r.word)
   );
 
-  if (remainingWords.length === 0) {
-    return randomChoice(allWords);
+  if (!remaining.length) {
+    return weightedRandom(wordRows, r => r.probability || 1).word;
   }
 
-  // 1️⃣ Feasible words
-  const feasibleWords = remainingWords.filter(w =>
-    isConsistentWithHistory(history, w, state)
+  const feasible = remaining.filter(r =>
+    isConsistentWithHistory(history, r.word, state)
   );
 
-  // 2️⃣ Info-seeking words (≥ N new letters)
-  const infoWords = remainingWords.filter(w =>
-    countNewLetters(w, usedLetters) >= INFO_MIN_NEW_LETTERS
+  const info = remaining.filter(r =>
+    countNewLetters(r.word, usedLetters) >= INFO_MIN_NEW_LETTERS
   );
 
-  // Decide strategy
-  const probs = getAIGuessProbs(state);
-  let strategy = weightedChoice(probs);
+  let strategy = weightedChoice(getAIGuessProbs(state));
 
-  // Fallbacks (important)
-  if (strategy === "feasible" && feasibleWords.length === 0) {
-    strategy = "info";
-  }
-  if (strategy === "info" && infoWords.length === 0) {
-    strategy = "random";
-  }
+  if (strategy === "feasible" && !feasible.length) strategy = "info";
+  if (strategy === "info" && !info.length) strategy = "random";
 
-  // Execute strategy
-  switch (strategy) {
-    case "feasible":
-      return randomChoice(feasibleWords);
+  const pool =
+    strategy === "feasible" ? feasible :
+    strategy === "info" ? info :
+    remaining;
 
-    case "info":
-      return randomChoice(infoWords);
-
-    case "random":
-    default:
-      return randomChoice(remainingWords);
-  }
+  return weightedRandom(pool, r => r.probability || 1).word;
 }
+
 function getAIGuessProbs(state) {
   const feasible = Math.min(1, 0.4 + state.history.length * 0.15);
 
