@@ -114,15 +114,8 @@ socket.on("disconnect", () => {
   for (const [roomId, room] of Object.entries(rooms)) {
     const player = room.players[socket.id];
     if (!player) continue;
-    console.log(
-    "[DISCONNECT]",
-    socket.id,
-    "connected=",
-    player.connected
-  );
-    const stillAuthoritative = room.players[socket.id]?.connected === true;
-    if (!stillAuthoritative) continue;
-
+    const authoritativeSocketId =room.currentSocketByUserId?.[player.userId];
+    if (authoritativeSocketId !== socket.id) {console.log("[DISCONNECT] ignored stale socket", socket.id, "authoritative is", authoritativeSocketId);continue;}
     player.connected = false;
     player.disconnectedAt = Date.now();
     if (room.state.roundStartTime && room.state.activeTimer) {
