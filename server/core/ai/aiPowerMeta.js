@@ -1,6 +1,7 @@
 module.exports = {
   hideTile: {
     role: "guesser",
+    aiUsable: true,
     isUsed: s => s.powers.hideTileUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -10,6 +11,7 @@ module.exports = {
 
   blindGuess: {
     role: "guesser",
+    aiUsable: true,
     isUsed: s => s.powers.blindGuessUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -19,6 +21,7 @@ module.exports = {
 
   forceGuess: {
     role: "setter",
+    aiUsable: true,
     isUsed: s => s.powers.forceGuessUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -28,6 +31,7 @@ module.exports = {
 
   revealGreen: {
     role: "guesser",
+    aiUsable: true,
     isUsed: s => s.powers.revealGreenUsed,
     buildAction: s => ({
       type: "USE_POWER",
@@ -38,6 +42,7 @@ module.exports = {
 
   freezeSecret: {
     role: "setter",
+    aiUsable: true,
     isUsed: s => s.powers.freezeSecretUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -47,6 +52,7 @@ module.exports = {
 
   confuseColors: {
     role: "setter",
+    aiUsable: true,
     isUsed: s => s.powers.confuseColorsUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -56,6 +62,7 @@ module.exports = {
 
   countOnly: {
     role: "setter",
+    aiUsable: true,
     isUsed: s => s.powers.countOnlyUsed,
     buildAction: s => ({
       type: "USE_POWER",
@@ -66,6 +73,7 @@ module.exports = {
 
   suggestGuess: {
     role: "guesser",
+    aiUsable: true,
     isUsed: s => s.powers.suggestGuessUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -75,6 +83,7 @@ module.exports = {
 
   suggestSecret: {
     role: "setter",
+    aiUsable: true,
     isUsed: s => s.powers.suggestSecretUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -84,6 +93,7 @@ module.exports = {
 
   revealHistory: {
     role: "guesser",
+    aiUsable: true,
     isUsed: s => s.powers.revealHistoryUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -93,6 +103,7 @@ module.exports = {
 
   blindSpot: {
     role: "guesser",
+    aiUsable: true,
     isUsed: s => s.powers.blindSpotUsed,
     buildAction: s => ({
       type: "USE_POWER",
@@ -103,6 +114,7 @@ module.exports = {
 
   stealthGuess: {
     role: "guesser",
+    aiUsable: true,
     isUsed: s => s.powers.stealthGuessUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -112,6 +124,7 @@ module.exports = {
 
   forceTimer: {
     role: "setter",
+    aiUsable: true,
     isUsed: s => s.powers.forceTimerUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -121,6 +134,7 @@ module.exports = {
 
   magicMode: {
     role: "guesser",
+    aiUsable: true,
     isUsed: s => s.powers.magicModeUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -130,6 +144,7 @@ module.exports = {
 
   vowelRefresh: {
     role: "guesser",
+    aiUsable: true,
     isUsed: s => s.powers.vowelRefreshUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -137,17 +152,19 @@ module.exports = {
     })
   },
 
- /* assassinWord: {
+ assassinWord: {
     role: "setter",
+    aiUsable: false,
     isUsed: s => s.powers.assassinWordUsed,
     buildAction: () => ({
       type: "USE_POWER",
       power: "assassinWord"
     })
-  },*/
+  },
 
   revealLetter: {
     role: "guesser",
+    aiUsable: true,
     isUsed: s => s.powers.revealLetter.used,
     buildAction: () => ({
       type: "USE_POWER",
