@@ -9,17 +9,32 @@ function pickGuess(state, allowedGuesses) {
   return pickAIGuess(state, allowedGuesses);
 }
 
-function pickSecret(secretRows) {
-  const candidates = secretRows.filter(r => r.probability > 0);
-  const chosen = weightedRandom(
-    candidates.length ? candidates : secretRows,
-    r => r.probability || 1
-  );
-
-  return chosen.word;
+function pickSecret(state, secretRows) {
+  return pickAISecret(state, secretRows);
 }
 
 //HELPER functions
+function computeRemainingForNewSecret(state, newSecret, secrets) {
+  const Guess = state.pendingGuess;
+  if (!Guess || Guess.includes("?")) return null;
+  const fb = scoreGuess(
+    newSecret.toUpperCase(),
+    Guess.toUpperCase()
+  );
+  const newHistoryEntry = {
+    guess: Guess,
+    fb,
+    ignoreConstraints: false
+  };
+  const testHistory = [...state.history, newHistoryEntry];
+  let count = 0;
+  for (const w of secrets) {
+    if (isConsistentWithHistory(testHistory, w, state)) {
+      count++;
+    }
+  }
+  return count;
+}
 
 function satisfiesAnyForceGuess(word, options = []) {
   if (!options || options.length === 0) return true;
@@ -28,31 +43,27 @@ function satisfiesAnyForceGuess(word, options = []) {
 
 function weightedRandom(items, weightFn) {
   if (!items || items.length === 0) return null;
-
   const total = items.reduce((s, x) => s + weightFn(x), 0);
   if (total <= 0) {
     return items[Math.floor(Math.random() * items.length)];
   }
-
   let r = Math.random() * total;
   for (const item of items) {
     r -= weightFn(item);
     if (r <= 0) return item;
   }
-
   return items[items.length - 1];
 }
+
 function weightedChoice(weights) {
   const total = Object.values(weights).reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
-
   for (const [key, w] of Object.entries(weights)) {
     r -= w;
     if (r <= 0) return key;
   }
   return Object.keys(weights)[0];
 }
-
 
 function getUsedLetters(state) {
   const used = new Set();
@@ -68,6 +79,29 @@ function countNewLetters(word, usedLetters) {
     if (!usedLetters.has(ch)) c++;
   }
   return c;
+}
+
+function pickAISecret(state, context) {
+  if (state.aiSecretChanged) return state.secret;
+  if (!state.history || state.history.length === 0) {
+    const candidates = secretRows.filter(r => r.probability > 0);
+    const chosen = weightedRandom(candidates.length ? candidates : secretRows,r => r.probability || 1);
+    return chosen.word;
+  }
+  const secrets = secretRows.secrets.map(r => r.word);
+  const before = computeRemainingForNewSecret(state,state.secret,secrets);
+  if (!before || before === 0) return null;  
+  const feasibleSecrets = secrets.filter(candidate =>isConsistentWithHistory(state.history, candidate, state));
+  for (const candidate of feasibleSecrets) {
+    const after = computeRemainingForNewSecret(state,candidate,secrets);
+    if (after === null) continue;
+     const reduction = (before - after) / before;
+      if (reduction >= 0.4) {
+        state.aiSecretChanged = true;
+        return candidate;
+      }
+  }
+  return null;
 }
 
 function pickAIGuess(state, wordRows) {
