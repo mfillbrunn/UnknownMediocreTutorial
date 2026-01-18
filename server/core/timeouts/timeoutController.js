@@ -118,9 +118,7 @@ function handleNormalTimeout({
       timedOut: true
     });
   }
-
-  emitStateForAllPlayers(roomId, room, io);
   return { continue: true };
 }
 
-
+module.exports = { handleTimeout };
