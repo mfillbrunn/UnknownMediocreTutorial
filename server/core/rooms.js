@@ -132,28 +132,19 @@ function findLastOpenRoom() {
   return null;
 }
 
-function removePlayer({
-  roomId,
-  socketId,
-  reason,
-  io,
-  context
-}) {
+function removePlayer({roomId, socketId, reason, io, context}) {
   const room = rooms[roomId];
   if (!room) return { ok: false };
-
   const player = room.players[socketId];
   if (!player) return { ok: false };
-
   const role = player.role;
-
   delete room.players[socketId];
-
-  io?.to(roomId).emit("lobbyEvent", {
-    type: "playerLeft",
-    role,
-    reason
-  });
+  delete room.state.roles[socketId];
+  delete room.state.ready?.[socketId];
+  delete room.state.playerNames?.[socketId];
+  const sock = io?.sockets?.sockets?.get(socketId);
+  sock?.leave(roomId);
+  io?.to(roomId).emit("lobbyEvent", { type: "playerLeft", role, reason});
 
   if (!hasAnyHumanPlayers(room)) {
     console.log("Deleting room with only AI:", roomId);
@@ -161,18 +152,9 @@ function removePlayer({
     return { ok: true, deleted: true };
   }
   resetRoomState(room);
-
-  // If one player remains and this was mid-game, you can still award a win
-  if (
-    Object.keys(room.players).length === 1 &&
-    room.state.phase !== "lobby"
-  ) {
-    room.state.timeoutLoser = role;
-    endGame(room.state, roomId, io, room, context);
-  }
-
   return { ok: true };
 }
+
 function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
   const now = Date.now();
 
