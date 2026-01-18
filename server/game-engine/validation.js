@@ -7,7 +7,7 @@ const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 function hasWord(container, wordUpper) {
   if (!container) return true; // allow if no dictionary
   if (container instanceof Set) return container.has(wordUpper);
-  if (Array.isArray(container)) return container.includes(wordUpper.toLowerCase());
+  if (Array.isArray(container)) return container.includes(wordUpper.toUpperCase());
   return false;
 }
 
@@ -33,16 +33,16 @@ function countPositionalDifferences(a, b) {
 function isValidWord(w, allowedList) {
   if (!w || w.length !== 5) return false;
   if (!allowedList || allowedList.length === 0) return true;
-  return allowedList.includes(w.toLowerCase());
+  return allowedList.includes(w.toUpperCase());
 }
 
 function satisfiesForceGuess(g, forceGuess) {
   switch (forceGuess.type) {
     case "startsWith":
-      return g.startsWith(forceGuess.letter.toLowerCase());
+      return g.startsWith(forceGuess.letter.toUpperCase());
 
     case "endsWith":
-      return g.endsWith(forceGuess.letter.toLowerCase());
+      return g.endsWith(forceGuess.letter.toUpperCase());
 
     case "doubleLetter":
       return hasDoubleLetter(g);
@@ -83,7 +83,7 @@ function checkSecret({ secret, state, allowedSecrets }) {
     return { ok: false, error: "Missing secret", code: "MISSING_SECRET" };
   }
   
-  const w = secret.toLowerCase();
+  const w = secret.toUpperCase();
   console.log(w);
 
   // 1️⃣ Length check
@@ -145,7 +145,7 @@ function checkGuess({ guess, state, allowedGuesses }) {
     return { ok: false, error: "Missing guess", code: "MISSING_GUESS" };
   }
 
-  const g = guess.toLowerCase();
+  const g = guess.toUpperCase();
 
   // 1️⃣ Length check
   if (g.length !== 5) {
@@ -190,7 +190,7 @@ function checkGuess({ guess, state, allowedGuesses }) {
 function parseWordlist(raw) {
   return raw
     .split(/\r?\n/)
-    .map(w => w.trim().toLowerCase())
+    .map(w => w.trim().toUpperCase())
     .filter(w => w.length === 5);
 }
 
