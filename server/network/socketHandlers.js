@@ -47,7 +47,6 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
     // Resume timing from current phase/turn
     room.state.roundStartTime = Date.now();
     startGameTimer(room, room.state, roomId, context);
-    room.state.isTimerRunning = true;
   }
   }
     socket.emit("roleAssigned", { role: result.role });
@@ -76,7 +75,6 @@ socket.on("quickJoin", ({ userId, name }, cb) => {
     // Resume timing from current phase/turn
     room.state.roundStartTime = Date.now();
     startGameTimer(room, room.state, roomId, context);
-    room.state.isTimerRunning = true;
   }
   }
   if (name) {
