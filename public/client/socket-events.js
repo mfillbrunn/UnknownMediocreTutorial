@@ -260,7 +260,6 @@ document.querySelectorAll(".concedeBtn").forEach(btn => {
 function showAIDifficultyModal() {
   $("aiDifficultyModal")?.classList.add("active");
 }
-
 function hideAIDifficultyModal() {
   $("aiDifficultyModal")?.classList.remove("active");
 }
@@ -271,14 +270,9 @@ $("addAiBtn")?.addEventListener("click", () => {
 document.querySelectorAll(".ai-option").forEach(btn => {
   btn.addEventListener("click", () => {
     const difficulty = Number(btn.dataset.difficulty);
-
     hideAIDifficultyModal();
-
     // Tell server to add AI with difficulty
-    sendGameAction(roomId, {
-      type: "ADD_AI",
-      difficulty
-    });
+    sendGameAction(roomId, {type: "ADD_AI", difficulty  , userId: window.currentUser.id});
   });
 });
 
