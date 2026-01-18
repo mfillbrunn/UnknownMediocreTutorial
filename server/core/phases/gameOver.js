@@ -38,10 +38,10 @@ function endGame(state, roomId, io, room, context) {
             .catch(err => console.error("Match history write failed:", err));
            }
           emitLobbyEvent(io, roomId, { type: "gameOverShowMenu" });
-          io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });
-          emitStateForAllPlayers(roomId, room, io)
+          io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });          
       }
    }
+   emitStateForAllPlayers(roomId, room, io);
 }
 
 module.exports = {endGame};
