@@ -26,7 +26,12 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
        state.gameOver = false;
        state.gameOverView = "match";
        state.canNextRound = false;   
-       if (state.timeControl?.enabled){startGameTimer(room, state, roomId, context);}
+       if (state.timeControl?.enabled){
+           state.paused = false;
+           state.isTimerRunning = false;
+           state.roundStartTime = Date.now();
+           startGameTimer(room, state, roomId, context);
+       }
        emitLobbyEvent(io, roomId, { type: "hideLobby" });
        emitStateForAllPlayers(roomId, room, io);
       return;
