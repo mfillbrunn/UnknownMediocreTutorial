@@ -26,7 +26,8 @@ function maybeRunAI(room, roomId, context) {
   // -----------------------------
   // NORMAL PHASE
   // -----------------------------
-  if (state.phase === "normal" && state.turn === aiPlayer.role) {
+if (state.phase === "normal" && state.turn === aiPlayer.role) {
+    // 🔥 POWER USE TAKES PRIORITY
     if (aiLogic.maybeUsePower) {
       const powerAction = aiLogic.maybeUsePower(state, context);
       if (powerAction) {
@@ -42,35 +43,39 @@ function maybeRunAI(room, roomId, context) {
         };
       }
     }
-
-    if (aiPlayer.role === state.guesser && !state.pendingGuess) {
-      actionFn = () => {
-        const guess = aiLogic.pickGuess(state, context.WORDS.guesses);
-        handleNormalPhase(
-          room,
-          state,
-          { type: "SUBMIT_GUESS", guess, ai: true },
-          state.guesser,
-          roomId,
-          context
-        );
-      };
-    }
-
-    if (aiPlayer.role === state.setter && state.pendingGuess) {
-      actionFn = () => {
-        const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
-        handleNormalPhase(
-          room,
-          state,
-           { type: "SET_SECRET_NEW", secret, ai: true },
-          state.setter,
-          roomId,
-          context
-        );
-      };
+  
+    // ⛔ Do NOT override power action
+    if (!actionFn) {
+      if (aiPlayer.role === state.guesser && !state.pendingGuess) {
+        actionFn = () => {
+          const guess = aiLogic.pickGuess(state, context.WORDS.guesses);
+          handleNormalPhase(
+            room,
+            state,
+            { type: "SUBMIT_GUESS", guess, ai: true },
+            state.guesser,
+            roomId,
+            context
+          );
+        };
+      }
+  
+      if (aiPlayer.role === state.setter && state.pendingGuess) {
+        actionFn = () => {
+          const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
+          handleNormalPhase(
+            room,
+            state,
+            { type: "SET_SECRET_NEW", secret, ai: true },
+            state.setter,
+            roomId,
+            context
+          );
+        };
+      }
     }
   }
+
 
   // -----------------------------
   // SIMULTANEOUS PHASE
