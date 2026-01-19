@@ -14,6 +14,17 @@ function pickSecret(state, secretRows, setterParams) {
   return pickAISecret(state, secretRows, setterParams);
 }
 
+function createAI({ guessParams, setterParams }) {
+  return {
+    pickGuess(state, words) {
+      return pickAIGuess(state, words, guessParams);
+    },
+    pickSecret(state, secrets) {
+      return pickAISecret(state, secrets, setterParams);
+    }
+  };
+}
+
 /* ===============================
    SHARED UTILITIES
    =============================== */
@@ -200,4 +211,4 @@ function pickAIGuess(state, wordRows, strategyWeights) {
    EXPORT
    =============================== */
 
-module.exports = { pickGuess, pickSecret };
+module.exports = { createAI };
