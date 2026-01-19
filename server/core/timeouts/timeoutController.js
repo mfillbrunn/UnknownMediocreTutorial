@@ -13,8 +13,7 @@ function handleTimeout({
   state,
   roomId,
   timedOutRole,
-  context,
-  dispatch
+  context
 }) {
   const io = context.io;
 
