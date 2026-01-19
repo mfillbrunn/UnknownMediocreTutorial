@@ -34,10 +34,10 @@ const LEVELS = {
       optimal:    0.5
     },
     setterParams: {
-      maxSecretChanges: 2,
+      maxSecretChanges: 4,
       maxSecretsEvaluated: 60,
-      minReductionThreshold: 0.25,
-      randomness: 0.15
+      minReductionThreshold: 0.1,
+      randomness: 0.001
     }
   }
 };
