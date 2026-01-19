@@ -230,31 +230,59 @@ $("loginBtn").onclick = async () => {
 logoutBtn.onclick = logout;
 
 window.supabase.auth.onAuthStateChange(async (event, session) => {
+  console.log("AUTH EVENT:", event);
+
   window.currentUser = session?.user || null;
 
- if (event === "SIGNED_OUT") {
-  window.authReady = false;
-  window.profileReady = false;
-  window.autoRejoinAttempted = false;
-   updateAccountUI();
+  if (event === "SIGNED_OUT") {
+    window.authReady = false;
+    window.profileReady = false;
+    window.autoRejoinAttempted = false;
+
+    updateAccountUI();
     renderMenuAccountStatus();
     showStartup();
     return;
   }
 
+  // ⛔ DO NOT mark authReady yet
+  if (event === "INITIAL_SESSION") {
+    if (!session?.user) return;
+
+    // Let Supabase finish wiring the token
+    setTimeout(async () => {
+      window.authReady = true;
+
+      await loadMyProfile();
+      window.profileReady = true;
+
+      updateAccountUI();
+      renderMenuAccountStatus();
+      maybeAutoRejoin();
+
+      // 🔁 retry loaders
+      if (pendingLeaderboardMode) loadLeaderboard(pendingLeaderboardMode);
+      if (pastGamesVisible) $("showPastGamesBtn")?.click();
+
+    }, 0);
+
+    return;
+  }
+
   if (event === "SIGNED_IN") {
     window.authReady = true;
+
     updateAccountUI();
     renderMenuAccountStatus();
     showStartup();
 
-    if (window.currentUser) {
-      await loadMyProfile();
-      window.profileReady = true;
-      maybeAutoRejoin();
-    }
+    await loadMyProfile();
+    window.profileReady = true;
+
+    maybeAutoRejoin();
   }
 });
+
 
 let profileLoadInProgress = false;
 
