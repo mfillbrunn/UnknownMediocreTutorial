@@ -141,7 +141,7 @@ function startGameTimer(room, state, roomId, context) {
       endGame(state, roomId, io, room, context);
       return;
     }
-    const result = handleTimeout({room,state,roomId,timedOutRole,context,dispatch: action =>handleNormalPhase(room,state,action,timedOutRole,roomId,context)});
+    const result = handleTimeout({room,state,roomId,timedOutRole,context});
     if (result?.continue) {
       startGameTimer(room, state, roomId, context);
     }
