@@ -13,7 +13,7 @@ function roleToSemantic(state, role) {
 
 function maybeUsePower(state) {
   if (!state.activePowers || state.activePowers.length === 0) return null;
-
+  if (state.powerUsedThisTurn) return null;
   const turn = state.history?.length || 0;
   const p = Math.min(BASE_POWER_PROB + turn * 0.05, 0.5);
   if (Math.random() > p) return null;
