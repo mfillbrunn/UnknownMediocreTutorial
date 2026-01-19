@@ -12,6 +12,7 @@ function roleToSemantic(state, role) {
 
 
 function maybeUsePower(state) {
+  if (state.phase !== "normal") return null;
   if (!state.activePowers || state.activePowers.length === 0) return null;
   if (state.powerUsedThisTurn) return null;
   const turn = state.history?.length || 0;
