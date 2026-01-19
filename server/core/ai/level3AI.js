@@ -3,6 +3,14 @@ const AI_POWER_META = require("./aiPowerMeta");
 
 const BASE_POWER_PROB = 0.25;
 
+//helpers
+function roleToSemantic(state, role) {
+  if (role === state.guesser) return "guesser";
+  if (role === state.setter) return "setter";
+  return null;
+}
+
+
 function maybeUsePower(state) {
   if (!state.activePowers || state.activePowers.length === 0) return null;
 
@@ -12,12 +20,13 @@ function maybeUsePower(state) {
 
   const role = state.turn;
   if (!role) return null;
-
+  const semanticRole = roleToSemantic(state, state.turn);
+  if (!semanticRole) return null;
   const usable = state.activePowers.filter(pid => {
     const meta = AI_POWER_META[pid];
     if (!meta) return false;
     if (meta.aiUsable === false) return false;
-    if (meta.role !== role) return false;
+    if (meta.role !== semanticRole) return false;
     if (meta.isUsed(state)) return false;
     return true;
   });
