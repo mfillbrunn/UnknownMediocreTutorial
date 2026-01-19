@@ -136,6 +136,7 @@ function createInitialState() {
     //AI
     aiSecretChanged: false,
          aiDifficulty: 1,
+         aiSecretChangeCount: 0,
     secret: "",
     currentSecret: "",
     pendingGuess: "",
