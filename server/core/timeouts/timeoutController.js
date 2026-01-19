@@ -33,8 +33,7 @@ function handleTimeout({
         state,
         roomId,
         timedOutRole,
-        context,
-        dispatch
+        context
       });
 
     default:
@@ -87,13 +86,9 @@ function handleNormalTimeout({
   state,
   roomId,
   timedOutRole,
-  context,
-  dispatch
+  context
 }) {
-  const io = context.io;
-  if (typeof dispatch !== "function") {
-    throw new Error("dispatch is required for normal-phase timeouts");
-  }
+  const io = context.io;  
   state.roundTimeouts ??= { A: 0, B: 0 };
   state.roundTimeouts[timedOutRole] =
     (state.roundTimeouts[timedOutRole] || 0) + 1;
