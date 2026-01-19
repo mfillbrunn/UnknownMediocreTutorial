@@ -11,43 +11,54 @@ engine.registerPower("magicMode", {
   },
 
   postScore(state, entry, roomId, io) {
-    if (!state.powers.magicModeActive) return;
+  if (!state.powers.magicModeActive) return;
 
-    const added = [];
+  const added = [];
+  const guess = entry.guess.toUpperCase();
+  const secret = state.secret.toUpperCase();
 
-    for (let i = 0; i < 5; i++) {
-      const fb = entry.fbGuesser?.[i];
-      if (fb !== "🟨") continue;
+  for (let i = 0; i < 5; i++) {
+    const fb = entry.fbGuesser?.[i];
+    if (fb !== "🟨") continue;
 
-      const letter = state.secret[i].toUpperCase();
+    const guessedLetter = guess[i];
+
+    // Find all correct positions of this letter in the secret
+    for (let j = 0; j < 5; j++) {
+      if (secret[j] !== guessedLetter) continue;
 
       // Avoid duplicate constraints
       const exists = state.extraConstraints.some(
-        c => c.type === "GREEN" && c.index === i
+        c => c.type === "GREEN" && c.index === j
       );
       if (exists) continue;
 
       state.extraConstraints.push({
         type: "GREEN",
-        index: i,
-        letter
+        index: j,
+        letter: guessedLetter
       });
 
-      added.push({ index: i, letter });
+      added.push({ index: j, letter: guessedLetter });
     }
+  }
 
-    if (added.length > 0) {
-      io?.to(roomId)?.emit(
-        "toast",
-        `Magic Mode locked in ${added.length} correct position${added.length > 1 ? "s" : ""}!`
-      );
-    } else {
-      io?.to(roomId)?.emit(
-        "toast",
-        "Magic Mode found no new positions to lock in."
-      );
-    }
-  },
+  if (added.length > 0) {
+    io?.to(roomId)?.emit(
+      "toast",
+      `Magic Mode revealed ${added.length} correct position${added.length > 1 ? "s" : ""}!`
+    );
+  } else {
+    io?.to(roomId)?.emit(
+      "toast",
+      "Magic Mode found no new positions to reveal."
+    );
+  }
+
+  // Power is single-use per activation
+  state.powers.magicModeActive = false;
+}
+,
 
   turnStart() {}
 });
