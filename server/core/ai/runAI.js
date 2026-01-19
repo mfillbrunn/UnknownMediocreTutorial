@@ -80,35 +80,39 @@ if (state.phase === "normal" && state.turn === aiPlayer.role) {
   // -----------------------------
   // SIMULTANEOUS PHASE
   // -----------------------------
-  if (state.phase === "simultaneous") {
-    if (aiPlayer.role === state.guesser && !state.simultaneousGuessSubmitted) {
-      actionFn = () => {
-        const guess = aiLogic.pickGuess(state, context.WORDS.guesses);
-        handleSimultaneousPhase(
-          room,
-          state,
-          { type: "SUBMIT_GUESS", guess, ai: true },
-          state.guesser,
-          roomId,
-          context
-        );
-      };
-    }
-
-    if (aiPlayer.role === state.setter && !state.simultaneousSecretSubmitted) {
-      actionFn = () => {
-        const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
-        handleSimultaneousPhase(
-          room,
-          state,
-          { type: "SET_SECRET_NEW", secret, ai: true },
-          state.setter,
-          roomId,
-          context
-        );
-      };
-    }
+// -----------------------------
+// SIMULTANEOUS PHASE
+// -----------------------------
+if (!actionFn && state.phase === "simultaneous") {
+  if (aiPlayer.role === state.guesser && !state.simultaneousGuessSubmitted) {
+    actionFn = () => {
+      const guess = aiLogic.pickGuess(state, context.WORDS.guesses);
+      handleSimultaneousPhase(
+        room,
+        state,
+        { type: "SUBMIT_GUESS", guess, ai: true },
+        state.guesser,
+        roomId,
+        context
+      );
+    };
   }
+
+  if (aiPlayer.role === state.setter && !state.simultaneousSecretSubmitted) {
+    actionFn = () => {
+      const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
+      handleSimultaneousPhase(
+        room,
+        state,
+        { type: "SET_SECRET_NEW", secret, ai: true },
+        state.setter,
+        roomId,
+        context
+      );
+    };
+  }
+}
+
 
   if (!actionFn) return;
 
