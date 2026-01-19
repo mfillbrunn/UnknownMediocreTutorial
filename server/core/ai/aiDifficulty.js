@@ -36,7 +36,7 @@ const LEVELS = {
     setterParams: {
       maxSecretChanges: 2,
       maxSecretsEvaluated: 60,
-      minReductionThreshold: 0.15,
+      minReductionThreshold: 0.25,
       randomness: 0.15
     }
   }
