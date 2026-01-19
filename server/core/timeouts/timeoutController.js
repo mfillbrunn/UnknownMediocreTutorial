@@ -3,7 +3,7 @@
 const { endGame } = require("../phases/gameOver");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
-const applyAction = require("../stateMachine");
+
 /**
  * Central timeout policy engine.
  * Decides what a timeout means based on phase.
@@ -102,6 +102,7 @@ function handleNormalTimeout({
   // Auto-play last move
   const last = state.history.at(-1);
   if (!last) return { continue: false };
+  const applyAction = require("../stateMachine");
       if (timedOutRole === state.guesser) {
       applyAction(     room,    state,    {  type: "SUBMIT_GUESS",     guess: last.guess,      timedOut: true       },
         timedOutRole,
