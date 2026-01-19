@@ -73,7 +73,7 @@ module.exports = {
 
   suggestGuess: {
     role: "guesser",
-    aiUsable: true,
+    aiUsable: false,
     isUsed: s => s.powers.suggestGuessUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -83,7 +83,7 @@ module.exports = {
 
   suggestSecret: {
     role: "setter",
-    aiUsable: true,
+    aiUsable: false,
     isUsed: s => s.powers.suggestSecretUsed,
     buildAction: () => ({
       type: "USE_POWER",
@@ -93,7 +93,7 @@ module.exports = {
 
   revealHistory: {
     role: "guesser",
-    aiUsable: true,
+    aiUsable: false,
     isUsed: s => s.powers.revealHistoryUsed,
     buildAction: () => ({
       type: "USE_POWER",
