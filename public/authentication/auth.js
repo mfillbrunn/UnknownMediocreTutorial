@@ -10,6 +10,10 @@ let pastGamesVisible = false;
 let pastGamesLoaded = false;
 let authInitInProgress = false;
 
+function authFullyReady() {
+  return window.authReady && window.profileReady && window.socketReady;
+}
+
 (async () => {
   if (authInitInProgress) return;
   authInitInProgress = true;
@@ -200,6 +204,9 @@ $("loginBtn").onclick = async () => {
     status.textContent = "Email and password required";
     return;
   }
+
+  status.textContent = "Logging in…";
+
   try {
     const { error } = await window.supabase.auth.signInWithPassword({
       email,
@@ -207,12 +214,17 @@ $("loginBtn").onclick = async () => {
     });
 
     if (error) throw error;
+
+    // Do NOT set auth state manually here
+    // onAuthStateChange will handle everything
     status.textContent = "Logged in";
+
   } catch (err) {
-    if (isAbortError(err)) return; // ✅ THIS LINE
+    if (isAbortError(err)) return;
     status.textContent = err.message;
   }
 };
+
 
 
 logoutBtn.onclick = logout;
@@ -343,47 +355,82 @@ function renderMenuAccountStatus () {
 $("showPastGamesBtn")?.addEventListener("click", async (e) => {
   e.preventDefault();
   e.stopPropagation();
-  if (!window.currentUser) return;
+
   const btn = $("showPastGamesBtn");
-  const myId = window.currentUser.id;
   const container = $("pastGamesContainer");
-  if (!container) return;
-  
+  if (!btn || !container) return;
+
+  // Auth not ready → show message and exit
+  if (!authFullyReady()) {
+    container.classList.remove("hidden");
+    container.textContent = "Please wait…";
+    return;
+  }
+
+  const myId = window.currentUser?.id;
+  if (!myId) return;
+
+  // Toggle OFF
   if (pastGamesVisible) {
     container.classList.add("hidden");
     pastGamesVisible = false;
-    btn.textContent = pastGamesVisible
-    ? "Hide Past Games"
-    : "Show Past Games";
+    btn.textContent = "Show Past Games";
     return;
   }
+
   // Toggle ON
   container.classList.remove("hidden");
   pastGamesVisible = true;
-  btn.textContent = pastGamesVisible
-    ? "Hide Past Games"
-    : "Show Past Games";
+  btn.textContent = "Hide Past Games";
+
   // Already loaded → just show
   if (pastGamesLoaded) return;
+
   // First-time load
-  container.textContent = "Loading…";   
+  container.textContent = "Loading…";
+
+  try {
     const { data, error } = await window.supabase
       .from("matches")
-      .select(`id,created_at,ranked,time_control,player_a,player_b,winner,score_a,score_b,rounds, player_a_profile:profiles!matches_player_a_fkey(username),
-        player_b_profile:profiles!matches_player_b_fkey(username)`)
+      .select(`
+        id,
+        created_at,
+        ranked,
+        time_control,
+        player_a,
+        player_b,
+        winner,
+        score_a,
+        score_b,
+        rounds,
+        player_a_profile:profiles!matches_player_a_fkey(username),
+        player_b_profile:profiles!matches_player_b_fkey(username)
+      `)
       .or(`player_a.eq.${myId},player_b.eq.${myId}`)
       .order("created_at", { ascending: false })
       .limit(20);
+
     console.log("PAST GAMES RESULT", { data, error });
-     if (error) {
-       if (isAbortError(error)) return;
-       console.error("Past games load failed:", error);
-       if (container) container.textContent = "Failed to load games";
-       return;
-     }
+
+    if (error) throw error;
+
     renderPastGames(data);
-    pastGamesLoaded = true;  
+    pastGamesLoaded = true;
+
+  } catch (err) {
+    if (isAbortError(err)) {
+      pastGamesLoaded = false;
+      setTimeout(() => {
+        $("showPastGamesBtn")?.click();
+      }, 200);
+      return;
+    }
+
+    console.error("Past games load failed:", err);
+    container.textContent = "Failed to load games";
+  }
 });
+
 function getPowersByRoleFromRounds(rounds = [], myId, match) {
   const byRole = {
     setter: new Set(),
@@ -545,6 +592,14 @@ async function loadLeaderboard(mode) {
   const list = $("leaderboardList");
   if (!list) return;
 
+  // Auth not ready → queue request and exit
+  if (!authFullyReady()) {
+    list.textContent = "Please wait…";
+    pendingLeaderboardMode = mode;
+    return;
+  }
+
+  // Prevent overlapping loads
   if (leaderboardLoadInProgress) {
     pendingLeaderboardMode = mode;
     return;
@@ -558,27 +613,29 @@ async function loadLeaderboard(mode) {
   try {
     const ratingColumn = `rating_${mode}`;
 
-      const { data, error } = await window.supabase
-        .from("leaderboard_profiles")
-        .select(`id, username, ${ratingColumn}`)
-        .order(ratingColumn, { ascending: false })
-        .limit(10);
-      
-      console.log("LEADERBOARD RESULT", { data, error });
-
+    const { data, error } = await window.supabase
+      .from("leaderboard_profiles")
+      .select(`id, username, ${ratingColumn}`)
+      .order(ratingColumn, { ascending: false })
+      .limit(10);
 
     if (error) throw error;
 
     renderLeaderboard(data, mode);
 
   } catch (err) {
-     if (isAbortError(err)) return;
-     console.error("Leaderboard load failed:", err);
-     list.textContent = "Failed to load leaderboard";
+    if (isAbortError(err)) {
+      pendingLeaderboardMode = mode;
+      return;
+    }
+
+    console.error("Leaderboard load failed:", err);
+    list.textContent = "Failed to load leaderboard";
+
   } finally {
     leaderboardLoadInProgress = false;
 
-    // 🔁 Retry the most recent request
+    // Retry the most recent queued request
     if (pendingLeaderboardMode) {
       const next = pendingLeaderboardMode;
       pendingLeaderboardMode = null;
@@ -586,6 +643,7 @@ async function loadLeaderboard(mode) {
     }
   }
 }
+
 
 
 function renderLeaderboard(rows, mode) {
