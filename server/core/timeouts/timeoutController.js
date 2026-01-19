@@ -108,19 +108,19 @@ function handleNormalTimeout({
   // Auto-play last move
   const last = state.history.at(-1);
   if (!last) return { continue: false };
-
-  if (timedOutRole === state.guesser) {
-    dispatch({
-      type: "SUBMIT_GUESS",
-      guess: last.guess,
-      timedOut: true
-    });
-  } else {
-    dispatch({
-      type: "SET_SECRET_SAME",
-      timedOut: true
-    });
-  }
+      if (timedOutRole === state.guesser) {
+      applyAction(     room,    state,    {  type: "SUBMIT_GUESS",     guess: last.guess,      timedOut: true       },
+        timedOutRole,
+        roomId,
+        context
+      );
+    } else {
+      applyAction(    room,    state,    {     type: "SET_SECRET_SAME",     timedOut: true    },
+        timedOutRole,
+        roomId,
+        context
+      );
+    }
   return { continue: true };
 }
 
