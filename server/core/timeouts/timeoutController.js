@@ -3,7 +3,7 @@
 const { endGame } = require("../phases/gameOver");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
-
+const applyAction = require("../stateMachine");
 /**
  * Central timeout policy engine.
  * Decides what a timeout means based on phase.
