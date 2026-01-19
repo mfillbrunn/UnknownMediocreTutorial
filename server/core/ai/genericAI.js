@@ -99,11 +99,16 @@ function pickAISecret(state, secretRows, {
   randomness
 }) {
   state.aiSecretChangeCount ??= 0;
-
+   console.log("Calling function")
+   console.log(aiSecretChangeCount)
   if (!state.history || state.history.length === 0) {
     return weightedRandom(secretRows, r => r.probability || 1).word;
   }
-
+   console.log({
+  aiSecretChangeCount: state.aiSecretChangeCount,
+  maxSecretChanges,
+  conditionMet: state.aiSecretChangeCount >= maxSecretChanges
+});
   if (state.aiSecretChangeCount >= maxSecretChanges) {
     return state.secret;
   }
@@ -112,7 +117,7 @@ function pickAISecret(state, secretRows, {
   const feasible = secrets.filter(w =>
     isConsistentWithHistory(state.history, w, state)
   );
-
+   console.log({ feasible: feasible.length});
   if (!feasible.length) return state.secret;
 
   const before = computeRemainingForSecret(state, state.secret, secrets);
