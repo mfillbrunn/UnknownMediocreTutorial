@@ -9,23 +9,6 @@ window.myProfile = null;
 let pastGamesVisible = false;
 let pastGamesLoaded = false;
 
-(async () => {
-  const { data } = await window.supabase.auth.getSession();
-
-  if (data.session?.user) {
-    window.currentUser = data.session.user;
-    window.authReady = true; // ✅ THIS WAS MISSING
-  } else {
-    window.currentUser = null;
-    window.authReady = false;
-  }
-  updateAccountUI();
-  renderMenuAccountStatus();
-})();
-
-
-
-
 function formatTimeMode(tc) {
   if (!tc || tc.enabled === false || tc.rankMode === "notime") {
     return "No Time";
@@ -189,44 +172,50 @@ $("loginBtn").onclick = async () => {
     status.textContent = "Email and password required";
     return;
   }
+  try {
+    const { error } = await window.supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
-  const { error } = await window.supabase.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  status.textContent = error ? error.message : "Logged in";
+    if (error) throw error;
+    status.textContent = "Logged in";
+  } catch (err) {
+    if (isAbortError(err)) return; // ✅ THIS LINE
+    status.textContent = err.message;
+  }
 };
 
 
 logoutBtn.onclick = logout;
 
 window.supabase.auth.onAuthStateChange(async (event, session) => {
+  // Single source of truth
   window.currentUser = session?.user || null;
+  window.authReady = !!session;
 
- if (event === "SIGNED_OUT") {
-  window.authReady = false;
-  window.profileReady = false;
-  window.autoRejoinAttempted = false;
-   updateAccountUI();
-    renderMenuAccountStatus();
+  // Always update UI when auth state changes
+  updateAccountUI();
+  renderMenuAccountStatus();
+
+  // Signed out OR no session
+  if (!session) {
+    window.profileReady = false;
+    window.autoRejoinAttempted = false;
     showStartup();
     return;
   }
 
-  if (event === "SIGNED_IN") {
-    window.authReady = true;
-    updateAccountUI();
-    renderMenuAccountStatus();
-    showStartup();
-
-    if (window.currentUser) {
-      await loadMyProfile();
-      window.profileReady = true;
-      maybeAutoRejoin();
-    }
+  // Session exists: INITIAL_SESSION or SIGNED_IN
+  try {
+    await loadMyProfile();
+    window.profileReady = true;
+    maybeAutoRejoin();
+  } catch (err) {
+    console.error("Failed to load profile:", err);
   }
 });
+
 
 let profileLoadInProgress = false;
 
