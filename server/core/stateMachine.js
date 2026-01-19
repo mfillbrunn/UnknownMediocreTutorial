@@ -29,7 +29,7 @@ function applyAction(room, state, action, role, roomId, context) {
       return;
   }
 
-  if (room && roomId && context) {
+  if (room && roomId && context && !action.type.startsWith("USE_")) {
     setTimeout(() => {
       try {
         maybeRunAI(room, roomId, context);
