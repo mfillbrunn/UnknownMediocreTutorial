@@ -8,6 +8,34 @@ window.currentUser = null;
 window.myProfile = null;
 let pastGamesVisible = false;
 let pastGamesLoaded = false;
+let authInitInProgress = false;
+
+(async () => {
+  if (authInitInProgress) return;
+  authInitInProgress = true;
+
+  try {
+    const { data } = await window.supabase.auth.getSession();
+
+    if (data.session?.user) {
+      window.currentUser = data.session.user;
+      window.authReady = true;
+    } else {
+      window.currentUser = null;
+      window.authReady = false;
+    }
+
+    updateAccountUI();
+    renderMenuAccountStatus();
+  } catch (err) {
+    if (!isAbortError(err)) console.error(err);
+  } finally {
+    authInitInProgress = false;
+  }
+})();
+
+
+
 
 function formatTimeMode(tc) {
   if (!tc || tc.enabled === false || tc.rankMode === "notime") {
@@ -190,32 +218,31 @@ $("loginBtn").onclick = async () => {
 logoutBtn.onclick = logout;
 
 window.supabase.auth.onAuthStateChange(async (event, session) => {
-  // Single source of truth
   window.currentUser = session?.user || null;
-  window.authReady = !!session;
 
-  // Always update UI when auth state changes
-  updateAccountUI();
-  renderMenuAccountStatus();
-
-  // Signed out OR no session
-  if (!session) {
-    window.profileReady = false;
-    window.autoRejoinAttempted = false;
+ if (event === "SIGNED_OUT") {
+  window.authReady = false;
+  window.profileReady = false;
+  window.autoRejoinAttempted = false;
+   updateAccountUI();
+    renderMenuAccountStatus();
     showStartup();
     return;
   }
 
-  // Session exists: INITIAL_SESSION or SIGNED_IN
-  try {
-    await loadMyProfile();
-    window.profileReady = true;
-    maybeAutoRejoin();
-  } catch (err) {
-    console.error("Failed to load profile:", err);
+  if (event === "SIGNED_IN") {
+    window.authReady = true;
+    updateAccountUI();
+    renderMenuAccountStatus();
+    showStartup();
+
+    if (window.currentUser) {
+      await loadMyProfile();
+      window.profileReady = true;
+      maybeAutoRejoin();
+    }
   }
 });
-
 
 let profileLoadInProgress = false;
 
