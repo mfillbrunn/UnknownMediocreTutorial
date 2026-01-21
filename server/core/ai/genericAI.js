@@ -186,16 +186,36 @@ function pickAIGuess(state, wordRows, strategyWeights) {
     );
   })();
 
+  const optimal2 = (() => {
+    // Case 1: many feasible → pure information gain (5 unused letters)
+    if (feasible.length > 10) {
+      const allFiveNew = remaining.filter(
+        r => countNewLetters(r.word, usedLetters) === 5
+      );
+      return allFiveNew;
+    }
+
+    // Case 2: few feasible → restrict to feasible and maximize unused letters
+    if (!feasible.length) return [];
+    const maxNew = Math.max(
+      ...feasible.map(r => countNewLetters(r.word, usedLetters))
+    );
+    return feasible.filter(
+      r => countNewLetters(r.word, usedLetters) === maxNew
+    );
+  })();
+
   const pools = {
     uninformed,
     feasible,
-    optimal
+    optimal,
+    optimal2
   };
 
   // Remove empty strategies
   const availableWeights = {};
   for (const [k, w] of Object.entries(strategyWeights)) {
-    if (pools[k].length) availableWeights[k] = w;
+    if (pools[k]?.length) availableWeights[k] = w;
   }
 
   const strategy = weightedChoice(availableWeights);
@@ -203,6 +223,7 @@ function pickAIGuess(state, wordRows, strategyWeights) {
 
   return pool[Math.floor(Math.random() * pool.length)].word;
 }
+
 
 /* ===============================
    EXPORT
