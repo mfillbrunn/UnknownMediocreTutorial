@@ -240,10 +240,6 @@ onStateUpdate(newState => {
   if (myRole && !roleAssigned) {
     roleAssigned = true;
   }
-  if (state.phase !== "simultaneous"){
-    localGuesserDraft = "";
-  }
-   localGuesserDraft = "";
   const setterCanEdit =  myRole === state.setter &&  ((state.phase === "normal" && state.turn === state.setter &&!!state.pendingGuess) || (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
   if (setterCanEdit) {
     state.setterDraft = prevSetterDraft;
@@ -254,8 +250,8 @@ onStateUpdate(newState => {
       PowerEngine.renderButtons(roomId);
       PowerEngine._initialized = true;
   }
-  // Clear guesser draft once it is no longer editable
-  if (state.phase === "normal" && state.pendingGuess && state.turn !== state.guesser) {localGuesserDraft = "";}
+  // Extra clearing after simultaneous round
+  if ((prevPhase === "simultaneous" && state.phase === "normal") || (prevPhase !== "simultaneous" && state.phase === "simultaneous")){localGuesserDraft = "";}
   window.state = state;   
   updateRoleCards();
   updateHostControls();
@@ -632,6 +628,7 @@ function handleGuesserInput(event) {
       return;
     }
     sendGameAction(roomId, {type: "SUBMIT_GUESS",guess: localGuesserDraft.toUpperCase()});
+    if (state.phase !== "simultaneous") {localGuesserDraft = "";}
     resetEphemeralUIState();
   }
 }
