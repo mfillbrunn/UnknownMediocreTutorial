@@ -44,7 +44,7 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
       freshState.phase = "lobby";
       freshState.ready = {};
       freshState.playerNames = names;
-      freshstate.hostUserId = hostUserId;
+      freshState.hostUserId = hostUserId;
       // Re-sync roles with room.players
       for (const [playerId, player] of Object.entries(room.players)) {
         freshState.roles[playerId] = player.role;
