@@ -45,17 +45,31 @@ function maybeRunAI(room, roomId, context) {
     }
 
     if (aiPlayer.role === state.setter && state.pendingGuess) {
+      if (state?.powers?.freezeActive) {
       actionFn = () => {
-        const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
-        handleNormalPhase(
-          room,
-          state,
-          { type: "SET_SECRET_NEW", secret, ai: true },
-          state.setter,
-          roomId,
-          context
-        );
-      };
+              const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
+              handleNormalPhase(
+                room,
+                state,
+                { type: "SET_SECRET_SAME", ai: true },
+                state.setter,
+                roomId,
+                context
+              );
+            };
+          } else{
+          actionFn = () => {
+            const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
+            handleNormalPhase(
+              room,
+              state,
+              { type: "SET_SECRET_NEW", secret, ai: true },
+              state.setter,
+              roomId,
+              context
+            );
+          };
+      }
     }
   }
 
