@@ -29,9 +29,9 @@ const LEVELS = {
   },
   3: {
     guessParams: {
-      uninformed: 0.1,
-      feasible:   0.4,
-      optimal:    0.5
+      uninformed: 0,
+      feasible:   0.2,
+      optimal:    0.8
     },
     setterParams: {
       maxSecretChanges: 4,
