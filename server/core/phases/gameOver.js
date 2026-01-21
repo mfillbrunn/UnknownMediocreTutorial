@@ -18,13 +18,7 @@ function endGame(state, roomId, io, room, context) {
        time: { A: state.timeUsed.A, B: state.timeUsed.B,}, timeoutLoser: state.timeoutLoser || null,
     history: state.history.map(x => ({ ...x })),
     powers: state.activePowers.map(x => ({ ...x })),
-  });
-    const res = state.mode?.onRoundEnd?.(state) || { view: "match", canNextRound: false };
-   state.turn = null;
-   state.gameOver = true; 
-   state.phase = "gameOver";
-   state.gameOverView = res.view || "match"; 
-   state.canNextRound = !!res.canNextRound;
+  });    
    const isAIMatch = Object.values(room.players).some(p => p.isAI);
    if (!isAIMatch) {
       if (!state.canNextRound) {
@@ -41,6 +35,39 @@ function endGame(state, roomId, io, room, context) {
           io.to(roomId).emit("animateTurn", { type: "guesserSubmitted" });          
       }
    }
+//Clean up the room
+   const res = state.mode?.onRoundEnd?.(state) || { view: "match", canNextRound: false };
+   state.turn = null;
+   state.gameOver = true; 
+   state.phase = "gameOver";
+   state.gameOverView = res.view || "match"; 
+   state.canNextRound = !!res.canNextRound;
+   // Next Round
+   if (state.canNextRound){
+      let saved;
+       if (state.activePowers.includes("revealLetter")) {
+            saved = state.powers.revealLetter.mode;
+        }    
+       resetRoundState(room, state, roomId, context);
+       if (state.activePowers.includes("revealLetter")) {
+            state.powers.revealLetter.mode = saved;
+        }
+   }
+   //Match is over
+    if (!state.canNextRound){
+      const names = state.playerNames;
+      const fresh = createInitialState();
+      for (const key of Object.keys(state)) {
+          delete state[key];
+      }
+      Object.assign(state, fresh);
+      state.playerNames= names;
+      for (const [playerId, player] of Object.entries(room.players)) {
+        state.roles[playerId] = player.role;
+      }
+      state.setter = "A";
+      state.guesser = "B";
+    }
    emitStateForAllPlayers(roomId, room, io);
 }
 
