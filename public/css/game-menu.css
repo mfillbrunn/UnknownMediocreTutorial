@@ -286,3 +286,126 @@ body.menu-mode .app-header {
   opacity: 0.5;
 }
 
+/* =========================================
+   GAME MENU — SPY / DOSSIER STYLE
+   Drop-in override (no HTML changes)
+   ========================================= */
+
+.game-menu {
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  position: relative;
+}
+
+/* Subtle briefing-room lighting */
+.game-menu::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at top center,
+      rgba(255,255,255,0.035),
+      transparent 60%
+    );
+  pointer-events: none;
+}
+
+/* Dossier container */
+.menu-center {
+  position: relative;
+  padding: 32px 28px;
+  border-radius: var(--r-12);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.03),
+      rgba(0,0,0,0.18)
+    ),
+    var(--screen-bg);
+
+  box-shadow:
+    0 14px 34px rgba(0,0,0,0.45);
+
+  align-items: center;
+}
+
+/* Program title */
+.menu-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--title);
+  opacity: 0.92;
+}
+
+/* Classified sublabel */
+.menu-title::after {
+  content: "CLASSIFIED PROGRAM";
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  letter-spacing: 1.8px;
+  opacity: 0.55;
+}
+
+/* Button stack */
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
+  width: 260px;
+}
+
+/* Dossier-style buttons */
+.menu-btn {
+  height: var(--h-control);
+  border-radius: var(--r-8);
+  font-size: var(--fs-15);
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+
+  background: #1a1b20;
+  color: #d6d6d6;
+
+  border: 1px solid #2a2c34;
+  box-shadow: none;
+
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.menu-btn:hover {
+  background: #20222a;
+  transform: translateY(-1px);
+}
+
+/* Primary action = authorized form */
+.menu-btn.primary {
+  background: #e6e6e6;
+  color: #111;
+  border: 1px solid #f0f0f0;
+}
+
+.menu-btn.primary:hover {
+  background: #ffffff;
+}
+
+/* Optional stamped accent */
+.menu-center::after {
+  content: "AUTHORIZED ACCESS";
+  position: absolute;
+  top: 14px;
+  right: 18px;
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  opacity: 0.25;
+
+  transform: rotate(-6deg);
+}
