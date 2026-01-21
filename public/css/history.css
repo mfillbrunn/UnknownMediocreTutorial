@@ -16,9 +16,9 @@
 }
 
 .history-tile {
-  width: clamp(30px, 8vw, 42px);
-  height: clamp(36px, 9vw, 48px);
-  font-size: clamp(14px, 3.5vw, 20px);
+   width: clamp(38px, 10vw, 54px);
+  height: clamp(46px, 11vw, 62px);
+  font-size: clamp(18px, 4.5vw, 26px);
   border-radius: var(--r-6);
   font-weight: 800;
   letter-spacing: 1px;
