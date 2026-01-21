@@ -5,6 +5,8 @@ const { emitLobbyEvent } = require("../../utils/emitLobby");
 const {stopTimer} = require("../../utils/Timer");
 const {applyRankedElo} = require("../../utils/elo");
 const {  computeMatchResult, writeMatchHistory} =  require("../../utils/writeMatchData");
+const resetRoundState = require("../../utils/resetRoundState");
+const { createInitialState } = require("../stateFactory");
 
 function endGame(state, roomId, io, room, context) {
    const { supabase } = context; 
