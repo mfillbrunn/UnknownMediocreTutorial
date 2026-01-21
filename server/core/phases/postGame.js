@@ -5,7 +5,6 @@ const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { createInitialState } = require("../stateFactory");
 const resetRoundState = require("../../utils/resetRoundState");
 const {startGameTimer} = require("./normal");
-const { deepFreeze } = require("../../utils/debugFreeze");
 
 function handleGameOverPhase(room, state, action, role, roomId, context) {
     const io = context.io;
@@ -51,7 +50,6 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
       freshState.setter = "A";
       freshState.guesser = "B";
       room.state = freshState;
-      deepFreeze(oldState);
       emitLobbyEvent(io, roomId, { type: "enterLobby" });  
       emitStateForAllPlayers(roomId, room, io);
       return;
