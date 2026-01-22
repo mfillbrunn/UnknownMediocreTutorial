@@ -52,6 +52,11 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
       freshState.setter = "A";
       freshState.guesser = "B";
       room.state = freshState;
+      room.currentSocketByUserId ??= {};
+      room.currentSocketByUserId = {};
+      for (const [sid, p] of Object.entries(room.players)) {
+        if (p?.userId) room.currentSocketByUserId[p.userId] = sid;
+      }
       emitLobbyEvent(io, roomId, { type: "enterLobby" });  
       emitStateForAllPlayers(roomId, room, io);
       return;
