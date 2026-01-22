@@ -245,7 +245,9 @@ body.menu-mode .app-header {
 .ranked-status:hover {
   background: #20222a;
 }
-
+#rankedToggleWrapper input {
+  display: none;
+}
 /* =========================================
    GAME MENU — SPY / DOSSIER STYLE
    Drop-in override (no HTML changes)
@@ -603,16 +605,54 @@ body.menu-mode .app-header {
   padding: 10px 12px;
 
   border-radius: var(--r-8);
-  background: #1a1b20;
-  border: 1px solid #2a2c34;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
 
   font-size: var(--fs-14);
   font-weight: 700;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.6px;
 
-  opacity: 0.9;
+  cursor: pointer;
+  user-select: none;
+
+  transition: background 0.15s ease;
 }
 
+.ranked-status::before {
+  content: "MODE";
+  opacity: 0.7;
+  font-size: 12px;
+  letter-spacing: 0.8px;
+}
+#rankedBadge {
+  padding: 4px 10px;
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+#rankedBadge.ranked-off {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+}
+#rankedBadge.ranked-on {
+  background: #e6d27a;   /* muted gold */
+  color: #111;
+}
+.ranked-status:hover {
+  background: rgba(255,255,255,0.2);
+}
+#rankedToggleWrapper.readonly,
+.ranked-status.readonly {
+  opacity: 0.5;
+  pointer-events: none;
+}
 /* =========================================
    TIMER OPTION — CLEAR SELECTION
    ========================================= */
