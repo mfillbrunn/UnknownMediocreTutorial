@@ -10,6 +10,10 @@ let pastGamesVisible = false;
 let pastGamesLoaded = false;
 let authInitInProgress = false;
 
+if (!window.supabaseClient || !window.supabaseClient.auth) {
+  throw new Error("Supabase client not initialized before auth.js");
+}
+
 function authFullyReady() {
   return window.authReady && window.profileReady && window.socketReady;
 }
@@ -56,7 +60,7 @@ function formatTimeMode(tc) {
 window.openSummary = openSummary;
 
 async function loadMatchSummary(matchId) {
-  const { data, error } = await window.supabase
+  const { data, error } = await window.supabaseClient
     .from("matches")
     .select("*")
     .eq("id", matchId)
@@ -123,7 +127,7 @@ $("signupBtn").onclick = async () => {
     return;
   }
 
-  const { data, error } = await window.supabase.auth.signUp({
+  const { data, error } = await window.supabaseClient.auth.signUp({
     email,
     password
   });
@@ -136,7 +140,7 @@ $("signupBtn").onclick = async () => {
   status.textContent = "Account created";
 
   if (data?.user) {
-    const { error: profileError } = await window.supabase
+    const { error: profileError } = await window.supabaseClient
       .from("profiles")
       .upsert({
         id: data.user.id,
@@ -181,7 +185,7 @@ $("loginBtn").onclick = async () => {
   status.textContent = "Logging in…";
 
   try {
-    const { error } = await window.supabase.auth.signInWithPassword({
+    const { error } = await window.supabaseClient.auth.signInWithPassword({
       email,
       password
     });
@@ -202,7 +206,7 @@ $("loginBtn").onclick = async () => {
 
 logoutBtn.onclick = logout;
 
-window.supabase.auth.onAuthStateChange(async (event, session) => {
+window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
   console.log("AUTH EVENT:", event);
 
   window.currentUser = session?.user || null;
@@ -264,7 +268,7 @@ async function loadMyProfile() {
   profileLoadInProgress = true;
 
   try {
-    const { data, error } = await window.supabase
+    const { data, error } = await window.supabaseClient
       .from("profiles")
       .select("id, username, rating_bullet, rating_blitz, rating_notime, rating_deep")
       .eq("id", window.currentUser.id)
@@ -277,7 +281,7 @@ async function loadMyProfile() {
       const email = window.currentUser.email || "";
       const username = email ? email.split("@")[0] : "player";
 
-      const { data: created, error: createErr } = await window.supabase
+      const { data: created, error: createErr } = await window.supabaseClient
         .from("profiles")
         .insert({
           id: window.currentUser.id,
@@ -391,7 +395,7 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
   container.textContent = "Loading…";
 
   try {
-    const { data, error } = await window.supabase
+    const { data, error } = await window.supabaseClient
       .from("matches")
       .select(`
         id,
@@ -614,7 +618,7 @@ async function loadLeaderboard(mode) {
   try {
     const ratingColumn = `rating_${mode}`;
 
-    const { data, error } = await window.supabase
+    const { data, error } = await window.supabaseClient
       .from("leaderboard_profiles")
       .select(`id, username, ${ratingColumn}`)
       .order(ratingColumn, { ascending: false })
@@ -690,7 +694,7 @@ async function logout() {
 
   localStorage.removeItem("roomId");
 
-  await window.supabase.auth.signOut();
+  await window.supabaseClient.auth.signOut();
   pastGamesVisible = false;
   pastGamesLoaded = false;  
   const container = $("pastGamesContainer");
