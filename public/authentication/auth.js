@@ -14,8 +14,12 @@ if (!window.supabaseClient || !window.supabaseClient.auth) {
   throw new Error("Supabase client not initialized before auth.js");
 }
 
-function authFullyReady() {
-  return window.authReady && window.profileReady && window.socketReady;
+function authReadyForData() {
+  return window.authReady && window.profileReady;
+}
+
+function authReadyForSocket() {
+  return window.authReady && window.socketReady;
 }
 
 function formatTimeMode(tc) {
@@ -367,7 +371,7 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
   if (!btn || !container) return;
 
   // Auth not ready → show message and exit
-  if (!authFullyReady()) {
+  if (!authReadyForData()) {
     container.classList.remove("hidden");
     container.textContent = "Please wait…";
     return;
@@ -599,7 +603,7 @@ async function loadLeaderboard(mode) {
   if (!list) return;
 
   // Auth not ready → queue request and exit
-  if (!authFullyReady()) {
+  if (!authReadyForData()) {
     list.textContent = "Please wait…";
     pendingLeaderboardMode = mode;
     return;
