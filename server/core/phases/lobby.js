@@ -150,7 +150,7 @@ if (action.type === "SET_POWER_COUNT") {
           const players = Object.entries(room.players);
           const humanPlayers = players.filter(([_, p]) => !p.isAI);
           const aiPlayers = players.filter(([_, p]) => p.isAI);
-         if (humanPlayers.length + aiPlayers.length <2){return;}                
+         if (humanPlayers.length ===1 && aiPlayers.length ==0){return;}                
           state.ready[action.playerId] = true;               
           emitToOtherPlayer(io, room, action.playerId, {
             type: "playerReady",
