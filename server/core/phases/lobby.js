@@ -42,6 +42,7 @@ if (action.type === "PLAYER_JOINED") {
 if (action.type === "SET_RANKED") {
   if (state.hostUserId !== action.userId) return;
   state.ranked = !!action.ranked;
+  emitStateForAllPlayers(roomId, room, io);
 }
 
 if (action.type === "SET_TIME_CONTROL") {
@@ -158,7 +159,7 @@ if (action.type === "SET_POWER_COUNT") {
           });
           const players = Object.entries(room.players);
           const humanPlayers = players.filter(([_, p]) => !p.isAI);
-          const aiPlayers = const humanPlayers = players.filter(([_, p]) => p.isAI);      
+          const aiPlayers = players.filter(([_, p]) => p.isAI);      
           const readyHumans = humanPlayers.filter(([id]) => state.ready[id]);
           if (readyHumans.length === 1){
                 emitStateForAllPlayers(roomId, room, io);
