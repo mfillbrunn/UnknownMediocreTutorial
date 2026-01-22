@@ -219,23 +219,31 @@ body.menu-mode .app-header {
 .menu-account-status .link-btn:hover {
   text-decoration: underline;
 }
-.ranked-status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 
 #rankedBadge.ranked-on {
-  color: gold;
-  font-weight: 600;
+  color: #e6d27a; /* muted gold */
 }
 
 #rankedBadge.ranked-off {
-  opacity: 0.7;
+  color: #aaa;
+}
+#rankedBadge {
+  text-transform: uppercase;
+  font-size: var(--fs-13);
+  letter-spacing: 0.6px;
 }
 
 #rankedToggleWrapper.readonly {
   opacity: 0.5;
+}
+#rankedToggleWrapper {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #2a2c34;
+  background: #18191f;
+}
+.ranked-status:hover {
+  background: #20222a;
 }
 
 /* =========================================
@@ -587,12 +595,24 @@ body.menu-mode .app-header {
    ========================================= */
 
 .ranked-status {
-  margin-top: var(--sp-14);
-  padding-top: var(--sp-10);
-  border-top: 1px dashed rgba(255,255,255,0.15);
-  font-size: var(--fs-13);
-  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 260px;
+  padding: 10px 12px;
+
+  border-radius: var(--r-8);
+  background: #1a1b20;
+  border: 1px solid #2a2c34;
+
+  font-size: var(--fs-14);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+
+  opacity: 0.9;
 }
+
 /* =========================================
    TIMER OPTION — CLEAR SELECTION
    ========================================= */
