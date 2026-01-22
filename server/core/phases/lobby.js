@@ -166,7 +166,21 @@ if (action.type === "SET_POWER_COUNT") {
                 emitStateForAllPlayers(roomId, room, io);
           }             
           if (readyHumans.length === 2 || (readyHumans.length === humanPlayers.length && aiPlayers.length === 1)) {
-                if (state.ranked) {
+             //refresh state
+             const oldState = state;                  
+             const freshState = createInitialState();
+             freshState.playerNames = oldState.playerNames;
+             freshState.hostUserId = oldState.hostUserId;
+             freshState.ranked = oldState.ranked;
+             freshState.timeControl = oldState.timeControl;
+             freshState.powerCount = oldState.powerCount;
+             for (const [playerId, player] of Object.entries(room.players)) {
+                  freshState.roles[playerId] = player.role;
+             }
+             room.state = freshState;
+             state = freshState;     
+             //continue
+              if (state.ranked) {
                   const ids = Object.keys(room.players);
                   const shuffled = ids.sort(() => Math.random() - 0.5);                
                   room.players[shuffled[0]].role = "A";
