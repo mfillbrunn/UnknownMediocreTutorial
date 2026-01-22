@@ -179,7 +179,12 @@ if (action.type === "SET_POWER_COUNT") {
                   freshState.roles[playerId] = player.role;
              }
              room.state = freshState;
-             state = freshState;     
+             state = freshState;
+             room.currentSocketByUserId ??= {};
+             room.currentSocketByUserId = {};
+             for (const [sid, p] of Object.entries(room.players)) {
+               if (p?.userId) room.currentSocketByUserId[p.userId] = sid;
+             }
              //continue
               if (state.ranked) {
                   const ids = Object.keys(room.players);
