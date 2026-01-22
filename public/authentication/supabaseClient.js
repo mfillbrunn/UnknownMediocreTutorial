@@ -1,5 +1,5 @@
 // authentication/supabaseClient.js
-console.trace("🔥 supabaseClient.js executed");
+
 if (!window.supabaseClient) {
   console.log("🔥 Creating Supabase client");
 
@@ -10,7 +10,8 @@ if (!window.supabaseClient) {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: false
+        detectSessionInUrl: false,
+        storage: window.localStorage
       }
     }
   );
