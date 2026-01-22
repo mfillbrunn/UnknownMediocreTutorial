@@ -11,14 +11,6 @@
   gap: var(--sp-22);
 }
 
-.menu-title {
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--title);
-  opacity: 0.95;
-}
 .menu-buttons {
   display: flex;
   flex-direction: column;
@@ -26,39 +18,9 @@
   width: 260px;
 }
 
-.menu-btn {
-  height: var(--h-control);
-  border-radius: var(--r-pill);
-  font-size: var(--fs-16);
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-
-  background: var(--btn-secondary);
-  color: var(--btn-secondary-text);
-  border: 1px solid transparent;
-
-  transition:
-    background 0.2s var(--ease-ui),
-    transform 0.15s var(--ease-ui),
-    box-shadow 0.2s var(--ease-ui);
-}
-
 .menu-btn:hover {
   background: var(--btn-secondary-hover);
   transform: translateY(-1px);
-}
-.menu-btn.primary {
-  background: var(--btn-primary);
-  color: #fff;
-
-  box-shadow:
-    0 0 14px var(--btn-primary-glow),
-    inset 0 0 8px rgba(255,255,255,.12);
-}
-
-.menu-btn.primary:hover {
-  background: var(--btn-primary-hover);
 }
 
 body.menu-mode .app-header {
@@ -118,7 +80,6 @@ body.menu-mode .app-header {
   text-align: center;
   font-weight: 800;
   background: var(--panel-bg);
-  box-shadow: var(--shadow-card);
 }
 
 .role-card.setter {
@@ -167,10 +128,6 @@ body.menu-mode .app-header {
 
 .timer-option input:checked + span {
   color: var(--role-accent);
-}
-
-.timer-option input:checked ~ * {
-  box-shadow: 0 0 12px var(--btn-primary-glow);
 }
 
 .timer-option small {
@@ -223,11 +180,6 @@ body.menu-mode .app-header {
   font-weight: 900;
   cursor: pointer;
   opacity: 0.7;
-}
-
-.kick-btn:hover {
-  opacity: 1;
-  transform: scale(1.1);
 }
 
 .leave-btn {
@@ -409,3 +361,236 @@ body.menu-mode .app-header {
 
   transform: rotate(-6deg);
 }
+
+/* =========================================
+   LOBBY — SPY / BRIEFING ROOM STYLE
+   Drop-in override
+   ========================================= */
+
+.screen-lobby {
+  position: relative;
+}
+
+/* Soft briefing-room lighting */
+.screen-lobby::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at top center,
+      rgba(255,255,255,0.03),
+      transparent 60%
+    );
+  pointer-events: none;
+}
+
+/* Main lobby panel = dossier */
+.lobby-panel {
+  padding: 24px 22px;
+  border-radius: var(--r-12);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.03),
+      rgba(0,0,0,0.18)
+    ),
+    var(--panel-bg);
+
+  box-shadow: 0 14px 34px rgba(0,0,0,0.45);
+}
+
+/* Header */
+.lobby-header {
+  padding-bottom: var(--sp-10);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.screen-title {
+  font-size: var(--fs-20);
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+/* Room code — mono, form-like */
+.room-code-wrap {
+  font-family: var(--font-mono);
+  font-size: var(--fs-13);
+  opacity: 0.8;
+}
+
+.room-code {
+  padding: 2px 6px;
+  margin-left: 6px;
+  border-radius: 4px;
+  background: #1b1c22;
+  border: 1px solid #2a2c34;
+}
+
+/* Waiting block */
+.waiting-block {
+  margin-top: var(--sp-14);
+  padding: var(--sp-12);
+  border-radius: var(--r-8);
+  background: #1a1b20;
+  border: 1px dashed rgba(255,255,255,0.15);
+  opacity: 0.75;
+}
+
+/* =========================================
+   ROLE SELECTION — FILE CARDS
+   ========================================= */
+
+.role-select {
+  margin-top: var(--sp-20);
+}
+
+.role-card {
+  background: #18191f;
+  border-radius: var(--r-10);
+  padding: var(--sp-14);
+  box-shadow: none;
+  position: relative;
+}
+
+/* Role headers */
+.role-title {
+  font-size: var(--fs-12);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+/* Names feel typed / logged */
+.role-name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-16);
+  letter-spacing: 0.5px;
+}
+
+/* Setter / Guesser accents = thin, restrained */
+.role-card.setter {
+  border: 1.5px solid color-mix(in srgb, var(--setter-color) 70%, transparent);
+}
+
+.role-card.guesser {
+  border: 1.5px solid color-mix(in srgb, var(--guesser-color) 70%, transparent);
+}
+
+/* Host badge = stamped */
+.host-badge {
+  font-size: var(--fs-11);
+  letter-spacing: 1px;
+  padding: 2px 6px;
+  border-radius: var(--r-6);
+  opacity: 0.8;
+}
+
+.role-card.setter .host-badge {
+  background: var(--setter-color);
+  color: #000;
+}
+
+.role-card.guesser .host-badge {
+  background: var(--guesser-color);
+  color: #000;
+}
+
+/* Kick button — minimal */
+.kick-btn {
+  opacity: 0.4;
+}
+
+.kick-btn:hover {
+  opacity: 0.8;
+}
+
+/* Role switch = neutral control */
+.role-switch {
+  background: none;
+  border: 1px solid #2a2c34;
+  border-radius: var(--r-8);
+  padding: 6px 8px;
+  color: #aaa;
+}
+
+.role-switch:hover {
+  background: #20222a;
+}
+
+/* Add AI button */
+.secondary-btn.small {
+  background: #1a1b20;
+  border: 1px solid #2a2c34;
+  color: #ccc;
+}
+
+.secondary-btn.small:hover {
+  background: #20222a;
+}
+
+/* =========================================
+   FOOTER ACTIONS
+   ========================================= */
+
+.lobby-footer {
+  margin-top: var(--sp-20);
+  padding-top: var(--sp-12);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Leave = secondary form */
+.leave-btn {
+  border-radius: var(--r-8);
+  background: #1a1b20;
+  border: 1px solid #2a2c34;
+}
+
+/* Ready = authorized action */
+.primary-btn {
+  border-radius: var(--r-8);
+  background: #e6e6e6;
+  color: #111;
+  border: 1px solid #f0f0f0;
+}
+
+.primary-btn:hover {
+  background: #ffffff;
+}
+
+/* =========================================
+   TIMER OPTIONS — BRIEFING CHOICES
+   ========================================= */
+
+.timer-select {
+  margin-top: var(--sp-22);
+}
+
+.timer-option {
+  background: #18191f;
+  border: 1px solid #2a2c34;
+  border-radius: var(--r-8);
+  padding: var(--sp-10);
+}
+
+.timer-option:hover {
+  background: #20222a;
+}
+
+.timer-option input:checked + span {
+  color: var(--role-accent);
+  font-weight: 800;
+}
+
+/* =========================================
+   RANKED STATUS — FOOTNOTE
+   ========================================= */
+
+.ranked-status {
+  margin-top: var(--sp-14);
+  padding-top: var(--sp-10);
+  border-top: 1px dashed rgba(255,255,255,0.15);
+  font-size: var(--fs-13);
+  opacity: 0.8;
+}
+
