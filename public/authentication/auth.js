@@ -14,33 +14,6 @@ function authFullyReady() {
   return window.authReady && window.profileReady && window.socketReady;
 }
 
-(async () => {
-  if (authInitInProgress) return;
-  authInitInProgress = true;
-
-  try {
-    const { data } = await window.supabase.auth.getSession();
-
-    if (data.session?.user) {
-      window.currentUser = data.session.user;
-      window.authReady = true;
-    } else {
-      window.currentUser = null;
-      window.authReady = false;
-    }
-
-    updateAccountUI();
-    renderMenuAccountStatus();
-  } catch (err) {
-    if (!isAbortError(err)) console.error(err);
-  } finally {
-    authInitInProgress = false;
-  }
-})();
-
-
-
-
 function formatTimeMode(tc) {
   if (!tc || tc.enabled === false || tc.rankMode === "notime") {
     return "No Time";
