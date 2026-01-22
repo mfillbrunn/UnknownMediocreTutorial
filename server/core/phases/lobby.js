@@ -144,8 +144,7 @@ if (action.type === "SET_POWER_COUNT") {
   // -------------------------------
   // PLAYER READY
   // -------------------------------
-        if (action.type === "PLAYER_READY") {
-        
+        if (action.type === "PLAYER_READY") {        
           // Ready is per PLAYER (socket.id), not role
           state.ready[action.playerId] = true;
                
@@ -159,11 +158,12 @@ if (action.type === "SET_POWER_COUNT") {
           });
           const players = Object.entries(room.players);
           const humanPlayers = players.filter(([_, p]) => !p.isAI);
+          const aiPlayers = const humanPlayers = players.filter(([_, p]) => p.isAI);      
           const readyHumans = humanPlayers.filter(([id]) => state.ready[id]);
           if (readyHumans.length === 1){
                 emitStateForAllPlayers(roomId, room, io);
           }             
-          if (readyHumans.length === humanPlayers.length) {
+          if (readyHumans.length === 2 || (readyHumans.length === humanPlayers.length && aiPlayers.length === 1)) {
                 if (state.ranked) {
                   const ids = Object.keys(room.players);
                   const shuffled = ids.sort(() => Math.random() - 0.5);                
@@ -201,11 +201,9 @@ if (action.type === "SET_POWER_COUNT") {
             }        
             emitLobbyEvent(io, roomId, { type: "hideLobby" });
             emitStateForAllPlayers(roomId, room, io);
-          }
-        
+          }        
           return;
         }
-
 }
 
 module.exports = handleLobbyPhase;
