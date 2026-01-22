@@ -593,4 +593,42 @@ body.menu-mode .app-header {
   font-size: var(--fs-13);
   opacity: 0.8;
 }
+/* =========================================
+   TIMER OPTION — CLEAR SELECTION
+   ========================================= */
+
+.timer-option {
+  position: relative;
+  border: 1px solid #2a2c34;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+/* Selected state */
+.timer-option input:checked + span {
+  font-weight: 900;
+}
+
+/* Strong visual container change */
+.timer-option:has(input:checked) {
+  background: #20222a;
+  border-color: var(--role-accent);
+}
+
+/* Left-side selection marker (form check) */
+.timer-option:has(input:checked)::before {
+  content: "✓";
+  position: absolute;
+  left: 10px;
+  top: 10px;
+
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--role-accent);
+}
+
+/* Shift text slightly so check doesn’t collide */
+.timer-option span,
+.timer-option small {
+  margin-left: 16px;
+}
 
