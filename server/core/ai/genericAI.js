@@ -78,11 +78,7 @@ function computeRemainingForSecret(state, secret, secrets) {
   if (!guess || guess.includes("?")) return null;
 
   const fb = scoreGuess(secret.toUpperCase(), guess.toUpperCase());
-  const newHistory = [
-    ...state.history,
-    { guess, fb, ignoreConstraints: false }
-  ];
-
+  const newHistory = [...state.history,{ guess, fb, ignoreConstraints: false }];
   let count = 0;
   for (const w of secrets) {
     if (isConsistentWithHistory(newHistory, w, state)) {
@@ -92,51 +88,164 @@ function computeRemainingForSecret(state, secret, secrets) {
   return count;
 }
 
-function pickAISecret(state, secretRows, {
-  maxSecretChanges,
-  maxSecretsEvaluated,
-  minReductionThreshold,
-  randomness
-}) {
+function countColors(secret, guess) {
+  const fb = scoreGuess(secret.toUpperCase(), guess.toUpperCase());
+  let score = 0;
+
+  for (const c of fb) {
+    if (c === "🟨") score += 0.5;
+    else if (c === "⬛") score += 1;
+    // 🟩 contributes 0
+  }
+
+  return score;
+}
+
+ffunction pickAISecret(
+  state,
+  secretRows,
+  {
+    maxSecretChanges,
+    maxSecretsEvaluated,
+    minReductionThreshold,
+    randomness, 
+    pOverlap ,
+    pReductionGivenNoOverlap 
+  }
+) {
   state.aiSecretChangeCount ??= 0;
+
+  // ---------- Early exits ----------
   if (!state.history || state.history.length === 0) {
     return weightedRandom(secretRows, r => r.probability || 1).word;
   }
+
   if (state.aiSecretChangeCount >= maxSecretChanges) {
     return state.secret;
   }
 
-  const secrets = secretRows.map(r => r.word);
-  const feasible = secrets.filter(w =>
-    isConsistentWithHistory(state.history, w, state)
+  // ---------- Noise: keep current secret ----------
+  if (Math.random() < randomness) {
+    return state.secret;
+  }
+
+  const allSecrets = secretRows.map(r => r.word);
+
+  const feasibleSecrets = allSecrets.filter(secret =>
+    isConsistentWithHistory(state.history, secret, state)
   );
-  if (!feasible.length) return state.secret;
 
-  const before = computeRemainingForSecret(state, state.secret, secrets);
-  if (!before || before === 0) return state.secret;
+  if (!feasibleSecrets.length) return state.secret;
 
-  const candidates = feasible
+  const baselineRemaining =
+    computeRemainingForSecret(state, state.secret, allSecrets);
+
+  if (!baselineRemaining || baselineRemaining === 0) {
+    return state.secret;
+  }
+
+  // ---------- Path 1: reduction ----------
+  const reductionCandidates = feasibleSecrets
     .slice(0, maxSecretsEvaluated)
     .map(secret => {
-      const after = computeRemainingForSecret(state, secret, secrets);
-      if (after === null) return null;
+      const remaining =
+        computeRemainingForSecret(state, secret, allSecrets);
+      if (remaining === null) return null;
+
       return {
         secret,
-        reduction: (before - after) / before
+        reduction: (baselineRemaining - remaining) / baselineRemaining
       };
     })
     .filter(c => c && c.reduction >= minReductionThreshold);
 
-  if (!candidates.length) return state.secret;
+  if (!reductionCandidates.length) return state.secret;
 
-  const chosen =
-    Math.random() < randomness
-      ? candidates[Math.floor(Math.random() * candidates.length)]
-      : weightedRandom(candidates, c => c.reduction);
+  const reductionChoice = weightedRandom(
+    reductionCandidates,
+    c => c.reduction
+  );
 
+  // ---------- Path 2 & 3: color-adversarial ----------
+  const guess = state.pendingGuess;
+
+  if (guess && !guess.includes("?")) {
+    // score current secret
+    let currentColorScore = 0;
+    for (const c of scoreGuess(
+      state.secret.toUpperCase(),
+      guess.toUpperCase()
+    )) {
+      if (c === "🟨") currentColorScore += 0.5;
+      else if (c === "⬛") currentColorScore += 1;
+    }
+
+    // score feasible secrets
+    const colorCandidates = feasibleSecrets
+      .map(secret => {
+        let score = 0;
+        for (const c of scoreGuess(
+          secret.toUpperCase(),
+          guess.toUpperCase()
+        )) {
+          if (c === "🟨") score += 0.5;
+          else if (c === "⬛") score += 1;
+        }
+        return {
+          secret,
+          score,
+          delta: score - currentColorScore
+        };
+      })
+      .filter(x => x.delta > 0);
+
+    if (colorCandidates.length) {
+      // overlap: reduction choice is also color-adversarial
+      const overlapCandidates = colorCandidates.filter(
+        x => x.secret === reductionChoice.secret
+      );
+
+      const bestOverlap =
+        overlapCandidates.length
+          ? overlapCandidates.reduce((a, b) =>
+              b.score > a.score ? b : a
+            )
+          : null;
+
+      state.aiSecretChangeCount++;
+
+      // ---------- Decision ----------
+      if (bestOverlap && Math.random() < pOverlap) {
+        // Path 3: overlap
+        return bestOverlap.secret;
+      }
+
+      if (Math.random() < pReductionGivenNoOverlap) {
+        // Path 1: reduction
+        return reductionChoice.secret;
+      }
+
+      // Path 2: color-adversarial (weighted by improvement)
+      const totalDelta = colorCandidates.reduce(
+        (s, x) => s + x.delta,
+        0
+      );
+
+      let r = Math.random() * totalDelta;
+      for (const x of colorCandidates) {
+        r -= x.delta;
+        if (r <= 0) return x.secret;
+      }
+
+      return colorCandidates[0].secret;
+    }
+  }
+
+  // ---------- Fallback ----------
   state.aiSecretChangeCount++;
-  return chosen.secret;
+  return reductionChoice.secret;
 }
+
 
 
 /* ===============================
