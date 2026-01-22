@@ -147,8 +147,11 @@ if (action.type === "SET_POWER_COUNT") {
   // -------------------------------
         if (action.type === "PLAYER_READY") {        
           // Ready is per PLAYER (socket.id), not role
-          state.ready[action.playerId] = true;
-               
+          const players = Object.entries(room.players);
+          const humanPlayers = players.filter(([_, p]) => !p.isAI);
+          const aiPlayers = players.filter(([_, p]) => p.isAI);
+         if (humanPlayers.length + aiPlayers.length <2){return;}                
+          state.ready[action.playerId] = true;               
           emitToOtherPlayer(io, room, action.playerId, {
             type: "playerReady",
             playerId: action.playerId
@@ -157,9 +160,7 @@ if (action.type === "SET_POWER_COUNT") {
             type: "playerReady",
             playerId: action.playerId
           });
-          const players = Object.entries(room.players);
-          const humanPlayers = players.filter(([_, p]) => !p.isAI);
-          const aiPlayers = players.filter(([_, p]) => p.isAI);      
+          
           const readyHumans = humanPlayers.filter(([id]) => state.ready[id]);
           if (readyHumans.length === 1){
                 emitStateForAllPlayers(roomId, room, io);
