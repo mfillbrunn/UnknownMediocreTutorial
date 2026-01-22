@@ -1,10 +1,19 @@
-// client/supabase.js
+// authentication/supabaseClient.js
 
-if (!window.supabase) {
-  console.log("🔥 Creating Supabase client");
+if (!window.__supabaseInit) {
+  window.__supabaseInit = true;
 
   window.supabase = supabase.createClient(
     "https://zskbwatoxvghyouqjuxi.supabase.co",
-    "sb_publishable_1ubwHN-WJJcvYRQb9c5Y9g_1FdOPGAP"
+    "sb_publishable_1ubwHN-WJJcvYRQb9c5Y9g_1FdOPGAP",
+    {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false
+      }
+    }
   );
+
+  console.log("🔥 Supabase client created");
 }
