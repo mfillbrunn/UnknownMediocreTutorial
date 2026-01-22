@@ -107,9 +107,9 @@ function pickAISecret(
   {
     maxSecretChanges,
     maxSecretsEvaluated,
-    randomness, // probability of keeping current secret
-    pOverlap = 0.3,
-    pReductionGivenNoOverlap = 0.6
+    randomness, 
+    pOverlap ,
+    pReductionGivenNoOverlap 
   }
 ) {
   state.aiSecretChangeCount ??= 0;
