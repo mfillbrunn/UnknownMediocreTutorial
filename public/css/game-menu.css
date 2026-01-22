@@ -669,16 +669,19 @@ body.menu-mode .app-header {
 body.menu-mode {
   background: none;
 }
-
 body.menu-mode::before {
   content: "";
   position: fixed;
   inset: 0;
+
   background:
-    linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)),
-    url("/assets/menu-bg.jpg") center top / cover no-repeat;
+    linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.65)),
+    url("/assets/menu-bg.jpg") center / contain no-repeat;
+
+  background-color: #000; /* letterbox fill */
   z-index: -2;
 }
+
 .menu-center {
   position: relative;
 
