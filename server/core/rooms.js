@@ -1,7 +1,8 @@
 // core/rooms.js
 const { createInitialState } = require("./stateFactory");
 const {endGame }  = require("./phases/gameOver");
-const { emitStateForAllPlayers } = require("../utils/emitState");
+const { emitStateForAllPlayers } = require("../utils/emitState");;
+const { stopTimer } = require("../utils/Timer");
 const rooms = {};
 
 function hasAnyHumanPlayers(room) {
@@ -152,6 +153,10 @@ function removePlayer({roomId, socketId, reason, io, context}) {
   }
   if (!hasAnyHumanPlayers(room)) {
     console.log("Deleting room with only AI:", roomId);
+    if (io) {
+      io.in(roomId).socketsLeave(roomId);
+    }
+    stopTimer(roomId);
     delete rooms[roomId];
     return { ok: true, deleted: true };
   }
