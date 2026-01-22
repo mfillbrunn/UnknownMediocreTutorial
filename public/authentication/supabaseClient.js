@@ -1,5 +1,5 @@
 // authentication/supabaseClient.js
-
+console.trace("🔥 supabaseClient.js executed");
 if (!window.supabaseClient) {
   console.log("🔥 Creating Supabase client");
 
