@@ -101,16 +101,15 @@ function countColors(secret, guess) {
   return score;
 }
 
-ffunction pickAISecret(
+function pickAISecret(
   state,
   secretRows,
   {
     maxSecretChanges,
     maxSecretsEvaluated,
-    minReductionThreshold,
-    randomness, 
-    pOverlap ,
-    pReductionGivenNoOverlap 
+    randomness, // probability of keeping current secret
+    pOverlap = 0.3,
+    pReductionGivenNoOverlap = 0.6
   }
 ) {
   state.aiSecretChangeCount ??= 0;
@@ -124,7 +123,7 @@ ffunction pickAISecret(
     return state.secret;
   }
 
-  // ---------- Noise: keep current secret ----------
+  // ---------- Noise ----------
   if (Math.random() < randomness) {
     return state.secret;
   }
@@ -137,10 +136,10 @@ ffunction pickAISecret(
 
   if (!feasibleSecrets.length) return state.secret;
 
-  const baselineRemaining =
+  const currentRemaining =
     computeRemainingForSecret(state, state.secret, allSecrets);
 
-  if (!baselineRemaining || baselineRemaining === 0) {
+  if (!currentRemaining || currentRemaining === 0) {
     return state.secret;
   }
 
@@ -151,13 +150,12 @@ ffunction pickAISecret(
       const remaining =
         computeRemainingForSecret(state, secret, allSecrets);
       if (remaining === null) return null;
-
       return {
         secret,
-        reduction: (baselineRemaining - remaining) / baselineRemaining
+        reduction: (currentRemaining - remaining) / currentRemaining
       };
     })
-    .filter(c => c && c.reduction >= minReductionThreshold);
+    .filter(Boolean);
 
   if (!reductionCandidates.length) return state.secret;
 
@@ -200,7 +198,6 @@ ffunction pickAISecret(
       .filter(x => x.delta > 0);
 
     if (colorCandidates.length) {
-      // overlap: reduction choice is also color-adversarial
       const overlapCandidates = colorCandidates.filter(
         x => x.secret === reductionChoice.secret
       );
@@ -216,16 +213,14 @@ ffunction pickAISecret(
 
       // ---------- Decision ----------
       if (bestOverlap && Math.random() < pOverlap) {
-        // Path 3: overlap
-        return bestOverlap.secret;
+        return bestOverlap.secret; // Path 3
       }
 
       if (Math.random() < pReductionGivenNoOverlap) {
-        // Path 1: reduction
-        return reductionChoice.secret;
+        return reductionChoice.secret; // Path 1
       }
 
-      // Path 2: color-adversarial (weighted by improvement)
+      // Path 2: weighted by improvement
       const totalDelta = colorCandidates.reduce(
         (s, x) => s + x.delta,
         0
