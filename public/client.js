@@ -528,7 +528,11 @@ function submitSetterNew() {
   }
   if (!window.ALLOWED_SECRETS.has(w)) {
     shakeDraftRow("setter");
-    toast("Word not in dictionary");
+    if (window.ALLOWED_GUESSES.has(w.toUpperCase())){
+      toast("Word not allowed as secret");
+    }else{
+      toast("Word not in dictionary");
+    }
     return;
   }
   if (typeof window.isConsistentWithHistory === "function" && !window.isConsistentWithHistory(state.history, w, state)) {
