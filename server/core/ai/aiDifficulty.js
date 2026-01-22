@@ -9,10 +9,11 @@ const LEVELS = {
       optimal2: 0.2
     },
     setterParams: {
-      maxSecretChanges: 0,
-      maxSecretsEvaluated: 10,
-      minReductionThreshold: 0.4,
-      randomness: 1.0
+    maxSecretChanges: 2,
+      maxSecretsEvaluated: 20,
+      randomness: 0.5, 
+      pOverlap: 0.1 ,
+      pReductionGivenNoOverlap: 0.5 
     }
   },
   2: {
@@ -23,10 +24,11 @@ const LEVELS = {
       optimal2: 0.1
     },
     setterParams: {
-      maxSecretChanges: 4,
-      maxSecretsEvaluated: 100,
-      minReductionThreshold: 0.05,
-      randomness: 0.1
+    maxSecretChanges: 3,
+      maxSecretsEvaluated: 50,
+      randomness: 0.2, 
+      pOverlap: 0.4 ,
+      pReductionGivenNoOverlap: 0.5 
     }
   },
   3: {
@@ -37,10 +39,11 @@ const LEVELS = {
       optimal2: 0.8
     },
     setterParams: {
-      maxSecretChanges: 4,
-      maxSecretsEvaluated: 100,
-      minReductionThreshold: 0.05,
-      randomness: 0.1
+   maxSecretChanges: 6,
+      maxSecretsEvaluated: 200,
+      randomness: 0, 
+      pOverlap: 1 ,
+      pReductionGivenNoOverlap: 0.5 
     }
   }
 };
