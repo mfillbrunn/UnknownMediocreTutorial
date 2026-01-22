@@ -166,6 +166,7 @@ $("signupBtn").onclick = async () => {
 };
 
 $("loginBtn").onclick = async () => {
+  console.log("LOGIN CLICK", Date.now());
   const emailEl = $("authEmail");
   const passwordEl = $("authPassword");
 
