@@ -110,11 +110,15 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
     }
   /// POWERs
   if (action.type.startsWith("USE_")) {
+    console.log("Power using");
     const powerId = normalizePowerId(action.type);
+    console.log({statepower: state.powerUsedThisTurn});
     if (!state.powerUsedThisTurn) {
       state.powerUsedThisTurn = true;
       powerEngine.applyPower(powerId, state, action, roomId, io);
+      console.log("power used");
     }
+    console.log("emitted");
     emitStateForAllPlayers(roomId, room, io);
     return;
   }
