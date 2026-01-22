@@ -180,6 +180,11 @@ if (action.type === "SET_POWER_COUNT") {
              }
              room.state = freshState;
              state = freshState;
+             state.activePowers = [];
+             state.powers = createInitialPowers();
+             state.powersUsedThisRoundGuesser = [];
+             state.powersUsedThisRoundSetter = [];
+             state.powerUsedThisTurn = false;     
              room.currentSocketByUserId ??= {};
              room.currentSocketByUserId = {};
              for (const [sid, p] of Object.entries(room.players)) {
