@@ -803,3 +803,75 @@ body.menu-mode::before {
 .menu-center {
   max-width: 90vw;
 }
+.game-menu {
+  justify-content: flex-start;
+  padding-left: 6vw;
+}
+
+.menu-center {
+  position: relative;
+
+  width: 300px;
+  padding: 28px 26px;
+
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.35),
+    inset 0 0 0 1px rgba(255,255,255,0.18);
+
+  color: #f5f5f5;
+}
+.menu-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #ffffff;
+  opacity: 0.9;
+}
+.menu-buttons {
+  width: 220px;
+  gap: 10px;
+}
+
+.menu-btn {
+  height: 38px;
+
+  background: rgba(255,255,255,0.15);
+  color: #ffffff;
+
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 10px;
+
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+
+  backdrop-filter: blur(4px);
+
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.menu-btn:hover {
+  background: rgba(255,255,255,0.25);
+  transform: translateX(3px);
+}
+.menu-btn.primary {
+  background: rgba(255,255,255,0.3);
+  color: #111;
+  border-color: rgba(255,255,255,0.4);
+}
+
+.menu-btn.primary:hover {
+  background: rgba(255,255,255,0.4);
+}
+.menu-center::after {
+  display: none;
+}
