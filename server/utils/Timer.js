@@ -4,7 +4,7 @@ const INTERVALS = {};
 
 function startTimer(roomId, state, io, onTimeout) {
   if (INTERVALS[roomId]) return;
-
+  state.timerRunning = true;
   let lastTick = Date.now();
 
   INTERVALS[roomId] = setInterval(() => {
@@ -39,6 +39,9 @@ function stopTimer(roomId) {
   if (INTERVALS[roomId]) {
     clearInterval(INTERVALS[roomId]);
     delete INTERVALS[roomId];
+  }
+  if (state) {
+    state.timerRunning = false;
   }
 }
 
