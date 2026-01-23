@@ -156,11 +156,7 @@ function removePlayer({roomId, socketId, reason, io, context}) {
   }
   if (!hasAnyHumanPlayers(room)) {
     console.log("Deleting room with only AI:", roomId);
-    if (io) {
-      io.in(roomId).socketsLeave(roomId);
-    }
-    stopTimer(roomId);
-    delete rooms[roomId];
+    forceCloseRoom(roomId, room, io);
     return { ok: true, deleted: true };
   }
   if (!room.state.gameOver && room.state.phase !== "lobby") {
@@ -184,11 +180,10 @@ function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
         continue; // don't delete yet
       }
     
-      if (now - room.aiOnlySince >= AI_ONLY_GRACE_MS) {
-        console.log("Cleaning AI-only room after grace:", roomId);
-        stopTimer(roomId);
-        delete rooms[roomId];
-      }
+    if (now - room.aiOnlySince >= AI_ONLY_GRACE_MS) {
+      console.log("Cleaning AI-only room after grace:", roomId);
+      forceCloseRoom(roomId, room, io);
+    }
       continue;
     } else {
       // humans exist → reset marker
@@ -256,6 +251,14 @@ function addAIPlayer(room) {
   };
 
   room.state.roles[AI_ID] = "B";
+}
+function forceCloseRoom(roomId, room, io) {
+  if (io) {
+    io.to(roomId).emit("forceLeaveRoom");
+    io.in(roomId).socketsLeave(roomId);
+  }
+  stopTimer(roomId);
+  delete rooms[roomId];
 }
 
 
