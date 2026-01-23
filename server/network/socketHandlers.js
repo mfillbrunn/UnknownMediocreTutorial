@@ -114,13 +114,8 @@ socket.on("disconnect", () => {
   for (const [roomId, room] of Object.entries(rooms)) {
     const player = room.players[socket.id];
     if (!player) continue;
-    room.currentSocketByUserId ??= {};
     const authoritativeSocketId =room.currentSocketByUserId?.[player.userId];
-    // Ignore stale sockets, but tolerate missing authority after resets
-  if (authoritativeSocketId && authoritativeSocketId !== socket.id) {console.log("[DISCONNECT] ignored stale socket", socket.id, "authoritative is", authoritativeSocketId);
-    continue;
-  }
-
+    if (authoritativeSocketId !== socket.id) {console.log("[DISCONNECT] ignored stale socket", socket.id, "authoritative is", authoritativeSocketId);continue;}
     player.connected = false;
     player.disconnectedAt = Date.now();
     if (room.state.roundStartTime && room.state.activeTimer) {
