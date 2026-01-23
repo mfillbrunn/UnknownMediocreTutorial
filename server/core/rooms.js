@@ -34,7 +34,8 @@ function createRoom(socket, userId) {
   rooms[roomId] = {
     state: createInitialState(),
     players: {},
-    currentSocketByUserId: {}
+    currentSocketByUserId: {},
+    aiOnlySince: null
   };
 
   socket.join(roomId);
@@ -59,6 +60,7 @@ function createRoom(socket, userId) {
  */
 function joinOrReattach(socket, roomId, userId) {
     const room = rooms[roomId];
+    room.aiOnlySince = null;
     if (!room) return { ok: false, error: "Room not found" };
     if (!userId) return { ok: false, error: "Missing userId" };
     room.currentSocketByUserId ??= {};
@@ -66,10 +68,6 @@ function joinOrReattach(socket, roomId, userId) {
     if (existing) {
       const { socketId: oldSocketId, player } = existing;
       room.currentSocketByUserId[userId] = socket.id;
-      if (oldSocketId !== socket.id) {
-        player.connected = false;
-        player.disconnectedAt = Date.now();
-      }
       delete room.players[oldSocketId];
       delete room.state.roles[oldSocketId];
       delete room.state.playerNames[oldSocketId];
@@ -173,11 +171,23 @@ function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
 
   for (const [roomId, room] of Object.entries(rooms)) {
     // 🔥 Delete AI-only rooms
+    const AI_ONLY_GRACE_MS = 30_000; // pick what feels right; can reuse graceMs
+    
     if (!hasAnyHumanPlayers(room)) {
-      console.log("Cleaning AI-only room:", roomId);
-      stopTimer(roomId);
-      delete rooms[roomId];
+      if (!room.aiOnlySince) {
+        room.aiOnlySince = now;
+        continue; // don't delete yet
+      }
+    
+      if (now - room.aiOnlySince >= AI_ONLY_GRACE_MS) {
+        console.log("Cleaning AI-only room after grace:", roomId);
+        stopTimer(roomId);
+        delete rooms[roomId];
+      }
       continue;
+    } else {
+      // humans exist → reset marker
+      room.aiOnlySince = null;
     }
 
     // Handle disconnected human players
