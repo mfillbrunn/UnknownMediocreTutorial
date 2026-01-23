@@ -1,8 +1,7 @@
 // core/rooms.js
 const { createInitialState } = require("./stateFactory");
 const {endGame }  = require("./phases/gameOver");
-const { emitStateForAllPlayers } = require("../utils/emitState");;
-const { stopTimer } = require("../utils/Timer");
+const { emitStateForAllPlayers } = require("../utils/emitState");
 const rooms = {};
 
 function hasAnyHumanPlayers(room) {
@@ -33,8 +32,7 @@ function createRoom(socket, userId) {
 
   rooms[roomId] = {
     state: createInitialState(),
-    players: {},
-    currentSocketByUserId: {}
+    players: {}
   };
 
   socket.join(roomId);
@@ -47,7 +45,7 @@ function createRoom(socket, userId) {
     disconnectedAt: null,
     isAI: false
   };
-  room.currentSocketByUserId[userId] = socket.id;
+
   room.state.roles[socket.id] = "A";
   room.state.hostUserId = userId;
 
@@ -140,7 +138,6 @@ function removePlayer({roomId, socketId, reason, io, context}) {
   const player = room.players[socketId];
   if (!player) return { ok: false };
   const role = player.role;
-  const userId = player.userId;
   delete room.players[socketId];
   delete room.state.roles[socketId];
   delete room.state.ready?.[socketId];
@@ -148,15 +145,9 @@ function removePlayer({roomId, socketId, reason, io, context}) {
   const sock = io?.sockets?.sockets?.get(socketId);
   sock?.leave(roomId);
   io?.to(roomId).emit("lobbyEvent", { type: "playerLeft", role, reason});
-  if (room.currentSocketByUserId?.[userId] === socketId) {
-      delete room.currentSocketByUserId[userId];
-  }
+
   if (!hasAnyHumanPlayers(room)) {
     console.log("Deleting room with only AI:", roomId);
-    if (io) {
-      io.in(roomId).socketsLeave(roomId);
-    }
-    stopTimer(roomId);
     delete rooms[roomId];
     return { ok: true, deleted: true };
   }
@@ -216,11 +207,6 @@ function resetRoomState(room) {
   // Reset host if someone remains
   const remainingPlayers = Object.values(room.players);
   room.state.hostUserId = remainingPlayers[0]?.userId ?? null;
-  room.currentSocketByUserId ??= {};
-  room.currentSocketByUserId = {};
-  for (const [socketId, player] of Object.entries(room.players)) {
-    if (player?.userId) room.currentSocketByUserId[player.userId] = socketId;
-  }
 }
 
 function addAIPlayer(room) {
