@@ -21,6 +21,15 @@ function authReadyForSocket() {
   return window.authReady && window.socketReady;
 }
 
+if (window.authReady && window.currentUser) {
+  loadMyProfile().then(() => {
+    window.profileReady = true;
+    updateAccountUI();
+    renderMenuAccountStatus();
+  });
+}
+
+
 function formatTimeMode(tc) {
   if (!tc || tc.enabled === false || tc.rankMode === "notime") {
     return "No Time";
