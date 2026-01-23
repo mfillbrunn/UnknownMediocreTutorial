@@ -160,6 +160,9 @@ function removePlayer({roomId, socketId, reason, io, context}) {
     delete rooms[roomId];
     return { ok: true, deleted: true };
   }
+  if (!room.state.gameOver && room.state.phase !== "lobby") {
+    stopTimer(roomId);
+  }
   resetRoomState(room);
   emitStateForAllPlayers(roomId, room, io);
   return { ok: true };
@@ -172,6 +175,7 @@ function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
     // 🔥 Delete AI-only rooms
     if (!hasAnyHumanPlayers(room)) {
       console.log("Cleaning AI-only room:", roomId);
+      stopTimer(roomId);
       delete rooms[roomId];
       continue;
     }
