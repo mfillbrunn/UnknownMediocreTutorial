@@ -103,6 +103,8 @@ function joinOrReattach(socket, roomId, userId) {
       disconnectedAt: null
     };
     room.state.roles[socket.id] = role;
+    room.currentSocketByUserId ??= {};
+    room.currentSocketByUserId[userId] = socket.id;
     return {
     ok: true,
     reattached: false,
