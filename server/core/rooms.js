@@ -60,8 +60,11 @@ function createRoom(socket, userId) {
  */
 function joinOrReattach(socket, roomId, userId) {
     const room = rooms[roomId];
-    room.aiOnlySince = null;
-    if (!room) return { ok: false, error: "Room not found" };
+    if (!room) {
+      console.warn("[joinOrReattach] room not found:", roomId);
+      return { ok: false, error: "Room not found" };
+    }
+  room.aiOnlySince = null;
     if (!userId) return { ok: false, error: "Missing userId" };
     room.currentSocketByUserId ??= {};
     const existing = getPlayerByUserId(room, userId);
