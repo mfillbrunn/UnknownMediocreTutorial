@@ -42,9 +42,12 @@ function mergeFakeFeedback(real, fake) {
     const f = fake[i];
 
     if (r === f) return r;
-
-    // Ordered pairs (canonical)
-    const pair = [r, f].sort().join("");
+    let pair;
+    if (Math.random()>0.5){
+    pair = r + f;
+    }else{
+    pair =  f +r;
+    }
 
     switch (pair) {
       case "⬛🟨": return "gray-yellow";
