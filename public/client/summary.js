@@ -436,13 +436,7 @@ function renderStoredRoundSummary(round, index) {
 
   const isFinalRound = index === state.matchRounds.length - 1;
 
-  const remaining =
-    round.timeoutLoser
-      ? "—"
-      : isFinalRound
-        ? 0
-        : round.remainingAfter ?? "—";
-
+const remaining = round.remaining ?? "—";
   let html = `
     <div class="stored-round">
       <h4>Round ${index + 1} – ${getNameByRole(round.setter)} was Setter</h4>
