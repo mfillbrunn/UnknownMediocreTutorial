@@ -25,7 +25,7 @@ window.POWER_METADATA = {
   
   forceGuess: {
     label: "Force Guess",
-    desc: "Forces the next guess to satisfy a special restriction. Can only be used with at least 10 words remaining!",
+    desc: "Forces the next guess to satisfy one of three randomly chosen special restrictions.",
     icon: "lock-input",
     emoji: "🔒",
     color: "#F97316"
