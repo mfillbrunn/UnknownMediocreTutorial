@@ -541,7 +541,8 @@ function submitSetterNew() {
     shakeDraftRow("setter");
     toast("Incompatible with previous feedback");
     //Check violations
-    const { secretIndices } =  findConsistencyViolations(state.history, w);
+    const violations = findConsistencyViolations(state.history, w);
+    const { secretIndices } = violations || {};
     if (secretIndices){
       flashConsistencyViolations(secretIndices);
       if (violations.secretIndices.size > 0 ||violations.history.length > 0) {
