@@ -434,9 +434,9 @@ html += `
 /////////////////
 function renderStoredRoundSummary(round, index) {
 
-  const isFinalRound = index === state.matchRounds.length - 1;
+  const finalIdx = round.history.length - 1;
+  const remaining = computeRemainingFromRound(round, finalIdx);
 
-const remaining = round.remaining ?? "—";
   let html = `
     <div class="stored-round">
       <h4>Round ${index + 1} – ${getNameByRole(round.setter)} was Setter</h4>
@@ -468,7 +468,6 @@ const remaining = round.remaining ?? "—";
   html += `</table></div>`;
   return html;
 }
-
 
 
 ///// SHARE TEXT
@@ -630,3 +629,21 @@ function updateMenuRoomCode() {
 
   el.textContent = window.roomId;
 }
+
+function computeRemainingFromRound(round, idx) {
+  // mirror live logic
+  if (round.timeoutLoser) return "—";
+
+  // final state → 0
+  if (idx === round.history.length - 1) return 0;
+
+  // rebuild minimal state expected by computeRemainingAfterIndex
+  const tempState = {
+    history: round.history.slice(0, idx + 1),
+    secret: round.history[idx].finalSecret,
+    phase: "playing"
+  };
+
+  return computeRemainingAfterIndex.call(null, idx, tempState);
+}
+
