@@ -92,7 +92,7 @@ createPowerButton(id, label) {
       const isPermanentlyUsed = state.powers[id + "Used"] === true;
 
       // Global / turn-based conditions that should make it non-usable this turn
-      const anotherPowerUsedThisTurn = state.powerUsedThisTurn;
+      const powerUsedThisTurn = state.powerUsedThisTurn === true;
       const notNormalPhase = state.phase !== "normal";
     
       // a power should be "used"/disabled if:
@@ -102,11 +102,10 @@ createPowerButton(id, label) {
       //
       const shouldBeDisabled =
         wrongRole ||
-        isPermanentlyUsed ||
-        anotherPowerUsedThisTurn ||
         notNormalPhase ||
         !isMyTurn ||
-        notAllowedByRule;;
+        notAllowedByRule;
+
 
       // ------------------------------------------------------
       // VISUAL STATES
@@ -119,8 +118,15 @@ createPowerButton(id, label) {
         btn.classList.remove("disabled-btn");
         continue;
       }
+      // 2) Another power used this turn → temporarily disabled
+      if (powerUsedThisTurn) {
+        btn.disabled = true;
+        btn.classList.add("disabled-btn");
+        btn.classList.remove("power-used");
+        continue;
+      }
 
-      // 2) Temporarily disabled (this turn, wrong phase/turn/role)
+      // 3) Temporarily disabled (this turn, wrong phase/turn/role)
       if (shouldBeDisabled) {
         btn.disabled = true;
         btn.classList.add("disabled-btn");
@@ -128,7 +134,7 @@ createPowerButton(id, label) {
         continue;
       }
 
-      // 3) Active / usable
+      // 4) Active / usable
       btn.disabled = false;
       btn.classList.remove("disabled-btn");
       btn.classList.remove("power-used");
