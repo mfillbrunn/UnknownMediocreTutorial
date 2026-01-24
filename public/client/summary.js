@@ -108,104 +108,99 @@ window.updateSummary = function updateSummary() {
 
 
 ///MATCH SUMMARY
-
 function renderMatchSummary(container) {
   const rounds = state.matchRounds || [];
 
-  // ----------------------------
-  // Compute points + time
-  // ----------------------------
- const {
-  points,
-  time,
-  winner,
-  winReason,
-  didWin,
-  winnerPoints,
-  loserPoints,
-  resultIcon
-} = computeMatchResult(state, myRole);
+  const {
+    points,
+    time,
+    winner,
+    winReason,
+    didWin,
+    winnerPoints,
+    loserPoints,
+    resultIcon
+  } = computeMatchResult(state, myRole);
 
-let resultText;
-if (winReason === "timeout") {
-  resultText = didWin
-    ? `⏱️ You won by timeout`
-    : `⏱️ You lost on time`;
-} else if (winReason === "tie") {
-  resultText = `${resultIcon} You tied`;
-} else {
-  resultText = didWin
-    ? `${resultIcon} You won`
-    : `${resultIcon} You lost`;
-}
-
-let scoreText = "";
-if (winner !== null) {
+  let resultText;
   if (winReason === "timeout") {
-    scoreText = `Final score (before timeout): ${
-      didWin
-        ? `${winnerPoints} – ${loserPoints}`
-        : `${loserPoints} – ${winnerPoints}`
-    }`;
+    resultText = didWin
+      ? `⏱️ You won by timeout`
+      : `⏱️ You lost on time`;
+  } else if (winReason === "tie") {
+    resultText = `${resultIcon} You tied`;
   } else {
-    scoreText = `Score: ${
-      didWin
-        ? `${winnerPoints} – ${loserPoints}`
-        : `${loserPoints} – ${winnerPoints}`
-    }`;
+    resultText = didWin
+      ? `${resultIcon} You won`
+      : `${resultIcon} You lost`;
   }
-}
 
+  let scoreText = "";
+  if (winner !== null) {
+    scoreText =
+      winReason === "timeout"
+        ? `Final score (before timeout): ${
+            didWin
+              ? `${winnerPoints} – ${loserPoints}`
+              : `${loserPoints} – ${winnerPoints}`
+          }`
+        : `Score: ${
+            didWin
+              ? `${winnerPoints} – ${loserPoints}`
+              : `${loserPoints} – ${winnerPoints}`
+          }`;
+  }
 
-let timeoutNote = "";
-if (winReason === "timeout" && state.timeoutLoser) {
-  const loserName = getNameByRole(state.timeoutLoser);
-  timeoutNote = `
-    <p class="timeout-note">
-      ⏱ ${loserName} lost on time
-    </p>
-  `;
-}
-let assassinationNote = "";
-if (state.powers?.assassinated) {
-  assassinationNote = `
-    <p class="assassination-note">
-      ☠ Assassination triggered — instant loss
-    </p>
-  `;
-}
+  let timeoutNote = "";
+  if (winReason === "timeout" && state.timeoutLoser) {
+    const loserName = getNameByRole(state.timeoutLoser);
+    timeoutNote = `
+      <p class="timeout-note">
+        ⏱ ${loserName} lost on time
+      </p>
+    `;
+  }
 
+  let assassinationNote = "";
+  if (state.powers?.assassinated) {
+    assassinationNote = `
+      <p class="assassination-note">
+        ☠ Assassination triggered — instant loss
+      </p>
+    `;
+  }
 
-//----------------------------
-  // POWERS
-  //----------------------
-
+  // ----------------------------
+  // POWERS (stacked, colored)
+  // ----------------------------
   const { setter, guesser } =
-  getActivePowersByRole(state.activePowers);
+    getActivePowersByRole(state.activePowers);
 
-let powersLine = null;
-if (setter.length || guesser.length) {
-  const setterPowers = setter.length
-    ? setter.map(powerToInlineLabel).join(" and ")
-    : "—";
+  let powersBlock = "";
+  if (setter.length || guesser.length) {
+    if (setter.length) {
+      powersBlock += `
+        <p class="match-power-line" style="color: var(--setter-color);">
+          ${setter.map(powerToInlineLabel).join(", ")}
+        </p>
+      `;
+    }
+    if (guesser.length) {
+      powersBlock += `
+        <p class="match-power-line" style="color: var(--guesser-color);">
+          ${guesser.map(powerToInlineLabel).join(", ")}
+        </p>
+      `;
+    }
+  }
 
-  const guesserPowers = guesser.length
-    ? guesser.map(powerToInlineLabel).join(" and ")
-    : "—";
-
-  powersLine =
-    `${setterPowers} | ${guesserPowers}`;
-}
-
-
-  
   // ----------------------------
   // Header
   // ----------------------------
   let html = `
-  <div class="match-header">
-    <h2>${resultText}</h2>
-    <h3>${scoreText}</h3>
+    <div class="match-header">
+      <h2>${resultText}</h2>
+      <h3>${scoreText}</h3>
       ${timeoutNote}
       ${assassinationNote}
       ${
@@ -221,126 +216,62 @@ if (setter.length || guesser.length) {
       Time control:
       ${
         state.timeControl?.enabled
-        ? state.timeControl.mode === "round"
-          ? `${formatDuration(state.timeControl.roundSeconds)} / round`
-          : `${formatDuration(state.timeControl.initialSeconds)} +${formatDuration(state.timeControl.incrementSeconds)}`
-        : "No time"
-
+          ? state.timeControl.mode === "round"
+            ? `${formatDuration(state.timeControl.roundSeconds)} / round`
+            : `${formatDuration(state.timeControl.initialSeconds)} +${formatDuration(state.timeControl.incrementSeconds)}`
+          : "No time"
       }
     </p>
-    ${
-      powersLine
-        ? `<p class="match-powers">
-             <strong>Powers:</strong> ${powersLine}
-           </p>`
-        : ""
-    }
-    
-  </div>
-`;
 
-
-  // ----------------------------
-  //COMPETITIVE  Match summary table
-  // ----------------------------
-  html += `
-    <table class="match-summary-table">
-      <tr>
-        <th>Round</th>
-        <th>Setter</th>
-        <th>Guesses</th>
-        <th>Setter Time</th>
-        <th>Guesser Time</th>
-      </tr>
-  `;
-
-  rounds.forEach((r, i) => {
-    html += `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${getNameByRole(r.setter)}</td>
-        <td>
-  ${r.guessCount}
-  ${
-    r.timeoutLoser
-      ? `<span class="timeout-badge">⏱</span>`
-      : ""
-  }
-  ${
-    state.powers?.assassinated && isFinal
-      ? `<span class="assassination-badge">☠</span>`
-      : ""
-  }
-</td>
-      <td>${formatDuration(r.time?.A || 0)}</td>
-      <td>${formatDuration(r.time?.B || 0)}</td>
-      </tr>
-    `;
-  });
-
-  html += `
-      <tr class="total-row">
-        <td><b>Total</b></td>
-        <td colspan="2"></td>
-        <td><b>${formatDuration(time.A)} </b></td>
-        <td><b>${formatDuration(time.B)} </b></td>
-      </tr>
-    </table>
+    ${powersBlock}
   `;
 
   // ----------------------------
-  // Toggle round details
+  // Round summaries ONLY (table removed)
   // ----------------------------
   html += `
-    <div class="round-details-toggle">
-      <button id="toggleRoundsBtn" class="secondary-btn">
-        Show Round Details
-      </button>
-    </div>
-
-    <div id="roundDetails" hidden>
+    <div id="roundDetails">
       ${rounds.map((r, i) => renderStoredRoundSummary(r, i)).join("")}
     </div>
   `;
-  
+
+  // ----------------------------
+  // Actions (next to Share)
+  // ----------------------------
   html += `
-  <div class="summary-actions">
-    <button id="newMatchBtn" class="primary-btn">
-      New Match
-    </button>
-    <button id="leaveSummaryBtn" class="secondary-btn danger">
-      Leave
-    </button>
-  </div>
-`;
+    <div class="summary-actions">
+      <button id="shareMatchBtn" class="secondary-btn">
+        Share
+      </button>
+      <button id="newMatchBtn" class="primary-btn">
+        New Match
+      </button>
+      <button id="leaveSummaryBtn" class="secondary-btn danger">
+        Leave
+      </button>
+    </div>
+  `;
+
   container.innerHTML = html;
 
-  // Toggle logic
-  $("toggleRoundsBtn").onclick = () => {
-    const details = $("roundDetails");
-    const btn = $("toggleRoundsBtn");
-    const open = details.hasAttribute("hidden");
-
-    details.toggleAttribute("hidden");
-    btn.textContent = open ? "Hide Round Details" : "Show Round Details";
-  };
   const leaveBtn = $("leaveSummaryBtn");
-if (leaveBtn) {
-  leaveBtn.onclick = () => {
-    socket.emit("leaveRoom", {}, () => {
-      roomId = null;
-      clearRoom();
-      state = null;          // 🔴 important: clear client game state
-      window.state = null;
-      showStartup();
-    });
-  };
+  if (leaveBtn) {
+    leaveBtn.onclick = () => {
+      socket.emit("leaveRoom", {}, () => {
+        roomId = null;
+        clearRoom();
+        state = null;
+        window.state = null;
+        showStartup();
+      });
+    };
+  }
 }
 
-}
 
-
-///COMPETITIVE  ROUND SUMMARY
+/////////////////////////////////
+/////////COMPETITIVE  ROUND SUMMARY
+////////////////////////////
 function renderRoundSummary(container) {
    
   let html = `<h3>Round Summary</h3>`;
@@ -375,6 +306,21 @@ if (state.timeoutLoser)  {
       <b>${guesserName}</b> (Guesser)
     </p>
   `;
+// ---- Round time used ----
+const roundTimeA = state.roundTime?.A ?? 0;
+const roundTimeB = state.roundTime?.B ?? 0;
+
+html += `
+  <p class="round-time-summary">
+    ⏱ <span style="color: var(--setter-color);">
+      ${setterName}: ${formatDuration(roundTimeA)}
+    </span>
+    &nbsp;|&nbsp;
+    <span style="color: var(--guesser-color);">
+      ${guesserName}: ${formatDuration(roundTimeB)}
+    </span>
+  </p>
+`;
 
   const lastEntry = state.history[state.history.length - 1];
   if (state.powers.assassinated) {
@@ -483,12 +429,28 @@ html += `
   }  
 };
 
-/// STORED ROUND DETAILS
+///////////////////////////////
+///////////STORED ROUND DETAILS
+/////////////////
 function renderStoredRoundSummary(round, index) {
+
+  const isFinalRound = index === state.matchRounds.length - 1;
+
+  const remaining =
+    round.timeoutLoser
+      ? "—"
+      : isFinalRound
+        ? 0
+        : round.remainingAfter ?? "—";
 
   let html = `
     <div class="stored-round">
       <h4>Round ${index + 1} – ${getNameByRole(round.setter)} was Setter</h4>
+
+      <p class="round-remaining">
+        <b>Remaining words:</b> ${remaining}
+      </p>
+
       <table class="summary-table">
         <tr>
           <th>#</th>
@@ -513,6 +475,9 @@ function renderStoredRoundSummary(round, index) {
   return html;
 }
 
+
+
+///// SHARE TEXT
 function buildShareText(state, myRole) {
   const rounds = state.matchRounds || [];
 
