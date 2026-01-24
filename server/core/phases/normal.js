@@ -135,6 +135,7 @@ function pushWinEntry(state, word) {
 }
 
 function startGameTimer(room, state, roomId, context) {
+  if (!rooms[roomId] || rooms[roomId].status !== "alive") return;
   const io = context.io;
   if (state.isTimerRunning) return;
   state.isTimerRunning = true;
