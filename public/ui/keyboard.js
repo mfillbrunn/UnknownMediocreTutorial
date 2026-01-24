@@ -27,6 +27,17 @@ window.KEYBOARD_LAYOUT = [
   ["ENTER","Z","X","C","V","B","N","M","⌫"]
 ];
 
+function getAgreedFeedbackAtIndex(h, i, isGuesser) {
+  if (!isGuesser) return h.fb?.[i];
+
+  if (!h.fakeFeedback) return h.fbGuesser?.[i];
+
+  const r = h.fakeFeedback.real?.[i];
+  const f = h.fakeFeedback.fake?.[i];
+
+  return r === f ? r : null;
+}
+
 // Determine best letter status for color assignment
 function getLetterStatusFromHistory(letter, state, isGuesser) {
   if (!state?.history) return null;
@@ -44,7 +55,8 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
   for (const h of state.history) {
     if (!h?.guess || h.countOnlyApplied) continue;
     const guess = h.guess.toUpperCase();
-    const fbArr = h[fbKey];
+    const fb = getAgreedFeedbackAtIndex(h, i, isGuesser);
+    if (!fb) continue;
     if (!Array.isArray(fbArr)) continue;
 
     for (let i = 0; i < 5; i++) {
