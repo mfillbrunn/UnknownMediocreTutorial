@@ -6,7 +6,13 @@ window.POWER_METADATA = {
     emoji: "🔵",
     color: "#3B82F6"
   },
-
+  fakeFeedback: {
+      label: "Fake Feedback",
+      desc: "Two feedbacks will be shown, one is real, the other one is fake.",
+      icon: "mask",
+      emoji: "🎭",
+      color: "#6B7280"
+    },
   countOnly: {
     label: "Count Only",
     desc: "Shows only the total number of greens and yellows, not their positions.",
