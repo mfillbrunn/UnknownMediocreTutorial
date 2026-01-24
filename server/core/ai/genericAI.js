@@ -16,8 +16,8 @@ function pickSecret(state, secretRows, setterParams) {
 
 function createAI({ guessParams, setterParams }) {
   return {
-    pickGuess(state, words) {
-      return pickAIGuess(state, words, guessParams);
+    pickGuess(state, words, secrets) {
+      return pickAIGuess(state, words, secrets, guessParams);
     },
     pickSecret(state, secrets) {
       return pickAISecret(state, secrets, setterParams);
