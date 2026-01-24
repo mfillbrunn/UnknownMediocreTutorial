@@ -14,7 +14,13 @@ window.POWER_METADATA = {
     emoji: "📊",
     color: "#6B7280"
   },
-
+rouletteSecret: {
+    label: "Roulette Secret",
+    desc: "The next secret is randomly chosen via a roulette.",
+    icon: "roulette",
+    emoji: "🎰",
+    color: "#6B7280"
+  },
   nonsense: {
     label: "Nonsense Guess",
     desc: "This round's guess does not have to make sense.",
