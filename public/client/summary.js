@@ -59,6 +59,17 @@ if (state.timeoutLoser) {
     resultIcon
   };
 }
+
+function normalizePowerId(p) {
+  return typeof p === "string" ? p : p?.id;
+}
+
+function powerToEmojiOnly(p) {
+  const id = normalizePowerId(p);
+  const meta = window.POWER_METADATA?.[id];
+  return meta?.emoji || "";
+}
+
 function getPowerId(p) {
   return typeof p === "string" ? p : p?.id;
 }
@@ -79,10 +90,7 @@ function powerToInlineLabel(powerId) {
   if (!meta) return powerId;
   if (meta.label) return meta.label;
 }
-function powerToEmojiOnly(powerId) {
-  const meta = window.POWER_METADATA?.[powerId];
-  return meta?.emoji || "";
-}
+
 
 
 ///SUMMARY SCREEN ROUTER
