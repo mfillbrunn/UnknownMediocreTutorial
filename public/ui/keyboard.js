@@ -55,10 +55,6 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
   for (const h of state.history) {
     if (!h?.guess || h.countOnlyApplied) continue;
     const guess = h.guess.toUpperCase();
-    const fb = getAgreedFeedbackAtIndex(h, i, isGuesser);
-    if (!fb) continue;
-    if (!Array.isArray(fbArr)) continue;
-
     for (let i = 0; i < 5; i++) {
       if (h.hideTileApplied && h.hiddenIndices?.includes(i)) continue;
 
@@ -75,8 +71,16 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
       }
 
       if (guess[i] !== letter) continue;
-
-      const fb = fbArr[i];
+      let fb;
+      if (isGuesser && h.fakeFeedback) {
+        const r = h.fakeFeedback.real?.[i];
+        const f = h.fakeFeedback.fake?.[i];
+        if (r !== f) continue; // disagreement → no keyboard info
+        fb = r;
+      } else {
+        fb = h.fb?.[i] ?? h.fbGuesser?.[i];
+      }
+      if (!fb) continue;
       if (fb === "🟩") strongest = "green";
       else if (fb === "🟨" && strongest !== "green") strongest = "yellow";
       else if (fb === "🟦" && !strongest) strongest = "blue";
