@@ -478,7 +478,7 @@ function renderStoredRoundSummary(round, index) {
   .map(p => powerToEmojiOnly(getPowerId(p)))
   .filter(Boolean);
 
-    let powersCell = "—";
+    let powersCell = "";
     if (gpIcons.length || spIcons.length) {
       powersCell = `
         <div class="summary-powers compact">
