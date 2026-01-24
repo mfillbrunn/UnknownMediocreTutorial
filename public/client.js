@@ -154,9 +154,7 @@ onPowerUsed(data => {
   }
   const mod = PowerEngine.powers[data.type];
   mod?.effects?.onPowerUsed?.(data);
-  PowerEngine.updateButtonStates(state, myRole);
 });
-
 
 // After renderButtons is called:
 if (!PowerEngine._initialized && roomId && roleAssigned) {
@@ -870,4 +868,3 @@ function countPositionalDifferences(a, b) {
   }
   return diff;
 }
-
