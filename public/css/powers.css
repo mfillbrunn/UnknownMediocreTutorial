@@ -153,9 +153,12 @@ body.blind-guess .key:hover {
 /* ===============================
    FAKE FEEDBACK
    =============================== */
-.tile-feedback-pulse {
-  animation: feedback-pulse 1.6s ease-in-out infinite;
+
+.tile-feedback-slide {
+  background-size: 200% 100%;
+  animation: feedback-slide 2.4s linear infinite;
 }
+
 .tile-gray-yellow {
   --fb-a: var(--tile-gray);
   --fb-b: var(--tile-yellow);
@@ -184,6 +187,14 @@ body.blind-guess .key:hover {
 .tile-green-yellow {
   --fb-a: var(--tile-green);
   --fb-b: var(--tile-yellow);
+}
+.tile-feedback-slide {
+  background-image: linear-gradient(
+    90deg,
+    var(--fb-a) 0%,
+    var(--fb-b) 50%,
+    var(--fb-a) 100%
+  );
 }
 
 
