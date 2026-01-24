@@ -170,24 +170,22 @@ function renderMatchSummary(container) {
     `;
   }
 
-  // ----------------------------
-  // POWERS (stacked, colored)
-  // ----------------------------
-  // ----------------------------
-// POWERS (labeled, tab-separated)
+ // ----------------------------
+// POWERS (labeled, icon + text)
 // ----------------------------
 const { setter, guesser } =
   getActivePowersByRole(state.activePowers);
 
 let powersBlock = "";
+
 if (setter.length) {
   powersBlock += `
     <p class="match-power-line">
-      <span style="color: var(--setter-color); font-weight: 700;">
-        Setter Powers:
+      <span class="power-label setter">
+        ${setter.map(p =>
+          `${powerToInlineIcon(p)} ${powerToInlineLabel(p)}`
+        ).join("\u00A0\u00A0")}
       </span>
-      &nbsp;&nbsp;
-      ${setter.map(powerToInlineLabel).join("\t")}
     </p>
   `;
 }
@@ -195,23 +193,21 @@ if (setter.length) {
 if (guesser.length) {
   powersBlock += `
     <p class="match-power-line">
-      <span style="color: var(--guesser-color); font-weight: 700;">
-        Guesser Powers:
+      <span class="power-label guesser">
+        ${guesser.map(p =>
+          `${powerToInlineIcon(p)} ${powerToInlineLabel(p)}`
+        ).join("\u00A0\u00A0")}
       </span>
-      &nbsp;&nbsp;
-      ${guesser.map(powerToInlineLabel).join("\t")}
     </p>
   `;
 }
+
 
   // ----------------------------
   // Actions (next to Share)
   // ----------------------------
   let html = `
     <div class="summary-actions">
-      <button id="shareMatchBtn" class="secondary-btn">
-        Share
-      </button>
       <button id="newMatchBtn" class="primary-btn">
         New Match
       </button>
