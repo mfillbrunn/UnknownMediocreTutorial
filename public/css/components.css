@@ -829,3 +829,30 @@
   margin: 2px 0;
   font-weight: 600;
 }
+
+.power-label.setter::before {
+  content: "Setter Powers: ";
+  color: var(--setter-color);
+  font-weight: 700;
+}
+
+.power-label.guesser::before {
+  content: "Guesser Powers: ";
+  color: var(--guesser-color);
+  font-weight: 700;
+}
+.share-btn {
+  border-color: var(--role-accent);
+  color: var(--role-accent);
+  font-weight: 700;
+}
+
+.share-btn:hover {
+  background: color-mix(
+    in srgb,
+    var(--role-accent) 15%,
+    transparent
+  );
+}
+
+
