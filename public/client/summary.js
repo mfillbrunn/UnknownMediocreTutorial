@@ -461,16 +461,7 @@ function renderStoredRoundSummary(round, index) {
 
   round.history.forEach((h, i) => {
 
-    const remaining =
-      round.timeoutLoser
-        ? "—"
-        : i === round.history.length - 1
-          ? 0
-          : computeRemainingAfterIndex(i, {
-              history: round.history.slice(0, i),
-              secret: round.history[i].finalSecret,
-              phase: "playing"
-            });
+const remaining = computeRemainingFromRound(round, i);
 
     html += `
       <tr>
