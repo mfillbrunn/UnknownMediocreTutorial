@@ -160,40 +160,4 @@ socket.on("assassinUsed", () => {
 });
 
 
-// /public/ui/rouletteSecretUI.js
-
-let rouletteInterval = null;
-let rouletteWords = null;
-
-function startSecretRoulette(words) {
-  stopSecretRoulette();
-
-  if (!Array.isArray(words) || words.length === 0) return;
-
-  rouletteWords = words;
-  let i = 0;
-
-  rouletteInterval = setInterval(() => {
-    const word = rouletteWords[i % rouletteWords.length];
-    state.setterDraft = word;
-    renderSetterDraft(word);
-    i++;
-  }, 70);
-}
-
-function stopSecretRoulette() {
-  if (rouletteInterval) {
-    clearInterval(rouletteInterval);
-    rouletteInterval = null;
-  }
-  rouletteWords = null;
-}
-// somewhere in client bootstrap (same place as other socket.on handlers)
-
-socket.on("rouletteSecretStart", ({ feasible }) => {
-  // Only setter should animate
-  if (myRole !== state.setter) return;
-
-  startSecretRoulette(feasible);
-});
 
