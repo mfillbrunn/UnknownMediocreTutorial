@@ -54,16 +54,18 @@ textarea {
   margin: 0 0 var(--sp-8);
 
   display: inline-block;
+  max-width: 100%;
 
-  font-size: var(--fs-20);
+  font-size: clamp(16px, 4.5vw, var(--fs-20));
   font-weight: 800;
   line-height: 1;
 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
   color: var(--title);
 }
-
-
-
 .hidden {
   display: none !important;
 }
