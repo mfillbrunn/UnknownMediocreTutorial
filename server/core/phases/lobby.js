@@ -18,6 +18,7 @@ const SETTER_POWERS = [
         "assassinWord",
         "forceGuess",
         "blindGuess",
+        "fakeFeedback",
       ];
       
       const GUESSER_POWERS = [
