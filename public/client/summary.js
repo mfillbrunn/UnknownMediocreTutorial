@@ -468,7 +468,7 @@ function renderStoredRoundSummary(round, index) {
           ? 0
           : computeRemainingAfterIndex(i, {
               history: round.history.slice(0, i),
-              secret: h.finalSecret,
+              secret: round.history[i].finalSecret,
               phase: "playing"
             });
 
