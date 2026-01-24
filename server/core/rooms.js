@@ -3,7 +3,7 @@ const { createInitialState } = require("./stateFactory");
 const {endGame }  = require("./phases/gameOver");
 const { emitStateForAllPlayers } = require("../utils/emitState");;
 const { stopTimer } = require("../utils/Timer");
-const { stopTimer } = require("../utils/teardown");
+const {   destroyRoom, stopAllRoomIntervals } = require("../utils/teardown");
 const rooms = {};
 
 function hasAnyHumanPlayers(room) {
