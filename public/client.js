@@ -267,6 +267,7 @@ onStateUpdate(newState => {
   updateWaitingIndicator();
   updatePowerInfoState(state);
   updateTimerVisibility();
+  maybeStartRouletteFromState(state);
   updateUI();
   if (state.phase === "simultaneous"){renderSetterRemainingBox(state, myRole, "");}
   if (state.phase === "normal"){renderSetterRemainingBox(state, myRole, state.secret);}
@@ -282,7 +283,6 @@ function updateUI() {
   updateLobbyHeader();
   updateScreens();
   updateSummary();
-  maybeStartRouletteFromState(state);
   InfoBadgeEngine.render(state, myRole);
   if (state.phase !== "lobby") hide("lobby");
 }
