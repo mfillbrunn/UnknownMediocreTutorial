@@ -124,7 +124,7 @@ if (action.type === "ADD_AI") {
   };
   state.roles[AI_ID] = "B";
   room.state.aiDifficulty = action.difficulty ?? 1;  
-  state.playerNames[AI_ID] = `Computer Lvl ${room.state.aiDifficulty}`;
+  state.playerNames[AI_ID] = `AI Lvl ${room.state.aiDifficulty}`;
   emitLobbyEvent(io, roomId, {
     type: "playerJoined",
     playerId: AI_ID,
