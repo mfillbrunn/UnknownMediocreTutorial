@@ -6,8 +6,8 @@ const { scoreGuess } = require("../../game-engine/scoring");
    ENTRY POINTS
    =============================== */
 
-function pickGuess(state, allowedGuesses, guessParams) {
-  return pickAIGuess(state, allowedGuesses, guessParams);
+function pickGuess(state, allowedGuesses, secretRows, guessParams) {
+  return pickAIGuess(state, allowedGuesses, secretRows, guessParams);
 }
 
 function pickSecret(state, secretRows, setterParams) {
@@ -244,10 +244,10 @@ function pickAISecret(
 
 
 /* ===============================
-   SOLVER LOGIC
+   GUESSER LOGIC
    =============================== */
 
-function pickAIGuess(state, wordRows, strategyWeights) {
+function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
   if (!state || !state.history) {
     return weightedRandom(wordRows, r => r.probability || 1).word;
   }
@@ -260,6 +260,7 @@ function pickAIGuess(state, wordRows, strategyWeights) {
   if (!remaining.length) {
     return weightedRandom(wordRows, r => r.probability || 1).word;
   }
+   const remaining_ideal = allowedSecrets.filter(r => !usedGuesses.has(r.word));
 
   // ----- Force guess power -----
   const forceOptions = state?.powers?.forceGuessOptions;
@@ -272,7 +273,7 @@ function pickAIGuess(state, wordRows, strategyWeights) {
   }
 
   // ----- Strategy pools -----
-  const feasible = remaining.filter(r =>
+  const feasible = remaining_ideal.filter(r =>
     isConsistentWithHistory(history, r.word, state)
   );
 
