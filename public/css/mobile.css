@@ -115,6 +115,9 @@
    #SetterInfoBadge, #GuesserInfoBadge{
          margin-top: var(--sp-2);
    }
+  .room-meta {
+    font-size: var(--fs-12);
+  }
 }
 
 /*----Extra small */
