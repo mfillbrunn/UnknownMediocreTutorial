@@ -67,10 +67,18 @@ window.renderHistory = function ({
         if (isHiddenCycling) {
           tile.classList.add("tile-hidden-cycle");
         } else {
-          if (fb === "🟩") tile.classList.add("tile-green");
-          else if (fb === "🟨") tile.classList.add("tile-yellow");
-          else if (fb === "🟦") tile.classList.add("tile-blue");
-          else tile.classList.add("tile-gray");
+          if (!isSetter && Array.isArray(safeEntry.fbComposite)) {
+            const c = safeEntry.fbComposite[i];
+            if (c === "🟩") tile.classList.add("tile-green");
+            else if (c === "🟨") tile.classList.add("tile-yellow");
+            else if (c === "⬛") tile.classList.add("tile-gray");
+            else tile.classList.add(`tile-${c}`);
+          }else{
+            if (fb === "🟩") tile.classList.add("tile-green");
+            else if (fb === "🟨") tile.classList.add("tile-yellow");
+            else if (fb === "🟦") tile.classList.add("tile-blue");
+            else tile.classList.add("tile-gray");
+          }
         }
       }
           
