@@ -842,15 +842,16 @@
   font-weight: 700;
 }
 .share-btn {
-  border-color: #BBDEF0;
-  color: #BBDEF0;
+  border-color: ##C9C9EE;
+  background: #C9C9EE;
+  color: #000;
   font-weight: 700;
 }
 
 .share-btn:hover {
   background: color-mix(
     in srgb,
-    #BBDEF0 15%,
+    #C9C9EE 15%,
     transparent
   );
 }
