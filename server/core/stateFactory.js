@@ -18,6 +18,7 @@ const powers = {
       //Roulette
       rouletteSecretUsed: false,
       rouletteSecretActive: false,
+      rouletteSecretFeasible = null,
       // FORCE GUESS
       forceGuessUsed: false,
       forceGuess: null,          // active constraint
