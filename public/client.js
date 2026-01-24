@@ -267,8 +267,8 @@ onStateUpdate(newState => {
   updateWaitingIndicator();
   updatePowerInfoState(state);
   updateTimerVisibility();
-  maybeStartRouletteFromState(state);
   updateUI();
+  maybeStartRouletteFromState(state);
   if (state.phase === "simultaneous"){renderSetterRemainingBox(state, myRole, "");}
   if (state.phase === "normal"){renderSetterRemainingBox(state, myRole, state.secret);}
   remainingCache.setterOld = null;
