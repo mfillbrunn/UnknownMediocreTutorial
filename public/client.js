@@ -817,7 +817,7 @@ document
           type: "SET_TIME_CONTROL",
           enabled: true,
           mode: "round",
-          seconds: 60,
+          seconds: 90,
   userId: window.currentUser.id
         });
       }

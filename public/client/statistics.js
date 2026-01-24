@@ -9,7 +9,7 @@ function formatTimeMode(tc) {
 
   switch (tc.rankMode) {
     case "bullet":
-      return "Bullet (1 min / round)";
+      return "Bullet (90 secs / round)";
     case "blitz":
       return "Blitz (3 min / round)";
     case "deep":

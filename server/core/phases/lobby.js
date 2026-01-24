@@ -65,7 +65,7 @@ if (action.type === "SET_TIME_CONTROL") {
   state.timeControl.enabled = true;
   state.timeControl.mode = mode;       
         state.timeControl.preset =
-          sec === 60 ? "bullet" :
+          sec === 90 ? "bullet" :
           sec === 180 ? "blitz" :
           sec === 900 ? "deep" :
           "custom";
@@ -78,7 +78,7 @@ if (action.type === "SET_TIME_CONTROL") {
     state.timeRemaining.A = sec;
     state.timeRemaining.B = sec;
   }; 
-    if (action.seconds === 60 && action.mode === "round") state.rankMode = "bullet";
+    if (action.seconds === 90 && action.mode === "round") state.rankMode = "bullet";
     else if (action.seconds === 180 && action.mode === "round") state.rankMode = "blitz";
     else if (action.seconds === 300 && action.mode === "chess") state.rankMode = "blitz"; 
     else state.rankMode = "custom";

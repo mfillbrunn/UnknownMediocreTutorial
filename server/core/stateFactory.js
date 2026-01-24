@@ -120,7 +120,7 @@ function createInitialState() {
     initialSeconds: 300,  // default 5 min
     incrementSeconds: 2,
       enabled: true,
-      roundSeconds: 60,
+      roundSeconds: 90,
       mode: "round",
       preset: "bullet"
       },      
