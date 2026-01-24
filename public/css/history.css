@@ -107,7 +107,6 @@ background: color-mix(in srgb, var(--tile-gray) 65%, #000);
 #draftSetter:not(:has(.history-row:nth-child(2)))
 .history-row
 .history-tile {
-  border-width: 2px;
   border-color: var(--role-accent);
   box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 70%, transparent);
 }
