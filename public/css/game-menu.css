@@ -752,17 +752,17 @@ body.menu-mode .app-header {
   background: #aaa;
   border-radius: 50%;
   display: inline-block;
-  animation: pulse 1.4s infinite ease-in-out both;
+  animation: pulse_dots 1.4s infinite ease-in-out both;
 }
 
 .dots span:nth-child(1) { animation-delay: 0s; }
 .dots span:nth-child(2) { animation-delay: 0.2s; }
 .dots span:nth-child(3) { animation-delay: 0.4s; }
 
-@keyframes pulse {
+@keyframes pulse_dots {
   0%, 80%, 100% { opacity: 0.3; }
   40% { opacity: 1; }
 }
-.pulse {
+.pulse_dots {
   will-change: opacity;
 }
