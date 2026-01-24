@@ -72,7 +72,10 @@ window.renderHistory = function ({
             if (c === "🟩") tile.classList.add("tile-green");
             else if (c === "🟨") tile.classList.add("tile-yellow");
             else if (c === "⬛") tile.classList.add("tile-gray");
-            else tile.classList.add(`tile-${c}`);
+            else {
+              tile.classList.add(`tile-${c}`);
+              tile.classList.add("tile-feedback-pulse");
+            }
           }else{
             if (fb === "🟩") tile.classList.add("tile-green");
             else if (fb === "🟨") tile.classList.add("tile-yellow");
