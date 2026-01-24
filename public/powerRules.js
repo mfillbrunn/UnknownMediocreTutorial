@@ -27,6 +27,17 @@ window.POWER_RULES = {
     );
   }
 },
+  rouletteSecret: {
+  once: true,
+  allowed(state, role) {
+    return (
+      state.phase === "normal" &&
+      role === state.guesser &&
+      !state.powerUsedThisTurn &&
+      !state.powers.rouletteSecretUsed
+    );
+  }
+},
    nonsense: {
   once: true,
   allowed(state, role) {
