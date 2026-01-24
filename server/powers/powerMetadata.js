@@ -3,6 +3,7 @@ module.exports = {
   confuseColors: { label: "Blue Mode" },
   countOnly: { label: "Count Only" },
   forceGuess: { label: "Force Guess" },
+  fakeFeedback: { label: "Fake Feedback" },
   forceTimer: { label: "Force Timer" },
   freezeSecret: { label: "Freeze Secret" },
   hideTile: { label: "Hide Tile" },
