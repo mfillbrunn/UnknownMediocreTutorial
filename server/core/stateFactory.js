@@ -23,7 +23,11 @@ const powers = {
       forceGuessUsed: false,
       forceGuess: null,          // active constraint
       forceGuessOptions: null,    // temporary options shown in setter modal
-      forceGuessActive: false,    
+      forceGuessActive: false,
+      // REVEAL GREEN
+      fakeFeedbackActive : false,
+      fakeFeedbackUsed : false,
+      fakeFeedbackSecret : false,
       // REVEAL GREEN
       revealGreenUsed: false,
       revealGreenPos: null,
