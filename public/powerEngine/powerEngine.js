@@ -66,9 +66,6 @@ createPowerButton(id, label) {
     const isGuesser = (role === state.guesser);
     const isMyTurn = (state.phase === "normal" && state.turn === role);
     for (const id in this.powers) {
-        if (!window.POWER_RULES?.[id]) {
-          console.warn("No POWER_RULES for power id:", id);
-        }
       const mod = this.powers[id];
       const btn = mod.buttonEl;
       if (!btn) continue;
