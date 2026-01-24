@@ -176,17 +176,17 @@
 }
 @keyframes feedback-slide {
   /* Stay on A */
-  0%   { background-color: var(--fb-a) !important; }
-  40%  { background-color: var(--fb-a) !important; }
+  0%, 40%, 100% {
+    background: var(--fb-a-bg) !important;
+    color: var(--fb-a-text) !important;
+  }
 
-  /* Transition A → B */
-  50%  { background-color: var(--fb-b) !important; }
-
-  /* Stay on B */
-  90%  { background-color: var(--fb-b) !important; }
-
-  /* Transition B → A happens implicitly */
-  100% { background-color: var(--fb-a) !important; }
+  /* Transition to B */
+  50%, 90% {
+    background: var(--fb-b-bg) !important;
+    color: var(--fb-b-text) !important;
+  }
 }
+
 
 
