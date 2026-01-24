@@ -15,15 +15,13 @@ module.exports = function registerSocketHandlers(io, context) {
     // CREATE ROOM ----------------------------
 socket.on("createRoom", ({ userId, name }, cb) => {
   const roomId = createRoom(socket, userId);
+  socket.data.roomId = roomId;
   const room = rooms[roomId];
-
   if (name) {
     room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
   }
-
   socket.emit("roleAssigned", { role: "A" });
   cb?.({ ok: true, roomId });
-
   emitStateForAllPlayers(roomId, room, io);
 });
 
@@ -31,6 +29,7 @@ socket.on("createRoom", ({ userId, name }, cb) => {
 socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
   const result = joinOrReattach(socket, roomId, userId);
   if (!result.ok) return cb?.(result);
+  socket.data.roomId = roomId;
   const room = rooms[roomId];
   if (name) {
     room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
@@ -55,31 +54,26 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
     emitStateForAllPlayers(roomId, room, io);
 });
 
-
-
     // QUICK JOIN ------------------------------
 socket.on("quickJoin", ({ userId, name }, cb) => {
   const roomId = findLastOpenRoom();
   if (!roomId) return cb?.({ ok: false, error: "No open rooms available" });
   const result = joinOrReattach(socket, roomId, userId);
   if (!result.ok) return cb?.(result);
+  socket.data.roomId = roomId;
   const room = rooms[roomId];
   if (result.reattached && result.shouldResumeGame) {
     room.state.paused = false;
     room.state.roundStartTime = Date.now();
-  if (
-    room.state.timeControl?.enabled &&
-    !room.state.gameOver &&
-    room.state.phase !== "lobby"
-  ) {
-    // Resume timing from current phase/turn
-    room.state.roundStartTime = Date.now();
-    startGameTimer(room, room.state, roomId, context);
+    if (
+      room.state.timeControl?.enabled &&
+      !room.state.gameOver &&
+      room.state.phase !== "lobby"
+    ) {
+      startGameTimer(room, room.state, roomId, context);
+    }
   }
-  }
-  if (name) {
-    room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
-  }
+  if (name) {room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);}
   socket.emit("roleAssigned", { role: result.role });
   socket.to(roomId).emit("lobbyEvent", {
     type: result.reattached ? "playerRejoined" : "playerJoined",
@@ -89,33 +83,58 @@ socket.on("quickJoin", ({ userId, name }, cb) => {
   emitStateForAllPlayers(roomId, room, io);
 });
 
-
-
     // GAME ACTION -----------------------------
-socket.on("gameAction", ({ roomId, action }) => {
-  console.log("[gameAction]", roomId, action.type);
-  if (!rooms[roomId]) {
-    console.warn("[gameAction] room not found:", roomId);
+socket.on("gameAction", ({ roomId: clientRoomId, action }) => {
+  const roomId = socket.data.roomId; // ✅ authoritative
+  console.log("[gameAction]", {
+    socketId: socket.id,
+    roomId,
+    clientRoomId,
+    action: action.type
+  });
+  if (!roomId || !rooms[roomId]) {
+    console.warn("[gameAction] socket not in a valid room", {
+      socketId: socket.id,
+      roomId,
+      clientRoomId
+    });
+    socket.emit("forceLeaveRoom");
     return;
   }
+  // Optional but VERY useful during debugging
+  if (clientRoomId && clientRoomId !== roomId) {
+    console.warn("[gameAction] client roomId mismatch", {
+      clientRoomId,
+      roomId
+    });
+  }
   const room = rooms[roomId];
-  if (!room) return;
-
   const player = room.players[socket.id];
-  if (!player || !player.connected) return;
-
-  const role = player.role;
-  if (!role) return;
-
+  if (!player) {
+    console.warn("[gameAction] player not registered in room", {
+      socketId: socket.id,
+      roomId
+    });
+    socket.emit("forceLeaveRoom");
+    return;
+  }
+  if (!player.connected) {
+    console.warn("[gameAction] player not connected", {
+      socketId: socket.id,
+      roomId
+    });
+    return;
+  }
   action.playerId = socket.id;
-  action.role = role;
-
-  applyAction(room, room.state, action, role, roomId, context);
+  action.role = player.role;
+  applyAction(room, room.state, action, player.role, roomId, context);
   emitStateForAllPlayers(roomId, room, io);
 });
 
+
     // DISCONNECT ------------------------------
 socket.on("disconnect", () => {
+   socket.data.roomId = null;
   for (const [roomId, room] of Object.entries(rooms)) {
     const player = room.players[socket.id];
     if (!player) continue;
@@ -160,7 +179,6 @@ socket.on("disconnect", () => {
 socket.on("leaveRoom", (_payload, cb) => {
   for (const [roomId, room] of Object.entries(rooms)) {
     if (!room.players[socket.id]) continue;
-
     removePlayer({
       roomId,
       socketId: socket.id,
@@ -168,14 +186,12 @@ socket.on("leaveRoom", (_payload, cb) => {
       io,
       context
     });
-
+    socket.data.roomId = null;
     cb?.({ ok: true });
     return;
   }
-
   cb?.({ ok: false, error: "Not in a room" });
 });
-
 
 
 // KICK PLAYER ------------------------------
@@ -209,7 +225,10 @@ socket.on("kickPlayer", ({ roomId }, cb) => {
 
   // Notify kicked player explicitly
   io.to(targetSocketId).emit("forceLeaveRoom");
-
+  const targetSocket = io.sockets.sockets.get(targetSocketId);
+    if (targetSocket) {
+      targetSocket.data.roomId = null;
+    }
   // Notify host only (optional UX)
   socket.emit("lobbyEvent", {
     type: "playerKicked",
