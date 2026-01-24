@@ -63,22 +63,14 @@ body.menu-mode .app-header {
 
 .role-select {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   grid-template-rows: auto auto; /* row 1: cards, row 2: actions */
-  column-gap: 20px;
+  column-gap: 16px;
   row-gap: 12px;
 
   align-items: center;
 }
 
-
-.role-card {
-  padding: var(--sp-12);
-  border-radius: var(--r-10);
-  text-align: center;
-  font-weight: 800;
-  background: var(--panel-bg);
-}
 
 .role-card.setter {
   border: 2px solid var(--setter-color);
@@ -417,17 +409,24 @@ body.menu-mode .app-header {
    ========================================= */
 
 .role-card {
-  background: #18191f;
-  border-radius: var(--r-10);
   padding: var(--sp-14);
   box-shadow: none;
   position: relative;
   height: 110px;
-  display: flex;
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: var(--sp-12);
+  border-radius: var(--r-10);
+  text-align: center;
+  font-weight: 800;
+  background: var(--panel-bg);
   flex-direction: column;
   justify-content: space-between;
+  min-width: 0;
 }
-
 /* Role headers */
 .role-title {
   font-size: var(--fs-12);
@@ -467,9 +466,7 @@ body.menu-mode .app-header {
   border-radius: var(--r-6);
   opacity: 0.8;
 }
-.role-card {
-  min-width: 240px;
-}
+
 .role-card.setter .host-badge {
   background: var(--setter-color);
   color: #000;
@@ -722,9 +719,6 @@ body.menu-mode .app-header {
 }
 
 .lobby-actions > * {
-  height: 32px;
-  min-width: 120px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -772,4 +766,13 @@ body.menu-mode .app-header {
 @keyframes pulse {
   0%, 80%, 100% { opacity: 0.3; }
   40% { opacity: 1; }
+}
+@media (max-width: 480px) {
+  .role-card {
+    height: 96px;
+  }
+
+  .role-name {
+    font-size: 14px;
+  }
 }
