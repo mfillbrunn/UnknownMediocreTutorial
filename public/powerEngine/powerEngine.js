@@ -62,6 +62,9 @@ createPowerButton(id, label) {
   // ⭐ Central button logic
   // -------------------------------------------------------------
   updateButtonStates(state, role) {
+    if (!window.POWER_RULES?.[id]) {
+      console.warn("No POWER_RULES for power id:", id);
+    }
     const isSetter = (role === state.setter);
     const isGuesser = (role === state.guesser);
     const isMyTurn = (state.phase === "normal" && state.turn === role);
