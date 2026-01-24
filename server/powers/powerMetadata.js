@@ -6,6 +6,7 @@ module.exports = {
   forceTimer: { label: "Force Timer" },
   freezeSecret: { label: "Freeze Secret" },
   hideTile: { label: "Hide Tile" },
+  rouletteSecret: { label: "Roulette Secret" },
   magicMode: { label: "Magic Mode" },
   revealGreen: { label: "Sneak Letter" },
   revealHistory: { label: "Reveal History" },
