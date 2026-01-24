@@ -188,4 +188,12 @@ function stopSecretRoulette() {
   }
   rouletteWords = null;
 }
+// somewhere in client bootstrap (same place as other socket.on handlers)
+
+socket.on("rouletteSecretStart", ({ feasible }) => {
+  // Only setter should animate
+  if (myRole !== state.setter) return;
+
+  startSecretRoulette(feasible);
+});
 
