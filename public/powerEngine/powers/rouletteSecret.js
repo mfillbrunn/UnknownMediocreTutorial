@@ -32,3 +32,18 @@ PowerEngine.register("rouletteSecret", {
     }
   }
 });
+
+InfoBadgeEngine.register((state, role) => {
+  if (!state.powers?.rouletteSecretActive) return null;
+
+  const meta = POWER_METADATA.rouletteSecret;
+
+  return {
+    id: "rouletteSecret",
+    emoji: meta.emoji,
+    text: meta.label,
+    color: meta.color,
+    priority: 20,
+    screen: "both"
+  };
+});
