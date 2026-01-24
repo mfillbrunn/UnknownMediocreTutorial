@@ -32,7 +32,7 @@ function maybeRunAI(room, roomId, context) {
   if (state.phase === "normal" && state.turn === aiPlayer.role) {
     if (aiPlayer.role === state.guesser && !state.pendingGuess) {
       actionFn = () => {
-        const guess = aiLogic.pickGuess(state, context.WORDS.guesses);
+        const guess = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
         handleNormalPhase(
           room,
           state,
@@ -79,7 +79,7 @@ function maybeRunAI(room, roomId, context) {
   if (!actionFn && state.phase === "simultaneous") {
     if (aiPlayer.role === state.guesser && !state.simultaneousGuessSubmitted) {
       actionFn = () => {
-        const guess = aiLogic.pickGuess(state, context.WORDS.guesses);
+        const guess = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
         handleSimultaneousPhase(
           room,
           state,
