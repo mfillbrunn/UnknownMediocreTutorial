@@ -1,6 +1,6 @@
 // /powers/powers/rouletteSecretServer.js
 const engine = require("../powerEngineServer.js");
-const { isConsistentWithHistory } = require("../../game-engine/validation");
+const { isConsistentWithHistory } = require("../../game-engine/history");
 
 // IMPORTANT:
 // ALLOWED_SECRETS must be reachable here.
