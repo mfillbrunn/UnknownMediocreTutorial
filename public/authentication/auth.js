@@ -69,7 +69,15 @@ function persistRoom(roomId) {
 
 function clearRoom() {
   localStorage.removeItem("roomId");
+  window.roomId = null;
+  window.state = null;
+  state = null;
+  window.autoRejoinAttempted = true;
+  hide?.("game");
+  hide?.("lobby");
+  showStartup?.();
 }
+
 
 $("signupBtn").onclick = async () => {
   const emailEl = $("authEmail");
