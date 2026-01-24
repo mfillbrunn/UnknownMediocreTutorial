@@ -825,4 +825,7 @@
   opacity: 0.75;
 }
 
-
+.match-power-line {
+  margin: 2px 0;
+  font-weight: 600;
+}
