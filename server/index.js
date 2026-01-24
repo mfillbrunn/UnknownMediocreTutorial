@@ -15,7 +15,7 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY // IMPORTANT: service role
 );
-
+const powerEngine = require("./powers/powerEngineServer");
 
 // ------------------------------
 const app = express();
@@ -71,7 +71,7 @@ const context = {
 // ------------------------------
 // Load power engine + all plugin powers
 // ------------------------------
-const powerEngine = require("./powers/powerEngineServer");
+
 require("./powers/powers/hideTileServer");
 require("./powers/powers/confuseColorsServer");
 require("./powers/powers/countOnlyServer");
