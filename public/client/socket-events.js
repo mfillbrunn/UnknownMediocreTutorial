@@ -280,4 +280,9 @@ document.querySelectorAll(".ai-option").forEach(btn => {
 });
 
 $("cancelAIModalBtn")?.addEventListener("click", hideAIDifficultyModal);
+socket.on("rouletteSecretStart", ({ feasible }) => {
+  // Only setter should animate
+  if (myRole !== state.setter) return;
 
+  startSecretRoulette(feasible);
+});
