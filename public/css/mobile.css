@@ -144,11 +144,11 @@
      .history-row.freeze-draft::after {
     animation: none;
   }
-     .pulse {
+     .pulse_dots {
     animation-duration: 2.5s;
   }
-     .pulse::before,
-  .pulse::after {
+     .pulse_dots::before,
+  .pulse_dots::after {
     animation: pulse 1.2s infinite;
   }
    
