@@ -258,21 +258,15 @@ function addAIPlayer(room) {
 
 function forceCloseRoom(roomId, room, io) {
   if (!room) return;
-
   if (room.status === "dead") return;
   room.status = "dead";
-
   console.log("[forceCloseRoom] closing room:", roomId);
-
-  // Stop ALL timers (extend this as needed)
-  stopTimer(roomId);
-
+  stopAllRoomIntervals(roomId, room);
   // Notify clients
   if (io) {
     io.to(roomId).emit("forceLeaveRoom");
     io.in(roomId).socketsLeave(roomId);
   }
-
   // Final removal
   delete rooms[roomId];
 }
