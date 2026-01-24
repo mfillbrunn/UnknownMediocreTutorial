@@ -488,7 +488,7 @@ body.menu-mode .app-header {
 /* Role switch = neutral control */
 .role-switch {
   background: none;
-  border: 1px solid #2a2c34;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: var(--r-8);
   padding: 6px 8px;
   color: #aaa;
