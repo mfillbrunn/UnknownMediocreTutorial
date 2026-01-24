@@ -99,7 +99,8 @@ background: color-mix(in srgb, var(--tile-gray) 65%, #000);
 .history-tile {
   border-color: var(--role-accent);
   box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 70%, transparent);
-   border-width: 2px;
+   
+    background: color-mix(in srgb, var(--role-accent), black 65%);
 }
 /* Setter: exactly one draft row → it is active */
 .theme-setter
