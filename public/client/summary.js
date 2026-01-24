@@ -324,8 +324,12 @@ if (state.timeoutLoser)  {
     </p>
   `;
 // ---- Round time used ----
-const roundTimeA = state.roundTime?.A ?? 0;
-const roundTimeB = state.roundTime?.B ?? 0;
+const lastRound =
+  state.matchRounds[state.matchRounds.length - 1];
+
+const roundTimeA = lastRound?.time?.A ?? 0;
+const roundTimeB = lastRound?.time?.B ?? 0;
+
 
 html += `
   <p class="round-time-summary">
