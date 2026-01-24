@@ -282,6 +282,7 @@ function updateUI() {
   updateLobbyHeader();
   updateScreens();
   updateSummary();
+  maybeStartRouletteFromState(state);
   InfoBadgeEngine.render(state, myRole);
   if (state.phase !== "lobby") hide("lobby");
 }
@@ -897,4 +898,16 @@ function stopSecretRoulette() {
     rouletteInterval = null;
   }
   rouletteWords = null;
+}
+function maybeStartRouletteFromState(state) {
+  if (
+    myRole !== state.setter ||
+    state.phase !== "normal" ||
+    !state.powers?.rouletteSecretActive ||
+    !Array.isArray(state.powers.rouletteSecretFeasible)
+  ) {
+    stopSecretRoulette();
+    return;
+  }
+  startSecretRoulette(state.powers.rouletteSecretFeasible);
 }
