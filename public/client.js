@@ -10,6 +10,8 @@ let lastSimulSecret = false;
 let lastSimulGuess = false;
 let KeepEnabled = true;
 let NewEnabled = true;
+let rouletteInterval = null;
+let rouletteWords = null;
 window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 window.lastTimeRemaining ??= { A: null, B: null };
@@ -870,4 +872,29 @@ function countPositionalDifferences(a, b) {
     if (a[i] !== b[i]) diff++;
   }
   return diff;
+}
+
+
+function startSecretRoulette(words) {
+  stopSecretRoulette();
+
+  if (!Array.isArray(words) || words.length === 0) return;
+
+  rouletteWords = words;
+  let i = 0;
+
+  rouletteInterval = setInterval(() => {
+    const word = rouletteWords[i % rouletteWords.length];
+    state.setterDraft = word;
+    renderSetterDraft(word);
+    i++;
+  }, 70);
+}
+
+function stopSecretRoulette() {
+  if (rouletteInterval) {
+    clearInterval(rouletteInterval);
+    rouletteInterval = null;
+  }
+  rouletteWords = null;
 }
