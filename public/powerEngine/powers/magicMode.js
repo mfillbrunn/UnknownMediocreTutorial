@@ -13,7 +13,7 @@ tooltip: {
         $("guesserPowerContainer").appendChild(wrapper)
 
     btn.onclick = () => {
-      sendGameAction(roomId, { type: "USE_MAGIC_MODE" });
+      sendGameAction({ type: "USE_MAGIC_MODE" });
     };
   }
 });

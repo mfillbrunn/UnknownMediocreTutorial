@@ -12,7 +12,7 @@ PowerEngine.register("revealLetter", {
 
     btn.onclick = () => {
       // Normalized by powerEngineServer.normalizePowerId → "revealLetter"
-      sendGameAction(roomId, { type: "USE_REVEAL_LETTER" });
+      sendGameAction({ type: "USE_REVEAL_LETTER" });
     };
   
 // Tooltip hooks (variant-aware)

@@ -15,7 +15,7 @@ tooltip: {
 
 
     btn.onclick = () =>
-      sendGameAction(roomId, { type: "USE_COUNT_ONLY" });
+      sendGameAction({ type: "USE_COUNT_ONLY" });
   },
 
   // Guesser sees a modified UI when power is active

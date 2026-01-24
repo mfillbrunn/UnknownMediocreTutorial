@@ -13,7 +13,7 @@ tooltip: {
     $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () =>
-      sendGameAction(roomId, { type: "USE_HIDE_TILE" });
+      sendGameAction({ type: "USE_HIDE_TILE" });
   },
 
   // Guesser sees hidden tiles in the history

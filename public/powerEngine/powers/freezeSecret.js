@@ -13,7 +13,7 @@ tooltip: {
 
 
     btn.onclick = () => {
-      sendGameAction(roomId, { type: "USE_FREEZE_SECRET" });
+      sendGameAction({ type: "USE_FREEZE_SECRET" });
     };
   },
 

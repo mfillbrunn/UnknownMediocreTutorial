@@ -15,7 +15,7 @@ tooltip: {
        
     btn.onclick = () => {
       if (btn.disabled) return;
-      sendGameAction(roomId, { type: "USE_BLIND_SPOT" });
+      sendGameAction({ type: "USE_BLIND_SPOT" });
     };
   },
 

@@ -66,8 +66,8 @@ window.quickJoin = function (payload, cb) {
 };
 
 
-window.sendGameAction = function (roomId, action) {
-  socket.emit("gameAction", { roomId, action });
+window.sendGameAction = function (action) {
+  socket.emit("gameAction", {action });
 };
 
 // ------------------------------

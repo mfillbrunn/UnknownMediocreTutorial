@@ -15,7 +15,7 @@ tooltip: {
 
     btn.onclick = () => {
       if (btn.disabled) return;
-      sendGameAction(roomId, { type: "USE_FORCE_GUESS" });
+      sendGameAction({ type: "USE_FORCE_GUESS" });
     };
   },
 

@@ -12,7 +12,7 @@ tooltip: {
 
     btn.onclick = () => {
       if (btn.disabled) return;
-      sendGameAction(roomId, { type: "USE_STEALTH_GUESS" });
+      sendGameAction({ type: "USE_STEALTH_GUESS" });
     };
   },
 

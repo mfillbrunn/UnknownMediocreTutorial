@@ -55,7 +55,7 @@ $("assassinSubmitBtn").onclick = () => {
   const word = $("assassinInput").value.trim();
   if (!word) return;
 
-  sendGameAction(roomId, {
+  sendGameAction({
     type: "USE_ASSASSIN_WORD",
     word
   });

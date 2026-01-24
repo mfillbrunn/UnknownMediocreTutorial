@@ -129,7 +129,7 @@ const username =
 
 
 $("switchRolesBtn")?.addEventListener("click", () => {
-  sendGameAction(roomId, { type: "SWITCH_ROLES" , userId: window.currentUser.id});
+  sendGameAction({ type: "SWITCH_ROLES" , userId: window.currentUser.id});
 });
 
 
@@ -140,7 +140,7 @@ $("readyBtn")?.addEventListener("click", () => {
   window.myProfile?.username ||
   window.currentUser?.email ||
   "Player";
-  sendGameAction(roomId, {
+  sendGameAction({
     type: "PLAYER_READY",
     name: username,
     userId: window.currentUser.id
@@ -149,13 +149,13 @@ $("readyBtn")?.addEventListener("click", () => {
 $("applyPowerCountBtn")?.addEventListener("click", () => {
    const n = parseInt($("powerCountInput").value, 10);
    if (!isNaN(n) && n > 0 && n <= 10) {
-     sendGameAction(roomId, { type: "SET_POWER_COUNT", count: n });
+     sendGameAction({ type: "SET_POWER_COUNT", count: n });
    }
 });
 
 document.addEventListener("click", e => {
   if (e.target?.id === "newMatchBtn") {
-    sendGameAction(roomId, { type: "NEW_MATCH" });
+    sendGameAction({ type: "NEW_MATCH" });
   }
 });
 
@@ -231,7 +231,7 @@ function updateRankedUI() {
   wrapper.classList.toggle("readonly", !isHost);
 }
 $("rankedToggle")?.addEventListener("change", e => {
-  sendGameAction(roomId, {
+  sendGameAction({
     type: "SET_RANKED",
     ranked: e.target.checked,
   userId: window.currentUser.id
@@ -257,7 +257,7 @@ $("leaderboardBtn")?.addEventListener("click", () => {
 document.querySelectorAll(".concedeBtn").forEach(btn => {
   btn.addEventListener("click", () => {
     if (!confirm("Are you sure you want to concede the match?")) return;
-    sendGameAction(roomId, { type: "CONCEDE" , userId: window.currentUser.id});
+    sendGameAction({ type: "CONCEDE" , userId: window.currentUser.id});
   });
 });
 function showAIDifficultyModal() {
@@ -275,7 +275,7 @@ document.querySelectorAll(".ai-option").forEach(btn => {
     const difficulty = Number(btn.dataset.difficulty);
     hideAIDifficultyModal();
     // Tell server to add AI with difficulty
-    sendGameAction(roomId, {type: "ADD_AI", difficulty: difficulty  , userId: window.currentUser.id});
+    sendGameAction({type: "ADD_AI", difficulty: difficulty  , userId: window.currentUser.id});
   });
 });
 

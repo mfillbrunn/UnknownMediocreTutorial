@@ -84,7 +84,7 @@ socket.on("quickJoin", ({ userId, name }, cb) => {
 });
 
     // GAME ACTION -----------------------------
-socket.on("gameAction", ({ roomId: clientRoomId, action }) => {
+socket.on("gameAction", ({ action }) => {
   const roomId = socket.data.roomId; // ✅ authoritative
   console.log("[gameAction]", {
     socketId: socket.id,

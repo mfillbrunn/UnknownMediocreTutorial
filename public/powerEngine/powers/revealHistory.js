@@ -13,7 +13,7 @@ tooltip: {
 
     btn.onclick = () => {
       if (btn.disabled) return; // ensure safety
-      sendGameAction(roomId, { type: "USE_REVEAL_HISTORY" });
+      sendGameAction({ type: "USE_REVEAL_HISTORY" });
     };
   },
 

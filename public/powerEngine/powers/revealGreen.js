@@ -14,7 +14,7 @@ tooltip: {
         $("guesserPowerContainer").appendChild(wrapper)
 
     btn.onclick = () =>
-      sendGameAction(roomId, { type: "USE_REVEAL_GREEN" });
+      sendGameAction({ type: "USE_REVEAL_GREEN" });
   },
 
   effects: {

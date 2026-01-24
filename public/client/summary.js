@@ -478,7 +478,7 @@ html += `
   const btn = $("nextRoundBtn");
   if (btn) {
     btn.onclick = () => {
-      sendGameAction(roomId, { type: "NEXT_ROUND" });
+      sendGameAction({ type: "NEXT_ROUND" });
     };
   }  
 };

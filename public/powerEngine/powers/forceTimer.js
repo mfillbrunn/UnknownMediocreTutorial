@@ -14,7 +14,7 @@ tooltip: {
     btn.onclick = () => {
       console.log("[CLIENT] ForceTimer button clicked");
       if (btn.disabled) return;
-      sendGameAction(roomId, { type: "USE_FORCE_TIMER" });
+      sendGameAction({ type: "USE_FORCE_TIMER" });
     };
   },
 

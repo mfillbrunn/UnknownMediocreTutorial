@@ -492,7 +492,7 @@ function handleSetterInput(event) {
     if (draft.length === 0) {
       if (KeepEnabled) {
         state.setterDraft = "";        
-        sendGameAction(roomId, { type: "SET_SECRET_SAME" });  
+        sendGameAction({ type: "SET_SECRET_SAME" });  
         resetEphemeralUIState();
         updateUI();
         renderSetterRemainingBox(state, myRole, state.secret);
@@ -548,7 +548,7 @@ function submitSetterNew() {
     }
     return;
   }  
-  sendGameAction(roomId, {type: "SET_SECRET_NEW",secret: w});
+  sendGameAction({type: "SET_SECRET_NEW",secret: w});
   state.setterDraft = "";  
   resetEphemeralUIState();
   updateUI();
@@ -631,7 +631,7 @@ function handleGuesserInput(event) {
       shakeDraftRow("guesser");
       return;
     }
-    sendGameAction(roomId, {type: "SUBMIT_GUESS",guess: localGuesserDraft.toUpperCase()});
+    sendGameAction({type: "SUBMIT_GUESS",guess: localGuesserDraft.toUpperCase()});
     if (state.phase !== "simultaneous") {localGuesserDraft = "";}
     resetEphemeralUIState();
   }
@@ -805,7 +805,7 @@ document
       const v = radio.value;
 
       if (v === "none") {
-        sendGameAction(roomId, {
+        sendGameAction({
           type: "SET_TIME_CONTROL",
           enabled: false,
   userId: window.currentUser.id
@@ -813,7 +813,7 @@ document
       }
 
       if (v === "bullet") {
-        sendGameAction(roomId, {
+        sendGameAction({
           type: "SET_TIME_CONTROL",
           enabled: true,
           mode: "round",
@@ -823,7 +823,7 @@ document
       }
 
       if (v === "blitz") {
-        sendGameAction(roomId, {
+        sendGameAction({
           type: "SET_TIME_CONTROL",
           enabled: true,
           mode: "round",
@@ -833,7 +833,7 @@ document
       }
 
       if (v === "deep") {
-        sendGameAction(roomId, {
+        sendGameAction({
           type: "SET_TIME_CONTROL",
           enabled: true,
           mode: "chess",

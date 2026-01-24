@@ -13,7 +13,7 @@ tooltip: {
     $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
-      sendGameAction(roomId, { type: "USE_CONFUSE_COLORS" });
+      sendGameAction({ type: "USE_CONFUSE_COLORS" });
     };
   },
 
