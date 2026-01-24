@@ -767,12 +767,6 @@ body.menu-mode .app-header {
   0%, 80%, 100% { opacity: 0.3; }
   40% { opacity: 1; }
 }
-@media (max-width: 480px) {
-  .role-card {
-    height: 96px;
-  }
-
-  .role-name {
-    font-size: 14px;
-  }
+.pulse {
+  will-change: opacity;
 }
