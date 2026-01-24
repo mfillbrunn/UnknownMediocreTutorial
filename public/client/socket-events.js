@@ -198,14 +198,17 @@ $("backBtn").onclick = () => {
 };
 
 socket.on("forceLeaveRoom", () => {
-  roomId = null;
-  state = null;
-  clearRoom();
-  state = null;         
+  console.warn("[forceLeaveRoom] Room closed by server");
+  localStorage.removeItem("roomId");
+  window.roomId = null;
   window.state = null;
-  showStartup();
-  toast("You were removed from the room.");
+  state = null;
+  window.autoRejoinAttempted = true;
+  clearRoom?.();
+  showStartup?.();
+  toast("The game has ended.");
 });
+
 
 function updateRankedUI() {
   const badge = $("rankedBadge");
