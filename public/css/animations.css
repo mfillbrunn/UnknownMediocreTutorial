@@ -174,3 +174,15 @@
     filter: brightness(1);
   }
 }
+@keyframes feedback-pulse {
+  0% {
+    background-color: var(--fb-a);
+  }
+  50% {
+    background-color: var(--fb-b);
+  }
+  100% {
+    background-color: var(--fb-a);
+  }
+}
+
