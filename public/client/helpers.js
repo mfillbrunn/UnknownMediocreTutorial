@@ -19,7 +19,7 @@ const show = id => {
 };
 const hide = id => {
   const el = $(id);
-  if (!el) {console.warn(`hide(): element #${id} not found`); return;}
+  if (!el) {return;}
   el.classList.remove("active");
 };
 window.showScreen = (id) => {
