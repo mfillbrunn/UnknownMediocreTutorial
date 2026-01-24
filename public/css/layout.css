@@ -150,7 +150,10 @@ display: grid;
 .role-header h2{
 margin:0;
 }
-
+.header-left,
+.header-right {
+  min-width: 0;
+}
 /*---DRAFT STACK */
 .draft-stack {
   position: relative;   /* ← NEW anchor */
