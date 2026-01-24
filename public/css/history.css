@@ -113,7 +113,7 @@ background: color-mix(in srgb, var(--tile-gray) 65%, #000);
 }
 
 .theme-guesser #draftGuesser .history-tile {
-  border-width: 2px;
+  background: color-mix(in srgb, var(--role-accent), black 65%);
   border-color: var(--role-accent);
   box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 70%, transparent);
 }
