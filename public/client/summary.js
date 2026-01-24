@@ -173,26 +173,37 @@ function renderMatchSummary(container) {
   // ----------------------------
   // POWERS (stacked, colored)
   // ----------------------------
-  const { setter, guesser } =
-    getActivePowersByRole(state.activePowers);
+  // ----------------------------
+// POWERS (labeled, tab-separated)
+// ----------------------------
+const { setter, guesser } =
+  getActivePowersByRole(state.activePowers);
 
-  let powersBlock = "";
-  if (setter.length || guesser.length) {
-    if (setter.length) {
-      powersBlock += `
-        <p class="match-power-line" style="color: var(--setter-color);">
-          ${setter.map(powerToInlineLabel).join(", ")}
-        </p>
-      `;
-    }
-    if (guesser.length) {
-      powersBlock += `
-        <p class="match-power-line" style="color: var(--guesser-color);">
-          ${guesser.map(powerToInlineLabel).join(", ")}
-        </p>
-      `;
-    }
-  }
+let powersBlock = "";
+if (setter.length) {
+  powersBlock += `
+    <p class="match-power-line">
+      <span style="color: var(--setter-color); font-weight: 700;">
+        Setter Powers:
+      </span>
+      &nbsp;&nbsp;
+      ${setter.map(powerToInlineLabel).join("\t")}
+    </p>
+  `;
+}
+
+if (guesser.length) {
+  powersBlock += `
+    <p class="match-power-line">
+      <span style="color: var(--guesser-color); font-weight: 700;">
+        Guesser Powers:
+      </span>
+      &nbsp;&nbsp;
+      ${guesser.map(powerToInlineLabel).join("\t")}
+    </p>
+  `;
+}
+
 
   // ----------------------------
   // Header
@@ -434,16 +445,9 @@ html += `
 /////////////////
 function renderStoredRoundSummary(round, index) {
 
-  const finalIdx = round.history.length - 1;
-  const remaining = computeRemainingFromRound(round, finalIdx);
-
   let html = `
     <div class="stored-round">
       <h4>Round ${index + 1} – ${getNameByRole(round.setter)} was Setter</h4>
-
-      <p class="round-remaining">
-        <b>Remaining words:</b> ${remaining}
-      </p>
 
       <table class="summary-table">
         <tr>
@@ -451,16 +455,30 @@ function renderStoredRoundSummary(round, index) {
           <th>Secret</th>
           <th>Guess</th>
           <th>Feedback</th>
+          <th>Remaining</th>
         </tr>
   `;
 
   round.history.forEach((h, i) => {
+
+    const remaining =
+      round.timeoutLoser
+        ? "—"
+        : i === round.history.length - 1
+          ? 0
+          : computeRemainingAfterIndex(i, {
+              history: round.history.slice(0, i + 1),
+              secret: h.finalSecret,
+              phase: "playing"
+            });
+
     html += `
       <tr>
         <td>${i + 1}</td>
         <td>${h.finalSecret?.toUpperCase() || "???"}</td>
         <td>${h.guess?.toUpperCase() || ""}</td>
         <td>${Array.isArray(h.fb) ? h.fb.join("") : ""}</td>
+        <td>${remaining}</td>
       </tr>
     `;
   });
