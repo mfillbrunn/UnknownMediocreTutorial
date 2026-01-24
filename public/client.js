@@ -152,6 +152,8 @@ onPowerUsed(data => {
     powerQueue.push(data);
     return;
   }
+  state.powerUsedThisTurn = true;
+  window.state = state;
   const mod = PowerEngine.powers[data.type];
   mod?.effects?.onPowerUsed?.(data);
   PowerEngine.updateButtonStates(state, myRole);
