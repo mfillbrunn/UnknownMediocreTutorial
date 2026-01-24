@@ -3,6 +3,7 @@ const { createInitialState } = require("./stateFactory");
 const {endGame }  = require("./phases/gameOver");
 const { emitStateForAllPlayers } = require("../utils/emitState");;
 const { stopTimer } = require("../utils/Timer");
+const { stopTimer } = require("../utils/teardown");
 const rooms = {};
 
 function hasAnyHumanPlayers(room) {
@@ -34,6 +35,7 @@ function createRoom(socket, userId) {
   rooms[roomId] = {
     state: createInitialState(),
     players: {},
+    status: "alive", // or "closing" | "dead",
     currentSocketByUserId: {},
     aiOnlySince: null
   };
@@ -54,6 +56,28 @@ function createRoom(socket, userId) {
 
   return roomId;
 }
+
+function destroyRoom(roomId, io) {
+  const room = rooms[roomId];
+  if (!room) return;
+
+  if (room.status === "dead") return;
+  room.status = "dead";
+
+  // 1. Stop ALL timers
+  stopTimer(roomId);
+  stopAllRoomIntervals(roomId); // force timers, AI loops, etc.
+
+  // 2. Notify clients
+  io?.to(roomId).emit("forceLeaveRoom");
+
+  // 3. Remove sockets
+  io?.in(roomId).socketsLeave(roomId);
+
+  // 4. Remove from registry LAST
+  delete rooms[roomId];
+}
+
 
 /**
  * Join a room OR reattach if userId exists and is disconnected.
@@ -137,58 +161,71 @@ function findLastOpenRoom() {
   return null;
 }
 
-function removePlayer({roomId, socketId, reason, io, context}) {
+function removePlayer({ roomId, socketId, reason, io, context }) {
   const room = rooms[roomId];
-  if (!room) return { ok: false };
+  if (!room || room.status !== "alive") return { ok: false };
   const player = room.players[socketId];
   if (!player) return { ok: false };
   const role = player.role;
   const userId = player.userId;
-  delete room.players[socketId];
-  delete room.state.roles[socketId];
-  delete room.state.ready?.[socketId];
-  delete room.state.playerNames?.[socketId];
-  const sock = io?.sockets?.sockets?.get(socketId);
-  sock?.leave(roomId);
-  io?.to(roomId).emit("lobbyEvent", { type: "playerLeft", role, reason});
-  if (room.currentSocketByUserId?.[userId] === socketId) {
-      delete room.currentSocketByUserId[userId];
-  }
-  if (!hasAnyHumanPlayers(room)) {
+  const remainingPlayers = Object.entries(room.players)
+    .filter(([id]) => id !== socketId)
+    .map(([_, p]) => p);
+  const hasHumanAfterRemoval = remainingPlayers.some(p => !p.isAI);
+  if (!hasHumanAfterRemoval) {
     console.log("Deleting room with only AI:", roomId);
     forceCloseRoom(roomId, room, io);
     return { ok: true, deleted: true };
   }
+  delete room.players[socketId];
+  delete room.state.roles[socketId];
+  delete room.state.ready?.[socketId];
+  delete room.state.playerNames?.[socketId];
+
+  if (room.currentSocketByUserId?.[userId] === socketId) {
+    delete room.currentSocketByUserId[userId];
+  }
+  const sock = io?.sockets?.sockets?.get(socketId);
+  sock?.leave(roomId);
+  io?.to(roomId).emit("lobbyEvent", {
+    type: "playerLeft",
+    role,
+    reason
+  });
   if (!room.state.gameOver && room.state.phase !== "lobby") {
     stopTimer(roomId);
+    room.state.paused = true;
   }
-  resetRoomState(room);
   emitStateForAllPlayers(roomId, room, io);
   return { ok: true };
 }
 
 function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
   const now = Date.now();
+  const AI_ONLY_GRACE_MS = 30_000;
 
   for (const [roomId, room] of Object.entries(rooms)) {
-    // 🔥 Delete AI-only rooms
-    const AI_ONLY_GRACE_MS = 30_000; // pick what feels right; can reuse graceMs
-    
+    // 🛑 Skip rooms already being destroyed
+    if (!room || room.status !== "alive") continue;
+
+    // 🔥 Handle AI-only rooms first
     if (!hasAnyHumanPlayers(room)) {
       if (!room.aiOnlySince) {
         room.aiOnlySince = now;
-        continue; // don't delete yet
+        continue;
       }
-    
-    if (now - room.aiOnlySince >= AI_ONLY_GRACE_MS) {
-      console.log("Cleaning AI-only room after grace:", roomId);
-      forceCloseRoom(roomId, room, io);
-    }
+
+      if (now - room.aiOnlySince >= AI_ONLY_GRACE_MS) {
+        console.log("Cleaning AI-only room after grace:", roomId);
+        forceCloseRoom(roomId, room, io);
+      }
+
+      // 🚫 Never process disconnected players for AI-only rooms
       continue;
-    } else {
-      // humans exist → reset marker
-      room.aiOnlySince = null;
     }
+
+    // Humans exist → reset marker
+    room.aiOnlySince = null;
 
     // Handle disconnected human players
     for (const [socketId, player] of Object.entries(room.players)) {
@@ -197,6 +234,7 @@ function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
         player.disconnectedAt &&
         now - player.disconnectedAt >= graceMs
       ) {
+        // removePlayer is now safe; it may destroy the room
         removePlayer({
           roomId,
           socketId,
@@ -209,36 +247,10 @@ function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
   }
 }
 
-
-function resetRoomState(room) {
-  const prevRankMode = room.state.rankMode;
-  const prevRanked = room.state.ranked;
-  const prevNames = room.state.playerNames;
-
-  room.state = createInitialState();
-
-  // Optional carry-over
-  room.state.rankMode = prevRankMode;
-  room.state.ranked = prevRanked;
-  room.state.playerNames = prevNames;
-
-  // Reapply existing players' roles (if any remain)
-  for (const [socketId, player] of Object.entries(room.players)) {
-    room.state.roles[socketId] = player.role;
-  }
-
-  // Reset host if someone remains
-  const remainingPlayers = Object.values(room.players);
-  room.state.hostUserId = remainingPlayers[0]?.userId ?? null;
-  room.currentSocketByUserId ??= {};
-  room.currentSocketByUserId = {};
-  for (const [socketId, player] of Object.entries(room.players)) {
-    if (player?.userId) room.currentSocketByUserId[player.userId] = socketId;
-  }
-}
-
 function addAIPlayer(room) {
-  const AI_ID = "AI"; // constant fake socket id
+  if (!room || room.status !== "alive") return;
+
+  const AI_ID = "AI";
 
   if (room.players[AI_ID]) return;
 
@@ -252,14 +264,28 @@ function addAIPlayer(room) {
 
   room.state.roles[AI_ID] = "B";
 }
+
 function forceCloseRoom(roomId, room, io) {
+  if (!room) return;
+
+  if (room.status === "dead") return;
+  room.status = "dead";
+
+  console.log("[forceCloseRoom] closing room:", roomId);
+
+  // Stop ALL timers (extend this as needed)
+  stopTimer(roomId);
+
+  // Notify clients
   if (io) {
     io.to(roomId).emit("forceLeaveRoom");
     io.in(roomId).socketsLeave(roomId);
   }
-  stopTimer(roomId);
+
+  // Final removal
   delete rooms[roomId];
 }
+
 
 
 module.exports = {
