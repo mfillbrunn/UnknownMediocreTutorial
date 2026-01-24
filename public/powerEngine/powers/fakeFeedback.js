@@ -14,7 +14,14 @@ tooltip: {
 
     btn.onclick = () =>
       sendGameAction({ type: "USE_FAKE_FEEDBACK" });
-  }
+  },
+  historyEffects(entry, isSetter) {
+  if (!entry.fakeFeedback || isSetter) return;
+  const { real, fake } = entry.fakeFeedback;
+  entry.fbComposite = mergeFakeFeedback(real, fake);
+  // Guesser sees only ambiguity
+  entry.fbGuesser = ["?","?","?","?","?"];
+}
 });
 
 InfoBadgeEngine.register((state, role) => {
@@ -29,3 +36,24 @@ InfoBadgeEngine.register((state, role) => {
     screen: "both"
   };
 });
+
+function mergeFakeFeedback(real, fake) {
+  return real.map((r, i) => {
+    const f = fake[i];
+
+    if (r === f) return r;
+
+    // Ordered pairs (canonical)
+    const pair = [r, f].sort().join("");
+
+    switch (pair) {
+      case "⬛🟨": return "gray-yellow";
+      case "🟨⬛": return "gray-yellow";
+      case "⬛🟩": return "gray-green";
+      case "🟩⬛": return "gray-green";
+      case "🟨🟩": return "yellow-green";
+      case "🟩🟨": return "yellow-green";
+      default:    return "unknown";
+    }
+  });
+}
