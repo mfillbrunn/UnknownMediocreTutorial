@@ -640,19 +640,16 @@ function updateMenuRoomCode() {
 }
 
 function computeRemainingFromRound(round, idx) {
-  // mirror live logic
   if (round.timeoutLoser) return "—";
-
-  // final state → 0
   if (idx === round.history.length - 1) return 0;
 
-  // rebuild minimal state expected by computeRemainingAfterIndex
   const tempState = {
     history: round.history.slice(0, idx + 1),
     secret: round.history[idx].finalSecret,
     phase: "playing"
   };
 
-  return computeRemainingAfterIndex.call(null, idx, tempState);
+  return computeRemainingAfterIndexFromState(idx, tempState);
 }
+
 
