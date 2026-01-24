@@ -181,18 +181,7 @@ if (action.type === "SET_POWER_COUNT") {
                   freshState.roles[playerId] = player.role;
              }
              room.state = freshState;
-             state = freshState;
-             state.activePowers = [];
-             state.powers = createInitialPowers();
-             state.powersUsedThisRoundGuesser = [];
-             state.powersUsedThisRoundSetter = [];
-             state.powerUsedThisTurn = false;     
-             room.currentSocketByUserId ??= {};
-             room.currentSocketByUserId = {};
-             for (const [sid, p] of Object.entries(room.players)) {
-               if (p?.userId) room.currentSocketByUserId[p.userId] = sid;
-             }
-             //continue
+             state = freshState; 
               if (state.ranked) {
                   const ids = Object.keys(room.players);
                   const shuffled = ids.sort(() => Math.random() - 0.5);                
@@ -214,16 +203,11 @@ if (action.type === "SET_POWER_COUNT") {
             state.mode.initMatch(state);
             state.mode.onLobbyReady(state, sP, gP);   
             state.phase = "simultaneous";
-            state.turn = null;
-            state.simultaneousGuessSubmitted = false;
-            state.simultaneousSecretSubmitted = false;        
             if (state.timeControl.enabled) {
               resetRoundTimer(state);
               state.activeTimer = "both";
               state.roundStartTime = Date.now();
-              stopTimer(roomId);
               startGameTimer(room, state, roomId, context);
-              state.isTimerRunning = true;
             }        
              if (state.activePowers.includes("revealLetter")) {
                 state.powers.revealLetter.mode =Math.random() < 0.5 ? "RARE" : "ROW";
