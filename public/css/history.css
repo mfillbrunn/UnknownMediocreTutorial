@@ -138,6 +138,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   border: none;
   box-shadow: none;
   opacity: 0.9;
+   background: var(--tile-green);
 }
 
 .theme-setter
@@ -148,6 +149,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   border: none;
   box-shadow: none;
   opacity: 0.9;
+   background: var(--tile-yellow);
 }
 
 
