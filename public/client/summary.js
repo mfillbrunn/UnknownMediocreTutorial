@@ -77,7 +77,10 @@ function powerToInlineLabel(powerId) {
   if (!meta) return powerId;
   if (meta.label) return meta.label;
 }
-
+function powerToEmojiOnly(powerId) {
+  const meta = window.POWER_METADATA?.[powerId];
+  return meta?.emoji || "";
+}
 
 
 ///SUMMARY SCREEN ROUTER
@@ -356,7 +359,7 @@ html += `
         <th>Secret</th>
         <th>Guess</th>
         <th>Feedback</th>
-        <th>Ps</th>
+        <th></th>
         <th># Words</th>
       </tr>
     </thead>
@@ -388,11 +391,11 @@ for (let i = 0; i < state.history.length; i++) {
       <div class="summary-powers compact">
         ${gp.length ? `
           <div class="powers-row guesser">
-            ${gp.map(powerToInlineIcon).join("")}
+            ${gp.map(powerToEmojiOnly).join("")}
           </div>` : ""}
         ${sp.length ? `
           <div class="powers-row setter">
-            ${sp.map(powerToInlineIcon).join("")}
+            ${sp.map(powerToEmojiOnly).join("")}
           </div>` : ""}
       </div>
     `;
@@ -446,13 +449,37 @@ function renderStoredRoundSummary(round, index) {
           <th>Secret</th>
           <th>Guess</th>
           <th>Feedback</th>
+          <th></th>
           <th>Remaining</th>
         </tr>
   `;
 
   round.history.forEach((h, i) => {
+    const remaining = computeRemainingFromRound(round, i);
 
-const remaining = computeRemainingFromRound(round, i);
+    const gpIcons = (h.powersGuesser || [])
+      .map(powerToEmojiOnly)
+      .filter(Boolean);
+
+    const spIcons = (h.powersSetter || [])
+      .map(powerToEmojiOnly)
+      .filter(Boolean);
+
+    let powersCell = "—";
+    if (gpIcons.length || spIcons.length) {
+      powersCell = `
+        <div class="summary-powers compact">
+          ${gpIcons.length ? `
+            <div class="powers-row guesser">
+              ${gpIcons.join("")}
+            </div>` : ""}
+          ${spIcons.length ? `
+            <div class="powers-row setter">
+              ${spIcons.join("")}
+            </div>` : ""}
+        </div>
+      `;
+    }
 
     html += `
       <tr>
@@ -460,6 +487,7 @@ const remaining = computeRemainingFromRound(round, i);
         <td>${h.finalSecret?.toUpperCase() || "???"}</td>
         <td>${h.guess?.toUpperCase() || ""}</td>
         <td>${Array.isArray(h.fb) ? h.fb.join("") : ""}</td>
+        <td class="powers-cell">${powersCell}</td>
         <td>${remaining}</td>
       </tr>
     `;
@@ -468,6 +496,7 @@ const remaining = computeRemainingFromRound(round, i);
   html += `</table></div>`;
   return html;
 }
+
 
 
 ///// SHARE TEXT
