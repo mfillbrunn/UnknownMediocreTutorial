@@ -123,3 +123,25 @@
 /*----Extra small */
 
 
+/*------- REDUCED MOTION --------------*/
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltip {
+    transition: none;
+    transform: none;
+  }
+   .history-tile.tile-hidden-cycle::before {
+    animation: none;
+    opacity: 0.7;
+  }
+     .history-row.freeze-draft::after {
+    animation: none;
+  }
+     .pulse {
+    animation-duration: 2.5s;
+  }
+     .pulse::before,
+  .pulse::after {
+    animation: pulse 1.2s infinite;
+  }
+}
