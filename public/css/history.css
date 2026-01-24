@@ -382,28 +382,3 @@ body.hide-constraints .constraint-row {
   letter-spacing: 0.3px;
 }
 
-///Fake feedback
-.tile-gray-yellow {
-  background: linear-gradient(
-    135deg,
-    var(--tile-gray) 50%,
-    var(--tile-yellow) 50%
-  ) !important;
-}
-
-.tile-gray-green {
-  background: linear-gradient(
-    135deg,
-    var(--tile-gray) 50%,
-    var(--tile-green) 50%
-  ) !important;
-}
-
-.tile-yellow-green {
-  background: linear-gradient(
-    135deg,
-    var(--tile-yellow) 50%,
-    var(--tile-green) 50%
-  ) !important;
-}
-
