@@ -226,5 +226,6 @@ function clearActivePowers(state) {
 module.exports = {
   handleNormalPhase,
   pushWinEntry,
-  startGameTimer
+  startGameTimer,
+  clearForceTimer
 };
