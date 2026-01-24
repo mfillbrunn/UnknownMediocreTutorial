@@ -33,6 +33,7 @@ function shake(element) {
   element.classList.add("shake");
   setTimeout(() => element.classList.remove("shake"), 300);
 }
+
 function resetKeyboards() {
   const ks = $("keyboardSetter");
   const kg = $("keyboardGuesser");
@@ -254,6 +255,7 @@ onStateUpdate(newState => {
   }
   // Extra clearing after simultaneous round
   if ((prevPhase === "simultaneous" && state.phase === "normal") || (prevPhase !== "simultaneous" && state.phase === "simultaneous")){localGuesserDraft = "";}
+  if (prevPhase !== state.phase) {stopSecretRoulette();}
   window.state = state;   
   updateRoleCards();
   updateHostControls();
@@ -463,7 +465,7 @@ function applyPreviewFeedback(fbArray) {
 }
 ///SETTER INPUT
 function handleSetterInput(event) {
-  if (!state.powers?.freezeActive){
+  if (!state.powers?.freezeActive || state.powers?.rouletteSecretActive){
     const isNormalSetterTurn =  myRole === state.setter && state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess;
     const isSimultaneousSecretEntry = state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted;
     if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
@@ -549,6 +551,7 @@ function submitSetterNew() {
     return;
   }  
   sendGameAction({type: "SET_SECRET_NEW",secret: w});
+  stopSecretRoulette();
   state.setterDraft = "";  
   resetEphemeralUIState();
   updateUI();
