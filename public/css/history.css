@@ -65,7 +65,7 @@ width: clamp(38px, 10vw, 54px);
 #draftSetter:has(.history-row:nth-child(2))
 .history-row:first-child
 .history-tile {
-background: color-mix(in srgb, var(--tile-gray) 65%, #000);
+background: color-mix(in srgb, var(--tile-gray) 85%, #000);
   color: var(--tile-gray-text);
   border-color: rgba(255,255,255,0.14);
   box-shadow: none;
@@ -100,7 +100,7 @@ background: color-mix(in srgb, var(--tile-gray) 65%, #000);
   border-color: var(--role-accent);
   box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 70%, transparent);
    
-    background: color-mix(in srgb, var(--role-accent), black 65%);
+    background: color-mix(in srgb, var(--role-accent), black 85%);
 }
 /* Setter: exactly one draft row → it is active */
 .theme-setter
@@ -112,7 +112,7 @@ background: color-mix(in srgb, var(--tile-gray) 65%, #000);
 }
 
 .theme-guesser #draftGuesser .history-tile {
-  background: color-mix(in srgb, var(--role-accent), black 65%);
+  background: color-mix(in srgb, var(--role-accent), black 85%);
   border-color: var(--role-accent);
   box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 70%, transparent);
 }
