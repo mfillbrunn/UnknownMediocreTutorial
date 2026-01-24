@@ -155,37 +155,55 @@ body.blind-guess .key:hover {
    =============================== */
 
 .tile-feedback-slide {
-animation: feedback-slide 4.5s ease-in-out infinite;
-}
+  /* safe defaults */
+  --fb-a-bg: var(--tile-gray);
+  --fb-b-bg: var(--tile-gray);
+  --fb-a-text: var(--tile-gray-text);
+  --fb-b-text: var(--tile-gray-text);
 
+  animation: feedback-slide 4.5s ease-in-out infinite;
+}
 .tile-gray-yellow {
-  --fb-a: var(--tile-gray);
-  --fb-b: var(--tile-yellow);
+  --fb-a-bg: var(--tile-gray);
+  --fb-a-text: var(--tile-gray-text);
+  --fb-b-bg: var(--tile-yellow);
+  --fb-b-text: var(--tile-yellow-text);
 }
 
 .tile-yellow-gray {
-  --fb-a: var(--tile-yellow);
-  --fb-b: var(--tile-gray);
+  --fb-a-bg: var(--tile-yellow);
+  --fb-a-text: var(--tile-yellow-text);
+  --fb-b-bg: var(--tile-gray);
+  --fb-b-text: var(--tile-gray-text);
 }
 
 .tile-gray-green {
-  --fb-a: var(--tile-gray);
-  --fb-b: var(--tile-green);
+  --fb-a-bg: var(--tile-gray);
+  --fb-a-text: var(--tile-gray-text);
+  --fb-b-bg: var(--tile-green);
+  --fb-b-text: var(--tile-green-text);
 }
 
 .tile-green-gray {
-  --fb-a: var(--tile-green);
-  --fb-b: var(--tile-gray);
+  --fb-a-bg: var(--tile-green);
+  --fb-a-text: var(--tile-green-text);
+  --fb-b-bg: var(--tile-gray);
+  --fb-b-text: var(--tile-gray-text);
 }
 
 .tile-yellow-green {
-  --fb-a: var(--tile-yellow);
-  --fb-b: var(--tile-green);
+  --fb-a-bg: var(--tile-yellow);
+  --fb-a-text: var(--tile-yellow-text);
+  --fb-b-bg: var(--tile-green);
+  --fb-b-text: var(--tile-green-text);
 }
 
 .tile-green-yellow {
-  --fb-a: var(--tile-green);
-  --fb-b: var(--tile-yellow);
+  --fb-a-bg: var(--tile-green);
+  --fb-a-text: var(--tile-green-text);
+  --fb-b-bg: var(--tile-yellow);
+  --fb-b-text: var(--tile-yellow-text);
 }
+
 
 
