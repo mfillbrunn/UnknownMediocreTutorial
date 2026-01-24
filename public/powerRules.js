@@ -16,6 +16,17 @@ window.POWER_RULES = {
       );
     }
   },
+  fakeFeedback: {
+    once: false,
+    allowed(state, role) {
+      return (
+        computeRemainingAfterIndex(state.history.length - 1) >= 2 &&
+        state.phase === "normal" &&
+        role === state.setter &&
+        !state.powerUsedThisTurn &&
+      );
+    }
+  },
   blindGuess: {
   once: true,
   allowed(state, role) {
@@ -52,8 +63,7 @@ window.POWER_RULES = {
 forceGuess: {
   once: true,
   allowed(state, role) {
-    return (
-      computeRemainingAfterIndex(state.history.length - 1)>=10 &&
+    return (      
       state.phase === "normal" &&
       role === state.setter &&
       !state.powerUsedThisTurn &&
