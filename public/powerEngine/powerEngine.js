@@ -62,9 +62,6 @@ createPowerButton(id, label) {
   // ⭐ Central button logic
   // -------------------------------------------------------------
   updateButtonStates(state, role) {
-    if (!window.POWER_RULES?.[id]) {
-        console.warn("No POWER_RULES for power id:", id);
-      }
     const isSetter = (role === state.setter);
     const isGuesser = (role === state.guesser);
     const isMyTurn = (state.phase === "normal" && state.turn === role);
@@ -104,11 +101,12 @@ createPowerButton(id, label) {
       //  - OR it is not the player's turn
       //
       const shouldBeDisabled =
-        powerUsedThisTurn ||
         wrongRole ||
         notNormalPhase ||
         !isMyTurn ||
         notAllowedByRule;
+
+
       // ------------------------------------------------------
       // VISUAL STATES
       // ------------------------------------------------------
@@ -120,14 +118,23 @@ createPowerButton(id, label) {
         btn.classList.remove("disabled-btn");
         continue;
       }
-      // 2) Temporarily disabled (this turn, wrong phase/turn/role)
+      // 2) Another power used this turn → temporarily disabled
+      if (powerUsedThisTurn) {
+        btn.disabled = true;
+        btn.classList.add("disabled-btn");
+        btn.classList.remove("power-used");
+        continue;
+      }
+
+      // 3) Temporarily disabled (this turn, wrong phase/turn/role)
       if (shouldBeDisabled) {
         btn.disabled = true;
         btn.classList.add("disabled-btn");
         btn.classList.remove("power-used");
         continue;
       }
-      // 3) Active / usable
+
+      // 4) Active / usable
       btn.disabled = false;
       btn.classList.remove("disabled-btn");
       btn.classList.remove("power-used");
