@@ -184,30 +184,6 @@ Constraint row using history tile language
     0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent),
     inset 0 0 var(--sp-6) color-mix(in srgb, var(--role-accent) 18%, transparent);
 }
-///Fake feedback
-.tile-gray-yellow {
-  background: linear-gradient(
-    135deg,
-    var(--tile-gray) 50%,
-    var(--tile-yellow) 50%
-  );
-}
-
-.tile-gray-green {
-  background: linear-gradient(
-    135deg,
-    var(--tile-gray) 50%,
-    var(--tile-green) 50%
-  );
-}
-
-.tile-yellow-green {
-  background: linear-gradient(
-    135deg,
-    var(--tile-yellow) 50%,
-    var(--tile-green) 50%
-  );
-}
 
 .constraint-row::before {
   content: "";
@@ -405,3 +381,29 @@ body.hide-constraints .constraint-row {
   color: #7b1fa2; /* or your assassin color */
   letter-spacing: 0.3px;
 }
+
+///Fake feedback
+.tile-gray-yellow {
+  background: linear-gradient(
+    135deg,
+    var(--tile-gray) 50%,
+    var(--tile-yellow) 50%
+  ) !important;
+}
+
+.tile-gray-green {
+  background: linear-gradient(
+    135deg,
+    var(--tile-gray) 50%,
+    var(--tile-green) 50%
+  ) !important;
+}
+
+.tile-yellow-green {
+  background: linear-gradient(
+    135deg,
+    var(--tile-yellow) 50%,
+    var(--tile-green) 50%
+  ) !important;
+}
+
