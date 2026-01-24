@@ -41,11 +41,6 @@ function buildSafeStateForPlayer(state, role) {
   }
 
   // -----------------------------------------------------
-  // 4. Clean internal machine flags
-  // -----------------------------------------------------
-  delete safe.powerUsedThisTurn;
-
-  // -----------------------------------------------------
   // 5. Filter & sanitize HISTORY
   // -----------------------------------------------------
   safe.history = safe.history
