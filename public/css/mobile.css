@@ -118,6 +118,13 @@
   .room-meta {
     font-size: var(--fs-12);
   }
+     .role-card {
+    height: 96px;
+  }
+
+  .role-name {
+    font-size: 14px;
+  }
 }
 
 /*----Extra small */
@@ -144,4 +151,5 @@
   .pulse::after {
     animation: pulse 1.2s infinite;
   }
+   
 }
