@@ -417,6 +417,7 @@ renderDraftRows({
 
 ///SETTER FEEDBACK PREVIEW FUNCTION
 function updateSetterPreview() {
+  if (state.powers?.rouletteSecretActive){return;}
  // If stealth is active, hide preview entirely
   const guess = state.pendingGuess;
   if (!guess) return;
@@ -468,7 +469,7 @@ function applyPreviewFeedback(fbArray) {
 }
 ///SETTER INPUT
 function handleSetterInput(event) {
-  if (!state.powers?.freezeActive){
+  if (!state.powers?.freezeActive || !state.powers?.rouletteSecretActive){
     const isNormalSetterTurn =  myRole === state.setter && state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess;
     const isSimultaneousSecretEntry = state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted;
     if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
