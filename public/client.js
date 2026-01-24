@@ -468,7 +468,7 @@ function applyPreviewFeedback(fbArray) {
 }
 ///SETTER INPUT
 function handleSetterInput(event) {
-  if (!state.powers?.freezeActive){
+  if (!state.powers?.freezeActive || !state.powers?.secretRouletteActive){
     const isNormalSetterTurn =  myRole === state.setter && state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess;
     const isSimultaneousSecretEntry = state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted;
     if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
@@ -884,7 +884,7 @@ function startSecretRoulette(words) {
   rouletteInterval = setInterval(() => {
     const word = rouletteWords[i % rouletteWords.length];
     state.setterDraft = word;
-    renderSetterDraft(word);
+    renderDraftRows({state,role: "setter",container: $("draftSetter")});
     updateUI();
     i++;
   }, 70);
