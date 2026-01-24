@@ -15,6 +15,9 @@ const powers = {
       blindGuessUsed: false,
       blindGuessArmed: false,
       blindGuessActive: false,
+      //Roulette
+      rouletteSecretUsed: false,
+      rouletteSecretActive: false,
       // FORCE GUESS
       forceGuessUsed: false,
       forceGuess: null,          // active constraint
