@@ -28,4 +28,5 @@ engine.registerPower("fakeFeedback", {
     fake    // ["🟨","⬛",...]
   };
    entry.fbGuesser = ["?","?","?","?","?"];
+ }
 });
