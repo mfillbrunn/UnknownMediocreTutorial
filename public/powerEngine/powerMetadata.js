@@ -52,7 +52,7 @@ window.POWER_METADATA = {
     desc: "Hides the feedback on one random tile for one round.",
     icon: "hidden-tile",
     emoji: "⬛",
-    color: "#111827"
+    color: "#1e1eba"
   },
 
   magicMode: {
