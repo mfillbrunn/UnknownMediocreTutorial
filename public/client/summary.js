@@ -356,7 +356,7 @@ html += `
         <th>Secret</th>
         <th>Guess</th>
         <th>Feedback</th>
-        <th>Powers</th>
+        <th></th>
         <th># Words</th>
       </tr>
     </thead>
