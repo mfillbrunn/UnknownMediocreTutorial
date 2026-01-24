@@ -158,6 +158,10 @@ onPowerUsed(data => {
   const mod = PowerEngine.powers[data.type];
   mod?.effects?.onPowerUsed?.(data);
   PowerEngine.updateButtonStates(state, myRole);
+  if (state.powers?.vowelRefreshActive && state.powers?.rouletteSecretActive){
+    stopSecretRoulette();
+    startSecretRoulette(state.powers.rouletteSecretFeasible);
+    }
 });
 
 
