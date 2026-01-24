@@ -220,34 +220,6 @@ body.menu-mode .app-header {
   text-decoration: underline;
 }
 
-#rankedBadge.ranked-on {
-  color: #e6d27a; /* muted gold */
-}
-
-#rankedBadge.ranked-off {
-  color: #aaa;
-}
-#rankedBadge {
-  text-transform: uppercase;
-  font-size: var(--fs-13);
-  letter-spacing: 0.6px;
-}
-
-#rankedToggleWrapper.readonly {
-  opacity: 0.5;
-}
-#rankedToggleWrapper {
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid #2a2c34;
-  background: #18191f;
-}
-.ranked-status:hover {
-  background: #20222a;
-}
-#rankedToggleWrapper input {
-  display: none;
-}
 /* =========================================
    GAME MENU — SPY / DOSSIER STYLE
    Drop-in override (no HTML changes)
@@ -619,34 +591,47 @@ body.menu-mode .app-header {
 }
 
 #rankedBadge {
-  padding: 4px 10px;
+  padding: 8px 14px;
+  min-width: 90px;
+
   border-radius: 999px;
 
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
+  font-size: var(--fs-13);
+  font-weight: 900;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
+
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
 
   transition:
     background 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    transform 0.15s ease;
 }
+
+#rankedBadge.ranked-on {
+  background: #e6d27a;
+  color: #111;
+  border: 1px solid #f0e3a0;
+}
+
 #rankedBadge.ranked-off {
   background: rgba(255,255,255,0.18);
-  color: #fff;
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.25);
 }
-#rankedBadge.ranked-on {
-  background: #e6d27a;   /* muted gold */
-  color: #111;
+
+#rankedBadge:not(.readonly):hover {
+  transform: translateY(-1px);
 }
-.ranked-status:hover {
-  background: rgba(255,255,255,0.2);
-}
-#rankedToggleWrapper.readonly,
-.ranked-status.readonly {
+
+#rankedBadge.readonly {
   opacity: 0.5;
   pointer-events: none;
 }
+
 /* =========================================
    TIMER OPTION — CLEAR SELECTION
    ========================================= */
@@ -709,58 +694,6 @@ body.menu-mode .app-header {
 
 }
 
-#rankedBadge {
-  grid-column: 2;
-  grid-row: 2;
-
-  justify-self: center;
-  margin-top: 6px;
-}
-#rankedBadge {
-  padding: 8px 14px;
-  min-width: 90px;
-
-  border-radius: 999px;
-
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-
-  transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    transform 0.15s ease;
-}
-
-#rankedBadge.ranked-off {
-  background: rgba(255,255,255,0.18);
-  color: #ffffff;
-  border: 1px solid rgba(255,255,255,0.25);
-}
-
-#rankedBadge.ranked-on {
-  background: #e6d27a;
-  color: #111;
-  border: 1px solid #f0e3a0;
-}
-#rankedBadge:hover {
-  transform: translateY(-1px);
-}
-
-
-#rankedBadge.readonly {
-  opacity: 0.5;
-  pointer-events: none;
-}
-#rankedToggleWrapper,
-#rankedToggleWrapper input {
-  display: none;
-}
 .secondary-btn.small {
   height: 32px;
   padding: 0 14px;

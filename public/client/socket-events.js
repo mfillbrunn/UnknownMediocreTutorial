@@ -208,35 +208,35 @@ socket.on("forceLeaveRoom", () => {
   showStartup?.();
   toast("The game has ended.");
 });
+$("rankedBadge")?.addEventListener("click", () => {
+  if (!state || !window.currentUser) return;
+  if (state.hostUserId !== window.currentUser.id) return;
+
+  sendGameAction({
+    type: "SET_RANKED",
+    ranked: !state.ranked,
+    userId: window.currentUser.id
+  });
+});
 
 
 function updateRankedUI() {
   const badge = $("rankedBadge");
-  const toggle = $("rankedToggle");
-  const wrapper = $("rankedToggleWrapper");
-  if (!badge || !toggle || !state) return;
+  if (!badge || !state || !window.currentUser) return;
 
   const isRanked = !!state.ranked;
   const isHost = state.hostUserId === window.currentUser.id;
 
-  // 🔹 Everyone sees the status
   badge.textContent = isRanked ? "🏆 Ranked" : "🎮 Casual";
-  badge.className = isRanked ? "ranked-on" : "ranked-off";
 
-  // 🔹 Only host can interact
-  toggle.checked = isRanked;
-  toggle.disabled = !isHost;
+  // Preserve other classes
+  badge.classList.toggle("ranked-on", isRanked);
+  badge.classList.toggle("ranked-off", !isRanked);
 
-  // Optional: visually dim toggle for non-hosts
-  wrapper.classList.toggle("readonly", !isHost);
+  // Host-only interaction
+  badge.classList.toggle("readonly", !isHost);
 }
-$("rankedToggle")?.addEventListener("change", e => {
-  sendGameAction({
-    type: "SET_RANKED",
-    ranked: e.target.checked,
-  userId: window.currentUser.id
-  });
-});
+
 
 function onRejoinUI() {
   // Always leave startup/menu mode
