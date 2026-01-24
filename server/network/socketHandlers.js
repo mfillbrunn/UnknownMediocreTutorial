@@ -93,6 +93,11 @@ socket.on("quickJoin", ({ userId, name }, cb) => {
 
     // GAME ACTION -----------------------------
 socket.on("gameAction", ({ roomId, action }) => {
+  console.log("[gameAction]", roomId, action.type);
+  if (!rooms[roomId]) {
+    console.warn("[gameAction] room not found:", roomId);
+    return;
+  }
   const room = rooms[roomId];
   if (!room) return;
 
