@@ -22,6 +22,7 @@ const SETTER_POWERS = [
       
       const GUESSER_POWERS = [
         "suggestGuess",
+        "rouletteSecret",
         "forceTimer",
         "revealHistory",
         "stealthGuess",
