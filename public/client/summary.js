@@ -204,11 +204,27 @@ if (guesser.length) {
   `;
 }
 
-
+  // ----------------------------
+  // Actions (next to Share)
+  // ----------------------------
+  let html = `
+    <div class="summary-actions">
+      <button id="shareMatchBtn" class="secondary-btn">
+        Share
+      </button>
+      <button id="newMatchBtn" class="primary-btn">
+        New Match
+      </button>
+      <button id="leaveSummaryBtn" class="secondary-btn danger">
+        Leave
+      </button>
+    </div>
+  `;
   // ----------------------------
   // Header
   // ----------------------------
-  let html = `
+ 
+  html += `
     <div class="match-header">
       <h2>${resultText}</h2>
       <h3>${scoreText}</h3>
@@ -245,24 +261,6 @@ if (guesser.length) {
       ${rounds.map((r, i) => renderStoredRoundSummary(r, i)).join("")}
     </div>
   `;
-
-  // ----------------------------
-  // Actions (next to Share)
-  // ----------------------------
-  html += `
-    <div class="summary-actions">
-      <button id="shareMatchBtn" class="secondary-btn">
-        Share
-      </button>
-      <button id="newMatchBtn" class="primary-btn">
-        New Match
-      </button>
-      <button id="leaveSummaryBtn" class="secondary-btn danger">
-        Leave
-      </button>
-    </div>
-  `;
-
   container.innerHTML = html;
 
   const leaveBtn = $("leaveSummaryBtn");
@@ -284,8 +282,18 @@ if (guesser.length) {
 /////////COMPETITIVE  ROUND SUMMARY
 ////////////////////////////
 function renderRoundSummary(container) {
-   
-  let html = `<h3>Round Summary</h3>`;
+
+  // Competitive mode: Next Round button
+  if (state.gameOverView === "round" && state.canNextRound) {
+    let html = `
+      <div class="summary-actions">
+        <button id="nextRoundBtn" class="primary-btn">
+          Next Round
+        </button>
+      </div>
+    `;
+  }
+  html += `<h3>Round Summary</h3>`;
 
   const setterPlayerId = Object.keys(state.roles || {})
   .find(id => state.roles[id] === "A");
@@ -418,18 +426,6 @@ html += `
     </tbody>
   </table>
 `;
-
-  // Competitive mode: Next Round button
-  if (state.gameOverView === "round" && state.canNextRound) {
-    html += `
-      <div class="summary-actions">
-        <button id="nextRoundBtn" class="primary-btn">
-          Next Round
-        </button>
-      </div>
-    `;
-  }
-
   container.innerHTML = html;
 
   const btn = $("nextRoundBtn");
