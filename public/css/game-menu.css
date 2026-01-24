@@ -592,10 +592,7 @@ body.menu-mode .app-header {
 
 #rankedBadge {
   padding: 8px 14px;
-  min-width: 90px;
-
   border-radius: 999px;
-
   font-size: var(--fs-13);
   font-weight: 900;
   letter-spacing: 0.6px;
@@ -707,20 +704,21 @@ body.menu-mode .app-header {
 }
 
 .lobby-actions {
-  grid-column: 3;
+  grid-column: 2;   
   grid-row: 2;
 
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 12px;
 
-  justify-self: center;
   margin-top: 6px;
 }
-.lobby-actions::before {
-  content: "";
-  width: 1px;
-  height: 22px;
-  background: rgba(255,255,255,0.25);
-  margin-right: 4px;
+.lobby-actions > * {
+  height: 32px;
+  min-width: 120px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
