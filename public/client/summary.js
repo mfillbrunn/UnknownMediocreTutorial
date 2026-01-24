@@ -59,7 +59,9 @@ if (state.timeoutLoser) {
     resultIcon
   };
 }
-
+function getPowerId(p) {
+  return typeof p === "string" ? p : p?.id;
+}
 
 function powerToInlineIcon(powerId) {
   const meta = window.POWER_METADATA?.[powerId];
@@ -402,11 +404,11 @@ for (let i = 0; i < state.history.length; i++) {
       <div class="summary-powers compact">
         ${gp.length ? `
           <div class="powers-row guesser">
-            ${gp.map(powerToEmojiOnly).join("")}
+            ${gp.map(p => powerToEmojiOnly(getPowerId(p))).join("")}
           </div>` : ""}
         ${sp.length ? `
           <div class="powers-row setter">
-            ${sp.map(powerToEmojiOnly).join("")}
+            ${sp.map(p => powerToEmojiOnly(getPowerId(p))).join("")}
           </div>` : ""}
       </div>
     `;
@@ -469,12 +471,12 @@ function renderStoredRoundSummary(round, index) {
     const remaining = computeRemainingFromRound(round, i);
 
     const gpIcons = (h.powersGuesser || [])
-      .map(powerToEmojiOnly)
-      .filter(Boolean);
+  .map(p => powerToEmojiOnly(getPowerId(p)))
+  .filter(Boolean);
 
     const spIcons = (h.powersSetter || [])
-      .map(powerToEmojiOnly)
-      .filter(Boolean);
+  .map(p => powerToEmojiOnly(getPowerId(p)))
+  .filter(Boolean);
 
     let powersCell = "—";
     if (gpIcons.length || spIcons.length) {
