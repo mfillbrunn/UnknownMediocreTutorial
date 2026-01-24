@@ -878,16 +878,14 @@ function countPositionalDifferences(a, b) {
 
 function startSecretRoulette(words) {
   stopSecretRoulette();
-
   if (!Array.isArray(words) || words.length === 0) return;
-
   rouletteWords = words;
   let i = 0;
-
   rouletteInterval = setInterval(() => {
     const word = rouletteWords[i % rouletteWords.length];
     state.setterDraft = word;
     renderSetterDraft(word);
+    updateUI();
     i++;
   }, 70);
 }
