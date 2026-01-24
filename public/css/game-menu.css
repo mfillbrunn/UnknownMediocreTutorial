@@ -703,13 +703,10 @@ body.menu-mode .app-header {
 
 /* Add AI goes BELOW arrows, centered */
 #addAiBtn {
-  grid-column: 3;
-  grid-row: 2;
-
-  margin-top: 6px;
+  
   font-size: var(--fs-13);
   letter-spacing: 0.6px;
-  justify-self: center;
+
 }
 
 #rankedBadge {
@@ -776,4 +773,21 @@ body.menu-mode .app-header {
   border-radius: 999px;
 }
 
+.lobby-actions {
+  grid-column: 3;
+  grid-row: 2;
 
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  justify-self: center;
+  margin-top: 6px;
+}
+.lobby-actions::before {
+  content: "";
+  width: 1px;
+  height: 22px;
+  background: rgba(255,255,255,0.25);
+  margin-right: 4px;
+}
