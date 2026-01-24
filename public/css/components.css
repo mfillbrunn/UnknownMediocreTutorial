@@ -842,15 +842,15 @@
   font-weight: 700;
 }
 .share-btn {
-  border-color: var(--role-accent);
-  color: var(--role-accent);
+  border-color: #BBDEF0;
+  color: #BBDEF0;
   font-weight: 700;
 }
 
 .share-btn:hover {
   background: color-mix(
     in srgb,
-    var(--role-accent) 15%,
+    #BBDEF0 15%,
     transparent
   );
 }
