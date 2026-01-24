@@ -62,6 +62,7 @@ try {
   console.warn("Could not load allowed secrets. Using allowed guesses fallback.");
   ALLOWED_SECRETS = ALLOWED_GUESSES;
 }
+global.ALLOWED_SECRETS = ALLOWED_SECRETS;
 const WORDS = loadWordList();
 app.get("/api/allowed-secrets", (req, res) => res.json(ALLOWED_SECRETS));
 
