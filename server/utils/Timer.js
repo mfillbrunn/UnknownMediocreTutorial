@@ -4,14 +4,24 @@ const INTERVALS = {};
 
 function startTimer(roomId, state, io, onTimeout) {
   if (INTERVALS[roomId]) return;
+
+  const myGeneration = state._timerGeneration; // 🔑 capture generation
   let lastTick = Date.now();
 
   INTERVALS[roomId] = setInterval(() => {
+    // 🔥 If state was replaced / match restarted, kill timer
+    if (state._timerGeneration !== myGeneration) {
+      stopTimer(roomId);
+      return;
+    }
+
+    if (state.paused) return;
+
     const now = Date.now();
     const dt = Math.floor((now - lastTick) / 1000);
     if (dt <= 0) return;
     lastTick = now;
-    if (state.paused) return;
+
     const roles =
       state.activeTimer === "both"
         ? ["A", "B"]
@@ -33,6 +43,7 @@ function startTimer(roomId, state, io, onTimeout) {
     });
   }, 250);
 }
+
 
 function stopTimer(roomId) {
   if (INTERVALS[roomId]) {
