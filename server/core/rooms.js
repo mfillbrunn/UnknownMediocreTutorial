@@ -57,28 +57,6 @@ function createRoom(socket, userId) {
   return roomId;
 }
 
-function destroyRoom(roomId, io) {
-  const room = rooms[roomId];
-  if (!room) return;
-
-  if (room.status === "dead") return;
-  room.status = "dead";
-
-  // 1. Stop ALL timers
-  stopTimer(roomId);
-  stopAllRoomIntervals(roomId); // force timers, AI loops, etc.
-
-  // 2. Notify clients
-  io?.to(roomId).emit("forceLeaveRoom");
-
-  // 3. Remove sockets
-  io?.in(roomId).socketsLeave(roomId);
-
-  // 4. Remove from registry LAST
-  delete rooms[roomId];
-}
-
-
 /**
  * Join a room OR reattach if userId exists and is disconnected.
  */
