@@ -48,11 +48,11 @@ function mergeFakeFeedback(real, fake) {
 
     switch (pair) {
       case "⬛🟨": return "gray-yellow";
-      case "🟨⬛": return "gray-yellow";
+      case "🟨⬛": return "yellow-gray";
       case "⬛🟩": return "gray-green";
-      case "🟩⬛": return "gray-green";
+      case "🟩⬛": return "green-gray";
       case "🟨🟩": return "yellow-green";
-      case "🟩🟨": return "yellow-green";
+      case "🟩🟨": return "green-yellow";
       default:    return "unknown";
     }
   });
