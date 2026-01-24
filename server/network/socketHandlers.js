@@ -85,48 +85,31 @@ socket.on("quickJoin", ({ userId, name }, cb) => {
 
     // GAME ACTION -----------------------------
 socket.on("gameAction", ({ action }) => {
-  const roomId = socket.data.roomId; // ✅ authoritative
+  const roomId = socket.data.roomId;
+
   console.log("[gameAction]", {
     socketId: socket.id,
     roomId,
-    clientRoomId,
     action: action.type
   });
+
   if (!roomId || !rooms[roomId]) {
-    console.warn("[gameAction] socket not in a valid room", {
-      socketId: socket.id,
-      roomId,
-      clientRoomId
-    });
+    console.warn("[gameAction] socket not in valid room", socket.id);
     socket.emit("forceLeaveRoom");
     return;
   }
-  // Optional but VERY useful during debugging
-  if (clientRoomId && clientRoomId !== roomId) {
-    console.warn("[gameAction] client roomId mismatch", {
-      clientRoomId,
-      roomId
-    });
-  }
+
   const room = rooms[roomId];
   const player = room.players[socket.id];
-  if (!player) {
-    console.warn("[gameAction] player not registered in room", {
-      socketId: socket.id,
-      roomId
-    });
-    socket.emit("forceLeaveRoom");
+
+  if (!player || !player.connected) {
+    console.warn("[gameAction] player not active", socket.id);
     return;
   }
-  if (!player.connected) {
-    console.warn("[gameAction] player not connected", {
-      socketId: socket.id,
-      roomId
-    });
-    return;
-  }
+
   action.playerId = socket.id;
   action.role = player.role;
+
   applyAction(room, room.state, action, player.role, roomId, context);
   emitStateForAllPlayers(roomId, room, io);
 });
