@@ -333,14 +333,21 @@ const roundTimeB = lastRound?.time?.B ?? 0;
 
 html += `
   <p class="round-time-summary">
-    ⏱ <span style="color: var(--setter-color);">
-      ${setterName}: ${formatDuration(roundTimeA)}
-    </span>
-    &nbsp;|&nbsp;
-    <span style="color: var(--guesser-color);">
-      ${guesserName}: ${formatDuration(roundTimeB)}
-    </span>
-  </p>
+  ⏱
+  <span style="color: var(--setter-color); font-weight: 600;">
+    ${setterName}
+  </span>
+  : <span class="time-value">
+    ${formatDuration(roundTimeA)}
+  </span>
+  &nbsp;|&nbsp;
+  <span style="color: var(--guesser-color); font-weight: 600;">
+    ${guesserName}
+  </span>
+  : <span class="time-value">
+    ${formatDuration(roundTimeB)}
+  </span>
+</p>
 `;
 
   const lastEntry = state.history[state.history.length - 1];
@@ -389,7 +396,7 @@ for (let i = 0; i < state.history.length; i++) {
   const gp = h.powersGuesser || [];
   const sp = h.powersSetter || [];
 
-  let powersCell = "—";
+  let powersCell = "";
   if (gp.length || sp.length) {
     powersCell = `
       <div class="summary-powers compact">
