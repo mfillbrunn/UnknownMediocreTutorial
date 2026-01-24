@@ -412,7 +412,6 @@ body.menu-mode .app-header {
   padding: var(--sp-14);
   box-shadow: none;
   position: relative;
-  height: 110px;
   display: block;
   max-width: 100%;
   overflow: hidden;
