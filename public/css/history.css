@@ -65,7 +65,7 @@ width: clamp(38px, 10vw, 54px);
 #draftSetter:has(.history-row:nth-child(2))
 .history-row:first-child
 .history-tile {
-background: color-mix(in srgb, var(--tile-gray) 85%, var(--panel-bg));
+background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   color: var(--tile-gray-text);
   border-color: rgba(255,255,255,0.14);
   box-shadow: none;
@@ -97,10 +97,8 @@ background: color-mix(in srgb, var(--tile-gray) 85%, var(--panel-bg));
 #draftSetter:has(.history-row:nth-child(2))
 .history-row:last-child
 .history-tile {
-  border-color: var(--role-accent);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 70%, transparent);
-   
-    background: color-mix(in srgb, var(--role-accent), var(--panel-bg) 85%);
+  border-color: var(--role-accent);   
+    background: color-mix(in srgb, var(--role-accent), var(--panel-bg) 95%);
 }
 /* Setter: exactly one draft row → it is active */
 .theme-setter
@@ -112,9 +110,8 @@ background: color-mix(in srgb, var(--tile-gray) 85%, var(--panel-bg));
 }
 
 .theme-guesser #draftGuesser .history-tile {
-  background: color-mix(in srgb, var(--role-accent), var(--panel-bg) 85%);
+  background: color-mix(in srgb, var(--role-accent), var(--panel-bg) 95%);
   border-color: var(--role-accent);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 70%, transparent);
 }
 
 /* Draft tiles when unusable */
