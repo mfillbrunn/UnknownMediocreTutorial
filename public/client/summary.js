@@ -282,10 +282,10 @@ if (guesser.length) {
 /////////COMPETITIVE  ROUND SUMMARY
 ////////////////////////////
 function renderRoundSummary(container) {
-
+  let html = ""
   // Competitive mode: Next Round button
   if (state.gameOverView === "round" && state.canNextRound) {
-    let html = `
+     html += `
       <div class="summary-actions">
         <button id="nextRoundBtn" class="primary-btn">
           Next Round
@@ -293,8 +293,7 @@ function renderRoundSummary(container) {
       </div>
     `;
   }
-  html += `<h3>Round Summary</h3>`;
-
+html += `<h3>Round Summary</h3>`;
   const setterPlayerId = Object.keys(state.roles || {})
   .find(id => state.roles[id] === "A");
 
