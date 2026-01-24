@@ -52,13 +52,6 @@ width: clamp(38px, 10vw, 54px);
 .history-tile.violation {
   color: #fff !important;
 }
-/* Stagger tiles automatically */
-.history-row .history-tile:nth-child(1) { animation-delay: 0.00s; }
-.history-row .history-tile:nth-child(2) { animation-delay: 0.08s; }
-.history-row .history-tile:nth-child(3) { animation-delay: 0.16s; }
-.history-row .history-tile:nth-child(4) { animation-delay: 0.24s; }
-.history-row .history-tile:nth-child(5) { animation-delay: 0.32s; }
-
 /* Only when there are TWO draft rows:
    style the TOP one as guesser-owned */
 .theme-setter
@@ -294,11 +287,13 @@ body.hide-constraints .constraint-row {
   border: 1px solid rgba(70,140,255,.35);
   box-shadow: 0 0 6px rgba(70,140,255,.35);
 }
-.theme-guesser .history-row .history-tile:nth-child(1) { animation-delay: 480ms; }
-.theme-guesser .history-row .history-tile:nth-child(2) { animation-delay: 360ms; }
-.theme-guesser .history-row .history-tile:nth-child(3) { animation-delay: 240ms; }
-.theme-guesser .history-row .history-tile:nth-child(4) { animation-delay: 120ms; }
-.theme-guesser .history-row .history-tile:nth-child(5) { animation-delay:   0ms; }
+/* 5-letter Wordle row — left to right swoosh */
+.history-row .history-tile:nth-child(1) { animation-delay:   0ms; }
+.history-row .history-tile:nth-child(2) { animation-delay: 120ms; }
+.history-row .history-tile:nth-child(3) { animation-delay: 240ms; }
+.history-row .history-tile:nth-child(4) { animation-delay: 360ms; }
+.history-row .history-tile:nth-child(5) { animation-delay: 480ms; }
+
 
 /* Wordle-style feedback colors */
 .tile-green  { background: var(--tile-green)  !important; color: var(--tile-green-text) !important; }
