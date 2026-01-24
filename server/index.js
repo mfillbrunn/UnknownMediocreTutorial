@@ -15,29 +15,7 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY // IMPORTANT: service role
 );
-// ------------------------------
-// Load power engine + all plugin powers
-// ------------------------------
-const powerEngine = require("./powers/powerEngineServer");
-require("./powers/powers/hideTileServer");
-require("./powers/powers/confuseColorsServer");
-require("./powers/powers/countOnlyServer");
-require("./powers/powers/forceGuessServer");
-require("./powers/powers/blindGuessServer");
-require("./powers/powers/revealGreenServer");
-require("./powers/powers/freezeSecretServer");
-require("./powers/powers/rouletteSecretServer");
-require("./powers/powers/suggestGuessServer");
-require("./powers/powers/suggestSecretServer");
-require("./powers/powers/forceTimerServer");
-require("./powers/powers/revealHistoryServer");
-require("./powers/powers/blindSpotServer");
-require("./powers/powers/stealthGuessServer");
-require("./powers/powers/magicModeServer.js");
-require("./powers/powers/vowelRefreshServer.js");
-require("./powers/powers/nonsenseServer.js");
-require("./powers/powers/revealLetterServer.js");
-require("./powers/powers/assassinWordServer.js");
+
 
 // ------------------------------
 const app = express();
@@ -90,7 +68,29 @@ const context = {
   ALLOWED_SECRETS,
   WORDS
 };
-
+// ------------------------------
+// Load power engine + all plugin powers
+// ------------------------------
+const powerEngine = require("./powers/powerEngineServer");
+require("./powers/powers/hideTileServer");
+require("./powers/powers/confuseColorsServer");
+require("./powers/powers/countOnlyServer");
+require("./powers/powers/forceGuessServer");
+require("./powers/powers/blindGuessServer");
+require("./powers/powers/revealGreenServer");
+require("./powers/powers/freezeSecretServer");
+require("./powers/powers/rouletteSecretServer");
+require("./powers/powers/suggestGuessServer");
+require("./powers/powers/suggestSecretServer");
+require("./powers/powers/forceTimerServer");
+require("./powers/powers/revealHistoryServer");
+require("./powers/powers/blindSpotServer");
+require("./powers/powers/stealthGuessServer");
+require("./powers/powers/magicModeServer.js");
+require("./powers/powers/vowelRefreshServer.js");
+require("./powers/powers/nonsenseServer.js");
+require("./powers/powers/revealLetterServer.js");
+require("./powers/powers/assassinWordServer.js");
 // Register socket event handlers (create/join room, game actions)
 registerSocketHandlers(io, context);
 
