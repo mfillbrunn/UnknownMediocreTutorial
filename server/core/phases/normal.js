@@ -96,6 +96,7 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
       clearActivePowers(state);
       if (state.powers && state.powers.stealthGuessActive) {state.powers.stealthGuessActive = false;}
       if (state.powers && state.powers.magicModeActive) {state.powers.magicModeActive = false;}
+      if (state.powers && state.powers.rouletteSecretActive) {state.powers.rouletteSecretActive = false;}  
       state.activeTimer = state.guesser;
       if (state.timeControl.mode === "chess") {
         addIncrement(state, state.setter);
@@ -205,7 +206,7 @@ function clearForceTimer(roomId, state) {
   delete state.powers.forceTimerArmed;
 }
 const ROUND_SCOPED_ACTIVE_POWERS = new Set([
-  "freezeActive", "stealthGuessActive", "confuseColorsActive","magicModeActive",  "countOnlyActive", "nonsenseActive"
+  "freezeActive", "stealthGuessActive", "confuseColorsActive","magicModeActive",  "countOnlyActive", "nonsenseActive", "rouletteSecretActive"
 ]);
 
 function clearActivePowers(state) {
