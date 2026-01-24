@@ -6,6 +6,7 @@ const { emitStateForAllPlayers } = require("../utils/emitState");
 const { emitLobbyEvent } = require("../utils/emitLobby");
 const { stopTimer } = require("../utils/Timer");
 const { startGameTimer } = require("../core/phases/normal");
+const {   destroyRoom, stopAllRoomIntervals } = require("../utils/teardown");
 
 module.exports = function registerSocketHandlers(io, context) {
   const { ALLOWED_GUESSES, ALLOWED_SECRETS } = context;
