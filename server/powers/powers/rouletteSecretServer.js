@@ -15,7 +15,7 @@ engine.registerPower("rouletteSecret", {
     if (state.powers.rouletteSecretUsed) return;
     state.powers.rouletteSecretUsed = true;
     state.powers.rouletteSecretActive = true;
-    state.powers.rouletteSecretFeasible = ALLOWED_SECRETS.filter(secret =>
+    state.powers.rouletteSecretFeasible = global.ALLOWED_SECRETS.filter(secret =>
       isConsistentWithHistory(state.history, secret, state)
     );
     io.to(roomId).emit("powerUsed", { type: "rouletteSecret" });
