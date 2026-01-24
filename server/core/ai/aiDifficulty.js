@@ -19,27 +19,27 @@ const LEVELS = {
   2: {
     guessParams: {
       uninformed: 0,
-      feasible:   0.1,
-      optimal:    0.8,
-      optimal2: 0.1
+      feasible:   0,
+      optimal:    1,
+      optimal2: 0
     },
     setterParams: {
-    maxSecretChanges: 3,
-      maxSecretsEvaluated: 50,
-      randomness: 0.2, 
-      pOverlap: 0.4 ,
+    maxSecretChanges: 4,
+      maxSecretsEvaluated: 200,
+      randomness: 0, 
+      pOverlap: 1 ,
       pReductionGivenNoOverlap: 0.5 
     }
   },
   3: {
     guessParams: {
       uninformed: 0,
-      feasible:   0.1,
-      optimal:    0.1,
-      optimal2: 0.8
+      feasible:   0,
+      optimal:    0,
+      optimal2: 1
     },
     setterParams: {
-   maxSecretChanges: 6,
+   maxSecretChanges: 4,
       maxSecretsEvaluated: 200,
       randomness: 0, 
       pOverlap: 1 ,
