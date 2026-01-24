@@ -542,12 +542,9 @@ function submitSetterNew() {
     toast("Incompatible with previous feedback");
     //Check violations
     const violations = findConsistencyViolations(state.history, w);
-    const { secretIndices } = violations || {};
-    if (secretIndices){
+    const { secretIndices } = violations;    
+    if (secretIndices.size > 0) {
       flashConsistencyViolations(secretIndices);
-      if (violations.secretIndices.size > 0 ||violations.history.length > 0) {
-        flashConsistencyViolations(violations);
-      }
     }
     return;
   }  
