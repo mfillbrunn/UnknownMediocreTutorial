@@ -82,6 +82,7 @@ require("./powers/powers/freezeSecretServer");
 require("./powers/powers/rouletteSecretServer");
 require("./powers/powers/suggestGuessServer");
 require("./powers/powers/suggestSecretServer");
+require("./powers/powers/fakeFeedbackServer");
 require("./powers/powers/forceTimerServer");
 require("./powers/powers/revealHistoryServer");
 require("./powers/powers/blindSpotServer");
