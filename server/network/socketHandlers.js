@@ -127,7 +127,6 @@ socket.on("disconnect", () => {
   if (authoritativeSocketId && authoritativeSocketId !== socket.id) {console.log("[DISCONNECT] ignored stale socket", socket.id, "authoritative is", authoritativeSocketId);
     continue;
   }
-
     player.connected = false;
     player.disconnectedAt = Date.now();
     if (room.state.roundStartTime && room.state.activeTimer) {
@@ -144,7 +143,7 @@ socket.on("disconnect", () => {
     }
     room.state.paused = true;
     if (room.state.timeControl?.enabled) {
-      stopTimer(roomId);
+      stopAllRoomIntervals(roomId, room);
       room.state.isTimerRunning = false;
     };
 
