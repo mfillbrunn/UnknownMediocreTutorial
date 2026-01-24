@@ -296,6 +296,5 @@ module.exports = {
   cleanupEmptyRooms,
   findLastOpenRoom,
   cleanupDisconnectedPlayers,
-  resetRoomState,
-  addAIPlayer
+   addAIPlayer
 };
