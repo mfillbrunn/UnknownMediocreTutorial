@@ -175,12 +175,18 @@
   }
 }
 @keyframes feedback-slide {
-  from {
-    background-position: 0% 50%;
-  }
-  to {
-    background-position: 200% 50%;
-  }
+  /* Stay on A */
+  0%   { background-color: var(--fb-a); }
+  40%  { background-color: var(--fb-a); }
+
+  /* Transition A → B */
+  50%  { background-color: var(--fb-b); }
+
+  /* Stay on B */
+  90%  { background-color: var(--fb-b); }
+
+  /* Transition B → A happens implicitly */
+  100% { background-color: var(--fb-a); }
 }
 
 
