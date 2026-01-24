@@ -155,7 +155,7 @@ body.blind-guess .key:hover {
    =============================== */
 
 .tile-feedback-slide {
-animation: feedback-toggle 4.5s ease-in-out infinite;
+animation: feedback-slide 4.5s ease-in-out infinite;
 }
 
 .tile-gray-yellow {
