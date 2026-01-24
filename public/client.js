@@ -468,7 +468,7 @@ function applyPreviewFeedback(fbArray) {
 }
 ///SETTER INPUT
 function handleSetterInput(event) {
-  if (!state.powers?.freezeActive || !state.powers?.secretRouletteActive){
+  if (!state.powers?.freezeActive){
     const isNormalSetterTurn =  myRole === state.setter && state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess;
     const isSimultaneousSecretEntry = state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted;
     if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
@@ -624,7 +624,6 @@ function handleGuesserInput(event) {
         toast("5 letters!");
         return;
       }
-    console.log(state.powers.nonsenseActive);
     const guessMakesSense = state.powers.nonsenseActive || window.ALLOWED_GUESSES.has(localGuesserDraft.toUpperCase());
     if (!guessMakesSense) {
       shakeDraftRow("guesser");
@@ -877,7 +876,6 @@ function countPositionalDifferences(a, b) {
 
 
 function startSecretRoulette(words) {
-  stopSecretRoulette();
   if (!Array.isArray(words) || words.length === 0) return;
   rouletteWords = words;
   let i = 0;
