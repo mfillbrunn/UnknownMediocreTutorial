@@ -54,9 +54,8 @@ function renderMenuAccountStatus () {
   const name = p?.username || window.currentUser.email;
 
   const elo = p
-    ? `Elo:
-       🚀 ${p.rating_bullet}
-       ⚡⚡ ${p.rating_blitz}
+    ? `🚀 ${p.rating_bullet}
+       ⚡ ${p.rating_blitz}
        🧠 ${p.rating_deep}`
     : "Loading rating…";
 
