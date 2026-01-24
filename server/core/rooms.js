@@ -146,6 +146,7 @@ function removePlayer({ roomId, socketId, reason, io, context }) {
   if (!player) return { ok: false };
   const role = player.role;
   const userId = player.userId;
+  const wasHost = room.state.hostUserId === userId;
   const remainingPlayers = Object.entries(room.players)
     .filter(([id]) => id !== socketId)
     .map(([_, p]) => p);
@@ -155,6 +156,7 @@ function removePlayer({ roomId, socketId, reason, io, context }) {
     forceCloseRoom(roomId, room, io);
     return { ok: true, deleted: true };
   }
+  
   delete room.players[socketId];
   delete room.state.roles[socketId];
   delete room.state.ready?.[socketId];
@@ -170,6 +172,17 @@ function removePlayer({ roomId, socketId, reason, io, context }) {
     role,
     reason
   });
+   if (wasHost) {
+    const newHost = Object.values(room.players).find(p => !p.isAI);
+    room.state.hostUserId = newHost?.userId ?? null;
+
+    if (newHost && io) {
+      io.to(roomId).emit("lobbyEvent", {
+        type: "hostChanged",
+        userId: newHost.userId
+      });
+    }
+  }
   if (!room.state.gameOver && room.state.phase !== "lobby") {
     stopTimer(roomId);
     room.state.paused = true;
