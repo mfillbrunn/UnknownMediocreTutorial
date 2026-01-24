@@ -498,12 +498,7 @@ body.menu-mode .app-header {
   background: #20222a;
 }
 
-/* Add AI button */
-.secondary-btn.small {
-  background: #1a1b20;
-  border: 1px solid #2a2c34;
-  color: #ccc;
-}
+
 
 .secondary-btn.small:hover {
   background: #20222a;
@@ -692,8 +687,11 @@ body.menu-mode .app-header {
   letter-spacing: 0.6px;
 
 }
-
+/* Add AI button */
 .secondary-btn.small {
+  background: #1a1b20;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ccc;
   height: 32px;
   padding: 0 14px;
 
