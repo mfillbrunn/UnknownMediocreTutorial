@@ -4,6 +4,7 @@ const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../util
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const CompetitiveMode = require("../modes/competitiveMode");
 const { stopTimer,resetRoundTimer } = require("../../utils/Timer");
+const { stopAllRoomIntervals } = require("../../utils/teardown");
 const {startGameTimer} = require("./normal");
 const { createInitialState,  createInitialPowers} = require("../stateFactory");
 
@@ -168,6 +169,7 @@ if (action.type === "SET_POWER_COUNT") {
           }             
           if (readyHumans.length === 2 || (readyHumans.length === humanPlayers.length && aiPlayers.length === 1)) {
              //refresh state
+             stopAllRoomIntervals(roomId, room);
              const oldState = state;                  
              const freshState = createInitialState();
              freshState.playerNames = oldState.playerNames;
