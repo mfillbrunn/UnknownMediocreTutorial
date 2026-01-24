@@ -180,6 +180,7 @@ if (action.type === "SET_POWER_COUNT") {
              for (const [playerId, player] of Object.entries(room.players)) {
                   freshState.roles[playerId] = player.role;
              }
+             freshState._timerGeneration = (oldState._timerGeneration || 0) + 1;
              room.state = freshState;
              state = freshState; 
               if (state.ranked) {
