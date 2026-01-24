@@ -1,6 +1,8 @@
 // /powers/powers/fakeFeedback.js
 const engine = require("../powerEngineServer.js");
 const { isConsistentWithHistory } = require("../../game-engine/history");
+const { scoreGuess } = require("../../game-engine/scoring");
+
 
 engine.registerPower("fakeFeedback", {
   apply(state, action, roomId, io) {
@@ -14,7 +16,16 @@ engine.registerPower("fakeFeedback", {
       do {
         state.powers.fakeFeedbackSecret = fakesecret[Math.floor(Math.random() * fakesecret.length)];
       } while (state.powers.fakeFeedbackSecret === state.secret);
-    }
+    }    
    io.to(roomId).emit("powerUsed", { type: "fakeFeedback" });
-  }
+  },
+ postScore(state, entry) {
+   if (!state.powers.fakeFeedbackActive) {return;}
+   const real  = scoreGuess(state.secret, state.pendingGuess);
+   const fake = scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess);
+ entry.fakeFeedback = {
+    real,   // ["🟩","⬛",...]
+    fake    // ["🟨","⬛",...]
+  };
+   entry.fbGuesser = ["?","?","?","?","?"];
 });
