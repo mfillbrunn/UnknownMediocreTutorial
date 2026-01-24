@@ -1,18 +1,26 @@
 ///Main updating function
 
 ///Calculate remaining words
-window.computeRemainingAfterIndex = function (idx) {
+
+window.computeRemainingAfterIndexFromState = function (idx, s) {
   const words = window.ALLOWED_SECRETS;
-  if (!state || !state.history) return 0;
-  const partialHistory = state.history.slice(0, idx + 1);
+  if (!s || !s.history) return 0;
+
+  const partialHistory = s.history.slice(0, idx + 1);
   let count = 0;
+
   for (const w of words) {
-    if (isConsistentWithHistory(partialHistory, w, state)) {
+    if (isConsistentWithHistory(partialHistory, w, s)) {
       count++;
     }
   }
   return count;
 };
+
+window.computeRemainingAfterIndex = function (idx) {
+  return window.computeRemainingAfterIndexFromState(idx, state);
+};
+
 
 window.computeRemainingNew = function (newWord) {
   const words = window.ALLOWED_SECRETS;
