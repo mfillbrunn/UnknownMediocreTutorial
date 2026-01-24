@@ -608,7 +608,6 @@ body.menu-mode .app-header {
 }
 
 #rankedBadge.ranked-off {
-  background: rgba(255,255,255,0.18);
   color: #ffffff;
   border: 1px solid rgba(255,255,255,0.25);
 }
@@ -691,7 +690,7 @@ body.menu-mode .app-header {
 .secondary-btn.small {
   background: #1a1b20;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #ccc;
+  color: var(--text);
   height: 32px;
   padding: 0 14px;
 
