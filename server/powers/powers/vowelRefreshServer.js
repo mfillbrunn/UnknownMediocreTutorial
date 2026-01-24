@@ -45,6 +45,9 @@ engine.registerPower("vowelRefresh", {
         entry.fbGuesser[i] = "";
       }
     }
+    state.powers.rouletteSecretFeasible = global.ALLOWED_SECRETS.filter(secret =>
+      isConsistentWithHistory(state.history, secret, state)
+    );
     // Emit UI-only info to both players
     io.to(roomId).emit("vowelRefreshInfo", {
       vowels: Array.from(resetVowels)
