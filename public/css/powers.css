@@ -150,3 +150,40 @@ body.blind-guess .key:hover {
   z-index: 3;
 }
 
+/* ===============================
+   FAKE FEEDBACK
+   =============================== */
+.tile-feedback-pulse {
+  animation: feedback-pulse 1.6s ease-in-out infinite;
+}
+.tile-gray-yellow {
+  --fb-a: var(--tile-gray);
+  --fb-b: var(--tile-yellow);
+}
+
+.tile-yellow-gray {
+  --fb-a: var(--tile-yellow);
+  --fb-b: var(--tile-gray);
+}
+
+.tile-gray-green {
+  --fb-a: var(--tile-gray);
+  --fb-b: var(--tile-green);
+}
+
+.tile-green-gray {
+  --fb-a: var(--tile-green);
+  --fb-b: var(--tile-gray);
+}
+
+.tile-yellow-green {
+  --fb-a: var(--tile-yellow);
+  --fb-b: var(--tile-green);
+}
+
+.tile-green-yellow {
+  --fb-a: var(--tile-green);
+  --fb-b: var(--tile-yellow);
+}
+
+
