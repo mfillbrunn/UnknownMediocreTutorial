@@ -96,11 +96,6 @@ body.menu-mode .app-header {
   letter-spacing: 0.6px;
 }
 
-.role-name {
-  margin-top: var(--sp-6);
-  font-size: var(--fs-18);
-}
-
 .timer-select {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -427,6 +422,10 @@ body.menu-mode .app-header {
   padding: var(--sp-14);
   box-shadow: none;
   position: relative;
+  height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 /* Role headers */
@@ -442,6 +441,13 @@ body.menu-mode .app-header {
   font-family: var(--font-mono);
   font-size: var(--fs-16);
   letter-spacing: 0.5px;
+   margin-top: var(--sp-6);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  display: block;
 }
 
 /* Setter / Guesser accents = thin, restrained */
@@ -461,7 +467,9 @@ body.menu-mode .app-header {
   border-radius: var(--r-6);
   opacity: 0.8;
 }
-
+.role-card {
+  min-width: 240px;
+}
 .role-card.setter .host-badge {
   background: var(--setter-color);
   color: #000;
@@ -720,4 +728,48 @@ body.menu-mode .app-header {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+.lobby-status-slot {
+  height: 32px;          /* fixed height */
+  margin-bottom: 10px;  /* spacing below header */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lobby-status-slot {
+  height: 32px;          /* fixed height */
+  margin-bottom: 10px;  /* spacing below header */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.waiting-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.waiting-indicator.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.dots span {
+  width: 6px;
+  height: 6px;
+  background: #aaa;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse 1.4s infinite ease-in-out both;
+}
+
+.dots span:nth-child(1) { animation-delay: 0s; }
+.dots span:nth-child(2) { animation-delay: 0.2s; }
+.dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse {
+  0%, 80%, 100% { opacity: 0.3; }
+  40% { opacity: 1; }
 }
