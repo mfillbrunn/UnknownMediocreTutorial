@@ -52,11 +52,6 @@ createPowerButton(id, label) {
     for (const id in this.powers) {
       const mod = this.powers[id];
       if (mod.uiEffects) mod.uiEffects(state, role);
-       if (mod.buttonEl && window.POWER_RULES[id]) {
-           const allowed = window.POWER_RULES[id].allowed(state, role);
-           mod.buttonEl.disabled = !allowed;
-           mod.buttonEl.classList.toggle("disabled-btn", !allowed);
-       }
     }
 
     // Then centralise button enabling / "used" logic
@@ -84,8 +79,10 @@ createPowerButton(id, label) {
 
        const rule = window.POWER_RULES?.[id];
       const notAllowedByRule =
-      rule && typeof rule.allowed === "function" && !rule.allowed(state, role);
-      
+        rule && typeof rule.allowed === "function"
+          ? rule.allowed(state, role) !== true
+          : false;
+
       // Role restriction (setter powers only visible/active for setter, etc.)
       const wrongRole =
         (mod.role === "setter" && !isSetter) ||
