@@ -47,6 +47,7 @@ function resetKeyboards() {
   const periodMs = 4500;
   const phaseMs = performance.now() % periodMs;
   document.documentElement.style.setProperty("--ff-phase", `${phaseMs / 1000}s`);
+  document.documentElement.style.setProperty("--pv-phase", `${phaseMs / 1000}s`);
 })();
 
 
