@@ -2,31 +2,31 @@ const tutorialSteps = [
   {
     title: "How the game works",
     description:
-      "One player sets a secret word. The other player tries to guess it using feedback.",
+      "One player - the setter - sets a secret word. The other player - the guesser - tries to guess it using feedback. The first round of each game will be simultaneous, so both players type in a word. Afterwards, they take turns.",
     image: "/./assets/menu-bg.jpg"
   },
   {
     title: "Guesser view",
     description:
-      "This is the guesser’s screen during play.",
+      "This is the guesser’s screen during play. The guesser role is similar to other wordle games.",
     image: "/./assets/tutorial/guesser.jpg"
   },
   {
     title: "Guesser view (annotated)",
     description:
-      "Feedback colors, keyboard hints, and timers explained.",
+      "The guesser players can use powers to help them find out the word easier.",
     image: "/./assets/tutorial/guesser_tips.jpg"
   },
   {
     title: "Setter view",
     description:
-      "The setter chooses the secret word and sees extra information.",
+      "The setter can change the secret word every round, but it has to fit all previous rounds.",
     image: "/./assets/tutorial/setter.jpg"
   },
   {
     title: "Setter view (annotated)",
     description:
-      "Some UI elements are only visible to the setter.",
+      "Some UI elements are only visible to the setter. The setter's powers typically hinder the guesser.",
     image: "/./assets/tutorial/setter_tips.jpg"
   }
 ];
