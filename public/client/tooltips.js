@@ -46,12 +46,12 @@ function buildPowerInfoPanel(state, role) {
   }
 
   if (sections.setter.length) {
-    panel.appendChild(makeInfoHeader("Setter Powers", "setter"));
+    panel.appendChild(makeInfoHeader("Spy Powers", "setter"));
     sections.setter.forEach(r => panel.appendChild(r));
   }
 
   if (sections.guesser.length) {
-    panel.appendChild(makeInfoHeader("Guesser Powers", "guesser"));
+    panel.appendChild(makeInfoHeader("Inspector Powers", "guesser"));
     sections.guesser.forEach(r => panel.appendChild(r));
   }
 }
