@@ -209,5 +209,22 @@ body.blind-guess .key:hover {
   --fb-b-text: var(--tile-yellow-text);
 }
 
+.tile-has-secondary {
+  position: relative;
+}
+
+.tile-has-secondary::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 30%;
+  height: 30%;
+  border-radius: 2px;
+}
+
+.secondary-gray::after   { background: var(--tile-gray); }
+.secondary-yellow::after { background: var(--tile-yellow); }
+.secondary-green::after  { background: var(--tile-green); }
 
 
