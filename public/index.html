@@ -27,6 +27,8 @@
   <link rel="stylesheet" href="css/account.css">    
   <!-- 11. Leaderboard-->
   <link rel="stylesheet" href="css/leaderboard.css">
+  <!-- 12. Tutorial>
+  <link rel="stylesheet" href="css/tutorial.css">
   <!-- Last. Mobile phone adjustments-->
   <link rel="stylesheet" href="css/mobile.css">
 
@@ -53,8 +55,7 @@
               <button id="quickPlayBtn" class="menu-btn primary">Quick Play</button>
               <button id="accountBtn" class="menu-btn">Account</button>
               <button id="leaderboardBtn" class="menu-btn">Leaderboard</button>
-              <button class="menu-btn">Options</button>
-              <button class="menu-btn">How to Play</button>
+              <button id="howToPlayBtn" class="menu-btn">How to Play</button>
             </div>
           </div>
         </section>
@@ -264,7 +265,30 @@
     </div>   
   </div>
 </section>
-    <!-- ========== MENU ========== -->
+   
+        <!-- Tutorial Overlay -->
+<section id="tutorialOverlay" class="tutorial hidden">
+  <div class="tutorial-card">
+
+    <div class="tutorial-image">
+      <img id="tutorialImage" src="" alt="Tutorial step">
+    </div>
+
+    <div class="tutorial-text">
+      <h2 id="tutorialTitle"></h2>
+      <p id="tutorialDescription"></p>
+    </div>
+
+    <div class="tutorial-controls">
+      <button id="tutorialPrev" disabled>Back</button>
+      <button id="tutorialNext">Next</button>
+      <button id="tutorialClose">Skip</button>
+    </div>
+
+  </div>
+</section>       
+        
+        <!-- ========== MENU ========== -->
     <section id="menu" class="screen">
        <h2 class="screen-title">Summary</h2>
        <div class="panel">          
