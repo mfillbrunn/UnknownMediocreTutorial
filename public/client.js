@@ -282,6 +282,7 @@ onStateUpdate(newState => {
   updateWaitingIndicator();
   updatePowerInfoState(state);
   updateTimerVisibility();
+  updateAppHeader(state);
   updateUI();
   maybeStartRouletteFromState(state);
   if (state.phase === "simultaneous"){renderSetterRemainingBox(state, myRole, "");}
@@ -935,4 +936,27 @@ function maybeStartRouletteFromState(state) {
     return;
   }
   startSecretRoulette(state.powers.rouletteSecretFeasible);
+}
+
+function updateAppHeader(state) {
+  const roomCodeEl = document.querySelector(".header-room-code");
+  const roleBadgeEl = document.querySelector(".header-role-badge");
+
+  if (!roomCodeEl || !roleBadgeEl || !state) return;
+
+  roomCodeEl.textContent = state.roomCode || "";
+
+  let roleLabel = "";
+  let roleClass = "";
+
+  if (myRole === state.setter) {
+    roleLabel = "SPY";
+    roleClass = "role-setter";
+  } else if (myRole === state.guesser) {
+    roleLabel = "INSPECTOR";
+    roleClass = "role-guesser";
+  }
+
+  roleBadgeEl.textContent = roleLabel;
+  roleBadgeEl.className = `role-badge header-role-badge ${roleClass}`;
 }
