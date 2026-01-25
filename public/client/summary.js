@@ -365,7 +365,7 @@ html += `
     html += `
       <p class="assassin-summary">
         ☠ ${guesserName} guessed the assassin word
-        "${lastEntry.guess.toUpperCase()}"
+        "${state.powers.assassinWord.toUpperCase()}"
       </p>
     `;
   }
