@@ -893,6 +893,7 @@ function countPositionalDifferences(a, b) {
 
 function startSecretRoulette(words) {
   if (!Array.isArray(words) || words.length === 0) return;
+  toast("Push enter when you are ready to submit!");
   rouletteWords = words;
   let i = 0;
   rouletteInterval = setInterval(() => {
