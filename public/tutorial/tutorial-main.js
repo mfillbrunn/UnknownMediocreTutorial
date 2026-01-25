@@ -48,15 +48,17 @@ const prevBtn = document.getElementById("tutorialPrev");
 const closeBtn = document.getElementById("tutorialClose");
 
 function showTutorial() {
+  document.getElementById("startupScreen")?.classList.add("disabled");
   overlay.classList.remove("hidden");
   tutorialIndex = 0;
   renderStep();
 }
 
 function hideTutorial() {
+  document.getElementById("startupScreen")?.classList.remove("disabled");
   overlay.classList.add("hidden");
-  localStorage.setItem("tutorialSeen", "1");
 }
+
 
 function renderStep() {
   const step = tutorialSteps[tutorialIndex];
