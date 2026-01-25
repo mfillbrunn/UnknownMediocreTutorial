@@ -38,8 +38,7 @@ if (!isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry
                       }
         }
   return classes.join(" ");
-}
-  } else if (isSetter && Array.isArray(safeEntry.fakeFeedback)) {
+} else if (isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry2) {
     classes.push(...getSetterTileClasses(safeEntry, guessIndex));
     return classes.join(" ");
   }
@@ -168,14 +167,6 @@ window.renderHistory = function ({ state, container, role }) {
 };
 
 ///Helper for uncertain feedback
-
-function fbToClass (fb) {
-    if (fb === "🟩") return "green";
-    if (fb === "🟨") return "yellow";
-    if (fb === "🟦") return "blue";
-    if (fb === "⬛") return "gray";
-    return null;
-  }
 
 function fbToClass(fb) {
   if (fb === "🟩") return "green";
