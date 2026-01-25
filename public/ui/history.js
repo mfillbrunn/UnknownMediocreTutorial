@@ -162,7 +162,7 @@ window.renderHistory = function ({ state, container, role }) {
 
 ///Helper for uncertain feedback
 
-function fbToClass (fb) => {
+function fbToClass (fb) {
     if (fb === "🟩") return "green";
     if (fb === "🟨") return "yellow";
     if (fb === "🟦") return "blue";
