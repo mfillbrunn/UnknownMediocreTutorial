@@ -77,7 +77,7 @@ rouletteSecret: {
 
   revealGreen: {
     label: "Sneak Letter",
-    desc: "Reveals one letter of the current secret — the setter may still change it.",
+    desc: "Reveals one letter of the current secret — the spy may still change it.",
     icon: "peek-letter",
     emoji: "👁️",
     color: "#22C55E"
@@ -116,7 +116,7 @@ rouletteSecret: {
 
   stealthGuess: {
     label: "Stealth Guess",
-    desc: "The setter cannot see the next guess.",
+    desc: "The spy cannot see the next guess.",
     icon: "ghost",
     emoji: "👻",
     color: "#4B5563"
