@@ -161,7 +161,8 @@ body.blind-guess .key:hover {
   --fb-a-text: var(--tile-gray-text);
   --fb-b-text: var(--tile-gray-text);
 
-  animation: feedback-slide 4.5s ease-in-out infinite;
+  animation: feedback-slide var(--ff-period) ease-in-out infinite;
+  animation-delay: calc(-1 * var(--ff-phase));
 }
 .tile-gray-yellow {
   --fb-a-bg: var(--tile-gray);
