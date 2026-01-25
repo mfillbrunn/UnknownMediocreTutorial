@@ -126,26 +126,14 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 .theme-setter
 #draftSetter
 .pending-guess
-.history-tile.preview-green {
-  color: var(--tile-green-text) !important;
-  border: none;
-  box-shadow: none;
-  opacity: 0.9;
-   animation: preview-green-pulse 2.2s  ease-in-out infinite;
-   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
-}
-
+.history-tile.preview-green,
 .theme-setter
 #draftSetter
 .pending-guess
 .history-tile.preview-yellow {
-  color: var(--tile-yellow-text) !important;
-  border: none;
-  box-shadow: none;
-  opacity: 0.9;
-   animation: preview-yellow-pulse 2.2s ease-in-out infinite;
-   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+  animation: preview-feedback 2.2s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
 }
+
 
 .theme-setter
 #draftSetter
