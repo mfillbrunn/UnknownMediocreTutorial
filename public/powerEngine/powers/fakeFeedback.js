@@ -42,13 +42,8 @@ function mergeFakeFeedback(real, fake) {
     const f = fake[i];
 
     if (r === f) return r;
-    let pair;
-    if (Math.random()>0.5){
+    let pair;    
     pair = r + f;
-    }else{
-    pair =  f +r;
-    }
-
     switch (pair) {
       case "⬛🟨": return "gray-yellow";
       case "🟨⬛": return "yellow-gray";
