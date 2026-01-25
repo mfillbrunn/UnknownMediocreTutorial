@@ -227,4 +227,38 @@ body.blind-guess .key:hover {
 .secondary-yellow::after { background: var(--tile-yellow); }
 .secondary-green::after  { background: var(--tile-green); }
 
+.tile-feedback-slide {
+  position: relative;
+  overflow: hidden;
+}
+
+.tile-feedback-slide::before,
+.tile-feedback-slide::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transition: none;
+}
+
+.tile-feedback-slide::before {
+  background: var(--fb-a-bg);
+  color: var(--fb-a-text);
+  animation: fb-fade-a 4.5s infinite ease-in-out;
+}
+
+.tile-feedback-slide::after {
+  background: var(--fb-b-bg);
+  color: var(--fb-b-text);
+  animation: fb-fade-b 4.5s infinite ease-in-out;
+}
+
+@keyframes fb-fade-a {
+  0%, 40%, 100% { opacity: 1; }
+  50%, 90%      { opacity: 0; }
+}
+
+@keyframes fb-fade-b {
+  0%, 40%, 100% { opacity: 0; }
+  50%, 90%      { opacity: 1; }
+}
 
