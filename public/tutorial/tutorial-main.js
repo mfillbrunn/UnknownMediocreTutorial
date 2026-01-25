@@ -48,13 +48,20 @@ const prevBtn = document.getElementById("tutorialPrev");
 const closeBtn = document.getElementById("tutorialClose");
 
 function showTutorial() {
+  document.body.style.overflow = "hidden";
   document.getElementById("startupScreen")?.classList.add("disabled");
   overlay.classList.remove("hidden");
+
+  img.style.opacity = 1;
+  img.style.transform = "scale(1)";
+
   tutorialIndex = 0;
   renderStep();
 }
 
+
 function hideTutorial() {
+  document.body.style.overflow = "";
   document.getElementById("startupScreen")?.classList.remove("disabled");
   overlay.classList.add("hidden");
 }
@@ -68,14 +75,13 @@ function renderStep() {
   img.style.transform = "scale(0.98)";
 
   setTimeout(() => {
+       img.onload = () => {
+      img.style.opacity = 1;
+      img.style.transform = "scale(1)";
+    };    
     img.src = step.image;
     title.textContent = step.title;
     desc.textContent = step.description;
-
-    img.onload = () => {
-      img.style.opacity = 1;
-      img.style.transform = "scale(1)";
-    };
   }, 200);
 
   prevBtn.disabled = tutorialIndex === 0;
@@ -107,4 +113,11 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape" && !overlay.classList.contains("hidden")) {
     hideTutorial();
   }
+});
+
+document.addEventListener("keydown", e => {
+  if (overlay.classList.contains("hidden")) return;
+
+  if (e.key === "ArrowRight") nextBtn.click();
+  if (e.key === "ArrowLeft")  prevBtn.click();
 });
