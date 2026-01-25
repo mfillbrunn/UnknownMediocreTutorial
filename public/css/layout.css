@@ -100,11 +100,11 @@ display: grid;
 }
 
 .role-setter {
-  color: var(--setter-accent);
+  color: var(--setter-color);
 }
 
 .role-guesser {
-  color: var(--guesser-accent);
+  color: var(--guesser-color);
 }
 
 .role-header {
@@ -162,6 +162,47 @@ display: grid;
 .role-header h2{
 margin:0;
 }
+
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-8) var(--sp-12);
+}
+
+.app-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-8);
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.header-divider {
+  opacity: 0.4;
+}
+
+.header-room-code {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.header-role-badge {
+  font-size: var(--fs-12);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
 .header-left,
 .header-right {
   min-width: 0;
