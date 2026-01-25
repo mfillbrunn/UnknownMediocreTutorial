@@ -170,29 +170,49 @@ function fbToClass (fb) {
     return null;
   }
 
+function fbToClass(fb) {
+  if (fb === "🟩") return "green";
+  if (fb === "🟨") return "yellow";
+  if (fb === "🟦") return "blue";
+  if (fb === "⬛") return "gray";
+  return null;
+}
+
 function getSetterTileClasses(safeEntry, guessIndex) {
   const classes = [];
+  // TRUE feedback
   const trueFb = safeEntry.fb?.[guessIndex];
   const trueClass = fbToClass(trueFb);
   if (trueClass) {
     classes.push(`tile-${trueClass}`);
   }
-  // add secondary class if composite differs
-  if (Array.isArray(safeEntry.fakeFeedback)) {
-    const composite = safeEntry.fakeFeedback[guessIndex];
-    if (typeof composite === "string" && composite.includes("-")) {
-      const [a, b] = composite.split("-");
-      const secondary =
-        a === trueClass ? b :
-        b === trueClass ? a :
-        null;
-      if (secondary) {
-        classes.push(`secondary-${secondary}`);
-        classes.push("tile-has-secondary");
-      }
-    }
+  // Fake feedback candidates
+  const entry1 = safeEntry.fakeFeedback?.entry1?.[guessIndex];
+  const entry2 = safeEntry.fakeFeedback?.entry2?.[guessIndex];
+  if (!entry1 || !entry2 || entry1 === entry2) {
+    // No uncertainty → nothing to overlay
+    return classes;
   }
-
+  if (entry1 !== trueFb && entry2 !== trueFb) {
+      console.warn("Fake feedback invariant violated", {
+        entry1,
+        entry2,
+        trueFb
+      });
+    }
+  // Identify the incorrect alternative
+  const secondaryFb =
+    entry1 === trueFb ? entry2 :
+    entry2 === trueFb ? entry1 :
+    null;
+  if (!secondaryFb) {
+    // Defensive: invariant violation
+    return classes;
+  }
+  const secondaryClass = fbToClass(secondaryFb);
+  if (secondaryClass) {
+    classes.push(`secondary-${secondaryClass}`);
+    classes.push("tile-has-secondary");
+  }
   return classes;
 }
-
