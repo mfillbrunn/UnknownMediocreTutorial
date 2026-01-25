@@ -38,7 +38,7 @@ if (!isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry
                       }
         }
   return classes.join(" ");
-} else if (isSetter) {
+} else if (isSetter && !state.powers?.stealthGuessActive) {
     const isHiddenCycling_setter =
     Array.isArray(safeEntry.hiddenIndices) &&
     safeEntry.hiddenIndices.includes(guessIndex);
@@ -210,7 +210,6 @@ function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot, isHiddenCyclin
     }
   }
   // --- Case 2: guesser sees special feedback (blue) ---
-  console.log(safeEntry.fbGuesser?.[guessIndex]);
   const guesserFb = safeEntry.fbGuesser?.[guessIndex];
   const guesserClass = fbToClass(guesserFb);
   if (guesserClass === "blue" || guesserClass === "purple") {
