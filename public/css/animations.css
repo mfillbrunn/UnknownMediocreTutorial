@@ -187,6 +187,17 @@
     color: var(--fb-b-text) !important;
   }
 }
+@keyframes preview-feedback {
+  0%, 40% {
+    filter: brightness(1);
+  }
+  50%, 90% {
+    filter: brightness(1.35);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
 
 
 
