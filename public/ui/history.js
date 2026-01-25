@@ -39,7 +39,12 @@ if (!isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry
         }
   return classes.join(" ");
 } else if (isSetter) {
-    classes.push(...getSetterTileClasses(safeEntry, guessIndex));
+    const isBlindSpotForSetter =
+    typeof bsIdx === "number" &&
+    typeof bsRound === "number" &&
+    guessIndex === bsIdx &&
+    entryRoundIndex >= bsRound;
+    classes.push(...getSetterTileClasses(safeEntry, guessIndex, isBlindSpotForSetter));
     return classes.join(" ");
   }
   // Fallback to fbArray 
@@ -180,7 +185,7 @@ function fbToClass(fb) {
   return null;
 }
 
-function getSetterTileClasses(safeEntry, guessIndex) {
+function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot) {
   const classes = [];
   // --- TRUE feedback (always) ---
   const trueFb = safeEntry.fb?.[guessIndex];
@@ -201,12 +206,15 @@ function getSetterTileClasses(safeEntry, guessIndex) {
       secondaryClass = fbToClass(secondaryFb);
     }
   }
-  // --- Case 2: guesser sees special feedback (blue / purple) ---
+  // --- Case 2: guesser sees special feedback (blue) ---
   console.log(safeEntry.fbGuesser?.[guessIndex]);
   const guesserFb = safeEntry.fbGuesser?.[guessIndex];
   const guesserClass = fbToClass(guesserFb);
   if (guesserClass === "blue" || guesserClass === "purple") {
     secondaryClass = guesserClass;
+  }
+  if (isBlindSpot) {
+    secondaryClass = "purple";
   }
   // --- Apply secondary if any ---
   if (secondaryClass) {
