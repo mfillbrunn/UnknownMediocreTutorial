@@ -175,48 +175,57 @@ function fbToClass(fb) {
   if (fb === "🟩") return "green";
   if (fb === "🟨") return "yellow";
   if (fb === "🟦") return "blue";
+  if (fb === "🟪") return "purple";
   if (fb === "⬛") return "gray";
   return null;
 }
 
 function getSetterTileClasses(safeEntry, guessIndex) {
   const classes = [];
-  // TRUE feedback
+
+  // --- TRUE feedback (always) ---
   const trueFb = safeEntry.fb?.[guessIndex];
   const trueClass = fbToClass(trueFb);
   if (trueClass) {
     classes.push(`tile-${trueClass}`);
   }
-  // Fake feedback candidates
+
+  let secondaryClass = null;
+
+  // --- Case 1: fakeFeedback ambiguity ---
   const entry1 = safeEntry.fakeFeedback?.entry1?.[guessIndex];
   const entry2 = safeEntry.fakeFeedback?.entry2?.[guessIndex];
-  if (!entry1 || !entry2 || entry1 === entry2) {
-    // No uncertainty → nothing to overlay
-    return classes;
-  }
-  if (entry1 !== trueFb && entry2 !== trueFb) {
-      console.warn("Fake feedback invariant violated", {
-        entry1,
-        entry2,
-        trueFb
-      });
+
+  if (entry1 && entry2 && entry1 !== entry2) {
+    const secondaryFb =
+      entry1 === trueFb ? entry2 :
+      entry2 === trueFb ? entry1 :
+      null;
+
+    if (secondaryFb) {
+      secondaryClass = fbToClass(secondaryFb);
     }
-  // Identify the incorrect alternative
-  const secondaryFb =
-    entry1 === trueFb ? entry2 :
-    entry2 === trueFb ? entry1 :
-    null;
-  if (!secondaryFb) {
-    // Defensive: invariant violation
-    return classes;
   }
-  const secondaryClass = fbToClass(secondaryFb);
+
+  // --- Case 2: guesser sees special feedback (blue / purple) ---
+  const guesserFb = safeEntry.fbGuesser?.[guessIndex];
+  const guesserClass = fbToClass(guesserFb);
+
+  if (guesserClass === "blue" || guesserClass === "purple") {
+    secondaryClass = guesserClass;
+  }
+
+  // --- Apply secondary if any ---
   if (secondaryClass) {
     classes.push(`secondary-${secondaryClass}`);
     classes.push("tile-has-secondary");
   }
+
   return classes;
 }
+
+
+
 function resetHistoryRenderer(container) {
   prevRenderState = [];
   container.innerHTML = "";
