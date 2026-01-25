@@ -283,10 +283,19 @@ body.blind-guess .key:hover {
   bottom: 2px;
   right: 4px;
 
-  font-size: 12px;   /* ↑ from ~10px */
+  font-size: 12px;
+  font-weight: 600;
   line-height: 1;
-  font-weight: 600;  /* improves legibility at small sizes */
 
-  opacity: 0.75;
+  color: white;
+
+  text-shadow:
+    -1px -1px 0 rgba(0,0,0,0.9),
+     1px -1px 0 rgba(0,0,0,0.9),
+    -1px  1px 0 rgba(0,0,0,0.9),
+     1px  1px 0 rgba(0,0,0,0.9);
+
+  opacity: 0.85;
   pointer-events: none;
 }
+
