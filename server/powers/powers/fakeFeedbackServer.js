@@ -23,10 +23,17 @@ engine.registerPower("fakeFeedback", {
    if (!state.powers.fakeFeedbackActive) {return;}
    const real  = scoreGuess(state.secret, state.pendingGuess);
    const fake = scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess);
- entry.fakeFeedback = {
+ if (Math.random()>0.5){
+   entry.fakeFeedback = {
     real,   // ["🟩","⬛",...]
     fake    // ["🟨","⬛",...]
   };
+   else{
+      entry.fakeFeedback = {
+    fake,   // ["🟩","⬛",...]
+    real    // ["🟨","⬛",...]
+  };
+ }
    entry.fbGuesser = ["?","?","?","?","?"];
  }
 });
