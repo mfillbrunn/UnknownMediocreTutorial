@@ -29,20 +29,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  max-height: 65vh;     /* ← controls vertical size */
-  overflow: hidden;
 }
 
 .tutorial-image img {
   max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain; /* ← key line */
+  max-height: 60vh;
   border-radius: 12px;
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
-
 
 .tutorial-text h2 {
   margin: 0;
@@ -87,14 +81,4 @@
 .screen.disabled {
   pointer-events: none;
   filter: blur(1px);
-}
-.tutorial-image {
-  background: rgba(255,255,255,0.03);
-  border-radius: 12px;
-}
-
-@media (max-width: 700px) {
-  .tutorial-image {
-    max-height: 50vh;
-  }
 }
