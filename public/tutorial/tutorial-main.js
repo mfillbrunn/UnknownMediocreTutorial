@@ -54,7 +54,8 @@ function showTutorial() {
 
   img.style.opacity = 1;
   img.style.transform = "scale(1)";
-
+  hide("startupScreen");
+  document.body.classList.remove("menu-mode");
   tutorialIndex = 0;
   renderStep();
 }
@@ -64,6 +65,8 @@ function hideTutorial() {
   document.body.style.overflow = "";
   document.getElementById("startupScreen")?.classList.remove("disabled");
   overlay.classList.add("hidden");
+  show("startupScreen");
+  document.body.classList.add("menu-mode");
 }
 
 
