@@ -189,38 +189,30 @@ function getSetterTileClasses(safeEntry, guessIndex) {
   if (trueClass) {
     classes.push(`tile-${trueClass}`);
   }
-
   let secondaryClass = null;
-
   // --- Case 1: fakeFeedback ambiguity ---
   const entry1 = safeEntry.fakeFeedback?.entry1?.[guessIndex];
   const entry2 = safeEntry.fakeFeedback?.entry2?.[guessIndex];
-
   if (entry1 && entry2 && entry1 !== entry2) {
     const secondaryFb =
       entry1 === trueFb ? entry2 :
       entry2 === trueFb ? entry1 :
       null;
-
     if (secondaryFb) {
       secondaryClass = fbToClass(secondaryFb);
     }
   }
-
   // --- Case 2: guesser sees special feedback (blue / purple) ---
   const guesserFb = safeEntry.fbGuesser?.[guessIndex];
   const guesserClass = fbToClass(guesserFb);
-
   if (guesserClass === "blue" || guesserClass === "purple") {
     secondaryClass = guesserClass;
   }
-
   // --- Apply secondary if any ---
   if (secondaryClass) {
     classes.push(`secondary-${secondaryClass}`);
     classes.push("tile-has-secondary");
   }
-
   return classes;
 }
 
