@@ -2,7 +2,7 @@ const tutorialSteps = [
   {
     title: "How the game works",
     description:
-      "One player—the setter—chooses a secret word. The other player—the guesser—tries to find it using feedback. In the first round, both players submit a word at the same time. After that, they take turns.",
+      "One player - the setter - chooses a secret word. The other player - the guesser - tries to find it using feedback. In the first round, both players submit a word at the same time. After that, they take turns.",
     image: "/./assets/menu-bg.jpg"
   },
   {
@@ -14,7 +14,7 @@ const tutorialSteps = [
   {
     title: "Guesser view (explained)",
     description:
-      "The guesser can use special powers to help narrow down the secret word. You can still guess words even if you already know some letters are wrong—this is not hard mode (and yes, that can be a terrible idea).",
+      "The guesser can use guesser-specific powers to help narrow down the secret word. Also - you can still guess words even if you already know some letters are wrong (this is not hard mode - trust me, don't try it).",
     image: "/./assets/tutorial/guesser_tips.jpg"
   },
   {
@@ -26,8 +26,14 @@ const tutorialSteps = [
   {
     title: "Setter view (explained)",
     description:
-      "Some UI elements are only visible to the setter. The setter’s powers are generally designed to make things harder for the guesser.",
+      "The setter also has setter-specific powers, and some extra UI elements. The setter’s powers are generally designed to make things harder for the guesser.",
     image: "/./assets/tutorial/setter_tips.jpg"
+  } 
+  ,{
+    title: "The winner",
+    description:
+      "You play two rounds, one each in every role with the same powers. You can use powers once a game and only one a round. The winner is the one who needed fewer guesses - and if tied, less time!",
+    image: "/./assets/loss-or-win.jpg"
   }
 ];
 
