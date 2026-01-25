@@ -14,7 +14,7 @@ const tutorialSteps = [
   {
     title: "Guesser view (annotated)",
     description:
-      "The guesser players can use powers to help them find out the word easier.",
+      "The guesser players can use powers to help them find out the word easier. They can guess any word even if they know the letters aren't in the secret word anymore.",
     image: "/./assets/tutorial/guesser_tips.jpg"
   },
   {
