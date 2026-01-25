@@ -23,25 +23,18 @@
   flex-direction: column;
   gap: 16px;
 }
-.tutorial-image {
+ .tutorial-image {
+  height: 200px;        /* or 180px */
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
 }
 
-/* THIS is the key */
 .tutorial-image img {
-  max-width: 90%;
-  max-height: 45vh;     /* ← hard vertical cap */
-  width: auto;
-  height: auto;
+  max-height: 100%;
+  max-width: 100%;
   object-fit: contain;
-  border-radius: 12px;
-  transition: opacity 0.4s ease, transform 0.4s ease;
 }
-
-
 
 .tutorial-text h2 {
   margin: 0;
