@@ -43,6 +43,11 @@ function resetKeyboards() {
   if (ks) delete ks.__keys;
   if (kg) delete kg.__keys;
 }
+(() => {
+  const periodMs = 4500;
+  const phaseMs = performance.now() % periodMs;
+  document.documentElement.style.setProperty("--ff-phase", `${phaseMs / 1000}s`);
+})();
 
 
 function shakeDraftRow(role) {
