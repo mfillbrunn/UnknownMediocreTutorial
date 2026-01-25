@@ -187,19 +187,7 @@
     color: var(--fb-b-text) !important;
   }
 }
-@keyframes preview-feedback {
-  /* Hold state A */
-  0%, 40%, 100% {
-    background: var(--pv-a-bg) !important;
-    color: var(--pv-a-text) !important;
-  }
 
-  /* Transition/hold state B */
-  50%, 90% {
-    background: var(--pv-b-bg) !important;
-    color: var(--pv-b-text) !important;
-  }
-}
 
 
 
