@@ -188,14 +188,16 @@
   }
 }
 @keyframes preview-feedback {
-  0%, 40% {
-    filter: brightness(1);
+  /* Hold state A */
+  0%, 40%, 100% {
+    background: var(--pv-a-bg) !important;
+    color: var(--pv-a-text) !important;
   }
+
+  /* Transition/hold state B */
   50%, 90% {
-    filter: brightness(1.35);
-  }
-  100% {
-    filter: brightness(1);
+    background: var(--pv-b-bg) !important;
+    color: var(--pv-b-text) !important;
   }
 }
 
