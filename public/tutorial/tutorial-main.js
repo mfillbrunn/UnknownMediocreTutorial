@@ -2,34 +2,35 @@ const tutorialSteps = [
   {
     title: "How the game works",
     description:
-      "One player - the setter - sets a secret word. The other player - the guesser - tries to guess it using feedback. The first round of each game will be simultaneous, so both players type in a word. Afterwards, they take turns.",
+      "One player—the setter—chooses a secret word. The other player—the guesser—tries to find it using feedback. In the first round, both players submit a word at the same time. After that, they take turns.",
     image: "/./assets/menu-bg.jpg"
   },
   {
     title: "Guesser view",
     description:
-      "This is the guesser’s screen during play. The guesser role is similar to other wordle games.",
+      "This is the guesser’s screen during play. The core gameplay will feel familiar if you’ve played other Wordle-style games.",
     image: "/./assets/tutorial/guesser.jpg"
   },
   {
-    title: "Guesser view (annotated)",
+    title: "Guesser view (explained)",
     description:
-      "The guesser players can use powers to help them find out the word easier. They can guess any word even if they know the letters aren't in the secret word anymore.",
+      "The guesser can use special powers to help narrow down the secret word. You can still guess words even if you already know some letters are wrong—this is not hard mode (and yes, that can be a terrible idea).",
     image: "/./assets/tutorial/guesser_tips.jpg"
   },
   {
     title: "Setter view",
     description:
-      "The setter can change the secret word every round, but it has to fit all previous rounds.",
+      "The setter may change the secret word each round, as long as it remains consistent with the feedback from all previous rounds.",
     image: "/./assets/tutorial/setter.jpg"
   },
   {
-    title: "Setter view (annotated)",
+    title: "Setter view (explained)",
     description:
-      "Some UI elements are only visible to the setter. The setter's powers typically hinder the guesser.",
+      "Some UI elements are only visible to the setter. The setter’s powers are generally designed to make things harder for the guesser.",
     image: "/./assets/tutorial/setter_tips.jpg"
   }
 ];
+
 
 tutorialSteps.forEach(step => {
   const img = new Image();
