@@ -890,16 +890,23 @@ function countPositionalDifferences(a, b) {
   return diff;
 }
 
-
 function startSecretRoulette(words) {
+  if (rouletteInterval) return;
   if (!Array.isArray(words) || words.length === 0) return;
+
   toast("Push enter when you are ready to submit!");
   rouletteWords = words;
+
   let i = 0;
   rouletteInterval = setInterval(() => {
+    if (!Array.isArray(rouletteWords) || rouletteWords.length === 0) {
+      stopSecretRoulette();
+      return;
+    }
+
     const word = rouletteWords[i % rouletteWords.length];
     state.setterDraft = word;
-    renderDraftRows({state,role: "setter",container: $("draftSetter")});
+    renderDraftRows({ state, role: "setter", container: $("draftSetter") });
     updateUI();
     i++;
   }, 70);
@@ -910,8 +917,9 @@ function stopSecretRoulette() {
     clearInterval(rouletteInterval);
     rouletteInterval = null;
   }
-  rouletteWords = null;
+  rouletteWords = [];
 }
+
 function maybeStartRouletteFromState(state) {
   if (
     myRole !== state.setter ||
