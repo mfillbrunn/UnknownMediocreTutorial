@@ -23,7 +23,7 @@ window.POWER_RULES = {
         computeRemainingAfterIndex(state.history.length - 1) >= 2 &&
         state.phase === "normal" &&
         role === state.setter &&
-        !state.powerUsedThisTurn &&
+        !state.powerUsedThisTurn 
       );
     }
   },
