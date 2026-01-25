@@ -286,3 +286,9 @@ socket.on("rouletteSecretStart", ({ feasible }) => {
 
   startSecretRoulette(feasible);
 });
+
+document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
+  showTutorial();
+});
+
+
