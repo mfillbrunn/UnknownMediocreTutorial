@@ -213,21 +213,22 @@ body.blind-guess .key:hover {
   position: relative;
 }
 
-.tile-has-secondary::after {
+.tile-has-secondary .tile-letter::after {
   content: "";
   position: absolute;
-  bottom: 2px;
-  right: 2px;
+  bottom: -2px;
+  right: -2px;
   width: 30%;
   height: 30%;
   border-radius: 2px;
+  z-index: 3;
 }
 
-.secondary-gray::after   { background: var(--tile-gray); }
-.secondary-yellow::after { background: var(--tile-yellow); }
-.secondary-green::after  { background: var(--tile-green); }
-.secondary-blue::after { background: var(--tile-blue); }
-.secondary-purple::after { background: var(--tile-purple); }
+.secondary-gray   .tile-letter::after { background: var(--tile-gray); }
+.secondary-yellow .tile-letter::after { background: var(--tile-yellow); }
+.secondary-green  .tile-letter::after { background: var(--tile-green); }
+.secondary-blue   .tile-letter::after { background: var(--tile-blue); }
+.secondary-purple .tile-letter::after { background: var(--tile-purple); }
 
 .tile-feedback-slide {
   position: relative;
