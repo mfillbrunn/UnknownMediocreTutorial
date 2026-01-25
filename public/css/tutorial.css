@@ -24,7 +24,7 @@
   gap: 16px;
 }
  .tutorial-image {
-  height: 200px;        /* or 180px */
+  height: 800px;        /* or 180px */
   display: flex;
   align-items: center;
   justify-content: center;
