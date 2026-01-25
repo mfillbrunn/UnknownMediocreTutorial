@@ -38,7 +38,7 @@ if (!isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry
                       }
         }
   return classes.join(" ");
-} else if (isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry2) {
+} else if (isSetter) {
     classes.push(...getSetterTileClasses(safeEntry, guessIndex));
     return classes.join(" ");
   }
@@ -182,7 +182,6 @@ function fbToClass(fb) {
 
 function getSetterTileClasses(safeEntry, guessIndex) {
   const classes = [];
-
   // --- TRUE feedback (always) ---
   const trueFb = safeEntry.fb?.[guessIndex];
   const trueClass = fbToClass(trueFb);
