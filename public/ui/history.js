@@ -1,100 +1,159 @@
-window.renderHistory = function ({
-  state,
-  container,
-  role
-}) {
-  if (state.powers?.blindGuessActive) {return;}
-  container.innerHTML = "";
+///History builder
+function computeTileClassKey({isSetter, entryRoundIndex, guessIndex, bsIdx, bsRound, safeEntry, fbArray}) {
+  const classes = ["history-tile"];
+  const isBlindSpot =
+    !isSetter &&
+    typeof bsIdx === "number" &&
+    typeof bsRound === "number" &&
+    guessIndex === bsIdx &&
+    entryRoundIndex >= bsRound;
+  if (isBlindSpot) {
+    classes.push("tile-purple");
+    return classes.join(" ");
+  }
+  const isHiddenCycling =
+    !isSetter &&
+    Array.isArray(safeEntry.hiddenIndices) &&
+    safeEntry.hiddenIndices.includes(guessIndex);
+  if (isHiddenCycling) {
+    classes.push("tile-hidden-cycle");
+    return classes.join(" ");
+  }
+  // Faithful fbComposite branch
+  if (!isSetter && Array.isArray(safeEntry.fbComposite)) {
+    const c = safeEntry.fbComposite[guessIndex];
+    if (c === "🟩") classes.push("tile-green");
+    else if (c === "🟨") classes.push("tile-yellow");
+    else if (c === "⬛") classes.push("tile-gray");
+    else {
+      // composite code like "gray-yellow", "yellow-gray", etc.
+      classes.push(`tile-${c}`);
+      classes.push("tile-feedback-slide");
+    }
+    return classes.join(" ");
+  }
+  // Fallback to fbArray 
+  const fb = fbArray[guessIndex];
+  if (fb === "🟩") classes.push("tile-green");
+  else if (fb === "🟨") classes.push("tile-yellow");
+  else if (fb === "🟦") classes.push("tile-blue");
+  else classes.push("tile-gray");
+  return classes.join(" ");
+}
+
+///Build history
+function buildHistoryRenderState(state, role) {
+  if (state.powers?.blindGuessActive) return [];
   const isSetter = role === "setter";
   const bsIdx   = state?.powers?.blindSpotIndex;
   const bsRound = state?.powers?.blindSpotRoundIndex;
   const history = state?.history || [];
-  let j=-1;
+  const rows = [];
+  let j = -1;
   for (const entry of history) {
-    if (!entry || !entry.guess) continue;
-    j = j + 1;
+    if (!entry?.guess) continue;
+    j++;
+    // stable key (prefer persisting on entry; adjust if you store elsewhere)
+    entry.__historyKey ??= `h-${entry.roundIndex ?? j}`;
     const safeEntry = JSON.parse(JSON.stringify(entry));
     PowerEngine.applyHistoryEffects(safeEntry, isSetter);
-
     let fbArray;
-    if (!isSetter && Array.isArray(safeEntry.fbGuesser)) {
-      fbArray = safeEntry.fbGuesser;
-    } else if (Array.isArray(safeEntry.fb)) {
-      fbArray = safeEntry.fb;
-    } else {
-      fbArray = ["⬛", "⬛", "⬛", "⬛", "⬛"];
-    }
-
+    if (!isSetter && Array.isArray(safeEntry.fbGuesser)) fbArray = safeEntry.fbGuesser;
+    else if (Array.isArray(safeEntry.fb)) fbArray = safeEntry.fb;
+    else fbArray = ["⬛","⬛","⬛","⬛","⬛"];
     if (!Array.isArray(fbArray) || fbArray.length !== 5) continue;
-
-   const rowWrap = document.createElement("div");
-    rowWrap.className = "history-row-wrap";
-    
-    const row = document.createElement("div");
-    row.className = "history-row";
-
-    const meta = document.createElement("div");
-      meta.className = "history-meta";
-
-    if (safeEntry.extraInfo) {
-      row.classList.add("evaluated-row");
-    }
     const guess = safeEntry.guess.toUpperCase();
-
+    const tiles = [];
     for (let i = 0; i < 5; i++) {
-      const tile = document.createElement("div");
-      tile.className = "history-tile";
-
-      tile.textContent = guess[i];
-      
-      const fb = fbArray[i];
-      const isBlindSpot =
-        !isSetter &&
-        typeof bsIdx === "number" &&
-        typeof bsRound === "number" &&
-        i === bsIdx &&
-        entry.roundIndex >= bsRound;
-      
-      if (isBlindSpot) {
-        tile.classList.add("tile-purple");
-      }
-      else {
-        const isHiddenCycling =
-          !isSetter &&
-          Array.isArray(safeEntry.hiddenIndices) &&
-          safeEntry.hiddenIndices.includes(i);
-      
-        if (isHiddenCycling) {
-          tile.classList.add("tile-hidden-cycle");
-        } else {
-          if (!isSetter && Array.isArray(safeEntry.fbComposite)) {
-            const c = safeEntry.fbComposite[i];
-            if (c === "🟩") tile.classList.add("tile-green");
-            else if (c === "🟨") tile.classList.add("tile-yellow");
-            else if (c === "⬛") tile.classList.add("tile-gray");
-            else {
-              tile.classList.add(`tile-${c}`);
-              tile.classList.add("tile-feedback-slide");
-            }
-          }else{
-            if (fb === "🟩") tile.classList.add("tile-green");
-            else if (fb === "🟨") tile.classList.add("tile-yellow");
-            else if (fb === "🟦") tile.classList.add("tile-blue");
-            else tile.classList.add("tile-gray");
-          }
-        }
-      }
-          
-      if ( !isSetter && state.powers.countOnlyUsed && j ===  state.powers.countOnlyRound) {
-        tile.classList.add("tile-hidden-cycle");  // THIS SHOULD APPLY ONLY TO LAST ONE OF HISTORY
-      }
-      row.appendChild(tile);
+      tiles.push({letter: guess[i], classKey: computeTileClassKey({ isSetter, entryRoundIndex: entry.roundIndex,guessIndex: i,bsIdx,bsRound, safeEntry, fbArray})});
     }
-    const rowAnchor = document.createElement("div");
-    rowAnchor.className = "history-row-anchor";
-    rowAnchor.appendChild(row);
-    rowAnchor.appendChild(meta);
-    rowWrap.appendChild(rowAnchor);
-    container.appendChild(rowWrap);
+    rows.push({key: entry.__historyKey,evaluated: !!safeEntry.extraInfo, tiles});
   }
+    if (!isSetter && state?.powers && typeof state.powers.countOnlyRound === "number") {
+      const idx = state.powers.countOnlyRound;    
+      if (rows[idx]) {rows[idx].tiles = rows[idx].tiles.map(t => ({...t,classKey: `${t.classKey} tile-hidden-cycle`}));}
+    }
+  return rows;
+}
+
+///Strict diffing algorithm
+function diffHistory(prev, next) {
+  const prevMap = new Map(prev.map(r => [r.key, r]));
+  const nextMap = new Map(next.map(r => [r.key, r]));
+  return {
+    added: next.filter(r => !prevMap.has(r.key)),
+    removed: prev.filter(r => !nextMap.has(r.key)),
+    updated: next.filter(r => {
+      const p = prevMap.get(r.key);
+      return p && !rowsEqual(p, r);
+    })
+  };
+}
+
+function rowsEqual(a, b) {
+  if (a.evaluated !== b.evaluated) return false;
+  for (let i = 0; i < 5; i++) {
+    if (a.tiles[i].letter   !== b.tiles[i].letter || a.tiles[i].classKey !== b.tiles[i].classKey) return false;
+  }
+  return true;
+}
+
+///DOM creator
+function createHistoryRowDOM(row) {
+  const wrap = document.createElement("div");
+  wrap.className = "history-row-wrap";
+  wrap.dataset.key = row.key;
+  const anchor = document.createElement("div");
+  anchor.className = "history-row-anchor";
+  const rowEl = document.createElement("div");
+  rowEl.className = "history-row";
+  if (row.evaluated) rowEl.classList.add("evaluated-row");
+  for (const tile of row.tiles) {
+    const el = document.createElement("div");
+    el.className = tile.classKey;
+    el.textContent = tile.letter;
+    rowEl.appendChild(el);
+  }
+  anchor.appendChild(rowEl);
+  wrap.appendChild(anchor);
+  return wrap;
+}
+
+function patchHistoryRow(wrap, row) {
+  const rowEl = wrap.querySelector(".history-row");
+  rowEl.classList.toggle("evaluated-row", row.evaluated);
+  const tiles = rowEl.children;
+  for (let i = 0; i < 5; i++) {
+    const t = tiles[i];
+    if (t.textContent !== row.tiles[i].letter) {
+      t.textContent = row.tiles[i].letter;
+    }
+    if (t.className !== row.tiles[i].classKey) {
+      t.className = row.tiles[i].classKey;
+    }
+  }
+}
+
+/// History renderer
+let prevRenderState = [];
+window.renderHistory = function ({ state, container, role }) {
+  const next = buildHistoryRenderState(state, role);
+  const diff = diffHistory(prevRenderState, next);
+  // Remove
+  for (const r of diff.removed) {
+    const el = container.querySelector(`[data-key="${r.key}"]`);
+    el?.remove();
+  }
+  // Update
+  for (const r of diff.updated) {
+    const el = container.querySelector(`[data-key="${r.key}"]`);
+    if (el) patchHistoryRow(el, r);
+  }
+  // Add (append in order)
+  for (const r of diff.added) {
+    container.appendChild(createHistoryRowDOM(r));
+  }
+  prevRenderState = next;
 };
+
+
