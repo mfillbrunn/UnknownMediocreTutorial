@@ -1,24 +1,34 @@
 // /public/ui/constraints.js — MODULAR VERSION (no power logic inside)
 
 function getEffectiveFbForConstraints(entry, isSetterView) {
-  // Setter always uses true feedback
+  // Setter always knows everything
   if (isSetterView) return entry.fb;
-  // No fake feedback → normal behavior
+
+  const result = Array(5).fill(null);
+
+  // No fake feedback → use guesser feedback as-is
   if (!entry.fakeFeedback?.entry1 || !entry.fakeFeedback?.entry2) {
     return entry.fbGuesser;
   }
-  // Fake feedback present
+
   const e1 = entry.fakeFeedback.entry1;
   const e2 = entry.fakeFeedback.entry2;
-  // Deterministic fake feedback → reveal it
-  if (Array.isArray(e1) && Array.isArray(e2) &&
-      e1.length === 5 && e2.length === 5 &&
-      e1.every((v, i) => v === e2[i])) {
-    return e1; // or e2, same thing
+
+  if (!Array.isArray(e1) || !Array.isArray(e2)) {
+    return entry.fbGuesser;
   }
-  // Ambiguous → fall back to fbGuesser (likely ????)
-  return entry.fbGuesser;
+
+  for (let i = 0; i < 5; i++) {
+    // Deterministic at this tile
+    if (e1[i] === e2[i]) {
+      result[i] = e1[i];
+    }
+    // else: leave as null → unknown
+  }
+
+  return result;
 }
+
 
 
 window.getPattern = function (state, isSetterView) {
