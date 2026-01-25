@@ -249,6 +249,11 @@ onStateUpdate(newState => {
   const prevPhase = state?.phase;
   const prevSetterDraft = state?.setterDraft || "";
   state = JSON.parse(JSON.stringify(newState));
+  if (prevPhase === "lobby" && state.phase !== "lobby") {
+      prevRenderState = [];
+      $("setterGuesserSubmitted").innerHTML = "";
+      $("historyGuesser").innerHTML = "";
+  }  
   const roleFromState = state.roles?.[socket.id] ?? null;
   if (roleFromState) myRole = roleFromState;
   window.myRole = myRole;
