@@ -23,18 +23,26 @@
   flex-direction: column;
   gap: 16px;
 }
- .tutorial-image {
-  height: 800px;        /* or 180px */
+
+.tutorial-image {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  max-height: 65vh;     /* ← controls vertical size */
+  overflow: hidden;
 }
 
 .tutorial-image img {
-  max-height: 100%;
   max-width: 100%;
-  object-fit: contain;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain; /* ← key line */
+  border-radius: 12px;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
+
 
 .tutorial-text h2 {
   margin: 0;
@@ -86,10 +94,7 @@
 }
 
 @media (max-width: 700px) {
-  .tutorial-image img {
-    max-height: 35vh;
-    max-width: 95%;
+  .tutorial-image {
+    max-height: 50vh;
   }
 }
-
-
