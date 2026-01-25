@@ -3,31 +3,31 @@ const tutorialSteps = [
     title: "How the game works",
     description:
       "One player sets a secret word. The other player tries to guess it using feedback.",
-    image: "/public/assets/menu-bg.jpg"
+    image: "/./assets/menu-bg.jpg"
   },
   {
     title: "Guesser view",
     description:
       "This is the guesser’s screen during play.",
-    image: "/public/assets/tutorial/guesser.jpg"
+    image: "/./assets/tutorial/guesser.jpg"
   },
   {
     title: "Guesser view (annotated)",
     description:
       "Feedback colors, keyboard hints, and timers explained.",
-    image: "/public/assets/tutorial/guesser_tips.jpg"
+    image: "/./assets/tutorial/guesser_tips.jpg"
   },
   {
     title: "Setter view",
     description:
       "The setter chooses the secret word and sees extra information.",
-    image: "/public/assets/tutorial/setter.jpg"
+    image: "/./assets/tutorial/setter.jpg"
   },
   {
     title: "Setter view (annotated)",
     description:
       "Some UI elements are only visible to the setter.",
-    image: "/public/assets/tutorial/setter_tips.jpg"
+    image: "/./assets/tutorial/setter_tips.jpg"
   }
 ];
 
