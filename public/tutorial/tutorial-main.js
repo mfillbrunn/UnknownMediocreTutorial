@@ -32,8 +32,8 @@ const tutorialSteps = [
   ,{
     title: "The winner",
     description:
-      "You play two rounds, one each in every role with the same powers. You can use powers once a game and only one a round. The winner is the one who needed fewer guesses - and if tied, less time!",
-    image: "/./assets/loss-or-win.jpg"
+      "You play two rounds—one in each role—using the same powers. Each power can be used once per game, and only one power may be used per turn. The winner is the player who needs fewer guesses; if tied, the faster time wins.",
+    image: "/./assets/tutorial/loss-or-win.jpg"
   }
 ];
 
