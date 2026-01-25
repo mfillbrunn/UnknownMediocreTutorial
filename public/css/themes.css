@@ -8,6 +8,8 @@
   --title:#fff;
      --ff-period: 4.5s;
   --ff-phase: 0s; /* set once via JS */
+    --pv-period: 2.2s;
+  --pv-phase: 0s; /* set once via JS for hard sync */
 
   /* ===============================
      Semantic surfaces
