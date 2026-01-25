@@ -24,12 +24,16 @@ function computeTileClassKey({isSetter, entryRoundIndex, guessIndex, bsIdx, bsRo
     const c = safeEntry.fbComposite[guessIndex];
     if (c === "🟩") classes.push("tile-green");
     else if (c === "🟨") classes.push("tile-yellow");
+    else if (fb === "🟦") classes.push("tile-blue");
     else if (c === "⬛") classes.push("tile-gray");
     else {
       // composite code like "gray-yellow", "yellow-gray", etc.
       classes.push(`tile-${c}`);
       classes.push("tile-feedback-slide");
     }
+    return classes.join(" ");
+  } else if (isSetter && Array.isArray(safeEntry.fbComposite)) {
+    classes.push(...getSetterTileClasses(safeEntry, guessIndex));
     return classes.join(" ");
   }
   // Fallback to fbArray 
@@ -156,4 +160,45 @@ window.renderHistory = function ({ state, container, role }) {
   prevRenderState = next;
 };
 
+///Helper for uncertain feedback
+
+function fbToClass(fb) {
+  if (fb === "🟩") return "green";
+  if (fb === "🟨") return "yellow";
+  if (fb === "⬛") return "gray";
+  return null;
+}
+
+function getSetterTileClasses(safeEntry, guessIndex) {
+  const classes = [];
+
+  // map true feedback to base class
+  const fbToClass = (fb) => {
+    if (fb === "🟩") return "green";
+    if (fb === "🟨") return "yellow";
+    if (fb === "⬛") return "gray";
+    return null;
+  };
+  const trueClass = fbToClass(safeEntry.fb);
+  if (trueClass) {
+    classes.push(`tile-${trueClass}`);
+  }
+  // add secondary class if composite differs
+  if (Array.isArray(safeEntry.fbComposite)) {
+    const composite = safeEntry.fbComposite[guessIndex];
+    if (typeof composite === "string" && composite.includes("-")) {
+      const [a, b] = composite.split("-");
+      const secondary =
+        a === trueClass ? b :
+        b === trueClass ? a :
+        null;
+      if (secondary) {
+        classes.push(`secondary-${secondary}`);
+        classes.push("tile-has-secondary");
+      }
+    }
+  }
+
+  return classes;
+}
 
