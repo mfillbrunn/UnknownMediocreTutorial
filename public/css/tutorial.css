@@ -78,4 +78,8 @@
   background: transparent;
   color: #aaa;
 }
-screen.disabled
+.screen.disabled {
+  pointer-events: none;
+  filter: blur(1px);
+}
+
