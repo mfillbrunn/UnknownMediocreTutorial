@@ -1,41 +1,48 @@
 const tutorialSteps = [
   {
-    title: "How the game works",
+    title: "The mission",
     description:
-      "One player - the setter - chooses a secret word. The other player - the guesser - tries to find it using feedback. In the first round, both players submit a word at the same time. After that, they take turns.",
+      "One player is the Spy, operating under cover with a secret word. The other is the Inspector, tasked with uncovering it using limited intelligence. In the opening round, both players submit a word simultaneously. From then on, turns alternate as the investigation unfolds.",
     image: "/./assets/menu-bg.jpg"
   },
   {
-    title: "Guesser view",
+    title: "Inspector view",
     description:
-      "This is the guesser’s screen during play. The core gameplay will feel familiar if you’ve played other Wordle-style games.",
+      "This is the Inspector’s interface during the investigation. The core mechanics will feel familiar if you’ve played Wordle-style games—but information here is not always what it seems.",
     image: "/./assets/tutorial/guesser.jpg"
   },
   {
-    title: "Guesser view (explained)",
+    title: "Inspector view (explained)",
     description:
-      "The guesser can use guesser-specific powers to help narrow down the secret word. Also - you can still guess words even if you already know some letters are wrong (this is not hard mode - trust me, don't try it).",
+      "The Inspector has access to special investigative powers that help narrow down the truth. You may continue guessing words even when some letters are known to be incorrect—this is not hard mode, and restraint is rarely rewarded.",
     image: "/./assets/tutorial/guesser_tips.jpg"
   },
   {
-    title: "Setter view",
+    title: "Spy view",
     description:
-      "The setter may change the secret word each round, as long as it remains consistent with the feedback from all previous rounds.",
+      "This is the Spy’s interface. The Spy may alter the secret word between rounds, as long as all previous feedback remains internally consistent. Misdirection is allowed—contradiction is not.",
     image: "/./assets/tutorial/setter.jpg"
   },
   {
-    title: "Setter view (explained)",
+    title: "Spy view (explained)",
     description:
-      "The setter also has setter-specific powers, and some extra UI elements. The setter’s powers are generally designed to make things harder for the guesser.",
+      "The Spy has access to deception-focused powers and additional intelligence tools. These abilities are designed to obscure the truth and complicate the Inspector’s investigation.",
     image: "/./assets/tutorial/setter_tips.jpg"
-  } 
-  ,{
-    title: "The winner",
+  },
+  {
+    title: "Powers",
     description:
-      "You play two rounds—one in each role—using the same powers. Each power can be used once per game, and only one power may be used per turn. The winner is the player who needs fewer guesses; if tied, the faster time wins.",
+      "Both sides have access to many special powers - try them out!",
+    image: "/./assets/tutorial/powers.jpg"
+  },
+  {
+    title: "The outcome",
+    description:
+      "Each player plays once as the Spy and once as the Inspector, using the same set of powers. Powers may be used once per game, and only one per turn. The player who solves the case in fewer guesses wins; if tied, the faster investigation prevails.",
     image: "/./assets/tutorial/loss-or-win.jpg"
   }
 ];
+
 
 
 tutorialSteps.forEach(step => {
