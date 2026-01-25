@@ -369,7 +369,7 @@ function updateSetterScreen() {
   KeepEnabled=true;
   NewEnabled=true;  
   $("setterScreen").querySelector(".screen-title").textContent = setterName;
-  $("setterRoleBadge").textContent = "Spy";
+  //$("setterRoleBadge").textContent = "Spy";
   const displayGuess =state.powers?.stealthGuessActive? "?????": state.pendingGuess;
   const isSetterTurn = state.turn === state.setter;
   const isDecisionStep =isSetterTurn &&!!displayGuess &&state.phase === "normal";
@@ -601,7 +601,7 @@ renderDraftRows({
  const guesserName = getPlayerNameByCurrentRole(state.guesser);
   
   $("guesserScreen").querySelector(".screen-title").textContent = guesserName;
-$("guesserRoleBadge").textContent = "Inspector";
+//$("guesserRoleBadge").textContent = "Inspector";
 setTurn("guesserScreen", false);
 if (state.phase === "simultaneous") {setTurn("guesserScreen", !state.pendingGuess);}
 if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserScreen", true);} 
