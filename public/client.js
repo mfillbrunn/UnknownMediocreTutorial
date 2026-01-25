@@ -349,7 +349,7 @@ PowerEngine.applyUI(state, myRole, roomId);
 // -----------------------------------------------------
 function updateRoleLabels() {
   if (!myRole) return;
-  const roleLabel = myRole === "A" ? "Setter" : "Guesser";
+  const roleLabel = myRole === "A" ? "Spy" : "Inspector";
   const lobbyEl = $("lobbyRoleLabel");
   if (lobbyEl) {
     lobbyEl.textContent = roleLabel;
@@ -368,7 +368,7 @@ function updateSetterScreen() {
   KeepEnabled=true;
   NewEnabled=true;  
   $("setterScreen").querySelector(".screen-title").textContent = setterName;
-  $("setterRoleBadge").textContent = "Setter";
+  $("setterRoleBadge").textContent = "Spy";
   const displayGuess =state.powers?.stealthGuessActive? "?????": state.pendingGuess;
   const isSetterTurn = state.turn === state.setter;
   const isDecisionStep =isSetterTurn &&!!displayGuess &&state.phase === "normal";
@@ -600,7 +600,7 @@ renderDraftRows({
  const guesserName = getPlayerNameByCurrentRole(state.guesser);
   
   $("guesserScreen").querySelector(".screen-title").textContent = guesserName;
-$("guesserRoleBadge").textContent = "Guesser";
+$("guesserRoleBadge").textContent = "Inspector";
 setTurn("guesserScreen", false);
 if (state.phase === "simultaneous") {setTurn("guesserScreen", !state.pendingGuess);}
 if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserScreen", true);} 
