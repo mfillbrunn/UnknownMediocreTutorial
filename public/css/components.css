@@ -412,6 +412,9 @@
   letter-spacing: 0.6px;
   text-transform: uppercase;
   opacity: 0.9;
+      background: #1b1c22;
+    border: 1px solid #2a2c34;
+    border-radius: 4px;
 }
 
 
