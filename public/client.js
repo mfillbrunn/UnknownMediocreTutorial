@@ -25,14 +25,16 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 function toast(msg) {
   const t = $("toast");
-  if (!t) return; // ← THIS IS REQUIRED
+  if (!t) {
+    console.warn("toast() called but #toast not in DOM:", msg);
+    return;
+  }
 
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => {
-    t.classList.remove("show");
-  }, 1500);
+  setTimeout(() => t.classList.remove("show"), 1500);
 }
+
 
 
 function shake(element) {
