@@ -39,12 +39,15 @@ if (!isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry
         }
   return classes.join(" ");
 } else if (isSetter) {
+    const isHiddenCycling_setter =
+    Array.isArray(safeEntry.hiddenIndices) &&
+    safeEntry.hiddenIndices.includes(guessIndex);
     const isBlindSpotForSetter =
     typeof bsIdx === "number" &&
     typeof bsRound === "number" &&
     guessIndex === bsIdx &&
     entryRoundIndex >= bsRound;
-    classes.push(...getSetterTileClasses(safeEntry, guessIndex, isBlindSpotForSetter));
+    classes.push(...getSetterTileClasses(safeEntry, guessIndex, isBlindSpotForSetter,isHiddenCycling_setter ));
     return classes.join(" ");
   }
   // Fallback to fbArray 
@@ -185,7 +188,7 @@ function fbToClass(fb) {
   return null;
 }
 
-function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot) {
+function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot, isHiddenCycling) {
   const classes = [];
   // --- TRUE feedback (always) ---
   const trueFb = safeEntry.fb?.[guessIndex];
@@ -220,6 +223,9 @@ function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot) {
   if (secondaryClass) {
     classes.push(`secondary-${secondaryClass}`);
     classes.push("tile-has-secondary");
+  }
+  if (isHiddenCycling) {
+    classes.push("tile-guesser-hidden");
   }
   return classes;
 }
