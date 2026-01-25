@@ -123,15 +123,28 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   filter: none;
 }
 
-.theme-setter
-#draftSetter
-.pending-guess
-.history-tile.preview-green,
-.theme-setter
-#draftSetter
-.pending-guess
-.history-tile.preview-yellow {
-  animation: preview-feedback 2.2s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+.theme-setter #draftSetter .pending-guess .history-tile.preview-green,
+.theme-setter #draftSetter .pending-guess .history-tile.preview-yellow {
+  border: none;
+  box-shadow: none;
+  opacity: 0.9;
+
+  animation: preview-feedback var(--pv-period) cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+  animation-delay: calc(-1 * var(--pv-phase)); /* ensures sync even after re-render */
+}
+.theme-setter #draftSetter .pending-guess .history-tile.preview-green {
+  --pv-a-bg: color-mix(in srgb, var(--tile-green) 70%, var(--panel-bg));
+  --pv-a-text: var(--tile-green-text);
+
+  --pv-b-bg: var(--tile-green);
+  --pv-b-text: var(--tile-green-text);
+}
+.theme-setter #draftSetter .pending-guess .history-tile.preview-yellow {
+  --pv-a-bg: color-mix(in srgb, var(--tile-yellow) 70%, var(--panel-bg));
+  --pv-a-text: var(--tile-yellow-text);
+
+  --pv-b-bg: var(--tile-yellow);
+  --pv-b-text: var(--tile-yellow-text);
 }
 
 
