@@ -329,8 +329,8 @@ if (state.timeoutLoser)  {
 
   html += `
     <p class="summary-players">
-      <b>${setterName}</b> (Setter) vs
-      <b>${guesserName}</b> (Guesser)
+      <b>${setterName}</b> (Spy) vs
+      <b>${guesserName}</b> (Inspector)
     </p>
   `;
 // ---- Round time used ----
@@ -462,7 +462,7 @@ function renderStoredRoundSummary(round, index) {
 
   let html = `
     <div class="stored-round">
-      <h4>Round ${index + 1} – ${getNameByRole(round.setter)} was Setter</h4>
+      <h4>Round ${index + 1} – ${getNameByRole(round.setter)} was Spy</h4>
 
       <table class="summary-table">
         <tr>
