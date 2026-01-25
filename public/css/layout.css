@@ -89,11 +89,23 @@ display: grid;
    row-gap: var(--sp-6);
    margin-top: var(--sp-12);
 }
-/*---- HEADERS ---*/
 
 /* =========================================
    Shared role header layout
    ========================================= */
+.header-role-badge {
+  font-size: var(--fs-11);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.role-setter {
+  color: var(--setter-accent);
+}
+
+.role-guesser {
+  color: var(--guesser-accent);
+}
 
 .role-header {
   display: flex;
