@@ -24,15 +24,15 @@ engine.registerPower("fakeFeedback", {
    let real;
    let fake;
    if (Math.random()>0.5){
-    real  = scoreGuess(state.secret, state.pendingGuess);
-    fake = scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess);
+    entry1  = scoreGuess(state.secret, state.pendingGuess);
+    entry2 = scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess);
    } else{
-    fake  = scoreGuess(state.secret, state.pendingGuess);
-    real = scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess)
+    entry1  = scoreGuess(state.secret, state.pendingGuess);
+    entry2 = scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess)
    }
    entry.fakeFeedback = {
-    real,   // ["🟩","⬛",...]
-    fake    // ["🟨","⬛",...]
+    entry1,   // ["🟩","⬛",...]
+    entry2    // ["🟨","⬛",...]
   }; 
    entry.fbGuesser = ["?","?","?","?","?"];
  }
