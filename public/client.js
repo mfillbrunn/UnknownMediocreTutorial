@@ -249,7 +249,7 @@ onStateUpdate(newState => {
   const prevPhase = state?.phase;
   const prevSetterDraft = state?.setterDraft || "";
   state = JSON.parse(JSON.stringify(newState));
-  if (prevPhase === "lobby" && state.phase !== "lobby") {
+  if (prevPhase === "lobby" && state.phase === "simultaneous" && prevRenderState !== []) {
       prevRenderState = [];
       $("setterGuesserSubmitted").innerHTML = "";
       $("historyGuesser").innerHTML = "";
