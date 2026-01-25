@@ -93,8 +93,10 @@
 }
 
 @media (max-width: 700px) {
-  .tutorial-image {
-    max-height: 50vh;
+  .tutorial-image img {
+    max-height: 35vh;
+    max-width: 95%;
   }
 }
+
 
