@@ -941,8 +941,7 @@ function maybeStartRouletteFromState(state) {
 function updateAppHeader(state) {
   const roomCodeEl = document.querySelector(".header-room-code");
   const roleBadgeEl = document.querySelector(".header-role-badge");
-
-  if (!roomCodeEl || !roleBadgeEl || !state) return;
+  if (!state || !roomCodeEl || !roleBadgeEl) return;
 
   roomCodeEl.textContent = state.roomCode || "";
 
