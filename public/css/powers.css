@@ -262,3 +262,12 @@ body.blind-guess .key:hover {
   50%, 90%      { opacity: 1; }
 }
 
+.tile-feedback-slide::before,
+.tile-feedback-slide::after {
+  z-index: 0;
+}
+
+.history-tile {
+  position: relative;
+  z-index: 1;
+}
