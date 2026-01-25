@@ -176,10 +176,12 @@ function getSetterTileClasses(safeEntry, guessIndex) {
   const fbToClass = (fb) => {
     if (fb === "🟩") return "green";
     if (fb === "🟨") return "yellow";
+    if (fb === "🟦") return "blue";
     if (fb === "⬛") return "gray";
     return null;
   };
-  const trueClass = fbToClass(safeEntry.fb);
+  const trueFb = safeEntry.fb?.[guessIndex];
+  const trueClass = fbToClass(trueFb);
   if (trueClass) {
     classes.push(`tile-${trueClass}`);
   }
