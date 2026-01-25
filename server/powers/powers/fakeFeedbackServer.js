@@ -21,19 +21,19 @@ engine.registerPower("fakeFeedback", {
   },
  postScore(state, entry) {
    if (!state.powers.fakeFeedbackActive) {return;}
-   const real  = scoreGuess(state.secret, state.pendingGuess);
-   const fake = scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess);
- if (Math.random()>0.5){
+   let real;
+   let fake;
+   if (Math.random()>0.5){
+    real  = scoreGuess(state.secret, state.pendingGuess);
+    fake = scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess);
+   } else{
+    fake  = scoreGuess(state.secret, state.pendingGuess);
+    real = scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess)
+   }
    entry.fakeFeedback = {
     real,   // ["🟩","⬛",...]
     fake    // ["🟨","⬛",...]
-  };
- }else{
-      entry.fakeFeedback = {
-    fake,   // ["🟩","⬛",...]
-    real    // ["🟨","⬛",...]
-  };
- }
+  }; 
    entry.fbGuesser = ["?","?","?","?","?"];
  }
 });
