@@ -1,5 +1,26 @@
 // /public/ui/constraints.js — MODULAR VERSION (no power logic inside)
 
+function getEffectiveFbForConstraints(entry, isSetterView) {
+  // Setter always uses true feedback
+  if (isSetterView) return entry.fb;
+  // No fake feedback → normal behavior
+  if (!entry.fakeFeedback?.entry1 || !entry.fakeFeedback?.entry2) {
+    return entry.fbGuesser;
+  }
+  // Fake feedback present
+  const e1 = entry.fakeFeedback.entry1;
+  const e2 = entry.fakeFeedback.entry2;
+  // Deterministic fake feedback → reveal it
+  if (Array.isArray(e1) && Array.isArray(e2) &&
+      e1.length === 5 && e2.length === 5 &&
+      e1.every((v, i) => v === e2[i])) {
+    return e1; // or e2, same thing
+  }
+  // Ambiguous → fall back to fbGuesser (likely ????)
+  return entry.fbGuesser;
+}
+
+
 window.getPattern = function (state, isSetterView) {
   let pattern = ["-", "-", "-", "-", "-"];
 
@@ -8,7 +29,7 @@ window.getPattern = function (state, isSetterView) {
   }
 
   for (const entry of state.history) {
-    const fbArray = isSetterView ? entry.fb : entry.fbGuesser;
+    const fbArray = getEffectiveFbForConstraints(entry, isSetterView);
     if (!Array.isArray(fbArray) || fbArray.length !== 5) {
       continue;
     }
@@ -117,7 +138,7 @@ window.getConstraintGrid = function (state, isSetterView) {
 // 1️⃣ Greens and forbidden letters from history
 if (state.history?.length) {
   for (const entry of state.history) {
-    const fbArray = isSetterView ? entry.fb : entry.fbGuesser;
+    const fbArray = getEffectiveFbForConstraints(entry, isSetterView);
     if (!Array.isArray(fbArray)) continue;
 
     const guess = entry.guess.toUpperCase();
