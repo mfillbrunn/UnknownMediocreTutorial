@@ -97,8 +97,7 @@ assassinWord: {
       state.phase === "normal" &&
       role === state.setter &&
       !state.powerUsedThisTurn &&
-      !state.powers.assassinWordUsed &&
-      state.activePowers?.includes("assassinWord")
+      !state.powers.assassinWordUsed 
     );
   }
 },
@@ -120,7 +119,7 @@ vowelRefresh: {
       state.phase === "normal" &&
       role === state.setter &&
       !state.powerUsedThisTurn &&
-      state.powers?.rouletteSecretActive
+      !state.powers?.rouletteSecretActive
     );
   }
 },
@@ -132,7 +131,7 @@ suggestSecret: {
       state.phase === "normal" &&
       role === state.setter &&
       !state.powerUsedThisTurn &&
-      !state.powers.freezeActive       // cannot be used while frozen
+      !state.powers?.freezeActive       // cannot be used while frozen
     );
   }
 },
@@ -143,7 +142,7 @@ confuseColors: {
       state.phase === "normal" &&
       role === state.setter &&
       !state.powerUsedThisTurn &&
-      !state.powers.magicModeJustUsed
+      !state.powers?.magicModeJustUsed
     );
   }
 },
@@ -227,8 +226,7 @@ magicMode: {
       return (
         state.phase === "normal" &&
         role === state.guesser &&
-        !state.powerUsedThisTurn &&
-        state.firstSecretSet          // setter has set at least one secret
+        !state.powerUsedThisTurn 
       );
     },
     effects: {
