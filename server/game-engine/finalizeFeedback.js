@@ -36,7 +36,7 @@ function finalizeFeedback(state, powerEngine, roomId, room, io) {
     roundIndex: state.history.length,
     powersGuesser,
     powersSetter,
-    fakeFeedback
+    fakeFeedback: null
   };
 
   // Step 3: allow powers to modify feedback entry
