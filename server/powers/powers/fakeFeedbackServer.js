@@ -28,7 +28,7 @@ engine.registerPower("fakeFeedback", {
     real,   // ["🟩","⬛",...]
     fake    // ["🟨","⬛",...]
   };
-   else{
+ }else{
       entry.fakeFeedback = {
     fake,   // ["🟩","⬛",...]
     real    // ["🟨","⬛",...]
