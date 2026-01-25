@@ -203,6 +203,7 @@ function getSetterTileClasses(safeEntry, guessIndex) {
     }
   }
   // --- Case 2: guesser sees special feedback (blue / purple) ---
+  console.log(safeEntry.fbGuesser?.[guessIndex]);
   const guesserFb = safeEntry.fbGuesser?.[guessIndex];
   const guesserClass = fbToClass(guesserFb);
   if (guesserClass === "blue" || guesserClass === "purple") {
