@@ -87,13 +87,6 @@ socket.on("quickJoin", ({ userId, name }, cb) => {
     // GAME ACTION -----------------------------
 socket.on("gameAction", ({ action }) => {
   const roomId = socket.data.roomId;
-
-  console.log("[gameAction]", {
-    socketId: socket.id,
-    roomId,
-    action: action.type
-  });
-
   if (!roomId || !rooms[roomId]) {
     console.warn("[gameAction] socket not in valid room", socket.id);
     socket.emit("forceLeaveRoom");
