@@ -389,9 +389,6 @@ body.menu-mode .app-header {
 .room-code {
   padding: 2px 6px;
   margin-left: 6px;
-  border-radius: 4px;
-  background: #1b1c22;
-  border: 1px solid #2a2c34;
 }
 
 /* Waiting block */
