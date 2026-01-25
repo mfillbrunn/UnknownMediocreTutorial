@@ -121,7 +121,10 @@ function createHistoryRowDOM(row) {
   for (const tile of row.tiles) {
     const el = document.createElement("div");
     el.className = tile.classKey;
-    el.textContent = tile.letter;
+    const span = document.createElement("span");
+    span.className = "tile-letter";
+    span.textContent = tile.letter;
+    el.appendChild(span);
     rowEl.appendChild(el);
   }
   anchor.appendChild(rowEl);
