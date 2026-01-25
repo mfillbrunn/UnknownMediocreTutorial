@@ -264,10 +264,13 @@ body.blind-guess .key:hover {
 
 .tile-feedback-slide::before,
 .tile-feedback-slide::after {
-  z-index: 0;
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
-.history-tile {
+.tile-letter {
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
