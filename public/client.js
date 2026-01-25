@@ -25,10 +25,15 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 function toast(msg) {
   const t = $("toast");
+  if (!t) return; // ← THIS IS REQUIRED
+
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 1500);
+  setTimeout(() => {
+    t.classList.remove("show");
+  }, 1500);
 }
+
 
 function shake(element) {
   if (!element) return;
