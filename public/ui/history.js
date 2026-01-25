@@ -24,7 +24,7 @@ function computeTileClassKey({isSetter, entryRoundIndex, guessIndex, bsIdx, bsRo
     const c = safeEntry.fbComposite[guessIndex];
     if (c === "🟩") classes.push("tile-green");
     else if (c === "🟨") classes.push("tile-yellow");
-    else if (fb === "🟦") classes.push("tile-blue");
+    else if (c === "🟦") classes.push("tile-blue");
     else if (c === "⬛") classes.push("tile-gray");
     else {
       // composite code like "gray-yellow", "yellow-gray", etc.
