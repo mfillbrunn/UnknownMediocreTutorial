@@ -74,12 +74,10 @@ function renderStep() {
 
   // fade out
   img.style.opacity = 0;
-  img.style.transform = "scale(0.98)";
 
   setTimeout(() => {
        img.onload = () => {
       img.style.opacity = 1;
-      img.style.transform = "scale(1)";
     };    
     img.src = step.image;
     title.textContent = step.title;
