@@ -3,7 +3,7 @@ const tutorialSteps = [
     title: "How the game works",
     description:
       "One player sets a secret word. The other player tries to guess it using feedback.",
-    image: "/public/assets/tutorial/overview.jpg"
+    image: "/public/assets/menu-bg.jpg"
   },
   {
     title: "Guesser view",
@@ -15,7 +15,7 @@ const tutorialSteps = [
     title: "Guesser view (annotated)",
     description:
       "Feedback colors, keyboard hints, and timers explained.",
-    image: "/public/assets/tutorial/guesser-annotated.jpg"
+    image: "/public/assets/tutorial/guesser_tips.jpg"
   },
   {
     title: "Setter view",
@@ -27,7 +27,7 @@ const tutorialSteps = [
     title: "Setter view (annotated)",
     description:
       "Some UI elements are only visible to the setter.",
-    image: "/public/assets/tutorial/setter-annotated.jpg"
+    image: "/public/assets/tutorial/setter_tips.jpg"
   }
 ];
 
@@ -100,3 +100,11 @@ prevBtn.onclick = () => {
 };
 
 closeBtn.onclick = hideTutorial;
+overlay.addEventListener("click", e => {
+  if (e.target === overlay) hideTutorial();
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && !overlay.classList.contains("hidden")) {
+    hideTutorial();
+  }
+});
