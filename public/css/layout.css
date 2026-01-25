@@ -262,3 +262,30 @@ margin:0;
 .constraint-toggle-btn {
 align-self: baseline;
 }
+.app-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: var(--sp-8) var(--sp-12);
+}
+
+.title {
+  justify-self: start;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.header-role-badge {
+  justify-self: center;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.header-room-code {
+  justify-self: end;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+  white-space: nowrap;
+}
