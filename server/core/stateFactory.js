@@ -43,7 +43,7 @@ const powers = {
       countOnlyUsed: false,
       countOnlyWord: "",
       countOnlyActive: false,
-      countOnlyRound: 0,
+      countOnlyRound: -1,
       // SUGGEST POWERS
       suggestGuessUsed: false,
       suggestGuessActive: false,
