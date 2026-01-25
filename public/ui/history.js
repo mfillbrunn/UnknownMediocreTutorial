@@ -20,18 +20,25 @@ function computeTileClassKey({isSetter, entryRoundIndex, guessIndex, bsIdx, bsRo
     return classes.join(" ");
   }
   // Faithful fbComposite branch
-  if (!isSetter && Array.isArray(safeEntry.fakeFeedback)) {
-    const c = safeEntry.fakeFeedback[guessIndex];
-    if (c === "🟩") classes.push("tile-green");
-    else if (c === "🟨") classes.push("tile-yellow");
-    else if (c === "🟦") classes.push("tile-blue");
-    else if (c === "⬛") classes.push("tile-gray");
-    else {
-      // composite code like "gray-yellow", "yellow-gray", etc.
-      classes.push(`tile-${c}`);
-      classes.push("tile-feedback-slide");
-    }
-    return classes.join(" ");
+if (!isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry2) {
+  const fb1 = safeEntry.fakeFeedback.entry1[guessIndex];
+  const fb2 = safeEntry.fakeFeedback.entry2[guessIndex];
+  // deterministic
+  if (fb1 === fb2) {
+    if (fb1 === "🟩") classes.push("tile-green");
+    else if (fb1 === "🟨") classes.push("tile-yellow");
+    else if (fb1 === "🟦") classes.push("tile-blue");
+    else classes.push("tile-gray");
+  } 
+  // uncertain → composite
+  else {const c1 = fbToClass(fb1);
+        const c2 = fbToClass(fb2);
+        if (c1 && c2) {classes.push(`tile-${c1}-${c2}`); 
+                   classes.push("tile-feedback-slide"); 
+                      }
+        }
+  return classes.join(" ");
+}
   } else if (isSetter && Array.isArray(safeEntry.fakeFeedback)) {
     classes.push(...getSetterTileClasses(safeEntry, guessIndex));
     return classes.join(" ");
