@@ -53,7 +53,6 @@ function showTutorial() {
   overlay.classList.remove("hidden");
 
   img.style.opacity = 1;
-  img.style.transform = "scale(1)";
   hide("startupScreen");
   document.body.classList.remove("menu-mode");
   tutorialIndex = 0;
