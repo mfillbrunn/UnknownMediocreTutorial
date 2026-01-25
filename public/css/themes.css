@@ -6,6 +6,8 @@
   --bg:#0c0c0e;
   --text:#e5e5e5;
   --title:#fff;
+     --ff-period: 4.5s;
+  --ff-phase: 0s; /* set once via JS */
 
   /* ===============================
      Semantic surfaces
