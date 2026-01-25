@@ -162,24 +162,16 @@ window.renderHistory = function ({ state, container, role }) {
 
 ///Helper for uncertain feedback
 
-function fbToClass(fb) {
-  if (fb === "🟩") return "green";
-  if (fb === "🟨") return "yellow";
-  if (fb === "⬛") return "gray";
-  return null;
-}
-
-function getSetterTileClasses(safeEntry, guessIndex) {
-  const classes = [];
-
-  // map true feedback to base class
-  const fbToClass = (fb) => {
+function fbToClass = (fb) => {
     if (fb === "🟩") return "green";
     if (fb === "🟨") return "yellow";
     if (fb === "🟦") return "blue";
     if (fb === "⬛") return "gray";
     return null;
-  };
+  }
+
+function getSetterTileClasses(safeEntry, guessIndex) {
+  const classes = [];
   const trueFb = safeEntry.fb?.[guessIndex];
   const trueClass = fbToClass(trueFb);
   if (trueClass) {
