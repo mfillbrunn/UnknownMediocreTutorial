@@ -58,7 +58,6 @@ textarea {
 
   font-size: clamp(16px, 4.5vw, var(--fs-20));
   font-weight: 800;
-  line-height: 1;
 
   white-space: nowrap;
   overflow: hidden;
