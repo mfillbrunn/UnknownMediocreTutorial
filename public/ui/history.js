@@ -214,3 +214,7 @@ function getSetterTileClasses(safeEntry, guessIndex) {
   }
   return classes;
 }
+function resetHistoryRenderer(container) {
+  prevRenderState = [];
+  container.innerHTML = "";
+}
