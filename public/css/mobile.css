@@ -153,3 +153,8 @@
   }
    
 }
+@media (max-width: 420px) {
+  .header-room-code {
+    display: none;
+  }
+}
