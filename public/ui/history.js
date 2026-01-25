@@ -20,8 +20,8 @@ function computeTileClassKey({isSetter, entryRoundIndex, guessIndex, bsIdx, bsRo
     return classes.join(" ");
   }
   // Faithful fbComposite branch
-  if (!isSetter && Array.isArray(safeEntry.fbComposite)) {
-    const c = safeEntry.fbComposite[guessIndex];
+  if (!isSetter && Array.isArray(safeEntry.fakeFeedback)) {
+    const c = safeEntry.fakeFeedback[guessIndex];
     if (c === "🟩") classes.push("tile-green");
     else if (c === "🟨") classes.push("tile-yellow");
     else if (c === "🟦") classes.push("tile-blue");
@@ -32,7 +32,7 @@ function computeTileClassKey({isSetter, entryRoundIndex, guessIndex, bsIdx, bsRo
       classes.push("tile-feedback-slide");
     }
     return classes.join(" ");
-  } else if (isSetter && Array.isArray(safeEntry.fbComposite)) {
+  } else if (isSetter && Array.isArray(safeEntry.fakeFeedback)) {
     classes.push(...getSetterTileClasses(safeEntry, guessIndex));
     return classes.join(" ");
   }
@@ -178,8 +178,8 @@ function getSetterTileClasses(safeEntry, guessIndex) {
     classes.push(`tile-${trueClass}`);
   }
   // add secondary class if composite differs
-  if (Array.isArray(safeEntry.fbComposite)) {
-    const composite = safeEntry.fbComposite[guessIndex];
+  if (Array.isArray(safeEntry.fakeFeedback)) {
+    const composite = safeEntry.fakeFeedback[guessIndex];
     if (typeof composite === "string" && composite.includes("-")) {
       const [a, b] = composite.split("-");
       const secondary =
