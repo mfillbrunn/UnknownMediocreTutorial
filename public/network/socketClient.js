@@ -65,9 +65,10 @@ window.quickJoin = function (payload, cb) {
   });
 };
 
-
 window.sendGameAction = function (action) {
-  socket.emit("gameAction", {action });
+  if (!socket.connected) return;
+  if (!window.roomId) return;
+  socket.emit("gameAction", { action });
 };
 
 // ------------------------------
@@ -93,7 +94,18 @@ window.onLobbyEvent = function (handler) {
 // ------------------------------
 // CONNECTION LOGS
 // ------------------------------
-
+socket.on("connect", () => {
+  console.log("🔌 Connected");
+  window.socketReady = true;
+  maybeAutoRejoin();
+});
 socket.on("connect_error", err =>
   console.warn("❌ Connection error:", err.message)
 );
+
+socket.on("reconnect", () => {
+  console.log("🔁 Reconnected");
+  window.socketReady = true;
+  window.autoRejoinAttempted = false;
+  maybeAutoRejoin();
+});
