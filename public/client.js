@@ -204,14 +204,14 @@ function updateWaitingIndicator() {
 let powerQueue = [];
 
 onPowerUsed(data => {
+  console.log(data.type);
+  console.log(data.variant);
+  console.log(!PowerEngine._initialized);
   if (!PowerEngine._initialized) {
     powerQueue.push(data);
     return;
   }
-  console.log(data.type);
-  console.log(data.variant);
   triggerPowerFX(data.type, data.variant);
-
   const mod = PowerEngine.powers[data.type];
   mod?.effects?.onPowerUsed?.(data);
   PowerEngine.updateButtonStates(state, myRole);
