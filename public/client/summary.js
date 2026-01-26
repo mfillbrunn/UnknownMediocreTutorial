@@ -471,7 +471,7 @@ function renderStoredRoundSummary(round, index) {
           <th>Guess</th>
           <th>Feedback</th>
           <th></th>
-          <th>Remaining</th>
+          <th>Secrets</th>
         </tr>
   `;
 
