@@ -32,13 +32,13 @@ const tutorialSteps = [
   {
     title: "Powers",
     description:
-      "Both sides have access to many special powers - try them out!",
+      "Both sides have access to many strong special powers - try them out! Powers may be used once per game, and only one per turn.",
     image: "/./assets/tutorial/powers.jpg"
   },
   {
     title: "The outcome",
     description:
-      "Each player plays once as the Spy and once as the Inspector, using the same set of powers. Powers may be used once per game, and only one per turn. The player who solves the case in fewer guesses wins; if tied, the faster investigation prevails.",
+      "Each player plays once as the Spy and once as the Inspector, using the same set of powers. The player who solves the case in fewer guesses wins; if tied, the faster investigation prevails.",
     image: "/./assets/tutorial/loss-or-win.jpg"
   }
 ];
