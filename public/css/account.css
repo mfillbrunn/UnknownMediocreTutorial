@@ -78,6 +78,51 @@
   gap: 4px;
   margin-top: 4px;
 }
+/* Account screen spacing fix */
+#accountScreen .menu-center {
+  gap: var(--sp-14);
+}
+
+#accountScreen .account-actions {
+  margin-top: var(--sp-6);
+}
+
+#accountScreen #pastGamesContainer {
+  margin-top: var(--sp-8);
+}
+/* Past games container */
+.past-games {
+  width: 100%;
+  margin-top: var(--sp-10);
+  border-radius: var(--r-10);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.03),
+      rgba(0,0,0,0.18)
+    ),
+    var(--panel-bg);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+/* Past game row = dossier entry */
+.past-game-row {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.past-game-opponent {
+  font-family: var(--font-mono);
+  letter-spacing: 0.4px;
+}
+
+.past-game-result .result-icon {
+  font-size: 1.2rem;
+}
+
+.past-game-powers {
+  opacity: 0.8;
+}
 
 /* =========================
    Mobile adjustments
