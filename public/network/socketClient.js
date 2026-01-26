@@ -155,3 +155,8 @@ socket.on("reconnect", () => {
   window.autoRejoinAttempted = false;
   maybeAutoRejoin();
 });
+
+socket.on("disconnect", reason => {
+  console.warn("🔌 Disconnected:", reason);
+});
+
