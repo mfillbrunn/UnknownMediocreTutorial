@@ -15,6 +15,7 @@ let rouletteWords = null;
 window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 window.lastTimeRemaining ??= { A: null, B: null };
+window.isRejoining = false;  
 // -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
@@ -120,6 +121,7 @@ function getPlayerNameByCurrentRole(targetRole) {
 }
 
 function enterLobbyAfterJoin() {
+  window.isRejoining = false;  
   showLobby();
 }
 
@@ -156,10 +158,6 @@ function updateWaitingIndicator() {
   }
 }
 
-
-// -----------------------------------------------------
-// SOCKET EVENT HANDLERS
-// -----------------------------------------------------
 // Power UI hook (client-side effects)
 let powerQueue = [];
 
@@ -522,7 +520,11 @@ function handleSetterInput(event) {
     const draft = (state.setterDraft || "").trim();
     if (draft.length === 0) {
       if (KeepEnabled) {
-        state.setterDraft = "";        
+        state.setterDraft = "";
+        if (window.isRejoining) {
+          toast("Reconnecting...");
+          return;
+        }
         sendGameAction({ type: "SET_SECRET_SAME" });  
         resetEphemeralUIState();
         updateUI();
@@ -577,6 +579,10 @@ function submitSetterNew() {
     }
     return;
   }  
+  if (window.isRejoining) {
+    toast("Reconnecting...");
+    return;
+  }
   sendGameAction({type: "SET_SECRET_NEW",secret: w});
   stopSecretRoulette();
   state.setterDraft = "";  
@@ -658,6 +664,10 @@ function handleGuesserInput(event) {
     if (!result.ok) {
       toast(result.message);
       shakeDraftRow("guesser");
+      return;
+    }
+    if (window.isRejoining) {
+      toast("Reconnecting...");
       return;
     }
     sendGameAction({type: "SUBMIT_GUESS",guess: localGuesserDraft.toUpperCase()});
