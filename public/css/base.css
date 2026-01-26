@@ -50,9 +50,10 @@ textarea {
   filter: brightness(0.95);
 }
 .title {
+  position: relative;
+  padding-left: var(--sp-8);
   margin: var(--sp-6) 0 var(--sp-10);
-
-  font-size: var(--fs-20);
+  font-size: var(--fs-16);
   font-weight: 800;
   letter-spacing: 1.6px;
   justify-self: start;
@@ -118,10 +119,7 @@ body::before {
   mix-blend-mode: overlay;
   opacity: 0.6;
 }
-.title {
-  position: relative;
-  padding-left: var(--sp-8);
-}
+
 
 .title::before {
   content: "▌";

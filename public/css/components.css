@@ -11,7 +11,6 @@
 
 .summary-table {
   text-align: center;
-  table-layout: fixed;
   width: 100%;
 }
 .match-summary-table th,
@@ -421,7 +420,7 @@
   padding: var(--sp-2) var(--sp-8);
   border-radius: var(--r-pill);
   line-height: 1;
-  font-size: var(--fs-20);
+  font-size: var(--fs-16);
   font-weight: 900;
   letter-spacing: 0.6px;
   text-transform: uppercase;

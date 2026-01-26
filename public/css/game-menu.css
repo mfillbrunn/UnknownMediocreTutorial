@@ -389,7 +389,7 @@ body.menu-mode .app-header {
 .room-code {
   padding: 2px 6px;
   margin-left: 6px;
-  font-size: var(--fs-20);
+  font-size: var(--fs-16);
 }
 
 /* Waiting block */
