@@ -380,8 +380,7 @@ html += `
         <th>Secret</th>
         <th>Guess</th>
         <th>Feedback</th>
-        <th></th>
-        <th># Words</th>
+        <th>Secrets</th>
       </tr>
     </thead>
     <tbody>
@@ -435,7 +434,6 @@ for (let i = 0; i < state.history.length; i++) {
       <td class="secret-cell">${secretCell}</td>
       <td class="guess-cell">${guessCell}</td>
       <td class="feedback-cell">${fbCell}</td>
-      <td class="powers-cell">${powersCell}</td>
       <td class="remaining-cell">${remaining}</td>
     </tr>
   `;
@@ -470,7 +468,6 @@ function renderStoredRoundSummary(round, index) {
           <th>Secret</th>
           <th>Guess</th>
           <th>Feedback</th>
-          <th></th>
           <th>Secrets</th>
         </tr>
   `;
@@ -508,7 +505,6 @@ function renderStoredRoundSummary(round, index) {
         <td>${h.finalSecret?.toUpperCase() || "???"}</td>
         <td>${h.guess?.toUpperCase() || ""}</td>
         <td>${Array.isArray(h.fb) ? h.fb.join("") : ""}</td>
-        <td class="powers-cell">${powersCell}</td>
         <td>${remaining}</td>
       </tr>
     `;

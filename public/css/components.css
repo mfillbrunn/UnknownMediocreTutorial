@@ -11,6 +11,8 @@
 
 .summary-table {
   text-align: center;
+  table-layout: fixed;
+  width: 100%;
 }
 .match-summary-table th,
 .match-summary-table td {
@@ -29,7 +31,19 @@
 .match-summary-table th {
   padding: 8px 12px;
 }
-
+.feedback-cell {
+  white-space: nowrap;
+  min-width: 6.5em; /* enough for 5 emoji */
+  text-align: center;
+}
+.feedback-cell {
+  font-family: var(--font-mono);
+}
+@media (max-width: 600px) {
+  .feedback-cell {
+    font-size: 0.9em;
+  }
+}
 
 .history-box {
   background: var(--history-bg);

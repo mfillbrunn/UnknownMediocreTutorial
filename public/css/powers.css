@@ -636,7 +636,7 @@ body.power-assassinWord #power-fx {
 
   color: #000;
   background: #fff;
-
+  white-space: nowrap;
   box-shadow:
     0 12px 32px rgba(0,0,0,0.45);
 
@@ -683,7 +683,7 @@ body.power-assassinWord #power-fx {
     opacity: 1;
   }
 
-  65% {
+  75% {
     left: 50%;
     transform: translateX(-50%) skewX(-12deg);
     opacity: 1;
@@ -700,12 +700,23 @@ body.power-assassinWord #power-fx {
 #submit-banner.show {
   animation: banner-woosh 1100ms cubic-bezier(.22,.9,.35,1);
 }
-
+#submit-banner {
+  max-width: 90vw;
+  text-align: center;
+}
 @media (prefers-reduced-motion: reduce) {
   #submit-banner.show {
     animation: none;
     opacity: 1;
     left: 50%;
     transform: translateX(-50%);
+  }
+}
+@media (max-width: 600px) {
+  #submit-banner {
+    font-size: var(--fs-20);
+    padding: 12px 28px;
+    letter-spacing: 1.4px;
+    top: 14%;
   }
 }
