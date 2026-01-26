@@ -107,10 +107,6 @@ joinRoom(code, resp => {
 
 });
 
-window.quickJoin = function (payload, cb) {
-  socket.emit("quickJoin", payload, cb);
-};
-
 $("quickJoinBtn")?.addEventListener("click", () => {
   if (!requireAuth("quick play")) return;
 const username =
