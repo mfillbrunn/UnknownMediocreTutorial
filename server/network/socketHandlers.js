@@ -30,6 +30,9 @@ socket.on("createRoom", ({ userId, name }, cb) => {
 socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
   const result = joinOrReattach(socket, roomId, userId);
   if (!result.ok) return cb?.(result);
+  if (socket.data.roomId && socket.data.roomId !== roomId) {
+    socket.leave(socket.data.roomId);
+  }
   socket.data.roomId = roomId;
   const room = rooms[roomId];
   if (name) {
@@ -61,6 +64,9 @@ socket.on("quickJoin", ({ userId, name }, cb) => {
   if (!roomId) return cb?.({ ok: false, error: "No open rooms available" });
   const result = joinOrReattach(socket, roomId, userId);
   if (!result.ok) return cb?.(result);
+  if (socket.data.roomId && socket.data.roomId !== roomId) {
+    socket.leave(socket.data.roomId);
+  }
   socket.data.roomId = roomId;
   const room = rooms[roomId];
   if (result.reattached && result.shouldResumeGame) {
@@ -89,7 +95,7 @@ socket.on("gameAction", ({ action }) => {
   const roomId = socket.data.roomId;
   if (!roomId || !rooms[roomId]) {
     console.warn("[gameAction] socket not in valid room", socket.id);
-    socket.emit("forceLeaveRoom");
+    socket.emit("roomInvalid", { reason: "desync" });
     return;
   }
 
@@ -111,7 +117,6 @@ socket.on("gameAction", ({ action }) => {
 
     // DISCONNECT ------------------------------
 socket.on("disconnect", () => {
-   socket.data.roomId = null;
   for (const [roomId, room] of Object.entries(rooms)) {
     const player = room.players[socket.id];
     if (!player) continue;
@@ -200,11 +205,7 @@ socket.on("kickPlayer", ({ roomId }, cb) => {
   });
 
   // Notify kicked player explicitly
-  io.to(targetSocketId).emit("forceLeaveRoom");
-  const targetSocket = io.sockets.sockets.get(targetSocketId);
-    if (targetSocket) {
-      targetSocket.data.roomId = null;
-    }
+  io.to(targetSocketId).emit("forceLeaveRoom");  
   // Notify host only (optional UX)
   socket.emit("lobbyEvent", {
     type: "playerKicked",
