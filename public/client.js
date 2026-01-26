@@ -154,6 +154,9 @@ function triggerPowerFX(type) {
 }
 
 function triggerSubmitFX(role) {
+  console.log("[SUBMIT FX] called with role:", role);
+  console.log("setterScreen:", document.getElementById("setterScreen"));
+  console.log("guesserScreen:", document.getElementById("guesserScreen"));
   let el = null;
   let cls = null;
 

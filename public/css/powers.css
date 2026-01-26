@@ -629,8 +629,8 @@ body.power-assassinWord #power-fx {
 /* Inspector submits — outward, confirmatory */
 #guesserScreen.submit-inspector {
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--role-accent) 45%, transparent),
-    0 0 10px color-mix(in srgb, var(--role-accent) 18%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--guesser-color) 45%, transparent),
+    0 0 10px color-mix(in srgb, var(--guesser-color) 18%, transparent);
 }
 
 /* Accessibility */
