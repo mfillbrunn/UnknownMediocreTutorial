@@ -164,13 +164,14 @@ if (action.type === "SET_POWER_COUNT") {
             type: "playerReady",
             playerId: action.playerId
           });
-          
+          console.log(roomId);  
           const readyHumans = humanPlayers.filter(([id]) => state.ready[id]);
           if (readyHumans.length === 1){
                 emitStateForAllPlayers(roomId, room, io);
           }             
           if (readyHumans.length === 2 || (readyHumans.length === humanPlayers.length && aiPlayers.length === 1)) {
              //refresh state
+             console.log(roomId);   
              stopAllRoomIntervals(roomId, room);
              const oldState = state;                  
              const freshState = createInitialState();
