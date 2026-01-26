@@ -68,6 +68,7 @@ window.quickJoin = function (payload, cb) {
 window.sendGameAction = function (action) {
   if (!socket.connected) return;
   if (!window.roomId) return;
+  if (window.isRejoining) return;
   socket.emit("gameAction", { action });
 };
 
