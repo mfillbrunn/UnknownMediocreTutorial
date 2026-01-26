@@ -153,6 +153,30 @@ function triggerPowerFX(type) {
   }, 900);
 }
 
+function triggerSubmitFX(role) {
+  let el = null;
+  let cls = null;
+
+  if (role === "spy") {
+    el = document.getElementById("setterScreen");
+    cls = "submit-spy";
+  } else if (role === "inspector") {
+    el = document.getElementById("guesserScreen");
+    cls = "submit-inspector";
+  }
+
+  if (!el) return;
+
+  el.classList.remove("submit-spy", "submit-inspector");
+  void el.offsetWidth; // restart transition
+  el.classList.add(cls);
+
+  clearTimeout(triggerSubmitFX._t);
+  triggerSubmitFX._t = setTimeout(() => {
+    el.classList.remove(cls);
+  }, 220);
+}
+
 // -----------------------------------------------------
 // Start up
 // -----------------------------------------------------
@@ -543,6 +567,7 @@ function handleSetterInput(event) {
           return;
         }
         sendGameAction({ type: "SET_SECRET_SAME" });  
+        triggerSubmitFX("spy");
         resetEphemeralUIState();
         updateUI();
         renderSetterRemainingBox(state, myRole, state.secret);
@@ -601,6 +626,7 @@ function submitSetterNew() {
     return;
   }
   sendGameAction({type: "SET_SECRET_NEW",secret: w});
+  triggerSubmitFX("spy");
   stopSecretRoulette();
   state.setterDraft = "";  
   resetEphemeralUIState();
@@ -688,6 +714,7 @@ function handleGuesserInput(event) {
       return;
     }
     sendGameAction({type: "SUBMIT_GUESS",guess: localGuesserDraft.toUpperCase()});
+    triggerSubmitFX("inspector");
     if (state.phase !== "simultaneous") {localGuesserDraft = "";}
     resetEphemeralUIState();
   }
