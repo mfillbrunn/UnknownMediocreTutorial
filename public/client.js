@@ -637,8 +637,8 @@ function submitSetterNew() {
   resetEphemeralUIState();
   updateUI();
   renderSetterRemainingBox(state, myRole, state.secret);
-  triggerSubmitFX("spy");
-  
+  console.log("ABOUT TO CALL triggerSubmitFX (spy)");
+  triggerSubmitFX("spy"); 
 }
 
 
