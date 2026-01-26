@@ -313,52 +313,6 @@ async function logout() {
   showStartup();
 }
 
-function maybeAutoRejoin() {
-  if (window.autoRejoinAttempted) return;
-  if (!window.socketReady) return;
-  if (!window.authReady) return;
-
-  const roomId = localStorage.getItem("roomId");
-  if (!roomId || !window.currentUser) return;
-
-  window.autoRejoinAttempted = true;
-  tryAutoRejoin();
-}
-
-
-function tryAutoRejoin() {
-  const storedRoomId = localStorage.getItem("roomId");
-  const user = window.currentUser;
-
-  if (!storedRoomId || !user) return;
-  if (!socket.connected) return;
-
-  const username =
-    window.myProfile?.username || user.email || "Player";
-
-  socket.emit(
-    "joinRoom",
-    { roomId: storedRoomId, userId: user.id, name: username },
-    res => {
-      if (!res?.ok) {
-        if (res.error === "Room not found") {
-          window.autoRejoinAttempted = true;
-          localStorage.removeItem("roomId");
-          clearRoom?.();
-          showStartup?.();
-          toast("Your previous game has ended.");
-        } else {
-          // allow one retry on next reconnect
-          window.autoRejoinAttempted = false;
-        }
-        return;
-      }
-      window.roomId = res.roomId || storedRoomId;
-      onRejoinUI();
-    }
-  );
-}
-
 function updateAccountUI() {
   const root = $("accountScreen");
   if (!root) return;
