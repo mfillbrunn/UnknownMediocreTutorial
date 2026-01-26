@@ -166,8 +166,11 @@ function removePlayer({ roomId, socketId, reason, io, context }) {
     delete room.currentSocketByUserId[userId];
   }
   const sock = io?.sockets?.sockets?.get(socketId);
-  sock?.leave(roomId);
-  io?.to(roomId).emit("lobbyEvent", {
+  if (sock) {
+    sock.data.roomId = null;  
+    sock.leave(roomId);
+  }
+    io?.to(roomId).emit("lobbyEvent", {
     type: "playerLeft",
     role,
     reason
