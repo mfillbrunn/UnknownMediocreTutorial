@@ -153,32 +153,19 @@ function triggerPowerFX(type) {
   }, 900);
 }
 
-function triggerSubmitFX(role) {
-  console.log("[SUBMIT FX] called with role:", role);
-  console.log("setterScreen:", document.getElementById("setterScreen"));
-  console.log("guesserScreen:", document.getElementById("guesserScreen"));
-  let el = null;
-  let cls = null;
+function showSubmitBanner(role, text) {
+  const banner = document.getElementById("submit-banner");
+  if (!banner) return;
 
-  if (role === "spy") {
-    el = document.getElementById("setterScreen");
-    cls = "submit-spy";
-  } else if (role === "inspector") {
-    el = document.getElementById("guesserScreen");
-    cls = "submit-inspector";
-  }
+  banner.classList.remove("spy", "inspector", "show");
+  void banner.offsetWidth; // restart animation
 
-  if (!el) return;
+  banner.textContent = text;
+  banner.classList.add(role === "spy" ? "spy" : "inspector");
 
-  el.classList.remove("submit-spy", "submit-inspector");
-  void el.offsetWidth; // restart transition
-  el.classList.add(cls);
-
-  clearTimeout(triggerSubmitFX._t);
-  triggerSubmitFX._t = setTimeout(() => {
-    el.classList.remove(cls);
-  }, 220);
+  banner.classList.add("show");
 }
+
 
 // -----------------------------------------------------
 // Start up
@@ -575,7 +562,7 @@ function handleSetterInput(event) {
         sendGameAction({ type: "SET_SECRET_SAME" });  
         resetEphemeralUIState();
         updateUI();
-        triggerSubmitFX("spy");
+        showSubmitBanner("spy", "Secret planted");
         renderSetterRemainingBox(state, myRole, state.secret);
         return;
       }
@@ -637,8 +624,7 @@ function submitSetterNew() {
   resetEphemeralUIState();
   updateUI();
   renderSetterRemainingBox(state, myRole, state.secret);
-  console.log("ABOUT TO CALL triggerSubmitFX (spy)");
-  triggerSubmitFX("spy"); 
+  showSubmitBanner("spy", "Secret planted");
 }
 
 
@@ -722,7 +708,7 @@ function handleGuesserInput(event) {
       return;
     }
     sendGameAction({type: "SUBMIT_GUESS",guess: localGuesserDraft.toUpperCase()});
-    triggerSubmitFX("inspector");
+    showSubmitBanner("inspector", "Guess in");
     if (state.phase !== "simultaneous") {localGuesserDraft = "";}
     resetEphemeralUIState();
   }
