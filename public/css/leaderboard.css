@@ -99,4 +99,49 @@
   border-color: #f0f0f0;
 }
 
+/* =========================================
+   LEADERBOARD — PODIUM STYLING
+   ========================================= */
+
+/* Gold */
+.leaderboard-row:nth-child(1) {
+  background: linear-gradient(
+    90deg,
+    rgba(212,175,55,0.18),
+    transparent 70%
+  );
+}
+
+.leaderboard-row:nth-child(1) .leaderboard-rank,
+.leaderboard-row:nth-child(1) .leaderboard-rating {
+  color: #d4af37; /* gold */
+}
+
+/* Silver */
+.leaderboard-row:nth-child(2) {
+  background: linear-gradient(
+    90deg,
+    rgba(192,192,192,0.16),
+    transparent 70%
+  );
+}
+
+.leaderboard-row:nth-child(2) .leaderboard-rank,
+.leaderboard-row:nth-child(2) .leaderboard-rating {
+  color: #c0c0c0; /* silver */
+}
+
+/* Bronze */
+.leaderboard-row:nth-child(3) {
+  background: linear-gradient(
+    90deg,
+    rgba(205,127,50,0.18),
+    transparent 70%
+  );
+}
+
+.leaderboard-row:nth-child(3) .leaderboard-rank,
+.leaderboard-row:nth-child(3) .leaderboard-rating {
+  color: #cd7f32; /* bronze */
+}
 
