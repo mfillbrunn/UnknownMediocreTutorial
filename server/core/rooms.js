@@ -7,7 +7,9 @@ const {   destroyRoom, stopAllRoomIntervals } = require("../utils/teardown");
 const rooms = {};
 
 function hasAnyHumanPlayers(room) {
-  return Object.values(room.players).some(p => !p.isAI);
+  return Object.values(room.players).some(
+    p => !p.isAI && p.connected
+  );
 }
 
 // Generate a human-friendly room ID
@@ -152,9 +154,7 @@ function removePlayer({ roomId, socketId, reason, io, context }) {
     .map(([_, p]) => p);
   const hasHumanAfterRemoval = remainingPlayers.some(p => !p.isAI);
   if (!hasHumanAfterRemoval) {
-    console.log("Deleting room with only AI:", roomId);
-    forceCloseRoom(roomId, room, io);
-    return { ok: true, deleted: true };
+    room.aiOnlySince ??= Date.now();
   }
   
   delete room.players[socketId];
