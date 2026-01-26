@@ -567,9 +567,9 @@ function handleSetterInput(event) {
           return;
         }
         sendGameAction({ type: "SET_SECRET_SAME" });  
-        triggerSubmitFX("spy");
         resetEphemeralUIState();
         updateUI();
+        triggerSubmitFX("spy");
         renderSetterRemainingBox(state, myRole, state.secret);
         return;
       }
@@ -626,11 +626,13 @@ function submitSetterNew() {
     return;
   }
   sendGameAction({type: "SET_SECRET_NEW",secret: w});
-  triggerSubmitFX("spy");
   stopSecretRoulette();
   state.setterDraft = "";  
   resetEphemeralUIState();
   updateUI();
+  renderSetterRemainingBox(state, myRole, state.secret);
+  triggerSubmitFX("spy");
+  
 }
 
 
