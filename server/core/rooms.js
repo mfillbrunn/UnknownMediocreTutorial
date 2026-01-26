@@ -131,10 +131,7 @@ function findLastOpenRoom() {
   for (let i = roomIds.length - 1; i >= 0; i--) {
     const roomId = roomIds[i];
     const room = rooms[roomId];
-    if (
-  room &&
-  Object.values(room.players).filter(p => p.connected).length === 1
-) {
+    if (room &&Object.values(room.players).filter(p => p.connected && !p.isAI).length === 1) {
   return roomId;
 }
   }
