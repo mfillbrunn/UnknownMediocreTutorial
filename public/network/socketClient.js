@@ -113,12 +113,13 @@ function tryAutoRejoin() {
 
   const username =
     window.myProfile?.username || user.email || "Player";
-
+  window.isRejoining = true;
   socket.emit(
     "joinRoom",
     { roomId: storedRoomId, userId: user.id, name: username },
     res => {
       if (!res?.ok) {
+        window.isRejoining = false;
         if (res.error === "Room not found") {
           window.autoRejoinAttempted = true;
           localStorage.removeItem("roomId");
@@ -131,6 +132,7 @@ function tryAutoRejoin() {
         }
         return;
       }
+      window.isRejoining = false;
       window.roomId = res.roomId || storedRoomId;
       onRejoinUI();
     }
