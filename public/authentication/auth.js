@@ -341,21 +341,18 @@ function tryAutoRejoin() {
     { roomId: storedRoomId, userId: user.id, name: username },
     res => {
       if (!res?.ok) {
-        console.warn("Auto-rejoin failed:", res?.error);
-
-        // 🔥 HARD RESET — room is gone
-        localStorage.removeItem("roomId");
-        window.roomId = null;
-        window.state = null;
-        window.autoRejoinAttempted = true; // do NOT retry automatically
-
-        clearRoom?.();
-        showStartup?.();
-        toast?.("Your previous game has ended.");
-
+        if (res.error === "Room not found") {
+          window.autoRejoinAttempted = true;
+          localStorage.removeItem("roomId");
+          clearRoom?.();
+          showStartup?.();
+          toast("Your previous game has ended.");
+        } else {
+          // allow one retry on next reconnect
+          window.autoRejoinAttempted = false;
+        }
         return;
       }
-
       window.roomId = res.roomId || storedRoomId;
       onRejoinUI();
     }
@@ -386,14 +383,6 @@ function updateAccountUI() {
   root.querySelector("#showPastGamesBtn")
     ?.classList.toggle("hidden", !loggedIn);
 }
-
-
-
-socket.on("connect", () => {
-  console.log("🔌 Connected");
-  window.socketReady = true;
-  maybeAutoRejoin();
-});
 
 window.onProfileReady = onProfileReady;
 window.logout = logout;
