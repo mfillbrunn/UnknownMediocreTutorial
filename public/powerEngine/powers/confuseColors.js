@@ -7,7 +7,7 @@ tooltip: {
   },
 
   renderButton(roomId) {
-  const { wrapper, btn } =    PowerEngine.createPowerButton("confuseColors", "Blue Mode");
+  const { wrapper, btn } =    PowerEngine.createPowerButton("confuseColors", window.POWER_METADATA.confuseColors.label);
   this.wrapperEl = wrapper;  
   this.buttonEl = btn;
     $("setterPowerContainer").appendChild(wrapper);

@@ -7,7 +7,7 @@ tooltip: {
   },
 
   renderButton(roomId) {
-     const { wrapper, btn } =    PowerEngine.createPowerButton("vowelRefresh", "Vowel Refresh");
+     const { wrapper, btn } =    PowerEngine.createPowerButton("vowelRefresh", window.POWER_METADATA.vowelRefresh.label);
     this.wrapperEl = wrapper;
      this.buttonEl = btn;
     $("setterPowerContainer").appendChild(wrapper);

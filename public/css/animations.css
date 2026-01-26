@@ -188,6 +188,13 @@
   }
 }
 
-
+@keyframes laserPing {
+  0% { box-shadow: none; }
+  40% {
+    box-shadow:
+      0 0 18px color-mix(in srgb, var(--role-accent) 35%, transparent);
+  }
+  100% { box-shadow: none; }
+}
 
 

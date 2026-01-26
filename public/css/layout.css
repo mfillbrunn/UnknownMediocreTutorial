@@ -178,12 +178,7 @@ margin:0;
   min-width: 0;
 }
 
-.title {
-  margin: 0;
-  font-weight: 900;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-}
+
 
 .header-divider {
   opacity: 0.4;
@@ -269,11 +264,6 @@ align-self: baseline;
   padding: var(--sp-8) var(--sp-12);
 }
 
-.title {
-  justify-self: start;
-  margin: 0;
-  white-space: nowrap;
-}
 
 .header-role-badge {
   justify-self: center;

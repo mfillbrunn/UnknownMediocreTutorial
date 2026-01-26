@@ -8,7 +8,7 @@ tooltip: {
 
 
   renderButton(roomId) {
-     const { wrapper, btn } =    PowerEngine.createPowerButton("revealGreen", "Sneak Letter");
+     const { wrapper, btn } =    PowerEngine.createPowerButton("revealGreen", window.POWER_METADATA.revealGreen.label);
     this.wrapperEl = wrapper;
      this.buttonEl = btn;
         $("guesserPowerContainer").appendChild(wrapper)

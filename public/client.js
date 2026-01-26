@@ -134,6 +134,24 @@ function requireAuth(actionName = "continue") {
   return true;
 }
 
+function triggerPowerFX(type) {
+  const body = document.body;
+
+  body.classList.remove("power-fx");
+  body.classList.forEach(c => {
+    if (c.startsWith("power-")) body.classList.remove(c);
+  });
+
+  // force restart
+  void body.offsetWidth;
+
+  body.classList.add("power-fx", `power-${type}`);
+
+  clearTimeout(triggerPowerFX._t);
+  triggerPowerFX._t = setTimeout(() => {
+    body.classList.remove("power-fx", `power-${type}`);
+  }, 900);
+}
 
 // -----------------------------------------------------
 // Start up
@@ -166,6 +184,7 @@ onPowerUsed(data => {
     powerQueue.push(data);
     return;
   }
+  triggerPowerFX(data.type);
   const mod = PowerEngine.powers[data.type];
   mod?.effects?.onPowerUsed?.(data);
   PowerEngine.updateButtonStates(state, myRole);
@@ -254,13 +273,11 @@ onStateUpdate(newState => {
   const prevPhase = state?.phase;
   const prevSetterDraft = state?.setterDraft || "";
   state = JSON.parse(JSON.stringify(newState));
-  if (prevPhase === "lobby" && state.phase === "simultaneous" && prevRenderState !== []) {
+  if (prevPhase === "lobby" && state.phase === "simultaneous" && prevRenderState.length > 0) {
       prevRenderState = [];
       $("setterGuesserSubmitted").innerHTML = "";
       $("historyGuesser").innerHTML = "";
   }  
-  const roleFromState = state.roles?.[socket.id] ?? null;
-  if (roleFromState) myRole = roleFromState;
   window.myRole = myRole;
   if (myRole && !roleAssigned) {
     roleAssigned = true;

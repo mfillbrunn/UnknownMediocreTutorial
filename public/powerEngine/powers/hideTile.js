@@ -7,7 +7,7 @@ tooltip: {
   },
 
   renderButton(roomId) {
-     const { wrapper, btn } =    PowerEngine.createPowerButton("hideTile", "Hide Tile");
+     const { wrapper, btn } =    PowerEngine.createPowerButton("hideTile", window.POWER_METADATA.hideTile.label);
     this.wrapperEl = wrapper;
      this.buttonEl = btn;
     $("setterPowerContainer").appendChild(wrapper);

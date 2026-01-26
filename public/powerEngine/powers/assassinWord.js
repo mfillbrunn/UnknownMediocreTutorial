@@ -5,7 +5,7 @@ PowerEngine.register("assassinWord", {
     desc: window.POWER_METADATA.assassinWord.desc
   },
   renderButton(roomId) {
-  const { wrapper, btn } =    PowerEngine.createPowerButton("assassinWord", "Assassin Word");
+  const { wrapper, btn } =    PowerEngine.createPowerButton("assassinWord", window.POWER_METADATA.assassinWord.label);
   this.wrapperEl = wrapper;
   this.buttonEl = btn;
   $("setterPowerContainer").appendChild(wrapper);

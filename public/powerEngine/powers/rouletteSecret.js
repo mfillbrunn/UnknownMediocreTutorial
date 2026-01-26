@@ -10,7 +10,7 @@ PowerEngine.register("rouletteSecret", {
 
   renderButton(roomId) {
     const { wrapper, btn } =
-      PowerEngine.createPowerButton("rouletteSecret", "Secret Roulette");
+      PowerEngine.createPowerButton("rouletteSecret", window.POWER_METADATA.rouletteSecret.label);
 
     this.wrapperEl = wrapper;
     this.buttonEl = btn;

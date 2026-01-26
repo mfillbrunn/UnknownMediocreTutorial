@@ -6,7 +6,7 @@ tooltip: {
   },
 
   renderButton(roomId) {
-   const { wrapper, btn } =    PowerEngine.createPowerButton("blindGuess", "Blind Guess");
+   const { wrapper, btn } =    PowerEngine.createPowerButton("blindGuess", window.POWER_METADATA.blindGuess.label);
    this.wrapperEl = wrapper; 
    this.buttonEl = btn;
     $("setterPowerContainer").appendChild(wrapper);

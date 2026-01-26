@@ -6,7 +6,7 @@ tooltip: {
     desc: window.POWER_METADATA.freezeSecret.desc
   },
   renderButton(roomId) {
-     const { wrapper, btn } =    PowerEngine.createPowerButton("freezeSecret", "Freeze Secret");
+     const { wrapper, btn } =    PowerEngine.createPowerButton("freezeSecret", window.POWER_METADATA.freezeSecret.label);
     this.wrapperEl = wrapper;
      this.buttonEl = btn;
         $("guesserPowerContainer").appendChild(wrapper)

@@ -2,11 +2,11 @@ socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
 
   // Notify BOTH players when setter submits (first time)
   if (secretSubmitted && !lastSimulSecret) {
-    toast("Setter submitted their secret!");
+    toast("Secret planted.");
   }
   // Notify BOTH players when guesser submits (first time)
   if (guessSubmitted && !lastSimulGuess) {
-    toast("Guesser submitted their guess!");
+    toast("Guess in.");
   }
   // Save previous values so we don't re-toast
   lastSimulSecret = secretSubmitted;
@@ -21,7 +21,7 @@ socket.on("revealOldSecret", ({ secret }) => {
 // Timer begins
 socket.on("forceTimerStarted", ({ durationMs }) => {
   const seconds = Math.ceil(durationMs / 1000);
-  toast(`⏱ Setter is now timed — ${seconds} seconds to make a guess!`);
+  toast(`⏱ Spy is now timed — ${seconds} seconds to make a guess!`);
 });
 
 socket.on("forceTimerExpired", () => {

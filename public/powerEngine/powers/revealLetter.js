@@ -56,11 +56,11 @@ PowerEngine.register("revealLetter", {
     // Button label depends on mode
     const mode = state.powers?.revealLetter?.mode;
     if (mode === "RARE") {
-      btn.textContent = "Rare Letter Bonus";
+      btn.textContent = "High-Value Target";
     } else if (mode === "ROW") {
-      btn.textContent = "Row Master";
+      btn.textContent = "Full Sweep";
     } else {
-      btn.textContent = "Reveal Letter";
+      btn.textContent = "Confirmed Lead";
     }
   }
 });

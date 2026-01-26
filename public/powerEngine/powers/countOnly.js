@@ -8,7 +8,7 @@ tooltip: {
 
 
   renderButton(roomId) {
- const { wrapper, btn } =    PowerEngine.createPowerButton("countOnly", "Count Only");
+ const { wrapper, btn } =    PowerEngine.createPowerButton("countOnly", window.POWER_METADATA.countOnly.label);
  this.wrapperEl = wrapper;   
  this.buttonEl = btn;
     $("setterPowerContainer").appendChild(wrapper);

@@ -299,3 +299,129 @@ body.blind-guess .key:hover {
   pointer-events: none;
 }
 
+/* POWER EFFECTS*/
+
+/* ================================
+   POWER FX LAYER
+   ================================ */
+
+#power-fx {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+}
+
+/* global hit response */
+body.power-fx {
+  animation: fx-shake 420ms var(--ease-ui, ease-out);
+}
+
+/* respect accessibility */
+@media (prefers-reduced-motion: reduce) {
+  body.power-fx,
+  #power-fx {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ================================
+   KEYFRAMES
+   ================================ */
+
+@keyframes fx-shake {
+  0%   { transform: translate3d(0,0,0); }
+  20%  { transform: translate3d(-4px, 2px, 0); }
+  40%  { transform: translate3d(3px, -2px, 0); }
+  60%  { transform: translate3d(-2px, 2px, 0); }
+  100% { transform: translate3d(0,0,0); }
+}
+
+@keyframes fx-flash {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes fx-scan {
+  from { background-position: 0 0; }
+  to   { background-position: 0 220px; }
+}
+
+@keyframes fx-vignette {
+  0%   { opacity: 0; }
+  30%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+body.power-confuseColors #power-fx {
+  opacity: 1;
+  background:
+    linear-gradient(
+      rgba(59,130,246,0.35),
+      rgba(59,130,246,0)
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.06) 0 2px,
+      rgba(0,0,0,0) 2px 6px
+    );
+  mix-blend-mode: screen;
+  animation:
+    fx-flash 650ms ease-out,
+    fx-scan 650ms linear;
+}
+body.power-fakeFeedback {
+  animation: fx-shake 260ms ease-out;
+}
+
+body.power-fakeFeedback #power-fx {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(255,255,255,0.22),
+      transparent 60%);
+  mix-blend-mode: overlay;
+  animation: fx-flash 700ms ease-out;
+}
+body.power-countOnly #power-fx {
+  opacity: 1;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(0,0,0,0.75) 35%,
+      transparent 70%
+    );
+  mix-blend-mode: multiply;
+  animation: fx-flash 650ms ease-out;
+}
+body.power-forceTimer #power-fx {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 50% 40%,
+      rgba(239,68,68,0.35),
+      transparent 70%);
+  mix-blend-mode: screen;
+  animation: fx-flash 800ms ease-out;
+}
+body.power-blindGuess #power-fx,
+body.power-blindSpot #power-fx {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 50% 50%,
+      transparent 35%,
+      rgba(0,0,0,0.9) 100%);
+  animation: fx-vignette 850ms ease-out;
+}
+body.power-freezeSecret #power-fx {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(56,189,248,0.25),
+      transparent 70%);
+  mix-blend-mode: screen;
+  animation: fx-flash 700ms ease-out;
+}

@@ -5,7 +5,7 @@ tooltip: {
     desc: window.POWER_METADATA.suggestSecret.desc
   },
   renderButton(roomId) {
-     const { wrapper, btn } =    PowerEngine.createPowerButton("suggestSecret", "Suggest Secret");
+     const { wrapper, btn } =    PowerEngine.createPowerButton("suggestSecret", window.POWER_METADATA.suggestSecret.label);
     this.wrapperEl = wrapper;
      this.buttonEl = btn;
     $("setterPowerContainer").appendChild(wrapper);
