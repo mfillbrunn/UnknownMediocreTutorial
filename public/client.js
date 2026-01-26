@@ -208,9 +208,10 @@ onPowerUsed(data => {
     powerQueue.push(data);
     return;
   }
-  requestAnimationFrame(() => {
-    triggerPowerFX(data.type, data.variant);
-  });
+  console.log(data.type);
+  console.log(data.variant);
+  triggerPowerFX(data.type, data.variant);
+
   const mod = PowerEngine.powers[data.type];
   mod?.effects?.onPowerUsed?.(data);
   PowerEngine.updateButtonStates(state, myRole);
