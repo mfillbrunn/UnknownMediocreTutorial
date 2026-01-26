@@ -610,42 +610,30 @@ body.power-assassinWord #power-fx {
 /* =========================================
    SUBMIT FX (SUBTLE, ROLE-SPECIFIC)
    ========================================= */
-
-#setterScreen,
-#guesserScreen {
-  transition:
-    box-shadow 180ms ease-out,
-    filter 180ms ease-out;
+#setterScreen::after,
+#guesserScreen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease-out;
 }
 
-/* Spy submits — inward, absorbing, concealed */
-#setterScreen.submit-spy {
-  filter: brightness(0.96) saturate(0.98);
-  box-shadow:
-    inset 0 0 0 1px rgba(0,0,0,0.55),
-    inset 0 0 14px rgba(0,0,0,0.35);
+#setterScreen.submit-spy::after {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(0,0,0,0.35),
+    transparent 65%
+  );
+  opacity: 1;
 }
 
-/* Inspector submits — outward, confirmatory */
-#guesserScreen.submit-inspector {
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--guesser-color) 45%, transparent),
-    0 0 10px color-mix(in srgb, var(--guesser-color) 18%, transparent);
-}
-
-/* Accessibility */
-@media (prefers-reduced-motion: reduce) {
-  #setterScreen,
-  #guesserScreen {
-    transition: none !important;
-  }
-}
-
-#setterScreen.submit-spy .screen-title {
-  opacity: 0.9;
-}
-
-#guesserScreen.submit-inspector .screen-title {
-  text-shadow:
-    0 0 6px color-mix(in srgb, var(--role-accent) 35%, transparent);
+#guesserScreen.submit-inspector::after {
+  background: radial-gradient(
+    circle at 50% 50%,
+    color-mix(in srgb, var(--role-accent) 25%, transparent),
+    transparent 65%
+  );
+  opacity: 1;
 }
