@@ -1,4 +1,5 @@
 const engine = require("../powerEngineServer.js");
+const {isConsistentWithHistory} = require("../../game-engine/history");
 
 engine.registerPower("vowelRefresh", {
   apply(state, action, roomId, io) {
@@ -45,9 +46,11 @@ engine.registerPower("vowelRefresh", {
         entry.fbGuesser[i] = "";
       }
     }
+    if (state.powers?.rouletteSecretActive){
     state.powers.rouletteSecretFeasible = global.ALLOWED_SECRETS.filter(secret =>
       isConsistentWithHistory(state.history, secret, state)
     );
+    }
     // Emit UI-only info to both players
     io.to(roomId).emit("vowelRefreshInfo", {
       vowels: Array.from(resetVowels)

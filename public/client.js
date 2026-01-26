@@ -204,11 +204,14 @@ function updateWaitingIndicator() {
 let powerQueue = [];
 
 onPowerUsed(data => {
+  console.log(data.type);
+  console.log(data.variant);
+  console.log(!PowerEngine._initialized);
   if (!PowerEngine._initialized) {
     powerQueue.push(data);
     return;
   }
-  triggerPowerFX(data.type);
+  triggerPowerFX(data.type, data.variant);
   const mod = PowerEngine.powers[data.type];
   mod?.effects?.onPowerUsed?.(data);
   PowerEngine.updateButtonStates(state, myRole);
@@ -297,7 +300,7 @@ onStateUpdate(newState => {
   const prevPhase = state?.phase;
   const prevSetterDraft = state?.setterDraft || "";
   state = JSON.parse(JSON.stringify(newState));
-  if (prevPhase === "lobby" && state.phase === "simultaneous" && prevRenderState.length > 0) {
+  if (prevPhase !== "simultaneous" && state.phase === "simultaneous" && prevRenderState.length > 0) {
       prevRenderState = [];
       $("setterGuesserSubmitted").innerHTML = "";
       $("historyGuesser").innerHTML = "";
@@ -567,9 +570,9 @@ function handleSetterInput(event) {
           return;
         }
         sendGameAction({ type: "SET_SECRET_SAME" });  
-        triggerSubmitFX("spy");
         resetEphemeralUIState();
         updateUI();
+        triggerSubmitFX("spy");
         renderSetterRemainingBox(state, myRole, state.secret);
         return;
       }
@@ -626,11 +629,13 @@ function submitSetterNew() {
     return;
   }
   sendGameAction({type: "SET_SECRET_NEW",secret: w});
-  triggerSubmitFX("spy");
   stopSecretRoulette();
   state.setterDraft = "";  
   resetEphemeralUIState();
   updateUI();
+  renderSetterRemainingBox(state, myRole, state.secret);
+  triggerSubmitFX("spy");
+  
 }
 
 
