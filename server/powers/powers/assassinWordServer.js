@@ -83,5 +83,6 @@ engine.registerPower("assassinWord", {
 
     // Room-level generic signal (NO WORD)
     io.to(roomId).emit("assassinUsed");
+    io.to(roomId).emit("powerUsed", { type: "assassinWord" });
   }
 });

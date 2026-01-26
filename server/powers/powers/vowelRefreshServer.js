@@ -55,6 +55,7 @@ engine.registerPower("vowelRefresh", {
     io.to(roomId).emit("vowelRefreshInfo", {
       vowels: Array.from(resetVowels)
     });
+    io.to(roomId).emit("powerUsed", { type: "vowelRefresh" });
   },
 
   postScore() {},

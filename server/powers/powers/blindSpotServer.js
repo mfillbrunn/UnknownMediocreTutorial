@@ -37,5 +37,6 @@ engine.registerPower("blindSpot", {
       "toast",
       `Blind Spot activated on position ${idx + 1}`
     );
+    io.to(roomId).emit("powerUsed", { type: "blindSpot" });
   }
 });

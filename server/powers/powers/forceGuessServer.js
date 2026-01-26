@@ -207,6 +207,7 @@ engine.registerPower("forceGuess", {
     io.to(action.playerId).emit("forceGuessOptions", {
       options: state.powers.forceGuessOptions
     });
+    io.to(roomId).emit("powerUsed", { type: "forceGuess" });
   }
 });
 

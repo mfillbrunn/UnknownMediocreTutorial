@@ -9,6 +9,7 @@ engine.registerPower("nonsense", {
       "toast",
       "Nonsense power activated - this round, the guess does not have to make sense."
     );
+    io.to(roomId).emit("powerUsed", { type: "nonsense" });
   },
 
   turnStart(state, role) {

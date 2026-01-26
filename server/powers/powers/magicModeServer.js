@@ -8,6 +8,7 @@ engine.registerPower("magicMode", {
 
     // Arm the power for the NEXT scoring
     state.powers.magicModeActive = true;
+    io.to(roomId).emit("powerUsed", { type: "magicMode" });
   },
 
   postScore(state, entry, roomId, io) {

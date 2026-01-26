@@ -53,6 +53,7 @@ engine.registerPower("suggestSecret", {
     io.to(action.playerId).emit("suggestWord", {
       word: suggestion
     });
+    io.to(roomId).emit("powerUsed", { type: "suggestSecret" });
   }
 });
 

@@ -31,5 +31,6 @@ engine.registerPower("suggestGuess", {
     io.to(action.playerId).emit("suggestWord", {
       word: suggestion
     });
+    io.to(roomId).emit("powerUsed", { type: "suggestGuess" });
   }
 });

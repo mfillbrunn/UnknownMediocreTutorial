@@ -11,6 +11,7 @@ engine.registerPower("blindGuess", {
       "toast",
       "🟣 Blind Guess armed — the next guess will be blind."
     );
+    io.to(roomId).emit("powerUsed", { type: "blindGuess" });
   },
 
   turnStart(state, role) {

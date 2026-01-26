@@ -18,11 +18,7 @@ const engine = {
     }
 
     p.apply(state, action, roomId, io);
-      io.to(roomId).emit("POWER_USED", {
-        type: id,
-        role: action.role,
-        by: action.playerId
-      });
+
     const role = action?.role;
     const meta = POWER_METADATA[id];
     const label = meta?.label;

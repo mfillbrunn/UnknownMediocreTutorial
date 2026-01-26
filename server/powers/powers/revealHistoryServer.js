@@ -17,6 +17,7 @@ engine.registerPower("revealHistory", {
 
     // Tag next history entry for UI annotation
     state.powers.revealHistoryPending = secret;
+    io.to(roomId).emit("powerUsed", { type: "revealHistory" });
   },
 
   postScore(state, entry) {

@@ -16,9 +16,7 @@ engine.registerPower("forceTimer", {
     state.powerUsedThisTurn = true;
     state.powers.forceTimerActive = true;
 
-    io.to(roomId).emit(
-      "toast",
-      "⏱ Force Timer armed — setter will be timed next turn."
-    );
+    io.to(roomId).emit("toast","⏱ Force Timer armed — setter will be timed next turn." );
+    io.to(roomId).emit("powerUsed", { type: "forceTimer" });
   }
 });
