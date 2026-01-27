@@ -20,14 +20,14 @@ function pickRandomUsablePower(state, role) {
 }
 function maybeUsePower(room, state, aiPlayer, roomId, context) {
   if (state.powerUsedThisTurn) return false;
-  if (Math.random() > 0.4) return false;
+  if (Math.random() > 0) return false;
 
   const powerId = pickRandomUsablePower(state, aiPlayer.role);
   if (!powerId) return false;
 
   const action = buildPowerAction(powerId, state);
   if (!action) return false;
-
+  console.log("action:", action);
   handleNormalPhase(
     room,
     state,
