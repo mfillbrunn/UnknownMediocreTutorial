@@ -9,4 +9,4 @@ function applyAIAction(room, action, role, roomId, context) {
   emitStateForAllPlayers(roomId, room, context.io);
 }
 
-export.modules = {applyAIAction}
+module.exports = { applyAIAction };
