@@ -10,8 +10,8 @@ function asArray(words) {
 
 const AI_PENDING = new Set();
 
-function aiDelay({ base = 800, variance = 1200 } = {}) {
-  return base + Math.random() * variance;
+function aiDelay({ base = 1500, variance = 1200 } = {}) {
+  return Math.min(base + Math.random() * variance,1000);
 }
 
 function maybeRunAI(room, roomId, context) {
