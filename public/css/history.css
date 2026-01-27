@@ -146,40 +146,48 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
    animation: preview-yellow-pulse 2.2s ease-in-out infinite;
    animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
-/* Ensure positioning context */
-.history-row.draft-row.pending-guess .history-tile:first-child {
+.history-row.draft-row.pending-guess {
   position: relative;
-  overflow: hidden;
+  margin-top: 18px; /* space for the bar */
 }
-
-/* Diagonal stamp */
-.history-row.draft-row.pending-guess .history-tile:first-child::before {
+.history-row.draft-row.pending-guess::before {
   content: "PREVIEW";
 
   position: absolute;
-  top: 6px;
-  left: -28px;
+  top: -16px;
+  left: 0;
+  right: 0;
 
-  transform: rotate(-45deg);
+  height: 14px;
 
-  padding: 4px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  font-size: var(--fs-11);
+  font-size: var(--fs-12);
   font-weight: 800;
   letter-spacing: 1.4px;
   text-transform: uppercase;
 
-  font-family: var(--font-sans);
-  color: #000;
+  color: #fff;
+  background: var(--setter-color);
 
-  background: rgba(255,255,255,0.75);
+  border-radius: 4px;
 
+  opacity: 0.95;
   pointer-events: none;
-  z-index: 2;
-
-  box-shadow:
-    0 1px 3px rgba(0,0,0,0.25);
 }
+.history-row.draft-row.pending-guess::before {
+  box-shadow:
+    0 2px 6px rgba(0,0,0,0.35);
+}
+.history-row.draft-row.pending-guess::before {
+  margin: 0 6px;
+}
+
+
+
+
 .theme-setter
 #draftSetter
 .pending-guess
