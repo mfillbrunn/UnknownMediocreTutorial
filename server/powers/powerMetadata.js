@@ -1,12 +1,12 @@
 // server/powerMetadata.js
 module.exports = {
   confuseColors: { label: "Blue Mode", role: "setter" },
-  countOnly: { label: "Count Only" ", role: "setter"},
-  forceGuess: { label: "Force Guess" ", role: "setter"},
-  fakeFeedback: { label: "Fake Feedback" ", role: "setter"},
+  countOnly: { label: "Count Only" , role: "setter"},
+  forceGuess: { label: "Force Guess" , role: "setter"},
+  fakeFeedback: { label: "Fake Feedback" , role: "setter"},
   forceTimer: { label: "Force Timer" , role: "guesser"},
   freezeSecret: { label: "Freeze Secret" , role: "guesser"},
-  hideTile: { label: "Hide Tile"", role: "setter" },
+  hideTile: { label: "Hide Tile", role: "setter" },
   rouletteSecret: { label: "Roulette Secret" , role: "guesser"},
   magicMode: { label: "Magic Mode", role: "guesser" },
   revealGreen: { label: "Sneak Letter" , role: "guesser"},
