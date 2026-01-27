@@ -60,6 +60,7 @@ function maybeRunAI(room, roomId, context) {
     console.log("powerId:", powerId);
     if (!powerId) return false;
     const action = buildPowerAction(powerId, state);
+    if (!action) return false;
     handleNormalPhase(
       room,
       state,
@@ -73,6 +74,7 @@ function maybeRunAI(room, roomId, context) {
     
     if (aiPlayer.role === state.guesser && !state.pendingGuess) {
       actionFn = () => {
+        if (maybeUsePower()) return;
         const guess = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
         handleNormalPhase(
           room,
@@ -88,6 +90,7 @@ function maybeRunAI(room, roomId, context) {
     if (aiPlayer.role === state.setter && state.pendingGuess) {
       if (state?.powers?.freezeActive) {
       actionFn = () => {
+              if (maybeUsePower()) return;
               const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
               handleNormalPhase(
                 room,
@@ -100,6 +103,7 @@ function maybeRunAI(room, roomId, context) {
             };
           } else{
           actionFn = () => {
+            if (maybeUsePower()) return;
             const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
             handleNormalPhase(
               room,
