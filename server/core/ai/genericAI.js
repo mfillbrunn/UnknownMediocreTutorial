@@ -11,7 +11,9 @@ function pickGuess(state, allowedGuesses, secretRows, guessParams) {
 }
 
 function pickSecret(state, secretRows, setterParams) {
-  return pickAISecret(state, secretRows, setterParams);
+  const secret = pickAISecret(state, secretRows, setterParams);
+   if (secret === state.pendingGuess) { return state.secret;}
+   return secret;
 }
 
 function createAI({ guessParams, setterParams }) {
