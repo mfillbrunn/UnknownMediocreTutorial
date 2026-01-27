@@ -32,6 +32,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       if (assassin && g.toUpperCase() === assassin.toUpperCase()) {
         state.powers.assassinated = true; 
         pushWinEntry(state, state.secret);
+        io.to(roomId).emit("secretFound");
         endGame(state, roomId, io, room,context);
         return;
       }  
@@ -39,6 +40,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     if (g === state.secret) {
       state.currentSecret = state.secret;
       pushWinEntry(state, g);
+      io.to(roomId).emit("secretFound");
       endGame(state, roomId, io, room,context);
       return;
     }
@@ -89,6 +91,7 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
       state.roundStartTime = Date.now();
       if (state.pendingGuess === w) {
         pushWinEntry(state, w);
+        io.to(roomId).emit("secretFound");
         endGame(state, roomId, io, room,context);
         return;
       }
@@ -130,8 +133,7 @@ function pushWinEntry(state, word) {
     fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
     extraInfo: null,
     finalSecret: word
-  });
-  io.to(roomId).emit("secretFound");
+  });  
 }
 
 function startGameTimer(room, state, roomId, context) {
