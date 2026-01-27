@@ -11,7 +11,7 @@ function pickRandomUsablePower(state, role) {
   const usable = state.activePowers.filter(powerId => {
     const meta = powerMetadata[powerId];
     if (!meta) return false;
-    return meta.role === role;
+    return meta.role === (role === "A" ? "setter" : "guesser");
   });
   if (!usable.length) return null;
   return usable[Math.floor(Math.random() * usable.length)];
