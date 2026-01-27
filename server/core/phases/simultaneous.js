@@ -73,6 +73,7 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
   const isWin = fb.every(tile => tile === "🟩");
     if (isWin) {
     state.history.push(entry);
+    io.to(roomId).emit("secretFound");
     endGame(state, roomId, io, room,context);
     return;
   }

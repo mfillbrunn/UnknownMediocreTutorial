@@ -218,6 +218,7 @@ if (action.type === "SET_POWER_COUNT") {
             }        
             emitLobbyEvent(io, roomId, { type: "hideLobby" });
             emitStateForAllPlayers(roomId, room, io);
+            io.to(roomId).emit("gameStart");
           }        
           return;
         }

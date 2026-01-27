@@ -153,20 +153,6 @@ function triggerPowerFX(type) {
   }, 900);
 }
 
-function showSubmitBanner(role, text) {
-  const banner = document.getElementById("submit-banner");
-  if (!banner) return;
-
-  banner.classList.remove("spy", "inspector", "show");
-  void banner.offsetWidth; // restart animation
-
-  banner.textContent = text;
-  banner.classList.add(role === "spy" ? "spy" : "inspector");
-
-  banner.classList.add("show");
-}
-
-
 // -----------------------------------------------------
 // Start up
 // -----------------------------------------------------
@@ -322,7 +308,9 @@ onStateUpdate(newState => {
   updatePowerInfoState(state);
   updateTimerVisibility();
   updateAppHeader(state);
+  updateLobbyHeader();
   updateUI();
+  updateSummary();
   maybeStartRouletteFromState(state);
   if (state.phase === "simultaneous"){renderSetterRemainingBox(state, myRole, "");}
   if (state.phase === "normal"){renderSetterRemainingBox(state, myRole, state.secret);}
@@ -335,9 +323,7 @@ onStateUpdate(newState => {
 function updateUI() {
   if (!state) return;
   // Render power buttons once
-  updateLobbyHeader();
   updateScreens();
-  updateSummary();
   InfoBadgeEngine.render(state, myRole);
   if (state.phase !== "lobby") hide("lobby");
 }
@@ -708,7 +694,6 @@ function handleGuesserInput(event) {
       return;
     }
     sendGameAction({type: "SUBMIT_GUESS",guess: localGuesserDraft.toUpperCase()});
-    showSubmitBanner("inspector", "Guess in");
     if (state.phase !== "simultaneous") {localGuesserDraft = "";}
     resetEphemeralUIState();
   }

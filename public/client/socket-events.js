@@ -1,17 +1,30 @@
-socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
 
+socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
   // Notify BOTH players when setter submits (first time)
   if (secretSubmitted && !lastSimulSecret) {
-    toast("Secret planted.");
+    showSubmitBanner("spy", "Secret planted");
   }
   // Notify BOTH players when guesser submits (first time)
   if (guessSubmitted && !lastSimulGuess) {
-    toast("Guess in.");
+    showSubmitBanner("inspector", "Guess in");
   }
-  // Save previous values so we don't re-toast
+  // Save previous values so we don't re-show
   lastSimulSecret = secretSubmitted;
   lastSimulGuess = guessSubmitted;
   });
+socket.on("secretFound", () => {
+  showSystemBanner("Secret Found");
+});
+  socket.on("guessSubmitted", () => {
+  showSubmitBanner("inspector", "Guess In");
+});
+socket.on("secretPlanted", () => {
+  showSubmitBanner("spy", "Secret Planted");
+});
+socket.on("gameStart", () => {
+  showSystemBanner("Game Started");
+});
+
 
 socket.on("revealOldSecret", ({ secret }) => {
   toast(`Secret three rounds ago was: ${secret.toUpperCase()}`);

@@ -1,0 +1,158 @@
+/* =========================================
+   SUBMIT BANNER — HEAVY, TACTILE, DELIBERATE
+   ========================================= */
+
+#submit-banner {
+  position: fixed;
+  left: -140%;
+  top: 18%;
+  transform: skewX(-12deg);
+
+  padding: 16px 44px;
+
+  font-size: var(--fs-24);
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+
+  color: #000;
+  background: #fff;
+  white-space: nowrap;
+  box-shadow:
+    0 12px 32px rgba(0,0,0,0.45);
+
+  pointer-events: none;
+  z-index: 100000;
+
+  opacity: 0;
+  will-change: transform, left, opacity;
+}
+
+/* -------------------------
+   Role colors
+   ------------------------- */
+
+#submit-banner.spy {
+  background: var(--setter-color);
+  color: #000;
+}
+
+#submit-banner.inspector {
+  background: var(--guesser-color);
+  color: #000;
+}
+
+/* -------------------------
+   Animation
+   ------------------------- */
+
+@keyframes banner-woosh {
+  /* enter */
+  0% {
+    left: -140%;
+    opacity: 0;
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  /* arrive + hesitate */
+  45% {
+    left: 50%;
+    transform: translateX(-50%) skewX(-12deg);
+    opacity: 1;
+  }
+
+  75% {
+    left: 50%;
+    transform: translateX(-50%) skewX(-12deg);
+    opacity: 1;
+  }
+
+  /* exit */
+  100% {
+    left: 140%;
+    opacity: 0;
+  }
+}
+
+/* active state */
+#submit-banner.show {
+  animation: banner-woosh 1100ms cubic-bezier(.22,.9,.35,1);
+}
+#submit-banner {
+  max-width: 90vw;
+  text-align: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  #submit-banner.show {
+    animation: none;
+    opacity: 1;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+@media (max-width: 600px) {
+  #submit-banner {
+    font-size: var(--fs-20);
+    padding: 12px 28px;
+    letter-spacing: 1.4px;
+    top: 14%;
+  }
+}
+
+/* =========================================
+   SYSTEM BANNER (GAME START / END)
+   ========================================= */
+
+#submit-banner.system {
+  background: var(--banner-color);
+  color: #000;
+
+  font-size: var(--fs-22);
+  font-weight: 900;
+  letter-spacing: 2.2px;
+
+  padding: 18px 56px;
+
+  box-shadow:
+    0 16px 40px rgba(0,0,0,0.45);
+}
+
+/* Slower, more ceremonial motion */
+@keyframes banner-system {
+  0% {
+    left: -140%;
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  45% {
+    left: 50%;
+    transform: translateX(-50%) skewX(-10deg);
+  }
+
+  70% {
+    left: 50%;
+    transform: translateX(-50%) skewX(-10deg);
+  }
+
+  100% {
+    left: 140%;
+    opacity: 0;
+  }
+}
+
+#submit-banner.system.show {
+  animation: banner-system 1500ms cubic-bezier(.18,.95,.25,1);
+}
+@media (max-width: 600px) {
+  #submit-banner.system {
+    font-size: var(--fs-20);
+    padding: 14px 40px;
+  }
+}

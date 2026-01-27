@@ -43,6 +43,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       return;
     }
     state.pendingGuess = g;
+    io.to(roomId).emit("guessSubmitted");
     // Round moving on
     clearActivePowers(state);
     if (state.powers && state.powers.confuseColorsActive) {state.powers.confuseColorsActive = false;}
@@ -91,6 +92,7 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
         endGame(state, roomId, io, room,context);
         return;
       }
+      io.to(roomId).emit("secretPlanted");
       clearForceTimer(roomId, state);
       finalizeFeedback(state, powerEngine, roomId, io);
       clearActivePowers(state);
@@ -129,6 +131,7 @@ function pushWinEntry(state, word) {
     extraInfo: null,
     finalSecret: word
   });
+  io.to(roomId).emit("secretFound");
 }
 
 function startGameTimer(room, state, roomId, context) {

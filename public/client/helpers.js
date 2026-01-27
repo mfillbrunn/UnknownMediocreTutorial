@@ -30,3 +30,34 @@ window.showStartup = function () {
   showScreen("startupScreen");
   document.body.classList.add("menu-mode");
 };
+
+function showSubmitBanner(role, text) {
+  const banner = document.getElementById("submit-banner");
+  if (!banner) return;
+
+  banner.classList.remove("spy", "inspector", "show");
+  void banner.offsetWidth; // restart animation
+
+  banner.textContent = text;
+  banner.classList.add(role === "spy" ? "spy" : "inspector");
+
+  banner.classList.add("show");
+}
+function showSystemBanner(text) {
+  const banner = document.getElementById("submit-banner");
+  if (!banner) return;
+
+  banner.classList.remove("spy", "inspector", "show");
+  banner.classList.add("system");
+
+  void banner.offsetWidth; // restart animation
+
+  banner.textContent = text;
+  banner.classList.add("show");
+
+  // Cleanup after animation
+  clearTimeout(showSystemBanner._t);
+  showSystemBanner._t = setTimeout(() => {
+    banner.classList.remove("show", "system");
+  }, 1600);
+}
