@@ -127,7 +127,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 #draftSetter
 .pending-guess
 .history-tile.preview-green {
-  color: var(--tile-green-text) !important;
+  background: color-mix(in srgb, var(--tile-green) 75%, #000) !important;
   border: none;
   box-shadow: none;
   opacity: 0.9;
@@ -139,7 +139,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 #draftSetter
 .pending-guess
 .history-tile.preview-yellow {
-  color: var(--tile-yellow-text) !important;
+  color: color-mix(in srgb, var(--tile-yellow-text) 75%, #000) !important;
   border: none;
   box-shadow: none;
   opacity: 0.9;
@@ -147,17 +147,34 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
    animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
-
+.history-row.draft-row::before {
+  content: "PREVIEW";
+  position: absolute;
+  left: -60px;
+  opacity: 0.35;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
 .theme-setter
 #draftSetter
 .pending-guess
 .history-tile.preview-gray {
-  background: var(--tile-gray);
+  background: color-mix(in srgb, var(--tile-gray) 80%, #000);
   color: var(--tile-gray-text);
   border: none;
   box-shadow: none;
   opacity: 0.8;
 }
+
+.history-row.draft-row.pending-guess {
+  opacity: 0.75;
+}
+.history-row.draft-row .history-tile {
+  border-color: rgba(255,255,255,0.25);
+  box-shadow: none;
+}
+
+
 #draftSetter {
   display: flex;
   flex-direction: column;   /* critical: stack rows vertically */
