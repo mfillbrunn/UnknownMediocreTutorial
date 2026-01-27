@@ -18,11 +18,27 @@ function pickRandomUsablePower(state, role) {
   console.log("usable:", usable);
   return usable[Math.floor(Math.random() * usable.length)];
 }
+function maybeUsePower(room, state, aiPlayer, roomId, context) {
+  if (state.powerUsedThisTurn) return false;
+  if (Math.random() > 0.4) return false;
 
-function asArray(words) {
-  if (Array.isArray(words)) return words;
-  if (words instanceof Set) return Array.from(words);
-  return [];
+  const powerId = pickRandomUsablePower(state, aiPlayer.role);
+  if (!powerId) return false;
+
+  const action = buildPowerAction(powerId, state);
+  if (!action) return false;
+
+  handleNormalPhase(
+    room,
+    state,
+    action,
+    aiPlayer.role,
+    roomId,
+    context
+  );
+
+  console.log("AI USED POWER:", powerId);
+  return true;
 }
 function buildPowerAction(powerId, state) {
   const meta = powerMetadata[powerId];
@@ -30,7 +46,11 @@ function buildPowerAction(powerId, state) {
   if (powerId === "assassinWord" ) {return;}
   return {type: `USE_${powerId}`,ai: true};
 }
-
+function asArray(words) {
+  if (Array.isArray(words)) return words;
+  if (words instanceof Set) return Array.from(words);
+  return [];
+}
 const AI_PENDING = new Set();
 
 function aiDelay({ base = 1500, variance = 1200 } = {}) {
@@ -53,28 +73,9 @@ function maybeRunAI(room, roomId, context) {
   // NORMAL PHASE
   // -----------------------------
   if (state.phase === "normal" && state.turn === aiPlayer.role) {
-    console.log("Before Power");
-    const maybeUsePower = () => {
-    if (Math.random() > 0.4) return false;
-    const powerId = pickRandomUsablePower(state, aiPlayer.role);
-    console.log("powerId:", powerId);
-    if (!powerId) return false;
-    const action = buildPowerAction(powerId, state);
-    if (!action) return false;
-    handleNormalPhase(
-      room,
-      state,
-      action,
-      aiPlayer.role,
-      roomId,
-      context
-    );
-    return true;
-  };
-    
-    if (aiPlayer.role === state.guesser && !state.pendingGuess) {
+     if (aiPlayer.role === state.guesser && !state.pendingGuess) {
       actionFn = () => {
-        maybeUsePower();
+        maybeUsePower(room, state, aiPlayer, roomId, context);
         const guess = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
         handleNormalPhase(
           room,
@@ -90,7 +91,7 @@ function maybeRunAI(room, roomId, context) {
     if (aiPlayer.role === state.setter && state.pendingGuess) {
       if (state?.powers?.freezeActive) {
       actionFn = () => {
-              maybeUsePower();
+              maybeUsePower(room, state, aiPlayer, roomId, context);
               const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
               handleNormalPhase(
                 room,
@@ -103,7 +104,7 @@ function maybeRunAI(room, roomId, context) {
             };
           } else{
           actionFn = () => {
-            maybeUsePower();
+            maybeUsePower(room, state, aiPlayer, roomId, context);
             const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
             handleNormalPhase(
               room,
