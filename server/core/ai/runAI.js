@@ -8,14 +8,14 @@ function pickRandomUsablePower(state, role) {
   if (!Array.isArray(state.activePowers) || state.activePowers.length === 0) {
     return null;
   }
-  console.log(state.activePowers);
+  console.log(activePowers: state.activePowers);
   const usable = state.activePowers.filter(powerId => {
     const meta = powerMetadata[powerId];
     if (!meta) return false;
     return meta.role === (role === "A" ? "setter" : "guesser");
   });
   if (!usable.length) return null;
-  console.log(usable);
+  console.log(usable:usable);
   return usable[Math.floor(Math.random() * usable.length)];
 }
 
@@ -26,7 +26,7 @@ function asArray(words) {
 }
 function buildPowerAction(powerId, state) {
   const meta = powerMetadata[powerId];
-  console.log(meta);
+  console.log(meta: meta);
   if (powerId === "assassinWord" ) {return;}
   return {type: `USE_${powerId}`,ai: true};
 }
@@ -57,7 +57,7 @@ function maybeRunAI(room, roomId, context) {
     const maybeUsePower = () => {
     if (Math.random() > 0.4) return false;
     const powerId = pickRandomUsablePower(state, aiPlayer.role);
-    console.log(powerId);
+    console.log(powerId: powerId);
     if (!powerId) return false;
     const action = buildPowerAction(powerId, state);
     handleNormalPhase(
