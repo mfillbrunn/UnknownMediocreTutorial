@@ -281,9 +281,10 @@ onStateUpdate(newState => {
       $("setterGuesserSubmitted").innerHTML = "";
       $("historyGuesser").innerHTML = "";
   }  
-  window.myRole = myRole;
-  if (myRole && !roleAssigned) {
-    roleAssigned = true;
+  const newMyRole = state.roles?.[socket.id] || null;
+  if (newMyRole !== myRole) {
+    myRole = newMyRole;
+    updateRoleLabels();
   }
   const setterCanEdit =  myRole === state.setter &&  ((state.phase === "normal" && state.turn === state.setter &&!!state.pendingGuess) || (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
   if (setterCanEdit) {
