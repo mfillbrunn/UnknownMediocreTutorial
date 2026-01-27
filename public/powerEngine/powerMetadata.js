@@ -1,38 +1,38 @@
 window.POWER_METADATA = {
   confuseColors: {
-    label: "Signal Jam",
-    desc: "Turns all green and yellow feedback blue for one round.",
+    label: "Jam Signals",
+    desc: "Turn all green and yellow feedback blue for one round.",
     icon: "palette-swap",
     emoji: "📡",
     color: "#3B82F6"
   },
 
   fakeFeedback: {
-    label: "False Intel",
-    desc: "Two feedbacks are shown—one real, one fabricated.",
+    label: "Falsify Intel",
+    desc: "The Inspector will see two feedbacks—one real, one fabricated.",
     icon: "mask",
     emoji: "🎭",
     color: "#6B7280"
   },
 
   countOnly: {
-    label: "Redacted Report",
-    desc: "Shows only the total number of greens and yellows, not their positions.",
+    label: "Redact Report",
+    desc: "Redact the positions and show only only the total number of greens and yellows.",
     icon: "tally",
     emoji: "📄",
     color: "#6B7280"
   },
 
   rouletteSecret: {
-    label: "Burner Word",
-    desc: "The next secret is randomly selected.",
+    label: "Break Cover",
+    desc: "The spy's next secret is randomly selected.",
     icon: "roulette",
     emoji: "🎰",
     color: "#6B7280"
   },
 
   nonsense: {
-    label: "Cover Noise",
+    label: "Signal Scramble",
     desc: "This round’s guess does not need to be a real word.",
     icon: "shuffle",
     emoji: "🌀",
@@ -40,8 +40,8 @@ window.POWER_METADATA = {
   },
 
   forceGuess: {
-    label: "Compelled Move",
-    desc: "Forces the next guess to follow one of three randomly chosen restrictions.",
+    label: "Force a Move",
+    desc: "Force the next guess to follow one of three randomly chosen restrictions.",
     icon: "lock-input",
     emoji: "🔒",
     color: "#F97316"
@@ -57,15 +57,15 @@ window.POWER_METADATA = {
 
   freezeSecret: {
     label: "Lockdown",
-    desc: "Prevents the spy from changing the secret next round.",
+    desc: "Prevent the spy from changing the secret next round.",
     icon: "snowflake",
     emoji: "❄️",
     color: "#38BDF8"
   },
 
   hideTile: {
-    label: "Blackout Tile",
-    desc: "Hides the feedback on one random tile for one round.",
+    label: "Hide Evidence",
+    desc: "Hide the feedback on one random tile for one round.",
     icon: "hidden-tile",
     emoji: "⬛",
     color: "#1e1eba"
@@ -73,22 +73,22 @@ window.POWER_METADATA = {
 
   magicMode: {
     label: "Inside Job",
-    desc: "Each yellow tile reveals one green letter next round.",
+    desc: "Turn each yellow tile next round green.",
     icon: "wand",
     emoji: "✨",
     color: "#A855F7"
   },
 
   revealGreen: {
-    label: "Leaked Letter",
-    desc: "Reveals one letter of the current secret—the spy may still change it.",
+    label: "Leak Info",
+    desc: "Reveal one letter of the current secret—the spy may still change it.",
     icon: "peek-letter",
     emoji: "👁️",
     color: "#22C55E"
   },
 
   revealHistory: {
-    label: "Cold Case",
+    label: "Solve Cold Case",
     desc: "Reveals a secret from several rounds ago. Can only be used after 3 rounds.",
     icon: "rewind",
     emoji: "⏪",
@@ -96,7 +96,7 @@ window.POWER_METADATA = {
   },
 
   revealLetter: {
-    label: "Confirmed Lead",
+    label: "Confirm Lead",
     desc: "Earn a guaranteed green letter by meeting specific usage criteria.",
     icon: "letter-plus",
     emoji: "🟩",
@@ -119,8 +119,8 @@ window.POWER_METADATA = {
   },
 
   stealthGuess: {
-    label: "Ghost Move",
-    desc: "The spy cannot see the next guess.",
+    label: "Move in Shadows",
+    desc: "Hide the guess from the spy next turn.",
     icon: "ghost",
     emoji: "👻",
     color: "#4B5563"
@@ -128,7 +128,7 @@ window.POWER_METADATA = {
 
   suggestGuess: {
     label: "Analyst Tip",
-    desc: "Suggests a valid guess that fits all known constraints.",
+    desc: "Receive a valid guess that fits all known constraints.",
     icon: "lightbulb",
     emoji: "💡",
     color: "#FACC15"
@@ -136,7 +136,7 @@ window.POWER_METADATA = {
 
   suggestSecret: {
     label: "Profiler Insight",
-    desc: "Suggests a valid secret consistent with all feedback.",
+    desc: "Receive a valid secret consistent with all feedback.",
     icon: "brain",
     emoji: "🧠",
     color: "#E879F9"
@@ -144,22 +144,22 @@ window.POWER_METADATA = {
 
   vowelRefresh: {
     label: "Signal Refresh",
-    desc: "Resets all vowels used in the last round if they were unused before.",
+    desc: "Reset all vowels used in the last round if they were unused before.",
     icon: "vowel-cycle",
     emoji: "🔁",
     color: "#0EA5E9"
   },
 
   blindSpot: {
-    label: "Dead Zone",
-    desc: "Hides feedback for one tile for the rest of the round.",
+    label: "Create Dead Zone",
+    desc: "Hide feedback for one tile for the rest of the round.",
     icon: "fog",
     emoji: "🌫️",
     color: "#374151"
   },
 
   assassinWord: {
-    label: "Kill Phrase",
+    label: "Set Kill Phrase",
     desc: "Choose a word that instantly ends the game if guessed. The earlier it’s planted, the greater the reward—but it can’t be too similar to your secret.",
     icon: "skull-word",
     emoji: "☠️",
@@ -168,7 +168,7 @@ window.POWER_METADATA = {
 
   blindGuess: {
     label: "Total Blackout",
-    desc: "Hides all feedback and keyboard colors for the next guess.",
+    desc: "Hide all feedback and keyboard colors for the next guess.",
     icon: "blindfold",
     emoji: "🙈",
     color: "#000000"
