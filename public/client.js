@@ -995,7 +995,11 @@ function updateAppHeader(state) {
     roleLabel = "INSPECTOR";
     roleClass = "role-guesser";
   }
-
+  if (state.phase ==="gameOver")
+  {
+    roleLabel = "";
+    roleClass = "";
+  }
   roleBadgeEl.textContent = roleLabel;
   roleBadgeEl.className = `role-badge header-role-badge ${roleClass}`;
 }
