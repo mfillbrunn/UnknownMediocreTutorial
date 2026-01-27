@@ -1,7 +1,7 @@
 const {handleNormalPhase} = require("../phases/normal");
 const handleSimultaneousPhase = require("../phases/simultaneous");
 const { getAI } = require("./aiDifficulty");
-const powerMetadata = require("../../powers/powers/powerMetadata");
+const powerMetadata = require("../../powers/powerMetadata");
 
 function pickRandomUsablePower(state, role) {
   if (state.powerUsedThisTurn) return null;
