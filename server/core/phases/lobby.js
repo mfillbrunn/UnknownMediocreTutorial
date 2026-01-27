@@ -105,9 +105,9 @@ if (action.type === "SWITCH_ROLES") {
   state.setter = "A";
   state.guesser = "B";
   // Notify players (UX only)
-  for (const playerId of ids) {
-    io.to(playerId).emit("lobbyEvent", { type: "rolesSwitched" });
-  }
+  emitLobbyEvent(io, roomId, {
+    type: "rolesSwitched"
+  });
   state.ready = {};      
   emitStateForAllPlayers(roomId, room, io);
   return;
