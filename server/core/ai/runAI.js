@@ -1,6 +1,7 @@
 const {handleNormalPhase} = require("../phases/normal");
 const handleSimultaneousPhase = require("../phases/simultaneous");
 const { getAI } = require("./aiDifficulty");
+const { applyAIAction } = require("./aiActions");
 const powerMetadata = require("../../powers/powerMetadata");
 
 function pickRandomUsablePower(state, role) {
@@ -28,15 +29,13 @@ function maybeUsePower(room, state, aiPlayer, roomId, context) {
   const action = buildPowerAction(powerId, state);
   if (!action) return false;
   console.log("action:", action);
-  handleNormalPhase(
-    room,
-    state,
-    action,
-    aiPlayer.role,
-    roomId,
-    context
-  );
-
+  applyAIAction(
+  room,
+  { type: `USE_${powerId}` },
+  aiPlayer.role,
+  roomId,
+  context
+);
   console.log("AI USED POWER:", powerId);
   return true;
 }
@@ -77,10 +76,9 @@ function maybeRunAI(room, roomId, context) {
       actionFn = () => {
         maybeUsePower(room, state, aiPlayer, roomId, context);
         const guess = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
-        handleNormalPhase(
+        applyAIAction(
           room,
-          state,
-          { type: "SUBMIT_GUESS", guess, ai: true },
+          { type: "SUBMIT_GUESS", guess },
           state.guesser,
           roomId,
           context
@@ -93,10 +91,9 @@ function maybeRunAI(room, roomId, context) {
       actionFn = () => {
               maybeUsePower(room, state, aiPlayer, roomId, context);
               const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
-              handleNormalPhase(
+              applyAIAction(
                 room,
-                state,
-                { type: "SET_SECRET_SAME", ai: true },
+                { type: "SET_SECRET_SAME"},
                 state.setter,
                 roomId,
                 context
@@ -106,10 +103,9 @@ function maybeRunAI(room, roomId, context) {
           actionFn = () => {
             maybeUsePower(room, state, aiPlayer, roomId, context);
             const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
-            handleNormalPhase(
+            applyAIAction(
               room,
-              state,
-              { type: "SET_SECRET_NEW", secret, ai: true },
+              { type: "SET_SECRET_NEW", secret },
               state.setter,
               roomId,
               context
@@ -126,10 +122,9 @@ function maybeRunAI(room, roomId, context) {
     if (aiPlayer.role === state.guesser && !state.simultaneousGuessSubmitted) {
       actionFn = () => {
         const guess = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
-        handleSimultaneousPhase(
+        applyAIAction(
           room,
-          state,
-          { type: "SUBMIT_GUESS", guess, ai: true },
+          { type: "SUBMIT_GUESS", guess },
           state.guesser,
           roomId,
           context
@@ -140,14 +135,13 @@ function maybeRunAI(room, roomId, context) {
     if (aiPlayer.role === state.setter && !state.simultaneousSecretSubmitted) {
       actionFn = () => {
         const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
-        handleSimultaneousPhase(
-          room,
-          state,
-          { type: "SET_SECRET_NEW", secret, ai: true },
-          state.setter,
-          roomId,
-          context
-        );
+          applyAIAction(
+            room,
+            { type: "SET_SECRET_NEW", secret },
+            state.setter,
+            roomId,
+            context
+          );
       };
     }
   }
