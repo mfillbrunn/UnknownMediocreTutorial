@@ -108,6 +108,8 @@ if (action.type === "SWITCH_ROLES") {
   for (const playerId of ids) {
     io.to(playerId).emit("lobbyEvent", { type: "rolesSwitched" });
   }
+  state.ready = {};      
+  emitStateForAllPlayers(roomId, room, io);
   return;
 }
 
