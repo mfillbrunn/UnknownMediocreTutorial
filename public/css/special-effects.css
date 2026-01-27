@@ -108,7 +108,7 @@
 
 #submit-banner.system {
   background: var(--banner-color);
-  color: #000;
+  color: #fff;
 
   font-size: var(--fs-22);
   font-weight: 900;
@@ -122,25 +122,29 @@
 
 /* Slower, more ceremonial motion */
 @keyframes banner-system {
-  0% {
+ 0% {
     left: -140%;
     opacity: 0;
   }
 
-  20% {
+  18% {
     opacity: 1;
   }
 
-  45% {
+  /* arrive + hesitate */
+  35% {
     left: 50%;
-    transform: translateX(-50%) skewX(-10deg);
+    transform: translateX(-50%) skewX(-12deg);
+    opacity: 1;
   }
 
-  70% {
+  85% {
     left: 50%;
-    transform: translateX(-50%) skewX(-10deg);
+    transform: translateX(-50%) skewX(-12deg);
+    opacity: 1;
   }
 
+  /* exit */
   100% {
     left: 140%;
     opacity: 0;

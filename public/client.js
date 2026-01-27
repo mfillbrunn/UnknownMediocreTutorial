@@ -548,7 +548,6 @@ function handleSetterInput(event) {
         sendGameAction({ type: "SET_SECRET_SAME" });  
         resetEphemeralUIState();
         updateUI();
-        showSubmitBanner("spy", "Secret planted");
         renderSetterRemainingBox(state, myRole, state.secret);
         return;
       }
@@ -610,7 +609,6 @@ function submitSetterNew() {
   resetEphemeralUIState();
   updateUI();
   renderSetterRemainingBox(state, myRole, state.secret);
-  showSubmitBanner("spy", "Secret planted");
 }
 
 
