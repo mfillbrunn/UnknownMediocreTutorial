@@ -257,10 +257,11 @@ case "playerLeft": {
       enableReadyButton(false);
       break;
 
-    case "enterLobby":
-      show("lobby");
-      hide("menu");
-      break;
+      case "enterLobby":
+        myRole = null;
+        show("lobby");
+        hide("menu");
+        break;
       
     case "gameOverShowMenu":
       hide("setterScreen");
