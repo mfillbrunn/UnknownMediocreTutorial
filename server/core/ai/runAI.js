@@ -4,29 +4,27 @@ const { getAI } = require("./aiDifficulty");
 const { applyAIAction } = require("./aiActions");
 const powerMetadata = require("../../powers/powerMetadata");
 
+const FORBIDDEN_AI_POWERS = new Set([
+  "assassinWord",
+  "revealHistory"
+]);
+
 function pickRandomUsablePower(state, role) {
   if (state.powerUsedThisTurn) return null;
-  if (!Array.isArray(state.activePowers) || state.activePowers.length === 0) {
-    return null;
-  }
+  if (!Array.isArray(state.activePowers) || state.activePowers.length === 0) {return null;}
   const usable = state.activePowers.filter(powerId => {
+    if (FORBIDDEN_AI_POWERS.has(powerId)) return false;
     const meta = powerMetadata[powerId];
     if (!meta) return false;
     return meta.role === (role === "A" ? "setter" : "guesser");
   });
   if (!usable.length) return null;
-  console.log("usable:", usable);
   return usable[Math.floor(Math.random() * usable.length)];
 }
-function toUpperSnake(str) {
-  return str
-    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-    .toUpperCase();
-}
-
+function toUpperSnake(str) {return str.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();}
 function maybeUsePower(room, state, aiPlayer, roomId, context) {
   if (state.powerUsedThisTurn) return false;
-  if (Math.random() > 1) return false;
+  if (Math.random() > 0.5) return false;
   const powerId = pickRandomUsablePower(state, aiPlayer.role);
   if (!powerId) return false;
   applyAIAction(room,    { type: `USE_${toUpperSnake(powerId)}` },    aiPlayer.role,    roomId,    context  );
