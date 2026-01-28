@@ -27,10 +27,16 @@ engine.registerPower("suggestGuess", {
     }
 
     const suggestion = feasible[Math.floor(Math.random() * feasible.length)];
+    if (!action.ai) {
+      const guesserSocketId = Object.entries(state.roles)
+        .find(([_, role]) => role === "B")?.[0];    
+      if (guesserSocketId && io.sockets.sockets.has(guesserSocketId)) {
+        io.to(guesserSocketId).emit("suggestWord", {
+          word: suggestion
+        });
+      }
+    }
 
-    io.to(action.playerId).emit("suggestWord", {
-      word: suggestion
-    });
     io.to(roomId).emit("powerUsed", { type: "suggestGuess" });
   }
 });
