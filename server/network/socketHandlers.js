@@ -117,7 +117,7 @@ socket.on("gameAction", ({ action }) => {
       } catch (err) {
         console.error("maybeRunAI crashed:", err);
       }
-    }, 300);
+    }, 1000);
   }
 });
 
