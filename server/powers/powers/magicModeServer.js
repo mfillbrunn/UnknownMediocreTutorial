@@ -1,7 +1,7 @@
 const engine = require("../powerEngineServer.js");
 
 engine.registerPower("magicMode", {
-  apply(state) {
+  apply(state, action, roomId, io) {
     if (state.powers.magicModeUsed) return;
     state.powers.magicModeUsed = true;
     state.powerUsedThisTurn = true;
