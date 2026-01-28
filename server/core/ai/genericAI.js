@@ -2,10 +2,6 @@ const { isConsistentWithHistory } = require("../../game-engine/history");
 const { satisfiesForceGuess } = require("../../game-engine/validation");
 const { scoreGuess } = require("../../game-engine/scoring");
 
-const FORBIDDEN_AI_POWERS = new Set([
-  "assassinWord"
-]);
-
 /* ===============================
    ENTRY POINTS
    =============================== */
@@ -20,16 +16,13 @@ function pickSecret(state, secretRows, setterParams) {
    return secret;
 }
 
-function createAI({ guessParams, setterParams, powerUseProb }) {
+function createAI({ guessParams, setterParams }) {
   return {
     pickGuess(state, words, secrets) {
       return pickAIGuess(state, words, secrets, guessParams);
     },
     pickSecret(state, secrets) {
       return pickAISecret(state, secrets, setterParams);
-    },
-    maybeUsePower(room, state, aiPlayer, roomId, context) {
-      return maybeUsePower(room,state,aiPlayer,roomId,context,powerUseProb);
     }
   };
 }
@@ -37,43 +30,6 @@ function createAI({ guessParams, setterParams, powerUseProb }) {
 /* ===============================
    SHARED UTILITIES
    =============================== */
-function toUpperSnake(str) {
-  return str
-    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-    .toUpperCase();
-}
-
-function pickRandomUsablePower(state, role) {
-  if (state.powerUsedThisTurn) return null;
-  if (!Array.isArray(state.activePowers) || state.activePowers.length === 0) {
-    return null;
-  }
-
-  const usable = state.activePowers.filter(powerId => {
-    if (FORBIDDEN_AI_POWERS.has(powerId)) return false;
-    const meta = powerMetadata[powerId];
-    if (!meta) return false;
-    return meta.role === (role === "A" ? "setter" : "guesser");
-  });
-
-  if (!usable.length) return null;
-  return usable[Math.floor(Math.random() * usable.length)];
-}
-
-function maybeUsePower(room,state, aiPlayer,  roomId,  context,  powerUseProb) {
-  if (state.powerUsedThisTurn) return false;
-  if (Math.random() > powerUseProb) return false;
-  const powerId = pickRandomUsablePower(state, aiPlayer.role);
-  if (!powerId) return false;
-  applyAIAction(
-    room,
-     { type: `USE_${toUpperSnake(powerId)}` },
-    aiPlayer.role,
-    roomId,
-    context
-  );
-  return true;
-}
 
 function weightedRandom(items, weightFn) {
   if (!items.length) return null;
