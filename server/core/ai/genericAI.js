@@ -37,6 +37,11 @@ function createAI({ guessParams, setterParams, powerUseProb }) {
 /* ===============================
    SHARED UTILITIES
    =============================== */
+function toUpperSnake(str) {
+  return str
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .toUpperCase();
+}
 
 function pickRandomUsablePower(state, role) {
   if (state.powerUsedThisTurn) return null;
@@ -62,7 +67,7 @@ function maybeUsePower(room,state, aiPlayer,  roomId,  context,  powerUseProb) {
   if (!powerId) return false;
   applyAIAction(
     room,
-    { type: `USE_${powerId}` },
+     { type: `USE_${toUpperSnake(powerId)}` },
     aiPlayer.role,
     roomId,
     context
