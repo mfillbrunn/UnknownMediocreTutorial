@@ -55,7 +55,6 @@ function maybeRunAI(room, roomId, context) {
             aiLogic.maybeUsePower(room, state, aiPlayer, roomId, context);
             const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
             applyAIAction(
-              applyAction,
               room,
               { type: "SET_SECRET_NEW", secret },
               state.setter,
