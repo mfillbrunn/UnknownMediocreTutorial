@@ -4,42 +4,6 @@ const { getAI } = require("./aiDifficulty");
 const { applyAIAction } = require("./aiActions");
 const powerMetadata = require("../../powers/powerMetadata");
 
-function pickRandomUsablePower(state, role) {
-  if (state.powerUsedThisTurn) return null;
-  if (!Array.isArray(state.activePowers) || state.activePowers.length === 0) {
-    return null;
-  }
-  console.log("activePowers:", state.activePowers);
-  const usable = state.activePowers.filter(powerId => {
-    const meta = powerMetadata[powerId];
-    if (!meta) return false;
-    return meta.role === (role === "A" ? "setter" : "guesser");
-  });
-  if (!usable.length) return null;
-  console.log("usable:", usable);
-  return usable[Math.floor(Math.random() * usable.length)];
-}
-function maybeUsePower(room, state, aiPlayer, roomId, context) {
-  if (state.powerUsedThisTurn) return false;
-  if (Math.random() > 1) return false;
-  const powerId = pickRandomUsablePower(state, aiPlayer.role);
-  if (!powerId) return false;
-  applyAIAction(
-    room,
-    { type: `USE_${powerId}` },
-    aiPlayer.role,
-    roomId,
-    context
-  );
-  console.log("AI USED POWER:", powerId);
-  return true;
-}
-
-function asArray(words) {
-  if (Array.isArray(words)) return words;
-  if (words instanceof Set) return Array.from(words);
-  return [];
-}
 const AI_PENDING = new Set();
 
 function aiDelay({ base = 1500, variance = 1200 } = {}) {
@@ -52,12 +16,9 @@ function maybeRunAI(room, roomId, context) {
   const aiEntry = Object.entries(room.players)
     .find(([_, p]) => p.isAI);
   if (!aiEntry) return;
-
   const [, aiPlayer] = aiEntry;
   if (AI_PENDING.has(roomId)) return;
-
   let actionFn = null;
-
   // -----------------------------
   // NORMAL PHASE
   // -----------------------------
