@@ -25,7 +25,7 @@ function maybeRunAI(room, roomId, context) {
   if (state.phase === "normal" && state.turn === aiPlayer.role) {
      if (aiPlayer.role === state.guesser && !state.pendingGuess) {
       actionFn = () => {
-        maybeUsePower(room, state, aiPlayer, roomId, context);
+        aiLogic.maybeUsePower(room, state, aiPlayer, roomId, context);
         const guess = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
         applyAIAction(
           room,
@@ -40,7 +40,7 @@ function maybeRunAI(room, roomId, context) {
     if (aiPlayer.role === state.setter && state.pendingGuess) {
       if (state?.powers?.freezeActive) {
       actionFn = () => {
-              maybeUsePower(room, state, aiPlayer, roomId, context);
+              aiLogic.maybeUsePower(room, state, aiPlayer, roomId, context);
               const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
               applyAIAction(
                 room,
@@ -52,7 +52,7 @@ function maybeRunAI(room, roomId, context) {
             };
           } else{
           actionFn = () => {
-            maybeUsePower(room, state, aiPlayer, roomId, context);
+            aiLogic.maybeUsePower(room, state, aiPlayer, roomId, context);
             const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
             applyAIAction(
               applyAction,
