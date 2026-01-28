@@ -3,6 +3,7 @@ const handleSimultaneousPhase = require("../phases/simultaneous");
 const { getAI } = require("./aiDifficulty");
 const { applyAIAction } = require("./aiActions");
 const powerMetadata = require("../../powers/powerMetadata");
+const applyAction = require("../stateMachine");
 
 function pickRandomUsablePower(state, role) {
   if (state.powerUsedThisTurn) return null;
@@ -25,6 +26,7 @@ function maybeUsePower(room, state, aiPlayer, roomId, context) {
   const powerId = pickRandomUsablePower(state, aiPlayer.role);
   if (!powerId) return false;
   applyAIAction(
+  applyAction,
     room,
     { type: `USE_${powerId}` },
     aiPlayer.role,
@@ -67,6 +69,7 @@ function maybeRunAI(room, roomId, context) {
         maybeUsePower(room, state, aiPlayer, roomId, context);
         const guess = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
         applyAIAction(
+          applyAction,
           room,
           { type: "SUBMIT_GUESS", guess },
           state.guesser,
@@ -82,6 +85,7 @@ function maybeRunAI(room, roomId, context) {
               maybeUsePower(room, state, aiPlayer, roomId, context);
               const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
               applyAIAction(
+                applyAction,
                 room,
                 { type: "SET_SECRET_SAME"},
                 state.setter,
@@ -94,6 +98,7 @@ function maybeRunAI(room, roomId, context) {
             maybeUsePower(room, state, aiPlayer, roomId, context);
             const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
             applyAIAction(
+              applyAction,
               room,
               { type: "SET_SECRET_NEW", secret },
               state.setter,
@@ -113,6 +118,7 @@ function maybeRunAI(room, roomId, context) {
       actionFn = () => {
         const guess = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
         applyAIAction(
+          applyAction,
           room,
           { type: "SUBMIT_GUESS", guess },
           state.guesser,
@@ -126,6 +132,7 @@ function maybeRunAI(room, roomId, context) {
       actionFn = () => {
         const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
           applyAIAction(
+            applyAction,
             room,
             { type: "SET_SECRET_NEW", secret },
             state.setter,
