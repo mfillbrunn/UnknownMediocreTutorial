@@ -1,7 +1,8 @@
 // core/ai/aiActions.js
 const { emitStateForAllPlayers } = require("../../utils/emitState");
+const applyAction = require("../stateMachine");
 
-function applyAIAction(applyAction, room, action, role, roomId, context) {
+function applyAIAction(room, action, role, roomId, context) {
   action.ai = true;
   action.role = role;
 
