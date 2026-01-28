@@ -9,7 +9,6 @@ function pickRandomUsablePower(state, role) {
   if (!Array.isArray(state.activePowers) || state.activePowers.length === 0) {
     return null;
   }
-  console.log("activePowers:", state.activePowers);
   const usable = state.activePowers.filter(powerId => {
     const meta = powerMetadata[powerId];
     if (!meta) return false;
@@ -31,7 +30,6 @@ function maybeUsePower(room, state, aiPlayer, roomId, context) {
   const powerId = pickRandomUsablePower(state, aiPlayer.role);
   if (!powerId) return false;
   applyAIAction(room,    { type: `USE_${toUpperSnake(powerId)}` },    aiPlayer.role,    roomId,    context  );
-  console.log("AI USED POWER:", powerId);
   return true;
 }
 
@@ -94,7 +92,6 @@ function maybeRunAI(room, roomId, context) {
             maybeUsePower(room, state, aiPlayer, roomId, context);
             const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
             applyAIAction(
-              applyAction,
               room,
               { type: "SET_SECRET_NEW", secret },
               state.setter,
