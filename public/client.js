@@ -512,7 +512,7 @@ function applyPreviewFeedback(fbArray) {
 }
 ///SETTER INPUT
 function handleSetterInput(event) {
-  if (!state.powers?.freezeActive || !state.powers?.rouletteSecretActive){return;}
+  if (state.powers?.freezeActive || state.powers?.rouletteSecretActive){return;}
     const isNormalSetterTurn =  myRole === state.setter && state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess;
     const isSimultaneousSecretEntry = state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted;
     if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
