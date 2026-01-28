@@ -51,14 +51,7 @@ engine.registerPower("suggestSecret", {
       candidates[Math.floor(Math.random() * candidates.length)];
 
       if (!action.ai) {
-        const setterSocketId = Object.entries(state.roles)
-          .find(([_, role]) => role === "A")?.[0];
-      
-        if (setterSocketId && io.sockets.sockets.has(setterSocketId)) {
-          io.to(setterSocketId).emit("suggestWord", {
-            word: suggestion
-          });
-        }
+        io.to(action.playerId).emit("suggestWord", {word: suggestion});
       }
     io.to(roomId).emit("powerUsed", { type: "suggestSecret" });
   }
