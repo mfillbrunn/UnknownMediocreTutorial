@@ -116,6 +116,8 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
     }
   /// POWERs
   if (action.type.startsWith("USE_")) {
+    console.log(action);
+    console.log("action used");
     const powerId = normalizePowerId(action.type);
     if (!state.powerUsedThisTurn) {
       state.powerUsedThisTurn = true;
