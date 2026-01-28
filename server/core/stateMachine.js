@@ -4,7 +4,7 @@ const handleLobbyPhase = require("./phases/lobby");
 const handleSimultaneousPhase = require("./phases/simultaneous");
 const { handleNormalPhase } = require("./phases/normal");
 const {handleGameOverPhase} = require("./phases/postGame");
-const {maybeRunAI} = require("./ai/runAI");
+
 
 function applyAction(room, state, action, role, roomId, context) {
   switch (state.phase) {
@@ -27,16 +27,6 @@ function applyAction(room, state, action, role, roomId, context) {
     default:
       console.warn("Unknown phase:", state.phase);
       return;
-  }
-
-  if (room && roomId && context && !action.ai && !action.type.startsWith("USE_") && (state.phase === "normal" || state.phase === "simultaneous")) {
-    setTimeout(() => {
-      try {
-        maybeRunAI(room, roomId, context);
-      } catch (err) {
-        console.error("maybeRunAI crashed:", err);
-      }
-    }, 300);
   }
 }
 

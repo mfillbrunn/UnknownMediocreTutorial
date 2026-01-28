@@ -7,6 +7,7 @@ const { emitLobbyEvent } = require("../utils/emitLobby");
 const { stopTimer } = require("../utils/Timer");
 const { startGameTimer } = require("../core/phases/normal");
 const {   destroyRoom, stopAllRoomIntervals } = require("../utils/teardown");
+const {maybeRunAI} = require("../core/ai/runAI");
 
 module.exports = function registerSocketHandlers(io, context) {
   const { ALLOWED_GUESSES, ALLOWED_SECRETS } = context;
@@ -98,20 +99,26 @@ socket.on("gameAction", ({ action }) => {
     socket.emit("roomInvalid", { reason: "desync" });
     return;
   }
-
   const room = rooms[roomId];
   const player = room.players[socket.id];
-
   if (!player || !player.connected) {
     console.warn("[gameAction] player not active", socket.id);
     return;
   }
-
   action.playerId = socket.id;
   action.role = player.role;
 
   applyAction(room, room.state, action, player.role, roomId, context);
   emitStateForAllPlayers(roomId, room, io);
+    if (!action.ai && !action.type.startsWith("USE_") && (room.state.phase === "normal" || room.state.phase === "simultaneous")) {
+    setTimeout(() => {
+      try {
+        maybeRunAI(room, roomId, context);
+      } catch (err) {
+        console.error("maybeRunAI crashed:", err);
+      }
+    }, 300);
+  }
 });
 
 
