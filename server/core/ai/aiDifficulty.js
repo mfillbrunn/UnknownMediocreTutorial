@@ -2,6 +2,7 @@ const { createAI } = require("./genericAI");
 
 const LEVELS = {
   1: {
+    powerUseProb: 0.1,
     guessParams: {
       uninformed: 0.1,
       feasible:   0.4,
@@ -17,6 +18,7 @@ const LEVELS = {
     }
   },
   2: {
+     powerUseProb: 0.3,
     guessParams: {
       uninformed: 0,
       feasible:   0.2,
@@ -32,6 +34,7 @@ const LEVELS = {
     }
   },
   3: {
+     powerUseProb: 1,
     guessParams: {
       uninformed: 0,
       feasible:   0,
