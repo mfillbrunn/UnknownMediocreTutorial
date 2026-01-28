@@ -204,9 +204,17 @@ engine.registerPower("forceGuess", {
     state.powers.forceGuessActive = true;
     state.powers.forceGuessOptions = generateforceGuessOptions(state);
 
-    io.to(action.playerId).emit("forceGuessOptions", {
-      options: state.powers.forceGuessOptions
-    });
+    if (!action.ai) {
+      const setterSocketId = Object.entries(state.roles)
+        .find(([_, role]) => role === "A")?.[0];
+    
+      if (setterSocketId && io.sockets.sockets.has(setterSocketId)) {
+        io.to(setterSocketId).emit("forceGuessOptions", {
+          options: state.powers.forceGuessOptions
+        });
+      }
+    }
+
     io.to(roomId).emit("powerUsed", { type: "forceGuess" });
   }
 });
