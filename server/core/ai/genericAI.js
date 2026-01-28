@@ -19,10 +19,10 @@ function pickSecret(state, secretRows, setterParams) {
 function createAI({ guessParams, setterParams }) {
   return {
     pickGuess(state, words, secrets) {
-      return pickAIGuess(state, words, secrets, guessParams);
+      return pickGuess(state, words, secrets, guessParams);
     },
     pickSecret(state, secrets) {
-      return pickAISecret(state, secrets, setterParams);
+      return pickSecret(state, secrets, setterParams);
     }
   };
 }
