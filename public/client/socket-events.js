@@ -286,10 +286,9 @@ shuffleBtn?.addEventListener("click", () => {
     ranked: !state.shuffle,
     userId: window.currentUser.id
   });
-  shuffleBtn.classList.toggle("active");
 });
 function updateShuffleUI() {
-  if (shuffleBtn || !state || !window.currentUser) return;
+  if (!shuffleBtn || !state || !window.currentUser) return;
   const isShuffle = !!state.shuffle;
   const isHost = state.hostUserId === window.currentUser.id;
   shuffleBtn.textContent = isShuffle ? "Shuffle" : "Non-shuffle";
