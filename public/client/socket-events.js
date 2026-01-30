@@ -279,12 +279,16 @@ function hideAIDifficultyModal() {
 $("addAiBtn")?.addEventListener("click", () => {
   showAIDifficultyModal();
 });
-$("shuffle")?.addEventListener("click", () => {
-   sendGameAction({
+const shuffleBtn = document.querySelector("#shuffle");
+
+shuffleBtn?.addEventListener("click", () => {
+  sendGameAction({
     type: "SET_SHUFFLE",
     ranked: !state.shuffle,
     userId: window.currentUser.id
   });
+
+  shuffleBtn.classList.toggle("active");
 });
 document.querySelectorAll(".ai-option").forEach(btn => {
   btn.addEventListener("click", () => {
