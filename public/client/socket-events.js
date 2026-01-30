@@ -283,7 +283,7 @@ const shuffleBtn = document.querySelector("#shuffle");
 shuffleBtn?.addEventListener("click", () => {
   sendGameAction({
     type: "SET_SHUFFLE",
-    ranked: !state.shuffle,
+    shuffle: !state.shuffle,
     userId: window.currentUser.id
   });
 });
