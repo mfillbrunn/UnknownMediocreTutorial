@@ -293,7 +293,7 @@ function updateShuffleUI() {
   const isHost = state.hostUserId === window.currentUser.id;
   shuffleBtn.classList.toggle("active", isShuffle);
   shuffleBtn.disabled = !isHost;
-  shuffleBtn.textContent = isShuffle ? "🔀 Shuffle" : "Random";
+  shuffleBtn.textContent = isShuffle ? "🔀 Shuffle" : "Non-Shuffle";
 }
 
 
