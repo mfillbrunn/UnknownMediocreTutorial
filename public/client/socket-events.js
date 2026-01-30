@@ -280,16 +280,21 @@ $("addAiBtn")?.addEventListener("click", () => {
   showAIDifficultyModal();
 });
 const shuffleBtn = document.querySelector("#shuffle");
-
 shuffleBtn?.addEventListener("click", () => {
   sendGameAction({
     type: "SET_SHUFFLE",
     ranked: !state.shuffle,
     userId: window.currentUser.id
   });
-
   shuffleBtn.classList.toggle("active");
 });
+function updateShuffleUI() {
+  if (shuffleBtn || !state || !window.currentUser) return;
+  const isShuffle = !!state.shuffle;
+  const isHost = state.hostUserId === window.currentUser.id;
+  shuffleBtn.textContent = isShuffle ? "Shuffle" : "Non-shuffle";
+}
+
 document.querySelectorAll(".ai-option").forEach(btn => {
   btn.addEventListener("click", () => {
     const difficulty = Number(btn.dataset.difficulty);
