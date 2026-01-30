@@ -48,7 +48,12 @@ if (action.type === "SET_RANKED") {
   state.ranked = !!action.ranked;
   emitStateForAllPlayers(roomId, room, io);
 }
-
+if (action.type === "SET_SHUFFLE") {
+  if (state.hostUserId !== action.userId) return;
+  state.shuffle = !!action.shuffle;
+  emitStateForAllPlayers(roomId, room, io);
+}
+        
 if (action.type === "SET_TIME_CONTROL") {
   if (state.hostUserId !== action.userId) return;
 
