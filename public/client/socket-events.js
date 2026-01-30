@@ -291,8 +291,11 @@ function updateShuffleUI() {
   if (!shuffleBtn || !state || !window.currentUser) return;
   const isShuffle = !!state.shuffle;
   const isHost = state.hostUserId === window.currentUser.id;
-  shuffleBtn.textContent = isShuffle ? "Shuffle" : "Non-shuffle";
+  shuffleBtn.classList.toggle("active", isShuffle);
+  shuffleBtn.disabled = !isHost;
+  shuffleBtn.textContent = isShuffle ? "🔀 Shuffle" : "Random";
 }
+
 
 document.querySelectorAll(".ai-option").forEach(btn => {
   btn.addEventListener("click", () => {
