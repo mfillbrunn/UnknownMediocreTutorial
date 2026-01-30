@@ -460,16 +460,13 @@ renderDraftRows({
 
 ///SETTER FEEDBACK PREVIEW FUNCTION
 function updateSetterPreview() {
-  if (state.powers?.rouletteSecretActive){return;}
+  if (state.powers?.rouletteSecretActive || state.powers?.stealthGuessActive){return;}
  // If stealth is active, hide preview entirely
   const guess = state.pendingGuess;
   if (!guess) return;
   const isSetterTurn = state.turn === state.setter;
   if (!isSetterTurn) return;
   const typed = (state.setterDraft || "").toUpperCase();
-  if (state.powers?.stealthGuessActive && myRole === state.setter) {
-    return;
-  }  
   let isIncomplete = false;
   clearSetterPreview();
   if (typed.length === 5) {
