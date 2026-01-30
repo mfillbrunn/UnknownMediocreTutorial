@@ -19,7 +19,7 @@ engine.registerPower("magicMode", {
   const secret = state.secret.toUpperCase();
 
   for (let i = 0; i < 5; i++) {
-    const fb = entry.fbGuesser?.[i];
+    const fb = entry.fb?.[i];
     if (fb !== "🟨") continue;
 
     const guessedLetter = guess[i];
