@@ -279,6 +279,13 @@ function hideAIDifficultyModal() {
 $("addAiBtn")?.addEventListener("click", () => {
   showAIDifficultyModal();
 });
+$("shuffle")?.addEventListener("click", () => {
+   sendGameAction({
+    type: "SET_SHUFFLE",
+    ranked: !state.shuffle,
+    userId: window.currentUser.id
+  });
+});
 document.querySelectorAll(".ai-option").forEach(btn => {
   btn.addEventListener("click", () => {
     const difficulty = Number(btn.dataset.difficulty);
