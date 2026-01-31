@@ -1,5 +1,3 @@
-const {handleNormalPhase} = require("../phases/normal");
-const handleSimultaneousPhase = require("../phases/simultaneous");
 const { getAI } = require("./aiDifficulty");
 const { applyAIAction } = require("./aiActions");
 const powerMetadata = require("../../powers/powerMetadata");
