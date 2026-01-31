@@ -3,8 +3,8 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("freezeSecret", {
   apply(state, action, roomId, io) {
-    if (state.powers.freezeSecretUsed) return;
-    if (!state.firstSecretSet) return;   // only after at least one secret
+    if (state.powers.freezeSecretUsed) return false;
+    if (!state.firstSecretSet) return false;   // only after at least one secret
 
     state.powers.freezeSecretUsed = true;
     state.powers.freezeActive = true;

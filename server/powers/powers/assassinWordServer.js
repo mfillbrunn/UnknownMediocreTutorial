@@ -14,17 +14,15 @@ const ALLOWED_WORDS = new Set(
 
 engine.registerPower("assassinWord", {
   apply(state, action, roomId, io) {
-    state.powers.assassinWordActive = true;
-    if (!state.activePowers?.includes("assassinWord")) return;
-    if (state.powers.assassinWordUsed && !state.powers.assassinWordActive) return;
+    if (!state.activePowers?.includes("assassinWord")) return false;
+    if (state.powers.assassinWordUsed && !state.powers.assassinWordActive) return false;
     
     const w = action.word.toUpperCase();
 
     // --- Validation ---
     if (w.length !== 5) {
       io.to(action.playerId).emit("errorMessage", "5 letters!");
-      state.powerUsedThisTurn = false; 
-      return;
+      return false;
     }
 
     if (!/^[A-Z]{5}$/.test(w)) {
@@ -32,8 +30,7 @@ engine.registerPower("assassinWord", {
         "errorMessage",
         "Assassin word must be exactly 5 letters."
       );
-      state.powerUsedThisTurn = false; 
-      return;
+      return false;
     }
 
     if (!ALLOWED_WORDS.has(w)) {
@@ -41,8 +38,7 @@ engine.registerPower("assassinWord", {
         "errorMessage",
         "Assassin word must be a valid dictionary word."
       );
-      state.powerUsedThisTurn = false; 
-      return;
+      return false;
     }
     
     if (state.secret) {
@@ -58,8 +54,7 @@ engine.registerPower("assassinWord", {
           "errorMessage",
           "Assassin word must differ from the secret by at least two letters."
         );
-        state.powerUsedThisTurn = false;
-        return;
+        return false;
       }
     }
 
@@ -68,15 +63,14 @@ engine.registerPower("assassinWord", {
         "errorMessage",
         "Assassin word cannot match current guess."
       );
-      state.powerUsedThisTurn = false; 
-      return;
+      return false;
     }
 
     // --- VALID → commit ---
+    state.powers.assassinWordActive = true;
     state.powers.assassinWordUsed = true;
     state.powers.assassinWord = w;
     state.powers.assassinPoints = Math.max(7-state.guessCount,1);
-    state.powerUsedThisTurn = true;    
 
     // Setter-only confirmation
     io.to(action.playerId).emit("assassinSet", { word: w });

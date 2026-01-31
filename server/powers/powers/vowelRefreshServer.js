@@ -3,14 +3,13 @@ const {isConsistentWithHistory} = require("../../game-engine/history");
 
 engine.registerPower("vowelRefresh", {
   apply(state, action, roomId, io) {
-    if (state.powers.vowelRefreshUsed) return;
+    if (state.powers.vowelRefreshUsed) return false;
     state.powers.vowelRefreshUsed = true;
     state.powers.vowelRefreshActive = true;
-    state.powerUsedThisTurn = true;
 
     const lastIndex = state.history.length - 1;
     const entry = state.history[lastIndex];
-    if (!entry) return;
+    if (!entry) return false;
 
     const vowels = new Set(["A", "E", "I", "O", "U"]);
     const guess = entry.guess.toUpperCase();

@@ -2,7 +2,7 @@ const engine = require("../powerEngineServer");
 
 engine.registerPower("nonsense", {
   apply(state, action, roomId, io) {
-    if (state.powers.nonsenseUsed) return;
+    if (state.powers.nonsenseUsed) return false ;
     state.powers.nonsenseUsed = true;
     state.powers.nonsenseActive = true;
     io.to(roomId).emit(

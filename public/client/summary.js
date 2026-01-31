@@ -175,7 +175,7 @@ function renderMatchSummary(container) {
   }
 
   let assassinationNote = "";
-  if (state.powers?.assassinated) {
+  if (state.powers?.assassinWordassassinated) {
     assassinationNote = `
       <p class="assassination-note">
         ☠ Assassination triggered — instant loss
@@ -361,7 +361,7 @@ html += `
 `;
 
   const lastEntry = state.history[state.history.length - 1];
-  if (state.powers.assassinated) {
+  if (state.powers.assassinWordassassinated) {
     html += `
       <p class="assassin-summary">
         ☠ ${guesserName} guessed the assassin word
@@ -535,7 +535,7 @@ function buildShareText(state, myRole) {
 let finalWinner = winner;
 let finalWinReason = winReason;
 let assassinationLine = null;
-if (state.powers?.assassinated) {
+if (state.powers?.assassinWordassassinated) {
   assassinationLine = "☠ Assassination triggered";
 }
 

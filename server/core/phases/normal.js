@@ -5,6 +5,7 @@ const { endGame } = require("./gameOver");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { handleTimeout } = require("../timeouts/timeoutController");
+const { isPowerAllowed } = require("../../powers/POWER_RULES");
 
 const FORCE_TIMER_INTERVALS = {};
 function handleNormalPhase(room, state, action, role, roomId, context) {
@@ -30,7 +31,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     // ASSASSIN
     const assassin = state.powers.assassinWord;
       if (assassin && g.toUpperCase() === assassin.toUpperCase()) {
-        state.powers.assassinated = true; 
+        state.powers.assassinWordassassinated = true; 
         pushWinEntry(state, state.secret);
         io.to(roomId).emit("secretFound");
         endGame(state, roomId, io, room,context);
@@ -119,9 +120,9 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
     console.log(action);
     console.log("action used");
     const powerId = normalizePowerId(action.type);
-    if (!state.powerUsedThisTurn) {
-      state.powerUsedThisTurn = true;
-      powerEngine.applyPower(powerId, state, action, roomId, io);
+    if (!state.powerUsedThisTurn && isPowerAllowed(powerId, state)) {
+      const applied = powerEngine.applyPower(powerId, state, action, roomId, io);
+      if (applied!==false) {state.powerUsedThisTurn = true;}
     }
     emitStateForAllPlayers(roomId, room, io);
     return;

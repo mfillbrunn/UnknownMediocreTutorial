@@ -12,7 +12,7 @@ engine.registerPower("rouletteSecret", {
   // Guesser uses the power
   // ----------------------------------
   apply(state, action, roomId, io) {
-    if (state.powers.rouletteSecretUsed) return;
+    if (state.powers.rouletteSecretUsed) return false;
     state.powers.rouletteSecretUsed = true;
     state.powers.rouletteSecretActive = true;
     state.powers.rouletteSecretFeasible = global.ALLOWED_SECRETS.filter(secret =>

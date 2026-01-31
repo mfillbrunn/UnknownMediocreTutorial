@@ -3,7 +3,7 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("countOnly", {
   apply(state, action, roomId, io) {
-    if (state.powers.countOnlyUsed) return;
+    if (state.powers.countOnlyUsed) return false;
     state.powers.countOnlyUsed = true;
     state.powers.countOnlyActive = true;
     state.powers.countOnlyWord = state.pendingGuess;

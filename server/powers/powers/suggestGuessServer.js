@@ -5,7 +5,7 @@ const { parseWordlist } = require("../../game-engine/validation");
 const fs = require("fs");
 const path = require("path");
 
-const WORDS = fs.readFileSync(path.join(__dirname, "../../wordlists/allowed_guesses.txt"), "utf8")
+const WORDS = fs.readFileSync(path.join(__dirname, "../../wordlists/allowed_secrets.txt"), "utf8")
   .trim()
   .split("\n");
 
@@ -13,10 +13,9 @@ engine.registerPower("suggestGuess", {
   apply(state, action, roomId, io) {
 
     // Once per match
-    if (state.powers.suggestGuessUsed) return;
+    if (state.powers.suggestGuessUsed) return false;
     state.powers.suggestGuessUsed = true;
     state.powers.suggestGuessActive = true;
-    state.powerUsedThisTurn = true;
 
     const feasible = WORDS.filter(w =>
       isConsistentWithHistory(state.history, w, state)

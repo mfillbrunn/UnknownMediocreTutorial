@@ -3,7 +3,7 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("stealthGuess", {
   apply(state, action, roomId, io) {
-    if (state.powers.stealthGuessUsed) return;
+    if (state.powers.stealthGuessUsed) return false;
 
     state.powers.stealthGuessUsed = true;
     state.powers.stealthGuessActive = true;

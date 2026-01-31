@@ -81,7 +81,7 @@ const powers = {
       assassinWordUsed: false,
       assassinWord: null,
       assassinWordActive: false,
-      assassinated : false,
+      assassinWordassassinated : false,
       assassinPoints: false,
       // UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
       revealLetter: {

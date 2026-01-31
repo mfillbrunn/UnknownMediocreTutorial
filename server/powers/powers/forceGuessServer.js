@@ -198,7 +198,7 @@ function optionKey(o) {
 
 engine.registerPower("forceGuess", {
   apply(state, action, roomId, io) {
-    if (state.powers.forceGuessUsed) return;
+    if (state.powers.forceGuessUsed) return false;
 
     state.powers.forceGuessUsed = true;
     state.powers.forceGuessActive = true;

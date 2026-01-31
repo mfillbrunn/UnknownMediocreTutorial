@@ -2,7 +2,7 @@ const engine = require("../powerEngineServer");
 
 engine.registerPower("blindGuess", {
   apply(state, action, roomId, io) {
-    if (state.powers.blindGuessUsed) return;
+    if (state.powers.blindGuessUsed) return false;
 
     state.powers.blindGuessUsed = true;
     state.powers.blindGuessArmed = true;

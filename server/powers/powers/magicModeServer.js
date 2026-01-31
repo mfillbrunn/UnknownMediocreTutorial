@@ -2,9 +2,8 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("magicMode", {
   apply(state, action, roomId, io) {
-    if (state.powers.magicModeUsed) return;
+    if (state.powers.magicModeUsed) return false;
     state.powers.magicModeUsed = true;
-    state.powerUsedThisTurn = true;
 
     // Arm the power for the NEXT scoring
     state.powers.magicModeActive = true;

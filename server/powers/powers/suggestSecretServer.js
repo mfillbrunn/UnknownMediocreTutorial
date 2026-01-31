@@ -13,14 +13,13 @@ engine.registerPower("suggestSecret", {
   apply(state, action, roomId, io) {
 
     // Once per match
-    if (state.powers.suggestSecretUsed) return;
+    if (state.powers.suggestSecretUsed) return false;
 
     // Cannot operate while frozen
-    if (state.powers.freezeActive) return;
+    if (state.powers.freezeActive) return false;
 
     state.powers.suggestSecretUsed = true;
     state.powers.suggestSecretActive = true;
-    state.powerUsedThisTurn = true;
 
     const feasible = WORDS.filter(w =>
       isConsistentWithHistory(state.history, w, state)

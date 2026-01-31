@@ -2,7 +2,7 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("blindSpot", {
   apply(state, action, roomId, io) {
-    if (state.powers.blindSpotUsed) return;
+    if (state.powers.blindSpotUsed) return false;
 
     // Collect green positions from history
     const greens = new Set();

@@ -3,8 +3,8 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("revealHistory", {
   apply(state, action, roomId, io) {
-    if (state.powers.revealHistoryUsed) return;
-    if (state.history.length < 3) return; // must have at least 2 completed rounds
+    if (state.powers.revealHistoryUsed) return false;
+    if (state.history.length < 3) return false; // must have at least 2 completed rounds
 
     state.powers.revealHistoryUsed = true;
     state.powers.revealHistoryActive = true;

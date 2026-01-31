@@ -3,8 +3,8 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("revealGreen", {
   apply(state, action, roomId, io) {
-  if (state.powers.revealGreenUsed) return;
-  if (!state.secret) return;
+  if (state.powers.revealGreenUsed) return false;
+  if (!state.secret) return false;
 
   const secret = state.secret.toUpperCase();
 
@@ -33,7 +33,7 @@ engine.registerPower("revealGreen", {
   // 2. If everything is known, do nothing
   if (unknownPositions.length === 0) {
     console.log("RevealGreen: No unknown positions left");
-    return;
+    return false;
   }
 
   // 3. Choose a random unknown position

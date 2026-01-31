@@ -3,13 +3,12 @@ const engine = require("../powerEngineServer.js");
 engine.registerPower("revealLetter", {
   apply(state, action, roomId, io) {
   const p = state.powers.revealLetter;
-  if (!p.ready || p.used) return;
+  if (!p.ready || p.used) return false;
 
-  if (!state.history.length) return;
+  if (!state.history.length) return false;
 
   p.used = true;
   p.ready = false;
-  state.powerUsedThisTurn = true;
 
   // Collect known green positions
   const greenPositions = new Set();
@@ -26,7 +25,7 @@ engine.registerPower("revealLetter", {
   }
     
   const options = [0,1,2,3,4].filter(i => !greenPositions.has(i));
-  if (!options.length) return;
+  if (!options.length) return false;
 
   const index = options[Math.floor(Math.random() * options.length)];
   const letter = state.secret[index].toUpperCase();

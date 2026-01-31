@@ -9,11 +9,10 @@ const engine = require("../powerEngineServer.js");
 engine.registerPower("forceTimer", {
   apply(state, action, roomId, io) {
     // One-time use
-    if (state.powers.forceTimerUsed) return;
+    if (state.powers.forceTimerUsed) return false;
 
     state.powers.forceTimerUsed = true;
     state.powers.forceTimerArmed = true;
-    state.powerUsedThisTurn = true;
     state.powers.forceTimerActive = true;
 
     io.to(roomId).emit("toast","⏱ Force Timer armed — setter will be timed next turn." );

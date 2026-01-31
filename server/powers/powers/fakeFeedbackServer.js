@@ -6,7 +6,7 @@ const { scoreGuess } = require("../../game-engine/scoring");
 
 engine.registerPower("fakeFeedback", {
   apply(state, action, roomId, io) {
-    if (state.powers.fakeFeedbackUsed) return;
+    if (state.powers.fakeFeedbackUsed) return false;
     state.powers.fakeFeedbackUsed = true;
     state.powers.fakeFeedbackActive = true;
     const fakesecret = global.ALLOWED_SECRETS.filter(secret =>isConsistentWithHistory(state.history, secret, state));
