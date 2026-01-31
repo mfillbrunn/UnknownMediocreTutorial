@@ -186,7 +186,7 @@ function startForceTimer(roomId, room, state, io, context) {
       clearInterval(FORCE_TIMER_INTERVALS[roomId]);
       delete FORCE_TIMER_INTERVALS[roomId];
     state.powerUsedThisTurn = false;
-      handleNormalPhase(
+      applyAction(
         room,
         state,
         { type: "SET_SECRET_SAME", playerId: room[state.setter] },
