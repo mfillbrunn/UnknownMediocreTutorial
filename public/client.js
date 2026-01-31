@@ -304,6 +304,7 @@ onStateUpdate(newState => {
   updateRoleCards();
   updateHostControls();
   updateRankedUI();
+  updateShuffleUI();
   updateTimerAccess(); 
   updateTimerPresetUI();
   updateWaitingIndicator();

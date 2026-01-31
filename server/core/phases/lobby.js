@@ -48,7 +48,12 @@ if (action.type === "SET_RANKED") {
   state.ranked = !!action.ranked;
   emitStateForAllPlayers(roomId, room, io);
 }
-
+if (action.type === "SET_SHUFFLE") {
+  if (state.hostUserId !== action.userId) return;
+  state.shuffle = !!action.shuffle;
+  emitStateForAllPlayers(roomId, room, io);
+}
+        
 if (action.type === "SET_TIME_CONTROL") {
   if (state.hostUserId !== action.userId) return;
 
@@ -188,7 +193,7 @@ if (action.type === "SET_POWER_COUNT") {
              freshState._timerGeneration = (oldState._timerGeneration || 0) + 1;
              room.state = freshState;
              state = freshState; 
-              if (state.ranked) {
+              if (state.ranked || state.shuffle) {
                   const ids = Object.keys(room.players);
                   const shuffled = ids.sort(() => Math.random() - 0.5);                
                   room.players[shuffled[0]].role = "A";

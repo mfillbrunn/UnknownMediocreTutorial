@@ -28,6 +28,10 @@ const powers = {
       fakeFeedbackActive : false,
       fakeFeedbackUsed : false,
       fakeFeedbackSecret : false,
+      // Bet Miss
+      betMissActive : false,
+      betMissUsed : false,
+      betMissNumber : null,
       // REVEAL GREEN
       revealGreenUsed: false,
       revealGreenPos: null,
@@ -104,13 +108,14 @@ function createInitialState() {
     guesser: "B",
     playerNames: {},
     ready: {},
-    powerCount: 10,       // NEW: number chosen in lobby
+    powerCount: 2,       // NEW: number chosen in lobby
     activePowers: [],  // NEW: each player’s random secrets
   // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
     mode: null,          // instance of mode controller
     rankMode: "bullet",
     matchMeta: {},       // owned entirely by the mode
     ranked : false,
+    shuffle: false,
     gameOverView: "match",
     canNextRound: false,
     conceded: false,

@@ -279,6 +279,24 @@ function hideAIDifficultyModal() {
 $("addAiBtn")?.addEventListener("click", () => {
   showAIDifficultyModal();
 });
+const shuffleBtn = document.querySelector("#shuffle");
+shuffleBtn?.addEventListener("click", () => {
+  sendGameAction({
+    type: "SET_SHUFFLE",
+    shuffle: !state.shuffle,
+    userId: window.currentUser.id
+  });
+});
+function updateShuffleUI() {
+  if (!shuffleBtn || !state || !window.currentUser) return;
+  const isShuffle = !!state.shuffle;
+  const isHost = state.hostUserId === window.currentUser.id;
+  shuffleBtn.classList.toggle("active", isShuffle);
+  shuffleBtn.disabled = !isHost;
+  shuffleBtn.textContent = isShuffle ? "🔀 Shuffle" : "Non-Shuffle";
+}
+
+
 document.querySelectorAll(".ai-option").forEach(btn => {
   btn.addEventListener("click", () => {
     const difficulty = Number(btn.dataset.difficulty);

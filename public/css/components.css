@@ -105,7 +105,11 @@
   box-shadow: none;
 }
 /*----POWER BTNS ---*/
-
+.secondary-btn.active {
+  background: #4caf50;      /* or your accent color */
+  color: white;
+  border-color: #4caf50;
+}
 /* Power buttons (single authoritative definition) */
 
 
