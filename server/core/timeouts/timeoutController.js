@@ -4,7 +4,6 @@ const { endGame } = require("../phases/gameOver");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const {maybeRunAI} = require("../ai/runAI");
-const applyAction = require("../stateMachine");
 
 /**
  * Central timeout policy engine.
@@ -15,7 +14,8 @@ function handleTimeout({
   state,
   roomId,
   timedOutRole,
-  context
+  context,
+  applyAction
 }) {
   const io = context.io;
 
@@ -26,7 +26,8 @@ function handleTimeout({
         state,
         roomId,
         timedOutRole,
-        context
+        context,
+        applyAction
       });
 
     case "normal":
@@ -35,7 +36,8 @@ function handleTimeout({
         state,
         roomId,
         timedOutRole,
-        context
+        context,
+        applyAction
       });
 
     default:
@@ -49,7 +51,8 @@ function handleSimultaneousTimeout({
   state,
   roomId,
   timedOutRole,
-  context
+  context,
+    applyAction
 }) {
   const io = context.io;
 
@@ -88,7 +91,8 @@ function handleNormalTimeout({
   state,
   roomId,
   timedOutRole,
-  context
+  context,
+    applyAction
 }) {
   const io = context.io;  
   state.roundTimeouts ??= { A: 0, B: 0 };
