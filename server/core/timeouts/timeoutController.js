@@ -117,7 +117,7 @@ function handleNormalTimeout({
         context
       );
     }
-  //setTimeout(() => {try {maybeRunAI(room, roomId, context);} catch (err) {console.error("maybeRunAI crashed:", err);}}, 1000);
+  setTimeout(() => {try {maybeRunAI(room, roomId, context);} catch (err) {console.error("maybeRunAI crashed:", err);}}, 1000);
   return { continue: true };
 }
 
