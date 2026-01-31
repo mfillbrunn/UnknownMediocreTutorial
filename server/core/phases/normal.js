@@ -138,10 +138,31 @@ function pushWinEntry(state, word) {
     finalSecret: word
   });  
 }
+
+function startGameTimer(room, state, roomId, context) {
+  if (!room || room.status !== "alive") return;
+  const io = context.io;
+  if (state.isTimerRunning) return;
+  state.isTimerRunning = true;
+  startTimer(roomId, state, io, timedOutRole => {
+    state.isTimerRunning = false;
+    if (state.timeControl.mode === "chess") {
+      state.timeoutLoser = timedOutRole;
+      endGame(state, roomId, io, room, context);
+      return;
+    }
+    const result = handleTimeout({room,state,roomId,timedOutRole,context});
+    if (result?.continue) {
+      startGameTimer(room, state, roomId, context);
+    }
+  });
+}
+
 function normalizePowerId(type) {
   const raw = type.replace("USE_", "").toLowerCase();
   return raw.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
+
 
 function startForceTimer(roomId, room, state, io, context) {
   const durationMs = 30000;
@@ -211,5 +232,6 @@ function clearActivePowers(state) {
 module.exports = {
   handleNormalPhase,
   pushWinEntry,
+  startGameTimer,
   clearForceTimer
 };
