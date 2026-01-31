@@ -3,6 +3,7 @@
 const { endGame } = require("../phases/gameOver");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
+const {maybeRunAI} = require("../ai/runAI");
 
 /**
  * Central timeout policy engine.
@@ -116,6 +117,7 @@ function handleNormalTimeout({
         context
       );
     }
+  setTimeout(() => {try {maybeRunAI(room, roomId, context);} catch (err) {console.error("maybeRunAI crashed:", err);}}, 1000);
   return { continue: true };
 }
 
