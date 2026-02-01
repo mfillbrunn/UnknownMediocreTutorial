@@ -2,9 +2,9 @@ const { endGame } = require("../phases/gameOver");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
+const { clearForceTimer, registerForceTimer } = require("../../utils/forceTimer");
 const { applyAction } = require("../applyAction");
 
-const FORCE_TIMER_INTERVALS = {};
 function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io}) {
   const assassin = state.powers.assassinWord;
   // Assassin hit → game over
@@ -104,25 +104,21 @@ function clearRoundState(state, role) {
 function startForceTimer(roomId, room, state, io, context) {
   const durationMs = 30000;
   const deadline = Date.now() + durationMs;
-    state.powers.forceTimerActive = true;
+
+  state.powers.forceTimerActive = true;
   state.powers.forceTimerDeadline = deadline;
   state.powers.forceTimerArmed = false;
-  io.to(roomId).emit("forceTimerStarted", {
-  deadline,
-  durationMs
-});
 
-  if (FORCE_TIMER_INTERVALS[roomId]) {
-    clearInterval(FORCE_TIMER_INTERVALS[roomId]);
-  }
+  io.to(roomId).emit("forceTimerStarted", { deadline, durationMs });
 
-  FORCE_TIMER_INTERVALS[roomId] = setInterval(() => {
+  const interval = setInterval(() => {
     const remaining = deadline - Date.now();
     io.to(roomId).emit("forceTimerTick", { remaining });
+
     if (remaining <= 0) {
-      clearInterval(FORCE_TIMER_INTERVALS[roomId]);
-      delete FORCE_TIMER_INTERVALS[roomId];
-    state.powerUsedThisTurn = false;
+      clearInterval(interval);
+      state.powerUsedThisTurn = false;
+
       applyAction(
         room,
         state,
@@ -131,10 +127,14 @@ function startForceTimer(roomId, room, state, io, context) {
         roomId,
         context
       );
+
       io.to(roomId).emit("forceTimerExpired");
     }
   }, 250);
+
+  registerForceTimer(roomId, interval);
 }
+
 function pushWinEntry(state, word) {
   state.history.push({
     guess: word,
@@ -145,17 +145,7 @@ function pushWinEntry(state, word) {
   });  
 }
 
-function clearForceTimer(roomId, state) {
-  if (FORCE_TIMER_INTERVALS[roomId]) {
-    clearInterval(FORCE_TIMER_INTERVALS[roomId]);
-    delete FORCE_TIMER_INTERVALS[roomId];
-  }
-  delete state.powers.forceTimerActive;
-  delete state.powers.forceTimerDeadline;
-  delete state.powers.forceTimerArmed;
-}
 module.exports = {
   transitionAfterGuess,
-  transitionAfterSecret,
-  clearForceTimer
+  transitionAfterSecret
 };
