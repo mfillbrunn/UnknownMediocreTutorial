@@ -138,7 +138,7 @@ function pushWinEntry(state, word) {
     finalSecret: word
   });  
 }
-
+/*
 function startGameTimer(room, state, roomId, context) {
   if (!room || room.status !== "alive") return;
   const io = context.io;
@@ -157,7 +157,7 @@ function startGameTimer(room, state, roomId, context) {
     }
   });
 }
-
+*/
 function normalizePowerId(type) {
   const raw = type.replace("USE_", "").toLowerCase();
   return raw.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
