@@ -156,5 +156,6 @@ function clearForceTimer(roomId, state) {
 }
 module.exports = {
   transitionAfterGuess,
-  transitionAfterSecret
+  transitionAfterSecret,
+  clearForceTimer
 };
