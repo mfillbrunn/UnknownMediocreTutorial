@@ -27,7 +27,7 @@ function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io,  
   io.to(roomId).emit("guessSubmitted");
   clearRoundState(state, "guesser");  
   if (state.powers.forceTimerArmed) {
-      startForceTimer(roomId, room, state, io, context);
+      startForceTimer(roomId, room, state, io, context,applyAction);
   } 
   context.powerEngine.turnStart(state, state.turn, roomId, io);
   emitStateForAllPlayers(roomId, room, io);

@@ -1,11 +1,10 @@
 const { emitStateForAllPlayers } = require("../../utils/emitState");
-const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
-const { addIncrement, resetRoundTimer, startTimer} = require("../../utils/Timer");
+const { startTimer} = require("../../utils/Timer");
 const { endGame } = require("./gameOver");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
-const { handleTimeout } = require("../timeouts/timeoutController");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
 const {transitionAfterGuess, transitionAfterSecret} = require("../transitions/normalTransitions");
+const {applyAction} = require("../stateMachine");
 
 function handleNormalPhase(room, state, action, role, roomId, context) {
   const io = context.io;
@@ -31,7 +30,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       guess: g,
       roomId,
       context,
-      io
+      io, applyAction
     });
     return;
   }
