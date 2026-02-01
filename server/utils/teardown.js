@@ -1,5 +1,5 @@
 const { stopTimer } = require("./Timer");
-const { clearForceTimer } = require("../core/transitions/normalTransitions");
+const { clearForceTimer } = require("./forceTimer");
 
 function stopAllRoomIntervals(roomId, room) {
   stopTimer(roomId);
