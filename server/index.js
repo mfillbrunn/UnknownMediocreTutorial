@@ -9,6 +9,8 @@ const { createRoom, joinRoom, rooms, cleanupEmptyRooms } = require("./core/rooms
 const registerSocketHandlers = require("./network/socketHandlers");
 const { createClient } = require("@supabase/supabase-js");
 const { loadWordList } = require("./utils/wordListLoader");
+const { applyAction } = require("./core/stateMachine");
+
 
 
 const supabase = createClient(
@@ -66,7 +68,8 @@ const context = {
   powerEngine,
   ALLOWED_GUESSES,
   ALLOWED_SECRETS,
-  WORDS
+  WORDS,
+  applyAction
 };
 // ------------------------------
 // Load power engine + all plugin powers
