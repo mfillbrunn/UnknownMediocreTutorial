@@ -3,7 +3,6 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
 const { clearForceTimer, registerForceTimer } = require("../../utils/forceTimer");
-const { applyAction } = require("../applyAction");
 
 function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io}) {
   const assassin = state.powers.assassinWord;
@@ -101,7 +100,7 @@ function clearRoundState(state, role) {
   state.powerUsedThisTurn = false;
 }
 
-function startForceTimer(roomId, room, state, io, context) {
+function startForceTimer(roomId, room, state, io, context, applyAction) {
   const durationMs = 30000;
   const deadline = Date.now() + durationMs;
 
