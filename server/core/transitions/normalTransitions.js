@@ -4,7 +4,7 @@ const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
 const { clearForceTimer, registerForceTimer } = require("../../utils/forceTimer");
 
-function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io) {
+function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io}) {
   const assassin = state.powers.assassinWord;
   // Assassin hit → game over
   if (assassin && guess === assassin.toUpperCase()) {

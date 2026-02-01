@@ -15,8 +15,7 @@ function handleTimeout({
   state,
   roomId,
   timedOutRole,
-  context,
-  applyAction
+  context
 }) {
   const io = context.io;
 
@@ -27,8 +26,7 @@ function handleTimeout({
         state,
         roomId,
         timedOutRole,
-        context,
-        applyAction
+        context
       });
 
     case "normal":
@@ -37,8 +35,7 @@ function handleTimeout({
         state,
         roomId,
         timedOutRole,
-        context,
-        applyAction
+        context
       });
 
     default:
@@ -52,8 +49,7 @@ function handleSimultaneousTimeout({
   state,
   roomId,
   timedOutRole,
-  context,
-    applyAction
+  context
 }) {
   const io = context.io;
 
@@ -92,8 +88,7 @@ function handleNormalTimeout({
   state,
   roomId,
   timedOutRole,
-  context,
-    applyAction
+  context
 }) {
   const io = context.io;  
   state.roundTimeouts ??= { A: 0, B: 0 };
@@ -110,7 +105,7 @@ function handleNormalTimeout({
   const last = state.history.at(-1);
   if (!last) return { continue: false };
       if (timedOutRole === state.guesser) {
-    transitionAfterGuess({room,state, guess: last.guess, roomId, context, io,applyAction });
+    transitionAfterGuess({room,state, guess: last.guess, roomId, context, io});
     } else {
       transitionAfterSecret({room,state,secret: state.secret,roomId,context,io});
     }

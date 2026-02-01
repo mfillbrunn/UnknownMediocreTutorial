@@ -1,12 +1,9 @@
 // network/socketHandlers.js
 
 const { rooms, createRoom,removePlayer, findLastOpenRoom, joinOrReattach  } = require("../core/rooms");
-const {applyAction} = require("../core/stateMachine");
 const { emitStateForAllPlayers } = require("../utils/emitState");
-const { emitLobbyEvent } = require("../utils/emitLobby");
-const { stopTimer } = require("../utils/Timer");
 const { startGameTimer } = require("../core/phases/normal");
-const {   destroyRoom, stopAllRoomIntervals } = require("../utils/teardown");
+const {  stopAllRoomIntervals } = require("../utils/teardown");
 const {maybeRunAI} = require("../core/ai/runAI");
 
 module.exports = function registerSocketHandlers(io, context) {
@@ -108,7 +105,7 @@ socket.on("gameAction", ({ action }) => {
   action.playerId = socket.id;
   action.role = player.role;
 
-  applyAction(room, room.state, action, player.role, roomId, context);
+  context.applyAction(room, room.state, action, player.role, roomId, context);
   emitStateForAllPlayers(roomId, room, io);
     if (!action.ai && !action.type.startsWith("USE_") && (room.state.phase === "normal" || room.state.phase === "simultaneous")) {
     setTimeout(() => {
