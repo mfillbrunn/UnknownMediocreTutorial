@@ -1,4 +1,4 @@
-const { endGame } = require("./gameOver");
+const { endGame } = require("../phases/gameOver");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
