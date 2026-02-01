@@ -1,7 +1,7 @@
-const handleLobbyPhase = require("../phases/lobby");
-const handleSimultaneousPhase = require("../phases/simultaneous");
-const { handleNormalPhase } = require("../phases/normal");
-const { handleGameOverPhase } = require("../phases/postGame");
+const handleLobbyPhase = require("./phases/lobby");
+const handleSimultaneousPhase = require("./phases/simultaneous");
+const { handleNormalPhase } = require("./phases/normal");
+const { handleGameOverPhase } = require("./phases/postGame");
 
 function applyAction(room, state, action, role, roomId, context) {
   switch (state.phase) {
