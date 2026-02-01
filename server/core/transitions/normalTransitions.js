@@ -4,7 +4,7 @@ const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
 const { clearForceTimer, registerForceTimer } = require("../../utils/forceTimer");
 
-function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io,  applyAction}) {
+function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io) {
   const assassin = state.powers.assassinWord;
   // Assassin hit → game over
   if (assassin && guess === assassin.toUpperCase()) {
@@ -27,7 +27,7 @@ function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io,  
   io.to(roomId).emit("guessSubmitted");
   clearRoundState(state, "guesser");  
   if (state.powers.forceTimerArmed) {
-      startForceTimer(roomId, room, state, io, context,applyAction);
+      startForceTimer(roomId, room, state, io, context,context.applyAction);
   } 
   context.powerEngine.turnStart(state, state.turn, roomId, io);
   emitStateForAllPlayers(roomId, room, io);
@@ -100,7 +100,7 @@ function clearRoundState(state, role) {
   state.powerUsedThisTurn = false;
 }
 
-function startForceTimer(roomId, room, state, io, context, applyAction) {
+function startForceTimer(roomId, room, state, io, context) {
   const durationMs = 30000;
   const deadline = Date.now() + durationMs;
 
@@ -118,7 +118,7 @@ function startForceTimer(roomId, room, state, io, context, applyAction) {
       clearInterval(interval);
       state.powerUsedThisTurn = false;
 
-      applyAction(
+      context.applyAction(
         room,
         state,
         { type: "SET_SECRET_SAME", playerId: room[state.setter] },
