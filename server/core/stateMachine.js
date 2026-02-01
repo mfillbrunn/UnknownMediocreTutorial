@@ -1,3 +1,3 @@
-const { applyAction } = require("./state/applyAction");
+const { applyAction } = require("./applyAction");
 
 module.exports = { applyAction };
