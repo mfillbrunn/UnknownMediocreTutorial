@@ -2,7 +2,7 @@ const { endGame } = require("../phases/gameOver");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
-
+const { applyAction } = require("../applyAction");
 
 const FORCE_TIMER_INTERVALS = {};
 function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io}) {
