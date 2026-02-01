@@ -3,21 +3,17 @@ const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer, startTimer} = require("../../utils/Timer");
 const { endGame } = require("./gameOver");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
-const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { handleTimeout } = require("../timeouts/timeoutController");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
 
-const FORCE_TIMER_INTERVALS = {};
+
 function handleNormalPhase(room, state, action, role, roomId, context) {
   const io = context.io;
   //Concede
   const { ALLOWED_GUESSES, powerEngine } = context;
   if (action.type === "CONCEDE") {
-  if (role === state.guesser){
-    const CONCEDE_PENALTY = 10;
-    state.guessCount += CONCEDE_PENALTY;
-  }
-    endGame(state, roomId, io, room, context);
+  if (role === state.guesser) state.guessCount += 10;
+  endGame(state, roomId, io, room, context);
   return;
 }
   /// GUESSER SUBMIT
@@ -28,97 +24,42 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
     state.guessCount= state.guessCount + 1;
     state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
     state.roundStartTime = Date.now();
-    // ASSASSIN
-    const assassin = state.powers.assassinWord;
-      if (assassin && g.toUpperCase() === assassin.toUpperCase()) {
-        state.powers.assassinWordassassinated = true; 
-        pushWinEntry(state, state.secret);
-        io.to(roomId).emit("secretFound");
-        endGame(state, roomId, io, room,context);
-        return;
-      }  
-    // CORRECT GUESS
-    if (g === state.secret) {
-      state.currentSecret = state.secret;
-      pushWinEntry(state, g);
-      io.to(roomId).emit("secretFound");
-      endGame(state, roomId, io, room,context);
-      return;
-    }
-    state.pendingGuess = g;
-    io.to(roomId).emit("guessSubmitted");
-    // Round moving on
-    clearActivePowers(state);
-    if (state.powers && state.powers.confuseColorsActive) {state.powers.confuseColorsActive = false;}
-    if (state.powers && state.powers.countOnlyActive) {state.powers.countOnlyActive = false;}
-    if (state.powers && state.powers.forceGuessOptions)  {state.powers.forceGuessOptions = null;}
-    if (state.powers && state.powers.nonsenseActive)  {state.powers.nonsenseActive = false;}
-    state.powers.forceGuess = null;
-    state.activeTimer = state.setter;
-    if (state.timeControl.mode === "chess") {
-      addIncrement(state, state.guesser);
-    } else if (state.timeControl.mode === "round") {
-      resetRoundTimer(state);
-    }
-    state.turn = state.setter;
-    if (state.powers.forceTimerArmed) {
-      startForceTimer(roomId, room, state, io, context);
-    }
-    state.powerUsedThisTurn = false;
-    powerEngine.turnStart(state, state.turn, roomId, io);
-    emitStateForAllPlayers(roomId, room, io);
+
+    transitionAfterGuess({
+      room,
+      state,
+      guess: g,
+      roomId,
+      context,
+      io
+    });
     return;
   }
-
   /// SETTER
 if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME") ) {
-    let w = null;
-    if (action.type === "SET_SECRET_NEW") {
-       w = action.secret.toUpperCase();
-    } else if (action.type === "SET_SECRET_SAME"){
-       w = state.secret;
-    }
+    const w = action.type === "SET_SECRET_NEW" ? action.secret.toUpperCase(): state.secret;
     const res = checkSecret({secret: w, state, allowedSecrets: context.ALLOWED_SECRETS });
     if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
     if (powerEngine.beforeSetterSecretChange(state, action)) return;
     if (state.powers.assassinWord && w.toUpperCase() === state.powers.assassinWord.toUpperCase()) {
       io.to(action.playerId).emit("errorMessage", "Secret cannot match assassin word!");
       return;
-    }
-      state.secret = w;
-      state.currentSecret = w;
-      state.firstSecretSet = true;
+    }      
       state.timeUsed[state.setter] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
-      state.roundStartTime = Date.now();
-      if (state.pendingGuess === w) {
-        pushWinEntry(state, w);
-        io.to(roomId).emit("secretFound");
-        endGame(state, roomId, io, room,context);
-        return;
-      }
-      io.to(roomId).emit("secretPlanted");
-      clearForceTimer(roomId, state);
-      finalizeFeedback(state, powerEngine, roomId, io);
-      clearActivePowers(state);
-      if (state.powers && state.powers.stealthGuessActive) {state.powers.stealthGuessActive = false;}
-      if (state.powers && state.powers.magicModeActive) {state.powers.magicModeActive = false;}
-      if (state.powers && state.powers.rouletteSecretActive) {state.powers.rouletteSecretActive = false;}  
-      state.activeTimer = state.guesser;
-      if (state.timeControl.mode === "chess") {
-        addIncrement(state, state.setter);
-      } else if (state.timeControl.mode === "round") {
-        resetRoundTimer(state);
-      }
-      state.turn = state.guesser;
-      state.powerUsedThisTurn = false;  
-      powerEngine.turnStart(state, state.guesser, roomId, io);
-      emitStateForAllPlayers(roomId, room, io);
+      state.roundStartTime = Date.now();    
+      transitionAfterSecret({
+          room,
+          state,
+          secret: w,
+          roomId,
+          context,
+          io
+        });
       return;
     }
+  
   /// POWERs
   if (action.type.startsWith("USE_")) {
-    console.log(action);
-    console.log("action used");
     const powerId = normalizePowerId(action.type);
     if (!state.powerUsedThisTurn && isPowerAllowed(powerId, state)) {
       const applied = powerEngine.applyPower(powerId, state, action, roomId, io);
@@ -129,16 +70,6 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
   }
 }
 
-function pushWinEntry(state, word) {
-  state.history.push({
-    guess: word,
-    fb: ["🟩","🟩","🟩","🟩","🟩"],
-    fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
-    extraInfo: null,
-    finalSecret: word
-  });  
-}
-/*
 function startGameTimer(room, state, roomId, context) {
   if (!room || room.status !== "alive") return;
   const io = context.io;
@@ -151,64 +82,19 @@ function startGameTimer(room, state, roomId, context) {
       endGame(state, roomId, io, room, context);
       return;
     }
-    const result = handleTimeout({room,state,roomId,timedOutRole,context});
+    const result = ({room,state,roomId,timedOutRole,context});
     if (result?.continue) {
       startGameTimer(room, state, roomId, context);
     }
   });
 }
-*/
+
 function normalizePowerId(type) {
   const raw = type.replace("USE_", "").toLowerCase();
   return raw.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
 
 
-function startForceTimer(roomId, room, state, io, context) {
-  const durationMs = 30000;
-  const deadline = Date.now() + durationMs;
-    state.powers.forceTimerActive = true;
-  state.powers.forceTimerDeadline = deadline;
-  state.powers.forceTimerArmed = false;
-  io.to(roomId).emit("forceTimerStarted", {
-  deadline,
-  durationMs
-});
-
-  if (FORCE_TIMER_INTERVALS[roomId]) {
-    clearInterval(FORCE_TIMER_INTERVALS[roomId]);
-  }
-
-  FORCE_TIMER_INTERVALS[roomId] = setInterval(() => {
-    const remaining = deadline - Date.now();
-    io.to(roomId).emit("forceTimerTick", { remaining });
-    if (remaining <= 0) {
-      clearInterval(FORCE_TIMER_INTERVALS[roomId]);
-      delete FORCE_TIMER_INTERVALS[roomId];
-    state.powerUsedThisTurn = false;
-      applyAction(
-        room,
-        state,
-        { type: "SET_SECRET_SAME", playerId: room[state.setter] },
-        state.setter,
-        roomId,
-        context
-      );
-      io.to(roomId).emit("forceTimerExpired");
-    }
-  }, 250);
-}
-
-
-function clearForceTimer(roomId, state) {
-  if (FORCE_TIMER_INTERVALS[roomId]) {
-    clearInterval(FORCE_TIMER_INTERVALS[roomId]);
-    delete FORCE_TIMER_INTERVALS[roomId];
-  }
-  delete state.powers.forceTimerActive;
-  delete state.powers.forceTimerDeadline;
-  delete state.powers.forceTimerArmed;
-}
 const ROUND_SCOPED_ACTIVE_POWERS = new Set([
   "freezeActive", "stealthGuessActive", "confuseColorsActive","magicModeActive",  "countOnlyActive", "nonsenseActive", "rouletteSecretActive"
 ]);
@@ -231,7 +117,5 @@ function clearActivePowers(state) {
 
 module.exports = {
   handleNormalPhase,
-  pushWinEntry,
-  startGameTimer,
-  clearForceTimer
+  startGameTimer
 };
