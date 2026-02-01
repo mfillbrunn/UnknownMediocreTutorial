@@ -31,4 +31,4 @@ function applyAction(room, state, action, role, roomId, context) {
 }
 
 
-module.exports = applyAction;
+module.exports = {applyAction};
