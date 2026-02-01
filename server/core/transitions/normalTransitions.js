@@ -3,6 +3,8 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
 
+
+const FORCE_TIMER_INTERVALS = {};
 function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io}) {
   const assassin = state.powers.assassinWord;
   // Assassin hit → game over
@@ -25,6 +27,9 @@ function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io}) 
   state.pendingGuess = guess;
   io.to(roomId).emit("guessSubmitted");
   clearRoundState(state, "guesser");  
+  if (state.powers.forceTimerArmed) {
+      startForceTimer(roomId, room, state, io, context);
+  } 
   context.powerEngine.turnStart(state, state.turn, roomId, io);
   emitStateForAllPlayers(roomId, room, io);
   return "continue";
@@ -41,6 +46,7 @@ function transitionAfterSecret({  room,  state,  secret,  roomId,  context,  io}
     return "gameOver";
   }
   io.to(roomId).emit("secretPlanted");
+  clearForceTimer(roomId, state);
   finalizeFeedback(state, context.powerEngine, roomId, io);
   clearRoundState(state, "setter");
   context.powerEngine.turnStart(state, state.turn, roomId, io);
@@ -95,6 +101,59 @@ function clearRoundState(state, role) {
   state.powerUsedThisTurn = false;
 }
 
+function startForceTimer(roomId, room, state, io, context) {
+  const durationMs = 30000;
+  const deadline = Date.now() + durationMs;
+    state.powers.forceTimerActive = true;
+  state.powers.forceTimerDeadline = deadline;
+  state.powers.forceTimerArmed = false;
+  io.to(roomId).emit("forceTimerStarted", {
+  deadline,
+  durationMs
+});
+
+  if (FORCE_TIMER_INTERVALS[roomId]) {
+    clearInterval(FORCE_TIMER_INTERVALS[roomId]);
+  }
+
+  FORCE_TIMER_INTERVALS[roomId] = setInterval(() => {
+    const remaining = deadline - Date.now();
+    io.to(roomId).emit("forceTimerTick", { remaining });
+    if (remaining <= 0) {
+      clearInterval(FORCE_TIMER_INTERVALS[roomId]);
+      delete FORCE_TIMER_INTERVALS[roomId];
+    state.powerUsedThisTurn = false;
+      applyAction(
+        room,
+        state,
+        { type: "SET_SECRET_SAME", playerId: room[state.setter] },
+        state.setter,
+        roomId,
+        context
+      );
+      io.to(roomId).emit("forceTimerExpired");
+    }
+  }, 250);
+}
+function pushWinEntry(state, word) {
+  state.history.push({
+    guess: word,
+    fb: ["🟩","🟩","🟩","🟩","🟩"],
+    fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
+    extraInfo: null,
+    finalSecret: word
+  });  
+}
+
+function clearForceTimer(roomId, state) {
+  if (FORCE_TIMER_INTERVALS[roomId]) {
+    clearInterval(FORCE_TIMER_INTERVALS[roomId]);
+    delete FORCE_TIMER_INTERVALS[roomId];
+  }
+  delete state.powers.forceTimerActive;
+  delete state.powers.forceTimerDeadline;
+  delete state.powers.forceTimerArmed;
+}
 module.exports = {
   transitionAfterGuess,
   transitionAfterSecret
