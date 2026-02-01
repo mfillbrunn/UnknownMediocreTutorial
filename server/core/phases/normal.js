@@ -29,7 +29,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       guess: g,
       roomId,
       context,
-      io, context.applyAction
+      io
     });
     return;
   }
