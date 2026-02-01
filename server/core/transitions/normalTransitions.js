@@ -3,16 +3,8 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
 
-function transitionAfterGuess({
-  room,
-  state,
-  guess,
-  roomId,
-  context,
-  io
-}) {
+function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io}) {
   const assassin = state.powers.assassinWord;
-
   // Assassin hit → game over
   if (assassin && guess === assassin.toUpperCase()) {
     state.powers.assassinWordassassinated = true;
@@ -21,7 +13,6 @@ function transitionAfterGuess({
     endGame(state, roomId, io, room, context);
     return "gameOver";
   }
-
   // Correct guess → game over
   if (guess === state.secret) {
     state.currentSecret = state.secret;
@@ -30,56 +21,30 @@ function transitionAfterGuess({
     endGame(state, roomId, io, room, context);
     return "gameOver";
   }
-
   // Otherwise → setter’s turn
   state.pendingGuess = guess;
   io.to(roomId).emit("guessSubmitted");
-
-  clearRoundState(state);
-
-  state.activeTimer = state.setter;
-  advanceTimer(state, state.guesser);
-  state.turn = state.setter;
-  state.powerUsedThisTurn = false;
-
+  clearRoundState(state, "guesser");  
   context.powerEngine.turnStart(state, state.turn, roomId, io);
   emitStateForAllPlayers(roomId, room, io);
-
   return "continue";
 }
 
-function transitionAfterSecret({
-  room,
-  state,
-  secret,
-  roomId,
-  context,
-  io
-}) {
+function transitionAfterSecret({  room,  state,  secret,  roomId,  context,  io}) {
   state.secret = secret;
   state.currentSecret = secret;
   state.firstSecretSet = true;
-
   if (state.pendingGuess === secret) {
     pushWinEntry(state, secret);
     io.to(roomId).emit("secretFound");
     endGame(state, roomId, io, room, context);
     return "gameOver";
   }
-
   io.to(roomId).emit("secretPlanted");
-
   finalizeFeedback(state, context.powerEngine, roomId, io);
-  clearRoundState(state);
-
-  state.activeTimer = state.guesser;
-  advanceTimer(state, state.setter);
-  state.turn = state.guesser;
-  state.powerUsedThisTurn = false;
-
+  clearRoundState(state, "setter");
   context.powerEngine.turnStart(state, state.turn, roomId, io);
   emitStateForAllPlayers(roomId, room, io);
-
   return "continue";
 }
 
@@ -92,10 +57,42 @@ function advanceTimer(state, player) {
     resetRoundTimer(state);
   }
 }
+const ROUND_SCOPED_ACTIVE_POWERS = new Set([
+  "freezeActive", "stealthGuessActive", "confuseColorsActive","magicModeActive",  "countOnlyActive", "nonsenseActive", "rouletteSecretActive"
+]);
+function clearActivePowers(state) {
+  if (!state?.powers || !Array.isArray(state.activePowers)) return;
+  for (const power of state.activePowers) {
+    const key = `${power}Active`;
+    if (!(key in state.powers)) continue;
+    if (ROUND_SCOPED_ACTIVE_POWERS.has(key)) continue;
+    const val = state.powers[key];
+    if (!val) continue;
+    state.powers[key] = typeof val === "boolean" ? false : null;
+  }
+}
 
-function clearRoundState(state) {
+function clearRoundState(state, role) {
   clearActivePowers(state);
+  if (role==="setter"){
+    if (state.powers && state.powers.stealthGuessActive) {state.powers.stealthGuessActive = false;}
+      if (state.powers && state.powers.magicModeActive) {state.powers.magicModeActive = false;}
+      if (state.powers && state.powers.rouletteSecretActive) {state.powers.rouletteSecretActive = false;}  
+      state.activeTimer = state.guesser;
+      advanceTimer(state, state.setter);
+      state.turn = state.guesser;
+  }
+  if (role==="guesser"){
+    if (state.powers && state.powers.confuseColorsActive) {state.powers.confuseColorsActive = false;}
+    if (state.powers && state.powers.countOnlyActive) {state.powers.countOnlyActive = false;}
+    if (state.powers && state.powers.forceGuessOptions)  {state.powers.forceGuessOptions = null;}
+    if (state.powers && state.powers.nonsenseActive)  {state.powers.nonsenseActive = false;}
+    state.activeTimer = state.setter;
+    advanceTimer(state, state.guesser);
+    state.turn = state.setter;
+  }
   state.powers.forceGuess = null;
+  state.powerUsedThisTurn = false;
 }
 
 module.exports = {
