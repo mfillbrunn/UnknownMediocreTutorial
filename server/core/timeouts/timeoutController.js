@@ -3,6 +3,7 @@
 const { endGame } = require("../phases/gameOver");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
+const {transitionAfterGuess, transitionAfterSecret} = require("../transitions/normalTransitions");
 const {maybeRunAI} = require("../ai/runAI");
 
 /**
@@ -109,17 +110,9 @@ function handleNormalTimeout({
   const last = state.history.at(-1);
   if (!last) return { continue: false };
       if (timedOutRole === state.guesser) {
-      applyAction(     room,    state,    {  type: "SUBMIT_GUESS",     guess: last.guess,      timedOut: true       },
-        timedOutRole,
-        roomId,
-        context
-      );
+    transitionAfterGuess({room,state, guess: last.guess, roomId, context, io });
     } else {
-      applyAction(    room,    state,    {     type: "SET_SECRET_SAME",     timedOut: true    },
-        timedOutRole,
-        roomId,
-        context
-      );
+      transitionAfterSecret({room,state,secret: state.secret,roomId,context,io});
     }
   setTimeout(() => {try {maybeRunAI(room, roomId, context);} catch (err) {console.error("maybeRunAI crashed:", err);}}, 1000);
   return { continue: true };
