@@ -4,7 +4,6 @@ const { endGame } = require("./gameOver");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
 const {transitionAfterGuess, transitionAfterSecret} = require("../transitions/normalTransitions");
-const {applyAction} = require("../stateMachine");
 
 function handleNormalPhase(room, state, action, role, roomId, context) {
   const io = context.io;
@@ -30,7 +29,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
       guess: g,
       roomId,
       context,
-      io, applyAction
+      io, context.applyAction
     });
     return;
   }
