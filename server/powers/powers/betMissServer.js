@@ -4,7 +4,7 @@ const {scoreGuess } = require("../../game-engine/scoring");
 engine.registerPower("betMiss", {
   apply(state, action, roomId, io) {
     console.log("applied");
-    if (state.powers.betMissUsed) return;
+    if (state.powers.betMissUsed) return false;
     console.log("postapplied");
     state.powers.betMissActive = true;
     state.powers.betMissUsed = true;
@@ -13,6 +13,13 @@ engine.registerPower("betMiss", {
     io.to(roomId).emit("powerUsed", { type: "betMiss" });
   },
   postScore(state, entry, roomId, io) {
+    if (!io) {
+        console.error(
+          "[powerEngine] postScore WITHOUT io\n",
+          new Error().stack
+        );
+        return;
+      }
     console.log("[betMiss] postScore entered:", {
       roomId,
       turn: state.turn,
