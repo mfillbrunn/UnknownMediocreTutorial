@@ -3,15 +3,18 @@ const {scoreGuess } = require("../../game-engine/scoring");
 
 engine.registerPower("betMiss", {
   apply(state, action, roomId, io) {
+    console.log("applied");
     if (state.powers.betMissUsed) return;
     state.powers.betMissActive = true;
     state.powers.betMissUsed = true;
     io.to(roomId).emit("powerUsed", { type: "betMiss" });
   },
   postScore(state, entry, roomId) {
-  if (!state.powers?.betMissActive || state.turn !== state.setter) {
+  console.log("postscored before");
+    if (!state.powers?.betMissActive || state.turn !== state.setter) {
     return;
   }
+     console.log("postscored");
   const betMissNumber = state.powers.betMissNumber;
   if (typeof betMissNumber !== "number" ||betMissNumber < 0 ||betMissNumber > 5) return;
   let misses = 0;
