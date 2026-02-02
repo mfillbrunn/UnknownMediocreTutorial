@@ -112,7 +112,7 @@ function createInitialState() {
     guesser: "B",
     playerNames: {},
     ready: {},
-    powerCount: 2,       // NEW: number chosen in lobby
+    powerCount: 10,       // NEW: number chosen in lobby
     activePowers: [],  // NEW: each player’s random secrets
   // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
     mode: null,          // instance of mode controller
