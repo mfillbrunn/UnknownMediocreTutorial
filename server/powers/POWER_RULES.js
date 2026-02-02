@@ -13,6 +13,14 @@ const POWER_RULES = {
     }
   },
 
+  betMiss: {
+    allowed(state) {
+      return (
+        state.turn === state.guesser &&
+        !state.powers.betMissUsed
+      );
+    }
+  },
   fakeFeedback: {
     allowed(state) {
       return (
