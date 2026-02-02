@@ -92,27 +92,6 @@ function normalizePowerId(type) {
   return raw.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
 
-
-const ROUND_SCOPED_ACTIVE_POWERS = new Set([
-  "freezeActive", "stealthGuessActive", "confuseColorsActive","magicModeActive",  "countOnlyActive", "nonsenseActive", "rouletteSecretActive", "betMissActive"
-]);
-
-function clearActivePowers(state) {
-  if (!state?.powers || !Array.isArray(state.activePowers)) return;
-  for (const power of state.activePowers) {
-    const key = `${power}Active`;
-    if (!(key in state.powers)) continue;
-    if (ROUND_SCOPED_ACTIVE_POWERS.has(key)) continue;
-
-    const val = state.powers[key];
-    if (!val) continue;
-
-    state.powers[key] = typeof val === "boolean" ? false : null;
-  }
-}
-
-
-
 module.exports = {
   handleNormalPhase,
   startGameTimer
