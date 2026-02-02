@@ -75,7 +75,6 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     endGame(state, roomId, io, room,context);
     return;
   }
-  powerEngine.postScore(state, entry, roomId, io);
   state.history.push(entry);
   // ---------------------------------------------
   // TRANSITION TO NORMAL PHASE WITH GUESSER TURN
@@ -88,7 +87,6 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     }
   state.activeTimer = state.guesser; 
   state.roundStartTime = Date.now();
-  powerEngine.turnStart(state, state.guesser, roomId, io);
   emitStateForAllPlayers(roomId, room, io); 
 }
 module.exports = handleSimultaneousPhase;
