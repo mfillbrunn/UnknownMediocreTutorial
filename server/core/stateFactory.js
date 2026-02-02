@@ -81,6 +81,10 @@ const powers = {
       nonsenseActive: false,
       nonsenseLastTurn: false,
       nonsenseUsed: false,
+      //reveal Penalty
+      revealPenaltyUsed: false,      // boolean (once per match)
+      revealPenaltyActive: false,    // boolean (this round)
+      revealPenaltyLetter: null,    // string (e.g. "A")
       // ASSASSIN WORD
       assassinWordUsed: false,
       assassinWord: null,

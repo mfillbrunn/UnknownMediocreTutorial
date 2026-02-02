@@ -14,6 +14,14 @@ function endGame(state, roomId, io, room, context) {
    } 
    state.matchRounds = state.matchRounds || []; 
    if (state.powers.assassinWordassassinated) {state.guessCount = state.guessCount + state.powers.assassinPoints;} 
+   if (state.powers.revealPenaltyUsed) {
+      const n = state.secret.split("").filter(c => c === state.powers.revealPenaltyLetter).length;
+      let penalty = 0;
+      if (n === 1) penalty = 2;
+      else if (n === 2) penalty = 4;
+      else if (n >= 3) penalty = 6;
+      state.guessCount += penalty;
+   }
    state.matchRounds.push({setter: state.setter, guesser: state.guesser, guessCount: state.guessCount,
        time: { A: state.timeUsed.A, B: state.timeUsed.B,}, timeoutLoser: state.timeoutLoser || null,
     history: state.history.map(x => ({ ...x })),

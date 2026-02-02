@@ -21,6 +21,14 @@ const POWER_RULES = {
       );
     }
   },
+    revealPenalty: {
+    allowed(state) {
+      return (
+        state.turn === state.setter &&
+        !state.powers.revealPenaltyUsed
+      );
+    }
+  },
   fakeFeedback: {
     allowed(state) {
       return (

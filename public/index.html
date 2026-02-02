@@ -377,7 +377,24 @@
                     <button id="assassinCancelBtn" class="secondary-btn small">Cancel</button>
                  </div>
               </div>
-           </div>           
+           </div>            
+          <div id="revealPenaltyModal" class="modal">
+            <div class="modal-content">
+              <h3>Reveal a Letter</h3>
+              <p>Choose a letter that is not yet known.</p>
+              <div class="letter-grid">
+                <!-- A–Z buttons generated in JS -->
+              </div>
+              <div class="decision-row">
+                <button id="revealPenaltyConfirm" class="primary-btn small" disabled>
+                  Confirm
+                </button>
+                <button id="revealPenaltyCancel" class="secondary-btn small">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         </section>
       </section>
       <!-- ========== GUESSER ========== -->
@@ -535,6 +552,7 @@
   <script src="powerEngine/powers/revealLetter.js"></script>
   <script src="powerEngine/powers/assassinWord.js"></script>
   <script src="powerEngine/powers/betMiss.js"></script>
+  <script src="powerEngine/powers/revealPenalty.js"></script>
   <script src="client/summary.js"></script>
   <script src="client.js"></script>
   <script src="client/roomid.js"></script>

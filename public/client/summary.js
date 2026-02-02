@@ -369,6 +369,21 @@ html += `
       </p>
     `;
   }
+    if (state.powers.revealPenaltyUsed) {
+      const letter = state.powers.revealPenaltyLetter;
+      const count = state.powers.revealPenaltyCount;
+
+      const penalty =
+        count === 1 ? 2 :
+        count === 2 ? 3 : 4;
+
+      html += `
+        <p class="reveal-penalty-summary">
+          ⚠️ The Spy revealed the letter <b>${letter}</b>
+          (${count}× in secret), adding <b>+${penalty}</b> guesses.
+        </p>
+      `;
+    }
 
   html += `<p><b>Total guesses:</b> ${state.guessCount}</p>`;
 
@@ -471,6 +486,21 @@ function renderStoredRoundSummary(round, index) {
           <th>Secrets</th>
         </tr>
   `;
+  if (round.powers?.revealPenaltyUsed) {
+    const letter = round.powers.revealPenaltyLetter;
+    const count = round.powers.revealPenaltyCount;
+
+    const penalty =
+      count === 1 ? 2 :
+      count === 2 ? 3 : 4;
+
+    html += `
+      <p class="round-note round-note--setter">
+        ⚠️ The Spy revealed the letter <b>${letter}</b>
+        (${count}× in secret), adding <b>+${penalty}</b> guesses.
+      </p>
+    `;
+  }
 
   round.history.forEach((h, i) => {
     const remaining = computeRemainingFromRound(round, i);

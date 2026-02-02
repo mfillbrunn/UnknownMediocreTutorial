@@ -704,6 +704,12 @@
 .summary-powers-setter {
   color: #ff4b5c;
 }
+.reveal-penalty-summary,
+.round-note--setter {
+  margin: 6px 0 10px;
+  font-size: 0.95em;
+  color: #92400E; /* amber-brown */
+}
 .match-meta {
   font-size: var(--fs-12);
   opacity: 0.85;

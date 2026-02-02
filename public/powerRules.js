@@ -15,6 +15,16 @@ betMiss: {
       );
     }
   },
+  revealPenalty: {
+    once: false,
+    allowed(state, role) {
+      return (
+        state.phase === "normal" &&
+        role === state.setter &&
+        !state.powerUsedThisTurn
+      );
+    }
+  },
   hideTile: {
     once: false,
     allowed(state, role) {

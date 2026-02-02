@@ -163,7 +163,13 @@ window.POWER_METADATA = {
     emoji: "🌫️",
     color: "#374151"
   },
-
+  revealPenalty: {
+    label: "Marked Weakness",
+    desc: "Reveal an unknown letter. For every time it appears in the final secret, the spy will score two extra points.",
+    icon: "warning",
+    emoji: "⚠️",
+    color: "#B45309"
+  },
   assassinWord: {
     label: "Set Kill Phrase",
     desc: "Choose a word that instantly ends the game if guessed. The earlier it’s planted, the greater the reward—but it can’t be too similar to your secret.",
