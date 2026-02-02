@@ -2,7 +2,7 @@ const engine = require("../powerEngineServer");
 const {scoreGuess } = require("../../game-engine/scoring");
 
 engine.registerPower("betMiss", {
-  apply(state, action, action, roomId, io) {
+  apply(state, action, roomId, io) {
     console.log("applied");
     if (state.powers.betMissUsed) return;
     console.log("postapplied");
