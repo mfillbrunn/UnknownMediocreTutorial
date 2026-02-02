@@ -11,9 +11,9 @@ engine.registerPower("betMiss", {
   },
   postScore(state, entry, roomId) {
   console.log("postscored before");
-    console.log("!state.powers?.betMissActive": state.powers.betMissActive);
-    console.log("state.turn !== state.setter": state.turn );
-    console.log("state.turn !== state.setter": state.setter );
+    console.log( state.powers.betMissActive);
+    console.log(state.turn );
+    console.log(state.setter );
     if (!state.powers?.betMissActive || state.turn !== state.setter) {
     return;
   }
