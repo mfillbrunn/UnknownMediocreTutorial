@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // --------------------------------------------------
 
 InfoBadgeEngine.register((state, role) => {
-  if (!state.powers?.betMissUsed) {return null;}
+  if (!state.powers?.betMissActive) {return null;}
   const meta = POWER_METADATA.betMiss;
   
   // Bet number exists?
