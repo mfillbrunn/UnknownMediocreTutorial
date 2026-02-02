@@ -9,7 +9,7 @@ engine.registerPower("betMiss", {
     io.to(roomId).emit("powerUsed", { type: "betMiss" });
   },
   postScore(state, entry, roomId) {
-  if (!state.powers?.betMissNumber || state.turn !== state.setter) {
+  if (!state.powers?.betMissActive || state.turn !== state.setter) {
     return;
   }
   const betMissNumber = state.powers.betMissNumber;
@@ -50,5 +50,6 @@ engine.registerPower("betMiss", {
       io.to(roomId).emit("toast", `Incorrect bet!`);
   }
   state.powers.betMissNumber = null;
+  state.powers.betMissActive= false;
 }
 });
