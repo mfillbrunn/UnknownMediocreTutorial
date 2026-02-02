@@ -32,7 +32,7 @@ function finalizeFeedback(state, powerEngine, roomId, room, io) {
     fb,
     fbGuesser: [...fb],
     extraInfo: null,
-    finalSecret: state.currentSecret,
+    finalSecret: state.secret,
     roundIndex: state.history.length,
     powersGuesser,
     powersSetter,
