@@ -36,8 +36,6 @@ function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io}) 
 
 function transitionAfterSecret({  room,  state,  secret,  roomId,  context,  io}) {
   state.secret = secret;
-  state.currentSecret = secret;
-  state.firstSecretSet = true;
   if (state.pendingGuess === secret) {
     pushWinEntry(state, secret);
     io.to(roomId).emit("secretFound");
