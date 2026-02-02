@@ -27,7 +27,7 @@ engine.registerPower("betMiss", {
         if (past.fb[i] === "🟩") greenPositions.add(i);
       }
     }
-    for (const c of state.extraConstraints) {
+    for (const c of state.extraConstraints ?? []) {
       if (c.type === "GREEN") {
         greenPositions.add(c.index);
       }
