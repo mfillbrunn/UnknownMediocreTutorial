@@ -604,3 +604,9 @@ body.power-assassinWord #power-fx {
     );
   animation: fx-vignette 1000ms ease-out;
 }
+
+.bet-btn.selected {
+  background: #222;
+  color: #fff;
+  border-color: #222;
+}
