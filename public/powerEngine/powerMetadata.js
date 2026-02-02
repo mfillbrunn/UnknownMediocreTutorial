@@ -6,7 +6,13 @@ window.POWER_METADATA = {
     emoji: "📡",
     color: "#3B82F6"
   },
-
+  betMiss: {
+    label: "Risky Maneuver",
+    desc: "The Inspector makes a bet on how many misses the next guess will have; if correct, they get rewarded with a green letter.",
+    icon: "casino",
+    emoji: "🎯",
+    color: "#F59E0B"
+  },
   fakeFeedback: {
     label: "Falsify Intel",
     desc: "The Inspector will see two feedbacks—one real, one fabricated.",
