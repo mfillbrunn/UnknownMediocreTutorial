@@ -72,7 +72,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     sendGameAction({
       type: "USE_BET_MISS",
-      betMissNumber: Number(value)
+      betMissNumber: Number(value),
+      role: "guesser"
     });
 
     $("betMissModal").classList.remove("active");
