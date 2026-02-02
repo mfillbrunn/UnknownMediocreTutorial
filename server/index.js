@@ -95,6 +95,7 @@ require("./powers/powers/vowelRefreshServer.js");
 require("./powers/powers/nonsenseServer.js");
 require("./powers/powers/revealLetterServer.js");
 require("./powers/powers/assassinWordServer.js");
+require("./powers/powers/betMissServer.js");
 // Register socket event handlers (create/join room, game actions)
 registerSocketHandlers(io, context);
 
