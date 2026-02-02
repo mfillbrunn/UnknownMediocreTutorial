@@ -43,7 +43,7 @@ function transitionAfterSecret({  room,  state,  secret,  roomId,  context,  io}
   }
   io.to(roomId).emit("secretPlanted");
   clearForceTimer(roomId, state);
-  finalizeFeedback(state, context.powerEngine, roomId, io);
+  finalizeFeedback(state, context.powerEngine, roomId,room, io);
   clearRoundState(state, "setter");
   context.powerEngine.turnStart(state, state.turn, roomId, io);
   emitStateForAllPlayers(roomId, room, io);
