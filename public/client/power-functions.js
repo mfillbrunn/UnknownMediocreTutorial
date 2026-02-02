@@ -159,5 +159,7 @@ socket.on("assassinUsed", () => {
   updateUI();
 });
 
-
+socket.on("betMissUsed", () => {
+  updateUI();
+});
 
