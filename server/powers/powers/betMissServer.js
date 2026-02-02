@@ -61,7 +61,7 @@ engine.registerPower("betMiss", {
       state.extraConstraints.push({type: "GREEN",index,letter});
     }
     
-  io.to(roomId).emit("betMiss", {betMissNumber });
+  io.to(roomId).emit("betMiss", state.powers.betMissNumber );
     io.to(roomId).emit("toast", `Revealed letter ${letter} in position ${index + 1}!`);
   io.to(roomId).emit("toast", `Bet was ${betMissNumber}!`);
   } else{
