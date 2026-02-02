@@ -70,9 +70,16 @@ PowerEngine.register("revealPenalty", {
     $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
-      renderRevealPenaltyLetters(window.uiState);
+      const state = window.uiState;
+      if (!state) {
+        console.warn("[revealPenalty] Cannot open modal: state not ready");
+        return;
+      }
+    
+      renderRevealPenaltyLetters(state);
       $("revealPenaltyModal").classList.add("active");
     };
+
   },
 
   effects: {
