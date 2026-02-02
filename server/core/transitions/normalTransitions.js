@@ -63,7 +63,8 @@ function advanceTimer(state, player) {
   }
 }
 const ROUND_SCOPED_ACTIVE_POWERS = new Set([
-  "freezeActive", "stealthGuessActive", "confuseColorsActive","magicModeActive",  "countOnlyActive", "nonsenseActive", "rouletteSecretActive"
+  "freezeActive", "stealthGuessActive", "confuseColorsActive","magicModeActive",  "countOnlyActive", "nonsenseActive", "rouletteSecretActive", "betMissActive"
+  
 ]);
 function clearActivePowers(state) {
   if (!state?.powers || !Array.isArray(state.activePowers)) return;
