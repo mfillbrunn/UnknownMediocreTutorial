@@ -5,7 +5,16 @@ window.POWER_RULES = {
   // ======================
   // SETTER POWERS
   // ======================
-
+betMiss: {
+    once: false,
+    allowed(state, role) {
+      return (
+        state.phase === "normal" &&
+        role === state.guesser &&
+        !state.powerUsedThisTurn
+      );
+    }
+  },
   hideTile: {
     once: false,
     allowed(state, role) {
