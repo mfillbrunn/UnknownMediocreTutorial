@@ -430,6 +430,32 @@
           <div id="GuesserInfoBadge" class="info badge"></div>
           <div id="keyboardGuesser" class="keyboard"></div>
        </main>
+        <!--- betting model ---> 
+                  <div id="betMissModal" class="modal">
+              <div class="modal-content">
+                 <h3>Bet Power</h3>
+                 <p class="modal-instruction">
+                    Bet how many grey letters your next guess will have.
+                 </p>
+              <div class="bet-options">
+                    <button class="bet-btn" data-value="0">0</button>
+                    <button class="bet-btn" data-value="1">1</button>
+                    <button class="bet-btn" data-value="2">2</button>
+                    <button class="bet-btn" data-value="3">3</button>
+                    <button class="bet-btn" data-value="4">4</button>
+                    <button class="bet-btn" data-value="5">5</button>
+                  </div>
+                 <input type="hidden" id="betMissInput" />
+            <div class="decision-row">
+              <button id="betMissSubmitBtn" class="primary-btn small" disabled>
+                Confirm
+              </button>
+              <button id="betMissCancelBtn" class="secondary-btn small">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
     </section>
 <!-- AI Difficulty Modal -->
 <div id="aiDifficultyModal" class="modal">
@@ -508,6 +534,7 @@
   <script src="powerEngine/powers/vowelRefresh.js"></script>
   <script src="powerEngine/powers/revealLetter.js"></script>
   <script src="powerEngine/powers/assassinWord.js"></script>
+  <script src="powerEngine/powers/betMiss.js"></script>
   <script src="client/summary.js"></script>
   <script src="client.js"></script>
   <script src="client/roomid.js"></script>
