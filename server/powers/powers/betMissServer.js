@@ -33,7 +33,7 @@ engine.registerPower("betMiss", {
       }
     }
     const options = [0,1,2,3,4].filter(i => !greenPositions.has(i));
-    if (!options.length) return false;
+    if (!options.length) return ;
     const index = options[Math.floor(Math.random() * options.length)];
     const letter = state.secret[index].toUpperCase();
     // Ensure constraints container exists
