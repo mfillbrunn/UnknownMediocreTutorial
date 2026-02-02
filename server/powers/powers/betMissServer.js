@@ -5,8 +5,10 @@ engine.registerPower("betMiss", {
   apply(state, action, roomId, io) {
     console.log("applied");
     if (state.powers.betMissUsed) return;
+    console.log("postapplied");
     state.powers.betMissActive = true;
     state.powers.betMissUsed = true;
+    console.log(state.powers.betMissActive);
     io.to(roomId).emit("powerUsed", { type: "betMiss" });
   },
   postScore(state, entry, roomId) {
