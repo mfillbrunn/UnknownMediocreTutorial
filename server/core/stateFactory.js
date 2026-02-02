@@ -15,10 +15,6 @@ const powers = {
       blindGuessUsed: false,
       blindGuessArmed: false,
       blindGuessActive: false,
-      //BET MISS
-      betMissActive: false,
-      betMissUsed: false,
-      betMissNumber: null,
       //Roulette
       rouletteSecretUsed: false,
       rouletteSecretActive: false,
