@@ -42,25 +42,53 @@ PowerEngine.register("betMiss", {
   }
 });
 document.addEventListener("DOMContentLoaded", () => {
-// Modal handlers (OWNED BY THIS POWER)
-$("betMissSubmitBtn").onclick = () => {
-  const roomId = $("betMissSubmitBtn").dataset.roomId;
-  const word = $("betMissInput").value.trim();
-  if (!word) return;
+  const buttons = document.querySelectorAll(".bet-btn");
+  const input = $("betMissInput");
+  const confirmBtn = $("betMissSubmitBtn");
 
-  sendGameAction({
-    type: "USE_BET_MISS",
-    word
+  // -----------------------------
+  // Number button selection (0–5)
+  // -----------------------------
+  buttons.forEach(btn => {
+    btn.onclick = () => {
+      // Clear previous selection
+      buttons.forEach(b => b.classList.remove("selected"));
+
+      // Select current
+      btn.classList.add("selected");
+      input.value = btn.dataset.value;
+
+      // Enable confirm
+      confirmBtn.disabled = false;
+    };
   });
 
-  $("betMissModal").classList.remove("active");
-};
+  // -----------------------------
+  // Confirm
+  // -----------------------------
+  confirmBtn.onclick = () => {
+    const value = input.value;
+    if (value === "") return;
 
-$("betMissCancelBtn").onclick = () => {
-  $("betMissModal").classList.remove("active");
-  $("betMissInput").value = "";
-};
+    sendGameAction({
+      type: "USE_BET_MISS",
+      betMissNumber: Number(value)
+    });
+
+    $("betMissModal").classList.remove("active");
+  };
+
+  // -----------------------------
+  // Cancel
+  // -----------------------------
+  $("betMissCancelBtn").onclick = () => {
+    $("betMissModal").classList.remove("active");
+    input.value = "";
+    confirmBtn.disabled = true;
+    buttons.forEach(b => b.classList.remove("selected"));
+  };
 });
+
 
 // --------------------------------------------------
 // Bet Miss — info badge 
