@@ -11,23 +11,31 @@ engine.registerPower("betMiss", {
     console.log(state.powers.betMissActive);
     io.to(roomId).emit("powerUsed", { type: "betMiss" });
   },
-  postScore(state, entry, roomId) {
-  console.log("postscored before");
-    console.log( state.powers.betMissActive);
-    console.log(state.turn );
-    console.log(state.setter );
+  postScore(state, entry, roomId, io) {
+    console.log("[betMiss] postScore entered:", {
+      roomId,
+      turn: state.turn,
+      setter: state.setter,
+      betMissActive: state.powers?.betMissActive,
+      betMissNumber: state.powers?.betMissNumber,
+      fb: entry?.fb
+    });
     if (!state.powers?.betMissActive || state.turn !== state.setter) {
-    return;
+    console.log("[betMiss] postScore exit: not active");
+      return;
   }
      console.log("postscored");
   const betMissNumber = state.powers.betMissNumber;
-  if (typeof betMissNumber !== "number" ||betMissNumber < 0 ||betMissNumber > 5) return;
+  if (typeof betMissNumber !== "number" ||betMissNumber < 0 ||betMissNumber > 5) 
+  {console.log("[betMiss] postScore exit: invalid betMissNumber", betMissNumber);return;}
   let misses = 0;
   const feedback = entry.fb;   
    for (let i = 0; i < 5; i++) {
         if (feedback[i] === "⬛") misses=misses+1;
       }    
+     console.log("[betMiss] computed misses:", { betMissNumber, misses, feedback });
   if (betMissNumber === misses){
+    console.log("[betMiss] BET SUCCESS");
     const greenPositions = new Set();
     for (const past of state.history) {
       if (!past?.fb) continue;
@@ -41,7 +49,8 @@ engine.registerPower("betMiss", {
       }
     }
     const options = [0,1,2,3,4].filter(i => !greenPositions.has(i));
-    if (!options.length) return ;
+    console.log("[betMiss] green reveal options:", options);
+    if (!options.length) {console.log("[betMiss] no options left to reveal"); return ;}
     const index = options[Math.floor(Math.random() * options.length)];
     const letter = state.secret[index].toUpperCase();
     // Ensure constraints container exists
