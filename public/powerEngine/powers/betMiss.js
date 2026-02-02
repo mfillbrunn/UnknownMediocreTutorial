@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (value === "") return;
 
     sendGameAction({
-      type: "USE_BET_MISS",
+      type: "SET_BET_MISS",
       betMissNumber: Number(value)
     });
 

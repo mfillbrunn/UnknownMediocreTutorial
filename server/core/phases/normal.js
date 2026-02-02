@@ -57,6 +57,16 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
     }
   
   /// POWERs
+
+  sendGameAction({
+      type: "SET_BET_MISS",
+      betMissNumber: Number(value)
+    });
+if (action.type === "SET_BET_MISS") {
+  state.powers.betMissNumber = action.betMissNumber;
+  emitStateForAllPlayers(roomId, room, io);
+  return;
+}
   if (action.type.startsWith("USE_")) {
     const powerId = normalizePowerId(action.type);
     if (!state.powerUsedThisTurn && isPowerAllowed(powerId, state)) {
