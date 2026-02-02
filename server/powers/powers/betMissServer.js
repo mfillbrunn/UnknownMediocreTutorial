@@ -63,7 +63,7 @@ engine.registerPower("betMiss", {
     
   io.to(roomId).emit("betMiss", state.powers.betMissNumber );
     io.to(roomId).emit("toast", `Revealed letter ${letter} in position ${index + 1}!`);
-  io.to(roomId).emit("toast", `Bet was ${betMissNumber}!`);
+  io.to(roomId).emit("toast", `Bet was ${state.powers.betMissNumber}!`);
   } else{
       io.to(roomId).emit("toast", `Incorrect bet!`);
   }
