@@ -108,7 +108,7 @@ InfoBadgeEngine.register((state, role) => {
     return {
       id: "betMiss-guesser",
       emoji: meta.emoji,
-      text: `${meta.label}: ${betMissNumber.toUpperCase()}`,
+      text: `${meta.label}: ${betMissNumber}`,
       color: meta.color,
       priority: 2,
       screen: "guesser",
