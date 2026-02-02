@@ -151,7 +151,6 @@ function createInitialState() {
          aiDifficulty: 1,
          aiSecretChangeCount: 0,
     secret: "",
-    currentSecret: "",
     pendingGuess: "",
     guessCount: 0,
     gameOver: false,

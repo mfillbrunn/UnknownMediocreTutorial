@@ -16,7 +16,6 @@ function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io}) 
   }
   // Correct guess → game over
   if (guess === state.secret) {
-    state.currentSecret = state.secret;
     pushWinEntry(state, guess);
     io.to(roomId).emit("secretFound");
     endGame(state, roomId, io, room, context);

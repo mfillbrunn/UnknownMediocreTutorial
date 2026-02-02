@@ -27,8 +27,6 @@ function handleSimultaneousPhase(room, state, action, role, roomId, context) {
     if (state.simultaneousSecretSubmitted) return;
     const w = action.secret.toUpperCase();
     state.secret = w;
-    state.currentSecret = w;
-    state.firstSecretSet = true;
     state.simultaneousSecretSubmitted = true;
     if (state.timeControl.mode === "chess") {addIncrement(state, state.setter);} 
     if (state.activeTimer === "both") {state.activeTimer = state.guesser;}

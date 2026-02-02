@@ -2,7 +2,6 @@ const {createInitialPowers} = require("../core/stateFactory");
 const {resetRoundTimer} = require("./Timer");
 function resetRoundState(room, state, roomId, context) {
   state.secret = "";
-  state.currentSecret = "";
   state.pendingGuess = "";
   state.gameOver = false;
   state.guessCount = 0;
