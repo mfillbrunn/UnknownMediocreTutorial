@@ -13,9 +13,9 @@ engine.registerPower("revealLetter", {
   // Collect known green positions
   const greenPositions = new Set();
   for (const entry of state.history) {
-    if (!entry?.fbGuesser) continue;
+    if (!entry?.fb) continue;
     for (let i = 0; i < 5; i++) {
-      if (entry.fbGuesser[i] === "🟩") greenPositions.add(i);
+      if (entry.fb[i] === "🟩") greenPositions.add(i);
     }
   }
   for (const c of state.extraConstraints) {
