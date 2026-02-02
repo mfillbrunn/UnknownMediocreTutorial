@@ -32,6 +32,7 @@ const SETTER_POWERS = [
         "magicMode",
         "revealLetter",
               "nonsense",
+              "betMiss",
       ];
 function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
