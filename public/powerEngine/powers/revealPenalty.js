@@ -14,16 +14,22 @@ PowerEngine.register("revealPenalty", {
     $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
-      $("revealPenaltyModal").classList.add("active");
-    };
+    renderLetters(window.uiState);
+    $("revealPenaltyModal").classList.add("active");
+  };
   },
 
-  effects: {
+   effects: {
     onPowerUsed() {
       const btn = this.buttonEl;
       if (!btn) return;
       btn.disabled = true;
       btn.classList.add("power-used");
+  
+      document.body.classList.add("power-revealPenalty");
+      setTimeout(() => {
+        document.body.classList.remove("power-revealPenalty");
+      }, 900);
     }
   }
 });
@@ -34,6 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderLetters(state) {
     grid.innerHTML = "";
+    selected = null;
+    confirm.disabled = true;
     const known = new Set();
 
     for (const past of state.history ?? []) {
