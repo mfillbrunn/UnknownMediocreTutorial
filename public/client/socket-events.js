@@ -279,14 +279,22 @@ function hideAIDifficultyModal() {
 $("addAiBtn")?.addEventListener("click", () => {
   showAIDifficultyModal();
 });
-$("devBtn")?.addEventListener("click", () => {
+const devBtn = document.querySelector("#dev");
+ devBtn?.addEventListener("click", () => {
   sendGameAction({
     type: "SET_DEV_MODE",
     dev_mode: !state.devMode,
     userId: window.currentUser.id
   });
 });
-
+function updateDevUI() {
+  if (!devBtn || !state || !window.currentUser) return;
+  const isDev = !!state.devMode;
+  const isHost = state.hostUserId === window.currentUser.id;
+  devBtn.classList.toggle("active", isDev);
+  devBtn.disabled = !isHost;
+  devBtn.textContent = isDev ? "Dev" : "Non-Dev";
+}
 const shuffleBtn = document.querySelector("#shuffle");
 shuffleBtn?.addEventListener("click", () => {
   sendGameAction({
