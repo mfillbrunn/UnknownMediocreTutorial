@@ -8,7 +8,24 @@ module.exports = {
       power: "hideTile"
     })
   },
-
+  betMiss: {
+    role: "guesser",
+    aiUsable: false,
+    isUsed: s => s.powers.betMissUsed,
+    buildAction: () => ({
+      type: "USE_POWER",
+      power: "betMiss"
+    })
+  },
+  revealPenalty: {
+    role: "setter",
+    aiUsable: false,
+    isUsed: s => s.powers.revealPenaltyUsed,
+    buildAction: () => ({
+      type: "USE_POWER",
+      power: "revealPenalty"
+    })
+  },
   blindGuess: {
     role: "guesser",
     aiUsable: true,
