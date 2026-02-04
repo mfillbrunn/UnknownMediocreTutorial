@@ -145,12 +145,9 @@ if (action.type === "ADD_AI") {
   return;
 }
 
-if (action.type === "SET_POWER_COUNT") {
-    let n = parseInt(action.count, 10);
-        console.log("SET_POWER_COUNT received:", n);
-    if (isNaN(n)) return;
-    n = Math.max(1, Math.min(10, n));
-    state.powerCount = n;
+if (action.type === "SET_DEV_MODE") {
+   state.devMode = !state.devMode;
+   state.powerCount = state.devMode ? 20 : 2;           
     emitStateForAllPlayers(roomId, room, io);
     return;
 }
