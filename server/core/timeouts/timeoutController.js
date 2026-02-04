@@ -105,6 +105,7 @@ function handleNormalTimeout({
   const last = state.history.at(-1);
   if (!last) return { continue: false };
       if (timedOutRole === state.guesser) {
+        if (state.powers && state.powers.forceGuessOptions)  {state.powers.forceGuessOptions = null;}
     transitionAfterGuess({room,state, guess: last.guess, roomId, context, io});
     } else {
       transitionAfterSecret({room,state,secret: state.secret,roomId,context,io});
