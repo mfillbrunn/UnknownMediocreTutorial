@@ -279,6 +279,14 @@ function hideAIDifficultyModal() {
 $("addAiBtn")?.addEventListener("click", () => {
   showAIDifficultyModal();
 });
+$("devBtn")?.addEventListener("click", () => {
+  sendGameAction({
+    type: "SET_DEV_MODE",
+    dev_mode: !state.devMode,
+    userId: window.currentUser.id
+  });
+});
+
 const shuffleBtn = document.querySelector("#shuffle");
 shuffleBtn?.addEventListener("click", () => {
   sendGameAction({
