@@ -87,12 +87,6 @@ textarea {
 
 #roomInfo:not(.hidden) { opacity: 1; }
 
-.laser-outline {
-  border: 1.5px solid var(--role-accent);
-  border-radius: var(--r-6);
-  animation: laserPing 0.5s ease-out;
-}
-
 
 :where(.theme-setter, .theme-guesser) {
   background: #0c0c0e;
