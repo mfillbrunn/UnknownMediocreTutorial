@@ -42,7 +42,6 @@
 }
 
 .play-area .power-btn {
-  font-size: var(--fs-13);
   min-height: var(--h-control-sm);
   padding: 0 var(--sp-12);
   border-radius: var(--r-8);
