@@ -279,7 +279,7 @@ function hideAIDifficultyModal() {
 $("addAiBtn")?.addEventListener("click", () => {
   showAIDifficultyModal();
 });
-const devBtn = document.querySelector("#dev");
+const devBtn = document.querySelector("#devBtn");
  devBtn?.addEventListener("click", () => {
   sendGameAction({
     type: "SET_DEV_MODE",
