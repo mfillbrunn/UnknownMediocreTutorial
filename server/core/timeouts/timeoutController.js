@@ -57,26 +57,12 @@ function handleSimultaneousTimeout({
     !state.matchRounds || state.matchRounds.length === 0;
 
   if (isFirstSimultaneous) {
-    // Match abandoned
-    state.phase = "lobby";
-    state.turn = null;
-    state.secret = null;
-    state.pendingGuess = null;
-    state.simultaneousSecretSubmitted = false;
-    state.simultaneousGuessSubmitted = false;
-    state.activeTimer = null;
-    state.isTimerRunning = false;
-    state.roundTimeouts = { A: 0, B: 0 };
-
-    emitLobbyEvent(io, roomId, {
-      type: "matchAbandoned",
-      reason: "timeout"
-    });
-
+    state.timeoutLoser = timedOutRole;
+    state.canNextRound = false;
+    endGame(state, roomId, io, room, context);
     emitStateForAllPlayers(roomId, room, io);
     return { continue: false };
   }
-
   // Otherwise: immediate loss
   state.timeoutLoser = timedOutRole;
   endGame(state, roomId, io, room, context);
