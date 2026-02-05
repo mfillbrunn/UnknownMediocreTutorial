@@ -246,18 +246,6 @@ function updateRankedUI() {
   badge.classList.toggle("readonly", !isHost);
 }
 
-
-function onRejoinUI() {
-  // Always leave startup/menu mode
-  document.body.classList.remove("menu-mode");
-
-  hide("startupScreen");
-  hide("menu");
-
-  // Show lobby or game based on state (stateUpdate will follow)
-  show("lobby");
-}
-
 $("leaderboardBtn")?.addEventListener("click", () => {
   showScreen("leaderboardScreen");
   loadLeaderboard("bullet");
