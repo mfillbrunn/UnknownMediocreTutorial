@@ -5,7 +5,6 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const CompetitiveMode = require("../modes/competitiveMode");
 const { stopTimer,resetRoundTimer } = require("../../utils/Timer");
 const { stopAllRoomIntervals } = require("../../utils/teardown");
-const {startGameTimer} = require("./normal");
 const { createInitialState,  createInitialPowers} = require("../stateFactory");
 
 const SETTER_POWERS = [
@@ -217,7 +216,7 @@ if (action.type === "SET_DEV_MODE") {
               resetRoundTimer(state);
               state.activeTimer = "both";
               state.roundStartTime = Date.now();
-              startGameTimer(room, state, roomId, context);
+              startTimerSafe(room, state, roomId, context);
             }        
              if (state.activePowers.includes("revealLetter")) {
                 state.powers.revealLetter.mode =Math.random() < 0.5 ? "RARE" : "ROW";
@@ -229,5 +228,8 @@ if (action.type === "SET_DEV_MODE") {
           return;
         }
 }
-
+function startTimerSafe(room, state, roomId, context) {
+  const { startGameTimer } = require("./normal");
+  return startGameTimer(room, state, roomId, context);
+}
 module.exports = handleLobbyPhase;
