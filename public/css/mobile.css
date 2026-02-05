@@ -1,4 +1,4 @@
-@media (max-width: 600px) { 
+
    .screen { padding: var(--sp-8);        
            }
    .panel {
@@ -125,7 +125,6 @@
   .role-name {
     font-size: 14px;
   }
-}
 
 /*----Extra small */
 
