@@ -92,6 +92,16 @@ window.onLobbyEvent = function (handler) {
 };
 
 
+function onRejoinUI() {
+  // Always leave startup/menu mode
+  document.body.classList.remove("menu-mode");
+
+  hide("startupScreen");
+  hide("menu");
+
+  // Show lobby or game based on state (stateUpdate will follow)
+  show("lobby");
+}
 function maybeAutoRejoin() {
   if (window.autoRejoinAttempted) return;
   if (!window.socketReady) return;
