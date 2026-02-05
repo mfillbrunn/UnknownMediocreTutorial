@@ -18,9 +18,21 @@ function handleTimeout({
   context
 }) {
   const io = context.io;
-
+console.log("[TIMEOUT] handleTimeout", {
+    roomId,
+    phase: state.phase,
+    timedOutRole,
+    turn: state.turn,
+    setter: state.setter,
+    guesser: state.guesser,
+    gameOver: state.gameOver,
+    historyLength: state.history?.length ?? 0,
+    pendingGuess: state.pendingGuess,
+    secret: state.secret ? "(set)" : "(unset)"
+  });
   switch (state.phase) {
     case "simultaneous":
+      console.log("[TIMEOUT] routing → simultaneous");
       return handleSimultaneousTimeout({
         room,
         state,
@@ -30,6 +42,7 @@ function handleTimeout({
       });
 
     case "normal":
+      console.log("[TIMEOUT] routing → simultaneous");
       return handleNormalTimeout({
         room,
         state,
@@ -40,6 +53,7 @@ function handleTimeout({
 
     default:
       // Lobby, gameOver, etc — ignore or no-op
+      console.log("[TIMEOUT] routing → normal");
       return { continue: false };
   }
 }
@@ -77,11 +91,27 @@ function handleNormalTimeout({
   context
 }) {
   const io = context.io;  
+  console.log("[TIMEOUT][NORMAL] entered", {
+    roomId,
+    timedOutRole,
+    turn: state.turn,
+    setter: state.setter,
+    guesser: state.guesser,
+    roundTimeouts: state.roundTimeouts,
+    forceGuessOptions: state.powers?.forceGuessOptions,
+    historyLength: state.history?.length ?? 0
+  });
   state.roundTimeouts ??= { A: 0, B: 0 };
   state.roundTimeouts[timedOutRole] =
     (state.roundTimeouts[timedOutRole] || 0) + 1;
-
+  console.log("[TIMEOUT][NORMAL] counter", {
+    role: timedOutRole,
+    count: state.roundTimeouts[timedOutRole]
+  });
   if (state.roundTimeouts[timedOutRole] >= 3) {
+    console.warn("[TIMEOUT][NORMAL] max timeouts reached → game over", {
+      loser: timedOutRole
+    });
     state.timeoutLoser = timedOutRole;
     endGame(state, roomId, io, room, context);
     return { continue: false };
@@ -89,14 +119,28 @@ function handleNormalTimeout({
 
   // Auto-play last move
   const last = state.history.at(-1);
-  if (!last) return { continue: false };
+  if (!last) {
+    console.warn("[TIMEOUT][NORMAL] no history → abort");
+    return { continue: false };
+  }
       if (timedOutRole === state.guesser) {
-        if (state.powers && state.powers.forceGuessOptions)  {state.powers.forceGuessOptions = null;}
+        console.log("[TIMEOUT][NORMAL] guesser timed out → auto-guess", {
+          guess: last.guess
+        });
+        if (state.powers && state.powers.forceGuessOptions !== null) {
+          console.log("[TIMEOUT][NORMAL] clearing forceGuessOptions");
+          state.powers.forceGuessOptions = null;
+        }
     transitionAfterGuess({room,state, guess: last.guess, roomId, context, io});
     } else {
+        console.log("[TIMEOUT][NORMAL] setter timed out → auto-secret", {
+          secret: state.secret ? "(reuse)" : "(missing)"
+          });
       transitionAfterSecret({room,state,secret: state.secret,roomId,context,io});
     }
-  setTimeout(() => {try {maybeRunAI(room, roomId, context);} catch (err) {console.error("maybeRunAI crashed:", err);}}, 1000);
+  setTimeout(() => {try {
+    console.log("[TIMEOUT][NORMAL] invoking maybeRunAI");
+    maybeRunAI(room, roomId, context);} catch (err) {console.error("maybeRunAI crashed:", err);}}, 1000);
   return { continue: true };
 }
 
