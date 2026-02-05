@@ -80,7 +80,7 @@ function startGameTimer(room, state, roomId, context) {
       endGame(state, roomId, io, room, context);
       return;
     }
-    const result = ({room,state,roomId,timedOutRole,context});
+    const result = handleTimeout({room,state,roomId,timedOutRole,context});
     if (result?.continue) {
       startGameTimer(room, state, roomId, context);
     }
