@@ -195,9 +195,9 @@
 }
 
 .key {
-  width: clamp(28px, 9vw, 44px);
-  height: clamp(36px, 11vw, 56px);
-  font-size: clamp(12px, 3.5vw, 18px);
+  width: clamp(28px, 9vw, 50px);
+  height: clamp(36px, 11vw, 60px);
+  font-size: clamp(12px, 3.5vw, 20px);
   padding: 0;
 
   display: flex;
