@@ -52,7 +52,14 @@ socket.on("joinRoom", ({ roomId, userId, name }, cb) => {
   }
     socket.emit("roleAssigned", { role: result.role });
     socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
-    cb?.({ ok: true, roomId, reattached: result.reattached });
+    cb?.({
+  ok: true,
+  roomId,
+  reattached: result.reattached,
+  role: result.role,
+  state: room.state,
+  // optional: minimal player info (don’t send sockets if you don’t want)
+});
     emitStateForAllPlayers(roomId, room, io);
 });
 
@@ -84,7 +91,15 @@ socket.on("quickJoin", ({ userId, name }, cb) => {
     type: result.reattached ? "playerRejoined" : "playerJoined",
     role: result.role
   });
-  cb?.({ ok: true, roomId, reattached: result.reattached });
+  cb?.({
+  ok: true,
+  roomId,
+  reattached: result.reattached,
+  role: result.role,
+  state: room.state,
+  // optional: minimal player info (don’t send sockets if you don’t want)
+});
+
   emitStateForAllPlayers(roomId, room, io);
 });
 
