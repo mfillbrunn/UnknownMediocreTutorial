@@ -1,6 +1,5 @@
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { startTimer} = require("../../utils/Timer");
-const { startGameTimer} = require("../../utils/Timer");
 const { endGame } = require("./gameOver");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
@@ -78,6 +77,5 @@ function normalizePowerId(type) {
 }
 
 module.exports = {
-  handleNormalPhase,
-  startGameTimer
+  handleNormalPhase
 };
