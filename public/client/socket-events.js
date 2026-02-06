@@ -73,12 +73,19 @@ socket.on("timerTick", ({ timeRemaining }) => {
 ///////////////////////////////////////////////
 
 socket.on("roleAssigned", ({ role }) => {
-  myRole = role;
+  window.myRole = role;
   roleAssigned = true;
+  persistLastGameInfo({
+    role,
+    opponentName: window.opponentName ?? null,
+    startedAt: Date.now()
+  });
     updateUI();
   updateRoleLabels();
 });
-
+function persistLastGameInfo(info) {
+  localStorage.setItem("lastGameInfo", JSON.stringify(info));
+}
 $("createRoomBtn")?.addEventListener("click", () => {
   if (!requireAuth("create a room")) return;
   const username =
