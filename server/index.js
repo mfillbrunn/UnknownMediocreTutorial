@@ -71,6 +71,10 @@ const context = {
   WORDS,
   applyAction
 };
+context.endGame = require("./core/phases/gameOver").endGame;
+context.transitionAfterGuess = require("./core/transitions/normalTransitions").transitionAfterGuess;
+context.transitionAfterSecret = require("./core/transitions/normalTransitions").transitionAfterSecret;
+context.maybeRunAI = require("./core/ai/runAI").maybeRunAI;
 // ------------------------------
 // Load power engine + all plugin powers
 // ------------------------------
