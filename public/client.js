@@ -18,12 +18,6 @@ window.lastTimeRemaining ??= { A: null, B: null };
 window.isRejoining = false;  
 window.pendingRejoin = null;
 
-localStorage.setItem("lastGameInfo", JSON.stringify({
-  role,
-  opponentName,
-  startedAt
-}));
-
 // -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
