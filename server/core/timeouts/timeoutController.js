@@ -144,4 +144,24 @@ function handleNormalTimeout({
   return { continue: true };
 }
 
-module.exports = { handleTimeout };
+function startGameTimer(room, state, roomId, context) {
+  if (!room || room.status !== "alive") return;
+  const io = context.io;
+  if (state.isTimerRunning) return;
+  state.isTimerRunning = true;
+  startTimer(roomId, state, io, timedOutRole => {
+    state.isTimerRunning = false;
+    if (state.timeControl.mode === "chess") {
+      state.timeoutLoser = timedOutRole;
+      endGame(state, roomId, io, room, context);
+      return;
+    }
+    const result = handleTimeout({room,state,roomId,timedOutRole,context});
+    if (result?.continue) {
+      startGameTimer(room, state, roomId, context);
+    }
+  });
+}
+
+module.exports = {
+  startGameTimer, handleTimeout };
