@@ -91,17 +91,36 @@ window.onLobbyEvent = function (handler) {
   socket.on("lobbyEvent", handler);
 };
 
-
-function onRejoinUI() {
-  // Always leave startup/menu mode
-  document.body.classList.remove("menu-mode");
-
+function showRejoinScreen(roomId) {
   hide("startupScreen");
   hide("menu");
+  show("rejoinScreen");
 
-  // Show lobby or game based on state (stateUpdate will follow)
-  show("lobby");
+  document.getElementById("rejoinYes").onclick = () => {
+    attemptRejoin();
+  };
+
+  document.getElementById("rejoinNo").onclick = () => {
+    discardRejoin();
+  };
 }
+function discardRejoin() {
+  window.pendingRejoin = null;
+  localStorage.removeItem("roomId");
+
+  hide("rejoinScreen");
+  show("startupScreen");
+  show("menu");
+}
+
+function attemptRejoin() {
+  const pending = window.pendingRejoin;
+  if (!pending) return;
+
+  hide("rejoinScreen");
+  tryAutoRejoin(); // reuse your existing logic
+}
+
 function maybeAutoRejoin() {
   if (window.autoRejoinAttempted) return;
   if (!window.socketReady) return;
@@ -111,7 +130,18 @@ function maybeAutoRejoin() {
   if (!roomId || !window.currentUser) return;
 
   window.autoRejoinAttempted = true;
-  tryAutoRejoin();
+  window.pendingRejoin = { roomId };
+  showRejoinScreen(roomId);
+}
+function onRejoinUI() {
+  document.body.classList.remove("menu-mode");
+
+  hide("startupScreen");
+  hide("menu");
+  hide("rejoinScreen");
+
+  // Do NOT force lobby/game yet
+  // Let stateUpdate decide
 }
 
 
