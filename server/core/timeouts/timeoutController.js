@@ -164,4 +164,4 @@ function startGameTimer(room, state, roomId, context) {
 }
 
 module.exports = {
-  startGameTimer, handleTimeout };
+  startGameTimer };
