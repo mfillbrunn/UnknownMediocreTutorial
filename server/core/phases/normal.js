@@ -1,5 +1,6 @@
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { startTimer} = require("../../utils/Timer");
+const { startGameTimer} = require("../../utils/Timer");
 const { endGame } = require("./gameOver");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
@@ -69,24 +70,7 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
   }
 }
 
-function startGameTimer(room, state, roomId, context) {
-  if (!room || room.status !== "alive") return;
-  const io = context.io;
-  if (state.isTimerRunning) return;
-  state.isTimerRunning = true;
-  startTimer(roomId, state, io, timedOutRole => {
-    state.isTimerRunning = false;
-    if (state.timeControl.mode === "chess") {
-      state.timeoutLoser = timedOutRole;
-      endGame(state, roomId, io, room, context);
-      return;
-    }
-    const result = handleTimeout({room,state,roomId,timedOutRole,context});
-    if (result?.continue) {
-      startGameTimer(room, state, roomId, context);
-    }
-  });
-}
+
 
 function normalizePowerId(type) {
   const raw = type.replace("USE_", "").toLowerCase();
