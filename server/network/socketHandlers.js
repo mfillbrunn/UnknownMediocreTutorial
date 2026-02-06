@@ -2,7 +2,7 @@
 
 const { rooms, createRoom,removePlayer, findLastOpenRoom, joinOrReattach  } = require("../core/rooms");
 const { emitStateForAllPlayers } = require("../utils/emitState");
-const { startGameTimer } = require("../core/phases/normal");
+const { startGameTimer } = require("../timeouts/timeoutController");
 const {  stopAllRoomIntervals } = require("../utils/teardown");
 const {maybeRunAI} = require("../core/ai/runAI");
 
