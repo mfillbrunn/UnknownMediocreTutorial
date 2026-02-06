@@ -1,10 +1,7 @@
 // core/timeouts/timeoutController.js
 const { startTimer } = require("../../utils/Timer");
-const { endGame } = require("../phases/gameOver");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
-const {transitionAfterGuess, transitionAfterSecret} = require("../transitions/normalTransitions");
-const {maybeRunAI} = require("../ai/runAI");
 
 /**
  * Central timeout policy engine.
@@ -90,6 +87,7 @@ function handleNormalTimeout({
   timedOutRole,
   context
 }) {
+  const { transitionAfterGuess, transitionAfterSecret, maybeRunAI } = context;
   const io = context.io;  
   console.log("[TIMEOUT][NORMAL] entered", {
     roomId,
@@ -145,6 +143,7 @@ function handleNormalTimeout({
 }
 
 function startGameTimer(room, state, roomId, context) {
+  const { endGame } = context;
   if (!room || room.status !== "alive") return;
   const io = context.io;
   if (state.isTimerRunning) return;
