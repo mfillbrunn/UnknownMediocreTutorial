@@ -36,31 +36,41 @@ function handleGameOverPhase(room, state, action, role, roomId, context) {
       return;
     }  
       ///NEW MATCH
-    if (action.type === "NEW_MATCH") {
-      const oldState = state;
-      const names = state.playerNames;
-      const hostUserId = state.hostUserId;  
-      const freshState = createInitialState();
-      freshState.phase = "lobby";
-      freshState.ready = {};
-      freshState.playerNames = names;
-      freshState.hostUserId = hostUserId;
-      // Re-sync roles with room.players
-      for (const [playerId, player] of Object.entries(room.players)) {
-        freshState.roles[playerId] = player.role;
-      }
-      freshState.setter = "A";
-      freshState.guesser = "B";
-      room.state = freshState;
-      room.currentSocketByUserId ??= {};
-      room.currentSocketByUserId = {};
-      for (const [sid, p] of Object.entries(room.players)) {
-        if (p?.userId) room.currentSocketByUserId[p.userId] = sid;
-      }
-      emitLobbyEvent(io, roomId, { type: "enterLobby" });  
-      emitStateForAllPlayers(roomId, room, io);
-      return;
-    }
+        if (action.type === "NEW_MATCH") {
+          const prevState = state;        
+          const freshState = createInitialState();
+          freshState.phase = "lobby";
+          freshState.ready = {};
+          freshState.hostUserId = prevState.hostUserId;        
+          // Rebuild playerNames using *current* sockets only
+          freshState.playerNames = {};
+          freshState.roles = {};        
+          for (const [socketId, player] of Object.entries(room.players)) {
+            // Preserve role from room.players (authoritative)
+            freshState.roles[socketId] = player.role;        
+            // Preserve name by userId if possible
+            const oldSocketId =
+              room.currentSocketByUserId?.[player.userId];        
+            if (oldSocketId && prevState.playerNames?.[oldSocketId]) {
+              freshState.playerNames[socketId] =
+                prevState.playerNames[oldSocketId];
+            }
+          }        
+          freshState.setter = "A";
+          freshState.guesser = "B";        
+          room.state = freshState;        
+          // Rebuild authoritative socket map
+          room.currentSocketByUserId = {};
+          for (const [sid, p] of Object.entries(room.players)) {
+            if (p?.userId) {
+              room.currentSocketByUserId[p.userId] = sid;
+            }
+          }        
+          emitLobbyEvent(io, roomId, { type: "enterLobby" });
+          emitStateForAllPlayers(roomId, room, io);
+          return;
+        }
+
   return;
 }
 
