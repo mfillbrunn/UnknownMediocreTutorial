@@ -4,7 +4,7 @@ const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { createInitialState } = require("../stateFactory");
 const resetRoundState = require("../../utils/resetRoundState");
-const {startGameTimer} = require("./normal");
+const { startGameTimer } = require("../timeouts/timeoutController");;
 
 function handleGameOverPhase(room, state, action, role, roomId, context) {
     const io = context.io;
