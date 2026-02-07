@@ -16,8 +16,6 @@ window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 window.lastTimeRemaining ??= { A: null, B: null };
 window.isRejoining = false;  
-window.pendingRejoin = null;
-
 // -----------------------------------------------------
 // DOM HELPERS
 // -----------------------------------------------------
