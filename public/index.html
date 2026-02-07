@@ -56,7 +56,7 @@
     <!-- ========== MAIN ========== -->
       <main id="appMain">
 <!-- ========== START UP ========== -->
-        <section id="startupScreen" class="screen game-menu hidden">
+        <section id="startupScreen" class="screen active game-menu">
           <div class="menu-center">
             <h2 class="menu-title">VS WORDLE</h2>
             <div id="menuAccountStatus" class="menu-account-status"></div>
@@ -68,23 +68,6 @@
             </div>
           </div>
         </section>
-<!-- ========== Loading screen ========== -->
-        <section id="loadingScreen" class="screen hidden">
-  <div class="menu-center">
-    <h2 class="menu-title">VS WORDLE</h2>
-    <p>Loading…</p>
-  </div>
-</section>
- <!-- ========== REJOIN SCREEN ========== -->
-        <div id="rejoinScreen" class="screen hidden">
-  <h2>Resume your last game?</h2>
-  <p>You were in an unfinished game.</p>
-
-  <div class="actions">
-    <button id="rejoinYes">Rejoin game</button>
-    <button id="rejoinNo">Discard</button>
-  </div>
-</div>
 <!-- ========== LEADErbOArD ========== -->
   <section id="leaderboardScreen" class="screen game-menu">
   <div class="menu-center">
@@ -314,7 +297,8 @@
     </div>
 
   </div>
-</section>               
+</section>       
+        
         <!-- ========== MENU ========== -->
     <section id="menu" class="screen">
        <h2 class="screen-title">Summary</h2>
