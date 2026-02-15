@@ -153,6 +153,46 @@ function triggerPowerFX(type) {
   }, 900);
 }
 
+function tutorialSteps(state, role){
+  if (!state.tutorial) return;
+      if (role === state.setter){
+        switch (state.history.length) {      
+              case 0:
+                showTutorial("Type BLIMP to start");
+                highlightKeyboard();
+                break;
+              case 1:
+                showTutorial("For now, don't worry - let's just keep the secret we had before. Press the ENTER button to use the same secret as before.");
+                break;
+              case 2:
+                showTutorial("Try using Reveal Green");
+                highlightPower("revealGreen");
+                break;
+              case 3:
+                hideTutorial();
+                break;
+            }    
+      }
+      if (role === state.guesser){
+        switch (state.history.length) {      
+          case 0:
+            showTutorial("Type CRANE to start");
+            highlightKeyboard();
+            break;
+          case 1:
+            showTutorial("Green means correct letter");
+            break;
+          case 2:
+            showTutorial("Try using Reveal Green");
+            highlightPower("revealGreen");
+            break;
+          case 3:
+            hideTutorial();
+            break;
+        }
+    }
+  }
+
 // -----------------------------------------------------
 // Start up
 // -----------------------------------------------------
@@ -318,6 +358,7 @@ onStateUpdate(newState => {
   maybeStartRouletteFromState(state);
   if (state.phase === "simultaneous"){renderSetterRemainingBox(state, myRole, "");}
   if (state.phase === "normal"){renderSetterRemainingBox(state, myRole, state.secret);}
+  tutorialSteps(state, myRole);
   remainingCache.setterOld = null;
 });
 
