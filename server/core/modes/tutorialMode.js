@@ -20,15 +20,15 @@ class TutorialMode {
     state.shuffle = false;
     state.ranked = false;
   }
-
   onLobbyReady(state, setterPowers, guesserPowers) {
-    // Force fixed tutorial powers
-    state.activePowers = [
-      "revealGreen",
-      "nonsense"
-    ];
-
-    state.powerCount = state.activePowers.length;
+    const sP =  ["hideTile",  "confuseColors"];
+    const gP = ["revealGreen",  "nonsense"];
+    state.initialPowers = {
+      setter: sP,
+      guesser: gP
+    };
+    // Round 1 powers
+    state.activePowers = [...sP, ...gP];
   }
 
   beforeGuess(state, guess) {
