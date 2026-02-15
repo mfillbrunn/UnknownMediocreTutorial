@@ -30,19 +30,6 @@ class TutorialMode {
     // Round 1 powers
     state.activePowers = [...sP, ...gP];
   }
-
-  beforeGuess(state, guess) {
-    if (state.tutorial.step < state.tutorial.scriptedTurns) {
-      const expected = state.tutorialGuesses[state.tutorial.step];
-      if (guess !== expected) {
-        return {
-          ok: false,
-          error: "Follow the tutorial hint"
-        };
-      }
-    }
-    return { ok: true };
-  }
 }
 
 module.exports = TutorialMode;
