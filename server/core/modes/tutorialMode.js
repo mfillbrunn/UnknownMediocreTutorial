@@ -14,7 +14,7 @@ class TutorialMode {
     state.tutorialSecret = ["BLIMP", "BLIMP", "LEMUR"]
     state.tutorialGuesses = ["CRANE", "BUSTY", "ALERT"];
     state.tutorialSecretsAI = "DORKY";
-    state.tutorialGuessesAI = ["SMALL", "GASSY", "BLINK"];
+    state.tutorialGuessesAI = ["SMALL", "GOQKY", "BLIND"];
 
     // No randomness
     state.shuffle = false;
