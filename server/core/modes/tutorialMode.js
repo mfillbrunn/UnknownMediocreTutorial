@@ -12,7 +12,7 @@ class TutorialMode {
 
     // Fixed secret & guesses
     state.tutorialSecret = ["BLIMP", "BLIMP", "LEMUR"]
-    state.tutorialGuesses = ["CRANE", "BUSTY", "ALERT"];
+    state.tutorialGuesses = ["CRAVE", "BUSTY", "RODNY"];
     state.tutorialSecretsAI = "DORKY";
     state.tutorialGuessesAI = ["SMALL", "GOQKY", "BLIND"];
 
@@ -21,7 +21,7 @@ class TutorialMode {
     state.ranked = false;
   }
   onLobbyReady(state, setterPowers, guesserPowers) {
-    const sP =  ["hideTile",  "confuseColors"];
+    const sP =  ["hideTile",  "countOnly"];
     const gP = ["revealGreen",  "nonsense"];
     state.initialPowers = {
       setter: sP,
