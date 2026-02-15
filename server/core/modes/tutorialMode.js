@@ -11,8 +11,10 @@ class TutorialMode {
     };
 
     // Fixed secret & guesses
-    state.secret = "PLANE";
-    state.tutorialGuesses = ["CRANE", "SOUND", "ALERT"];
+    state.tutorialSecret = ["BLIMP", "BLIMP", "LEMUR"]
+    state.tutorialGuesses = ["CRANE", "BUSTY", "ALERT"];
+    state.tutorialSecretsAI = "DORKY";
+    state.tutorialGuessesAI = ["SMALL", "GASSY", "BLINK"];
 
     // No randomness
     state.shuffle = false;
