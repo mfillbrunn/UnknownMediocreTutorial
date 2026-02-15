@@ -43,16 +43,6 @@ class TutorialMode {
     }
     return { ok: true };
   }
-
-  afterGuess(state) {
-    if (state.tutorial.step < state.tutorial.scriptedTurns) {
-      state.tutorial.step++;
-    }
-  }
-
-  isScripted(state) {
-    return state.tutorial.step < state.tutorial.scriptedTurns;
-  }
 }
 
 module.exports = TutorialMode;
