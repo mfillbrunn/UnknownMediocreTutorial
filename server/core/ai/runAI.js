@@ -22,8 +22,24 @@ function pickRandomUsablePower(state, role) {
   return usable[Math.floor(Math.random() * usable.length)];
 }
 function toUpperSnake(str) {return str.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();}
-function maybeUsePower(room, state, aiPlayer, roomId, context) {
+
+function maybeUsePower(room, state, aiPlayer, roomId, context,isTutorial) {
   if (state.powerUsedThisTurn) return false;
+  if (isTutorial){
+      if (aiPlayer.role === state.guesser){
+         if (state.history.length === 1){
+           applyAIAction(room, { type: `USE_${toUpperSnake("nonsense")}` },    aiPlayer.role,    roomId,    context  );
+         }
+        return true;
+      }
+      if (aiPlayer.role === state.setter){
+          if (state.history.length === 2){
+           applyAIAction(room, { type: `USE_${toUpperSnake("countOnly")}` },    aiPlayer.role,    roomId,    context  );
+         }
+        return true;
+      }
+      return false;
+  }
   if (Math.random() > 0.5) return false;
   const powerId = pickRandomUsablePower(state, aiPlayer.role);
   if (!powerId) return false;
@@ -48,20 +64,20 @@ function maybeRunAI(room, roomId, context) {
   const aiEntry = Object.entries(room.players)
     .find(([_, p]) => p.isAI);
   if (!aiEntry) return;
-
   const [, aiPlayer] = aiEntry;
   if (AI_PENDING.has(roomId)) return;
-
   let actionFn = null;
-
+  // Tutorial
+  const isTutorial = state.mode?.type === "tutorial" && state.mode.isScripted(state));
   // -----------------------------
   // NORMAL PHASE
   // -----------------------------
   if (state.phase === "normal" && state.turn === aiPlayer.role) {
      if (aiPlayer.role === state.guesser && !state.pendingGuess) {
       actionFn = () => {
-        maybeUsePower(room, state, aiPlayer, roomId, context);
-        const guess = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
+        maybeUsePower(room, state, aiPlayer, roomId, context, isTutorial);
+        let guess = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
+        guess = isTutorial ? state.tutorialGuessesAI[state.history.length] : guess
         applyAIAction(
           room,
           { type: "SUBMIT_GUESS", guess },
@@ -75,7 +91,7 @@ function maybeRunAI(room, roomId, context) {
     if (aiPlayer.role === state.setter && state.pendingGuess) {
       if (state?.powers?.freezeActive) {
       actionFn = () => {
-              maybeUsePower(room, state, aiPlayer, roomId, context);
+              maybeUsePower(room, state, aiPlayer, roomId, context, isTutorial);
               const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
               applyAIAction(
                 room,
@@ -87,8 +103,9 @@ function maybeRunAI(room, roomId, context) {
             };
           } else{
           actionFn = () => {
-            maybeUsePower(room, state, aiPlayer, roomId, context);
+            maybeUsePower(room, state, aiPlayer, roomId, context, isTutorial);
             const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
+            secret = isTutorial ? state.tutorialSecretsAI[state.history.length] : secret
             applyAIAction(
               room,
               { type: "SET_SECRET_NEW", secret },
@@ -108,6 +125,7 @@ function maybeRunAI(room, roomId, context) {
     if (aiPlayer.role === state.guesser && !state.simultaneousGuessSubmitted) {
       actionFn = () => {
         const guess = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
+        guess = isTutorial ? state.tutorialGuessesAI[0] : guess
         applyAIAction(
           room,
           { type: "SUBMIT_GUESS", guess },
@@ -121,6 +139,7 @@ function maybeRunAI(room, roomId, context) {
     if (aiPlayer.role === state.setter && !state.simultaneousSecretSubmitted) {
       actionFn = () => {
         const secret = aiLogic.pickSecret(state, context.WORDS.secrets);
+        secret = isTutorial ? state.tutorialSecretsAI[0] : secret
           applyAIAction(
             room,
             { type: "SET_SECRET_NEW", secret },
