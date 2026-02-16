@@ -17,7 +17,7 @@ socket.on("createRoom", ({ userId, name, mode }, cb) => {
   socket.data.roomId = roomId;
   const room = rooms[roomId];
   if (mode === "tutorial") {
-    const TutorialMode = require("../modes/tutorialMode");
+    const TutorialMode = require("../core/modes/tutorialMode");
     room.state.mode = new TutorialMode();
   }
   if (name) {
