@@ -167,13 +167,17 @@ function tutorialSteps(state, role){
                 break;
               case 1:
                 showTutorial("For now, don't worry - let's just keep the secret we had before. Press the ENTER button to use the same secret as before.");
+                clearHighlights();
                 break;
               case 2:
-                showTutorial("Try using Reveal Green");
-                highlightPower("revealGreen");
+                showTutorial("Oh no - it's getting too close. Try changing the secret to LEMUR - type in LEMUR and hit ENTER.");
+                highlightKeyboard();
                 break;
               case 3:
-                hideTutorial();
+                showTutorial("Now it's up to you - finish the game. And don't forget your powers. You can look up what they do by clicking on the ? icon.");            
+                break;
+              case 4:
+                hideTutorial();            
                 break;
             }    
       }
@@ -184,14 +188,17 @@ function tutorialSteps(state, role){
             highlightKeyboard();
             break;
           case 1:
-            showTutorial("Green means correct letter");
+            showTutorial("Green means correct letter. Try out BESTI now - you don't have to use letters that were correct before and you can use wrong letters again.");
             break;
           case 2:
-            showTutorial("Try using Reveal Green");
+            showTutorial("Try using the power Leak Info - and then the guess RODNY.");
             highlightPower("revealGreen");
             break;
           case 3:
-            hideTutorial();
+            showTutorial("Now it's up to you - finish the game!");            
+            break;
+          case 4:
+            hideTutorial();            
             break;
         }
     }
