@@ -79,8 +79,8 @@ function joinOrReattach(socket, roomId, userId) {
       const oldReady = room.state.ready?.[oldSocketId];
       
       delete room.players[oldSocketId];
-      delete room.state.roles[oldSocketId];
-      delete room.state.playerNames[oldSocketId];
+      if (room.state.playerNames) delete room.state.playerNames[oldSocketId];
+      if (room.state.roles) delete room.state.roles[oldSocketId];
       if (room.state.ready) delete room.state.ready[oldSocketId];
       if (oldName) room.state.playerNames[socket.id] = oldName;
       if (oldReady && room.state.ready) room.state.ready[socket.id] = oldReady;
