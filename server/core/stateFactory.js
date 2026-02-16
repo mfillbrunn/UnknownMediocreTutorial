@@ -120,6 +120,7 @@ function createInitialState() {
     matchMeta: {},       // owned entirely by the mode
     ranked : false,
     shuffle: false,
+         isTutorial: false,
          devMode: false,
     gameOverView: "match",
     canNextRound: false,
