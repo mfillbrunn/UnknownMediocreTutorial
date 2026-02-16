@@ -37,7 +37,7 @@ const SETTER_POWERS = [
       ];
 function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
-  const isTutorial = state.mode?.type === "tutorial";
+  const isTutorial = state.mode instanceof require("../modes/tutorialMode");
 if (action.type === "PLAYER_JOINED") {
   if (action.name) {
     state.playerNames[action.playerId] = String(action.name).trim().slice(0, 16);
@@ -238,37 +238,60 @@ if (action.type === "SET_DEV_MODE") {
 function startTutorialGame(room, state, roomId, context) {
   const io = context.io;
   stopAllRoomIntervals(roomId, room);
+
+  const AI_ID = "AI";
+
+  // Ensure AI exists
+  if (!room.players[AI_ID]) {
+    room.players[AI_ID] = {
+      role: "A",
+      userId: "AI",
+      connected: true,
+      disconnectedAt: null,
+      isAI: true
+    };
+  }
+
   const freshState = createInitialState();
+
   // Preserve identity
   freshState.playerNames = state.playerNames;
   freshState.hostUserId = state.hostUserId;
-  // Force roles:
-  // Human = guesser (B), AI = setter (A)
+
   const ids = Object.keys(room.players);
   const humanId = ids.find(id => room.players[id]?.userId !== "AI");
   const aiId = ids.find(id => room.players[id]?.userId === "AI");
+
+  if (!humanId || !aiId) {
+    console.warn("Tutorial start failed: missing players");
+    return;
+  }
+
+  // Force roles: Human guesser, AI setter
   room.players[humanId].role = "B";
   room.players[aiId].role = "A";
+
   freshState.roles[humanId] = "B";
   freshState.roles[aiId] = "A";
+
   freshState.setter = "A";
   freshState.guesser = "B";
+
   // Attach tutorial mode
   const TutorialMode = require("../modes/tutorialMode");
   freshState.mode = new TutorialMode();
   freshState.mode.initMatch(freshState);
-  // Fixed powers
-  freshState.mode.onLobbyReady(
-    freshState,
-    SETTER_POWERS,
-    GUESSER_POWERS
-  );
+  freshState.mode.onLobbyReady(freshState);
+
   freshState.phase = "simultaneous";
+
   room.state = freshState;
+
   emitLobbyEvent(io, roomId, { type: "hideLobby" });
   emitStateForAllPlayers(roomId, room, io);
   io.to(roomId).emit("gameStart");
 }
+
 
 
 module.exports = handleLobbyPhase;
