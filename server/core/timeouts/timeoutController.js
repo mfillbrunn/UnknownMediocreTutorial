@@ -2,7 +2,7 @@
 const { startTimer } = require("../../utils/Timer");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
-
+const { endGame } = require("../phases/gameOver");
 /**
  * Central timeout policy engine.
  * Decides what a timeout means based on phase.
