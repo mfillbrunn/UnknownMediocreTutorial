@@ -160,6 +160,9 @@ function tutorialSteps(state, role) {
     hideTutorial();
     return;
   }
+   if (!state.tutorialSecrets || !state.tutorialGuesses) {
+    return;
+  }
   const step = state.history.length;
   // Prevent duplicate triggers
   if (step === lastTutorialStep) return;
