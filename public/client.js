@@ -160,46 +160,34 @@ function tutorialSteps(state, role) {
     hideTutorial();
     return;
   }
-
   const step = state.history.length;
-
   // Prevent duplicate triggers
   if (step === lastTutorialStep) return;
   lastTutorialStep = step;
-
   clearHighlights(); // Always reset highlights per step
-
   if (role === state.setter) {
+    const word = state.tutorialSecrets[step];
     switch (step) {
-
       case 0: {
-        const word = state.tutorialSecrets?.[0];
         if (!word) break;
         showTutorial(`Type ${word} to start`);
         highlightKeyboard();
         break;
       }
-
       case 1:
         showTutorial("For now, keep the same secret. Press ENTER to reuse it.");
         break;
-
       case 2: {
-        const word = state.tutorialSecrets?.[2];
         if (!word) break;
-        showTutorial(
-          `It's getting close. Change the secret to ${word} — type ${word} and press ENTER.`
-        );
+        showTutorial(`It's getting close. Change the secret to ${word} — type ${word} and press ENTER.`);
         highlightKeyboard();
         break;
       }
-
       case 3:
         showTutorial(
           "Now it's up to you. Finish the game — and remember your powers!"
         );
         break;
-
       default:
         hideTutorial();
         break;
@@ -207,39 +195,28 @@ function tutorialSteps(state, role) {
   }
 
   if (role === state.guesser) {
+    const word = state.tutorialGuesses[step];
     switch (step) {
-
-      case 0: {
-        const word = state.tutorialGuesses?.[0];
+      case 0: {        
         if (!word) break;
         showTutorial(`Type ${word} to start`);
         highlightKeyboard();
         break;
       }
-
       case 1: {
-        const word = state.tutorialGuesses?.[1];
         if (!word) break;
-        showTutorial(
-          `Green means correct letter. Try ${word} now — you can reuse letters.`
-        );
+        showTutorial(`Green means correct letter. Try ${word} now — you can reuse letters.`);
         break;
       }
-
       case 2: {
-        const word = state.tutorialGuesses?.[2];
         if (!word) break;
-        showTutorial(
-          `Use the Leak Info power, then guess ${word}.`
-        );
+        showTutorial(`Use the Leak Info power, then guess ${word}.`);
         highlightPower("revealGreen");
         break;
       }
-
       case 3:
         showTutorial("Now it's up to you — finish the game!");
         break;
-
       default:
         hideTutorial();
         break;
