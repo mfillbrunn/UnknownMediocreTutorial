@@ -12,14 +12,10 @@ module.exports = function registerSocketHandlers(io, context) {
   io.on("connection", socket => {
 
     // CREATE ROOM ----------------------------
-socket.on("createRoom", ({ userId, name, mode }, cb) => {
+socket.on("createRoom", ({ userId, name }, cb) => {
   const roomId = createRoom(socket, userId);
   socket.data.roomId = roomId;
   const room = rooms[roomId];
-  if (mode === "tutorial") {
-    console.log("Tutorial");
-    room.state.isTutorial = true;
-  }
   if (name) {
     room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
   }
