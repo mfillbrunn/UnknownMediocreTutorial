@@ -2,7 +2,8 @@
 
 const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
-const {CompetitiveMode, TutorialMode} = require("../modes/competitiveMode");
+const CompetitiveMode = require("../modes/competitiveMode");
+const TutorialMode = require("../modes/tutorialMode");
 const { stopTimer,resetRoundTimer } = require("../../utils/Timer");
 const { stopAllRoomIntervals } = require("../../utils/teardown");
 const { createInitialState,  createInitialPowers} = require("../stateFactory");
