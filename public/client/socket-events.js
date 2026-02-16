@@ -139,7 +139,6 @@ const username =
   persistRoom(roomId); // ✅ HERE
   enterLobbyAfterJoin();
 });
-
 });
 
 
@@ -326,8 +325,30 @@ socket.on("rouletteSecretStart", ({ feasible }) => {
 });
 
 document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
-  showTutorial();
+  if (!requireAuth("create a room")) return;
+
+  const username =
+    window.myProfile?.username ||
+    window.currentUser?.email ||
+    "Player";
+
+  createRoom(
+    {
+      name: username,
+      mode: "tutorial"   // 👈 pass tutorial flag
+    },
+    resp => {
+      if (!resp?.ok) return toast(resp?.error);
+
+      const roomId = resp.roomId;
+      persistRoom(roomId);
+
+      // DO NOT enter lobby manually for tutorial.
+      // Let server auto-start it.
+    }
+  );
 });
+
 
 
 
