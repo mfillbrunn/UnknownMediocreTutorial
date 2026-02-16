@@ -325,7 +325,7 @@ socket.on("rouletteSecretStart", ({ feasible }) => {
 });
 
 document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
-  if (!requireAuth("create a room")) return;
+  if (!requireAuth("start tutorial")) return;
 
   const username =
     window.myProfile?.username ||
@@ -333,21 +333,37 @@ document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
     "Player";
 
   createRoom(
-    {
-      name: username,
-      mode: "tutorial"   // 👈 pass tutorial flag
-    },
+    { name: username },
     resp => {
       if (!resp?.ok) return toast(resp?.error);
 
       const roomId = resp.roomId;
       persistRoom(roomId);
+      window.roomId = roomId;
 
-      // DO NOT enter lobby manually for tutorial.
-      // Let server auto-start it.
+      // Step 1: Add AI (level 1)
+      sendGameAction({
+        type: "ADD_AI",
+        difficulty: 1,
+        userId: window.currentUser.id
+      });
+
+      // Step 2: Switch roles so human is guesser
+      setTimeout(() => {
+        sendGameAction({ type: "SWITCH_ROLES" });
+      }, 200);
+
+      // Step 3: Ready human
+      setTimeout(() => {
+        sendGameAction({
+          type: "PLAYER_READY",
+          playerId: socket.id
+        });
+      }, 400);
     }
   );
 });
+
 
 
 
