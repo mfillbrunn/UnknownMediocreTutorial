@@ -19,6 +19,7 @@ socket.on("createRoom", ({ userId, name, mode }, cb) => {
   if (mode === "tutorial") {
     const TutorialMode = require("../core/modes/tutorialMode");
     room.state.isTutorial = true;
+    console.log("Tutorial mode");
     room.state.mode = new TutorialMode();
   }
   if (name) {
