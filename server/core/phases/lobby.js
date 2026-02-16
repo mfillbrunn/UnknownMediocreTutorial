@@ -161,6 +161,7 @@ if (action.type === "SET_DEV_MODE") {
           const players = Object.entries(room.players);
           const humanPlayers = players.filter(([_, p]) => !p.isAI);
           const aiPlayers = players.filter(([_, p]) => p.isAI);
+                console.log(action.mode);
          if (action.mode === "tutorial") {state.isTutorial = true;}               
          if (humanPlayers.length + aiPlayers.length < 2){return;}  
           state.ready[action.playerId] = true;               
