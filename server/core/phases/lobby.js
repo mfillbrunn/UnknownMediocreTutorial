@@ -37,6 +37,7 @@ const SETTER_POWERS = [
       ];
 function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
+  console.log("Lobby mode:", state.mode?.type);
   const isTutorial = state.mode instanceof require("../modes/tutorialMode");
 if (action.type === "PLAYER_JOINED") {
   if (action.name) {
