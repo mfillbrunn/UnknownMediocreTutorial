@@ -349,7 +349,6 @@ onStateUpdate(newState => {
       PowerEngine._initialized = true;
   }
   // Extra clearing after simultaneous round
-  if ((prevPhase === "simultaneous" && state.phase === "normal") || (prevPhase !== "simultaneous" && state.phase === "simultaneous")){localGuesserDraft = "";}
   if (prevPhase !== state.phase) {stopSecretRoulette();}
   window.state = state;   
   updateRoleCards();
@@ -635,11 +634,20 @@ function submitSetterNew() {
   if (!window.ALLOWED_SECRETS.has(w)) {
     shakeDraftRow("setter");
     if (window.ALLOWED_GUESSES.has(w.toUpperCase())){
+      shakeDraftRow("setter");
       toast("Word not allowed as secret");
     }else{
+      shakeDraftRow("setter");
       toast("Word not in dictionary");
     }
     return;
+  }
+  if (state.isTutorial && state.history.length < state.state.scriptedTurns) {
+    if (w !== state.tutorialSecrets[state.history.length]){
+      shakeDraftRow("setter");
+      toast(`Type in ${state.tutorialSecrets[state.history.length]}`);      
+      return;
+    }
   }
   if (typeof window.isConsistentWithHistory === "function" && !window.isConsistentWithHistory(state.history, w, state)) {
     shakeDraftRow("setter");
@@ -711,8 +719,7 @@ function handleGuesserInput(event) {
   if (event.type === "BACKSPACE") {
     localGuesserDraft = localGuesserDraft.slice(0, -1);
     renderGuesserDraftOnly();
-    return;
-  }
+    return;  }
 
   if (event.type === "LETTER") {
     if (localGuesserDraft.length < 5) {
@@ -721,31 +728,38 @@ function handleGuesserInput(event) {
     }
     return;
   }
-
-  if (event.type === "ENTER") {
-      if (localGuesserDraft.length !== 5) {
-        shakeDraftRow("guesser");
+  const g = localGuesserDraft.toUpperCase();
+  if (event.type === "ENTER") {    
+      if (g.length !== 5) {
         toast("5 letters!");
+        shakeDraftRow("guesser");
         return;
       }
-    const guessMakesSense = state.powers.nonsenseActive || window.ALLOWED_GUESSES.has(localGuesserDraft.toUpperCase());
+    const guessMakesSense = state.powers.nonsenseActive || window.ALLOWED_GUESSES.has(g.toUpperCase());
     if (!guessMakesSense) {
-      shakeDraftRow("guesser");
       toast("Not in dictionary");
+      shakeDraftRow("guesser");
       return;
     }    
-    const result = validateGuesserGuess(localGuesserDraft.toUpperCase(),state.powers?.forceGuessOptions,window.ALLOWED_GUESSES);
+    const result = validateGuesserGuess(g,state.powers?.forceGuessOptions,window.ALLOWED_GUESSES);
     if (!result.ok) {
       toast(result.message);
       shakeDraftRow("guesser");
       return;
     }
+    if (state.isTutorial && state.history.length < state.state.scriptedTurns) {
+      if (g !== state.tutorialGuesses[state.history.length]){
+        toast(`Type in ${state.tutorialGuesses[state.history.length]}`);      
+        shakeDraftRow("guesser");
+        return;
+      }
+    }
     if (window.isRejoining) {
       toast("Reconnecting...");
       return;
     }
-    sendGameAction({type: "SUBMIT_GUESS",guess: localGuesserDraft.toUpperCase()});
-    if (state.phase !== "simultaneous") {localGuesserDraft = "";}
+    sendGameAction({type: "SUBMIT_GUESS",guess: g});
+    localGuesserDraft = "";
     resetEphemeralUIState();
   }
 }
