@@ -22,7 +22,7 @@ function checkSecret({ secret, state, allowedSecrets }) {
   if (state?.powers?.assassinWord) {
     const assassin = state.powers.assassinWord.toUpperCase();
     try {
-      const diff = countPositionalDifferences(w.toUpperCase(), assassin);
+      const diff = countPositionalDifferences(w, assassin);
       if (diff < 2) {
         return {
           ok: false,
@@ -39,7 +39,7 @@ function checkSecret({ secret, state, allowedSecrets }) {
     }
   }
   // 3️⃣ Dictionary check
-  if (!hasWord(allowedSecrets, w.toUpperCase())) {
+  if (!hasWord(allowedSecrets, w)) {
     return {
       ok: false,
       error: "Word not in dictionary",
@@ -53,6 +53,16 @@ function checkSecret({ secret, state, allowedSecrets }) {
       error: "Incompatible with previous feedback",
       code: "HISTORY_INCONSISTENT"
     };
+  }
+ // 5 Tutorial check
+  if (state.isTutorial &&& state.history.length < state.state.scriptedTurns) {
+    if (w !== state.tutorialSecrets[state.history.length]){
+      return {
+      ok: false,
+      error: "Incompatible with tutorial",
+      code: "INCONSISTENT_TUTORIAL"
+    };
+    }
   }
 
   // ✅ Passed all checks
@@ -80,7 +90,7 @@ function checkGuess({ guess, state, allowedGuesses }) {
   // 2️⃣ Dictionary check (unless nonsense mode active)
   const nonsenseActive = !!state?.powers?.nonsenseActive;
 
-  if (!nonsenseActive && !hasWord(allowedGuesses, g.toUpperCase())) {
+  if (!nonsenseActive && !hasWord(allowedGuesses, g)) {
     return {
       ok: false,
       error: "Not in dictionary",
@@ -105,6 +115,17 @@ function checkGuess({ guess, state, allowedGuesses }) {
     }
   }
 
+   // 4 Tutorial check
+  if (state.isTutorial &&& state.history.length < state.state.scriptedTurns) {
+    if (g !== state.tutorialGuesses[state.history.length]){
+      return {
+      ok: false,
+      error: "Incompatible with tutorial",
+      code: "INCONSISTENT_TUTORIAL"
+    };
+    }
+  }
+  
   // ✅ Passed all checks
   return { ok: true };
 }
