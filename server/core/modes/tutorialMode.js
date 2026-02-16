@@ -5,15 +5,12 @@ class TutorialMode {
 
   initMatch(state) {
     // Tutorial metadata
-    state.tutorial = {
-      step: 0,
-      scriptedTurns: 3
-    };
+    state.scriptedTurns = 3;
 
     // Fixed secret & guesses
     state.tutorialSecret = ["BLIMP", "BLIMP", "LEMUR"]
     state.tutorialGuesses = ["CRAVE", "BUSTY", "RODNY"];
-    state.tutorialSecretsAI = "DORKY";
+    state.tutorialSecretsAI = ["DORKY", "DORKY", "DORKY"];
     state.tutorialGuessesAI = ["SMALL", "GOQKY", "BLIND"];
 
     // No randomness
