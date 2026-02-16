@@ -362,6 +362,8 @@ document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
       }, 400);
     }
   );
+  hide("startupScreen");
+  hide("menu");
 });
 
 
