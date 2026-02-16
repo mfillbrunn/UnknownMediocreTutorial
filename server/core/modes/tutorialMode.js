@@ -12,7 +12,7 @@ class TutorialMode {
     state.tutorialGuesses = ["CRAVE", "BUSTY", "RODNY"];
     state.tutorialSecretsAI = ["DORKY", "DORKY", "DORKY"];
     state.tutorialGuessesAI = ["SMALL", "GOQKY", "BLIND"];
-
+    state.timeControl.enabled = false;
     // No randomness
     state.shuffle = false;
     state.ranked = false;
