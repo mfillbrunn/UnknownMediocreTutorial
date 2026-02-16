@@ -12,10 +12,14 @@ module.exports = function registerSocketHandlers(io, context) {
   io.on("connection", socket => {
 
     // CREATE ROOM ----------------------------
-socket.on("createRoom", ({ userId, name }, cb) => {
+socket.on("createRoom", ({ userId, name, mode }, cb) => {
   const roomId = createRoom(socket, userId);
   socket.data.roomId = roomId;
   const room = rooms[roomId];
+  if (mode === "tutorial") {
+    const TutorialMode = require("../modes/tutorialMode");
+    room.state.mode = new TutorialMode();
+  }
   if (name) {
     room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
   }
