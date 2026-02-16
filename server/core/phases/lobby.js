@@ -182,8 +182,11 @@ if (action.type === "SET_DEV_MODE") {
              //refresh state
              console.log(roomId);   
              stopAllRoomIntervals(roomId, room);
-             const oldState = state;                  
-             const freshState = createInitialState();
+                const oldState = state;
+                const isTutorial = oldState.isTutorial;
+                
+                const freshState = createInitialState();
+                freshState.isTutorial = isTutorial;
              freshState.playerNames = oldState.playerNames;
              freshState.hostUserId = oldState.hostUserId;
              freshState.ranked = oldState.ranked;
