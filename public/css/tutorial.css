@@ -43,4 +43,23 @@
   50% { box-shadow: 0 0 12px rgba(0,255,204,0.7); }
   100% { box-shadow: 0 0 0px rgba(0,255,204,0.7); }
 }
+.tutorial-bubble.collapsed {
+  width: 120px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.tutorial-bubble.collapsed .tutorial-body {
+  display: none;
+}
+
+.tutorial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tutorial-bubble.collapsed .tutorial-close {
+  transform: rotate(45deg); /* turns X into + */
+}
 
