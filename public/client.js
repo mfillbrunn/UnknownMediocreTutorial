@@ -642,7 +642,7 @@ function submitSetterNew() {
     }
     return;
   }
-  if (state.isTutorial && state.history.length < state.state.scriptedTurns) {
+  if (state.isTutorial && state.history.length < state.scriptedTurns) {
     if (w !== state.tutorialSecrets[state.history.length]){
       shakeDraftRow("setter");
       toast(`Type in ${state.tutorialSecrets[state.history.length]}`);      
@@ -747,7 +747,7 @@ function handleGuesserInput(event) {
       shakeDraftRow("guesser");
       return;
     }
-    if (state.isTutorial && state.history.length < state.state.scriptedTurns) {
+    if (state.isTutorial && state.history.length < state.scriptedTurns) {
       if (g !== state.tutorialGuesses[state.history.length]){
         toast(`Type in ${state.tutorialGuesses[state.history.length]}`);      
         shakeDraftRow("guesser");
