@@ -32,3 +32,15 @@
   font-size: 14px;
   cursor: pointer;
 }
+
+.tutorial-highlight {
+  outline: 3px solid #00ffcc;
+  animation: tutorialPulse 1.5s infinite;
+}
+
+@keyframes tutorialPulse {
+  0% { box-shadow: 0 0 0px rgba(0,255,204,0.7); }
+  50% { box-shadow: 0 0 12px rgba(0,255,204,0.7); }
+  100% { box-shadow: 0 0 0px rgba(0,255,204,0.7); }
+}
+
