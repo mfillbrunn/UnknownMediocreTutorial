@@ -154,8 +154,9 @@ function triggerPowerFX(type) {
   }, 900);
 }
 
+
 function tutorialSteps(state, role){
-  if (!state.tutorial) return;
+  if (!state.isTutorial) return;
   if (state.history.length === lastTutorialStep) return;
   lastTutorialStep = state.history.length;
       if (role === state.setter){
