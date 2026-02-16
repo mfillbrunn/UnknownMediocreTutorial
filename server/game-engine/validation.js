@@ -55,7 +55,7 @@ function checkSecret({ secret, state, allowedSecrets }) {
     };
   }
  // 5 Tutorial check
-  if (state.isTutorial &&& state.history.length < state.state.scriptedTurns) {
+  if (state.isTutorial && state.history.length < state.state.scriptedTurns) {
     if (w !== state.tutorialSecrets[state.history.length]){
       return {
       ok: false,
@@ -116,7 +116,7 @@ function checkGuess({ guess, state, allowedGuesses }) {
   }
 
    // 4 Tutorial check
-  if (state.isTutorial &&& state.history.length < state.state.scriptedTurns) {
+  if (state.isTutorial && state.history.length < state.state.scriptedTurns) {
     if (g !== state.tutorialGuesses[state.history.length]){
       return {
       ok: false,
