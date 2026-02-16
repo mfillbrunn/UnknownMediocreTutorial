@@ -333,7 +333,7 @@ document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
     "Player";
 
   createRoom(
-    { name: username },
+    { name: username, mode: "tutorial" },
     resp => {
       if (!resp?.ok) return toast(resp?.error);
 
