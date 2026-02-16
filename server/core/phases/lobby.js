@@ -2,7 +2,7 @@
 
 const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
-const CompetitiveMode = require("../modes/competitiveMode");
+const {CompetitiveMode, TutorialMode} = require("../modes/competitiveMode");
 const { stopTimer,resetRoundTimer } = require("../../utils/Timer");
 const { stopAllRoomIntervals } = require("../../utils/teardown");
 const { createInitialState,  createInitialPowers} = require("../stateFactory");
@@ -212,6 +212,9 @@ if (action.type === "SET_DEV_MODE") {
             if (!state.isTutorial) {
                   state.mode = new CompetitiveMode();
                 }
+            if (state.isTutorial){
+                  state.mode = new TutorialMode();
+                  }                  
             state.mode.initMatch(state);
             state.mode.onLobbyReady(state, sP, gP);   
             state.phase = "simultaneous";
