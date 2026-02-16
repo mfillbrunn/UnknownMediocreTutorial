@@ -4,6 +4,10 @@ class TutorialMode {
   }
 
   initMatch(state) {
+    state.roundIndex = 0;
+    state.roundsTotal = 2;
+    state.matchOver = false;
+    
     // Tutorial metadata
     state.scriptedTurns = 3;
 
