@@ -162,7 +162,7 @@ function tutorialSteps(state, role){
       if (role === state.setter){
         switch (state.history.length) {      
               case 0:
-                showTutorial("Type BLIMP to start");
+                showTutorial(`Type ${state.tutorialSecrets[state.history.length]} to start`);
                 highlightKeyboard();
                 break;
               case 1:
@@ -170,11 +170,11 @@ function tutorialSteps(state, role){
                 clearHighlights();
                 break;
               case 2:
-                showTutorial("Oh no - it's getting too close. Try changing the secret to LEMUR - type in LEMUR and hit ENTER.");
+                showTutorial(`Oh no - it's getting too close. Try changing the secret to ${state.tutorialSecrets[state.history.length]} - type in ${state.tutorialSecrets[state.history.length]} and hit ENTER.`);
                 highlightKeyboard();
                 break;
               case 3:
-                showTutorial("Now it's up to you - finish the game. And don't forget your powers. You can look up what they do by clicking on the ? icon.");            
+                showTutorial(`Now it's up to you - finish the game. And don't forget your powers. You can look up what they do by clicking on the ? icon.`);            
                 break;
               case 4:
                 hideTutorial();            
@@ -184,14 +184,14 @@ function tutorialSteps(state, role){
       if (role === state.guesser){
         switch (state.history.length) {      
           case 0:
-            showTutorial("Type CRANE to start");
+            showTutorial(`Type ${state.tutorialGuesses[state.history.length]} to start`);
             highlightKeyboard();
             break;
           case 1:
-            showTutorial("Green means correct letter. Try out BESTI now - you don't have to use letters that were correct before and you can use wrong letters again.");
+            showTutorial(`Green means correct letter. Try out ${state.tutorialGuesses[state.history.length]} now - you don't have to use letters that were correct before and you can use wrong letters again.`);
             break;
           case 2:
-            showTutorial("Try using the power Leak Info - and then the guess RODNY.");
+            showTutorial(`Try using the Leak Info power - and then the guess ${state.tutorialGuesses[state.history.length]}.`);
             highlightPower("revealGreen");
             break;
           case 3:
@@ -633,7 +633,7 @@ function submitSetterNew() {
   }
   if (!window.ALLOWED_SECRETS.has(w)) {
     shakeDraftRow("setter");
-    if (window.ALLOWED_GUESSES.has(w.toUpperCase())){
+    if (window.ALLOWED_GUESSES.has(w)){
       shakeDraftRow("setter");
       toast("Word not allowed as secret");
     }else{
