@@ -17,6 +17,7 @@ socket.on("createRoom", ({ userId, name, mode }, cb) => {
   socket.data.roomId = roomId;
   const room = rooms[roomId];
   if (mode === "tutorial") {
+    console.log("Tutorial");
     room.state.isTutorial = true;
   }
   if (name) {
