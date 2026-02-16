@@ -23,7 +23,7 @@ function pickRandomUsablePower(state, role) {
 }
 function toUpperSnake(str) {return str.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();}
 
-function maybeUsePower(room, state, aiPlayer, roomId, context,isTutorial) {
+function maybeUsePower(room, state, aiPlayer, roomId, context, isTutorial) {
   if (state.powerUsedThisTurn) return false;
   if (isTutorial){
       if (aiPlayer.role === state.guesser){
@@ -68,7 +68,7 @@ function maybeRunAI(room, roomId, context) {
   if (AI_PENDING.has(roomId)) return;
   let actionFn = null;
   // Tutorial
-  const isTutorial = state.mode?.type === "tutorial" && state.history.length <=state.scriptedTurns;
+  const isTutorial = state.isTutorial && state.history.length <=state.scriptedTurns;
   // -----------------------------
   // NORMAL PHASE
   // -----------------------------
