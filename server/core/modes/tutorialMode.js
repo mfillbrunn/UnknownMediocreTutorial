@@ -12,7 +12,7 @@ class TutorialMode {
     state.scriptedTurns = 3;
 
     // Fixed secret & guesses
-    state.tutorialSecret = ["BLIMP", "BLIMP", "LEMUR"]
+    state.tutorialSecrets = ["BLIMP", "BLIMP", "LEMUR"]
     state.tutorialGuesses = ["CRAVE", "BESTI", "RODNY"];
     state.tutorialSecretsAI = ["DORKY", "DORKY", "DORKY"];
     state.tutorialGuessesAI = ["SMALL", "GOQKY", "BLIND"];
