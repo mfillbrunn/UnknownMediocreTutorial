@@ -68,7 +68,7 @@ function maybeRunAI(room, roomId, context) {
   if (AI_PENDING.has(roomId)) return;
   let actionFn = null;
   // Tutorial
-  const isTutorial = state.mode?.type === "tutorial" && state.mode.isScripted(state));
+  const isTutorial = state.mode?.type === "tutorial" && state.mode.isScripted(state);
   // -----------------------------
   // NORMAL PHASE
   // -----------------------------
