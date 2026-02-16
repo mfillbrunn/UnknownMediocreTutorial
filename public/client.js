@@ -12,6 +12,7 @@ let KeepEnabled = true;
 let NewEnabled = true;
 let rouletteInterval = null;
 let rouletteWords = null;
+let lastTutorialStep = null;
 window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 window.lastTimeRemaining ??= { A: null, B: null };
@@ -155,6 +156,8 @@ function triggerPowerFX(type) {
 
 function tutorialSteps(state, role){
   if (!state.tutorial) return;
+  if (state.history.length === lastTutorialStep) return;
+  lastTutorialStep = state.history.length;
       if (role === state.setter){
         switch (state.history.length) {      
               case 0:
@@ -322,7 +325,7 @@ onStateUpdate(newState => {
       $("setterGuesserSubmitted").innerHTML = "";
       $("historyGuesser").innerHTML = "";
   }  
-  const newMyRole = state.roles?.[socket.id] || null;
+  const newMyRole = state.roles && state.roles[socket.id];
   if (newMyRole !== myRole) {
     myRole = newMyRole;
     updateRoleLabels();
