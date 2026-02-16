@@ -333,7 +333,7 @@ document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
     "Player";
 
   createRoom(
-    { name: username, mode: "tutorial" },
+    { name: username},
     resp => {
       if (!resp?.ok) return toast(resp?.error);
 
@@ -357,7 +357,8 @@ document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
       setTimeout(() => {
         sendGameAction({
           type: "PLAYER_READY",
-          playerId: socket.id
+          playerId: socket.id,
+          mode: "tutorial" 
         });
       }, 400);
     }
