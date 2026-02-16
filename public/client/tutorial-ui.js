@@ -1,3 +1,5 @@
+let tutorialCollapsed = false;
+
 function showTutorial(text) {
   const bubble = document.getElementById("tutorialBubble");
   const textEl = document.getElementById("tutorialText");
@@ -8,15 +10,26 @@ function showTutorial(text) {
   bubble.classList.remove("hidden");
 }
 
-function hideTutorial() {
+function toggleTutorial() {
   const bubble = document.getElementById("tutorialBubble");
   if (!bubble) return;
-  bubble.classList.add("hidden");
 
-  clearHighlights();
+  tutorialCollapsed = !tutorialCollapsed;
+
+  bubble.classList.toggle("collapsed", tutorialCollapsed);
 }
 
-document.getElementById("tutorialCloseBtn")?.addEventListener("click", hideTutorial);
+document.getElementById("tutorialToggleBtn")
+  ?.addEventListener("click", e => {
+    e.stopPropagation();
+    toggleTutorial();
+  });
+document.getElementById("tutorialBubble")
+  ?.addEventListener("click", () => {
+    if (tutorialCollapsed) {
+      toggleTutorial();
+    }
+  });
 
 function highlightKeyboard() {
   const keyboard = document.querySelector(".keyboard");
