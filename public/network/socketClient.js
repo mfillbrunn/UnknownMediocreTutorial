@@ -91,6 +91,20 @@ window.onLobbyEvent = function (handler) {
   socket.on("lobbyEvent", handler);
 };
 
+window.onPowerUsed(payload => {
+  if (!payload?.type) return;
+
+  if (
+    tutorialWaitingFor &&
+    tutorialWaitingFor.type === "power" &&
+    payload.type === tutorialWaitingFor.powerId
+  ) {
+    tutorialWaitingFor = null;
+    tutorialSubStep++;
+    tutorialSteps(window.state, window.myRole);
+  }
+});
+
 
 function onRejoinUI() {
   // Always leave startup/menu mode
