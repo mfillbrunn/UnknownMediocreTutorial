@@ -317,7 +317,6 @@ onStateUpdate(newState => {
   maybeStartRouletteFromState(state);
   if (state.phase === "simultaneous"){renderSetterRemainingBox(state, myRole, "");}
   if (state.phase === "normal"){renderSetterRemainingBox(state, myRole, state.secret);}
-  tutorialSteps(state, myRole);
   remainingCache.setterOld = null;
 });
 
