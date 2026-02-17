@@ -34,9 +34,12 @@
 }
 
 .tutorial-highlight {
-  outline: 3px solid #00ffcc;
   animation: tutorialPulse 1.5s infinite;
+  outline: 3px solid rgba(255, 215, 0, 0.95);
+  outline-offset: 6px;
+  border-radius: 10px;
 }
+
 
 @keyframes tutorialPulse {
   0% { box-shadow: 0 0 0px rgba(0,255,204,0.7); }
