@@ -79,6 +79,9 @@ function highlightPowerInfoBtn() {
 function highlightPowerButton(powerId) {
   highlightEl(qs(`[data-power-id="${powerId}"]`));
 }
+function highlightGuesserBadge() {
+  highlightEl(byId("GuesserInfoBadge"));
+}
 function clearHighlights() {
   document.querySelectorAll(".tutorial-highlight")
     .forEach(el => el.classList.remove("tutorial-highlight"));
@@ -255,9 +258,44 @@ function tutorialSteps(state, role) {
   // ------------------------
   // ROUND 3+ : done
   // ------------------------
-  showTutorial(
-    `From here on out, finish the game on your own. After you have guessed the word, you'll play the other side.`,
-    { enabled: true }
-  );
+   if (round === 3) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `You can see that your opponent also has powers.`,
+        { enabled: true }
+      );
+      highlightHistoryGuesser();
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `This power hides the feedback for each tile and just shows you the number of green and yellow tiles. You see info for powers used here.`,
+        { enabled: true }
+      );
+      highlightGuesserBadge;
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `Remember - this ? button explains powers.`,
+        { enabled: true }
+      );
+      highlightPowerInfoBtn();
+      return;
+    }
+
+   if (tutorialSubStep === 4) {
+      const word = state.tutorialGuesses?.[2] || "RODNY";
+      showTutorial(
+        `From here on out, finish the game on your own. After you have guessed the word, you'll play the other side.`,
+        { enabled: false }
+      );
+      return;
+    }
+    hideTutorial();
+    return;
+  }
 }
 window.tutorialSteps = tutorialSteps;
