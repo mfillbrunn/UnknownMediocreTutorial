@@ -67,14 +67,6 @@
 .tutorial-bubble.collapsed .tutorial-close {
   transform: rotate(45deg); /* turns X into + */
 }
-@media (max-width: 768px) {
-  .tutorial-bubble {
-    top: 10px;
-    bottom: auto;
-    right: 10px;
-    left: 10px;
-    max-width: none;
-  }
-}
+
 
 
