@@ -89,12 +89,22 @@ function clearHighlights() {
 
 // Continue click
 byId("tutorialContinueBtn")?.addEventListener("click", () => {
-  // only allow continue when we are not waiting for an action
-  if (tutorialWaitingFor) return;
+  console.log("Continue clicked");
+  console.log("tutorialWaitingFor:", tutorialWaitingFor);
+
+  if (tutorialWaitingFor) {
+    console.log("Blocked because waiting");
+    return;
+  }
+
   tutorialSubStep++;
-  // tutorialSteps will re-render next on stateUpdate; but we can force refresh if you want:
-  if (window.state && window.myRole) tutorialSteps(window.state, window.myRole);
+  console.log("Advancing to substep:", tutorialSubStep);
+
+  if (window.state && window.myRole) {
+    tutorialSteps(window.state, window.myRole);
+  }
 });
+
 
 // Optional: call this when the user actually uses a power
 function notifyTutorialPowerUsed(powerId) {
