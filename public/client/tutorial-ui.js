@@ -75,12 +75,29 @@ function highlightKeyboardGuesser() {
 function highlightHistoryGuesser() {
   highlightEl(byId("historyGuesser"));  // <div id="historyGuesser" ...>
 }
+function highlightSetterPreview() {
+  highlightEl(byId("setterPreview")); 
+}
+function highlightSetterWords() {
+  highlightEl(byId("SetterRemainingBox")); 
+}
 function highlightPowersCol() {
   highlightEl(byId("guesserPowerContainer")); // <div id="guesserPowerContainer" ...>
 }
 function highlightPowerInfoBtn() {
   highlightEl(byId("powerInfoBtnGuesser"));
 }
+function highlightKeyboardSetter() {
+  highlightEl(byId("keyboardSetter"));
+}
+function highlightSetterDraft() {
+  highlightEl(byId("draftSetter"));
+}
+function highlightSetterHistory() {
+  highlightEl(byId("setterGuesserSubmitted"));
+}
+
+
 function highlightPowerButtonByText(label) {
   const btns = document.querySelectorAll(".power-btn");
   btns.forEach(btn => {
@@ -96,6 +113,25 @@ function clearHighlights() {
   document.querySelectorAll(".tutorial-highlight")
     .forEach(el => el.classList.remove("tutorial-highlight"));
 }
+// ------------------------
+// Waiting Helpers (Global)
+// ------------------------
+
+function waitForGuessSubmission(round) {
+  tutorialWaitingFor = { type: "guess", round };
+  setContinue({ show: true, enabled: false });
+}
+
+function waitForSecretSubmission(round) {
+  tutorialWaitingFor = { type: "setSecret", round };
+  setContinue({ show: true, enabled: false });
+}
+
+function waitForPowerUse(powerId) {
+  tutorialWaitingFor = { type: "power", powerId };
+  setContinue({ show: true, enabled: false });
+}
+
 
 // Continue click
 byId("tutorialContinueBtn")?.addEventListener("click", () => {
@@ -129,15 +165,9 @@ window.notifyTutorialPowerUsed = notifyTutorialPowerUsed; // expose if needed
 // Main tutorial logic
 // ------------------------
 function tutorialSteps(state, role) {
-  // stop tutorial if not in tutorial
-  console.log("TUTORIAL RUN >>>",
-    { round: state?.history?.length ?? 0,
-      lastTutorialRound,
-      tutorialSubStep,
-      tutorialWaitingFor,
-      isTutorial: !!state?.isTutorial,
-      role,
-      expectedGuesser: state?.guesser });
+const isGuesser = role === state.guesser;
+const isSetter  = role === state.setter;
+  
   if (!state?.isTutorial) {
     lastTutorialRound = null;
     tutorialSubStep = 0;
@@ -156,17 +186,18 @@ function tutorialSteps(state, role) {
     clearHighlights();
   }
 
-  // Helper to wait until a condition changes without letting user "continue" early
-  const waitForGuessSubmission = () => {
-    tutorialWaitingFor = { type: "guess", round };
-    setContinue({ show: true, enabled: false }); // continue disabled: they must act
-  };
+  if (isGuesser) {
+      runGuesserTutorial(state);
+      return;
+    }
+  if (isSetter) {
+    runSetterTutorial(state);
+    return;
+  }
+}
 
-  const waitForPowerUse = (powerId) => {
-    tutorialWaitingFor = { type: "power", powerId };
-    setContinue({ show: true, enabled: false });
-  };
-
+function runGuesserTutorial(state){
+ const round = state.history?.length ?? 0;
   clearHighlights();
 
   // ------------------------
@@ -179,7 +210,7 @@ function tutorialSteps(state, role) {
       { enabled: true, mode: "hide" } // no continue yet; they must submit the guess
     );
     highlightKeyboardGuesser();
-    waitForGuessSubmission();
+    waitForGuessSubmission(round);
     return;
   }
 
@@ -212,7 +243,7 @@ function tutorialSteps(state, role) {
         { enabled: true, mode: "hide" }
       );
       highlightKeyboardGuesser();
-      waitForGuessSubmission();
+      waitForGuessSubmission(round);
       return;
     }
 
@@ -269,7 +300,7 @@ function tutorialSteps(state, role) {
         { enabled: true, mode: "hide" }
       );
       highlightKeyboardGuesser();
-      waitForGuessSubmission();
+      waitForGuessSubmission(round);
       return;
     }
 
@@ -320,4 +351,123 @@ function tutorialSteps(state, role) {
     return;
   }
 }
+
+function runSetterTutorial(state) {
+  const round = state.history?.length ?? 0;
+
+  clearHighlights();
+
+  if (round === 0) {
+    const word = state.tutorialSecrets?.[0];
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `You are the Secret Setter. Enter "${word}" as your secret now. Your opponent will not see it.`,
+        { enabled: false }
+      );
+      highlightKeyboardSetter();
+      waitForSecretSubmission(round);
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  if (round === 1) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `You could change your secret word, but no need to worry for now. You can simply use the old word. Click on enter.`,
+        { enabled: true }
+      );
+      highlightHistoryGuesser();
+      return;
+    }
+    if (round === 2){
+      const word = state.tutorialSecrets?.[2];
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `You can also use powers to make it harder for your opponent. They are different powers but they work the same as for the guesser, so we won't focus on this now.`,
+        { enabled: true }
+      );
+      highlightPowersCol();
+      return;
+    }
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `Now you can see here the preview - this shows you what feedback the guesser would see before you entered a word.`,
+        { enabled: true }
+      );
+      highlightSetterPreview();
+      return;
+    }
+      if (tutorialSubStep === 2) {
+      showTutorial(
+        `If you type in a different word, it will show you the feedback as you type. Try it now - just type any word and you'll see (don't submit it yet).`,
+        { enabled: true }
+      );
+      highlightSetterDraft();
+      return;
+    }
+       if (tutorialSubStep === 3) {
+      showTutorial(
+        `As mentioned before, your secret word does not only need to be a feasible secret - there is a list! - but also fit all of the feedback you have gotten so far.`,
+        { enabled: true }
+      );
+      highlightSetterHistory();
+      return;
+    }
+    if (tutorialSubStep === 4) {
+      showTutorial(
+        `To make it easier for you - when you submit a word that doesn't fit the criteria, the letters that are not allowed will flash in red. Those are the ones you need to change.`,
+        { enabled: true }
+      );
+      highlightSetterDraft();
+      return;
+    }
+      if (tutorialSubStep === 4) {
+      showTutorial(
+        `Now one more thing - this box tells you how well your guess is doing. The number on the left tells you how many possible secrets were possible last round.`,
+        { enabled: true }
+      );
+      highlightSetterWords();
+      return;
+    }
+
+    if (tutorialSubStep === 5) {
+      showTutorial(
+        `The number in the middle shows you how many secrets would remain if you kept your previous secret and didn't change it. The number on the right shows you the number of remaining secrets if you change it to a new word.`,
+        { enabled: true }
+      );
+      highlightSetterWords();
+      return;
+    }
+          if (tutorialSubStep === 6) {
+      showTutorial(
+        `If you have enough time and know the words, you can keep trying until you find the largest number of remaining words. It will likely be the best word!`,
+        { enabled: true }
+      );
+      highlightSetterWords();
+      return;
+    }
+              if (tutorialSubStep === 7) {
+      showTutorial(
+        `Now enough talk - this is it, let's enter a new secret: "${word}"!`,
+         { enabled: true, mode: "hide" }
+      );
+      highlightKeyboardSetter();
+      return;
+    }
+    hideTutorial();
+    return;
+  }
+
+  if (round > 2) {
+    showTutorial(
+      `From here on, play strategically and try to outsmart your opponent.`,
+      { enabled: true, mode: "hide" }
+    );
+  }
+}
+
+
 window.tutorialSteps = tutorialSteps;
