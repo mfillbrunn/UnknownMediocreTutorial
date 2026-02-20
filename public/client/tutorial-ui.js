@@ -5,16 +5,21 @@ let lastTutorialRound = null;     // state.history.length last processed
 let tutorialSubStep = 0;          // sub-step within a round
 let tutorialWaitingFor = null;    // { type: "guess", round } or { type: "power", powerId }
 let tutorialCollapsed = false;
+let tutorialContinueMode = "advance"; 
 
 function qs(sel) { return document.querySelector(sel); }
 function byId(id) { return document.getElementById(id); }
 
-function setContinue({ show = true, enabled = true } = {}) {
+function setContinue({ show = true, enabled = true, mode = "advance" } = {}) {
   const btn = byId("tutorialContinueBtn");
   if (!btn) return;
+
   btn.style.display = show ? "" : "none";
   btn.disabled = !enabled;
+
+  tutorialContinueMode = mode;
 }
+
 
 function showTutorial(text, opts = {}) {
   const bubble = byId("tutorialBubble");
@@ -94,17 +99,15 @@ function clearHighlights() {
 
 // Continue click
 byId("tutorialContinueBtn")?.addEventListener("click", () => {
-  console.log("Continue clicked");
-  console.log("tutorialWaitingFor:", tutorialWaitingFor);
+  if (tutorialWaitingFor) return;
 
-  if (tutorialWaitingFor) {
-    console.log("Blocked because waiting");
+  if (tutorialContinueMode === "hide") {
+    hideTutorial();
     return;
   }
 
+  // default behavior
   tutorialSubStep++;
-  console.log("Advancing to substep:", tutorialSubStep);
-
   if (window.state && window.myRole) {
     tutorialSteps(window.state, window.myRole);
   }
@@ -173,7 +176,7 @@ function tutorialSteps(state, role) {
     const word = state.tutorialGuesses?.[0] || "CRANE"; // fallback
     showTutorial(
       `First, you need to enter your initial guess. Your opponent will put a secret word at the same time without seeing yours. Enter "${word}" and click on the ENTER button.`,
-      { enabled: false } // no continue yet; they must submit the guess
+      { enabled: true, mode: "hide" } // no continue yet; they must submit the guess
     );
     highlightKeyboardGuesser();
     waitForGuessSubmission();
@@ -206,7 +209,7 @@ function tutorialSteps(state, role) {
       const word = state.tutorialGuesses?.[1] || "BESTI";
       showTutorial(
         `Now it's time to enter another guess. Enter "${word}". Unlike the secret setter, you can reuse letters you've already guessed, and you can still guess letters that end up not being in the secret.`,
-        { enabled: false }
+        { enabled: true, mode: "hide" }
       );
       highlightKeyboardGuesser();
       waitForGuessSubmission();
@@ -262,8 +265,8 @@ function tutorialSteps(state, role) {
     if (tutorialSubStep === 4) {
       const word = state.tutorialGuesses?.[2] || "RODNY";
       showTutorial(
-        `Now it's time to enter a final guess — "${word}".`,
-        { enabled: false }
+        `Now it's time to enter another guess — "${word}".`,
+        { enabled: true, mode: "hide" }
       );
       highlightKeyboardGuesser();
       waitForGuessSubmission();
@@ -309,7 +312,7 @@ function tutorialSteps(state, role) {
       const word = state.tutorialGuesses?.[2] || "RODNY";
       showTutorial(
         `From here on out, finish the game on your own. After you have guessed the word, you'll play the other side.`,
-        { enabled: false }
+        { enabled: true, mode: "hide" }
       );
       return;
     }
