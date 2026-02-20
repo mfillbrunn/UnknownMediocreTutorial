@@ -122,6 +122,14 @@ window.notifyTutorialPowerUsed = notifyTutorialPowerUsed; // expose if needed
 // ------------------------
 function tutorialSteps(state, role) {
   // stop tutorial if not in tutorial
+  console.log("TUTORIAL RUN >>>",
+    { round: state?.history?.length ?? 0,
+      lastTutorialRound,
+      tutorialSubStep,
+      tutorialWaitingFor,
+      isTutorial: !!state?.isTutorial,
+      role,
+      expectedGuesser: state?.guesser });
   if (!state?.isTutorial) {
     lastTutorialRound = null;
     tutorialSubStep = 0;
