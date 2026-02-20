@@ -382,6 +382,7 @@ function runSetterTutorial(state) {
       highlightHistoryGuesser();
       return;
     }
+  }
     if (round === 2){
       const word = state.tutorialSecrets?.[2];
     if (tutorialSubStep === 0) {
@@ -424,7 +425,7 @@ function runSetterTutorial(state) {
       highlightSetterDraft();
       return;
     }
-      if (tutorialSubStep === 4) {
+      if (tutorialSubStep === 5) {
       showTutorial(
         `Now one more thing - this box tells you how well your guess is doing. The number on the left tells you how many possible secrets were possible last round.`,
         { enabled: true }
@@ -433,7 +434,7 @@ function runSetterTutorial(state) {
       return;
     }
 
-    if (tutorialSubStep === 5) {
+    if (tutorialSubStep === 6) {
       showTutorial(
         `The number in the middle shows you how many secrets would remain if you kept your previous secret and didn't change it. The number on the right shows you the number of remaining secrets if you change it to a new word.`,
         { enabled: true }
@@ -441,7 +442,7 @@ function runSetterTutorial(state) {
       highlightSetterWords();
       return;
     }
-          if (tutorialSubStep === 6) {
+          if (tutorialSubStep === 7) {
       showTutorial(
         `If you have enough time and know the words, you can keep trying until you find the largest number of remaining words. It will likely be the best word!`,
         { enabled: true }
@@ -449,12 +450,13 @@ function runSetterTutorial(state) {
       highlightSetterWords();
       return;
     }
-              if (tutorialSubStep === 7) {
+              if (tutorialSubStep === 8) {
       showTutorial(
         `Now enough talk - this is it, let's enter a new secret: "${word}"!`,
          { enabled: true, mode: "hide" }
       );
       highlightKeyboardSetter();
+      waitForSecretSubmission(round);
       return;
     }
     hideTutorial();
