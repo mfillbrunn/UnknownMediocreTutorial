@@ -76,8 +76,13 @@ function highlightPowersCol() {
 function highlightPowerInfoBtn() {
   highlightEl(byId("powerInfoBtnGuesser"));
 }
-function highlightPowerButton(powerId) {
-  highlightEl(qs(`[data-power-id="${powerId}"]`));
+function highlightPowerButtonByText(label) {
+  const btns = document.querySelectorAll(".power-btn");
+  btns.forEach(btn => {
+    if (btn.textContent.trim() === label) {
+      highlightEl(btn);
+    }
+  });
 }
 function highlightGuesserBadge() {
   highlightEl(byId("GuesserInfoBadge"));
@@ -249,7 +254,7 @@ function tutorialSteps(state, role) {
         `Now use the Leak Info power. It will reveal a random letter.`,
         { enabled: false }
       );
-      highlightPowerButton("revealGreen"); // Leak Info in your wording, revealGreen in code
+      highlightPowerButtonByText("Leak Info");
       waitForPowerUse("revealGreen");
       return;
     }
