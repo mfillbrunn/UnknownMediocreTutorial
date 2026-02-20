@@ -139,7 +139,6 @@ function tutorialSteps(state, role) {
   // round transition => reset substeps unless we are mid-wait for a power/guess
   if (round !== lastTutorialRound) {
     lastTutorialRound = round;
-    tutorialSubStep = 0;
     tutorialWaitingFor = null;
     clearHighlights();
   }
@@ -283,7 +282,7 @@ function tutorialSteps(state, role) {
         `This power hides the feedback for each tile and just shows you the number of green and yellow tiles. You see info for powers used here.`,
         { enabled: true }
       );
-      highlightGuesserBadge;
+      highlightGuesserBadge();
       return;
     }
 
@@ -296,7 +295,7 @@ function tutorialSteps(state, role) {
       return;
     }
 
-   if (tutorialSubStep === 4) {
+   if (tutorialSubStep === 3) {
       const word = state.tutorialGuesses?.[2] || "RODNY";
       showTutorial(
         `From here on out, finish the game on your own. After you have guessed the word, you'll play the other side.`,
