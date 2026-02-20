@@ -9,7 +9,7 @@ class TutorialMode {
     state.matchOver = false;
     
     // Tutorial metadata
-    state.scriptedTurns = 3;
+    state.scriptedTurns = 4;
 
     // Fixed secret & guesses
     state.tutorialSecrets = ["BLIMP", "BLIMP", "LEMUR"]
