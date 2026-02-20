@@ -144,11 +144,11 @@ function tutorialSteps(state, role) {
   }
 
   // Only tutorial for guesser side (your described flow)
-    const round = state.history?.length ?? 0;
-
+  const round = state.history?.length ?? 0;
   // round transition => reset substeps unless we are mid-wait for a power/guess
   if (round !== lastTutorialRound) {
     lastTutorialRound = round;
+    tutorialSubStep = 0;
     tutorialWaitingFor = null;
     clearHighlights();
   }
