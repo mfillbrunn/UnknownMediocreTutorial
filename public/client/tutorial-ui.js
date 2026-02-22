@@ -187,18 +187,18 @@ const isSetter  = role === state.setter;
   }
 
   if (isGuesser) {
-      runGuesserTutorial(state);
+      runGuesserTutorial(state, role);
       return;
     }
   if (isSetter) {
-    runSetterTutorial(state);
+    runSetterTutorial(state, role);
     return;
   }
 }
 
-function runGuesserTutorial(state){
+function runGuesserTutorial(state,role){
  const round = state.history?.length ?? 0;
-  if (state.turn != state.guesser){return;}
+  if (role != state.guesser){return;}
   clearHighlights();
 
   // ------------------------
@@ -353,9 +353,9 @@ function runGuesserTutorial(state){
   }
 }
 
-function runSetterTutorial(state) {
+function runSetterTutorial(state, role) {
   const round = state.history?.length ?? 0;
-  if (state.turn != state.setter){return;}
+  if (role != state.setter){return;}
   clearHighlights();
 
   if (round === 0) {
