@@ -1,56 +1,71 @@
 .tutorial-bubble {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
-  max-width: 280px;
-  background: #1f1f1f;
-  color: white;
-  padding: 14px 16px;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  right: 24px;
+  bottom: 24px;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+
+  background: linear-gradient(145deg, #1e1e1e, #171717);
+  color: #f5f5f5;
+
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.45),
+    0 0 0 1px rgba(255,255,255,0.03) inset;
+
+  padding: 0;
+  overflow: hidden;
+
   z-index: 9999;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  pointer-events: auto;
-  width: auto;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
+
 
 .tutorial-bubble.hidden {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(16px) scale(0.98);
   pointer-events: none;
 }
+
 
 .tutorial-content {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-
 .tutorial-close {
-  align-self: flex-end;
   background: transparent;
   border: none;
-  color: #aaa;
-  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+  font-size: 16px;
   cursor: pointer;
+  transition: color 0.15s ease, transform 0.15s ease;
 }
 
+.tutorial-close:hover {
+  color: white;
+  transform: scale(1.1);
+}
 .tutorial-highlight {
-  animation: tutorialPulse 1.5s infinite;
-  outline: 3px solid rgba(255, 215, 0, 0.95);
-  outline-offset: 6px;
-  border-radius: 10px;
+  position: relative;
+  z-index: 10;
+  outline: 3px solid rgba(255, 213, 79, 0.95);
+  outline-offset: 4px;
+  border-radius: 12px;
+  animation: tutorialPulse 1.8s ease-in-out infinite;
 }
-
 
 @keyframes tutorialPulse {
-  0% { box-shadow: 0 0 0px rgba(0,255,204,0.7); }
-  50% { box-shadow: 0 0 12px rgba(0,255,204,0.7); }
-  100% { box-shadow: 0 0 0px rgba(0,255,204,0.7); }
+  0%   { box-shadow: 0 0 0 0 rgba(255,213,79,0.5); }
+  70%  { box-shadow: 0 0 0 12px rgba(255,213,79,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,213,79,0); }
 }
+
 .tutorial-bubble.collapsed {
-  width: 120px;
-  padding: 8px 12px;
+  width: auto;
+  padding: 10px 16px;
   cursor: pointer;
 }
 
@@ -58,14 +73,68 @@
   display: none;
 }
 
+.tutorial-bubble.collapsed .tutorial-header {
+  border-bottom: none;
+}
+
+
 .tutorial-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.tutorial-header span {
+  color: #ffd54f;
 }
 
 .tutorial-bubble.collapsed .tutorial-close {
   transform: rotate(45deg); /* turns X into + */
+}
+.tutorial-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#tutorialText {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #eaeaea;
+}
+.tutorial-controls {
+  display: flex;
+  justify-content: flex-end;
+}
+
+#tutorialContinueBtn {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 8px;
+  background: #ffd54f;
+  color: #111;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+#tutorialContinueBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(255,213,79,0.4);
+}
+
+#tutorialContinueBtn:active {
+  transform: translateY(0px);
+  box-shadow: none;
 }
 
 
