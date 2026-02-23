@@ -16,10 +16,6 @@ function setContinue({ show = true, enabled = true, mode = "advance" } = {}) {
 
   btn.style.display = show ? "" : "none";
   btn.disabled = !enabled;
-
-  if (mode === "hide") {
-    toggleTutorial();
-  }
 }
 
 
@@ -218,6 +214,7 @@ function runGuesserTutorial(state,role){
       `First, you need to enter your initial guess. Your opponent will put a secret word at the same time without seeing yours. Enter "${word}" and click on the ENTER button.`,
       { enabled: true, mode: "hide" } // no continue yet; they must submit the guess
     );
+    tutorialContinueMode = "hide";
     highlightKeyboardGuesser();
     waitForGuessSubmission(round);
     return;
@@ -233,6 +230,7 @@ function runGuesserTutorial(state,role){
         { enabled: true }
       );
       highlightHistoryGuesser();
+    tutorialContinueMode = "advance";
       return;
     }
 
@@ -242,6 +240,7 @@ function runGuesserTutorial(state,role){
         { enabled: true }
       );
       highlightHistoryGuesser();
+      tutorialContinueMode = "advance";
       return;
     }
 
@@ -253,6 +252,7 @@ function runGuesserTutorial(state,role){
       );
       highlightKeyboardGuesser();
       waitForGuessSubmission(round);
+      tutorialContinueMode = "hide";
       return;
     }
 
@@ -271,6 +271,7 @@ function runGuesserTutorial(state,role){
         { enabled: true }
       );
       highlightPowersCol();
+      tutorialContinueMode = "advance";
       return;
     }
 
@@ -280,6 +281,7 @@ function runGuesserTutorial(state,role){
         { enabled: true }
       );
       highlightPowersCol();
+      tutorialContinueMode = "advance";
       return;
     }
 
@@ -289,6 +291,7 @@ function runGuesserTutorial(state,role){
         { enabled: true }
       );
       highlightPowerInfoBtn();
+      tutorialContinueMode = "advance";
       return;
     }
 
@@ -299,6 +302,7 @@ function runGuesserTutorial(state,role){
       );
       highlightPowerButtonByText("Leak Info");
       waitForPowerUse("revealGreen");
+      tutorialContinueMode = "advance";
       return;
     }
 
@@ -309,6 +313,7 @@ function runGuesserTutorial(state,role){
         { enabled: true, mode: "hide" }
       );
       highlightKeyboardGuesser();
+      tutorialContinueMode = "hide";
       waitForGuessSubmission(round);
       return;
     }
@@ -327,6 +332,7 @@ function runGuesserTutorial(state,role){
         { enabled: true }
       );
       highlightHistoryGuesser();
+      tutorialContinueMode = "advance";
       return;
     }
 
@@ -336,6 +342,7 @@ function runGuesserTutorial(state,role){
         { enabled: true }
       );
       highlightGuesserBadge();
+      tutorialContinueMode = "advance";
       return;
     }
 
@@ -345,6 +352,7 @@ function runGuesserTutorial(state,role){
         { enabled: true }
       );
       highlightPowerInfoBtn();
+      tutorialContinueMode = "advance";
       return;
     }
 
@@ -354,7 +362,8 @@ function runGuesserTutorial(state,role){
         `From here on out, finish the game on your own. After you have guessed the word, you'll play the other side.`,
         { enabled: true, mode: "hide" }
       );
-      return;
+     tutorialContinueMode = "hide"; 
+     return;
     }
     hideTutorial();
     return;
@@ -373,6 +382,7 @@ function runSetterTutorial(state, role) {
         { enabled: false }
       );
       highlightKeyboardSetter();
+      tutorialContinueMode = "hide"; 
       waitForSecretSubmission(round);
       return;
     }
@@ -388,6 +398,7 @@ function runSetterTutorial(state, role) {
         { enabled: true }
       );
       highlightHistoryGuesser();
+      tutorialContinueMode = "advance"; 
       return;
     }
   if (tutorialSubStep === 1) {
@@ -396,8 +407,10 @@ function runSetterTutorial(state, role) {
         { enabled: true, mode: "hide" }
       );
       highlightHistoryGuesser();
+      tutorialContinueMode = "hide"; 
       return;
     }
+    
   }
     if (round === 2){
       const word = state.tutorialSecrets?.[2];
@@ -407,6 +420,7 @@ function runSetterTutorial(state, role) {
         { enabled: true }
       );
       highlightPowersCol();
+      tutorialContinueMode = "advance"; 
       return;
     }
     if (tutorialSubStep === 1) {
@@ -415,6 +429,7 @@ function runSetterTutorial(state, role) {
         { enabled: true }
       );
       highlightSetterPreview();
+      tutorialContinueMode = "advance"; 
       return;
     }
       if (tutorialSubStep === 2) {
@@ -423,6 +438,7 @@ function runSetterTutorial(state, role) {
         { enabled: true }
       );
       highlightSetterDraft();
+      tutorialContinueMode = "advance"; 
       return;
     }
        if (tutorialSubStep === 3) {
@@ -431,6 +447,7 @@ function runSetterTutorial(state, role) {
         { enabled: true }
       );
       highlightSetterHistory();
+      tutorialContinueMode = "advance"; 
       return;
     }
     if (tutorialSubStep === 4) {
@@ -439,6 +456,7 @@ function runSetterTutorial(state, role) {
         { enabled: true }
       );
       highlightSetterDraft();
+      tutorialContinueMode = "advance"; 
       return;
     }
       if (tutorialSubStep === 5) {
@@ -447,6 +465,7 @@ function runSetterTutorial(state, role) {
         { enabled: true }
       );
       highlightSetterWords();
+      tutorialContinueMode = "advance"; 
       return;
     }
 
@@ -456,6 +475,7 @@ function runSetterTutorial(state, role) {
         { enabled: true }
       );
       highlightSetterWords();
+      tutorialContinueMode = "advance"; 
       return;
     }
           if (tutorialSubStep === 7) {
@@ -464,6 +484,7 @@ function runSetterTutorial(state, role) {
         { enabled: true }
       );
       highlightSetterWords();
+      tutorialContinueMode = "advance"; 
       return;
     }
               if (tutorialSubStep === 8) {
@@ -472,6 +493,7 @@ function runSetterTutorial(state, role) {
          { enabled: true, mode: "hide" }
       );
       highlightKeyboardSetter();
+      tutorialContinueMode = "hide"; 
       waitForSecretSubmission(round);
       return;
     }
@@ -483,7 +505,8 @@ function runSetterTutorial(state, role) {
     showTutorial(
       `From here on, play strategically and try to outsmart your opponent.`,
       { enabled: true, mode: "hide" }
-    );
+    );    
+    hideTutorial();
   }
 }
 
@@ -495,6 +518,7 @@ function runSummaryTutorial(state){
         `The first round ended. In this tutorial, you tried to guess the secret word, but in a real match, whichever role you play first is randomly determined.`,
         { enabled: true }
       );
+      tutorialContinueMode = "advance"; 
        return;
     }
       if (tutorialSubStep === 1) {
@@ -502,6 +526,7 @@ function runSummaryTutorial(state){
         `The next round will have you play as the other role. You will have the same power as your opponent just had against you, and they will have your powers.`,
         { enabled: true }
       );
+      tutorialContinueMode = "advance"; 
        return;
     }
   if (tutorialSubStep === 2) {
@@ -510,6 +535,7 @@ function runSummaryTutorial(state){
         { enabled: true }
       );
       highlightHistoryGuesser();
+      tutorialContinueMode = "advance"; 
       return;
     }
     if (tutorialSubStep === 3) {
@@ -518,6 +544,7 @@ function runSummaryTutorial(state){
         { enabled: true }
       );
       highlightHistoryGuesser();
+      tutorialContinueMode = "hide"; 
       return;
     }
 }
@@ -528,29 +555,33 @@ function runMatchTutorial(state){
         `The match ended! On this screen, you will see a summary of both rounds and see who won - the player with the fewer guesses!`,
         { enabled: true }
       );
+      tutorialContinueMode = "advance"; 
        return;
     }
-    if (tutorialSubStep === 2) {
+    if (tutorialSubStep === 1) {
       showTutorial(
         `If there is a tie, then the player who took less time wins - so be quick!`,
         { enabled: true }
       );
       highlightHistoryGuesser();
+      tutorialContinueMode = "advance"; 
       return;
     }
-  if (tutorialSubStep === 3) {
+  if (tutorialSubStep === 2) {
       showTutorial(
         `Try out other games - the powers will vary and there will be a lot of different ones, and they could really change the game!`,
         { enabled: true }
       );
+      tutorialContinueMode = "advance"; 
       highlightHistoryGuesser();
       return;
     }
-    if (tutorialSubStep === 4) {
+    if (tutorialSubStep === 3) {
       showTutorial(
         `For now, thank you for choosing the game and the tutorial is over. Have fun and good luck!`,
         { enabled: true }
       );
+      tutorialContinueMode = "hide"; 
       highlightHistoryGuesser();
       return;
     }
