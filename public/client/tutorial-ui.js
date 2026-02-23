@@ -361,7 +361,7 @@ function runGuesserTutorial(state,role){
       );
       highlightPowerButtonByText("Leak Info");
       waitForPowerUse("revealGreen");
-      tutorialContinueMode = "advance";
+      tutorialContinueMode = "hide";
       return;
     }
 
