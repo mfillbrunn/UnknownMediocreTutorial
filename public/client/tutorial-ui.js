@@ -20,13 +20,27 @@ function setContinue({ show = true, enabled = true, mode = "advance" } = {}) {
 function updateActionBadge() {
   const badge = byId("tutorialActionBadge");
   if (!badge) return;
+  let word;
+  if (state.phase === "simultaneous"){
+    if (state.roles["AI"]===state.guesser){
+      word =  state.tutorialSecrets?.[state.history.length]; 
+    }else{
+      word =  state.tutorialGuesses?.[state.history.length];
+    }
+  } else{
+    if (state.turn === state.guesser){
+    word =  state.tutorialGuesses?.[state.history.length]; 
+    } else{
+    word =  state.tutorialSecrets?.[state.history.length]; 
+    }
+  }
   badge.textContent =
   tutorialWaitingFor?.type === "guess"
-    ? "ENTER GUESS"
+    ? `ENTER "${word}"'
     : tutorialWaitingFor?.type === "power"
-    ? "USE POWER"
+    ? "USE LEAK INFO"
     : tutorialWaitingFor?.type === "setSecret"
-    ? "ENTER SECRET"
+    ? `ENTER "${word}"'
     : "ACTION";
 
   const shouldShow =
