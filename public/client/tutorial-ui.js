@@ -187,6 +187,7 @@ window.notifyTutorialPowerUsed = notifyTutorialPowerUsed; // expose if needed
 function tutorialSteps(state, role) {
 const isGuesser = role === state.guesser;
 const isSetter  = role === state.setter;
+  if (state.phase === "Normal" && window.myRole != state.turn){return;}
   updateActionBadge();
   if (!state?.isTutorial) {
     lastTutorialRound = null;
