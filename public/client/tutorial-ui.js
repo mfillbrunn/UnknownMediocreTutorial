@@ -186,11 +186,11 @@ const isSetter  = role === state.setter;
     clearHighlights();
   }
 
-  if (state.turn === "B") {
+  if (state.roles["AI"] === "A") {
       runGuesserTutorial(state, role);
       return;
     }
-  if (state.turn === "A") {
+  if (state.roles["AI"] === "B") {
     runSetterTutorial(state, role);
     return;
   }
