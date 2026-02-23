@@ -14,8 +14,8 @@ class TutorialMode {
     // Fixed secret & guesses
     state.tutorialSecrets = ["BLIMP", "BLIMP", "LEMUR"]
     state.tutorialGuesses = ["DRAPE", "BESTI", "RODNY"];
-    state.tutorialSecretsAI = ["DORKY", "DORKY", "DORKY"];
-    state.tutorialGuessesAI = ["SMALL", "GOQKY", "BLIND"];
+    state.tutorialSecretsAI = ["DORKY", "DORKY", "DORKY", "DORKY"];
+    state.tutorialGuessesAI = ["SMALL", "GOQKY", "BLIND", "FRESH"];
     state.timeControl.enabled = false;
     // No randomness
     state.shuffle = false;
