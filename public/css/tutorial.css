@@ -137,5 +137,33 @@
   box-shadow: none;
 }
 
+.tutorial-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tutorial-action {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  padding: 3px 6px;
+  border-radius: 999px;
+
+  background: #ff3b3b;
+  color: white;
+
+  animation: tutorialActionPulse 1.6s ease-in-out infinite;
+}
+
+.tutorial-action.hidden {
+  display: none;
+}
+
+@keyframes tutorialActionPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 59, 59, 0.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(255, 59, 59, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 59, 59, 0); }
+}
 
 
