@@ -17,6 +17,26 @@ function setContinue({ show = true, enabled = true, mode = "advance" } = {}) {
   btn.style.display = show ? "" : "none";
 }
 
+function updateActionBadge() {
+  const badge = byId("tutorialActionBadge");
+  if (!badge) return;
+  badge.textContent =
+  tutorialWaitingFor?.type === "guess"
+    ? "ENTER GUESS"
+    : tutorialWaitingFor?.type === "power"
+    ? "USE POWER"
+    : tutorialWaitingFor?.type === "setSecret"
+    ? "ENTER SECRET"
+    : "ACTION";
+
+  const shouldShow =
+    tutorialWaitingFor &&
+    (tutorialWaitingFor.type === "guess" ||
+     tutorialWaitingFor.type === "setSecret" ||
+     tutorialWaitingFor.type === "power");
+
+  badge.classList.toggle("hidden", !shouldShow);
+}
 
 function showTutorial(text, opts = {}) {
   const bubble = byId("tutorialBubble");
@@ -42,6 +62,7 @@ function hideTutorial() {
   bubble.classList.remove("collapsed");
 
   tutorialWaitingFor = null;
+  updateActionBadge();
   clearHighlights();
 }
 
@@ -117,16 +138,19 @@ function clearHighlights() {
 function waitForGuessSubmission(round) {
   tutorialWaitingFor = { type: "guess", round };
   setContinue({ show: true, enabled: false });
+  updateActionBadge();
 }
 
 function waitForSecretSubmission(round) {
   tutorialWaitingFor = { type: "setSecret", round };
   setContinue({ show: true, enabled: false });
+  updateActionBadge();
 }
 
 function waitForPowerUse(powerId) {
   tutorialWaitingFor = { type: "power", powerId };
   setContinue({ show: true, enabled: false });
+  updateActionBadge();
 }
 
 
@@ -148,6 +172,7 @@ function notifyTutorialPowerUsed(powerId) {
   if (!tutorialWaitingFor) return;
   if (tutorialWaitingFor.type === "power" && tutorialWaitingFor.powerId === powerId) {
     tutorialWaitingFor = null;
+    updateActionBadge();
     tutorialSubStep++; // advance to next message
     if (window.state && window.myRole) tutorialSteps(window.state, window.myRole);
   }
