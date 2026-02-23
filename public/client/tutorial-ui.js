@@ -33,7 +33,7 @@ function updateActionBadge() {
   }
   else if (waitingType === "setSecret") {
     word = state.tutorialSecrets?.[round];
-    if (state.secret === state.tutorialSecrets.[round]) {word = "";}
+    if (state.secret === state.tutorialSecrets[round]) {word = "";}
   }
 
   // --- Determine badge label ---
