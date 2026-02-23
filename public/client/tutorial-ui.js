@@ -33,6 +33,7 @@ function updateActionBadge() {
   }
   else if (waitingType === "setSecret") {
     word = state.tutorialSecrets?.[round];
+    if (state.secret === state.tutorialSecrets.[round]) {word = "";}
   }
 
   // --- Determine badge label ---
@@ -312,7 +313,7 @@ function runGuesserTutorial(state,role){
 
     if (tutorialSubStep === 1) {
       showTutorial(
-        `Except for the first guess, your opponent will see your guess and can then change the secret word to whatever they want - typically to make it harder for you. But - all secrets must respect constraints from our guesses so far.`,
+        `Except for the first guess, your opponent will see your guess and can then change the secret word to whatever they want - typically to make it harder for you. But - all secrets must respect constraints from your guesses so far.`,
         { enabled: true }
       );
       highlightHistoryGuesser();
@@ -454,7 +455,23 @@ function runSetterTutorial(state, role) {
     const word = state.tutorialSecrets?.[0];
     if (tutorialSubStep === 0) {
       showTutorial(
-        `You are the Secret Setter. Enter "${word}" as your secret now. Your opponent will not see it.`,
+        `You are now the Spy. As the spy, you will pick a secret word and try to hide it as long as they can from the Inspector.`,
+        { enabled: false }
+      );
+      tutorialContinueMode = "advance"; 
+      return;
+    }
+        if (tutorialSubStep === 1) {
+      showTutorial(
+        `This role is more complicated, and we will go through carefully to show you exactly how to play it best.`,
+        { enabled: false }
+      );
+      tutorialContinueMode = "advance"; 
+      return;
+    }
+        if (tutorialSubStep === 2) {
+      showTutorial(
+        `In the first round, you enter a secret word - your opponent will not see it. Enter "${word}".`,
         { enabled: false }
       );
       highlightKeyboardSetter();
@@ -470,24 +487,49 @@ function runSetterTutorial(state, role) {
   if (round === 1) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `Your opponent used the nonsense power- their guess did not have to make sense.`,
+        `Now two guesses are shown here - the first guess at the top which was already scored.`,
         { enabled: true }
       );
       highlightHistoryGuesser();
       tutorialContinueMode = "advance"; 
       return;
     }
-  if (tutorialSubStep === 1) {
+    if (tutorialSubStep === 1) {
       showTutorial(
-        `You could change your secret word, but no need to worry for now. You can simply use the old word. Click on enter.`,
+        `And now the second guess. The second guess has not been scored yet. Every turn (after the first one), as the spy, you will be able to see the guess before deciding whether you want to keep your previous secret or change it.`,
+        { enabled: true }
+      );
+      highlightHistoryGuesser();
+      tutorialContinueMode = "advance"; 
+      return;
+    }
+  if (tutorialSubStep === 2) {
+      showTutorial(
+        `Generally, you will want to change your secret if you give a lot of additional information (for example greens or yellows) to the Inspector.`,
+        { enabled: true }
+      );
+      tutorialContinueMode = "advance"; 
+      return;
+    }
+    if (tutorialSubStep === 3) {
+      showTutorial(
+        `One thing you'll notice is that the guess makes no sense - that is because the Inspector used a power so that their guess did not have to make sense.`,
+        { enabled: true, mode: "hide" }
+      );
+      highlightHistoryGuesser();
+      tutorialContinueMode = "advance"; 
+      return;
+    } 
+    if (tutorialSubStep === 4) {
+      showTutorial(
+        `You could change your secret word, but no need to worry for now - you didn't give any new information. You can simply use the old word. Click on enter.`,
         { enabled: true, mode: "hide" }
       );
       highlightHistoryGuesser();
       tutorialContinueMode = "hide"; 
       waitForSecretSubmission(round);
       return;
-    }
-    
+    } 
   }
     if (round === 2){
       const word = state.tutorialSecrets?.[2];
