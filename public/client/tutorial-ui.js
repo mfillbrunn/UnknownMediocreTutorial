@@ -49,7 +49,6 @@ function toggleTutorial() {
   const bubble = byId("tutorialBubble");
   if (!bubble) return;
   tutorialCollapsed = !tutorialCollapsed;
-  console.log("collapsed now:", tutorialCollapsed);
   bubble.classList.toggle("collapsed", tutorialCollapsed);
 }
 
@@ -133,11 +132,7 @@ function waitForPowerUse(powerId) {
 
 // Continue click
 byId("tutorialContinueBtn")?.addEventListener("click", (e) => {
-  console.log("clicked");
-  console.log(tutorialContinueMode);
-
   if (tutorialContinueMode === "hide") {
-    console.log("hiding");
     toggleTutorial();
     return;
   }
