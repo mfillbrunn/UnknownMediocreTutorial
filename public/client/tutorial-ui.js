@@ -59,7 +59,7 @@ byId("tutorialToggleBtn")?.addEventListener("click", e => {
   toggleTutorial();
 });
 byId("tutorialBubble")?.addEventListener("click", () => {
-  if (tutorialCollapsed) toggleTutorial();
+  if (tutorialCollapsed && tutorialContinueMode != "hide") toggleTutorial();
 });
 
 // Highlight helpers
