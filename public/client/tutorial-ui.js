@@ -198,7 +198,6 @@ const isSetter  = role === state.setter;
 
 function runGuesserTutorial(state,role){
  const round = state.history?.length ?? 0;
-  if (role != state.guesser){return;}
   clearHighlights();
 
   // ------------------------
@@ -355,7 +354,6 @@ function runGuesserTutorial(state,role){
 
 function runSetterTutorial(state, role) {
   const round = state.history?.length ?? 0;
-  if (role != state.setter){return;}
   clearHighlights();
 
   if (round === 0) {
