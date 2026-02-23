@@ -17,7 +17,9 @@ function setContinue({ show = true, enabled = true, mode = "advance" } = {}) {
   btn.style.display = show ? "" : "none";
   btn.disabled = !enabled;
 
-  tutorialContinueMode = mode;
+    if (mode !== undefined) {
+    tutorialContinueMode = mode;
+  }
 }
 
 
@@ -490,22 +492,29 @@ function runSummaryTutorial(state){
 
     if (tutorialSubStep === 0) {
       showTutorial(
-        `The first round ended. In this tutorial, you tried to guess the secret word, but in a real match, whichever role you play is randomly determined.`,
+        `The first round ended. In this tutorial, you tried to guess the secret word, but in a real match, whichever role you play first is randomly determined.`,
         { enabled: true }
       );
        return;
     }
-  if (tutorialSubStep === 1) {
+      if (tutorialSubStep === 1) {
       showTutorial(
         `The next round will have you play as the other role. You will have the same power as your opponent just had against you, and they will have your powers.`,
+        { enabled: true }
+      );
+       return;
+    }
+  if (tutorialSubStep === 2) {
+      showTutorial(
+        `On this screen, you can see which secret words and guesses each player made, as well as the feedback that was shown and how many secret words remained.`,
         { enabled: true }
       );
       highlightHistoryGuesser();
       return;
     }
-    if (tutorialSubStep === 2) {
+    if (tutorialSubStep === 3) {
       showTutorial(
-        `The winner will be the one who used fewer guesses to guess the secret word. Good luck!`,
+        `The winner will be the one who used fewer guesses when they had to guess the secret word. Now it is time for the second round - Good luck!`,
         { enabled: true }
       );
       highlightHistoryGuesser();
