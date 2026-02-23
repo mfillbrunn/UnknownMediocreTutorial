@@ -34,7 +34,9 @@ function updateActionBadge() {
     (tutorialWaitingFor.type === "guess" ||
      tutorialWaitingFor.type === "setSecret" ||
      tutorialWaitingFor.type === "power");
-
+  const continueBtn = byId("tutorialContinueBtn");
+  if (shouldShow) {continueBtn.textContent = "Hide";}
+  if (!shouldShow) {continueBtn.textContent = "Continue";}
   badge.classList.toggle("hidden", !shouldShow);
 }
 
@@ -232,7 +234,7 @@ function runGuesserTutorial(state,role){
     const word = state.tutorialGuesses?.[0] || "CRANE"; // fallback
     if (tutorialSubStep === 0) {
       showTutorial(
-        `Hello! Thank you for playing - now let's learn how to play.`,
+        `Welcome! Let’s walk through how the game works.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
@@ -240,7 +242,7 @@ function runGuesserTutorial(state,role){
     }
       if (tutorialSubStep === 1) {
       showTutorial(
-        `Press continue when you're ready for the next steps. Sometimes, the tutorial will require you to enter a guess or use a power, and it will be shown with a red Action.`,
+        `Press continue when you're ready for the next steps. Whenever the tutorial requires you to act (enter a guess or use a power), you’ll see a red ACTION label in the header.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
@@ -248,7 +250,7 @@ function runGuesserTutorial(state,role){
     }
     if (tutorialSubStep === 2) {
       showTutorial(
-        `In the first round you will play as the Inspector. This role is quite similar to that of regular Wordle - you will enter words to guess your opponent's secret word.`,
+        `In the first round, you play as the Inspector. This role works similarly to Wordle: you enter guesses to find your opponent’s secret word.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
@@ -256,7 +258,7 @@ function runGuesserTutorial(state,role){
     }
         if (tutorialSubStep === 3) {
       showTutorial(
-        `There are some differences, and one of them are powers - they change how the game is played dramatically! But more to that later.`,
+        `However, this game adds powers, which can significantly change how a round unfolds. We’ll cover them shortly.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
@@ -292,7 +294,7 @@ function runGuesserTutorial(state,role){
 
     if (tutorialSubStep === 1) {
       showTutorial(
-        `Your opponent can change the secret word — but all future secrets must respect constraints from the feedback (e.g., keep greens fixed, include yellows somewhere, and avoid greys).`,
+        `Except for the first guess, your opponent will see your guess and can then change the secret word to whatever they want - typically to make it harder for you. But - all secrets must respect constraints from our guesses so far.`,
         { enabled: true }
       );
       highlightHistoryGuesser();
@@ -353,7 +355,7 @@ function runGuesserTutorial(state,role){
 
     if (tutorialSubStep === 3) {
       showTutorial(
-        `Now use the Leak Info power. It will reveal a random letter.`,
+        `Use the Leak Info power now. It will reveal one correct letter and its position.`,
         { enabled: false }
       );
       highlightPowerButtonByText("Leak Info");
@@ -499,7 +501,7 @@ function runSetterTutorial(state, role) {
     }
        if (tutorialSubStep === 3) {
       showTutorial(
-        `As mentioned before, your secret word does not only need to be a feasible secret - there is a list! - but also fit all of the feedback you have gotten so far.`,
+        `Your secret must be a valid word from the allowed list and must satisfy all previous feedback constraints.`,
         { enabled: true }
       );
       highlightSetterHistory();
@@ -527,7 +529,9 @@ function runSetterTutorial(state, role) {
 
     if (tutorialSubStep === 6) {
       showTutorial(
-        `The number in the middle shows you how many secrets would remain if you kept your previous secret, the number on the right shows you the number of remaining secrets if do change it.`,
+        `The left number shows how many secrets were possible last round.
+The middle number shows how many remain if you keep your current secret.
+The right number shows how many would remain if you switch to the drafted word.`,
         { enabled: true }
       );
       highlightSetterWords();
