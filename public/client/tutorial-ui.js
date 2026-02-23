@@ -185,7 +185,7 @@ window.notifyTutorialPowerUsed = notifyTutorialPowerUsed; // expose if needed
 function tutorialSteps(state, role) {
 const isGuesser = role === state.guesser;
 const isSetter  = role === state.setter;
-  
+  updateActionBadge();
   if (!state?.isTutorial) {
     lastTutorialRound = null;
     tutorialSubStep = 0;
@@ -230,15 +230,51 @@ function runGuesserTutorial(state,role){
   // ------------------------
   if (round === 0) {
     const word = state.tutorialGuesses?.[0] || "CRANE"; // fallback
-    showTutorial(
-      `First, you need to enter your initial guess. Your opponent will put a secret word at the same time without seeing yours. Enter "${word}" and click on the ENTER button.`,
-      { enabled: true, mode: "hide" } // no continue yet; they must submit the guess
-    );
-    tutorialContinueMode = "hide";
-    highlightKeyboardGuesser();
-    waitForGuessSubmission(round);
-    return;
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `Hello! Thank you for playing - now let's learn how to play.`,
+        { enabled: true }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+      if (tutorialSubStep === 1) {
+      showTutorial(
+        `Press continue when you're ready for the next steps. Sometimes, the tutorial will require you to enter a guess or use a power, and it will be shown with a red Action.`,
+        { enabled: true }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `In the first round you will play as the Inspector. This role is quite similar to that of regular Wordle - you will enter words to guess your opponent's secret word.`,
+        { enabled: true }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+        if (tutorialSubStep === 3) {
+      showTutorial(
+        `There are some differences, and one of them are powers - they change how the game is played dramatically! But more to that later.`,
+        { enabled: true }
+      );
+      tutorialContinueMode = "advance";
+      highlightPowersCol();
+      return;
+    }
+    if (tutorialSubStep === 4) {
+      showTutorial(
+        `First, you need to enter your initial guess. Your opponent will put a secret word at the same time without seeing yours. Enter "${word}" and click on the ENTER button.`,
+        { enabled: true, mode: "hide"  }
+      );
+      tutorialContinueMode = "hide";
+      highlightKeyboardGuesser();
+      waitForGuessSubmission(round);
+      return;
+    }
   }
+
 
   // ------------------------
   // ROUND 1 (history.length == 1): feedback explanation, then constraints, then next guess prompt
