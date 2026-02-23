@@ -618,8 +618,6 @@ The right number shows how many would remain if you switch to the drafted word.`
       waitForSecretSubmission(round);
       return;
     }
-    hideTutorial();
-    return;
   }
 
   if (round > 2) {
@@ -628,6 +626,7 @@ The right number shows how many would remain if you switch to the drafted word.`
       { enabled: true, mode: "hide" }
     );    
     hideTutorial();
+    return;
   }
 }
 
