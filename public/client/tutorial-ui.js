@@ -132,6 +132,7 @@ function waitForPowerUse(powerId) {
 
 // Continue click
 byId("tutorialContinueBtn")?.addEventListener("click", (e) => {
+  if (tutorialWaitingFor) return;
   if (tutorialContinueMode === "hide") {
     toggleTutorial();
     return;
