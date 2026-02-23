@@ -39,15 +39,13 @@ function updateActionBadge() {
   let label = "ACTION";
 
   if (waitingType === "guess" && word) {
-    label = `ENTER "${word}"`;
+    label = `ENTER ${word}`;
   }
   else if (waitingType === "setSecret" && word) {
-    label = `ENTER "${word}"`;
+    label = `ENTER ${word}`;
   }
   else if (waitingType === "power") {
-    label = tutorialWaitingFor?.powerId
-      ? `USE ${tutorialWaitingFor.powerId.toUpperCase()}`
-      : "USE POWER";
+    label = "USE LEAK INFO";
   }
 
   badge.textContent = label;
