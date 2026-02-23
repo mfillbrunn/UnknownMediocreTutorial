@@ -194,6 +194,14 @@ const isSetter  = role === state.setter;
     runSetterTutorial(state, role);
     return;
   }
+  if (state.gameOverView==="round" && state.phase === "gameOver"){
+    runSummaryTutorial(state);
+    return;
+ }
+    if (state.gameOverView==="match" && state.phase === "gameOver"){
+    runMatchTutorial(state);
+    return;
+ }
 }
 
 function runGuesserTutorial(state,role){
@@ -478,5 +486,57 @@ function runSetterTutorial(state, role) {
   }
 }
 
+function runSummaryTutorial(state){
+ clearHighlights();
 
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `The first round ended. In this tutorial, you tried to guess the secret word, but in a real match, whichever role you play is randomly determined.`,
+        { enabled: true }
+      );
+       return;
+    }
+  if (tutorialSubStep === 1) {
+      showTutorial(
+        `The next round will have you play as the other role. You will have the same power as your opponent just had against you, and they will have your powers.`,
+        { enabled: true }
+      );
+      highlightHistoryGuesser();
+      return;
+    }
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `The winner will be the one who used fewer guesses to guess the secret word. Good luck!`,
+        { enabled: true }
+      );
+      highlightHistoryGuesser();
+      return;
+    }
+}
+function runMatchTutorial(state){
+ clearHighlights();
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `The match ended! On this screen, you will see a summary of both rounds and see who won - the player with the fewer guesses!`,
+        { enabled: true }
+      );
+       return;
+    }
+  if (tutorialSubStep === 1) {
+      showTutorial(
+        `Try out other games - the powers will vary and there will be a lot of different ones, and they could really change the game!`,
+        { enabled: true }
+      );
+      highlightHistoryGuesser();
+      return;
+    }
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `For now, thank you for choosing the game and the tutorial is over. Have fun and good luck!`,
+        { enabled: true }
+      );
+      highlightHistoryGuesser();
+      return;
+    }
+}
 window.tutorialSteps = tutorialSteps;
