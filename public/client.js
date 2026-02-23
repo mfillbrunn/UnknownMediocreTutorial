@@ -240,7 +240,8 @@ case "playerLeft": {
     }
 
     case "playerReady":
-      toast(`Player ${evt.role} is READY`);
+      
+      toast(`Player is READY`);
       if (evt.playerId === socket.id) {
         enableReadyButton(false);
       }
