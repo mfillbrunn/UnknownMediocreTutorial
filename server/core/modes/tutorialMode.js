@@ -9,13 +9,13 @@ class TutorialMode {
     state.matchOver = false;
     
     // Tutorial metadata
-    state.scriptedTurns = 4;
+    state.scriptedTurns = 3;
 
     // Fixed secret & guesses
     state.tutorialSecrets = ["BLIMP", "BLIMP", "LEMUR"]
     state.tutorialGuesses = ["DRAPE", "BESTI", "RODNY"];
-    state.tutorialSecretsAI = ["DORKY", "DORKY", "DORKY", "DORKY"];
-    state.tutorialGuessesAI = ["SMALL", "GOQKY", "BLIND", "FRESH"];
+    state.tutorialSecretsAI = ["DORKY", "DORKY", "DORKY"];
+    state.tutorialGuessesAI = ["SMALL", "GOQKY", "BLIND"];
     state.timeControl.enabled = false;
     // No randomness
     state.shuffle = false;
