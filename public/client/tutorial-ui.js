@@ -49,6 +49,7 @@ function toggleTutorial() {
   const bubble = byId("tutorialBubble");
   if (!bubble) return;
   tutorialCollapsed = !tutorialCollapsed;
+  console.log("collapsed now:", tutorialCollapsed);
   bubble.classList.toggle("collapsed", tutorialCollapsed);
 }
 
