@@ -340,7 +340,7 @@ const lastRound =
 const roundTimeA = lastRound?.time?.A ?? 0;
 const roundTimeB = lastRound?.time?.B ?? 0;
 
-
+if (state.timeControl ==="enabled"){
 html += `
   <p class="round-time-summary">
   ⏱
@@ -359,7 +359,7 @@ html += `
   </span>
 </p>
 `;
-
+}
   const lastEntry = state.history[state.history.length - 1];
   if (state.powers.assassinWordassassinated) {
     html += `
