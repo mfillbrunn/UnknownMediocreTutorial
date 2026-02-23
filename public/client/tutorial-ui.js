@@ -15,7 +15,6 @@ function setContinue({ show = true, enabled = true, mode = "advance" } = {}) {
   if (!btn) return;
 
   btn.style.display = show ? "" : "none";
-  btn.disabled = !enabled;
 }
 
 
