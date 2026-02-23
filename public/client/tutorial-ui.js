@@ -377,8 +377,16 @@ function runSetterTutorial(state, role) {
   if (round === 1) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `You could change your secret word, but no need to worry for now. You can simply use the old word. Click on enter.`,
+        `Your opponent used the nonsense power- their guess did not have to make sense.`,
         { enabled: true }
+      );
+      highlightHistoryGuesser();
+      return;
+    }
+  if (tutorialSubStep === 1) {
+      showTutorial(
+        `You could change your secret word, but no need to worry for now. You can simply use the old word. Click on enter.`,
+        { enabled: true, mode: "hide" }
       );
       highlightHistoryGuesser();
       return;
@@ -428,7 +436,7 @@ function runSetterTutorial(state, role) {
     }
       if (tutorialSubStep === 5) {
       showTutorial(
-        `Now one more thing - this box tells you how well your guess is doing. The number on the left tells you how many possible secrets were possible last round.`,
+        `Now one more thing - this box tells you how well your guess is doing. The number on the left tells you how many secrets were possible last round.`,
         { enabled: true }
       );
       highlightSetterWords();
@@ -437,7 +445,7 @@ function runSetterTutorial(state, role) {
 
     if (tutorialSubStep === 6) {
       showTutorial(
-        `The number in the middle shows you how many secrets would remain if you kept your previous secret and didn't change it. The number on the right shows you the number of remaining secrets if you change it to a new word.`,
+        `The number in the middle shows you how many secrets would remain if you kept your previous secret, the number on the right shows you the number of remaining secrets if do change it.`,
         { enabled: true }
       );
       highlightSetterWords();
@@ -445,7 +453,7 @@ function runSetterTutorial(state, role) {
     }
           if (tutorialSubStep === 7) {
       showTutorial(
-        `If you have enough time and know the words, you can keep trying until you find the largest number of remaining words. It will likely be the best word!`,
+        `If you have enough time and know the words, you can keep trying out different words until you find the largest number of remaining words. It will likely be the best word!`,
         { enabled: true }
       );
       highlightSetterWords();
