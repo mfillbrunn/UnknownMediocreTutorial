@@ -185,15 +185,6 @@ const isSetter  = role === state.setter;
     tutorialWaitingFor = null;
     clearHighlights();
   }
-
-  if (state.roles["AI"]===state.setter) {
-      runGuesserTutorial(state, role);
-      return;
-    }
-  if (state.roles["AI"]===state.guesser) {
-    runSetterTutorial(state, role);
-    return;
-  }
   if (state.gameOverView==="round" && state.phase === "gameOver"){
     runSummaryTutorial(state);
     return;
@@ -202,6 +193,14 @@ const isSetter  = role === state.setter;
     runMatchTutorial(state);
     return;
  }
+  if (state.roles["AI"]===state.setter) {
+      runGuesserTutorial(state, role);
+      return;
+    }
+  if (state.roles["AI"]===state.guesser) {
+    runSetterTutorial(state, role);
+    return;
+  }
 }
 
 function runGuesserTutorial(state,role){
@@ -522,7 +521,15 @@ function runMatchTutorial(state){
       );
        return;
     }
-  if (tutorialSubStep === 1) {
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `If there is a tie, then the player who took less time wins - so be quick!`,
+        { enabled: true }
+      );
+      highlightHistoryGuesser();
+      return;
+    }
+  if (tutorialSubStep === 3) {
       showTutorial(
         `Try out other games - the powers will vary and there will be a lot of different ones, and they could really change the game!`,
         { enabled: true }
@@ -530,7 +537,7 @@ function runMatchTutorial(state){
       highlightHistoryGuesser();
       return;
     }
-    if (tutorialSubStep === 2) {
+    if (tutorialSubStep === 4) {
       showTutorial(
         `For now, thank you for choosing the game and the tutorial is over. Have fun and good luck!`,
         { enabled: true }
