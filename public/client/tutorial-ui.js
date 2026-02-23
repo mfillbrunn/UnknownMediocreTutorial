@@ -17,8 +17,8 @@ function setContinue({ show = true, enabled = true, mode = "advance" } = {}) {
   btn.style.display = show ? "" : "none";
   btn.disabled = !enabled;
 
-    if (mode !== undefined) {
-    tutorialContinueMode = mode;
+  if (mode === "hide") {
+    toggleTutorial();
   }
 }
 
