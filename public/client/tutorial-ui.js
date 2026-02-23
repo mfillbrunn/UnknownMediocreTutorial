@@ -484,6 +484,7 @@ function runSetterTutorial(state, role) {
       );
       highlightHistoryGuesser();
       tutorialContinueMode = "hide"; 
+      waitForSecretSubmission(round);
       return;
     }
     
