@@ -17,42 +17,47 @@ function setContinue({ show = true, enabled = true, mode = "advance" } = {}) {
   btn.style.display = show ? "" : "none";
 }
 
-function updateActionBadge() {
+function updateActionBadge(state) {
   const badge = byId("tutorialActionBadge");
-  if (!badge) return;
-  let word;
-  if (state.phase === "simultaneous"){
-    if (state.roles["AI"]===state.guesser){
-      word =  state.tutorialSecrets?.[state.history.length]; 
-    }else{
-      word =  state.tutorialGuesses?.[state.history.length];
-    }
-  } else{
-    if (state.turn === state.guesser){
-    word =  state.tutorialGuesses?.[state.history.length]; 
-    } else{
-    word =  state.tutorialSecrets?.[state.history.length]; 
-    }
-  }
-  badge.textContent =
-  tutorialWaitingFor?.type === "guess"
-    ? `ENTER "${word}"'
-    : tutorialWaitingFor?.type === "power"
-    ? "USE LEAK INFO"
-    : tutorialWaitingFor?.type === "setSecret"
-    ? `ENTER "${word}"'
-    : "ACTION";
-
-  const shouldShow =
-    tutorialWaitingFor &&
-    (tutorialWaitingFor.type === "guess" ||
-     tutorialWaitingFor.type === "setSecret" ||
-     tutorialWaitingFor.type === "power");
   const continueBtn = byId("tutorialContinueBtn");
-  if (shouldShow) {continueBtn.textContent = "Hide";}
-  if (!shouldShow) {continueBtn.textContent = "Continue";}
+  if (!badge || !continueBtn) return;
+
+  const waitingType = tutorialWaitingFor?.type;
+  const round = state.history?.length ?? 0;
+
+  // --- Determine correct tutorial word ---
+  let word = null;
+
+  if (waitingType === "guess") {
+    word = state.tutorialGuesses?.[round];
+  }
+  else if (waitingType === "setSecret") {
+    word = state.tutorialSecrets?.[round];
+  }
+
+  // --- Determine badge label ---
+  let label = "ACTION";
+
+  if (waitingType === "guess" && word) {
+    label = `ENTER "${word}"`;
+  }
+  else if (waitingType === "setSecret" && word) {
+    label = `ENTER "${word}"`;
+  }
+  else if (waitingType === "power") {
+    label = tutorialWaitingFor?.powerId
+      ? `USE ${tutorialWaitingFor.powerId.toUpperCase()}`
+      : "USE POWER";
+  }
+
+  badge.textContent = label;
+
+  const shouldShow = Boolean(waitingType);
+
   badge.classList.toggle("hidden", !shouldShow);
+  continueBtn.textContent = shouldShow ? "Hide" : "Continue";
 }
+
 
 function showTutorial(text, opts = {}) {
   const bubble = byId("tutorialBubble");
