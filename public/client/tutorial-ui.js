@@ -17,7 +17,7 @@ function setContinue({ show = true, enabled = true, mode = "advance" } = {}) {
   btn.style.display = show ? "" : "none";
 }
 
-function updateActionBadge(state) {
+function updateActionBadge() {
   const badge = byId("tutorialActionBadge");
   const continueBtn = byId("tutorialContinueBtn");
   if (!badge || !continueBtn) return;
