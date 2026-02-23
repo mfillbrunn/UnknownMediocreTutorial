@@ -7,21 +7,18 @@ engine.registerPower("revealGreen", {
   if (!state.secret) return false;
 
   const secret = state.secret.toUpperCase();
-
-  // 1. Build a list of positions the guesser DOES NOT already know
   const unknownPositions = [];
 
   for (let i = 0; i < 5; i++) {
     const letter = secret[i];
 
-    // Skip positions already revealed by feedback (true green)
-    const lastEntry = state.history[state.history.length - 1];
-    const greenKnown =
-      lastEntry &&
-      Array.isArray(lastEntry.fbGuesser) &&
-      lastEntry.fbGuesser[i] === "🟩";
+    // Was this position EVER confirmed green?
+    const greenKnown = state.history.some(entry =>
+      Array.isArray(entry.fbGuesser) &&
+      entry.fbGuesser[i] === "🟩"
+    );
 
-    // Skip positions already revealed by this power
+    // Was it already revealed by this power?
     const alreadyRevealedByPower =
       state.powers.revealGreenPos === i;
 
@@ -30,24 +27,31 @@ engine.registerPower("revealGreen", {
     }
   }
 
-  // 2. If everything is known, do nothing
   if (unknownPositions.length === 0) {
     console.log("RevealGreen: No unknown positions left");
     return false;
   }
 
-  // 3. Choose a random unknown position
-  const pos = unknownPositions[Math.floor(Math.random() * unknownPositions.length)];
+  const pos = unknownPositions[
+    Math.floor(Math.random() * unknownPositions.length)
+  ];
+
   const letter = secret[pos];
+
   state.powers.revealLetterRound = state.history.length;
   state.powers.revealGreenUsed = true;
   state.powers.revealGreenPos = pos;
   state.powers.revealGreenLetter = letter;
-    state.powers.revealGreenActive = true;
+  state.powers.revealGreenActive = true;
   state.revealGreenInfo = { pos, letter };
-  io.to(roomId).emit("powerUsed", { type: "revealGreen", pos, letter });
-    
-},
+
+  io.to(roomId).emit("powerUsed", {
+    type: "revealGreen",
+    pos,
+    letter
+  });
+}
+,
 
 
 postScore(state, entry) {
