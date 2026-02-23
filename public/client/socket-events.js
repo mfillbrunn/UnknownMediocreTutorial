@@ -351,7 +351,7 @@ document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
       // Step 2: Switch roles so human is guesser
       setTimeout(() => {
         sendGameAction({ type: "SWITCH_ROLES" });
-      }, 200);
+      }, 1);
 
       // Step 3: Ready human
       setTimeout(() => {
@@ -360,7 +360,7 @@ document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
           playerId: socket.id,
           mode: "tutorial" 
         });
-      }, 400);
+      }, 1);
     }
   );
   hide("startupScreen");
