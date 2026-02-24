@@ -472,10 +472,10 @@ body.hide-constraints .constraint-row {
 
 /* Staggered delay */
 .history-row:not(.draft-row) .history-tile:nth-child(1) { animation-delay: 0ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(2) { animation-delay: 250ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(3) { animation-delay: 500ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(4) { animation-delay: 750ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(5) { animation-delay: 1000ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(2) { animation-delay: 400ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(3) { animation-delay: 800ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(4) { animation-delay: 120ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(5) { animation-delay: 1600ms; }
 
 /* Flip motion */
 @keyframes wordle-flip {
@@ -498,10 +498,10 @@ body.hide-constraints .constraint-row {
 
 /* Same stagger for mask */
 .history-row:not(.draft-row) .history-tile:nth-child(1)::before { animation-delay: 0ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(2)::before { animation-delay: 500ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(3)::before { animation-delay: 1000ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(4)::before { animation-delay: 1500ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(5)::before { animation-delay: 2000ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(2)::before { animation-delay: 400ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(3)::before { animation-delay: 800ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(4)::before { animation-delay: 1200ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(5)::before { animation-delay: 1600ms; }
 
 /* Mask disappears at midpoint */
 @keyframes reveal-mask {
