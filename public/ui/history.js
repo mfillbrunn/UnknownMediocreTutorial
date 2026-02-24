@@ -157,23 +157,58 @@ function patchHistoryRow(wrap, row) {
 
 /// History renderer
 let prevRenderState = [];
+
 window.renderHistory = function ({ state, container, role }) {
   const next = buildHistoryRenderState(state, role);
   const diff = diffHistory(prevRenderState, next);
+
   // Remove
   for (const r of diff.removed) {
     const el = container.querySelector(`[data-key="${r.key}"]`);
     el?.remove();
   }
+
   // Update
   for (const r of diff.updated) {
     const el = container.querySelector(`[data-key="${r.key}"]`);
-    if (el) patchHistoryRow(el, r);
+    if (!el) continue;
+
+    const prevRow = prevRenderState.find(p => p.key === r.key);
+
+    patchHistoryRow(el, r);
+
+    // 🔥 Trigger flip when row transitions to evaluated
+    if (prevRow && !prevRow.evaluated && r.evaluated) {
+      const rowEl = el.querySelector(".history-row");
+
+      rowEl.classList.remove("animate");
+      void rowEl.offsetWidth; // force reflow
+      rowEl.classList.add("animate");
+
+      // total flip time = 1000ms delay + 700ms animation
+      setTimeout(() => {
+        rowEl.classList.remove("animate");
+      }, 1750);
+    }
   }
+
   // Add (append in order)
   for (const r of diff.added) {
-    container.appendChild(createHistoryRowDOM(r));
+    const wrap = createHistoryRowDOM(r);
+    container.appendChild(wrap);
+    if (r.evaluated) {
+      const rowEl = wrap.querySelector(".history-row");
+
+      requestAnimationFrame(() => {
+        rowEl.classList.add("animate");
+
+        setTimeout(() => {
+          rowEl.classList.remove("animate");
+        }, 1750);
+      });
+    }
   }
+
   prevRenderState = next;
 };
 
