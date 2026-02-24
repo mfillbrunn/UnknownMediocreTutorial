@@ -449,4 +449,49 @@ body.hide-constraints .constraint-row {
   color: #7b1fa2; /* or your assassin color */
   letter-spacing: 0.3px;
 }
+/*Flipping*/
+/* Row needs perspective for 3D */
+.history-row {
+  perspective: 1000px;
+}
+.history-tile {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  transform: rotateX(0deg);
+}
+@keyframes wordle-flip {
+  0% {
+    transform: rotateX(0deg);
+    background: var(--panel-bg);
+  }
 
+  49% {
+    transform: rotateX(89deg);
+    background: var(--panel-bg);
+  }
+
+  50% {
+    transform: rotateX(90deg);
+  }
+
+  100% {
+    transform: rotateX(0deg);
+  }
+}
+.evaluated-row.animate .history-tile {
+  animation: wordle-flip 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.evaluated-row.animate .history-tile:nth-child(1) { animation-delay: 0ms; }
+.evaluated-row.animate .history-tile:nth-child(2) { animation-delay: 250ms; }
+.evaluated-row.animate .history-tile:nth-child(3) { animation-delay: 500ms; }
+.evaluated-row.animate .history-tile:nth-child(4) { animation-delay: 750ms; }
+.evaluated-row.animate .history-tile:nth-child(5) { animation-delay: 1000ms; }
+
+.history-tile {
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.25);
+}
+
+.evaluated-row.animate .history-tile {
+  transform-origin: center;
+}
