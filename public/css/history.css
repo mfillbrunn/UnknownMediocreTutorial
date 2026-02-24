@@ -36,7 +36,7 @@ font-size: clamp(17px, 6vw, 34px);
 }
 
 /* Red flash overlay that sits above existing tile colors */
-.history-tile.violation::after {
+.history-tile.violation::before {
   content: "";
   position: absolute;
   inset: -1px;
@@ -449,13 +449,6 @@ body.hide-constraints .constraint-row {
 }
 /*Flipping*/
 /* Row needs perspective for 3D */
-/* =========================================
-   WORDLE FLIP WITH MIDPOINT COLOR REVEAL
-   ========================================= */
-/* =========================================
-   WORDLE FLIP — SLOWER REVEAL
-   ========================================= */
-
 .history-row {
   perspective: 1000px;
 }
@@ -488,28 +481,26 @@ body.hide-constraints .constraint-row {
 
 /* ===== FULL TILE MASK (covers border + background) ===== */
 
-.history-row:not(.draft-row) .history-tile::before {
+/* Use ::after instead of ::before to avoid clashing */
+.history-row:not(.draft-row) .history-tile::after {
   content: "";
   position: absolute;
-
-  /* expand 1px outward to fully cover border */
-  inset: -1px;
-
+  inset: -2px; /* fully covers border */
   background: var(--panel-bg);
   border-radius: inherit;
 
-  z-index: 5;
+  z-index: 100;   /* higher than power overlays */
   pointer-events: none;
 
   animation: reveal-mask 1200ms forwards;
 }
 
-/* Match stagger timing */
-.history-row:not(.draft-row) .history-tile:nth-child(1)::before { animation-delay: 0ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(2)::before { animation-delay: 350ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(3)::before { animation-delay: 700ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(4)::before { animation-delay: 1050ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(5)::before { animation-delay: 1400ms; }
+/* Match stagger */
+.history-row:not(.draft-row) .history-tile:nth-child(1)::after { animation-delay: 0ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(2)::after { animation-delay: 350ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(3)::after { animation-delay: 700ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(4)::after { animation-delay: 1050ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(5)::after { animation-delay: 1400ms; }
 
 @keyframes reveal-mask {
   0%, 49% { opacity: 1; }
