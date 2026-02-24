@@ -275,6 +275,11 @@ if (guesser.length) {
   const leaveBtn = $("leaveSummaryBtn");
   if (leaveBtn) {
     leaveBtn.onclick = () => {
+      
+      const bubble = byId("tutorialBubble");
+      if (!bubble) return;
+      bubble.classList.add("hidden");
+
       socket.emit("leaveRoom", {}, () => {
         roomId = null;
         clearRoom();
