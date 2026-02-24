@@ -449,50 +449,62 @@ body.hide-constraints .constraint-row {
 }
 /*Flipping*/
 /* Row needs perspective for 3D */
+/* =========================================
+   WORDLE FLIP WITH MIDPOINT COLOR REVEAL
+   ========================================= */
+
+/* 3D perspective */
 .history-row {
   perspective: 1000px;
 }
+
+/* Base tile 3D setup */
 .history-tile {
   transform-style: preserve-3d;
   backface-visibility: hidden;
-  transform: rotateX(0deg);
+  position: relative;
 }
+
+/* Trigger flip for submitted rows */
 .history-row:not(.draft-row) .history-tile {
   animation: wordle-flip 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
+
+/* Staggered delay */
 .history-row:not(.draft-row) .history-tile:nth-child(1) { animation-delay: 0ms; }
 .history-row:not(.draft-row) .history-tile:nth-child(2) { animation-delay: 250ms; }
 .history-row:not(.draft-row) .history-tile:nth-child(3) { animation-delay: 500ms; }
 .history-row:not(.draft-row) .history-tile:nth-child(4) { animation-delay: 750ms; }
 .history-row:not(.draft-row) .history-tile:nth-child(5) { animation-delay: 1000ms; }
+
+/* Flip motion */
 @keyframes wordle-flip {
   0%   { transform: rotateX(0deg); }
   50%  { transform: rotateX(90deg); }
   100% { transform: rotateX(0deg); }
 }
 
-.history-tile {
-  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.25);
-}
-
-.evaluated-row .history-tile {
-  transform-origin: center;
-}
-.history-row:not(.draft-row) .history-tile {
-  animation: wordle-flip 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
+/* ===== COLOR MASK (hides feedback until midpoint) ===== */
 
 .history-row:not(.draft-row) .history-tile::before {
   content: "";
   position: absolute;
   inset: 0;
   background: var(--panel-bg);
-  z-index: 2;
+  border-radius: inherit;
+  z-index: 3;
   animation: reveal-mask 700ms forwards;
 }
 
+/* Same stagger for mask */
+.history-row:not(.draft-row) .history-tile:nth-child(1)::before { animation-delay: 0ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(2)::before { animation-delay: 250ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(3)::before { animation-delay: 500ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(4)::before { animation-delay: 750ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(5)::before { animation-delay: 1000ms; }
+
+/* Mask disappears at midpoint */
 @keyframes reveal-mask {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0; }
 }
-
