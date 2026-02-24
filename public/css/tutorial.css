@@ -66,6 +66,9 @@
 .tutorial-bubble.collapsed {
   width: auto;
   cursor: pointer;
+  position: fixed;
+    right: 24px;
+    bottom: 300px;
 }
 
 .tutorial-bubble.collapsed .tutorial-body {
@@ -75,6 +78,7 @@
 .tutorial-bubble.collapsed .tutorial-header {
   border-bottom: none;
   font-size: 0px;
+  padding: 2px;
 }
 
 
