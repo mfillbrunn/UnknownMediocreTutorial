@@ -206,16 +206,18 @@ if (action.type === "SET_DEV_MODE") {
                   state.roles[shuffled[0]] = "A";
                   state.roles[shuffled[1]] = "B";
                 }
-            const N = state.powerCount || 2;        
-            const sP = SETTER_POWERS
+            const N = state.powerCount || 2; 
+                  let sP;
+                  let gP;
+             if (!state.isTutorial) {
+                   sP = SETTER_POWERS
               .slice()
               .sort(() => Math.random() - 0.5)
               .slice(0, N);        
-            const gP = GUESSER_POWERS
+            gP = GUESSER_POWERS
               .slice()
               .sort(() => Math.random() - 0.5)
               .slice(0, N);        
-            if (!state.isTutorial) {
                   state.mode = new CompetitiveMode();
                 }
             if (state.isTutorial){
