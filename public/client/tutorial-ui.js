@@ -590,8 +590,7 @@ function runSetterTutorial(state, role) {
 
     if (tutorialSubStep === 6) {
       showTutorial(
-        `The left number shows how many secrets were possible last round.
-The middle number shows how many remain if you keep your current secret.
+        `The middle number shows how many remain if you keep your current secret.
 The right number shows how many would remain if you switch to the drafted word.`,
         { enabled: true }
       );
@@ -610,7 +609,7 @@ The right number shows how many would remain if you switch to the drafted word.`
     }
               if (tutorialSubStep === 8) {
       showTutorial(
-        `Now enough talk - this is it, let's enter a new secret: "${word}"!`,
+        `Now enough talk - this is it, let's enter a new secret: "${word}"! Afterwards, finish the game on your own!`,
          { enabled: true, mode: "hide" }
       );
       highlightKeyboardSetter();
@@ -620,10 +619,10 @@ The right number shows how many would remain if you switch to the drafted word.`
     }
   }
 
-  if (round > 2) {
+  if (round === 3) {
     showTutorial(
       `From here on, play strategically and try to outsmart your opponent.`,
-      { enabled: true, mode: "hide" }
+      { enabled: gtrue, mode: "hide" }
     );    
     hideTutorial();
     return;
