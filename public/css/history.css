@@ -457,14 +457,14 @@ body.hide-constraints .constraint-row {
   backface-visibility: hidden;
   transform: rotateX(0deg);
 }
-.evaluated-row .history-tile {
+.history-row:not(.draft-row) .history-tile {
   animation: wordle-flip 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
-.evaluated-row .history-tile:nth-child(1) { animation-delay: 0ms; }
-.evaluated-row .history-tile:nth-child(2) { animation-delay: 250ms; }
-.evaluated-row .history-tile:nth-child(3) { animation-delay: 500ms; }
-.evaluated-row .history-tile:nth-child(4) { animation-delay: 750ms; }
-.evaluated-row .history-tile:nth-child(5) { animation-delay: 1000ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(1) { animation-delay: 0ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(2) { animation-delay: 250ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(3) { animation-delay: 500ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(4) { animation-delay: 750ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(5) { animation-delay: 1000ms; }
 @keyframes wordle-flip {
   0%   { transform: rotateX(0deg); }
   50%  { transform: rotateX(90deg); }
