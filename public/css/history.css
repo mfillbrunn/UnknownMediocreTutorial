@@ -498,10 +498,10 @@ body.hide-constraints .constraint-row {
 
 /* Same stagger for mask */
 .history-row:not(.draft-row) .history-tile:nth-child(1)::before { animation-delay: 0ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(2)::before { animation-delay: 250ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(3)::before { animation-delay: 500ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(4)::before { animation-delay: 750ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(5)::before { animation-delay: 1000ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(2)::before { animation-delay: 500ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(3)::before { animation-delay: 1000ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(4)::before { animation-delay: 1500ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(5)::before { animation-delay: 2000ms; }
 
 /* Mask disappears at midpoint */
 @keyframes reveal-mask {
