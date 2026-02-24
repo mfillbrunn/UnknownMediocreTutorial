@@ -486,17 +486,25 @@ body.hide-constraints .constraint-row {
 
 /* ===== MASK FOR MIDPOINT REVEAL ===== */
 
+/* ===== FULL TILE MASK (covers border + background) ===== */
+
 .history-row:not(.draft-row) .history-tile::before {
   content: "";
   position: absolute;
-  inset: 0;
+
+  /* expand 1px outward to fully cover border */
+  inset: -1px;
+
   background: var(--panel-bg);
   border-radius: inherit;
-  z-index: 3;
+
+  z-index: 5;
+  pointer-events: none;
+
   animation: reveal-mask 1200ms forwards;
 }
 
-/* Match stagger to flip */
+/* Match stagger timing */
 .history-row:not(.draft-row) .history-tile:nth-child(1)::before { animation-delay: 0ms; }
 .history-row:not(.draft-row) .history-tile:nth-child(2)::before { animation-delay: 350ms; }
 .history-row:not(.draft-row) .history-tile:nth-child(3)::before { animation-delay: 700ms; }
