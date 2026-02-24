@@ -142,7 +142,7 @@ function createHistoryRowDOM(row) {
 
 function patchHistoryRow(wrap, row) {
   const rowEl = wrap.querySelector(".history-row");
-  rowEl.classList.toggle("evaluated-row", row.evaluated);
+  rowEl.classList.add("evaluated-row");
   const tiles = rowEl.children;
   for (let i = 0; i < 5; i++) {
     const t = tiles[i];
