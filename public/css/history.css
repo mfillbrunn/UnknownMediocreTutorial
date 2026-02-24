@@ -32,7 +32,7 @@ font-size: clamp(17px, 6vw, 34px);
 
   transform-style: preserve-3d;
   position: relative;
-  animation: none; /* baseline */
+  
 }
 
 /* Red flash overlay that sits above existing tile colors */
@@ -385,7 +385,7 @@ body.hide-constraints .constraint-row {
 
 .history-scroll { z-index: 1;} 
 
-.draft-tile { animation: none; }
+
 
 .draft-row .draft-tile,
 .draft-box .history-tile {
