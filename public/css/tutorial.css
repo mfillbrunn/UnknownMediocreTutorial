@@ -69,6 +69,7 @@
   position: fixed;
     right: 24px;
     bottom: 300px;
+  background-color: grey;
 }
 
 .tutorial-bubble.collapsed .tutorial-body {
