@@ -370,8 +370,8 @@ body.hide-constraints .constraint-row {
 .tile-blue   { background: var(--tile-blue)  !important; color: var(--tile-blue-text) !important; }
 .tile-purple {  background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important;}
 
-.evaluated-row.animate .history-tile {
-  animation: flip-in 0.6s ease forwards;
+.evaluated-row .history-tile {
+  animation: wordle-flip 700ms cubic-bezier(0.22,1,0.36,1) forwards;
 }
 .draft-row .history-tile { animation: draft-pop 120ms ease-out; }
 
