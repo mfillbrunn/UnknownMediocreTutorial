@@ -286,7 +286,7 @@ position: absolute;
 .constraint-row .history-tile {
   position: relative;
   display: grid; /* IMPORTANT */
-   animate: none;
+   animation: none;
 }
 
 .constraint-row .history-tile .quadrants {
@@ -486,11 +486,11 @@ body.hide-constraints .constraint-row {
 .history-row:not(.draft-row) .history-tile::after {
   content: "";
   position: absolute;
-  inset: -2px; /* fully covers border */
-  background: var(--panel-bg);
+  inset: 0;
+  background: inherit;
   border-radius: inherit;
 
-  z-index: 100;   /* higher than power overlays */
+  z-index: 1;
   pointer-events: none;
 
   animation: reveal-mask 1200ms forwards;
