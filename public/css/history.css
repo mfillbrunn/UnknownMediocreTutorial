@@ -455,7 +455,7 @@ body.hide-constraints .constraint-row {
 
 .history-tile {
   transform-style: preserve-3d;
-  backface-visibility: hidden;
+ 
   position: relative;
 }
 
