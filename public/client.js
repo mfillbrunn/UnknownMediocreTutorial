@@ -319,6 +319,10 @@ onStateUpdate(newState => {
   if (state.phase === "simultaneous"){renderSetterRemainingBox(state, myRole, "");}
   if (state.phase === "normal"){renderSetterRemainingBox(state, myRole, state.secret);}
   tutorialSteps(state, myRole);
+  if (!state.isTutorial){  
+    const bubble = byId("tutorialBubble");
+    if (!bubble) return;
+  bubble.classList.add("hidden");}
   remainingCache.setterOld = null;
 });
 
