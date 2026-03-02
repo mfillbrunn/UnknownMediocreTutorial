@@ -43,21 +43,20 @@ function computeMatchResult(state, myRole) {
   };
 }
 async function writeMatchHistory({ state, room, supabase, ratingChange }) {
-  const socketIds = Object.keys(room.players);
-  if (socketIds.length !== 2) return;
 
-  // Resolve sockets by role
-  const socketA = socketIds.find(
-    id => room.players[id]?.role === "A"
-  );
-  const socketB = socketIds.find(
-    id => room.players[id]?.role === "B"
-  );
-  if (!socketA || !socketB) return;
+  // Only human players
+  const humans = Object.values(room.playersByUserId)
+    .filter(p => !p.isAI);
 
-  // Resolve USER IDs (critical)
-  const userA = room.players[socketA].userId;
-  const userB = room.players[socketB].userId;
+  if (humans.length !== 2) return;
+
+  const playerA = humans.find(p => p.role === "A");
+  const playerB = humans.find(p => p.role === "B");
+
+  if (!playerA || !playerB) return;
+
+  const userA = playerA.userId;
+  const userB = playerB.userId;
 
   const {
     winner,
