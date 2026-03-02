@@ -61,8 +61,9 @@ function aiDelay({ base = 1500, variance = 1200 } = {}) {
 function maybeRunAI(room, roomId, context) {
   const state = room.state;
   const aiLogic = getAI(state);
-  const aiEntry = Object.entries(room.players)
-    .find(([_, p]) => p.isAI);
+  const aiPlayer = Object.values(room.playersByUserId || {})
+  .find(p => p.isAI);
+
   if (!aiEntry) return;
   const [, aiPlayer] = aiEntry;
   if (AI_PENDING.has(roomId)) return;
