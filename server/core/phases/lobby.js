@@ -100,23 +100,31 @@ if (action.type === "SET_TIME_CONTROL") {
   // SWITCH ROLES
   // -------------------------------
 if (action.type === "SWITCH_ROLES") {
-  if (state.ranked) return; // silently ignore
-  const ids = Object.keys(room.players);
-  if (ids.length !== 2) return;
-  const idA = ids.find(id => room.players[id]?.role === "A");
-  const idB = ids.find(id => room.players[id]?.role === "B");
-  if (!idA || !idB) return;
-  room.players[idA].role = "B";
-  room.players[idB].role = "A";
-  state.roles[idA] = "B";
-  state.roles[idB] = "A";
+  if (state.ranked) return;
+
+  const humans = Object.values(room.playersByUserId)
+    .filter(p => !p.isAI);
+
+  if (humans.length !== 2) return;
+
+  const playerA = humans.find(p => p.role === "A");
+  const playerB = humans.find(p => p.role === "B");
+  if (!playerA || !playerB) return;
+
+  // Swap canonical roles
+  playerA.role = "B";
+  playerB.role = "A";
+
+  // Update state.players
+  state.players[playerA.userId].role = "B";
+  state.players[playerB.userId].role = "A";
+
   state.setter = "A";
   state.guesser = "B";
-  // Notify players (UX only)
-  emitLobbyEvent(io, roomId, {
-    type: "rolesSwitched"
-  });
-  state.ready = {};      
+
+  state.ready = {};
+
+  emitLobbyEvent(io, roomId, { type: "rolesSwitched" });
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
@@ -124,24 +132,35 @@ if (action.type === "SWITCH_ROLES") {
 if (action.type === "ADD_AI") {
   if (state.ranked) return;
   if (state.hostUserId !== action.userId) return;
-  if (Object.keys(room.players).length >= 2) return;
-  // Add AI player
-  const AI_ID = "AI";
-  room.players[AI_ID] = {
+
+  const humanCount = Object.values(room.playersByUserId)
+    .filter(p => !p.isAI).length;
+
+  if (humanCount >= 2) return;
+
+  const AI_USER = "AI";
+
+  room.playersByUserId[AI_USER] = {
+    userId: AI_USER,
     role: "B",
-    userId: "AI",
+    socketId: null,
     connected: true,
-    disconnectedAt: null,
     isAI: true
   };
-  state.roles[AI_ID] = "B";
-  room.state.aiDifficulty = action.difficulty ?? 1;  
-  state.playerNames[AI_ID] = `AI Lvl ${room.state.aiDifficulty}`;
+
+  state.players ||= {};
+  state.players[AI_USER] = {
+    role: "B",
+    ready: false,
+    name: `AI Lvl ${action.difficulty ?? 1}`
+  };
+
   emitLobbyEvent(io, roomId, {
     type: "playerJoined",
-    playerId: AI_ID,
+    userId: AI_USER,
     isAI: true
   });
+
   emitStateForAllPlayers(roomId, room, io);
   return;
 }
@@ -156,91 +175,89 @@ if (action.type === "SET_DEV_MODE") {
   // -------------------------------
   // PLAYER READY
   // -------------------------------
-        if (action.type === "PLAYER_READY") {        
-          // Ready is per PLAYER (socket.id), not role
-          const players = Object.entries(room.players);
-          const humanPlayers = players.filter(([_, p]) => !p.isAI);
-          const aiPlayers = players.filter(([_, p]) => p.isAI);
-                console.log(action.mode);
-         if (action.mode === "tutorial") {state.isTutorial = true;}               
-         if (humanPlayers.length + aiPlayers.length < 2){return;}  
-          state.ready[action.playerId] = true;               
-          emitToOtherPlayer(io, room, action.playerId, {
-            type: "playerReady",
-            playerId: action.playerId
-          });
-          emitToPlayer(io, action.playerId, {
-            type: "playerReady",
-            playerId: action.playerId
-          });
-          console.log(roomId);  
-          const readyHumans = humanPlayers.filter(([id]) => state.ready[id]);
-          if (readyHumans.length === 1){
-                emitStateForAllPlayers(roomId, room, io);
-          }             
-          if (readyHumans.length === 2 || (readyHumans.length === humanPlayers.length && aiPlayers.length === 1)) {
-             //refresh state
-             console.log(roomId);   
-             stopAllRoomIntervals(roomId, room);
-                const oldState = state;
-                const isTutorial = oldState.isTutorial;
-                
-                const freshState = createInitialState();
-                freshState.isTutorial = isTutorial;
-             freshState.playerNames = oldState.playerNames;
-             freshState.hostUserId = oldState.hostUserId;
-             freshState.ranked = oldState.ranked;
-             freshState.timeControl = oldState.timeControl;
-             freshState.powerCount = oldState.powerCount;
-             for (const [playerId, player] of Object.entries(room.players)) {
-                  freshState.roles[playerId] = player.role;
-             }
-             freshState._timerGeneration = (oldState._timerGeneration || 0) + 1;
-             room.state = freshState;
-             state = freshState; 
-              if (state.ranked || state.shuffle) {
-                  const ids = Object.keys(room.players);
-                  const shuffled = ids.sort(() => Math.random() - 0.5);                
-                  room.players[shuffled[0]].role = "A";
-                  room.players[shuffled[1]].role = "B";                
-                  state.roles[shuffled[0]] = "A";
-                  state.roles[shuffled[1]] = "B";
-                }
-            const N = state.powerCount || 2; 
-                  let sP;
-                  let gP;
-             if (!state.isTutorial) {
-                   sP = SETTER_POWERS
-              .slice()
-              .sort(() => Math.random() - 0.5)
-              .slice(0, N);        
-            gP = GUESSER_POWERS
-              .slice()
-              .sort(() => Math.random() - 0.5)
-              .slice(0, N);        
-                  state.mode = new CompetitiveMode();
-                }
-            if (state.isTutorial){
-                  state.mode = new TutorialMode();
-                  }                  
-            state.mode.initMatch(state);
-            state.mode.onLobbyReady(state, sP, gP);   
-            state.phase = "simultaneous";
-            if (state.timeControl.enabled) {
-              resetRoundTimer(state);
-              state.activeTimer = "both";
-              state.roundStartTime = Date.now();
-              startGameTimer(room, state, roomId, context);
-            }        
-             if (state.activePowers.includes("revealLetter")) {
-                state.powers.revealLetter.mode =Math.random() < 0.5 ? "RARE" : "ROW";
-            }        
-            emitLobbyEvent(io, roomId, { type: "hideLobby" });
-            emitStateForAllPlayers(roomId, room, io);
-            io.to(roomId).emit("gameStart");
-          }        
-          return;
-        }
+       if (action.type === "PLAYER_READY") {
+
+  const userId = action.userId;
+  if (!userId) return;
+
+  const player = room.playersByUserId[userId];
+  if (!player) return;
+
+  state.players ||= {};
+  state.players[userId] ||= {};
+
+  state.players[userId].ready = true;
+
+  const humans = Object.values(room.playersByUserId)
+    .filter(p => !p.isAI);
+
+  const readyHumans = humans.filter(p =>
+    state.players[p.userId]?.ready
+  );
+
+  if (readyHumans.length < humans.length) {
+    emitStateForAllPlayers(roomId, room, io);
+    return;
+  }
+
+  // Everyone ready → start game
+
+  stopAllRoomIntervals(roomId, room);
+
+  const freshState = createInitialState();
+
+  freshState.players = {};
+
+  for (const p of Object.values(room.playersByUserId)) {
+    freshState.players[p.userId] = {
+      role: p.role,
+      ready: false,
+      name: state.players[p.userId]?.name
+    };
+  }
+
+  freshState.hostUserId = state.hostUserId;
+  freshState.ranked = state.ranked;
+  freshState.timeControl = state.timeControl;
+  freshState.powerCount = state.powerCount;
+
+  room.state = freshState;
+  state = freshState;
+
+  const N = state.powerCount || 2;
+
+  let sP = SETTER_POWERS
+    .slice()
+    .sort(() => Math.random() - 0.5)
+    .slice(0, N);
+
+  let gP = GUESSER_POWERS
+    .slice()
+    .sort(() => Math.random() - 0.5)
+    .slice(0, N);
+
+  state.mode = state.isTutorial
+    ? new TutorialMode()
+    : new CompetitiveMode();
+
+  state.mode.initMatch(state);
+  state.mode.onLobbyReady(state, sP, gP);
+
+  state.phase = "simultaneous";
+
+  if (state.timeControl?.enabled) {
+    resetRoundTimer(state);
+    state.activeTimer = "both";
+    state.roundStartTime = Date.now();
+    startGameTimer(room, state, roomId, context);
+  }
+
+  emitLobbyEvent(io, roomId, { type: "hideLobby" });
+  emitStateForAllPlayers(roomId, room, io);
+  io.to(roomId).emit("gameStart");
+
+  return;
+}
 }
 
 module.exports = handleLobbyPhase;
