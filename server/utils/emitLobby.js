@@ -2,28 +2,37 @@
 
 /**
  * Sends a lobby-related event to all players in the room.
- *
- * Usage:
- *   emitLobbyEvent(io, roomId, { type: "playerReady", role: "A" });
  */
 function emitLobbyEvent(io, roomId, payload) {
   io.to(roomId).emit("lobbyEvent", payload);
 }
-function emitToPlayer(io, playerId, payload) {
-  io.to(playerId).emit("lobbyEvent", payload);
+
+/**
+ * Emit directly to a specific userId (not socketId).
+ */
+function emitToUser(io, room, userId, payload) {
+  const player = room.playersByUserId?.[userId];
+  if (!player || !player.socketId) return;
+
+  io.to(player.socketId).emit("lobbyEvent", payload);
 }
 
-// NEW: emit to the other player automatically
-function emitToOtherPlayer(io, room, triggeringPlayerId, payload) {
-  const playerIds = Object.keys(room.players);
-  const other = playerIds.find(id => id !== triggeringPlayerId);
-  if (other) {
-    io.to(other).emit("lobbyEvent", payload);
+/**
+ * Emit to the other human player (userId-based).
+ */
+function emitToOtherUser(io, room, triggeringUserId, payload) {
+  const others = Object.values(room.playersByUserId || {})
+    .filter(p => p.userId !== triggeringUserId && !p.isAI);
+
+  for (const p of others) {
+    if (p.socketId) {
+      io.to(p.socketId).emit("lobbyEvent", payload);
+    }
   }
 }
 
 module.exports = {
   emitLobbyEvent,
-  emitToPlayer,
-  emitToOtherPlayer
+  emitToUser,
+  emitToOtherUser
 };
