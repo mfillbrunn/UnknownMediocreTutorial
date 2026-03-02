@@ -198,10 +198,12 @@ function cleanupEmptyRooms() {
 }
 
 function findLastOpenRoom() {
+  
   const roomIds = Object.keys(rooms);
   for (let i = roomIds.length - 1; i >= 0; i--) {
     const roomId = roomIds[i];
     const room = rooms[roomId];
+    console.log("Room snapshot:", roomId, room.playersByUserId);
     if (room && Object.values(room.playersByUserId || {}).filter(p => p.connected && !p.isAI).length === 1) {
       return roomId;
     }
