@@ -1,6 +1,6 @@
 // core/phases/lobby.js
 
-const { emitLobbyEvent, emitToPlayer,  emitToOtherPlayer } = require("../../utils/emitLobby");
+const { emitLobbyEvent, emitToUser,  emitToOtherUser } = require("../../utils/emitLobby");
 const { emitStateForAllPlayers } = require("../../utils/emitState");
 const CompetitiveMode = require("../modes/competitiveMode");
 const TutorialMode = require("../modes/tutorialMode");
