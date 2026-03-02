@@ -106,6 +106,7 @@ function createInitialState() {
    const state = {
     phase: "lobby",
     host:null,
+    players: {},
     roles:{},
     turn: null,
     setter: "A",
