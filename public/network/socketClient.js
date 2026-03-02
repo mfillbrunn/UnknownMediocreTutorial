@@ -57,13 +57,13 @@ window.quickJoin = function (payload, cb) {
     userId,
     ...payload
   }, res => {
+    console.log("quickJoin result:", res);
     if (res?.ok && res.roomId) {
         persistRoom(res.roomId);
         window.roomId = res.roomId;
       }
     cb?.(res);
   });
-  console.log("quickJoin result:", res);
 };
 
 window.sendGameAction = function (action) {
