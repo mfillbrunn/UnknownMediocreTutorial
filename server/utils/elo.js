@@ -7,7 +7,7 @@ function eloDelta(rA, rB, scoreA, k = 32) {
   return Math.round(k * (scoreA - expectedA));
 }
 
-async function applyRankedElo({ state, room, supabase,winner,tie }) {
+async function applyRankedElo({ state, room, supabase, winner, tie }) {
   if (!state.ranked) return null;
 
   const mode = state.rankMode;
@@ -15,24 +15,23 @@ async function applyRankedElo({ state, room, supabase,winner,tie }) {
     throw new Error("applyRankedElo called without rankMode");
   }
 
-  const socketIds = Object.keys(room.players);
-  if (socketIds.length !== 2) return null;
+  // Get human players only
+  const humans = Object.values(room.playersByUserId)
+    .filter(p => !p.isAI);
 
-  // Resolve socket IDs by role
-  const socketA = socketIds.find(
-    id => room.players[id]?.role === "A"
-  );
-  const socketB = socketIds.find(
-    id => room.players[id]?.role === "B"
-  );
+  if (humans.length !== 2) return null;
 
-  if (!socketA || !socketB) {
+  // Resolve by role (canonical)
+  const playerA = humans.find(p => p.role === "A");
+  const playerB = humans.find(p => p.role === "B");
+
+  if (!playerA || !playerB) {
     throw new Error("Could not resolve both players by role");
   }
 
-  // Resolve USER IDs (this was missing)
-  const userA = room.players[socketA].userId;
-  const userB = room.players[socketB].userId;
+  const userA = playerA.userId;
+  const userB = playerB.userId;
+
   const scoreA = tie ? 0.5 : winner === "A" ? 1 : 0;
   const scoreB = 1 - scoreA;
 
