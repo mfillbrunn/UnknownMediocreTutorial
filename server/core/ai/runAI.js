@@ -62,10 +62,9 @@ function maybeRunAI(room, roomId, context) {
   const state = room.state;
   const aiLogic = getAI(state);
   const aiPlayer = Object.values(room.playersByUserId || {})
-  .find(p => p.isAI);
-
-  if (!aiEntry) return;
-  const [, aiPlayer] = aiEntry;
+    .find(p => p.isAI);
+  
+  if (!aiPlayer) return;
   if (AI_PENDING.has(roomId)) return;
   let actionFn = null;
   // Tutorial
