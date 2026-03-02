@@ -63,6 +63,7 @@ window.quickJoin = function (payload, cb) {
       }
     cb?.(res);
   });
+  console.log("quickJoin result:", res);
 };
 
 window.sendGameAction = function (action) {
