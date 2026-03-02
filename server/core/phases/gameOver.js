@@ -33,7 +33,7 @@ function endGame(state, roomId, io, room, context) {
    state.phase = "gameOver";
    state.gameOverView = res.view || "match"; 
    state.canNextRound = !!res.canNextRound;
-   const isAIMatch = Object.values(room.players).some(p => p.isAI);
+   const isAIMatch = Object.values(room.playersByUserId).some(p => p.isAI);
    if (!isAIMatch) {
       if (!state.canNextRound) {
            const {winner,tie} = computeMatchResult(state, null);
