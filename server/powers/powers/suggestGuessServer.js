@@ -26,8 +26,9 @@ engine.registerPower("suggestGuess", {
     }
 
     const suggestion = feasible[Math.floor(Math.random() * feasible.length)];
+    const socketId = state.players[action.playerId]?.socketId;
     if (!action.ai) {
-      io.to(action.playerId).emit("suggestWord", {word: suggestion});
+      io.to(socketId).emit("suggestWord", { word: suggestion });
     }
 
     io.to(roomId).emit("powerUsed", { type: "suggestGuess" });
