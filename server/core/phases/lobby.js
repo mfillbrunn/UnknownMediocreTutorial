@@ -101,14 +101,13 @@ if (action.type === "SET_TIME_CONTROL") {
   // -------------------------------
 if (action.type === "SWITCH_ROLES") {
   if (state.ranked) return;
+  if (state.hostUserId !== action.userId) return;
 
-  const humans = Object.values(room.playersByUserId)
-    .filter(p => !p.isAI);
-
-  if (humans.length !== 2) return;
-
-  const playerA = humans.find(p => p.role === "A");
-  const playerB = humans.find(p => p.role === "B");
+  const players = Object.values(room.playersByUserId);
+  if (players.length !== 2) return;
+        
+  const playerA = players.find(p => p.role === "A");
+  const playerB = players.find(p => p.role === "B");
   if (!playerA || !playerB) return;
 
   // Swap canonical roles
@@ -122,7 +121,9 @@ if (action.type === "SWITCH_ROLES") {
   state.setter = "A";
   state.guesser = "B";
 
-  state.ready = {};
+  for (const p of Object.values(state.players)) {
+          p.ready = false;
+        }
 
   emitLobbyEvent(io, roomId, { type: "rolesSwitched" });
   emitStateForAllPlayers(roomId, room, io);
@@ -132,6 +133,8 @@ if (action.type === "SWITCH_ROLES") {
 if (action.type === "ADD_AI") {
   if (state.ranked) return;
   if (state.hostUserId !== action.userId) return;
+  if (room.playersByUserId["AI"]) return;
+  state.aiDifficulty = action.difficulty ?? 1;
 
   const humanCount = Object.values(room.playersByUserId)
     .filter(p => !p.isAI).length;
@@ -154,7 +157,9 @@ if (action.type === "ADD_AI") {
     ready: false,
     name: `AI Lvl ${action.difficulty ?? 1}`
   };
-
+for (const p of Object.values(state.players)) {
+  p.ready = false;
+}
   emitLobbyEvent(io, roomId, {
     type: "playerJoined",
     userId: AI_USER,
