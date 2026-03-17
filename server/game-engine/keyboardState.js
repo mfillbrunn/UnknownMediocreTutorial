@@ -6,20 +6,10 @@ const KEYBOARD_LAYOUT = [
   ["ENTER","Z","X","C","V","B","N","M","⌫"]
 ];
 
-function getAgreedFeedbackAtIndex(h, i, isGuesser) {
-  if (!isGuesser) return h.fb?.[i];
-
-  if (!h.fakeFeedback) return h.fbGuesser?.[i];
-
-  const r = h.fakeFeedback.real?.[i];
-  const f = h.fakeFeedback.fake?.[i];
-
-  return r === f ? r : null;
-}
-
-function getLetterStatusFromHistory(letter, state, isGuesser) {
+function getLetterStatusFromHistory(letter, state) {
   if (!state?.history) return null;
 
+  // Extra constraints (forced greens)
   const extraGreens = state.extraConstraints
     ?.filter(c => c.type === "GREEN")
     .map(c => c.letter);
@@ -30,56 +20,38 @@ function getLetterStatusFromHistory(letter, state, isGuesser) {
 
   let strongest = null;
 
-  for (const h of state.history) {
-    if (!h?.guess || h.countOnlyApplied) continue;
+  for (const entry of state.history) {
+    if (!entry?.guess) continue;
 
-    const guess = h.guess.toUpperCase();
+    const guess = entry.guess.toUpperCase();
+    const fb = entry.fb; // safe state already provides the correct fb
+
+    if (!Array.isArray(fb)) continue;
 
     for (let i = 0; i < 5; i++) {
-
-      if (h.hideTileApplied && h.hiddenIndices?.includes(i)) continue;
-
-      const bsIdx = state.powers?.blindSpotIndex;
-      const bsRound = state.powers?.blindSpotRoundIndex;
-
-      if (
-        isGuesser &&
-        typeof bsIdx === "number" &&
-        bsIdx === i &&
-        typeof h.roundIndex === "number" &&
-        h.roundIndex >= bsRound
-      ) {
-        continue;
-      }
-
       if (guess[i] !== letter) continue;
 
-      const fb = getAgreedFeedbackAtIndex(h, i, isGuesser);
+      const f = fb[i];
+      if (!f || f === "?") continue;
 
-      if (!fb) continue;
-
-      if (fb === "🟩") strongest = "green";
-      else if (fb === "🟨" && strongest !== "green") strongest = "yellow";
-      else if (fb === "🟦" && !strongest) strongest = "blue";
-      else if (fb === "⬛" && !strongest) strongest = "gray";
+      if (f === "🟩") strongest = "green";
+      else if (f === "🟨" && strongest !== "green") strongest = "yellow";
+      else if (f === "🟦" && !strongest) strongest = "blue";
+      else if (f === "⬛" && !strongest) strongest = "gray";
     }
   }
 
   return strongest;
 }
 
-function buildKeyboardState(state, isGuesser) {
-
+function buildKeyboardState(state) {
   const keyboard = {};
 
   for (const row of KEYBOARD_LAYOUT) {
     for (const symbol of row) {
-
       if (!/^[A-Z]$/.test(symbol)) continue;
 
-      const status = getLetterStatusFromHistory(symbol, state, isGuesser);
-
-      keyboard[symbol] = status;
+      keyboard[symbol] = getLetterStatusFromHistory(symbol, state);
     }
   }
 
