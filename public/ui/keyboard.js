@@ -1,4 +1,4 @@
-// /public/ui/keyboard.js — PENDING-GUESS-ONLY VERSION
+// /public/ui/keyboard.js — SERVER-DRIVEN VERSION
 
 function buildKeyboard(container) {
   container.innerHTML = "";
@@ -12,6 +12,7 @@ function buildKeyboard(container) {
       keyEl.className = "key";
       keyEl.dataset.key = symbol;
       keyEl.textContent = symbol === "ENTER" ? "⏎" : symbol;
+
       rowDiv.appendChild(keyEl);
     });
 
@@ -27,75 +28,10 @@ window.KEYBOARD_LAYOUT = [
   ["ENTER","Z","X","C","V","B","N","M","⌫"]
 ];
 
-function getAgreedFeedbackAtIndex(h, i, isGuesser) {
-  if (!isGuesser) return h.fb?.[i];
-
-  if (!h.fakeFeedback) return h.fbGuesser?.[i];
-
-  const r = h.fakeFeedback.real?.[i];
-  const f = h.fakeFeedback.fake?.[i];
-
-  return r === f ? r : null;
-}
-
-// Determine best letter status for color assignment
-function getLetterStatusFromHistory(letter, state, isGuesser) {
-  if (!state?.history) return null;
-  
-  const extraGreens = state.extraConstraints
-  ?.filter(c => c.type === "GREEN")
-  .map(c => c.letter);
-  if (extraGreens?.includes(letter)) {
-    return "green";
-  }
-
-  let strongest = null;
-  const fbKey = isGuesser ? "fbGuesser" : "fb";
-
-  for (const h of state.history) {
-    if (!h?.guess || h.countOnlyApplied) continue;
-    const guess = h.guess.toUpperCase();
-    for (let i = 0; i < 5; i++) {
-      if (h.hideTileApplied && h.hiddenIndices?.includes(i)) continue;
-
-      const bsIdx = state.powers?.blindSpotIndex;
-      const bsRound = state.powers?.blindSpotRoundIndex;
-      if (
-        isGuesser &&
-        typeof bsIdx === "number" &&
-        bsIdx === i &&
-        typeof h.roundIndex === "number" &&
-        h.roundIndex >= bsRound
-      ) {
-        continue;
-      }
-
-      if (guess[i] !== letter) continue;
-      let fb;
-      if (isGuesser && h.fakeFeedback) {
-        const r = h.fakeFeedback.real?.[i];
-        const f = h.fakeFeedback.fake?.[i];
-        if (r !== f) continue; // disagreement → no keyboard info
-        fb = r;
-      } else {
-        fb = h.fb?.[i] ?? h.fbGuesser?.[i];
-      }
-      if (!fb) continue;
-      if (fb === "🟩") strongest = "green";
-      else if (fb === "🟨" && strongest !== "green") strongest = "yellow";
-      else if (fb === "🟦" && !strongest) strongest = "blue";
-      else if (fb === "⬛" && !strongest) strongest = "gray";
-    }
-  }
-
-  return strongest;
-}
-
 window.renderKeyboard = function ({
   state,
   container,
-  pendingGuess,   
-  isGuesser,
+  pendingGuess,
   onInput
 }) {
   if (!container.__keys) {
@@ -127,21 +63,19 @@ window.renderKeyboard = function ({
     }
 
     if (/^[A-Z]$/.test(symbol)) {
-      const letter = symbol;
+      const status = state.keyboard?.[symbol];
 
-      // History coloring
-      const status = getLetterStatusFromHistory(letter, state, isGuesser);
       if (status === "green") keyEl.classList.add("key-green");
       else if (status === "yellow") keyEl.classList.add("key-yellow");
       else if (status === "gray") keyEl.classList.add("key-gray");
       else if (status === "blue") keyEl.classList.add("key-blue");
 
-      // Current submitted guess highlight
-      if (guess.includes(letter)) {
+      // highlight letters currently typed
+      if (guess.includes(symbol)) {
         keyEl.classList.add("key-current");
       }
 
-      keyEl.onclick = () => onInput({ type: "LETTER", value: letter });
+      keyEl.onclick = () => onInput({ type: "LETTER", value: symbol });
     }
   }
 };
