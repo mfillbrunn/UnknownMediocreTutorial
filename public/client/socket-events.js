@@ -350,14 +350,15 @@ document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
 
       // Step 2: Switch roles so human is guesser
       setTimeout(() => {
-        sendGameAction({ type: "SWITCH_ROLES" });
+        sendGameAction({ type: "SWITCH_ROLES" ,
+        userId: window.currentUser.id});
       }, 1);
 
       // Step 3: Ready human
       setTimeout(() => {
         sendGameAction({
           type: "PLAYER_READY",
-          playerId: socket.id,
+          userId: window.currentUser.id
           mode: "tutorial" 
         });
       }, 1);
