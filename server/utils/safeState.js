@@ -1,3 +1,5 @@
+const { buildKeyboardState } = require("../game-engine/keyboardState");
+
 function buildSafeStateForPlayer(state, role) {
   const safe = JSON.parse(JSON.stringify(state));
 
@@ -127,7 +129,8 @@ function buildSafeStateForPlayer(state, role) {
       return e;
     })
     .filter(e => e !== null);
-
+  const isGuesser = role === state.guesser;
+  safe.keyboard = buildKeyboardState(safe, isGuesser);
   return safe;
 }
 
