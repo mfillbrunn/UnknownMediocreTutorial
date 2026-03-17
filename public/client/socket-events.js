@@ -358,7 +358,7 @@ document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
       setTimeout(() => {
         sendGameAction({
           type: "PLAYER_READY",
-          userId: window.currentUser.id
+          userId: window.currentUser.id,
           mode: "tutorial" 
         });
       }, 1);
