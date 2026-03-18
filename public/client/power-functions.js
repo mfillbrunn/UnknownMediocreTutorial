@@ -14,17 +14,29 @@ function resetEphemeralUIState() {
 
 // Suggest secret/guess
 socket.on("suggestWord", ({ word }) => {
+  if (!word) {
+    console.warn("suggestWord received invalid word:", word);
+    return;
+  }
+
   const upper = word.toUpperCase();
+
   window.uiState = window.uiState || {};
-  if (myRole === state.setter) {
-    window.uiState.suggestedSecret = upper;
+
+  // fallback: always store both
+  window.uiState.suggestedSecret = upper;
+  window.uiState.suggestedGuess = upper;
+
+  // only apply draft if role is known
+  if (myRole === state?.setter) {
     state.setterDraft = upper;
   }
-  if (myRole === state.guesser) {
-    window.uiState.suggestedGuess = upper;
-    localGuesserDraft = upper.toUpperCase();
-  }  
-    updateUI();
+
+  if (myRole === state?.guesser) {
+    localGuesserDraft = upper;
+  }
+
+  updateUI();
 });
 
 // Vowel Refresh — UI-only info
