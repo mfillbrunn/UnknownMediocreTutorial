@@ -10,7 +10,7 @@ const WORDS = fs.readFileSync(path.join(__dirname, "../../wordlists/allowed_secr
   .split("\n");
 
 engine.registerPower("suggestGuess", {
-  apply(state, action, roomId, io, room) {
+  apply(state, action, roomId, io) {
 
     // Once per match
     if (state.powers.suggestGuessUsed) return false;
