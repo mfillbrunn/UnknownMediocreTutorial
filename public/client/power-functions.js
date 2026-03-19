@@ -14,26 +14,16 @@ function resetEphemeralUIState() {
 
 // Suggest secret/guess
 socket.on("suggestWord", ({ word }) => {
-  if (!word) {
-    console.warn("suggestWord received invalid word:", word);
-    return;
-  }
+  if (!word) return;
 
   const upper = word.toUpperCase();
 
-  window.uiState = window.uiState || {};
-
-  // fallback: always store both
-  window.uiState.suggestedSecret = upper;
-  window.uiState.suggestedGuess = upper;
-
-  // only apply draft if role is known
   if (myRole === state?.setter) {
     state.setterDraft = upper;
   }
 
   if (myRole === state?.guesser) {
-    localGuesserDraft = upper;
+    state.guesserDraft = upper;
   }
 
   updateUI();
