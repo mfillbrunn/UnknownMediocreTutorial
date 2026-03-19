@@ -26,15 +26,17 @@ engine.registerPower("suggestGuess", {
     }
 
     const suggestion = feasible[Math.floor(Math.random() * feasible.length)];
-    console.log("action.playerId", action.playerId);
-console.log("state.players keys", Object.keys(state.players || {}));
-console.log("state.players[action.playerId]", state.players?.[action.playerId]);
-    const socketId = state.players[action.playerId]?.socketId;
-    if (!action.ai) {  
-    io.to(socketId).emit("suggestWord", { word: suggestion });
-    console.log("Socket sent");
-    }
+const socketId = state.players?.[action.userId]?.socketId;
 
+if (!action.ai && socketId) {
+  io.to(socketId).emit("suggestWord", { word: suggestion });
+  console.log("Socket sent to", socketId);
+} else {
+  console.warn("suggestWord failed", {
+    userId: action.userId,
+    socketId
+  });
+}
     io.to(roomId).emit("powerUsed", { type: "suggestGuess" });
   }
 });
