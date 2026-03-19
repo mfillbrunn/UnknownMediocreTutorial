@@ -7,7 +7,7 @@ const engine = {
     this.powers[id] = handlers;
   },
 
-  applyPower(id, state, action, roomId, io) {
+  applyPower(id, state, action, roomId, io, room) {
     const p = this.powers[id];
     if (!p || typeof p.apply !== "function") return;
     if (!Array.isArray(state.powersUsedThisRoundGuesser)) {
@@ -17,7 +17,7 @@ const engine = {
       state.powersUsedThisRoundSetter = [];
     }
 
-    p.apply(state, action, roomId, io);
+    p.apply(state, action, roomId, io, room);
 
     const role = action?.role;
     const meta = POWER_METADATA[id];
