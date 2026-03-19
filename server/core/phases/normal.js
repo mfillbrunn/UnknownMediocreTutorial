@@ -16,13 +16,7 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
   /// GUESSER SUBMIT
   if (!state.pendingGuess && action.type === "SUBMIT_GUESS" && role === state.guesser) {
     const res = checkGuess({guess: action.guess,state,allowedGuesses: context.ALLOWED_GUESSES});
-    if (!res.ok) {
-      const socketId = room.playersByUserId?.[action.userId]?.socketId;
-      if (socketId) {
-        io.to(socketId).emit("errorMessage", res.error);
-      }
-      return;
-    }
+    if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
     const g = action.guess.toUpperCase(); 
     state.guessCount= state.guessCount + 1;
     state.timeUsed[state.guesser] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
@@ -42,21 +36,12 @@ function handleNormalPhase(room, state, action, role, roomId, context) {
 if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME") ) {
     const w = action.type === "SET_SECRET_NEW" ? action.secret.toUpperCase(): state.secret;
     const res = checkSecret({secret: w, state, allowedSecrets: context.ALLOWED_SECRETS });
-    if (!res.ok) {
-      const socketId = room.playersByUserId?.[action.userId]?.socketId;
-      if (socketId) {
-        io.to(socketId).emit("errorMessage", res.error);
-      }
-      return;
-    }
+    if (!res.ok) {io.to(action.playerId).emit("errorMessage", res.error);return;}
     if (powerEngine.beforeSetterSecretChange(state, action)) return;
     if (state.powers.assassinWord && w.toUpperCase() === state.powers.assassinWord.toUpperCase()) {
-      const socketId = room.playersByUserId?.[action.userId]?.socketId;
-      if (socketId) {
-        io.to(socketId).emit("errorMessage", "Secret cannot match assassin word!");
-      }
+      io.to(action.playerId).emit("errorMessage", "Secret cannot match assassin word!");
       return;
-    }
+    }      
       state.timeUsed[state.setter] +=  Math.floor((Date.now() - state.roundStartTime) / 1000);
       state.roundStartTime = Date.now();    
       transitionAfterSecret({
@@ -74,7 +59,6 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
   if (action.type.startsWith("USE_")) {
     const powerId = normalizePowerId(action.type);
     if (!state.powerUsedThisTurn && isPowerAllowed(powerId, state)) {
-      action.room = room;
       const applied = powerEngine.applyPower(powerId, state, action, roomId, io);
       if (applied!==false) {state.powerUsedThisTurn = true;}
     }
