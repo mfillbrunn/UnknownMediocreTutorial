@@ -26,9 +26,9 @@ engine.registerPower("suggestGuess", {
     }
 
     const suggestion = feasible[Math.floor(Math.random() * feasible.length)];
-    console.log("suggestGuess feasible:", feasible.length);
-  console.log("suggestGuess sample:", feasible.slice(0,5));
-  console.log("suggestGuess chosen:", suggestion);
+    console.log("action.playerId", action.playerId);
+console.log("state.players keys", Object.keys(state.players || {}));
+console.log("state.players[action.playerId]", state.players?.[action.playerId]);
     const socketId = state.players[action.playerId]?.socketId;
     if (!action.ai) {  
     io.to(socketId).emit("suggestWord", { word: suggestion });
