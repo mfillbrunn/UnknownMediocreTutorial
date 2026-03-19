@@ -30,8 +30,10 @@ engine.registerPower("suggestGuess", {
   console.log("suggestGuess sample:", feasible.slice(0,5));
   console.log("suggestGuess chosen:", suggestion);
     const socketId = state.players[action.playerId]?.socketId;
-      io.to(socketId).emit("suggestWord", { word: suggestion });
-    
+    if !action.ai{  
+    io.to(socketId).emit("suggestWord", { word: suggestion });
+    console.log("Socket sent");
+    }
 
     io.to(roomId).emit("powerUsed", { type: "suggestGuess" });
   }
