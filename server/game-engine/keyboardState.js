@@ -24,8 +24,11 @@ function getLetterStatusFromHistory(letter, state) {
     if (!entry?.guess) continue;
 
     const guess = entry.guess.toUpperCase();
-    const fb = entry.fb; // safe state already provides the correct fb
-
+    let fb = entry.fb; // safe state already provides the correct fb
+    if (!fb){
+      fb = entr.fbGuesser;
+    }
+    
     if (!Array.isArray(fb)) continue;
 
     for (let i = 0; i < 5; i++) {
