@@ -129,8 +129,7 @@ function buildSafeStateForPlayer(state, role) {
       return e;
     })
     .filter(e => e !== null);
-  const isGuesser = role === state.guesser;
-  safe.keyboard = buildKeyboardState(safe, isGuesser);
+  safe.keyboard = buildKeyboardState(safe);
   return safe;
 }
 
