@@ -1,4 +1,6 @@
-const { isConsistentWithHistory, scoreGuess } = require("../game-engine/validation");
+const { scoreGuess } = require("../game-engine/validation");
+const { isConsistentWithHistory } = require("../game-engine/history");
+
 
 function computeRemainingAfterIndexFromState(idx, state, allowedSecrets) {
   if (!state || !Array.isArray(state.history)) return 0;
