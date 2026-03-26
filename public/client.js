@@ -515,6 +515,13 @@ function applyPreviewFeedback(fbArray) {
 }
 ///SETTER INPUT
 function emitSetterDraftPreview(draft) {
+   console.log("emitSetterDraftPreview", {
+    draft,
+    roomId,
+    myRole,
+    setter: state.setter,
+    hasSocket: !!socket
+  });
   if (!socket || !roomId || myRole !== state.setter) return;
   socket.emit("setterDraftSecret", {roomId, draft});
 }
