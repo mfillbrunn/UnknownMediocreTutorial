@@ -136,7 +136,7 @@ function buildSafeStateForPlayer(state, role) {
     })
     .filter(e => e !== null);
   safe.keyboard = buildKeyboardState(safe);
-  safe.setterRemainingBox = buildSetterRemainingBoxState(state,role,global.ALLOWED_SECRETS);
+  if (role === state.setter) {safe.setterRemainingBox = buildSetterRemainingBoxState(state,role,global.ALLOWED_SECRETS);}
   return safe;
 }
 
