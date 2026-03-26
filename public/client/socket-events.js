@@ -24,7 +24,9 @@ socket.on("secretPlanted", () => {
 socket.on("gameStart", () => {
   showSystemBanner("Game Started");
 });
-
+socket.on("setterRemainingBox", (boxState) => {
+  renderSetterRemainingBox(boxState);
+});
 
 socket.on("revealOldSecret", ({ secret }) => {
   toast(`Secret three rounds ago was: ${secret.toUpperCase()}`);
