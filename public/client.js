@@ -316,8 +316,7 @@ onStateUpdate(newState => {
   updateUI();
   updateSummary();
   maybeStartRouletteFromState(state);
-  if (state.phase === "simultaneous"){renderSetterRemainingBox(state, myRole, "");}
-  if (state.phase === "normal"){renderSetterRemainingBox(state, myRole, state.secret);}
+  renderSetterRemainingBox(state.setterRemainingBox);
   tutorialSteps(state, myRole);
   if (!state.isTutorial){  
     const bubble = byId("tutorialBubble");
