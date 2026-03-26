@@ -1,11 +1,6 @@
 const { buildKeyboardState } = require("../game-engine/keyboardState");
 const { buildSetterRemainingBoxState } = require("./remainingWords");
 
-safe.setterRemainingBox = buildSetterRemainingBoxState(
-  state,
-  role,
-  global.ALLOWED_SECRETS
-);
 function buildSafeStateForPlayer(state, role) {
   const safe = JSON.parse(JSON.stringify(state));
 
