@@ -446,7 +446,7 @@ for (let i = 0; i < state.history.length; i++) {
     ? "—"
     : isFinal
       ? 0
-      : computeRemainingAfterIndex(i);
+      : ?;
 
   html += `
     <tr class="${isFinal ? "final-row" : ""}">
@@ -508,7 +508,7 @@ function renderStoredRoundSummary(round, index) {
   }
 
   round.history.forEach((h, i) => {
-    const remaining = computeRemainingFromRound(round, i);
+    const remaining = 0;
 
     const gpIcons = (h.powersGuesser || [])
   .map(p => powerToEmojiOnly(getPowerId(p)))
