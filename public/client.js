@@ -322,7 +322,6 @@ onStateUpdate(newState => {
     const bubble = byId("tutorialBubble");
     if (!bubble) return;
   bubble.classList.add("hidden");}
-  remainingCache.setterOld = null;
 });
 
 // -----------------------------------------------------
