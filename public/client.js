@@ -515,57 +515,79 @@ function applyPreviewFeedback(fbArray) {
   });
 }
 ///SETTER INPUT
+function emitSetterDraftPreview(draft) {
+  if (!socket || !roomId || myRole !== state.setter) return;
+  socket.emit("setterDraftSecret", {roomId, draft});
+}
 function handleSetterInput(event) {
-    if (!(state.powers?.freezeActive || state.powers?.rouletteSecretActive)){
-    const isNormalSetterTurn =  myRole === state.setter && state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess;
-    const isSimultaneousSecretEntry = state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted;
+  if (!(state.powers?.freezeActive || state.powers?.rouletteSecretActive)) {
+    const isNormalSetterTurn =
+      myRole === state.setter &&
+      state.phase === "normal" &&
+      state.turn === state.setter &&
+      !!state.pendingGuess;
+
+    const isSimultaneousSecretEntry =
+      state.phase === "simultaneous" &&
+      !state.secret &&
+      !state.simultaneousSecretSubmitted;
+
     if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
+
     const isEditing = event.type === "LETTER" || event.type === "BACKSPACE";
-      // First edit: clear ghosted secret
-      if (isEditing && !state.setterDraft) {
-        state.setterDraft = "";
-      }
+
+    if (isEditing && !state.setterDraft) {
+      state.setterDraft = "";
+    }
+
     const draft = state.setterDraft || "";
+
     if (event.type === "BACKSPACE") {
       state.setterDraft = draft.slice(0, -1);
       updateUI();
-      renderSetterRemainingBox(state, myRole, state.setterDraft);
+      emitSetterDraftPreview(state.setterDraft);
       return;
     }
+
     if (event.type === "LETTER") {
-      remainingCache.setterCurrent = null;
       if (draft.length < 5) {
         state.setterDraft = draft + event.value;
         updateUI();
-        renderSetterRemainingBox(state, myRole, state.setterDraft);
+        emitSetterDraftPreview(state.setterDraft);
       }
       return;
     }
   }
+
   if (event.type === "ENTER") {
-    const draft = (state.setterDraft || "").trim();
+    const draft = (state.setterDraft || "").trim().toUpperCase();
+
     if (draft.length === 0) {
       if (KeepEnabled) {
         state.setterDraft = "";
+        emitSetterDraftPreview("");
+
         if (window.isRejoining) {
           toast("Reconnecting...");
           return;
         }
-        sendGameAction({ type: "SET_SECRET_SAME" });  
+
+        sendGameAction({ type: "SET_SECRET_SAME" });
         resetEphemeralUIState();
         updateUI();
-        renderSetterRemainingBox(state, myRole, state.secret);
         return;
       }
     }
+
     if (NewEnabled) {
-      renderSetterRemainingBox(state, myRole, draft);
+      emitSetterDraftPreview(draft);
       submitSetterNew();
       return;
     }
-      shakeDraftRow("setter");
-      toast("Can't submit new secret");
-      return;      
+
+    shakeDraftRow("setter");
+    toast("Can't submit new secret");
+    return;
   }
 }
 
