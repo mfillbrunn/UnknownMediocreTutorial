@@ -1,4 +1,4 @@
-const { scoreGuess } = require("../game-engine/validation");
+const { scoreGuess } = require("../game-engine/scoring");
 const { isConsistentWithHistory } = require("../game-engine/history");
 
 
