@@ -125,7 +125,28 @@ module.exports = function registerSocketHandlers(io, context) {
       syncStateSocketKeys(room);
       emitStateForAllPlayers(roomId, room, io);
     });
-
+    /*------REMAINING BOX ------*/
+    socket.on("setterDraftSecret", ({ roomId, draft }) => {
+      const room = rooms[roomId];
+      if (!room || !room.state) return;
+    
+      const state = room.state;
+    
+      // Only setter allowed
+      if (socket.id !== state.setter) return;
+    
+      const normalized =
+        typeof draft === "string" ? draft.trim().toUpperCase() : "";
+    
+      const boxState = buildSetterRemainingBoxState(
+        state,
+        socket.id,
+        context.ALLOWED_SECRETS,
+        normalized
+      );
+    
+      socket.emit("setterRemainingBox", boxState);
+    });
     /* ---------- GAME ACTION ---------- */
     socket.on("gameAction", ({ action }) => {
       const roomId = socket.data.roomId;
