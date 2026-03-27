@@ -127,39 +127,28 @@ module.exports = function registerSocketHandlers(io, context) {
     });
     /*------REMAINING BOX ------*/
 socket.on("setterDraftSecret", ({ roomId, draft }) => {
-  console.log("SERVER got setterDraftSecret", {
-    roomId,
-    draft,
-    socketId: socket.id
-  });
+  console.log("SERVER got setterDraftSecret", { roomId, draft, socketId: socket.id });
 
   const room = rooms[roomId];
-  if (!room || !room.state) {
-    console.log("SERVER no room/state", { roomId });
-    return;
-  }
+  if (!room || !room.state) return;
 
   const state = room.state;
+  const viewerRole = state.roles?.[socket.id];
 
-  if (socket.id !== state.setter) {
-    console.log("SERVER not setter", {
-      socketId: socket.id,
-      setter: state.setter
-    });
+  if (viewerRole !== state.setter) {
+    console.log("SERVER not setter", { socketId: socket.id, viewerRole, setter: state.setter });
     return;
-    
   }
 
   const normalized = typeof draft === "string" ? draft.trim().toUpperCase() : "";
 
   const boxState = buildSetterRemainingBoxState(
     state,
-    socket.id,
+    viewerRole,
     context.ALLOWED_SECRETS,
     normalized
   );
 
-  console.log("SERVER emitting setterRemainingBox", boxState);
   socket.emit("setterRemainingBox", boxState);
 });
     /* ---------- GAME ACTION ---------- */
