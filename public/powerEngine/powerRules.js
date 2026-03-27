@@ -39,7 +39,6 @@ betMiss: {
     once: false,
     allowed(state, role) {
       return (
-        computeRemainingAfterIndex(state.history.length - 1) >= 2 &&
         state.phase === "normal" &&
         role === state.setter &&
         !state.powerUsedThisTurn 
