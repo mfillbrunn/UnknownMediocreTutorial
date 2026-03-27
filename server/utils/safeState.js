@@ -1,5 +1,6 @@
 const { buildKeyboardState } = require("../game-engine/keyboardState");
 const { buildSetterRemainingBoxState } = require("./remainingWords");
+const { buildConstraintData } = require("./constraintData");
 
 function buildSafeStateForPlayer(state, role) {
   const safe = JSON.parse(JSON.stringify(state));
