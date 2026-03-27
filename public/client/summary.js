@@ -441,12 +441,7 @@ for (let i = 0; i < state.history.length; i++) {
     `;
   }
 
- const remaining =
-  state.timeoutLoser
-    ? "—"
-    : isFinal
-      ? 0
-      : ?;
+ const remaining =0;
 
   html += `
     <tr class="${isFinal ? "final-row" : ""}">
