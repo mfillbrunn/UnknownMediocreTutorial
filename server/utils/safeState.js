@@ -133,6 +133,7 @@ function buildSafeStateForPlayer(state, role) {
     .filter(e => e !== null);
   safe.keyboard = buildKeyboardState(safe);
   if (role === state.setter) {safe.setterRemainingBox = buildSetterRemainingBoxState(state,role,global.ALLOWED_SECRETS);}
+  safe.constraintData = buildConstraintData(safe, role);
   return safe;
 }
 
