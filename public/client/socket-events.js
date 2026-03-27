@@ -31,7 +31,41 @@ socket.on("setterRemainingBox", (boxState) => {
 socket.on("revealOldSecret", ({ secret }) => {
   toast(`Secret three rounds ago was: ${secret.toUpperCase()}`);
 });
+socket.on("setterDraftSecret", ({ roomId, draft }) => {
+  console.log("SERVER got setterDraftSecret", {
+    roomId,
+    draft,
+    socketId: socket.id
+  });
 
+  const room = rooms[roomId];
+  if (!room || !room.state) {
+    console.log("SERVER no room/state", { roomId });
+    return;
+  }
+
+  const state = room.state;
+
+  if (socket.id !== state.setter) {
+    console.log("SERVER not setter", {
+      socketId: socket.id,
+      setter: state.setter
+    });
+    return;
+  }
+
+  const normalized = typeof draft === "string" ? draft.trim().toUpperCase() : "";
+
+  const boxState = buildSetterRemainingBoxState(
+    state,
+    socket.id,
+    context.ALLOWED_SECRETS,
+    normalized
+  );
+
+  console.log("SERVER emitting setterRemainingBox", boxState);
+  socket.emit("setterRemainingBox", boxState);
+});
 
 // Timer begins
 socket.on("forceTimerStarted", ({ durationMs }) => {
