@@ -13,6 +13,7 @@ const { emitStateForAllPlayers } = require("../utils/emitState");
 const { startGameTimer } = require("../core/timeouts/timeoutController");
 const { stopAllRoomIntervals } = require("../utils/teardown");
 const { maybeRunAI } = require("../core/ai/runAI");
+const { buildSetterRemainingBoxState } = require("../utils/remainingWords");
 
 module.exports = function registerSocketHandlers(io, context) {
   const { ALLOWED_GUESSES, ALLOWED_SECRETS } = context;
