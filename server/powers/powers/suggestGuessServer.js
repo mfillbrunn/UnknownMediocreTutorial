@@ -11,32 +11,26 @@ const WORDS = fs.readFileSync(path.join(__dirname, "../../wordlists/allowed_secr
 
 engine.registerPower("suggestGuess", {
   apply(state, action, roomId, io, room) {
-
-    // Once per match
     if (state.powers.suggestGuessUsed) return false;
-    state.powers.suggestGuessUsed = true;
-    state.powers.suggestGuessActive = true;
 
     const feasible = WORDS.filter(w =>
       isConsistentWithHistory(state.history, w, state)
     );
+
     if (feasible.length === 0) {
       io.to(action.playerId).emit("toast", "No valid suggestions!");
-      return;
+      return false;
     }
 
     const suggestion = feasible[Math.floor(Math.random() * feasible.length)];
-    const socketId = room.playersByUserId?.[action.userId]?.socketId;
-    
-    if (!action.ai && socketId) {
-      io.to(socketId).emit("suggestWord", { word: suggestion });
-      console.log("Socket sent to", socketId);
-    } else {
-      console.warn("suggestWord failed", {
-        userId: action.userId,
-        socketId
-      });
-    }
+
+    state.powers.suggestGuessUsed = true;
+    state.powers.suggestGuessActive = true;
+    state.powers.suggestedGuess = suggestion; // optional but useful for state-driven UI
+
+    io.to(action.playerId).emit("suggestWord", { word: suggestion });
     io.to(roomId).emit("powerUsed", { type: "suggestGuess" });
+
+    return true;
   }
 });
