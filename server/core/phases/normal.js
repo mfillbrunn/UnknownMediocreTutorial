@@ -59,7 +59,7 @@ if (state.pendingGuess && state.turn === state.setter && (action.type === "SET_S
   if (action.type.startsWith("USE_")) {
     const powerId = normalizePowerId(action.type);
     if (!state.powerUsedThisTurn && isPowerAllowed(powerId, state)) {
-      const applied = powerEngine.applyPower(powerId, state, action, roomId, io);
+      const applied = powerEngine.applyPower(powerId, state, action, roomId, io, room);
       if (applied!==false) {state.powerUsedThisTurn = true;}
     }
     emitStateForAllPlayers(roomId, room, io);
