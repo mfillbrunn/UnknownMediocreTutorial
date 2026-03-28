@@ -5,6 +5,23 @@ const { emitLobbyEvent } = require("../../utils/emitLobby");
 const {stopTimer} = require("../../utils/Timer");
 const {applyRankedElo} = require("../../utils/elo");
 const {  computeMatchResult, writeMatchHistory} =  require("../../utils/writeMatchData");
+const { computeRemainingAfterIndexFromState } = require("../../utils/remainingWords");
+
+function buildArchivedRoundHistory(state, allowedSecrets) {
+  const history = Array.isArray(state.history) ? state.history : [];
+  return history.map((entry, idx) => {
+    const cloned = { ...entry };
+    const isFinal = idx === history.length - 1;
+    let remainingAfter = 0;
+    if (state.timeoutLoser) {remainingAfter = "—";
+    } else if (isFinal) {remainingAfter = 0;
+    } else {
+      const tempState = {...state, history: history.slice(0, idx + 1)};
+      remainingAfter = computeRemainingAfterIndexFromState(idx,tempState,allowedSecrets);
+    }
+    return {...cloned, remainingAfter};
+  });
+}
 
 function endGame(state, roomId, io, room, context) {
    const { supabase } = context; 
@@ -24,7 +41,7 @@ function endGame(state, roomId, io, room, context) {
    }
    state.matchRounds.push({setter: state.setter, guesser: state.guesser, guessCount: state.guessCount,
        time: { A: state.timeUsed.A, B: state.timeUsed.B,}, timeoutLoser: state.timeoutLoser || null,
-    history: state.history.map(x => ({ ...x })),
+    history: buildArchivedRoundHistory(state, context.ALLOWED_SECRETS),
     powers: state.activePowers.map(x => ({ ...x })),
   });
     const res = state.mode?.onRoundEnd?.(state) || { view: "match", canNextRound: false };
