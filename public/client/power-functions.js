@@ -18,11 +18,14 @@ socket.on("suggestWord", ({ word }) => {
 
   const upper = word.toUpperCase();
 
-  if (myRole === state?.setter) {
+  window.uiState = window.uiState || {};
+  window.uiState.suggestedGuess = upper;
+
+  if (myRole === "setter") {
     state.setterDraft = upper;
   }
 
-  if (myRole === state?.guesser) {
+  if (myRole === "guesser") {
     state.guesserDraft = upper;
   }
 
