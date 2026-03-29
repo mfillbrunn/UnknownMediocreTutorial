@@ -431,6 +431,14 @@ function addAIPlayer(room, difficulty = 1) {
   syncTurnOwners(room);
 }
 
+function getSocketIdForUser(room, userId) {
+  return room.playersByUserId?.[userId]?.socketId ?? null;
+}
+function emitErrorToUser(room, io, userId, message) {
+  const socketId = getSocketIdForUser(room, userId);
+  if (!socketId) return;
+  io.to(socketId).emit("errorMessage", message);
+}
 /* Force close */
 
 function forceCloseRoom(roomId, room, io) {
@@ -464,6 +472,8 @@ module.exports = {
   // helpers exported for use elsewhere
   ensureConnectionPlayer,
   ensureStatePlayer,
+  emitErrorToUser,
+  getSocketIdForUser,
   getPlayerState,
   getMissingRole,
   setPlayerRole,
