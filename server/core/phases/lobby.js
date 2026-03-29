@@ -113,6 +113,15 @@ if (action.type === "SWITCH_ROLES") {
   // Swap canonical roles
   playerA.role = "B";
   playerB.role = "A";
+        if (!state.players?.[playerA.userId] || !state.players?.[playerB.userId]) {
+          console.error("SWITCH_ROLES desync", {
+            playerA,
+            playerB,
+            statePlayers: state.players,
+            roomPlayers: room.playersByUserId
+          });
+          return;
+        }
 
   // Update state.players
   state.players[playerA.userId].role = "B";
