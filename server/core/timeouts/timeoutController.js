@@ -1,8 +1,9 @@
 // core/timeouts/timeoutController.js
+
 const { startTimer } = require("../../utils/Timer");
-const { emitStateForAllPlayers } = require("../../utils/emitState");
-const { emitLobbyEvent } = require("../../utils/emitLobby");
+const { emitRoomState } = require("../rooms");
 const { endGame } = require("../phases/gameOver");
+
 /**
  * Central timeout policy engine.
  * Decides what a timeout means based on phase.
@@ -11,14 +12,13 @@ function handleTimeout({
   room,
   state,
   roomId,
-  timedOutRole,
+  timedOutUserId,
   context
 }) {
-  const io = context.io;
-console.log("[TIMEOUT] handleTimeout", {
+  console.log("[TIMEOUT] handleTimeout", {
     roomId,
     phase: state.phase,
-    timedOutRole,
+    timedOutUserId,
     turn: state.turn,
     setter: state.setter,
     guesser: state.guesser,
@@ -27,30 +27,29 @@ console.log("[TIMEOUT] handleTimeout", {
     pendingGuess: state.pendingGuess,
     secret: state.secret ? "(set)" : "(unset)"
   });
+
   switch (state.phase) {
     case "simultaneous":
-      console.log("[TIMEOUT] routing → simultaneous");
+      console.log("[TIMEOUT] routing -> simultaneous");
       return handleSimultaneousTimeout({
         room,
         state,
         roomId,
-        timedOutRole,
+        timedOutUserId,
         context
       });
 
     case "normal":
-      console.log("[TIMEOUT] routing → simultaneous");
+      console.log("[TIMEOUT] routing -> normal");
       return handleNormalTimeout({
         room,
         state,
         roomId,
-        timedOutRole,
+        timedOutUserId,
         context
       });
 
     default:
-      // Lobby, gameOver, etc — ignore or no-op
-      console.log("[TIMEOUT] routing → normal");
       return { continue: false };
   }
 }
@@ -59,7 +58,7 @@ function handleSimultaneousTimeout({
   room,
   state,
   roomId,
-  timedOutRole,
+  timedOutUserId,
   context
 }) {
   const io = context.io;
@@ -67,15 +66,15 @@ function handleSimultaneousTimeout({
   const isFirstSimultaneous =
     !state.matchRounds || state.matchRounds.length === 0;
 
+  state.timeoutLoser = timedOutUserId;
+
   if (isFirstSimultaneous) {
-    state.timeoutLoser = timedOutRole;
     state.canNextRound = false;
     endGame(state, roomId, io, room, context);
-    emitStateForAllPlayers(roomId, room, io);
+    emitRoomState(roomId, room, io);
     return { continue: false };
   }
-  // Otherwise: immediate loss
-  state.timeoutLoser = timedOutRole;
+
   endGame(state, roomId, io, room, context);
   return { continue: false };
 }
@@ -84,14 +83,15 @@ function handleNormalTimeout({
   room,
   state,
   roomId,
-  timedOutRole,
+  timedOutUserId,
   context
 }) {
   const { transitionAfterGuess, transitionAfterSecret, maybeRunAI } = context;
-  const io = context.io;  
+  const io = context.io;
+
   console.log("[TIMEOUT][NORMAL] entered", {
     roomId,
-    timedOutRole,
+    timedOutUserId,
     turn: state.turn,
     setter: state.setter,
     guesser: state.guesser,
@@ -99,63 +99,109 @@ function handleNormalTimeout({
     forceGuessOptions: state.powers?.forceGuessOptions,
     historyLength: state.history?.length ?? 0
   });
-  state.roundTimeouts ??= { A: 0, B: 0 };
-  state.roundTimeouts[timedOutRole] =
-    (state.roundTimeouts[timedOutRole] || 0) + 1;
+
+  state.roundTimeouts ||= {};
+  state.roundTimeouts[timedOutUserId] =
+    (state.roundTimeouts[timedOutUserId] || 0) + 1;
+
   console.log("[TIMEOUT][NORMAL] counter", {
-    role: timedOutRole,
-    count: state.roundTimeouts[timedOutRole]
+    userId: timedOutUserId,
+    count: state.roundTimeouts[timedOutUserId]
   });
-  if (state.roundTimeouts[timedOutRole] >= 3) {
-    console.warn("[TIMEOUT][NORMAL] max timeouts reached → game over", {
-      loser: timedOutRole
+
+  if (state.roundTimeouts[timedOutUserId] >= 3) {
+    console.warn("[TIMEOUT][NORMAL] max timeouts reached -> game over", {
+      loser: timedOutUserId
     });
-    state.timeoutLoser = timedOutRole;
+    state.timeoutLoser = timedOutUserId;
     endGame(state, roomId, io, room, context);
     return { continue: false };
   }
 
-  // Auto-play last move
   const last = state.history.at(-1);
   if (!last) {
-    console.warn("[TIMEOUT][NORMAL] no history → abort");
+    console.warn("[TIMEOUT][NORMAL] no history -> abort");
     return { continue: false };
   }
-      if (timedOutRole === state.guesser) {
-        console.log("[TIMEOUT][NORMAL] guesser timed out → auto-guess", {
-          guess: last.guess
-        });
-        if (state.powers && state.powers.forceGuessOptions !== null) {
-          console.log("[TIMEOUT][NORMAL] clearing forceGuessOptions");
-          state.powers.forceGuessOptions = null;
-        }
-    transitionAfterGuess({room,state, guess: last.guess, roomId, context, io});
-    } else {
-        console.log("[TIMEOUT][NORMAL] setter timed out → auto-secret", {
-          secret: state.secret ? "(reuse)" : "(missing)"
-          });
-      transitionAfterSecret({room,state,secret: state.secret,roomId,context,io});
+
+  if (timedOutUserId === state.guesser) {
+    console.log("[TIMEOUT][NORMAL] guesser timed out -> auto-guess", {
+      guess: last.guess
+    });
+
+    if (state.powers?.forceGuessOptions != null) {
+      console.log("[TIMEOUT][NORMAL] clearing forceGuessOptions");
+      state.powers.forceGuessOptions = null;
     }
-  setTimeout(() => {try {
-    console.log("[TIMEOUT][NORMAL] invoking maybeRunAI");
-    maybeRunAI(room, roomId, context);} catch (err) {console.error("maybeRunAI crashed:", err);}}, 1000);
+
+    transitionAfterGuess({
+      room,
+      state,
+      guess: last.guess,
+      roomId,
+      context,
+      io
+    });
+  } else if (timedOutUserId === state.setter) {
+    console.log("[TIMEOUT][NORMAL] setter timed out -> auto-secret", {
+      secret: state.secret ? "(reuse)" : "(missing)"
+    });
+
+    transitionAfterSecret({
+      room,
+      state,
+      secret: state.secret,
+      roomId,
+      context,
+      io
+    });
+  } else {
+    console.warn("[TIMEOUT][NORMAL] timedOutUserId does not match setter or guesser", {
+      timedOutUserId,
+      setter: state.setter,
+      guesser: state.guesser
+    });
+    return { continue: false };
+  }
+
+  setTimeout(() => {
+    try {
+      console.log("[TIMEOUT][NORMAL] invoking maybeRunAI");
+      maybeRunAI(room, roomId, context);
+    } catch (err) {
+      console.error("maybeRunAI crashed:", err);
+    }
+  }, 1000);
+
   return { continue: true };
 }
 
 function startGameTimer(room, state, roomId, context) {
   const { endGame } = context;
-  if (!room || room.status !== "alive") return;
   const io = context.io;
+
+  if (!room || room.status !== "alive") return;
   if (state.isTimerRunning) return;
+
   state.isTimerRunning = true;
-  startTimer(roomId, state, io, timedOutRole => {
+
+  startTimer(roomId, state, io, (timedOutUserId) => {
     state.isTimerRunning = false;
+
     if (state.timeControl.mode === "chess") {
-      state.timeoutLoser = timedOutRole;
+      state.timeoutLoser = timedOutUserId;
       endGame(state, roomId, io, room, context);
       return;
     }
-    const result = handleTimeout({room,state,roomId,timedOutRole,context});
+
+    const result = handleTimeout({
+      room,
+      state,
+      roomId,
+      timedOutUserId,
+      context
+    });
+
     if (result?.continue) {
       startGameTimer(room, state, roomId, context);
     }
@@ -163,4 +209,5 @@ function startGameTimer(room, state, roomId, context) {
 }
 
 module.exports = {
-  startGameTimer };
+  startGameTimer
+};
