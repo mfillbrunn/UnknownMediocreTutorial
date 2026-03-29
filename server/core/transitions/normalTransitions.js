@@ -1,12 +1,13 @@
 const { endGame } = require("../phases/gameOver");
-const { emitStateForAllPlayers } = require("../../utils/emitState");
+const { emitRoomState } = require("../rooms");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
 const { clearForceTimer, registerForceTimer } = require("../../utils/forceTimer");
 
-function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io}) {
+function transitionAfterGuess({ room, state, guess, roomId, context, io }) {
   const assassin = state.powers.assassinWord;
-  // Assassin hit → game over
+
+  // Assassin hit -> game over
   if (assassin && guess === assassin.toUpperCase()) {
     state.powers.assassinWordassassinated = true;
     pushWinEntry(state, state.secret);
@@ -14,86 +15,109 @@ function transitionAfterGuess({  room,  state,  guess,  roomId,  context,  io}) 
     endGame(state, roomId, io, room, context);
     return "gameOver";
   }
-  // Correct guess → game over
+
+  // Correct guess -> game over
   if (guess === state.secret) {
     pushWinEntry(state, guess);
     io.to(roomId).emit("secretFound");
     endGame(state, roomId, io, room, context);
     return "gameOver";
   }
-  // Otherwise → setter’s turn
+
+  // Otherwise -> setter's turn
   state.pendingGuess = guess;
   io.to(roomId).emit("guessSubmitted");
-  clearRoundState(state, "guesser");  
+
+  clearRoundState(state, "guesser");
+
   if (state.powers.forceTimerArmed) {
-      startForceTimer(roomId, room, state, io, context,context.applyAction);
-  } 
+    startForceTimer(roomId, room, state, io, context);
+  }
+
   context.powerEngine.turnStart(state, state.turn, roomId, io);
-  emitStateForAllPlayers(roomId, room, io);
+  emitRoomState(roomId, room, io);
   return "continue";
 }
 
-function transitionAfterSecret({  room,  state,  secret,  roomId,  context,  io}) {
+function transitionAfterSecret({ room, state, secret, roomId, context, io }) {
   state.secret = secret;
+
   if (state.pendingGuess === secret) {
     pushWinEntry(state, secret);
     io.to(roomId).emit("secretFound");
     endGame(state, roomId, io, room, context);
     return "gameOver";
   }
+
   io.to(roomId).emit("secretPlanted");
   clearForceTimer(roomId, state);
-  finalizeFeedback(state, context.powerEngine, roomId,room, io);
+  finalizeFeedback(state, context.powerEngine, roomId, room, io);
   clearRoundState(state, "setter");
   context.powerEngine.turnStart(state, state.turn, roomId, io);
-  emitStateForAllPlayers(roomId, room, io);
+  emitRoomState(roomId, room, io);
   return "continue";
 }
 
 /* ---------- helpers ---------- */
 
-function advanceTimer(state, player) {
+function advanceTimer(state, userId) {
   if (state.timeControl.mode === "chess") {
-    addIncrement(state, player);
+    addIncrement(state, userId);
   } else if (state.timeControl.mode === "round") {
     resetRoundTimer(state);
   }
 }
+
 const ROUND_SCOPED_ACTIVE_POWERS = new Set([
-  "freezeActive", "stealthGuessActive", "confuseColorsActive","magicModeActive",  "countOnlyActive", "nonsenseActive", "rouletteSecretActive", "betMissActive"
-  
+  "freezeActive",
+  "stealthGuessActive",
+  "confuseColorsActive",
+  "magicModeActive",
+  "countOnlyActive",
+  "nonsenseActive",
+  "rouletteSecretActive",
+  "betMissActive"
 ]);
+
 function clearActivePowers(state) {
   if (!state?.powers || !Array.isArray(state.activePowers)) return;
+
   for (const power of state.activePowers) {
     const key = `${power}Active`;
     if (!(key in state.powers)) continue;
     if (ROUND_SCOPED_ACTIVE_POWERS.has(key)) continue;
+
     const val = state.powers[key];
     if (!val) continue;
+
     state.powers[key] = typeof val === "boolean" ? false : null;
   }
 }
 
-function clearRoundState(state, role) {
+function clearRoundState(state, actingRole) {
   clearActivePowers(state);
-  if (role==="setter"){
-    if (state.powers && state.powers.stealthGuessActive) {state.powers.stealthGuessActive = false;}
-      if (state.powers && state.powers.magicModeActive) {state.powers.magicModeActive = false;}
-      if (state.powers && state.powers.rouletteSecretActive) {state.powers.rouletteSecretActive = false;}  
-      state.activeTimer = state.guesser;
-      advanceTimer(state, state.setter);
-      state.turn = state.guesser;
+
+  if (actingRole === "setter") {
+    if (state.powers?.stealthGuessActive) state.powers.stealthGuessActive = false;
+    if (state.powers?.magicModeActive) state.powers.magicModeActive = false;
+    if (state.powers?.rouletteSecretActive) state.powers.rouletteSecretActive = false;
+
+    state.activeTimer = state.guesser;
+    advanceTimer(state, state.setter);
+    state.turn = state.guesser;
   }
-  if (role==="guesser"){
-    if (state.powers && state.powers.confuseColorsActive) {state.powers.confuseColorsActive = false;}
-    if (state.powers && state.powers.countOnlyActive) {state.powers.countOnlyActive = false;}
-    if (state.powers && state.powers.forceGuessOptions)  {state.powers.forceGuessOptions = null;}
-    if (state.powers && state.powers.nonsenseActive)  {state.powers.nonsenseActive = false;}
+
+  if (actingRole === "guesser") {
+    if (state.powers?.confuseColorsActive) state.powers.confuseColorsActive = false;
+    if (state.powers?.countOnlyActive) state.powers.countOnlyActive = false;
+    if (state.powers?.forceGuessOptions) state.powers.forceGuessOptions = null;
+    if (state.powers?.nonsenseActive) state.powers.nonsenseActive = false;
+
     state.activeTimer = state.setter;
     advanceTimer(state, state.guesser);
     state.turn = state.setter;
   }
+
   state.powers.forceGuess = null;
   state.powerUsedThisTurn = false;
 }
@@ -119,8 +143,11 @@ function startForceTimer(roomId, room, state, io, context) {
       context.applyAction(
         room,
         state,
-        { type: "SET_SECRET_SAME", playerId: room[state.setter] },
-        state.setter,
+        {
+          type: "SET_SECRET_SAME",
+          userId: state.setter,
+          ai: true
+        },
         roomId,
         context
       );
@@ -135,11 +162,11 @@ function startForceTimer(roomId, room, state, io, context) {
 function pushWinEntry(state, word) {
   state.history.push({
     guess: word,
-    fb: ["🟩","🟩","🟩","🟩","🟩"],
-    fbGuesser: ["🟩","🟩","🟩","🟩","🟩"],
+    fb: ["🟩", "🟩", "🟩", "🟩", "🟩"],
+    fbGuesser: ["🟩", "🟩", "🟩", "🟩", "🟩"],
     extraInfo: null,
     finalSecret: word
-  });  
+  });
 }
 
 module.exports = {
