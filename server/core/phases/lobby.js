@@ -36,16 +36,23 @@ const SETTER_POWERS = [
               "nonsense",
               "betMiss",
       ];
+
 function handleLobbyPhase(room, state, action, role, roomId, context) {
   const io = context.io;
+
 if (action.type === "PLAYER_JOINED") {
+  const playerState = ensurePlayerState(room, state, action.playerId);
+  if (!playerState) return;
+
   if (action.name) {
-    state.playerNames[action.playerId] = String(action.name).trim().slice(0, 16);
+    playerState.name = String(action.name).trim().slice(0, 16);
   }
- emitStateForAllPlayers(roomId, room, io);
- emitLobbyEvent(io, roomId, { type: "playerJoined" });
+
+  emitStateForAllPlayers(roomId, room, io);
+  emitLobbyEvent(io, roomId, { type: "playerJoined" });
   return;
 }
+
 if (action.type === "SET_RANKED") {
   if (state.hostUserId !== action.userId) return;
   state.ranked = !!action.ranked;
@@ -273,5 +280,22 @@ if (action.type === "SET_DEV_MODE") {
   return;
 }
 }
+function ensurePlayerState(room, state, userId) {
+  state.players ||= {};
 
+  const roomPlayer = room.playersByUserId?.[userId];
+  if (!roomPlayer) return null;
+
+  state.players[userId] ||= {
+    role: roomPlayer.role ?? null,
+    ready: false,
+    name: null,
+    isAI: !!roomPlayer.isAI
+  };
+
+  state.players[userId].role = roomPlayer.role ?? state.players[userId].role;
+  state.players[userId].isAI = !!roomPlayer.isAI;
+
+  return state.players[userId];
+}
 module.exports = handleLobbyPhase;
