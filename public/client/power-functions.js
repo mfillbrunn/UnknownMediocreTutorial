@@ -15,12 +15,12 @@ function resetEphemeralUIState() {
 // Suggest secret/guess
 socket.on("suggestWord", ({ word }) => {
   if (!word) return;
-
+  console.log(word);
   const upper = word.toUpperCase();
 
   window.uiState = window.uiState || {};
   window.uiState.suggestedGuess = upper;
-
+  console.log(myRole);
   if (myRole === "setter") {
     state.setterDraft = upper;
   }
