@@ -136,8 +136,7 @@ vowelRefresh: {
     return (
       state.phase === "normal" &&
       role === state.setter &&
-      !state.powerUsedThisTurn &&
-      !state.powers?.rouletteSecretActive
+      !state.powerUsedThisTurn 
     );
   }
 },
