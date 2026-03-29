@@ -7,36 +7,40 @@ const {
   findLastOpenRoom,
   joinOrReattach,
   getPlayerByUserId,
-  syncStateSocketKeys
+  getPlayerState,
+  setPlayerName,
+  emitRoomState
 } = require("../core/rooms");
-const { emitStateForAllPlayers } = require("../utils/emitState");
 const { startGameTimer } = require("../core/timeouts/timeoutController");
 const { stopAllRoomIntervals } = require("../utils/teardown");
 const { maybeRunAI } = require("../core/ai/runAI");
 const { buildSetterRemainingBoxState } = require("../utils/remainingWords");
 
 module.exports = function registerSocketHandlers(io, context) {
-  const { ALLOWED_GUESSES, ALLOWED_SECRETS } = context;
-
-  io.on("connection", socket => {
+  io.on("connection", (socket) => {
     /* ---------- CREATE ROOM ---------- */
     socket.on("createRoom", ({ userId, name }, cb) => {
       const roomId = createRoom(socket, userId);
       socket.data.roomId = roomId;
+
       const room = rooms[roomId];
 
-      // map display name into socket-keyed container
       if (name) {
-        room.state.playerNames = room.state.playerNames || {};
-        room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
+        setPlayerName(room, userId, name);
       }
 
-      socket.emit("roleAssigned", { role: "A" });
-      cb?.({ ok: true, roomId });
+      const role = room.state.players?.[userId]?.role ?? null;
 
-      // ensure state mappings in sync (roles keyed by socket)
-      syncStateSocketKeys(room);
-      emitStateForAllPlayers(roomId, room, io);
+      socket.emit("roleAssigned", { role });
+
+      cb?.({
+        ok: true,
+        roomId,
+        role,
+        state: room.state
+      });
+
+      emitRoomState(roomId, room, io);
     });
 
     /* ---------- JOIN ROOM / REATTACH ---------- */
@@ -44,23 +48,26 @@ module.exports = function registerSocketHandlers(io, context) {
       const result = joinOrReattach(socket, roomId, userId);
       if (!result.ok) return cb?.(result);
 
-      // if socket had another room, leave it
       if (socket.data.roomId && socket.data.roomId !== roomId) {
         socket.leave(socket.data.roomId);
       }
+
       socket.data.roomId = roomId;
       const room = rooms[roomId];
 
-      // put display name into socket-keyed state (compat)
       if (name) {
-        room.state.playerNames = room.state.playerNames || {};
-        room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
+        setPlayerName(room, userId, name);
       }
 
       if (result.reattached && result.shouldResumeGame) {
         room.state.paused = false;
         room.state.roundStartTime = Date.now();
-        if (room.state.timeControl?.enabled && !room.state.gameOver && room.state.phase !== "lobby") {
+
+        if (
+          room.state.timeControl?.enabled &&
+          !room.state.gameOver &&
+          room.state.phase !== "lobby"
+        ) {
           room.state.roundStartTime = Date.now();
           startGameTimer(room, room.state, roomId, context);
         }
@@ -68,7 +75,11 @@ module.exports = function registerSocketHandlers(io, context) {
 
       socket.emit("roleAssigned", { role: result.role });
 
-      socket.to(roomId).emit("lobbyEvent", { type: "playerJoined" });
+      socket.to(roomId).emit("lobbyEvent", {
+        type: result.reattached ? "playerRejoined" : "playerJoined",
+        userId
+      });
+
       cb?.({
         ok: true,
         roomId,
@@ -77,15 +88,15 @@ module.exports = function registerSocketHandlers(io, context) {
         state: room.state
       });
 
-      // sync socket-keyed state and broadcast
-      syncStateSocketKeys(room);
-      emitStateForAllPlayers(roomId, room, io);
+      emitRoomState(roomId, room, io);
     });
 
     /* ---------- QUICK JOIN ---------- */
     socket.on("quickJoin", ({ userId, name }, cb) => {
       const roomId = findLastOpenRoom();
-      if (!roomId) return cb?.({ ok: false, error: "No open rooms available" });
+      if (!roomId) {
+        return cb?.({ ok: false, error: "No open rooms available" });
+      }
 
       const result = joinOrReattach(socket, roomId, userId);
       if (!result.ok) return cb?.(result);
@@ -93,26 +104,32 @@ module.exports = function registerSocketHandlers(io, context) {
       if (socket.data.roomId && socket.data.roomId !== roomId) {
         socket.leave(socket.data.roomId);
       }
+
       socket.data.roomId = roomId;
       const room = rooms[roomId];
+
+      if (name) {
+        setPlayerName(room, userId, name);
+      }
 
       if (result.reattached && result.shouldResumeGame) {
         room.state.paused = false;
         room.state.roundStartTime = Date.now();
-        if (room.state.timeControl?.enabled && !room.state.gameOver && room.state.phase !== "lobby") {
+
+        if (
+          room.state.timeControl?.enabled &&
+          !room.state.gameOver &&
+          room.state.phase !== "lobby"
+        ) {
           startGameTimer(room, room.state, roomId, context);
         }
       }
 
-      if (name) {
-        room.state.playerNames = room.state.playerNames || {};
-        room.state.playerNames[socket.id] = String(name).trim().slice(0, 16);
-      }
-
       socket.emit("roleAssigned", { role: result.role });
+
       socket.to(roomId).emit("lobbyEvent", {
         type: result.reattached ? "playerRejoined" : "playerJoined",
-        role: result.role
+        userId
       });
 
       cb?.({
@@ -123,35 +140,35 @@ module.exports = function registerSocketHandlers(io, context) {
         state: room.state
       });
 
-      syncStateSocketKeys(room);
-      emitStateForAllPlayers(roomId, room, io);
+      emitRoomState(roomId, room, io);
     });
-    /*------REMAINING BOX ------*/
-socket.on("setterDraftSecret", ({ roomId, draft }) => {
-  console.log("SERVER got setterDraftSecret", { roomId, draft, socketId: socket.id });
 
-  const room = rooms[roomId];
-  if (!room || !room.state) return;
+    /* ---------- SETTER REMAINING BOX ---------- */
+    socket.on("setterDraftSecret", ({ roomId, draft }) => {
+      const room = rooms[roomId];
+      if (!room || !room.state) return;
 
-  const state = room.state;
-  const viewerRole = state.roles?.[socket.id];
+      const userId = room.socketToUserId?.[socket.id];
+      if (!userId) return;
 
-  if (viewerRole !== state.setter) {
-    console.log("SERVER not setter", { socketId: socket.id, viewerRole, setter: state.setter });
-    return;
-  }
+      const actingPlayer = getPlayerState(room, userId);
+      if (!actingPlayer) return;
+      if (actingPlayer.role !== "setter") return;
+      if (userId !== room.state.setter) return;
 
-  const normalized = typeof draft === "string" ? draft.trim().toUpperCase() : "";
+      const normalized =
+        typeof draft === "string" ? draft.trim().toUpperCase() : "";
 
-  const boxState = buildSetterRemainingBoxState(
-    state,
-    viewerRole,
-    context.ALLOWED_SECRETS,
-    normalized
-  );
+      const boxState = buildSetterRemainingBoxState(
+        room.state,
+        "setter",
+        context.ALLOWED_SECRETS,
+        normalized
+      );
 
-  socket.emit("setterRemainingBox", boxState);
-});
+      socket.emit("setterRemainingBox", boxState);
+    });
+
     /* ---------- GAME ACTION ---------- */
     socket.on("gameAction", ({ action }) => {
       const roomId = socket.data.roomId;
@@ -160,34 +177,38 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
         socket.emit("roomInvalid", { reason: "desync" });
         return;
       }
-      const room = rooms[roomId];
 
+      const room = rooms[roomId];
       const userId = room.socketToUserId?.[socket.id];
+
       if (!userId) {
         console.warn("[gameAction] no userId for socket", socket.id);
         return;
       }
-      const player = room.playersByUserId?.[userId];
-      if (!player || !player.connected) {
+
+      const connPlayer = room.playersByUserId?.[userId];
+      const statePlayer = room.state.players?.[userId];
+
+      if (!connPlayer || !connPlayer.connected || !statePlayer) {
         console.warn("[gameAction] player not active", userId);
         return;
       }
 
-      // pass stable identifiers into game logic
       action.userId = userId;
-      action.role = player.role;
 
       try {
-        context.applyAction(room, room.state, action, player.role, roomId, context);
+        context.applyAction(room, room.state, action, roomId, context);
       } catch (err) {
         console.error("[gameAction] applyAction error", err);
       }
 
-      // update state->socket keyed maps and broadcast
-      syncStateSocketKeys(room);
-      emitStateForAllPlayers(roomId, room, io);
+      emitRoomState(roomId, room, io);
 
-      if (!action.ai && !action.type.startsWith("USE_") && (room.state.phase === "normal" || room.state.phase === "simultaneous")) {
+      if (
+        !action.ai &&
+        !action.type.startsWith("USE_") &&
+        (room.state.phase === "normal" || room.state.phase === "simultaneous")
+      ) {
         setTimeout(() => {
           try {
             maybeRunAI(room, roomId, context);
@@ -209,31 +230,41 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
       const userId = room.socketToUserId?.[socket.id];
       if (!userId) return;
 
-      const player = room.playersByUserId?.[userId];
-      if (!player) return;
+      const connPlayer = room.playersByUserId?.[userId];
+      const statePlayer = room.state.players?.[userId];
+      if (!connPlayer || !statePlayer) return;
 
-      // Ensure that we don't treat a replaced socket as the primary disconnect
-      // If player's current socketId is different, ignore this stale disconnect
-      if (player.socketId && player.socketId !== socket.id) {
-        console.log("[DISCONNECT] ignored stale socket", socket.id, "authoritative is", player.socketId);
+      if (connPlayer.socketId && connPlayer.socketId !== socket.id) {
+        console.log(
+          "[DISCONNECT] ignored stale socket",
+          socket.id,
+          "authoritative is",
+          connPlayer.socketId
+        );
         return;
       }
 
-      player.connected = false;
-      player.disconnectedAt = Date.now();
+      connPlayer.connected = false;
+      connPlayer.disconnectedAt = Date.now();
 
-      // remove reverse map for this socket
       delete room.socketToUserId[socket.id];
 
-      // update timers and paused state
       if (room.state.roundStartTime && room.state.activeTimer) {
         const dt = Math.floor((Date.now() - room.state.roundStartTime) / 1000);
-        const roles = room.state.activeTimer === "both" ? ["A", "B"] : [room.state.activeTimer];
-        for (const r of roles) {
-          room.state.timeUsed[r] = (room.state.timeUsed[r] || 0) + Math.max(0, dt);
+
+        const activeUsers =
+          room.state.activeTimer === "both"
+            ? [room.state.setter, room.state.guesser].filter(Boolean)
+            : [room.state.activeTimer];
+
+        for (const activeUserId of activeUsers) {
+          room.state.timeUsed[activeUserId] =
+            (room.state.timeUsed[activeUserId] || 0) + Math.max(0, dt);
         }
+
         room.state.roundStartTime = Date.now();
       }
+
       room.state.paused = true;
 
       if (room.state.timeControl?.enabled) {
@@ -243,18 +274,17 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
 
       socket.to(roomId).emit("lobbyEvent", {
         type: "playerDisconnected",
-        role: player.role
+        userId
       });
 
-      // update state->socket maps and broadcast
-      syncStateSocketKeys(room);
-      emitStateForAllPlayers(roomId, room, io);
+      emitRoomState(roomId, room, io);
     });
 
     /* ---------- LEAVE ROOM ---------- */
     socket.on("leaveRoom", (_payload, cb) => {
       const roomId = socket.data.roomId;
       if (!roomId) return cb?.({ ok: false, error: "Not in a room" });
+
       const room = rooms[roomId];
       if (!room) return cb?.({ ok: false, error: "Room not found" });
 
@@ -268,6 +298,7 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
         io,
         context
       });
+
       socket.data.roomId = null;
       cb?.({ ok: true });
     });
@@ -278,14 +309,21 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
       if (!room) return cb?.({ ok: false, error: "Room not found" });
 
       const myUserId = room.socketToUserId?.[socket.id];
-      const me = room.playersByUserId?.[myUserId];
-      if (!me || room.state.hostUserId !== me.userId) {
+      const me = room.state.players?.[myUserId];
+
+      if (!me || room.state.hostUserId !== myUserId) {
         return cb?.({ ok: false, error: "Not host" });
       }
 
-      // Find a non-host player to kick
-      const target = Object.values(room.playersByUserId || {}).find(p => p.userId !== myUserId && !p.isAI);
-      if (!target) return cb?.({ ok: false, error: "No player to kick" });
+      const target = Object.values(room.state.players || {}).find(
+        (p) => p.userId !== myUserId && !p.isAI
+      );
+
+      if (!target) {
+        return cb?.({ ok: false, error: "No player to kick" });
+      }
+
+      const targetConn = room.playersByUserId?.[target.userId];
 
       removePlayer({
         roomId,
@@ -295,12 +333,16 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
         context
       });
 
-      // Notify kicked player's socket explicitly (if connected)
-      if (target.socketId) io.to(target.socketId).emit("forceLeaveRoom");
-      socket.emit("lobbyEvent", { type: "playerKicked", role: target.role });
+      if (targetConn?.socketId) {
+        io.to(targetConn.socketId).emit("forceLeaveRoom");
+      }
+
+      socket.emit("lobbyEvent", {
+        type: "playerKicked",
+        userId: target.userId
+      });
 
       cb?.({ ok: true });
     });
-
-  }); // connection
+  });
 };
