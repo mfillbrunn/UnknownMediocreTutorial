@@ -407,7 +407,7 @@ function updateRoleLabels() {
 // SETTER UI
 // -----------------------------------------------------
 function updateSetterScreen() {
-  const setterName = getPlayerNameByCurrentRole(state.setter);
+  const setterName = getPlayerByUserId(state.setter)?.name || "—";
   KeepEnabled=true;
   NewEnabled=true;  
   $("setterScreen").querySelector(".screen-title").textContent = setterName;
@@ -684,7 +684,7 @@ renderDraftRows({
   container: $("draftGuesser"),
   localGuesserDraft
 });
- const guesserName = getPlayerNameByCurrentRole(state.guesser);
+ const guesserName = getPlayerByUserId(state.guesser)?.name || "—";
   
   $("guesserScreen").querySelector(".screen-title").textContent = guesserName;
   //$("guesserRoleBadge").textContent = "Inspector";
