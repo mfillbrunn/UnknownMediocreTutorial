@@ -15,73 +15,68 @@ async function applyRankedElo({ state, room, supabase, winner, tie }) {
     throw new Error("applyRankedElo called without rankMode");
   }
 
-  // Get human players only
-  const humans = Object.values(room.playersByUserId)
-    .filter(p => !p.isAI);
-
+  const humans = Object.values(state.players || {}).filter((p) => !p.isAI);
   if (humans.length !== 2) return null;
 
-  // Resolve by role (canonical)
-  const playerA = humans.find(p => p.role === "A");
-  const playerB = humans.find(p => p.role === "B");
+  const setterPlayer = humans.find((p) => p.role === "setter");
+  const guesserPlayer = humans.find((p) => p.role === "guesser");
 
-  if (!playerA || !playerB) {
+  if (!setterPlayer || !guesserPlayer) {
     throw new Error("Could not resolve both players by role");
   }
 
-  const userA = playerA.userId;
-  const userB = playerB.userId;
+  const userSetter = setterPlayer.userId;
+  const userGuesser = guesserPlayer.userId;
 
-  const scoreA = tie ? 0.5 : winner === "A" ? 1 : 0;
-  const scoreB = 1 - scoreA;
+  const scoreSetter = tie ? 0.5 : winner === userSetter ? 1 : 0;
+  const scoreGuesser = tie ? 0.5 : winner === userGuesser ? 1 : 0;
 
-  // Fetch profiles by USER ID
-  const [{ data: pa }, { data: pb }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", userA).single(),
-    supabase.from("profiles").select("*").eq("id", userB).single()
+  const [{ data: pSetter }, { data: pGuesser }] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", userSetter).single(),
+    supabase.from("profiles").select("*").eq("id", userGuesser).single()
   ]);
 
-  if (!pa || !pb) {
+  if (!pSetter || !pGuesser) {
     throw new Error("Profile not found for Elo update");
   }
 
-  const rA = pa[`rating_${mode}`];
-  const rB = pb[`rating_${mode}`];
+  const rSetter = pSetter[`rating_${mode}`];
+  const rGuesser = pGuesser[`rating_${mode}`];
 
-  const deltaA = eloDelta(rA, rB, scoreA);
-  const deltaB = -deltaA;
+  const deltaSetter = eloDelta(rSetter, rGuesser, scoreSetter);
+  const deltaGuesser = -deltaSetter;
 
-  const [resA, resB] = await Promise.all([
+  const [resSetter, resGuesser] = await Promise.all([
     supabase
       .from("profiles")
       .update({
-        [`rating_${mode}`]: rA + deltaA,
-        [`games_played_${mode}`]: pa[`games_played_${mode}`] + 1,
-        [`wins_${mode}`]: pa[`wins_${mode}`] + (scoreA === 1 ? 1 : 0)
+        [`rating_${mode}`]: rSetter + deltaSetter,
+        [`games_played_${mode}`]: pSetter[`games_played_${mode}`] + 1,
+        [`wins_${mode}`]: pSetter[`wins_${mode}`] + (scoreSetter === 1 ? 1 : 0)
       })
-      .eq("id", userA),
+      .eq("id", userSetter),
 
     supabase
       .from("profiles")
       .update({
-        [`rating_${mode}`]: rB + deltaB,
-        [`games_played_${mode}`]: pb[`games_played_${mode}`] + 1,
-        [`wins_${mode}`]: pb[`wins_${mode}`] + (scoreB === 1 ? 1 : 0)
+        [`rating_${mode}`]: rGuesser + deltaGuesser,
+        [`games_played_${mode}`]: pGuesser[`games_played_${mode}`] + 1,
+        [`wins_${mode}`]: pGuesser[`wins_${mode}`] + (scoreGuesser === 1 ? 1 : 0)
       })
-      .eq("id", userB)
+      .eq("id", userGuesser)
   ]);
 
-  if (resA.error || resB.error) {
+  if (resSetter.error || resGuesser.error) {
     throw new Error("Failed to update both player ratings");
   }
 
   return {
-    userA,
-    userB,
-    rating_a_before: rA,
-    rating_b_before: rB,
-    rating_a_after: rA + deltaA,
-    rating_b_after: rB + deltaB
+    userSetter,
+    userGuesser,
+    rating_setter_before: rSetter,
+    rating_guesser_before: rGuesser,
+    rating_setter_after: rSetter + deltaSetter,
+    rating_guesser_after: rGuesser + deltaGuesser
   };
 }
 
