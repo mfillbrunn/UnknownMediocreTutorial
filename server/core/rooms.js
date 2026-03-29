@@ -1,21 +1,25 @@
 // core/rooms.js
 const { createInitialState } = require("./stateFactory");
-const { endGame } = require("./phases/gameOver");
 const { emitStateForAllPlayers } = require("../utils/emitState");
 const { stopTimer } = require("../utils/Timer");
-const { destroyRoom, stopAllRoomIntervals } = require("../utils/teardown");
+const { stopAllRoomIntervals } = require("../utils/teardown");
+
 const rooms = {};
 
 /* ---------- Helpers ---------- */
 
 function hasAnyHumanPlayers(room) {
-  return Object.values(room.playersByUserId || {}).some(p => !p.isAI && p.connected);
+  return Object.values(room.playersByUserId || {}).some(
+    (p) => !p.isAI && p.connected
+  );
 }
 
 function generateRoomId() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let id = "";
-  for (let i = 0; i < 4; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 4; i++) {
+    id += chars[Math.floor(Math.random() * chars.length)];
+  }
   return id;
 }
 
@@ -24,26 +28,117 @@ function getPlayerByUserId(room, userId) {
   return room.playersByUserId?.[userId] ?? null;
 }
 
-/* Build socket-keyed mappings used by clients.
-   Keeps compatibility with existing client expectations
-   that state.roles / state.playerNames / state.ready are keyed by socket.id. */
-function syncStateSocketKeys(room) {
-  // Clean all socket-keyed maps
-  room.state.roles = {};
-  room.state.playerNames = room.state.playerNames || {};
-  room.state.ready = room.state.ready || {};
+function ensureConnectionPlayer(room, userId, overrides = {}) {
+  if (!room || !userId) return null;
 
-  for (const [userId, p] of Object.entries(room.playersByUserId || {})) {
-    if (!p.socketId) continue;
-    // roles map
-    room.state.roles[p.socketId] = p.role;
-    // keep playerNames and ready if they were stored keyed by old socket keys.
-    // If you prefer storing names/ready by userId in future, convert here.
-    // If there's an existing playerNamesByUserId, map it. For now, prefer existing socket-keyed storage.
-    // Ensure keys exist
-    room.state.playerNames[p.socketId] = room.state.playerNames[p.socketId] ?? room.state.playerNamesByUserId?.[userId] ?? room.state.playerNames[p.socketId] ?? null;
-    room.state.ready[p.socketId] = room.state.ready[p.socketId] ?? room.state.readyByUserId?.[userId] ?? false;
+  room.playersByUserId ||= {};
+  room.playersByUserId[userId] ||= {
+    userId,
+    socketId: null,
+    connected: false,
+    disconnectedAt: null,
+    isAI: false
+  };
+
+  Object.assign(room.playersByUserId[userId], overrides);
+  return room.playersByUserId[userId];
+}
+
+function ensureStatePlayer(room, userId, overrides = {}) {
+  if (!room || !userId) return null;
+
+  const connPlayer = room.playersByUserId?.[userId];
+  room.state.players ||= {};
+
+  room.state.players[userId] ||= {
+    userId,
+    role: null,      // "setter" | "guesser"
+    ready: false,
+    name: null,
+    isAI: !!connPlayer?.isAI
+  };
+
+  if (connPlayer) {
+    room.state.players[userId].isAI = !!connPlayer.isAI;
   }
+
+  Object.assign(room.state.players[userId], overrides);
+  return room.state.players[userId];
+}
+
+function getPlayerState(room, userId) {
+  if (!room || !userId) return null;
+  return room.state.players?.[userId] ?? null;
+}
+
+function getMissingRole(room) {
+  const roles = new Set(
+    Object.values(room.state.players || {})
+      .map((p) => p.role)
+      .filter(Boolean)
+  );
+
+  return roles.has("setter") ? "guesser" : "setter";
+}
+
+function setPlayerRole(room, userId, role) {
+  const player = ensureStatePlayer(room, userId);
+  if (!player) return null;
+
+  player.role = role;
+  syncTurnOwners(room);
+  return player;
+}
+
+function setPlayerReady(room, userId, ready) {
+  const player = ensureStatePlayer(room, userId);
+  if (!player) return null;
+
+  player.ready = !!ready;
+  return player;
+}
+
+function setPlayerName(room, userId, name) {
+  const player = ensureStatePlayer(room, userId);
+  if (!player) return null;
+
+  const trimmed = String(name ?? "").trim().slice(0, 16);
+  player.name = trimmed || null;
+  return player;
+}
+
+function clearAllReady(room) {
+  for (const player of Object.values(room.state.players || {})) {
+    player.ready = false;
+  }
+}
+
+function syncTurnOwners(room) {
+  const players = Object.values(room.state.players || {});
+  room.state.setter = players.find((p) => p.role === "setter")?.userId ?? null;
+  room.state.guesser = players.find((p) => p.role === "guesser")?.userId ?? null;
+}
+
+function removePlayerState(room, userId) {
+  delete room.playersByUserId?.[userId];
+  delete room.state.players?.[userId];
+
+  if (room.state.hostUserId === userId) {
+    room.state.hostUserId = null;
+  }
+  if (room.state.setter === userId) {
+    room.state.setter = null;
+  }
+  if (room.state.guesser === userId) {
+    room.state.guesser = null;
+  }
+
+  syncTurnOwners(room);
+}
+
+function emitRoomState(roomId, room, io) {
+  syncTurnOwners(room);
+  emitStateForAllPlayers(roomId, room, io);
 }
 
 /* ---------- Room lifecycle ---------- */
@@ -56,38 +151,33 @@ function createRoom(socket, userId) {
 
   rooms[roomId] = {
     state: createInitialState(),
-    playersByUserId: {}, // userId -> player object
+    playersByUserId: {}, // transport/session layer only
     socketToUserId: {},  // socketId -> userId
-    status: "alive",     // "alive" | "closing" | "dead"
+    status: "alive",
     aiOnlySince: null
   };
 
   const room = rooms[roomId];
   socket.join(roomId);
 
-  // create initial player
-  room.playersByUserId[userId] = {
-    role: "A",
-    userId,
+  ensureConnectionPlayer(room, userId, {
     socketId: socket.id,
     connected: true,
     disconnectedAt: null,
     isAI: false
-  };
-  room.state.players ||= {};
-  room.state.players[userId] = {
-    role: "A",
+  });
+
+  ensureStatePlayer(room, userId, {
+    userId,
+    role: "setter",
     ready: false,
     name: null,
     isAI: false
-  };
+  });
+
   room.socketToUserId[socket.id] = userId;
-
-  // Keep state mapping compatible for clients
-  room.state.roles = room.state.roles || {};
-  room.state.roles[socket.id] = "A";
-
   room.state.hostUserId = userId;
+  syncTurnOwners(room);
 
   return roomId;
 }
@@ -102,105 +192,82 @@ function joinOrReattach(socket, roomId, userId) {
     console.warn("[joinOrReattach] room not found:", roomId);
     return { ok: false, error: "Room not found" };
   }
+
   room.aiOnlySince = null;
-  if (!userId) return { ok: false, error: "Missing userId" };
 
-  room.playersByUserId ??= {};
-  room.socketToUserId ??= {};
+  if (!userId) {
+    return { ok: false, error: "Missing userId" };
+  }
 
-  const existing = room.playersByUserId[userId];
+  room.playersByUserId ||= {};
+  room.socketToUserId ||= {};
+  room.state.players ||= {};
 
-  // If this socket was previously mapped to another userId, clear that mapping
-  const prevMappedUser = room.socketToUserId[socket.id];
-  if (prevMappedUser && prevMappedUser !== userId) {
+  const existingConn = room.playersByUserId[userId];
+
+  const prevMappedUserId = room.socketToUserId[socket.id];
+  if (prevMappedUserId && prevMappedUserId !== userId) {
     delete room.socketToUserId[socket.id];
   }
 
-  if (existing) {
-    // Reattach: update the player's socketId and keep userId as primary identity
-    const oldSocketId = existing.socketId;
+  if (existingConn) {
+    const oldSocketId = existingConn.socketId;
     if (oldSocketId && room.socketToUserId[oldSocketId] === userId) {
-      delete room.socketToUserId[oldSocketId]; // remove old reverse map
+      delete room.socketToUserId[oldSocketId];
     }
 
-    existing.socketId = socket.id;
-    existing.connected = true;
-    existing.disconnectedAt = null;
+    existingConn.socketId = socket.id;
+    existingConn.connected = true;
+    existingConn.disconnectedAt = null;
 
     room.socketToUserId[socket.id] = userId;
 
-    // Update any socket-keyed state so clients receive expected mapping
-    room.state.roles = room.state.roles || {};
-    room.state.roles[socket.id] = existing.role;
-    if (oldSocketId) {
-      delete room.state.roles[oldSocketId];
-      if (room.state.playerNames) {
-        // migrate display name if present
-        const oldName = room.state.playerNames[oldSocketId];
-        if (oldName) {
-          delete room.state.playerNames[oldSocketId];
-          room.state.playerNames[socket.id] = oldName;
-        }
-      }
-      if (room.state.ready) {
-        const oldReady = room.state.ready[oldSocketId];
-        if (typeof oldReady !== "undefined") {
-          delete room.state.ready[oldSocketId];
-          room.state.ready[socket.id] = oldReady;
-        }
-      }
-    }
+    ensureStatePlayer(room, userId, {
+      isAI: !!existingConn.isAI
+    });
 
     socket.join(roomId);
-    room.state.players ||= {};
 
-    room.state.players[userId] ||= {
-      role: existing.role,
-      ready: false,
-      name: null,
-      isAI: !!existing.isAI
+    const shouldResumeGame =
+      !room.state.gameOver && room.state.phase !== "lobby";
+
+    return {
+      ok: true,
+      reattached: true,
+      role: room.state.players[userId]?.role ?? null,
+      shouldResumeGame
     };
-    
-    room.state.players[userId].role = existing.role;
-    room.state.players[userId].isAI = !!existing.isAI;
-    const shouldResumeGame = !room.state.gameOver && room.state.phase !== "lobby";
-
-    return { ok: true, reattached: true, role: existing.role, shouldResumeGame };
   }
 
-  // Normal join if space (count humans)
-  const humanCount = Object.values(room.playersByUserId).filter(p => !p.isAI).length;
+  const humanCount = Object.values(room.playersByUserId).filter(
+    (p) => !p.isAI
+  ).length;
+
   if (humanCount >= 2) {
     return { ok: false, error: "Room is full" };
   }
 
   socket.join(roomId);
 
-  const occupiedRoles = new Set(Object.values(room.playersByUserId).map(p => p.role));
-  const role = occupiedRoles.has("A") ? "B" : "A";
+  const role = getMissingRole(room);
 
-  room.playersByUserId[userId] = {
-    role,
-    userId,
+  ensureConnectionPlayer(room, userId, {
     socketId: socket.id,
     connected: true,
     disconnectedAt: null,
     isAI: false
-  };
-  room.state.players ||= {};
-  room.state.players[userId] = room.state.players[userId] || {
+  });
+
+  ensureStatePlayer(room, userId, {
+    userId,
     role,
     ready: false,
     name: null,
     isAI: false
-  };
-  room.state.players[userId].role = role;
-  room.state.players[userId].isAI = false;
-  room.socketToUserId[socket.id] = userId;
+  });
 
-  // keep state.roles consistent
-  room.state.roles = room.state.roles || {};
-  room.state.roles[socket.id] = role;
+  room.socketToUserId[socket.id] = userId;
+  syncTurnOwners(room);
 
   return {
     ok: true,
@@ -213,8 +280,9 @@ function joinOrReattach(socket, roomId, userId) {
 function cleanupEmptyRooms() {
   for (const [roomId, room] of Object.entries(rooms)) {
     if (!room) continue;
-    const hasAny = Object.keys(room.playersByUserId || {}).length > 0;
-    if (!hasAny) {
+
+    const hasAnyPlayers = Object.keys(room.playersByUserId || {}).length > 0;
+    if (!hasAnyPlayers) {
       console.log("Cleaning empty room:", roomId);
       delete rooms[roomId];
     }
@@ -222,40 +290,46 @@ function cleanupEmptyRooms() {
 }
 
 function findLastOpenRoom() {
-  
   const roomIds = Object.keys(rooms);
+
   for (let i = roomIds.length - 1; i >= 0; i--) {
     const roomId = roomIds[i];
     const room = rooms[roomId];
-    console.log("Room snapshot:", roomId, room.playersByUserId);
-    if (room && Object.values(room.playersByUserId || {}).filter(p => p.connected && !p.isAI).length === 1) {
+
+    if (
+      room &&
+      Object.values(room.playersByUserId || {}).filter(
+        (p) => p.connected && !p.isAI
+      ).length === 1
+    ) {
       return roomId;
     }
   }
+
   return null;
 }
 
-/* Remove player by userId (not socketId) */
 function removePlayer({ roomId, userId, reason, io, context }) {
   const room = rooms[roomId];
   if (!room || room.status !== "alive") return { ok: false };
-  const player = room.playersByUserId?.[userId];
-  if (!player) return { ok: false };
 
-  const role = player.role;
+  const connPlayer = room.playersByUserId?.[userId];
+  const statePlayer = room.state.players?.[userId];
+  if (!connPlayer || !statePlayer) return { ok: false };
+
+  const role = statePlayer.role;
   const wasHost = room.state.hostUserId === userId;
 
-  // compute remaining after removal
   const remainingPlayers = Object.entries(room.playersByUserId || {})
     .filter(([uid]) => uid !== userId)
-    .map(([_, p]) => p);
-  const hasHumanAfterRemoval = remainingPlayers.some(p => !p.isAI);
+    .map(([, p]) => p);
+
+  const hasHumanAfterRemoval = remainingPlayers.some((p) => !p.isAI);
   if (!hasHumanAfterRemoval) {
     room.aiOnlySince ??= Date.now();
   }
 
-  // remove reverse socket mapping and do socket leave
-  const socketId = player.socketId;
+  const socketId = connPlayer.socketId;
   if (socketId && room.socketToUserId?.[socketId] === userId) {
     delete room.socketToUserId[socketId];
     const sock = io?.sockets?.sockets?.get(socketId);
@@ -265,27 +339,19 @@ function removePlayer({ roomId, userId, reason, io, context }) {
     }
   }
 
-  // delete player record
-  delete room.playersByUserId[userId];
-    if (room.state.players) {
-    delete room.state.players[userId];
-  }
-  // clean up state socket-keyed maps
-  if (socketId) {
-    if (room.state.roles) delete room.state.roles[socketId];
-    if (room.state.ready) delete room.state.ready[socketId];
-    if (room.state.playerNames) delete room.state.playerNames[socketId];
-  }
+  removePlayerState(room, userId);
 
-  // notify
-  io?.to(roomId).emit("lobbyEvent", { type: "playerLeft", role, reason });
+  io?.to(roomId).emit("lobbyEvent", { type: "playerLeft", userId, role, reason });
 
-  // host reassignment
   if (wasHost) {
-    const newHost = Object.values(room.playersByUserId).find(p => !p.isAI);
+    const newHost = Object.values(room.state.players || {}).find((p) => !p.isAI);
     room.state.hostUserId = newHost?.userId ?? null;
+
     if (newHost && io) {
-      io.to(roomId).emit("lobbyEvent", { type: "hostChanged", userId: newHost.userId });
+      io.to(roomId).emit("lobbyEvent", {
+        type: "hostChanged",
+        userId: newHost.userId
+      });
     }
   }
 
@@ -294,13 +360,13 @@ function removePlayer({ roomId, userId, reason, io, context }) {
     room.state.paused = true;
   }
 
-  emitStateForAllPlayers(roomId, room, io);
+  emitRoomState(roomId, room, io);
   return { ok: true };
 }
 
-function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
+function cleanupDisconnectedPlayers(io, graceMs = 30000, context) {
   const now = Date.now();
-  const AI_ONLY_GRACE_MS = 30_000;
+  const AI_ONLY_GRACE_MS = 30000;
 
   for (const [roomId, room] of Object.entries(rooms)) {
     if (!room || room.status !== "alive") continue;
@@ -321,7 +387,12 @@ function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
     room.aiOnlySince = null;
 
     for (const [userId, player] of Object.entries(room.playersByUserId || {})) {
-      if (!player.isAI && !player.connected && player.disconnectedAt && now - player.disconnectedAt >= graceMs) {
+      if (
+        !player.isAI &&
+        !player.connected &&
+        player.disconnectedAt &&
+        now - player.disconnectedAt >= graceMs
+      ) {
         removePlayer({
           roomId,
           userId,
@@ -334,37 +405,48 @@ function cleanupDisconnectedPlayers(io, graceMs = 30_000, context) {
   }
 }
 
-function addAIPlayer(room) {
+function addAIPlayer(room, difficulty = 1) {
   if (!room || room.status !== "alive") return;
 
   const AI_USER = "AI";
   if (room.playersByUserId?.[AI_USER]) return;
 
-  room.playersByUserId[AI_USER] = {
-    role: "B",
-    userId: AI_USER,
+  const role = getMissingRole(room);
+
+  ensureConnectionPlayer(room, AI_USER, {
     socketId: null,
     connected: true,
     disconnectedAt: null,
     isAI: true
-  };
+  });
 
-  // keep state mapping for compatibility (no socket for AI)
-  room.state.roles = room.state.roles || {};
-  room.state.roles["AI"] = "B";
+  ensureStatePlayer(room, AI_USER, {
+    userId: AI_USER,
+    role,
+    ready: false,
+    name: `AI Lvl ${difficulty}`,
+    isAI: true
+  });
+
+  syncTurnOwners(room);
 }
 
-/* Force close - unchanged */
+/* Force close */
+
 function forceCloseRoom(roomId, room, io) {
   if (!room) return;
   if (room.status === "dead") return;
+
   room.status = "dead";
   console.log("[forceCloseRoom] closing room:", roomId);
+
   stopAllRoomIntervals(roomId, room);
+
   if (io) {
     io.to(roomId).emit("forceLeaveRoom");
     io.in(roomId).socketsLeave(roomId);
   }
+
   delete rooms[roomId];
 }
 
@@ -378,5 +460,17 @@ module.exports = {
   cleanupDisconnectedPlayers,
   addAIPlayer,
   getPlayerByUserId,
-  syncStateSocketKeys
+
+  // helpers exported for use elsewhere
+  ensureConnectionPlayer,
+  ensureStatePlayer,
+  getPlayerState,
+  getMissingRole,
+  setPlayerRole,
+  setPlayerReady,
+  setPlayerName,
+  clearAllReady,
+  syncTurnOwners,
+  removePlayerState,
+  emitRoomState
 };
