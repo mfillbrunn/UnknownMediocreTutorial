@@ -197,7 +197,7 @@ onPowerUsed(data => {
   triggerPowerFX(data.type, data.variant);
   const mod = PowerEngine.powers[data.type];
   mod?.effects?.onPowerUsed?.(data);
-  PowerEngine.updateButtonStates(state, myRole);
+  PowerEngine.updateButtonStates(state, myRole, myUserId());
   if (state.powers?.vowelRefreshActive && state.powers?.rouletteSecretActive){
     stopSecretRoulette();
     startSecretRoulette(state.powers.rouletteSecretFeasible);
@@ -384,7 +384,7 @@ function updateScreens() {
     hide("setterScreen");
     updateGuesserScreen();
   }
-PowerEngine.applyUI(state, myRole, roomId);
+PowerEngine.applyUI(state, myRole, myUserId());
 }
 
 // -----------------------------------------------------
