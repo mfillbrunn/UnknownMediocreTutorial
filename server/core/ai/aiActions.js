@@ -1,13 +1,13 @@
 // core/ai/aiActions.js
-const { emitStateForAllPlayers } = require("../../utils/emitState");
-const {applyAction} = require("../applyAction");
+const { applyAction } = require("../applyAction");
+const { emitRoomState } = require("../rooms");
 
-function applyAIAction(room, action, role, roomId, context) {
+function applyAIAction(room, action, userId, roomId, context) {
   action.ai = true;
-  action.role = role;
+  action.userId = userId;
 
   applyAction(room, room.state, action, roomId, context);
-  emitStateForAllPlayers(roomId, room, context.io);
+  emitRoomState(roomId, room, context.io);
 }
 
 module.exports = { applyAIAction };
