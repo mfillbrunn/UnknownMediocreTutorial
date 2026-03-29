@@ -4,7 +4,7 @@ const { isPowerAllowed } = require("../../powers/POWER_RULES");
 const { transitionAfterGuess, transitionAfterSecret } = require("../transitions/normalTransitions");
 const { emitRoomState } = require("../rooms");
 
-function handleNormalPhase(room, state, action, role, roomId, context) {
+function handleNormalPhase(room, state, action, roomId, context) {
   const io = context.io;
   const { powerEngine } = context;
   const userId = action.userId;
