@@ -118,8 +118,12 @@ if (action.type === "SWITCH_ROLES") {
   if (!playerA || !playerB) return;
 
   // Swap canonical roles
-  playerA.role = "B";
-  playerB.role = "A";
+        const setterPlayer = Object.values(room.playersByUserId).find(p => p.role === "A");
+        const guesserPlayer = Object.values(room.playersByUserId).find(p => p.role === "B");
+        
+        state.setter = setterPlayer?.userId ?? null;
+        state.guesser = guesserPlayer?.userId ?? null;
+        
         if (!state.players?.[playerA.userId] || !state.players?.[playerB.userId]) {
           console.error("SWITCH_ROLES desync", {
             playerA,
