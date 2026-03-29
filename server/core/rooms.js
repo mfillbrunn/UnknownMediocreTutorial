@@ -74,7 +74,13 @@ function createRoom(socket, userId) {
     disconnectedAt: null,
     isAI: false
   };
-
+  room.state.players ||= {};
+  room.state.players[userId] = {
+    role: "A",
+    ready: false,
+    name: null,
+    isAI: false
+  };
   room.socketToUserId[socket.id] = userId;
 
   // Keep state mapping compatible for clients
@@ -146,7 +152,17 @@ function joinOrReattach(socket, roomId, userId) {
     }
 
     socket.join(roomId);
+    room.state.players ||= {};
 
+    room.state.players[userId] ||= {
+      role: existing.role,
+      ready: false,
+      name: null,
+      isAI: !!existing.isAI
+    };
+    
+    room.state.players[userId].role = existing.role;
+    room.state.players[userId].isAI = !!existing.isAI;
     const shouldResumeGame = !room.state.gameOver && room.state.phase !== "lobby";
 
     return { ok: true, reattached: true, role: existing.role, shouldResumeGame };
@@ -171,7 +187,15 @@ function joinOrReattach(socket, roomId, userId) {
     disconnectedAt: null,
     isAI: false
   };
-
+  room.state.players ||= {};
+  room.state.players[userId] = room.state.players[userId] || {
+    role,
+    ready: false,
+    name: null,
+    isAI: false
+  };
+  room.state.players[userId].role = role;
+  room.state.players[userId].isAI = false;
   room.socketToUserId[socket.id] = userId;
 
   // keep state.roles consistent
@@ -243,7 +267,9 @@ function removePlayer({ roomId, userId, reason, io, context }) {
 
   // delete player record
   delete room.playersByUserId[userId];
-
+    if (room.state.players) {
+    delete room.state.players[userId];
+  }
   // clean up state socket-keyed maps
   if (socketId) {
     if (room.state.roles) delete room.state.roles[socketId];
