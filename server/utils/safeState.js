@@ -2,8 +2,9 @@ const { buildKeyboardState } = require("../game-engine/keyboardState");
 const { buildSetterRemainingBoxState } = require("./remainingWords");
 const { buildConstraintData } = require("./constraintData");
 
-function buildSafeStateForPlayer(state, role) {
+function buildSafeStateForPlayer(state, userId, allowedSecrets) {
   const safe = JSON.parse(JSON.stringify(state));
+  const viewerRole = state.players?.[userId]?.role ?? null;
 
   // Preserve externally-visible values explicitly
   safe.activePowers = state.activePowers;
@@ -14,70 +15,55 @@ function buildSafeStateForPlayer(state, role) {
   } else {
     delete safe.revealGreenInfo;
   }
-  // -----------------------------------------------------
-  // 1. Hide SECRET from guesser
-  // -----------------------------------------------------
-  if (role === state.guesser) {
+
+  // Hide secret from guesser
+  if (viewerRole === "guesser") {
     safe.secret = "";
     safe.aiSecretChanged = "";
   }
-  // -----------------------------------------------------
-  // 2. Hide GUESS from setter during simultaneous phase
-  // -----------------------------------------------------
-  if (role === state.setter && state.phase === "simultaneous") {
+
+  // Hide guess from setter during simultaneous phase
+  if (viewerRole === "setter" && state.phase === "simultaneous") {
     safe.pendingGuess = "";
   }
-  if (role === state.setter && state.powers.betMissActive) {
+
+  if (viewerRole === "setter" && state.powers.betMissActive) {
     safe.betMissNumber = null;
   }
-  // STEALTH GUESS: hide the current pending guess ONLY DURING decision step
-  if (role === state.setter && state.powers.stealthGuessActive) {
-      safe.pendingGuess = "?????";   // placeholder
+
+  // Stealth guess: hide current pending guess during decision step
+  if (viewerRole === "setter" && state.powers.stealthGuessActive) {
+    safe.pendingGuess = "?????";
   }
 
-  // -----------------------------------------------------
-  // 3. Clean INTERNAL power state (never exposed)
-  // -----------------------------------------------------
-
-  // DO NOT delete freezeActive — client needs this!
+  // Clean internal power state
   delete safe.powers.currentHiddenIndices;
   delete safe.powers.hideTilePendingCount;
 
-  if (role === state.guesser) {
+  if (viewerRole === "guesser") {
     delete safe.powers.assassinWord;
   }
 
-  // -----------------------------------------------------
-  // 5. Filter & sanitize HISTORY
-  // -----------------------------------------------------
+  // Filter and sanitize history
   safe.history = safe.history
-    .map(entry => {
+    .map((entry) => {
       if (!entry) return null;
 
       const e = JSON.parse(JSON.stringify(entry));
 
-      // ================================================
-      // DURING GAMEPLAY (NOT gameOver)
-      // ================================================
       if (!state.gameOver) {
-
-        // --------------------------------------------------
-        // GUESSER VIEW — masked feedback logic
-        // --------------------------------------------------
-        if (role === state.guesser) {
+        // Guesser view: masked feedback logic
+        if (viewerRole === "guesser") {
           delete e.fb;
 
-          // Ensure fbGuesser exists
           if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
             e.fbGuesser = ["?", "?", "?", "?", "?"];
-          } 
+          }
         }
 
-        // --------------------------------------------------
-        // STEALTH GUESS masking
-        // --------------------------------------------------
+        // Stealth guess masking
         if (
-          role === state.setter &&
+          viewerRole === "setter" &&
           state.powers.stealthGuessActive &&
           e.stealthApplied
         ) {
@@ -87,22 +73,19 @@ function buildSafeStateForPlayer(state, role) {
           }
         }
 
-        // --------------------------------------------------
         // Tag applied powers
-        // --------------------------------------------------
         if (e.blindSpotApplied != null) {
           e.powerUsed = (e.powerUsed || "") + " BlindSpot";
         }
+
         if (e.revealedOldSecret) {
           e.powerUsed =
             (e.powerUsed || "") +
             ` Reveal(${e.revealedOldSecret.toUpperCase()})`;
         }
 
-        // --------------------------------------------------
-        // SETTER VIEW — always sees true feedback
-        // --------------------------------------------------
-        if (role === state.setter) {
+        // Setter view: always sees true feedback
+        if (viewerRole === "setter") {
           if (!Array.isArray(e.fb) || e.fb.length !== 5) {
             if (Array.isArray(e.fbGuesser)) {
               e.fb = e.fbGuesser;
@@ -114,26 +97,28 @@ function buildSafeStateForPlayer(state, role) {
 
         // Hide finalSecret until after gameOver
         delete e.finalSecret;
-      }
-
-      // ================================================
-      // AFTER GAME OVER → true reveal
-      // ================================================
-      else {
-        // Everyone sees true fb now; fbGuesser no longer needed
+      } else {
+        // After game over, true reveal for everyone
         delete e.fbGuesser;
-
-        // keep fb, guess, finalSecret
       }
 
       delete e.ignoreConstraints;
-
       return e;
     })
-    .filter(e => e !== null);
+    .filter((e) => e !== null);
+
   safe.keyboard = buildKeyboardState(safe);
-  if (role === state.setter) {safe.setterRemainingBox = buildSetterRemainingBoxState(state,role,global.ALLOWED_SECRETS);}
-  safe.constraintData = buildConstraintData(safe, role);
+
+  if (viewerRole === "setter") {
+    safe.setterRemainingBox = buildSetterRemainingBoxState(
+      state,
+      viewerRole,
+      allowedSecrets
+    );
+  }
+
+  safe.constraintData = buildConstraintData(safe, viewerRole);
+
   return safe;
 }
 
