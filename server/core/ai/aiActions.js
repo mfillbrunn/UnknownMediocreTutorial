@@ -6,7 +6,7 @@ function applyAIAction(room, action, role, roomId, context) {
   action.ai = true;
   action.role = role;
 
-  applyAction(room, room.state, action, role, roomId, context);
+  applyAction(room, room.state, action, roomId, context);
   emitStateForAllPlayers(roomId, room, context.io);
 }
 
