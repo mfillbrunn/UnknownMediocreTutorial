@@ -58,7 +58,7 @@ function initializePlayerTimers(state, userIds) {
   }
 }
 
-function handleLobbyPhase(room, state, action, role, roomId, context) {
+function handleLobbyPhase(room, state, action, roomId, context) {
   const io = context.io;
 
   if (action.type === "PLAYER_JOINED") {
