@@ -57,7 +57,30 @@ function resetKeyboards() {
   document.documentElement.style.setProperty("--ff-phase", `${phaseMs / 1000}s`);
   document.documentElement.style.setProperty("--pv-phase", `${phaseMs / 1000}s`);
 })();
+function myUserId() {
+  return window.currentUser?.id || null;
+}
 
+function myPlayer() {
+  const uid = myUserId();
+  return uid && state?.players ? state.players[uid] || null : null;
+}
+
+function getMyRole() {
+  return myPlayer()?.role || null;
+}
+
+function getPlayerByUserId(userId) {
+  return userId && state?.players ? state.players[userId] || null : null;
+}
+
+function getSetterPlayer() {
+  return getPlayerByUserId(state?.setter);
+}
+
+function getGuesserPlayer() {
+  return getPlayerByUserId(state?.guesser);
+}
 
 function shakeDraftRow(role) {
   let row;
@@ -98,26 +121,10 @@ function mySocketId() {
 }
 
 function updateRoleCards() {
-  if (!state?.roles || !state?.playerNames) return;
+  if (!state?.players) return;
 
-  $("setterName").textContent =
-    getPlayerNameByCurrentRole(state.setter);
-
-  $("guesserName").textContent =
-    getPlayerNameByCurrentRole(state.guesser);
-}
-
-
-function getPlayerNameByCurrentRole(targetRole) {
-  if (!state?.roles || !state?.playerNames) return "—";
-
-  // targetRole is state.setter or state.guesser (e.g. "A" or "B")
-  const socketId = Object.keys(state.roles)
-    .find(id => state.roles[id] === targetRole);
-
-  return socketId
-    ? state.playerNames[socketId] || "—"
-    : "—";
+  $("setterName").textContent = getSetterPlayer()?.name || "—";
+  $("guesserName").textContent = getGuesserPlayer()?.name || "—";
 }
 
 function enterLobbyAfterJoin() {
@@ -167,7 +174,7 @@ function updateWaitingIndicator() {
   const el = $("waitingForPlayer");
   if (!el || !state || state.phase !== "lobby") return;
 
-  const playerCount = Object.keys(state.roles || {}).length;
+  const playerCount = Object.keys(state.players || {}).length;
 
   if (playerCount >= 2) {
     el.classList.add("hidden");
@@ -254,7 +261,7 @@ case "playerLeft": {
       $("waitingForPlayer")?.classList.add("hidden");
       hide("lobby");
       hide("menu");
-      show(myRole === "A" ? "setterScreen" : "guesserScreen");
+      show(myRole === "setter" ? "setterScreen" : "guesserScreen");
       enableReadyButton(false);
       break;
 
@@ -283,12 +290,15 @@ onStateUpdate(newState => {
       $("setterGuesserSubmitted").innerHTML = "";
       $("historyGuesser").innerHTML = "";
   }  
-  const newMyRole = state.roles && state.roles[socket.id];
+  const newMyRole = getMyRole();
   if (newMyRole !== myRole) {
     myRole = newMyRole;
     updateRoleLabels();
   }
-  const setterCanEdit =  myRole === state.setter &&  ((state.phase === "normal" && state.turn === state.setter &&!!state.pendingGuess) || (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
+  const setterCanEdit =
+  myUserId() === state.setter &&
+  ((state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess) ||
+   (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
   if (setterCanEdit) {
     state.setterDraft = prevSetterDraft;
   } else {
@@ -352,7 +362,7 @@ function updateScreens() {
     hide("menu");
     hide("setterScreen");
     hide("guesserScreen");
-    enableReadyButton(!state.ready?.[socket.id]);
+    enableReadyButton(!state.players?.[myUserId()]?.ready);
     return;
   }
   enableReadyButton(false);
@@ -365,7 +375,7 @@ function updateScreens() {
     show("menu");
     return;
   }
-  if (myRole === state.setter) {
+  if (myUserId() === state.setter) {
     show("setterScreen");
     hide("guesserScreen");
     updateSetterScreen();
@@ -382,7 +392,7 @@ PowerEngine.applyUI(state, myRole, roomId);
 // -----------------------------------------------------
 function updateRoleLabels() {
   if (!myRole) return;
-  const roleLabel = myRole === "A" ? "Spy" : "Inspector";
+  const roleLabel = myRole === "setter" ? "Spy" : "Inspector";
   const lobbyEl = $("lobbyRoleLabel");
   if (lobbyEl) {
     lobbyEl.textContent = roleLabel;
@@ -451,7 +461,7 @@ renderDraftRows({
   container: $("draftSetter")
 });
   
-  if (myRole === state.setter) {
+  if (myUserId() === state.setter) {
     renderKeyboard({
     state,
     container: $("keyboardSetter"),
@@ -521,13 +531,13 @@ function emitSetterDraftPreview(draft) {
     setter: state.setter,
     hasSocket: !!socket
   });
-  if (!socket || !roomId || myRole !== state.setter) return;
+  if (!socket || !roomId || myUserId() !== state.setter) return;
   socket.emit("setterDraftSecret", {roomId, draft});
 }
 function handleSetterInput(event) {
   if (!(state.powers?.freezeActive || state.powers?.rouletteSecretActive)) {
     const isNormalSetterTurn =
-      myRole === state.setter &&
+      myUserId() === state.setter &&
       state.phase === "normal" &&
       state.turn === state.setter &&
       !!state.pendingGuess;
@@ -683,7 +693,7 @@ if (state.phase === "simultaneous") {setTurn("guesserScreen", !state.pendingGues
 if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserScreen", true);} 
 
   const displayGuess = state.pendingGuess || localGuesserDraft;
- if (myRole === state.guesser) {
+ if (myUserId() === state.setter) {
   renderKeyboard({
     state,
     container: $("keyboardGuesser"),
@@ -747,44 +757,31 @@ function handleGuesserInput(event) {
 
 /// HOst CONtROLS
 function getHostRole() {
-  if (!state?.hostUserId || !myRole) return null;
-   return state?.hostUserId === window.currentUser.id
-    ? myRole
-    : (myRole === "A" ? "B" : "A");
+  if (!state?.hostUserId) return null;
+  return state.players?.[state.hostUserId]?.role || null;
 }
 
 function updateHostControls() {
-  if (!state || !state.roles || !state.playerNames) return;
+  if (!state?.players) return;
 
-  const playerIds = Object.keys(state.playerNames);
-  const twoPlayers = playerIds.length === 2;
+  const players = Object.values(state.players);
+  const twoPlayers = players.length === 2;
 
-  // Resolve role → playerId
-  const setterPlayerId = Object.keys(state.roles)
-    .find(id => state.roles[id] === "A");
+  const setterUserId = state.setter;
+  const guesserUserId = state.guesser;
 
-  const guesserPlayerId = Object.keys(state.roles)
-    .find(id => state.roles[id] === "B");
-
-  // Host badges
   const hostRole = getHostRole();
-  $("setterHostBadge")?.classList.toggle(
-    "hidden",
-    hostRole !== "A"
-  );
-  $("guesserHostBadge")?.classList.toggle(
-    "hidden",
-    hostRole !== "B"
-  );
 
-  // Kick buttons (host only, opponent only, works for AI)
+  $("setterHostBadge")?.classList.toggle("hidden", hostRole !== "setter");
+  $("guesserHostBadge")?.classList.toggle("hidden", hostRole !== "guesser");
+
   const kickSetterBtn = $("kickSetterBtn");
   if (kickSetterBtn) {
     kickSetterBtn.classList.toggle(
       "hidden",
       !isHost() ||
       !twoPlayers ||
-      setterPlayerId === socket.id
+      setterUserId === myUserId()
     );
   }
 
@@ -794,7 +791,7 @@ function updateHostControls() {
       "hidden",
       !isHost() ||
       !twoPlayers ||
-      guesserPlayerId === socket.id
+      guesserUserId === myUserId()
     );
   }
 }
@@ -1013,7 +1010,7 @@ function stopSecretRoulette() {
 
 function maybeStartRouletteFromState(state) {
   if (
-    myRole !== state.setter ||
+    myUserId() !== state.setter ||
     state.phase !== "normal" ||
     !state.powers?.rouletteSecretActive ||
     !Array.isArray(state.powers.rouletteSecretFeasible)
@@ -1034,10 +1031,10 @@ function updateAppHeader(state) {
   let roleLabel = "";
   let roleClass = "";
 
-  if (myRole === state.setter) {
+  if (myUserId() === state.setter) {
     roleLabel = "SPY";
     roleClass = "role-setter";
-  } else if (myRole === state.guesser) {
+  } else if (myUserId() === state.setter) {
     roleLabel = "INSPECTOR";
     roleClass = "role-guesser";
   }
