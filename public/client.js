@@ -693,7 +693,7 @@ if (state.phase === "simultaneous") {setTurn("guesserScreen", !state.pendingGues
 if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserScreen", true);} 
 
   const displayGuess = state.pendingGuess || localGuesserDraft;
- if (myUserId() === state.setter) {
+ if (myUserId() === state.guesser) {
   renderKeyboard({
     state,
     container: $("keyboardGuesser"),
@@ -1034,7 +1034,7 @@ function updateAppHeader(state) {
   if (myUserId() === state.setter) {
     roleLabel = "SPY";
     roleClass = "role-setter";
-  } else if (myUserId() === state.setter) {
+  } else if (myUserId() === state.guesser) {
     roleLabel = "INSPECTOR";
     roleClass = "role-guesser";
   }
