@@ -105,16 +105,19 @@ const powers = {
 function createInitialState() {
    const state = {
     phase: "lobby",
-    host:null,
     players: {},
-    roles:{},
+    hostUserId: null,
+         setter: null,
+         guesser: null,
     turn: null,
-    setter: "A",
-    guesser: "B",
-    playerNames: {},
-    ready: {},
     powerCount: 2,       // NEW: number chosen in lobby
     activePowers: [],  // NEW: each player’s random secrets
+   timeUsed: {},
+      roundTimeouts: {},
+      timeRemaining: {},
+         timeExpired: null, // userId | null
+      timeoutLoser: null, // userId | null
+      activeTimer: null, // userId | "both" | null
   // --- MODE / MATCH CONTROL (NEW, GENERIC) ---
     mode: null,          // instance of mode controller
     rankMode: "bullet",
@@ -127,14 +130,6 @@ function createInitialState() {
     canNextRound: false,
     conceded: false,
     matchRounds: [],
-    timeUsed: {
-    A: 0,
-    B: 0
-    },
-    roundTimeouts: {
-    A: 0,
-    B: 0
-    },
     ///TIMER
     timeControl: {
     initialSeconds: 300,  // default 5 min
@@ -144,14 +139,7 @@ function createInitialState() {
       mode: "round",
       preset: "bullet"
       },      
-      timeRemaining: {
-        A: 0,
-        B: 0
-      },
     roundStartTime:null,
-    timeExpired: null, // "A" | "B" | null
-    activeTimer: null, // "A" | "B" | "both" | null
-    timeoutLoser: null,
     isTimerRunning: false,
     //AI
     aiSecretChanged: false,
@@ -163,8 +151,6 @@ function createInitialState() {
     gameOver: false,
     extraConstraints: [],    
     history: [],
-    powersUsedThisRoundGuesser: [],
-    powersUsedThisRoundSetter: [],
     simultaneousGuessSubmitted: false,
     simultaneousSecretSubmitted: false,
     powerUsedThisTurn: false,   
