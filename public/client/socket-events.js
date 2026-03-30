@@ -130,16 +130,23 @@ joinRoom(code, resp => {
 
 $("quickJoinBtn")?.addEventListener("click", () => {
   if (!requireAuth("quick play")) return;
-const username =
-  window.myProfile?.username ||
-  window.currentUser?.email ||
-  "Player";
+
+  const username =
+    window.myProfile?.username ||
+    window.currentUser?.email ||
+    "Player";
+
+  const payload = {
+    userId: window.currentUser.id,
+    name: username
+  };
+
   quickJoin(payload, resp => {
-  if (!resp.ok) return toast(resp.error);
-  roomId = resp.roomId;
-  persistRoom(roomId); // ✅ HERE
-  enterLobbyAfterJoin();
-});
+    if (!resp.ok) return toast(resp.error);
+    roomId = resp.roomId;
+    persistRoom(roomId);
+    enterLobbyAfterJoin();
+  });
 });
 
 
@@ -320,7 +327,7 @@ document.querySelectorAll(".ai-option").forEach(btn => {
 $("cancelAIModalBtn")?.addEventListener("click", hideAIDifficultyModal);
 socket.on("rouletteSecretStart", ({ feasible }) => {
   // Only setter should animate
-  if (myRole !== state.setter) return;
+  if (myUserId() !== state.setter) return;
 
   startSecretRoulette(feasible);
 });
