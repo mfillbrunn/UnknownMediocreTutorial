@@ -10,7 +10,7 @@ betMiss: {
     allowed(state, role) {
       return (
         state.phase === "normal" &&
-        role === state.guesser &&
+        role === "guesser" &&
         !state.powerUsedThisTurn
       );
     }
@@ -20,7 +20,7 @@ betMiss: {
     allowed(state, role) {
       return (
         state.phase === "normal" &&
-        role === state.setter &&
+        role === "setter" &&
         !state.powerUsedThisTurn
       );
     }
@@ -30,7 +30,7 @@ betMiss: {
     allowed(state, role) {
       return (
         state.phase === "normal" &&
-        role === state.setter &&
+        role === "setter" &&
         !state.powerUsedThisTurn
       );
     }
@@ -40,7 +40,7 @@ betMiss: {
     allowed(state, role) {
       return (
         state.phase === "normal" &&
-        role === state.setter &&
+        role === "setter" &&
         !state.powerUsedThisTurn 
       );
     }
@@ -50,7 +50,7 @@ betMiss: {
   allowed(state, role) {
     return (
       state.phase === "normal" &&
-      role === state.setter &&
+      role === "setter" &&
       !state.powerUsedThisTurn &&
       !state.powers.blindGuessUsed
     );
@@ -61,7 +61,7 @@ betMiss: {
   allowed(state, role) {
     return (
       state.phase === "normal" &&
-      role === state.guesser &&
+      role === "guesser" &&
       !state.powerUsedThisTurn &&
       !state.powers.rouletteSecretUsed
     );
@@ -72,7 +72,7 @@ betMiss: {
   allowed(state, role) {
     return (
       state.phase === "normal" &&
-      role === state.guesser &&
+      role === "guesser" &&
       !state.powerUsedThisTurn &&
       !state.powers.nonsenseUsed
     );
@@ -83,7 +83,7 @@ forceGuess: {
   allowed(state, role) {
     return (      
       state.phase === "normal" &&
-      role === state.setter &&
+      role === "setter" &&
       !state.powerUsedThisTurn &&
       !state.powers.forceGuessUsed
     );
@@ -98,7 +98,7 @@ revealLetter: {
 
     return (
       state.phase === "normal" &&
-      role === state.guesser &&
+      role === "guesser" &&
       !state.powerUsedThisTurn &&
       state.activePowers?.includes("revealLetter") &&
       p.ready === true &&
@@ -113,7 +113,7 @@ assassinWord: {
   allowed(state, role) {
     return (
       state.phase === "normal" &&
-      role === state.setter &&
+      role === "setter" &&
       !state.powerUsedThisTurn &&
       !state.powers.assassinWordUsed 
     );
@@ -125,7 +125,7 @@ suggestGuess: {
   allowed(state, role) {
     return (
       state.phase === "normal" &&
-      role === state.guesser &&
+      role === "guesser" &&
       !state.powerUsedThisTurn
     );
   }
@@ -135,7 +135,7 @@ vowelRefresh: {
   allowed(state, role) {
     return (
       state.phase === "normal" &&
-      role === state.setter &&
+      role === "setter" &&
       !state.powerUsedThisTurn 
     );
   }
@@ -146,7 +146,7 @@ suggestSecret: {
   allowed(state, role) {
     return (
       state.phase === "normal" &&
-      role === state.setter &&
+      role === "setter" &&
       !state.powerUsedThisTurn &&
       !state.powers?.freezeActive       // cannot be used while frozen
     );
@@ -157,7 +157,7 @@ confuseColors: {
   allowed(state, role) {
     return (
       state.phase === "normal" &&
-      role === state.setter &&
+      role === "setter" &&
       !state.powerUsedThisTurn &&
       !state.powers?.magicModeJustUsed
     );
@@ -170,7 +170,7 @@ confuseColors: {
     allowed(state, role) {
       return (
         state.phase === "normal" &&
-        role === state.setter &&
+        role === "setter" &&
         !state.powerUsedThisTurn
       );
     }
@@ -179,7 +179,7 @@ forceTimer: {
   once: true,
   allowed(state, role) {
     return state.phase === "normal" &&
-           role === state.guesser &&
+           role === "guesser" &&
            !state.powerUsedThisTurn;
   }
 },
@@ -188,7 +188,7 @@ revealHistory: {
   once: true,
   allowed(state, role) {
     return state.phase === "normal" &&
-           role === state.guesser &&
+           role === "guesser" &&
            state.history.length >= 3 &&
            !state.powerUsedThisTurn;
   }
@@ -198,7 +198,7 @@ blindSpot: {
   once: true,
   allowed(state, role) {
     return state.phase === "normal" &&
-           role === state.setter &&
+           role === "setter" &&
            !state.powerUsedThisTurn;
   }
 },
@@ -207,7 +207,7 @@ stealthGuess: {
   once: true,
   allowed(state, role) {
     return state.phase === "normal" &&
-           role === state.guesser &&
+           role === "guesser" &&
            !state.powerUsedThisTurn;
   }
 },
@@ -221,7 +221,7 @@ stealthGuess: {
     allowed(state, role) {
       return (
         state.phase === "normal" &&
-        role === state.guesser &&
+        role === "guesser" &&
         !state.powerUsedThisTurn 
       );
     }
@@ -231,7 +231,7 @@ magicMode: {
   allowed(state, role) {
     return (
       state.phase === "normal" &&
-      role === state.guesser &&
+      role === "guesser" &&
       !state.powerUsedThisTurn
     );
   }
@@ -242,7 +242,7 @@ magicMode: {
     allowed(state, role) {
       return (
         state.phase === "normal" &&
-        role === state.guesser &&
+        role === "guesser" &&
         !state.powerUsedThisTurn 
       );
     },
