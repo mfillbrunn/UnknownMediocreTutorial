@@ -25,7 +25,7 @@ tooltip: {
     }
 
     // Show only to setter
-    if (role !== state.setter) {
+    if (role !== "setter") {
       this.buttonEl.style.display = "none";
       return;
     }
