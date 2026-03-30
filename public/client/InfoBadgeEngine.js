@@ -17,8 +17,8 @@ window.InfoBadgeEngine = {
       for (const msg of arr) {
         if (!msg) continue;
 
-        if (msg.screen === "setter" && role !== state.setter) continue;
-        if (msg.screen === "guesser" && role !== state.guesser) continue;
+        if (msg.screen === "setter" && role !== "setter") continue;
+        if (msg.screen === "guesser" && role !== "guesser") continue;
 
         messages.push(msg);
       }
@@ -31,7 +31,7 @@ window.InfoBadgeEngine = {
 
   render(state, role) {
     const badge =
-      role === state.setter
+      role === "setter"
         ? $("SetterInfoBadge")
         : $("GuesserInfoBadge");
 
