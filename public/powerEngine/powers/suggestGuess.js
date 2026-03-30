@@ -39,7 +39,7 @@ InfoBadgeEngine.register((state, role) => {
   // -----------------------------
   // GUESSER: show word
   // -----------------------------
-  if (role === state.guesser) {
+  if (role === "guesser") {
     const guess = window.uiState?.suggestedGuess;
     return {
       id: "suggestGuess-word",
@@ -55,7 +55,7 @@ InfoBadgeEngine.register((state, role) => {
   // -----------------------------
   // SETTER: show generic notice
   // -----------------------------
-  if (role === state.setter) {
+  if (role === "setter") {
     return {
       id: "suggestGuess-used",
       emoji: meta.emoji,
