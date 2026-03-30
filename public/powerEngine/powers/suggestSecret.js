@@ -38,7 +38,7 @@ InfoBadgeEngine.register((state, role) => {
   // -----------------------------
   // SETTER: show word
   // -----------------------------
-  if (role === state.setter) {
+  if (role === "setter") {
     const secret = window.uiState?.suggestedSecret;
     return {
       id: "suggestSecret-word",
@@ -54,7 +54,7 @@ InfoBadgeEngine.register((state, role) => {
   // -----------------------------
   // GUESSER: generic notice only
   // -----------------------------
-  if (role === state.guesser) {
+  if (role ==="guesser") {
     return {
       id: "suggestSecret-used",
       emoji: meta.emoji,
