@@ -1,11 +1,13 @@
-// suggestGuess power (guesser)
 const engine = require("../powerEngineServer.js");
 const { isConsistentWithHistory } = require("../../game-engine/history");
-const { parseWordlist } = require("../../game-engine/validation");
+const { getSocketIdForUser } = require("../../core/rooms");
 const fs = require("fs");
 const path = require("path");
 
-const WORDS = fs.readFileSync(path.join(__dirname, "../../wordlists/allowed_secrets.txt"), "utf8")
+const WORDS = fs.readFileSync(
+  path.join(__dirname, "../../wordlists/allowed_secrets.txt"),
+  "utf8"
+)
   .trim()
   .split("\n");
 
@@ -13,24 +15,31 @@ engine.registerPower("suggestGuess", {
   apply(state, action, roomId, io, room) {
     if (state.powers.suggestGuessUsed) return false;
 
-    const feasible = WORDS.filter(w =>
+    const feasible = WORDS.filter((w) =>
       isConsistentWithHistory(state.history, w, state)
     );
 
     if (feasible.length === 0) {
-      io.to(action.playerId).emit("toast", "No valid suggestions!");
+      const socketId = getSocketIdForUser(room, action.userId);
+      if (socketId) {
+        io.to(socketId).emit("toast", "No valid suggestions!");
+      }
       return false;
     }
 
-    const suggestion = feasible[Math.floor(Math.random() * feasible.length)];
+    const suggestion =
+      feasible[Math.floor(Math.random() * feasible.length)];
 
     state.powers.suggestGuessUsed = true;
     state.powers.suggestGuessActive = true;
-    state.powers.suggestedGuess = suggestion; // optional but useful for state-driven UI
+    state.powers.suggestedGuess = suggestion;
 
-    io.to(action.playerId).emit("suggestWord", { word: suggestion });
+    const socketId = getSocketIdForUser(room, action.userId);
+    if (socketId) {
+      io.to(socketId).emit("suggestWord", { word: suggestion });
+    }
+
     io.to(roomId).emit("powerUsed", { type: "suggestGuess" });
-
     return true;
   }
 });
