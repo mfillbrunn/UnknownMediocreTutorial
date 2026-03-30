@@ -78,7 +78,23 @@ window.PowerEngine = {
     const isPermanentlyUsed = state.powers?.[id + "Used"] === true;
     const powerUsedThisTurn = state.powerUsedThisTurn === true;
     const notNormalPhase = state.phase !== "normal";
-
+    console.log("POWER DEBUG", {
+      id,
+      role,
+      userId,
+      stateTurn: state.turn,
+      stateSetter: state.setter,
+      stateGuesser: state.guesser,
+      isSetter,
+      isGuesser,
+      isMyTurn,
+      wrongRole,
+      notAllowedByRule,
+      phase: state.phase,
+      activePowers: state.activePowers,
+      powerUsedThisTurn: state.powerUsedThisTurn,
+      used: state.powers?.[id + "Used"]
+    });
     const shouldBeDisabled =
       wrongRole ||
       notNormalPhase ||
