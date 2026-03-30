@@ -48,7 +48,7 @@ window.PowerEngine = {
     this.updateButtonStates(state, role, userId);
   },
 
-  updateButtonStates(state, role, userId) {updateButtonStates(state, role, userId) {
+  updateButtonStates(state, role, userId) {
   const isSetter = role === "setter";
   const isGuesser = role === "guesser";
   const isMyTurn = state.phase === "normal" && state.turn === userId;
