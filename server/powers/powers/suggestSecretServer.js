@@ -1,46 +1,40 @@
-// suggestSecret power (setter)
 const engine = require("../powerEngineServer.js");
 const { isConsistentWithHistory } = require("../../game-engine/history");
-const { parseWordlist } = require("../../game-engine/validation");
+const { getSocketIdForUser } = require("../../core/rooms");
 const fs = require("fs");
 const path = require("path");
 
-const WORDS = fs.readFileSync(path.join(__dirname, "../../wordlists/allowed_secrets.txt"), "utf8")
+const WORDS = fs.readFileSync(
+  path.join(__dirname, "../../wordlists/allowed_secrets.txt"),
+  "utf8"
+)
   .trim()
   .split("\n");
 
 engine.registerPower("suggestSecret", {
-  apply(state, action, roomId, io) {
-
-    // Once per match
+  apply(state, action, roomId, io, room) {
     if (state.powers.suggestSecretUsed) return false;
-
-    // Cannot operate while frozen
     if (state.powers.freezeActive) return false;
 
-    state.powers.suggestSecretUsed = true;
-    state.powers.suggestSecretActive = true;
-
-    const feasible = WORDS.filter(w =>
+    const feasible = WORDS.filter((w) =>
       isConsistentWithHistory(state.history, w, state)
     );
 
     if (feasible.length === 0) {
-      io.to(action.playerId).emit("toast", "No valid secrets!");
-      return;
+      const socketId = getSocketIdForUser(room, action.userId);
+      if (socketId) {
+        io.to(socketId).emit("toast", "No valid secrets!");
+      }
+      return false;
     }
 
     let candidates = feasible;
 
-    // Only filter if there is more than one option
     if (feasible.length > 1 && state.pendingGuess) {
       const upperPending = state.pendingGuess.toUpperCase();
-
       const filtered = feasible.filter(
-        w => w.toUpperCase() !== upperPending
+        (w) => w.toUpperCase() !== upperPending
       );
-
-      // Only use filtered list if it doesn't eliminate everything
       if (filtered.length > 0) {
         candidates = filtered;
       }
@@ -49,10 +43,18 @@ engine.registerPower("suggestSecret", {
     const suggestion =
       candidates[Math.floor(Math.random() * candidates.length)];
 
-      if (!action.ai) {
-        io.to(action.playerId).emit("suggestWord", {word: suggestion});
+    state.powers.suggestSecretUsed = true;
+    state.powers.suggestSecretActive = true;
+    state.powers.suggestedSecret = suggestion;
+
+    if (!action.ai) {
+      const socketId = getSocketIdForUser(room, action.userId);
+      if (socketId) {
+        io.to(socketId).emit("suggestWord", { word: suggestion });
       }
+    }
+
     io.to(roomId).emit("powerUsed", { type: "suggestSecret" });
+    return true;
   }
 });
-
