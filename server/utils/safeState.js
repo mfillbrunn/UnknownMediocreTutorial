@@ -112,7 +112,7 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
   if (viewerRole === "setter") {
     safe.setterRemainingBox = buildSetterRemainingBoxState(
       state,
-      viewerRole,
+      userId,
       allowedSecrets
     );
   }
