@@ -1,5 +1,5 @@
 function renderSetterRemainingBox(boxState) {
-  const box = document.getElementById("SetterRemainingBox");
+  const box = document.getElementById("setterRemainingBox");
   if (!box) return;
 
   if (!boxState || !boxState.visible) {
