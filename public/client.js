@@ -1,3 +1,4 @@
+
 // -----------------------------------------------------
 // LOCAL CLIENT STATE
 // -----------------------------------------------------
@@ -660,7 +661,7 @@ function submitSetterNew() {
   state.setterDraft = "";  
   resetEphemeralUIState();
   updateUI();
-  renderSetterRemainingBox(state.setterRemainingBox);
+  renderSetterRemainingBox(state, myRole, state.secret);
 }
 
 
