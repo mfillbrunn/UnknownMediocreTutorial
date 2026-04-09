@@ -660,7 +660,7 @@ function submitSetterNew() {
   state.setterDraft = "";  
   resetEphemeralUIState();
   updateUI();
-  renderSetterRemainingBox(state, myRole, state.secret);
+  renderSetterRemainingBox(state.setterRemainingBox);
 }
 
 
