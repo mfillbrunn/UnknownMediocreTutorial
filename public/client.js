@@ -327,7 +327,6 @@ onStateUpdate(newState => {
   updateUI();
   updateSummary();
   maybeStartRouletteFromState(state);
-  renderSetterRemainingBox(state.setterRemainingBox);
   tutorialSteps(state, myRole);
   if (!state.isTutorial){  
     const bubble = byId("tutorialBubble");
@@ -661,7 +660,6 @@ function submitSetterNew() {
   state.setterDraft = "";  
   resetEphemeralUIState();
   updateUI();
-  renderSetterRemainingBox(state, myRole, state.secret);
 }
 
 
