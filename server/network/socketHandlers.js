@@ -159,12 +159,24 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
   const normalized =
     typeof draft === "string" ? draft.trim().toUpperCase() : "";
 
+  // DEBUG
+  console.log("[setterDraftSecret]", {
+    userId,
+    stateSetter: room.state.setter,
+    phase: room.state.phase,
+    historyLength: room.state.history?.length,
+    allowedSecretsLength: context.ALLOWED_SECRETS?.length,
+    normalized,
+  });
+
   const boxState = buildSetterRemainingBoxState(
     room.state,
-    userId,          // ← pass actual userId
+    userId,
     context.ALLOWED_SECRETS,
     normalized
   );
+
+  console.log("[setterDraftSecret] boxState", boxState);
 
   socket.emit("setterRemainingBox", boxState);
 });
