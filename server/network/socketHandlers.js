@@ -144,30 +144,30 @@ module.exports = function registerSocketHandlers(io, context) {
     });
 
     /* ---------- SETTER REMAINING BOX ---------- */
-    socket.on("setterDraftSecret", ({ roomId, draft }) => {
-      const room = rooms[roomId];
-      if (!room || !room.state) return;
+socket.on("setterDraftSecret", ({ roomId, draft }) => {
+  const room = rooms[roomId];
+  if (!room || !room.state) return;
 
-      const userId = room.socketToUserId?.[socket.id];
-      if (!userId) return;
+  const userId = room.socketToUserId?.[socket.id];
+  if (!userId) return;
 
-      const actingPlayer = getPlayerState(room, userId);
-      if (!actingPlayer) return;
-      if (actingPlayer.role !== "setter") return;
-      if (userId !== room.state.setter) return;
+  const actingPlayer = getPlayerState(room, userId);
+  if (!actingPlayer) return;
+  if (actingPlayer.role !== "setter") return;
+  if (userId !== room.state.setter) return;
 
-      const normalized =
-        typeof draft === "string" ? draft.trim().toUpperCase() : "";
+  const normalized =
+    typeof draft === "string" ? draft.trim().toUpperCase() : "";
 
-      const boxState = buildSetterRemainingBoxState(
-        room.state,
-        "setter",
-        context.ALLOWED_SECRETS,
-        normalized
-      );
+  const boxState = buildSetterRemainingBoxState(
+    room.state,
+    userId,          // ← pass actual userId
+    context.ALLOWED_SECRETS,
+    normalized
+  );
 
-      socket.emit("setterRemainingBox", boxState);
-    });
+  socket.emit("setterRemainingBox", boxState);
+});
 
     /* ---------- GAME ACTION ---------- */
     socket.on("gameAction", ({ action }) => {
