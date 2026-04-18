@@ -40,6 +40,7 @@ function computeRemainingNew(secretWord, state, allowedSecrets) {
   let count = 0;
   for (const word of allowedSecrets) {
     if (isConsistentWithHistory(testHistory, word, state)) {
+      
       count++;
     }
   }
@@ -58,10 +59,14 @@ function getRemainingWordInfo(state, allowedSecrets, draftSecret) {
   }
 
   const history = Array.isArray(state.history) ? state.history : [];
-  const lastIdx = history.length - 1;
-  if (lastIdx < 0) return null;
 
-  const current = computeRemainingAfterIndexFromState(lastIdx, state, allowedSecrets);
+  // Compute current remaining — full list if no history yet
+  let current;
+  if (history.length === 0) {
+    current = allowedSecrets.length;
+  } else {
+    current = computeRemainingAfterIndexFromState(history.length - 1, state, allowedSecrets);
+  }
 
   let oldCount = -1;
   let newCount = -1;
@@ -71,17 +76,12 @@ function getRemainingWordInfo(state, allowedSecrets, draftSecret) {
 
   if (guessIsComplete) {
     oldCount = computeRemainingNew(state.secret, state, allowedSecrets);
-
     if (typeof draftSecret === "string" && draftSecret.length === 5) {
       newCount = computeRemainingNew(draftSecret, state, allowedSecrets);
     }
   }
 
-  return {
-    current,
-    old: oldCount,
-    new: newCount
-  };
+  return { current, old: oldCount, new: newCount };
 }
 
 function buildSetterRemainingBoxState(state, viewerId, allowedSecrets, draftSecret = null) {
