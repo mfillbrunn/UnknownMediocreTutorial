@@ -67,33 +67,7 @@ function endGame(state, roomId, io, room, context) {
     state.guessCount += penalty;
   }
 
-  if (!Array.isArray(state.matchRounds)) {
-      state.matchRounds = [];
-    };
-const archivedHistory = buildArchivedRoundHistory(
-  state,
-  context.ALLOWED_SECRETS
-).map((entry, idx, arr) => {
-  const isFinal = idx === arr.length - 1;
-
-  return isFinal
-    ? {
-        ...entry,
-        finalSecret: state.secret || entry.finalSecret || null,
-      }
-    : entry;
-});
-
-const activePowerSnapshot = Array.isArray(state.activePowers)
-  ? state.activePowers.map((x) =>
-      x && typeof x === "object" ? { ...x } : x
-    )
-  : [];
-
-const powersSnapshot =
-  state.powers && typeof state.powers === "object"
-    ? JSON.parse(JSON.stringify(state.powers))
-    : {};
+  
 const archivedHistory = buildArchivedRoundHistory(
   state,
   context.ALLOWED_SECRETS
