@@ -46,7 +46,9 @@ function endGame(state, roomId, io, room, context) {
     state.isTimerRunning = false;
   }
 
-  state.matchRounds ||= {};
+  if (!Array.isArray(state.matchRounds)) {
+    state.matchRounds = [];
+  }
 
   if (state.powers.assassinWordassassinated) {
     state.guessCount += state.powers.assassinPoints;
@@ -65,18 +67,46 @@ function endGame(state, roomId, io, room, context) {
     state.guessCount += penalty;
   }
 
-  state.matchRounds = state.matchRounds || [];
-  state.matchRounds.push({
-    setter: state.setter,
-    guesser: state.guesser,
-    guessCount: state.guessCount,
-    time: { ...(state.timeUsed || {}) },
-    timeoutLoser: state.timeoutLoser || null,
-    history: buildArchivedRoundHistory(state, context.ALLOWED_SECRETS),
-    powers: Array.isArray(state.activePowers)
-      ? state.activePowers.map((x) => ({ ...x }))
-      : []
-  });
+  if (!Array.isArray(state.matchRounds)) {
+      state.matchRounds = [];
+    };
+const archivedHistory = buildArchivedRoundHistory(
+  state,
+  context.ALLOWED_SECRETS
+).map((entry, idx, arr) => {
+  const isFinal = idx === arr.length - 1;
+
+  return isFinal
+    ? {
+        ...entry,
+        finalSecret: state.secret || entry.finalSecret || null,
+      }
+    : entry;
+});
+
+const activePowerSnapshot = Array.isArray(state.activePowers)
+  ? state.activePowers.map((x) =>
+      x && typeof x === "object" ? { ...x } : x
+    )
+  : [];
+
+const powersSnapshot =
+  state.powers && typeof state.powers === "object"
+    ? JSON.parse(JSON.stringify(state.powers))
+    : {};
+
+state.matchRounds.push({
+  setter: state.setter,
+  guesser: state.guesser,
+  secret: state.secret || null,
+  finalSecret: state.secret || null,
+  guessCount: state.guessCount,
+  time: { ...(state.timeUsed || {}) },
+  timeoutLoser: state.timeoutLoser || null,
+  history: archivedHistory,
+  powers: powersSnapshot,
+  activePowers: activePowerSnapshot,
+});
 
   const res = state.mode?.onRoundEnd?.(state) || {
     view: "match",
