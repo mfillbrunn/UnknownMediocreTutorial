@@ -94,6 +94,17 @@ const powersSnapshot =
   state.powers && typeof state.powers === "object"
     ? JSON.parse(JSON.stringify(state.powers))
     : {};
+const archivedHistory = buildArchivedRoundHistory(
+  state,
+  context.ALLOWED_SECRETS
+);
+
+if (archivedHistory.length > 0) {
+  archivedHistory[archivedHistory.length - 1] = {
+    ...archivedHistory[archivedHistory.length - 1],
+    finalSecret: state.secret || null,
+  };
+}
 
 state.matchRounds.push({
   setter: state.setter,
@@ -104,8 +115,14 @@ state.matchRounds.push({
   time: { ...(state.timeUsed || {}) },
   timeoutLoser: state.timeoutLoser || null,
   history: archivedHistory,
-  powers: powersSnapshot,
-  activePowers: activePowerSnapshot,
+  powers: state.powers
+    ? JSON.parse(JSON.stringify(state.powers))
+    : {},
+  activePowers: Array.isArray(state.activePowers)
+    ? state.activePowers.map((x) =>
+        x && typeof x === "object" ? { ...x } : x
+      )
+    : [],
 });
 
   const res = state.mode?.onRoundEnd?.(state) || {
