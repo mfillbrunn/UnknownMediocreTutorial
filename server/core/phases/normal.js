@@ -65,18 +65,18 @@ function handleNormalPhase(room, state, action, roomId, context) {
   ) {
       const feedback = state.history[0].fb;   
       const misses = 0;
-    for (let i = 0; i < 5; i++) {
-        if (feedback[i] === "⬛") misses=misses+1;
-      }    
-    let secret ="";
-    if (state.guesscount === 1 && misses ===5){
-      secret = state.secret;}
-    else{
-     secret =
-      action.type === "SET_SECRET_NEW"
-        ? action.secret.toUpperCase()
-        : state.secret;
-    }
+      for (let i = 0; i < 5; i++) {
+          if (feedback[i] === "⬛") misses=misses+1;
+        }    
+      let secret ="";
+      if (state.guesscount === 1 && misses ===5){
+        secret = state.secret;}
+      else{
+         secret =
+          action.type === "SET_SECRET_NEW"
+            ? action.secret.toUpperCase()
+            : state.secret;
+        }
     const res = checkSecret({
       secret,
       state,
