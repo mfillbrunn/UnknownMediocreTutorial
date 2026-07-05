@@ -64,12 +64,12 @@ function handleNormalPhase(room, state, action, roomId, context) {
     (action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME")
   ) {
       const feedback = state.history[0].fb;   
-      const misses = 0;
+      let misses = 0;
       for (let i = 0; i < 5; i++) {
           if (feedback[i] === "⬛") misses=misses+1;
         }    
       let secret ="";
-      if (state.guesscount === 1 && misses ===5){
+      if (state.guessCount === 1 && misses ===5){
         secret = state.secret;}
       else{
          secret =
