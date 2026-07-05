@@ -63,20 +63,17 @@ function handleNormalPhase(room, state, action, roomId, context) {
     userId === state.setter &&
     (action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME")
   ) {
-      const feedback = state.history[0].fb;   
-      let misses = 0;
-      for (let i = 0; i < 5; i++) {
-          if (feedback[i] === "⬛") misses=misses+1;
-        }    
-      let secret ="";
-      if (state.guessCount === 1 && misses ===5){
-        secret = state.secret;}
-      else{
-         secret =
-          action.type === "SET_SECRET_NEW"
-            ? action.secret.toUpperCase()
-            : state.secret;
-        }
+    const feedback = state.history[0].fb; 
+    let misses = 0; 
+    for (let i = 0; i < 5; i++) { if (feedback[i] === "⬛") {misses=misses+1; }} 
+    if (state.guessCount === 1 && misses ===5 && action.secret.toUpperCase() != state.secret){
+      return;
+    }    
+    const secret =
+      action.type === "SET_SECRET_NEW"
+        ? action.secret.toUpperCase()
+        : state.secret;
+
     const res = checkSecret({
       secret,
       state,
