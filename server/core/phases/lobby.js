@@ -133,6 +133,7 @@ function handleLobbyPhase(room, state, action, roomId, context) {
     if (action.seconds === 90 && action.mode === "round") state.rankMode = "bullet";
     else if (action.seconds === 180 && action.mode === "round") state.rankMode = "blitz";
     else if (action.seconds === 300 && action.mode === "chess") state.rankMode = "blitz";
+    else if (action.seconds === 900) state.rankMode = "deep";
     else state.rankMode = "custom";
 
     emitRoomState(roomId, room, io);
