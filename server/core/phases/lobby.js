@@ -189,7 +189,12 @@ function handleLobbyPhase(room, state, action, roomId, context) {
     emitRoomState(roomId, room, io);
     return;
   }
-
+if (action.type === "SET_DAILY_POWERS") {
+  state._dailySetterPowers = action.setterPowers || null;
+  state._dailyGuesserPowers = action.guesserPowers || null;
+  state._dailyDate = action.date || null;
+  return;
+}
   if (action.type === "PLAYER_READY") {
     const userId = action.userId;
     if (!userId) return;
@@ -229,7 +234,8 @@ function handleLobbyPhase(room, state, action, roomId, context) {
     freshState.devMode = state.devMode;
     freshState.isTutorial = state.isTutorial;
     freshState.rankMode = state.rankMode;
-
+  
+  
     room.state = freshState;
     state = freshState;
 
