@@ -10,6 +10,7 @@ const registerSocketHandlers = require("./network/socketHandlers");
 const { createClient } = require("@supabase/supabase-js");
 const { loadWordList } = require("./utils/wordListLoader");
 const { applyAction } = require("./core/stateMachine");
+const { getDailyConfig } = require("./utils/dailyConfig");
 
 
 
@@ -48,6 +49,10 @@ const WORDS = loadWordList();
 app.get("/api/allowed-secrets", (req, res) => res.json(ALLOWED_SECRETS));
 
 app.get("/api/allowed-guesses", (req, res) => res.json(ALLOWED_GUESSES));
+app.get("/api/daily", (req, res) => {
+  const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  res.json(getDailyConfig(today));
+});
 app.use(express.static(path.join(__dirname, "..", "public")));
 app.get("*", (req, res) =>
   res.sendFile(path.join(__dirname, "..", "public", "index.html"))
