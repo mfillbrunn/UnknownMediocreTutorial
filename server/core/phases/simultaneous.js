@@ -128,9 +128,9 @@ function handleSimultaneousPhase(room, state, action, roomId, context) {
     endGame(state, roomId, io, room, context);
     return;
   }
-
+  
   state.history.push(entry);
-
+  state.simultaneousAllWrong  = fb.every(tile => tile === "⬛"));
   // Transition to normal phase with guesser turn
   state.phase = "normal";
   state.turn = state.guesser;
