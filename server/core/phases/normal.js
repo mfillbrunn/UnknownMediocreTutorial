@@ -63,12 +63,10 @@ function handleNormalPhase(room, state, action, roomId, context) {
     userId === state.setter &&
     (action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME")
   ) {
-    const feedback = state.history[0].fb; 
-    let misses = 0; 
-    for (let i = 0; i < 5; i++) { if (feedback[i] === "⬛") {misses=misses+1; }} 
-    if (state.guessCount === 1 && misses ===5 && action.secret.toUpperCase() != state.secret){
+    if (state.simultaneousAllWrong && action.type === "SET_SECRET_NEW") {
+      io.to(action.playerId).emit("errorMessage", "All feedback was wrong — you must keep the same secret this round.");
       return;
-    }    
+    } 
     const secret =
       action.type === "SET_SECRET_NEW"
         ? action.secret.toUpperCase()
