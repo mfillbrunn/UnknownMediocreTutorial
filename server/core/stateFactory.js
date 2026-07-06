@@ -154,6 +154,7 @@ function createInitialState() {
     simultaneousGuessSubmitted: false,
     simultaneousSecretSubmitted: false,
     powerUsedThisTurn: false,   
+         simultaneousAllWrong: false,
     powers: createInitialPowers()    
   };
   return state;
