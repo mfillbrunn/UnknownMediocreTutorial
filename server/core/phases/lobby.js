@@ -234,7 +234,9 @@ if (action.type === "SET_DAILY_POWERS") {
     freshState.devMode = state.devMode;
     freshState.isTutorial = state.isTutorial;
     freshState.rankMode = state.rankMode;
-  
+     freshState._dailySetterPowers = state._dailySetterPowers || null;
+     freshState._dailyGuesserPowers = state._dailyGuesserPowers || null;
+     freshState._dailyDate = state._dailyDate || null;
   
     room.state = freshState;
     state = freshState;
@@ -248,15 +250,13 @@ if (action.type === "SET_DAILY_POWERS") {
 
     const N = state.powerCount || 2;
 
-    const sP = SETTER_POWERS
-      .slice()
-      .sort(() => Math.random() - 0.5)
-      .slice(0, N);
-
-    const gP = GUESSER_POWERS
-      .slice()
-      .sort(() => Math.random() - 0.5)
-      .slice(0, N);
+     if (state._dailySetterPowers && state._dailyGuesserPowers) {
+           sP = state._dailySetterPowers;
+           gP = state._dailyGuesserPowers;
+       } else {
+         sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
+         gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
+       }
 
     state.mode = state.isTutorial
       ? new TutorialMode()
