@@ -55,8 +55,19 @@ class TutorialMode {
   onNextRound(state) {
     state.roundIndex += 1;
 
-    // swap roles
-    [state.setter, state.guesser] = [state.guesser, state.setter];
+    const oldSetter = state.setter;
+    const oldGuesser = state.guesser;
+
+    state.setter = oldGuesser;
+    state.guesser = oldSetter;
+
+    // syncTurnOwners reads player.role, so we must update it here
+    if (state.players?.[state.setter]) {
+      state.players[state.setter].role = "setter";
+    }
+    if (state.players?.[state.guesser]) {
+      state.players[state.guesser].role = "guesser";
+    }
 
     // swap powers (same powers, reversed roles)
     state.activePowers = [
