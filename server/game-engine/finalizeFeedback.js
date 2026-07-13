@@ -17,15 +17,6 @@ function finalizeFeedback(state, powerEngine, roomId, room, io) {
   // Step 2: base scoring
   const fb = scoreGuess(state.secret, guess);
 
-  // --- NEW: snapshot any powers used this round (setter vs guesser) ---
-  const powersGuesser = Array.isArray(state.powersUsedThisRoundGuesser)
-    ? [...state.powersUsedThisRoundGuesser]
-    : [];
-  const powersSetter = Array.isArray(state.powersUsedThisRoundSetter)
-    ? [...state.powersUsedThisRoundSetter]
-    : [];
-
-  
   // Build history entry
   const entry = {
     guess,
@@ -34,18 +25,23 @@ function finalizeFeedback(state, powerEngine, roomId, room, io) {
     extraInfo: null,
     finalSecret: state.secret,
     roundIndex: state.history.length,
-    powersGuesser,
-    powersSetter,
+    powerEvents: [],
     fakeFeedback: null
   };
 
-  // Step 3: allow powers to modify feedback entry
+  // Step 3: allow powers to modify feedback entry (also captures any
+  // power results broadcast during postScore, e.g. a resolved bet)
   powerEngine.postScore(state, entry, roomId, io);
+
+  // Drain power-use events queued since the last entry (from applyPower
+  // and the postScore call above) onto this entry, chronologically.
+  entry.powerEvents = Array.isArray(state._pendingPowerEvents)
+    ? [...state._pendingPowerEvents]
+    : [];
+  state._pendingPowerEvents = [];
 
   // Step 4: commit entry to history
   state.history.push(entry);
-  state.powersUsedThisRoundGuesser = [];
-  state.powersUsedThisRoundSetter = [];
   state.pendingGuess = "";
 }
 

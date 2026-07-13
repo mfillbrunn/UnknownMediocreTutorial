@@ -155,7 +155,8 @@ function createInitialState() {
     simultaneousSecretSubmitted: false,
     powerUsedThisTurn: false,   
          simultaneousAllWrong: false,
-    powers: createInitialPowers()    
+    _pendingPowerEvents: [],
+    powers: createInitialPowers()
   };
   return state;
 }

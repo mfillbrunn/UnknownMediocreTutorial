@@ -1,5 +1,6 @@
 // /powers/powerEngineServer.js
 const POWER_METADATA = require("./powerMetadata");
+const { wrapIoForCapture, pushPendingEvent, FALLBACK_ROLE } = require("./logPowerUse");
 const engine = {
   powers: {},
 
@@ -10,26 +11,19 @@ const engine = {
   applyPower(id, state, action, roomId, io, room) {
     const p = this.powers[id];
     if (!p || typeof p.apply !== "function") return;
-    if (!Array.isArray(state.powersUsedThisRoundGuesser)) {
-      state.powersUsedThisRoundGuesser = [];
-      }
-    if (!Array.isArray(state.powersUsedThisRoundSetter)) {
-      state.powersUsedThisRoundSetter = [];
-    }
 
-    p.apply(state, action, roomId, io, room);
+    const capture = [];
+    const wrappedIo = wrapIoForCapture(io, roomId, capture);
+    const result = p.apply(state, action, roomId, wrappedIo, room);
+    if (result === false) return false;
 
-    const role = action?.role;
-    const meta = POWER_METADATA[id];
-    const label = meta?.label;
-    if (!label || id === "forceGuess" || id === "revealLetter") {
-      return;
-    }
-    if (role === state.guesser) {
-      state.powersUsedThisRoundGuesser.push(label);
-    } else if (role === state.setter) {
-      state.powersUsedThisRoundSetter.push(label);
-    }
+    const actorUserId = action?.userId;
+    const actorRole =
+      actorUserId === state.guesser ? "guesser" :
+      actorUserId === state.setter ? "setter" :
+      FALLBACK_ROLE[id] || POWER_METADATA[id]?.role || null;
+
+    pushPendingEvent(state, id, actorRole, roomId, io, capture);
   },
 
   beforeSetterSecretChange(state, action) {
@@ -57,7 +51,11 @@ const engine = {
     for (const id in this.powers) {
       const p = this.powers[id];
       if (typeof p.postScore === "function") {
-        p.postScore(state, entry, roomId, io);
+        const capture = [];
+        const wrappedIo = wrapIoForCapture(io, roomId, capture);
+        p.postScore(state, entry, roomId, wrappedIo);
+        const actorRole = FALLBACK_ROLE[id] || POWER_METADATA[id]?.role || null;
+        pushPendingEvent(state, id, actorRole, roomId, io, capture);
       }
     }
   },

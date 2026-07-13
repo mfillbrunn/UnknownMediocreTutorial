@@ -15,8 +15,7 @@ function resetRoundState(room, state, roomId, context) {
   state.roundStartTime = null;
   state.timeoutLoser = null;
 
-  state.powersUsedThisRoundGuesser = [];
-  state.powersUsedThisRoundSetter = [];
+  state._pendingPowerEvents = [];
 
   state.timeUsed ||= {};
   state.roundTimeouts ||= {};

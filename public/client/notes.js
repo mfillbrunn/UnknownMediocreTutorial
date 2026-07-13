@@ -1,11 +1,21 @@
 // client/notes.js — vanilla JS scratchpad / word-notes panel
 
 (function () {
-  let _entries  = [];   // [{ word: string }]
+  let _entries  = [];   // [{ word: string }]  — user-typed candidates
   let _draft    = "";
   let _active   = false;
   let _role     = null;
   let _lastRoom = null;
+  let _inBreakPrev = false;
+  let _lastPrunedHistoryLen = -1;
+
+  // Cache the auto-computed "remaining words" list — only recompute when
+  // the history actually changes, since it filters thousands of words.
+  const _remainingCache = { historyLen: -1, role: null, list: [] };
+
+  function _isBreak(state) {
+    return state?.phase === "gameOver" && state?.gameOverView === "round";
+  }
 
   function _resetIfRoomChanged() {
     const cur = window.roomId;
@@ -16,12 +26,34 @@
     }
   }
 
+  // Clear notes once, exactly on the transition into the round break —
+  // i.e. after the word was guessed, before the automatic setter/guesser
+  // role swap (which only happens once NEXT_ROUND is processed).
+  function _handleRoundBreakTransition(state) {
+    const nowBreak = _isBreak(state);
+    if (nowBreak && !_inBreakPrev) {
+      _entries = [];
+      _draft = "";
+    }
+    _inBreakPrev = nowBreak;
+  }
+
   function _viable(history, word) {
     if (!history?.length) return true;
     if (typeof window.isConsistentWithHistory === "function") {
       return window.isConsistentWithHistory(history, word, window.state);
     }
     return true;
+  }
+
+  // Drop entries that are no longer consistent with history, in real time,
+  // rather than just greying them out.
+  function _pruneInfeasible(state) {
+    const history = state?.history || [];
+    if (history.length === _lastPrunedHistoryLen) return;
+    _lastPrunedHistoryLen = history.length;
+    if (!_entries.length) return;
+    _entries = _entries.filter(e => _viable(history, e.word));
   }
 
   function _guessedLetters(history) {
@@ -44,6 +76,18 @@
     row.innerHTML = html;
   }
 
+  function _fillDraft(word) {
+    if (!word || word.length !== 5) return;
+    if (_role === "setter") {
+      if (window.state) window.state.setterDraft = word;
+      window.updateUI?.();
+      window.emitSetterDraftPreview?.(word);
+    } else {
+      window.localGuesserDraft = word;
+      window.renderGuesserDraftOnly?.();
+    }
+  }
+
   function _renderList(roleId, state) {
     const list = document.getElementById(`notesList${roleId}`);
     if (!list) return;
@@ -62,7 +106,7 @@
       const elim   = _entries.filter(e => !_viable(history, e.word));
       viable.forEach(e => {
         html += `<div class="notes-entry notes-viable" data-word="${e.word}">
-          <span class="notes-word">${e.word}</span>
+          <span class="notes-word notes-fillable" data-fill="${e.word}">${e.word}</span>
           <button class="notes-remove" data-word="${e.word}" title="Remove">✕</button>
         </div>`;
       });
@@ -99,18 +143,55 @@
       });
     });
 
-    if (!isSetter) {
-      list.querySelectorAll(".notes-fillable").forEach(span => {
-        span.style.cursor = "pointer";
-        span.addEventListener("click", () => {
-          const w = span.dataset.fill;
-          if (w?.length === 5) {
-            window.localGuesserDraft = w;
-            window.renderGuesserDraftOnly?.();
-          }
-        });
-      });
+    list.querySelectorAll(".notes-fillable").forEach(span => {
+      span.addEventListener("click", () => _fillDraft(span.dataset.fill));
+    });
+  }
+
+  // Auto-computed list of words still consistent with the current round's
+  // secret/history — setter compares against ALLOWED_SECRETS (candidate
+  // secrets to keep/switch to), guesser against ALLOWED_GUESSES.
+  function _computeRemaining(state) {
+    const history = state?.history || [];
+    const isSetter = _role === "setter";
+    if (
+      _remainingCache.historyLen === history.length &&
+      _remainingCache.role === _role
+    ) {
+      return _remainingCache.list;
     }
+
+    const source = isSetter ? window.ALLOWED_SECRETS : window.ALLOWED_GUESSES;
+    const list = source
+      ? Array.from(source).filter(w => _viable(history, w))
+      : [];
+
+    _remainingCache.historyLen = history.length;
+    _remainingCache.role = _role;
+    _remainingCache.list = list;
+    return list;
+  }
+
+  function _renderRemaining(roleId, state) {
+    const container = document.getElementById(`notesRemaining${roleId}`);
+    if (!container) return;
+
+    const remaining = _computeRemaining(state);
+    const CAP = 80;
+    const shown = remaining.slice(0, CAP);
+
+    let html = `<div class="notes-remaining-count">${remaining.length} word${remaining.length === 1 ? "" : "s"} remaining</div>`;
+    html += shown
+      .map(w => `<span class="notes-remaining-word" data-fill="${w}">${w}</span>`)
+      .join("");
+    if (remaining.length > CAP) {
+      html += `<span class="notes-remaining-count">+${remaining.length - CAP} more</span>`;
+    }
+    container.innerHTML = html;
+
+    container.querySelectorAll(".notes-remaining-word").forEach(span => {
+      span.addEventListener("click", () => _fillDraft(span.dataset.fill));
+    });
   }
 
   function _renderPanel(state) {
@@ -119,10 +200,14 @@
     const panel  = document.getElementById(`notesPanel${roleId}`);
     if (!panel) return;
 
+    _handleRoundBreakTransition(state);
+    _pruneInfeasible(state);
+
     if (!_active) { panel.classList.add("hidden"); return; }
     panel.classList.remove("hidden");
     _renderDraft(roleId);
     _renderList(roleId, state);
+    _renderRemaining(roleId, state);
   }
 
   // ── Public API ──────────────────────────────────────────────────────
@@ -149,6 +234,12 @@
   window.notesInput = function (event) {
     if (!_active || !_role) return false;
     const roleId = _role === "setter" ? "Setter" : "Guesser";
+
+    const isEdit = event.type === "BACKSPACE" || event.type === "ENTER" || event.type === "LETTER";
+    if (isEdit && !_isBreak(window.state)) {
+      window.toast?.("Notes can only be edited during the break");
+      return true;
+    }
 
     if (event.type === "BACKSPACE") {
       _draft = _draft.slice(0, -1);

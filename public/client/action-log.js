@@ -22,27 +22,23 @@
       if (entry.phase === "simultaneous") {
         entries.push({ type: "action", text: isSetter ? "Secret submitted" : "Spy submitted secret" });
       }
+
+      (entry.powerEvents || []).forEach(evt => {
+        const formatted = window.formatPowerEvent?.(evt);
+        if (!formatted) return;
+        const who =
+          formatted.actorRole == null ? "" :
+          formatted.actorRole === myRole ? "You: " : "Opponent: ";
+        entries.push({
+          type: "power",
+          text: `${formatted.emoji ? formatted.emoji + " " : ""}${who}${formatted.text}`
+        });
+      });
+
+      if (entry.secretLocked) {
+        entries.push({ type: "lock", text: "🔒 Secret locked" });
+      }
     });
-
-    if (state.simultaneousAllWrong) {
-      entries.push({ type: "lock", text: "🔒 Secret locked" });
-    }
-
-    const p = state.powers || {};
-    if (p.freezeActive)               entries.push({ type: "power", text: "❄️ Lockdown active" });
-    if (p.blindGuessActive)           entries.push({ type: "power", text: "🙈 Blind Guess active" });
-    if (p.stealthGuessActive)         entries.push({ type: "power", text: "👻 Stealth Guess active" });
-    if (p.rouletteSecretActive)       entries.push({ type: "power", text: "🎰 Break Cover active" });
-    if (p.fakeFeedbackRound != null)  entries.push({ type: "power", text: "🎭 Falsify Intel active" });
-    if (p.confuseColorsRound != null) entries.push({ type: "power", text: "📡 Jam Signals active" });
-    if (p.blindSpotTile != null)      entries.push({ type: "power", text: "⬛ Blind Spot active" });
-    if (p.magicModeRound != null)     entries.push({ type: "power", text: "✨ Magic Mode active" });
-    if (p.forceTimerActive)           entries.push({ type: "power", text: "⏳ Time Pressure active" });
-    if (p.assassinWordUsed)           entries.push({ type: "power", text: "☠️ Assassin Word set" });
-    if (p.betMissActive)              entries.push({ type: "power", text: "🎯 Risky Maneuver active" });
-    if (p.revealGreenUsed)            entries.push({ type: "power", text: "👁 Letter revealed" });
-    if (p.forceGuessUsed)             entries.push({ type: "power", text: "🔫 Force a Move used" });
-    if (p.nonsenseUsed)               entries.push({ type: "power", text: "🌀 Signal Scramble used" });
 
     return entries;
   }

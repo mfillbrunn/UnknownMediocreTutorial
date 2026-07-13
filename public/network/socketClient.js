@@ -106,6 +106,24 @@ window.onPowerUsed(payload => {
   }
 });
 
+// Generic popup for any power use, visible to both the user and their
+// opponent (worded from each viewer's own perspective).
+socket.on("powerActivity", payload => {
+  if (!payload?.id) return;
+  const formatted = window.formatPowerEvent?.(payload);
+  if (!formatted) return;
+
+  const who =
+    formatted.actorRole == null ? "A power" :
+    formatted.actorRole === window.myRole ? "You" : "Opponent";
+  const verb = who === "A power" ? "was used" : "used";
+  const detailSuffix = formatted.detail ? ` — ${formatted.detail}` : "";
+
+  window.toast?.(
+    `${formatted.emoji ? formatted.emoji + " " : ""}${who} ${verb}: ${formatted.label}${detailSuffix}`
+  );
+});
+
 
 function onRejoinUI() {
   // Always leave startup/menu mode
