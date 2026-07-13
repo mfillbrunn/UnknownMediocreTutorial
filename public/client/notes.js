@@ -64,6 +64,14 @@
     return s;
   }
 
+  function _shakeNotesDraft(roleId) {
+    const row = document.getElementById(`notesDraft${roleId}`);
+    if (!row) return;
+    row.classList.remove("draft-shake");
+    void row.offsetWidth; // restart animation if already running
+    row.classList.add("draft-shake");
+  }
+
   function _renderDraft(roleId) {
     const row = document.getElementById(`notesDraft${roleId}`);
     if (!row) return;
@@ -124,7 +132,7 @@
           cls = "notes-viable";
         } else {
           const allNew = e.word.split("").every(l => !guessed.has(l));
-          cls = allNew ? "notes-clean" : "notes-elim";
+          cls = allNew ? "notes-clean" : "notes-grey";
         }
         html += `<div class="notes-entry ${cls}" data-word="${e.word}">
           <span class="notes-word notes-fillable" data-fill="${e.word}">${e.word}</span>
@@ -249,9 +257,17 @@
     if (event.type === "ENTER") {
       if (_draft.length === 5) {
         const w = _draft.toUpperCase();
-        if (!_entries.find(e => e.word === w)) _entries.push({ word: w });
-        _draft = "";
-        _renderPanel(window.state);
+        const dict = _role === "setter" ? window.ALLOWED_SECRETS : window.ALLOWED_GUESSES;
+        if (dict && !dict.has(w)) {
+          _shakeNotesDraft(roleId);
+        } else if (!_entries.find(e => e.word === w)) {
+          _entries.push({ word: w });
+          _draft = "";
+          _renderPanel(window.state);
+        } else {
+          _draft = "";
+          _renderPanel(window.state);
+        }
       }
       return true;
     }
