@@ -1,0 +1,431 @@
+/* ===================================================================
+   features.css — new features ported from mobile-frontend
+   =================================================================== */
+
+/* ── Header small buttons (Notes, Log) ────────────────────────────── */
+.header-sm-btn {
+  height: 28px;
+  padding: 0 9px;
+  border-radius: var(--r-8, 8px);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.6);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.header-sm-btn:hover {
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.9);
+}
+.header-sm-btn.active {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.35);
+  color: #fff;
+}
+
+/* ── Game side panels (Notes + Log) ────────────────────────────────── */
+.game-side-panel {
+  position: fixed;
+  top: 52px;          /* below app-header */
+  right: 0;
+  width: min(280px, 85vw);
+  max-height: calc(100dvh - 52px - 60px); /* leave room for keyboard area */
+  overflow-y: auto;
+  background: rgba(14, 15, 22, 0.97);
+  border-left: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0 0 0 12px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  transition: opacity 0.15s ease;
+}
+.game-side-panel.hidden {
+  display: none;
+}
+
+/* ── Action Log ─────────────────────────────────────────────────────── */
+.action-log-panel {
+  padding: 10px;
+  gap: 2px;
+  display: flex;
+  flex-direction: column;
+}
+.log-entry {
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+.log-round {
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-top: 4px;
+}
+.log-action {
+  color: rgba(255,255,255,0.75);
+}
+.log-power {
+  color: var(--role-accent, rgba(255,180,50,0.85));
+  font-size: 11px;
+}
+.log-lock {
+  color: #f87171;
+  font-weight: 700;
+}
+.log-scroll-anchor { height: 4px; }
+
+/* ── Notes Panel ────────────────────────────────────────────────────── */
+.notes-panel {
+  padding: 10px;
+}
+.notes-panel-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 8px;
+}
+.notes-draft-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.notes-draft-cell {
+  flex: 1;
+  aspect-ratio: 1;
+  max-height: 38px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.04);
+  transition: border-color 0.1s;
+}
+.notes-draft-cell.filled {
+  border-color: rgba(255,255,255,0.45);
+}
+.notes-draft-cell.cursor {
+  border-color: rgba(255,255,255,0.7);
+  animation: cursor-blink 1s step-end infinite;
+}
+@keyframes cursor-blink {
+  0%, 100% { border-color: rgba(255,255,255,0.7); }
+  50%       { border-color: rgba(255,255,255,0.2); }
+}
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.notes-empty {
+  font-size: 11px;
+  opacity: 0.35;
+  text-align: center;
+  padding: 8px 0;
+}
+.notes-entry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.notes-word {
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  flex: 1;
+  text-transform: uppercase;
+}
+.notes-remove {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.notes-remove:hover { color: rgba(255,255,255,0.7); }
+
+/* viable = consistent with all feedback */
+.notes-viable .notes-word { color: #4ade80; }
+.notes-viable { border-color: rgba(74, 222, 128, 0.2); }
+
+/* clean = no bad letters (guesser only) */
+.notes-clean .notes-word { color: #60a5fa; }
+.notes-clean { border-color: rgba(96, 165, 250, 0.2); }
+
+/* eliminated = incompatible */
+.notes-elim .notes-word {
+  color: rgba(255,255,255,0.3);
+  text-decoration: line-through;
+}
+
+/* ── Secret lock overlay ─────────────────────────────────────────────── */
+.secret-lock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--r-6, 6px);
+  font-size: 1.4rem;
+  pointer-events: none;
+  z-index: 5;
+}
+.secret-lock-overlay.hidden { display: none; }
+
+/* Ensure draft-stack is a positioning context */
+.draft-stack { position: relative; }
+
+/* ── Lobby ready state ───────────────────────────────────────────────── */
+.role-card.is-ready {
+  background: rgba(74, 222, 128, 0.09);
+  border-color: rgba(74, 222, 128, 0.55) !important;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+.role-card.is-ready::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(32px, 10vw, 60px);
+  font-weight: 900;
+  color: rgba(74, 222, 128, 0.10);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* lobby ready button: keep it green & enabled */
+#readyBtn.lobby-ready-btn {
+  background: rgba(74, 222, 128, 0.18);
+  border-color: rgba(74, 222, 128, 0.6);
+  color: #4ade80;
+}
+#readyBtn.lobby-ready-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+
+/* ── Powers Library panel (upgrade of ? button) ─────────────────────── */
+.power-info-panel {
+  max-height: 65vh;
+  overflow-y: auto;
+}
+.power-info-section {
+  padding: 6px 12px 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.45;
+  margin-top: 6px;
+}
+.power-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.power-info-emoji { font-size: 18px; flex-shrink: 0; }
+.power-info-body { flex: 1; min-width: 0; }
+.power-info-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.power-info-desc {
+  font-size: 11px;
+  opacity: 0.55;
+  line-height: 1.4;
+}
+.power-info-row.power-info-active {
+  background: rgba(74, 222, 128, 0.07);
+  border-left: 2px solid rgba(74, 222, 128, 0.5);
+}
+
+/* ── Daily Challenge screen ──────────────────────────────────────────── */
+.daily-date {
+  font-size: 13px;
+  opacity: 0.5;
+  margin: -8px 0 12px;
+  letter-spacing: 0.5px;
+}
+.daily-powers-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto 12px;
+}
+.daily-powers-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.daily-role-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  width: 60px;
+  flex-shrink: 0;
+}
+.daily-role-label.spy { color: var(--setter-color, #f87171); }
+.daily-role-label.inspector { color: var(--guesser-color, #60a5fa); }
+.daily-powers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.daily-power-pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+.daily-power-pill.spy {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #f87171;
+}
+.daily-power-pill.inspector {
+  background: rgba(59,130,246,0.12);
+  border: 1px solid rgba(59,130,246,0.3);
+  color: #60a5fa;
+}
+.daily-ai-label {
+  font-size: 13px;
+  opacity: 0.55;
+  margin: 0 0 4px;
+}
+
+/* ── Friends screen ──────────────────────────────────────────────────── */
+.friends-center {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 16px;
+}
+.friends-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.friends-back {
+  flex-shrink: 0;
+  font-size: 12px;
+  height: 32px;
+  padding: 0 10px;
+}
+.friends-tabs {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+.friends-tab {
+  flex: 1;
+  padding: 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--r-8, 8px);
+  color: rgba(255,255,255,0.55);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.friends-tab.active {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.3);
+  color: #fff;
+}
+.friends-content {
+  width: 100%;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.friends-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+}
+.friends-name { flex: 1; font-size: 14px; font-weight: 600; }
+.friends-status { font-size: 11px; opacity: 0.4; }
+.friends-section-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-top: 4px;
+}
+.friends-empty {
+  font-size: 13px;
+  opacity: 0.4;
+  text-align: center;
+  padding: 20px 0;
+}
+.friends-search-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  width: 100%;
+}
+.friends-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── VS AI screen ────────────────────────────────────────────────────── */
+.vsai-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 300px;
+  padding: 24px 16px;
+}

@@ -183,13 +183,18 @@ document.addEventListener("click", e => {
 });
 
 $("shareResultBtn")?.addEventListener("click", async () => {
+  const text = buildShareText(state, myRole);
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "VS Wordle result", text });
+      return;
+    } catch { /* user cancelled or share failed — fall through */ }
+  }
   try {
-    const text = buildShareText(state, myRole);
     await navigator.clipboard.writeText(text);
     toast("Result copied to clipboard");
-  } catch (err) {
-    console.error("Clipboard copy failed:", err);
-    toast("Could not copy result");
+  } catch {
+    toast("Could not share result");
   }
 });
 
@@ -264,6 +269,32 @@ $("leaderboardBtn")?.addEventListener("click", () => {
   showScreen("leaderboardScreen");
   loadLeaderboard("bullet");
 });
+
+$("dailyBtn")?.addEventListener("click", () => {
+  window.showDailyChallenge?.();
+});
+
+$("friendsBtn")?.addEventListener("click", () => {
+  window.showFriendsScreen?.();
+});
+
+$("vsAiBtn")?.addEventListener("click", () => {
+  if (!requireAuth("play vs AI")) return;
+  showScreen("vsAiScreen");
+});
+
+// VS AI difficulty selection (called from vsAiScreen inline onclick)
+window._startVsAI = function (difficulty) {
+  if (!requireAuth("play vs AI")) return;
+  const username = window.myProfile?.username || window.currentUser?.email || "Player";
+  socket.emit("createRoom", { userId: window.currentUser.id, name: username }, resp => {
+    if (!resp?.ok) return toast(resp?.error || "Could not create room");
+    window.roomId = resp.roomId;
+    persistRoom(resp.roomId);
+    sendGameAction({ type: "ADD_AI", difficulty, userId: window.currentUser.id });
+    enterLobbyAfterJoin();
+  });
+};
 
 document.querySelectorAll(".concedeBtn").forEach(btn => {
   btn.addEventListener("click", () => {

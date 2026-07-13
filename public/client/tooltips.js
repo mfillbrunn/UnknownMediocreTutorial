@@ -21,24 +21,25 @@ function buildPowerInfoPanel(state, role) {
 
   panel.innerHTML = "";
 
-  const sections = {
-    setter: [],
-    guesser: []
-  };
+  // Show active powers at top (highlighted), then all others as a library
+  const activePowers = new Set(state.activePowers || []);
+
+  const sections = { setter: [], guesser: [] };
 
   for (const id in PowerEngine.powers) {
-    if (state.activePowers && !state.activePowers.includes(id)) continue;
-
-    const mod = PowerEngine.powers[id];
+    const mod  = PowerEngine.powers[id];
     const meta = getPowerMeta(id);
     if (!meta) continue;
 
+    const isActive = activePowers.has(id);
     const row = document.createElement("div");
-    row.className = "power-info-row";
-
+    row.className = "power-info-row" + (isActive ? " power-info-active" : "");
     row.innerHTML = `
-      <div class="power-info-title">${meta.label}</div>
-      <div class="power-info-desc">${meta.desc}</div>
+      <span class="power-info-emoji">${meta.emoji || "⚡"}</span>
+      <div class="power-info-body">
+        <div class="power-info-title">${meta.label}${isActive ? " <span style='font-size:9px;opacity:.6;font-weight:600'>● ACTIVE</span>" : ""}</div>
+        <div class="power-info-desc">${meta.desc}</div>
+      </div>
     `;
 
     const powerRole = mod.role || "guesser";
@@ -46,12 +47,18 @@ function buildPowerInfoPanel(state, role) {
   }
 
   if (sections.setter.length) {
-    panel.appendChild(makeInfoHeader("Spy Powers", "setter"));
+    const h = document.createElement("div");
+    h.className = "power-info-section";
+    h.textContent = "Spy Powers";
+    panel.appendChild(h);
     sections.setter.forEach(r => panel.appendChild(r));
   }
 
   if (sections.guesser.length) {
-    panel.appendChild(makeInfoHeader("Inspector Powers", "guesser"));
+    const h = document.createElement("div");
+    h.className = "power-info-section";
+    h.textContent = "Inspector Powers";
+    panel.appendChild(h);
     sections.guesser.forEach(r => panel.appendChild(r));
   }
 }

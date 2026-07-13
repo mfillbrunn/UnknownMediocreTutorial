@@ -33,6 +33,8 @@
   <link rel="stylesheet" href="css/special-effects.css">
   <!-- Last. Mobile phone adjustments-->
   <link rel="stylesheet" href="css/mobile.css">
+  <!-- New features -->
+  <link rel="stylesheet" href="css/features.css">
 
 </head>
 <body>
@@ -62,9 +64,12 @@
             <div id="menuAccountStatus" class="menu-account-status"></div>
             <div class="menu-buttons">
               <button id="quickPlayBtn" class="menu-btn primary">Quick Play</button>
+              <button id="vsAiBtn" class="menu-btn">Play vs AI 🤖</button>
+              <button id="dailyBtn" class="menu-btn">Daily Challenge ☀️</button>
+              <button id="friendsBtn" class="menu-btn">Friends 👥</button>
               <button id="accountBtn" class="menu-btn">Past Games & Account</button>
               <button id="leaderboardBtn" class="menu-btn">Leaderboard</button>
-              <button id="howToPlayBtn" class="menu-btn">How to Play</button>
+              <button id="howToPlayBtn" class="menu-btn">Tutorial</button>
             </div>
           </div>
         </section>
@@ -333,6 +338,8 @@
                   </div>
                 </div>
                 <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
+                <button id="notesBtnSetter" class="header-sm-btn" onclick="toggleNotes('setter')" title="Notes">Notes</button>
+                <button id="actionLogBtnSetter" class="header-sm-btn" onclick="toggleActionLog('setter')" title="Action Log">Log</button>
                 <button id="powerInfoBtnSetter" class="power-info-btn" aria-label="Power descriptions"> <span class="power-info-icon">?</span></button>
                 <button class="concedeBtn secondary-btn small danger-btn">X</button>
               </div>
@@ -354,6 +361,7 @@
                   <div class="draft-row-wrap">
                      <div class="draft-stack">
                         <div id="draftSetter" class="history-tiles draft-layer"></div>
+                        <div id="secretLockOverlay" class="secret-lock-overlay hidden">🔒</div>
                      </div>
                   </div>
                </div>   
@@ -363,6 +371,15 @@
            <div id="keyboardSetter" class="keyboard"></div>
          </main>
          <!---Modals--->
+        <!-- Notes panel (setter) -->
+        <div id="notesPanelSetter" class="game-side-panel notes-panel hidden">
+          <div class="notes-panel-title">Notes</div>
+          <div id="notesDraftSetter" class="notes-draft-row"></div>
+          <div id="notesListSetter" class="notes-list"></div>
+        </div>
+        <!-- Action log panel (setter) -->
+        <div id="actionLogSetter" class="game-side-panel action-log-panel hidden"></div>
+
         <section id="globalOverlays">
            <!-- Assassin Modal -->
            <div id="assassinModal" class="modal">
@@ -420,6 +437,8 @@
                   </div>
                 </div>              
               <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
+              <button id="notesBtnGuesser" class="header-sm-btn" onclick="toggleNotes('guesser')" title="Notes">Notes</button>
+              <button id="actionLogBtnGuesser" class="header-sm-btn" onclick="toggleActionLog('guesser')" title="Action Log">Log</button>
               <button id="powerInfoBtnGuesser" class="power-info-btn" aria-label="Power descriptions"><span class="power-info-icon">?</span></button>
               <button class="concedeBtn secondary-btn small danger-btn">X</button>
             </div>
@@ -448,7 +467,16 @@
           <div id="GuesserInfoBadge" class="info badge"></div>
           <div id="keyboardGuesser" class="keyboard"></div>
        </main>
-        <!--- betting model ---> 
+        <!-- Notes panel (guesser) -->
+        <div id="notesPanelGuesser" class="game-side-panel notes-panel hidden">
+          <div class="notes-panel-title">Notes</div>
+          <div id="notesDraftGuesser" class="notes-draft-row"></div>
+          <div id="notesListGuesser" class="notes-list"></div>
+        </div>
+        <!-- Action log panel (guesser) -->
+        <div id="actionLogGuesser" class="game-side-panel action-log-panel hidden"></div>
+
+        <!--- betting model --->
                   <div id="betMissModal" class="modal">
               <div class="modal-content">
                  <h3>Bet Power</h3>
@@ -475,6 +503,24 @@
           </div>
         </div>
     </section>
+<!-- ========== DAILY CHALLENGE ========== -->
+<section id="dailyScreen" class="screen game-menu"></section>
+
+<!-- ========== FRIENDS ========== -->
+<section id="friendsScreen" class="screen game-menu"></section>
+
+<!-- ========== PLAY VS AI ========== -->
+<section id="vsAiScreen" class="screen game-menu">
+  <div class="menu-center vsai-center">
+    <h2 class="menu-title">Play vs AI</h2>
+    <p style="font-size:12px;opacity:0.5;margin:-8px 0 8px">Choose difficulty</p>
+    <button class="menu-btn primary" onclick="_startVsAI(1)">🤖 Beginner<br><small style="font-weight:400;opacity:0.65">Casual, exploratory</small></button>
+    <button class="menu-btn" onclick="_startVsAI(2)">🧠 The Thinker<br><small style="font-weight:400;opacity:0.65">Our smartest AI</small></button>
+    <button class="menu-btn" onclick="_startVsAI(3)">🔥 The Sneak<br><small style="font-weight:400;opacity:0.65">Our sneakiest AI</small></button>
+    <button class="menu-btn" onclick="showStartup()">Back</button>
+  </div>
+</section>
+
 <!-- AI Difficulty Modal -->
 <div id="aiDifficultyModal" class="modal">
   <div class="panel ai-difficulty-panel">
@@ -578,6 +624,10 @@
   <script src="powerEngine/powers/betMiss.js"></script>
   <script src="powerEngine/powers/revealPenalty.js"></script>
   <script src="client/summary.js"></script>
+  <script src="client/action-log.js"></script>
+  <script src="client/notes.js"></script>
+  <script src="client/friends.js"></script>
+  <script src="client/daily-challenge.js"></script>
   <script src="client.js"></script>
   <script src="client/roomid.js"></script>
   <div id="powerInfoPanelSetter" class="power-info-panel" hidden></div>

@@ -126,6 +126,14 @@ function updateRoleCards() {
 
   $("setterName").textContent = getSetterPlayer()?.name || "—";
   $("guesserName").textContent = getGuesserPlayer()?.name || "—";
+
+  // Ready-state badge on role cards
+  const setterCard  = document.querySelector(".role-card.setter");
+  const guesserCard = document.querySelector(".role-card.guesser");
+  const setterReady  = !!getSetterPlayer()?.ready;
+  const guesserReady = !!getGuesserPlayer()?.ready;
+  setterCard?.classList.toggle("is-ready",  setterReady);
+  guesserCard?.classList.toggle("is-ready", guesserReady);
 }
 
 function enterLobbyAfterJoin() {
@@ -248,11 +256,7 @@ case "playerLeft": {
     }
 
     case "playerReady":
-      
-      toast(`Player is READY`);
-      if (evt.playerId === socket.id) {
-        enableReadyButton(false);
-      }
+      toast("A player is ready");
       break;
     case "playerDisconnected":
       toast("Your opponent disconnected. Waiting to reconnect…");
@@ -339,10 +343,23 @@ onStateUpdate(newState => {
 // -----------------------------------------------------
 function updateUI() {
   if (!state) return;
-  // Render power buttons once
   updateScreens();
   InfoBadgeEngine.render(state, myRole);
   if (state.phase !== "lobby") hide("lobby");
+  updateSecretLock();
+  window.renderActionLog?.(state, myRole);
+  window.renderNotesPanel?.(state);
+}
+
+function updateSecretLock() {
+  const overlay = $("secretLockOverlay");
+  if (!overlay) return;
+  const locked = !!state?.simultaneousAllWrong;
+  overlay.classList.toggle("hidden", !locked);
+  if (locked && myRole === "setter") {
+    // Prevent new secret entry
+    NewEnabled = false;
+  }
 }
 
 // -----------------------------------------------------
@@ -362,7 +379,7 @@ function updateScreens() {
     hide("menu");
     hide("setterScreen");
     hide("guesserScreen");
-    enableReadyButton(!state.players?.[myUserId()]?.ready);
+    enableReadyButton(!!state.players?.[myUserId()]?.ready);
     return;
   }
   enableReadyButton(false);
@@ -535,6 +552,7 @@ function emitSetterDraftPreview(draft) {
   socket.emit("setterDraftSecret", {roomId, draft});
 }
 function handleSetterInput(event) {
+  if (window.isNotesActive?.() && window.notesInput?.(event)) return;
   if (!(state.powers?.freezeActive || state.powers?.rouletteSecretActive)) {
     const isNormalSetterTurn =
       myUserId() === state.setter &&
@@ -705,6 +723,7 @@ if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserS
 
 ///GUESSER INPUT
 function handleGuesserInput(event) {
+  if (window.isNotesActive?.() && window.notesInput?.(event)) return;
   if (state.pendingGuess) return;
   if (event.type === "BACKSPACE") {
     localGuesserDraft = localGuesserDraft.slice(0, -1);
@@ -888,17 +907,13 @@ function updateTimerPresetUI() {
     });
 }
 
-function enableReadyButton(enabled) {
+function enableReadyButton(isReady) {
   const btn = $("readyBtn");
   if (!btn) return;
-  btn.disabled = !enabled;
-  if (!enabled) {
-    btn.classList.add("waiting");
-    btn.textContent = "Waiting...";
-  } else {
-    btn.classList.remove("waiting");
-    btn.textContent = "I'm Ready";
-  }
+  btn.disabled = false;
+  btn.textContent = "I'm Ready";
+  btn.classList.remove("waiting");
+  btn.classList.toggle("lobby-ready-btn", !!isReady);
 }
 
 

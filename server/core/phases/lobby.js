@@ -200,7 +200,13 @@ if (action.type === "SET_DAILY_POWERS") {
     if (!userId) return;
     if (!room.playersByUserId[userId]) return;
 
-    setPlayerReady(room, userId, true);
+    const nowReady = !state.players[userId]?.ready;
+    setPlayerReady(room, userId, nowReady);
+
+    if (!nowReady) {
+      emitRoomState(roomId, room, io);
+      return;
+    }
 
     const humans = Object.values(state.players || {}).filter((p) => !p.isAI);
     const readyHumans = humans.filter((p) => p.ready);
