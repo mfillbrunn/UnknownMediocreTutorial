@@ -45,12 +45,13 @@
     const meta = window.POWER_METADATA?.[evt.id];
     const label = meta?.label || evt.id;
     const emoji = meta?.emoji || "";
+    const desc = meta?.desc || "";
     const detail =
       DETAIL_FORMATTERS[evt.id]?.(evt.emissions) ||
       lastToastText(evt.emissions) ||
       null;
     const text = detail ? `${label}: ${detail}` : `${label} used`;
-    return { id: evt.id, emoji, label, detail, text, actorRole: evt.actorRole || null };
+    return { id: evt.id, emoji, label, desc, detail, text, actorRole: evt.actorRole || null };
   }
 
   window.formatPowerEvent = formatPowerEvent;

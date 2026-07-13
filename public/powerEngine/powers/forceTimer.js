@@ -34,7 +34,7 @@ uiEffects(state, role) {
   bar.classList.remove("force-timer");
 
   if (
-    role === state.setter &&
+    role === "setter" &&
     state.powers.forceTimerActive &&
     state.powers.forceTimerDeadline
   ) {

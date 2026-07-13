@@ -43,6 +43,13 @@
     const $ = id => document.getElementById(id);
   </script>
   <div id="toast" class="toast"></div>
+  <div id="powerPopup" class="power-popup">
+    <div class="power-popup-emoji"></div>
+    <div class="power-popup-body">
+      <div class="power-popup-title"></div>
+      <div class="power-popup-desc"></div>
+    </div>
+  </div>
     <div id="appContainer">
       <!-- ========== HEADER ========== -->
 <header class="app-header">
@@ -376,8 +383,6 @@
           <div class="notes-panel-title">Notes</div>
           <div id="notesDraftSetter" class="notes-draft-row"></div>
           <div id="notesListSetter" class="notes-list"></div>
-          <div class="notes-panel-title notes-remaining-title">Remaining</div>
-          <div id="notesRemainingSetter" class="notes-list notes-remaining-list"></div>
         </div>
         <!-- Action log panel (setter) -->
         <div id="actionLogSetter" class="game-side-panel action-log-panel hidden"></div>
@@ -474,8 +479,6 @@
           <div class="notes-panel-title">Notes</div>
           <div id="notesDraftGuesser" class="notes-draft-row"></div>
           <div id="notesListGuesser" class="notes-list"></div>
-          <div class="notes-panel-title notes-remaining-title">Remaining</div>
-          <div id="notesRemainingGuesser" class="notes-list notes-remaining-list"></div>
         </div>
         <!-- Action log panel (guesser) -->
         <div id="actionLogGuesser" class="game-side-panel action-log-panel hidden"></div>

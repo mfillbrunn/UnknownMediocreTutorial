@@ -83,7 +83,7 @@ InfoBadgeEngine.register((state, role) => {
   // -----------------------------
   // SETTER: show the actual word
   // -----------------------------
-  if (role === state.setter) {
+  if (role === "setter") {
     return {
       id: "assassinWord-setter",
       emoji: meta.emoji,
@@ -98,7 +98,7 @@ InfoBadgeEngine.register((state, role) => {
   // -----------------------------
   // GUESSER: generic warning only
   // -----------------------------
-  if (role === state.guesser) {
+  if (role === "guesser") {
     return {
       id: "assassinWord-guesser",
       emoji: meta.emoji,

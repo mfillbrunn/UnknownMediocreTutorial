@@ -19,7 +19,7 @@ tooltip: {
 
   // This handles ongoing frozen UI
  uiEffects(state, role) {
-  if (role !== state.setter) return;
+  if (role !== "setter") return;
 
   const frozen =
     state.powers.freezeActive &&

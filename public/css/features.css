@@ -187,35 +187,14 @@
 .notes-grey .notes-word { color: rgba(255,255,255,0.3); }
 .notes-grey { border-color: rgba(255,255,255,0.07); }
 
-/* ── Notes: auto-computed remaining words ──────────────────────────── */
-.notes-remaining-title {
-  margin-top: 10px;
-}
-.notes-remaining-list {
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.notes-remaining-word {
+/* ── Notes: per-word remaining-count badge (setter only) ───────────── */
+.notes-remaining-count-inline {
   font-family: var(--font-mono, monospace);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 3px 6px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.75);
-  cursor: pointer;
-}
-.notes-remaining-word:hover {
-  background: rgba(255,255,255,0.1);
-}
-.notes-remaining-count {
-  font-size: 11px;
-  opacity: 0.5;
-  padding: 0 0 6px;
+  opacity: 0.6;
+  padding: 0 4px;
+  flex-shrink: 0;
 }
 
 /* ── Secret lock overlay ─────────────────────────────────────────────── */
@@ -233,6 +212,14 @@
   z-index: 5;
 }
 .secret-lock-overlay.hidden { display: none; }
+
+/* When the setter's draft stack shows both the guesser's pending-guess row
+   AND the setter's own new-secret row, the lock only applies to the
+   setter's row (the second/bottom one) — don't cover the pending guess. */
+#draftSetter:has(.history-row:nth-child(2)) ~ .secret-lock-overlay {
+  top: 50%;
+  height: 50%;
+}
 
 /* Ensure draft-stack is a positioning context */
 .draft-stack { position: relative; }

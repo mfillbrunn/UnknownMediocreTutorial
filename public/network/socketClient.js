@@ -106,22 +106,39 @@ window.onPowerUsed(payload => {
   }
 });
 
-// Generic popup for any power use, visible to both the user and their
-// opponent (worded from each viewer's own perspective).
+// Centered, opaque popup for any power use, visible to both the user and
+// their opponent (worded from each viewer's own perspective), lingering
+// long enough to actually read the power's description.
+let _powerPopupTimer = null;
+window.showPowerPopup = function (html) {
+  const el = document.getElementById("powerPopup");
+  if (!el) return;
+  el.querySelector(".power-popup-emoji").textContent = html.emoji || "";
+  el.querySelector(".power-popup-title").textContent = html.title || "";
+  el.querySelector(".power-popup-desc").textContent = html.desc || "";
+
+  clearTimeout(_powerPopupTimer);
+  el.classList.remove("show");
+  void el.offsetWidth; // restart if already showing
+  el.classList.add("show");
+  _powerPopupTimer = setTimeout(() => el.classList.remove("show"), 3800);
+};
+
 socket.on("powerActivity", payload => {
   if (!payload?.id) return;
   const formatted = window.formatPowerEvent?.(payload);
   if (!formatted) return;
 
   const who =
-    formatted.actorRole == null ? "A power" :
-    formatted.actorRole === window.myRole ? "You" : "Opponent";
-  const verb = who === "A power" ? "was used" : "used";
+    formatted.actorRole == null ? "A power was used" :
+    formatted.actorRole === window.myRole ? "You used" : "Opponent used";
   const detailSuffix = formatted.detail ? ` — ${formatted.detail}` : "";
 
-  window.toast?.(
-    `${formatted.emoji ? formatted.emoji + " " : ""}${who} ${verb}: ${formatted.label}${detailSuffix}`
-  );
+  window.showPowerPopup({
+    emoji: formatted.emoji,
+    title: `${who}: ${formatted.label}`,
+    desc: `${formatted.desc || ""}${detailSuffix}`
+  });
 });
 
 

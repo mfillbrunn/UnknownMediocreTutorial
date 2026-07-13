@@ -26,7 +26,7 @@ tooltip: {
   },
 
   uiEffects(state, role) {
-    if (role !== state.setter) return;
+    if (role !== "setter") return;
     if (state.powers?.nonsenseActive) {
       document.body.classList.add("nonsense");
     } else {

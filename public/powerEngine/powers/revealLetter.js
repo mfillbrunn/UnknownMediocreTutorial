@@ -46,7 +46,7 @@ PowerEngine.register("revealLetter", {
     }
 
     // Only guesser sees the button
-    if (role !== state.guesser) {
+    if (role !== "guesser") {
       btn.style.display = "none";
       return;
     }

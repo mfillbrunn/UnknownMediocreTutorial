@@ -20,7 +20,7 @@ tooltip: {
 
   // Guesser sees a modified UI when power is active
   uiEffects(state, role) {
-    if (role !== state.guesser) return;
+    if (role !== "guesser") return;
     if (!state.powers.countOnlyActive) return;
   },
 
@@ -46,8 +46,8 @@ InfoBadgeEngine.register((state, role) => {
     .find(e => e.countOnlyApplied && e.extraInfo);
 
   if (!entry) return null;
-  if (role === state.setter && state.powers.countOnlyActive===false) { return null};
-  if (role === state.guesser && state.powers?.blindGuessActive) return null;
+  if (role === "setter" && state.powers.countOnlyActive===false) { return null};
+  if (role === "guesser" && state.powers?.blindGuessActive) return null;
   const { greens, yellows, total } = entry.extraInfo;
   const word = state.powers.countOnlyWord.toUpperCase(); 
   return {

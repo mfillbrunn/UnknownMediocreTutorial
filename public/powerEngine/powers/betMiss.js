@@ -105,7 +105,7 @@ InfoBadgeEngine.register((state, role) => {
   // -----------------------------
   // Guesser: show the actual bet
   // -----------------------------
-  if (role === state.guesser) {
+  if (role === "guesser") {
     return {
       id: "betMiss-guesser",
       emoji: meta.emoji,
@@ -120,7 +120,7 @@ InfoBadgeEngine.register((state, role) => {
   // -----------------------------
   // Setter: generic warning only
   // -----------------------------
-  if (role === state.setter) {
+  if (role === "setter") {
     return {
       id: "betMiss-setter",
       emoji: meta.emoji,

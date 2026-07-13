@@ -9,10 +9,6 @@
   let _inBreakPrev = false;
   let _lastPrunedHistoryLen = -1;
 
-  // Cache the auto-computed "remaining words" list — only recompute when
-  // the history actually changes, since it filters thousands of words.
-  const _remainingCache = { historyLen: -1, role: null, list: [] };
-
   function _isBreak(state) {
     return state?.phase === "gameOver" && state?.gameOverView === "round";
   }
@@ -91,9 +87,28 @@
       window.updateUI?.();
       window.emitSetterDraftPreview?.(word);
     } else {
-      window.localGuesserDraft = word;
-      window.renderGuesserDraftOnly?.();
+      window.setGuesserDraft?.(word);
     }
+  }
+
+  // Reuses the same "remaining words" math as the setter's Keep/New box
+  // (server/utils/remainingWords.js computeRemainingNew), run client-side
+  // since only the client knows what candidate words are in notes.
+  function _remainingCountFor(candidateWord, state) {
+    const guess = state?.pendingGuess;
+    if (!guess || guess.includes("?")) return null;
+    if (typeof window.predictFeedback !== "function" || typeof window.isConsistentWithHistory !== "function") return null;
+    if (!window.ALLOWED_SECRETS) return null;
+
+    const fb = window.predictFeedback(candidateWord, guess);
+    if (!fb) return null;
+    const testHistory = [...(state.history || []), { guess, fb, ignoreConstraints: false }];
+
+    let count = 0;
+    for (const w of window.ALLOWED_SECRETS) {
+      if (window.isConsistentWithHistory(testHistory, w, state)) count++;
+    }
+    return count;
   }
 
   function _renderList(roleId, state) {
@@ -113,8 +128,10 @@
       const viable = _entries.filter(e => _viable(history, e.word));
       const elim   = _entries.filter(e => !_viable(history, e.word));
       viable.forEach(e => {
+        const count = _remainingCountFor(e.word, state);
         html += `<div class="notes-entry notes-viable" data-word="${e.word}">
           <span class="notes-word notes-fillable" data-fill="${e.word}">${e.word}</span>
+          ${count != null ? `<span class="notes-remaining-count-inline">${count}</span>` : ""}
           <button class="notes-remove" data-word="${e.word}" title="Remove">✕</button>
         </div>`;
       });
@@ -156,52 +173,6 @@
     });
   }
 
-  // Auto-computed list of words still consistent with the current round's
-  // secret/history — setter compares against ALLOWED_SECRETS (candidate
-  // secrets to keep/switch to), guesser against ALLOWED_GUESSES.
-  function _computeRemaining(state) {
-    const history = state?.history || [];
-    const isSetter = _role === "setter";
-    if (
-      _remainingCache.historyLen === history.length &&
-      _remainingCache.role === _role
-    ) {
-      return _remainingCache.list;
-    }
-
-    const source = isSetter ? window.ALLOWED_SECRETS : window.ALLOWED_GUESSES;
-    const list = source
-      ? Array.from(source).filter(w => _viable(history, w))
-      : [];
-
-    _remainingCache.historyLen = history.length;
-    _remainingCache.role = _role;
-    _remainingCache.list = list;
-    return list;
-  }
-
-  function _renderRemaining(roleId, state) {
-    const container = document.getElementById(`notesRemaining${roleId}`);
-    if (!container) return;
-
-    const remaining = _computeRemaining(state);
-    const CAP = 80;
-    const shown = remaining.slice(0, CAP);
-
-    let html = `<div class="notes-remaining-count">${remaining.length} word${remaining.length === 1 ? "" : "s"} remaining</div>`;
-    html += shown
-      .map(w => `<span class="notes-remaining-word" data-fill="${w}">${w}</span>`)
-      .join("");
-    if (remaining.length > CAP) {
-      html += `<span class="notes-remaining-count">+${remaining.length - CAP} more</span>`;
-    }
-    container.innerHTML = html;
-
-    container.querySelectorAll(".notes-remaining-word").forEach(span => {
-      span.addEventListener("click", () => _fillDraft(span.dataset.fill));
-    });
-  }
-
   function _renderPanel(state) {
     if (!_role) return;
     const roleId = _role === "setter" ? "Setter" : "Guesser";
@@ -215,7 +186,6 @@
     panel.classList.remove("hidden");
     _renderDraft(roleId);
     _renderList(roleId, state);
-    _renderRemaining(roleId, state);
   }
 
   // ── Public API ──────────────────────────────────────────────────────

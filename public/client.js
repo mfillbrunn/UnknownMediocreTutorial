@@ -963,6 +963,14 @@ document
     });
   });
 
+// notes.js runs in its own script scope and can't reassign the bare
+// `localGuesserDraft` binding (writing window.localGuesserDraft only
+// creates an unrelated global property) — go through this setter instead.
+window.setGuesserDraft = function (word) {
+  localGuesserDraft = word;
+  renderGuesserDraftOnly();
+};
+
 function renderGuesserDraftOnly() {
   renderDraftRows({
     state,
