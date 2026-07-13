@@ -130,7 +130,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   color: var(--tile-green-text) !important;
   border: none;
   box-shadow: none;
-  opacity: 0.9;
+  opacity: 0.6;
    animation: preview-green-pulse 2.2s  ease-in-out infinite;
    animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
@@ -142,7 +142,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   color: var(--tile-yellow-text) !important;
   border: none;
   box-shadow: none;
-  opacity: 0.9;
+  opacity: 0.6;
    animation: preview-yellow-pulse 2.2s ease-in-out infinite;
    animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
@@ -156,7 +156,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   color: var(--tile-gray-text);
   border: none;
   box-shadow: none;
-  opacity: 0.8;
+  opacity: 0.55;
 }
 #draftSetter {
   display: flex;
@@ -181,8 +181,8 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   z-index: 1;
 }
 
-/* Enclosing frame */
-.theme-setter .history-row.draft-row.pending-guess::after {
+/* Enclosing frame — only shown when the guide is turned on */
+body.guide-on .theme-setter .history-row.draft-row.pending-guess::after {
   content: "";
   position: absolute;
 
@@ -192,7 +192,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   left: -10px;
   right: -10px;
 
-  border: 3px solid var(--setter-color);
+  border: 3px solid var(--tile-blue);
   border-radius: 16px;
 
   pointer-events: none;
@@ -203,8 +203,8 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
     0 8px 20px rgba(0,0,0,0.4);
 }
 
-/* Top label bar */
-.theme-setter .history-row.draft-row.pending-guess::before {
+/* Top label bar — only shown when the guide is turned on */
+body.guide-on .theme-setter .history-row.draft-row.pending-guess::before {
   content: "PREVIEW";
 
   position: absolute;
@@ -219,7 +219,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   text-transform: uppercase;
 
   color: #fff;
-  background: var(--setter-color);
+  background: var(--tile-blue);
 
   border-radius: 8px;
 

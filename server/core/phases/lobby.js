@@ -208,7 +208,16 @@ if (action.type === "SET_DAILY_POWERS") {
       return;
     }
 
-    const humans = Object.values(state.players || {}).filter((p) => !p.isAI);
+    const allPlayers = Object.values(state.players || {});
+
+    // Need two players in the room (human + human, or human + AI) before
+    // a single ready-up can start the game.
+    if (allPlayers.length < 2) {
+      emitRoomState(roomId, room, io);
+      return;
+    }
+
+    const humans = allPlayers.filter((p) => !p.isAI);
     const readyHumans = humans.filter((p) => p.ready);
 
     if (readyHumans.length < humans.length) {

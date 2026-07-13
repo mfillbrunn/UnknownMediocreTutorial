@@ -271,8 +271,15 @@ align-self: baseline;
   white-space: nowrap;
 }
 
-.header-room-code {
+.header-right-cluster {
   justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  min-width: 0;
+}
+
+.header-room-code {
   font-weight: 700;
   letter-spacing: 0.08em;
   opacity: 0.85;
