@@ -12,21 +12,19 @@ function renderSetterRemainingBox(boxState) {
 
   const oldStyle = boxState.highlightOld ? "color: var(--tile-green)" : "";
   const newStyle = boxState.highlightNew ? "color: var(--tile-green)" : "";
+  const current = boxState.current.toLocaleString();
 
   box.innerHTML = `
     <div class="line">
-      <span class="label">Words</span>
-      <span class="value">${boxState.current.toLocaleString()}</span>
-    </div>
-    <div class="line">
       <span class="label">Keep</span>
       <span class="value" style="${oldStyle}">
-        ${boxState.old != null ? boxState.old.toLocaleString() : "?"}
+        ${current} → ${boxState.old != null ? boxState.old.toLocaleString() : "?"}
       </span>
     </div>
     <div class="line">
       <span class="label">New</span>
       <span class="value" style="${newStyle}">
+        ${current} →
         ${
           boxState.isConsistent === false
             ? `<span class="inconsistent-x">✕</span>`

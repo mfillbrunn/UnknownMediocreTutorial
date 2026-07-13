@@ -328,6 +328,7 @@ onStateUpdate(newState => {
   updateTimerVisibility();
   updateAppHeader(state);
   updateLobbyHeader();
+  updateGuideBanner();
   updateUI();
   updateSummary();
   maybeStartRouletteFromState(state);
@@ -869,6 +870,89 @@ $("quickPlayBtn")?.addEventListener("click", () => {
   });
 });
 
+
+(function setupGuideToggle() {
+  const btn = $("guideToggleBtn");
+  if (!btn) return;
+
+  // Load saved preference (default: on)
+  const stored = localStorage.getItem("guideActive");
+  const guideOn = stored === null ? true : stored === "true";
+
+  document.body.classList.toggle("guide-on", guideOn);
+  btn.classList.toggle("active", guideOn);
+
+  btn.onclick = () => {
+    const isOn = document.body.classList.toggle("guide-on");
+    localStorage.setItem("guideActive", isOn);
+    btn.classList.toggle("active", isOn);
+    updateGuideBanner();
+  };
+})();
+
+// -----------------------------------------------------
+// GUIDE: phase + current-task banner
+// -----------------------------------------------------
+function getGuideInfo(state, role) {
+  if (!state || !role) return null;
+
+  if (state.phase === "simultaneous") {
+    if (role === "setter") {
+      const done = !!state.secret || state.simultaneousSecretSubmitted;
+      return {
+        phase: "Simultaneous Round",
+        task: done
+          ? "Secret locked in — waiting for your opponent's opening guess."
+          : "Choose your secret word. Your opponent is guessing blind this round."
+      };
+    }
+    const done = !!state.pendingGuess || state.simultaneousGuessSubmitted;
+    return {
+      phase: "Simultaneous Round",
+      task: done
+        ? "Guess submitted — waiting for the setter's secret."
+        : "Submit your opening guess. You don't know the secret yet."
+    };
+  }
+
+  if (state.phase === "normal") {
+    if (role === "setter") {
+      const isDecisionStep = state.turn === state.setter && !!state.pendingGuess;
+      return {
+        phase: "Guessing Round",
+        task: isDecisionStep
+          ? "Your turn: keep your secret, or switch to a new word consistent with all feedback so far."
+          : "Waiting for the guesser to submit a guess."
+      };
+    }
+    const isGuessTurn = state.turn === state.guesser;
+    return {
+      phase: "Guessing Round",
+      task: isGuessTurn
+        ? "Your turn: submit a guess."
+        : "Waiting for the setter to decide whether to keep or change the secret."
+    };
+  }
+
+  return null;
+}
+
+function updateGuideBanner() {
+  const banner = $("guideBanner");
+  if (!banner) return;
+
+  const guideOn = document.body.classList.contains("guide-on");
+  const info = guideOn ? getGuideInfo(state, myRole) : null;
+
+  if (!info) {
+    banner.classList.add("hidden");
+    return;
+  }
+
+  $("guidePhase").textContent = info.phase;
+  $("guideTask").textContent = info.task;
+  banner.classList.remove("hidden");
+}
 
 (function setupConstraintToggle() {
   const buttons = document.querySelectorAll(".constraint-toggle-btn");

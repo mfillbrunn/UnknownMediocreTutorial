@@ -57,10 +57,18 @@
 
   <span class="role-badge header-role-badge"></span>
 
-  <span class="room-code header-room-code"></span>
+  <div class="header-right-cluster">
+    <span class="room-code header-room-code"></span>
+    <button id="guideToggleBtn" class="guide-toggle-btn" title="Toggle guide" aria-label="Toggle guide">🧭 Guide</button>
+  </div>
 </header>
 
-
+<!-- ========== GUIDE BANNER ========== -->
+<div id="guideBanner" class="guide-banner hidden">
+  <span id="guidePhase" class="guide-phase"></span>
+  <span class="guide-sep">·</span>
+  <span id="guideTask" class="guide-task"></span>
+</div>
 
     <!-- ========== MAIN ========== -->
       <main id="appMain">
@@ -249,10 +257,10 @@
     
     <!-- LOBBY FOOTER -->
     <div class="lobby-footer">
-      <button id="leaveRoomBtn" class="leave-btn">
+      <button id="leaveRoomBtn" class="leave-btn secondary-btn">
         Leave
       </button>
-      
+
       <button id="readyBtn" class="primary-btn">
         I’m Ready
       </button>

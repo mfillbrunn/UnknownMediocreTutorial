@@ -171,9 +171,7 @@ body.menu-mode .app-header {
   background: none;
   border: 1px solid var(--btn-secondary);
   color: var(--btn-secondary-text);
-  padding: 6px 10px;
   border-radius: var(--r-8);
-  font-size: var(--fs-13);
 }
 
 .leave-btn:hover {
@@ -181,9 +179,14 @@ body.menu-mode .app-header {
 }
 .lobby-footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  align-items: stretch;
+  gap: var(--sp-10);
   margin-top: var(--sp-16);
+}
+
+.lobby-footer .leave-btn,
+.lobby-footer .primary-btn {
+  flex: 1;
 }
 
 .menu-account-status {
@@ -582,13 +585,17 @@ body.menu-mode .app-header {
 }
 
 #rankedBadge {
-  padding: 8px 14px;
+  height: 32px;
+  padding: 0 14px;
   border-radius: 999px;
-  font-size: var(--fs-13);
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.6px;
   text-transform: uppercase;
 
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   cursor: pointer;
   user-select: none;
