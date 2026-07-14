@@ -265,7 +265,7 @@ function updateRankedUI() {
   badge.classList.toggle("readonly", !isHost);
 }
 
-$("leaderboardBtn")?.addEventListener("click", () => {
+$("accountLeaderboardBtn")?.addEventListener("click", () => {
   showScreen("leaderboardScreen");
   loadLeaderboard("bullet");
 });
@@ -274,11 +274,11 @@ $("dailyBtn")?.addEventListener("click", () => {
   window.showDailyChallenge?.();
 });
 
-$("friendsBtn")?.addEventListener("click", () => {
+$("accountFriendsBtn")?.addEventListener("click", () => {
   window.showFriendsScreen?.();
 });
 
-$("vsAiBtn")?.addEventListener("click", () => {
+$("playVsAiBtn")?.addEventListener("click", () => {
   if (!requireAuth("play vs AI")) return;
   showScreen("vsAiScreen");
 });
@@ -286,6 +286,7 @@ $("vsAiBtn")?.addEventListener("click", () => {
 // VS AI difficulty selection (called from vsAiScreen inline onclick)
 window._startVsAI = function (difficulty) {
   if (!requireAuth("play vs AI")) return;
+  window.rememberLastPlayMode?.({ mode: "ai", difficulty });
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
   socket.emit("createRoom", { userId: window.currentUser.id, name: username }, resp => {
     if (!resp?.ok) return toast(resp?.error || "Could not create room");

@@ -74,6 +74,26 @@ window.sendGameAction = function (action) {
 };
 
 // ------------------------------
+// RANKED MATCHMAKING
+// ------------------------------
+window.rankedQueueJoin = function (preset, cb) {
+  const userId = window.getUserId();
+  if (!userId) return cb?.({ ok: false, error: "Not logged in" });
+  const name = window.myProfile?.username || window.currentUser?.email || "Player";
+  socket.emit("rankedQueueJoin", { userId, name, preset }, res => cb?.(res));
+};
+
+window.rankedQueueCancel = function () {
+  const userId = window.getUserId();
+  if (!userId) return;
+  socket.emit("rankedQueueCancel", { userId });
+};
+
+window.onRankedMatchFound = function (handler) {
+  socket.on("rankedMatchFound", handler);
+};
+
+// ------------------------------
 // INCOMING EVENTS (GLOBAL)
 // ------------------------------
 window.onStateUpdate = function (handler) {
@@ -124,8 +144,17 @@ window.showPowerPopup = function (html) {
   _powerPopupTimer = setTimeout(() => el.classList.remove("show"), 3800);
 };
 
+// Powers used mid-turn, buffered here so the action log can show them the
+// moment they happen instead of waiting for the enclosing guess/decision to
+// resolve. Cleared in client.js whenever state.history actually changes.
+window._livePowerEvents = [];
+
 socket.on("powerActivity", payload => {
   if (!payload?.id) return;
+
+  window._livePowerEvents.push(payload);
+  window.renderActionLog?.(window.state, window.myRole);
+
   const formatted = window.formatPowerEvent?.(payload);
   if (!formatted) return;
 

@@ -7,6 +7,7 @@ const { Server } = require("socket.io");
 const { cleanupDisconnectedPlayers } = require("./core/rooms");
 const { createRoom, joinRoom, rooms, cleanupEmptyRooms } = require("./core/rooms");
 const registerSocketHandlers = require("./network/socketHandlers");
+const { registerMatchmaking } = require("./core/matchmaking");
 const { createClient } = require("@supabase/supabase-js");
 const { loadWordList } = require("./utils/wordListLoader");
 const { applyAction } = require("./core/stateMachine");
@@ -108,6 +109,7 @@ require("./powers/powers/betMissServer.js");
 require("./powers/powers/revealPenaltyServer.js");
 // Register socket event handlers (create/join room, game actions)
 registerSocketHandlers(io, context);
+registerMatchmaking(io, context);
 
 // Cleanup stale rooms every 10 minutes
 setInterval(() => cleanupEmptyRooms(), 10 * 60 * 1000);

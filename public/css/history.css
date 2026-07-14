@@ -74,6 +74,23 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   position: relative;
 }
 
+/* Whole-row entrance when a new guess is submitted, on top of the
+   per-tile flip-reveal already applied to the tiles themselves. */
+.history-row-wrap.row-enter {
+  animation: history-row-enter 320ms var(--ease-ui, ease-out) both;
+}
+
+@keyframes history-row-enter {
+  0%   { opacity: 0; transform: translateY(10px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .history-row-wrap.row-enter {
+    animation: none;
+  }
+}
+
 .history-row-anchor {
   position: relative;
   display: inline-flex;

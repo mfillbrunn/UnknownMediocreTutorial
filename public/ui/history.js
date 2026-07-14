@@ -119,7 +119,7 @@ function rowsEqual(a, b) {
 ///DOM creator
 function createHistoryRowDOM(row) {
   const wrap = document.createElement("div");
-  wrap.className = "history-row-wrap";
+  wrap.className = "history-row-wrap row-enter";
   wrap.dataset.key = row.key;
   const anchor = document.createElement("div");
   anchor.className = "history-row-anchor";

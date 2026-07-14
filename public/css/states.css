@@ -36,8 +36,9 @@
 }
 
 .theme-setter .key.key-current {
-  outline: 3px dashed var(--warning-accent);
-  outline-offset: -3px;
+  box-shadow:
+    inset 0 0 0 2px rgba(255,255,255,0.4),
+    0 0 7px color-mix(in srgb, var(--role-accent) 50%, transparent);
 
   animation: setter-warning-pulse 2.6s var(--ease-ui) infinite;
 }

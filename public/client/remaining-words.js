@@ -14,6 +14,11 @@ function renderSetterRemainingBox(boxState) {
   const newStyle = boxState.highlightNew ? "color: var(--tile-green)" : "";
   const current = boxState.current.toLocaleString();
 
+  const guideOn = document.body.classList.contains("guide-on");
+  const hint = guideOn
+    ? `<div class="line remaining-hint">How many possible secrets would still fit the clues so far — if you keep this secret vs. switch to your typed word.</div>`
+    : "";
+
   box.innerHTML = `
     <div class="line">
       <span class="label">Keep</span>
@@ -34,5 +39,6 @@ function renderSetterRemainingBox(boxState) {
         }
       </span>
     </div>
+    ${hint}
   `;
 }
