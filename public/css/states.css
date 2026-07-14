@@ -37,8 +37,8 @@
 
 .theme-setter .key.key-current {
   box-shadow:
-    inset 0 0 0 2px rgba(255,255,255,0.4),
-    0 0 7px color-mix(in srgb, var(--role-accent) 50%, transparent);
+    inset 0 0 0 1.5px rgba(255,255,255,0.2),
+    0 0 5px color-mix(in srgb, var(--role-accent) 30%, transparent);
 
   animation: setter-warning-pulse 2.6s var(--ease-ui) infinite;
 }

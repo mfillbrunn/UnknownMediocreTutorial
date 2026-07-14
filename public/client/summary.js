@@ -249,20 +249,12 @@ if (guesser.length) {
 
 
   // ----------------------------
-  // Top bar: room code (share button lives statically above the container)
-  // ----------------------------
-  let html = `
-    <div class="summary-top-bar">
-      <span class="summary-room-chip">Room <b>${window.roomId || "—"}</b></span>
-    </div>
-  `;
-
-  // ----------------------------
-  // Result header (lead with the outcome, not the actions)
+  // Result header (lead with the outcome, not the actions) — room code
+  // isn't repeated here, it's already shown in the app header above.
   // ----------------------------
   const resultClass = didWin ? "win" : winReason === "tie" ? "tie" : "loss";
 
-  html += `
+  let html = `
     <div class="match-header match-header--${resultClass}">
       <div class="match-result-icon">${resultIcon}</div>
       <h2>${resultText}</h2>
@@ -304,7 +296,7 @@ if (guesser.length) {
   html += `
     <div class="summary-actions">
       <button id="newMatchBtn" class="new-match-btn">
-        <span class="new-match-icon">↻</span> New Match
+        <span class="new-match-icon">⚡</span> New Match
       </button>
       <button id="leaveSummaryBtn" class="secondary-btn danger">
         Leave
@@ -344,12 +336,7 @@ if (guesser.length) {
 /////////COMPETITIVE  ROUND SUMMARY
 ////////////////////////////
 function renderRoundSummary(container) {
-  let html = `
-    <div class="summary-top-bar">
-      <span class="summary-room-chip">Room <b>${window.roomId || "—"}</b></span>
-    </div>
-    <h3 class="summary-heading">Round Summary</h3>
-  `;
+  let html = `<h3 class="summary-heading">Round Summary</h3>`;
   // The round that just ended is still reflected by state.setter/guesser —
   // roles swap for the *next* round only once NEXT_ROUND is sent.
   const setterName = getPlayerName(state.setter);

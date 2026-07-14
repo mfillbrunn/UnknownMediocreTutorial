@@ -283,10 +283,22 @@
         <span class="arrow guesser-arrow">⇄</span>
       </button>
       <div class="lobby-actions">
-        <button id="shuffle" class="secondary-btn small">Random</button>
-      <span id="rankedBadge"></span>
-      <button id="addAiBtn" class="secondary-btn small">+ AI</button>
-        <button id="devBtn" class="secondary-btn small">Dev</button>
+        <span class="lobby-action-item">
+          <button id="shuffle" class="secondary-btn small">Random</button>
+          <button class="lobby-info-btn" data-info="Randomly assigns who's Spy and who's Inspector when the match starts." aria-label="About Random roles">ⓘ</button>
+        </span>
+        <span class="lobby-action-item">
+          <span id="rankedBadge"></span>
+          <button class="lobby-info-btn" data-info="Ranked matches affect your Elo rating and appear on the leaderboard." aria-label="About Ranked">ⓘ</button>
+        </span>
+        <span class="lobby-action-item">
+          <button id="addAiBtn" class="secondary-btn small">+ AI</button>
+          <button class="lobby-info-btn" data-info="Add a computer opponent so you can play solo." aria-label="About Add AI">ⓘ</button>
+        </span>
+        <span class="lobby-action-item">
+          <button id="devBtn" class="secondary-btn small">Dev</button>
+          <button class="lobby-info-btn" data-info="Developer mode — unlocks more powers per match, for testing." aria-label="About Dev mode">ⓘ</button>
+        </span>
     </div>
 
 
