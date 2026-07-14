@@ -181,6 +181,15 @@ function onRejoinUI() {
   // Show lobby or game based on state (stateUpdate will follow)
   show("lobby");
 }
+
+// Tracks whether the socket has ever *dropped* during this page load. The
+// very first connection just resumes any in-progress game silently (that's
+// "continuing where you left off" after opening/reloading the app). Once a
+// real disconnect has happened — tab backgrounded, network hiccup, laptop
+// asleep — every connection after that is a reconnection, and those get a
+// prompt instead of silently dropping the player back into the game.
+window._everDisconnected = false;
+
 function maybeAutoRejoin() {
   if (window.autoRejoinAttempted) return;
   if (!window.socketReady) return;
@@ -190,9 +199,26 @@ function maybeAutoRejoin() {
   if (!roomId || !window.currentUser) return;
 
   window.autoRejoinAttempted = true;
-  tryAutoRejoin();
+
+  if (!window._everDisconnected) {
+    tryAutoRejoin();
+    return;
+  }
+
+  showRejoinPrompt();
 }
 
+function showRejoinPrompt() {
+  const modal = $("rejoinModal");
+  if (!modal) {
+    // Markup missing for some reason — fall back to the old silent path
+    // rather than stranding the player with no way back in.
+    tryAutoRejoin();
+    return;
+  }
+  if (modal.classList.contains("active")) return; // already showing
+  modal.classList.add("active");
+}
 
 function tryAutoRejoin() {
   const storedRoomId = localStorage.getItem("roomId");
@@ -242,12 +268,20 @@ socket.on("connect_error", err =>
 );
 
 socket.on("reconnect", () => {
+  // The Socket "connect" event above already fires (and reacts to) every
+  // reconnection too, so this is just a log line, not a second attempt.
   console.log("🔁 Reconnected");
   window.socketReady = true;
-  window.autoRejoinAttempted = false;
-  maybeAutoRejoin();
 });
 
 socket.on("disconnect", reason => {
   console.warn("🔌 Disconnected:", reason);
+  // Allow the next successful "connect" to react again (show the rejoin
+  // prompt, or resolve a stale room) instead of staying stuck from a
+  // previous cycle's flag.
+  window.autoRejoinAttempted = false;
+  window._everDisconnected = true;
+  if (window.roomId) {
+    toast("Connection lost — reconnecting…");
+  }
 });

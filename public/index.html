@@ -80,7 +80,7 @@
             <div class="menu-buttons">
               <div class="split-btn menu-split-btn">
                 <button id="playMainBtn" class="menu-btn primary split-btn-main">Play</button>
-                <button id="playQuickBtn" class="menu-btn primary split-btn-quick" title="Repeat last mode" aria-label="Repeat last play mode">⟳</button>
+                <button id="playQuickBtn" class="menu-btn primary split-btn-quick" title="Quick play: repeat last mode" aria-label="Quick play: repeat last mode">⚡</button>
               </div>
               <button id="dailyBtn" class="menu-btn">Daily Challenge ☀️</button>
               <button id="accountBtn" class="menu-btn">Account</button>
@@ -632,6 +632,18 @@
     >
       Cancel
     </button>
+  </div>
+</div>
+<div id="rejoinModal" class="modal">
+  <div class="panel rejoin-modal-panel">
+    <h2 class="screen-title">Disconnected</h2>
+    <p class="modal-instruction">
+      You lost connection to the game. Rejoin now, or leave the match.
+    </p>
+    <div class="rejoin-modal-actions">
+      <button id="rejoinConfirmBtn" class="primary-btn">Rejoin Game</button>
+      <button id="rejoinLeaveBtn" class="secondary-btn danger">Leave Game</button>
+    </div>
   </div>
 </div>
 <div id="tutorialBubble" class="tutorial-bubble hidden">

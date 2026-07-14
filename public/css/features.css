@@ -807,6 +807,25 @@
   background: rgba(74, 222, 128, 0.08);
 }
 
+/* ── Rejoin-after-disconnect modal ───────────────────────────────────── */
+.rejoin-modal-panel {
+  max-width: 320px;
+  text-align: center;
+}
+
+.rejoin-modal-panel .modal-instruction {
+  margin: var(--sp-8) 0 var(--sp-16);
+  font-size: var(--fs-14);
+  opacity: 0.85;
+  line-height: 1.4;
+}
+
+.rejoin-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-10);
+}
+
 /* ── Account screen: sub-navigation (Friends / Leaderboard / Past Games) ── */
 #accountScreen .account-actions {
   display: flex;
