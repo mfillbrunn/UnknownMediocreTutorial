@@ -1,6 +1,7 @@
 const { endGame } = require("./gameOver");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
+const POWER_METADATA = require("../../powers/powerMetadata");
 const { transitionAfterGuess, transitionAfterSecret } = require("../transitions/normalTransitions");
 const { emitRoomState } = require("../rooms");
 
@@ -116,7 +117,19 @@ function handleNormalPhase(room, state, action, roomId, context) {
   if (action.type.startsWith("USE_")) {
     const powerId = normalizePowerId(action.type);
 
-    if (!state.powerUsedThisTurn && isPowerAllowed(powerId, state)) {
+    // isPowerAllowed() only checks whose TURN it is, not who is actually
+    // calling — without this, any connected player (or a mistimed AI
+    // action) could trigger the other role's power as long as the game
+    // happened to be in that role's turn.
+    const requiredRole = POWER_METADATA[powerId]?.role;
+    const callerRole = room.state.players?.[userId]?.role;
+    const callerOwnsThisPower = !requiredRole || callerRole === requiredRole;
+
+    if (
+      callerOwnsThisPower &&
+      !state.powerUsedThisTurn &&
+      isPowerAllowed(powerId, state)
+    ) {
       const applied = powerEngine.applyPower(powerId, state, action, roomId, io, room);
       if (applied !== false) {
         state.powerUsedThisTurn = true;

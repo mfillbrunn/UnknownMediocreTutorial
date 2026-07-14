@@ -85,12 +85,26 @@ function buildHistoryRenderState(state, role) {
     for (let i = 0; i < 5; i++) {
       tiles.push({letter: guess[i], classKey: computeTileClassKey({ isSetter, entryRoundIndex: entry.roundIndex,guessIndex: i,bsIdx,bsRound, safeEntry, fbArray})});
     }
-    rows.push({key: entry.__historyKey,evaluated: !!safeEntry.extraInfo, tiles});
-  }
-    if (!isSetter && state?.powers && typeof state.powers.countOnlyRound === "number") {
-      const idx = state.powers.countOnlyRound;    
-      if (rows[idx]) {rows[idx].tiles = rows[idx].tiles.map(t => ({...t,classKey: `${t.classKey} tile-hidden-cycle`}));}
+    // Count Only replaces per-tile feedback with just a green/yellow tally —
+    // mark every tile in that row with a small "didn't know this" corner
+    // mark (reusing the same annotation hideTile uses) and carry the tally
+    // along so the row can show it without breaking the row's own
+    // centering/alignment with every other row.
+    let countOnlyInfo = null;
+    if (safeEntry.extraInfo && safeEntry.countOnlyApplied) {
+      countOnlyInfo = safeEntry.extraInfo;
+      for (const tile of tiles) {
+        tile.classKey = `${tile.classKey} tile-guesser-hidden`;
+      }
     }
+
+    rows.push({
+      key: entry.__historyKey,
+      evaluated: !!safeEntry.extraInfo,
+      countOnlyInfo,
+      tiles
+    });
+  }
   return rows;
 }
 
@@ -110,10 +124,28 @@ function diffHistory(prev, next) {
 
 function rowsEqual(a, b) {
   if (a.evaluated !== b.evaluated) return false;
+  if (!!a.countOnlyInfo !== !!b.countOnlyInfo) return false;
+  if (a.countOnlyInfo && b.countOnlyInfo) {
+    if (a.countOnlyInfo.greens !== b.countOnlyInfo.greens) return false;
+    if (a.countOnlyInfo.yellows !== b.countOnlyInfo.yellows) return false;
+  }
   for (let i = 0; i < 5; i++) {
     if (a.tiles[i].letter   !== b.tiles[i].letter || a.tiles[i].classKey !== b.tiles[i].classKey) return false;
   }
   return true;
+}
+
+// Count Only tally, anchored beside its row without affecting the row's
+// own centering — the anchor is already `position: relative`, so this
+// badge is pulled out of flow instead of sitting in the centered flexbox.
+function createCountOnlyBadge({ greens, yellows }) {
+  const badge = document.createElement("div");
+  badge.className = "count-only-badge";
+  badge.innerHTML = `
+    <span class="count-only-green">G:${greens}</span>
+    <span class="count-only-yellow">Y:${yellows}</span>
+  `;
+  return badge;
 }
 
 ///DOM creator
@@ -136,6 +168,9 @@ function createHistoryRowDOM(row) {
     rowEl.appendChild(el);
   }
   anchor.appendChild(rowEl);
+  if (row.countOnlyInfo) {
+    anchor.appendChild(createCountOnlyBadge(row.countOnlyInfo));
+  }
   wrap.appendChild(anchor);
   return wrap;
 }
@@ -152,6 +187,19 @@ function patchHistoryRow(wrap, row) {
     if (t.className !== row.tiles[i].classKey) {
       t.className = row.tiles[i].classKey;
     }
+  }
+
+  const anchor = wrap.querySelector(".history-row-anchor");
+  let badge = anchor?.querySelector(".count-only-badge");
+  if (row.countOnlyInfo) {
+    if (!badge) {
+      anchor.appendChild(createCountOnlyBadge(row.countOnlyInfo));
+    } else {
+      badge.querySelector(".count-only-green").textContent = `G:${row.countOnlyInfo.greens}`;
+      badge.querySelector(".count-only-yellow").textContent = `Y:${row.countOnlyInfo.yellows}`;
+    }
+  } else if (badge) {
+    badge.remove();
   }
 }
 

@@ -143,15 +143,11 @@ window.onRankedMatchFound?.(({ roomId: matchedRoomId }) => {
 });
 
 // -----------------------------------------------------
-// Rules / Power Library
+// How to Play (rules + power library + tutorial launch, combined)
 // -----------------------------------------------------
-$("rulesBtn")?.addEventListener("click", () => {
-  showScreen("rulesScreen");
-});
-
-$("powerLibraryBtn")?.addEventListener("click", () => {
+$("howToPlayBtn")?.addEventListener("click", () => {
   renderPowerLibrary();
-  showScreen("powerLibraryScreen");
+  showScreen("howToPlayScreen");
 });
 
 function renderPowerLibrary() {

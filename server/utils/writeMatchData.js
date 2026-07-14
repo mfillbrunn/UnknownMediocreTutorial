@@ -1,42 +1,65 @@
-function computeMatchResult(state, myRole) {
+// Mirrors public/client/summary.js's computeMatchResult. Points/time are
+// tracked per user ID — "A"/"B" were never real keys on state
+// (state.roles/state.playerNames don't exist), which used to make this
+// always resolve to a tie/no winner and silently corrupt ranked Elo.
+function computeMatchResult(state, viewerUserId) {
   const rounds = state.matchRounds || [];
 
-  const points = { A: 0, B: 0 };
-  const time = { A: 0, B: 0 };
+  const points = {};
+  const time = {};
+
+  const addPoints = (id, n) => { if (id) points[id] = (points[id] || 0) + (n || 0); };
+  const addTime = (id, n) => { if (id) time[id] = (time[id] || 0) + (n || 0); };
 
   rounds.forEach(r => {
-    points[r.setter] += r.guessCount;
-    time.A += r.time?.A || 0;
-    time.B += r.time?.B || 0;
+    addPoints(r.setter, r.guessCount);
+    for (const [uid, secs] of Object.entries(r.time || {})) {
+      addTime(uid, secs);
+    }
   });
 
+  const playerIds = Object.keys(state.players || {});
+  const [idA, idB] = playerIds;
+
   let winner = null;
+  let tie = false;
   let winReason = "points";
 
-   if (state.timeoutLoser) {
-    winner = state.timeoutLoser === "A" ? "B" : "A";
+  if (state.timeoutLoser) {
+    winner = playerIds.find(id => id !== state.timeoutLoser) || null;
     winReason = "timeout";
   } else {
-    // Normal resolution
-    if (points.A > points.B) {
-      winner = "A";
-    } else if (points.B > points.A) {
-      winner = "B";
-    } else if (time.A !== time.B) {
-      winner = time.A <= time.B ? "A" : "B";
-      winReason = "time";
+    const pA = points[idA] || 0;
+    const pB = points[idB] || 0;
+    if (pA > pB) {
+      winner = idA;
+    } else if (pB > pA) {
+      winner = idB;
     } else {
-      winReason = "tie";
+      const tA = time[idA] || 0;
+      const tB = time[idB] || 0;
+      if (tA !== tB) {
+        winner = tA <= tB ? idA : idB;
+        winReason = "time";
+      } else {
+        tie = true;
+        winReason = "tie";
+      }
     }
   }
-  const didWin = winner && myRole === winner;
-  const winnerPoints = winner ? points[winner] : points.A;
-  const loserPoints = winner ? points[winner === "A" ? "B" : "A"] : points.A;
+
+  const didWin = winner != null && viewerUserId != null && winner === viewerUserId;
+  const winnerPoints = winner != null ? (points[winner] || 0) : (points[idA] || 0);
+  const loserPoints = winner != null
+    ? (points[winner === idA ? idB : idA] || 0)
+    : (points[idB] || 0);
+
   return {
     points,
     time,
     winner,
-    winReason,        
+    tie,
+    winReason,
     didWin,
     winnerPoints,
     loserPoints
@@ -50,11 +73,7 @@ async function writeMatchHistory({ state, room, supabase, ratingChange }) {
 
   if (humans.length !== 2) return;
 
-  const playerA = humans.find(p => p.role === "A");
-  const playerB = humans.find(p => p.role === "B");
-
-  if (!playerA || !playerB) return;
-
+  const [playerA, playerB] = humans;
   const userA = playerA.userId;
   const userB = playerB.userId;
 
@@ -65,20 +84,17 @@ async function writeMatchHistory({ state, room, supabase, ratingChange }) {
     loserPoints
   } = computeMatchResult(state, null);
 
-  const winnerUserId =
-    winner === "A" ? userA :
-    winner === "B" ? userB :
-    null;
+  const winnerUserId = winner;
 
   const scoreA =
-    winner === "A" ? winnerPoints :
-    winner === "B" ? loserPoints :
-    winnerPoints;
+    winnerUserId == null ? winnerPoints :
+    winnerUserId === userA ? winnerPoints :
+    loserPoints;
 
   const scoreB =
-    winner === "B" ? winnerPoints :
-    winner === "A" ? loserPoints :
-    winnerPoints;
+    winnerUserId == null ? winnerPoints :
+    winnerUserId === userB ? winnerPoints :
+    loserPoints;
 
   const { error } = await supabase.from("matches").insert({
     mode: state.rankMode,

@@ -96,6 +96,36 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   display: inline-flex;
   align-items: center;
 }
+
+/* Count Only tally — pinned to the row it belongs to via absolute
+   positioning so it never affects that row's centered alignment with
+   every other row in the same column. */
+.count-only-badge {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: var(--sp-8, 8px);
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.count-only-green {
+  color: var(--tile-green);
+}
+
+.count-only-yellow {
+  color: var(--tile-yellow);
+}
 .history-row .history-tile {
   position: relative;
   display: flex;

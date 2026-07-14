@@ -45,12 +45,17 @@ function shake(element) {
   setTimeout(() => element.classList.remove("shake"), 300);
 }
 
+// Rebuilds both keyboards from scratch right now (not lazily on next
+// render), so leftover green/yellow/gray classes from the previous game
+// don't flash on screen while waiting on the server round-trip for a new
+// match/round.
 function resetKeyboards() {
-  const ks = $("keyboardSetter");
-  const kg = $("keyboardGuesser");
-
-  if (ks) delete ks.__keys;
-  if (kg) delete kg.__keys;
+  ["keyboardSetter", "keyboardGuesser"].forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    delete el.__keys;
+    if (typeof buildKeyboard === "function") buildKeyboard(el);
+  });
 }
 (() => {
   const periodMs = 4500;
@@ -890,6 +895,12 @@ function updateTimerAccess() {
     localStorage.setItem("guideActive", isOn);
     btn.classList.toggle("active", isOn);
     updateGuideBanner();
+    // The remaining-words box's guide hint is baked into its innerHTML at
+    // render time, so without this it wouldn't reflect the new guide state
+    // until the next natural render (next keystroke or state update).
+    if (typeof renderSetterRemainingBox === "function" && window.state?.setterRemainingBox) {
+      renderSetterRemainingBox(window.state.setterRemainingBox);
+    }
   };
 })();
 
