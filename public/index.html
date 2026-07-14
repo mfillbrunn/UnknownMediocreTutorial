@@ -78,16 +78,53 @@
             <h2 class="menu-title">VS WORDLE</h2>
             <div id="menuAccountStatus" class="menu-account-status"></div>
             <div class="menu-buttons">
-              <button id="quickPlayBtn" class="menu-btn primary">Quick Play</button>
-              <button id="vsAiBtn" class="menu-btn">Play vs AI 🤖</button>
+              <div class="split-btn menu-split-btn">
+                <button id="playMainBtn" class="menu-btn primary split-btn-main">Play</button>
+                <button id="playQuickBtn" class="menu-btn primary split-btn-quick" title="Repeat last mode" aria-label="Repeat last play mode">⟳</button>
+              </div>
               <button id="dailyBtn" class="menu-btn">Daily Challenge ☀️</button>
-              <button id="friendsBtn" class="menu-btn">Friends 👥</button>
-              <button id="accountBtn" class="menu-btn">Past Games & Account</button>
-              <button id="leaderboardBtn" class="menu-btn">Leaderboard</button>
-              <button id="howToPlayBtn" class="menu-btn">Tutorial</button>
+              <button id="accountBtn" class="menu-btn">Account</button>
+              <button id="howToPlayBtn" class="menu-btn">How to Play</button>
+              <button id="rulesBtn" class="menu-btn">Rules</button>
+              <button id="powerLibraryBtn" class="menu-btn">Power Library</button>
             </div>
           </div>
         </section>
+
+<!-- ========== PLAY ========== -->
+<section id="playScreen" class="screen game-menu">
+  <div class="menu-center">
+    <h2 class="menu-title">Play</h2>
+    <div class="menu-buttons play-menu-buttons">
+      <button id="playFriendBtn" class="menu-btn primary">Play Friend</button>
+      <button id="playVsAiBtn" class="menu-btn">Play vs AI 🤖</button>
+      <div class="play-ranked-row">
+        <button id="playRankedBtn" class="menu-btn ranked-btn">Ranked Play 🏆</button>
+        <select id="rankedSpeedSelect" class="ranked-speed-select" aria-label="Ranked time control">
+          <option value="bullet">Bullet</option>
+          <option value="blitz" selected>Blitz</option>
+          <option value="deep">Deep</option>
+          <option value="none">No Time</option>
+        </select>
+      </div>
+    </div>
+    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
+  </div>
+</section>
+
+<!-- ========== RANKED MATCHMAKING ========== -->
+<section id="rankedWaitingScreen" class="screen game-menu">
+  <div class="menu-center">
+    <h2 class="menu-title">Ranked Play</h2>
+    <div class="ranked-waiting-body">
+      <div id="rankedSearchSpinner" class="ranked-search-spinner"></div>
+      <p id="rankedWaitingText" class="ranked-waiting-text">Searching for a player…</p>
+      <p id="rankedCountdownText" class="ranked-countdown-text hidden"></p>
+    </div>
+    <button id="rankedCancelBtn" class="menu-btn secondary-btn danger">Cancel</button>
+  </div>
+</section>
+
 <!-- ========== LEADErbOArD ========== -->
   <section id="leaderboardScreen" class="screen game-menu">
   <div class="menu-center">
@@ -104,9 +141,38 @@
       Loading…
     </div>
 
-    <button class="menu-btn" onclick="showScreen('startupScreen')">
+    <button class="menu-btn" onclick="showScreen('accountScreen')">
       Back
     </button>
+  </div>
+</section>
+
+<!-- ========== RULES ========== -->
+<section id="rulesScreen" class="screen game-menu">
+  <div class="menu-center rules-center">
+    <h2 class="menu-title">Rules</h2>
+    <div class="rules-content">
+      <h3>The basics</h3>
+      <p>One player is the <b>Spy</b> (setter): they pick a secret 5-letter word. The other is the <b>Inspector</b> (guesser): they try to guess it, Wordle-style — green means right letter/right spot, yellow means right letter/wrong spot, gray means not in the word.</p>
+      <h3>The twist</h3>
+      <p>After every guess, the Spy may <b>keep</b> their secret or <b>switch</b> to a new word — as long as the new word is still consistent with every clue given so far. A good Spy stalls; a good Inspector asks questions that narrow the field no matter which word the Spy is hiding.</p>
+      <h3>Round 1 is simultaneous</h3>
+      <p>Neither player has any information yet, so the Spy locks in a secret and the Inspector submits an opening guess at the same time, blind.</p>
+      <h3>Scoring</h3>
+      <p>The Spy scores a point for every guess it takes the Inspector to win the round. Fewer guesses is better for the Inspector; more guesses is better for the Spy. Roles swap each round; the lower total score across all rounds wins the match.</p>
+      <h3>Powers</h3>
+      <p>Both sides can unlock special powers that bend the rules in their favor — see the <b>Power Library</b> for the full list.</p>
+    </div>
+    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
+  </div>
+</section>
+
+<!-- ========== POWER LIBRARY ========== -->
+<section id="powerLibraryScreen" class="screen game-menu">
+  <div class="menu-center power-library-center">
+    <h2 class="menu-title">Power Library</h2>
+    <div id="powerLibraryList" class="power-library-list"></div>
+    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
   </div>
 </section>
 
@@ -146,6 +212,8 @@
     <p id="authStatus" class="auth-status"></p>
        <div class="account-actions">
       <button id="showPastGamesBtn" class="menu-btn">Past Games</button>
+      <button id="accountFriendsBtn" class="menu-btn">Friends 👥</button>
+      <button id="accountLeaderboardBtn" class="menu-btn">Leaderboard</button>
     </div>
     <div id="pastGamesContainer" class="past-games hidden"></div>
   </div>
@@ -645,6 +713,7 @@
   <script src="client/friends.js"></script>
   <script src="client/daily-challenge.js"></script>
   <script src="client.js"></script>
+  <script src="client/play-menu.js"></script>
   <script src="client/roomid.js"></script>
   <div id="powerInfoPanelSetter" class="power-info-panel" hidden></div>
   <div id="powerInfoPanelGuesser" class="power-info-panel" hidden></div>

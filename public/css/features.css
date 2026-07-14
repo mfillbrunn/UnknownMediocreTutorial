@@ -141,6 +141,14 @@
   color: var(--role-accent, rgba(255,180,50,0.85));
   font-size: 11px;
 }
+/* Colored by the role that actually owns the power, not the viewer's own
+   screen — so an opponent's power reads distinctly from your own. */
+.log-power-setter {
+  color: var(--setter-color);
+}
+.log-power-guesser {
+  color: var(--guesser-color);
+}
 .log-lock {
   color: #f87171;
   font-weight: 700;
@@ -512,4 +520,365 @@
   width: 100%;
   max-width: 300px;
   padding: 24px 16px;
+}
+
+/* ── Summary screen ───────────────────────────────────────────────────── */
+#menu.screen {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+#menu .share-btn {
+  display: block;
+  margin: 0 0 var(--sp-10) auto;
+  height: 32px;
+  padding: 0 14px;
+  font-size: 12px;
+}
+
+.match-header {
+  text-align: center;
+  padding: var(--sp-20) var(--sp-16) var(--sp-16);
+  margin: calc(var(--sp-10) * -1) calc(var(--sp-10) * -1) var(--sp-16);
+  border-radius: var(--r-12);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.12)),
+    var(--screen-bg);
+}
+
+.match-result-icon {
+  font-size: 2.6rem;
+  line-height: 1;
+  margin-bottom: var(--sp-6);
+}
+
+.match-header h2 {
+  margin: 0;
+  font-size: var(--fs-22, 22px);
+  font-weight: 900;
+  letter-spacing: 0.3px;
+}
+
+.match-header h3 {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--fs-15);
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.match-header--win h2 { color: #4ade80; }
+.match-header--loss h2 { color: #f87171; }
+.match-header--tie h2 { color: rgba(255,255,255,0.85); }
+
+.summary-heading {
+  font-size: var(--fs-16);
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  margin: 0 0 var(--sp-10);
+  text-align: center;
+}
+
+/* Meta chips (time control, etc.) */
+.match-meta-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--sp-8);
+  margin: 0 0 var(--sp-10);
+}
+
+.match-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  font-size: var(--fs-12);
+  font-weight: 700;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+/* Powers used, as chip rows colored by owning role */
+.match-power-line {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 var(--sp-6);
+  font-weight: 700;
+  font-size: var(--fs-13);
+}
+
+.power-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid currentColor;
+}
+
+.power-label.setter {
+  color: var(--setter-color);
+  border-color: color-mix(in srgb, var(--setter-color) 45%, transparent);
+}
+
+.power-label.guesser {
+  color: var(--guesser-color);
+  border-color: color-mix(in srgb, var(--guesser-color) 45%, transparent);
+}
+
+.power-label span {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Inline alert-style notes */
+.timeout-note,
+.timeout-summary,
+.assassination-note,
+.assassin-summary,
+.reveal-penalty-summary,
+.tie-breaker {
+  text-align: center;
+  font-size: var(--fs-13);
+  margin: var(--sp-6) 0 0;
+}
+
+.summary-players {
+  text-align: center;
+  margin: 0 0 var(--sp-8);
+}
+
+.round-time-summary {
+  text-align: center;
+  font-size: var(--fs-13);
+  margin: 0 0 var(--sp-10);
+}
+
+/* Actions */
+.summary-actions {
+  display: flex;
+  gap: var(--sp-10);
+  margin: var(--sp-14) 0;
+}
+
+.summary-actions .primary-btn,
+.summary-actions .secondary-btn {
+  flex: 1;
+}
+
+.secondary-btn.danger {
+  color: #f87171;
+  border: 1px solid color-mix(in srgb, #f87171 45%, transparent);
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.secondary-btn.danger:hover {
+  background: rgba(248, 113, 113, 0.16);
+}
+
+/* Round-by-round tables */
+#roundDetails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
+}
+
+.stored-round {
+  padding: var(--sp-10);
+  border-radius: var(--r-10);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.stored-round h4 {
+  margin: 0 0 var(--sp-8);
+  font-size: var(--fs-13);
+  font-weight: 800;
+  opacity: 0.85;
+}
+
+.summary-table-wrap {
+  overflow-x: auto;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-12);
+}
+
+.summary-table th {
+  padding: 6px 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0.55;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.summary-table td {
+  padding: 6px 4px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+}
+
+.summary-table tbody tr:nth-child(odd) {
+  background: rgba(255,255,255,0.02);
+}
+
+.summary-table tr.final-row {
+  background: rgba(74, 222, 128, 0.08);
+}
+
+/* ── Account screen: sub-navigation (Friends / Leaderboard / Past Games) ── */
+#accountScreen .account-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-10);
+  width: 260px;
+}
+
+/* ── Play split button ────────────────────────────────────────────────── */
+.split-btn {
+  display: flex;
+  gap: 2px;
+}
+
+.split-btn-main {
+  flex: 1;
+}
+
+.split-btn-quick {
+  flex: 0 0 auto;
+  width: var(--h-control);
+  padding: 0;
+  font-size: var(--fs-18);
+}
+
+/* ── Play submenu ─────────────────────────────────────────────────────── */
+.play-menu-buttons {
+  width: 280px;
+}
+
+.play-ranked-row {
+  display: flex;
+  gap: var(--sp-8);
+}
+
+.play-ranked-row .ranked-btn {
+  flex: 1;
+}
+
+.ranked-speed-select {
+  flex: 0 0 auto;
+  width: 92px;
+  height: var(--h-control);
+  border-radius: var(--r-8);
+  background: #1a1b20;
+  color: var(--text);
+  border: 1px solid #2a2c34;
+  font-size: var(--fs-13);
+  font-weight: 700;
+  text-align: center;
+  padding: 0 var(--sp-6);
+}
+
+/* ── Ranked matchmaking waiting screen ───────────────────────────────── */
+.ranked-waiting-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-14);
+  padding: var(--sp-20) 0;
+}
+
+.ranked-search-spinner {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.12);
+  border-top-color: var(--role-accent, #4da3ff);
+  animation: ranked-spin 900ms linear infinite;
+}
+
+.ranked-search-spinner.hidden {
+  display: none;
+}
+
+@keyframes ranked-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ranked-waiting-text {
+  font-size: var(--fs-15);
+  font-weight: 700;
+  opacity: 0.9;
+  text-align: center;
+}
+
+.ranked-countdown-text {
+  font-size: var(--fs-22, 22px);
+  font-weight: 900;
+  color: #4ade80;
+}
+
+.ranked-countdown-text.hidden,
+.ranked-waiting-text.hidden {
+  display: none;
+}
+
+/* ── Rules screen ─────────────────────────────────────────────────────── */
+.rules-center {
+  max-width: 420px;
+}
+
+.rules-content {
+  text-align: left;
+  width: 100%;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: var(--sp-4);
+}
+
+.rules-content h3 {
+  margin: var(--sp-14) 0 var(--sp-4);
+  font-size: var(--fs-14);
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: var(--role-accent, #4da3ff);
+}
+
+.rules-content h3:first-child {
+  margin-top: 0;
+}
+
+.rules-content p {
+  margin: 0;
+  font-size: var(--fs-13);
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+/* ── Power library screen ────────────────────────────────────────────── */
+.power-library-center {
+  max-width: 420px;
+}
+
+.power-library-list {
+  width: 100%;
+  max-height: 60vh;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.power-lib-row-setter {
+  border-left: 2px solid var(--setter-color);
+}
+
+.power-lib-row-guesser {
+  border-left: 2px solid var(--guesser-color);
 }

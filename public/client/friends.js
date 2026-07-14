@@ -115,7 +115,7 @@
     screen.innerHTML = `
       <div class="menu-center friends-center">
         <div class="friends-header">
-          <button class="menu-btn friends-back" onclick="showStartup()">← Back</button>
+          <button class="menu-btn friends-back" onclick="showScreen('accountScreen')">← Back</button>
           <h2 class="menu-title" style="flex:1;text-align:center">Friends</h2>
         </div>
         <div class="friends-tabs">

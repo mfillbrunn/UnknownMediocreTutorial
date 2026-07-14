@@ -217,26 +217,15 @@ if (guesser.length) {
 
 
   // ----------------------------
-  // Actions (next to Share)
+  // Result header (lead with the outcome, not the actions)
   // ----------------------------
+  const resultClass = didWin ? "win" : winReason === "tie" ? "tie" : "loss";
+
   let html = `
-    <div class="summary-actions">
-      <button id="newMatchBtn" class="primary-btn">
-        New Match
-      </button>
-      <button id="leaveSummaryBtn" class="secondary-btn danger">
-        Leave
-      </button>
-    </div>
-  `;
-  // ----------------------------
-  // Header
-  // ----------------------------
- 
-  html += `
-    <div class="match-header">
+    <div class="match-header match-header--${resultClass}">
+      <div class="match-result-icon">${resultIcon}</div>
       <h2>${resultText}</h2>
-      <h3>${scoreText}</h3>
+      ${scoreText ? `<h3>${scoreText}</h3>` : ""}
       ${timeoutNote}
       ${assassinationNote}
       ${
@@ -248,18 +237,33 @@ if (guesser.length) {
       }
     </div>
 
-    <p class="match-meta">
-      Time control:
-      ${
-        state.timeControl?.enabled
-          ? state.timeControl.mode === "round"
-            ? `${formatDuration(state.timeControl.roundSeconds)} / round`
-            : `${formatDuration(state.timeControl.initialSeconds)} +${formatDuration(state.timeControl.incrementSeconds)}`
-          : "No time"
-      }
-    </p>
+    <div class="match-meta-row">
+      <span class="match-meta-chip">
+        ⏱ ${
+          state.timeControl?.enabled
+            ? state.timeControl.mode === "round"
+              ? `${formatDuration(state.timeControl.roundSeconds)} / round`
+              : `${formatDuration(state.timeControl.initialSeconds)} +${formatDuration(state.timeControl.incrementSeconds)}`
+            : "No time"
+        }
+      </span>
+    </div>
 
     ${powersBlock}
+  `;
+
+  // ----------------------------
+  // Actions
+  // ----------------------------
+  html += `
+    <div class="summary-actions">
+      <button id="newMatchBtn" class="primary-btn">
+        New Match
+      </button>
+      <button id="leaveSummaryBtn" class="secondary-btn danger">
+        Leave
+      </button>
+    </div>
   `;
 
   // ----------------------------
@@ -296,18 +300,7 @@ if (guesser.length) {
 /////////COMPETITIVE  ROUND SUMMARY
 ////////////////////////////
 function renderRoundSummary(container) {
-  let html = ""
-  // Competitive mode: Next Round button
-  if (state.gameOverView === "round" && state.canNextRound) {
-     html += `
-      <div class="summary-actions">
-        <button id="nextRoundBtn" class="primary-btn">
-          Next Round
-        </button>
-      </div>
-    `;
-  }
-html += `<h3>Round Summary</h3>`;
+  let html = `<h3 class="summary-heading">Round Summary</h3>`;
   const setterPlayerId = Object.keys(state.roles || {})
   .find(id => state.roles[id] === "A");
 
@@ -393,6 +386,7 @@ html += `
   html += `<p><b>Total guesses:</b> ${state.guessCount}</p>`;
 
   html += `
+  <div class="summary-table-wrap">
   <table class="summary-table summary-table--round">
     <thead>
       <tr>
@@ -458,7 +452,20 @@ for (let i = 0; i < state.history.length; i++) {
 html += `
     </tbody>
   </table>
+  </div>
 `;
+
+  // Competitive mode: Next Round action, after the round's own details
+  if (state.gameOverView === "round" && state.canNextRound) {
+    html += `
+      <div class="summary-actions">
+        <button id="nextRoundBtn" class="primary-btn">
+          Next Round
+        </button>
+      </div>
+    `;
+  }
+
   container.innerHTML = html;
 
   const btn = $("nextRoundBtn");
@@ -476,9 +483,11 @@ function renderStoredRoundSummary(round, index) {
 
   let html = `
     <div class="stored-round">
-      <h4>Round ${index + 1} – ${getNameByRole(round.setter)} was Spy</h4>
+      <h4>Round ${index + 1} – ${state.playerNames?.[round.setter] || getNameByRole(round.setter)} was Spy</h4>
 
+      <div class="summary-table-wrap">
       <table class="summary-table">
+        <thead>
         <tr>
           <th>#</th>
           <th>Secret</th>
@@ -486,6 +495,8 @@ function renderStoredRoundSummary(round, index) {
           <th>Feedback</th>
           <th>Secrets</th>
         </tr>
+        </thead>
+        <tbody>
   `;
   if (round.powers?.revealPenaltyUsed) {
     const letter = round.powers.revealPenaltyLetter;
@@ -541,7 +552,7 @@ function renderStoredRoundSummary(round, index) {
     `;
   });
 
-  html += `</table></div>`;
+  html += `</tbody></table></div></div>`;
   return html;
 }
 

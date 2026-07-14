@@ -1,43 +1,79 @@
 // client/action-log.js — vanilla JS port of ActionLog.jsx
 
 (function () {
+  // A power event is colored by which role it belongs to (the role that
+  // used it), not by the current viewer's own screen — otherwise an
+  // opponent's power looks identical to your own in the log.
+  function powerEntry(evt, viewerRole) {
+    const formatted = window.formatPowerEvent?.(evt);
+    if (!formatted) return null;
+    const who =
+      formatted.actorRole == null ? "" :
+      formatted.actorRole === viewerRole ? "You: " : "Opponent: ";
+    const roleClass = formatted.actorRole ? ` log-power-${formatted.actorRole}` : "";
+    return {
+      type: "power",
+      cssClass: roleClass,
+      text: `${formatted.emoji ? formatted.emoji + " " : ""}${who}${formatted.text}`
+    };
+  }
+
   function buildLog(state, myRole) {
     if (!state) return [];
     const entries = [];
-    const isSetter = myRole === "setter";
-    const history = state.history || [];
+    const myId = typeof myUserId === "function" ? myUserId() : null;
 
     entries.push({ type: "round", text: "Game start" });
 
-    let prevRoundIdx = -1;
-    history.forEach(entry => {
-      if (!entry?.guess) return;
-      const rIdx = entry.roundIndex ?? 0;
-      if (rIdx !== prevRoundIdx) {
-        prevRoundIdx = rIdx;
-        if (rIdx > 0) entries.push({ type: "round", text: `Round ${rIdx + 1}` });
-      }
-      const guessHidden = !isSetter && state.powers?.stealthGuessActive;
-      entries.push({ type: "action", text: `Inspector: ${guessHidden ? "?????" : entry.guess.toUpperCase()}` });
-      if (entry.phase === "simultaneous") {
-        entries.push({ type: "action", text: isSetter ? "Secret submitted" : "Spy submitted secret" });
-      }
+    // Completed rounds are archived (and state.history is wiped) at each
+    // round boundary, so pull them from state.matchRounds too — otherwise
+    // the log only ever shows the round currently in progress.
+    const rounds = Array.isArray(state.matchRounds) ? state.matchRounds : [];
 
-      (entry.powerEvents || []).forEach(evt => {
-        const formatted = window.formatPowerEvent?.(evt);
-        if (!formatted) return;
-        const who =
-          formatted.actorRole == null ? "" :
-          formatted.actorRole === myRole ? "You: " : "Opponent: ";
-        entries.push({
-          type: "power",
-          text: `${formatted.emoji ? formatted.emoji + " " : ""}${who}${formatted.text}`
+    function appendRound(history, setterIdThisRound, roundNumber, isLiveRound) {
+      if (roundNumber > 0) {
+        entries.push({ type: "round", text: `Round ${roundNumber + 1}` });
+      }
+      // Roles can swap between rounds, so "you"/"the setter" has to be
+      // resolved per-round rather than from the viewer's current role.
+      const isSetterThisRound = myId != null && setterIdThisRound === myId;
+      const viewerRole = isSetterThisRound ? "setter" : "guesser";
+
+      (history || []).forEach(entry => {
+        if (!entry?.guess) return;
+        const guessHidden = isLiveRound && !isSetterThisRound && state.powers?.stealthGuessActive;
+        entries.push({ type: "action", text: `Inspector: ${guessHidden ? "?????" : entry.guess.toUpperCase()}` });
+        if (entry.phase === "simultaneous") {
+          entries.push({ type: "action", text: isSetterThisRound ? "Secret submitted" : "Spy submitted secret" });
+        }
+
+        (entry.powerEvents || []).forEach(evt => {
+          const pe = powerEntry(evt, viewerRole);
+          if (pe) entries.push(pe);
         });
+
+        if (entry.secretLocked) {
+          entries.push({ type: "lock", text: "🔒 Secret locked" });
+        }
       });
 
-      if (entry.secretLocked) {
-        entries.push({ type: "lock", text: "🔒 Secret locked" });
-      }
+      return viewerRole;
+    }
+
+    rounds.forEach((round, idx) => {
+      appendRound(round.history, round.setter, idx, false);
+    });
+    const liveViewerRole = appendRound(state.history, state.setter, rounds.length, true);
+
+    // Powers used mid-turn are only attached to a history entry once that
+    // guess/decision resolves. Surface them the moment they're used instead
+    // of making the player wait for the turn to finish — once the entry
+    // finalizes, this live buffer is cleared and the authoritative version
+    // (with any result learned since) takes its place.
+    const live = Array.isArray(window._livePowerEvents) ? window._livePowerEvents : [];
+    live.forEach(evt => {
+      const pe = powerEntry(evt, liveViewerRole);
+      if (pe) entries.push(pe);
     });
 
     return entries;
@@ -51,7 +87,7 @@
 
     const entries = buildLog(state, myRole);
     container.innerHTML =
-      entries.map(e => `<div class="log-entry log-${e.type}">${e.text}</div>`).join("") +
+      entries.map(e => `<div class="log-entry log-${e.type}${e.cssClass || ""}">${e.text}</div>`).join("") +
       '<div class="log-scroll-anchor"></div>';
 
     container.querySelector(".log-scroll-anchor")?.scrollIntoView({ behavior: "smooth" });

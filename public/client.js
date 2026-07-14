@@ -152,20 +152,30 @@ function requireAuth(actionName = "continue") {
 
 function triggerPowerFX(type) {
   const body = document.body;
+  // The shake animation is applied to #appContainer (not body): a transform
+  // on an ancestor of a `position: fixed` element becomes that element's
+  // containing block, which was dragging #powerPopup/#toast along with the
+  // shake. Keeping the transform off body leaves those fixed overlays put.
+  const container = $("appContainer");
 
-  body.classList.remove("power-fx");
-  body.classList.forEach(c => {
-    if (c.startsWith("power-")) body.classList.remove(c);
+  [body, container].forEach(el => {
+    if (!el) return;
+    el.classList.remove("power-fx");
+    el.classList.forEach(c => {
+      if (c.startsWith("power-")) el.classList.remove(c);
+    });
   });
 
   // force restart
   void body.offsetWidth;
 
   body.classList.add("power-fx", `power-${type}`);
+  container?.classList.add("power-fx", `power-${type}`);
 
   clearTimeout(triggerPowerFX._t);
   triggerPowerFX._t = setTimeout(() => {
     body.classList.remove("power-fx", `power-${type}`);
+    container?.classList.remove("power-fx", `power-${type}`);
   }, 900);
 }
 
@@ -174,9 +184,12 @@ function triggerPowerFX(type) {
 // -----------------------------------------------------
 
 function showLobby() {
-  hide("startupScreen");
+  // Sweep every menu screen (not just startupScreen) — any menu-mode screen
+  // left active (e.g. the AI difficulty picker) would otherwise stay
+  // stacked on top of the lobby since they're independently toggled.
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   show("lobby");
-  updateWaitingIndicator(); 
+  updateWaitingIndicator();
   document.body.classList.remove("menu-mode");
 }
 function updateWaitingIndicator() {
@@ -264,8 +277,10 @@ case "playerLeft": {
 
     case "hideLobby":
       $("waitingForPlayer")?.classList.add("hidden");
-      hide("lobby");
-      hide("menu");
+      // Sweep every menu screen too: a ranked match can start directly out
+      // of the matchmaking waiting screen, skipping the manual lobby.
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.body.classList.remove("menu-mode");
       show(myRole === "setter" ? "setterScreen" : "guesserScreen");
       enableReadyButton(false);
       break;
@@ -289,7 +304,14 @@ case "playerLeft": {
 onStateUpdate(newState => {
   const prevPhase = state?.phase;
   const prevSetterDraft = state?.setterDraft || "";
+  const prevHistoryLen = state?.history?.length ?? -1;
   state = JSON.parse(JSON.stringify(newState));
+  if ((state.history?.length ?? 0) !== prevHistoryLen) {
+    // A guess/decision just finalized (or a new round started) — any
+    // mid-turn power events are now baked into state.history/matchRounds,
+    // so drop the live buffer to avoid showing them twice in the log.
+    window._livePowerEvents = [];
+  }
   if (prevPhase !== "simultaneous" && state.phase === "simultaneous" && prevRenderState.length > 0) {
       prevRenderState = [];
       $("setterGuesserSubmitted").innerHTML = "";
@@ -375,7 +397,12 @@ function updateLobbyHeader() {
 // -----------------------------------------------------
 function updateScreens() {
   if (state.phase === "lobby") {
-    enterMenuMode(); 
+    // Ranked matchmaking briefly puts the freshly-created room through the
+    // normal lobby phase server-side (role/time-control setup) before both
+    // players are auto-readied. Don't let that flash the manual lobby UI
+    // over the "match found" countdown screen.
+    if (window._rankedMatching) return;
+    enterMenuMode();
     show("lobby");
     hide("menu");
     hide("setterScreen");
@@ -478,7 +505,15 @@ renderDraftRows({
   role: "setter",
   container: $("draftSetter")
 });
-  
+
+  // Sync from the authoritative per-state snapshot (correctly hidden
+  // outside the decision step, e.g. at the start of a new simultaneous
+  // round) rather than only from the live keystroke-preview channel,
+  // which otherwise leaves stale data showing after a round changes.
+  if (typeof renderSetterRemainingBox === "function") {
+    renderSetterRemainingBox(state.setterRemainingBox || { visible: false });
+  }
+
   if (myUserId() === state.setter) {
     renderKeyboard({
     state,
@@ -836,39 +871,7 @@ function updateTimerAccess() {
 // -----------------------------------------------------
 // BUTTONS
 // -----------------------------------------------------
-
-
-$("quickPlayBtn")?.addEventListener("click", () => {
-  if (!requireAuth("quick play")) return;
-  const username =
-    window.myProfile?.username ||
-    window.currentUser?.email ||
-    "Player";
-
-  const payload = {
-    userId: window.currentUser.id,
-    name: username
-  };
-
-  quickJoin(payload, resp => {
-    if (resp.ok) {
-      roomId = resp.roomId;
-      persistRoom(roomId);
-      enterLobbyAfterJoin();
-      return;
-    }
-
-    createRoom(payload, resp2 => {
-      if (!resp2.ok) {
-        toast(resp2.error || "Could not start game");
-        return;
-      }
-      roomId = resp2.roomId;
-      persistRoom(roomId);
-      enterLobbyAfterJoin();
-    });
-  });
-});
+// Play/Ranked menu wiring lives in client/play-menu.js
 
 
 (function setupGuideToggle() {

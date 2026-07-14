@@ -313,14 +313,18 @@ body.blind-guess .key:hover {
   opacity: 0;
 }
 
-/* global hit response */
-body.power-fx {
+/* Global hit response. Applied to #appContainer rather than body: a
+   transform on an ancestor of a `position: fixed` element (like
+   #powerPopup or #toast) becomes that element's containing block, which
+   was dragging the popup along with the shake instead of leaving it
+   fixed to the viewport. */
+#appContainer.power-fx {
   animation: fx-shake 420ms var(--ease-ui, ease-out);
 }
 
 /* respect accessibility */
 @media (prefers-reduced-motion: reduce) {
-  body.power-fx,
+  #appContainer.power-fx,
   #power-fx {
     animation: none !important;
     transition: none !important;
@@ -373,7 +377,7 @@ body.power-confuseColors #power-fx {
     fx-flash 650ms ease-out,
     fx-scan 650ms linear;
 }
-body.power-fakeFeedback {
+#appContainer.power-fakeFeedback {
   animation: fx-shake 260ms ease-out;
 }
 
@@ -425,7 +429,7 @@ body.power-freezeSecret #power-fx {
   mix-blend-mode: screen;
   animation: fx-flash 700ms ease-out;
 }
-body.power-rouletteSecret {
+#appContainer.power-rouletteSecret {
   animation: fx-shake 300ms ease-out;
 }
 
@@ -441,7 +445,7 @@ body.power-rouletteSecret #power-fx {
   mix-blend-mode: overlay;
   animation: fx-flash 700ms ease-out;
 }
-body.power-nonsense {
+#appContainer.power-nonsense {
   animation: fx-shake 220ms linear;
 }
 
@@ -590,7 +594,7 @@ body.power-vowelRefresh #power-fx {
   mix-blend-mode: screen;
   animation: fx-flash 700ms ease-out;
 }
-body.power-assassinWord {
+#appContainer.power-assassinWord {
   animation: fx-shake 500ms ease-out;
 }
 
