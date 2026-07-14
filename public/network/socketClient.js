@@ -144,6 +144,13 @@ window.showPowerPopup = function (html) {
   _powerPopupTimer = setTimeout(() => el.classList.remove("show"), 3800);
 };
 
+// Click anywhere on the popup to dismiss it early instead of waiting out
+// the full timer.
+document.getElementById("powerPopup")?.addEventListener("click", () => {
+  clearTimeout(_powerPopupTimer);
+  document.getElementById("powerPopup")?.classList.remove("show");
+});
+
 // Powers used mid-turn, buffered here so the action log can show them the
 // moment they happen instead of waiting for the enclosing guess/decision to
 // resolve. Cleared in client.js whenever state.history actually changes.

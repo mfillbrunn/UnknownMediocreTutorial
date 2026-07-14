@@ -401,10 +401,7 @@ html += `
     if (state.powers.revealPenaltyUsed) {
       const letter = state.powers.revealPenaltyLetter;
       const count = state.powers.revealPenaltyCount;
-
-      const penalty =
-        count === 1 ? 2 :
-        count === 2 ? 3 : 4;
+      const penalty = count * 2;
 
       html += `
         <p class="reveal-penalty-summary">
@@ -533,10 +530,7 @@ function renderStoredRoundSummary(round, index) {
   if (round.powers?.revealPenaltyUsed) {
     const letter = round.powers.revealPenaltyLetter;
     const count = round.powers.revealPenaltyCount;
-
-    const penalty =
-      count === 1 ? 2 :
-      count === 2 ? 3 : 4;
+    const penalty = count * 2;
 
     html += `
       <p class="round-note round-note--setter">

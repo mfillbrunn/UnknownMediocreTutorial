@@ -536,8 +536,23 @@
   margin-top: var(--sp-8);
 }
 
+/* #roundSummary is a .summary-box nested inside .panel, both of which pick
+   up the shared card background/padding/margin-top from components.css —
+   stacking three layers of top spacing before any real content. Collapse
+   that down to a single outer frame (the .screen itself already provides
+   one). */
 #menu .panel {
-  padding-top: var(--sp-10);
+  background: none;
+  padding: var(--sp-10) 0 0;
+  margin-top: 0;
+  box-shadow: none;
+}
+
+#menu #roundSummary {
+  background: none;
+  padding: 0;
+  margin-top: 0;
+  box-shadow: none;
 }
 
 #menu .share-btn {
