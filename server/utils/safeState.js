@@ -111,10 +111,20 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
   safe.keyboard = buildKeyboardState(safe);
 
   if (viewerRole === "setter") {
+    // emitRoomState() (the generic broadcast used almost everywhere) never
+    // threads the allowed-secrets list through — only the dedicated
+    // setterDraftSecret live-preview path does. Fall back to the global
+    // list loaded at startup so the box has real data on every broadcast,
+    // not just while actively typing a draft.
+    const secrets =
+      Array.isArray(allowedSecrets) && allowedSecrets.length
+        ? allowedSecrets
+        : global.ALLOWED_SECRETS;
+
     safe.setterRemainingBox = buildSetterRemainingBoxState(
       state,
       userId,
-      allowedSecrets
+      secrets
     );
   }
 

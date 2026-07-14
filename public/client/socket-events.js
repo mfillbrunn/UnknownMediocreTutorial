@@ -177,7 +177,8 @@ $("applyPowerCountBtn")?.addEventListener("click", () => {
 });
 
 document.addEventListener("click", e => {
-  if (e.target?.id === "newMatchBtn") {
+  if (e.target?.closest?.("#newMatchBtn")) {
+    resetKeyboards();
     sendGameAction({ type: "NEW_MATCH" });
   }
 });
@@ -210,8 +211,9 @@ $("leaveRoomBtn")?.addEventListener("click", () => {
   socket.emit("leaveRoom", {}, () => {
     roomId = null;
     clearRoom();
-    state = null;         
+    state = null;
     window.state = null;
+    resetKeyboards();
     showStartup();
   });
 });
@@ -364,7 +366,7 @@ socket.on("rouletteSecretStart", ({ feasible }) => {
   startSecretRoulette(feasible);
 });
 
-document.getElementById("howToPlayBtn")?.addEventListener("click", () => {
+document.getElementById("startTutorialBtn")?.addEventListener("click", () => {
   if (!requireAuth("start tutorial")) return;
 
   const username =

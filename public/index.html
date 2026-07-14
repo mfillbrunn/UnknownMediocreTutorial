@@ -85,8 +85,6 @@
               <button id="dailyBtn" class="menu-btn">Daily Challenge ☀️</button>
               <button id="accountBtn" class="menu-btn">Account</button>
               <button id="howToPlayBtn" class="menu-btn">How to Play</button>
-              <button id="rulesBtn" class="menu-btn">Rules</button>
-              <button id="powerLibraryBtn" class="menu-btn">Power Library</button>
             </div>
           </div>
         </section>
@@ -147,10 +145,15 @@
   </div>
 </section>
 
-<!-- ========== RULES ========== -->
-<section id="rulesScreen" class="screen game-menu">
+<!-- ========== HOW TO PLAY (rules + power library + tutorial launch) ========== -->
+<section id="howToPlayScreen" class="screen game-menu">
   <div class="menu-center rules-center">
-    <h2 class="menu-title">Rules</h2>
+    <h2 class="menu-title">How to Play</h2>
+
+    <button id="startTutorialBtn" class="menu-btn primary">
+      ▶ Start Interactive Tutorial
+    </button>
+
     <div class="rules-content">
       <h3>The basics</h3>
       <p>One player is the <b>Spy</b> (setter): they pick a secret 5-letter word. The other is the <b>Inspector</b> (guesser): they try to guess it, Wordle-style — green means right letter/right spot, yellow means right letter/wrong spot, gray means not in the word.</p>
@@ -161,17 +164,11 @@
       <h3>Scoring</h3>
       <p>The Spy scores a point for every guess it takes the Inspector to win the round. Fewer guesses is better for the Inspector; more guesses is better for the Spy. Roles swap each round; the lower total score across all rounds wins the match.</p>
       <h3>Powers</h3>
-      <p>Both sides can unlock special powers that bend the rules in their favor — see the <b>Power Library</b> for the full list.</p>
+      <p>Both sides can unlock special powers that bend the rules in their favor — full list below.</p>
     </div>
-    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
-  </div>
-</section>
 
-<!-- ========== POWER LIBRARY ========== -->
-<section id="powerLibraryScreen" class="screen game-menu">
-  <div class="menu-center power-library-center">
-    <h2 class="menu-title">Power Library</h2>
     <div id="powerLibraryList" class="power-library-list"></div>
+
     <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
   </div>
 </section>
@@ -389,17 +386,18 @@
         
         <!-- ========== MENU ========== -->
     <section id="menu" class="screen">
-       <h2 class="screen-title">Summary</h2>
-       <div class="panel">          
-         <button id="shareResultBtn" class="secondary-btn share-btn">Share</button> 
+       <div class="panel">
+         <button id="shareResultBtn" class="secondary-btn share-btn">Share</button>
          <div id="roundSummary" class="summary-box"></div>
-          <p><b>Room:</b> <span id="menuRoomCode"></span></p>
        </div>
-       <button id="newMatchBtn" class="primary-btn">New Match</button>
     </section>
   
     <!-- ========== SETTER ========== -->
     <section id="setterScreen" class="screen theme-setter">
+       <!-- Force Timer power: large countdown overlay to add time pressure -->
+       <div id="forceTimerOverlay" class="force-timer-overlay hidden">
+         <span id="forceTimerNumber"></span>
+       </div>
        <!-- HEADER TOP ROW-->
           <header class="role-header">
             <!-- TOP ROW: identity + timer -->

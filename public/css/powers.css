@@ -277,9 +277,19 @@ body.blind-guess .key:hover {
   position: relative;
   z-index: 2;
 }
-.tile-guesser-hidden::after {
+/* Specificity has to match/beat history.css's
+   ".history-row:not(.draft-row) .history-tile::after" (the flip-reveal
+   mask) — both target the tile's ::after. Matching specificity alone
+   wasn't enough either: CSS cascades property-by-property, so anything
+   this rule didn't explicitly set (inset's top/left, background,
+   animation) was still leaking in from the mask rule — in particular its
+   `animation: reveal-mask` drives opacity to 0 after 1.2s, which silently
+   erased this mark once the flip animation finished. Every property the
+   mask rule sets is reset here so nothing leaks through. */
+.history-row .history-tile.tile-guesser-hidden::after {
   content: "?";
   position: absolute;
+  inset: auto;
   bottom: 2px;
   right: 4px;
 
@@ -288,6 +298,9 @@ body.blind-guess .key:hover {
   line-height: 1;
 
   color: white;
+  background: transparent;
+  border-radius: 0;
+  animation: none;
 
   text-shadow:
     -1px -1px 0 rgba(0,0,0,0.9),
@@ -297,6 +310,7 @@ body.blind-guess .key:hover {
 
   opacity: 0.85;
   pointer-events: none;
+  z-index: 101;
 }
 
 /* POWER EFFECTS*/

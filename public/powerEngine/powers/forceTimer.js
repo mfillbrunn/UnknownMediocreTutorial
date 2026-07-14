@@ -27,24 +27,39 @@ tooltip: {
   },
 
 uiEffects(state, role) {
-  const bar = $("turnIndicatorSetter");
-  if (!bar) return;
+  const overlay = $("forceTimerOverlay");
+  if (!overlay) return;
 
-  // Always clean up first
-  bar.classList.remove("force-timer");
-
-  if (
+  const active =
     role === "setter" &&
-    state.powers.forceTimerActive &&
-    state.powers.forceTimerDeadline
-  ) {
-    const remaining = Math.max(
-      0,
-      Math.ceil((state.powers.forceTimerDeadline - Date.now()) / 1000)
-    );
+    !!state.powers?.forceTimerActive &&
+    !!state.powers?.forceTimerDeadline;
 
-    bar.textContent = `⏱ ${remaining}s`;
-    bar.classList.add("force-timer");
+  if (!active) {
+    overlay.classList.add("hidden");
+    clearInterval(this._forceTimerTick);
+    this._forceTimerTick = null;
+    return;
+  }
+
+  overlay.classList.remove("hidden");
+
+  const deadline = state.powers.forceTimerDeadline;
+  const numberEl = $("forceTimerNumber");
+
+  const render = () => {
+    const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+    if (numberEl) numberEl.textContent = remaining;
+    overlay.classList.toggle("force-timer-urgent", remaining <= 5);
+    if (remaining <= 0) {
+      clearInterval(this._forceTimerTick);
+      this._forceTimerTick = null;
+    }
+  };
+
+  render();
+  if (!this._forceTimerTick) {
+    this._forceTimerTick = setInterval(render, 250);
   }
 }
 });

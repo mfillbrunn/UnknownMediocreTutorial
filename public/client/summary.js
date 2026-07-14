@@ -2,62 +2,89 @@
 
 ///CALCULATE WINNER
 
-function computeMatchResult(state, myRole) {
+// Points/time are tracked per user ID (the only identity that's stable
+// across a match — roles swap every round). "A"/"B" were never real keys
+// on state (state.roles/state.playerNames don't exist), which used to make
+// this always resolve to a tie and every player name blank.
+function computeMatchResult(state, viewerUserId) {
   const rounds = state.matchRounds || [];
 
-  const points = { A: 0, B: 0 };
-  const time = { A: 0, B: 0 };
+  const points = {};
+  const time = {};
+
+  const addPoints = (id, n) => { if (id) points[id] = (points[id] || 0) + (n || 0); };
+  const addTime = (id, n) => { if (id) time[id] = (time[id] || 0) + (n || 0); };
 
   rounds.forEach(r => {
-    points[r.setter] += r.guessCount;
-    time.A += r.time?.A || 0;
-    time.B += r.time?.B || 0;
+    // The Spy (that round's setter) is credited with a point per guess it
+    // took the Inspector to win.
+    addPoints(r.setter, r.guessCount);
+    for (const [uid, secs] of Object.entries(r.time || {})) {
+      addTime(uid, secs);
+    }
   });
 
+  const playerIds = Object.keys(state.players || {});
+  const [idA, idB] = playerIds;
+
   let winner = null;
+  let tie = false;
   let winReason = "points";
 
-if (state.timeoutLoser) {
-    winner = state.timeoutLoser === "A" ? "B" : "A";
+  if (state.timeoutLoser) {
+    winner = playerIds.find(id => id !== state.timeoutLoser) || null;
     winReason = "timeout";
   } else {
-    // Normal resolution
-    if (points.A > points.B) {
-      winner = "A";
-    } else if (points.B > points.A) {
-      winner = "B";
-    } else if (time.A !== time.B) {
-      winner = time.A <= time.B ? "A" : "B";
-      winReason = "time";
+    const pA = points[idA] || 0;
+    const pB = points[idB] || 0;
+    if (pA > pB) {
+      winner = idA;
+    } else if (pB > pA) {
+      winner = idB;
     } else {
-      winReason = "tie";
+      const tA = time[idA] || 0;
+      const tB = time[idB] || 0;
+      if (tA !== tB) {
+        winner = tA <= tB ? idA : idB;
+        winReason = "time";
+      } else {
+        tie = true;
+        winReason = "tie";
+      }
     }
   }
 
-  const didWin = winner && myRole === winner;
+  const didWin = winner != null && viewerUserId != null && winner === viewerUserId;
 
-  const winnerPoints = winner ? points[winner] : points.A;
-  const loserPoints = winner ? points[winner === "A" ? "B" : "A"] : points.A;
+  const winnerPoints = winner != null ? (points[winner] || 0) : (points[idA] || 0);
+  const loserPoints = winner != null
+    ? (points[winner === idA ? idB : idA] || 0)
+    : (points[idB] || 0);
 
   const resultIcon =
     winReason === "tie"
-      ? "↔️"
+      ? "🤝"
       : winReason === "timeout"
       ? "⏱️"
       : didWin
       ? "🏆"
-      : "❌";
+      : "🥈";
 
   return {
     points,
     time,
     winner,
-    winReason,        
+    tie,
+    winReason,
     didWin,
     winnerPoints,
     loserPoints,
     resultIcon
   };
+}
+
+function getPlayerName(userId) {
+  return (userId && state.players?.[userId]?.name) || "—";
 }
 
 function normalizePowerId(p) {
@@ -133,19 +160,24 @@ function renderMatchSummary(container) {
     winnerPoints,
     loserPoints,
     resultIcon
-  } = computeMatchResult(state, myRole);
+  } = computeMatchResult(state, myUserId());
+
+  const playerIds = Object.keys(state.players || {});
+  const opponentId = playerIds.find(id => id !== myUserId()) || null;
+  const myName = getPlayerName(myUserId());
+  const opponentName = getPlayerName(opponentId);
 
   let resultText;
   if (winReason === "timeout") {
     resultText = didWin
-      ? `⏱️ You won by timeout`
-      : `⏱️ You lost on time`;
+      ? `You won by timeout`
+      : `You lost on time`;
   } else if (winReason === "tie") {
-    resultText = `${resultIcon} You tied`;
+    resultText = `You tied`;
   } else {
     resultText = didWin
-      ? `${resultIcon} You won`
-      : `${resultIcon} You lost`;
+      ? `You won`
+      : `You lost`;
   }
 
   let scoreText = "";
@@ -166,7 +198,7 @@ function renderMatchSummary(container) {
 
   let timeoutNote = "";
   if (winReason === "timeout" && state.timeoutLoser) {
-    const loserName = getNameByRole(state.timeoutLoser);
+    const loserName = getPlayerName(state.timeoutLoser);
     timeoutNote = `
       <p class="timeout-note">
         ⏱ ${loserName} lost on time
@@ -217,14 +249,28 @@ if (guesser.length) {
 
 
   // ----------------------------
+  // Top bar: room code (share button lives statically above the container)
+  // ----------------------------
+  let html = `
+    <div class="summary-top-bar">
+      <span class="summary-room-chip">Room <b>${window.roomId || "—"}</b></span>
+    </div>
+  `;
+
+  // ----------------------------
   // Result header (lead with the outcome, not the actions)
   // ----------------------------
   const resultClass = didWin ? "win" : winReason === "tie" ? "tie" : "loss";
 
-  let html = `
+  html += `
     <div class="match-header match-header--${resultClass}">
       <div class="match-result-icon">${resultIcon}</div>
       <h2>${resultText}</h2>
+      <p class="match-players-line">
+        <span class="${didWin ? "me-winner" : ""}">${myName}</span>
+        <span class="vs">vs</span>
+        <span class="${!didWin && winner ? "me-winner" : ""}">${opponentName}</span>
+      </p>
       ${scoreText ? `<h3>${scoreText}</h3>` : ""}
       ${timeoutNote}
       ${assassinationNote}
@@ -257,8 +303,8 @@ if (guesser.length) {
   // ----------------------------
   html += `
     <div class="summary-actions">
-      <button id="newMatchBtn" class="primary-btn">
-        New Match
+      <button id="newMatchBtn" class="new-match-btn">
+        <span class="new-match-icon">↻</span> New Match
       </button>
       <button id="leaveSummaryBtn" class="secondary-btn danger">
         Leave
@@ -279,16 +325,14 @@ if (guesser.length) {
   const leaveBtn = $("leaveSummaryBtn");
   if (leaveBtn) {
     leaveBtn.onclick = () => {
-      
-      const bubble = byId("tutorialBubble");
-      if (!bubble) return;
-      bubble.classList.add("hidden");
+      byId("tutorialBubble")?.classList.add("hidden");
 
       socket.emit("leaveRoom", {}, () => {
         roomId = null;
         clearRoom();
         state = null;
         window.state = null;
+        resetKeyboards();
         showStartup();
       });
     };
@@ -300,20 +344,19 @@ if (guesser.length) {
 /////////COMPETITIVE  ROUND SUMMARY
 ////////////////////////////
 function renderRoundSummary(container) {
-  let html = `<h3 class="summary-heading">Round Summary</h3>`;
-  const setterPlayerId = Object.keys(state.roles || {})
-  .find(id => state.roles[id] === "A");
+  let html = `
+    <div class="summary-top-bar">
+      <span class="summary-room-chip">Room <b>${window.roomId || "—"}</b></span>
+    </div>
+    <h3 class="summary-heading">Round Summary</h3>
+  `;
+  // The round that just ended is still reflected by state.setter/guesser —
+  // roles swap for the *next* round only once NEXT_ROUND is sent.
+  const setterName = getPlayerName(state.setter);
+  const guesserName = getPlayerName(state.guesser);
 
-const guesserPlayerId = Object.keys(state.roles || {})
-  .find(id => state.roles[id] === "B");
-
-const setterName =
-  setterPlayerId ? state.playerNames[setterPlayerId] : "—";
-
-const guesserName =
-  guesserPlayerId ? state.playerNames[guesserPlayerId] : "—";
 if (state.timeoutLoser)  {
-  const loserName = getNameByRole(state.timeoutLoser);
+  const loserName = getPlayerName(state.timeoutLoser);
 
   const note ="(lost on time)";
 
@@ -335,10 +378,10 @@ if (state.timeoutLoser)  {
 const lastRound =
   state.matchRounds[state.matchRounds.length - 1];
 
-const roundTimeA = lastRound?.time?.A ?? 0;
-const roundTimeB = lastRound?.time?.B ?? 0;
+const roundTimeA = lastRound?.time?.[state.setter] ?? 0;
+const roundTimeB = lastRound?.time?.[state.guesser] ?? 0;
 
-if (state.timeControl ==="enabled"){
+if (state.timeControl?.enabled) {
 html += `
   <p class="round-time-summary">
   ⏱
@@ -471,9 +514,10 @@ html += `
   const btn = $("nextRoundBtn");
   if (btn) {
     btn.onclick = () => {
+      resetKeyboards();
       sendGameAction({ type: "NEXT_ROUND" });
     };
-  }  
+  }
 };
 
 ///////////////////////////////
@@ -483,7 +527,7 @@ function renderStoredRoundSummary(round, index) {
 
   let html = `
     <div class="stored-round">
-      <h4>Round ${index + 1} – ${state.playerNames?.[round.setter] || getNameByRole(round.setter)} was Spy</h4>
+      <h4>Round ${index + 1} – ${getPlayerName(round.setter)} was Spy</h4>
 
       <div class="summary-table-wrap">
       <table class="summary-table">
@@ -573,27 +617,19 @@ function buildShareText(state, myRole) {
   winnerPoints,
   loserPoints,
   resultIcon
-} = computeMatchResult(state, myRole);
-let finalWinner = winner;
-let finalWinReason = winReason;
+} = computeMatchResult(state, myUserId());
+const finalWinner = winner;
+const finalWinReason = winReason;
 let assassinationLine = null;
 if (state.powers?.assassinWordassassinated) {
   assassinationLine = "☠ Assassination triggered";
 }
 
-if (state.timeoutLoser) {
-  finalWinner = state.timeoutLoser === "A" ? "B" : "A";
-  finalWinReason = "timeout";
-}
-const winnerName =
-  finalWinReason  === "tie"
-    ? getNameByRole("A")
-    : getNameByRole(finalWinner);
-
-const loserName =
-  finalWinReason === "tie"
-    ? getNameByRole("B")
-    : getNameByRole(finalWinner === "A" ? "B" : "A");
+const playerIds = Object.keys(state.players || {});
+const winnerName = winner != null ? getPlayerName(winner) : getPlayerName(playerIds[0]);
+const loserName = winner != null
+  ? getPlayerName(playerIds.find(id => id !== winner))
+  : getPlayerName(playerIds[1]);
 
 let winnerLabel;
 
@@ -649,7 +685,7 @@ if (setter.length || guesser.length) {
      if (finalWinReason === "timeout") {
         return `R${i + 1}: ${secret} (${guesses}) ⏱`;
       }
-    const roundWinner = getNameByRole(r.guesser);
+    const roundWinner = getPlayerName(r.guesser);
     const timeoutMark = r.timeoutLoser ? " ⏱" : "";
 
     return `R${i + 1}: ${roundWinner} guessed ${secret} (${guesses})${timeoutMark}`;
@@ -702,12 +738,6 @@ function formatDuration(seconds) {
   return secs === 0
     ? `${mins}m`
     : `${mins}m ${secs}s`;
-}
-
-function getNameByRole(role) {
-  const id = Object.keys(state.roles || {})
-    .find(pid => state.roles[pid] === role);
-  return id ? state.playerNames?.[id] || "—" : "—";
 }
 
 function updateMenuRoomCode() {
