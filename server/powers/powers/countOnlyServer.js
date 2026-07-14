@@ -25,8 +25,9 @@ engine.registerPower("countOnly", {
       total: totalMatches
     };
 
-    // Replace guesser feedback with black tiles
-    entry.fbGuesser = ["⬛","⬛","⬛","⬛","⬛"];
+    // Replace guesser feedback with the "unknown" marker (not "⬛"/absent —
+    // that would make the keyboard falsely mark these letters as wrong).
+    entry.fbGuesser = ["❓","❓","❓","❓","❓"];
 
     entry.countOnlyApplied = true;
     entry.powerUsed = "countOnly";

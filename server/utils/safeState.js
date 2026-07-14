@@ -108,7 +108,9 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
     })
     .filter((e) => e !== null);
 
-  safe.keyboard = buildKeyboardState(safe);
+  const keyboardState = buildKeyboardState(safe);
+  safe.keyboard = keyboardState.keyboard;
+  safe.keyboardUncertain = keyboardState.uncertain;
 
   if (viewerRole === "setter") {
     // emitRoomState() (the generic broadcast used almost everywhere) never

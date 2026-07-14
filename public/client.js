@@ -325,6 +325,11 @@ onStateUpdate(newState => {
   const newMyRole = getMyRole();
   if (newMyRole !== myRole) {
     myRole = newMyRole;
+    // Keep window.myRole authoritative too — it's read by socketClient.js's
+    // power-popup logic, and the "roleAssigned" socket event alone doesn't
+    // cover role swaps between rounds or AI rooms where it can fire before
+    // roles are actually determined.
+    window.myRole = newMyRole;
     updateRoleLabels();
   }
   const setterCanEdit =
@@ -973,7 +978,13 @@ function updateGuideBanner() {
     btn.addEventListener("click", e => {
       e.stopPropagation();
       e.preventDefault();
-      if (btn.dataset.info) toast(btn.dataset.info);
+      if (!btn.dataset.info) return;
+      const title = (btn.getAttribute("aria-label") || "").replace(/^About\s+/i, "");
+      window.showPowerPopup?.({
+        emoji: "ℹ️",
+        title,
+        desc: btn.dataset.info
+      });
     });
   });
 })();
