@@ -91,6 +91,34 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   }
 }
 
+/* Setter's draft stack: the secret row slides down into place, the
+   incoming pending-guess row slides in from the side — distinct motions
+   so it's clear which row just appeared and why. */
+.draft-row.row-slide-down {
+  animation: draft-row-slide-down 340ms var(--ease-ui, ease-out) both;
+}
+
+.draft-row.row-slide-in {
+  animation: draft-row-slide-in 340ms var(--ease-ui, ease-out) both;
+}
+
+@keyframes draft-row-slide-down {
+  0%   { opacity: 0; transform: translateY(-18px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes draft-row-slide-in {
+  0%   { opacity: 0; transform: translateX(-28px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draft-row.row-slide-down,
+  .draft-row.row-slide-in {
+    animation: none;
+  }
+}
+
 .history-row-anchor {
   position: relative;
   display: inline-flex;
@@ -177,7 +205,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   color: var(--tile-green-text) !important;
   border: none;
   box-shadow: none;
-  opacity: 0.6;
+  opacity: 0.46;
    animation: preview-green-pulse 2.2s  ease-in-out infinite;
    animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
@@ -189,7 +217,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   color: var(--tile-yellow-text) !important;
   border: none;
   box-shadow: none;
-  opacity: 0.6;
+  opacity: 0.46;
    animation: preview-yellow-pulse 2.2s ease-in-out infinite;
    animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
@@ -203,7 +231,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   color: var(--tile-gray-text);
   border: none;
   box-shadow: none;
-  opacity: 0.55;
+  opacity: 0.42;
 }
 #draftSetter {
   display: flex;

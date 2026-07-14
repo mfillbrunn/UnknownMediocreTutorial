@@ -80,7 +80,7 @@
             <div class="menu-buttons">
               <div class="split-btn menu-split-btn">
                 <button id="playMainBtn" class="menu-btn primary split-btn-main">Play</button>
-                <button id="playQuickBtn" class="menu-btn primary split-btn-quick" title="Repeat last mode" aria-label="Repeat last play mode">⟳</button>
+                <button id="playQuickBtn" class="menu-btn primary split-btn-quick" title="Quick play: repeat last mode" aria-label="Quick play: repeat last mode">⚡</button>
               </div>
               <button id="dailyBtn" class="menu-btn">Daily Challenge ☀️</button>
               <button id="accountBtn" class="menu-btn">Account</button>
@@ -283,10 +283,22 @@
         <span class="arrow guesser-arrow">⇄</span>
       </button>
       <div class="lobby-actions">
-        <button id="shuffle" class="secondary-btn small">Random</button>
-      <span id="rankedBadge"></span>
-      <button id="addAiBtn" class="secondary-btn small">+ AI</button>
-        <button id="devBtn" class="secondary-btn small">Dev</button>
+        <span class="lobby-action-item">
+          <button id="shuffle" class="secondary-btn small">Random</button>
+          <button class="lobby-info-btn" data-info="Randomly assigns who's Spy and who's Inspector when the match starts." aria-label="About Random roles">ⓘ</button>
+        </span>
+        <span class="lobby-action-item">
+          <span id="rankedBadge"></span>
+          <button class="lobby-info-btn" data-info="Ranked matches affect your Elo rating and appear on the leaderboard." aria-label="About Ranked">ⓘ</button>
+        </span>
+        <span class="lobby-action-item">
+          <button id="addAiBtn" class="secondary-btn small">+ AI</button>
+          <button class="lobby-info-btn" data-info="Add a computer opponent so you can play solo." aria-label="About Add AI">ⓘ</button>
+        </span>
+        <span class="lobby-action-item">
+          <button id="devBtn" class="secondary-btn small">Dev</button>
+          <button class="lobby-info-btn" data-info="Developer mode — unlocks more powers per match, for testing." aria-label="About Dev mode">ⓘ</button>
+        </span>
     </div>
 
 
@@ -620,6 +632,18 @@
     >
       Cancel
     </button>
+  </div>
+</div>
+<div id="rejoinModal" class="modal">
+  <div class="panel rejoin-modal-panel">
+    <h2 class="screen-title">Disconnected</h2>
+    <p class="modal-instruction">
+      You lost connection to the game. Rejoin now, or leave the match.
+    </p>
+    <div class="rejoin-modal-actions">
+      <button id="rejoinConfirmBtn" class="primary-btn">Rejoin Game</button>
+      <button id="rejoinLeaveBtn" class="secondary-btn danger">Leave Game</button>
+    </div>
   </div>
 </div>
 <div id="tutorialBubble" class="tutorial-bubble hidden">

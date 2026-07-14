@@ -139,25 +139,25 @@
 }
 @keyframes preview-green-pulse {
   0% {
-    background-color: color-mix(in srgb, var(--tile-green) 22%, #000);
+    background-color: color-mix(in srgb, var(--tile-green) 14%, #000);
   }
   50% {
-    background-color: color-mix(in srgb, var(--tile-green) 55%, #000);
+    background-color: color-mix(in srgb, var(--tile-green) 36%, #000);
   }
   100% {
-    background-color: color-mix(in srgb, var(--tile-green) 22%, #000);
+    background-color: color-mix(in srgb, var(--tile-green) 14%, #000);
   }
 }
 
 @keyframes preview-yellow-pulse {
   0% {
-    background-color: color-mix(in srgb, var(--tile-yellow) 22%, #000);
+    background-color: color-mix(in srgb, var(--tile-yellow) 14%, #000);
   }
   50% {
-    background-color: color-mix(in srgb, var(--tile-yellow) 55%, #000);
+    background-color: color-mix(in srgb, var(--tile-yellow) 36%, #000);
   }
   100% {
-    background-color: color-mix(in srgb, var(--tile-yellow) 22%, #000);
+    background-color: color-mix(in srgb, var(--tile-yellow) 14%, #000);
   }
 }
 @keyframes preview-swoosh {

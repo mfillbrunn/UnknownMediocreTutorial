@@ -113,8 +113,10 @@ registerMatchmaking(io, context);
 
 // Cleanup stale rooms every 10 minutes
 setInterval(() => cleanupEmptyRooms(), 10 * 60 * 1000);
-// Cleanup disconnected players after 60-second grace window
-setInterval(() => cleanupDisconnectedPlayers(io, 60_000), 5_000);
+// Cleanup disconnected players after a 30-second grace window (matches the
+// client's rejoin-or-leave prompt, which offers to reconnect within the
+// same window).
+setInterval(() => cleanupDisconnectedPlayers(io, 30_000), 5_000);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log("VS Wordle server running on", PORT));

@@ -153,6 +153,18 @@ function startForceTimer(roomId, room, state, io, context) {
       );
 
       io.to(roomId).emit("forceTimerExpired");
+
+      // This action is dispatched directly from a server-side timer, not
+      // through the socket "gameAction" handler — which is the only other
+      // place that re-triggers the AI after a move. Without this, the turn
+      // silently passes to the AI and nothing ever prompts it to play.
+      setTimeout(() => {
+        try {
+          context.maybeRunAI(room, roomId, context);
+        } catch (err) {
+          console.error("maybeRunAI crashed after force timer expiry:", err);
+        }
+      }, 1000);
     }
   }, 250);
 

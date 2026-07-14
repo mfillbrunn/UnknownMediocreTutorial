@@ -58,6 +58,25 @@ window.renderDraftRows = function ({
     }
   }
 
+  // Capture visibility BEFORE this render's "hide by default" reset below —
+  // that reset and re-show happen within the same synchronous call, so
+  // reading row.style.display *after* it would always report "just
+  // hidden" and the transition-detection in showRow() would fire on every
+  // render (e.g. every keystroke) instead of just genuine appearances.
+  const pendingWasVisible = pendingRow.style.display !== "none";
+  const draftWasVisible = draftRow.style.display !== "none";
+
+  // Reveals a row, replaying `animClass` only on an actual hidden->visible
+  // transition (per the wasVisible snapshot taken above this render).
+  function showRow(row, wasVisible, animClass) {
+    row.style.display = "";
+    if (!wasVisible && animClass) {
+      row.classList.remove(animClass);
+      void row.offsetWidth; // restart animation
+      row.classList.add(animClass);
+    }
+  }
+
   // Hide rows by default
   pendingRow.style.display = "none";
   draftRow.style.display = "none";
@@ -71,14 +90,14 @@ window.renderDraftRows = function ({
       (state.phase === "normal" && state.turn === state.guesser);
 
     if (!canGuess && upperPending) {
-      pendingRow.style.display = "";
       updateRow(pendingRow, upperPending, "draft-row pending-guess");
+      showRow(pendingRow, pendingWasVisible);
       return;
     }
 
     if (canGuess) {
-      draftRow.style.display = "";
       updateRow(draftRow, upperGuesserDraft, "draft-row guesser-draft");
+      showRow(draftRow, draftWasVisible);
     }
 
     return;
@@ -98,17 +117,19 @@ window.renderDraftRows = function ({
         !!state.pendingGuess)
     );
 
-  // Always show pending guess if it exists
+  // Always show pending guess if it exists — slides in when it first
+  // appears (the guesser just submitted a guess). updateRow() overwrites
+  // the row's className wholesale, so it has to run *before* showRow()
+  // adds the animation class, not after.
   if (upperPending) {
-    pendingRow.style.display = "";
     updateRow(pendingRow, upperPending, "draft-row pending-guess");
+    showRow(pendingRow, pendingWasVisible, "row-slide-in");
   }
 
-  // Draft / preview row
-  draftRow.style.display = "";
-
+  // Draft / preview (secret) row — slides down when it first appears.
   if (!setterCanEdit) {
     updateRow(draftRow, upperSecret, "draft-row ghost-secret");
+    showRow(draftRow, draftWasVisible, "row-slide-down");
     return;
   }
 
@@ -118,6 +139,7 @@ window.renderDraftRows = function ({
       upperSetterDraft || "",
       "draft-row setter-draft"
     );
+    showRow(draftRow, draftWasVisible, "row-slide-down");
     return;
   }
 
@@ -129,6 +151,7 @@ window.renderDraftRows = function ({
         ? "draft-row setter-draft"
         : "draft-row ghost-secret"
     );
+    showRow(draftRow, draftWasVisible, "row-slide-down");
   }
 };
 

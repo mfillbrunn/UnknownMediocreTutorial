@@ -968,6 +968,16 @@ function updateGuideBanner() {
   banner.classList.remove("hidden");
 }
 
+(function setupLobbyInfoButtons() {
+  document.querySelectorAll(".lobby-info-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (btn.dataset.info) toast(btn.dataset.info);
+    });
+  });
+})();
+
 (function setupConstraintToggle() {
   const buttons = document.querySelectorAll(".constraint-toggle-btn");
   if (!buttons.length) return;

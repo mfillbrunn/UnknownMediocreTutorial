@@ -218,6 +218,31 @@ $("leaveRoomBtn")?.addEventListener("click", () => {
   });
 });
 
+$("rejoinConfirmBtn")?.addEventListener("click", () => {
+  $("rejoinModal")?.classList.remove("active");
+  tryAutoRejoin();
+});
+
+$("rejoinLeaveBtn")?.addEventListener("click", () => {
+  $("rejoinModal")?.classList.remove("active");
+  window.autoRejoinAttempted = true; // don't re-prompt for this room
+
+  const finish = () => {
+    roomId = null;
+    clearRoom();
+    state = null;
+    window.state = null;
+    resetKeyboards();
+    showStartup();
+  };
+
+  if (socket.connected) {
+    socket.emit("leaveRoom", {}, finish);
+  } else {
+    finish();
+  }
+});
+
 $("accountBtn").onclick = () => {
   document.body.classList.remove("menu-mode"); 
   showScreen("accountScreen");
