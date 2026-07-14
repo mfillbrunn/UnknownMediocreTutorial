@@ -48,7 +48,8 @@ window.renderKeyboard = function ({
       "key-yellow",
       "key-gray",
       "key-blue",
-      "key-current"
+      "key-current",
+      "key-uncertain"
     );
 
     // Special keys
@@ -69,6 +70,12 @@ window.renderKeyboard = function ({
       else if (status === "yellow") keyEl.classList.add("key-yellow");
       else if (status === "gray") keyEl.classList.add("key-gray");
       else if (status === "blue") keyEl.classList.add("key-blue");
+
+      // Count Only power: letter was guessed but its true color is
+      // unknown — looks like an untouched key, plus a small "?" mark.
+      if (!status && state.keyboardUncertain?.[symbol]) {
+        keyEl.classList.add("key-uncertain");
+      }
 
       // highlight letters currently typed
       if (guess.includes(symbol)) {

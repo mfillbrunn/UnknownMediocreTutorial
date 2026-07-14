@@ -7,7 +7,7 @@ const KEYBOARD_LAYOUT = [
 ];
 
 function getLetterStatusFromHistory(letter, state) {
-  if (!state?.history) return null;
+  if (!state?.history) return { status: null, uncertain: false };
 
   // Extra constraints (forced greens)
   const extraGreens = state.extraConstraints
@@ -15,10 +15,11 @@ function getLetterStatusFromHistory(letter, state) {
     .map(c => c.letter);
 
   if (extraGreens?.includes(letter)) {
-    return "green";
+    return { status: "green", uncertain: false };
   }
 
   let strongest = null;
+  let uncertain = false;
 
   for (const entry of state.history) {
     if (!entry?.guess) continue;
@@ -28,7 +29,7 @@ function getLetterStatusFromHistory(letter, state) {
     if (!fb){
       fb = entry.fbGuesser;
     }
-    
+
     if (!Array.isArray(fb)) continue;
 
     for (let i = 0; i < 5; i++) {
@@ -37,6 +38,13 @@ function getLetterStatusFromHistory(letter, state) {
       const f = fb[i];
       if (!f || f === "?") continue;
 
+      // Count Only masks feedback with "❓" — the letter's true status is
+      // unknown, not confirmed absent, so it must not be scored as "gray".
+      if (f === "❓") {
+        uncertain = true;
+        continue;
+      }
+
       if (f === "🟩") strongest = "green";
       else if (f === "🟨" && strongest !== "green") strongest = "yellow";
       else if (f === "🟦" && !strongest) strongest = "blue";
@@ -44,21 +52,26 @@ function getLetterStatusFromHistory(letter, state) {
     }
   }
 
-  return strongest;
+  // A later, unmasked guess can resolve the letter's real status — once
+  // that happens it's no longer "uncertain", just whatever it resolved to.
+  return { status: strongest, uncertain: uncertain && !strongest };
 }
 
 function buildKeyboardState(state) {
   const keyboard = {};
+  const uncertain = {};
 
   for (const row of KEYBOARD_LAYOUT) {
     for (const symbol of row) {
       if (!/^[A-Z]$/.test(symbol)) continue;
 
-      keyboard[symbol] = getLetterStatusFromHistory(symbol, state);
+      const result = getLetterStatusFromHistory(symbol, state);
+      keyboard[symbol] = result.status;
+      if (result.uncertain) uncertain[symbol] = true;
     }
   }
 
-  return keyboard;
+  return { keyboard, uncertain };
 }
 
 module.exports = {

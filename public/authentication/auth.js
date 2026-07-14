@@ -222,7 +222,16 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
 
     updateAccountUI();
     renderMenuAccountStatus();
-    showStartup();
+
+    // Supabase re-fires "SIGNED_IN" whenever a backgrounded tab regains
+    // focus (it revalidates the session), not just on an actual login —
+    // so this can't unconditionally jump to the startup screen, or it
+    // yanks the player out of a live game just from switching tabs. Only
+    // do that when there's no game to return to; maybeAutoRejoin() below
+    // handles getting back into one that exists.
+    if (!window.roomId && !localStorage.getItem("roomId")) {
+      showStartup();
+    }
 
     await loadMyProfile();
     window.profileReady = true;

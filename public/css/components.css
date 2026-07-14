@@ -281,6 +281,25 @@
   box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.18);
 }
 
+/* Count Only power: letter was guessed but its true color is hidden —
+   keep the default "unused" look (no green/yellow/gray) and just mark the
+   uncertainty with a small corner "?", mirroring the history tile's mark. */
+.key.key-uncertain {
+  position: relative;
+}
+.key.key-uncertain::after {
+  content: "?";
+  position: absolute;
+  bottom: 1px;
+  right: 3px;
+
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
 
 /* ENTER key — semantic, not positional */
 /* ENTER key — both roles */

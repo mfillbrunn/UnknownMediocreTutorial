@@ -291,7 +291,16 @@ if (guesser.length) {
   `;
 
   // ----------------------------
-  // Actions
+  // Round summaries ONLY (table removed)
+  // ----------------------------
+  html += `
+    <div id="roundDetails">
+      ${rounds.map((r, i) => renderStoredRoundSummary(r, i)).join("")}
+    </div>
+  `;
+
+  // ----------------------------
+  // Actions (bottom, below the round details)
   // ----------------------------
   html += `
     <div class="summary-actions">
@@ -304,14 +313,6 @@ if (guesser.length) {
     </div>
   `;
 
-  // ----------------------------
-  // Round summaries ONLY (table removed)
-  // ----------------------------
-  html += `
-    <div id="roundDetails">
-      ${rounds.map((r, i) => renderStoredRoundSummary(r, i)).join("")}
-    </div>
-  `;
   container.innerHTML = html;
 
   const leaveBtn = $("leaveSummaryBtn");

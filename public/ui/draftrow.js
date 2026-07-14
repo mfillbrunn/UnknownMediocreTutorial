@@ -29,6 +29,13 @@ window.renderDraftRows = function ({
     container.__draftRows.pending = makeRow();
     container.__draftRows.draft = makeRow();
 
+    // Start hidden via an explicit style, not just "never shown" — the
+    // wasVisible check below reads style.display, and an unset "" reads as
+    // visible, which skipped the entrance animation on a row's very first
+    // appearance in a fresh game.
+    container.__draftRows.pending.style.display = "none";
+    container.__draftRows.draft.style.display = "none";
+
     container.appendChild(container.__draftRows.pending);
     container.appendChild(container.__draftRows.draft);
   }
