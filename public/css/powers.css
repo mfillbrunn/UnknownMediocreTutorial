@@ -160,8 +160,17 @@ body.blind-guess .key:hover {
   --fb-b-bg: var(--tile-gray);
   --fb-a-text: var(--tile-gray-text);
   --fb-b-text: var(--tile-gray-text);
+}
 
-    animation-name: feedback-slide;
+/* history.css's ".history-row:not(.draft-row) .history-tile" sets the
+   `animation` shorthand (the one-time wordle-flip reveal) at higher
+   specificity (3 class-level selectors vs. 1 here) — a shorthand
+   overwrites every animation sub-property at once, so it was silently
+   winning over animation-name/duration/etc declared on .tile-feedback-slide
+   alone and feedback-slide never actually ran. Match/beat that
+   specificity so the infinite color-cycle animation actually applies. */
+.history-row:not(.draft-row) .history-tile.tile-feedback-slide {
+  animation-name: feedback-slide;
   animation-duration: 4.5s;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
@@ -230,49 +239,20 @@ body.blind-guess .key:hover {
 .secondary-green::before  { background: var(--tile-green); }
 .secondary-purple::before { background: var(--tile-purple); }
 
-.tile-feedback-slide {
-  position: relative;
-  overflow: hidden;
-}
-
-.tile-feedback-slide::before,
-.tile-feedback-slide::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  transition: none;
-}
-
-.tile-feedback-slide::before {
-  background: var(--fb-a-bg);
-  color: var(--fb-a-text);
-  animation: fb-fade-a 4.5s infinite ease-in-out;
-}
-
-.tile-feedback-slide::after {
-  background: var(--fb-b-bg);
-  color: var(--fb-b-text);
-  animation: fb-fade-b 4.5s infinite ease-in-out;
-}
-
-@keyframes fb-fade-a {
-  0%, 40%, 100% { opacity: 1; }
-  50%, 90%      { opacity: 0; }
-}
-
-@keyframes fb-fade-b {
-  0%, 40%, 100% { opacity: 0; }
-  50%, 90%      { opacity: 1; }
-}
-
-.tile-feedback-slide::before,
-.tile-feedback-slide::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
+/* Falsify Intel (fakeFeedback): the tile itself swaps between the two
+   possible feedback colors via the "feedback-slide" keyframe declared
+   above (background + color together, in lockstep, with !important so it
+   beats the base .tile-green/.tile-yellow/etc rules). This used to be
+   duplicated with a ::before/::after cross-fade overlay that (a) set
+   `color` on pseudo-elements with empty content, which does nothing
+   visible, so the letter never actually got the black text green/yellow
+   needs, and (b) had its ::after fought and overridden by the
+   higher-specificity flip-reveal mask rule in history.css, so the second
+   color never showed at all — just the mask's own dark background. The
+   single main-element animation below doesn't have either problem, so
+   the overlay was removed rather than patched.
+   .tile-letter needs its own z-index so it stays above the tile's own
+   background, matching every other tile-color path. */
 .tile-letter {
   position: relative;
   z-index: 2;

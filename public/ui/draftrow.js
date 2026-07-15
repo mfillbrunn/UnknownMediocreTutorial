@@ -112,13 +112,13 @@ window.renderDraftRows = function ({
 
     if (!canGuess && upperPending) {
       updateRow(pendingRow, upperPending, "draft-row pending-guess");
-      showRow(pendingRow, pendingWasVisible);
+      showRow(pendingRow, pendingWasVisible, "row-slide-in");
       return;
     }
 
     if (canGuess) {
       updateRow(draftRow, upperGuesserDraft, "draft-row guesser-draft");
-      showRow(draftRow, draftWasVisible);
+      showRow(draftRow, draftWasVisible, "row-slide-down");
     }
 
     return;
