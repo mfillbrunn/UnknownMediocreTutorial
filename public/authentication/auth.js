@@ -31,6 +31,13 @@ function authFullyReady() {
 
     updateAccountUI();
     renderMenuAccountStatus();
+
+    // Not logged in at all and came in on an invite link — surface the
+    // login/signup prompt now; the auth hooks below pick the join back
+    // up once they actually sign in.
+    if (!window.currentUser) {
+      window.maybeJoinPendingInvite?.();
+    }
   } catch (err) {
     if (!isAbortError(err)) console.error(err);
   } finally {
@@ -206,7 +213,10 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
 
       updateAccountUI();
       renderMenuAccountStatus();
-      maybeAutoRejoin();
+
+      if (!(window._pendingInviteCode && maybeJoinPendingInvite())) {
+        maybeAutoRejoin();
+      }
 
       // 🔁 retry loaders
       if (pendingLeaderboardMode) loadLeaderboard(pendingLeaderboardMode);
@@ -227,16 +237,19 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
     // focus (it revalidates the session), not just on an actual login —
     // so this can't unconditionally jump to the startup screen, or it
     // yanks the player out of a live game just from switching tabs. Only
-    // do that when there's no game to return to; maybeAutoRejoin() below
-    // handles getting back into one that exists.
-    if (!window.roomId && !localStorage.getItem("roomId")) {
+    // do that when there's no game to return to and no pending invite;
+    // maybeAutoRejoin()/maybeJoinPendingInvite() below handle getting
+    // into a game that exists.
+    if (!window._pendingInviteCode && !window.roomId && !localStorage.getItem("roomId")) {
       showStartup();
     }
 
     await loadMyProfile();
     window.profileReady = true;
 
-    maybeAutoRejoin();
+    if (!(window._pendingInviteCode && maybeJoinPendingInvite())) {
+      maybeAutoRejoin();
+    }
   }
 });
 

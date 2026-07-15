@@ -26,6 +26,15 @@ window.showScreen = (id) => {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 };
+
+// updateScreens()/onRejoinUI() only ever hide()/show() a fixed, small set
+// of game-related screens (lobby/menu/setterScreen/guesserScreen) — any
+// other menu screen the player happened to be on (My Games, Daily
+// Challenge, Friends, Account, ...) never got explicitly hidden, so it
+// stayed .active underneath the game. Sweep everything first.
+window.hideAllScreens = () => {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+};
 window.showStartup = function () {
   showScreen("startupScreen");
   document.body.classList.add("menu-mode");

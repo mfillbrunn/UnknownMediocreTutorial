@@ -416,6 +416,7 @@ function updateLobbyHeader() {
 // Screen Visibility
 // -----------------------------------------------------
 function updateScreens() {
+  hideAllScreens();
   if (state.phase === "lobby") {
     // Ranked matchmaking briefly puts the freshly-created room through the
     // normal lobby phase server-side (role/time-control setup) before both
@@ -1203,8 +1204,17 @@ function updateAppHeader(state) {
   const myId = myUserId();
   const opponentId = Object.keys(state.players || {}).find(id => id !== myId);
   const { points } = computeMatchResult(state, myId);
-  const myPoints = points[myId] || 0;
-  const oppPoints = opponentId ? points[opponentId] || 0 : 0;
+  let myPoints = points[myId] || 0;
+  let oppPoints = opponentId ? points[opponentId] || 0 : 0;
+
+  // computeMatchResult only tallies *completed* rounds — add the current
+  // round's live guess count (resets to 0 each round, +1 per guess) to
+  // whichever player is this round's Spy, the same way a completed
+  // round's points are scored, so the score counts up in real time.
+  if (typeof state.guessCount === "number") {
+    if (state.setter === myId) myPoints += state.guessCount;
+    else if (state.setter === opponentId) oppPoints += state.guessCount;
+  }
 
   // Numbers only, no "You:"/"Opp:" labels — which one is "you" is instead
   // conveyed the same way the rest of the UI already marks "you" (bright/

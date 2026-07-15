@@ -182,8 +182,9 @@ function onRejoinUI() {
   // Always leave startup/menu mode
   document.body.classList.remove("menu-mode");
 
-  hide("startupScreen");
-  hide("menu");
+  // Whatever menu screen the player was actually on (My Games, Daily
+  // Challenge, Friends, ...) needs to go too, not just startup/menu.
+  hideAllScreens();
 
   // Show lobby or game based on state (stateUpdate will follow)
   show("lobby");
