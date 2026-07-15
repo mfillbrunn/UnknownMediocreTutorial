@@ -137,6 +137,7 @@ function handleSimultaneousPhase(room, state, action, roomId, context) {
   state.phase = "normal";
   state.turn = state.guesser;
   state.powerUsedThisTurn = false;
+  state.setterDraft = "";
 
   if (state.timeControl.mode === "round") {
     resetRoundTimer(state);

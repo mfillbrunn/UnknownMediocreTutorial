@@ -102,6 +102,7 @@ function clearRoundState(state, actingRole) {
     if (state.powers?.magicModeActive) state.powers.magicModeActive = false;
     if (state.powers?.rouletteSecretActive) state.powers.rouletteSecretActive = false;
 
+    state.setterDraft = "";
     state.activeTimer = state.guesser;
     advanceTimer(state, state.setter);
     state.turn = state.guesser;
