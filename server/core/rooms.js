@@ -371,6 +371,13 @@ function cleanupDisconnectedPlayers(io, graceMs = 30000, context) {
   for (const [roomId, room] of Object.entries(rooms)) {
     if (!room || room.status !== "alive") continue;
 
+    // Unlimited-time games are meant to be played over however long it
+    // takes — a player closing the tab mid-turn isn't "leaving", so they
+    // never get auto-removed (or the room force-closed) just for being
+    // disconnected, even if every human is disconnected at once. They
+    // come back via the "My Games" list whenever it's next their turn.
+    if (room.state?.timeControl?.enabled === false) continue;
+
     if (!hasAnyHumanPlayers(room)) {
       if (!room.aiOnlySince) {
         room.aiOnlySince = now;

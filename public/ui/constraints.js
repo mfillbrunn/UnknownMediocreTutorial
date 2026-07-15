@@ -15,12 +15,20 @@ window.renderConstraintRow = function ({
 }) {
   if (state.powers?.blindGuessActive) return;
 
-  container.innerHTML = "";
-
   const grid = state.constraintData?.grid;
   if (!Array.isArray(grid) || grid.length !== 5) return;
 
   const bsIdx = state.powers?.blindSpotIndex;
+
+  // This gets called on every keystroke (typing a guess/secret doesn't
+  // change the constraints), but tearing the tiles down and recreating
+  // them retriggers their entrance animation via the fresh DOM nodes.
+  // Skip the rebuild entirely unless the actual constraint data changed.
+  const signature = JSON.stringify({ grid, bsIdx, isSetterView });
+  if (container.__constraintSignature === signature) return;
+  container.__constraintSignature = signature;
+
+  container.innerHTML = "";
 
   for (let i = 0; i < 5; i++) {
     const tile = document.createElement("div");

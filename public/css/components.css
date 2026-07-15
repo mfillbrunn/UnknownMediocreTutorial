@@ -349,21 +349,27 @@
   transform: translateX(-50%) translateY(40px);
   opacity: 0;
 
+  max-width: min(360px, 88vw);
   padding: var(--sp-12) var(--sp-22);
   font-size: var(--fs-18);
   font-weight: 700;
+  text-align: center;
 
-  border-radius: var(--r-10);
-  background: var(--toast-bg);
-  border: 1px solid var(--toast-border);
+  /* --toast-bg/--toast-border were never actually defined anywhere, so
+     this rendered with no background and no border at all — just
+     floating text. Match the same card look the power-use popup uses. */
+  border-radius: var(--r-14, 14px);
+  background: rgba(18, 19, 28, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
   color: #fff;
 
   transition:
   opacity 0.25s var(--ease-ui),
   transform 0.25s var(--ease-ui);
   z-index: 99999;
-  pointer-events: none;  
-  user-select: none;         
+  pointer-events: none;
+  user-select: none;
 }
 .toast.show {
   opacity: 1;

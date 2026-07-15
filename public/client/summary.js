@@ -120,6 +120,29 @@ function powerToInlineLabel(powerId) {
 
 
 
+// Lines the Share button up with whichever heading is currently showing
+// (the win/loss line in the match summary, "Round Summary" in the round
+// summary) instead of it sitting on its own row above everything.
+function positionShareButton() {
+  const btn = $("shareResultBtn");
+  const panel = btn?.closest(".panel");
+  if (!btn || !panel) return;
+
+  const heading = document.querySelector(
+    "#roundSummary .match-header h2, #roundSummary .summary-heading"
+  );
+  if (!heading) {
+    btn.style.top = "0";
+    return;
+  }
+
+  const panelRect = panel.getBoundingClientRect();
+  const headingRect = heading.getBoundingClientRect();
+  const top =
+    headingRect.top - panelRect.top + headingRect.height / 2 - btn.offsetHeight / 2;
+  btn.style.top = `${Math.max(0, top)}px`;
+}
+
 ///SUMMARY SCREEN ROUTER
 window.updateSummary = function updateSummary() {
   const container = $("roundSummary");
@@ -304,8 +327,8 @@ if (guesser.length) {
   // ----------------------------
   html += `
     <div class="summary-actions">
-      <button id="newMatchBtn" class="new-match-btn">
-        <span class="new-match-icon">⚡</span> New Match
+      <button id="newMatchBtn" class="primary-btn">
+        New Match
       </button>
       <button id="leaveSummaryBtn" class="secondary-btn danger">
         Leave
@@ -314,6 +337,7 @@ if (guesser.length) {
   `;
 
   container.innerHTML = html;
+  positionShareButton();
 
   const leaveBtn = $("leaveSummaryBtn");
   if (leaveBtn) {
@@ -495,6 +519,7 @@ html += `
   }
 
   container.innerHTML = html;
+  positionShareButton();
 
   const btn = $("nextRoundBtn");
   if (btn) {

@@ -17,6 +17,7 @@ const {
   emitRoomState,
   syncTurnOwners
 } = require("../rooms");
+const { markDailyStarted } = require("../dailyTracking");
 
 const SETTER_POWERS = [
   "hideTile",
@@ -193,6 +194,9 @@ if (action.type === "SET_DAILY_POWERS") {
   state._dailySetterPowers = action.setterPowers || null;
   state._dailyGuesserPowers = action.guesserPowers || null;
   state._dailyDate = action.date || null;
+  if (action.userId && action.date) {
+    markDailyStarted(action.userId, action.date, roomId);
+  }
   return;
 }
   if (action.type === "PLAYER_READY") {
@@ -252,7 +256,13 @@ if (action.type === "SET_DAILY_POWERS") {
      freshState._dailySetterPowers = state._dailySetterPowers || null;
      freshState._dailyGuesserPowers = state._dailyGuesserPowers || null;
      freshState._dailyDate = state._dailyDate || null;
-  
+     freshState.isDaily = !!(
+       state._dailySetterPowers &&
+       state._dailyGuesserPowers &&
+       state._dailyDate
+     );
+     freshState.dailyDate = state._dailyDate || null;
+
     room.state = freshState;
     state = freshState;
 

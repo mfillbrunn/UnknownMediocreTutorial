@@ -20,6 +20,31 @@ window.showDailyChallenge = async function () {
     return;
   }
 
+  const status = await new Promise(resolve => {
+    socket.emit(
+      "getDailyStatus",
+      { userId: window.currentUser.id, date: config.date },
+      resolve
+    );
+  });
+
+  if (status?.status === "completed") {
+    screen.innerHTML = `<div class="menu-center">
+      <h2 class="menu-title">Daily Challenge</h2>
+      <p class="daily-date">☀️ ${config.date}</p>
+      <p class="daily-completed-msg">
+        You've already played today's challenge. Come back tomorrow!
+      </p>
+      <button class="menu-btn" onclick="showStartup()">Back</button>
+    </div>`;
+    return;
+  }
+
+  if (status?.status === "in-progress" && status.roomId) {
+    _resumeDailyGame(status.roomId);
+    return;
+  }
+
   const spyPills = (config.setterPowers || []).map(p => {
     const m = window.POWER_METADATA?.[p];
     return `<span class="daily-power-pill spy">${m?.emoji || ""} ${m?.label || p}</span>`;
@@ -88,10 +113,38 @@ function _startDailyGame(config) {
       });
     }, 80);
 
+    // Daily Challenge always runs with no time limit.
+    setTimeout(() => {
+      sendGameAction({ type: "SET_TIME_CONTROL", enabled: false, userId: window.currentUser.id });
+    }, 110);
+
     setTimeout(() => {
       sendGameAction({ type: "PLAYER_READY", userId: window.currentUser.id, mode: "daily" });
-    }, 120);
+    }, 150);
 
     enterLobbyAfterJoin();
   });
+}
+
+// Rejoin an in-progress daily-challenge room instead of starting a new one
+// (e.g. the player left mid-game and came back later the same day).
+function _resumeDailyGame(roomId) {
+  const username = window.myProfile?.username || window.currentUser?.email || "Player";
+
+  window.roomId = roomId;
+  persistRoom(roomId);
+
+  socket.emit(
+    "joinRoom",
+    { roomId, userId: window.currentUser.id, name: username },
+    res => {
+      if (!res?.ok) {
+        toast(res?.error || "Could not resume today's challenge");
+        showStartup();
+        return;
+      }
+      window.roomId = res.roomId || roomId;
+      onRejoinUI();
+    }
+  );
 }

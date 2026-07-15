@@ -56,7 +56,8 @@ function renderMenuAccountStatus () {
   const elo = p
     ? `🚀 ${p.rating_bullet}
        ⚡ ${p.rating_blitz}
-       🧠 ${p.rating_deep}`
+       🧠 ${p.rating_deep}
+       ♾️ ${p.rating_notime}`
     : "Loading rating…";
 
   el.innerHTML = `

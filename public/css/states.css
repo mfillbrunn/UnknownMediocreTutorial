@@ -23,6 +23,12 @@
 .draft-shake {
   animation: draft-shake 220ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Generic shake() helper (client.js) — was adding/removing this class with
+   no matching CSS anywhere, so it never actually did anything. */
+.shake {
+  animation: draft-shake 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
 .theme-setter .key.key-gray:hover,
 .theme-setter .key.key-gray:active {
  transform: none;

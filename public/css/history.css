@@ -102,6 +102,12 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   animation: draft-row-slide-in 340ms var(--ease-ui, ease-out) both;
 }
 
+/* Guesser's own draft submitting: the just-typed guess slides out to the
+   right as it hands off to the pending/locked state. */
+.draft-row.row-slide-out {
+  animation: draft-row-slide-out 340ms var(--ease-ui, ease-out) both;
+}
+
 @keyframes draft-row-slide-down {
   0%   { opacity: 0; transform: translateY(-18px); }
   100% { opacity: 1; transform: translateY(0); }
@@ -112,9 +118,15 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   100% { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes draft-row-slide-out {
+  0%   { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(28px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .draft-row.row-slide-down,
-  .draft-row.row-slide-in {
+  .draft-row.row-slide-in,
+  .draft-row.row-slide-out {
     animation: none;
   }
 }
@@ -201,35 +213,31 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 }
 
 /* Preview tiles are a *guess* at what the real feedback will be, not a
-   confirmed result — an opaque fill reads as confirmed (same look as an
-   evaluated tile) no matter how low the opacity goes. Signal "tentative"
-   with a colored outline/glow on an otherwise unfilled tile instead, so
-   it's visually distinct from a real green/yellow/gray tile rather than
-   just a fainter version of the same thing. */
+   confirmed result. They look exactly like a real solved tile (full
+   color, normal text) — the only "this is tentative" signal is a gentle
+   pulse, not a dimmed/faded fill. */
 .theme-setter
 #draftSetter
 .pending-guess
 .history-tile.preview-green {
-  background: transparent;
-  color: var(--tile-gray-text);
-  border: 2px solid color-mix(in srgb, var(--tile-green) 55%, transparent);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--tile-green) 30%, transparent);
+  background: var(--tile-green) !important;
+  color: var(--tile-green-text) !important;
+  border: none;
+  box-shadow: none;
   opacity: 1;
-   animation: preview-green-pulse 2.2s  ease-in-out infinite;
-   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+  animation: preview-pulse 4.4s ease-in-out infinite;
 }
 
 .theme-setter
 #draftSetter
 .pending-guess
 .history-tile.preview-yellow {
-  background: transparent;
-  color: var(--tile-gray-text);
-  border: 2px solid color-mix(in srgb, var(--tile-yellow) 55%, transparent);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--tile-yellow) 30%, transparent);
+  background: var(--tile-yellow) !important;
+  color: var(--tile-yellow-text) !important;
+  border: none;
+  box-shadow: none;
   opacity: 1;
-   animation: preview-yellow-pulse 2.2s ease-in-out infinite;
-   animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+  animation: preview-pulse 4.4s ease-in-out infinite;
 }
 
 
@@ -237,11 +245,12 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 #draftSetter
 .pending-guess
 .history-tile.preview-gray {
-  background: transparent;
-  color: var(--tile-gray-text);
-  border: 2px dashed rgba(255, 255, 255, 0.25);
+  background: var(--tile-gray) !important;
+  color: var(--tile-gray-text) !important;
+  border: none;
   box-shadow: none;
   opacity: 1;
+  animation: preview-pulse 4.4s ease-in-out infinite;
 }
 #draftSetter {
   display: flex;
