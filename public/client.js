@@ -368,6 +368,7 @@ onStateUpdate(newState => {
   updatePowerInfoState(state);
   updateTimerVisibility();
   updateAppHeader(state);
+  updateLeaveGameButtons(state);
   updateLobbyHeader();
   updateGuideBanner();
   updateUI();
@@ -1178,21 +1179,41 @@ function updateAppHeader(state) {
 
   roomCodeEl.textContent = state.roomCode || "";
 
-  let roleLabel = "";
-  let roleClass = "";
+  // Spy/Inspector duplicated what the screen title + tile colors already
+  // show. A running score reads at a glance and is actually new
+  // information — how many guesses each of you has needed so far.
+  if (state.phase === "gameOver" || state.phase === "lobby") {
+    roleBadgeEl.textContent = "";
+    roleBadgeEl.className = "role-badge header-role-badge";
+    return;
+  }
 
-  if (myUserId() === state.setter) {
-    roleLabel = "SPY";
-    roleClass = "role-setter";
-  } else if (myUserId() === state.guesser) {
-    roleLabel = "INSPECTOR";
-    roleClass = "role-guesser";
-  }
-  if (state.phase ==="gameOver")
-  {
-    roleLabel = "";
-    roleClass = "";
-  }
-  roleBadgeEl.textContent = roleLabel;
-  roleBadgeEl.className = `role-badge header-role-badge ${roleClass}`;
+  const myId = myUserId();
+  const opponentId = Object.keys(state.players || {}).find(id => id !== myId);
+  const { points } = computeMatchResult(state, myId);
+  const myPoints = points[myId] || 0;
+  const oppPoints = opponentId ? points[opponentId] || 0 : 0;
+
+  roleBadgeEl.textContent = `You: ${myPoints}  Opp: ${oppPoints}`;
+  roleBadgeEl.className = "role-badge header-role-badge";
 }
+
+// Unlimited-time games are meant to be stepped away from and resumed
+// later (see "My Games") — surface an explicit, safe way to do that
+// instead of relying on just closing the tab.
+function updateLeaveGameButtons(state) {
+  const show = !!state && state.timeControl?.enabled === false && !state.gameOver;
+  document.querySelectorAll(".leave-game-btn").forEach(btn => {
+    btn.classList.toggle("hidden", !show);
+  });
+}
+
+document.querySelectorAll(".leave-game-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    byId("tutorialBubble")?.classList.add("hidden");
+    // Just step away — the room stays alive server-side (unlimited-time
+    // rooms are exempt from disconnect cleanup) so it shows back up in
+    // "My Games" whenever the player wants to resume it.
+    clearRoom();
+  });
+});

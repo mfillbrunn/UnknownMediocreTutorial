@@ -112,18 +112,14 @@ window.renderDraftRows = function ({
 
     if (!canGuess && upperPending) {
       updateRow(pendingRow, upperPending, "draft-row pending-guess");
-      // No slide-in here — this is the guesser's own guess locking in
-      // right after they submitted it, not new/incoming data. The
-      // slide-in is for content that genuinely just arrived (the
-      // setter's view of it, or the guesser's own draft box appearing
-      // at the start of their turn below).
-      showRow(pendingRow, pendingWasVisible);
 
-      // The guesser's own draft row was just visible — they hit submit.
-      // Slide it out to the right instead of just vanishing, then hide
-      // it once the animation finishes (the default "hide by default"
-      // above already set display:none instantly, so bring it back for
-      // the outro).
+      // pendingRow and draftRow are separate, stacked rows — revealing
+      // pendingRow immediately while draftRow (holding the same text)
+      // slides out underneath it showed the guess twice at once, which
+      // read as the row duplicating, dropping down, then sliding away.
+      // Only one of the two should ever be visible at a time: keep
+      // pendingRow hidden until the outro finishes, or reveal it right
+      // away if there's nothing to animate out.
       if (draftWasVisible) {
         draftRow.style.display = "";
         draftRow.classList.remove("row-slide-out");
@@ -135,9 +131,12 @@ window.renderDraftRows = function ({
             draftRow.style.display = "none";
             draftRow.classList.remove("row-slide-out");
             draftRow.removeEventListener("animationend", onSlideOutEnd);
+            showRow(pendingRow, false);
           },
           { once: true }
         );
+      } else {
+        showRow(pendingRow, pendingWasVisible);
       }
       return;
     }
