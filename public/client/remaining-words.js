@@ -10,6 +10,13 @@ function renderSetterRemainingBox(boxState) {
 
   box.hidden = false;
 
+  // Toggling the guide re-renders this box purely to add/remove the hint
+  // line — it has to reuse the last real numbers, not whatever the most
+  // recent full state broadcast happened to carry (that can be stale
+  // relative to a live-typed draft, which arrives via a separate event
+  // that never touches window.state).
+  window._lastRemainingBoxState = boxState;
+
   const oldStyle = boxState.highlightOld ? "color: var(--tile-green)" : "";
   const newStyle = boxState.highlightNew ? "color: var(--tile-green)" : "";
   const current = boxState.current.toLocaleString();
