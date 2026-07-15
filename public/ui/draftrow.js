@@ -56,9 +56,23 @@ window.renderDraftRows = function ({
       state.turn === state.setter &&
       state.powers?.freezeActive;
 
+    // Every keystroke while typing a guess/secret calls back into this via
+    // updateUI(), re-running this render far more often than the row's own
+    // entrance animation (340ms) takes to finish. Overwriting className
+    // wholesale each time stripped the animation class mid-flight, so it
+    // visually never got to play. Carry over any slide class already in
+    // progress instead of dropping it.
+    const inFlightAnim = ["row-slide-in", "row-slide-down"].filter(c =>
+      row.classList.contains(c)
+    );
+
     row.className = frozen
       ? "history-row draft-row freeze-draft"
       : `history-row ${className}`;
+
+    if (!frozen && inFlightAnim.length) {
+      row.classList.add(...inFlightAnim);
+    }
 
     for (let i = 0; i < 5; i++) {
       row.__tiles[i].textContent = word[i] || "";

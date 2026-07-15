@@ -65,6 +65,7 @@ function endGame(state, roomId, io, room, context) {
     else if (n >= 3) penalty = 6;
 
     state.guessCount += penalty;
+    state.powers.revealPenaltyCount = n;
   }
 
   
