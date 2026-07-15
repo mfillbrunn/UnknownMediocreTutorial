@@ -102,12 +102,6 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   animation: draft-row-slide-in 340ms var(--ease-ui, ease-out) both;
 }
 
-/* Guesser's own draft submitting: the just-typed guess slides out to the
-   right as it hands off to the pending/locked state. */
-.draft-row.row-slide-out {
-  animation: draft-row-slide-out 340ms var(--ease-ui, ease-out) both;
-}
-
 @keyframes draft-row-slide-down {
   0%   { opacity: 0; transform: translateY(-18px); }
   100% { opacity: 1; transform: translateY(0); }
@@ -118,15 +112,21 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   100% { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes draft-row-slide-out {
-  0%   { opacity: 1; transform: translateX(0); }
-  100% { opacity: 0; transform: translateX(100%); }
+@media (prefers-reduced-motion: reduce) {
+  .draft-row.row-slide-down,
+  .draft-row.row-slide-in {
+    animation: none;
+  }
+}
+
+/* Guesser's own submitted guess, waiting on the setter to respond — stays
+   in place (no slide-away) and pulses gently instead. */
+.draft-row.pending-guess.row-pulse-wait .history-tile {
+  animation: draft-pulse-wait 1.8s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .draft-row.row-slide-down,
-  .draft-row.row-slide-in,
-  .draft-row.row-slide-out {
+  .draft-row.pending-guess.row-pulse-wait .history-tile {
     animation: none;
   }
 }
@@ -225,7 +225,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   border: none;
   box-shadow: none;
   opacity: 1;
-  animation: preview-pulse 4.4s ease-in-out infinite;
+  animation: preview-pulse 1.8s ease-in-out infinite;
 }
 
 .theme-setter
@@ -237,7 +237,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   border: none;
   box-shadow: none;
   opacity: 1;
-  animation: preview-pulse 4.4s ease-in-out infinite;
+  animation: preview-pulse 1.8s ease-in-out infinite;
 }
 
 
@@ -250,7 +250,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   border: none;
   box-shadow: none;
   opacity: 1;
-  animation: preview-pulse 4.4s ease-in-out infinite;
+  animation: preview-pulse 1.8s ease-in-out infinite;
 }
 #draftSetter {
   display: flex;

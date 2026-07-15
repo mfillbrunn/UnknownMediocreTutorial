@@ -111,39 +111,13 @@ window.renderDraftRows = function ({
       (state.phase === "normal" && state.turn === state.guesser);
 
     if (!canGuess && upperPending) {
-      updateRow(pendingRow, upperPending, "draft-row pending-guess");
-
-      // pendingRow and draftRow are separate, stacked rows — revealing
-      // pendingRow immediately while draftRow (holding the same text)
-      // slides out underneath it showed the guess twice at once, which
-      // read as the row duplicating, dropping down, then sliding away.
-      // Only one of the two should ever be visible at a time: keep
-      // pendingRow hidden until the outro finishes, or reveal it right
-      // away if there's nothing to animate out.
-      if (draftWasVisible) {
-        draftRow.style.display = "";
-        draftRow.classList.remove("row-slide-out");
-        void draftRow.offsetWidth; // restart animation
-        draftRow.classList.add("row-slide-out");
-        draftRow.addEventListener(
-          "animationend",
-          function onSlideOutEnd() {
-            draftRow.style.display = "none";
-            draftRow.classList.remove("row-slide-out");
-            draftRow.removeEventListener("animationend", onSlideOutEnd);
-            // Clear the draft row's own content now that it's off-screen
-            // — it otherwise silently kept showing the just-submitted
-            // guess in its hidden tiles (this whole branch never touches
-            // draftRow's content again until it's genuinely retyped into).
-            updateRow(draftRow, "", "draft-row guesser-draft");
-            showRow(pendingRow, false);
-          },
-          { once: true }
-        );
-      } else {
-        updateRow(draftRow, "", "draft-row guesser-draft");
-        showRow(pendingRow, pendingWasVisible);
-      }
+      // The just-submitted guess stays right where it was typed instead
+      // of sliding off to a separate row — just restyle it in place as
+      // "waiting on the setter", pulsing gently while it's their turn to
+      // respond (reaching this branch at all means it's their turn).
+      // pendingRow is unused here (guesser has no need for a second row).
+      updateRow(draftRow, upperPending, "draft-row pending-guess row-pulse-wait");
+      showRow(draftRow, draftWasVisible);
       return;
     }
 
