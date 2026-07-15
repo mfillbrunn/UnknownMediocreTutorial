@@ -114,13 +114,13 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 }
 
 @keyframes draft-row-slide-in {
-  0%   { opacity: 0; transform: translateX(-28px); }
+  0%   { opacity: 0; transform: translateX(-100%); }
   100% { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes draft-row-slide-out {
   0%   { opacity: 1; transform: translateX(0); }
-  100% { opacity: 0; transform: translateX(28px); }
+  100% { opacity: 0; transform: translateX(100%); }
 }
 
 @media (prefers-reduced-motion: reduce) {

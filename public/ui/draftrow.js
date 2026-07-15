@@ -131,11 +131,17 @@ window.renderDraftRows = function ({
             draftRow.style.display = "none";
             draftRow.classList.remove("row-slide-out");
             draftRow.removeEventListener("animationend", onSlideOutEnd);
+            // Clear the draft row's own content now that it's off-screen
+            // — it otherwise silently kept showing the just-submitted
+            // guess in its hidden tiles (this whole branch never touches
+            // draftRow's content again until it's genuinely retyped into).
+            updateRow(draftRow, "", "draft-row guesser-draft");
             showRow(pendingRow, false);
           },
           { once: true }
         );
       } else {
+        updateRow(draftRow, "", "draft-row guesser-draft");
         showRow(pendingRow, pendingWasVisible);
       }
       return;
