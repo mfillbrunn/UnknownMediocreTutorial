@@ -138,26 +138,24 @@
   }
 }
 @keyframes preview-green-pulse {
-  0% {
-    background-color: color-mix(in srgb, var(--tile-green) 14%, #000);
+  0%, 100% {
+    border-color: color-mix(in srgb, var(--tile-green) 40%, transparent);
+    box-shadow: 0 0 4px color-mix(in srgb, var(--tile-green) 18%, transparent);
   }
   50% {
-    background-color: color-mix(in srgb, var(--tile-green) 36%, #000);
-  }
-  100% {
-    background-color: color-mix(in srgb, var(--tile-green) 14%, #000);
+    border-color: color-mix(in srgb, var(--tile-green) 75%, transparent);
+    box-shadow: 0 0 9px color-mix(in srgb, var(--tile-green) 45%, transparent);
   }
 }
 
 @keyframes preview-yellow-pulse {
-  0% {
-    background-color: color-mix(in srgb, var(--tile-yellow) 14%, #000);
+  0%, 100% {
+    border-color: color-mix(in srgb, var(--tile-yellow) 40%, transparent);
+    box-shadow: 0 0 4px color-mix(in srgb, var(--tile-yellow) 18%, transparent);
   }
   50% {
-    background-color: color-mix(in srgb, var(--tile-yellow) 36%, #000);
-  }
-  100% {
-    background-color: color-mix(in srgb, var(--tile-yellow) 14%, #000);
+    border-color: color-mix(in srgb, var(--tile-yellow) 75%, transparent);
+    box-shadow: 0 0 9px color-mix(in srgb, var(--tile-yellow) 45%, transparent);
   }
 }
 @keyframes preview-swoosh {
