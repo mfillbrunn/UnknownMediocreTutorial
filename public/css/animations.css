@@ -145,8 +145,20 @@
     filter: brightness(1);
   }
   50% {
-    transform: scale(1.05);
-    filter: brightness(1.2);
+    transform: scale(1.08);
+    filter: brightness(1.3);
+  }
+}
+
+/* Guesser's submitted guess, waiting on the setter to respond — a gentle
+   scale-only pulse (no filter change, so it doesn't fight the
+   is-not-your-turn grayscale/dim styling applied to the same tiles). */
+@keyframes draft-pulse-wait {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
   }
 }
 @keyframes preview-swoosh {
