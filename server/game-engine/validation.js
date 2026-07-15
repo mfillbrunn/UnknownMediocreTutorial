@@ -177,7 +177,7 @@ function satisfiesForceGuess(g, forceGuess) {
       return g.endsWith(forceGuess.letter.toUpperCase());
 
     case "doubleLetter":
-      return hasDoubleLetter(g);
+      return g.includes(forceGuess.letter.toUpperCase().repeat(2));
 
     case "minVowels":
       return countVowels(g) >= forceGuess.count;
@@ -204,7 +204,4 @@ function isPalindrome(word) {
   return word === word.split("").reverse().join("");
 }
 
-function hasDoubleLetter(word) {
-  return /(.)\1/.test(word);
-}
 module.exports = { checkSecret,checkGuess, parseWordlist,satisfiesForceGuess  };

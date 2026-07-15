@@ -60,6 +60,14 @@ function getRemainingWordInfo(state, allowedSecrets, draftSecret) {
 
   const history = Array.isArray(state.history) ? state.history : [];
 
+  // Stealth Guess hides the guess/feedback text from the setter, but the
+  // remaining-word count was still being computed from the real,
+  // unmasked history — silently leaking the same information back
+  // through the numbers instead. Hide the count for that one round too.
+  if (history[history.length - 1]?.stealthApplied) {
+    return { current: null, old: -1, new: -1, hiddenByStealth: true };
+  }
+
   // Compute current remaining — full list if no history yet
   let current;
   if (history.length === 0) {
@@ -99,7 +107,25 @@ function buildSetterRemainingBoxState(state, viewerId, allowedSecrets, draftSecr
   }
 
   const info = getRemainingWordInfo(state, allowedSecrets, draftSecret);
-  if (!info || info.current == null) {
+  if (!info) {
+    return { visible: false };
+  }
+
+  // Stay visible so the setter isn't tipped off that something's
+  // different this round — just show "?" instead of real numbers.
+  if (info.hiddenByStealth) {
+    return {
+      visible: true,
+      current: "?",
+      old: null,
+      new: null,
+      isConsistent: true,
+      highlightOld: false,
+      highlightNew: false
+    };
+  }
+
+  if (info.current == null) {
     return { visible: false };
   }
 

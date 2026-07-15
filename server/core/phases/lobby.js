@@ -246,6 +246,7 @@ if (action.type === "SET_DAILY_POWERS") {
 
     freshState.hostUserId = state.hostUserId;
     freshState.ranked = state.ranked;
+    freshState.matchStartedAt = Date.now();
     freshState.shuffle = state.shuffle;
     freshState.timeControl = { ...state.timeControl };
     freshState.powerCount = state.powerCount;

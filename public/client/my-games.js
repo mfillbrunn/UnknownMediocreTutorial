@@ -28,18 +28,25 @@ window.showMyGames = async function () {
     return;
   }
 
-  const rows = games.map(g => `
-    <button class="my-game-row ${g.isMyTurn ? "your-turn" : ""}" data-room-id="${g.roomId}">
-      <span class="my-game-opponent">vs ${g.opponentName}</span>
-      <span class="my-game-turn-badge">${g.isMyTurn ? "Your turn" : "Waiting…"}</span>
-    </button>
-  `).join("");
+  const casual = games.filter(g => !g.ranked);
+  const ranked = games.filter(g => g.ranked);
+
+  const section = (title, list) => {
+    if (!list.length) return "";
+    return `
+      <div class="my-games-section">
+        <h3 class="my-games-section-title">${title}</h3>
+        <div class="my-games-list">${list.map(_renderGameRow).join("")}</div>
+      </div>
+    `;
+  };
 
   screen.innerHTML = `
     <div class="menu-center">
       <h2 class="menu-title">My Games</h2>
       <p class="daily-date">♾️ Unlimited-time games in progress</p>
-      <div class="my-games-list">${rows}</div>
+      ${section("Casual", casual)}
+      ${section("Ranked", ranked)}
       <button class="menu-btn" onclick="showStartup()">Back</button>
     </div>
   `;
@@ -47,7 +54,35 @@ window.showMyGames = async function () {
   screen.querySelectorAll(".my-game-row").forEach(btn => {
     btn.addEventListener("click", () => _resumeMyGame(btn.dataset.roomId));
   });
+
+  screen.querySelectorAll(".my-game-abandon-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      _abandonMyGame(btn.dataset.roomId);
+    });
+  });
 };
+
+function _formatStartDate(ts) {
+  if (!ts) return "";
+  return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function _renderGameRow(g) {
+  const dateLabel = _formatStartDate(g.startedAt);
+  return `
+    <div class="my-game-row-wrap">
+      <button class="my-game-row ${g.isMyTurn ? "your-turn" : ""}" data-room-id="${g.roomId}">
+        <span class="my-game-main">
+          <span class="my-game-opponent">vs ${g.opponentName}</span>
+          ${dateLabel ? `<span class="my-game-date">Started ${dateLabel}</span>` : ""}
+        </span>
+        <span class="my-game-turn-badge">${g.isMyTurn ? "Your turn" : "Waiting…"}</span>
+      </button>
+      ${g.ranked ? "" : `<button class="my-game-abandon-btn" data-room-id="${g.roomId}" title="End this game for good">Abandon</button>`}
+    </div>
+  `;
+}
 
 function _resumeMyGame(roomId) {
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
@@ -66,6 +101,23 @@ function _resumeMyGame(roomId) {
       }
       window.roomId = res.roomId || roomId;
       onRejoinUI();
+    }
+  );
+}
+
+function _abandonMyGame(roomId) {
+  if (!confirm("Abandon this game for good? This can't be undone.")) return;
+
+  socket.emit(
+    "abandonGame",
+    { roomId, userId: window.currentUser.id },
+    res => {
+      if (!res?.ok) {
+        toast(res?.error || "Could not abandon that game");
+        return;
+      }
+      toast("Game abandoned");
+      window.showMyGames();
     }
   );
 }

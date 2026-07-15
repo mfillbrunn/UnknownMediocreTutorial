@@ -548,30 +548,26 @@ renderDraftRows({
 
 ///SETTER FEEDBACK PREVIEW FUNCTION
 function updateSetterPreview() {
-  if (state.powers?.rouletteSecretActive || state.powers?.stealthGuessActive){return;}
+  if (state.powers?.rouletteSecretActive || state.powers?.stealthGuessActive){
+    clearSetterPreview();
+    return;
+  }
  // If stealth is active, hide preview entirely
   const guess = state.pendingGuess;
-  if (!guess) return;
+  if (!guess) { clearSetterPreview(); return; }
   const isSetterTurn = state.turn === state.setter;
-  if (!isSetterTurn) return;
+  if (!isSetterTurn) { clearSetterPreview(); return; }
   const typed = (state.setterDraft || "").toUpperCase();
-  let isIncomplete = false;
-  clearSetterPreview();
+  let fb, isIncomplete = false;
   if (typed.length === 5) {
-    const fb = predictFeedback(typed, guess);
-    applyPreviewFeedback(fb);
+    fb = predictFeedback(typed, guess);
   } else if (typed.length === 0) {
-    const fbSame = predictFeedback(state.secret, guess);
-    applyPreviewFeedback(fbSame);
-  } else if (typed.length >= 1) {
-    const fbIncomplete = predictFeedbackIncomplete(typed, guess);
-    applyPreviewFeedback(fbIncomplete);
+    fb = predictFeedback(state.secret, guess);
+  } else {
+    fb = predictFeedbackIncomplete(typed, guess);
     isIncomplete = true;
   }
-  if (isIncomplete) {
-    const tiles = document.querySelectorAll("#draftSetter .pending-guess .history-tile");
-    tiles.forEach(t => t.classList.add("preview-incomplete"));
-  }
+  applyPreviewFeedback(fb, isIncomplete);
 }
 function clearSetterPreview() {
   const tiles = document.querySelectorAll("#draftSetter .pending-guess .history-tile");
@@ -584,15 +580,31 @@ function clearSetterPreview() {
     );
   });
 }
-function applyPreviewFeedback(fbArray) {
+const PREVIEW_CLASSES = ["preview-green", "preview-yellow", "preview-gray", "preview-incomplete"];
+function applyPreviewFeedback(fbArray, isIncomplete = false) {
   if (state.powers.stealthGuessActive){return;}
   const tiles = document.querySelectorAll("#draftSetter .pending-guess .history-tile");
   fbArray.forEach((fb, i) => {
     const tile = tiles[i];
     if (!tile) return;
-    if (fb === "🟩") tile.classList.add("preview-green");
-    else if (fb === "🟨") tile.classList.add("preview-yellow");
-    else tile.classList.add("preview-gray");
+
+    const colorClass =
+      fb === "🟩" ? "preview-green" :
+      fb === "🟨" ? "preview-yellow" :
+      "preview-gray";
+    const desired = isIncomplete ? [colorClass, "preview-incomplete"] : [colorClass];
+
+    // This runs on every keystroke/render — removing and re-adding an
+    // animated class restarts its animation, so only touch the DOM when
+    // the actual desired classes changed (otherwise the pulse never gets
+    // to finish even one cycle).
+    const current = PREVIEW_CLASSES.filter(c => tile.classList.contains(c));
+    const same =
+      current.length === desired.length && desired.every(c => current.includes(c));
+    if (same) return;
+
+    tile.classList.remove(...PREVIEW_CLASSES);
+    tile.classList.add(...desired);
   });
 }
 ///SETTER INPUT
@@ -1194,7 +1206,10 @@ function updateAppHeader(state) {
   const myPoints = points[myId] || 0;
   const oppPoints = opponentId ? points[opponentId] || 0 : 0;
 
-  roleBadgeEl.textContent = `You: ${myPoints}  Opp: ${oppPoints}`;
+  // Numbers only, no "You:"/"Opp:" labels — which one is "you" is instead
+  // conveyed the same way the rest of the UI already marks "you" (bright/
+  // bold vs. dim), so it stays readable without spelling it out.
+  roleBadgeEl.innerHTML = `<span class="score-you">${myPoints}</span><span class="score-sep">–</span><span class="score-opp">${oppPoints}</span>`;
   roleBadgeEl.className = "role-badge header-role-badge";
 }
 

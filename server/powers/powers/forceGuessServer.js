@@ -18,11 +18,15 @@ try {
 }
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
+// "containsTwo" used to exist alongside "doubleLetter" as a separate
+// entry here, but both represent the exact same restriction ("contains
+// a doubled letter") — having both meant two of the three offered
+// options could both end up as "Double letter", which reads as a
+// duplicate.
 const COMMON = [
-  "containsTwo",
+  "doubleLetter",
   "startsWith",
   "endsWith",
-  "doubleLetter",
   "firstLastSame"
 ];
 const MIN_DOUBLE_LETTER_SOLUTIONS = 25;
@@ -58,7 +62,7 @@ function generateforceGuessOptions(state) {
 
   // Generate initial options
   const rawOptions = types.map(type => {
-    if (type === "containsTwo") {
+    if (type === "doubleLetter") {
       return generateSafeDoubleLetter(ALLOWED_GUESSES);
     }
     if (type === "startsWith" || type === "endsWith") {
@@ -93,7 +97,7 @@ function generateforceGuessOptions(state) {
     if (options.length >= 3) break;
 
     let o;
-    if (type === "containsTwo" || type === "doubleLetter") {
+    if (type === "doubleLetter") {
       o = generateSafeDoubleLetter(ALLOWED_GUESSES);
     } else if (type === "startsWith" || type === "endsWith") {
       const [l] = pickLetters(state, 1);

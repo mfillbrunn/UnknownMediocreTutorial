@@ -430,15 +430,35 @@
 }
 
 /* ── My Games (unlimited-time games in progress) ─────────────────────── */
+.my-games-section {
+  width: 280px;
+  margin: 4px 0;
+}
+
+.my-games-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin: 0 0 var(--sp-8) 2px;
+  text-align: left;
+}
+
 .my-games-list {
   display: flex;
   flex-direction: column;
   gap: var(--sp-10);
-  width: 280px;
-  margin: 4px 0 4px;
+}
+
+.my-game-row-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-8);
 }
 
 .my-game-row {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -462,8 +482,22 @@
   border-color: color-mix(in srgb, var(--tile-green) 55%, transparent);
 }
 
+.my-game-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .my-game-opponent {
   font-size: var(--fs-14);
+}
+
+.my-game-date {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.55;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .my-game-turn-badge {
@@ -477,6 +511,25 @@
 .my-game-row.your-turn .my-game-turn-badge {
   color: var(--tile-green);
   opacity: 1;
+}
+
+.my-game-abandon-btn {
+  flex-shrink: 0;
+  padding: 0 var(--sp-10);
+  border-radius: var(--r-8);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, #f87171 45%, transparent);
+  color: #f87171;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s var(--ease-ui);
+}
+
+.my-game-abandon-btn:hover {
+  background: color-mix(in srgb, #f87171 12%, transparent);
 }
 
 /* ── Friends screen ──────────────────────────────────────────────────── */

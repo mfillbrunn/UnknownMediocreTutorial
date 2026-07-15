@@ -85,14 +85,12 @@ function highlightRareBonusTile(i, letter) {
 
 function formatforceGuessOption(o) {
   switch (o.type) {
-    case "containsTwo":
-      return `Contains ${o.letters.join(" + ")}`;
     case "startsWith":
       return `Starts with ${o.letter}`;
     case "endsWith":
       return `Ends with ${o.letter}`;
     case "doubleLetter":
-      return "Double letter";
+      return `Double letter (${o.letter})`;
     case "minVowels":
       return "At least 3 vowels";
     case "maxVowels":
@@ -134,7 +132,7 @@ function satisfiesforceGuess(g, forceGuess) {
     case "endsWith":
       return g.endsWith(forceGuess.letter.toUpperCase());
     case "doubleLetter":
-      return hasDoubleLetter(g);
+      return g.includes(forceGuess.letter.toUpperCase().repeat(2));
     case "minVowels":
       return countVowels(g) >= forceGuess.count;
     case "maxVowels":
@@ -154,10 +152,6 @@ function countVowels(word) {
 
 function isPalindrome(word) {
   return word === word.split("").reverse().join("");
-}
-
-function hasDoubleLetter(word) {
-  return /(.)\1/.test(word);
 }
 
 ///ASSASSIN LISTENER
