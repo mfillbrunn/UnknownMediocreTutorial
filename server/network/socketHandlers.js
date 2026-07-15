@@ -9,7 +9,8 @@ const {
   getPlayerByUserId,
   getPlayerState,
   setPlayerName,
-  emitRoomState
+  emitRoomState,
+  forceCloseRoom
 } = require("../core/rooms");
 const { startGameTimer } = require("../core/timeouts/timeoutController");
 const { stopAllRoomIntervals } = require("../utils/teardown");
@@ -59,7 +60,9 @@ module.exports = function registerSocketHandlers(io, context) {
           opponentName: opponent?.name || (opponent?.isAI ? "AI" : "Opponent"),
           myRole: me.role,
           isMyTurn,
-          phase: state.phase
+          phase: state.phase,
+          ranked: !!state.ranked,
+          startedAt: state.matchStartedAt || null
         });
       }
 
@@ -67,6 +70,23 @@ module.exports = function registerSocketHandlers(io, context) {
       results.sort((a, b) => (b.isMyTurn ? 1 : 0) - (a.isMyTurn ? 1 : 0));
 
       cb?.(results);
+    });
+
+    /* ---------- ABANDON GAME (unlimited-time, non-ranked only) ---------- */
+    socket.on("abandonGame", ({ roomId, userId }, cb) => {
+      const room = rooms[roomId];
+      if (!room || room.status !== "alive") {
+        return cb?.({ ok: false, error: "Game not found" });
+      }
+      if (!room.playersByUserId?.[userId]) {
+        return cb?.({ ok: false, error: "Not your game" });
+      }
+      if (room.state?.ranked) {
+        return cb?.({ ok: false, error: "Ranked games can't be abandoned" });
+      }
+
+      forceCloseRoom(roomId, room, io);
+      cb?.({ ok: true });
     });
 
     /* ---------- CREATE ROOM ---------- */

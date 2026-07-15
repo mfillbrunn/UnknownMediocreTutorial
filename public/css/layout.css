@@ -197,6 +197,23 @@ margin:0;
   white-space: nowrap;
 }
 
+/* Live score: your own number stands out, the opponent's stays muted —
+   the same "you" convention as .me-winner elsewhere — so which is which
+   reads without needing a "You:"/"Opp:" label. */
+.score-you {
+  color: var(--tile-green);
+  font-size: 1.15em;
+}
+
+.score-opp {
+  opacity: 0.6;
+}
+
+.score-sep {
+  opacity: 0.4;
+  margin: 0 0.2em;
+}
+
 .header-left,
 .header-right {
   min-width: 0;

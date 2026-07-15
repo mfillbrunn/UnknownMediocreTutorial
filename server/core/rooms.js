@@ -475,6 +475,7 @@ module.exports = {
   cleanupDisconnectedPlayers,
   addAIPlayer,
   getPlayerByUserId,
+  forceCloseRoom,
 
   // helpers exported for use elsewhere
   ensureConnectionPlayer,
