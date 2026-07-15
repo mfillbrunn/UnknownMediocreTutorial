@@ -429,6 +429,56 @@
   max-width: 260px;
 }
 
+/* ── My Games (unlimited-time games in progress) ─────────────────────── */
+.my-games-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-10);
+  width: 280px;
+  margin: 4px 0 4px;
+}
+
+.my-game-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-10);
+  padding: var(--sp-12) var(--sp-16);
+  border-radius: var(--r-10);
+  background: var(--btn-secondary);
+  color: var(--btn-secondary-text);
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: 700;
+  text-align: left;
+  transition: background 0.15s var(--ease-ui), border-color 0.15s var(--ease-ui);
+}
+
+.my-game-row:hover {
+  background: var(--btn-secondary-hover);
+}
+
+.my-game-row.your-turn {
+  border-color: color-mix(in srgb, var(--tile-green) 55%, transparent);
+}
+
+.my-game-opponent {
+  font-size: var(--fs-14);
+}
+
+.my-game-turn-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.my-game-row.your-turn .my-game-turn-badge {
+  color: var(--tile-green);
+  opacity: 1;
+}
+
 /* ── Friends screen ──────────────────────────────────────────────────── */
 .friends-center {
   width: 100%;
@@ -562,12 +612,22 @@
   box-shadow: none;
 }
 
+#menu .panel {
+  position: relative;
+}
+
+/* top is set from JS (positionShareButton()) to line up with whatever
+   heading is currently showing (the win/loss line, or "Round Summary")
+   instead of sitting on its own row above everything. */
 #menu .share-btn {
-  display: block;
-  margin: 0 0 var(--sp-10) auto;
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin: 0;
   height: 32px;
   padding: 0 14px;
   font-size: 12px;
+  z-index: 2;
 }
 
 .match-header {
@@ -726,42 +786,29 @@
 }
 
 .summary-actions .primary-btn,
-.summary-actions .secondary-btn,
-.summary-actions .new-match-btn {
+.summary-actions .secondary-btn {
   flex: 1;
 }
 
-/* Play-again CTA: a clear step up from the plain flat primary button */
-.new-match-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-8);
-  height: var(--h-control);
-  border: none;
-  border-radius: var(--r-10);
+/* Quick-repeat "play again" CTA (start menu) — the gold treatment moved
+   here from New Match, which is a plain action among plain actions on
+   the summary screen and shouldn't stand out as the special one. */
+#playQuickBtn {
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
   color: #241a02;
-  font-weight: 900;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  cursor: pointer;
+  border: none;
   box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
   transition: transform 0.15s var(--ease-ui), box-shadow 0.15s var(--ease-ui);
 }
 
-.new-match-btn:hover {
+#playQuickBtn:hover {
+  background: linear-gradient(135deg, #fcd34d, #f59e0b);
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
 }
 
-.new-match-btn:active {
+#playQuickBtn:active {
   transform: translateY(0) scale(0.97);
-}
-
-.new-match-icon {
-  font-size: 1.1em;
-  line-height: 1;
 }
 
 .secondary-btn.danger {

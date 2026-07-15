@@ -89,22 +89,31 @@ function getGuesserPlayer() {
 }
 
 function shakeDraftRow(role) {
-  let row;
+  let row, keyboard;
 
   if (role === "setter") {
     row = document.querySelector(".history-row.draft-row.setter-draft");
+    keyboard = $("keyboardSetter");
   } else if (role === "guesser") {
     row = document.querySelector(".history-row.draft-row.guesser-draft");
+    keyboard = $("keyboardGuesser");
   } else {
     return;
   }
 
-  if (!row) return;
+  if (row) {
+    // Restart animation if already running
+    row.classList.remove("draft-shake");
+    void row.offsetWidth; // force reflow
+    row.classList.add("draft-shake");
+  }
 
-  // Restart animation if already running
-  row.classList.remove("draft-shake");
-  void row.offsetWidth; // force reflow
-  row.classList.add("draft-shake");
+  if (keyboard) {
+    keyboard.classList.remove("shake");
+    void keyboard.offsetWidth;
+    keyboard.classList.add("shake");
+    setTimeout(() => keyboard.classList.remove("shake"), 220);
+  }
 }
 ///Simplified turn indicator
 function setTurn(screenId, isYourTurn) {

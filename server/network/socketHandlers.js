@@ -24,6 +24,51 @@ module.exports = function registerSocketHandlers(io, context) {
       cb?.(getDailyStatus(userId, date));
     });
 
+    /* ---------- MY GAMES (unlimited-time games in progress) ---------- */
+    socket.on("getMyActiveGames", ({ userId }, cb) => {
+      if (!userId) return cb?.([]);
+
+      const results = [];
+
+      for (const [roomId, room] of Object.entries(rooms)) {
+        if (!room || room.status !== "alive") continue;
+        const state = room.state;
+        if (!state || state.gameOver || state.phase === "lobby") continue;
+        if (state.timeControl?.enabled !== false) continue;
+
+        const me = state.players?.[userId];
+        if (!me) continue;
+
+        const opponentId = Object.keys(state.players || {}).find(
+          (id) => id !== userId
+        );
+        const opponent = opponentId ? state.players[opponentId] : null;
+
+        let isMyTurn = false;
+        if (state.phase === "normal") {
+          isMyTurn = state.turn === userId;
+        } else if (state.phase === "simultaneous") {
+          isMyTurn =
+            me.role === "setter"
+              ? !state.simultaneousSecretSubmitted
+              : !state.simultaneousGuessSubmitted;
+        }
+
+        results.push({
+          roomId,
+          opponentName: opponent?.name || (opponent?.isAI ? "AI" : "Opponent"),
+          myRole: me.role,
+          isMyTurn,
+          phase: state.phase
+        });
+      }
+
+      // Games where it's your turn first.
+      results.sort((a, b) => (b.isMyTurn ? 1 : 0) - (a.isMyTurn ? 1 : 0));
+
+      cb?.(results);
+    });
+
     /* ---------- CREATE ROOM ---------- */
     socket.on("createRoom", ({ userId, name }, cb) => {
       const roomId = createRoom(socket, userId);

@@ -137,21 +137,16 @@
     opacity: 1;
   }
 }
-@keyframes preview-green-pulse {
+/* Preview tiles use their real solved-tile color; the pulse itself (not
+   a color/opacity change) is what signals "tentative". */
+@keyframes preview-pulse {
   0%, 100% {
-    background-color: color-mix(in srgb, var(--tile-green) 10%, #000);
+    transform: scale(1);
+    filter: brightness(1);
   }
   50% {
-    background-color: color-mix(in srgb, var(--tile-green) 26%, #000);
-  }
-}
-
-@keyframes preview-yellow-pulse {
-  0%, 100% {
-    background-color: color-mix(in srgb, var(--tile-yellow) 10%, #000);
-  }
-  50% {
-    background-color: color-mix(in srgb, var(--tile-yellow) 26%, #000);
+    transform: scale(1.05);
+    filter: brightness(1.2);
   }
 }
 @keyframes preview-swoosh {

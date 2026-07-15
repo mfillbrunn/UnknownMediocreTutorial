@@ -29,10 +29,19 @@ body.menu-mode .app-header {
 
 
 /*----LOBBY ----*/
+#lobby.screen.active {
+  margin-top: var(--sp-8);
+}
+
 .lobby-panel {
   display: flex;
   flex-direction: column;
   gap: var(--sp-16);
+  /* The shared :where(.panel, ...) rule's own margin-top otherwise
+     stacks on top of the .screen's own margin above, doubling up the
+     empty space before "Lobby" even though neither .lobby-panel rule
+     here declares it explicitly. */
+  margin-top: 0;
 }
 
 .lobby-header {
