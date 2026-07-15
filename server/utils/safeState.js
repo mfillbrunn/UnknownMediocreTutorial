@@ -126,7 +126,8 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
     safe.setterRemainingBox = buildSetterRemainingBoxState(
       state,
       userId,
-      secrets
+      secrets,
+      state.setterDraft
     );
   }
 

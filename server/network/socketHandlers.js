@@ -230,6 +230,12 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
   const normalized =
     typeof draft === "string" ? draft.trim().toUpperCase() : "";
 
+  // Persisted so the next general state broadcast (triggered by anything
+  // else in the room — a power use, a reconnect, etc.) can still compute
+  // the "New" count instead of falling back to "?" just because that
+  // broadcast wasn't the setterDraftSecret event itself.
+  room.state.setterDraft = normalized;
+
   // DEBUG
   console.log("[setterDraftSecret]", {
     userId,
