@@ -201,21 +201,18 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 }
 
 /* Preview tiles are a *guess* at what the real feedback will be, not a
-   confirmed result — an opaque fill reads as confirmed (same look as an
-   evaluated tile) no matter how low the opacity goes. Signal "tentative"
-   with a colored outline/glow on an otherwise unfilled tile instead, so
-   it's visually distinct from a real green/yellow/gray tile rather than
-   just a fainter version of the same thing. */
+   confirmed result, so they pulse and keep a non-opaque fill — enough
+   color to read at a glance, never a flat solid block like a confirmed
+   tile. */
 .theme-setter
 #draftSetter
 .pending-guess
 .history-tile.preview-green {
-  background: transparent;
-  color: var(--tile-gray-text);
-  border: 2px solid color-mix(in srgb, var(--tile-green) 55%, transparent);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--tile-green) 30%, transparent);
-  opacity: 1;
-   animation: preview-green-pulse 2.2s  ease-in-out infinite;
+  color: var(--tile-green-text) !important;
+  border: none;
+  box-shadow: none;
+  opacity: 0.32;
+   animation: preview-green-pulse 4.4s  ease-in-out infinite;
    animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
@@ -223,12 +220,11 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 #draftSetter
 .pending-guess
 .history-tile.preview-yellow {
-  background: transparent;
-  color: var(--tile-gray-text);
-  border: 2px solid color-mix(in srgb, var(--tile-yellow) 55%, transparent);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--tile-yellow) 30%, transparent);
-  opacity: 1;
-   animation: preview-yellow-pulse 2.2s ease-in-out infinite;
+  color: var(--tile-yellow-text) !important;
+  border: none;
+  box-shadow: none;
+  opacity: 0.32;
+   animation: preview-yellow-pulse 4.4s ease-in-out infinite;
    animation-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
@@ -237,11 +233,11 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 #draftSetter
 .pending-guess
 .history-tile.preview-gray {
-  background: transparent;
+  background: var(--tile-gray);
   color: var(--tile-gray-text);
-  border: 2px dashed rgba(255, 255, 255, 0.25);
+  border: none;
   box-shadow: none;
-  opacity: 1;
+  opacity: 0.3;
 }
 #draftSetter {
   display: flex;

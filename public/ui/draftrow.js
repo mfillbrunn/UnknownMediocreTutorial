@@ -112,7 +112,12 @@ window.renderDraftRows = function ({
 
     if (!canGuess && upperPending) {
       updateRow(pendingRow, upperPending, "draft-row pending-guess");
-      showRow(pendingRow, pendingWasVisible, "row-slide-in");
+      // No slide-in here — this is the guesser's own guess locking in
+      // right after they submitted it, not new/incoming data. The
+      // slide-in is for content that genuinely just arrived (the
+      // setter's view of it, or the guesser's own draft box appearing
+      // at the start of their turn below).
+      showRow(pendingRow, pendingWasVisible);
       return;
     }
 

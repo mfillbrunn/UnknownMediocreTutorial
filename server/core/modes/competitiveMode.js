@@ -3,7 +3,10 @@ const BaseMode = require("./baseMode");
 class CompetitiveMode extends BaseMode {
   initMatch(state) {
     state.roundIndex = 0;
-    state.roundsTotal = 2;
+    // Daily Challenge is one puzzle a day, not a 2-round swap match — the
+    // human is always the Inspector against the day's preset Spy powers,
+    // so there's no second round for them to take the Spy seat in.
+    state.roundsTotal = state.isDaily ? 1 : 2;
     state.matchOver = false;
 
     state.initialSetter = state.setter;

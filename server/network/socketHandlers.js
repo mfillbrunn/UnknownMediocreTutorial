@@ -15,9 +15,15 @@ const { startGameTimer } = require("../core/timeouts/timeoutController");
 const { stopAllRoomIntervals } = require("../utils/teardown");
 const { maybeRunAI } = require("../core/ai/runAI");
 const { buildSetterRemainingBoxState } = require("../utils/remainingWords");
+const { getDailyStatus } = require("../core/dailyTracking");
 
 module.exports = function registerSocketHandlers(io, context) {
   io.on("connection", (socket) => {
+    /* ---------- DAILY CHALLENGE STATUS ---------- */
+    socket.on("getDailyStatus", ({ userId, date }, cb) => {
+      cb?.(getDailyStatus(userId, date));
+    });
+
     /* ---------- CREATE ROOM ---------- */
     socket.on("createRoom", ({ userId, name }, cb) => {
       const roomId = createRoom(socket, userId);

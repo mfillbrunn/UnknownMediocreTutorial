@@ -6,6 +6,7 @@ const { stopTimer } = require("../../utils/Timer");
 const { applyRankedElo } = require("../../utils/elo");
 const { computeMatchResult, writeMatchHistory } = require("../../utils/writeMatchData");
 const { computeRemainingAfterIndexFromState } = require("../../utils/remainingWords");
+const { markDailyCompleted } = require("../dailyTracking");
 
 function buildArchivedRoundHistory(state, allowedSecrets) {
   const history = Array.isArray(state.history) ? state.history : [];
@@ -110,6 +111,14 @@ state.matchRounds.push({
   state.phase = "gameOver";
   state.gameOverView = res.view || "match";
   state.canNextRound = !!res.canNextRound;
+
+  if (state.isDaily && !state.canNextRound) {
+    for (const player of Object.values(state.players || {})) {
+      if (!player.isAI) {
+        markDailyCompleted(player.userId, state.dailyDate);
+      }
+    }
+  }
 
   const isAIMatch = Object.values(room.playersByUserId || {}).some((p) => p.isAI);
 
