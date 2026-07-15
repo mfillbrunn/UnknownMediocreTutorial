@@ -160,3 +160,116 @@
     padding: 14px 40px;
   }
 }
+
+/* =========================================
+   BIG ANNOUNCE — round start (role + goal),
+   secret found / secret lost
+   ========================================= */
+
+.big-announce {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.big-announce.show {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.big-announce-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-8, 8px);
+
+  padding: 32px 44px;
+  border-radius: var(--r-16, 16px);
+
+  background: var(--screen-bg);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+
+  text-align: center;
+  max-width: 88vw;
+
+  transform: scale(0.85) translateY(10px);
+  opacity: 0;
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease;
+}
+
+.big-announce.show .big-announce-card {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.big-announce-icon {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.big-announce-title {
+  font-size: var(--fs-24, 24px);
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  color: var(--text);
+}
+
+.big-announce-sub {
+  font-size: var(--fs-14, 14px);
+  font-weight: 600;
+  opacity: 0.8;
+  max-width: 40ch;
+}
+
+.big-announce.role-setter .big-announce-card {
+  border-color: color-mix(in srgb, var(--setter-color) 55%, transparent);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.55),
+    0 0 30px color-mix(in srgb, var(--setter-color) 25%, transparent);
+}
+
+.big-announce.role-setter .big-announce-title {
+  color: var(--setter-color);
+}
+
+.big-announce.role-guesser .big-announce-card {
+  border-color: color-mix(in srgb, var(--guesser-color) 55%, transparent);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.55),
+    0 0 30px color-mix(in srgb, var(--guesser-color) 25%, transparent);
+}
+
+.big-announce.role-guesser .big-announce-title {
+  color: var(--guesser-color);
+}
+
+.big-announce.outcome-win .big-announce-title {
+  color: var(--tile-green);
+}
+
+.big-announce.outcome-lose .big-announce-title {
+  color: var(--setter-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .big-announce,
+  .big-announce-card {
+    transition: opacity 120ms ease;
+  }
+  .big-announce.show .big-announce-card {
+    transform: none;
+  }
+}

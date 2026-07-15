@@ -26,6 +26,19 @@ window.renderConstraintRow = function ({
   // Skip the rebuild entirely unless the actual constraint data changed.
   const signature = JSON.stringify({ grid, bsIdx, isSetterView });
   if (container.__constraintSignature === signature) return;
+
+  // A position that just gained a green letter it didn't have before
+  // (e.g. Magic Mode revealing a correct spot) gets a "flow up from the
+  // bottom" flash so the reveal actually reads as new information instead
+  // of silently appearing on the next re-render.
+  const prevGrid = container.__prevGrid;
+  const newlyGreen = new Set();
+  for (let i = 0; i < 5; i++) {
+    const wasGreen = prevGrid?.[i]?.green;
+    const isGreen = grid[i]?.green;
+    if (isGreen && !wasGreen) newlyGreen.add(i);
+  }
+  container.__prevGrid = grid;
   container.__constraintSignature = signature;
 
   container.innerHTML = "";
@@ -48,7 +61,21 @@ window.renderConstraintRow = function ({
 
     if (cell.green) {
       tile.classList.add("tile-green");
-      tile.textContent = cell.green;
+
+      const letter = document.createElement("span");
+      letter.className = "main-letter";
+      letter.textContent = cell.green;
+      tile.appendChild(letter);
+
+      if (newlyGreen.has(i)) {
+        tile.classList.add("magic-reveal");
+        tile.addEventListener(
+          "animationend",
+          () => tile.classList.remove("magic-reveal"),
+          { once: true }
+        );
+      }
+
       container.appendChild(tile);
       continue;
     }

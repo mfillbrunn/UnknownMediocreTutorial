@@ -330,7 +330,23 @@ onStateUpdate(newState => {
       prevRenderState = [];
       $("setterGuesserSubmitted").innerHTML = "";
       $("historyGuesser").innerHTML = "";
-  }  
+  }
+  // Round start: announce role + goal instead of the old generic "Game
+  // Started" banner. prevPhase === undefined means this is the very first
+  // state this page has ever seen (fresh load/rejoin) — skip the
+  // announcement then, it should only fire for a round actually starting
+  // while the player is watching.
+  if (prevPhase !== undefined && prevPhase !== "simultaneous" && state.phase === "simultaneous") {
+    const iAmSetter = myUserId() === state.setter;
+    window.showBigAnnounce?.({
+      icon: iAmSetter ? "🕵️" : "🔍",
+      title: iAmSetter ? "You are the Spy" : "You are the Inspector",
+      sub: iAmSetter
+        ? "Keep your secret hidden — evade every guess."
+        : "Find the secret word before your opponent runs out the clock.",
+      roleClass: iAmSetter ? "role-setter" : "role-guesser"
+    });
+  }
   const newMyRole = getMyRole();
   if (newMyRole !== myRole) {
     myRole = newMyRole;
@@ -415,7 +431,62 @@ function updateLobbyHeader() {
 // -----------------------------------------------------
 // Screen Visibility
 // -----------------------------------------------------
+let _lastScreenPhase = null;
+let _gameOverRevealInFlight = false;
+
 function updateScreens() {
+  const enteringGameOverLive =
+    state.phase === "gameOver" &&
+    _lastScreenPhase !== "gameOver" &&
+    _lastScreenPhase !== null; // null = very first render this page has done (fresh load/rejoin) — don't replay the reveal for a round that already ended
+  _lastScreenPhase = state.phase;
+
+  if (enteringGameOverLive && !_gameOverRevealInFlight) {
+    const lastEntry = state.history?.[state.history.length - 1];
+    const wonByGuess =
+      !state.timeoutLoser &&
+      Array.isArray(lastEntry?.fb) &&
+      lastEntry.fb.every(f => f === "🟩");
+
+    if (wonByGuess) {
+      _gameOverRevealInFlight = true;
+
+      // Keep the just-finished round's screen up (instead of jumping
+      // straight to the summary) so the winning row's tile-flip reveal —
+      // already wired up for every history row via CSS — actually plays
+      // where the player can see it.
+      if (myUserId() === state.setter) {
+        show("setterScreen");
+        hide("guesserScreen");
+        updateSetterScreen();
+      } else {
+        show("guesserScreen");
+        hide("setterScreen");
+        updateGuesserScreen();
+      }
+
+      const iAmGuesser = myUserId() === state.guesser;
+      window.showBigAnnounce?.({
+        icon: iAmGuesser ? "🎉" : "💀",
+        title: iAmGuesser ? "You found the secret!" : "Your secret was found!",
+        sub: `The word was ${(lastEntry.finalSecret || state.secret || "").toUpperCase()}.`,
+        roleClass: iAmGuesser ? "outcome-win" : "outcome-lose",
+        duration: 2400
+      });
+
+      // 5 tiles * 350ms stagger + 1200ms flip duration for the last tile,
+      // plus a beat to actually read the popup, before moving on.
+      setTimeout(() => {
+        _gameOverRevealInFlight = false;
+        updateScreens();
+      }, 2800);
+
+      return;
+    }
+  }
+
+  if (_gameOverRevealInFlight) return;
+
   hideAllScreens();
   if (state.phase === "lobby") {
     // Ranked matchmaking briefly puts the freshly-created room through the
@@ -926,8 +997,12 @@ function updateTimerAccess() {
     // The remaining-words box's guide hint is baked into its innerHTML at
     // render time, so without this it wouldn't reflect the new guide state
     // until the next natural render (next keystroke or state update).
-    if (typeof renderSetterRemainingBox === "function" && window.state?.setterRemainingBox) {
-      renderSetterRemainingBox(window.state.setterRemainingBox);
+    // Reuse the last real boxState (which may be more current than
+    // window.state.setterRemainingBox if the setter is mid-draft) so this
+    // purely-cosmetic re-render doesn't reset the counts to "?".
+    const lastBoxState = window._lastRemainingBoxState || window.state?.setterRemainingBox;
+    if (typeof renderSetterRemainingBox === "function" && lastBoxState) {
+      renderSetterRemainingBox(lastBoxState);
     }
   };
 })();
@@ -1222,6 +1297,26 @@ function updateAppHeader(state) {
   roleBadgeEl.innerHTML = `<span class="score-you">${myPoints}</span><span class="score-sep">–</span><span class="score-opp">${oppPoints}</span>`;
   roleBadgeEl.className = "role-badge header-role-badge";
 }
+
+// A "+1" that floats up from whichever score number just incremented, so a
+// submitted guess reads as an event instead of only a silently-updated
+// number. Appended to <body> (not inside the score badge itself) since
+// updateAppHeader() rebuilds the badge's innerHTML on every state update,
+// which would otherwise wipe the pop mid-animation.
+function showScorePop(isMe) {
+  const target = document.querySelector(isMe ? ".score-you" : ".score-opp");
+  if (!target) return;
+
+  const rect = target.getBoundingClientRect();
+  const pop = document.createElement("span");
+  pop.className = "score-pop";
+  pop.textContent = "+1";
+  pop.style.left = `${rect.left + rect.width / 2}px`;
+  pop.style.top = `${rect.top}px`;
+  document.body.appendChild(pop);
+  pop.addEventListener("animationend", () => pop.remove(), { once: true });
+}
+window.showScorePop = showScorePop;
 
 // Unlimited-time games are meant to be stepped away from and resumed
 // later (see "My Games") — surface an explicit, safe way to do that

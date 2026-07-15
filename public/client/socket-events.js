@@ -7,22 +7,18 @@ socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
   // Notify BOTH players when guesser submits (first time)
   if (guessSubmitted && !lastSimulGuess) {
     showSubmitBanner("inspector", "Guess in");
+    window.showScorePop?.(window.state?.guesser === myUserId());
   }
   // Save previous values so we don't re-show
   lastSimulSecret = secretSubmitted;
   lastSimulGuess = guessSubmitted;
   });
-socket.on("secretFound", () => {
-  showSystemBanner("Secret Found");
-});
   socket.on("guessSubmitted", () => {
   showSubmitBanner("inspector", "Guess In");
+  window.showScorePop?.(window.state?.guesser === myUserId());
 });
 socket.on("secretPlanted", () => {
   showSubmitBanner("spy", "Secret Planted");
-});
-socket.on("gameStart", () => {
-  showSystemBanner("Game Started");
 });
 socket.on("setterRemainingBox", (boxState) => {
   renderSetterRemainingBox(boxState);

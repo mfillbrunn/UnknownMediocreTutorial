@@ -214,6 +214,42 @@ margin:0;
   margin: 0 0.2em;
 }
 
+/* "+1" that floats up from the score number that just incremented.
+   position:fixed and appended to <body> — see showScorePop() in
+   client.js for why it can't live inside the score badge itself. */
+.score-pop {
+  position: fixed;
+  transform: translate(-50%, 0);
+  font-size: var(--fs-12);
+  font-weight: 800;
+  color: var(--tile-green);
+  pointer-events: none;
+  z-index: 999;
+  animation: score-pop-float 800ms ease-out forwards;
+}
+
+@keyframes score-pop-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.85);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -8px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -26px) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .score-pop {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 .header-left,
 .header-right {
   min-width: 0;
