@@ -744,6 +744,17 @@
 .match-header--loss h2, .match-header--loss .match-result-icon { color: #f87171; }
 .match-header--tie h2, .match-header--tie .match-result-icon { color: rgba(255,255,255,0.85); }
 
+.match-elo-change {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--fs-14);
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.match-elo-change.elo-gain { color: #4ade80; }
+.match-elo-change.elo-loss { color: #f87171; }
+.match-elo-change.elo-even { opacity: 0.7; }
+
 .summary-heading {
   font-size: var(--fs-16);
   font-weight: 800;
