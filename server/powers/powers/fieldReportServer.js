@@ -2,11 +2,20 @@
 //
 // Guesser power modeled on Force Move (forceGuessServer.js)'s condition
 // vocabulary, but passive instead of forced: activating it reveals 3
-// conditions, then the very next guess is checked against them (postScore,
-// mirroring betMissServer.js's "evaluate the next scored guess, once"
-// pattern). 2 of 3 met -> a free yellow letter (present, position
-// unknown). All 3 met -> a free green letter at a random unrevealed
-// position.
+// conditions, then the very next guess is checked against them. 2 of 3
+// met -> a free yellow letter (present, position unknown). All 3 met ->
+// a free green letter at a random unrevealed position.
+//
+// Evaluated via onGuessSubmitted, not postScore: whether the guess meets
+// the conditions depends only on the guess word itself, never on the
+// secret or its feedback, so there's no reason to wait for the setter's
+// Keep/New decision to know the answer. Firing here also means any GREEN
+// extraConstraint this grants is already in place before that decision,
+// so isConsistentWithHistory (game-engine/history.js) automatically
+// binds the setter to a secret consistent with it — no separate
+// enforcement needed. Both the activation and the result are reported
+// from this single hook, in that order, so they land as one action-log
+// line instead of two.
 //
 // The 3 conditions are derived FROM a real allowed-guess word, not picked
 // independently at random — that guarantees at least one valid word (the
@@ -134,20 +143,24 @@ engine.registerPower("fieldReport", {
     state.powers.fieldReportActive = true;
     state.powers.fieldReportConditions = generateConditions();
 
-    io.to(roomId).emit("powerUsed", { type: "fieldReport" });
+    // No public emit here on purpose — activation and result now report
+    // together from onGuessSubmitted (see file header), so there's a
+    // single log line instead of an empty "used" line followed by the
+    // real result. The InfoBadgeEngine status bar already shows the 3
+    // conditions the instant this fires, which is confirmation enough.
   },
 
-  postScore(state, entry, roomId, io) {
-    if (!state.powers?.fieldReportActive || state.turn !== state.setter) {
-      return;
-    }
+  onGuessSubmitted(state, guess, roomId, io) {
+    if (!state.powers?.fieldReportActive) return;
 
     const conditions = state.powers.fieldReportConditions || [];
-    const guess = entry.guess.toUpperCase();
+    guess = guess.toUpperCase();
     const metCount = conditions.filter(c => satisfiesForceGuess(guess, c)).length;
 
     // One shot: only the guess made right after activation is evaluated.
     state.powers.fieldReportActive = false;
+
+    io.to(roomId).emit("powerUsed", { type: "fieldReport" });
 
     if (metCount >= 3) {
       const greenPositions = new Set();

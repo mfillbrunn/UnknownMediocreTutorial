@@ -28,6 +28,12 @@ function transitionAfterGuess({ room, state, guess, roomId, context, io }) {
   state.pendingGuess = guess;
   io.to(roomId).emit("guessSubmitted");
 
+  // Guess-only power evaluation (e.g. Field Report) — before
+  // clearRoundState wipes round-scoped power flags and before the
+  // setter's upcoming Keep/New decision, so any GREEN extraConstraint
+  // granted here already binds their choice via isConsistentWithHistory.
+  context.powerEngine.onGuessSubmitted(state, guess, roomId, io);
+
   clearRoundState(state, "guesser");
 
   if (state.powers.forceTimerArmed) {

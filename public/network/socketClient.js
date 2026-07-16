@@ -141,7 +141,7 @@ window.showPowerPopup = function (html) {
   el.classList.remove("show");
   void el.offsetWidth; // restart if already showing
   el.classList.add("show");
-  _powerPopupTimer = setTimeout(() => el.classList.remove("show"), 3800);
+  _powerPopupTimer = setTimeout(() => el.classList.remove("show"), 5500);
 };
 
 // Click anywhere on the popup to dismiss it early instead of waiting out
@@ -156,6 +156,11 @@ document.getElementById("powerPopup")?.addEventListener("click", () => {
 // resolve. Cleared in client.js whenever state.history actually changes.
 window._livePowerEvents = [];
 
+// Powers with their own dedicated result popup (richer than the generic
+// one — e.g. Field Report's condition list) skip this one so the two
+// centered popups don't stack/overwrite each other.
+const POWERS_WITH_OWN_POPUP = new Set(["fieldReport"]);
+
 socket.on("powerActivity", payload => {
   if (!payload?.id) return;
 
@@ -164,6 +169,7 @@ socket.on("powerActivity", payload => {
 
   const formatted = window.formatPowerEvent?.(payload);
   if (!formatted) return;
+  if (POWERS_WITH_OWN_POPUP.has(payload.id)) return;
 
   const who =
     formatted.actorRole == null ? "A power was used" :
