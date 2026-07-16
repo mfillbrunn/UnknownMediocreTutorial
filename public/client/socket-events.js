@@ -7,7 +7,10 @@ socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
   // Notify BOTH players when guesser submits (first time)
   if (guessSubmitted && !lastSimulGuess) {
     showSubmitBanner("inspector", "Guess in");
-    window.showScorePop?.(window.state?.guesser === myUserId());
+    // A guess adds to the SETTER's score (points = guesses it took to
+    // find their secret), not the guesser's — the +1 has to pop on
+    // whoever is setting this round, not whoever just guessed.
+    window.showScorePop?.(window.state?.setter === myUserId());
   }
   // Save previous values so we don't re-show
   lastSimulSecret = secretSubmitted;
@@ -15,7 +18,7 @@ socket.on("simulProgress", ({ secretSubmitted, guessSubmitted }) => {
   });
   socket.on("guessSubmitted", () => {
   showSubmitBanner("inspector", "Guess In");
-  window.showScorePop?.(window.state?.guesser === myUserId());
+  window.showScorePop?.(window.state?.setter === myUserId());
 });
 socket.on("secretPlanted", () => {
   showSubmitBanner("spy", "Secret Planted");

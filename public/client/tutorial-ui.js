@@ -134,6 +134,9 @@ function highlightSetterDraft() {
 function highlightSetterHistory() {
   highlightEl(byId("setterGuesserSubmitted"));
 }
+function highlightGuideToggle() {
+  highlightEl(byId("guideToggleBtn"));
+}
 
 
 function highlightPowerButtonByText(label) {
@@ -286,6 +289,15 @@ function runGuesserTutorial(state,role){
       return;
     }
     if (tutorialSubStep === 4) {
+      showTutorial(
+        `See this Guide button? Toggle it any time you want extra on-screen explanations of what's happening — like why a box is showing certain numbers, or what phase you're in. Try clicking it now, then continue.`,
+        { enabled: true }
+      );
+      tutorialContinueMode = "advance";
+      highlightGuideToggle();
+      return;
+    }
+    if (tutorialSubStep === 5) {
       showTutorial(
         `First, you need to enter your initial guess. Your opponent will put a secret word at the same time without seeing yours. Enter "${word}" and click on the ENTER button.`,
         { enabled: true, mode: "hide"  }
