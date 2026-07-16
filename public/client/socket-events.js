@@ -358,6 +358,7 @@ const devBtn = document.querySelector("#devBtn");
     userId: window.currentUser.id
   });
 });
+let _prevDevMode = false;
 function updateDevUI() {
   if (!devBtn || !state || !window.currentUser) return;
   const isDev = !!state.devMode;
@@ -365,6 +366,11 @@ function updateDevUI() {
   devBtn.classList.toggle("active", isDev);
   devBtn.disabled = !isHost;
   devBtn.textContent = isDev ? "Dev" : "Non-Dev";
+
+  if (isDev && !_prevDevMode && isHost) {
+    window.openDevPowersModal?.();
+  }
+  _prevDevMode = isDev;
 }
 const shuffleBtn = document.querySelector("#shuffle");
 shuffleBtn?.addEventListener("click", () => {

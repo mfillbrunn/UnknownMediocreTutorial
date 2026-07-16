@@ -199,6 +199,18 @@ function handleLobbyPhase(room, state, action, roomId, context) {
     emitRoomState(roomId, room, io);
     return;
   }
+
+  if (action.type === "SET_DEV_POWERS") {
+    if (state.hostUserId !== action.userId) return;
+    state._devSetterPowers = Array.isArray(action.setterPowers)
+      ? action.setterPowers.filter(p => SETTER_POWERS.includes(p))
+      : null;
+    state._devGuesserPowers = Array.isArray(action.guesserPowers)
+      ? action.guesserPowers.filter(p => GUESSER_POWERS.includes(p))
+      : null;
+    emitRoomState(roomId, room, io);
+    return;
+  }
 if (action.type === "SET_DAILY_POWERS") {
   state._dailySetterPowers = action.setterPowers || null;
   state._dailyGuesserPowers = action.guesserPowers || null;
@@ -275,6 +287,8 @@ if (action.type === "SET_DAILY_POWERS") {
      freshState._dailySetterPowers = state._dailySetterPowers || null;
      freshState._dailyGuesserPowers = state._dailyGuesserPowers || null;
      freshState._dailyDate = state._dailyDate || null;
+     freshState._devSetterPowers = state._devSetterPowers || null;
+     freshState._devGuesserPowers = state._devGuesserPowers || null;
      freshState.isDaily = !!(
        state._dailySetterPowers &&
        state._dailyGuesserPowers &&
@@ -348,6 +362,15 @@ if (action.type === "SET_DAILY_POWERS") {
     if (state._dailySetterPowers && state._dailyGuesserPowers) {
       sP = state._dailySetterPowers;
       gP = state._dailyGuesserPowers;
+    } else if (
+      state.devMode &&
+      (state._devSetterPowers?.length || state._devGuesserPowers?.length)
+    ) {
+      // Dev Mode with a curated selection: use exactly what the host
+      // picked in the power-selection popup. An empty/never-set side
+      // falls back to "all of that role's powers" rather than none.
+      sP = state._devSetterPowers?.length ? state._devSetterPowers : SETTER_POWERS.slice();
+      gP = state._devGuesserPowers?.length ? state._devGuesserPowers : GUESSER_POWERS.slice();
     } else {
       sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
       gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);

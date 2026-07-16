@@ -841,6 +841,73 @@ body.menu-mode .app-header {
   min-height: 1.2em;
 }
 
+/* ── Dev Mode power picker ────────────────────────────────────────────── */
+.dev-powers-panel {
+  max-width: 460px;
+  text-align: center;
+}
+
+.dev-powers-columns {
+  display: flex;
+  gap: 14px;
+  text-align: left;
+  margin: 12px 0 16px;
+}
+
+.dev-powers-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.dev-powers-col-label {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.dev-powers-col-label.role-setter { color: var(--setter-color, #f87171); }
+.dev-powers-col-label.role-guesser { color: var(--guesser-color, #60a5fa); }
+
+.dev-powers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.dev-power-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: var(--r-6);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.dev-power-checkbox:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.dev-power-checkbox input {
+  flex-shrink: 0;
+}
+
+.dev-power-checkbox-emoji {
+  flex-shrink: 0;
+}
+
+.dev-power-checkbox-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* =========================================
    TIMER OPTION — CLEAR SELECTION
    ========================================= */

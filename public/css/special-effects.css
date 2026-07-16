@@ -279,6 +279,11 @@
 }
 
 .big-announce-power-text {
+  /* .big-announce carries the bare .role-setter/.role-guesser utility
+     class (also used for header badges) to color the title — without
+     this override, that class's `color` cascades down and tints the
+     power descriptions red/blue too instead of the normal text color. */
+  color: var(--text);
   font-size: var(--fs-13, 13px);
   font-weight: 500;
   opacity: 0.85;
@@ -286,6 +291,7 @@
 }
 
 .big-announce-power-text strong {
+  color: var(--text);
   font-weight: 800;
   opacity: 1;
 }
