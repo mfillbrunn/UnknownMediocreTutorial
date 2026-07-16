@@ -234,6 +234,43 @@
   max-width: 40ch;
 }
 
+.big-announce-powers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  width: 100%;
+  max-width: 34ch;
+}
+
+.big-announce-powers:empty {
+  display: none;
+}
+
+.big-announce-power-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  text-align: left;
+}
+
+.big-announce-power-emoji {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.big-announce-power-text {
+  font-size: var(--fs-13, 13px);
+  font-weight: 500;
+  opacity: 0.85;
+  line-height: 1.35;
+}
+
+.big-announce-power-text strong {
+  font-weight: 800;
+  opacity: 1;
+}
+
 .big-announce.role-setter .big-announce-card {
   border-color: color-mix(in srgb, var(--setter-color) 55%, transparent);
   box-shadow:

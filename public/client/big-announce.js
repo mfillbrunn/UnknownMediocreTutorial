@@ -6,6 +6,7 @@ window.showBigAnnounce = function ({
   icon = "",
   title = "",
   sub = "",
+  powers = null,
   roleClass = "",
   duration = 2400
 } = {}) {
@@ -18,6 +19,18 @@ window.showBigAnnounce = function ({
   el.querySelector(".big-announce-icon").textContent = icon;
   el.querySelector(".big-announce-title").textContent = title;
   el.querySelector(".big-announce-sub").textContent = sub;
+
+  const powersEl = el.querySelector(".big-announce-powers");
+  if (powersEl) {
+    powersEl.innerHTML = Array.isArray(powers) && powers.length
+      ? powers.map(p => `
+          <div class="big-announce-power-row">
+            <span class="big-announce-power-emoji">${p.emoji || ""}</span>
+            <span class="big-announce-power-text"><strong>${p.label}</strong> — ${p.desc || ""}</span>
+          </div>
+        `).join("")
+      : "";
+  }
 
   // Restart the entrance animation even if it's already showing (e.g. a
   // second round-start fires before the first finished dismissing).

@@ -114,10 +114,6 @@ function finalizeDraft(room, state, roomId, context) {
   }
 
   emitLobbyEvent(io, roomId, { type: "hideLobby" });
-  io.to(roomId).emit("draftRevealed", {
-    setter: { userId: state.setter, powers: sP },
-    guesser: { userId: state.guesser, powers: gP }
-  });
   emitRoomState(roomId, room, io);
   io.to(roomId).emit("gameStart");
 }

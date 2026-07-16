@@ -741,6 +741,17 @@ body.menu-mode .app-header {
   text-align: center;
 }
 
+.draft-role-label {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+.draft-role-label.role-setter { color: var(--setter-color, #f87171); }
+.draft-role-label.role-guesser { color: var(--guesser-color, #60a5fa); }
+
 .draft-instruction {
   font-size: 14px;
   opacity: 0.75;
