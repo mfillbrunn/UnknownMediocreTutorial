@@ -87,6 +87,10 @@ function _renderGameRow(g) {
 function _resumeMyGame(roomId) {
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
 
+  // Deliberately returning to a room started via "Invite a Friend" —
+  // let normal screen updates resume for it.
+  if (window._asyncInviteRoomId === roomId) window._asyncInviteRoomId = null;
+
   window.roomId = roomId;
   persistRoom(roomId);
 
