@@ -83,6 +83,10 @@ document.getElementById("devPowersAllBtn")?.addEventListener("click", () => {
   document.querySelectorAll("#devPowersModal input[type=checkbox]").forEach(cb => { cb.checked = true; });
 });
 
+document.getElementById("devPowersNoneBtn")?.addEventListener("click", () => {
+  document.querySelectorAll("#devPowersModal input[type=checkbox]").forEach(cb => { cb.checked = false; });
+});
+
 document.getElementById("devPowersCancelBtn")?.addEventListener("click", () => {
   closeDevPowersModal();
 });

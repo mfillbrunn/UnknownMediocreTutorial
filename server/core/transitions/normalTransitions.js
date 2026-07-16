@@ -76,7 +76,14 @@ const ROUND_SCOPED_ACTIVE_POWERS = new Set([
   "countOnlyActive",
   "nonsenseActive",
   "rouletteSecretActive",
-  "betMissActive"
+  "betMissActive",
+  // Like magicMode/betMiss, fieldReportActive has to survive the guesser's
+  // own clearRoundState("guesser") call (fired the instant they submit the
+  // very guess it's meant to evaluate) — postScore doesn't run until the
+  // setter's subsequent Keep/New decision. Without this exemption the flag
+  // gets wiped before postScore ever sees it, so the power silently never
+  // grants anything.
+  "fieldReportActive"
 ]);
 
 function clearActivePowers(state) {
