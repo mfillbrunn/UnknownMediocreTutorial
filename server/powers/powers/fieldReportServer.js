@@ -7,11 +7,29 @@
 // pattern). 2 of 3 met -> a free yellow letter (present, position
 // unknown). All 3 met -> a free green letter at a random unrevealed
 // position.
+//
+// The 3 conditions are derived FROM a real allowed-guess word, not picked
+// independently at random — that guarantees at least one valid word (the
+// one they were derived from) satisfies all three simultaneously, however
+// mismatched the conditions look at a glance. That word doesn't need to
+// be consistent with prior feedback/history; it only has to be a valid
+// guess in general.
 
+const path = require("path");
+const fs = require("fs");
+const { parseWordlist, satisfiesForceGuess } = require("../../game-engine/validation");
 const engine = require("../powerEngineServer");
-const { satisfiesForceGuess } = require("../../game-engine/validation");
 
-const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+let ALLOWED_GUESSES = [];
+try {
+  const allowedPath = path.join(__dirname, "../../wordlists/allowed_guesses.txt");
+  const raw = fs.readFileSync(allowedPath, "utf8");
+  ALLOWED_GUESSES = parseWordlist(raw);
+} catch (err) {
+  console.warn("Could not load allowed guesses for fieldReport:", err.message);
+}
+
+const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 const CONDITION_TYPES = [
   "startsWith",
   "endsWith",
@@ -22,8 +40,21 @@ const CONDITION_TYPES = [
   "palindrome"
 ];
 
-function randomLetter() {
-  return ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+function countVowels(word) {
+  return [...word].filter(c => VOWELS.has(c)).length;
+}
+
+function isPalindrome(word) {
+  return word === word.split("").reverse().join("");
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 function optionKey(o) {
@@ -40,36 +71,58 @@ function optionKey(o) {
   }
 }
 
-function buildCondition(type) {
+// Builds a condition of `type` that is true for `word` — or null if `type`
+// doesn't apply to this particular word (e.g. no double letter, not a
+// palindrome). startsWith/endsWith/minVowels/maxVowels are always
+// derivable for any word, so at least 4 of the 7 types are always
+// available — 3 valid, distinct conditions are guaranteed on every call.
+function conditionForWord(type, word) {
   switch (type) {
     case "startsWith":
+      return { type, letter: word[0] };
     case "endsWith":
-    case "doubleLetter":
-      return { type, letter: randomLetter() };
+      return { type, letter: word[4] };
+    case "doubleLetter": {
+      for (let i = 0; i < 4; i++) {
+        if (word[i] === word[i + 1]) return { type, letter: word[i] };
+      }
+      return null;
+    }
     case "minVowels":
-      return { type, count: 3 };
+      return { type, count: countVowels(word) };
     case "maxVowels":
-      return { type, count: 1 };
+      return { type, count: countVowels(word) };
+    case "firstLastSame":
+      return word[0] === word[4] ? { type } : null;
+    case "palindrome":
+      return isPalindrome(word) ? { type } : null;
     default:
-      return { type };
+      return null;
   }
 }
 
 function generateConditions() {
-  const shuffled = CONDITION_TYPES.slice().sort(() => Math.random() - 0.5);
+  if (!ALLOWED_GUESSES.length) return [];
+
+  const word = ALLOWED_GUESSES[Math.floor(Math.random() * ALLOWED_GUESSES.length)].toUpperCase();
   const seen = new Set();
   const conditions = [];
 
-  for (const type of shuffled) {
+  for (const type of shuffle(CONDITION_TYPES)) {
     if (conditions.length >= 3) break;
-    const c = buildCondition(type);
+    const c = conditionForWord(type, word);
+    if (!c) continue;
     const key = optionKey(c);
     if (seen.has(key)) continue;
     seen.add(key);
     conditions.push(c);
   }
 
-  return conditions;
+  // startsWith/endsWith/minVowels/maxVowels never return null, so this
+  // only recurses in the vanishingly rare case those 4 collapse to fewer
+  // than 3 distinct keys (e.g. a word whose vowel count as both min and
+  // max dedupes down) — just pick a different word.
+  return conditions.length >= 3 ? conditions : generateConditions();
 }
 
 engine.registerPower("fieldReport", {
@@ -110,7 +163,7 @@ engine.registerPower("fieldReport", {
 
       const options = [0, 1, 2, 3, 4].filter(i => !greenPositions.has(i));
       if (!options.length) {
-        io.to(roomId).emit("toast", "Field Report: all 3 conditions met, but every position is already known.");
+        io.to(roomId).emit("fieldReportResult", { metCount, reward: "none-left", conditions });
         return;
       }
 
@@ -122,7 +175,7 @@ engine.registerPower("fieldReport", {
         state.extraConstraints.push({ type: "GREEN", index, letter });
         io.to(roomId).emit("greenLetterRevealed", { index, letter, source: "fieldReport" });
       }
-      io.to(roomId).emit("toast", `Field Report: all 3 conditions met! Revealed ${letter} in position ${index + 1}.`);
+      io.to(roomId).emit("fieldReportResult", { metCount, reward: "green", letter, index, conditions });
       return;
     }
 
@@ -142,17 +195,17 @@ engine.registerPower("fieldReport", {
       const options = secretLetters.filter(l => !known.has(l));
 
       if (!options.length) {
-        io.to(roomId).emit("toast", "Field Report: 2 of 3 conditions met, but every letter is already known.");
+        io.to(roomId).emit("fieldReportResult", { metCount, reward: "none-left", conditions });
         return;
       }
 
       const letter = options[Math.floor(Math.random() * options.length)];
       state.extraConstraints ??= [];
       state.extraConstraints.push({ type: "YELLOW", letter });
-      io.to(roomId).emit("toast", `Field Report: 2 of 3 conditions met! ${letter} is somewhere in the secret.`);
+      io.to(roomId).emit("fieldReportResult", { metCount, reward: "yellow", letter, conditions });
       return;
     }
 
-    io.to(roomId).emit("toast", `Field Report: only ${metCount} of 3 conditions met — no reveal this time.`);
+    io.to(roomId).emit("fieldReportResult", { metCount, reward: "none", conditions });
   }
 });

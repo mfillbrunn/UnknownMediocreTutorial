@@ -105,6 +105,42 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
 });
 
 //--------------------------------------------------
+// FIELD REPORT — always show how many of the 3 conditions the evaluated
+// guess met, on both screens, right after it's scored (fires from the
+// same postScore step that grants the reward, so the letter is already
+// in extraConstraints by the time this popup appears).
+//--------------------------------------------------
+socket.on("fieldReportResult", ({ metCount, reward, letter, index, conditions }) => {
+  const conditionList = Array.isArray(conditions)
+    ? conditions.map(c => typeof formatFieldReportCondition === "function" ? formatFieldReportCondition(c) : c.type).join(" • ")
+    : "";
+
+  let icon = "📋";
+  let title = `Field Report: ${metCount}/3 met`;
+  let sub = "No reveal this time.";
+
+  if (reward === "green") {
+    icon = "🟩";
+    title = `Field Report: 3/3 met!`;
+    sub = `Revealed ${letter.toUpperCase()} in position ${index + 1}.`;
+  } else if (reward === "yellow") {
+    icon = "🟨";
+    title = `Field Report: 2/3 met!`;
+    sub = `${letter.toUpperCase()} is somewhere in the secret.`;
+  } else if (reward === "none-left") {
+    sub = "Everything was already known.";
+  }
+
+  window.showBigAnnounce?.({
+    icon,
+    title,
+    sub: conditionList ? `${sub} (${conditionList})` : sub,
+    roleClass: reward === "green" || reward === "yellow" ? "outcome-win" : "",
+    duration: 3600
+  });
+});
+
+//--------------------------------------------------
 // FORCE GUESS
 //--------------------------------------------------
 

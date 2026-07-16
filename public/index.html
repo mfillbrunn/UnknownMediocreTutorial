@@ -667,6 +667,31 @@
     </button>
   </div>
 </div>
+
+<!-- Dev Mode Power Selection Modal -->
+<div id="devPowersModal" class="modal">
+  <div class="panel dev-powers-panel">
+    <h2 class="screen-title">Dev Mode: Choose Powers</h2>
+    <p class="draft-instruction">Pick which powers are in play this match instead of all of them.</p>
+
+    <div class="dev-powers-columns">
+      <div class="dev-powers-col">
+        <div class="dev-powers-col-label role-setter">Spy</div>
+        <div class="dev-powers-list" id="devSetterPowersList"></div>
+      </div>
+      <div class="dev-powers-col">
+        <div class="dev-powers-col-label role-guesser">Inspector</div>
+        <div class="dev-powers-list" id="devGuesserPowersList"></div>
+      </div>
+    </div>
+
+    <div class="decision-row">
+      <button id="devPowersConfirmBtn" class="primary-btn small">Confirm</button>
+      <button id="devPowersAllBtn" class="secondary-btn small">Select All</button>
+      <button id="devPowersCancelBtn" class="secondary-btn small">Cancel</button>
+    </div>
+  </div>
+</div>
 <div id="rejoinModal" class="modal">
   <div class="panel rejoin-modal-panel">
     <h2 class="screen-title">Disconnected</h2>
@@ -770,6 +795,7 @@
   <script src="client/daily-challenge.js"></script>
   <script src="client/my-games.js"></script>
   <script src="client/draft.js"></script>
+  <script src="client/dev-powers.js"></script>
   <script src="client/invite.js"></script>
   <script src="client/big-announce.js"></script>
   <script src="client.js"></script>
