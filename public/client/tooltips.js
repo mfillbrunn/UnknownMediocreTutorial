@@ -21,23 +21,25 @@ function buildPowerInfoPanel(state, role) {
 
   panel.innerHTML = "";
 
-  // Show active powers at top (highlighted), then all others as a library
+  // Only the powers actually active this game — not the full library of
+  // every power that could exist.
   const activePowers = new Set(state.activePowers || []);
 
   const sections = { setter: [], guesser: [] };
 
   for (const id in PowerEngine.powers) {
+    if (!activePowers.has(id)) continue;
+
     const mod  = PowerEngine.powers[id];
     const meta = getPowerMeta(id);
     if (!meta) continue;
 
-    const isActive = activePowers.has(id);
     const row = document.createElement("div");
-    row.className = "power-info-row" + (isActive ? " power-info-active" : "");
+    row.className = "power-info-row power-info-active";
     row.innerHTML = `
       <span class="power-info-emoji">${meta.emoji || "⚡"}</span>
       <div class="power-info-body">
-        <div class="power-info-title">${meta.label}${isActive ? " <span style='font-size:9px;opacity:.6;font-weight:600'>● ACTIVE</span>" : ""}</div>
+        <div class="power-info-title">${meta.label}</div>
         <div class="power-info-desc">${meta.desc}</div>
       </div>
     `;

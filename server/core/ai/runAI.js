@@ -140,7 +140,11 @@ function maybeRunAI(room, roomId, context) {
     }
 
     if (aiRole === "setter" && state.pendingGuess) {
-      if (state?.powers?.freezeActive) {
+      // simultaneousAllWrong: the opening guess missed every letter, so
+      // the setter is locked into keeping that same secret this round
+      // (server rejects SET_SECRET_NEW while this is set) — same as
+      // freezeActive, just from a different rule.
+      if (state?.powers?.freezeActive || state.simultaneousAllWrong) {
         actionFn = () => {
           maybeUsePower(room, state, aiUserId, roomId, context, isTutorial);
 

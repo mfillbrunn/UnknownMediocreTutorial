@@ -91,8 +91,19 @@ window.showDailyChallenge = async function () {
 function _startDailyGame(config) {
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
 
+  // The whole setup (adding the AI, swapping to Inspector, applying the
+  // day's powers, disabling the timer, marking ready) is a scripted
+  // sequence with no real "waiting for another player" step — showing the
+  // normal multiplayer lobby for the ~150ms it takes to land would just
+  // flash it on screen for no reason. Suppress it; updateScreens() skips
+  // the lobby UI while this is set, until the round actually starts.
+  window._dailyStarting = true;
+
   socket.emit("createRoom", { userId: window.currentUser.id, name: username }, resp => {
-    if (!resp?.ok) return toast(resp?.error || "Could not create room");
+    if (!resp?.ok) {
+      window._dailyStarting = false;
+      return toast(resp?.error || "Could not create room");
+    }
 
     window.roomId = resp.roomId;
     persistRoom(resp.roomId);
@@ -122,7 +133,15 @@ function _startDailyGame(config) {
       sendGameAction({ type: "PLAYER_READY", userId: window.currentUser.id, mode: "daily" });
     }, 150);
 
-    enterLobbyAfterJoin();
+    // Not enterLobbyAfterJoin() — that shows the multiplayer lobby screen,
+    // which is exactly the flash this is avoiding. Stay on dailyScreen
+    // (with a loading message) until the round starts; updateScreens()
+    // picks up the transition once the server state moves off "lobby".
+    window.isRejoining = false;
+    const screenEl = document.getElementById("dailyScreen");
+    if (screenEl) {
+      screenEl.innerHTML = `<div class="menu-center"><p class="daily-date">Starting today's challenge…</p></div>`;
+    }
   });
 }
 
