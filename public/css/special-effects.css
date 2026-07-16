@@ -228,10 +228,19 @@
 }
 
 .big-announce-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   font-size: var(--fs-14, 14px);
   font-weight: 600;
   opacity: 0.8;
   max-width: 40ch;
+}
+
+.big-announce-sub-line:last-child:not(:only-child) {
+  font-size: var(--fs-13, 13px);
+  font-weight: 500;
+  opacity: 0.75;
 }
 
 .big-announce-powers {

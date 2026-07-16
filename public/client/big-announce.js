@@ -18,7 +18,18 @@ window.showBigAnnounce = function ({
   el.className = `big-announce ${roleClass}`.trim();
   el.querySelector(".big-announce-icon").textContent = icon;
   el.querySelector(".big-announce-title").textContent = title;
-  el.querySelector(".big-announce-sub").textContent = sub;
+
+  // sub can be a single string or an array of strings, each rendered on
+  // its own line (e.g. Field Report: the revealed-letter line separate
+  // from the conditions-met line).
+  const subEl = el.querySelector(".big-announce-sub");
+  subEl.innerHTML = "";
+  (Array.isArray(sub) ? sub : [sub]).filter(Boolean).forEach(line => {
+    const lineEl = document.createElement("div");
+    lineEl.className = "big-announce-sub-line";
+    lineEl.textContent = line;
+    subEl.appendChild(lineEl);
+  });
 
   const powersEl = el.querySelector(".big-announce-powers");
   if (powersEl) {

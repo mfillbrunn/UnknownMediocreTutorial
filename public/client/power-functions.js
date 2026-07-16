@@ -134,7 +134,7 @@ socket.on("fieldReportResult", ({ metCount, reward, letter, index, conditions })
   window.showBigAnnounce?.({
     icon,
     title,
-    sub: conditionList ? `${sub} (${conditionList})` : sub,
+    sub: [sub, conditionList ? `Conditions: ${conditionList}` : null],
     roleClass: reward === "green" || reward === "yellow" ? "outcome-win" : "",
     duration: 6000
   });
