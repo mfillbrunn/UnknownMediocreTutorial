@@ -364,13 +364,15 @@ if (action.type === "SET_DAILY_POWERS") {
       gP = state._dailyGuesserPowers;
     } else if (
       state.devMode &&
-      (state._devSetterPowers?.length || state._devGuesserPowers?.length)
+      (Array.isArray(state._devSetterPowers) || Array.isArray(state._devGuesserPowers))
     ) {
-      // Dev Mode with a curated selection: use exactly what the host
-      // picked in the power-selection popup. An empty/never-set side
-      // falls back to "all of that role's powers" rather than none.
-      sP = state._devSetterPowers?.length ? state._devSetterPowers : SETTER_POWERS.slice();
-      gP = state._devGuesserPowers?.length ? state._devGuesserPowers : GUESSER_POWERS.slice();
+      // Dev Mode with a confirmed selection: use exactly what the host
+      // picked in the power-selection popup, including an intentionally
+      // empty side (e.g. "Deselect All" — zero setter powers this match).
+      // A side that was never confirmed at all (still null, e.g. the host
+      // reloaded mid-lobby) falls back to "all of that role's powers".
+      sP = Array.isArray(state._devSetterPowers) ? state._devSetterPowers : SETTER_POWERS.slice();
+      gP = Array.isArray(state._devGuesserPowers) ? state._devGuesserPowers : GUESSER_POWERS.slice();
     } else {
       sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
       gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
