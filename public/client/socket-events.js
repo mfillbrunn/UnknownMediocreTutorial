@@ -207,6 +207,17 @@ $("kickGuesserBtn")?.addEventListener("click", () => {
 });
 
 $("leaveRoomBtn")?.addEventListener("click", () => {
+  // Unlimited-time rooms are meant to be stepped away from without losing
+  // your spot — same "Leave" convention already used for an in-progress
+  // unlimited game (see updateLeaveGameButtons/clearRoom). Emitting
+  // leaveRoom here would strip your player entry from the room, which is
+  // exactly what made it vanish from My Games — so for these, just stop
+  // watching locally and leave the server-side room intact.
+  if (state?.timeControl?.enabled === false) {
+    clearRoom();
+    return;
+  }
+
   socket.emit("leaveRoom", {}, () => {
     roomId = null;
     clearRoom();
