@@ -17,6 +17,15 @@ module.exports = {
       power: "betMiss"
     })
   },
+  fieldReport: {
+    role: "guesser",
+    aiUsable: true,
+    isUsed: s => s.powers.fieldReportUsed,
+    buildAction: () => ({
+      type: "USE_POWER",
+      power: "fieldReport"
+    })
+  },
   revealPenalty: {
     role: "setter",
     aiUsable: false,

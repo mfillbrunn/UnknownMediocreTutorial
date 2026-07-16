@@ -7,6 +7,8 @@ const { resetRoundTimer } = require("../../utils/Timer");
 const { stopAllRoomIntervals } = require("../../utils/teardown");
 const { createInitialState } = require("../stateFactory");
 const { startGameTimer } = require("../timeouts/timeoutController");
+const { startDraftTimer } = require("../../utils/draftTimer");
+const { finalizeDraft, shuffle } = require("./draft");
 const {
   ensureStatePlayer,
   setPlayerName,
@@ -26,7 +28,6 @@ const SETTER_POWERS = [
   "countOnly",
   "blindSpot",
   "vowelRefresh",
-  "assassinWord",
   "forceGuess",
   "blindGuess",
   "fakeFeedback",
@@ -44,7 +45,8 @@ const GUESSER_POWERS = [
   "magicMode",
   "revealLetter",
   "nonsense",
-  "betMiss"
+  "betMiss",
+  "fieldReport"
 ];
 
 function initializePlayerTimers(state, userIds) {
@@ -88,6 +90,13 @@ function handleLobbyPhase(room, state, action, roomId, context) {
   if (action.type === "SET_SHUFFLE") {
     if (state.hostUserId !== action.userId) return;
     state.shuffle = !!action.shuffle;
+    emitRoomState(roomId, room, io);
+    return;
+  }
+
+  if (action.type === "SET_DRAFT_MODE") {
+    if (state.hostUserId !== action.userId) return;
+    state.draftMode = !!action.draftMode;
     emitRoomState(roomId, room, io);
     return;
   }
@@ -256,6 +265,7 @@ if (action.type === "SET_DAILY_POWERS") {
     freshState.ranked = state.ranked;
     freshState.matchStartedAt = Date.now();
     freshState.shuffle = state.shuffle;
+    freshState.draftMode = !!state.draftMode;
     freshState.timeControl = { ...state.timeControl };
     freshState.powerCount = state.powerCount;
     freshState.aiDifficulty = state.aiDifficulty;
@@ -284,19 +294,65 @@ if (action.type === "SET_DAILY_POWERS") {
 
     const N = state.powerCount || 2;
 
-     if (state._dailySetterPowers && state._dailyGuesserPowers) {
-           sP = state._dailySetterPowers;
-           gP = state._dailyGuesserPowers;
-       } else {
-         sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
-         gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
-       }
-
     state.mode = state.isTutorial
       ? new TutorialMode()
       : new CompetitiveMode();
 
     state.mode.initMatch(state);
+
+    // Draft Mode: skip the random pick and let each role's player choose
+    // 2 of 3 revealed powers instead. Not compatible with daily challenge
+    // (fixed powers), tutorial (scripted powers), or dev mode (wants
+    // everything unlocked for testing).
+    const draftEligible =
+      state.draftMode &&
+      !state.isDaily &&
+      !state.isTutorial &&
+      !state.devMode;
+
+    if (draftEligible) {
+      state.draftCandidates = {};
+      state.draftPicks = {};
+      state.draftDone = {};
+
+      for (const player of Object.values(state.players || {})) {
+        const pool = player.role === "setter" ? SETTER_POWERS : GUESSER_POWERS;
+        state.draftCandidates[player.userId] = shuffle(pool).slice(0, 3);
+
+        if (player.isAI) {
+          state.draftPicks[player.userId] =
+            shuffle(state.draftCandidates[player.userId]).slice(0, 2);
+          state.draftDone[player.userId] = true;
+        }
+      }
+
+      state.draftDeadline = Date.now() + 30000;
+      state.phase = "draft";
+
+      emitLobbyEvent(io, roomId, { type: "hideLobby" });
+      emitRoomState(roomId, room, io);
+      startDraftTimer(roomId, state, io, () =>
+        finalizeDraft(room, state, roomId, context)
+      );
+
+      const humanUserIds = Object.values(room.playersByUserId || {})
+        .filter((p) => !p.isAI)
+        .map((p) => p.userId);
+      if (humanUserIds.every((uid) => state.draftDone[uid])) {
+        finalizeDraft(room, state, roomId, context);
+      }
+
+      return;
+    }
+
+    if (state._dailySetterPowers && state._dailyGuesserPowers) {
+      sP = state._dailySetterPowers;
+      gP = state._dailyGuesserPowers;
+    } else {
+      sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
+      gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
+    }
+
     state.mode.onLobbyReady(state, sP, gP);
 
     state.phase = "simultaneous";

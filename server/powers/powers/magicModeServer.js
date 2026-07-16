@@ -38,6 +38,7 @@ engine.registerPower("magicMode", {
         index: j,
         letter: guessedLetter
       });
+      io?.to(roomId)?.emit("greenLetterRevealed", { index: j, letter: guessedLetter, source: "magicMode" });
 
       added.push({ index: j, letter: guessedLetter });
     }

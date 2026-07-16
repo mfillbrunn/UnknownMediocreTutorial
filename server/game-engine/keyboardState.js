@@ -9,7 +9,7 @@ const KEYBOARD_LAYOUT = [
 function getLetterStatusFromHistory(letter, state) {
   if (!state?.history) return { status: null, uncertain: false };
 
-  // Extra constraints (forced greens)
+  // Extra constraints (forced greens / free yellows from powers)
   const extraGreens = state.extraConstraints
     ?.filter(c => c.type === "GREEN")
     .map(c => c.letter);
@@ -18,7 +18,13 @@ function getLetterStatusFromHistory(letter, state) {
     return { status: "green", uncertain: false };
   }
 
-  let strongest = null;
+  const extraYellows = state.extraConstraints
+    ?.filter(c => c.type === "YELLOW")
+    .map(c => c.letter);
+
+  // A floor, not a lock — a later guess revealing this letter as green
+  // (a real position match) should still upgrade past it.
+  let strongest = extraYellows?.includes(letter) ? "yellow" : null;
   let uncertain = false;
 
   for (const entry of state.history) {

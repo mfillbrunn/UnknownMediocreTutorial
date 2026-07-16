@@ -1,8 +1,10 @@
 const { stopTimer } = require("./Timer");
 const { clearForceTimer } = require("./forceTimer");
+const { stopDraftTimer } = require("./draftTimer");
 
 function stopAllRoomIntervals(roomId, room) {
   stopTimer(roomId);
+  stopDraftTimer(roomId);
   try {
     if (room?.state) {
       clearForceTimer(roomId, room.state);

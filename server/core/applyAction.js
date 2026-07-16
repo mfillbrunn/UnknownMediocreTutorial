@@ -1,4 +1,5 @@
 const handleLobbyPhase = require("./phases/lobby");
+const { handleDraftPhase } = require("./phases/draft");
 const handleSimultaneousPhase = require("./phases/simultaneous");
 const { handleNormalPhase } = require("./phases/normal");
 const { handleGameOverPhase } = require("./phases/postGame");
@@ -7,6 +8,9 @@ function applyAction(room, state, action, roomId, context) {
   switch (state.phase) {
     case "lobby":
       handleLobbyPhase(room, state, action, roomId, context);
+      break;
+    case "draft":
+      handleDraftPhase(room, state, action, roomId, context);
       break;
     case "simultaneous":
       handleSimultaneousPhase(room, state, action, roomId, context);

@@ -25,4 +25,5 @@ module.exports = {
   assassinWord: { label: "Assassin Word", role: "setter" },
   blindGuess:{ label: "Blind Guess" , role: "setter"},
   blindSpot:{ label: "Blind Spot", role: "setter" },
+  fieldReport: { label: "Field Report", role: "guesser" },
 };

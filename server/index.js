@@ -107,6 +107,7 @@ require("./powers/powers/revealLetterServer.js");
 require("./powers/powers/assassinWordServer.js");
 require("./powers/powers/betMissServer.js");
 require("./powers/powers/revealPenaltyServer.js");
+require("./powers/powers/fieldReportServer.js");
 // Register socket event handlers (create/join room, game actions)
 registerSocketHandlers(io, context);
 registerMatchmaking(io, context);

@@ -13,6 +13,13 @@ window.POWER_METADATA = {
     emoji: "🎯",
     color: "#F59E0B"
   },
+  fieldReport: {
+    label: "Field Report",
+    desc: "Reveals 3 conditions for your next guess. Meet 2 of 3 for a free yellow letter; meet all 3 for a free green letter.",
+    icon: "clipboard",
+    emoji: "📋",
+    color: "#0EA5E9"
+  },
   fakeFeedback: {
     label: "Falsify Intel",
     desc: "The Inspector will see two feedbacks—one real, one fabricated.",
@@ -103,7 +110,7 @@ window.POWER_METADATA = {
 
   revealLetter: {
     label: "Confirm Lead",
-    desc: "Earn a guaranteed green letter by meeting specific usage criteria. High-Value Target: at least 4 of QWYJKXVZ. Full Sweep: all letters in a row.",
+    desc: "Earn a guaranteed green letter by meeting specific usage criteria. High-Value Target: at least 4 of Q, J, X, Z, W, K, V. Full Sweep: all letters in a keyboard row.",
     icon: "letter-plus",
     emoji: "🟩",
     color: "#16A34A",
@@ -111,13 +118,13 @@ window.POWER_METADATA = {
     variants: {
       ROW: {
         label: "Full Sweep",
-        desc: "Reveal a green letter by using all letters in a keyboard row.",
+        desc: "Reveal a green letter by using every letter in one keyboard row (top, home, or bottom).",
         icon: "keyboard-row",
         emoji: "⌨️"
       },
       RARE: {
         label: "High-Value Target",
-        desc: "Reveal a rare green letter by using at least 4 of QWYJKXVZ.",
+        desc: "Reveal a rare green letter by using at least 4 of Q, J, X, Z, W, K, V.",
         icon: "diamond-letter",
         emoji: "💎"
       }
