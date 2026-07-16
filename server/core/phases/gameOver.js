@@ -128,6 +128,21 @@ state.matchRounds.push({
     if (state.ranked) {
       applyRankedElo({ state, room, supabase, winner, tie })
         .then((ratingChange) => {
+          // The Elo update is async and lands after the emitRoomState()
+          // below already went out — push a follow-up broadcast once the
+          // delta is known so the summary screen can show it. room.state
+          // may have moved on (new match, room torn down) by the time
+          // this resolves, so only apply it to the state it was computed
+          // for.
+          if (ratingChange && room.state === state) {
+            state.eloChange = {
+              [ratingChange.userSetter]:
+                ratingChange.rating_setter_after - ratingChange.rating_setter_before,
+              [ratingChange.userGuesser]:
+                ratingChange.rating_guesser_after - ratingChange.rating_guesser_before
+            };
+            emitRoomState(roomId, room, io);
+          }
           return writeMatchHistory({ state, room, supabase, ratingChange });
         })
         .catch((err) => console.error("Ranked match persistence failed:", err));

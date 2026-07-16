@@ -219,6 +219,18 @@ function renderMatchSummary(container) {
           }`;
   }
 
+  // Ranked matches get an Elo delta computed async (after the match's
+  // profile rows are read/updated) and pushed in a follow-up broadcast —
+  // may not have landed yet on the very first gameOver render, in which
+  // case this just silently omits it until the next state update arrives.
+  let eloHtml = "";
+  const myEloChange = state.ranked ? state.eloChange?.[myUserId()] : null;
+  if (typeof myEloChange === "number") {
+    const sign = myEloChange > 0 ? "+" : "";
+    const eloClass = myEloChange > 0 ? "elo-gain" : myEloChange < 0 ? "elo-loss" : "elo-even";
+    eloHtml = `<p class="match-elo-change ${eloClass}">${sign}${myEloChange} Elo</p>`;
+  }
+
   let timeoutNote = "";
   if (winReason === "timeout" && state.timeoutLoser) {
     const loserName = getPlayerName(state.timeoutLoser);
@@ -287,6 +299,7 @@ if (guesser.length) {
         <span class="${!didWin && winner ? "me-winner" : ""}">${opponentName}</span>
       </p>
       ${scoreText ? `<h3>${scoreText}</h3>` : ""}
+      ${eloHtml}
       ${timeoutNote}
       ${assassinationNote}
       ${
