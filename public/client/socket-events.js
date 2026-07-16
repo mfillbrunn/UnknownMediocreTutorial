@@ -400,7 +400,12 @@ document.getElementById("startTutorialBtn")?.addEventListener("click", () => {
     resp => {
       if (!resp?.ok) return toast(resp?.error);
 
-      const roomId = resp.roomId;
+      // Not `const roomId` — that would shadow the shared global `roomId`
+      // (declared in client.js) with a callback-local copy, leaving the
+      // real one stuck at null for the rest of the session. Several things
+      // key off it directly (e.g. PowerEngine's one-time button render
+      // guard), not just window.roomId.
+      roomId = resp.roomId;
       persistRoom(roomId);
       window.roomId = roomId;
 

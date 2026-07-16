@@ -204,6 +204,14 @@ if (action.type === "SET_DAILY_POWERS") {
     if (!userId) return;
     if (!room.playersByUserId[userId]) return;
 
+    // The client marks the scripted "Start Interactive Tutorial" ready-up
+    // with mode: "tutorial" — nothing else ever sets isTutorial, so
+    // without this the lobby->game transition below always carries
+    // forward isTutorial: false and TutorialMode never actually engages.
+    if (action.mode === "tutorial") {
+      state.isTutorial = true;
+    }
+
     const nowReady = !state.players[userId]?.ready;
     setPlayerReady(room, userId, nowReady);
 
