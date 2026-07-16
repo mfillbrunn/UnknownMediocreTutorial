@@ -12,6 +12,21 @@ window.ALLOWED_SECRETS = new Set();
 fetch("/api/allowed-secrets")
   .then(r => r.json())
   .then(words => words.forEach(w => window.ALLOWED_SECRETS.add(w.toUpperCase())));
+// Several .modal dialogs (Assassin Word, Marked Weakness, Bet Power) are
+// authored nested inside setterScreen/guesserScreen for convenience, but
+// .modal is position:fixed and .screen.active sets a transform — any
+// transform on an ancestor creates a new containing block for fixed-
+// position descendants, so instead of covering the real viewport these
+// were only ever covering their parent screen's own (possibly short,
+// scrolled, or oddly-positioned) box. Reparenting them to <body> once at
+// load, before any of them are ever opened, sidesteps that entirely.
+["assassinModal", "revealPenaltyModal", "betMissModal"].forEach(id => {
+  const el = document.getElementById(id);
+  if (el && el.parentElement !== document.body) {
+    document.body.appendChild(el);
+  }
+});
+
 const show = id => {
   const el = $(id);
   if (!el) {console.warn(`show(): element #${id} not found`); return;}
@@ -38,6 +53,7 @@ window.hideAllScreens = () => {
 window.showStartup = function () {
   showScreen("startupScreen");
   document.body.classList.add("menu-mode");
+  window.refreshMyGamesNotification?.();
 };
 
 function showSubmitBanner(role, text) {

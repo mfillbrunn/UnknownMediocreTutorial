@@ -7,7 +7,7 @@
 // check).
 
 const activeRooms = new Map();   // "<userId>:<date>" -> roomId, not finished yet
-const completions = new Map();   // "<userId>:<date>" -> true, match is over
+const completions = new Map();   // "<userId>:<date>" -> { score, time, won, tie }, match is over
 
 function key(userId, date) {
   return `${userId}:${date}`;
@@ -18,9 +18,9 @@ function markDailyStarted(userId, date, roomId) {
   activeRooms.set(key(userId, date), roomId);
 }
 
-function markDailyCompleted(userId, date) {
+function markDailyCompleted(userId, date, result) {
   if (!userId || !date) return;
-  completions.set(key(userId, date), true);
+  completions.set(key(userId, date), result || null);
   activeRooms.delete(key(userId, date));
 }
 
@@ -28,7 +28,7 @@ function getDailyStatus(userId, date) {
   if (!userId || !date) return { status: "none" };
 
   if (completions.has(key(userId, date))) {
-    return { status: "completed" };
+    return { status: "completed", result: completions.get(key(userId, date)) };
   }
 
   const roomId = activeRooms.get(key(userId, date));

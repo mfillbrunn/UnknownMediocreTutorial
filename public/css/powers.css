@@ -603,10 +603,43 @@ body.power-assassinWord #power-fx {
   animation: fx-vignette 1000ms ease-out;
 }
 
-.bet-btn.selected {
-  background: #222;
+.bet-options {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--sp-6);
+  margin: 0 0 var(--sp-16);
+}
+
+.bet-btn {
+  width: 100%;
+  aspect-ratio: 1;
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: var(--r-6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--kb-neutral);
   color: #fff;
-  border-color: #222;
+  font-weight: 800;
+  font-size: var(--fs-14);
+
+  cursor: pointer;
+  transition: background .15s var(--ease-ui), transform .1s var(--ease-ui), box-shadow .15s var(--ease-ui);
+}
+
+.bet-btn:hover {
+  background: var(--kb-hover);
+  transform: translateY(-1px);
+}
+
+.bet-btn.selected {
+  background: var(--setter-color);
+  color: #000;
+  border-color: var(--setter-color);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.5);
 }
 
 body.power-revealPenalty #power-fx {

@@ -2,6 +2,23 @@
 // games (they can be safely disconnected from and resumed any time) and
 // lets them jump back into whichever one, highlighting whose turn it is.
 
+// Green mail badge on the My Games button — checked on login and whenever
+// the player lands back on the main menu, so it doesn't need a live
+// subscription per game to stay reasonably fresh.
+window.refreshMyGamesNotification = function () {
+  const badge = document.getElementById("myGamesNotifyBadge");
+  if (!badge) return;
+  if (!window.currentUser) {
+    badge.classList.add("hidden");
+    return;
+  }
+
+  socket.emit("getMyActiveGames", { userId: window.currentUser.id }, games => {
+    const hasTurn = Array.isArray(games) && games.some(g => g.isMyTurn && !g.isPending);
+    badge.classList.toggle("hidden", !hasTurn);
+  });
+};
+
 window.showMyGames = async function () {
   if (!window.currentUser) return toast("Please log in first");
 
@@ -102,26 +119,34 @@ function _renderGameRow(g) {
   `;
 }
 
-function _resumeMyGame(roomId) {
+function _resumeMyGame(targetRoomId) {
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
 
   // Deliberately returning to a room started via "Invite a Friend" —
   // let normal screen updates resume for it.
-  if (window._asyncInviteRoomId === roomId) window._asyncInviteRoomId = null;
+  if (window._asyncInviteRoomId === targetRoomId) window._asyncInviteRoomId = null;
 
-  window.roomId = roomId;
-  persistRoom(roomId);
+  // Not just window.roomId — client.js's own `roomId` (declared with
+  // `let`, so it's a separate global binding, not a window property) is
+  // what PowerEngine's one-time button-render guard actually checks.
+  // Leaving it unset here is exactly why the power buttons (and other
+  // roomId-gated UI) stayed missing until a full page reload re-derived
+  // it from localStorage.
+  roomId = targetRoomId;
+  window.roomId = targetRoomId;
+  persistRoom(targetRoomId);
 
   socket.emit(
     "joinRoom",
-    { roomId, userId: window.currentUser.id, name: username },
+    { roomId: targetRoomId, userId: window.currentUser.id, name: username },
     res => {
       if (!res?.ok) {
         toast(res?.error || "Could not resume that game");
         showStartup();
         return;
       }
-      window.roomId = res.roomId || roomId;
+      roomId = res.roomId || targetRoomId;
+      window.roomId = res.roomId || targetRoomId;
       onRejoinUI();
     }
   );

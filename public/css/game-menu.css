@@ -333,6 +333,48 @@ body.menu-mode .app-header {
   background: #ffffff;
 }
 
+#myGamesBtn {
+  position: relative;
+}
+
+.notify-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+
+  background: var(--tile-green);
+  border: 2px solid var(--screen-bg, #111);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--tile-green) 60%, transparent);
+
+  font-size: 11px;
+  line-height: 1;
+
+  animation: notify-badge-pop 1.8s var(--ease-ui) infinite;
+}
+
+.notify-badge.hidden {
+  display: none;
+}
+
+@keyframes notify-badge-pop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notify-badge {
+    animation: none;
+  }
+}
+
 /* Optional stamped accent */
 .menu-center::after {
   content: "AUTHORIZED ACCESS";

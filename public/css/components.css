@@ -432,7 +432,7 @@
    MODAL BASE (HIDDEN)
    ========================================= */
 .modal {
-  position: absolute;
+  position: fixed;
   inset: 0;
 
   display: none;
@@ -448,6 +448,44 @@
 .modal.active {
   display: flex;
   pointer-events: auto;
+}
+
+.modal-content {
+  max-width: 340px;
+  width: calc(100% - var(--sp-32));
+  text-align: center;
+  background: var(--panel-bg);
+  color: var(--panel-text);
+  border-radius: var(--r-10);
+  padding: var(--sp-16);
+  box-shadow: var(--shadow-inset-soft);
+}
+.modal-content h3 {
+  margin: 0 0 var(--sp-8);
+}
+.modal-instruction {
+  margin: var(--sp-8) 0 var(--sp-16);
+  font-size: var(--fs-14);
+  opacity: 0.85;
+  line-height: 1.4;
+}
+.modal-input {
+  width: 100%;
+  padding: var(--sp-10) var(--sp-12);
+  margin-bottom: var(--sp-16);
+  border-radius: var(--r-10);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--panel-text);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+.modal-content .decision-row {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-8);
 }
 
 /* ===============================

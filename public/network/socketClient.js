@@ -257,6 +257,13 @@ function tryAutoRejoin() {
         return;
       }
       window.isRejoining = false;
+      // Not just window.roomId — client.js's own `roomId` (declared with
+      // `let`, a separate global binding, not a window property) gates
+      // PowerEngine's one-time button-render call. Leaving it unset here
+      // is why rejoining left the power buttons (and anything else keyed
+      // off it) missing until a full reload re-derived it from
+      // localStorage.
+      roomId = res.roomId || storedRoomId;
       window.roomId = res.roomId || storedRoomId;
       onRejoinUI();
     }
