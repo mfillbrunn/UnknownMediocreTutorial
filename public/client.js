@@ -435,6 +435,16 @@ let _lastScreenPhase = null;
 let _gameOverRevealInFlight = false;
 
 function updateScreens() {
+  // The "Invite a Friend" async flow leaves this room's socket connection
+  // live in the background after the host has already navigated away —
+  // state broadcasts (the host's own setup actions, then later the
+  // friend joining/readying/playing) keep arriving the whole time. None
+  // of that should force any screen back onto the host; they left on
+  // purpose. Cleared when they deliberately return via My Games.
+  if (window._asyncInviteRoomId && window._asyncInviteRoomId === window.roomId) {
+    return;
+  }
+
   const enteringGameOverLive =
     state.phase === "gameOver" &&
     _lastScreenPhase !== "gameOver" &&
