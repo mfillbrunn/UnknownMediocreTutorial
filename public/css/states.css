@@ -43,8 +43,22 @@
 
 .theme-setter .key.key-current {
   box-shadow:
-    inset 0 0 0 1.5px rgba(255,255,255,0.2),
-    0 0 5px color-mix(in srgb, var(--role-accent) 30%, transparent);
+    inset 0 0 0 2px rgba(255,255,255,0.32),
+    0 0 6px color-mix(in srgb, var(--role-accent) 35%, transparent);
 
   animation: setter-warning-pulse 2.6s var(--ease-ui) infinite;
+}
+
+/* .key-green/-yellow/-blue/-purple all set box-shadow: none !important —
+   without an equally-important, more specific override here, a letter
+   that's both "in the current guess" and already color-solved from an
+   earlier guess (the common case) would show no outline at all. */
+.theme-setter .key.key-current.key-green,
+.theme-setter .key.key-current.key-yellow,
+.theme-setter .key.key-current.key-blue,
+.theme-setter .key.key-current.key-purple,
+.theme-setter .key.key-current.key-gray {
+  box-shadow:
+    inset 0 0 0 2px rgba(255,255,255,0.32),
+    0 0 6px color-mix(in srgb, var(--role-accent) 35%, transparent) !important;
 }
