@@ -29,9 +29,19 @@ window.renderDraftScreen = function (s) {
   const candidates = s.draftCandidates?.[uid] || [];
   const myPicks = s.draftPicks?.[uid] || [];
   const iAmDone = !!s.draftDone?.[uid];
+  const myRole = s.players?.[uid]?.role;
 
   const opponentId = Object.keys(s.players || {}).find(id => id !== uid);
   const opponentDone = opponentId ? !!s.draftDone?.[opponentId] : false;
+
+  const roleLabel = $("draftRoleLabel");
+  if (roleLabel) {
+    roleLabel.textContent = myRole === "setter"
+      ? "Drafting for: Spy"
+      : "Drafting for: Inspector";
+    roleLabel.classList.toggle("role-setter", myRole === "setter");
+    roleLabel.classList.toggle("role-guesser", myRole === "guesser");
+  }
 
   const list = $("draftCandidates");
   if (list) {
@@ -87,16 +97,6 @@ socket.on("draftTick", ({ remainingMs }) => {
   label.classList.toggle("draft-timer-low", secs <= 10);
 });
 
-socket.on("draftRevealed", ({ setter, guesser }) => {
-  const fmt = ids => (ids || [])
-    .map(id => window.POWER_METADATA?.[id]?.label || id)
-    .join(", ");
-
-  window.showBigAnnounce?.({
-    icon: "🎴",
-    title: "Powers drafted!",
-    sub: `Spy: ${fmt(setter.powers) || "—"}. Inspector: ${fmt(guesser.powers) || "—"}.`,
-    roleClass: "outcome-win",
-    duration: 3200
-  });
-});
+// No dedicated "powers drafted" popup here — the round-start popup
+// (client.js, fired on every phase -> "simultaneous" transition) already
+// shows the player's own role and their side's drafted/assigned powers.
