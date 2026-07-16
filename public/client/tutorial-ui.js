@@ -232,11 +232,12 @@ const isSetter  = role === "setter";
     runMatchTutorial(state);
     return;
  }
-  if (state.roles["AI"]===state.setter) {
+  const aiPlayer = Object.values(state.players || {}).find(p => p.isAI);
+  if (aiPlayer?.role === "setter") {
       runGuesserTutorial(state, role);
       return;
     }
-  if (state.roles["AI"]===state.guesser) {
+  if (aiPlayer?.role === "guesser") {
     runSetterTutorial(state, role);
     return;
   }
@@ -622,8 +623,8 @@ The right number shows how many would remain if you switch to the drafted word.`
   if (round === 3) {
     showTutorial(
       `From here on, play strategically and try to outsmart your opponent.`,
-      { enabled: gtrue, mode: "hide" }
-    );    
+      { enabled: true, mode: "hide" }
+    );
     hideTutorial();
     return;
   }
