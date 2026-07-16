@@ -115,7 +115,13 @@ state.matchRounds.push({
   if (state.isDaily && !state.canNextRound) {
     for (const player of Object.values(state.players || {})) {
       if (!player.isAI) {
-        markDailyCompleted(player.userId, state.dailyDate);
+        const { points, time, didWin, tie } = computeMatchResult(state, player.userId);
+        markDailyCompleted(player.userId, state.dailyDate, {
+          score: points[player.userId] || 0,
+          time: time[player.userId] || 0,
+          won: didWin,
+          tie
+        });
       }
     }
   }

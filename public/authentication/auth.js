@@ -218,6 +218,8 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
         maybeAutoRejoin();
       }
 
+      window.refreshMyGamesNotification?.();
+
       // 🔁 retry loaders
       if (pendingLeaderboardMode) loadLeaderboard(pendingLeaderboardMode);
       if (pastGamesVisible) $("showPastGamesBtn")?.click();

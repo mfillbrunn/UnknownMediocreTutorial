@@ -1,5 +1,12 @@
 // client/daily-challenge.js
 
+function formatDailyTime(totalSeconds) {
+  const secs = Math.round(totalSeconds || 0);
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 window.showDailyChallenge = async function () {
   if (!window.currentUser) return toast("Please log in first");
 
@@ -29,12 +36,28 @@ window.showDailyChallenge = async function () {
   });
 
   if (status?.status === "completed") {
+    const r = status.result;
+    const resultBlock = r
+      ? `<div class="daily-result-block">
+          <div class="daily-result-row">
+            <span class="daily-result-label">Score</span>
+            <span class="daily-result-value">${r.score}</span>
+          </div>
+          <div class="daily-result-row">
+            <span class="daily-result-label">Time</span>
+            <span class="daily-result-value">${formatDailyTime(r.time)}</span>
+          </div>
+          <p class="daily-result-outcome">${r.tie ? "It was a tie!" : r.won ? "You won! 🎉" : "You lost this one."}</p>
+        </div>`
+      : "";
+
     screen.innerHTML = `<div class="menu-center">
       <h2 class="menu-title">Daily Challenge</h2>
       <p class="daily-date">☀️ ${config.date}</p>
       <p class="daily-completed-msg">
         You've already played today's challenge. Come back tomorrow!
       </p>
+      ${resultBlock}
       <button class="menu-btn" onclick="showStartup()">Back</button>
     </div>`;
     return;
@@ -147,22 +170,26 @@ function _startDailyGame(config) {
 
 // Rejoin an in-progress daily-challenge room instead of starting a new one
 // (e.g. the player left mid-game and came back later the same day).
-function _resumeDailyGame(roomId) {
+function _resumeDailyGame(targetRoomId) {
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
 
-  window.roomId = roomId;
-  persistRoom(roomId);
+  // Not just window.roomId — see the identical fix in my-games.js's
+  // _resumeMyGame for why the plain global binding matters too.
+  roomId = targetRoomId;
+  window.roomId = targetRoomId;
+  persistRoom(targetRoomId);
 
   socket.emit(
     "joinRoom",
-    { roomId, userId: window.currentUser.id, name: username },
+    { roomId: targetRoomId, userId: window.currentUser.id, name: username },
     res => {
       if (!res?.ok) {
         toast(res?.error || "Could not resume today's challenge");
         showStartup();
         return;
       }
-      window.roomId = res.roomId || roomId;
+      roomId = res.roomId || targetRoomId;
+      window.roomId = res.roomId || targetRoomId;
       onRejoinUI();
     }
   );

@@ -79,15 +79,19 @@
       .insert({ from_user: myId, to_user: toId, room_id: roomId, status: "pending" });
   }
 
-  async function acceptInvite(inviteId, roomId) {
+  async function acceptInvite(inviteId, targetRoomId) {
     await sb().from("game_invites")
       .update({ status: "accepted" }).eq("id", inviteId);
     const username = window.myProfile?.username || window.currentUser?.email || "Player";
     return new Promise(resolve => {
-      socket.emit("joinRoom", { roomId, userId: window.currentUser.id, name: username }, resp => {
+      socket.emit("joinRoom", { roomId: targetRoomId, userId: window.currentUser.id, name: username }, resp => {
         if (resp?.ok) {
-          window.roomId = roomId;
-          persistRoom(roomId);
+          // Not just window.roomId — see the identical fix in
+          // my-games.js's _resumeMyGame for why the plain global binding
+          // (client.js's `let roomId`) matters too.
+          roomId = targetRoomId;
+          window.roomId = targetRoomId;
+          persistRoom(targetRoomId);
           enterLobbyAfterJoin();
         } else {
           toast(resp?.error || "Could not join room");
