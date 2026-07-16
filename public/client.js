@@ -488,7 +488,7 @@ function updateScreens() {
       // shows — 5 tiles * 350ms stagger (last tile delay 1400ms) + 1200ms
       // flip duration for that last tile = 2600ms total.
       const FLIP_TOTAL_MS = 2600;
-      const POPUP_DURATION_MS = 2200;
+      const POPUP_DURATION_MS = 3200;
 
       const iAmGuesser = myUserId() === state.guesser;
       setTimeout(() => {

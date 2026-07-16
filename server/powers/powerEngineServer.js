@@ -67,6 +67,25 @@ const engine = {
         p.turnStart(state, role, roomId, io);
       }
     }
+  },
+
+  // Fires the instant a guess is submitted (normal phase), before the
+  // setter's Keep/New decision and before finalizeFeedback/postScore. For
+  // powers whose evaluation only depends on the guess word itself (not the
+  // secret or feedback), this is the earliest correct moment to act — no
+  // reason to wait for scoring just to tell the player something already
+  // knowable from their own guess.
+  onGuessSubmitted(state, guess, roomId, io) {
+    for (const id in this.powers) {
+      const p = this.powers[id];
+      if (typeof p.onGuessSubmitted === "function") {
+        const capture = [];
+        const wrappedIo = wrapIoForCapture(io, roomId, capture);
+        p.onGuessSubmitted(state, guess, roomId, wrappedIo);
+        const actorRole = FALLBACK_ROLE[id] || POWER_METADATA[id]?.role || null;
+        pushPendingEvent(state, id, actorRole, roomId, io, capture);
+      }
+    }
   }
 };
 

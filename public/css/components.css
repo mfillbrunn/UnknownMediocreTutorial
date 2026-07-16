@@ -552,11 +552,12 @@
 
 
 /* =========================================
-   INFO BADGE (Power status)
+   INFO BADGE (Power status) — a status-bar strip themed by role
    ========================================= */
 #SetterInfoBadge,
 #GuesserInfoBadge {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
 
@@ -566,11 +567,24 @@
   /* Reserve the height a populated badge takes so the keyboard below it
      doesn't jump up/down as messages appear and disappear. */
   min-height: 20px;
+  border-radius: var(--r-10);
 
   font-size: var(--fs-12);
   font-weight: 800;
   letter-spacing: 0.4px;
   text-align: center;
+
+  transition: background .15s ease, border-color .15s ease, padding .15s ease, box-shadow .15s ease;
+}
+
+#SetterInfoBadge.show,
+#GuesserInfoBadge.show {
+  padding: var(--sp-6) var(--sp-14);
+  background: rgba(0, 0, 0, 0.38);
+  border: 1px solid color-mix(in srgb, var(--role-accent) 40%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 10px color-mix(in srgb, var(--role-accent) 12%, transparent);
 }
 
 .badge-item {
@@ -587,7 +601,7 @@
 
 .badge-sep {
   width: 0.75rem;
-  opacity: 0.4;
+  opacity: 0.35;
   user-select: none;
 }
 

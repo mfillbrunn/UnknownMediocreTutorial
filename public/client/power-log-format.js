@@ -38,6 +38,14 @@
     vowelRefresh(emissions) {
       const p = findEmission(emissions, "vowelRefreshInfo")?.payload;
       return p?.vowels?.length ? `reset vowels: ${p.vowels.join(", ")}` : null;
+    },
+    fieldReport(emissions) {
+      const p = findEmission(emissions, "fieldReportResult")?.payload;
+      if (!p) return null;
+      if (p.reward === "green") return `${p.metCount}/3 met — revealed ${p.letter} in position ${p.index + 1}`;
+      if (p.reward === "yellow") return `${p.metCount}/3 met — ${p.letter} is in the secret`;
+      if (p.reward === "none-left") return `${p.metCount}/3 met — nothing left to reveal`;
+      return `${p.metCount}/3 met — no reveal`;
     }
   };
 

@@ -100,15 +100,15 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
     title: "Green letter revealed!",
     sub: `${label} revealed ${letter.toUpperCase()} in position ${index + 1}.`,
     roleClass: "outcome-win",
-    duration: 2200
+    duration: 4200
   });
 });
 
 //--------------------------------------------------
 // FIELD REPORT — always show how many of the 3 conditions the evaluated
 // guess met, on both screens, right after it's scored (fires from the
-// same postScore step that grants the reward, so the letter is already
-// in extraConstraints by the time this popup appears).
+// same onGuessSubmitted step that grants the reward, so the letter is
+// already in extraConstraints by the time this popup appears).
 //--------------------------------------------------
 socket.on("fieldReportResult", ({ metCount, reward, letter, index, conditions }) => {
   const conditionList = Array.isArray(conditions)
@@ -136,7 +136,7 @@ socket.on("fieldReportResult", ({ metCount, reward, letter, index, conditions })
     title,
     sub: conditionList ? `${sub} (${conditionList})` : sub,
     roleClass: reward === "green" || reward === "yellow" ? "outcome-win" : "",
-    duration: 3600
+    duration: 6000
   });
 });
 
