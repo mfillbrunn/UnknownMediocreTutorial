@@ -343,7 +343,7 @@ onStateUpdate(newState => {
       title: iAmSetter ? "You are the Spy" : "You are the Inspector",
       sub: iAmSetter
         ? "Keep your secret hidden — evade every guess."
-        : "Find the secret word before your opponent runs out the clock.",
+        : "Do your best to find the secret word — try to hurry!",
       roleClass: iAmSetter ? "role-setter" : "role-guesser"
     });
   }
@@ -465,27 +465,44 @@ function updateScreens() {
         updateGuesserScreen();
       }
 
-      const iAmGuesser = myUserId() === state.guesser;
-      window.showBigAnnounce?.({
-        icon: iAmGuesser ? "🎉" : "💀",
-        title: iAmGuesser ? "You found the secret!" : "Your secret was found!",
-        sub: `The word was ${(lastEntry.finalSecret || state.secret || "").toUpperCase()}.`,
-        roleClass: iAmGuesser ? "outcome-win" : "outcome-lose",
-        duration: 2400
-      });
+      // The tile flip has to actually finish playing before the popup
+      // shows — 5 tiles * 350ms stagger (last tile delay 1400ms) + 1200ms
+      // flip duration for that last tile = 2600ms total.
+      const FLIP_TOTAL_MS = 2600;
+      const POPUP_DURATION_MS = 2200;
 
-      // 5 tiles * 350ms stagger + 1200ms flip duration for the last tile,
-      // plus a beat to actually read the popup, before moving on.
+      const iAmGuesser = myUserId() === state.guesser;
+      setTimeout(() => {
+        window.showBigAnnounce?.({
+          icon: iAmGuesser ? "🎉" : "💀",
+          title: iAmGuesser ? "You found the secret!" : "Your secret was found!",
+          sub: `The word was ${(lastEntry.finalSecret || state.secret || "").toUpperCase()}.`,
+          roleClass: iAmGuesser ? "outcome-win" : "outcome-lose",
+          duration: POPUP_DURATION_MS
+        });
+      }, FLIP_TOTAL_MS);
+
       setTimeout(() => {
         _gameOverRevealInFlight = false;
         updateScreens();
-      }, 2800);
+      }, FLIP_TOTAL_MS + POPUP_DURATION_MS + 200);
 
       return;
     }
   }
 
   if (_gameOverRevealInFlight) return;
+
+  // Daily Challenge's setup (add AI, swap to Inspector, apply the day's
+  // powers, disable the timer, ready up) is scripted and briefly leaves
+  // state.phase === "lobby" — showing the real multiplayer lobby for that
+  // window would flash it pointlessly. Bail out before hideAllScreens()
+  // even runs, so whatever daily-challenge.js is already showing (a
+  // loading message) stays put until the round actually starts.
+  if (window._dailyStarting) {
+    if (state.phase !== "lobby") window._dailyStarting = false;
+    else return;
+  }
 
   hideAllScreens();
   if (state.phase === "lobby") {
