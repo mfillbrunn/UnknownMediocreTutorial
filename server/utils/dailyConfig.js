@@ -4,11 +4,12 @@
 
 const SETTER_POWERS = [
   "hideTile", "suggestSecret", "confuseColors", "countOnly", "blindSpot",
-  "vowelRefresh", "assassinWord", "forceGuess", "blindGuess", "fakeFeedback", "revealPenalty",
+  "vowelRefresh", "forceGuess", "blindGuess", "fakeFeedback", "revealPenalty",
 ];
 const GUESSER_POWERS = [
   "suggestGuess", "rouletteSecret", "forceTimer", "revealHistory", "stealthGuess",
   "revealGreen", "freezeSecret", "magicMode", "revealLetter", "nonsense", "betMiss",
+  "fieldReport",
 ];
 
 function seededRandom(seed) {

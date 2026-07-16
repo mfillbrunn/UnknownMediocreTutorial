@@ -40,6 +40,7 @@ engine.registerPower("revealLetter", {
       index,
       letter
     });
+    io.to(roomId).emit("greenLetterRevealed", { index, letter, source: "revealLetter" });
   }
 
   io.to(roomId).emit("rareLetterReveal", { index, letter });

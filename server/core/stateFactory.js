@@ -91,6 +91,10 @@ const powers = {
       assassinWordActive: false,
       assassinWordassassinated : false,
       assassinPoints: false,
+      // FIELD REPORT (3-condition partial/full reveal)
+      fieldReportUsed: false,
+      fieldReportActive: false,
+      fieldReportConditions: null,
       // UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
       revealLetter: {
         ready: false,          // power is unlocked
@@ -124,6 +128,7 @@ function createInitialState() {
     matchMeta: {},       // owned entirely by the mode
     ranked : false,
     shuffle: false,
+    draftMode: true,
          isTutorial: false,
          devMode: false,
     gameOverView: "match",

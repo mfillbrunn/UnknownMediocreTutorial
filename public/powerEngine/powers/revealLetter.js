@@ -1,4 +1,67 @@
 // /powers/powers/revealLetter.js
+
+// Mirrors the unlock thresholds in server/powers/powers/revealLetterServer.js
+// turnStart() — kept in sync manually since the server is the source of
+// truth for when the power actually unlocks; this only computes a
+// human-readable progress readout from the same public history data.
+const RARE_LETTERS = "QJXZWKV".split("");
+const RARE_NEEDED = 4;
+const KEYBOARD_ROWS = [
+  { name: "Top row (QWERTYUIOP)", letters: "QWERTYUIOP".split("") },
+  { name: "Home row (ASDFGHJKL)", letters: "ASDFGHJKL".split("") },
+  { name: "Bottom row (ZXCVBNM)", letters: "ZXCVBNM".split("") }
+];
+
+function computeRevealLetterStatus(state) {
+  const p = state.powers?.revealLetter;
+  if (!p || !p.mode) return null;
+
+  if (p.used) {
+    return { label: "Used", desc: "Already revealed a letter this match." };
+  }
+  if (p.ready) {
+    return { label: "Ready!", desc: "Click to reveal a guaranteed green letter." };
+  }
+
+  const history = state.history || [];
+
+  if (p.mode === "RARE") {
+    const seen = new Set();
+    for (const h of history) {
+      for (const c of (h.guess || "").toUpperCase()) {
+        if (RARE_LETTERS.includes(c)) seen.add(c);
+      }
+    }
+    const found = Array.from(seen).sort();
+    return {
+      label: `${found.length}/${RARE_NEEDED}`,
+      desc: `Use ${RARE_NEEDED}+ rare letters (${RARE_LETTERS.join(", ")}) across your guesses. ` +
+        (found.length ? `Found so far: ${found.join(", ")}.` : "None found yet.")
+    };
+  }
+
+  // ROW
+  const used = KEYBOARD_ROWS.map(() => new Set());
+  for (const h of history) {
+    for (const c of (h.guess || "").toUpperCase()) {
+      KEYBOARD_ROWS.forEach((row, i) => {
+        if (row.letters.includes(c)) used[i].add(c);
+      });
+    }
+  }
+  let bestIdx = 0;
+  KEYBOARD_ROWS.forEach((row, i) => {
+    if (used[i].size / row.letters.length > used[bestIdx].size / KEYBOARD_ROWS[bestIdx].letters.length) {
+      bestIdx = i;
+    }
+  });
+  const row = KEYBOARD_ROWS[bestIdx];
+  return {
+    label: `${used[bestIdx].size}/${row.letters.length}`,
+    desc: `Use every letter in one keyboard row. Closest: ${row.name} — ${used[bestIdx].size}/${row.letters.length} used.`
+  };
+}
+
 PowerEngine.register("revealLetter", {
   role: "guesser",
 
@@ -14,8 +77,8 @@ PowerEngine.register("revealLetter", {
       // Normalized by powerEngineServer.normalizePowerId → "revealLetter"
       sendGameAction({ type: "USE_REVEAL_LETTER" });
     };
-  
-// Tooltip hooks (variant-aware)
+
+// Tooltip hooks (variant-aware, with live progress)
     const showVariantTooltip = () => {
       const mode = window.state?.powers?.revealLetter?.mode;
       const meta =
@@ -23,9 +86,11 @@ PowerEngine.register("revealLetter", {
 
       if (!meta) return;
 
+      const status = window.state ? computeRevealLetterStatus(window.state) : null;
+
       showTooltip(btn, {
         title: meta.label,
-        desc: meta.desc
+        desc: status ? `${meta.desc} ${status.desc}` : meta.desc
       });
     };
 
@@ -53,15 +118,15 @@ PowerEngine.register("revealLetter", {
 
     btn.style.display = "";
 
-    // Button label depends on mode
+    // Button label: condition name + a compact live-progress suffix.
     const mode = state.powers?.revealLetter?.mode;
-    if (mode === "RARE") {
-      btn.textContent = "High-Value Target";
-    } else if (mode === "ROW") {
-      btn.textContent = "Full Sweep";
-    } else {
-      btn.textContent = "Confirmed Lead";
-    }
+    const conditionName =
+      mode === "RARE" ? "High-Value Target" :
+      mode === "ROW" ? "Full Sweep" :
+      "Confirmed Lead";
+
+    const status = computeRevealLetterStatus(state);
+    btn.textContent = status ? `${conditionName} (${status.label})` : conditionName;
   }
 });
 

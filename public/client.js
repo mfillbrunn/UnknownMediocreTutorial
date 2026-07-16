@@ -376,6 +376,7 @@ onStateUpdate(newState => {
   updateRoleCards();
   updateHostControls();
   updateRankedUI();
+  window.updateDraftModeUI?.();
   updateShuffleUI();
   updateDevUI();
   updateTimerAccess(); 
@@ -527,6 +528,15 @@ function updateScreens() {
     hide("setterScreen");
     hide("guesserScreen");
     enableReadyButton(!!state.players?.[myUserId()]?.ready);
+    return;
+  }
+  if (state.phase === "draft") {
+    enterMenuMode();
+    show("draftScreen");
+    hide("menu");
+    hide("setterScreen");
+    hide("guesserScreen");
+    window.renderDraftScreen?.(state);
     return;
   }
   enableReadyButton(false);

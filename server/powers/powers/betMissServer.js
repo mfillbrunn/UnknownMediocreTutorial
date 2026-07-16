@@ -50,8 +50,9 @@ engine.registerPower("betMiss", {
     // Prevent duplicate reveals
     if (!state.extraConstraints.some(c => c.type === "GREEN" && c.index === index)) {
       state.extraConstraints.push({type: "GREEN",index,letter});
+      io.to(roomId).emit("greenLetterRevealed", { index, letter, source: "betMiss" });
     }
-    
+
   io.to(roomId).emit("betMiss", { betMissNumber: state.powers.betMissNumber});
     io.to(roomId).emit("toast", `Revealed letter ${letter} in position ${index + 1}!`);
   io.to(roomId).emit("toast", `Bet was ${state.powers.betMissNumber}!`);

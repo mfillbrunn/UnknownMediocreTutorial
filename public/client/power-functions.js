@@ -80,6 +80,31 @@ function highlightRareBonusTile(i, letter) {
 }
 
 //--------------------------------------------------
+// FREE GREEN LETTER — any power that grants a guaranteed green letter
+// (Reveal Letter, Magic Mode, Bet Power, ...) fires this. The constraint
+// row already flashes the tile itself; this adds a same-moment popup on
+// BOTH screens so the reveal doesn't go unnoticed if you're not looking
+// at the constraint row right then.
+//--------------------------------------------------
+const GREEN_REVEAL_SOURCE_LABELS = {
+  revealLetter: "Reveal Letter",
+  magicMode: "Magic Mode",
+  betMiss: "Bet Power",
+  fieldReport: "Field Report"
+};
+
+socket.on("greenLetterRevealed", ({ index, letter, source }) => {
+  const label = GREEN_REVEAL_SOURCE_LABELS[source] || "A power";
+  window.showBigAnnounce?.({
+    icon: "🟩",
+    title: "Green letter revealed!",
+    sub: `${label} revealed ${letter.toUpperCase()} in position ${index + 1}.`,
+    roleClass: "outcome-win",
+    duration: 2200
+  });
+});
+
+//--------------------------------------------------
 // FORCE GUESS
 //--------------------------------------------------
 

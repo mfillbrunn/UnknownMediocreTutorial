@@ -21,6 +21,15 @@ const POWER_RULES = {
       );
     }
   },
+
+  fieldReport: {
+    allowed(state) {
+      return (
+        state.turn === state.guesser &&
+        !state.powers.fieldReportUsed
+      );
+    }
+  },
     revealPenalty: {
     allowed(state) {
       return (

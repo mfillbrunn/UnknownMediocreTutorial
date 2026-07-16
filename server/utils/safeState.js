@@ -27,6 +27,18 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
     safe.pendingGuess = "";
   }
 
+  // Draft Mode: don't let a player see the opponent's in-progress picks
+  // before both sides lock in — the whole point is a simultaneous,
+  // independent choice. Once the draft finalizes these keys are deleted
+  // from state entirely, so there's nothing left to redact by then.
+  if (state.phase === "draft") {
+    if (safe.draftPicks) {
+      safe.draftPicks = userId in safe.draftPicks
+        ? { [userId]: safe.draftPicks[userId] }
+        : {};
+    }
+  }
+
   if (viewerRole === "setter" && state.powers.betMissActive) {
     safe.betMissNumber = null;
   }

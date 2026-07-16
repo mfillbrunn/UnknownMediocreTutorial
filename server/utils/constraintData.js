@@ -70,7 +70,7 @@ function getMustContainLetters(state) {
 
   if (state.extraConstraints?.length) {
     for (const c of state.extraConstraints) {
-      if (c.type === "GREEN") {
+      if (c.type === "GREEN" || c.type === "YELLOW") {
         must.add(c.letter);
       }
     }
