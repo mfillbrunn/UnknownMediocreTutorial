@@ -482,6 +482,16 @@
   border-color: color-mix(in srgb, var(--tile-green) 55%, transparent);
 }
 
+.my-game-row.pending {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--tile-yellow) 55%, transparent);
+}
+
+.my-game-row.pending .my-game-turn-badge {
+  color: var(--tile-yellow);
+  opacity: 1;
+}
+
 .my-game-main {
   display: flex;
   flex-direction: column;
