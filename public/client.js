@@ -338,18 +338,21 @@ onStateUpdate(newState => {
   // while the player is watching.
   if (prevPhase !== undefined && prevPhase !== "simultaneous" && state.phase === "simultaneous") {
     const iAmSetter = myUserId() === state.setter;
-    const myPowerIds = state.initialPowers?.[iAmSetter ? "setter" : "guesser"] || [];
-    const myPowers = myPowerIds.map(id => {
+    const describePowers = ids => (ids || []).map(id => {
       const meta = window.POWER_METADATA?.[id];
       return { emoji: meta?.emoji, label: meta?.label || id, desc: meta?.desc };
     });
+    const powerGroups = [
+      { label: "Spy", roleClass: "role-setter", powers: describePowers(state.initialPowers?.setter) },
+      { label: "Inspector", roleClass: "role-guesser", powers: describePowers(state.initialPowers?.guesser) }
+    ];
     window.showBigAnnounce?.({
       icon: iAmSetter ? "🕵️" : "🔍",
       title: iAmSetter ? "You are the Spy" : "You are the Inspector",
       sub: iAmSetter ? "Keep your secret hidden." : "Find the secret word.",
-      powers: myPowers,
+      powerGroups,
       roleClass: iAmSetter ? "role-setter" : "role-guesser",
-      duration: myPowers.length ? 3400 : 2400
+      duration: 4200
     });
   }
   const newMyRole = getMyRole();
