@@ -237,15 +237,34 @@
 .big-announce-powers {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
   margin-top: 4px;
   width: 100%;
   max-width: 34ch;
+  max-height: 42vh;
+  overflow-y: auto;
 }
 
 .big-announce-powers:empty {
   display: none;
 }
+
+.big-announce-power-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.big-announce-power-group-label {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.big-announce-power-group-label.role-setter { color: var(--setter-color, #f87171); }
+.big-announce-power-group-label.role-guesser { color: var(--guesser-color, #60a5fa); }
 
 .big-announce-power-row {
   display: flex;

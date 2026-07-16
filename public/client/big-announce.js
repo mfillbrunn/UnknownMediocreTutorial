@@ -6,7 +6,7 @@ window.showBigAnnounce = function ({
   icon = "",
   title = "",
   sub = "",
-  powers = null,
+  powerGroups = null,
   roleClass = "",
   duration = 2400
 } = {}) {
@@ -22,13 +22,20 @@ window.showBigAnnounce = function ({
 
   const powersEl = el.querySelector(".big-announce-powers");
   if (powersEl) {
-    powersEl.innerHTML = Array.isArray(powers) && powers.length
-      ? powers.map(p => `
-          <div class="big-announce-power-row">
-            <span class="big-announce-power-emoji">${p.emoji || ""}</span>
-            <span class="big-announce-power-text"><strong>${p.label}</strong> — ${p.desc || ""}</span>
-          </div>
-        `).join("")
+    powersEl.innerHTML = Array.isArray(powerGroups)
+      ? powerGroups
+          .filter(group => Array.isArray(group.powers) && group.powers.length)
+          .map(group => `
+            <div class="big-announce-power-group">
+              <div class="big-announce-power-group-label ${group.roleClass || ""}">${group.label}</div>
+              ${group.powers.map(p => `
+                <div class="big-announce-power-row">
+                  <span class="big-announce-power-emoji">${p.emoji || ""}</span>
+                  <span class="big-announce-power-text"><strong>${p.label}</strong> — ${p.desc || ""}</span>
+                </div>
+              `).join("")}
+            </div>
+          `).join("")
       : "";
   }
 
