@@ -352,7 +352,7 @@ onStateUpdate(newState => {
       sub: iAmSetter ? "Keep your secret hidden." : "Find the secret word.",
       powerGroups,
       roleClass: iAmSetter ? "role-setter" : "role-guesser",
-      duration: 4200
+      duration: 15000
     });
   }
   const newMyRole = getMyRole();
