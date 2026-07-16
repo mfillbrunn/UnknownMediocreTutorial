@@ -28,8 +28,10 @@ window.showMyGames = async function () {
     return;
   }
 
-  const casual = games.filter(g => !g.ranked);
-  const ranked = games.filter(g => g.ranked);
+  const pending = games.filter(g => g.isPending);
+  const active = games.filter(g => !g.isPending);
+  const casual = active.filter(g => !g.ranked);
+  const ranked = active.filter(g => g.ranked);
 
   const section = (title, list) => {
     if (!list.length) return "";
@@ -45,6 +47,7 @@ window.showMyGames = async function () {
     <div class="menu-center">
       <h2 class="menu-title">My Games</h2>
       <p class="daily-date">♾️ Unlimited-time games in progress</p>
+      ${section("Waiting for a friend", pending)}
       ${section("Casual", casual)}
       ${section("Ranked", ranked)}
       <button class="menu-btn" onclick="showStartup()">Back</button>
@@ -69,6 +72,21 @@ function _formatStartDate(ts) {
 }
 
 function _renderGameRow(g) {
+  if (g.isPending) {
+    return `
+      <div class="my-game-row-wrap">
+        <button class="my-game-row pending" data-room-id="${g.roomId}">
+          <span class="my-game-main">
+            <span class="my-game-opponent">Room ${g.roomId}</span>
+            <span class="my-game-date">Share the link again from here if you need to</span>
+          </span>
+          <span class="my-game-turn-badge">Waiting for join…</span>
+        </button>
+        <button class="my-game-abandon-btn" data-room-id="${g.roomId}" title="Cancel this invite">Cancel</button>
+      </div>
+    `;
+  }
+
   const dateLabel = _formatStartDate(g.startedAt);
   return `
     <div class="my-game-row-wrap">

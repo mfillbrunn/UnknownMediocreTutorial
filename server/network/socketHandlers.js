@@ -34,11 +34,16 @@ module.exports = function registerSocketHandlers(io, context) {
       for (const [roomId, room] of Object.entries(rooms)) {
         if (!room || room.status !== "alive") continue;
         const state = room.state;
-        if (!state || state.gameOver || state.phase === "lobby") continue;
+        if (!state || state.gameOver) continue;
         if (state.timeControl?.enabled !== false) continue;
 
         const me = state.players?.[userId];
         if (!me) continue;
+
+        // A room an "Invite a Friend" host has already readied up and
+        // left is still phase "lobby" until the friend joins — surface it
+        // too (as pending) so it doesn't just vanish from view.
+        const isPending = state.phase === "lobby";
 
         const opponentId = Object.keys(state.players || {}).find(
           (id) => id !== userId
@@ -57,17 +62,21 @@ module.exports = function registerSocketHandlers(io, context) {
 
         results.push({
           roomId,
-          opponentName: opponent?.name || (opponent?.isAI ? "AI" : "Opponent"),
+          opponentName: opponent?.name || (opponent?.isAI ? "AI" : isPending ? null : "Opponent"),
           myRole: me.role,
           isMyTurn,
+          isPending,
           phase: state.phase,
           ranked: !!state.ranked,
           startedAt: state.matchStartedAt || null
         });
       }
 
-      // Games where it's your turn first.
-      results.sort((a, b) => (b.isMyTurn ? 1 : 0) - (a.isMyTurn ? 1 : 0));
+      // Games where it's your turn first, pending invites last.
+      results.sort((a, b) => {
+        if (a.isPending !== b.isPending) return a.isPending ? 1 : -1;
+        return (b.isMyTurn ? 1 : 0) - (a.isMyTurn ? 1 : 0);
+      });
 
       cb?.(results);
     });
