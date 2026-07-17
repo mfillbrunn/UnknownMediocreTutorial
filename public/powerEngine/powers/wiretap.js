@@ -50,7 +50,7 @@ window.emitWiretapDraft = function (draft) {
   socket.emit("guesserWiretapDraft", { roomId: window.roomId, draft: draft || "" });
 };
 
-socket.on("wiretapLive", ({ draft, count }) => {
-  window._wiretapLive = { draft, count };
+socket.on("wiretapLive", ({ draft, count, invalid }) => {
+  window._wiretapLive = { draft, count, invalid: !!invalid };
   window.renderGuesserRemainingBox?.(window.state?.guesserRemainingBox || { visible: false });
 });

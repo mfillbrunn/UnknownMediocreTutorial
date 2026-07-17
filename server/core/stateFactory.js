@@ -97,6 +97,7 @@ const powers = {
       fieldReportConditions: null,
       // LETTER PROBE (test 5 letters -> count present in secret)
       letterProbeUsed: false,
+      letterProbeResult: null,
       // WIRETAP (passive remaining-count always on; once-per-round active
       // ability, bullet/blitz only, makes the count update live as the
       // guesser drafts a guess). wiretapUsed is per-round (reset each round

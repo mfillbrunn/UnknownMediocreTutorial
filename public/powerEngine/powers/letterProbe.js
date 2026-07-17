@@ -41,7 +41,30 @@ PowerEngine.register("letterProbe", {
   }
 });
 
-// Private result — only the guesser who swept receives this.
+// Info badge: shown for the rest of the turn (state.powers.letterProbeResult
+// is cleared once the following guess is scored — by then the result has
+// moved to a permanent line in the action log instead, see action-log.js).
+InfoBadgeEngine.register((state, role) => {
+  if (role !== "guesser") return null;
+  if (!state.activePowers?.includes("letterProbe")) return null;
+  const result = state.powers?.letterProbeResult;
+  if (!result) return null;
+
+  const meta = POWER_METADATA.letterProbe;
+  const verb = result.count === 1 ? "is" : "are";
+  return {
+    id: "letterProbeResult",
+    emoji: meta.emoji,
+    text: `${meta.label}: ${result.count}/${result.distinctTested} ${verb} in the secret`,
+    color: meta.color,
+    priority: 10,
+    screen: "guesser",
+    details: meta.desc
+  };
+});
+
+// Private result — only the guesser who swept receives this. Kept as an
+// immediate popup on top of the badge/log, which is the persistent record.
 socket.on("letterProbeResult", ({ letters, count, distinctTested }) => {
   const spaced = (letters || "").split("").join(" ");
   const verb = count === 1 ? "is" : "are";

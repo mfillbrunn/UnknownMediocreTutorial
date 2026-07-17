@@ -157,9 +157,16 @@ function buildSetterRemainingBoxState(state, viewerId, allowedSecrets, draftSecr
 
   const hasDraft = typeof draftSecret === "string" && draftSecret.length === 5;
 
+  // The draft word must both fit the clues so far AND actually be a valid
+  // secret word (not merely a valid guess) — a word that's fine to guess
+  // with but isn't in the secrets dictionary can never legally be planted,
+  // so it gets the same ✕ treatment as one that contradicts the feedback.
   let isConsistent = true;
   if (hasDraft) {
-    isConsistent = isConsistentWithHistory(state.history, draftSecret, state);
+    const isValidSecretWord =
+      Array.isArray(allowedSecrets) && allowedSecrets.includes(draftSecret);
+    isConsistent =
+      isValidSecretWord && isConsistentWithHistory(state.history, draftSecret, state);
   }
 
   const hasOld = info.old > -1;
