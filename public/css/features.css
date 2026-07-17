@@ -279,14 +279,24 @@
   border-radius: var(--r-6, 6px);
   font-size: 1.4rem;
   pointer-events: none;
-  z-index: 5;
+  /* #draftSetter (the .draft-layer sibling this overlay sits next to) is
+     z-index: 20 — without going higher than that, the draft tiles paint
+     over this whenever their rows actually occupy the same pixels, hiding
+     the lock icon entirely instead of showing it on top of the secret. */
+  z-index: 25;
 }
 .secret-lock-overlay.hidden { display: none; }
 
-/* When the setter's draft stack shows both the guesser's pending-guess row
-   AND the setter's own new-secret row, the lock only applies to the
-   setter's row (the second/bottom one) — don't cover the pending guess. */
-#draftSetter:has(.history-row:nth-child(2)) ~ .secret-lock-overlay {
+/* draftSetter's pending-guess and secret rows are both always present in
+   the DOM (built once, then shown/hidden via inline style — see
+   ui/draftrow.js) — a `:has(.history-row:nth-child(2))` child-count check
+   can't tell visible rows from display:none ones and was always true,
+   permanently cutting the overlay down to the bottom half even when the
+   pending-guess row above it was hidden and the secret row alone filled
+   the whole stack. updateSecretLock() sets this class explicitly instead,
+   from the same state.pendingGuess check that actually drives that row's
+   visibility. */
+.secret-lock-overlay.split-bottom {
   top: 50%;
   height: 50%;
 }

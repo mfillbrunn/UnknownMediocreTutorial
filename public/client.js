@@ -425,6 +425,12 @@ function updateSecretLock() {
   if (!overlay) return;
   const locked = !!state?.simultaneousAllWrong;
   overlay.classList.toggle("hidden", !locked);
+  // Only cover the bottom (secret) row when the pending-guess row above it
+  // is actually showing — driven from the same state.pendingGuess check
+  // that decides that row's own visibility in ui/draftrow.js, instead of a
+  // DOM child-count CSS selector that can't distinguish visible rows from
+  // ones hidden via style.display.
+  overlay.classList.toggle("split-bottom", !!state?.pendingGuess);
   if (locked && myRole === "setter") {
     // Prevent new secret entry
     NewEnabled = false;
@@ -545,6 +551,17 @@ function updateScreens() {
     hide("menu");
     hide("setterScreen");
     hide("guesserScreen");
+    if (!myUserId()) {
+      // renderDraftScreen looks up this player's own candidates/picks by
+      // uid (state.draftCandidates[myUserId()]) — rendering it with no uid
+      // yet resolved silently produces an empty, unclickable screen
+      // instead of an error, and nothing here would ever prompt a retry on
+      // its own. Try again shortly rather than leaving it stuck until some
+      // unrelated state update (e.g. the other player picking) happens to
+      // re-render it, or the player refreshes the page.
+      setTimeout(() => { if (state?.phase === "draft") updateScreens(); }, 150);
+      return;
+    }
     window.renderDraftScreen?.(state);
     return;
   }
