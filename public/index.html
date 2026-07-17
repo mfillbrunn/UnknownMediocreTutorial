@@ -99,6 +99,11 @@
     <h2 class="menu-title">Play</h2>
     <div class="menu-buttons play-menu-buttons">
       <button id="playFriendBtn" class="menu-btn primary">Play</button>
+      <div class="join-room-row">
+        <input id="joinRoomInput" type="text" class="join-room-input" placeholder="Room code" maxlength="8" autocomplete="off" autocapitalize="characters" />
+        <button id="joinRoomBtn" class="menu-btn join-room-submit-btn" title="Join a specific room by code">Join</button>
+        <button id="quickJoinBtn" class="quick-join-circle-btn" title="Quick join: jump into the next open room" aria-label="Quick join: jump into the next open room">🎲</button>
+      </div>
       <button id="playVsAiBtn" class="menu-btn">Play vs AI 🤖</button>
       <button id="inviteAsyncBtn" class="menu-btn" title="Casual, unlimited-time, shuffled game — send a link, no need to wait around">Invite a Friend ✉️</button>
       <div class="play-ranked-row">

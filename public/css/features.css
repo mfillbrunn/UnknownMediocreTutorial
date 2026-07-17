@@ -1101,6 +1101,66 @@
   width: 280px;
 }
 
+/* ── Join a room by code, plus a circular Quick Join shortcut ──────────── */
+.join-room-row {
+  display: flex;
+  gap: var(--sp-8);
+  align-items: center;
+}
+
+.join-room-input {
+  flex: 1;
+  min-width: 0;
+  height: var(--h-control);
+  padding: 0 var(--sp-12);
+  border-radius: var(--r-8);
+  background: #1a1b20;
+  color: var(--text);
+  border: 1px solid #2a2c34;
+  font-size: var(--fs-13);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.join-room-input:focus {
+  outline: none;
+  border-color: var(--role-accent, #60a5fa);
+}
+
+.join-room-submit-btn {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 0 var(--sp-14);
+}
+
+.quick-join-circle-btn {
+  flex: 0 0 auto;
+  width: var(--h-control);
+  height: var(--h-control);
+  border-radius: 50%;
+  padding: 0;
+  font-size: var(--fs-16);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--btn-secondary, #23242b);
+  color: var(--text);
+  border: 1px solid #2a2c34;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.quick-join-circle-btn:hover {
+  background: var(--btn-secondary-hover);
+  transform: translateY(-1px);
+}
+
+.quick-join-circle-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
 .play-ranked-row {
   display: flex;
   gap: var(--sp-8);
