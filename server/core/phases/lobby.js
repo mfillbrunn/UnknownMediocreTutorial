@@ -208,6 +208,11 @@ function handleLobbyPhase(room, state, action, roomId, context) {
     state._devGuesserPowers = Array.isArray(action.guesserPowers)
       ? action.guesserPowers.filter(p => GUESSER_POWERS.includes(p))
       : null;
+    // An explicit re-pick here should win over a pending Replay lock,
+    // otherwise the host's new choice would silently be ignored in favor
+    // of whatever powers were active last match.
+    state._replaySetterPowers = null;
+    state._replayGuesserPowers = null;
     emitRoomState(roomId, room, io);
     return;
   }
@@ -289,6 +294,8 @@ if (action.type === "SET_DAILY_POWERS") {
      freshState._dailyDate = state._dailyDate || null;
      freshState._devSetterPowers = state._devSetterPowers || null;
      freshState._devGuesserPowers = state._devGuesserPowers || null;
+     freshState._replaySetterPowers = state._replaySetterPowers || null;
+     freshState._replayGuesserPowers = state._replayGuesserPowers || null;
      freshState.isDaily = !!(
        state._dailySetterPowers &&
        state._dailyGuesserPowers &&
@@ -359,7 +366,13 @@ if (action.type === "SET_DAILY_POWERS") {
       return;
     }
 
-    if (state._dailySetterPowers && state._dailyGuesserPowers) {
+    if (Array.isArray(state._replaySetterPowers) && Array.isArray(state._replayGuesserPowers)) {
+      // Replay: reuse exactly what was active last match, bypassing daily/
+      // dev/random selection entirely (draftEligible is already forced off
+      // for this path — see the REPLAY_MATCH handler in postGame.js).
+      sP = state._replaySetterPowers;
+      gP = state._replayGuesserPowers;
+    } else if (state._dailySetterPowers && state._dailyGuesserPowers) {
       sP = state._dailySetterPowers;
       gP = state._dailyGuesserPowers;
     } else if (
