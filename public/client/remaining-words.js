@@ -49,3 +49,31 @@ function renderSetterRemainingBox(boxState) {
     ${hint}
   `;
 }
+
+// Wiretap power (guesser): a single-line box showing how many secrets are
+// still possible — the same count the setter sees.
+function renderGuesserRemainingBox(boxState) {
+  const box = document.getElementById("GuesserRemainingBox");
+  if (!box) return;
+
+  if (!boxState || !boxState.visible || boxState.current == null) {
+    box.innerHTML = "";
+    box.hidden = true;
+    return;
+  }
+
+  box.hidden = false;
+
+  const guideOn = document.body.classList.contains("guide-on");
+  const hint = guideOn
+    ? `<div class="line remaining-hint">How many possible secrets still fit every clue so far — the same number the Spy sees.</div>`
+    : "";
+
+  box.innerHTML = `
+    <div class="line">
+      <span class="label">🎧 Possible</span>
+      <span class="value">${boxState.current.toLocaleString()}</span>
+    </div>
+    ${hint}
+  `;
+}

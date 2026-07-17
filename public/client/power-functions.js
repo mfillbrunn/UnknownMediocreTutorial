@@ -90,7 +90,8 @@ const GREEN_REVEAL_SOURCE_LABELS = {
   revealLetter: "Reveal Letter",
   magicMode: "Magic Mode",
   betMiss: "Bet Power",
-  fieldReport: "Field Report"
+  fieldReport: "Field Report",
+  revealLocation: "Informant"
 };
 
 socket.on("greenLetterRevealed", ({ index, letter, source }) => {

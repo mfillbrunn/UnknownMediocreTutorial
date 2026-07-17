@@ -29,4 +29,7 @@ module.exports = {
   blindGuess:{ label: "Blind Guess" , role: "setter"},
   blindSpot:{ label: "Blind Spot", role: "setter" },
   fieldReport: { label: "Field Report", role: "guesser" },
+  wiretap: { label: "Wiretap", role: "guesser" },
+  letterProbe: { label: "Recon Sweep", role: "guesser" },
+  revealLocation: { label: "Informant", role: "guesser" },
 };

@@ -95,6 +95,13 @@ const powers = {
       fieldReportUsed: false,
       fieldReportActive: false,
       fieldReportConditions: null,
+      // LETTER PROBE (test 5 letters -> count present in secret)
+      letterProbeUsed: false,
+      // REVEAL LOCATION (auto-repicking permanent green reveal)
+      // Positions this power has already revealed+locked as GREEN this
+      // round. Persists across turns within a round; wiped each round via
+      // resetRoundState -> createInitialPowers.
+      revealLocationIndices: [],
       // UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
       revealLetter: {
         ready: false,          // power is unlocked

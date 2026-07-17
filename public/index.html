@@ -578,7 +578,8 @@
              <!-- LEFT: POWERS -->
              <div class="play-col powers-col">
                 <div id="guesserPowerContainer" class="power-container laser-scope">
-                </div>                
+                </div>
+                <div id="GuesserRemainingBox" class="remaining-box" hidden></div>
              </div>
              <!-- CENTER: HISTORY TOP -->
              <div class="play-col center-col">
@@ -625,6 +626,34 @@
                 Confirm
               </button>
               <button id="betMissCancelBtn" class="secondary-btn small">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!--- Recon Sweep (letter probe) modal --->
+        <div id="letterProbeModal" class="modal">
+          <div class="modal-content">
+            <h3>🔎 Recon Sweep</h3>
+            <p class="modal-instruction">
+              Enter any 5 letters. You'll learn only how many of them are in
+              the secret — not which ones, not where.
+            </p>
+            <input
+              type="text"
+              id="letterProbeInput"
+              class="letter-probe-input"
+              maxlength="5"
+              autocomplete="off"
+              autocapitalize="characters"
+              placeholder="5 letters"
+            />
+            <div class="decision-row">
+              <button id="letterProbeSubmitBtn" class="primary-btn small" disabled>
+                Sweep
+              </button>
+              <button id="letterProbeCancelBtn" class="secondary-btn small">
                 Cancel
               </button>
             </div>
@@ -794,6 +823,9 @@
   <script src="powerEngine/powers/betMiss.js"></script>
   <script src="powerEngine/powers/revealPenalty.js"></script>
   <script src="powerEngine/powers/fieldReport.js"></script>
+  <script src="powerEngine/powers/wiretap.js"></script>
+  <script src="powerEngine/powers/letterProbe.js"></script>
+  <script src="powerEngine/powers/revealLocation.js"></script>
   <script src="client/summary.js"></script>
   <script src="client/action-log.js"></script>
   <script src="client/notes.js"></script>

@@ -51,12 +51,18 @@
 
   // Clear notes once, exactly on the transition into the round break —
   // i.e. after the word was guessed, before the automatic setter/guesser
-  // role swap (which only happens once NEXT_ROUND is processed).
+  // role swap (which only happens once NEXT_ROUND is processed). Also close
+  // the notes panel entirely: a fresh round means the old candidates are
+  // stale, so the window shouldn't linger open showing an empty list.
   function _handleRoundBreakTransition(state) {
     const nowBreak = _isBreak(state);
     if (nowBreak && !_inBreakPrev) {
       _entries = [];
       _draft = "";
+      _active = false;
+      const roleId = _role === "setter" ? "Setter" : "Guesser";
+      document.getElementById(`notesPanel${roleId}`)?.classList.add("hidden");
+      document.getElementById(`notesBtn${roleId}`)?.classList.remove("active");
     }
     _inBreakPrev = nowBreak;
   }
@@ -210,6 +216,18 @@
     _pruneInfeasible(state);
 
     if (!_active) { panel.classList.add("hidden"); return; }
+
+    // The setter always knows their own secret, so keep it in their notes
+    // by default (added once it's set, re-added each round). Only the setter
+    // — the guesser's state.secret is blanked server-side, and they must not
+    // be handed the answer.
+    if (_role === "setter") {
+      const secret = (state?.secret || "").toUpperCase();
+      if (secret.length === 5 && !_entries.some(e => e.word === secret)) {
+        _entries.push({ word: secret });
+      }
+    }
+
     panel.classList.remove("hidden");
     _renderDraft(roleId);
     _renderList(roleId, state);
