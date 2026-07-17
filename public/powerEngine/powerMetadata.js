@@ -110,7 +110,7 @@ window.POWER_METADATA = {
 
   revealLetter: {
     label: "Confirm Lead",
-    desc: "Earn a guaranteed green letter by meeting specific usage criteria. High-Value Target: at least 4 of Q, J, X, Z, W, K, V. Full Sweep: all letters in a keyboard row.",
+    desc: "Earn a guaranteed green letter by meeting specific usage criteria. High-Value Target: at least 4 of Q, J, X, Z, W, K, V. Full Sweep: all letters in a keyboard row. In Order: 3 guesses with letters in alphabetical order. Double Trouble: 3 guesses with distinct double letters. Word Chain: 3 guesses that link to the previous guess's last letter.",
     icon: "letter-plus",
     emoji: "🟩",
     color: "#16A34A",
@@ -127,6 +127,24 @@ window.POWER_METADATA = {
         desc: "Reveal a rare green letter by using at least 4 of Q, J, X, Z, W, K, V.",
         icon: "diamond-letter",
         emoji: "💎"
+      },
+      ALPHA: {
+        label: "In Order",
+        desc: "Reveal a green letter by submitting 3 guesses whose letters are in strict alphabetical order (e.g. ABHOR).",
+        icon: "sort-asc",
+        emoji: "🔤"
+      },
+      DOUBLES: {
+        label: "Double Trouble",
+        desc: "Reveal a green letter by submitting 3 guesses with distinct double letters (e.g. SPEED, GLOSS, MAMMY — no repeating the same doubled letter).",
+        icon: "twin-letters",
+        emoji: "👯"
+      },
+      CHAIN: {
+        label: "Word Chain",
+        desc: "Reveal a green letter by submitting 3 guesses that each start with the last letter of your previous guess.",
+        icon: "link",
+        emoji: "🔗"
       }
     }
   },

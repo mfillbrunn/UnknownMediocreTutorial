@@ -19,13 +19,16 @@ class CompetitiveMode extends BaseMode {
     // Round 1 powers
     state.activePowers = [...setterPowers, ...guesserPowers];
 
-    // revealLetter has two mutually-exclusive unlock conditions (ROW /
-    // RARE) — pick one for the whole match here so it's set before the
-    // first turnStart() check ever runs. postGame.js already saves/
-    // restores state.powers.revealLetter.mode across the round-2 role
-    // swap, so whichever mode is picked here is what both players see.
+    // revealLetter has several mutually-exclusive unlock conditions
+    // (ROW / RARE / ALPHA / DOUBLES / CHAIN) — pick one for the whole
+    // match here so it's set before the first turnStart() check ever
+    // runs. postGame.js already saves/restores state.powers.revealLetter
+    // .mode across the round-2 role swap, so whichever mode is picked
+    // here is what both players see.
     if (guesserPowers.includes("revealLetter")) {
-      state.powers.revealLetter.mode = Math.random() < 0.5 ? "ROW" : "RARE";
+      const REVEAL_LETTER_MODES = ["ROW", "RARE", "ALPHA", "DOUBLES", "CHAIN"];
+      state.powers.revealLetter.mode =
+        REVEAL_LETTER_MODES[Math.floor(Math.random() * REVEAL_LETTER_MODES.length)];
     }
   }
 

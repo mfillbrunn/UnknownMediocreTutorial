@@ -15,7 +15,10 @@ module.exports = {
     label: "Reveal Letter", role: "guesser",
     variants: {
       ROW: { label: "Row Master" },
-      RARE: { label: "Rare Letter Bonus" }
+      RARE: { label: "Rare Letter Bonus" },
+      ALPHA: { label: "In Order" },
+      DOUBLES: { label: "Double Trouble" },
+      CHAIN: { label: "Word Chain" }
     }
   },
   stealthGuess: { label: "Stealth Guess" , role: "guesser"},
