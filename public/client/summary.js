@@ -343,6 +343,9 @@ if (guesser.length) {
       <button id="newMatchBtn" class="primary-btn">
         New Match
       </button>
+      <button id="replayMatchBtn" class="secondary-btn">
+        Replay
+      </button>
       <button id="leaveSummaryBtn" class="secondary-btn danger">
         Leave
       </button>
@@ -351,6 +354,14 @@ if (guesser.length) {
 
   container.innerHTML = html;
   positionShareButton();
+
+  const replayBtn = $("replayMatchBtn");
+  if (replayBtn) {
+    replayBtn.onclick = () => {
+      resetKeyboards();
+      sendGameAction({ type: "REPLAY_MATCH" });
+    };
+  }
 
   const leaveBtn = $("leaveSummaryBtn");
   if (leaveBtn) {

@@ -33,15 +33,21 @@ const DEV_GUESSER_POWERS = [
   "fieldReport"
 ];
 
-function buildDevPowerCheckboxes(containerId, powerIds) {
+function buildDevPowerCheckboxes(containerId, powerIds, lastSelected) {
   const list = document.getElementById(containerId);
   if (!list) return;
 
+  // lastSelected is the array the host confirmed last time (may be empty
+  // from "Deselect All"). Only fall back to "all checked" when nothing has
+  // ever been confirmed yet (null/undefined).
+  const hasPriorSelection = Array.isArray(lastSelected);
+
   list.innerHTML = powerIds.map(id => {
     const meta = window.POWER_METADATA?.[id];
+    const checked = hasPriorSelection ? lastSelected.includes(id) : true;
     return `
       <label class="dev-power-checkbox">
-        <input type="checkbox" value="${id}" checked />
+        <input type="checkbox" value="${id}" ${checked ? "checked" : ""} />
         <span class="dev-power-checkbox-emoji">${meta?.emoji || ""}</span>
         <span class="dev-power-checkbox-label">${meta?.label || id}</span>
       </label>
@@ -56,8 +62,8 @@ function getCheckedDevPowers(containerId) {
 }
 
 window.openDevPowersModal = function () {
-  buildDevPowerCheckboxes("devSetterPowersList", DEV_SETTER_POWERS);
-  buildDevPowerCheckboxes("devGuesserPowersList", DEV_GUESSER_POWERS);
+  buildDevPowerCheckboxes("devSetterPowersList", DEV_SETTER_POWERS, window.state?._devSetterPowers);
+  buildDevPowerCheckboxes("devGuesserPowersList", DEV_GUESSER_POWERS, window.state?._devGuesserPowers);
   document.getElementById("devPowersModal")?.classList.add("active");
 };
 
