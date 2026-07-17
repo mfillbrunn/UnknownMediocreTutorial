@@ -110,7 +110,7 @@ window.POWER_METADATA = {
 
   revealLetter: {
     label: "Confirm Lead",
-    desc: "Earn a guaranteed green letter by meeting specific usage criteria. High-Value Target: at least 4 of Q, J, X, Z, W, K, V. Full Sweep: all letters in a keyboard row. In Order: 3 guesses with letters in alphabetical order. Double Trouble: 3 guesses with distinct double letters. Word Chain: 3 guesses that link to the previous guess's last letter.",
+    desc: "Earn a guaranteed green letter by meeting one randomly-assigned usage condition:",
     icon: "letter-plus",
     emoji: "🟩",
     color: "#16A34A",

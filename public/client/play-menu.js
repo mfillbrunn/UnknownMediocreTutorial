@@ -150,6 +150,24 @@ $("howToPlayBtn")?.addEventListener("click", () => {
   showScreen("howToPlayScreen");
 });
 
+// Powers with multiple mutually-exclusive unlock conditions (e.g. Reveal
+// Letter's Row/Rare/Alpha/Doubles/Chain) pack every variant's description
+// into one line-broken list here, since this reference screen is the only
+// place all of them are shown together — everywhere else (in-game info,
+// draft candidates) shows at most the one condition that's actually live.
+function describePowerLibraryEntry(meta) {
+  const variantKeys = meta.variants ? Object.keys(meta.variants) : [];
+  if (!variantKeys.length) return meta.desc || "";
+
+  const lines = [];
+  if (meta.desc) lines.push(meta.desc);
+  for (const key of variantKeys) {
+    const v = meta.variants[key];
+    lines.push(`<strong>${v.label}:</strong> ${v.desc}`);
+  }
+  return lines.join("<br><br>");
+}
+
 function renderPowerLibrary() {
   const list = $("powerLibraryList");
   if (!list) return;
@@ -167,7 +185,7 @@ function renderPowerLibrary() {
       <span class="power-info-emoji">${meta.emoji || "⚡"}</span>
       <div class="power-info-body">
         <div class="power-info-title">${meta.label}</div>
-        <div class="power-info-desc">${meta.desc || ""}</div>
+        <div class="power-info-desc">${describePowerLibraryEntry(meta)}</div>
       </div>
     `;
     sections[role]?.push(row);

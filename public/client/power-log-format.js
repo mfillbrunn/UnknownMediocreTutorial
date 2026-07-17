@@ -50,7 +50,8 @@
   };
 
   function formatPowerEvent(evt) {
-    const meta = window.POWER_METADATA?.[evt.id];
+    const variant = window.state?.powers?.[evt.id]?.mode || null;
+    const meta = window.getPowerMeta ? window.getPowerMeta(evt.id, variant) : window.POWER_METADATA?.[evt.id];
     const label = meta?.label || evt.id;
     const emoji = meta?.emoji || "";
     const desc = meta?.desc || "";
