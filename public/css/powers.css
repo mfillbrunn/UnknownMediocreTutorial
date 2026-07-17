@@ -524,6 +524,14 @@ body.power-revealLocation #power-fx {
   mix-blend-mode: screen;
   animation: fx-flash 650ms ease-out;
 }
+body.power-doubleGuess #power-fx {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 35% 50%, rgba(244,114,182,0.30), transparent 55%),
+    radial-gradient(circle at 65% 50%, rgba(244,114,182,0.30), transparent 55%);
+  mix-blend-mode: screen;
+  animation: fx-flash 700ms ease-out;
+}
 body.power-revealGreen #power-fx {
   opacity: 1;
   background:

@@ -33,7 +33,8 @@ const DEV_GUESSER_POWERS = [
   "fieldReport",
   "wiretap",
   "letterProbe",
-  "revealLocation"
+  "revealLocation",
+  "doubleGuess"
 ];
 
 function buildDevPowerCheckboxes(containerId, powerIds, lastSelected) {

@@ -48,6 +48,32 @@ function computeRemainingNew(secretWord, state, allowedSecrets) {
   return count;
 }
 
+// Wiretap live tap: how many secrets would still fit if the guesser
+// actually submitted `guessWord` (scored against the REAL secret). This
+// reveals real information — it's the payload of the activated ability,
+// only sent to the guesser during their activated turn.
+function computeRemainingAfterGuess(secret, guessWord, state, allowedSecrets) {
+  if (!secret || !guessWord || guessWord.length !== 5) return null;
+  if (!Array.isArray(state?.history)) return null;
+  const secrets =
+    Array.isArray(allowedSecrets) && allowedSecrets.length
+      ? allowedSecrets
+      : global.ALLOWED_SECRETS;
+  if (!Array.isArray(secrets) || !secrets.length) return null;
+
+  const fb = scoreGuess(secret.toUpperCase(), guessWord.toUpperCase());
+  const testHistory = [
+    ...state.history,
+    { guess: guessWord.toUpperCase(), fb, ignoreConstraints: false }
+  ];
+
+  let count = 0;
+  for (const word of secrets) {
+    if (isConsistentWithHistory(testHistory, word, state)) count++;
+  }
+  return count;
+}
+
 function getRemainingWordInfo(state, allowedSecrets, draftSecret) {
   if (
     !state ||
@@ -189,6 +215,7 @@ function buildGuesserRemainingBoxState(state, allowedSecrets) {
 module.exports = {
   computeRemainingAfterIndexFromState,
   computeRemainingNew,
+  computeRemainingAfterGuess,
   getRemainingWordInfo,
   buildSetterRemainingBoxState,
   buildGuesserRemainingBoxState

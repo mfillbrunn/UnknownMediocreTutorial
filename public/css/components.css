@@ -913,6 +913,22 @@
 .theme-guesser .remaining-box {
   display: none;
 }
+/* The guesser legitimately has their own remaining box now (Wiretap), so
+   un-hide that specific one (the blanket rule above was written when only
+   the setter had one). Still respect its [hidden] attribute when empty. */
+.theme-guesser #GuesserRemainingBox {
+  display: block;
+}
+.theme-guesser #GuesserRemainingBox[hidden] {
+  display: none;
+}
+#GuesserRemainingBox .wiretap-live .label {
+  color: var(--guesser-color, #60a5fa);
+  font-weight: 700;
+}
+#GuesserRemainingBox .wiretap-live-waiting {
+  opacity: 0.6;
+}
 .remaining-box .line:first-child {
   padding-bottom: var(--sp-4);
   margin-bottom: var(--sp-4);

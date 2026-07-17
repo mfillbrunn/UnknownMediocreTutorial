@@ -35,6 +35,29 @@ betMiss: {
       );
     }
   },
+  wiretap: {
+    once: false,
+    allowed(state, role) {
+      return (
+        state.phase === "normal" &&
+        role === "guesser" &&
+        !state.powerUsedThisTurn &&
+        !state.powers?.wiretapUsed &&
+        (state.rankMode === "bullet" || state.rankMode === "blitz")
+      );
+    }
+  },
+  doubleGuess: {
+    once: true,
+    allowed(state, role) {
+      return (
+        state.phase === "normal" &&
+        role === "guesser" &&
+        !state.pendingGuess &&
+        !state.powerUsedThisTurn
+      );
+    }
+  },
   revealPenalty: {
     once: false,
     allowed(state, role) {

@@ -632,6 +632,43 @@
           </div>
         </div>
 
+        <!--- Double Tap (two guesses) modal --->
+        <div id="doubleGuessModal" class="modal">
+          <div class="modal-content">
+            <h3>🎯 Double Tap</h3>
+            <p class="modal-instruction">
+              Fire two guesses at the same secret. The Spy sees only one
+              (picked at random). If either is the secret, you win.
+            </p>
+            <input
+              type="text"
+              id="doubleGuessInput1"
+              class="letter-probe-input"
+              maxlength="5"
+              autocomplete="off"
+              autocapitalize="characters"
+              placeholder="Guess 1"
+            />
+            <input
+              type="text"
+              id="doubleGuessInput2"
+              class="letter-probe-input"
+              maxlength="5"
+              autocomplete="off"
+              autocapitalize="characters"
+              placeholder="Guess 2"
+            />
+            <div class="decision-row">
+              <button id="doubleGuessSubmitBtn" class="primary-btn small" disabled>
+                Fire
+              </button>
+              <button id="doubleGuessCancelBtn" class="secondary-btn small">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!--- Recon Sweep (letter probe) modal --->
         <div id="letterProbeModal" class="modal">
           <div class="modal-content">
@@ -826,6 +863,7 @@
   <script src="powerEngine/powers/wiretap.js"></script>
   <script src="powerEngine/powers/letterProbe.js"></script>
   <script src="powerEngine/powers/revealLocation.js"></script>
+  <script src="powerEngine/powers/doubleGuess.js"></script>
   <script src="client/summary.js"></script>
   <script src="client/action-log.js"></script>
   <script src="client/notes.js"></script>

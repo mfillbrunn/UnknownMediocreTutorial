@@ -1,9 +1,10 @@
 // /powers/powers/revealLocation.js — Informant (guesser)
 //
-// Always-on, no button. The actual reveals arrive as GREEN extraConstraints
-// (shown on the constraint row) plus a "greenLetterRevealed" popup, both
-// driven server-side. Registered here only so it appears in the power info
-// panel / Power Library, and to show a small status badge.
+// Always-on, no button. The informant peeks one unknown position and shows
+// the guesser the current secret's letter there (server-side, private to
+// the guesser via state.powers.revealLocationPeek). Rendered as a status
+// badge; the position stays fixed until the guesser turns it green, then
+// the server moves the peek elsewhere.
 PowerEngine.register("revealLocation", {
   role: "guesser",
   tooltip: {
@@ -14,21 +15,15 @@ PowerEngine.register("revealLocation", {
 });
 
 InfoBadgeEngine.register((state, role) => {
-  const indices = state.powers?.revealLocationIndices;
   if (!state.activePowers?.includes("revealLocation")) return null;
-  if (!Array.isArray(indices) || indices.length === 0) return null;
+  const peek = state.powers?.revealLocationPeek;
+  if (!peek || typeof peek.index !== "number" || !peek.letter) return null;
 
   const meta = POWER_METADATA.revealLocation;
-  const positions = indices
-    .slice()
-    .sort((a, b) => a - b)
-    .map(i => i + 1)
-    .join(", ");
-
   return {
     id: "revealLocation",
     emoji: meta.emoji,
-    text: `${meta.label}: position${indices.length > 1 ? "s" : ""} ${positions}`,
+    text: `${meta.label}: position ${peek.index + 1} = ${peek.letter}`,
     color: meta.color,
     priority: 11,
     screen: "guesser",

@@ -49,7 +49,8 @@ const GUESSER_POWERS = [
   "fieldReport",
   "wiretap",
   "letterProbe",
-  "revealLocation"
+  "revealLocation",
+  "doubleGuess"
 ];
 
 function initializePlayerTimers(state, userIds) {
