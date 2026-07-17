@@ -214,6 +214,16 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
       updateAccountUI();
       renderMenuAccountStatus();
 
+      // If a game/lobby stateUpdate already arrived over the socket before
+      // auth resolved, every render that ran up to now read myUserId() as
+      // null — e.g. the draft screen looks up its candidates/picks by uid
+      // and silently renders empty for a null key, leaving nothing
+      // clickable until some later, unrelated state broadcast (like the
+      // other player picking) happens to trigger a re-render. Re-render
+      // now that the real uid is available so nothing is stuck waiting on
+      // that.
+      window.updateUI?.();
+
       if (!(window._pendingInviteCode && maybeJoinPendingInvite())) {
         maybeAutoRejoin();
       }
@@ -234,6 +244,9 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
 
     updateAccountUI();
     renderMenuAccountStatus();
+    // Same reasoning as the INITIAL_SESSION branch above: re-render
+    // whatever's already on screen now that myUserId() is finally correct.
+    window.updateUI?.();
 
     // Supabase re-fires "SIGNED_IN" whenever a backgrounded tab regains
     // focus (it revalidates the session), not just on an actual login —
