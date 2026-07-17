@@ -57,6 +57,26 @@ socket.on("errorMessage", msg => {
   // There is no #newSecretInput anymore — the setter types on the board —
   // so shake the actual draft rows of whichever role hit the error, and
   // reword the two known server codes to match the in-game wording.
+  if (typeof shakeDraftRow === "function") {
+    shakeDraftRow(window.myRole === "setter" ? "setter" : "guesser");
+  }
+
+  if (msg === "Incompatible with previous feedback" && window.myRole === "setter") {
+    // state.setterDraft still holds the attempted word here — it's only
+    // cleared on a SUCCESSFUL submit, and the server just rejected this one.
+    const reasons = typeof explainSecretInconsistency === "function"
+      ? explainSecretInconsistency(window.state?.history, window.state?.extraConstraints, window.state?.setterDraft)
+      : [];
+    window.showBigAnnounce?.({
+      icon: "🚫",
+      title: "Not consistent with prior feedback",
+      sub: reasons.length ? reasons : ["Doesn't match the clues given so far."],
+      roleClass: "role-setter",
+      duration: 5000
+    });
+    return;
+  }
+
   const friendly =
     msg === "Incompatible with previous feedback"
       ? "Not consistent with prior feedback"
@@ -64,9 +84,6 @@ socket.on("errorMessage", msg => {
         ? "Not a valid secret"
         : msg;
 
-  if (typeof shakeDraftRow === "function") {
-    shakeDraftRow(window.myRole === "setter" ? "setter" : "guesser");
-  }
   toast(friendly);
 });
 
