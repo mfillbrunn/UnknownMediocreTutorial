@@ -12,7 +12,6 @@ function resetRoundState(room, state, roomId, context) {
   state.simultaneousGuessSubmitted = false;
   state.simultaneousSecretSubmitted = false;
   state.powerUsedThisTurn = false;
-  state.awaitingFreshSecret = false;
   state.roundStartTime = null;
   state.timeoutLoser = null;
 

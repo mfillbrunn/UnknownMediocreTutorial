@@ -110,9 +110,16 @@ const powers = {
       // the live reveal shown to the guesser (redacted from the setter).
       revealLocationPeekIndex: null,
       revealLocationPeek: null,
-      // DOUBLE GUESS (two guesses, one shown; both scored vs same secret)
+      // DOUBLE GUESS (Double Tap): two guesses submitted at once. The setter
+      // sees only one (doubleGuessShownFirst says whether that shown word is
+      // g1), reacts with a normal Keep/New decision, and BOTH are then scored
+      // against the setter's final secret. doubleGuessPending marks that a
+      // resolution is owed on the next SET_SECRET; doubleGuessHidden holds the
+      // word the setter never sees (redacted from them in safeState).
       doubleGuessUsed: false,
-      doubleGuessForceKeep: false,
+      doubleGuessPending: false,
+      doubleGuessHidden: null,
+      doubleGuessShownFirst: null,
       // UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
       revealLetter: {
         ready: false,          // power is unlocked
@@ -178,7 +185,6 @@ function createInitialState() {
     simultaneousSecretSubmitted: false,
     powerUsedThisTurn: false,
          simultaneousAllWrong: false,
-    awaitingFreshSecret: false,
     _pendingPowerEvents: [],
     powers: createInitialPowers()
   };

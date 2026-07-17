@@ -319,17 +319,8 @@ onStateUpdate(newState => {
   const prevPhase = state?.phase;
   const prevSetterDraft = state?.setterDraft || "";
   const prevHistoryLen = state?.history?.length ?? -1;
-  const prevAwaitingFresh = !!state?.awaitingFreshSecret;
   state = JSON.parse(JSON.stringify(newState));
-  // Prompt the setter the moment a Double Tap hands them a fresh-secret
-  // decision (no pending guess to react to).
-  if (
-    !prevAwaitingFresh &&
-    state.awaitingFreshSecret &&
-    myUserId() === state.setter
-  ) {
-    toast("Double Tap used — set your next secret");
-  }
+  window.powerKbSyncTurn?.();
   if ((state.history?.length ?? 0) !== prevHistoryLen) {
     // A guess/decision just finalized (or a new round started) — any
     // mid-turn power events are now baked into state.history/matchRounds,
@@ -638,12 +629,10 @@ function updateSetterScreen() {
     NewEnabled=setterInputEnabled;
     setTurn("setterScreen", !state.secret); 
   }
-  // NORMAL PHASE — decision step, or a fresh-secret decision after a Double
-  // Tap (no pending guess to respond to, the setter just picks their next
-  // secret: keep the current one or switch to a new consistent word).
+  // NORMAL PHASE — decision step (respond to the pending guess by keeping the
+  // current secret or switching to a new consistent word).
   else if (state.phase === "normal") {
-    const isFreshSecret = isSetterTurn && !!state.awaitingFreshSecret && !displayGuess;
-    const canDecide = isDecisionStep || isFreshSecret;
+    const canDecide = isDecisionStep;
     setterInputEnabled = canDecide;
     KeepEnabled=canDecide;
     NewEnabled=canDecide;
@@ -782,16 +771,7 @@ function handleSetterInput(event) {
       !state.secret &&
       !state.simultaneousSecretSubmitted;
 
-    // Fresh-secret entry after a Double Tap: setter's turn, normal phase,
-    // no pending guess — they type/keep their next secret.
-    const isFreshSecretEntry =
-      myUserId() === state.setter &&
-      state.phase === "normal" &&
-      state.turn === state.setter &&
-      !!state.awaitingFreshSecret &&
-      !state.pendingGuess;
-
-    if (!(isNormalSetterTurn || isSimultaneousSecretEntry || isFreshSecretEntry)) return;
+    if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
 
     const isEditing = event.type === "LETTER" || event.type === "BACKSPACE";
 
@@ -957,6 +937,9 @@ if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserS
 ///GUESSER INPUT
 function handleGuesserInput(event) {
   if (window.isNotesActive?.() && window.notesInput?.(event)) return;
+  // Recon Sweep / Double Tap capture keystrokes on the on-screen keyboard
+  // when armed, so their entry stays on the coloured keyboard (no modal).
+  if (window.powerKbActive?.() && window.powerKbInput?.(event)) return;
   if (state.pendingGuess) return;
   if (event.type === "BACKSPACE") {
     localGuesserDraft = localGuesserDraft.slice(0, -1);

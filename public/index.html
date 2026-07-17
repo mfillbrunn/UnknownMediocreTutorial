@@ -592,8 +592,9 @@
                   </div>
              </div>
           </div>
-          <!--- KEYBOARD AREA---> 
+          <!--- KEYBOARD AREA--->
           <div id="GuesserInfoBadge" class="info badge"></div>
+          <div id="powerKbPrompt" class="power-kb-prompt" hidden></div>
           <div id="keyboardGuesser" class="keyboard"></div>
        </main>
         <!-- Notes panel (guesser) -->
@@ -626,71 +627,6 @@
                 Confirm
               </button>
               <button id="betMissCancelBtn" class="secondary-btn small">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!--- Double Tap (two guesses) modal --->
-        <div id="doubleGuessModal" class="modal">
-          <div class="modal-content">
-            <h3>🎯 Double Tap</h3>
-            <p class="modal-instruction">
-              Fire two guesses at the same secret. The Spy sees only one
-              (picked at random). If either is the secret, you win.
-            </p>
-            <input
-              type="text"
-              id="doubleGuessInput1"
-              class="letter-probe-input"
-              maxlength="5"
-              autocomplete="off"
-              autocapitalize="characters"
-              placeholder="Guess 1"
-            />
-            <input
-              type="text"
-              id="doubleGuessInput2"
-              class="letter-probe-input"
-              maxlength="5"
-              autocomplete="off"
-              autocapitalize="characters"
-              placeholder="Guess 2"
-            />
-            <div class="decision-row">
-              <button id="doubleGuessSubmitBtn" class="primary-btn small" disabled>
-                Fire
-              </button>
-              <button id="doubleGuessCancelBtn" class="secondary-btn small">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!--- Recon Sweep (letter probe) modal --->
-        <div id="letterProbeModal" class="modal">
-          <div class="modal-content">
-            <h3>🔎 Recon Sweep</h3>
-            <p class="modal-instruction">
-              Enter any 5 letters. You'll learn only how many of them are in
-              the secret — not which ones, not where.
-            </p>
-            <input
-              type="text"
-              id="letterProbeInput"
-              class="letter-probe-input"
-              maxlength="5"
-              autocomplete="off"
-              autocapitalize="characters"
-              placeholder="5 letters"
-            />
-            <div class="decision-row">
-              <button id="letterProbeSubmitBtn" class="primary-btn small" disabled>
-                Sweep
-              </button>
-              <button id="letterProbeCancelBtn" class="secondary-btn small">
                 Cancel
               </button>
             </div>
@@ -834,6 +770,7 @@
   <script src="client/power-log-format.js"></script>
   <script src="client/InfoBadgeEngine.js"></script>
   <script src="client/remaining-words.js"></script>
+  <script src="client/power-keyboard.js"></script>
   <script src="powerEngine/powerEngine.js"></script>
   <script src="powerEngine/powerRules.js"></script>
   

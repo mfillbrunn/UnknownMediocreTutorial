@@ -60,7 +60,18 @@ function renderGuesserRemainingBox(boxState) {
 
   const active = !!window.state?.powers?.wiretapActive;
 
-  if ((!boxState || !boxState.visible || boxState.current == null) && !active) {
+  // Informant peek (revealLocation): shown here alongside the words-left
+  // count so the known letter is a persistent, prominent readout — not a
+  // transient popup the guesser has to catch and remember.
+  const peek =
+    window.state?.activePowers?.includes("revealLocation")
+      ? window.state?.powers?.revealLocationPeek
+      : null;
+  const hasPeek = peek && typeof peek.index === "number" && peek.letter;
+
+  const hasCount = boxState && boxState.visible && boxState.current != null;
+
+  if (!hasCount && !active && !hasPeek) {
     box.innerHTML = "";
     box.hidden = true;
     return;
@@ -81,6 +92,13 @@ function renderGuesserRemainingBox(boxState) {
          </div>`
       : "";
 
+  const informantLine = hasPeek
+    ? `<div class="line informant-line">
+         <span class="label">🔦 Position ${peek.index + 1}</span>
+         <span class="value">${peek.letter}</span>
+       </div>`
+    : "";
+
   let liveLine = "";
   if (active) {
     const live = window._wiretapLive;
@@ -99,5 +117,5 @@ function renderGuesserRemainingBox(boxState) {
     }
   }
 
-  box.innerHTML = `${currentLine}${liveLine}${hint}`;
+  box.innerHTML = `${informantLine}${currentLine}${liveLine}${hint}`;
 }
