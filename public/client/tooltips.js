@@ -31,7 +31,8 @@ function buildPowerInfoPanel(state, role) {
     if (!activePowers.has(id)) continue;
 
     const mod  = PowerEngine.powers[id];
-    const meta = getPowerMeta(id);
+    const variant = state.powers?.[id]?.mode || null;
+    const meta = getPowerMeta(id, variant);
     if (!meta) continue;
 
     const row = document.createElement("div");

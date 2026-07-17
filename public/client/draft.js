@@ -55,7 +55,6 @@ window.renderDraftScreen = function (s) {
       btn.innerHTML = `
         <span class="draft-candidate-emoji">${meta?.emoji || ""}</span>
         <span class="draft-candidate-label">${meta?.label || powerId}</span>
-        <span class="draft-candidate-desc">${meta?.desc || ""}</span>
       `;
       btn.onclick = () => {
         if (iAmDone) return;

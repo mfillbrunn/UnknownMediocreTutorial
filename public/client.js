@@ -339,7 +339,8 @@ onStateUpdate(newState => {
   if (prevPhase !== undefined && prevPhase !== "simultaneous" && state.phase === "simultaneous") {
     const iAmSetter = myUserId() === state.setter;
     const describePowers = ids => (ids || []).map(id => {
-      const meta = window.POWER_METADATA?.[id];
+      const variant = state.powers?.[id]?.mode || null;
+      const meta = window.getPowerMeta ? window.getPowerMeta(id, variant) : window.POWER_METADATA?.[id];
       return { emoji: meta?.emoji, label: meta?.label || id, desc: meta?.desc };
     });
     const powerGroups = [
