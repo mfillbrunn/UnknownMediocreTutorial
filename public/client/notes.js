@@ -13,6 +13,33 @@
     return state?.phase === "gameOver" && state?.gameOverView === "round";
   }
 
+  // Notes reuse the on-screen keyboard, so they can only safely intercept
+  // it when the player isn't using that same keyboard to type their real
+  // guess/secret right now — i.e. anytime EXCEPT their own active turn
+  // (this mirrors the exact turn-guard conditions in handleSetterInput /
+  // handleGuesserInput in client.js).
+  function _isMyTurnToType(state) {
+    if (!state || !_role) return false;
+
+    if (_role === "setter") {
+      if (state.powers?.freezeActive || state.powers?.rouletteSecretActive) return false;
+      const myId = window.myUserId?.();
+      const isNormalSetterTurn =
+        myId === state.setter &&
+        state.phase === "normal" &&
+        state.turn === state.setter &&
+        !!state.pendingGuess;
+      const isSimultaneousSecretEntry =
+        state.phase === "simultaneous" &&
+        !state.secret &&
+        !state.simultaneousSecretSubmitted;
+      return isNormalSetterTurn || isSimultaneousSecretEntry;
+    }
+
+    // guesser
+    return state.phase !== "gameOver" && !state.pendingGuess;
+  }
+
   function _resetIfRoomChanged() {
     const cur = window.roomId;
     if (cur !== _lastRoom) {
@@ -214,8 +241,8 @@
     const roleId = _role === "setter" ? "Setter" : "Guesser";
 
     const isEdit = event.type === "BACKSPACE" || event.type === "ENTER" || event.type === "LETTER";
-    if (isEdit && !_isBreak(window.state)) {
-      window.toast?.("Notes can only be edited during the break");
+    if (isEdit && !_isBreak(window.state) && _isMyTurnToType(window.state)) {
+      window.toast?.("Notes can't be edited during your turn");
       return true;
     }
 
