@@ -286,6 +286,21 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
         return;
       }
 
+      // A drafted word that isn't actually in the dictionary could never be
+      // submitted as a guess, so treat it like an inconsistent word rather
+      // than computing a hypothetical (misleading) count for it.
+      const guesses = context.ALLOWED_GUESSES;
+      const isValidGuessWord = Array.isArray(guesses)
+        ? guesses.includes(g)
+        : guesses instanceof Set
+          ? guesses.has(g)
+          : true;
+
+      if (!isValidGuessWord) {
+        socket.emit("wiretapLive", { draft: g, count: null, invalid: true });
+        return;
+      }
+
       const count = computeRemainingAfterGuess(
         state.secret,
         g,

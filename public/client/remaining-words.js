@@ -104,7 +104,15 @@ function renderGuesserRemainingBox(boxState) {
     const live = window._wiretapLive;
     // The server echoes the draft it scored, so show that draft+count pair
     // directly (no need to match a private local draft variable).
-    if (live && live.draft && live.draft.length === 5 && live.count != null) {
+    if (live && live.draft && live.draft.length === 5 && live.invalid) {
+      // Complete but not a real dictionary word — could never actually be
+      // submitted, so flag it the same way the setter's box flags an
+      // invalid/inconsistent secret rather than showing a bogus count.
+      liveLine = `<div class="line wiretap-live">
+          <span class="label">↳ ${live.draft}</span>
+          <span class="value"><span class="inconsistent-x">✕</span></span>
+        </div>`;
+    } else if (live && live.draft && live.draft.length === 5 && live.count != null) {
       liveLine = `<div class="line wiretap-live">
           <span class="label">↳ ${live.draft}</span>
           <span class="value">${live.count.toLocaleString()} left</span>

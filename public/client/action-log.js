@@ -52,6 +52,19 @@
           if (pe) entries.push(pe);
         });
 
+        // Recon Sweep result: private to the guesser (safeState strips this
+        // field for the setter entirely), so it only ever renders here.
+        if (entry.letterProbeResult && viewerRole === "guesser") {
+          const { count, distinctTested, letters } = entry.letterProbeResult;
+          const meta = window.POWER_METADATA?.letterProbe;
+          const verb = count === 1 ? "is" : "are";
+          entries.push({
+            type: "power",
+            cssClass: " log-power-guesser",
+            text: `${meta?.emoji ? meta.emoji + " " : ""}You: ${meta?.label || "Recon Sweep"}: ${count}/${distinctTested} ${verb} in the secret (${letters})`
+          });
+        }
+
         if (entry.secretLocked) {
           entries.push({ type: "lock", text: "🔒 Secret locked" });
         }

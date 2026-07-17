@@ -64,6 +64,12 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
     delete safe.powers.revealLocationPeekIndex;
   }
 
+  // Recon Sweep result is private to the guesser — the setter must never
+  // learn which letters were tested or how many were present.
+  if (viewerRole !== "guesser") {
+    delete safe.powers.letterProbeResult;
+  }
+
   // Double Tap: the setter may know the power fired (doubleGuessPending) but
   // must never see the hidden word, nor which of g1/g2 was the one shown.
   if (viewerRole === "setter") {
@@ -107,6 +113,12 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
           e.guess = "?????";
           if (Array.isArray(e.fb)) e.fb = ["?", "?", "?", "?", "?"];
           e.powerUsed = (e.powerUsed || "") + " DoubleTap(hidden)";
+        }
+
+        // Recon Sweep result attached to this entry is private to the
+        // guesser — the setter must never learn which letters were tested.
+        if (viewerRole !== "guesser") {
+          delete e.letterProbeResult;
         }
 
         // Tag applied powers
