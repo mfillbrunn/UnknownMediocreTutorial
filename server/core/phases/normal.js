@@ -57,6 +57,41 @@ function handleNormalPhase(room, state, action, roomId, context) {
     state.powers.doubleGuessUsed = true;
     state.powerUsedThisTurn = true;
 
+    // Immediate win: if either word already matches the current secret, the
+    // game ends now — the setter never gets to react, exactly as a normal
+    // correct guess ends the round before the Keep/New decision.
+    const secretNow = (state.secret || "").toUpperCase();
+    if (g1 === secretNow || g2 === secretNow) {
+      const fb1 = scoreGuess(secretNow, g1);
+      const fb2 = scoreGuess(secretNow, g2);
+      const mk = (guess, fb) => ({
+        guess,
+        fb,
+        fbGuesser: [...fb],
+        extraInfo: null,
+        finalSecret: secretNow,
+        roundIndex: state.history.length,
+        powerEvents: [],
+        doubleGuessApplied: true,
+        doubleGuessHidden: false
+      });
+      state.history.push(mk(g1, fb1), mk(g2, fb2));
+      state.guessCount += 2;
+
+      io.to(roomId).emit("powerUsed", { type: "doubleGuess" });
+      if (socketId) {
+        io.to(socketId).emit("doubleGuessResult", {
+          guesses: [
+            { guess: g1, fb: [...fb1] },
+            { guess: g2, fb: [...fb2] }
+          ]
+        });
+      }
+      io.to(roomId).emit("secretFound");
+      endGame(state, roomId, io, room, context);
+      return;
+    }
+
     // Random which one the setter gets to see. The shown word becomes the
     // pending guess; the other is stashed until resolution.
     const shownIsFirst = Math.random() < 0.5;
