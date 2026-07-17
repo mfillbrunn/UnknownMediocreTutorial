@@ -64,6 +64,13 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
     delete safe.powers.revealLocationPeekIndex;
   }
 
+  // Double Tap: the setter may know the power fired (doubleGuessPending) but
+  // must never see the hidden word, nor which of g1/g2 was the one shown.
+  if (viewerRole === "setter") {
+    delete safe.powers.doubleGuessHidden;
+    delete safe.powers.doubleGuessShownFirst;
+  }
+
   // Filter and sanitize history
   safe.history = safe.history
     .map((entry) => {

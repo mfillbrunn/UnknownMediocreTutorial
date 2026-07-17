@@ -2,11 +2,10 @@ const { endGame } = require("./gameOver");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
 const POWER_METADATA = require("../../powers/powerMetadata");
-const { transitionAfterGuess, transitionAfterSecret } = require("../transitions/normalTransitions");
+const { transitionAfterGuess, transitionAfterSecret, clearRoundState } = require("../transitions/normalTransitions");
 const { emitRoomState } = require("../rooms");
 const { scoreGuess } = require("../../game-engine/scoring");
-const { isConsistentWithHistory } = require("../../game-engine/history");
-const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
+const { clearForceTimer } = require("../../utils/forceTimer");
 
 function handleNormalPhase(room, state, action, roomId, context) {
   const io = context.io;
@@ -24,12 +23,12 @@ function handleNormalPhase(room, state, action, roomId, context) {
     return;
   }
 
-  // Double Tap: two guesses at once, both scored against the CURRENT secret
-  // (before the setter can change), feedback combined for the guesser. The
-  // setter sees only one (random); the other is masked in their history.
-  // After scoring, the setter gets a fresh keep/change decision for the next
-  // guesser turn (awaitingFreshSecret) — so the two taps land on one secret,
-  // then normal play resumes.
+  // Double Tap: the guesser fires two guesses at once. The setter is shown
+  // only ONE of them (random) as a normal pending guess and reacts with their
+  // usual Keep/New decision — they know the power fired, but not the hidden
+  // word. Scoring happens AFTER the setter commits: both guesses are scored
+  // against the setter's FINAL secret (see resolveDoubleGuess in the setter
+  // block below), then the combined feedback goes back to the guesser.
   if (
     action.type === "USE_DOUBLE_GUESS" &&
     userId === state.guesser &&
@@ -58,32 +57,17 @@ function handleNormalPhase(room, state, action, roomId, context) {
     state.powers.doubleGuessUsed = true;
     state.powerUsedThisTurn = true;
 
-    const secret = state.secret.toUpperCase();
-    // Random which one the setter gets to see.
+    // Random which one the setter gets to see. The shown word becomes the
+    // pending guess; the other is stashed until resolution.
     const shownIsFirst = Math.random() < 0.5;
     const shown = shownIsFirst ? g1 : g2;
     const hidden = shownIsFirst ? g2 : g1;
 
-    const fbShown = scoreGuess(secret, shown);
-    const fbHidden = scoreGuess(secret, hidden);
+    state.powers.doubleGuessPending = true;
+    state.powers.doubleGuessHidden = hidden;
+    state.powers.doubleGuessShownFirst = shownIsFirst;
 
-    const mkEntry = (guess, fb, isHidden) => ({
-      guess,
-      fb,
-      fbGuesser: [...fb],
-      extraInfo: null,
-      finalSecret: secret,
-      roundIndex: state.history.length,
-      powerEvents: [],
-      doubleGuessApplied: true,
-      doubleGuessHidden: isHidden
-    });
-
-    // Keep the on-board order stable (g1 then g2), independent of which was
-    // shown, so neither player can infer shown/hidden from row order.
-    const e1 = mkEntry(g1, shownIsFirst ? fbShown : fbHidden, !shownIsFirst);
-    const e2 = mkEntry(g2, shownIsFirst ? fbHidden : fbShown, shownIsFirst);
-    state.history.push(e1, e2);
+    state.pendingGuess = shown;
     state.guessCount += 2;
 
     if (state.roundStartTime && state.timeUsed?.[state.guesser] != null) {
@@ -92,77 +76,13 @@ function handleNormalPhase(room, state, action, roomId, context) {
     state.roundStartTime = Date.now();
 
     io.to(roomId).emit("powerUsed", { type: "doubleGuess" });
-    if (socketId) {
-      io.to(socketId).emit("doubleGuessResult", {
-        guesses: [
-          { guess: g1, fb: [...(shownIsFirst ? fbShown : fbHidden)] },
-          { guess: g2, fb: [...(shownIsFirst ? fbHidden : fbShown)] }
-        ]
-      });
-    }
+    io.to(roomId).emit("guessSubmitted");
 
-    // Win if EITHER guess is the secret.
-    if (g1 === secret || g2 === secret) {
-      io.to(roomId).emit("secretFound");
-      endGame(state, roomId, io, room, context);
-      return;
-    }
-
-    // Otherwise: setter reacts (fresh keep/change) for the next guesser turn.
-    state.pendingGuess = "";
-    state.awaitingFreshSecret = true;
-    state.turn = state.setter;
-    state.powerUsedThisTurn = false;
-    state.activeTimer = state.setter;
-    if (state.timeControl?.mode === "round") resetRoundTimer(state);
-
-    context.powerEngine.turnStart(state, state.turn, roomId, io);
-    emitRoomState(roomId, room, io);
-    return;
-  }
-
-  // Fresh-secret decision after a Double Tap: the setter sets their next
-  // secret with no pending guess to score. Validated for consistency with
-  // all history (including the two taps), then play returns to the guesser.
-  if (
-    state.awaitingFreshSecret &&
-    !state.pendingGuess &&
-    state.turn === state.setter &&
-    userId === state.setter &&
-    (action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME")
-  ) {
-    const socketId = room.playersByUserId?.[userId]?.socketId ?? null;
-    const secret =
-      action.type === "SET_SECRET_NEW"
-        ? (action.secret || "").toUpperCase()
-        : state.secret;
-
-    const res = checkSecret({ secret, state, allowedSecrets: context.ALLOWED_SECRETS });
-    if (!res.ok) {
-      if (socketId) io.to(socketId).emit("errorMessage", res.error);
-      return;
-    }
-    if (
-      state.powers.assassinWord &&
-      secret === state.powers.assassinWord.toUpperCase()
-    ) {
-      if (socketId) io.to(socketId).emit("errorMessage", "Secret cannot match assassin word!");
-      return;
-    }
-
-    if (state.roundStartTime && state.timeUsed?.[state.setter] != null) {
-      state.timeUsed[state.setter] += Math.floor((Date.now() - state.roundStartTime) / 1000);
-    }
-    state.roundStartTime = Date.now();
-
-    state.secret = secret;
-    state.awaitingFreshSecret = false;
-    state.setterDraft = "";
-    state.turn = state.guesser;
-    state.activeTimer = state.guesser;
-    state.powerUsedThisTurn = false;
-    if (state.timeControl?.mode === "chess") addIncrement(state, state.setter);
-    else if (state.timeControl?.mode === "round") resetRoundTimer(state);
+    // Hand the turn to the setter for their Keep/New decision. Reuse the
+    // normal post-guess transition bookkeeping (clears round-scoped powers,
+    // flips the turn, advances the timer) — but skip the win-check, since
+    // nothing is scored until the setter commits their secret.
+    clearRoundState(state, "guesser");
 
     context.powerEngine.turnStart(state, state.turn, roomId, io);
     emitRoomState(roomId, room, io);
@@ -250,6 +170,14 @@ function handleNormalPhase(room, state, action, roomId, context) {
     }
     state.roundStartTime = Date.now();
 
+    // Double Tap resolution: the setter has just committed their final secret
+    // (Keep or New). Score BOTH the shown and hidden guesses against it and
+    // return the combined feedback to the guesser.
+    if (state.powers.doubleGuessPending) {
+      resolveDoubleGuess({ room, state, secret, roomId, context, io });
+      return;
+    }
+
     transitionAfterSecret({
       room,
       state,
@@ -287,6 +215,74 @@ function handleNormalPhase(room, state, action, roomId, context) {
     emitRoomState(roomId, room, io);
     return;
   }
+}
+
+// Double Tap resolution. Called from the setter's SET_SECRET handler once
+// doubleGuessPending is set: the setter has committed their final secret, so
+// both the shown (pendingGuess) and hidden guesses are now scored against it.
+// The two entries are pushed in stable g1/g2 order (so row order leaks nothing
+// about which was shown), the hidden one is masked from the setter in
+// safeState, and the guesser receives both real feedbacks. The round ends if
+// either guess equals the final secret.
+function resolveDoubleGuess({ room, state, secret, roomId, context, io }) {
+  const finalSecret = (secret || "").toUpperCase();
+  const shown = (state.pendingGuess || "").toUpperCase();
+  const hidden = (state.powers.doubleGuessHidden || "").toUpperCase();
+  const shownFirst = state.powers.doubleGuessShownFirst;
+
+  const fbShown = scoreGuess(finalSecret, shown);
+  const fbHidden = scoreGuess(finalSecret, hidden);
+
+  state.secret = finalSecret;
+  state.simultaneousAllWrong = false;
+
+  const mkEntry = (guess, fb, isHidden) => ({
+    guess,
+    fb,
+    fbGuesser: [...fb],
+    extraInfo: null,
+    finalSecret,
+    roundIndex: state.history.length,
+    powerEvents: [],
+    doubleGuessApplied: true,
+    doubleGuessHidden: isHidden
+  });
+
+  const eShown = mkEntry(shown, fbShown, false);
+  const eHidden = mkEntry(hidden, fbHidden, true);
+  if (shownFirst) state.history.push(eShown, eHidden);
+  else state.history.push(eHidden, eShown);
+
+  // Clear the Double Tap resolution state.
+  state.powers.doubleGuessPending = false;
+  state.powers.doubleGuessHidden = null;
+  state.powers.doubleGuessShownFirst = null;
+  state.pendingGuess = "";
+
+  clearForceTimer(roomId, state);
+
+  // Win if EITHER guess matched the setter's final secret.
+  if (shown === finalSecret || hidden === finalSecret) {
+    io.to(roomId).emit("secretFound");
+    endGame(state, roomId, io, room, context);
+    return;
+  }
+
+  io.to(roomId).emit("secretPlanted");
+
+  // Combined feedback back to the guesser (private), in stable g1/g2 order.
+  const socketId = room.playersByUserId?.[state.guesser]?.socketId ?? null;
+  if (socketId) {
+    const guesses = shownFirst
+      ? [{ guess: shown, fb: [...fbShown] }, { guess: hidden, fb: [...fbHidden] }]
+      : [{ guess: hidden, fb: [...fbHidden] }, { guess: shown, fb: [...fbShown] }];
+    io.to(socketId).emit("doubleGuessResult", { guesses });
+  }
+
+  // Hand back to the guesser (advances the setter's timer, flips the turn).
+  clearRoundState(state, "setter");
+  context.powerEngine.turnStart(state, state.turn, roomId, io);
+  emitRoomState(roomId, room, io);
 }
 
 function normalizePowerId(type) {

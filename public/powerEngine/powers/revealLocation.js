@@ -12,21 +12,8 @@ PowerEngine.register("revealLocation", {
     desc: window.POWER_METADATA.revealLocation.desc
   }
   // No renderButton: passive power.
-});
-
-InfoBadgeEngine.register((state, role) => {
-  if (!state.activePowers?.includes("revealLocation")) return null;
-  const peek = state.powers?.revealLocationPeek;
-  if (!peek || typeof peek.index !== "number" || !peek.letter) return null;
-
-  const meta = POWER_METADATA.revealLocation;
-  return {
-    id: "revealLocation",
-    emoji: meta.emoji,
-    text: `${meta.label}: position ${peek.index + 1} = ${peek.letter}`,
-    color: meta.color,
-    priority: 11,
-    screen: "guesser",
-    details: meta.desc
-  };
+  //
+  // The peeked position + letter is rendered persistently in the guesser's
+  // remaining-words box (see renderGuesserRemainingBox) — right alongside the
+  // "words left" count — rather than as a transient popup or a thin badge.
 });

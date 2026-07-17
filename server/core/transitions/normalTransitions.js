@@ -197,5 +197,6 @@ function pushWinEntry(state, word) {
 
 module.exports = {
   transitionAfterGuess,
-  transitionAfterSecret
+  transitionAfterSecret,
+  clearRoundState
 };

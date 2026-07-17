@@ -609,6 +609,28 @@
   animation: pulse-good 280ms cubic-bezier(0.4, 0, 0.2, 1) 2;
 }
 
+/* Power keyboard prompt — a themed instruction strip shown above the
+   on-screen keyboard while Recon Sweep / Double Tap are armed. Sits in the
+   same slot the InfoBadge would, so the keyboard below it never jumps. */
+.power-kb-prompt {
+  margin-top: var(--sp-6);
+  padding: var(--sp-6) var(--sp-14);
+  border-radius: var(--r-10);
+  text-align: center;
+  font-size: var(--fs-13);
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: var(--role-accent);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid color-mix(in srgb, var(--role-accent) 55%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--role-accent) 18%, transparent);
+  animation: pulse-good 1.6s ease-in-out infinite;
+}
+
+.power-kb-prompt[hidden] {
+  display: none;
+}
+
 /*----TIMER ---*/
 
 .timer-block {
@@ -928,6 +950,11 @@
 }
 #GuesserRemainingBox .wiretap-live-waiting {
   opacity: 0.6;
+}
+#GuesserRemainingBox .informant-line .value {
+  color: var(--tile-green);
+  font-weight: 900;
+  letter-spacing: 1px;
 }
 .remaining-box .line:first-child {
   padding-bottom: var(--sp-4);

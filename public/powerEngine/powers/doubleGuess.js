@@ -14,14 +14,9 @@ PowerEngine.register("doubleGuess", {
     $("guesserPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
-      const a = $("doubleGuessInput1");
-      const b = $("doubleGuessInput2");
-      if (a) a.value = "";
-      if (b) b.value = "";
-      const submit = $("doubleGuessSubmitBtn");
-      if (submit) submit.disabled = true;
-      $("doubleGuessModal")?.classList.add("active");
-      a?.focus();
+      // Arm the on-screen keyboard: the guesser types the two words directly
+      // on the coloured keyboard (no modal), one after the other.
+      window.armPowerKeyboard?.("doubleGuess");
     };
   },
 
@@ -46,42 +41,21 @@ PowerEngine.register("doubleGuess", {
   }
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  const a = $("doubleGuessInput1");
-  const b = $("doubleGuessInput2");
-  const submit = $("doubleGuessSubmitBtn");
-  const cancel = $("doubleGuessCancelBtn");
-  if (!a || !b || !submit || !cancel) return;
-
-  const clean = (el) => {
-    el.value = el.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 5);
-  };
-  const refresh = () => {
-    clean(a); clean(b);
-    const okA = a.value.length === 5 && window.ALLOWED_GUESSES?.has(a.value);
-    const okB = b.value.length === 5 && window.ALLOWED_GUESSES?.has(b.value);
-    submit.disabled = !(okA && okB);
-  };
-
-  a.addEventListener("input", refresh);
-  b.addEventListener("input", refresh);
-  a.addEventListener("keydown", (e) => { if (e.key === "Enter") b.focus(); });
-  b.addEventListener("keydown", (e) => { if (e.key === "Enter" && !submit.disabled) submit.click(); });
-
-  submit.onclick = () => {
-    const g1 = a.value, g2 = b.value;
-    if (g1.length !== 5 || g2.length !== 5) return;
-    if (!window.ALLOWED_GUESSES?.has(g1) || !window.ALLOWED_GUESSES?.has(g2)) {
-      toast("Both must be valid words");
-      return;
-    }
-    sendGameAction({ type: "USE_DOUBLE_GUESS", guess1: g1, guess2: g2, role: "guesser" });
-    $("doubleGuessModal")?.classList.remove("active");
-  };
-
-  cancel.onclick = () => {
-    $("doubleGuessModal")?.classList.remove("active");
-    submit.disabled = true;
+// Setter status: while a Double Tap is pending resolution, the setter sees a
+// persistent badge telling them the power fired (they still only see one of
+// the two guesses as the pending guess).
+InfoBadgeEngine.register((state, role) => {
+  if (role !== "setter") return null;
+  if (!state.powers?.doubleGuessPending) return null;
+  const meta = POWER_METADATA.doubleGuess;
+  return {
+    id: "doubleGuessPending",
+    emoji: meta.emoji,
+    text: `${meta.label}: a second hidden guess is in play`,
+    color: meta.color,
+    priority: 9,
+    screen: "setter",
+    details: meta.desc
   };
 });
 
