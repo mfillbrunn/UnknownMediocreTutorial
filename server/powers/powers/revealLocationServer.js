@@ -2,35 +2,37 @@
 //
 // Always-on guesser power (no activation) — "Informant".
 //
-// At the start of each of the guesser's normal-phase turns (i.e. right
-// after the setter has committed a secret), if the guesser has caught up
-// to every position this power has revealed so far, it reveals one more:
-// it reads the true letter at a random not-yet-known position and locks it
-// as a GREEN extraConstraint. Locking it means the setter is forced to keep
-// that letter there on every future secret this round (enforced by
-// isConsistentWithHistory), so it's guaranteed green after the setter
-// submits — exactly the requirement.
+// The informant peeks ONE unknown position and shows the guesser whatever
+// letter is currently sitting there in the secret. It does NOT lock the
+// position (the setter is free to change that letter within the usual
+// consistency rules) — it's a peek, refreshed each of the guesser's turns
+// against the current secret. The peeked position stays FIXED until the
+// guesser confirms it green through their own play; then the informant
+// moves on to a different still-unknown position.
 //
-// "Caught up" = the guesser has independently earned a real 🟩 at that
-// position through their own guessing. Since a revealed position shows on
-// the guesser's board immediately, they'll typically play it next turn,
-// confirm it green, and this hands them a fresh reveal — always keeping
-// them one green ahead. Reveals are permanent and accumulate.
+// The peek is private to the guesser (redacted from the setter in
+// safeState) so the setter doesn't learn which position is being watched.
 //
-// revealLocationIndices lives in state.powers (reset each round via
-// createInitialPowers) and tracks the positions THIS power revealed.
+// revealLocationPeekIndex = the fixed position being watched.
+// revealLocationPeek = { index, letter } = what to show the guesser now.
 
 const engine = require("../powerEngineServer");
 
-function earnedGreenPositions(state) {
-  const earned = new Set();
+function knownGreenPositions(state) {
+  const green = new Set();
   for (const past of state.history ?? []) {
-    if (!Array.isArray(past?.fb)) continue;
+    const fb = Array.isArray(past?.fbGuesser) ? past.fbGuesser
+             : Array.isArray(past?.fb) ? past.fb : null;
+    if (!fb) continue;
     for (let i = 0; i < 5; i++) {
-      if (past.fb[i] === "🟩") earned.add(i);
+      if (fb[i] === "🟩") green.add(i);
     }
   }
-  return earned;
+  // Positions locked green by other powers count as "known" too.
+  for (const c of state.extraConstraints ?? []) {
+    if (c.type === "GREEN") green.add(c.index);
+  }
+  return green;
 }
 
 engine.registerPower("revealLocation", {
@@ -40,33 +42,39 @@ engine.registerPower("revealLocation", {
     if (!state.activePowers?.includes("revealLocation")) return;
     if (!state.secret || state.secret.length !== 5) return;
 
-    state.powers.revealLocationIndices ??= [];
+    const green = knownGreenPositions(state);
 
-    const earned = earnedGreenPositions(state);
+    let peekIndex = state.powers.revealLocationPeekIndex;
 
-    // Still waiting on the guesser to confirm a prior reveal? Don't stack
-    // another one — keep them exactly one green ahead.
-    const pending = state.powers.revealLocationIndices.filter(i => !earned.has(i));
-    if (pending.length > 0) return;
-
-    // Candidate positions: not already earned-green, and not already
-    // locked green by any power (this one or another).
-    const knownGreen = new Set(earned);
-    for (const c of state.extraConstraints ?? []) {
-      if (c.type === "GREEN") knownGreen.add(c.index);
+    // Repick when there's no peek yet, or the watched position has become
+    // green (the guesser caught up to it) — move to a new unknown spot.
+    if (peekIndex == null || green.has(peekIndex)) {
+      const options = [0, 1, 2, 3, 4].filter(i => !green.has(i));
+      if (!options.length) {
+        // Board effectively solved — nothing left to peek.
+        state.powers.revealLocationPeekIndex = null;
+        state.powers.revealLocationPeek = null;
+        return;
+      }
+      peekIndex = options[Math.floor(Math.random() * options.length)];
+      state.powers.revealLocationPeekIndex = peekIndex;
     }
 
-    const options = [0, 1, 2, 3, 4].filter(i => !knownGreen.has(i));
-    if (!options.length) return; // board is effectively solved
+    const letter = state.secret[peekIndex].toUpperCase();
+    const prev = state.powers.revealLocationPeek;
+    state.powers.revealLocationPeek = { index: peekIndex, letter };
 
-    const index = options[Math.floor(Math.random() * options.length)];
-    const letter = state.secret[index].toUpperCase();
-
-    state.extraConstraints ??= [];
-    state.extraConstraints.push({ type: "GREEN", index, letter });
-    state.powers.revealLocationIndices.push(index);
-
-    io.to(roomId).emit("greenLetterRevealed", { index, letter, source: "revealLocation" });
-    io.to(roomId).emit("powerUsed", { type: "revealLocation" });
+    // The peek is shown to the guesser via the redacted
+    // state.powers.revealLocationPeek badge (safeState keeps it for the
+    // guesser, strips it from the setter), so it just updates on the next
+    // state broadcast — no per-position emit that could leak to the setter.
+    //
+    // Only when the WATCHED POSITION changes (a new spot chosen) do we mark
+    // a public power-use for the action log: a bare "used" line with no
+    // index/letter, so the setter learns the informant moved but not where.
+    const positionChanged = !prev || prev.index !== peekIndex;
+    if (positionChanged) {
+      io.to(roomId).emit("powerUsed", { type: "revealLocation" });
+    }
   }
 });

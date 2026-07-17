@@ -39,6 +39,27 @@ const POWER_RULES = {
       );
     }
   },
+
+  wiretap: {
+    allowed(state) {
+      // Active live-tap only in bullet/blitz, once per round.
+      return (
+        state.turn === state.guesser &&
+        !state.powers.wiretapUsed &&
+        (state.rankMode === "bullet" || state.rankMode === "blitz")
+      );
+    }
+  },
+
+  doubleGuess: {
+    allowed(state) {
+      return (
+        state.turn === state.guesser &&
+        !state.pendingGuess &&
+        !state.powers.doubleGuessUsed
+      );
+    }
+  },
     revealPenalty: {
     allowed(state) {
       return (

@@ -57,6 +57,13 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
     delete safe.powers.assassinWord;
   }
 
+  // Informant peek is private to the guesser — the setter must not learn
+  // which position is being watched (or the letter, which they know anyway).
+  if (viewerRole !== "guesser") {
+    delete safe.powers.revealLocationPeek;
+    delete safe.powers.revealLocationPeekIndex;
+  }
+
   // Filter and sanitize history
   safe.history = safe.history
     .map((entry) => {
@@ -84,6 +91,15 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
           if (Array.isArray(e.fb)) {
             e.fb = ["?", "?", "?", "?", "?"];
           }
+        }
+
+        // Double Tap: the setter sees only the SHOWN guess. The hidden one
+        // is masked (word + feedback) but still occupies a row, so the
+        // setter knows a second guess happened without learning what it was.
+        if (viewerRole === "setter" && e.doubleGuessHidden) {
+          e.guess = "?????";
+          if (Array.isArray(e.fb)) e.fb = ["?", "?", "?", "?", "?"];
+          e.powerUsed = (e.powerUsed || "") + " DoubleTap(hidden)";
         }
 
         // Tag applied powers

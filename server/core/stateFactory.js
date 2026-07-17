@@ -97,11 +97,22 @@ const powers = {
       fieldReportConditions: null,
       // LETTER PROBE (test 5 letters -> count present in secret)
       letterProbeUsed: false,
-      // REVEAL LOCATION (auto-repicking permanent green reveal)
-      // Positions this power has already revealed+locked as GREEN this
-      // round. Persists across turns within a round; wiped each round via
-      // resetRoundState -> createInitialPowers.
-      revealLocationIndices: [],
+      // WIRETAP (passive remaining-count always on; once-per-round active
+      // ability, bullet/blitz only, makes the count update live as the
+      // guesser drafts a guess). wiretapUsed is per-round (reset each round
+      // via createInitialPowers). wiretapActive lasts only the activated
+      // turn (cleared by clearActivePowers on the guesser's next submit).
+      wiretapUsed: false,
+      wiretapActive: false,
+      // INFORMANT (fixed-position peek). revealLocationPeekIndex is the
+      // position currently being peeked (stays fixed until it becomes a
+      // real green, then moves). revealLocationPeek = {index, letter} is
+      // the live reveal shown to the guesser (redacted from the setter).
+      revealLocationPeekIndex: null,
+      revealLocationPeek: null,
+      // DOUBLE GUESS (two guesses, one shown; both scored vs same secret)
+      doubleGuessUsed: false,
+      doubleGuessForceKeep: false,
       // UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
       revealLetter: {
         ready: false,          // power is unlocked
@@ -165,8 +176,9 @@ function createInitialState() {
     history: [],
     simultaneousGuessSubmitted: false,
     simultaneousSecretSubmitted: false,
-    powerUsedThisTurn: false,   
+    powerUsedThisTurn: false,
          simultaneousAllWrong: false,
+    awaitingFreshSecret: false,
     _pendingPowerEvents: [],
     powers: createInitialPowers()
   };

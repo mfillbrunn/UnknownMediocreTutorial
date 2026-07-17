@@ -15,7 +15,7 @@ const {
 const { startGameTimer } = require("../core/timeouts/timeoutController");
 const { stopAllRoomIntervals } = require("../utils/teardown");
 const { maybeRunAI } = require("../core/ai/runAI");
-const { buildSetterRemainingBoxState } = require("../utils/remainingWords");
+const { buildSetterRemainingBoxState, computeRemainingAfterGuess } = require("../utils/remainingWords");
 const { getDailyStatus } = require("../core/dailyTracking");
 
 module.exports = function registerSocketHandlers(io, context) {
@@ -266,6 +266,34 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
 
   socket.emit("setterRemainingBox", boxState);
 });
+
+    // Wiretap live tap: while the guesser's wiretap is active this turn,
+    // they emit their in-progress guess draft and get back how many secrets
+    // would remain if they submitted it (scored against the real secret).
+    socket.on("guesserWiretapDraft", ({ roomId, draft }) => {
+      const room = rooms[roomId];
+      if (!room || !room.state) return;
+      const state = room.state;
+
+      const userId = room.socketToUserId?.[socket.id];
+      if (!userId || userId !== state.guesser) return;
+      if (!state.powers?.wiretapActive) return;
+      if (state.phase !== "normal") return;
+
+      const g = typeof draft === "string" ? draft.trim().toUpperCase() : "";
+      if (g.length !== 5 || !/^[A-Z]{5}$/.test(g)) {
+        socket.emit("wiretapLive", { draft: g, count: null });
+        return;
+      }
+
+      const count = computeRemainingAfterGuess(
+        state.secret,
+        g,
+        state,
+        context.ALLOWED_SECRETS
+      );
+      socket.emit("wiretapLive", { draft: g, count });
+    });
 
     /* ---------- GAME ACTION ---------- */
     socket.on("gameAction", ({ action }) => {

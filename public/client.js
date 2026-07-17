@@ -319,7 +319,17 @@ onStateUpdate(newState => {
   const prevPhase = state?.phase;
   const prevSetterDraft = state?.setterDraft || "";
   const prevHistoryLen = state?.history?.length ?? -1;
+  const prevAwaitingFresh = !!state?.awaitingFreshSecret;
   state = JSON.parse(JSON.stringify(newState));
+  // Prompt the setter the moment a Double Tap hands them a fresh-secret
+  // decision (no pending guess to react to).
+  if (
+    !prevAwaitingFresh &&
+    state.awaitingFreshSecret &&
+    myUserId() === state.setter
+  ) {
+    toast("Double Tap used — set your next secret");
+  }
   if ((state.history?.length ?? 0) !== prevHistoryLen) {
     // A guess/decision just finalized (or a new round started) — any
     // mid-turn power events are now baked into state.history/matchRounds,
@@ -628,12 +638,16 @@ function updateSetterScreen() {
     NewEnabled=setterInputEnabled;
     setTurn("setterScreen", !state.secret); 
   }
-  // NORMAL PHASE — decision step only
+  // NORMAL PHASE — decision step, or a fresh-secret decision after a Double
+  // Tap (no pending guess to respond to, the setter just picks their next
+  // secret: keep the current one or switch to a new consistent word).
   else if (state.phase === "normal") {
-    setterInputEnabled = isDecisionStep;
-    KeepEnabled=isDecisionStep;
-    NewEnabled=isDecisionStep;
-    setTurn("setterScreen", isDecisionStep); 
+    const isFreshSecret = isSetterTurn && !!state.awaitingFreshSecret && !displayGuess;
+    const canDecide = isDecisionStep || isFreshSecret;
+    setterInputEnabled = canDecide;
+    KeepEnabled=canDecide;
+    NewEnabled=canDecide;
+    setTurn("setterScreen", canDecide);
   }
   // LOBBY / GAMEOVER — everything off
   else {
@@ -768,7 +782,16 @@ function handleSetterInput(event) {
       !state.secret &&
       !state.simultaneousSecretSubmitted;
 
-    if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
+    // Fresh-secret entry after a Double Tap: setter's turn, normal phase,
+    // no pending guess — they type/keep their next secret.
+    const isFreshSecretEntry =
+      myUserId() === state.setter &&
+      state.phase === "normal" &&
+      state.turn === state.setter &&
+      !!state.awaitingFreshSecret &&
+      !state.pendingGuess;
+
+    if (!(isNormalSetterTurn || isSimultaneousSecretEntry || isFreshSecretEntry)) return;
 
     const isEditing = event.type === "LETTER" || event.type === "BACKSPACE";
 
@@ -906,6 +929,10 @@ renderDraftRows({
 });
 if (typeof renderGuesserRemainingBox === "function") {
   renderGuesserRemainingBox(state.guesserRemainingBox || { visible: false });
+}
+if (state?.powers?.wiretapActive) {
+  // Populate the live tap for the current draft (e.g. right after activating).
+  window.emitWiretapDraft?.(localGuesserDraft);
 }
  const guesserName = getPlayerByUserId(state.guesser)?.name || "—";
   
@@ -1270,6 +1297,12 @@ function renderGuesserDraftOnly() {
     isGuesser: true,
     onInput: handleGuesserInput
   });
+
+  // Wiretap live tap: while active, feed the current draft to the server so
+  // it can report how many secrets would remain if this guess were made.
+  if (state?.powers?.wiretapActive) {
+    window.emitWiretapDraft?.(localGuesserDraft);
+  }
 }
 function countPositionalDifferences(a, b) {
   let diff = 0;

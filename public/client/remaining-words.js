@@ -50,13 +50,17 @@ function renderSetterRemainingBox(boxState) {
   `;
 }
 
-// Wiretap power (guesser): a single-line box showing how many secrets are
-// still possible — the same count the setter sees.
+// Wiretap power (guesser): a box showing how many secrets are still
+// possible — the same count the setter sees. While the active "tap" is on
+// (bullet/blitz), it adds a live line showing how many would remain if the
+// currently-typed guess were submitted.
 function renderGuesserRemainingBox(boxState) {
   const box = document.getElementById("GuesserRemainingBox");
   if (!box) return;
 
-  if (!boxState || !boxState.visible || boxState.current == null) {
+  const active = !!window.state?.powers?.wiretapActive;
+
+  if ((!boxState || !boxState.visible || boxState.current == null) && !active) {
     box.innerHTML = "";
     box.hidden = true;
     return;
@@ -69,11 +73,31 @@ function renderGuesserRemainingBox(boxState) {
     ? `<div class="line remaining-hint">How many possible secrets still fit every clue so far — the same number the Spy sees.</div>`
     : "";
 
-  box.innerHTML = `
-    <div class="line">
-      <span class="label">🎧 Possible</span>
-      <span class="value">${boxState.current.toLocaleString()}</span>
-    </div>
-    ${hint}
-  `;
+  const currentLine =
+    boxState && boxState.current != null
+      ? `<div class="line">
+           <span class="label">🎧 Possible</span>
+           <span class="value">${boxState.current.toLocaleString()}</span>
+         </div>`
+      : "";
+
+  let liveLine = "";
+  if (active) {
+    const live = window._wiretapLive;
+    // The server echoes the draft it scored, so show that draft+count pair
+    // directly (no need to match a private local draft variable).
+    if (live && live.draft && live.draft.length === 5 && live.count != null) {
+      liveLine = `<div class="line wiretap-live">
+          <span class="label">↳ ${live.draft}</span>
+          <span class="value">${live.count.toLocaleString()} left</span>
+        </div>`;
+    } else {
+      liveLine = `<div class="line wiretap-live wiretap-live-waiting">
+          <span class="label">↳ live tap</span>
+          <span class="value">type a guess…</span>
+        </div>`;
+    }
+  }
+
+  box.innerHTML = `${currentLine}${liveLine}${hint}`;
 }
