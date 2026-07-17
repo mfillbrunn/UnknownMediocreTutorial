@@ -11,6 +11,21 @@ const KEYBOARD_ROWS = [
   { name: "Home row (ASDFGHJKL)", letters: "ASDFGHJKL".split("") },
   { name: "Bottom row (ZXCVBNM)", letters: "ZXCVBNM".split("") }
 ];
+const CHAIN_ALPHA_DOUBLES_NEEDED = 3;
+
+function isAscendingWord(word) {
+  for (let i = 1; i < word.length; i++) {
+    if (word.charCodeAt(i) <= word.charCodeAt(i - 1)) return false;
+  }
+  return true;
+}
+
+function doubledLetterOf(word) {
+  for (let i = 0; i < word.length - 1; i++) {
+    if (word[i] === word[i + 1]) return word[i];
+  }
+  return null;
+}
 
 function computeRevealLetterStatus(state) {
   const p = state.powers?.revealLetter;
@@ -40,25 +55,60 @@ function computeRevealLetterStatus(state) {
     };
   }
 
-  // ROW
-  const used = KEYBOARD_ROWS.map(() => new Set());
-  for (const h of history) {
-    for (const c of (h.guess || "").toUpperCase()) {
-      KEYBOARD_ROWS.forEach((row, i) => {
-        if (row.letters.includes(c)) used[i].add(c);
-      });
+  if (p.mode === "ROW") {
+    const used = KEYBOARD_ROWS.map(() => new Set());
+    for (const h of history) {
+      for (const c of (h.guess || "").toUpperCase()) {
+        KEYBOARD_ROWS.forEach((row, i) => {
+          if (row.letters.includes(c)) used[i].add(c);
+        });
+      }
     }
+    let bestIdx = 0;
+    KEYBOARD_ROWS.forEach((row, i) => {
+      if (used[i].size / row.letters.length > used[bestIdx].size / KEYBOARD_ROWS[bestIdx].letters.length) {
+        bestIdx = i;
+      }
+    });
+    const row = KEYBOARD_ROWS[bestIdx];
+    return {
+      label: `${used[bestIdx].size}/${row.letters.length}`,
+      desc: `Use every letter in one keyboard row. Closest: ${row.name} — ${used[bestIdx].size}/${row.letters.length} used.`
+    };
   }
-  let bestIdx = 0;
-  KEYBOARD_ROWS.forEach((row, i) => {
-    if (used[i].size / row.letters.length > used[bestIdx].size / KEYBOARD_ROWS[bestIdx].letters.length) {
-      bestIdx = i;
+
+  if (p.mode === "ALPHA") {
+    const count = history.filter(h => isAscendingWord((h.guess || "").toUpperCase())).length;
+    return {
+      label: `${count}/${CHAIN_ALPHA_DOUBLES_NEEDED}`,
+      desc: `Submit ${CHAIN_ALPHA_DOUBLES_NEEDED} guesses with letters in alphabetical order (e.g. ABHOR). Found so far: ${count}.`
+    };
+  }
+
+  if (p.mode === "DOUBLES") {
+    const doubles = new Set();
+    for (const h of history) {
+      const d = doubledLetterOf((h.guess || "").toUpperCase());
+      if (d) doubles.add(d);
     }
-  });
-  const row = KEYBOARD_ROWS[bestIdx];
+    const found = Array.from(doubles).sort();
+    return {
+      label: `${found.length}/${CHAIN_ALPHA_DOUBLES_NEEDED}`,
+      desc: `Submit ${CHAIN_ALPHA_DOUBLES_NEEDED} guesses with distinct double letters. ` +
+        (found.length ? `Found so far: ${found.join(", ")}.` : "None found yet.")
+    };
+  }
+
+  // CHAIN
+  let links = 0;
+  for (let i = 1; i < history.length; i++) {
+    const prev = (history[i - 1].guess || "").toUpperCase();
+    const curr = (history[i].guess || "").toUpperCase();
+    if (curr[0] === prev[4]) links++;
+  }
   return {
-    label: `${used[bestIdx].size}/${row.letters.length}`,
-    desc: `Use every letter in one keyboard row. Closest: ${row.name} — ${used[bestIdx].size}/${row.letters.length} used.`
+    label: `${links}/${CHAIN_ALPHA_DOUBLES_NEEDED}`,
+    desc: `Submit ${CHAIN_ALPHA_DOUBLES_NEEDED} guesses that each start with the last letter of your previous guess. Linked so far: ${links}.`
   };
 }
 
@@ -123,6 +173,9 @@ PowerEngine.register("revealLetter", {
     const conditionName =
       mode === "RARE" ? "High-Value Target" :
       mode === "ROW" ? "Full Sweep" :
+      mode === "ALPHA" ? "In Order" :
+      mode === "DOUBLES" ? "Double Trouble" :
+      mode === "CHAIN" ? "Word Chain" :
       "Confirmed Lead";
 
     const status = computeRevealLetterStatus(state);

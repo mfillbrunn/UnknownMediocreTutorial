@@ -107,5 +107,52 @@ engine.registerPower("revealLetter", {
         io.to(roomId).emit("toast", "Row Master unlocked!");
       }
     }
+
+    if (p.mode === "ALPHA") {
+      const isAscending = word => {
+        for (let i = 1; i < word.length; i++) {
+          if (word.charCodeAt(i) <= word.charCodeAt(i - 1)) return false;
+        }
+        return true;
+      };
+
+      const count = state.history.filter(h => isAscending(h.guess.toUpperCase())).length;
+      if (count >= 3) {
+        p.ready = true;
+        io.to(roomId).emit("toast", "In Order unlocked!");
+      }
+    }
+
+    if (p.mode === "DOUBLES") {
+      const doubles = new Set();
+      for (const h of state.history) {
+        const w = h.guess.toUpperCase();
+        for (let i = 0; i < w.length - 1; i++) {
+          if (w[i] === w[i + 1]) {
+            doubles.add(w[i]);
+            break;
+          }
+        }
+      }
+
+      if (doubles.size >= 3) {
+        p.ready = true;
+        io.to(roomId).emit("toast", "Double Trouble unlocked!");
+      }
+    }
+
+    if (p.mode === "CHAIN") {
+      let links = 0;
+      for (let i = 1; i < state.history.length; i++) {
+        const prev = state.history[i - 1].guess.toUpperCase();
+        const curr = state.history[i].guess.toUpperCase();
+        if (curr[0] === prev[4]) links++;
+      }
+
+      if (links >= 3) {
+        p.ready = true;
+        io.to(roomId).emit("toast", "Word Chain unlocked!");
+      }
+    }
   }
 });
