@@ -631,6 +631,64 @@
   display: none;
 }
 
+/* Must-include box — setter aid: the letters known to belong somewhere in
+   the secret (from green/yellow feedback so far), so a new secret can be
+   built to satisfy them. Each chip shrinks/fades away in place the moment
+   the setter types that letter into their draft, and grows back if they
+   backspace it out — a live checklist of what's left to place. */
+.must-contain-box {
+  margin-top: var(--sp-6);
+  padding: var(--sp-6) var(--sp-14);
+  border-radius: var(--r-10);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-6) var(--sp-8);
+  background: rgba(0, 0, 0, 0.38);
+  border: 1px solid color-mix(in srgb, var(--role-accent) 40%, transparent);
+}
+
+.must-contain-box[hidden] {
+  display: none;
+}
+
+.must-contain-label {
+  font-size: var(--fs-12);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  opacity: 0.7;
+  margin-right: var(--sp-4);
+}
+
+.must-contain-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6em;
+  height: 1.6em;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-6);
+  font-size: var(--fs-14);
+  font-weight: 900;
+  color: var(--tile-green);
+  background: color-mix(in srgb, var(--tile-green) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tile-green) 45%, transparent);
+
+  transition: opacity 0.25s ease, transform 0.25s ease, min-width 0.25s ease,
+    margin 0.25s ease, padding 0.25s ease, border-width 0.25s ease;
+}
+
+.must-contain-letter.satisfied {
+  opacity: 0;
+  transform: scale(0.3);
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border-width: 0;
+  pointer-events: none;
+}
+
 /*----TIMER ---*/
 
 .timer-block {

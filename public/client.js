@@ -672,6 +672,10 @@ renderDraftRows({
     renderSetterRemainingBox(state.setterRemainingBox || { visible: false });
   }
 
+  if (typeof renderSetterMustContainBox === "function") {
+    renderSetterMustContainBox(state.constraintData?.mustContain, state.setterDraft);
+  }
+
   if (myUserId() === state.setter) {
     renderKeyboard({
     state,
@@ -866,15 +870,24 @@ function submitSetterNew() {
   }
   if (typeof window.isConsistentWithHistory === "function" && !window.isConsistentWithHistory(state.history, w, state)) {
     shakeDraftRow("setter");
-    toast("Not consistent with prior feedback");
     //Check violations
     const violations = findConsistencyViolations(state.history, w);
-    const { secretIndices } = violations;    
+    const { secretIndices } = violations;
     if (secretIndices.size > 0) {
       flashConsistencyViolations(secretIndices);
     }
+    const reasons = typeof explainSecretInconsistency === "function"
+      ? explainSecretInconsistency(state.history, state.extraConstraints, w)
+      : [];
+    window.showBigAnnounce?.({
+      icon: "🚫",
+      title: "Not consistent with prior feedback",
+      sub: reasons.length ? reasons : ["Doesn't match the clues given so far."],
+      roleClass: "role-setter",
+      duration: 5000
+    });
     return;
-  }  
+  }
   if (window.isRejoining) {
     toast("Reconnecting...");
     return;
