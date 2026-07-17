@@ -111,20 +111,23 @@ $("joinRoomBtn")?.addEventListener("click", () => {
 
   const code = $("joinRoomInput").value.trim().toUpperCase();
   if (!code) return toast("Enter a code");
-const username =
-  window.myProfile?.username ||
-  window.currentUser?.email ||
-  "Player";
-joinRoom(code, resp => {
-  if (!resp.ok) return toast(resp.error);
-  roomId = code;
-  persistRoom(roomId); // ✅ HERE
-  enterLobbyAfterJoin();
-}, {
-  userId: window.currentUser.id,
-  name: username
+  const username =
+    window.myProfile?.username ||
+    window.currentUser?.email ||
+    "Player";
+  joinRoom(code, {
+    userId: window.currentUser.id,
+    name: username
+  }, resp => {
+    if (!resp.ok) return toast(resp.error);
+    roomId = code;
+    persistRoom(roomId);
+    enterLobbyAfterJoin();
+  });
 });
 
+$("joinRoomInput")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") $("joinRoomBtn")?.click();
 });
 
 $("quickJoinBtn")?.addEventListener("click", () => {
