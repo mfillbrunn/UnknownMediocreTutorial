@@ -17,11 +17,19 @@ function normalizeFB(fbArr) {
  */
 function isConsistentWithHistory(history, proposedSecret, state) {
   proposedSecret = proposedSecret.toUpperCase();
-  // Enforce extraConstraints (timeless secret constraints)
+  // Enforce extraConstraints (timeless secret constraints). Mirrors the
+  // server's isConsistentWithHistory: GREEN pins a letter to a position,
+  // YELLOW only requires the letter to appear somewhere. Both must be
+  // checked or the client would let the setter submit a secret the server
+  // then rejects (a toast with no shake / no explanation).
   if (state?.extraConstraints?.length) {
     for (const c of state.extraConstraints) {
       if (c.type === "GREEN") {
         if (proposedSecret[c.index] !== c.letter) {
+          return false;
+        }
+      } else if (c.type === "YELLOW") {
+        if (!proposedSecret.includes(c.letter)) {
           return false;
         }
       }

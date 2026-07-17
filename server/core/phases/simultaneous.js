@@ -146,6 +146,14 @@ function handleSimultaneousPhase(room, state, action, roomId, context) {
   state.activeTimer = state.guesser;
   state.roundStartTime = Date.now();
 
+  // The simultaneous→normal handoff is the guesser's first normal-phase
+  // turn, but (unlike every later turn, which goes through
+  // transitionAfterSecret) nothing here fires the turnStart hook — so an
+  // always-on guesser power like Informant would miss the very first turn
+  // of round 1. Fire it now. All existing turnStart handlers are guarded
+  // (role/flag checks) and no-op with a 1-entry history, so this is safe.
+  powerEngine.turnStart(state, state.turn, roomId, io);
+
   emitRoomState(roomId, room, io);
 }
 

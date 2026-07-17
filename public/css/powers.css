@@ -502,6 +502,28 @@ body.power-fieldReport #power-fx {
   mix-blend-mode: screen;
   animation: fx-flash 700ms ease-out;
 }
+body.power-letterProbe #power-fx {
+  opacity: 1;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(34,211,238,0.30),
+      transparent 68%
+    );
+  mix-blend-mode: screen;
+  animation: fx-flash 650ms ease-out;
+}
+body.power-revealLocation #power-fx {
+  opacity: 1;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(52,211,153,0.32),
+      transparent 70%
+    );
+  mix-blend-mode: screen;
+  animation: fx-flash 650ms ease-out;
+}
 body.power-revealGreen #power-fx {
   opacity: 1;
   background:
@@ -651,6 +673,28 @@ body.power-assassinWord #power-fx {
   color: #000;
   border-color: var(--setter-color);
   box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.5);
+}
+
+/* Recon Sweep (letter probe) input */
+.letter-probe-input {
+  display: block;
+  width: 100%;
+  margin: 0 0 var(--sp-16);
+  padding: var(--sp-10) var(--sp-12);
+  border-radius: var(--r-8);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #1a1b20;
+  color: #fff;
+  font-weight: 800;
+  font-size: var(--fs-20);
+  letter-spacing: 0.4em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.letter-probe-input:focus {
+  outline: none;
+  border-color: var(--guesser-color, #60a5fa);
 }
 
 body.power-revealPenalty #power-fx {

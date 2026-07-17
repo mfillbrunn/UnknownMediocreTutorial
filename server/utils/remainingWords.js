@@ -150,9 +150,46 @@ function buildSetterRemainingBoxState(state, viewerId, allowedSecrets, draftSecr
   };
 }
 
+// Wiretap power: the guesser sees the same "how many secrets are still
+// possible" count the setter sees — the number of dictionary words still
+// consistent with all feedback so far. This is derived purely from
+// committed history (not the pending guess), so it's stable across the
+// guesser's turn and identical to the setter's `current`. It's not a leak:
+// the guesser can already compute it themselves from the feedback they see.
+function buildGuesserRemainingBoxState(state, allowedSecrets) {
+  if (
+    !state ||
+    state.phase !== "normal" ||
+    state.gameOver
+  ) {
+    return { visible: false };
+  }
+
+  const secrets =
+    Array.isArray(allowedSecrets) && allowedSecrets.length
+      ? allowedSecrets
+      : global.ALLOWED_SECRETS;
+
+  if (!Array.isArray(secrets) || !secrets.length) {
+    return { visible: false };
+  }
+
+  const history = Array.isArray(state.history) ? state.history : [];
+
+  let current;
+  if (history.length === 0) {
+    current = secrets.length;
+  } else {
+    current = computeRemainingAfterIndexFromState(history.length - 1, state, secrets);
+  }
+
+  return { visible: true, current };
+}
+
 module.exports = {
   computeRemainingAfterIndexFromState,
   computeRemainingNew,
   getRemainingWordInfo,
-  buildSetterRemainingBoxState
+  buildSetterRemainingBoxState,
+  buildGuesserRemainingBoxState
 };

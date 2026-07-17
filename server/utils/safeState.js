@@ -1,5 +1,5 @@
 const { buildKeyboardState } = require("../game-engine/keyboardState");
-const { buildSetterRemainingBoxState } = require("./remainingWords");
+const { buildSetterRemainingBoxState, buildGuesserRemainingBoxState } = require("./remainingWords");
 const { buildConstraintData } = require("./constraintData");
 
 function buildSafeStateForPlayer(state, userId, allowedSecrets) {
@@ -141,6 +141,16 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
       secrets,
       state.setterDraft
     );
+  }
+
+  // Wiretap (guesser): show the guesser the same remaining-secrets count
+  // the setter sees, at the start of each normal-round turn.
+  if (viewerRole === "guesser" && state.activePowers?.includes("wiretap")) {
+    const secrets =
+      Array.isArray(allowedSecrets) && allowedSecrets.length
+        ? allowedSecrets
+        : global.ALLOWED_SECRETS;
+    safe.guesserRemainingBox = buildGuesserRemainingBoxState(state, secrets);
   }
 
   safe.constraintData = buildConstraintData(safe, viewerRole);

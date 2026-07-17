@@ -863,7 +863,7 @@ function submitSetterNew() {
   }
   if (typeof window.isConsistentWithHistory === "function" && !window.isConsistentWithHistory(state.history, w, state)) {
     shakeDraftRow("setter");
-    toast("Incompatible with previous feedback");
+    toast("Not consistent with prior feedback");
     //Check violations
     const violations = findConsistencyViolations(state.history, w);
     const { secretIndices } = violations;    
@@ -904,6 +904,9 @@ renderDraftRows({
   container: $("draftGuesser"),
   localGuesserDraft
 });
+if (typeof renderGuesserRemainingBox === "function") {
+  renderGuesserRemainingBox(state.guesserRemainingBox || { visible: false });
+}
  const guesserName = getPlayerByUserId(state.guesser)?.name || "—";
   
   $("guesserScreen").querySelector(".screen-title").textContent = guesserName;

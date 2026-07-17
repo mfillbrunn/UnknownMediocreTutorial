@@ -25,6 +25,16 @@ betMiss: {
       );
     }
   },
+  letterProbe: {
+    once: true,
+    allowed(state, role) {
+      return (
+        state.phase === "normal" &&
+        role === "guesser" &&
+        !state.powerUsedThisTurn
+      );
+    }
+  },
   revealPenalty: {
     once: false,
     allowed(state, role) {

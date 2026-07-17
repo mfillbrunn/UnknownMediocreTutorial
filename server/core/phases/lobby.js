@@ -46,7 +46,10 @@ const GUESSER_POWERS = [
   "revealLetter",
   "nonsense",
   "betMiss",
-  "fieldReport"
+  "fieldReport",
+  "wiretap",
+  "letterProbe",
+  "revealLocation"
 ];
 
 function initializePlayerTimers(state, userIds) {

@@ -209,5 +209,29 @@ window.POWER_METADATA = {
     icon: "blindfold",
     emoji: "🙈",
     color: "#000000"
+  },
+
+  wiretap: {
+    label: "Wiretap",
+    desc: "Always see how many possible secrets are still left — the same count the Spy sees — at the start of each of your turns. No activation needed.",
+    icon: "headphones",
+    emoji: "🎧",
+    color: "#38BDF8"
+  },
+
+  letterProbe: {
+    label: "Recon Sweep",
+    desc: "Test any 5 letters. You learn only how many of them are in the secret — just the number, not which ones or where.",
+    icon: "radar",
+    emoji: "🔎",
+    color: "#22D3EE"
+  },
+
+  revealLocation: {
+    label: "Informant",
+    desc: "An informant permanently reveals one correct letter in its exact spot. Once you've confirmed that spot green yourself, they reveal another — always keeping you one green ahead. No activation needed.",
+    icon: "flashlight",
+    emoji: "🔦",
+    color: "#34D399"
   }
 };

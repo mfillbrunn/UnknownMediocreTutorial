@@ -52,9 +52,22 @@ socket.on("errorMessage", msg => {
     return;
   }
 
-  // fallback for secret errors
-  shake($("newSecretInput"));
-  toast(msg);
+  // Fallback for secret/guess errors the client didn't catch locally
+  // (e.g. an inconsistent secret that slipped past the client check).
+  // There is no #newSecretInput anymore — the setter types on the board —
+  // so shake the actual draft rows of whichever role hit the error, and
+  // reword the two known server codes to match the in-game wording.
+  const friendly =
+    msg === "Incompatible with previous feedback"
+      ? "Not consistent with prior feedback"
+      : msg === "Word not in dictionary"
+        ? "Not a valid secret"
+        : msg;
+
+  if (typeof shakeDraftRow === "function") {
+    shakeDraftRow(window.myRole === "setter" ? "setter" : "guesser");
+  }
+  toast(friendly);
 });
 
 socket.on("timerTick", ({ timeRemaining }) => {

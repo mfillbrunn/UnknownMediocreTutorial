@@ -30,6 +30,15 @@ const POWER_RULES = {
       );
     }
   },
+
+  letterProbe: {
+    allowed(state) {
+      return (
+        state.turn === state.guesser &&
+        !state.powers.letterProbeUsed
+      );
+    }
+  },
     revealPenalty: {
     allowed(state) {
       return (
