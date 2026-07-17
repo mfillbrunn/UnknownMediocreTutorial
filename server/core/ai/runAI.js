@@ -36,6 +36,37 @@ function toUpperSnake(str) {
   return str.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();
 }
 
+// Some guesser powers need a payload built by the AI, not just a bare
+// USE_<POWER> action. Returns the full action to dispatch.
+function buildPowerAction(powerId, state, context) {
+  const type = `USE_${toUpperSnake(powerId)}`;
+
+  if (powerId === "doubleGuess") {
+    const aiLogic = getAI(state);
+    const g1 = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
+    let g2 = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
+    // Ensure the two guesses differ; fall back to any other valid word.
+    if (!g2 || g2 === g1) {
+      const alt = (context.WORDS.guesses || []).find(
+        (r) => r.word !== g1
+      );
+      if (alt) g2 = alt.word;
+    }
+    if (!g1 || !g2 || g1 === g2) return null; // can't form two distinct guesses
+    return { type, guess1: g1, guess2: g2 };
+  }
+
+  if (powerId === "letterProbe") {
+    // Recon Sweep tests any 5 letters — reuse a picked guess word as the probe.
+    const aiLogic = getAI(state);
+    const letters = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
+    if (!letters || letters.length !== 5) return null;
+    return { type, letters };
+  }
+
+  return { type };
+}
+
 function maybeUsePower(room, state, aiUserId, roomId, context, isTutorial) {
   const aiRole = getAIRole(state, aiUserId);
   if (!aiRole) return false;
@@ -76,13 +107,10 @@ function maybeUsePower(room, state, aiUserId, roomId, context, isTutorial) {
   const powerId = pickRandomUsablePower(state, aiRole);
   if (!powerId) return false;
 
-  applyAIAction(
-    room,
-    { type: `USE_${toUpperSnake(powerId)}` },
-    aiUserId,
-    roomId,
-    context
-  );
+  const powerAction = buildPowerAction(powerId, state, context);
+  if (!powerAction) return false;
+
+  applyAIAction(room, powerAction, aiUserId, roomId, context);
 
   return true;
 }
@@ -118,6 +146,13 @@ function maybeRunAI(room, roomId, context) {
     if (aiRole === "guesser" && !state.pendingGuess) {
       actionFn = () => {
         maybeUsePower(room, state, aiUserId, roomId, context, isTutorial);
+
+        // Double Tap (and any future turn-consuming guesser power) already
+        // submitted the guesses and handed the turn to the setter — don't
+        // also fire a normal guess on top of it.
+        if (state.pendingGuess || state.turn !== aiUserId || state.gameOver) {
+          return;
+        }
 
         let guess = aiLogic.pickGuess(
           state,
@@ -237,4 +272,4 @@ function maybeRunAI(room, roomId, context) {
   }, aiDelay());
 }
 
-module.exports = { maybeRunAI };
+module.exports = { maybeRunAI, buildPowerAction };

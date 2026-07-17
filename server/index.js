@@ -35,6 +35,13 @@ try {
 } catch {
   console.warn("Could not load allowed guesses.");
 }
+// Load the tagged word list first so it can supply the authoritative secret
+// set. This matters for the fallback below: everything that reasons about
+// "how many secrets remain" (the setter box, the guesser's Wiretap/Tap Line)
+// counts over ALLOWED_SECRETS, so it must be the true secret list — never the
+// full guess list, which would inflate every count with non-secret words.
+const WORDS = loadWordList();
+
 // Load allowed secrets
 let ALLOWED_SECRETS = [];
 try {
@@ -42,11 +49,15 @@ try {
   const raw = fs.readFileSync(secretPath, "utf8");
   ALLOWED_SECRETS = parseWordlist(raw);
 } catch {
-  console.warn("Could not load allowed secrets. Using allowed guesses fallback.");
-  ALLOWED_SECRETS = ALLOWED_GUESSES;
+  console.warn("Could not load allowed secrets. Falling back to the isSecret-tagged words.");
+  ALLOWED_SECRETS = WORDS.secrets.map((r) => r.word);
+}
+// Last-resort guard: never let the secret list collapse into the full guess
+// list (which would make every remaining-secrets count include non-secrets).
+if (!Array.isArray(ALLOWED_SECRETS) || !ALLOWED_SECRETS.length) {
+  ALLOWED_SECRETS = WORDS.secrets.map((r) => r.word);
 }
 global.ALLOWED_SECRETS = ALLOWED_SECRETS;
-const WORDS = loadWordList();
 app.get("/api/allowed-secrets", (req, res) => res.json(ALLOWED_SECRETS));
 
 app.get("/api/allowed-guesses", (req, res) => res.json(ALLOWED_GUESSES));

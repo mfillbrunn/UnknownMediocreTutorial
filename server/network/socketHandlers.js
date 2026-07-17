@@ -332,7 +332,12 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
 
       if (
         !action.ai &&
-        !action.type.startsWith("USE_") &&
+        // Most powers keep the same player's turn, so there's nothing for the
+        // AI to do afterwards. Double Tap is the exception: it consumes the
+        // guesser's turn and hands the pending (visible) guess to the setter,
+        // so the AI setter must be given a chance to respond just like a
+        // normal guess.
+        (!action.type.startsWith("USE_") || action.type === "USE_DOUBLE_GUESS") &&
         (room.state.phase === "normal" || room.state.phase === "simultaneous")
       ) {
         setTimeout(() => {
