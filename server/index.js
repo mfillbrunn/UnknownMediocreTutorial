@@ -22,6 +22,20 @@ const supabase = createClient(
 const powerEngine = require("./powers/powerEngineServer");
 
 // ------------------------------
+// Node's default behavior for an uncaught exception (or unhandled promise
+// rejection) is to terminate the whole process — which drops every
+// connected socket.io connection at once, since it's all one process. A
+// single edge case anywhere (an AI move, a power interaction, a malformed
+// action) used to look like "the whole game disconnects randomly" for
+// every player currently connected. Log instead of crashing so one bad
+// request can't take the entire server down.
+process.on("uncaughtException", err => {
+  console.error("Uncaught exception (server kept running):", err);
+});
+process.on("unhandledRejection", err => {
+  console.error("Unhandled rejection (server kept running):", err);
+});
+
 const app = express();
 const server = http.createServer(app);
 

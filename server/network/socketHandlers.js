@@ -245,24 +245,12 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
   // broadcast wasn't the setterDraftSecret event itself.
   room.state.setterDraft = normalized;
 
-  // DEBUG
-  console.log("[setterDraftSecret]", {
-    userId,
-    stateSetter: room.state.setter,
-    phase: room.state.phase,
-    historyLength: room.state.history?.length,
-    allowedSecretsLength: context.ALLOWED_SECRETS?.length,
-    normalized,
-  });
-
   const boxState = buildSetterRemainingBoxState(
     room.state,
     userId,
     context.ALLOWED_SECRETS,
     normalized
   );
-
-  console.log("[setterDraftSecret] boxState", boxState);
 
   socket.emit("setterRemainingBox", boxState);
 });

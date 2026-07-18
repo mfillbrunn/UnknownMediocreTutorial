@@ -268,7 +268,17 @@ function maybeRunAI(room, roomId, context) {
     if (room.state !== state) return;
     if (state.gameOver) return;
 
-    actionFn();
+    // This callback runs on its own tick, well after maybeRunAI's own
+    // synchronous body returned — the try/catch around the *call* to
+    // maybeRunAI() in socketHandlers.js can't see an exception thrown in
+    // here. Node has no other handler for it either (uncaughtException
+    // just kills the process), so a single bad AI move used to take down
+    // the whole server and disconnect every connected player. Contain it.
+    try {
+      actionFn();
+    } catch (err) {
+      console.error("AI action crashed:", err);
+    }
   }, aiDelay());
 }
 
