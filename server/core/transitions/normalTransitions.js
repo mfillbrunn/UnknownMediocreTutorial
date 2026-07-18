@@ -126,6 +126,11 @@ function clearRoundState(state, actingRole) {
     if (state.powers?.countOnlyActive) state.powers.countOnlyActive = false;
     if (state.powers?.forceGuessOptions) state.powers.forceGuessOptions = null;
     if (state.powers?.nonsenseActive) state.powers.nonsenseActive = false;
+    // Letter Lockout: the ban only ever covers ONE guess (the one that
+    // just got validated and submitted) — clear it here regardless of
+    // whether the setter picks a new one next round, matching "the
+    // guesser cannot use that letter in his NEXT guess" (singular).
+    if (state.powers?.letterLockoutBanned) state.powers.letterLockoutBanned = null;
 
     state.activeTimer = state.setter;
     advanceTimer(state, state.guesser);

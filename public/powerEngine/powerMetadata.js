@@ -249,5 +249,21 @@ window.POWER_METADATA = {
     icon: "bar-chart",
     emoji: "📊",
     color: "#818CF8"
+  },
+
+  delayedIntel: {
+    label: "Delayed Intel",
+    desc: "Active from the start. The Inspector always sees each round's feedback one round late — the opening guess's result only appears once their second guess is submitted, the second guess's result once their third is submitted, and so on. A correct guess still wins instantly no matter what's been revealed yet — this only affects what the Inspector gets to see.",
+    icon: "clock-delay",
+    emoji: "🕰️",
+    color: "#A78BFA"
+  },
+
+  letterLockout: {
+    label: "Letter Lockout",
+    desc: "Active from the start. On each of your turns (once the simultaneous round is over), you may ban one letter you haven't banned before — the Inspector's next guess cannot contain it. Only one letter is locked out at a time. Once every letter has been used, the power simply has nothing left to ban.",
+    icon: "letter-ban",
+    emoji: "🚫",
+    color: "#FB7185"
   }
 };

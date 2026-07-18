@@ -30,6 +30,16 @@ function handleGameOverPhase(room, state, action, roomId, context) {
       savedLetterProfileMode = state.powers.letterProfileMode;
     }
 
+    // Letter Lockout: the "not yet picked by him" pool belongs to the
+    // setter POSITION across the whole match, not to whichever specific
+    // player happens to hold it in a given round — round 2's setter (the
+    // round-1 guesser, post role-swap) must not be able to re-ban a
+    // letter round 1's setter already spent.
+    let savedLetterLockoutUsedLetters;
+    if (state.activePowers.includes("letterLockout")) {
+      savedLetterLockoutUsedLetters = state.powers.letterLockoutUsedLetters;
+    }
+
     resetRoundState(room, state, roomId, context);
 
     if (state.activePowers.includes("revealLetter")) {
@@ -38,6 +48,10 @@ function handleGameOverPhase(room, state, action, roomId, context) {
 
     if (state.activePowers.includes("letterProfile")) {
       state.powers.letterProfileMode = savedLetterProfileMode;
+    }
+
+    if (state.activePowers.includes("letterLockout")) {
+      state.powers.letterLockoutUsedLetters = savedLetterLockoutUsedLetters;
     }
 
     state.phase = res.phase || "simultaneous";

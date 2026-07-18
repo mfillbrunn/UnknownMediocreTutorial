@@ -19,6 +19,16 @@ function computeTileClassKey({isSetter, entryRoundIndex, guessIndex, bsIdx, bsRo
     classes.push("tile-hidden-cycle");
     return classes.join(" ");
   }
+  // Delayed Intel: this round hasn't "unlocked" for the guesser yet (see
+  // server/utils/delayedFeedback.js) — fbArray is just a "?" placeholder
+  // at this point, which the fallback branch further down would otherwise
+  // read as "tile-gray" (falsely implying every letter came back
+  // confirmed absent). Render an honest hollow/not-yet-revealed tile
+  // instead, before that fallback ever runs.
+  if (!isSetter && safeEntry.delayedFeedback) {
+    classes.push("tile-delayed");
+    return classes.join(" ");
+  }
   // Faithful fbComposite branch
 if (!isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry2) {
   const fb1 = safeEntry.fakeFeedback.entry1[guessIndex];

@@ -115,6 +115,18 @@ function checkGuess({ guess, state, allowedGuesses }) {
     }
   }
 
+  // 3.5️⃣ Letter Lockout (setter power): the setter banned one letter this
+  // round — the guesser's next guess can't contain it.
+  const bannedLetter = state?.powers?.letterLockoutBanned;
+
+  if (bannedLetter && g.includes(bannedLetter)) {
+    return {
+      ok: false,
+      error: `Guess cannot contain the locked-out letter ${bannedLetter}`,
+      code: "LETTER_LOCKOUT_VIOLATION"
+    };
+  }
+
    // 4 Tutorial check
   if (state.isTutorial && state.history.length < state.scriptedTurns && !!state.canNextRound) {
     if (g !== state.tutorialGuesses[state.history.length]){

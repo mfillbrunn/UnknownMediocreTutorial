@@ -542,6 +542,26 @@
               </div>
             </div>
           </div>
+          <div id="letterLockoutModal" class="modal">
+            <div class="panel reveal-penalty-panel">
+              <h2 class="screen-title">🚫 Ban a Letter</h2>
+              <p class="reveal-penalty-instruction">
+                Choose one letter you haven't banned before this match. The
+                Inspector's next guess cannot contain it.
+              </p>
+              <div class="letter-grid">
+                <!-- A–Z buttons generated in JS -->
+              </div>
+              <div class="decision-row">
+                <button id="letterLockoutConfirm" class="primary-btn small" disabled>
+                  Confirm
+                </button>
+                <button id="letterLockoutCancel" class="secondary-btn small">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         </section>
       </section>
       <!-- ========== GUESSER ========== -->
@@ -807,6 +827,8 @@
   <script src="powerEngine/powers/revealLocation.js"></script>
   <script src="powerEngine/powers/doubleGuess.js"></script>
   <script src="powerEngine/powers/letterProfile.js"></script>
+  <script src="powerEngine/powers/delayedIntel.js"></script>
+  <script src="powerEngine/powers/letterLockout.js"></script>
   <script src="client/summary.js"></script>
   <script src="client/action-log.js"></script>
   <script src="client/notes.js"></script>

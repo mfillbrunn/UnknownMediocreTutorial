@@ -300,6 +300,28 @@
   pointer-events: none;
 }
 
+/* Letter Lockout (setter power): the guesser's currently-banned letter —
+   a clear "don't type this" marker on their own keyboard, distinct from
+   any feedback color (red X wash + strikethrough-style overlay works
+   whether or not the key already has a green/yellow/gray status from
+   earlier guesses). */
+.key.key-banned {
+  position: relative;
+  box-shadow: inset 0 0 0 1.5px rgba(251, 113, 133, 0.85);
+}
+.key.key-banned::after {
+  content: "🚫";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  opacity: 0.9;
+  pointer-events: none;
+  text-shadow: 0 0 3px rgba(0,0,0,0.8);
+}
+
 
 /* ENTER key — semantic, not positional */
 /* ENTER key — both roles */
