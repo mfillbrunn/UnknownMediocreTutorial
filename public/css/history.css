@@ -294,6 +294,51 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   border: 1.5px dashed color-mix(in srgb, var(--tile-yellow-text), transparent 35%) !important;
 }
 
+/* Typing feedback: the instant a keystroke pushes a tile's preview color
+   UP (gray -> yellow, gray -> green, or yellow -> green — see the
+   rank-comparison logic in applyPreviewFeedback), it plays a one-shot
+   "hit" animation instead of just silently recoloring, so the setter
+   feels which keystroke caused the change. A higher-specificity selector
+   (one extra class beyond the base rule below) is enough to override the
+   idle bob's `animation` shorthand without !important; the explicit
+   animation-delay: 0s also overrides the :nth-child stagger rules above
+   so the hit always starts immediately rather than waiting out that
+   tile's stagger offset. Removed via JS ~animation-duration after
+   playing, so the idle bob resumes afterward. */
+#draftSetter .draft-row.pending-guess .history-tile.tile-hit-yellow {
+  animation: tile-hit-yellow-kf 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation-delay: 0s;
+}
+
+#draftSetter .draft-row.pending-guess .history-tile.tile-hit-green {
+  animation: tile-hit-green-kf 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation-delay: 0s;
+}
+
+@keyframes tile-hit-yellow-kf {
+  0%   { transform: translateY(0); }
+  35%  { transform: translateY(-6px); }
+  62%  { transform: translateY(1px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes tile-hit-green-kf {
+  0%   { transform: translateY(0) translateX(0); }
+  28%  { transform: translateY(-11px) translateX(0); }
+  50%  { transform: translateY(0) translateX(-3px); }
+  65%  { transform: translateY(0) translateX(3px); }
+  80%  { transform: translateY(0) translateX(-2px); }
+  92%  { transform: translateY(0) translateX(1px); }
+  100% { transform: translateY(0) translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #draftSetter .draft-row.pending-guess .history-tile.tile-hit-yellow,
+  #draftSetter .draft-row.pending-guess .history-tile.tile-hit-green {
+    animation: none;
+  }
+}
+
 /* A letter proven absent isn't very informative — it stays the plain
    hollow/dashed look (no override here) rather than getting a solid fill,
    so attention goes to the green/yellow tiles that actually say something. */
