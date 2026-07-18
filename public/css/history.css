@@ -222,45 +222,86 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   filter: none;
 }
 
-/* Preview tiles are a *guess* at what the real feedback will be, not a
-   confirmed result. They look exactly like a real solved tile (full
-   color, normal text) — the only "this is tentative" signal is a gentle
-   pulse, not a dimmed/faded fill. */
-.theme-setter
-#draftSetter
-.pending-guess
-.history-tile.preview-green {
-  background: var(--tile-green) !important;
-  color: var(--tile-green-text) !important;
-  border: none;
-  box-shadow: none;
-  opacity: 1;
-  animation: preview-pulse 1.8s ease-in-out infinite;
+/* =========================================
+   SETTER: PENDING-GUESS ROW — tentative, not "finished"
+   =========================================
+   The guesser's just-submitted guess, as shown to the setter awaiting their
+   Keep/New decision. It has to read as provisional in clear contrast to the
+   committed history rows above it: hollow tiles with a dashed hairline
+   outline and a soft lift ("held in hand", not "set down on the board"),
+   full-weight/full-opacity letters — never dimmed, dimming reads as
+   "disabled" — and no pulsing/breathing/loading motion. */
+#draftSetter .draft-row.pending-guess .history-tile {
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  border-style: dashed;
+  border-width: 1.5px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35) !important;
+  color: var(--text) !important;
+  opacity: 1 !important;
+  transform: translateY(-3px);
+  /* A settle-bounce on the drop via an overshooting curve (translateY dips
+     just past 0 before resting), plus smooth crossfades for every property
+     the commit toggle below changes — a transition works here even against
+     !important values on both sides, unlike a @keyframes animation, which
+     !important author rules always outrank regardless of animation state. */
+  transition: border-color 0.25s ease, border-style 0s 0.12s, color 0.25s ease,
+    background 0.3s ease, box-shadow 0.3s ease,
+    transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.theme-setter
-#draftSetter
-.pending-guess
-.history-tile.preview-yellow {
-  background: var(--tile-yellow) !important;
-  color: var(--tile-yellow-text) !important;
-  border: none;
-  box-shadow: none;
-  opacity: 1;
-  animation: preview-pulse 1.8s ease-in-out infinite;
+/* Hypothetical feedback preview — a *guess* at what the real feedback would
+   be if the setter committed to the secret they're currently drafting, not
+   a confirmed result. Still surfaced (it's useful), but as a colored dashed
+   outline rather than a solid fill, so it stays legible as a hint instead
+   of reading like an already-resolved tile. */
+#draftSetter .draft-row.pending-guess .history-tile.preview-green {
+  border-color: var(--tile-green) !important;
+  color: var(--tile-green) !important;
 }
 
+#draftSetter .draft-row.pending-guess .history-tile.preview-yellow {
+  border-color: var(--tile-yellow) !important;
+  color: var(--tile-yellow) !important;
+}
 
-.theme-setter
-#draftSetter
-.pending-guess
-.history-tile.preview-gray {
-  background: var(--tile-gray) !important;
+#draftSetter .draft-row.pending-guess .history-tile.preview-gray {
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: var(--text) !important;
+}
+
+/* Commit — toggled once (see client.js) the instant the setter confirms
+   Keep/New, right before this row is replaced by the true resolved history
+   entry. Dashed -> solid, hollow -> filled, lifted -> flat: the transition
+   declared above animates every one of these smoothly since it's a real
+   computed-value change, not a competing animation the !important rules
+   above would otherwise block. */
+#draftSetter .draft-row.pending-guess.draft-committing .history-tile {
+  background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg)) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  border-style: solid;
+  border-width: 1px;
+  box-shadow: none !important;
   color: var(--tile-gray-text) !important;
-  border: none;
-  box-shadow: none;
-  opacity: 1;
-  animation: preview-pulse 1.8s ease-in-out infinite;
+  transform: translateY(0) !important;
+}
+
+#draftSetter .draft-row.pending-guess.draft-committing .history-tile.preview-green {
+  background: var(--tile-green) !important;
+  border-color: var(--tile-green) !important;
+  color: var(--tile-green-text) !important;
+}
+
+#draftSetter .draft-row.pending-guess.draft-committing .history-tile.preview-yellow {
+  background: var(--tile-yellow) !important;
+  border-color: var(--tile-yellow) !important;
+  color: var(--tile-yellow-text) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #draftSetter .draft-row.pending-guess .history-tile {
+    transition: none;
+  }
 }
 #draftSetter {
   display: flex;
@@ -273,99 +314,6 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   padding: 0;
   gap: var(--sp-6);
 }
-
-/* =========================================
-   SETTER'S OWN DRAFT ROW — tentative & editable
-   =========================================
-   The row the setter is actively typing their next secret into. It has to
-   read as a draft in clear contrast to the committed history rows above it
-   (which read as settled/final) — the contrast IS the point, so this only
-   changes the container, never the letters: hollow tiles with a dashed
-   hairline outline and a soft lift ("held in hand", not "set down on the
-   board"), full-weight/full-opacity text, and a blinking caret in the next
-   tile to fill as the only idle motion (no pulsing/breathing). The
-   structural selectors above (`:has(...)`) supply a solid role-accent fill
-   for this same row — override with !important on the fill/border/shadow
-   only, so text/layout rules keep flowing from those. */
-#draftSetter .draft-row.setter-draft .history-tile {
-  background: transparent !important;
-  border: 1.5px dashed color-mix(in srgb, var(--role-accent) 65%, transparent) !important;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35) !important;
-  color: var(--text) !important;
-  opacity: 1 !important;
-  transform: translateY(-3px);
-  transition: border-color 0.2s ease, background 0.25s ease,
-    box-shadow 0.25s ease, transform 0.25s ease;
-}
-
-/* A tile with a letter already typed into it — still hollow, still lifted,
-   just a solid hairline instead of dashed to confirm "something's there"
-   without looking finished. */
-#draftSetter .draft-row.setter-draft .history-tile.tile-filled {
-  border-style: solid !important;
-  border-width: 1px !important;
-}
-
-/* Blinking caret in the next-empty tile. */
-#draftSetter .draft-row.setter-draft .history-tile.tile-focused::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 20%;
-  bottom: 20%;
-  width: 2px;
-  background: var(--role-accent);
-  transform: translateX(-50%);
-  animation: setter-draft-caret-blink 1s steps(1, jump-none) infinite;
-}
-
-@keyframes setter-draft-caret-blink {
-  0%, 49%  { opacity: 1; }
-  50%, 99% { opacity: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #draftSetter .draft-row.setter-draft .history-tile.tile-focused::after {
-    animation: none;
-  }
-}
-
-/* Commit transition — fired once (see client.js) the instant the setter
-   confirms Keep/New, right before the row is replaced by real history.
-   Dashed -> solid, hollow -> filled, lifted -> flat, with a small settle
-   bounce: the visible "drop into place" that retroactively sells the
-   pre-commit state as having actually been a draft. */
-#draftSetter .draft-row.setter-draft.draft-committing .history-tile {
-  animation: setter-draft-commit 340ms var(--ease-ui, ease-out) both;
-}
-
-@keyframes setter-draft-commit {
-  0% {
-    border-style: dashed;
-    background: transparent;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
-    transform: translateY(-3px) scale(1);
-  }
-  55% {
-    border-style: solid;
-    background: color-mix(in srgb, var(--role-accent), var(--panel-bg) 85%);
-    box-shadow: none;
-    transform: translateY(0) scale(1.06);
-  }
-  100% {
-    border-style: solid;
-    background: color-mix(in srgb, var(--role-accent), var(--panel-bg) 90%);
-    box-shadow: none;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #draftSetter .draft-row.setter-draft.draft-committing .history-tile {
-    animation: none;
-  }
-}
-
 
 /* =========================================
    SETTER-ONLY PENDING PREVIEW FRAME

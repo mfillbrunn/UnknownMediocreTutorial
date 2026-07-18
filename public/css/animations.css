@@ -131,19 +131,6 @@
     opacity: 1;
   }
 }
-/* Preview tiles use their real solved-tile color; the pulse itself (not
-   a color/opacity change) is what signals "tentative". */
-@keyframes preview-pulse {
-  0%, 100% {
-    transform: scale(1);
-    filter: brightness(1);
-  }
-  50% {
-    transform: scale(1.08);
-    filter: brightness(1.3);
-  }
-}
-
 /* Guesser's submitted guess, waiting on the setter to respond — a gentle
    scale-only pulse (no filter change, so it doesn't fight the
    is-not-your-turn grayscale/dim styling applied to the same tiles). */

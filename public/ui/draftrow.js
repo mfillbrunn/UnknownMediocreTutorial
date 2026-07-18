@@ -92,17 +92,6 @@ window.renderDraftRows = function ({
     }
   }
 
-  // Marks which tile is "next to type into" for a row the player is
-  // actively editing, so it can show a blinking caret — only meaningful for
-  // a row with real keyboard focus (the setter's own draft), not a
-  // read-only display of someone else's word.
-  function markFocusedTile(row, word) {
-    const len = word.length;
-    for (let i = 0; i < 5; i++) {
-      row.__tiles[i].classList.toggle("tile-focused", len < 5 && i === len);
-    }
-  }
-
   // Capture visibility BEFORE this render's "hide by default" reset below —
   // that reset and re-show happen within the same synchronous call, so
   // reading row.style.display *after* it would always report "just
@@ -190,7 +179,6 @@ window.renderDraftRows = function ({
       "draft-row setter-draft",
       greenPattern
     );
-    markFocusedTile(draftRow, upperSetterDraft || "");
     showRow(draftRow, draftWasVisible, "row-slide-down");
     return;
   }
@@ -204,7 +192,6 @@ window.renderDraftRows = function ({
         : "draft-row ghost-secret",
       upperSetterDraft ? greenPattern : null
     );
-    if (upperSetterDraft) markFocusedTile(draftRow, upperSetterDraft);
     showRow(draftRow, draftWasVisible, "row-slide-down");
   }
 };
