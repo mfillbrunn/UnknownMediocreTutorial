@@ -328,6 +328,19 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
   const strategy = weightedChoice(availableWeights);
   const pool = pools[strategy];
 
+  // Late in a long game every letter can already appear in some past guess
+  // (emptying `uninformed`) while the feedback so far rules out every
+  // remaining dictionary word (emptying `feasible`, and with it `optimal`/
+  // `optimal2`) — e.g. after an opponent power injects a contradictory
+  // constraint. All four pools end up empty, `strategy` comes back
+  // `undefined`, and indexing into `pools[undefined]` used to throw. That
+  // throw happened inside runAI's setTimeout callback, which has no
+  // try/catch around it, so it crashed the whole Node process and dropped
+  // every connected socket. Fall back to any still-unused word instead.
+  if (!pool || !pool.length) {
+    return weightedRandom(remaining.length ? remaining : wordRows, r => r.probability || 1).word;
+  }
+
   return pool[Math.floor(Math.random() * pool.length)].word;
 }
 
