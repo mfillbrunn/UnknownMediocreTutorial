@@ -11,10 +11,10 @@ const LEVELS = {
     },
     setterParams: {
     maxSecretChanges: 2,
-      maxSecretsEvaluated: 20,
-      randomness: 0.5, 
+      maxSecretsEvaluated: 15,
+      randomness: 0.5,
       pOverlap: 0.1 ,
-      pReductionGivenNoOverlap: 0.5 
+      pReductionGivenNoOverlap: 0.5
     }
   },
   2: {
@@ -27,10 +27,10 @@ const LEVELS = {
     },
     setterParams: {
   maxSecretChanges: 3,
-      maxSecretsEvaluated: 50,
-      randomness: 0.2, 
+      maxSecretsEvaluated: 30,
+      randomness: 0.2,
       pOverlap: 0.3 ,
-      pReductionGivenNoOverlap: 0.8 
+      pReductionGivenNoOverlap: 0.8
     }
   },
   3: {
@@ -43,10 +43,18 @@ const LEVELS = {
     },
     setterParams: {
    maxSecretChanges: 4,
-      maxSecretsEvaluated: 200,
-      randomness: 0, 
+      // Was 200 — the dominant CPU cost in the whole server (see
+      // genericAI.js's pickAISecret/REMAINING_SAMPLE_CAP comments): this is
+      // a direct multiplier on how many candidates get the expensive
+      // "how many secrets would remain" evaluation each setter turn.
+      // Combined with the sampling cap added there, 60 keeps a wide,
+      // randomly-drawn search (actually LESS biased than the old
+      // first-N-in-list-order slice) while cutting worst-case per-turn
+      // cost roughly 25-30x.
+      maxSecretsEvaluated: 60,
+      randomness: 0,
       pOverlap: 1 ,
-      pReductionGivenNoOverlap: 0.5 
+      pReductionGivenNoOverlap: 0.5
     }
   }
 };
