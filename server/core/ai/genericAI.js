@@ -316,16 +316,28 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
   }
 
   // ----- Strategy pools -----
-  // isConsistentWithHistory scans this whole pool once per guesser turn —
-  // cost grows with the number of guesses so far (each check replays every
-  // past guess). Capping the pool with the same random-sample approach as
-  // pickAISecret bounds that cost in long games without meaningfully
-  // narrowing the AI's options (the feasible set from a full-size sample
-  // is already usually far smaller than this cap).
-  const idealPool = sampleArray(remaining_ideal, 1200);
-  const feasible = idealPool.filter(r =>
+  // The feasible set (words still consistent with every clue) MUST be
+  // computed over the full secret list, not a sample: a sample can omit
+  // the actual secret, and then the AI keeps guessing feasible-LOOKING
+  // words that can never be right and never finishes the game. This is a
+  // single O(secrets * history) pass of fast isConsistentWithHistory
+  // checks (~1ms), so there's no reason to cap it — the expensive
+  // O(candidates * secrets) blow-up that sampling was added for lives in
+  // pickAISecret (the setter side), not here.
+  const feasible = remaining_ideal.filter(r =>
     isConsistentWithHistory(history, r.word, state)
   );
+
+  // Closing move: once only a handful of secrets remain consistent, stop
+  // gathering information and actually take a shot at winning by guessing
+  // one of them — otherwise the AI can circle indefinitely on "high
+  // information" words that are themselves already ruled out, never
+  // guessing the real secret. (The setter can still dodge by switching
+  // secrets, but only up to its per-match change limit; after that this
+  // guarantees the game converges.)
+  if (feasible.length > 0 && feasible.length <= 2) {
+    return feasible[Math.floor(Math.random() * feasible.length)].word;
+  }
 
   const uninformed = remaining.filter(r =>
     countNewLetters(r.word, usedLetters) >= 1

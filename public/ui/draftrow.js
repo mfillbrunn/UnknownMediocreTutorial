@@ -127,20 +127,54 @@ window.renderDraftRows = function ({
       (state.phase === "simultaneous" && !state.simultaneousGuessSubmitted) ||
       (state.phase === "normal" && state.turn === state.guesser);
 
-    if (!canGuess && upperPending) {
-      // The just-submitted guess stays right where it was typed instead
-      // of sliding off to a separate row — just restyle it in place as
-      // "waiting on the setter", pulsing gently while it's their turn to
-      // respond (reaching this branch at all means it's their turn).
-      // pendingRow is unused here (guesser has no need for a second row).
-      updateRow(draftRow, upperPending, "draft-row pending-guess row-pulse-wait");
-      showRow(draftRow, draftWasVisible);
+    if (canGuess) {
+      // Back to typing a fresh guess — re-arm the submit slide-out for the
+      // next submission, and cancel any outro still parked on the row.
+      container.__guesserSubmitSlideDone = false;
+      draftRow.__slidingOut = false;
+      // No green ghost letters on the guesser's side anymore — that hint
+      // now lives only on the setter's own draft/secret overlay (below).
+      updateRow(draftRow, upperGuesserDraft, "draft-row guesser-draft", null);
+      showRow(draftRow, draftWasVisible, "row-slide-down");
       return;
     }
 
-    if (canGuess) {
-      updateRow(draftRow, upperGuesserDraft, "draft-row guesser-draft", greenPattern);
-      showRow(draftRow, draftWasVisible, "row-slide-down");
+    if (upperPending) {
+      // Just submitted — the guess "flies off" to the setter: slide the
+      // row out to the right once, then it's gone from the draft area (it
+      // returns as a scored row in history once the setter responds). The
+      // guard makes the one-shot outro fire only on the actual submit
+      // transition, not on every re-render while waiting.
+      if (!container.__guesserSubmitSlideDone) {
+        container.__guesserSubmitSlideDone = true;
+        if (draftWasVisible) {
+          updateRow(draftRow, upperPending, "draft-row guesser-draft");
+          draftRow.classList.remove("row-slide-down", "row-slide-in");
+          draftRow.style.display = "";
+          draftRow.__slidingOut = true;
+          void draftRow.offsetWidth; // restart from a clean state
+          draftRow.classList.add("row-slide-out");
+          draftRow.addEventListener(
+            "animationend",
+            function onOut() {
+              draftRow.removeEventListener("animationend", onOut);
+              // A new guess turn may have already reclaimed the row while
+              // this outro was mid-flight — if so, leave it alone.
+              if (!draftRow.__slidingOut) return;
+              draftRow.__slidingOut = false;
+              draftRow.classList.remove("row-slide-out");
+              draftRow.style.display = "none";
+              updateRow(draftRow, "", "draft-row guesser-draft");
+            },
+            { once: true }
+          );
+        }
+      } else if (draftRow.__slidingOut) {
+        // A re-render landed mid-outro — keep the row visible so the
+        // default "hide by default" reset above doesn't cut the slide off.
+        draftRow.style.display = "";
+      }
+      return;
     }
 
     return;
@@ -170,8 +204,11 @@ window.renderDraftRows = function ({
   }
 
   // Draft / preview (secret) row — slides down when it first appears.
+  // The overlaid current secret shows its known-green letters in green
+  // too (same as the setter's own typed draft): green means that position
+  // is confirmed, so the secret's letter there is worth highlighting.
   if (!setterCanEdit) {
-    updateRow(draftRow, upperSecret, "draft-row ghost-secret");
+    updateRow(draftRow, upperSecret, "draft-row ghost-secret", null, greenPattern);
     showRow(draftRow, draftWasVisible, "row-slide-down");
     return;
   }
@@ -196,7 +233,9 @@ window.renderDraftRows = function ({
         ? "draft-row setter-draft"
         : "draft-row ghost-secret",
       null,
-      upperSetterDraft ? greenPattern : null
+      // Green-match applies to both: the setter's typed draft AND the
+      // overlaid current secret when they haven't typed anything yet.
+      greenPattern
     );
     showRow(draftRow, draftWasVisible, "row-slide-down");
   }
