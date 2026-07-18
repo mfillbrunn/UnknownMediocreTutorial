@@ -303,6 +303,9 @@ function tryAutoRejoin() {
 socket.on("connect", () => {
   console.log("🔌 Connected");
   window.socketReady = true;
+  // A blip that recovered before the deferred "connection lost" toast
+  // fired — cancel it so a sub-second hiccup shows the player nothing.
+  clearTimeout(window._disconnectToastTimer);
   maybeAutoRejoin();
 });
 socket.on("connect_error", err =>
@@ -327,7 +330,16 @@ socket.on("disconnect", reason => {
   // silently) from a long absence (ask before rejoining) — see
   // maybeAutoRejoin / BRIEF_RECONNECT_MS.
   window._disconnectedAt = Date.now();
+  // Don't flash a "connection lost" toast the instant the socket drops —
+  // socket.io reconnects on its own, and a sub-second transport blip
+  // (the common "transport close" hiccup during normal play) recovers
+  // before the player would even register the message. Defer it, and let
+  // the connect handler cancel it if we're back in time; only a drop that
+  // actually persists past this delay is worth telling the player about.
   if (window.roomId) {
-    toast("Connection lost — reconnecting…");
+    clearTimeout(window._disconnectToastTimer);
+    window._disconnectToastTimer = setTimeout(() => {
+      if (!socket.connected) toast("Connection lost — reconnecting…");
+    }, 2500);
   }
 });

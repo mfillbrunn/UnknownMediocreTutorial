@@ -224,9 +224,6 @@ function updateWaitingIndicator() {
 let powerQueue = [];
 
 onPowerUsed(data => {
-  console.log(data.type);
-  console.log(data.variant);
-  console.log(!PowerEngine._initialized);
   if (!PowerEngine._initialized) {
     powerQueue.push(data);
     return;
