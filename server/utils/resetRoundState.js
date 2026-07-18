@@ -14,6 +14,11 @@ function resetRoundState(room, state, roomId, context) {
   state.powerUsedThisTurn = false;
   state.roundStartTime = null;
   state.timeoutLoser = null;
+  // Round-scoped: an all-black opening guess locks the setter into keeping
+  // that secret for the rest of THAT round. Left unset here, it survived
+  // into the next round (and any role swap with it), incorrectly locking
+  // the new setter's secret entry before they'd even had a guess to react to.
+  state.simultaneousAllWrong = false;
 
   state._pendingPowerEvents = [];
 
