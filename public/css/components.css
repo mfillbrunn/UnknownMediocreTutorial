@@ -661,6 +661,14 @@
   margin-right: var(--sp-4);
 }
 
+.must-contain-hint {
+  flex-basis: 100%;
+  font-size: var(--fs-11);
+  opacity: 0.6;
+  text-align: center;
+  margin-bottom: var(--sp-4);
+}
+
 .must-contain-letter {
   display: inline-flex;
   align-items: center;
@@ -671,12 +679,23 @@
   border-radius: var(--r-6);
   font-size: var(--fs-14);
   font-weight: 900;
-  color: var(--tile-green);
-  background: color-mix(in srgb, var(--tile-green) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tile-green) 45%, transparent);
 
   transition: opacity 0.25s ease, transform 0.25s ease, min-width 0.25s ease,
     margin 0.25s ease, padding 0.25s ease, border-width 0.25s ease;
+}
+
+/* Confirmed to a specific position — green, matching the tile color. */
+.must-contain-letter.mc-green {
+  color: var(--tile-green);
+  background: color-mix(in srgb, var(--tile-green) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tile-green) 45%, transparent);
+}
+
+/* Confirmed present, but position not yet known — yellow. */
+.must-contain-letter.mc-yellow {
+  color: var(--tile-yellow);
+  background: color-mix(in srgb, var(--tile-yellow) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tile-yellow) 45%, transparent);
 }
 
 .must-contain-letter.satisfied {
