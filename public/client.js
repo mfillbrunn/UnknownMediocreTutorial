@@ -673,6 +673,10 @@ renderDraftRows({
     renderSetterRemainingBox(state.setterRemainingBox || { visible: false });
   }
 
+  if (typeof renderSetterLetterProfileBox === "function") {
+    renderSetterLetterProfileBox(state.setterLetterProfile || null);
+  }
+
   if (typeof renderSetterMustContainBox === "function") {
     const greenLetters = new Set(
       (state.constraintData?.grid || [])
@@ -921,6 +925,9 @@ renderDraftRows({
 });
 if (typeof renderGuesserRemainingBox === "function") {
   renderGuesserRemainingBox(state.guesserRemainingBox || { visible: false });
+}
+if (typeof renderGuesserLetterProfileBox === "function") {
+  renderGuesserLetterProfileBox(state.powers?.letterProfileGuesserStat || null);
 }
 if (state?.powers?.wiretapActive) {
   // Populate the live tap for the current draft (e.g. right after activating).

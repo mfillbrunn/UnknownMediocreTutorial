@@ -33,4 +33,5 @@ module.exports = {
   letterProbe: { label: "Recon Sweep", role: "guesser" },
   revealLocation: { label: "Informant", role: "guesser" },
   doubleGuess: { label: "Double Tap", role: "guesser" },
+  letterProfile: { label: "Letter Profile", role: "guesser" },
 };

@@ -27,6 +27,10 @@ socket.on("setterRemainingBox", (boxState) => {
   renderSetterRemainingBox(boxState);
 });
 
+socket.on("setterLetterProfile", (stat) => {
+  window.renderSetterLetterProfileBox?.(stat);
+});
+
 socket.on("revealOldSecret", ({ secret }) => {
   toast(`Secret three rounds ago was: ${secret.toUpperCase()}`);
 });

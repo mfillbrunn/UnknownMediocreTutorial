@@ -121,6 +121,16 @@ const powers = {
       doubleGuessPending: false,
       doubleGuessHidden: null,
       doubleGuessShownFirst: null,
+      // LETTER PROFILE (always-on guesser power). Mode is chosen ONCE for
+      // the whole match (competitiveMode.js's onLobbyReady), preserved
+      // across the round-2 role swap by postGame.js exactly like
+      // revealLetter.mode below. letterProfileGuesserStat is the guesser's
+      // per-turn reveal (computed in letterProfileServer.js's turnStart
+      // hook from the real secret, redacted from the setter in safeState —
+      // the setter has their own live equivalent computed from their own
+      // draft/secret instead).
+      letterProfileMode: null,
+      letterProfileGuesserStat: null,
       // UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
       revealLetter: {
         ready: false,          // power is unlocked
