@@ -69,13 +69,24 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 }
 
 /* A known-green letter shown as a translucent placeholder in an otherwise
-   empty draft tile — "this position has to be this letter" — for both
-   roles, independent of guide mode. It gives way to the real crisp letter
-   the instant the player types it there (updateRow only renders the ghost
-   when the tile is actually empty). */
+   empty draft tile — "this position has to be this letter", independent of
+   guide mode. Used for the guesser's draft; the setter's own draft uses
+   tile-green-match below instead (a ghost there would just get covered up
+   the instant any letter — right or wrong — gets typed at that position,
+   losing all meaning). Gives way to the real crisp letter the instant the
+   player types it there (updateRow only renders the ghost when empty). */
 .history-tile.tile-ghost-letter {
   color: color-mix(in srgb, var(--tile-green) 55%, transparent);
   font-weight: 600;
+}
+
+/* The setter's own draft: the typed letter turns green the moment it
+   actually matches a position already confirmed green — positive
+   confirmation instead of a hint that disappears as soon as anything gets
+   typed there. */
+#draftSetter .draft-row.setter-draft .history-tile.tile-green-match {
+  color: var(--tile-green);
+  font-weight: 900;
 }
 
 .history-row-wrap {
@@ -226,11 +237,13 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
    SETTER: PENDING-GUESS ROW — looks normal, feels alive
    =========================================
    The guesser's just-submitted guess, as shown to the setter awaiting their
-   Keep/New decision. Tiles look like any other row (solid fill via the
-   hypothetical-feedback-preview classes below, or the plain gray fallback
-   from the structural rule above when no preview color is determined yet)
-   — the only "this is still open" signal is a gentle up/down bob, each
-   tile a little out of phase with its neighbors, so the row reads as
+   Keep/New decision. Tiles default to hollow with a dashed hairline outline
+   and plain text; a tile with a determined hypothetical-feedback color
+   (green/yellow/gray, from the preview against whatever secret the setter
+   is drafting) fills in solid at that color, just dimmed a bit below full
+   saturation so it still reads as provisional rather than a finished tile.
+   The only "this is still open" motion is a gentle up/down bob, each tile
+   a little out of phase with its neighbors, so the row reads as
    waiting/alive rather than finished, without the urgency of a pulse or a
    loading-spinner feel. No toggled one-shot class involved (a prior
    version used a "committing" class added on confirm and never removed,
@@ -238,6 +251,10 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
    in-flight-animation preservation — this is a plain always-on animation
    instead, so there's no state to get stuck). */
 #draftSetter .draft-row.pending-guess .history-tile {
+  background: transparent !important;
+  border: 1.5px dashed rgba(255, 255, 255, 0.4) !important;
+  color: var(--text) !important;
+  box-shadow: none !important;
   animation: pending-guess-bob 2.2s ease-in-out infinite;
 }
 
@@ -260,27 +277,24 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 
 /* Hypothetical feedback preview — a *guess* at what the real feedback would
    be if the setter committed to the secret they're currently drafting.
-   Looks exactly like a real solved tile (solid fill, normal text). */
+   Solid fill at normal saturation, just dimmed a little below the real
+   tile color, so a determined tile reads as "this is what it'd be" rather
+   than "this is locked in". */
 #draftSetter .draft-row.pending-guess .history-tile.preview-green {
-  background: var(--tile-green) !important;
+  background: color-mix(in srgb, var(--tile-green), black 18%) !important;
   color: var(--tile-green-text) !important;
-  border: none;
-  box-shadow: none;
+  border: none !important;
 }
 
 #draftSetter .draft-row.pending-guess .history-tile.preview-yellow {
-  background: var(--tile-yellow) !important;
+  background: color-mix(in srgb, var(--tile-yellow), black 18%) !important;
   color: var(--tile-yellow-text) !important;
-  border: none;
-  box-shadow: none;
+  border: none !important;
 }
 
-#draftSetter .draft-row.pending-guess .history-tile.preview-gray {
-  background: var(--tile-gray) !important;
-  color: var(--tile-gray-text) !important;
-  border: none;
-  box-shadow: none;
-}
+/* A letter proven absent isn't very informative — it stays the plain
+   hollow/dashed look (no override here) rather than getting a solid fill,
+   so attention goes to the green/yellow tiles that actually say something. */
 #draftSetter {
   display: flex;
   flex-direction: column;   /* critical: stack rows vertically */

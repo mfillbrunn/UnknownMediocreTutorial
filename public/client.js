@@ -1099,6 +1099,22 @@ function updateTimerAccess() {
     if (typeof renderSetterRemainingBox === "function" && lastBoxState) {
       renderSetterRemainingBox(lastBoxState);
     }
+    // The must-contain box is guide-mode-only (hidden entirely when guide
+    // is off) — without an explicit re-render here it wouldn't appear/
+    // disappear until the next natural render (next keystroke or state
+    // update).
+    if (typeof renderSetterMustContainBox === "function" && window.state) {
+      const greenLetters = new Set(
+        (window.state.constraintData?.grid || [])
+          .map(cell => cell?.green)
+          .filter(Boolean)
+      );
+      renderSetterMustContainBox(
+        window.state.constraintData?.mustContain,
+        window.state.setterDraft,
+        greenLetters
+      );
+    }
   };
 })();
 
