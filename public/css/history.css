@@ -83,9 +83,12 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 /* The setter's own draft: the typed letter turns green the moment it
    actually matches a position already confirmed green — positive
    confirmation instead of a hint that disappears as soon as anything gets
-   typed there. */
-#draftSetter .draft-row.setter-draft .history-tile.tile-green-match {
-  color: var(--tile-green);
+   typed there. Also applies to the ghost-secret overlay (the current
+   secret shown when the setter hasn't typed a new draft), so known-green
+   positions in it read green too. Overrides the dim ghost-secret color. */
+#draftSetter .draft-row.setter-draft .history-tile.tile-green-match,
+#draftSetter .draft-row.ghost-secret .history-tile.tile-green-match {
+  color: var(--tile-green) !important;
   font-weight: 900;
 }
 
@@ -123,6 +126,13 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   animation: draft-row-slide-in 340ms var(--ease-ui, ease-out) both;
 }
 
+/* The guesser's just-submitted guess flying off to the right toward the
+   setter. `both` holds the final (off-screen, faded) frame so a re-render
+   during the ~340ms doesn't snap it back before the JS hides it. */
+.draft-row.row-slide-out {
+  animation: draft-row-slide-out 340ms var(--ease-ui, ease-out) both;
+}
+
 @keyframes draft-row-slide-down {
   0%   { opacity: 0; transform: translateY(-18px); }
   100% { opacity: 1; transform: translateY(0); }
@@ -133,9 +143,15 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   100% { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes draft-row-slide-out {
+  0%   { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(100%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .draft-row.row-slide-down,
-  .draft-row.row-slide-in {
+  .draft-row.row-slide-in,
+  .draft-row.row-slide-out {
     animation: none;
   }
 }
