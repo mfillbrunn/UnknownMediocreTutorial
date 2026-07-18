@@ -223,85 +223,63 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 }
 
 /* =========================================
-   SETTER: PENDING-GUESS ROW — tentative, not "finished"
+   SETTER: PENDING-GUESS ROW — looks normal, feels alive
    =========================================
    The guesser's just-submitted guess, as shown to the setter awaiting their
-   Keep/New decision. It has to read as provisional in clear contrast to the
-   committed history rows above it: hollow tiles with a dashed hairline
-   outline and a soft lift ("held in hand", not "set down on the board"),
-   full-weight/full-opacity letters — never dimmed, dimming reads as
-   "disabled" — and no pulsing/breathing/loading motion. */
+   Keep/New decision. Tiles look like any other row (solid fill via the
+   hypothetical-feedback-preview classes below, or the plain gray fallback
+   from the structural rule above when no preview color is determined yet)
+   — the only "this is still open" signal is a gentle up/down bob, each
+   tile a little out of phase with its neighbors, so the row reads as
+   waiting/alive rather than finished, without the urgency of a pulse or a
+   loading-spinner feel. No toggled one-shot class involved (a prior
+   version used a "committing" class added on confirm and never removed,
+   which then got carried into every later render by updateRow()'s
+   in-flight-animation preservation — this is a plain always-on animation
+   instead, so there's no state to get stuck). */
 #draftSetter .draft-row.pending-guess .history-tile {
-  background: transparent !important;
-  border-color: rgba(255, 255, 255, 0.4) !important;
-  border-style: dashed;
-  border-width: 1.5px;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35) !important;
-  color: var(--text) !important;
-  opacity: 1 !important;
-  transform: translateY(-3px);
-  /* A settle-bounce on the drop via an overshooting curve (translateY dips
-     just past 0 before resting), plus smooth crossfades for every property
-     the commit toggle below changes — a transition works here even against
-     !important values on both sides, unlike a @keyframes animation, which
-     !important author rules always outrank regardless of animation state. */
-  transition: border-color 0.25s ease, border-style 0s 0.12s, color 0.25s ease,
-    background 0.3s ease, box-shadow 0.3s ease,
-    transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: pending-guess-bob 2.2s ease-in-out infinite;
 }
 
-/* Hypothetical feedback preview — a *guess* at what the real feedback would
-   be if the setter committed to the secret they're currently drafting, not
-   a confirmed result. Still surfaced (it's useful), but as a colored dashed
-   outline rather than a solid fill, so it stays legible as a hint instead
-   of reading like an already-resolved tile. */
-#draftSetter .draft-row.pending-guess .history-tile.preview-green {
-  border-color: var(--tile-green) !important;
-  color: var(--tile-green) !important;
-}
+#draftSetter .draft-row.pending-guess .history-tile:nth-child(1) { animation-delay: 0ms; }
+#draftSetter .draft-row.pending-guess .history-tile:nth-child(2) { animation-delay: 120ms; }
+#draftSetter .draft-row.pending-guess .history-tile:nth-child(3) { animation-delay: 240ms; }
+#draftSetter .draft-row.pending-guess .history-tile:nth-child(4) { animation-delay: 360ms; }
+#draftSetter .draft-row.pending-guess .history-tile:nth-child(5) { animation-delay: 480ms; }
 
-#draftSetter .draft-row.pending-guess .history-tile.preview-yellow {
-  border-color: var(--tile-yellow) !important;
-  color: var(--tile-yellow) !important;
-}
-
-#draftSetter .draft-row.pending-guess .history-tile.preview-gray {
-  border-color: rgba(255, 255, 255, 0.35) !important;
-  color: var(--text) !important;
-}
-
-/* Commit — toggled once (see client.js) the instant the setter confirms
-   Keep/New, right before this row is replaced by the true resolved history
-   entry. Dashed -> solid, hollow -> filled, lifted -> flat: the transition
-   declared above animates every one of these smoothly since it's a real
-   computed-value change, not a competing animation the !important rules
-   above would otherwise block. */
-#draftSetter .draft-row.pending-guess.draft-committing .history-tile {
-  background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg)) !important;
-  border-color: rgba(255, 255, 255, 0.14) !important;
-  border-style: solid;
-  border-width: 1px;
-  box-shadow: none !important;
-  color: var(--tile-gray-text) !important;
-  transform: translateY(0) !important;
-}
-
-#draftSetter .draft-row.pending-guess.draft-committing .history-tile.preview-green {
-  background: var(--tile-green) !important;
-  border-color: var(--tile-green) !important;
-  color: var(--tile-green-text) !important;
-}
-
-#draftSetter .draft-row.pending-guess.draft-committing .history-tile.preview-yellow {
-  background: var(--tile-yellow) !important;
-  border-color: var(--tile-yellow) !important;
-  color: var(--tile-yellow-text) !important;
+@keyframes pending-guess-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   #draftSetter .draft-row.pending-guess .history-tile {
-    transition: none;
+    animation: none;
   }
+}
+
+/* Hypothetical feedback preview — a *guess* at what the real feedback would
+   be if the setter committed to the secret they're currently drafting.
+   Looks exactly like a real solved tile (solid fill, normal text). */
+#draftSetter .draft-row.pending-guess .history-tile.preview-green {
+  background: var(--tile-green) !important;
+  color: var(--tile-green-text) !important;
+  border: none;
+  box-shadow: none;
+}
+
+#draftSetter .draft-row.pending-guess .history-tile.preview-yellow {
+  background: var(--tile-yellow) !important;
+  color: var(--tile-yellow-text) !important;
+  border: none;
+  box-shadow: none;
+}
+
+#draftSetter .draft-row.pending-guess .history-tile.preview-gray {
+  background: var(--tile-gray) !important;
+  color: var(--tile-gray-text) !important;
+  border: none;
+  box-shadow: none;
 }
 #draftSetter {
   display: flex;

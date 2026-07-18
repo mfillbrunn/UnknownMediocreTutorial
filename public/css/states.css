@@ -41,27 +41,42 @@
   border: none;
 }
 
-/* Marks a key present in the guesser's just-submitted guess — a plain
-   dashed light-blue outline, same thickness as the old inset highlight,
-   nothing else. No glow, no shadow, no pulsing; it just quietly marks the
-   letter. */
+/* Marks a key present in the guesser's just-submitted guess — a subtle
+   pulsating blue light around the key, no outline. Rendered on a pseudo-
+   element rather than the key's own box-shadow: .key-green/-yellow/-blue/
+   -purple/-gray all set box-shadow: none !important, and an !important
+   static declaration always beats a competing animation regardless of
+   selector specificity — animating the key's own box-shadow directly would
+   just never visibly move on a solved key. A separate glow layer sidesteps
+   that entirely, and works identically whether the key is colored or not. */
 .theme-setter .key.key-current {
-  outline: 3px dashed var(--tile-blue);
-  outline-offset: -3px;
-  box-shadow: none;
-  animation: none;
+  position: relative;
+  outline: none;
 }
 
-/* .key-green/-yellow/-blue/-purple all set box-shadow: none !important —
-   without an equally-important, more specific override here, a letter
-   that's both "in the current guess" and already color-solved from an
-   earlier guess (the common case) would show no outline at all. */
-.theme-setter .key.key-current.key-green,
-.theme-setter .key.key-current.key-yellow,
-.theme-setter .key.key-current.key-blue,
-.theme-setter .key.key-current.key-purple,
-.theme-setter .key.key-current.key-gray {
-  outline: 3px dashed var(--tile-blue);
-  outline-offset: -3px;
-  box-shadow: none !important;
+.theme-setter .key.key-current::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--tile-blue) 45%, transparent);
+  animation: key-current-glow-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes key-current-glow-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    box-shadow: 0 0 6px 1px color-mix(in srgb, var(--tile-blue) 45%, transparent);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 13px 3px color-mix(in srgb, var(--tile-blue) 80%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-setter .key.key-current::after {
+    animation: none;
+  }
 }

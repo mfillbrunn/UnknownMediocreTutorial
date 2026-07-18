@@ -116,19 +116,6 @@ function shakeDraftRow(role) {
   }
 }
 
-// Plays the "drop into place" commit animation on the pending-guess row
-// (the guesser's guess as shown to the setter) the instant the setter
-// confirms Keep/New — dashed/hollow/lifted collapses into solid/filled/flat.
-// Fire-and-forget: the row typically gets replaced by the next state
-// broadcast before the animation even finishes, which is fine, it only has
-// to read right for the moment it's visible.
-function playPendingGuessCommitAnimation() {
-  const row = document.querySelector(".history-row.draft-row.pending-guess");
-  if (!row) return;
-  row.classList.remove("draft-committing");
-  void row.offsetWidth;
-  row.classList.add("draft-committing");
-}
 ///Simplified turn indicator
 function setTurn(screenId, isYourTurn) {
   const screen = document.getElementById(screenId);
@@ -834,7 +821,6 @@ function handleSetterInput(event) {
           return;
         }
 
-        playPendingGuessCommitAnimation();
         sendGameAction({ type: "SET_SECRET_SAME" });
         resetEphemeralUIState();
         updateUI();
@@ -912,7 +898,6 @@ function submitSetterNew() {
     toast("Reconnecting...");
     return;
   }
-  playPendingGuessCommitAnimation();
   sendGameAction({type: "SET_SECRET_NEW",secret: w});
   stopSecretRoulette();
   state.setterDraft = "";
