@@ -15,7 +15,9 @@ const DEV_SETTER_POWERS = [
   "forceGuess",
   "blindGuess",
   "fakeFeedback",
-  "revealPenalty"
+  "revealPenalty",
+  "delayedIntel",
+  "letterLockout"
 ];
 
 const DEV_GUESSER_POWERS = [

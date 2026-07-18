@@ -131,6 +131,15 @@ const powers = {
       // draft/secret instead).
       letterProfileMode: null,
       letterProfileGuesserStat: null,
+      // LETTER LOCKOUT (setter power). letterLockoutUsedLetters is the
+      // match-scoped pool of letters the setter has already banned
+      // (persisted across the round-2 role swap by postGame.js, same
+      // pattern as revealLetter.mode — a repeat pick isn't allowed).
+      // letterLockoutBanned is the single letter currently in effect for
+      // the guesser's upcoming guess; cleared the instant that guess is
+      // validated and submitted (normalTransitions.js's clearRoundState).
+      letterLockoutUsedLetters: [],
+      letterLockoutBanned: null,
       // UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
       revealLetter: {
         ready: false,          // power is unlocked

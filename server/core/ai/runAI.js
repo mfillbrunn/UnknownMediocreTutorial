@@ -64,6 +64,19 @@ function buildPowerAction(powerId, state, context) {
     return { type, letters };
   }
 
+  if (powerId === "letterLockout") {
+    // Any letter not already spent this match works — no deep strategy
+    // needed, just avoid re-picking one already banned (the server would
+    // reject that as a no-op anyway).
+    const used = new Set(state.powers?.letterLockoutUsedLetters || []);
+    const available = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      .split("")
+      .filter((l) => !used.has(l));
+    if (!available.length) return null;
+    const letter = available[Math.floor(Math.random() * available.length)];
+    return { type, letter };
+  }
+
   return { type };
 }
 

@@ -2,6 +2,7 @@ const { buildKeyboardState } = require("../game-engine/keyboardState");
 const { buildSetterRemainingBoxState, buildGuesserRemainingBoxState } = require("./remainingWords");
 const { buildConstraintData } = require("./constraintData");
 const { computeLetterProfileStats } = require("./letterProfile");
+const { guesserVisibleHistoryCount } = require("./delayedFeedback");
 
 function buildSafeStateForPlayer(state, userId, allowedSecrets) {
   const safe = JSON.parse(JSON.stringify(state));
@@ -85,9 +86,15 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
     delete safe.powers.doubleGuessShownFirst;
   }
 
+  // Delayed Intel (setter power): how many of the TRUE history entries the
+  // guesser currently has real information about — computed once here
+  // (not per-entry) since it depends only on state.history.length /
+  // state.pendingGuess, not on anything entry-specific.
+  const guesserVisibleCount = guesserVisibleHistoryCount(state);
+
   // Filter and sanitize history
   safe.history = safe.history
-    .map((entry) => {
+    .map((entry, idx) => {
       if (!entry) return null;
 
       const e = JSON.parse(JSON.stringify(entry));
@@ -99,6 +106,17 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
 
           if (!Array.isArray(e.fbGuesser) || e.fbGuesser.length !== 5) {
             e.fbGuesser = ["?", "?", "?", "?", "?"];
+          }
+
+          // Delayed Intel: this round hasn't "unlocked" for the guesser
+          // yet (see delayedFeedback.js) — withhold the real fbGuesser
+          // the same way as the missing-data case above, but tag the
+          // entry so the client can render an honest "not revealed yet"
+          // tile instead of whatever the generic feedback-symbol fallback
+          // would otherwise show for a placeholder value.
+          if (idx >= guesserVisibleCount) {
+            e.fbGuesser = ["?", "?", "?", "?", "?"];
+            e.delayedFeedback = true;
           }
         }
 

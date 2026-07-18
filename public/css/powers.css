@@ -39,6 +39,41 @@
 
   pointer-events: none;
 }
+
+/* Delayed Intel (setter power): a round the guesser hasn't "unlocked" yet
+   — same gray + "?" watermark language as tile-hidden-cycle above (an
+   already-established "you don't know this yet" look) rather than
+   falling into the plain tile-gray fallback, which would misleadingly
+   read as "every letter confirmed absent" instead of "not revealed yet".
+   Masks the whole row (every tile in it), not a single position, which
+   is what visually distinguishes it from Hide Tile at a glance. */
+.history-tile.tile-delayed {
+  position: relative;
+  overflow: hidden;
+
+  background: var(--tile-gray);
+  color: var(--tile-gray-text);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.history-tile.tile-delayed::before {
+  content: "?";
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: var(--font-mono);
+  font-weight: 1000;
+  font-size: 20px;
+
+  color: rgba(255, 255, 255, 0.32);
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.35));
+
+  pointer-events: none;
+}
 /* ===============================
    FREEZE — Draft Row Overlay
    =============================== */
@@ -531,6 +566,17 @@ body.power-doubleGuess #power-fx {
     radial-gradient(circle at 65% 50%, rgba(244,114,182,0.30), transparent 55%);
   mix-blend-mode: screen;
   animation: fx-flash 700ms ease-out;
+}
+body.power-letterLockout #power-fx {
+  opacity: 1;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(251,113,133,0.32),
+      transparent 70%
+    );
+  mix-blend-mode: screen;
+  animation: fx-flash 600ms ease-out;
 }
 body.power-revealGreen #power-fx {
   opacity: 1;

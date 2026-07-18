@@ -31,7 +31,9 @@ const SETTER_POWERS = [
   "forceGuess",
   "blindGuess",
   "fakeFeedback",
-  "revealPenalty"
+  "revealPenalty",
+  "delayedIntel",
+  "letterLockout"
 ];
 
 const GUESSER_POWERS = [

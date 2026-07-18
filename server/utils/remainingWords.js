@@ -1,5 +1,6 @@
 const { scoreGuess } = require("../game-engine/scoring");
 const { isConsistentWithHistory } = require("../game-engine/history");
+const { guesserVisibleHistoryCount } = require("./delayedFeedback");
 
 
 function computeRemainingAfterIndexFromState(idx, state, allowedSecrets) {
@@ -188,7 +189,12 @@ function buildSetterRemainingBoxState(state, viewerId, allowedSecrets, draftSecr
 // consistent with all feedback so far. This is derived purely from
 // committed history (not the pending guess), so it's stable across the
 // guesser's turn and identical to the setter's `current`. It's not a leak:
-// the guesser can already compute it themselves from the feedback they see.
+// the guesser can already compute it themselves from the feedback they see
+// — UNLESS Delayed Intel is also active, in which case "the feedback they
+// see" is a strict subset of state.history, and computing this count from
+// the full true history would hand back exactly the information Delayed
+// Intel is withholding. guesserVisibleHistoryCount() caps it to only the
+// rounds the guesser has actually unlocked.
 function buildGuesserRemainingBoxState(state, allowedSecrets) {
   if (
     !state ||
@@ -207,13 +213,13 @@ function buildGuesserRemainingBoxState(state, allowedSecrets) {
     return { visible: false };
   }
 
-  const history = Array.isArray(state.history) ? state.history : [];
+  const visibleCount = guesserVisibleHistoryCount(state);
 
   let current;
-  if (history.length === 0) {
+  if (visibleCount === 0) {
     current = secrets.length;
   } else {
-    current = computeRemainingAfterIndexFromState(history.length - 1, state, secrets);
+    current = computeRemainingAfterIndexFromState(visibleCount - 1, state, secrets);
   }
 
   return { visible: true, current };

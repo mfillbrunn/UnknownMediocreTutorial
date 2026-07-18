@@ -147,6 +147,7 @@ require("./powers/powers/letterProbeServer.js");
 require("./powers/powers/revealLocationServer.js");
 require("./powers/powers/wiretapServer.js");
 require("./powers/powers/letterProfileServer.js");
+require("./powers/powers/letterLockoutServer.js");
 // Register socket event handlers (create/join room, game actions)
 registerSocketHandlers(io, context);
 registerMatchmaking(io, context);

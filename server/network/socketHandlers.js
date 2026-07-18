@@ -17,6 +17,7 @@ const { stopAllRoomIntervals } = require("../utils/teardown");
 const { maybeRunAI } = require("../core/ai/runAI");
 const { buildSetterRemainingBoxState, computeRemainingAfterGuess } = require("../utils/remainingWords");
 const { computeLetterProfileStats } = require("../utils/letterProfile");
+const { guesserVisibleHistoryCount } = require("../utils/delayedFeedback");
 const { getDailyStatus } = require("../core/dailyTracking");
 
 module.exports = function registerSocketHandlers(io, context) {
@@ -302,10 +303,21 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
         return;
       }
 
+      // If Delayed Intel is also active, the guesser hasn't unlocked the
+      // most recent round's feedback yet — computing this hypothetical
+      // count from the FULL true history would hand back exactly what
+      // that power is withholding. Truncate to only what they've
+      // actually unlocked (see delayedFeedback.js).
+      const visibleCount = guesserVisibleHistoryCount(state);
+      const historyForCount =
+        visibleCount === state.history.length
+          ? state
+          : { ...state, history: state.history.slice(0, visibleCount) };
+
       const count = computeRemainingAfterGuess(
         state.secret,
         g,
-        state,
+        historyForCount,
         context.ALLOWED_SECRETS
       );
       socket.emit("wiretapLive", { draft: g, count });

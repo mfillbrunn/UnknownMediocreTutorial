@@ -32,6 +32,7 @@ window.renderKeyboard = function ({
   state,
   container,
   pendingGuess,
+  isGuesser,
   onInput
 }) {
   if (!container.__keys) {
@@ -49,7 +50,8 @@ window.renderKeyboard = function ({
       "key-gray",
       "key-blue",
       "key-current",
-      "key-uncertain"
+      "key-uncertain",
+      "key-banned"
     );
 
     // Special keys
@@ -80,6 +82,14 @@ window.renderKeyboard = function ({
       // highlight letters currently typed
       if (guess.includes(symbol)) {
         keyEl.classList.add("key-current");
+      }
+
+      // Letter Lockout (setter power): only the GUESSER's next guess is
+      // restricted — mark it on their keyboard only, not the setter's own
+      // (which would misleadingly imply the setter's typing is affected
+      // too, when it's only a preview of what they just banned).
+      if (isGuesser && state.powers?.letterLockoutBanned === symbol) {
+        keyEl.classList.add("key-banned");
       }
 
       keyEl.onclick = () => onInput({ type: "LETTER", value: symbol });
