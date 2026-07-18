@@ -279,17 +279,19 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
    be if the setter committed to the secret they're currently drafting.
    Solid fill at normal saturation, just dimmed a little below the real
    tile color, so a determined tile reads as "this is what it'd be" rather
-   than "this is locked in". */
+   than "this is locked in". The border stays dashed (rather than the solid
+   border a real scored tile has) so even the determined tiles still read
+   as provisional, not a finished/committed result. */
 #draftSetter .draft-row.pending-guess .history-tile.preview-green {
   background: color-mix(in srgb, var(--tile-green), black 18%) !important;
   color: var(--tile-green-text) !important;
-  border: none !important;
+  border: 1.5px dashed color-mix(in srgb, var(--tile-green-text), transparent 35%) !important;
 }
 
 #draftSetter .draft-row.pending-guess .history-tile.preview-yellow {
   background: color-mix(in srgb, var(--tile-yellow), black 18%) !important;
   color: var(--tile-yellow-text) !important;
-  border: none !important;
+  border: 1.5px dashed color-mix(in srgb, var(--tile-yellow-text), transparent 35%) !important;
 }
 
 /* A letter proven absent isn't very informative — it stays the plain

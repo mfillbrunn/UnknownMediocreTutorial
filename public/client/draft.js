@@ -48,14 +48,31 @@ window.renderDraftScreen = function (s) {
     list.innerHTML = "";
     candidates.forEach(powerId => {
       const meta = window.POWER_METADATA?.[powerId];
+      // The candidate list is a quick skim, not the place for the full
+      // rules text — show just the first sentence there, and save the
+      // complete description for the info popup on click.
+      const fullDesc = meta?.desc || "";
+      const shortDesc = fullDesc.split(/(?<=\.)\s+/)[0] || fullDesc;
       const btn = document.createElement("button");
       btn.className = "draft-candidate-btn";
       btn.disabled = iAmDone;
       btn.classList.toggle("selected", myPicks.includes(powerId));
       btn.innerHTML = `
         <span class="draft-candidate-emoji">${meta?.emoji || ""}</span>
-        <span class="draft-candidate-label">${meta?.label || powerId}</span>
+        <span class="draft-candidate-label">
+          ${meta?.label || powerId}
+          <button type="button" class="draft-candidate-info" aria-label="Power details">ⓘ</button>
+        </span>
+        <span class="draft-candidate-desc">${shortDesc}</span>
       `;
+      btn.querySelector(".draft-candidate-info")?.addEventListener("click", e => {
+        e.stopPropagation();
+        window.showPowerPopup?.({
+          emoji: meta?.emoji || "",
+          title: meta?.label || powerId,
+          desc: fullDesc
+        });
+      });
       btn.onclick = () => {
         if (iAmDone) return;
         sendGameAction({
