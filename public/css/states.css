@@ -42,13 +42,14 @@
 }
 
 /* Marks a key present in the guesser's just-submitted guess — a subtle
-   pulsating blue light around the key, no outline. Rendered on a pseudo-
+   pulsating red light around the key, no outline. Rendered on a pseudo-
    element rather than the key's own box-shadow: .key-green/-yellow/-blue/
    -purple/-gray all set box-shadow: none !important, and an !important
    static declaration always beats a competing animation regardless of
    selector specificity — animating the key's own box-shadow directly would
    just never visibly move on a solved key. A separate glow layer sidesteps
-   that entirely, and works identically whether the key is colored or not. */
+   that entirely, and works identically whether the key is colored or not.
+   var(--role-accent) is the setter's red inside .theme-setter. */
 .theme-setter .key.key-current {
   position: relative;
   outline: none;
@@ -60,18 +61,18 @@
   inset: -3px;
   border-radius: inherit;
   pointer-events: none;
-  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--tile-blue) 45%, transparent);
+  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--role-accent) 35%, transparent);
   animation: key-current-glow-pulse 1.8s ease-in-out infinite;
 }
 
 @keyframes key-current-glow-pulse {
   0%, 100% {
-    opacity: 0.6;
-    box-shadow: 0 0 6px 1px color-mix(in srgb, var(--tile-blue) 45%, transparent);
+    opacity: 0.55;
+    box-shadow: 0 0 4px 1px color-mix(in srgb, var(--role-accent) 35%, transparent);
   }
   50% {
-    opacity: 1;
-    box-shadow: 0 0 13px 3px color-mix(in srgb, var(--tile-blue) 80%, transparent);
+    opacity: 0.9;
+    box-shadow: 0 0 8px 2px color-mix(in srgb, var(--role-accent) 55%, transparent);
   }
 }
 

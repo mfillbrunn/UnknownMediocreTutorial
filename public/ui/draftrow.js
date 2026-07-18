@@ -53,12 +53,14 @@ window.renderDraftRows = function ({
 
   // Positions already confirmed green (from feedback so far, or a power's
   // GREEN extraConstraint) — same data the constraint row above already
-  // shows, but here it's overlaid directly into the tile it belongs in.
-  // Applies to both roles, independent of guide mode: it's just showing the
-  // player their own already-known information in the place they'll type it.
+  // shows. For the guesser's draft this is overlaid as a ghost letter in
+  // the still-empty tile it belongs in. For the setter's own draft it
+  // instead colors the actually-typed letter green once it matches — a
+  // ghost there gets covered up (and thus loses all meaning) the moment
+  // *any* letter is typed at that position, including a wrong one.
   const greenPattern = (state.constraintData?.grid || []).map(cell => cell?.green || null);
 
-  function updateRow(row, word, className, ghostPattern) {
+  function updateRow(row, word, className, ghostPattern, greenMatchPattern) {
     const frozen =
       state.turn === state.setter &&
       state.powers?.freezeActive;
@@ -85,10 +87,12 @@ window.renderDraftRows = function ({
       const tile = row.__tiles[i];
       const real = word[i] || "";
       const ghost = !real && ghostPattern && ghostPattern[i];
+      const isGreenMatch = !!real && greenMatchPattern && greenMatchPattern[i] === real;
 
       tile.textContent = real || ghost || "";
       tile.classList.toggle("tile-ghost-letter", !!ghost);
       tile.classList.toggle("tile-filled", !!real);
+      tile.classList.toggle("tile-green-match", isGreenMatch);
     }
   }
 
@@ -177,6 +181,7 @@ window.renderDraftRows = function ({
       draftRow,
       upperSetterDraft || "",
       "draft-row setter-draft",
+      null,
       greenPattern
     );
     showRow(draftRow, draftWasVisible, "row-slide-down");
@@ -190,6 +195,7 @@ window.renderDraftRows = function ({
       upperSetterDraft
         ? "draft-row setter-draft"
         : "draft-row ghost-secret",
+      null,
       upperSetterDraft ? greenPattern : null
     );
     showRow(draftRow, draftWasVisible, "row-slide-down");
