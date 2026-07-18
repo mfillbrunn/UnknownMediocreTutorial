@@ -89,7 +89,17 @@ const io = new Server(server, {
   path: "/socket.io",
   cors: { origin: "*", methods: ["GET", "POST"] },
   transports: ["polling", "websocket"],
-  allowEIO3: true
+  allowEIO3: true,
+  // The single-threaded event loop briefly stalls on heavy synchronous
+  // work (notably the AI's secret-selection each turn, which scans the
+  // whole word list), and mobile/flaky networks add their own latency.
+  // With the default 20s ping timeout, one such hiccup — or a short
+  // network blip — is enough for the connection to be declared dead,
+  // dropping the player into the "rejoin" modal even though nothing is
+  // actually wrong. A more generous timeout rides out those transients;
+  // genuinely-gone connections still get cleaned up, just a bit later.
+  pingInterval: 25000,
+  pingTimeout: 60000
 });
 
 // Attach global engine objects so modules can use them

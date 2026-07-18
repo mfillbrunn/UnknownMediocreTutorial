@@ -196,13 +196,22 @@ function onRejoinUI() {
   show("lobby");
 }
 
-// Tracks whether the socket has ever *dropped* during this page load. The
-// very first connection just resumes any in-progress game silently (that's
-// "continuing where you left off" after opening/reloading the app). Once a
-// real disconnect has happened — tab backgrounded, network hiccup, laptop
-// asleep — every connection after that is a reconnection, and those get a
-// prompt instead of silently dropping the player back into the game.
+// Tracks whether the socket has ever *dropped* during this page load, and
+// when the most recent drop happened. The very first connection just
+// resumes any in-progress game silently (that's "continuing where you left
+// off" after opening/reloading the app).
 window._everDisconnected = false;
+window._disconnectedAt = 0;
+
+// How long a gap counts as "brief". socket.io reconnects on its own after a
+// transient hiccup (a momentary network blip, a server event-loop stall
+// during AI computation, a proxy timeout), and the server keeps the
+// player's seat for a 30s reattach grace. A reconnect that lands inside
+// that window can just resume silently — throwing the disruptive "rejoin"
+// modal for a blip the user never even caused is exactly the annoyance
+// being reported. Only a genuinely long absence (tab backgrounded for
+// minutes, laptop asleep), where the seat may already be gone, still asks.
+const BRIEF_RECONNECT_MS = 20000;
 
 function maybeAutoRejoin() {
   if (window.autoRejoinAttempted) return;
@@ -214,7 +223,19 @@ function maybeAutoRejoin() {
 
   window.autoRejoinAttempted = true;
 
+  // First connection of this page load — silent resume.
   if (!window._everDisconnected) {
+    tryAutoRejoin();
+    return;
+  }
+
+  // Reconnection after a drop: resume silently if it was brief (still
+  // within the server's reattach grace), otherwise ask.
+  const gap = window._disconnectedAt
+    ? Date.now() - window._disconnectedAt
+    : Infinity;
+
+  if (gap < BRIEF_RECONNECT_MS) {
     tryAutoRejoin();
     return;
   }
@@ -302,6 +323,10 @@ socket.on("disconnect", reason => {
   // previous cycle's flag.
   window.autoRejoinAttempted = false;
   window._everDisconnected = true;
+  // Stamp the drop so the next reconnect can tell a brief blip (resume
+  // silently) from a long absence (ask before rejoining) — see
+  // maybeAutoRejoin / BRIEF_RECONNECT_MS.
+  window._disconnectedAt = Date.now();
   if (window.roomId) {
     toast("Connection lost — reconnecting…");
   }
