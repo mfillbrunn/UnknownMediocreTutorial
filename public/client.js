@@ -733,6 +733,12 @@ function clearSetterPreview() {
   });
 }
 const PREVIEW_CLASSES = ["preview-green", "preview-yellow", "preview-gray", "preview-incomplete"];
+// Ranks the three preview colors so a keystroke that pushes a tile UP
+// (gray->yellow, gray->green, yellow->green) can be told apart from one
+// that leaves it unchanged in kind or downgrades it — only an upgrade
+// gets the little "hit" animation below.
+const PREVIEW_COLOR_RANK = { "preview-gray": 0, "preview-yellow": 1, "preview-green": 2 };
+const PREVIEW_HIT_DURATION_MS = { "tile-hit-yellow": 450, "tile-hit-green": 550 };
 function applyPreviewFeedback(fbArray, isIncomplete = false) {
   if (state.powers.stealthGuessActive){return;}
   const tiles = document.querySelectorAll("#draftSetter .pending-guess .history-tile");
@@ -754,6 +760,37 @@ function applyPreviewFeedback(fbArray, isIncomplete = false) {
     const same =
       current.length === desired.length && desired.every(c => current.includes(c));
     if (same) return;
+
+    // A keystroke just pushed this tile's color UP — give it a little
+    // jump (yellow) or a bigger jump + shake (green) so typing a hit
+    // *feels* like something, not just a color swap noticed after the
+    // fact. Skip on the tile's very first-ever color assignment
+    // (current.length === 0 — right after a fresh pending guess appears
+    // and clearSetterPreview() wiped every class): that's the row
+    // settling into its baseline against the still-unedited secret, not
+    // something the setter just caused by typing.
+    if (current.length > 0) {
+      const oldColor = current.find(c => c !== "preview-incomplete");
+      const oldRank = PREVIEW_COLOR_RANK[oldColor] ?? 0;
+      const newRank = PREVIEW_COLOR_RANK[colorClass] ?? 0;
+
+      if (newRank > oldRank) {
+        const hitClass =
+          colorClass === "preview-green" ? "tile-hit-green" :
+          colorClass === "preview-yellow" ? "tile-hit-yellow" :
+          null;
+
+        if (hitClass) {
+          tile.classList.remove("tile-hit-yellow", "tile-hit-green");
+          void tile.offsetWidth; // restart if a previous hit is still mid-animation
+          tile.classList.add(hitClass);
+          setTimeout(
+            () => tile.classList.remove(hitClass),
+            PREVIEW_HIT_DURATION_MS[hitClass]
+          );
+        }
+      }
+    }
 
     tile.classList.remove(...PREVIEW_CLASSES);
     tile.classList.add(...desired);
