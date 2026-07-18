@@ -71,6 +71,28 @@ function countNewLetters(word, usedLetters) {
   return c;
 }
 
+// Caps the pool used for the AI's expensive "how many secrets would this
+// leave" estimates (see pickAISecret below) — a fixed-size random sample
+// instead of the full feasible set, so per-turn cost stops growing with
+// dictionary/feasible-set size. Used only to RANK candidates against each
+// other, never for anything that needs to be exact, so a representative
+// sample costs the AI a little precision, not correctness.
+const REMAINING_SAMPLE_CAP = 400;
+
+function sampleArray(arr, cap) {
+  if (arr.length <= cap) return arr;
+  // Partial Fisher-Yates: only the first `cap` positions need to end up
+  // randomized, so this touches every element once (O(n), same order as
+  // the feasibility scan that produced `arr`) rather than fully sorting.
+  const copy = arr.slice();
+  const n = Math.min(cap, copy.length);
+  for (let i = 0; i < n; i++) {
+    const j = i + Math.floor(Math.random() * (copy.length - i));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
+}
+
 /* ===============================
    SETTER LOGIC
    =============================== */
@@ -132,25 +154,44 @@ function pickAISecret(
 
   const allSecrets = secretRows.map(r => r.word);
 
+  // Every word not consistent with the guesses so far can never become
+  // consistent by adding MORE history — state.history only grows. So
+  // scanning feasibleSecrets instead of the full allSecrets list below
+  // gives identical results, for free.
   const feasibleSecrets = allSecrets.filter(secret =>
     isConsistentWithHistory(state.history, secret, state)
   );
 
   if (!feasibleSecrets.length) return state.secret;
 
+  // computeRemainingForSecret rescans the pool it's given for EVERY
+  // candidate evaluated below (up to maxSecretsEvaluated times) — with
+  // the full feasible set that's O(maxSecretsEvaluated * feasibleSecrets
+  // .length), the single biggest CPU cost anywhere in the server (it was
+  // measured blocking the shared Node event loop for hundreds of ms on a
+  // single AI turn, which stalls every other room's game and connection
+  // at the same time). A fixed-size random sample bounds that regardless
+  // of how large the feasible set is; it's only used to RANK candidates
+  // against each other, so the approximation costs a little precision,
+  // not correctness. reductionCandidates and colorCandidates below both
+  // draw from this SAME pool (rather than colorCandidates scanning the
+  // full feasible set) so reductionChoice.secret is always found when
+  // checking for a Path-3 overlap.
+  const samplePool = sampleArray(feasibleSecrets, REMAINING_SAMPLE_CAP);
+
   const currentRemaining =
-    computeRemainingForSecret(state, state.secret, allSecrets);
+    computeRemainingForSecret(state, state.secret, samplePool);
 
   if (!currentRemaining || currentRemaining === 0) {
     return state.secret;
   }
 
   // ---------- Path 1: reduction ----------
-  const reductionCandidates = feasibleSecrets
-    .slice(0, maxSecretsEvaluated)
+  const reductionCandidates = samplePool
+    .slice(0, Math.min(maxSecretsEvaluated, samplePool.length))
     .map(secret => {
       const remaining =
-        computeRemainingForSecret(state, secret, allSecrets);
+        computeRemainingForSecret(state, secret, samplePool);
       if (remaining === null) return null;
       return {
         secret,
@@ -180,8 +221,8 @@ function pickAISecret(
       else if (c === "⬛") currentColorScore += 1;
     }
 
-    // score feasible secrets
-    const colorCandidates = feasibleSecrets
+    // score sampled feasible secrets
+    const colorCandidates = samplePool
       .map(secret => {
         let score = 0;
         for (const c of scoreGuess(
@@ -275,7 +316,14 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
   }
 
   // ----- Strategy pools -----
-  const feasible = remaining_ideal.filter(r =>
+  // isConsistentWithHistory scans this whole pool once per guesser turn —
+  // cost grows with the number of guesses so far (each check replays every
+  // past guess). Capping the pool with the same random-sample approach as
+  // pickAISecret bounds that cost in long games without meaningfully
+  // narrowing the AI's options (the feasible set from a full-size sample
+  // is already usually far smaller than this cap).
+  const idealPool = sampleArray(remaining_ideal, 1200);
+  const feasible = idealPool.filter(r =>
     isConsistentWithHistory(history, r.word, state)
   );
 
