@@ -115,6 +115,19 @@ function shakeDraftRow(role) {
     setTimeout(() => keyboard.classList.remove("shake"), 220);
   }
 }
+
+// Plays the "drop into place" commit animation on the setter's own draft
+// row the instant they confirm Keep/New — dashed/hollow/lifted collapses
+// into solid/filled/flat. Fire-and-forget: the row typically gets replaced
+// by the next state broadcast before the animation even finishes, which is
+// fine, it only has to read right for the moment it's visible.
+function playSetterDraftCommitAnimation() {
+  const row = document.querySelector(".history-row.draft-row.setter-draft");
+  if (!row) return;
+  row.classList.remove("draft-committing");
+  void row.offsetWidth;
+  row.classList.add("draft-committing");
+}
 ///Simplified turn indicator
 function setTurn(screenId, isYourTurn) {
   const screen = document.getElementById(screenId);
@@ -673,7 +686,12 @@ renderDraftRows({
   }
 
   if (typeof renderSetterMustContainBox === "function") {
-    renderSetterMustContainBox(state.constraintData?.mustContain, state.setterDraft);
+    const greenLetters = new Set(
+      (state.constraintData?.grid || [])
+        .map(cell => cell?.green)
+        .filter(Boolean)
+    );
+    renderSetterMustContainBox(state.constraintData?.mustContain, state.setterDraft, greenLetters);
   }
 
   if (myUserId() === state.setter) {
@@ -892,9 +910,15 @@ function submitSetterNew() {
     toast("Reconnecting...");
     return;
   }
+  playSetterDraftCommitAnimation();
   sendGameAction({type: "SET_SECRET_NEW",secret: w});
   stopSecretRoulette();
-  state.setterDraft = "";  
+  // Deliberately NOT clearing state.setterDraft here: the row still needs
+  // to show the just-typed word while the commit animation plays. Clearing
+  // it early would flip the row to the ghost-secret display a beat before
+  // the server round-trip actually resolves anything, cutting the
+  // animation off before it starts. The authoritative state update that's
+  // about to arrive clears it for real.
   resetEphemeralUIState();
   updateUI();
 }

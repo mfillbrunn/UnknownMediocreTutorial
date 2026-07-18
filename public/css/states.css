@@ -41,12 +41,15 @@
   border: none;
 }
 
+/* Marks a key present in the guesser's just-submitted guess — a plain
+   dashed light-blue outline, same thickness as the old inset highlight,
+   nothing else. No glow, no shadow, no pulsing; it just quietly marks the
+   letter. */
 .theme-setter .key.key-current {
-  box-shadow:
-    inset 0 0 0 3px rgba(255,255,255,0.6),
-    0 0 8px color-mix(in srgb, var(--role-accent) 50%, transparent);
-
-  animation: setter-warning-pulse 2.6s var(--ease-ui) infinite;
+  outline: 3px dashed var(--tile-blue);
+  outline-offset: -3px;
+  box-shadow: none;
+  animation: none;
 }
 
 /* .key-green/-yellow/-blue/-purple all set box-shadow: none !important —
@@ -58,7 +61,7 @@
 .theme-setter .key.key-current.key-blue,
 .theme-setter .key.key-current.key-purple,
 .theme-setter .key.key-current.key-gray {
-  box-shadow:
-    inset 0 0 0 3px rgba(255,255,255,0.6),
-    0 0 8px color-mix(in srgb, var(--role-accent) 50%, transparent) !important;
+  outline: 3px dashed var(--tile-blue);
+  outline-offset: -3px;
+  box-shadow: none !important;
 }

@@ -51,7 +51,14 @@ window.renderDraftRows = function ({
   const upperGuesserDraft = localGuesserDraft.toUpperCase();
   const upperSetterDraft = (state.setterDraft || "").toUpperCase();
 
-  function updateRow(row, word, className) {
+  // Positions already confirmed green (from feedback so far, or a power's
+  // GREEN extraConstraint) — same data the constraint row above already
+  // shows, but here it's overlaid directly into the tile it belongs in.
+  // Applies to both roles, independent of guide mode: it's just showing the
+  // player their own already-known information in the place they'll type it.
+  const greenPattern = (state.constraintData?.grid || []).map(cell => cell?.green || null);
+
+  function updateRow(row, word, className, ghostPattern) {
     const frozen =
       state.turn === state.setter &&
       state.powers?.freezeActive;
@@ -60,9 +67,9 @@ window.renderDraftRows = function ({
     // updateUI(), re-running this render far more often than the row's own
     // entrance animation (340ms) takes to finish. Overwriting className
     // wholesale each time stripped the animation class mid-flight, so it
-    // visually never got to play. Carry over any slide class already in
-    // progress instead of dropping it.
-    const inFlightAnim = ["row-slide-in", "row-slide-down"].filter(c =>
+    // visually never got to play. Carry over any slide/commit class already
+    // in progress instead of dropping it.
+    const inFlightAnim = ["row-slide-in", "row-slide-down", "draft-committing"].filter(c =>
       row.classList.contains(c)
     );
 
@@ -75,7 +82,24 @@ window.renderDraftRows = function ({
     }
 
     for (let i = 0; i < 5; i++) {
-      row.__tiles[i].textContent = word[i] || "";
+      const tile = row.__tiles[i];
+      const real = word[i] || "";
+      const ghost = !real && ghostPattern && ghostPattern[i];
+
+      tile.textContent = real || ghost || "";
+      tile.classList.toggle("tile-ghost-letter", !!ghost);
+      tile.classList.toggle("tile-filled", !!real);
+    }
+  }
+
+  // Marks which tile is "next to type into" for a row the player is
+  // actively editing, so it can show a blinking caret — only meaningful for
+  // a row with real keyboard focus (the setter's own draft), not a
+  // read-only display of someone else's word.
+  function markFocusedTile(row, word) {
+    const len = word.length;
+    for (let i = 0; i < 5; i++) {
+      row.__tiles[i].classList.toggle("tile-focused", len < 5 && i === len);
     }
   }
 
@@ -122,7 +146,7 @@ window.renderDraftRows = function ({
     }
 
     if (canGuess) {
-      updateRow(draftRow, upperGuesserDraft, "draft-row guesser-draft");
+      updateRow(draftRow, upperGuesserDraft, "draft-row guesser-draft", greenPattern);
       showRow(draftRow, draftWasVisible, "row-slide-down");
     }
 
@@ -163,8 +187,10 @@ window.renderDraftRows = function ({
     updateRow(
       draftRow,
       upperSetterDraft || "",
-      "draft-row setter-draft"
+      "draft-row setter-draft",
+      greenPattern
     );
+    markFocusedTile(draftRow, upperSetterDraft || "");
     showRow(draftRow, draftWasVisible, "row-slide-down");
     return;
   }
@@ -175,8 +201,10 @@ window.renderDraftRows = function ({
       upperSetterDraft || upperSecret,
       upperSetterDraft
         ? "draft-row setter-draft"
-        : "draft-row ghost-secret"
+        : "draft-row ghost-secret",
+      upperSetterDraft ? greenPattern : null
     );
+    if (upperSetterDraft) markFocusedTile(draftRow, upperSetterDraft);
     showRow(draftRow, draftWasVisible, "row-slide-down");
   }
 };

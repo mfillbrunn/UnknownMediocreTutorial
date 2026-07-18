@@ -68,6 +68,16 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   opacity: 0.35;
 }
 
+/* A known-green letter shown as a translucent placeholder in an otherwise
+   empty draft tile — "this position has to be this letter" — for both
+   roles, independent of guide mode. It gives way to the real crisp letter
+   the instant the player types it there (updateRow only renders the ghost
+   when the tile is actually empty). */
+.history-tile.tile-ghost-letter {
+  color: color-mix(in srgb, var(--tile-green) 55%, transparent);
+  font-weight: 600;
+}
+
 .history-row-wrap {
   display: flex;
   justify-content: center;
@@ -262,6 +272,98 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   margin: 0 auto;           /* belt + suspenders */
   padding: 0;
   gap: var(--sp-6);
+}
+
+/* =========================================
+   SETTER'S OWN DRAFT ROW — tentative & editable
+   =========================================
+   The row the setter is actively typing their next secret into. It has to
+   read as a draft in clear contrast to the committed history rows above it
+   (which read as settled/final) — the contrast IS the point, so this only
+   changes the container, never the letters: hollow tiles with a dashed
+   hairline outline and a soft lift ("held in hand", not "set down on the
+   board"), full-weight/full-opacity text, and a blinking caret in the next
+   tile to fill as the only idle motion (no pulsing/breathing). The
+   structural selectors above (`:has(...)`) supply a solid role-accent fill
+   for this same row — override with !important on the fill/border/shadow
+   only, so text/layout rules keep flowing from those. */
+#draftSetter .draft-row.setter-draft .history-tile {
+  background: transparent !important;
+  border: 1.5px dashed color-mix(in srgb, var(--role-accent) 65%, transparent) !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35) !important;
+  color: var(--text) !important;
+  opacity: 1 !important;
+  transform: translateY(-3px);
+  transition: border-color 0.2s ease, background 0.25s ease,
+    box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+/* A tile with a letter already typed into it — still hollow, still lifted,
+   just a solid hairline instead of dashed to confirm "something's there"
+   without looking finished. */
+#draftSetter .draft-row.setter-draft .history-tile.tile-filled {
+  border-style: solid !important;
+  border-width: 1px !important;
+}
+
+/* Blinking caret in the next-empty tile. */
+#draftSetter .draft-row.setter-draft .history-tile.tile-focused::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 20%;
+  bottom: 20%;
+  width: 2px;
+  background: var(--role-accent);
+  transform: translateX(-50%);
+  animation: setter-draft-caret-blink 1s steps(1, jump-none) infinite;
+}
+
+@keyframes setter-draft-caret-blink {
+  0%, 49%  { opacity: 1; }
+  50%, 99% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #draftSetter .draft-row.setter-draft .history-tile.tile-focused::after {
+    animation: none;
+  }
+}
+
+/* Commit transition — fired once (see client.js) the instant the setter
+   confirms Keep/New, right before the row is replaced by real history.
+   Dashed -> solid, hollow -> filled, lifted -> flat, with a small settle
+   bounce: the visible "drop into place" that retroactively sells the
+   pre-commit state as having actually been a draft. */
+#draftSetter .draft-row.setter-draft.draft-committing .history-tile {
+  animation: setter-draft-commit 340ms var(--ease-ui, ease-out) both;
+}
+
+@keyframes setter-draft-commit {
+  0% {
+    border-style: dashed;
+    background: transparent;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+    transform: translateY(-3px) scale(1);
+  }
+  55% {
+    border-style: solid;
+    background: color-mix(in srgb, var(--role-accent), var(--panel-bg) 85%);
+    box-shadow: none;
+    transform: translateY(0) scale(1.06);
+  }
+  100% {
+    border-style: solid;
+    background: color-mix(in srgb, var(--role-accent), var(--panel-bg) 90%);
+    box-shadow: none;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #draftSetter .draft-row.setter-draft.draft-committing .history-tile {
+    animation: none;
+  }
 }
 
 
