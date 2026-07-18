@@ -16,6 +16,7 @@ const { startGameTimer } = require("../core/timeouts/timeoutController");
 const { stopAllRoomIntervals } = require("../utils/teardown");
 const { maybeRunAI } = require("../core/ai/runAI");
 const { buildSetterRemainingBoxState, computeRemainingAfterGuess } = require("../utils/remainingWords");
+const { computeLetterProfileStats } = require("../utils/letterProfile");
 const { getDailyStatus } = require("../core/dailyTracking");
 
 module.exports = function registerSocketHandlers(io, context) {
@@ -253,6 +254,18 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
   );
 
   socket.emit("setterRemainingBox", boxState);
+
+  if (room.state.activePowers?.includes("letterProfile")) {
+    // Same "keep showing the last real word" fallback as safeState.js's
+    // setterLetterProfile: a partial (<5 letter) in-progress draft
+    // shouldn't blank the box, it should keep reflecting the still-current
+    // committed secret until a full new draft word replaces it.
+    const word = normalized.length === 5 ? normalized : room.state.secret;
+    socket.emit(
+      "setterLetterProfile",
+      computeLetterProfileStats(word, room.state.powers?.letterProfileMode)
+    );
+  }
 });
 
     // Wiretap live tap: while the guesser's wiretap is active this turn,

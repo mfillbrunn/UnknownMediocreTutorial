@@ -241,5 +241,13 @@ window.POWER_METADATA = {
     icon: "double-tap",
     emoji: "🎯",
     color: "#F472B6"
+  },
+
+  letterProfile: {
+    label: "Letter Profile",
+    desc: "From the start of the match, one category is randomly chosen and shown to both sides — alphabet half (A–M / N–Z), keyboard row (top / home / bottom), or vowel vs. consonant. You always see how the secret's letters break down across it: for the Spy it updates live while drafting; for you it's revealed once you're on the clock each turn. No activation needed.",
+    icon: "bar-chart",
+    emoji: "📊",
+    color: "#818CF8"
   }
 };

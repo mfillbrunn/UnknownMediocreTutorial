@@ -25,10 +25,19 @@ function handleGameOverPhase(room, state, action, roomId, context) {
       savedRevealLetterMode = state.powers.revealLetter.mode;
     }
 
+    let savedLetterProfileMode;
+    if (state.activePowers.includes("letterProfile")) {
+      savedLetterProfileMode = state.powers.letterProfileMode;
+    }
+
     resetRoundState(room, state, roomId, context);
 
     if (state.activePowers.includes("revealLetter")) {
       state.powers.revealLetter.mode = savedRevealLetterMode;
+    }
+
+    if (state.activePowers.includes("letterProfile")) {
+      state.powers.letterProfileMode = savedLetterProfileMode;
     }
 
     state.phase = res.phase || "simultaneous";

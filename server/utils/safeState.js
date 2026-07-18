@@ -1,6 +1,7 @@
 const { buildKeyboardState } = require("../game-engine/keyboardState");
 const { buildSetterRemainingBoxState, buildGuesserRemainingBoxState } = require("./remainingWords");
 const { buildConstraintData } = require("./constraintData");
+const { computeLetterProfileStats } = require("./letterProfile");
 
 function buildSafeStateForPlayer(state, userId, allowedSecrets) {
   const safe = JSON.parse(JSON.stringify(state));
@@ -62,6 +63,13 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
   if (viewerRole !== "guesser") {
     delete safe.powers.revealLocationPeek;
     delete safe.powers.revealLocationPeekIndex;
+  }
+
+  // Letter Profile: the guesser's per-turn reveal (computed from the real
+  // secret) is private to them — the setter gets their own live equivalent
+  // below, computed from their own draft/secret instead.
+  if (viewerRole !== "guesser") {
+    delete safe.powers.letterProfileGuesserStat;
   }
 
   // Recon Sweep result is private to the guesser — the setter must never
@@ -175,6 +183,24 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
       userId,
       secrets,
       state.setterDraft
+    );
+  }
+
+  // Letter Profile (setter): a live readout of their OWN secret's
+  // breakdown — no leak risk, it's their own word. Falls back to the
+  // already-committed secret while the draft is incomplete (< 5 letters),
+  // matching the same "keep showing the last real word" feel as the
+  // dedicated live-keystroke path in socketHandlers.js's setterDraftSecret
+  // handler, which this is the fallback for on any OTHER broadcast (a
+  // power use, a reconnect, etc.) that doesn't go through that handler.
+  if (viewerRole === "setter" && state.activePowers?.includes("letterProfile")) {
+    const word =
+      state.setterDraft && state.setterDraft.length === 5
+        ? state.setterDraft
+        : state.secret;
+    safe.setterLetterProfile = computeLetterProfileStats(
+      word,
+      state.powers?.letterProfileMode
     );
   }
 

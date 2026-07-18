@@ -1,4 +1,5 @@
 const BaseMode = require("./baseMode");
+const { pickLetterProfileMode } = require("../../utils/letterProfile");
 
 class CompetitiveMode extends BaseMode {
   initMatch(state) {
@@ -29,6 +30,14 @@ class CompetitiveMode extends BaseMode {
       const REVEAL_LETTER_MODES = ["ROW", "RARE", "ALPHA", "DOUBLES", "CHAIN"];
       state.powers.revealLetter.mode =
         REVEAL_LETTER_MODES[Math.floor(Math.random() * REVEAL_LETTER_MODES.length)];
+    }
+
+    // Letter Profile's category (alphabet half / keyboard row / vowel-
+    // consonant) is likewise picked once for the whole match — see
+    // stateFactory.js's comment on letterProfileMode. postGame.js
+    // save/restores it across the round-2 role swap the same way.
+    if (guesserPowers.includes("letterProfile")) {
+      state.powers.letterProfileMode = pickLetterProfileMode();
     }
   }
 

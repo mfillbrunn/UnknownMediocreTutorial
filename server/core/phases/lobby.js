@@ -50,7 +50,8 @@ const GUESSER_POWERS = [
   "wiretap",
   "letterProbe",
   "revealLocation",
-  "doubleGuess"
+  "doubleGuess",
+  "letterProfile"
 ];
 
 function initializePlayerTimers(state, userIds) {
