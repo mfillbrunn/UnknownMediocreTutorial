@@ -204,8 +204,19 @@ function maybeRunAI(room, roomId, context) {
       // simultaneousAllWrong: the opening guess missed every letter, so
       // the setter is locked into keeping that same secret this round
       // (server rejects SET_SECRET_NEW while this is set) — same as
-      // freezeActive, just from a different rule.
-      if (state?.powers?.freezeActive || state.simultaneousAllWrong) {
+      // freezeActive, just from a different rule. stealthGuessActive
+      // means THIS pendingGuess is hidden from the setter — safeState.js
+      // already masks it to "?????" for a human's client
+      // (safe.pendingGuess), but the AI reads room.state directly, so
+      // without this check it would see the real guess straight through
+      // its own opponent's power. There's no informed basis to switch
+      // without seeing what was guessed, so keep — same call a blind
+      // human would reasonably make.
+      if (
+        state?.powers?.freezeActive ||
+        state.simultaneousAllWrong ||
+        state?.powers?.stealthGuessActive
+      ) {
         actionFn = () => {
           maybeUsePower(room, state, aiUserId, roomId, context, isTutorial);
 

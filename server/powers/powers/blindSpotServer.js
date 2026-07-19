@@ -38,5 +38,23 @@ engine.registerPower("blindSpot", {
       `Blind Spot activated on position ${idx + 1}`
     );
     io.to(roomId).emit("powerUsed", { type: "blindSpot" });
+  },
+
+  postScore(state, entry) {
+    // Client-side, the tile at blindSpotIndex already renders purple for
+    // every entry from blindSpotRoundIndex onward (see history.js's
+    // computeTileClassKey), purely by comparing position/round — the
+    // underlying fbGuesser value was never actually touched, so an AI
+    // opponent reading state.history directly saw the true color right
+    // through the mask. Mask it for real here too, matching the same "❓
+    // means no info" handling hideTile/countOnly/fakeFeedback already use.
+    const idx = state.powers.blindSpotIndex;
+    const bsRound = state.powers.blindSpotRoundIndex;
+    if (typeof idx !== "number" || typeof bsRound !== "number") return;
+    if (entry.roundIndex < bsRound) return;
+    if (!Array.isArray(entry.fbGuesser)) return;
+
+    entry.fbGuesser = entry.fbGuesser.slice();
+    entry.fbGuesser[idx] = "❓";
   }
 });
