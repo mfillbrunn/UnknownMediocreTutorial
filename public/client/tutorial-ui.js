@@ -234,7 +234,7 @@ function runGuesserTutorial(state,role){
     const word = state.tutorialGuesses?.[0] || "CHAMP";
     if (tutorialSubStep === 0) {
       showTutorial(
-        `👋 Welcome to VS Wordle! Let's walk through how a match works.`,
+        `👋 Welcome to Vowel Play! Let's walk through how a match works.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";

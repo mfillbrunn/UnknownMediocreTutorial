@@ -58,6 +58,11 @@ $("playMainBtn")?.addEventListener("click", () => {
   showScreen("playScreen");
 });
 
+$("rankedMenuBtn")?.addEventListener("click", () => {
+  if (!requireAuth("play ranked")) return;
+  showScreen("rankedPlayScreen");
+});
+
 $("playQuickBtn")?.addEventListener("click", () => {
   if (!requireAuth("play")) return;
   runLastPlayMode(getLastPlayMode());
@@ -96,7 +101,7 @@ function startRankedQueue(preset) {
     if (!resp?.ok) {
       toast(resp?.error || "Could not join ranked queue");
       cancelRankedQueue();
-      showScreen("playScreen");
+      showScreen("rankedPlayScreen");
     }
   });
 }
@@ -115,7 +120,7 @@ $("playRankedBtn")?.addEventListener("click", () => {
 
 $("rankedCancelBtn")?.addEventListener("click", () => {
   cancelRankedQueue();
-  showScreen("playScreen");
+  showScreen("rankedPlayScreen");
 });
 
 window.onRankedMatchFound?.(({ roomId: matchedRoomId }) => {
@@ -143,11 +148,19 @@ window.onRankedMatchFound?.(({ roomId: matchedRoomId }) => {
 });
 
 // -----------------------------------------------------
-// How to Play (rules + power library + tutorial launch, combined)
+// How to Play hub (Tutorial / Rules / Powers)
 // -----------------------------------------------------
 $("howToPlayBtn")?.addEventListener("click", () => {
-  renderPowerLibrary();
   showScreen("howToPlayScreen");
+});
+
+$("showRulesBtn")?.addEventListener("click", () => {
+  showScreen("rulesScreen");
+});
+
+$("showPowersBtn")?.addEventListener("click", () => {
+  renderPowerLibrary();
+  showScreen("powersScreen");
 });
 
 // Powers with multiple mutually-exclusive unlock conditions (e.g. Reveal

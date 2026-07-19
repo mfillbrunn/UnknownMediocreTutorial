@@ -160,4 +160,4 @@ setInterval(() => cleanupEmptyRooms(), 10 * 60 * 1000);
 setInterval(() => cleanupDisconnectedPlayers(io, 30_000), 5_000);
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log("VS Wordle server running on", PORT));
+server.listen(PORT, () => console.log("Vowel Play server running on", PORT));
