@@ -316,6 +316,30 @@
 
     <div id="simResults" class="sim-results hidden"></div>
 
+    <div class="sim-batch-controls">
+      <button id="simTestAllBtn" class="menu-btn">Test All Powers</button>
+      <span id="simTestAllEstimate" class="sim-estimate"></span>
+    </div>
+
+    <div id="simBatchProgress" class="sim-progress hidden">
+      <div class="sim-progress-bar"><div id="simBatchProgressFill" class="sim-progress-fill"></div></div>
+      <span id="simBatchProgressText"></span>
+    </div>
+
+    <h3 class="sim-subtitle sim-subtitle-wide">Power Strength Chart</h3>
+    <div class="sim-chart-toolbar">
+      <div id="simRoleFilter" class="sim-role-filter">
+        <button class="sim-role-btn active" data-role="all">All</button>
+        <button class="sim-role-btn" data-role="guesser">Guesser</button>
+        <button class="sim-role-btn" data-role="setter">Setter</button>
+      </div>
+      <label class="sim-split-toggle">
+        <input type="checkbox" id="simSplitViewToggle" />
+        Split guesser / setter
+      </label>
+    </div>
+    <div id="simChartWrap" class="sim-chart-wrap"></div>
+
     <h3 class="sim-subtitle">Past Runs</h3>
     <div id="simPastRuns" class="sim-past-runs">Loading…</div>
 

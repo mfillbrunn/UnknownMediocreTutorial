@@ -19,7 +19,7 @@ const { buildSetterRemainingBoxState, computeRemainingAfterGuess } = require("..
 const { computeLetterProfileStats } = require("../utils/letterProfile");
 const { guesserVisibleHistoryCount } = require("../utils/delayedFeedback");
 const { getDailyStatus } = require("../core/dailyTracking");
-const { runPowerSimulation, savePowerSimulation } = require("../core/simulation/runPowerSimulation");
+const { runPowerSimulation, runAllPowerSimulations, savePowerSimulation } = require("../core/simulation/runPowerSimulation");
 
 module.exports = function registerSocketHandlers(io, context) {
   io.on("connection", (socket) => {
@@ -533,6 +533,28 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
       } catch (err) {
         console.error("Power simulation failed:", err);
         cb?.({ ok: false, error: "Simulation failed" });
+      }
+    });
+
+    socket.on("runAllPowerSimulations", async ({ userId, runs, aiDifficulty, roleFilter }, cb) => {
+      if (!userId) return cb?.({ ok: false, error: "Not logged in" });
+
+      const safeRuns = Math.max(1, Math.min(1000, Math.floor(Number(runs)) || 100));
+      const safeDifficulty = Math.max(1, Math.min(3, Math.floor(Number(aiDifficulty)) || 2));
+      const safeRoleFilter = ["all", "setter", "guesser"].includes(roleFilter) ? roleFilter : "all";
+
+      try {
+        const results = await runAllPowerSimulations(
+          { runs: safeRuns, aiDifficulty: safeDifficulty, roleFilter: safeRoleFilter },
+          context,
+          userId,
+          (progress) => socket.emit("powerSimulationBatchProgress", progress)
+        );
+
+        cb?.({ ok: true, results });
+      } catch (err) {
+        console.error("Power simulation batch failed:", err);
+        cb?.({ ok: false, error: "Simulation batch failed" });
       }
     });
   });
