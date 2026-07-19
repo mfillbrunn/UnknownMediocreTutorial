@@ -76,7 +76,11 @@ function handleNormalPhase(room, state, action, roomId, context) {
         doubleGuessHidden: false
       });
       state.history.push(mk(g1, fb1), mk(g2, fb2));
-      state.guessCount += 2;
+      // Both guesses are recorded and scored, but Double Tap is spending a
+      // single turn — only the first (as if it were a normal guess) counts
+      // toward the score, or the power would just be a strictly worse way
+      // to guess than never using it.
+      state.guessCount += 1;
 
       io.to(roomId).emit("powerUsed", { type: "doubleGuess" });
       if (socketId) {
@@ -103,7 +107,9 @@ function handleNormalPhase(room, state, action, roomId, context) {
     state.powers.doubleGuessShownFirst = shownIsFirst;
 
     state.pendingGuess = shown;
-    state.guessCount += 2;
+    // Only the first (as if it were a normal guess) counts toward the
+    // score — see the immediate-win branch above for why.
+    state.guessCount += 1;
 
     if (state.roundStartTime && state.timeUsed?.[state.guesser] != null) {
       state.timeUsed[state.guesser] += Math.floor((Date.now() - state.roundStartTime) / 1000);
