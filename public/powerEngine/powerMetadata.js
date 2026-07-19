@@ -266,7 +266,7 @@ window.POWER_METADATA = {
     desc: "Fire two guesses at once against the same secret. The Spy sees only one of them (chosen at random) but knows you used the power. You get the feedback for both. If either is the secret, you win the round.",
     short: "Submit two guesses at once and get feedback on both.",
     icon: "double-tap",
-    emoji: "🎯",
+    emoji: "🔫",
     color: "#F472B6"
   },
 

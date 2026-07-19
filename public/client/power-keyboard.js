@@ -47,7 +47,7 @@
     if (st.mode === "doubleGuess") {
       const n = st.slot + 1;
       const firstNote = st.slot === 1 ? `  ·  1st: ${st.first}` : "";
-      return `🎯 Double Tap — type guess ${n} of 2, then Enter${firstNote}`;
+      return `🔫 Double Tap — type guess ${n} of 2, then Enter${firstNote}`;
     }
     return "";
   }
