@@ -110,9 +110,6 @@ function highlightKeyboardGuesser() {
 function highlightHistoryGuesser() {
   highlightEl(byId("historyGuesser"));  // <div id="historyGuesser" ...>
 }
-function highlightSetterPreview() {
-  highlightEl(byId("setterPreview"));
-}
 function highlightSetterWords() {
   highlightEl(byId("SetterRemainingBox"));
 }
@@ -352,20 +349,10 @@ function runGuesserTutorial(state,role){
   }
 
   // ------------------------
-  // ROUND 2+ : the AI kept its secret, then it's free play.
+  // ROUND 2+ : free play from here.
   // ------------------------
   if (round === 2) {
     if (tutorialSubStep === 0) {
-      showTutorial(
-        `Notice the Spy kept the same secret — smart, since your last guess's feedback didn't force a change.`,
-        { enabled: true }
-      );
-      highlightHistoryGuesser();
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 1) {
       showTutorial(
         `From here on, finish this round on your own. Once you find the secret, you'll switch roles and play as the Spy. Good luck! 🍀`,
         { enabled: true, mode: "hide" }
@@ -438,25 +425,25 @@ function runSetterTutorial(state, role) {
     }
     if (tutorialSubStep === 2) {
       showTutorial(
-        `Let's switch it up this time. This is the preview — it shows what feedback the Inspector would see for a candidate word, before you commit to it.`,
-        { enabled: true }
-      );
-      highlightSetterPreview();
-      tutorialContinueMode = "advance";
-      return;
-    }
-    if (tutorialSubStep === 3) {
-      showTutorial(
-        `Try typing a word into the draft now — you'll see live feedback as you type. Don't submit it yet.`,
+        `Let's switch it up this time. As you type a candidate word here, it colors live tile by tile — a preview of what it would look like as your secret.`,
         { enabled: true }
       );
       highlightSetterDraft();
       tutorialContinueMode = "advance";
       return;
     }
+    if (tutorialSubStep === 3) {
+      showTutorial(
+        `This box shows how a candidate is doing: "Keep: X → Y" is how many secrets would still be possible if you keep your current one. "New: X → Y" is how many would remain if you switch to whatever you've drafted.`,
+        { enabled: true }
+      );
+      highlightSetterWords();
+      tutorialContinueMode = "advance";
+      return;
+    }
     if (tutorialSubStep === 4) {
       showTutorial(
-        `Your secret must be a valid word from the allowed list and must satisfy every clue given by earlier guesses.`,
+        `Your secret must be a valid word and must still fit every clue from earlier guesses — if it doesn't, "New" shows a ✕ instead of a number, and letters that break a clue will flash red when you try to submit.`,
         { enabled: true }
       );
       highlightSetterHistory();
@@ -465,26 +452,24 @@ function runSetterTutorial(state, role) {
     }
     if (tutorialSubStep === 5) {
       showTutorial(
-        `If you submit a word that breaks a clue, the letters that don't fit will flash red — those are the ones to change.`,
+        `Let's see that happen. Type "${state.tutorialWrongSecretExamples?.[round] || "MUSHY"}" and press ENTER — it looks like a fine word, but let's see what the game thinks.`,
         { enabled: true }
       );
-      highlightSetterDraft();
+      highlightKeyboardSetter();
       tutorialContinueMode = "advance";
       return;
     }
     if (tutorialSubStep === 6) {
       showTutorial(
-        `This box tells you how a candidate is doing. The number on the left is how many secrets were possible last round.`,
+        `See that? It doesn't reproduce the feedback your last guess already got — so it can't be the real secret. The game caught it and explained why.`,
         { enabled: true }
       );
-      highlightSetterWords();
       tutorialContinueMode = "advance";
       return;
     }
     if (tutorialSubStep === 7) {
       showTutorial(
-        `The middle number shows how many remain if you keep your current secret.
-The right number shows how many would remain if you switch to the drafted word.`,
+        `The bigger the remaining count, the harder you are to pin down. With time, you can try a few drafts to find the word that leaves you the most options!`,
         { enabled: true }
       );
       highlightSetterWords();
@@ -493,16 +478,7 @@ The right number shows how many would remain if you switch to the drafted word.`
     }
     if (tutorialSubStep === 8) {
       showTutorial(
-        `The bigger that remaining count, the harder you are to pin down. With time, you can try a few drafts to find the word that leaves you the most options!`,
-        { enabled: true }
-      );
-      highlightSetterWords();
-      tutorialContinueMode = "advance";
-      return;
-    }
-    if (tutorialSubStep === 9) {
-      showTutorial(
-        `Now let's lock it in — enter "${word}"! After this, finish the round on your own.`,
+        `Now let's lock it in for real — enter "${word}"! After this, finish the round on your own.`,
          { enabled: true, mode: "hide" }
       );
       highlightKeyboardSetter();
