@@ -3,7 +3,7 @@
 // ------------------------
 let lastTutorialRound = null;     // state.history.length last processed
 let tutorialSubStep = 0;          // sub-step within a round
-let tutorialWaitingFor = null;    // { type: "guess", round } or { type: "setSecret", round }
+let tutorialWaitingFor = null;    // { type: "guess", round } or { type: "setSecret", round } or { type: "power", powerId }
 let tutorialCollapsed = false;
 let tutorialContinueMode = "advance";
 
@@ -44,6 +44,10 @@ function updateActionBadge() {
   }
   else if (waitingType === "setSecret" && word) {
     label = `ENTER ${word}`;
+  }
+  else if (waitingType === "power") {
+    const meta = window.POWER_METADATA?.[tutorialWaitingFor.powerId];
+    label = `USE ${(meta?.label || tutorialWaitingFor.powerId || "").toUpperCase()}`;
   }
 
   badge.textContent = label;
@@ -125,6 +129,17 @@ function highlightSetterHistory() {
 function highlightGuideToggle() {
   highlightEl(byId("guideToggleBtn"));
 }
+function highlightPowersCol() {
+  // Only one of these exists in the DOM for a given role's screen — the
+  // other query just no-ops via highlightEl's null guard.
+  highlightEl(byId("guesserPowerContainer"));
+  highlightEl(byId("setterPowerContainer"));
+}
+function highlightPowerButtonByText(label) {
+  document.querySelectorAll(".power-btn").forEach(btn => {
+    if (btn.textContent.trim() === label) highlightEl(btn);
+  });
+}
 
 function clearHighlights() {
   document.querySelectorAll(".tutorial-highlight")
@@ -146,6 +161,12 @@ function waitForSecretSubmission(round) {
   updateActionBadge();
 }
 
+function waitForPowerUse(powerId) {
+  tutorialWaitingFor = { type: "power", powerId };
+  setContinue({ show: true, enabled: false });
+  updateActionBadge();
+}
+
 
 // Continue click
 byId("tutorialContinueBtn")?.addEventListener("click", (e) => {
@@ -159,6 +180,22 @@ byId("tutorialContinueBtn")?.addEventListener("click", (e) => {
     tutorialSteps(window.state, window.myRole);
   }
 });
+
+// Called (via socketClient.js's sendGameAction) the instant the player
+// actually fires a USE_<POWER> action the tutorial is waiting on — advances
+// immediately rather than waiting for a guess/secret submission that,
+// unlike a power activation, wouldn't otherwise change state.history.length
+// and so wouldn't naturally re-trigger tutorialSteps() on its own.
+function notifyTutorialPowerUsed(powerId) {
+  if (!tutorialWaitingFor) return;
+  if (tutorialWaitingFor.type === "power" && tutorialWaitingFor.powerId === powerId) {
+    tutorialWaitingFor = null;
+    updateActionBadge();
+    tutorialSubStep++;
+    if (window.state && window.myRole) tutorialSteps(window.state, window.myRole);
+  }
+}
+window.notifyTutorialPowerUsed = notifyTutorialPowerUsed;
 
 // ------------------------
 // Feedback-tile explanation helper (round 1 of the guesser tutorial walks
@@ -196,7 +233,7 @@ const isSetter  = role === "setter";
 
   // Only tutorial for guesser side (your described flow)
   const round = state.history?.length ?? 0;
-  // round transition => reset substeps unless we are mid-wait for a guess/secret
+  // round transition => reset substeps unless we are mid-wait for a guess/secret/power
   if (round !== lastTutorialRound) {
     lastTutorialRound = round;
     tutorialSubStep = 0;
@@ -225,6 +262,91 @@ const isSetter  = role === "setter";
 function runGuesserTutorial(state,role){
  const round = state.history?.length ?? 0;
   clearHighlights();
+  const stage2 = state.tutorialStage === 2;
+
+  // ==========================================================
+  // STAGE 2 (powers follow-up): same CHAMP/CAIRN words, but this
+  // time the Inspector has Leak Info (revealGreen) available and is
+  // walked through actually using it.
+  // ==========================================================
+  if (stage2) {
+    if (round === 0) {
+      const word = state.tutorialGuesses?.[0] || "CHAMP";
+      if (tutorialSubStep === 0) {
+        showTutorial(
+          `👋 Welcome back! This short follow-up teaches you two powers — one for the Inspector, one for the Spy.`,
+          { enabled: true }
+        );
+        tutorialContinueMode = "advance";
+        return;
+      }
+      if (tutorialSubStep === 1) {
+        showTutorial(
+          `🔎 You're the Inspector again, and this time you have a power available: 👁️ Leak Info — it reveals one correct letter and its position.`,
+          { enabled: true }
+        );
+        highlightPowersCol();
+        tutorialContinueMode = "advance";
+        return;
+      }
+      if (tutorialSubStep === 2) {
+        showTutorial(
+          `First, enter your opening guess. Enter "${word}" and click ENTER.`,
+          { enabled: true, mode: "hide" }
+        );
+        tutorialContinueMode = "hide";
+        highlightKeyboardGuesser();
+        waitForGuessSubmission(round);
+        return;
+      }
+      hideTutorial();
+      return;
+    }
+
+    if (round === 1) {
+      if (tutorialSubStep === 0) {
+        showTutorial(
+          `Now let's use your power. Click "Leak Info" to reveal one correct letter and where it goes.`,
+          { enabled: false }
+        );
+        highlightPowerButtonByText("Leak Info");
+        tutorialContinueMode = "hide";
+        waitForPowerUse("revealGreen");
+        return;
+      }
+      if (tutorialSubStep === 1) {
+        const word = state.tutorialGuesses?.[1] || "CAIRN";
+        showTutorial(
+          `Nice — that's a free hint toward the secret. Now enter your second guess: "${word}".`,
+          { enabled: true, mode: "hide" }
+        );
+        highlightKeyboardGuesser();
+        tutorialContinueMode = "hide";
+        waitForGuessSubmission(round);
+        return;
+      }
+      hideTutorial();
+      return;
+    }
+
+    if (round === 2) {
+      if (tutorialSubStep === 0) {
+        showTutorial(
+          `From here on, finish this round on your own. Once you find the secret, you'll switch roles and try the Spy's power. Good luck! 🍀`,
+          { enabled: true, mode: "hide" }
+        );
+        tutorialContinueMode = "hide";
+        return;
+      }
+      hideTutorial();
+      return;
+    }
+    return;
+  }
+
+  // ==========================================================
+  // STAGE 1 (base rules, no powers)
+  // ==========================================================
 
   // ------------------------
   // ROUND 0 (history.length == 0): brief overall rules, then guesser-
@@ -369,6 +491,79 @@ function runGuesserTutorial(state,role){
 function runSetterTutorial(state, role) {
   const round = state.history?.length ?? 0;
   clearHighlights();
+  const stage2 = state.tutorialStage === 2;
+
+  // ==========================================================
+  // STAGE 2 (powers follow-up): same BLIMP/LEMUR secrets, but this
+  // time the Spy has Redact Report (countOnly) available and is
+  // walked through actually using it.
+  // ==========================================================
+  if (stage2) {
+    if (round === 0) {
+      const word = state.tutorialSecrets?.[0];
+      if (tutorialSubStep === 0) {
+        showTutorial(
+          `🕵️ Now you're the Spy, with a power of your own available this time: 📄 Redact Report.`,
+          { enabled: false }
+        );
+        highlightPowersCol();
+        tutorialContinueMode = "advance";
+        return;
+      }
+      if (tutorialSubStep === 1) {
+        showTutorial(
+          `In the first round, you enter a secret word — your opponent won't see it. Enter "${word}".`,
+          { enabled: false }
+        );
+        highlightKeyboardSetter();
+        tutorialContinueMode = "hide";
+        waitForSecretSubmission(round);
+        return;
+      }
+      hideTutorial();
+      return;
+    }
+
+    if (round === 1) {
+      const word = state.tutorialSecrets?.[1];
+      if (tutorialSubStep === 0) {
+        showTutorial(
+          `Let's use your power this turn. Click "Redact Report" — it hides exact tile positions from the Inspector and shows them only how many letters are green or yellow in total.`,
+          { enabled: true }
+        );
+        highlightPowerButtonByText("Redact Report");
+        tutorialContinueMode = "hide";
+        waitForPowerUse("countOnly");
+        return;
+      }
+      if (tutorialSubStep === 1) {
+        showTutorial(
+          `Nice — now let's lock in a new secret. Enter "${word}"! After this, finish the round on your own.`,
+          { enabled: true, mode: "hide" }
+        );
+        highlightKeyboardSetter();
+        tutorialContinueMode = "hide";
+        waitForSecretSubmission(round);
+        return;
+      }
+      hideTutorial();
+      return;
+    }
+
+    if (round === 2) {
+      showTutorial(
+        `From here on, play strategically and try to outsmart your opponent.`,
+        { enabled: true, mode: "hide" }
+      );
+      hideTutorial();
+      return;
+    }
+    return;
+  }
+
+  // ==========================================================
+  // STAGE 1 (base rules, no powers)
+  // ==========================================================
 
   if (round === 0) {
     const word = state.tutorialSecrets?.[0];
@@ -503,10 +698,13 @@ function runSetterTutorial(state, role) {
 
 function runSummaryTutorial(state){
  clearHighlights();
+ const stage2 = state.tutorialStage === 2;
 
     if (tutorialSubStep === 0) {
       showTutorial(
-        `The first round ended. In this tutorial, you tried to guess the secret word, but in a real match, whichever role you play first is randomly determined.`,
+        stage2
+          ? `Round 1 done — you just used Leak Info as the Inspector.`
+          : `The first round ended. In this tutorial, you tried to guess the secret word, but in a real match, whichever role you play first is randomly determined.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
@@ -514,7 +712,9 @@ function runSummaryTutorial(state){
     }
       if (tutorialSubStep === 1) {
       showTutorial(
-        `The next round has you play the other role — you'll be the Spy 🕵️, and the tutorial AI will be the Inspector 🔎.`,
+        stage2
+          ? `Now you'll play the Spy and get to try Redact Report.`
+          : `The next round has you play the other role — you'll be the Spy 🕵️, and the tutorial AI will be the Inspector 🔎.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
@@ -541,6 +741,37 @@ function runSummaryTutorial(state){
 }
 function runMatchTutorial(state){
  clearHighlights();
+ const stage2 = state.tutorialStage === 2;
+
+ if (stage2) {
+   if (tutorialSubStep === 0) {
+     showTutorial(
+       `That's both powers tried — one from each side! 👁️ Leak Info and 📄 Redact Report are just two of many.`,
+       { enabled: true }
+     );
+     tutorialContinueMode = "advance";
+     return;
+   }
+   if (tutorialSubStep === 1) {
+     showTutorial(
+       `Check the Powers screen any time from How to Play to see the full list on both sides.`,
+       { enabled: true }
+     );
+     tutorialContinueMode = "advance";
+     return;
+   }
+   if (tutorialSubStep === 2) {
+     showTutorial(
+       `That's the tutorial! Have fun and good luck out there.`,
+       { enabled: true }
+     );
+     tutorialContinueMode = "hide";
+     return;
+   }
+   hideTutorial();
+   return;
+ }
+
     if (tutorialSubStep === 0) {
       showTutorial(
         `The match ended! On this screen, you will see a summary of both rounds and see who won - the player with the fewer guesses!`,
@@ -560,7 +791,7 @@ function runMatchTutorial(state){
     }
   if (tutorialSubStep === 2) {
       showTutorial(
-        `Try out other games - most matches also give both sides special powers that bend the rules and can really change the game!`,
+        `Try out other games - most matches also give both sides special powers that bend the rules and can really change the game! There's even a follow-up tutorial that walks you through your first two.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";

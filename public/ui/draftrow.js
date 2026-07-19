@@ -87,7 +87,13 @@ window.renderDraftRows = function ({
       const tile = row.__tiles[i];
       const real = word[i] || "";
       const ghost = !real && ghostPattern && ghostPattern[i];
-      const isGreenMatch = !!real && greenMatchPattern && greenMatchPattern[i] === real;
+      // classList.toggle's second arg must be a real boolean — passing
+      // `undefined` (which `real && greenMatchPattern && ...` can produce
+      // when greenMatchPattern is omitted, e.g. for the pending-guess row)
+      // makes the browser treat it as "no force given" and flip the class
+      // instead of forcing it off, letting tile-green-match flap on/off
+      // across renders instead of staying reliably unset.
+      const isGreenMatch = !!(real && greenMatchPattern && greenMatchPattern[i] === real);
 
       tile.textContent = real || ghost || "";
       tile.classList.toggle("tile-ghost-letter", !!ghost);

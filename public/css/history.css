@@ -228,25 +228,6 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 70%, transparent);
 }
 
-/* The setter's actively-editable secret draft (as opposed to the
-   read-only ghost-secret preview shown between turns) gets its own green
-   outline, thicker than any other tile border in the app, so the input
-   area itself reads as clearly distinct from the setter's red role theme
-   used everywhere else. Scoped to .setter-draft specifically so it wins
-   over the two role-accent rules above (which still govern ghost-secret). */
-.theme-setter
-#draftSetter:has(.history-row:nth-child(2))
-.history-row.setter-draft
-.history-tile,
-.theme-setter
-#draftSetter:not(:has(.history-row:nth-child(2)))
-.history-row.setter-draft
-.history-tile {
-  border-color: var(--tile-green);
-  border-width: 3px;
-  box-shadow: 0 0 8px color-mix(in srgb, var(--tile-green) 65%, transparent);
-}
-
 .theme-guesser #draftGuesser .history-tile {
   background: color-mix(in srgb, var(--role-accent), var(--panel-bg) 95%);
   border-color: var(--role-accent);
