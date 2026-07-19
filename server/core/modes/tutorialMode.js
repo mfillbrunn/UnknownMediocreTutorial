@@ -7,29 +7,32 @@ class TutorialMode {
     state.roundIndex = 0;
     state.roundsTotal = 2;
     state.matchOver = false;
-    
-    // Tutorial metadata
-    state.scriptedTurns = 3;
 
-    // Fixed secret & guesses
-    state.tutorialSecrets = ["BLIMP", "BLIMP", "LEMUR"]
-    state.tutorialGuesses = ["DRAPE", "BESTI", "RODNY"];
-    state.tutorialSecretsAI = ["DORKY", "DORKY", "DORKY"];
-    state.tutorialGuessesAI = ["SMALL", "GOQKY", "BLIND"];
+    // Tutorial metadata — two forced turns per round, then the AI falls
+    // back to normal beginner-difficulty play (runAI.js gates its scripted
+    // branch on history.length < scriptedTurns).
+    state.scriptedTurns = 2;
+
+    // Round 1: human is guesser, tutorial AI is setter and keeps the
+    // secret "CUMIN" across both scripted turns. Round 2: human is setter
+    // — reuses the pre-existing secret pair (BLIMP, then switching to
+    // LEMUR) and the AI's pre-existing guesses as the guesser.
+    state.tutorialSecrets = ["BLIMP", "LEMUR"];
+    state.tutorialGuesses = ["CHAMP", "CAIRN"];
+    state.tutorialSecretsAI = ["CUMIN", "CUMIN"];
+    state.tutorialGuessesAI = ["SMALL", "BLIND"];
     state.timeControl.enabled = false;
     // No randomness
     state.shuffle = false;
     state.ranked = false;
   }
   onLobbyReady(state, setterPowers, guesserPowers) {
-    const sP =  ["hideTile",  "countOnly"];
-    const gP = ["revealGreen",  "nonsense"];
+    // No powers in the tutorial — the first game teaches the base rules only.
     state.initialPowers = {
-      setter: sP,
-      guesser: gP
+      setter: [],
+      guesser: []
     };
-    // Round 1 powers
-    state.activePowers = [...sP, ...gP];
+    state.activePowers = [];
   }
     onRoundEnd(state) {
     // More rounds to play → round summary
