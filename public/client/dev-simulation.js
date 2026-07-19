@@ -337,7 +337,7 @@ async function loadChartData(forceReload) {
   try {
     const { data, error } = await window.supabaseClient
       .from("power_simulations")
-      .select("power_id, power_role, runs, ai_difficulty, avg_guesses_with_power, raw_with_power, created_at")
+      .select("power_id, power_role, runs, ai_difficulty, avg_guesses_with_power, avg_guesses_without_power, raw_with_power, raw_without_power, created_at")
       .order("created_at", { ascending: false })
       .limit(300);
 
@@ -365,24 +365,64 @@ function computeStdErr(raw) {
   return Math.sqrt(variance) / Math.sqrt(n);
 }
 
-// Sorted ascending by average guesses, per the "sort by guess count" spec.
+// The chart's y-value: how much the power moved guesses away from the
+// no-power baseline, on a scale where POSITIVE always means "the power is
+// working as intended for whoever holds it" regardless of role. A setter
+// power that hides info should make the guesser take MORE guesses (raw
+// delta is already positive, no flip needed). A guesser power that reveals
+// info should make the guesser take FEWER guesses (raw delta is negative),
+// so it's negated here — otherwise a genuinely strong guesser power would
+// plot as a big negative bar right next to a genuinely strong setter
+// power's big positive bar, even though both are "strong" in the same
+// sense. sem combines both batches' standard errors (independent samples),
+// since the plotted value is now a difference of two means, not one.
+function computeEffectiveness(row) {
+  const avgWith = Number(row.avg_guesses_with_power);
+  const avgWithout = Number(row.avg_guesses_without_power);
+  const rawDelta = avgWith - avgWithout;
+  const value = row.power_role === "guesser" ? -rawDelta : rawDelta;
+
+  const semWith = computeStdErr(row.raw_with_power);
+  const semWithout = computeStdErr(row.raw_without_power);
+  const sem = Math.sqrt(semWith ** 2 + semWithout ** 2);
+
+  return { value, sem };
+}
+
+// Plain (unflipped) average guesses across the no-power baseline trials,
+// to contextualize the effectiveness scale above — e.g. "+0.4" only means
+// something once you know a typical round takes ~4-5 guesses to begin
+// with. Averaged per-row rather than per-trial: each row already IS an
+// average over its own baseline batch (shared across every power of that
+// role for a "Test All" run, or dedicated for a standalone single-power
+// run), so this is an average of averages, not a mix of different sample
+// sizes double-counting the shared "Test All" baseline.
+function computeBaselineAvg(rows, role) {
+  const filtered = rows.filter(r => role === "all" || r.power_role === role);
+  if (!filtered.length) return null;
+  return filtered.reduce((s, r) => s + Number(r.avg_guesses_without_power), 0) / filtered.length;
+}
+
+// Sorted ascending by effectiveness, per the "sort by guess count" spec —
+// weakest (or backfiring) powers first, strongest last.
 function buildChartDataset(rows, roleFilter) {
   return rows
     .filter(r => roleFilter === "all" || r.power_role === roleFilter)
     .map(r => {
       const meta = window.POWER_METADATA?.[r.power_id];
+      const { value, sem } = computeEffectiveness(r);
       const raw = Array.isArray(r.raw_with_power) ? r.raw_with_power : [];
       return {
         id: r.power_id,
         role: r.power_role,
         label: meta?.label || r.power_id,
         emoji: meta?.emoji || "",
-        avg: Number(r.avg_guesses_with_power),
-        sem: computeStdErr(raw),
+        value,
+        sem,
         n: raw.length || r.runs || 0
       };
     })
-    .sort((a, b) => a.avg - b.avg);
+    .sort((a, b) => a.value - b.value);
 }
 
 function renderCharts() {
@@ -396,15 +436,20 @@ function renderCharts() {
 
   const splitOn = document.getElementById("simSplitViewToggle")?.checked;
 
+  const baselineLabel = (role) => {
+    const avg = computeBaselineAvg(chartRowsCache, role);
+    return avg == null ? "" : `baseline ${avg.toFixed(2)} avg guesses`;
+  };
+
   if (splitOn) {
     wrap.innerHTML = `
       <div class="sim-chart-pair">
         <div class="sim-chart-single">
-          <div class="sim-chart-title">Guesser Powers</div>
+          <div class="sim-chart-title">Guesser Powers <span class="sim-chart-baseline">(${baselineLabel("guesser")})</span></div>
           <div class="sim-chart-svg-wrap" id="simChartGuesser"></div>
         </div>
         <div class="sim-chart-single">
-          <div class="sim-chart-title">Setter Powers</div>
+          <div class="sim-chart-title">Setter Powers <span class="sim-chart-baseline">(${baselineLabel("setter")})</span></div>
           <div class="sim-chart-svg-wrap" id="simChartSetter"></div>
         </div>
       </div>
@@ -412,15 +457,23 @@ function renderCharts() {
     renderBarChart(document.getElementById("simChartGuesser"), buildChartDataset(chartRowsCache, "guesser"));
     renderBarChart(document.getElementById("simChartSetter"), buildChartDataset(chartRowsCache, "setter"));
   } else {
-    wrap.innerHTML = `<div class="sim-chart-svg-wrap" id="simChartSingle"></div>`;
+    const note = simRoleFilter === "all"
+      ? `Baseline (no power) avg guesses — guesser ${computeBaselineAvg(chartRowsCache, "guesser")?.toFixed(2) ?? "—"} · setter ${computeBaselineAvg(chartRowsCache, "setter")?.toFixed(2) ?? "—"}`
+      : `Baseline (no power) avg guesses: ${computeBaselineAvg(chartRowsCache, simRoleFilter)?.toFixed(2) ?? "—"}`;
+    wrap.innerHTML = `
+      <div class="sim-chart-note">${note}</div>
+      <div class="sim-chart-svg-wrap" id="simChartSingle"></div>
+    `;
     renderBarChart(document.getElementById("simChartSingle"), buildChartDataset(chartRowsCache, simRoleFilter));
   }
 }
 
-// Hand-rolled SVG bar chart — power on the x axis, avg guesses (with the
-// power active) on the y axis, error bars showing standard error of the
-// mean. No charting library in this codebase yet, and a plain bar+error
-// chart doesn't need one.
+// Hand-rolled SVG bar chart — power on the x axis, effectiveness (see
+// computeEffectiveness) on the y axis, error bars showing standard error.
+// Bars are zero-centered: a power that backfires for its own holder (rare,
+// but possible with a noisy or genuinely counterproductive power) plots
+// below the zero line instead of being clamped to it. No charting library
+// in this codebase yet, and a plain bar+error chart doesn't need one.
 function renderBarChart(container, data) {
   if (!container) return;
 
@@ -433,42 +486,44 @@ function renderBarChart(container, data) {
   const gap = 16;
   const marginTop = 14;
   const marginBottom = 40;
-  const marginLeft = 30;
+  const marginLeft = 34;
   const marginRight = 14;
   const plotH = 200;
 
   const width = marginLeft + marginRight + data.length * (barW + gap);
   const height = marginTop + plotH + marginBottom;
 
-  const yMax = Math.max(...data.map(d => d.avg + d.sem), 1) * 1.15;
-  const yScale = v => marginTop + plotH - (v / yMax) * plotH;
+  const maxAbs = Math.max(...data.map(d => Math.abs(d.value) + d.sem), 0.5) * 1.15;
+  const yScale = v => marginTop + plotH - ((v + maxAbs) / (maxAbs * 2)) * plotH;
+  const zeroY = yScale(0);
 
   const roleColor = role => (role === "setter" ? "var(--setter-color, #f87171)" : "var(--guesser-color, #60a5fa)");
 
-  const gridlineCount = 4;
-  let gridlines = "";
-  for (let i = 0; i <= gridlineCount; i++) {
-    const val = (yMax / gridlineCount) * i;
+  const gridVals = [-maxAbs, -maxAbs / 2, 0, maxAbs / 2, maxAbs];
+  const gridlines = gridVals.map(val => {
     const y = yScale(val);
-    gridlines += `
-      <line class="sim-bar-axis" x1="${marginLeft}" y1="${y.toFixed(1)}" x2="${width - marginRight}" y2="${y.toFixed(1)}"></line>
+    const zero = val === 0;
+    return `
+      <line class="${zero ? "sim-bar-zero-line" : "sim-bar-axis"}" x1="${marginLeft}" y1="${y.toFixed(1)}" x2="${width - marginRight}" y2="${y.toFixed(1)}"></line>
       <text class="sim-bar-axis-label" x="${marginLeft - 6}" y="${(y + 3).toFixed(1)}" text-anchor="end">${val.toFixed(1)}</text>
     `;
-  }
+  }).join("");
 
   let bars = "";
   data.forEach((d, i) => {
     const x = marginLeft + i * (barW + gap);
     const cx = x + barW / 2;
-    const barTop = yScale(d.avg);
-    const barBottom = yScale(0);
-    const errTop = yScale(d.avg + d.sem);
-    const errBottom = yScale(Math.max(0, d.avg - d.sem));
+    const barEdge = yScale(d.value);
+    const barTop = Math.min(barEdge, zeroY);
+    const barH = Math.abs(zeroY - barEdge);
+    const errTop = yScale(d.value + d.sem);
+    const errBottom = yScale(d.value - d.sem);
+    const sign = d.value >= 0 ? "+" : "";
 
     bars += `
       <g class="sim-bar-group">
-        <title>${d.emoji} ${d.label} (${d.role}) — avg ${d.avg.toFixed(2)} ± ${d.sem.toFixed(2)} guesses (n=${d.n})</title>
-        <rect class="sim-bar-fill" x="${x.toFixed(1)}" y="${barTop.toFixed(1)}" width="${barW}" height="${Math.max(0, barBottom - barTop).toFixed(1)}" fill="${roleColor(d.role)}" rx="3"></rect>
+        <title>${d.emoji} ${d.label} (${d.role}) — effectiveness ${sign}${d.value.toFixed(2)} ± ${d.sem.toFixed(2)} guesses (n=${d.n})</title>
+        <rect class="sim-bar-fill" x="${x.toFixed(1)}" y="${barTop.toFixed(1)}" width="${barW}" height="${Math.max(0, barH).toFixed(1)}" fill="${roleColor(d.role)}" rx="3"></rect>
         <line class="sim-bar-errbar" x1="${cx.toFixed(1)}" y1="${errTop.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${errBottom.toFixed(1)}"></line>
         <line class="sim-bar-errbar" x1="${(cx - 5).toFixed(1)}" y1="${errTop.toFixed(1)}" x2="${(cx + 5).toFixed(1)}" y2="${errTop.toFixed(1)}"></line>
         <line class="sim-bar-errbar" x1="${(cx - 5).toFixed(1)}" y1="${errBottom.toFixed(1)}" x2="${(cx + 5).toFixed(1)}" y2="${errBottom.toFixed(1)}"></line>
