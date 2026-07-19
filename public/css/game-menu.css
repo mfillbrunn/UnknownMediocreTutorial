@@ -692,48 +692,6 @@ body.menu-mode .app-header {
   pointer-events: none;
 }
 
-#draftModeBadge {
-  height: 32px;
-  padding: 0 14px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-
-  transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    transform 0.15s ease;
-}
-
-#draftModeBadge.ranked-on {
-  background: #e6d27a;
-  color: #111;
-  border: 1px solid #f0e3a0;
-}
-
-#draftModeBadge.ranked-off {
-  color: #ffffff;
-  border: 1px solid rgba(255,255,255,0.25);
-}
-
-#draftModeBadge:not(.readonly):hover {
-  transform: translateY(-1px);
-}
-
-#draftModeBadge.readonly {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
 /* ── Power Draft screen ──────────────────────────────────────────────── */
 .draft-panel {
   max-width: 420px;

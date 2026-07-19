@@ -1,28 +1,4 @@
-// client/draft.js — pre-round power draft screen (Draft Mode)
-
-$("draftModeBadge")?.addEventListener("click", () => {
-  if (!state || !window.currentUser) return;
-  if (state.hostUserId !== window.currentUser.id) return;
-
-  sendGameAction({
-    type: "SET_DRAFT_MODE",
-    draftMode: !state.draftMode,
-    userId: window.currentUser.id
-  });
-});
-
-window.updateDraftModeUI = function () {
-  const badge = $("draftModeBadge");
-  if (!badge || !state || !window.currentUser) return;
-
-  const on = state.draftMode !== false;
-  const isHost = state.hostUserId === window.currentUser.id;
-
-  badge.textContent = on ? "🎴 Draft: On" : "🎴 Draft: Off";
-  badge.classList.toggle("ranked-on", on);
-  badge.classList.toggle("ranked-off", !on);
-  badge.classList.toggle("readonly", !isHost);
-};
+// client/draft.js — pre-round power draft screen (Draft Mode, always on)
 
 window.renderDraftScreen = function (s) {
   const uid = myUserId();

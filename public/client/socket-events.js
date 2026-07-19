@@ -290,11 +290,6 @@ $("rejoinLeaveBtn")?.addEventListener("click", () => {
   }
 });
 
-$("accountBtn").onclick = () => {
-  document.body.classList.remove("menu-mode");
-  showScreen("accountScreen");
-  updateAccountUI();
-};
 $("dataBtn")?.addEventListener("click", () => {
   showScreen("dataScreen");
 });

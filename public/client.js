@@ -384,7 +384,6 @@ onStateUpdate(newState => {
   updateRoleCards();
   updateHostControls();
   updateRankedUI();
-  window.updateDraftModeUI?.();
   updateShuffleUI();
   updateDevUI();
   updateTimerAccess(); 
