@@ -21,6 +21,14 @@ class TutorialMode {
     state.tutorialGuesses = ["CHAMP", "CAIRN"];
     state.tutorialSecretsAI = ["CUMIN", "CUMIN"];
     state.tutorialGuessesAI = ["SMALL", "BLIND"];
+
+    // A deliberately-inconsistent secret the setter round asks the player
+    // to try, indexed like the arrays above (only turn index 1 uses it) so
+    // they see the real "not consistent with prior feedback" rejection
+    // before entering the real LEMUR switch. Doesn't reproduce the
+    // feedback SMALL already got against BLIMP, so it fails the
+    // consistency check even though it's a valid dictionary word.
+    state.tutorialWrongSecretExamples = [null, "MUSHY"];
     state.timeControl.enabled = false;
     // No randomness
     state.shuffle = false;
