@@ -732,7 +732,7 @@ if (setter.length || guesser.length) {
   // Assemble final text
   // -----------------------
   const lines = [
-    "VS Wordle result",
+    "Vowel Play result",
     `${resultIcon} ${winnerLabel} ${winnerPoints}–${loserPoints} ${loserName}`,
     assassinationLine,
     `${powersLine} ⏱ ${timeLine}`,

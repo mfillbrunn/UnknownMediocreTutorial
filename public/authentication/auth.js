@@ -371,7 +371,8 @@ function updateAccountUI() {
   root.querySelector("#logoutBtn")
     ?.classList.toggle("hidden", !loggedIn);
 
-  root.querySelector("#showPastGamesBtn")
+  // Moved out of accountScreen onto the Data screen — query globally.
+  $("showPastGamesBtn")
     ?.classList.toggle("hidden", !loggedIn);
 }
 

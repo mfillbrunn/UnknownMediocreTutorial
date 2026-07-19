@@ -49,7 +49,7 @@ async function shareOrCopyInviteLink(roomId, copiedMessage = "Invite link copied
 
   if (navigator.share) {
     try {
-      await navigator.share({ title: "Join my VS Wordle game", url: link });
+      await navigator.share({ title: "Join my Vowel Play game", url: link });
       return;
     } catch { /* user cancelled or share failed — fall through to copy */ }
   }

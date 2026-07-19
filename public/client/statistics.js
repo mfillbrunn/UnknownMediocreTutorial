@@ -64,10 +64,12 @@ function renderMenuAccountStatus () {
     <span class="account-logged-in">
       <strong>${name}</strong><br/>
       <small>${elo}</small><br/>
+      <button class="link-btn menu-friends-btn">Friends 👥</button>
       <button class="link-btn menu-logout-btn">Log out</button>
     </span>
   `;
 
+  el.querySelector(".menu-friends-btn").onclick = () => window.showFriendsScreen?.();
   el.querySelector(".menu-logout-btn").onclick = logout;
 }
 

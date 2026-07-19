@@ -2,7 +2,7 @@
 <html lang="en">
   <!---- INFO -->
 <head>
-  <title>VS Wordle — Competitive Mode</title>
+  <title>Vowel Play — Competitive Mode</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- 1. Themes & variables -->
@@ -53,7 +53,7 @@
     <div id="appContainer">
       <!-- ========== HEADER ========== -->
 <header class="app-header">
-  <span class="title">VS WORDLE</span>
+  <span class="title">VOWEL PLAY</span>
 
   <span class="role-badge header-role-badge"></span>
 
@@ -75,18 +75,20 @@
 <!-- ========== START UP ========== -->
         <section id="startupScreen" class="screen active game-menu">
           <div class="menu-center">
-            <h2 class="menu-title">VS WORDLE</h2>
+            <h2 class="menu-title">VOWEL PLAY</h2>
             <div id="menuAccountStatus" class="menu-account-status"></div>
             <div class="menu-buttons">
               <div class="split-btn menu-split-btn">
-                <button id="playMainBtn" class="menu-btn primary split-btn-main">Play</button>
+                <button id="playMainBtn" class="menu-btn primary split-btn-main">Casual</button>
                 <button id="playQuickBtn" class="menu-btn primary split-btn-quick" title="Quick play: repeat last mode" aria-label="Quick play: repeat last mode">⚡</button>
               </div>
+              <button id="rankedMenuBtn" class="menu-btn">Ranked 🏆</button>
               <button id="dailyBtn" class="menu-btn">Daily Challenge ☀️</button>
               <button id="myGamesBtn" class="menu-btn">
                 My Games ♾️
                 <span id="myGamesNotifyBadge" class="notify-badge hidden" title="It's your turn in a game">✉️</span>
               </button>
+              <button id="dataBtn" class="menu-btn">Data 📊</button>
               <button id="accountBtn" class="menu-btn">Account</button>
               <button id="howToPlayBtn" class="menu-btn">How to Play</button>
             </div>
@@ -96,7 +98,7 @@
 <!-- ========== PLAY ========== -->
 <section id="playScreen" class="screen game-menu">
   <div class="menu-center">
-    <h2 class="menu-title">Play</h2>
+    <h2 class="menu-title">Casual</h2>
     <div class="menu-buttons play-menu-buttons">
       <button id="playFriendBtn" class="menu-btn primary">Play</button>
       <div class="join-room-row">
@@ -106,6 +108,16 @@
       </div>
       <button id="playVsAiBtn" class="menu-btn">Play vs AI 🤖</button>
       <button id="inviteAsyncBtn" class="menu-btn" title="Casual, unlimited-time, shuffled game — send a link, no need to wait around">Invite a Friend ✉️</button>
+    </div>
+    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
+  </div>
+</section>
+
+<!-- ========== RANKED PLAY (mode select) ========== -->
+<section id="rankedPlayScreen" class="screen game-menu">
+  <div class="menu-center">
+    <h2 class="menu-title">Ranked</h2>
+    <div class="menu-buttons play-menu-buttons">
       <div class="play-ranked-row">
         <button id="playRankedBtn" class="menu-btn ranked-btn">Ranked Play 🏆</button>
         <select id="rankedSpeedSelect" class="ranked-speed-select" aria-label="Ranked time control">
@@ -149,20 +161,31 @@
       Loading…
     </div>
 
-    <button class="menu-btn" onclick="showScreen('accountScreen')">
+    <button class="menu-btn" onclick="showScreen('dataScreen')">
       Back
     </button>
   </div>
 </section>
 
-<!-- ========== HOW TO PLAY (rules + power library + tutorial launch) ========== -->
+<!-- ========== HOW TO PLAY (Tutorial / Rules / Powers hub) ========== -->
 <section id="howToPlayScreen" class="screen game-menu">
-  <div class="menu-center rules-center">
+  <div class="menu-center">
     <h2 class="menu-title">How to Play</h2>
 
-    <button id="startTutorialBtn" class="menu-btn primary">
-      ▶ Start Interactive Tutorial
-    </button>
+    <div class="menu-buttons">
+      <button id="startTutorialBtn" class="menu-btn primary">▶ Tutorial</button>
+      <button id="showRulesBtn" class="menu-btn">Rules</button>
+      <button id="showPowersBtn" class="menu-btn">Powers</button>
+    </div>
+
+    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
+  </div>
+</section>
+
+<!-- ========== RULES ========== -->
+<section id="rulesScreen" class="screen game-menu">
+  <div class="menu-center rules-center">
+    <h2 class="menu-title">Rules</h2>
 
     <div class="rules-content">
       <h3>The basics</h3>
@@ -174,12 +197,21 @@
       <h3>Scoring</h3>
       <p>The Spy scores a point for every guess it takes the Inspector to win the round. Fewer guesses is better for the Inspector; more guesses is better for the Spy. Roles swap each round; the lower total score across all rounds wins the match.</p>
       <h3>Powers</h3>
-      <p>Both sides can unlock special powers that bend the rules in their favor — full list below.</p>
+      <p>Both sides can unlock special powers that bend the rules in their favor — see the Powers screen for the full list.</p>
     </div>
+
+    <button class="menu-btn" onclick="showScreen('howToPlayScreen')">Back</button>
+  </div>
+</section>
+
+<!-- ========== POWERS ========== -->
+<section id="powersScreen" class="screen game-menu">
+  <div class="menu-center rules-center">
+    <h2 class="menu-title">Powers</h2>
 
     <div id="powerLibraryList" class="power-library-list"></div>
 
-    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
+    <button class="menu-btn" onclick="showScreen('howToPlayScreen')">Back</button>
   </div>
 </section>
 
@@ -215,14 +247,21 @@
       Update Username
     </button>
     <button id="logoutBtn" class="menu-btn hidden">Log Out</button>
-    <button id="backBtn" class="menu-btn">Back</button>
     <p id="authStatus" class="auth-status"></p>
-       <div class="account-actions">
-      <button id="showPastGamesBtn" class="menu-btn">Past Games</button>
-      <button id="accountFriendsBtn" class="menu-btn">Friends 👥</button>
+    <button id="backBtn" class="menu-btn">Back</button>
+  </div>
+</section>
+
+<!-- ========== DATA (leaderboards + past games) ========== -->
+<section id="dataScreen" class="screen game-menu">
+  <div class="menu-center">
+    <h2 class="menu-title">Data</h2>
+    <div class="menu-buttons">
       <button id="accountLeaderboardBtn" class="menu-btn">Leaderboard</button>
+      <button id="showPastGamesBtn" class="menu-btn">Past Games</button>
     </div>
     <div id="pastGamesContainer" class="past-games hidden"></div>
+    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
   </div>
 </section>
 

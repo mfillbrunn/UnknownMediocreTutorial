@@ -223,7 +223,7 @@ $("shareResultBtn")?.addEventListener("click", async () => {
   const text = buildShareText(state, myRole);
   if (navigator.share) {
     try {
-      await navigator.share({ title: "VS Wordle result", text });
+      await navigator.share({ title: "Vowel Play result", text });
       return;
     } catch { /* user cancelled or share failed — fall through */ }
   }
@@ -291,10 +291,13 @@ $("rejoinLeaveBtn")?.addEventListener("click", () => {
 });
 
 $("accountBtn").onclick = () => {
-  document.body.classList.remove("menu-mode"); 
+  document.body.classList.remove("menu-mode");
   showScreen("accountScreen");
-  updateAccountUI(); 
+  updateAccountUI();
 };
+$("dataBtn")?.addEventListener("click", () => {
+  showScreen("dataScreen");
+});
 $("backBtn").onclick = () => {
   showStartup(); // re-applies menu-mode correctly
 };
@@ -346,10 +349,6 @@ $("accountLeaderboardBtn")?.addEventListener("click", () => {
 
 $("dailyBtn")?.addEventListener("click", () => {
   window.showDailyChallenge?.();
-});
-
-$("accountFriendsBtn")?.addEventListener("click", () => {
-  window.showFriendsScreen?.();
 });
 
 $("playVsAiBtn")?.addEventListener("click", () => {
