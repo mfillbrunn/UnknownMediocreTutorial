@@ -20,6 +20,19 @@
 const { rooms, createRoom, addAIPlayer } = require("../rooms");
 const { applyAction } = require("../applyAction");
 const { computeAIActionForUser } = require("../ai/runAI");
+const powerMetadata = require("../../powers/powerMetadata");
+
+// assassinWord is excluded from AI play entirely (see runAI.js's
+// FORBIDDEN_AI_POWERS) — testing it here would just produce a "with
+// power" batch that's identical to baseline, since the AI can never
+// actually use it.
+const EXCLUDED_FROM_SIMULATION = new Set(["assassinWord"]);
+
+function getAllTestablePowers() {
+  return Object.entries(powerMetadata)
+    .filter(([id]) => !EXCLUDED_FROM_SIMULATION.has(id))
+    .map(([id, meta]) => ({ id, role: meta.role }));
+}
 
 const SEAT_A = "simA";
 const SEAT_B = "AI";
@@ -99,6 +112,49 @@ function runSingleTrial({ powerId, powerRole, aiDifficulty, withPower }, context
   }
 }
 
+const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
+
+// Runs one batch of `runs` trials (either all "with power" or all
+// baseline), yielding the event loop periodically. Shared by both
+// runPowerSimulation (one power, its own dedicated baseline) and
+// runAllPowerSimulations (many powers, one baseline per role reused
+// across all of them — see there for why).
+async function runBatch({ powerId, powerRole, aiDifficulty, runs, withPower }, context, onProgress) {
+  const results = [];
+  for (let i = 0; i < runs; i++) {
+    const result = runSingleTrial({ powerId, powerRole, aiDifficulty, withPower }, context);
+    if (result != null) results.push(result);
+    if (i % 5 === 4) await yieldEventLoop();
+    onProgress?.({ completed: i + 1, total: runs });
+  }
+  return {
+    completed: results.length,
+    avg: avg(results),
+    min: results.length ? Math.min(...results) : null,
+    max: results.length ? Math.max(...results) : null,
+    raw: results
+  };
+}
+
+function combineBatches(powerId, powerRole, runs, aiDifficulty, withBatch, withoutBatch) {
+  return {
+    powerId,
+    powerRole,
+    runs,
+    aiDifficulty,
+    completedWithPower: withBatch.completed,
+    completedWithoutPower: withoutBatch.completed,
+    avgWithPower: withBatch.avg,
+    avgWithoutPower: withoutBatch.avg,
+    minWithPower: withBatch.min,
+    maxWithPower: withBatch.max,
+    minWithoutPower: withoutBatch.min,
+    maxWithoutPower: withoutBatch.max,
+    rawWithPower: withBatch.raw,
+    rawWithoutPower: withoutBatch.raw
+  };
+}
+
 // Runs `runs` trials with the power active, then `runs` more as a baseline
 // with no power at all — same AI difficulty, same seat roles, throughout.
 // onProgress(payload) fires periodically so the caller can stream status
@@ -109,41 +165,67 @@ async function runPowerSimulation({ powerId, powerRole, runs = 100, aiDifficulty
     throw new Error("powerRole must be 'setter' or 'guesser'");
   }
 
-  const withPower = [];
-  const withoutPower = [];
+  const withBatch = await runBatch(
+    { powerId, powerRole, aiDifficulty, runs, withPower: true },
+    context,
+    (p) => onProgress?.({ stage: "with_power", ...p })
+  );
+  const withoutBatch = await runBatch(
+    { powerId, powerRole, aiDifficulty, runs, withPower: false },
+    context,
+    (p) => onProgress?.({ stage: "without_power", ...p })
+  );
 
-  for (let i = 0; i < runs; i++) {
-    const result = runSingleTrial({ powerId, powerRole, aiDifficulty, withPower: true }, context);
-    if (result != null) withPower.push(result);
-    if (i % 5 === 4) await yieldEventLoop();
-    onProgress?.({ stage: "with_power", completed: i + 1, total: runs });
+  return combineBatches(powerId, powerRole, runs, aiDifficulty, withBatch, withoutBatch);
+}
+
+// Tests every power (or every power of one role) one after another, and
+// saves each result to Supabase as it finishes — the "Test All Powers"
+// button. Each power still gets its own dedicated "with power" batch, but
+// the "without power" baseline is only computed ONCE per role and reused
+// across every power of that role: a no-power baseline for "setter" is the
+// exact same experiment regardless of which setter power is being
+// compared against it, so recomputing it per power (as calling
+// runPowerSimulation in a loop would) is pure waste — roughly doubling the
+// total time for no extra information. onProgress fires for both the
+// one-off baseline phase and each power's own batch.
+async function runAllPowerSimulations({ runs = 100, aiDifficulty = 2, roleFilter = "all" }, context, userId, onProgress) {
+  const powers = getAllTestablePowers().filter(
+    (p) => roleFilter === "all" || p.role === roleFilter
+  );
+  const roles = [...new Set(powers.map((p) => p.role))];
+
+  const baselines = {};
+  for (const role of roles) {
+    baselines[role] = await runBatch(
+      { powerId: null, powerRole: role, aiDifficulty, runs, withPower: false },
+      context,
+      (p) => onProgress?.({ phase: "baseline", role, ...p })
+    );
   }
 
-  for (let i = 0; i < runs; i++) {
-    const result = runSingleTrial({ powerId, powerRole, aiDifficulty, withPower: false }, context);
-    if (result != null) withoutPower.push(result);
-    if (i % 5 === 4) await yieldEventLoop();
-    onProgress?.({ stage: "without_power", completed: i + 1, total: runs });
+  const results = [];
+  for (let i = 0; i < powers.length; i++) {
+    const { id: powerId, role: powerRole } = powers[i];
+    const withBatch = await runBatch(
+      { powerId, powerRole, aiDifficulty, runs, withPower: true },
+      context,
+      (p) => onProgress?.({ phase: "power", powerIndex: i, totalPowers: powers.length, powerId, powerRole, ...p })
+    );
+
+    const stats = combineBatches(powerId, powerRole, runs, aiDifficulty, withBatch, baselines[powerRole]);
+
+    let saved = null;
+    try {
+      saved = await savePowerSimulation(stats, context, userId);
+    } catch (saveErr) {
+      console.error(`Power simulation save failed for ${powerId}:`, saveErr);
+    }
+
+    results.push({ stats, saved: !!saved });
   }
 
-  const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
-
-  return {
-    powerId,
-    powerRole,
-    runs,
-    aiDifficulty,
-    completedWithPower: withPower.length,
-    completedWithoutPower: withoutPower.length,
-    avgWithPower: avg(withPower),
-    avgWithoutPower: avg(withoutPower),
-    minWithPower: withPower.length ? Math.min(...withPower) : null,
-    maxWithPower: withPower.length ? Math.max(...withPower) : null,
-    minWithoutPower: withoutPower.length ? Math.min(...withoutPower) : null,
-    maxWithoutPower: withoutPower.length ? Math.max(...withoutPower) : null,
-    rawWithPower: withPower,
-    rawWithoutPower: withoutPower
-  };
+  return results;
 }
 
 async function savePowerSimulation(stats, context, userId) {
@@ -172,4 +254,4 @@ async function savePowerSimulation(stats, context, userId) {
   return data;
 }
 
-module.exports = { runPowerSimulation, savePowerSimulation };
+module.exports = { runPowerSimulation, runAllPowerSimulations, savePowerSimulation, getAllTestablePowers };
