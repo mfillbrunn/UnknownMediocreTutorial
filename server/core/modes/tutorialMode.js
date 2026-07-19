@@ -8,6 +8,12 @@ class TutorialMode {
     state.roundsTotal = 2;
     state.matchOver = false;
 
+    // Stage 1 (default): the base-rules tutorial, no powers. Stage 2: a
+    // short follow-up teaching exactly one guesser power and one setter
+    // power. Set by lobby.js's PLAYER_READY handler from action.mode
+    // ("tutorial" vs "tutorial2") before initMatch runs.
+    state.tutorialStage = state.tutorialStage || 1;
+
     // Tutorial metadata — two forced turns per round, then the AI falls
     // back to normal beginner-difficulty play (runAI.js gates its scripted
     // branch on history.length < scriptedTurns).
@@ -16,7 +22,9 @@ class TutorialMode {
     // Round 1: human is guesser, tutorial AI is setter and keeps the
     // secret "CUMIN" across both scripted turns. Round 2: human is setter
     // — reuses the pre-existing secret pair (BLIMP, then switching to
-    // LEMUR) and the AI's pre-existing guesses as the guesser.
+    // LEMUR) and the AI's pre-existing guesses as the guesser. Stage 2
+    // reuses the exact same words — same underlying game, just with the
+    // two powers now in play — so it reads as a direct continuation.
     state.tutorialSecrets = ["BLIMP", "LEMUR"];
     state.tutorialGuesses = ["CHAMP", "CAIRN"];
     state.tutorialSecretsAI = ["CUMIN", "CUMIN"];
@@ -29,13 +37,30 @@ class TutorialMode {
     // feedback SMALL already got against BLIMP, so it fails the
     // consistency check even though it's a valid dictionary word.
     state.tutorialWrongSecretExamples = [null, "MUSHY"];
+
+    // Stage 2 only: the one power taught on each side. Round 1 (human as
+    // guesser) teaches revealGreen; round 2 (human as setter, after the
+    // role swap) teaches countOnly — see onLobbyReady/onNextRound below.
+    if (state.tutorialStage === 2) {
+      state.tutorialPowerGuesser = "revealGreen";
+      state.tutorialPowerSetter = "countOnly";
+    }
+
     state.timeControl.enabled = false;
     // No randomness
     state.shuffle = false;
     state.ranked = false;
   }
   onLobbyReady(state, setterPowers, guesserPowers) {
-    // No powers in the tutorial — the first game teaches the base rules only.
+    if (state.tutorialStage === 2) {
+      const sP = [state.tutorialPowerSetter];
+      const gP = [state.tutorialPowerGuesser];
+      state.initialPowers = { setter: sP, guesser: gP };
+      state.activePowers = [...sP, ...gP];
+      return;
+    }
+
+    // Stage 1: no powers — the first game teaches the base rules only.
     state.initialPowers = {
       setter: [],
       guesser: []

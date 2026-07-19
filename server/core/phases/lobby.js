@@ -241,8 +241,16 @@ if (action.type === "SET_DAILY_POWERS") {
     // with mode: "tutorial" — nothing else ever sets isTutorial, so
     // without this the lobby->game transition below always carries
     // forward isTutorial: false and TutorialMode never actually engages.
+    // "tutorial2" is the follow-up powers tutorial (one guesser power, one
+    // setter power) — same mechanism, tutorialStage picked up by
+    // TutorialMode.initMatch below via freshState.
     if (action.mode === "tutorial") {
       state.isTutorial = true;
+      state.tutorialStage = 1;
+    }
+    if (action.mode === "tutorial2") {
+      state.isTutorial = true;
+      state.tutorialStage = 2;
     }
 
     const nowReady = !state.players[userId]?.ready;
@@ -295,6 +303,7 @@ if (action.type === "SET_DAILY_POWERS") {
     freshState.aiDifficulty = state.aiDifficulty;
     freshState.devMode = state.devMode;
     freshState.isTutorial = state.isTutorial;
+    freshState.tutorialStage = state.tutorialStage || 1;
     freshState.rankMode = state.rankMode;
      freshState._dailySetterPowers = state._dailySetterPowers || null;
      freshState._dailyGuesserPowers = state._dailyGuesserPowers || null;
