@@ -309,6 +309,18 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
   if (!remaining.length) {
     return weightedRandom(wordRows, r => r.probability || 1).word;
   }
+
+  // ----- Total Blackout power -----
+  // Hides all feedback and keyboard colors for THIS guess — a human
+  // guesser has to pick with no visible history at all. Every pool below
+  // (feasible/optimal/uninformed) is built from that same history, so
+  // using any of them would let the AI reason with information it isn't
+  // actually shown. Match the human experience: an unweighted random pick
+  // among words not yet guessed.
+  if (state.powers?.blindGuessActive) {
+    return weightedRandom(remaining, r => r.probability || 1).word;
+  }
+
    const remaining_ideal = allowedSecrets.filter(r => !usedGuesses.has(r.word));
 
   // ----- Force guess power -----
