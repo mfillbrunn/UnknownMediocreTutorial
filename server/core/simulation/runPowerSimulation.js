@@ -37,19 +37,20 @@ function yieldEventLoop() {
   return new Promise((resolve) => setImmediate(resolve));
 }
 
+// Setting state.activePowers/initialPowers directly here does NOT stick —
+// lobby.js's PLAYER_READY handler (the "both players ready, start the
+// match" path) always overwrites both from a fresh SETTER_POWERS/
+// GUESSER_POWERS random pick (2 of each by default) UNLESS state.devMode
+// is on with state._devSetterPowers/_devGuesserPowers set, which is the
+// one path it treats as an explicit override (see lobby.js:394-408 — the
+// same mechanism the "Dev Mode" power-picker modal already uses via the
+// SET_DEV_POWERS action). Route through that instead of activePowers
+// directly, or every trial silently gets random extra powers on both
+// sides on top of the one actually under test.
 function configurePowers(state, powerId, powerRole, withPower) {
-  if (withPower) {
-    if (powerRole === "setter") {
-      state.activePowers = [powerId];
-      state.initialPowers = { setter: [powerId], guesser: [] };
-    } else {
-      state.activePowers = [powerId];
-      state.initialPowers = { setter: [], guesser: [powerId] };
-    }
-  } else {
-    state.activePowers = [];
-    state.initialPowers = { setter: [], guesser: [] };
-  }
+  state.devMode = true;
+  state._devSetterPowers = withPower && powerRole === "setter" ? [powerId] : [];
+  state._devGuesserPowers = withPower && powerRole === "guesser" ? [powerId] : [];
 }
 
 // Runs ONE trial round: seat A always holds the power's own role (and the
