@@ -51,6 +51,7 @@ window.renderKeyboard = function ({
       "key-blue",
       "key-current",
       "key-uncertain",
+      "key-purple",
       "key-banned"
     );
 
@@ -77,6 +78,14 @@ window.renderKeyboard = function ({
       // unknown — looks like an untouched key, plus a small "?" mark.
       if (!status && state.keyboardUncertain?.[symbol]) {
         keyEl.classList.add("key-uncertain");
+      }
+
+      // Create Dead Zone (blindSpot) power: this letter's only feedback so
+      // far came from the hidden tile — match the tile's own purple
+      // treatment instead of leaking its real color, until an unmasked
+      // guess resolves it for real.
+      if (!status && state.keyboardBlindSpot?.[symbol]) {
+        keyEl.classList.add("key-purple");
       }
 
       // highlight letters currently typed

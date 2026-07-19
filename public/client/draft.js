@@ -25,10 +25,10 @@ window.renderDraftScreen = function (s) {
     candidates.forEach(powerId => {
       const meta = window.POWER_METADATA?.[powerId];
       // The candidate list is a quick skim, not the place for the full
-      // rules text — show just the first sentence there, and save the
-      // complete description for the info popup on click.
+      // rules text — show the dedicated high-level blurb there, and save
+      // the complete description for the info popup on click.
       const fullDesc = meta?.desc || "";
-      const shortDesc = fullDesc.split(/(?<=\.)\s+/)[0] || fullDesc;
+      const shortDesc = meta?.short || fullDesc;
       const btn = document.createElement("button");
       btn.className = "draft-candidate-btn";
       btn.disabled = iAmDone;

@@ -149,7 +149,62 @@ function updateRoleCards() {
   const guesserReady = !!getGuesserPlayer()?.ready;
   setterCard?.classList.toggle("is-ready",  setterReady);
   guesserCard?.classList.toggle("is-ready", guesserReady);
+
+  // Empty-slot "+": whichever role has no player yet is inherently the
+  // opponent's seat (mine already occupies the other one) — swap its name
+  // placeholder for a big "+" that opens Invite Friend / Add AI, instead of
+  // just showing a dead "—".
+  updateAddOpponentSlot("setter", !getSetterPlayer());
+  updateAddOpponentSlot("guesser", !getGuesserPlayer());
 }
+
+function updateAddOpponentSlot(role, isEmpty) {
+  const cap = role === "setter" ? "Setter" : "Guesser";
+  const nameEl = $(role + "Name");
+  const btn = $(`addOpponent${cap}Btn`);
+  const menu = $(`addOpponent${cap}Menu`);
+  if (!btn || !menu) return;
+
+  nameEl?.classList.toggle("hidden", isEmpty);
+  btn.classList.toggle("hidden", !isEmpty);
+  if (!isEmpty) menu.classList.add("hidden");
+}
+
+function closeAddOpponentMenus() {
+  $("addOpponentSetterMenu")?.classList.add("hidden");
+  $("addOpponentGuesserMenu")?.classList.add("hidden");
+  $("addOpponentSetterBtn")?.classList.remove("hidden");
+  $("addOpponentGuesserBtn")?.classList.remove("hidden");
+  // Re-hide whichever "+" shouldn't actually be showing (the role that has
+  // a player) — updateAddOpponentSlot already keeps them in sync, but a
+  // menu-close can happen without a fresh render in between.
+  updateRoleCards();
+}
+
+["Setter", "Guesser"].forEach(cap => {
+  const btn = $(`addOpponent${cap}Btn`);
+  const menu = $(`addOpponent${cap}Menu`);
+  btn?.addEventListener("click", e => {
+    e.stopPropagation();
+    btn.classList.add("hidden");
+    menu?.classList.remove("hidden");
+  });
+  menu?.addEventListener("click", e => {
+    const optBtn = e.target.closest(".add-opponent-option");
+    if (!optBtn) return;
+    if (optBtn.dataset.action === "invite") {
+      if (window.roomId) shareOrCopyInviteLink(window.roomId);
+    } else if (optBtn.dataset.action === "ai") {
+      showAIDifficultyModal();
+    }
+    closeAddOpponentMenus();
+  });
+});
+
+document.addEventListener("click", e => {
+  if (e.target.closest(".add-opponent-menu") || e.target.closest(".add-opponent-btn")) return;
+  closeAddOpponentMenus();
+});
 
 function enterLobbyAfterJoin() {
   window.isRejoining = false;  
@@ -340,7 +395,7 @@ onStateUpdate(newState => {
     const describePowers = ids => (ids || []).map(id => {
       const variant = state.powers?.[id]?.mode || null;
       const meta = window.getPowerMeta ? window.getPowerMeta(id, variant) : window.POWER_METADATA?.[id];
-      return { emoji: meta?.emoji, label: meta?.label || id, desc: meta?.desc };
+      return { emoji: meta?.emoji, label: meta?.label || id, desc: meta?.short || meta?.desc };
     });
     const powerGroups = [
       { label: "Spy", roleClass: "role-setter", powers: describePowers(state.initialPowers?.setter) },

@@ -311,7 +311,7 @@
     
         <div class="role-body">
           <span class="role-name" id="setterName">—</span>
-    
+
           <!-- Kick button (host-only, opponent-only) -->
           <button
             class="kick-btn hidden"
@@ -320,9 +320,23 @@
           >
             ✕
           </button>
+
+          <!-- Empty-slot "+" — shown only when this role has no player yet -->
+          <button
+            class="add-opponent-btn hidden"
+            id="addOpponentSetterBtn"
+            aria-label="Invite a friend or add AI"
+            title="Invite a friend or add AI"
+          >
+            +
+          </button>
+          <div class="add-opponent-menu hidden" id="addOpponentSetterMenu">
+            <button type="button" class="add-opponent-option" data-action="invite" title="Invite a friend">✉️ Invite</button>
+            <button type="button" class="add-opponent-option" data-action="ai" title="Add a computer opponent">🤖 AI</button>
+          </div>
         </div>
       </div>
-    
+
       <!-- SWITCH ROLES -->
       <button
         id="switchRolesBtn"
@@ -368,7 +382,7 @@
     
         <div class="role-body">
           <span class="role-name" id="guesserName">—</span>
-    
+
           <!-- Kick button -->
           <button
             class="kick-btn hidden"
@@ -377,9 +391,23 @@
           >
             ✕
           </button>
+
+          <!-- Empty-slot "+" — shown only when this role has no player yet -->
+          <button
+            class="add-opponent-btn hidden"
+            id="addOpponentGuesserBtn"
+            aria-label="Invite a friend or add AI"
+            title="Invite a friend or add AI"
+          >
+            +
+          </button>
+          <div class="add-opponent-menu hidden" id="addOpponentGuesserMenu">
+            <button type="button" class="add-opponent-option" data-action="invite" title="Invite a friend">✉️ Invite</button>
+            <button type="button" class="add-opponent-option" data-action="ai" title="Add a computer opponent">🤖 AI</button>
+          </div>
         </div>
       </div>
-    
+
     </div>
     
     <!-- LOBBY FOOTER -->
