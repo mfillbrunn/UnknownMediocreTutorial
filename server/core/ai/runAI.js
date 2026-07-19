@@ -85,35 +85,8 @@ function maybeUsePower(room, state, aiUserId, roomId, context, isTutorial) {
   if (!aiRole) return false;
   if (state.powerUsedThisTurn) return false;
 
-  if (isTutorial) {
-    if (aiRole === "guesser") {
-      if (state.history.length === 1) {
-        applyAIAction(
-          room,
-          { type: "USE_NONSENSE" },
-          aiUserId,
-          roomId,
-          context
-        );
-      }
-      return true;
-    }
-
-    if (aiRole === "setter") {
-      if (state.history.length === 2) {
-        applyAIAction(
-          room,
-          { type: "USE_COUNT_ONLY" },
-          aiUserId,
-          roomId,
-          context
-        );
-      }
-      return true;
-    }
-
-    return false;
-  }
+  // No powers are active during the tutorial — nothing to do.
+  if (isTutorial) return false;
 
   if (Math.random() > 0.5) return false;
 

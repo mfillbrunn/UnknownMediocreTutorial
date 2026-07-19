@@ -3,9 +3,9 @@
 // ------------------------
 let lastTutorialRound = null;     // state.history.length last processed
 let tutorialSubStep = 0;          // sub-step within a round
-let tutorialWaitingFor = null;    // { type: "guess", round } or { type: "power", powerId }
+let tutorialWaitingFor = null;    // { type: "guess", round } or { type: "setSecret", round }
 let tutorialCollapsed = false;
-let tutorialContinueMode = "advance"; 
+let tutorialContinueMode = "advance";
 
 function qs(sel) { return document.querySelector(sel); }
 function byId(id) { return document.getElementById(id); }
@@ -44,9 +44,6 @@ function updateActionBadge() {
   }
   else if (waitingType === "setSecret" && word) {
     label = `ENTER ${word}`;
-  }
-  else if (waitingType === "power") {
-    label = "USE LEAK INFO";
   }
 
   badge.textContent = label;
@@ -114,16 +111,10 @@ function highlightHistoryGuesser() {
   highlightEl(byId("historyGuesser"));  // <div id="historyGuesser" ...>
 }
 function highlightSetterPreview() {
-  highlightEl(byId("setterPreview")); 
+  highlightEl(byId("setterPreview"));
 }
 function highlightSetterWords() {
-  highlightEl(byId("SetterRemainingBox")); 
-}
-function highlightPowersCol() {
-  highlightEl(byId("guesserPowerContainer")); // <div id="guesserPowerContainer" ...>
-}
-function highlightPowerInfoBtn() {
-  highlightEl(byId("powerInfoBtnGuesser"));
+  highlightEl(byId("SetterRemainingBox"));
 }
 function highlightKeyboardSetter() {
   highlightEl(byId("keyboardSetter"));
@@ -138,18 +129,6 @@ function highlightGuideToggle() {
   highlightEl(byId("guideToggleBtn"));
 }
 
-
-function highlightPowerButtonByText(label) {
-  const btns = document.querySelectorAll(".power-btn");
-  btns.forEach(btn => {
-    if (btn.textContent.trim() === label) {
-      highlightEl(btn);
-    }
-  });
-}
-function highlightGuesserBadge() {
-  highlightEl(byId("GuesserInfoBadge"));
-}
 function clearHighlights() {
   document.querySelectorAll(".tutorial-highlight")
     .forEach(el => el.classList.remove("tutorial-highlight"));
@@ -170,12 +149,6 @@ function waitForSecretSubmission(round) {
   updateActionBadge();
 }
 
-function waitForPowerUse(powerId) {
-  tutorialWaitingFor = { type: "power", powerId };
-  setContinue({ show: true, enabled: false });
-  updateActionBadge();
-}
-
 
 // Continue click
 byId("tutorialContinueBtn")?.addEventListener("click", (e) => {
@@ -190,17 +163,23 @@ byId("tutorialContinueBtn")?.addEventListener("click", (e) => {
   }
 });
 
-// Optional: call this when the user actually uses a power
-function notifyTutorialPowerUsed(powerId) {
-  if (!tutorialWaitingFor) return;
-  if (tutorialWaitingFor.type === "power" && tutorialWaitingFor.powerId === powerId) {
-    tutorialWaitingFor = null;
-    updateActionBadge();
-    tutorialSubStep++; // advance to next message
-    if (window.state && window.myRole) tutorialSteps(window.state, window.myRole);
-  }
+// ------------------------
+// Feedback-tile explanation helper (round 1 of the guesser tutorial walks
+// through the just-scored guess one tile at a time).
+// ------------------------
+function tileColorMeaning(symbol) {
+  if (symbol === "🟩") return "Green — right letter, right position.";
+  if (symbol === "🟨") return "Yellow — right letter, wrong position.";
+  return "Grey — this letter isn't in the secret at all.";
 }
-window.notifyTutorialPowerUsed = notifyTutorialPowerUsed; // expose if needed
+
+function describeTutorialTile(entry, index) {
+  const guess = (entry?.guess || "").toUpperCase();
+  const fb = entry?.fbGuesser || entry?.fb || [];
+  const letter = guess[index] || "?";
+  const symbol = fb[index] || "⬛";
+  return `Tile ${index + 1} — "${letter}": ${symbol} ${tileColorMeaning(symbol)}`;
+}
 
 // ------------------------
 // Main tutorial logic
@@ -220,7 +199,7 @@ const isSetter  = role === "setter";
 
   // Only tutorial for guesser side (your described flow)
   const round = state.history?.length ?? 0;
-  // round transition => reset substeps unless we are mid-wait for a power/guess
+  // round transition => reset substeps unless we are mid-wait for a guess/secret
   if (round !== lastTutorialRound) {
     lastTutorialRound = round;
     tutorialSubStep = 0;
@@ -251,21 +230,22 @@ function runGuesserTutorial(state,role){
   clearHighlights();
 
   // ------------------------
-  // ROUND 0 (history.length == 0): initial guess instruction, highlight keyboard
+  // ROUND 0 (history.length == 0): brief overall rules, then guesser-
+  // specific rules, then the first scripted guess ("CHAMP").
   // ------------------------
   if (round === 0) {
-    const word = state.tutorialGuesses?.[0] || "CRANE"; // fallback
+    const word = state.tutorialGuesses?.[0] || "CHAMP";
     if (tutorialSubStep === 0) {
       showTutorial(
-        `Welcome! Let’s walk through how the game works.`,
+        `👋 Welcome to VS Wordle! Let's walk through how a match works.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
       return;
     }
-      if (tutorialSubStep === 1) {
+    if (tutorialSubStep === 1) {
       showTutorial(
-        `Press continue when you're ready for the next steps. Whenever the tutorial requires you to act (enter a guess or use a power), you’ll see a red ACTION label in the header.`,
+        `🕵️ One player is the Spy — they pick a secret 5-letter word and try to protect it. 🔎 The other is the Inspector — they try to guess it, Wordle-style: 🟩 right letter & spot, 🟨 right letter, wrong spot, ⬛ not in the word.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
@@ -273,33 +253,40 @@ function runGuesserTutorial(state,role){
     }
     if (tutorialSubStep === 2) {
       showTutorial(
-        `In the first round, you play as the Inspector. This role works similarly to Wordle: you enter guesses to find your opponent’s secret word.`,
+        `🏆 The Spy scores a point for every guess it takes the Inspector to find the word. Roles swap each round, and whoever has the lower total score wins the match.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
       return;
     }
-        if (tutorialSubStep === 3) {
+    if (tutorialSubStep === 3) {
       showTutorial(
-        `However, this game adds powers, which can significantly change how a round unfolds. We’ll cover them shortly.`,
+        `Press Continue whenever you're ready for the next step. Whenever the tutorial needs YOU to act, you'll see a red ACTION label in the header.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
-      highlightPowersCol();
       return;
     }
     if (tutorialSubStep === 4) {
       showTutorial(
-        `See this Guide button? Toggle it any time you want extra on-screen explanations of what's happening — like why a box is showing certain numbers, or what phase you're in. Try clicking it now, then continue.`,
+        `🔎 In this first round, you'll play as the Inspector against a tutorial AI 🤖 playing the Spy.`,
+        { enabled: true }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+    if (tutorialSubStep === 5) {
+      showTutorial(
+        `💡 See this Guide button? Toggle it any time you want extra on-screen explanations — like why a box is showing certain numbers, or what phase you're in. Try clicking it now, then continue.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
       highlightGuideToggle();
       return;
     }
-    if (tutorialSubStep === 5) {
+    if (tutorialSubStep === 6) {
       showTutorial(
-        `First, you need to enter your initial guess. Your opponent will put a secret word at the same time without seeing yours. Enter "${word}" and click on the ENTER button.`,
+        `First, enter your opening guess. Your opponent picks a secret at the same time, without seeing yours. Enter "${word}" and click ENTER.`,
         { enabled: true, mode: "hide"  }
       );
       tutorialContinueMode = "hide";
@@ -311,22 +298,15 @@ function runGuesserTutorial(state,role){
 
 
   // ------------------------
-  // ROUND 1 (history.length == 1): feedback explanation, then constraints, then next guess prompt
+  // ROUND 1 (history.length == 1): walk through the scored guess tile by
+  // tile, then the second scripted guess ("CAIRN").
   // ------------------------
   if (round === 1) {
+    const entry = state.history[0];
+
     if (tutorialSubStep === 0) {
       showTutorial(
-        `This is where feedback from your guess shows up. You can see which letters were green (correct letter in the correct position), yellow (in the secret but different position), or grey (not in the secret).`,
-        { enabled: true }
-      );
-      highlightHistoryGuesser();
-    tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 1) {
-      showTutorial(
-        `Except for the first guess, your opponent will see your guess and can then change the secret word to whatever they want - typically to make it harder for you. But - all secrets must respect constraints from your guesses so far.`,
+        `Let's look at the feedback for your guess, tile by tile.`,
         { enabled: true }
       );
       highlightHistoryGuesser();
@@ -334,10 +314,30 @@ function runGuesserTutorial(state,role){
       return;
     }
 
-    if (tutorialSubStep === 2) {
-      const word = state.tutorialGuesses?.[1] || "BESTI";
+    if (tutorialSubStep >= 1 && tutorialSubStep <= 5) {
       showTutorial(
-        `Now it's time to enter another guess. Enter "${word}". Unlike the secret setter, you can reuse letters you've already guessed, and you can still guess letters that end up not being in the secret.`,
+        describeTutorialTile(entry, tutorialSubStep - 1),
+        { enabled: true }
+      );
+      highlightHistoryGuesser();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 6) {
+      showTutorial(
+        `Except for the very first guess, the Spy sees your guess and can choose to keep their secret or switch to a new one — as long as the new word still fits every clue given so far.`,
+        { enabled: true }
+      );
+      highlightHistoryGuesser();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 7) {
+      const word = state.tutorialGuesses?.[1] || "CAIRN";
+      showTutorial(
+        `Now it's time to enter another guess. Enter "${word}".`,
         { enabled: true, mode: "hide" }
       );
       highlightKeyboardGuesser();
@@ -352,73 +352,12 @@ function runGuesserTutorial(state,role){
   }
 
   // ------------------------
-  // ROUND 2 (history.length == 2): powers intro, info button, then force Leak Info use, then final guess prompt
+  // ROUND 2+ : the AI kept its secret, then it's free play.
   // ------------------------
   if (round === 2) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `The next thing we will show you are powers.`,
-        { enabled: true }
-      );
-      highlightPowersCol();
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 1) {
-      showTutorial(
-        `You get randomly selected powers at the beginning of the game. For the Inspector, powers help you guess the word. Each power can only be used once per game, so choose carefully — and you can only use one power per turn.`,
-        { enabled: true }
-      );
-      highlightPowersCol();
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 2) {
-      showTutorial(
-        `If you need to look up what a power does, click this ? button — you can also see what powers your opponent has.`,
-        { enabled: true }
-      );
-      highlightPowerInfoBtn();
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 3) {
-      showTutorial(
-        `Use the Leak Info power now. It will reveal one correct letter and its position.`,
-        { enabled: false }
-      );
-      highlightPowerButtonByText("Leak Info");
-      waitForPowerUse("revealGreen");
-      tutorialContinueMode = "hide";
-      return;
-    }
-
-    if (tutorialSubStep === 4) {
-      const word = state.tutorialGuesses?.[2] || "RODNY";
-      showTutorial(
-        `Now it's time to enter another guess — "${word}".`,
-        { enabled: true, mode: "hide" }
-      );
-      highlightKeyboardGuesser();
-      tutorialContinueMode = "hide";
-      waitForGuessSubmission(round);
-      return;
-    }
-
-    hideTutorial();
-    return;
-  }
-
-  // ------------------------
-  // ROUND 3+ : done
-  // ------------------------
-   if (round === 3) {
-    if (tutorialSubStep === 0) {
-      showTutorial(
-        `You can see that your opponent also has powers.`,
+        `Notice the Spy kept the same secret — smart, since your last guess's feedback didn't force a change.`,
         { enabled: true }
       );
       highlightHistoryGuesser();
@@ -428,33 +367,13 @@ function runGuesserTutorial(state,role){
 
     if (tutorialSubStep === 1) {
       showTutorial(
-        `This power hides the feedback for each tile and just shows you the number of green and yellow tiles. You see info for powers used here.`,
-        { enabled: true }
-      );
-      highlightGuesserBadge();
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 2) {
-      showTutorial(
-        `Remember - this ? button explains powers.`,
-        { enabled: true }
-      );
-      highlightPowerInfoBtn();
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-   if (tutorialSubStep === 3) {
-      const word = state.tutorialGuesses?.[2] || "RODNY";
-      showTutorial(
-        `From here on out, finish the game on your own. After you have guessed the word, you'll play the other side.`,
+        `From here on, finish this round on your own. Once you find the secret, you'll switch roles and play as the Spy. Good luck! 🍀`,
         { enabled: true, mode: "hide" }
       );
-     tutorialContinueMode = "hide"; 
-     return;
+      tutorialContinueMode = "hide";
+      return;
     }
+
     hideTutorial();
     return;
   }
@@ -468,27 +387,27 @@ function runSetterTutorial(state, role) {
     const word = state.tutorialSecrets?.[0];
     if (tutorialSubStep === 0) {
       showTutorial(
-        `You are now the Spy. As the spy, you will pick a secret word and try to hide it as long as they can from the Inspector.`,
+        `🕵️ You are now the Spy. As the Spy, you pick a secret word and try to hide it as long as you can from the Inspector.`,
         { enabled: false }
       );
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       return;
     }
         if (tutorialSubStep === 1) {
       showTutorial(
-        `This role is more complicated, and we will go through carefully to show you exactly how to play it best.`,
+        `This role is more complicated, and we'll go through it carefully so you know exactly how to play it well.`,
         { enabled: false }
       );
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       return;
     }
         if (tutorialSubStep === 2) {
       showTutorial(
-        `In the first round, you enter a secret word - your opponent will not see it. Enter "${word}".`,
+        `In the first round, you enter a secret word — your opponent will not see it. Enter "${word}".`,
         { enabled: false }
       );
       highlightKeyboardSetter();
-      tutorialContinueMode = "hide"; 
+      tutorialContinueMode = "hide";
       waitForSecretSubmission(round);
       return;
     }
@@ -498,141 +417,105 @@ function runSetterTutorial(state, role) {
   }
 
   if (round === 1) {
+    const word = state.tutorialSecrets?.[1];
+
     if (tutorialSubStep === 0) {
       showTutorial(
-        `Now two guesses are shown here - the first guess at the top which was already scored.`,
+        `Now two guesses are shown here — the first at the top, already scored, and the second below, not yet scored. Every turn after the first, you'll see the Inspector's guess before deciding whether to keep your secret or change it.`,
         { enabled: true }
       );
       highlightHistoryGuesser();
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       return;
     }
     if (tutorialSubStep === 1) {
       showTutorial(
-        `And now the second guess. The second guess has not been scored yet. Every turn (after the first one), as the spy, you will be able to see the guess before deciding whether you want to keep your previous secret or change it.`,
+        `Generally, you'll want to change your secret if your last guess gave away a lot of new information — extra greens or yellows.`,
         { enabled: true }
       );
-      highlightHistoryGuesser();
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       return;
     }
-  if (tutorialSubStep === 2) {
+    if (tutorialSubStep === 2) {
       showTutorial(
-        `Generally, you will want to change your secret if you give a lot of additional information (for example greens or yellows) to the Inspector.`,
+        `Let's switch it up this time. This is the preview — it shows what feedback the Inspector would see for a candidate word, before you commit to it.`,
         { enabled: true }
       );
-      tutorialContinueMode = "advance"; 
+      highlightSetterPreview();
+      tutorialContinueMode = "advance";
       return;
     }
     if (tutorialSubStep === 3) {
       showTutorial(
-        `One thing you'll notice is that the guess makes no sense - that is because the Inspector used a power so that their guess did not have to make sense.`,
-        { enabled: true, mode: "hide" }
-      );
-      highlightHistoryGuesser();
-      tutorialContinueMode = "advance"; 
-      return;
-    } 
-    if (tutorialSubStep === 4) {
-      showTutorial(
-        `You could change your secret word, but no need to worry for now - you didn't give any new information. You can simply use the old word. Click on enter.`,
-        { enabled: true, mode: "hide" }
-      );
-      highlightHistoryGuesser();
-      tutorialContinueMode = "hide"; 
-      waitForSecretSubmission(round);
-      return;
-    } 
-  }
-    if (round === 2){
-      const word = state.tutorialSecrets?.[2];
-    if (tutorialSubStep === 0) {
-      showTutorial(
-        `You can also use powers to make it harder for your opponent. They are different powers but they work the same as for the guesser, so we won't focus on this now.`,
-        { enabled: true }
-      );
-      highlightPowersCol();
-      tutorialContinueMode = "advance"; 
-      return;
-    }
-    if (tutorialSubStep === 1) {
-      showTutorial(
-        `Now you can see here the preview - this shows you what feedback the guesser would see before you entered a word.`,
-        { enabled: true }
-      );
-      highlightSetterPreview();
-      tutorialContinueMode = "advance"; 
-      return;
-    }
-      if (tutorialSubStep === 2) {
-      showTutorial(
-        `If you type in a different word, it will show you the feedback as you type. Try it now - just type any word and you'll see (don't submit it yet).`,
+        `Try typing a word into the draft now — you'll see live feedback as you type. Don't submit it yet.`,
         { enabled: true }
       );
       highlightSetterDraft();
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       return;
     }
-       if (tutorialSubStep === 3) {
+    if (tutorialSubStep === 4) {
       showTutorial(
-        `Your secret must be a valid word from the allowed list and must satisfy all previous feedback constraints.`,
+        `Your secret must be a valid word from the allowed list and must satisfy every clue given by earlier guesses.`,
         { enabled: true }
       );
       highlightSetterHistory();
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       return;
     }
-    if (tutorialSubStep === 4) {
+    if (tutorialSubStep === 5) {
       showTutorial(
-        `To make it easier for you - when you submit a word that doesn't fit the criteria, the letters that are not allowed will flash in red. Those are the ones you need to change.`,
+        `If you submit a word that breaks a clue, the letters that don't fit will flash red — those are the ones to change.`,
         { enabled: true }
       );
       highlightSetterDraft();
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       return;
     }
-      if (tutorialSubStep === 5) {
+    if (tutorialSubStep === 6) {
       showTutorial(
-        `Now one more thing - this box tells you how well your guess is doing. The number on the left tells you how many secrets were possible last round.`,
+        `This box tells you how a candidate is doing. The number on the left is how many secrets were possible last round.`,
         { enabled: true }
       );
       highlightSetterWords();
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       return;
     }
-
-    if (tutorialSubStep === 6) {
+    if (tutorialSubStep === 7) {
       showTutorial(
         `The middle number shows how many remain if you keep your current secret.
 The right number shows how many would remain if you switch to the drafted word.`,
         { enabled: true }
       );
       highlightSetterWords();
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       return;
     }
-          if (tutorialSubStep === 7) {
+    if (tutorialSubStep === 8) {
       showTutorial(
-        `If you have enough time and know the words, you can keep trying out different words until you find the largest number of remaining words. It will likely be the best word!`,
+        `The bigger that remaining count, the harder you are to pin down. With time, you can try a few drafts to find the word that leaves you the most options!`,
         { enabled: true }
       );
       highlightSetterWords();
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       return;
     }
-              if (tutorialSubStep === 8) {
+    if (tutorialSubStep === 9) {
       showTutorial(
-        `Now enough talk - this is it, let's enter a new secret: "${word}"! Afterwards, finish the game on your own!`,
+        `Now let's lock it in — enter "${word}"! After this, finish the round on your own.`,
          { enabled: true, mode: "hide" }
       );
       highlightKeyboardSetter();
-      tutorialContinueMode = "hide"; 
+      tutorialContinueMode = "hide";
       waitForSecretSubmission(round);
       return;
     }
+
+    hideTutorial();
+    return;
   }
 
-  if (round === 3) {
+  if (round === 2) {
     showTutorial(
       `From here on, play strategically and try to outsmart your opponent.`,
       { enabled: true, mode: "hide" }
@@ -650,15 +533,15 @@ function runSummaryTutorial(state){
         `The first round ended. In this tutorial, you tried to guess the secret word, but in a real match, whichever role you play first is randomly determined.`,
         { enabled: true }
       );
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
        return;
     }
       if (tutorialSubStep === 1) {
       showTutorial(
-        `The next round will have you play as the other role. You will have the same power as your opponent just had against you, and they will have your powers.`,
+        `The next round has you play the other role — you'll be the Spy 🕵️, and the tutorial AI will be the Inspector 🔎.`,
         { enabled: true }
       );
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
        return;
     }
   if (tutorialSubStep === 2) {
@@ -667,7 +550,7 @@ function runSummaryTutorial(state){
         { enabled: true }
       );
       highlightHistoryGuesser();
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       return;
     }
     if (tutorialSubStep === 3) {
@@ -676,7 +559,7 @@ function runSummaryTutorial(state){
         { enabled: true }
       );
       highlightHistoryGuesser();
-      tutorialContinueMode = "hide"; 
+      tutorialContinueMode = "hide";
       return;
     }
 }
@@ -687,7 +570,7 @@ function runMatchTutorial(state){
         `The match ended! On this screen, you will see a summary of both rounds and see who won - the player with the fewer guesses!`,
         { enabled: true }
       );
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
        return;
     }
     if (tutorialSubStep === 1) {
@@ -696,15 +579,15 @@ function runMatchTutorial(state){
         { enabled: true }
       );
       highlightHistoryGuesser();
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       return;
     }
   if (tutorialSubStep === 2) {
       showTutorial(
-        `Try out other games - the powers will vary and there will be a lot of different ones, and they could really change the game!`,
+        `Try out other games - most matches also give both sides special powers that bend the rules and can really change the game!`,
         { enabled: true }
       );
-      tutorialContinueMode = "advance"; 
+      tutorialContinueMode = "advance";
       highlightHistoryGuesser();
       return;
     }
@@ -713,7 +596,7 @@ function runMatchTutorial(state){
         `For now, thank you for choosing the game and the tutorial is over. Have fun and good luck!`,
         { enabled: true }
       );
-      tutorialContinueMode = "hide"; 
+      tutorialContinueMode = "hide";
       highlightHistoryGuesser();
       return;
     }

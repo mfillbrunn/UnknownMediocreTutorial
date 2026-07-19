@@ -685,7 +685,8 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  max-width: 300px;
+  /* No max-width cap — match the width of sibling .menu-center screens
+     (startup, play, etc.) instead of rendering narrower than them. */
   padding: 24px 16px;
 }
 
@@ -1230,7 +1231,8 @@
 
 /* ── Rules screen ─────────────────────────────────────────────────────── */
 .rules-center {
-  max-width: 420px;
+  /* No max-width cap — match the width of sibling .menu-center screens
+     (startup, play, etc.) instead of rendering narrower than them. */
 }
 
 .rules-content {

@@ -97,8 +97,15 @@ function powerToEmojiOnly(p) {
   return meta?.emoji || "";
 }
 
-function getPowerId(p) {
-  return typeof p === "string" ? p : p?.id;
+// Per-turn power-use icons come from the history entry's powerEvents (each
+// tagged with the role that triggered it), not a powersGuesser/powersSetter
+// field — no such field is ever written server-side.
+function powersUsedByRole(entry, role) {
+  const events = Array.isArray(entry?.powerEvents) ? entry.powerEvents : [];
+  return events
+    .filter(e => e.actorRole === role)
+    .map(e => powerToEmojiOnly(e.id))
+    .filter(Boolean);
 }
 
 function powerToInlineIcon(powerId) {
@@ -470,6 +477,7 @@ html += `
         <th>Secret</th>
         <th>Guess</th>
         <th>Feedback</th>
+        <th>Powers</th>
         <th>Secrets</th>
       </tr>
     </thead>
@@ -492,8 +500,8 @@ for (let i = 0; i < state.history.length; i++) {
     ? h.fb.join("")
     : "";
 
-  const gp = h.powersGuesser || [];
-  const sp = h.powersSetter || [];
+  const gp = powersUsedByRole(h, "guesser");
+  const sp = powersUsedByRole(h, "setter");
 
   let powersCell = "";
   if (gp.length || sp.length) {
@@ -501,11 +509,11 @@ for (let i = 0; i < state.history.length; i++) {
       <div class="summary-powers compact">
         ${gp.length ? `
           <div class="powers-row guesser">
-            ${gp.map(p => powerToEmojiOnly(getPowerId(p))).join("")}
+            ${gp.join("")}
           </div>` : ""}
         ${sp.length ? `
           <div class="powers-row setter">
-            ${sp.map(p => powerToEmojiOnly(getPowerId(p))).join("")}
+            ${sp.join("")}
           </div>` : ""}
       </div>
     `;
@@ -520,6 +528,7 @@ for (let i = 0; i < state.history.length; i++) {
       <td class="secret-cell">${secretCell}</td>
       <td class="guess-cell">${guessCell}</td>
       <td class="feedback-cell">${fbCell}</td>
+      <td class="powers-cell">${powersCell}</td>
       <td class="remaining-cell">${remaining}</td>
     </tr>
   `;
@@ -571,6 +580,7 @@ function renderStoredRoundSummary(round, index) {
           <th>Secret</th>
           <th>Guess</th>
           <th>Feedback</th>
+          <th>Powers</th>
           <th>Secrets</th>
         </tr>
         </thead>
@@ -592,13 +602,8 @@ function renderStoredRoundSummary(round, index) {
   round.history.forEach((h, i) => {
     const remaining = computeRemainingFromRound(round, i);
 
-    const gpIcons = (h.powersGuesser || [])
-  .map(p => powerToEmojiOnly(getPowerId(p)))
-  .filter(Boolean);
-
-    const spIcons = (h.powersSetter || [])
-  .map(p => powerToEmojiOnly(getPowerId(p)))
-  .filter(Boolean);
+    const gpIcons = powersUsedByRole(h, "guesser");
+    const spIcons = powersUsedByRole(h, "setter");
 
     let powersCell = "";
     if (gpIcons.length || spIcons.length) {
@@ -622,6 +627,7 @@ function renderStoredRoundSummary(round, index) {
         <td>${h.finalSecret?.toUpperCase() || "???"}</td>
         <td>${h.guess?.toUpperCase() || ""}</td>
         <td>${Array.isArray(h.fb) ? h.fb.join("") : ""}</td>
+        <td class="powers-cell">${powersCell}</td>
         <td>${remaining}</td>
       </tr>
     `;
