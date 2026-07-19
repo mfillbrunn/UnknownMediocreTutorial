@@ -19,8 +19,12 @@ document.getElementById("devPlayBtn")?.addEventListener("click", () => {
 document.getElementById("devSimulationBtn")?.addEventListener("click", () => {
   showScreen("simulationScreen");
   populateSimPowerSelect();
-  loadPastSimulations();
-  loadChartData();
+  // Always force a fresh fetch on open — someone else's simulation run
+  // (another tab, another session) may have landed in Supabase since this
+  // page loaded, and the cached rows from a prior visit would silently
+  // hide that instead of showing the latest data.
+  loadPastSimulations(true);
+  loadChartData(true);
   updateSimTestAllEstimate();
 });
 
