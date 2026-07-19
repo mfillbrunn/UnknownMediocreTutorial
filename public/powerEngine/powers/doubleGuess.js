@@ -64,7 +64,7 @@ socket.on("doubleGuessResult", ({ guesses }) => {
   if (!Array.isArray(guesses)) return;
   const lines = guesses.map(g => `${g.guess}  ${Array.isArray(g.fb) ? g.fb.join("") : ""}`);
   window.showBigAnnounce?.({
-    icon: "🎯",
+    icon: "🔫",
     title: "Double Tap fired!",
     sub: lines,
     roleClass: "role-guesser",
