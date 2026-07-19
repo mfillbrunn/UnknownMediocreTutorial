@@ -36,4 +36,7 @@ module.exports = {
   letterProfile: { label: "Letter Profile", role: "guesser" },
   delayedIntel: { label: "Delayed Intel", role: "setter" },
   letterLockout: { label: "Letter Lockout", role: "setter" },
+  revealPenalty: { label: "Marked Weakness", role: "setter" },
+  betMiss: { label: "Risky Maneuver", role: "guesser" },
+  nonsense: { label: "Signal Scramble", role: "guesser" },
 };

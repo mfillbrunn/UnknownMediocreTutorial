@@ -19,6 +19,7 @@ const { buildSetterRemainingBoxState, computeRemainingAfterGuess } = require("..
 const { computeLetterProfileStats } = require("../utils/letterProfile");
 const { guesserVisibleHistoryCount } = require("../utils/delayedFeedback");
 const { getDailyStatus } = require("../core/dailyTracking");
+const { runPowerSimulation, savePowerSimulation } = require("../core/simulation/runPowerSimulation");
 
 module.exports = function registerSocketHandlers(io, context) {
   io.on("connection", (socket) => {
@@ -502,6 +503,37 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
       });
 
       cb?.({ ok: true });
+    });
+
+    /* ---------- DEV: POWER STRENGTH SIMULATION ---------- */
+    socket.on("runPowerSimulation", async ({ userId, powerId, powerRole, runs, aiDifficulty }, cb) => {
+      if (!userId) return cb?.({ ok: false, error: "Not logged in" });
+      if (!powerId || (powerRole !== "setter" && powerRole !== "guesser")) {
+        return cb?.({ ok: false, error: "Pick a power first" });
+      }
+
+      const safeRuns = Math.max(1, Math.min(1000, Math.floor(Number(runs)) || 100));
+      const safeDifficulty = Math.max(1, Math.min(3, Math.floor(Number(aiDifficulty)) || 2));
+
+      try {
+        const stats = await runPowerSimulation(
+          { powerId, powerRole, runs: safeRuns, aiDifficulty: safeDifficulty },
+          context,
+          (progress) => socket.emit("powerSimulationProgress", progress)
+        );
+
+        let saved = null;
+        try {
+          saved = await savePowerSimulation(stats, context, userId);
+        } catch (saveErr) {
+          console.error("Power simulation save failed:", saveErr);
+        }
+
+        cb?.({ ok: true, stats, saved });
+      } catch (err) {
+        console.error("Power simulation failed:", err);
+        cb?.({ ok: false, error: "Simulation failed" });
+      }
     });
   });
 };
