@@ -122,7 +122,7 @@
         <select id="rankedSpeedSelect" class="ranked-speed-select" aria-label="Ranked time control">
           <option value="bullet">Bullet</option>
           <option value="blitz" selected>Blitz</option>
-          <option value="deep">Deep</option>
+          <!-- "deep" intentionally omitted — see timer-select comment above -->
           <option value="none">No Time</option>
         </select>
       </div>
@@ -436,14 +436,11 @@
         <span>Blitz</span>
         <small>3 min / round</small>
       </label>
-  
-      <label class="timer-option">
-        <input type="radio" name="timePreset" value="deep" />
-        <span>Deep</span>
-        <small>15 min total</small>
-      </label>
 
-      <label class="timer-option">
+      <!-- "Deep" (15 min total) intentionally hidden from players — the
+           preset still fully works server-side (SET_TIME_CONTROL mode
+           "chess"/900s), just not offered as a pickable option here. -->
+      <label class="timer-option timer-option-wide">
         <input type="radio" name="timePreset" value="none"  />
         <span>Unlimited</span>
       </label>

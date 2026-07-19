@@ -4,9 +4,13 @@ const { getAI } = require("./aiDifficulty");
 const { applyAIAction } = require("./aiActions");
 const powerMetadata = require("../../powers/powerMetadata");
 
+// assassinWord is excluded from the game's randomized power pools
+// entirely (see task #106) — kept out of the AI pool too for the same
+// reason. revealHistory (Solve Cold Case) used to be excluded as well,
+// but there's no actual reason to: it's a self-contained reveal with no
+// extra payload needed, so the AI can fire it exactly like a human would.
 const FORBIDDEN_AI_POWERS = new Set([
-  "assassinWord",
-  "revealHistory"
+  "assassinWord"
 ]);
 
 function getAIRole(state, aiUserId) {
@@ -75,6 +79,42 @@ function buildPowerAction(powerId, state, context) {
     if (!available.length) return null;
     const letter = available[Math.floor(Math.random() * available.length)];
     return { type, letter };
+  }
+
+  if (powerId === "revealPenalty") {
+    // Needs a still-unknown letter (revealPenaltyServer.js rejects any
+    // letter already confirmed green/yellow/gray, or already forced via
+    // another power) — mirror that exact "known" set here, or the AI's
+    // attempt always silently no-ops without the letter ever getting
+    // marked used, and the power just never actually fires.
+    const known = new Set();
+    for (const past of state.history ?? []) {
+      if (!past?.fb) continue;
+      for (let i = 0; i < 5; i++) {
+        if (past.fb[i] === "🟩" || past.fb[i] === "🟨" || past.fb[i] === "⬛") {
+          known.add(past.guess[i]);
+        }
+      }
+    }
+    for (const c of state.extraConstraints ?? []) {
+      if (c.letter) known.add(c.letter.toUpperCase());
+    }
+    const available = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      .split("")
+      .filter((l) => !known.has(l));
+    if (!available.length) return null;
+    const letter = available[Math.floor(Math.random() * available.length)];
+    return { type, letter };
+  }
+
+  if (powerId === "betMiss") {
+    // Needs a betMissNumber (0-5) or betMissServer.js's postScore bails
+    // out on `typeof betMissNumber !== "number"` and the bet — the
+    // power's one-time use — is burned for nothing. No stronger signal is
+    // available yet (this runs before the AI's own next guess is picked),
+    // so a random guess-count is at least a real bet with real odds,
+    // instead of a guaranteed-wasted activation.
+    return { type, betMissNumber: Math.floor(Math.random() * 6) };
   }
 
   return { type };

@@ -105,7 +105,11 @@ function computeRemainingForSecret(state, secret, secrets) {
   const newHistory = [...state.history,{ guess, fb, ignoreConstraints: false }];
   let count = 0;
   for (const w of secrets) {
-    if (isConsistentWithHistory(newHistory, w, state)) {
+    // How many secrets would still look plausible to the GUESSER — the
+    // same quantity the "remaining words" box shows a human setter — so
+    // this has to read what the guesser is actually shown (fbGuesser),
+    // not the setter's own true knowledge.
+    if (isConsistentWithHistory(newHistory, w, state, { fbGuesser: true })) {
       count++;
     }
   }
@@ -157,9 +161,11 @@ function pickAISecret(
   // Every word not consistent with the guesses so far can never become
   // consistent by adding MORE history — state.history only grows. So
   // scanning feasibleSecrets instead of the full allSecrets list below
-  // gives identical results, for free.
+  // gives identical results, for free. Guesser view (see
+  // computeRemainingForSecret above) — this is still "what looks possible
+  // to my opponent", the setter's own remaining-secrets estimate.
   const feasibleSecrets = allSecrets.filter(secret =>
-    isConsistentWithHistory(state.history, secret, state)
+    isConsistentWithHistory(state.history, secret, state, { fbGuesser: true })
   );
 
   if (!feasibleSecrets.length) return state.secret;
@@ -324,8 +330,13 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
   // checks (~1ms), so there's no reason to cap it — the expensive
   // O(candidates * secrets) blow-up that sampling was added for lives in
   // pickAISecret (the setter side), not here.
+  // Guesser view: this is the AI's own belief about which secrets are
+  // still possible, so it has to read what it was actually shown
+  // (fbGuesser) — reading the true fb here would let the AI see straight
+  // through any masking power (Redact Report, Hide Evidence, Falsify
+  // Intel) used against it.
   const feasible = remaining_ideal.filter(r =>
-    isConsistentWithHistory(history, r.word, state)
+    isConsistentWithHistory(history, r.word, state, { fbGuesser: true })
   );
 
   // Closing move: once only a handful of secrets remain consistent, stop
