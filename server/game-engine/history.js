@@ -1,18 +1,33 @@
 const { scoreGuess } = require("./scoring.js");
 
 /**
- * Normalize emoji-based feedback so comparisons are consistent.
+ * Normalize emoji-based feedback so comparisons are consistent. "❓"/"?"
+ * are the guesser-view masking placeholders left by Redact Report, Hide
+ * Evidence, and Falsify Intel (see fbGuesser below) — treated the same as
+ * "" (no info at that position), never as a hard mismatch.
  */
 function normalizeFB(fbArr) {
   return fbArr.map(fb => {
     if (fb === "🟩") return "🟩";
     if (fb === "🟨") return "🟨";
     if (fb === "⬛") return "⬛"; // includes ⬜ treated as black
-    if (fb === "") return "";
+    if (fb === "" || fb === "❓" || fb === "?") return "";
   });
 }
 
-function isConsistentWithHistory(history, proposedSecret, state) {
+// `opts.fbGuesser: true` switches the feedback source from the true `fb`
+// (what the setter actually knows) to `fbGuesser` (what the guesser is
+// actually shown, including any masking a power has applied). Every
+// existing caller — secret-legality validation, power internals — keeps
+// the default (true fb): those enforce a hard rule ("does this secret
+// really match what was shown") that must never be fooled by a mask.
+// Only a guesser's own reasoning about which secrets remain plausible
+// should use the guesser view; genericAI.js's pickGuess/pickSecret pass
+// this because that's exactly what they're modeling — otherwise the AI's
+// decision-making reads server truth straight through a masking power
+// aimed at it, and the power has no actual effect on it (see runAI.js).
+function isConsistentWithHistory(history, proposedSecret, state, opts = {}) {
+  const useFbGuesser = !!opts.fbGuesser;
   const extra = state?.extraConstraints ?? [];
   const forcedGreens = extra.filter(c => c.type === "GREEN");
   const forcedYellows = extra.filter(c => c.type === "YELLOW");
@@ -37,7 +52,8 @@ function isConsistentWithHistory(history, proposedSecret, state) {
     if (entry.ignoreConstraints) continue;
 
     const guess = entry.guess.toUpperCase();
-    const actual = normalizeFB(entry.fb);
+    const rawFb = useFbGuesser ? (entry.fbGuesser ?? entry.fb) : entry.fb;
+    const actual = normalizeFB(rawFb);
      let expected = scoreGuess(proposedSecret, guess);
     // 5 — final comparison
     for (let i = 0; i < 5; i++) {

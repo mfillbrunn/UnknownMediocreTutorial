@@ -114,6 +114,12 @@ body.menu-mode .app-header {
   font-weight: 700;
 }
 
+/* Unlimited is now the 3rd (odd) item in the grid since Deep was hidden —
+   span both columns instead of leaving it stranded alone on its own row. */
+.timer-option-wide {
+  grid-column: 1 / -1;
+}
+
 .timer-option input {
   position: absolute;
   inset: 0;
