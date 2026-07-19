@@ -333,6 +333,37 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
     return weightedRandom(forced, r => r.probability || 1).word;
   }
 
+  // ----- Leak Info (revealGreen) / Informant (revealLocation) -----
+  // Both hand the guesser a letter+position that's accurate for THIS guess
+  // only — neither locks it into extraConstraints (the setter is free to
+  // switch away right after, see revealGreenServer.js/
+  // revealLocationServer.js), so it's not something isConsistentWithHistory
+  // enforces on its own. The strategy pools below don't all filter on it
+  // either (uninformed/optimal2's "5 new letters" case only cares about
+  // unused letters, not this), so without this a real free, guaranteed
+  // letter could just go unused. A human would obviously type it in — make
+  // the AI do the same instead of possibly guessing right past it.
+  const greenHint = state.revealGreenInfo
+    ? { idx: state.revealGreenInfo.pos, letter: state.revealGreenInfo.letter }
+    : state.powers?.revealLocationPeek
+    ? { idx: state.powers.revealLocationPeek.index, letter: state.powers.revealLocationPeek.letter }
+    : null;
+
+  if (greenHint && Number.isInteger(greenHint.idx) && greenHint.letter) {
+    const matching = remaining.filter(
+      r => r.word[greenHint.idx]?.toUpperCase() === greenHint.letter.toUpperCase()
+    );
+    if (matching.length) {
+      // Prefer a match that's also still consistent with everything else
+      // known so far; fall back to any match rather than none at all.
+      const matchingFeasible = matching.filter(r =>
+        isConsistentWithHistory(history, r.word, state, { fbGuesser: true })
+      );
+      const pool = matchingFeasible.length ? matchingFeasible : matching;
+      return pool[Math.floor(Math.random() * pool.length)].word;
+    }
+  }
+
   // ----- Strategy pools -----
   // The feasible set (words still consistent with every clue) MUST be
   // computed over the full secret list, not a sample: a sample can omit

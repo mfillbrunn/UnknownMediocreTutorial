@@ -1322,3 +1322,160 @@
 .power-lib-row-guesser {
   border-left: 2px solid var(--guesser-color);
 }
+
+/* ── Developer: Simulation screen ─────────────────────────────────── */
+.sim-center {
+  max-width: 420px;
+}
+
+.sim-explainer {
+  font-size: 13px;
+  opacity: 0.7;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.sim-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.sim-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.sim-field select,
+.sim-field input {
+  padding: 8px 10px;
+  border-radius: var(--r-10);
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.04);
+  color: inherit;
+  font-size: 14px;
+}
+
+.sim-power-role {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: -4px;
+}
+
+.sim-progress {
+  margin-bottom: 16px;
+}
+
+.sim-progress.hidden {
+  display: none;
+}
+
+.sim-progress-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.sim-progress-fill {
+  height: 100%;
+  background: #4cafef;
+  transition: width 0.2s ease;
+}
+
+.sim-progress span {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.sim-results {
+  text-align: left;
+  border-radius: var(--r-10);
+  background: var(--panel-bg);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.4);
+  padding: 12px 14px;
+  margin-bottom: 20px;
+}
+
+.sim-results.hidden {
+  display: none;
+}
+
+.sim-result-header {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.sim-result-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 13px;
+}
+
+.sim-result-row:last-child {
+  border-bottom: none;
+}
+
+.sim-result-delta {
+  font-weight: 700;
+}
+
+.sim-subtitle {
+  font-size: 14px;
+  opacity: 0.8;
+  margin: 0 0 8px;
+  text-align: left;
+}
+
+.sim-past-runs {
+  text-align: left;
+  border-radius: var(--r-10);
+  background: var(--panel-bg);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.4);
+  overflow: hidden;
+  margin-bottom: 16px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.sim-past-run-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 12px;
+}
+
+.sim-past-run-row:last-child {
+  border-bottom: none;
+}
+
+.sim-past-run-power {
+  font-weight: 700;
+}
+
+.sim-past-run-delta {
+  text-align: right;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.sim-past-run-meta {
+  opacity: 0.6;
+}
+
+.sim-past-run-date {
+  text-align: right;
+  opacity: 0.5;
+}

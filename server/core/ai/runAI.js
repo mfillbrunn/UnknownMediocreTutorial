@@ -147,18 +147,20 @@ function aiDelay({ base = 1500, variance = 1200 } = {}) {
   return Math.min(base + Math.random() * variance, 2500);
 }
 
-function maybeRunAI(room, roomId, context) {
+// Decides what a given seat's AI-controlled player should do right now, but
+// doesn't execute it — returns the action closure (or null if there's
+// nothing to do) so callers can choose how/when to run it. maybeRunAI below
+// is the real-game caller: it schedules the result behind aiDelay() so a
+// live opponent feels like it's "thinking". The power-simulation runner
+// (core/simulation/runPowerSimulation.js) is the other caller — it needs
+// the exact same guess/secret/power-usage logic for BOTH simulated seats,
+// synchronously and with no artificial delay, so it calls this directly
+// instead of going through the real-game scheduling path.
+function computeAIActionForUser(room, roomId, context, aiUserId) {
   const state = room.state;
   const aiLogic = getAI(state);
-
-  const aiPlayer = Object.values(room.playersByUserId || {}).find((p) => p.isAI);
-  if (!aiPlayer) return;
-
-  const aiUserId = aiPlayer.userId;
   const aiRole = getAIRole(state, aiUserId);
-
-  if (!aiRole) return;
-  if (AI_PENDING.has(roomId)) return;
+  if (!aiRole) return null;
 
   let actionFn = null;
 
@@ -295,6 +297,19 @@ function maybeRunAI(room, roomId, context) {
     }
   }
 
+  return actionFn;
+}
+
+function maybeRunAI(room, roomId, context) {
+  const state = room.state;
+
+  const aiPlayer = Object.values(room.playersByUserId || {}).find((p) => p.isAI);
+  if (!aiPlayer) return;
+
+  const aiUserId = aiPlayer.userId;
+  if (AI_PENDING.has(roomId)) return;
+
+  const actionFn = computeAIActionForUser(room, roomId, context, aiUserId);
   if (!actionFn) return;
 
   AI_PENDING.add(roomId);
@@ -319,4 +334,4 @@ function maybeRunAI(room, roomId, context) {
   }, aiDelay());
 }
 
-module.exports = { maybeRunAI, buildPowerAction };
+module.exports = { maybeRunAI, buildPowerAction, computeAIActionForUser };

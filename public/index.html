@@ -90,6 +90,7 @@
               </button>
               <button id="dataBtn" class="menu-btn">Data 📊</button>
               <button id="howToPlayBtn" class="menu-btn">How to Play</button>
+              <button id="developerBtn" class="menu-btn">Developer 🛠️</button>
             </div>
           </div>
         </section>
@@ -262,6 +263,63 @@
     </div>
     <div id="pastGamesContainer" class="past-games hidden"></div>
     <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
+  </div>
+</section>
+
+<!-- ========== DEVELOPER ========== -->
+<section id="developerScreen" class="screen game-menu">
+  <div class="menu-center">
+    <h2 class="menu-title">Developer</h2>
+    <div class="menu-buttons">
+      <button id="devPlayBtn" class="menu-btn primary">Play</button>
+      <button id="devSimulationBtn" class="menu-btn">Simulation</button>
+    </div>
+    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
+  </div>
+</section>
+
+<!-- ========== SIMULATION (AI vs AI power benchmark) ========== -->
+<section id="simulationScreen" class="screen game-menu">
+  <div class="menu-center sim-center">
+    <h2 class="menu-title">Simulation</h2>
+    <p class="sim-explainer">
+      Pits two AI opponents against each other: one batch with the chosen
+      power active, one baseline batch with no powers. Compares the average
+      guesses needed per round to measure how strong the power actually is.
+    </p>
+
+    <div class="sim-controls">
+      <label class="sim-field">
+        <span>Power</span>
+        <select id="simPowerSelect"></select>
+      </label>
+      <div id="simPowerRoleLabel" class="sim-power-role"></div>
+      <label class="sim-field">
+        <span>Runs per batch</span>
+        <input id="simRunsInput" type="number" min="1" max="1000" value="100" />
+      </label>
+      <label class="sim-field">
+        <span>AI difficulty</span>
+        <select id="simDifficultySelect">
+          <option value="1">🤖 Beginner</option>
+          <option value="2" selected>🧠 The Thinker</option>
+          <option value="3">🔥 The Sneak</option>
+        </select>
+      </label>
+      <button id="simRunBtn" class="menu-btn primary">Run Simulation</button>
+    </div>
+
+    <div id="simProgress" class="sim-progress hidden">
+      <div class="sim-progress-bar"><div id="simProgressFill" class="sim-progress-fill"></div></div>
+      <span id="simProgressText"></span>
+    </div>
+
+    <div id="simResults" class="sim-results hidden"></div>
+
+    <h3 class="sim-subtitle">Past Runs</h3>
+    <div id="simPastRuns" class="sim-past-runs">Loading…</div>
+
+    <button class="menu-btn" onclick="showScreen('developerScreen')">Back</button>
   </div>
 </section>
 
@@ -897,6 +955,7 @@
   <script src="client/my-games.js"></script>
   <script src="client/draft.js"></script>
   <script src="client/dev-powers.js"></script>
+  <script src="client/dev-simulation.js"></script>
   <script src="client/invite.js"></script>
   <script src="client/big-announce.js"></script>
   <script src="client.js"></script>
