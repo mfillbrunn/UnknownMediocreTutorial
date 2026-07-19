@@ -277,10 +277,25 @@ function tryAutoRejoin() {
   const username =
     window.myProfile?.username || user.email || "Player";
   window.isRejoining = true;
+
+  // sendGameAction drops every action while isRejoining is true (so a
+  // guess/secret submitted mid-rejoin can't race the room state). If this
+  // ack never arrives — connection drops again right after the emit, or a
+  // slow server tick (e.g. mid AI turn) loses it — isRejoining stayed
+  // stuck true forever, silently swallowing all future input until the
+  // player reloaded the page. Force it back open after a timeout so a lost
+  // ack degrades to "one rejoin attempt didn't land" instead of "the game
+  // is now permanently unresponsive."
+  const rejoinTimeout = setTimeout(() => {
+    window.isRejoining = false;
+    window.autoRejoinAttempted = false;
+  }, 8000);
+
   socket.emit(
     "joinRoom",
     { roomId: storedRoomId, userId: user.id, name: username },
     res => {
+      clearTimeout(rejoinTimeout);
       if (!res?.ok) {
         window.isRejoining = false;
         if (res.error === "Room not found") {

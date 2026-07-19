@@ -59,6 +59,35 @@ function updateActionBadge() {
 }
 
 
+// The bubble is fixed bottom-right, but so is the on-screen keyboard it
+// sits above — on short/narrow viewports (common on phones) the two
+// overlapped outright, silently eating every tap on the keyboard's bottom
+// row (including ENTER) since the bubble painted on top of it. Push the
+// bubble up to clear whichever keyboard is actually visible right now,
+// recomputed on every show (role/screen can change which keyboard that is)
+// and on resize/orientation change.
+function repositionTutorialBubble() {
+  const bubble = byId("tutorialBubble");
+  if (!bubble || bubble.classList.contains("hidden")) return;
+
+  const guesserKb = byId("keyboardGuesser");
+  const setterKb = byId("keyboardSetter");
+  const kb =
+    (guesserKb && guesserKb.offsetParent !== null && guesserKb) ||
+    (setterKb && setterKb.offsetParent !== null && setterKb) ||
+    null;
+
+  if (!kb) {
+    bubble.style.bottom = "";
+    return;
+  }
+
+  const kbTop = kb.getBoundingClientRect().top;
+  const clearance = Math.max(24, window.innerHeight - kbTop + 16);
+  bubble.style.bottom = `${clearance}px`;
+}
+window.addEventListener("resize", repositionTutorialBubble);
+
 function showTutorial(text, opts = {}) {
   const bubble = byId("tutorialBubble");
   const textEl = byId("tutorialText");
@@ -72,6 +101,7 @@ function showTutorial(text, opts = {}) {
 
   // default: show+enabled continue unless caller overrides
   setContinue({ show: true, enabled: true, ...opts });
+  repositionTutorialBubble();
 }
 
 function hideTutorial() {
@@ -92,6 +122,14 @@ function toggleTutorial() {
   if (!bubble) return;
   tutorialCollapsed = !tutorialCollapsed;
   bubble.classList.toggle("collapsed", tutorialCollapsed);
+  // Collapsed uses its own fixed CSS spot (small pill, doesn't reach the
+  // keyboard) — drop the inline bottom override from repositionTutorialBubble
+  // so that CSS rule can apply again; restore the dynamic clearance on expand.
+  if (tutorialCollapsed) {
+    bubble.style.bottom = "";
+  } else {
+    repositionTutorialBubble();
+  }
 }
 
 // wiring for collapse/expand
@@ -265,9 +303,10 @@ function runGuesserTutorial(state,role){
   const stage2 = state.tutorialStage === 2;
 
   // ==========================================================
-  // STAGE 2 (powers follow-up): same CHAMP/CAIRN words, but this
-  // time the Inspector has Leak Info (revealGreen) available and is
-  // walked through actually using it.
+  // STAGE 2 (powers follow-up): same opening CHAMP guess as stage 1, but
+  // this time the Inspector has Leak Info (revealGreen) available and is
+  // walked through actually using it — the second guess (CUMIN) is the
+  // AI's real secret, so it wins the round on the spot.
   // ==========================================================
   if (stage2) {
     if (round === 0) {
@@ -315,7 +354,7 @@ function runGuesserTutorial(state,role){
         return;
       }
       if (tutorialSubStep === 1) {
-        const word = state.tutorialGuesses?.[1] || "CAIRN";
+        const word = state.tutorialGuesses?.[1] || "CUMIN";
         showTutorial(
           `Nice — that's a free hint toward the secret. Now enter your second guess: "${word}".`,
           { enabled: true, mode: "hide" }

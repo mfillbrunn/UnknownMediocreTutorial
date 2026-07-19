@@ -44,6 +44,12 @@ class TutorialMode {
     if (state.tutorialStage === 2) {
       state.tutorialPowerGuesser = "revealGreen";
       state.tutorialPowerSetter = "countOnly";
+
+      // Stage 2's second guess is the AI's actual secret (CUMIN, from
+      // tutorialSecretsAI above) rather than stage 1's CAIRN, so entering
+      // it right after the Leak Info reveal wins the round immediately
+      // instead of trailing into unscripted free play.
+      state.tutorialGuesses = ["CHAMP", "CUMIN"];
     }
 
     state.timeControl.enabled = false;
