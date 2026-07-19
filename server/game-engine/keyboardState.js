@@ -7,7 +7,7 @@ const KEYBOARD_LAYOUT = [
 ];
 
 function getLetterStatusFromHistory(letter, state) {
-  if (!state?.history) return { status: null, uncertain: false };
+  if (!state?.history) return { status: null, uncertain: false, blind: false };
 
   // Extra constraints (forced greens / free yellows from powers)
   const extraGreens = state.extraConstraints
@@ -15,7 +15,7 @@ function getLetterStatusFromHistory(letter, state) {
     .map(c => c.letter);
 
   if (extraGreens?.includes(letter)) {
-    return { status: "green", uncertain: false };
+    return { status: "green", uncertain: false, blind: false };
   }
 
   const extraYellows = state.extraConstraints
@@ -26,13 +26,18 @@ function getLetterStatusFromHistory(letter, state) {
   // (a real position match) should still upgrade past it.
   let strongest = extraYellows?.includes(letter) ? "yellow" : null;
   let uncertain = false;
+  let blind = false;
+
+  const bsIdx = state?.powers?.blindSpotIndex;
+  const bsRound = state?.powers?.blindSpotRoundIndex;
 
   for (const entry of state.history) {
     if (!entry?.guess) continue;
 
     const guess = entry.guess.toUpperCase();
     let fb = entry.fb; // safe state already provides the correct fb
-    if (!fb){
+    const isGuesserView = !fb;
+    if (isGuesserView) {
       fb = entry.fbGuesser;
     }
 
@@ -40,6 +45,22 @@ function getLetterStatusFromHistory(letter, state) {
 
     for (let i = 0; i < 5; i++) {
       if (guess[i] !== letter) continue;
+
+      // Blind Spot hides this exact tile's feedback from the guesser (it
+      // renders as an opaque purple tile in the history row) — the
+      // keyboard must not leak the true color for that same instance, or
+      // the power hides nothing. Only applies to the guesser's own view;
+      // the setter already knows their own true feedback.
+      if (
+        isGuesserView &&
+        typeof bsIdx === "number" &&
+        typeof bsRound === "number" &&
+        i === bsIdx &&
+        (entry.roundIndex ?? 0) >= bsRound
+      ) {
+        blind = true;
+        continue;
+      }
 
       const f = fb[i];
       if (!f || f === "?") continue;
@@ -59,13 +80,19 @@ function getLetterStatusFromHistory(letter, state) {
   }
 
   // A later, unmasked guess can resolve the letter's real status — once
-  // that happens it's no longer "uncertain", just whatever it resolved to.
-  return { status: strongest, uncertain: uncertain && !strongest };
+  // that happens it's no longer "uncertain"/"blind", just whatever it
+  // resolved to.
+  return {
+    status: strongest,
+    uncertain: uncertain && !strongest,
+    blind: blind && !strongest
+  };
 }
 
 function buildKeyboardState(state) {
   const keyboard = {};
   const uncertain = {};
+  const blind = {};
 
   for (const row of KEYBOARD_LAYOUT) {
     for (const symbol of row) {
@@ -74,10 +101,11 @@ function buildKeyboardState(state) {
       const result = getLetterStatusFromHistory(symbol, state);
       keyboard[symbol] = result.status;
       if (result.uncertain) uncertain[symbol] = true;
+      if (result.blind) blind[symbol] = true;
     }
   }
 
-  return { keyboard, uncertain };
+  return { keyboard, uncertain, blind };
 }
 
 module.exports = {

@@ -552,6 +552,70 @@ body.menu-mode .app-header {
   opacity: 0.8;
 }
 
+/* Empty-slot "+" — the big, obvious affordance for filling an unoccupied
+   role card, replacing the "—" placeholder name entirely while empty. */
+.add-opponent-btn {
+  width: 100%;
+  min-height: 2.2em;
+  border: 1.5px dashed rgba(255, 255, 255, 0.3);
+  border-radius: var(--r-8);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.6em;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.add-opponent-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.55);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.role-card.setter .add-opponent-btn:hover {
+  border-color: var(--setter-color);
+}
+
+.role-card.guesser .add-opponent-btn:hover {
+  border-color: var(--guesser-color);
+}
+
+/* Side-by-side, not stacked — .role-card clips overflow (needed to keep
+   long player names truncated), so the menu can't grow taller than the
+   single-row "+" button it replaces. Two narrow buttons in a row fit that
+   same height; two stacked buttons would just get cut off by the card. */
+.add-opponent-menu {
+  display: flex;
+  flex-direction: row;
+  gap: var(--sp-6);
+  width: 100%;
+}
+
+.add-opponent-option {
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-6) var(--sp-4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--r-8);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: var(--fs-11);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.add-opponent-option:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
 /* Role switch = neutral control */
 .role-switch {
   background: none;
