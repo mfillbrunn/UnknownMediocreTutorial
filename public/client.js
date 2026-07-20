@@ -522,11 +522,23 @@ function updateScreens() {
   _lastScreenPhase = state.phase;
 
   if (enteringGameOverLive && !_gameOverRevealInFlight) {
-    const lastEntry = state.history?.[state.history.length - 1];
-    const wonByGuess =
-      !state.timeoutLoser &&
-      Array.isArray(lastEntry?.fb) &&
-      lastEntry.fb.every(f => f === "🟩");
+    const history = state.history || [];
+    const lastEntry = history[history.length - 1];
+    const secondLastEntry = history[history.length - 2];
+    // Double Tap (resolveDoubleGuess in normal.js) pushes two entries
+    // together in an order that has nothing to do with which one actually
+    // won (it's randomized to not leak which guess was shown to the Spy)
+    // -- checking only the literal last entry misses the win whenever the
+    // winning guess happened to be pushed first, silently skipping this
+    // whole reveal sequence.
+    const winCandidates =
+      lastEntry?.doubleGuessApplied && secondLastEntry?.doubleGuessApplied
+        ? [lastEntry, secondLastEntry]
+        : [lastEntry];
+    const winningEntry = winCandidates.find(
+      e => Array.isArray(e?.fb) && e.fb.every(f => f === "🟩")
+    );
+    const wonByGuess = !state.timeoutLoser && !!winningEntry;
 
     if (wonByGuess) {
       _gameOverRevealInFlight = true;
