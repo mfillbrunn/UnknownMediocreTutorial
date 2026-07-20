@@ -875,8 +875,47 @@ function clearSetterDraft() {
   window.clearNotesDraft?.();
   updateUI();
 }
+// Shared by handleSetterInput (typing) and setSetterDraftLetterAt (Drag
+// Mode) -- both need to know whether the setter actually has a live draft
+// to edit right now.
+function canSetterEditDraftNow() {
+  if (state.powers?.freezeActive || state.powers?.rouletteSecretActive) return false;
+  const isNormalSetterTurn =
+    myUserId() === state.setter &&
+    state.phase === "normal" &&
+    state.turn === state.setter &&
+    !!state.pendingGuess;
+  const isSimultaneousSecretEntry =
+    state.phase === "simultaneous" &&
+    !state.secret &&
+    !state.simultaneousSecretSubmitted;
+  return isNormalSetterTurn || isSimultaneousSecretEntry;
+}
+// Drag Mode (see drag-mode.js): drops a letter at a specific tile
+// position instead of appending it to the end like typing does. Unfilled
+// positions to its left are padded with a space -- draftrow.js already
+// renders a lone space the same as an empty tile, and submitSetterNew
+// rejects a draft still containing one the same way it rejects an
+// incomplete typed draft.
+function setSetterDraftLetterAt(index, letter) {
+  if (!Number.isInteger(index) || index < 0 || index > 4) return;
+  if (!/^[A-Z]$/.test(letter)) return;
+  if (!canSetterEditDraftNow()) return;
+
+  const chars = (state.setterDraft || "").padEnd(5, " ").split("");
+  chars[index] = letter;
+  state.setterDraft = chars.join("");
+  updateUI();
+  emitSetterDraftPreview(state.setterDraft);
+}
+window.setSetterDraftLetterAt = setSetterDraftLetterAt;
 function handleSetterInput(event) {
   if (window.isNotesActive?.() && window.notesInput?.(event)) return;
+  // Freeze/roulette deliberately skip only the typing block below and
+  // fall through to the ENTER handling further down (e.g. so "keep same
+  // secret" still works while frozen) -- canSetterEditDraftNow() can't be
+  // reused for this outer guard since it also folds in that same
+  // freeze/roulette check.
   if (!(state.powers?.freezeActive || state.powers?.rouletteSecretActive)) {
     const isNormalSetterTurn =
       myUserId() === state.setter &&
@@ -951,7 +990,10 @@ function handleSetterInput(event) {
 /// SUBMIT NEW SECRET FUNCTION
 function submitSetterNew() {
   const w = (state.setterDraft || "").toUpperCase();
-  if (w.length !== 5) {
+  // A space is Drag Mode's "not filled at this position yet" placeholder
+  // (see setSetterDraftLetterAt) -- a draft still holding one is exactly
+  // as incomplete as a too-short typed draft.
+  if (w.length !== 5 || w.includes(" ")) {
     shakeDraftRow("setter");
     toast("5 letters!");
     return;
@@ -1004,9 +1046,10 @@ function submitSetterNew() {
     window.showBigAnnounce?.({
       icon: "🚫",
       title: "Not consistent with prior feedback",
-      sub: reasons.length ? reasons : ["Doesn't match the clues given so far."],
+      sub: reasons.length ? reasons.slice(0, 2) : ["Doesn't match the clues given so far."],
       roleClass: "role-setter",
-      duration: 5000
+      duration: 2200,
+      compact: true
     });
     clearSetterDraft();
     return;

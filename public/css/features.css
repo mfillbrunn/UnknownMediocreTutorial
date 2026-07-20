@@ -2,6 +2,44 @@
    features.css — new features ported from mobile-frontend
    =================================================================== */
 
+/* ── Drag Mode (setter header toggle + drag-and-drop letters) ──────── */
+#keyboardSetter.drag-mode-active .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]) {
+  cursor: grab;
+}
+
+.draft-tile[data-drag-index] {
+  transition: outline-color 0.12s ease, background 0.12s ease;
+}
+
+.draft-tile[data-drag-index].drag-hover {
+  outline: 2px dashed var(--setter-color, #f87171);
+  outline-offset: 2px;
+  background: color-mix(in srgb, var(--setter-color, #f87171) 18%, transparent);
+}
+
+.drag-letter-ghost {
+  position: fixed;
+  z-index: 100002;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: var(--r-8, 8px);
+  background: var(--setter-color, #f87171);
+  color: #000;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+  opacity: 0.95;
+}
+
 /* ── Guide toggle (header, top-right) ─────────────────────────────── */
 .guide-toggle-btn {
   height: 28px;
