@@ -92,6 +92,11 @@ function handleGameOverPhase(room, state, action, roomId, context) {
     // power assignment) keeps remembering the host's last choice.
     freshState._devSetterPowers = prevState._devSetterPowers || null;
     freshState._devGuesserPowers = prevState._devGuesserPowers || null;
+    // Same idea for custom mode: keep the host's mode choice and each
+    // player's last-picked loadout so the lobby doesn't reset to "pick
+    // again" every match.
+    freshState.customPowersMode = !!prevState.customPowersMode;
+    freshState._customPlayerLoadouts = prevState._customPlayerLoadouts || null;
 
     freshState.players = {};
 
@@ -145,8 +150,16 @@ function handleGameOverPhase(room, state, action, roomId, context) {
     // Force off so the lobby's draftEligible check can't route this back
     // through a fresh draft — the whole point of Replay is skipping re-pick.
     freshState.draftMode = false;
-    freshState._replaySetterPowers = prevState.initialPowers?.setter || [];
-    freshState._replayGuesserPowers = prevState.initialPowers?.guesser || [];
+    freshState.customPowersMode = !!prevState.customPowersMode;
+    if (prevState.customPowersMode) {
+      // Custom mode has no single shared setter/guesser pool to replay --
+      // pin each player's own last loadout instead (consumed by the
+      // customEligible branch in lobby.js).
+      freshState._replayCustomPlayerPowers = prevState.customPlayerPowers || {};
+    } else {
+      freshState._replaySetterPowers = prevState.initialPowers?.setter || [];
+      freshState._replayGuesserPowers = prevState.initialPowers?.guesser || [];
+    }
 
     freshState.players = {};
 

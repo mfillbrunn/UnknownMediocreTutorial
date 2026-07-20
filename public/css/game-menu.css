@@ -962,6 +962,57 @@ body.menu-mode .app-header {
 }
 
 /* =========================================
+   POWER LOADOUTS (custom mode combo builder)
+   ========================================= */
+
+.loadout-power-checkbox {
+  justify-content: space-between;
+}
+
+.loadout-power-cost {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  opacity: 0.7;
+  margin-left: auto;
+}
+
+.loadout-power-checkbox input:disabled ~ .loadout-power-cost,
+.loadout-power-checkbox input:disabled ~ .dev-power-checkbox-label {
+  opacity: 0.4;
+}
+
+.loadout-builder {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.loadout-builder-title {
+  font-size: 14px;
+  font-weight: 900;
+  margin: 0 0 10px;
+  text-align: center;
+}
+
+.loadout-total {
+  text-align: center;
+  font-weight: 800;
+  font-size: 13px;
+  margin: 10px 0;
+  opacity: 0.85;
+}
+
+.loadout-total-over {
+  color: #f87171;
+}
+
+.loadout-row .friends-name small {
+  opacity: 0.65;
+  font-weight: 600;
+}
+
+/* =========================================
    TIMER OPTION — CLEAR SELECTION
    ========================================= */
 
