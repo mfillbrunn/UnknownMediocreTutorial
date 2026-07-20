@@ -1,11 +1,16 @@
 // /powers/powers/hideTile.js — Hide Evidence (setter)
 //
-// The setter picks exactly which tile of the pending guess gets hidden by
-// tapping it directly in the pending-guess row, instead of a random tile
-// being chosen server-side. The power tray button is a status label only
-// (charges/turn eligibility, same generic enable/disable every power's
-// button gets) — it has no click handler; the tap-a-tile interaction below
-// is the only way to actually activate it.
+// The setter picks exactly which tile of the pending guess loses its
+// feedback by tapping it directly in the pending-guess row, instead of a
+// random tile being chosen server-side. The power tray button is a status
+// label only (charges/turn eligibility, same generic enable/disable every
+// power's button gets) — it has no click handler; the tap-a-tile
+// interaction below is the only way to actually activate it.
+//
+// Mirrors Vowel Refresh: the server directly erases entry.fb/fbGuesser for
+// that position (server/powers/powers/hideTileServer.js), so there's
+// nothing for this file to mask client-side -- the tile just renders with
+// no feedback color, same as any other blanked position.
 PowerEngine.register("hideTile", {
 
   role: "setter",
@@ -33,7 +38,7 @@ PowerEngine.register("hideTile", {
 
     tiles.forEach((tile, i) => {
       tile.classList.toggle("tile-pickable-hide", usable);
-      tile.title = usable ? "Tap to hide this tile's feedback (Hide Evidence)" : "";
+      tile.title = usable ? "Tap to erase this tile's feedback (Hide Evidence)" : "";
 
       if (tile.__hideTileWired) return;
       tile.__hideTileWired = true;
@@ -46,16 +51,6 @@ PowerEngine.register("hideTile", {
         if (!stillUsable) return;
         sendGameAction({ type: "USE_HIDE_TILE", index: i });
       });
-    });
-  },
-
-  // Guesser sees hidden tiles in the history
-  historyEffects(entry, isSetter) {
-    if (isSetter) return;
-    if (!entry.hiddenIndices) return;
-
-    entry.hiddenIndices.forEach(idx => {
-      entry.fbGuesser[idx] = "❓";
     });
   }
 });

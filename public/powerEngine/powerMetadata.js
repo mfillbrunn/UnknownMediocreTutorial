@@ -88,8 +88,8 @@ window.POWER_METADATA = {
 
   hideTile: {
     label: "Hide Evidence",
-    desc: "Tap a tile in the pending guess to hide its feedback for that round — neither you nor the Inspector will see its result.",
-    short: "Pick a tile to hide its feedback from both sides.",
+    desc: "Tap a tile in the pending guess to erase its feedback for that round — the result at that position is gone for both sides, not shown to either.",
+    short: "Pick a tile whose feedback is erased for both sides.",
     icon: "hidden-tile",
     emoji: "⬛",
     color: "#1e1eba"
