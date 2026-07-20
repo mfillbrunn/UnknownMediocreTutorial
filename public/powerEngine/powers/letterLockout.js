@@ -30,6 +30,9 @@ function renderLetterLockoutLetters(state) {
       btn.title = "Already confirmed green/yellow -- can't be banned";
       btn.classList.add("letter-lockout-known");
     }
+    // Same colors the real keyboard shows for this letter, so the setter
+    // can see at a glance which letters are still worth banning.
+    btn.classList.add("picker-" + (state.keyboard?.[letter] || "unused"));
 
     btn.onclick = () => {
       document

@@ -1042,9 +1042,18 @@
   transform: translateY(-1px);
 }
 
+/* Letter-picker color coding (Letter Lockout's ban-letter grid): mirror the
+   real keyboard's key colors so it's obvious at a glance which letters are
+   already known/eliminated before picking one to ban. .picker-unused is
+   the plain default look above and needs no override. */
+.letter-grid button.picker-green  { background: var(--tile-green);  color: var(--tile-green-text); }
+.letter-grid button.picker-yellow { background: var(--tile-yellow); color: var(--tile-yellow-text); }
+.letter-grid button.picker-gray   { background: var(--tile-gray);   color: var(--tile-gray-text); }
+.letter-grid button.picker-blue   { background: var(--tile-blue);   color: var(--tile-blue-text); }
+
 .letter-grid button.selected {
-  background: var(--setter-color);
-  color: #000;
+  background: var(--setter-color) !important;
+  color: #000 !important;
   box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.5);
 }
 

@@ -227,7 +227,18 @@
     }
 
     panel.classList.remove("hidden");
-    _renderDraft(roleId);
+
+    // The draft row shares the real on-screen keyboard with actual
+    // gameplay typing (see _isMyTurnToType) -- once it's genuinely the
+    // player's turn, keystrokes fall through to the real guess/secret
+    // draft instead (see notesInput below), so the notes draft tiles
+    // have nothing live to show and just vanish rather than sit there
+    // stale.
+    const draftRow = document.getElementById(`notesDraft${roleId}`);
+    const myTurn = !_isBreak(state) && _isMyTurnToType(state);
+    if (draftRow) draftRow.classList.toggle("hidden", myTurn);
+    if (!myTurn) _renderDraft(roleId);
+
     _renderList(roleId, state);
   }
 
@@ -258,8 +269,12 @@
 
     const isEdit = event.type === "BACKSPACE" || event.type === "ENTER" || event.type === "LETTER";
     if (isEdit && !_isBreak(window.state) && _isMyTurnToType(window.state)) {
-      window.toast?.("Notes can't be edited during your turn");
-      return true;
+      // It's the player's real turn -- let the keystroke fall through to
+      // the actual gameplay handler (handleSetterInput/handleGuesserInput)
+      // instead of the notes scratchpad. The notes draft row is hidden
+      // for the same reason (see _renderPanel), so there's nothing here
+      // to type into right now anyway.
+      return false;
     }
 
     if (event.type === "BACKSPACE") {
@@ -299,4 +314,13 @@
   };
 
   window.isNotesActive = function () { return _active; };
+
+  // Called when a secret submission gets rejected (bad word, inconsistent
+  // with history, etc.) so the setter doesn't have to backspace through a
+  // dead draft by hand -- clears the notes scratchpad's own in-progress
+  // draft alongside the real one (see client.js's submitSetterNew).
+  window.clearNotesDraft = function () {
+    _draft = "";
+    if (_role) _renderDraft(_role === "setter" ? "Setter" : "Guesser");
+  };
 })();
