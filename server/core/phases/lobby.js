@@ -9,6 +9,7 @@ const { createInitialState } = require("../stateFactory");
 const { startGameTimer } = require("../timeouts/timeoutController");
 const { startDraftTimer } = require("../../utils/draftTimer");
 const { finalizeDraft, shuffle } = require("./draft");
+const { QUEST_TYPES } = require("../../powers/powers/questServer");
 const { isLoadoutValid } = require("../../powers/POWER_POINTS");
 const { pickRandomAILoadout } = require("../../powers/randomLoadout");
 const {
@@ -38,6 +39,11 @@ const SETTER_POWERS = [
   "letterLockout"
 ];
 
+// revealLetter and fieldReport are deliberately excluded from this pool --
+// their condition-based mechanics live on in the always-on Quest system
+// instead (see server/powers/powers/questServer.js), which now covers the
+// same ground for every guesser rather than as a power that may or may
+// not get rolled/drafted.
 const GUESSER_POWERS = [
   "suggestGuess",
   "rouletteSecret",
@@ -47,10 +53,8 @@ const GUESSER_POWERS = [
   "revealGreen",
   "freezeSecret",
   "magicMode",
-  "revealLetter",
   "nonsense",
   "betMiss",
-  "fieldReport",
   "wiretap",
   "letterProbe",
   "revealLocation",
@@ -430,15 +434,30 @@ if (action.type === "SET_DAILY_POWERS") {
     if (draftEligible) {
       state.draftCandidates = {};
       state.draftPicks = {};
+      // Guesser-only: a separate offer/pick pair for Quests, alongside
+      // (not instead of) their power draft -- setter is untouched (still
+      // offered 3 powers, picks 2).
+      state.draftQuestCandidates = {};
+      state.draftQuestPicks = {};
       state.draftDone = {};
 
       for (const player of Object.values(state.players || {})) {
-        const pool = player.role === "setter" ? SETTER_POWERS : GUESSER_POWERS;
-        state.draftCandidates[player.userId] = shuffle(pool).slice(0, 3);
+        const isGuesser = player.role !== "setter";
+        const pool = isGuesser ? GUESSER_POWERS : SETTER_POWERS;
+        state.draftCandidates[player.userId] = shuffle(pool).slice(0, isGuesser ? 2 : 3);
+
+        if (isGuesser) {
+          state.draftQuestCandidates[player.userId] = shuffle(QUEST_TYPES).slice(0, 2);
+        }
 
         if (player.isAI) {
+          const maxPowerPicks = isGuesser ? 1 : 2;
           state.draftPicks[player.userId] =
-            shuffle(state.draftCandidates[player.userId]).slice(0, 2);
+            shuffle(state.draftCandidates[player.userId]).slice(0, maxPowerPicks);
+          if (isGuesser) {
+            state.draftQuestPicks[player.userId] =
+              shuffle(state.draftQuestCandidates[player.userId]).slice(0, 1);
+          }
           state.draftDone[player.userId] = true;
         }
       }

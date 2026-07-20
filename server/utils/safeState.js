@@ -39,6 +39,11 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
         ? { [userId]: safe.draftPicks[userId] }
         : {};
     }
+    if (safe.draftQuestPicks) {
+      safe.draftQuestPicks = userId in safe.draftQuestPicks
+        ? { [userId]: safe.draftQuestPicks[userId] }
+        : {};
+    }
   }
 
   if (viewerRole === "setter" && state.powers.betMissActive) {

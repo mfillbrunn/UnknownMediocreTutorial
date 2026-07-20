@@ -14,6 +14,9 @@ function formatFieldReportCondition(c) {
   const fmt = FIELD_REPORT_CONDITION_LABELS[c.type];
   return fmt ? fmt(c) : c.type;
 }
+// Reused by the Quest system (client/quest.js) for its own FIELDREPORT-
+// style objective, same condition vocabulary.
+window.formatFieldReportCondition = formatFieldReportCondition;
 
 PowerEngine.register("fieldReport", {
   role: "guesser",
