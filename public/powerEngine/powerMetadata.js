@@ -88,8 +88,8 @@ window.POWER_METADATA = {
 
   hideTile: {
     label: "Hide Evidence",
-    desc: "Hide the feedback on one random tile for one round.",
-    short: "Hides one random tile's feedback for a round.",
+    desc: "Tap a tile in the pending guess to hide its feedback for that round — neither you nor the Inspector will see its result.",
+    short: "Pick a tile to hide its feedback from both sides.",
     icon: "hidden-tile",
     emoji: "⬛",
     color: "#1e1eba"
@@ -157,7 +157,7 @@ window.POWER_METADATA = {
       },
       CHAIN: {
         label: "Word Chain",
-        desc: "Reveal a green letter by submitting 3 guesses that each start with the last letter of your previous guess.",
+        desc: "Reveal a green letter by submitting 2 guesses that each start with the last letter of your previous guess.",
         icon: "link",
         emoji: "🔗"
       }

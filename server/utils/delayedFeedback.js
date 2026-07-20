@@ -26,16 +26,28 @@ function guesserVisibleHistoryCount(state) {
 
   if (typeof affected !== "number" || total <= affected) return total;
 
+  // Double Tap pushes TWO history entries for what's really a single round
+  // (resolveDoubleGuess in normal.js) -- if Delayed Intel was armed for
+  // that round, both entries have to unlock together, or the shown guess's
+  // feedback would leak a round early while the hidden one stayed withheld.
+  const span = state.history[affected]?.doubleGuessApplied ? 2 : 1;
+  const unlockAt = affected + span;
+
   // A round after the delayed one already exists in history -- that could
   // only happen once the guesser's next guess was already submitted AND
   // scored, meaning the delayed round already unlocked.
-  if (total > affected + 1) return total;
+  if (total > unlockAt) return total;
 
-  // The delayed round is the latest one recorded. It unlocks the instant
-  // the guesser submits their next guess (state.pendingGuess set) --
-  // until then, withhold it (and anything after it, though there can't
-  // be anything after it yet).
-  return state.pendingGuess ? total : affected;
+  // The delayed round (or double-tap pair) is the latest one recorded. It
+  // unlocks the instant the guesser submits their next guess
+  // (state.pendingGuess set) -- until then, withhold it.
+  if (total === unlockAt) {
+    return state.pendingGuess ? total : affected;
+  }
+
+  // Still mid-span (shouldn't normally happen -- a double-tap pair is
+  // pushed atomically -- but stay conservative and keep withholding).
+  return affected;
 }
 
 module.exports = { guesserVisibleHistoryCount };

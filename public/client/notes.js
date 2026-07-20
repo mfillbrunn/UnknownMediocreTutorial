@@ -6,7 +6,6 @@
   let _active   = false;
   let _role     = null;
   let _lastRoom = null;
-  let _inBreakPrev = false;
   let _lastPrunedHistoryLen = -1;
 
   function _isBreak(state) {
@@ -49,22 +48,21 @@
     }
   }
 
-  // Clear notes once, exactly on the transition into the round break —
-  // i.e. after the word was guessed, before the automatic setter/guesser
-  // role swap (which only happens once NEXT_ROUND is processed). Also close
-  // the notes panel entirely: a fresh round means the old candidates are
-  // stale, so the window shouldn't linger open showing an empty list.
-  function _handleRoundBreakTransition(state) {
-    const nowBreak = _isBreak(state);
-    if (nowBreak && !_inBreakPrev) {
+  // A genuinely new match (NEW_MATCH) reuses the same room, so
+  // _resetIfRoomChanged never fires for it -- state.matchStartedAt is set
+  // fresh each time a match actually begins (lobby.js's PLAYER_READY
+  // handler), unlike NEXT_ROUND, which only changes the round within the
+  // same match. That's the right boundary to clear notes on: entries
+  // should survive a round swap (see _pruneInfeasible for what actually
+  // invalidates one), just not leak into a brand new match.
+  let _lastMatchStart = null;
+  function _resetIfNewMatch(state) {
+    const cur = state?.matchStartedAt ?? null;
+    if (cur != null && cur !== _lastMatchStart) {
       _entries = [];
       _draft = "";
-      _active = false;
-      const roleId = _role === "setter" ? "Setter" : "Guesser";
-      document.getElementById(`notesPanel${roleId}`)?.classList.add("hidden");
-      document.getElementById(`notesBtn${roleId}`)?.classList.remove("active");
+      _lastMatchStart = cur;
     }
-    _inBreakPrev = nowBreak;
   }
 
   function _viable(history, word) {
@@ -212,7 +210,7 @@
     const panel  = document.getElementById(`notesPanel${roleId}`);
     if (!panel) return;
 
-    _handleRoundBreakTransition(state);
+    _resetIfNewMatch(state);
     _pruneInfeasible(state);
 
     if (!_active) { panel.classList.add("hidden"); return; }
@@ -273,7 +271,13 @@
       if (_draft.length === 5) {
         const w = _draft.toUpperCase();
         const dict = _role === "setter" ? window.ALLOWED_SECRETS : window.ALLOWED_GUESSES;
-        if (dict && !dict.has(w)) {
+        // A setter's note is a candidate SECRET -- if it's already
+        // inconsistent with the feedback given so far, reject it outright
+        // (same shake as an invalid dictionary word) instead of adding a
+        // doomed entry the setter would just have to delete themselves.
+        const infeasible =
+          _role === "setter" && !_viable(window.state?.history, w);
+        if ((dict && !dict.has(w)) || infeasible) {
           _shakeNotesDraft(roleId);
         } else if (!_entries.find(e => e.word === w)) {
           _entries.push({ word: w });

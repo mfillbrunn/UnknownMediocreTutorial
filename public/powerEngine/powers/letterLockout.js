@@ -16,12 +16,20 @@ function renderLetterLockoutLetters(state) {
   delete confirm.dataset.letter;
 
   const used = new Set(state.powers?.letterLockoutUsedLetters || []);
+  // Already confirmed green/yellow -- the guesser is entitled to use it,
+  // so it can't be banned (mirrors the server-side guard in
+  // letterLockoutServer.js).
+  const known = new Set(state.constraintData?.mustContain || []);
 
   for (let c = 65; c <= 90; c++) {
     const letter = String.fromCharCode(c);
     const btn = document.createElement("button");
     btn.textContent = letter;
-    btn.disabled = used.has(letter);
+    btn.disabled = used.has(letter) || known.has(letter);
+    if (known.has(letter) && !used.has(letter)) {
+      btn.title = "Already confirmed green/yellow -- can't be banned";
+      btn.classList.add("letter-lockout-known");
+    }
 
     btn.onclick = () => {
       document

@@ -248,6 +248,16 @@ function fbToClass(fb) {
 
 function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot, isHiddenCycling) {
   const classes = [];
+
+  // Hide Evidence: the setter chose this exact tile to be hidden -- it's
+  // meant to be a genuine blind spot for BOTH sides now, not just the
+  // guesser, so render the same "not revealed" tile the guesser sees
+  // instead of falling through to the true color below.
+  if (isHiddenCycling) {
+    classes.push("tile-hidden-cycle");
+    return classes;
+  }
+
   // --- TRUE feedback (always) ---
   const trueFb = safeEntry.fb?.[guessIndex];
   const trueClass = fbToClass(trueFb);

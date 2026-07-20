@@ -74,7 +74,9 @@ betMiss: {
       return (
         state.phase === "normal" &&
         role === "setter" &&
-        !state.powerUsedThisTurn
+        !!state.pendingGuess &&
+        !state.powerUsedThisTurn &&
+        (state.powers?.hideTileUses || 0) < 2
       );
     }
   },

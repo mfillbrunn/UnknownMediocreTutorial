@@ -11,7 +11,8 @@ const KEYBOARD_ROWS = [
   { name: "Home row (ASDFGHJKL)", letters: "ASDFGHJKL".split("") },
   { name: "Bottom row (ZXCVBNM)", letters: "ZXCVBNM".split("") }
 ];
-const CHAIN_ALPHA_DOUBLES_NEEDED = 3;
+const ALPHA_DOUBLES_NEEDED = 3;
+const CHAIN_NEEDED = 2;
 
 function isAscendingWord(word) {
   for (let i = 1; i < word.length; i++) {
@@ -80,8 +81,8 @@ function computeRevealLetterStatus(state) {
   if (p.mode === "ALPHA") {
     const count = history.filter(h => isAscendingWord((h.guess || "").toUpperCase())).length;
     return {
-      label: `${count}/${CHAIN_ALPHA_DOUBLES_NEEDED}`,
-      desc: `Submit ${CHAIN_ALPHA_DOUBLES_NEEDED} guesses with letters in alphabetical order (e.g. ABHOR). Found so far: ${count}.`
+      label: `${count}/${ALPHA_DOUBLES_NEEDED}`,
+      desc: `Submit ${ALPHA_DOUBLES_NEEDED} guesses with letters in alphabetical order (e.g. ABHOR). Found so far: ${count}.`
     };
   }
 
@@ -93,8 +94,8 @@ function computeRevealLetterStatus(state) {
     }
     const found = Array.from(doubles).sort();
     return {
-      label: `${found.length}/${CHAIN_ALPHA_DOUBLES_NEEDED}`,
-      desc: `Submit ${CHAIN_ALPHA_DOUBLES_NEEDED} guesses with distinct double letters. ` +
+      label: `${found.length}/${ALPHA_DOUBLES_NEEDED}`,
+      desc: `Submit ${ALPHA_DOUBLES_NEEDED} guesses with distinct double letters. ` +
         (found.length ? `Found so far: ${found.join(", ")}.` : "None found yet.")
     };
   }
@@ -107,8 +108,8 @@ function computeRevealLetterStatus(state) {
     if (curr[0] === prev[4]) links++;
   }
   return {
-    label: `${links}/${CHAIN_ALPHA_DOUBLES_NEEDED}`,
-    desc: `Submit ${CHAIN_ALPHA_DOUBLES_NEEDED} guesses that each start with the last letter of your previous guess. Linked so far: ${links}.`
+    label: `${links}/${CHAIN_NEEDED}`,
+    desc: `Submit ${CHAIN_NEEDED} guesses that each start with the last letter of your previous guess. Linked so far: ${links}.`
   };
 }
 

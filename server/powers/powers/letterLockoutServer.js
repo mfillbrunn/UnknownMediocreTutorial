@@ -15,6 +15,7 @@
 // letter is currently in effect.
 
 const engine = require("../powerEngineServer");
+const { getMustContainLetters } = require("../../utils/constraintData");
 
 engine.registerPower("letterLockout", {
   apply(state, action, roomId, io) {
@@ -23,6 +24,11 @@ engine.registerPower("letterLockout", {
 
     const used = state.powers.letterLockoutUsedLetters || [];
     if (used.includes(letter)) return false; // already banned earlier this match
+
+    // Can't ban a letter that's already confirmed green or yellow -- the
+    // guesser is entitled to use it, and letting the setter block it would
+    // effectively erase real information the feedback already gave away.
+    if (getMustContainLetters(state).includes(letter)) return false;
 
     state.powers.letterLockoutUsedLetters = [...used, letter];
     state.powers.letterLockoutBanned = letter;

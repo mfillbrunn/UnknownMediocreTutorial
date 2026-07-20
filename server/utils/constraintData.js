@@ -148,5 +148,6 @@ function buildConstraintData(state, role) {
 }
 
 module.exports = {
-  buildConstraintData
+  buildConstraintData,
+  getMustContainLetters
 };

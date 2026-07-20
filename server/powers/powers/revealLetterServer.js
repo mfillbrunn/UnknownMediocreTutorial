@@ -149,7 +149,7 @@ engine.registerPower("revealLetter", {
         if (curr[0] === prev[4]) links++;
       }
 
-      if (links >= 3) {
+      if (links >= 2) {
         p.ready = true;
         io.to(roomId).emit("toast", "Word Chain unlocked!");
       }

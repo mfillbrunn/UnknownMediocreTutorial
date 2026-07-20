@@ -1050,10 +1050,19 @@
 #GuesserRemainingBox .wiretap-live-waiting {
   opacity: 0.6;
 }
-#GuesserRemainingBox .informant-line .value {
-  color: var(--tile-green);
+.informant-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: var(--r-6);
+  background: var(--tile-green);
+  color: #fff;
   font-weight: 900;
-  letter-spacing: 1px;
+  font-size: 1em;
+  line-height: 1;
+  border: 1px solid color-mix(in srgb, var(--tile-green) 55%, black);
 }
 .remaining-box .line:first-child {
   padding-bottom: var(--sp-4);

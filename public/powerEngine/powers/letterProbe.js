@@ -52,10 +52,11 @@ InfoBadgeEngine.register((state, role) => {
 
   const meta = POWER_METADATA.letterProbe;
   const verb = result.count === 1 ? "is" : "are";
+  const spaced = (result.letters || "").split("").join(" ");
   return {
     id: "letterProbeResult",
     emoji: meta.emoji,
-    text: `${meta.label}: ${result.count}/${result.distinctTested} ${verb} in the secret`,
+    text: `${meta.label} (${spaced}): ${result.count}/${result.distinctTested} ${verb} in the secret`,
     color: meta.color,
     priority: 10,
     screen: "guesser",

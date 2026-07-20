@@ -1,19 +1,52 @@
+// /powers/powers/hideTile.js — Hide Evidence (setter)
+//
+// The setter picks exactly which tile of the pending guess gets hidden by
+// tapping it directly in the pending-guess row, instead of a random tile
+// being chosen server-side. The power tray button is a status label only
+// (charges/turn eligibility, same generic enable/disable every power's
+// button gets) — it has no click handler; the tap-a-tile interaction below
+// is the only way to actually activate it.
 PowerEngine.register("hideTile", {
 
   role: "setter",
-tooltip: {
+  tooltip: {
     title: window.POWER_METADATA.hideTile.label,
     desc: window.POWER_METADATA.hideTile.desc
   },
 
   renderButton(roomId) {
-     const { wrapper, btn } =    PowerEngine.createPowerButton("hideTile", window.POWER_METADATA.hideTile.label);
+    const { wrapper, btn } = PowerEngine.createPowerButton("hideTile", window.POWER_METADATA.hideTile.label);
     this.wrapperEl = wrapper;
-     this.buttonEl = btn;
+    this.buttonEl = btn;
     $("setterPowerContainer").appendChild(wrapper);
+  },
 
-    btn.onclick = () =>
-      sendGameAction({ type: "USE_HIDE_TILE" });
+  uiEffects(state, role) {
+    if (role !== "setter") return;
+    const container = document.getElementById("draftSetter");
+    const tiles = container?.__draftRows?.pending?.__tiles;
+    if (!Array.isArray(tiles) || tiles.length !== 5) return;
+
+    const usable =
+      !state.powerUsedThisTurn &&
+      window.POWER_RULES?.hideTile?.allowed?.(state, role) === true;
+
+    tiles.forEach((tile, i) => {
+      tile.classList.toggle("tile-pickable-hide", usable);
+      tile.title = usable ? "Tap to hide this tile's feedback (Hide Evidence)" : "";
+
+      if (tile.__hideTileWired) return;
+      tile.__hideTileWired = true;
+      tile.addEventListener("click", () => {
+        const s = window.state;
+        const r = window.myRole;
+        const stillUsable =
+          s && !s.powerUsedThisTurn &&
+          window.POWER_RULES?.hideTile?.allowed?.(s, r) === true;
+        if (!stillUsable) return;
+        sendGameAction({ type: "USE_HIDE_TILE", index: i });
+      });
+    });
   },
 
   // Guesser sees hidden tiles in the history

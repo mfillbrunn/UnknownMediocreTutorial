@@ -1,3 +1,9 @@
+function ordinal(n) {
+  const suffixes = ["th", "st", "nd", "rd"];
+  const rem100 = n % 100;
+  return n + (suffixes[(rem100 - 20) % 10] || suffixes[rem100] || suffixes[0]);
+}
+
 function renderSetterRemainingBox(boxState) {
   const box = document.getElementById("SetterRemainingBox");
   if (!box) return;
@@ -94,8 +100,8 @@ function renderGuesserRemainingBox(boxState) {
 
   const informantLine = hasPeek
     ? `<div class="line informant-line">
-         <span class="label">🔦 Position ${peek.index + 1}</span>
-         <span class="value">${peek.letter}</span>
+         <span class="label">🔦 ${ordinal(peek.index + 1)} letter</span>
+         <span class="value"><span class="informant-tile">${peek.letter}</span></span>
        </div>`
     : "";
 
