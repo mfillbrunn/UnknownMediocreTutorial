@@ -441,6 +441,7 @@ onStateUpdate(newState => {
   updateRankedUI();
   updateShuffleUI();
   updateDevUI();
+  updatePowerModeUI();
   updateTimerAccess(); 
   updateTimerPresetUI();
   updateWaitingIndicator();

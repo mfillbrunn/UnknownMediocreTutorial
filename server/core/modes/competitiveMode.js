@@ -1,6 +1,17 @@
 const BaseMode = require("./baseMode");
 const { pickLetterProfileMode } = require("../../utils/letterProfile");
 
+// "custom" mode's per-round active pool: whichever powers the CURRENT
+// setter chose as their setter powers, plus whichever powers the CURRENT
+// guesser chose as their guesser powers -- each player's loadout follows
+// them across the round-2 role swap the same way state.initialPowers does
+// for the symmetric modes, just keyed by userId instead of by role.
+function computeCustomActivePowers(state) {
+  const setterPool = state.customPlayerPowers?.[state.setter]?.setterPowers || [];
+  const guesserPool = state.customPlayerPowers?.[state.guesser]?.guesserPowers || [];
+  return [...setterPool, ...guesserPool];
+}
+
 class CompetitiveMode extends BaseMode {
   initMatch(state) {
     state.roundIndex = 0;
@@ -41,6 +52,34 @@ class CompetitiveMode extends BaseMode {
     }
   }
 
+  // "custom" mode: playerPowers is { [userId]: { setterPowers, guesserPowers } },
+  // one entry per player, each already validated against the points budget.
+  // Unlike onLobbyReady above, there's no single shared setter/guesser pool --
+  // asymmetric by design, so state.initialPowers (role-keyed) doesn't apply
+  // here. state.customPlayerPowers is the durable per-player record instead.
+  onLobbyReadyCustom(state, playerPowers) {
+    state.customPlayerPowers = playerPowers;
+    state.activePowers = computeCustomActivePowers(state);
+
+    // revealLetter/letterProfile each need one mode picked for the whole
+    // match. Any player who included the power in their own guesserPowers
+    // might end up holding the guesser seat at some point, so check across
+    // everyone's loadout rather than just the current round's guesser.
+    const anyGuesserPowers = Object.values(playerPowers).flatMap(
+      (p) => p?.guesserPowers || []
+    );
+
+    if (anyGuesserPowers.includes("revealLetter")) {
+      const REVEAL_LETTER_MODES = ["ROW", "RARE", "ALPHA", "DOUBLES", "CHAIN"];
+      state.powers.revealLetter.mode =
+        REVEAL_LETTER_MODES[Math.floor(Math.random() * REVEAL_LETTER_MODES.length)];
+    }
+
+    if (anyGuesserPowers.includes("letterProfile")) {
+      state.powers.letterProfileMode = pickLetterProfileMode();
+    }
+  }
+
   onRoundEnd(state) {
     if (state.roundIndex < state.roundsTotal - 1) {
       return {
@@ -72,10 +111,9 @@ class CompetitiveMode extends BaseMode {
       state.players[state.guesser].role = "guesser";
     }
 
-    state.activePowers = [
-      ...state.initialPowers.guesser,
-      ...state.initialPowers.setter
-    ];
+    state.activePowers = state.customPowersMode
+      ? computeCustomActivePowers(state)
+      : [...state.initialPowers.guesser, ...state.initialPowers.setter];
 
     return {
       phase: "simultaneous",

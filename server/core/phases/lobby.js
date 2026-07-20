@@ -9,6 +9,8 @@ const { createInitialState } = require("../stateFactory");
 const { startGameTimer } = require("../timeouts/timeoutController");
 const { startDraftTimer } = require("../../utils/draftTimer");
 const { finalizeDraft, shuffle } = require("./draft");
+const { isLoadoutValid } = require("../../powers/POWER_POINTS");
+const { pickRandomAILoadout } = require("../../powers/randomLoadout");
 const {
   ensureStatePlayer,
   setPlayerName,
@@ -104,6 +106,34 @@ function handleLobbyPhase(room, state, action, roomId, context) {
   if (action.type === "SET_DRAFT_MODE") {
     if (state.hostUserId !== action.userId) return;
     state.draftMode = !!action.draftMode;
+    emitRoomState(roomId, room, io);
+    return;
+  }
+
+  // Three-way power-selection mode: "draft" (current per-round pick),
+  // "random" (server-rolled pool), "custom" (each player brings their own
+  // point-budgeted loadout, see POWER_POINTS.js). Supersedes SET_DRAFT_MODE
+  // above but that action is left in place for anything still using it.
+  if (action.type === "SET_POWER_MODE") {
+    if (state.hostUserId !== action.userId) return;
+    if (!["draft", "random", "custom"].includes(action.mode)) return;
+    state.draftMode = action.mode === "draft";
+    state.customPowersMode = action.mode === "custom";
+    emitRoomState(roomId, room, io);
+    return;
+  }
+
+  // Custom mode: a player locks in which of their saved loadouts they're
+  // bringing to this match. Anyone who reaches Ready without one gets a
+  // random valid loadout instead (see the customPowersMode branch below).
+  if (action.type === "SET_CUSTOM_LOADOUT") {
+    const userId = action.userId;
+    if (!userId || !room.playersByUserId[userId]) return;
+    const setterPowers = Array.isArray(action.setterPowers) ? action.setterPowers : [];
+    const guesserPowers = Array.isArray(action.guesserPowers) ? action.guesserPowers : [];
+    if (!isLoadoutValid(setterPowers, guesserPowers)) return;
+    state._customPlayerLoadouts ||= {};
+    state._customPlayerLoadouts[userId] = { setterPowers, guesserPowers };
     emitRoomState(roomId, room, io);
     return;
   }
@@ -298,6 +328,9 @@ if (action.type === "SET_DAILY_POWERS") {
     freshState.matchStartedAt = Date.now();
     freshState.shuffle = state.shuffle;
     freshState.draftMode = !!state.draftMode;
+    freshState.customPowersMode = !!state.customPowersMode;
+    freshState._customPlayerLoadouts = state._customPlayerLoadouts || null;
+    freshState._replayCustomPlayerPowers = state._replayCustomPlayerPowers || null;
     freshState.timeControl = { ...state.timeControl };
     freshState.powerCount = state.powerCount;
     freshState.aiDifficulty = state.aiDifficulty;
@@ -343,9 +376,56 @@ if (action.type === "SET_DAILY_POWERS") {
     // everything unlocked for testing).
     const draftEligible =
       state.draftMode &&
+      !state.customPowersMode &&
       !state.isDaily &&
       !state.isTutorial &&
       !state.devMode;
+
+    // Custom mode: each player brings their own point-budgeted loadout
+    // (picked earlier in the lobby via SET_CUSTOM_LOADOUT, or replayed from
+    // last match) instead of a shared per-role pool. Mutually exclusive
+    // with draft/daily/dev the same way draftEligible already is above.
+    const customEligible =
+      state.customPowersMode &&
+      !state.isDaily &&
+      !state.isTutorial &&
+      !state.devMode;
+
+    if (customEligible) {
+      const playerPowers = {};
+
+      for (const player of Object.values(state.players || {})) {
+        const replay = state._replayCustomPlayerPowers?.[player.userId];
+        const chosen = state._customPlayerLoadouts?.[player.userId];
+        const loadout =
+          replay && isLoadoutValid(replay.setterPowers, replay.guesserPowers)
+            ? replay
+            : chosen && isLoadoutValid(chosen.setterPowers, chosen.guesserPowers)
+            ? chosen
+            : pickRandomAILoadout();
+
+        playerPowers[player.userId] = {
+          setterPowers: loadout.setterPowers.slice(),
+          guesserPowers: loadout.guesserPowers.slice()
+        };
+      }
+
+      state.mode.onLobbyReadyCustom(state, playerPowers);
+
+      state.phase = "simultaneous";
+
+      if (state.timeControl?.enabled) {
+        resetRoundTimer(state);
+        state.activeTimer = "both";
+        state.roundStartTime = Date.now();
+        startGameTimer(room, state, roomId, context);
+      }
+
+      emitLobbyEvent(io, roomId, { type: "hideLobby" });
+      emitRoomState(roomId, room, io);
+      io.to(roomId).emit("gameStart");
+      return;
+    }
 
     if (draftEligible) {
       state.draftCandidates = {};

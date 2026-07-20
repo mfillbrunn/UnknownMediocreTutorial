@@ -242,8 +242,18 @@ function handleNormalPhase(room, state, action, roomId, context) {
     const callerRole = room.state.players?.[userId]?.role;
     const callerOwnsThisPower = !requiredRole || callerRole === requiredRole;
 
+    // Custom mode: powers aren't a shared per-role pool -- each player only
+    // has whatever's in their OWN loadout for their current role, even
+    // though state.activePowers (used for generic bookkeeping) is the union
+    // of both players' pools. Without this check either player could fire a
+    // power only their opponent actually picked.
+    const callerHasThisPowerInLoadout =
+      !state.customPowersMode ||
+      (state.customPlayerPowers?.[userId]?.[`${callerRole}Powers`] || []).includes(powerId);
+
     if (
       callerOwnsThisPower &&
+      callerHasThisPowerInLoadout &&
       !state.powerUsedThisTurn &&
       isPowerAllowed(powerId, state)
     ) {

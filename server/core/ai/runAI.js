@@ -75,11 +75,24 @@ function getAIRole(state, aiUserId) {
   return state.players?.[aiUserId]?.role ?? null;
 }
 
-function isPowerContextuallyUsable(powerId, state, aiRole) {
+// Custom mode: state.activePowers is the UNION of both players' loadouts
+// for the current round (see competitiveMode.js's computeCustomActivePowers)
+// -- an AI only actually owns whatever's in its OWN loadout for its current
+// role, same restriction normal.js's USE_ handler enforces for humans.
+function aiOwnsPowerInCustomMode(state, aiUserId, aiRole, powerId) {
+  if (!state.customPowersMode) return true;
+  const loadout = state.customPlayerPowers?.[aiUserId];
+  const pool = aiRole === "setter" ? loadout?.setterPowers : loadout?.guesserPowers;
+  return !!pool?.includes(powerId);
+}
+
+function isPowerContextuallyUsable(powerId, state, aiRole, aiUserId) {
   if (FORBIDDEN_AI_POWERS.has(powerId)) return false;
 
   const meta = powerMetadata[powerId];
   if (!meta || meta.role !== aiRole) return false;
+
+  if (!aiOwnsPowerInCustomMode(state, aiUserId, aiRole, powerId)) return false;
 
   if (!isPowerAllowed(powerId, state)) return false;
 
@@ -89,14 +102,14 @@ function isPowerContextuallyUsable(powerId, state, aiRole) {
   return true;
 }
 
-function pickRandomUsablePower(state, aiRole) {
+function pickRandomUsablePower(state, aiRole, aiUserId) {
   if (state.powerUsedThisTurn) return null;
   if (!Array.isArray(state.activePowers) || state.activePowers.length === 0) {
     return null;
   }
 
   const usable = state.activePowers.filter((powerId) =>
-    isPowerContextuallyUsable(powerId, state, aiRole)
+    isPowerContextuallyUsable(powerId, state, aiRole, aiUserId)
   );
 
   if (!usable.length) return null;
@@ -112,19 +125,19 @@ function pickRandomUsablePower(state, aiRole) {
 const ASAP_ALWAYS = new Set(["blindSpot", "fieldReport"]);
 const ASAP_COINFLIP = new Set(["revealHistory"]);
 
-function pickPriorityPower(state, aiRole) {
+function pickPriorityPower(state, aiRole, aiUserId) {
   if (state.powerUsedThisTurn) return null;
   if (!Array.isArray(state.activePowers)) return null;
 
   for (const powerId of state.activePowers) {
-    if (ASAP_ALWAYS.has(powerId) && isPowerContextuallyUsable(powerId, state, aiRole)) {
+    if (ASAP_ALWAYS.has(powerId) && isPowerContextuallyUsable(powerId, state, aiRole, aiUserId)) {
       return powerId;
     }
   }
   for (const powerId of state.activePowers) {
     if (
       ASAP_COINFLIP.has(powerId) &&
-      isPowerContextuallyUsable(powerId, state, aiRole) &&
+      isPowerContextuallyUsable(powerId, state, aiRole, aiUserId) &&
       Math.random() < 0.5
     ) {
       return powerId;
@@ -233,7 +246,7 @@ function maybeUsePower(room, state, aiUserId, roomId, context, isTutorial) {
   // No powers are active during the tutorial — nothing to do.
   if (isTutorial) return false;
 
-  const priorityPowerId = pickPriorityPower(state, aiRole);
+  const priorityPowerId = pickPriorityPower(state, aiRole, aiUserId);
   if (priorityPowerId) {
     const priorityAction = buildPowerAction(priorityPowerId, state, context);
     if (priorityAction) {
@@ -244,7 +257,7 @@ function maybeUsePower(room, state, aiUserId, roomId, context, isTutorial) {
 
   if (Math.random() > 0.5) return false;
 
-  const powerId = pickRandomUsablePower(state, aiRole);
+  const powerId = pickRandomUsablePower(state, aiRole, aiUserId);
   if (!powerId) return false;
 
   const powerAction = buildPowerAction(powerId, state, context);

@@ -178,6 +178,8 @@ function createInitialState() {
     ranked : false,
     shuffle: false,
     draftMode: true,
+    customPowersMode: false, // NEW: "custom" power-selection mode (per-player loadouts)
+    customPlayerPowers: null, // NEW: { [userId]: { setterPowers, guesserPowers } }, durable for the match
          isTutorial: false,
          devMode: false,
     gameOverView: "match",

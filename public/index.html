@@ -90,6 +90,7 @@
               </button>
               <button id="dataBtn" class="menu-btn">Data 📊</button>
               <button id="howToPlayBtn" class="menu-btn">How to Play</button>
+              <button id="powerLoadoutsBtn" class="menu-btn">Power Loadouts 🎛️</button>
               <button id="developerBtn" class="menu-btn">Developer 🛠️</button>
             </div>
           </div>
@@ -445,6 +446,23 @@
           <button id="devBtn" class="secondary-btn small">Dev</button>
           <button class="lobby-info-btn" data-info="Developer mode — unlocks more powers per match, for testing." aria-label="About Dev mode">ⓘ</button>
         </span>
+        <span class="lobby-action-item">
+          <select id="powerModeSelect" class="menu-input small">
+            <option value="draft">Draft</option>
+            <option value="random">Random</option>
+            <option value="custom">Custom</option>
+          </select>
+          <button class="lobby-info-btn" data-info="Draft: pick 2 of 3 revealed powers each round. Random: the server rolls a random pool. Custom: bring your own point-budgeted loadout." aria-label="About power mode">ⓘ</button>
+        </span>
+    </div>
+
+    <div id="customLoadoutPicker" class="lobby-actions hidden">
+      <span class="lobby-action-item">
+        <select id="loadoutPickerSelect" class="menu-input small">
+          <option value="">Random loadout</option>
+        </select>
+        <button id="manageLoadoutsBtn" class="secondary-btn small" type="button">Manage Loadouts</button>
+      </span>
     </div>
 
 
@@ -807,6 +825,9 @@
 <!-- ========== FRIENDS ========== -->
 <section id="friendsScreen" class="screen game-menu"></section>
 
+<!-- ========== POWER LOADOUTS (custom mode combo builder) ========== -->
+<section id="powerLoadoutsScreen" class="screen game-menu"></section>
+
 <!-- ========== PLAY VS AI ========== -->
 <section id="vsAiScreen" class="screen game-menu">
   <div class="menu-center vsai-center">
@@ -932,6 +953,7 @@
   <script src="client/socket-events.js"></script>
   <script src="client/power-functions.js"></script>
   <script src="powerEngine/powerMetadata.js"></script>
+  <script src="powerEngine/POWER_POINTS.js"></script>
   <script src="client/power-log-format.js"></script>
   <script src="client/InfoBadgeEngine.js"></script>
   <script src="client/remaining-words.js"></script>
@@ -979,6 +1001,7 @@
   <script src="client/my-games.js"></script>
   <script src="client/draft.js"></script>
   <script src="client/dev-powers.js"></script>
+  <script src="client/power-loadouts.js"></script>
   <script src="client/dev-simulation.js"></script>
   <script src="client/invite.js"></script>
   <script src="client/big-announce.js"></script>
