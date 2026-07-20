@@ -11,14 +11,6 @@ function computeTileClassKey({isSetter, entryRoundIndex, guessIndex, bsIdx, bsRo
     classes.push("tile-purple");
     return classes.join(" ");
   }
-  const isHiddenCycling =
-    !isSetter &&
-    Array.isArray(safeEntry.hiddenIndices) &&
-    safeEntry.hiddenIndices.includes(guessIndex);
-  if (isHiddenCycling) {
-    classes.push("tile-hidden-cycle");
-    return classes.join(" ");
-  }
   // Delayed Intel: this round hasn't "unlocked" for the guesser yet (see
   // server/utils/delayedFeedback.js) — fbArray is just a "?" placeholder
   // at this point, which the fallback branch further down would otherwise
@@ -49,15 +41,12 @@ if (!isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry
         }
   return classes.join(" ");
 } else if (isSetter && !state.powers?.stealthGuessActive) {
-    const isHiddenCycling_setter =
-    Array.isArray(safeEntry.hiddenIndices) &&
-    safeEntry.hiddenIndices.includes(guessIndex);
     const isBlindSpotForSetter =
     typeof bsIdx === "number" &&
     typeof bsRound === "number" &&
     guessIndex === bsIdx &&
     entryRoundIndex >= bsRound;
-    classes.push(...getSetterTileClasses(safeEntry, guessIndex, isBlindSpotForSetter,isHiddenCycling_setter ));
+    classes.push(...getSetterTileClasses(safeEntry, guessIndex, isBlindSpotForSetter));
     return classes.join(" ");
   }
   // Fallback to fbArray 
@@ -246,17 +235,8 @@ function fbToClass(fb) {
   return null;
 }
 
-function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot, isHiddenCycling) {
+function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot) {
   const classes = [];
-
-  // Hide Evidence: the setter chose this exact tile to be hidden -- it's
-  // meant to be a genuine blind spot for BOTH sides now, not just the
-  // guesser, so render the same "not revealed" tile the guesser sees
-  // instead of falling through to the true color below.
-  if (isHiddenCycling) {
-    classes.push("tile-hidden-cycle");
-    return classes;
-  }
 
   // --- TRUE feedback (always) ---
   const trueFb = safeEntry.fb?.[guessIndex];
@@ -290,9 +270,6 @@ function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot, isHiddenCyclin
   if (secondaryClass) {
     classes.push(`secondary-${secondaryClass}`);
     classes.push("tile-has-secondary");
-  }
-  if (isHiddenCycling) {
-    classes.push("tile-guesser-hidden");
   }
   return classes;
 }
