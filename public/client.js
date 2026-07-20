@@ -428,6 +428,10 @@ onStateUpdate(newState => {
     state.setterDraft = prevSetterDraft;
   } else {
     state.setterDraft = "";
+    // Locks are only meant to survive repeated rejections within the same
+    // decision turn -- once that turn actually ends, stale locks from it
+    // shouldn't silently carry into whatever comes next.
+    setterDraftLocks.clear();
   }
   if (!PowerEngine._initialized && roomId && myRole && state && state.phase !== "lobby") {
       PowerEngine.renderButtons(roomId);
@@ -774,10 +778,16 @@ function updateSetterPreview() {
   const isSetterTurn = state.turn === state.setter;
   if (!isSetterTurn) { clearSetterPreview(); return; }
   const typed = (state.setterDraft || "").toUpperCase();
+  // Drag Mode and locked tiles can leave the draft filled out of order
+  // (e.g. only position 3 filled) -- "complete"/"empty" have to be judged
+  // by how many real letters are present, not by raw string length, which
+  // is always 5 the moment any position has ever been touched (padded
+  // with spaces for the rest).
+  const filledCount = typed.split("").filter(c => c && c !== " ").length;
   let fb, isIncomplete = false;
-  if (typed.length === 5) {
+  if (filledCount === 5 && !typed.includes(" ")) {
     fb = predictFeedback(typed, guess);
-  } else if (typed.length === 0) {
+  } else if (filledCount === 0) {
     fb = predictFeedback(state.secret, guess);
   } else {
     fb = predictFeedbackIncomplete(typed, guess);
@@ -865,13 +875,43 @@ function emitSetterDraftPreview(draft) {
   if (!socket || !roomId || myUserId() !== state.setter) return;
   socket.emit("setterDraftSecret", {roomId, draft});
 }
+
+// Draft tile locks (Drag Mode: click a filled tile to lock it) -- indices
+// currently protected from BACKSPACE and clearSetterDraft(). Deliberately
+// not synced to the server or reset by every render; only cleared when a
+// fresh decision turn begins (see the setterCanEdit branch in
+// onStateUpdate) so locks survive repeated rejections within the same
+// turn, which is the whole point of locking a letter down.
+let setterDraftLocks = new Set();
+function isSetterDraftIndexLocked(index) {
+  return setterDraftLocks.has(index);
+}
+window.isSetterDraftIndexLocked = isSetterDraftIndexLocked;
+function toggleSetterDraftLock(index) {
+  if (!Number.isInteger(index) || index < 0 || index > 4) return;
+  const chars = (state.setterDraft || "").padEnd(5, " ").split("");
+  if (chars[index] === " ") return; // nothing there to lock
+  if (setterDraftLocks.has(index)) setterDraftLocks.delete(index);
+  else setterDraftLocks.add(index);
+  updateUI();
+}
+window.toggleSetterDraftLock = toggleSetterDraftLock;
+
 // A rejected secret (bad word, inconsistent with history, too similar to
 // the assassin word, or a server-side rejection that slipped past the
 // client checks) shouldn't leave the setter to backspace through five
-// dead letters by hand -- wipe the draft everywhere it's shown.
+// dead letters by hand -- wipe the draft everywhere it's shown, except
+// any letters they've explicitly locked in place.
 function clearSetterDraft() {
-  state.setterDraft = "";
-  emitSetterDraftPreview("");
+  const chars = (state.setterDraft || "").padEnd(5, " ").split("");
+  for (let i = 0; i < 5; i++) {
+    if (!setterDraftLocks.has(i)) chars[i] = " ";
+  }
+  const next = chars.join("");
+  // Nothing locked (the common case) -- collapse back to a clean "" like
+  // before, instead of leaving a row of invisible spaces around.
+  state.setterDraft = next.trim() === "" ? "" : next;
+  emitSetterDraftPreview(state.setterDraft);
   window.clearNotesDraft?.();
   updateUI();
 }
@@ -905,10 +945,38 @@ function setSetterDraftLetterAt(index, letter) {
   const chars = (state.setterDraft || "").padEnd(5, " ").split("");
   chars[index] = letter;
   state.setterDraft = chars.join("");
+  // The letter that was here is gone -- a stale lock on it would be
+  // misleading, and re-locking the new letter is a deliberate action the
+  // user can take again if they want it protected.
+  setterDraftLocks.delete(index);
   updateUI();
   emitSetterDraftPreview(state.setterDraft);
 }
 window.setSetterDraftLetterAt = setSetterDraftLetterAt;
+
+// Drag Mode tile-to-tile: relocates the letter at `from` to `to`,
+// overwriting whatever was at `to` and leaving `from` blank -- a move, not
+// a copy. Both endpoints lose any existing lock for the same reason
+// setSetterDraftLetterAt does.
+function moveSetterDraftLetter(from, to) {
+  if (!Number.isInteger(from) || from < 0 || from > 4) return;
+  if (!Number.isInteger(to) || to < 0 || to > 4) return;
+  if (from === to) return;
+  if (!canSetterEditDraftNow()) return;
+
+  const chars = (state.setterDraft || "").padEnd(5, " ").split("");
+  const letter = chars[from];
+  if (letter === " ") return; // nothing to move
+
+  chars[to] = letter;
+  chars[from] = " ";
+  state.setterDraft = chars.join("");
+  setterDraftLocks.delete(from);
+  setterDraftLocks.delete(to);
+  updateUI();
+  emitSetterDraftPreview(state.setterDraft);
+}
+window.moveSetterDraftLetter = moveSetterDraftLetter;
 function handleSetterInput(event) {
   if (window.isNotesActive?.() && window.notesInput?.(event)) return;
   // Freeze/roulette deliberately skip only the typing block below and
@@ -938,16 +1006,30 @@ function handleSetterInput(event) {
 
     const draft = state.setterDraft || "";
 
+    // Position-based (not append/pop-last) so it plays nicely with Drag
+    // Mode's tile fills and locked tiles, which can leave gaps anywhere,
+    // not just at the end.
     if (event.type === "BACKSPACE") {
-      state.setterDraft = draft.slice(0, -1);
+      const chars = draft.padEnd(5, " ").split("");
+      for (let i = 4; i >= 0; i--) {
+        if (chars[i] !== " " && !setterDraftLocks.has(i)) {
+          chars[i] = " ";
+          break;
+        }
+      }
+      const next = chars.join("");
+      state.setterDraft = next.trim() === "" ? "" : next;
       updateUI();
       emitSetterDraftPreview(state.setterDraft);
       return;
     }
 
     if (event.type === "LETTER") {
-      if (draft.length < 5) {
-        state.setterDraft = draft + event.value;
+      const chars = draft.padEnd(5, " ").split("");
+      const idx = chars.indexOf(" ");
+      if (idx !== -1) {
+        chars[idx] = event.value;
+        state.setterDraft = chars.join("");
         updateUI();
         emitSetterDraftPreview(state.setterDraft);
       }

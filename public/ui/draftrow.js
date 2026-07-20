@@ -20,11 +20,21 @@ window.renderDraftRows = function ({
       for (let i = 0; i < 5; i++) {
         const tile = document.createElement("div");
         tile.className = "history-tile draft-tile";
-        // Drag Mode drop target (setter only) -- see drag-mode.js. The
-        // pending-guess row is the guesser's already-submitted guess
-        // awaiting scoring, not editable, so it never gets this.
+        // Drag Mode drop target + drag source (setter only) -- see
+        // drag-mode.js. The pending-guess row is the guesser's
+        // already-submitted guess awaiting scoring, not editable, so it
+        // never gets this.
         if (isEditableDraft && role === "setter") {
           tile.dataset.dragIndex = i;
+          // A tile with a letter can itself be dragged onto another tile
+          // (moves it, overwriting the target) or just tapped in place
+          // (toggles its lock) -- beginTileDrag tells the two apart the
+          // same way beginKeyDrag tells a tap from a drag.
+          tile.addEventListener("pointerdown", (e) => {
+            const letter = tile.textContent?.trim();
+            if (!letter) return;
+            window.beginTileDrag?.(i, letter, e.clientX, e.clientY);
+          });
         }
         row.__tiles.push(tile);
         row.appendChild(tile);
@@ -66,7 +76,7 @@ window.renderDraftRows = function ({
   // *any* letter is typed at that position, including a wrong one.
   const greenPattern = (state.constraintData?.grid || []).map(cell => cell?.green || null);
 
-  function updateRow(row, word, className, ghostPattern, greenMatchPattern) {
+  function updateRow(row, word, className, ghostPattern, greenMatchPattern, showLocks) {
     const frozen =
       state.turn === state.setter &&
       state.powers?.freezeActive;
@@ -110,6 +120,14 @@ window.renderDraftRows = function ({
       tile.classList.toggle("tile-ghost-letter", !!ghost);
       tile.classList.toggle("tile-filled", !!real);
       tile.classList.toggle("tile-green-match", isGreenMatch);
+      // Tiles are reused across renders/roles/rows, so this must be
+      // explicitly cleared (not just skipped) whenever the row showing
+      // right now isn't the setter's own editable draft -- otherwise a
+      // lock icon from a prior render (e.g. the setter-draft view) could
+      // linger onto the read-only ghost-secret view that reuses the same
+      // DOM tile.
+      const locked = !!showLocks && !!real && window.isSetterDraftIndexLocked?.(i);
+      tile.classList.toggle("tile-locked", locked);
     }
   }
 
@@ -236,7 +254,8 @@ window.renderDraftRows = function ({
       upperSetterDraft || "",
       "draft-row setter-draft",
       null,
-      greenPattern
+      greenPattern,
+      true
     );
     showRow(draftRow, draftWasVisible, "row-slide-down");
     return;
@@ -252,7 +271,8 @@ window.renderDraftRows = function ({
       null,
       // Green-match applies to both: the setter's typed draft AND the
       // overlaid current secret when they haven't typed anything yet.
-      greenPattern
+      greenPattern,
+      !!upperSetterDraft
     );
     showRow(draftRow, draftWasVisible, "row-slide-down");
   }
