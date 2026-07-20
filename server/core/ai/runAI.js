@@ -3,18 +3,90 @@
 const { getAI } = require("./aiDifficulty");
 const { applyAIAction } = require("./aiActions");
 const powerMetadata = require("../../powers/powerMetadata");
+const { isPowerAllowed } = require("../../powers/POWER_RULES");
+const { pickLetterLockoutLetter, pickReconSweepLetters, feasibleSecretsFor } = require("./genericAI");
 
 // assassinWord is excluded from the game's randomized power pools
 // entirely (see task #106) — kept out of the AI pool too for the same
 // reason. revealHistory (Solve Cold Case) used to be excluded as well,
 // but there's no actual reason to: it's a self-contained reveal with no
 // extra payload needed, so the AI can fire it exactly like a human would.
+// revealLetter (Confirm Lead) is excluded by explicit request — its
+// unlock conditions (typing patterns like alphabetical/doubled-letter
+// guesses across several turns) aren't worth bending the AI's normal
+// guessing strategy to chase.
 const FORBIDDEN_AI_POWERS = new Set([
-  "assassinWord"
+  "assassinWord",
+  "revealLetter"
 ]);
+
+// Powers whose value depends on context beyond "is it my turn and have I
+// not used it yet" (which isPowerAllowed already covers) — an extra check
+// per power, applied both when picking a power at random and when
+// deciding whether to prioritize one. Absent from this map = no extra
+// condition.
+const EXTRA_ELIGIBILITY = {
+  // Lockdown (freezeSecret) blocks the setter from submitting a NEW
+  // secret — but simultaneousAllWrong (the opening guess missed
+  // everything) already forces the setter to keep their secret on its
+  // own. Using the power on top of that spends it for nothing.
+  freezeSecret: (state) => !state.simultaneousAllWrong,
+
+  // Marked Weakness (revealPenalty) rewards the SETTER with bonus score
+  // for every occurrence of the revealed letter in their own secret (see
+  // revealPenaltyServer.js / the power's description) — so deliberately
+  // revealing a letter that IS in the secret is a bet in the setter's
+  // favor, not against it. Held back until the guesser already has at
+  // least 3 colored (green/yellow) tiles: early in the round that same
+  // reveal would hand over a disproportionate amount of fresh
+  // information for the guaranteed bonus to be worth it.
+  revealPenalty: (state) => countColoredTiles(state) >= 3,
+
+  // Inside Job (magicMode) converts this guess's own yellow tiles into
+  // green constraints — it only has something to work with once the AI
+  // already has real yellow letters in play to potentially re-place.
+  magicMode: (state) => countKnownYellowLetters(state) >= 2
+};
+
+function countColoredTiles(state) {
+  let count = 0;
+  for (const h of state.history ?? []) {
+    if (!h?.fb) continue;
+    for (const c of h.fb) {
+      if (c === "🟩" || c === "🟨") count++;
+    }
+  }
+  return count;
+}
+
+function countKnownYellowLetters(state) {
+  const yellows = new Set();
+  for (const h of state.history ?? []) {
+    const fb = h?.fbGuesser ?? h?.fb;
+    if (!fb || !h?.guess) continue;
+    for (let i = 0; i < 5; i++) {
+      if (fb[i] === "🟨") yellows.add(h.guess[i]?.toUpperCase());
+    }
+  }
+  return yellows.size;
+}
 
 function getAIRole(state, aiUserId) {
   return state.players?.[aiUserId]?.role ?? null;
+}
+
+function isPowerContextuallyUsable(powerId, state, aiRole) {
+  if (FORBIDDEN_AI_POWERS.has(powerId)) return false;
+
+  const meta = powerMetadata[powerId];
+  if (!meta || meta.role !== aiRole) return false;
+
+  if (!isPowerAllowed(powerId, state)) return false;
+
+  const extra = EXTRA_ELIGIBILITY[powerId];
+  if (extra && !extra(state)) return false;
+
+  return true;
 }
 
 function pickRandomUsablePower(state, aiRole) {
@@ -23,17 +95,42 @@ function pickRandomUsablePower(state, aiRole) {
     return null;
   }
 
-  const usable = state.activePowers.filter((powerId) => {
-    if (FORBIDDEN_AI_POWERS.has(powerId)) return false;
-
-    const meta = powerMetadata[powerId];
-    if (!meta) return false;
-
-    return meta.role === aiRole;
-  });
+  const usable = state.activePowers.filter((powerId) =>
+    isPowerContextuallyUsable(powerId, state, aiRole)
+  );
 
   if (!usable.length) return null;
   return usable[Math.floor(Math.random() * usable.length)];
+}
+
+// Some powers are strongest used the instant they're available rather
+// than left to the normal 50% "use any active power" coin flip below —
+// this bypasses that roll for them specifically. Create Dead Zone and
+// Field Report are always grabbed on the first eligible turn; Solve Cold
+// Case only gets a 50/50 shot at jumping the queue each turn (it's still
+// useful later, so there's less urgency).
+const ASAP_ALWAYS = new Set(["blindSpot", "fieldReport"]);
+const ASAP_COINFLIP = new Set(["revealHistory"]);
+
+function pickPriorityPower(state, aiRole) {
+  if (state.powerUsedThisTurn) return null;
+  if (!Array.isArray(state.activePowers)) return null;
+
+  for (const powerId of state.activePowers) {
+    if (ASAP_ALWAYS.has(powerId) && isPowerContextuallyUsable(powerId, state, aiRole)) {
+      return powerId;
+    }
+  }
+  for (const powerId of state.activePowers) {
+    if (
+      ASAP_COINFLIP.has(powerId) &&
+      isPowerContextuallyUsable(powerId, state, aiRole) &&
+      Math.random() < 0.5
+    ) {
+      return powerId;
+    }
+  }
+  return null;
 }
 
 function toUpperSnake(str) {
@@ -61,32 +158,33 @@ function buildPowerAction(powerId, state, context) {
   }
 
   if (powerId === "letterProbe") {
-    // Recon Sweep tests any 5 letters — reuse a picked guess word as the probe.
-    const aiLogic = getAI(state);
-    const letters = aiLogic.pickGuess(state, context.WORDS.guesses, context.WORDS.secrets);
+    // Recon Sweep tests any 5 letters — probe the letters most common
+    // among the remaining feasible secrets instead of reusing a normal
+    // dictionary guess (which may not even touch an untested letter).
+    const letters = pickReconSweepLetters(state, context.WORDS.secrets);
     if (!letters || letters.length !== 5) return null;
     return { type, letters };
   }
 
   if (powerId === "letterLockout") {
-    // Any letter not already spent this match works — no deep strategy
-    // needed, just avoid re-picking one already banned (the server would
-    // reject that as a no-op anyway).
-    const used = new Set(state.powers?.letterLockoutUsedLetters || []);
-    const available = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      .split("")
-      .filter((l) => !used.has(l));
-    if (!available.length) return null;
-    const letter = available[Math.floor(Math.random() * available.length)];
+    const letter = pickLetterLockoutLetter(state, context.WORDS.secrets);
+    if (!letter) return null;
     return { type, letter };
   }
 
   if (powerId === "revealPenalty") {
-    // Needs a still-unknown letter (revealPenaltyServer.js rejects any
-    // letter already confirmed green/yellow/gray, or already forced via
-    // another power) — mirror that exact "known" set here, or the AI's
-    // attempt always silently no-ops without the letter ever getting
-    // marked used, and the power just never actually fires.
+    // revealPenaltyServer.js rejects any letter already confirmed green/
+    // yellow/gray, or already forced via another power — mirror that
+    // exact "known" set here. Deliberately pick a letter that IS in the
+    // setter's own secret: the power rewards the SETTER with bonus score
+    // for every occurrence of the revealed letter in the final secret
+    // (see powerMetadata's description) — revealing a true letter is a
+    // bet in the setter's own favor, not a risk. EXTRA_ELIGIBILITY above
+    // already holds this power back until the guesser has enough info
+    // that the reveal isn't giving away more than they could already
+    // suspect. If every letter in the secret is already known, there's no
+    // safe/useful reveal left — skip rather than fall back to gambling on
+    // a random unknown letter.
     const known = new Set();
     for (const past of state.history ?? []) {
       if (!past?.fb) continue;
@@ -99,9 +197,8 @@ function buildPowerAction(powerId, state, context) {
     for (const c of state.extraConstraints ?? []) {
       if (c.letter) known.add(c.letter.toUpperCase());
     }
-    const available = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      .split("")
-      .filter((l) => !known.has(l));
+    const secretLetters = [...new Set((state.secret || "").toUpperCase().split(""))];
+    const available = secretLetters.filter((l) => !known.has(l));
     if (!available.length) return null;
     const letter = available[Math.floor(Math.random() * available.length)];
     return { type, letter };
@@ -109,12 +206,20 @@ function buildPowerAction(powerId, state, context) {
 
   if (powerId === "betMiss") {
     // Needs a betMissNumber (0-5) or betMissServer.js's postScore bails
-    // out on `typeof betMissNumber !== "number"` and the bet — the
-    // power's one-time use — is burned for nothing. No stronger signal is
-    // available yet (this runs before the AI's own next guess is picked),
-    // so a random guess-count is at least a real bet with real odds,
-    // instead of a guaranteed-wasted activation.
-    return { type, betMissNumber: Math.floor(Math.random() * 6) };
+    // out on `typeof betMissNumber !== "number"` and the bet is wasted.
+    // No direct signal about the upcoming guess exists yet (this runs
+    // before it's picked), but the most recent guess's own miss (⬛)
+    // count is a reasonable anchor — as the round narrows down, guesses
+    // tend to land close to the last one's miss count, sometimes one
+    // fewer as another letter gets confirmed. A 50/50 between those two
+    // anchors beats a uniform blind 0-5 guess.
+    const lastEntry = state.history?.[state.history.length - 1];
+    const lastFb = lastEntry?.fbGuesser ?? lastEntry?.fb;
+    const anchor = Array.isArray(lastFb)
+      ? lastFb.filter((c) => c === "⬛").length
+      : 3;
+    const betMissNumber = Math.random() < 0.5 ? anchor : Math.max(0, anchor - 1);
+    return { type, betMissNumber };
   }
 
   return { type };
@@ -127,6 +232,15 @@ function maybeUsePower(room, state, aiUserId, roomId, context, isTutorial) {
 
   // No powers are active during the tutorial — nothing to do.
   if (isTutorial) return false;
+
+  const priorityPowerId = pickPriorityPower(state, aiRole);
+  if (priorityPowerId) {
+    const priorityAction = buildPowerAction(priorityPowerId, state, context);
+    if (priorityAction) {
+      applyAIAction(room, priorityAction, aiUserId, roomId, context);
+      return true;
+    }
+  }
 
   if (Math.random() > 0.5) return false;
 
@@ -334,4 +448,11 @@ function maybeRunAI(room, roomId, context) {
   }, aiDelay());
 }
 
-module.exports = { maybeRunAI, buildPowerAction, computeAIActionForUser };
+module.exports = {
+  maybeRunAI,
+  buildPowerAction,
+  computeAIActionForUser,
+  pickPriorityPower,
+  pickRandomUsablePower,
+  isPowerContextuallyUsable
+};
