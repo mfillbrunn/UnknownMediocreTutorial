@@ -17,12 +17,42 @@
 
 .draft-tile[data-drag-index] {
   transition: outline-color 0.12s ease, background 0.12s ease;
+  /* Same reasoning as the keys above -- tiles are themselves drag sources
+     now (tile-to-tile relocation), so a touch browser needs to hand the
+     whole gesture to JS from the first touch rather than trying to
+     scroll. Applies to every draft tile regardless of Drag Mode being on
+     right now since it's cheap and harmless when off (pointerdown simply
+     no-ops there). */
+  touch-action: none;
 }
 
 .draft-tile[data-drag-index].drag-hover {
   outline: 2px dashed var(--setter-color, #f87171);
   outline-offset: 2px;
   background: color-mix(in srgb, var(--setter-color, #f87171) 18%, transparent);
+}
+
+/* Locked draft tile (tap a filled tile in Drag Mode to lock it) -- a
+   small badge, same corner/sizing language as the "didn't know this"
+   marker powers.css uses for tile-guesser-hidden, so it reads as part of
+   the same visual vocabulary. */
+.draft-tile.tile-locked {
+  outline: 1.5px solid color-mix(in srgb, var(--setter-color, #f87171) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.draft-tile.tile-locked::after {
+  content: "🔒";
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+
+  font-size: 11px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+
+  pointer-events: none;
+  z-index: 3;
 }
 
 .drag-letter-ghost {
