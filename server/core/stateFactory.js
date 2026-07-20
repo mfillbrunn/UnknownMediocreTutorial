@@ -9,6 +9,7 @@ function createInitialPowers(){
 const powers = {
 // HIDE TILE
       hideTileUsed: false,
+      hideTileUses: 0, // charges spent — 2 charges total, see POWER_RULES.js
       hideTilePendingCount: 0,
       hideTileActive: 0,
       // BLIND GUESS
@@ -34,6 +35,7 @@ const powers = {
       betMissNumber : null,
       // REVEAL GREEN
       revealGreenUsed: false,
+      revealGreenUses: 0, // charges spent — 2 charges total, see POWER_RULES.js
       revealGreenPos: null,
       revealGreenLetter: null,
       revealGreenActive: false,
@@ -50,8 +52,10 @@ const powers = {
       countOnlyRound: -1,
       // SUGGEST POWERS
       suggestGuessUsed: false,
+      suggestGuessUses: 0, // charges spent — 2 charges total, see POWER_RULES.js
       suggestGuessActive: false,
       suggestSecretUsed: false,
+      suggestSecretUses: 0, // charges spent — 2 charges total, see POWER_RULES.js
       suggestSecretActive: false,
       // REVEAL HISTORY
       revealHistoryUsed: false,

@@ -71,6 +71,139 @@ function countNewLetters(word, usedLetters) {
   return c;
 }
 
+// Standard English letter-frequency order (ETAOIN SHRDLU, extended to all
+// 26) — the "common letters" category several power heuristics below fall
+// back on when there isn't enough game-specific info to do better.
+const COMMON_LETTER_ORDER = "ETAOINSHRDLCUMWFGYPBVKJXQZ".split("");
+
+function shuffleArray(arr) {
+  const copy = arr.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+// Words from `secretRows` still consistent with everything shown to the
+// GUESSER so far (fbGuesser view) — the guesser's own belief about which
+// secrets remain possible. Shared by every power heuristic below that
+// needs to reason about "the remaining words," so they all agree on what
+// that means instead of each recomputing a slightly different notion of
+// it.
+function feasibleSecretsFor(state, secretRows) {
+  return secretRows.filter(r =>
+    isConsistentWithHistory(state.history, r.word, state, { fbGuesser: true })
+  );
+}
+
+// For each letter, how many of the given words contain it at least once —
+// "how many remaining candidates would this letter help distinguish,"
+// the standard information-value heuristic for probes that don't have to
+// be a real dictionary word.
+function letterFrequencyAmong(words) {
+  const counts = new Map();
+  for (const r of words) {
+    for (const ch of new Set(r.word.toUpperCase())) {
+      counts.set(ch, (counts.get(ch) || 0) + 1);
+    }
+  }
+  return counts;
+}
+
+function topLettersByFrequency(counts, excludeLetters, n) {
+  return [...counts.entries()]
+    .filter(([letter]) => !excludeLetters.has(letter))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([letter]) => letter);
+}
+
+// Letter Lockout (setter): three candidate categories to ban from —
+// generic common English letters, letters actually in the setter's own
+// secret (banning one denies the guesser a chance to confirm it green
+// this turn), and letters drawn from the remaining feasible words (only
+// meaningful, and only computed, once that pool has already narrowed
+// below 5 — with many candidates left almost every letter appears in some
+// of them, so the category wouldn't say anything a random letter didn't).
+// One category is picked at random each activation; if it turns out to
+// have nothing available (already banned, or category 3 not applicable
+// yet), the next category is tried.
+function pickLetterLockoutLetter(state, secretRows) {
+  const used = new Set(state.powers?.letterLockoutUsedLetters || []);
+
+  const commonAvailable = COMMON_LETTER_ORDER.filter(l => !used.has(l));
+
+  const secretLetters = [...new Set((state.secret || "").toUpperCase().split(""))]
+    .filter(l => !used.has(l));
+
+  const feasible = feasibleSecretsFor(state, secretRows);
+  const remainingWordLetters = feasible.length > 0 && feasible.length < 5
+    ? [...new Set(feasible.flatMap(r => r.word.toUpperCase().split("")))].filter(l => !used.has(l))
+    : [];
+
+  const categories = shuffleArray([commonAvailable, secretLetters, remainingWordLetters]);
+  for (const pool of categories) {
+    if (pool.length) return pool[Math.floor(Math.random() * pool.length)];
+  }
+  return null;
+}
+
+// Signal Scramble (nonsense, guesser): this round's guess doesn't need to
+// be a real word, so build one from scratch out of whichever letters are
+// most common among the still-feasible secrets — pure information
+// gathering, unconstrained by the dictionary.
+function pickSignalScrambleGuess(state, secretRows) {
+  const usedLetters = getUsedLetters(state);
+  const feasible = feasibleSecretsFor(state, secretRows);
+  const counts = letterFrequencyAmong(feasible);
+
+  const letters = topLettersByFrequency(counts, usedLetters, 5);
+
+  // Not enough distinct high-value letters left unused — pad with the
+  // next-best by raw frequency (even if already tested), then finally
+  // generic common letters, so a full 5-letter guess is always produced.
+  if (letters.length < 5) {
+    const byFrequency = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([l]) => l);
+    for (const l of byFrequency) {
+      if (letters.length >= 5) break;
+      if (!letters.includes(l)) letters.push(l);
+    }
+  }
+  if (letters.length < 5) {
+    for (const l of COMMON_LETTER_ORDER) {
+      if (letters.length >= 5) break;
+      if (!letters.includes(l)) letters.push(l);
+    }
+  }
+
+  return letters.slice(0, 5).join("");
+}
+
+// Recon Sweep (letterProbe, guesser): test the 5 most common untested
+// letters among the remaining feasible secrets. If none of the remaining
+// candidates share any untested letter (nothing left to learn this way),
+// returns null so the caller skips using the power this turn rather than
+// burning it on a probe that can't teach it anything.
+function pickReconSweepLetters(state, secretRows) {
+  const usedLetters = getUsedLetters(state);
+  const feasible = feasibleSecretsFor(state, secretRows);
+  const counts = letterFrequencyAmong(feasible);
+
+  const top = topLettersByFrequency(counts, usedLetters, 5);
+  if (!top.length) return null;
+
+  if (top.length < 5) {
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    for (const l of alphabet) {
+      if (top.length >= 5) break;
+      if (!usedLetters.has(l) && !top.includes(l)) top.push(l);
+    }
+  }
+
+  return top.slice(0, 5).join("");
+}
+
 // Caps the pool used for the AI's expensive "how many secrets would this
 // leave" estimates (see pickAISecret below) — a fixed-size random sample
 // instead of the full feasible set, so per-turn cost stops growing with
@@ -364,6 +497,45 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
     }
   }
 
+  // ----- Solve Cold Case (revealHistory) -----
+  // Just revealed a real secret from a few rounds back — if it's still
+  // consistent with everything learned since, it's a free, pre-validated
+  // guess; no reason to reason about anything else this turn.
+  const oldSecret = state.powers?.revealHistoryPending;
+  if (oldSecret) {
+    const upperOld = oldSecret.toUpperCase();
+    if (!usedGuesses.has(upperOld) && isConsistentWithHistory(history, upperOld, state, { fbGuesser: true })) {
+      return upperOld;
+    }
+  }
+
+  // ----- Field Report (fieldReport) -----
+  // Just revealed 3 conditions for this exact guess — meeting 2 of 3 gives
+  // a free yellow letter, all 3 gives a free green one. Worth deliberately
+  // aiming for instead of hoping the normal strategy pools happen to land
+  // on a word that qualifies.
+  if (state.powers?.fieldReportActive && state.powers?.fieldReportConditions?.length) {
+    const conditions = state.powers.fieldReportConditions;
+    const meetsAll = (word) => conditions.every((c) => satisfiesForceGuess(word, c));
+    const qualifying = remaining.filter((r) => meetsAll(r.word));
+    if (qualifying.length) {
+      const feasibleQualifying = qualifying.filter((r) =>
+        isConsistentWithHistory(history, r.word, state, { fbGuesser: true })
+      );
+      const pool = feasibleQualifying.length ? feasibleQualifying : qualifying;
+      return pool[Math.floor(Math.random() * pool.length)].word;
+    }
+  }
+
+  // ----- Signal Scramble (nonsense) -----
+  // This guess doesn't have to be a real word this round — build one out
+  // of whichever letters are most common among the remaining feasible
+  // secrets instead of leaving that freedom on the table.
+  if (state.powers?.nonsenseActive) {
+    const scramble = pickSignalScrambleGuess(state, allowedSecrets);
+    if (scramble) return scramble;
+  }
+
   // ----- Strategy pools -----
   // The feasible set (words still consistent with every clue) MUST be
   // computed over the full secret list, not a sample: a sample can omit
@@ -463,4 +635,10 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
    EXPORT
    =============================== */
 
-module.exports = { createAI };
+module.exports = {
+  createAI,
+  pickLetterLockoutLetter,
+  pickReconSweepLetters,
+  feasibleSecretsFor,
+  COMMON_LETTER_ORDER
+};

@@ -13,7 +13,9 @@ const WORDS = fs.readFileSync(
 
 engine.registerPower("suggestSecret", {
   apply(state, action, roomId, io, room) {
-    if (state.powers.suggestSecretUsed) return false;
+    // Two charges per round — can be activated on two separate turns
+    // (never the same turn, powerUsedThisTurn already prevents that).
+    if ((state.powers.suggestSecretUses || 0) >= 2) return false;
     if (state.powers.freezeActive) return false;
 
     const feasible = WORDS.filter((w) =>
@@ -44,6 +46,7 @@ engine.registerPower("suggestSecret", {
       candidates[Math.floor(Math.random() * candidates.length)];
 
     state.powers.suggestSecretUsed = true;
+    state.powers.suggestSecretUses = (state.powers.suggestSecretUses || 0) + 1;
     state.powers.suggestSecretActive = true;
     state.powers.suggestedSecret = suggestion;
 

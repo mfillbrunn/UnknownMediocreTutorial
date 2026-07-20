@@ -6,9 +6,9 @@ function isPowerAllowed(powerId, state) {
 const POWER_RULES = {
   hideTile: {
     allowed(state) {
-      return (        
+      return (
         state.turn === state.setter &&
-        !state.powers.hideTileUsed
+        (state.powers.hideTileUses || 0) < 2
       );
     }
   },
@@ -148,7 +148,7 @@ const POWER_RULES = {
     allowed(state) {
       return (
         state.turn === state.guesser &&
-        !state.powers.suggestGuessUsed
+        (state.powers.suggestGuessUses || 0) < 2
       );
     }
   },
@@ -168,7 +168,7 @@ const POWER_RULES = {
       return (
         state.turn === state.setter &&
         !state.powers?.freezeActive &&
-        !state.powers.suggestSecretUsed
+        (state.powers.suggestSecretUses || 0) < 2
       );
     }
   },
@@ -232,7 +232,7 @@ const POWER_RULES = {
     allowed(state) {
       return (
         state.turn === state.guesser &&
-        !state.powers.revealGreenUsed
+        (state.powers.revealGreenUses || 0) < 2
       );
     }
   },

@@ -13,7 +13,9 @@ const WORDS = fs.readFileSync(
 
 engine.registerPower("suggestGuess", {
   apply(state, action, roomId, io, room) {
-    if (state.powers.suggestGuessUsed) return false;
+    // Two charges per round — can be activated on two separate turns
+    // (never the same turn, powerUsedThisTurn already prevents that).
+    if ((state.powers.suggestGuessUses || 0) >= 2) return false;
 
     const feasible = WORDS.filter((w) =>
       isConsistentWithHistory(state.history, w, state)
@@ -31,6 +33,7 @@ engine.registerPower("suggestGuess", {
       feasible[Math.floor(Math.random() * feasible.length)];
 
     state.powers.suggestGuessUsed = true;
+    state.powers.suggestGuessUses = (state.powers.suggestGuessUses || 0) + 1;
     state.powers.suggestGuessActive = true;
     state.powers.suggestedGuess = suggestion;
 
