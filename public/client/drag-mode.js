@@ -1,13 +1,12 @@
-// client/drag-mode.js — Setter "Drag Mode"
+// client/drag-mode.js — Setter drag-and-drop
 //
-// Toggle at the top of the setter screen: while active, letters can be
-// dragged straight from the on-screen keyboard onto a specific draft tile,
-// as an alternative to typing them in order -- or dragged from one draft
-// tile to another to relocate them (overwriting whatever was at the
-// target). Built on Pointer Events rather than native HTML5
-// drag-and-drop -- native DnD has no reliable touch support on mobile
-// browsers, which this game targets, while Pointer Events unify mouse and
-// touch behind one code path.
+// Always on for the setter: letters can be dragged straight from the
+// on-screen keyboard onto a specific draft tile, as an alternative to
+// typing them in order -- or dragged from one draft tile to another to
+// relocate them (overwriting whatever was at the target). Built on
+// Pointer Events rather than native HTML5 drag-and-drop -- native DnD has
+// no reliable touch support on mobile browsers, which this game targets,
+// while Pointer Events unify mouse and touch behind one code path.
 //
 // A plain tap (pointerdown+pointerup with no real movement) never creates
 // the drag ghost. On a keyboard key that falls through to the key's
@@ -16,7 +15,6 @@
 // dragging and locking share the same tap/drag distinction so one
 // gesture cleanly does either depending on how far it moves.
 (function () {
-  let active = false;
   let pendingLetter = null;
   // Set only when the drag originated from a draft tile (not a keyboard
   // key) -- null means "this is a key-sourced drag/tap".
@@ -26,14 +24,6 @@
   let hoverTile = null;
 
   const DRAG_THRESHOLD = 8;
-
-  window.isSetterDragModeActive = function () { return active; };
-
-  window.toggleSetterDragMode = function () {
-    active = !active;
-    document.getElementById("dragModeBtnSetter")?.classList.toggle("active", active);
-    document.getElementById("keyboardSetter")?.classList.toggle("drag-mode-active", active);
-  };
 
   function setHoverTile(tile) {
     if (tile === hoverTile) return;
@@ -100,7 +90,6 @@
   }
 
   function arm(letter, sourceIndex, x, y) {
-    if (!active) return;
     pendingLetter = letter;
     pendingSourceIndex = sourceIndex;
     startX = x;

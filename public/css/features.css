@@ -2,27 +2,23 @@
    features.css — new features ported from mobile-frontend
    =================================================================== */
 
-/* ── Drag Mode (setter header toggle + drag-and-drop letters) ──────── */
-#keyboardSetter.drag-mode-active .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]) {
+/* ── Setter drag-and-drop (always on, see drag-mode.js) ─────────────── */
+#keyboardSetter .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]) {
   cursor: grab;
   /* Without this, a touch browser claims the gesture for page
      scroll/pan the instant the finger moves, so pointermove/pointerup
      never reach drag-mode.js -- the drag silently does nothing. This has
      to be set before the touch starts (it can't be applied reactively
-     from JS once the gesture is already underway), so it's keyed off the
-     drag-mode-active class the header toggle sets, not any per-drag
-     state. */
+     from JS once the gesture is already underway). */
   touch-action: none;
 }
 
 .draft-tile[data-drag-index] {
   transition: outline-color 0.12s ease, background 0.12s ease;
   /* Same reasoning as the keys above -- tiles are themselves drag sources
-     now (tile-to-tile relocation), so a touch browser needs to hand the
+     too (tile-to-tile relocation), so a touch browser needs to hand the
      whole gesture to JS from the first touch rather than trying to
-     scroll. Applies to every draft tile regardless of Drag Mode being on
-     right now since it's cheap and harmless when off (pointerdown simply
-     no-ops there). */
+     scroll. */
   touch-action: none;
 }
 
@@ -32,10 +28,10 @@
   background: color-mix(in srgb, var(--setter-color, #f87171) 18%, transparent);
 }
 
-/* Locked draft tile (tap a filled tile in Drag Mode to lock it) -- a
-   small badge, same corner/sizing language as the "didn't know this"
-   marker powers.css uses for tile-guesser-hidden, so it reads as part of
-   the same visual vocabulary. */
+/* Locked draft tile (tap a filled tile to lock it) -- a small badge,
+   same corner/sizing language as the "didn't know this" marker
+   powers.css uses for tile-guesser-hidden, so it reads as part of the
+   same visual vocabulary. */
 .draft-tile.tile-locked {
   outline: 1.5px solid color-mix(in srgb, var(--setter-color, #f87171) 70%, transparent);
   outline-offset: 2px;
