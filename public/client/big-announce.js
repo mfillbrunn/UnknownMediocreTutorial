@@ -8,14 +8,19 @@ window.showBigAnnounce = function ({
   sub = "",
   powerGroups = null,
   roleClass = "",
-  duration = 2400
+  duration = 2400,
+  // Compact: a small top-of-screen banner instead of the full ceremonial
+  // centered/backdrop-dimmed card -- for frequent, low-stakes messages
+  // (e.g. a rejected secret) where blocking the whole board would be
+  // overkill.
+  compact = false
 } = {}) {
   const el = document.getElementById("bigAnnouncePopup");
   if (!el) return;
 
   clearTimeout(el.__dismissTimer);
 
-  el.className = `big-announce ${roleClass}`.trim();
+  el.className = `big-announce ${compact ? "compact" : ""} ${roleClass}`.trim();
   el.querySelector(".big-announce-icon").textContent = icon;
   el.querySelector(".big-announce-title").textContent = title;
 

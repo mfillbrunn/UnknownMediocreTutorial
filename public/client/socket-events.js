@@ -74,9 +74,10 @@ socket.on("errorMessage", msg => {
     window.showBigAnnounce?.({
       icon: "🚫",
       title: "Not consistent with prior feedback",
-      sub: reasons.length ? reasons : ["Doesn't match the clues given so far."],
+      sub: reasons.length ? reasons.slice(0, 2) : ["Doesn't match the clues given so far."],
       roleClass: "role-setter",
-      duration: 5000
+      duration: 2200,
+      compact: true
     });
     window.clearSetterDraft?.();
     return;

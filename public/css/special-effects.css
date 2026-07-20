@@ -335,6 +335,38 @@
   color: var(--setter-color);
 }
 
+/* Compact: a small top-of-screen banner (rejected secret, etc.) instead of
+   a full-screen ceremonial moment -- no dark backdrop blocking the board,
+   card sits near the top rather than dead center, and everything is
+   sized down since there's no need to command full attention. */
+.big-announce.compact {
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.big-announce.compact .big-announce-card {
+  padding: 14px 22px;
+  border-radius: var(--r-12, 12px);
+  gap: 4px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.big-announce.compact .big-announce-icon {
+  font-size: 22px;
+}
+
+.big-announce.compact .big-announce-title {
+  font-size: var(--fs-15, 15px);
+}
+
+.big-announce.compact .big-announce-sub {
+  font-size: var(--fs-12, 12px);
+  max-width: 32ch;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .big-announce,
   .big-announce-card {

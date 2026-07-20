@@ -13,21 +13,27 @@ window.renderDraftRows = function ({
     container.innerHTML = "";
     container.__draftRows = {};
 
-    function makeRow() {
+    function makeRow(isEditableDraft) {
       const row = document.createElement("div");
       row.className = "history-row draft-row";
       row.__tiles = [];
       for (let i = 0; i < 5; i++) {
         const tile = document.createElement("div");
         tile.className = "history-tile draft-tile";
+        // Drag Mode drop target (setter only) -- see drag-mode.js. The
+        // pending-guess row is the guesser's already-submitted guess
+        // awaiting scoring, not editable, so it never gets this.
+        if (isEditableDraft && role === "setter") {
+          tile.dataset.dragIndex = i;
+        }
         row.__tiles.push(tile);
         row.appendChild(tile);
       }
       return row;
     }
 
-    container.__draftRows.pending = makeRow();
-    container.__draftRows.draft = makeRow();
+    container.__draftRows.pending = makeRow(false);
+    container.__draftRows.draft = makeRow(true);
 
     // Start hidden via an explicit style, not just "never shown" — the
     // wasVisible check below reads style.display, and an unset "" reads as
@@ -85,7 +91,12 @@ window.renderDraftRows = function ({
 
     for (let i = 0; i < 5; i++) {
       const tile = row.__tiles[i];
-      const real = word[i] || "";
+      // A space is Drag Mode's placeholder for "not filled at this
+      // position yet" (see setSetterDraftLetterAt in client.js) -- treat
+      // it the same as an actually-empty slot rather than rendering it
+      // as a filled, blank-looking tile.
+      const rawChar = word[i];
+      const real = (rawChar && rawChar !== " ") ? rawChar : "";
       const ghost = !real && ghostPattern && ghostPattern[i];
       // classList.toggle's second arg must be a real boolean — passing
       // `undefined` (which `real && greenMatchPattern && ...` can produce

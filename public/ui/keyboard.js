@@ -102,6 +102,18 @@ window.renderKeyboard = function ({
       }
 
       keyEl.onclick = () => onInput({ type: "LETTER", value: symbol });
+
+      // Drag Mode (setter only): a plain tap still types normally (see
+      // drag-mode.js -- no real pointer movement means no ghost element
+      // ever gets created, so this is a no-op and the click above fires
+      // as usual); moving the pointer before lifting instead drags the
+      // letter onto a specific draft tile.
+      if (!isGuesser && !keyEl.__dragWired) {
+        keyEl.__dragWired = true;
+        keyEl.addEventListener("pointerdown", (e) => {
+          window.beginKeyDrag?.(symbol, e.clientX, e.clientY);
+        });
+      }
     }
   }
 };
