@@ -281,8 +281,8 @@ window.POWER_METADATA = {
 
   delayedIntel: {
     label: "Delayed Intel",
-    desc: "Active from the start. The Inspector always sees each round's feedback one round late — the opening guess's result only appears once their second guess is submitted, the second guess's result once their third is submitted, and so on. A correct guess still wins instantly no matter what's been revealed yet — this only affects what the Inspector gets to see.",
-    short: "Feedback is always shown to the Inspector one round late.",
+    desc: "One-time use. Delay this round's feedback — the Inspector won't see the result until they've submitted their next guess. A correct guess still wins instantly no matter what's been revealed yet — this only affects what the Inspector gets to see.",
+    short: "Delays this round's feedback until the Inspector's next guess.",
     icon: "clock-delay",
     emoji: "🕰️",
     color: "#A78BFA"

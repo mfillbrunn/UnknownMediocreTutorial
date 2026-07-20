@@ -253,6 +253,16 @@ const POWER_RULES = {
         !state.powers.freezeSecretUsed
       );
     }
+  },
+
+  delayedIntel: {
+    allowed(state) {
+      return (
+        state.turn === state.setter &&
+        !!state.pendingGuess &&
+        !state.powers.delayedIntelUsed
+      );
+    }
   }
 };
 

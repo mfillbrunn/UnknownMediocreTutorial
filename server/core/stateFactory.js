@@ -144,6 +144,14 @@ const powers = {
       // validated and submitted (normalTransitions.js's clearRoundState).
       letterLockoutUsedLetters: [],
       letterLockoutBanned: null,
+      // DELAYED INTEL (setter power). One-time use per round: activated
+      // during the setter's own turn, it delays only the round about to be
+      // decided (the guesser won't see its feedback until they've
+      // submitted their NEXT guess) -- not every round for the rest of the
+      // match. delayedIntelRoundIndex is the state.history index of that
+      // one delayed round (see utils/delayedFeedback.js).
+      delayedIntelUsed: false,
+      delayedIntelRoundIndex: null,
       // UNIFIED REVEAL LETTER POWER (combines Row Master + Rare Bonus)
       revealLetter: {
         ready: false,          // power is unlocked

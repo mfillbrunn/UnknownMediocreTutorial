@@ -255,6 +255,16 @@ stealthGuess: {
   }
 },
 
+delayedIntel: {
+  once: true,
+  allowed(state, role) {
+    return state.phase === "normal" &&
+           role === "setter" &&
+           !!state.pendingGuess &&
+           !state.powerUsedThisTurn;
+  }
+},
+
   // ======================
   // GUESSER POWERS
   // ======================
