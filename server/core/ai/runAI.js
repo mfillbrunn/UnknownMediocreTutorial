@@ -170,6 +170,23 @@ function buildPowerAction(powerId, state, context) {
     return { type, guess1: g1, guess2: g2 };
   }
 
+  if (powerId === "hideTile") {
+    // Human players tap a specific pending-guess tile to hide; the AI picks
+    // one itself. Avoid a position already confirmed green -- there's
+    // nothing left to hide there, so it'd waste the charge.
+    const known = new Set();
+    for (const past of state.history ?? []) {
+      if (!past?.fb) continue;
+      for (let i = 0; i < 5; i++) {
+        if (past.fb[i] === "🟩") known.add(i);
+      }
+    }
+    const eligible = [0, 1, 2, 3, 4].filter((i) => !known.has(i));
+    const pool = eligible.length ? eligible : [0, 1, 2, 3, 4];
+    const index = pool[Math.floor(Math.random() * pool.length)];
+    return { type, index };
+  }
+
   if (powerId === "letterProbe") {
     // Recon Sweep tests any 5 letters — probe the letters most common
     // among the remaining feasible secrets instead of reusing a normal

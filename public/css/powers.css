@@ -40,6 +40,21 @@
   pointer-events: none;
 }
 
+/* Hide Evidence (setter power): the pending-guess row's tiles become
+   directly tappable when the power has a charge available -- this is the
+   whole activation surface now (see public/powerEngine/powers/hideTile.js
+   uiEffects), not a modal or a plain button click. */
+.pending-guess .history-tile.tile-pickable-hide {
+  cursor: pointer;
+  outline: 2px dashed color-mix(in srgb, var(--setter-color, #f87171) 70%, transparent);
+  outline-offset: 2px;
+  transition: filter 0.15s ease;
+}
+
+.pending-guess .history-tile.tile-pickable-hide:hover {
+  filter: brightness(1.15);
+}
+
 /* Delayed Intel (setter power): a round the guesser hasn't "unlocked" yet
    — same gray + "?" watermark language as tile-hidden-cycle above (an
    already-established "you don't know this yet" look) rather than
@@ -67,10 +82,13 @@
 
   font-family: var(--font-mono);
   font-weight: 1000;
-  font-size: 20px;
+  /* Same size language as a real revealed letter (history-tile's own
+     font-size clamp) so the placeholder reads as clearly as the letter
+     it's standing in for, not as a faint watermark. */
+  font-size: clamp(20px, 7vw, 38px);
 
-  color: rgba(255, 255, 255, 0.32);
-  filter: drop-shadow(0 0 4px rgba(255,255,255,0.35));
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
 
   pointer-events: none;
 }

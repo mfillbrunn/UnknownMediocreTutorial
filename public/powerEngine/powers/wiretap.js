@@ -19,7 +19,7 @@ PowerEngine.register("wiretap", {
 
   renderButton(roomId) {
     const { wrapper, btn } =
-      PowerEngine.createPowerButton("wiretap", "Tap Line");
+      PowerEngine.createPowerButton("wiretap", window.POWER_METADATA.wiretap.label);
     this.wrapperEl = wrapper;
     this.buttonEl = btn;
     $("guesserPowerContainer").appendChild(wrapper);

@@ -10,7 +10,7 @@ const powers = {
 // HIDE TILE
       hideTileUsed: false,
       hideTileUses: 0, // charges spent — 2 charges total, see POWER_RULES.js
-      hideTilePendingCount: 0,
+      hideTilePendingIndex: null, // tile index the setter picked, applied to the next-scored entry
       hideTileActive: 0,
       // BLIND GUESS
       blindGuessUsed: false,
