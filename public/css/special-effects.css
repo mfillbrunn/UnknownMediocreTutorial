@@ -345,6 +345,13 @@
   padding-top: 12vh;
   background: transparent;
   backdrop-filter: none;
+  /* Unlike the ceremonial variant, compact has no visible backdrop to
+     signal it's still there -- the base .big-announce.show rule sets
+     pointer-events:auto across this whole fixed inset:0 element, which
+     would otherwise silently eat every click/drag on the board underneath
+     for the full duration with zero visual cue why. Only the card itself
+     should still catch a click (to dismiss early). */
+  pointer-events: none !important;
 }
 
 .big-announce.compact .big-announce-card {
@@ -352,6 +359,7 @@
   border-radius: var(--r-12, 12px);
   gap: 4px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
 }
 
 .big-announce.compact .big-announce-icon {

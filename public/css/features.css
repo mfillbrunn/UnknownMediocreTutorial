@@ -5,6 +5,14 @@
 /* ── Drag Mode (setter header toggle + drag-and-drop letters) ──────── */
 #keyboardSetter.drag-mode-active .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]) {
   cursor: grab;
+  /* Without this, a touch browser claims the gesture for page
+     scroll/pan the instant the finger moves, so pointermove/pointerup
+     never reach drag-mode.js -- the drag silently does nothing. This has
+     to be set before the touch starts (it can't be applied reactively
+     from JS once the gesture is already underway), so it's keyed off the
+     drag-mode-active class the header toggle sets, not any per-drag
+     state. */
+  touch-action: none;
 }
 
 .draft-tile[data-drag-index] {
