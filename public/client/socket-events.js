@@ -78,6 +78,7 @@ socket.on("errorMessage", msg => {
       roleClass: "role-setter",
       duration: 5000
     });
+    window.clearSetterDraft?.();
     return;
   }
 
@@ -87,6 +88,11 @@ socket.on("errorMessage", msg => {
       : msg === "Word not in dictionary"
         ? "Not a valid secret"
         : msg;
+
+  // Any other errorMessage the setter can hit is a rejected secret too
+  // (only the setter's SET_SECRET_* actions land here; guess errors are
+  // reported separately) -- same "don't backspace it by hand" treatment.
+  if (window.myRole === "setter") window.clearSetterDraft?.();
 
   toast(friendly);
 });

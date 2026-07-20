@@ -80,18 +80,6 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   font-weight: 600;
 }
 
-/* The setter's own draft: the typed letter turns green the moment it
-   actually matches a position already confirmed green — positive
-   confirmation instead of a hint that disappears as soon as anything gets
-   typed there. Also applies to the ghost-secret overlay (the current
-   secret shown when the setter hasn't typed a new draft), so known-green
-   positions in it read green too. Overrides the dim ghost-secret color. */
-#draftSetter .draft-row.setter-draft .history-tile.tile-green-match,
-#draftSetter .draft-row.ghost-secret .history-tile.tile-green-match {
-  color: var(--tile-green) !important;
-  font-weight: 900;
-}
-
 .history-row-wrap {
   display: flex;
   justify-content: center;

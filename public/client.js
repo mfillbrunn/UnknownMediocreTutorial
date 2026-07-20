@@ -865,6 +865,16 @@ function emitSetterDraftPreview(draft) {
   if (!socket || !roomId || myUserId() !== state.setter) return;
   socket.emit("setterDraftSecret", {roomId, draft});
 }
+// A rejected secret (bad word, inconsistent with history, too similar to
+// the assassin word, or a server-side rejection that slipped past the
+// client checks) shouldn't leave the setter to backspace through five
+// dead letters by hand -- wipe the draft everywhere it's shown.
+function clearSetterDraft() {
+  state.setterDraft = "";
+  emitSetterDraftPreview("");
+  window.clearNotesDraft?.();
+  updateUI();
+}
 function handleSetterInput(event) {
   if (window.isNotesActive?.() && window.notesInput?.(event)) return;
   if (!(state.powers?.freezeActive || state.powers?.rouletteSecretActive)) {
@@ -951,6 +961,7 @@ function submitSetterNew() {
     if (countPositionalDifferences(w, assassin) < 2) {
       shakeDraftRow("setter");
       toast("Too similar to assassin word (needs 2 or more different letters)");
+      clearSetterDraft();
       return;
     }
   }
@@ -963,6 +974,7 @@ function submitSetterNew() {
       shakeDraftRow("setter");
       toast("Word not in dictionary");
     }
+    clearSetterDraft();
     return;
   }
   if (state.isTutorial && state.history.length < state.scriptedTurns) {
@@ -996,6 +1008,7 @@ function submitSetterNew() {
       roleClass: "role-setter",
       duration: 5000
     });
+    clearSetterDraft();
     return;
   }
   if (window.isRejoining) {
