@@ -159,7 +159,19 @@ const powers = {
         pendingReveal: null,    // { index, letter, mode }
       mode : null
       },
-      revealLetterActive: false
+      revealLetterActive: false,
+      // QUEST (always-on guesser mechanic, see questServer.js). type is
+      // chosen once per match by CompetitiveMode and preserved across the
+      // round-2 role swap by postGame.js -- ready/used/conditions reset
+      // every round like the rest of state.powers. conditions is only
+      // used by the FIELDREPORT quest type, regenerated fresh each round.
+      quest: {
+        type: null,
+        ready: false,
+        used: false,
+        conditions: null
+      },
+      questActive: false
 };
       return powers;
 }

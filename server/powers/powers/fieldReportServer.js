@@ -222,3 +222,8 @@ engine.registerPower("fieldReport", {
     io.to(roomId).emit("fieldReportResult", { metCount, reward: "none", conditions });
   }
 });
+
+// Reused by the Quest system (server/powers/powers/questServer.js) for its
+// own FIELDREPORT-style objective -- same condition vocabulary and
+// generation, just evaluated across multiple guesses instead of one.
+module.exports = { generateConditions };

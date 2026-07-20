@@ -269,12 +269,21 @@
     if (!select || !window.state || !window.currentUser) return;
 
     const mode = window.state.customPowersMode ? "custom" : (window.state.draftMode ? "draft" : "random");
-    if (document.activeElement !== select && select.value !== mode) select.value = mode;
+    // Custom is hidden from the dropdown for now (no matching <option>),
+    // so there's nothing to sync the select to if a room is somehow still
+    // in that mode (e.g. a stale Replay) -- leave it showing whatever it
+    // already shows rather than assigning a value the element can't hold.
+    if (mode !== "custom" && document.activeElement !== select && select.value !== mode) {
+      select.value = mode;
+    }
 
     const isHost = window.state.hostUserId === window.currentUser.id;
     select.disabled = !isHost;
 
-    const showPicker = mode === "custom" && window.state.phase === "lobby";
+    // Custom mode itself is hidden from the dropdown for now -- the
+    // picker panel (and the loadout-list population below) stays hidden
+    // along with it.
+    const showPicker = false && mode === "custom" && window.state.phase === "lobby";
     picker?.classList.toggle("hidden", !showPicker);
     if (!showPicker) return;
 

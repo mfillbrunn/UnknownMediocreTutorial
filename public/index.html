@@ -450,9 +450,11 @@
           <select id="powerModeSelect" class="menu-input small">
             <option value="draft">Draft</option>
             <option value="random">Random</option>
-            <option value="custom">Custom</option>
+            <!-- Custom (point-budgeted loadouts) hidden for now -- see
+                 power-loadouts.js's updatePowerModeUI, which is guarded
+                 against ever landing on it while this option is gone. -->
           </select>
-          <button class="lobby-info-btn" data-info="Draft: pick 2 of 3 revealed powers each round. Random: the server rolls a random pool. Custom: bring your own point-budgeted loadout." aria-label="About power mode">ⓘ</button>
+          <button class="lobby-info-btn" data-info="Draft: pick powers (and, for the Inspector, a Quest) each round. Random: the server rolls a random pool." aria-label="About power mode">ⓘ</button>
         </span>
     </div>
 
@@ -553,10 +555,16 @@
   <div class="panel draft-panel">
     <h2 class="screen-title">Power Draft</h2>
     <p class="draft-role-label" id="draftRoleLabel"></p>
-    <p class="draft-instruction">Pick 2 of the 3 powers below for your side.</p>
+    <p class="draft-instruction" id="draftInstruction">Pick 2 of the 3 powers below for your side.</p>
     <div class="draft-timer" id="draftTimerLabel">0:30</div>
 
     <div class="draft-candidates" id="draftCandidates"></div>
+
+    <!-- Guesser only: a second, independent pick for their Quest. -->
+    <div id="draftQuestSection" class="draft-quest-section" hidden>
+      <p class="draft-instruction">Pick 1 of the 2 Quests below.</p>
+      <div class="draft-candidates" id="draftQuestCandidates"></div>
+    </div>
 
     <div class="draft-status" id="draftStatus"></div>
 
@@ -759,7 +767,10 @@
           <div class="play-row">
              <!-- LEFT: POWERS -->
              <div class="play-col powers-col">
-                <div id="guesserPowerContainer" class="power-container laser-scope">
+                <div class="quest-and-powers-row">
+                  <div id="GuesserQuestBox" class="quest-box" hidden></div>
+                  <div id="guesserPowerContainer" class="power-container laser-scope">
+                  </div>
                 </div>
                 <div id="GuesserRemainingBox" class="remaining-box" hidden></div>
                 <div id="GuesserLetterProfileBox" class="letter-profile-box" hidden></div>
@@ -953,6 +964,7 @@
   <script src="client/socket-events.js"></script>
   <script src="client/power-functions.js"></script>
   <script src="powerEngine/powerMetadata.js"></script>
+  <script src="powerEngine/QUEST_METADATA.js"></script>
   <script src="powerEngine/POWER_POINTS.js"></script>
   <script src="client/power-log-format.js"></script>
   <script src="client/InfoBadgeEngine.js"></script>
@@ -986,6 +998,7 @@
   <script src="powerEngine/powers/betMiss.js"></script>
   <script src="powerEngine/powers/revealPenalty.js"></script>
   <script src="powerEngine/powers/fieldReport.js"></script>
+  <script src="client/quest.js"></script>
   <script src="powerEngine/powers/wiretap.js"></script>
   <script src="powerEngine/powers/letterProbe.js"></script>
   <script src="powerEngine/powers/revealLocation.js"></script>

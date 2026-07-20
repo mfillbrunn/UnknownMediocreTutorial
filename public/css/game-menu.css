@@ -811,6 +811,19 @@ body.menu-mode .app-header {
   margin-bottom: 16px;
 }
 
+/* Guesser only: a second, independent draft section for their Quest pick,
+   below the power candidates. Same instruction/candidate styling, just a
+   divider above it to visually separate the two picks. */
+.draft-quest-section {
+  padding-top: 12px;
+  margin-top: -4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.draft-quest-section[hidden] {
+  display: none;
+}
+
 .draft-candidate-btn {
   display: grid;
   grid-template-columns: auto 1fr;

@@ -1,5 +1,6 @@
 const BaseMode = require("./baseMode");
 const { pickLetterProfileMode } = require("../../utils/letterProfile");
+const { pickRandomQuestType, ensureQuestConditions } = require("../../powers/powers/questServer");
 
 // "custom" mode's per-round active pool: whichever powers the CURRENT
 // setter chose as their setter powers, plus whichever powers the CURRENT
@@ -22,7 +23,10 @@ class CompetitiveMode extends BaseMode {
     state.initialGuesser = state.guesser;
   }
 
-  onLobbyReady(state, setterPowers, guesserPowers) {
+  // guesserQuest: optional forced quest type (Draft mode's pick). Falls
+  // back to a random pick (Random mode, or anything else that doesn't go
+  // through the draft).
+  onLobbyReady(state, setterPowers, guesserPowers, guesserQuest) {
     state.initialPowers = {
       setter: setterPowers,
       guesser: guesserPowers
@@ -31,18 +35,6 @@ class CompetitiveMode extends BaseMode {
     // Round 1 powers
     state.activePowers = [...setterPowers, ...guesserPowers];
 
-    // revealLetter has several mutually-exclusive unlock conditions
-    // (ROW / RARE / ALPHA / DOUBLES / CHAIN) — pick one for the whole
-    // match here so it's set before the first turnStart() check ever
-    // runs. postGame.js already saves/restores state.powers.revealLetter
-    // .mode across the round-2 role swap, so whichever mode is picked
-    // here is what both players see.
-    if (guesserPowers.includes("revealLetter")) {
-      const REVEAL_LETTER_MODES = ["ROW", "RARE", "ALPHA", "DOUBLES", "CHAIN"];
-      state.powers.revealLetter.mode =
-        REVEAL_LETTER_MODES[Math.floor(Math.random() * REVEAL_LETTER_MODES.length)];
-    }
-
     // Letter Profile's category (alphabet half / keyboard row / vowel-
     // consonant) is likewise picked once for the whole match — see
     // stateFactory.js's comment on letterProfileMode. postGame.js
@@ -50,6 +42,12 @@ class CompetitiveMode extends BaseMode {
     if (guesserPowers.includes("letterProfile")) {
       state.powers.letterProfileMode = pickLetterProfileMode();
     }
+
+    // Every guesser always has exactly one Quest for the match (see
+    // questServer.js) -- chosen here the same way revealLetter.mode used
+    // to be, preserved across the round-2 role swap by postGame.js.
+    state.powers.quest.type = guesserQuest || pickRandomQuestType();
+    ensureQuestConditions(state);
   }
 
   // "custom" mode: playerPowers is { [userId]: { setterPowers, guesserPowers } },
@@ -61,23 +59,21 @@ class CompetitiveMode extends BaseMode {
     state.customPlayerPowers = playerPowers;
     state.activePowers = computeCustomActivePowers(state);
 
-    // revealLetter/letterProfile each need one mode picked for the whole
-    // match. Any player who included the power in their own guesserPowers
-    // might end up holding the guesser seat at some point, so check across
-    // everyone's loadout rather than just the current round's guesser.
+    // letterProfile needs its mode picked for the whole match. Any player
+    // who included the power in their own guesserPowers might end up
+    // holding the guesser seat at some point, so check across everyone's
+    // loadout rather than just the current round's guesser.
     const anyGuesserPowers = Object.values(playerPowers).flatMap(
       (p) => p?.guesserPowers || []
     );
 
-    if (anyGuesserPowers.includes("revealLetter")) {
-      const REVEAL_LETTER_MODES = ["ROW", "RARE", "ALPHA", "DOUBLES", "CHAIN"];
-      state.powers.revealLetter.mode =
-        REVEAL_LETTER_MODES[Math.floor(Math.random() * REVEAL_LETTER_MODES.length)];
-    }
-
     if (anyGuesserPowers.includes("letterProfile")) {
       state.powers.letterProfileMode = pickLetterProfileMode();
     }
+
+    // Same as onLobbyReady -- every guesser always has a Quest.
+    state.powers.quest.type = pickRandomQuestType();
+    ensureQuestConditions(state);
   }
 
   onRoundEnd(state) {

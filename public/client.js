@@ -397,9 +397,19 @@ onStateUpdate(newState => {
       const meta = window.getPowerMeta ? window.getPowerMeta(id, variant) : window.POWER_METADATA?.[id];
       return { emoji: meta?.emoji, label: meta?.label || id, desc: meta?.short || meta?.desc };
     });
+    const guesserPowers = describePowers(state.initialPowers?.guesser);
+    const questType = state.powers?.quest?.type;
+    const questMeta = questType ? window.QUEST_METADATA?.[questType] : null;
+    if (questMeta) {
+      guesserPowers.push({
+        emoji: questMeta.emoji,
+        label: `Quest: ${questMeta.label}`,
+        desc: questMeta.desc
+      });
+    }
     const powerGroups = [
       { label: "Spy", roleClass: "role-setter", powers: describePowers(state.initialPowers?.setter) },
-      { label: "Inspector", roleClass: "role-guesser", powers: describePowers(state.initialPowers?.guesser) }
+      { label: "Inspector", roleClass: "role-guesser", powers: guesserPowers }
     ];
     window.showBigAnnounce?.({
       icon: iAmSetter ? "🕵️" : "🔍",
@@ -1173,6 +1183,9 @@ if (typeof renderGuesserRemainingBox === "function") {
 }
 if (typeof renderGuesserLetterProfileBox === "function") {
   renderGuesserLetterProfileBox(state.powers?.letterProfileGuesserStat || null);
+}
+if (typeof renderQuestBox === "function") {
+  renderQuestBox(state);
 }
 if (state?.powers?.wiretapActive) {
   // Populate the live tap for the current draft (e.g. right after activating).

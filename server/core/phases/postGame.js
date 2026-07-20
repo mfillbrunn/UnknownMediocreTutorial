@@ -5,6 +5,7 @@ const { createInitialState } = require("../stateFactory");
 const resetRoundState = require("../../utils/resetRoundState");
 const { startGameTimer } = require("../timeouts/timeoutController");
 const { emitRoomState, syncTurnOwners } = require("../rooms");
+const { ensureQuestConditions } = require("../../powers/powers/questServer");
 
 function handleGameOverPhase(room, state, action, roomId, context) {
   const io = context.io;
@@ -40,6 +41,12 @@ function handleGameOverPhase(room, state, action, roomId, context) {
       savedLetterLockoutUsedLetters = state.powers.letterLockoutUsedLetters;
     }
 
+    // Quest type is match-scoped like revealLetter.mode used to be --
+    // always present now (every guesser has one), not gated on
+    // activePowers. Conditions (FIELDREPORT quest only) are NOT saved
+    // here on purpose: they're regenerated fresh each round below.
+    const savedQuestType = state.powers.quest?.type;
+
     resetRoundState(room, state, roomId, context);
 
     if (state.activePowers.includes("revealLetter")) {
@@ -53,6 +60,9 @@ function handleGameOverPhase(room, state, action, roomId, context) {
     if (state.activePowers.includes("letterLockout")) {
       state.powers.letterLockoutUsedLetters = savedLetterLockoutUsedLetters;
     }
+
+    state.powers.quest.type = savedQuestType || null;
+    ensureQuestConditions(state);
 
     state.phase = res.phase || "simultaneous";
     state.gameOver = false;
