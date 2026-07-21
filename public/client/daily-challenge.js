@@ -147,11 +147,7 @@ window.showDailyChallenge = async function () {
         </div>
         <div class="daily-powers-row">
           <span class="daily-role-label inspector">Inspector</span>
-          <div class="daily-powers">${insPills || "<span style='opacity:.4'>—</span>"}</div>
-        </div>
-        <div class="daily-powers-row">
-          <span class="daily-role-label inspector">Quest</span>
-          <div class="daily-powers">${questPill || "<span style='opacity:.4'>—</span>"}</div>
+          <div class="daily-powers">${insPills}${questPill}${(insPills || questPill) ? "" : "<span style='opacity:.4'>—</span>"}</div>
         </div>
       </div>
 
