@@ -72,18 +72,14 @@ function renderMenuAccountStatus () {
   el.querySelector(".menu-logout-btn").onclick = logout;
 }
 
-// Fetch past games
-$("showPastGamesBtn")?.addEventListener("click", async (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-
-  const btn = $("showPastGamesBtn");
-  const container = $("pastGamesContainer");
-  if (!btn || !container) return;
+// Fetch this player's finished matches and render them into `container`.
+// Shared by the Ranked screen's "Past Games" toggle and the My Games
+// screen's "Past Games" subtab, so both stay in sync with one query.
+async function fetchAndRenderPastGames(container) {
+  if (!container) return;
 
   // Auth not ready → show message and exit
   if (!authFullyReady()) {
-    container.classList.remove("hidden");
     container.textContent = "Please wait…";
     return;
   }
@@ -91,23 +87,6 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
   const myId = window.currentUser?.id;
   if (!myId) return;
 
-  // Toggle OFF
-  if (pastGamesVisible) {
-    container.classList.add("hidden");
-    pastGamesVisible = false;
-    btn.textContent = "Show Past Games";
-    return;
-  }
-
-  // Toggle ON
-  container.classList.remove("hidden");
-  pastGamesVisible = true;
-  btn.textContent = "Hide Past Games";
-
-  // Already loaded → just show
-  if (pastGamesLoaded) return;
-
-  // First-time load
   container.textContent = "Loading…";
 
   try {
@@ -131,25 +110,59 @@ $("showPastGamesBtn")?.addEventListener("click", async (e) => {
       .order("created_at", { ascending: false })
       .limit(20);
 
-    console.log("PAST GAMES RESULT", { data, error });
-
     if (error) throw error;
 
-    renderPastGames(data);
-    pastGamesLoaded = true;
+    renderPastGames(data, container);
+    container.dataset.loaded = "1";
 
   } catch (err) {
     if (isAbortError(err)) {
-      pastGamesLoaded = false;
-      setTimeout(() => {
-        $("showPastGamesBtn")?.click();
-      }, 200);
+      delete container.dataset.loaded;
+      setTimeout(() => fetchAndRenderPastGames(container), 200);
       return;
     }
 
     console.error("Past games load failed:", err);
     container.textContent = "Failed to load games";
   }
+}
+window.fetchAndRenderPastGames = fetchAndRenderPastGames;
+
+$("showPastGamesBtn")?.addEventListener("click", async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const btn = $("showPastGamesBtn");
+  const container = $("pastGamesContainer");
+  if (!btn || !container) return;
+
+  // Auth not ready → show message and exit
+  if (!authFullyReady()) {
+    container.classList.remove("hidden");
+    container.textContent = "Please wait…";
+    return;
+  }
+
+  if (!window.currentUser?.id) return;
+
+  // Toggle OFF
+  if (pastGamesVisible) {
+    container.classList.add("hidden");
+    pastGamesVisible = false;
+    btn.textContent = "Show Past Games";
+    return;
+  }
+
+  // Toggle ON
+  container.classList.remove("hidden");
+  pastGamesVisible = true;
+  btn.textContent = "Hide Past Games";
+
+  // Already loaded → just show
+  if (pastGamesLoaded) return;
+
+  await fetchAndRenderPastGames(container);
+  pastGamesLoaded = container.dataset.loaded === "1";
 });
 
 
@@ -186,9 +199,13 @@ function getPowersByRoleFromRounds(rounds = [], myId, match) {
   };
 }
 
-function renderPastGames(matches) {
-  const container = $("pastGamesContainer");
+function renderPastGames(matches, container = $("pastGamesContainer")) {
   if (!container || !window.currentUser) return;
+
+  if (!matches.length) {
+    container.textContent = "No finished games yet.";
+    return;
+  }
 
   const myId = window.currentUser.id;
 

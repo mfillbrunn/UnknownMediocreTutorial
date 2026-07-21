@@ -37,19 +37,6 @@ window.showMyGames = async function () {
 
   const gameList = Array.isArray(games) ? games : [];
 
-  if (gameList.length === 0 && !invites.length) {
-    screen.innerHTML = `<div class="menu-center">
-      <h2 class="menu-title">My Games</h2>
-      <p class="daily-completed-msg">
-        No unlimited-time games in progress. Start one with the
-        "Unlimited" time control — you can disconnect any time and
-        pick it back up here.
-      </p>
-      <button class="menu-btn" onclick="showStartup()">Back</button>
-    </div>`;
-    return;
-  }
-
   const pending = gameList.filter(g => g.isPending);
   const active = gameList.filter(g => !g.isPending);
   const casual = active.filter(g => !g.ranked);
@@ -72,14 +59,32 @@ window.showMyGames = async function () {
     </div>
   ` : "";
 
+  const activePane = gameList.length === 0 && !invites.length
+    ? `<p class="daily-completed-msg">
+        No unlimited-time games in progress. Start one with the
+        "Unlimited" time control — you can disconnect any time and
+        pick it back up here.
+      </p>`
+    : `${invitesSection}${section("Waiting for a friend", pending)}${section("Casual", casual)}${section("Ranked", ranked)}`;
+
   screen.innerHTML = `
     <div class="menu-center">
       <h2 class="menu-title">My Games</h2>
-      <p class="daily-date">♾️ Unlimited-time games in progress</p>
-      ${invitesSection}
-      ${section("Waiting for a friend", pending)}
-      ${section("Casual", casual)}
-      ${section("Ranked", ranked)}
+
+      <div class="friends-tabs my-games-tabs">
+        <button class="friends-tab my-games-tab active" data-my-games-tab="active">Active</button>
+        <button class="friends-tab my-games-tab" data-my-games-tab="past">Past Games</button>
+      </div>
+
+      <div id="myGamesActivePane">
+        <p class="daily-date">♾️ Unlimited-time games in progress</p>
+        ${activePane}
+      </div>
+
+      <div id="myGamesPastPane" class="hidden">
+        <div id="myGamesPastGamesContainer" class="past-games"></div>
+      </div>
+
       <button class="menu-btn" onclick="showStartup()">Back</button>
     </div>
   `;
@@ -107,6 +112,25 @@ window.showMyGames = async function () {
       btn.disabled = true;
       await window._declineGameInvite(btn.dataset.inviteId);
       window.showMyGames();
+    });
+  });
+
+  const activePaneEl = document.getElementById("myGamesActivePane");
+  const pastPaneEl = document.getElementById("myGamesPastPane");
+
+  screen.querySelectorAll(".my-games-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.myGamesTab;
+      screen.querySelectorAll(".my-games-tab").forEach(b => b.classList.toggle("active", b === btn));
+      activePaneEl?.classList.toggle("hidden", tab !== "active");
+      pastPaneEl?.classList.toggle("hidden", tab !== "past");
+
+      if (tab === "past") {
+        const container = document.getElementById("myGamesPastGamesContainer");
+        if (container && !container.dataset.loaded) {
+          window.fetchAndRenderPastGames?.(container);
+        }
+      }
     });
   });
 };
