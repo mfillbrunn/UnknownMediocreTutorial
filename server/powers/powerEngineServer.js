@@ -30,8 +30,12 @@ const engine = {
     for (const id in this.powers) {
       const p = this.powers[id];
       if (typeof p.beforeSetterSecretChange === "function") {
-        if (p.beforeSetterSecretChange(state, action)) {
-          return true;
+        try {
+          if (p.beforeSetterSecretChange(state, action)) {
+            return true;
+          }
+        } catch (err) {
+          console.error(`[powerEngine] beforeSetterSecretChange crashed for "${id}":`, err);
         }
       }
     }
@@ -42,7 +46,11 @@ const engine = {
     for (const id in this.powers) {
       const p = this.powers[id];
       if (typeof p.preScore === "function") {
-        p.preScore(state, guess, roomId, io);
+        try {
+          p.preScore(state, guess, roomId, io);
+        } catch (err) {
+          console.error(`[powerEngine] preScore crashed for "${id}":`, err);
+        }
       }
     }
   },
@@ -53,18 +61,35 @@ const engine = {
       if (typeof p.postScore === "function") {
         const capture = [];
         const wrappedIo = wrapIoForCapture(io, roomId, capture);
-        p.postScore(state, entry, roomId, wrappedIo);
-        const actorRole = FALLBACK_ROLE[id] || POWER_METADATA[id]?.role || null;
-        pushPendingEvent(state, id, actorRole, roomId, io, capture);
+        try {
+          p.postScore(state, entry, roomId, wrappedIo);
+          const actorRole = FALLBACK_ROLE[id] || POWER_METADATA[id]?.role || null;
+          pushPendingEvent(state, id, actorRole, roomId, io, capture);
+        } catch (err) {
+          console.error(`[powerEngine] postScore crashed for "${id}":`, err);
+        }
       }
     }
   },
 
+  // Each power's turnStart runs independently, guarded by its own
+  // try/catch: this loop drives every subsequent action in the game (a
+  // human's submit, or an AI's — see runAI.js's applyAIAction, which has
+  // no catch of its own around this call chain), so one power throwing
+  // here used to abort every OTHER power's turnStart in the same pass and
+  // skip the emitRoomState at the end of the caller's action handler.
+  // From either player's screen that reads as the game simply freezing —
+  // no error toast, no state update, nothing to retry. Contain it exactly
+  // like postScore/onGuessSubmitted already do below.
   turnStart(state, role, roomId, io) {
     for (const id in this.powers) {
       const p = this.powers[id];
       if (typeof p.turnStart === "function") {
-        p.turnStart(state, role, roomId, io);
+        try {
+          p.turnStart(state, role, roomId, io);
+        } catch (err) {
+          console.error(`[powerEngine] turnStart crashed for "${id}":`, err);
+        }
       }
     }
   },
@@ -81,9 +106,13 @@ const engine = {
       if (typeof p.onGuessSubmitted === "function") {
         const capture = [];
         const wrappedIo = wrapIoForCapture(io, roomId, capture);
-        p.onGuessSubmitted(state, guess, roomId, wrappedIo);
-        const actorRole = FALLBACK_ROLE[id] || POWER_METADATA[id]?.role || null;
-        pushPendingEvent(state, id, actorRole, roomId, io, capture);
+        try {
+          p.onGuessSubmitted(state, guess, roomId, wrappedIo);
+          const actorRole = FALLBACK_ROLE[id] || POWER_METADATA[id]?.role || null;
+          pushPendingEvent(state, id, actorRole, roomId, io, capture);
+        } catch (err) {
+          console.error(`[powerEngine] onGuessSubmitted crashed for "${id}":`, err);
+        }
       }
     }
   }

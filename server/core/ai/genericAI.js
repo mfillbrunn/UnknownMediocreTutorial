@@ -1,6 +1,7 @@
 const { isConsistentWithHistory } = require("../../game-engine/history");
 const { satisfiesForceGuess } = require("../../game-engine/validation");
 const { scoreGuess } = require("../../game-engine/scoring");
+const questServer = require("../../powers/powers/questServer");
 
 /* ===============================
    ENTRY POINTS
@@ -429,6 +430,181 @@ function pickAISecret(
    GUESSER LOGIC
    =============================== */
 
+/* ---------- Quest-aware guessing ----------
+   The AI actively tries to complete its own quest (server/powers/powers/
+   questServer.js): the first guess of a round always tries, later guesses
+   try 75% of the time, and a guess that would be the LAST one needed
+   ("one away") always tries -- unless only one feasible secret remains,
+   in which case taking the win always wins out (see the call site in
+   pickAIGuess, which checks that before any of this runs at all).
+   Reuses questServer.js's exported pure predicates/thresholds instead of
+   re-deriving quest logic, same as questServer.js's own turnStart switch
+   does -- there is exactly one place each quest's condition is defined. */
+
+function questRareLettersSeen(history) {
+  const seen = new Set();
+  for (const h of history) {
+    for (const c of h.guess.toUpperCase()) {
+      if (questServer.QUEST_RARE_LETTERS.has(c)) seen.add(c);
+    }
+  }
+  return seen;
+}
+
+// One entry per keyboard row: { row: Set, used: Set } for letters of that
+// row already covered by a past guess this round.
+function questRowCoverage(history) {
+  return questServer.QUEST_KEYBOARD_ROWS.map(row => {
+    const used = new Set();
+    for (const h of history) {
+      for (const c of h.guess.toUpperCase()) {
+        if (row.has(c)) used.add(c);
+      }
+    }
+    return { row, used };
+  });
+}
+
+function questDoublesSeen(history) {
+  const seen = new Set();
+  for (const h of history) {
+    const d = questServer.doubledLetterOf(h.guess.toUpperCase());
+    if (d) seen.add(d);
+  }
+  return seen;
+}
+
+// Does guessing `word` next make progress toward (or complete) the quest?
+// For the single-word-pattern quest types this IS the quest's per-guess
+// condition; for the cumulative ones (RARE/ROW/DOUBLES) it means "adds
+// something not already covered."
+function questWordAdvances(word, quest, state) {
+  const w = word.toUpperCase();
+  const history = state.history || [];
+
+  switch (quest.type) {
+    case "RARE": {
+      const seen = questRareLettersSeen(history);
+      return [...w].some(c => questServer.QUEST_RARE_LETTERS.has(c) && !seen.has(c));
+    }
+    case "ROW": {
+      const coverage = questRowCoverage(history);
+      return coverage.some(({ row, used }) =>
+        used.size < row.size && [...w].some(c => row.has(c) && !used.has(c))
+      );
+    }
+    case "ALPHA":
+      return questServer.isAscendingWord(w);
+    case "DOUBLES": {
+      const d = questServer.doubledLetterOf(w);
+      return !!d && !questDoublesSeen(history).has(d);
+    }
+    case "CHAIN": {
+      const prev = history.length ? history[history.length - 1].guess.toUpperCase() : null;
+      return !prev || w[0] === prev[prev.length - 1];
+    }
+    case "HARDMODE": {
+      const { green, mustInclude } = questServer.computeHardModeConstraints(history);
+      return questServer.isHardModeCompliant(w, green, mustInclude);
+    }
+    case "FIELDREPORT": {
+      const conditions = quest.conditions;
+      if (!Array.isArray(conditions) || !conditions.length) return false;
+      return conditions.filter(c => satisfiesForceGuess(w, c)).length >= 2;
+    }
+    case "ALTERNATING":
+      return questServer.isAlternatingWord(w);
+    case "BOOKENDS":
+      return questServer.isBookendWord(w);
+    case "REVERSEALPHA":
+      return questServer.isReverseAlphaWord(w);
+    case "HALF_AM":
+      return questServer.isInLetterRange(w, "A", "M");
+    case "HALF_NZ":
+      return questServer.isInLetterRange(w, "N", "Z");
+    case "VOWELPROGRESSION": {
+      const stage = questServer.computeVowelProgressionStage(history);
+      if (stage >= 4) return false;
+      const targetVowels = stage + 1;
+      const vowelCount = [...w].filter(c => "AEIOU".includes(c)).length;
+      return vowelCount === targetVowels;
+    }
+    default:
+      return false;
+  }
+}
+
+// Is the quest exactly one qualifying guess away from complete? Mirrors
+// each case's threshold (QUEST_THRESHOLDS) against its current progress
+// count. ROW/RARE are coverage-based rather than a flat count, so "one
+// away" means exactly one letter short somewhere.
+function questIsOneAway(quest, state) {
+  const history = state.history || [];
+  switch (quest.type) {
+    case "RARE":
+      return questRareLettersSeen(history).size === questServer.QUEST_THRESHOLDS.RARE - 1;
+    case "ROW":
+      return questRowCoverage(history).some(({ row, used }) => row.size - used.size === 1);
+    case "ALPHA":
+      return history.filter(h => questServer.isAscendingWord(h.guess.toUpperCase())).length
+        === questServer.QUEST_THRESHOLDS.ALPHA - 1;
+    case "DOUBLES":
+      return questDoublesSeen(history).size === questServer.QUEST_THRESHOLDS.DOUBLES - 1;
+    case "CHAIN": {
+      let links = 0;
+      for (let i = 1; i < history.length; i++) {
+        const prev = history[i - 1].guess.toUpperCase();
+        const curr = history[i].guess.toUpperCase();
+        if (curr[0] === prev[4]) links++;
+      }
+      return links === questServer.QUEST_THRESHOLDS.CHAIN - 1;
+    }
+    case "HARDMODE":
+      return questServer.computeHardModeCount(history) === questServer.QUEST_THRESHOLDS.HARDMODE - 1;
+    case "FIELDREPORT":
+      return questServer.computeFieldReportCount(history, quest.conditions)
+        === questServer.QUEST_THRESHOLDS.FIELDREPORT - 1;
+    case "ALTERNATING":
+      return history.filter(h => questServer.isAlternatingWord(h.guess.toUpperCase())).length
+        === questServer.QUEST_THRESHOLDS.ALTERNATING - 1;
+    case "BOOKENDS":
+      return history.filter(h => questServer.isBookendWord(h.guess.toUpperCase())).length
+        === questServer.QUEST_THRESHOLDS.BOOKENDS - 1;
+    case "REVERSEALPHA":
+      return history.filter(h => questServer.isReverseAlphaWord(h.guess.toUpperCase())).length
+        === questServer.QUEST_THRESHOLDS.REVERSEALPHA - 1;
+    case "HALF_AM":
+      return history.filter(h => questServer.isInLetterRange(h.guess.toUpperCase(), "A", "M")).length
+        === questServer.QUEST_THRESHOLDS.HALF_AM - 1;
+    case "HALF_NZ":
+      return history.filter(h => questServer.isInLetterRange(h.guess.toUpperCase(), "N", "Z")).length
+        === questServer.QUEST_THRESHOLDS.HALF_NZ - 1;
+    case "VOWELPROGRESSION":
+      return questServer.computeVowelProgressionStage(history) === questServer.QUEST_THRESHOLDS.VOWELPROGRESSION - 1;
+    default:
+      return false;
+  }
+}
+
+// Picks a quest-satisfying guess from `remaining` (not yet guessed),
+// preferring words still consistent with the clues so far (`feasible`) so
+// the AI doesn't throw away a turn on something it already knows is wrong
+// — falling back to any dictionary word satisfying the quest if nothing
+// feasible does. Returns null if nothing qualifies at all (rare, but
+// e.g. CHAIN or VOWELPROGRESSION's exact vowel target can legitimately
+// have no live candidates left).
+function pickQuestSatisfyingGuess(quest, state, remaining, feasible) {
+  const feasibleQualifying = feasible.filter(r => questWordAdvances(r.word, quest, state));
+  if (feasibleQualifying.length) {
+    return feasibleQualifying[Math.floor(Math.random() * feasibleQualifying.length)].word;
+  }
+  const qualifying = remaining.filter(r => questWordAdvances(r.word, quest, state));
+  if (qualifying.length) {
+    return qualifying[Math.floor(Math.random() * qualifying.length)].word;
+  }
+  return null;
+}
+
 function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
   if (!state || !state.history) {
     return weightedRandom(wordRows, r => r.probability || 1).word;
@@ -553,6 +729,25 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
   const feasible = remaining_ideal.filter(r =>
     isConsistentWithHistory(history, r.word, state, { fbGuesser: true })
   );
+
+  // ----- Quest-aware guessing -----
+  // Skipped entirely when exactly one feasible secret remains -- that's a
+  // guaranteed win right now, and taking it always beats quest progress
+  // (falls through to the closing-move branch just below, unchanged).
+  // Otherwise: always try on the first guess of the round, always try if
+  // this guess would complete the quest ("one away"), and try 75% of the
+  // time on every other guess.
+  const quest = state.powers?.quest;
+  if (feasible.length !== 1 && quest?.type && !quest.used) {
+    const isFirstGuess = history.length === 0;
+    const oneAway = questIsOneAway(quest, state);
+    const shouldTryQuest = isFirstGuess || oneAway || Math.random() < 0.75;
+
+    if (shouldTryQuest) {
+      const questGuess = pickQuestSatisfyingGuess(quest, state, remaining, feasible);
+      if (questGuess) return questGuess;
+    }
+  }
 
   // Closing move: once only a handful of secrets remain consistent, stop
   // gathering information and actually take a shot at winning by guessing

@@ -46,6 +46,27 @@ const QUEST_TYPES = [
   "ALTERNATING", "BOOKENDS", "REVERSEALPHA", "HALF_AM", "HALF_NZ", "VOWELPROGRESSION"
 ];
 
+// Per-type "how many qualifying guesses does this quest need" -- shared by
+// the switch below and by the AI's quest-aware guess picker
+// (server/core/ai/genericAI.js), which needs to know how close a match's
+// current progress is to done ("one away") without duplicating each
+// case's threshold.
+const QUEST_THRESHOLDS = {
+  RARE: 4,
+  ROW: 1, // "complete any one row" -- see rowsCompleted() below, not a plain count
+  ALPHA: 3,
+  DOUBLES: 3,
+  CHAIN: 2,
+  HARDMODE: 4,
+  FIELDREPORT: 3,
+  ALTERNATING: 3,
+  BOOKENDS: 3,
+  REVERSEALPHA: 3,
+  HALF_AM: 3,
+  HALF_NZ: 3,
+  VOWELPROGRESSION: 4
+};
+
 const QUEST_VOWELS = new Set("AEIOU");
 function questCountVowels(word) {
   let n = 0;
@@ -76,6 +97,37 @@ function isInLetterRange(word, minLetter, maxLetter) {
   }
   return true;
 }
+
+// ALPHA's condition (strict ascending letters, e.g. ABHOR) -- was a local
+// closure inside the switch below; hoisted so the AI can reuse it too.
+function isAscendingWord(word) {
+  for (let i = 1; i < word.length; i++) {
+    if (word.charCodeAt(i) <= word.charCodeAt(i - 1)) return false;
+  }
+  return true;
+}
+
+// BOOKENDS' condition (first letter === last letter, e.g. SEEDS).
+function isBookendWord(word) {
+  return word[0] === word[word.length - 1];
+}
+
+// DOUBLES' per-word check: the first doubled letter in the word, or null.
+// A guess only counts toward DOUBLES if its doubled letter hasn't already
+// been used by an earlier qualifying guess this round.
+function doubledLetterOf(word) {
+  for (let i = 0; i < word.length - 1; i++) {
+    if (word[i] === word[i + 1]) return word[i];
+  }
+  return null;
+}
+
+const QUEST_RARE_LETTERS = new Set("QJXZWKV");
+const QUEST_KEYBOARD_ROWS = [
+  new Set("QWERTYUIOP"),
+  new Set("ASDFGHJKL"),
+  new Set("ZXCVBNM")
+];
 
 // Advances a stage pointer (0-4) forward through history in a single
 // pass: stage N is satisfied by the first guess with exactly N+1 vowels
@@ -111,6 +163,43 @@ function ensureQuestConditions(state) {
 // Wordle hard mode -- a guess is checked against what was known BEFORE it
 // was made, then its own feedback folds into the requirements for the
 // next one.
+// Pure per-word check against a given green/mustInclude snapshot -- split
+// out of computeHardModeCount so genericAI.js's quest-aware guess picker
+// can ask "would THIS candidate be hard-mode legal right now" without
+// re-deriving the reduction logic itself.
+function isHardModeCompliant(word, green, mustInclude) {
+  const g = word.toUpperCase();
+  for (let i = 0; i < 5; i++) {
+    if (green[i] && g[i] !== green[i]) return false;
+  }
+  for (const letter of mustInclude) {
+    if (!g.includes(letter)) return false;
+  }
+  return true;
+}
+
+// Folds one more history entry's feedback into a running green/mustInclude
+// snapshot -- the other half of the split described above.
+function foldHardModeConstraint(green, mustInclude, entry) {
+  const fb = entry.fbGuesser || entry.fb;
+  if (!Array.isArray(fb) || !entry.guess) return;
+  const g = entry.guess.toUpperCase();
+  for (let i = 0; i < 5; i++) {
+    if (fb[i] === "🟩") green[i] = g[i];
+    else if (fb[i] === "🟨") mustInclude.add(g[i]);
+  }
+}
+
+// The green/mustInclude constraints implied by history SO FAR (i.e. what
+// the NEXT guess would be checked against) -- used by the AI to evaluate
+// hard-mode-legality of a not-yet-made guess.
+function computeHardModeConstraints(history) {
+  const green = [null, null, null, null, null];
+  const mustInclude = new Set();
+  for (const entry of history) foldHardModeConstraint(green, mustInclude, entry);
+  return { green, mustInclude };
+}
+
 function computeHardModeCount(history) {
   const green = [null, null, null, null, null];
   const mustInclude = new Set();
@@ -121,19 +210,9 @@ function computeHardModeCount(history) {
     if (!Array.isArray(fb) || !entry.guess) continue;
     const g = entry.guess.toUpperCase();
 
-    let compliant = true;
-    for (let i = 0; i < 5; i++) {
-      if (green[i] && g[i] !== green[i]) compliant = false;
-    }
-    for (const letter of mustInclude) {
-      if (!g.includes(letter)) compliant = false;
-    }
-    if (compliant) count++;
+    if (isHardModeCompliant(g, green, mustInclude)) count++;
 
-    for (let i = 0; i < 5; i++) {
-      if (fb[i] === "🟩") green[i] = g[i];
-      else if (fb[i] === "🟨") mustInclude.add(g[i]);
-    }
+    foldHardModeConstraint(green, mustInclude, entry);
   }
 
   return count;
@@ -195,47 +274,37 @@ engine.registerPower("quest", {
     if (!q.ready) {
       switch (q.type) {
         case "RARE": {
-          const rare = new Set("QJXZWKV");
           const seen = new Set();
           for (const h of state.history) {
             for (const c of h.guess.toUpperCase()) {
-              if (rare.has(c)) seen.add(c);
+              if (QUEST_RARE_LETTERS.has(c)) seen.add(c);
             }
           }
-          if (seen.size >= 4) q.ready = true;
+          if (seen.size >= QUEST_THRESHOLDS.RARE) q.ready = true;
           break;
         }
         case "ROW": {
-          const rows = [new Set("QWERTYUIOP"), new Set("ASDFGHJKL"), new Set("ZXCVBNM")];
-          const used = rows.map(() => new Set());
+          const used = QUEST_KEYBOARD_ROWS.map(() => new Set());
           for (const h of state.history) {
             for (const c of h.guess.toUpperCase()) {
-              rows.forEach((row, i) => { if (row.has(c)) used[i].add(c); });
+              QUEST_KEYBOARD_ROWS.forEach((row, i) => { if (row.has(c)) used[i].add(c); });
             }
           }
-          if (rows.some((row, i) => used[i].size === row.size)) q.ready = true;
+          if (QUEST_KEYBOARD_ROWS.some((row, i) => used[i].size === row.size)) q.ready = true;
           break;
         }
         case "ALPHA": {
-          const isAscending = word => {
-            for (let i = 1; i < word.length; i++) {
-              if (word.charCodeAt(i) <= word.charCodeAt(i - 1)) return false;
-            }
-            return true;
-          };
-          const count = state.history.filter(h => isAscending(h.guess.toUpperCase())).length;
-          if (count >= 3) q.ready = true;
+          const count = state.history.filter(h => isAscendingWord(h.guess.toUpperCase())).length;
+          if (count >= QUEST_THRESHOLDS.ALPHA) q.ready = true;
           break;
         }
         case "DOUBLES": {
           const doubles = new Set();
           for (const h of state.history) {
-            const w = h.guess.toUpperCase();
-            for (let i = 0; i < w.length - 1; i++) {
-              if (w[i] === w[i + 1]) { doubles.add(w[i]); break; }
-            }
+            const d = doubledLetterOf(h.guess.toUpperCase());
+            if (d) doubles.add(d);
           }
-          if (doubles.size >= 3) q.ready = true;
+          if (doubles.size >= QUEST_THRESHOLDS.DOUBLES) q.ready = true;
           break;
         }
         case "CHAIN": {
@@ -245,47 +314,44 @@ engine.registerPower("quest", {
             const curr = state.history[i].guess.toUpperCase();
             if (curr[0] === prev[4]) links++;
           }
-          if (links >= 2) q.ready = true;
+          if (links >= QUEST_THRESHOLDS.CHAIN) q.ready = true;
           break;
         }
         case "HARDMODE": {
-          if (computeHardModeCount(state.history) >= 4) q.ready = true;
+          if (computeHardModeCount(state.history) >= QUEST_THRESHOLDS.HARDMODE) q.ready = true;
           break;
         }
         case "FIELDREPORT": {
-          if (computeFieldReportCount(state.history, q.conditions) >= 3) q.ready = true;
+          if (computeFieldReportCount(state.history, q.conditions) >= QUEST_THRESHOLDS.FIELDREPORT) q.ready = true;
           break;
         }
         case "ALTERNATING": {
           const count = state.history.filter(h => isAlternatingWord(h.guess.toUpperCase())).length;
-          if (count >= 3) q.ready = true;
+          if (count >= QUEST_THRESHOLDS.ALTERNATING) q.ready = true;
           break;
         }
         case "BOOKENDS": {
-          const count = state.history.filter(h => {
-            const w = h.guess.toUpperCase();
-            return w[0] === w[4];
-          }).length;
-          if (count >= 3) q.ready = true;
+          const count = state.history.filter(h => isBookendWord(h.guess.toUpperCase())).length;
+          if (count >= QUEST_THRESHOLDS.BOOKENDS) q.ready = true;
           break;
         }
         case "REVERSEALPHA": {
           const count = state.history.filter(h => isReverseAlphaWord(h.guess.toUpperCase())).length;
-          if (count >= 3) q.ready = true;
+          if (count >= QUEST_THRESHOLDS.REVERSEALPHA) q.ready = true;
           break;
         }
         case "HALF_AM": {
           const count = state.history.filter(h => isInLetterRange(h.guess.toUpperCase(), "A", "M")).length;
-          if (count >= 3) q.ready = true;
+          if (count >= QUEST_THRESHOLDS.HALF_AM) q.ready = true;
           break;
         }
         case "HALF_NZ": {
           const count = state.history.filter(h => isInLetterRange(h.guess.toUpperCase(), "N", "Z")).length;
-          if (count >= 3) q.ready = true;
+          if (count >= QUEST_THRESHOLDS.HALF_NZ) q.ready = true;
           break;
         }
         case "VOWELPROGRESSION": {
-          if (computeVowelProgressionStage(state.history) >= 4) q.ready = true;
+          if (computeVowelProgressionStage(state.history) >= QUEST_THRESHOLDS.VOWELPROGRESSION) q.ready = true;
           break;
         }
       }
@@ -300,12 +366,20 @@ engine.registerPower("quest", {
 
 module.exports = {
   QUEST_TYPES,
+  QUEST_THRESHOLDS,
+  QUEST_RARE_LETTERS,
+  QUEST_KEYBOARD_ROWS,
   pickRandomQuestType,
   ensureQuestConditions,
   computeHardModeCount,
+  computeHardModeConstraints,
+  isHardModeCompliant,
   computeFieldReportCount,
   isAlternatingWord,
   isReverseAlphaWord,
   isInLetterRange,
+  isAscendingWord,
+  isBookendWord,
+  doubledLetterOf,
   computeVowelProgressionStage
 };

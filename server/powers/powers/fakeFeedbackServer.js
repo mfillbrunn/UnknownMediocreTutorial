@@ -21,15 +21,8 @@ engine.registerPower("fakeFeedback", {
   },
  postScore(state, entry) {
    if (!state.powers.fakeFeedbackActive) {return;}
-   let real;
-   let fake;
-   if (Math.random()>0.5){
-    entry1  = scoreGuess(state.secret, state.pendingGuess);
-    entry2 = scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess);
-   } else{
-    entry1  = scoreGuess(state.secret, state.pendingGuess);
-    entry2 = scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess)
-   }
+   let entry1 = scoreGuess(state.secret, state.pendingGuess);
+   let entry2 = scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess);
    entry.fakeFeedback = {
     entry1,   // ["🟩","⬛",...]
     entry2    // ["🟨","⬛",...]
