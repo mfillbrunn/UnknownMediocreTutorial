@@ -95,6 +95,19 @@ const GREEN_REVEAL_SOURCE_LABELS = {
 };
 
 socket.on("greenLetterRevealed", ({ index, letter, source }) => {
+  // Quests are always-on for every guesser (not an opt-in activation like
+  // the other sources here), and the AI actively steers its guessing
+  // toward completing its own quest almost every round -- reusing the
+  // same big center-screen "power used" splash for that made it feel
+  // like the AI was constantly firing off a power it never actually has.
+  // A quiet toast (still shown for both players, since the reveal is
+  // real game state either way) is enough; the quest badge itself
+  // already reflects completion.
+  if (source === "quest") {
+    toast(`Quest complete! ${letter.toUpperCase()} revealed in position ${index + 1}.`);
+    return;
+  }
+
   const label = GREEN_REVEAL_SOURCE_LABELS[source] || "A power";
   window.showBigAnnounce?.({
     icon: "🟩",
