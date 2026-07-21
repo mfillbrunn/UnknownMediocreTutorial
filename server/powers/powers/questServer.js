@@ -52,7 +52,7 @@ const QUEST_TYPES = [
 // current progress is to done ("one away") without duplicating each
 // case's threshold.
 const QUEST_THRESHOLDS = {
-  RARE: 4,
+  RARE: 5,
   ROW: 1, // "complete any one row" -- see rowsCompleted() below, not a plain count
   ALPHA: 3,
   DOUBLES: 3,

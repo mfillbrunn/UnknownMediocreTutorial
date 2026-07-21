@@ -170,8 +170,16 @@ window._livePowerEvents = [];
 
 // Powers with their own dedicated result popup (richer than the generic
 // one — e.g. Field Report's condition list) skip this one so the two
-// centered popups don't stack/overwrite each other.
-const POWERS_WITH_OWN_POPUP = new Set(["fieldReport"]);
+// centered popups don't stack/overwrite each other. Quest is registered
+// as a fake "power" purely to piggyback on the server's turnStart
+// dispatch (see questServer.js) and already has its own big-announce
+// popup (greenLetterRevealed in power-functions.js / questEarlyClaim in
+// quest.js) — without this, completing a quest fired that AND a second,
+// redundant generic popup every time, which given how often the AI
+// completes its own quest (genericAI.js actively biases guesses toward
+// it) made the AI look like it was spamming a "power" it never actually
+// has.
+const POWERS_WITH_OWN_POPUP = new Set(["fieldReport", "quest"]);
 
 socket.on("powerActivity", payload => {
   if (!payload?.id) return;

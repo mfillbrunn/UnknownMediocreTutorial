@@ -15,7 +15,7 @@ window.QUEST_METADATA = {
   },
   RARE: {
     label: "High-Value Target",
-    desc: "Use at least 4 of Q, J, X, Z, W, K, V across your guesses.",
+    desc: "Use at least 5 of Q, J, X, Z, W, K, V across your guesses.",
     emoji: "💎",
     color: "#16A34A"
   },
