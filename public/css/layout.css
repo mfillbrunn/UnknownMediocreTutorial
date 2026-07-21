@@ -250,6 +250,49 @@ margin:0;
   }
 }
 
+/* "Nice! +X more words" that floats up from the setter's remaining-words
+   box when they switch to a new secret that leaves more words still
+   possible than keeping the old one would have. Same fixed/body-appended
+   approach as .score-pop above, for the same reason (the box's innerHTML
+   gets rebuilt on the next state update). */
+.secret-reward-pop {
+  position: fixed;
+  transform: translate(-50%, 0);
+  font-size: var(--fs-13);
+  font-weight: 800;
+  color: var(--tile-green);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 999;
+  animation: secret-reward-pop-float 1400ms ease-out forwards;
+}
+
+@keyframes secret-reward-pop-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.85);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -10px) scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, -34px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -46px) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .secret-reward-pop {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 .header-left,
 .header-right {
   min-width: 0;

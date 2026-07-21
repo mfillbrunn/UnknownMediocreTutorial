@@ -1693,6 +1693,43 @@ function showScorePop(isMe) {
 }
 window.showScorePop = showScorePop;
 
+// "Nice! +X more words" that floats up from the setter's remaining-words
+// box when they change their secret to one that leaves strictly more
+// words still possible than keeping the old one would have -- a reward
+// nudge for actively throwing the guesser off instead of always keeping.
+// Same append-to-body / animationend-cleanup pattern as showScorePop above
+// (the box's innerHTML gets fully rebuilt on the next state update, which
+// would otherwise cut the animation short).
+const SECRET_REWARD_TIERS = [
+  { min: 1, labels: ["Nice!", "Good job!"] },
+  { min: 10, labels: ["Well done!", "Nice move!"] },
+  { min: 30, labels: ["Great pick!", "Well played!"] },
+  { min: 75, labels: ["Amazing!", "Awesome!"] }
+];
+
+function showSecretChangeRewardPop(diff) {
+  if (!(diff > 0)) return;
+
+  const anchor = document.getElementById("SetterRemainingBox");
+  if (!anchor || anchor.hidden) return;
+
+  let labels = SECRET_REWARD_TIERS[0].labels;
+  for (const tier of SECRET_REWARD_TIERS) {
+    if (diff >= tier.min) labels = tier.labels;
+  }
+  const label = labels[Math.floor(Math.random() * labels.length)];
+
+  const rect = anchor.getBoundingClientRect();
+  const pop = document.createElement("span");
+  pop.className = "secret-reward-pop";
+  pop.textContent = `${label} +${diff.toLocaleString()} more words`;
+  pop.style.left = `${rect.left + rect.width / 2}px`;
+  pop.style.top = `${rect.top}px`;
+  document.body.appendChild(pop);
+  pop.addEventListener("animationend", () => pop.remove(), { once: true });
+}
+window.showSecretChangeRewardPop = showSecretChangeRewardPop;
+
 // Unlimited-time games are meant to be stepped away from and resumed
 // later (see "My Games") — surface an explicit, safe way to do that
 // instead of relying on just closing the tab.

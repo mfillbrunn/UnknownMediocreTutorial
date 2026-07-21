@@ -6,6 +6,7 @@ const { transitionAfterGuess, transitionAfterSecret, clearRoundState } = require
 const { emitRoomState } = require("../rooms");
 const { scoreGuess } = require("../../game-engine/scoring");
 const { clearForceTimer } = require("../../utils/forceTimer");
+const { computeRemainingNew } = require("../../utils/remainingWords");
 
 function handleNormalPhase(room, state, action, roomId, context) {
   const io = context.io;
@@ -176,7 +177,7 @@ function handleNormalPhase(room, state, action, roomId, context) {
     if (state.simultaneousAllWrong && action.type === "SET_SECRET_NEW") {
       io.to(action.playerId).emit("errorMessage", "All feedback was wrong — you must keep the same secret this round.");
       return;
-    } 
+    }
     const secret =
       action.type === "SET_SECRET_NEW"
         ? action.secret.toUpperCase()
@@ -204,6 +205,27 @@ function handleNormalPhase(room, state, action, roomId, context) {
         "Secret cannot match assassin word!"
       );
       return;
+    }
+
+    // Reward nudge: when the setter actually changes their secret (as
+    // opposed to keeping it), show them privately how much more (or less)
+    // ambiguous the new pick leaves things vs. what keeping the old secret
+    // would have, both evaluated against this same pending guess. This is
+    // the exact old/new pair already live in their remaining-words box
+    // (getRemainingWordInfo in remainingWords.js) -- just captured at the
+    // moment of commit rather than continuously while typing. Only fires
+    // on an actual improvement (more remaining secrets = harder for the
+    // guesser), and only to the setter's own socket -- never broadcast, so
+    // it can't leak anything to the guesser.
+    if (action.type === "SET_SECRET_NEW") {
+      const oldCount = computeRemainingNew(state.secret, state, context.ALLOWED_SECRETS);
+      const newCount = computeRemainingNew(secret, state, context.ALLOWED_SECRETS);
+      if (oldCount != null && newCount != null && newCount > oldCount) {
+        const setterSocketId = room.playersByUserId?.[state.setter]?.socketId;
+        if (setterSocketId) {
+          io.to(setterSocketId).emit("secretChangeReward", { diff: newCount - oldCount });
+        }
+      }
     }
 
     if (state.roundStartTime && state.timeUsed?.[state.setter] != null) {

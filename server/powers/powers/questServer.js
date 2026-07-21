@@ -18,18 +18,79 @@
 //
 // ROW/RARE/ALPHA/DOUBLES/CHAIN mirror revealLetterServer.js's unlock
 // conditions exactly (same thresholds, same wording) -- see that file for
-// the original. HARDMODE and FIELDREPORT are new:
+// the original. The rest are new:
 //   - HARDMODE: 4 guesses (across the whole round, including the
 //     simultaneous-phase opener) that are each Wordle hard-mode legal
 //     against everything known at the time that guess was made.
 //   - FIELDREPORT: fieldReportServer.js's 3-condition vocabulary, but
 //     instead of a one-shot "next guess only" check, the guesser needs 3
 //     separate guesses that each satisfy at least 2 of the 3 conditions.
+//   - ALTERNATING: 3 guesses with no two adjacent letters in the same
+//     vowel/consonant category (CVCVC like MAGIC, or VCVCV -- either
+//     direction counts).
+//   - BOOKENDS: 3 guesses whose first and last letter are identical
+//     (SEEDS, LEVEL).
+//   - REVERSEALPHA: ALPHA's mirror image -- 3 guesses whose letters are
+//     in strict *descending* alphabetical order.
+//   - HALF_AM / HALF_NZ: 3 guesses using only letters from the first or
+//     second half of the alphabet respectively.
+//   - VOWELPROGRESSION: a guess with exactly 1 vowel, then (later) one
+//     with exactly 2, then 3, then 4 -- in that order across the round,
+//     not necessarily consecutive guesses.
 const engine = require("../powerEngineServer.js");
 const { satisfiesForceGuess } = require("../../game-engine/validation");
 const { generateConditions } = require("./fieldReportServer.js");
 
-const QUEST_TYPES = ["ROW", "RARE", "ALPHA", "DOUBLES", "CHAIN", "HARDMODE", "FIELDREPORT"];
+const QUEST_TYPES = [
+  "ROW", "RARE", "ALPHA", "DOUBLES", "CHAIN", "HARDMODE", "FIELDREPORT",
+  "ALTERNATING", "BOOKENDS", "REVERSEALPHA", "HALF_AM", "HALF_NZ", "VOWELPROGRESSION"
+];
+
+const QUEST_VOWELS = new Set("AEIOU");
+function questCountVowels(word) {
+  let n = 0;
+  for (const c of word) if (QUEST_VOWELS.has(c)) n++;
+  return n;
+}
+
+function isAlternatingWord(word) {
+  for (let i = 1; i < word.length; i++) {
+    if (QUEST_VOWELS.has(word[i]) === QUEST_VOWELS.has(word[i - 1])) return false;
+  }
+  return true;
+}
+
+function isReverseAlphaWord(word) {
+  for (let i = 1; i < word.length; i++) {
+    if (word.charCodeAt(i) >= word.charCodeAt(i - 1)) return false;
+  }
+  return true;
+}
+
+function isInLetterRange(word, minLetter, maxLetter) {
+  const min = minLetter.charCodeAt(0);
+  const max = maxLetter.charCodeAt(0);
+  for (const c of word) {
+    const code = c.charCodeAt(0);
+    if (code < min || code > max) return false;
+  }
+  return true;
+}
+
+// Advances a stage pointer (0-4) forward through history in a single
+// pass: stage N is satisfied by the first guess with exactly N+1 vowels
+// that appears after stage N-1 was already satisfied. Ready once all 4
+// targets (1, 2, 3, 4 vowels) have been hit in order.
+function computeVowelProgressionStage(history) {
+  const targets = [1, 2, 3, 4];
+  let stage = 0;
+  for (const entry of history) {
+    if (stage >= targets.length) break;
+    if (!entry?.guess) continue;
+    if (questCountVowels(entry.guess.toUpperCase()) === targets[stage]) stage++;
+  }
+  return stage;
+}
 
 function pickRandomQuestType() {
   return QUEST_TYPES[Math.floor(Math.random() * QUEST_TYPES.length)];
@@ -195,6 +256,38 @@ engine.registerPower("quest", {
           if (computeFieldReportCount(state.history, q.conditions) >= 3) q.ready = true;
           break;
         }
+        case "ALTERNATING": {
+          const count = state.history.filter(h => isAlternatingWord(h.guess.toUpperCase())).length;
+          if (count >= 3) q.ready = true;
+          break;
+        }
+        case "BOOKENDS": {
+          const count = state.history.filter(h => {
+            const w = h.guess.toUpperCase();
+            return w[0] === w[4];
+          }).length;
+          if (count >= 3) q.ready = true;
+          break;
+        }
+        case "REVERSEALPHA": {
+          const count = state.history.filter(h => isReverseAlphaWord(h.guess.toUpperCase())).length;
+          if (count >= 3) q.ready = true;
+          break;
+        }
+        case "HALF_AM": {
+          const count = state.history.filter(h => isInLetterRange(h.guess.toUpperCase(), "A", "M")).length;
+          if (count >= 3) q.ready = true;
+          break;
+        }
+        case "HALF_NZ": {
+          const count = state.history.filter(h => isInLetterRange(h.guess.toUpperCase(), "N", "Z")).length;
+          if (count >= 3) q.ready = true;
+          break;
+        }
+        case "VOWELPROGRESSION": {
+          if (computeVowelProgressionStage(state.history) >= 4) q.ready = true;
+          break;
+        }
       }
       if (q.ready) io.to(roomId).emit("toast", "Quest complete!");
     }
@@ -210,5 +303,9 @@ module.exports = {
   pickRandomQuestType,
   ensureQuestConditions,
   computeHardModeCount,
-  computeFieldReportCount
+  computeFieldReportCount,
+  isAlternatingWord,
+  isReverseAlphaWord,
+  isInLetterRange,
+  computeVowelProgressionStage
 };
