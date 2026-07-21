@@ -85,7 +85,8 @@ app.get("/api/daily", (req, res) => {
     date: cfg.date,
     aiDifficulty: cfg.aiDifficulty,
     setterPowers: cfg.setterPowers,
-    guesserPowers: cfg.guesserPowers
+    guesserPowers: cfg.guesserPowers,
+    questType: cfg.questType
   });
 });
 app.use(express.static(path.join(__dirname, "..", "public")));

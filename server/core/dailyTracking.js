@@ -24,6 +24,17 @@ function markDailyCompleted(userId, date, result) {
   activeRooms.delete(key(userId, date));
 }
 
+// Abandoning a started-but-unfinished daily room (e.g. via My Games'
+// Abandon button) should still count as "already played" -- otherwise
+// getDailyStatus keeps pointing at a roomId that forceCloseRoom just
+// deleted, and the client's rejoin attempt fails with a stale "Room not
+// found" error instead of a sensible message.
+function markDailyAbandoned(userId, date) {
+  if (!userId || !date) return;
+  completions.set(key(userId, date), { abandoned: true });
+  activeRooms.delete(key(userId, date));
+}
+
 function getDailyStatus(userId, date) {
   if (!userId || !date) return { status: "none" };
 
@@ -39,4 +50,4 @@ function getDailyStatus(userId, date) {
   return { status: "none" };
 }
 
-module.exports = { markDailyStarted, markDailyCompleted, getDailyStatus };
+module.exports = { markDailyStarted, markDailyCompleted, markDailyAbandoned, getDailyStatus };

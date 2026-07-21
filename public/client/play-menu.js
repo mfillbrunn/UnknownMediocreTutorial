@@ -200,6 +200,10 @@ $("showRulesBtn")?.addEventListener("click", () => {
   showScreen("rulesScreen");
 });
 
+$("showAdvancedTutorialBtn")?.addEventListener("click", () => {
+  showScreen("advancedTutorialScreen");
+});
+
 // Mirrors the SETTER_POWERS/GUESSER_POWERS pools in
 // server/core/phases/lobby.js — kept in sync manually, same as every other
 // client/server power-pool duplication in this codebase (see also

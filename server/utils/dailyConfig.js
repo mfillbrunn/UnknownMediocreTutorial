@@ -2,6 +2,8 @@
 // Deterministic daily config generated from the date string.
 // Same input → same output forever (no randomness involved at call time).
 
+const { QUEST_TYPES } = require("../powers/powers/questServer");
+
 const SETTER_POWERS = [
   "hideTile", "suggestSecret", "confuseColors", "countOnly", "blindSpot",
   "vowelRefresh", "forceGuess", "blindGuess", "fakeFeedback", "revealPenalty",
@@ -44,6 +46,14 @@ function getDailyConfig(dateStr, allowedSecrets, allowedGuesses) {
   // regular casual match, not a second full loadout.
   const guesserPowers = seededShuffle(GUESSER_POWERS, rng).slice(0, 1);
 
+  // Every guesser always has a Quest (see questServer.js) -- pick it from
+  // the same seeded stream so every player gets the same one that day,
+  // same as the powers above. Note: if this lands on FIELDREPORT, its 3
+  // sub-conditions are still generated with plain Math.random() by
+  // fieldReportServer.js's generateConditions() -- not worth threading a
+  // seeded rng through that path just for one quest type in thirteen.
+  const questType = QUEST_TYPES[Math.floor(rng() * QUEST_TYPES.length)];
+
   // Continuing the SAME rng stream keeps everything deterministic from one
   // seed. These two are server-only -- never returned by the public
   // /api/daily route (see server/index.js, which whitelists fields before
@@ -58,7 +68,7 @@ function getDailyConfig(dateStr, allowedSecrets, allowedGuesses) {
     ? allowedGuesses[Math.floor(rng() * allowedGuesses.length)]
     : null;
 
-  return { date: dateStr, aiDifficulty, setterPowers, guesserPowers, secretWord, openingGuess };
+  return { date: dateStr, aiDifficulty, setterPowers, guesserPowers, questType, secretWord, openingGuess };
 }
 
 module.exports = { getDailyConfig };

@@ -1025,6 +1025,62 @@ function moveSetterDraftLetter(from, to) {
   emitSetterDraftPreview(state.setterDraft);
 }
 window.moveSetterDraftLetter = moveSetterDraftLetter;
+
+// Drag Mode, guesser side -- same mechanics as the setter's own draft tile
+// locks/drag above, just operating on localGuesserDraft (a plain local
+// variable, not synced state) instead of state.setterDraft.
+let guesserDraftLocks = new Set();
+function isGuesserDraftIndexLocked(index) {
+  return guesserDraftLocks.has(index);
+}
+window.isGuesserDraftIndexLocked = isGuesserDraftIndexLocked;
+function toggleGuesserDraftLock(index) {
+  if (!Number.isInteger(index) || index < 0 || index > 4) return;
+  const chars = (localGuesserDraft || "").padEnd(5, " ").split("");
+  if (chars[index] === " ") return; // nothing there to lock
+  if (guesserDraftLocks.has(index)) guesserDraftLocks.delete(index);
+  else guesserDraftLocks.add(index);
+  renderGuesserDraftOnly();
+}
+window.toggleGuesserDraftLock = toggleGuesserDraftLock;
+
+// Mirrors canSetterEditDraftNow -- handleGuesserInput's own guard is just
+// "!state.pendingGuess" (a submitted guess awaiting the setter's response),
+// so that's the whole check here too.
+function canGuesserEditDraftNow() {
+  return myUserId() === state.guesser && !state.pendingGuess;
+}
+
+function setGuesserDraftLetterAt(index, letter) {
+  if (!Number.isInteger(index) || index < 0 || index > 4) return;
+  if (!/^[A-Z]$/.test(letter)) return;
+  if (!canGuesserEditDraftNow()) return;
+
+  const chars = (localGuesserDraft || "").padEnd(5, " ").split("");
+  chars[index] = letter;
+  guesserDraftLocks.delete(index);
+  window.setGuesserDraft(chars.join(""));
+}
+window.setGuesserDraftLetterAt = setGuesserDraftLetterAt;
+
+function moveGuesserDraftLetter(from, to) {
+  if (!Number.isInteger(from) || from < 0 || from > 4) return;
+  if (!Number.isInteger(to) || to < 0 || to > 4) return;
+  if (from === to) return;
+  if (!canGuesserEditDraftNow()) return;
+
+  const chars = (localGuesserDraft || "").padEnd(5, " ").split("");
+  const letter = chars[from];
+  if (letter === " ") return; // nothing to move
+
+  chars[to] = letter;
+  chars[from] = " ";
+  guesserDraftLocks.delete(from);
+  guesserDraftLocks.delete(to);
+  window.setGuesserDraft(chars.join(""));
+}
+window.moveGuesserDraftLetter = moveGuesserDraftLetter;
+
 function handleSetterInput(event) {
   if (window.isNotesActive?.() && window.notesInput?.(event)) return;
   // Freeze/roulette deliberately skip only the typing block below and
@@ -1253,21 +1309,40 @@ function handleGuesserInput(event) {
   // when armed, so their entry stays on the coloured keyboard (no modal).
   if (window.powerKbActive?.() && window.powerKbInput?.(event)) return;
   if (state.pendingGuess) return;
+
+  // Position-based (not append/pop-last), same reasoning as
+  // handleSetterInput -- Drag Mode's tile fills and locked tiles can leave
+  // gaps anywhere, not just at the end.
   if (event.type === "BACKSPACE") {
-    localGuesserDraft = localGuesserDraft.slice(0, -1);
+    const chars = (localGuesserDraft || "").padEnd(5, " ").split("");
+    for (let i = 4; i >= 0; i--) {
+      if (chars[i] !== " " && !guesserDraftLocks.has(i)) {
+        chars[i] = " ";
+        break;
+      }
+    }
+    const next = chars.join("");
+    localGuesserDraft = next.trim() === "" ? "" : next;
     renderGuesserDraftOnly();
-    return;  }
+    return;
+  }
 
   if (event.type === "LETTER") {
-    if (localGuesserDraft.length < 5) {
-      localGuesserDraft += event.value;
+    const chars = (localGuesserDraft || "").padEnd(5, " ").split("");
+    const idx = chars.indexOf(" ");
+    if (idx !== -1) {
+      chars[idx] = event.value;
+      localGuesserDraft = chars.join("");
       renderGuesserDraftOnly();
     }
     return;
   }
   const g = localGuesserDraft.toUpperCase();
-  if (event.type === "ENTER") {    
-      if (g.length !== 5) {
+  if (event.type === "ENTER") {
+      // A space is Drag Mode's "not filled at this position yet"
+      // placeholder (see setGuesserDraftLetterAt) -- a draft still holding
+      // one is exactly as incomplete as a too-short typed draft.
+      if (g.length !== 5 || g.includes(" ")) {
         toast("5 letters!");
         shakeDraftRow("guesser");
         return;
@@ -1297,6 +1372,7 @@ function handleGuesserInput(event) {
     }
     sendGameAction({type: "SUBMIT_GUESS",guess: g});
     localGuesserDraft = "";
+    guesserDraftLocks.clear();
     resetEphemeralUIState();
   }
 }

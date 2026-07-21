@@ -51,19 +51,32 @@
   color: white;
   transform: scale(1.1);
 }
+/* An outline (even with outline-offset) draws OUTSIDE the element's own
+   box, so it gets clipped by any clipping ancestor -- e.g. .play-area's
+   overflow-x: hidden, which per the CSS overflow spec also computes
+   overflow-y to auto (a "not visible" value on either axis forces the
+   other off "visible" too), turning it into a real clip box on both axes.
+   The keyboard sits flush against .play-area's edges, so an outline there
+   was clipped on 3 of its 4 sides. An INSET box-shadow instead draws
+   inside the element's own border box, which is never clipped by an
+   ancestor's overflow regardless of how close to the edge the element
+   sits -- so the ring itself is guaranteed fully visible everywhere this
+   class gets applied, keyboard included. The outer pulse ring is kept as
+   a secondary glow on top (it can still get clipped near .play-area's
+   edges, but that's just decorative -- the inset ring is what actually
+   marks the highlighted element). */
 .tutorial-highlight {
   position: relative;
   z-index: 10;
-  outline: 3px solid rgba(255, 213, 79, 0.95);
-  outline-offset: 4px;
+  box-shadow: inset 0 0 0 3px rgba(255, 213, 79, 0.95);
   border-radius: 12px;
   animation: tutorialPulse 1.8s ease-in-out infinite;
 }
 
 @keyframes tutorialPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(255,213,79,0.5); }
-  70%  { box-shadow: 0 0 0 12px rgba(255,213,79,0); }
-  100% { box-shadow: 0 0 0 0 rgba(255,213,79,0); }
+  0%   { box-shadow: inset 0 0 0 3px rgba(255,213,79,0.95), 0 0 0 0 rgba(255,213,79,0.5); }
+  70%  { box-shadow: inset 0 0 0 3px rgba(255,213,79,0.95), 0 0 0 12px rgba(255,213,79,0); }
+  100% { box-shadow: inset 0 0 0 3px rgba(255,213,79,0.95), 0 0 0 0 rgba(255,213,79,0); }
 }
 
 .tutorial-bubble.collapsed {

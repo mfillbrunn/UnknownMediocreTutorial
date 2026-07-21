@@ -274,6 +274,7 @@ if (action.type === "SET_DAILY_POWERS") {
     const daily = getDailyConfig(action.date, context.ALLOWED_SECRETS, context.ALLOWED_GUESSES);
     state._dailySecret = daily.secretWord;
     state._dailyOpeningGuess = daily.openingGuess;
+    state._dailyQuestType = daily.questType;
   }
   if (action.userId && action.date) {
     markDailyStarted(action.userId, action.date, roomId);
@@ -379,6 +380,7 @@ if (action.type === "SET_DAILY_POWERS") {
      freshState._dailyDate = state._dailyDate || null;
      freshState._dailySecret = state._dailySecret || null;
      freshState._dailyOpeningGuess = state._dailyOpeningGuess || null;
+     freshState._dailyQuestType = state._dailyQuestType || null;
      freshState._devSetterPowers = state._devSetterPowers || null;
      freshState._devGuesserPowers = state._devGuesserPowers || null;
      freshState._replaySetterPowers = state._replaySetterPowers || null;
@@ -540,7 +542,10 @@ if (action.type === "SET_DAILY_POWERS") {
       gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
     }
 
-    state.mode.onLobbyReady(state, sP, gP);
+    // Daily challenge: pass the day's deterministic quest type through the
+    // same guesserQuest parameter Draft Mode uses, so every player gets
+    // the same quest that day too (see dailyConfig.js).
+    state.mode.onLobbyReady(state, sP, gP, state._dailyQuestType || undefined);
 
     state.phase = "simultaneous";
 
