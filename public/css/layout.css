@@ -54,7 +54,8 @@
 .play-area .constraint-row,
 .play-area .draft-stack,
 .play-area .keyboard,
-.play-area .key {
+.play-area .key,
+.play-area .info.badge {
   pointer-events: auto;
 }
 
@@ -76,6 +77,12 @@ display: grid;
   align-items: stretch;
   row-gap: var(--sp-6);
    margin-top: var(--sp-6);
+  /* .play-row disables pointer-events entirely (a grid-gutter click-
+     through trick) and only re-enables specific descendants -- this
+     column holds nothing but interactive elements (power buttons, the
+     quest badge, etc.), so it needs pointer-events back wholesale rather
+     than opting in element by element. */
+  pointer-events: auto;
   }
 
 /* Center column: history + draft */

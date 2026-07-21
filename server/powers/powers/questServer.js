@@ -397,16 +397,27 @@ function grantQuestYellowEarly(state, roomId, io) {
   io.to(roomId).emit("toast", `Quest claimed early! ${letter} is somewhere in the secret.`);
 }
 
-// Entry point for the guesser's own click on the quest box -- returns
-// false (no-op) if the trade isn't actually available right now, so the
-// caller can skip the room broadcast entirely on a stale/duplicate click.
-function attemptEarlyQuestClaim(state, userId, roomId, io) {
+// Entry point for the guesser's own click on the quest badge -- covers
+// BOTH reward states with one action: once the quest is ready, claim the
+// real green letter; otherwise, if it's exactly one guess away, claim the
+// early yellow trade instead. Neither reward is granted automatically
+// anymore (see turnStart below) -- the guesser always has to tap for it.
+// Returns false (no-op) if neither is actually available right now, so
+// the caller can skip the room broadcast entirely on a stale/duplicate
+// click.
+function attemptQuestClaim(state, userId, roomId, io) {
   if (userId !== state.guesser) return false;
   const q = state.powers?.quest;
-  if (!q || !q.type || q.used || q.ready) return false;
-  if (!isQuestOneAway(q, state)) return false;
-  grantQuestYellowEarly(state, roomId, io);
-  return true;
+  if (!q || !q.type || q.used) return false;
+  if (q.ready) {
+    grantQuestReward(state, roomId, io);
+    return true;
+  }
+  if (isQuestOneAway(q, state)) {
+    grantQuestYellowEarly(state, roomId, io);
+    return true;
+  }
+  return false;
 }
 
 engine.registerPower("quest", {
@@ -501,18 +512,17 @@ engine.registerPower("quest", {
           break;
         }
       }
-      if (q.ready) io.to(roomId).emit("toast", "Quest complete!");
+      // No longer an auto-grant -- just lets the guesser know the badge is
+      // now claimable. attemptQuestClaim (fired by tapping the badge) is
+      // what actually reveals the green letter.
+      if (q.ready) io.to(roomId).emit("toast", "Quest ready — tap the badge for your green letter!");
     }
 
     // Surfaced to the client as-is (safeState.js never redacts
-    // state.powers.quest) so the guesser's quest box knows when to offer
+    // state.powers.quest) so the guesser's info badge knows when to offer
     // the early-yellow-for-a-forfeited-green trade without re-deriving
     // any of the per-type counting logic itself.
     q.oneAway = !q.ready && !q.used && isQuestOneAway(q, state);
-
-    if (q.ready && !q.used && state.history.length) {
-      grantQuestReward(state, roomId, io);
-    }
   }
 });
 
@@ -538,5 +548,5 @@ module.exports = {
   rowCoverage,
   doublesSeen,
   isQuestOneAway,
-  attemptEarlyQuestClaim
+  attemptQuestClaim
 };

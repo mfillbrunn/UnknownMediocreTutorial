@@ -5,6 +5,7 @@ const { applyAIAction } = require("./aiActions");
 const powerMetadata = require("../../powers/powerMetadata");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
 const { pickLetterLockoutLetter, pickReconSweepLetters, feasibleSecretsFor } = require("./genericAI");
+const questServer = require("../../powers/powers/questServer");
 
 // assassinWord is excluded from the game's randomized power pools
 // entirely (see task #106) — kept out of the AI pool too for the same
@@ -306,6 +307,8 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
   const aiRole = getAIRole(state, aiUserId);
   if (!aiRole) return null;
 
+  maybeClaimQuest(room, roomId, context, aiUserId);
+
   let actionFn = null;
 
   const isTutorial =
@@ -442,6 +445,25 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
   }
 
   return actionFn;
+}
+
+// The quest badge now requires an explicit click to claim either reward
+// (see questServer.js's attemptQuestClaim) -- a real human just taps it,
+// so give the AI the equivalent: as soon as its quest is ready, claim the
+// green letter immediately, no "thinking" delay needed since there's no
+// real decision here. Deliberately doesn't take the early-yellow trade —
+// that's a judgment call (forfeit a guaranteed green for an earlier
+// yellow) not worth modeling, and the AI never took it before this
+// feature existed either. Lives in computeAIActionForUser (rather than
+// maybeRunAI) so the power-simulation runner, which calls that directly
+// for both simulated seats, gets it too.
+function maybeClaimQuest(room, roomId, context, aiUserId) {
+  const state = room.state;
+  const aiRole = getAIRole(state, aiUserId);
+  if (aiRole !== "guesser") return;
+  const q = state.powers?.quest;
+  if (!q?.type || q.used || !q.ready) return;
+  applyAIAction(room, { type: "USE_QUEST" }, aiUserId, roomId, context);
 }
 
 function maybeRunAI(room, roomId, context) {
