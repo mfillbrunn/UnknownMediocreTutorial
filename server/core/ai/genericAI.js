@@ -269,9 +269,10 @@ function pickAISecret(
   {
     maxSecretChanges,
     maxSecretsEvaluated,
-    randomness, 
+    randomness,
     pOverlap ,
-    pReductionGivenNoOverlap 
+    pReductionGivenNoOverlap,
+    randomSecretProb
   }
 ) {
   state.aiSecretChangeCount ??= 0;
@@ -304,6 +305,19 @@ function pickAISecret(
 
   if (!feasibleSecrets.length) return state.secret;
 
+  // Easy/Medium's real weakness, distinct from `randomness` above (which
+  // just stalls on the current secret): a switch that ignores which
+  // candidate actually dodges the guesser best. Without this, `randomness`
+  // aside, every level reasons about reduction/color-adversarial quality
+  // identically -- the ONLY thing separating them was how many candidates
+  // got evaluated (15/30/60) and how the resulting scores got mixed, which
+  // benchmarking (bench-ai-skill.js) showed barely moved the needle since
+  // even a shallow evaluated sample tends to contain a decent switch.
+  if (Math.random() < randomSecretProb) {
+    state.aiSecretChangeCount++;
+    return feasibleSecrets[Math.floor(Math.random() * feasibleSecrets.length)];
+  }
+
   // computeRemainingForSecret rescans the pool it's given for EVERY
   // candidate evaluated below (up to maxSecretsEvaluated times) — with
   // the full feasible set that's O(maxSecretsEvaluated * feasibleSecrets
@@ -313,7 +327,7 @@ function pickAISecret(
   // at the same time). A fixed-size random sample bounds that regardless
   // of how large the feasible set is; it's only used to RANK candidates
   // against each other, so the approximation costs a little precision,
-  // not correctness. reductionCandidates and colorCandidates below both
+  // not correctness. stallCandidates and colorCandidates below both
   // draw from this SAME pool (rather than colorCandidates scanning the
   // full feasible set) so reductionChoice.secret is always found when
   // checking for a Path-3 overlap.
@@ -326,25 +340,31 @@ function pickAISecret(
     return state.secret;
   }
 
-  // ---------- Path 1: reduction ----------
-  const reductionCandidates = samplePool
+  // ---------- Path 1: stall (maximize the guesser's remaining ambiguity) ----------
+  // A good Spy wants THIS candidate secret to leave the guesser with as
+  // many still-plausible words as possible after their next guess — the
+  // opposite of "reduction." (This used to weight toward LOWER remaining
+  // counts, i.e. deliberately picking secrets that narrowed the guesser's
+  // own search fastest — the AI was reasoning against itself; confirmed
+  // by benchmarking (see bench-ai-skill.js / diag-reduction-direction.js
+  // in scratch): the harder this path "reasoned" via the old weighting,
+  // the WORSE its defense measured, on par with a setter that never
+  // switches secrets at all.)
+  const stallCandidates = samplePool
     .slice(0, Math.min(maxSecretsEvaluated, samplePool.length))
     .map(secret => {
       const remaining =
         computeRemainingForSecret(state, secret, samplePool);
       if (remaining === null) return null;
-      return {
-        secret,
-        reduction: (currentRemaining - remaining) / currentRemaining
-      };
+      return { secret, remaining };
     })
     .filter(Boolean);
 
-  if (!reductionCandidates.length) return state.secret;
+  if (!stallCandidates.length) return state.secret;
 
   const reductionChoice = weightedRandom(
-    reductionCandidates,
-    c => c.reduction
+    stallCandidates,
+    c => c.remaining
   );
 
   // ---------- Path 2 & 3: color-adversarial ----------
@@ -522,7 +542,9 @@ function pickQuestSatisfyingGuess(quest, state, remaining, feasible) {
   return null;
 }
 
-function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
+function pickAIGuess(state, wordRows, allowedSecrets, strategyParams) {
+  const { randomGuessProb = 0, ...strategyWeights } = strategyParams || {};
+
   if (!state || !state.history) {
     return weightedRandom(wordRows, r => r.probability || 1).word;
   }
@@ -675,6 +697,19 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
   // guarantees the game converges.)
   if (feasible.length > 0 && feasible.length <= 2) {
     return feasible[Math.floor(Math.random() * feasible.length)].word;
+  }
+
+  // Easy/Medium's real weakness: benchmarking (bench-ai-skill.js) showed
+  // the uninformed/feasible/optimal/optimal2 pools below are all fairly
+  // strong guesses in practice (this dictionary is small enough that most
+  // still-consistent words share plenty of information already), so just
+  // reweighting between those 4 pools barely separated the difficulty
+  // levels. A genuinely careless guess -- ignoring the clues entirely --
+  // is the one thing that reliably does. Skipped once feasible.length<=2
+  // above (a human "easy" opponent still takes the free win, not a random
+  // shot in the dark right when the answer's obvious).
+  if (Math.random() < randomGuessProb) {
+    return remaining[Math.floor(Math.random() * remaining.length)].word;
   }
 
   const uninformed = remaining.filter(r =>
