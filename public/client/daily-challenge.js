@@ -1,5 +1,31 @@
 // client/daily-challenge.js
 
+// Same navigator.share() -> clipboard fallback -> toast pattern as
+// invite.js's shareOrCopyInviteLink, just with a Wordle-style result
+// summary instead of a join link.
+async function _shareDailyResult(config, r) {
+  const outcome = r.tie ? "Tied" : r.won ? "Won" : "Lost";
+  const text = [
+    `Vowel Play — Daily Challenge ${config.date}`,
+    `Score: ${r.score}:${r.opponentScore ?? 0} (${formatDailyTime(r.time)}) — ${outcome}`,
+    location.origin
+  ].join("\n");
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "Vowel Play Daily Challenge", text });
+      return;
+    } catch { /* user cancelled or share failed — fall through to copy */ }
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    toast("Result copied to clipboard");
+  } catch {
+    toast("Could not copy result");
+  }
+}
+
 function formatDailyTime(totalSeconds) {
   const secs = Math.round(totalSeconds || 0);
   const m = Math.floor(secs / 60);
@@ -41,13 +67,14 @@ window.showDailyChallenge = async function () {
       ? `<div class="daily-result-block">
           <div class="daily-result-row">
             <span class="daily-result-label">Score</span>
-            <span class="daily-result-value">${r.score}</span>
+            <span class="daily-result-value">${r.score}:${r.opponentScore ?? 0}</span>
           </div>
           <div class="daily-result-row">
             <span class="daily-result-label">Time</span>
             <span class="daily-result-value">${formatDailyTime(r.time)}</span>
           </div>
           <p class="daily-result-outcome">${r.tie ? "It was a tie!" : r.won ? "You won! 🎉" : "You lost this one."}</p>
+          <button id="shareDailyBtn" class="menu-btn primary small" style="margin-top:8px">Share Result 📤</button>
         </div>`
       : "";
 
@@ -60,6 +87,12 @@ window.showDailyChallenge = async function () {
       ${resultBlock}
       <button class="menu-btn" onclick="showStartup()">Back</button>
     </div>`;
+
+    if (r) {
+      document.getElementById("shareDailyBtn")?.addEventListener("click", () => {
+        _shareDailyResult(config, r);
+      });
+    }
     return;
   }
 

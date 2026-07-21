@@ -23,6 +23,7 @@ const {
   syncTurnOwners
 } = require("../rooms");
 const { markDailyStarted } = require("../dailyTracking");
+const { getDailyConfig } = require("../../utils/dailyConfig");
 
 const SETTER_POWERS = [
   "hideTile",
@@ -262,6 +263,18 @@ if (action.type === "SET_DAILY_POWERS") {
   state._dailySetterPowers = action.setterPowers || null;
   state._dailyGuesserPowers = action.guesserPowers || null;
   state._dailyDate = action.date || null;
+  // Recomputed server-side from the date alone (never trusting anything
+  // the client could send) so the AI's opening secret (round it's setter)
+  // and opening guess (round it's guesser) are the same for every player
+  // that day -- see dailyConfig.js. Deliberately never sent back to the
+  // client: safeState.js has no field for these, so they can't leak the
+  // day's answer ahead of time the way the public /api/daily route's
+  // response is explicitly whitelisted to avoid too.
+  if (action.date) {
+    const daily = getDailyConfig(action.date, context.ALLOWED_SECRETS, context.ALLOWED_GUESSES);
+    state._dailySecret = daily.secretWord;
+    state._dailyOpeningGuess = daily.openingGuess;
+  }
   if (action.userId && action.date) {
     markDailyStarted(action.userId, action.date, roomId);
   }
@@ -364,6 +377,8 @@ if (action.type === "SET_DAILY_POWERS") {
      freshState._dailySetterPowers = state._dailySetterPowers || null;
      freshState._dailyGuesserPowers = state._dailyGuesserPowers || null;
      freshState._dailyDate = state._dailyDate || null;
+     freshState._dailySecret = state._dailySecret || null;
+     freshState._dailyOpeningGuess = state._dailyOpeningGuess || null;
      freshState._devSetterPowers = state._devSetterPowers || null;
      freshState._devGuesserPowers = state._devGuesserPowers || null;
      freshState._replaySetterPowers = state._replaySetterPowers || null;

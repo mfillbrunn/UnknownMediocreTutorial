@@ -459,8 +459,6 @@ onStateUpdate(newState => {
   window.state = state;   
   updateRoleCards();
   updateHostControls();
-  updateRankedUI();
-  updateShuffleUI();
   updateDevUI();
   updatePowerModeUI();
   updateTimerAccess(); 

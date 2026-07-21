@@ -200,9 +200,44 @@ $("showRulesBtn")?.addEventListener("click", () => {
   showScreen("rulesScreen");
 });
 
+// Mirrors the SETTER_POWERS/GUESSER_POWERS pools in
+// server/core/phases/lobby.js — kept in sync manually, same as every other
+// client/server power-pool duplication in this codebase (see also
+// client/dev-powers.js). Only powers actually offered by random/draft mode
+// belong in this reference screen — revealLetter and fieldReport moved to
+// the always-on Quest system, and assassinWord/letterLockout are disabled
+// from random/draft pools, so none of the four show up here anymore.
+const POWER_LIB_SETTER_POWERS = [
+  "hideTile", "suggestSecret", "confuseColors", "countOnly", "blindSpot",
+  "vowelRefresh", "forceGuess", "blindGuess", "fakeFeedback", "revealPenalty",
+  "delayedIntel"
+];
+const POWER_LIB_GUESSER_POWERS = [
+  "suggestGuess", "rouletteSecret", "forceTimer", "revealHistory",
+  "stealthGuess", "revealGreen", "freezeSecret", "magicMode", "nonsense",
+  "betMiss", "wiretap", "letterProbe", "revealLocation", "doubleGuess",
+  "letterProfile"
+];
+
+let _powerLibTab = "setter";
+
 $("showPowersBtn")?.addEventListener("click", () => {
+  _powerLibTab = "setter";
+  document.querySelectorAll(".power-lib-tab").forEach(b => {
+    b.classList.toggle("active", b.dataset.powerLibTab === _powerLibTab);
+  });
   renderPowerLibrary();
   showScreen("powersScreen");
+});
+
+document.querySelectorAll(".power-lib-tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    _powerLibTab = btn.dataset.powerLibTab;
+    document.querySelectorAll(".power-lib-tab").forEach(b => {
+      b.classList.toggle("active", b.dataset.powerLibTab === _powerLibTab);
+    });
+    renderPowerLibrary();
+  });
 });
 
 // Powers with multiple mutually-exclusive unlock conditions (e.g. Reveal
@@ -226,13 +261,32 @@ function describePowerLibraryEntry(meta) {
 function renderPowerLibrary() {
   const list = $("powerLibraryList");
   if (!list) return;
+  list.innerHTML = "";
 
-  const sections = { setter: [], guesser: [] };
+  if (_powerLibTab === "quests") {
+    for (const id in (window.QUEST_METADATA || {})) {
+      const meta = window.QUEST_METADATA[id];
+      if (!meta) continue;
+      const row = document.createElement("div");
+      row.className = "power-info-row power-lib-row-guesser";
+      row.innerHTML = `
+        <span class="power-info-emoji">${meta.emoji || "🎯"}</span>
+        <div class="power-info-body">
+          <div class="power-info-title">${meta.label}</div>
+          <div class="power-info-desc">${meta.desc || ""}</div>
+        </div>
+      `;
+      list.appendChild(row);
+    }
+    return;
+  }
 
-  for (const id in (window.POWER_METADATA || {})) {
-    const meta = window.POWER_METADATA[id];
+  const ids = _powerLibTab === "guesser" ? POWER_LIB_GUESSER_POWERS : POWER_LIB_SETTER_POWERS;
+  const role = _powerLibTab === "guesser" ? "guesser" : "setter";
+
+  for (const id of ids) {
+    const meta = window.POWER_METADATA?.[id];
     if (!meta) continue;
-    const role = window.PowerEngine?.powers?.[id]?.role || "guesser";
 
     const row = document.createElement("div");
     row.className = `power-info-row power-lib-row-${role}`;
@@ -243,20 +297,6 @@ function renderPowerLibrary() {
         <div class="power-info-desc">${describePowerLibraryEntry(meta)}</div>
       </div>
     `;
-    sections[role]?.push(row);
+    list.appendChild(row);
   }
-
-  list.innerHTML = "";
-
-  const spyHeader = document.createElement("div");
-  spyHeader.className = "power-info-section power-info-header-setter";
-  spyHeader.textContent = "Spy Powers";
-  list.appendChild(spyHeader);
-  sections.setter.forEach(r => list.appendChild(r));
-
-  const inspectorHeader = document.createElement("div");
-  inspectorHeader.className = "power-info-section power-info-header-guesser";
-  inspectorHeader.textContent = "Inspector Powers";
-  list.appendChild(inspectorHeader);
-  sections.guesser.forEach(r => list.appendChild(r));
 }
