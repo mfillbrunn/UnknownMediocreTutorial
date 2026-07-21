@@ -75,28 +75,51 @@
 <!-- ========== START UP ========== -->
         <section id="startupScreen" class="screen active game-menu">
           <div class="menu-center">
+            <button id="developerBtn" class="dev-tools-icon-btn" title="Developer tools" aria-label="Developer tools">🛠️</button>
             <h2 class="menu-title">VOWEL PLAY</h2>
             <div id="menuAccountStatus" class="menu-account-status"></div>
             <div class="menu-buttons">
               <div class="split-btn menu-split-btn">
-                <button id="playMainBtn" class="menu-btn primary split-btn-main">Casual</button>
+                <button id="quickPlayBtn" class="menu-btn primary split-btn-main">Quick Play</button>
                 <button id="playQuickBtn" class="menu-btn primary split-btn-quick" title="Quick play: repeat last mode" aria-label="Quick play: repeat last mode">⚡</button>
               </div>
+              <button id="playFriendMainBtn" class="menu-btn" title="Casual, unlimited-time, shuffled game — send a link, no need to wait around">Play with a Friend ✉️</button>
               <button id="rankedMenuBtn" class="menu-btn">Ranked 🏆</button>
               <button id="dailyBtn" class="menu-btn">Daily Challenge ☀️</button>
               <button id="myGamesBtn" class="menu-btn">
                 My Games ♾️
                 <span id="myGamesNotifyBadge" class="notify-badge hidden" title="It's your turn in a game">✉️</span>
               </button>
-              <button id="dataBtn" class="menu-btn">Data 📊</button>
               <button id="howToPlayBtn" class="menu-btn">How to Play</button>
-              <button id="powerLoadoutsBtn" class="menu-btn">Power Loadouts 🎛️</button>
-              <button id="developerBtn" class="menu-btn">Developer 🛠️</button>
             </div>
           </div>
         </section>
 
-<!-- ========== PLAY ========== -->
+<!-- ========== QUICK PLAY ========== -->
+<section id="quickPlayScreen" class="screen game-menu">
+  <div class="menu-center">
+    <h2 class="menu-title">Quick Play</h2>
+    <div class="menu-buttons play-menu-buttons">
+      <button id="quickPlayHumanBtn" class="menu-btn primary">Play Human 🧑</button>
+      <button id="quickPlayAiBtn" class="menu-btn">Play AI 🤖</button>
+    </div>
+    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
+  </div>
+</section>
+
+<!-- ========== QUICK PLAY VS AI (difficulty picker) ========== -->
+<section id="quickPlayAiScreen" class="screen game-menu">
+  <div class="menu-center vsai-center">
+    <h2 class="menu-title">Play AI</h2>
+    <p style="font-size:12px;opacity:0.5;margin:-8px 0 8px">Choose difficulty</p>
+    <button class="menu-btn primary" onclick="_startQuickAI(1)">🤖 Beginner<br><small style="font-weight:400;opacity:0.65">Casual, exploratory</small></button>
+    <button class="menu-btn" onclick="_startQuickAI(2)">🧠 The Thinker<br><small style="font-weight:400;opacity:0.65">Our smartest AI</small></button>
+    <button class="menu-btn" onclick="_startQuickAI(3)">🔥 The Sneak<br><small style="font-weight:400;opacity:0.65">Our sneakiest AI</small></button>
+    <button class="menu-btn" onclick="showScreen('quickPlayScreen')">Back</button>
+  </div>
+</section>
+
+<!-- ========== PLAY (advanced/manual — reachable via Developer > Play) ========== -->
 <section id="playScreen" class="screen game-menu">
   <div class="menu-center">
     <h2 class="menu-title">Casual</h2>
@@ -128,7 +151,10 @@
           <option value="none">No Time</option>
         </select>
       </div>
+      <button id="rankedLeaderboardBtn" class="menu-btn">Leaderboard 📊</button>
+      <button id="showPastGamesBtn" class="menu-btn">Past Games</button>
     </div>
+    <div id="pastGamesContainer" class="past-games hidden"></div>
     <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
   </div>
 </section>
@@ -162,7 +188,7 @@
       Loading…
     </div>
 
-    <button class="menu-btn" onclick="showScreen('dataScreen')">
+    <button class="menu-btn" onclick="showScreen('rankedPlayScreen')">
       Back
     </button>
   </div>
@@ -251,19 +277,6 @@
     <button id="logoutBtn" class="menu-btn hidden">Log Out</button>
     <p id="authStatus" class="auth-status"></p>
     <button id="backBtn" class="menu-btn">Back</button>
-  </div>
-</section>
-
-<!-- ========== DATA (leaderboards + past games) ========== -->
-<section id="dataScreen" class="screen game-menu">
-  <div class="menu-center">
-    <h2 class="menu-title">Data</h2>
-    <div class="menu-buttons">
-      <button id="accountLeaderboardBtn" class="menu-btn">Leaderboard</button>
-      <button id="showPastGamesBtn" class="menu-btn">Past Games</button>
-    </div>
-    <div id="pastGamesContainer" class="past-games hidden"></div>
-    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
   </div>
 </section>
 
@@ -438,35 +451,7 @@
           <span id="rankedBadge"></span>
           <button class="lobby-info-btn" data-info="Ranked matches affect your Elo rating and appear on the leaderboard." aria-label="About Ranked">ⓘ</button>
         </span>
-        <span class="lobby-action-item">
-          <button id="addAiBtn" class="secondary-btn small">+ AI</button>
-          <button class="lobby-info-btn" data-info="Add a computer opponent so you can play solo." aria-label="About Add AI">ⓘ</button>
-        </span>
-        <span class="lobby-action-item">
-          <button id="devBtn" class="secondary-btn small">Dev</button>
-          <button class="lobby-info-btn" data-info="Developer mode — unlocks more powers per match, for testing." aria-label="About Dev mode">ⓘ</button>
-        </span>
-        <span class="lobby-action-item">
-          <select id="powerModeSelect" class="menu-input small">
-            <option value="draft">Draft</option>
-            <option value="random">Random</option>
-            <!-- Custom (point-budgeted loadouts) hidden for now -- see
-                 power-loadouts.js's updatePowerModeUI, which is guarded
-                 against ever landing on it while this option is gone. -->
-          </select>
-          <button class="lobby-info-btn" data-info="Draft: pick powers (and, for the Inspector, a Quest) each round. Random: the server rolls a random pool." aria-label="About power mode">ⓘ</button>
-        </span>
     </div>
-
-    <div id="customLoadoutPicker" class="lobby-actions hidden">
-      <span class="lobby-action-item">
-        <select id="loadoutPickerSelect" class="menu-input small">
-          <option value="">Random loadout</option>
-        </select>
-        <button id="manageLoadoutsBtn" class="secondary-btn small" type="button">Manage Loadouts</button>
-      </span>
-    </div>
-
 
       <!-- GUESSER -->
       <div class="role-card guesser">
@@ -655,6 +640,7 @@
                      <div class="draft-stack">
                         <div id="draftSetter" class="history-tiles draft-layer"></div>
                         <div id="secretLockOverlay" class="secret-lock-overlay hidden">🔒</div>
+                        <div id="setterDraftInvalidOverlay" class="secret-invalid-overlay hidden">✕</div>
                      </div>
                   </div>
                </div>   

@@ -484,8 +484,41 @@ function updateUI() {
   InfoBadgeEngine.render(state, myRole);
   if (state.phase !== "lobby") hide("lobby");
   updateSecretLock();
+  updateSetterDraftInvalidOverlay();
   window.renderActionLog?.(state, myRole);
   window.renderNotesPanel?.(state);
+}
+
+// Live version of submitSetterNew()'s rejection checks (dictionary +
+// isConsistentWithHistory), run on every draft change instead of only
+// after the setter tries to submit -- so a doomed secret is visibly
+// flagged (a big red X over the draft row) the instant it's fully typed,
+// not just after a failed submit. Only fires once the draft is actually
+// complete (5 real letters, no Drag Mode blank placeholders) and never
+// while simultaneousAllWrong already covers the row with the lock icon.
+function updateSetterDraftInvalidOverlay() {
+  const overlay = $("setterDraftInvalidOverlay");
+  if (!overlay) return;
+
+  const draft = (state?.setterDraft || "").toUpperCase();
+  const filledCount = draft.split("").filter(c => c && c !== " ").length;
+  const complete = filledCount === 5 && !draft.includes(" ");
+
+  let invalid = false;
+  if (
+    complete &&
+    myRole === "setter" &&
+    !state?.isTutorial &&
+    !state?.simultaneousAllWrong
+  ) {
+    const notInDictionary = window.ALLOWED_SECRETS && !window.ALLOWED_SECRETS.has(draft);
+    const inconsistent =
+      typeof window.isConsistentWithHistory === "function" &&
+      !window.isConsistentWithHistory(state.history, draft, state);
+    invalid = notInDictionary || inconsistent;
+  }
+
+  overlay.classList.toggle("hidden", !invalid);
 }
 
 function updateSecretLock() {

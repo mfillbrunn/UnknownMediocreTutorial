@@ -33,16 +33,47 @@ function startPlayFriend() {
   });
 }
 
+// Quick Play -> "Play Human": join whatever open room is waiting, or (per
+// the server's quickJoin handler) create a fresh one if none is. Shared by
+// the new top-level quickPlayHumanBtn and the older #playScreen's
+// quickJoinBtn (Developer > Play), so both stay in sync with one
+// implementation instead of two copies of the same socket call.
+function startQuickPlayHuman() {
+  if (!requireAuth("quick play")) return;
+  window.rememberLastPlayMode({ mode: "quickHuman" });
+
+  const username =
+    window.myProfile?.username || window.currentUser?.email || "Player";
+
+  quickJoin({ userId: window.currentUser.id, name: username }, resp => {
+    if (!resp.ok) return toast(resp.error);
+    roomId = resp.roomId;
+    persistRoom(roomId);
+    enterLobbyAfterJoin();
+  });
+}
+window.startQuickPlayHuman = startQuickPlayHuman;
+
 function runLastPlayMode(last) {
   if (!last || !last.mode) {
-    showScreen("playScreen");
+    showScreen("quickPlayScreen");
+    return;
+  }
+  if (last.mode === "quickHuman") {
+    startQuickPlayHuman();
+    return;
+  }
+  if (last.mode === "quickAi") {
+    window._startQuickAI?.(last.difficulty || 1);
     return;
   }
   if (last.mode === "friend") {
-    startPlayFriend();
+    window.startAsyncInvite?.();
     return;
   }
   if (last.mode === "ai") {
+    // Legacy value from before the Quick Play split -- still replay it the
+    // same way so an existing localStorage entry doesn't just dead-end.
     window._startVsAI?.(last.difficulty || 1);
     return;
   }
@@ -50,12 +81,23 @@ function runLastPlayMode(last) {
     startRankedQueue(last.preset || "blitz");
     return;
   }
-  showScreen("playScreen");
+  showScreen("quickPlayScreen");
 }
 
-$("playMainBtn")?.addEventListener("click", () => {
+$("quickPlayBtn")?.addEventListener("click", () => {
   if (!requireAuth("play")) return;
-  showScreen("playScreen");
+  showScreen("quickPlayScreen");
+});
+
+$("quickPlayHumanBtn")?.addEventListener("click", startQuickPlayHuman);
+
+$("quickPlayAiBtn")?.addEventListener("click", () => {
+  if (!requireAuth("play vs AI")) return;
+  showScreen("quickPlayAiScreen");
+});
+
+$("playFriendMainBtn")?.addEventListener("click", () => {
+  window.startAsyncInvite?.();
 });
 
 $("rankedMenuBtn")?.addEventListener("click", () => {
