@@ -422,6 +422,28 @@
   height: 50%;
 }
 
+/* Live "this 5-letter secret would be rejected" warning -- same overlay
+   pattern as .secret-lock-overlay (a sibling in .draft-stack), shown the
+   instant a complete draft stops being consistent with prior feedback or
+   isn't a real secret word, instead of only after the setter tries to
+   submit it. Mutually exclusive with the lock overlay (that state means
+   editing is moot anyway), so no split-bottom variant is needed here. */
+.secret-invalid-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(239, 68, 68, 0.12);
+  color: rgba(239, 68, 68, 0.55);
+  font-size: 4.5rem;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 25;
+}
+.secret-invalid-overlay.hidden { display: none; }
+
 /* Ensure draft-stack is a positioning context */
 .draft-stack { position: relative; }
 
@@ -1289,6 +1311,43 @@
 }
 
 .quick-join-circle-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* ── Developer tools icon (top-right corner of the main menu) ──────────
+   Replaces the old full-width "Developer 🛠️" menu button -- same 🛠️
+   glyph, same #developerBtn id/handler (dev-simulation.js), just a small
+   corner icon instead of another row in the button stack. */
+#startupScreen .menu-center {
+  position: relative;
+}
+.dev-tools-icon-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: var(--fs-16);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--btn-secondary, #23242b);
+  color: var(--text);
+  border: 1px solid #2a2c34;
+  opacity: 0.7;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+}
+.dev-tools-icon-btn:hover {
+  background: var(--btn-secondary-hover);
+  opacity: 1;
+  transform: translateY(-1px);
+}
+.dev-tools-icon-btn:active {
   transform: translateY(0) scale(0.95);
 }
 

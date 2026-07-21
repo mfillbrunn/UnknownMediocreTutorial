@@ -180,24 +180,7 @@ $("joinRoomInput")?.addEventListener("keydown", (e) => {
 });
 
 $("quickJoinBtn")?.addEventListener("click", () => {
-  if (!requireAuth("quick play")) return;
-
-  const username =
-    window.myProfile?.username ||
-    window.currentUser?.email ||
-    "Player";
-
-  const payload = {
-    userId: window.currentUser.id,
-    name: username
-  };
-
-  quickJoin(payload, resp => {
-    if (!resp.ok) return toast(resp.error);
-    roomId = resp.roomId;
-    persistRoom(roomId);
-    enterLobbyAfterJoin();
-  });
+  window.startQuickPlayHuman?.();
 });
 
 
@@ -305,9 +288,6 @@ $("rejoinLeaveBtn")?.addEventListener("click", () => {
   }
 });
 
-$("dataBtn")?.addEventListener("click", () => {
-  showScreen("dataScreen");
-});
 $("backBtn").onclick = () => {
   showStartup(); // re-applies menu-mode correctly
 };
@@ -352,7 +332,7 @@ function updateRankedUI() {
   badge.classList.toggle("readonly", !isHost);
 }
 
-$("accountLeaderboardBtn")?.addEventListener("click", () => {
+$("rankedLeaderboardBtn")?.addEventListener("click", () => {
   showScreen("leaderboardScreen");
   loadLeaderboard("bullet");
 });
@@ -366,7 +346,9 @@ $("playVsAiBtn")?.addEventListener("click", () => {
   showScreen("vsAiScreen");
 });
 
-// VS AI difficulty selection (called from vsAiScreen inline onclick)
+// VS AI difficulty selection (called from vsAiScreen inline onclick) --
+// Developer > Play's manual path: creates the room and AI, then drops the
+// player in the lobby to configure/ready up by hand.
 window._startVsAI = function (difficulty) {
   if (!requireAuth("play vs AI")) return;
   window.rememberLastPlayMode?.({ mode: "ai", difficulty });
@@ -376,6 +358,29 @@ window._startVsAI = function (difficulty) {
     window.roomId = resp.roomId;
     persistRoom(resp.roomId);
     sendGameAction({ type: "ADD_AI", difficulty, userId: window.currentUser.id });
+    enterLobbyAfterJoin();
+  });
+};
+
+// Quick Play -> "Play AI" (called from quickPlayAiScreen inline onclick):
+// same room+AI setup as _startVsAI, but skips the lobby entirely -- draft
+// mode (the server default), shuffle, and no timer are set up front and
+// the host is marked ready immediately, so the match starts on its own the
+// instant the room exists (PLAYER_READY only requires every HUMAN in the
+// room to be ready, and there's just the one -- see lobby.js).
+window._startQuickAI = function (difficulty) {
+  if (!requireAuth("play vs AI")) return;
+  window.rememberLastPlayMode?.({ mode: "quickAi", difficulty });
+  const username = window.myProfile?.username || window.currentUser?.email || "Player";
+  socket.emit("createRoom", { userId: window.currentUser.id, name: username }, resp => {
+    if (!resp?.ok) return toast(resp?.error || "Could not create room");
+    window.roomId = resp.roomId;
+    persistRoom(resp.roomId);
+    const userId = window.currentUser.id;
+    sendGameAction({ type: "ADD_AI", difficulty, userId });
+    sendGameAction({ type: "SET_SHUFFLE", shuffle: true, userId });
+    sendGameAction({ type: "SET_TIME_CONTROL", enabled: false, userId });
+    sendGameAction({ type: "PLAYER_READY", userId });
     enterLobbyAfterJoin();
   });
 };

@@ -74,6 +74,7 @@ document.getElementById("inviteBtn")?.addEventListener("click", () => {
 // shows up in My Games for both of them.
 window.startAsyncInvite = function () {
   if (!requireAuth("invite a friend")) return;
+  window.rememberLastPlayMode?.({ mode: "friend" });
 
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
 

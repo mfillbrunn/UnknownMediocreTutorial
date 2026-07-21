@@ -175,13 +175,22 @@ module.exports = function registerSocketHandlers(io, context) {
     });
 
     /* ---------- QUICK JOIN ---------- */
+    // "Play Human" from the Quick Play menu: join whatever open room is
+    // waiting, or -- if none is -- create a fresh one instead of just
+    // failing, so the button always puts the player somewhere instead of
+    // needing a second "create a room" fallback action from the client.
     socket.on("quickJoin", ({ userId, name }, cb) => {
-      const roomId = findLastOpenRoom();
+      let roomId = findLastOpenRoom();
+      let createdNewRoom = false;
+
       if (!roomId) {
-        return cb?.({ ok: false, error: "No open rooms available" });
+        roomId = createRoom(socket, userId);
+        createdNewRoom = true;
       }
 
-      const result = joinOrReattach(socket, roomId, userId);
+      const result = createdNewRoom
+        ? { ok: true, reattached: false, role: rooms[roomId]?.state?.players?.[userId]?.role ?? null }
+        : joinOrReattach(socket, roomId, userId);
       if (!result.ok) return cb?.(result);
 
       if (socket.data.roomId && socket.data.roomId !== roomId) {
