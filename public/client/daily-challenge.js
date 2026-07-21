@@ -63,6 +63,22 @@ window.showDailyChallenge = async function () {
 
   if (status?.status === "completed") {
     const r = status.result;
+
+    // Abandoning a started daily room (My Games > Abandon) counts as
+    // "already played" too -- markDailyAbandoned() records this instead
+    // of a real score, since there's no result to show or share.
+    if (r?.abandoned) {
+      screen.innerHTML = `<div class="menu-center">
+        <h2 class="menu-title">Daily Challenge</h2>
+        <p class="daily-date">☀️ ${config.date}</p>
+        <p class="daily-completed-msg">
+          You already played today's challenge and abandoned it. Come back tomorrow!
+        </p>
+        <button class="menu-btn" onclick="showStartup()">Back</button>
+      </div>`;
+      return;
+    }
+
     const resultBlock = r
       ? `<div class="daily-result-block">
           <div class="daily-result-row">
@@ -111,6 +127,11 @@ window.showDailyChallenge = async function () {
     return `<span class="daily-power-pill inspector">${m?.emoji || ""} ${m?.label || p}</span>`;
   }).join("");
 
+  const questMeta = config.questType ? window.QUEST_METADATA?.[config.questType] : null;
+  const questPill = questMeta
+    ? `<span class="daily-power-pill quest">${questMeta.emoji || "🎯"} ${questMeta.label}</span>`
+    : "";
+
   const diffLabels = { 1: "🤖 Beginner", 2: "🧠 The Thinker", 3: "🔥 The Sneak" };
   const diffLabel  = diffLabels[config.aiDifficulty] || "AI";
 
@@ -127,6 +148,10 @@ window.showDailyChallenge = async function () {
         <div class="daily-powers-row">
           <span class="daily-role-label inspector">Inspector</span>
           <div class="daily-powers">${insPills || "<span style='opacity:.4'>—</span>"}</div>
+        </div>
+        <div class="daily-powers-row">
+          <span class="daily-role-label inspector">Quest</span>
+          <div class="daily-powers">${questPill || "<span style='opacity:.4'>—</span>"}</div>
         </div>
       </div>
 

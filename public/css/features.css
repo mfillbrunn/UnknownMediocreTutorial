@@ -2,8 +2,9 @@
    features.css — new features ported from mobile-frontend
    =================================================================== */
 
-/* ── Setter drag-and-drop (always on, see drag-mode.js) ─────────────── */
-#keyboardSetter .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]) {
+/* ── Setter + Guesser drag-and-drop (always on, see drag-mode.js) ────── */
+#keyboardSetter .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]),
+#keyboardGuesser .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]) {
   cursor: grab;
   /* Without this, a touch browser claims the gesture for page
      scroll/pan the instant the finger moves, so pointermove/pointerup
@@ -519,6 +520,11 @@
   background: rgba(59,130,246,0.12);
   border: 1px solid rgba(59,130,246,0.3);
   color: #60a5fa;
+}
+.daily-power-pill.quest {
+  background: rgba(22,163,74,0.12);
+  border: 1px solid rgba(22,163,74,0.3);
+  color: #4ade80;
 }
 .daily-ai-label {
   font-size: 13px;

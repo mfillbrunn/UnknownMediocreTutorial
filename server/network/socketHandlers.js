@@ -18,7 +18,7 @@ const { maybeRunAI } = require("../core/ai/runAI");
 const { buildSetterRemainingBoxState, computeRemainingAfterGuess } = require("../utils/remainingWords");
 const { computeLetterProfileStats } = require("../utils/letterProfile");
 const { guesserVisibleHistoryCount } = require("../utils/delayedFeedback");
-const { getDailyStatus } = require("../core/dailyTracking");
+const { getDailyStatus, markDailyAbandoned } = require("../core/dailyTracking");
 const { runPowerSimulation, runAllPowerSimulations, savePowerSimulation } = require("../core/simulation/runPowerSimulation");
 
 module.exports = function registerSocketHandlers(io, context) {
@@ -95,6 +95,10 @@ module.exports = function registerSocketHandlers(io, context) {
       }
       if (room.state?.ranked) {
         return cb?.({ ok: false, error: "Ranked games can't be abandoned" });
+      }
+
+      if (room.state?.isDaily && room.state?.dailyDate) {
+        markDailyAbandoned(userId, room.state.dailyDate);
       }
 
       forceCloseRoom(roomId, room, io);
