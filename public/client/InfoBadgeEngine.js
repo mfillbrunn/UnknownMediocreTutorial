@@ -39,6 +39,8 @@ window.InfoBadgeEngine = {
   render(state, role) {
     const badgeId = role === "setter" ? "SetterInfoBadge" : "GuesserInfoBadge";
     const badge = $(badgeId);
+    const detailId = role === "setter" ? "SetterInfoBadgeDetail" : "GuesserInfoBadgeDetail";
+    const detail = $(detailId);
 
     if (!badge) return;
 
@@ -48,6 +50,7 @@ window.InfoBadgeEngine = {
     if (!messages.length) {
       badge.classList.remove("show");
       badge.innerHTML = "";
+      if (detail) { detail.hidden = true; detail.innerHTML = ""; }
       return;
     }
 
@@ -60,6 +63,23 @@ window.InfoBadgeEngine = {
       .join(`<span class="badge-sep">·</span>`);
 
     badge.classList.add("show");
+
+    // A message can carry extra info that doesn't fit the one-line badge
+    // (e.g. a quest's randomized per-match conditions) -- shown as its own
+    // small line right underneath, only for the messages that actually
+    // need it (most don't set subtext at all).
+    if (detail) {
+      const subtexts = messages.map(m => m.subtext).filter(Boolean);
+      if (subtexts.length) {
+        detail.innerHTML = subtexts
+          .map(s => `<span class="info-badge-detail-item">${s}</span>`)
+          .join(`<span class="badge-sep">·</span>`);
+        detail.hidden = false;
+      } else {
+        detail.innerHTML = "";
+        detail.hidden = true;
+      }
+    }
 
     if (!this._delegatedBound[role]) {
       this._delegatedBound[role] = true;

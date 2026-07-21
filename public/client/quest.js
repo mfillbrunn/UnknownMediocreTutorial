@@ -305,6 +305,13 @@ InfoBadgeEngine.register((state, role) => {
     : q.oneAway ? "var(--tile-yellow)"
     : status.meta.color;
 
+  // Most quest types are fully explained by the label + progress count
+  // (their rules are static and already in the "?" power-info panel), but
+  // Field Report's 3 conditions are randomized per match -- there's no way
+  // to know what they are without surfacing them somewhere. Shown as a
+  // line under the badge rather than crammed into it.
+  const subtext = q.type === "FIELDREPORT" && !status.done ? status.desc : null;
+
   return {
     id: "quest",
     emoji: status.meta.emoji ?? "🎯",
@@ -313,6 +320,7 @@ InfoBadgeEngine.register((state, role) => {
     priority: 12,
     screen: "both",
     details: status.desc,
+    subtext,
     clickable: canClaim,
     onClick: canClaim
       ? () => window.sendGameAction?.({ type: "USE_QUEST", userId: window.currentUser?.id })
