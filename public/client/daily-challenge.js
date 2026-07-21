@@ -132,7 +132,7 @@ window.showDailyChallenge = async function () {
     ? `<span class="daily-power-pill quest">${questMeta.emoji || "🎯"} ${questMeta.label}</span>`
     : "";
 
-  const diffLabels = { 1: "🤖 Easy", 2: "🧠 Medium", 3: "🔥 Hard" };
+  const diffLabels = { 1: "Easy", 2: "Medium", 3: "Hard" };
   const diffLabel  = diffLabels[config.aiDifficulty] || "AI";
 
   screen.innerHTML = `
