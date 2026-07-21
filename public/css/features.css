@@ -2,20 +2,16 @@
    features.css — new features ported from mobile-frontend
    =================================================================== */
 
-/* ── Guesser Quest box (always to the left of the power buttons) ────── */
-/* A flex row (not the powers-col's usual vertical stack) so the quest
-   box reliably renders to the left of guesserPowerContainer at every
-   viewport width, mobile's row-flip of .power-container included. */
-.quest-and-powers-row {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: var(--sp-8);
-}
+/* ── Guesser Quest box (its own row: above the power buttons, below the
+   feedback/history rows) ──────────────────────────────────────────── */
+/* .powers-col is a flex-wrap row in mobile.css at every viewport width
+   (no media-query gate) -- width:100% forces the quest box onto its own
+   line ahead of #guesserPowerContainer instead of sitting beside it. */
 
 /* Same visual language as .remaining-box/.letter-profile-box, tinted
    green since a quest's payoff is always a free green letter. */
 .quest-box {
+  width: 100%;
   min-width: 120px;
   padding: var(--sp-6) var(--sp-8);
 
