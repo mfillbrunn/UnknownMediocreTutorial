@@ -355,6 +355,14 @@ window._startVsAI = function (difficulty) {
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
   socket.emit("createRoom", { userId: window.currentUser.id, name: username }, resp => {
     if (!resp?.ok) return toast(resp?.error || "Could not create room");
+    // roomId (bare) is the module-scoped variable client.js's power-button
+    // render gate actually reads -- every other room-creation flow in this
+    // file (createRoomBtn, joinRoomBtn, ranked match found) sets it too.
+    // Setting only window.roomId here left it null, so onStateUpdate's
+    // `roomId && myRole && ...` check for PowerEngine.renderButtons()
+    // never passed, and the power buttons never got created for the whole
+    // session -- reproducibly, every vs-AI game, only fixed by a reload.
+    roomId = resp.roomId;
     window.roomId = resp.roomId;
     persistRoom(resp.roomId);
     sendGameAction({ type: "ADD_AI", difficulty, userId: window.currentUser.id });
@@ -374,6 +382,9 @@ window._startQuickAI = function (difficulty) {
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
   socket.emit("createRoom", { userId: window.currentUser.id, name: username }, resp => {
     if (!resp?.ok) return toast(resp?.error || "Could not create room");
+    // See the matching comment in _startVsAI above -- bare roomId is what
+    // the power-button render gate in client.js actually reads.
+    roomId = resp.roomId;
     window.roomId = resp.roomId;
     persistRoom(resp.roomId);
     const userId = window.currentUser.id;

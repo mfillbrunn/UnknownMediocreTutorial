@@ -35,8 +35,9 @@ const SETTER_POWERS = [
   "blindGuess",
   "fakeFeedback",
   "revealPenalty",
-  "delayedIntel",
-  "letterLockout"
+  "delayedIntel"
+  // letterLockout ("forbid a letter") deliberately excluded -- disabled
+  // from random/draft pools, same precedent as assassinWord above.
 ];
 
 // revealLetter and fieldReport are deliberately excluded from this pool --
@@ -325,6 +326,24 @@ if (action.type === "SET_DAILY_POWERS") {
         name: player.name,
         isAI: !!player.isAI
       };
+    }
+
+    // Shuffle roles: the lobby's "Random" toggle (state.shuffle) promises
+    // to "randomly assign who's Spy and who's Inspector when the match
+    // starts", but nothing ever actually re-rolled the roles -- the host
+    // is fixed as setter at room creation (rooms.js's createRoom) and
+    // stayed that way unless someone hit Switch Roles by hand. Coin-flip
+    // here, once, right as the match is actually starting, so it applies
+    // uniformly whether the round ahead goes through Draft or straight to
+    // random/dev/daily/replay powers below.
+    if (state.shuffle) {
+      const ids = Object.keys(freshState.players);
+      if (ids.length === 2 && Math.random() < 0.5) {
+        const [a, b] = ids;
+        const roleA = freshState.players[a].role;
+        freshState.players[a].role = freshState.players[b].role;
+        freshState.players[b].role = roleA;
+      }
     }
 
     freshState.hostUserId = state.hostUserId;
