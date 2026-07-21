@@ -169,7 +169,7 @@ function computeQuestStatus(state) {
         if (QUEST_RARE_LETTERS.includes(c)) seen.add(c);
       }
     }
-    return { meta, label: `${seen.size}/4`, desc: meta.desc, done: false };
+    return { meta, label: `${seen.size}/5`, desc: meta.desc, done: false };
   }
 
   if (q.type === "ROW") {
