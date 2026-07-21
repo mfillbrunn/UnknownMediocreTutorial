@@ -329,19 +329,20 @@ InfoBadgeEngine.register((state, role) => {
 });
 
 // --------------------------------------------------
-// Quest — early claim popup (mirrors fieldReportResult's yellow-reward
-// popup in power-functions.js; questServer.js's grantQuestYellowEarly
-// emits this right after pushing the YELLOW extraConstraint).
+// Quest — early claim (questServer.js's grantQuestYellowEarly emits this
+// right after pushing the YELLOW extraConstraint). A quiet toast, not the
+// big center-screen "power used" splash -- same reasoning as
+// greenLetterRevealed's source==="quest" branch in power-functions.js:
+// quests are always-on for every guesser, not an opt-in power activation,
+// so the flashier treatment reads as the AI constantly firing off a power
+// it never actually has.
 // --------------------------------------------------
 socket.on("questEarlyClaim", ({ questType, letter }) => {
   const meta = window.QUEST_METADATA?.[questType];
-  window.showBigAnnounce?.({
-    icon: letter ? "🟨" : "🎯",
-    title: `${meta?.label || "Quest"} claimed early!`,
-    sub: letter
-      ? `${letter.toUpperCase()} is somewhere in the secret. No green letter later — the quest is used.`
-      : "Nothing new left to reveal — the quest is used.",
-    roleClass: letter ? "outcome-win" : "",
-    duration: 4200
-  });
+  const label = meta?.label || "Quest";
+  toast(
+    letter
+      ? `${label} claimed early! ${letter.toUpperCase()} is somewhere in the secret.`
+      : `${label} claimed early, but nothing new was left to reveal.`
+  );
 });

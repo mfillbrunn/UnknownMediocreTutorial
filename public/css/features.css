@@ -1473,6 +1473,46 @@
   border-left: 2px solid var(--guesser-color);
 }
 
+/* ── AI difficulty buttons: green/yellow/red at a glance ──────────────
+   Reuses the same tile colors the board already uses for green/yellow
+   feedback (and their paired dark text) so "Easy/Medium" reads as the
+   same familiar color language, plus the app's existing red accent
+   (--setter-color) for Hard rather than inventing a new color. Applied
+   on top of .menu-btn/.ai-option's own base classes (features.css loads
+   last, so these override .menu-btn.primary/.primary-btn/.secondary-btn
+   without needing !important). */
+.difficulty-easy {
+  background: var(--tile-green);
+  color: var(--tile-green-text);
+  border-color: var(--tile-green);
+}
+.difficulty-easy:hover {
+  background: color-mix(in srgb, var(--tile-green) 85%, white);
+}
+.difficulty-medium {
+  background: var(--tile-yellow);
+  color: var(--tile-yellow-text);
+  border-color: var(--tile-yellow);
+}
+.difficulty-medium:hover {
+  background: color-mix(in srgb, var(--tile-yellow) 85%, white);
+}
+.difficulty-hard {
+  background: var(--setter-color);
+  color: #fff;
+  border-color: var(--setter-color);
+}
+.difficulty-hard:hover {
+  background: color-mix(in srgb, var(--setter-color) 85%, white);
+}
+.difficulty-easy small,
+.difficulty-medium small,
+.difficulty-hard small {
+  display: block;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
 /* ── Developer: Simulation screen ─────────────────────────────────── */
 .sim-center {
   /* Wide enough for the all-powers bar chart; the form controls below
