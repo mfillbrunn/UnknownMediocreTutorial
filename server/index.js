@@ -77,7 +77,16 @@ app.get("/api/allowed-secrets", (req, res) => res.json(ALLOWED_SECRETS));
 app.get("/api/allowed-guesses", (req, res) => res.json(ALLOWED_GUESSES));
 app.get("/api/daily", (req, res) => {
   const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-  res.json(getDailyConfig(today));
+  const cfg = getDailyConfig(today);
+  // Explicit whitelist -- secretWord/openingGuess (added for the AI's
+  // deterministic-per-day opening moves) must never reach the client, or
+  // the human could just read today's answer out of this response.
+  res.json({
+    date: cfg.date,
+    aiDifficulty: cfg.aiDifficulty,
+    setterPowers: cfg.setterPowers,
+    guesserPowers: cfg.guesserPowers
+  });
 });
 app.use(express.static(path.join(__dirname, "..", "public")));
 app.get("*", (req, res) =>

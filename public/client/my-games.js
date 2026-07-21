@@ -28,11 +28,16 @@ window.showMyGames = async function () {
 
   screen.innerHTML = `<div class="menu-center"><p class="daily-date">Loading…</p></div>`;
 
-  const games = await new Promise(resolve => {
-    socket.emit("getMyActiveGames", { userId: window.currentUser.id }, resolve);
-  });
+  const [games, invites] = await Promise.all([
+    new Promise(resolve => {
+      socket.emit("getMyActiveGames", { userId: window.currentUser.id }, resolve);
+    }),
+    window._fetchGameInvites ? window._fetchGameInvites(window.currentUser.id) : []
+  ]);
 
-  if (!Array.isArray(games) || games.length === 0) {
+  const gameList = Array.isArray(games) ? games : [];
+
+  if (gameList.length === 0 && !invites.length) {
     screen.innerHTML = `<div class="menu-center">
       <h2 class="menu-title">My Games</h2>
       <p class="daily-completed-msg">
@@ -45,8 +50,8 @@ window.showMyGames = async function () {
     return;
   }
 
-  const pending = games.filter(g => g.isPending);
-  const active = games.filter(g => !g.isPending);
+  const pending = gameList.filter(g => g.isPending);
+  const active = gameList.filter(g => !g.isPending);
   const casual = active.filter(g => !g.ranked);
   const ranked = active.filter(g => g.ranked);
 
@@ -60,10 +65,18 @@ window.showMyGames = async function () {
     `;
   };
 
+  const invitesSection = invites.length ? `
+    <div class="my-games-section">
+      <h3 class="my-games-section-title">Game Invites</h3>
+      <div class="my-games-list">${invites.map(_renderInviteRow).join("")}</div>
+    </div>
+  ` : "";
+
   screen.innerHTML = `
     <div class="menu-center">
       <h2 class="menu-title">My Games</h2>
       <p class="daily-date">♾️ Unlimited-time games in progress</p>
+      ${invitesSection}
       ${section("Waiting for a friend", pending)}
       ${section("Casual", casual)}
       ${section("Ranked", ranked)}
@@ -81,7 +94,36 @@ window.showMyGames = async function () {
       _abandonMyGame(btn.dataset.roomId);
     });
   });
+
+  screen.querySelectorAll(".my-game-invite-join-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      await window._acceptGameInvite(btn.dataset.inviteId, btn.dataset.roomId);
+    });
+  });
+
+  screen.querySelectorAll(".my-game-invite-decline-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      await window._declineGameInvite(btn.dataset.inviteId);
+      window.showMyGames();
+    });
+  });
 };
+
+function _renderInviteRow(inv) {
+  return `
+    <div class="my-game-row-wrap">
+      <span class="my-game-row">
+        <span class="my-game-main">
+          <span class="my-game-opponent">${inv.sender?.username || "?"} invited you</span>
+        </span>
+      </span>
+      <button class="my-game-abandon-btn my-game-invite-join-btn" data-invite-id="${inv.id}" data-room-id="${inv.room_id}">Join</button>
+      <button class="my-game-abandon-btn my-game-invite-decline-btn" data-invite-id="${inv.id}" title="Decline this invite">Decline</button>
+    </div>
+  `;
+}
 
 function _formatStartDate(ts) {
   if (!ts) return "";

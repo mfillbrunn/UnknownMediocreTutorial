@@ -1411,6 +1411,10 @@
   text-align: left;
 }
 
+.power-lib-tabs {
+  margin-top: var(--sp-14);
+}
+
 #startTutorialBtn {
   width: 100%;
   margin-bottom: var(--sp-4);

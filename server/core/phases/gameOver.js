@@ -113,11 +113,19 @@ state.matchRounds.push({
   state.canNextRound = !!res.canNextRound;
 
   if (state.isDaily && !state.canNextRound) {
+    const aiPlayer = Object.values(state.players || {}).find((p) => p.isAI);
     for (const player of Object.values(state.players || {})) {
       if (!player.isAI) {
         const { points, time, didWin, tie } = computeMatchResult(state, player.userId);
         markDailyCompleted(player.userId, state.dailyDate, {
           score: points[player.userId] || 0,
+          // Both rounds' points combined already live in `points` (each
+          // round credits its setter, and the human/AI are setter in
+          // exactly one round each) -- opponentScore is just the AI's
+          // half of the same totals, so the completed-daily UI can show
+          // "you : AI" as one total-score readout instead of just your
+          // own number.
+          opponentScore: (aiPlayer && points[aiPlayer.userId]) || 0,
           time: time[player.userId] || 0,
           won: didWin,
           tie

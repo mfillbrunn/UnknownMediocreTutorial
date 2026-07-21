@@ -79,6 +79,11 @@
       .insert({ from_user: myId, to_user: toId, room_id: roomId, status: "pending" });
   }
 
+  async function declineInvite(inviteId) {
+    await sb().from("game_invites")
+      .update({ status: "declined" }).eq("id", inviteId);
+  }
+
   async function acceptInvite(inviteId, targetRoomId) {
     await sb().from("game_invites")
       .update({ status: "accepted" }).eq("id", inviteId);
@@ -100,6 +105,12 @@
       });
     });
   }
+
+  // Exposed so my-games.js can surface pending invites there too, without
+  // duplicating the Supabase query/update logic.
+  window._fetchGameInvites = fetchInvites;
+  window._acceptGameInvite = acceptInvite;
+  window._declineGameInvite = declineInvite;
 
   // ── State ────────────────────────────────────────────────────────────
   let _tab = "friends";
@@ -246,9 +257,16 @@
         <div class="friends-row">
           <span class="friends-name">${inv.sender?.username || "?"} invited you</span>
           <button class="primary-btn small" data-room="${inv.room_id}" data-inv="${inv.id}">Join</button>
+          <button class="secondary-btn small" data-decline-inv="${inv.id}">Decline</button>
         </div>`).join("");
       content.querySelectorAll("[data-room]").forEach(btn => {
         btn.addEventListener("click", () => acceptInvite(btn.dataset.inv, btn.dataset.room));
+      });
+      content.querySelectorAll("[data-decline-inv]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          await declineInvite(btn.dataset.declineInv);
+          _loadTab("invites");
+        });
       });
     }
   }

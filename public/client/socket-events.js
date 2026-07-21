@@ -303,35 +303,6 @@ socket.on("forceLeaveRoom", () => {
   showStartup?.();
   toast("The game has ended.");
 });
-$("rankedBadge")?.addEventListener("click", () => {
-  if (!state || !window.currentUser) return;
-  if (state.hostUserId !== window.currentUser.id) return;
-
-  sendGameAction({
-    type: "SET_RANKED",
-    ranked: !state.ranked,
-    userId: window.currentUser.id
-  });
-});
-
-
-function updateRankedUI() {
-  const badge = $("rankedBadge");
-  if (!badge || !state || !window.currentUser) return;
-
-  const isRanked = !!state.ranked;
-  const isHost = state.hostUserId === window.currentUser.id;
-
-  badge.textContent = isRanked ? "🏆 Ranked" : "🎮 Casual";
-
-  // Preserve other classes
-  badge.classList.toggle("ranked-on", isRanked);
-  badge.classList.toggle("ranked-off", !isRanked);
-
-  // Host-only interaction
-  badge.classList.toggle("readonly", !isHost);
-}
-
 $("rankedLeaderboardBtn")?.addEventListener("click", () => {
   showScreen("leaderboardScreen");
   loadLeaderboard("bullet");
@@ -434,24 +405,6 @@ function updateDevUI() {
   }
   _prevDevMode = isDev;
 }
-const shuffleBtn = document.querySelector("#shuffle");
-shuffleBtn?.addEventListener("click", () => {
-  sendGameAction({
-    type: "SET_SHUFFLE",
-    shuffle: !state.shuffle,
-    userId: window.currentUser.id
-  });
-});
-function updateShuffleUI() {
-  if (!shuffleBtn || !state || !window.currentUser) return;
-  const isShuffle = !!state.shuffle;
-  const isHost = state.hostUserId === window.currentUser.id;
-  shuffleBtn.classList.toggle("active", isShuffle);
-  shuffleBtn.disabled = !isHost;
-  shuffleBtn.textContent = isShuffle ? "🔀 Shuffle" : "Non-Shuffle";
-}
-
-
 document.querySelectorAll(".ai-option").forEach(btn => {
   btn.addEventListener("click", () => {
     const difficulty = Number(btn.dataset.difficulty);
