@@ -35,6 +35,49 @@ function questDoubledLetterOf(word) {
   return null;
 }
 
+const QUEST_VOWELS = new Set(["A", "E", "I", "O", "U"]);
+function questCountVowels(word) {
+  let n = 0;
+  for (const c of word) if (QUEST_VOWELS.has(c)) n++;
+  return n;
+}
+
+function questIsAlternatingWord(word) {
+  for (let i = 1; i < word.length; i++) {
+    if (QUEST_VOWELS.has(word[i]) === QUEST_VOWELS.has(word[i - 1])) return false;
+  }
+  return true;
+}
+
+function questIsReverseAlphaWord(word) {
+  for (let i = 1; i < word.length; i++) {
+    if (word.charCodeAt(i) >= word.charCodeAt(i - 1)) return false;
+  }
+  return true;
+}
+
+function questIsInLetterRange(word, minLetter, maxLetter) {
+  const min = minLetter.charCodeAt(0);
+  const max = maxLetter.charCodeAt(0);
+  for (const c of word) {
+    const code = c.charCodeAt(0);
+    if (code < min || code > max) return false;
+  }
+  return true;
+}
+
+// Mirrors questServer.js's computeVowelProgressionStage exactly.
+function computeVowelProgressionStage(history) {
+  const targets = [1, 2, 3, 4];
+  let stage = 0;
+  for (const entry of history) {
+    if (stage >= targets.length) break;
+    if (!entry?.guess) continue;
+    if (questCountVowels(entry.guess.toUpperCase()) === targets[stage]) stage++;
+  }
+  return stage;
+}
+
 // Mirrors questServer.js's computeHardModeCount exactly.
 function computeHardModeProgress(history) {
   const green = [null, null, null, null, null];
@@ -175,6 +218,39 @@ function computeQuestStatus(state) {
       desc: conditionList ? `Conditions: ${conditionList}` : meta.desc,
       done: false
     };
+  }
+
+  if (q.type === "ALTERNATING") {
+    const count = history.filter(h => questIsAlternatingWord((h.guess || "").toUpperCase())).length;
+    return { meta, label: `${count}/3`, desc: meta.desc, done: false };
+  }
+
+  if (q.type === "BOOKENDS") {
+    const count = history.filter(h => {
+      const w = (h.guess || "").toUpperCase();
+      return w.length === 5 && w[0] === w[4];
+    }).length;
+    return { meta, label: `${count}/3`, desc: meta.desc, done: false };
+  }
+
+  if (q.type === "REVERSEALPHA") {
+    const count = history.filter(h => questIsReverseAlphaWord((h.guess || "").toUpperCase())).length;
+    return { meta, label: `${count}/3`, desc: meta.desc, done: false };
+  }
+
+  if (q.type === "HALF_AM") {
+    const count = history.filter(h => questIsInLetterRange((h.guess || "").toUpperCase(), "A", "M")).length;
+    return { meta, label: `${count}/3`, desc: meta.desc, done: false };
+  }
+
+  if (q.type === "HALF_NZ") {
+    const count = history.filter(h => questIsInLetterRange((h.guess || "").toUpperCase(), "N", "Z")).length;
+    return { meta, label: `${count}/3`, desc: meta.desc, done: false };
+  }
+
+  if (q.type === "VOWELPROGRESSION") {
+    const stage = computeVowelProgressionStage(history);
+    return { meta, label: `${stage}/4`, desc: meta.desc, done: false };
   }
 
   return null;

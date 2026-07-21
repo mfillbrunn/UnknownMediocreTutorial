@@ -35,6 +35,14 @@ socket.on("revealOldSecret", ({ secret }) => {
   toast(`Secret three rounds ago was: ${secret.toUpperCase()}`);
 });
 
+// Private reward nudge for the setter: fires only when they actually
+// changed their secret AND the new pick leaves strictly more remaining
+// words than keeping the old one would have (see normal.js's SET_SECRET_NEW
+// handler). Never sent to the guesser.
+socket.on("secretChangeReward", ({ diff }) => {
+  window.showSecretChangeRewardPop?.(diff);
+});
+
 // Timer begins
 socket.on("forceTimerStarted", ({ durationMs }) => {
   const seconds = Math.ceil(durationMs / 1000);
