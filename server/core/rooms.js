@@ -412,6 +412,10 @@ function cleanupDisconnectedPlayers(io, graceMs = 30000, context) {
   }
 }
 
+// Keep in sync with aiDifficulty.js's LEVELS keys and the client-side
+// Easy/Medium/Hard labels (index.html's difficulty pickers).
+const AI_DIFFICULTY_NAMES = { 1: "AI (Easy)", 2: "AI (Medium)", 3: "AI (Hard)" };
+
 function addAIPlayer(room, difficulty = 1) {
   if (!room || room.status !== "alive") return;
 
@@ -431,7 +435,7 @@ function addAIPlayer(room, difficulty = 1) {
     userId: AI_USER,
     role,
     ready: false,
-    name: `AI Lvl ${difficulty}`,
+    name: AI_DIFFICULTY_NAMES[difficulty] || `AI Lvl ${difficulty}`,
     isAI: true
   });
 
