@@ -627,6 +627,25 @@
   user-select: none;
 }
 
+/* Extra info a badge item needs spelled out but doesn't fit on the badge
+   line itself -- e.g. Field Report's randomized per-match conditions.
+   Sits directly under the badge strip; only shown when something actually
+   has a subtext to display (most badge messages don't). */
+#SetterInfoBadgeDetail,
+#GuesserInfoBadgeDetail {
+  margin-top: var(--sp-4);
+  padding: 0 var(--sp-14);
+  font-size: var(--fs-11);
+  font-weight: 600;
+  opacity: 0.75;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.info-badge-detail-item {
+  opacity: 0.95;
+}
+
 .badge-item[style*="--tile-green"] {
   animation: pulse-good 280ms cubic-bezier(0.4, 0, 0.2, 1) 2;
 }
