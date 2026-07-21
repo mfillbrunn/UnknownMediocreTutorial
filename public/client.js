@@ -1406,6 +1406,12 @@ function updateTimerAccess() {
         greenLetters
       );
     }
+    // Same reasoning: the quest box's explanation line is guide-mode-only,
+    // so it needs an explicit re-render to appear/disappear immediately
+    // instead of waiting for the next state broadcast.
+    if (typeof renderQuestBox === "function" && window.state) {
+      renderQuestBox(window.state);
+    }
   };
 })();
 

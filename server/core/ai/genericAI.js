@@ -437,42 +437,11 @@ function pickAISecret(
    ("one away") always tries -- unless only one feasible secret remains,
    in which case taking the win always wins out (see the call site in
    pickAIGuess, which checks that before any of this runs at all).
-   Reuses questServer.js's exported pure predicates/thresholds instead of
-   re-deriving quest logic, same as questServer.js's own turnStart switch
-   does -- there is exactly one place each quest's condition is defined. */
-
-function questRareLettersSeen(history) {
-  const seen = new Set();
-  for (const h of history) {
-    for (const c of h.guess.toUpperCase()) {
-      if (questServer.QUEST_RARE_LETTERS.has(c)) seen.add(c);
-    }
-  }
-  return seen;
-}
-
-// One entry per keyboard row: { row: Set, used: Set } for letters of that
-// row already covered by a past guess this round.
-function questRowCoverage(history) {
-  return questServer.QUEST_KEYBOARD_ROWS.map(row => {
-    const used = new Set();
-    for (const h of history) {
-      for (const c of h.guess.toUpperCase()) {
-        if (row.has(c)) used.add(c);
-      }
-    }
-    return { row, used };
-  });
-}
-
-function questDoublesSeen(history) {
-  const seen = new Set();
-  for (const h of history) {
-    const d = questServer.doubledLetterOf(h.guess.toUpperCase());
-    if (d) seen.add(d);
-  }
-  return seen;
-}
+   Reuses questServer.js's exported pure predicates/thresholds/progress
+   helpers (rareLettersSeen/rowCoverage/doublesSeen/isQuestOneAway) instead
+   of re-deriving quest logic -- there is exactly one place each quest's
+   condition and progress count is defined, shared with the turnStart
+   switch and the early-claim feature. */
 
 // Does guessing `word` next make progress toward (or complete) the quest?
 // For the single-word-pattern quest types this IS the quest's per-guess
@@ -484,11 +453,11 @@ function questWordAdvances(word, quest, state) {
 
   switch (quest.type) {
     case "RARE": {
-      const seen = questRareLettersSeen(history);
+      const seen = questServer.rareLettersSeen(history);
       return [...w].some(c => questServer.QUEST_RARE_LETTERS.has(c) && !seen.has(c));
     }
     case "ROW": {
-      const coverage = questRowCoverage(history);
+      const coverage = questServer.rowCoverage(history);
       return coverage.some(({ row, used }) =>
         used.size < row.size && [...w].some(c => row.has(c) && !used.has(c))
       );
@@ -497,7 +466,7 @@ function questWordAdvances(word, quest, state) {
       return questServer.isAscendingWord(w);
     case "DOUBLES": {
       const d = questServer.doubledLetterOf(w);
-      return !!d && !questDoublesSeen(history).has(d);
+      return !!d && !questServer.doublesSeen(history).has(d);
     }
     case "CHAIN": {
       const prev = history.length ? history[history.length - 1].guess.toUpperCase() : null;
@@ -529,58 +498,6 @@ function questWordAdvances(word, quest, state) {
       const vowelCount = [...w].filter(c => "AEIOU".includes(c)).length;
       return vowelCount === targetVowels;
     }
-    default:
-      return false;
-  }
-}
-
-// Is the quest exactly one qualifying guess away from complete? Mirrors
-// each case's threshold (QUEST_THRESHOLDS) against its current progress
-// count. ROW/RARE are coverage-based rather than a flat count, so "one
-// away" means exactly one letter short somewhere.
-function questIsOneAway(quest, state) {
-  const history = state.history || [];
-  switch (quest.type) {
-    case "RARE":
-      return questRareLettersSeen(history).size === questServer.QUEST_THRESHOLDS.RARE - 1;
-    case "ROW":
-      return questRowCoverage(history).some(({ row, used }) => row.size - used.size === 1);
-    case "ALPHA":
-      return history.filter(h => questServer.isAscendingWord(h.guess.toUpperCase())).length
-        === questServer.QUEST_THRESHOLDS.ALPHA - 1;
-    case "DOUBLES":
-      return questDoublesSeen(history).size === questServer.QUEST_THRESHOLDS.DOUBLES - 1;
-    case "CHAIN": {
-      let links = 0;
-      for (let i = 1; i < history.length; i++) {
-        const prev = history[i - 1].guess.toUpperCase();
-        const curr = history[i].guess.toUpperCase();
-        if (curr[0] === prev[4]) links++;
-      }
-      return links === questServer.QUEST_THRESHOLDS.CHAIN - 1;
-    }
-    case "HARDMODE":
-      return questServer.computeHardModeCount(history) === questServer.QUEST_THRESHOLDS.HARDMODE - 1;
-    case "FIELDREPORT":
-      return questServer.computeFieldReportCount(history, quest.conditions)
-        === questServer.QUEST_THRESHOLDS.FIELDREPORT - 1;
-    case "ALTERNATING":
-      return history.filter(h => questServer.isAlternatingWord(h.guess.toUpperCase())).length
-        === questServer.QUEST_THRESHOLDS.ALTERNATING - 1;
-    case "BOOKENDS":
-      return history.filter(h => questServer.isBookendWord(h.guess.toUpperCase())).length
-        === questServer.QUEST_THRESHOLDS.BOOKENDS - 1;
-    case "REVERSEALPHA":
-      return history.filter(h => questServer.isReverseAlphaWord(h.guess.toUpperCase())).length
-        === questServer.QUEST_THRESHOLDS.REVERSEALPHA - 1;
-    case "HALF_AM":
-      return history.filter(h => questServer.isInLetterRange(h.guess.toUpperCase(), "A", "M")).length
-        === questServer.QUEST_THRESHOLDS.HALF_AM - 1;
-    case "HALF_NZ":
-      return history.filter(h => questServer.isInLetterRange(h.guess.toUpperCase(), "N", "Z")).length
-        === questServer.QUEST_THRESHOLDS.HALF_NZ - 1;
-    case "VOWELPROGRESSION":
-      return questServer.computeVowelProgressionStage(history) === questServer.QUEST_THRESHOLDS.VOWELPROGRESSION - 1;
     default:
       return false;
   }
@@ -740,7 +657,7 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyWeights) {
   const quest = state.powers?.quest;
   if (feasible.length !== 1 && quest?.type && !quest.used) {
     const isFirstGuess = history.length === 0;
-    const oneAway = questIsOneAway(quest, state);
+    const oneAway = questServer.isQuestOneAway(quest, state);
     const shouldTryQuest = isFirstGuess || oneAway || Math.random() < 0.75;
 
     if (shouldTryQuest) {

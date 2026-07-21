@@ -49,6 +49,27 @@ function buildPowerInfoPanel(state, role) {
     sections[powerRole]?.push(row);
   }
 
+  // Quest isn't a registered PowerEngine power (it piggybacks on the power
+  // dispatch loop purely server-side, see questServer.js), so the loop above
+  // never sees it. It's the guesser's own objective, so it's listed under
+  // Inspector Powers on both panels -- giving the setter equal visibility
+  // into what the guesser is working toward, same as the quest box/info
+  // badge already do.
+  const questType = state.powers?.quest?.type;
+  const questMeta = questType && window.QUEST_METADATA?.[questType];
+  if (questMeta) {
+    const row = document.createElement("div");
+    row.className = "power-info-row power-info-active";
+    row.innerHTML = `
+      <span class="power-info-emoji">${questMeta.emoji || "🎯"}</span>
+      <div class="power-info-body">
+        <div class="power-info-title">Quest: ${questMeta.label}</div>
+        <div class="power-info-desc">${questMeta.desc}</div>
+      </div>
+    `;
+    sections.guesser.push(row);
+  }
+
   if (sections.setter.length) {
     const h = document.createElement("div");
     h.className = "power-info-section";

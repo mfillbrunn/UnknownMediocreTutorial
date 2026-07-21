@@ -7,6 +7,7 @@ const { emitRoomState } = require("../rooms");
 const { scoreGuess } = require("../../game-engine/scoring");
 const { clearForceTimer } = require("../../utils/forceTimer");
 const { computeRemainingNew } = require("../../utils/remainingWords");
+const questServer = require("../../powers/powers/questServer");
 
 function handleNormalPhase(room, state, action, roomId, context) {
   const io = context.io;
@@ -21,6 +22,18 @@ function handleNormalPhase(room, state, action, roomId, context) {
       state.guessCount += 10;
     }
     endGame(state, roomId, io, room, context);
+    return;
+  }
+
+  // Quest early claim: the guesser trades their eventual green letter for
+  // an immediate yellow one, available only while the quest is exactly one
+  // qualifying guess away from completing on its own. Not tied to whose
+  // turn it is or a pending guess -- it's a standing option on the quest
+  // box itself, not a normal power activation.
+  if (action.type === "USE_QUEST_EARLY") {
+    if (questServer.attemptEarlyQuestClaim(state, userId, roomId, io)) {
+      emitRoomState(roomId, room, io);
+    }
     return;
   }
 
