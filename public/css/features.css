@@ -35,11 +35,6 @@
   margin-bottom: var(--sp-4);
 }
 
-.quest-box .quest-progress {
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
-}
-
 .quest-box .quest-desc {
   margin-top: var(--sp-4);
   font-weight: 500;
@@ -49,6 +44,27 @@
 .quest-box.quest-done {
   background: color-mix(in srgb, var(--tile-green) 20%, transparent);
   border-color: color-mix(in srgb, var(--tile-green) 55%, transparent);
+}
+
+/* One qualifying guess away from completion -- the guesser can tap the box
+   to cash in an early yellow letter instead of waiting for the green one. */
+.quest-box.quest-claimable {
+  cursor: pointer;
+  background: color-mix(in srgb, var(--tile-yellow) 14%, transparent);
+  border-color: color-mix(in srgb, var(--tile-yellow) 45%, transparent);
+  animation: quest-claimable-pulse 1.6s ease-in-out infinite;
+}
+
+.quest-box .quest-claim-hint {
+  margin-top: var(--sp-4);
+  font-weight: 700;
+  color: var(--tile-yellow);
+  opacity: 0.95;
+}
+
+@keyframes quest-claimable-pulse {
+  0%, 100% { border-color: color-mix(in srgb, var(--tile-yellow) 45%, transparent); }
+  50% { border-color: color-mix(in srgb, var(--tile-yellow) 85%, transparent); }
 }
 
 /* ── Setter drag-and-drop (always on, see drag-mode.js) ─────────────── */

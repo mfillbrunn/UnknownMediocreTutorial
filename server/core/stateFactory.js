@@ -169,6 +169,8 @@ const powers = {
         type: null,
         ready: false,
         used: false,
+        oneAway: false,
+        claimedEarly: false,
         conditions: null
       },
       questActive: false

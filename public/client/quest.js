@@ -143,6 +143,15 @@ function computeQuestStatus(state) {
   if (!meta) return null;
 
   if (q.used) {
+    if (q.claimedEarly) {
+      return {
+        meta,
+        label: "Claimed early",
+        desc: "Yellow letter revealed early — no green letter for this quest.",
+        done: true,
+        claimedEarly: true
+      };
+    }
     return { meta, label: "Complete!", desc: "Free green letter revealed.", done: true };
   }
   if (q.ready) {
@@ -264,16 +273,32 @@ window.renderQuestBox = function (state) {
   const status = computeQuestStatus(state);
   if (!status) {
     box.hidden = true;
+    box.onclick = null;
     return;
   }
 
+  const q = state.powers?.quest;
+  const claimable = !!q?.oneAway && !status.done;
+
   box.hidden = false;
   box.classList.toggle("quest-done", !!status.done);
+  box.classList.toggle("quest-claimable", claimable);
+
+  const guideOn = document.body.classList.contains("guide-on");
+  const hintHtml = claimable
+    ? `<div class="quest-claim-hint">Tap for an early 🟨 (forfeits the 🟩)</div>`
+    : "";
+  const descHtml = guideOn ? `<div class="quest-desc">${status.desc}</div>` : "";
+
   box.innerHTML = `
-    <div class="quest-title">${status.meta.emoji || "🎯"} ${status.meta.label}</div>
-    <div class="quest-progress">${status.label}</div>
-    <div class="quest-desc">${status.desc}</div>
+    <div class="quest-title">${status.meta.emoji || "🎯"} ${status.meta.label} — ${status.label}</div>
+    ${hintHtml}
+    ${descHtml}
   `;
+
+  box.onclick = claimable
+    ? () => window.sendGameAction?.({ type: "USE_QUEST_EARLY", userId: window.currentUser?.id })
+    : null;
 };
 
 // --------------------------------------------------
@@ -289,11 +314,31 @@ InfoBadgeEngine.register((state, role) => {
     id: "quest",
     emoji: status.meta.emoji ?? "🎯",
     text: status.done
-      ? `Quest complete: ${status.meta.label}`
+      ? (status.claimedEarly
+        ? `Quest claimed early: ${status.meta.label}`
+        : `Quest complete: ${status.meta.label}`)
       : `Quest: ${status.meta.label} (${status.label})`,
     color: status.meta.color,
     priority: 12,
     screen: "both",
     details: status.desc
   };
+});
+
+// --------------------------------------------------
+// Quest — early claim popup (mirrors fieldReportResult's yellow-reward
+// popup in power-functions.js; questServer.js's grantQuestYellowEarly
+// emits this right after pushing the YELLOW extraConstraint).
+// --------------------------------------------------
+socket.on("questEarlyClaim", ({ questType, letter }) => {
+  const meta = window.QUEST_METADATA?.[questType];
+  window.showBigAnnounce?.({
+    icon: letter ? "🟨" : "🎯",
+    title: `${meta?.label || "Quest"} claimed early!`,
+    sub: letter
+      ? `${letter.toUpperCase()} is somewhere in the secret. No green letter later — the quest is used.`
+      : "Nothing new left to reveal — the quest is used.",
+    roleClass: letter ? "outcome-win" : "",
+    duration: 4200
+  });
 });

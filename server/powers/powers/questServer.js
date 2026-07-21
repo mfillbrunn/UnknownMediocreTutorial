@@ -148,6 +148,97 @@ function pickRandomQuestType() {
   return QUEST_TYPES[Math.floor(Math.random() * QUEST_TYPES.length)];
 }
 
+// ---- Shared progress helpers (used by the turnStart switch below AND by
+// genericAI.js's quest-aware guess picker AND the early-claim feature) ----
+
+function rareLettersSeen(history) {
+  const seen = new Set();
+  for (const h of history) {
+    for (const c of h.guess.toUpperCase()) {
+      if (QUEST_RARE_LETTERS.has(c)) seen.add(c);
+    }
+  }
+  return seen;
+}
+
+// One entry per keyboard row: { row: Set, used: Set } for letters of that
+// row already covered by a past guess this round.
+function rowCoverage(history) {
+  return QUEST_KEYBOARD_ROWS.map(row => {
+    const used = new Set();
+    for (const h of history) {
+      for (const c of h.guess.toUpperCase()) {
+        if (row.has(c)) used.add(c);
+      }
+    }
+    return { row, used };
+  });
+}
+
+function doublesSeen(history) {
+  const seen = new Set();
+  for (const h of history) {
+    const d = doubledLetterOf(h.guess.toUpperCase());
+    if (d) seen.add(d);
+  }
+  return seen;
+}
+
+// Is the quest exactly one qualifying guess away from complete? Mirrors
+// each case's threshold (QUEST_THRESHOLDS) against its current progress
+// count -- used both by the AI's quest-aware guess picker (to know when to
+// always try) and by the early-claim feature below (to gate the
+// yellow-for-a-forfeited-green trade). ROW/RARE are coverage-based rather
+// than a flat count, so "one away" means exactly one letter short
+// somewhere.
+function isQuestOneAway(quest, state) {
+  const history = state.history || [];
+  switch (quest.type) {
+    case "RARE":
+      return rareLettersSeen(history).size === QUEST_THRESHOLDS.RARE - 1;
+    case "ROW":
+      return rowCoverage(history).some(({ row, used }) => row.size - used.size === 1);
+    case "ALPHA":
+      return history.filter(h => isAscendingWord(h.guess.toUpperCase())).length
+        === QUEST_THRESHOLDS.ALPHA - 1;
+    case "DOUBLES":
+      return doublesSeen(history).size === QUEST_THRESHOLDS.DOUBLES - 1;
+    case "CHAIN": {
+      let links = 0;
+      for (let i = 1; i < history.length; i++) {
+        const prev = history[i - 1].guess.toUpperCase();
+        const curr = history[i].guess.toUpperCase();
+        if (curr[0] === prev[4]) links++;
+      }
+      return links === QUEST_THRESHOLDS.CHAIN - 1;
+    }
+    case "HARDMODE":
+      return computeHardModeCount(history) === QUEST_THRESHOLDS.HARDMODE - 1;
+    case "FIELDREPORT":
+      return computeFieldReportCount(history, quest.conditions)
+        === QUEST_THRESHOLDS.FIELDREPORT - 1;
+    case "ALTERNATING":
+      return history.filter(h => isAlternatingWord(h.guess.toUpperCase())).length
+        === QUEST_THRESHOLDS.ALTERNATING - 1;
+    case "BOOKENDS":
+      return history.filter(h => isBookendWord(h.guess.toUpperCase())).length
+        === QUEST_THRESHOLDS.BOOKENDS - 1;
+    case "REVERSEALPHA":
+      return history.filter(h => isReverseAlphaWord(h.guess.toUpperCase())).length
+        === QUEST_THRESHOLDS.REVERSEALPHA - 1;
+    case "HALF_AM":
+      return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "A", "M")).length
+        === QUEST_THRESHOLDS.HALF_AM - 1;
+    case "HALF_NZ":
+      return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "N", "Z")).length
+        === QUEST_THRESHOLDS.HALF_NZ - 1;
+    case "VOWELPROGRESSION":
+      return computeVowelProgressionStage(history) === QUEST_THRESHOLDS.VOWELPROGRESSION - 1;
+    default:
+      return false;
+  }
+}
+
 // FIELDREPORT's conditions are generated once per round (not once per
 // match -- they're tied to a random word, there's no reason to keep the
 // same 3 across a role swap into a brand new secret) and lazily, the
@@ -263,6 +354,61 @@ function grantQuestReward(state, roomId, io) {
   io.to(roomId).emit("toast", `Quest complete! Revealed letter ${letter} in position ${index + 1}!`);
 }
 
+// Early-claim trade: once a quest is exactly one qualifying guess away
+// from its green reward, the guesser can cash it in right now for a
+// yellow letter (present, position unknown) instead of waiting -- but
+// that spends the quest's one-time use, same as grantQuestReward does, so
+// there's no green later even if they go on to actually complete it.
+// Mirrors fieldReportServer.js's 2-of-3 yellow reward exactly (same
+// "known letters" exclusion set, same random pick among the rest).
+function grantQuestYellowEarly(state, roomId, io) {
+  const q = state.powers.quest;
+  q.used = true;
+  q.ready = false;
+  // Distinguishes this from a normal grantQuestReward() completion so the
+  // client can show "claimed early" instead of "complete!" -- both set
+  // q.used, but only one of them actually finished the quest's condition.
+  q.claimedEarly = true;
+
+  const known = new Set();
+  for (const past of state.history ?? []) {
+    if (!past?.fb) continue;
+    for (let i = 0; i < 5; i++) {
+      if (past.fb[i] === "🟩" || past.fb[i] === "🟨") known.add(past.guess[i]);
+    }
+  }
+  for (const c of state.extraConstraints ?? []) {
+    if (c.letter) known.add(c.letter.toUpperCase());
+  }
+
+  const secretLetters = [...new Set(state.secret.toUpperCase().split(""))];
+  const options = secretLetters.filter(l => !known.has(l));
+
+  if (!options.length) {
+    io.to(roomId).emit("questEarlyClaim", { questType: q.type, letter: null });
+    io.to(roomId).emit("toast", "Quest claimed early, but there was nothing new left to reveal.");
+    return;
+  }
+
+  const letter = options[Math.floor(Math.random() * options.length)];
+  state.extraConstraints ??= [];
+  state.extraConstraints.push({ type: "YELLOW", letter });
+  io.to(roomId).emit("questEarlyClaim", { questType: q.type, letter });
+  io.to(roomId).emit("toast", `Quest claimed early! ${letter} is somewhere in the secret.`);
+}
+
+// Entry point for the guesser's own click on the quest box -- returns
+// false (no-op) if the trade isn't actually available right now, so the
+// caller can skip the room broadcast entirely on a stale/duplicate click.
+function attemptEarlyQuestClaim(state, userId, roomId, io) {
+  if (userId !== state.guesser) return false;
+  const q = state.powers?.quest;
+  if (!q || !q.type || q.used || q.ready) return false;
+  if (!isQuestOneAway(q, state)) return false;
+  grantQuestYellowEarly(state, roomId, io);
+  return true;
+}
+
 engine.registerPower("quest", {
   turnStart(state, role, roomId, io) {
     if (role !== state.guesser) return;
@@ -358,6 +504,12 @@ engine.registerPower("quest", {
       if (q.ready) io.to(roomId).emit("toast", "Quest complete!");
     }
 
+    // Surfaced to the client as-is (safeState.js never redacts
+    // state.powers.quest) so the guesser's quest box knows when to offer
+    // the early-yellow-for-a-forfeited-green trade without re-deriving
+    // any of the per-type counting logic itself.
+    q.oneAway = !q.ready && !q.used && isQuestOneAway(q, state);
+
     if (q.ready && !q.used && state.history.length) {
       grantQuestReward(state, roomId, io);
     }
@@ -381,5 +533,10 @@ module.exports = {
   isAscendingWord,
   isBookendWord,
   doubledLetterOf,
-  computeVowelProgressionStage
+  computeVowelProgressionStage,
+  rareLettersSeen,
+  rowCoverage,
+  doublesSeen,
+  isQuestOneAway,
+  attemptEarlyQuestClaim
 };
