@@ -1,19 +1,21 @@
 // client/quest.js — Guesser Quests
 //
-// Renders the always-on quest progress box (left of the guesser's power
-// buttons, see #GuesserQuestBox in index.html + .quest-and-powers-row in
-// features.css) and mirrors the server's unlock thresholds so the
-// progress readout updates instantly from public history data, same
-// pattern as powerEngine/powers/revealLetter.js's
-// computeRevealLetterStatus (kept in sync manually -- the server in
-// questServer.js is the source of truth for when a quest actually
-// unlocks).
+// All quest UI lives in the shared info-badge strip (see
+// InfoBadgeEngine.js) -- there used to also be a standalone quest box
+// above the guesser's power buttons, but it was folded into the badge so
+// there's one place to look, on both screens. computeQuestStatus mirrors
+// the server's unlock thresholds so the progress readout updates
+// instantly from public history data, same pattern as
+// powerEngine/powers/revealLetter.js's computeRevealLetterStatus (kept in
+// sync manually -- the server in questServer.js is the source of truth
+// for when a quest actually unlocks).
 //
-// "Openly known to both players": this box only lives on the guesser's
-// own screen (mirrors where revealLetter's button used to live), but the
-// InfoBadgeEngine registration below also surfaces the quest's type and
-// live progress on BOTH screens via the shared info-badge strip, so the
-// setter isn't left guessing what the guesser is working toward.
+// "Openly known to both players": the InfoBadgeEngine registration below
+// surfaces the quest's type and live progress on BOTH screens via the
+// shared info-badge strip, so the setter isn't left guessing what the
+// guesser is working toward. Only the guesser's badge is ever clickable
+// (see the `role === "guesser"` check below) -- the setter's copy is
+// read-only.
 const QUEST_RARE_LETTERS = "QJXZWKV".split("");
 const QUEST_KEYBOARD_ROWS = [
   { name: "Top row (QWERTYUIOP)", letters: "QWERTYUIOP".split("") },
@@ -266,43 +268,15 @@ function computeQuestStatus(state) {
 }
 window.computeQuestStatus = computeQuestStatus;
 
-window.renderQuestBox = function (state) {
-  const box = document.getElementById("GuesserQuestBox");
-  if (!box) return;
-
-  const status = computeQuestStatus(state);
-  if (!status) {
-    box.hidden = true;
-    box.onclick = null;
-    return;
-  }
-
-  const q = state.powers?.quest;
-  const claimable = !!q?.oneAway && !status.done;
-
-  box.hidden = false;
-  box.classList.toggle("quest-done", !!status.done);
-  box.classList.toggle("quest-claimable", claimable);
-
-  const guideOn = document.body.classList.contains("guide-on");
-  const hintHtml = claimable
-    ? `<div class="quest-claim-hint">Tap for an early 🟨 (forfeits the 🟩)</div>`
-    : "";
-  const descHtml = guideOn ? `<div class="quest-desc">${status.desc}</div>` : "";
-
-  box.innerHTML = `
-    <div class="quest-title">${status.meta.emoji || "🎯"} ${status.meta.label} — ${status.label}</div>
-    ${hintHtml}
-    ${descHtml}
-  `;
-
-  box.onclick = claimable
-    ? () => window.sendGameAction?.({ type: "USE_QUEST_EARLY", userId: window.currentUser?.id })
-    : null;
-};
-
 // --------------------------------------------------
-// Quest — info badge (both players), same pattern as revealLetter's.
+// Quest — info badge (both players), same pattern as revealLetter's. This
+// is now the ONLY quest UI (the standalone quest box above the power
+// buttons was removed) -- it doubles as the claim button: yellow +
+// clickable while one guess away (early claim, forfeits the green),
+// green + clickable once the quest is fully ready (claim the green
+// letter). Both cases send the same USE_QUEST action; the server decides
+// which reward applies from state.powers.quest itself (see
+// questServer.js's attemptQuestClaim).
 // --------------------------------------------------
 InfoBadgeEngine.register((state, role) => {
   const q = state.powers?.quest;
@@ -310,18 +284,39 @@ InfoBadgeEngine.register((state, role) => {
   const status = computeQuestStatus(state);
   if (!status) return null;
 
+  const canClaim = role === "guesser" && !status.done && (q.ready || q.oneAway);
+
+  let text;
+  if (status.done) {
+    text = status.claimedEarly
+      ? `Quest claimed early: ${status.meta.label}`
+      : `Quest complete: ${status.meta.label}`;
+  } else if (q.ready) {
+    text = `${status.meta.label} ready — tap for 🟩`;
+  } else if (q.oneAway) {
+    text = `${status.meta.label}: one away — tap for early 🟨`;
+  } else {
+    text = `Quest: ${status.meta.label} (${status.label})`;
+  }
+
+  const color = status.done
+    ? status.meta.color
+    : q.ready ? "var(--tile-green)"
+    : q.oneAway ? "var(--tile-yellow)"
+    : status.meta.color;
+
   return {
     id: "quest",
     emoji: status.meta.emoji ?? "🎯",
-    text: status.done
-      ? (status.claimedEarly
-        ? `Quest claimed early: ${status.meta.label}`
-        : `Quest complete: ${status.meta.label}`)
-      : `Quest: ${status.meta.label} (${status.label})`,
-    color: status.meta.color,
+    text,
+    color,
     priority: 12,
     screen: "both",
-    details: status.desc
+    details: status.desc,
+    clickable: canClaim,
+    onClick: canClaim
+      ? () => window.sendGameAction?.({ type: "USE_QUEST", userId: window.currentUser?.id })
+      : null
   };
 });
 

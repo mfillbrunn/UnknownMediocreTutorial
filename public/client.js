@@ -295,8 +295,8 @@ onPowerUsed(data => {
 
 
 // After renderButtons is called:
-if (!PowerEngine._initialized && roomId && roleAssigned) {
-  PowerEngine.renderButtons(roomId);
+if (!PowerEngine._initialized && window.roomId && roleAssigned) {
+  PowerEngine.renderButtons(window.roomId);
   PowerEngine._initialized = true;
 
   // flush queue
@@ -443,8 +443,15 @@ onStateUpdate(newState => {
     // shouldn't silently carry into whatever comes next.
     setterDraftLocks.clear();
   }
-  if (!PowerEngine._initialized && roomId && myRole && state && state.phase !== "lobby") {
-      PowerEngine.renderButtons(roomId);
+  // window.roomId, not the bare roomId -- this file's `let roomId` is a
+  // module-scoped shadow of window.roomId, and plenty of room-join flows
+  // (invite.js's startAsyncInvite/maybeJoinPendingInvite among them) only
+  // ever set window.roomId. Reading the bare variable here left this gate
+  // permanently false for those flows, so PowerEngine.renderButtons()
+  // never ran and the power buttons/quest badge never got created for the
+  // rest of the session -- reproducibly, only fixed by a reload.
+  if (!PowerEngine._initialized && window.roomId && myRole && state && state.phase !== "lobby") {
+      PowerEngine.renderButtons(window.roomId);
       PowerEngine._initialized = true;
   }
   // Extra clearing after simultaneous round
@@ -1217,9 +1224,6 @@ if (typeof renderGuesserRemainingBox === "function") {
 if (typeof renderGuesserLetterProfileBox === "function") {
   renderGuesserLetterProfileBox(state.powers?.letterProfileGuesserStat || null);
 }
-if (typeof renderQuestBox === "function") {
-  renderQuestBox(state);
-}
 if (state?.powers?.wiretapActive) {
   // Populate the live tap for the current draft (e.g. right after activating).
   window.emitWiretapDraft?.(localGuesserDraft);
@@ -1405,12 +1409,6 @@ function updateTimerAccess() {
         window.state.setterDraft,
         greenLetters
       );
-    }
-    // Same reasoning: the quest box's explanation line is guide-mode-only,
-    // so it needs an explicit re-render to appear/disappear immediately
-    // instead of waiting for the next state broadcast.
-    if (typeof renderQuestBox === "function" && window.state) {
-      renderQuestBox(window.state);
     }
   };
 })();

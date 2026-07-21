@@ -25,13 +25,14 @@ function handleNormalPhase(room, state, action, roomId, context) {
     return;
   }
 
-  // Quest early claim: the guesser trades their eventual green letter for
-  // an immediate yellow one, available only while the quest is exactly one
-  // qualifying guess away from completing on its own. Not tied to whose
-  // turn it is or a pending guess -- it's a standing option on the quest
-  // box itself, not a normal power activation.
-  if (action.type === "USE_QUEST_EARLY") {
-    if (questServer.attemptEarlyQuestClaim(state, userId, roomId, io)) {
+  // Quest claim: tapping the guesser's quest badge. Covers both reward
+  // states -- the real green letter once the quest is ready, or (one
+  // guess earlier) the early-yellow trade that forfeits it -- questServer
+  // decides which applies from state.powers.quest itself. Not tied to
+  // whose turn it is or a pending guess; it's a standing option on the
+  // badge, not a normal power activation.
+  if (action.type === "USE_QUEST") {
+    if (questServer.attemptQuestClaim(state, userId, roomId, io)) {
       emitRoomState(roomId, room, io);
     }
     return;

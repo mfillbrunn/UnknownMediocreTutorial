@@ -631,6 +631,27 @@
   animation: pulse-good 280ms cubic-bezier(0.4, 0, 0.2, 1) 2;
 }
 
+/* Clickable badge items (e.g. a claimable quest reward) -- needs to read
+   as a button, not just a status readout, since tapping it fires a real
+   game action. */
+.badge-item.badge-clickable {
+  cursor: pointer;
+  padding: 1px var(--sp-6);
+  border-radius: var(--r-6);
+  border: 1px solid color-mix(in srgb, currentColor 55%, transparent);
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  animation: badge-clickable-pulse 1.6s ease-in-out infinite;
+}
+
+.badge-item.badge-clickable:active {
+  transform: scale(0.96);
+}
+
+@keyframes badge-clickable-pulse {
+  0%, 100% { box-shadow: 0 0 0 color-mix(in srgb, currentColor 0%, transparent); }
+  50% { box-shadow: 0 0 8px color-mix(in srgb, currentColor 55%, transparent); }
+}
+
 /* Power keyboard prompt — a themed instruction strip shown above the
    on-screen keyboard while Recon Sweep / Double Tap are armed. Sits in the
    same slot the InfoBadge would, so the keyboard below it never jumps. */
