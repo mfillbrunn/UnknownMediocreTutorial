@@ -14,10 +14,15 @@
 }
 
 /* Delayed Intel (setter power): a round the guesser hasn't "unlocked" yet
-   — a gray + "?" watermark ("you don't know this yet") rather than
-   falling into the plain tile-gray fallback, which would misleadingly
-   read as "every letter confirmed absent" instead of "not revealed yet".
-   Masks the whole row (every tile in it), not a single position. */
+   — a gray tile with a faint "?" watermark sitting behind the letter
+   ("you don't know the color yet", not "you don't know what you typed" —
+   the guesser already knows their own guess) rather than falling into the
+   plain tile-gray fallback, which would misleadingly read as "every
+   letter confirmed absent" instead of "not revealed yet". Masks the whole
+   row (every tile in it), not a single position. Disappears entirely the
+   instant the round unlocks (safeState.js stops setting
+   entry.delayedFeedback, so this class stops applying at all — no
+   separate "reveal" step needed here). */
 .history-tile.tile-delayed {
   position: relative;
   overflow: hidden;
@@ -31,6 +36,7 @@
   content: "?";
   position: absolute;
   inset: 0;
+  z-index: 0;
 
   display: flex;
   align-items: center;
@@ -38,13 +44,13 @@
 
   font-family: var(--font-mono);
   font-weight: 1000;
-  /* Same size language as a real revealed letter (history-tile's own
-     font-size clamp) so the placeholder reads as clearly as the letter
-     it's standing in for, not as a faint watermark. */
   font-size: clamp(20px, 7vw, 38px);
 
-  color: rgba(255, 255, 255, 0.88);
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
+  /* Faint background watermark, not a competing glyph -- the actual
+     letter (.tile-letter, z-index: 2) sits in front of this and needs to
+     stay clearly readable on its own. */
+  color: rgba(255, 255, 255, 0.14);
+  text-shadow: none;
 
   pointer-events: none;
 }
