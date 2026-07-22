@@ -2,10 +2,8 @@
 
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { createInitialState } = require("../stateFactory");
-const resetRoundState = require("../../utils/resetRoundState");
-const { startGameTimer } = require("../timeouts/timeoutController");
 const { emitRoomState, syncTurnOwners } = require("../rooms");
-const { ensureQuestConditions } = require("../../powers/powers/questServer");
+const { advanceToNextRound } = require("../transitions/nextRoundTransition");
 
 function handleGameOverPhase(room, state, action, roomId, context) {
   const io = context.io;
@@ -16,68 +14,7 @@ function handleGameOverPhase(room, state, action, roomId, context) {
       return;
     }
 
-    const res = state.mode?.onNextRound?.(state) || {
-      phase: "simultaneous",
-      resetRound: true
-    };
-
-    let savedRevealLetterMode;
-    if (state.activePowers.includes("revealLetter")) {
-      savedRevealLetterMode = state.powers.revealLetter.mode;
-    }
-
-    let savedLetterProfileMode;
-    if (state.activePowers.includes("letterProfile")) {
-      savedLetterProfileMode = state.powers.letterProfileMode;
-    }
-
-    // Letter Lockout: the "not yet picked by him" pool belongs to the
-    // setter POSITION across the whole match, not to whichever specific
-    // player happens to hold it in a given round — round 2's setter (the
-    // round-1 guesser, post role-swap) must not be able to re-ban a
-    // letter round 1's setter already spent.
-    let savedLetterLockoutUsedLetters;
-    if (state.activePowers.includes("letterLockout")) {
-      savedLetterLockoutUsedLetters = state.powers.letterLockoutUsedLetters;
-    }
-
-    // Quest type is match-scoped like revealLetter.mode used to be --
-    // always present now (every guesser has one), not gated on
-    // activePowers. Conditions (FIELDREPORT quest only) are NOT saved
-    // here on purpose: they're regenerated fresh each round below.
-    const savedQuestType = state.powers.quest?.type;
-
-    resetRoundState(room, state, roomId, context);
-
-    if (state.activePowers.includes("revealLetter")) {
-      state.powers.revealLetter.mode = savedRevealLetterMode;
-    }
-
-    if (state.activePowers.includes("letterProfile")) {
-      state.powers.letterProfileMode = savedLetterProfileMode;
-    }
-
-    if (state.activePowers.includes("letterLockout")) {
-      state.powers.letterLockoutUsedLetters = savedLetterLockoutUsedLetters;
-    }
-
-    state.powers.quest.type = savedQuestType || null;
-    ensureQuestConditions(state);
-
-    state.phase = res.phase || "simultaneous";
-    state.gameOver = false;
-    state.gameOverView = "match";
-    state.canNextRound = false;
-
-    if (state.timeControl?.enabled) {
-      state.paused = false;
-      state.isTimerRunning = false;
-      state.roundStartTime = Date.now();
-      startGameTimer(room, state, roomId, context);
-    }
-
-    emitLobbyEvent(io, roomId, { type: "hideLobby" });
-    emitRoomState(roomId, room, io);
+    advanceToNextRound(room, state, roomId, context);
     return;
   }
 

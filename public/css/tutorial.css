@@ -84,7 +84,10 @@
   cursor: pointer;
   position: fixed;
     right: 24px;
-    bottom: 300px;
+  /* bottom is set dynamically by repositionTutorialBubble() in
+     tutorial-ui.js, same keyboard-clearance logic as the expanded bubble --
+     a fixed value here would drift onto the keyboard on short viewports or
+     whichever screen's keyboard happens to be taller. */
   background-color: grey;
 }
 

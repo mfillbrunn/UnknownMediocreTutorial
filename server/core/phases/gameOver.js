@@ -7,6 +7,7 @@ const { applyRankedElo } = require("../../utils/elo");
 const { computeMatchResult, writeMatchHistory } = require("../../utils/writeMatchData");
 const { computeRemainingAfterIndexFromState } = require("../../utils/remainingWords");
 const { markDailyCompleted } = require("../dailyTracking");
+const { advanceToNextRound } = require("../transitions/nextRoundTransition");
 
 function buildArchivedRoundHistory(state, allowedSecrets) {
   const history = Array.isArray(state.history) ? state.history : [];
@@ -94,6 +95,11 @@ state.matchRounds.push({
     view: "match",
     canNextRound: false
   };
+
+  if (res.skipSummary) {
+    advanceToNextRound(room, state, roomId, context);
+    return;
+  }
 
   state.turn = null;
   state.gameOver = true;
