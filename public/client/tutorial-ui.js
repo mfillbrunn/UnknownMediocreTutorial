@@ -49,6 +49,9 @@ function updateActionBadge() {
     const meta = window.POWER_METADATA?.[tutorialWaitingFor.powerId];
     label = `USE ${(meta?.label || tutorialWaitingFor.powerId || "").toUpperCase()}`;
   }
+  else if (waitingType === "notes") {
+    label = "OPEN NOTES";
+  }
 
   badge.textContent = label;
 
@@ -167,6 +170,12 @@ function highlightSetterHistory() {
 function highlightGuideToggle() {
   highlightEl(byId("guideToggleBtn"));
 }
+function highlightNotesButton(role) {
+  highlightEl(byId(role === "setter" ? "notesBtnSetter" : "notesBtnGuesser"));
+}
+function highlightDraftRow(role) {
+  highlightEl(byId(role === "setter" ? "draftSetter" : "draftGuesser"));
+}
 function highlightPowersCol() {
   // Only one of these exists in the DOM for a given role's screen — the
   // other query just no-ops via highlightEl's null guard.
@@ -205,6 +214,12 @@ function waitForPowerUse(powerId) {
   updateActionBadge();
 }
 
+function waitForNotesOpen() {
+  tutorialWaitingFor = { type: "notes" };
+  setContinue({ show: true, enabled: false });
+  updateActionBadge();
+}
+
 
 // Continue click
 byId("tutorialContinueBtn")?.addEventListener("click", (e) => {
@@ -234,6 +249,20 @@ function notifyTutorialPowerUsed(powerId) {
   }
 }
 window.notifyTutorialPowerUsed = notifyTutorialPowerUsed;
+
+// Called (via notes.js's toggleNotes) the instant the player actually opens
+// their Notes panel -- mirrors notifyTutorialPowerUsed's reasoning, since
+// opening Notes doesn't touch state.history.length either.
+function notifyTutorialNotesOpened() {
+  if (!tutorialWaitingFor) return;
+  if (tutorialWaitingFor.type === "notes") {
+    tutorialWaitingFor = null;
+    updateActionBadge();
+    tutorialSubStep++;
+    if (window.state && window.myRole) tutorialSteps(window.state, window.myRole);
+  }
+}
+window.notifyTutorialNotesOpened = notifyTutorialNotesOpened;
 
 // ------------------------
 // Feedback-tile explanation helper (round 1 of the guesser tutorial walks
@@ -289,6 +318,11 @@ const isSetter  = role === "setter";
 
   if (state.tutorialStage === "power") {
     runPowerTutorial(state, role);
+    return;
+  }
+
+  if (state.tutorialStage === "advanced") {
+    runAdvancedTutorial(state, role);
     return;
   }
 
@@ -919,6 +953,173 @@ function runPowerTutorialReceiving(state, role, meta, powerId, round) {
   hideTutorial();
 }
 
+// ==========================================================
+// STAGE "advanced": the UI-features walkthrough (Notes, Guide, Drag & Lock,
+// Power UI) launched from the standalone "Advanced Tutorial" menu button.
+// Reuses stage 2's exact scripted match (see tutorialMode.js) -- round 1 has
+// the human as Inspector (Notes + Guide + Leak Info + Drag & Lock on their
+// guess row), round 2 (after the normal end-of-round role swap) has them as
+// Spy (Drag & Lock on their secret row + Redact Report).
+// ==========================================================
+function runAdvancedTutorial(state, role) {
+  if (role === "guesser") {
+    runAdvancedTutorialGuesser(state);
+  } else {
+    runAdvancedTutorialSetter(state);
+  }
+}
+
+function runAdvancedTutorialGuesser(state) {
+  const round = state.history?.length ?? 0;
+
+  if (round === 0) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `👋 Welcome to the Advanced Tutorial! This covers four UI features the basic tutorial skips: 📝 Notes, 🧭 Guide, ✋ Drag & Lock, and ⚡ the Power UI. Let's try each hands-on, starting as the Inspector.`,
+        { enabled: true }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `📝 Tap the Notes button to open your private scratchpad — it reuses the on-screen keyboard whenever it isn't your turn, so jotting down candidate words never counts as a real move. Try opening it now.`,
+        { enabled: false }
+      );
+      highlightNotesButton("guesser");
+      tutorialContinueMode = "hide";
+      waitForNotesOpen();
+      return;
+    }
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `🧭 This is the Guide toggle — switch it any time for extra on-screen explanations, like why a box shows the numbers it does. Try clicking it, then continue.`,
+        { enabled: true }
+      );
+      highlightGuideToggle();
+      tutorialContinueMode = "advance";
+      return;
+    }
+    if (tutorialSubStep === 3) {
+      const word = state.tutorialGuesses?.[0] || "CHAMP";
+      showTutorial(
+        `First, enter your opening guess. Enter "${word}" and click ENTER.`,
+        { enabled: true, mode: "hide" }
+      );
+      highlightKeyboardGuesser();
+      tutorialContinueMode = "hide";
+      waitForGuessSubmission(round);
+      return;
+    }
+    hideTutorial();
+    return;
+  }
+
+  if (round === 1) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `⚡ Now the Power UI: active powers show up as buttons below your draft row. Tap "Leak Info" to activate it — a popup will confirm what it revealed, and a small badge nearby lets you find it again later.`,
+        { enabled: false }
+      );
+      highlightPowerButtonByText("Leak Info");
+      tutorialContinueMode = "hide";
+      waitForPowerUse("revealGreen");
+      return;
+    }
+    if (tutorialSubStep === 1) {
+      const word = state.tutorialGuesses?.[1] || "CUMIN";
+      showTutorial(
+        `✋ Last one: Drag & Lock. On your own draft row, drag a letter straight from the keyboard onto a tile instead of typing left to right, and tap a filled tile to lock it (🔒) so Backspace can't touch it. Try it as you enter "${word}".`,
+        { enabled: true, mode: "hide" }
+      );
+      highlightDraftRow("guesser");
+      tutorialContinueMode = "hide";
+      waitForGuessSubmission(round);
+      return;
+    }
+    hideTutorial();
+    return;
+  }
+
+  if (round === 2) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `That's all four from the Inspector's side! In a moment your roles will swap and you'll see Drag & Lock and the Power UI again as the Spy.`,
+        { enabled: true, mode: "hide" }
+      );
+      tutorialContinueMode = "hide";
+      return;
+    }
+    hideTutorial();
+    return;
+  }
+
+  hideTutorial();
+}
+
+function runAdvancedTutorialSetter(state) {
+  const round = state.history?.length ?? 0;
+
+  if (round === 0) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `🕵️ Now you're the Spy. Drag & Lock works here too, on your secret row — and Notes will auto-add your current secret for you, so you never lose track of it.`,
+        { enabled: true }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+    if (tutorialSubStep === 1) {
+      const word = state.tutorialSecrets?.[0];
+      showTutorial(
+        `Try it as you set your secret: drag a letter from the keyboard onto a tile, or tap a filled tile to lock it (🔒). Enter "${word}" when ready.`,
+        { enabled: false }
+      );
+      highlightDraftRow("setter");
+      tutorialContinueMode = "hide";
+      waitForSecretSubmission(round);
+      return;
+    }
+    hideTutorial();
+    return;
+  }
+
+  if (round === 1) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `⚡ The Power UI works the same way on this side. Tap "Redact Report" — it hides exact tile positions from the Inspector and shows them only how many letters are green or yellow in total.`,
+        { enabled: true }
+      );
+      highlightPowerButtonByText("Redact Report");
+      tutorialContinueMode = "hide";
+      waitForPowerUse("countOnly");
+      return;
+    }
+    if (tutorialSubStep === 1) {
+      const word = state.tutorialSecrets?.[1];
+      showTutorial(
+        `Nice — now lock in your new secret: "${word}".`,
+        { enabled: true, mode: "hide" }
+      );
+      highlightKeyboardSetter();
+      tutorialContinueMode = "hide";
+      waitForSecretSubmission(round);
+      return;
+    }
+    hideTutorial();
+    return;
+  }
+
+  if (round === 2) {
+    showTutorial(
+      `That's every advanced feature from both sides!`,
+      { enabled: true, mode: "hide" }
+    );
+    hideTutorial();
+    return;
+  }
+}
+
 function runSummaryTutorial(state){
  clearHighlights();
  const stage2 = state.tutorialStage === 2;
@@ -966,6 +1167,28 @@ function runMatchTutorial(state){
  clearHighlights();
  const stage2 = state.tutorialStage === 2;
  const stagePower = state.tutorialStage === "power";
+ const stageAdvanced = state.tutorialStage === "advanced";
+
+ if (stageAdvanced) {
+   if (tutorialSubStep === 0) {
+     showTutorial(
+       `That's the Advanced Tutorial! You've now tried Notes, Guide, Drag & Lock, and the Power UI from both sides.`,
+       { enabled: true }
+     );
+     tutorialContinueMode = "advance";
+     return;
+   }
+   if (tutorialSubStep === 1) {
+     showTutorial(
+       `Head back to How to Play any time to revisit the Rules or Power Library.`,
+       { enabled: true }
+     );
+     tutorialContinueMode = "hide";
+     return;
+   }
+   hideTutorial();
+   return;
+ }
 
  if (stagePower) {
    const meta = window.POWER_METADATA?.[state.tutorialPowerId];

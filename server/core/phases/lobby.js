@@ -318,6 +318,14 @@ if (action.type === "SET_DAILY_POWERS") {
       state.tutorialStage = "power";
       state.tutorialPowerId = action.powerId;
     }
+    // "advanced" is the UI-features walkthrough (Notes, Guide, Drag & Lock,
+    // Power UI) launched from the "Advanced Tutorial" menu button -- reuses
+    // stage 2's exact scripted words/powers (see TutorialMode.initMatch),
+    // just with different narration in tutorial-ui.js.
+    if (action.mode === "advanced") {
+      state.isTutorial = true;
+      state.tutorialStage = "advanced";
+    }
 
     const nowReady = !state.players[userId]?.ready;
     setPlayerReady(room, userId, nowReady);

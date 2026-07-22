@@ -255,6 +255,7 @@
     const roleId = role === "setter" ? "Setter" : "Guesser";
     document.getElementById(`notesBtn${roleId}`)?.classList.toggle("active", _active);
     _renderPanel(window.state);
+    if (_active) window.notifyTutorialNotesOpened?.();
   };
 
   window.renderNotesPanel = function (state) {
