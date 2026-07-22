@@ -40,18 +40,33 @@ class TutorialMode {
     // consistency check even though it's a valid dictionary word.
     state.tutorialWrongSecretExamples = [null, "MUSHY"];
 
-    // Stage 2 only: the one power taught on each side. Round 1 (human as
-    // guesser) teaches revealGreen; round 2 (human as setter, after the
-    // role swap) teaches countOnly — see onLobbyReady/onNextRound below.
-    if (state.tutorialStage === 2) {
+    // Stage 2 and stage "advanced" share the exact same scripted words and
+    // power pair — stage "advanced" is the UI-features walkthrough (Notes,
+    // Guide, Drag & Lock, Power UI) launched standalone from the "Advanced
+    // Tutorial" menu button, reusing stage 2's already-verified word
+    // sequence rather than inventing a new one; only the narration in
+    // tutorial-ui.js differs. Round 1 (human as guesser) teaches
+    // revealGreen; round 2 (human as setter, after the role swap) teaches
+    // countOnly — see onLobbyReady/onNextRound below.
+    if (state.tutorialStage === 2 || state.tutorialStage === "advanced") {
       state.tutorialPowerGuesser = "revealGreen";
       state.tutorialPowerSetter = "countOnly";
 
-      // Stage 2's second guess is the AI's actual secret (CUMIN, from
+      // Second guess is the AI's actual secret (CUMIN, from
       // tutorialSecretsAI above) rather than stage 1's CAIRN, so entering
       // it right after the Leak Info reveal wins the round immediately
       // instead of trailing into unscripted free play.
       state.tutorialGuesses = ["CHAMP", "CUMIN"];
+    }
+
+    // Stage "advanced" only: unlike stage 2 (whose setter round trails into
+    // unscripted free play after LEMUR), this standalone walkthrough scripts
+    // the AI's second guess as LEMUR too -- the human's own second secret
+    // submission (LEMUR, matching) wins the round immediately, the same way
+    // the guesser round's CUMIN already does, keeping the whole thing fully
+    // scripted end-to-end.
+    if (state.tutorialStage === "advanced") {
+      state.tutorialGuessesAI = ["SMALL", "LEMUR"];
     }
 
     // Stage "power": a single power (launched from a "Try it" button next
@@ -104,7 +119,7 @@ class TutorialMode {
     state.ranked = false;
   }
   onLobbyReady(state, setterPowers, guesserPowers) {
-    if (state.tutorialStage === 2) {
+    if (state.tutorialStage === 2 || state.tutorialStage === "advanced") {
       const sP = [state.tutorialPowerSetter];
       const gP = [state.tutorialPowerGuesser];
       state.initialPowers = { setter: sP, guesser: gP };
@@ -135,7 +150,7 @@ class TutorialMode {
     // pausing on it. gameOver.js's endGame() checks this flag and calls
     // nextRoundTransition.js's advanceToNextRound() directly.
     if (
-      (state.tutorialStage === 2 || state.tutorialStage === "power") &&
+      (state.tutorialStage === 2 || state.tutorialStage === "power" || state.tutorialStage === "advanced") &&
       state.roundIndex < state.roundsTotal - 1
     ) {
       return { skipSummary: true };

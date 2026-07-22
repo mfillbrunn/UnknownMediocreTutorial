@@ -200,9 +200,9 @@ $("showRulesBtn")?.addEventListener("click", () => {
   showScreen("rulesScreen");
 });
 
-$("showAdvancedTutorialBtn")?.addEventListener("click", () => {
-  showScreen("advancedTutorialScreen");
-});
+// Advanced Tutorial: launches a scripted interactive match (see
+// socket-events.js's startFreshTutorial("advanced")) rather than showing a
+// static screen -- same pattern as the Tutorial / Tutorial: Powers buttons.
 
 // Mirrors the SETTER_POWERS/GUESSER_POWERS pools in
 // server/core/phases/lobby.js — kept in sync manually, same as every other
