@@ -4,10 +4,11 @@
 
 const { QUEST_TYPES } = require("../powers/powers/questServer");
 
+// forceGuess and revealPenalty excluded -- see lobby.js's SETTER_POWERS
+// comment: kept out of random/draft, still available elsewhere.
 const SETTER_POWERS = [
   "hideTile", "suggestSecret", "confuseColors", "countOnly", "blindSpot",
-  "vowelRefresh", "forceGuess", "blindGuess", "fakeFeedback", "revealPenalty",
-  "forceTimer",
+  "vowelRefresh", "blindGuess", "fakeFeedback", "forceTimer",
 ];
 // revealLetter and fieldReport excluded -- see lobby.js's GUESSER_POWERS
 // comment: their condition-based mechanics live on in the Quest system
