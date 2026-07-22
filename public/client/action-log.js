@@ -42,7 +42,17 @@
       (history || []).forEach(entry => {
         if (!entry?.guess) return;
         const guessHidden = isLiveRound && !isSetterThisRound && state.powers?.stealthGuessActive;
-        entries.push({ type: "action", text: `Inspector: ${guessHidden ? "?????" : entry.guess.toUpperCase()}` });
+        // Total Blackout hides the guesser's entire history board (see
+        // history.js's buildHistoryRenderState returning [] while
+        // blindGuessActive) -- the log lists the same round's guessed
+        // words in plain text, so without this it's an easy way to read
+        // right through the blackout. Redact every guess in the live
+        // round the same way, for as long as the board itself is blanked.
+        const blackedOut = isLiveRound && state.powers?.blindGuessActive;
+        const guessDisplay = blackedOut
+          ? `<span class="log-blackout-word">${"█".repeat(entry.guess.length)}</span>`
+          : (guessHidden ? "?????" : entry.guess.toUpperCase());
+        entries.push({ type: "action", text: `Inspector: ${guessDisplay}` });
         if (entry.phase === "simultaneous") {
           entries.push({ type: "action", text: isSetterThisRound ? "Secret submitted" : "Spy submitted secret" });
         }
