@@ -271,6 +271,9 @@ function renderPowerLibrary() {
     for (const id in (window.QUEST_METADATA || {})) {
       const meta = window.QUEST_METADATA[id];
       if (!meta) continue;
+      const examplesHtml = Array.isArray(meta.examples) && meta.examples.length
+        ? `<div class="power-lib-quest-examples">e.g. ${meta.examples.join(" → ")}</div>`
+        : "";
       const row = document.createElement("div");
       row.className = "power-info-row power-lib-row-guesser";
       row.innerHTML = `
@@ -278,6 +281,7 @@ function renderPowerLibrary() {
         <div class="power-info-body">
           <div class="power-info-title">${meta.label}</div>
           <div class="power-info-desc">${meta.desc || ""}</div>
+          ${examplesHtml}
         </div>
       `;
       list.appendChild(row);
