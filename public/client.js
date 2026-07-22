@@ -491,6 +491,7 @@ function updateUI() {
   if (!state) return;
   updateScreens();
   InfoBadgeEngine.render(state, myRole);
+  window.maybeShowQuestProgressPop?.(state);
   if (state.phase !== "lobby") hide("lobby");
   updateSecretLock();
   updateSetterDraftInvalidOverlay();

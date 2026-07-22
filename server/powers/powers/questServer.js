@@ -230,10 +230,10 @@ function isQuestOneAway(quest, state) {
       return history.filter(h => isReverseAlphaWord(h.guess.toUpperCase())).length
         === QUEST_THRESHOLDS.REVERSEALPHA - 1;
     case "HALF_AM":
-      return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "A", "M")).length
+      return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "A", "P")).length
         === QUEST_THRESHOLDS.HALF_AM - 1;
     case "HALF_NZ":
-      return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "N", "Z")).length
+      return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "K", "Z")).length
         === QUEST_THRESHOLDS.HALF_NZ - 1;
     case "VOWELSHORTAGE":
       return computeVowelShortageCount(history) === QUEST_THRESHOLDS.VOWELSHORTAGE - 1;
@@ -323,6 +323,88 @@ function computeFieldReportCount(history, conditions) {
     total += conditions.filter(c => satisfiesForceGuess(entry.guess.toUpperCase(), c)).length;
   }
   return total;
+}
+
+// Is the quest fully satisfied? Mirrors each case's threshold against its
+// current progress count over the given history -- shared by turnStart
+// (finalized history) and evaluateQuestProgress below (history plus a
+// not-yet-scored pending guess), so the two hooks can't drift apart.
+function isQuestReady(quest, history) {
+  switch (quest.type) {
+    case "RARE":
+      return rareLettersSeen(history).size >= QUEST_THRESHOLDS.RARE;
+    case "ROW":
+      return rowCoverage(history).some(({ row, used }) => used.size >= row.size);
+    case "ALPHA":
+      return history.filter(h => isAscendingWord(h.guess.toUpperCase())).length
+        >= QUEST_THRESHOLDS.ALPHA;
+    case "DOUBLES":
+      return doublesSeen(history).size >= QUEST_THRESHOLDS.DOUBLES;
+    case "CHAIN": {
+      let links = 0;
+      for (let i = 1; i < history.length; i++) {
+        const prev = history[i - 1].guess.toUpperCase();
+        const curr = history[i].guess.toUpperCase();
+        if (curr[0] === prev[4]) links++;
+      }
+      return links >= QUEST_THRESHOLDS.CHAIN;
+    }
+    case "HARDMODE":
+      return computeHardModeCount(history) >= QUEST_THRESHOLDS.HARDMODE;
+    case "FIELDREPORT":
+      return computeFieldReportCount(history, quest.conditions) >= QUEST_THRESHOLDS.FIELDREPORT;
+    case "ALTERNATING":
+      return history.filter(h => isAlternatingWord(h.guess.toUpperCase())).length
+        >= QUEST_THRESHOLDS.ALTERNATING;
+    case "BOOKENDS":
+      return history.filter(h => isBookendWord(h.guess.toUpperCase())).length
+        >= QUEST_THRESHOLDS.BOOKENDS;
+    case "REVERSEALPHA":
+      return history.filter(h => isReverseAlphaWord(h.guess.toUpperCase())).length
+        >= QUEST_THRESHOLDS.REVERSEALPHA;
+    case "HALF_AM":
+      return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "A", "P")).length
+        >= QUEST_THRESHOLDS.HALF_AM;
+    case "HALF_NZ":
+      return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "K", "Z")).length
+        >= QUEST_THRESHOLDS.HALF_NZ;
+    case "VOWELSHORTAGE":
+      return computeVowelShortageCount(history) >= QUEST_THRESHOLDS.VOWELSHORTAGE;
+    default:
+      return false;
+  }
+}
+
+// Evaluates ready/oneAway against history PLUS a guess that was just
+// submitted but hasn't been scored yet (no history entry for it exists
+// until the setter reacts and finalizeFeedback.js runs) -- called from
+// onGuessSubmitted so the quest badge updates the instant the guesser
+// submits, not several steps later once it's the guesser's turn again.
+// HARDMODE can't just append a fake `{ guess }` entry like every other
+// type: its check depends on that entry's OWN feedback (not known yet) to
+// decide what carries forward, but its COMPLIANCE only depends on
+// history-so-far's accumulated constraints -- so it's evaluated directly
+// against computeHardModeConstraints instead of going through the
+// history-array-based isQuestReady/isQuestOneAway at all.
+function evaluateQuestProgress(quest, state, pendingGuess) {
+  const history = state.history || [];
+
+  if (quest.type === "HARDMODE") {
+    const { green, mustInclude } = computeHardModeConstraints(history);
+    const count = computeHardModeCount(history)
+      + (isHardModeCompliant(pendingGuess, green, mustInclude) ? 1 : 0);
+    return {
+      ready: count >= QUEST_THRESHOLDS.HARDMODE,
+      oneAway: count === QUEST_THRESHOLDS.HARDMODE - 1
+    };
+  }
+
+  const pendingHistory = [...history, { guess: pendingGuess }];
+  const ready = isQuestReady(quest, pendingHistory);
+  return {
+    ready,
+    oneAway: !ready && isQuestOneAway(quest, { history: pendingHistory })
+  };
 }
 
 // Same random-unrevealed-position mechanic revealLetter/fieldReport both
@@ -426,6 +508,13 @@ function attemptQuestClaim(state, userId, roomId, io) {
 }
 
 engine.registerPower("quest", {
+  // Progress is evaluated in onGuessSubmitted below (fires the instant the
+  // guesser submits, before the setter's Keep/New reaction) -- this hook
+  // now only handles setup (FIELDREPORT's conditions need to exist before
+  // the first guess, for the badge subtext) and re-derives ready/oneAway
+  // from the now-finalized history as a safety net for guesses
+  // onGuessSubmitted didn't see it submit directly, e.g. the
+  // simultaneous-phase opening guess.
   turnStart(state, role, roomId, io) {
     if (role !== state.guesser) return;
     const q = state.powers?.quest;
@@ -433,94 +522,12 @@ engine.registerPower("quest", {
 
     ensureQuestConditions(state);
 
-    if (!q.ready) {
-      switch (q.type) {
-        case "RARE": {
-          const seen = new Set();
-          for (const h of state.history) {
-            for (const c of h.guess.toUpperCase()) {
-              if (QUEST_RARE_LETTERS.has(c)) seen.add(c);
-            }
-          }
-          if (seen.size >= QUEST_THRESHOLDS.RARE) q.ready = true;
-          break;
-        }
-        case "ROW": {
-          const used = QUEST_KEYBOARD_ROWS.map(() => new Set());
-          for (const h of state.history) {
-            for (const c of h.guess.toUpperCase()) {
-              QUEST_KEYBOARD_ROWS.forEach((row, i) => { if (row.has(c)) used[i].add(c); });
-            }
-          }
-          if (QUEST_KEYBOARD_ROWS.some((row, i) => used[i].size === row.size)) q.ready = true;
-          break;
-        }
-        case "ALPHA": {
-          const count = state.history.filter(h => isAscendingWord(h.guess.toUpperCase())).length;
-          if (count >= QUEST_THRESHOLDS.ALPHA) q.ready = true;
-          break;
-        }
-        case "DOUBLES": {
-          const doubles = new Set();
-          for (const h of state.history) {
-            const d = doubledLetterOf(h.guess.toUpperCase());
-            if (d) doubles.add(d);
-          }
-          if (doubles.size >= QUEST_THRESHOLDS.DOUBLES) q.ready = true;
-          break;
-        }
-        case "CHAIN": {
-          let links = 0;
-          for (let i = 1; i < state.history.length; i++) {
-            const prev = state.history[i - 1].guess.toUpperCase();
-            const curr = state.history[i].guess.toUpperCase();
-            if (curr[0] === prev[4]) links++;
-          }
-          if (links >= QUEST_THRESHOLDS.CHAIN) q.ready = true;
-          break;
-        }
-        case "HARDMODE": {
-          if (computeHardModeCount(state.history) >= QUEST_THRESHOLDS.HARDMODE) q.ready = true;
-          break;
-        }
-        case "FIELDREPORT": {
-          if (computeFieldReportCount(state.history, q.conditions) >= QUEST_THRESHOLDS.FIELDREPORT) q.ready = true;
-          break;
-        }
-        case "ALTERNATING": {
-          const count = state.history.filter(h => isAlternatingWord(h.guess.toUpperCase())).length;
-          if (count >= QUEST_THRESHOLDS.ALTERNATING) q.ready = true;
-          break;
-        }
-        case "BOOKENDS": {
-          const count = state.history.filter(h => isBookendWord(h.guess.toUpperCase())).length;
-          if (count >= QUEST_THRESHOLDS.BOOKENDS) q.ready = true;
-          break;
-        }
-        case "REVERSEALPHA": {
-          const count = state.history.filter(h => isReverseAlphaWord(h.guess.toUpperCase())).length;
-          if (count >= QUEST_THRESHOLDS.REVERSEALPHA) q.ready = true;
-          break;
-        }
-        case "HALF_AM": {
-          const count = state.history.filter(h => isInLetterRange(h.guess.toUpperCase(), "A", "M")).length;
-          if (count >= QUEST_THRESHOLDS.HALF_AM) q.ready = true;
-          break;
-        }
-        case "HALF_NZ": {
-          const count = state.history.filter(h => isInLetterRange(h.guess.toUpperCase(), "N", "Z")).length;
-          if (count >= QUEST_THRESHOLDS.HALF_NZ) q.ready = true;
-          break;
-        }
-        case "VOWELSHORTAGE": {
-          if (computeVowelShortageCount(state.history) >= QUEST_THRESHOLDS.VOWELSHORTAGE) q.ready = true;
-          break;
-        }
-      }
+    if (!q.ready && isQuestReady(q, state.history || [])) {
+      q.ready = true;
       // No longer an auto-grant -- just lets the guesser know the badge is
       // now claimable. attemptQuestClaim (fired by tapping the badge) is
       // what actually reveals the green letter.
-      if (q.ready) io.to(roomId).emit("toast", "Quest ready — tap the badge for your green letter!");
+      io.to(roomId).emit("toast", "Quest ready — tap the badge for your green letter!");
     }
 
     // Surfaced to the client as-is (safeState.js never redacts
@@ -528,6 +535,30 @@ engine.registerPower("quest", {
     // the early-yellow-for-a-forfeited-green trade without re-deriving
     // any of the per-type counting logic itself.
     q.oneAway = !q.ready && !q.used && isQuestOneAway(q, state);
+  },
+
+  // Fires the instant the guesser submits a guess, before the setter has
+  // reacted (Keep/New) and long before the guess lands in state.history
+  // (see finalizeFeedback.js) -- see evaluateQuestProgress's header for
+  // why this can't just wait for turnStart. Mirrors
+  // fieldReportServer.js's own onGuessSubmitted use for the same reason:
+  // this quest's progress only depends on the guess word itself (or, for
+  // HARDMODE, on constraints already known from history), so there's no
+  // need to wait for it to be scored.
+  onGuessSubmitted(state, guess, roomId, io) {
+    const q = state.powers?.quest;
+    if (!q || !q.type || q.used || q.ready) return;
+
+    ensureQuestConditions(state);
+
+    const { ready, oneAway } = evaluateQuestProgress(q, state, guess);
+    if (ready) {
+      q.ready = true;
+      q.oneAway = false;
+      io.to(roomId).emit("toast", "Quest ready — tap the badge for your green letter!");
+    } else {
+      q.oneAway = oneAway;
+    }
   }
 });
 
@@ -553,6 +584,8 @@ module.exports = {
   rareLettersSeen,
   rowCoverage,
   doublesSeen,
+  isQuestReady,
   isQuestOneAway,
+  evaluateQuestProgress,
   attemptQuestClaim
 };

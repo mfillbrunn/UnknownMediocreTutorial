@@ -83,18 +83,18 @@ window.QUEST_METADATA = {
     examples: ["TRIED", "PLIED", "TONED"]
   },
   HALF_AM: {
-    label: "A to M",
-    desc: "Submit 3 guesses using only letters A through M.",
+    label: "A to P",
+    desc: "Submit 3 guesses using only letters A through P.",
     emoji: "🅰️",
     color: "#16A34A",
-    examples: ["CABLE", "MAGIC", "IDEAL"]
+    examples: ["CABLE", "MAGIC", "PLAIN"]
   },
   HALF_NZ: {
-    label: "N to Z",
-    desc: "Submit 3 guesses using only letters N through Z.",
+    label: "K to Z",
+    desc: "Submit 3 guesses using only letters K through Z.",
     emoji: "🆉",
     color: "#16A34A",
-    examples: ["STONY", "SPORT", "TRUST"]
+    examples: ["STONY", "SPORT", "KNOWN"]
   },
   VOWELSHORTAGE: {
     label: "Vowel Shortage",

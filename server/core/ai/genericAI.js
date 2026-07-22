@@ -511,9 +511,9 @@ function questWordAdvances(word, quest, state) {
     case "REVERSEALPHA":
       return questServer.isReverseAlphaWord(w);
     case "HALF_AM":
-      return questServer.isInLetterRange(w, "A", "M");
+      return questServer.isInLetterRange(w, "A", "P");
     case "HALF_NZ":
-      return questServer.isInLetterRange(w, "N", "Z");
+      return questServer.isInLetterRange(w, "K", "Z");
     case "VOWELSHORTAGE": {
       const vowelCount = [...w].filter(c => "AEIOU".includes(c)).length;
       return vowelCount === 1;

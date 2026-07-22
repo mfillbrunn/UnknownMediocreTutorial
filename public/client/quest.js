@@ -250,12 +250,12 @@ function computeQuestStatus(state) {
   }
 
   if (q.type === "HALF_AM") {
-    const count = history.filter(h => questIsInLetterRange((h.guess || "").toUpperCase(), "A", "M")).length;
+    const count = history.filter(h => questIsInLetterRange((h.guess || "").toUpperCase(), "A", "P")).length;
     return { meta, label: `${count}/3`, desc: meta.desc, done: false };
   }
 
   if (q.type === "HALF_NZ") {
-    const count = history.filter(h => questIsInLetterRange((h.guess || "").toUpperCase(), "N", "Z")).length;
+    const count = history.filter(h => questIsInLetterRange((h.guess || "").toUpperCase(), "K", "Z")).length;
     return { meta, label: `${count}/3`, desc: meta.desc, done: false };
   }
 
@@ -343,6 +343,57 @@ InfoBadgeEngine.register((state, role) => {
 // so the flashier treatment reads as the AI constantly firing off a power
 // it never actually has.
 // --------------------------------------------------
+// Quest — increment pop. Progress now ticks up the instant the guesser
+// submits a guess (see questServer.js's onGuessSubmitted), not only once
+// the setter has reacted, so a purely re-rendered number is easy to miss.
+// Reuses showScorePop's ".score-pop" floating "+1" (client.js) positioned
+// over the quest badge instead of the header score, same append-to-body /
+// animationend-cleanup pattern for the same reason: the badge's innerHTML
+// gets fully rebuilt by InfoBadgeEngine.render() on every state update,
+// which would cut a listener-bound animation short.
+// --------------------------------------------------
+let _questPopSeen = { type: null, count: null, ready: false };
+
+function maybeShowQuestProgressPop(state) {
+  const q = state.powers?.quest;
+  if (!q || !q.type || q.used) {
+    _questPopSeen = { type: null, count: null, ready: false };
+    return;
+  }
+  if (q.type !== _questPopSeen.type) {
+    // New quest (fresh round, or role swap) -- nothing to compare against
+    // yet, so this render can't be an "increase".
+    _questPopSeen = { type: q.type, count: null, ready: false };
+  }
+
+  const status = computeQuestStatus(state);
+  // Once ready, computeQuestStatus swaps the "n/m" fraction for "Ready!" --
+  // the final increment is caught separately below via q.ready instead.
+  const match = status && !q.ready ? /^(\d+)\// .exec(status.label) : null;
+  const count = match ? Number(match[1]) : null;
+
+  const numericIncrease = count != null && _questPopSeen.count != null && count > _questPopSeen.count;
+  const justBecameReady = q.ready && !_questPopSeen.ready;
+
+  if (numericIncrease || justBecameReady) {
+    const badge = document.querySelector(".badge-quest");
+    if (badge) {
+      const rect = badge.getBoundingClientRect();
+      const pop = document.createElement("span");
+      pop.className = "score-pop";
+      pop.textContent = "+1";
+      pop.style.left = `${rect.left + rect.width / 2}px`;
+      pop.style.top = `${rect.top}px`;
+      document.body.appendChild(pop);
+      pop.addEventListener("animationend", () => pop.remove(), { once: true });
+    }
+  }
+
+  if (count != null) _questPopSeen.count = count;
+  _questPopSeen.ready = !!q.ready;
+}
+window.maybeShowQuestProgressPop = maybeShowQuestProgressPop;
+
 socket.on("questEarlyClaim", ({ questType, letter }) => {
   const meta = window.QUEST_METADATA?.[questType];
   const label = meta?.label || "Quest";
