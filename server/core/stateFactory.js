@@ -29,6 +29,7 @@ const powers = {
       fakeFeedbackActive : false,
       fakeFeedbackUsed : false,
       fakeFeedbackSecret : false,
+      fakeFeedbackScramble : false,
       // Bet Miss
       betMissActive : false,
       betMissUsed : false,
