@@ -47,8 +47,10 @@ window.showDailyChallenge = async function () {
     config = await fetch("/api/daily").then(r => r.json());
   } catch {
     screen.innerHTML = `<div class="menu-center">
+      <div class="screen-back-header">
+        <button class="menu-btn screen-back-btn" onclick="showStartup()">← Back</button>
+      </div>
       <p>Could not load daily challenge.</p>
-      <button class="menu-btn" onclick="showStartup()">Back</button>
     </div>`;
     return;
   }
@@ -69,12 +71,14 @@ window.showDailyChallenge = async function () {
     // of a real score, since there's no result to show or share.
     if (r?.abandoned) {
       screen.innerHTML = `<div class="menu-center">
-        <h2 class="menu-title">Daily Challenge</h2>
+        <div class="screen-back-header">
+          <button class="menu-btn screen-back-btn" onclick="showStartup()">← Back</button>
+          <h2 class="menu-title" style="flex:1;text-align:center">Daily Challenge</h2>
+        </div>
         <p class="daily-date">☀️ ${config.date}</p>
         <p class="daily-completed-msg">
           You already played today's challenge and abandoned it. Come back tomorrow!
         </p>
-        <button class="menu-btn" onclick="showStartup()">Back</button>
       </div>`;
       return;
     }
@@ -95,13 +99,15 @@ window.showDailyChallenge = async function () {
       : "";
 
     screen.innerHTML = `<div class="menu-center">
-      <h2 class="menu-title">Daily Challenge</h2>
+      <div class="screen-back-header">
+        <button class="menu-btn screen-back-btn" onclick="showStartup()">← Back</button>
+        <h2 class="menu-title" style="flex:1;text-align:center">Daily Challenge</h2>
+      </div>
       <p class="daily-date">☀️ ${config.date}</p>
       <p class="daily-completed-msg">
         You've already played today's challenge. Come back tomorrow!
       </p>
       ${resultBlock}
-      <button class="menu-btn" onclick="showStartup()">Back</button>
     </div>`;
 
     if (r) {
@@ -137,7 +143,10 @@ window.showDailyChallenge = async function () {
 
   screen.innerHTML = `
     <div class="menu-center">
-      <h2 class="menu-title">Daily Challenge</h2>
+      <div class="screen-back-header">
+        <button class="menu-btn screen-back-btn" onclick="showStartup()">← Back</button>
+        <h2 class="menu-title" style="flex:1;text-align:center">Daily Challenge</h2>
+      </div>
       <p class="daily-date">☀️ ${config.date}</p>
 
       <div class="daily-powers-block">
@@ -156,7 +165,6 @@ window.showDailyChallenge = async function () {
       <button id="startDailyBtn" class="menu-btn primary" style="margin-top:8px">
         Play Today's Challenge
       </button>
-      <button class="menu-btn" onclick="showStartup()">Back</button>
     </div>
   `;
 
