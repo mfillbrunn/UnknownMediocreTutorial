@@ -33,11 +33,14 @@ if (!isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry
     else classes.push("tile-gray");
   } 
   // uncertain → composite
-  else {const c1 = fbToClass(fb1);
-        const c2 = fbToClass(fb2);
-        if (c1 && c2) {classes.push(`tile-${c1}-${c2}`); 
-                   classes.push("tile-feedback-slide"); 
-                      }
+  else {const c1 = fbToClass(fb1) || "gray";
+        const c2 = fbToClass(fb2) || "gray";
+        // Any unrecognized symbol falls back to gray rather than being
+        // dropped -- an unstyled tile falls all the way through to the
+        // page background (no color at all), which reads as solid black
+        // instead of the "not in the word" look it's supposed to have.
+        classes.push(`tile-${c1}-${c2}`);
+        classes.push("tile-feedback-slide");
         }
   return classes.join(" ");
 } else if (isSetter && !state.powers?.stealthGuessActive) {
@@ -240,10 +243,11 @@ function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot) {
 
   // --- TRUE feedback (always) ---
   const trueFb = safeEntry.fb?.[guessIndex];
-  const trueClass = fbToClass(trueFb);
-  if (trueClass) {
-    classes.push(`tile-${trueClass}`);
-  }
+  // Falls back to gray rather than leaving the tile with no color class at
+  // all -- an unstyled tile falls through to the page background (no
+  // color), which reads as solid black instead of "not in the word".
+  const trueClass = fbToClass(trueFb) || "gray";
+  classes.push(`tile-${trueClass}`);
   let secondaryClass = null;
   // --- Case 1: fakeFeedback ambiguity ---
   const entry1 = safeEntry.fakeFeedback?.entry1?.[guessIndex];
