@@ -3,11 +3,11 @@
 // Guesser Quests: an always-on, openly-visible (both players see it)
 // route to a free green letter. ROW/RARE/ALPHA/DOUBLES/CHAIN are the exact
 // unlock conditions the old revealLetter power's variants used;
-// HARDMODE/FIELDREPORT and the six ALTERNATING..VOWELPROGRESSION types
+// HARDMODE/FIELDREPORT and the six ALTERNATING..VOWELSHORTAGE types
 // below are new. See server/powers/powers/questServer.js for the matching
 // server-side logic.
 // examples: 2-3 real, dictionary-valid guesses that satisfy the quest's
-// condition on their own (or, for ROW/CHAIN/VOWELPROGRESSION, as a short
+// condition on their own (or, for ROW/CHAIN/VOWELSHORTAGE, as a short
 // sequence) -- shown in the Powers screen's Guesser Quests tab so players
 // can see what "counts" without needing to play a live round. Omitted for
 // HARDMODE and FIELDREPORT: both depend on state that's generated fresh
@@ -57,7 +57,7 @@ window.QUEST_METADATA = {
   },
   FIELDREPORT: {
     label: "Field Report",
-    desc: "3 conditions are shown below. Satisfy at least 8 conditions across your guesses.",
+    desc: "3 conditions are shown below. Every condition your guesses satisfy (across all your guesses) adds to a running total — reach 6 for an early yellow letter, 8 for the full green.",
     emoji: "📋",
     color: "#16A34A"
   },
@@ -96,11 +96,11 @@ window.QUEST_METADATA = {
     color: "#16A34A",
     examples: ["STONY", "SPORT", "TRUST"]
   },
-  VOWELPROGRESSION: {
-    label: "Vowel Ladder",
-    desc: "Submit a guess with exactly 1 vowel, then (later) one with 2, then 3, then 4 — in that order.",
-    emoji: "🪜",
+  VOWELSHORTAGE: {
+    label: "Vowel Shortage",
+    desc: "Submit 4 guesses that each contain only one vowel.",
+    emoji: "🏜️",
     color: "#16A34A",
-    examples: ["TRUST", "STONE", "OCEAN", "ADIEU"]
+    examples: ["TRUST", "CRISP", "GHOST", "PLANT"]
   }
 };

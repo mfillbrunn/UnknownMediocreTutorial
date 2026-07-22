@@ -23,8 +23,9 @@
 //     simultaneous-phase opener) that are each Wordle hard-mode legal
 //     against everything known at the time that guess was made.
 //   - FIELDREPORT: fieldReportServer.js's 3-condition vocabulary, but
-//     instead of a one-shot "next guess only" check, the guesser needs 3
-//     separate guesses that each satisfy at least 2 of the 3 conditions.
+//     instead of a one-shot "next guess only" check, every condition any
+//     guess satisfies (summed across the whole round) counts toward a
+//     total of 8 -- reaching 6 unlocks the early-yellow trade.
 //   - ALTERNATING: 3 guesses with no two adjacent letters in the same
 //     vowel/consonant category (CVCVC like MAGIC, or VCVCV -- either
 //     direction counts).
@@ -34,23 +35,24 @@
 //     in strict *descending* alphabetical order.
 //   - HALF_AM / HALF_NZ: 3 guesses using only letters from the first or
 //     second half of the alphabet respectively.
-//   - VOWELPROGRESSION: a guess with exactly 1 vowel, then (later) one
-//     with exactly 2, then 3, then 4 -- in that order across the round,
-//     not necessarily consecutive guesses.
+//   - VOWELSHORTAGE: 4 guesses (not necessarily consecutive) that each
+//     contain exactly 1 vowel.
 const engine = require("../powerEngineServer.js");
 const { satisfiesForceGuess } = require("../../game-engine/validation");
 const { generateConditions } = require("./fieldReportServer.js");
 
 const QUEST_TYPES = [
   "ROW", "RARE", "ALPHA", "DOUBLES", "CHAIN", "HARDMODE", "FIELDREPORT",
-  "ALTERNATING", "BOOKENDS", "REVERSEALPHA", "HALF_AM", "HALF_NZ", "VOWELPROGRESSION"
+  "ALTERNATING", "BOOKENDS", "REVERSEALPHA", "HALF_AM", "HALF_NZ", "VOWELSHORTAGE"
 ];
 
 // Per-type "how many qualifying guesses does this quest need" -- shared by
 // the switch below and by the AI's quest-aware guess picker
 // (server/core/ai/genericAI.js), which needs to know how close a match's
 // current progress is to done ("one away") without duplicating each
-// case's threshold.
+// case's threshold. FIELDREPORT counts individual conditions satisfied
+// (summed across every guess), not qualifying guesses -- every other type
+// counts one point per qualifying guess.
 const QUEST_THRESHOLDS = {
   RARE: 5,
   ROW: 1, // "complete any one row" -- see rowsCompleted() below, not a plain count
@@ -58,14 +60,20 @@ const QUEST_THRESHOLDS = {
   DOUBLES: 3,
   CHAIN: 2,
   HARDMODE: 4,
-  FIELDREPORT: 3,
+  FIELDREPORT: 8,
   ALTERNATING: 3,
   BOOKENDS: 3,
   REVERSEALPHA: 3,
   HALF_AM: 3,
   HALF_NZ: 3,
-  VOWELPROGRESSION: 4
+  VOWELSHORTAGE: 4
 };
+
+// FIELDREPORT's early-yellow checkpoint isn't "one condition short of 8"
+// like every other quest's "one away" rule (a single guess can satisfy up
+// to 3 conditions at once, so an exact target-1 match can easily get
+// jumped over) -- it's a fixed checkpoint partway through the total.
+const FIELDREPORT_YELLOW_AT = 6;
 
 const QUEST_VOWELS = new Set("AEIOU");
 function questCountVowels(word) {
@@ -129,19 +137,15 @@ const QUEST_KEYBOARD_ROWS = [
   new Set("ZXCVBNM")
 ];
 
-// Advances a stage pointer (0-4) forward through history in a single
-// pass: stage N is satisfied by the first guess with exactly N+1 vowels
-// that appears after stage N-1 was already satisfied. Ready once all 4
-// targets (1, 2, 3, 4 vowels) have been hit in order.
-function computeVowelProgressionStage(history) {
-  const targets = [1, 2, 3, 4];
-  let stage = 0;
+// Number of guesses (any order, not necessarily consecutive) with exactly
+// 1 vowel -- ready once 4 of them have been submitted.
+function computeVowelShortageCount(history) {
+  let count = 0;
   for (const entry of history) {
-    if (stage >= targets.length) break;
     if (!entry?.guess) continue;
-    if (questCountVowels(entry.guess.toUpperCase()) === targets[stage]) stage++;
+    if (questCountVowels(entry.guess.toUpperCase()) === 1) count++;
   }
-  return stage;
+  return count;
 }
 
 function pickRandomQuestType() {
@@ -215,8 +219,7 @@ function isQuestOneAway(quest, state) {
     case "HARDMODE":
       return computeHardModeCount(history) === QUEST_THRESHOLDS.HARDMODE - 1;
     case "FIELDREPORT":
-      return computeFieldReportCount(history, quest.conditions)
-        === QUEST_THRESHOLDS.FIELDREPORT - 1;
+      return computeFieldReportCount(history, quest.conditions) >= FIELDREPORT_YELLOW_AT;
     case "ALTERNATING":
       return history.filter(h => isAlternatingWord(h.guess.toUpperCase())).length
         === QUEST_THRESHOLDS.ALTERNATING - 1;
@@ -232,8 +235,8 @@ function isQuestOneAway(quest, state) {
     case "HALF_NZ":
       return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "N", "Z")).length
         === QUEST_THRESHOLDS.HALF_NZ - 1;
-    case "VOWELPROGRESSION":
-      return computeVowelProgressionStage(history) === QUEST_THRESHOLDS.VOWELPROGRESSION - 1;
+    case "VOWELSHORTAGE":
+      return computeVowelShortageCount(history) === QUEST_THRESHOLDS.VOWELSHORTAGE - 1;
     default:
       return false;
   }
@@ -309,15 +312,17 @@ function computeHardModeCount(history) {
   return count;
 }
 
+// Sums how many of the 3 conditions each guess satisfies across the whole
+// round -- a guess that hits all 3 at once contributes 3, not 1, toward
+// the total of 8 (see QUEST_THRESHOLDS.FIELDREPORT above).
 function computeFieldReportCount(history, conditions) {
   if (!Array.isArray(conditions) || !conditions.length) return 0;
-  let count = 0;
+  let total = 0;
   for (const entry of history) {
     if (!entry?.guess) continue;
-    const metCount = conditions.filter(c => satisfiesForceGuess(entry.guess.toUpperCase(), c)).length;
-    if (metCount >= 2) count++;
+    total += conditions.filter(c => satisfiesForceGuess(entry.guess.toUpperCase(), c)).length;
   }
-  return count;
+  return total;
 }
 
 // Same random-unrevealed-position mechanic revealLetter/fieldReport both
@@ -507,8 +512,8 @@ engine.registerPower("quest", {
           if (count >= QUEST_THRESHOLDS.HALF_NZ) q.ready = true;
           break;
         }
-        case "VOWELPROGRESSION": {
-          if (computeVowelProgressionStage(state.history) >= QUEST_THRESHOLDS.VOWELPROGRESSION) q.ready = true;
+        case "VOWELSHORTAGE": {
+          if (computeVowelShortageCount(state.history) >= QUEST_THRESHOLDS.VOWELSHORTAGE) q.ready = true;
           break;
         }
       }
@@ -529,6 +534,7 @@ engine.registerPower("quest", {
 module.exports = {
   QUEST_TYPES,
   QUEST_THRESHOLDS,
+  FIELDREPORT_YELLOW_AT,
   QUEST_RARE_LETTERS,
   QUEST_KEYBOARD_ROWS,
   pickRandomQuestType,
@@ -543,7 +549,7 @@ module.exports = {
   isAscendingWord,
   isBookendWord,
   doubledLetterOf,
-  computeVowelProgressionStage,
+  computeVowelShortageCount,
   rareLettersSeen,
   rowCoverage,
   doublesSeen,

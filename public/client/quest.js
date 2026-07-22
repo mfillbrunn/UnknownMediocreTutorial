@@ -68,16 +68,14 @@ function questIsInLetterRange(word, minLetter, maxLetter) {
   return true;
 }
 
-// Mirrors questServer.js's computeVowelProgressionStage exactly.
-function computeVowelProgressionStage(history) {
-  const targets = [1, 2, 3, 4];
-  let stage = 0;
+// Mirrors questServer.js's computeVowelShortageCount exactly.
+function computeVowelShortageCount(history) {
+  let count = 0;
   for (const entry of history) {
-    if (stage >= targets.length) break;
     if (!entry?.guess) continue;
-    if (questCountVowels(entry.guess.toUpperCase()) === targets[stage]) stage++;
+    if (questCountVowels(entry.guess.toUpperCase()) === 1) count++;
   }
-  return stage;
+  return count;
 }
 
 // Mirrors questServer.js's computeHardModeCount exactly.
@@ -109,15 +107,17 @@ function computeHardModeProgress(history) {
   return count;
 }
 
+// Mirrors questServer.js's computeFieldReportCount exactly -- sums every
+// condition each guess satisfies across the whole round, not "guesses
+// meeting at least 2 of 3".
 function computeFieldReportProgress(history, conditions) {
   if (!Array.isArray(conditions) || !conditions.length) return 0;
-  let count = 0;
+  let total = 0;
   for (const entry of history) {
     if (!entry?.guess || typeof satisfiesForceGuessClient !== "function") continue;
-    const metCount = conditions.filter(c => satisfiesForceGuessClient(entry.guess.toUpperCase(), c)).length;
-    if (metCount >= 2) count++;
+    total += conditions.filter(c => satisfiesForceGuessClient(entry.guess.toUpperCase(), c)).length;
   }
-  return count;
+  return total;
 }
 
 // Small client-side mirror of server/game-engine/validation.js's
@@ -225,7 +225,7 @@ function computeQuestStatus(state) {
       : "";
     return {
       meta,
-      label: `${count}/3`,
+      label: `${count}/8`,
       desc: conditionList ? `Conditions: ${conditionList}` : meta.desc,
       done: false
     };
@@ -259,9 +259,9 @@ function computeQuestStatus(state) {
     return { meta, label: `${count}/3`, desc: meta.desc, done: false };
   }
 
-  if (q.type === "VOWELPROGRESSION") {
-    const stage = computeVowelProgressionStage(history);
-    return { meta, label: `${stage}/4`, desc: meta.desc, done: false };
+  if (q.type === "VOWELSHORTAGE") {
+    const count = computeVowelShortageCount(history);
+    return { meta, label: `${count}/4`, desc: meta.desc, done: false };
   }
 
   return null;
