@@ -499,7 +499,10 @@ function questWordAdvances(word, quest, state) {
     case "FIELDREPORT": {
       const conditions = quest.conditions;
       if (!Array.isArray(conditions) || !conditions.length) return false;
-      return conditions.filter(c => satisfiesForceGuess(w, c)).length >= 2;
+      // Every condition met contributes to the running total now (see
+      // questServer.js's computeFieldReportCount), not just a >=2/3 guess --
+      // any guess meeting at least one condition makes progress.
+      return conditions.filter(c => satisfiesForceGuess(w, c)).length >= 1;
     }
     case "ALTERNATING":
       return questServer.isAlternatingWord(w);
@@ -511,12 +514,9 @@ function questWordAdvances(word, quest, state) {
       return questServer.isInLetterRange(w, "A", "M");
     case "HALF_NZ":
       return questServer.isInLetterRange(w, "N", "Z");
-    case "VOWELPROGRESSION": {
-      const stage = questServer.computeVowelProgressionStage(history);
-      if (stage >= 4) return false;
-      const targetVowels = stage + 1;
+    case "VOWELSHORTAGE": {
       const vowelCount = [...w].filter(c => "AEIOU".includes(c)).length;
-      return vowelCount === targetVowels;
+      return vowelCount === 1;
     }
     default:
       return false;
@@ -528,7 +528,7 @@ function questWordAdvances(word, quest, state) {
 // the AI doesn't throw away a turn on something it already knows is wrong
 // — falling back to any dictionary word satisfying the quest if nothing
 // feasible does. Returns null if nothing qualifies at all (rare, but
-// e.g. CHAIN or VOWELPROGRESSION's exact vowel target can legitimately
+// e.g. CHAIN or VOWELSHORTAGE's exact vowel target can legitimately
 // have no live candidates left).
 function pickQuestSatisfyingGuess(quest, state, remaining, feasible) {
   const feasibleQualifying = feasible.filter(r => questWordAdvances(r.word, quest, state));
