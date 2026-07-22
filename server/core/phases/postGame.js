@@ -32,6 +32,7 @@ function handleGameOverPhase(room, state, action, roomId, context) {
     freshState.devMode = prevState.devMode;
     freshState.isTutorial = prevState.isTutorial;
     freshState.tutorialStage = prevState.tutorialStage || 1;
+    freshState.tutorialPowerId = prevState.tutorialPowerId || null;
     freshState.rankMode = prevState.rankMode;
     freshState.timeControl = { ...prevState.timeControl };
     // Dev Mode's confirmed power selection otherwise resets to "pick again"
@@ -92,6 +93,7 @@ function handleGameOverPhase(room, state, action, roomId, context) {
     freshState.devMode = prevState.devMode;
     freshState.isTutorial = prevState.isTutorial;
     freshState.tutorialStage = prevState.tutorialStage || 1;
+    freshState.tutorialPowerId = prevState.tutorialPowerId || null;
     freshState.rankMode = prevState.rankMode;
     freshState.timeControl = { ...prevState.timeControl };
     // Force off so the lobby's draftEligible check can't route this back

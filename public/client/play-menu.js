@@ -223,6 +223,12 @@ const POWER_LIB_GUESSER_POWERS = [
   "letterProfile"
 ];
 
+// Preview batch for the per-power "Try it" tutorial (one setter power,
+// one guesser power) -- see server/core/modes/tutorialMode.js's stage
+// "power" and public/client/tutorial-ui.js's runPowerTutorial. Expand
+// this list as more powers get their own tutorial wired up.
+const POWER_TUTORIAL_AVAILABLE = new Set(["hideTile", "revealGreen"]);
+
 let _powerLibTab = "setter";
 
 $("showPowersBtn")?.addEventListener("click", () => {
@@ -298,13 +304,23 @@ function renderPowerLibrary() {
 
     const row = document.createElement("div");
     row.className = `power-info-row power-lib-row-${role}`;
+    const tryItBtn = POWER_TUTORIAL_AVAILABLE.has(id)
+      ? `<button class="power-lib-try-btn" data-try-power="${id}" title="Try ${meta.label} in a short interactive tutorial">▶ Try it</button>`
+      : "";
     row.innerHTML = `
       <span class="power-info-emoji">${meta.emoji || "⚡"}</span>
       <div class="power-info-body">
         <div class="power-info-title">${meta.label}</div>
         <div class="power-info-desc">${describePowerLibraryEntry(meta)}</div>
       </div>
+      ${tryItBtn}
     `;
     list.appendChild(row);
   }
+
+  list.querySelectorAll("[data-try-power]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      window.startPowerTutorial?.(btn.dataset.tryPower);
+    });
+  });
 }
