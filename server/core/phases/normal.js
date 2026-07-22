@@ -39,11 +39,19 @@ function handleNormalPhase(room, state, action, roomId, context) {
     return;
   }
 
-  // Marked Weakness: the guesser's "call the bluff" response to a reveal.
-  // Same standing-option shape as USE_QUEST above -- not tied to whose
-  // turn it is, resolved immediately (see revealPenaltyServer.js).
+  // Marked Weakness: the guesser's response to the setter's claim -- accept
+  // it, or call it a bluff. Same standing-option shape as USE_QUEST above --
+  // not tied to whose turn it is, resolved immediately (see
+  // revealPenaltyServer.js).
+  if (action.type === "USE_REVEAL_PENALTY_ACCEPT") {
+    if (revealPenaltyServer.resolveClaim(state, userId, roomId, io, true)) {
+      emitRoomState(roomId, room, io);
+    }
+    return;
+  }
+
   if (action.type === "USE_REVEAL_PENALTY_CALL") {
-    if (revealPenaltyServer.resolveBluffCall(state, userId, roomId, io)) {
+    if (revealPenaltyServer.resolveClaim(state, userId, roomId, io, false)) {
       emitRoomState(roomId, room, io);
     }
     return;

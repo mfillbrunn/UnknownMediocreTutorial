@@ -55,17 +55,8 @@ function endGame(state, roomId, io, room, context) {
     state.guessCount += state.powers.assassinPoints;
   }
 
-  // Marked Weakness: only tallied here if the guesser never called the
-  // bluff -- a call (right or wrong) already resolved immediately in
-  // revealPenaltyServer.js's resolveBluffCall.
-  if (state.powers.revealPenaltyUsed && !state.powers.revealPenaltyCalled) {
-    const n = state.secret
-      .split("")
-      .filter((c) => c === state.powers.revealPenaltyLetter).length;
-
-    state.guessCount += n;
-    state.powers.revealPenaltyCount = n;
-  }
+  // Marked Weakness has no game-end step -- accept/call always resolves
+  // immediately in revealPenaltyServer.js's resolveClaim.
 
   
 const archivedHistory = buildArchivedRoundHistory(

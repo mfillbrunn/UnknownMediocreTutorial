@@ -553,13 +553,12 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyParams) {
   const usedGuesses = new Set(history.map(h => h.guess.toUpperCase()));
   const usedLetters = getUsedLetters(state);
 
-  // Letter Lockout / Marked Weakness (wrong bluff call): the setter has
-  // banned a letter from THIS guess (or the rest of the round). checkGuess
-  // would reject it server-side anyway, but nothing retries a rejected AI
-  // guess -- filtering it out of the candidate pool up front is what
-  // actually keeps the AI from silently stalling if its top pick happens
-  // to contain it.
-  const bannedLetter = state.powers?.letterLockoutBanned || state.powers?.revealPenaltyBannedLetter;
+  // Letter Lockout: the setter has banned a letter from this guess.
+  // checkGuess would reject it server-side anyway, but nothing retries a
+  // rejected AI guess -- filtering it out of the candidate pool up front is
+  // what actually keeps the AI from silently stalling if its top pick
+  // happens to contain it.
+  const bannedLetter = state.powers?.letterLockoutBanned;
   const notBanned = r => !bannedLetter || !r.word.includes(bannedLetter);
 
   const remaining = wordRows.filter(r => !usedGuesses.has(r.word) && notBanned(r));
