@@ -98,25 +98,29 @@
 <!-- ========== QUICK PLAY ========== -->
 <section id="quickPlayScreen" class="screen game-menu">
   <div class="menu-center">
-    <h2 class="menu-title">Quick Play</h2>
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('startupScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Quick Play</h2>
+    </div>
     <div class="menu-buttons play-menu-buttons">
       <button id="quickPlayHumanBtn" class="menu-btn primary">Play Human 🧑</button>
       <button id="quickPlayAiBtn" class="menu-btn">Play AI 🤖</button>
     </div>
-    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
   </div>
 </section>
 
 <!-- ========== QUICK PLAY VS AI (difficulty picker) ========== -->
 <section id="quickPlayAiScreen" class="screen game-menu">
   <div class="menu-center vsai-center">
-    <h2 class="menu-title">Play AI</h2>
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('quickPlayScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Play AI</h2>
+    </div>
     <p style="font-size:12px;opacity:0.5;margin:-8px 0 8px">Choose difficulty</p>
     <div class="menu-buttons">
       <button class="menu-btn difficulty-easy" onclick="_startQuickAI(1)">Easy<br><small>Relaxed, makes mistakes</small></button>
       <button class="menu-btn difficulty-medium" onclick="_startQuickAI(2)">Medium<br><small>Solid, balanced play</small></button>
       <button class="menu-btn difficulty-hard" onclick="_startQuickAI(3)">Hard<br><small>Sharp and hard to corner</small></button>
-      <button class="menu-btn" onclick="showScreen('quickPlayScreen')">Back</button>
     </div>
   </div>
 </section>
@@ -124,7 +128,10 @@
 <!-- ========== PLAY (advanced/manual — reachable via Developer > Play) ========== -->
 <section id="playScreen" class="screen game-menu">
   <div class="menu-center">
-    <h2 class="menu-title">Casual</h2>
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('startupScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Casual</h2>
+    </div>
     <div class="menu-buttons play-menu-buttons">
       <button id="playFriendBtn" class="menu-btn primary">Play</button>
       <div class="join-room-row">
@@ -135,14 +142,16 @@
       <button id="playVsAiBtn" class="menu-btn">Play vs AI 🤖</button>
       <button id="inviteAsyncBtn" class="menu-btn" title="Casual, unlimited-time, shuffled game — send a link, no need to wait around">Invite a Friend ✉️</button>
     </div>
-    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
   </div>
 </section>
 
 <!-- ========== RANKED PLAY (mode select) ========== -->
 <section id="rankedPlayScreen" class="screen game-menu">
   <div class="menu-center">
-    <h2 class="menu-title">Ranked</h2>
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('startupScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Ranked</h2>
+    </div>
     <div class="menu-buttons play-menu-buttons">
       <div class="play-ranked-row">
         <button id="playRankedBtn" class="menu-btn ranked-btn">Ranked Play 🏆</button>
@@ -157,7 +166,6 @@
       <button id="showPastGamesBtn" class="menu-btn">Past Games</button>
     </div>
     <div id="pastGamesContainer" class="past-games hidden"></div>
-    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
   </div>
 </section>
 
@@ -177,7 +185,10 @@
 <!-- ========== LEADErbOArD ========== -->
   <section id="leaderboardScreen" class="screen game-menu">
   <div class="menu-center">
-    <h2 class="menu-title">Leaderboard</h2>
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('rankedPlayScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Leaderboard</h2>
+    </div>
 
     <div class="leaderboard-tabs">
       <button class="leaderboard-tab active" data-mode="bullet">Bullet</button>
@@ -189,17 +200,16 @@
     <div id="leaderboardList" class="leaderboard-list">
       Loading…
     </div>
-
-    <button class="menu-btn" onclick="showScreen('rankedPlayScreen')">
-      Back
-    </button>
   </div>
 </section>
 
 <!-- ========== HOW TO PLAY (Tutorial / Rules / Powers hub) ========== -->
 <section id="howToPlayScreen" class="screen game-menu">
   <div class="menu-center">
-    <h2 class="menu-title">How to Play</h2>
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('startupScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">How to Play</h2>
+    </div>
 
     <div class="menu-buttons">
       <button id="startTutorialBtn" class="menu-btn primary">▶ Tutorial</button>
@@ -208,15 +218,16 @@
       <button id="showRulesBtn" class="menu-btn">Rules</button>
       <button id="showPowersBtn" class="menu-btn">Powers</button>
     </div>
-
-    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
   </div>
 </section>
 
 <!-- ========== RULES ========== -->
 <section id="rulesScreen" class="screen game-menu">
   <div class="menu-center rules-center">
-    <h2 class="menu-title">Rules</h2>
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('howToPlayScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Rules</h2>
+    </div>
 
     <div class="rules-content">
       <h3>The basics</h3>
@@ -232,15 +243,16 @@
       <h3>Guesser Quests</h3>
       <p>Every Inspector also gets an always-on Quest: a visible challenge (like using every letter in a keyboard row, or submitting guesses in alphabetical order) that rewards a free green letter reveal when completed. See the Powers screen's Guesser Quests tab for the full list.</p>
     </div>
-
-    <button class="menu-btn" onclick="showScreen('howToPlayScreen')">Back</button>
   </div>
 </section>
 
 <!-- ========== ADVANCED TUTORIAL (UI reference: Notes, Guide, Drag & Lock, Power UI) ========== -->
 <section id="advancedTutorialScreen" class="screen game-menu">
   <div class="menu-center rules-center">
-    <h2 class="menu-title">Advanced Tutorial</h2>
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('howToPlayScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Advanced Tutorial</h2>
+    </div>
     <p style="font-size:12px;opacity:0.5;margin:-8px 0 8px">A quick reference for UI features the basic tutorial doesn't cover</p>
 
     <div class="rules-content">
@@ -256,15 +268,16 @@
       <h3>⚡ Power UI</h3>
       <p>Active powers show up as buttons below your draft row — tap one to use it, and a popup confirms what happened. Powers you don't have this match are simply hidden, not greyed out. Some powers (like Recon Sweep or Double Tap) take their input right on the on-screen keyboard instead of a popup — just start typing after activating them. Any power or quest that reveals information leaves a small badge nearby so you can find it again later without re-reading the popup.</p>
     </div>
-
-    <button class="menu-btn" onclick="showScreen('howToPlayScreen')">Back</button>
   </div>
 </section>
 
 <!-- ========== POWERS ========== -->
 <section id="powersScreen" class="screen game-menu">
   <div class="menu-center rules-center">
-    <h2 class="menu-title">Powers</h2>
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('howToPlayScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Powers</h2>
+    </div>
 
     <div class="friends-tabs power-lib-tabs">
       <button class="friends-tab power-lib-tab active" data-power-lib-tab="setter">Setter Powers</button>
@@ -273,15 +286,16 @@
     </div>
 
     <div id="powerLibraryList" class="power-library-list"></div>
-
-    <button class="menu-btn" onclick="showScreen('howToPlayScreen')">Back</button>
   </div>
 </section>
 
 <!-- ========== ACCOUNT ========== -->
 <section id="accountScreen" class="screen game-menu">
   <div class="menu-center">
-    <h2 class="menu-title">Account</h2>
+    <div class="screen-back-header">
+      <button id="backBtn" class="menu-btn screen-back-btn">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Account</h2>
+    </div>
      <div id="authInputs" class="auth-inputs">
   <input
     id="authEmail"
@@ -311,26 +325,30 @@
     </button>
     <button id="logoutBtn" class="menu-btn hidden">Log Out</button>
     <p id="authStatus" class="auth-status"></p>
-    <button id="backBtn" class="menu-btn">Back</button>
   </div>
 </section>
 
 <!-- ========== DEVELOPER ========== -->
 <section id="developerScreen" class="screen game-menu">
   <div class="menu-center">
-    <h2 class="menu-title">Developer</h2>
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('startupScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Developer</h2>
+    </div>
     <div class="menu-buttons">
       <button id="devPlayBtn" class="menu-btn primary">Play</button>
       <button id="devSimulationBtn" class="menu-btn">Simulation</button>
     </div>
-    <button class="menu-btn" onclick="showScreen('startupScreen')">Back</button>
   </div>
 </section>
 
 <!-- ========== SIMULATION (AI vs AI power benchmark) ========== -->
 <section id="simulationScreen" class="screen game-menu">
   <div class="menu-center sim-center">
-    <h2 class="menu-title">Simulation</h2>
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('developerScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Simulation</h2>
+    </div>
     <p class="sim-explainer">
       Pits two AI opponents against each other: one batch with the chosen
       power active, one baseline batch with no powers. Compares the average
@@ -391,8 +409,6 @@
 
     <h3 class="sim-subtitle">Past Runs</h3>
     <div id="simPastRuns" class="sim-past-runs">Loading…</div>
-
-    <button class="menu-btn" onclick="showScreen('developerScreen')">Back</button>
   </div>
 </section>
 
@@ -859,13 +875,15 @@
 <!-- ========== PLAY VS AI ========== -->
 <section id="vsAiScreen" class="screen game-menu">
   <div class="menu-center vsai-center">
-    <h2 class="menu-title">Play vs AI</h2>
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showStartup()">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Play vs AI</h2>
+    </div>
     <p style="font-size:12px;opacity:0.5;margin:-8px 0 8px">Choose difficulty</p>
     <div class="menu-buttons">
       <button class="menu-btn difficulty-easy" onclick="_startVsAI(1)">Easy<br><small>Relaxed, makes mistakes</small></button>
       <button class="menu-btn difficulty-medium" onclick="_startVsAI(2)">Medium<br><small>Solid, balanced play</small></button>
       <button class="menu-btn difficulty-hard" onclick="_startVsAI(3)">Hard<br><small>Sharp and hard to corner</small></button>
-      <button class="menu-btn" onclick="showStartup()">Back</button>
     </div>
   </div>
 </section>

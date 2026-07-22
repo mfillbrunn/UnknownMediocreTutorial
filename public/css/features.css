@@ -696,6 +696,24 @@
   background: color-mix(in srgb, #f87171 12%, transparent);
 }
 
+/* ── Screen back header: puts the Back button at the TOP of a screen,
+   next to the title, instead of below all its content -- so it's always
+   visible without scrolling on tall/scrollable screens (Rules, Powers,
+   Leaderboard, Simulation, My Games, etc). Shares layout with the
+   friends-header/friends-back pattern below. ─────────────────────────── */
+.screen-back-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.screen-back-btn {
+  flex-shrink: 0;
+  font-size: 12px;
+  height: 32px;
+  padding: 0 10px;
+}
+
 /* ── Friends screen ──────────────────────────────────────────────────── */
 .friends-center {
   width: 100%;

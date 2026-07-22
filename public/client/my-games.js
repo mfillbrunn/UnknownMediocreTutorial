@@ -69,7 +69,10 @@ window.showMyGames = async function () {
 
   screen.innerHTML = `
     <div class="menu-center">
-      <h2 class="menu-title">My Games</h2>
+      <div class="screen-back-header">
+        <button class="menu-btn screen-back-btn" onclick="showStartup()">← Back</button>
+        <h2 class="menu-title" style="flex:1;text-align:center">My Games</h2>
+      </div>
 
       <div class="friends-tabs my-games-tabs">
         <button class="friends-tab my-games-tab active" data-my-games-tab="active">Active</button>
@@ -84,8 +87,6 @@ window.showMyGames = async function () {
       <div id="myGamesPastPane" class="hidden">
         <div id="myGamesPastGamesContainer" class="past-games"></div>
       </div>
-
-      <button class="menu-btn" onclick="showStartup()">Back</button>
     </div>
   `;
 
