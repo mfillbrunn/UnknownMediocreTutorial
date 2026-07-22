@@ -224,7 +224,8 @@ forceTimer: {
   once: true,
   allowed(state, role) {
     return state.phase === "normal" &&
-           role === "guesser" &&
+           role === "setter" &&
+           state.history.length >= 1 &&
            !state.powerUsedThisTurn;
   }
 },

@@ -17,13 +17,13 @@ const DEV_SETTER_POWERS = [
   "fakeFeedback",
   "revealPenalty",
   "delayedIntel",
-  "letterLockout"
+  "letterLockout",
+  "forceTimer"
 ];
 
 const DEV_GUESSER_POWERS = [
   "suggestGuess",
   "rouletteSecret",
-  "forceTimer",
   "revealHistory",
   "stealthGuess",
   "revealGreen",

@@ -10,7 +10,11 @@ const { startGameTimer } = require("../timeouts/timeoutController");
 const { startDraftTimer } = require("../../utils/draftTimer");
 const { finalizeDraft, shuffle } = require("./draft");
 const { QUEST_TYPES } = require("../../powers/powers/questServer");
-const { isLoadoutValid } = require("../../powers/POWER_POINTS");
+const {
+  isLoadoutValid,
+  SETTER_POWER_POINTS,
+  GUESSER_POWER_POINTS
+} = require("../../powers/POWER_POINTS");
 const { pickRandomAILoadout } = require("../../powers/randomLoadout");
 const {
   ensureStatePlayer,
@@ -36,7 +40,8 @@ const SETTER_POWERS = [
   "blindGuess",
   "fakeFeedback",
   "revealPenalty",
-  "delayedIntel"
+  "delayedIntel",
+  "forceTimer"
   // letterLockout ("forbid a letter") deliberately excluded -- disabled
   // from random/draft pools, same precedent as assassinWord above.
 ];
@@ -45,22 +50,19 @@ const SETTER_POWERS = [
 // their condition-based mechanics live on in the always-on Quest system
 // instead (see server/powers/powers/questServer.js), which now covers the
 // same ground for every guesser rather than as a power that may or may
-// not get rolled/drafted.
+// not get rolled/drafted. magicMode, betMiss, wiretap, and doubleGuess are
+// also excluded here (still selectable in Dev Mode / Custom Loadouts, just
+// not handed out by random/draft).
 const GUESSER_POWERS = [
   "suggestGuess",
   "rouletteSecret",
-  "forceTimer",
   "revealHistory",
   "stealthGuess",
   "revealGreen",
   "freezeSecret",
-  "magicMode",
   "nonsense",
-  "betMiss",
-  "wiretap",
   "letterProbe",
   "revealLocation",
-  "doubleGuess",
   "letterProfile"
 ];
 
@@ -245,11 +247,15 @@ function handleLobbyPhase(room, state, action, roomId, context) {
 
   if (action.type === "SET_DEV_POWERS") {
     if (state.hostUserId !== action.userId) return;
+    // Validated against the full per-role power set (POWER_POINTS' keys),
+    // not the trimmed random/draft SETTER_POWERS/GUESSER_POWERS pool above
+    // -- Dev Mode's picker (client/dev-powers.js) intentionally offers a
+    // wider selection than what random/draft hands out.
     state._devSetterPowers = Array.isArray(action.setterPowers)
-      ? action.setterPowers.filter(p => SETTER_POWERS.includes(p))
+      ? action.setterPowers.filter(p => p in SETTER_POWER_POINTS)
       : null;
     state._devGuesserPowers = Array.isArray(action.guesserPowers)
-      ? action.guesserPowers.filter(p => GUESSER_POWERS.includes(p))
+      ? action.guesserPowers.filter(p => p in GUESSER_POWER_POINTS)
       : null;
     // An explicit re-pick here should win over a pending Replay lock,
     // otherwise the host's new choice would silently be ignored in favor

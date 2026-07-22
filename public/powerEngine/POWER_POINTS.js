@@ -17,13 +17,13 @@ window.SETTER_POWER_POINTS = {
   fakeFeedback: 3,
   revealPenalty: 2,
   delayedIntel: 1.5,
-  letterLockout: 3.5
+  letterLockout: 3.5,
+  forceTimer: 1.5
 };
 
 window.GUESSER_POWER_POINTS = {
   suggestGuess: 1,
   rouletteSecret: 3,
-  forceTimer: 1.5,
   revealHistory: 3,
   stealthGuess: 1.5,
   revealGreen: 2.5,

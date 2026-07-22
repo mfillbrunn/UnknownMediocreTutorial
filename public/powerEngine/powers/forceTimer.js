@@ -1,5 +1,5 @@
 PowerEngine.register("forceTimer", {
-  role: "guesser",
+  role: "setter",
 tooltip: {
     title: window.POWER_METADATA.forceTimer.label,
     desc: window.POWER_METADATA.forceTimer.desc
@@ -9,7 +9,7 @@ tooltip: {
      const { wrapper, btn } =    PowerEngine.createPowerButton("forceTimer", window.POWER_METADATA.forceTimer.label);
     this.wrapperEl = wrapper;
      this.buttonEl = btn;
-    $("guesserPowerContainer").appendChild(wrapper);
+    $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
       console.log("[CLIENT] ForceTimer button clicked");
@@ -31,7 +31,7 @@ uiEffects(state, role) {
   if (!overlay) return;
 
   const active =
-    role === "setter" &&
+    role === "guesser" &&
     !!state.powers?.forceTimerActive &&
     !!state.powers?.forceTimerDeadline;
 

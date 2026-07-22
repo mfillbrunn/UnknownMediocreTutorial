@@ -24,13 +24,13 @@ const SETTER_POWER_POINTS = {
   fakeFeedback: 3,      // Falsify Intel — guesser sees a real + a fake feedback
   revealPenalty: 2,     // Marked Weakness — bonus points when the revealed letter is true
   delayedIntel: 1.5,    // Delayed Intel — one-time use, delays a single round's feedback
-  letterLockout: 3.5    // Letter Lockout — bans a letter every turn, whole match
+  letterLockout: 3.5,   // Letter Lockout — bans a letter every turn, whole match
+  forceTimer: 1.5       // Time Pressure — short clock on Inspector's next guess
 };
 
 const GUESSER_POWER_POINTS = {
   suggestGuess: 1,      // Analyst Tip — 2 charges, helper only, no AI payoff
   rouletteSecret: 3,    // Break Cover — spy's next secret is forced random
-  forceTimer: 1.5,      // Time Pressure — short clock on spy's next secret
   revealHistory: 3,     // Solve Cold Case — reveals + potentially reusable old secret
   stealthGuess: 1.5,    // Move in Shadows — hides a guess from the spy
   revealGreen: 2.5,     // Leak Info — 2 charges, reveals a live letter position

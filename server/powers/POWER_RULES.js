@@ -194,8 +194,12 @@ const POWER_RULES = {
   forceTimer: {
     allowed(state) {
       return (
-        state.turn === state.guesser &&
-        !state.powers.forceTimerUsed
+        state.turn === state.setter &&
+        !state.powers.forceTimerUsed &&
+        // Expiry resubmits the guesser's most recent guess this round --
+        // guaranteed to exist by the time the setter is on the clock,
+        // since a guesser turn always precedes the setter's first turn.
+        state.history.length >= 1
       );
     }
   },

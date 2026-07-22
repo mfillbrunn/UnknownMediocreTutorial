@@ -7,13 +7,16 @@ const { QUEST_TYPES } = require("../powers/powers/questServer");
 const SETTER_POWERS = [
   "hideTile", "suggestSecret", "confuseColors", "countOnly", "blindSpot",
   "vowelRefresh", "forceGuess", "blindGuess", "fakeFeedback", "revealPenalty",
+  "forceTimer",
 ];
 // revealLetter and fieldReport excluded -- see lobby.js's GUESSER_POWERS
 // comment: their condition-based mechanics live on in the Quest system
-// instead (server/powers/powers/questServer.js).
+// instead (server/powers/powers/questServer.js). magicMode and betMiss are
+// also excluded -- see lobby.js's GUESSER_POWERS comment (kept out of
+// random/draft, still available elsewhere).
 const GUESSER_POWERS = [
-  "suggestGuess", "rouletteSecret", "forceTimer", "revealHistory", "stealthGuess",
-  "revealGreen", "freezeSecret", "magicMode", "nonsense", "betMiss",
+  "suggestGuess", "rouletteSecret", "revealHistory", "stealthGuess",
+  "revealGreen", "freezeSecret", "nonsense",
 ];
 
 function seededRandom(seed) {
