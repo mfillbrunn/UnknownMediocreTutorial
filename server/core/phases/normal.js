@@ -8,6 +8,7 @@ const { scoreGuess } = require("../../game-engine/scoring");
 const { clearForceTimer } = require("../../utils/forceTimer");
 const { computeRemainingNew } = require("../../utils/remainingWords");
 const questServer = require("../../powers/powers/questServer");
+const revealPenaltyServer = require("../../powers/powers/revealPenaltyServer");
 
 function handleNormalPhase(room, state, action, roomId, context) {
   const io = context.io;
@@ -33,6 +34,16 @@ function handleNormalPhase(room, state, action, roomId, context) {
   // badge, not a normal power activation.
   if (action.type === "USE_QUEST") {
     if (questServer.attemptQuestClaim(state, userId, roomId, io)) {
+      emitRoomState(roomId, room, io);
+    }
+    return;
+  }
+
+  // Marked Weakness: the guesser's "call the bluff" response to a reveal.
+  // Same standing-option shape as USE_QUEST above -- not tied to whose
+  // turn it is, resolved immediately (see revealPenaltyServer.js).
+  if (action.type === "USE_REVEAL_PENALTY_CALL") {
+    if (revealPenaltyServer.resolveBluffCall(state, userId, roomId, io)) {
       emitRoomState(roomId, room, io);
     }
     return;

@@ -55,17 +55,15 @@ function endGame(state, roomId, io, room, context) {
     state.guessCount += state.powers.assassinPoints;
   }
 
-  if (state.powers.revealPenaltyUsed) {
+  // Marked Weakness: only tallied here if the guesser never called the
+  // bluff -- a call (right or wrong) already resolved immediately in
+  // revealPenaltyServer.js's resolveBluffCall.
+  if (state.powers.revealPenaltyUsed && !state.powers.revealPenaltyCalled) {
     const n = state.secret
       .split("")
       .filter((c) => c === state.powers.revealPenaltyLetter).length;
 
-    let penalty = 0;
-    if (n === 1) penalty = 2;
-    else if (n === 2) penalty = 4;
-    else if (n >= 3) penalty = 6;
-
-    state.guessCount += penalty;
+    state.guessCount += n;
     state.powers.revealPenaltyCount = n;
   }
 

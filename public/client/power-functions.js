@@ -91,7 +91,8 @@ const GREEN_REVEAL_SOURCE_LABELS = {
   magicMode: "Magic Mode",
   betMiss: "Bet Power",
   fieldReport: "Field Report",
-  quest: "Quest"
+  quest: "Quest",
+  bluffCaught: "Bluff Called"
 };
 
 socket.on("greenLetterRevealed", ({ index, letter, source }) => {

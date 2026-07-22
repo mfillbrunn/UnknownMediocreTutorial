@@ -120,21 +120,66 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --------------------------------------------------
-// Info badge
+// Info badge — also doubles as the guesser's "call the bluff" button,
+// same pattern as quest.js's claim badge. Calling the bluff means "this
+// letter ISN'T really in the secret" -- resolved immediately server-side
+// (resolveBluffCall in revealPenaltyServer.js). Caught -> free green
+// letter (its own splash via the shared greenLetterRevealed handler in
+// power-functions.js). Wrong -> the setter scores +2 and the letter is
+// locked out of guesses for the rest of the round (see
+// revealPenaltyCallResolved below for that announcement).
 // --------------------------------------------------
 InfoBadgeEngine.register((state, role) => {
   if (!state.powers?.revealPenaltyUsed) return null;
 
   const meta = POWER_METADATA.revealPenalty;
   const letter = state.powers.revealPenaltyLetter;
+  const called = state.powers.revealPenaltyCalled;
+  const canCall = role === "guesser" && state.powers.revealPenaltyAwaitingCall && !called;
+
+  let text = `${meta.label}: ${letter}`;
+  let color = meta.color;
+
+  if (called) {
+    if (state.powers.revealPenaltyCallResult === "caught") {
+      text = `Bluff called — ${letter} wasn't really there!`;
+      color = "var(--tile-green)";
+    } else {
+      text = `Bluff call wrong — ${letter} was real, locked out this round`;
+      color = "var(--setter-color)";
+    }
+  } else if (canCall) {
+    text = `${meta.label}: ${letter} — tap to call bluff`;
+  }
 
   return {
     id: "revealPenalty",
     emoji: meta.emoji,
-    text: `${meta.label}: ${letter}`,
-    color: meta.color,
+    text,
+    color,
     priority: 10,
     screen: role,
-    details: meta.desc
+    details: meta.desc,
+    clickable: canCall,
+    onClick: canCall
+      ? () => window.sendGameAction?.({ type: "USE_REVEAL_PENALTY_CALL", userId: window.currentUser?.id })
+      : null
   };
+});
+
+// --------------------------------------------------
+// Bluff call resolved. The "caught" outcome already gets its splash via
+// the shared greenLetterRevealed handler (source: "bluffCaught") since it
+// grants the same free-letter reward as everything else there; only the
+// "wrong call" outcome needs its own announcement.
+// --------------------------------------------------
+socket.on("revealPenaltyCallResolved", ({ letter, result }) => {
+  if (result !== "wrong") return;
+  window.showBigAnnounce?.({
+    icon: "❌",
+    title: "Wrong call!",
+    sub: `${letter} really was in the secret — it's locked out for the rest of the round.`,
+    roleClass: "outcome-lose",
+    duration: 4200
+  });
 });
