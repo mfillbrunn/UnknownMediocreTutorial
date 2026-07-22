@@ -286,16 +286,21 @@ InfoBadgeEngine.register((state, role) => {
 
   const canClaim = role === "guesser" && !status.done && (q.ready || q.oneAway);
 
-  // "One away" (yellow) intentionally keeps the exact same wording as the
-  // regular in-progress state -- color + glow (see components.css's
-  // quest-oneaway-glow) are the only signal, no text change.
+  // Guide off: the badge only ever reads as the plain in-progress line --
+  // color + glow (see components.css's quest-oneaway-glow) are the only
+  // signal for "ready"/"one away", no wording change. Guide on: spell out
+  // what that means in words too, same as every other guide-gated hint.
+  const guideOn = document.body.classList.contains("guide-on");
+
   let text;
   if (status.done) {
     text = status.claimedEarly
       ? `Quest claimed early: ${status.meta.label}`
       : `Quest complete: ${status.meta.label}`;
-  } else if (q.ready) {
+  } else if (guideOn && q.ready) {
     text = `${status.meta.label} ready — tap for 🟩`;
+  } else if (guideOn && q.oneAway) {
+    text = `${status.meta.label}: one away — tap for early 🟨`;
   } else {
     text = `Quest: ${status.meta.label} (${status.label})`;
   }
