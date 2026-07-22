@@ -56,12 +56,26 @@ PowerEngine.register("hideTile", {
     const tiles = container?.__draftRows?.pending?.__tiles;
     if (!Array.isArray(tiles) || tiles.length !== 5) return;
 
+    // Which tile was picked, tracked purely client-side (the server strips
+    // powers.hideTilePendingIndex from every broadcast, see safeState.js)
+    // so the clicked tile can flip to the "unused" gray look immediately
+    // on tap instead of waiting on a round-trip. Scoped to the word it was
+    // picked for, so a later, genuinely different pending guess reusing
+    // these same DOM tiles doesn't inherit a stale mark.
+    if (container.__hideTilePickedFor !== state.pendingGuess) {
+      container.__hideTilePickedFor = state.pendingGuess;
+      container.__hideTilePickedIndex = null;
+    }
+
     const usable =
+      container.__hideTilePickedIndex === null &&
       !state.powerUsedThisTurn &&
       window.POWER_RULES?.hideTile?.allowed?.(state, role) === true;
 
     tiles.forEach((tile, i) => {
+      const picked = container.__hideTilePickedIndex === i;
       tile.classList.toggle("tile-pickable-hide", usable);
+      tile.classList.toggle("tile-hide-picked", picked);
       tile.title = usable ? "Tap to erase this tile's feedback (Hide Evidence)" : "";
 
       if (tile.__hideTileWired) return;
@@ -71,8 +85,20 @@ PowerEngine.register("hideTile", {
         const r = window.myRole;
         const stillUsable =
           s && !s.powerUsedThisTurn &&
+          container.__hideTilePickedIndex === null &&
           window.POWER_RULES?.hideTile?.allowed?.(s, r) === true;
         if (!stillUsable) return;
+
+        // Mark it immediately -- don't wait for the server round-trip
+        // (or even the next render) to gray the tile out.
+        container.__hideTilePickedFor = s.pendingGuess;
+        container.__hideTilePickedIndex = i;
+        tiles.forEach((t, j) => {
+          t.classList.toggle("tile-hide-picked", j === i);
+          t.classList.remove("tile-pickable-hide");
+          t.title = "";
+        });
+
         sendGameAction({ type: "USE_HIDE_TILE", index: i });
       });
     });
