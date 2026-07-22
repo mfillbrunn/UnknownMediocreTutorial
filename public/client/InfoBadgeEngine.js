@@ -56,7 +56,7 @@ window.InfoBadgeEngine = {
 
     badge.innerHTML = messages
       .map((m, i) => `
-        <span class="badge-item${m.clickable ? " badge-clickable" : ""}" data-badge-index="${i}" style="color:${m.color ?? "var(--role-accent)"}">
+        <span class="badge-item${m.id ? ` badge-${m.id}` : ""}${m.clickable ? " badge-clickable" : ""}" data-badge-index="${i}" style="color:${m.color ?? "var(--role-accent)"}">
           ${m.emoji ? `${m.emoji} ` : ""}${m.text}
         </span>
       `)
