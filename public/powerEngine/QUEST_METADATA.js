@@ -30,7 +30,7 @@ window.QUEST_METADATA = {
   },
   ALPHA: {
     label: "In Order",
-    desc: "Submit 3 guesses whose letters are in strict alphabetical order (e.g. ABHOR).",
+    desc: "Submit 3 guesses whose letters are in strict alphabetical order: A -> Z.",
     emoji: "🔤",
     color: "#16A34A",
     examples: ["ABHOR", "CHOPS", "DIRTY"]
@@ -51,7 +51,7 @@ window.QUEST_METADATA = {
   },
   HARDMODE: {
     label: "Hard Mode Streak",
-    desc: "Submit 4 guesses (including your simultaneous-round opener) that are Hard Mode legal — each guess must keep every green letter in place and reuse every yellow letter revealed so far.",
+    desc: "Submit 4 guesses (including your simultaneous-round opener) that are Hard Mode legal — each guess must be consistent with all prior feedback.",
     emoji: "🎯",
     color: "#16A34A"
   },
@@ -63,21 +63,21 @@ window.QUEST_METADATA = {
   },
   ALTERNATING: {
     label: "Zigzag",
-    desc: "Submit 3 guesses that strictly alternate consonant/vowel (e.g. MAGIC, DEBIT).",
+    desc: "Submit 3 guesses that strictly alternate consonant/vowel (e.g. CVCVC or VCVCV).",
     emoji: "🌀",
     color: "#16A34A",
     examples: ["MAGIC", "DEBIT", "LEMON"]
   },
   BOOKENDS: {
     label: "Bookends",
-    desc: "Submit 3 guesses whose first and last letter are identical (e.g. SEEDS, LEVEL).",
+    desc: "Submit 3 guesses whose first and last letter are identical (e.g. AxxxA, LxxxL).",
     emoji: "📚",
     color: "#16A34A",
     examples: ["SEEDS", "LEVEL", "STATS"]
   },
   REVERSEALPHA: {
     label: "Reverse Order",
-    desc: "Submit 3 guesses whose letters are in strict descending alphabetical order.",
+    desc: "Submit 3 guesses whose letters are in strict descending alphabetical order: Z -> A.",
     emoji: "🔃",
     color: "#16A34A",
     examples: ["TRIED", "PLIED", "TONED"]
