@@ -6,36 +6,48 @@
 // HARDMODE/FIELDREPORT and the six ALTERNATING..VOWELPROGRESSION types
 // below are new. See server/powers/powers/questServer.js for the matching
 // server-side logic.
+// examples: 2-3 real, dictionary-valid guesses that satisfy the quest's
+// condition on their own (or, for ROW/CHAIN/VOWELPROGRESSION, as a short
+// sequence) -- shown in the Powers screen's Guesser Quests tab so players
+// can see what "counts" without needing to play a live round. Omitted for
+// HARDMODE and FIELDREPORT: both depend on state that's generated fresh
+// each round (prior feedback, randomized conditions), so no fixed word
+// list could actually demonstrate them.
 window.QUEST_METADATA = {
   ROW: {
     label: "Full Sweep",
     desc: "Use every letter in one keyboard row (top, home, or bottom) across your guesses.",
     emoji: "⌨️",
-    color: "#16A34A"
+    color: "#16A34A",
+    examples: ["ROUTE", "POWER", "QUIET"]
   },
   RARE: {
     label: "High-Value Target",
     desc: "Use at least 5 of Q, J, X, Z, W, K, V across your guesses.",
     emoji: "💎",
-    color: "#16A34A"
+    color: "#16A34A",
+    examples: ["QUACK", "VIXEN", "WACKY"]
   },
   ALPHA: {
     label: "In Order",
     desc: "Submit 3 guesses whose letters are in strict alphabetical order (e.g. ABHOR).",
     emoji: "🔤",
-    color: "#16A34A"
+    color: "#16A34A",
+    examples: ["ABHOR", "CHOPS", "DIRTY"]
   },
   DOUBLES: {
     label: "Double Trouble",
     desc: "Submit 3 guesses with distinct double letters (e.g. SPEED, GLOSS, MAMMY — no repeating the same doubled letter).",
     emoji: "👯",
-    color: "#16A34A"
+    color: "#16A34A",
+    examples: ["SPEED", "GLOSS", "MAMMY"]
   },
   CHAIN: {
     label: "Word Chain",
     desc: "Submit guesses that each start with the last letter of your previous guess.",
     emoji: "🔗",
-    color: "#16A34A"
+    color: "#16A34A",
+    examples: ["TOWER", "RADIO", "OCEAN"]
   },
   HARDMODE: {
     label: "Hard Mode Streak",
@@ -53,36 +65,42 @@ window.QUEST_METADATA = {
     label: "Zigzag",
     desc: "Submit 3 guesses that strictly alternate consonant/vowel (e.g. MAGIC, DEBIT).",
     emoji: "🌀",
-    color: "#16A34A"
+    color: "#16A34A",
+    examples: ["MAGIC", "DEBIT", "LEMON"]
   },
   BOOKENDS: {
     label: "Bookends",
     desc: "Submit 3 guesses whose first and last letter are identical (e.g. SEEDS, LEVEL).",
     emoji: "📚",
-    color: "#16A34A"
+    color: "#16A34A",
+    examples: ["SEEDS", "LEVEL", "STATS"]
   },
   REVERSEALPHA: {
     label: "Reverse Order",
-    desc: "Submit 3 guesses whose letters are in strict descending alphabetical order (e.g. ZYXWV).",
+    desc: "Submit 3 guesses whose letters are in strict descending alphabetical order.",
     emoji: "🔃",
-    color: "#16A34A"
+    color: "#16A34A",
+    examples: ["TRIED", "PLIED", "TONED"]
   },
   HALF_AM: {
     label: "A to M",
     desc: "Submit 3 guesses using only letters A through M.",
     emoji: "🅰️",
-    color: "#16A34A"
+    color: "#16A34A",
+    examples: ["CABLE", "MAGIC", "IDEAL"]
   },
   HALF_NZ: {
     label: "N to Z",
     desc: "Submit 3 guesses using only letters N through Z.",
     emoji: "🆉",
-    color: "#16A34A"
+    color: "#16A34A",
+    examples: ["STONY", "SPORT", "TRUST"]
   },
   VOWELPROGRESSION: {
     label: "Vowel Ladder",
     desc: "Submit a guess with exactly 1 vowel, then (later) one with 2, then 3, then 4 — in that order.",
     emoji: "🪜",
-    color: "#16A34A"
+    color: "#16A34A",
+    examples: ["TRUST", "STONE", "OCEAN", "ADIEU"]
   }
 };
