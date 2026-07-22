@@ -2,26 +2,33 @@
 const engine = require("../powerEngineServer.js");
 const { isConsistentWithHistory } = require("../../game-engine/history");
 const { scoreGuess } = require("../../game-engine/scoring");
+const { buildKeyboardState } = require("../../game-engine/keyboardState");
 
-// Reassigns the non-green feedback symbols among themselves (a shuffle,
-// not a redraw) so the fake reading stays a real permutation of what was
-// actually scored -- green tiles are locked truth (a real alternate secret
-// would have to share them too, so faking them would be either pointless
-// or self-contradictory) and are always left untouched. Used as a fallback
-// when no real alternate secret is available (see apply() below) --
-// typically right after Signal Scramble lets a guess skip the dictionary
-// check, which can make almost every other real word inconsistent with
-// this guess's true feedback. Since the fake doesn't need to correspond to
-// any real word in that case, synthesizing it directly sidesteps that
-// dead end entirely.
-function buildScrambledFakeFeedback(trueFb) {
+// Mixes up this guess's feedback, but protects any LETTER that already had
+// a known status going into this guess (i.e. it's already colored on the
+// keyboard from an earlier guess this round, or forced by a power like
+// Field Report) -- those positions keep their true color untouched, since
+// faking something the player already knows would just look broken. Every
+// other position -- including a green revealed for the first time by this
+// very guess -- is fair game and gets its true color reassigned to a
+// different eligible position. Used as a fallback when no real alternate
+// secret is available (see apply() below) -- typically right after Signal
+// Scramble lets a guess skip the dictionary check, which can make almost
+// every other real word inconsistent with this guess's true feedback.
+// Since the fake doesn't need to correspond to any real word in that case,
+// synthesizing it directly sidesteps that dead end entirely.
+function buildScrambledFakeFeedback(trueFb, guess, state) {
   const fake = [...trueFb];
+  const { keyboard } = buildKeyboardState(state);
+
   const idx = [];
   const vals = [];
-  trueFb.forEach((fb, i) => {
-    if (fb !== "🟩") { idx.push(i); vals.push(fb); }
-  });
-  // Nothing worth scrambling: fewer than 2 non-green tiles, or they're
+  for (let i = 0; i < 5; i++) {
+    if (keyboard[guess[i]] != null) continue; // already known -- protected
+    idx.push(i);
+    vals.push(trueFb[i]);
+  }
+  // Nothing worth scrambling: fewer than 2 eligible tiles, or they're
   // already all the same symbol (every permutation would look identical).
   if (idx.length < 2 || new Set(vals).size < 2) return fake;
 
@@ -83,7 +90,7 @@ engine.registerPower("fakeFeedback", {
    if (!state.powers.fakeFeedbackActive) {return;}
    let entry1 = scoreGuess(state.secret, state.pendingGuess);
    let entry2 = state.powers.fakeFeedbackScramble
-     ? buildScrambledFakeFeedback(entry1)
+     ? buildScrambledFakeFeedback(entry1, state.pendingGuess.toUpperCase(), state)
      : scoreGuess(state.powers.fakeFeedbackSecret, state.pendingGuess);
    entry.fakeFeedback = {
     entry1,   // ["🟩","⬛",...]
