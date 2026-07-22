@@ -33,7 +33,9 @@ function renderLetterProfileBox(boxId, stat) {
   }
 
   box.hidden = false;
-  box.innerHTML = `<div class="title">📊 Letter Profile</div>${letterProfileLines(stat)}`;
+  const guideOn = document.body.classList.contains("guide-on");
+  const title = guideOn ? `<div class="title">📊 Letter Profile</div>` : "";
+  box.innerHTML = `${title}${letterProfileLines(stat)}`;
 }
 
 window.renderSetterLetterProfileBox = function (stat) {

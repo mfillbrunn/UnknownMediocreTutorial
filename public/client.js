@@ -1488,6 +1488,15 @@ function updateTimerAccess() {
         greenLetters
       );
     }
+    // The Letter Profile box's header title is also guide-mode-only --
+    // same reasoning: re-render both copies immediately instead of
+    // waiting for the next natural state update to pick up the toggle.
+    if (typeof renderSetterLetterProfileBox === "function" && window.state) {
+      renderSetterLetterProfileBox(window.state.setterLetterProfile || null);
+    }
+    if (typeof renderGuesserLetterProfileBox === "function" && window.state) {
+      renderGuesserLetterProfileBox(window.state.powers?.letterProfileGuesserStat || null);
+    }
   };
 })();
 
