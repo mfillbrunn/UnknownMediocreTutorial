@@ -286,6 +286,9 @@ InfoBadgeEngine.register((state, role) => {
 
   const canClaim = role === "guesser" && !status.done && (q.ready || q.oneAway);
 
+  // "One away" (yellow) intentionally keeps the exact same wording as the
+  // regular in-progress state -- color + glow (see components.css's
+  // quest-oneaway-glow) are the only signal, no text change.
   let text;
   if (status.done) {
     text = status.claimedEarly
@@ -293,8 +296,6 @@ InfoBadgeEngine.register((state, role) => {
       : `Quest complete: ${status.meta.label}`;
   } else if (q.ready) {
     text = `${status.meta.label} ready — tap for 🟩`;
-  } else if (q.oneAway) {
-    text = `${status.meta.label}: one away — tap for early 🟨`;
   } else {
     text = `Quest: ${status.meta.label} (${status.label})`;
   }
