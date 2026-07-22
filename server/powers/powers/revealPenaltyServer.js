@@ -1,15 +1,15 @@
 // powers/powers/revealPenaltyServer.js
 //
-// Marked Weakness: the setter claims a letter appears a specific number
-// (1-5) of times in the secret. The guesser then either accepts or calls
-// the claim a bluff -- always resolved IMMEDIATELY (resolveClaim, below),
-// never deferred to game end:
-//   - Accept: trusts the claim without checking it. The setter scores
-//     that many points, no matter whether the claim was actually true.
-//   - Call, and the claim was true: the setter scores DOUBLE (2 points
-//     per occurrence) -- calling a truthful claim backfires on the guesser.
-//   - Call, and the claim was false (an actual bluff): the guesser gets a
-//     free green letter instead, same reward shape as a completed quest.
+// Marked Weakness: the setter claims a letter IS in the secret. The
+// guesser then either accepts or calls the claim a bluff -- always
+// resolved IMMEDIATELY (resolveClaim, below), never deferred to game end:
+//   - Accept: trusts the claim without checking it. The setter scores 1
+//     point, no matter whether the claim was actually true.
+//   - Call, and the claim was true (the letter really is in the secret):
+//     the setter scores 2 points -- calling a truthful claim backfires on
+//     the guesser.
+//   - Call, and the claim was false (an actual bluff, letter isn't in the
+//     secret): the guesser gets a free yellow letter instead.
 const engine = require("../powerEngineServer");
 
 engine.registerPower("revealPenalty", {
@@ -18,9 +18,7 @@ engine.registerPower("revealPenalty", {
     if (state.powers.revealPenaltyUsed) return false;
 
     const letter = action.letter?.toUpperCase();
-    const count = Number(action.count);
     if (!letter || letter.length !== 1) return false;
-    if (!Number.isInteger(count) || count < 1 || count > 5) return false;
 
     // Compute known letters (greens + yellows + constraints)
     const known = new Set();
@@ -42,38 +40,32 @@ engine.registerPower("revealPenalty", {
 
     state.powers.revealPenaltyUsed = true;
     state.powers.revealPenaltyLetter = letter;
-    state.powers.revealPenaltyCount = count;
 
     io.to(roomId).emit("powerUsed", { type: "revealPenalty" });
   }
 });
 
-// Free green-letter reward for catching a bluff -- same pick logic as
-// questServer.js's grantQuestReward (random still-unrevealed position of
-// the CURRENT secret, since that's what the claim was just checked against).
-function grantBluffCaughtReward(state, roomId, io) {
-  const greenPositions = new Set();
-  for (const entry of state.history ?? []) {
-    if (!entry?.fb) continue;
+// Free yellow-letter reward for catching a bluff -- same pick logic as
+// questServer.js's grantQuestYellowEarly (random letter that's actually in
+// the secret and not already known, since the claimed letter itself is
+// confirmed ABSENT and so useless as a reward).
+function pickYellowRewardLetter(state) {
+  const known = new Set();
+  for (const past of state.history ?? []) {
+    if (!past?.fb) continue;
     for (let i = 0; i < 5; i++) {
-      if (entry.fb[i] === "🟩") greenPositions.add(i);
+      if (past.fb[i] === "🟩" || past.fb[i] === "🟨") known.add(past.guess[i]);
     }
   }
   for (const c of state.extraConstraints ?? []) {
-    if (c.type === "GREEN") greenPositions.add(c.index);
+    if (c.letter) known.add(c.letter.toUpperCase());
   }
 
-  const options = [0, 1, 2, 3, 4].filter(i => !greenPositions.has(i));
-  if (!options.length) return;
+  const secretLetters = [...new Set((state.secret || "").toUpperCase().split(""))];
+  const options = secretLetters.filter(l => !known.has(l));
+  if (!options.length) return null;
 
-  const index = options[Math.floor(Math.random() * options.length)];
-  const letter = state.secret[index].toUpperCase();
-
-  state.extraConstraints ??= [];
-  if (!state.extraConstraints.some(c => c.type === "GREEN" && c.index === index)) {
-    state.extraConstraints.push({ type: "GREEN", index, letter });
-    io.to(roomId).emit("greenLetterRevealed", { index, letter, source: "bluffCaught" });
-  }
+  return options[Math.floor(Math.random() * options.length)];
 }
 
 // Entry point for the guesser's Accept/Call response (InfoBadgeEngine's
@@ -87,30 +79,31 @@ function resolveClaim(state, userId, roomId, io, accepted) {
   if (!p.revealPenaltyUsed || p.revealPenaltyResolved) return false;
 
   const letter = p.revealPenaltyLetter;
-  const claimedCount = p.revealPenaltyCount;
-  const actualCount = (state.secret || "")
-    .toUpperCase()
-    .split("")
-    .filter(c => c === letter).length;
-  const claimTrue = actualCount === claimedCount;
+  const inSecret = (state.secret || "").toUpperCase().includes(letter);
 
   p.revealPenaltyResolved = true;
 
+  let yellowLetter = null;
+
   if (accepted) {
     p.revealPenaltyResult = "accepted";
-    state.guessCount += claimedCount;
-  } else if (claimTrue) {
-    p.revealPenaltyResult = "trueCall";
-    state.guessCount += claimedCount * 2;
+    state.guessCount += 1;
+  } else if (inSecret) {
+    p.revealPenaltyResult = "wrongCall";
+    state.guessCount += 2;
   } else {
     p.revealPenaltyResult = "bluffCaught";
-    grantBluffCaughtReward(state, roomId, io);
+    yellowLetter = pickYellowRewardLetter(state);
+    if (yellowLetter) {
+      state.extraConstraints ??= [];
+      state.extraConstraints.push({ type: "YELLOW", letter: yellowLetter });
+    }
   }
 
   io.to(roomId).emit("revealPenaltyResolved", {
     letter,
-    count: claimedCount,
-    result: p.revealPenaltyResult
+    result: p.revealPenaltyResult,
+    yellowLetter
   });
 
   return true;

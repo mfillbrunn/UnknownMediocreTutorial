@@ -178,8 +178,11 @@ window._livePowerEvents = [];
 // redundant generic popup every time, which given how often the AI
 // completes its own quest (genericAI.js actively biases guesses toward
 // it) made the AI look like it was spamming a "power" it never actually
-// has.
-const POWERS_WITH_OWN_POPUP = new Set(["fieldReport", "quest"]);
+// has. magicMode is the same shape: the generic "you used Inside Job"
+// popup fires on activation, then its real result (magicModeRevealed in
+// magicMode.js) fires later once the next guess scores -- showing both
+// reads as the power popping up twice for one use.
+const POWERS_WITH_OWN_POPUP = new Set(["fieldReport", "quest", "magicMode"]);
 
 socket.on("powerActivity", payload => {
   if (!payload?.id) return;

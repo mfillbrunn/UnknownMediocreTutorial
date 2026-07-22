@@ -9,17 +9,16 @@ function formatRevealPenaltySummary(powers, noteClass = "reveal-penalty-summary"
   if (!powers?.revealPenaltyUsed || !powers.revealPenaltyResolved) return "";
 
   const letter = powers.revealPenaltyLetter;
-  const count = powers.revealPenaltyCount;
 
   if (powers.revealPenaltyResult === "accepted") {
-    return `<p class="${noteClass}">⚠️ The Spy claimed <b>${letter}</b>×${count} — the Inspector accepted, adding <b>+${count}</b> guesses.</p>`;
+    return `<p class="${noteClass}">⚠️ The Spy claimed <b>${letter}</b> was in the secret — the Inspector accepted, adding <b>+1</b> guess.</p>`;
   }
 
-  if (powers.revealPenaltyResult === "trueCall") {
-    return `<p class="${noteClass}">⚠️ The Spy claimed <b>${letter}</b>×${count} — the Inspector called it, but it was true. <b>+${count * 2}</b> guesses for the Spy.</p>`;
+  if (powers.revealPenaltyResult === "wrongCall") {
+    return `<p class="${noteClass}">⚠️ The Spy claimed <b>${letter}</b> was in the secret — the Inspector called it, but it was true. <b>+2</b> guesses for the Spy.</p>`;
   }
 
-  return `<p class="${noteClass}">⚠️ The Spy claimed <b>${letter}</b>×${count} — the Inspector called the bluff, and caught it.</p>`;
+  return `<p class="${noteClass}">⚠️ The Spy claimed <b>${letter}</b> was in the secret — the Inspector called the bluff, and caught it.</p>`;
 }
 
 ///CALCULATE WINNER

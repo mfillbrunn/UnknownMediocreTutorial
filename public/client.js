@@ -417,7 +417,11 @@ onStateUpdate(newState => {
       sub: iAmSetter ? "Keep your secret hidden." : "Find the secret word.",
       powerGroups,
       roleClass: iAmSetter ? "role-setter" : "role-guesser",
-      duration: 15000
+      duration: 15000,
+      // No-time-limit games (including Daily Challenge) have no reason to
+      // rush the player through reading their powers before this vanishes
+      // on its own -- let them dismiss it themselves instead.
+      persistent: state.timeControl?.enabled === false
     });
   }
   const newMyRole = getMyRole();

@@ -258,6 +258,25 @@
   display: none;
 }
 
+/* Shown only on persistent (no-auto-dismiss) announcements -- see the
+   `persistent` option in client/big-announce.js, used for no-time-limit
+   games' round-start popup so it doesn't rush the player through reading
+   it before it vanishes on its own. */
+.big-announce-tap-hint {
+  margin-top: 10px;
+  font-size: var(--fs-12, 12px);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  opacity: 0.55;
+  animation: big-announce-tap-hint-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes big-announce-tap-hint-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.85; }
+}
+
 .big-announce-power-group {
   display: flex;
   flex-direction: column;

@@ -24,6 +24,18 @@ PowerEngine.register("hideTile", {
     this.wrapperEl = wrapper;
     this.buttonEl = btn;
     $("setterPowerContainer").appendChild(wrapper);
+
+    // The button itself has no activation effect -- picking a tile in the
+    // pending-guess row (uiEffects below) is the only way to actually use
+    // this power. Without any feedback, tapping the button looks like it
+    // just does nothing. Nudge the player toward the real interaction.
+    btn.onclick = () => {
+      window.showPowerPopup?.({
+        emoji: window.POWER_METADATA.hideTile.emoji || "🫥",
+        title: window.POWER_METADATA.hideTile.label,
+        desc: "Tap a letter in your pending guess row to hide its feedback."
+      });
+    };
   },
 
   uiEffects(state, role) {

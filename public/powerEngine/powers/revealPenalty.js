@@ -3,20 +3,13 @@
 // --------------------------------------------------
 function renderRevealPenaltyLetters(state) {
   const grid = document.querySelector(".letter-grid");
-  const countRow = $("revealPenaltyCountRow");
   const confirm = $("revealPenaltyConfirm");
 
-  if (!grid || !countRow || !confirm) return;
+  if (!grid || !confirm) return;
 
   grid.innerHTML = "";
-  countRow.innerHTML = "";
   confirm.disabled = true;
   delete confirm.dataset.letter;
-  delete confirm.dataset.count;
-
-  const updateConfirmState = () => {
-    confirm.disabled = !(confirm.dataset.letter && confirm.dataset.count);
-  };
 
   const known = new Set();
 
@@ -48,28 +41,10 @@ function renderRevealPenaltyLetters(state) {
 
       btn.classList.add("selected");
       confirm.dataset.letter = letter;
-      updateConfirmState();
+      confirm.disabled = false;
     };
 
     grid.appendChild(btn);
-  }
-
-  // Render 1–5 (claimed occurrence count)
-  for (let n = 1; n <= 5; n++) {
-    const btn = document.createElement("button");
-    btn.textContent = n;
-
-    btn.onclick = () => {
-      countRow
-        .querySelectorAll("button")
-        .forEach(b => b.classList.remove("selected"));
-
-      btn.classList.add("selected");
-      confirm.dataset.count = n;
-      updateConfirmState();
-    };
-
-    countRow.appendChild(btn);
   }
 }
 
@@ -126,13 +101,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   confirm.onclick = () => {
     const letter = confirm.dataset.letter;
-    const count = confirm.dataset.count;
-    if (!letter || !count) return;
+    if (!letter) return;
 
     sendGameAction({
       type: "USE_REVEAL_PENALTY",
       letter,
-      count: Number(count),
       role: "setter"
     });
 
@@ -143,7 +116,6 @@ document.addEventListener("DOMContentLoaded", () => {
     $("revealPenaltyModal").classList.remove("active");
     confirm.disabled = true;
     delete confirm.dataset.letter;
-    delete confirm.dataset.count;
   };
 });
 
@@ -161,22 +133,21 @@ InfoBadgeEngine.register((state, role) => {
 
   const meta = POWER_METADATA.revealPenalty;
   const letter = state.powers.revealPenaltyLetter;
-  const count = state.powers.revealPenaltyCount;
   const resolved = state.powers.revealPenaltyResolved;
 
   if (resolved) {
     const result = state.powers.revealPenaltyResult;
-    let text = `${meta.label}: ${letter}×${count}`;
+    let text = `${meta.label}: ${letter}`;
     let color = meta.color;
 
     if (result === "accepted") {
-      text = `${letter}×${count} accepted — Spy scored +${count}`;
-    } else if (result === "trueCall") {
-      text = `Called ${letter}×${count}, but it was true — Spy scored +${count * 2}`;
+      text = `${letter} accepted — Spy scored +1`;
+    } else if (result === "wrongCall") {
+      text = `Called ${letter}, but it was true — Spy scored +2`;
       color = "var(--setter-color)";
     } else if (result === "bluffCaught") {
-      text = `Called ${letter}×${count} — it was a bluff!`;
-      color = "var(--tile-green)";
+      text = `Called ${letter} — it was a bluff!`;
+      color = "var(--tile-yellow)";
     }
 
     return {
@@ -194,7 +165,7 @@ InfoBadgeEngine.register((state, role) => {
     return {
       id: "revealPenalty",
       emoji: meta.emoji,
-      text: `${meta.label}: claims ${letter}×${count}`,
+      text: `${meta.label}: claims ${letter} is in the secret`,
       color: meta.color,
       priority: 10,
       screen: role,
@@ -206,22 +177,22 @@ InfoBadgeEngine.register((state, role) => {
     {
       id: "revealPenaltyAccept",
       emoji: "✅",
-      text: `Accept ${letter}×${count} (Spy scores +${count})`,
+      text: `Accept: ${letter} is in the secret (Spy scores +1)`,
       color: meta.color,
       priority: 10,
       screen: "guesser",
-      details: "Trust the claim without checking it -- the Spy scores this many points either way.",
+      details: "Trust the claim without checking it -- the Spy scores 1 point either way.",
       clickable: true,
       onClick: () => window.sendGameAction?.({ type: "USE_REVEAL_PENALTY_ACCEPT", userId: window.currentUser?.id })
     },
     {
       id: "revealPenaltyCall",
       emoji: "🚨",
-      text: `Call bluff on ${letter}×${count}`,
+      text: `Call bluff on ${letter}`,
       color: "var(--setter-color)",
       priority: 11,
       screen: "guesser",
-      details: "Right, and you get a free green letter. Wrong, and the Spy scores double.",
+      details: "Right, and you get a free yellow letter. Wrong, and the Spy scores 2 points.",
       clickable: true,
       onClick: () => window.sendGameAction?.({ type: "USE_REVEAL_PENALTY_CALL", userId: window.currentUser?.id })
     }
@@ -229,23 +200,37 @@ InfoBadgeEngine.register((state, role) => {
 });
 
 // --------------------------------------------------
-// Claim resolved. The "bluffCaught" outcome already gets its splash via
-// the shared greenLetterRevealed handler (source: "bluffCaught") since it
-// grants the same free-letter reward as everything else there; the other
-// two outcomes get their own announcement here.
+// Claim resolved. "accepted"/"wrongCall" just get a quiet toast/splash
+// here; "bluffCaught" also announces the free yellow letter it granted
+// (if the secret had no letters left to reward, yellowLetter is null and
+// that line is simply omitted).
 // --------------------------------------------------
-socket.on("revealPenaltyResolved", ({ letter, count, result }) => {
+socket.on("revealPenaltyResolved", ({ letter, result, yellowLetter }) => {
   if (result === "accepted") {
-    toast(`${letter}×${count} accepted — the Spy scores +${count}.`);
+    toast(`${letter} accepted — the Spy scores +1.`);
     return;
   }
 
-  if (result === "trueCall") {
+  if (result === "wrongCall") {
     window.showBigAnnounce?.({
       icon: "❌",
       title: "Wrong call!",
-      sub: `${letter} really did appear ${count}× — the Spy scores double (+${count * 2}).`,
+      sub: `${letter} really was in the secret — the Spy scores +2.`,
       roleClass: "outcome-lose",
+      duration: 4200
+    });
+    return;
+  }
+
+  if (result === "bluffCaught") {
+    window.showBigAnnounce?.({
+      icon: "🟨",
+      title: "Bluff caught!",
+      sub: [
+        `${letter} wasn't really in the secret.`,
+        yellowLetter ? `${yellowLetter} is somewhere in the secret.` : null
+      ],
+      roleClass: "outcome-win",
       duration: 4200
     });
   }

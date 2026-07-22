@@ -39,6 +39,20 @@ tooltip: {
 
     this.buttonEl.disabled = used || !turn || !phase;
     this.buttonEl.classList.toggle("disabled-btn", this.buttonEl.disabled);
+
+    // Preview: shine whichever vowels in the LAST guess would actually get
+    // reset if the power were used right now, so the setter can judge
+    // whether it's worth spending before committing -- same eligibility
+    // rule the server enforces (vowelRefreshServer.js): a vowel in the
+    // last guess not already confirmed present by an earlier guess.
+    const lastRow = $("setterGuesserSubmitted")?.lastElementChild;
+    const tiles = lastRow?.querySelectorAll(".history-tile");
+    if (tiles?.length === 5) {
+      const eligible = this.buttonEl.disabled ? new Set() : getRefreshableVowelIndices(state);
+      tiles.forEach((tile, i) => {
+        tile.classList.toggle("vowel-refresh-shine", eligible.has(i));
+      });
+    }
   },
   historyEffects(entry, isSetter) {
   },
@@ -46,6 +60,39 @@ tooltip: {
   keyboardEffects(state, role, keyEl, letter) {
   }
 });
+
+// Shared by uiEffects above -- mirrors vowelRefreshServer.js's apply()
+// exactly (same "known present before this round" exclusion), just
+// read-only and index-based instead of mutating feedback.
+function getRefreshableVowelIndices(state) {
+  const history = state.history || [];
+  const lastIndex = history.length - 1;
+  const entry = history[lastIndex];
+  if (!entry?.guess) return new Set();
+
+  const vowels = new Set(["A", "E", "I", "O", "U"]);
+  const guess = entry.guess.toUpperCase();
+  const knownPresent = new Set();
+
+  for (let r = 0; r < lastIndex; r++) {
+    const h = history[r];
+    const fb = h.fb ?? h.fbGuesser;
+    if (!Array.isArray(fb)) continue;
+    const g = h.guess.toUpperCase();
+    for (let i = 0; i < 5; i++) {
+      if (fb[i] === "🟩" || fb[i] === "🟨") knownPresent.add(g[i]);
+    }
+  }
+
+  const indices = new Set();
+  for (let i = 0; i < 5; i++) {
+    const letter = guess[i];
+    if (!vowels.has(letter)) continue;
+    if (knownPresent.has(letter)) continue;
+    indices.add(i);
+  }
+  return indices;
+}
 // --------------------------------------------------
 // Vowel Refresh — info badge (both players)
 // --------------------------------------------------
