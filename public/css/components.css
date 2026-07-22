@@ -671,6 +671,29 @@
   50% { box-shadow: 0 0 8px color-mix(in srgb, currentColor 55%, transparent); }
 }
 
+/* Quest badge: stays a plain text readout like every other info badge
+   (not a button-chip) even while claimable -- the "one away" state below
+   is what's supposed to draw the eye, not a permanent pill/border. */
+.badge-item.badge-quest.badge-clickable {
+  padding: 0;
+  border: none;
+  background: none;
+  animation: none;
+}
+
+/* Matches inline color the same way .badge-item[style*="--tile-green"]
+   already does above -- "one away" sets color:var(--tile-yellow), so this
+   fires on both the setter's and guesser's copy without needing a
+   separate state flag threaded through the badge item. */
+.badge-item.badge-quest[style*="--tile-yellow"] {
+  animation: quest-oneaway-glow 1.6s ease-in-out infinite;
+}
+
+@keyframes quest-oneaway-glow {
+  0%, 100% { text-shadow: 0 0 4px color-mix(in srgb, var(--tile-yellow) 55%, transparent); }
+  50% { text-shadow: 0 0 10px color-mix(in srgb, var(--tile-yellow) 95%, transparent); }
+}
+
 /* Power keyboard prompt — a themed instruction strip shown above the
    on-screen keyboard while Recon Sweep / Double Tap are armed. Sits in the
    same slot the InfoBadge would, so the keyboard below it never jumps. */
