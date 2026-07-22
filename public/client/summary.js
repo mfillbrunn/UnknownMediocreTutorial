@@ -1,24 +1,25 @@
 // client/summary.js
 
 // Marked Weakness summary line -- shared by the match summary (state.powers)
-// and each archived round's history block (round.powers). Branches on
-// whether the guesser ever called the bluff (resolved immediately, see
-// revealPenaltyServer.js) vs let it ride to the passive game-end tally.
+// and each archived round's history block (round.powers). Always resolved
+// immediately in play (see revealPenaltyServer.js's resolveClaim), so this
+// just recaps whichever of the three outcomes already happened; if the
+// guesser never responded before the round ended, there's nothing to show.
 function formatRevealPenaltySummary(powers, noteClass = "reveal-penalty-summary") {
-  if (!powers?.revealPenaltyUsed) return "";
+  if (!powers?.revealPenaltyUsed || !powers.revealPenaltyResolved) return "";
 
   const letter = powers.revealPenaltyLetter;
+  const count = powers.revealPenaltyCount;
 
-  if (powers.revealPenaltyCalled) {
-    return powers.revealPenaltyCallResult === "caught"
-      ? `<p class="${noteClass}">⚠️ The Inspector called the Spy's bluff on <b>${letter}</b> — correct, it wasn't really in the secret.</p>`
-      : `<p class="${noteClass}">⚠️ The Inspector called the Spy's bluff on <b>${letter}</b> — wrong, it really was there. <b>+2</b> guesses for the Spy, and it was locked out for the round.</p>`;
+  if (powers.revealPenaltyResult === "accepted") {
+    return `<p class="${noteClass}">⚠️ The Spy claimed <b>${letter}</b>×${count} — the Inspector accepted, adding <b>+${count}</b> guesses.</p>`;
   }
 
-  const count = powers.revealPenaltyCount || 0;
-  return count > 0
-    ? `<p class="${noteClass}">⚠️ The Spy revealed the letter <b>${letter}</b> (${count}× in secret), adding <b>+${count}</b> guesses.</p>`
-    : `<p class="${noteClass}">⚠️ The Spy revealed the letter <b>${letter}</b> — it wasn't in the secret, no penalty.</p>`;
+  if (powers.revealPenaltyResult === "trueCall") {
+    return `<p class="${noteClass}">⚠️ The Spy claimed <b>${letter}</b>×${count} — the Inspector called it, but it was true. <b>+${count * 2}</b> guesses for the Spy.</p>`;
+  }
+
+  return `<p class="${noteClass}">⚠️ The Spy claimed <b>${letter}</b>×${count} — the Inspector called the bluff, and caught it.</p>`;
 }
 
 ///CALCULATE WINNER

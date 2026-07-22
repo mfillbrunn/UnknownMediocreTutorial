@@ -33,14 +33,13 @@ const EXTRA_ELIGIBILITY = {
   // own. Using the power on top of that spends it for nothing.
   freezeSecret: (state) => !state.simultaneousAllWrong,
 
-  // Marked Weakness (revealPenalty) rewards the SETTER with bonus score
-  // for every occurrence of the revealed letter in their own secret (see
-  // revealPenaltyServer.js / the power's description) — so deliberately
-  // revealing a letter that IS in the secret is a bet in the setter's
-  // favor, not against it. Held back until the guesser already has at
-  // least 3 colored (green/yellow) tiles: early in the round that same
-  // reveal would hand over a disproportionate amount of fresh
-  // information for the guaranteed bonus to be worth it.
+  // Marked Weakness (revealPenalty): the AI always claims truthfully (see
+  // the picker below), which is never a bad bet for the setter -- accepted
+  // or wrongly called, a true claim always nets the setter points. Held
+  // back until the guesser already has at least 3 colored (green/yellow)
+  // tiles: early in the round the same reveal would hand over a
+  // disproportionate amount of fresh information for the guaranteed bonus
+  // to be worth it.
   revealPenalty: (state) => countColoredTiles(state) >= 3,
 
   // Inside Job (magicMode) converts this guess's own yellow tiles into
@@ -206,16 +205,15 @@ function buildPowerAction(powerId, state, context) {
   if (powerId === "revealPenalty") {
     // revealPenaltyServer.js rejects any letter already confirmed green/
     // yellow/gray, or already forced via another power — mirror that
-    // exact "known" set here. Deliberately pick a letter that IS in the
-    // setter's own secret: the power rewards the SETTER with bonus score
-    // for every occurrence of the revealed letter in the final secret
-    // (see powerMetadata's description) — revealing a true letter is a
-    // bet in the setter's own favor, not a risk. EXTRA_ELIGIBILITY above
-    // already holds this power back until the guesser has enough info
-    // that the reveal isn't giving away more than they could already
-    // suspect. If every letter in the secret is already known, there's no
-    // safe/useful reveal left — skip rather than fall back to gambling on
-    // a random unknown letter.
+    // exact "known" set here. Always claims TRUTHFULLY (a real letter from
+    // the setter's own secret, with its real occurrence count): under this
+    // power's payoff structure a true claim is never worse for the setter
+    // than a bluff would be (accepted, it scores the same either way;
+    // called, a true claim scores DOUBLE while a bluff scores nothing and
+    // hands the guesser a free letter) — so bluffing is a strictly worse
+    // bet than the truth here, not worth modeling. If every letter in the
+    // secret is already known, there's no safe/useful claim left — skip
+    // rather than gamble on an unknown letter.
     const known = new Set();
     for (const past of state.history ?? []) {
       if (!past?.fb) continue;
@@ -228,11 +226,13 @@ function buildPowerAction(powerId, state, context) {
     for (const c of state.extraConstraints ?? []) {
       if (c.letter) known.add(c.letter.toUpperCase());
     }
-    const secretLetters = [...new Set((state.secret || "").toUpperCase().split(""))];
+    const secretUpper = (state.secret || "").toUpperCase();
+    const secretLetters = [...new Set(secretUpper.split(""))];
     const available = secretLetters.filter((l) => !known.has(l));
     if (!available.length) return null;
     const letter = available[Math.floor(Math.random() * available.length)];
-    return { type, letter };
+    const count = secretUpper.split("").filter((c) => c === letter).length;
+    return { type, letter, count };
   }
 
   if (powerId === "betMiss") {
@@ -308,7 +308,7 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
   if (!aiRole) return null;
 
   maybeClaimQuest(room, roomId, context, aiUserId);
-  maybeCallBluff(room, roomId, context, aiUserId);
+  maybeRespondToClaim(room, roomId, context, aiUserId);
 
   let actionFn = null;
 
@@ -481,32 +481,41 @@ function maybeClaimQuest(room, roomId, context, aiUserId) {
   applyAIAction(room, { type: "USE_QUEST" }, aiUserId, roomId, context);
 }
 
-// Marked Weakness: the AI has no real way to know if a reveal is a bluff
-// (that's the whole point), so it estimates from what it can see -- how
-// many of the secrets still consistent with its own guess feedback contain
-// the revealed letter. A low fraction reads as "probably a bluff" and it
-// calls; anything else it leaves alone, since a wrong call costs 2 points
-// and locks the letter out for the round, so staying quiet in ambiguous
-// cases is the safer default. Same computeAIActionForUser placement as
-// maybeClaimQuest, for the same reason (power-simulation runner needs it too).
-function maybeCallBluff(room, roomId, context, aiUserId) {
+// Marked Weakness: the AI has no real way to know if the setter's claim is
+// true (that's the whole point), so it estimates from what it can see --
+// among the secrets still consistent with its own guess feedback, what
+// fraction actually contain the claimed letter exactly the claimed number
+// of times. Accepting always costs the claimed count; calling costs double
+// if the claim turns out true, or nets a free letter if it was a bluff --
+// so accept when the claim looks credible (>= 50% of feasible secrets
+// match it), call when it doesn't. Same computeAIActionForUser placement
+// as maybeClaimQuest, for the same reason (power-simulation runner needs
+// it too).
+function maybeRespondToClaim(room, roomId, context, aiUserId) {
   const state = room.state;
   const aiRole = getAIRole(state, aiUserId);
   if (aiRole !== "guesser") return;
 
   const p = state.powers;
-  if (!p?.revealPenaltyUsed || !p.revealPenaltyAwaitingCall || p.revealPenaltyCalled) return;
+  if (!p?.revealPenaltyUsed || p.revealPenaltyResolved) return;
 
   const feasible = feasibleSecretsFor(state, context.WORDS.secrets);
   if (!feasible.length) return;
 
   const letter = p.revealPenaltyLetter;
-  const containingFraction =
-    feasible.filter(r => r.word.includes(letter)).length / feasible.length;
+  const claimedCount = p.revealPenaltyCount;
+  const matchingFraction =
+    feasible.filter(r => r.word.split("").filter(c => c === letter).length === claimedCount).length
+    / feasible.length;
 
-  if (containingFraction >= 0.3) return;
-
-  applyAIAction(room, { type: "USE_REVEAL_PENALTY_CALL" }, aiUserId, roomId, context);
+  const accept = matchingFraction >= 0.5;
+  applyAIAction(
+    room,
+    { type: accept ? "USE_REVEAL_PENALTY_ACCEPT" : "USE_REVEAL_PENALTY_CALL" },
+    aiUserId,
+    roomId,
+    context
+  );
 }
 
 function maybeRunAI(room, roomId, context) {

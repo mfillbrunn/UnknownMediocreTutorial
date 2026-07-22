@@ -709,13 +709,19 @@
            </div>            
           <div id="revealPenaltyModal" class="modal">
             <div class="panel reveal-penalty-panel">
-              <h2 class="screen-title">⚠️ Reveal a Letter</h2>
+              <h2 class="screen-title">⚠️ Marked Weakness</h2>
               <p class="reveal-penalty-instruction">
-                Choose a letter that is not yet known. For every time it
-                appears in the final secret, you'll score two extra points.
+                Choose a letter that isn't yet known, and claim how many
+                times it appears in the secret. The Inspector can accept
+                your claim (you score that many points) or call it a bluff
+                (right, and they get a free green letter; wrong, and you
+                score double).
               </p>
               <div class="letter-grid">
                 <!-- A–Z buttons generated in JS -->
+              </div>
+              <div class="reveal-penalty-count-row" id="revealPenaltyCountRow">
+                <!-- 1-5 count buttons generated in JS -->
               </div>
               <div class="decision-row">
                 <button id="revealPenaltyConfirm" class="primary-btn small" disabled>

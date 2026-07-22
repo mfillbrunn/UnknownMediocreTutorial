@@ -210,8 +210,8 @@ window.POWER_METADATA = {
   },
   revealPenalty: {
     label: "Marked Weakness",
-    desc: "Reveal an unknown letter. The Inspector can call it a bluff (checked immediately): right, and they get a free green letter; wrong, and the Spy scores 2 points and that letter is locked out for the round. If they don't call it, the Spy scores 1 point for every time it's really in the final secret.",
-    short: "Reveals a letter the Inspector can call as a bluff, or let ride for points if it's real.",
+    desc: "Claim an unknown letter appears a specific number of times (1-5) in the secret. If the Inspector accepts, the Spy scores that many points. If they call it a bluff and the claim was true, the Spy scores double. If it really was a bluff, the Inspector gets a free green letter instead.",
+    short: "Claim a letter's count in the secret -- the Inspector can accept it or call your bluff.",
     icon: "warning",
     emoji: "⚠️",
     color: "#B45309"
