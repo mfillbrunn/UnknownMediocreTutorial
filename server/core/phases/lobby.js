@@ -29,6 +29,9 @@ const {
 const { markDailyStarted } = require("../dailyTracking");
 const { getDailyConfig } = require("../../utils/dailyConfig");
 
+// forceGuess and revealPenalty are deliberately excluded here too (still
+// selectable in Dev Mode / Custom Loadouts, just not handed out by
+// random/draft), same as magicMode/betMiss/wiretap/doubleGuess below.
 const SETTER_POWERS = [
   "hideTile",
   "suggestSecret",
@@ -36,10 +39,8 @@ const SETTER_POWERS = [
   "countOnly",
   "blindSpot",
   "vowelRefresh",
-  "forceGuess",
   "blindGuess",
   "fakeFeedback",
-  "revealPenalty",
   "delayedIntel",
   "forceTimer"
   // letterLockout ("forbid a letter") deliberately excluded -- disabled
