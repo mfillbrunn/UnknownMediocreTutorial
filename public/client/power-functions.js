@@ -88,11 +88,9 @@ function highlightRareBonusTile(i, letter) {
 //--------------------------------------------------
 const GREEN_REVEAL_SOURCE_LABELS = {
   revealLetter: "Reveal Letter",
-  magicMode: "Magic Mode",
   betMiss: "Bet Power",
   fieldReport: "Field Report",
-  quest: "Quest",
-  bluffCaught: "Bluff Called"
+  quest: "Quest"
 };
 
 socket.on("greenLetterRevealed", ({ index, letter, source }) => {

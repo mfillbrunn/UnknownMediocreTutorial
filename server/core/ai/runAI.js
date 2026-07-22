@@ -206,14 +206,14 @@ function buildPowerAction(powerId, state, context) {
     // revealPenaltyServer.js rejects any letter already confirmed green/
     // yellow/gray, or already forced via another power — mirror that
     // exact "known" set here. Always claims TRUTHFULLY (a real letter from
-    // the setter's own secret, with its real occurrence count): under this
-    // power's payoff structure a true claim is never worse for the setter
-    // than a bluff would be (accepted, it scores the same either way;
-    // called, a true claim scores DOUBLE while a bluff scores nothing and
-    // hands the guesser a free letter) — so bluffing is a strictly worse
-    // bet than the truth here, not worth modeling. If every letter in the
-    // secret is already known, there's no safe/useful claim left — skip
-    // rather than gamble on an unknown letter.
+    // the setter's own secret): under this power's payoff structure a
+    // true claim is never worse for the setter than a bluff would be
+    // (accepted, it scores the same either way; called, a true claim
+    // scores DOUBLE while a bluff scores nothing and hands the guesser a
+    // free letter) — so bluffing is a strictly worse bet than the truth
+    // here, not worth modeling. If every letter in the secret is already
+    // known, there's no safe/useful claim left — skip rather than gamble
+    // on an unknown letter.
     const known = new Set();
     for (const past of state.history ?? []) {
       if (!past?.fb) continue;
@@ -226,13 +226,11 @@ function buildPowerAction(powerId, state, context) {
     for (const c of state.extraConstraints ?? []) {
       if (c.letter) known.add(c.letter.toUpperCase());
     }
-    const secretUpper = (state.secret || "").toUpperCase();
-    const secretLetters = [...new Set(secretUpper.split(""))];
+    const secretLetters = [...new Set((state.secret || "").toUpperCase().split(""))];
     const available = secretLetters.filter((l) => !known.has(l));
     if (!available.length) return null;
     const letter = available[Math.floor(Math.random() * available.length)];
-    const count = secretUpper.split("").filter((c) => c === letter).length;
-    return { type, letter, count };
+    return { type, letter };
   }
 
   if (powerId === "betMiss") {
@@ -484,13 +482,13 @@ function maybeClaimQuest(room, roomId, context, aiUserId) {
 // Marked Weakness: the AI has no real way to know if the setter's claim is
 // true (that's the whole point), so it estimates from what it can see --
 // among the secrets still consistent with its own guess feedback, what
-// fraction actually contain the claimed letter exactly the claimed number
-// of times. Accepting always costs the claimed count; calling costs double
-// if the claim turns out true, or nets a free letter if it was a bluff --
-// so accept when the claim looks credible (>= 50% of feasible secrets
-// match it), call when it doesn't. Same computeAIActionForUser placement
-// as maybeClaimQuest, for the same reason (power-simulation runner needs
-// it too).
+// fraction actually contain the claimed letter. Accepting always costs 1
+// point; calling costs 2 if the claim turns out true, or nets a free
+// letter (and costs nothing) if it was a bluff. Expected cost of calling
+// is 2 * P(true), which beats accepting's flat 1 exactly when P(true) <
+// 0.5 -- so call when the claim looks unlikely, accept when it looks
+// credible. Same computeAIActionForUser placement as maybeClaimQuest, for
+// the same reason (power-simulation runner needs it too).
 function maybeRespondToClaim(room, roomId, context, aiUserId) {
   const state = room.state;
   const aiRole = getAIRole(state, aiUserId);
@@ -503,12 +501,10 @@ function maybeRespondToClaim(room, roomId, context, aiUserId) {
   if (!feasible.length) return;
 
   const letter = p.revealPenaltyLetter;
-  const claimedCount = p.revealPenaltyCount;
-  const matchingFraction =
-    feasible.filter(r => r.word.split("").filter(c => c === letter).length === claimedCount).length
-    / feasible.length;
+  const containingFraction =
+    feasible.filter(r => r.word.includes(letter)).length / feasible.length;
 
-  const accept = matchingFraction >= 0.5;
+  const accept = containingFraction >= 0.5;
   applyAIAction(
     room,
     { type: accept ? "USE_REVEAL_PENALTY_ACCEPT" : "USE_REVEAL_PENALTY_CALL" },

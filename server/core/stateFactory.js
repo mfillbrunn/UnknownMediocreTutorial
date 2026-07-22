@@ -85,15 +85,13 @@ const powers = {
       nonsenseActive: false,
       nonsenseLastTurn: false,
       nonsenseUsed: false,
-      //reveal Penalty (Marked Weakness) -- the setter claims a letter
-      // appears a specific number (1-5) of times in the secret; the
-      // guesser accepts or calls the claim a bluff. Always resolved
-      // immediately, never at game end.
+      //reveal Penalty (Marked Weakness) -- the setter claims a letter is
+      // (or isn't) in the secret; the guesser accepts or calls the claim a
+      // bluff. Always resolved immediately, never at game end.
       revealPenaltyUsed: false,      // boolean (once per round) -- claim made
-      revealPenaltyLetter: null,     // string (e.g. "A")
-      revealPenaltyCount: null,      // 1-5, the claimed occurrence count
+      revealPenaltyLetter: null,     // string (e.g. "A") -- claimed to be IN the secret
       revealPenaltyResolved: false,  // true once the guesser has responded
-      revealPenaltyResult: null,     // "accepted" | "trueCall" | "bluffCaught"
+      revealPenaltyResult: null,     // "accepted" | "wrongCall" | "bluffCaught"
       // ASSASSIN WORD
       assassinWordUsed: false,
       assassinWord: null,

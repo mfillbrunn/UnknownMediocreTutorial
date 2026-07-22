@@ -38,22 +38,16 @@ engine.registerPower("magicMode", {
         index: j,
         letter: guessedLetter
       });
-      io?.to(roomId)?.emit("greenLetterRevealed", { index: j, letter: guessedLetter, source: "magicMode" });
 
       added.push({ index: j, letter: guessedLetter });
     }
   }
 
+  // One combined announcement for every letter this activation reveals,
+  // instead of a separate greenLetterRevealed splash per letter that would
+  // stack/overwrite each other when more than one yellow converts at once.
   if (added.length > 0) {
-    io?.to(roomId)?.emit(
-      "toast",
-      `Magic Mode revealed ${added.length} correct position${added.length > 1 ? "s" : ""}!`
-    );
-  } else {
-    io?.to(roomId)?.emit(
-      "toast",
-      "Magic Mode found no new positions to reveal."
-    );
+    io?.to(roomId)?.emit("magicModeRevealed", { added });
   }
 
   // Power is single-use per activation

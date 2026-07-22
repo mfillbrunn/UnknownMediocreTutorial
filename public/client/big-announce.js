@@ -13,7 +13,12 @@ window.showBigAnnounce = function ({
   // centered/backdrop-dimmed card -- for frequent, low-stakes messages
   // (e.g. a rejected secret) where blocking the whole board would be
   // overkill.
-  compact = false
+  compact = false,
+  // Persistent: no auto-dismiss timer at all -- only a click closes it.
+  // Used for no-time-limit games' round-start announcement, where there's
+  // no reason to rush a player through reading their powers before it
+  // vanishes on its own.
+  persistent = false
 } = {}) {
   const el = document.getElementById("bigAnnouncePopup");
   if (!el) return;
@@ -23,6 +28,9 @@ window.showBigAnnounce = function ({
   el.className = `big-announce ${compact ? "compact" : ""} ${roleClass}`.trim();
   el.querySelector(".big-announce-icon").textContent = icon;
   el.querySelector(".big-announce-title").textContent = title;
+
+  const tapHintEl = el.querySelector(".big-announce-tap-hint");
+  if (tapHintEl) tapHintEl.hidden = !persistent;
 
   // sub can be a single string or an array of strings, each rendered on
   // its own line (e.g. Field Report: the revealed-letter line separate
@@ -69,5 +77,5 @@ window.showBigAnnounce = function ({
   };
 
   el.addEventListener("click", dismiss);
-  el.__dismissTimer = setTimeout(dismiss, duration);
+  el.__dismissTimer = persistent ? null : setTimeout(dismiss, duration);
 };

@@ -31,3 +31,30 @@ InfoBadgeEngine.register((state, role) => {
     screen: "both"
   };
 });
+
+// --------------------------------------------------
+// Magic Mode result — one combined splash for every letter this
+// activation revealed (magicModeServer.js's postScore batches them into a
+// single event so multiple reveals from one use don't stack/overwrite
+// each other with separate popups). Nothing to show if it found nothing
+// to convert -- the generic activation popup already confirmed the power
+// was used (see POWERS_WITH_OWN_POPUP in socketClient.js, which now skips
+// that generic popup anyway since this is the real result).
+// --------------------------------------------------
+socket.on("magicModeRevealed", ({ added }) => {
+  if (!Array.isArray(added) || !added.length) return;
+
+  const sub = added
+    .map(a => `${a.letter.toUpperCase()} in position ${a.index + 1}`)
+    .join(", ");
+
+  window.showBigAnnounce?.({
+    icon: "🟩",
+    title: added.length > 1
+      ? "Magic Mode revealed correct positions!"
+      : "Magic Mode revealed a correct position!",
+    sub,
+    roleClass: "outcome-win",
+    duration: 4200
+  });
+});
