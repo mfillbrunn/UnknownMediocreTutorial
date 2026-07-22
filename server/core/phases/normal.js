@@ -2,7 +2,7 @@ const { endGame } = require("./gameOver");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
 const POWER_METADATA = require("../../powers/powerMetadata");
-const { transitionAfterGuess, transitionAfterSecret, clearRoundState } = require("../transitions/normalTransitions");
+const { transitionAfterGuess, transitionAfterSecret, clearRoundState, startForceTimer } = require("../transitions/normalTransitions");
 const { emitRoomState } = require("../rooms");
 const { scoreGuess } = require("../../game-engine/scoring");
 const { clearForceTimer } = require("../../utils/forceTimer");
@@ -152,6 +152,10 @@ function handleNormalPhase(room, state, action, roomId, context) {
 
     io.to(roomId).emit("powerUsed", { type: "doubleGuess" });
     io.to(roomId).emit("guessSubmitted");
+
+    // The guesser just acted, resolving any Force Timer that was pressuring
+    // them -- same as the normal SUBMIT_GUESS path (transitionAfterGuess).
+    clearForceTimer(roomId, state);
 
     // Hand the turn to the setter for their Keep/New decision. Reuse the
     // normal post-guess transition bookkeeping (clears round-scoped powers,
@@ -365,8 +369,6 @@ function resolveDoubleGuess({ room, state, secret, roomId, context, io }) {
   state.powers.doubleGuessShownFirst = null;
   state.pendingGuess = "";
 
-  clearForceTimer(roomId, state);
-
   // Win if EITHER guess matched the setter's final secret.
   if (shown === finalSecret || hidden === finalSecret) {
     io.to(roomId).emit("secretFound");
@@ -387,6 +389,11 @@ function resolveDoubleGuess({ room, state, secret, roomId, context, io }) {
 
   // Hand back to the guesser (advances the setter's timer, flips the turn).
   clearRoundState(state, "setter");
+
+  if (state.powers.forceTimerArmed) {
+    startForceTimer(roomId, room, state, io, context);
+  }
+
   context.powerEngine.turnStart(state, state.turn, roomId, io);
   emitRoomState(roomId, room, io);
 }

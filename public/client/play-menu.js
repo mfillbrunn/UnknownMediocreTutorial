@@ -214,12 +214,12 @@ $("showAdvancedTutorialBtn")?.addEventListener("click", () => {
 const POWER_LIB_SETTER_POWERS = [
   "hideTile", "suggestSecret", "confuseColors", "countOnly", "blindSpot",
   "vowelRefresh", "forceGuess", "blindGuess", "fakeFeedback", "revealPenalty",
-  "delayedIntel"
+  "delayedIntel", "forceTimer"
 ];
 const POWER_LIB_GUESSER_POWERS = [
-  "suggestGuess", "rouletteSecret", "forceTimer", "revealHistory",
-  "stealthGuess", "revealGreen", "freezeSecret", "magicMode", "nonsense",
-  "betMiss", "wiretap", "letterProbe", "revealLocation", "doubleGuess",
+  "suggestGuess", "rouletteSecret", "revealHistory",
+  "stealthGuess", "revealGreen", "freezeSecret", "nonsense",
+  "letterProbe", "revealLocation",
   "letterProfile"
 ];
 

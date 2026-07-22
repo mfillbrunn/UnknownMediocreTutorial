@@ -70,8 +70,8 @@ window.POWER_METADATA = {
 
   forceTimer: {
     label: "Time Pressure",
-    desc: "The spy has only a short time to submit a new secret.",
-    short: "The Spy gets only a short time to pick a secret.",
+    desc: "The Inspector has only a short time to submit their next guess. If time runs out, their last guess is resubmitted automatically.",
+    short: "The Inspector gets only a short time for their next guess.",
     icon: "hourglass",
     emoji: "⏳",
     color: "#EF4444"

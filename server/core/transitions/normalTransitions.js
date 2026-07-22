@@ -34,11 +34,11 @@ function transitionAfterGuess({ room, state, guess, roomId, context, io }) {
   // granted here already binds their choice via isConsistentWithHistory.
   context.powerEngine.onGuessSubmitted(state, guess, roomId, io);
 
-  clearRoundState(state, "guesser");
+  // The guesser just acted, resolving any Force Timer that was pressuring
+  // them -- stop its ticking interval before the setter's turn begins.
+  clearForceTimer(roomId, state);
 
-  if (state.powers.forceTimerArmed) {
-    startForceTimer(roomId, room, state, io, context);
-  }
+  clearRoundState(state, "guesser");
 
   context.powerEngine.turnStart(state, state.turn, roomId, io);
   emitRoomState(roomId, room, io);
@@ -56,9 +56,13 @@ function transitionAfterSecret({ room, state, secret, roomId, context, io }) {
   }
 
   io.to(roomId).emit("secretPlanted");
-  clearForceTimer(roomId, state);
   finalizeFeedback(state, context.powerEngine, roomId, room, io);
   clearRoundState(state, "setter");
+
+  if (state.powers.forceTimerArmed) {
+    startForceTimer(roomId, room, state, io, context);
+  }
+
   context.powerEngine.turnStart(state, state.turn, roomId, io);
   emitRoomState(roomId, room, io);
   return "continue";
@@ -159,12 +163,18 @@ function startForceTimer(roomId, room, state, io, context) {
       clearInterval(interval);
       state.powerUsedThisTurn = false;
 
+      // No guess submitted in time -- resubmit the guesser's most recent
+      // guess this round (guaranteed to exist, see POWER_RULES.js's
+      // forceTimer.allowed) rather than leaving the turn stuck.
+      const lastGuess = state.history[state.history.length - 1]?.guess;
+
       context.applyAction(
         room,
         state,
         {
-          type: "SET_SECRET_SAME",
-          userId: state.setter,
+          type: "SUBMIT_GUESS",
+          userId: state.guesser,
+          guess: lastGuess,
           ai: true
         },
         roomId,
@@ -203,5 +213,6 @@ function pushWinEntry(state, word) {
 module.exports = {
   transitionAfterGuess,
   transitionAfterSecret,
-  clearRoundState
+  clearRoundState,
+  startForceTimer
 };

@@ -4,7 +4,7 @@ module.exports = {
   countOnly: { label: "Count Only" , role: "setter"},
   forceGuess: { label: "Force Guess" , role: "setter"},
   fakeFeedback: { label: "Fake Feedback" , role: "setter"},
-  forceTimer: { label: "Force Timer" , role: "guesser"},
+  forceTimer: { label: "Force Timer" , role: "setter"},
   freezeSecret: { label: "Freeze Secret" , role: "guesser"},
   hideTile: { label: "Hide Tile", role: "setter" },
   rouletteSecret: { label: "Roulette Secret" , role: "guesser"},
