@@ -1592,6 +1592,31 @@ function updateGuideBanner() {
 function isHost() {
   return state && state.hostUserId === window.currentUser.id;
 }
+
+// Analog-watch time control: hour position + legend text for each pickable
+// preset ("deep" stays hidden from the dial, same as the old list UI).
+const TIMER_CLOCK_INFO = {
+  bullet: { icon: "🚀", label: "Bullet", desc: "90 secs / round", angle: 60 },
+  blitz: { icon: "⚡", label: "Blitz", desc: "3 min / round", angle: 180 },
+  none: { icon: "♾️", label: "Unlimited", desc: "No time limit", angle: 270 }
+};
+
+function updateTimerClockVisual(preset) {
+  const info = TIMER_CLOCK_INFO[preset];
+
+  const hand = $("timerClockHand");
+  if (hand && info) {
+    hand.style.setProperty("--hand-angle", `${info.angle}deg`);
+  }
+
+  const legend = $("timerClockLegend");
+  if (legend) {
+    legend.textContent = info
+      ? `${info.icon} ${info.label} — ${info.desc}`
+      : "Choose a time control";
+  }
+}
+
 function updateTimerPresetUI() {
   if (!state?.timeControl) return;
 
@@ -1602,6 +1627,8 @@ function updateTimerPresetUI() {
     .forEach(radio => {
       radio.checked = radio.value === preset;
     });
+
+  updateTimerClockVisual(preset);
 }
 
 function enableReadyButton(isReady) {
@@ -1619,6 +1646,7 @@ document
   .forEach(radio => {
     radio.addEventListener("change", () => {
       const v = radio.value;
+      updateTimerClockVisual(v);
 
       if (v === "none") {
         sendGameAction({

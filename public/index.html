@@ -533,30 +533,36 @@
     </div>
 
   
-    <!-- TIMER OPTIONS -->
-    <div class="timer-select">
-  
-      <label class="timer-option">
-        <input type="radio" name="timePreset" value="bullet"  />
-        <span>Bullet</span>
-        <small>90 secs / round</small>
-      </label>
-  
-      <label class="timer-option">
-        <input type="radio" name="timePreset" value="blitz" />
-        <span>Blitz</span>
-        <small>3 min / round</small>
-      </label>
+    <!-- TIMER OPTIONS — analog watch: 2 o'clock = Bullet, 6 o'clock = Blitz,
+         9 o'clock = Unlimited. Each marker still wraps a real
+         input[name="timePreset"] radio, so updateTimerAccess()/
+         updateTimerPresetUI() in client.js keep working unchanged. -->
+    <div class="timer-clock" id="timerClock">
+      <div class="timer-clock-face">
+        <div class="timer-clock-hand" id="timerClockHand"></div>
+        <div class="timer-clock-center"></div>
 
-      <!-- "Deep" (15 min total) intentionally hidden from players — the
-           preset still fully works server-side (SET_TIME_CONTROL mode
-           "chess"/900s), just not offered as a pickable option here. -->
-      <label class="timer-option timer-option-wide">
-        <input type="radio" name="timePreset" value="none"  />
-        <span>Unlimited</span>
-      </label>
-  
-    </div>   
+        <label class="timer-option timer-clock-marker" style="--angle: 60deg">
+          <input type="radio" name="timePreset" value="bullet" />
+          <span class="timer-clock-icon">🚀</span>
+        </label>
+
+        <label class="timer-option timer-clock-marker" style="--angle: 180deg">
+          <input type="radio" name="timePreset" value="blitz" />
+          <span class="timer-clock-icon">⚡</span>
+        </label>
+
+        <!-- "Deep" (15 min total) intentionally hidden from players — the
+             preset still fully works server-side (SET_TIME_CONTROL mode
+             "chess"/900s), just not offered as a pickable option here. -->
+        <label class="timer-option timer-clock-marker" style="--angle: 270deg">
+          <input type="radio" name="timePreset" value="none" />
+          <span class="timer-clock-icon">♾️</span>
+        </label>
+      </div>
+
+      <p class="timer-clock-legend" id="timerClockLegend">🚀 Bullet — 90 secs / round</p>
+    </div>
   </div>
 </section>
 
