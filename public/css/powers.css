@@ -1,16 +1,39 @@
 /* Hide Evidence (setter power): the pending-guess row's tiles become
    directly tappable when the power has a charge available -- this is the
    whole activation surface now (see public/powerEngine/powers/hideTile.js
-   uiEffects), not a modal or a plain button click. */
+   uiEffects), not a modal or a plain button click. A static thin dashed
+   outline was easy to miss against the row's other tile styling, so this
+   pulses continuously (not just right after tapping the power button) to
+   make "these are pickable" unmistakable. */
 .pending-guess .history-tile.tile-pickable-hide {
   cursor: pointer;
   outline: 2px dashed color-mix(in srgb, var(--setter-color, #f87171) 70%, transparent);
   outline-offset: 2px;
   transition: filter 0.15s ease;
+  animation: hide-evidence-pulse 1.4s ease-in-out infinite;
 }
 
 .pending-guess .history-tile.tile-pickable-hide:hover {
   filter: brightness(1.15);
+}
+
+@keyframes hide-evidence-pulse {
+  0%, 100% { box-shadow: 0 0 0 color-mix(in srgb, var(--setter-color, #f87171) 0%, transparent); }
+  50% { box-shadow: 0 0 10px 2px color-mix(in srgb, var(--setter-color, #f87171) 65%, transparent); }
+}
+
+/* One-shot brighter flash triggered by tapping the power tray button
+   itself (see hideTile.js) -- the continuous pulse above already marks
+   the tiles as pickable at all times, this just draws the eye there the
+   instant the button is tapped. */
+.pending-guess .history-tile.tile-pickable-hide.hide-evidence-flash {
+  animation: hide-evidence-flash 0.6s ease-out 2;
+}
+
+@keyframes hide-evidence-flash {
+  0% { box-shadow: 0 0 0 color-mix(in srgb, var(--setter-color, #f87171) 0%, transparent); }
+  50% { box-shadow: 0 0 16px 4px color-mix(in srgb, var(--setter-color, #f87171) 90%, transparent); }
+  100% { box-shadow: 0 0 0 color-mix(in srgb, var(--setter-color, #f87171) 0%, transparent); }
 }
 
 /* Delayed Intel (setter power): a round the guesser hasn't "unlocked" yet

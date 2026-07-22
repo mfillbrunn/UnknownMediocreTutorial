@@ -2,10 +2,13 @@
 //
 // The setter picks exactly which tile of the pending guess loses its
 // feedback by tapping it directly in the pending-guess row, instead of a
-// random tile being chosen server-side. The power tray button is a status
-// label only (charges/turn eligibility, same generic enable/disable every
-// power's button gets) — it has no click handler; the tap-a-tile
-// interaction below is the only way to actually activate it.
+// random tile being chosen server-side. The power tray button doesn't
+// activate anything itself -- the tap-a-tile interaction below is the
+// only way to actually use this power -- it just flashes the pending
+// row's tiles (already continuously outlined via tile-pickable-hide
+// whenever a charge is available, see uiEffects/powers.css) so tapping
+// the button draws the eye straight to which letters are pickable,
+// instead of popping up a modal that has to be dismissed first.
 //
 // Mirrors Vowel Refresh: the server directly erases entry.fb/fbGuesser for
 // that position (server/powers/powers/hideTileServer.js), so there's
@@ -25,15 +28,24 @@ PowerEngine.register("hideTile", {
     this.buttonEl = btn;
     $("setterPowerContainer").appendChild(wrapper);
 
-    // The button itself has no activation effect -- picking a tile in the
-    // pending-guess row (uiEffects below) is the only way to actually use
-    // this power. Without any feedback, tapping the button looks like it
-    // just does nothing. Nudge the player toward the real interaction.
     btn.onclick = () => {
-      window.showPowerPopup?.({
-        emoji: window.POWER_METADATA.hideTile.emoji || "🫥",
-        title: window.POWER_METADATA.hideTile.label,
-        desc: "Tap a letter in your pending guess row to hide its feedback."
+      const s = window.state;
+      const usable =
+        s && !s.powerUsedThisTurn &&
+        window.POWER_RULES?.hideTile?.allowed?.(s, window.myRole) === true;
+      if (!usable) return;
+
+      const tiles = document.getElementById("draftSetter")?.__draftRows?.pending?.__tiles;
+      if (!Array.isArray(tiles)) return;
+      tiles.forEach(tile => {
+        tile.classList.remove("hide-evidence-flash");
+        void tile.offsetWidth; // restart the animation if it's already mid-flight
+        tile.classList.add("hide-evidence-flash");
+        tile.addEventListener(
+          "animationend",
+          () => tile.classList.remove("hide-evidence-flash"),
+          { once: true }
+        );
       });
     };
   },
