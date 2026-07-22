@@ -28,6 +28,7 @@ const {
 } = require("../rooms");
 const { markDailyStarted } = require("../dailyTracking");
 const { getDailyConfig } = require("../../utils/dailyConfig");
+const POWER_METADATA = require("../../powers/powerMetadata");
 
 // forceGuess and revealPenalty are deliberately excluded here too (still
 // selectable in Dev Mode / Custom Loadouts, just not handed out by
@@ -299,7 +300,11 @@ if (action.type === "SET_DAILY_POWERS") {
     // forward isTutorial: false and TutorialMode never actually engages.
     // "tutorial2" is the follow-up powers tutorial (one guesser power, one
     // setter power) — same mechanism, tutorialStage picked up by
-    // TutorialMode.initMatch below via freshState.
+    // TutorialMode.initMatch below via freshState. "tutorialPower" is the
+    // per-power "Try it" tutorial launched from the Power Library --
+    // action.powerId names which single power to teach, validated against
+    // powerMetadata so an untrusted client can't smuggle in an arbitrary
+    // string.
     if (action.mode === "tutorial") {
       state.isTutorial = true;
       state.tutorialStage = 1;
@@ -307,6 +312,11 @@ if (action.type === "SET_DAILY_POWERS") {
     if (action.mode === "tutorial2") {
       state.isTutorial = true;
       state.tutorialStage = 2;
+    }
+    if (action.mode === "tutorialPower" && POWER_METADATA[action.powerId]) {
+      state.isTutorial = true;
+      state.tutorialStage = "power";
+      state.tutorialPowerId = action.powerId;
     }
 
     const nowReady = !state.players[userId]?.ready;
@@ -381,6 +391,7 @@ if (action.type === "SET_DAILY_POWERS") {
     freshState.devMode = state.devMode;
     freshState.isTutorial = state.isTutorial;
     freshState.tutorialStage = state.tutorialStage || 1;
+    freshState.tutorialPowerId = state.tutorialPowerId || null;
     freshState.rankMode = state.rankMode;
      freshState._dailySetterPowers = state._dailySetterPowers || null;
      freshState._dailyGuesserPowers = state._dailyGuesserPowers || null;

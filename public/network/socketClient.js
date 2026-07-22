@@ -66,21 +66,29 @@ window.quickJoin = function (payload, cb) {
   });
 };
 
-// Maps a power's USE_<SNAKE_CASE> action type back to its camelCase id,
-// only for the powers the tutorial ever waits on — used to nudge the
-// tutorial forward the instant the player actually fires the action,
-// since (unlike a guess/secret submission) using a power doesn't advance
-// state.history.length and so wouldn't otherwise re-trigger tutorialSteps().
-const TUTORIAL_POWER_ACTION_MAP = {
-  USE_REVEAL_GREEN: "revealGreen",
-  USE_COUNT_ONLY: "countOnly"
-};
+// Maps a power's USE_<SNAKE_CASE> action type back to its camelCase id --
+// mirrors server/core/phases/normal.js's normalizePowerId exactly, so it
+// works for any power (not just the ones some earlier tutorial stage
+// happened to wait on) without needing a new entry added by hand each
+// time another power gets its own tutorial. Used to nudge the tutorial
+// forward the instant the player actually fires the action, since
+// (unlike a guess/secret submission) using a power doesn't advance
+// state.history.length and so wouldn't otherwise re-trigger
+// tutorialSteps(); harmless no-op via notifyTutorialPowerUsed's own guard
+// when the tutorial isn't actually waiting on this specific power.
+function actionTypeToPowerId(type) {
+  if (typeof type !== "string" || !type.startsWith("USE_")) return null;
+  return type
+    .replace("USE_", "")
+    .toLowerCase()
+    .replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+}
 
 window.sendGameAction = function (action) {
   if (!socket.connected) return;
   if (!window.roomId) return;
   if (window.isRejoining) return;
-  const tutorialPowerId = TUTORIAL_POWER_ACTION_MAP[action.type];
+  const tutorialPowerId = actionTypeToPowerId(action.type);
   if (tutorialPowerId) window.notifyTutorialPowerUsed?.(tutorialPowerId);
   socket.emit("gameAction", { action });
 };

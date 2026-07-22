@@ -259,6 +259,30 @@ function maybeUsePower(room, state, aiUserId, roomId, context, isTutorial) {
   if (!aiRole) return false;
   if (state.powerUsedThisTurn) return false;
 
+  // Power tutorial (tutorialStage "power"): round 1 has the human use the
+  // power being taught in its native role; round 2 swaps roles so the AI
+  // now holds that same role and must actually demonstrate the power
+  // being used against the human, not roll dice on whether to bother.
+  // Checking the power's own role against the AI's CURRENT role is what
+  // naturally scopes this to round 2 only -- in round 1 the AI holds the
+  // other role, so the check below is false and this is a no-op. Bypasses
+  // both the isTutorial early-return right below (which otherwise blocks
+  // ALL AI power use during scripted turns) and the normal 50% random-use
+  // roll further down, since demonstrating it IS the point of the round.
+  if (
+    state.isTutorial &&
+    state.tutorialStage === "power" &&
+    state.tutorialPowerId &&
+    powerMetadata[state.tutorialPowerId]?.role === aiRole &&
+    isPowerAllowed(state.tutorialPowerId, state)
+  ) {
+    const forcedAction = buildPowerAction(state.tutorialPowerId, state, context);
+    if (forcedAction) {
+      applyAIAction(room, forcedAction, aiUserId, roomId, context);
+      return true;
+    }
+  }
+
   // No powers are active during the tutorial — nothing to do.
   if (isTutorial) return false;
 

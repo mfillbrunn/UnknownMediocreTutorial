@@ -484,6 +484,60 @@ document.getElementById("startTutorial2Btn")?.addEventListener("click", () => {
   startFreshTutorial("tutorial2");
 });
 
+// Per-power "Try it" tutorial (Power Library "?" buttons). Unlike
+// startFreshTutorial above, whether the human starts as guesser or setter
+// depends on the power being taught -- a new room's host is setter by
+// default, so only guesser powers need the SWITCH_ROLES step; setter
+// powers start correctly with no switch at all. Round 1 has the human use
+// the power themselves; round 2 (a normal end-of-round role swap, same
+// mechanism as every other tutorial round transition) has the AI use the
+// SAME power against them from the other side instead of any new "peek at
+// the opponent's screen" machinery -- see runAI.js's maybeUsePower.
+window.startPowerTutorial = function startPowerTutorial(powerId) {
+  if (!requireAuth("start tutorial")) return;
+  const meta = window.POWER_METADATA?.[powerId];
+  if (!meta) return;
+
+  const username =
+    window.myProfile?.username ||
+    window.currentUser?.email ||
+    "Player";
+
+  createRoom(
+    { name: username },
+    resp => {
+      if (!resp?.ok) return toast(resp?.error);
+
+      roomId = resp.roomId;
+      persistRoom(roomId);
+      window.roomId = roomId;
+
+      sendGameAction({
+        type: "ADD_AI",
+        difficulty: 1,
+        userId: window.currentUser.id
+      });
+
+      if (meta.role === "guesser") {
+        setTimeout(() => {
+          sendGameAction({ type: "SWITCH_ROLES", userId: window.currentUser.id });
+        }, 1);
+      }
+
+      setTimeout(() => {
+        sendGameAction({
+          type: "PLAYER_READY",
+          userId: window.currentUser.id,
+          mode: "tutorialPower",
+          powerId
+        });
+      }, 1);
+    }
+  );
+  hide("startupScreen");
+  hide("menu");
+};
+
 // "Continue to Tutorial 2" from tutorial 1's match-summary screen: reuse
 // the SAME room/players (NEW_MATCH resets state but keeps the room and its
 // players, including the AI) instead of leaving and recreating one. The

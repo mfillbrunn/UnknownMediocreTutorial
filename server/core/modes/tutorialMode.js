@@ -1,3 +1,5 @@
+const powerMetadata = require("../../powers/powerMetadata");
+
 class TutorialMode {
   constructor() {
     this.type = "tutorial";
@@ -52,6 +54,50 @@ class TutorialMode {
       state.tutorialGuesses = ["CHAMP", "CUMIN"];
     }
 
+    // Stage "power": a single power (launched from a "Try it" button next
+    // to that power in the Power Library, see lobby.js's PLAYER_READY
+    // tutorialPower branch, which sets tutorialPowerId) taught in BOTH
+    // directions across the same two rounds -- round 1 has the human use
+    // it themselves in its native role; round 2 (after the normal role
+    // swap below) has the AI use the SAME power against them instead of
+    // building any new "peek at the other side" machinery. runAI.js's
+    // maybeUsePower forces this the instant the AI's current role matches
+    // the power's role, which only becomes true post-swap.
+    //
+    // Word sequencing (traced against the real win-condition timing --
+    // a guess only wins once the SETTER's reaction to it is committed,
+    // scored against whatever secret they end up choosing):
+    //   - Round 1 (teaching): the human's own second action (their real
+    //     use of the power, plus a scripted follow-up word) wins the
+    //     round immediately -- there's no opposing reaction turn to leave
+    //     room for, since the AI's blind opener already stood as its one
+    //     move for that exchange.
+    //   - Round 2 (receiving): the AI now holds the power and needs an
+    //     actual turn to fire it on before the round can end, so the
+    //     human's own second scripted word is a deliberate non-winner
+    //     (SNORE / the AI's throwaway guess "BLIND") that just asks them
+    //     to keep going normally -- the win comes on the THIRD action
+    //     instead, once the AI's power-use turn has already happened.
+    //     scriptedTurns is bumped to 3 to cover that extra round-2 turn.
+    if (state.tutorialStage === "power" && state.tutorialPowerId) {
+      const role = powerMetadata[state.tutorialPowerId]?.role === "setter" ? "setter" : "guesser";
+      state.tutorialPowerGuesser = role === "guesser" ? state.tutorialPowerId : null;
+      state.tutorialPowerSetter = role === "setter" ? state.tutorialPowerId : null;
+      state.scriptedTurns = 3;
+
+      if (role === "guesser") {
+        state.tutorialGuesses = ["CHAMP", "CUMIN"];
+        // SALAD (not BLIND) as the throwaway probe: it scores identically
+        // against BLIMP and LEMUR, so keeping BLIMP in response to it
+        // doesn't lock in a feedback pattern (e.g. BLIND's 3 greens on
+        // B/L/I) that would make switching to LEMUR next turn invalid.
+        state.tutorialGuessesAI = ["SMALL", "SALAD", "LEMUR"];
+      } else {
+        state.tutorialGuessesAI = ["SMALL", "LEMUR"];
+        state.tutorialGuesses = ["CHAMP", "SNORE", "CUMIN"];
+      }
+    }
+
     state.timeControl.enabled = false;
     // No randomness
     state.shuffle = false;
@@ -66,6 +112,14 @@ class TutorialMode {
       return;
     }
 
+    if (state.tutorialStage === "power") {
+      const sP = state.tutorialPowerSetter ? [state.tutorialPowerSetter] : [];
+      const gP = state.tutorialPowerGuesser ? [state.tutorialPowerGuesser] : [];
+      state.initialPowers = { setter: sP, guesser: gP };
+      state.activePowers = [...sP, ...gP];
+      return;
+    }
+
     // Stage 1: no powers — the first game teaches the base rules only.
     state.initialPowers = {
       setter: [],
@@ -74,12 +128,16 @@ class TutorialMode {
     state.activePowers = [];
   }
     onRoundEnd(state) {
-    // Stage 2 (the "Tutorial: Powers" follow-up): the round-summary screen
-    // was already taught in stage 1 -- showing it again between round 1
-    // and round 2 here is pure duplication, so skip straight into round 2
-    // instead of pausing on it. gameOver.js's endGame() checks this flag
-    // and calls nextRoundTransition.js's advanceToNextRound() directly.
-    if (state.tutorialStage === 2 && state.roundIndex < state.roundsTotal - 1) {
+    // Stage 2 (the "Tutorial: Powers" follow-up) and stage "power" (the
+    // per-power "Try it" tutorial): the round-summary screen was already
+    // taught in stage 1 -- showing it again between round 1 and round 2
+    // here is pure duplication, so skip straight into round 2 instead of
+    // pausing on it. gameOver.js's endGame() checks this flag and calls
+    // nextRoundTransition.js's advanceToNextRound() directly.
+    if (
+      (state.tutorialStage === 2 || state.tutorialStage === "power") &&
+      state.roundIndex < state.roundsTotal - 1
+    ) {
       return { skipSummary: true };
     }
 
