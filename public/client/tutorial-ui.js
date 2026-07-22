@@ -69,6 +69,10 @@ function updateActionBadge() {
 function repositionTutorialBubble() {
   const bubble = byId("tutorialBubble");
   if (!bubble || bubble.classList.contains("hidden")) return;
+  // Collapsed pill needs the same keyboard clearance as the expanded
+  // card -- the two only differ in a default fallback below (a shorter
+  // clearance is fine for the small pill), never in whether they get one.
+  const minClearance = bubble.classList.contains("collapsed") ? 16 : 24;
 
   const guesserKb = byId("keyboardGuesser");
   const setterKb = byId("keyboardSetter");
@@ -83,7 +87,7 @@ function repositionTutorialBubble() {
   }
 
   const kbTop = kb.getBoundingClientRect().top;
-  const clearance = Math.max(24, window.innerHeight - kbTop + 16);
+  const clearance = Math.max(minClearance, window.innerHeight - kbTop + 16);
   bubble.style.bottom = `${clearance}px`;
 }
 window.addEventListener("resize", repositionTutorialBubble);
@@ -122,14 +126,10 @@ function toggleTutorial() {
   if (!bubble) return;
   tutorialCollapsed = !tutorialCollapsed;
   bubble.classList.toggle("collapsed", tutorialCollapsed);
-  // Collapsed uses its own fixed CSS spot (small pill, doesn't reach the
-  // keyboard) — drop the inline bottom override from repositionTutorialBubble
-  // so that CSS rule can apply again; restore the dynamic clearance on expand.
-  if (tutorialCollapsed) {
-    bubble.style.bottom = "";
-  } else {
-    repositionTutorialBubble();
-  }
+  // Both collapsed and expanded need the live keyboard clearance -- a
+  // fixed CSS spot for the collapsed pill used to drift onto the keyboard
+  // on short viewports, silently eating taps on its bottom row.
+  repositionTutorialBubble();
 }
 
 // wiring for collapse/expand

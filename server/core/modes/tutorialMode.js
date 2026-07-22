@@ -74,6 +74,15 @@ class TutorialMode {
     state.activePowers = [];
   }
     onRoundEnd(state) {
+    // Stage 2 (the "Tutorial: Powers" follow-up): the round-summary screen
+    // was already taught in stage 1 -- showing it again between round 1
+    // and round 2 here is pure duplication, so skip straight into round 2
+    // instead of pausing on it. gameOver.js's endGame() checks this flag
+    // and calls nextRoundTransition.js's advanceToNextRound() directly.
+    if (state.tutorialStage === 2 && state.roundIndex < state.roundsTotal - 1) {
+      return { skipSummary: true };
+    }
+
     // More rounds to play → round summary
     if (state.roundIndex < state.roundsTotal - 1) {
       return {
