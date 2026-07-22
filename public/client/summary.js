@@ -1,5 +1,26 @@
 // client/summary.js
 
+// Marked Weakness summary line -- shared by the match summary (state.powers)
+// and each archived round's history block (round.powers). Branches on
+// whether the guesser ever called the bluff (resolved immediately, see
+// revealPenaltyServer.js) vs let it ride to the passive game-end tally.
+function formatRevealPenaltySummary(powers, noteClass = "reveal-penalty-summary") {
+  if (!powers?.revealPenaltyUsed) return "";
+
+  const letter = powers.revealPenaltyLetter;
+
+  if (powers.revealPenaltyCalled) {
+    return powers.revealPenaltyCallResult === "caught"
+      ? `<p class="${noteClass}">⚠️ The Inspector called the Spy's bluff on <b>${letter}</b> — correct, it wasn't really in the secret.</p>`
+      : `<p class="${noteClass}">⚠️ The Inspector called the Spy's bluff on <b>${letter}</b> — wrong, it really was there. <b>+2</b> guesses for the Spy, and it was locked out for the round.</p>`;
+  }
+
+  const count = powers.revealPenaltyCount || 0;
+  return count > 0
+    ? `<p class="${noteClass}">⚠️ The Spy revealed the letter <b>${letter}</b> (${count}× in secret), adding <b>+${count}</b> guesses.</p>`
+    : `<p class="${noteClass}">⚠️ The Spy revealed the letter <b>${letter}</b> — it wasn't in the secret, no penalty.</p>`;
+}
+
 ///CALCULATE WINNER
 
 // Points/time are tracked per user ID (the only identity that's stable
@@ -477,18 +498,7 @@ html += `
       </p>
     `;
   }
-    if (state.powers.revealPenaltyUsed) {
-      const letter = state.powers.revealPenaltyLetter;
-      const count = state.powers.revealPenaltyCount;
-      const penalty = count * 2;
-
-      html += `
-        <p class="reveal-penalty-summary">
-          ⚠️ The Spy revealed the letter <b>${letter}</b>
-          (${count}× in secret), adding <b>+${penalty}</b> guesses.
-        </p>
-      `;
-    }
+    html += formatRevealPenaltySummary(state.powers);
 
   html += `<p><b>Total guesses:</b> ${state.guessCount}</p>`;
 
@@ -610,18 +620,7 @@ function renderStoredRoundSummary(round, index) {
         </thead>
         <tbody>
   `;
-  if (round.powers?.revealPenaltyUsed) {
-    const letter = round.powers.revealPenaltyLetter;
-    const count = round.powers.revealPenaltyCount;
-    const penalty = count * 2;
-
-    html += `
-      <p class="round-note round-note--setter">
-        ⚠️ The Spy revealed the letter <b>${letter}</b>
-        (${count}× in secret), adding <b>+${penalty}</b> guesses.
-      </p>
-    `;
-  }
+  html += formatRevealPenaltySummary(round.powers, "round-note round-note--setter");
 
   round.history.forEach((h, i) => {
     const remaining = computeRemainingFromRound(round, i);

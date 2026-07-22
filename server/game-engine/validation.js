@@ -127,6 +127,20 @@ function checkGuess({ guess, state, allowedGuesses }) {
     };
   }
 
+  // 3.6️⃣ Marked Weakness (revealPenalty): the guesser wrongly called the
+  // bluff -- the letter really is in the secret, but locked out of use for
+  // the rest of THIS round (unlike Letter Lockout above, this isn't
+  // cleared after one guess; it only resets when the round itself does).
+  const revealPenaltyBanned = state?.powers?.revealPenaltyBannedLetter;
+
+  if (revealPenaltyBanned && g.includes(revealPenaltyBanned)) {
+    return {
+      ok: false,
+      error: `Guess cannot contain the locked-out letter ${revealPenaltyBanned}`,
+      code: "REVEAL_PENALTY_LOCKOUT_VIOLATION"
+    };
+  }
+
    // 4 Tutorial check
   if (state.isTutorial && state.history.length < state.scriptedTurns && !!state.canNextRound) {
     if (g !== state.tutorialGuesses[state.history.length]){

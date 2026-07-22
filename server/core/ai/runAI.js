@@ -308,6 +308,7 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
   if (!aiRole) return null;
 
   maybeClaimQuest(room, roomId, context, aiUserId);
+  maybeCallBluff(room, roomId, context, aiUserId);
 
   let actionFn = null;
 
@@ -478,6 +479,34 @@ function maybeClaimQuest(room, roomId, context, aiUserId) {
   const q = state.powers?.quest;
   if (!q?.type || q.used || !q.ready) return;
   applyAIAction(room, { type: "USE_QUEST" }, aiUserId, roomId, context);
+}
+
+// Marked Weakness: the AI has no real way to know if a reveal is a bluff
+// (that's the whole point), so it estimates from what it can see -- how
+// many of the secrets still consistent with its own guess feedback contain
+// the revealed letter. A low fraction reads as "probably a bluff" and it
+// calls; anything else it leaves alone, since a wrong call costs 2 points
+// and locks the letter out for the round, so staying quiet in ambiguous
+// cases is the safer default. Same computeAIActionForUser placement as
+// maybeClaimQuest, for the same reason (power-simulation runner needs it too).
+function maybeCallBluff(room, roomId, context, aiUserId) {
+  const state = room.state;
+  const aiRole = getAIRole(state, aiUserId);
+  if (aiRole !== "guesser") return;
+
+  const p = state.powers;
+  if (!p?.revealPenaltyUsed || !p.revealPenaltyAwaitingCall || p.revealPenaltyCalled) return;
+
+  const feasible = feasibleSecretsFor(state, context.WORDS.secrets);
+  if (!feasible.length) return;
+
+  const letter = p.revealPenaltyLetter;
+  const containingFraction =
+    feasible.filter(r => r.word.includes(letter)).length / feasible.length;
+
+  if (containingFraction >= 0.3) return;
+
+  applyAIAction(room, { type: "USE_REVEAL_PENALTY_CALL" }, aiUserId, roomId, context);
 }
 
 function maybeRunAI(room, roomId, context) {
