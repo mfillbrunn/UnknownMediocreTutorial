@@ -171,5 +171,27 @@ setInterval(() => cleanupEmptyRooms(), 10 * 60 * 1000);
 // same window).
 setInterval(() => cleanupDisconnectedPlayers(io, 30_000), 5_000);
 
+// AI turn watchdog: maybeRunAI's own try/catch (runAI.js) already stops a
+// single bad AI move from crashing the server, but a move that throws
+// still just gets logged and abandoned -- nothing else was retriggering
+// it, so any AI action that fails once left the game stuck on the AI's
+// turn forever (an "AI never moves again" freeze with no server crash to
+// explain it). maybeRunAI is safe to call unconditionally on every tick:
+// it no-ops immediately whenever there's genuinely nothing to do (already
+// mid-move via AI_PENDING, not actually the AI's turn, or game over) --
+// see runAI.js. Retrying here gives every AI move a fresh attempt (with
+// fresh randomness) every few seconds until it lands, instead of one
+// silent, unrecoverable failure.
+setInterval(() => {
+  for (const [roomId, room] of Object.entries(rooms)) {
+    if (!room || room.status !== "alive" || room.state?.gameOver) continue;
+    try {
+      context.maybeRunAI(room, roomId, context);
+    } catch (err) {
+      console.error("AI watchdog crashed for room", roomId, err);
+    }
+  }
+}, 4_000);
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log("Vowel Play server running on", PORT));
