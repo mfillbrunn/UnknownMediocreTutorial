@@ -247,9 +247,15 @@ $("leaveRoomBtn")?.addEventListener("click", () => {
   // unlimited game (see updateLeaveGameButtons/clearRoom). Emitting
   // leaveRoom here would strip your player entry from the room, which is
   // exactly what made it vanish from My Games — so for these, just stop
-  // watching locally and leave the server-side room intact.
+  // watching locally and leave the server-side room intact. Disconnect +
+  // reconnect too (same fix as updateLeaveGameButtons' handler): clearRoom()
+  // alone leaves this socket still subscribed to the room, so a later
+  // broadcast (e.g. an AI opponent's move) would otherwise pull the player
+  // right back into the live game.
   if (state?.timeControl?.enabled === false) {
     clearRoom();
+    socket.disconnect();
+    socket.connect();
     return;
   }
 

@@ -1915,7 +1915,17 @@ document.querySelectorAll(".leave-game-btn").forEach(btn => {
     byId("tutorialBubble")?.classList.add("hidden");
     // Just step away — the room stays alive server-side (unlimited-time
     // rooms are exempt from disconnect cleanup) so it shows back up in
-    // "My Games" whenever the player wants to resume it.
+    // "My Games" whenever the player wants to resume it. clearRoom() only
+    // wipes local state though -- the socket itself stayed subscribed to
+    // the room, so the next server-side broadcast (e.g. an AI opponent's
+    // autonomous move) still landed here and silently pulled the player
+    // right back into the live game. Force a disconnect/reconnect so this
+    // behaves the same as actually closing the tab (the case it's meant
+    // to substitute for) -- the server's own "disconnect" handler already
+    // does the right thing (pauses the room, doesn't remove the player)
+    // without a real navigation away.
     clearRoom();
+    socket.disconnect();
+    socket.connect();
   });
 });

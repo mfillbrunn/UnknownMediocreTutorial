@@ -489,7 +489,7 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
       }
 
       const target = Object.values(room.state.players || {}).find(
-        (p) => p.userId !== myUserId && !p.isAI
+        (p) => p.userId !== myUserId
       );
 
       if (!target) {

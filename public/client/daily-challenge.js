@@ -138,9 +138,6 @@ window.showDailyChallenge = async function () {
     ? `<span class="daily-power-pill quest">${questMeta.emoji || "🎯"} ${questMeta.label}</span>`
     : "";
 
-  const diffLabels = { 1: "Easy", 2: "Medium", 3: "Hard" };
-  const diffLabel  = diffLabels[config.aiDifficulty] || "AI";
-
   screen.innerHTML = `
     <div class="menu-center">
       <div class="screen-back-header">
@@ -160,20 +157,28 @@ window.showDailyChallenge = async function () {
         </div>
       </div>
 
-      <p class="daily-ai-label">vs ${diffLabel}</p>
-
-      <button id="startDailyBtn" class="menu-btn primary" style="margin-top:8px">
-        Play Today's Challenge
-      </button>
+      <p class="daily-ai-label">Choose your opponent</p>
+      <div class="daily-difficulty-row">
+        <button class="menu-btn difficulty-easy" data-difficulty="1">Easy</button>
+        <button class="menu-btn difficulty-medium" data-difficulty="2">Medium</button>
+        <button class="menu-btn difficulty-hard" data-difficulty="3">Hard</button>
+      </div>
     </div>
   `;
 
-  document.getElementById("startDailyBtn")?.addEventListener("click", () => {
-    _startDailyGame(config);
+  screen.querySelectorAll("[data-difficulty]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      _startDailyGame(config, Number(btn.dataset.difficulty));
+    });
   });
 };
 
-function _startDailyGame(config) {
+// difficulty: player's choice from the three buttons above -- overrides
+// config.aiDifficulty, the value the daily seed would otherwise have
+// picked (see dailyConfig.js). Only the AI's strength is left up to the
+// player; the day's powers/quest/starting secret stay whatever the seed
+// picked, so the challenge itself is still the same for everyone today.
+function _startDailyGame(config, difficulty) {
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
 
   // The whole setup (adding the AI, swapping to Inspector, applying the
@@ -193,7 +198,7 @@ function _startDailyGame(config) {
     window.roomId = resp.roomId;
     persistRoom(resp.roomId);
 
-    sendGameAction({ type: "ADD_AI", difficulty: config.aiDifficulty, userId: window.currentUser.id });
+    sendGameAction({ type: "ADD_AI", difficulty: difficulty || config.aiDifficulty, userId: window.currentUser.id });
 
     setTimeout(() => {
       sendGameAction({ type: "SWITCH_ROLES", userId: window.currentUser.id });
