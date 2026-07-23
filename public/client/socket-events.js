@@ -329,6 +329,9 @@ window._startVsAI = function (difficulty) {
   if (!requireAuth("play vs AI")) return;
   window.rememberLastPlayMode?.({ mode: "ai", difficulty });
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
+  // Developer > Play's "Dev Mode" checkbox -- read before createRoom's
+  // callback fires, same reasoning as startPlayFriend() in play-menu.js.
+  const wantsDevMode = !!$("devModeCheckbox")?.checked;
   socket.emit("createRoom", { userId: window.currentUser.id, name: username }, resp => {
     if (!resp?.ok) return toast(resp?.error || "Could not create room");
     // roomId (bare) is the module-scoped variable client.js's power-button
@@ -342,6 +345,9 @@ window._startVsAI = function (difficulty) {
     window.roomId = resp.roomId;
     persistRoom(resp.roomId);
     sendGameAction({ type: "ADD_AI", difficulty, userId: window.currentUser.id });
+    if (wantsDevMode) {
+      sendGameAction({ type: "SET_DEV_MODE", userId: window.currentUser.id });
+    }
     enterLobbyAfterJoin();
   });
 };

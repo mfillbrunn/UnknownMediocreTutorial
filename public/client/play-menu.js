@@ -22,6 +22,10 @@ function startPlayFriend() {
   window.rememberLastPlayMode({ mode: "friend" });
   const username =
     window.myProfile?.username || window.currentUser?.email || "Player";
+  // Developer > Play's "Dev Mode" checkbox: read it before createRoom's
+  // callback fires, since #playScreen (and the checkbox on it) may already
+  // be hidden by the time the server responds.
+  const wantsDevMode = !!$("devModeCheckbox")?.checked;
   createRoom({ userId: window.currentUser.id, name: username }, resp => {
     if (!resp.ok) {
       toast(resp.error || "Could not start game");
@@ -29,6 +33,13 @@ function startPlayFriend() {
     }
     roomId = resp.roomId;
     persistRoom(roomId);
+    // SET_DEV_MODE toggles state.devMode server-side (it starts false on a
+    // fresh room) -- updateDevUI() picks up the resulting broadcast and
+    // opens the power picker modal itself, same as manually toggling Dev
+    // used to before its lobby button was removed.
+    if (wantsDevMode) {
+      sendGameAction({ type: "SET_DEV_MODE", userId: window.currentUser.id });
+    }
     enterLobbyAfterJoin();
   });
 }
