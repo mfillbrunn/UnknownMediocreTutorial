@@ -102,6 +102,20 @@
   color: var(--tile-blue);
 }
 
+/* ── Physical keyboard toggle (header, next to Guide) ─────────────────
+   Only meaningful on a device with an actual keyboard -- hidden on
+   touch-only screens (no physical keys to toggle), shown wherever a
+   mouse/trackpad is the primary pointer (a reasonable desktop proxy
+   without user-agent sniffing). */
+.keyboard-toggle-btn {
+  padding: 0 8px;
+}
+@media (pointer: coarse) {
+  .keyboard-toggle-btn {
+    display: none;
+  }
+}
+
 /* ── Guide banner (below header, shows phase + current task) ─────────── */
 .guide-banner {
   margin-bottom: var(--sp-10);

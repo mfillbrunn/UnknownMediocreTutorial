@@ -1518,6 +1518,65 @@ function updateTimerAccess() {
   };
 })();
 
+// Physical keyboard toggle (desktop-only, see .keyboard-toggle-btn's
+// pointer:coarse media query hiding it on touch screens) -- opt-in
+// (default off) since a stray keypress while just reading the board
+// shouldn't start typing a guess/secret. When on, routes real keydown
+// events through the exact same handleSetterInput/handleGuesserInput
+// functions the on-screen keyboard already uses (see keyboard.js's
+// onInput contract), so every existing guard in those functions (whose
+// turn it is, Notes mode, Recon Sweep/Double Tap's power-keyboard
+// capture, Drag Mode locks, tutorial scripting, ...) applies identically
+// -- nothing here needs to know about any of that itself.
+(function setupPhysicalKeyboard() {
+  const btn = $("keyboardToggleBtn");
+  if (!btn) return;
+
+  const stored = localStorage.getItem("physicalKeyboardActive");
+  const keyboardOn = stored === "true"; // default: off
+
+  document.body.classList.toggle("physical-keyboard-on", keyboardOn);
+  btn.classList.toggle("active", keyboardOn);
+
+  btn.onclick = () => {
+    const isOn = document.body.classList.toggle("physical-keyboard-on");
+    localStorage.setItem("physicalKeyboardActive", isOn);
+    btn.classList.toggle("active", isOn);
+  };
+
+  document.addEventListener("keydown", (e) => {
+    if (!document.body.classList.contains("physical-keyboard-on")) return;
+    if (!state) return;
+
+    // Never hijack typing into a real text field (room code, chat, notes
+    // textarea if it's ever a native one, account forms, ...) or a
+    // keyboard shortcut the browser/OS already owns (Cmd/Ctrl+R, etc.).
+    const tag = document.activeElement?.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    let event;
+    if (/^[a-zA-Z]$/.test(e.key)) {
+      event = { type: "LETTER", value: e.key.toUpperCase() };
+    } else if (e.key === "Backspace") {
+      event = { type: "BACKSPACE" };
+    } else if (e.key === "Enter") {
+      event = { type: "ENTER" };
+    } else {
+      return;
+    }
+
+    const myId = myUserId();
+    if (myId && myId === state.setter) {
+      e.preventDefault();
+      handleSetterInput(event);
+    } else if (myId && myId === state.guesser) {
+      e.preventDefault();
+      handleGuesserInput(event);
+    }
+  });
+})();
+
 // -----------------------------------------------------
 // GUIDE: phase + current-task banner
 // -----------------------------------------------------
