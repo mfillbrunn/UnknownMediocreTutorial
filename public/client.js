@@ -496,7 +496,10 @@ function updateUI() {
   if (!state) return;
   updateScreens();
   InfoBadgeEngine.render(state, myRole);
-  window.maybeShowQuestProgressPop?.(state);
+  // Quest badge shows on both screens (see quest.js's InfoBadgeEngine
+  // registration), but the "+1" pop is only meaningful to the guesser
+  // actually working toward it -- the setter's copy is read-only.
+  if (myRole === "guesser") window.maybeShowQuestProgressPop?.(state);
   if (state.phase !== "lobby") hide("lobby");
   updateSecretLock();
   updateSetterDraftInvalidOverlay();
