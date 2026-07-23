@@ -1771,6 +1771,42 @@ document
     });
   });
 
+// Ranked screen's own timer-preset clock -- visually identical to the
+// casual lobby's dial above, but a separate radio group/ids
+// (rankedTimePreset) since this picks a preset for a room that doesn't
+// exist yet rather than live-editing one already in progress: picking a
+// marker here just updates the dial + legend, and playRankedBtn's click
+// handler (play-menu.js) reads whichever radio is checked when it actually
+// queues for a match.
+function updateRankedTimerClockVisual(preset) {
+  const info = TIMER_CLOCK_INFO[preset];
+
+  const hand = $("rankedTimerClockHand");
+  if (hand && info) {
+    hand.style.setProperty("--hand-angle", `${info.angle}deg`);
+  }
+
+  const legend = $("rankedTimerClockLegend");
+  if (legend) {
+    legend.textContent = info
+      ? `${info.icon} ${info.label} — ${info.desc}`
+      : "Choose a time control";
+  }
+}
+window.updateRankedTimerClockVisual = updateRankedTimerClockVisual;
+
+document
+  .querySelectorAll('input[name="rankedTimePreset"]')
+  .forEach(radio => {
+    radio.addEventListener("change", () => {
+      if (radio.checked) updateRankedTimerClockVisual(radio.value);
+    });
+  });
+
+updateRankedTimerClockVisual(
+  document.querySelector('input[name="rankedTimePreset"]:checked')?.value || "blitz"
+);
+
 // notes.js runs in its own script scope and can't reassign the bare
 // `localGuesserDraft` binding (writing window.localGuesserDraft only
 // creates an unrelated global property) — go through this setter instead.

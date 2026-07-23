@@ -73,8 +73,7 @@ function renderMenuAccountStatus () {
 }
 
 // Fetch this player's finished matches and render them into `container`.
-// Shared by the Ranked screen's "Past Games" toggle and the My Games
-// screen's "Past Games" subtab, so both stay in sync with one query.
+// Used by the My Games screen's "Past Games" subtab.
 async function fetchAndRenderPastGames(container) {
   if (!container) return;
 
@@ -128,44 +127,6 @@ async function fetchAndRenderPastGames(container) {
 }
 window.fetchAndRenderPastGames = fetchAndRenderPastGames;
 
-$("showPastGamesBtn")?.addEventListener("click", async (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-
-  const btn = $("showPastGamesBtn");
-  const container = $("pastGamesContainer");
-  if (!btn || !container) return;
-
-  // Auth not ready → show message and exit
-  if (!authFullyReady()) {
-    container.classList.remove("hidden");
-    container.textContent = "Please wait…";
-    return;
-  }
-
-  if (!window.currentUser?.id) return;
-
-  // Toggle OFF
-  if (pastGamesVisible) {
-    container.classList.add("hidden");
-    pastGamesVisible = false;
-    btn.textContent = "Show Past Games";
-    return;
-  }
-
-  // Toggle ON
-  container.classList.remove("hidden");
-  pastGamesVisible = true;
-  btn.textContent = "Hide Past Games";
-
-  // Already loaded → just show
-  if (pastGamesLoaded) return;
-
-  await fetchAndRenderPastGames(container);
-  pastGamesLoaded = container.dataset.loaded === "1";
-});
-
-
 function getPowersByRoleFromRounds(rounds = [], myId, match) {
   const byRole = {
     setter: new Set(),
@@ -199,7 +160,7 @@ function getPowersByRoleFromRounds(rounds = [], myId, match) {
   };
 }
 
-function renderPastGames(matches, container = $("pastGamesContainer")) {
+function renderPastGames(matches, container) {
   if (!container || !window.currentUser) return;
 
   if (!matches.length) {

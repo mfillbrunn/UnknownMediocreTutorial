@@ -1385,28 +1385,6 @@
   transform: translateY(0) scale(0.95);
 }
 
-.play-ranked-row {
-  display: flex;
-  gap: var(--sp-8);
-}
-
-.play-ranked-row .ranked-btn {
-  flex: 1;
-}
-
-.ranked-speed-select {
-  flex: 0 0 auto;
-  width: 92px;
-  height: var(--h-control);
-  border-radius: var(--r-8);
-  background: #1a1b20;
-  color: var(--text);
-  border: 1px solid #2a2c34;
-  font-size: var(--fs-13);
-  font-weight: 700;
-  text-align: center;
-  padding: 0 var(--sp-6);
-}
 
 /* ── Ranked matchmaking waiting screen ───────────────────────────────── */
 .ranked-waiting-body {

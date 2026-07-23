@@ -87,9 +87,6 @@
   margin-top: var(--sp-6);
 }
 
-#accountScreen #pastGamesContainer {
-  margin-top: var(--sp-8);
-}
 /* Past games container */
 .past-games {
   width: 100%;

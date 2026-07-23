@@ -6,8 +6,6 @@ window.profileReady = false;
 window.autoRejoinAttempted = false;
 window.currentUser = null;
 window.myProfile = null;
-let pastGamesVisible = false;
-let pastGamesLoaded = false;
 let authInitInProgress = false;
 
 function authFullyReady() {
@@ -232,7 +230,6 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
 
       // 🔁 retry loaders
       if (pendingLeaderboardMode) loadLeaderboard(pendingLeaderboardMode);
-      if (pastGamesVisible) $("showPastGamesBtn")?.click();
 
     }, 0);
 
@@ -335,13 +332,6 @@ async function logout() {
   localStorage.removeItem("roomId");
 
   await window.supabaseClient.auth.signOut();
-  pastGamesVisible = false;
-  pastGamesLoaded = false;  
-  const container = $("pastGamesContainer");
-  if (container) {
-    container.classList.add("hidden");
-    container.innerHTML = "";
-  }
   window.currentUser = null;
   window.myProfile = null;
   clearRoom();
@@ -369,10 +359,6 @@ function updateAccountUI() {
     ?.classList.toggle("hidden", loggedIn);
 
   root.querySelector("#logoutBtn")
-    ?.classList.toggle("hidden", !loggedIn);
-
-  // Moved out of accountScreen onto the Data screen — query globally.
-  $("showPastGamesBtn")
     ?.classList.toggle("hidden", !loggedIn);
 }
 

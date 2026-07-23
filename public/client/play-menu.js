@@ -156,7 +156,8 @@ function cancelRankedQueue() {
 
 $("playRankedBtn")?.addEventListener("click", () => {
   if (!requireAuth("play ranked")) return;
-  const preset = $("rankedSpeedSelect")?.value || "blitz";
+  const preset =
+    document.querySelector('input[name="rankedTimePreset"]:checked')?.value || "blitz";
   startRankedQueue(preset);
 });
 

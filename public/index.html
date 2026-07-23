@@ -154,19 +154,39 @@
       <h2 class="menu-title" style="flex:1;text-align:center">Ranked</h2>
     </div>
     <div class="menu-buttons play-menu-buttons">
-      <div class="play-ranked-row">
-        <button id="playRankedBtn" class="menu-btn ranked-btn">Ranked Play 🏆</button>
-        <select id="rankedSpeedSelect" class="ranked-speed-select" aria-label="Ranked time control">
-          <option value="bullet">Bullet</option>
-          <option value="blitz" selected>Blitz</option>
-          <!-- "deep" intentionally omitted — see timer-select comment above -->
-          <option value="none">No Time</option>
-        </select>
-      </div>
+      <button id="playRankedBtn" class="menu-btn ranked-btn">Ranked Play 🏆</button>
       <button id="rankedLeaderboardBtn" class="menu-btn">Leaderboard 📊</button>
-      <button id="showPastGamesBtn" class="menu-btn">Past Games</button>
     </div>
-    <div id="pastGamesContainer" class="past-games hidden"></div>
+
+    <!-- Same clock-dial as the casual lobby's timer picker (see #timerClock
+         below) -- a separate radio group (rankedTimePreset, not timePreset)
+         since this fires before any room exists, so picking one here can't
+         send a live SET_TIME_CONTROL action the way the in-lobby clock does;
+         see setupRankedTimerClock in client.js. -->
+    <div class="timer-clock" id="rankedTimerClock">
+      <div class="timer-clock-face">
+        <div class="timer-clock-hand" id="rankedTimerClockHand"></div>
+        <div class="timer-clock-center"></div>
+
+        <label class="timer-option timer-clock-marker" style="--angle: 60deg">
+          <input type="radio" name="rankedTimePreset" value="bullet" />
+          <span class="timer-clock-icon">🚀</span>
+        </label>
+
+        <label class="timer-option timer-clock-marker" style="--angle: 180deg">
+          <input type="radio" name="rankedTimePreset" value="blitz" checked />
+          <span class="timer-clock-icon">⚡</span>
+        </label>
+
+        <!-- "Deep" intentionally omitted, same as the casual lobby's dial. -->
+        <label class="timer-option timer-clock-marker" style="--angle: 270deg">
+          <input type="radio" name="rankedTimePreset" value="none" />
+          <span class="timer-clock-icon">♾️</span>
+        </label>
+      </div>
+
+      <p class="timer-clock-legend" id="rankedTimerClockLegend">⚡ Blitz — 3 min / round</p>
+    </div>
   </div>
 </section>
 
