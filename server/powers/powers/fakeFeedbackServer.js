@@ -70,18 +70,32 @@ engine.registerPower("fakeFeedback", {
     if (state.powers.fakeFeedbackScramble) {
       state.powers.fakeFeedbackSecret = null;
     } else {
-      const fakesecret = global.ALLOWED_SECRETS.filter(secret =>isConsistentWithHistory(state.history, secret, state));
-      if (fakesecret.length <= 1) {
-        // No real alternate secret left consistent with history at all --
-        // fall back to the same synthesis rather than silently no-op'ing
-        // (the old behavior: fakeFeedbackSecret = state.secret, i.e.
-        // entry2 always equal to entry1, no fakery at all).
+      // The fake secret has to be consistent with prior history (so the
+      // guesser can't rule it out) AND, crucially, score THIS guess
+      // DIFFERENTLY from the real secret. The old code only required the
+      // first: it filtered by consistency and then picked at random, which
+      // frequently landed on an alternate that happens to score the guess
+      // identically to the truth. When that happens entry1 === entry2 at
+      // every position, every composite tile collapses to a single solid
+      // color, and the power visibly does nothing but recolor a couple of
+      // tiles gray -- exactly the "the tiles just go black" bug. Requiring a
+      // different reading guarantees at least one tile actually alternates
+      // between the two possible words.
+      const trueFb = scoreGuess(state.secret, state.pendingGuess);
+      const fakesecret = global.ALLOWED_SECRETS.filter(secret =>
+        secret !== state.secret &&
+        isConsistentWithHistory(state.history, secret, state) &&
+        scoreGuess(secret, state.pendingGuess).some((v, i) => v !== trueFb[i])
+      );
+      if (fakesecret.length === 0) {
+        // No consistent alternate produces a different reading of this guess
+        // (e.g. the guess is so generic every remaining secret scores it the
+        // same) -- synthesize a scrambled fake directly rather than silently
+        // no-op'ing (the old behavior: entry2 always equal to entry1).
         state.powers.fakeFeedbackSecret = null;
         state.powers.fakeFeedbackScramble = true;
       } else {
-        do {
-          state.powers.fakeFeedbackSecret = fakesecret[Math.floor(Math.random() * fakesecret.length)];
-        } while (state.powers.fakeFeedbackSecret === state.secret);
+        state.powers.fakeFeedbackSecret = fakesecret[Math.floor(Math.random() * fakesecret.length)];
       }
     }
    io.to(roomId).emit("powerUsed", { type: "fakeFeedback" });
