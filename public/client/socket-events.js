@@ -346,13 +346,23 @@ window._startVsAI = function (difficulty) {
 // mode (the server default), shuffle, and no timer are set up front and
 // the host is marked ready immediately, so the match starts on its own the
 // instant the room exists (PLAYER_READY only requires every HUMAN in the
-// room to be ready, and there's just the one -- see lobby.js).
+// room to be ready, and there's just the one -- see lobby.js). The room
+// still passes through state.phase === "lobby" for the brief span between
+// createRoom and that PLAYER_READY landing -- window._quickAiStarting (see
+// the matching guard in client.js's updateScreens()) keeps whatever screen
+// is already showing (quickPlayAiScreen) up instead of flashing the real
+// multiplayer lobby UI for that window, same fix as daily-challenge.js's
+// _dailyStarting for the same reason.
 window._startQuickAI = function (difficulty) {
   if (!requireAuth("play vs AI")) return;
   window.rememberLastPlayMode?.({ mode: "quickAi", difficulty });
+  window._quickAiStarting = true;
   const username = window.myProfile?.username || window.currentUser?.email || "Player";
   socket.emit("createRoom", { userId: window.currentUser.id, name: username }, resp => {
-    if (!resp?.ok) return toast(resp?.error || "Could not create room");
+    if (!resp?.ok) {
+      window._quickAiStarting = false;
+      return toast(resp?.error || "Could not create room");
+    }
     // See the matching comment in _startVsAI above -- bare roomId is what
     // the power-button render gate in client.js actually reads.
     roomId = resp.roomId;
@@ -363,7 +373,7 @@ window._startQuickAI = function (difficulty) {
     sendGameAction({ type: "SET_SHUFFLE", shuffle: true, userId });
     sendGameAction({ type: "SET_TIME_CONTROL", enabled: false, userId });
     sendGameAction({ type: "PLAYER_READY", userId });
-    enterLobbyAfterJoin();
+    window.isRejoining = false;
   });
 };
 

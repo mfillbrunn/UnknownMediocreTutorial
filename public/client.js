@@ -207,7 +207,12 @@ document.addEventListener("click", e => {
 });
 
 function enterLobbyAfterJoin() {
-  window.isRejoining = false;  
+  window.isRejoining = false;
+  // Guards against a stuck flag if a prior _startQuickAI run somehow never
+  // left state.phase === "lobby" (see socket-events.js) -- every real
+  // lobby entry point routes through here, so this is the one place a
+  // leftover flag can't end up hiding a legitimate lobby.
+  window._quickAiStarting = false;
   showLobby();
 }
 
@@ -650,6 +655,15 @@ function updateScreens() {
   // loading message) stays put until the round actually starts.
   if (window._dailyStarting) {
     if (state.phase !== "lobby") window._dailyStarting = false;
+    else return;
+  }
+
+  // Quick Play -> Play AI (see socket-events.js's _startQuickAI): same
+  // "scripted setup briefly leaves state.phase === lobby" situation as
+  // Daily Challenge above, same fix -- keep whatever screen is already up
+  // (the difficulty picker) instead of flashing the real lobby UI.
+  if (window._quickAiStarting) {
+    if (state.phase !== "lobby") window._quickAiStarting = false;
     else return;
   }
 
