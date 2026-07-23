@@ -322,7 +322,6 @@ function tryAutoRejoin() {
           localStorage.removeItem("roomId");
           clearRoom?.();
           showStartup?.();
-          toast("Your previous game has ended.");
         } else {
           // allow one retry on next reconnect
           window.autoRejoinAttempted = false;

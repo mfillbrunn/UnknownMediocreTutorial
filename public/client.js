@@ -317,13 +317,9 @@ onLobbyEvent(evt => {
   switch (evt.type) {
 
     case "playerJoined":
-      toast("A player joined.");
       $("waitingForPlayer")?.classList.add("hidden");
       break;
 
-  case "rolesSwitched":
-    toast("Roles have been switched.");
-    break;
 case "playerKicked":
   toast("Opponent disconnected too long. You win.");
   break;
@@ -340,9 +336,6 @@ case "playerLeft": {
       break;
     }
 
-    case "playerReady":
-      toast("A player is ready");
-      break;
     case "playerDisconnected":
       toast("Your opponent disconnected. Waiting to reconnect…");
       break;

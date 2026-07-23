@@ -307,7 +307,6 @@ socket.on("forceLeaveRoom", () => {
   window.autoRejoinAttempted = true;
   clearRoom?.();
   showStartup?.();
-  toast("The game has ended.");
 });
 $("rankedLeaderboardBtn")?.addEventListener("click", () => {
   showScreen("leaderboardScreen");
