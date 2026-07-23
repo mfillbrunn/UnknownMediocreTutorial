@@ -78,6 +78,7 @@ function clearRoom() {
   window.state = null;
   state = null;
   window.autoRejoinAttempted = true;
+  window.resetTransientGameUI?.();
   hide?.("game");
   hide?.("lobby");
   showStartup?.();

@@ -57,6 +57,21 @@ function resetKeyboards() {
     if (typeof buildKeyboard === "function") buildKeyboard(el);
   });
 }
+
+// A tutorial's highlight rings (DOM classes toggled in tutorial-ui.js) and
+// an unsubmitted guesser draft (localGuesserDraft, a plain module-level
+// variable, not part of `state`) are both transient per-game UI state that
+// outlives `state` itself -- clearRoom() nulling `state` doesn't touch
+// either, so without this a highlight ring left over from an abandoned
+// tutorial step, or letters someone was mid-typing, silently carried over
+// into whatever game started next. Resets the raw variables directly
+// rather than going through setGuesserDraft(), which re-renders using
+// `state` -- by the time clearRoom() calls this, state is already null.
+window.resetTransientGameUI = function () {
+  localGuesserDraft = "";
+  guesserDraftLocks.clear();
+  window.clearHighlights?.();
+};
 (() => {
   const periodMs = 4500;
   const phaseMs = performance.now() % periodMs;

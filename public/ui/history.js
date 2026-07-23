@@ -21,6 +21,17 @@ function computeTileClassKey({isSetter, entryRoundIndex, guessIndex, bsIdx, bsRo
     classes.push("tile-delayed");
     return classes.join(" ");
   }
+  // Hide Evidence / Vowel Refresh erase a tile's feedback outright
+  // (server sets fb[i]/fbGuesser[i] to "") rather than masking it behind a
+  // placeholder -- without this check it fell into the fbToClass
+  // "unrecognized symbol" fallback further down and rendered as a plain
+  // gray tile, indistinguishable from (and actively misleading as) a
+  // genuine "letter not in the word" result. Checked for both roles since
+  // both fb and fbGuesser get erased together.
+  if (fbArray[guessIndex] === "") {
+    classes.push("tile-erased");
+    return classes.join(" ");
+  }
   // Faithful fbComposite branch
 if (!isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry2) {
   const fb1 = safeEntry.fakeFeedback.entry1[guessIndex];
