@@ -211,7 +211,17 @@ function handleNormalPhase(room, state, action, roomId, context) {
     userId === state.setter &&
     (action.type === "SET_SECRET_NEW" || action.type === "SET_SECRET_SAME")
   ) {
-    if (state.simultaneousAllWrong && action.type === "SET_SECRET_NEW") {
+    // Break Cover (rouletteSecret) forces the setter's NEXT secret to be a
+    // random new one -- it explicitly overrides the simultaneous-round lock
+    // below rather than colliding with it, so a guesser using the power
+    // during a locked round doesn't leave the setter stuck unable to
+    // satisfy either constraint (can't submit NEW per the lock, but forced
+    // to per the power).
+    if (
+      state.simultaneousAllWrong &&
+      action.type === "SET_SECRET_NEW" &&
+      !state.powers?.rouletteSecretActive
+    ) {
       io.to(action.playerId).emit("errorMessage", "All feedback was wrong — you must keep the same secret this round.");
       return;
     }

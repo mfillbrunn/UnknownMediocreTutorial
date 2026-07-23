@@ -45,7 +45,17 @@ const EXTRA_ELIGIBILITY = {
   // Inside Job (magicMode) converts this guess's own yellow tiles into
   // green constraints — it only has something to work with once the AI
   // already has real yellow letters in play to potentially re-place.
-  magicMode: (state) => countKnownYellowLetters(state) >= 2
+  magicMode: (state) => countKnownYellowLetters(state) >= 2,
+
+  // Break Cover (rouletteSecret) forces the setter's next secret to be a
+  // random new one -- which directly collides with simultaneousAllWrong
+  // (the opening guess missed everything, locking the setter into keeping
+  // their secret this round). normal.js lets the power override that lock
+  // rather than leaving the setter stuck, but there's no upside to the AI
+  // deliberately picking that fight: the setter was already locked into
+  // the same secret regardless, so using the power here spends it for a
+  // forced switch that teaches the guesser nothing it didn't already know.
+  rouletteSecret: (state) => !state.simultaneousAllWrong
 };
 
 function countColoredTiles(state) {
@@ -376,17 +386,21 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
       // simultaneousAllWrong: the opening guess missed every letter, so
       // the setter is locked into keeping that same secret this round
       // (server rejects SET_SECRET_NEW while this is set) — same as
-      // freezeActive, just from a different rule. stealthGuessActive
-      // means THIS pendingGuess is hidden from the setter — safeState.js
-      // already masks it to "?????" for a human's client
-      // (safe.pendingGuess), but the AI reads room.state directly, so
-      // without this check it would see the real guess straight through
+      // freezeActive, just from a different rule. Unless the guesser used
+      // Break Cover (rouletteSecret), which explicitly overrides that lock
+      // (see normal.js) and forces a new secret instead — the AI has to
+      // follow the same override a human setter now can, or the power
+      // would silently do nothing against an AI opponent.
+      // stealthGuessActive means THIS pendingGuess is hidden from the
+      // setter — safeState.js already masks it to "?????" for a human's
+      // client (safe.pendingGuess), but the AI reads room.state directly,
+      // so without this check it would see the real guess straight through
       // its own opponent's power. There's no informed basis to switch
       // without seeing what was guessed, so keep — same call a blind
       // human would reasonably make.
       if (
         state?.powers?.freezeActive ||
-        state.simultaneousAllWrong ||
+        (state.simultaneousAllWrong && !state.powers?.rouletteSecretActive) ||
         state?.powers?.stealthGuessActive
       ) {
         actionFn = () => {

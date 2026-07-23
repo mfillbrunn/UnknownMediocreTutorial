@@ -506,7 +506,10 @@ function updateUI() {
 // flagged (a big red X over the draft row) the instant it's fully typed,
 // not just after a failed submit. Only fires once the draft is actually
 // complete (5 real letters, no Drag Mode blank placeholders) and never
-// while simultaneousAllWrong already covers the row with the lock icon.
+// while simultaneousAllWrong already covers the row with the lock icon --
+// unless Break Cover (rouletteSecret) is overriding that lock (see
+// updateSecretLock), in which case a real submission is possible again and
+// should get the same live validation any other new secret would.
 function updateSetterDraftInvalidOverlay() {
   const overlay = $("setterDraftInvalidOverlay");
   if (!overlay) return;
@@ -520,7 +523,7 @@ function updateSetterDraftInvalidOverlay() {
     complete &&
     myRole === "setter" &&
     !state?.isTutorial &&
-    !state?.simultaneousAllWrong
+    (!state?.simultaneousAllWrong || state?.powers?.rouletteSecretActive)
   ) {
     const notInDictionary = window.ALLOWED_SECRETS && !window.ALLOWED_SECRETS.has(draft);
     const inconsistent =
@@ -535,7 +538,13 @@ function updateSetterDraftInvalidOverlay() {
 function updateSecretLock() {
   const overlay = $("secretLockOverlay");
   if (!overlay) return;
-  const locked = !!state?.simultaneousAllWrong;
+  // Break Cover (rouletteSecret) forces the setter's next secret to be a
+  // random new one -- it explicitly overrides this lock server-side (see
+  // normal.js) rather than colliding with it, so the client shouldn't show
+  // the "locked, can't submit new" state (or actually disable NewEnabled)
+  // while it's in effect either.
+  const overridden = !!state?.powers?.rouletteSecretActive;
+  const locked = !!state?.simultaneousAllWrong && !overridden;
   overlay.classList.toggle("hidden", !locked);
   // Only cover the bottom (secret) row when the pending-guess row above it
   // is actually showing — driven from the same state.pendingGuess check
