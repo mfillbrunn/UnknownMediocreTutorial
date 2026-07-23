@@ -231,20 +231,15 @@ function renderMatchSummary(container) {
       : `You lost`;
   }
 
+  // Just the numbers now -- shown large, right under the win/loss headline
+  // (see the html below), so a "Score:"/"Final score (before timeout):"
+  // prefix would be redundant; the timeout case is still called out
+  // separately by timeoutNote further down.
   let scoreText = "";
   if (winner !== null) {
-    scoreText =
-      winReason === "timeout"
-        ? `Final score (before timeout): ${
-            didWin
-              ? `${winnerPoints} – ${loserPoints}`
-              : `${loserPoints} – ${winnerPoints}`
-          }`
-        : `Score: ${
-            didWin
-              ? `${winnerPoints} – ${loserPoints}`
-              : `${loserPoints} – ${winnerPoints}`
-          }`;
+    scoreText = didWin
+      ? `${winnerPoints} – ${loserPoints}`
+      : `${loserPoints} – ${winnerPoints}`;
   }
 
   // Ranked matches get an Elo delta computed async (after the match's
@@ -279,32 +274,40 @@ function renderMatchSummary(container) {
   }
 
  // ----------------------------
-// POWERS (labeled, icon + text)
+// POWERS (icon + text, no "Setter/Guesser Powers:" label)
 // ----------------------------
 const { setter, guesser } =
   getActivePowersByRole(state.activePowers);
 
+// The guesser's quest is always-on for the whole match (not part of
+// activePowers -- see questServer.js's file header), so it's not picked
+// up by getActivePowersByRole above; add it to the guesser list here.
+const questType = state.powers?.quest?.type;
+const questMeta = questType ? window.QUEST_METADATA?.[questType] : null;
+
+const setterEntries = setter.map(p => `${powerToInlineIcon(p)} ${powerToInlineLabel(p)}`);
+const guesserEntries = guesser.map(p => `${powerToInlineIcon(p)} ${powerToInlineLabel(p)}`);
+if (questMeta) {
+  guesserEntries.push(`${questMeta.emoji || "\uD83C\uDFAF"} ${questMeta.label}`);
+}
+
 let powersBlock = "";
 
-if (setter.length) {
+if (setterEntries.length) {
   powersBlock += `
     <p class="match-power-line">
       <span class="power-label setter">
-        ${setter.map(p =>
-          `${powerToInlineIcon(p)} ${powerToInlineLabel(p)}`
-        ).join("\u00A0\u00A0")}
+        ${setterEntries.join("\u00A0\u00A0")}
       </span>
     </p>
   `;
 }
 
-if (guesser.length) {
+if (guesserEntries.length) {
   powersBlock += `
     <p class="match-power-line">
       <span class="power-label guesser">
-        ${guesser.map(p =>
-          `${powerToInlineIcon(p)} ${powerToInlineLabel(p)}`
-        ).join("\u00A0\u00A0")}
+        ${guesserEntries.join("\u00A0\u00A0")}
       </span>
     </p>
   `;
@@ -319,14 +322,13 @@ if (guesser.length) {
 
   let html = `
     <div class="match-header match-header--${resultClass}">
-      <div class="match-result-icon">${resultIcon}</div>
       <h2>${resultText}</h2>
+      ${scoreText ? `<p class="match-score-line">${scoreText}</p>` : ""}
       <p class="match-players-line">
         <span class="${didWin ? "me-winner" : ""}">${myName}</span>
         <span class="vs">vs</span>
         <span class="${!didWin && winner ? "me-winner" : ""}">${opponentName}</span>
       </p>
-      ${scoreText ? `<h3>${scoreText}</h3>` : ""}
       ${eloHtml}
       ${timeoutNote}
       ${assassinationNote}

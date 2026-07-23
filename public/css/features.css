@@ -909,29 +909,22 @@
     var(--screen-bg);
 }
 
-.match-result-icon {
-  width: 56px;
-  height: 56px;
-  margin: 0 auto var(--sp-8);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.8rem;
-  line-height: 1;
-  background: rgba(255,255,255,0.06);
-  border: 2px solid currentColor;
-}
-
 .match-header h2 {
   margin: 0;
-  font-size: var(--fs-22, 22px);
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+}
+
+.match-score-line {
+  margin: var(--sp-4) 0 0;
+  font-size: 30px;
   font-weight: 900;
   letter-spacing: 0.3px;
 }
 
 .match-players-line {
-  margin: var(--sp-6) 0 0;
+  margin: var(--sp-8) 0 0;
   font-size: var(--fs-14);
   font-weight: 700;
   opacity: 0.85;
@@ -949,16 +942,9 @@
   color: #4ade80;
 }
 
-.match-header h3 {
-  margin: var(--sp-4) 0 0;
-  font-size: var(--fs-15);
-  font-weight: 700;
-  opacity: 0.85;
-}
-
-.match-header--win h2, .match-header--win .match-result-icon { color: #4ade80; }
-.match-header--loss h2, .match-header--loss .match-result-icon { color: #f87171; }
-.match-header--tie h2, .match-header--tie .match-result-icon { color: rgba(255,255,255,0.85); }
+.match-header--win h2, .match-header--win .match-score-line { color: #4ade80; }
+.match-header--loss h2, .match-header--loss .match-score-line { color: #f87171; }
+.match-header--tie h2, .match-header--tie .match-score-line { color: rgba(255,255,255,0.85); }
 
 .match-elo-change {
   margin: var(--sp-4) 0 0;

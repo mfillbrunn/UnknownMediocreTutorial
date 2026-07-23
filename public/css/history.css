@@ -677,7 +677,7 @@ body.hide-constraints .constraint-row {
   font-weight: 800;
   color: var(--setter-color);
 }
-.match-header h2:has(+ .timeout-note) {
+.match-header:has(.timeout-note) h2 {
   color: var(--setter-color);
 }
 .timeout-summary {
