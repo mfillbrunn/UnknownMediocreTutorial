@@ -104,6 +104,10 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
   // already reflects completion.
   if (source === "quest") {
     toast(`Quest complete! ${letter.toUpperCase()} revealed in position ${index + 1}.`);
+    // Draw the eye to the quest badge itself the instant the reveal
+    // lands, since the quiet toast above (deliberately not the big
+    // splash -- see the comment above this handler) is easy to miss.
+    window.shake?.(document.querySelector(".badge-quest"));
     return;
   }
 
