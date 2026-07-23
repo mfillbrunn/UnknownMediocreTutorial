@@ -7,6 +7,14 @@ let tutorialWaitingFor = null;    // { type: "guess", round } or { type: "setSec
 let tutorialCollapsed = false;
 let tutorialContinueMode = "advance";
 
+// STAGE "power" only (see runPowerTutorial* below): guards against
+// re-firing a one-shot side effect (pre-filling the guesser's draft,
+// sending the teaching->receiving skip action) on every re-render of the
+// same seeded round/substep, not just the first. Reset alongside the
+// other per-round tutorial state whenever state.history.length changes.
+let powerTutorialDraftPrefilled = false;
+let powerTutorialSkipSent = false;
+
 function qs(sel) { return document.querySelector(sel); }
 function byId(id) { return document.getElementById(id); }
 
@@ -44,6 +52,13 @@ function updateActionBadge() {
   }
   else if (waitingType === "setSecret" && word) {
     label = `ENTER ${word}`;
+  }
+  // No specific scripted word to call out (e.g. the per-power "Try it"
+  // tutorial's pre-filled draft, submitted as-is) -- a plain "SUBMIT" beats
+  // the generic "ACTION" fallback below without inventing a word nobody
+  // actually needs to type.
+  else if (waitingType === "guess" || waitingType === "setSecret") {
+    label = "SUBMIT";
   }
   else if (waitingType === "power") {
     const meta = window.POWER_METADATA?.[tutorialWaitingFor.powerId];
@@ -305,6 +320,8 @@ const isSetter  = role === "setter";
     lastTutorialRound = round;
     tutorialSubStep = 0;
     tutorialWaitingFor = null;
+    powerTutorialDraftPrefilled = false;
+    powerTutorialSkipSent = false;
     clearHighlights();
   }
   if (state.gameOverView==="round" && state.phase === "gameOver"){
@@ -729,17 +746,33 @@ function runSetterTutorial(state, role) {
 
 // ==========================================================
 // STAGE "power": the per-power "Try it" tutorial (Power Library "?"
-// buttons). Round 1 has the human use the power themselves in its native
-// role ("teaching"); round 2, after the normal end-of-round role swap,
-// has the AI use the SAME power against the human instead ("receiving")
-// -- see tutorialMode.js's onLobbyReady/onRoundEnd and runAI.js's
-// maybeUsePower for the server-side half of this. Which of the two is
-// showing is just role === the power's own role, since roles genuinely
-// swap between the rounds -- no need to track round index separately.
-// Word sequencing here mirrors tutorialMode.js's initMatch exactly; see
-// its comment for why round 2 needs one extra non-winning turn that
-// round 1 doesn't.
+// buttons). Drops straight into a mid-match scenario instead of scripting
+// a full game from scratch -- two rounds already in the history, one live
+// turn ready to go (see tutorialMode.js's seedPowerTutorialRound for the
+// server half of this). Round 1 has the human use the power themselves in
+// its native role ("teaching"); round 2, after a role swap the tutorial
+// itself triggers (TUTORIAL_SKIP_TO_RECEIVING, once the teaching side's
+// one demonstrated exchange is done), has the AI use the SAME power
+// against the human instead ("receiving") -- see runAI.js's maybeUsePower
+// for the server-side half of that. Which of the two is showing is just
+// role === the power's own role, since roles genuinely swap between the
+// rounds -- no need to track round index separately.
 // ==========================================================
+const POWER_TUTORIAL_SEED_ROUND = 2; // matches seedPowerTutorialRound's 2 fabricated history rows
+const POWER_TUTORIAL_GUESSER_DRAFT = "SNORE";
+
+// Pre-fills the guesser's draft with a real, submittable word so their
+// only remaining action is ENTER -- once per seeded round (guarded by
+// powerTutorialDraftPrefilled, reset alongside the rest of the per-round
+// tutorial state in tutorialSteps), not on every re-render of the same
+// substep, which would otherwise stomp anything the player had already
+// started editing.
+function prefillPowerTutorialGuesserDraft() {
+  if (powerTutorialDraftPrefilled) return;
+  powerTutorialDraftPrefilled = true;
+  window.setGuesserDraft?.(POWER_TUTORIAL_GUESSER_DRAFT);
+}
+
 function runPowerTutorial(state, role) {
   const round = state.history?.length ?? 0;
   clearHighlights();
@@ -759,7 +792,7 @@ function runPowerTutorial(state, role) {
 function runPowerTutorialTeaching(state, role, meta, powerId, round) {
   const isGuesser = role === "guesser";
 
-  if (round === 0) {
+  if (round === POWER_TUTORIAL_SEED_ROUND) {
     if (tutorialSubStep === 0) {
       showTutorial(
         `${isGuesser ? "🔎" : "🕵️"} Let's try out ${meta.emoji || ""} ${meta.label}. ${meta.desc}`,
@@ -781,45 +814,17 @@ function runPowerTutorialTeaching(state, role, meta, powerId, round) {
       return;
     }
     if (tutorialSubStep === (isGuesser ? 2 : 1)) {
-      const word = isGuesser ? (state.tutorialGuesses?.[0] || "CHAMP") : state.tutorialSecrets?.[0];
-      showTutorial(
-        isGuesser
-          ? `First, enter your opening guess. Enter "${word}" and click ENTER.`
-          : `In this first round, enter a secret word — your opponent won't see it. Enter "${word}".`,
-        { enabled: true, mode: "hide" }
-      );
-      tutorialContinueMode = "hide";
-      if (isGuesser) {
-        highlightKeyboardGuesser();
-        waitForGuessSubmission(round);
-      } else {
-        highlightKeyboardSetter();
-        waitForSecretSubmission(round);
-      }
-      return;
-    }
-    hideTutorial();
-    return;
-  }
-
-  if (round === 1) {
-    if (tutorialSubStep === 0) {
-      showTutorial(
-        `Now let's use it. Tap "${meta.label}" to activate it.`,
-        { enabled: false }
-      );
+      if (isGuesser) prefillPowerTutorialGuesserDraft();
+      showTutorial(`Tap "${meta.label}" to activate it.`, { enabled: false });
       highlightPowerButtonByText(meta.label);
       tutorialContinueMode = "hide";
       waitForPowerUse(powerId);
       return;
     }
-    if (tutorialSubStep === 1) {
-      const word = isGuesser ? (state.tutorialGuesses?.[1] || "CUMIN") : state.tutorialSecrets?.[1];
+    if (tutorialSubStep === (isGuesser ? 3 : 2)) {
       showTutorial(
-        isGuesser
-          ? `Nice — now enter your second guess: "${word}".`
-          : `Nice — now lock in your new secret: "${word}".`,
-        { enabled: true, mode: "hide" }
+        isGuesser ? "Now submit your guess." : "Now submit to lock it in.",
+        { enabled: false }
       );
       tutorialContinueMode = "hide";
       if (isGuesser) {
@@ -835,16 +840,22 @@ function runPowerTutorialTeaching(state, role, meta, powerId, round) {
     return;
   }
 
-  if (round === 2) {
-    if (tutorialSubStep === 0) {
+  if (round === POWER_TUTORIAL_SEED_ROUND + 1) {
+    // The seeded round is deliberately left unscripted after this one
+    // exchange -- nothing guarantees a real win to trigger the normal
+    // role-swap on its own, so trigger it directly instead of scripting
+    // (or waiting out) one. See normal.js's TUTORIAL_SKIP_TO_RECEIVING
+    // handler.
+    if (!powerTutorialSkipSent) {
+      powerTutorialSkipSent = true;
       showTutorial(
-        `That's ${meta.label} from your side! In a moment your roles will swap and you'll see what it's like on the RECEIVING end.`,
-        { enabled: true, mode: "hide" }
+        `That's ${meta.label} from your side! Switching to the RECEIVING end now, so you can see what it looks like from there.`,
+        { enabled: false }
       );
       tutorialContinueMode = "hide";
+      sendGameAction({ type: "TUTORIAL_SKIP_TO_RECEIVING" });
       return;
     }
-    hideTutorial();
     return;
   }
 
@@ -854,96 +865,69 @@ function runPowerTutorialTeaching(state, role, meta, powerId, round) {
 function runPowerTutorialReceiving(state, role, meta, powerId, round) {
   const isGuesser = role === "guesser";
 
-  if (round === 0) {
-    if (tutorialSubStep === 0) {
-      showTutorial(
-        `🔄 Roles just swapped! Now watch what it's like when your opponent uses ${meta.emoji || ""} ${meta.label} against YOU.`,
-        { enabled: true }
-      );
-      tutorialContinueMode = "advance";
+  if (round === POWER_TUTORIAL_SEED_ROUND) {
+    // Setter power: the guess the human is about to submit is real (the
+    // setter -- the AI, who now holds the power -- reacts to it for
+    // real right after), so there's nothing to wait on before letting
+    // them submit.
+    if (isGuesser) {
+      if (tutorialSubStep === 0) {
+        showTutorial(
+          `🔄 Roles just swapped! Now watch what it's like when your opponent uses ${meta.emoji || ""} ${meta.label} against YOU.`,
+          { enabled: true }
+        );
+        tutorialContinueMode = "advance";
+        return;
+      }
+      if (tutorialSubStep === 1) {
+        showTutorial(
+          `💡 One more thing: as the Inspector, you also always have a Quest active — a visible challenge shown next to your powers that rewards a free green letter when completed. Check the Powers screen any time for the full list and example words.`,
+          { enabled: true }
+        );
+        tutorialContinueMode = "advance";
+        return;
+      }
+      if (tutorialSubStep === 2) {
+        prefillPowerTutorialGuesserDraft();
+        showTutorial(`Submit your guess.`, { enabled: false });
+        highlightKeyboardGuesser();
+        tutorialContinueMode = "hide";
+        waitForGuessSubmission(round);
+        return;
+      }
+      hideTutorial();
       return;
     }
-    if (isGuesser && tutorialSubStep === 1) {
+
+    // Guesser power: the AI holds it now, and has to genuinely use it and
+    // submit a guess before there's anything for the human (setter) to
+    // react to -- no button of the human's own to tap here, just a beat
+    // of watching before their own (now unscripted) reaction closes out
+    // the round.
+    if (!state.pendingGuess) {
       showTutorial(
-        `💡 One more thing: as the Inspector, you also always have a Quest active — a visible challenge shown next to your powers that rewards a free green letter when completed. Check the Powers screen any time for the full list and example words.`,
-        { enabled: true }
-      );
-      tutorialContinueMode = "advance";
-      return;
-    }
-    if (tutorialSubStep === (isGuesser ? 2 : 1)) {
-      const word = isGuesser ? (state.tutorialGuesses?.[0] || "CHAMP") : state.tutorialSecrets?.[0];
-      showTutorial(
-        isGuesser
-          ? `Enter your opening guess: "${word}".`
-          : `Enter your opening secret: "${word}".`,
-        { enabled: true, mode: "hide" }
+        `🔄 Roles just swapped! Watch what happens when your opponent uses ${meta.emoji || ""} ${meta.label} against you...`,
+        { enabled: false }
       );
       tutorialContinueMode = "hide";
-      if (isGuesser) {
-        highlightKeyboardGuesser();
-        waitForGuessSubmission(round);
-      } else {
-        highlightKeyboardSetter();
-        waitForSecretSubmission(round);
-      }
       return;
     }
-    hideTutorial();
+    showTutorial(
+      `⚡ Your opponent just used ${meta.label}! React normally to finish the round.`,
+      { enabled: false }
+    );
+    tutorialContinueMode = "hide";
+    highlightSetterHistory();
     return;
   }
 
-  if (round === 1) {
-    // A throwaway probe (guesser-power case) or a plain Keep reaction
-    // (setter-power case) -- just enough to give the AI a real turn to
-    // fire the power on before the actual win a round later. Deliberately
-    // NOT using waitForGuessSubmission/waitForSecretSubmission here: their
-    // badge auto-derives from tutorialGuesses/tutorialSecrets indexed by
-    // round, which at this index points at round 2's later WINNING word,
-    // not this throwaway one -- showing that word early would be
-    // confusing. The round/substep reset once history.length genuinely
-    // changes is what advances this regardless.
-    if (tutorialSubStep === 0) {
-      if (isGuesser) {
-        const word = state.tutorialGuesses?.[1] || "SNORE";
-        showTutorial(`Enter one more guess: "${word}".`, { enabled: true, mode: "hide" });
-        highlightKeyboardGuesser();
-      } else {
-        showTutorial(`Your opponent just guessed — click "Keep" to keep your secret for now.`, { enabled: true, mode: "hide" });
-        highlightSetterHistory();
-      }
-      tutorialContinueMode = "hide";
-      return;
-    }
-    hideTutorial();
-    return;
-  }
-
-  if (round === 2) {
+  if (round === POWER_TUTORIAL_SEED_ROUND + 1) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `⚡ There it is — your opponent just used ${meta.label}!`,
+        `⚡ That's ${meta.label} in action! You've now seen it from both sides.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
-      return;
-    }
-    if (tutorialSubStep === 1) {
-      const word = isGuesser ? (state.tutorialGuesses?.[2] || "CUMIN") : state.tutorialSecrets?.[1];
-      showTutorial(
-        isGuesser
-          ? `Now finish it off — enter "${word}".`
-          : `Now finish it off — lock in "${word}".`,
-        { enabled: true, mode: "hide" }
-      );
-      tutorialContinueMode = "hide";
-      if (isGuesser) {
-        highlightKeyboardGuesser();
-        waitForGuessSubmission(round);
-      } else {
-        highlightKeyboardSetter();
-        waitForSecretSubmission(round);
-      }
       return;
     }
     hideTutorial();

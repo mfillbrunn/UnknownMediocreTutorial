@@ -76,6 +76,15 @@ function advanceToNextRound(room, state, roomId, context) {
   state.gameOverView = "match";
   state.canNextRound = false;
 
+  // The per-power "Try it" tutorial seeds round 2 with a mid-match
+  // scenario (see TutorialMode.seedPowerTutorialRound) instead of
+  // starting fresh -- has to run after resetRoundState above, which would
+  // otherwise wipe out anything seeded any earlier (e.g. from onNextRound
+  // itself). Overrides state.phase (to "normal") and possibly state.turn
+  // on top of the defaults just set above; a no-op for every other mode/
+  // stage.
+  state.mode?.afterRoundReset?.(state);
+
   if (state.timeControl?.enabled) {
     state.paused = false;
     state.isTimerRunning = false;
@@ -85,6 +94,22 @@ function advanceToNextRound(room, state, roomId, context) {
 
   emitLobbyEvent(io, roomId, { type: "hideLobby" });
   emitRoomState(roomId, room, io);
+
+  // Some seeded scenarios (a guesser-power tutorial's receiving side) put
+  // the AI on the move the instant this round starts, before any human
+  // action exists to trigger the usual "run the AI ~1s after a player
+  // acts" path (see socketHandlers.js's gameAction handler) -- without an
+  // explicit kick here, the AI watchdog interval would still catch it, but
+  // only after up to several seconds of the screen looking frozen.
+  if (state.turn && state.players?.[state.turn]?.isAI) {
+    setTimeout(() => {
+      try {
+        context.maybeRunAI?.(room, roomId, context);
+      } catch (err) {
+        console.error("maybeRunAI crashed after round transition:", err);
+      }
+    }, 800);
+  }
 }
 
 module.exports = { advanceToNextRound };

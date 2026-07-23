@@ -451,9 +451,18 @@ onStateUpdate(newState => {
   myUserId() === state.setter &&
   ((state.phase === "normal" && state.turn === state.setter && !!state.pendingGuess) ||
    (state.phase === "simultaneous" && !state.secret && !state.simultaneousSecretSubmitted));
-  if (setterCanEdit) {
+  // history.length unchanged means this broadcast is still about the same
+  // decision as before -- keep whatever the player was already typing
+  // instead of snapping back to the (now stale) copy this broadcast
+  // carries. A genuinely new turn/round (history.length changed) always
+  // trusts the fresh broadcast instead, which matters when the server
+  // itself pre-fills the draft (e.g. a "Try it" power tutorial seeding a
+  // mid-match scenario) -- carrying over a leftover local value would
+  // silently overwrite that pre-fill.
+  const stillSameDecision = (state.history?.length ?? 0) === prevHistoryLen;
+  if (setterCanEdit && stillSameDecision) {
     state.setterDraft = prevSetterDraft;
-  } else {
+  } else if (!setterCanEdit) {
     state.setterDraft = "";
     // Locks are only meant to survive repeated rejections within the same
     // decision turn -- once that turn actually ends, stale locks from it

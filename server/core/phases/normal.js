@@ -3,6 +3,7 @@ const { checkSecret, checkGuess } = require("../../game-engine/validation");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
 const POWER_METADATA = require("../../powers/powerMetadata");
 const { transitionAfterGuess, transitionAfterSecret, clearRoundState, startForceTimer } = require("../transitions/normalTransitions");
+const { advanceToNextRound } = require("../transitions/nextRoundTransition");
 const { emitRoomState } = require("../rooms");
 const { scoreGuess } = require("../../game-engine/scoring");
 const { clearForceTimer } = require("../../utils/forceTimer");
@@ -16,6 +17,22 @@ function handleNormalPhase(room, state, action, roomId, context) {
   const userId = action.userId;
 
   if (!userId) return;
+
+  // Per-power "Try it" tutorial only: the seeded round (see
+  // tutorialMode.js's seedPowerTutorialRound) is deliberately left
+  // unscripted after the one demonstrated exchange, so there's no
+  // guaranteed win to trigger the normal role-swap-into-receiving flow on
+  // its own. tutorial-ui.js sends this the moment it sees that exchange
+  // finish, to move straight into round 2 instead of waiting on (or
+  // scripting) a real win. Reuses the exact same role-swap + reseed path a
+  // genuine round-end takes, just without endGame()'s side effects (score,
+  // elo, DB writes) -- nothing was actually won here.
+  if (action.type === "TUTORIAL_SKIP_TO_RECEIVING") {
+    if (state.isTutorial && state.tutorialStage === "power") {
+      advanceToNextRound(room, state, roomId, context);
+    }
+    return;
+  }
 
   // Concede
   if (action.type === "CONCEDE") {

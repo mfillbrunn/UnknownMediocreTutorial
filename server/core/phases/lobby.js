@@ -573,7 +573,13 @@ if (action.type === "SET_DAILY_POWERS") {
     // the same quest that day too (see dailyConfig.js).
     state.mode.onLobbyReady(state, sP, gP, state._dailyQuestType || undefined);
 
-    state.phase = "simultaneous";
+    // The per-power "Try it" tutorial's onLobbyReady above already seeded a
+    // mid-match scenario (state.phase = "normal", a turn already assigned)
+    // via TutorialMode.seedPowerTutorialRound -- don't stomp that back to
+    // the fresh-game default below.
+    if (state.tutorialStage !== "power") {
+      state.phase = "simultaneous";
+    }
 
     if (state.timeControl?.enabled) {
       resetRoundTimer(state);
@@ -585,6 +591,19 @@ if (action.type === "SET_DAILY_POWERS") {
     emitLobbyEvent(io, roomId, { type: "hideLobby" });
     emitRoomState(roomId, room, io);
     io.to(roomId).emit("gameStart");
+
+    // See nextRoundTransition.js's matching comment: a seeded scenario can
+    // put the AI on the move (or reacting) before any human action exists
+    // to trigger the usual post-action AI kick.
+    if (state.tutorialStage === "power" && state.turn && state.players?.[state.turn]?.isAI) {
+      setTimeout(() => {
+        try {
+          context.maybeRunAI?.(room, roomId, context);
+        } catch (err) {
+          console.error("maybeRunAI crashed after tutorial power lobby ready:", err);
+        }
+      }, 800);
+    }
     return;
   }
 }

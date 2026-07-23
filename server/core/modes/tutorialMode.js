@@ -1,4 +1,5 @@
 const powerMetadata = require("../../powers/powerMetadata");
+const { scoreGuess } = require("../../game-engine/scoring");
 
 class TutorialMode {
   constructor() {
@@ -79,38 +80,19 @@ class TutorialMode {
     // maybeUsePower forces this the instant the AI's current role matches
     // the power's role, which only becomes true post-swap.
     //
-    // Word sequencing (traced against the real win-condition timing --
-    // a guess only wins once the SETTER's reaction to it is committed,
-    // scored against whatever secret they end up choosing):
-    //   - Round 1 (teaching): the human's own second action (their real
-    //     use of the power, plus a scripted follow-up word) wins the
-    //     round immediately -- there's no opposing reaction turn to leave
-    //     room for, since the AI's blind opener already stood as its one
-    //     move for that exchange.
-    //   - Round 2 (receiving): the AI now holds the power and needs an
-    //     actual turn to fire it on before the round can end, so the
-    //     human's own second scripted word is a deliberate non-winner
-    //     (SNORE / the AI's throwaway guess "BLIND") that just asks them
-    //     to keep going normally -- the win comes on the THIRD action
-    //     instead, once the AI's power-use turn has already happened.
-    //     scriptedTurns is bumped to 3 to cover that extra round-2 turn.
+    // Unlike the other stages, this one doesn't script a match from
+    // scratch -- seedPowerTutorialRound (called from onLobbyReady below,
+    // and again from onNextRound after the round-2 role swap) drops the
+    // player straight into a mid-match scenario instead, so there are no
+    // scripted opening words to sequence here. scriptedTurns = 0 means the
+    // scripted-word gates in validation.js/client.js (which only apply
+    // while history.length < scriptedTurns) never engage -- the seeded
+    // history already starts past that threshold.
     if (state.tutorialStage === "power" && state.tutorialPowerId) {
       const role = powerMetadata[state.tutorialPowerId]?.role === "setter" ? "setter" : "guesser";
       state.tutorialPowerGuesser = role === "guesser" ? state.tutorialPowerId : null;
       state.tutorialPowerSetter = role === "setter" ? state.tutorialPowerId : null;
-      state.scriptedTurns = 3;
-
-      if (role === "guesser") {
-        state.tutorialGuesses = ["CHAMP", "CUMIN"];
-        // SALAD (not BLIND) as the throwaway probe: it scores identically
-        // against BLIMP and LEMUR, so keeping BLIMP in response to it
-        // doesn't lock in a feedback pattern (e.g. BLIND's 3 greens on
-        // B/L/I) that would make switching to LEMUR next turn invalid.
-        state.tutorialGuessesAI = ["SMALL", "SALAD", "LEMUR"];
-      } else {
-        state.tutorialGuessesAI = ["SMALL", "LEMUR"];
-        state.tutorialGuesses = ["CHAMP", "SNORE", "CUMIN"];
-      }
+      state.scriptedTurns = 0;
     }
 
     state.timeControl.enabled = false;
@@ -132,6 +114,10 @@ class TutorialMode {
       const gP = state.tutorialPowerGuesser ? [state.tutorialPowerGuesser] : [];
       state.initialPowers = { setter: sP, guesser: gP };
       state.activePowers = [...sP, ...gP];
+      // Round 1 always has the human playing the power's own role (see
+      // lobby.js's tutorialPower launch flow, which force-swaps them into
+      // it before readying up) -- teaching: true.
+      this.seedPowerTutorialRound(state, { teaching: true });
       return;
     }
 
@@ -142,6 +128,70 @@ class TutorialMode {
     };
     state.activePowers = [];
   }
+
+  // Drops the "Try it" power tutorial straight into a mid-match scenario
+  // -- two already-scored rounds already sitting in state.history, one
+  // live turn ready to go -- instead of scripting an entire match from
+  // scratch just to reach the one moment this tutorial actually cares
+  // about. Called for round 1 (teaching, from onLobbyReady above) and
+  // again for round 2 (receiving, from nextRoundTransition.js's
+  // afterRoundReset hook below, which runs AFTER resetRoundState --
+  // calling this any earlier would just get wiped out by that reset).
+  seedPowerTutorialRound(state, { teaching }) {
+    if (state.tutorialStage !== "power" || !state.tutorialPowerId) return;
+
+    const powerRole = powerMetadata[state.tutorialPowerId]?.role === "setter" ? "setter" : "guesser";
+
+    // Both scored for real against the same secret, so they're
+    // automatically self-consistent with each other and with whatever
+    // gets submitted next -- no separate consistency bookkeeping needed.
+    const secret = "BLIMP";
+    state.secret = secret;
+    state.history = ["CHAMP", "CAIRN"].map((guess, i) => {
+      const fb = scoreGuess(secret, guess);
+      return {
+        guess,
+        fb,
+        fbGuesser: [...fb],
+        extraInfo: null,
+        finalSecret: secret,
+        roundIndex: i,
+        powerEvents: [],
+        fakeFeedback: null
+      };
+    });
+    state.phase = "normal";
+
+    // Only one combination lets the "prior" guesser move be faked
+    // outright: teaching a SETTER power, where the guess the human is
+    // about to react to doesn't need to have genuinely invoked anything
+    // -- it's just context for their own upcoming power use. Every other
+    // combination needs a REAL guesser move next (human or AI) so that
+    // whoever actually holds the power fires it for real and picks up its
+    // real effects/flags (e.g. Break Cover's feasible-word list), instead
+    // of the tutorial pretending that already happened.
+    if (teaching && powerRole === "setter") {
+      state.turn = state.setter;
+      state.pendingGuess = "SMALL";
+      // Pre-filled with the running secret so submitting it is one
+      // keystroke (ENTER) -- resubmitting the same word as "new" is
+      // functionally identical to keeping it, just via the visible,
+      // discoverable draft row instead of the empty-draft "keep"
+      // shortcut.
+      state.setterDraft = secret;
+    } else {
+      state.turn = state.guesser;
+      state.pendingGuess = "";
+    }
+  }
+
+  // Called by nextRoundTransition.js right after it resets round-scoped
+  // state for round 2 (which would otherwise wipe anything seeded here).
+  afterRoundReset(state) {
+    if (state.tutorialStage !== "power") return;
+    this.seedPowerTutorialRound(state, { teaching: false });
+  }
+
     onRoundEnd(state) {
     // Stage 2 (the "Tutorial: Powers" follow-up) and stage "power" (the
     // per-power "Try it" tutorial): the round-summary screen was already
