@@ -44,7 +44,7 @@ window.QUEST_METADATA = {
   },
   CHAIN: {
     label: "Word Chain",
-    desc: "Submit guesses that each start with the last letter of your previous guess.",
+    desc: "Submit 3 guesses that each start with the last letter of your previous guess.",
     emoji: "🔗",
     color: "#16A34A",
     examples: ["TOWER", "RADIO", "OCEAN"]
