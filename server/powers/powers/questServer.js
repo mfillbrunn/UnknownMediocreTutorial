@@ -58,7 +58,7 @@ const QUEST_THRESHOLDS = {
   ROW: 1, // "complete any one row" -- see rowsCompleted() below, not a plain count
   ALPHA: 3,
   DOUBLES: 3,
-  CHAIN: 2,
+  CHAIN: 3,
   HARDMODE: 4,
   FIELDREPORT: 8,
   ALTERNATING: 3,
