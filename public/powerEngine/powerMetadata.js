@@ -25,7 +25,7 @@ window.POWER_METADATA = {
   },
   fakeFeedback: {
     label: "Falsify Intel",
-    desc: "The Inspector will see two feedbacks—one real, one fabricated.",
+    desc: "The Inspector will see two feedbacks — one real, one fabricated.",
     short: "Inspector sees one real and one fake feedback.",
     icon: "mask",
     emoji: "🎭",
@@ -88,7 +88,7 @@ window.POWER_METADATA = {
 
   hideTile: {
     label: "Hide Evidence",
-    desc: "Tap a tile in the pending guess to erase its feedback for that round — the result at that position is gone for both sides, not shown to either.",
+    desc: "Tap a tile in the pending guess to reset that letter and hide the feedback this round.",
     short: "Pick a tile whose feedback is erased for both sides.",
     icon: "hidden-tile",
     emoji: "⬛",
@@ -106,7 +106,7 @@ window.POWER_METADATA = {
 
   revealGreen: {
     label: "Leak Info",
-    desc: "Reveal one letter of the current secret—the spy may still change it.",
+    desc: "Reveal one letter of the current secret — the spy may still change it.",
     short: "Reveals one letter's position in the secret.",
     icon: "peek-letter",
     emoji: "👁️",
@@ -115,8 +115,8 @@ window.POWER_METADATA = {
 
   revealHistory: {
     label: "Solve Cold Case",
-    desc: "Reveals a secret from several rounds ago. Can only be used after 3 rounds.",
-    short: "Reveals a secret from several rounds ago.",
+    desc: "Reveals a secret from three rounds ago.",
+    short: "Reveals a secret from three rounds ago.",
     icon: "rewind",
     emoji: "⏪",
     color: "#64748B"
@@ -193,7 +193,7 @@ window.POWER_METADATA = {
 
   vowelRefresh: {
     label: "Signal Refresh",
-    desc: "Reset all vowels used in the last round if they were unused before.",
+    desc: "Reset all vowels used in the last round but only if they were unused before.",
     short: "Resets last round's previously-unused vowels.",
     icon: "vowel-cycle",
     emoji: "🔁",
@@ -211,7 +211,7 @@ window.POWER_METADATA = {
   revealPenalty: {
     label: "Marked Weakness",
     desc: "Claim an unknown letter is in the secret. If the Inspector accepts, the Spy scores 1 point. If they call it a bluff and the claim was true, the Spy scores 2 points. If it really was a bluff, the Inspector gets a free yellow letter instead.",
-    short: "Claim a letter is in the secret -- the Inspector can accept it or call your bluff.",
+    short: "Claim a letter is in the secret - the Inspector can accept it or call your bluff.",
     icon: "warning",
     emoji: "⚠️",
     color: "#B45309"
@@ -236,7 +236,7 @@ window.POWER_METADATA = {
 
   wiretap: {
     label: "Wiretap",
-    desc: "Always see how many possible secrets are still left — the same count the Spy sees — at the start of each turn. In blitz & bullet games you can also tap it once a round to make that count update live as you type, so you can home in on the secret. No live tap in longer games.",
+    desc: "Always see how many possible secrets are still left — the same count the Spy sees — at the start of each turn. In blitz & bullet games you can also tap it once a round to make that count update live as you type.",
     short: "See the same remaining-secrets count the Spy sees.",
     icon: "headphones",
     emoji: "🎧",
@@ -254,7 +254,7 @@ window.POWER_METADATA = {
 
   revealLocation: {
     label: "Informant",
-    desc: "An informant peeks one unknown position and shows you the letter that's there right now. That position stays fixed until you confirm it green yourself — then the informant moves on to another unknown spot. No activation needed.",
+    desc: "An informant peeks one unknown position and shows you the letter that's there right now. That position stays fixed until you confirm it green yourself — then the informant moves on to another unknown spot.",
     short: "Passively reveals the letter at one unknown position.",
     icon: "flashlight",
     emoji: "🔦",
@@ -263,7 +263,7 @@ window.POWER_METADATA = {
 
   doubleGuess: {
     label: "Double Tap",
-    desc: "Fire two guesses at once against the same secret. The Spy sees only one of them (chosen at random) but knows you used the power. You get the feedback for both. If either is the secret, you win the round.",
+    desc: "Fire two guesses at once against the same secret. The Spy sees only one of them (chosen at random). You get feedback for both.",
     short: "Submit two guesses at once and get feedback on both.",
     icon: "double-tap",
     emoji: "🔫",
@@ -272,7 +272,7 @@ window.POWER_METADATA = {
 
   letterProfile: {
     label: "Letter Profile",
-    desc: "From the start of the match, one category is randomly chosen and shown to both sides — alphabet half (A–M / N–Z), keyboard row (top / home / bottom), or vowel vs. consonant. You always see how the secret's letters break down across it: for the Spy it updates live while drafting; for you it's revealed once you're on the clock each turn. No activation needed.",
+    desc: "From the start of the match, one category is randomly chosen and always shown to both sides — alphabet half (A–M / N–Z), keyboard row (top / home / bottom), or vowel vs. consonant.",
     short: "Shows how the secret's letters break down by category.",
     icon: "bar-chart",
     emoji: "📊",
@@ -281,7 +281,7 @@ window.POWER_METADATA = {
 
   delayedIntel: {
     label: "Delayed Intel",
-    desc: "One-time use. Delay this round's feedback — the Inspector won't see the result until they've submitted their next guess. A correct guess still wins instantly no matter what's been revealed yet — this only affects what the Inspector gets to see.",
+    desc: "Delay a round's feedback and the Inspector won't see the result until they've submitted their next guess.",
     short: "Delays this round's feedback until the Inspector's next guess.",
     icon: "clock-delay",
     emoji: "🕰️",
@@ -290,7 +290,7 @@ window.POWER_METADATA = {
 
   letterLockout: {
     label: "Letter Lockout",
-    desc: "Active from the start. On each of your turns (once the simultaneous round is over), you may ban one letter you haven't banned before — the Inspector's next guess cannot contain it. Only one letter is locked out at a time. Once every letter has been used, the power simply has nothing left to ban.",
+    desc: "Active from the start. On each of your turns, you may ban one letter you haven't banned before — the Inspector's next guess cannot contain it.",
     short: "Ban one letter from the Inspector's next guess.",
     icon: "letter-ban",
     emoji: "🚫",
