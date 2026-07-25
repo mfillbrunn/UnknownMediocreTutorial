@@ -383,15 +383,19 @@ if (guesserEntries.length) {
   // ----------------------------
   // Actions (bottom, below the round details)
   // ----------------------------
+  // Daily Challenge is a once-a-day, fixed-setup event -- New Match and
+  // Replay don't apply (there's nothing to re-roll or replay into), so only
+  // offer Leave (back to the menu, where the day's result/rankings live).
+  const isDaily = !!state.isDaily;
   html += `
     ${tutorial2Cta}
     <div class="summary-actions">
-      <button id="newMatchBtn" class="primary-btn">
+      ${isDaily ? "" : `<button id="newMatchBtn" class="primary-btn">
         New Match
       </button>
       <button id="replayMatchBtn" class="secondary-btn">
         Replay
-      </button>
+      </button>`}
       <button id="leaveSummaryBtn" class="secondary-btn danger">
         Leave
       </button>
