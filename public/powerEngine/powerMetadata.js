@@ -1,32 +1,32 @@
 window.POWER_METADATA = {
   confuseColors: {
     label: "Jam Signals",
-    desc: "Turn all green and yellow feedback blue for one round.",
-    short: "Green/yellow feedback turns blue for a round.",
+    desc: "For one round, every green and yellow tile turns blue instead. The Inspector can't tell the colors apart!",
+    short: "Green and yellow tiles turn blue for one round.",
     icon: "palette-swap",
     emoji: "📡",
     color: "#3B82F6"
   },
   betMiss: {
     label: "Risky Maneuver",
-    desc: "The Inspector makes a bet on how many misses the next guess will have; if correct, they get rewarded with a green letter.",
-    short: "Bet on your miss count for a free green letter.",
+    desc: "The Inspector guesses how many misses their next try will have. Guess it right, and they win a free green letter!",
+    short: "Guess your miss count right to win a free green letter.",
     icon: "casino",
     emoji: "🎯",
     color: "#F59E0B"
   },
   fieldReport: {
     label: "Field Report",
-    desc: "Reveals 3 conditions for your next guess. Meet 2 of 3 for a free yellow letter; meet all 3 for a free green letter.",
-    short: "Meet hidden conditions for a free yellow or green letter.",
+    desc: "Shows 3 secret rules for your next guess. Follow 2 of them for a free yellow letter, or all 3 for a free green letter!",
+    short: "Follow secret rules to win a free yellow or green letter.",
     icon: "clipboard",
     emoji: "📋",
     color: "#0EA5E9"
   },
   fakeFeedback: {
     label: "Falsify Intel",
-    desc: "The Inspector will see two feedbacks — one real, one fabricated.",
-    short: "Inspector sees one real and one fake feedback.",
+    desc: "The Inspector sees two answers for their guess — one is true and one is made up. They have to figure out which is which!",
+    short: "The Inspector sees one true answer and one fake one.",
     icon: "mask",
     emoji: "🎭",
     color: "#6B7280"
@@ -34,8 +34,8 @@ window.POWER_METADATA = {
 
   countOnly: {
     label: "Redact Report",
-    desc: "Redact the positions and show only only the total number of greens and yellows.",
-    short: "Feedback shown only as green/yellow totals, no positions.",
+    desc: "Hides where the green and yellow tiles are. The Inspector only learns how many greens and yellows they got, not which letters.",
+    short: "Shows only how many greens and yellows — not where they are.",
     icon: "tally",
     emoji: "📄",
     color: "#6B7280"
@@ -43,8 +43,8 @@ window.POWER_METADATA = {
 
   rouletteSecret: {
     label: "Break Cover",
-    desc: "The spy's next secret is randomly selected.",
-    short: "The Spy's next secret is picked at random.",
+    desc: "Picks the Spy's next secret word for them at random. They don't get to choose it!",
+    short: "Randomly picks the Spy's next secret word.",
     icon: "roulette",
     emoji: "🎰",
     color: "#6B7280"
@@ -52,7 +52,7 @@ window.POWER_METADATA = {
 
   nonsense: {
     label: "Signal Scramble",
-    desc: "This round’s guess does not need to be a real word.",
+    desc: "This round, the guess doesn't have to be a real word. Any 5 letters will work!",
     short: "This round's guess doesn't need to be a real word.",
     icon: "shuffle",
     emoji: "🌀",
@@ -61,8 +61,8 @@ window.POWER_METADATA = {
 
   forceGuess: {
     label: "Force a Move",
-    desc: "Force the next guess to follow one of three randomly chosen restrictions.",
-    short: "Forces a random restriction on the next guess.",
+    desc: "Picks one surprise rule that the next guess has to follow.",
+    short: "Adds one surprise rule to the next guess.",
     icon: "lock-input",
     emoji: "🔒",
     color: "#F97316"
@@ -70,7 +70,7 @@ window.POWER_METADATA = {
 
   forceTimer: {
     label: "Time Pressure",
-    desc: "The Inspector has only a short time to submit their next guess. If time runs out, their last guess is resubmitted automatically.",
+    desc: "Gives the Inspector only a little time to make their next guess. If time runs out, their old guess gets used again automatically.",
     short: "The Inspector gets only a short time for their next guess.",
     icon: "hourglass",
     emoji: "⏳",
@@ -79,7 +79,7 @@ window.POWER_METADATA = {
 
   freezeSecret: {
     label: "Lockdown",
-    desc: "Prevent the spy from changing the secret next round.",
+    desc: "Stops the Spy from picking a new secret next round. They're stuck with the one they have!",
     short: "The Spy can't change their secret next round.",
     icon: "snowflake",
     emoji: "❄️",
@@ -88,7 +88,7 @@ window.POWER_METADATA = {
 
   hideTile: {
     label: "Hide Evidence",
-    desc: "Tap a tile in the pending guess to reset that letter and hide the feedback this round.",
+    desc: "Tap one tile from the last guess. That letter's clue disappears from every past guess too!",
     short: "Pick a tile; the letter from it is erased from all prior feedback.",
     icon: "hidden-tile",
     emoji: "⬛",
@@ -97,7 +97,7 @@ window.POWER_METADATA = {
 
   magicMode: {
     label: "Inside Job",
-    desc: "Turn each yellow tile next round green.",
+    desc: "Turns every yellow tile into a green tile next round!",
     short: "Turns every yellow tile green next round.",
     icon: "wand",
     emoji: "✨",
@@ -106,7 +106,7 @@ window.POWER_METADATA = {
 
   revealGreen: {
     label: "Leak Info",
-    desc: "Reveal one letter of the current secret — the spy may still change it.",
+    desc: "Shows you one letter from the secret word right now. The Spy can still change their secret later, though!",
     short: "Reveals one letter's position in the secret.",
     icon: "peek-letter",
     emoji: "👁️",
@@ -115,7 +115,7 @@ window.POWER_METADATA = {
 
   revealHistory: {
     label: "Solve Cold Case",
-    desc: "Reveals a secret from three rounds ago.",
+    desc: "Shows you what the secret word was three rounds ago.",
     short: "Reveals a secret from three rounds ago.",
     icon: "rewind",
     emoji: "⏪",
@@ -124,7 +124,7 @@ window.POWER_METADATA = {
 
   revealLetter: {
     label: "Confirm Lead",
-    desc: "Earn a guaranteed green letter by meeting one randomly-assigned usage condition:",
+    desc: "Do a special challenge with your guesses to win a free green letter:",
     short: "Complete a hidden challenge for a free green letter.",
     icon: "letter-plus",
     emoji: "🟩",
@@ -133,31 +133,31 @@ window.POWER_METADATA = {
     variants: {
       ROW: {
         label: "Full Sweep",
-        desc: "Reveal a green letter by using every letter in one keyboard row (top, home, or bottom).",
+        desc: "Use every letter from one row of the keyboard (top, middle, or bottom) to win a green letter.",
         icon: "keyboard-row",
         emoji: "⌨️"
       },
       RARE: {
         label: "High-Value Target",
-        desc: "Reveal a rare green letter by using at least 4 of Q, J, X, Z, W, K, V.",
+        desc: "Use at least 4 of these tricky letters — Q, J, X, Z, W, K, V — to win a green letter.",
         icon: "diamond-letter",
         emoji: "💎"
       },
       ALPHA: {
         label: "In Order",
-        desc: "Reveal a green letter by submitting 3 guesses whose letters are in strict alphabetical order (e.g. ABHOR).",
+        desc: "Make 3 guesses whose letters are in ABC order, like ABHOR, to win a green letter.",
         icon: "sort-asc",
         emoji: "🔤"
       },
       DOUBLES: {
         label: "Double Trouble",
-        desc: "Reveal a green letter by submitting 3 guesses with distinct double letters (e.g. SPEED, GLOSS, MAMMY — no repeating the same doubled letter).",
+        desc: "Make 3 guesses that each have two matching letters in a row, like SPEED or GLOSS — just don't repeat the same double letter twice.",
         icon: "twin-letters",
         emoji: "👯"
       },
       CHAIN: {
         label: "Word Chain",
-        desc: "Reveal a green letter by submitting 2 guesses that each start with the last letter of your previous guess.",
+        desc: "Make 2 guesses where the second one starts with the last letter of the first one.",
         icon: "link",
         emoji: "🔗"
       }
@@ -166,7 +166,7 @@ window.POWER_METADATA = {
 
   stealthGuess: {
     label: "Move in Shadows",
-    desc: "Hide the guess from the spy next turn.",
+    desc: "Hides your next guess so the Spy can't see it.",
     short: "Hides your guess from the Spy next turn.",
     icon: "ghost",
     emoji: "👻",
@@ -175,8 +175,8 @@ window.POWER_METADATA = {
 
   suggestGuess: {
     label: "Analyst Tip",
-    desc: "Receive a valid guess that fits all known constraints.",
-    short: "Gives you a valid guess that fits all clues.",
+    desc: "Gives you a good guess that already fits everything you know so far.",
+    short: "Gives you a valid guess that fits all known clues.",
     icon: "lightbulb",
     emoji: "💡",
     color: "#FACC15"
@@ -184,7 +184,7 @@ window.POWER_METADATA = {
 
   suggestSecret: {
     label: "Profiler Insight",
-    desc: "Receive a valid secret consistent with all feedback.",
+    desc: "Gives you a secret word that still fits everything you've told the Inspector so far.",
     short: "Gives you a valid secret that fits all feedback.",
     icon: "brain",
     emoji: "🧠",
@@ -193,7 +193,7 @@ window.POWER_METADATA = {
 
   vowelRefresh: {
     label: "Signal Refresh",
-    desc: "Reset all vowels used in the last round but only if they were unused before.",
+    desc: "Un-marks the vowels from your last guess, but only the ones you hadn't used before.",
     short: "Resets last round's previously-unused vowels.",
     icon: "vowel-cycle",
     emoji: "🔁",
@@ -202,7 +202,7 @@ window.POWER_METADATA = {
 
   blindSpot: {
     label: "Create Dead Zone",
-    desc: "Hide feedback for one tile for the rest of the round.",
+    desc: "Hides the clue for one tile for the rest of the round.",
     short: "Hides one tile's feedback for the rest of the round.",
     icon: "fog",
     emoji: "🌫️",
@@ -210,7 +210,7 @@ window.POWER_METADATA = {
   },
   revealPenalty: {
     label: "Marked Weakness",
-    desc: "Claim an unknown letter is in the secret. If the Inspector accepts, the Spy scores 1 point. If they call it a bluff and the claim was true, the Spy scores 2 points. If it really was a bluff, the Inspector gets a free yellow letter instead.",
+    desc: "Say a letter you think is in the secret. If the Inspector believes you, the Spy gets 1 point. If they call it a bluff but you were right, the Spy gets 2 points instead. If it really was a bluff, the Inspector gets a free yellow letter!",
     short: "Claim a letter is in the secret - the Inspector can accept it or call your bluff.",
     icon: "warning",
     emoji: "⚠️",
@@ -218,7 +218,7 @@ window.POWER_METADATA = {
   },
   assassinWord: {
     label: "Set Kill Phrase",
-    desc: "Choose a word that instantly ends the game if guessed. The earlier it’s planted, the greater the reward—but it can’t be too similar to your secret.",
+    desc: "Pick a secret trap word. If the Inspector ever guesses it, the game ends right away! Plant it early for a bigger reward — but it can't look too much like your real secret.",
     short: "Plant a word that instantly wins the game if guessed.",
     icon: "skull-word",
     emoji: "☠️",
@@ -227,7 +227,7 @@ window.POWER_METADATA = {
 
   blindGuess: {
     label: "Total Blackout",
-    desc: "Hide all feedback and keyboard colors for the next guess.",
+    desc: "Hides all the clues and keyboard colors for your next guess.",
     short: "Hides all feedback and keyboard colors for one guess.",
     icon: "blindfold",
     emoji: "🙈",
@@ -236,7 +236,7 @@ window.POWER_METADATA = {
 
   wiretap: {
     label: "Wiretap",
-    desc: "Always see how many possible secrets are still left — the same count the Spy sees — at the start of each turn. In blitz & bullet games you can also tap it once a round to make that count update live as you type.",
+    desc: "Always shows how many secret words are still possible — the same number the Spy sees. In fast games, you can also tap it once a round to watch that number update live as you type!",
     short: "See the same remaining-secrets count the Spy sees.",
     icon: "headphones",
     emoji: "🎧",
@@ -245,7 +245,7 @@ window.POWER_METADATA = {
 
   letterProbe: {
     label: "Recon Sweep",
-    desc: "Test any 5 letters. You learn only how many of them are in the secret — just the number, not which ones or where.",
+    desc: "Pick any 5 letters to test. You'll only learn how many of them are in the secret — not which ones or where.",
     short: "Test 5 letters, learn how many are in the secret.",
     icon: "radar",
     emoji: "🔎",
@@ -254,7 +254,7 @@ window.POWER_METADATA = {
 
   revealLocation: {
     label: "Informant",
-    desc: "An informant peeks one unknown position and shows you the letter that's there right now. That position stays fixed until you confirm it green yourself — then the informant moves on to another unknown spot.",
+    desc: "A secret helper peeks at one unknown spot and tells you the letter there right now. It keeps watching that spot until you guess it right — then it moves on to a new one!",
     short: "Passively reveals the letter at one unknown position.",
     icon: "flashlight",
     emoji: "🔦",
@@ -263,7 +263,7 @@ window.POWER_METADATA = {
 
   doubleGuess: {
     label: "Double Tap",
-    desc: "Fire two guesses at once against the same secret. The Spy sees only one of them (chosen at random). You get feedback for both.",
+    desc: "Fire two guesses at once at the same secret. The Spy only sees one of them, picked at random — but you get clues back for both!",
     short: "Submit two guesses at once and get feedback on both.",
     icon: "double-tap",
     emoji: "🔫",
@@ -272,7 +272,7 @@ window.POWER_METADATA = {
 
   letterProfile: {
     label: "Letter Profile",
-    desc: "From the start of the match, one category is randomly chosen and always shown to both sides — alphabet half (A–M / N–Z), keyboard row (top / home / bottom), or vowel vs. consonant.",
+    desc: "From the start of the match, both players can always see one fact about the secret's letters — like whether they're A-M or N-Z, which keyboard row they're on, or how many are vowels.",
     short: "Shows how the secret's letters break down by category.",
     icon: "bar-chart",
     emoji: "📊",
@@ -281,7 +281,7 @@ window.POWER_METADATA = {
 
   delayedIntel: {
     label: "Delayed Intel",
-    desc: "Delay a round's feedback and the Inspector won't see the result until they've submitted their next guess.",
+    desc: "Holds back this round's clues. The Inspector won't see them until after their next guess!",
     short: "Delays this round's feedback until the Inspector's next guess.",
     icon: "clock-delay",
     emoji: "🕰️",
@@ -290,7 +290,7 @@ window.POWER_METADATA = {
 
   letterLockout: {
     label: "Letter Lockout",
-    desc: "Active from the start. On each of your turns, you may ban one letter you haven't banned before — the Inspector's next guess cannot contain it.",
+    desc: "Works from the very start. On each of your turns, you can ban one new letter — the Inspector's next guess can't use it!",
     short: "Ban one letter from the Inspector's next guess.",
     icon: "letter-ban",
     emoji: "🚫",
