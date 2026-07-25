@@ -213,6 +213,12 @@ $("applyPowerCountBtn")?.addEventListener("click", () => {
 document.addEventListener("click", e => {
   if (e.target?.closest?.("#newMatchBtn")) {
     resetKeyboards();
+    // NEW_MATCH reuses this same room -- it never goes through clearRoom(),
+    // which is the only other place this normally gets called -- so
+    // without this, transient client-only UI state (an unsubmitted
+    // guesser draft, tutorial highlight rings, cached power-picker state)
+    // from the match that just ended silently carries into the new one.
+    window.resetTransientGameUI?.();
     sendGameAction({ type: "NEW_MATCH" });
   }
 });

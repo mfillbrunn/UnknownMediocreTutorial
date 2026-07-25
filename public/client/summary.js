@@ -417,6 +417,10 @@ if (guesserEntries.length) {
   if (replayBtn) {
     replayBtn.onclick = () => {
       resetKeyboards();
+      // Same reasoning as newMatchBtn in socket-events.js: REPLAY_MATCH
+      // also reuses this room without ever going through clearRoom(), so
+      // transient client-only UI state has to be cleared here explicitly.
+      window.resetTransientGameUI?.();
       sendGameAction({ type: "REPLAY_MATCH" });
     };
   }
