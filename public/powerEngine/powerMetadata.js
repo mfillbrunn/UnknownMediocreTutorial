@@ -89,7 +89,7 @@ window.POWER_METADATA = {
   hideTile: {
     label: "Hide Evidence",
     desc: "Tap a tile in the pending guess to reset that letter and hide the feedback this round.",
-    short: "Pick a tile whose feedback is erased for both sides.",
+    short: "Pick a tile; the letter from it is erased from all prior feedback.",
     icon: "hidden-tile",
     emoji: "⬛",
     color: "#1e1eba"
