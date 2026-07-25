@@ -581,6 +581,23 @@
   border: 1px solid rgba(22,163,74,0.3);
   color: #4ade80;
 }
+/* Tappable pill -- opens the same description popup as an in-game power
+   activation (showPowerPopup), so a player can check what a power/quest
+   does before the match starts. */
+.daily-pill-info {
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+.daily-pill-info:hover {
+  filter: brightness(1.25);
+}
+.daily-pill-info:active {
+  transform: scale(0.96);
+}
+.daily-pill-info-icon {
+  opacity: 0.55;
+  font-size: 12px;
+}
 .daily-ai-label {
   font-size: 16px;
   opacity: 0.6;

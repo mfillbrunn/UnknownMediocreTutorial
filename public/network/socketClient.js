@@ -84,13 +84,26 @@ function actionTypeToPowerId(type) {
     .replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
 
+// Returns whether the action was actually emitted -- callers that
+// optimistically clear local UI state right after sending (a submitted
+// guess/secret draft, most notably) need to know this failed silently
+// rather than assuming it reached the server. Before this returned
+// nothing, a guess typed and submitted during a brief disconnect would
+// get its local draft wiped anyway even though sendGameAction bailed out
+// on the `!socket.connected` check below, so the guess was just lost:
+// the screen looked normal (empty, ready-to-type draft, same as after a
+// real successful submit) but the server never received anything, and
+// the next real submission attempt would fail with a generic "5 letters"
+// error since the "draft" backing it had already been cleared out from
+// under it.
 window.sendGameAction = function (action) {
-  if (!socket.connected) return;
-  if (!window.roomId) return;
-  if (window.isRejoining) return;
+  if (!socket.connected) return false;
+  if (!window.roomId) return false;
+  if (window.isRejoining) return false;
   const tutorialPowerId = actionTypeToPowerId(action.type);
   if (tutorialPowerId) window.notifyTutorialPowerUsed?.(tutorialPowerId);
   socket.emit("gameAction", { action });
+  return true;
 };
 
 // ------------------------------
@@ -345,12 +358,26 @@ function tryAutoRejoin() {
 // ------------------------------
 // CONNECTION LOGS
 // ------------------------------
+// A small, persistent banner (distinct from the transient "Connection
+// lost" toast, and from the disruptive rejoinModal reserved for long
+// absences) -- stays up for as long as the socket is actually down, so a
+// player mid-blip has a standing signal that something's off rather than
+// a message that already scrolled away. Shown on the same deferred timer
+// as the toast (a sub-second blip shows neither), hidden the instant the
+// socket reconnects.
+function setConnectionBannerVisible(visible) {
+  const el = document.getElementById("connectionBanner");
+  if (!el) return;
+  el.hidden = !visible;
+}
+
 socket.on("connect", () => {
   console.log("🔌 Connected");
   window.socketReady = true;
   // A blip that recovered before the deferred "connection lost" toast
   // fired — cancel it so a sub-second hiccup shows the player nothing.
   clearTimeout(window._disconnectToastTimer);
+  setConnectionBannerVisible(false);
   maybeAutoRejoin();
 });
 socket.on("connect_error", err =>
@@ -384,7 +411,10 @@ socket.on("disconnect", reason => {
   if (window.roomId) {
     clearTimeout(window._disconnectToastTimer);
     window._disconnectToastTimer = setTimeout(() => {
-      if (!socket.connected) toast("Connection lost — reconnecting…");
+      if (!socket.connected) {
+        toast("Connection lost — reconnecting…");
+        setConnectionBannerVisible(true);
+      }
     }, 2500);
   }
 });

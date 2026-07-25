@@ -1231,7 +1231,16 @@ function handleSetterInput(event) {
           return;
         }
 
-        sendGameAction({ type: "SET_SECRET_SAME" });
+        // Only clear the ephemeral submit-flow UI if this actually reached
+        // the server -- sendGameAction silently no-ops (returns false)
+        // while genuinely disconnected, and clearing here regardless used
+        // to make the screen look like a normal successful submit even
+        // though nothing was sent, with no way to tell the two apart until
+        // the next action mysteriously failed.
+        if (!sendGameAction({ type: "SET_SECRET_SAME" })) {
+          toast("Not connected — try again");
+          return;
+        }
         resetEphemeralUIState();
         updateUI();
         return;
@@ -1321,7 +1330,12 @@ function submitSetterNew() {
     toast("Reconnecting...");
     return;
   }
-  sendGameAction({type: "SET_SECRET_NEW",secret: w});
+  // Same reasoning as the SET_SECRET_SAME branch above: don't wipe the
+  // draft the player just typed unless it actually reached the server.
+  if (!sendGameAction({type: "SET_SECRET_NEW",secret: w})) {
+    toast("Not connected — try again");
+    return;
+  }
   stopSecretRoulette();
   state.setterDraft = "";
   resetEphemeralUIState();
@@ -1447,7 +1461,19 @@ function handleGuesserInput(event) {
       toast("Reconnecting...");
       return;
     }
-    sendGameAction({type: "SUBMIT_GUESS",guess: g});
+    // This is the exact bug behind "type a guess, submit, get a bogus '5
+    // letters!' error, have to reload": sendGameAction silently no-ops
+    // (returns false) while genuinely disconnected, but this used to clear
+    // the draft unconditionally right after calling it regardless of
+    // whether the guess actually reached the server. The screen then
+    // looked completely normal -- an empty, ready-to-type draft, same as
+    // after any real successful submit -- while the server never got
+    // anything and still expected the original guess. The next real
+    // attempt hit the plain length check on an already-emptied draft.
+    if (!sendGameAction({type: "SUBMIT_GUESS",guess: g})) {
+      toast("Not connected — try again");
+      return;
+    }
     localGuesserDraft = "";
     guesserDraftLocks.clear();
     resetEphemeralUIState();

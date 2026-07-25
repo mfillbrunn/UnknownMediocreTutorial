@@ -157,19 +157,25 @@ window.showDailyChallenge = async function () {
     return;
   }
 
+  // Each pill doubles as a tap target for its own description -- same
+  // popup used for "power used" announcements elsewhere (showPowerPopup),
+  // so a player can check what a power/quest actually does before ever
+  // starting the match, without needing to visit the separate Powers
+  // screen. Looked up by id on click rather than baking the description
+  // into a data-attribute, so there's no HTML-escaping to get wrong.
   const spyPills = (config.setterPowers || []).map(p => {
     const m = window.POWER_METADATA?.[p];
-    return `<span class="daily-power-pill spy">${m?.emoji || ""} ${m?.label || p}</span>`;
+    return `<span class="daily-power-pill spy daily-pill-info" data-power="${p}">${m?.emoji || ""} ${m?.label || p} <span class="daily-pill-info-icon">ⓘ</span></span>`;
   }).join("");
 
   const insPills = (config.guesserPowers || []).map(p => {
     const m = window.POWER_METADATA?.[p];
-    return `<span class="daily-power-pill inspector">${m?.emoji || ""} ${m?.label || p}</span>`;
+    return `<span class="daily-power-pill inspector daily-pill-info" data-power="${p}">${m?.emoji || ""} ${m?.label || p} <span class="daily-pill-info-icon">ⓘ</span></span>`;
   }).join("");
 
   const questMeta = config.questType ? window.QUEST_METADATA?.[config.questType] : null;
   const questPill = questMeta
-    ? `<span class="daily-power-pill quest">${questMeta.emoji || "🎯"} ${questMeta.label}</span>`
+    ? `<span class="daily-power-pill quest daily-pill-info" data-quest="${config.questType}">${questMeta.emoji || "🎯"} ${questMeta.label} <span class="daily-pill-info-icon">ⓘ</span></span>`
     : "";
 
   screen.innerHTML = `
@@ -213,6 +219,21 @@ window.showDailyChallenge = async function () {
   });
   document.getElementById("dailyRankingsBtn")?.addEventListener("click", () => {
     _showDailyRankings(config);
+  });
+
+  screen.querySelectorAll(".daily-pill-info").forEach(pill => {
+    pill.addEventListener("click", () => {
+      const powerId = pill.dataset.power;
+      const meta = powerId
+        ? window.POWER_METADATA?.[powerId]
+        : window.QUEST_METADATA?.[pill.dataset.quest];
+      if (!meta) return;
+      window.showPowerPopup?.({
+        emoji: meta.emoji || (powerId ? "⚡" : "🎯"),
+        title: powerId ? meta.label : `Quest: ${meta.label}`,
+        desc: meta.desc
+      });
+    });
   });
 };
 
