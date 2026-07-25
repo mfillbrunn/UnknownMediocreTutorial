@@ -620,6 +620,13 @@
   gap: var(--sp-4) var(--sp-10);
   margin-top: var(--sp-6);
 
+  /* Sit above .force-timer-overlay (z-index: 5) -- otherwise the guesser's
+     Force Timer countdown, which is absolutely positioned over the whole
+     screen, paints over this badge and hides/blocks a claimable quest's
+     button even though the badge comes later in the DOM. */
+  position: relative;
+  z-index: 6;
+
   /* Reserve the height a populated badge takes so the keyboard below it
      doesn't jump up/down as messages appear and disappear. */
   min-height: 20px;
@@ -677,6 +684,8 @@
    has a subtext to display (most badge messages don't). */
 #SetterInfoBadgeDetail,
 #GuesserInfoBadgeDetail {
+  position: relative;
+  z-index: 6;
   margin-top: var(--sp-4);
   padding: 0 var(--sp-14);
   font-size: var(--fs-11);
