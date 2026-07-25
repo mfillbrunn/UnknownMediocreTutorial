@@ -111,6 +111,9 @@
   window._fetchGameInvites = fetchInvites;
   window._acceptGameInvite = acceptInvite;
   window._declineGameInvite = declineInvite;
+  // Exposed so the daily-challenge Rankings tab can offer a "Friends" filter
+  // without re-implementing the friendships query.
+  window._fetchFriends = fetchFriends;
 
   // ── State ────────────────────────────────────────────────────────────
   let _tab = "friends";

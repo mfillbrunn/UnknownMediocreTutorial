@@ -130,6 +130,32 @@ state.matchRounds.push({
           // achievement against Hard than against Easy.
           difficulty: state.aiDifficulty || null
         });
+
+        // Persist to Supabase so the daily-challenge Rankings tab can show
+        // everyone's results (dailyTracking is in-memory only). Best-effort:
+        // if the daily_results table doesn't exist yet the error is logged
+        // and swallowed, and the rest of game-over is unaffected. One row per
+        // user per day (upsert on user_id,date).
+        if (supabase) {
+          supabase
+            .from("daily_results")
+            .upsert(
+              {
+                user_id: player.userId,
+                date: state.dailyDate,
+                score: points[player.userId] || 0,
+                opponent_score: (aiPlayer && points[aiPlayer.userId]) || 0,
+                time_seconds: Math.round(time[player.userId] || 0),
+                won: didWin,
+                tie,
+                difficulty: state.aiDifficulty || null
+              },
+              { onConflict: "user_id,date" }
+            )
+            .then(({ error }) => {
+              if (error) console.error("[daily_results] upsert failed:", error.message);
+            });
+        }
       }
     }
   }
