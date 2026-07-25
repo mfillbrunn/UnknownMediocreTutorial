@@ -133,16 +133,31 @@ function buildFakeFeedback(state, guess, trueFb) {
     if (!FAKEABLE.includes(trueFb[i])) continue;
     eligible.push(i);
   }
-  if (eligible.length === 0) return fake; // nothing safely fakeable
+
+  // Every position was safely deducible -- most commonly an all-miss
+  // guess, where every gray tile is trivially provable absent on its own.
+  // Rather than let the power whiff and hand back the guesser's true
+  // feedback completely untouched (a solid, non-animated row that reads
+  // as "this did nothing"), still lie about exactly one tile so using the
+  // power is always visible. A sharp guesser could in principle catch
+  // this one lie by reasoning it out, but a fully truthful row defeats
+  // the power outright.
+  let pool = eligible;
+  let forcedSingle = false;
+  if (pool.length === 0) {
+    pool = [0, 1, 2, 3, 4].filter(i => FAKEABLE.includes(trueFb[i]));
+    forcedSingle = true;
+  }
+  if (pool.length === 0) return fake; // no ordinary-colored tile to lie about at all
 
   // Fisher-Yates shuffle, then lie about the first k.
-  for (let i = eligible.length - 1; i > 0; i--) {
+  for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [eligible[i], eligible[j]] = [eligible[j], eligible[i]];
+    [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  const k = 1 + Math.floor(Math.random() * eligible.length);
+  const k = forcedSingle ? 1 : 1 + Math.floor(Math.random() * pool.length);
   for (let n = 0; n < k; n++) {
-    const pos = eligible[n];
+    const pos = pool[n];
     const others = FAKEABLE.filter(c => c !== trueFb[pos]);
     fake[pos] = others[Math.floor(Math.random() * others.length)];
   }
