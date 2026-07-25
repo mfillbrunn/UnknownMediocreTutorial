@@ -123,7 +123,12 @@ state.matchRounds.push({
           opponentScore: (aiPlayer && points[aiPlayer.userId]) || 0,
           time: time[player.userId] || 0,
           won: didWin,
-          tie
+          tie,
+          // Which AI strength the player chose for this run (1 Easy / 2
+          // Medium / 3 Hard) -- surfaced on the completed-daily screen and
+          // in the shared result, since the same score is a very different
+          // achievement against Hard than against Easy.
+          difficulty: state.aiDifficulty || null
         });
       }
     }

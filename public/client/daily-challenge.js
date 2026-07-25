@@ -5,9 +5,10 @@
 // summary instead of a join link.
 async function _shareDailyResult(config, r) {
   const outcome = r.tie ? "Tied" : r.won ? "Won" : "Lost";
+  const diffLabel = r.difficulty ? ` vs ${dailyDifficultyMeta(r.difficulty).label} AI` : "";
   const text = [
     `Vowel Play — Daily Challenge ${config.date}`,
-    `Score: ${r.score}:${r.opponentScore ?? 0} (${formatDailyTime(r.time)}) — ${outcome}`,
+    `Score: ${r.score}:${r.opponentScore ?? 0} (${formatDailyTime(r.time)}) — ${outcome}${diffLabel}`,
     location.origin
   ].join("\n");
 
@@ -32,6 +33,20 @@ function formatDailyTime(totalSeconds) {
   const s = secs % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
 }
+
+// AI difficulty (1 Easy / 2 Medium / 3 Hard) -> label + a color used both
+// as the completed-result chip and (see the ranking subtab) the dot next to
+// each entry. Kept in sync with index.html's difficulty-easy/-medium/-hard
+// button classes and the daily difficulty picker.
+const DAILY_DIFFICULTY = {
+  1: { label: "Easy", color: "#22c55e" },
+  2: { label: "Medium", color: "#f59e0b" },
+  3: { label: "Hard", color: "#ef4444" }
+};
+function dailyDifficultyMeta(difficulty) {
+  return DAILY_DIFFICULTY[difficulty] || { label: "AI", color: "#9ca3af" };
+}
+window.dailyDifficultyMeta = dailyDifficultyMeta;
 
 window.showDailyChallenge = async function () {
   if (!window.currentUser) return toast("Please log in first");
@@ -83,6 +98,16 @@ window.showDailyChallenge = async function () {
       return;
     }
 
+    const diffMeta = r?.difficulty ? dailyDifficultyMeta(r.difficulty) : null;
+    const difficultyRow = diffMeta
+      ? `<div class="daily-result-row">
+            <span class="daily-result-label">Opponent</span>
+            <span class="daily-result-value">
+              <span class="daily-diff-dot" style="background:${diffMeta.color}"></span>${diffMeta.label} AI
+            </span>
+          </div>`
+      : "";
+
     const resultBlock = r
       ? `<div class="daily-result-block">
           <div class="daily-result-row">
@@ -93,6 +118,7 @@ window.showDailyChallenge = async function () {
             <span class="daily-result-label">Time</span>
             <span class="daily-result-value">${formatDailyTime(r.time)}</span>
           </div>
+          ${difficultyRow}
           <p class="daily-result-outcome">${r.tie ? "It was a tie!" : r.won ? "You won! 🎉" : "You lost this one."}</p>
           <button id="shareDailyBtn" class="menu-btn primary small" style="margin-top:8px">Share Result 📤</button>
         </div>`
