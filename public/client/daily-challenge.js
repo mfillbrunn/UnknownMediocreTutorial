@@ -110,6 +110,7 @@ window.showDailyChallenge = async function () {
 
     const resultBlock = r
       ? `<div class="daily-result-block">
+          <p class="daily-result-outcome big">${r.tie ? "It was a tie!" : r.won ? "You won! 🎉" : "You lost this one."}</p>
           <div class="daily-result-row">
             <span class="daily-result-label">Score</span>
             <span class="daily-result-value">${r.score}:${r.opponentScore ?? 0}</span>
@@ -119,11 +120,14 @@ window.showDailyChallenge = async function () {
             <span class="daily-result-value">${formatDailyTime(r.time)}</span>
           </div>
           ${difficultyRow}
-          <p class="daily-result-outcome">${r.tie ? "It was a tie!" : r.won ? "You won! 🎉" : "You lost this one."}</p>
-          <button id="shareDailyBtn" class="menu-btn primary small" style="margin-top:8px">Share Result 📤</button>
-          <button id="dailyRankingsBtn" class="menu-btn small" style="margin-top:8px">🏆 Rankings</button>
+          <div class="daily-result-actions">
+            <button id="dailyRankingsBtn" class="menu-btn small">🏆 Rankings</button>
+            <button id="shareDailyBtn" class="menu-btn primary small">Share Result 📤</button>
+          </div>
         </div>`
-      : `<button id="dailyRankingsBtn" class="menu-btn small" style="margin-top:8px">🏆 Rankings</button>`;
+      : `<div class="daily-result-actions">
+          <button id="dailyRankingsBtn" class="menu-btn small">🏆 Rankings</button>
+        </div>`;
 
     screen.innerHTML = `<div class="menu-center">
       <div class="screen-back-header">
@@ -301,7 +305,14 @@ async function _showDailyRankings(config) {
   );
 
   const myId = window.currentUser?.id;
-  listEl.innerHTML = rows.map((r, i) => {
+  const header = `
+    <div class="daily-rank-row daily-rank-header">
+      <span class="daily-rank-pos">#</span>
+      <span class="daily-rank-name">Player</span>
+      <span class="daily-rank-score">Score</span>
+      <span class="daily-rank-time">Time</span>
+    </div>`;
+  listEl.innerHTML = header + rows.map((r, i) => {
     const diff = dailyDifficultyMeta(r.difficulty);
     const name = names[r.user_id] || (r.user_id === myId ? "You" : "Player");
     const isMe = r.user_id === myId;

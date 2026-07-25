@@ -689,6 +689,19 @@
   background: rgba(99,102,241,0.14);
   border-radius: 8px;
 }
+.daily-rank-header {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0.55;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.daily-rank-header .daily-rank-score,
+.daily-rank-header .daily-rank-time {
+  font-family: inherit;
+  font-weight: 800;
+}
 .daily-rank-pos {
   font-weight: 800;
   opacity: 0.7;
@@ -730,6 +743,24 @@
   font-size: 16px;
   font-weight: 700;
   text-align: center;
+}
+/* Result headline sitting above the score, made prominent (the outcome is
+   the thing you care about at a glance). */
+.daily-result-outcome.big {
+  margin: 0 0 12px;
+  font-size: clamp(24px, 6vw, 34px);
+  font-weight: 900;
+  line-height: 1.1;
+}
+/* Rankings + Share sit side by side, equal width, with Rankings first. */
+.daily-result-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.daily-result-actions .menu-btn {
+  flex: 1 1 0;
+  margin: 0;
 }
 
 /* ── My Games (unlimited-time games in progress) ─────────────────────── */
