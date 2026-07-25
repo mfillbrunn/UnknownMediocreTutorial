@@ -14,16 +14,14 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("hideTile", {
   apply(state, action, roomId, io) {
-    // Two charges per round — can be activated on two separate turns
-    // (never the same turn, powerUsedThisTurn already prevents that).
-    if ((state.powers.hideTileUses || 0) >= 2) return false;
+    // One-time use per match.
+    if (state.powers.hideTileUsed) return false;
     if (!state.pendingGuess) return false;
 
     const index = Number(action.index);
     if (!Number.isInteger(index) || index < 0 || index > 4) return false;
 
     state.powers.hideTileUsed = true;
-    state.powers.hideTileUses = (state.powers.hideTileUses || 0) + 1;
     state.powers.hideTileActive = true;
     state.powers.hideTilePendingIndex = index;
 

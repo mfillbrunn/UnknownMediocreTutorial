@@ -8,8 +8,7 @@
 function createInitialPowers(){
 const powers = {
 // HIDE TILE
-      hideTileUsed: false,
-      hideTileUses: 0, // charges spent — 2 charges total, see POWER_RULES.js
+      hideTileUsed: false, // one-time use per match, see POWER_RULES.js
       hideTilePendingIndex: null, // tile index the setter picked, applied to the next-scored entry
       hideTileActive: 0,
       // BLIND GUESS

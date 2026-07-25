@@ -1,10 +1,10 @@
-/* Hide Evidence (setter power): the pending-guess row's tiles become
-   directly tappable when the power has a charge available -- this is the
-   whole activation surface now (see public/powerEngine/powers/hideTile.js
-   uiEffects), not a modal or a plain button click. A static thin dashed
-   outline was easy to miss against the row's other tile styling, so this
-   pulses continuously (not just right after tapping the power button) to
-   make "these are pickable" unmistakable. */
+/* Hide Evidence (setter power): tapping the power tray button arms it,
+   then the pending-guess row's tiles become directly tappable -- picking
+   one is the only way to actually use the power (see
+   public/powerEngine/powers/hideTile.js uiEffects). Nothing marks the
+   tiles as pickable before the button is pressed; this class (and its
+   blink) only ever applies once armed, so there's no passive "this is
+   available" highlight to notice ahead of time. */
 .pending-guess .history-tile.tile-pickable-hide {
   cursor: pointer;
   outline: 2px dashed color-mix(in srgb, var(--setter-color, #f87171) 70%, transparent);
@@ -20,20 +20,6 @@
 @keyframes hide-evidence-pulse {
   0%, 100% { box-shadow: 0 0 0 color-mix(in srgb, var(--setter-color, #f87171) 0%, transparent); }
   50% { box-shadow: 0 0 10px 2px color-mix(in srgb, var(--setter-color, #f87171) 65%, transparent); }
-}
-
-/* One-shot brighter flash triggered by tapping the power tray button
-   itself (see hideTile.js) -- the continuous pulse above already marks
-   the tiles as pickable at all times, this just draws the eye there the
-   instant the button is tapped. */
-.pending-guess .history-tile.tile-pickable-hide.hide-evidence-flash {
-  animation: hide-evidence-flash 0.6s ease-out 2;
-}
-
-@keyframes hide-evidence-flash {
-  0% { box-shadow: 0 0 0 color-mix(in srgb, var(--setter-color, #f87171) 0%, transparent); }
-  50% { box-shadow: 0 0 16px 4px color-mix(in srgb, var(--setter-color, #f87171) 90%, transparent); }
-  100% { box-shadow: 0 0 0 color-mix(in srgb, var(--setter-color, #f87171) 0%, transparent); }
 }
 
 /* Delayed Intel (setter power): a round the guesser hasn't "unlocked" yet

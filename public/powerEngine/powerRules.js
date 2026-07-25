@@ -69,14 +69,14 @@ betMiss: {
     }
   },
   hideTile: {
-    once: false,
+    once: true,
     allowed(state, role) {
       return (
         state.phase === "normal" &&
         role === "setter" &&
         !!state.pendingGuess &&
         !state.powerUsedThisTurn &&
-        (state.powers?.hideTileUses || 0) < 2
+        !state.powers?.hideTileUsed
       );
     }
   },

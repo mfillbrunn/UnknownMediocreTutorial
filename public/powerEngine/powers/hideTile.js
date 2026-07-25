@@ -1,14 +1,11 @@
 // /powers/powers/hideTile.js — Hide Evidence (setter)
 //
-// The setter picks exactly which tile of the pending guess loses its
-// feedback by tapping it directly in the pending-guess row, instead of a
-// random tile being chosen server-side. The power tray button doesn't
-// activate anything itself -- the tap-a-tile interaction below is the
-// only way to actually use this power -- it just flashes the pending
-// row's tiles (already continuously outlined via tile-pickable-hide
-// whenever a charge is available, see uiEffects/powers.css) so tapping
-// the button draws the eye straight to which letters are pickable,
-// instead of popping up a modal that has to be dismissed first.
+// One-time use per match. Tapping the power tray button arms it -- only
+// then do the pending-guess row's tiles start blinking to show they're
+// pickable. Tapping one of those tiles is what actually erases its
+// feedback (server-side, see below); the button by itself doesn't erase
+// anything. Before the button is pressed the tiles carry no special
+// styling at all, so there's nothing to notice ahead of time.
 //
 // Mirrors Vowel Refresh: the server directly erases entry.fb/fbGuesser for
 // that position (server/powers/powers/hideTileServer.js), so there's
@@ -35,18 +32,20 @@ PowerEngine.register("hideTile", {
         window.POWER_RULES?.hideTile?.allowed?.(s, window.myRole) === true;
       if (!usable) return;
 
-      const tiles = document.getElementById("draftSetter")?.__draftRows?.pending?.__tiles;
-      if (!Array.isArray(tiles)) return;
-      tiles.forEach(tile => {
-        tile.classList.remove("hide-evidence-flash");
-        void tile.offsetWidth; // restart the animation if it's already mid-flight
-        tile.classList.add("hide-evidence-flash");
-        tile.addEventListener(
-          "animationend",
-          () => tile.classList.remove("hide-evidence-flash"),
-          { once: true }
-        );
-      });
+      const container = document.getElementById("draftSetter");
+      if (!container) return;
+
+      // Keep the picked/armed state scoped to the current pending guess --
+      // same reset uiEffects does below, done here too so arming takes
+      // effect immediately instead of waiting on the next render.
+      if (container.__hideTilePickedFor !== s.pendingGuess) {
+        container.__hideTilePickedFor = s.pendingGuess;
+        container.__hideTilePickedIndex = null;
+      }
+      if (container.__hideTilePickedIndex !== null) return;
+
+      container.__hideTileArmed = true;
+      this.uiEffects(s, window.myRole);
     };
   },
 
@@ -61,10 +60,12 @@ PowerEngine.register("hideTile", {
     // so the clicked tile can flip to the "unused" gray look immediately
     // on tap instead of waiting on a round-trip. Scoped to the word it was
     // picked for, so a later, genuinely different pending guess reusing
-    // these same DOM tiles doesn't inherit a stale mark.
+    // these same DOM tiles doesn't inherit a stale mark or a stale armed
+    // state left over from a previous guess.
     if (container.__hideTilePickedFor !== state.pendingGuess) {
       container.__hideTilePickedFor = state.pendingGuess;
       container.__hideTilePickedIndex = null;
+      container.__hideTileArmed = false;
     }
 
     const usable =
@@ -72,27 +73,33 @@ PowerEngine.register("hideTile", {
       !state.powerUsedThisTurn &&
       window.POWER_RULES?.hideTile?.allowed?.(state, role) === true;
 
+    // Blink only the tiles that can actually be tapped right now, and only
+    // once the button has been pressed -- no passive highlight beforehand.
+    const pickable = usable && !!container.__hideTileArmed;
+
     tiles.forEach((tile, i) => {
       const picked = container.__hideTilePickedIndex === i;
-      tile.classList.toggle("tile-pickable-hide", usable);
+      tile.classList.toggle("tile-pickable-hide", pickable);
       tile.classList.toggle("tile-hide-picked", picked);
-      tile.title = usable ? "Tap to erase this tile's feedback (Hide Evidence)" : "";
+      tile.title = pickable ? "Tap to erase this tile's feedback (Hide Evidence)" : "";
 
       if (tile.__hideTileWired) return;
       tile.__hideTileWired = true;
       tile.addEventListener("click", () => {
         const s = window.state;
         const r = window.myRole;
-        const stillUsable =
+        const stillPickable =
           s && !s.powerUsedThisTurn &&
+          container.__hideTileArmed &&
           container.__hideTilePickedIndex === null &&
           window.POWER_RULES?.hideTile?.allowed?.(s, r) === true;
-        if (!stillUsable) return;
+        if (!stillPickable) return;
 
         // Mark it immediately -- don't wait for the server round-trip
         // (or even the next render) to gray the tile out.
         container.__hideTilePickedFor = s.pendingGuess;
         container.__hideTilePickedIndex = i;
+        container.__hideTileArmed = false;
         tiles.forEach((t, j) => {
           t.classList.toggle("tile-hide-picked", j === i);
           t.classList.remove("tile-pickable-hide");
