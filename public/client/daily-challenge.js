@@ -187,8 +187,13 @@ window.showDailyChallenge = async function () {
         </div>
         <div class="daily-powers-row">
           <span class="daily-role-label inspector">Inspector</span>
-          <div class="daily-powers">${insPills}${questPill}${(insPills || questPill) ? "" : "<span style='opacity:.4'>—</span>"}</div>
+          <div class="daily-powers">${insPills || "<span style='opacity:.4'>—</span>"}</div>
         </div>
+        ${questPill ? `
+        <div class="daily-powers-row">
+          <span class="daily-role-label quest">Quest</span>
+          <div class="daily-powers">${questPill}</div>
+        </div>` : ""}
       </div>
 
       <p class="daily-ai-label">Choose your opponent</p>
@@ -262,10 +267,14 @@ async function _showDailyRankings(config) {
   try {
     const { data, error } = await sb
       .from("daily_results")
-      .select("user_id, score, opponent_score, time_seconds, won, tie, difficulty")
+      .select("user_id, date, score, opponent_score, time_seconds, won, tie, difficulty")
       .eq("date", config.date);
     if (error) throw error;
-    rows = data || [];
+    // Belt-and-suspenders re-check on top of the .eq() above -- a stale
+    // row (e.g. an old onConflict upsert mismatch, or a date column that
+    // doesn't compare the way .eq() assumes) should never be able to slip
+    // a previous day's score into today's board.
+    rows = (data || []).filter(r => r.date === config.date);
   } catch (e) {
     console.error("[daily rankings] read failed:", e?.message || e);
     listEl.innerHTML = `<p class="daily-rank-msg">Rankings aren't available yet.</p>`;
