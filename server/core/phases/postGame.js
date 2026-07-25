@@ -136,6 +136,34 @@ function handleGameOverPhase(room, state, action, roomId, context) {
       freshState.timeRemaining[userId] = initialSeconds;
     }
 
+    // Replay skips the lobby and jumps straight back into a match with the
+    // same settings. To reuse the lobby's full start pipeline (random/
+    // custom/replay power assignment, timers, gameStart broadcast) instead
+    // of duplicating it, we dispatch a synthetic PLAYER_READY: pre-mark
+    // every human except one "starter" as ready, then ready-up the starter
+    // -- once the lobby handler sees all humans ready it builds and starts
+    // the game. Falls back to the old enter-the-lobby behavior only if there
+    // are somehow no humans to start it.
+    const humanIds = Object.values(freshState.players)
+      .filter(p => !p.isAI)
+      .map(p => p.userId);
+    const starter =
+      humanIds.includes(freshState.hostUserId) ? freshState.hostUserId : humanIds[0];
+
+    if (starter) {
+      for (const uid of humanIds) {
+        if (uid !== starter) freshState.players[uid].ready = true;
+      }
+      context.applyAction(
+        room,
+        freshState,
+        { type: "PLAYER_READY", userId: starter },
+        roomId,
+        context
+      );
+      return;
+    }
+
     emitLobbyEvent(io, roomId, { type: "enterLobby" });
     emitRoomState(roomId, room, io);
     return;
