@@ -72,9 +72,15 @@ function getLetterStatusFromHistory(letter, state) {
         continue;
       }
 
+      // Priority green > yellow > blue > gray. Blue (a real green/yellow
+      // hidden by Blue Mode) means the letter IS in the word, so it must
+      // beat gray -- otherwise a duplicate letter whose excess copy scored
+      // gray at an earlier position (e.g. LEVEL vs a secret with one L, the
+      // matched L at the end going blue) would lock in gray first and the
+      // key would wrongly look unused instead of blue.
       if (f === "🟩") strongest = "green";
       else if (f === "🟨" && strongest !== "green") strongest = "yellow";
-      else if (f === "🟦" && !strongest) strongest = "blue";
+      else if (f === "🟦" && strongest !== "green" && strongest !== "yellow") strongest = "blue";
       else if (f === "⬛" && !strongest) strongest = "gray";
     }
   }
