@@ -551,6 +551,7 @@
 }
 .daily-role-label.spy { color: var(--setter-color, #f87171); }
 .daily-role-label.inspector { color: var(--guesser-color, #60a5fa); }
+.daily-role-label.quest { color: #4ade80; }
 .daily-powers {
   display: flex;
   flex-direction: row;
