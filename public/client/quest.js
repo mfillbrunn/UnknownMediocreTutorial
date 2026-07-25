@@ -145,16 +145,31 @@ function computeQuestStatus(state) {
   if (!meta) return null;
 
   if (q.used) {
+    const resultLetter = q.resultLetter ? q.resultLetter.toUpperCase() : null;
     if (q.claimedEarly) {
       return {
         meta,
-        label: "Claimed early",
-        desc: "Yellow letter revealed early — no green letter for this quest.",
+        label: resultLetter ? `🟨 ${resultLetter}` : "Claimed early",
+        desc: resultLetter
+          ? `Claimed early: ${resultLetter} is somewhere in the secret (yellow).`
+          : "Claimed early — nothing new was left to reveal.",
         done: true,
-        claimedEarly: true
+        claimedEarly: true,
+        resultLetter,
+        resultColor: "yellow"
       };
     }
-    return { meta, label: "Complete!", desc: "Free green letter revealed.", done: true };
+    return {
+      meta,
+      label: resultLetter ? `🟩 ${resultLetter}` : "Complete!",
+      desc: resultLetter
+        ? `Complete! ${resultLetter} is green in position ${(q.resultIndex ?? 0) + 1}.`
+        : "Free green letter revealed.",
+      done: true,
+      resultLetter,
+      resultColor: "green",
+      resultIndex: q.resultIndex
+    };
   }
   if (q.ready) {
     return { meta, label: "Ready!", desc: "Revealing your green letter…", done: false };
@@ -294,9 +309,16 @@ InfoBadgeEngine.register((state, role) => {
 
   let text;
   if (status.done) {
-    text = status.claimedEarly
-      ? `Quest claimed early: ${status.meta.label}`
-      : `Quest complete: ${status.meta.label}`;
+    // Show the actual reward (which letter, which color, and -- for a green
+    // -- where) rather than the quest's name, so the badge reads as a result
+    // once claimed.
+    if (status.resultLetter && status.resultColor === "green") {
+      text = `Quest: 🟩 ${status.resultLetter} in position ${(status.resultIndex ?? 0) + 1}`;
+    } else if (status.resultLetter && status.resultColor === "yellow") {
+      text = `Quest: 🟨 ${status.resultLetter} is in the word`;
+    } else {
+      text = status.claimedEarly ? "Quest claimed early" : "Quest complete";
+    }
   } else if (guideOn && q.ready) {
     text = `${status.meta.label} ready — tap for 🟩`;
   } else if (guideOn && q.oneAway) {
@@ -306,7 +328,7 @@ InfoBadgeEngine.register((state, role) => {
   }
 
   const color = status.done
-    ? status.meta.color
+    ? (status.resultColor === "yellow" ? "var(--tile-yellow)" : "var(--tile-green)")
     : q.ready ? "var(--tile-green)"
     : q.oneAway ? "var(--tile-yellow)"
     : status.meta.color;

@@ -433,6 +433,13 @@ function grantQuestReward(state, roomId, io) {
 
   state.extraConstraints ??= [];
   state.powers.questActive = true;
+  // Persist the reward on the quest itself so the quest badge can show the
+  // actual result (which letter, which color, and -- for a green -- where)
+  // instead of a generic "complete" line, and so it survives re-renders /
+  // rejoins as plain state rather than only living in the one-shot event.
+  q.resultColor = "green";
+  q.resultLetter = letter;
+  q.resultIndex = index;
   if (!state.extraConstraints.some(c => c.type === "GREEN" && c.index === index)) {
     state.extraConstraints.push({ type: "GREEN", index, letter });
     io.to(roomId).emit("greenLetterRevealed", { index, letter, source: "quest" });
@@ -472,6 +479,8 @@ function grantQuestYellowEarly(state, roomId, io) {
   const options = secretLetters.filter(l => !known.has(l));
 
   if (!options.length) {
+    q.resultColor = "yellow";
+    q.resultLetter = null;
     io.to(roomId).emit("questEarlyClaim", { questType: q.type, letter: null });
     io.to(roomId).emit("toast", "Quest claimed early, but there was nothing new left to reveal.");
     return;
@@ -480,6 +489,9 @@ function grantQuestYellowEarly(state, roomId, io) {
   const letter = options[Math.floor(Math.random() * options.length)];
   state.extraConstraints ??= [];
   state.extraConstraints.push({ type: "YELLOW", letter });
+  // Same reason as grantQuestReward: badge shows the actual yellow letter.
+  q.resultColor = "yellow";
+  q.resultLetter = letter;
   io.to(roomId).emit("questEarlyClaim", { questType: q.type, letter });
   io.to(roomId).emit("toast", `Quest claimed early! ${letter} is somewhere in the secret.`);
 }
