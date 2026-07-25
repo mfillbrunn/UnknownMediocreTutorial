@@ -512,6 +512,14 @@ function maybeClaimQuest(room, roomId, context, aiUserId) {
   const state = room.state;
   const aiRole = getAIRole(state, aiUserId);
   if (aiRole !== "guesser") return;
+  // Only claim on the AI's OWN turn. A human taps the quest badge during
+  // their turn; the AI was claiming the instant the quest went ready --
+  // which is at the end of its guess, i.e. during the SETTER's (the human's)
+  // turn -- so from the human's side the reward popped up mid-their-turn,
+  // out of nowhere. Deferring to the AI's next turn matches how a human
+  // would claim it and keeps the reward landing right before the AI's next
+  // guess (where it's actually useful) instead of on the opponent's clock.
+  if (state.turn !== aiUserId) return;
   const q = state.powers?.quest;
   if (!q?.type || q.used || !q.ready) return;
   applyAIAction(room, { type: "USE_QUEST" }, aiUserId, roomId, context);
