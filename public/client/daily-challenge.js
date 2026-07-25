@@ -121,8 +121,9 @@ window.showDailyChallenge = async function () {
           ${difficultyRow}
           <p class="daily-result-outcome">${r.tie ? "It was a tie!" : r.won ? "You won! 🎉" : "You lost this one."}</p>
           <button id="shareDailyBtn" class="menu-btn primary small" style="margin-top:8px">Share Result 📤</button>
+          <button id="dailyRankingsBtn" class="menu-btn small" style="margin-top:8px">🏆 Rankings</button>
         </div>`
-      : "";
+      : `<button id="dailyRankingsBtn" class="menu-btn small" style="margin-top:8px">🏆 Rankings</button>`;
 
     screen.innerHTML = `<div class="menu-center">
       <div class="screen-back-header">
@@ -141,6 +142,9 @@ window.showDailyChallenge = async function () {
         _shareDailyResult(config, r);
       });
     }
+    document.getElementById("dailyRankingsBtn")?.addEventListener("click", () => {
+      _showDailyRankings(config);
+    });
     return;
   }
 
@@ -189,6 +193,7 @@ window.showDailyChallenge = async function () {
         <button class="menu-btn difficulty-medium" data-difficulty="2">Medium</button>
         <button class="menu-btn difficulty-hard" data-difficulty="3">Hard</button>
       </div>
+      <button id="dailyRankingsBtn" class="menu-btn small" style="margin-top:14px">🏆 Rankings</button>
     </div>
   `;
 
@@ -197,7 +202,122 @@ window.showDailyChallenge = async function () {
       _startDailyGame(config, Number(btn.dataset.difficulty));
     });
   });
+  document.getElementById("dailyRankingsBtn")?.addEventListener("click", () => {
+    _showDailyRankings(config);
+  });
 };
+
+// Daily rankings subtab: everyone who has played today, sorted best-first
+// (higher score, then faster time), each with a colored dot for the AI
+// difficulty they beat. Toggle between All and Friends. Reads the
+// daily_results Supabase table (written server-side on completion, see
+// gameOver.js); degrades to a friendly message if the table is missing or
+// nobody has played yet.
+let _dailyRankScope = "all";
+
+async function _showDailyRankings(config) {
+  const screen = document.getElementById("dailyScreen");
+  if (!screen) return;
+
+  screen.innerHTML = `<div class="menu-center">
+    <div class="screen-back-header">
+      <button id="dailyRankBackBtn" class="menu-btn screen-back-btn">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Daily Rankings</h2>
+    </div>
+    <p class="daily-date">☀️ ${config.date}</p>
+    <div class="daily-rank-tabs">
+      <button class="daily-rank-tab ${_dailyRankScope === "all" ? "active" : ""}" data-scope="all">All</button>
+      <button class="daily-rank-tab ${_dailyRankScope === "friends" ? "active" : ""}" data-scope="friends">Friends</button>
+    </div>
+    <div class="daily-rank-legend">
+      <span><span class="daily-diff-dot" style="background:${DAILY_DIFFICULTY[1].color}"></span>Easy</span>
+      <span><span class="daily-diff-dot" style="background:${DAILY_DIFFICULTY[2].color}"></span>Medium</span>
+      <span><span class="daily-diff-dot" style="background:${DAILY_DIFFICULTY[3].color}"></span>Hard</span>
+    </div>
+    <div id="dailyRankList" class="daily-rank-list"><p class="daily-rank-msg">Loading…</p></div>
+  </div>`;
+
+  document.getElementById("dailyRankBackBtn")?.addEventListener("click", () => {
+    window.showDailyChallenge?.();
+  });
+  screen.querySelectorAll(".daily-rank-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      _dailyRankScope = tab.dataset.scope;
+      _showDailyRankings(config);
+    });
+  });
+
+  const listEl = document.getElementById("dailyRankList");
+  const sb = window.supabaseClient;
+  if (!sb) {
+    listEl.innerHTML = `<p class="daily-rank-msg">Rankings aren't available right now.</p>`;
+    return;
+  }
+
+  let rows;
+  try {
+    const { data, error } = await sb
+      .from("daily_results")
+      .select("user_id, score, opponent_score, time_seconds, won, tie, difficulty")
+      .eq("date", config.date);
+    if (error) throw error;
+    rows = data || [];
+  } catch (e) {
+    console.error("[daily rankings] read failed:", e?.message || e);
+    listEl.innerHTML = `<p class="daily-rank-msg">Rankings aren't available yet.</p>`;
+    return;
+  }
+
+  // Friends filter (always keep yourself in view).
+  if (_dailyRankScope === "friends") {
+    let friendIds = new Set();
+    try {
+      const friends = (await window._fetchFriends?.(window.currentUser?.id)) || [];
+      friendIds = new Set(friends.map(f => f.id));
+    } catch { /* fall through with just self */ }
+    friendIds.add(window.currentUser?.id);
+    rows = rows.filter(r => friendIds.has(r.user_id));
+  }
+
+  if (!rows.length) {
+    listEl.innerHTML = `<p class="daily-rank-msg">${
+      _dailyRankScope === "friends"
+        ? "No friends have played today yet."
+        : "No one has played today's challenge yet."
+    }</p>`;
+    return;
+  }
+
+  // Attach usernames (separate lookup so we don't depend on a FK embed).
+  let names = {};
+  try {
+    const ids = [...new Set(rows.map(r => r.user_id))];
+    const { data: profs } = await sb.from("profiles").select("id, username").in("id", ids);
+    (profs || []).forEach(p => { names[p.id] = p.username; });
+  } catch { /* usernames optional */ }
+
+  rows.sort((a, b) =>
+    (b.score - a.score) || ((a.time_seconds ?? 1e9) - (b.time_seconds ?? 1e9))
+  );
+
+  const myId = window.currentUser?.id;
+  listEl.innerHTML = rows.map((r, i) => {
+    const diff = dailyDifficultyMeta(r.difficulty);
+    const name = names[r.user_id] || (r.user_id === myId ? "You" : "Player");
+    const isMe = r.user_id === myId;
+    return `
+      <div class="daily-rank-row ${isMe ? "me" : ""}">
+        <span class="daily-rank-pos">${i + 1}</span>
+        <span class="daily-rank-name">
+          <span class="daily-diff-dot" style="background:${diff.color}" title="${diff.label} AI"></span>
+          ${name}${isMe ? " (you)" : ""}
+        </span>
+        <span class="daily-rank-score">${r.score}:${r.opponent_score ?? 0}</span>
+        <span class="daily-rank-time">${formatDailyTime(r.time_seconds)}</span>
+      </div>`;
+  }).join("");
+}
+window._showDailyRankings = _showDailyRankings;
 
 // difficulty: player's choice from the three buttons above -- overrides
 // config.aiDifficulty, the value the daily seed would otherwise have
