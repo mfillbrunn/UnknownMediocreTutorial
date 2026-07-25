@@ -67,10 +67,29 @@ function resetKeyboards() {
 // into whatever game started next. Resets the raw variables directly
 // rather than going through setGuesserDraft(), which re-renders using
 // `state` -- by the time clearRoom() calls this, state is already null.
+//
+// Also called directly by the New Match / Replay button handlers
+// (socket-events.js / summary.js), which -- unlike leaving a room -- never
+// go through clearRoom() at all: NEW_MATCH/REPLAY_MATCH reuse the same
+// room and just swap in a fresh server state. Some power UI caches a power
+// module stashes directly on the draft-row container (e.g. hideTile's
+// armed/picked-tile state below) are keyed off state.pendingGuess to
+// survive a normal round-to-round change, but a brand new match also
+// starts with pendingGuess === "" -- often the exact same value the just-
+// ended match already had -- so that equality check never fires on its
+// own and the stale value would otherwise leak into the new match.
 window.resetTransientGameUI = function () {
   localGuesserDraft = "";
   guesserDraftLocks.clear();
   window.clearHighlights?.();
+
+  for (const id of ["draftSetter", "draftGuesser"]) {
+    const container = document.getElementById(id);
+    if (!container) continue;
+    container.__hideTilePickedFor = undefined;
+    container.__hideTilePickedIndex = null;
+    container.__hideTileArmed = false;
+  }
 };
 (() => {
   const periodMs = 4500;
