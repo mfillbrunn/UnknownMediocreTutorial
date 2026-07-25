@@ -29,7 +29,13 @@ function computeTileClassKey({isSetter, entryRoundIndex, guessIndex, bsIdx, bsRo
   // genuine "letter not in the word" result. Checked for both roles since
   // both fb and fbGuesser get erased together.
   if (fbArray[guessIndex] === "") {
-    classes.push("tile-erased");
+    // Vowel Refresh reset this vowel's status back to unknown -- render it as
+    // a clearly "unused / not yet known" tile (its own class), distinct from
+    // Hide Evidence's "redacted" look, since here the letter's status was
+    // wiped, not deliberately concealed.
+    const vowelReset = Array.isArray(safeEntry.vowelRefreshCleared)
+      && safeEntry.vowelRefreshCleared.includes(guessIndex);
+    classes.push(vowelReset ? "tile-vowel-reset" : "tile-erased");
     return classes.join(" ");
   }
   // Faithful fbComposite branch

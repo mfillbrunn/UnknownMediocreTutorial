@@ -114,6 +114,37 @@
 
   pointer-events: none;
 }
+
+/* Vowel Refresh reset this vowel back to "unknown". Unlike Hide Evidence's
+   redaction (tile-erased above, on a solid gray body), this reads as a
+   plain UNUSED / not-yet-known tile: hollow, dashed, transparent body --
+   the same "you don't know this letter's status" look an untouched tile
+   has -- with a faint ↻ so the reset is legible rather than looking like a
+   rendering glitch. */
+.history-tile.tile-vowel-reset {
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+  color: var(--tile-gray-text);
+  border: 2px dashed rgba(255, 214, 92, 0.55);
+}
+
+.history-tile.tile-vowel-reset::before {
+  content: "↻";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 700;
+  font-size: clamp(16px, 5.5vw, 30px);
+  color: rgba(255, 214, 92, 0.5);
+  text-shadow: none;
+  pointer-events: none;
+}
 /* ===============================
    FREEZE — Draft Row Overlay
    =============================== */

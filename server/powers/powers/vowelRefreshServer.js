@@ -14,6 +14,10 @@ engine.registerPower("vowelRefresh", {
     const vowels = new Set(["A", "E", "I", "O", "U"]);
     const guess = entry.guess.toUpperCase();
     const resetVowels = new Set();
+    // Positions this power actually cleared -- lets the client render those
+    // tiles as "reset to unknown" (distinct from Hide Evidence's "redacted"
+    // look), even though both end up as an empty "" feedback.
+    const resetIndices = [];
     // Collect letters known to be present BEFORE this round
     const knownPresent = new Set();
 
@@ -38,6 +42,7 @@ engine.registerPower("vowelRefresh", {
       // Do NOT erase if this vowel was previously confirmed
       if (knownPresent.has(letter)) continue;
       resetVowels.add(letter);
+      resetIndices.push(i);
       if (Array.isArray(entry.fb)) {
         entry.fb[i] = "";
       }
@@ -45,6 +50,7 @@ engine.registerPower("vowelRefresh", {
         entry.fbGuesser[i] = "";
       }
     }
+    if (resetIndices.length) entry.vowelRefreshCleared = resetIndices;
     if (state.powers?.rouletteSecretActive){
     state.powers.rouletteSecretFeasible = global.ALLOWED_SECRETS.filter(secret =>
       isConsistentWithHistory(state.history, secret, state)
