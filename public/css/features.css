@@ -626,6 +626,17 @@
   align-items: baseline;
   padding: 4px 0;
 }
+/* Difficulty dot shown next to the opponent label on the completed-daily
+   screen and beside each entry in the ranking subtab. Color is set inline
+   from dailyDifficultyMeta() (green/amber/red for Easy/Medium/Hard). */
+.daily-diff-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
 .daily-result-row + .daily-result-row {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
