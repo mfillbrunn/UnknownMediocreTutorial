@@ -103,10 +103,22 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
   // real game state either way) is enough; the quest badge itself
   // already reflects completion.
   if (source === "quest") {
-    toast(`Quest complete! ${letter.toUpperCase()} revealed in position ${index + 1}.`);
-    // Draw the eye to the quest badge itself the instant the reveal
-    // lands, since the quiet toast above (deliberately not the big
-    // splash -- see the comment above this handler) is easy to miss.
+    // The guesser who earned it gets a short celebratory popup naming the
+    // reward (letter, color, and position for a green); the setter gets a
+    // quiet toast instead, so a big splash doesn't hijack their turn every
+    // time the (always-on, AI-chased) quest completes.
+    const iAmGuesser = window.currentUser?.id && window.currentUser.id === window.state?.guesser;
+    if (iAmGuesser) {
+      window.showBigAnnounce?.({
+        icon: "🟩",
+        title: "Quest complete!",
+        sub: `${letter.toUpperCase()} is green in position ${index + 1}.`,
+        roleClass: "outcome-win",
+        duration: 3200
+      });
+    } else {
+      toast(`Opponent's quest complete: ${letter.toUpperCase()} in position ${index + 1}.`);
+    }
     window.shake?.(document.querySelector(".badge-quest"));
     return;
   }
