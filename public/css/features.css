@@ -680,7 +680,7 @@
 }
 .daily-rank-row {
   display: grid;
-  grid-template-columns: 28px 1fr auto auto;
+  grid-template-columns: 28px 1fr auto auto auto;
   gap: 10px;
   align-items: center;
   padding: 8px 10px;
@@ -698,31 +698,46 @@
   opacity: 0.55;
   border-bottom: 1px solid rgba(255,255,255,0.15);
 }
-.daily-rank-header .daily-rank-score,
+.daily-rank-header .daily-rank-points,
+.daily-rank-header .daily-rank-diff,
 .daily-rank-header .daily-rank-time {
   font-family: inherit;
   font-weight: 800;
 }
+/* Position, points, difficulty, and time are all centered; name is the
+   only left-oriented column. */
+.daily-rank-pos,
+.daily-rank-points,
+.daily-rank-diff,
+.daily-rank-time {
+  text-align: center;
+}
 .daily-rank-pos {
   font-weight: 800;
   opacity: 0.7;
-  text-align: center;
 }
 .daily-rank-name {
+  text-align: left;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.daily-rank-score {
+.daily-rank-points {
   font-family: var(--font-mono, monospace);
   font-weight: 700;
+  min-width: 32px;
+}
+.daily-rank-diff {
+  min-width: 20px;
+}
+.daily-rank-diff .daily-diff-dot {
+  margin-right: 0;
 }
 .daily-rank-time {
   font-family: var(--font-mono, monospace);
   opacity: 0.7;
   min-width: 44px;
-  text-align: right;
 }
 .daily-result-row + .daily-result-row {
   border-top: 1px solid rgba(255, 255, 255, 0.08);

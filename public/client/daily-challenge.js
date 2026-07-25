@@ -309,8 +309,19 @@ async function _showDailyRankings(config) {
     (profs || []).forEach(p => { names[p.id] = p.username; });
   } catch { /* usernames optional */ }
 
+  // Points: how many guesses the AI needed to crack your secret (r.score,
+  // credited to you as setter) minus how many guesses you needed to crack
+  // the AI's (r.opponent_score, credited to the AI as setter) -- higher
+  // means you were both a tougher setter and a sharper guesser than your
+  // opponent that day.
+  const pointsOf = r => (r.score ?? 0) - (r.opponent_score ?? 0);
+
+  // Points desc, then harder-difficulty-first (beating a tougher AI at the
+  // same point total is the better result), then faster time.
   rows.sort((a, b) =>
-    (b.score - a.score) || ((a.time_seconds ?? 1e9) - (b.time_seconds ?? 1e9))
+    (pointsOf(b) - pointsOf(a)) ||
+    ((b.difficulty ?? 0) - (a.difficulty ?? 0)) ||
+    ((a.time_seconds ?? 1e9) - (b.time_seconds ?? 1e9))
   );
 
   const myId = window.currentUser?.id;
@@ -318,21 +329,23 @@ async function _showDailyRankings(config) {
     <div class="daily-rank-row daily-rank-header">
       <span class="daily-rank-pos">#</span>
       <span class="daily-rank-name">Player</span>
-      <span class="daily-rank-score">Score</span>
+      <span class="daily-rank-points">Points</span>
+      <span class="daily-rank-diff">Diff</span>
       <span class="daily-rank-time">Time</span>
     </div>`;
   listEl.innerHTML = header + rows.map((r, i) => {
     const diff = dailyDifficultyMeta(r.difficulty);
     const name = names[r.user_id] || (r.user_id === myId ? "You" : "Player");
     const isMe = r.user_id === myId;
+    const points = pointsOf(r);
     return `
       <div class="daily-rank-row ${isMe ? "me" : ""}">
         <span class="daily-rank-pos">${i + 1}</span>
-        <span class="daily-rank-name">
+        <span class="daily-rank-name">${name}${isMe ? " (you)" : ""}</span>
+        <span class="daily-rank-points">${points > 0 ? "+" : ""}${points}</span>
+        <span class="daily-rank-diff">
           <span class="daily-diff-dot" style="background:${diff.color}" title="${diff.label} AI"></span>
-          ${name}${isMe ? " (you)" : ""}
         </span>
-        <span class="daily-rank-score">${r.score}:${r.opponent_score ?? 0}</span>
         <span class="daily-rank-time">${formatDailyTime(r.time_seconds)}</span>
       </div>`;
   }).join("");
