@@ -298,12 +298,22 @@ function updateWaitingIndicator() {
 // Power UI hook (client-side effects)
 let powerQueue = [];
 
+// Passive/ambient powers that quietly update a badge every turn rather than
+// being deliberately activated -- they still emit powerUsed (for the info
+// badge / action log) but must NOT trigger the full-screen shake FX, which
+// is meant for a real, one-off power activation. Informant (revealLocation)
+// re-peeks on the guesser's turn and was shaking the screen on essentially
+// every guess.
+const AMBIENT_POWER_FX_SKIP = new Set(["revealLocation"]);
+
 onPowerUsed(data => {
   if (!PowerEngine._initialized) {
     powerQueue.push(data);
     return;
   }
-  triggerPowerFX(data.type, data.variant);
+  if (!AMBIENT_POWER_FX_SKIP.has(data.type)) {
+    triggerPowerFX(data.type, data.variant);
+  }
   const mod = PowerEngine.powers[data.type];
   mod?.effects?.onPowerUsed?.(data);
   PowerEngine.updateButtonStates(state, myRole, myUserId());
