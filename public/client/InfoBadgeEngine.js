@@ -54,13 +54,28 @@ window.InfoBadgeEngine = {
       return;
     }
 
-    badge.innerHTML = messages
-      .map((m, i) => `
-        <span class="badge-item${m.id ? ` badge-${m.id}` : ""}${m.clickable ? " badge-clickable" : ""}" data-badge-index="${i}" style="color:${m.color ?? "var(--role-accent)"}">
-          ${m.emoji ? `${m.emoji} ` : ""}${m.text}
-        </span>
-      `)
+    const renderItem = (m, i) => `
+      <span class="badge-item${m.id ? ` badge-${m.id}` : ""}${m.clickable ? " badge-clickable" : ""}" data-badge-index="${i}" style="color:${m.color ?? "var(--role-accent)"}">
+        ${m.emoji ? `${m.emoji} ` : ""}${m.text}
+      </span>
+    `;
+
+    // The quest is always-on and meant to stand out, but it sorts into the
+    // same wrapping row as however many powers happen to be active right
+    // now (up to MAX_POWERS_PER_ROLE = 3) -- with 3 powers up, that row
+    // gets very wide/wraps across lines and the quest just reads as one
+    // more item buried in the crowd. Pull it onto its own row instead so
+    // it never has to compete with the powers for space.
+    const questIndex = messages.findIndex(m => m.id === "quest");
+    const questHtml = questIndex === -1 ? "" : renderItem(messages[questIndex], questIndex);
+    const powerHtml = messages
+      .map((m, i) => (i === questIndex ? null : renderItem(m, i)))
+      .filter(Boolean)
       .join(`<span class="badge-sep">·</span>`);
+
+    badge.innerHTML = [questHtml, powerHtml]
+      .filter(Boolean)
+      .join(`<span class="badge-row-break"></span>`);
 
     badge.classList.add("show");
 

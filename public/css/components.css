@@ -627,6 +627,16 @@
   user-select: none;
 }
 
+/* Forces the powers that follow it onto a new line within the badge's flex
+   row, without needing a separate DOM container -- see InfoBadgeEngine's
+   render(), which puts one of these between the quest item and everything
+   else so the quest always gets its own row instead of wrapping in with
+   the powers. */
+.badge-row-break {
+  flex-basis: 100%;
+  height: 0;
+}
+
 /* Extra info a badge item needs spelled out but doesn't fit on the badge
    line itself -- e.g. Field Report's randomized per-match conditions.
    Sits directly under the badge strip; only shown when something actually
