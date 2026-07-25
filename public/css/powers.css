@@ -246,68 +246,99 @@ body.blind-guess .key:hover {
    FAKE FEEDBACK
    =============================== */
 
+/* Falsify Intel (setter power): the tile cycles between the two possible
+   feedback colors. Each color pair gets its own literal @keyframes (rather
+   than one shared keyframes block reading `background`/`color` off
+   per-instance custom properties set with !important) and wins over
+   history.css's one-time flip-reveal purely on selector specificity --
+   no !important inside the keyframes themselves. Both of the old tricks
+   are fragile across engines: per the CSS Animations spec, a declaration
+   inside @keyframes that carries !important is invalid and dropped
+   entirely, and browsers have converged on enforcing that -- Chrome on a
+   laptop kept rendering the color-cycle by luck (older/looser parsing),
+   while Chrome on iPhone (WebKit under the hood, so out of Google's
+   control) correctly dropped the `background: var(--fb-a-bg) !important`
+   line and just never painted a color, so the tile sat on whatever
+   background it already had. will-change forces the tile onto its own
+   compositing layer, since a plain background-color animation sitting
+   behind another element's already-finished (opacity:0, fill-mode:
+   forwards) reveal mask is also a spot iOS Safari has been seen to stop
+   repainting. */
 .tile-feedback-slide {
-  /* safe defaults */
-  --fb-a-bg: var(--tile-gray);
-  --fb-b-bg: var(--tile-gray);
-  --fb-a-text: var(--tile-gray-text);
-  --fb-b-text: var(--tile-gray-text);
+  will-change: background-color, color;
 }
 
-/* history.css's ".history-row:not(.draft-row) .history-tile" sets the
-   `animation` shorthand (the one-time wordle-flip reveal) at higher
-   specificity (3 class-level selectors vs. 1 here) — a shorthand
-   overwrites every animation sub-property at once, so it was silently
-   winning over animation-name/duration/etc declared on .tile-feedback-slide
-   alone and feedback-slide never actually ran. Match/beat that
-   specificity so the infinite color-cycle animation actually applies. */
-.history-row:not(.draft-row) .history-tile.tile-feedback-slide {
-  animation-name: feedback-slide;
+.history-row:not(.draft-row) .history-tile.tile-gray-yellow {
+  animation-name: feedback-slide-gray-yellow;
   animation-duration: 4.5s;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
   animation-delay: calc(-1 * var(--ff-phase));
 }
-.tile-gray-yellow {
-  --fb-a-bg: var(--tile-gray);
-  --fb-a-text: var(--tile-gray-text);
-  --fb-b-bg: var(--tile-yellow);
-  --fb-b-text: var(--tile-yellow-text);
+
+.history-row:not(.draft-row) .history-tile.tile-yellow-gray {
+  animation-name: feedback-slide-yellow-gray;
+  animation-duration: 4.5s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-delay: calc(-1 * var(--ff-phase));
 }
 
-.tile-yellow-gray {
-  --fb-a-bg: var(--tile-yellow);
-  --fb-a-text: var(--tile-yellow-text);
-  --fb-b-bg: var(--tile-gray);
-  --fb-b-text: var(--tile-gray-text);
+.history-row:not(.draft-row) .history-tile.tile-gray-green {
+  animation-name: feedback-slide-gray-green;
+  animation-duration: 4.5s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-delay: calc(-1 * var(--ff-phase));
 }
 
-.tile-gray-green {
-  --fb-a-bg: var(--tile-gray);
-  --fb-a-text: var(--tile-gray-text);
-  --fb-b-bg: var(--tile-green);
-  --fb-b-text: var(--tile-green-text);
+.history-row:not(.draft-row) .history-tile.tile-green-gray {
+  animation-name: feedback-slide-green-gray;
+  animation-duration: 4.5s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-delay: calc(-1 * var(--ff-phase));
 }
 
-.tile-green-gray {
-  --fb-a-bg: var(--tile-green);
-  --fb-a-text: var(--tile-green-text);
-  --fb-b-bg: var(--tile-gray);
-  --fb-b-text: var(--tile-gray-text);
+.history-row:not(.draft-row) .history-tile.tile-yellow-green {
+  animation-name: feedback-slide-yellow-green;
+  animation-duration: 4.5s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-delay: calc(-1 * var(--ff-phase));
 }
 
-.tile-yellow-green {
-  --fb-a-bg: var(--tile-yellow);
-  --fb-a-text: var(--tile-yellow-text);
-  --fb-b-bg: var(--tile-green);
-  --fb-b-text: var(--tile-green-text);
+.history-row:not(.draft-row) .history-tile.tile-green-yellow {
+  animation-name: feedback-slide-green-yellow;
+  animation-duration: 4.5s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-delay: calc(-1 * var(--ff-phase));
 }
 
-.tile-green-yellow {
-  --fb-a-bg: var(--tile-green);
-  --fb-a-text: var(--tile-green-text);
-  --fb-b-bg: var(--tile-yellow);
-  --fb-b-text: var(--tile-yellow-text);
+@keyframes feedback-slide-gray-yellow {
+  0%, 40%, 100% { background: var(--tile-gray);   color: var(--tile-gray-text); }
+  50%, 90%      { background: var(--tile-yellow); color: var(--tile-yellow-text); }
+}
+@keyframes feedback-slide-yellow-gray {
+  0%, 40%, 100% { background: var(--tile-yellow); color: var(--tile-yellow-text); }
+  50%, 90%      { background: var(--tile-gray);   color: var(--tile-gray-text); }
+}
+@keyframes feedback-slide-gray-green {
+  0%, 40%, 100% { background: var(--tile-gray);  color: var(--tile-gray-text); }
+  50%, 90%      { background: var(--tile-green); color: var(--tile-green-text); }
+}
+@keyframes feedback-slide-green-gray {
+  0%, 40%, 100% { background: var(--tile-green); color: var(--tile-green-text); }
+  50%, 90%      { background: var(--tile-gray);  color: var(--tile-gray-text); }
+}
+@keyframes feedback-slide-yellow-green {
+  0%, 40%, 100% { background: var(--tile-yellow); color: var(--tile-yellow-text); }
+  50%, 90%      { background: var(--tile-green);  color: var(--tile-green-text); }
+}
+@keyframes feedback-slide-green-yellow {
+  0%, 40%, 100% { background: var(--tile-green);  color: var(--tile-green-text); }
+  50%, 90%      { background: var(--tile-yellow); color: var(--tile-yellow-text); }
 }
 
 .tile-has-secondary {

@@ -156,20 +156,6 @@
     filter: brightness(1);
   }
 }
-@keyframes feedback-slide {
-  /* Stay on A */
-  0%, 40%, 100% {
-    background: var(--fb-a-bg) !important;
-    color: var(--fb-a-text) !important;
-  }
-
-  /* Transition to B */
-  50%, 90% {
-    background: var(--fb-b-bg) !important;
-    color: var(--fb-b-text) !important;
-  }
-}
-
 @keyframes laserPing {
   0% { box-shadow: none; }
   40% {
