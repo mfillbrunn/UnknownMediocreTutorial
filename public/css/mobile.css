@@ -59,9 +59,16 @@
   }  
   .powers-col .power-btn {
     flex: 1 1 48%;
-    padding: 0 var(--sp-6);       
-    min-height: 32px;              
+    padding: 0 var(--sp-6);
+    min-height: 32px;
     letter-spacing: 0.3px;
+}
+  /* Icon buttons stay a fixed square -- the 48%-flex/text-pill sizing
+     above is for the text-fallback case only (no icon asset yet). */
+  .powers-col .power-btn.power-btn-icon {
+    flex: 0 0 auto;
+    padding: 4px;
+    min-height: var(--h-control);
 }
    .history-tiles{
       gap: var(--sp-6);

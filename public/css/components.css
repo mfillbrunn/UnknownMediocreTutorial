@@ -175,6 +175,39 @@
   cursor: not-allowed;
 }
 
+/* Icon-image power buttons (assets/powers/icons/<id>.png) -- a fixed
+   square instead of the text pill's auto-width, image fills it via
+   object-fit. Falls back to the plain text-pill styling above whenever
+   PowerEngine.createPowerButton's onerror strips this class (no icon
+   asset yet for that power). */
+.power-btn.power-btn-icon {
+  width: var(--h-control);
+  height: var(--h-control);
+  padding: 4px;
+}
+.power-btn-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+/* line-through only affects text nodes, so the "permanently used" power
+   needs its own strike mark drawn across the icon image. */
+.power-btn.power-btn-icon.power-used::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom right,
+    transparent calc(50% - 1px),
+    currentColor calc(50% - 1px),
+    currentColor calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+  pointer-events: none;
+}
+
 /* =========================================
    KEYBOARD
    ========================================= */

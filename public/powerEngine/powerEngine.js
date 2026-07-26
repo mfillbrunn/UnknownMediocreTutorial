@@ -12,8 +12,23 @@ window.PowerEngine = {
     wrapper.className = "power-btn-wrapper";
 
     const btn = document.createElement("button");
-    btn.className = "power-btn";
-    btn.textContent = label;
+    btn.className = "power-btn power-btn-icon";
+    btn.title = label;
+
+    // Icon-only image buttons (assets/powers/icons/<id>.png) -- falls back
+    // to the old text-pill look via onerror for any power that doesn't
+    // have an icon yet, so partial icon sets degrade gracefully instead
+    // of needing a hardcoded list of "which ids have art".
+    const img = document.createElement("img");
+    img.className = "power-btn-img";
+    img.src = `assets/powers/icons/${id}.png`;
+    img.alt = label;
+    img.onerror = () => {
+      img.remove();
+      btn.classList.remove("power-btn-icon");
+      btn.textContent = label;
+    };
+    btn.appendChild(img);
 
     const meta = this.powers[id]?.tooltip;
     if (meta) {
