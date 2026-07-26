@@ -265,6 +265,47 @@
   pointer-events: none;
 }
 
+/* Quest badge tile -- the guesser's one active quest, shown as a
+   power-badge-style card in the same row as the power buttons (see
+   quest.js's createQuestBadgeTile/updateQuestBadge). It reuses every
+   .power-badge/.power-icon/.power-btn-label rule above by redefining
+   --role-accent locally: every one of those rules reads var(--role-accent)
+   for its border/background/icon/label color, so overriding the variable
+   here is enough to recolor the whole card without duplicating any of
+   that CSS. Default is a neutral quest-purple; ready/one-away swap it for
+   the same --tile-green/--tile-yellow used by the text-only badge so both
+   read as the same signal. */
+.quest-badge-tile {
+  --role-accent: #8b7cff;
+}
+.quest-badge-tile.quest-oneaway {
+  --role-accent: var(--tile-yellow);
+}
+.quest-badge-tile.quest-ready,
+.quest-badge-tile.quest-done {
+  --role-accent: var(--tile-green);
+}
+.quest-badge-tile.quest-oneaway,
+.quest-badge-tile.quest-ready {
+  animation: badge-clickable-pulse 1.6s ease-in-out infinite;
+}
+.quest-progress-chip {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  border: 1.5px solid var(--role-accent);
+  background: #14151b;
+  color: var(--role-accent);
+  font-size: 9px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
 /* =========================================
    KEYBOARD
    ========================================= */

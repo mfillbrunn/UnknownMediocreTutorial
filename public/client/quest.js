@@ -284,6 +284,130 @@ function computeQuestStatus(state) {
 window.computeQuestStatus = computeQuestStatus;
 
 // --------------------------------------------------
+// Quest — badge tile, guesser only. Sits in the same power-container row
+// as the power buttons (guesserPowerContainer) so the active quest reads
+// as a card in that row, the same visual language as the setter's power
+// badges -- see components.css's .quest-badge-tile, which reuses every
+// .power-badge/.power-icon/.power-btn-label rule by just redefining
+// --role-accent locally instead of duplicating the card CSS. The setter's
+// only view of the quest stays the existing text-only InfoBadgeEngine
+// registration below (screen: "both") -- this tile is purely additive.
+// --------------------------------------------------
+const QUEST_ICON_IDS = {
+  ROW: "quest-full-sweep",
+  RARE: "quest-rare-letters",
+  ALPHA: "quest-in-order",
+  DOUBLES: "quest-double-trouble",
+  CHAIN: "quest-word-chain",
+  HARDMODE: "quest-hard-mode-streak",
+  FIELDREPORT: "quest-field-report",
+  ALTERNATING: "quest-zigzag",
+  BOOKENDS: "quest-bookends",
+  REVERSEALPHA: "quest-reverse-order",
+  HALF_AM: "quest-a-to-p",
+  HALF_NZ: "quest-k-to-z",
+  VOWELSHORTAGE: "quest-vowel-shortage"
+};
+
+let _questBadge = null;
+let _questBadgeType = null;
+
+function createQuestBadgeTile(type) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "power-btn-wrapper";
+
+  const btn = document.createElement("button");
+  btn.className = "power-btn power-badge quest-badge-tile";
+
+  const iconId = QUEST_ICON_IDS[type];
+  if (iconId) {
+    const svgNS = "http://www.w3.org/2000/svg";
+    const xlinkNS = "http://www.w3.org/1999/xlink";
+    const icon = document.createElementNS(svgNS, "svg");
+    icon.setAttribute("class", "power-icon");
+    icon.setAttribute("viewBox", "0 0 120 120");
+    const use = document.createElementNS(svgNS, "use");
+    use.setAttributeNS(xlinkNS, "xlink:href", `#${iconId}`);
+    use.setAttribute("href", `#${iconId}`);
+    icon.appendChild(use);
+    btn.appendChild(icon);
+  }
+
+  const labelEl = document.createElement("span");
+  labelEl.className = "power-btn-label";
+  btn.appendChild(labelEl);
+
+  const chip = document.createElement("span");
+  chip.className = "quest-progress-chip";
+  btn.appendChild(chip);
+
+  wrapper.appendChild(btn);
+  return { wrapper, btn, labelEl, chip };
+}
+
+// Called from client.js's updateUI(), right next to
+// maybeShowQuestProgressPop. Lazily creates the tile on first call for a
+// guesser with an active quest, keeps it pinned as the first card in
+// guesserPowerContainer, and re-syncs its ready/one-away/done state and
+// claim handler on every render (same rebuild-in-place pattern as
+// PowerEngine.updateButtonStates -- state, not the DOM, is the source of
+// truth each tick).
+function updateQuestBadge(state, role) {
+  const container = document.getElementById("guesserPowerContainer");
+  const q = state.powers?.quest;
+
+  if (role !== "guesser" || !q || !q.type || !container) {
+    if (_questBadge) {
+      _questBadge.wrapper.remove();
+      _questBadge = null;
+      _questBadgeType = null;
+    }
+    return;
+  }
+
+  if (!_questBadge || _questBadgeType !== q.type) {
+    if (_questBadge) _questBadge.wrapper.remove();
+    _questBadge = createQuestBadgeTile(q.type);
+    _questBadgeType = q.type;
+    container.insertBefore(_questBadge.wrapper, container.firstChild);
+  } else if (container.firstChild !== _questBadge.wrapper) {
+    container.insertBefore(_questBadge.wrapper, container.firstChild);
+  }
+
+  const status = computeQuestStatus(state);
+  if (!status) return;
+
+  const { btn, labelEl, chip } = _questBadge;
+  btn.title = status.meta.label;
+  labelEl.textContent = status.meta.label;
+
+  const canClaim = !status.done && (q.ready || q.oneAway);
+
+  btn.classList.toggle("quest-ready", !status.done && !!q.ready);
+  btn.classList.toggle("quest-oneaway", !status.done && !q.ready && !!q.oneAway);
+  btn.classList.toggle("quest-done", !!status.done);
+  btn.classList.toggle("power-used", !!status.done);
+  btn.disabled = !canClaim;
+
+  if (status.done) {
+    chip.textContent = status.resultColor === "yellow" ? "🟨" : "🟩";
+    chip.style.display = "";
+  } else if (q.ready) {
+    chip.textContent = "!";
+    chip.style.display = "";
+  } else {
+    const match = /^(\d+\/\d+)/.exec(status.label);
+    chip.style.display = match ? "" : "none";
+    if (match) chip.textContent = match[1];
+  }
+
+  btn.onclick = canClaim
+    ? () => window.sendGameAction?.({ type: "USE_QUEST", userId: window.currentUser?.id })
+    : null;
+}
+window.updateQuestBadge = updateQuestBadge;
+
+// --------------------------------------------------
 // Quest — info badge (both players), same pattern as revealLetter's. This
 // is now the ONLY quest UI (the standalone quest box above the power
 // buttons was removed) -- it doubles as the claim button: yellow +
@@ -398,7 +522,7 @@ function maybeShowQuestProgressPop(state) {
   const justBecameReady = q.ready && !_questPopSeen.ready;
 
   if (numericIncrease || justBecameReady) {
-    const badge = document.querySelector(".badge-quest");
+    const badge = document.querySelector(".quest-badge-tile") || document.querySelector(".badge-quest");
     if (badge) {
       const rect = badge.getBoundingClientRect();
       const pop = document.createElement("span");
