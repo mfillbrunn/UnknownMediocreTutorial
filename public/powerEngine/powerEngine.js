@@ -1,3 +1,33 @@
+// Maps internal power ids to the <symbol id="icon-..."> defined in the
+// inline SVG icon library (index.html, right after <body>). A power with
+// no entry here just shows its label alone in the same badge card --
+// intentional, not a bug, until that power gets an icon drawn for it.
+const POWER_ICON_IDS = {
+  // Spy (setter)
+  hideTile: "icon-hide-evidence",
+  suggestSecret: "icon-secret-word-helper",
+  confuseColors: "icon-color-swap",
+  countOnly: "icon-counts-only",
+  blindSpot: "icon-foggy-tile",
+  vowelRefresh: "icon-vowel-reset",
+  blindGuess: "icon-total-blackout",
+  fakeFeedback: "icon-fake-clue",
+  delayedIntel: "icon-delayed-clue",
+  forceTimer: "icon-time-pressure",
+
+  // Inspector (guesser)
+  suggestGuess: "icon-smart-guess-tip",
+  rouletteSecret: "icon-secret-spin",
+  revealHistory: "icon-time-rewind",
+  stealthGuess: "icon-sneaky-guess",
+  revealGreen: "icon-letter-peek",
+  freezeSecret: "icon-lockdown",
+  nonsense: "icon-silly-word",
+  letterProbe: "icon-letter-scan",
+  revealLocation: "icon-informant",
+  letterProfile: "icon-letter-profile"
+};
+
 window.PowerEngine = {
   powers: {},
   _initialized: false,
@@ -12,35 +42,29 @@ window.PowerEngine = {
     wrapper.className = "power-btn-wrapper";
 
     const btn = document.createElement("button");
-    btn.className = "power-btn power-btn-icon power-btn-has-svg";
+    btn.className = "power-btn power-badge";
     btn.title = label;
 
-    // Prefer a self-contained SVG badge (assets/powers/svg/<id>.svg) --
-    // icon, divider, and title all baked into one vector card. Falls back
-    // to the PNG icon + printed label (assets/powers/icons/<id>.png) for
-    // any power that doesn't have an SVG yet, via onerror, so the two art
-    // styles can coexist while the set migrates one power at a time.
-    const svgImg = document.createElement("img");
-    svgImg.className = "power-btn-svg";
-    svgImg.src = `assets/powers/svg/${id}.svg`;
-    svgImg.alt = label;
-    svgImg.onerror = () => {
-      svgImg.remove();
-      btn.classList.remove("power-btn-has-svg");
+    // Vector icon from the inline <symbol> library, recolored via
+    // currentColor (--role-accent) -- one icon works for both roles.
+    const iconId = POWER_ICON_IDS[id];
+    if (iconId) {
+      const svgNS = "http://www.w3.org/2000/svg";
+      const xlinkNS = "http://www.w3.org/1999/xlink";
+      const icon = document.createElementNS(svgNS, "svg");
+      icon.setAttribute("class", "power-icon");
+      icon.setAttribute("viewBox", "0 0 120 120");
+      const use = document.createElementNS(svgNS, "use");
+      use.setAttributeNS(xlinkNS, "xlink:href", `#${iconId}`);
+      use.setAttribute("href", `#${iconId}`);
+      icon.appendChild(use);
+      btn.appendChild(icon);
+    }
 
-      const img = document.createElement("img");
-      img.className = "power-btn-img";
-      img.src = `assets/powers/icons/${id}.png`;
-      img.alt = label;
-      img.onerror = () => img.remove();
-      btn.appendChild(img);
-
-      const labelEl = document.createElement("span");
-      labelEl.className = "power-btn-label";
-      labelEl.textContent = label;
-      btn.appendChild(labelEl);
-    };
-    btn.appendChild(svgImg);
+    const labelEl = document.createElement("span");
+    labelEl.className = "power-btn-label";
+    labelEl.textContent = label;
+    btn.appendChild(labelEl);
 
     const meta = this.powers[id]?.tooltip;
     if (meta) {

@@ -63,12 +63,12 @@
     min-height: 32px;
     letter-spacing: 0.3px;
 }
-  /* Icon buttons keep their own fixed size -- the 48%-flex/text-pill
-     sizing above is for the old small pill look only. */
-  .powers-col .power-btn.power-btn-icon {
+  /* Badge buttons keep their own fixed size -- the 48%-flex/text-pill
+     sizing above is for a power with no <symbol> or badge art at all. */
+  .powers-col .power-btn.power-badge {
     flex: 0 0 auto;
-    padding: 8px 4px 6px;
-    min-height: 80px;
+    padding: 12px 8px 10px;
+    min-height: 92px;
 }
    .history-tiles{
       gap: var(--sp-6);

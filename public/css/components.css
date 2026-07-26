@@ -175,64 +175,83 @@
   cursor: not-allowed;
 }
 
-/* Icon-image power buttons: icon (assets/powers/icons/<id>.png, or just
-   the label alone if that power doesn't have art yet) stacked above its
-   printed label, no accent-colored outline -- a plain tinted chip instead
-   of the text-pill's colored border. */
-.power-btn.power-btn-icon {
-  width: 80px;
-  height: auto;
-  min-height: 80px;
-  padding: 8px 4px 6px;
-  border: none;
-  background: rgba(255, 255, 255, 0.05);
+/* Power badge buttons: a bordered gradient card with a vector icon (from
+   the inline <symbol> library in index.html, referenced via <use>) and
+   the power's printed name below it. Colors read from --role-accent,
+   which .theme-setter/.theme-guesser already set on the ancestor screen,
+   so the same card CSS covers both roles without a spy/inspector
+   variant. A power with no matching <symbol> yet just omits the <svg>
+   and shows the label alone, centered, in the same card. */
+.power-btn.power-badge {
+  width: 92px;
+  height: 92px;
+  min-height: 92px;
+  padding: 12px 8px 10px;
+  border: 2px solid color-mix(in srgb, var(--role-accent) 55%, transparent);
+  border-radius: var(--r-16, 16px);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--role-accent) 10%, #14151b),
+      color-mix(in srgb, var(--role-accent) 4%, #0d0e12)
+    );
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 7px 18px rgba(0, 0, 0, 0.28);
 }
-.power-btn.power-btn-icon::before {
+.power-btn.power-badge::before {
   display: none;
 }
-.power-btn-img {
-  width: 46px;
-  height: 46px;
-  object-fit: contain;
-  display: block;
-  pointer-events: none;
-  flex-shrink: 0;
+.power-btn.power-badge:not(.power-used):not(.disabled-btn):hover {
+  border-color: var(--role-accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 9px 24px rgba(0, 0, 0, 0.34),
+    0 0 0 2px color-mix(in srgb, var(--role-accent) 25%, transparent);
 }
+
+.power-icon {
+  width: 58%;
+  max-width: 48px;
+  flex: 1 1 auto;
+  color: var(--role-accent);
+  overflow: visible;
+  pointer-events: none;
+}
+.power-icon .line,
+.power-icon .shape {
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.power-icon .fill {
+  fill: currentColor;
+  stroke: none;
+}
+.power-icon .text {
+  fill: currentColor;
+  stroke: none;
+  font-weight: 800;
+  text-anchor: middle;
+}
+
 .power-btn-label {
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.3px;
   text-transform: uppercase;
-  line-height: 1.15;
+  line-height: 1.1;
   color: var(--role-accent);
   text-align: center;
 }
 
-/* SVG badge power buttons (assets/powers/svg/<id>.svg) -- the badge is a
-   self-contained card (background, border/glow, icon, divider, printed
-   title all baked into the vector art), so this variant drops the chip
-   background/padding the PNG+label variant above needs. Higher
-   specificity than mobile.css's ".powers-col .power-btn" text-pill
-   sizing so it isn't stretched to 48% width there. */
-.power-btn.power-btn-icon.power-btn-has-svg {
-  width: 100px;
-  height: 100px;
-  min-height: 100px;
-  padding: 0;
-  background: none;
-}
-.power-btn-svg {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-  pointer-events: none;
-}
 /* line-through only affects text nodes, so the "permanently used" power
-   needs its own strike mark drawn across the icon image. */
-.power-btn.power-btn-icon.power-used::after {
+   needs its own strike mark drawn across the card. */
+.power-btn.power-badge.power-used::after {
   content: "";
   position: absolute;
   inset: 0;

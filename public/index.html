@@ -42,6 +42,168 @@
     /* Required by your JS */
     const $ = id => document.getElementById(id);
   </script>
+  <!-- Power badge icon library -- vector <symbol> defs referenced by
+       .power-icon <use> elements in PowerEngine.createPowerButton().
+       Colors come from currentColor (set via --role-accent on the
+       ancestor .theme-setter/.theme-guesser screen), so one icon works
+       for both roles without needing separate assets. -->
+  <svg aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden">
+    <defs>
+
+      <!-- SPY ICONS -->
+
+      <symbol id="icon-hide-evidence" viewBox="0 0 120 120">
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M19 34h36l8 9h38v50H19z"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M25 34v-9h31l8 9"/>
+        <rect class="fill" fill="currentColor" x="65" y="58" width="10" height="10" rx="2"/>
+        <rect class="fill" fill="currentColor" x="80" y="52" width="8" height="8" rx="2"/>
+        <rect class="fill" fill="currentColor" x="90" y="65" width="7" height="7" rx="2"/>
+        <rect class="fill" fill="currentColor" x="73" y="76" width="7" height="7" rx="2"/>
+      </symbol>
+
+      <symbol id="icon-secret-word-helper" viewBox="0 0 120 120">
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M60 17c-20 0-37 15-37 35 0 13 7 24 18 30v15h38V82c11-6 18-17 18-30 0-20-17-35-37-35z"/>
+        <circle class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" cx="60" cy="53" r="10"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M60 63v15"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M42 97h36"/>
+      </symbol>
+
+      <symbol id="icon-color-swap" viewBox="0 0 120 120">
+        <rect class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" x="22" y="47" width="28" height="28" rx="5"/>
+        <rect class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" x="70" y="47" width="28" height="28" rx="5"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M32 34c13-15 36-17 52-4"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M78 23l8 8-11 4"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M88 86c-13 15-36 17-52 4"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M42 97l-8-8 11-4"/>
+      </symbol>
+
+      <symbol id="icon-counts-only" viewBox="0 0 120 120">
+        <rect class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" x="28" y="18" width="64" height="84" rx="8"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M45 18v-7h30v7"/>
+        <circle class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" cx="45" cy="49" r="8"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M41 49l3 3 6-7"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M62 49h20"/>
+        <circle class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" cx="45" cy="75" r="8"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M41 75l3 3 6-7"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M62 75h20"/>
+      </symbol>
+
+      <symbol id="icon-foggy-tile" viewBox="0 0 120 120">
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M22 75c0-10 8-18 18-18 2-13 13-23 27-23 15 0 27 12 27 27 8 2 14 9 14 18 0 10-8 18-18 18H39c-10 0-17-9-17-22z"/>
+        <rect class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" x="45" y="48" width="30" height="30" rx="5"/>
+        <text class="text" fill="currentColor" font-weight="800" text-anchor="middle" x="60" y="70" font-size="26">?</text>
+      </symbol>
+
+      <symbol id="icon-vowel-reset" viewBox="0 0 120 120">
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M88 45a35 35 0 1 0 3 30"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M88 25v20H68"/>
+        <text class="text" fill="currentColor" font-weight="800" text-anchor="middle" x="56" y="76" font-size="46">A</text>
+      </symbol>
+
+      <symbol id="icon-total-blackout" viewBox="0 0 120 120">
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M18 61c12-19 26-28 42-28s30 9 42 28c-12 19-26 28-42 28S30 80 18 61z"/>
+        <circle class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" cx="60" cy="61" r="13"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M20 101L100 21"/>
+      </symbol>
+
+      <symbol id="icon-fake-clue" viewBox="0 0 120 120">
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M24 28h34v44c0 12-8 22-17 27-9-5-17-15-17-27z"/>
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M62 35h34v38c0 11-7 20-17 25-4-2-7-5-10-8"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M34 54c4-4 8-4 12 0"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M37 70c6 6 12 6 18 0"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M72 56c4-4 8-4 12 0"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M72 76c6-6 12-6 18 0"/>
+      </symbol>
+
+      <symbol id="icon-delayed-clue" viewBox="0 0 120 120">
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M39 18h42M39 102h42"/>
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M43 22c0 20 4 26 17 38-13 12-17 18-17 38h34c0-20-4-26-17-38 13-12 17-18 17-38z"/>
+        <circle class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" cx="89" cy="79" r="17"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M89 69v11l7 5"/>
+      </symbol>
+
+      <symbol id="icon-time-pressure" viewBox="0 0 120 120">
+        <circle class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" cx="60" cy="64" r="34"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M60 30V18M48 18h24"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M60 64l18-15"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M17 49h13M13 64h13M17 79h13"/>
+      </symbol>
+
+      <!-- INSPECTOR ICONS -->
+
+      <symbol id="icon-smart-guess-tip" viewBox="0 0 120 120">
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M60 16c-19 0-34 14-34 32 0 12 6 22 17 28v13h34V76c11-6 17-16 17-28 0-18-15-32-34-32z"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M47 89h26M50 99h20"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M60 29v9M42 37l7 6M78 37l-7 6"/>
+      </symbol>
+
+      <symbol id="icon-secret-spin" viewBox="0 0 120 120">
+        <rect class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" x="20" y="31" width="80" height="58" rx="10"/>
+        <rect class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" x="29" y="42" width="18" height="28" rx="3"/>
+        <rect class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" x="51" y="42" width="18" height="28" rx="3"/>
+        <rect class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" x="73" y="42" width="18" height="28" rx="3"/>
+        <text class="text" fill="currentColor" font-weight="800" text-anchor="middle" x="38" y="63" font-size="19">?</text>
+        <text class="text" fill="currentColor" font-weight="800" text-anchor="middle" x="60" y="63" font-size="19">?</text>
+        <text class="text" fill="currentColor" font-weight="800" text-anchor="middle" x="82" y="63" font-size="19">?</text>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M100 43h8v25"/>
+      </symbol>
+
+      <symbol id="icon-time-rewind" viewBox="0 0 120 120">
+        <circle class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" cx="62" cy="61" r="35"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M62 40v23l-14 10"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M29 43H13V27"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M15 42c7-17 24-28 43-28"/>
+      </symbol>
+
+      <symbol id="icon-sneaky-guess" viewBox="0 0 120 120">
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M28 55h64L78 38H42z"/>
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M37 55c0 25 9 39 23 39s23-14 23-39"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M42 72h12M66 72h12"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M52 91l8 5 8-5"/>
+      </symbol>
+
+      <symbol id="icon-letter-peek" viewBox="0 0 120 120">
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M16 60c12-20 27-30 44-30s32 10 44 30c-12 20-27 30-44 30S28 80 16 60z"/>
+        <circle class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" cx="60" cy="60" r="14"/>
+        <circle class="fill" fill="currentColor" cx="60" cy="60" r="5"/>
+      </symbol>
+
+      <symbol id="icon-lockdown" viewBox="0 0 120 120">
+        <rect class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" x="27" y="51" width="66" height="50" rx="8"/>
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M42 51V38c0-11 8-20 18-20s18 9 18 20v13"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M60 70v13"/>
+        <circle class="fill" fill="currentColor" cx="60" cy="68" r="4"/>
+      </symbol>
+
+      <symbol id="icon-silly-word" viewBox="0 0 120 120">
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M23 43c11-25 25-29 37-11 12-18 26-14 37 11-6-3-12-3-18 1 2 6 1 12-3 18H44c-4-6-5-12-3-18-6-4-12-4-18-1z"/>
+        <circle class="fill" fill="currentColor" cx="49" cy="76" r="4"/>
+        <circle class="fill" fill="currentColor" cx="71" cy="76" r="4"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M45 89c10 8 20 8 30 0"/>
+      </symbol>
+
+      <symbol id="icon-letter-scan" viewBox="0 0 120 120">
+        <circle class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" cx="52" cy="52" r="27"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M72 72l25 25"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M37 52h30M52 37v30"/>
+        <circle class="fill" fill="currentColor" cx="52" cy="52" r="5"/>
+      </symbol>
+
+      <symbol id="icon-informant" viewBox="0 0 120 120">
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M28 80l24-24 26 26-24 24z"/>
+        <path class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M52 56l14-14 26 26-14 14z"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M72 31l9-9M89 39l13-4M81 20l4-10"/>
+      </symbol>
+
+      <symbol id="icon-letter-profile" viewBox="0 0 120 120">
+        <rect class="shape" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" x="26" y="22" width="68" height="78" rx="8"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M45 22v-7h30v7"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M42 82V60M60 82V47M78 82V68"/>
+        <path class="line" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M38 88h44"/>
+      </symbol>
+
+    </defs>
+  </svg>
   <div id="toast" class="toast"></div>
   <div id="connectionBanner" class="connection-banner" hidden>Reconnecting…</div>
   <div id="powerPopup" class="power-popup">
