@@ -209,6 +209,27 @@
   color: var(--role-accent);
   text-align: center;
 }
+
+/* SVG badge power buttons (assets/powers/svg/<id>.svg) -- the badge is a
+   self-contained card (background, border/glow, icon, divider, printed
+   title all baked into the vector art), so this variant drops the chip
+   background/padding the PNG+label variant above needs. Higher
+   specificity than mobile.css's ".powers-col .power-btn" text-pill
+   sizing so it isn't stretched to 48% width there. */
+.power-btn.power-btn-icon.power-btn-has-svg {
+  width: 100px;
+  height: 100px;
+  min-height: 100px;
+  padding: 0;
+  background: none;
+}
+.power-btn-svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
 /* line-through only affects text nodes, so the "permanently used" power
    needs its own strike mark drawn across the icon image. */
 .power-btn.power-btn-icon.power-used::after {

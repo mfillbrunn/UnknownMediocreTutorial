@@ -12,25 +12,35 @@ window.PowerEngine = {
     wrapper.className = "power-btn-wrapper";
 
     const btn = document.createElement("button");
-    btn.className = "power-btn power-btn-icon";
+    btn.className = "power-btn power-btn-icon power-btn-has-svg";
     btn.title = label;
 
-    // Icon image (assets/powers/icons/<id>.png) with the power's label
-    // printed below it. If a power doesn't have an icon yet, onerror just
-    // drops the <img> -- the label alone still renders in the same
-    // enlarged, borderless layout, so a partial icon set degrades
-    // gracefully instead of needing a hardcoded list of "which ids have art".
-    const img = document.createElement("img");
-    img.className = "power-btn-img";
-    img.src = `assets/powers/icons/${id}.png`;
-    img.alt = label;
-    img.onerror = () => img.remove();
-    btn.appendChild(img);
+    // Prefer a self-contained SVG badge (assets/powers/svg/<id>.svg) --
+    // icon, divider, and title all baked into one vector card. Falls back
+    // to the PNG icon + printed label (assets/powers/icons/<id>.png) for
+    // any power that doesn't have an SVG yet, via onerror, so the two art
+    // styles can coexist while the set migrates one power at a time.
+    const svgImg = document.createElement("img");
+    svgImg.className = "power-btn-svg";
+    svgImg.src = `assets/powers/svg/${id}.svg`;
+    svgImg.alt = label;
+    svgImg.onerror = () => {
+      svgImg.remove();
+      btn.classList.remove("power-btn-has-svg");
 
-    const labelEl = document.createElement("span");
-    labelEl.className = "power-btn-label";
-    labelEl.textContent = label;
-    btn.appendChild(labelEl);
+      const img = document.createElement("img");
+      img.className = "power-btn-img";
+      img.src = `assets/powers/icons/${id}.png`;
+      img.alt = label;
+      img.onerror = () => img.remove();
+      btn.appendChild(img);
+
+      const labelEl = document.createElement("span");
+      labelEl.className = "power-btn-label";
+      labelEl.textContent = label;
+      btn.appendChild(labelEl);
+    };
+    btn.appendChild(svgImg);
 
     const meta = this.powers[id]?.tooltip;
     if (meta) {
