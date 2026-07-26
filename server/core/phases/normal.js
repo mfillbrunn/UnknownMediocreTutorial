@@ -292,6 +292,18 @@ function handleNormalPhase(room, state, action, roomId, context) {
       }
     }
 
+    // Stats bookkeeping (My Games stats screen): capture the very first
+    // secret this round regardless of action type -- that's the round's
+    // "starting secret" -- and count every time the setter actually swaps
+    // to a different word afterward. Both read out of state in gameOver.js
+    // when the round gets archived.
+    if (state.initialSecretThisRound == null) {
+      state.initialSecretThisRound = secret;
+    }
+    if (action.type === "SET_SECRET_NEW" && secret !== state.secret) {
+      state.secretChangeCount = (state.secretChangeCount || 0) + 1;
+    }
+
     if (state.roundStartTime && state.timeUsed?.[state.setter] != null) {
       state.timeUsed[state.setter] += Math.floor((Date.now() - state.roundStartTime) / 1000);
     }

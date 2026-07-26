@@ -7,6 +7,12 @@ function resetRoundState(room, state, roomId, context) {
   state.gameOver = false;
   state.guessCount = 0;
   state.history = [];
+  // Stats bookkeeping for this round: the very first secret the setter
+  // commits to (before any later SET_SECRET_NEW changes it) and how many
+  // times they change it -- both read out in gameOver.js when the round
+  // gets archived into state.matchRounds for the My Games stats screen.
+  state.initialSecretThisRound = null;
+  state.secretChangeCount = 0;
   state.extraConstraints = [];
   state.turn = null;
   state.simultaneousGuessSubmitted = false;

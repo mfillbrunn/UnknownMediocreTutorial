@@ -72,9 +72,14 @@ function renderMenuAccountStatus () {
   el.querySelector(".menu-logout-btn").onclick = logout;
 }
 
+// Labels for state.aiDifficulty (1/2/3) -- kept in sync with
+// server/core/rooms.js's AI_DIFFICULTY_NAMES and index.html's pickers.
+const AI_DIFFICULTY_LABELS = { 1: "Easy", 2: "Medium", 3: "Hard" };
+
 // Fetch this player's finished matches and render them into `container`.
-// Used by the My Games screen's "Past Games" subtab.
-async function fetchAndRenderPastGames(container) {
+// Used by the My Games screen's "Past Games" subtab. `sourceFilter` is
+// "all" | "human" | "ai", matching the My Games source-filter tabs.
+async function fetchAndRenderPastGames(container, sourceFilter = "all") {
   if (!container) return;
 
   // Auth not ready → show message and exit
@@ -89,7 +94,7 @@ async function fetchAndRenderPastGames(container) {
   container.textContent = "Loading…";
 
   try {
-    const { data, error } = await window.supabaseClient
+    let query = window.supabaseClient
       .from("matches")
       .select(`
         id,
@@ -99,6 +104,9 @@ async function fetchAndRenderPastGames(container) {
         player_a,
         player_b,
         winner,
+        is_ai,
+        ai_difficulty,
+        winner_is_ai,
         score_a,
         score_b,
         rounds,
@@ -109,6 +117,11 @@ async function fetchAndRenderPastGames(container) {
       .order("created_at", { ascending: false })
       .limit(20);
 
+    if (sourceFilter === "human") query = query.eq("is_ai", false);
+    if (sourceFilter === "ai") query = query.eq("is_ai", true);
+
+    const { data, error } = await query;
+
     if (error) throw error;
 
     renderPastGames(data, container);
@@ -117,7 +130,7 @@ async function fetchAndRenderPastGames(container) {
   } catch (err) {
     if (isAbortError(err)) {
       delete container.dataset.loaded;
-      setTimeout(() => fetchAndRenderPastGames(container), 200);
+      setTimeout(() => fetchAndRenderPastGames(container, sourceFilter), 200);
       return;
     }
 
@@ -127,7 +140,7 @@ async function fetchAndRenderPastGames(container) {
 }
 window.fetchAndRenderPastGames = fetchAndRenderPastGames;
 
-function getPowersByRoleFromRounds(rounds = [], myId, match) {
+function getPowersByRoleFromRounds(rounds = [], myId) {
   const byRole = {
     setter: new Set(),
     guesser: new Set()
@@ -135,14 +148,6 @@ function getPowersByRoleFromRounds(rounds = [], myId, match) {
 
   rounds.forEach(r => {
     if (!Array.isArray(r.powers)) return;
-
-    const setterRole =
-      (r.setter === "A" && match.player_a === myId) ||
-      (r.setter === "B" && match.player_b === myId)
-        ? "setter"
-        : "guesser";
-
-    const guesserRole = setterRole === "setter" ? "guesser" : "setter";
 
     r.powers.forEach(pid => {
       const power = PowerEngine.powers?.[pid];
@@ -171,11 +176,11 @@ function renderPastGames(matches, container) {
   const myId = window.currentUser.id;
 
   container.innerHTML = matches.map(m => {
-    const opponentName =
-      m.player_a === myId
-        ? m.player_b_profile?.username
-        : m.player_a_profile?.username
-      || "Opponent";
+    const opponentName = m.is_ai
+      ? `AI${m.ai_difficulty ? ` (${AI_DIFFICULTY_LABELS[m.ai_difficulty] || m.ai_difficulty})` : ""}`
+      : (m.player_a === myId
+          ? m.player_b_profile?.username
+          : m.player_a_profile?.username) || "Opponent";
 
     // -----------------------
     // Result
@@ -183,7 +188,10 @@ function renderPastGames(matches, container) {
     let resultLabel = "Tie";
     let resultIcon = "↔️";
 
-    if (m.winner) {
+    if (m.is_ai && m.winner_is_ai) {
+      resultLabel = "Loss";
+      resultIcon = "❌";
+    } else if (m.winner) {
       const didWin = m.winner === myId;
       resultLabel = didWin ? "Win" : "Loss";
       resultIcon = didWin ? "🏆" : "❌";
@@ -200,7 +208,7 @@ function renderPastGames(matches, container) {
     // Powers (ROUND-BASED, SPEC-COMPLIANT)
     // -----------------------
     const { setter, guesser } =
-      getPowersByRoleFromRounds(m.rounds || [], myId, m);
+      getPowersByRoleFromRounds(m.rounds || [], myId);
 
     let powersLine = null;
     if (setter.length || guesser.length) {
@@ -266,6 +274,166 @@ function renderPastGames(matches, container) {
   }).join("");
 }
 
+// Fetch a larger batch of this player's finished matches (not just the 20
+// shown in Past Games) and render the My Games "Stats" subtab from them.
+// `sourceFilter` is "all" | "human" | "ai", matching the source-filter tabs.
+async function fetchAndRenderStats(container, sourceFilter = "all") {
+  if (!container) return;
+
+  if (!authFullyReady()) {
+    container.textContent = "Please wait…";
+    return;
+  }
+
+  const myId = window.currentUser?.id;
+  if (!myId) return;
+
+  container.textContent = "Loading…";
+
+  try {
+    let query = window.supabaseClient
+      .from("matches")
+      .select("player_a, player_b, winner, is_ai, winner_is_ai, rounds")
+      .or(`player_a.eq.${myId},player_b.eq.${myId}`)
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    if (sourceFilter === "human") query = query.eq("is_ai", false);
+    if (sourceFilter === "ai") query = query.eq("is_ai", true);
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    renderStats(data, container);
+    container.dataset.loaded = "1";
+
+  } catch (err) {
+    if (isAbortError(err)) {
+      delete container.dataset.loaded;
+      setTimeout(() => fetchAndRenderStats(container, sourceFilter), 200);
+      return;
+    }
+
+    console.error("Stats load failed:", err);
+    container.textContent = "Failed to load statistics";
+  }
+}
+window.fetchAndRenderStats = fetchAndRenderStats;
+
+// Crunches raw match rows into the My Games stats numbers. All counts are
+// from `myId`'s perspective:
+//  - "secret" stats only look at rounds where myId was the setter.
+//  - "opening guess" stats only look at rounds where myId was the guesser.
+//  - "winningest" = the word that appears in the most matches myId went on
+//    to win overall (not a per-round win, since this game only scores wins
+//    at the match level).
+//  - avgGuessesToFindSecret: per round as guesser, unconditional.
+//  - avgGuessesWhenYouWin: per round as guesser, only within matches myId won.
+//  - avgSecretChanges: per round as setter, how often they swapped secrets.
+function computeMyGameStats(matches, myId) {
+  const secretUsage = new Map();
+  const secretWins = new Map();
+  const guessUsage = new Map();
+  const guessWins = new Map();
+
+  let guesserRoundGuessSum = 0, guesserRoundCount = 0;
+  let winRoundGuessSum = 0, winRoundCount = 0;
+  let setterRoundCount = 0, secretChangeSum = 0;
+
+  matches.forEach(m => {
+    const won = m.winner === myId;
+
+    (m.rounds || []).forEach(r => {
+      if (r.setter === myId) {
+        const word = (r.startingSecret || r.secret || "").toUpperCase();
+        if (word) {
+          secretUsage.set(word, (secretUsage.get(word) || 0) + 1);
+          if (won) secretWins.set(word, (secretWins.get(word) || 0) + 1);
+        }
+        setterRoundCount++;
+        secretChangeSum += r.secretChanges || 0;
+      }
+
+      if (r.guesser === myId) {
+        const opening = r.history?.[0]?.guess?.toUpperCase();
+        if (opening) {
+          guessUsage.set(opening, (guessUsage.get(opening) || 0) + 1);
+          if (won) guessWins.set(opening, (guessWins.get(opening) || 0) + 1);
+        }
+        if (Number.isFinite(r.guessCount)) {
+          guesserRoundGuessSum += r.guessCount;
+          guesserRoundCount++;
+          if (won) {
+            winRoundGuessSum += r.guessCount;
+            winRoundCount++;
+          }
+        }
+      }
+    });
+  });
+
+  const topByCount = map => {
+    let best = null, bestCount = 0;
+    map.forEach((count, word) => {
+      if (count > bestCount) { best = word; bestCount = count; }
+    });
+    return best ? { word: best, count: bestCount } : null;
+  };
+
+  return {
+    gamesPlayed: matches.length,
+    mostCommonSecret: topByCount(secretUsage),
+    mostCommonOpeningGuess: topByCount(guessUsage),
+    mostWinningSecret: topByCount(secretWins),
+    mostWinningOpeningGuess: topByCount(guessWins),
+    avgGuessesToFindSecret: guesserRoundCount ? guesserRoundGuessSum / guesserRoundCount : null,
+    avgGuessesWhenYouWin: winRoundCount ? winRoundGuessSum / winRoundCount : null,
+    avgSecretChanges: setterRoundCount ? secretChangeSum / setterRoundCount : null
+  };
+}
+
+function renderStats(matches, container) {
+  if (!container || !window.currentUser) return;
+
+  if (!matches.length) {
+    container.textContent = "No finished games yet.";
+    return;
+  }
+
+  const stats = computeMyGameStats(matches, window.currentUser.id);
+  const fmtNum = n => (n == null ? "—" : n.toFixed(1));
+
+  const wordCard = (label, sub, s) => `
+    <div class="stat-card">
+      <div class="stat-label">${label}</div>
+      <div class="stat-value">${s ? s.word : "—"}</div>
+      <div class="stat-sub">${s ? `${s.count} game${s.count === 1 ? "" : "s"}` : sub}</div>
+    </div>
+  `;
+
+  const numCard = (label, value, sub) => `
+    <div class="stat-card">
+      <div class="stat-label">${label}</div>
+      <div class="stat-value">${value}</div>
+      <div class="stat-sub">${sub}</div>
+    </div>
+  `;
+
+  container.innerHTML = `
+    <div class="stats-grid">
+      ${wordCard("Most Common Secret", "No secrets yet", stats.mostCommonSecret)}
+      ${wordCard("Most Common Opening Guess", "No guesses yet", stats.mostCommonOpeningGuess)}
+      ${wordCard("Most Winning Secret", "No wins yet", stats.mostWinningSecret)}
+      ${wordCard("Most Winning Opening Guess", "No wins yet", stats.mostWinningOpeningGuess)}
+      ${numCard("Avg Guesses to Find Secret", fmtNum(stats.avgGuessesToFindSecret), "as guesser, per round")}
+      ${numCard("Avg Guesses When You Win", fmtNum(stats.avgGuessesWhenYouWin), "as guesser, in won matches")}
+      ${numCard("Avg Secret Changes", fmtNum(stats.avgSecretChanges), "per round as setter")}
+    </div>
+    <div class="stats-footnote">Based on your last ${stats.gamesPlayed} game${stats.gamesPlayed === 1 ? "" : "s"}.</div>
+  `;
+}
+window.renderStats = renderStats;
 
 function summarizeMatchPowers(rounds = []) {
   const used = new Set();

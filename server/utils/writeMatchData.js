@@ -67,15 +67,23 @@ function computeMatchResult(state, viewerUserId) {
 }
 async function writeMatchHistory({ state, room, supabase, ratingChange }) {
 
-  // Only human players
-  const humans = Object.values(room.playersByUserId)
-    .filter(p => !p.isAI);
+  const allPlayers = Object.values(room.playersByUserId);
+  const humans = allPlayers.filter(p => !p.isAI);
+  const aiPlayers = allPlayers.filter(p => p.isAI);
 
-  if (humans.length !== 2) return;
+  // Either 2 real players, or exactly 1 real player + 1 AI opponent (the
+  // tutorial's single-player room shape -- no AI entry at all -- falls
+  // through here and is correctly skipped).
+  const isAIMatch = humans.length === 1 && aiPlayers.length === 1;
+  if (!isAIMatch && humans.length !== 2) return;
 
-  const [playerA, playerB] = humans;
+  const [playerA, playerB] = isAIMatch ? [humans[0], aiPlayers[0]] : humans;
   const userA = playerA.userId;
-  const userB = playerB.userId;
+  // AI's userId is the synthetic literal "AI" (server/core/rooms.js), not a
+  // real profiles.id -- storing it in player_b would violate the FK
+  // constraint the column has to profiles. Leave it null for AI matches;
+  // is_ai/ai_difficulty carry the opponent info instead.
+  const userB = isAIMatch ? null : playerB.userId;
 
   const {
     winner,
@@ -85,6 +93,11 @@ async function writeMatchHistory({ state, room, supabase, ratingChange }) {
   } = computeMatchResult(state, null);
 
   const winnerUserId = winner;
+  const winnerIsAI = isAIMatch && winnerUserId === playerB.userId;
+  // Same FK concern as player_b above -- never write the "AI" sentinel id
+  // into `winner`. winner_is_ai carries that outcome instead; a tie still
+  // reads as winner: null the same way it always has for human matches.
+  const dbWinner = winnerIsAI ? null : winnerUserId;
 
   const scoreA =
     winnerUserId == null ? winnerPoints :
@@ -93,7 +106,7 @@ async function writeMatchHistory({ state, room, supabase, ratingChange }) {
 
   const scoreB =
     winnerUserId == null ? winnerPoints :
-    winnerUserId === userB ? winnerPoints :
+    winnerUserId === playerB.userId ? winnerPoints :
     loserPoints;
 
   const { error } = await supabase.from("matches").insert({
@@ -103,7 +116,11 @@ async function writeMatchHistory({ state, room, supabase, ratingChange }) {
     player_a: userA,
     player_b: userB,
 
-    winner: winnerUserId,
+    is_ai: isAIMatch,
+    ai_difficulty: isAIMatch ? (state.aiDifficulty || null) : null,
+    winner_is_ai: winnerIsAI,
+
+    winner: dbWinner,
     win_reason: winReason,
 
     score_a: scoreA,

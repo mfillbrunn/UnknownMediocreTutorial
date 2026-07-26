@@ -77,6 +77,12 @@ state.matchRounds.push({
   guesser: state.guesser,
   secret: state.secret || null,
   finalSecret: state.secret || null,
+  // The secret the setter actually opened the round with (before any
+  // SET_SECRET_NEW mid-round changes) and how many times they changed it
+  // -- used by the My Games stats screen; falls back to the final secret
+  // for rounds that somehow never captured it (e.g. old archived data).
+  startingSecret: state.initialSecretThisRound || state.secret || null,
+  secretChanges: state.secretChangeCount || 0,
   guessCount: state.guessCount,
   time: { ...(state.timeUsed || {}) },
   timeoutLoser: state.timeoutLoser || null,
@@ -162,10 +168,16 @@ state.matchRounds.push({
 
   const isAIMatch = Object.values(room.playersByUserId || {}).some((p) => p.isAI);
 
-  if (!isAIMatch && !state.canNextRound) {
+  // Match history (My Games / stats) now covers human-vs-AI games too, not
+  // just human-vs-human -- but never the Daily Challenge (already gets its
+  // own per-day record above via daily_results, so recording it here too
+  // would just double it up) or the tutorial (scripted secrets/words would
+  // pollute the stats screen, and writeMatchHistory's humans.length===2
+  // guard already excludes tutorial's single-player room shape anyway).
+  if (!state.isDaily && !state.isTutorial && !state.canNextRound) {
     const { winner, tie } = computeMatchResult(state, null);
 
-    if (state.ranked) {
+    if (state.ranked && !isAIMatch) {
       applyRankedElo({ state, room, supabase, winner, tie })
         .then((ratingChange) => {
           // The Elo update is async and lands after the emitRoomState()

@@ -19,8 +19,13 @@ window.refreshMyGamesNotification = function () {
   });
 };
 
+// "all" | "human" | "ai" -- which opponent type the Past Games / Stats
+// panes are currently filtered to. Reset each time the screen is opened.
+let myGamesSourceFilter = "all";
+
 window.showMyGames = async function () {
   if (!window.currentUser) return toast("Please log in first");
+  myGamesSourceFilter = "all";
 
   showScreen("myGamesScreen");
   const screen = document.getElementById("myGamesScreen");
@@ -77,6 +82,13 @@ window.showMyGames = async function () {
       <div class="friends-tabs my-games-tabs">
         <button class="friends-tab my-games-tab active" data-my-games-tab="active">Active</button>
         <button class="friends-tab my-games-tab" data-my-games-tab="past">Past Games</button>
+        <button class="friends-tab my-games-tab" data-my-games-tab="stats">Stats</button>
+      </div>
+
+      <div class="friends-tabs my-games-source-tabs hidden">
+        <button class="friends-tab my-games-source-tab active" data-my-games-source="all">All Games</button>
+        <button class="friends-tab my-games-source-tab" data-my-games-source="human">Vs Players</button>
+        <button class="friends-tab my-games-source-tab" data-my-games-source="ai">Vs AI</button>
       </div>
 
       <div id="myGamesActivePane">
@@ -86,6 +98,10 @@ window.showMyGames = async function () {
 
       <div id="myGamesPastPane" class="hidden">
         <div id="myGamesPastGamesContainer" class="past-games"></div>
+      </div>
+
+      <div id="myGamesStatsPane" class="hidden">
+        <div id="myGamesStatsContainer" class="my-games-stats"></div>
       </div>
     </div>
   `;
@@ -118,6 +134,18 @@ window.showMyGames = async function () {
 
   const activePaneEl = document.getElementById("myGamesActivePane");
   const pastPaneEl = document.getElementById("myGamesPastPane");
+  const statsPaneEl = document.getElementById("myGamesStatsPane");
+  const sourceTabsEl = screen.querySelector(".my-games-source-tabs");
+
+  function loadMyGamesPane(tab) {
+    if (tab === "past") {
+      const container = document.getElementById("myGamesPastGamesContainer");
+      window.fetchAndRenderPastGames?.(container, myGamesSourceFilter);
+    } else if (tab === "stats") {
+      const container = document.getElementById("myGamesStatsContainer");
+      window.fetchAndRenderStats?.(container, myGamesSourceFilter);
+    }
+  }
 
   screen.querySelectorAll(".my-games-tab").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -125,13 +153,22 @@ window.showMyGames = async function () {
       screen.querySelectorAll(".my-games-tab").forEach(b => b.classList.toggle("active", b === btn));
       activePaneEl?.classList.toggle("hidden", tab !== "active");
       pastPaneEl?.classList.toggle("hidden", tab !== "past");
+      statsPaneEl?.classList.toggle("hidden", tab !== "stats");
+      // Active games aren't filtered by opponent type (there's usually
+      // only one or two anyway) -- only Past Games and Stats respect it.
+      sourceTabsEl?.classList.toggle("hidden", tab === "active");
 
-      if (tab === "past") {
-        const container = document.getElementById("myGamesPastGamesContainer");
-        if (container && !container.dataset.loaded) {
-          window.fetchAndRenderPastGames?.(container);
-        }
-      }
+      if (tab === "past" || tab === "stats") loadMyGamesPane(tab);
+    });
+  });
+
+  screen.querySelectorAll(".my-games-source-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      myGamesSourceFilter = btn.dataset.myGamesSource;
+      screen.querySelectorAll(".my-games-source-tab").forEach(b => b.classList.toggle("active", b === btn));
+
+      const activeTab = screen.querySelector(".my-games-tab.active")?.dataset.myGamesTab;
+      loadMyGamesPane(activeTab);
     });
   });
 };
