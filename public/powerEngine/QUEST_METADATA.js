@@ -22,7 +22,7 @@ window.QUEST_METADATA = {
     examples: ["ROUTE", "POWER", "QUIET"]
   },
   RARE: {
-    label: "High-Value Target",
+    label: "Rare Letters",
     desc: "Use at least 5 of Q, J, X, Z, W, K, V across your guesses.",
     emoji: "💎",
     color: "#16A34A",

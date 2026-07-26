@@ -71,7 +71,7 @@
           entries.push({
             type: "power",
             cssClass: " log-power-guesser",
-            text: `${meta?.emoji ? meta.emoji + " " : ""}You: ${meta?.label || "Recon Sweep"}: ${count}/${distinctTested} ${verb} in the secret (${letters})`
+            text: `${meta?.emoji ? meta.emoji + " " : ""}You: ${meta?.label || "Letter Scan"}: ${count}/${distinctTested} ${verb} in the secret (${letters})`
           });
         }
 

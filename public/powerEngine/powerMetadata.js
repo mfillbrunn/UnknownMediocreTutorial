@@ -1,6 +1,6 @@
 window.POWER_METADATA = {
   confuseColors: {
-    label: "Jam Signals",
+    label: "Color Swap",
     desc: "For one round, every green and yellow tile turns blue instead. The Inspector can't tell the colors apart!",
     short: "Green and yellow tiles turn blue for one round.",
     icon: "palette-swap",
@@ -8,7 +8,7 @@ window.POWER_METADATA = {
     color: "#3B82F6"
   },
   betMiss: {
-    label: "Risky Maneuver",
+    label: "Miss Bet",
     desc: "The Inspector guesses how many misses their next try will have. Guess it right, and they win a free green letter!",
     short: "Guess your miss count right to win a free green letter.",
     icon: "casino",
@@ -24,7 +24,7 @@ window.POWER_METADATA = {
     color: "#0EA5E9"
   },
   fakeFeedback: {
-    label: "Falsify Intel",
+    label: "Fake Clue",
     desc: "The Inspector sees two answers for their guess — one is true and one is made up. They have to figure out which is which!",
     short: "The Inspector sees one true answer and one fake one.",
     icon: "mask",
@@ -33,7 +33,7 @@ window.POWER_METADATA = {
   },
 
   countOnly: {
-    label: "Redact Report",
+    label: "Counts Only",
     desc: "Hides where the green and yellow tiles are. The Inspector only learns how many greens and yellows they got, not which letters.",
     short: "Shows only how many greens and yellows — not where they are.",
     icon: "tally",
@@ -42,7 +42,7 @@ window.POWER_METADATA = {
   },
 
   rouletteSecret: {
-    label: "Break Cover",
+    label: "Secret Spin",
     desc: "Picks the Spy's next secret word for them at random. They don't get to choose it!",
     short: "Randomly picks the Spy's next secret word.",
     icon: "roulette",
@@ -51,7 +51,7 @@ window.POWER_METADATA = {
   },
 
   nonsense: {
-    label: "Signal Scramble",
+    label: "Silly Word",
     desc: "This round, the guess doesn't have to be a real word. Any 5 letters will work!",
     short: "This round's guess doesn't need to be a real word.",
     icon: "shuffle",
@@ -96,7 +96,7 @@ window.POWER_METADATA = {
   },
 
   magicMode: {
-    label: "Inside Job",
+    label: "Color Upgrade",
     desc: "Turns every yellow tile into a green tile next round!",
     short: "Turns every yellow tile green next round.",
     icon: "wand",
@@ -105,7 +105,7 @@ window.POWER_METADATA = {
   },
 
   revealGreen: {
-    label: "Leak Info",
+    label: "Letter Peek",
     desc: "Shows you one letter from the secret word right now. The Spy can still change their secret later, though!",
     short: "Reveals one letter's position in the secret.",
     icon: "peek-letter",
@@ -114,7 +114,7 @@ window.POWER_METADATA = {
   },
 
   revealHistory: {
-    label: "Solve Cold Case",
+    label: "Time Rewind",
     desc: "Shows you what the secret word was three rounds ago.",
     short: "Reveals a secret from three rounds ago.",
     icon: "rewind",
@@ -123,7 +123,7 @@ window.POWER_METADATA = {
   },
 
   revealLetter: {
-    label: "Confirm Lead",
+    label: "Letter Challenge",
     desc: "Do a special challenge with your guesses to win a free green letter:",
     short: "Complete a hidden challenge for a free green letter.",
     icon: "letter-plus",
@@ -138,7 +138,7 @@ window.POWER_METADATA = {
         emoji: "⌨️"
       },
       RARE: {
-        label: "High-Value Target",
+        label: "Rare Letters",
         desc: "Use at least 4 of these tricky letters — Q, J, X, Z, W, K, V — to win a green letter.",
         icon: "diamond-letter",
         emoji: "💎"
@@ -165,7 +165,7 @@ window.POWER_METADATA = {
   },
 
   stealthGuess: {
-    label: "Move in Shadows",
+    label: "Sneaky Guess",
     desc: "Hides your next guess so the Spy can't see it.",
     short: "Hides your guess from the Spy next turn.",
     icon: "ghost",
@@ -174,7 +174,7 @@ window.POWER_METADATA = {
   },
 
   suggestGuess: {
-    label: "Analyst Tip",
+    label: "Smart Guess Tip",
     desc: "Gives you a good guess that already fits everything you know so far.",
     short: "Gives you a valid guess that fits all known clues.",
     icon: "lightbulb",
@@ -183,7 +183,7 @@ window.POWER_METADATA = {
   },
 
   suggestSecret: {
-    label: "Profiler Insight",
+    label: "Secret Word Helper",
     desc: "Gives you a secret word that still fits everything you've told the Inspector so far.",
     short: "Gives you a valid secret that fits all feedback.",
     icon: "brain",
@@ -192,7 +192,7 @@ window.POWER_METADATA = {
   },
 
   vowelRefresh: {
-    label: "Signal Refresh",
+    label: "Vowel Reset",
     desc: "Un-marks the vowels from your last guess, but only the ones you hadn't used before.",
     short: "Resets last round's previously-unused vowels.",
     icon: "vowel-cycle",
@@ -201,7 +201,7 @@ window.POWER_METADATA = {
   },
 
   blindSpot: {
-    label: "Create Dead Zone",
+    label: "Foggy Tile",
     desc: "Hides the clue for one tile for the rest of the round.",
     short: "Hides one tile's feedback for the rest of the round.",
     icon: "fog",
@@ -209,7 +209,7 @@ window.POWER_METADATA = {
     color: "#374151"
   },
   revealPenalty: {
-    label: "Marked Weakness",
+    label: "Letter Bluff",
     desc: "Say a letter you think is in the secret. If the Inspector believes you, the Spy gets 1 point. If they call it a bluff but you were right, the Spy gets 2 points instead. If it really was a bluff, the Inspector gets a free yellow letter!",
     short: "Claim a letter is in the secret - the Inspector can accept it or call your bluff.",
     icon: "warning",
@@ -217,7 +217,7 @@ window.POWER_METADATA = {
     color: "#B45309"
   },
   assassinWord: {
-    label: "Set Kill Phrase",
+    label: "Trap Word",
     desc: "Pick a secret trap word. If the Inspector ever guesses it, the game ends right away! Plant it early for a bigger reward — but it can't look too much like your real secret.",
     short: "Plant a word that instantly wins the game if guessed.",
     icon: "skull-word",
@@ -235,7 +235,7 @@ window.POWER_METADATA = {
   },
 
   wiretap: {
-    label: "Wiretap",
+    label: "Listen In",
     desc: "Always shows how many secret words are still possible — the same number the Spy sees. In fast games, you can also tap it once a round to watch that number update live as you type!",
     short: "See the same remaining-secrets count the Spy sees.",
     icon: "headphones",
@@ -244,7 +244,7 @@ window.POWER_METADATA = {
   },
 
   letterProbe: {
-    label: "Recon Sweep",
+    label: "Letter Scan",
     desc: "Pick any 5 letters to test. You'll only learn how many of them are in the secret — not which ones or where.",
     short: "Test 5 letters, learn how many are in the secret.",
     icon: "radar",
@@ -262,7 +262,7 @@ window.POWER_METADATA = {
   },
 
   doubleGuess: {
-    label: "Double Tap",
+    label: "Double Guess",
     desc: "Fire two guesses at once at the same secret. The Spy only sees one of them, picked at random — but you get clues back for both!",
     short: "Submit two guesses at once and get feedback on both.",
     icon: "double-tap",
@@ -280,7 +280,7 @@ window.POWER_METADATA = {
   },
 
   delayedIntel: {
-    label: "Delayed Intel",
+    label: "Delayed Clue",
     desc: "Holds back this round's clues. The Inspector won't see them until after their next guess!",
     short: "Delays this round's feedback until the Inspector's next guess.",
     icon: "clock-delay",

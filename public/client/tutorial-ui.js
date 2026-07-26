@@ -361,7 +361,7 @@ function runGuesserTutorial(state,role){
 
   // ==========================================================
   // STAGE 2 (powers follow-up): same opening CHAMP guess as stage 1, but
-  // this time the Inspector has Leak Info (revealGreen) available and is
+  // this time the Inspector has Letter Peek (revealGreen) available and is
   // walked through actually using it — the second guess (CUMIN) is the
   // AI's real secret, so it wins the round on the spot.
   // ==========================================================
@@ -378,7 +378,7 @@ function runGuesserTutorial(state,role){
       }
       if (tutorialSubStep === 1) {
         showTutorial(
-          `🔎 You're the Inspector again, and this time you have a power available: 👁️ Leak Info — it reveals one correct letter and its position.`,
+          `🔎 You're the Inspector again, and this time you have a power available: 👁️ Letter Peek — it reveals one correct letter and its position.`,
           { enabled: true }
         );
         highlightPowersCol();
@@ -402,10 +402,10 @@ function runGuesserTutorial(state,role){
     if (round === 1) {
       if (tutorialSubStep === 0) {
         showTutorial(
-          `Now let's use your power. Click "Leak Info" to reveal one correct letter and where it goes.`,
+          `Now let's use your power. Click "Letter Peek" to reveal one correct letter and where it goes.`,
           { enabled: false }
         );
-        highlightPowerButtonByText("Leak Info");
+        highlightPowerButtonByText("Letter Peek");
         tutorialContinueMode = "hide";
         waitForPowerUse("revealGreen");
         return;
@@ -567,7 +567,7 @@ function runSetterTutorial(state, role) {
 
   // ==========================================================
   // STAGE 2 (powers follow-up): same BLIMP/LEMUR secrets, but this
-  // time the Spy has Redact Report (countOnly) available and is
+  // time the Spy has Counts Only (countOnly) available and is
   // walked through actually using it.
   // ==========================================================
   if (stage2) {
@@ -575,7 +575,7 @@ function runSetterTutorial(state, role) {
       const word = state.tutorialSecrets?.[0];
       if (tutorialSubStep === 0) {
         showTutorial(
-          `🕵️ Now you're the Spy, with a power of your own available this time: 📄 Redact Report.`,
+          `🕵️ Now you're the Spy, with a power of your own available this time: 📄 Counts Only.`,
           { enabled: false }
         );
         highlightPowersCol();
@@ -600,10 +600,10 @@ function runSetterTutorial(state, role) {
       const word = state.tutorialSecrets?.[1];
       if (tutorialSubStep === 0) {
         showTutorial(
-          `Let's use your power this turn. Click "Redact Report" — it hides exact tile positions from the Inspector and shows them only how many letters are green or yellow in total.`,
+          `Let's use your power this turn. Click "Counts Only" — it hides exact tile positions from the Inspector and shows them only how many letters are green or yellow in total.`,
           { enabled: true }
         );
-        highlightPowerButtonByText("Redact Report");
+        highlightPowerButtonByText("Counts Only");
         tutorialContinueMode = "hide";
         waitForPowerUse("countOnly");
         return;
@@ -941,9 +941,9 @@ function runPowerTutorialReceiving(state, role, meta, powerId, round) {
 // STAGE "advanced": the UI-features walkthrough (Notes, Guide, Drag & Lock,
 // Power UI) launched from the standalone "Advanced Tutorial" menu button.
 // Reuses stage 2's exact scripted match (see tutorialMode.js) -- round 1 has
-// the human as Inspector (Notes + Guide + Leak Info + Drag & Lock on their
+// the human as Inspector (Notes + Guide + Letter Peek + Drag & Lock on their
 // guess row), round 2 (after the normal end-of-round role swap) has them as
-// Spy (Drag & Lock on their secret row + Redact Report).
+// Spy (Drag & Lock on their secret row + Counts Only).
 // ==========================================================
 function runAdvancedTutorial(state, role) {
   if (role === "guesser") {
@@ -1002,10 +1002,10 @@ function runAdvancedTutorialGuesser(state) {
   if (round === 1) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `⚡ Now the Power UI: active powers show up as buttons below your draft row. Tap "Leak Info" to activate it — a popup will confirm what it revealed, and a small badge nearby lets you find it again later.`,
+        `⚡ Now the Power UI: active powers show up as buttons below your draft row. Tap "Letter Peek" to activate it — a popup will confirm what it revealed, and a small badge nearby lets you find it again later.`,
         { enabled: false }
       );
-      highlightPowerButtonByText("Leak Info");
+      highlightPowerButtonByText("Letter Peek");
       tutorialContinueMode = "hide";
       waitForPowerUse("revealGreen");
       return;
@@ -1071,10 +1071,10 @@ function runAdvancedTutorialSetter(state) {
   if (round === 1) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `⚡ The Power UI works the same way on this side. Tap "Redact Report" — it hides exact tile positions from the Inspector and shows them only how many letters are green or yellow in total.`,
+        `⚡ The Power UI works the same way on this side. Tap "Counts Only" — it hides exact tile positions from the Inspector and shows them only how many letters are green or yellow in total.`,
         { enabled: true }
       );
-      highlightPowerButtonByText("Redact Report");
+      highlightPowerButtonByText("Counts Only");
       tutorialContinueMode = "hide";
       waitForPowerUse("countOnly");
       return;
@@ -1111,7 +1111,7 @@ function runSummaryTutorial(state){
     if (tutorialSubStep === 0) {
       showTutorial(
         stage2
-          ? `Round 1 done — you just used Leak Info as the Inspector.`
+          ? `Round 1 done — you just used Letter Peek as the Inspector.`
           : `The first round ended. In this tutorial, you tried to guess the secret word, but in a real match, whichever role you play first is randomly determined.`,
         { enabled: true }
       );
@@ -1121,7 +1121,7 @@ function runSummaryTutorial(state){
       if (tutorialSubStep === 1) {
       showTutorial(
         stage2
-          ? `Now you'll play the Spy and get to try Redact Report.`
+          ? `Now you'll play the Spy and get to try Counts Only.`
           : `The next round has you play the other role — you'll be the Spy 🕵️, and the tutorial AI will be the Inspector 🔎.`,
         { enabled: true }
       );
@@ -1200,7 +1200,7 @@ function runMatchTutorial(state){
  if (stage2) {
    if (tutorialSubStep === 0) {
      showTutorial(
-       `That's both powers tried — one from each side! 👁️ Leak Info and 📄 Redact Report are just two of many.`,
+       `That's both powers tried — one from each side! 👁️ Letter Peek and 📄 Counts Only are just two of many.`,
        { enabled: true }
      );
      tutorialContinueMode = "advance";

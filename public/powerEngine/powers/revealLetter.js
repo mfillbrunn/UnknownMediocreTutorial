@@ -172,12 +172,12 @@ PowerEngine.register("revealLetter", {
     // Button label: condition name + a compact live-progress suffix.
     const mode = state.powers?.revealLetter?.mode;
     const conditionName =
-      mode === "RARE" ? "High-Value Target" :
+      mode === "RARE" ? "Rare Letters" :
       mode === "ROW" ? "Full Sweep" :
       mode === "ALPHA" ? "In Order" :
       mode === "DOUBLES" ? "Double Trouble" :
       mode === "CHAIN" ? "Word Chain" :
-      "Confirmed Lead";
+      "Letter Challenge";
 
     const status = computeRevealLetterStatus(state);
     btn.textContent = status ? `${conditionName} (${status.label})` : conditionName;
