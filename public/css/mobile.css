@@ -63,12 +63,12 @@
     min-height: 32px;
     letter-spacing: 0.3px;
 }
-  /* Icon buttons stay a fixed square -- the 48%-flex/text-pill sizing
-     above is for the text-fallback case only (no icon asset yet). */
+  /* Icon buttons keep their own fixed size -- the 48%-flex/text-pill
+     sizing above is for the old small pill look only. */
   .powers-col .power-btn.power-btn-icon {
     flex: 0 0 auto;
-    padding: 4px;
-    min-height: var(--h-control);
+    padding: 8px 4px 6px;
+    min-height: 80px;
 }
    .history-tiles{
       gap: var(--sp-6);

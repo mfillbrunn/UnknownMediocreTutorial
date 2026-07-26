@@ -175,22 +175,39 @@
   cursor: not-allowed;
 }
 
-/* Icon-image power buttons (assets/powers/icons/<id>.png) -- a fixed
-   square instead of the text pill's auto-width, image fills it via
-   object-fit. Falls back to the plain text-pill styling above whenever
-   PowerEngine.createPowerButton's onerror strips this class (no icon
-   asset yet for that power). */
+/* Icon-image power buttons: icon (assets/powers/icons/<id>.png, or just
+   the label alone if that power doesn't have art yet) stacked above its
+   printed label, no accent-colored outline -- a plain tinted chip instead
+   of the text-pill's colored border. */
 .power-btn.power-btn-icon {
-  width: var(--h-control);
-  height: var(--h-control);
-  padding: 4px;
+  width: 80px;
+  height: auto;
+  min-height: 80px;
+  padding: 8px 4px 6px;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  flex-direction: column;
+  gap: 4px;
+}
+.power-btn.power-btn-icon::before {
+  display: none;
 }
 .power-btn-img {
-  width: 100%;
-  height: 100%;
+  width: 46px;
+  height: 46px;
   object-fit: contain;
   display: block;
   pointer-events: none;
+  flex-shrink: 0;
+}
+.power-btn-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  line-height: 1.15;
+  color: var(--role-accent);
+  text-align: center;
 }
 /* line-through only affects text nodes, so the "permanently used" power
    needs its own strike mark drawn across the icon image. */

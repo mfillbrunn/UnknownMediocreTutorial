@@ -15,20 +15,22 @@ window.PowerEngine = {
     btn.className = "power-btn power-btn-icon";
     btn.title = label;
 
-    // Icon-only image buttons (assets/powers/icons/<id>.png) -- falls back
-    // to the old text-pill look via onerror for any power that doesn't
-    // have an icon yet, so partial icon sets degrade gracefully instead
-    // of needing a hardcoded list of "which ids have art".
+    // Icon image (assets/powers/icons/<id>.png) with the power's label
+    // printed below it. If a power doesn't have an icon yet, onerror just
+    // drops the <img> -- the label alone still renders in the same
+    // enlarged, borderless layout, so a partial icon set degrades
+    // gracefully instead of needing a hardcoded list of "which ids have art".
     const img = document.createElement("img");
     img.className = "power-btn-img";
     img.src = `assets/powers/icons/${id}.png`;
     img.alt = label;
-    img.onerror = () => {
-      img.remove();
-      btn.classList.remove("power-btn-icon");
-      btn.textContent = label;
-    };
+    img.onerror = () => img.remove();
     btn.appendChild(img);
+
+    const labelEl = document.createElement("span");
+    labelEl.className = "power-btn-label";
+    labelEl.textContent = label;
+    btn.appendChild(labelEl);
 
     const meta = this.powers[id]?.tooltip;
     if (meta) {
