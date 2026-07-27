@@ -684,9 +684,11 @@ body.hide-constraints .constraint-row {
   overscroll-behavior: contain;
   /* Buffer so a tile's border/glow/reveal-mask (history.css's ::after,
      which bleeds 2px past the tile edge) never gets clipped by the
-     scroll boundary itself -- without this the top row could look
-     slightly cut off along its top edge. */
-  padding: 4px 2px;
+     scroll boundary itself -- without this the top row can look slightly
+     cut off along its top edge. More on top than bottom since that's the
+     edge that actually reads as "cut off" (the bottom edge fading into
+     scrollable content is expected/normal). */
+  padding: 10px 2px 4px;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--role-accent) 55%, transparent) transparent;
 }

@@ -207,6 +207,13 @@
   max-width: 100%;
   align-self: stretch;
 }
+/* Same reasoning as .remaining-box above -- no horizontal room to share
+   a line with the power badges in this narrow sidebar. */
+.theme-setter .powers-col .letter-profile-box {
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+}
 
 /* =========================================
    Shared role header layout
@@ -396,7 +403,12 @@ body:has(#guesserScreen.active) #appContainer {
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  /* No overflow:hidden here -- #appContainer above already clips at the
+     page boundary (that's what actually stops the page from scrolling),
+     so this doesn't need its own redundant clipping layer, which was one
+     more place a badge/glow/chip poking slightly outside its own box
+     (e.g. the quest progress chip's negative top offset) could get cut
+     off for no reason. */
 }
 #setterScreen.active > .role-header,
 #guesserScreen.active > .role-header {

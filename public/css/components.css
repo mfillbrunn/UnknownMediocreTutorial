@@ -1383,9 +1383,14 @@
   color: color-mix(in srgb, var(--text) 85%, transparent);
 }
 
+/* Shares the same flex-wrap row as the power/quest badges and the
+   remaining-words box (layout.css's .powers-col) instead of being forced
+   onto its own full-width line -- width:auto lets it sit beside them
+   when there's room, and the row's own flex-wrap sends it to the next
+   line on its own when there isn't. */
 .powers-col .letter-profile-box {
-  flex-basis: 100%;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   text-align: left;
 }
 
