@@ -36,9 +36,26 @@
    pointer-events: none;
      max-width: 100vw;
   overflow-x: hidden;
+  /* Fills whatever height is left in the screen after .role-header (see
+     the body:has(...) chain above) -- min-height:0 is what lets a flex
+     item actually shrink below its content size instead of forcing the
+     screen taller than the viewport. */
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .play-area > * + * {
   margin-top: var(--sp-8);
+}
+/* .play-row is the one child that's allowed to flex -- everything else
+   here (must-contain-box, the info badge, the keyboard) keeps its
+   natural size so .history-scroll (further down, inside .play-row) is
+   what actually absorbs the available space. */
+.play-area > .play-row {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.play-area > *:not(.play-row) {
+  flex-shrink: 0;
 }
 
 .play-area .power-btn {
@@ -74,7 +91,12 @@
 }
 
 /* Center column: history + draft. Comes first in the DOM and stays first
-   visually (order:1) -- tiles on top. */
+   visually (order:1) -- tiles on top. flex:1 1 auto + min-height:0 makes
+   it (not .powers-col) the one that grows/shrinks to fill leftover
+   vertical space in .play-row -- that space then cascades down to
+   .history-scroll (history.css), the actual flexible/scrollable element,
+   once constraint-row/draft-row-wrap (flex-shrink:0) take their own
+   natural size out of it. */
 .center-col {
   display: flex;
   flex-direction: column;
@@ -84,6 +106,8 @@
    row-gap: var(--sp-6);
    margin-top: var(--sp-12);
   order: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   /* Lets .history-tile (history.css) size itself off this column's own
      width (cqw) instead of the raw viewport -- harmless now that the
      column spans the full row, just keeps the same sizing mechanism. */
@@ -91,7 +115,8 @@
 }
 
 /* Powers row: below the board (order:2), buttons stacked horizontally
-   (wrapping) rather than in a narrow single-file column. */
+   (wrapping) rather than in a narrow single-file column. flex-shrink:0
+   (not the flexible one) -- see .center-col above. */
 .powers-col {
   display: flex;
   flex-direction: row;
@@ -102,6 +127,7 @@
    margin-top: var(--sp-6);
   order: 2;
   width: 100%;
+  flex-shrink: 0;
   /* .play-row disables pointer-events entirely (a grid-gutter click-
      through trick, still harmless to keep) and only re-enables specific
      descendants -- this row holds nothing but interactive elements
@@ -138,7 +164,13 @@
    order/flex-direction change here, so nothing else needs touching. */
 .theme-setter .play-row {
   flex-direction: row;
-  align-items: flex-start;
+  /* stretch (not flex-start) -- .center-col and .powers-col both need a
+     real, definite height (not just their own content's natural height)
+     for their own internal flex-grow/overflow math to work: .center-col
+     so .history-scroll's flex:1 has something concrete to fill, and
+     .powers-col so its overflow-y:auto below actually has a box to clip
+     against instead of just growing however tall its badges need. */
+  align-items: stretch;
 }
 .theme-setter .center-col {
   order: 2;
@@ -154,6 +186,11 @@
   /* Just enough to fit one ~63px badge card (mobile.css) plus a little
      breathing room -- the board (center-col) gets the rest of the row. */
   max-width: 96px;
+  /* Stretched to the row's full height above -- if a setter's active
+     powers + quest mirror + remaining-box add up to more than that (a
+     lot of active powers at once), this scrolls internally instead of
+     forcing the row (and the whole page) taller than the viewport. */
+  overflow-y: auto;
 }
 .theme-setter .powers-col .power-container {
   flex-direction: column;
@@ -330,6 +367,42 @@ body:has(#guesserScreen.active) .app-header {
   display: none;
 }
 
+/* Game screens (setter/guesser) fill the viewport exactly and never let
+   the PAGE itself scroll -- only .history-scroll (history.css, the past-
+   guesses list) scrolls internally, everything else (header, powers,
+   keyboard) just keeps its natural size. This is a flex-column chain all
+   the way down: body -> #appContainer -> the active screen -> .play-area
+   -> .play-row -> .center-col -> .history-scroll is the one link that's
+   actually allowed to grow/shrink (flex:1 1 auto, see history.css) --
+   every other element in the chain is either a fixed/natural-size sibling
+   (flex-shrink:0) or just passes the available space down to its own
+   flex:1 child. Scoped via :has() so every other screen (menus, lobby, My
+   Games, etc.) keeps its ordinary page-scroll behavior untouched. */
+body:has(#setterScreen.active),
+body:has(#guesserScreen.active) {
+  height: 100dvh;
+  overflow: hidden;
+}
+body:has(#setterScreen.active) #appContainer,
+body:has(#guesserScreen.active) #appContainer {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#setterScreen.active,
+#guesserScreen.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+#setterScreen.active > .role-header,
+#guesserScreen.active > .role-header {
+  flex-shrink: 0;
+}
+
 .app-header-left {
   display: flex;
   align-items: baseline;
@@ -469,8 +542,12 @@ body:has(#guesserScreen.active) .app-header {
 .draft-row-wrap {
   display: flex;
   justify-content: center;
-  width: 100%;   
+  width: 100%;
   pointer-events: none;
+  /* A natural-size sibling of .history-scroll within .center-col's flex
+     column -- must not shrink, so .history-scroll (the one designated
+     flexible element) is what absorbs any space pressure instead. */
+  flex-shrink: 0;
 }
 /* =========================================
    SECRET ROW 

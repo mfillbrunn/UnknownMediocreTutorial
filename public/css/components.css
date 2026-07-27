@@ -1280,23 +1280,24 @@
 /* Shares the same flex-wrap row as the power buttons (layout.css's
    .powers-col/.power-container) instead of being forced onto its own
    line below them -- see mobile.css's .powers-col .remaining-box for the
-   width:auto override that actually lets it sit inline. Keep/New still
-   render as one single line within the box itself (see
-   renderSetterRemainingBox in remaining-words.js). */
+   width:auto override that actually lets it sit inline. */
 .powers-col .remaining-box {
   margin: 0;
   text-align: center;
 }
+/* Keep/New (renderSetterRemainingBox in remaining-words.js) each get
+   their own label line and their own numbers line right below it --
+   .label/.value below are block-level lines now, not spans sharing one
+   row, so the count doesn't get lost right next to its label. */
 .remaining-box .line {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: baseline;
-  gap: var(--sp-6);
+  display: block;
 }
 
 .remaining-box .label {
   opacity: 0.75;
+}
+.remaining-box .label:not(:first-child) {
+  margin-top: var(--sp-4);
 }
 
 .remaining-box .value {

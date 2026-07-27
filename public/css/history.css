@@ -42,7 +42,21 @@ font-size: clamp(14px, 7cqw, 35px);
 
   transform-style: preserve-3d;
   position: relative;
-  
+
+}
+
+/* Setter's board (.center-col) is narrower than the guesser's -- it
+   shares the row with the sidebar -- but the powers row is no longer a
+   second horizontal band competing for vertical space below it (it's
+   beside it now, not under it), so a bigger share of that narrower
+   column's own width can still go to each tile without overflowing it.
+   17.5cqw (0.175W) stays under the same T <= 0.2W - 3.2px ceiling even
+   at the narrowest realistic width for this column (~220-230px on a
+   small phone). */
+.theme-setter .history-tile {
+  width: clamp(30px, 17.5cqw, 78px);
+  height: clamp(30px, 17.5cqw, 78px);
+  font-size: clamp(15px, 8.8cqw, 39px);
 }
 
 /* Red flash overlay that sits above existing tile colors */
@@ -95,11 +109,11 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   justify-content: center;
   position: relative;
   /* Direct flex child of .history-scroll (.history-tiles' column flex) --
-     without this, once that container got a max-height (see
+     without this, once that container's own height gets constrained (see
      .history-scroll), flexbox's default flex-shrink:1 would proportionally
-     squash every row down to fit the capped height instead of leaving
-     rows at their natural size and letting overflow-y:auto scroll the
-     excess, which is the whole point of capping it in the first place. */
+     squash every row down to fit instead of leaving rows at their natural
+     size and letting overflow-y:auto scroll the excess, which is the
+     whole point of the scroll container in the first place. */
   flex-shrink: 0;
 }
 
@@ -460,6 +474,10 @@ Constraint row using history tile language
   position: relative;
   padding: var(--sp-6);
   border-radius: var(--r-10);
+  /* A natural-size sibling of .history-scroll within .center-col's flex
+     column -- must not shrink, so .history-scroll (the one designated
+     flexible element) is what absorbs any space pressure instead. */
+  flex-shrink: 0;
   border: 1.5px solid color-mix(
     in srgb,
     var(--role-accent) 60%,
@@ -647,39 +665,31 @@ body.hide-constraints .constraint-row {
 /* Only this element (past submitted guesses) scrolls -- everything else
    on the screen (constraint row above it, the draft row below it, the
    powers row, keyboard, header) stays put regardless of how many guesses
-   pile up. A FIXED height (not max-height) + overflow-y:auto is what
-   actually keeps the keyboard at a constant spot from the very first
-   guess -- max-height only caps growth once content is already tall
-   enough to hit it, so early in a round (1-2 rows) the box would still be
-   shorter than that and the keyboard would sit higher, creeping down a
-   little with every guess until the cap kicked in. A fixed height reserves
-   that space up front. justify-content:flex-end bottom-anchors the rows
-   so the newest guess always sits right against the draft row below with
-   no gap, and once there are more rows than fit, the OLDEST ones (top)
-   are what overflow off-screen first -- ui/history.js scrolls this to the
-   bottom whenever a new row is appended so the latest guess stays visible
-   by default. */
+   pile up, and the whole PAGE never scrolls either (see layout.css's
+   body:has(#setterScreen.active)/#guesserScreen.active height-management
+   chain -- #appContainer down through .play-area/.play-row/.center-col
+   are all a flex column with this element as the one truly flexible
+   link). flex:1 lets it take exactly whatever vertical room is left over
+   after the constraint row, draft row, powers, and keyboard all take
+   their natural size; min-height is a floor so it never gets squeezed to
+   nothing. Rows flow top-to-bottom in normal document order (the default
+   justify-content:flex-start) same as real Wordle -- newest guess appends
+   at the bottom, and once there are more rows than fit, the OLDEST ones
+   (top) are what scroll out of view first; ui/history.js scrolls this to
+   the bottom whenever a new row is appended so the latest guess stays
+   visible by default. */
 .history-scroll {
   z-index: 1;
-  height: 34vh;
+  flex: 1 1 auto;
+  min-height: 100px;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
-  justify-content: flex-end;
   /* Buffer so a tile's border/glow/reveal-mask (history.css's ::after,
      which bleeds 2px past the tile edge) never gets clipped by the
      scroll boundary itself -- without this the top row could look
      slightly cut off along its top edge. */
   padding: 4px 2px;
-  /* A flex item's automatic min main-size resolves to 0 (instead of its
-     content size) the moment it gets a non-visible overflow -- without
-     this, .center-col's column flex would shrink this element (and every
-     row inside it) down arbitrarily small under any layout pressure,
-     collapsing each row's own box far below its tiles' actual height and
-     making consecutive rows paint on top of each other. flex-shrink:0
-     keeps it (and thus every row) at its real content size, still capped
-     by height/overflow-y above once that content actually exceeds it. */
-  flex-shrink: 0;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--role-accent) 55%, transparent) transparent;
 }

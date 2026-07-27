@@ -345,11 +345,10 @@ function createQuestBadgeTile(type) {
   return { wrapper, btn, labelEl, chip };
 }
 
-// Text-only badge content: "Quest: <progress>" then the quest's name on
-// its own line -- no emoji/result-color glyphs here (the InfoBadgeEngine
-// text badge below still uses those for its own, differently-scoped
-// display). Ready/done collapse to a plain word rather than the emoji
-// result text used elsewhere, keeping this one spot glyph-free.
+// Progress text for the corner chip -- "n/m" while in progress, or a
+// plain word once ready/done (no emoji/result-color glyphs here; the
+// InfoBadgeEngine text badge below still uses those for its own,
+// differently-scoped display).
 function questCardProgressText(status, q) {
   if (status.done) return "Done";
   if (q.ready) return "Ready";
@@ -402,8 +401,12 @@ function updateQuestBadge(state, role) {
 
   const { btn, labelEl, chip } = _questBadge;
   btn.title = status.meta.label;
-  labelEl.innerHTML = `Quest: ${questCardProgressText(status, q)}<br>${status.meta.label}`;
-  chip.style.display = "none";
+  // Progress ("n/m", "Ready", "Done") now lives in the small corner chip
+  // instead of a "Quest: <progress>" prefix line, so the label itself is
+  // just the quest's name.
+  labelEl.textContent = status.meta.label;
+  chip.textContent = questCardProgressText(status, q);
+  chip.style.display = "";
 
   // Only the guesser can actually claim -- the setter's tile is a
   // read-only mirror (its blue border already marks it as "theirs, not

@@ -33,19 +33,17 @@ function renderSetterRemainingBox(boxState) {
     : "";
 
   box.innerHTML = `
-    <div class="line">
-      <span class="label">Keep</span>
-      <span class="value" style="${oldStyle}">${current} → ${boxState.old != null ? boxState.old.toLocaleString() : "?"}</span>
-      <span class="label">New</span>
-      <span class="value" style="${newStyle}">${current} →
-        ${
-          boxState.isConsistent === false
-            ? `<span class="inconsistent-x">✕</span>`
-            : boxState.new != null
-              ? boxState.new.toLocaleString()
-              : "?"
-        }
-      </span>
+    <div class="line label">Keep</div>
+    <div class="line value" style="${oldStyle}">${current} → ${boxState.old != null ? boxState.old.toLocaleString() : "?"}</div>
+    <div class="line label">New</div>
+    <div class="line value" style="${newStyle}">${current} →
+      ${
+        boxState.isConsistent === false
+          ? `<span class="inconsistent-x">✕</span>`
+          : boxState.new != null
+            ? boxState.new.toLocaleString()
+            : "?"
+      }
     </div>
     ${hint}
   `;

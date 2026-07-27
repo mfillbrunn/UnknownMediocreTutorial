@@ -56,12 +56,6 @@
     max-width: 38px;
     flex: 0 0 auto;
   }
-  /* The setter's own screen carries one icon-less exception: their
-     read-only mirror of the guesser's quest (quest.js's updateQuestBadge,
-     pinned as the last card under their own powers) stays text-only. */
-  .theme-setter .quest-badge-tile .power-icon {
-    display: none;
-  }
   .powers-col .power-btn-label {
     height: 18px;
     font-size: 8px;
