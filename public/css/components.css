@@ -239,6 +239,14 @@
   color: var(--role-accent);
   text-align: center;
 }
+/* Applied by fitBadgeLabel (powerEngine.js) when a label would otherwise
+   wrap to 3 lines (e.g. "Secret Word Helper") -- shrinks it back down to
+   2 so every badge reads at roughly the same size instead of some cards
+   visibly carrying more text than others. */
+.power-btn-label.power-btn-label-sm {
+  font-size: 8.5px;
+  letter-spacing: 0.1px;
+}
 
 /* line-through only affects text nodes, so the "permanently used" power
    needs its own strike mark drawn across the card. */
@@ -256,18 +264,21 @@
   pointer-events: none;
 }
 
-/* Quest badge tile -- the guesser's one active quest, shown as a
-   power-badge-style card in the same row as the power buttons (see
-   quest.js's createQuestBadgeTile/updateQuestBadge). It reuses every
+/* Quest badge tile -- the one active quest, shown as a power-badge-style
+   card in the same row as the power buttons on BOTH screens (see
+   quest.js's createQuestBadgeTile/updateQuestBadge) -- clickable/claimable
+   for the guesser, a read-only mirror for the setter. It reuses every
    .power-badge/.power-icon/.power-btn-label rule above by redefining
    --role-accent locally: every one of those rules reads var(--role-accent)
    for its border/background/icon/label color, so overriding the variable
    here is enough to recolor the whole card without duplicating any of
-   that CSS. Default is a neutral quest-purple; ready/one-away swap it for
-   the same --tile-green/--tile-yellow used by the text-only badge so both
-   read as the same signal. */
+   that CSS. Default is the guesser's own blue -- the quest is always
+   theirs, so on the setter's screen (where every other badge is red) a
+   blue-outlined card reads immediately as "not mine". Ready/one-away swap
+   it for the same --tile-green/--tile-yellow used by the text-only badge
+   so both read as the same signal. */
 .quest-badge-tile {
-  --role-accent: #8b7cff;
+  --role-accent: #4da3ff;
 }
 .quest-badge-tile.quest-oneaway {
   --role-accent: var(--tile-yellow);

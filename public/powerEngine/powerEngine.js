@@ -28,6 +28,27 @@ const POWER_ICON_IDS = {
   letterProfile: "icon-letter-profile"
 };
 
+// Shared by power buttons (below) and quest.js's badge tile -- a label
+// that wraps to 3 lines (e.g. "Secret Word Helper", "Hard Mode Streak")
+// gets a smaller font so every badge reads at a consistent size instead
+// of some cards carrying noticeably more text than others. Runs on the
+// next frame since scrollHeight is only meaningful once the element has
+// real layout, which requires it to already be in the document -- callers
+// append the returned wrapper synchronously right after creation, so by
+// the time this fires the label is already live.
+function fitBadgeLabel(labelEl) {
+  labelEl.classList.remove("power-btn-label-sm");
+  requestAnimationFrame(() => {
+    const cs = getComputedStyle(labelEl);
+    const lineHeight = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2;
+    const lines = Math.round(labelEl.scrollHeight / lineHeight);
+    if (lines >= 3) {
+      labelEl.classList.add("power-btn-label-sm");
+    }
+  });
+}
+window.fitBadgeLabel = fitBadgeLabel;
+
 window.PowerEngine = {
   powers: {},
   _initialized: false,
@@ -65,6 +86,7 @@ window.PowerEngine = {
     labelEl.className = "power-btn-label";
     labelEl.textContent = label;
     btn.appendChild(labelEl);
+    fitBadgeLabel(labelEl);
 
     const meta = this.powers[id]?.tooltip;
     if (meta) {

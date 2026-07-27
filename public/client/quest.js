@@ -346,17 +346,22 @@ function createQuestBadgeTile(type) {
 }
 
 // Called from client.js's updateUI(), right next to
-// maybeShowQuestProgressPop. Lazily creates the tile on first call for a
-// guesser with an active quest, keeps it pinned as the first card in
-// guesserPowerContainer, and re-syncs its ready/one-away/done state and
-// claim handler on every render (same rebuild-in-place pattern as
-// PowerEngine.updateButtonStates -- state, not the DOM, is the source of
-// truth each tick).
+// maybeShowQuestProgressPop. Lazily creates the tile on first call for
+// whichever screen we're on (guesserPowerContainer for the guesser,
+// setterPowerContainer for the setter -- the setter's copy is read-only,
+// shown purely so they can see the guesser's progress at a glance without
+// hunting for it), keeps it pinned as the first card in that row, and
+// re-syncs its ready/one-away/done state and claim handler on every
+// render (same rebuild-in-place pattern as PowerEngine.updateButtonStates
+// -- state, not the DOM, is the source of truth each tick).
 function updateQuestBadge(state, role) {
-  const container = document.getElementById("guesserPowerContainer");
+  const containerId = role === "guesser" ? "guesserPowerContainer"
+    : role === "setter" ? "setterPowerContainer"
+    : null;
+  const container = containerId ? document.getElementById(containerId) : null;
   const q = state.powers?.quest;
 
-  if (role !== "guesser" || !q || !q.type || !container) {
+  if (!container || !q || !q.type) {
     if (_questBadge) {
       _questBadge.wrapper.remove();
       _questBadge = null;
@@ -380,8 +385,12 @@ function updateQuestBadge(state, role) {
   const { btn, labelEl, chip } = _questBadge;
   btn.title = status.meta.label;
   labelEl.textContent = status.meta.label;
+  window.fitBadgeLabel?.(labelEl);
 
-  const canClaim = !status.done && (q.ready || q.oneAway);
+  // Only the guesser can actually claim -- the setter's tile is a
+  // read-only mirror (its blue border already marks it as "theirs, not
+  // mine", see .quest-badge-tile's default --role-accent).
+  const canClaim = role === "guesser" && !status.done && (q.ready || q.oneAway);
 
   btn.classList.toggle("quest-ready", !status.done && !!q.ready);
   btn.classList.toggle("quest-oneaway", !status.done && !q.ready && !!q.oneAway);
@@ -423,15 +432,14 @@ InfoBadgeEngine.register((state, role) => {
   const status = computeQuestStatus(state);
   if (!status) return null;
 
-  // The guesser now has the visual quest-badge-tile card (see
-  // updateQuestBadge above) showing icon/name/progress/ready state and
-  // handling the claim click itself, so this text line would just repeat
-  // it there -- kept only for Field Report, whose 3 conditions are
-  // randomized per match and have nowhere else to be shown (see the
-  // subtext comment below). The setter has no visual tile at all, so
-  // their copy is untouched.
+  // Both roles now have the visual quest-badge-tile card (see
+  // updateQuestBadge above) showing icon/name/progress/ready state --
+  // guesser's is the real claim button, setter's is a read-only mirror --
+  // so this text line would just repeat it on either screen. Kept only
+  // for Field Report, whose 3 conditions are randomized per match and
+  // have nowhere else to be shown (see the subtext comment below).
   const hasUniqueInfo = q.type === "FIELDREPORT" && !status.done;
-  if (role === "guesser" && !hasUniqueInfo) return null;
+  if (!hasUniqueInfo) return null;
 
   const canClaim = role === "guesser" && !status.done && (q.ready || q.oneAway);
 
