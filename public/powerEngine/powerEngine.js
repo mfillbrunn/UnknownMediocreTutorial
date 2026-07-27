@@ -39,9 +39,24 @@ const POWER_ICON_IDS = {
 // synchronously right after creation, so by the time this fires the label
 // is already live.
 const BADGE_LABEL_SIZES = [11, 10, 9, 8, 7.2];
-function fitBadgeLabel(labelEl) {
-  labelEl.style.fontSize = "";
+function fitBadgeLabel(labelEl, attemptsLeft) {
+  if (attemptsLeft === undefined) {
+    labelEl.style.fontSize = "";
+    attemptsLeft = 30;
+  }
   requestAnimationFrame(() => {
+    if (!labelEl.isConnected) return;
+    // renderButtons() can run before the button's screen has actually been
+    // shown (#setterScreen/#guesserScreen start hidden and get toggled on
+    // later) -- while any ancestor is display:none, clientHeight and
+    // scrollHeight both read 0, so the check below would wrongly conclude
+    // "already fits" on the very first frame and never shrink long labels
+    // at all. Keep waiting (bounded) for it to actually become visible
+    // instead of measuring a collapsed box.
+    if (labelEl.offsetParent === null) {
+      if (attemptsLeft > 0) fitBadgeLabel(labelEl, attemptsLeft - 1);
+      return;
+    }
     const maxHeight = labelEl.clientHeight;
     for (const size of BADGE_LABEL_SIZES) {
       if (labelEl.scrollHeight <= maxHeight + 1) break;
