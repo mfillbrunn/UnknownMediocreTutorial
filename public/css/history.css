@@ -22,9 +22,14 @@
    overflowed once the sidebar started sharing that row with it (a 5-tile
    board at 12vw comfortably exceeds a ~35-45% narrower board column on a
    phone). */
-width: clamp(30px, 20cqw, 72px);
-height: clamp(30px, 20cqw, 72px);
-font-size: clamp(16px, 10cqw, 36px);
+/* 5 tiles + 4 gaps (var(--sp-6) = 6px) must fit within the container's own
+   width: 5*T + 24 <= W, i.e. T <= 0.2W - 4.8px -- worked out per actual
+   container width (~180-260px on a phone) rather than picked by eye, since
+   a too-high cqw here overflows the row past its own column (checked via
+   getBoundingClientRect, not just how it looks in a screenshot). */
+width: clamp(30px, 16cqw, 74px);
+height: clamp(30px, 16cqw, 74px);
+font-size: clamp(15px, 8cqw, 37px);
   border-radius: var(--r-6);
   font-weight: 800;
   letter-spacing: 1px;

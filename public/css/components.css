@@ -310,13 +310,6 @@
 .quest-badge-tile.quest-badge-readonly {
   opacity: 0.68;
 }
-/* Setter's read-only mirror of the guesser's power loadout (Opp tab --
-   see quest.js's updateOpponentPowerMirror). Same "look, don't touch"
-   treatment as the quest mirror above. */
-.power-badge-readonly {
-  opacity: 0.68;
-  cursor: default;
-}
 .quest-progress-chip {
   position: absolute;
   top: -8px;

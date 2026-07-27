@@ -74,14 +74,16 @@ display: grid;
    board (center-col) gets as much of the row's width as possible; the
    grid track itself is `auto` (layout.css's .play-row), so it would
    otherwise grow to fit whatever's widest inside (e.g. the remaining-
-   words box's text). */
+   words box's text). Single-column now (power cards stack one per row,
+   see .powers-col .power-container below), so this only needs to fit one
+   badge (~63px) plus a little breathing room, not two side by side. */
 .powers-col {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   row-gap: var(--sp-6);
    margin-top: var(--sp-6);
-  max-width: 132px;
+  max-width: 96px;
   /* .play-row disables pointer-events entirely (a grid-gutter click-
      through trick) and only re-enables specific descendants -- this
      column holds nothing but interactive elements (power buttons, the
@@ -90,18 +92,17 @@ display: grid;
   pointer-events: auto;
   }
 
-/* You/Opp/? tab row above the power buttons (setter only -- see
-   selectPowerTab in client.js) and the Log/Notes tab row below them
-   (both screens -- see selectSidebarTab). Same compact pill-pair look,
-   reused for both. */
+/* Log/Notes tab row below the power buttons (both screens -- see
+   selectSidebarTab in client.js). Stacked full-width rather than side by
+   side, same single-column language as everything else in this narrow
+   sidebar. */
 .sidebar-tab-row {
   display: flex;
+  flex-direction: column;
   align-items: stretch;
   gap: var(--sp-4);
 }
 .sidebar-tab-btn {
-  flex: 1 1 0;
-  min-width: 0;
   padding: var(--sp-4) 0;
   border: 1px solid color-mix(in srgb, var(--role-accent) 40%, transparent);
   border-radius: var(--r-8);
@@ -117,38 +118,14 @@ display: grid;
   background: color-mix(in srgb, var(--role-accent) 22%, transparent);
   border-color: var(--role-accent);
 }
-/* Opens the same power-info popup the old header "?" button did -- red
-   regardless of role, a fixed color rather than --role-accent, since
-   it's a help affordance rather than a setter/guesser-owned control. */
-.sidebar-tab-help-btn {
-  flex: 0 0 auto;
-  width: 26px;
-  border-radius: 50%;
-  border: 1px solid rgba(248, 113, 113, 0.6);
-  background: transparent;
-  color: #f87171;
-  font-weight: 800;
-  font-size: var(--fs-12);
-  cursor: pointer;
-}
 
-/* You/Opp -- two separate containers (#setterPowerContainer for the
-   setter's own real powers, #setterOpponentPowerContainer for the
-   guesser's quest + power loadout, both read-only -- see quest.js's
-   updateQuestBadge/updateOpponentPowerMirror) swapped via the `hidden`
-   attribute in selectPowerTab (client.js) rather than filtered by CSS. */
-
-/* Power cards sit side by side in a wrapping row, not stacked in a single
-   column -- both the setter/guesser's own row and the setter's Opp-tab
-   mirror (quest tile + power tiles together) use this same layout. */
-.powers-col .power-container:not([hidden]) {
+/* Power cards stack one per row -- same single-column sidebar language as
+   everything else here (Log/Notes buttons above). */
+.powers-col .power-container {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
   gap: var(--sp-6);
-}
-.powers-col .power-container > * + * {
-  margin-top: 0;
 }
 
 /* Compact, always-mounted Log/Notes box (replaces the old floating

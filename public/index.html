@@ -746,6 +746,7 @@
                   </div>
                 </div>
                 <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
+                <button id="powerInfoBtnSetter" class="power-info-btn" aria-label="Power descriptions"> <span class="power-info-icon">?</span></button>
                 <button id="keyboardToggleBtnSetter" class="guide-toggle-btn keyboard-toggle-btn" title="Toggle physical keyboard input" aria-label="Toggle physical keyboard input">⌨️</button>
                 <button id="guideToggleBtnSetter" class="guide-toggle-btn" title="Toggle guide" aria-label="Toggle guide">🧭<span class="guide-btn-label"> Guide</span></button>
               </div>
@@ -756,13 +757,7 @@
             <div class="play-row">
                 <!-- LEFT: powers -->               
                <div class="play-col powers-col">
-                 <div class="sidebar-tab-row">
-                   <button class="sidebar-tab-btn active" data-tab="you" onclick="selectPowerTab('setter','you')">You</button>
-                   <button class="sidebar-tab-btn" data-tab="opp" onclick="selectPowerTab('setter','opp')">Opp</button>
-                   <button id="powerInfoBtnSetter" class="sidebar-tab-help-btn" aria-label="Power descriptions">?</button>
-                 </div>
                  <div id="setterPowerContainer" class="power-container laser-scope"></div>
-                 <div id="setterOpponentPowerContainer" class="power-container laser-scope" hidden></div>
                  <div id="SetterRemainingBox" class="remaining-box"  hidden></div>
                  <div id="SetterLetterProfileBox" class="letter-profile-box" hidden></div>
                  <div class="sidebar-tab-row">

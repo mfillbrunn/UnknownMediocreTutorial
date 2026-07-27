@@ -346,20 +346,18 @@ function createQuestBadgeTile(type) {
 }
 
 // Called from client.js's updateUI(), right next to
-// maybeShowQuestProgressPop. Lazily creates the tile on first call for
-// whichever screen we're on (guesserPowerContainer for the guesser --
-// it's their own quest, alongside their own powers; setterOpponentPowerContainer
-// for the setter -- the setter's copy is read-only and lives in the Opp
-// tab alongside a read-only mirror of the guesser's powers, see
-// client.js's updateOpponentPowerMirror, not mixed into the setter's own
-// You-tab power list), keeps it pinned as the first card in that row, and
-// re-syncs its ready/one-away/done state and claim handler on every
-// render (same rebuild-in-place pattern as PowerEngine.updateButtonStates
-// -- state, not the DOM, is the source of truth each tick).
+// maybeShowQuestProgressPop. Lazily creates the tile on first call --
+// guesser only (it's their own quest, alongside their own powers). The
+// setter has no card-tile mirror of it (that was the Opp tab, since
+// removed to keep the sidebar narrow) -- their only view of the quest is
+// back to the plain thin text badge in the shared info-badge strip (see
+// the InfoBadgeEngine registration below). Keeps the tile pinned as the
+// first card in guesserPowerContainer, and re-syncs its ready/one-away/
+// done state and claim handler on every render (same rebuild-in-place
+// pattern as PowerEngine.updateButtonStates -- state, not the DOM, is the
+// source of truth each tick).
 function updateQuestBadge(state, role) {
-  const containerId = role === "guesser" ? "guesserPowerContainer"
-    : role === "setter" ? "setterOpponentPowerContainer"
-    : null;
+  const containerId = role === "guesser" ? "guesserPowerContainer" : null;
   const container = containerId ? document.getElementById(containerId) : null;
   const q = state.powers?.quest;
 
@@ -437,13 +435,15 @@ InfoBadgeEngine.register((state, role) => {
   const status = computeQuestStatus(state);
   if (!status) return null;
 
-  // Both roles now have the visual quest-badge-tile card (see
-  // updateQuestBadge above) showing icon/name/progress/ready state --
-  // guesser's is the real claim button, setter's is a read-only mirror --
-  // so this text line would just repeat it on either screen. Kept only
-  // for Field Report, whose 3 conditions are randomized per match and
-  // have nowhere else to be shown (see the subtext comment below).
-  const hasUniqueInfo = q.type === "FIELDREPORT" && !status.done;
+  // The guesser has the visual quest-badge-tile card (updateQuestBadge
+  // above) showing icon/name/progress/ready state as their real claim
+  // button -- this text line would just repeat it, so it's suppressed
+  // there except for Field Report, whose 3 conditions are randomized per
+  // match and have nowhere else to be shown (see the subtext comment
+  // below). The setter has no card of their own (removed along with the
+  // Opp tab to keep the sidebar narrow) -- this thin text badge is their
+  // only quest UI, so it always shows for them.
+  const hasUniqueInfo = role === "setter" || (q.type === "FIELDREPORT" && !status.done);
   if (!hasUniqueInfo) return null;
 
   const canClaim = role === "guesser" && !status.done && (q.ready || q.oneAway);
@@ -466,9 +466,9 @@ InfoBadgeEngine.register((state, role) => {
     } else {
       text = status.claimedEarly ? "Quest claimed early" : "Quest complete";
     }
-  } else if (guideOn && q.ready) {
+  } else if (guideOn && q.ready && role === "guesser") {
     text = `${status.meta.label} ready — tap for 🟩`;
-  } else if (guideOn && q.oneAway) {
+  } else if (guideOn && q.oneAway && role === "guesser") {
     text = `${status.meta.label}: one away — tap for early 🟨`;
   } else {
     text = `Quest: ${status.meta.label} (${status.label})`;
@@ -562,50 +562,6 @@ function maybeShowQuestProgressPop(state) {
   _questPopSeen.ready = !!q.ready;
 }
 window.maybeShowQuestProgressPop = maybeShowQuestProgressPop;
-
-// --------------------------------------------------
-// Opp tab (setter only) -- read-only mirror of the guesser's power
-// loadout, shown alongside their quest badge (updateQuestBadge above) in
-// setterOpponentPowerContainer. state.initialPowers.guesser is already
-// shared with both players at match start (see client.js's "big
-// announce" popup, which lists both loadouts openly), so this isn't
-// exposing anything the setter couldn't already see there -- it just
-// keeps it visible afterward instead of a one-time popup. Per-power used/
-// unused state (state.powers[id + "Used"]) is likewise already visible
-// cross-role via the action log's power-use entries.
-// --------------------------------------------------
-let _oppPowerBadges = {};
-let _oppPowerIdsKey = null;
-
-function updateOpponentPowerMirror(state, role) {
-  if (role !== "setter") return;
-  const container = document.getElementById("setterOpponentPowerContainer");
-  if (!container) return;
-
-  const ids = state.initialPowers?.guesser || [];
-  const idsKey = ids.join(",");
-
-  if (idsKey !== _oppPowerIdsKey) {
-    Object.values(_oppPowerBadges).forEach(b => b.wrapper.remove());
-    _oppPowerBadges = {};
-    _oppPowerIdsKey = idsKey;
-    ids.forEach(id => {
-      const variant = state.powers?.[id]?.mode || null;
-      const meta = window.getPowerMeta ? window.getPowerMeta(id, variant) : window.POWER_METADATA?.[id];
-      const { wrapper, btn } = PowerEngine.createPowerButton(id, meta?.label || id);
-      btn.disabled = true;
-      btn.classList.add("power-badge-readonly");
-      container.appendChild(wrapper);
-      _oppPowerBadges[id] = { wrapper, btn };
-    });
-  }
-
-  ids.forEach(id => {
-    const used = state.powers?.[id + "Used"] === true;
-    _oppPowerBadges[id]?.btn.classList.toggle("power-used", used);
-  });
-}
-window.updateOpponentPowerMirror = updateOpponentPowerMirror;
 
 socket.on("questEarlyClaim", ({ questType, letter }) => {
   const meta = window.QUEST_METADATA?.[questType];

@@ -547,7 +547,6 @@ function updateUI() {
   // meaningful to the guesser actually working toward it -- the setter's
   // copy stays the read-only text badge.
   window.updateQuestBadge?.(state, myRole);
-  window.updateOpponentPowerMirror?.(state, myRole);
   if (myRole === "guesser") window.maybeShowQuestProgressPop?.(state);
   if (state.phase !== "lobby") hide("lobby");
   updateSecretLock();
@@ -1668,24 +1667,6 @@ function updateTimerAccess() {
     }
   });
 })();
-
-// The setter's power sidebar has a "You" / "Opp" tab pair above the power
-// buttons (see index.html's .sidebar-tab-row inside #setterPowerContainer's
-// parent): "You" shows the setter's own power cards, "Opp" isolates the
-// guesser's quest-badge-tile mirror (see quest.js's updateQuestBadge,
-// which always inserts it as #setterPowerContainer's first child) so it
-// reads as "their thing", not mixed in among the setter's own powers.
-// Pure CSS visibility toggle via a data attribute -- nothing here needs to
-// know which children are which, .quest-badge-tile already marks itself.
-window.selectPowerTab = function (role, tab) {
-  const youEl = document.getElementById(role === "setter" ? "setterPowerContainer" : "guesserPowerContainer");
-  const oppEl = document.getElementById(role === "setter" ? "setterOpponentPowerContainer" : "guesserOpponentPowerContainer");
-  if (youEl) youEl.hidden = tab !== "you";
-  if (oppEl) oppEl.hidden = tab !== "opp";
-  document.querySelectorAll(`#${role}Screen .sidebar-tab-btn[data-tab]`).forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.tab === tab);
-  });
-};
 
 // The Log/Notes pair below the power sidebar now share ONE compact,
 // always-mounted box (see index.html's .sidebar-log-notes-box) instead of
