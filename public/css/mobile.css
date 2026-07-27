@@ -34,10 +34,16 @@
      gradient surface, accent border, accent icon + label, hover lift,
      used-power strike) -- this scope only shrinks that card 25% for the
      compact mobile row (layout.css's .powers-col/.power-container are
-     row-wrap), it doesn't reskin it. */
+     row-wrap), it doesn't reskin it. A fixed height (not min-height) is
+     deliberate -- .power-btn-label below is already a fixed-height box
+     that fitBadgeLabel (powerEngine.js) shrinks text into regardless of
+     line count, but the CARD itself only had a min-height, so a 1-line
+     label ("Informant") floored out at 63px while a longer 2-3 line one
+     (a long quest name) grew past it -- every badge is now the same
+     overall size no matter how much label text it has. */
   .powers-col .power-btn.power-badge {
     width: 63px;
-    min-height: 63px;
+    height: 78px;
     align-self: center;
     flex-direction: column;
     align-items: center;
@@ -77,12 +83,14 @@
      line (components.css's .powers-col .remaining-box no longer sets
      flex-basis/width:100%) -- width:auto lets it sit beside the badges
      when there's room, and the row's own flex-wrap sends it to the next
-     line on its own when there isn't. */
+     line on its own when there isn't. Narrower + smaller text than the
+     base .remaining-box already is (components.css) so it takes up less
+     of that shared row. */
   .powers-col .remaining-box {
     width: auto;
     max-width: 100%;
     padding: var(--sp-4) var(--sp-6);
-    font-size: var(--fs-11);
+    font-size: 9px;
     align-self: center;
   }
    #SetterInfoBadge, #GuesserInfoBadge{

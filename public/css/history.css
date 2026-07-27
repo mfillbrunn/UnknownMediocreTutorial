@@ -647,15 +647,30 @@ body.hide-constraints .constraint-row {
 /* Only this element (past submitted guesses) scrolls -- everything else
    on the screen (constraint row above it, the draft row below it, the
    powers row, keyboard, header) stays put regardless of how many guesses
-   pile up. A capped max-height + overflow-y:auto keeps that in place;
-   ui/history.js scrolls this to the bottom whenever a new row is appended
-   so the latest guess is what's visible by default. */
+   pile up. A FIXED height (not max-height) + overflow-y:auto is what
+   actually keeps the keyboard at a constant spot from the very first
+   guess -- max-height only caps growth once content is already tall
+   enough to hit it, so early in a round (1-2 rows) the box would still be
+   shorter than that and the keyboard would sit higher, creeping down a
+   little with every guess until the cap kicked in. A fixed height reserves
+   that space up front. justify-content:flex-end bottom-anchors the rows
+   so the newest guess always sits right against the draft row below with
+   no gap, and once there are more rows than fit, the OLDEST ones (top)
+   are what overflow off-screen first -- ui/history.js scrolls this to the
+   bottom whenever a new row is appended so the latest guess stays visible
+   by default. */
 .history-scroll {
   z-index: 1;
-  max-height: 34vh;
+  height: 34vh;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
+  justify-content: flex-end;
+  /* Buffer so a tile's border/glow/reveal-mask (history.css's ::after,
+     which bleeds 2px past the tile edge) never gets clipped by the
+     scroll boundary itself -- without this the top row could look
+     slightly cut off along its top edge. */
+  padding: 4px 2px;
   /* A flex item's automatic min main-size resolves to 0 (instead of its
      content size) the moment it gets a non-visible overflow -- without
      this, .center-col's column flex would shrink this element (and every
@@ -663,7 +678,7 @@ body.hide-constraints .constraint-row {
      collapsing each row's own box far below its tiles' actual height and
      making consecutive rows paint on top of each other. flex-shrink:0
      keeps it (and thus every row) at its real content size, still capped
-     by max-height/overflow-y above once that content actually exceeds it. */
+     by height/overflow-y above once that content actually exceeds it. */
   flex-shrink: 0;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--role-accent) 55%, transparent) transparent;
