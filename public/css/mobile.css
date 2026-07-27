@@ -43,21 +43,32 @@
      overall size no matter how much label text it has. */
   .powers-col .power-btn.power-badge {
     width: 63px;
-    height: 78px;
+    height: 66px;
+    /* components.css's base .power-btn.power-badge sets min-height:84px
+       (its own, larger desktop-reference size) -- without resetting it
+       here too, that min-height wins over this smaller height and the
+       card renders at 84px regardless. */
+    min-height: 0;
     align-self: center;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--sp-4);
-    padding: 6px 4px 8px;
+    gap: 3px;
+    padding: 5px 4px 6px;
     border-radius: var(--r-12, 12px);
 }
   .powers-col .power-icon {
-    max-width: 38px;
+    max-width: 32px;
     flex: 0 0 auto;
   }
+  /* The setter's own screen carries one icon-less exception: their
+     read-only mirror of the guesser's quest (quest.js's updateQuestBadge,
+     pinned as the last card under their own powers) stays text-only. */
+  .theme-setter .quest-badge-tile .power-icon {
+    display: none;
+  }
   .powers-col .power-btn-label {
-    height: 18px;
+    height: 16px;
     font-size: 8px;
     text-align: center;
   }
@@ -77,9 +88,10 @@
      line (components.css's .powers-col .remaining-box no longer sets
      flex-basis/width:100%) -- width:auto lets it sit beside the badges
      when there's room, and the row's own flex-wrap sends it to the next
-     line on its own when there isn't. Narrower + smaller text than the
-     base .remaining-box already is (components.css) so it takes up less
-     of that shared row. */
+     line on its own when there isn't. This font-size only actually
+     matters for the guesser's box (Possible/informant/wiretap-live,
+     .line/.label/.value) -- the setter's Old/Keep/New stat cards
+     (.remaining-stat*) set their own explicit sizes and override it. */
   .powers-col .remaining-box {
     width: auto;
     max-width: 100%;

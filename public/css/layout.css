@@ -123,7 +123,7 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: flex-start;
-  gap: var(--sp-8);
+  gap: var(--sp-4);
    margin-top: var(--sp-6);
   order: 2;
   width: 100%;
@@ -141,7 +141,7 @@
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--sp-8);
+  gap: var(--sp-4);
   /* No width:100% here anymore, and flex-grow:0 (not 1) -- this needs to
      shrink-to-fit its actual buttons instead of stretching to claim the
      whole row, so the remaining-words box (a sibling, not a child of this
@@ -200,8 +200,8 @@
 /* The remaining-words box shared the power row's horizontal line in the
    guesser's single-column layout (components.css/mobile.css) -- there's
    no horizontal room for that in this narrow sidebar, so it goes back to
-   a full-width block that wraps its own Keep/New line across two lines
-   instead (.remaining-box .line already wraps). */
+   a full-width block, letting each Old/Keep/New stat card
+   (components.css's .remaining-stat) span the sidebar's full width. */
 .theme-setter .powers-col .remaining-box {
   width: 100%;
   max-width: 100%;
@@ -561,15 +561,13 @@ body:has(#guesserScreen.active) #appContainer {
   align-items: center;
  }
 
-/* =========================================
-   3 column layout
-   ========================================= */
-   .power-container {
-     flex-direction: column;
-  }
-.power-container > * + * {
-  margin-top: var(--sp-6);
-}
+/* Stale rules from a much older 3-column layout used to live here
+   (.power-container { flex-direction: column } and a `> * + *`
+   margin-top) -- .powers-col .power-container / .theme-setter .powers-col
+   .power-container above already set flex-direction per role, and the
+   margin-top was stacking on top of that container's own flex gap
+   (doubling the visible spacing between power badges) rather than doing
+   anything useful, so both were removed outright. */
 .power-btn-wrapper {
   margin-bottom: 0;
 }

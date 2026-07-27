@@ -32,18 +32,28 @@ function renderSetterRemainingBox(boxState) {
     ? `<div class="line remaining-hint">How many possible secrets would still fit the clues so far — if you keep this secret vs. switch to your typed word.</div>`
     : "";
 
+  const keepValue = boxState.old != null ? boxState.old.toLocaleString() : "?";
+  const newValue =
+    boxState.isConsistent === false
+      ? `<span class="inconsistent-x">✕</span>`
+      : boxState.new != null
+        ? boxState.new.toLocaleString()
+        : "?";
+
   box.innerHTML = `
-    <div class="line label">Keep</div>
-    <div class="line value" style="${oldStyle}">${current} → ${boxState.old != null ? boxState.old.toLocaleString() : "?"}</div>
-    <div class="line label">New</div>
-    <div class="line value" style="${newStyle}">${current} →
-      ${
-        boxState.isConsistent === false
-          ? `<span class="inconsistent-x">✕</span>`
-          : boxState.new != null
-            ? boxState.new.toLocaleString()
-            : "?"
-      }
+    <div class="remaining-stats">
+      <div class="remaining-stat">
+        <span class="remaining-stat-label">Old</span>
+        <span class="remaining-stat-value">${current}</span>
+      </div>
+      <div class="remaining-stat">
+        <span class="remaining-stat-label">Keep</span>
+        <span class="remaining-stat-value" style="${oldStyle}">${keepValue}</span>
+      </div>
+      <div class="remaining-stat">
+        <span class="remaining-stat-label">New</span>
+        <span class="remaining-stat-value" style="${newStyle}">${newValue}</span>
+      </div>
     </div>
     ${hint}
   `;

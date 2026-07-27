@@ -17,18 +17,15 @@
 
 .history-tile {
 /* Sized against the board column's own width (see .center-col's
-   container-type in layout.css), not the raw viewport. .center-col now
-   spans the full row (powers moved below it instead of sharing the row),
-   so this container is wider than it used to be -- 5 tiles + 4 gaps
+   container-type in layout.css), not the raw viewport. 5 tiles + 4 gaps
    (var(--sp-4) = 4px) must fit within that width: 5*T + 16 <= W, i.e.
-   T <= 0.2W - 3.2px -- 13.9cqw (25% smaller than the previous 18.5cqw) is
-   well under that ratio across the ~300-370px container widths a phone
-   actually produces here (checked via getBoundingClientRect, not just how
-   it looks in a screenshot -- a too-high cqw overflows the row past its
-   own column). */
-width: clamp(27px, 13.9cqw, 69px);
-height: clamp(27px, 13.9cqw, 69px);
-font-size: clamp(14px, 7cqw, 35px);
+   T <= 0.2W - 3.2px -- 16cqw stays under that ratio across the
+   ~300-370px container widths a phone actually produces here (checked via
+   getBoundingClientRect, not just how it looks in a screenshot -- a
+   too-high cqw overflows the row past its own column). */
+width: clamp(30px, 16cqw, 78px);
+height: clamp(30px, 16cqw, 78px);
+font-size: clamp(16px, 8cqw, 39px);
   border-radius: var(--r-6);
   font-weight: 800;
   letter-spacing: 1px;
@@ -50,13 +47,13 @@ font-size: clamp(14px, 7cqw, 35px);
    second horizontal band competing for vertical space below it (it's
    beside it now, not under it), so a bigger share of that narrower
    column's own width can still go to each tile without overflowing it.
-   17.5cqw (0.175W) stays under the same T <= 0.2W - 3.2px ceiling even
+   18.3cqw (0.183W) stays under the same T <= 0.2W - 3.2px ceiling even
    at the narrowest realistic width for this column (~220-230px on a
    small phone). */
 .theme-setter .history-tile {
-  width: clamp(30px, 17.5cqw, 78px);
-  height: clamp(30px, 17.5cqw, 78px);
-  font-size: clamp(15px, 8.8cqw, 39px);
+  width: clamp(31px, 17.8cqw, 82px);
+  height: clamp(31px, 17.8cqw, 82px);
+  font-size: clamp(16px, 9cqw, 41px);
 }
 
 /* Red flash overlay that sits above existing tile colors */
