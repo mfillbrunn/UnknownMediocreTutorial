@@ -9,7 +9,7 @@
     if (!formatted) return null;
     const who =
       formatted.actorRole == null ? "" :
-      formatted.actorRole === viewerRole ? "You: " : "Opponent: ";
+      formatted.actorRole === viewerRole ? "You: " : "Opp: ";
     const roleClass = formatted.actorRole ? ` log-power-${formatted.actorRole}` : "";
     return {
       type: "power",
@@ -52,10 +52,18 @@
         const guessDisplay = blackedOut
           ? `<span class="log-blackout-word">${"█".repeat(entry.guess.length)}</span>`
           : (guessHidden ? "?????" : entry.guess.toUpperCase());
-        entries.push({ type: "action", text: `Inspector: ${guessDisplay}` });
+        // Simultaneous-phase secret submission and a locked secret both
+        // belong to this same turn/entry as the guess -- folded onto its
+        // row as a short suffix instead of their own separate rows, so
+        // one turn always reads as exactly one compact log row rather
+        // than spilling across two or three in the small always-visible
+        // box (see .sidebar-log-notes-box).
+        let text = `Guess: ${guessDisplay}`;
         if (entry.phase === "simultaneous") {
-          entries.push({ type: "action", text: isSetterThisRound ? "Secret submitted" : "Spy submitted secret" });
+          text += isSetterThisRound ? " · set" : " · opp set";
         }
+        if (entry.secretLocked) text += " 🔒";
+        entries.push({ type: "action", text });
 
         (entry.powerEvents || []).forEach(evt => {
           const pe = powerEntry(evt, viewerRole);
@@ -67,16 +75,11 @@
         if (entry.letterProbeResult && viewerRole === "guesser") {
           const { count, distinctTested, letters } = entry.letterProbeResult;
           const meta = window.POWER_METADATA?.letterProbe;
-          const verb = count === 1 ? "is" : "are";
           entries.push({
             type: "power",
             cssClass: " log-power-guesser",
-            text: `${meta?.emoji ? meta.emoji + " " : ""}You: ${meta?.label || "Letter Scan"}: ${count}/${distinctTested} ${verb} in the secret (${letters})`
+            text: `${meta?.emoji ? meta.emoji + " " : ""}${meta?.label || "Letter Scan"}: ${count}/${distinctTested} (${letters})`
           });
-        }
-
-        if (entry.secretLocked) {
-          entries.push({ type: "lock", text: "🔒 Secret locked" });
         }
       });
 

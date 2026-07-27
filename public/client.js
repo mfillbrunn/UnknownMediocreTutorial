@@ -547,6 +547,7 @@ function updateUI() {
   // meaningful to the guesser actually working toward it -- the setter's
   // copy stays the read-only text badge.
   window.updateQuestBadge?.(state, myRole);
+  window.updateOpponentPowerMirror?.(state, myRole);
   if (myRole === "guesser") window.maybeShowQuestProgressPop?.(state);
   if (state.phase !== "lobby") hide("lobby");
   updateSecretLock();
@@ -1677,8 +1678,10 @@ function updateTimerAccess() {
 // Pure CSS visibility toggle via a data attribute -- nothing here needs to
 // know which children are which, .quest-badge-tile already marks itself.
 window.selectPowerTab = function (role, tab) {
-  const containerEl = document.getElementById(role === "setter" ? "setterPowerContainer" : "guesserPowerContainer");
-  if (containerEl) containerEl.dataset.activeTab = tab;
+  const youEl = document.getElementById(role === "setter" ? "setterPowerContainer" : "guesserPowerContainer");
+  const oppEl = document.getElementById(role === "setter" ? "setterOpponentPowerContainer" : "guesserOpponentPowerContainer");
+  if (youEl) youEl.hidden = tab !== "you";
+  if (oppEl) oppEl.hidden = tab !== "opp";
   document.querySelectorAll(`#${role}Screen .sidebar-tab-btn[data-tab]`).forEach(btn => {
     btn.classList.toggle("active", btn.dataset.tab === tab);
   });

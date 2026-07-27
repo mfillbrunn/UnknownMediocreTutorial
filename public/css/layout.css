@@ -132,16 +132,23 @@ display: grid;
   cursor: pointer;
 }
 
-/* You/Opp visibility -- #setterPowerContainer's own children split into
-   the setter's real power cards and (as its first child, see quest.js's
-   updateQuestBadge) the guesser's quest-badge-tile mirror. Pure CSS: no
-   JS needs to know which child is which, only toggle the container's own
-   data-active-tab (selectPowerTab, client.js). */
-#setterPowerContainer[data-active-tab="you"] .quest-badge-tile {
-  display: none;
+/* You/Opp -- two separate containers (#setterPowerContainer for the
+   setter's own real powers, #setterOpponentPowerContainer for the
+   guesser's quest + power loadout, both read-only -- see quest.js's
+   updateQuestBadge/updateOpponentPowerMirror) swapped via the `hidden`
+   attribute in selectPowerTab (client.js) rather than filtered by CSS. */
+
+/* Power cards sit side by side in a wrapping row, not stacked in a single
+   column -- both the setter/guesser's own row and the setter's Opp-tab
+   mirror (quest tile + power tiles together) use this same layout. */
+.powers-col .power-container:not([hidden]) {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--sp-6);
 }
-#setterPowerContainer[data-active-tab="opp"] > .power-btn-wrapper:not(:has(.quest-badge-tile)) {
-  display: none;
+.powers-col .power-container > * + * {
+  margin-top: 0;
 }
 
 /* Compact, always-mounted Log/Notes box (replaces the old floating

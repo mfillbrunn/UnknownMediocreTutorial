@@ -8,9 +8,9 @@
      -- .play-row's grid-template-columns (layout.css: auto minmax(0,1fr)
      auto) already does this natively now that nothing here overrides it
      into a stacked column, so powers-col just needs to stay narrow
-     (auto-width, sized to its own content) and its own children column-
-     stacked, same as layout.css's un-overridden .powers-col/.power-container
-     already specify. */
+     (auto-width, capped via max-width). Its power cards themselves flow
+     side by side in a wrapping row (layout.css's .powers-col
+     .power-container), not stacked one per line. */
    .keyboard{
    margin-top: var(--sp-2);
    }
@@ -34,11 +34,12 @@
   .power-btn::before {
     display: none;
   }  
-  /* powers-col is a column flex container now (sidebar, not a wrapping
-     row), so a flex-basis percentage here would size against its HEIGHT,
-     not width -- full width via align-items:stretch (layout.css) is what
-     a power with no <symbol>/badge art actually needs, one per row. */
+  /* .power-container is a wrapping row now (layout.css) -- a power with no
+     <symbol>/badge art (a longer text label, not a compact icon card)
+     takes the full row width by itself rather than trying to sit
+     side-by-side with another card. */
   .powers-col .power-btn {
+    flex: 1 1 100%;
     padding: 0 var(--sp-6);
     min-height: 32px;
     letter-spacing: 0.3px;
@@ -83,28 +84,23 @@
       margin-top: var(--sp-2);
    }
    .remaining-box {
-    display: inline-flex;         
-    align-items: center;
-    align-self: center;
-    justify-content: flex-start;   
-    gap: var(--sp-10);
     padding: var(--sp-6) var(--sp-8);
     font-size: var(--fs-12);
-    width: fit-content;          
+    width: 100%;
     max-width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-  }
-   .remaining-box .line:first-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
   }
    .remaining-box {
   display: none;
 }
+/* Stacked vertically (Keep on its own line, New below it) -- the sidebar
+   is too narrow for them side by side, and components.css's
+   .line:first-child divider (border-bottom) already reads correctly once
+   they're stacked, so nothing here needs to suppress it. */
 .remaining-box:not([hidden]) {
-  display: inline-flex; /* or flex, whatever you’re using */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-2);
 }
    #SetterInfoBadge, #GuesserInfoBadge{
          margin-top: var(--sp-2);

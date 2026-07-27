@@ -22,9 +22,9 @@
    overflowed once the sidebar started sharing that row with it (a 5-tile
    board at 12vw comfortably exceeds a ~35-45% narrower board column on a
    phone). */
-width: clamp(28px, 17cqw, 68px);
-height: clamp(28px, 17cqw, 68px);
-font-size: clamp(15px, 8.5cqw, 34px);
+width: clamp(30px, 20cqw, 72px);
+height: clamp(30px, 20cqw, 72px);
+font-size: clamp(16px, 10cqw, 36px);
   border-radius: var(--r-6);
   font-weight: 800;
   letter-spacing: 1px;
