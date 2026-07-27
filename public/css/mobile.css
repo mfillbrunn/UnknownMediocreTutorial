@@ -34,21 +34,23 @@
   .power-btn::before {
     display: none;
   }  
-  /* Sidebar power buttons: name only, no icon, filled solid with the
-     screen's role color (red for the setter, blue for the guesser) --
-     everything else (the icon card, fixed badge sizing, corner chip) is
-     dropped in favor of a plain colored pill, same treatment for the
-     icon-badge and plain-label power kinds alike. .power-container is a
-     column flex container (layout.css), so full width comes from its
+  /* Sidebar power buttons: filled solid with the screen's role color
+     (red for the setter, blue for the guesser), icon + name side by side
+     in a compact pill instead of the old tall icon-card -- fixed badge
+     sizing and the corner chip are still dropped, but the icon itself
+     stays (see the setter-only exception further down for its one
+     read-only quest mirror, which stays icon-less). Same treatment for
+     the icon-badge and plain-label power kinds alike. .power-container is
+     a column flex container (layout.css), so full width comes from its
      align-items:stretch rather than anything set here. */
-  .powers-col .power-icon {
-    display: none;
-  }
   .powers-col .power-btn,
   .powers-col .power-btn.power-badge {
     width: auto;
-    min-height: 32px;
+    flex-direction: row;
+    align-items: center;
+    min-height: 36px;
     padding: var(--sp-4) var(--sp-6);
+    gap: var(--sp-6);
     background: var(--role-accent);
     border: none;
     box-shadow: none;
@@ -57,10 +59,23 @@
   .powers-col .power-btn.power-badge:not(.power-used):not(.disabled-btn):hover {
     box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 60%, transparent);
   }
+  .powers-col .power-icon {
+    width: 22px;
+    max-width: 22px;
+    flex: 0 0 auto;
+    color: inherit;
+  }
+  /* The setter's own screen carries one icon-less exception: their
+     read-only mirror of the guesser's quest (quest.js's updateQuestBadge,
+     pinned as the last card under their own powers) stays text-only. */
+  .theme-setter .quest-badge-tile .power-icon {
+    display: none;
+  }
   .powers-col .power-btn-label {
     height: auto;
     font-size: 9px;
     color: inherit;
+    text-align: left;
   }
   .powers-col .power-btn.power-badge.power-used::after {
     display: none;
