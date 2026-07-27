@@ -4,13 +4,8 @@
    .panel {
     padding: var(--sp-12);
   }
-  /* Sidebar (powers-col) sits beside the board (center-col), not below it
-     -- .play-row's grid-template-columns (layout.css: auto minmax(0,1fr)
-     auto) already does this natively now that nothing here overrides it
-     into a stacked column, so powers-col just needs to stay narrow
-     (auto-width, capped via max-width). Its power cards stack one per
-     row (layout.css's .powers-col .power-container) to keep that width
-     as small as possible, leaving more of the row for the board. */
+  /* powers-col sits below the board (center-col) now, one flex row that
+     wraps -- see layout.css's .play-row/.center-col/.powers-col order. */
    .keyboard{
    margin-top: var(--sp-2);
    }
@@ -34,15 +29,13 @@
   .power-btn::before {
     display: none;
   }  
-  /* Sidebar power buttons: filled solid with the screen's role color
-     (red for the setter, blue for the guesser). Icon-bearing badges go
-     back to the larger icon-on-top-of-name card (not the compact
-     side-by-side pill) -- fixed badge sizing and the corner chip are
-     still dropped, but the icon itself stays (see the setter-only
-     exception further down for its one read-only quest mirror, which
-     stays icon-less). .power-container is a column flex container
-     (layout.css), so full width comes from its align-items:stretch
-     rather than anything set here. */
+  /* Power buttons below the board: filled solid with the screen's role
+     color (red for the setter, blue for the guesser), laid out
+     horizontally (layout.css's .powers-col/.power-container are row-wrap
+     now). Icon-bearing badges use the larger icon-on-top-of-name card --
+     fixed badge sizing and the corner chip are dropped, but the icon
+     itself stays (see the setter-only exception further down for its one
+     read-only quest mirror, which stays icon-less). */
   .powers-col .power-btn {
     width: auto;
     min-height: 36px;

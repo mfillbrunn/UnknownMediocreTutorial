@@ -110,12 +110,10 @@
   function renderActionLog(state, myRole) {
     if (!state || !myRole) return;
     const roleId = myRole === "setter" ? "Setter" : "Guesser";
-    // Log now lives in the always-mounted .sidebar-log-notes-box (see
-    // selectSidebarTab in client.js), which only shows/hides via its own
-    // .hidden class -- rendering unconditionally here (instead of bailing
-    // while hidden, as when this was a floating panel toggled open/closed)
-    // keeps it current so switching back to the Log tab shows fresh
-    // content instantly instead of stale content from before the switch.
+    // Log is a floating panel (see toggleActionLog below) toggled open/
+    // closed from the header -- rendered unconditionally (not gated on
+    // its own .hidden class) so it's already current the instant it's
+    // opened instead of showing stale content from before the toggle.
     const container = document.getElementById(`actionLog${roleId}`);
     if (!container) return;
 

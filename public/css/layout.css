@@ -60,97 +60,19 @@
 }
 
 
-/* 3-column play layout */
+/* Single column: board (tiles/draft) on top, powers below it -- see
+   .center-col/.powers-col order below. Was a 3-column grid (sidebar
+   beside the board); back to a plain vertical stack. */
 .play-row {
-display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-14);
   width: 100%;
   pointer-events: none;
 }
 
-
-/* Left column: powers -- kept deliberately narrow (max-width) so the
-   board (center-col) gets as much of the row's width as possible; the
-   grid track itself is `auto` (layout.css's .play-row), so it would
-   otherwise grow to fit whatever's widest inside (e.g. the remaining-
-   words box's text). Single-column now (power cards stack one per row,
-   see .powers-col .power-container below), so this only needs to fit one
-   badge (~63px) plus a little breathing room, not two side by side. */
-.powers-col {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  row-gap: var(--sp-6);
-   margin-top: var(--sp-6);
-  max-width: 96px;
-  /* .play-row disables pointer-events entirely (a grid-gutter click-
-     through trick) and only re-enables specific descendants -- this
-     column holds nothing but interactive elements (power buttons, the
-     quest badge, etc.), so it needs pointer-events back wholesale rather
-     than opting in element by element. */
-  pointer-events: auto;
-  }
-
-/* Log/Notes tab row below the power buttons (both screens -- see
-   selectSidebarTab in client.js). Stacked full-width rather than side by
-   side, same single-column language as everything else in this narrow
-   sidebar -- narrower than the sidebar itself (align-self:center instead
-   of the inherited stretch) so it doesn't visually dominate the column. */
-.sidebar-tab-row {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  align-self: center;
-  width: 80px;
-  gap: var(--sp-4);
-}
-.sidebar-tab-btn {
-  padding: var(--sp-4) 0;
-  border: 1px solid color-mix(in srgb, var(--role-accent) 40%, transparent);
-  border-radius: var(--r-8);
-  background: transparent;
-  color: var(--role-accent);
-  font-size: var(--fs-11);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-.sidebar-tab-btn.active {
-  background: color-mix(in srgb, var(--role-accent) 22%, transparent);
-  border-color: var(--role-accent);
-}
-
-/* Power cards stack one per row -- same single-column sidebar language as
-   everything else here (Log/Notes buttons above). */
-.powers-col .power-container {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--sp-6);
-}
-
-/* Compact, always-mounted Log/Notes box (replaces the old floating
-   .game-side-panel overlay) -- roughly 3 text lines tall by default,
-   scrolls internally past that. Whichever of .action-log-panel/
-   .notes-panel isn't the active tab just gets .hidden (see
-   selectSidebarTab/notes.js's _active-driven class), same convention as
-   everywhere else in the app. */
-.sidebar-log-notes-box {
-  background: #000;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: var(--r-8);
-  max-height: 78px;
-  overflow-y: auto;
-  align-self: center;
-  width: 80px;
-}
-.sidebar-log-notes-panel.hidden {
-  display: none;
-}
-
-/* Center column: history + draft */
+/* Center column: history + draft. Comes first in the DOM and stays first
+   visually (order:1) -- tiles on top. */
 .center-col {
   display: flex;
   flex-direction: column;
@@ -159,10 +81,40 @@ display: grid;
    max-width: 100%;
    row-gap: var(--sp-6);
    margin-top: var(--sp-12);
+  order: 1;
   /* Lets .history-tile (history.css) size itself off this column's own
-     width (cqw) instead of the raw viewport, now that it shares the row
-     with a sidebar rather than spanning full width. */
+     width (cqw) instead of the raw viewport -- harmless now that the
+     column spans the full row, just keeps the same sizing mechanism. */
   container-type: inline-size;
+}
+
+/* Powers row: below the board (order:2), buttons stacked horizontally
+   (wrapping) rather than in a narrow single-file column. */
+.powers-col {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--sp-8);
+   margin-top: var(--sp-6);
+  order: 2;
+  width: 100%;
+  /* .play-row disables pointer-events entirely (a grid-gutter click-
+     through trick, still harmless to keep) and only re-enables specific
+     descendants -- this row holds nothing but interactive elements
+     (power buttons, the quest badge, etc.), so it needs pointer-events
+     back wholesale rather than opting in element by element. */
+  pointer-events: auto;
+  }
+
+.powers-col .power-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-8);
+  width: 100%;
 }
 
 /* =========================================
@@ -253,10 +205,19 @@ display: grid;
    full-size look from elsewhere in the app. */
 .header-right {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--sp-2);
+  row-gap: var(--sp-4);
   justify-self: end;
   min-width: 0;
+  /* Enough icons/buttons now live here (timer, constraint toggle, power
+     info, Log, Notes, keyboard toggle, guide toggle) that they no longer
+     fit one line in the 1fr side track next to the centered score --
+     wrapping onto a second line beats letting the row blow out past its
+     grid track and overlap the score/left cluster. */
+  max-width: 100%;
 }
 .header-right .timer-block {
   flex-direction: row;

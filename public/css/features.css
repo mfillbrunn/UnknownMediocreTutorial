@@ -185,9 +185,13 @@
   width: min(280px, 85vw);
   max-height: calc(100dvh - 52px - 60px); /* leave room for keyboard area */
   overflow-y: auto;
-  background: rgba(14, 15, 22, 0.97);
-  border-left: 1px solid rgba(255,255,255,0.1);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  /* Translucent floating window (not a near-opaque panel) -- blur keeps the
+     log/notes text legible over whatever board/tiles show through. */
+  background: rgba(14, 15, 22, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-left: 1px solid rgba(255,255,255,0.12);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
   border-radius: 0 0 0 12px;
   z-index: 200;
   display: flex;

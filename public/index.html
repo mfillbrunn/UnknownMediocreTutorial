@@ -747,32 +747,17 @@
                 </div>
                 <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
                 <button id="powerInfoBtnSetter" class="power-info-btn" aria-label="Power descriptions"> <span class="power-info-icon">?</span></button>
+                <button id="actionLogBtnSetter" class="header-sm-btn" onclick="toggleActionLog('setter')" title="Action Log">Log</button>
+                <button id="notesBtnSetter" class="header-sm-btn" onclick="toggleNotes('setter')" title="Notes">Notes</button>
                 <button id="keyboardToggleBtnSetter" class="guide-toggle-btn keyboard-toggle-btn" title="Toggle physical keyboard input" aria-label="Toggle physical keyboard input">⌨️</button>
                 <button id="guideToggleBtnSetter" class="guide-toggle-btn" title="Toggle guide" aria-label="Toggle guide">🧭<span class="guide-btn-label"> Guide</span></button>
               </div>
             </div>
           </header>
-         <!-- PLAY AREA -->    
+         <!-- PLAY AREA -->
          <main class="play-area setter-play">
             <div class="play-row">
-                <!-- LEFT: powers -->               
-               <div class="play-col powers-col">
-                 <div id="setterPowerContainer" class="power-container laser-scope"></div>
-                 <div id="SetterRemainingBox" class="remaining-box"  hidden></div>
-                 <div id="SetterLetterProfileBox" class="letter-profile-box" hidden></div>
-                 <div class="sidebar-tab-row">
-                   <button id="actionLogBtnSetter" class="sidebar-tab-btn active" onclick="selectSidebarTab('setter','log')">Log</button>
-                   <button id="notesBtnSetter" class="sidebar-tab-btn" onclick="selectSidebarTab('setter','notes')">Notes</button>
-                 </div>
-                 <div class="sidebar-log-notes-box">
-                   <div id="actionLogSetter" class="sidebar-log-notes-panel action-log-panel"></div>
-                   <div id="notesPanelSetter" class="sidebar-log-notes-panel notes-panel hidden">
-                     <div id="notesDraftSetter" class="notes-draft-row"></div>
-                     <div id="notesListSetter" class="notes-list"></div>
-                   </div>
-                 </div>
-               </div>
-               <!-- CENTER: history + drafts -->
+               <!-- CENTER: history + drafts (tiles on top) -->
                <div class="play-col center-col">
                   <div id="constraintRowSetter" class="history-row constraint-row"></div>
                   <div id="setterGuesserSubmitted" class="history-tiles history-scroll"></div>
@@ -785,6 +770,12 @@
                      </div>
                   </div>
                </div>
+               <!-- BELOW TILES: powers, stacked horizontally -->
+               <div class="play-col powers-col">
+                 <div id="setterPowerContainer" class="power-container laser-scope"></div>
+                 <div id="SetterRemainingBox" class="remaining-box"  hidden></div>
+                 <div id="SetterLetterProfileBox" class="letter-profile-box" hidden></div>
+               </div>
             </div>
             <!-- KEYBOARD AREA-->
              <div id="SetterMustContainBox" class="must-contain-box" hidden></div>
@@ -793,9 +784,14 @@
            <div id="keyboardSetter" class="keyboard"></div>
          </main>
          <!---Modals--->
-        <!-- Notes + Action log panels (setter) now live inline in the
-             sidebar's .sidebar-log-notes-box, not here -- see powers-col
-             above. -->
+        <!-- Notes panel (setter) -->
+        <div id="notesPanelSetter" class="game-side-panel notes-panel hidden">
+          <div class="notes-panel-title">Notes</div>
+          <div id="notesDraftSetter" class="notes-draft-row"></div>
+          <div id="notesListSetter" class="notes-list"></div>
+        </div>
+        <!-- Action log panel (setter) -->
+        <div id="actionLogSetter" class="game-side-panel action-log-panel hidden"></div>
 
         <section id="globalOverlays">
            <!-- Assassin Modal -->
@@ -891,33 +887,17 @@
                 </div>
               <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
               <button id="powerInfoBtnGuesser" class="power-info-btn" aria-label="Power descriptions"><span class="power-info-icon">?</span></button>
+              <button id="actionLogBtnGuesser" class="header-sm-btn" onclick="toggleActionLog('guesser')" title="Action Log">Log</button>
+              <button id="notesBtnGuesser" class="header-sm-btn" onclick="toggleNotes('guesser')" title="Notes">Notes</button>
               <button id="keyboardToggleBtnGuesser" class="guide-toggle-btn keyboard-toggle-btn" title="Toggle physical keyboard input" aria-label="Toggle physical keyboard input">⌨️</button>
               <button id="guideToggleBtnGuesser" class="guide-toggle-btn" title="Toggle guide" aria-label="Toggle guide">🧭<span class="guide-btn-label"> Guide</span></button>
             </div>
           </div>
         </header>
-       <!--- PLAY AREA---> 
+       <!--- PLAY AREA--->
        <main class="play-area guesser-play">
           <div class="play-row">
-             <!-- LEFT: POWERS -->
-             <div class="play-col powers-col">
-                <div id="guesserPowerContainer" class="power-container laser-scope">
-                </div>
-                <div id="GuesserRemainingBox" class="remaining-box" hidden></div>
-                <div id="GuesserLetterProfileBox" class="letter-profile-box" hidden></div>
-                <div class="sidebar-tab-row">
-                  <button id="actionLogBtnGuesser" class="sidebar-tab-btn active" onclick="selectSidebarTab('guesser','log')">Log</button>
-                  <button id="notesBtnGuesser" class="sidebar-tab-btn" onclick="selectSidebarTab('guesser','notes')">Notes</button>
-                </div>
-                <div class="sidebar-log-notes-box">
-                  <div id="actionLogGuesser" class="sidebar-log-notes-panel action-log-panel"></div>
-                  <div id="notesPanelGuesser" class="sidebar-log-notes-panel notes-panel hidden">
-                    <div id="notesDraftGuesser" class="notes-draft-row"></div>
-                    <div id="notesListGuesser" class="notes-list"></div>
-                  </div>
-                </div>
-             </div>
-             <!-- CENTER: HISTORY TOP -->
+             <!-- CENTER: HISTORY TOP (tiles on top) -->
              <div class="play-col center-col">
                 <div id="constraintRowGuesser" class="history-row constraint-row"></div>
                 <div id="historyGuesser" class="history-tiles history-scroll"></div>
@@ -927,6 +907,13 @@
                     </div>
                   </div>
              </div>
+             <!-- BELOW TILES: powers, stacked horizontally -->
+             <div class="play-col powers-col">
+                <div id="guesserPowerContainer" class="power-container laser-scope">
+                </div>
+                <div id="GuesserRemainingBox" class="remaining-box" hidden></div>
+                <div id="GuesserLetterProfileBox" class="letter-profile-box" hidden></div>
+             </div>
           </div>
           <!--- KEYBOARD AREA--->
           <div id="GuesserInfoBadge" class="info badge"></div>
@@ -934,9 +921,14 @@
           <div id="powerKbPrompt" class="power-kb-prompt" hidden></div>
           <div id="keyboardGuesser" class="keyboard"></div>
        </main>
-        <!-- Notes + Action log panels (guesser) now live inline in the
-             sidebar's .sidebar-log-notes-box, not here -- see powers-col
-             above. -->
+        <!-- Notes panel (guesser) -->
+        <div id="notesPanelGuesser" class="game-side-panel notes-panel hidden">
+          <div class="notes-panel-title">Notes</div>
+          <div id="notesDraftGuesser" class="notes-draft-row"></div>
+          <div id="notesListGuesser" class="notes-list"></div>
+        </div>
+        <!-- Action log panel (guesser) -->
+        <div id="actionLogGuesser" class="game-side-panel action-log-panel hidden"></div>
 
         <!--- betting model --->
                   <div id="betMissModal" class="modal">

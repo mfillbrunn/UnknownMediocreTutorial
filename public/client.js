@@ -1668,32 +1668,6 @@ function updateTimerAccess() {
   });
 })();
 
-// The Log/Notes pair below the power sidebar now share ONE compact,
-// always-mounted box (see index.html's .sidebar-log-notes-box) instead of
-// each being an independent floating overlay -- these two buttons act as
-// tabs selecting which of #actionLog{Role}/#notesPanel{Role} is visible,
-// not open/close toggles. Notes still owns its own active/inactive state
-// (it captures the on-screen keyboard when active, see notes.js), so
-// selecting it delegates to window.toggleNotes/closeNotes rather than
-// duplicating that logic here.
-window.selectSidebarTab = function (role, tab) {
-  const roleId = role === "setter" ? "Setter" : "Guesser";
-  const logBtn = document.getElementById(`actionLogBtn${roleId}`);
-  const notesBtn = document.getElementById(`notesBtn${roleId}`);
-  const logPanel = document.getElementById(`actionLog${roleId}`);
-
-  logBtn?.classList.toggle("active", tab === "log");
-  notesBtn?.classList.toggle("active", tab === "notes");
-  logPanel?.classList.toggle("hidden", tab !== "log");
-
-  if (tab === "notes") {
-    if (!window.isNotesActive?.()) window.toggleNotes?.(role);
-  } else if (window.isNotesActive?.()) {
-    window.closeNotes?.();
-  }
-  if (tab === "log") window.renderActionLog?.(window.state, role);
-};
-
 // -----------------------------------------------------
 // GUIDE: phase + current-task banner
 // -----------------------------------------------------

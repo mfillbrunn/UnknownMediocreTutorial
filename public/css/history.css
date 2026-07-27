@@ -17,15 +17,17 @@
 
 .history-tile {
 /* Sized against the board column's own width (see .center-col's
-   container-type in layout.css), not the raw viewport. 5 tiles + 4 gaps
+   container-type in layout.css), not the raw viewport. .center-col now
+   spans the full row (powers moved below it instead of sharing the row),
+   so this container is wider than it used to be -- 5 tiles + 4 gaps
    (var(--sp-4) = 4px) must fit within that width: 5*T + 16 <= W, i.e.
-   T <= 0.2W - 3.2px -- 18cqw stays just under that ratio across the
-   ~180-260px container widths a phone actually produces here (checked via
-   getBoundingClientRect, not just how it looks in a screenshot -- a
+   T <= 0.2W - 3.2px -- 18.5cqw stays just under that ratio across the
+   ~300-370px container widths a phone actually produces here now (checked
+   via getBoundingClientRect, not just how it looks in a screenshot -- a
    too-high cqw overflows the row past its own column). */
-width: clamp(32px, 18cqw, 82px);
-height: clamp(32px, 18cqw, 82px);
-font-size: clamp(16px, 9cqw, 41px);
+width: clamp(36px, 18.5cqw, 92px);
+height: clamp(36px, 18.5cqw, 92px);
+font-size: clamp(18px, 9.3cqw, 46px);
   border-radius: var(--r-6);
   font-weight: 800;
   letter-spacing: 1px;
