@@ -60,9 +60,11 @@
 }
 
 
-/* Single column: board (tiles/draft) on top, powers below it -- see
-   .center-col/.powers-col order below. Was a 3-column grid (sidebar
-   beside the board); back to a plain vertical stack. */
+/* Base layout: single column, board (tiles/draft) on top, powers below it
+   -- see .center-col/.powers-col order below. This is the guesser's
+   layout; the setter goes back to the side-by-side sidebar+board layout
+   further down (.theme-setter .play-row and friends), since the two
+   roles now deliberately diverge instead of sharing one layout. */
 .play-row {
   display: flex;
   flex-direction: column;
@@ -122,6 +124,51 @@
      internally via flex-wrap above once they run out of room. */
   flex: 0 1 auto;
   min-width: 0;
+}
+
+/* =========================================
+   Setter only: side-by-side sidebar + board
+   ========================================= */
+/* The guesser keeps the single stacked column above (board on top,
+   powers below). The setter goes back to the original two-column
+   layout -- a narrow power sidebar beside the board -- since the two
+   roles' screens no longer have to share one layout. .center-col and
+   .powers-col are still the exact same elements/DOM order as the
+   single-column version (center-col first, powers-col second); only
+   order/flex-direction change here, so nothing else needs touching. */
+.theme-setter .play-row {
+  flex-direction: row;
+  align-items: flex-start;
+}
+.theme-setter .center-col {
+  order: 2;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.theme-setter .powers-col {
+  order: 1;
+  flex-direction: column;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  width: auto;
+  /* Just enough to fit one ~63px badge card (mobile.css) plus a little
+     breathing room -- the board (center-col) gets the rest of the row. */
+  max-width: 96px;
+}
+.theme-setter .powers-col .power-container {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+/* The remaining-words box shared the power row's horizontal line in the
+   guesser's single-column layout (components.css/mobile.css) -- there's
+   no horizontal room for that in this narrow sidebar, so it goes back to
+   a full-width block that wraps its own Keep/New line across two lines
+   instead (.remaining-box .line already wraps). */
+.theme-setter .powers-col .remaining-box {
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
 }
 
 /* =========================================
