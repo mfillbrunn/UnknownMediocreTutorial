@@ -1,26 +1,17 @@
 
-   .screen { padding: var(--sp-8);        
+   .screen { padding: var(--sp-8);
            }
    .panel {
     padding: var(--sp-12);
   }
-  .powers-col {
-    order: 2 !important;
-     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--sp-6);
-     padding-right: 0;
-     margin-top: 0;
-     align-items: stretch;
-     align-content: center;
-  }
-  .center-col {
-    order: 1 !important;
-      row-gap: var(--sp-4);
-  }
+  /* Sidebar (powers-col) sits beside the board (center-col), not below it
+     -- .play-row's grid-template-columns (layout.css: auto minmax(0,1fr)
+     auto) already does this natively now that nothing here overrides it
+     into a stacked column, so powers-col just needs to stay narrow
+     (auto-width, sized to its own content) and its own children column-
+     stacked, same as layout.css's un-overridden .powers-col/.power-container
+     already specify. */
    .keyboard{
-   order: 3 !important;
    margin-top: var(--sp-2);
    }
    #keyboardSetter, #keyboardGuesser {
@@ -29,23 +20,9 @@
    .play-area > * + * {
      margin-top: var(--sp-8);
    }
-   .power-container > * + * {
-     margin-top: 0;
-   }
-  .play-row {
-     display: flex;
-    flex-direction: column;
-    gap: var(--sp-6);
-  }
   .powers-col,
   .center-col {
     margin-bottom: var(--sp-2);
-  }
-    .power-container {
-    display: flex;
-    flex-direction: row;
-       justify-content: center;
-       gap: var(--sp-6);
   }
 .power-btn {
    border: 1.5px solid color-mix(
@@ -57,19 +34,42 @@
   .power-btn::before {
     display: none;
   }  
+  /* powers-col is a column flex container now (sidebar, not a wrapping
+     row), so a flex-basis percentage here would size against its HEIGHT,
+     not width -- full width via align-items:stretch (layout.css) is what
+     a power with no <symbol>/badge art actually needs, one per row. */
   .powers-col .power-btn {
-    flex: 1 1 48%;
     padding: 0 var(--sp-6);
     min-height: 32px;
     letter-spacing: 0.3px;
 }
-  /* Badge buttons keep their own fixed size -- the 48%-flex/text-pill
-     sizing above is for a power with no <symbol> or badge art at all. */
+  /* Badge buttons keep their own fixed size instead of stretching full
+     width -- the rule above is for a power with no <symbol> or badge art
+     at all. Sized ~25% smaller than the base .power-badge (84px -> 63px)
+     so the sidebar stays narrow next to the board. */
   .powers-col .power-btn.power-badge {
-    flex: 0 0 auto;
-    padding: 8px 5px 11px;
-    min-height: 84px;
+    align-self: center;
+    width: 63px;
+    min-height: 63px;
+    padding: 6px 4px 8px;
 }
+  .powers-col .power-icon {
+    max-width: 48px;
+  }
+  .powers-col .power-btn-label {
+    height: 18px;
+    font-size: 8.5px;
+  }
+  .powers-col .power-btn-label.power-btn-label-sm,
+  .powers-col .quest-progress-chip {
+    font-size: 8px;
+  }
+  .powers-col .quest-progress-chip {
+    min-width: 18px;
+    padding: 1px 4px;
+    top: -6px;
+    right: -6px;
+  }
    .history-tiles{
       gap: var(--sp-6);
    }
@@ -106,19 +106,6 @@
 .remaining-box:not([hidden]) {
   display: inline-flex; /* or flex, whatever you’re using */
 }
- .header-row.header-top {
-   flex-wrap: wrap;
-    justify-content: space-between;
-    gap: var(--sp-6);
-    margin-left: 0;
-    margin-right: 0;         
-  }
-   .header-left {
-    justify-content: flex-start;
-  }
-   .header-right {
-    justify-content: flex-end;
-  }
    #SetterInfoBadge, #GuesserInfoBadge{
          margin-top: var(--sp-2);
    }

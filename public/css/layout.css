@@ -70,13 +70,18 @@ display: grid;
 }
 
 
-/* Left column: powers */
+/* Left column: powers -- kept deliberately narrow (max-width) so the
+   board (center-col) gets as much of the row's width as possible; the
+   grid track itself is `auto` (layout.css's .play-row), so it would
+   otherwise grow to fit whatever's widest inside (e.g. the remaining-
+   words box's text). */
 .powers-col {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   row-gap: var(--sp-6);
    margin-top: var(--sp-6);
+  max-width: 132px;
   /* .play-row disables pointer-events entirely (a grid-gutter click-
      through trick) and only re-enables specific descendants -- this
      column holds nothing but interactive elements (power buttons, the
@@ -84,6 +89,77 @@ display: grid;
      than opting in element by element. */
   pointer-events: auto;
   }
+
+/* You/Opp/? tab row above the power buttons (setter only -- see
+   selectPowerTab in client.js) and the Log/Notes tab row below them
+   (both screens -- see selectSidebarTab). Same compact pill-pair look,
+   reused for both. */
+.sidebar-tab-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-4);
+}
+.sidebar-tab-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: var(--sp-4) 0;
+  border: 1px solid color-mix(in srgb, var(--role-accent) 40%, transparent);
+  border-radius: var(--r-8);
+  background: transparent;
+  color: var(--role-accent);
+  font-size: var(--fs-11);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.sidebar-tab-btn.active {
+  background: color-mix(in srgb, var(--role-accent) 22%, transparent);
+  border-color: var(--role-accent);
+}
+/* Opens the same power-info popup the old header "?" button did -- red
+   regardless of role, a fixed color rather than --role-accent, since
+   it's a help affordance rather than a setter/guesser-owned control. */
+.sidebar-tab-help-btn {
+  flex: 0 0 auto;
+  width: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(248, 113, 113, 0.6);
+  background: transparent;
+  color: #f87171;
+  font-weight: 800;
+  font-size: var(--fs-12);
+  cursor: pointer;
+}
+
+/* You/Opp visibility -- #setterPowerContainer's own children split into
+   the setter's real power cards and (as its first child, see quest.js's
+   updateQuestBadge) the guesser's quest-badge-tile mirror. Pure CSS: no
+   JS needs to know which child is which, only toggle the container's own
+   data-active-tab (selectPowerTab, client.js). */
+#setterPowerContainer[data-active-tab="you"] .quest-badge-tile {
+  display: none;
+}
+#setterPowerContainer[data-active-tab="opp"] > .power-btn-wrapper:not(:has(.quest-badge-tile)) {
+  display: none;
+}
+
+/* Compact, always-mounted Log/Notes box (replaces the old floating
+   .game-side-panel overlay) -- roughly 3 text lines tall by default,
+   scrolls internally past that. Whichever of .action-log-panel/
+   .notes-panel isn't the active tab just gets .hidden (see
+   selectSidebarTab/notes.js's _active-driven class), same convention as
+   everywhere else in the app. */
+.sidebar-log-notes-box {
+  background: #000;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--r-8);
+  max-height: 78px;
+  overflow-y: auto;
+}
+.sidebar-log-notes-panel.hidden {
+  display: none;
+}
 
 /* Center column: history + draft */
 .center-col {
@@ -94,6 +170,10 @@ display: grid;
    max-width: 100%;
    row-gap: var(--sp-6);
    margin-top: var(--sp-12);
+  /* Lets .history-tile (history.css) size itself off this column's own
+     width (cqw) instead of the raw viewport, now that it shares the row
+     with a sidebar rather than spanning full width. */
+  container-type: inline-size;
 }
 
 /* =========================================
@@ -127,11 +207,14 @@ display: grid;
 .theme-setter h2 {
   color: var(--setter-color);
 }
-/* Top row */
+/* Top row -- a real 3-column grid (not flex + space-between) so the score
+   in the center column stays truly centered regardless of how much wider
+   the left cluster (Leave/X) is than the right cluster (timer + toggles),
+   or vice versa. */
 .header-row.header-top {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
    margin-left: var(--sp-8);
    margin-right: var(--sp-8);
    min-height: var(--h-control);
@@ -142,11 +225,19 @@ display: grid;
   justify-content: center;
 }
 
-   /* Left cluster: title + room */
+/* The opponent-name title client.js still writes into (setterName/
+   guesserName) -- kept in the DOM so that assignment doesn't throw, just
+   not part of the visible header row per the compact layout redesign. */
+.header-hidden-title {
+  display: none;
+}
+
+   /* Left cluster: leave + concede */
 .header-left {
   display: flex;
   align-items: center;
   gap: var(--sp-10);
+  justify-self: start;
 }
 /* Room + badge stacked */
 .room-meta {
@@ -159,11 +250,58 @@ display: grid;
   font-weight: 700;
 }
 
-/* Right cluster: timer + icons */
+/* Center: score */
+.header-center {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+}
+
+/* Right cluster: timer + icons -- this column has real width pressure on
+   a phone (timer + constraint-toggle + guide all sharing one grid track
+   with the score/left cluster now taking their own space), so its
+   contents get a compact scoped restyle below rather than reusing their
+   full-size look from elsewhere in the app. */
 .header-right {
   display: flex;
   align-items: center;
-  gap: var(--sp-8);
+  gap: var(--sp-2);
+  justify-self: end;
+  min-width: 0;
+}
+.header-right .timer-block {
+  flex-direction: row;
+  gap: var(--sp-4);
+  margin-right: 0;
+}
+.header-right .timer-row {
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+}
+.header-right .timer-label {
+  font-size: 7px;
+  min-width: 0;
+  margin-right: 0;
+  line-height: 1;
+}
+.header-right .chess-timer {
+  font-size: var(--fs-11);
+  min-width: 0;
+  line-height: 1.1;
+}
+/* Icon-only in this compact header -- the outer app-header's own copy
+   (shown on menu screens) keeps its full "Guide" text. */
+.header-right .guide-btn-label {
+  display: none;
+}
+.header-right .guide-toggle-btn:not(.keyboard-toggle-btn) {
+  padding: 0 var(--sp-4);
+}
+.header-right .constraint-toggle-btn {
+  width: 24px;
+  height: 24px;
 }
 .role-header h2{
 margin:0;
@@ -175,6 +313,17 @@ margin:0;
   align-items: center;
   justify-content: space-between;
   padding: var(--sp-8) var(--sp-12);
+}
+/* Setter/guesser screens now carry their own complete header (title, room
+   code and the outer header's score/guide/keyboard-toggle instances are
+   all duplicated or unnecessary there -- see index.html's per-screen
+   .role-header and updateAppHeader's querySelectorAll in client.js), so
+   the outer app-header would just be a redundant second header row
+   sitting above it during an actual game. Hidden only then; still shown
+   on every menu/lobby screen. */
+body:has(#setterScreen.active) .app-header,
+body:has(#guesserScreen.active) .app-header {
+  display: none;
 }
 
 .app-header-left {

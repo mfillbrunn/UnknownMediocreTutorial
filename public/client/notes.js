@@ -262,6 +262,20 @@
     _renderPanel(state);
   };
 
+  // Called from client.js's selectSidebarTab when the Log tab is picked --
+  // Notes and Log now share one compact box (see index.html's
+  // .sidebar-log-notes-box), so switching to Log has to explicitly release
+  // Notes' keyboard capture instead of it lingering active in the
+  // background (toggleNotes has no "force off" mode of its own, only
+  // "flip", which would incorrectly turn it back ON if already active).
+  window.closeNotes = function () {
+    if (!_active) return;
+    _active = false;
+    const roleId = _role === "setter" ? "Setter" : "Guesser";
+    document.getElementById(`notesBtn${roleId}`)?.classList.remove("active");
+    _renderPanel(window.state);
+  };
+
   // Called from handleSetterInput / handleGuesserInput when notes is active.
   // Returns true to consume the event.
   window.notesInput = function (event) {

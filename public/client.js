@@ -1548,20 +1548,24 @@ function updateTimerAccess() {
 
 
 (function setupGuideToggle() {
-  const btn = $("guideToggleBtn");
-  if (!btn) return;
+  // One instance in the outer app-header (menus) plus one duplicated into
+  // each of setter/guesser's own headers (see index.html) -- all three
+  // share this class and stay in sync via it, rather than moving a single
+  // element between screens on every switch.
+  const btns = document.querySelectorAll(".guide-toggle-btn:not(.keyboard-toggle-btn)");
+  if (!btns.length) return;
 
   // Load saved preference (default: on)
   const stored = localStorage.getItem("guideActive");
   const guideOn = stored === null ? true : stored === "true";
 
   document.body.classList.toggle("guide-on", guideOn);
-  btn.classList.toggle("active", guideOn);
+  btns.forEach(b => b.classList.toggle("active", guideOn));
 
-  btn.onclick = () => {
+  btns.forEach(btn => { btn.onclick = () => {
     const isOn = document.body.classList.toggle("guide-on");
     localStorage.setItem("guideActive", isOn);
-    btn.classList.toggle("active", isOn);
+    btns.forEach(b => b.classList.toggle("active", isOn));
     updateGuideBanner();
     // The remaining-words box's guide hint is baked into its innerHTML at
     // render time, so without this it wouldn't reflect the new guide state
@@ -1598,7 +1602,7 @@ function updateTimerAccess() {
     if (typeof renderGuesserLetterProfileBox === "function" && window.state) {
       renderGuesserLetterProfileBox(window.state.powers?.letterProfileGuesserStat || null);
     }
-  };
+  }; });
 })();
 
 // Physical keyboard toggle (desktop-only, see .keyboard-toggle-btn's
@@ -1612,20 +1616,24 @@ function updateTimerAccess() {
 // capture, Drag Mode locks, tutorial scripting, ...) applies identically
 // -- nothing here needs to know about any of that itself.
 (function setupPhysicalKeyboard() {
-  const btn = $("keyboardToggleBtn");
-  if (!btn) return;
+  // One instance in the outer app-header (menus) plus one duplicated into
+  // each of setter/guesser's own headers -- see setupGuideToggle's comment
+  // above for why these stay as separate elements kept in sync by class
+  // rather than one element moved between screens.
+  const btns = document.querySelectorAll(".keyboard-toggle-btn");
+  if (!btns.length) return;
 
   const stored = localStorage.getItem("physicalKeyboardActive");
   const keyboardOn = stored === "true"; // default: off
 
   document.body.classList.toggle("physical-keyboard-on", keyboardOn);
-  btn.classList.toggle("active", keyboardOn);
+  btns.forEach(b => b.classList.toggle("active", keyboardOn));
 
-  btn.onclick = () => {
+  btns.forEach(btn => { btn.onclick = () => {
     const isOn = document.body.classList.toggle("physical-keyboard-on");
     localStorage.setItem("physicalKeyboardActive", isOn);
-    btn.classList.toggle("active", isOn);
-  };
+    btns.forEach(b => b.classList.toggle("active", isOn));
+  }; });
 
   document.addEventListener("keydown", (e) => {
     if (!document.body.classList.contains("physical-keyboard-on")) return;
@@ -1659,6 +1667,48 @@ function updateTimerAccess() {
     }
   });
 })();
+
+// The setter's power sidebar has a "You" / "Opp" tab pair above the power
+// buttons (see index.html's .sidebar-tab-row inside #setterPowerContainer's
+// parent): "You" shows the setter's own power cards, "Opp" isolates the
+// guesser's quest-badge-tile mirror (see quest.js's updateQuestBadge,
+// which always inserts it as #setterPowerContainer's first child) so it
+// reads as "their thing", not mixed in among the setter's own powers.
+// Pure CSS visibility toggle via a data attribute -- nothing here needs to
+// know which children are which, .quest-badge-tile already marks itself.
+window.selectPowerTab = function (role, tab) {
+  const containerEl = document.getElementById(role === "setter" ? "setterPowerContainer" : "guesserPowerContainer");
+  if (containerEl) containerEl.dataset.activeTab = tab;
+  document.querySelectorAll(`#${role}Screen .sidebar-tab-btn[data-tab]`).forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.tab === tab);
+  });
+};
+
+// The Log/Notes pair below the power sidebar now share ONE compact,
+// always-mounted box (see index.html's .sidebar-log-notes-box) instead of
+// each being an independent floating overlay -- these two buttons act as
+// tabs selecting which of #actionLog{Role}/#notesPanel{Role} is visible,
+// not open/close toggles. Notes still owns its own active/inactive state
+// (it captures the on-screen keyboard when active, see notes.js), so
+// selecting it delegates to window.toggleNotes/closeNotes rather than
+// duplicating that logic here.
+window.selectSidebarTab = function (role, tab) {
+  const roleId = role === "setter" ? "Setter" : "Guesser";
+  const logBtn = document.getElementById(`actionLogBtn${roleId}`);
+  const notesBtn = document.getElementById(`notesBtn${roleId}`);
+  const logPanel = document.getElementById(`actionLog${roleId}`);
+
+  logBtn?.classList.toggle("active", tab === "log");
+  notesBtn?.classList.toggle("active", tab === "notes");
+  logPanel?.classList.toggle("hidden", tab !== "log");
+
+  if (tab === "notes") {
+    if (!window.isNotesActive?.()) window.toggleNotes?.(role);
+  } else if (window.isNotesActive?.()) {
+    window.closeNotes?.();
+  }
+  if (tab === "log") window.renderActionLog?.(window.state, role);
+};
 
 // -----------------------------------------------------
 // GUIDE: phase + current-task banner
@@ -1985,17 +2035,24 @@ function maybeStartRouletteFromState(state) {
 
 function updateAppHeader(state) {
   const roomCodeEl = document.querySelector(".header-room-code");
-  const roleBadgeEl = document.querySelector(".header-role-badge");
-  if (!state || !roomCodeEl || !roleBadgeEl) return;
+  // Each screen (menu app-header, setter, guesser) now carries its own
+  // .header-role-badge instance instead of sharing one global element in
+  // the outer app-header -- only ever one is actually visible at a time
+  // (its screen is .active), but updating every instance keeps whichever
+  // one that is correct without needing to know which screen is showing.
+  const roleBadgeEls = document.querySelectorAll(".header-role-badge");
+  if (!state || !roleBadgeEls.length) return;
 
-  roomCodeEl.textContent = state.roomCode || "";
+  if (roomCodeEl) roomCodeEl.textContent = state.roomCode || "";
 
   // Spy/Inspector duplicated what the screen title + tile colors already
   // show. A running score reads at a glance and is actually new
   // information — how many guesses each of you has needed so far.
   if (state.phase === "gameOver" || state.phase === "lobby") {
-    roleBadgeEl.textContent = "";
-    roleBadgeEl.className = "role-badge header-role-badge";
+    roleBadgeEls.forEach(el => {
+      el.textContent = "";
+      el.className = "role-badge header-role-badge";
+    });
     return;
   }
 
@@ -2017,17 +2074,23 @@ function updateAppHeader(state) {
   // Numbers only, no "You:"/"Opp:" labels — which one is "you" is instead
   // conveyed the same way the rest of the UI already marks "you" (bright/
   // bold vs. dim), so it stays readable without spelling it out.
-  roleBadgeEl.innerHTML = `<span class="score-you">${myPoints}</span><span class="score-sep">–</span><span class="score-opp">${oppPoints}</span>`;
-  roleBadgeEl.className = "role-badge header-role-badge";
+  const html = `<span class="score-you">${myPoints}</span><span class="score-sep">–</span><span class="score-opp">${oppPoints}</span>`;
+  roleBadgeEls.forEach(el => {
+    el.innerHTML = html;
+    el.className = "role-badge header-role-badge";
+  });
 }
 
 // A "+1" that floats up from whichever score number just incremented, so a
 // submitted guess reads as an event instead of only a silently-updated
 // number. Appended to <body> (not inside the score badge itself) since
 // updateAppHeader() rebuilds the badge's innerHTML on every state update,
-// which would otherwise wipe the pop mid-animation.
+// which would otherwise wipe the pop mid-animation. Scoped to the active
+// screen since .header-role-badge now has one instance per screen and
+// only the visible one has a meaningful bounding rect to float up from.
 function showScorePop(isMe) {
-  const target = document.querySelector(isMe ? ".score-you" : ".score-opp");
+  const cls = isMe ? ".score-you" : ".score-opp";
+  const target = document.querySelector(`.screen.active ${cls}`) || document.querySelector(cls);
   if (!target) return;
 
   const rect = target.getBoundingClientRect();

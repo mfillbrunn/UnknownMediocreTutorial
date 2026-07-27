@@ -721,11 +721,16 @@
     <section id="setterScreen" class="screen theme-setter">
        <!-- HEADER TOP ROW-->
           <header class="role-header">
-            <!-- TOP ROW: identity + timer -->
+            <!-- TOP ROW: leave/concede left, score center, guide/utility right -->
             <div class="header-row header-top">
+              <h2 class="screen-title header-hidden-title"></h2>
               <div class="header-left">
-                <h2 class="screen-title"></h2>
                 <button id="leaveGameBtnSetter" class="leave-game-btn secondary-btn small hidden">Leave</button>
+                <button class="concedeBtn secondary-btn small danger-btn">X</button>
+              </div>
+
+              <div class="header-center">
+                <span class="role-badge header-role-badge"></span>
               </div>
 
               <div class="header-right">
@@ -741,21 +746,35 @@
                   </div>
                 </div>
                 <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
-                <button id="notesBtnSetter" class="header-sm-btn" onclick="toggleNotes('setter')" title="Notes">Notes</button>
-                <button id="actionLogBtnSetter" class="header-sm-btn" onclick="toggleActionLog('setter')" title="Action Log">Log</button>
-                <button id="powerInfoBtnSetter" class="power-info-btn" aria-label="Power descriptions"> <span class="power-info-icon">?</span></button>
-                <button class="concedeBtn secondary-btn small danger-btn">X</button>
+                <button id="keyboardToggleBtnSetter" class="guide-toggle-btn keyboard-toggle-btn" title="Toggle physical keyboard input" aria-label="Toggle physical keyboard input">⌨️</button>
+                <button id="guideToggleBtnSetter" class="guide-toggle-btn" title="Toggle guide" aria-label="Toggle guide">🧭<span class="guide-btn-label"> Guide</span></button>
               </div>
-            </div>   
+            </div>
           </header>
          <!-- PLAY AREA -->    
          <main class="play-area setter-play">
             <div class="play-row">
                 <!-- LEFT: powers -->               
                <div class="play-col powers-col">
-                 <div id="setterPowerContainer" class="power-container laser-scope"></div>
+                 <div class="sidebar-tab-row">
+                   <button class="sidebar-tab-btn active" data-tab="you" onclick="selectPowerTab('setter','you')">You</button>
+                   <button class="sidebar-tab-btn" data-tab="opp" onclick="selectPowerTab('setter','opp')">Opp</button>
+                   <button id="powerInfoBtnSetter" class="sidebar-tab-help-btn" aria-label="Power descriptions">?</button>
+                 </div>
+                 <div id="setterPowerContainer" class="power-container laser-scope" data-active-tab="you"></div>
                  <div id="SetterRemainingBox" class="remaining-box"  hidden></div>
                  <div id="SetterLetterProfileBox" class="letter-profile-box" hidden></div>
+                 <div class="sidebar-tab-row">
+                   <button id="actionLogBtnSetter" class="sidebar-tab-btn active" onclick="selectSidebarTab('setter','log')">Log</button>
+                   <button id="notesBtnSetter" class="sidebar-tab-btn" onclick="selectSidebarTab('setter','notes')">Notes</button>
+                 </div>
+                 <div class="sidebar-log-notes-box">
+                   <div id="actionLogSetter" class="sidebar-log-notes-panel action-log-panel"></div>
+                   <div id="notesPanelSetter" class="sidebar-log-notes-panel notes-panel hidden">
+                     <div id="notesDraftSetter" class="notes-draft-row"></div>
+                     <div id="notesListSetter" class="notes-list"></div>
+                   </div>
+                 </div>
                </div>
                <!-- CENTER: history + drafts -->
                <div class="play-col center-col">
@@ -769,7 +788,7 @@
                         <div id="setterDraftInvalidOverlay" class="secret-invalid-overlay hidden">✕</div>
                      </div>
                   </div>
-               </div>   
+               </div>
             </div>
             <!-- KEYBOARD AREA-->
              <div id="SetterMustContainBox" class="must-contain-box" hidden></div>
@@ -778,14 +797,9 @@
            <div id="keyboardSetter" class="keyboard"></div>
          </main>
          <!---Modals--->
-        <!-- Notes panel (setter) -->
-        <div id="notesPanelSetter" class="game-side-panel notes-panel hidden">
-          <div class="notes-panel-title">Notes</div>
-          <div id="notesDraftSetter" class="notes-draft-row"></div>
-          <div id="notesListSetter" class="notes-list"></div>
-        </div>
-        <!-- Action log panel (setter) -->
-        <div id="actionLogSetter" class="game-side-panel action-log-panel hidden"></div>
+        <!-- Notes + Action log panels (setter) now live inline in the
+             sidebar's .sidebar-log-notes-box, not here -- see powers-col
+             above. -->
 
         <section id="globalOverlays">
            <!-- Assassin Modal -->
@@ -856,28 +870,33 @@
        </div>
        <!-- HEADER -->
         <header class="role-header">
-          <!-- TOP ROW: identity + timer -->
+          <!-- TOP ROW: leave/concede left, score center, guide/utility right -->
           <div class="header-row header-top">
+            <h2 class="screen-title header-hidden-title"></h2>
             <div class="header-left">
-              <h2 class="screen-title"></h2>
               <button id="leaveGameBtnGuesser" class="leave-game-btn secondary-btn small hidden">Leave</button>
+              <button class="concedeBtn secondary-btn small danger-btn">X</button>
             </div>
+
+            <div class="header-center">
+              <span class="role-badge header-role-badge"></span>
+            </div>
+
             <div class="header-right">
                 <div class="timer-block">
                   <div class="timer-row self">
                     <span class="timer-label">YOU</span>
                     <span id="timerGuesser" class="chess-timer"></span>
-                  </div>                
+                  </div>
                   <div class="timer-row opponent">
                     <span class="timer-label">OPP</span>
                     <span id="timerSetterOpponent" class="chess-timer opponent"></span>
                   </div>
-                </div>              
+                </div>
               <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
-              <button id="notesBtnGuesser" class="header-sm-btn" onclick="toggleNotes('guesser')" title="Notes">Notes</button>
-              <button id="actionLogBtnGuesser" class="header-sm-btn" onclick="toggleActionLog('guesser')" title="Action Log">Log</button>
               <button id="powerInfoBtnGuesser" class="power-info-btn" aria-label="Power descriptions"><span class="power-info-icon">?</span></button>
-              <button class="concedeBtn secondary-btn small danger-btn">X</button>
+              <button id="keyboardToggleBtnGuesser" class="guide-toggle-btn keyboard-toggle-btn" title="Toggle physical keyboard input" aria-label="Toggle physical keyboard input">⌨️</button>
+              <button id="guideToggleBtnGuesser" class="guide-toggle-btn" title="Toggle guide" aria-label="Toggle guide">🧭<span class="guide-btn-label"> Guide</span></button>
             </div>
           </div>
         </header>
@@ -890,6 +909,17 @@
                 </div>
                 <div id="GuesserRemainingBox" class="remaining-box" hidden></div>
                 <div id="GuesserLetterProfileBox" class="letter-profile-box" hidden></div>
+                <div class="sidebar-tab-row">
+                  <button id="actionLogBtnGuesser" class="sidebar-tab-btn active" onclick="selectSidebarTab('guesser','log')">Log</button>
+                  <button id="notesBtnGuesser" class="sidebar-tab-btn" onclick="selectSidebarTab('guesser','notes')">Notes</button>
+                </div>
+                <div class="sidebar-log-notes-box">
+                  <div id="actionLogGuesser" class="sidebar-log-notes-panel action-log-panel"></div>
+                  <div id="notesPanelGuesser" class="sidebar-log-notes-panel notes-panel hidden">
+                    <div id="notesDraftGuesser" class="notes-draft-row"></div>
+                    <div id="notesListGuesser" class="notes-list"></div>
+                  </div>
+                </div>
              </div>
              <!-- CENTER: HISTORY TOP -->
              <div class="play-col center-col">
@@ -908,14 +938,9 @@
           <div id="powerKbPrompt" class="power-kb-prompt" hidden></div>
           <div id="keyboardGuesser" class="keyboard"></div>
        </main>
-        <!-- Notes panel (guesser) -->
-        <div id="notesPanelGuesser" class="game-side-panel notes-panel hidden">
-          <div class="notes-panel-title">Notes</div>
-          <div id="notesDraftGuesser" class="notes-draft-row"></div>
-          <div id="notesListGuesser" class="notes-list"></div>
-        </div>
-        <!-- Action log panel (guesser) -->
-        <div id="actionLogGuesser" class="game-side-panel action-log-panel hidden"></div>
+        <!-- Notes + Action log panels (guesser) now live inline in the
+             sidebar's .sidebar-log-notes-box, not here -- see powers-col
+             above. -->
 
         <!--- betting model --->
                   <div id="betMissModal" class="modal">

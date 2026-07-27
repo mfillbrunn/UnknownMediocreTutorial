@@ -16,9 +16,15 @@
 }
 
 .history-tile {
-width: clamp(32px, 12vw, 68px);
-height: clamp(32px, 12vw, 68px);
-font-size: clamp(17px, 6vw, 34px);
+/* Sized against the board column's own width (see .center-col's
+   container-type in layout.css), not the raw viewport -- vw units sized
+   tiles as if the board still had the full screen width to itself, which
+   overflowed once the sidebar started sharing that row with it (a 5-tile
+   board at 12vw comfortably exceeds a ~35-45% narrower board column on a
+   phone). */
+width: clamp(28px, 17cqw, 68px);
+height: clamp(28px, 17cqw, 68px);
+font-size: clamp(15px, 8.5cqw, 34px);
   border-radius: var(--r-6);
   font-weight: 800;
   letter-spacing: 1px;
