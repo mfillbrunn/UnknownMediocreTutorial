@@ -34,41 +34,36 @@
   .power-btn::before {
     display: none;
   }  
-  /* .power-container is a column flex container (layout.css), so a power
-     with no <symbol>/badge art gets its full width via align-items:stretch
-     there rather than a flex-basis percentage here (which would size
-     against height, not width, in a column container). */
-  .powers-col .power-btn {
-    padding: 0 var(--sp-6);
-    min-height: 32px;
-    letter-spacing: 0.3px;
-}
-  /* Badge buttons keep their own fixed size instead of stretching full
-     width -- the rule above is for a power with no <symbol> or badge art
-     at all. Sized ~25% smaller than the base .power-badge (84px -> 63px)
-     so the sidebar stays narrow next to the board. */
-  .powers-col .power-btn.power-badge {
-    align-self: center;
-    width: 63px;
-    min-height: 63px;
-    padding: 6px 4px 8px;
-}
+  /* Sidebar power buttons: name only, no icon, filled solid with the
+     screen's role color (red for the setter, blue for the guesser) --
+     everything else (the icon card, fixed badge sizing, corner chip) is
+     dropped in favor of a plain colored pill, same treatment for the
+     icon-badge and plain-label power kinds alike. .power-container is a
+     column flex container (layout.css), so full width comes from its
+     align-items:stretch rather than anything set here. */
   .powers-col .power-icon {
-    max-width: 48px;
+    display: none;
+  }
+  .powers-col .power-btn,
+  .powers-col .power-btn.power-badge {
+    width: auto;
+    min-height: 32px;
+    padding: var(--sp-4) var(--sp-6);
+    background: var(--role-accent);
+    border: none;
+    box-shadow: none;
+    color: #0c0d10;
+}
+  .powers-col .power-btn.power-badge:not(.power-used):not(.disabled-btn):hover {
+    box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 60%, transparent);
   }
   .powers-col .power-btn-label {
-    height: 18px;
-    font-size: 8.5px;
+    height: auto;
+    font-size: 9px;
+    color: inherit;
   }
-  .powers-col .power-btn-label.power-btn-label-sm,
-  .powers-col .quest-progress-chip {
-    font-size: 8px;
-  }
-  .powers-col .quest-progress-chip {
-    min-width: 18px;
-    padding: 1px 4px;
-    top: -6px;
-    right: -6px;
+  .powers-col .power-btn.power-badge.power-used::after {
+    display: none;
   }
    .history-tiles{
       gap: var(--sp-6);

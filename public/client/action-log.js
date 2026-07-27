@@ -38,9 +38,11 @@
       // resolved per-round rather than from the viewer's current role.
       const isSetterThisRound = myId != null && setterIdThisRound === myId;
       const viewerRole = isSetterThisRound ? "setter" : "guesser";
+      let guessNumber = 0;
 
       (history || []).forEach(entry => {
         if (!entry?.guess) return;
+        guessNumber++;
         const guessHidden = isLiveRound && !isSetterThisRound && state.powers?.stealthGuessActive;
         // Total Blackout hides the guesser's entire history board (see
         // history.js's buildHistoryRenderState returning [] while
@@ -58,7 +60,7 @@
         // one turn always reads as exactly one compact log row rather
         // than spilling across two or three in the small always-visible
         // box (see .sidebar-log-notes-box).
-        let text = `Guess: ${guessDisplay}`;
+        let text = `${guessNumber}: ${guessDisplay}`;
         if (entry.phase === "simultaneous") {
           text += isSetterThisRound ? " · set" : " · opp set";
         }

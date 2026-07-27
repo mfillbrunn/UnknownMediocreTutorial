@@ -95,11 +95,14 @@ display: grid;
 /* Log/Notes tab row below the power buttons (both screens -- see
    selectSidebarTab in client.js). Stacked full-width rather than side by
    side, same single-column language as everything else in this narrow
-   sidebar. */
+   sidebar -- narrower than the sidebar itself (align-self:center instead
+   of the inherited stretch) so it doesn't visually dominate the column. */
 .sidebar-tab-row {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  align-self: center;
+  width: 80px;
   gap: var(--sp-4);
 }
 .sidebar-tab-btn {
@@ -140,6 +143,8 @@ display: grid;
   border-radius: var(--r-8);
   max-height: 78px;
   overflow-y: auto;
+  align-self: center;
+  width: 80px;
 }
 .sidebar-log-notes-panel.hidden {
   display: none;

@@ -17,19 +17,15 @@
 
 .history-tile {
 /* Sized against the board column's own width (see .center-col's
-   container-type in layout.css), not the raw viewport -- vw units sized
-   tiles as if the board still had the full screen width to itself, which
-   overflowed once the sidebar started sharing that row with it (a 5-tile
-   board at 12vw comfortably exceeds a ~35-45% narrower board column on a
-   phone). */
-/* 5 tiles + 4 gaps (var(--sp-6) = 6px) must fit within the container's own
-   width: 5*T + 24 <= W, i.e. T <= 0.2W - 4.8px -- worked out per actual
-   container width (~180-260px on a phone) rather than picked by eye, since
-   a too-high cqw here overflows the row past its own column (checked via
-   getBoundingClientRect, not just how it looks in a screenshot). */
-width: clamp(30px, 16cqw, 74px);
-height: clamp(30px, 16cqw, 74px);
-font-size: clamp(15px, 8cqw, 37px);
+   container-type in layout.css), not the raw viewport. 5 tiles + 4 gaps
+   (var(--sp-6) = 6px) must fit within that width: 5*T + 24 <= W, i.e.
+   T <= 0.2W - 4.8px -- 17cqw stays just under that ratio across the
+   ~180-260px container widths a phone actually produces here (checked via
+   getBoundingClientRect, not just how it looks in a screenshot -- a
+   too-high cqw overflows the row past its own column). */
+width: clamp(32px, 17cqw, 78px);
+height: clamp(32px, 17cqw, 78px);
+font-size: clamp(16px, 8.5cqw, 39px);
   border-radius: var(--r-6);
   font-weight: 800;
   letter-spacing: 1px;

@@ -1281,10 +1281,15 @@
   align-self: stretch;
   text-align: left;
 }
+/* Label and value each get their own line (New: label, value, then Keep:
+   label, value) instead of sharing one row -- see renderSetterRemainingBox
+   in remaining-words.js, which now emits 4 .line divs instead of 2. */
 .remaining-box .line {
   display: flex;
-  justify-content: space-between;
   gap: var(--sp-6);
+}
+.remaining-box .line.value-line {
+  padding-left: var(--sp-4);
 }
 
 .remaining-box .label {
@@ -1295,9 +1300,6 @@
   font-variant-numeric: tabular-nums;
     font-weight: 800;
   color: var(--text);
-}
-.powers-col .remaining-box .line {
-  justify-content: space-between;
 }
 .theme-guesser .remaining-box {
   display: none;
@@ -1332,7 +1334,10 @@
   line-height: 1;
   border: 1px solid color-mix(in srgb, var(--tile-green) 55%, black);
 }
-.remaining-box .line:first-child {
+/* Divider between the New section (label+value, first 2 lines) and the
+   Keep section (last 2 lines) -- sits after New's value line now that
+   each label/value pair spans two .line divs instead of one. */
+.remaining-box .line.value-line:first-of-type {
   padding-bottom: var(--sp-4);
   margin-bottom: var(--sp-4);
   border-bottom: 1px solid rgba(255,255,255,0.12);

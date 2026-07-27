@@ -34,13 +34,9 @@ function renderSetterRemainingBox(boxState) {
 
   box.innerHTML = `
     <div class="line">
-      <span class="label">Keep</span>
-      <span class="value" style="${oldStyle}">
-        ${current} → ${boxState.old != null ? boxState.old.toLocaleString() : "?"}
-      </span>
-    </div>
-    <div class="line">
       <span class="label">New</span>
+    </div>
+    <div class="line value-line">
       <span class="value" style="${newStyle}">
         ${current} →
         ${
@@ -50,6 +46,14 @@ function renderSetterRemainingBox(boxState) {
               ? boxState.new.toLocaleString()
               : "?"
         }
+      </span>
+    </div>
+    <div class="line">
+      <span class="label">Keep</span>
+    </div>
+    <div class="line value-line">
+      <span class="value" style="${oldStyle}">
+        ${current} → ${boxState.old != null ? boxState.old.toLocaleString() : "?"}
       </span>
     </div>
     ${hint}
