@@ -29,40 +29,26 @@
   .power-btn::before {
     display: none;
   }  
-  /* Power buttons below the board: filled solid with the screen's role
-     color (red for the setter, blue for the guesser), laid out
-     horizontally (layout.css's .powers-col/.power-container are row-wrap
-     now). Icon-bearing badges use the larger icon-on-top-of-name card --
-     fixed badge sizing and the corner chip are dropped, but the icon
-     itself stays (see the setter-only exception further down for its one
-     read-only quest mirror, which stays icon-less). */
-  .powers-col .power-btn {
-    width: auto;
-    min-height: 36px;
-    padding: var(--sp-4) var(--sp-6);
-    background: var(--role-accent);
-    border: none;
-    box-shadow: none;
-    color: #0c0d10;
-}
+  /* Power buttons below the board: the same two-tone bordered card as
+     components.css's base .power-btn.power-badge (dark role-tinted
+     gradient surface, accent border, accent icon + label, hover lift,
+     used-power strike) -- this scope only shrinks that card 25% for the
+     compact mobile row (layout.css's .powers-col/.power-container are
+     row-wrap), it doesn't reskin it. */
   .powers-col .power-btn.power-badge {
-    width: 84px;
-    min-height: 84px;
+    width: 63px;
+    min-height: 63px;
     align-self: center;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--sp-6);
-    padding: 8px 5px 11px;
+    gap: var(--sp-4);
+    padding: 6px 4px 8px;
+    border-radius: var(--r-12, 12px);
 }
-  .powers-col .power-btn.power-badge:not(.power-used):not(.disabled-btn):hover {
-    box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 60%, transparent);
-  }
   .powers-col .power-icon {
-    width: 50px;
-    max-width: 50px;
+    max-width: 38px;
     flex: 0 0 auto;
-    color: inherit;
   }
   /* The setter's own screen carries one icon-less exception: their
      read-only mirror of the guesser's quest (quest.js's updateQuestBadge,
@@ -71,13 +57,9 @@
     display: none;
   }
   .powers-col .power-btn-label {
-    height: auto;
-    font-size: 10px;
-    color: inherit;
+    height: 18px;
+    font-size: 8px;
     text-align: center;
-  }
-  .powers-col .power-btn.power-badge.power-used::after {
-    display: none;
   }
    .history-tiles{
       gap: var(--sp-6);
@@ -91,25 +73,18 @@
    .center-col .history-tiles{
       margin-top: var(--sp-2);
    }
-   .remaining-box {
-    padding: var(--sp-6) var(--sp-8);
-    font-size: var(--fs-12);
-    width: 100%;
+  /* Shares the power-buttons row instead of being forced onto its own
+     line (components.css's .powers-col .remaining-box no longer sets
+     flex-basis/width:100%) -- width:auto lets it sit beside the badges
+     when there's room, and the row's own flex-wrap sends it to the next
+     line on its own when there isn't. */
+  .powers-col .remaining-box {
+    width: auto;
     max-width: 100%;
+    padding: var(--sp-4) var(--sp-6);
+    font-size: var(--fs-11);
+    align-self: center;
   }
-   .remaining-box {
-  display: none;
-}
-/* Stacked vertically (Keep on its own line, New below it) -- the sidebar
-   is too narrow for them side by side, and components.css's
-   .line:first-child divider (border-bottom) already reads correctly once
-   they're stacked, so nothing here needs to suppress it. */
-.remaining-box:not([hidden]) {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--sp-2);
-}
    #SetterInfoBadge, #GuesserInfoBadge{
          margin-top: var(--sp-2);
    }

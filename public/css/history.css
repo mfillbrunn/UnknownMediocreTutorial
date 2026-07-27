@@ -21,13 +21,14 @@
    spans the full row (powers moved below it instead of sharing the row),
    so this container is wider than it used to be -- 5 tiles + 4 gaps
    (var(--sp-4) = 4px) must fit within that width: 5*T + 16 <= W, i.e.
-   T <= 0.2W - 3.2px -- 18.5cqw stays just under that ratio across the
-   ~300-370px container widths a phone actually produces here now (checked
-   via getBoundingClientRect, not just how it looks in a screenshot -- a
-   too-high cqw overflows the row past its own column). */
-width: clamp(36px, 18.5cqw, 92px);
-height: clamp(36px, 18.5cqw, 92px);
-font-size: clamp(18px, 9.3cqw, 46px);
+   T <= 0.2W - 3.2px -- 13.9cqw (25% smaller than the previous 18.5cqw) is
+   well under that ratio across the ~300-370px container widths a phone
+   actually produces here (checked via getBoundingClientRect, not just how
+   it looks in a screenshot -- a too-high cqw overflows the row past its
+   own column). */
+width: clamp(27px, 13.9cqw, 69px);
+height: clamp(27px, 13.9cqw, 69px);
+font-size: clamp(14px, 7cqw, 35px);
   border-radius: var(--r-6);
   font-weight: 800;
   letter-spacing: 1px;
@@ -93,6 +94,13 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   display: flex;
   justify-content: center;
   position: relative;
+  /* Direct flex child of .history-scroll (.history-tiles' column flex) --
+     without this, once that container got a max-height (see
+     .history-scroll), flexbox's default flex-shrink:1 would proportionally
+     squash every row down to fit the capped height instead of leaving
+     rows at their natural size and letting overflow-y:auto scroll the
+     excess, which is the whole point of capping it in the first place. */
+  flex-shrink: 0;
 }
 
 /* Whole-row entrance when a new guess is submitted, on top of the
@@ -636,7 +644,40 @@ body.hide-constraints .constraint-row {
   pointer-events: none;
 }
 
-.history-scroll { z-index: 1;} 
+/* Only this element (past submitted guesses) scrolls -- everything else
+   on the screen (constraint row above it, the draft row below it, the
+   powers row, keyboard, header) stays put regardless of how many guesses
+   pile up. A capped max-height + overflow-y:auto keeps that in place;
+   ui/history.js scrolls this to the bottom whenever a new row is appended
+   so the latest guess is what's visible by default. */
+.history-scroll {
+  z-index: 1;
+  max-height: 34vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  /* A flex item's automatic min main-size resolves to 0 (instead of its
+     content size) the moment it gets a non-visible overflow -- without
+     this, .center-col's column flex would shrink this element (and every
+     row inside it) down arbitrarily small under any layout pressure,
+     collapsing each row's own box far below its tiles' actual height and
+     making consecutive rows paint on top of each other. flex-shrink:0
+     keeps it (and thus every row) at its real content size, still capped
+     by max-height/overflow-y above once that content actually exceeds it. */
+  flex-shrink: 0;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--role-accent) 55%, transparent) transparent;
+}
+.history-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.history-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--role-accent) 55%, transparent);
+  border-radius: 3px;
+}
+.history-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
 
 
 

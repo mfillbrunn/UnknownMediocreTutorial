@@ -241,6 +241,14 @@ window.renderHistory = function ({ state, container, role }) {
   for (const r of diff.added) {
     container.appendChild(createHistoryRowDOM(r));
   }
+  // container is the scrollable .history-scroll box (history.css) --
+  // keep the newest guess in view instead of leaving the scroll position
+  // wherever it was before this row landed.
+  if (diff.added.length > 0) {
+    requestAnimationFrame(() => {
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+    });
+  }
   prevRenderState = next;
 };
 

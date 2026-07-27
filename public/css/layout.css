@@ -114,7 +114,14 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--sp-8);
-  width: 100%;
+  /* No width:100% here anymore, and flex-grow:0 (not 1) -- this needs to
+     shrink-to-fit its actual buttons instead of stretching to claim the
+     whole row, so the remaining-words box (a sibling, not a child of this
+     container) has real room to share the same flex line instead of
+     always being pushed to a new one below it. Its own buttons still wrap
+     internally via flex-wrap above once they run out of room. */
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 /* =========================================

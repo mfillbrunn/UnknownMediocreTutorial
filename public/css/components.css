@@ -1276,15 +1276,14 @@
     transparent
   );
 }
-/* Sits below the power buttons (layout.css's .powers-col is a wrapping
-   flex row) -- flex-basis:100% forces it onto its own line below all of
-   them instead of trying to share a row with the last power button, and
-   Keep/New render as one single line (see renderSetterRemainingBox in
-   remaining-words.js). */
+/* Shares the same flex-wrap row as the power buttons (layout.css's
+   .powers-col/.power-container) instead of being forced onto its own
+   line below them -- see mobile.css's .powers-col .remaining-box for the
+   width:auto override that actually lets it sit inline. Keep/New still
+   render as one single line within the box itself (see
+   renderSetterRemainingBox in remaining-words.js). */
 .powers-col .remaining-box {
-  flex-basis: 100%;
-  width: 100%;
-  margin-top: var(--sp-8);
+  margin: 0;
   text-align: center;
 }
 .remaining-box .line {
