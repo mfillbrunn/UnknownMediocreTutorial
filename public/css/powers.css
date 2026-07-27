@@ -76,9 +76,14 @@
   position: relative;
   overflow: hidden;
 
-  background: var(--tile-gray);
+  /* Transparent instead of a solid gray body -- the diagonal stripes on
+     ::before below read as "redacted / cut out of the record" rather
+     than a plain unused tile, and the letter (.tile-letter, z-index 2)
+     stands out much more clearly against the page background than it
+     did against solid mid-gray. */
+  background: transparent;
   color: var(--tile-gray-text);
-  border: 1px dashed rgba(255,255,255,0.25);
+  border: 1px dashed rgba(255,255,255,0.4);
 }
 
 .history-tile.tile-erased::before {
@@ -91,11 +96,19 @@
   align-items: center;
   justify-content: center;
 
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.12) 0px,
+    rgba(255, 255, 255, 0.12) 3px,
+    transparent 3px,
+    transparent 11px
+  );
+
   font-family: var(--font-mono);
   font-weight: 1000;
   font-size: clamp(20px, 7vw, 38px);
 
-  color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.22);
   text-shadow: none;
 
   pointer-events: none;
