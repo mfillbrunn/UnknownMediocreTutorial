@@ -423,6 +423,16 @@ InfoBadgeEngine.register((state, role) => {
   const status = computeQuestStatus(state);
   if (!status) return null;
 
+  // The guesser now has the visual quest-badge-tile card (see
+  // updateQuestBadge above) showing icon/name/progress/ready state and
+  // handling the claim click itself, so this text line would just repeat
+  // it there -- kept only for Field Report, whose 3 conditions are
+  // randomized per match and have nowhere else to be shown (see the
+  // subtext comment below). The setter has no visual tile at all, so
+  // their copy is untouched.
+  const hasUniqueInfo = q.type === "FIELDREPORT" && !status.done;
+  if (role === "guesser" && !hasUniqueInfo) return null;
+
   const canClaim = role === "guesser" && !status.done && (q.ready || q.oneAway);
 
   // Guide off: the badge only ever reads as the plain in-progress line --

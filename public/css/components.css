@@ -193,9 +193,8 @@
    that can still live here instead of on the symbol itself. */
 .power-btn.power-badge {
   width: 84px;
-  height: 84px;
   min-height: 84px;
-  padding: 9px 5px 7px;
+  padding: 8px 5px 11px;
   border: 2px solid color-mix(in srgb, var(--role-accent) 55%, transparent);
   border-radius: var(--r-16, 16px);
   background:
@@ -223,8 +222,8 @@
 }
 
 .power-icon {
-  width: 72%;
-  max-width: 58px;
+  width: 80%;
+  max-width: 64px;
   flex: 1 1 auto;
   color: var(--role-accent);
   overflow: visible;

@@ -67,7 +67,7 @@
      sizing above is for a power with no <symbol> or badge art at all. */
   .powers-col .power-btn.power-badge {
     flex: 0 0 auto;
-    padding: 9px 5px 7px;
+    padding: 8px 5px 11px;
     min-height: 84px;
 }
    .history-tiles{
