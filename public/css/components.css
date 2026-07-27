@@ -236,11 +236,19 @@
    fitBadgeLabel (powerEngine.js) shrinks the font-size in steps until the
    text actually fits inside this box instead of overflowing it, and the
    flex centering keeps short 1-line labels sitting in the vertical middle
-   of that same slot rather than hugging its top. */
+   of that same slot rather than hugging its top.
+   flex-direction: column (not row) is deliberate -- a row-direction flex
+   container sizes its anonymous text item to shrink-to-content-width
+   (flexbox's default min-width:auto behavior), which stopped the text
+   from wrapping across the box's actual width at all and just let it
+   overflow past the edges, invisible under overflow:hidden. column
+   direction puts width on the CROSS axis, where the default
+   align-items:stretch gives the text the box's full width to wrap
+   against, same as a plain block element would. */
 .power-btn-label {
   height: 24px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
   overflow: hidden;
   font-size: 11px;
