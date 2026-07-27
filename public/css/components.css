@@ -181,7 +181,16 @@
    which .theme-setter/.theme-guesser already set on the ancestor screen,
    so the same card CSS covers both roles without a spy/inspector
    variant. A power with no matching <symbol> yet just omits the <svg>
-   and shows the label alone, centered, in the same card. */
+   and shows the label alone, centered, in the same card.
+
+   Icons are two-color line art: accent-filled shapes plus off-white
+   "light" highlight details, baked directly onto each <symbol>'s
+   elements as fill/stroke presentation attributes (not CSS classes --
+   ordinary descendant selectors here can't reach through <use>'s shadow
+   tree). --icon-surface backs the handful of "cut-out" notches that are
+   meant to read as a hole in the icon shape; custom properties (unlike
+   classes) DO inherit through <use>, so this is the one styling knob
+   that can still live here instead of on the symbol itself. */
 .power-btn.power-badge {
   width: 92px;
   height: 92px;
@@ -195,6 +204,7 @@
       color-mix(in srgb, var(--role-accent) 10%, #14151b),
       color-mix(in srgb, var(--role-accent) 4%, #0d0e12)
     );
+  --icon-surface: #121317;
   flex-direction: column;
   gap: 6px;
   box-shadow:
@@ -219,24 +229,6 @@
   color: var(--role-accent);
   overflow: visible;
   pointer-events: none;
-}
-.power-icon .line,
-.power-icon .shape {
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.power-icon .fill {
-  fill: currentColor;
-  stroke: none;
-}
-.power-icon .text {
-  fill: currentColor;
-  stroke: none;
-  font-weight: 800;
-  text-anchor: middle;
 }
 
 .power-btn-label {
