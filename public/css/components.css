@@ -1276,10 +1276,24 @@
     transparent
   );
 }
+/* Narrower + tighter inside the sidebar (whose own max-width is smaller
+   than this box's base min-width) -- drop the min-width floor entirely
+   and shrink padding/font so it doesn't force the column wider than the
+   power badges above it. */
 .powers-col .remaining-box {
   margin-top: auto;
   align-self: stretch;
   text-align: left;
+  min-width: 0;
+  padding: var(--sp-4) var(--sp-6);
+  font-size: 10px;
+}
+.powers-col .remaining-box .line.value-line {
+  padding-left: var(--sp-2);
+}
+.powers-col .remaining-box .line.value-line:first-of-type {
+  padding-bottom: var(--sp-2);
+  margin-bottom: var(--sp-2);
 }
 /* Label and value each get their own line (New: label, value, then Keep:
    label, value) instead of sharing one row -- see renderSetterRemainingBox

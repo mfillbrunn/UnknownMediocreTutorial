@@ -35,33 +35,39 @@
     display: none;
   }  
   /* Sidebar power buttons: filled solid with the screen's role color
-     (red for the setter, blue for the guesser), icon + name side by side
-     in a compact pill instead of the old tall icon-card -- fixed badge
-     sizing and the corner chip are still dropped, but the icon itself
-     stays (see the setter-only exception further down for its one
-     read-only quest mirror, which stays icon-less). Same treatment for
-     the icon-badge and plain-label power kinds alike. .power-container is
-     a column flex container (layout.css), so full width comes from its
-     align-items:stretch rather than anything set here. */
-  .powers-col .power-btn,
-  .powers-col .power-btn.power-badge {
+     (red for the setter, blue for the guesser). Icon-bearing badges go
+     back to the larger icon-on-top-of-name card (not the compact
+     side-by-side pill) -- fixed badge sizing and the corner chip are
+     still dropped, but the icon itself stays (see the setter-only
+     exception further down for its one read-only quest mirror, which
+     stays icon-less). .power-container is a column flex container
+     (layout.css), so full width comes from its align-items:stretch
+     rather than anything set here. */
+  .powers-col .power-btn {
     width: auto;
-    flex-direction: row;
-    align-items: center;
     min-height: 36px;
     padding: var(--sp-4) var(--sp-6);
-    gap: var(--sp-6);
     background: var(--role-accent);
     border: none;
     box-shadow: none;
     color: #0c0d10;
 }
+  .powers-col .power-btn.power-badge {
+    width: 84px;
+    min-height: 84px;
+    align-self: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-6);
+    padding: 8px 5px 11px;
+}
   .powers-col .power-btn.power-badge:not(.power-used):not(.disabled-btn):hover {
     box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 60%, transparent);
   }
   .powers-col .power-icon {
-    width: 22px;
-    max-width: 22px;
+    width: 50px;
+    max-width: 50px;
     flex: 0 0 auto;
     color: inherit;
   }
@@ -73,9 +79,9 @@
   }
   .powers-col .power-btn-label {
     height: auto;
-    font-size: 9px;
+    font-size: 10px;
     color: inherit;
-    text-align: left;
+    text-align: center;
   }
   .powers-col .power-btn.power-badge.power-used::after {
     display: none;

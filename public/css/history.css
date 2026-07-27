@@ -10,22 +10,22 @@
 .history-row {
   display: flex;
   justify-content: center;
-  gap: var(--sp-6);
-  min-height: 48px;   
+  gap: var(--sp-4);
+  min-height: 48px;
 
 }
 
 .history-tile {
 /* Sized against the board column's own width (see .center-col's
    container-type in layout.css), not the raw viewport. 5 tiles + 4 gaps
-   (var(--sp-6) = 6px) must fit within that width: 5*T + 24 <= W, i.e.
-   T <= 0.2W - 4.8px -- 17cqw stays just under that ratio across the
+   (var(--sp-4) = 4px) must fit within that width: 5*T + 16 <= W, i.e.
+   T <= 0.2W - 3.2px -- 18cqw stays just under that ratio across the
    ~180-260px container widths a phone actually produces here (checked via
    getBoundingClientRect, not just how it looks in a screenshot -- a
    too-high cqw overflows the row past its own column). */
-width: clamp(32px, 17cqw, 78px);
-height: clamp(32px, 17cqw, 78px);
-font-size: clamp(16px, 8.5cqw, 39px);
+width: clamp(32px, 18cqw, 82px);
+height: clamp(32px, 18cqw, 82px);
+font-size: clamp(16px, 9cqw, 41px);
   border-radius: var(--r-6);
   font-weight: 800;
   letter-spacing: 1px;
