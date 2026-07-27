@@ -389,8 +389,11 @@ function updateQuestBadge(state, role) {
 
   // Only the guesser can actually claim -- the setter's tile is a
   // read-only mirror (its blue border already marks it as "theirs, not
-  // mine", see .quest-badge-tile's default --role-accent).
+  // mine", see .quest-badge-tile's default --role-accent; the extra
+  // transparency from quest-badge-readonly below reinforces "look, don't
+  // touch" further).
   const canClaim = role === "guesser" && !status.done && (q.ready || q.oneAway);
+  btn.classList.toggle("quest-badge-readonly", role !== "guesser");
 
   btn.classList.toggle("quest-ready", !status.done && !!q.ready);
   btn.classList.toggle("quest-oneaway", !status.done && !q.ready && !!q.oneAway);

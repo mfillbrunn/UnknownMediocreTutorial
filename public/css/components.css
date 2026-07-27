@@ -230,7 +230,19 @@
   pointer-events: none;
 }
 
+/* A fixed-height box (not just a fixed font-size) -- reserving the same
+   2-line slot for every label, regardless of how many words it actually
+   has, is what makes every badge card end up the same overall size.
+   fitBadgeLabel (powerEngine.js) shrinks the font-size in steps until the
+   text actually fits inside this box instead of overflowing it, and the
+   flex centering keeps short 1-line labels sitting in the vertical middle
+   of that same slot rather than hugging its top. */
 .power-btn-label {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.2px;
@@ -238,14 +250,6 @@
   line-height: 1.1;
   color: var(--role-accent);
   text-align: center;
-}
-/* Applied by fitBadgeLabel (powerEngine.js) when a label would otherwise
-   wrap to 3 lines (e.g. "Secret Word Helper") -- shrinks it back down to
-   2 so every badge reads at roughly the same size instead of some cards
-   visibly carrying more text than others. */
-.power-btn-label.power-btn-label-sm {
-  font-size: 8.5px;
-  letter-spacing: 0.1px;
 }
 
 /* line-through only affects text nodes, so the "permanently used" power
@@ -290,6 +294,13 @@
 .quest-badge-tile.quest-oneaway,
 .quest-badge-tile.quest-ready {
   animation: badge-clickable-pulse 1.6s ease-in-out infinite;
+}
+/* The setter's copy is display-only -- it can never be claimed from this
+   screen (see updateQuestBadge's role check in quest.js). Dialing back
+   the opacity reads as "look, don't touch" at a glance, on top of the
+   blue-vs-red border already separating it from the setter's own powers. */
+.quest-badge-tile.quest-badge-readonly {
+  opacity: 0.68;
 }
 .quest-progress-chip {
   position: absolute;

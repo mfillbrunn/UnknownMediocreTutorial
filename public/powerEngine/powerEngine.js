@@ -28,22 +28,24 @@ const POWER_ICON_IDS = {
   letterProfile: "icon-letter-profile"
 };
 
-// Shared by power buttons (below) and quest.js's badge tile -- a label
-// that wraps to 3 lines (e.g. "Secret Word Helper", "Hard Mode Streak")
-// gets a smaller font so every badge reads at a consistent size instead
-// of some cards carrying noticeably more text than others. Runs on the
-// next frame since scrollHeight is only meaningful once the element has
-// real layout, which requires it to already be in the document -- callers
-// append the returned wrapper synchronously right after creation, so by
-// the time this fires the label is already live.
+// Shared by power buttons (below) and quest.js's badge tile. .power-btn-label
+// reserves a fixed-height 2-line box in CSS (components.css) so every badge
+// card ends up the same overall size regardless of label length -- this
+// shrinks the font-size in steps until a long label (e.g. "Secret Word
+// Helper", "Hard Mode Streak") actually fits inside that fixed box instead
+// of overflowing it. Runs on the next frame since scrollHeight is only
+// meaningful once the element has real layout, which requires it to
+// already be in the document -- callers append the returned wrapper
+// synchronously right after creation, so by the time this fires the label
+// is already live.
+const BADGE_LABEL_SIZES = [11, 10, 9, 8, 7.2];
 function fitBadgeLabel(labelEl) {
-  labelEl.classList.remove("power-btn-label-sm");
+  labelEl.style.fontSize = "";
   requestAnimationFrame(() => {
-    const cs = getComputedStyle(labelEl);
-    const lineHeight = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2;
-    const lines = Math.round(labelEl.scrollHeight / lineHeight);
-    if (lines >= 3) {
-      labelEl.classList.add("power-btn-label-sm");
+    const maxHeight = labelEl.clientHeight;
+    for (const size of BADGE_LABEL_SIZES) {
+      if (labelEl.scrollHeight <= maxHeight + 1) break;
+      labelEl.style.fontSize = size + "px";
     }
   });
 }
