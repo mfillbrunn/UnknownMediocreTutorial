@@ -2773,19 +2773,6 @@ body:has(#guesserScreen.active) #appMain {
   pointer-events: none;
 }
 
-/*
-  The Opp view's quest card spans the full row instead of sharing a
-  column with whatever power card comes after it -- squeezed into one
-  half of the 2-column grid (44px wide at this sidebar's width), its
-  icon + label + progress chip didn't fit the fixed 66px card height and
-  spilled out past the card's own border. grid-column only affects direct
-  grid items (the .power-btn-wrapper divs), not the .quest-badge-tile
-  button nested a level further inside one of them.
-*/
-#setterScreen .setter-power-view > .power-btn-wrapper:has(.quest-badge-tile) {
-  grid-column: 1 / -1;
-}
-
 #setterScreen .setter-sidebar-empty {
   grid-column: 1 / -1;
 
@@ -2828,20 +2815,39 @@ body:has(#guesserScreen.active) #appMain {
   other role's powers, synced from setterPowerContainer -- see
   ui/guesser-sidebar.js).
 */
-#guesserScreen .guesser-power-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/*
+  Sits beside the power row instead of on its own line above it -- a
+  narrow vertical strip (You stacked over Opp) that shares the row's
+  horizontal space, same idea as the setter's sidebar tabs but adapted to
+  the guesser's single flex row instead of a dedicated column.
+*/
+#guesserScreen .guesser-powers-row {
+  display: flex;
+  flex-direction: row;
+  /* stretch (not flex-start) -- lets the You/Opp tab column split the
+     power row's own height evenly instead of shrinking to its own tiny
+     content height and looking like a stray leftover beside the much
+     taller power cards. */
+  align-items: stretch;
   gap: var(--sp-4);
 
   width: 100%;
-  max-width: 220px;
-  margin: 0 auto var(--sp-4);
+}
+
+#guesserScreen .guesser-power-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  flex: 0 0 auto;
+  width: 44px;
 }
 
 #guesserScreen .guesser-power-tab {
-  min-height: 26px;
+  flex: 1 1 0;
+  min-height: 0;
 
-  padding: 3px 4px;
+  padding: 3px 2px;
 
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--r-6);
@@ -2879,7 +2885,8 @@ body:has(#guesserScreen.active) #appMain {
 */
 #guesserScreen .guesser-power-stack {
   display: grid;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 #guesserScreen .guesser-power-stack > .guesser-power-view {

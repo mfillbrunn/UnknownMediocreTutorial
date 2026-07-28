@@ -1127,6 +1127,13 @@
 .power-info-btn, .constraint-toggle-btn {
   all: unset;
   cursor: pointer;
+  /* all:unset resets box-sizing to its initial value (content-box),
+     overriding base.css's global border-box reset -- in the setter
+     sidebar's fixed 30px grid track (features.css's .setter-power-tabs)
+     that let this button's own 1px border add on top of its width
+     instead of being absorbed by it, pushing it a couple pixels past
+     the track/column edge. */
+  box-sizing: border-box;
 
   width: 28px;
   height: 28px;

@@ -86,6 +86,7 @@
 
     btn.title = status.meta.label;
     labelEl.textContent = status.meta.label;
+    window.fitBadgeLabel?.(labelEl);
     chip.textContent = window.questCardProgressText(status, q);
     chip.style.display = "";
 

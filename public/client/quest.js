@@ -414,6 +414,7 @@ function updateQuestBadge(state, role) {
   // instead of a "Quest: <progress>" prefix line, so the label itself is
   // just the quest's name.
   labelEl.textContent = status.meta.label;
+  window.fitBadgeLabel?.(labelEl);
   chip.textContent = questCardProgressText(status, q);
   chip.style.display = "";
 
