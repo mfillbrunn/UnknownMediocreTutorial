@@ -260,14 +260,21 @@ function ensureQuestConditions(state) {
 // Pure per-word check against a given green/mustInclude snapshot -- split
 // out of computeHardModeCount so genericAI.js's quest-aware guess picker
 // can ask "would THIS candidate be hard-mode legal right now" without
-// re-deriving the reduction logic itself.
+// re-deriving the reduction logic itself. mustInclude is a
+// Map<letter, Set<excludedPositions>> -- a yellow letter must appear
+// somewhere in the guess (like real Wordle hard mode) AND must not be
+// placed back at a position it already came back yellow at (yellow means
+// "in the word, not here").
 function isHardModeCompliant(word, green, mustInclude) {
   const g = word.toUpperCase();
   for (let i = 0; i < 5; i++) {
     if (green[i] && g[i] !== green[i]) return false;
   }
-  for (const letter of mustInclude) {
+  for (const [letter, excludedPositions] of mustInclude) {
     if (!g.includes(letter)) return false;
+    for (const pos of excludedPositions) {
+      if (g[pos] === letter) return false;
+    }
   }
   return true;
 }
@@ -280,7 +287,10 @@ function foldHardModeConstraint(green, mustInclude, entry) {
   const g = entry.guess.toUpperCase();
   for (let i = 0; i < 5; i++) {
     if (fb[i] === "🟩") green[i] = g[i];
-    else if (fb[i] === "🟨") mustInclude.add(g[i]);
+    else if (fb[i] === "🟨") {
+      if (!mustInclude.has(g[i])) mustInclude.set(g[i], new Set());
+      mustInclude.get(g[i]).add(i);
+    }
   }
 }
 
@@ -289,14 +299,14 @@ function foldHardModeConstraint(green, mustInclude, entry) {
 // hard-mode-legality of a not-yet-made guess.
 function computeHardModeConstraints(history) {
   const green = [null, null, null, null, null];
-  const mustInclude = new Set();
+  const mustInclude = new Map();
   for (const entry of history) foldHardModeConstraint(green, mustInclude, entry);
   return { green, mustInclude };
 }
 
 function computeHardModeCount(history) {
   const green = [null, null, null, null, null];
-  const mustInclude = new Set();
+  const mustInclude = new Map();
   let count = 0;
 
   for (const entry of history) {

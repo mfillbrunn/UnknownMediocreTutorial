@@ -78,10 +78,13 @@ function computeVowelShortageCount(history) {
   return count;
 }
 
-// Mirrors questServer.js's computeHardModeCount exactly.
+// Mirrors questServer.js's computeHardModeCount exactly. mustInclude is a
+// Map<letter, Set<excludedPositions>> -- a yellow letter must appear
+// somewhere in the guess AND must not land back at a position it already
+// came back yellow at (yellow means "in the word, not here").
 function computeHardModeProgress(history) {
   const green = [null, null, null, null, null];
-  const mustInclude = new Set();
+  const mustInclude = new Map();
   let count = 0;
 
   for (const entry of history) {
@@ -93,14 +96,20 @@ function computeHardModeProgress(history) {
     for (let i = 0; i < 5; i++) {
       if (green[i] && g[i] !== green[i]) compliant = false;
     }
-    for (const letter of mustInclude) {
+    for (const [letter, excludedPositions] of mustInclude) {
       if (!g.includes(letter)) compliant = false;
+      for (const pos of excludedPositions) {
+        if (g[pos] === letter) compliant = false;
+      }
     }
     if (compliant) count++;
 
     for (let i = 0; i < 5; i++) {
       if (fb[i] === "🟩") green[i] = g[i];
-      else if (fb[i] === "🟨") mustInclude.add(g[i]);
+      else if (fb[i] === "🟨") {
+        if (!mustInclude.has(g[i])) mustInclude.set(g[i], new Set());
+        mustInclude.get(g[i]).add(i);
+      }
     }
   }
 
