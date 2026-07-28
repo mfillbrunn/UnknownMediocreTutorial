@@ -422,7 +422,42 @@ body:has(#guesserScreen.active) #appContainer {
   min-width: 0;
 }
 
+/* =========================================
+   GAME VIEWPORT — complete the flex chain
+   ========================================= */
 
+/*
+  Actual DOM:
+  #appContainer
+    -> #appMain
+      -> #setterScreen / #guesserScreen
+
+  #appMain must participate in the flex layout or the active screen
+  will size itself from its content and push the keyboard downward.
+*/
+body:has(#setterScreen.active) #appMain,
+body:has(#guesserScreen.active) #appMain {
+  display: flex;
+  flex-direction: column;
+
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Prevent the container's padding from making it taller than the viewport
+   in case border-box is not already applied globally. */
+body:has(#setterScreen.active) #appContainer,
+body:has(#guesserScreen.active) #appContainer {
+  box-sizing: border-box;
+}
+
+/* Give the active screen a definite share of #appMain's height. */
+#setterScreen.active,
+#guesserScreen.active {
+  flex: 1 1 0;
+  min-height: 0;
+}
 
 .header-divider {
   opacity: 0.4;
