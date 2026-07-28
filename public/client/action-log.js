@@ -118,11 +118,30 @@
     if (!container) return;
 
     const entries = buildLog(state, myRole);
+
+    // updateUI() calls this on every keystroke/tick, not just when a new
+    // line actually appears (the setter's copy is now always visible in
+    // the sidebar, not just opened on demand -- see setter-sidebar.js), so
+    // without this the whole panel was tearing itself down and re-running
+    // the scroll-to-bottom animation dozens of times a second, which read
+    // as the entire log "rewriting itself" instead of one new line
+    // quietly appending. Skip the rebuild entirely when nothing changed.
+    const signature = JSON.stringify(entries);
+    if (container.dataset.logSignature === signature) return;
+    const grew = entries.length > Number(container.dataset.logCount || 0);
+    container.dataset.logSignature = signature;
+    container.dataset.logCount = String(entries.length);
+
     container.innerHTML =
       entries.map(e => `<div class="log-entry log-${e.type}${e.cssClass || ""}">${e.text}</div>`).join("") +
       '<div class="log-scroll-anchor"></div>';
 
-    container.querySelector(".log-scroll-anchor")?.scrollIntoView({ behavior: "smooth" });
+    // Only autoscroll when a line was actually added -- an edit to an
+    // existing line (e.g. a power result filling in) shouldn't yank the
+    // view back down if the player had scrolled up to read earlier lines.
+    if (grew) {
+      container.querySelector(".log-scroll-anchor")?.scrollIntoView({ behavior: "smooth" });
+    }
   }
 
   function toggleActionLog(role) {
