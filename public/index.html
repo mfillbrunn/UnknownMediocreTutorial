@@ -767,136 +767,7 @@
                      </div>
                   </div>
                </div>
-               <!-- BELOW TILES: powers, stacked horizontally -->
-               <div class="play-col powers-col">
-                 <div id="setterPowerContainer" class="power-container laser-scope"></div>
-                 <div id="SetterRemainingBox" class="remaining-box"  hidden></div>
-                 <div id="SetterLetterProfileBox" class="letter-profile-box" hidden></div>
-               </div>
-            </div>
-            <!-- KEYBOARD AREA-->
-             <div id="SetterMustContainBox" class="must-contain-box" hidden></div>
-             <div id="SetterInfoBadge" class="info badge"></div>
-             <div id="SetterInfoBadgeDetail" class="info-badge-detail" hidden></div>
-           <div id="keyboardSetter" class="keyboard"></div>
-         </main>
-         <!---Modals--->
-        
-        <section id="globalOverlays">
-           <!-- Assassin Modal -->
-           <div id="assassinModal" class="modal">
-              <div class="modal-content">
-                 <h3>Assassin Word</h3>
-                 <p class="modal-instruction">
-                    Choose a word that instantly ends the game if guessed.
-                 </p>
-                 <input id="assassinInput" class="modal-input" maxlength="5" autocomplete="off"
-                    />
-                 <div class="decision-row">
-                    <button id="assassinSubmitBtn" class="primary-btn small">Confirm</button>
-                    <button id="assassinCancelBtn" class="secondary-btn small">Cancel</button>
-                 </div>
-              </div>
-           </div>            
-          <div id="revealPenaltyModal" class="modal">
-            <div class="panel reveal-penalty-panel">
-              <h2 class="screen-title">⚠️ Marked Weakness</h2>
-              <p class="reveal-penalty-instruction">
-                Choose a letter that isn't yet known and claim it's in the
-                secret. The Inspector can accept your claim (you score 1
-                point) or call it a bluff (right, and they get a free
-                yellow letter; wrong, and you score 2 points).
-              </p>
-              <div class="letter-grid">
-                <!-- A–Z buttons generated in JS -->
-              </div>
-              <div class="decision-row">
-                <button id="revealPenaltyConfirm" class="primary-btn small" disabled>
-                  Confirm
-                </button>
-                <button id="revealPenaltyCancel" class="secondary-btn small">
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-          <div id="letterLockoutModal" class="modal">
-            <div class="panel reveal-penalty-panel">
-              <h2 class="screen-title">🚫 Ban a Letter</h2>
-              <p class="reveal-penalty-instruction">
-                Choose one letter you haven't banned before this match. The
-                Inspector's next guess cannot contain it.
-              </p>
-              <div class="letter-grid">
-                <!-- A–Z buttons generated in JS -->
-              </div>
-              <div class="decision-row">
-                <button id="letterLockoutConfirm" class="primary-btn small" disabled>
-                  Confirm
-                </button>
-                <button id="letterLockoutCancel" class="secondary-btn small">
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-      </section>
-      <!-- ========== GUESSER ========== -->
-    
-     <section id="guesserScreen" class="screen theme-guesser">
-       <!-- Force Timer power: large countdown overlay to add time pressure -->
-       <div id="forceTimerOverlay" class="force-timer-overlay hidden">
-         <span id="forceTimerNumber"></span>
-       </div>
-       <!-- HEADER -->
-        <header class="role-header">
-          <!-- TOP ROW: leave/concede left, score center, guide/utility right -->
-          <div class="header-row header-top">
-            <h2 class="screen-title header-hidden-title"></h2>
-            <div class="header-left">
-              <button id="leaveGameBtnGuesser" class="leave-game-btn secondary-btn small hidden">Leave</button>
-              <button class="concedeBtn secondary-btn small danger-btn">X</button>
-            </div>
-
-            <div class="header-center">
-              <span class="role-badge header-role-badge"></span>
-            </div>
-
-            <div class="header-right">
-                <div class="timer-block">
-                  <div class="timer-row self">
-                    <span class="timer-label">YOU</span>
-                    <span id="timerGuesser" class="chess-timer"></span>
-                  </div>
-                  <div class="timer-row opponent">
-                    <span class="timer-label">OPP</span>
-                    <span id="timerSetterOpponent" class="chess-timer opponent"></span>
-                  </div>
-                </div>
-              <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
-              <button id="powerInfoBtnGuesser" class="power-info-btn" aria-label="Power descriptions"><span class="power-info-icon">?</span></button>
-              <button id="actionLogBtnGuesser" class="header-sm-btn" onclick="toggleActionLog('guesser')" title="Action Log">Log</button>
-              <button id="notesBtnGuesser" class="header-sm-btn" onclick="toggleNotes('guesser')" title="Notes">Notes</button>
-              <button id="keyboardToggleBtnGuesser" class="guide-toggle-btn keyboard-toggle-btn" title="Toggle physical keyboard input" aria-label="Toggle physical keyboard input">⌨️</button>
-              <button id="guideToggleBtnGuesser" class="guide-toggle-btn" title="Toggle guide" aria-label="Toggle guide">🧭<span class="guide-btn-label"> Guide</span></button>
-            </div>
-          </div>
-        </header>
-       <!--- PLAY AREA--->
-       <main class="play-area guesser-play">
-          <div class="play-row">
-             <!-- CENTER: HISTORY TOP (tiles on top) -->
-             <div class="play-col center-col">
-                <div id="constraintRowGuesser" class="history-row constraint-row"></div>
-                <div id="historyGuesser" class="history-tiles history-scroll"></div>
-                  <div class="draft-row-wrap">
-                    <div class="draft-stack">
-                      <div id="draftGuesser" class="history-tiles draft-layer"></div>
-                    </div>
-                  </div>
-             </div>
-             <!-- BELOW TILES: powers, stacked horizontally --><aside
+               <!-- BELOW TILES: powers, stacked horizontally --><aside
   class="play-col powers-col setter-sidebar"
   aria-label="Game sidebar"
 >
@@ -1022,6 +893,136 @@
     ></div>
   </section>
 </aside>
+            </div>
+            <!-- KEYBOARD AREA-->
+             <div id="SetterMustContainBox" class="must-contain-box" hidden></div>
+             <div id="SetterInfoBadge" class="info badge"></div>
+             <div id="SetterInfoBadgeDetail" class="info-badge-detail" hidden></div>
+           <div id="keyboardSetter" class="keyboard"></div>
+         </main>
+         <!---Modals--->
+        
+        <section id="globalOverlays">
+           <!-- Assassin Modal -->
+           <div id="assassinModal" class="modal">
+              <div class="modal-content">
+                 <h3>Assassin Word</h3>
+                 <p class="modal-instruction">
+                    Choose a word that instantly ends the game if guessed.
+                 </p>
+                 <input id="assassinInput" class="modal-input" maxlength="5" autocomplete="off"
+                    />
+                 <div class="decision-row">
+                    <button id="assassinSubmitBtn" class="primary-btn small">Confirm</button>
+                    <button id="assassinCancelBtn" class="secondary-btn small">Cancel</button>
+                 </div>
+              </div>
+           </div>            
+          <div id="revealPenaltyModal" class="modal">
+            <div class="panel reveal-penalty-panel">
+              <h2 class="screen-title">⚠️ Marked Weakness</h2>
+              <p class="reveal-penalty-instruction">
+                Choose a letter that isn't yet known and claim it's in the
+                secret. The Inspector can accept your claim (you score 1
+                point) or call it a bluff (right, and they get a free
+                yellow letter; wrong, and you score 2 points).
+              </p>
+              <div class="letter-grid">
+                <!-- A–Z buttons generated in JS -->
+              </div>
+              <div class="decision-row">
+                <button id="revealPenaltyConfirm" class="primary-btn small" disabled>
+                  Confirm
+                </button>
+                <button id="revealPenaltyCancel" class="secondary-btn small">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+          <div id="letterLockoutModal" class="modal">
+            <div class="panel reveal-penalty-panel">
+              <h2 class="screen-title">🚫 Ban a Letter</h2>
+              <p class="reveal-penalty-instruction">
+                Choose one letter you haven't banned before this match. The
+                Inspector's next guess cannot contain it.
+              </p>
+              <div class="letter-grid">
+                <!-- A–Z buttons generated in JS -->
+              </div>
+              <div class="decision-row">
+                <button id="letterLockoutConfirm" class="primary-btn small" disabled>
+                  Confirm
+                </button>
+                <button id="letterLockoutCancel" class="secondary-btn small">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+      <!-- ========== GUESSER ========== -->
+    
+     <section id="guesserScreen" class="screen theme-guesser">
+       <!-- Force Timer power: large countdown overlay to add time pressure -->
+       <div id="forceTimerOverlay" class="force-timer-overlay hidden">
+         <span id="forceTimerNumber"></span>
+       </div>
+       <!-- HEADER -->
+        <header class="role-header">
+          <!-- TOP ROW: leave/concede left, score center, guide/utility right -->
+          <div class="header-row header-top">
+            <h2 class="screen-title header-hidden-title"></h2>
+            <div class="header-left">
+              <button id="leaveGameBtnGuesser" class="leave-game-btn secondary-btn small hidden">Leave</button>
+              <button class="concedeBtn secondary-btn small danger-btn">X</button>
+            </div>
+
+            <div class="header-center">
+              <span class="role-badge header-role-badge"></span>
+            </div>
+
+            <div class="header-right">
+                <div class="timer-block">
+                  <div class="timer-row self">
+                    <span class="timer-label">YOU</span>
+                    <span id="timerGuesser" class="chess-timer"></span>
+                  </div>
+                  <div class="timer-row opponent">
+                    <span class="timer-label">OPP</span>
+                    <span id="timerSetterOpponent" class="chess-timer opponent"></span>
+                  </div>
+                </div>
+              <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
+              <button id="powerInfoBtnGuesser" class="power-info-btn" aria-label="Power descriptions"><span class="power-info-icon">?</span></button>
+              <button id="actionLogBtnGuesser" class="header-sm-btn" onclick="toggleActionLog('guesser')" title="Action Log">Log</button>
+              <button id="notesBtnGuesser" class="header-sm-btn" onclick="toggleNotes('guesser')" title="Notes">Notes</button>
+              <button id="keyboardToggleBtnGuesser" class="guide-toggle-btn keyboard-toggle-btn" title="Toggle physical keyboard input" aria-label="Toggle physical keyboard input">⌨️</button>
+              <button id="guideToggleBtnGuesser" class="guide-toggle-btn" title="Toggle guide" aria-label="Toggle guide">🧭<span class="guide-btn-label"> Guide</span></button>
+            </div>
+          </div>
+        </header>
+       <!--- PLAY AREA--->
+       <main class="play-area guesser-play">
+          <div class="play-row">
+             <!-- CENTER: HISTORY TOP (tiles on top) -->
+             <div class="play-col center-col">
+                <div id="constraintRowGuesser" class="history-row constraint-row"></div>
+                <div id="historyGuesser" class="history-tiles history-scroll"></div>
+                  <div class="draft-row-wrap">
+                    <div class="draft-stack">
+                      <div id="draftGuesser" class="history-tiles draft-layer"></div>
+                    </div>
+                  </div>
+             </div>
+             <!-- BELOW TILES: powers, stacked horizontally -->
+             <div class="play-col powers-col">
+                <div id="guesserPowerContainer" class="power-container laser-scope">
+                </div>
+                <div id="GuesserRemainingBox" class="remaining-box" hidden></div>
+                <div id="GuesserLetterProfileBox" class="letter-profile-box" hidden></div>
+             </div>
           </div>
           <!--- KEYBOARD AREA--->
           <div id="GuesserInfoBadge" class="info badge"></div>
