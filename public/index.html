@@ -746,9 +746,6 @@
                   </div>
                 </div>
                 <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
-                <button id="powerInfoBtnSetter" class="power-info-btn" aria-label="Power descriptions"> <span class="power-info-icon">?</span></button>
-                <button id="actionLogBtnSetter" class="header-sm-btn" onclick="toggleActionLog('setter')" title="Action Log">Log</button>
-                <button id="notesBtnSetter" class="header-sm-btn" onclick="toggleNotes('setter')" title="Notes">Notes</button>
                 <button id="keyboardToggleBtnSetter" class="guide-toggle-btn keyboard-toggle-btn" title="Toggle physical keyboard input" aria-label="Toggle physical keyboard input">⌨️</button>
                 <button id="guideToggleBtnSetter" class="guide-toggle-btn" title="Toggle guide" aria-label="Toggle guide">🧭<span class="guide-btn-label"> Guide</span></button>
               </div>
@@ -784,15 +781,7 @@
            <div id="keyboardSetter" class="keyboard"></div>
          </main>
          <!---Modals--->
-        <!-- Notes panel (setter) -->
-        <div id="notesPanelSetter" class="game-side-panel notes-panel hidden">
-          <div class="notes-panel-title">Notes</div>
-          <div id="notesDraftSetter" class="notes-draft-row"></div>
-          <div id="notesListSetter" class="notes-list"></div>
-        </div>
-        <!-- Action log panel (setter) -->
-        <div id="actionLogSetter" class="game-side-panel action-log-panel hidden"></div>
-
+        
         <section id="globalOverlays">
            <!-- Assassin Modal -->
            <div id="assassinModal" class="modal">
@@ -907,13 +896,132 @@
                     </div>
                   </div>
              </div>
-             <!-- BELOW TILES: powers, stacked horizontally -->
-             <div class="play-col powers-col">
-                <div id="guesserPowerContainer" class="power-container laser-scope">
-                </div>
-                <div id="GuesserRemainingBox" class="remaining-box" hidden></div>
-                <div id="GuesserLetterProfileBox" class="letter-profile-box" hidden></div>
-             </div>
+             <!-- BELOW TILES: powers, stacked horizontally --><aside
+  class="play-col powers-col setter-sidebar"
+  aria-label="Game sidebar"
+>
+  <!-- LOG / NOTES -->
+  <section class="setter-sidebar-activity">
+    <div
+      class="setter-sidebar-tabs"
+      role="tablist"
+      aria-label="Game information"
+    >
+      <button
+        type="button"
+        id="actionLogBtnSetter"
+        class="header-sm-btn setter-sidebar-tab is-active"
+        role="tab"
+        aria-selected="true"
+        aria-controls="actionLogSetter"
+      >
+        Log
+      </button>
+
+      <button
+        type="button"
+        id="notesBtnSetter"
+        class="header-sm-btn setter-sidebar-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="notesPanelSetter"
+      >
+        Notes
+      </button>
+    </div>
+
+    <div class="setter-sidebar-panels">
+      <!-- No "hidden" class: Log is shown by default -->
+      <div
+        id="actionLogSetter"
+        class="game-side-panel action-log-panel setter-sidebar-panel"
+        role="tabpanel"
+        aria-labelledby="actionLogBtnSetter"
+      ></div>
+
+      <div
+        id="notesPanelSetter"
+        class="game-side-panel notes-panel setter-sidebar-panel hidden"
+        role="tabpanel"
+        aria-labelledby="notesBtnSetter"
+      >
+        <div class="notes-panel-title">Notes</div>
+        <div id="notesDraftSetter" class="notes-draft-row"></div>
+        <div id="notesListSetter" class="notes-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- POWER VIEW -->
+  <section class="setter-sidebar-powers">
+    <div
+      class="setter-power-tabs"
+      role="tablist"
+      aria-label="Whose powers to display"
+    >
+      <button
+        type="button"
+        id="setterPowersYouBtn"
+        class="setter-power-tab is-active"
+        role="tab"
+        aria-selected="true"
+        aria-controls="setterPowerContainer"
+      >
+        You
+      </button>
+
+      <button
+        type="button"
+        id="setterPowersOppBtn"
+        class="setter-power-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="setterOpponentPowerContainer"
+      >
+        Opp
+      </button>
+
+      <!-- Keep the existing ID so the current power-info JS still finds it -->
+      <button
+        type="button"
+        id="powerInfoBtnSetter"
+        class="power-info-btn setter-power-help"
+        aria-label="Power descriptions"
+        title="Power descriptions"
+      >
+        <span class="power-info-icon">?</span>
+      </button>
+    </div>
+
+    <!-- Existing container: current setter's powers -->
+    <div
+      id="setterPowerContainer"
+      class="power-container laser-scope setter-power-view"
+      role="tabpanel"
+      aria-labelledby="setterPowersYouBtn"
+    ></div>
+
+    <!-- New read-only container: opponent's powers -->
+    <div
+      id="setterOpponentPowerContainer"
+      class="power-container laser-scope setter-power-view hidden"
+      role="tabpanel"
+      aria-labelledby="setterPowersOppBtn"
+    ></div>
+
+    <div
+      id="SetterRemainingBox"
+      class="remaining-box"
+      hidden
+    ></div>
+
+    <div
+      id="SetterLetterProfileBox"
+      class="letter-profile-box"
+      hidden
+    ></div>
+  </section>
+</aside>
           </div>
           <!--- KEYBOARD AREA--->
           <div id="GuesserInfoBadge" class="info badge"></div>
