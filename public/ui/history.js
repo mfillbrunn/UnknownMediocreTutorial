@@ -80,7 +80,13 @@ if (!isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry
 
 ///Build history
 function buildHistoryRenderState(state, role) {
-  if (state.powers?.blindGuessActive) return [];
+  // Total Blackout is a SETTER power that blinds the GUESSER's next guess
+  // (see powerEngine/powers/blindGuess.js's role:"setter") -- blanking
+  // this for BOTH roles left the setter unable to see their own board
+  // either, and (combined with renderHistory's now-fixed shared
+  // prevRenderState bug) made the setter's blanked render corrupt the
+  // guesser's diff on whichever call ran second that tick.
+  if (role === "guesser" && state.powers?.blindGuessActive) return [];
   const isSetter = role === "setter";
   const bsIdx   = state?.powers?.blindSpotIndex;
   const bsRound = state?.powers?.blindSpotRoundIndex;
@@ -223,10 +229,23 @@ function patchHistoryRow(wrap, row) {
 }
 
 /// History renderer
-let prevRenderState = [];
+// Was a single module-level variable shared across EVERY call site --
+// renderHistory runs once for the setter's own history container and
+// once for the guesser's (client.js's updateSetterScreen/
+// updateGuesserScreen, both called every tick regardless of which screen
+// is actually visible), so the two calls constantly clobbered each
+// other's "previous" snapshot. Most of the time the two roles' data
+// looks similar enough that this went unnoticed, but the moment they
+// genuinely diverge -- e.g. Total Blackout blanking only the render this
+// function computes for that tick (see buildHistoryRenderState) -- the
+// NEXT call's diff got compared against the WRONG role's snapshot from
+// the same tick, corrupting the added/removed/updated classification for
+// whichever container ran second. Tracked per-container instead so each
+// history box only ever diffs against its own last render.
 window.renderHistory = function ({ state, container, role }) {
+  const prev = container.__prevRenderState || [];
   const next = buildHistoryRenderState(state, role);
-  const diff = diffHistory(prevRenderState, next);
+  const diff = diffHistory(prev, next);
   // Remove
   for (const r of diff.removed) {
     const el = container.querySelector(`[data-key="${r.key}"]`);
@@ -249,7 +268,7 @@ window.renderHistory = function ({ state, container, role }) {
       container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
     });
   }
-  prevRenderState = next;
+  container.__prevRenderState = next;
 };
 
 ///Helper for uncertain feedback
@@ -306,6 +325,6 @@ function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot) {
 
 
 function resetHistoryRenderer(container) {
-  prevRenderState = [];
+  container.__prevRenderState = [];
   container.innerHTML = "";
 }

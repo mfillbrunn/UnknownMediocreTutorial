@@ -2870,6 +2870,10 @@ body:has(#guesserScreen.active) #appMain {
 
   flex: 0 0 auto;
   width: 44px;
+  /* Power/quest cards read first (left-aligned), tabs after (right of
+     them) -- order alone flips the visual position without touching the
+     DOM/JS wiring built around the actual markup order. */
+  order: 2;
 }
 
 #guesserScreen .guesser-power-tab {

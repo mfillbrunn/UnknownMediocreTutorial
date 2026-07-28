@@ -13,7 +13,16 @@ window.renderConstraintRow = function ({
   container,
   isSetterView
 }) {
-  if (state.powers?.blindGuessActive) return;
+  // Total Blackout only ever blinds the guesser's own view (see
+  // ui/history.js's buildHistoryRenderState for the matching fix) -- the
+  // setter should keep seeing the constraint row normally throughout.
+  // Actually clear the row (not just skip re-rendering it) so it reads as
+  // genuinely blanked instead of showing whatever it last had.
+  if (!isSetterView && state.powers?.blindGuessActive) {
+    if (container.innerHTML !== "") container.innerHTML = "";
+    container.__constraintSignature = null;
+    return;
+  }
 
   const grid = state.constraintData?.grid;
   if (!Array.isArray(grid) || grid.length !== 5) return;

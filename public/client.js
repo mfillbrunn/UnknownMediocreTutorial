@@ -422,10 +422,17 @@ onStateUpdate(newState => {
     // so drop the live buffer to avoid showing them twice in the log.
     window._livePowerEvents = [];
   }
-  if (prevPhase !== "simultaneous" && state.phase === "simultaneous" && prevRenderState.length > 0) {
-      prevRenderState = [];
-      $("setterGuesserSubmitted").innerHTML = "";
-      $("historyGuesser").innerHTML = "";
+  if (prevPhase !== "simultaneous" && state.phase === "simultaneous") {
+      const setterHistEl = $("setterGuesserSubmitted");
+      const guesserHistEl = $("historyGuesser");
+      // renderHistory tracks its own previous-render snapshot per
+      // container now (see ui/history.js) -- clear both explicitly so a
+      // fresh round starts from a clean diff instead of comparing against
+      // last round's rows.
+      setterHistEl.__prevRenderState = [];
+      guesserHistEl.__prevRenderState = [];
+      setterHistEl.innerHTML = "";
+      guesserHistEl.innerHTML = "";
   }
   // Round start: announce role + goal instead of the old generic "Game
   // Started" banner. prevPhase === undefined means this is the very first
