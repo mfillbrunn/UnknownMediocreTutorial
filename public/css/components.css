@@ -310,6 +310,29 @@
 .quest-badge-tile.quest-badge-readonly {
   opacity: 0.68;
 }
+/* The progress chip used to float as a small pill poking above the
+   card's top edge -- easy to miss, especially once several cards are
+   sitting in a row. Hide the quest's icon and let the chip take its
+   place in the card body instead, big enough to actually read at a
+   glance. order:-1 puts it before the label visually without touching
+   the DOM order createQuestBadgeTile builds it in (icon, label, chip). */
+.quest-badge-tile .power-icon {
+  display: none;
+}
+.quest-badge-tile .quest-progress-chip {
+  position: static;
+  order: -1;
+  inset: auto;
+  transform: none;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 0;
+  padding: 2px 6px;
+  font-size: clamp(13px, 4vw, 20px);
+}
 .quest-progress-chip {
   position: absolute;
   top: -8px;

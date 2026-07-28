@@ -52,6 +52,19 @@
     }
 
     clone.classList.add("opponent-power-readonly");
+
+    // cloneNode copies the source's already-fitted inline font-size too --
+    // that was sized for the GUESSER's own (wider) power row, not this
+    // narrower Opp-view column, so a long label ("Smart Guess Tip") that
+    // fit fine there could still overflow here. Re-fit against the actual
+    // destination width once this clone lands in the document (queued via
+    // rAF by fitBadgeLabel itself, which runs after the synchronous
+    // target.replaceChildren call below finishes, so isConnected is true
+    // by the time it checks).
+    for (const label of clone.querySelectorAll(".power-btn-label")) {
+      window.fitBadgeLabel?.(label);
+    }
+
     return clone;
   }
 

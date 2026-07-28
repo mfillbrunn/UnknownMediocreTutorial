@@ -34,6 +34,22 @@
       if (roundNumber > 0) {
         entries.push({ type: "round", text: `Round ${roundNumber + 1}` });
       }
+      // Field Report's 3 conditions are randomized per round and have no
+      // other persistent home now that the on-screen info badge that used
+      // to show them was removed (it just duplicated the quest card's own
+      // progress otherwise) -- surfaced once here instead, right where the
+      // round starts. Only known for the round in progress: past rounds'
+      // conditions aren't archived in state.matchRounds, so this can't be
+      // reconstructed for completed rounds.
+      const quest = state.powers?.quest;
+      if (isLiveRound && quest?.type === "FIELDREPORT" && Array.isArray(quest.conditions)) {
+        const conditionList = typeof window.formatFieldReportCondition === "function"
+          ? quest.conditions.map(window.formatFieldReportCondition).join(" • ")
+          : "";
+        if (conditionList) {
+          entries.push({ type: "power", cssClass: "", text: `Quest: Field Report — ${conditionList}` });
+        }
+      }
       // Roles can swap between rounds, so "you"/"the setter" has to be
       // resolved per-round rather than from the viewer's current role.
       const isSetterThisRound = myId != null && setterIdThisRound === myId;

@@ -37,6 +37,15 @@
     }
 
     clone.classList.add("opponent-power-readonly");
+
+    // Same reasoning as setter-sidebar.js's makeReadOnlyClone -- the
+    // source's already-fitted font-size was sized for the setter's own
+    // sidebar column width, not this destination, so long labels need a
+    // fresh fit once the clone actually lands in the document.
+    for (const label of clone.querySelectorAll(".power-btn-label")) {
+      window.fitBadgeLabel?.(label);
+    }
+
     return clone;
   }
 

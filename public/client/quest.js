@@ -439,88 +439,13 @@ function updateQuestBadge(state, role) {
 window.updateQuestBadge = updateQuestBadge;
 
 // --------------------------------------------------
-// Quest — info badge (both players), same pattern as revealLetter's. This
-// is now the ONLY quest UI (the standalone quest box above the power
-// buttons was removed) -- it doubles as the claim button: yellow +
-// clickable while one guess away (early claim, forfeits the green),
-// green + clickable once the quest is fully ready (claim the green
-// letter). Both cases send the same USE_QUEST action; the server decides
-// which reward applies from state.powers.quest itself (see
-// questServer.js's attemptQuestClaim).
-// --------------------------------------------------
-InfoBadgeEngine.register((state, role) => {
-  const q = state.powers?.quest;
-  if (!q || !q.type) return null;
-  const status = computeQuestStatus(state);
-  if (!status) return null;
-
-  // Both roles now have the visual quest-badge-tile card (updateQuestBadge
-  // above) showing name/progress/ready state -- guesser's is the real
-  // claim button, setter's is a read-only mirror pinned under their own
-  // powers -- so this text line would just repeat it on either screen.
-  // Kept only for Field Report, whose 3 conditions are randomized per
-  // match and have nowhere else to be shown (see the subtext comment
-  // below).
-  const hasUniqueInfo = q.type === "FIELDREPORT" && !status.done;
-  if (!hasUniqueInfo) return null;
-
-  const canClaim = role === "guesser" && !status.done && (q.ready || q.oneAway);
-
-  // Guide off: the badge only ever reads as the plain in-progress line --
-  // color + glow (see components.css's quest-oneaway-glow) are the only
-  // signal for "ready"/"one away", no wording change. Guide on: spell out
-  // what that means in words too, same as every other guide-gated hint.
-  const guideOn = document.body.classList.contains("guide-on");
-
-  let text;
-  if (status.done) {
-    // Show the actual reward (which letter, which color, and -- for a green
-    // -- where) rather than the quest's name, so the badge reads as a result
-    // once claimed.
-    if (status.resultLetter && status.resultColor === "green") {
-      text = `Quest: 🟩 ${status.resultLetter} in position ${(status.resultIndex ?? 0) + 1}`;
-    } else if (status.resultLetter && status.resultColor === "yellow") {
-      text = `Quest: 🟨 ${status.resultLetter} is in the word`;
-    } else {
-      text = status.claimedEarly ? "Quest claimed early" : "Quest complete";
-    }
-  } else if (guideOn && q.ready && role === "guesser") {
-    text = `${status.meta.label} ready — tap for 🟩`;
-  } else if (guideOn && q.oneAway && role === "guesser") {
-    text = `${status.meta.label}: one away — tap for early 🟨`;
-  } else {
-    text = `Quest: ${status.meta.label} (${status.label})`;
-  }
-
-  const color = status.done
-    ? (status.resultColor === "yellow" ? "var(--tile-yellow)" : "var(--tile-green)")
-    : q.ready ? "var(--tile-green)"
-    : q.oneAway ? "var(--tile-yellow)"
-    : status.meta.color;
-
-  // Most quest types are fully explained by the label + progress count
-  // (their rules are static and already in the "?" power-info panel), but
-  // Field Report's 3 conditions are randomized per match -- there's no way
-  // to know what they are without surfacing them somewhere. Shown as a
-  // line under the badge rather than crammed into it.
-  const subtext = q.type === "FIELDREPORT" && !status.done ? status.desc : null;
-
-  return {
-    id: "quest",
-    emoji: status.meta.emoji ?? "🎯",
-    text,
-    color,
-    priority: 12,
-    screen: "both",
-    details: status.desc,
-    subtext,
-    clickable: canClaim,
-    onClick: canClaim
-      ? () => window.sendGameAction?.({ type: "USE_QUEST", userId: window.currentUser?.id })
-      : null
-  };
-});
-
+// Quest used to also have a text info-badge entry here (same pattern as
+// revealLetter's), kept alive only because Field Report's randomized 3
+// conditions had nowhere else to be shown. The visual quest-badge-tile
+// card (updateQuestBadge above) already covers name/progress/ready state
+// for every quest type -- this text line just repeated it. Now that
+// Field Report's conditions are logged instead (see action-log.js's
+// appendRound), the whole entry was redundant and has been removed.
 // --------------------------------------------------
 // Quest — early claim (questServer.js's grantQuestYellowEarly emits this
 // right after pushing the YELLOW extraConstraint). A quiet toast, not the
