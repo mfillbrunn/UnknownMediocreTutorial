@@ -63,7 +63,15 @@ window.renderDraftRows = function ({
   // ----------------------------
   // Helpers
   // ----------------------------
-  const upperPending = state.pendingGuess?.toUpperCase() || "";
+  // Sneaky Guess: only the setter's own view of the pending-guess row
+  // needs masking -- the guesser sees this same value while their own
+  // just-submitted guess slides away, which is their own word, not a
+  // leak. client.js's displayGuess/keyboard rendering hide it the same
+  // way; this is the actual tile row those two don't cover.
+  const upperPending =
+    role === "setter" && state.powers?.stealthGuessActive
+      ? "?????"
+      : (state.pendingGuess?.toUpperCase() || "");
   const upperSecret = state.secret?.toUpperCase() || "";
   const upperGuesserDraft = localGuesserDraft.toUpperCase();
   const upperSetterDraft = (state.setterDraft || "").toUpperCase();
