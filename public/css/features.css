@@ -2240,3 +2240,112 @@
   0%, 100% { box-shadow: 0 0 0 rgba(255, 214, 92, 0); }
   50% { box-shadow: 0 0 14px 3px rgba(255, 214, 92, 0.7); }
 }
+/* =====================================================
+   GAME VIEWPORT — keyboard always remains on-screen
+   Put this at the END of features.css
+   ===================================================== */
+
+body:has(#setterScreen.active),
+body:has(#guesserScreen.active) {
+  margin: 0;
+
+  height: 100vh;
+  height: 100dvh;
+
+  min-height: 0;
+  overflow: hidden;
+}
+
+/*
+  The padding must be included inside the viewport height.
+  Otherwise height:100% + padding makes this taller than the screen.
+*/
+body:has(#setterScreen.active) #appContainer,
+body:has(#guesserScreen.active) #appContainer {
+  box-sizing: border-box;
+
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+
+  display: flex;
+  flex-direction: column;
+
+  min-height: 0;
+  overflow: hidden;
+}
+
+/*
+  Missing link in the current flex-height chain:
+  #appContainer -> #appMain -> active game screen.
+*/
+body:has(#setterScreen.active) #appMain,
+body:has(#guesserScreen.active) #appMain {
+  display: flex;
+  flex-direction: column;
+
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+/*
+  Remove the generic .screen.active top margin during a game.
+  Keep all screen padding inside the screen's allocated height.
+*/
+#setterScreen.active,
+#guesserScreen.active {
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+
+  margin-top: 0;
+}
+
+/* Pass the available height down toward the history list. */
+#setterScreen.active .play-area,
+#guesserScreen.active .play-area {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+#setterScreen.active .play-row,
+#guesserScreen.active .play-row {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+#setterScreen.active .center-col,
+#guesserScreen.active .center-col {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/*
+  Only old submitted guesses shrink and scroll.
+  Removing the old 100px minimum is important on shorter screens.
+*/
+#setterScreen.active .history-scroll,
+#guesserScreen.active .history-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 100%;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+/* Keyboard always keeps its natural height. */
+#keyboardSetter,
+#keyboardGuesser {
+  flex: 0 0 auto;
+  min-height: 0;
+}
