@@ -57,6 +57,11 @@ function isConsistentWithHistory(history, proposedSecret, state, opts = {}) {
      let expected = scoreGuess(proposedSecret, guess);
     // 5 — final comparison
     for (let i = 0; i < 5; i++) {
+      // Confuse Colors only makes the ORIGINALLY green/yellow positions of
+      // a guess unreliable (see confuseColorsServer.js) -- a gray position
+      // in that same guess is untouched and still a hard constraint, so it
+      // must not be skipped along with the recolored ones.
+      if (entry.confuseIgnoreIndices?.includes(i)) continue;
       if ((expected[i] !== actual[i]) && actual[i] !=="") return false;
     }
   }

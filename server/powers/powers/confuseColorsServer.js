@@ -16,7 +16,18 @@ engine.registerPower("confuseColors", {
  postScore(state, entry) {
   if (state.powers.confuseColorsActive) {
     entry.confuseApplied = true;
-    entry.ignoreConstraints = true;
+    // Only the positions that were actually green/yellow (and get recolored
+    // blue below) become unreliable for future secret-switch validation --
+    // a position that came back gray was never touched by this power and
+    // still means exactly what it always means (this letter truly isn't in
+    // the word), so it must keep binding the setter's later choices same as
+    // any other gray tile. A blanket per-guess exemption here used to let
+    // the setter switch to a secret that contradicted an untouched gray
+    // tile from this same guess.
+    entry.confuseIgnoreIndices = entry.fb.reduce((acc, f, i) => {
+      if (f === "🟩" || f === "🟨") acc.push(i);
+      return acc;
+    }, []);
     entry.fbGuesser = entry.fbGuesser.map(t => {
       // Do NOT recolor blind-spot purple
     if (t === "🟪") return t;

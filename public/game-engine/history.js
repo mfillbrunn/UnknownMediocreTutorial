@@ -44,9 +44,13 @@ function isConsistentWithHistory(history, proposedSecret, state) {
 
     // IMPORTANT: browser scoreGuess comes from scoring.js (already loaded)
     let expected = window.scoreGuess(proposedSecret, guess);
- 
+
 
     for (let i = 0; i < 5; i++) {
+      // Mirrors the server: only the originally green/yellow positions of a
+      // Confuse Colors guess are unreliable -- a gray position is untouched
+      // and still a hard constraint (see server/game-engine/history.js).
+      if (entry.confuseIgnoreIndices?.includes(i)) continue;
       if ((expected[i] !== actual[i]) && actual[i] !=="") return false;
     }
   }
