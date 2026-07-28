@@ -2497,9 +2497,12 @@ body:has(#guesserScreen.active) #appMain {
 .theme-setter .play-row {
   /*
     Fixed width means Log, Notes, remaining-word counts, and power
-    changes cannot move the board horizontally.
+    changes cannot move the board horizontally. Trimmed down slightly
+    from clamp(116px, 30vw, 168px) -- at the old width, the Log/Notes
+    text and the "?" power-info button crowded right up against the
+    board's edge on the right.
   */
-  --setter-sidebar-width: clamp(116px, 30vw, 168px);
+  --setter-sidebar-width: clamp(106px, 27vw, 154px);
 
   gap: var(--sp-6);
 }
@@ -2721,6 +2724,30 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 /*
+  You/Opp stack in the same grid cell instead of one replacing the other
+  in normal flow -- the stack's own height is then whichever of the two
+  is taller, so switching tabs never changes the sidebar's height (and
+  never drags the remaining-words box below it up/down). The inactive
+  view stays display:grid (so it still participates in that height calc)
+  but visibility:hidden so it's neither seen nor clickable.
+*/
+#setterScreen .setter-power-stack {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+}
+
+#setterScreen .setter-power-stack > .setter-power-view {
+  grid-area: 1 / 1;
+}
+
+#setterScreen .setter-power-stack > .setter-power-view.hidden {
+  display: grid !important;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/*
   Override fixed badge widths from mobile.css/powers.css so two
   buttons can fit in the fixed sidebar.
 */
@@ -2746,6 +2773,19 @@ body:has(#guesserScreen.active) #appMain {
   pointer-events: none;
 }
 
+/*
+  The Opp view's quest card spans the full row instead of sharing a
+  column with whatever power card comes after it -- squeezed into one
+  half of the 2-column grid (44px wide at this sidebar's width), its
+  icon + label + progress chip didn't fit the fixed 66px card height and
+  spilled out past the card's own border. grid-column only affects direct
+  grid items (the .power-btn-wrapper divs), not the .quest-badge-tile
+  button nested a level further inside one of them.
+*/
+#setterScreen .setter-power-view > .power-btn-wrapper:has(.quest-badge-tile) {
+  grid-column: 1 / -1;
+}
+
 #setterScreen .setter-sidebar-empty {
   grid-column: 1 / -1;
 
@@ -2758,17 +2798,20 @@ body:has(#guesserScreen.active) #appMain {
 
 
 /* =====================================================
-   NEVER SHOW A QUEST CARD ON THE SETTER SCREEN
+   NEVER SHOW A QUEST CARD IN THE SETTER'S OWN "YOU" VIEW
    ===================================================== */
 
 /*
-  client/quest.js was not supplied, so these cover the common
-  generated quest markers: ID, class, and data attributes.
+  The setter has no quest of their own -- quest.js still pins a read-only
+  mirror onto setterPowerContainer ("You") for older callers, so it stays
+  hidden there. The Opp view is a different container (a clone of the
+  Inspector's own real power row) and is deliberately left alone here so
+  their actual quest card -- with its live progress chip -- shows through.
 */
-#setterScreen .powers-col [id*="quest" i],
-#setterScreen .powers-col [class*="quest" i],
-#setterScreen .powers-col [data-quest],
-#setterScreen .powers-col [data-quest-id] {
+#setterScreen #setterPowerContainer [id*="quest" i],
+#setterScreen #setterPowerContainer [class*="quest" i],
+#setterScreen #setterPowerContainer [data-quest],
+#setterScreen #setterPowerContainer [data-quest-id] {
   display: none !important;
 }
 

@@ -50,6 +50,14 @@
   };
 
   function formatPowerEvent(evt) {
+    // USE_QUEST isn't a power in POWER_METADATA (it's the guesser's
+    // standing quest badge, not a drafted power) -- questServer.js pushes
+    // this shape directly on completion, so it's formatted here instead
+    // of falling through to the metadata lookup below.
+    if (evt.id === "quest") {
+      return { id: "quest", emoji: "", label: "Quest", desc: "", detail: null, text: "Quest completed", actorRole: evt.actorRole || null };
+    }
+
     const variant = window.state?.powers?.[evt.id]?.mode || null;
     const meta = window.getPowerMeta ? window.getPowerMeta(evt.id, variant) : window.POWER_METADATA?.[evt.id];
     const label = meta?.label || evt.id;
@@ -59,7 +67,7 @@
       DETAIL_FORMATTERS[evt.id]?.(evt.emissions) ||
       lastToastText(evt.emissions) ||
       null;
-    const text = detail ? `${label}: ${detail}` : `${label} used`;
+    const text = detail ? `${label}: ${detail}` : label;
     return { id: evt.id, emoji, label, desc, detail, text, actorRole: evt.actorRole || null };
   }
 

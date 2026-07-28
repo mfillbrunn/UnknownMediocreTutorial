@@ -864,21 +864,27 @@
       </button>
     </div>
 
-    <!-- Existing container: current setter's powers -->
-    <div
-      id="setterPowerContainer"
-      class="power-container laser-scope setter-power-view"
-      role="tabpanel"
-      aria-labelledby="setterPowersYouBtn"
-    ></div>
+    <!-- Stacks You/Opp in the same grid cell (see features.css) so the
+         sidebar's height is always the taller of the two, instead of
+         jumping/reflowing (and dragging the remaining-words box with it)
+         whenever the tab with fewer cards is switched to. -->
+    <div class="setter-power-stack">
+      <!-- Existing container: current setter's powers -->
+      <div
+        id="setterPowerContainer"
+        class="power-container laser-scope setter-power-view"
+        role="tabpanel"
+        aria-labelledby="setterPowersYouBtn"
+      ></div>
 
-    <!-- New read-only container: opponent's powers -->
-    <div
-      id="setterOpponentPowerContainer"
-      class="power-container laser-scope setter-power-view hidden"
-      role="tabpanel"
-      aria-labelledby="setterPowersOppBtn"
-    ></div>
+      <!-- New read-only container: opponent's powers -->
+      <div
+        id="setterOpponentPowerContainer"
+        class="power-container laser-scope setter-power-view hidden"
+        role="tabpanel"
+        aria-labelledby="setterPowersOppBtn"
+      ></div>
+    </div>
 
     <div
       id="SetterRemainingBox"

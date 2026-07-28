@@ -14,7 +14,7 @@
     return {
       type: "power",
       cssClass: roleClass,
-      text: `${formatted.emoji ? formatted.emoji + " " : ""}${who}${formatted.text}`
+      text: `${who}${formatted.text}`
     };
   }
 
@@ -80,7 +80,7 @@
           entries.push({
             type: "power",
             cssClass: " log-power-guesser",
-            text: `${meta?.emoji ? meta.emoji + " " : ""}${meta?.label || "Letter Scan"}: ${count}/${distinctTested} (${letters})`
+            text: `${meta?.label || "Letter Scan"}: ${count}/${distinctTested} (${letters})`
           });
         }
       });

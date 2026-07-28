@@ -27,32 +27,6 @@
   }
 
   /*
-    Detect a generated Quest element without depending on one exact
-    class name. client/quest.js was not included in the supplied files.
-  */
-  function elementLooksLikeQuest(root) {
-    if (!(root instanceof Element)) return false;
-
-    const elements = [root, ...root.querySelectorAll("*")];
-
-    return elements.some(element => {
-      const marker = [
-        element.id,
-        element.getAttribute("class"),
-        element.getAttribute("data-quest"),
-        element.getAttribute("data-quest-id"),
-        element.getAttribute("data-power-id"),
-        element.getAttribute("data-type")
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return marker.includes("quest");
-    });
-  }
-
-  /*
     Opponent powers are clones of the rendered guesser powers.
     Cloning deliberately does not copy addEventListener handlers, and
     all remaining inline interaction is removed below.
@@ -81,6 +55,52 @@
     return clone;
   }
 
+  /*
+    guesserPowerContainer is never actually populated with the quest card
+    on the setter's own client -- client.js's updateUI() only ever calls
+    quest.js's updateQuestBadge(state, myRole), so on the setter's screen
+    that only ever fills setterPowerContainer (the setter's own, hidden by
+    features.css), never the guesser's. Built directly from state instead
+    of cloned, with the click handler simply never attached (rather than
+    stripped afterward like makeReadOnlyClone does for the power buttons)
+    -- quest.js's own onclick fires USE_QUEST as window.currentUser?.id,
+    which would be the SETTER's id if this card were ever built by the
+    normal guesser-role path and merely left visible.
+  */
+  function buildReadOnlyQuestCard(state) {
+    if (
+      typeof window.computeQuestStatus !== "function" ||
+      typeof window.createQuestBadgeTile !== "function" ||
+      typeof window.questCardProgressText !== "function"
+    ) {
+      return null;
+    }
+
+    const q = state?.powers?.quest;
+    if (!q || !q.type) return null;
+
+    const status = window.computeQuestStatus(state);
+    if (!status) return null;
+
+    const { wrapper, btn, labelEl, chip } = window.createQuestBadgeTile(q.type);
+
+    btn.title = status.meta.label;
+    labelEl.textContent = status.meta.label;
+    chip.textContent = window.questCardProgressText(status, q);
+    chip.style.display = "";
+
+    btn.classList.add("quest-badge-readonly", "opponent-power-readonly");
+    btn.classList.toggle("quest-ready", !status.done && !!q.ready);
+    btn.classList.toggle("quest-oneaway", !status.done && !q.ready && !!q.oneAway);
+    btn.classList.toggle("quest-done", !!status.done);
+    btn.classList.toggle("power-used", !!status.done);
+    btn.disabled = true;
+    btn.tabIndex = -1;
+    btn.setAttribute("aria-disabled", "true");
+
+    return wrapper;
+  }
+
   function syncSetterOpponentPowers() {
     /*
       This assumes the game currently renders the Inspector's powers
@@ -94,12 +114,19 @@
     const fragment = document.createDocumentFragment();
     let visiblePowerCount = 0;
 
-    for (const child of source.children) {
-      /*
-        The setter should not see a Quest card in either You or Opp view.
-      */
-      if (elementLooksLikeQuest(child)) continue;
+    /*
+      The quest is genuinely the Inspector's, so it belongs in the Opp
+      view -- pinned first, same position quest.js gives it in the
+      guesser's own real power row (see features.css, which only hides
+      quest cards from the setter's own "You" container, not this one).
+    */
+    const questCard = buildReadOnlyQuestCard(window.state);
+    if (questCard) {
+      fragment.appendChild(questCard);
+      visiblePowerCount += 1;
+    }
 
+    for (const child of source.children) {
       fragment.appendChild(makeReadOnlyClone(child));
       visiblePowerCount += 1;
     }

@@ -456,6 +456,15 @@ function grantQuestReward(state, roomId, io) {
   }
   io.to(roomId).emit("questCompleted", { questType: q.type, index, letter });
   io.to(roomId).emit("toast", `Quest complete! Revealed letter ${letter} in position ${index + 1}!`);
+
+  // USE_QUEST is a standing-option click (see attemptQuestClaim below),
+  // not a normal apply()/postScore() power activation, so it isn't
+  // wrapped by logPowerUse.js's automatic emit capture -- push the log
+  // line directly the same shape that capture would have produced.
+  if (!Array.isArray(state._pendingPowerEvents)) state._pendingPowerEvents = [];
+  const logPayload = { id: "quest", actorRole: "guesser", emissions: [] };
+  state._pendingPowerEvents.push(logPayload);
+  io.to(roomId).emit("powerActivity", logPayload);
 }
 
 // Early-claim trade: once a quest is exactly one qualifying guess away

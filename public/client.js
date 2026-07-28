@@ -885,11 +885,20 @@ renderDraftRows({
     renderKeyboard({
     state,
     container: $("keyboardSetter"),
-    pendingGuess: state.pendingGuess || "",
+    // displayGuess (not the raw state.pendingGuess) so Sneaky Guess's
+    // "?????" masking actually holds -- this drives the keyboard's
+    // key-current highlight, which was leaking every letter of the
+    // hidden guess even while the draft row itself correctly stayed
+    // blanked out.
+    pendingGuess: displayGuess || "",
     isGuesser: false,
     onInput: handleSetterInput
   });
-  }  
+  }
+  // Keeps the sidebar's Opp tab (the Inspector's quest + powers, read-only)
+  // current every tick, not just when the tab is switched to -- their
+  // quest's progress chip otherwise only updated on the next tab switch.
+  window.syncSetterOpponentPowers?.();
   updateSetterPreview();
  }
 
