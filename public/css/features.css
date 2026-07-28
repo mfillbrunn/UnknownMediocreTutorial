@@ -2802,6 +2802,35 @@ body:has(#guesserScreen.active) #appMain {
   display: none !important;
 }
 
+/*
+  The active-power status strip (InfoBadgeEngine) used to float near the
+  keyboard, disconnected from the power cards it actually describes --
+  moved to sit directly under them in the sidebar instead (see
+  index.html). Shrunk to fit the same ~104-140px column as the Log/Notes
+  and You/Opp tabs above it, instead of the wider size it was tuned for
+  as a full-width strip over the board.
+*/
+#setterScreen .setter-sidebar-powers #SetterInfoBadge {
+  margin-top: var(--sp-4);
+  gap: 2px var(--sp-6);
+  font-size: var(--fs-11, 11px);
+}
+
+#setterScreen .setter-sidebar-powers #SetterInfoBadge.show {
+  padding: var(--sp-4) var(--sp-8);
+}
+
+#setterScreen .setter-sidebar-powers .badge-item:nth-child(1),
+#setterScreen .setter-sidebar-powers .badge-item:nth-child(2),
+#setterScreen .setter-sidebar-powers .badge-item:nth-child(3) {
+  font-size: var(--fs-12, 12px);
+}
+
+#setterScreen .setter-sidebar-powers #SetterInfoBadgeDetail {
+  padding: 0 var(--sp-6);
+  font-size: var(--fs-10, 10px);
+}
+
 
 /* =====================================================
    GUESSER: YOU / OPP POWER TABS
