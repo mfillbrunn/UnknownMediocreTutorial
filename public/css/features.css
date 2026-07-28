@@ -2430,3 +2430,342 @@ body:has(#guesserScreen.active) #appMain {
   max-width: 100%;
   box-sizing: border-box;
 }
+/* =====================================================
+   IPHONE HISTORY SCROLLING
+   ===================================================== */
+
+#setterScreen .history-scroll,
+#guesserScreen .history-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+
+  overflow-y: auto !important;
+  overflow-x: hidden;
+
+  /*
+    Important because several ancestors currently use
+    pointer-events:none.
+  */
+  pointer-events: auto !important;
+
+  /*
+    Allow a touch beginning on a row or tile to become a
+    native vertical scrolling gesture.
+  */
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch;
+
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: contain;
+}
+
+/*
+  Override any touch-action:none rule applied to tiles by another
+  stylesheet. Taps still work; vertical dragging scrolls the history.
+*/
+#setterScreen .history-scroll .history-row-wrap,
+#setterScreen .history-scroll .history-row,
+#setterScreen .history-scroll .history-tile,
+#guesserScreen .history-scroll .history-row-wrap,
+#guesserScreen .history-scroll .history-row,
+#guesserScreen .history-scroll .history-tile {
+  touch-action: pan-y !important;
+}
+
+/* Do not retain history.css's old 100px minimum. */
+#setterScreen .history-scroll,
+#guesserScreen .history-scroll {
+  min-height: 0;
+}
+
+
+/* =====================================================
+   FIXED SETTER SIDEBAR
+   ===================================================== */
+
+.theme-setter .play-row {
+  /*
+    Fixed width means Log, Notes, remaining-word counts, and power
+    changes cannot move the board horizontally.
+  */
+  --setter-sidebar-width: clamp(116px, 30vw, 168px);
+
+  gap: var(--sp-6);
+}
+
+#setterScreen .setter-sidebar {
+  order: 1;
+
+  flex: 0 0 var(--setter-sidebar-width);
+  width: var(--setter-sidebar-width);
+  min-width: var(--setter-sidebar-width);
+  max-width: var(--setter-sidebar-width);
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  box-sizing: border-box;
+  min-height: 0;
+  gap: var(--sp-6);
+
+  overflow: hidden;
+  scrollbar-gutter: stable;
+  pointer-events: auto;
+}
+
+#setterScreen .center-col {
+  order: 2;
+
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+
+
+/* =====================================================
+   LOG / NOTES SIDEBAR SECTION
+   ===================================================== */
+
+#setterScreen .setter-sidebar-activity {
+  display: flex;
+  flex-direction: column;
+
+  flex: 1 1 0;
+  min-height: 72px;
+  overflow: hidden;
+}
+
+#setterScreen .setter-sidebar-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+
+  flex: 0 0 auto;
+  margin-bottom: var(--sp-4);
+}
+
+#setterScreen .setter-sidebar-tab,
+#setterScreen .setter-power-tab {
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+
+  padding: 3px 4px;
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--r-6);
+
+  background: var(--panel-bg);
+  color: var(--text);
+
+  font-size: var(--fs-10, 10px);
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+
+  cursor: pointer;
+}
+
+#setterScreen .setter-sidebar-tab.is-active,
+#setterScreen .setter-power-tab.is-active {
+  border-color: var(--role-accent);
+
+  background: color-mix(
+    in srgb,
+    var(--role-accent) 20%,
+    var(--panel-bg)
+  );
+
+  box-shadow:
+    0 0 6px
+    color-mix(in srgb, var(--role-accent) 35%, transparent);
+}
+
+#setterScreen .setter-sidebar-panels {
+  position: relative;
+
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/*
+  The old panels may currently have absolute/fixed positioning.
+  Inside the sidebar, they become ordinary contained panels.
+*/
+#setterScreen .setter-sidebar .game-side-panel {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  z-index: auto !important;
+
+  display: block;
+
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: none;
+  max-height: none;
+
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--sp-6);
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  pointer-events: auto;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+#setterScreen .setter-sidebar .game-side-panel.hidden {
+  display: none !important;
+}
+
+
+/* =====================================================
+   YOU / OPP / HELP CONTROLS
+   ===================================================== */
+
+#setterScreen .setter-sidebar-powers {
+  flex: 0 1 54%;
+  min-height: 0;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+#setterScreen .setter-power-tabs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 30px;
+  gap: var(--sp-4);
+
+  margin-bottom: var(--sp-4);
+}
+
+#setterScreen .setter-power-help {
+  align-self: stretch;
+
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 28px;
+
+  margin: 0;
+  padding: 0;
+}
+
+
+/* =====================================================
+   TWO POWER BUTTONS PER ROW
+   ===================================================== */
+
+#setterScreen .setter-power-view {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--sp-4);
+
+  width: 100%;
+  min-width: 0;
+}
+
+#setterScreen .setter-power-view.hidden {
+  display: none !important;
+}
+
+/*
+  Override fixed badge widths from mobile.css/powers.css so two
+  buttons can fit in the fixed sidebar.
+*/
+#setterScreen .setter-power-view > *,
+#setterScreen .setter-power-view .power-btn-wrapper,
+#setterScreen .setter-power-view .power-btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  box-sizing: border-box;
+  margin: 0 !important;
+}
+
+#setterScreen .setter-power-view .power-btn {
+  padding-left: 3px;
+  padding-right: 3px;
+  overflow: hidden;
+}
+
+/* Opponent powers are informational and cannot be activated. */
+#setterScreen .opponent-power-readonly {
+  pointer-events: none;
+}
+
+#setterScreen .setter-sidebar-empty {
+  grid-column: 1 / -1;
+
+  padding: var(--sp-6);
+  font-size: var(--fs-10, 10px);
+  line-height: 1.25;
+  text-align: center;
+  opacity: 0.65;
+}
+
+
+/* =====================================================
+   NEVER SHOW A QUEST CARD ON THE SETTER SCREEN
+   ===================================================== */
+
+/*
+  client/quest.js was not supplied, so these cover the common
+  generated quest markers: ID, class, and data attributes.
+*/
+#setterScreen .powers-col [id*="quest" i],
+#setterScreen .powers-col [class*="quest" i],
+#setterScreen .powers-col [data-quest],
+#setterScreen .powers-col [data-quest-id] {
+  display: none !important;
+}
+
+
+/* =====================================================
+   SMALL IPHONE ADJUSTMENTS
+   ===================================================== */
+
+@media (max-width: 430px) {
+  .theme-setter .play-row {
+    gap: 5px;
+  }
+
+  #setterScreen .setter-sidebar {
+    gap: 4px;
+  }
+
+  #setterScreen .setter-sidebar-tab,
+  #setterScreen .setter-power-tab {
+    min-height: 26px;
+    padding: 2px;
+    font-size: 9px;
+  }
+
+  #setterScreen .setter-power-tabs {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 27px;
+    gap: 3px;
+  }
+
+  #setterScreen .setter-power-view {
+    gap: 3px;
+  }
+
+  #setterScreen .setter-power-view .power-btn {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+}
