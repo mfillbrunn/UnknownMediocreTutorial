@@ -219,7 +219,7 @@ function isQuestOneAway(quest, state) {
     case "HARDMODE":
       return computeHardModeCount(history) === QUEST_THRESHOLDS.HARDMODE - 1;
     case "FIELDREPORT":
-      return computeFieldReportCount(history, quest.conditions) >= FIELDREPORT_YELLOW_AT;
+      return computeFieldReportCount(history, quest.conditionsHistory) >= FIELDREPORT_YELLOW_AT;
     case "ALTERNATING":
       return history.filter(h => isAlternatingWord(h.guess.toUpperCase())).length
         === QUEST_THRESHOLDS.ALTERNATING - 1;
@@ -324,15 +324,41 @@ function computeHardModeCount(history) {
 
 // Sums how many of the 3 conditions each guess satisfies across the whole
 // round -- a guess that hits all 3 at once contributes 3, not 1, toward
-// the total of 8 (see QUEST_THRESHOLDS.FIELDREPORT above).
-function computeFieldReportCount(history, conditions) {
-  if (!Array.isArray(conditions) || !conditions.length) return 0;
+// the total of 8 (see QUEST_THRESHOLDS.FIELDREPORT above). Each guess is
+// scored against whichever conditions were actually active THAT turn
+// (conditionsHistory[i], recorded by ensureFieldReportProgress below) --
+// conditions refresh every turn, so replaying old guesses against
+// TODAY's conditions would score them against rules they were never
+// judged on.
+function computeFieldReportCount(history, conditionsHistory) {
+  if (!Array.isArray(conditionsHistory)) return 0;
   let total = 0;
-  for (const entry of history) {
-    if (!entry?.guess) continue;
+  history.forEach((entry, i) => {
+    const conditions = conditionsHistory[i];
+    if (!entry?.guess || !Array.isArray(conditions)) return;
     total += conditions.filter(c => satisfiesForceGuess(entry.guess.toUpperCase(), c)).length;
-  }
+  });
   return total;
+}
+
+// Catches up conditionsHistory to state.history: for every guess added
+// since the last call, records whichever q.conditions were live at that
+// point, then rolls q.conditions over to a fresh random set for the next
+// guess. Called from both onGuessSubmitted (one new guess at a time) and
+// turnStart (a safety net that can catch more than one, e.g. the
+// simultaneous-phase opener onGuessSubmitted never sees directly) --
+// idempotent either way, since it only ever advances past what's already
+// been recorded.
+function ensureFieldReportProgress(state) {
+  const q = state.powers?.quest;
+  if (!q || q.type !== "FIELDREPORT") return;
+  if (!q.conditions) q.conditions = generateConditions();
+  if (!Array.isArray(q.conditionsHistory)) q.conditionsHistory = [];
+  const history = state.history || [];
+  while (q.conditionsHistory.length < history.length) {
+    q.conditionsHistory.push(q.conditions);
+    q.conditions = generateConditions();
+  }
 }
 
 // Is the quest fully satisfied? Mirrors each case's threshold against its
@@ -362,7 +388,7 @@ function isQuestReady(quest, history) {
     case "HARDMODE":
       return computeHardModeCount(history) >= QUEST_THRESHOLDS.HARDMODE;
     case "FIELDREPORT":
-      return computeFieldReportCount(history, quest.conditions) >= QUEST_THRESHOLDS.FIELDREPORT;
+      return computeFieldReportCount(history, quest.conditionsHistory) >= QUEST_THRESHOLDS.FIELDREPORT;
     case "ALTERNATING":
       return history.filter(h => isAlternatingWord(h.guess.toUpperCase())).length
         >= QUEST_THRESHOLDS.ALTERNATING;
@@ -406,6 +432,23 @@ function evaluateQuestProgress(quest, state, pendingGuess) {
     return {
       ready: count >= QUEST_THRESHOLDS.HARDMODE,
       oneAway: count === QUEST_THRESHOLDS.HARDMODE - 1
+    };
+  }
+
+  // FIELDREPORT can't go through the generic history-replay path below
+  // either: pendingGuess hasn't been scored against a conditions snapshot
+  // yet (that only happens once it actually lands in history -- see
+  // ensureFieldReportProgress), so it has to be checked against the
+  // CURRENT q.conditions directly and added on top of the already-
+  // recorded total for every prior guess.
+  if (quest.type === "FIELDREPORT") {
+    ensureFieldReportProgress(state);
+    const priorCount = computeFieldReportCount(history, quest.conditionsHistory);
+    const pendingCount = quest.conditions.filter(c => satisfiesForceGuess(pendingGuess.toUpperCase(), c)).length;
+    const total = priorCount + pendingCount;
+    return {
+      ready: total >= QUEST_THRESHOLDS.FIELDREPORT,
+      oneAway: total < QUEST_THRESHOLDS.FIELDREPORT && total >= FIELDREPORT_YELLOW_AT
     };
   }
 
@@ -527,6 +570,7 @@ function attemptQuestClaim(state, userId, roomId, io) {
   if (userId !== state.guesser) return false;
   const q = state.powers?.quest;
   if (!q || !q.type || q.used) return false;
+  ensureFieldReportProgress(state);
   if (q.ready) {
     grantQuestReward(state, roomId, io);
     return true;
@@ -551,7 +595,7 @@ engine.registerPower("quest", {
     const q = state.powers?.quest;
     if (!q || !q.type || q.used) return;
 
-    ensureQuestConditions(state);
+    ensureFieldReportProgress(state);
 
     if (!q.ready && isQuestReady(q, state.history || [])) {
       q.ready = true;
@@ -580,7 +624,7 @@ engine.registerPower("quest", {
     const q = state.powers?.quest;
     if (!q || !q.type || q.used || q.ready) return;
 
-    ensureQuestConditions(state);
+    ensureFieldReportProgress(state);
 
     const { ready, oneAway } = evaluateQuestProgress(q, state, guess);
     if (ready) {
@@ -601,6 +645,7 @@ module.exports = {
   QUEST_KEYBOARD_ROWS,
   pickRandomQuestType,
   ensureQuestConditions,
+  ensureFieldReportProgress,
   computeHardModeCount,
   computeHardModeConstraints,
   isHardModeCompliant,

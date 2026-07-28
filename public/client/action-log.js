@@ -34,17 +34,18 @@
       if (roundNumber > 0) {
         entries.push({ type: "round", text: `Round ${roundNumber + 1}` });
       }
-      // Field Report's 3 conditions are randomized per round and have no
-      // other persistent home now that the on-screen info badge that used
-      // to show them was removed (it just duplicated the quest card's own
-      // progress otherwise) -- surfaced once here instead, right where the
-      // round starts. Only known for the round in progress: past rounds'
-      // conditions aren't archived in state.matchRounds, so this can't be
-      // reconstructed for completed rounds.
+      // Field Report's 3 conditions refresh every turn (the 0-8 total
+      // keeps accumulating, but which 3 conditions are "live" changes
+      // each guess -- see questServer.js) and have no other persistent
+      // home now that the on-screen info badge that used to show them was
+      // removed. Only known for the round in progress: past rounds'
+      // per-turn conditions aren't archived in state.matchRounds, so this
+      // can't be reconstructed for completed rounds.
       const quest = state.powers?.quest;
-      if (isLiveRound && quest?.type === "FIELDREPORT" && Array.isArray(quest.conditions)) {
-        const conditionList = typeof window.formatFieldReportCondition === "function"
-          ? quest.conditions.map(window.formatFieldReportCondition).join(" • ")
+      const isLiveFieldReport = isLiveRound && quest?.type === "FIELDREPORT";
+      function pushConditionsLine(conditions) {
+        const conditionList = Array.isArray(conditions) && typeof window.formatFieldReportCondition === "function"
+          ? conditions.map(window.formatFieldReportCondition).join(" • ")
           : "";
         if (conditionList) {
           entries.push({ type: "power", cssClass: "", text: `Quest: Field Report — ${conditionList}` });
@@ -58,6 +59,12 @@
 
       (history || []).forEach(entry => {
         if (!entry?.guess) return;
+        // Logged BEFORE the guess it applied to -- the conditions that
+        // were live are what the player was actually aiming for when
+        // they made this guess.
+        if (isLiveFieldReport) {
+          pushConditionsLine(quest.conditionsHistory?.[guessNumber]);
+        }
         guessNumber++;
         const guessHidden = isLiveRound && !isSetterThisRound && state.powers?.stealthGuessActive;
         // Total Blackout hides the guesser's entire history board (see
@@ -100,6 +107,14 @@
           });
         }
       });
+
+      // The not-yet-consumed conditions for the guesser's NEXT guess --
+      // shown once at the end of the live round's entries so there's
+      // always a current answer to "what am I aiming for right now"
+      // without needing the removed on-screen badge.
+      if (isLiveFieldReport && !quest.used) {
+        pushConditionsLine(quest.conditions);
+      }
 
       return viewerRole;
     }

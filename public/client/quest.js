@@ -118,14 +118,19 @@ function computeHardModeProgress(history) {
 
 // Mirrors questServer.js's computeFieldReportCount exactly -- sums every
 // condition each guess satisfies across the whole round, not "guesses
-// meeting at least 2 of 3".
-function computeFieldReportProgress(history, conditions) {
-  if (!Array.isArray(conditions) || !conditions.length) return 0;
+// meeting at least 2 of 3". Conditions now refresh every turn (design:
+// the total keeps accumulating, but which 3 conditions are "live"
+// changes each guess), so each guess is scored against
+// conditionsHistory[i] -- whichever conditions were actually active when
+// that guess was made -- not today's q.conditions.
+function computeFieldReportProgress(history, conditionsHistory) {
+  if (!Array.isArray(conditionsHistory)) return 0;
   let total = 0;
-  for (const entry of history) {
-    if (!entry?.guess || typeof satisfiesForceGuessClient !== "function") continue;
+  history.forEach((entry, i) => {
+    const conditions = conditionsHistory[i];
+    if (!entry?.guess || !Array.isArray(conditions) || typeof satisfiesForceGuessClient !== "function") return;
     total += conditions.filter(c => satisfiesForceGuessClient(entry.guess.toUpperCase(), c)).length;
-  }
+  });
   return total;
 }
 
@@ -243,7 +248,12 @@ function computeQuestStatus(state) {
   }
 
   if (q.type === "FIELDREPORT") {
-    const count = computeFieldReportProgress(history, q.conditions);
+    // The running count replays each PAST guess against whatever
+    // conditions were live when it was made (conditionsHistory), while
+    // the description below shows q.conditions -- the CURRENT, still-
+    // live set the guesser's next guess is actually being judged
+    // against (they refresh every turn; see questServer.js).
+    const count = computeFieldReportProgress(history, q.conditionsHistory);
     const conditionList = Array.isArray(q.conditions) && typeof window.formatFieldReportCondition === "function"
       ? q.conditions.map(window.formatFieldReportCondition).join(" • ")
       : "";
