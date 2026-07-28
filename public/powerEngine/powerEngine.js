@@ -38,7 +38,7 @@ const POWER_ICON_IDS = {
 // already be in the document -- callers append the returned wrapper
 // synchronously right after creation, so by the time this fires the label
 // is already live.
-const BADGE_LABEL_SIZES = [11, 10, 9, 8, 7.2];
+const BADGE_LABEL_SIZES = [11, 10, 9, 8, 7.2, 6.5, 6];
 function fitBadgeLabel(labelEl, attemptsLeft) {
   if (attemptsLeft === undefined) {
     labelEl.style.fontSize = "";
@@ -58,9 +58,18 @@ function fitBadgeLabel(labelEl, attemptsLeft) {
       return;
     }
     const maxHeight = labelEl.clientHeight;
+    if (labelEl.scrollHeight <= maxHeight + 1) return;
+    // Check AFTER setting each size, not before -- this list assumes the
+    // CSS default it starts shrinking from is 11px (components.css's
+    // desktop-reference box). mobile.css's smaller powers-col card starts
+    // its label at 8px instead, so checking-then-setting (the old order)
+    // read that already-small 8px as "still too big" and set it to the
+    // list's first entry (11px) -- LARGER than what was already there --
+    // before working back down. Setting first and checking after always
+    // moves monotonically toward the smallest size that actually fits.
     for (const size of BADGE_LABEL_SIZES) {
-      if (labelEl.scrollHeight <= maxHeight + 1) break;
       labelEl.style.fontSize = size + "px";
+      if (labelEl.scrollHeight <= maxHeight + 1) break;
     }
   });
 }

@@ -2817,6 +2817,91 @@ body:has(#guesserScreen.active) #appMain {
 
 
 /* =====================================================
+   GUESSER: YOU / OPP POWER TABS
+   ===================================================== */
+
+/*
+  The guesser's powers-col is a single-column stacked layout (board on
+  top, powers below), unlike the setter's side-by-side sidebar -- so
+  these tabs sit directly above the power row instead of in their own
+  sidebar column, but toggle the same way (a read-only clone of the
+  other role's powers, synced from setterPowerContainer -- see
+  ui/guesser-sidebar.js).
+*/
+#guesserScreen .guesser-power-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+
+  width: 100%;
+  max-width: 220px;
+  margin: 0 auto var(--sp-4);
+}
+
+#guesserScreen .guesser-power-tab {
+  min-height: 26px;
+
+  padding: 3px 4px;
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--r-6);
+
+  background: var(--panel-bg);
+  color: var(--text);
+
+  font-size: var(--fs-10, 10px);
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+
+  cursor: pointer;
+}
+
+#guesserScreen .guesser-power-tab.is-active {
+  border-color: var(--role-accent);
+
+  background: color-mix(
+    in srgb,
+    var(--role-accent) 20%,
+    var(--panel-bg)
+  );
+
+  box-shadow:
+    0 0 6px
+    color-mix(in srgb, var(--role-accent) 35%, transparent);
+}
+
+/*
+  You/Opp stack in the same grid cell instead of one replacing the other
+  in normal flow -- the stack's own height is then whichever of the two
+  is taller, so switching tabs never reflows the remaining-words/letter-
+  profile boxes below it (same trick as #setterScreen .setter-power-stack).
+*/
+#guesserScreen .guesser-power-stack {
+  display: grid;
+  width: 100%;
+}
+
+#guesserScreen .guesser-power-stack > .guesser-power-view {
+  grid-area: 1 / 1;
+}
+
+#guesserScreen .guesser-power-stack > .guesser-power-view.hidden {
+  /* .power-container's own natural display (layout.css) is flex, not
+     grid -- keep that so it still participates in the stack's height
+     calc while hidden, matching the setter's grid-display equivalent. */
+  display: flex !important;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Opponent powers are informational and cannot be activated. */
+#guesserScreen .opponent-power-readonly {
+  pointer-events: none;
+}
+
+
+/* =====================================================
    SMALL IPHONE ADJUSTMENTS
    ===================================================== */
 
@@ -2848,5 +2933,11 @@ body:has(#guesserScreen.active) #appMain {
   #setterScreen .setter-power-view .power-btn {
     padding-left: 2px;
     padding-right: 2px;
+  }
+
+  #guesserScreen .guesser-power-tab {
+    min-height: 24px;
+    padding: 2px;
+    font-size: 9px;
   }
 }

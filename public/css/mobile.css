@@ -68,7 +68,13 @@
     display: none;
   }
   .powers-col .power-btn-label {
-    height: 16px;
+    /* 16px only ever comfortably fit a short 1-2 word label -- a longer
+       3-word one (e.g. "Secret Word Helper") still overflowed this box
+       even at fitBadgeLabel's smallest font step. There's slack in the
+       66px card (padding ~11px + icon ~32px + gap 3px leaves ~20px) to
+       give the label a taller slot instead of relying on illegibly
+       small text alone. */
+    height: 20px;
     font-size: 8px;
     text-align: center;
   }

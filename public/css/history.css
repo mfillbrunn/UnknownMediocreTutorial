@@ -469,6 +469,14 @@ Constraint row using history tile language
 --------------------------------------*/
 .constraint-row {
   position: relative;
+  /* .center-col uses align-items:center (shrink-to-fit), so without an
+     explicit width this row was sized purely by its tiles' content --
+     tiles alone were already tuned to nearly fill .center-col, leaving no
+     room for this row's own padding/border, so the box as a whole spilled
+     ~13px past .center-col on both sides (into the sidebar and off the
+     board). Pin it to the column's actual width instead. */
+  width: 100%;
+  box-sizing: border-box;
   padding: var(--sp-6);
   border-radius: var(--r-10);
   /* A natural-size sibling of .history-scroll within .center-col's flex
@@ -503,6 +511,19 @@ position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* The setter's narrow .center-col is the tightest fit -- .history-tile's
+   17.8cqw was tuned to nearly fill that column with no row chrome at all,
+   which is what regular (unpadded) history rows are. Now that
+   .constraint-row itself claims a fixed width (above) instead of growing
+   past the column, its own padding+border need to come out of the tiles'
+   share too, or they'd overflow the row's padding internally. Scaled down
+   by the same ratio the row's interior lost to that padding+border. */
+.theme-setter .constraint-row .history-tile {
+  width: clamp(29px, 16.6cqw, 77px);
+  height: clamp(29px, 16.6cqw, 77px);
+  font-size: clamp(15px, 8.4cqw, 38px);
 }
 
 .constraint-tile {
@@ -699,8 +720,17 @@ body.hide-constraints .constraint-row {
    it reads as its own contained/scrollable area rather than blending
    into the rest of the screen (the setter's sidebar-based layout already
    gives its board a visually distinct region, so this stays scoped to
-   the guesser's single-column screen). */
+   the guesser's single-column screen). Shrink-wrapped to the tile rows'
+   own width (not the base rule's width:100%) -- the rows themselves are
+   already centered within .center-col via justify-content:center, so a
+   full-width backdrop left visible dark margin on both sides instead of
+   hugging the actual feedback tiles. */
 #guesserScreen .history-scroll {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding-left: 10px;
+  padding-right: 10px;
   background: color-mix(in srgb, black 16%, transparent);
   border-radius: var(--r-10);
 }

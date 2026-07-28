@@ -1024,7 +1024,41 @@
              </div>
              <!-- BELOW TILES: powers, stacked horizontally -->
              <div class="play-col powers-col">
-                <div id="guesserPowerContainer" class="power-container laser-scope">
+                <div
+                  class="guesser-power-tabs"
+                  role="tablist"
+                  aria-label="Whose powers to display"
+                >
+                  <button
+                    type="button"
+                    id="guesserPowersYouBtn"
+                    class="guesser-power-tab is-active"
+                    role="tab"
+                    aria-selected="true"
+                    aria-controls="guesserPowerContainer"
+                  >
+                    You
+                  </button>
+
+                  <button
+                    type="button"
+                    id="guesserPowersOppBtn"
+                    class="guesser-power-tab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="guesserOpponentPowerContainer"
+                  >
+                    Opp
+                  </button>
+                </div>
+
+                <!-- Stacks You/Opp in the same grid cell (see features.css)
+                     so switching tabs never changes this row's height. -->
+                <div class="guesser-power-stack">
+                  <div id="guesserPowerContainer" class="power-container laser-scope guesser-power-view">
+                  </div>
+                  <div id="guesserOpponentPowerContainer" class="power-container laser-scope guesser-power-view hidden">
+                  </div>
                 </div>
                 <div id="GuesserRemainingBox" class="remaining-box" hidden></div>
                 <div id="GuesserLetterProfileBox" class="letter-profile-box" hidden></div>
@@ -1258,6 +1292,7 @@
   <script src="client/summary.js"></script>
   <script src="client/action-log.js"></script>
   <script src="ui/setter-sidebar.js"></script>
+  <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
   <script src="client/drag-mode.js"></script>
   <script src="client/friends.js"></script>

@@ -1401,7 +1401,11 @@ if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserS
     isGuesser: true,
     onInput: handleGuesserInput
   });
-}  
+}
+  // Keeps the Opp tab (the Spy's powers, read-only) current every tick,
+  // not just when the tab is switched to -- mirrors setter.js's
+  // syncSetterOpponentPowers call in updateSetterScreen().
+  window.syncGuesserOpponentPowers?.();
 }
 
 ///GUESSER INPUT
