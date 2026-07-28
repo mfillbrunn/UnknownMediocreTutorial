@@ -2349,3 +2349,84 @@ body:has(#guesserScreen.active) #appMain {
   flex: 0 0 auto;
   min-height: 0;
 }
+
+/* =====================================================
+   SMALLER TILES + FIXED SETTER SIDEBAR
+   ===================================================== */
+
+/* ---------- Smaller game tiles ---------- */
+
+#setterScreen .history-tile,
+#guesserScreen .history-tile {
+  width: clamp(30px, 12.5cqw, 56px);
+  height: clamp(30px, 12.5cqw, 56px);
+  font-size: clamp(16px, 6cqw, 28px);
+}
+
+/*
+  The existing history row has min-height: 48px.
+  Remove that floor so smaller tiles actually save vertical space.
+*/
+#setterScreen .history-row,
+#guesserScreen .history-row {
+  min-height: 0;
+}
+
+/* Slightly reduce vertical spacing between rows. */
+#setterScreen .history-tiles,
+#guesserScreen .history-tiles {
+  gap: 4px;
+}
+
+
+/* ---------- Fixed setter left column ---------- */
+
+.theme-setter .play-row {
+  --setter-sidebar-width: 92px;
+}
+
+/*
+  Give the sidebar one permanent width.
+  Its contents can appear/disappear without changing the board width.
+*/
+.theme-setter .powers-col {
+  flex: 0 0 var(--setter-sidebar-width);
+
+  width: var(--setter-sidebar-width);
+  min-width: var(--setter-sidebar-width);
+  max-width: var(--setter-sidebar-width);
+
+  box-sizing: border-box;
+  align-self: stretch;
+  min-height: 0;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  /*
+    Prevent the column's inner width from changing when its
+    vertical scrollbar appears.
+  */
+  scrollbar-gutter: stable;
+}
+
+/*
+  The board always receives the remaining width instead of sizing
+  itself according to its tile contents.
+*/
+.theme-setter .center-col {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+
+/* Keep every optional sidebar section inside the fixed column. */
+.theme-setter .powers-col > *,
+.theme-setter .powers-col .power-container,
+.theme-setter .powers-col .remaining-box,
+.theme-setter .powers-col .letter-profile-box {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
