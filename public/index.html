@@ -751,6 +751,7 @@
                   </div>
                 </div>
                 <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
+                <button id="powerInfoBtnSetter" class="power-info-btn" aria-label="Power descriptions" title="Power descriptions"><span class="power-info-icon">?</span></button>
                 <button id="keyboardToggleBtnSetter" class="guide-toggle-btn keyboard-toggle-btn" title="Toggle physical keyboard input" aria-label="Toggle physical keyboard input">⌨️</button>
                 <button id="guideToggleBtnSetter" class="guide-toggle-btn" title="Toggle guide" aria-label="Toggle guide">🧭<span class="guide-btn-label"> Guide</span></button>
               </div>
@@ -759,107 +760,34 @@
          <!-- PLAY AREA -->
          <main class="play-area setter-play">
             <div class="play-row">
-               <!-- CENTER: history + drafts (tiles on top) -->
+               <!-- CENTER: history (tiles on top) -- the draft/pending-guess
+                    rows used to live here too, but now sit full-width below
+                    both columns, right above the keyboard (see
+                    .setter-secret-row further down). -->
                <div class="play-col center-col">
                   <div id="constraintRowSetter" class="history-row constraint-row"></div>
                   <div id="setterGuesserSubmitted" class="history-tiles history-scroll"></div>
                   <div id="setterPreview" class="preview-box" hidden></div>
-                  <div class="draft-row-wrap">
-                     <div class="draft-stack">
-                        <div id="draftSetter" class="history-tiles draft-layer"></div>
-                        <div id="secretLockOverlay" class="secret-lock-overlay hidden">🔒</div>
-                        <div id="setterDraftInvalidOverlay" class="secret-invalid-overlay hidden">✕</div>
-                     </div>
-                  </div>
                </div>
                <!-- BELOW TILES: powers, stacked horizontally --><aside
   class="play-col powers-col setter-sidebar"
   aria-label="Game sidebar"
 >
-  <!-- POWER VIEW -->
+  <!-- POWER VIEW: just the setter's own powers -- there's no opponent
+       toggle anymore, so this is a single container, not a tabbed
+       stack. -->
   <section class="setter-sidebar-powers">
     <div
-      class="setter-power-tabs"
-      role="tablist"
-      aria-label="Whose powers to display"
-    >
-      <button
-        type="button"
-        id="setterPowersYouBtn"
-        class="setter-power-tab is-active"
-        role="tab"
-        aria-selected="true"
-        aria-controls="setterPowerContainer"
-      >
-        You
-      </button>
-
-      <button
-        type="button"
-        id="setterPowersOppBtn"
-        class="setter-power-tab"
-        role="tab"
-        aria-selected="false"
-        aria-controls="setterOpponentPowerContainer"
-      >
-        Opp
-      </button>
-
-      <!-- Keep the existing ID so the current power-info JS still finds it -->
-      <button
-        type="button"
-        id="powerInfoBtnSetter"
-        class="power-info-btn setter-power-help"
-        aria-label="Power descriptions"
-        title="Power descriptions"
-      >
-        <span class="power-info-icon">?</span>
-      </button>
-    </div>
-
-    <!-- Stacks You/Opp in the same grid cell (see features.css) so the
-         sidebar's height is always the taller of the two, instead of
-         jumping/reflowing (and dragging the remaining-words box with it)
-         whenever the tab with fewer cards is switched to. -->
-    <div class="setter-power-stack">
-      <!-- Existing container: current setter's powers -->
-      <div
-        id="setterPowerContainer"
-        class="power-container laser-scope setter-power-view"
-        role="tabpanel"
-        aria-labelledby="setterPowersYouBtn"
-      ></div>
-
-      <!-- New read-only container: opponent's powers -->
-      <div
-        id="setterOpponentPowerContainer"
-        class="power-container laser-scope setter-power-view hidden"
-        role="tabpanel"
-        aria-labelledby="setterPowersOppBtn"
-      ></div>
-    </div>
-
-    <!-- Which power is currently in effect -- lives beside the power
-         cards it describes instead of floating near the keyboard. -->
-    <div id="SetterInfoBadge" class="info badge"></div>
-    <div id="SetterInfoBadgeDetail" class="info-badge-detail" hidden></div>
-
-    <div
-      id="SetterRemainingBox"
-      class="remaining-box"
-      hidden
-    ></div>
-
-    <div
-      id="SetterLetterProfileBox"
-      class="letter-profile-box"
-      hidden
+      id="setterPowerContainer"
+      class="power-container laser-scope setter-power-view"
+      role="region"
+      aria-label="Your powers"
     ></div>
   </section>
 
-  <!-- LOG / NOTES: last in the column, hidden by default -- clicking
-       whichever tab is currently open closes it again instead of just
-       switching (see ui/setter-sidebar.js). -->
+  <!-- LOG / NOTES: right below the power cards, hidden by default --
+       clicking whichever tab is currently open closes it again instead
+       of just switching (see ui/setter-sidebar.js). -->
   <section class="setter-sidebar-activity">
     <div
       class="setter-sidebar-tabs"
@@ -909,7 +837,40 @@
       </div>
     </div>
   </section>
+
+  <!-- INFO BADGES: below Log/Notes -- which power is currently in
+       effect, the Old/Keep/New remaining-words count, and the letter
+       profile breakdown. -->
+  <div id="SetterInfoBadge" class="info badge"></div>
+  <div id="SetterInfoBadgeDetail" class="info-badge-detail" hidden></div>
+
+  <div
+    id="SetterRemainingBox"
+    class="remaining-box"
+    hidden
+  ></div>
+
+  <div
+    id="SetterLetterProfileBox"
+    class="letter-profile-box"
+    hidden
+  ></div>
 </aside>
+            </div>
+            <!-- SECRET / PENDING-GUESS ROWS: full width, below both
+                 columns, right above the keyboard -- larger than the
+                 history/constraint rows above since these are the two
+                 rows a player is actually acting on each turn (see
+                 features.css's .setter-secret-row). draftrow.js already
+                 appends the pending-guess row before the draft row, so
+                 pending-guess renders above the draft row here without
+                 any JS change. -->
+            <div class="draft-row-wrap setter-secret-row">
+               <div class="draft-stack">
+                  <div id="draftSetter" class="history-tiles draft-layer"></div>
+                  <div id="secretLockOverlay" class="secret-lock-overlay hidden">🔒</div>
+                  <div id="setterDraftInvalidOverlay" class="secret-invalid-overlay hidden">✕</div>
+               </div>
             </div>
             <!-- KEYBOARD AREA-->
              <div id="SetterMustContainBox" class="must-contain-box" hidden></div>

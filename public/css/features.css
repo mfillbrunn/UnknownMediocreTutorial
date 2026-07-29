@@ -2547,6 +2547,31 @@ body:has(#guesserScreen.active) #appMain {
 
 
 /* =====================================================
+   SECRET / PENDING-GUESS ROWS -- FULL WIDTH, ABOVE KEYBOARD
+   ===================================================== */
+
+/*
+  Sits below BOTH columns (sidebar + board) as its own full-width row,
+  not inside .center-col with the constraint/history rows -- these two
+  rows (the guesser's pending guess, and the setter's own secret) are
+  what the setter is actually acting on every turn, so they get the
+  most horizontal room on the screen and (via their own container-query
+  context below) size their tiles larger than the ones still confined
+  to .center-col's narrower width.
+*/
+#setterScreen .setter-secret-row {
+  container-type: inline-size;
+  margin-top: var(--sp-10, 10px);
+}
+
+#setterScreen .setter-secret-row .history-tile {
+  width: clamp(38px, 18cqw, 90px);
+  height: clamp(38px, 18cqw, 90px);
+  font-size: clamp(18px, 9cqw, 44px);
+}
+
+
+/* =====================================================
    LOG / NOTES SIDEBAR SECTION
    ===================================================== */
 
@@ -2586,8 +2611,7 @@ body:has(#guesserScreen.active) #appMain {
   margin-bottom: var(--sp-4);
 }
 
-#setterScreen .setter-sidebar-tab,
-#setterScreen .setter-power-tab {
+#setterScreen .setter-sidebar-tab {
   width: 100%;
   min-width: 0;
   min-height: 28px;
@@ -2608,8 +2632,7 @@ body:has(#guesserScreen.active) #appMain {
   cursor: pointer;
 }
 
-#setterScreen .setter-sidebar-tab.is-active,
-#setterScreen .setter-power-tab.is-active {
+#setterScreen .setter-sidebar-tab.is-active {
   border-color: var(--role-accent);
 
   background: color-mix(
@@ -2689,7 +2712,7 @@ body:has(#guesserScreen.active) #appMain {
 
 
 /* =====================================================
-   YOU / OPP / HELP CONTROLS
+   SETTER'S OWN POWERS
    ===================================================== */
 
 #setterScreen .setter-sidebar-powers {
@@ -2702,26 +2725,6 @@ body:has(#guesserScreen.active) #appMain {
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-}
-
-#setterScreen .setter-power-tabs {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 30px;
-  gap: var(--sp-4);
-
-  margin-bottom: var(--sp-4);
-}
-
-#setterScreen .setter-power-help {
-  align-self: stretch;
-
-  width: 100%;
-  min-width: 0;
-  height: auto;
-  min-height: 28px;
-
-  margin: 0;
-  padding: 0;
 }
 
 
@@ -2737,34 +2740,6 @@ body:has(#guesserScreen.active) #appMain {
 
   width: 100%;
   min-width: 0;
-}
-
-#setterScreen .setter-power-view.hidden {
-  display: none !important;
-}
-
-/*
-  You/Opp stack in the same grid cell instead of one replacing the other
-  in normal flow -- the stack's own height is then whichever of the two
-  is taller, so switching tabs never changes the sidebar's height (and
-  never drags the remaining-words box below it up/down). The inactive
-  view stays display:grid (so it still participates in that height calc)
-  but visibility:hidden so it's neither seen nor clickable.
-*/
-#setterScreen .setter-power-stack {
-  display: grid;
-  width: 100%;
-  min-width: 0;
-}
-
-#setterScreen .setter-power-stack > .setter-power-view {
-  grid-area: 1 / 1;
-}
-
-#setterScreen .setter-power-stack > .setter-power-view.hidden {
-  display: grid !important;
-  visibility: hidden;
-  pointer-events: none;
 }
 
 /*
@@ -2861,32 +2836,14 @@ body:has(#guesserScreen.active) #appMain {
   font-size: 13px;
 }
 
-/* Opponent powers are informational and cannot be activated. */
-#setterScreen .opponent-power-readonly {
-  pointer-events: none;
-}
-
-#setterScreen .setter-sidebar-empty {
-  grid-column: 1 / -1;
-
-  padding: var(--sp-6);
-  font-size: var(--fs-10, 10px);
-  line-height: 1.25;
-  text-align: center;
-  opacity: 0.65;
-}
-
-
 /* =====================================================
-   NEVER SHOW A QUEST CARD IN THE SETTER'S OWN "YOU" VIEW
+   NEVER SHOW A QUEST CARD IN THE SETTER'S OWN POWER VIEW
    ===================================================== */
 
 /*
   The setter has no quest of their own -- quest.js still pins a read-only
-  mirror onto setterPowerContainer ("You") for older callers, so it stays
-  hidden there. The Opp view is a different container (a clone of the
-  Inspector's own real power row) and is deliberately left alone here so
-  their actual quest card -- with its live progress chip -- shows through.
+  mirror onto setterPowerContainer for older callers, so it stays hidden
+  here.
 */
 #setterScreen #setterPowerContainer [id*="quest" i],
 #setterScreen #setterPowerContainer [class*="quest" i],
@@ -2896,30 +2853,30 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 /*
-  The active-power status strip (InfoBadgeEngine) used to float near the
-  keyboard, disconnected from the power cards it actually describes --
-  moved to sit directly under them in the sidebar instead (see
-  index.html). Shrunk to fit the same ~104-140px column as the Log/Notes
-  and You/Opp tabs above it, instead of the wider size it was tuned for
-  as a full-width strip over the board.
+  The active-power status strip (InfoBadgeEngine), the Old/Keep/New
+  remaining-words count, and the letter profile box now sit below
+  Log/Notes as direct children of the sidebar (see index.html), not
+  nested inside .setter-sidebar-powers -- shrunk to fit the same
+  ~104-140px column width, instead of the wider size InfoBadge was
+  originally tuned for as a full-width strip over the board.
 */
-#setterScreen .setter-sidebar-powers #SetterInfoBadge {
+#setterScreen .setter-sidebar #SetterInfoBadge {
   margin-top: var(--sp-4);
   gap: 2px var(--sp-6);
   font-size: var(--fs-11, 11px);
 }
 
-#setterScreen .setter-sidebar-powers #SetterInfoBadge.show {
+#setterScreen .setter-sidebar #SetterInfoBadge.show {
   padding: var(--sp-4) var(--sp-8);
 }
 
-#setterScreen .setter-sidebar-powers .badge-item:nth-child(1),
-#setterScreen .setter-sidebar-powers .badge-item:nth-child(2),
-#setterScreen .setter-sidebar-powers .badge-item:nth-child(3) {
+#setterScreen .setter-sidebar .badge-item:nth-child(1),
+#setterScreen .setter-sidebar .badge-item:nth-child(2),
+#setterScreen .setter-sidebar .badge-item:nth-child(3) {
   font-size: var(--fs-12, 12px);
 }
 
-#setterScreen .setter-sidebar-powers #SetterInfoBadgeDetail {
+#setterScreen .setter-sidebar #SetterInfoBadgeDetail {
   padding: 0 var(--sp-6);
   font-size: var(--fs-10, 10px);
 }
@@ -3036,7 +2993,7 @@ body:has(#guesserScreen.active) #appMain {
   You/Opp stack in the same grid cell instead of one replacing the other
   in normal flow -- the stack's own height is then whichever of the two
   is taller, so switching tabs never reflows the remaining-words/letter-
-  profile boxes below it (same trick as #setterScreen .setter-power-stack).
+  profile boxes below it.
 */
 #guesserScreen .guesser-power-stack {
   display: grid;
@@ -3076,16 +3033,10 @@ body:has(#guesserScreen.active) #appMain {
     gap: 4px;
   }
 
-  #setterScreen .setter-sidebar-tab,
-  #setterScreen .setter-power-tab {
+  #setterScreen .setter-sidebar-tab {
     min-height: 26px;
     padding: 2px;
     font-size: 9px;
-  }
-
-  #setterScreen .setter-power-tabs {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 27px;
-    gap: 3px;
   }
 
   #setterScreen .setter-power-view {

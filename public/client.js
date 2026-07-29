@@ -902,10 +902,6 @@ renderDraftRows({
     onInput: handleSetterInput
   });
   }
-  // Keeps the sidebar's Opp tab (the Inspector's quest + powers, read-only)
-  // current every tick, not just when the tab is switched to -- their
-  // quest's progress chip otherwise only updated on the next tab switch.
-  window.syncSetterOpponentPowers?.();
   updateSetterPreview();
  }
 
@@ -1410,8 +1406,7 @@ if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserS
   });
 }
   // Keeps the Opp tab (the Spy's powers, read-only) current every tick,
-  // not just when the tab is switched to -- mirrors setter.js's
-  // syncSetterOpponentPowers call in updateSetterScreen().
+  // not just when the tab is switched to.
   window.syncGuesserOpponentPowers?.();
 }
 

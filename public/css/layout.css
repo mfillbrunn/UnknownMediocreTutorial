@@ -383,7 +383,8 @@
 .header-right .guide-toggle-btn:not(.keyboard-toggle-btn) {
   padding: 0 var(--sp-4);
 }
-.header-right .constraint-toggle-btn {
+.header-right .constraint-toggle-btn,
+.header-right .power-info-btn {
   width: 24px;
   height: 24px;
 }
