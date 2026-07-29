@@ -2814,34 +2814,90 @@ body:has(#guesserScreen.active) #appMain {
 
 /* =====================================================
    INFO TAB (replaces Notes) -- active-power status (InfoBadgeEngine)
-   plus the word-distribution/letter-profile breakdown, both shrunk to
-   fit the same ~104-140px sidebar column instead of the wider sizes
-   they were originally tuned for.
+   plus the word-distribution/letter-profile breakdown.
+
+   InfoBadgeEngine's badge markup/components.css's base styling was
+   built for a standalone pill-shaped status strip (its own background,
+   border, box-shadow, centered inline-wrap layout) -- sitting inside
+   this tab next to the Log tab's plain stacked-row entries, that read
+   as a separate boxed widget bolted on rather than more of the same
+   list. Flattened here to the exact same look as a .log-entry: no pill
+   container, one item per block-level row instead of an inline-wrapped
+   run, same font-size/line-height/padding as the sidebar's Log tab
+   (#setterScreen .setter-sidebar .log-entry above). Each item's own
+   inline color (InfoBadgeEngine.render's per-message color) still
+   applies -- that's the same idea as the Log's own log-power-setter/
+   log-power-guesser color-coding, not part of the pill look being
+   removed.
    ===================================================== */
 
 #setterScreen #infoPanelSetter #SetterInfoBadge {
+  display: block;
   margin-top: 0;
-  gap: 2px var(--sp-6);
-  font-size: var(--fs-11, 11px);
+  gap: 0;
+  font-size: 9.5px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-align: left;
 }
 
 #setterScreen #infoPanelSetter #SetterInfoBadge.show {
-  padding: var(--sp-4) var(--sp-8);
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+#setterScreen #infoPanelSetter .badge-item {
+  display: block;
+  padding: 2px 4px;
+  font-size: 9.5px;
+  font-weight: 400;
+  opacity: 0.85;
 }
 
 #setterScreen #infoPanelSetter .badge-item:nth-child(1),
 #setterScreen #infoPanelSetter .badge-item:nth-child(2),
 #setterScreen #infoPanelSetter .badge-item:nth-child(3) {
-  font-size: var(--fs-12, 12px);
+  font-size: 9.5px;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+#setterScreen #infoPanelSetter .badge-sep,
+#setterScreen #infoPanelSetter .badge-row-break {
+  display: none;
 }
 
 #setterScreen #infoPanelSetter #SetterInfoBadgeDetail {
-  padding: 0 var(--sp-6);
-  font-size: var(--fs-10, 10px);
+  padding: 0;
+  font-size: 9.5px;
+  font-weight: 400;
+  text-align: left;
+  line-height: 1.3;
+}
+
+#setterScreen #infoPanelSetter .info-badge-detail-item {
+  display: block;
+  padding: 2px 4px;
+  opacity: 0.7;
 }
 
 #setterScreen #infoPanelSetter .letter-profile-box {
-  margin-top: var(--sp-8);
+  margin-top: 0;
+  padding: 2px 4px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  font-size: 9.5px;
+  font-weight: 400;
+}
+
+#setterScreen #infoPanelSetter .letter-profile-box .title {
+  border-bottom: none;
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+  font-weight: 700;
 }
 
 /* Nothing active and no letter profile to show -- read as "nothing to
@@ -2850,7 +2906,7 @@ body:has(#guesserScreen.active) #appMain {
   content: "Nothing active right now.";
   display: block;
   padding: var(--sp-8) 0;
-  font-size: var(--fs-10, 10px);
+  font-size: 9.5px;
   opacity: 0.6;
   text-align: center;
 }
