@@ -2780,10 +2780,54 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 /*
-  The Old/Keep/New remaining-words count and the letter profile box sit
-  below the power cards as direct children of the sidebar (see
-  index.html), not nested inside .setter-sidebar-powers.
+  The Old/Keep/New remaining-words count sits below the power cards as
+  a direct child of the sidebar (see index.html), not nested inside
+  .setter-sidebar-powers.
 */
+
+
+/* =====================================================
+   INFO TAB (replaces Notes) -- active-power status (InfoBadgeEngine)
+   plus the word-distribution/letter-profile breakdown, both shrunk to
+   fit the same ~104-140px sidebar column instead of the wider sizes
+   they were originally tuned for.
+   ===================================================== */
+
+#setterScreen #infoPanelSetter #SetterInfoBadge {
+  margin-top: 0;
+  gap: 2px var(--sp-6);
+  font-size: var(--fs-11, 11px);
+}
+
+#setterScreen #infoPanelSetter #SetterInfoBadge.show {
+  padding: var(--sp-4) var(--sp-8);
+}
+
+#setterScreen #infoPanelSetter .badge-item:nth-child(1),
+#setterScreen #infoPanelSetter .badge-item:nth-child(2),
+#setterScreen #infoPanelSetter .badge-item:nth-child(3) {
+  font-size: var(--fs-12, 12px);
+}
+
+#setterScreen #infoPanelSetter #SetterInfoBadgeDetail {
+  padding: 0 var(--sp-6);
+  font-size: var(--fs-10, 10px);
+}
+
+#setterScreen #infoPanelSetter .letter-profile-box {
+  margin-top: var(--sp-8);
+}
+
+/* Nothing active and no letter profile to show -- read as "nothing to
+   report" instead of the tab just looking broken/empty. */
+#setterScreen #infoPanelSetter:not(:has(#SetterInfoBadge.show, .letter-profile-box:not([hidden])))::after {
+  content: "Nothing active right now.";
+  display: block;
+  padding: var(--sp-8) 0;
+  font-size: var(--fs-10, 10px);
+  opacity: 0.6;
+  text-align: center;
+}
 
 
 /* =====================================================

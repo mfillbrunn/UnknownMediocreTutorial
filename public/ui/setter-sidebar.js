@@ -11,7 +11,7 @@
   }
 
   /*
-    panelName is "log" or "notes" -- Log starts open by default (see
+    panelName is "log" or "info" -- Log starts open by default (see
     initialiseSetterSidebar), and clicking the currently-open tab closes
     it, dropping panelName to null (neither panel open) rather than
     forcing something to always be shown.
@@ -21,28 +21,28 @@
       "#setterScreen .setter-sidebar-activity"
     );
     const logPanel = byId("actionLogSetter");
-    const notesPanel = byId("notesPanelSetter");
+    const infoPanel = byId("infoPanelSetter");
 
     const logButton = byId("actionLogBtnSetter");
-    const notesButton = byId("notesBtnSetter");
+    const infoButton = byId("infoBtnSetter");
 
     const showLog = panelName === "log";
-    const showNotes = panelName === "notes";
+    const showInfo = panelName === "info";
 
     logPanel?.classList.toggle("hidden", !showLog);
-    notesPanel?.classList.toggle("hidden", !showNotes);
+    infoPanel?.classList.toggle("hidden", !showInfo);
 
     setTabState(logButton, showLog);
-    setTabState(notesButton, showNotes);
+    setTabState(infoButton, showInfo);
 
-    activitySection?.classList.toggle("panel-open", showLog || showNotes);
+    activitySection?.classList.toggle("panel-open", showLog || showInfo);
   }
 
   function initialiseSetterSidebar() {
     const logButton = byId("actionLogBtnSetter");
-    const notesButton = byId("notesBtnSetter");
+    const infoButton = byId("infoBtnSetter");
 
-    // Tracks which of Log/Notes is currently open (null = neither) so a
+    // Tracks which of Log/Info is currently open (null = neither) so a
     // click on the already-open tab can close it instead of re-opening
     // the same panel.
     let activeSetterPanel = "log";
@@ -52,8 +52,8 @@
       showSetterSidebarPanel(activeSetterPanel);
     });
 
-    notesButton?.addEventListener("click", () => {
-      activeSetterPanel = activeSetterPanel === "notes" ? null : "notes";
+    infoButton?.addEventListener("click", () => {
+      activeSetterPanel = activeSetterPanel === "info" ? null : "info";
       showSetterSidebarPanel(activeSetterPanel);
     });
 

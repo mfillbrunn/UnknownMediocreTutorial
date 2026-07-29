@@ -800,13 +800,7 @@
     hidden
   ></div>
 
-  <div
-    id="SetterLetterProfileBox"
-    class="letter-profile-box"
-    hidden
-  ></div>
-
-  <!-- LOG / NOTES: last element in the column. Log starts open;
+  <!-- LOG / INFO: last element in the column. Log starts open;
        clicking whichever tab is currently open closes it again instead
        of just switching (see ui/setter-sidebar.js). -->
   <section class="setter-sidebar-activity">
@@ -828,13 +822,13 @@
 
       <button
         type="button"
-        id="notesBtnSetter"
+        id="infoBtnSetter"
         class="header-sm-btn setter-sidebar-tab"
         role="tab"
         aria-selected="false"
-        aria-controls="notesPanelSetter"
+        aria-controls="infoPanelSetter"
       >
-        Notes
+        Info
       </button>
     </div>
 
@@ -846,15 +840,19 @@
         aria-labelledby="actionLogBtnSetter"
       ></div>
 
+      <!-- Active-power status (InfoBadgeEngine -- already includes
+           cross-role things visible to the setter, like the guesser's
+           live Field Report quest conditions) plus the word-distribution
+           (vowel/consonant) breakdown. -->
       <div
-        id="notesPanelSetter"
-        class="game-side-panel notes-panel setter-sidebar-panel hidden"
+        id="infoPanelSetter"
+        class="game-side-panel setter-sidebar-panel hidden"
         role="tabpanel"
-        aria-labelledby="notesBtnSetter"
+        aria-labelledby="infoBtnSetter"
       >
-        <div class="notes-panel-title">Notes</div>
-        <div id="notesDraftSetter" class="notes-draft-row"></div>
-        <div id="notesListSetter" class="notes-list"></div>
+        <div id="SetterInfoBadge" class="info badge"></div>
+        <div id="SetterInfoBadgeDetail" class="info-badge-detail" hidden></div>
+        <div id="SetterLetterProfileBox" class="letter-profile-box" hidden></div>
       </div>
     </div>
   </section>
