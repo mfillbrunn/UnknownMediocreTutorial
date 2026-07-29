@@ -116,6 +116,29 @@
         pushConditionsLine(quest.conditions);
       }
 
+      // Quest completion/one-away, same "current status once at the end
+      // of the live round" treatment as the Field Report conditions above
+      // -- there's no per-guess record of exactly when ready/oneAway
+      // flipped, only the current state, so this can't be attached to a
+      // specific guess row. Always the guesser's own color: it's their
+      // quest regardless of which role is viewing the log.
+      if (isLiveRound && quest?.type) {
+        const status = window.computeQuestStatus?.(state);
+        if (status?.done) {
+          entries.push({
+            type: "power",
+            cssClass: " log-power-guesser",
+            text: `Quest: ${status.meta.label} — ${status.desc}`
+          });
+        } else if (quest.oneAway) {
+          entries.push({
+            type: "power",
+            cssClass: " log-power-guesser",
+            text: `Quest: ${status.meta.label} — One guess away!`
+          });
+        }
+      }
+
       return viewerRole;
     }
 

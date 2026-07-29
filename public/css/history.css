@@ -724,15 +724,19 @@ body.hide-constraints .constraint-row {
    into the rest of the screen (the setter's sidebar-based layout already
    gives its board a visually distinct region, so this stays scoped to
    the guesser's single-column screen). Sized to exactly one feedback
-   row's own width (5 tiles + 4 gaps, using the same clamp() as
-   .history-tile above, plus this element's own left/right padding)
-   instead of width:fit-content -- fit-content shrank to whatever's
-   actually inside it, so with zero guesses yet (nothing to shrink-wrap
-   around) the backdrop collapsed to near-nothing instead of already
-   reading as the board's contained area. This way it's always exactly
-   the feedback's width, before the first guess and after. */
+   row's own width (5 tiles + 4 gaps, plus this element's own left/right
+   padding) instead of width:fit-content -- fit-content shrank to
+   whatever's actually inside it, so with zero guesses yet (nothing to
+   shrink-wrap around) the backdrop collapsed to near-nothing instead of
+   already reading as the board's contained area. This way it's always
+   exactly the feedback's width, before the first guess and after. The
+   clamp() here has to match the tile size features.css's
+   "#guesserScreen .history-tile" rule actually ends up applying (it
+   overrides this file's own base .history-tile clamp with a smaller
+   one, and wins on specificity) -- not the base clamp above, or this
+   backdrop wouldn't actually hug the tiles it's sized against. */
 #guesserScreen .history-scroll {
-  width: calc(5 * clamp(30px, 16cqw, 78px) + 4 * var(--sp-4) + 20px);
+  width: calc(5 * clamp(30px, 12.5cqw, 56px) + 4 * var(--sp-4) + 20px);
   max-width: 100%;
   margin: 0 auto;
   padding-left: 10px;

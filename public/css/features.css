@@ -2371,6 +2371,32 @@ body:has(#guesserScreen.active) #appMain {
   font-size: clamp(16px, 6cqw, 28px);
 }
 
+/* A little larger than the regular history/feedback tiles -- this is
+   the row the guesser is actively typing into, so it should read as
+   the "live" one. */
+#guesserScreen #draftGuesser .history-tile {
+  width: clamp(33px, 14cqw, 62px);
+  height: clamp(33px, 14cqw, 62px);
+  font-size: clamp(18px, 6.8cqw, 31px);
+}
+
+/*
+  The guesser's draft row hides entirely (display:none, see
+  draftrow.js's GUESSER branch) between submitting a guess and their
+  next turn. .draft-row-wrap is flex-shrink:0 (layout.css), sized purely
+  by its own content -- with nothing visible inside it that content
+  collapses to 0 height, and the history-scroll backdrop right above it
+  (flex:1, absorbs whatever's left in .center-col) visibly grows to fill
+  that freed space, then shrinks back once the draft row reappears --
+  the whole feedback backdrop reading as jumping up and down. Floor this
+  wrapper to the draft row's own (enlarged) tile height, matching the
+  clamp() just above, so that space is never actually there to reclaim
+  regardless of whether the row is currently shown.
+*/
+#guesserScreen .draft-row-wrap {
+  min-height: clamp(33px, 14cqw, 62px);
+}
+
 /*
   The setter's board gets the rest of the row once the fixed sidebar
   (above) takes its share -- cqw here is relative to .center-col, which is
@@ -2862,17 +2888,45 @@ body:has(#guesserScreen.active) #appMain {
   width: auto;
 }
 
+/*
+  Same boxed-panel + "nothing active" empty state as the setter's Info
+  tab (#infoPanelSetter in this file's SETTER: INFO TAB rules) -- the
+  guesser has no Log/Info tab switch of their own (their Log is a
+  floating panel toggled from the header), but this column is the
+  guesser's equivalent contained "info" area, so it gets the same
+  wrapped look instead of the badge just floating unframed beside the
+  power cards.
+*/
 #guesserScreen .guesser-info-col {
   flex: 1 1 0;
   min-width: 0;
 
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
+
+  padding: var(--sp-6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--r-10);
+  background: rgba(14, 15, 22, 0.35);
 }
 
 #guesserScreen .guesser-info-col #GuesserInfoBadge {
   margin-top: 0;
+}
+
+#guesserScreen .guesser-info-col .letter-profile-box {
+  margin-top: var(--sp-8);
+}
+
+#guesserScreen .guesser-info-col:not(:has(#GuesserInfoBadge.show, .letter-profile-box:not([hidden])))::after {
+  content: "Nothing active right now.";
+  display: block;
+  padding: var(--sp-4) 0;
+  font-size: var(--fs-10, 10px);
+  opacity: 0.6;
+  text-align: center;
 }
 
 /* Guesser powers: compact cards next to each other */
