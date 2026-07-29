@@ -760,14 +760,23 @@
          <!-- PLAY AREA -->
          <main class="play-area setter-play">
             <div class="play-row">
-               <!-- CENTER: history (tiles on top) -- the draft/pending-guess
-                    rows used to live here too, but now sit full-width below
-                    both columns, right above the keyboard (see
-                    .setter-secret-row further down). -->
+               <!-- CENTER: history + drafts (tiles on top) -->
                <div class="play-col center-col">
                   <div id="constraintRowSetter" class="history-row constraint-row"></div>
                   <div id="setterGuesserSubmitted" class="history-tiles history-scroll"></div>
                   <div id="setterPreview" class="preview-box" hidden></div>
+                  <!-- draftrow.js appends the pending-guess row before the
+                       draft row, so the guesser's pending guess renders
+                       above the setter's own secret row here with no JS
+                       change. Same .history-tile sizing as the rows above
+                       -- no special enlarging. -->
+                  <div class="draft-row-wrap">
+                     <div class="draft-stack">
+                        <div id="draftSetter" class="history-tiles draft-layer"></div>
+                        <div id="secretLockOverlay" class="secret-lock-overlay hidden">🔒</div>
+                        <div id="setterDraftInvalidOverlay" class="secret-invalid-overlay hidden">✕</div>
+                     </div>
+                  </div>
                </div>
                <!-- BELOW TILES: powers, stacked horizontally --><aside
   class="play-col powers-col setter-sidebar"
@@ -785,7 +794,24 @@
     ></div>
   </section>
 
-  <!-- LOG / NOTES: right below the power cards, hidden by default --
+  <!-- INFO BADGES: which power is currently in effect, the Old/Keep/New
+       remaining-words count, and the letter profile breakdown. -->
+  <div id="SetterInfoBadge" class="info badge"></div>
+  <div id="SetterInfoBadgeDetail" class="info-badge-detail" hidden></div>
+
+  <div
+    id="SetterRemainingBox"
+    class="remaining-box"
+    hidden
+  ></div>
+
+  <div
+    id="SetterLetterProfileBox"
+    class="letter-profile-box"
+    hidden
+  ></div>
+
+  <!-- LOG / NOTES: last element in the column. Log starts open;
        clicking whichever tab is currently open closes it again instead
        of just switching (see ui/setter-sidebar.js). -->
   <section class="setter-sidebar-activity">
@@ -837,40 +863,7 @@
       </div>
     </div>
   </section>
-
-  <!-- INFO BADGES: below Log/Notes -- which power is currently in
-       effect, the Old/Keep/New remaining-words count, and the letter
-       profile breakdown. -->
-  <div id="SetterInfoBadge" class="info badge"></div>
-  <div id="SetterInfoBadgeDetail" class="info-badge-detail" hidden></div>
-
-  <div
-    id="SetterRemainingBox"
-    class="remaining-box"
-    hidden
-  ></div>
-
-  <div
-    id="SetterLetterProfileBox"
-    class="letter-profile-box"
-    hidden
-  ></div>
 </aside>
-            </div>
-            <!-- SECRET / PENDING-GUESS ROWS: full width, below both
-                 columns, right above the keyboard -- larger than the
-                 history/constraint rows above since these are the two
-                 rows a player is actually acting on each turn (see
-                 features.css's .setter-secret-row). draftrow.js already
-                 appends the pending-guess row before the draft row, so
-                 pending-guess renders above the draft row here without
-                 any JS change. -->
-            <div class="draft-row-wrap setter-secret-row">
-               <div class="draft-stack">
-                  <div id="draftSetter" class="history-tiles draft-layer"></div>
-                  <div id="secretLockOverlay" class="secret-lock-overlay hidden">🔒</div>
-                  <div id="setterDraftInvalidOverlay" class="secret-invalid-overlay hidden">✕</div>
-               </div>
             </div>
             <!-- KEYBOARD AREA-->
              <div id="SetterMustContainBox" class="must-contain-box" hidden></div>

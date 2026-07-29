@@ -2547,40 +2547,14 @@ body:has(#guesserScreen.active) #appMain {
 
 
 /* =====================================================
-   SECRET / PENDING-GUESS ROWS -- FULL WIDTH, ABOVE KEYBOARD
-   ===================================================== */
-
-/*
-  Sits below BOTH columns (sidebar + board) as its own full-width row,
-  not inside .center-col with the constraint/history rows -- these two
-  rows (the guesser's pending guess, and the setter's own secret) are
-  what the setter is actually acting on every turn, so they get the
-  most horizontal room on the screen and (via their own container-query
-  context below) size their tiles larger than the ones still confined
-  to .center-col's narrower width.
-*/
-#setterScreen .setter-secret-row {
-  container-type: inline-size;
-  margin-top: var(--sp-10, 10px);
-}
-
-#setterScreen .setter-secret-row .history-tile {
-  width: clamp(38px, 18cqw, 90px);
-  height: clamp(38px, 18cqw, 90px);
-  font-size: clamp(18px, 9cqw, 44px);
-}
-
-
-/* =====================================================
    LOG / NOTES SIDEBAR SECTION
    ===================================================== */
 
 /*
-  Collapsed by default (just the Log/Notes tabs, no panel) -- the powers
-  section above needs most of the sidebar's height for the now
-  full-width, stacked power/quest cards. Clicking a tab expands this
-  section to make room for its panel; clicking that same tab again
-  collapses it back (see ui/setter-sidebar.js's showSetterSidebarPanel).
+  Log starts open (see ui/setter-sidebar.js's initialiseSetterSidebar) --
+  Notes still starts collapsed. Clicking a tab expands this section to
+  make room for its panel; clicking that same tab again collapses it
+  back down to just the two tabs.
 */
 #setterScreen .setter-sidebar-activity {
   display: flex;

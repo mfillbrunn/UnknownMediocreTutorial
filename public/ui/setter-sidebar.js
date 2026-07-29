@@ -11,9 +11,10 @@
   }
 
   /*
-    panelName is "log", "notes", or null -- null means neither panel is
-    open (the default/collapsed state; see initialiseSetterSidebar's
-    click handlers for the toggle-the-active-one-closed behavior).
+    panelName is "log" or "notes" -- Log starts open by default (see
+    initialiseSetterSidebar), and clicking the currently-open tab closes
+    it, dropping panelName to null (neither panel open) rather than
+    forcing something to always be shown.
   */
   function showSetterSidebarPanel(panelName) {
     const activitySection = document.querySelector(
@@ -44,7 +45,7 @@
     // Tracks which of Log/Notes is currently open (null = neither) so a
     // click on the already-open tab can close it instead of re-opening
     // the same panel.
-    let activeSetterPanel = null;
+    let activeSetterPanel = "log";
 
     logButton?.addEventListener("click", () => {
       activeSetterPanel = activeSetterPanel === "log" ? null : "log";
@@ -56,11 +57,11 @@
       showSetterSidebarPanel(activeSetterPanel);
     });
 
-    // Required initial state: Log/Notes collapsed.
-    showSetterSidebarPanel(null);
+    // Required initial state: Log open.
+    showSetterSidebarPanel("log");
 
-    // Whenever the player returns to the setter screen, collapse Log/Notes
-    // back down.
+    // Whenever the player returns to the setter screen, reopen Log by
+    // default again.
     const setterScreen = byId("setterScreen");
 
     if (setterScreen) {
@@ -70,8 +71,8 @@
         const isActive = setterScreen.classList.contains("active");
 
         if (isActive && !wasActive) {
-          activeSetterPanel = null;
-          showSetterSidebarPanel(null);
+          activeSetterPanel = "log";
+          showSetterSidebarPanel("log");
         }
 
         wasActive = isActive;
