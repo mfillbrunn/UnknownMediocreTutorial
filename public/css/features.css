@@ -2996,6 +2996,52 @@ body:has(#guesserScreen.active) #appMain {
   }
 }
 
+/* Letter Profile: a passive card in the guesser's own power row, same slot
+   an active power's button would occupy (see
+   powerEngine/powers/letterProfile.js) -- shows the live category
+   breakdown instead of a name label, since there's nothing to click. */
+.letter-profile-tile {
+  cursor: default;
+}
+
+.letter-profile-tile .power-icon {
+  max-width: 32px;
+}
+
+.letter-profile-tile-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.letter-profile-tile-lines .line {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.letter-profile-tile-lines .label {
+  opacity: 0.75;
+  font-weight: 700;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+.letter-profile-tile-lines .value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  font-size: 11px;
+  color: var(--text);
+}
+
+.letter-profile-tile-lines .letter-profile-tile-pending {
+  justify-content: center;
+  opacity: 0.5;
+  font-weight: 700;
+}
+
 /* =====================================================
    SMALL IPHONE ADJUSTMENTS
    ===================================================== */
