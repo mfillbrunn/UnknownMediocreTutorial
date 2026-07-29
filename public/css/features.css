@@ -239,11 +239,16 @@
   font-size: 11px;
 }
 /* Colored by the role that actually owns the power, not the viewer's own
-   screen — so an opponent's power reads distinctly from your own. */
-.log-power-setter {
+   screen — so an opponent's power reads distinctly from your own. The
+   compound selector (not just .log-power-setter/-guesser alone) is
+   deliberate: those alone tie with .log-power above on specificity and
+   would only win by sitting later in this file, which is easy to break
+   by accident later -- this way it always wins regardless of source
+   order. */
+.log-power.log-power-setter {
   color: var(--setter-color);
 }
-.log-power-guesser {
+.log-power.log-power-guesser {
   color: var(--guesser-color);
 }
 .log-lock {

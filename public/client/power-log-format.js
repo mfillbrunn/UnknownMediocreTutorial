@@ -63,7 +63,11 @@
     // this shape directly on completion, so it's formatted here instead
     // of falling through to the metadata lookup below.
     if (evt.id === "quest") {
-      return { id: "quest", emoji: "", label: "Quest", desc: "", detail: null, text: "Quest completed", actorRole: evt.actorRole || null };
+      // Always the guesser's own quest regardless of what the emitted
+      // payload's actorRole says (there's no other role it could ever
+      // belong to) -- hard-coded rather than trusting evt.actorRole so
+      // this can't ever fall back to the default/unstyled color.
+      return { id: "quest", emoji: "", label: "Quest", desc: "", detail: null, text: "Quest completed", actorRole: "guesser" };
     }
 
     const variant = window.state?.powers?.[evt.id]?.mode || null;
