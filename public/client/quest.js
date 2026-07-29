@@ -302,6 +302,29 @@ function computeQuestStatus(state) {
 }
 window.computeQuestStatus = computeQuestStatus;
 
+// The setter has no visual quest card of their own (the guesser's quest
+// is shown to them as a power-badge-tile card, but that's hidden from
+// the setter's power row -- see features.css's "NEVER SHOW A QUEST CARD
+// IN THE SETTER'S OWN POWER VIEW"), so their only view of it is here in
+// the shared info badge: name, live status, and -- via subtext, the same
+// slot Field Report's per-turn conditions already use -- whatever the
+// quest's own description covers, condition list included.
+InfoBadgeEngine.register((state, role) => {
+  if (role !== "setter") return null;
+
+  const status = computeQuestStatus(state);
+  if (!status) return null;
+
+  return {
+    id: "questStatus",
+    emoji: status.meta.emoji,
+    text: `Quest: ${status.meta.label} — ${status.label}`,
+    subtext: status.desc,
+    color: "#4da3ff",
+    screen: "setter"
+  };
+});
+
 // --------------------------------------------------
 // Quest — badge tile, guesser only. Sits in the same power-container row
 // as the power buttons (guesserPowerContainer) so the active quest reads
