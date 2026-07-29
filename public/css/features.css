@@ -2969,15 +2969,16 @@ body:has(#guesserScreen.active) #appMain {
 */
 #guesserScreen .guesser-power-view {
   display: flex !important;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  gap: var(--sp-6);
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+
+  gap: var(--sp-4);
 
   width: 100%;
   min-width: 0;
 }
-
 #guesserScreen .guesser-power-view > *,
 #guesserScreen .guesser-power-view .power-btn-wrapper,
 #guesserScreen .guesser-power-view .power-btn {
