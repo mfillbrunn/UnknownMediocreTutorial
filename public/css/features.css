@@ -2793,23 +2793,72 @@ body:has(#guesserScreen.active) #appMain {
   mobile.css's .powers-col .power-btn.power-badge fixes a small
   height:66px meant for a half-width two-per-row card -- reset that to
   auto/min-height so the now full-width card can actually grow into the
-  extra room, and give the icon/label more space to match.
+  extra room, and give the icon/label more space to match. The setter's
+  sidebar column stays narrow (~104px) even at full width, so this keeps
+  the original icon-over-label vertical card shape -- see the guesser
+  rule below for why its own (much wider) column needed a different
+  shape instead.
 */
-#setterScreen .setter-power-view .power-btn.power-badge,
-#guesserScreen .guesser-power-view .power-btn.power-badge {
+#setterScreen .setter-power-view .power-btn.power-badge {
   height: auto;
   min-height: 96px;
 }
 
-#setterScreen .setter-power-view .power-icon,
-#guesserScreen .guesser-power-view .power-icon {
+#setterScreen .setter-power-view .power-icon {
   max-width: 44px;
 }
 
-#setterScreen .setter-power-view .power-btn-label,
-#guesserScreen .guesser-power-view .power-btn-label {
+#setterScreen .setter-power-view .power-btn-label {
   height: 28px;
   font-size: 10px;
+}
+
+/*
+  The guesser's power row sits in a wide single-column area below the
+  board (300+px), not a narrow sidebar -- keeping the vertical icon-
+  over-label shape there just centered a tiny icon/chip in a mostly-
+  empty wide bar. Horizontal row instead: icon/chip on the left, label
+  filling the rest of the width, so the extra width goes to readable
+  text instead of empty space.
+*/
+#guesserScreen .guesser-power-view .power-btn.power-badge {
+  height: auto;
+  min-height: 56px;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--sp-10, 10px);
+  padding: 10px 14px;
+}
+
+#guesserScreen .guesser-power-view .power-icon {
+  width: 32px;
+  max-width: 32px;
+  flex: 0 0 auto;
+}
+
+#guesserScreen .guesser-power-view .power-btn-label {
+  height: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  font-size: 12px;
+}
+
+/*
+  The quest card's progress chip normally flex-grows to fill the space
+  the (hidden) icon left behind -- in the guesser's row layout that
+  would blow the chip up to fill all the leftover horizontal width
+  instead of the label. Keep the chip sized to its own content and let
+  the label claim the width instead, same division of space as every
+  other power card above (icon-sized slot + flexible label).
+*/
+#guesserScreen .guesser-power-view .quest-badge-tile .quest-progress-chip {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 13px;
 }
 
 /* Opponent powers are informational and cannot be activated. */
