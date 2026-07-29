@@ -3042,6 +3042,38 @@ body:has(#guesserScreen.active) #appMain {
   font-weight: 700;
 }
 
+/* Informant: same passive-card treatment as Letter Profile above (see
+   powerEngine/powers/revealLocation.js) -- the peeked position + letter
+   instead of a name label. Used to live inside the remaining-words box;
+   .informant-tile is that same green letter tile, reused here. */
+.informant-power-tile {
+  cursor: default;
+}
+
+.informant-power-tile .power-icon {
+  max-width: 32px;
+}
+
+.informant-power-tile-peek {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.informant-power-tile-ordinal {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  opacity: 0.75;
+}
+
+.informant-power-tile-pending {
+  font-weight: 700;
+  opacity: 0.5;
+}
+
 /* =====================================================
    SMALL IPHONE ADJUSTMENTS
    ===================================================== */
