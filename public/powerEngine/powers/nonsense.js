@@ -35,8 +35,19 @@ tooltip: {
   }
 });
 
+// nonsenseActive/nonsenseLastTurn (server-set) only cover ~1 of the
+// setter's own turns after use before clearing -- easy to miss now that
+// Log (not Info) is the default tab, since by the time a player switches
+// over to check Info the window's often already gone. state.history still
+// has this round's nonsense powerEvent (see logPowerUse.js) for as long
+// as the round itself lasts, so fall back to that: once used, this stays
+// visible in Info for the rest of the round instead of disappearing after
+// one turn.
 InfoBadgeEngine.register((state, role) => {
-  if (!state.powers?.nonsenseActive && !state.powers?.nonsenseLastTurn) return null;
+  const usedThisRound = (state.history || []).some(entry =>
+    (entry.powerEvents || []).some(evt => evt.id === "nonsense")
+  );
+  if (!state.powers?.nonsenseActive && !state.powers?.nonsenseLastTurn && !usedThisRound) return null;
 
   const meta = POWER_METADATA.nonsense;
 
