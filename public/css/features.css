@@ -2722,7 +2722,17 @@ body:has(#guesserScreen.active) #appMain {
 
 #setterScreen .setter-sidebar-powers {
   flex: 1 1 0;
-  min-height: 0;
+  /* A bare min-height:0 let this shrink arbitrarily far below its actual
+     content on short viewports -- with the Log/Notes panel below it also
+     competing for space (and defaulting open), that meant the LAST power
+     card's label could get silently scroll-clipped with no visible
+     scrollbar or fade to hint more was there; it just looked cut off.
+     Each card's min-height (64px) is just a floor -- icon+label+padding
+     actually need ~81px, so 3 cards (the max a setter carries) plus the
+     grid's own gaps (6px * 2) come to ~255px. Floor it there so the
+     common case always shows every card in full, and only an unusually
+     short viewport still needs to scroll for it. */
+  min-height: 255px;
 
   overflow-x: hidden;
   overflow-y: auto;
