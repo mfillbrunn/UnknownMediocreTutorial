@@ -120,17 +120,30 @@ function getRemainingWordInfo(state, allowedSecrets, draftSecret) {
 }
 
 function buildSetterRemainingBoxState(state, viewerId, allowedSecrets, draftSecret = null) {
-  if (
-    !state ||
-    state.phase === "simultaneous" ||
-    state.phase === "lobby" ||
-    state.phase === "gameOver"
-  ) {
+  if (!state || state.phase === "lobby" || state.phase === "gameOver") {
     return { visible: false };
   }
 
   if (viewerId !== state.setter) {
     return { visible: false };
+  }
+
+  // During the simultaneous round-start phase the setter is still
+  // choosing their secret -- there's no guess/feedback yet for
+  // getRemainingWordInfo to filter against, so show the box with empty
+  // placeholders instead of hiding it outright (it used to only appear
+  // once the round's first guess landed).
+  if (state.phase === "simultaneous") {
+    return {
+      visible: true,
+      empty: true,
+      current: null,
+      old: null,
+      new: null,
+      isConsistent: true,
+      highlightOld: false,
+      highlightNew: false
+    };
   }
 
   const info = getRemainingWordInfo(state, allowedSecrets, draftSecret);

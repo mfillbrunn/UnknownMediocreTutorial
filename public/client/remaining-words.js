@@ -23,6 +23,30 @@ function renderSetterRemainingBox(boxState) {
   // that never touches window.state).
   window._lastRemainingBoxState = boxState;
 
+  // Simultaneous round-start: the setter is still choosing their secret,
+  // so there's no guess/feedback yet to compute real numbers from. Show
+  // the box (so its layout/position is stable from the very start of the
+  // round) with placeholder dashes instead of the real stats.
+  if (boxState.empty) {
+    box.innerHTML = `
+      <div class="remaining-stats">
+        <div class="remaining-stat">
+          <span class="remaining-stat-label">Old</span>
+          <span class="remaining-stat-value">–</span>
+        </div>
+        <div class="remaining-stat">
+          <span class="remaining-stat-label">Keep</span>
+          <span class="remaining-stat-value">–</span>
+        </div>
+        <div class="remaining-stat">
+          <span class="remaining-stat-label">New</span>
+          <span class="remaining-stat-value">–</span>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
   const oldStyle = boxState.highlightOld ? "color: var(--tile-green)" : "";
   const newStyle = boxState.highlightNew ? "color: var(--tile-green)" : "";
   const current = boxState.current.toLocaleString();

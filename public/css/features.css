@@ -2550,20 +2550,31 @@ body:has(#guesserScreen.active) #appMain {
    LOG / NOTES SIDEBAR SECTION
    ===================================================== */
 
+/*
+  Collapsed by default (just the Log/Notes tabs, no panel) -- the powers
+  section above needs most of the sidebar's height for the now
+  full-width, stacked power/quest cards. Clicking a tab expands this
+  section to make room for its panel; clicking that same tab again
+  collapses it back (see ui/setter-sidebar.js's showSetterSidebarPanel).
+*/
 #setterScreen .setter-sidebar-activity {
   display: flex;
   flex-direction: column;
 
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#setterScreen .setter-sidebar-activity.panel-open {
   /*
-    Capped rather than flex:1 -- the powers section below (power cards +
-    the Old/Keep/New remaining-words box + its guide hint) needs most of
-    the sidebar's height to avoid scrolling on every turn; the Log can
-    scroll internally for its own overflow instead of claiming the
-    larger share by default.
+    Capped rather than flex:1 while open -- the powers section above
+    still needs most of the sidebar's height; the open panel scrolls
+    internally for its own overflow instead of claiming the larger
+    share.
   */
   flex: 0 1 34%;
   min-height: 60px;
-  overflow: hidden;
 }
 
 #setterScreen .setter-sidebar-tabs {
@@ -2715,14 +2726,14 @@ body:has(#guesserScreen.active) #appMain {
 
 
 /* =====================================================
-   TWO POWER BUTTONS PER ROW
+   ONE POWER BUTTON PER ROW, FULL COLUMN WIDTH
    ===================================================== */
 
 #setterScreen .setter-power-view {
   display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   align-items: start;
-  gap: var(--sp-4);
+  gap: var(--sp-6);
 
   width: 100%;
   min-width: 0;
@@ -2757,8 +2768,9 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 /*
-  Override fixed badge widths from mobile.css/powers.css so two
-  buttons can fit in the fixed sidebar.
+  Override fixed badge widths from mobile.css/powers.css so a single
+  button spans the whole sidebar column instead of the small fixed
+  63x66px card that layout assumed two-per-row.
 */
 #setterScreen .setter-power-view > *,
 #setterScreen .setter-power-view .power-btn-wrapper,
@@ -2775,6 +2787,29 @@ body:has(#guesserScreen.active) #appMain {
   padding-left: 3px;
   padding-right: 3px;
   overflow: hidden;
+}
+
+/*
+  mobile.css's .powers-col .power-btn.power-badge fixes a small
+  height:66px meant for a half-width two-per-row card -- reset that to
+  auto/min-height so the now full-width card can actually grow into the
+  extra room, and give the icon/label more space to match.
+*/
+#setterScreen .setter-power-view .power-btn.power-badge,
+#guesserScreen .guesser-power-view .power-btn.power-badge {
+  height: auto;
+  min-height: 96px;
+}
+
+#setterScreen .setter-power-view .power-icon,
+#guesserScreen .guesser-power-view .power-icon {
+  max-width: 44px;
+}
+
+#setterScreen .setter-power-view .power-btn-label,
+#guesserScreen .guesser-power-view .power-btn-label {
+  height: 28px;
+  font-size: 10px;
 }
 
 /* Opponent powers are informational and cannot be activated. */
@@ -2917,6 +2952,35 @@ body:has(#guesserScreen.active) #appMain {
   box-shadow:
     0 0 6px
     color-mix(in srgb, var(--role-accent) 35%, transparent);
+}
+
+/*
+  One power/quest button per row, full width, stacked vertically --
+  same idea as #setterScreen .setter-power-view above, but this
+  container stays flex (not grid; see the .hidden rule below, which
+  depends on that) since it's shared with the setter's read-only Opp
+  mirror via makeReadOnlyClone rather than rebuilt per screen.
+*/
+#guesserScreen .guesser-power-view {
+  display: flex !important;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: var(--sp-6);
+
+  width: 100%;
+  min-width: 0;
+}
+
+#guesserScreen .guesser-power-view > *,
+#guesserScreen .guesser-power-view .power-btn-wrapper,
+#guesserScreen .guesser-power-view .power-btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  box-sizing: border-box;
+  margin: 0 !important;
 }
 
 /*

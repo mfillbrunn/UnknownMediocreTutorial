@@ -776,58 +776,6 @@
   class="play-col powers-col setter-sidebar"
   aria-label="Game sidebar"
 >
-  <!-- LOG / NOTES -->
-  <section class="setter-sidebar-activity">
-    <div
-      class="setter-sidebar-tabs"
-      role="tablist"
-      aria-label="Game information"
-    >
-      <button
-        type="button"
-        id="actionLogBtnSetter"
-        class="header-sm-btn setter-sidebar-tab is-active"
-        role="tab"
-        aria-selected="true"
-        aria-controls="actionLogSetter"
-      >
-        Log
-      </button>
-
-      <button
-        type="button"
-        id="notesBtnSetter"
-        class="header-sm-btn setter-sidebar-tab"
-        role="tab"
-        aria-selected="false"
-        aria-controls="notesPanelSetter"
-      >
-        Notes
-      </button>
-    </div>
-
-    <div class="setter-sidebar-panels">
-      <!-- No "hidden" class: Log is shown by default -->
-      <div
-        id="actionLogSetter"
-        class="game-side-panel action-log-panel setter-sidebar-panel"
-        role="tabpanel"
-        aria-labelledby="actionLogBtnSetter"
-      ></div>
-
-      <div
-        id="notesPanelSetter"
-        class="game-side-panel notes-panel setter-sidebar-panel hidden"
-        role="tabpanel"
-        aria-labelledby="notesBtnSetter"
-      >
-        <div class="notes-panel-title">Notes</div>
-        <div id="notesDraftSetter" class="notes-draft-row"></div>
-        <div id="notesListSetter" class="notes-list"></div>
-      </div>
-    </div>
-  </section>
-
   <!-- POWER VIEW -->
   <section class="setter-sidebar-powers">
     <div
@@ -907,6 +855,59 @@
       class="letter-profile-box"
       hidden
     ></div>
+  </section>
+
+  <!-- LOG / NOTES: last in the column, hidden by default -- clicking
+       whichever tab is currently open closes it again instead of just
+       switching (see ui/setter-sidebar.js). -->
+  <section class="setter-sidebar-activity">
+    <div
+      class="setter-sidebar-tabs"
+      role="tablist"
+      aria-label="Game information"
+    >
+      <button
+        type="button"
+        id="actionLogBtnSetter"
+        class="header-sm-btn setter-sidebar-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="actionLogSetter"
+      >
+        Log
+      </button>
+
+      <button
+        type="button"
+        id="notesBtnSetter"
+        class="header-sm-btn setter-sidebar-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="notesPanelSetter"
+      >
+        Notes
+      </button>
+    </div>
+
+    <div class="setter-sidebar-panels">
+      <div
+        id="actionLogSetter"
+        class="game-side-panel action-log-panel setter-sidebar-panel hidden"
+        role="tabpanel"
+        aria-labelledby="actionLogBtnSetter"
+      ></div>
+
+      <div
+        id="notesPanelSetter"
+        class="game-side-panel notes-panel setter-sidebar-panel hidden"
+        role="tabpanel"
+        aria-labelledby="notesBtnSetter"
+      >
+        <div class="notes-panel-title">Notes</div>
+        <div id="notesDraftSetter" class="notes-draft-row"></div>
+        <div id="notesListSetter" class="notes-list"></div>
+      </div>
+    </div>
   </section>
 </aside>
             </div>

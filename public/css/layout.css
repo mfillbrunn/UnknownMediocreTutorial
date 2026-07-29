@@ -513,10 +513,12 @@ body:has(#guesserScreen.active) #appContainer {
   white-space: nowrap;
 }
 
-/* Live score: your own number stands out, the opponent's stays muted —
-   the same "you" convention as .me-winner elsewhere. A tiny YOU/OPP
-   caption above each number spells it out too, the same pattern the
-   adjacent timer block already uses. */
+/* Live score: your own number stands out via color, the opponent's
+   stays muted via opacity -- same "you" convention as .me-winner
+   elsewhere -- but both numbers share one font-size/weight so neither
+   looks bigger or bolder than the other. A tiny YOU/OPP caption above
+   each number spells it out too, the same pattern the adjacent timer
+   block already uses. */
 .score-you,
 .score-opp {
   display: inline-flex;
@@ -524,6 +526,8 @@ body:has(#guesserScreen.active) #appContainer {
   align-items: center;
   line-height: 1;
   vertical-align: middle;
+  font-size: 1em;
+  font-weight: 800;
 }
 
 .score-label {
@@ -536,7 +540,6 @@ body:has(#guesserScreen.active) #appContainer {
 
 .score-you {
   color: var(--tile-green);
-  font-size: 1.15em;
 }
 
 .score-opp {

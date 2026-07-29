@@ -10,7 +10,15 @@
     button.setAttribute("aria-selected", String(selected));
   }
 
+  /*
+    panelName is "log", "notes", or null -- null means neither panel is
+    open (the default/collapsed state; see initialiseSetterSidebar's
+    click handlers for the toggle-the-active-one-closed behavior).
+  */
   function showSetterSidebarPanel(panelName) {
+    const activitySection = document.querySelector(
+      "#setterScreen .setter-sidebar-activity"
+    );
     const logPanel = byId("actionLogSetter");
     const notesPanel = byId("notesPanelSetter");
 
@@ -18,12 +26,15 @@
     const notesButton = byId("notesBtnSetter");
 
     const showLog = panelName === "log";
+    const showNotes = panelName === "notes";
 
     logPanel?.classList.toggle("hidden", !showLog);
-    notesPanel?.classList.toggle("hidden", showLog);
+    notesPanel?.classList.toggle("hidden", !showNotes);
 
     setTabState(logButton, showLog);
-    setTabState(notesButton, !showLog);
+    setTabState(notesButton, showNotes);
+
+    activitySection?.classList.toggle("panel-open", showLog || showNotes);
   }
 
   /*
@@ -182,12 +193,19 @@
     const ownButton = byId("setterPowersYouBtn");
     const opponentButton = byId("setterPowersOppBtn");
 
+    // Tracks which of Log/Notes is currently open (null = neither) so a
+    // click on the already-open tab can close it instead of re-opening
+    // the same panel.
+    let activeSetterPanel = null;
+
     logButton?.addEventListener("click", () => {
-      showSetterSidebarPanel("log");
+      activeSetterPanel = activeSetterPanel === "log" ? null : "log";
+      showSetterSidebarPanel(activeSetterPanel);
     });
 
     notesButton?.addEventListener("click", () => {
-      showSetterSidebarPanel("notes");
+      activeSetterPanel = activeSetterPanel === "notes" ? null : "notes";
+      showSetterSidebarPanel(activeSetterPanel);
     });
 
     ownButton?.addEventListener("click", () => {
@@ -199,10 +217,10 @@
     });
 
     /*
-      Required initial state:
-      Log visible and your own powers visible.
+      Required initial state: Log/Notes collapsed, your own powers
+      visible.
     */
-    showSetterSidebarPanel("log");
+    showSetterSidebarPanel(null);
     showSetterPowerView("you");
 
     /*
@@ -238,7 +256,7 @@
 
     /*
       Whenever the player returns to the setter screen, reset the
-      sidebar to Log + You.
+      sidebar to Log/Notes collapsed + You.
     */
     const setterScreen = byId("setterScreen");
 
@@ -249,7 +267,8 @@
         const isActive = setterScreen.classList.contains("active");
 
         if (isActive && !wasActive) {
-          showSetterSidebarPanel("log");
+          activeSetterPanel = null;
+          showSetterSidebarPanel(null);
           showSetterPowerView("you");
         }
 
