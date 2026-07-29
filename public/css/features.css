@@ -2780,33 +2780,10 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 /*
-  The active-power status strip (InfoBadgeEngine), the Old/Keep/New
-  remaining-words count, and the letter profile box now sit below
-  Log/Notes as direct children of the sidebar (see index.html), not
-  nested inside .setter-sidebar-powers -- shrunk to fit the same
-  ~104-140px column width, instead of the wider size InfoBadge was
-  originally tuned for as a full-width strip over the board.
+  The Old/Keep/New remaining-words count and the letter profile box sit
+  below the power cards as direct children of the sidebar (see
+  index.html), not nested inside .setter-sidebar-powers.
 */
-#setterScreen .setter-sidebar #SetterInfoBadge {
-  margin-top: var(--sp-4);
-  gap: 2px var(--sp-6);
-  font-size: var(--fs-11, 11px);
-}
-
-#setterScreen .setter-sidebar #SetterInfoBadge.show {
-  padding: var(--sp-4) var(--sp-8);
-}
-
-#setterScreen .setter-sidebar .badge-item:nth-child(1),
-#setterScreen .setter-sidebar .badge-item:nth-child(2),
-#setterScreen .setter-sidebar .badge-item:nth-child(3) {
-  font-size: var(--fs-12, 12px);
-}
-
-#setterScreen .setter-sidebar #SetterInfoBadgeDetail {
-  padding: 0 var(--sp-6);
-  font-size: var(--fs-10, 10px);
-}
 
 
 /* =====================================================
