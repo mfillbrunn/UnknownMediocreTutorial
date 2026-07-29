@@ -800,7 +800,7 @@
     hidden
   ></div>
 
-  <!-- LOG / INFO: last element in the column. Log starts open;
+  <!-- LOG / NOTES: last element in the column. Log starts open;
        clicking whichever tab is currently open closes it again instead
        of just switching (see ui/setter-sidebar.js). -->
   <section class="setter-sidebar-activity">
@@ -822,13 +822,13 @@
 
       <button
         type="button"
-        id="infoBtnSetter"
+        id="notesBtnSetter"
         class="header-sm-btn setter-sidebar-tab"
         role="tab"
         aria-selected="false"
-        aria-controls="infoPanelSetter"
+        aria-controls="notesPanelSetter"
       >
-        Info
+        Notes
       </button>
     </div>
 
@@ -840,19 +840,15 @@
         aria-labelledby="actionLogBtnSetter"
       ></div>
 
-      <!-- Active-power status (InfoBadgeEngine -- already includes
-           cross-role things visible to the setter, like the guesser's
-           live Field Report quest conditions) plus the word-distribution
-           (vowel/consonant) breakdown. -->
       <div
-        id="infoPanelSetter"
-        class="game-side-panel setter-sidebar-panel hidden"
+        id="notesPanelSetter"
+        class="game-side-panel notes-panel setter-sidebar-panel hidden"
         role="tabpanel"
-        aria-labelledby="infoBtnSetter"
+        aria-labelledby="notesBtnSetter"
       >
-        <div id="SetterInfoBadge" class="info badge"></div>
-        <div id="SetterInfoBadgeDetail" class="info-badge-detail" hidden></div>
-        <div id="SetterLetterProfileBox" class="letter-profile-box" hidden></div>
+        <div class="notes-panel-title">Notes</div>
+        <div id="notesDraftSetter" class="notes-draft-row"></div>
+        <div id="notesListSetter" class="notes-list"></div>
       </div>
     </div>
   </section>
@@ -976,64 +972,20 @@
                     </div>
                   </div>
              </div>
-             <!-- BELOW TILES: own power/quest cards on the left, Log/Info
-                  tabs on the right -- sharing this row instead of the
-                  info badge sitting in its own full-width band below the
-                  whole play area. Log/Info toggle like on the setter
-                  screen (see ui/guesser-sidebar.js), Log open by
-                  default. -->
+             <!-- BELOW TILES: own power/quest cards on the left, the
+                  action log on the right -- sharing this row instead of
+                  the info badge sitting in its own full-width band below
+                  the whole play area. Just the log, always shown -- no
+                  tab switcher (see ui/guesser-sidebar.js). -->
              <div class="play-col powers-col">
                 <div class="guesser-powers-row">
                   <div id="guesserPowerContainer" class="power-container laser-scope guesser-power-view">
                   </div>
                   <section class="guesser-info-col">
                     <div
-                      class="guesser-sidebar-tabs"
-                      role="tablist"
-                      aria-label="Game information"
-                    >
-                      <button
-                        type="button"
-                        id="actionLogBtnGuesser"
-                        class="header-sm-btn guesser-sidebar-tab"
-                        role="tab"
-                        aria-selected="false"
-                        aria-controls="actionLogGuesser"
-                      >
-                        Log
-                      </button>
-
-                      <button
-                        type="button"
-                        id="infoBtnGuesser"
-                        class="header-sm-btn guesser-sidebar-tab"
-                        role="tab"
-                        aria-selected="false"
-                        aria-controls="infoPanelGuesser"
-                      >
-                        Info
-                      </button>
-                    </div>
-
-                    <div class="guesser-sidebar-panels">
-                      <div
-                        id="actionLogGuesser"
-                        class="game-side-panel action-log-panel guesser-sidebar-panel hidden"
-                        role="tabpanel"
-                        aria-labelledby="actionLogBtnGuesser"
-                      ></div>
-
-                      <div
-                        id="infoPanelGuesser"
-                        class="game-side-panel guesser-sidebar-panel hidden"
-                        role="tabpanel"
-                        aria-labelledby="infoBtnGuesser"
-                      >
-                        <div id="GuesserInfoBadge" class="info badge"></div>
-                        <div id="GuesserInfoBadgeDetail" class="info-badge-detail" hidden></div>
-                        <div id="GuesserLetterProfileBox" class="letter-profile-box" hidden></div>
-                      </div>
-                    </div>
+                      id="actionLogGuesser"
+                      class="game-side-panel action-log-panel guesser-sidebar-panel"
+                    ></div>
                   </section>
                 </div>
                 <div id="GuesserRemainingBox" class="remaining-box" hidden></div>

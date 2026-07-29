@@ -11,7 +11,7 @@
   }
 
   /*
-    panelName is "log" or "info" -- Log starts open by default (see
+    panelName is "log" or "notes" -- Log starts open by default (see
     initialiseSetterSidebar), and clicking the currently-open tab closes
     it, dropping panelName to null (neither panel open) rather than
     forcing something to always be shown.
@@ -21,28 +21,42 @@
       "#setterScreen .setter-sidebar-activity"
     );
     const logPanel = byId("actionLogSetter");
-    const infoPanel = byId("infoPanelSetter");
+    const notesPanel = byId("notesPanelSetter");
 
     const logButton = byId("actionLogBtnSetter");
-    const infoButton = byId("infoBtnSetter");
+    const notesButton = byId("notesBtnSetter");
 
     const showLog = panelName === "log";
-    const showInfo = panelName === "info";
+    const showNotes = panelName === "notes";
 
     logPanel?.classList.toggle("hidden", !showLog);
-    infoPanel?.classList.toggle("hidden", !showInfo);
+    notesPanel?.classList.toggle("hidden", !showNotes);
 
     setTabState(logButton, showLog);
-    setTabState(infoButton, showInfo);
+    setTabState(notesButton, showNotes);
 
-    activitySection?.classList.toggle("panel-open", showLog || showInfo);
+    activitySection?.classList.toggle("panel-open", showLog || showNotes);
+
+    // Notes tracks its own active/inactive state separately (keyboard
+    // capture, in-progress draft, entry list -- see client/notes.js), on
+    // top of this tab's own hidden/visible class above. Only one of these
+    // two calls actually does anything: toggleNotes no-ops via its own
+    // guard when already active, closeNotes no-ops when already inactive.
+    // Without this, switching to Log wouldn't release Notes' keyboard
+    // capture, so real typing would keep getting swallowed by the (now
+    // hidden) notes scratchpad instead of reaching the real guess/secret.
+    if (showNotes) {
+      if (!window.isNotesActive?.()) window.toggleNotes?.("setter");
+    } else {
+      window.closeNotes?.();
+    }
   }
 
   function initialiseSetterSidebar() {
     const logButton = byId("actionLogBtnSetter");
-    const infoButton = byId("infoBtnSetter");
+    const notesButton = byId("notesBtnSetter");
 
-    // Tracks which of Log/Info is currently open (null = neither) so a
+    // Tracks which of Log/Notes is currently open (null = neither) so a
     // click on the already-open tab can close it instead of re-opening
     // the same panel.
     let activeSetterPanel = "log";
@@ -52,8 +66,8 @@
       showSetterSidebarPanel(activeSetterPanel);
     });
 
-    infoButton?.addEventListener("click", () => {
-      activeSetterPanel = activeSetterPanel === "info" ? null : "info";
+    notesButton?.addEventListener("click", () => {
+      activeSetterPanel = activeSetterPanel === "notes" ? null : "notes";
       showSetterSidebarPanel(activeSetterPanel);
     });
 

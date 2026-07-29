@@ -2813,107 +2813,7 @@ body:has(#guesserScreen.active) #appMain {
 
 
 /* =====================================================
-   INFO TAB (replaces Notes) -- active-power status (InfoBadgeEngine)
-   plus the word-distribution/letter-profile breakdown.
-
-   InfoBadgeEngine's badge markup/components.css's base styling was
-   built for a standalone pill-shaped status strip (its own background,
-   border, box-shadow, centered inline-wrap layout) -- sitting inside
-   this tab next to the Log tab's plain stacked-row entries, that read
-   as a separate boxed widget bolted on rather than more of the same
-   list. Flattened here to the exact same look as a .log-entry: no pill
-   container, one item per block-level row instead of an inline-wrapped
-   run, same font-size/line-height/padding as the sidebar's Log tab
-   (#setterScreen .setter-sidebar .log-entry above). Each item's own
-   inline color (InfoBadgeEngine.render's per-message color) still
-   applies -- that's the same idea as the Log's own log-power-setter/
-   log-power-guesser color-coding, not part of the pill look being
-   removed.
-   ===================================================== */
-
-#setterScreen #infoPanelSetter #SetterInfoBadge {
-  display: block;
-  margin-top: 0;
-  gap: 0;
-  font-size: 9.5px;
-  font-weight: 400;
-  letter-spacing: normal;
-  text-align: left;
-}
-
-#setterScreen #infoPanelSetter #SetterInfoBadge.show {
-  padding: 0;
-  background: none;
-  border: none;
-  box-shadow: none;
-}
-
-#setterScreen #infoPanelSetter .badge-item {
-  display: block;
-  padding: 2px 4px;
-  font-size: 9.5px;
-  font-weight: 400;
-  opacity: 0.85;
-}
-
-#setterScreen #infoPanelSetter .badge-item:nth-child(1),
-#setterScreen #infoPanelSetter .badge-item:nth-child(2),
-#setterScreen #infoPanelSetter .badge-item:nth-child(3) {
-  font-size: 9.5px;
-  font-weight: 400;
-  opacity: 0.85;
-}
-
-#setterScreen #infoPanelSetter .badge-sep,
-#setterScreen #infoPanelSetter .badge-row-break {
-  display: none;
-}
-
-#setterScreen #infoPanelSetter #SetterInfoBadgeDetail {
-  padding: 0;
-  font-size: 9.5px;
-  font-weight: 400;
-  text-align: left;
-  line-height: 1.3;
-}
-
-#setterScreen #infoPanelSetter .info-badge-detail-item {
-  display: block;
-  padding: 2px 4px;
-  opacity: 0.7;
-}
-
-#setterScreen #infoPanelSetter .letter-profile-box {
-  margin-top: 0;
-  padding: 2px 4px;
-  background: none;
-  border: none;
-  border-radius: 0;
-  font-size: 9.5px;
-  font-weight: 400;
-}
-
-#setterScreen #infoPanelSetter .letter-profile-box .title {
-  border-bottom: none;
-  padding-bottom: 2px;
-  margin-bottom: 2px;
-  font-weight: 700;
-}
-
-/* Nothing active and no letter profile to show -- read as "nothing to
-   report" instead of the tab just looking broken/empty. */
-#setterScreen #infoPanelSetter:not(:has(#SetterInfoBadge.show, .letter-profile-box:not([hidden])))::after {
-  content: "Nothing active right now.";
-  display: block;
-  padding: var(--sp-8) 0;
-  font-size: 9.5px;
-  opacity: 0.6;
-  text-align: center;
-}
-
-
-/* =====================================================
-   GUESSER: OWN POWERS + INFO BADGE ROW
+   GUESSER: OWN POWERS + LOG ROW
    ===================================================== */
 
 /*
@@ -2954,12 +2854,10 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 /*
-  Log/Info tabs, like on the setter screen (ui/setter-sidebar.js /
-  ui/guesser-sidebar.js) -- unlike that tall standalone sidebar column
-  though, this box shares a short, fixed-height row with the power cards
-  (align-items:stretch above), so it never collapses to just its tabs:
-  exactly one of Log/Info is always showing, and both panels scroll
-  internally for their own overflow within that fixed height.
+  Just the action log now -- no tab switcher (see ui/guesser-sidebar.js).
+  This box shares a short, fixed-height row with the power cards
+  (align-items:stretch above), and the log scrolls internally for its own
+  overflow within that fixed height.
 */
 #guesserScreen .guesser-info-col {
   flex: 1 1 0;
@@ -2977,60 +2875,9 @@ body:has(#guesserScreen.active) #appMain {
   overflow: hidden;
 }
 
-#guesserScreen .guesser-sidebar-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-4);
-
-  flex: 0 0 auto;
-  margin-bottom: var(--sp-4);
-}
-
-#guesserScreen .guesser-sidebar-tab {
-  width: 100%;
-  min-width: 0;
-  min-height: 22px;
-
-  padding: 2px 4px;
-
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--r-6);
-
-  background: var(--panel-bg);
-  color: var(--text);
-
-  font-size: var(--fs-10, 10px);
-  font-weight: 800;
-  line-height: 1;
-  text-transform: uppercase;
-
-  cursor: pointer;
-}
-
-#guesserScreen .guesser-sidebar-tab.is-active {
-  border-color: var(--role-accent);
-
-  background: color-mix(
-    in srgb,
-    var(--role-accent) 20%,
-    var(--panel-bg)
-  );
-
-  box-shadow:
-    0 0 6px
-    color-mix(in srgb, var(--role-accent) 35%, transparent);
-}
-
-#guesserScreen .guesser-sidebar-panels {
-  position: relative;
-
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-/* The old panels may currently have absolute/fixed positioning (base
-   .game-side-panel, components.css). Inside this box, they become
-   ordinary contained/scrolling panels, same treatment as the setter's
+/* The old panel may currently have absolute/fixed positioning (base
+   .game-side-panel, components.css). Inside this box, it becomes an
+   ordinary contained/scrolling panel, same treatment as the setter's
    sidebar (#setterScreen .setter-sidebar .game-side-panel above). */
 #guesserScreen .guesser-sidebar-panel {
   position: static !important;
@@ -3040,8 +2887,8 @@ body:has(#guesserScreen.active) #appMain {
 
   display: block;
 
+  flex: 1 1 0;
   width: 100%;
-  height: 100%;
   min-width: 0;
   min-height: 0;
   max-width: none;
@@ -3066,10 +2913,6 @@ body:has(#guesserScreen.active) #appMain {
   overscroll-behavior: contain;
 }
 
-#guesserScreen .guesser-sidebar-panel.hidden {
-  display: none !important;
-}
-
 /* The log is embedded in a short, narrow box instead of the floating
    panel's original size -- shrink it to fit, same idea as the setter
    sidebar's log-entry override. */
@@ -3086,23 +2929,6 @@ body:has(#guesserScreen.active) #appMain {
 
 #guesserScreen .guesser-sidebar-panel.action-log-panel .log-power {
   font-size: 8.5px;
-}
-
-#guesserScreen #infoPanelGuesser #GuesserInfoBadge {
-  margin-top: 0;
-}
-
-#guesserScreen #infoPanelGuesser .letter-profile-box {
-  margin-top: var(--sp-8);
-}
-
-#guesserScreen #infoPanelGuesser:not(:has(#GuesserInfoBadge.show, .letter-profile-box:not([hidden])))::after {
-  content: "Nothing active right now.";
-  display: block;
-  padding: var(--sp-4) 0;
-  font-size: var(--fs-10, 10px);
-  opacity: 0.6;
-  text-align: center;
 }
 
 /* Guesser powers: compact cards next to each other */
