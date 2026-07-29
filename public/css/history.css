@@ -710,24 +710,35 @@ body.hide-constraints .constraint-row {
    it reads as its own contained/scrollable area rather than blending
    into the rest of the screen (the setter's sidebar-based layout already
    gives its board a visually distinct region, so this stays scoped to
-   the guesser's single-column screen). Sized to exactly one feedback
-   row's own width (5 tiles + 4 gaps, plus this element's own left/right
-   padding) instead of width:fit-content -- fit-content shrank to
-   whatever's actually inside it, so with zero guesses yet (nothing to
-   shrink-wrap around) the backdrop collapsed to near-nothing instead of
-   already reading as the board's contained area. This way it's always
-   exactly the feedback's width, before the first guess and after. The
-   clamp() here has to match the tile size features.css's
-   "#guesserScreen .history-tile" rule actually ends up applying (it
-   overrides this file's own base .history-tile clamp with a smaller
-   one, and wins on specificity) -- not the base clamp above, or this
-   backdrop wouldn't actually hug the tiles it's sized against. */
+   the guesser's single-column screen). Sized to one feedback row's own
+   width (5 tiles + 4 gaps, plus this element's own left/right padding)
+   instead of width:fit-content -- fit-content shrank to whatever's
+   actually inside it, so with zero guesses yet (nothing to shrink-wrap
+   around) the backdrop collapsed to near-nothing instead of already
+   reading as the board's contained area. This way it's always exactly
+   the feedback's width, before the first guess and after. The clamp()
+   here has to match the tile size features.css's "#guesserScreen
+   .history-tile" rule actually ends up applying (it overrides this
+   file's own base .history-tile clamp with a smaller one, and wins on
+   specificity) -- not the base clamp above, or this backdrop wouldn't
+   actually hug the tiles it's sized against.
+
+   padding-right is wider than padding-left: Count Only's G/Y tally
+   (.count-only-badge below) sits just past the row's right edge via
+   absolute positioning, and this box clips overflow-x -- without the
+   extra padding reserved here, that badge rendered entirely outside
+   this now-tile-width box and got clipped to invisible. Reserved
+   unconditionally (not toggled on when Count Only is actually in play)
+   so nothing shifts mid-match when the power activates; row-wrap's own
+   justify-content:center exactly fills this box's narrower content
+   area either way, so every row's tiles still land at the same X
+   position regardless of whether this particular row has a badge. */
 #guesserScreen .history-scroll {
-  width: calc(5 * clamp(30px, 12.5cqw, 56px) + 4 * var(--sp-4) + 20px);
+  width: calc(5 * clamp(30px, 12.5cqw, 56px) + 4 * var(--sp-4) + 60px);
   max-width: 100%;
   margin: 0 auto;
   padding-left: 10px;
-  padding-right: 10px;
+  padding-right: 50px;
   background: color-mix(in srgb, black 16%, transparent);
   border-radius: var(--r-10);
 }
