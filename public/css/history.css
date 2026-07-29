@@ -723,13 +723,16 @@ body.hide-constraints .constraint-row {
    it reads as its own contained/scrollable area rather than blending
    into the rest of the screen (the setter's sidebar-based layout already
    gives its board a visually distinct region, so this stays scoped to
-   the guesser's single-column screen). Shrink-wrapped to the tile rows'
-   own width (not the base rule's width:100%) -- the rows themselves are
-   already centered within .center-col via justify-content:center, so a
-   full-width backdrop left visible dark margin on both sides instead of
-   hugging the actual feedback tiles. */
+   the guesser's single-column screen). Sized to exactly one feedback
+   row's own width (5 tiles + 4 gaps, using the same clamp() as
+   .history-tile above, plus this element's own left/right padding)
+   instead of width:fit-content -- fit-content shrank to whatever's
+   actually inside it, so with zero guesses yet (nothing to shrink-wrap
+   around) the backdrop collapsed to near-nothing instead of already
+   reading as the board's contained area. This way it's always exactly
+   the feedback's width, before the first guess and after. */
 #guesserScreen .history-scroll {
-  width: fit-content;
+  width: calc(5 * clamp(30px, 16cqw, 78px) + 4 * var(--sp-4) + 20px);
   max-width: 100%;
   margin: 0 auto;
   padding-left: 10px;

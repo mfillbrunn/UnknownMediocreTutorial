@@ -2831,82 +2831,50 @@ body:has(#guesserScreen.active) #appMain {
 
 
 /* =====================================================
-   GUESSER: YOU / OPP POWER TABS
+   GUESSER: OWN POWERS + INFO BADGE ROW
    ===================================================== */
 
 /*
-  The guesser's powers-col is a single-column stacked layout (board on
-  top, powers below), unlike the setter's side-by-side sidebar -- so
-  these tabs sit directly above the power row instead of in their own
-  sidebar column, but toggle the same way (a read-only clone of the
-  other role's powers, synced from setterPowerContainer -- see
-  ui/guesser-sidebar.js).
-*/
-/*
-  Sits beside the power row instead of on its own line above it -- a
-  narrow vertical strip (You stacked over Opp) that shares the row's
-  horizontal space, same idea as the setter's sidebar tabs but adapted to
-  the guesser's single flex row instead of a dedicated column.
+  Own power/quest cards on the left, the info badge on the right -- they
+  share this row (full board width) instead of the badge sitting in its
+  own band below the whole play area. The info column takes whatever
+  width the power cards don't use, and stretches to the row's full
+  height so the badge's text is vertically centered against the cards
+  beside it rather than only claiming its own natural (much shorter)
+  height.
 */
 #guesserScreen .guesser-powers-row {
   display: flex;
   flex-direction: row;
-  /* stretch (not flex-start) -- lets the You/Opp tab column split the
-     power row's own height evenly instead of shrinking to its own tiny
-     content height and looking like a stray leftover beside the much
-     taller power cards. */
   align-items: stretch;
-  gap: var(--sp-4);
+  gap: var(--sp-8);
 
   width: 100%;
 }
 
-#guesserScreen .guesser-power-tabs {
+#guesserScreen .guesser-powers-row #guesserPowerContainer {
+  /* .guesser-power-view (below) sets width:100% for the single-column
+     layout this row used to be part of -- now that the info badge
+     shares the row, that would claim the whole thing and squeeze the
+     badge down to nothing. This selector's extra #id beats it on
+     specificity so the power cards go back to shrink-to-fit. */
+  flex: 0 1 auto;
+  width: auto;
+}
+
+#guesserScreen .guesser-info-col {
+  flex: 1 1 0;
+  min-width: 0;
+
   display: flex;
   flex-direction: column;
-  gap: 3px;
-
-  flex: 0 0 auto;
-  width: 44px;
-  /* Power/quest cards read first (left-aligned), tabs after (right of
-     them) -- order alone flips the visual position without touching the
-     DOM/JS wiring built around the actual markup order. */
-  order: 2;
+  justify-content: center;
 }
 
-#guesserScreen .guesser-power-tab {
-  flex: 1 1 0;
-  min-height: 0;
-
-  padding: 3px 2px;
-
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--r-6);
-
-  background: var(--panel-bg);
-  color: var(--text);
-
-  font-size: var(--fs-10, 10px);
-  font-weight: 800;
-  line-height: 1;
-  text-transform: uppercase;
-
-  cursor: pointer;
+#guesserScreen .guesser-info-col #GuesserInfoBadge {
+  margin-top: 0;
 }
 
-#guesserScreen .guesser-power-tab.is-active {
-  border-color: var(--role-accent);
-
-  background: color-mix(
-    in srgb,
-    var(--role-accent) 20%,
-    var(--panel-bg)
-  );
-
-  box-shadow:
-    0 0 6px
-    color-mix(in srgb, var(--role-accent) 35%, transparent);
-}
 /* Guesser powers: compact cards next to each other */
 #guesserScreen .guesser-power-view {
   display: flex !important;
@@ -2972,37 +2940,6 @@ body:has(#guesserScreen.active) #appMain {
   }
 }
 
-/*
-  You/Opp stack in the same grid cell instead of one replacing the other
-  in normal flow -- the stack's own height is then whichever of the two
-  is taller, so switching tabs never reflows the remaining-words/letter-
-  profile boxes below it.
-*/
-#guesserScreen .guesser-power-stack {
-  display: grid;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-#guesserScreen .guesser-power-stack > .guesser-power-view {
-  grid-area: 1 / 1;
-}
-
-#guesserScreen .guesser-power-stack > .guesser-power-view.hidden {
-  /* .power-container's own natural display (layout.css) is flex, not
-     grid -- keep that so it still participates in the stack's height
-     calc while hidden, matching the setter's grid-display equivalent. */
-  display: flex !important;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-/* Opponent powers are informational and cannot be activated. */
-#guesserScreen .opponent-power-readonly {
-  pointer-events: none;
-}
-
-
 /* =====================================================
    SMALL IPHONE ADJUSTMENTS
    ===================================================== */
@@ -3029,11 +2966,5 @@ body:has(#guesserScreen.active) #appMain {
   #setterScreen .setter-power-view .power-btn {
     padding-left: 2px;
     padding-right: 2px;
-  }
-
-  #guesserScreen .guesser-power-tab {
-    min-height: 24px;
-    padding: 2px;
-    font-size: 9px;
   }
 }

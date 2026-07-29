@@ -978,48 +978,17 @@
                     </div>
                   </div>
              </div>
-             <!-- BELOW TILES: powers, stacked horizontally -->
+             <!-- BELOW TILES: own power/quest cards on the left, info
+                  badge on the right -- sharing this row instead of the
+                  info badge sitting in its own full-width band below the
+                  whole play area. -->
              <div class="play-col powers-col">
-                <!-- Tabs sit beside the power row (not above it) so they
-                     share its horizontal space instead of costing their
-                     own line. -->
                 <div class="guesser-powers-row">
-                  <div
-                    class="guesser-power-tabs"
-                    role="tablist"
-                    aria-label="Whose powers to display"
-                  >
-                    <button
-                      type="button"
-                      id="guesserPowersYouBtn"
-                      class="guesser-power-tab is-active"
-                      role="tab"
-                      aria-selected="true"
-                      aria-controls="guesserPowerContainer"
-                    >
-                      You
-                    </button>
-
-                    <button
-                      type="button"
-                      id="guesserPowersOppBtn"
-                      class="guesser-power-tab"
-                      role="tab"
-                      aria-selected="false"
-                      aria-controls="guesserOpponentPowerContainer"
-                    >
-                      Opp
-                    </button>
+                  <div id="guesserPowerContainer" class="power-container laser-scope guesser-power-view">
                   </div>
-
-                  <!-- Stacks You/Opp in the same grid cell (see
-                       features.css) so switching tabs never changes this
-                       row's height. -->
-                  <div class="guesser-power-stack">
-                    <div id="guesserPowerContainer" class="power-container laser-scope guesser-power-view">
-                    </div>
-                    <div id="guesserOpponentPowerContainer" class="power-container laser-scope guesser-power-view hidden">
-                    </div>
+                  <div class="guesser-info-col">
+                    <div id="GuesserInfoBadge" class="info badge"></div>
+                    <div id="GuesserInfoBadgeDetail" class="info-badge-detail" hidden></div>
                   </div>
                 </div>
                 <div id="GuesserRemainingBox" class="remaining-box" hidden></div>
@@ -1027,8 +996,6 @@
              </div>
           </div>
           <!--- KEYBOARD AREA--->
-          <div id="GuesserInfoBadge" class="info badge"></div>
-          <div id="GuesserInfoBadgeDetail" class="info-badge-detail" hidden></div>
           <div id="powerKbPrompt" class="power-kb-prompt" hidden></div>
           <div id="keyboardGuesser" class="keyboard"></div>
        </main>
@@ -1254,7 +1221,6 @@
   <script src="client/summary.js"></script>
   <script src="client/action-log.js"></script>
   <script src="ui/setter-sidebar.js"></script>
-  <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
   <script src="client/drag-mode.js"></script>
   <script src="client/friends.js"></script>
