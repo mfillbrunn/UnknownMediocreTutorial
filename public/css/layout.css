@@ -204,7 +204,7 @@
    (components.css's .remaining-stat) span the sidebar's full width. */
 .theme-setter .powers-col .remaining-box {
   width: 100%;
-  max-width: 100%;
+  max-width: 90%;
   align-self: stretch;
 }
 /* Same reasoning as .remaining-box above -- no horizontal room to share
