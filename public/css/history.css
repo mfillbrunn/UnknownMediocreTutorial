@@ -475,7 +475,10 @@ Constraint row using history tile language
      room for this row's own padding/border, so the box as a whole spilled
      ~13px past .center-col on both sides (into the sidebar and off the
      board). Pin it to the column's actual width instead. */
-  width: 100%;
+  width: fit-content;
+  max-width: calc(100% - 8px);
+  box-sizing: border-box;
+  align-self: center;
   box-sizing: border-box;
   padding: var(--sp-6);
   border-radius: var(--r-10);
