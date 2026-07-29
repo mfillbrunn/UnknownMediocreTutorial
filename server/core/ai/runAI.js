@@ -181,20 +181,27 @@ function buildPowerAction(powerId, state, context) {
   }
 
   if (powerId === "hideTile") {
-    // Human players tap a specific pending-guess tile to hide; the AI picks
-    // one itself. Avoid a position already confirmed green -- there's
-    // nothing left to hide there, so it'd waste the charge.
-    const known = new Set();
-    for (const past of state.history ?? []) {
-      if (!past?.fb) continue;
-      for (let i = 0; i < 5; i++) {
-        if (past.fb[i] === "🟩") known.add(i);
+    // Human players pick a letter on their own keyboard to reset; the AI
+    // picks one itself. Only letters with existing (non-erased) feedback
+    // are actually useful -- anything else gets rejected server-side and
+    // wastes the charge. Prefer a letter that isn't already fully green
+    // (still ambiguous/useful to erase) over one that's fully solved.
+    const withFeedback = new Set();
+    const notFullyGreen = new Set();
+    for (const entry of state.history ?? []) {
+      const guess = (entry.guess || "").toUpperCase();
+      const fb = entry.fb ?? entry.fbGuesser;
+      if (!Array.isArray(fb)) continue;
+      for (let i = 0; i < guess.length; i++) {
+        if (!fb[i]) continue;
+        withFeedback.add(guess[i]);
+        if (fb[i] !== "🟩") notFullyGreen.add(guess[i]);
       }
     }
-    const eligible = [0, 1, 2, 3, 4].filter((i) => !known.has(i));
-    const pool = eligible.length ? eligible : [0, 1, 2, 3, 4];
-    const index = pool[Math.floor(Math.random() * pool.length)];
-    return { type, index };
+    const pool = [...(notFullyGreen.size ? notFullyGreen : withFeedback)];
+    if (!pool.length) return null;
+    const letter = pool[Math.floor(Math.random() * pool.length)];
+    return { type, letter };
   }
 
   if (powerId === "letterProbe") {

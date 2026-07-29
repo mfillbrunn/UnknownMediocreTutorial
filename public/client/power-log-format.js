@@ -50,6 +50,10 @@
     letterLockout(emissions) {
       const p = findEmission(emissions, "powerUsed")?.payload;
       return p?.letter ? `banned letter ${p.letter}` : null;
+    },
+    hideTile(emissions) {
+      const p = findEmission(emissions, "powerUsed")?.payload;
+      return p?.letter ? `reset letter ${p.letter}` : null;
     }
   };
 

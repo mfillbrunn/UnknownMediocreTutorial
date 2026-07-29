@@ -1,124 +1,96 @@
-// /powers/powers/hideTile.js — Hide Evidence (setter)
+// /powers/powers/hideTile.js — Hide Evidence (setter), a.k.a. Reset Letter
 //
-// One-time use per match. Tapping the power tray button arms it -- only
-// then do the pending-guess row's tiles start blinking to show they're
-// pickable. Tapping one of those tiles is what actually erases its
-// feedback (server-side, see below); the button by itself doesn't erase
-// anything. Before the button is pressed the tiles carry no special
-// styling at all, so there's nothing to notice ahead of time.
+// Usable twice per match. Tapping the power tray button arms letter-picking
+// on the setter's own on-screen keyboard -- the next letter key tapped is
+// the pick, sent straight to the server, instead of a tile tap or a modal
+// grid. handleSetterInput (public/client.js) checks hideTileKbActive() /
+// hideTileKbInput() before its normal typing logic, the same interception
+// shape public/client/power-keyboard.js already uses for the guesser's
+// Recon Sweep / Double Tap.
 //
-// Mirrors Vowel Refresh: the server directly erases entry.fb/fbGuesser for
-// that position (server/powers/powers/hideTileServer.js), so there's
-// nothing for this file to mask client-side -- the tile just renders with
-// no feedback color, same as any other blanked position.
-PowerEngine.register("hideTile", {
+// The server erases entry.fb/fbGuesser for every occurrence of that letter
+// across every guess so far this round (server/powers/powers/hideTileServer.js)
+// -- same erase-not-mask treatment as Vowel Refresh -- so there's nothing for
+// this file to mask client-side: keyboardState.js's live derivation from
+// state.history automatically regrays both the keyboard key and the
+// affected history tiles (ui/history.js already treats fb[i]==="" as
+// "tile-erased").
+(function () {
+  let armed = false;
 
-  role: "setter",
-  tooltip: {
-    title: window.POWER_METADATA.hideTile.label,
-    desc: window.POWER_METADATA.hideTile.desc
-  },
-
-  renderButton(roomId) {
-    const { wrapper, btn } = PowerEngine.createPowerButton("hideTile", window.POWER_METADATA.hideTile.label);
-    this.wrapperEl = wrapper;
-    this.buttonEl = btn;
-    $("setterPowerContainer").appendChild(wrapper);
-
-    btn.onclick = () => {
-      const s = window.state;
-      const usable =
-        s && !s.powerUsedThisTurn &&
-        window.POWER_RULES?.hideTile?.allowed?.(s, window.myRole) === true;
-      if (!usable) return;
-
-      const container = document.getElementById("draftSetter");
-      if (!container) return;
-
-      // Keep the picked/armed state scoped to the current pending guess --
-      // same reset uiEffects does below, done here too so arming takes
-      // effect immediately instead of waiting on the next render.
-      if (container.__hideTilePickedFor !== s.pendingGuess) {
-        container.__hideTilePickedFor = s.pendingGuess;
-        container.__hideTilePickedIndex = null;
-      }
-      if (container.__hideTilePickedIndex !== null) return;
-
-      container.__hideTileArmed = true;
-      this.uiEffects(s, window.myRole);
-    };
-  },
-
-  uiEffects(state, role) {
-    if (role !== "setter") return;
-    const container = document.getElementById("draftSetter");
-    const tiles = container?.__draftRows?.pending?.__tiles;
-    if (!Array.isArray(tiles) || tiles.length !== 5) return;
-
-    // Which tile was picked, tracked purely client-side (the server strips
-    // powers.hideTilePendingIndex from every broadcast, see safeState.js)
-    // so the clicked tile can flip to the "unused" gray look immediately
-    // on tap instead of waiting on a round-trip. Scoped to the word it was
-    // picked for, so a later, genuinely different pending guess reusing
-    // these same DOM tiles doesn't inherit a stale mark or a stale armed
-    // state left over from a previous guess.
-    if (container.__hideTilePickedFor !== state.pendingGuess) {
-      container.__hideTilePickedFor = state.pendingGuess;
-      container.__hideTilePickedIndex = null;
-      container.__hideTileArmed = false;
-    }
-
-    const usable =
-      container.__hideTilePickedIndex === null &&
+  function canArm(state, role) {
+    return (
+      !!state &&
+      role === "setter" &&
       !state.powerUsedThisTurn &&
-      window.POWER_RULES?.hideTile?.allowed?.(state, role) === true;
-
-    // Blink only the tiles that can actually be tapped right now, and only
-    // once the button has been pressed -- no passive highlight beforehand.
-    const pickable = usable && !!container.__hideTileArmed;
-
-    tiles.forEach((tile, i) => {
-      const picked = container.__hideTilePickedIndex === i;
-      tile.classList.toggle("tile-pickable-hide", pickable);
-      tile.classList.toggle("tile-hide-picked", picked);
-      tile.title = pickable ? "Tap to erase this tile's feedback (Hide Evidence)" : "";
-
-      if (tile.__hideTileWired) return;
-      tile.__hideTileWired = true;
-      tile.addEventListener("click", () => {
-        const s = window.state;
-        const r = window.myRole;
-        const stillPickable =
-          s && !s.powerUsedThisTurn &&
-          container.__hideTileArmed &&
-          container.__hideTilePickedIndex === null &&
-          window.POWER_RULES?.hideTile?.allowed?.(s, r) === true;
-        if (!stillPickable) return;
-
-        // Mark it immediately -- don't wait for the server round-trip
-        // (or even the next render) to gray the tile out.
-        container.__hideTilePickedFor = s.pendingGuess;
-        container.__hideTilePickedIndex = i;
-        container.__hideTileArmed = false;
-        tiles.forEach((t, j) => {
-          t.classList.toggle("tile-hide-picked", j === i);
-          t.classList.remove("tile-pickable-hide");
-          t.title = "";
-        });
-
-        sendGameAction({ type: "USE_HIDE_TILE", index: i });
-      });
-    });
+      window.POWER_RULES?.hideTile?.allowed?.(state, role) === true
+    );
   }
-});
+
+  window.hideTileKbActive = function () {
+    return armed;
+  };
+
+  window.hideTileKbReset = function () {
+    armed = false;
+  };
+
+  // Called from handleSetterInput. Returns true if the event was consumed.
+  window.hideTileKbInput = function (event) {
+    if (!armed) return false;
+    if (event.type !== "LETTER") return true; // swallow backspace/enter while armed
+    const letter = String(event.value || "").toUpperCase();
+    armed = false;
+    sendGameAction({ type: "USE_HIDE_TILE", letter });
+    window.updateUI?.();
+    return true;
+  };
+
+  PowerEngine.register("hideTile", {
+    role: "setter",
+    tooltip: {
+      title: window.POWER_METADATA.hideTile.label,
+      desc: window.POWER_METADATA.hideTile.desc
+    },
+
+    renderButton(roomId) {
+      const { wrapper, btn } = PowerEngine.createPowerButton("hideTile", window.POWER_METADATA.hideTile.label);
+      this.wrapperEl = wrapper;
+      this.buttonEl = btn;
+      $("setterPowerContainer").appendChild(wrapper);
+
+      btn.onclick = () => {
+        const s = window.state;
+        if (!canArm(s, window.myRole)) {
+          if (armed) { armed = false; this.uiEffects(s, window.myRole); }
+          return;
+        }
+        armed = !armed;
+        this.uiEffects(s, window.myRole);
+      };
+    },
+
+    uiEffects(state, role) {
+      if (role !== "setter") return;
+
+      if (armed && !canArm(state, role)) armed = false;
+
+      this.buttonEl?.classList.toggle("power-armed", armed);
+
+      const kb = document.getElementById("keyboardSetter");
+      kb?.classList.toggle("keyboard-picking-hide", armed);
+    }
+  });
+})();
 
 InfoBadgeEngine.register((state, role) => {
   if (!state.powers?.hideTileActive) return null;
   const meta = POWER_METADATA.hideTile;
+  const letters = state.powers?.hideTileLetters || [];
   return {
     id: "hideTile",
     emoji: meta.emoji,
-    text: meta.label,
+    text: letters.length ? `${meta.label}: ${letters.join(", ")}` : meta.label,
     color: meta.color,
     priority: 20,
     screen: "both"

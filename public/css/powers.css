@@ -1,20 +1,20 @@
-/* Hide Evidence (setter power): tapping the power tray button arms it,
-   then the pending-guess row's tiles become directly tappable -- picking
-   one is the only way to actually use the power (see
-   public/powerEngine/powers/hideTile.js uiEffects). Nothing marks the
-   tiles as pickable before the button is pressed; this class (and its
-   blink) only ever applies once armed, so there's no passive "this is
-   available" highlight to notice ahead of time. */
-.pending-guess .history-tile.tile-pickable-hide {
-  cursor: pointer;
-  outline: 2px dashed color-mix(in srgb, var(--setter-color, #f87171) 70%, transparent);
+/* Hide Evidence / Reset Letter (setter power): tapping the power tray
+   button arms letter-picking on the setter's own on-screen keyboard --
+   see public/powerEngine/powers/hideTile.js. The button itself glows while
+   armed, and the whole keyboard gets a matching outline so it's obvious a
+   tap there means something different right now, without needing a modal
+   or per-key highlighting (any letter key can be picked). */
+.power-btn.power-armed {
+  outline: 2px solid color-mix(in srgb, var(--setter-color, #f87171) 80%, transparent);
   outline-offset: 2px;
-  transition: filter 0.15s ease;
   animation: hide-evidence-pulse 1.4s ease-in-out infinite;
 }
 
-.pending-guess .history-tile.tile-pickable-hide:hover {
-  filter: brightness(1.15);
+#keyboardSetter.keyboard-picking-hide {
+  outline: 2px dashed color-mix(in srgb, var(--setter-color, #f87171) 70%, transparent);
+  outline-offset: 4px;
+  border-radius: var(--r-10);
+  animation: hide-evidence-pulse 1.4s ease-in-out infinite;
 }
 
 @keyframes hide-evidence-pulse {

@@ -13,7 +13,7 @@
 // balance pass.
 
 const SETTER_POWER_POINTS = {
-  hideTile: 2,          // Hide Evidence — one-time use, hides 1 tile for a round
+  hideTile: 3.5,         // Hide Evidence — pick a letter, erase its feedback everywhere so far; twice per match
   suggestSecret: 1,     // Profiler Insight — helper only, no AI payoff
   confuseColors: 2.5,   // Jam Signals — all green/yellow read as blue for a round
   countOnly: 2.5,       // Redact Report — strips position info for a round

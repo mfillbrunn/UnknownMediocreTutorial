@@ -326,19 +326,6 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   border: 1.5px dashed color-mix(in srgb, var(--tile-yellow-text), transparent 35%) !important;
 }
 
-/* Hide Evidence (setter power): the tile the setter just tapped to erase,
-   in the same solid "unused" gray a real scored tile gets -- unlike the
-   preview colors above, this isn't a guess at a future color, it's the
-   actual outcome (that position's feedback is genuinely gone), so it gets
-   a solid border and no bob animation instead of the dashed/tentative
-   look every other pending-guess tile has. */
-#draftSetter .draft-row.pending-guess .history-tile.tile-hide-picked {
-  background: var(--tile-gray) !important;
-  color: var(--tile-gray-text) !important;
-  border: 1.5px solid var(--tile-gray) !important;
-  animation: none !important;
-}
-
 /* Typing feedback: the instant a keystroke pushes a tile's preview color
    UP (gray -> yellow, gray -> green, or yellow -> green — see the
    rank-comparison logic in applyPreviewFeedback), it plays a one-shot

@@ -6,7 +6,7 @@
 // costs and enforce the budget before ever hitting the server.
 
 window.SETTER_POWER_POINTS = {
-  hideTile: 2,
+  hideTile: 3.5,
   suggestSecret: 1,
   confuseColors: 2.5,
   countOnly: 2.5,

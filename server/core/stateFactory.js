@@ -8,9 +8,10 @@
 function createInitialPowers(){
 const powers = {
 // HIDE TILE
-      hideTileUsed: false, // one-time use per match, see POWER_RULES.js
-      hideTilePendingIndex: null, // tile index the setter picked, applied to the next-scored entry
+      hideTileUsed: false, // true once both uses are spent, see POWER_RULES.js
+      hideTileUses: 0, // usable twice per match
       hideTileActive: 0,
+      hideTileLetters: [], // letters picked so far, for the Info badge
       // BLIND GUESS
       blindGuessUsed: false,
       blindGuessArmed: false,

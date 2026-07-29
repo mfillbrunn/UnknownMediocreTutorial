@@ -88,8 +88,8 @@ window.POWER_METADATA = {
 
   hideTile: {
     label: "Hide Evidence",
-    desc: "Tap one tile from the last guess. That letter's clue disappears from every past guess too!",
-    short: "Pick a tile; the letter from it is erased from all prior feedback.",
+    desc: "Pick a letter on your keyboard. Its clue disappears from every guess so far this round, on both sides -- usable twice per match.",
+    short: "Pick a letter; every guess's clue for it is erased and the keyboard key goes unused.",
     icon: "hidden-tile",
     emoji: "⬛",
     color: "#1e1eba"

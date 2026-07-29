@@ -8,7 +8,7 @@ const POWER_RULES = {
     allowed(state) {
       return (
         state.turn === state.setter &&
-        !state.powers.hideTileUsed
+        (state.powers.hideTileUses || 0) < 2
       );
     }
   },
