@@ -2576,6 +2576,36 @@ body:has(#guesserScreen.active) #appMain {
   min-height: 60px;
 }
 
+/*
+  Always-visible quest line, sitting above the Log/Info tabs instead of
+  inside either toggled panel -- unlike the rest of the info badge, the
+  setter shouldn't have to click into Info just to see the guesser's
+  quest and its live status/conditions.
+*/
+#setterScreen .setter-quest-status {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  padding: var(--sp-4) var(--sp-8);
+  margin-bottom: var(--sp-4);
+
+  border: 1px solid rgba(77, 163, 255, 0.35);
+  border-radius: var(--r-6);
+  background: color-mix(in srgb, #4da3ff 10%, var(--panel-bg));
+
+  font-size: var(--fs-11, 11px);
+}
+
+#setterScreen .setter-quest-status[hidden] {
+  display: none;
+}
+
+#setterScreen .setter-quest-status .info-badge-detail-item {
+  font-size: var(--fs-10, 10px);
+  opacity: 0.75;
+}
+
 #setterScreen .setter-sidebar-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;

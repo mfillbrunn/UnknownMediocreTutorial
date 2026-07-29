@@ -804,6 +804,11 @@
        clicking whichever tab is currently open closes it again instead
        of just switching (see ui/setter-sidebar.js). -->
   <section class="setter-sidebar-activity">
+    <!-- Quest status is always relevant, so it's not gated behind the
+         Info tab like the rest of the InfoBadgeEngine messages --
+         see quest.js's renderSetterQuestStatus. -->
+    <div id="SetterQuestStatus" class="setter-quest-status" hidden></div>
+
     <div
       class="setter-sidebar-tabs"
       role="tablist"

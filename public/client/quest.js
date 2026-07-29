@@ -305,25 +305,35 @@ window.computeQuestStatus = computeQuestStatus;
 // The setter has no visual quest card of their own (the guesser's quest
 // is shown to them as a power-badge-tile card, but that's hidden from
 // the setter's power row -- see features.css's "NEVER SHOW A QUEST CARD
-// IN THE SETTER'S OWN POWER VIEW"), so their only view of it is here in
-// the shared info badge: name, live status, and -- via subtext, the same
-// slot Field Report's per-turn conditions already use -- whatever the
-// quest's own description covers, condition list included.
-InfoBadgeEngine.register((state, role) => {
-  if (role !== "setter") return null;
+// IN THE SETTER'S OWN POWER VIEW"), so their view of it lives here --
+// but unlike the rest of the InfoBadgeEngine messages (which only render
+// while the Info tab is open), the quest is always relevant to what the
+// setter should be picking, so it's rendered directly into a standalone
+// element that sits above the Log/Info tabs instead of inside either
+// panel -- see index.html's #SetterQuestStatus and client.js's updateUI.
+function renderSetterQuestStatus(state, role) {
+  const el = document.getElementById("SetterQuestStatus");
+  if (!el) return;
+
+  if (role !== "setter") {
+    el.hidden = true;
+    return;
+  }
 
   const status = computeQuestStatus(state);
-  if (!status) return null;
+  if (!status) {
+    el.hidden = true;
+    el.innerHTML = "";
+    return;
+  }
 
-  return {
-    id: "questStatus",
-    emoji: status.meta.emoji,
-    text: `Quest: ${status.meta.label} — ${status.label}`,
-    subtext: status.desc,
-    color: "#4da3ff",
-    screen: "setter"
-  };
-});
+  el.innerHTML = `
+    <span class="badge-item" style="color:#4da3ff">${status.meta.emoji ?? ""} Quest: ${status.meta.label} — ${status.label}</span>
+    ${status.desc ? `<span class="info-badge-detail-item">${status.desc}</span>` : ""}
+  `;
+  el.hidden = false;
+}
+window.renderSetterQuestStatus = renderSetterQuestStatus;
 
 // --------------------------------------------------
 // Quest — badge tile, guesser only. Sits in the same power-container row
