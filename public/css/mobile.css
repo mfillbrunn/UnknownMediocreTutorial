@@ -58,7 +58,7 @@
     border-radius: var(--r-12, 12px);
 }
   .powers-col .power-icon {
-    max-width: 46px;
+    max-width: 24px;
     flex: 0 0 auto;
   }
   /* The setter's own screen carries one icon-less exception: their
@@ -74,7 +74,7 @@
        66px card (padding ~11px + icon ~32px + gap 3px leaves ~20px) to
        give the label a taller slot instead of relying on illegibly
        small text alone. */
-    height: 20px;
+    height: 18px;
     font-size: 8px;
     text-align: center;
   }
