@@ -58,7 +58,7 @@
     border-radius: var(--r-12, 12px);
 }
   .powers-col .power-icon {
-    max-width: 32px;
+    max-width: 38px;
     flex: 0 0 auto;
   }
   /* The setter's own screen carries one icon-less exception: their

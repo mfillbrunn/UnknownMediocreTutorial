@@ -223,7 +223,7 @@
 
 .power-icon {
   width: 80%;
-  max-width: 64px;
+  max-width: 72px;
   flex: 1 1 auto;
   color: var(--role-accent);
   overflow: visible;
