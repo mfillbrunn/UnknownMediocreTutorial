@@ -3103,3 +3103,56 @@ body:has(#guesserScreen.active) #appMain {
     font-size: 9px;
   }
 }
+/* =====================================================
+   CONSTRAINT ROW — hug the five tiles
+   ===================================================== */
+
+#constraintRowGuesser.constraint-row,
+#constraintRowSetter.constraint-row {
+  width: fit-content !important;
+  max-width: calc(100% - 8px);
+  align-self: center;
+  box-sizing: border-box;
+}
+
+
+/* =====================================================
+   QUEST BADGE — remain a compact square badge
+   ===================================================== */
+
+#guesserScreen .power-btn.power-badge.quest-badge-tile {
+  box-sizing: border-box;
+
+  /* Do not grow to fill the power-view area. */
+  flex: 0 0 84px !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+
+  width: 84px !important;
+  min-width: 84px !important;
+  max-width: 84px !important;
+
+  height: 84px !important;
+  min-height: 84px !important;
+
+  /* Progress above label, rather than beside it. */
+  flex-direction: column !important;
+
+  justify-self: start;
+  align-self: center;
+
+  padding: 8px 5px 11px !important;
+}
+
+
+/* Keep the contents properly contained inside the square. */
+#guesserScreen .quest-badge-tile .quest-progress-chip {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+
+#guesserScreen .quest-badge-tile .power-btn-label {
+  width: 100%;
+  min-width: 0;
+}
