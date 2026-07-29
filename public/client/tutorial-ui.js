@@ -185,9 +185,6 @@ function highlightSetterHistory() {
 function highlightGuideToggle() {
   highlightEl(byId("guideToggleBtn"));
 }
-function highlightNotesButton(role) {
-  highlightEl(byId(role === "setter" ? "notesBtnSetter" : "notesBtnGuesser"));
-}
 function highlightDraftRow(role) {
   highlightEl(byId(role === "setter" ? "draftSetter" : "draftGuesser"));
 }
@@ -225,12 +222,6 @@ function waitForSecretSubmission(round) {
 
 function waitForPowerUse(powerId) {
   tutorialWaitingFor = { type: "power", powerId };
-  setContinue({ show: true, enabled: false });
-  updateActionBadge();
-}
-
-function waitForNotesOpen() {
-  tutorialWaitingFor = { type: "notes" };
   setContinue({ show: true, enabled: false });
   updateActionBadge();
 }
@@ -938,10 +929,10 @@ function runPowerTutorialReceiving(state, role, meta, powerId, round) {
 }
 
 // ==========================================================
-// STAGE "advanced": the UI-features walkthrough (Notes, Guide, Drag & Lock,
+// STAGE "advanced": the UI-features walkthrough (Guide, Drag & Lock,
 // Power UI) launched from the standalone "Advanced Tutorial" menu button.
 // Reuses stage 2's exact scripted match (see tutorialMode.js) -- round 1 has
-// the human as Inspector (Notes + Guide + Letter Peek + Drag & Lock on their
+// the human as Inspector (Guide + Letter Peek + Drag & Lock on their
 // guess row), round 2 (after the normal end-of-round role swap) has them as
 // Spy (Drag & Lock on their secret row + Counts Only).
 // ==========================================================
@@ -959,23 +950,13 @@ function runAdvancedTutorialGuesser(state) {
   if (round === 0) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `👋 Welcome to the Advanced Tutorial! This covers four UI features the basic tutorial skips: 📝 Notes, 🧭 Guide, ✋ Drag & Lock, and ⚡ the Power UI. Let's try each hands-on, starting as the Inspector.`,
+        `👋 Welcome to the Advanced Tutorial! This covers three UI features the basic tutorial skips: 🧭 Guide, ✋ Drag & Lock, and ⚡ the Power UI. Let's try each hands-on, starting as the Inspector.`,
         { enabled: true }
       );
       tutorialContinueMode = "advance";
       return;
     }
     if (tutorialSubStep === 1) {
-      showTutorial(
-        `📝 Tap the Notes button to open your private scratchpad — it reuses the on-screen keyboard whenever it isn't your turn, so jotting down candidate words never counts as a real move. Try opening it now.`,
-        { enabled: false }
-      );
-      highlightNotesButton("guesser");
-      tutorialContinueMode = "hide";
-      waitForNotesOpen();
-      return;
-    }
-    if (tutorialSubStep === 2) {
       showTutorial(
         `🧭 This is the Guide toggle — switch it any time for extra on-screen explanations, like why a box shows the numbers it does. Try clicking it, then continue.`,
         { enabled: true }
@@ -984,7 +965,7 @@ function runAdvancedTutorialGuesser(state) {
       tutorialContinueMode = "advance";
       return;
     }
-    if (tutorialSubStep === 3) {
+    if (tutorialSubStep === 2) {
       const word = state.tutorialGuesses?.[0] || "CHAMP";
       showTutorial(
         `First, enter your opening guess. Enter "${word}" and click ENTER.`,
@@ -1156,7 +1137,7 @@ function runMatchTutorial(state){
  if (stageAdvanced) {
    if (tutorialSubStep === 0) {
      showTutorial(
-       `That's the Advanced Tutorial! You've now tried Notes, Guide, Drag & Lock, and the Power UI from both sides.`,
+       `That's the Advanced Tutorial! You've now tried Guide, Drag & Lock, and the Power UI from both sides.`,
        { enabled: true }
      );
      tutorialContinueMode = "advance";

@@ -2876,6 +2876,15 @@ body:has(#guesserScreen.active) #appMain {
   gap: var(--sp-8);
 
   width: 100%;
+  /* Now that the Log/Info box (below) needs real vertical room for its
+     own content, not just to match whatever height the power cards
+     happen to need, this row can't rely purely on align-items:stretch
+     to size itself -- with no powers/quest yet (e.g. the very first
+     render), the power side has 0 natural height and, with nothing else
+     in the chain giving this row a concrete height either, the whole
+     row (and the log/info content inside it) would collapse to nothing.
+     Floor it to one power card's height. */
+  min-height: 84px;
 }
 
 #guesserScreen .guesser-powers-row #guesserPowerContainer {
@@ -2889,13 +2898,12 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 /*
-  Same boxed-panel + "nothing active" empty state as the setter's Info
-  tab (#infoPanelSetter in this file's SETTER: INFO TAB rules) -- the
-  guesser has no Log/Info tab switch of their own (their Log is a
-  floating panel toggled from the header), but this column is the
-  guesser's equivalent contained "info" area, so it gets the same
-  wrapped look instead of the badge just floating unframed beside the
-  power cards.
+  Log/Info tabs, like on the setter screen (ui/setter-sidebar.js /
+  ui/guesser-sidebar.js) -- unlike that tall standalone sidebar column
+  though, this box shares a short, fixed-height row with the power cards
+  (align-items:stretch above), so it never collapses to just its tabs:
+  exactly one of Log/Info is always showing, and both panels scroll
+  internally for their own overflow within that fixed height.
 */
 #guesserScreen .guesser-info-col {
   flex: 1 1 0;
@@ -2904,23 +2912,135 @@ body:has(#guesserScreen.active) #appMain {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 
   padding: var(--sp-6);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--r-10);
   background: rgba(14, 15, 22, 0.35);
+
+  overflow: hidden;
 }
 
-#guesserScreen .guesser-info-col #GuesserInfoBadge {
+#guesserScreen .guesser-sidebar-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+
+  flex: 0 0 auto;
+  margin-bottom: var(--sp-4);
+}
+
+#guesserScreen .guesser-sidebar-tab {
+  width: 100%;
+  min-width: 0;
+  min-height: 22px;
+
+  padding: 2px 4px;
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--r-6);
+
+  background: var(--panel-bg);
+  color: var(--text);
+
+  font-size: var(--fs-10, 10px);
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+
+  cursor: pointer;
+}
+
+#guesserScreen .guesser-sidebar-tab.is-active {
+  border-color: var(--role-accent);
+
+  background: color-mix(
+    in srgb,
+    var(--role-accent) 20%,
+    var(--panel-bg)
+  );
+
+  box-shadow:
+    0 0 6px
+    color-mix(in srgb, var(--role-accent) 35%, transparent);
+}
+
+#guesserScreen .guesser-sidebar-panels {
+  position: relative;
+
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* The old panels may currently have absolute/fixed positioning (base
+   .game-side-panel, components.css). Inside this box, they become
+   ordinary contained/scrolling panels, same treatment as the setter's
+   sidebar (#setterScreen .setter-sidebar .game-side-panel above). */
+#guesserScreen .guesser-sidebar-panel {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  z-index: auto !important;
+
+  display: block;
+
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: none;
+  max-height: none;
+
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+
+  pointer-events: auto;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+#guesserScreen .guesser-sidebar-panel.hidden {
+  display: none !important;
+}
+
+/* The log is embedded in a short, narrow box instead of the floating
+   panel's original size -- shrink it to fit, same idea as the setter
+   sidebar's log-entry override. */
+#guesserScreen .guesser-sidebar-panel.action-log-panel .log-entry {
+  font-size: 9.5px;
+  line-height: 1.3;
+  padding: 2px 4px;
+}
+
+#guesserScreen .guesser-sidebar-panel.action-log-panel .log-round {
+  font-size: 8.5px;
+  margin-top: 2px;
+}
+
+#guesserScreen .guesser-sidebar-panel.action-log-panel .log-power {
+  font-size: 8.5px;
+}
+
+#guesserScreen #infoPanelGuesser #GuesserInfoBadge {
   margin-top: 0;
 }
 
-#guesserScreen .guesser-info-col .letter-profile-box {
+#guesserScreen #infoPanelGuesser .letter-profile-box {
   margin-top: var(--sp-8);
 }
 
-#guesserScreen .guesser-info-col:not(:has(#GuesserInfoBadge.show, .letter-profile-box:not([hidden])))::after {
+#guesserScreen #infoPanelGuesser:not(:has(#GuesserInfoBadge.show, .letter-profile-box:not([hidden])))::after {
   content: "Nothing active right now.";
   display: block;
   padding: var(--sp-4) 0;

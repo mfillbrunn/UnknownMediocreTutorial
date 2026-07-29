@@ -958,8 +958,6 @@
                 </div>
               <button class="constraint-toggle-btn" title="Toggle constraints">⧉</button>
               <button id="powerInfoBtnGuesser" class="power-info-btn" aria-label="Power descriptions"><span class="power-info-icon">?</span></button>
-              <button id="actionLogBtnGuesser" class="header-sm-btn" onclick="toggleActionLog('guesser')" title="Action Log">Log</button>
-              <button id="notesBtnGuesser" class="header-sm-btn" onclick="toggleNotes('guesser')" title="Notes">Notes</button>
               <button id="keyboardToggleBtnGuesser" class="guide-toggle-btn keyboard-toggle-btn" title="Toggle physical keyboard input" aria-label="Toggle physical keyboard input">⌨️</button>
               <button id="guideToggleBtnGuesser" class="guide-toggle-btn" title="Toggle guide" aria-label="Toggle guide">🧭<span class="guide-btn-label"> Guide</span></button>
             </div>
@@ -978,19 +976,65 @@
                     </div>
                   </div>
              </div>
-             <!-- BELOW TILES: own power/quest cards on the left, info
-                  badge on the right -- sharing this row instead of the
+             <!-- BELOW TILES: own power/quest cards on the left, Log/Info
+                  tabs on the right -- sharing this row instead of the
                   info badge sitting in its own full-width band below the
-                  whole play area. -->
+                  whole play area. Log/Info toggle like on the setter
+                  screen (see ui/guesser-sidebar.js), Log open by
+                  default. -->
              <div class="play-col powers-col">
                 <div class="guesser-powers-row">
                   <div id="guesserPowerContainer" class="power-container laser-scope guesser-power-view">
                   </div>
-                  <div class="guesser-info-col">
-                    <div id="GuesserInfoBadge" class="info badge"></div>
-                    <div id="GuesserInfoBadgeDetail" class="info-badge-detail" hidden></div>
-                    <div id="GuesserLetterProfileBox" class="letter-profile-box" hidden></div>
-                  </div>
+                  <section class="guesser-info-col">
+                    <div
+                      class="guesser-sidebar-tabs"
+                      role="tablist"
+                      aria-label="Game information"
+                    >
+                      <button
+                        type="button"
+                        id="actionLogBtnGuesser"
+                        class="header-sm-btn guesser-sidebar-tab"
+                        role="tab"
+                        aria-selected="false"
+                        aria-controls="actionLogGuesser"
+                      >
+                        Log
+                      </button>
+
+                      <button
+                        type="button"
+                        id="infoBtnGuesser"
+                        class="header-sm-btn guesser-sidebar-tab"
+                        role="tab"
+                        aria-selected="false"
+                        aria-controls="infoPanelGuesser"
+                      >
+                        Info
+                      </button>
+                    </div>
+
+                    <div class="guesser-sidebar-panels">
+                      <div
+                        id="actionLogGuesser"
+                        class="game-side-panel action-log-panel guesser-sidebar-panel hidden"
+                        role="tabpanel"
+                        aria-labelledby="actionLogBtnGuesser"
+                      ></div>
+
+                      <div
+                        id="infoPanelGuesser"
+                        class="game-side-panel guesser-sidebar-panel hidden"
+                        role="tabpanel"
+                        aria-labelledby="infoBtnGuesser"
+                      >
+                        <div id="GuesserInfoBadge" class="info badge"></div>
+                        <div id="GuesserInfoBadgeDetail" class="info-badge-detail" hidden></div>
+                        <div id="GuesserLetterProfileBox" class="letter-profile-box" hidden></div>
+                      </div>
+                    </div>
+                  </section>
                 </div>
                 <div id="GuesserRemainingBox" class="remaining-box" hidden></div>
              </div>
@@ -999,14 +1043,6 @@
           <div id="powerKbPrompt" class="power-kb-prompt" hidden></div>
           <div id="keyboardGuesser" class="keyboard"></div>
        </main>
-        <!-- Notes panel (guesser) -->
-        <div id="notesPanelGuesser" class="game-side-panel notes-panel hidden">
-          <div class="notes-panel-title">Notes</div>
-          <div id="notesDraftGuesser" class="notes-draft-row"></div>
-          <div id="notesListGuesser" class="notes-list"></div>
-        </div>
-        <!-- Action log panel (guesser) -->
-        <div id="actionLogGuesser" class="game-side-panel action-log-panel hidden"></div>
 
         <!--- betting model --->
                   <div id="betMissModal" class="modal">
@@ -1221,6 +1257,7 @@
   <script src="client/summary.js"></script>
   <script src="client/action-log.js"></script>
   <script src="ui/setter-sidebar.js"></script>
+  <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
   <script src="client/drag-mode.js"></script>
   <script src="client/friends.js"></script>

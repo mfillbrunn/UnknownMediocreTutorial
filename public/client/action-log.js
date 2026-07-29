@@ -164,10 +164,10 @@
   function renderActionLog(state, myRole) {
     if (!state || !myRole) return;
     const roleId = myRole === "setter" ? "Setter" : "Guesser";
-    // Log is a floating panel (see toggleActionLog below) toggled open/
-    // closed from the header -- rendered unconditionally (not gated on
-    // its own .hidden class) so it's already current the instant it's
-    // opened instead of showing stale content from before the toggle.
+    // Rendered unconditionally (not gated on its own .hidden class), even
+    // while its Log/Info tab isn't the one showing (setter-sidebar.js /
+    // guesser-sidebar.js), so it's already current the instant a player
+    // switches to it instead of showing stale content from before.
     const container = document.getElementById(`actionLog${roleId}`);
     if (!container) return;
 
@@ -198,16 +198,5 @@
     }
   }
 
-  function toggleActionLog(role) {
-    const roleId = role === "setter" ? "Setter" : "Guesser";
-    const container = document.getElementById(`actionLog${roleId}`);
-    const btn = document.getElementById(`actionLogBtn${roleId}`);
-    if (!container) return;
-    const isHidden = container.classList.toggle("hidden");
-    btn?.classList.toggle("active", !isHidden);
-    if (!isHidden) renderActionLog(window.state, role);
-  }
-
   window.renderActionLog = renderActionLog;
-  window.toggleActionLog = toggleActionLog;
 })();
