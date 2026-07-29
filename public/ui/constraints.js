@@ -62,6 +62,13 @@ window.renderConstraintRow = function ({
       tile.classList.add("tile-blindspot");
 
       if (!isSetterView) {
+        // tile-blindspot alone only draws a thin outline around an
+        // otherwise-empty (transparent) tile -- easy to miss against the
+        // row's own blue glow. Fill it with the same solid purple used for
+        // this same masked position over in the guesser's history row
+        // (see history.js's computeTileClassKey) so it reads as clearly
+        // "hidden by a power" here too, not just "unknown".
+        tile.classList.add("tile-purple");
         tile.textContent = "";
         container.appendChild(tile);
         continue;
