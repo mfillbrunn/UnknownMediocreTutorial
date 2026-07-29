@@ -95,6 +95,11 @@
 
       <symbol id="icon-letter-profile" viewBox="0 0 120 120"><rect fill="currentColor" x="18" y="17" width="84" height="87" rx="11"/><rect fill="#f4f5f7" x="31" y="63" width="13" height="28" rx="3"/><rect fill="#f4f5f7" x="53" y="45" width="13" height="46" rx="3"/><rect fill="#f4f5f7" x="75" y="30" width="13" height="61" rx="3"/></symbol>
 
+      <!-- Surrender (Leave header buttons) -- pole in the button's own
+           accent color (currentColor), flag always plain white regardless
+           of role, since "white flag" is the whole point of the icon. -->
+      <symbol id="icon-white-flag" viewBox="0 0 120 120"><rect fill="currentColor" x="26" y="12" width="10" height="98" rx="3"/><path fill="#f4f5f7" d="M36 18h58q6 0 2 5l-16 19q-4 5 0 10l16 19q4 5-2 5H36z"/></symbol>
+
 
       <!-- QUEST ICONS -->
 
@@ -726,7 +731,7 @@
               <h2 class="screen-title header-hidden-title"></h2>
               <div class="header-left">
                 <button id="leaveGameBtnSetter" class="leave-game-btn secondary-btn small hidden">Leave</button>
-                <button class="concedeBtn secondary-btn small danger-btn">X</button>
+                <button class="concedeBtn secondary-btn small danger-btn" title="Surrender" aria-label="Surrender"><svg class="concede-flag-icon" viewBox="0 0 120 120" aria-hidden="true"><use href="#icon-white-flag" xlink:href="#icon-white-flag"/></svg></button>
               </div>
 
               <div class="header-center">
@@ -985,7 +990,7 @@
             <h2 class="screen-title header-hidden-title"></h2>
             <div class="header-left">
               <button id="leaveGameBtnGuesser" class="leave-game-btn secondary-btn small hidden">Leave</button>
-              <button class="concedeBtn secondary-btn small danger-btn">X</button>
+              <button class="concedeBtn secondary-btn small danger-btn" title="Surrender" aria-label="Surrender"><svg class="concede-flag-icon" viewBox="0 0 120 120" aria-hidden="true"><use href="#icon-white-flag" xlink:href="#icon-white-flag"/></svg></button>
             </div>
 
             <div class="header-center">

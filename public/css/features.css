@@ -155,7 +155,13 @@
 .header-sm-btn {
   height: 28px;
   padding: 0 9px;
-  border-radius: var(--r-8, 8px);
+  /* Pill, not rounded-rect -- matches Guide/keyboard-toggle and the
+     Leave/Concede buttons in the same header row (see layout.css's
+     .header-left button.secondary-btn). #setterScreen .setter-sidebar-tab
+     overrides this back to a smaller radius for the sidebar's own
+     Log/Notes tabs, so this only actually changes the guesser's header
+     row copy. */
+  border-radius: 999px;
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.15);
   color: rgba(255,255,255,0.6);
@@ -318,7 +324,10 @@
   border: 1px solid rgba(255,255,255,0.07);
 }
 .notes-word {
-  font-family: var(--font-mono, monospace);
+  /* Was monospace -- Log's entries (same sidebar, one tab-switch away)
+     use the page's default sans font, so the two panels read as
+     visually different typefaces sitting right next to each other. */
+  font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;

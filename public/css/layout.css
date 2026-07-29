@@ -278,6 +278,42 @@
   gap: var(--sp-10);
   justify-self: start;
 }
+/* Leave + Concede (X) -- match the header-right cluster's shared pill
+   language (Log/Notes, Guide, keyboard toggle all use this same height/
+   radius/type scale) instead of the taller, more rounded shape they'd
+   otherwise get from game-menu.css's .secondary-btn.small rule (written
+   for the lobby's Add AI button, but not scoped to it, so it leaks into
+   every other .secondary-btn.small in the app -- including these two).
+   Higher specificity (element + 2 classes) than that leaked rule so this
+   reliably wins regardless of stylesheet order. Only shape/size/type are
+   touched here -- .danger-btn's role-accent color/border stay as they
+   are, since that color is meaningful (a real "danger" signal). */
+.header-left button.secondary-btn {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+/* Concede is icon-only now (a white flag, not the "X" text) -- square it
+   off instead of the text pill's horizontal padding, same as the other
+   icon-only header buttons (constraint-toggle, power-info). */
+.header-left .concedeBtn {
+  width: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.concede-flag-icon {
+  width: 15px;
+  height: 15px;
+  color: currentColor;
+  overflow: visible;
+}
 /* Room + badge stacked */
 .room-meta {
    display: inline-flex;
@@ -478,8 +514,26 @@ body:has(#guesserScreen.active) #appContainer {
 }
 
 /* Live score: your own number stands out, the opponent's stays muted —
-   the same "you" convention as .me-winner elsewhere — so which is which
-   reads without needing a "You:"/"Opp:" label. */
+   the same "you" convention as .me-winner elsewhere. A tiny YOU/OPP
+   caption above each number spells it out too, the same pattern the
+   adjacent timer block already uses. */
+.score-you,
+.score-opp {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.score-label {
+  font-size: 0.5em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+  margin-bottom: 0.15em;
+}
+
 .score-you {
   color: var(--tile-green);
   font-size: 1.15em;
@@ -490,8 +544,10 @@ body:has(#guesserScreen.active) #appContainer {
 }
 
 .score-sep {
+  display: inline-block;
   opacity: 0.4;
   margin: 0 0.2em;
+  vertical-align: middle;
 }
 
 /* "+1" that floats up from the score number that just incremented.

@@ -2049,10 +2049,11 @@ function updateAppHeader(state) {
     else if (state.setter === opponentId) oppPoints += state.guessCount;
   }
 
-  // Numbers only, no "You:"/"Opp:" labels — which one is "you" is instead
-  // conveyed the same way the rest of the UI already marks "you" (bright/
-  // bold vs. dim), so it stays readable without spelling it out.
-  const html = `<span class="score-you">${myPoints}</span><span class="score-sep">–</span><span class="score-opp">${oppPoints}</span>`;
+  // Small YOU/OPP captions above each number -- the bright/dim color
+  // distinction alone wasn't enough for at-a-glance clarity, so this
+  // spells it out too, the same pattern the adjacent timer block already
+  // uses for its own YOU/OPP labels.
+  const html = `<span class="score-you"><span class="score-label">You</span>${myPoints}</span><span class="score-sep">–</span><span class="score-opp"><span class="score-label">Opp</span>${oppPoints}</span>`;
   roleBadgeEls.forEach(el => {
     el.innerHTML = html;
     el.className = "role-badge header-role-badge";
