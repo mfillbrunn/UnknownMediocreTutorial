@@ -2855,15 +2855,14 @@ body:has(#guesserScreen.active) #appMain {
   gap: var(--sp-8);
 
   width: 100%;
-  /* Now that the Log/Info box (below) needs real vertical room for its
-     own content, not just to match whatever height the power cards
-     happen to need, this row can't rely purely on align-items:stretch
-     to size itself -- with no powers/quest yet (e.g. the very first
-     render), the power side has 0 natural height and, with nothing else
-     in the chain giving this row a concrete height either, the whole
-     row (and the log/info content inside it) would collapse to nothing.
-     Floor it to one power card's height. */
-  min-height: 84px;
+  /* The info column now stacks two readable panels (the info badge and
+     the log, see .guesser-info-col below) instead of just one log box,
+     so this floor is taller than a single power card's own height (90px)
+     -- otherwise each panel would only get ~35px to work with, nowhere
+     near enough for a legible font. Also covers the same "nothing to
+     stretch against yet" case the single-panel version handled (no
+     powers/quest on the very first render). */
+  min-height: 210px;
 }
 
 #guesserScreen .guesser-powers-row #guesserPowerContainer {
@@ -2874,6 +2873,12 @@ body:has(#guesserScreen.active) #appMain {
      specificity so the power cards go back to shrink-to-fit. */
   flex: 0 1 auto;
   width: auto;
+  /* Without this, align-items:stretch (above) stretches the power cards'
+     wrapping row to match the now-taller info column beside it, leaving
+     a large empty gap under a single row of 90px cards. Pin it to its
+     own natural top-aligned height instead -- it already wraps onto a
+     second row by itself once it has enough cards to need the space. */
+  align-self: flex-start;
 }
 
 /*
@@ -2889,6 +2894,7 @@ body:has(#guesserScreen.active) #appMain {
   position: relative;
   display: flex;
   flex-direction: column;
+  gap: var(--sp-6);
 
   padding: var(--sp-6);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -2896,6 +2902,78 @@ body:has(#guesserScreen.active) #appMain {
   background: rgba(14, 15, 22, 0.35);
 
   overflow: hidden;
+}
+
+/* Info badge: the top half of the info column -- quest conditions and
+   whatever power results are currently registered with InfoBadgeEngine
+   (see client/InfoBadgeEngine.js), in a noticeably larger/more readable
+   font than the log below it (that one stays compact since it's a long
+   scrolling history, not a handful of at-a-glance facts). Collapses to
+   nothing when there's nothing to show (InfoBadgeEngine only adds
+   .show once it has at least one message) so the log gets the full
+   column instead of an empty half. */
+#guesserScreen #GuesserInfoBadge {
+  flex: 0 0 0;
+  min-height: 0;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+#guesserScreen #GuesserInfoBadge.show {
+  flex: 1 1 0;
+  overflow-y: auto;
+}
+
+/* Each collected message (quest status, a power's result, ...) reads as
+   its own line -- the compact "chip row" look InfoBadgeEngine.js's HTML
+   implies (inline items separated by "·") doesn't leave room to actually
+   be readable at this larger size, so the separators/row-break markers
+   it emits are just turned into block-level line breaks here instead. */
+#guesserScreen #GuesserInfoBadge .badge-item {
+  display: block;
+}
+#guesserScreen #GuesserInfoBadge .badge-sep {
+  display: none;
+}
+#guesserScreen #GuesserInfoBadge .badge-row-break {
+  display: block;
+}
+
+#guesserScreen #GuesserInfoBadgeDetail {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+  opacity: 0.8;
+}
+#guesserScreen #GuesserInfoBadgeDetail[hidden] {
+  display: none;
+}
+#guesserScreen #GuesserInfoBadgeDetail .info-badge-detail-item {
+  display: block;
+}
+#guesserScreen #GuesserInfoBadgeDetail .badge-sep {
+  display: none;
+}
+
+/* Divider between the info section (badge + detail above) and the log
+   below -- lives on the log's top edge rather than the badge's bottom
+   edge so it sits after BOTH badge and detail regardless of whether the
+   detail line is present (~ matches any later sibling, not just the
+   next one). Only appears once the badge actually has content (.show)
+   so an empty info section doesn't leave a stray line above the log. */
+#guesserScreen #GuesserInfoBadge.show ~ .guesser-sidebar-panel {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: var(--sp-6);
 }
 
 /* The old panel may currently have absolute/fixed positioning (base
