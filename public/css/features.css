@@ -2717,6 +2717,24 @@ body:has(#guesserScreen.active) #appMain {
   font-size: 8.5px;
 }
 
+/*
+  Notes had no equivalent override, so it was still rendering at the
+  floating panel's original (larger) sizes -- switching tabs between Log
+  and Notes changed the type size along with the content. Match Log's
+  sizing exactly: .notes-word is the main readable line (same role as
+  .log-entry above), the rest are secondary/label text (same role as
+  .log-round/.log-power above).
+*/
+#setterScreen .setter-sidebar .notes-word {
+  font-size: 9.5px;
+}
+
+#setterScreen .setter-sidebar .notes-panel-title,
+#setterScreen .setter-sidebar .notes-remaining-count-inline,
+#setterScreen .setter-sidebar .notes-empty {
+  font-size: 8.5px;
+}
+
 
 /* =====================================================
    SETTER'S OWN POWERS
