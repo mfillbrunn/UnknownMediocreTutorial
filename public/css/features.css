@@ -3031,7 +3031,14 @@ body:has(#guesserScreen.active) #appMain {
   min-width: 0;
   padding: 0;
   border-radius: var(--r-8, 8px);
-  font-size: 15px;
+  /* A double-digit count (e.g. Field Report's running total, which keeps
+     accumulating past its own 8 target) crowded right up against the
+     base 2px border at 15px -- thicken the border so it reads as a clear
+     frame instead of a thin line getting lost next to the digits, and
+     drop the font size a notch so two digits actually have room to sit
+     inside it instead of nearly touching the border on both sides. */
+  border-width: 3px;
+  font-size: 13px;
   line-height: 1;
 }
 
@@ -3060,7 +3067,8 @@ body:has(#guesserScreen.active) #appMain {
   #guesserScreen .guesser-power-view .quest-badge-tile .quest-progress-chip {
     width: 28px;
     height: 28px;
-    font-size: 13px;
+    border-width: 2.5px;
+    font-size: 11px;
   }
 }
 
