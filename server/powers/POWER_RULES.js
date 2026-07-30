@@ -168,7 +168,7 @@ const POWER_RULES = {
       return (
         state.turn === state.setter &&
         !state.powers?.freezeActive &&
-        (state.powers.suggestSecretUses || 0) < 2
+        !state.powers?.suggestSecretUsed
       );
     }
   },

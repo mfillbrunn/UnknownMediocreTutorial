@@ -56,7 +56,6 @@ const powers = {
       suggestGuessUses: 0, // charges spent — 2 charges total, see POWER_RULES.js
       suggestGuessActive: false,
       suggestSecretUsed: false,
-      suggestSecretUses: 0, // charges spent — 2 charges total, see POWER_RULES.js
       suggestSecretActive: false,
       // REVEAL HISTORY
       revealHistoryUsed: false,

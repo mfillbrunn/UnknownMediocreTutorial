@@ -13,9 +13,12 @@ const WORDS = fs.readFileSync(
 
 engine.registerPower("suggestSecret", {
   apply(state, action, roomId, io, room) {
-    // Two charges per round — can be activated on two separate turns
-    // (never the same turn, powerUsedThisTurn already prevents that).
-    if ((state.powers.suggestSecretUses || 0) >= 2) return false;
+    // Once per match, same as every other client shows it -- the button
+    // permanently disables after the first use (see powerEngine.js's
+    // isPermanentlyUsed, keyed off suggestSecretUsed below). POWER_RULES.js's
+    // allowed() already guards this too, but the AI calls apply() through a
+    // separate path (runAI.js), so it has to be enforced here as well.
+    if (state.powers.suggestSecretUsed) return false;
     if (state.powers.freezeActive) return false;
 
     const feasible = WORDS.filter((w) =>
@@ -46,7 +49,6 @@ engine.registerPower("suggestSecret", {
       candidates[Math.floor(Math.random() * candidates.length)];
 
     state.powers.suggestSecretUsed = true;
-    state.powers.suggestSecretUses = (state.powers.suggestSecretUses || 0) + 1;
     state.powers.suggestSecretActive = true;
     state.powers.suggestedSecret = suggestion;
 
