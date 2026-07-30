@@ -2723,24 +2723,19 @@ body:has(#guesserScreen.active) #appMain {
    ===================================================== */
 
 #setterScreen .setter-sidebar-powers {
-  /* flex-grow:0 (not 1) -- this only ever needs exactly what its cards
-     take up, so it shouldn't compete with the Log/Notes panel below for
-     any extra room the column has to spare; that panel is the one meant
-     to stretch into leftover space (see .setter-sidebar-activity.panel-
-     open below). flex-shrink stays on as the safety net for a genuinely
-     short viewport. */
-  flex: 0 1 auto;
-  /* A bare min-height:0 let this shrink arbitrarily far below its actual
-     content on short viewports -- with the Log/Notes panel below it also
-     competing for space (and defaulting open), that meant the LAST power
-     card's label could get silently scroll-clipped with no visible
-     scrollbar or fade to hint more was there; it just looked cut off.
-     Each card's min-height (64px) is just a floor -- icon+label+padding
-     actually need ~81px, so 3 cards (the max a setter carries) plus the
-     grid's own gaps (6px * 2) come to ~255px. Floor it there so the
-     common case always shows every card in full, and only an unusually
-     short viewport still needs to scroll for it. */
-  min-height: 255px;
+  /* flex-grow:0 AND flex-shrink:0 -- this claims exactly what its actual
+     cards need (1 card some rounds, up to 3 others) and never more or
+     less, so it doesn't reserve blank space sized for the worst case
+     the way a fixed min-height did (that used to leave a dead gap below
+     a single card, since every round reserved room for 3). It also
+     never shrinks below that actual size, so the cards themselves can
+     never clip -- if the column is ever too short to fit everything,
+     the Log/Notes panel below is the one that gives, since it already
+     scrolls internally for its own overflow (see .setter-sidebar-
+     activity.panel-open's flex:1 1 auto, the one section actually meant
+     to grow into leftover room and shrink back down as that room
+     shrinks). */
+  flex: 0 0 auto;
 
   overflow-x: hidden;
   overflow-y: auto;
