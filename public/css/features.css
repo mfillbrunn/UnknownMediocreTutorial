@@ -3011,6 +3011,30 @@ body:has(#guesserScreen.active) #appMain {
   max-width: 46px;
 }
 
+/* Quest tile, guesser only: the progress count used to fill the whole
+   icon spot (components.css's shared .quest-badge-tile .quest-progress-
+   chip, flex:1 1 auto, centered) -- pin it into a small square flush
+   against the card's top edge instead, so it reads as a distinct
+   "progress corner" rather than as the card's icon, and give it a
+   bigger, more legible number. justify-content:flex-start overrides the
+   card's own centering (base .power-btn) so the chip+label group hugs
+   the top instead of sitting in the vertical middle of the fixed-height
+   card. The card itself (features.css's 90x90 rule above) is untouched. */
+#guesserScreen .guesser-power-view .power-btn.power-badge.quest-badge-tile {
+  justify-content: flex-start;
+}
+
+#guesserScreen .guesser-power-view .quest-badge-tile .quest-progress-chip {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  min-width: 0;
+  padding: 0;
+  border-radius: var(--r-8, 8px);
+  font-size: 15px;
+  line-height: 1;
+}
+
 /* Smaller power cards on phones -- same icon/label budget as above, just
    in a slightly smaller box. */
 @media (max-width: 430px) {
@@ -3031,6 +3055,12 @@ body:has(#guesserScreen.active) #appMain {
 
   #guesserScreen .guesser-power-view .power-icon {
     max-width: 38px;
+  }
+
+  #guesserScreen .guesser-power-view .quest-badge-tile .quest-progress-chip {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
   }
 }
 
