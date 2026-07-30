@@ -247,6 +247,14 @@ function onRejoinUI() {
 window._everDisconnected = false;
 window._disconnectedAt = 0;
 
+// Set on every drop, consumed (and cleared) by the very next screens
+// update in client.js — see the matching comment there. Distinct from
+// _everDisconnected (which stays true for the rest of the page's life,
+// too coarse for this: a blip in round 1 shouldn't suppress a real live
+// win's reveal in round 5) — this only affects whichever state update
+// happens to be the first one processed after reconnecting.
+window._skipNextGameOverReveal = false;
+
 // How long a gap counts as "brief". socket.io reconnects on its own after a
 // transient hiccup (a momentary network blip, a server event-loop stall
 // during AI computation, a proxy timeout), and the server keeps the
@@ -402,6 +410,10 @@ socket.on("disconnect", reason => {
   // silently) from a long absence (ask before rejoining) — see
   // maybeAutoRejoin / BRIEF_RECONNECT_MS.
   window._disconnectedAt = Date.now();
+  // Whatever the reconnect eventually reveals (round already over while
+  // we were gone, mid-round, etc.), the player didn't watch it happen
+  // live -- see client.js's updateScreens() for where this gets used.
+  window._skipNextGameOverReveal = true;
   // Don't flash a "connection lost" toast the instant the socket drops —
   // socket.io reconnects on its own, and a sub-second transport blip
   // (the common "transport close" hiccup during normal play) recovers

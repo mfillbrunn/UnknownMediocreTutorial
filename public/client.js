@@ -633,10 +633,22 @@ function updateScreens() {
     return;
   }
 
+  // A disconnect since the last screens update means the player wasn't
+  // necessarily watching live -- replaying the ~6s flip+popup ceremony
+  // once they reconnect made the win reveal feel like it fired late
+  // (because relative to the actual win, it did: it only starts once
+  // they're back, however long that took). See socketClient.js's
+  // "disconnect" handler for where this gets set. Consumed unconditionally
+  // on every call so it only ever affects the ONE update right after
+  // reconnecting, not some later round's genuine live win.
+  const skipRevealForReconnect = !!window._skipNextGameOverReveal;
+  window._skipNextGameOverReveal = false;
+
   const enteringGameOverLive =
     state.phase === "gameOver" &&
     _lastScreenPhase !== "gameOver" &&
-    _lastScreenPhase !== null; // null = very first render this page has done (fresh load/rejoin) — don't replay the reveal for a round that already ended
+    _lastScreenPhase !== null && // null = very first render this page has done (fresh load/rejoin) — don't replay the reveal for a round that already ended
+    !skipRevealForReconnect;
   _lastScreenPhase = state.phase;
 
   if (enteringGameOverLive && !_gameOverRevealInFlight) {
