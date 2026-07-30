@@ -87,11 +87,28 @@ function getRemainingWordInfo(state, allowedSecrets, draftSecret) {
 
   const history = Array.isArray(state.history) ? state.history : [];
 
-  // Stealth Guess hides the guess/feedback text from the setter, but the
-  // remaining-word count was still being computed from the real,
-  // unmasked history — silently leaking the same information back
-  // through the numbers instead. Hide the count for that one round too.
-  if (history[history.length - 1]?.stealthApplied) {
+  // Stealth Guess hides the guess/feedback text from the setter for the
+  // ONE guess it was used on — the remaining-word count derived from that
+  // guess's real feedback would otherwise leak the same information right
+  // back through the numbers. "The guess it was used on" has to be judged
+  // against whatever's actually pending right now, not just "the last
+  // entry in history": a history entry only gets created once the setter
+  // reacts (see finalizeFeedback.js), so while a guess is still pending,
+  // the last entry in history is always the PREVIOUS guess's — checking
+  // its stealthApplied flag here kept the count hidden all the way
+  // through the guesser's entirely next, unrelated guess too, since that
+  // guess doesn't get its own entry until the setter reacts to it either.
+  // state.powers.stealthGuessActive is the live signal for a still-
+  // pending stealth guess; entry.stealthApplied only exists retroactively
+  // on the entry finalizeFeedback creates once it resolves (clearing
+  // stealthGuessActive in that same step) — so check whichever one
+  // actually corresponds to what's being evaluated right now.
+  const pendingGuess = state.pendingGuess;
+  const stealthHidden = pendingGuess
+    ? !!state.powers?.stealthGuessActive
+    : !!history[history.length - 1]?.stealthApplied;
+
+  if (stealthHidden) {
     return { current: null, old: -1, new: -1, hiddenByStealth: true };
   }
 
@@ -106,7 +123,7 @@ function getRemainingWordInfo(state, allowedSecrets, draftSecret) {
   let oldCount = -1;
   let newCount = -1;
 
-  const guess = state.pendingGuess;
+  const guess = pendingGuess;
   const guessIsComplete = !!guess && !guess.includes("?");
 
   if (guessIsComplete) {
