@@ -461,11 +461,31 @@ function updateQuestBadge(state, role) {
   btn.classList.toggle("quest-oneaway", !status.done && !q.ready && !!q.oneAway);
   btn.classList.toggle("quest-done", !!status.done);
   btn.classList.toggle("power-used", !!status.done);
-  btn.disabled = !canClaim;
+  // Stays clickable either way -- only the ACTION behind the click changes,
+  // never disabled outright, so there's always some response to a tap
+  // instead of a dead card. Native `disabled` would silently swallow
+  // clicks (no CSS here keys off it anyway, see components.css's
+  // .disabled-btn class instead), which is exactly what blocked the
+  // explain-on-click case below before this.
+  btn.disabled = false;
 
+  // Ready/one-away: tapping claims the quest, same as always. Anything
+  // else (still in progress, or already claimed) has nothing to claim --
+  // show what the quest actually wants instead of doing nothing, using
+  // status.desc, which already resolves to the specific live explanation
+  // (e.g. Field Report's current 3 conditions) rather than just the
+  // static blurb.
   btn.onclick = canClaim
     ? () => window.sendGameAction?.({ type: "USE_QUEST", userId: window.currentUser?.id })
-    : null;
+    : () => {
+        window.showBigAnnounce?.({
+          icon: status.meta.emoji || "🎯",
+          title: `Quest: ${status.meta.label}`,
+          sub: [status.desc, `Progress: ${status.label}`],
+          roleClass: "role-guesser",
+          duration: 6000
+        });
+      };
 }
 window.updateQuestBadge = updateQuestBadge;
 
