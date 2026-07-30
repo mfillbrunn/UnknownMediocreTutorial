@@ -3087,8 +3087,8 @@ body:has(#guesserScreen.active) #appMain {
 
 #guesserScreen .guesser-power-view .quest-badge-tile .quest-progress-chip {
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   min-width: 0;
   padding: 0;
   border-radius: var(--r-8, 8px);
@@ -3097,8 +3097,11 @@ body:has(#guesserScreen.active) #appMain {
      base 2px border at 15px -- thicken the border so it reads as a clear
      frame instead of a thin line getting lost next to the digits, and
      drop the font size a notch so two digits actually have room to sit
-     inside it instead of nearly touching the border on both sides. */
-  border-width: 3px;
+     inside it instead of nearly touching the border on both sides. The
+     chip grew a few px alongside the thicker border (rather than just
+     thickening it in place) so the inner content area actually gained
+     room instead of the border eating into the same fixed box. */
+  border-width: 4px;
   font-size: 13px;
   line-height: 1;
 }
@@ -3139,9 +3142,9 @@ body:has(#guesserScreen.active) #appMain {
   }
 
   #guesserScreen .guesser-power-view .quest-badge-tile .quest-progress-chip {
-    width: 28px;
-    height: 28px;
-    border-width: 2.5px;
+    width: 31px;
+    height: 31px;
+    border-width: 3px;
     font-size: 11px;
   }
 

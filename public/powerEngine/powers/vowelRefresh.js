@@ -45,7 +45,17 @@ tooltip: {
     // whether it's worth spending before committing -- same eligibility
     // rule the server enforces (vowelRefreshServer.js): a vowel in the
     // last guess not already confirmed present by an earlier guess.
-    const lastRow = $("setterGuesserSubmitted")?.lastElementChild;
+    //
+    // A guess earlier in the match was once "the last row" and got shined
+    // then -- once a newer guess comes in it's no longer the last row, but
+    // nothing else ever revisits it to turn the class back off, so it kept
+    // glittering forever. Clear it off every row before reapplying it to
+    // only the current last one.
+    const submittedContainer = $("setterGuesserSubmitted");
+    submittedContainer?.querySelectorAll(".vowel-refresh-shine")
+      .forEach(tile => tile.classList.remove("vowel-refresh-shine"));
+
+    const lastRow = submittedContainer?.lastElementChild;
     const tiles = lastRow?.querySelectorAll(".history-tile");
     if (tiles?.length === 5) {
       const eligible = this.buttonEl.disabled ? new Set() : getRefreshableVowelIndices(state);
