@@ -3115,14 +3115,17 @@ body:has(#guesserScreen.active) #appMain {
   }
 }
 
-/* Letter Profile and Informant show a variable 2-3 line stat readout
-   instead of the short fixed-height name label every other power card
-   has -- at this card's compact fixed size (above) a 3-line profile mode
-   (e.g. "rows") doesn't fit and clips past the bottom edge. Let just
-   these two grow taller than the shared fixed height instead, rather
-   than enlarging every plain button card to cover their worst case. */
-#guesserScreen .guesser-power-view .power-btn.power-badge.letter-profile-tile,
-#guesserScreen .guesser-power-view .power-btn.power-badge.informant-power-tile {
+/* Letter Profile shows a variable 2-3 line stat readout instead of the
+   short fixed-height name label every other power card has -- at this
+   card's compact fixed size (above) a 3-line profile mode (e.g. "rows")
+   doesn't fit and clips past the bottom edge. Let just this one grow
+   taller than the shared fixed height instead, rather than enlarging
+   every plain button card to cover its worst case. Informant's own
+   peek content is a fixed shape (one ordinal line + one letter tile,
+   never more), so it stays at the shared fixed size below instead of
+   also growing -- it used to visibly resize every time the peeked
+   letter/position changed. */
+#guesserScreen .guesser-power-view .power-btn.power-badge.letter-profile-tile {
   height: auto !important;
   max-height: none !important;
 }
