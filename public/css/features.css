@@ -2803,7 +2803,7 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 #setterScreen .setter-power-view .power-icon {
-  max-width: 34px;
+  max-width: 40px;
 }
 
 #setterScreen .setter-power-view .power-btn-label {
@@ -2985,18 +2985,18 @@ body:has(#guesserScreen.active) #appMain {
    and label sizes below (mobile.css's .powers-col .power-icon/
    .power-btn-label, shared with the mobile breakpoint further down) are
    deliberately budgeted to fit inside this exact box -- icon + label +
-   padding + gap must not exceed 60px or the label clips/overlaps the
+   padding + gap must not exceed 62px or the label clips/overlaps the
    icon instead of the card growing to fit it. */
 #guesserScreen .guesser-power-view .power-btn.power-badge {
-  flex: 0 0 60px !important;
+  flex: 0 0 62px !important;
 
-  width: 60px !important;
-  min-width: 60px !important;
-  max-width: 60px !important;
+  width: 62px !important;
+  min-width: 62px !important;
+  max-width: 62px !important;
 
-  height: 60px !important;
-  min-height: 60px !important;
-  max-height: 60px !important;
+  height: 62px !important;
+  min-height: 62px !important;
+  max-height: 62px !important;
 
   flex-direction: column !important;
   align-items: center;
@@ -3007,18 +3007,18 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 /* Smaller power cards on phones -- same icon/label budget as above, just
-   in a slightly smaller box (44px of padding+gap+icon+label vs. 46px). */
+   in a slightly smaller box. */
 @media (max-width: 430px) {
   #guesserScreen .guesser-power-view .power-btn.power-badge {
-    flex-basis: 52px !important;
+    flex-basis: 54px !important;
 
-    width: 52px !important;
-    min-width: 52px !important;
-    max-width: 52px !important;
+    width: 54px !important;
+    min-width: 54px !important;
+    max-width: 54px !important;
 
-    height: 54px !important;
-    min-height: 54px !important;
-    max-height: 54px !important;
+    height: 56px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
 
     gap: 2px;
     padding: 4px 3px 5px !important;
@@ -3046,7 +3046,7 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 .letter-profile-tile .power-icon {
-  max-width: 20px;
+  max-width: 23px;
 }
 
 .letter-profile-tile-lines {
@@ -3092,7 +3092,7 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 .informant-power-tile .power-icon {
-  max-width: 20px;
+  max-width: 23px;
 }
 
 .informant-power-tile-peek {
