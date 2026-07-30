@@ -723,21 +723,24 @@ body.hide-constraints .constraint-row {
    specificity) -- not the base clamp above, or this backdrop wouldn't
    actually hug the tiles it's sized against.
 
-   padding-right is wider than padding-left: Count Only's G/Y tally
-   (.count-only-badge below) sits just past the row's right edge via
-   absolute positioning, and this box clips overflow-x -- without the
-   extra padding reserved here, that badge rendered entirely outside
-   this now-tile-width box and got clipped to invisible. Reserved
+   padding is symmetric (50px each side) even though only the right side
+   actually needs the room: Count Only's G/Y tally (.count-only-badge
+   below) sits just past the row's right edge via absolute positioning,
+   and this box clips overflow-x -- without padding reserved there, that
+   badge rendered entirely outside this now-tile-width box and got
+   clipped to invisible. Matching it on the left, rather than just
+   widening the right side alone, is what keeps the tile row itself
+   visually centered in the box instead of pushed left. Reserved
    unconditionally (not toggled on when Count Only is actually in play)
    so nothing shifts mid-match when the power activates; row-wrap's own
    justify-content:center exactly fills this box's narrower content
    area either way, so every row's tiles still land at the same X
    position regardless of whether this particular row has a badge. */
 #guesserScreen .history-scroll {
-  width: calc(5 * clamp(30px, 12.5cqw, 56px) + 4 * var(--sp-4) + 60px);
+  width: calc(5 * clamp(30px, 12.5cqw, 56px) + 4 * var(--sp-4) + 100px);
   max-width: 100%;
   margin: 0 auto;
-  padding-left: 10px;
+  padding-left: 50px;
   padding-right: 50px;
   background: color-mix(in srgb, black 16%, transparent);
   border-radius: var(--r-10);
