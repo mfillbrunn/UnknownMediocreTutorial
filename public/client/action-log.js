@@ -116,6 +116,29 @@
         pushConditionsLine(quest.conditions);
       }
 
+      // Recon Sweep result, shown the instant it's used rather than
+      // waiting for the setter's Keep/New decision to finalize this
+      // round's guess entry (see letterProbeServer.js's postScore --
+      // that's what actually attaches entry.letterProbeResult above, and
+      // it doesn't run until the setter reacts, a full extra round-trip
+      // after the guesser already has the answer). state.powers.
+      // letterProbeResult is live from the moment the power fires until
+      // postScore consumes it into that permanent entry, so reading it
+      // straight from state here — same "live buffer" idea as the Field
+      // Report conditions/quest status above — surfaces the exact same
+      // text immediately, then hands off to the permanent line with no
+      // gap or duplicate (the two are mutually exclusive: postScore
+      // clears this field in the same step it fills in the entry).
+      if (isLiveRound && viewerRole === "guesser" && state.powers?.letterProbeResult) {
+        const { count, distinctTested, letters } = state.powers.letterProbeResult;
+        const meta = window.POWER_METADATA?.letterProbe;
+        entries.push({
+          type: "power",
+          cssClass: " log-power-guesser",
+          text: `${meta?.label || "Letter Scan"}: ${count}/${distinctTested} (${letters})`
+        });
+      }
+
       // Quest completion/one-away, same "current status once at the end
       // of the live round" treatment as the Field Report conditions above
       // -- there's no per-guess record of exactly when ready/oneAway
