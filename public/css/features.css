@@ -2254,6 +2254,49 @@
   0%, 100% { box-shadow: 0 0 0 rgba(255, 214, 92, 0); }
   50% { box-shadow: 0 0 14px 3px rgba(255, 214, 92, 0.7); }
 }
+
+/* Twinkling star glints on top of the glow -- two 8-point stars at
+   opposite corners of the tile (.history-tile is already
+   position:relative), staggered so they never twinkle in sync. This is
+   the actual "sparkle" -- the pulse above is just the ambient glow. */
+.vowel-refresh-shine::before,
+.vowel-refresh-shine::after {
+  content: "";
+  position: absolute;
+  width: 34%;
+  height: 34%;
+  background: #fff6d6;
+  clip-path: polygon(
+    50% 0%, 61% 38%, 100% 50%, 61% 62%,
+    50% 100%, 39% 62%, 0% 50%, 39% 38%
+  );
+  pointer-events: none;
+  opacity: 0;
+  animation: vowel-refresh-sparkle 1.6s ease-in-out infinite;
+}
+.vowel-refresh-shine::before {
+  top: 2%;
+  right: 4%;
+}
+.vowel-refresh-shine::after {
+  bottom: 4%;
+  left: 6%;
+  width: 22%;
+  height: 22%;
+  animation-delay: 0.55s;
+}
+@keyframes vowel-refresh-sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(20deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vowel-refresh-shine,
+  .vowel-refresh-shine::before,
+  .vowel-refresh-shine::after {
+    animation: none;
+  }
+}
 /* =====================================================
    GAME VIEWPORT — keyboard always remains on-screen
    Put this at the END of features.css
