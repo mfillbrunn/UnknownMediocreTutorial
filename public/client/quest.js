@@ -309,35 +309,17 @@ window.computeQuestStatus = computeQuestStatus;
 // the shared info badge: just the name and live progress, no emoji or
 // description -- those matter to the guesser working toward it, not to
 // the setter picking a secret to counter it.
-//
-// The guesser DOES already see name/progress on their own quest-badge-
-// tile card, so this registration would be pure repetition for them --
-// except for the conditions text (status.desc, e.g. Field Report's
-// current 3 live conditions), which has no other persistent home once
-// the game-start log line scrolls out of view. That's carried as
-// `subtext`, a second line the guesser's own info-badge panel renders
-// underneath the main one (see index.html's #GuesserInfoBadgeDetail).
 InfoBadgeEngine.register((state, role) => {
-  if (role !== "setter" && role !== "guesser") return null;
+  if (role !== "setter") return null;
 
   const status = computeQuestStatus(state);
   if (!status) return null;
 
-  if (role === "setter") {
-    return {
-      id: "questStatus",
-      text: `Quest: ${status.meta.label} — ${status.label}`,
-      color: "#4da3ff",
-      screen: "setter"
-    };
-  }
-
   return {
     id: "questStatus",
     text: `Quest: ${status.meta.label} — ${status.label}`,
-    subtext: status.desc,
     color: "#4da3ff",
-    screen: "guesser"
+    screen: "setter"
   };
 });
 
