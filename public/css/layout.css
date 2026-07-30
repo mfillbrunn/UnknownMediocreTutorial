@@ -512,6 +512,14 @@ body:has(#guesserScreen.active) #appContainer {
   font-weight: 800;
   letter-spacing: 0.06em;
   white-space: nowrap;
+  /* .score-you/.score-opp stack a small label above the big number, so
+     their own baseline sits at the label's bottom instead of the number's
+     -- vertical-align:middle on .score-sep was centering the dash against
+     that mismatched baseline and landing it up near the labels instead of
+     the numbers. A flex row centers everything by box height instead,
+     independent of baselines. */
+  display: inline-flex;
+  align-items: center;
 }
 
 /* Live score: your own number stands out via color, the opponent's
@@ -526,7 +534,6 @@ body:has(#guesserScreen.active) #appContainer {
   flex-direction: column;
   align-items: center;
   line-height: 1;
-  vertical-align: middle;
   font-size: 1em;
   font-weight: 800;
 }
@@ -548,10 +555,15 @@ body:has(#guesserScreen.active) #appContainer {
 }
 
 .score-sep {
-  display: inline-block;
   opacity: 0.4;
   margin: 0 0.2em;
-  vertical-align: middle;
+  /* .score-you/.score-opp stack a small YOU/OPP label above the number,
+     so the visual weight of that column sits low, near the number --
+     align-items:center on the row centers the dash against the *whole*
+     two-line column instead and lands it a few px too high, biased
+     toward the label. Bottom-aligning the dash to the row instead makes
+     it land almost exactly on the number's own vertical center. */
+  align-self: flex-end;
 }
 
 /* "+1" that floats up from the score number that just incremented.

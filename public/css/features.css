@@ -3060,6 +3060,19 @@ body:has(#guesserScreen.active) #appMain {
   line-height: 1;
 }
 
+/* The quest name label (below the chip) was shrinking down to 8px --
+   fitBadgeLabel (powerEngine.js) only shrinks a label to fit its box, it
+   never grows one, and the base 24px box was too tight for a two-word
+   name like "Field Report" at anything larger. justify-content:flex-start
+   above (this card doesn't fill its full 90px height) leaves genuine
+   slack below the chip+label group -- give the label box more of it so
+   the fit algorithm can settle on a bigger, more legible size instead of
+   shrinking all the way down. */
+#guesserScreen .guesser-power-view .quest-badge-tile .power-btn-label {
+  height: 32px;
+  font-size: 12px;
+}
+
 /* Smaller power cards on phones -- same icon/label budget as above, just
    in a slightly smaller box. */
 @media (max-width: 430px) {
@@ -3087,6 +3100,11 @@ body:has(#guesserScreen.active) #appMain {
     height: 28px;
     border-width: 2.5px;
     font-size: 11px;
+  }
+
+  #guesserScreen .guesser-power-view .quest-badge-tile .power-btn-label {
+    height: 26px;
+    font-size: 10px;
   }
 }
 
