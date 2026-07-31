@@ -1,6 +1,4 @@
-/* =========================================
-   HISTORY — TILE STYLE
-   ========================================= */
+/* HISTORY — TILE STYLE */
 .history-tiles {
   display: flex;
   flex-direction: column;
@@ -265,9 +263,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   filter: none;
 }
 
-/* =========================================
-   SETTER: PENDING-GUESS ROW — looks normal, feels alive
-   =========================================
+/* Setter: pending-guess row — looks normal, feels alive.
    The guesser's just-submitted guess, as shown to the setter awaiting their
    Keep/New decision. Tiles default to hollow with a dashed hairline outline
    and plain text; a tile with a determined hypothetical-feedback color
@@ -386,9 +382,7 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   gap: var(--sp-6);
 }
 
-/* =========================================
-   SETTER-ONLY PENDING PREVIEW FRAME
-   ========================================= */
+/* SETTER-ONLY PENDING PREVIEW FRAME */
 
 /* Only visible for the setter */
 .theme-setter .history-row.draft-row.pending-guess {
@@ -451,9 +445,7 @@ body.guide-on .theme-setter .history-row.draft-row.pending-guess::before {
   content: none;
 }
 
-/* ----------------------------------
-Constraint row using history tile language 
---------------------------------------*/
+/* Constraint row uses history tile language */
 .constraint-row {
   position: relative;
   /* .center-col uses align-items:center (shrink-to-fit), so without an
@@ -850,11 +842,7 @@ body.hide-constraints .constraint-row {
   100% { transform: rotateX(0deg); }
 }
 
-/* ===== MASK FOR MIDPOINT REVEAL ===== */
-
-/* ===== FULL TILE MASK (covers border + background) ===== */
-
-/* Use ::after instead of ::before to avoid clashing */
+/* Full tile mask (covers border + background) -- ::after instead of ::before to avoid clashing */
 .history-row:not(.draft-row) .history-tile::after {
   content: "";
   position: absolute;

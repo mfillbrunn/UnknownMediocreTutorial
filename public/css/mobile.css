@@ -116,11 +116,6 @@
     font-size: 14px;
   }
 
-/*----Extra small */
-
-
-/*------- REDUCED MOTION --------------*/
-
 @media (prefers-reduced-motion: reduce) {
   .tooltip {
     transition: none;

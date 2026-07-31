@@ -144,9 +144,7 @@
   text-shadow: none;
   pointer-events: none;
 }
-/* ===============================
-   FREEZE — Draft Row Overlay
-   =============================== */
+/* FREEZE — Draft Row Overlay */
 
 .history-row.freeze-draft {
   position: relative;
@@ -185,18 +183,14 @@
   position: relative;
   z-index: 1;
 }
-/* ===============================
-   BLIND GUESS (UI-only power)
-   =============================== */
+/* BLIND GUESS (UI-only power) */
 
 body.blind-guess .constraint-row,
 body.blind-guess .history-scroll {
   display: none !important;
 }
 
-/* ===============================
-   BLIND GUESS — keyboard hard mask
-   =============================== */
+/* BLIND GUESS — keyboard hard mask */
 
 body.blind-guess .key {
   /* Color */
@@ -230,9 +224,7 @@ body.blind-guess .key:hover {
   box-shadow: none;
 }
 
-/* ===============================
-   BLIND SPOT — half outline
-   =============================== */
+/* BLIND SPOT — half outline */
 
 .tile-blindspot {
   position: relative;
@@ -255,9 +247,7 @@ body.blind-guess .key:hover {
   z-index: 3;
 }
 
-/* ===============================
-   FAKE FEEDBACK
-   =============================== */
+/* FAKE FEEDBACK */
 
 /* Falsify Intel (setter power): the tile cycles between the two possible
    feedback colors. Each color pair gets its own literal @keyframes (rather
@@ -431,9 +421,7 @@ body.blind-guess .key:hover {
 
 /* POWER EFFECTS*/
 
-/* ================================
-   POWER FX LAYER
-   ================================ */
+/* POWER FX LAYER */
 
 #power-fx {
   position: fixed;
@@ -461,9 +449,7 @@ body.blind-guess .key:hover {
   }
 }
 
-/* ================================
-   KEYFRAMES
-   ================================ */
+/* KEYFRAMES */
 
 @keyframes fx-shake {
   0%   { transform: translate3d(0,0,0); }

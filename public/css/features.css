@@ -1,6 +1,4 @@
-/* ===================================================================
-   features.css — new features ported from mobile-frontend
-   =================================================================== */
+/* features.css — new features ported from mobile-frontend */
 
 /* ── Setter + Guesser drag-and-drop (always on, see drag-mode.js) ────── */
 #keyboardSetter .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]),
@@ -2297,10 +2295,7 @@
     animation: none;
   }
 }
-/* =====================================================
-   GAME VIEWPORT — keyboard always remains on-screen
-   Put this at the END of features.css
-   ===================================================== */
+/* GAME VIEWPORT — keyboard always remains on-screen Put this at the END of features.css */
 
 body:has(#setterScreen.active),
 body:has(#guesserScreen.active) {
@@ -2407,11 +2402,9 @@ body:has(#guesserScreen.active) #appMain {
   min-height: 0;
 }
 
-/* =====================================================
-   SMALLER TILES + FIXED SETTER SIDEBAR
-   ===================================================== */
+/* SMALLER TILES + FIXED SETTER SIDEBAR */
 
-/* ---------- Smaller game tiles ---------- */
+/* Smaller game tiles */
 
 #guesserScreen .history-tile {
   width: clamp(30px, 12.5cqw, 56px);
@@ -2473,7 +2466,7 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 
-/* ---------- Fixed setter left column ---------- */
+/* Fixed setter left column */
 
 .theme-setter .play-row {
   --setter-sidebar-width: 92px;
@@ -2524,9 +2517,7 @@ body:has(#guesserScreen.active) #appMain {
   max-width: 100%;
   box-sizing: border-box;
 }
-/* =====================================================
-   IPHONE HISTORY SCROLLING
-   ===================================================== */
+/* IPHONE HISTORY SCROLLING */
 
 #setterScreen .history-scroll,
 #guesserScreen .history-scroll {
@@ -2573,9 +2564,7 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 
-/* =====================================================
-   FIXED SETTER SIDEBAR
-   ===================================================== */
+/* FIXED SETTER SIDEBAR */
 
 .theme-setter .play-row {
   /*
@@ -2620,9 +2609,7 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 
-/* =====================================================
-   LOG / NOTES SIDEBAR SECTION
-   ===================================================== */
+/* LOG / NOTES SIDEBAR SECTION */
 
 /*
   Log starts open (see ui/setter-sidebar.js's initialiseSetterSidebar) --
@@ -2779,9 +2766,7 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 
-/* =====================================================
-   SETTER'S OWN POWERS
-   ===================================================== */
+/* SETTER'S OWN POWERS */
 
 #setterScreen .setter-sidebar-powers {
   /* flex-grow:0 AND flex-shrink:0 -- this claims exactly what its actual
@@ -2807,9 +2792,7 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 
-/* =====================================================
-   ONE POWER BUTTON PER ROW, FULL COLUMN WIDTH
-   ===================================================== */
+/* ONE POWER BUTTON PER ROW, FULL COLUMN WIDTH */
 
 #setterScreen .setter-power-view {
   display: grid !important;
@@ -2868,9 +2851,7 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 
-/* =====================================================
-   NEVER SHOW A QUEST CARD IN THE SETTER'S OWN POWER VIEW
-   ===================================================== */
+/* NEVER SHOW A QUEST CARD IN THE SETTER'S OWN POWER VIEW */
 
 /*
   The setter has no quest of their own -- quest.js still pins a read-only
@@ -2891,9 +2872,7 @@ body:has(#guesserScreen.active) #appMain {
 */
 
 
-/* =====================================================
-   GUESSER: OWN POWERS + LOG ROW
-   ===================================================== */
+/* GUESSER: OWN POWERS + LOG ROW */
 
 /*
   Own power/quest cards on the left, the info badge on the right -- they
@@ -3250,9 +3229,7 @@ body:has(#guesserScreen.active) #appMain {
   opacity: 0.5;
 }
 
-/* =====================================================
-   SMALL IPHONE ADJUSTMENTS
-   ===================================================== */
+/* SMALL IPHONE ADJUSTMENTS */
 
 @media (max-width: 430px) {
   .theme-setter .play-row {

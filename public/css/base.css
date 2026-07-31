@@ -19,10 +19,6 @@ textarea {
   font: inherit;
 }
 
-/* =========================================
-   LOBBY TYPOGRAPHY
-   ========================================= */
-/* Low-specificity grouping to avoid clashes */
 .screen-lobby,
 .screen-lobby :where(input, button, p, label, span) {
   font-family: var(--font-sans);

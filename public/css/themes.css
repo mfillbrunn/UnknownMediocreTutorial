@@ -1,8 +1,6 @@
 /* Default = Esports */
 :root {
-   /* ===============================
-     Core colors
-     =============================== */
+  /* Core colors */
   --bg:#0c0c0e;
   --text:#e5e5e5;
   --title:#fff;
@@ -11,17 +9,13 @@
     --pv-period: 2.2s;
   --pv-phase: 0s; /* set once via JS for hard sync */
 
-  /* ===============================
-     Semantic surfaces
-     =============================== */
+  /* Semantic surfaces */
   --screen-bg:#111216;
   --panel-bg:#16171c;
   --panel-text:#e4e4e4;
   --history-bg:#1c1d22;
 
-  /* ===============================
-     Controls
-     =============================== */
+  /* Controls */
   --btn-primary:#0f5fff;
   --btn-primary-hover:#2f74ff;
   --btn-primary-glow:rgba(15,95,255,.5);
@@ -30,17 +24,13 @@
   --btn-secondary-text:#ccc;
   --btn-secondary-hover:#3a3c42;
    --kick-btn: #ff4b5c;
-  /* ===============================
-     Keyboard
-     =============================== */
+  /* Keyboard */
   --kb-neutral:#1f232a;
   --kb-border:#2b303a;
   --kb-hover:#2f3036;
   --kb-used:#2a2a2c;
 
-  /* ===============================
-     Tiles
-     =============================== */
+  /* Tiles */
   --tile-green:#2ECC71;
   --tile-green-text:#000;
   --tile-yellow:#F2C854;
@@ -54,7 +44,6 @@
    --warning-accent: #4DA3FF; 
     --guesser-color:  #4da3ff;
    --setter-color:#ff4b5c;
-/*----SIZING ---*/
    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
 
@@ -102,13 +91,9 @@
   --shadow-inset: 0 0 6px rgba(0,0,0,.35) inset;
   --shadow-card: 0 0 12px rgba(0,0,0,.35);
 
-
-  /*colors*/
   --banner-color: #58355e;
 }
 
-
-/* Theme: Guesser */
 .theme-guesser {
   --role-accent: #4da3ff;
   --role-accent-strong: #4da3ff;

@@ -57,9 +57,7 @@
 }
 :where(.theme-setter, .theme-guesser) .history-box { margin-bottom: var(--sp-6); }
 
-/* =========================================
-   BUTTONS
-   ========================================= */
+/* BUTTONS */
 :where(.primary-btn, .secondary-btn) {
   border: none;
   cursor: pointer;
@@ -351,9 +349,7 @@
   pointer-events: none;
 }
 
-/* =========================================
-   KEYBOARD
-   ========================================= */
+/* KEYBOARD */
 .keyboard {
   width: 100%;
   max-width: 520px;
@@ -537,9 +533,7 @@
 }
 
 
-/* =========================================
-   TOAST + TURN POPUP
-   ========================================= */
+/* TOAST + TURN POPUP */
 .toast {
   position: fixed;
   bottom: 40px;
@@ -574,15 +568,13 @@
   transform: translateX(-50%) translateY(0);
 }
 
-/* =========================================
-   CONNECTION BANNER — persistent (not a toast that scrolls away, not the
+/* Connection banner — persistent (not a toast that scrolls away, not the
    disruptive rejoinModal) indicator that stays up for as long as the
    socket is actually disconnected. Shown on the same deferred timer the
    "Connection lost" toast already uses, so a sub-second blip still shows
    nothing; unlike the toast, this doesn't auto-dismiss on its own, since
    its whole point is telling the player "actions may not be reaching the
-   server right now" for exactly as long as that's still true.
-   ========================================= */
+   server right now" for exactly as long as that's still true. */
 .connection-banner {
   position: fixed;
   top: 0;
@@ -608,9 +600,7 @@
   50% { opacity: 0.7; }
 }
 
-/* =========================================
-   POWER USE POPUP (centered, opaque, lingers)
-   ========================================= */
+/* POWER USE POPUP (centered, opaque, lingers) */
 .power-popup {
   position: fixed;
   top: 50%;
@@ -660,9 +650,7 @@
   opacity: 0.8;
   line-height: 1.35;
 }
-/* =========================================
-   MODAL BASE (HIDDEN)
-   ========================================= */
+/* MODAL BASE (HIDDEN) */
 .modal {
   position: fixed;
   inset: 0;
@@ -720,9 +708,7 @@
   gap: var(--sp-8);
 }
 
-/* ===============================
-   TOOLTIP
-   =============================== */
+/* TOOLTIP */
 
 .tooltip {
   position: fixed;
@@ -765,9 +751,7 @@
   opacity: 0.9;
 }
 
-/* ===============================
-   ROLE BADGE (next to Room ID)
-   =============================== */
+/* ROLE BADGE (next to Room ID) */
 .role-badge {
   padding: var(--sp-2) var(--sp-8);
   border-radius: var(--r-pill);
@@ -962,9 +946,7 @@
 .timer-row:has(.chess-timer.active) { 
   background: color-mix(in srgb, var(--role-accent), black 65%);
 }
-/* ----------------------------------
-   Power info panel (desktop + mobile)
----------------------------------- */
+/* Power info panel (desktop + mobile) */
 
 .power-info-panel {
   position: fixed;
@@ -1145,10 +1127,7 @@
   margin-top: var(--sp-6);
 }
 
-/* --------------------------------------
---------------------------------------Remaining words box (setter only)
---------------------------------------*/
-/* Plain wrapper now -- each number below is its own bordered card (same
+/* Remaining words box (setter only) -- each number below is its own bordered card (same
    two-tone gradient-surface/accent-border language as .power-btn.power-
    badge), not the box itself, so the three numbers read as a trio of
    small stat cards under the power buttons rather than one plain panel. */
@@ -1249,10 +1228,7 @@
   line-height: 1;
   border: 1px solid color-mix(in srgb, var(--tile-green) 55%, black);
 }
-/* --------------------------------------
---------------------------------------Letter Profile box (both roles)
---------------------------------------
-   Same visual language as .remaining-box, kept as its own class rather
+/* Letter Profile box (both roles) -- same visual language as .remaining-box, kept as its own class rather
    than reusing that one — .theme-guesser .remaining-box has a blanket
    `display: none` with a single carved-out exception for
    #GuesserRemainingBox (see below), and this box needs to show for both

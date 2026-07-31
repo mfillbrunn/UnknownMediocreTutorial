@@ -1,6 +1,4 @@
-/* =========================================
-   SUBMIT BANNER — HEAVY, TACTILE, DELIBERATE
-   ========================================= */
+/* SUBMIT BANNER — HEAVY, TACTILE, DELIBERATE */
 
 #submit-banner {
   position: fixed;
@@ -28,10 +26,7 @@
   will-change: transform, left, opacity;
 }
 
-/* -------------------------
-   Role colors
-   ------------------------- */
-
+/* Role colors */
 #submit-banner.spy {
   background: var(--setter-color);
   color: #000;
@@ -41,10 +36,6 @@
   background: var(--guesser-color);
   color: #000;
 }
-
-/* -------------------------
-   Animation
-   ------------------------- */
 
 @keyframes banner-woosh {
   /* enter */
@@ -102,9 +93,7 @@
   }
 }
 
-/* =========================================
-   SYSTEM BANNER (GAME START / END)
-   ========================================= */
+/* SYSTEM BANNER (GAME START / END) */
 
 #submit-banner.system {
   background: var(--banner-color);
@@ -161,10 +150,7 @@
   }
 }
 
-/* =========================================
-   BIG ANNOUNCE — round start (role + goal),
-   secret found / secret lost
-   ========================================= */
+/* BIG ANNOUNCE — round start (role + goal), secret found / secret lost */
 
 .big-announce {
   position: fixed;

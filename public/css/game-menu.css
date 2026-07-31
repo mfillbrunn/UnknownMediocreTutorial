@@ -230,10 +230,7 @@ body.menu-mode .app-header {
   text-decoration: underline;
 }
 
-/* =========================================
-   GAME MENU — SPY / DOSSIER STYLE
-   Drop-in override (no HTML changes)
-   ========================================= */
+/* GAME MENU — SPY / DOSSIER STYLE Drop-in override (no HTML changes) */
 
 .game-menu {
   align-items: center;
@@ -396,10 +393,7 @@ body.menu-mode .app-header {
   transform: rotate(-6deg);
 }
 
-/* =========================================
-   LOBBY — SPY / BRIEFING ROOM STYLE
-   Drop-in override
-   ========================================= */
+/* LOBBY — SPY / BRIEFING ROOM STYLE Drop-in override */
 
 .screen-lobby {
   position: relative;
@@ -477,9 +471,7 @@ body.menu-mode .app-header {
   opacity: 0.75;
 }
 
-/* =========================================
-   ROLE SELECTION — FILE CARDS
-   ========================================= */
+/* ROLE SELECTION — FILE CARDS */
 
 .role-card {
   padding: var(--sp-14);
@@ -641,9 +633,7 @@ body.menu-mode .app-header {
   background: #20222a;
 }
 
-/* =========================================
-   FOOTER ACTIONS
-   ========================================= */
+/* FOOTER ACTIONS */
 
 .lobby-footer {
   margin-top: var(--sp-20);
@@ -670,9 +660,7 @@ body.menu-mode .app-header {
   background: #ffffff;
 }
 
-/* =========================================
-   TIMER OPTIONS — BRIEFING CHOICES
-   ========================================= */
+/* TIMER OPTIONS — BRIEFING CHOICES */
 
 .timer-select {
   margin-top: var(--sp-22);
@@ -694,9 +682,7 @@ body.menu-mode .app-header {
   font-weight: 800;
 }
 
-/* =========================================
-   RANKED STATUS — FOOTNOTE
-   ========================================= */
+/* RANKED STATUS — FOOTNOTE */
 
 .ranked-status {
   display: flex;
@@ -974,9 +960,7 @@ body.menu-mode .app-header {
   white-space: nowrap;
 }
 
-/* =========================================
-   POWER LOADOUTS (custom mode combo builder)
-   ========================================= */
+/* POWER LOADOUTS (custom mode combo builder) */
 
 .loadout-power-checkbox {
   justify-content: space-between;
@@ -1025,9 +1009,7 @@ body.menu-mode .app-header {
   font-weight: 600;
 }
 
-/* =========================================
-   TIMER OPTION — CLEAR SELECTION
-   ========================================= */
+/* TIMER OPTION — CLEAR SELECTION */
 
 .timer-option {
   position: relative;
@@ -1063,9 +1045,7 @@ body.menu-mode .app-header {
 .timer-option small {
   margin-left: 16px;
 }
-/* =========================================
-   ROLE SELECT — FIX ADD AI PLACEMENT
-   ========================================= */
+/* ROLE SELECT — FIX ADD AI PLACEMENT */
 
 /* Switch roles stays centered */
 .role-card.setter {

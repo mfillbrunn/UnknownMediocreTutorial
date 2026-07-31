@@ -1,6 +1,4 @@
-/* =========================================
-   SCREEN PANELS
-   ========================================= */
+/* SCREEN PANELS */
 .screen {
   display: none;
   position: relative;
@@ -27,7 +25,7 @@
   margin: 0 auto;
   padding: var(--sp-20);
 }
-/* --- PLAY AREA --- */
+/* Play area */
 
 .play-area {
   display: flex;
@@ -152,9 +150,7 @@
   min-width: 0;
 }
 
-/* =========================================
-   Setter only: side-by-side sidebar + board
-   ========================================= */
+/* Setter only: side-by-side sidebar + board */
 /* The guesser keeps the single stacked column above (board on top,
    powers below). The setter goes back to the original two-column
    layout -- a narrow power sidebar beside the board -- since the two
@@ -215,9 +211,7 @@
   align-self: stretch;
 }
 
-/* =========================================
-   Shared role header layout
-   ========================================= */
+/* Shared role header layout */
 .header-role-badge {
   font-size: var(--fs-11);
   font-weight: 800;
@@ -459,9 +453,7 @@ body:has(#guesserScreen.active) #appContainer {
   min-width: 0;
 }
 
-/* =========================================
-   GAME VIEWPORT — complete the flex chain
-   ========================================= */
+/* GAME VIEWPORT — complete the flex chain */
 
 /*
   Actual DOM:
@@ -668,9 +660,7 @@ body:has(#guesserScreen.active) #appContainer {
      flexible element) is what absorbs any space pressure instead. */
   flex-shrink: 0;
 }
-/* =========================================
-   SECRET ROW 
-   ========================================= */
+/* SECRET ROW */
 .secret-row {
   display: flex;
   justify-content: center;
