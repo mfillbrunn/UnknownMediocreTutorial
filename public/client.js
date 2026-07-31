@@ -13,6 +13,12 @@ let KeepEnabled = true;
 let NewEnabled = true;
 let rouletteInterval = null;
 let rouletteWords = null;
+// Captured just before a state update that resolves the setter's pending
+// guess into a scored history row -- see resolvePendingGuessFlight() below,
+// which uses this to fly a clone of the pending row from here to where the
+// new row lands instead of the old row just vanishing and a new one fading
+// in disconnected from it.
+let pendingGuessFlight = null;
 window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 window.lastTimeRemaining ??= { A: null, B: null };
@@ -403,6 +409,24 @@ onStateUpdate(newState => {
   const prevPhase = state?.phase;
   const prevSetterDraft = state?.setterDraft || "";
   const prevHistoryLen = state?.history?.length ?? -1;
+  const prevPendingGuess = state?.pendingGuess || "";
+  // The guess I (the setter) was just looking at is about to resolve into
+  // a scored history row this tick (finalizeFeedback.js pushes the entry
+  // and clears pendingGuess together, same broadcast) -- grab the pending
+  // row's current on-screen position now, while the DOM still reflects the
+  // OLD state, so resolvePendingGuessFlight() can fly a clone of it there
+  // once the re-render below lands the real row.
+  if (
+    prevPendingGuess &&
+    state &&
+    myUserId() === state.setter &&
+    (newState.history?.length ?? 0) > prevHistoryLen
+  ) {
+    const pendingEl = document.querySelector("#draftSetter .draft-row.pending-guess");
+    if (pendingEl && pendingEl.offsetParent !== null) {
+      pendingGuessFlight = { rect: pendingEl.getBoundingClientRect(), guess: prevPendingGuess.toUpperCase() };
+    }
+  }
   state = JSON.parse(JSON.stringify(newState));
   window.powerKbSyncTurn?.();
   if ((state.history?.length ?? 0) !== prevHistoryLen) {
@@ -904,7 +928,90 @@ renderDraftRows({
   });
   }
   updateSetterPreview();
+  resolvePendingGuessFlight();
  }
+
+// Consumes a pendingGuessFlight capture (if this render just landed the
+// matching row) and hands off to flyRowFromCapture(). Runs on every
+// updateSetterScreen() call -- a no-op the vast majority of the time since
+// the capture is only ever set the one tick a guess actually resolves.
+function resolvePendingGuessFlight() {
+  if (!pendingGuessFlight) return;
+  const capture = pendingGuessFlight;
+  pendingGuessFlight = null;
+  const container = $("setterGuesserSubmitted");
+  const target = container?.lastElementChild;
+  if (!target) return;
+  const letters = [...target.querySelectorAll(".tile-letter")].map(s => s.textContent).join("");
+  // Guards against animating the wrong row if anything about this tick
+  // didn't match expectations (e.g. Sneaky Guess masking, or the container
+  // got reset for an unrelated reason) -- better to just skip the flight
+  // than fly a clone to a row it doesn't actually belong to.
+  if (letters !== capture.guess) return;
+  flyRowFromCapture(target, capture.rect);
+}
+
+// Classic FLIP (First-Last-Invert-Play): a plain, uncolored clone of the
+// pending row is positioned at its old spot and transform-animated to the
+// new row's resting spot, while the real new row stays frozen (opacity 0,
+// its own entrance/flip animations paused) underneath until the clone
+// lands -- see the .flight-armed / .flight-ghost rules in history.css.
+function flyRowFromCapture(newRow, startRect) {
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+  newRow.classList.add("flight-armed");
+  // Snap to the bottom instantly rather than the smooth scroll renderHistory
+  // already queued -- that scroll would otherwise keep sliding the row's
+  // resting spot out from under the flight while it's mid-flight.
+  const scrollBox = newRow.closest(".history-scroll");
+  if (scrollBox) scrollBox.scrollTop = scrollBox.scrollHeight;
+  const endRect = newRow.getBoundingClientRect();
+  if (!startRect.width || !endRect.width) {
+    newRow.classList.remove("flight-armed");
+    return;
+  }
+  const ghost = document.createElement("div");
+  ghost.className = "history-row draft-row pending-guess flight-ghost";
+  for (const span of newRow.querySelectorAll(".tile-letter")) {
+    const tile = document.createElement("div");
+    tile.className = "history-tile draft-tile";
+    const letter = document.createElement("span");
+    letter.className = "tile-letter";
+    letter.textContent = span.textContent;
+    tile.appendChild(letter);
+    ghost.appendChild(tile);
+  }
+  Object.assign(ghost.style, {
+    position: "fixed",
+    left: `${startRect.left}px`,
+    top: `${startRect.top}px`,
+    width: `${startRect.width}px`,
+    height: `${startRect.height}px`,
+    margin: "0",
+    zIndex: "9999",
+    pointerEvents: "none"
+  });
+  document.body.appendChild(ghost);
+
+  const dx = endRect.left - startRect.left;
+  const dy = endRect.top - startRect.top;
+  const sx = endRect.width / startRect.width;
+  const sy = endRect.height / startRect.height;
+
+  let landed = false;
+  const land = () => {
+    if (landed) return;
+    landed = true;
+    ghost.remove();
+    newRow.classList.remove("flight-armed");
+  };
+
+  requestAnimationFrame(() => {
+    ghost.style.transition = "transform 380ms cubic-bezier(0.3, 0, 0.2, 1), opacity 380ms ease-out";
+    ghost.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+    ghost.addEventListener("transitionend", land, { once: true });
+    setTimeout(land, 460); // safety net if transitionend never fires
+  });
+}
 
 ///SETTER FEEDBACK PREVIEW FUNCTION
 function updateSetterPreview() {

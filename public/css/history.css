@@ -129,6 +129,28 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   }
 }
 
+/* Setter only (client.js's flyRowFromCapture): holds a freshly-added row
+   invisible and its animations frozen at frame 0 until a flying clone of
+   the pending-guess row it came from lands in its place -- without this
+   the real row's entrance/flip would play a beat early, underneath a
+   clone that's still mid-flight toward it. */
+.history-row-wrap.flight-armed {
+  opacity: 0;
+}
+
+.history-row-wrap.flight-armed .history-tile,
+.history-row-wrap.flight-armed .history-tile::after {
+  animation-play-state: paused;
+}
+
+/* The clone reuses .pending-guess for its tile look, but it isn't the
+   actual draft-area preview row -- skip the guide mode's blue "PREVIEW"
+   frame/label (below) so a labeled frame doesn't fly across the screen. */
+.history-row.pending-guess.flight-ghost::before,
+.history-row.pending-guess.flight-ghost::after {
+  content: none;
+}
+
 /* Setter's draft stack: the secret row slides down into place, the
    incoming pending-guess row slides in from the side — distinct motions
    so it's clear which row just appeared and why. */
