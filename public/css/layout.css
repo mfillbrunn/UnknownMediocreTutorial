@@ -172,6 +172,15 @@
   order: 2;
   flex: 1 1 auto;
   min-width: 0;
+  /* History no longer force-fills the column (see #setterGuesserSubmitted
+     below), so there's real leftover space to distribute -- center the
+     history+draft group in it instead of leaving it flush at the top.
+     As history grows, the group's total height grows too, so centering
+     pushes the draft/pending row further down each round -- once the
+     group's height reaches the column's own height there's no leftover
+     space left to center into, and history-scroll's flex-shrink (see
+     below) takes over exactly like the old fill-and-scroll behavior. */
+  justify-content: center;
 }
 .theme-setter .powers-col {
   order: 1;

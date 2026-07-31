@@ -2395,6 +2395,19 @@ body:has(#guesserScreen.active) #appMain {
   overscroll-behavior: contain;
 }
 
+/* Setter only: flex-grow:0 (overriding the shared flex:1 1 0 above, hence
+   the extra #setterScreen.active for specificity) so the history box
+   stops force-filling 100% of the column regardless of how few rows it
+   holds -- see .theme-setter .center-col's justify-content:center
+   (layout.css) for the other half of this, which is what actually
+   centers the now-natural-sized history+draft group in the leftover
+   space. flex-shrink stays on, so once the group's real content height
+   exceeds the column, this still shrinks to fit and scrolls internally
+   exactly like before, just not forced there from round 1. */
+#setterScreen.active #setterGuesserSubmitted.history-scroll {
+  flex: 0 1 auto;
+}
+
 /* Keyboard always keeps its natural height. */
 #keyboardSetter,
 #keyboardGuesser {
