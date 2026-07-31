@@ -326,12 +326,10 @@ function runGuesserTutorial(state,role){
   clearHighlights();
   const stage2 = state.tutorialStage === 2;
 
-  // ==========================================================
   // STAGE 2 (powers follow-up): same opening CHAMP guess as stage 1, but
   // this time the Inspector has Letter Peek (revealGreen) available and is
   // walked through actually using it — the second guess (CUMIN) is the
   // AI's real secret, so it wins the round on the spot.
-  // ==========================================================
   if (stage2) {
     if (round === 0) {
       const word = state.tutorialGuesses?.[0] || "CHAMP";
@@ -407,9 +405,7 @@ function runGuesserTutorial(state,role){
     return;
   }
 
-  // ==========================================================
   // STAGE 1 (base rules, no powers)
-  // ==========================================================
 
   // ------------------------
   // ROUND 0 (history.length == 0): brief overall rules, then guesser-
@@ -510,11 +506,9 @@ function runSetterTutorial(state, role) {
   clearHighlights();
   const stage2 = state.tutorialStage === 2;
 
-  // ==========================================================
   // STAGE 2 (powers follow-up): same BLIMP/LEMUR secrets, but this
   // time the Spy has Counts Only (countOnly) available and is
   // walked through actually using it.
-  // ==========================================================
   if (stage2) {
     if (round === 0) {
       const word = state.tutorialSecrets?.[0];
@@ -578,9 +572,7 @@ function runSetterTutorial(state, role) {
     return;
   }
 
-  // ==========================================================
   // STAGE 1 (base rules, no powers)
-  // ==========================================================
 
   if (round === 0) {
     const word = state.tutorialSecrets?.[0];
@@ -636,7 +628,6 @@ function runSetterTutorial(state, role) {
   }
 }
 
-// ==========================================================
 // STAGE "power": the per-power "Try it" tutorial (Power Library "?"
 // buttons). Drops straight into a mid-match scenario instead of scripting
 // a full game from scratch -- two rounds already in the history, one live
@@ -649,7 +640,6 @@ function runSetterTutorial(state, role) {
 // for the server-side half of that. Which of the two is showing is just
 // role === the power's own role, since roles genuinely swap between the
 // rounds -- no need to track round index separately.
-// ==========================================================
 const POWER_TUTORIAL_SEED_ROUND = 2; // matches seedPowerTutorialRound's 2 fabricated history rows
 const POWER_TUTORIAL_GUESSER_DRAFT = "SNORE";
 
@@ -829,14 +819,12 @@ function runPowerTutorialReceiving(state, role, meta, powerId, round) {
   hideTutorial();
 }
 
-// ==========================================================
 // STAGE "advanced": the UI-features walkthrough (Guide, Drag & Lock,
 // Power UI) launched from the standalone "Advanced Tutorial" menu button.
 // Reuses stage 2's exact scripted match (see tutorialMode.js) -- round 1 has
 // the human as Inspector (Guide + Letter Peek + Drag & Lock on their
 // guess row), round 2 (after the normal end-of-round role swap) has them as
 // Spy (Drag & Lock on their secret row + Counts Only).
-// ==========================================================
 function runAdvancedTutorial(state, role) {
   if (role === "guesser") {
     runAdvancedTutorialGuesser(state);

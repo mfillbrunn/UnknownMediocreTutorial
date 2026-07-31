@@ -168,9 +168,7 @@ window.renderDraftRows = function ({
   pendingRow.style.display = "none";
   draftRow.style.display = "none";
 
-  // ============================
-  // GUESSER
-  // ============================
+  // Guesser
   if (role === "guesser") {
     const canGuess =
       (state.phase === "simultaneous" && !state.simultaneousGuessSubmitted) ||
@@ -229,9 +227,7 @@ window.renderDraftRows = function ({
     return;
   }
 
-  // ============================
-  // SETTER
-  // ============================
+  // Setter
   const setterCanEdit =
     !state.powers?.freezeActive &&
     (

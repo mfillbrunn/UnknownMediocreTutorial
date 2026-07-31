@@ -2,9 +2,7 @@
 
 window.POWER_RULES = {
 
-  // ======================
-  // SETTER POWERS
-  // ======================
+  // Setter powers
 betMiss: {
     once: false,
     allowed(state, role) {
@@ -266,10 +264,7 @@ delayedIntel: {
   }
 },
 
-  // ======================
-  // GUESSER POWERS
-  // ======================
-
+  // Guesser powers
   revealGreen: {
     once: true,
     allowed(state, role) {

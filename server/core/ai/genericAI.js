@@ -3,9 +3,7 @@ const { satisfiesForceGuess } = require("../../game-engine/validation");
 const { scoreGuess } = require("../../game-engine/scoring");
 const questServer = require("../../powers/powers/questServer");
 
-/* ===============================
-   ENTRY POINTS
-   =============================== */
+/* ENTRY POINTS */
 
 function pickGuess(state, allowedGuesses, secretRows, guessParams) {
   return pickAIGuess(state, allowedGuesses, secretRows, guessParams);
@@ -28,9 +26,7 @@ function createAI({ guessParams, setterParams }) {
   };
 }
 
-/* ===============================
-   SHARED UTILITIES
-   =============================== */
+/* SHARED UTILITIES */
 
 function weightedRandom(items, weightFn) {
   if (!items.length) return null;
@@ -227,9 +223,7 @@ function sampleArray(arr, cap) {
   return copy.slice(0, n);
 }
 
-/* ===============================
-   SETTER LOGIC
-   =============================== */
+/* SETTER LOGIC */
 
 function computeRemainingForSecret(state, secret, secrets) {
   const guess = state.pendingGuess;
@@ -446,9 +440,7 @@ function pickAISecret(
 
 
 
-/* ===============================
-   GUESSER LOGIC
-   =============================== */
+/* GUESSER LOGIC */
 
 /* ---------- Quest-aware guessing ----------
    The AI actively tries to complete its own quest (server/powers/powers/
@@ -787,9 +779,7 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyParams) {
 }
 
 
-/* ===============================
-   EXPORT
-   =============================== */
+/* EXPORT */
 
 module.exports = {
   createAI,
