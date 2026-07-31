@@ -1312,12 +1312,7 @@ function submitSetterNew() {
   }
   if (state.isTutorial && state.history.length < state.scriptedTurns) {
     const expected = state.tutorialSecrets[state.history.length];
-    // The tutorial deliberately walks the player through one rejected
-    // secret on a specific scripted turn to demonstrate the real
-    // consistency-check popup below — let it through the scripted-word
-    // gate too instead of being swallowed by the generic hint toast.
-    const wrongExample = state.tutorialWrongSecretExamples?.[state.history.length];
-    if (w !== expected && w !== wrongExample) {
+    if (w !== expected) {
       shakeDraftRow("setter");
       toast(`Type in ${expected}`);
       return;

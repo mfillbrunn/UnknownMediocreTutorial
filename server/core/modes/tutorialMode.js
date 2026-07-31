@@ -33,14 +33,6 @@ class TutorialMode {
     state.tutorialSecretsAI = ["CUMIN", "CUMIN"];
     state.tutorialGuessesAI = ["SMALL", "BLIND"];
 
-    // A deliberately-inconsistent secret the setter round asks the player
-    // to try, indexed like the arrays above (only turn index 1 uses it) so
-    // they see the real "not consistent with prior feedback" rejection
-    // before entering the real LEMUR switch. Doesn't reproduce the
-    // feedback SMALL already got against BLIMP, so it fails the
-    // consistency check even though it's a valid dictionary word.
-    state.tutorialWrongSecretExamples = [null, "MUSHY"];
-
     // Stage 2 and stage "advanced" share the exact same scripted words and
     // power pair — stage "advanced" is the UI-features walkthrough (Notes,
     // Guide, Drag & Lock, Power UI) launched standalone from the "Advanced
