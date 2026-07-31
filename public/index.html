@@ -140,6 +140,19 @@
       <div class="power-popup-desc"></div>
     </div>
   </div>
+  <!-- Tap a power/quest badge -> this info card, with an explicit Use
+       button to actually activate it (see client/tooltips.js). -->
+  <div id="powerActionModal" class="modal">
+    <div class="power-action-card">
+      <div class="power-action-emoji"></div>
+      <div class="power-action-title"></div>
+      <div class="power-action-desc"></div>
+      <div class="decision-row">
+        <button id="powerActionUseBtn" class="primary-btn small" type="button">Use</button>
+        <button id="powerActionCloseBtn" class="secondary-btn small" type="button">Close</button>
+      </div>
+    </div>
+  </div>
     <div id="appContainer">
       <!-- ========== HEADER ========== -->
 <header class="app-header">

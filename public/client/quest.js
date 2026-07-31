@@ -469,23 +469,29 @@ function updateQuestBadge(state, role) {
   // explain-on-click case below before this.
   btn.disabled = false;
 
-  // Ready/one-away: tapping claims the quest, same as always. Anything
-  // else (still in progress, or already claimed) has nothing to claim --
-  // show what the quest actually wants instead of doing nothing, using
-  // status.desc, which already resolves to the specific live explanation
-  // (e.g. Field Report's current 3 conditions) rather than just the
-  // static blurb.
-  btn.onclick = canClaim
-    ? () => window.sendGameAction?.({ type: "USE_QUEST", userId: window.currentUser?.id })
-    : () => {
-        window.showBigAnnounce?.({
-          icon: status.meta.emoji || "🎯",
-          title: `Quest: ${status.meta.label}`,
-          sub: [status.desc, `Progress: ${status.label}`],
-          roleClass: "role-guesser",
-          duration: 6000
-        });
-      };
+  // Tapping opens the same info+Use popup as any power button -- the Use
+  // button only appears/works when canClaim (ready OR one-away, i.e. a
+  // green-flagged or yellow-flagged quest -- see the comment above
+  // canClaim). Still in progress or already claimed shows the info alone,
+  // using status.desc, which already resolves to the specific live
+  // explanation (e.g. Field Report's current 3 conditions) rather than
+  // just the static blurb.
+  btn.onclick = () => {
+    window.showPowerActionPopup?.({
+      emoji: status.meta.emoji || "🎯",
+      title: status.meta.label,
+      // status.desc already states the outcome once done or ready (e.g.
+      // "Complete! X is green..." / "Revealing your green letter…") --
+      // the raw progress label would just be a redundant, more cryptic
+      // restatement of that alongside it.
+      desc: (status.done || q.ready) ? status.desc : `${status.desc} (Progress: ${status.label})`,
+      showUse: canClaim,
+      useEnabled: canClaim,
+      onUse: canClaim
+        ? () => window.sendGameAction?.({ type: "USE_QUEST", userId: window.currentUser?.id })
+        : undefined
+    });
+  };
 }
 window.updateQuestBadge = updateQuestBadge;
 

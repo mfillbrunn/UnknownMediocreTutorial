@@ -650,6 +650,50 @@
   opacity: 0.8;
   line-height: 1.35;
 }
+
+/* POWER ACTION MODAL -- tap a power/quest badge opens this (via the
+   .modal/.modal.active backdrop already used by the letter-picker
+   modals), instead of the tap itself firing the action. Its own explicit
+   background (not the shared :where(.panel, ...) card, which components.css
+   makes transparent inside .theme-setter/.theme-guesser) so it reads as a
+   clear focused card over the dark backdrop, same look as .power-popup.
+   z-index matched to .power-popup (100000), well above the shared .modal
+   base (1000, fine for the letter-picker modals but not enough here) --
+   a fast player can still be looking at this while the round-start
+   big-announce (100001) lingers, and that one's meant to stay on top. */
+#powerActionModal {
+  z-index: 100000;
+}
+.power-action-card {
+  max-width: min(340px, 88vw);
+  text-align: center;
+  background: rgba(18, 19, 28, 0.97);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--r-14, 14px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  padding: var(--sp-20, 20px) var(--sp-22, 22px);
+}
+.power-action-emoji {
+  font-size: 2.4rem;
+  line-height: 1;
+  margin-bottom: var(--sp-8, 8px);
+}
+.power-action-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: var(--sp-8, 8px);
+}
+.power-action-desc {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  line-height: 1.4;
+  margin-bottom: var(--sp-16, 16px);
+}
+#powerActionUseBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 /* MODAL BASE (HIDDEN) */
 .modal {
   position: fixed;

@@ -122,6 +122,33 @@ window.PowerEngine = {
       wrapper.addEventListener("mouseleave", hideTooltip);
     }
 
+    // Tapping/clicking no longer fires the power directly -- it opens an
+    // info popup (title/desc) with an explicit Use button instead. Power
+    // modules still just do `btn.onclick = fn` exactly as before (see
+    // e.g. blindGuess.js) -- this property override quietly redirects
+    // that assignment into `useHandler` rather than the DOM's native
+    // onclick, so nothing in any individual power file needs to change.
+    // A disabled button never dispatches "click" at all (browser-level,
+    // regardless of listener type), so this still only ever fires while
+    // the power is actually usable, exactly mirroring the old direct-
+    // activation gate -- it's just an extra tap away now.
+    let useHandler = null;
+    Object.defineProperty(btn, "onclick", {
+      configurable: true,
+      get() { return useHandler; },
+      set(fn) { useHandler = fn; }
+    });
+
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      window.showPowerActionPopup?.({
+        emoji: window.POWER_METADATA?.[id]?.emoji,
+        title: meta?.title || window.POWER_METADATA?.[id]?.label || label,
+        desc: meta?.desc || window.POWER_METADATA?.[id]?.desc || "",
+        onUse: () => useHandler?.()
+      });
+    });
+
     wrapper.appendChild(btn);
     return { wrapper, btn };
   },

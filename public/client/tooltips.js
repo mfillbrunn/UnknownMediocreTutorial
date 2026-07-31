@@ -202,3 +202,45 @@ document.addEventListener("DOMContentLoaded", () => {
   initPowerInfoButton("powerInfoBtnGuesser", "guesser");
 });
 
+// POWER ACTION MODAL -- tapping a power/quest badge opens this instead of
+// firing the action directly: title/desc for context, plus an explicit Use
+// button (hidden/disabled when there's nothing to use right now). See
+// powerEngine.js's createPowerButton (powers) and quest.js's
+// updateQuestBadge (the guesser's quest) for the two callers.
+function showPowerActionPopup({ emoji, title, desc, useLabel = "Use", showUse = true, useEnabled = true, onUse }) {
+  const modal = document.getElementById("powerActionModal");
+  if (!modal) return;
+
+  modal.querySelector(".power-action-emoji").textContent = emoji || "";
+  modal.querySelector(".power-action-title").textContent = title || "";
+  modal.querySelector(".power-action-desc").textContent = desc || "";
+
+  const useBtn = document.getElementById("powerActionUseBtn");
+  useBtn.style.display = showUse ? "" : "none";
+  useBtn.textContent = useLabel;
+  useBtn.disabled = !useEnabled;
+  useBtn.onclick = () => {
+    hidePowerActionPopup();
+    if (useEnabled) onUse?.();
+  };
+
+  modal.classList.add("active");
+}
+window.showPowerActionPopup = showPowerActionPopup;
+
+function hidePowerActionPopup() {
+  document.getElementById("powerActionModal")?.classList.remove("active");
+}
+window.hidePowerActionPopup = hidePowerActionPopup;
+
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("powerActionModal");
+  document.getElementById("powerActionCloseBtn")?.addEventListener("click", hidePowerActionPopup);
+  // Tapping the dark backdrop (not the card itself) dismisses it, same as
+  // every other modal's Cancel button but without requiring the tap to
+  // land on a specific button.
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) hidePowerActionPopup();
+  });
+});
+
