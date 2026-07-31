@@ -992,10 +992,19 @@ function flyRowFromCapture(newRow, startRect) {
   });
   document.body.appendChild(ghost);
 
-  const dx = endRect.left - startRect.left;
-  const dy = endRect.top - startRect.top;
-  const sx = endRect.width / startRect.width;
-  const sy = endRect.height / startRect.height;
+  // Center-to-center, not edge-to-edge -- both rows are independently
+  // horizontally centered in the same-width column (row-enter/draft-row-
+  // wrap's own justify-content:center), so this is naturally a near-
+  // vertical slide even though the draft row's tiles are physically
+  // bigger than history's. No scale() here on purpose: stretching the
+  // ghost to the destination's (smaller) tile size distorted the letters
+  // into an "elongated" look. Keeping the ghost at its own natural draft-
+  // tile size for the whole flight and only translating it reads as a
+  // clean slide-up-and-drop-into-place instead -- the size change from
+  // draft-tile to history-tile happens in one frame at landing, when the
+  // ghost is swapped out for the real (still/small) row underneath.
+  const dx = (endRect.left + endRect.width / 2) - (startRect.left + startRect.width / 2);
+  const dy = (endRect.top + endRect.height / 2) - (startRect.top + startRect.height / 2);
 
   let landed = false;
   const land = () => {
@@ -1006,10 +1015,10 @@ function flyRowFromCapture(newRow, startRect) {
   };
 
   requestAnimationFrame(() => {
-    ghost.style.transition = "transform 380ms cubic-bezier(0.3, 0, 0.2, 1), opacity 380ms ease-out";
-    ghost.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+    ghost.style.transition = "transform 420ms cubic-bezier(0.16, 1, 0.3, 1), opacity 420ms ease-out";
+    ghost.style.transform = `translate(${dx}px, ${dy}px)`;
     ghost.addEventListener("transitionend", land, { once: true });
-    setTimeout(land, 460); // safety net if transitionend never fires
+    setTimeout(land, 500); // safety net if transitionend never fires
   });
 }
 
