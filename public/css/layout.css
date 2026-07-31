@@ -172,15 +172,20 @@
   order: 2;
   flex: 1 1 auto;
   min-width: 0;
-  /* History no longer force-fills the column (see #setterGuesserSubmitted
-     below), so there's real leftover space to distribute -- center the
-     history+draft group in it instead of leaving it flush at the top.
-     As history grows, the group's total height grows too, so centering
-     pushes the draft/pending row further down each round -- once the
-     group's height reaches the column's own height there's no leftover
-     space left to center into, and history-scroll's flex-shrink (see
-     below) takes over exactly like the old fill-and-scroll behavior. */
-  justify-content: center;
+}
+/* The pending-guess/draft row is the only child that should float toward
+   the middle of whatever vertical space history isn't using -- history
+   and the constraint row above it stay pinned to the top of the column
+   (their default flex-start/natural sizing, untouched here). Grow this
+   one child to absorb the leftover space that #setterGuesserSubmitted's
+   flex:0 1 auto (below) no longer claims, then vertically center its own
+   content (align-items, since .draft-row-wrap is a row-direction flex
+   container -- justify-content already centers it horizontally) within
+   that grown box. As history fills up, this shrinks back down and the
+   row settles toward the bottom, same as the old fill-and-scroll look. */
+.theme-setter .draft-row-wrap {
+  flex: 1 1 auto;
+  align-items: center;
 }
 .theme-setter .powers-col {
   order: 1;
