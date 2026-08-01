@@ -186,6 +186,10 @@ function createHistoryRowDOM(row) {
   for (const tile of row.tiles) {
     const el = document.createElement("div");
     el.className = tile.classKey;
+    // Feeds the flip-reveal cover's content (history.css's ::after,
+    // content: attr(data-letter)) -- keeps that cover a plain CSS layer
+    // instead of a real DOM node competing with .tile-letter below.
+    el.dataset.letter = tile.letter;
     const span = document.createElement("span");
     span.className = "tile-letter";
     span.textContent = tile.letter;
@@ -208,6 +212,7 @@ function patchHistoryRow(wrap, row) {
     const t = tiles[i];
     if (t.textContent !== row.tiles[i].letter) {
       t.textContent = row.tiles[i].letter;
+      t.dataset.letter = row.tiles[i].letter;
     }
     if (t.className !== row.tiles[i].classKey) {
       t.className = row.tiles[i].classKey;

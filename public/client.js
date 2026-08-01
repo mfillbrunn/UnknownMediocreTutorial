@@ -712,9 +712,12 @@ function updateScreens() {
       }
 
       // The tile flip has to actually finish playing before the popup
-      // shows — 5 tiles * 350ms stagger (last tile delay 1400ms) + 1200ms
-      // flip duration for that last tile = 2600ms total.
-      const FLIP_TOTAL_MS = 2600;
+      // shows — worst case (setter's view, where the winning row also
+      // slides up into place via slideRowIntoPlace before any tile can
+      // start flipping): 420ms slide + 1400ms stagger to the last tile's
+      // cover-flip + 550ms for that tile's own flip = 2370ms, rounded up
+      // for a small buffer.
+      const FLIP_TOTAL_MS = 2400;
       const POPUP_DURATION_MS = 3200;
 
       const iAmGuesser = myUserId() === state.guesser;
@@ -932,7 +935,7 @@ renderDraftRows({
  }
 
 // Consumes a pendingGuessFlight capture (if this render just landed the
-// matching row) and hands off to flyRowFromCapture(). Runs on every
+// matching row) and hands off to slideRowIntoPlace(). Runs on every
 // updateSetterScreen() call -- a no-op the vast majority of the time since
 // the capture is only ever set the one tick a guess actually resolves.
 function resolvePendingGuessFlight() {
@@ -945,79 +948,69 @@ function resolvePendingGuessFlight() {
   const letters = [...target.querySelectorAll(".tile-letter")].map(s => s.textContent).join("");
   // Guards against animating the wrong row if anything about this tick
   // didn't match expectations (e.g. Sneaky Guess masking, or the container
-  // got reset for an unrelated reason) -- better to just skip the flight
-  // than fly a clone to a row it doesn't actually belong to.
+  // got reset for an unrelated reason) -- better to just skip the slide
+  // than drag a row it doesn't actually belong to.
   if (letters !== capture.guess) return;
-  flyRowFromCapture(target, capture.rect);
+  slideRowIntoPlace(target, capture.rect);
 }
 
-// Classic FLIP (First-Last-Invert-Play): a plain, uncolored clone of the
-// pending row is positioned at its old spot and transform-animated to the
-// new row's resting spot, while the real new row stays frozen (opacity 0,
-// its own entrance/flip animations paused) underneath until the clone
-// lands -- see the .flight-armed / .flight-ghost rules in history.css.
-function flyRowFromCapture(newRow, startRect) {
+// Classic FLIP (First-Last-Invert-Play), on the real row -- no clone.
+// renderHistory already appended this row at its correct final spot in
+// the DOM; this just makes it LOOK like it's still sitting at the pending
+// row's old position (an inverted transform, applied before the next
+// paint) and animates that back to identity, so what the setter actually
+// sees is the real tiles sliding up off the draft row into their slot in
+// the history list. history.css's .flight-sliding keeps each tile's own
+// cover-flip (the color reveal) paused for the whole slide, so the tiles
+// still read as plain/undecided the entire way up and only start
+// revealing their feedback color once they've actually landed.
+function slideRowIntoPlace(newRow, startRect) {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-  newRow.classList.add("flight-armed");
+  newRow.classList.add("flight-sliding");
   // Snap to the bottom instantly rather than the smooth scroll renderHistory
   // already queued -- that scroll would otherwise keep sliding the row's
-  // resting spot out from under the flight while it's mid-flight.
+  // resting spot out from under the slide while it's mid-flight.
   const scrollBox = newRow.closest(".history-scroll");
   if (scrollBox) scrollBox.scrollTop = scrollBox.scrollHeight;
   const endRect = newRow.getBoundingClientRect();
   if (!startRect.width || !endRect.width) {
-    newRow.classList.remove("flight-armed");
+    newRow.classList.remove("flight-sliding");
     return;
   }
-  const ghost = document.createElement("div");
-  ghost.className = "history-row draft-row pending-guess flight-ghost";
-  for (const span of newRow.querySelectorAll(".tile-letter")) {
-    const tile = document.createElement("div");
-    tile.className = "history-tile draft-tile";
-    const letter = document.createElement("span");
-    letter.className = "tile-letter";
-    letter.textContent = span.textContent;
-    tile.appendChild(letter);
-    ghost.appendChild(tile);
-  }
-  Object.assign(ghost.style, {
-    position: "fixed",
-    left: `${startRect.left}px`,
-    top: `${startRect.top}px`,
-    width: `${startRect.width}px`,
-    height: `${startRect.height}px`,
-    margin: "0",
-    zIndex: "9999",
-    pointerEvents: "none"
-  });
-  document.body.appendChild(ghost);
 
   // Center-to-center, not edge-to-edge -- both rows are independently
-  // horizontally centered in the same-width column (row-enter/draft-row-
-  // wrap's own justify-content:center), so this is naturally a near-
-  // vertical slide even though the draft row's tiles are physically
-  // bigger than history's. No scale() here on purpose: stretching the
-  // ghost to the destination's (smaller) tile size distorted the letters
-  // into an "elongated" look. Keeping the ghost at its own natural draft-
-  // tile size for the whole flight and only translating it reads as a
-  // clean slide-up-and-drop-into-place instead -- the size change from
-  // draft-tile to history-tile happens in one frame at landing, when the
-  // ghost is swapped out for the real (still/small) row underneath.
-  const dx = (endRect.left + endRect.width / 2) - (startRect.left + startRect.width / 2);
-  const dy = (endRect.top + endRect.height / 2) - (startRect.top + startRect.height / 2);
+  // horizontally centered in the same-width column, so this is naturally
+  // a near-vertical slide even though the draft row's tiles are
+  // physically bigger than history's.
+  const dx = (startRect.left + startRect.width / 2) - (endRect.left + endRect.width / 2);
+  const dy = (startRect.top + startRect.height / 2) - (endRect.top + endRect.height / 2);
+
+  // Invert: park the row back at its old (draft) position via transform
+  // alone -- its real layout position/size never change, so nothing else
+  // on the page reflows around it.
+  newRow.style.transform = `translate(${dx}px, ${dy}px)`;
+  void newRow.offsetWidth; // force layout before the transition below is added
 
   let landed = false;
   const land = () => {
     if (landed) return;
     landed = true;
-    ghost.remove();
-    newRow.classList.remove("flight-armed");
+    newRow.style.transition = "";
+    newRow.style.transform = "";
+    // row-enter has to go too, not just flight-sliding -- it's still
+    // sitting on the row from creation, just suppressed (flight-sliding's
+    // animation:none) for the slide. Removing only flight-sliding would
+    // un-suppress it right here and restart history-row-enter's fade/
+    // scale from scratch, landing as an unwanted little "pop" on top of
+    // the tile flip that's about to start -- the slide already was this
+    // row's entrance.
+    newRow.classList.remove("flight-sliding", "row-enter");
   };
 
   requestAnimationFrame(() => {
-    ghost.style.transition = "transform 420ms cubic-bezier(0.16, 1, 0.3, 1), opacity 420ms ease-out";
-    ghost.style.transform = `translate(${dx}px, ${dy}px)`;
-    ghost.addEventListener("transitionend", land, { once: true });
+    newRow.style.transition = "transform 420ms cubic-bezier(0.16, 1, 0.3, 1)";
+    newRow.style.transform = "translate(0, 0)";
+    newRow.addEventListener("transitionend", land, { once: true });
     setTimeout(land, 500); // safety net if transitionend never fires
   });
 }

@@ -129,26 +129,18 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   }
 }
 
-/* Setter only (client.js's flyRowFromCapture): holds a freshly-added row
-   invisible and its animations frozen at frame 0 until a flying clone of
-   the pending-guess row it came from lands in its place -- without this
-   the real row's entrance/flip would play a beat early, underneath a
-   clone that's still mid-flight toward it. */
-.history-row-wrap.flight-armed {
-  opacity: 0;
-}
-
-.history-row-wrap.flight-armed .history-tile,
-.history-row-wrap.flight-armed .history-tile::after {
-  animation-play-state: paused;
-}
-
-/* The clone reuses .pending-guess for its tile look, but it isn't the
-   actual draft-area preview row -- skip the guide mode's blue "PREVIEW"
-   frame/label (below) so a labeled frame doesn't fly across the screen. */
-.history-row.pending-guess.flight-ghost::before,
-.history-row.pending-guess.flight-ghost::after {
-  content: none;
+/* Setter only (client.js's slideRowIntoPlace): the real just-added row is
+   dragged (via an inline transform, FLIP-style) from the pending row's old
+   position up into its actual spot in the history list, instead of a
+   disposable clone flying there while the real row waits underneath.
+   Cancels the default row-enter fade -- the slide itself is this row's
+   entrance. The matching rule that freezes each tile's cover-flip during
+   the slide lives further down, right after tile-cover-flip is defined
+   (same specificity, same selector shape as that rule -- has to come
+   after it in the file to actually win the tie instead of being
+   silently reset back to "running" by the later animation: shorthand). */
+.history-row-wrap.flight-sliding {
+  animation: none;
 }
 
 /* Setter's draft stack: the secret row slides down into place, the
@@ -846,49 +838,59 @@ body.hide-constraints .constraint-row {
   position: relative;
 }
 
-/* Slower flip */
-.history-row:not(.draft-row) .history-tile {
-  animation: wordle-flip 1200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-/* Staggered delay (adjusted spacing) */
-.history-row:not(.draft-row) .history-tile:nth-child(1) { animation-delay: 0ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(2) { animation-delay: 350ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(3) { animation-delay: 700ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(4) { animation-delay: 1050ms; }
-.history-row:not(.draft-row) .history-tile:nth-child(5) { animation-delay: 1400ms; }
-
-@keyframes wordle-flip {
-  0%   { transform: rotateX(0deg); }
-  50%  { transform: rotateX(90deg); }
-  100% { transform: rotateX(0deg); }
-}
-
-/* Full tile mask (covers border + background) -- ::after instead of ::before to avoid clashing */
+/* Reveal flip: the real tile (below) already carries its true final
+   color/letter the instant it's created -- it never animates or gets
+   rerendered itself. A plain, undecided-looking cover sits on top
+   (::after -- ::before is already spoken for by .violation above) and
+   rotates away in ONE direction to reveal the real tile underneath, once
+   per tile, staggered. This replaced an opacity-masked rotateX(0->90->0)
+   "there and back" animation that read as two separate flips (down to a
+   blank tile, then back up into color) instead of a single reveal.
+   content comes from data-letter (ui/history.js sets it alongside the
+   real .tile-letter text) so this needs no extra DOM node. */
 .history-row:not(.draft-row) .history-tile::after {
-  content: "";
+  content: attr(data-letter);
   position: absolute;
-  inset: -2px; /* fully covers border */
-  background: var(--panel-bg);
+  inset: -1px; /* fully covers border, matches the real tile's own box */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: inherit;
+  background: var(--history-bg, #1c1d24);
+  color: var(--text);
+  font: inherit;
 
   z-index: 100;   /* higher than power overlays */
   pointer-events: none;
+  backface-visibility: hidden;
 
-  animation: reveal-mask 1200ms forwards;
+  animation: tile-cover-flip 550ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* Match stagger */
+/* Staggered -- one tile at a time */
 .history-row:not(.draft-row) .history-tile:nth-child(1)::after { animation-delay: 0ms; }
 .history-row:not(.draft-row) .history-tile:nth-child(2)::after { animation-delay: 350ms; }
 .history-row:not(.draft-row) .history-tile:nth-child(3)::after { animation-delay: 700ms; }
 .history-row:not(.draft-row) .history-tile:nth-child(4)::after { animation-delay: 1050ms; }
 .history-row:not(.draft-row) .history-tile:nth-child(5)::after { animation-delay: 1400ms; }
 
-@keyframes reveal-mask {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
+@keyframes tile-cover-flip {
+  0%   { transform: rotateX(0deg); }
+  100% { transform: rotateX(-90deg); }
 }
+
+/* Freezes the cover-flip above at frame 0 while client.js's
+   slideRowIntoPlace is still sliding the row up -- same selector shape/
+   specificity as the animation: rule above (3 classes + a pseudo-element
+   each), so this has to come AFTER it in the file to actually win ties:
+   CSS resolves same-specificity conflicts by source order, and the
+   animation: shorthand above implicitly resets animation-play-state to
+   "running" as one of its longhands, which silently overrode this when
+   it was declared earlier in the file instead. */
+.history-row-wrap.flight-sliding .history-tile::after {
+  animation-play-state: paused;
+}
+
 .history-tile .tile-letter {
   position: relative;
   z-index: 2;
