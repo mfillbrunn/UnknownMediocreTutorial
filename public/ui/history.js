@@ -247,7 +247,12 @@ function patchHistoryRow(wrap, row) {
 // the same tick, corrupting the added/removed/updated classification for
 // whichever container ran second. Tracked per-container instead so each
 // history box only ever diffs against its own last render.
-window.renderHistory = function ({ state, container, role }) {
+// autoScroll: false lets a caller (client.js's slideRowIntoPlace) defer
+// this -- it needs the container's scroll position to stay completely
+// still while the new row's own slide-up animation plays (any scroll
+// here, even smooth, would drag every already-visible row along with
+// it), and scrolls the container itself once that's done instead.
+window.renderHistory = function ({ state, container, role, autoScroll = true }) {
   const prev = container.__prevRenderState || [];
   const next = buildHistoryRenderState(state, role);
   const diff = diffHistory(prev, next);
@@ -268,7 +273,7 @@ window.renderHistory = function ({ state, container, role }) {
   // container is the scrollable .history-scroll box (history.css) --
   // keep the newest guess in view instead of leaving the scroll position
   // wherever it was before this row landed.
-  if (diff.added.length > 0) {
+  if (diff.added.length > 0 && autoScroll) {
     requestAnimationFrame(() => {
       container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
     });

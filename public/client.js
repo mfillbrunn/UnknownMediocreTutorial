@@ -882,7 +882,12 @@ function updateSetterScreen() {
  renderHistory({
   state,
   container: $("setterGuesserSubmitted"),
-  role: "setter"
+  role: "setter",
+  // A pending flight capture means slideRowIntoPlace is about to take
+  // over this row's entrance -- it needs the container to hold still
+  // while the row slides, and scrolls it (see land() below) once that's
+  // actually done instead of racing it here.
+  autoScroll: !pendingGuessFlight
 });
 renderConstraintRow({
   state,
@@ -944,13 +949,24 @@ function resolvePendingGuessFlight() {
   pendingGuessFlight = null;
   const container = $("setterGuesserSubmitted");
   const target = container?.lastElementChild;
-  if (!target) return;
+  // updateSetterScreen's renderHistory call suppressed its own auto-scroll
+  // for this render (autoScroll: !pendingGuessFlight), trusting
+  // slideRowIntoPlace to catch it up once landed -- every bail-out path
+  // below skips that, so it has to scroll for itself instead or the view
+  // is left stuck wherever it was.
+  if (!target) {
+    container?.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+    return;
+  }
   const letters = [...target.querySelectorAll(".tile-letter")].map(s => s.textContent).join("");
   // Guards against animating the wrong row if anything about this tick
   // didn't match expectations (e.g. Sneaky Guess masking, or the container
   // got reset for an unrelated reason) -- better to just skip the slide
   // than drag a row it doesn't actually belong to.
-  if (letters !== capture.guess) return;
+  if (letters !== capture.guess) {
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+    return;
+  }
   slideRowIntoPlace(target, capture.rect);
 }
 
@@ -965,18 +981,45 @@ function resolvePendingGuessFlight() {
 // still read as plain/undecided the entire way up and only start
 // revealing their feedback color once they've actually landed.
 function slideRowIntoPlace(newRow, startRect) {
-  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-  newRow.classList.add("flight-sliding");
-  // Snap to the bottom instantly rather than the smooth scroll renderHistory
-  // already queued -- that scroll would otherwise keep sliding the row's
-  // resting spot out from under the slide while it's mid-flight.
   const scrollBox = newRow.closest(".history-scroll");
-  if (scrollBox) scrollBox.scrollTop = scrollBox.scrollHeight;
-  const endRect = newRow.getBoundingClientRect();
-  if (!startRect.width || !endRect.width) {
-    newRow.classList.remove("flight-sliding");
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+    scrollBox?.scrollTo({ top: scrollBox.scrollHeight, behavior: "auto" });
     return;
   }
+  // Measure where the row actually belongs BEFORE touching anything --
+  // it's still a normal, untransformed child of the scrollable container
+  // at this point, so this reflects its true resting spot.
+  const endRect = newRow.getBoundingClientRect();
+  if (!startRect.width || !endRect.width) {
+    scrollBox?.scrollTo({ top: scrollBox.scrollHeight, behavior: "smooth" });
+    return;
+  }
+
+  newRow.classList.add("flight-sliding");
+
+  // Detach the row from the scrollable container for the flight itself.
+  // A transform large enough to reach back to the draft row's position
+  // (well outside .history-scroll's own bounds) inflates that ancestor's
+  // scrollable content region -- transformed descendants count toward
+  // it -- which dragged every already-visible row's scroll position
+  // along with this one mid-slide, exactly the "everything moves"
+  // symptom this was built to avoid. Pinning the row to the viewport
+  // instead (position:fixed, placed to exactly match where it just
+  // measured) sidesteps that: it's still the real row/tiles, not a
+  // clone, just temporarily outside the scrollable flow while it moves.
+  // Re-inserted at the same spot once landed, below.
+  const parent = newRow.parentNode;
+  const nextSibling = newRow.nextSibling;
+  Object.assign(newRow.style, {
+    position: "fixed",
+    left: `${endRect.left}px`,
+    top: `${endRect.top}px`,
+    width: `${endRect.width}px`,
+    height: `${endRect.height}px`,
+    margin: "0",
+    zIndex: "9999"
+  });
+  document.body.appendChild(newRow);
 
   // Center-to-center, not edge-to-edge -- both rows are independently
   // horizontally centered in the same-width column, so this is naturally
@@ -986,8 +1029,7 @@ function slideRowIntoPlace(newRow, startRect) {
   const dy = (startRect.top + startRect.height / 2) - (endRect.top + endRect.height / 2);
 
   // Invert: park the row back at its old (draft) position via transform
-  // alone -- its real layout position/size never change, so nothing else
-  // on the page reflows around it.
+  // alone.
   newRow.style.transform = `translate(${dx}px, ${dy}px)`;
   void newRow.offsetWidth; // force layout before the transition below is added
 
@@ -997,6 +1039,16 @@ function slideRowIntoPlace(newRow, startRect) {
     landed = true;
     newRow.style.transition = "";
     newRow.style.transform = "";
+    newRow.style.position = "";
+    newRow.style.left = "";
+    newRow.style.top = "";
+    newRow.style.width = "";
+    newRow.style.height = "";
+    newRow.style.margin = "";
+    newRow.style.zIndex = "";
+    // Back into the scrollable list, at the exact spot it came from.
+    if (nextSibling) parent.insertBefore(newRow, nextSibling);
+    else parent.appendChild(newRow);
     // row-enter has to go too, not just flight-sliding -- it's still
     // sitting on the row from creation, just suppressed (flight-sliding's
     // animation:none) for the slide. Removing only flight-sliding would
@@ -1005,6 +1057,10 @@ function slideRowIntoPlace(newRow, startRect) {
     // the tile flip that's about to start -- the slide already was this
     // row's entrance.
     newRow.classList.remove("flight-sliding", "row-enter");
+    // Now it's safe to bring the new row fully into view -- same smooth
+    // scroll renderHistory would have done itself, just held back until
+    // the slide (which needed the container motionless) finished.
+    scrollBox?.scrollTo({ top: scrollBox.scrollHeight, behavior: "smooth" });
   };
 
   requestAnimationFrame(() => {
