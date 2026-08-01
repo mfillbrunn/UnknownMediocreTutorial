@@ -469,10 +469,17 @@ function runGuesserTutorial(state,role){
         return;
       }
       if (tutorialSubStep === 2) {
-        showTutorial(
-          `First, enter your opening guess. Enter "${word}" and click ENTER.`,
-          { enabled: true, mode: "hide" }
-        );
+        // Waits on the Spy to also submit their opening secret
+        // (simultaneous phase) -- see the matching comment on the base
+        // tutorial's CHAMP step.
+        if (state.simultaneousGuessSubmitted) {
+          showTutorial(`Waiting for the Spy to finish picking their secret…`, { enabled: false });
+        } else {
+          showTutorial(
+            `First, enter your opening guess. Enter "${word}" and click ENTER.`,
+            { enabled: true, mode: "hide" }
+          );
+        }
         tutorialContinueMode = "hide";
         highlightKeyboardGuesser();
         waitForGuessSubmission(round);
@@ -495,10 +502,16 @@ function runGuesserTutorial(state,role){
       }
       if (tutorialSubStep === 1) {
         const word = state.tutorialGuesses?.[1] || "CUMIN";
-        showTutorial(
-          `Nice — that's a free hint toward the secret. Now enter your second guess: "${word}".`,
-          { enabled: true, mode: "hide" }
-        );
+        // Waits on the Spy's reaction once submitted -- see the matching
+        // comment on the base tutorial's CAIRN step.
+        if (state.pendingGuess) {
+          showTutorial(`Waiting for the Spy to react to "${word}"…`, { enabled: false });
+        } else {
+          showTutorial(
+            `Nice — that's a free hint toward the secret. Now enter your second guess: "${word}".`,
+            { enabled: true, mode: "hide" }
+          );
+        }
         highlightKeyboardGuesser();
         tutorialContinueMode = "hide";
         waitForGuessSubmission(round);
@@ -572,10 +585,18 @@ function runGuesserTutorial(state,role){
       return;
     }
     if (tutorialSubStep === 5) {
-      showTutorial(
-        `This is the keyboard. Type a 5-letter word to start: "${word}".`,
-        { enabled: true, mode: "hide"  }
-      );
+      // Once submitted, this keeps re-rendering while it waits on the Spy
+      // to also submit their opening secret (simultaneous phase) --
+      // without branching here it'd keep asking for a word that's
+      // already typed in.
+      if (state.simultaneousGuessSubmitted) {
+        showTutorial(`Waiting for the Spy to finish picking their secret…`, { enabled: false });
+      } else {
+        showTutorial(
+          `This is the keyboard. Type a 5-letter word to start: "${word}".`,
+          { enabled: true, mode: "hide"  }
+        );
+      }
       tutorialContinueMode = "hide";
       highlightKeyboardGuesser();
       waitForGuessSubmission(round);
@@ -722,10 +743,16 @@ function runSetterTutorial(state, role) {
         return;
       }
       if (tutorialSubStep === 1) {
-        showTutorial(
-          `In the first round, you enter a secret word — your opponent won't see it. Enter "${word}".`,
-          { enabled: false }
-        );
+        // Waits on the Inspector to also submit their opening guess
+        // (simultaneous phase) once this is submitted.
+        if (state.simultaneousSecretSubmitted) {
+          showTutorial(`Waiting for the Inspector to finish their opening guess…`, { enabled: false });
+        } else {
+          showTutorial(
+            `In the first round, you enter a secret word — your opponent won't see it. Enter "${word}".`,
+            { enabled: false }
+          );
+        }
         highlightKeyboardSetter();
         tutorialContinueMode = "hide";
         waitForSecretSubmission(round);
@@ -785,10 +812,18 @@ function runSetterTutorial(state, role) {
       return;
     }
     if (tutorialSubStep === 1) {
-      showTutorial(
-        `First, pick a secret word your opponent won't see. How about "${word}"?`,
-        { enabled: false }
-      );
+      // Waits on the Inspector to also submit their opening guess
+      // (simultaneous phase) once this is submitted -- state.history
+      // doesn't move until both sides are in, so without this the prompt
+      // would keep asking for a secret that's already picked.
+      if (state.simultaneousSecretSubmitted) {
+        showTutorial(`Waiting for the Inspector to finish their opening guess…`, { enabled: false });
+      } else {
+        showTutorial(
+          `First, pick a secret word your opponent won't see. How about "${word}"?`,
+          { enabled: false }
+        );
+      }
       highlightKeyboardSetter();
       tutorialContinueMode = "hide";
       waitForSecretSubmission(round);
@@ -981,10 +1016,18 @@ function runPowerTutorialTeaching(state, role, meta, powerId, round) {
       return;
     }
     if (tutorialSubStep === (isGuesser ? 3 : 2)) {
-      showTutorial(
-        isGuesser ? "Now submit your guess." : "Now submit to lock it in.",
-        { enabled: false }
-      );
+      // The guesser's submission waits on the Spy's reaction -- the
+      // setter's doesn't (submitting a secret IS what scores the round,
+      // no separate opponent step follows), so only the guesser side
+      // needs a waiting variant here.
+      if (isGuesser && state.pendingGuess) {
+        showTutorial(`Waiting for the Spy to react…`, { enabled: false });
+      } else {
+        showTutorial(
+          isGuesser ? "Now submit your guess." : "Now submit to lock it in.",
+          { enabled: false }
+        );
+      }
       tutorialContinueMode = "hide";
       if (isGuesser) {
         highlightKeyboardGuesser();
@@ -1048,7 +1091,10 @@ function runPowerTutorialReceiving(state, role, meta, powerId, round) {
       }
       if (tutorialSubStep === 2) {
         prefillPowerTutorialGuesserDraft();
-        showTutorial(`Submit your guess.`, { enabled: false });
+        showTutorial(
+          state.pendingGuess ? `Waiting for the Spy to react…` : `Submit your guess.`,
+          { enabled: false }
+        );
         highlightKeyboardGuesser();
         tutorialContinueMode = "hide";
         waitForGuessSubmission(round);
@@ -1135,10 +1181,16 @@ function runAdvancedTutorialGuesser(state) {
     }
     if (tutorialSubStep === 2) {
       const word = state.tutorialGuesses?.[0] || "CHAMP";
-      showTutorial(
-        `First, enter your opening guess. Enter "${word}" and click ENTER.`,
-        { enabled: true, mode: "hide" }
-      );
+      // Waits on the Spy to also submit their opening secret
+      // (simultaneous phase) once this is submitted.
+      if (state.simultaneousGuessSubmitted) {
+        showTutorial(`Waiting for the Spy to finish picking their secret…`, { enabled: false });
+      } else {
+        showTutorial(
+          `First, enter your opening guess. Enter "${word}" and click ENTER.`,
+          { enabled: true, mode: "hide" }
+        );
+      }
       highlightKeyboardGuesser();
       tutorialContinueMode = "hide";
       waitForGuessSubmission(round);
@@ -1161,10 +1213,15 @@ function runAdvancedTutorialGuesser(state) {
     }
     if (tutorialSubStep === 1) {
       const word = state.tutorialGuesses?.[1] || "CUMIN";
-      showTutorial(
-        `Last one: Drag & Lock. On your own draft row, drag a letter straight from the keyboard onto a tile instead of typing left to right, and tap a filled tile to lock it so Backspace can't touch it. Try it as you enter "${word}".`,
-        { enabled: true, mode: "hide" }
-      );
+      // Waits on the Spy's reaction once submitted.
+      if (state.pendingGuess) {
+        showTutorial(`Waiting for the Spy to react to "${word}"…`, { enabled: false });
+      } else {
+        showTutorial(
+          `Last one: Drag & Lock. On your own draft row, drag a letter straight from the keyboard onto a tile instead of typing left to right, and tap a filled tile to lock it so Backspace can't touch it. Try it as you enter "${word}".`,
+          { enabled: true, mode: "hide" }
+        );
+      }
       highlightDraftRow("guesser");
       tutorialContinueMode = "hide";
       waitForGuessSubmission(round);
@@ -1204,10 +1261,16 @@ function runAdvancedTutorialSetter(state) {
     }
     if (tutorialSubStep === 1) {
       const word = state.tutorialSecrets?.[0];
-      showTutorial(
-        `Try it as you set your secret: drag a letter from the keyboard onto a tile, or tap a filled tile to lock it. Enter "${word}" when ready.`,
-        { enabled: false }
-      );
+      // Waits on the Inspector to also submit their opening guess
+      // (simultaneous phase) once this is submitted.
+      if (state.simultaneousSecretSubmitted) {
+        showTutorial(`Waiting for the Inspector to finish their opening guess…`, { enabled: false });
+      } else {
+        showTutorial(
+          `Try it as you set your secret: drag a letter from the keyboard onto a tile, or tap a filled tile to lock it. Enter "${word}" when ready.`,
+          { enabled: false }
+        );
+      }
       highlightDraftRow("setter");
       tutorialContinueMode = "hide";
       waitForSecretSubmission(round);
