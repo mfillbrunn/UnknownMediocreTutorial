@@ -715,9 +715,9 @@ function updateScreens() {
       // shows — worst case (setter's view, where the winning row also
       // slides up into place via slideRowIntoPlace before any tile can
       // start flipping): 420ms slide + 1400ms stagger to the last tile's
-      // cover-flip + 550ms for that tile's own flip = 2370ms, rounded up
+      // cover-flip + 650ms for that tile's own flip = 2470ms, rounded up
       // for a small buffer.
-      const FLIP_TOTAL_MS = 2400;
+      const FLIP_TOTAL_MS = 2500;
       const POPUP_DURATION_MS = 3200;
 
       const iAmGuesser = myUserId() === state.guesser;
