@@ -997,19 +997,25 @@ function slideRowIntoPlace(newRow, startRect) {
 
   newRow.classList.add("flight-sliding");
 
-  // Detach the row from the scrollable container for the flight itself.
-  // A transform large enough to reach back to the draft row's position
-  // (well outside .history-scroll's own bounds) inflates that ancestor's
-  // scrollable content region -- transformed descendants count toward
-  // it -- which dragged every already-visible row's scroll position
-  // along with this one mid-slide, exactly the "everything moves"
-  // symptom this was built to avoid. Pinning the row to the viewport
-  // instead (position:fixed, placed to exactly match where it just
-  // measured) sidesteps that: it's still the real row/tiles, not a
-  // clone, just temporarily outside the scrollable flow while it moves.
-  // Re-inserted at the same spot once landed, below.
-  const parent = newRow.parentNode;
-  const nextSibling = newRow.nextSibling;
+  // Pull the row out of normal flow for the flight itself, WITHOUT
+  // reparenting it out of .history-scroll. A transform large enough to
+  // reach back to the draft row's position (well outside .history-scroll's
+  // own bounds) inflates that ancestor's scrollable content region --
+  // transformed descendants count toward it -- which dragged every
+  // already-visible row's scroll position along with this one mid-slide,
+  // exactly the "everything moves" symptom this was built to avoid.
+  // position:fixed sidesteps that the same way reparenting to
+  // document.body used to (fixed-position elements use the viewport as
+  // their containing block and escape ancestor scroll-clipping/overflow
+  // contribution regardless of DOM nesting -- no ancestor here sets
+  // transform/perspective/filter to override that), but staying a real
+  // child of .history-scroll keeps it inside the .center-col container-
+  // query context its own width/height (clamp(...cqw...)) depends on --
+  // reparenting to document.body broke that and made the tiles balloon in
+  // size mid-slide. It also means there's nothing left orphaned in
+  // document.body if the screen gets swapped out from under it mid-flight
+  // (e.g. a win ending the match) -- it just gets hidden/removed with the
+  // rest of the screen like any other in-place descendant.
   Object.assign(newRow.style, {
     position: "fixed",
     left: `${endRect.left}px`,
@@ -1019,7 +1025,6 @@ function slideRowIntoPlace(newRow, startRect) {
     margin: "0",
     zIndex: "9999"
   });
-  document.body.appendChild(newRow);
 
   // Center-to-center, not edge-to-edge -- both rows are independently
   // horizontally centered in the same-width column, so this is naturally
@@ -1046,9 +1051,6 @@ function slideRowIntoPlace(newRow, startRect) {
     newRow.style.height = "";
     newRow.style.margin = "";
     newRow.style.zIndex = "";
-    // Back into the scrollable list, at the exact spot it came from.
-    if (nextSibling) parent.insertBefore(newRow, nextSibling);
-    else parent.appendChild(newRow);
     // row-enter has to go too, not just flight-sliding -- it's still
     // sitting on the row from creation, just suppressed (flight-sliding's
     // animation:none) for the slide. Removing only flight-sliding would

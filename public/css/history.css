@@ -836,20 +836,26 @@ body.hide-constraints .constraint-row {
 
 .history-tile {
   transform-style: preserve-3d;
- 
+  backface-visibility: hidden;
   position: relative;
 }
 
-/* Reveal flip: the real tile (below) already carries its true final
-   color/letter the instant it's created -- it never animates or gets
-   rerendered itself. A plain, undecided-looking cover sits on top
-   (::after -- ::before is already spoken for by .violation above) and
-   rotates away in ONE direction to reveal the real tile underneath, once
-   per tile, staggered. This replaced an opacity-masked rotateX(0->90->0)
-   "there and back" animation that read as two separate flips (down to a
-   blank tile, then back up into color) instead of a single reveal.
+/* Reveal flip, two complementary layers so BOTH visibly rotate instead of
+   one flap moving over a static tile:
+   - The cover (::after -- ::before is already spoken for by .violation
+     above) is an undecided-looking face that starts flat (covering the
+     tile) and rotates away to edge-on across the FIRST half of the
+     animation.
+   - The real tile itself (below, already carrying its true final color/
+     letter the instant it's created -- it never gets rerendered) starts
+     pre-rotated edge-on -- invisible, and hidden behind the still-opaque
+     cover anyway -- and rotates the rest of the way from edge-on to flat
+     across the SECOND half.
+   The two halves meet at the edge-on midpoint, same as a real flip card's
+   front/back faces would, without needing to duplicate every existing
+   .tile-COLOR rule onto a separate back-face element.
    content comes from data-letter (ui/history.js sets it alongside the
-   real .tile-letter text) so this needs no extra DOM node. */
+   real .tile-letter text) so the cover needs no extra DOM node. */
 .history-row:not(.draft-row) .history-tile::after {
   content: attr(data-letter);
   position: absolute;
@@ -876,26 +882,43 @@ body.hide-constraints .constraint-row {
   animation: tile-cover-flip 650ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
-/* Staggered -- one tile at a time */
+.history-row:not(.draft-row) .history-tile {
+  animation: tile-flip-reveal 650ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* Staggered -- one tile at a time. Same delay applies to the tile and its
+   cover so the two halves described above line up per-tile. */
+.history-row:not(.draft-row) .history-tile:nth-child(1),
 .history-row:not(.draft-row) .history-tile:nth-child(1)::after { animation-delay: 0ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(2),
 .history-row:not(.draft-row) .history-tile:nth-child(2)::after { animation-delay: 350ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(3),
 .history-row:not(.draft-row) .history-tile:nth-child(3)::after { animation-delay: 700ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(4),
 .history-row:not(.draft-row) .history-tile:nth-child(4)::after { animation-delay: 1050ms; }
+.history-row:not(.draft-row) .history-tile:nth-child(5),
 .history-row:not(.draft-row) .history-tile:nth-child(5)::after { animation-delay: 1400ms; }
 
 @keyframes tile-cover-flip {
-  0%   { transform: rotateX(0deg); }
-  100% { transform: rotateX(-90deg); }
+  0%       { transform: rotateX(0deg); }
+  50%,100% { transform: rotateX(-90deg); }
 }
 
-/* Freezes the cover-flip above at frame 0 while client.js's
+@keyframes tile-flip-reveal {
+  0%,50% { transform: rotateX(90deg); }
+  100%   { transform: rotateX(0deg); }
+}
+
+/* Freezes both flip layers above at their frame-0 pose while client.js's
    slideRowIntoPlace is still sliding the row up -- same selector shape/
-   specificity as the animation: rule above (3 classes + a pseudo-element
-   each), so this has to come AFTER it in the file to actually win ties:
-   CSS resolves same-specificity conflicts by source order, and the
-   animation: shorthand above implicitly resets animation-play-state to
-   "running" as one of its longhands, which silently overrode this when
-   it was declared earlier in the file instead. */
+   specificity as the animation: rules above (3 classes, with or without a
+   trailing pseudo-element), so this has to come AFTER both in the file to
+   actually win ties: CSS resolves same-specificity conflicts by source
+   order, and the animation: shorthand above implicitly resets
+   animation-play-state to "running" as one of its longhands, which
+   silently overrode this when it was declared earlier in the file
+   instead. */
+.history-row-wrap.flight-sliding .history-tile,
 .history-row-wrap.flight-sliding .history-tile::after {
   animation-play-state: paused;
 }
