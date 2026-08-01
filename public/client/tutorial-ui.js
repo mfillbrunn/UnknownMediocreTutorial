@@ -57,10 +57,31 @@ function updateActionBadge() {
     if (state.secret === state.tutorialSecrets[round]) {word = "";}
   }
 
+  // Already submitted -- just waiting on the opponent now (the Spy
+  // hasn't reacted to a pending guess yet, or during the simultaneous
+  // opening the other side hasn't submitted their half yet either).
+  // state.history.length doesn't move until they act, so without this
+  // the badge would keep asking for an action that's already done,
+  // reading as duplicated/stuck rather than "your turn is over, wait".
+  // simultaneousGuessSubmitted/simultaneousSecretSubmitted only mean
+  // anything while state.phase is actually "simultaneous" -- they're
+  // never reset back to false once that phase ends, so checking them
+  // unscoped kept reporting "already submitted" for every later round's
+  // normal-phase guess too.
+  const alreadyWaiting =
+    (waitingType === "guess" && (
+      (state.phase === "normal" && !!state.pendingGuess) ||
+      (state.phase === "simultaneous" && !!state.simultaneousGuessSubmitted)
+    )) ||
+    (waitingType === "setSecret" && state.phase === "simultaneous" && !!state.simultaneousSecretSubmitted);
+
   // --- Determine badge label ---
   let label = "ACTION";
 
-  if (waitingType === "guess" && word) {
+  if (alreadyWaiting) {
+    label = "WAITING…";
+  }
+  else if (waitingType === "guess" && word) {
     label = `ENTER ${word}`;
   }
   else if (waitingType === "setSecret" && word) {
@@ -183,14 +204,17 @@ function highlightEl(el) {
 function highlightKeyboardGuesser() {
   highlightEl(byId("keyboardGuesser")); // <div id="keyboardGuesser" class="keyboard">
 }
+// Highlights just the most recent row, not the whole scrollable box --
+// container.lastElementChild is always the newest .history-row-wrap since
+// renderHistory only ever appends new rows in order (ui/history.js).
 function highlightHistoryGuesser() {
-  highlightEl(byId("historyGuesser"));  // <div id="historyGuesser" ...>
+  highlightEl(byId("historyGuesser")?.lastElementChild);
 }
 function highlightKeyboardSetter() {
   highlightEl(byId("keyboardSetter"));
 }
 function highlightSetterHistory() {
-  highlightEl(byId("setterGuesserSubmitted"));
+  highlightEl(byId("setterGuesserSubmitted")?.lastElementChild);
 }
 // Each role's live screen has its own guide button in its own header
 // (guideToggleBtnSetter / guideToggleBtnGuesser) -- the top-level
@@ -577,7 +601,7 @@ function runGuesserTutorial(state,role){
 
     if (tutorialSubStep === 1) {
       showTutorial(
-        `Time for your next guess — use the feedback to narrow it down.`,
+        `Green means that letter is correct — right letter, right spot.`,
         { enabled: true }
       );
       highlightHistoryGuesser();
@@ -586,11 +610,53 @@ function runGuesserTutorial(state,role){
     }
 
     if (tutorialSubStep === 2) {
-      const word = state.tutorialGuesses?.[1] || "CAIRN";
       showTutorial(
-        `Try "${word}". You don't have to reuse letters you know are right — sometimes it's even better not to.`,
-        { enabled: true, mode: "hide" }
+        `Yellow means that letter is in the secret, just not there — try it somewhere else.`,
+        { enabled: true }
       );
+      highlightHistoryGuesser();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 3) {
+      showTutorial(
+        `Grey means that letter isn't in the secret at all.`,
+        { enabled: true }
+      );
+      highlightHistoryGuesser();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 4) {
+      showTutorial(
+        `Time for your next guess — use the feedback to narrow it down.`,
+        { enabled: true }
+      );
+      highlightHistoryGuesser();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 5) {
+      const word = state.tutorialGuesses?.[1] || "CAIRN";
+      // Once submitted, this re-renders every state update while it
+      // waits on the Spy's reaction (state.history.length doesn't move
+      // until then) -- without branching here, "Try CAIRN" would keep
+      // showing next to the CAIRN row that's already sitting there
+      // pending, reading as a duplicated, already-done request.
+      if (state.pendingGuess) {
+        showTutorial(
+          `Waiting for the Spy to react to "${word}"…`,
+          { enabled: false }
+        );
+      } else {
+        showTutorial(
+          `Try "${word}". You don't have to reuse letters you know are right — sometimes it's even better not to.`,
+          { enabled: true, mode: "hide" }
+        );
+      }
       highlightKeyboardGuesser();
       waitForGuessSubmission(round);
       tutorialContinueMode = "hide";
@@ -616,6 +682,14 @@ function runGuesserTutorial(state,role){
     if (tutorialSubStep === 1) {
       showTutorial(
         `One tip: the Spy likes well-spiced food.`,
+        { enabled: true }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `Now this is the base game for the Inspector. Try to finish the rest of the round in a similar way.`,
         { enabled: true, mode: "hide" }
       );
       tutorialContinueMode = "hide";
