@@ -696,6 +696,11 @@ function updateScreens() {
 
     if (wonByGuess) {
       _gameOverRevealInFlight = true;
+      // Read by tutorial-ui.js so it can hold off rendering the round-
+      // summary tutorial (and its highlightRoundSummary() call) until the
+      // summary screen this reveal delays is actually visible, instead of
+      // popping up over the still-showing game screen mid-flip.
+      window._gameOverRevealInFlight = true;
 
       // Keep the just-finished round's screen up (instead of jumping
       // straight to the summary) so the winning row's tile-flip reveal —
@@ -733,7 +738,15 @@ function updateScreens() {
 
       setTimeout(() => {
         _gameOverRevealInFlight = false;
+        window._gameOverRevealInFlight = false;
         updateScreens();
+        // This screen switch happens outside the normal stateUpdate
+        // pipeline (no new server broadcast triggers it), so nothing else
+        // would tell tutorial-ui.js the wait it was holding on is over --
+        // without this, the round/match summary tutorial popup would stay
+        // stuck not rendering until some unrelated later state update
+        // happened to arrive.
+        if (window.state && window.myRole) tutorialSteps(window.state, window.myRole);
       }, FLIP_TOTAL_MS + POPUP_DURATION_MS + 200);
 
       return;
@@ -1457,11 +1470,12 @@ function submitSetterNew() {
     return;
   }
   if (state?.powers?.assassinWord) {
-    const assassin = state.powers.assassinWord.toUpperCase(); 
+    const assassin = state.powers.assassinWord.toUpperCase();
     if (countPositionalDifferences(w, assassin) < 2) {
       shakeDraftRow("setter");
       toast("Too similar to assassin word (needs 2 or more different letters)");
       clearSetterDraft();
+      window.notifyTutorialRejectedSecret?.();
       return;
     }
   }
@@ -1475,6 +1489,7 @@ function submitSetterNew() {
       toast("Word not in dictionary");
     }
     clearSetterDraft();
+    window.notifyTutorialRejectedSecret?.();
     return;
   }
   if (state.isTutorial && state.history.length < state.scriptedTurns) {
@@ -1482,6 +1497,7 @@ function submitSetterNew() {
     if (w !== expected) {
       shakeDraftRow("setter");
       toast(`Type in ${expected}`);
+      window.notifyTutorialRejectedSecret?.();
       return;
     }
   }
@@ -1505,6 +1521,7 @@ function submitSetterNew() {
       compact: true
     });
     clearSetterDraft();
+    window.notifyTutorialRejectedSecret?.();
     return;
   }
   if (window.isRejoining) {

@@ -73,6 +73,11 @@ socket.on("errorMessage", msg => {
     shakeDraftRow(window.myRole === "setter" ? "setter" : "guesser");
   }
 
+  // Only the setter's SET_SECRET_* actions land here (guess errors are
+  // reported separately) -- tell the tutorial in case it's specifically
+  // waiting on a rejected secret attempt (the "try PICKY" step).
+  if (window.myRole === "setter") window.notifyTutorialRejectedSecret?.();
+
   if (msg === "Incompatible with previous feedback" && window.myRole === "setter") {
     // state.setterDraft still holds the attempted word here — it's only
     // cleared on a SUCCESSFUL submit, and the server just rejected this one.

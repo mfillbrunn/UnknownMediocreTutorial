@@ -15,6 +15,19 @@ let tutorialContinueMode = "advance";
 let powerTutorialDraftPrefilled = false;
 let powerTutorialSkipSent = false;
 
+// A round moving forward means a guess/secret just got scored -- the
+// tile-flip reveal (staggered per tile, ~2s, plus a ~420ms slide first for
+// the setter's own view of it -- see client.js's slideRowIntoPlace/
+// FLIP_TOTAL_MS) is still painting colors on screen for a couple of
+// seconds after the server already considers the round done. Rendering a
+// popup about "here's your feedback" the instant the state update lands
+// used to read as out of sync with what's actually visible -- gate
+// forward round transitions behind this same wait instead, matching how
+// long the reveal actually takes.
+const TUTORIAL_REVEAL_WAIT_MS = 2500;
+let tutorialRevealGateRound = null;
+let tutorialRevealGateTimer = null;
+
 function qs(sel) { return document.querySelector(sel); }
 function byId(id) { return document.getElementById(id); }
 
@@ -66,6 +79,9 @@ function updateActionBadge() {
   }
   else if (waitingType === "notes") {
     label = "OPEN NOTES";
+  }
+  else if (waitingType === "rejectedSecret") {
+    label = "TRY PICKY";
   }
 
   badge.textContent = label;
@@ -176,8 +192,13 @@ function highlightKeyboardSetter() {
 function highlightSetterHistory() {
   highlightEl(byId("setterGuesserSubmitted"));
 }
-function highlightGuideToggle() {
-  highlightEl(byId("guideToggleBtn"));
+// Each role's live screen has its own guide button in its own header
+// (guideToggleBtnSetter / guideToggleBtnGuesser) -- the top-level
+// #guideToggleBtn in the outer app-header is CSS-hidden the entire time
+// #setterScreen/#guesserScreen is active (layout.css), so highlighting it
+// during actual gameplay highlighted nothing visible.
+function highlightGuideToggle(role) {
+  highlightEl(byId(role === "setter" ? "guideToggleBtnSetter" : "guideToggleBtnGuesser"));
 }
 function highlightDraftRow(role) {
   highlightEl(byId(role === "setter" ? "draftSetter" : "draftGuesser"));
@@ -192,6 +213,14 @@ function highlightPowerButtonByText(label) {
   document.querySelectorAll(".power-btn").forEach(btn => {
     if (btn.textContent.trim() === label) highlightEl(btn);
   });
+}
+// Both round- and match-summary tutorials talk about the recap screen --
+// #roundSummary is the one shared container summary.js renders either
+// into (see renderRoundSummary/renderMatchSummary). The live game's own
+// #historyGuesser panel used to get highlighted here instead, which is
+// part of a screen that's hidden the whole time the summary is showing.
+function highlightRoundSummary() {
+  highlightEl(byId("roundSummary"));
 }
 
 function clearHighlights() {
@@ -216,6 +245,12 @@ function waitForSecretSubmission(round) {
 
 function waitForPowerUse(powerId) {
   tutorialWaitingFor = { type: "power", powerId };
+  setContinue({ show: true, enabled: false });
+  updateActionBadge();
+}
+
+function waitForRejectedSecret() {
+  tutorialWaitingFor = { type: "rejectedSecret" };
   setContinue({ show: true, enabled: false });
   updateActionBadge();
 }
@@ -264,6 +299,24 @@ function notifyTutorialNotesOpened() {
 }
 window.notifyTutorialNotesOpened = notifyTutorialNotesOpened;
 
+// Called (via socket-events.js's "errorMessage" handler) the instant the
+// setter's attempted secret gets rejected by the server -- same reasoning
+// as the two notify functions above, since a rejection doesn't touch
+// state.history.length either. Doesn't check which word was attempted or
+// why it was rejected -- any rejection while this tutorial step is
+// specifically waiting for one demonstrates the same lesson (a new secret
+// has to still match every clue given so far).
+function notifyTutorialRejectedSecret() {
+  if (!tutorialWaitingFor) return;
+  if (tutorialWaitingFor.type === "rejectedSecret") {
+    tutorialWaitingFor = null;
+    updateActionBadge();
+    tutorialSubStep++;
+    if (window.state && window.myRole) tutorialSteps(window.state, window.myRole);
+  }
+}
+window.notifyTutorialRejectedSecret = notifyTutorialRejectedSecret;
+
 // ------------------------
 // Main tutorial logic
 // ------------------------
@@ -276,21 +329,62 @@ const isSetter  = role === "setter";
     lastTutorialRound = null;
     tutorialSubStep = 0;
     tutorialWaitingFor = null;
+    tutorialRevealGateRound = null;
+    clearTimeout(tutorialRevealGateTimer);
     hideTutorial();
     return;
   }
+
+  // client.js holds the just-finished game screen up for several extra
+  // seconds after a win (tile flip, then a "you found it" popup) before
+  // switching to the round/match summary screen -- see its own
+  // _gameOverRevealInFlight/FLIP_TOTAL_MS/POPUP_DURATION_MS. That delay is
+  // already accounted for over there; without checking it here too, this
+  // function would already have `state.gameOverView` and the new
+  // (incremented) round by the very first broadcast after the win, and
+  // would render the summary tutorial's popup + highlightRoundSummary()
+  // straight away -- floating over the still-showing game screen, pointed
+  // at a summary box that isn't even on screen yet. client.js calls this
+  // function again once it actually flips the screen over, so there's
+  // nothing more to do here in the meantime.
+  if (window._gameOverRevealInFlight) return;
 
   // Only tutorial for guesser side (your described flow)
   const round = state.history?.length ?? 0;
   // round transition => reset substeps unless we are mid-wait for a guess/secret/power
   if (round !== lastTutorialRound) {
+    const prevRound = lastTutorialRound;
     lastTutorialRound = round;
     tutorialSubStep = 0;
     tutorialWaitingFor = null;
     powerTutorialDraftPrefilled = false;
     powerTutorialSkipSent = false;
     clearHighlights();
+
+    // Moving to a LATER round (not a reset back to 0 for a fresh sub-
+    // match/role swap, and not the very first render this page has done)
+    // means a guess/secret just got scored -- gate on the reveal actually
+    // finishing before rendering this round's first popup. Re-entrant
+    // calls to tutorialSteps() that land while this timer is still
+    // running (more state broadcasts can easily arrive in ~2.5s) just
+    // hit the tutorialRevealGateRound check below and no-op. Skipped
+    // when heading into gameOver -- that transition already waited out
+    // the reveal (and then some, for the found-secret popup too) up in
+    // the window._gameOverRevealInFlight check above, so gating again
+    // here would just be a second, redundant wait stacked on top.
+    if (prevRound !== null && round > prevRound && state.phase !== "gameOver") {
+      tutorialRevealGateRound = round;
+      clearTimeout(tutorialRevealGateTimer);
+      showTutorial(`Let's see how that went…`, { enabled: false });
+      setContinue({ show: false });
+      tutorialRevealGateTimer = setTimeout(() => {
+        if (tutorialRevealGateRound !== round) return;
+        tutorialRevealGateRound = null;
+        if (window.state && window.myRole) tutorialSteps(window.state, window.myRole);
+      }, TUTORIAL_REVEAL_WAIT_MS);
+    }
   }
+  if (tutorialRevealGateRound === round) return;
   if (state.gameOverView==="round" && state.phase === "gameOver"){
     runSummaryTutorial(state);
     return;
@@ -648,17 +742,22 @@ function runSetterTutorial(state, role) {
         `Their next guess is shown above before it's scored — that's your edge: you react to it first.`,
         { enabled: true }
       );
-      highlightSetterHistory();
+      // The pending (not-yet-scored) guess renders as the top row inside
+      // the draft area, not the settled history list above it -- see
+      // draftrow.js/renderDraftRows, whose pending row it appends is a
+      // child of the same container as the setter's own draft tiles.
+      highlightDraftRow("setter");
       tutorialContinueMode = "advance";
       return;
     }
     if (tutorialSubStep === 2) {
       showTutorial(
-        `You can keep your secret, or switch — but a new word must still match every clue you've given so far. Try typing PICKY and hitting Enter: it won't fit, so it gets rejected.`,
-        { enabled: true }
+        `You can keep your secret, or switch — but a new word must still match every clue you've given so far. Type PICKY and hit Enter — watch it get rejected.`,
+        { enabled: false }
       );
       highlightKeyboardSetter();
-      tutorialContinueMode = "advance";
+      tutorialContinueMode = "hide";
+      waitForRejectedSecret();
       return;
     }
     if (tutorialSubStep === 3) {
@@ -903,7 +1002,9 @@ function runPowerTutorialReceiving(state, role, meta, powerId, round) {
       { enabled: false }
     );
     tutorialContinueMode = "hide";
-    highlightSetterHistory();
+    // What they're reacting to is the pending guess, which renders in the
+    // draft area (see draftrow.js), not the settled history list.
+    highlightDraftRow("setter");
     return;
   }
 
@@ -954,7 +1055,7 @@ function runAdvancedTutorialGuesser(state) {
         `This is the Guide toggle — switch it any time for extra on-screen explanations, like why a box shows the numbers it does. Try clicking it, then continue.`,
         { enabled: true }
       );
-      highlightGuideToggle();
+      highlightGuideToggle("guesser");
       tutorialContinueMode = "advance";
       return;
     }
@@ -1088,7 +1189,7 @@ function runSummaryTutorial(state){
           `Round 1 done — you just used Letter Peek as the Inspector. This recap shows each secret, guess, and the feedback given.`,
           { enabled: true }
         );
-        highlightHistoryGuesser();
+        highlightRoundSummary();
         tutorialContinueMode = "advance";
         return;
       }
@@ -1108,7 +1209,7 @@ function runSummaryTutorial(state){
         `Nice, you found the secret! Here's a quick summary of the round.`,
         { enabled: true }
       );
-      highlightHistoryGuesser();
+      highlightRoundSummary();
       tutorialContinueMode = "advance";
       return;
     }
@@ -1221,7 +1322,7 @@ function runMatchTutorial(state){
         `This is the final score. If your opponent needed more guesses than you did, you win!`,
         { enabled: true }
       );
-      highlightHistoryGuesser();
+      highlightRoundSummary();
       tutorialContinueMode = "advance";
       return;
     }
