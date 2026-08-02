@@ -199,9 +199,23 @@
       });
     });
 
-    list.querySelectorAll(".notes-fillable").forEach(span => {
-      span.addEventListener("click", () => _fillDraft(span.dataset.fill));
-    });
+list.querySelectorAll(
+  ".notes-fillable"
+).forEach(span => {
+  span.addEventListener(
+    "click",
+    () => {
+      const word =
+        span.dataset.fill;
+
+      _fillDraft(word);
+
+      window
+        .notifyTutorialNoteSelected
+        ?.(word);
+    }
+  );
+});
   }
 
   function _renderPanel(state) {
@@ -309,14 +323,24 @@
           _role === "setter" && !_viable(window.state?.history, w);
         if ((dict && !dict.has(w)) || infeasible) {
           _shakeNotesDraft(roleId);
-        } else if (!_entries.find(e => e.word === w)) {
-          _entries.push({ word: w });
-          _draft = "";
-          _renderPanel(window.state);
-        } else {
-          _draft = "";
-          _renderPanel(window.state);
-        }
+} else {
+  if (
+    !_entries.find(
+      entry => entry.word === w
+    )
+  ) {
+    _entries.push({
+      word: w
+    });
+  }
+
+  _draft = "";
+  _renderPanel(window.state);
+
+  window
+    .notifyTutorialNoteAdded
+    ?.(w);
+}
       }
       return true;
     }
