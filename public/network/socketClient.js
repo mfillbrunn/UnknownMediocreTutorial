@@ -215,9 +215,13 @@ socket.on("powerActivity", payload => {
   if (!formatted) return;
   if (POWERS_WITH_OWN_POPUP.has(payload.id)) return;
 
-  const who =
-    formatted.actorRole == null ? "A power was used" :
-    formatted.actorRole === window.myRole ? "You used" : "Opponent used";
+  // The player who used the power already confirmed it themselves via
+  // the power-info popup's own "Use" button, so a second "You used: X"
+  // splash right after is redundant -- only the opponent, who wasn't
+  // shown anything yet, still needs the notification.
+  if (formatted.actorRole === window.myRole) return;
+
+  const who = formatted.actorRole == null ? "A power was used" : "Opponent used";
   const detailSuffix = formatted.detail ? ` — ${formatted.detail}` : "";
 
   window.showPowerPopup({
