@@ -395,12 +395,21 @@ case "playerLeft": {
         hide("menu");
         break;
       
-    case "gameOverShowMenu":
-      hide("setterScreen");
-      hide("guesserScreen");
-      show("menu");
-      enableReadyButton(false);
-      break;
+case "gameOverShowMenu":
+  enableReadyButton(false);
+
+  if (
+    !_gameOverRevealInFlight &&
+    !window._gameOverRevealInFlight &&
+    (
+      state?.phase === "gameOver" ||
+      state?.phase === "roundSummary"
+    )
+  ) {
+    updateScreens();
+  }
+
+  break;
   }
 });
 
@@ -545,10 +554,14 @@ onStateUpdate(newState => {
   updateLeaveGameButtons(state);
   updateLobbyHeader();
   updateGuideBanner();
-  updateUI();
+updateUI();
+
+if (!_gameOverRevealInFlight) {
   updateSummary();
-  maybeStartRouletteFromState(state);
-  tutorialSteps(state, myRole);
+}
+
+maybeStartRouletteFromState(state);
+tutorialSteps(state, myRole);
   if (!state.isTutorial){  
     const bubble = byId("tutorialBubble");
     if (!bubble) return;
@@ -730,25 +743,26 @@ function updateScreens() {
         window.showBigAnnounce?.({
           icon: iAmGuesser ? "🎉" : "💀",
           title: iAmGuesser ? "You found the secret!" : "Your secret was found!",
-          sub: `The word was ${(lastEntry.finalSecret || state.secret || "").toUpperCase()}.`,
+          sub: `The word was ${(winningEntry.finalSecret || state.secret || "").toUpperCase()}.`,
           roleClass: iAmGuesser ? "outcome-win" : "outcome-lose",
           duration: POPUP_DURATION_MS
         });
       }, FLIP_TOTAL_MS);
 
-      setTimeout(() => {
-        _gameOverRevealInFlight = false;
-        window._gameOverRevealInFlight = false;
-        updateScreens();
-        // This screen switch happens outside the normal stateUpdate
-        // pipeline (no new server broadcast triggers it), so nothing else
-        // would tell tutorial-ui.js the wait it was holding on is over --
-        // without this, the round/match summary tutorial popup would stay
-        // stuck not rendering until some unrelated later state update
-        // happened to arrive.
-        if (window.state && window.myRole) tutorialSteps(window.state, window.myRole);
-      }, FLIP_TOTAL_MS + POPUP_DURATION_MS + 200);
+setTimeout(() => {
+  _gameOverRevealInFlight = false;
+  window._gameOverRevealInFlight = false;
 
+  updateSummary();
+  updateScreens();
+
+  if (window.state && window.myRole) {
+    tutorialSteps(
+      window.state,
+      window.myRole
+    );
+  }
+}, FLIP_TOTAL_MS + POPUP_DURATION_MS + 200);
       return;
     }
   }
