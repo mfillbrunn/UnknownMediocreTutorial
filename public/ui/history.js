@@ -173,112 +173,283 @@ function createCountOnlyBadge({ greens, yellows }) {
   return badge;
 }
 
+
+
+
 ///DOM creator
 function createHistoryRowDOM(row) {
   const wrap = document.createElement("div");
   wrap.className = "history-row-wrap row-enter";
   wrap.dataset.key = row.key;
+
   const anchor = document.createElement("div");
   anchor.className = "history-row-anchor";
+
   const rowEl = document.createElement("div");
   rowEl.className = "history-row";
-  if (row.evaluated) rowEl.classList.add("evaluated-row");
+
+  if (row.evaluated) {
+    rowEl.classList.add("evaluated-row");
+  }
+
   for (const tile of row.tiles) {
     const el = document.createElement("div");
     el.className = tile.classKey;
-    // Feeds the flip-reveal cover's content (history.css's ::after,
-    // content: attr(data-letter)) -- keeps that cover a plain CSS layer
-    // instead of a real DOM node competing with .tile-letter below.
     el.dataset.letter = tile.letter;
-    const span = document.createElement("span");
-    span.className = "tile-letter";
-    span.textContent = tile.letter;
-    el.appendChild(span);
+
+    const letter = document.createElement("span");
+    letter.className = "tile-letter";
+    letter.textContent = tile.letter;
+
+    const cover = document.createElement("span");
+    cover.className = "history-tile-cover";
+    cover.dataset.letter = tile.letter;
+    cover.setAttribute("aria-hidden", "true");
+
+    el.append(letter, cover);
     rowEl.appendChild(el);
   }
+
   anchor.appendChild(rowEl);
+
   if (row.countOnlyInfo) {
-    anchor.appendChild(createCountOnlyBadge(row.countOnlyInfo));
+    anchor.appendChild(
+      createCountOnlyBadge(row.countOnlyInfo)
+    );
   }
+
   wrap.appendChild(anchor);
   return wrap;
 }
 
 function patchHistoryRow(wrap, row) {
   const rowEl = wrap.querySelector(".history-row");
-  rowEl.classList.add("evaluated-row");
-  const tiles = rowEl.children;
+  if (!rowEl) return;
+
+  rowEl.classList.toggle(
+    "evaluated-row",
+    !!row.evaluated
+  );
+
+  const tiles = rowEl.querySelectorAll(
+    ":scope > .history-tile"
+  );
+
   for (let i = 0; i < 5; i++) {
-    const t = tiles[i];
-    if (t.textContent !== row.tiles[i].letter) {
-      t.textContent = row.tiles[i].letter;
-      t.dataset.letter = row.tiles[i].letter;
+    const tileEl = tiles[i];
+    const tileState = row.tiles[i];
+
+    if (!tileEl || !tileState) continue;
+
+    tileEl.className = tileState.classKey;
+    tileEl.dataset.letter = tileState.letter;
+
+    let letter = tileEl.querySelector(".tile-letter");
+
+    if (!letter) {
+      letter = document.createElement("span");
+      letter.className = "tile-letter";
+      tileEl.prepend(letter);
     }
-    if (t.className !== row.tiles[i].classKey) {
-      t.className = row.tiles[i].classKey;
+
+    letter.textContent = tileState.letter;
+
+    const cover = tileEl.querySelector(
+      ".history-tile-cover"
+    );
+
+    if (cover) {
+      cover.dataset.letter = tileState.letter;
     }
   }
 
-  const anchor = wrap.querySelector(".history-row-anchor");
-  let badge = anchor?.querySelector(".count-only-badge");
+  const anchor = wrap.querySelector(
+    ".history-row-anchor"
+  );
+
+  let badge = anchor?.querySelector(
+    ".count-only-badge"
+  );
+
   if (row.countOnlyInfo) {
     if (!badge) {
-      anchor.appendChild(createCountOnlyBadge(row.countOnlyInfo));
+      anchor?.appendChild(
+        createCountOnlyBadge(row.countOnlyInfo)
+      );
     } else {
-      badge.querySelector(".count-only-green").textContent = `G:${row.countOnlyInfo.greens}`;
-      badge.querySelector(".count-only-yellow").textContent = `Y:${row.countOnlyInfo.yellows}`;
+      badge.querySelector(
+        ".count-only-green"
+      ).textContent =
+        `G:${row.countOnlyInfo.greens}`;
+
+      badge.querySelector(
+        ".count-only-yellow"
+      ).textContent =
+        `Y:${row.countOnlyInfo.yellows}`;
     }
-  } else if (badge) {
-    badge.remove();
+  } else {
+    badge?.remove();
   }
 }
 
+function finishHistoryReveal(wrap) {
+  if (!wrap) return;
+
+  clearTimeout(wrap.__revealTimer);
+
+  wrap.classList.remove(
+    "reveal-waiting",
+    "reveal-tiles"
+  );
+
+  wrap.querySelectorAll(
+    ".history-tile-cover"
+  ).forEach(el => el.remove());
+}
+
+function revealHistoryRow(wrap) {
+  if (
+    !wrap ||
+    !wrap.isConnected ||
+    wrap.__revealStarted
+  ) {
+    return;
+  }
+
+  wrap.__revealStarted = true;
+  wrap.classList.remove("reveal-waiting");
+
+  if (
+    window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    ).matches
+  ) {
+    finishHistoryReveal(wrap);
+    return;
+  }
+
+  wrap.classList.remove("reveal-tiles");
+  void wrap.offsetWidth;
+  wrap.classList.add("reveal-tiles");
+
+  const lastTile = wrap.querySelector(
+    ".history-tile:last-child"
+  );
+
+  const onEnd = event => {
+    if (
+      event.target !== lastTile ||
+      event.animationName !== "history-wordle-flip"
+    ) {
+      return;
+    }
+
+    lastTile.removeEventListener(
+      "animationend",
+      onEnd
+    );
+
+    finishHistoryReveal(wrap);
+  };
+
+  lastTile?.addEventListener(
+    "animationend",
+    onEnd
+  );
+
+  wrap.__revealTimer = setTimeout(
+    () => finishHistoryReveal(wrap),
+    1400
+  );
+}
+
+window.revealHistoryRow = revealHistoryRow;
+
 /// History renderer
-// Was a single module-level variable shared across EVERY call site --
-// renderHistory runs once for the setter's own history container and
-// once for the guesser's (client.js's updateSetterScreen/
-// updateGuesserScreen, both called every tick regardless of which screen
-// is actually visible), so the two calls constantly clobbered each
-// other's "previous" snapshot. Most of the time the two roles' data
-// looks similar enough that this went unnoticed, but the moment they
-// genuinely diverge -- e.g. Total Blackout blanking only the render this
-// function computes for that tick (see buildHistoryRenderState) -- the
-// NEXT call's diff got compared against the WRONG role's snapshot from
-// the same tick, corrupting the added/removed/updated classification for
-// whichever container ran second. Tracked per-container instead so each
-// history box only ever diffs against its own last render.
-// autoScroll: false lets a caller (client.js's slideRowIntoPlace) defer
-// this -- it needs the container's scroll position to stay completely
-// still while the new row's own slide-up animation plays (any scroll
-// here, even smooth, would drag every already-visible row along with
-// it), and scrolls the container itself once that's done instead.
-window.renderHistory = function ({ state, container, role, autoScroll = true }) {
-  const prev = container.__prevRenderState || [];
-  const next = buildHistoryRenderState(state, role);
-  const diff = diffHistory(prev, next);
-  // Remove
-  for (const r of diff.removed) {
-    const el = container.querySelector(`[data-key="${r.key}"]`);
-    el?.remove();
+window.renderHistory = function ({
+  state,
+  container,
+  role,
+  autoScroll = true,
+  deferRevealWord = ""
+}) {
+  const prev =
+    container.__prevRenderState || [];
+
+  const next =
+    buildHistoryRenderState(state, role);
+
+  const diff =
+    diffHistory(prev, next);
+
+  const addedElements = [];
+  const revealNow = [];
+
+  let deferredMatchUsed = false;
+
+  for (const row of diff.removed) {
+    container
+      .querySelector(`[data-key="${row.key}"]`)
+      ?.remove();
   }
-  // Update
-  for (const r of diff.updated) {
-    const el = container.querySelector(`[data-key="${r.key}"]`);
-    if (el) patchHistoryRow(el, r);
+
+  for (const row of diff.updated) {
+    const el = container.querySelector(
+      `[data-key="${row.key}"]`
+    );
+
+    if (el) {
+      patchHistoryRow(el, row);
+    }
   }
-  // Add (append in order)
-  for (const r of diff.added) {
-    container.appendChild(createHistoryRowDOM(r));
+
+  for (const row of diff.added) {
+    const el = createHistoryRowDOM(row);
+
+    const word = row.tiles
+      .map(tile => tile.letter)
+      .join("");
+
+    const shouldDefer =
+      !deferredMatchUsed &&
+      !!deferRevealWord &&
+      word === deferRevealWord;
+
+    if (shouldDefer) {
+      deferredMatchUsed = true;
+      el.classList.add("reveal-waiting");
+    } else {
+      revealNow.push(el);
+    }
+
+    container.appendChild(el);
+    addedElements.push(el);
   }
-  // container is the scrollable .history-scroll box (history.css) --
-  // keep the newest guess in view instead of leaving the scroll position
-  // wherever it was before this row landed.
-  if (diff.added.length > 0 && autoScroll) {
+
+  if (revealNow.length) {
     requestAnimationFrame(() => {
-      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+      revealNow.forEach(revealHistoryRow);
     });
   }
+
+  if (
+    addedElements.length > 0 &&
+    autoScroll
+  ) {
+    requestAnimationFrame(() => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth"
+      });
+    });
+  }
+
   container.__prevRenderState = next;
+
+  return {
+    diff,
+    addedElements
+  };
 };
 
 ///Helper for uncertain feedback
