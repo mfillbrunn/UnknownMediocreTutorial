@@ -386,7 +386,7 @@ function animateTutorialBody() {
       body.classList.remove(
         "tutorial-step-in"
       );
-    }, 220);
+    }, 380);
 }
 
 function showTutorial(text, opts = {}) {
