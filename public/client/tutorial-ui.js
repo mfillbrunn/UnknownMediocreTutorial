@@ -172,8 +172,63 @@ function scheduleTutorialLayout() {
     });
 }
 
+function isTutorialElementVisible(el) {
+  if (!el || !el.isConnected) {
+    return false;
+  }
+
+  const style =
+    getComputedStyle(el);
+
+  const rect =
+    el.getBoundingClientRect();
+
+  return (
+    style.display !== "none" &&
+    style.visibility !== "hidden" &&
+    rect.width > 0 &&
+    rect.height > 0
+  );
+}
+
+function tutorialRectsOverlap(
+  first,
+  second,
+  gap = 8
+) {
+  return (
+    first.left < second.right + gap &&
+    first.right > second.left - gap &&
+    first.top < second.bottom + gap &&
+    first.bottom > second.top - gap
+  );
+}
+
+function tutorialAvoidElements() {
+  const highlighted =
+    Array.isArray(tutorialHighlightTargets)
+      ? tutorialHighlightTargets
+      : [];
+
+  const draftRows =
+    document.querySelectorAll(
+      "#setterScreen.active " +
+      "#draftSetter .history-row, " +
+      "#guesserScreen.active " +
+      "#draftGuesser .history-row"
+    );
+
+  return [
+    ...new Set([
+      ...highlighted,
+      ...draftRows
+    ])
+  ].filter(isTutorialElementVisible);
+}
+
 function repositionTutorialBubble() {
-  const bubble = byId("tutorialBubble");
+  const bubble =
+    byId("tutorialBubble");
 
   if (
     !bubble ||
@@ -182,39 +237,120 @@ function repositionTutorialBubble() {
     return;
   }
 
+  const viewport =
+    window.visualViewport;
+
+  const viewportTop =
+    viewport?.offsetTop || 0;
+
   const viewportHeight =
-    window.visualViewport?.height ||
+    viewport?.height ||
     window.innerHeight;
+
+  const viewportBottom =
+    viewportTop + viewportHeight;
+
+  const edge =
+    tutorialCollapsed ? 8 : 12;
+
+  const gap = 10;
 
   const keyboard =
     getVisibleTutorialKeyboard();
 
-  const base =
-    tutorialCollapsed ? 8 : 12;
+  const keyboardTop =
+    keyboard
+      ? keyboard.getBoundingClientRect().top
+      : viewportBottom;
 
-  let bottom = base;
-
-  if (keyboard) {
-    const keyboardTop =
-      keyboard.getBoundingClientRect().top;
-
-    bottom = Math.max(
-      base,
-      viewportHeight - keyboardTop + 8
+  const availableBottom =
+    Math.min(
+      viewportBottom - edge,
+      keyboardTop - edge
     );
+
+  /*
+    Clear the last calculated position before
+    measuring the bubble at its current size.
+  */
+  bubble.style.top = "";
+  bubble.style.bottom = "";
+  bubble.style.removeProperty(
+    "--tutorial-bottom"
+  );
+
+  const bubbleHeight =
+    bubble.offsetHeight;
+
+  const minTop =
+    viewportTop + edge;
+
+  const maxTop =
+    Math.max(
+      minTop,
+      availableBottom - bubbleHeight
+    );
+
+  /*
+    Start as low as possible while remaining
+    above the keyboard.
+  */
+  let top = maxTop;
+
+  bubble.style.top =
+    `${Math.round(top)}px`;
+
+  bubble.style.bottom = "auto";
+
+  const avoidRects =
+    tutorialAvoidElements().map(el =>
+      el.getBoundingClientRect()
+    );
+
+  let bubbleRect =
+    bubble.getBoundingClientRect();
+
+  for (const avoidRect of avoidRects) {
+    if (
+      !tutorialRectsOverlap(
+        bubbleRect,
+        avoidRect,
+        gap
+      )
+    ) {
+      continue;
+    }
+
+    const aboveTop =
+      avoidRect.top -
+      gap -
+      bubbleHeight;
+
+    const belowTop =
+      avoidRect.bottom + gap;
+
+    if (aboveTop >= minTop) {
+      top = Math.min(
+        aboveTop,
+        maxTop
+      );
+    } else if (belowTop <= maxTop) {
+      top = belowTop;
+    } else {
+      /*
+        There is not enough room directly above
+        or below, so use the top of the viewport.
+      */
+      top = minTop;
+    }
+
+    bubble.style.top =
+      `${Math.round(top)}px`;
+
+    bubbleRect =
+      bubble.getBoundingClientRect();
   }
-
-  bottom = Math.min(
-    bottom,
-    Math.max(base, viewportHeight - 72)
-  );
-
-  bubble.style.setProperty(
-    "--tutorial-bottom",
-    `${Math.round(bottom)}px`
-  );
 }
-
 function tutorialStepKey(opts = {}) {
   if (opts.key) {
     return opts.key;
@@ -424,7 +560,7 @@ function queueHighlightCommit() {
         );
       });
 
-    positionTutorialFocusRing();
+    scheduleTutorialLayout();
   });
 }
 
@@ -528,11 +664,26 @@ function positionTutorialFocusRing() {
     `${Math.round(left)}px, ` +
     `${Math.round(top)}px, 0)`;
 
-  ring.style.borderRadius =
-    getComputedStyle(
-      rects[0].el
-    ).borderRadius || "12px";
+ const firstTarget =
+  rects[0].el;
 
+const firstTile =
+  firstTarget.matches(".history-row")
+    ? firstTarget.querySelector(
+        ".history-tile"
+      )
+    : null;
+
+const targetRadius =
+  getComputedStyle(
+    firstTile || firstTarget
+  ).borderRadius;
+
+ring.style.borderRadius =
+  targetRadius &&
+  targetRadius !== "0px"
+    ? `calc(${targetRadius} + 4px)`
+    : "10px";
   ring.classList.add("show");
 }
 
@@ -542,10 +693,29 @@ function highlightKeyboardGuesser() {
   );
 }
 
+function lastHistoryRow(containerId) {
+  return byId(containerId)
+    ?.lastElementChild
+    ?.querySelector(".history-row");
+}
+
+function visibleDraftRows(role) {
+  const container = byId(
+    role === "setter"
+      ? "draftSetter"
+      : "draftGuesser"
+  );
+
+  if (!container) return [];
+
+  return [
+    ...container.querySelectorAll(".history-row")
+  ].filter(isTutorialElementVisible);
+}
+
 function highlightHistoryGuesser() {
   highlightEl(
-    byId("historyGuesser")
-      ?.lastElementChild
+    lastHistoryRow("historyGuesser")
   );
 }
 
@@ -557,8 +727,7 @@ function highlightKeyboardSetter() {
 
 function highlightSetterHistory() {
   highlightEl(
-    byId("setterGuesserSubmitted")
-      ?.lastElementChild
+    lastHistoryRow("setterGuesserSubmitted")
   );
 }
 
@@ -573,13 +742,31 @@ function highlightGuideToggle(role) {
 }
 
 function highlightDraftRow(role) {
+  const rows = visibleDraftRows(role);
+
+  const editableRow =
+    role === "setter"
+      ? rows.find(row =>
+          row.classList.contains("setter-draft") ||
+          row.classList.contains("ghost-secret")
+        )
+      : rows.find(row =>
+          row.classList.contains("guesser-draft")
+        );
+
   highlightEl(
-    byId(
-      role === "setter"
-        ? "draftSetter"
-        : "draftGuesser"
-    )
+    editableRow ||
+    rows[rows.length - 1]
   );
+}
+
+function highlightPendingGuessRow() {
+  const pendingRow =
+    visibleDraftRows("setter").find(row =>
+      row.classList.contains("pending-guess")
+    );
+
+  highlightEl(pendingRow);
 }
 function highlightNotesButton() {
   highlightEl(byId("notesBtnSetter"));
@@ -1621,7 +1808,7 @@ function runSetterTutorial(
         }
       );
 
-      highlightDraftRow("setter");
+      highlightPendingGuessRow();
 
       return;
     }
