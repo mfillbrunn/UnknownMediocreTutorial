@@ -29,9 +29,9 @@
   contain: layout paint;
 
 transition:
-  opacity 120ms ease-out,
-  transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
-  top 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
+  opacity 220ms ease-out,
+  transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
+  top 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
   visibility 0s linear 0s;
 }
 
@@ -40,10 +40,10 @@ transition:
   visibility: hidden;
   transform: translate3d(0, 8px, 0) scale(0.98);
   pointer-events: none;
-  transition:
-    opacity 100ms ease-in,
-    transform 120ms ease-in,
-    visibility 0s linear 120ms;
+transition:
+  opacity 180ms ease-in,
+  transform 230ms ease-in,
+  visibility 0s linear 230ms;
 }
 
 .tutorial-header {
@@ -94,10 +94,10 @@ transition:
   cursor: pointer;
   touch-action: manipulation;
 
-  transition:
-    background 100ms ease,
-    color 100ms ease,
-    transform 140ms ease;
+transition:
+  background 180ms ease,
+  color 180ms ease,
+  transform 220ms ease;
 }
 
 .tutorial-close:hover {
@@ -123,7 +123,7 @@ transition:
 }
 
 .tutorial-body.tutorial-step-in {
-  animation: tutorial-step-in 180ms ease-out both;
+  animation: tutorial-step-in 320ms ease-out both;
 }
 
 @keyframes tutorial-step-in {
@@ -163,10 +163,10 @@ transition:
   letter-spacing: 0.2px;
   cursor: pointer;
   touch-action: manipulation;
-
+ 
   transition:
-    transform 90ms ease,
-    filter 120ms ease;
+  transform 150ms ease,
+  filter 190ms ease;
 }
 
 #tutorialContinueBtn:hover {
@@ -258,12 +258,12 @@ transition:
   pointer-events: none;
   z-index: 9998;
 
-  transition:
-    opacity 100ms ease,
-    transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    width 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    height 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    border-radius 140ms ease;
+transition:
+  opacity 180ms ease,
+  transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+  width 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+  height 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+  border-radius 240ms ease;
 }
 
 .tutorial-focus-ring.show {
@@ -276,7 +276,7 @@ transition:
   inset: -2px;
   border: 2px solid rgba(255, 213, 79, 0.7);
   border-radius: inherit;
-  animation: tutorial-ring-pulse 1.25s ease-out infinite;
+  animation: tutorial-ring-pulse 2s ease-out infinite;
 }
 
 @keyframes tutorial-ring-pulse {
