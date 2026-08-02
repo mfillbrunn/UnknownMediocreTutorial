@@ -722,7 +722,7 @@ function updateScreens() {
       // start flipping): 420ms slide + 1400ms stagger to the last tile's
       // cover-flip + 650ms for that tile's own flip = 2470ms, rounded up
       // for a small buffer.
-      const FLIP_TOTAL_MS = 2500;
+      const FLIP_TOTAL_MS = 1800;
       const POPUP_DURATION_MS = 3200;
 
       const iAmGuesser = myUserId() === state.guesser;
@@ -892,16 +892,14 @@ function updateSetterScreen() {
   // ----------------------------------------
 // SETTER VIEW:
 // ----------------------------------------
- renderHistory({
+const historyRender = renderHistory({
   state,
   container: $("setterGuesserSubmitted"),
   role: "setter",
-  // A pending flight capture means slideRowIntoPlace is about to take
-  // over this row's entrance -- it needs the container to hold still
-  // while the row slides, and scrolls it (see land() below) once that's
-  // actually done instead of racing it here.
-  autoScroll: !pendingGuessFlight
-});
+  autoScroll: !pendingGuessFlight,
+  deferRevealWord:
+    pendingGuessFlight?.guess || ""
+})
 renderConstraintRow({
   state,
   container: $("constraintRowSetter"),
@@ -949,140 +947,267 @@ renderDraftRows({
   });
   }
   updateSetterPreview();
-  resolvePendingGuessFlight();
+ resolvePendingGuessFlight(
+  historyRender?.addedElements || []
+);
  }
-
-// Consumes a pendingGuessFlight capture (if this render just landed the
-// matching row) and hands off to slideRowIntoPlace(). Runs on every
-// updateSetterScreen() call -- a no-op the vast majority of the time since
-// the capture is only ever set the one tick a guess actually resolves.
-function resolvePendingGuessFlight() {
-  if (!pendingGuessFlight) return;
-  const capture = pendingGuessFlight;
-  pendingGuessFlight = null;
-  const container = $("setterGuesserSubmitted");
-  const target = container?.lastElementChild;
-  // updateSetterScreen's renderHistory call suppressed its own auto-scroll
-  // for this render (autoScroll: !pendingGuessFlight), trusting
-  // slideRowIntoPlace to catch it up once landed -- every bail-out path
-  // below skips that, so it has to scroll for itself instead or the view
-  // is left stuck wherever it was.
-  if (!target) {
-    container?.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
-    return;
-  }
-  const letters = [...target.querySelectorAll(".tile-letter")].map(s => s.textContent).join("");
-  // Guards against animating the wrong row if anything about this tick
-  // didn't match expectations (e.g. Sneaky Guess masking, or the container
-  // got reset for an unrelated reason) -- better to just skip the slide
-  // than drag a row it doesn't actually belong to.
-  if (letters !== capture.guess) {
-    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
-    return;
-  }
-  slideRowIntoPlace(target, capture.rect);
+function historyRowWord(wrap) {
+  return [
+    ...wrap.querySelectorAll(".tile-letter")
+  ]
+    .map(el => el.textContent || "")
+    .join("");
 }
 
-// Classic FLIP (First-Last-Invert-Play), on the real row -- no clone.
-// renderHistory already appended this row at its correct final spot in
-// the DOM; this just makes it LOOK like it's still sitting at the pending
-// row's old position (an inverted transform, applied before the next
-// paint) and animates that back to identity, so what the setter actually
-// sees is the real tiles sliding up off the draft row into their slot in
-// the history list. history.css's .flight-sliding keeps each tile's own
-// cover-flip (the color reveal) paused for the whole slide, so the tiles
-// still read as plain/undecided the entire way up and only start
-// revealing their feedback color once they've actually landed.
-function slideRowIntoPlace(newRow, startRect) {
-  const scrollBox = newRow.closest(".history-scroll");
-  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-    scrollBox?.scrollTo({ top: scrollBox.scrollHeight, behavior: "auto" });
-    return;
+function startHistoryRowReveal(wrap) {
+  if (!wrap) return;
+
+  wrap.style.visibility = "";
+
+  wrap.classList.remove(
+    "row-enter",
+    "reveal-waiting"
+  );
+
+  if (
+    typeof window.revealHistoryRow ===
+    "function"
+  ) {
+    window.revealHistoryRow(wrap);
+  } else {
+    wrap.querySelectorAll(
+      ".history-tile-cover"
+    ).forEach(el => el.remove());
   }
-  // Measure where the row actually belongs BEFORE touching anything --
-  // it's still a normal, untransformed child of the scrollable container
-  // at this point, so this reflects its true resting spot.
-  const endRect = newRow.getBoundingClientRect();
-  if (!startRect.width || !endRect.width) {
-    scrollBox?.scrollTo({ top: scrollBox.scrollHeight, behavior: "smooth" });
+}
+
+function resolvePendingGuessFlight(
+  addedElements = []
+) {
+  if (!pendingGuessFlight) return;
+
+  const capture = pendingGuessFlight;
+  pendingGuessFlight = null;
+
+  const container =
+    $("setterGuesserSubmitted");
+
+  const candidates =
+    addedElements.length
+      ? addedElements
+      : [
+          ...(container?.children || [])
+        ].slice(-2);
+
+  const target = candidates.find(
+    row =>
+      historyRowWord(row) === capture.guess
+  );
+
+  if (!container || !target) {
+    container
+      ?.querySelectorAll(".reveal-waiting")
+      .forEach(startHistoryRowReveal);
+
+    if (container) {
+      container.scrollTop =
+        container.scrollHeight;
+    }
+
     return;
   }
 
-  newRow.classList.add("flight-sliding");
+  slideRowIntoPlace(
+    target,
+    capture.rect
+  );
+}
 
-  // Pull the row out of normal flow for the flight itself, WITHOUT
-  // reparenting it out of .history-scroll. A transform large enough to
-  // reach back to the draft row's position (well outside .history-scroll's
-  // own bounds) inflates that ancestor's scrollable content region --
-  // transformed descendants count toward it -- which dragged every
-  // already-visible row's scroll position along with this one mid-slide,
-  // exactly the "everything moves" symptom this was built to avoid.
-  // position:fixed sidesteps that the same way reparenting to
-  // document.body used to (fixed-position elements use the viewport as
-  // their containing block and escape ancestor scroll-clipping/overflow
-  // contribution regardless of DOM nesting -- no ancestor here sets
-  // transform/perspective/filter to override that), but staying a real
-  // child of .history-scroll keeps it inside the .center-col container-
-  // query context its own width/height (clamp(...cqw...)) depends on --
-  // reparenting to document.body broke that and made the tiles balloon in
-  // size mid-slide. It also means there's nothing left orphaned in
-  // document.body if the screen gets swapped out from under it mid-flight
-  // (e.g. a win ending the match) -- it just gets hidden/removed with the
-  // rest of the screen like any other in-place descendant.
-  Object.assign(newRow.style, {
+function slideRowIntoPlace(
+  newRow,
+  startRect
+) {
+  const scrollBox =
+    newRow.closest(".history-scroll");
+
+  const visualRow =
+    newRow.querySelector(".history-row");
+
+  if (
+    !scrollBox ||
+    !visualRow ||
+    !startRect?.width ||
+    !startRect?.height
+  ) {
+    startHistoryRowReveal(newRow);
+    return;
+  }
+
+  newRow.classList.remove("row-enter");
+
+  scrollBox.scrollTop =
+    scrollBox.scrollHeight;
+
+  const endRect =
+    visualRow.getBoundingClientRect();
+
+  if (!endRect.width || !endRect.height) {
+    startHistoryRowReveal(newRow);
+    return;
+  }
+
+  if (
+    window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    ).matches
+  ) {
+    startHistoryRowReveal(newRow);
+    return;
+  }
+
+  document
+    .querySelectorAll(
+      ".history-flight-clone"
+    )
+    .forEach(el => el.remove());
+
+  const flight =
+    visualRow.cloneNode(true);
+
+  flight.classList.add(
+    "history-flight-clone"
+  );
+
+  flight.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  flight.querySelectorAll(
+    ".history-tile-cover"
+  ).forEach(el => el.remove());
+
+  const sourceTiles =
+    visualRow.querySelectorAll(
+      ":scope > .history-tile"
+    );
+
+  const flightTiles =
+    flight.querySelectorAll(
+      ":scope > .history-tile"
+    );
+
+  sourceTiles.forEach(
+    (source, index) => {
+      const clone = flightTiles[index];
+      if (!clone) return;
+
+      const rect =
+        source.getBoundingClientRect();
+
+      const style =
+        getComputedStyle(source);
+
+      Object.assign(clone.style, {
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+        flex: `0 0 ${rect.width}px`,
+        fontSize: style.fontSize,
+        fontFamily: style.fontFamily,
+        fontWeight: style.fontWeight,
+        lineHeight: style.lineHeight,
+        borderRadius: style.borderRadius,
+        letterSpacing: style.letterSpacing
+      });
+    }
+  );
+
+  const rowStyle =
+    getComputedStyle(visualRow);
+
+  Object.assign(flight.style, {
     position: "fixed",
     left: `${endRect.left}px`,
     top: `${endRect.top}px`,
     width: `${endRect.width}px`,
     height: `${endRect.height}px`,
+    gap: rowStyle.gap,
     margin: "0",
-    zIndex: "9999"
+    zIndex: "100000",
+    pointerEvents: "none",
+    transformOrigin: "center center",
+    willChange: "transform"
   });
 
-  // Center-to-center, not edge-to-edge -- both rows are independently
-  // horizontally centered in the same-width column, so this is naturally
-  // a near-vertical slide even though the draft row's tiles are
-  // physically bigger than history's.
-  const dx = (startRect.left + startRect.width / 2) - (endRect.left + endRect.width / 2);
-  const dy = (startRect.top + startRect.height / 2) - (endRect.top + endRect.height / 2);
+  document.body.appendChild(flight);
 
-  // Invert: park the row back at its old (draft) position via transform
-  // alone.
-  newRow.style.transform = `translate(${dx}px, ${dy}px)`;
-  void newRow.offsetWidth; // force layout before the transition below is added
+  newRow.style.visibility = "hidden";
 
-  let landed = false;
+  const dx =
+    startRect.left +
+    startRect.width / 2 -
+    (
+      endRect.left +
+      endRect.width / 2
+    );
+
+  const dy =
+    startRect.top +
+    startRect.height / 2 -
+    (
+      endRect.top +
+      endRect.height / 2
+    );
+
+  const scaleX =
+    startRect.width / endRect.width;
+
+  const scaleY =
+    startRect.height / endRect.height;
+
+  flight.style.transform =
+    `translate3d(${dx}px, ${dy}px, 0) ` +
+    `scale(${scaleX}, ${scaleY})`;
+
+  void flight.offsetWidth;
+
+  let finished = false;
+  let safetyTimer = null;
+
   const land = () => {
-    if (landed) return;
-    landed = true;
-    newRow.style.transition = "";
-    newRow.style.transform = "";
-    newRow.style.position = "";
-    newRow.style.left = "";
-    newRow.style.top = "";
-    newRow.style.width = "";
-    newRow.style.height = "";
-    newRow.style.margin = "";
-    newRow.style.zIndex = "";
-    // row-enter has to go too, not just flight-sliding -- it's still
-    // sitting on the row from creation, just suppressed (flight-sliding's
-    // animation:none) for the slide. Removing only flight-sliding would
-    // un-suppress it right here and restart history-row-enter's fade/
-    // scale from scratch, landing as an unwanted little "pop" on top of
-    // the tile flip that's about to start -- the slide already was this
-    // row's entrance.
-    newRow.classList.remove("flight-sliding", "row-enter");
-    // Now it's safe to bring the new row fully into view -- same smooth
-    // scroll renderHistory would have done itself, just held back until
-    // the slide (which needed the container motionless) finished.
-    scrollBox?.scrollTo({ top: scrollBox.scrollHeight, behavior: "smooth" });
+    if (finished) return;
+
+    finished = true;
+    clearTimeout(safetyTimer);
+
+    flight.remove();
+    startHistoryRowReveal(newRow);
   };
 
   requestAnimationFrame(() => {
-    newRow.style.transition = "transform 420ms cubic-bezier(0.16, 1, 0.3, 1)";
-    newRow.style.transform = "translate(0, 0)";
-    newRow.addEventListener("transitionend", land, { once: true });
-    setTimeout(land, 500); // safety net if transitionend never fires
+    flight.style.transition =
+      "transform 460ms " +
+      "cubic-bezier(0.22, 1, 0.36, 1)";
+
+    flight.style.transform =
+      "translate3d(0, 0, 0) " +
+      "scale(1, 1)";
+
+    flight.addEventListener(
+      "transitionend",
+      event => {
+        if (
+          event.propertyName ===
+          "transform"
+        ) {
+          land();
+        }
+      },
+      { once: true }
+    );
+
+    safetyTimer =
+      setTimeout(land, 650);
   });
 }
 
