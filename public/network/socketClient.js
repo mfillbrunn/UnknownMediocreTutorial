@@ -222,7 +222,10 @@ socket.on("powerActivity", payload => {
   if (formatted.actorRole === window.myRole) return;
 
   const who = formatted.actorRole == null ? "A power was used" : "Opponent used";
-  const detailSuffix = formatted.detail ? ` — ${formatted.detail}` : "";
+  // formatPowerEvent falls back detail to the same static desc when a power
+  // has no dynamic result to report, so only append it when it says something
+  // desc doesn't -- otherwise the popup repeats the description twice.
+  const detailSuffix = formatted.detail && formatted.detail !== formatted.desc ? ` — ${formatted.detail}` : "";
 
   window.showPowerPopup({
     emoji: formatted.emoji,
