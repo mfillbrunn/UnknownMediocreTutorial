@@ -359,24 +359,18 @@ function toggleTutorial(
   scheduleTutorialLayout();
 }
 
-byId("tutorialToggleBtn")
-  ?.addEventListener(
-    "click",
-    event => {
-      event.stopPropagation();
-      toggleTutorial();
-    }
-  );
+byId("tutorialToggleBtn")?.addEventListener("click", event => {
+  event.stopPropagation();
+  toggleTutorial();
+});
 
-byId("tutorialBubble")
-  ?.addEventListener(
-    "click",
-    () => {
-      if (tutorialCollapsed) {
-        toggleTutorial(false);
-      }
-    }
-  );
+byId("tutorialBubble")?.addEventListener("click", event => {
+  if (event.target.closest("button")) return;
+
+  if (tutorialCollapsed) {
+    toggleTutorial(false);
+  }
+});
 
 byId("tutorialText")
   ?.setAttribute(
@@ -891,34 +885,25 @@ function waitForRejectedSecret() {
   updateActionBadge();
 }
 
-byId("tutorialContinueBtn")
-  ?.addEventListener(
-    "click",
-    () => {
-      if (
-        tutorialContinueMode === "hide"
-      ) {
-        toggleTutorial(true);
-        return;
-      }
+byId("tutorialContinueBtn")?.addEventListener("click", event => {
+  event.stopPropagation();
 
-      if (tutorialWaitingFor) {
-        return;
-      }
+  if (tutorialContinueMode === "hide") {
+    toggleTutorial(true);
+    return;
+  }
 
-      tutorialSubStep++;
+  if (tutorialWaitingFor) return;
 
-      if (
-        window.state &&
-        window.myRole
-      ) {
-        tutorialSteps(
-          window.state,
-          window.myRole
-        );
-      }
-    }
-  );
+  tutorialSubStep++;
+
+  if (window.state && window.myRole) {
+    tutorialSteps(
+      window.state,
+      window.myRole
+    );
+  }
+});
 
 function notifyTutorialPowerUsed(
   powerId
