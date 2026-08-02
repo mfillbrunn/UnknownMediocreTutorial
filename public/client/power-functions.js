@@ -119,7 +119,7 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
     } else {
       toast(`Opponent's quest complete: ${letter.toUpperCase()} in position ${index + 1}.`);
     }
-    window.shake?.(document.querySelector(".badge-quest"));
+    window.shake?.(document.querySelector(".quest-badge-tile"));
     return;
   }
 
