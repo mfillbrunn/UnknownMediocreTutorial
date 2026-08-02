@@ -198,34 +198,47 @@
 .tutorial-action.hidden {
   display: none;
 }
-
 .tutorial-bubble.collapsed {
-  width: auto;
-  max-width: calc(100vw - 24px);
-  max-height: 44px;
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+
+  height: 40px;
+  max-height: 40px;
+
   border-radius: 999px;
   cursor: pointer;
   transform-origin: bottom right;
 }
 
-.tutorial-bubble.collapsed .tutorial-body {
+.tutorial-bubble.collapsed .tutorial-body,
+.tutorial-bubble.collapsed .tutorial-title {
   display: none;
 }
 
 .tutorial-bubble.collapsed .tutorial-header {
+  width: 40px;
+  height: 40px;
   min-height: 40px;
-  padding: 5px 6px 5px 11px;
+
+  padding: 0;
+  justify-content: center;
+
   border-bottom: 0;
 }
 
 .tutorial-bubble.collapsed .tutorial-close {
+  width: 40px;
+  height: 40px;
+  flex-basis: 40px;
+
+  color: #ffd54f;
   transform: rotate(45deg);
 }
 
 .tutorial-bubble.collapsed .tutorial-close:active {
   transform: rotate(45deg) scale(0.9);
 }
-
 .tutorial-focus-ring {
   position: fixed;
   left: 0;
@@ -286,12 +299,12 @@
     transform-origin: bottom center;
   }
 
-  .tutorial-bubble.collapsed {
-    left: auto;
-    right: max(12px, env(safe-area-inset-right));
-    width: auto;
-    transform-origin: bottom right;
-  }
+.tutorial-bubble.collapsed {
+  left: auto;
+  right: max(12px, env(safe-area-inset-right));
+  width: 40px;
+  transform-origin: bottom right;
+}
 
   .tutorial-header {
     padding: 7px 8px 7px 10px;
