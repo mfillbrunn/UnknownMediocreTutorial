@@ -1,94 +1,211 @@
 .tutorial-bubble {
+  --tutorial-bottom: 12px;
+
   position: fixed;
-  right: 24px;
-  bottom: 24px;
-  width: 320px;
-  max-width: calc(100vw - 32px);
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(var(--tutorial-bottom), env(safe-area-inset-bottom));
 
-  background: linear-gradient(145deg, #1e1e1e, #171717);
-  color: #f5f5f5;
+  width: min(340px, calc(100vw - 24px));
+  max-height: 360px;
+  max-height: min(42dvh, 360px);
 
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.06);
-
-  box-shadow:
-    0 20px 40px rgba(0,0,0,0.45),
-    0 0 0 1px rgba(255,255,255,0.03) inset;
-
-  padding: 0;
-  overflow: hidden;
-  max-height: 70vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+
+  background: rgba(18, 19, 24, 0.98);
+  color: #f5f5f5;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.48);
+
+  opacity: 1;
+  visibility: visible;
+  transform: translate3d(0, 0, 0) scale(1);
+  transform-origin: bottom right;
 
   z-index: 9999;
-  transition: opacity 0.25s ease, transform 0.25s ease, bottom 0.2s ease;
-}
+  isolation: isolate;
+  contain: layout paint;
 
+  transition:
+    opacity 120ms ease-out,
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0s linear 0s;
+}
 
 .tutorial-bubble.hidden {
   opacity: 0;
-  transform: translateY(16px) scale(0.98);
+  visibility: hidden;
+  transform: translate3d(0, 8px, 0) scale(0.98);
   pointer-events: none;
+  transition:
+    opacity 100ms ease-in,
+    transform 120ms ease-in,
+    visibility 0s linear 120ms;
 }
 
-
-.tutorial-content {
+.tutorial-header {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
+
+  min-height: 38px;
+  padding: 8px 10px 8px 12px;
+
+  background: rgba(255, 255, 255, 0.045);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
+
+.tutorial-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+}
+
+.tutorial-title > span:first-child {
+  color: #ffd54f;
+}
+
 .tutorial-close {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
   background: transparent;
-  border: none;
-  color: rgba(255,255,255,0.6);
-  font-size: 16px;
+  color: rgba(255, 255, 255, 0.58);
+
+  font-size: 20px;
+  line-height: 1;
   cursor: pointer;
-  transition: color 0.15s ease, transform 0.15s ease;
+  touch-action: manipulation;
+
+  transition:
+    background 100ms ease,
+    color 100ms ease,
+    transform 140ms ease;
 }
 
 .tutorial-close:hover {
-  color: white;
-  transform: scale(1.1);
-}
-/* An outline (even with outline-offset) draws OUTSIDE the element's own
-   box, so it gets clipped by any clipping ancestor -- e.g. .play-area's
-   overflow-x: hidden, which per the CSS overflow spec also computes
-   overflow-y to auto (a "not visible" value on either axis forces the
-   other off "visible" too), turning it into a real clip box on both axes.
-   The keyboard sits flush against .play-area's edges, so an outline there
-   was clipped on 3 of its 4 sides. An INSET box-shadow instead draws
-   inside the element's own border box, which is never clipped by an
-   ancestor's overflow regardless of how close to the edge the element
-   sits -- so the ring itself is guaranteed fully visible everywhere this
-   class gets applied, keyboard included. The outer pulse ring is kept as
-   a secondary glow on top (it can still get clipped near .play-area's
-   edges, but that's just decorative -- the inset ring is what actually
-   marks the highlighted element). */
-.tutorial-highlight {
-  position: relative;
-  z-index: 10;
-  box-shadow: inset 0 0 0 3px rgba(255, 213, 79, 0.95);
-  border-radius: 12px;
-  animation: tutorialPulse 1.8s ease-in-out infinite;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
-@keyframes tutorialPulse {
-  0%   { box-shadow: inset 0 0 0 3px rgba(255,213,79,0.95), 0 0 0 0 rgba(255,213,79,0.5); }
-  70%  { box-shadow: inset 0 0 0 3px rgba(255,213,79,0.95), 0 0 0 12px rgba(255,213,79,0); }
-  100% { box-shadow: inset 0 0 0 3px rgba(255,213,79,0.95), 0 0 0 0 rgba(255,213,79,0); }
+.tutorial-close:active {
+  transform: scale(0.9);
+}
+
+.tutorial-body {
+  min-height: 0;
+  padding: 12px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tutorial-body.tutorial-step-in {
+  animation: tutorial-step-in 180ms ease-out both;
+}
+
+@keyframes tutorial-step-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+#tutorialText {
+  display: block;
+  font-size: 13px;
+  line-height: 1.42;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.tutorial-controls {
+  display: flex;
+  justify-content: flex-end;
+}
+
+#tutorialContinueBtn {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+
+  background: #ffd54f;
+  color: #17130a;
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  touch-action: manipulation;
+
+  transition:
+    transform 90ms ease,
+    filter 120ms ease;
+}
+
+#tutorialContinueBtn:hover {
+  filter: brightness(1.06);
+}
+
+#tutorialContinueBtn:active {
+  transform: scale(0.96);
+}
+
+.tutorial-action {
+  min-width: 0;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  padding: 3px 7px;
+  border-radius: 999px;
+
+  background: rgba(255, 213, 79, 0.14);
+  border: 1px solid rgba(255, 213, 79, 0.38);
+  color: #ffe082;
+
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.tutorial-action.hidden {
+  display: none;
 }
 
 .tutorial-bubble.collapsed {
   width: auto;
+  max-width: calc(100vw - 24px);
+  max-height: 44px;
+  border-radius: 999px;
   cursor: pointer;
-  position: fixed;
-    right: 24px;
-  /* bottom is set dynamically by repositionTutorialBubble() in
-     tutorial-ui.js, same keyboard-clearance logic as the expanded bubble --
-     a fixed value here would drift onto the keyboard on short viewports or
-     whichever screen's keyboard happens to be taller. */
-  background-color: grey;
+  transform-origin: bottom right;
 }
 
 .tutorial-bubble.collapsed .tutorial-body {
@@ -96,99 +213,115 @@
 }
 
 .tutorial-bubble.collapsed .tutorial-header {
-  border-bottom: none;
-  font-size: 0px;
-  padding: 2px;
-}
-
-
-.tutorial-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  padding: 14px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-
-  background: rgba(255,255,255,0.04);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-.tutorial-header span {
-  color: #ffd54f;
+  min-height: 40px;
+  padding: 5px 6px 5px 11px;
+  border-bottom: 0;
 }
 
 .tutorial-bubble.collapsed .tutorial-close {
-  transform: rotate(45deg); /* turns X into + */
-}
-.tutorial-body {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
+  transform: rotate(45deg);
 }
 
-#tutorialText {
-  font-size: 14px;
-  line-height: 1.5;
-  color: #eaeaea;
-}
-.tutorial-controls {
-  display: flex;
-  justify-content: flex-end;
+.tutorial-bubble.collapsed .tutorial-close:active {
+  transform: rotate(45deg) scale(0.9);
 }
 
-#tutorialContinueBtn {
-  padding: 6px 14px;
-  font-size: 13px;
-  border-radius: 8px;
-  background: #ffd54f;
-  color: #111;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+.tutorial-focus-ring {
+  position: fixed;
+  left: 0;
+  top: 0;
+
+  width: 0;
+  height: 0;
+  box-sizing: border-box;
+
+  border: 2px solid #ffd54f;
+  box-shadow:
+    0 0 0 3px rgba(255, 213, 79, 0.18),
+    0 6px 22px rgba(0, 0, 0, 0.22);
+
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9998;
+
+  transition:
+    opacity 100ms ease,
+    transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-radius 140ms ease;
 }
 
-#tutorialContinueBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(255,213,79,0.4);
+.tutorial-focus-ring.show {
+  opacity: 1;
 }
 
-#tutorialContinueBtn:active {
-  transform: translateY(0px);
-  box-shadow: none;
+.tutorial-focus-ring::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 2px solid rgba(255, 213, 79, 0.7);
+  border-radius: inherit;
+  animation: tutorial-ring-pulse 1.25s ease-out infinite;
 }
 
-.tutorial-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+@keyframes tutorial-ring-pulse {
+  0% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+  70%, 100% {
+    opacity: 0;
+    transform: scale(1.045);
+  }
 }
 
-.tutorial-action {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  padding: 3px 6px;
-  border-radius: 999px;
+@media (max-width: 600px) {
+  .tutorial-bubble {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: 280px;
+    max-height: min(36dvh, 280px);
+    transform-origin: bottom center;
+  }
 
-  background: #ff3b3b;
-  color: white;
+  .tutorial-bubble.collapsed {
+    left: auto;
+    right: max(12px, env(safe-area-inset-right));
+    width: auto;
+    transform-origin: bottom right;
+  }
 
-  animation: tutorialActionPulse 1.6s ease-in-out infinite;
+  .tutorial-header {
+    padding: 7px 8px 7px 10px;
+  }
+
+  .tutorial-body {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  #tutorialText {
+    font-size: 12.5px;
+    line-height: 1.38;
+  }
+
+  #tutorialContinueBtn {
+    min-height: 32px;
+    padding: 0 12px;
+  }
 }
 
-.tutorial-action.hidden {
-  display: none;
-}
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-bubble,
+  .tutorial-close,
+  #tutorialContinueBtn,
+  .tutorial-focus-ring {
+    transition: none;
+  }
 
-@keyframes tutorialActionPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(255, 59, 59, 0.6); }
-  70%  { box-shadow: 0 0 0 8px rgba(255, 59, 59, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 59, 59, 0); }
-}
-
-
+  .tutorial-body.tutorial-step-in,
+  .tutorial-focus-ring::after {
+    animation: none;
+  }
