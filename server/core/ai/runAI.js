@@ -330,7 +330,29 @@ const AI_PENDING = new Set();
 function aiDelay({ base = 1500, variance = 1200 } = {}) {
   return Math.min(base + Math.random() * variance, 2500);
 }
+function aiDelayForState(
+  state,
+  aiUserId
+) {
+  const aiRole =
+    getAIRole(
+      state,
+      aiUserId
+    );
 
+  const isAdvancedNotesPractice =
+    state.isTutorial &&
+    state.tutorialStage === "advanced" &&
+    aiRole === "guesser" &&
+    state.phase === "normal" &&
+    state.turn === aiUserId &&
+    !state.pendingGuess &&
+    state.history?.length === 1;
+
+  return isAdvancedNotesPractice
+    ? 18000
+    : aiDelay();
+}
 // Decides what a given seat's AI-controlled player should do right now, but
 // doesn't execute it — returns the action closure (or null if there's
 // nothing to do) so callers can choose how/when to run it. maybeRunAI below
@@ -598,7 +620,10 @@ function maybeRunAI(room, roomId, context) {
     } catch (err) {
       console.error("AI action crashed:", err);
     }
-  }, aiDelay());
+}, aiDelayForState(
+  state,
+  aiUserId
+));
 }
 
 module.exports = {
