@@ -913,14 +913,22 @@ function startTutorialRevealGate(
     }
   };
 
-  if (
-    !lastTile ||
+  // Once the flip/reveal animation finishes (or there's nothing to gate
+  // on), don't jump straight to the next instruction -- give the player a
+  // beat to actually look at the colors that just appeared before the
+  // tutorial text changes out from under them. Shorter for
+  // prefers-reduced-motion, but still a deliberate pause rather than an
+  // instant swap.
+  const reducedMotion =
     window.matchMedia?.(
       "(prefers-reduced-motion: reduce)"
-    ).matches
-  ) {
+    ).matches;
+
+  const readPause = reducedMotion ? 500 : 900;
+
+  if (!lastTile) {
     tutorialRevealGateTimer =
-      setTimeout(finish, 40);
+      setTimeout(finish, readPause);
 
     return;
   }
@@ -932,6 +940,7 @@ function startTutorialRevealGate(
       .map(name => name.trim());
 
   if (
+    reducedMotion ||
     !animationNames.some(
       name =>
         name !== "none" &&
@@ -939,7 +948,7 @@ function startTutorialRevealGate(
     )
   ) {
     tutorialRevealGateTimer =
-      setTimeout(finish, 80);
+      setTimeout(finish, readPause);
 
     return;
   }
@@ -958,7 +967,13 @@ function startTutorialRevealGate(
         return;
       }
 
-      finish();
+      lastTile.removeEventListener(
+        "animationend",
+        onAnimationEnd
+      );
+
+      tutorialRevealGateTimer =
+        setTimeout(finish, readPause);
     };
 
   lastTile.addEventListener(
@@ -1540,7 +1555,7 @@ function runGuesserTutorial(
 
     if (tutorialSubStep === 0) {
       showTutorial(
-        `You are the Inspector. The Spy has a hidden 5-letter word. Find it in as few guesses as you can.`,
+        `Welcome! You're the Inspector 🕵️. The Spy just hid a secret 5-letter word somewhere in their head.`,
         {
           mode: "advance"
         }
@@ -1550,18 +1565,29 @@ function runGuesserTutorial(
     }
 
     if (tutorialSubStep === 1) {
+      showTutorial(
+        `Your job: figure out the secret word. Try to do it in as few guesses as you can.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
       if (
         state.simultaneousGuessSubmitted
       ) {
         showTutorial(
-          `Guess submitted. Waiting for the Spy to choose their secret...`,
+          `Guess submitted! Now we wait for the Spy to lock in their secret word...`,
           {
             mode: "hide"
           }
         );
       } else {
         showTutorial(
-          `Enter "${word}" and press Enter.`,
+          `Let's make your first guess. Type "${word}" on the keyboard below, then press Enter.`,
           {
             mode: "hide"
           }
@@ -1581,7 +1607,7 @@ function runGuesserTutorial(
   if (round === 1) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `Green means the letter and its spot are right. Yellow means the letter is in the word, but in another spot. Grey means the letter is not in the word.`,
+        `Nice, you guessed! Now look up at your guess — each letter's tile changed color. Those colors are clues.`,
         {
           mode: "advance"
         }
@@ -1593,20 +1619,59 @@ function runGuesserTutorial(
     }
 
     if (tutorialSubStep === 1) {
+      showTutorial(
+        `🟩 Green means that letter is correct AND in the right spot. You found a piece of the secret!`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightHistoryGuesser();
+
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `🟨 Yellow means that letter IS in the secret word, just in a different spot. Keep it, but try moving it.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightHistoryGuesser();
+
+      return;
+    }
+
+    if (tutorialSubStep === 3) {
+      showTutorial(
+        `⬜ Grey means that letter isn't in the secret word at all. You can rule it out completely.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightHistoryGuesser();
+
+      return;
+    }
+
+    if (tutorialSubStep === 4) {
       const word =
         state.tutorialGuesses?.[1] ||
         "CAIRN";
 
       if (state.pendingGuess) {
         showTutorial(
-          `Guess submitted. Waiting for the Spy to respond...`,
+          `Guess submitted! Waiting for the Spy to respond...`,
           {
             mode: "hide"
           }
         );
       } else {
         showTutorial(
-          `Use the colors and try "${word}". New letters can sometimes teach you more than letters you already know.`,
+          `Now use those clues for your next guess. Try "${word}" — new letters can teach you even more.`,
           {
             mode: "hide"
           }
@@ -1626,7 +1691,18 @@ function runGuesserTutorial(
   if (round === 2) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `Now finish the round on your own. Hint: the Spy likes well-spiced food.`,
+        `You've got the hang of it! Finish this round on your own now.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `Here's a little hint: the Spy likes well-spiced food. 🌶️`,
         {
           mode: "hide"
         }
@@ -1772,18 +1848,40 @@ function runSetterTutorial(
     const word =
       state.tutorialSecrets?.[0];
 
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `Now it's your turn to be the Spy 🕵️‍♂️. This time, you're the one hiding a secret word.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `Your goal: keep a valid 5-letter secret alive for as many guesses as you can.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
     if (
       state.simultaneousSecretSubmitted
     ) {
       showTutorial(
-        `Secret locked. Waiting for the Inspector's opening guess...`,
+        `Secret locked in! Now we wait for the Inspector's opening guess...`,
         {
           mode: "hide"
         }
       );
     } else {
       showTutorial(
-        `You are the Spy. Keep a valid 5-letter secret alive for as many guesses as possible. Enter "${word}".`,
+        `Let's pick your secret. Type "${word}" on the keyboard below, then press Enter.`,
         {
           mode: "hide"
         }
@@ -1802,7 +1900,7 @@ function runSetterTutorial(
 
     if (tutorialSubStep === 0) {
       showTutorial(
-        `The Inspector's pending guess is above your secret. You may keep or switch, but every new secret must still fit all earlier feedback.`,
+        `Here's something new: you can see the Inspector's next guess before it's scored — it's sitting right above your secret.`,
         {
           mode: "advance"
         }
@@ -1815,7 +1913,20 @@ function runSetterTutorial(
 
     if (tutorialSubStep === 1) {
       showTutorial(
-        `Try PICKY and press Enter. It will be rejected because it breaks the clues.`,
+        `You get to choose: keep your current secret, or swap in a new one. There's just one rule — any new secret must still match every clue you've already given.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightPendingGuessRow();
+
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `Let's see that rule in action. Type PICKY and press Enter — watch what happens.`,
         {
           mode: "hide"
         }
@@ -1827,9 +1938,9 @@ function runSetterTutorial(
       return;
     }
 
-    if (tutorialSubStep === 2) {
+    if (tutorialSubStep === 3) {
       showTutorial(
-        `Now enter a legal replacement: "${word}".`,
+        `Right — PICKY got rejected because it breaks a clue you already gave. Now try a word that's actually allowed: "${word}".`,
         {
           mode: "hide"
         }
@@ -1848,7 +1959,7 @@ function runSetterTutorial(
   if (round === 2) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `Old / Keep / New shows how many legal secrets remain. An X means the option is invalid. More remaining words gives you more room to hide.`,
+        `One more useful tool before you're on your own: this box shows how many secret words are still possible.`,
         {
           mode: "advance"
         }
@@ -1863,7 +1974,22 @@ function runSetterTutorial(
 
     if (tutorialSubStep === 1) {
       showTutorial(
-        `That is the core Spy strategy. Finish the round on your own.`,
+        `Old / Keep / New each show a count. An X means that option is no longer legal. More remaining words means more places to hide!`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightEl(
+        byId("SetterRemainingBox")
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `That's the core Spy strategy — stay flexible, stay legal. Finish this round on your own now. You've got this!`,
         {
           mode: "hide"
         }
