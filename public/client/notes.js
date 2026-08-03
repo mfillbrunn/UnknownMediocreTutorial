@@ -7,6 +7,8 @@
   let _role     = null;
   let _lastRoom = null;
   let _lastPrunedHistoryLen = -1;
+  let _wasMyTurn = false; // tracks the last _isMyTurnToType result, so
+                          // _renderPanel can detect the false->true edge
 
   function _isBreak(state) {
     return state?.phase === "gameOver" && state?.gameOverView === "round";
@@ -17,11 +19,20 @@
   // guess/secret right now — i.e. anytime EXCEPT their own active turn
   // (this mirrors the exact turn-guard conditions in handleSetterInput /
   // handleGuesserInput in client.js).
+  //
+  // Deliberately does NOT special-case freeze/rouletteSecret the way
+  // handleSetterInput's inner typing block does -- that block skips itself
+  // during freeze/roulette but ENTER still falls through past it to submit
+  // "keep same secret" (see client.js's comment there). An earlier version
+  // of this function excluded freeze/roulette here too, which meant Notes
+  // kept "active" turn-capture and swallowed that same ENTER keypress
+  // before it ever reached the real handler -- the setter's turn genuinely
+  // began (the UI already showed it), but the keyboard stayed stuck
+  // feeding Notes and Enter-to-keep silently did nothing.
   function _isMyTurnToType(state) {
     if (!state || !_role) return false;
 
     if (_role === "setter") {
-      if (state.powers?.freezeActive || state.powers?.rouletteSecretActive) return false;
       const myId = window.myUserId?.();
       const isNormalSetterTurn =
         myId === state.setter &&
@@ -44,6 +55,7 @@
     if (cur !== _lastRoom) {
       _entries  = [];
       _draft    = "";
+      _wasMyTurn = false;
       _lastRoom = cur;
     }
   }
@@ -61,6 +73,7 @@
     if (cur != null && cur !== _lastMatchStart) {
       _entries = [];
       _draft = "";
+      _wasMyTurn = false;
       _lastMatchStart = cur;
     }
   }
@@ -250,6 +263,12 @@ list.querySelectorAll(
     // stale.
     const draftRow = document.getElementById(`notesDraft${roleId}`);
     const myTurn = !_isBreak(state) && _isMyTurnToType(state);
+    // The instant the player's real turn starts, drop whatever unfinished
+    // word they'd half-typed into Notes -- otherwise it just sits in
+    // _draft hidden behind the real draft row and reappears stale (still
+    // mid-word) the next time they're idle again.
+    if (myTurn && !_wasMyTurn) _draft = "";
+    _wasMyTurn = myTurn;
     if (draftRow) draftRow.classList.toggle("hidden", myTurn);
     if (!myTurn) _renderDraft(roleId);
 
