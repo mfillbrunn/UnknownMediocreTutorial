@@ -811,9 +811,6 @@ function highlightPendingGuessRow() {
 
   highlightEl(pendingRow);
 }
-function highlightNotesButton() {
-  highlightEl(byId("notesBtnSetter"));
-}
 
 function highlightNotesPanel() {
   highlightEl(byId("notesPanelSetter"));
@@ -1077,19 +1074,6 @@ function waitForPowerUse(powerId) {
 
   updateActionBadge();
 }
-function waitForNotesOpen() {
-  tutorialWaitingFor = {
-    type: "notes"
-  };
-
-  setContinue({
-    show: true,
-    mode: "hide"
-  });
-
-  updateActionBadge();
-}
-
 function waitForNoteAdded(word) {
   tutorialWaitingFor = {
     type: "noteAdded",
@@ -2540,24 +2524,14 @@ function runAdvancedTutorialSetter(state) {
     ).toUpperCase();
 
     if (tutorialSubStep === 0) {
-      if (
-        window.isNotesActive?.()
-      ) {
-        tutorialSubStep = 1;
-
-        runAdvancedTutorialSetter(state);
-        return;
-      }
-
       showTutorial(
-        `It is the Inspector's turn, so your secret keyboard is free. Tap Notes to use it as a scratchpad while you wait.`,
+        `It is the Inspector's turn, so your secret keyboard is free. Notes has opened automatically as a scratchpad while you wait.`,
         {
-          mode: "hide"
+          mode: "advance"
         }
       );
 
-      highlightNotesButton();
-      waitForNotesOpen();
+      highlightNotesPanel();
       return;
     }
 

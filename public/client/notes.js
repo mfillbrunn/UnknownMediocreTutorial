@@ -266,28 +266,12 @@ list.querySelectorAll(
       _active = !_active;
     }
     _role = role;
-    const roleId = role === "setter" ? "Setter" : "Guesser";
-    document.getElementById(`notesBtn${roleId}`)?.classList.toggle("active", _active);
     _renderPanel(window.state);
     if (_active) window.notifyTutorialNotesOpened?.();
   };
 
   window.renderNotesPanel = function (state) {
     _renderPanel(state);
-  };
-
-  // Called from client.js's selectSidebarTab when the Log tab is picked --
-  // Notes and Log now share one compact box (see index.html's
-  // .sidebar-log-notes-box), so switching to Log has to explicitly release
-  // Notes' keyboard capture instead of it lingering active in the
-  // background (toggleNotes has no "force off" mode of its own, only
-  // "flip", which would incorrectly turn it back ON if already active).
-  window.closeNotes = function () {
-    if (!_active) return;
-    _active = false;
-    const roleId = _role === "setter" ? "Setter" : "Guesser";
-    document.getElementById(`notesBtn${roleId}`)?.classList.remove("active");
-    _renderPanel(window.state);
   };
 
   // Called from handleSetterInput / handleGuesserInput when notes is active.
@@ -353,17 +337,6 @@ list.querySelectorAll(
   };
 
   window.isNotesActive = function () { return _active; };
-
-  // Used by ui/setter-sidebar.js's idle-expand collapse: whether the
-  // setter has actually typed a still-viable candidate word (not just
-  // their own auto-added secret, see _renderPanel) worth showing them
-  // once their turn comes back.
-  window.setterNotesHasFeasible = function () {
-    if (_role !== "setter") return false;
-    const history = window.state?.history || [];
-    const secret = (window.state?.secret || "").toUpperCase();
-    return _entries.some(e => e.word !== secret && _viable(history, e.word));
-  };
 
   // Called when a secret submission gets rejected (bad word, inconsistent
   // with history, etc.) so the setter doesn't have to backspace through a

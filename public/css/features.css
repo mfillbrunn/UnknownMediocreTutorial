@@ -149,16 +149,13 @@
   opacity: 0.92;
 }
 
-/* ── Header small buttons (Notes, Log) ────────────────────────────── */
+/* ── Header small buttons ─────────────────────────────────────────── */
 .header-sm-btn {
   height: 28px;
   padding: 0 9px;
   /* Pill, not rounded-rect -- matches Guide/keyboard-toggle and the
      Leave/Concede buttons in the same header row (see layout.css's
-     .header-left button.secondary-btn). #setterScreen .setter-sidebar-tab
-     overrides this back to a smaller radius for the sidebar's own
-     Log/Notes tabs, so this only actually changes the guesser's header
-     row copy. */
+     .header-left button.secondary-btn). */
   border-radius: 999px;
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.15);
@@ -2622,34 +2619,23 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 
-/* LOG / NOTES SIDEBAR SECTION */
-
-/*
-  Log starts open (see ui/setter-sidebar.js's initialiseSetterSidebar) --
-  Notes still starts collapsed. Clicking a tab expands this section to
-  make room for its panel; clicking that same tab again collapses it
-  back down to just the two tabs.
-*/
+/* NOTES SIDEBAR SECTION -- always showing, no Log tab (see
+   ui/setter-sidebar.js) */
 #setterScreen .setter-sidebar-activity {
   display: flex;
   flex-direction: column;
 
-  flex: 0 0 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-#setterScreen .setter-sidebar-activity.panel-open {
   /*
-    flex-grow:1 -- the powers section above now only claims exactly what
-    its cards need (flex-grow:0, see .setter-sidebar-powers), so this is
-    the element that actually stretches to fill whatever room the column
-    has left over, and shrinks back down (to the min-height floor) as
-    that room shrinks. It already scrolls internally for its own
-    overflow past that.
+    flex-grow:1 -- the powers section above only claims exactly what its
+    cards need (flex-grow:0, see .setter-sidebar-powers), so this is the
+    element that actually stretches to fill whatever room the column has
+    left over, and shrinks back down (to the min-height floor) as that
+    room shrinks. It already scrolls internally for its own overflow
+    past that.
   */
   flex: 1 1 auto;
   min-height: 60px;
+  overflow: hidden;
 }
 
 /*
@@ -2694,50 +2680,6 @@ body:has(#guesserScreen.active) #appMain {
 
 .setter-notes-idle-hint.hidden {
   display: none;
-}
-
-#setterScreen .setter-sidebar-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-4);
-
-  flex: 0 0 auto;
-  margin-bottom: var(--sp-4);
-}
-
-#setterScreen .setter-sidebar-tab {
-  width: 100%;
-  min-width: 0;
-  min-height: 28px;
-
-  padding: 3px 4px;
-
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--r-6);
-
-  background: var(--panel-bg);
-  color: var(--text);
-
-  font-size: var(--fs-10, 10px);
-  font-weight: 800;
-  line-height: 1;
-  text-transform: uppercase;
-
-  cursor: pointer;
-}
-
-#setterScreen .setter-sidebar-tab.is-active {
-  border-color: var(--role-accent);
-
-  background: color-mix(
-    in srgb,
-    var(--role-accent) 20%,
-    var(--panel-bg)
-  );
-
-  box-shadow:
-    0 0 6px
-    color-mix(in srgb, var(--role-accent) 35%, transparent);
 }
 
 #setterScreen .setter-sidebar-panels {
@@ -2785,32 +2727,11 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 /*
-  The sidebar's Log is embedded in a ~120-170px column instead of the
-  floating panel .log-entry's 12px was sized for -- shrink it to actually
-  fit without wrapping every entry onto three lines.
-*/
-#setterScreen .setter-sidebar .log-entry {
-  font-size: 9.5px;
-  line-height: 1.3;
-  padding: 2px 4px;
-}
-
-#setterScreen .setter-sidebar .log-round {
-  font-size: 8.5px;
-  margin-top: 2px;
-}
-
-#setterScreen .setter-sidebar .log-power {
-  font-size: 8.5px;
-}
-
-/*
-  Notes had no equivalent override, so it was still rendering at the
-  floating panel's original (larger) sizes -- switching tabs between Log
-  and Notes changed the type size along with the content. Match Log's
-  sizing exactly: .notes-word is the main readable line (same role as
-  .log-entry above), the rest are secondary/label text (same role as
-  .log-round/.log-power above).
+  The sidebar's Notes is embedded in a ~120-170px column instead of the
+  floating panel's original sizes it was sized for -- shrink it to
+  actually fit without wrapping every entry onto three lines.
+  .notes-word is the main readable line, the rest are secondary/label
+  text.
 */
 #setterScreen .setter-sidebar .notes-word {
   font-size: 9.5px;
@@ -2833,9 +2754,9 @@ body:has(#guesserScreen.active) #appMain {
      a single card, since every round reserved room for 3). It also
      never shrinks below that actual size, so the cards themselves can
      never clip -- if the column is ever too short to fit everything,
-     the Log/Notes panel below is the one that gives, since it already
+     the Notes panel below is the one that gives, since it already
      scrolls internally for its own overflow (see .setter-sidebar-
-     activity.panel-open's flex:1 1 auto, the one section actually meant
+     activity's own flex:1 1 auto, the one section actually meant
      to grow into leftover room and shrink back down as that room
      shrinks). */
   flex: 0 0 auto;
@@ -3293,12 +3214,6 @@ body:has(#guesserScreen.active) #appMain {
 
   #setterScreen .setter-sidebar {
     gap: 4px;
-  }
-
-  #setterScreen .setter-sidebar-tab {
-    min-height: 26px;
-    padding: 2px;
-    font-size: 9px;
   }
 
   #setterScreen .setter-power-view {

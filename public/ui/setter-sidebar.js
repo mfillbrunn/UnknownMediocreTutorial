@@ -3,75 +3,26 @@
 
   const byId = id => document.getElementById(id);
 
-  function setTabState(button, selected) {
-    if (!button) return;
-
-    button.classList.toggle("is-active", selected);
-    button.setAttribute("aria-selected", String(selected));
-  }
-
-  // Tracks which of Log/Notes is currently open (null = neither), at
-  // module scope so the idle-expand logic below can read/restore it
-  // alongside the tab click handlers.
-  let activeSetterPanel = "log";
-
-  /*
-    panelName is "log" or "notes" -- Log starts open by default (see
-    initialiseSetterSidebar), and clicking the currently-open tab closes
-    it, dropping panelName to null (neither panel open) rather than
-    forcing something to always be shown.
-  */
-  function showSetterSidebarPanel(panelName) {
-    const activitySection = document.querySelector(
-      "#setterScreen .setter-sidebar-activity"
-    );
-    const logPanel = byId("actionLogSetter");
-    const notesPanel = byId("notesPanelSetter");
-
-    const logButton = byId("actionLogBtnSetter");
-    const notesButton = byId("notesBtnSetter");
-
-    const showLog = panelName === "log";
-    const showNotes = panelName === "notes";
-
-    logPanel?.classList.toggle("hidden", !showLog);
-    notesPanel?.classList.toggle("hidden", !showNotes);
-
-    setTabState(logButton, showLog);
-    setTabState(notesButton, showNotes);
-
-    activitySection?.classList.toggle("panel-open", showLog || showNotes);
-
-    // Notes tracks its own active/inactive state separately (keyboard
-    // capture, in-progress draft, entry list -- see client/notes.js), on
-    // top of this tab's own hidden/visible class above. Only one of these
-    // two calls actually does anything: toggleNotes no-ops via its own
-    // guard when already active, closeNotes no-ops when already inactive.
-    // Without this, switching to Log wouldn't release Notes' keyboard
-    // capture, so real typing would keep getting swallowed by the (now
-    // hidden) notes scratchpad instead of reaching the real guess/secret.
-    if (showNotes) {
-      if (!window.isNotesActive?.()) window.toggleNotes?.("setter");
-    } else {
-      window.closeNotes?.();
-    }
+  // Notes is the sidebar's only view now -- no Log tab, nothing to
+  // switch between -- so it just stays continuously active (keyboard
+  // capture, draft row, entry list -- see client/notes.js) whenever the
+  // setter screen is up, instead of needing an explicit open/close step.
+  function ensureNotesOpen() {
+    if (!window.isNotesActive?.()) window.toggleNotes?.("setter");
   }
 
   // ------------------------------------------------------------------
   // IDLE AUTO-EXPAND
   //
-  // While it isn't the setter's turn, float the Log/Notes section over
-  // the draft row, forced onto the Notes tab, so the setter can use the
-  // dead time to jot candidate words -- keystrokes only reach Notes
-  // while that tab is the active one (see notes.js's window.notesInput,
-  // gated on _isMyTurnToType). It snaps back to its normal in-flow spot
-  // the instant the turn returns, restoring whichever tab was open
-  // before -- unless the setter actually typed a still-viable word while
-  // idle, in which case it stays on Notes so they can see it.
+  // While it isn't the setter's turn, float the Notes section over the
+  // draft row so the setter can use the dead time to jot candidate
+  // words -- keystrokes only reach Notes while it's active (see
+  // notes.js's window.notesInput, gated on _isMyTurnToType, and
+  // ensureNotesOpen above which keeps it active throughout). It snaps
+  // back to its normal in-flow spot the instant the turn returns.
   // ------------------------------------------------------------------
 
   let idleExpanded = false;
-  let idlePriorPanel = "log";
   let flipToken = 0;
 
   function shouldIdleExpand(state) {
@@ -186,7 +137,6 @@
     const startRect = activitySection.getBoundingClientRect();
 
     idleExpanded = true;
-    idlePriorPanel = activeSetterPanel || "log";
 
     // Pin at the old in-flow spot the instant this leaves flow, before
     // measuring anything else -- .setter-sidebar shrinking by this
@@ -198,8 +148,7 @@
     activitySection.classList.add("idle-floating");
     applyFixedRect(activitySection, startRect);
 
-    activeSetterPanel = "notes";
-    showSetterSidebarPanel("notes");
+    ensureNotesOpen();
     hint?.classList.remove("hidden");
 
     const targetRect = computeExpandedRect();
@@ -216,14 +165,9 @@
     if (!activitySection || !idleExpanded) return;
 
     const startRect = activitySection.getBoundingClientRect();
-    const restoreTab = window.setterNotesHasFeasible?.()
-      ? "notes"
-      : idlePriorPanel || "log";
 
     idleExpanded = false;
     hint?.classList.add("hidden");
-    activeSetterPanel = restoreTab;
-    showSetterSidebarPanel(restoreTab);
 
     // Measure the true natural in-flow rect by briefly reverting to
     // normal layout, then immediately re-pinning at the old fixed spot
@@ -260,24 +204,10 @@
   };
 
   function initialiseSetterSidebar() {
-    const logButton = byId("actionLogBtnSetter");
-    const notesButton = byId("notesBtnSetter");
+    ensureNotesOpen();
 
-    logButton?.addEventListener("click", () => {
-      activeSetterPanel = activeSetterPanel === "log" ? null : "log";
-      showSetterSidebarPanel(activeSetterPanel);
-    });
-
-    notesButton?.addEventListener("click", () => {
-      activeSetterPanel = activeSetterPanel === "notes" ? null : "notes";
-      showSetterSidebarPanel(activeSetterPanel);
-    });
-
-    // Required initial state: Log open.
-    showSetterSidebarPanel("log");
-
-    // Whenever the player returns to the setter screen, reopen Log by
-    // default again.
+    // Whenever the player returns to the setter screen, make sure Notes
+    // is (still) active again.
     const setterScreen = byId("setterScreen");
 
     if (setterScreen) {
@@ -287,8 +217,7 @@
         const isActive = setterScreen.classList.contains("active");
 
         if (isActive && !wasActive) {
-          activeSetterPanel = "log";
-          showSetterSidebarPanel("log");
+          ensureNotesOpen();
         }
 
         if (!isActive && idleExpanded) {
@@ -332,12 +261,6 @@
       applyFixedRect(activitySection, targetRect);
     });
   }
-
-  /*
-    Exposed in case the tutorial or another UI module needs to select
-    one of these views.
-  */
-  window.showSetterSidebarPanel = showSetterSidebarPanel;
 
   if (document.readyState === "loading") {
     document.addEventListener(
