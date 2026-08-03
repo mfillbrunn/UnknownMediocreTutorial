@@ -1017,6 +1017,10 @@
   text-align: center;
   padding: 20px 0;
 }
+.invite-friend-content .friends-content {
+  max-height: 45vh;
+  overflow-y: auto;
+}
 .friends-search-wrap {
   display: flex;
   flex-direction: column;
@@ -2640,10 +2644,12 @@ body:has(#guesserScreen.active) #appMain {
 
 /*
   Idle-expand: while it's not the setter's turn, ui/setter-sidebar.js
-  pins this section to a fixed rect covering roughly the draft row + the
-  sidebar column (via a FLIP animation from its normal in-flow rect), so
-  the setter can use the dead time to jot notes. It snaps back to normal
-  in-flow layout the moment the turn returns.
+  pins this section to a fixed rect the same width as .center-col (the
+  board/draft-row column, on the right), taller than usual, over the
+  draft row's vertical position (via a FLIP animation from its normal
+  in-flow rect in the sidebar) -- so the setter can use the dead time to
+  jot notes without covering the sidebar (powers, on the left). It snaps
+  back to normal in-flow layout the moment the turn returns.
 */
 #setterScreen .setter-sidebar-activity.idle-floating {
   position: fixed;

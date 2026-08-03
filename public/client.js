@@ -221,10 +221,10 @@ function closeAddOpponentMenus() {
   menu?.addEventListener("click", e => {
     const optBtn = e.target.closest(".add-opponent-option");
     if (!optBtn) return;
-    if (optBtn.dataset.action === "invite") {
+    if (optBtn.dataset.action === "other") {
       if (window.roomId) shareOrCopyInviteLink(window.roomId);
-    } else if (optBtn.dataset.action === "ai") {
-      showAIDifficultyModal();
+    } else if (optBtn.dataset.action === "friend") {
+      window.showInviteFriendModal?.();
     }
     closeAddOpponentMenus();
   });

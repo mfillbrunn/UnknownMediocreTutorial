@@ -1,5 +1,10 @@
 
-#setterScreen.is-not-your-turn #keyboardSetter,
+/* The setter's keyboard is deliberately excluded here -- Notes
+   (ui/setter-sidebar.js / client/notes.js) is always active and captures
+   that same on-screen keyboard as a scratchpad during the opponent's
+   turn, so dimming it and setting pointer-events:none would silently
+   block real taps from reaching Notes (synthetic .click() calls in tests
+   bypass pointer-events, which is why this didn't show up there). */
 #guesserScreen.is-not-your-turn #keyboardGuesser{
   filter: grayscale(0.9);
   opacity: 0.45;
@@ -13,7 +18,6 @@
   pointer-events: auto;
 }
 
-#setterScreen.is-not-your-turn #keyboardSetter .key,
 #guesserScreen.is-not-your-turn #keyboardGuesser .key {
   transform: none !important;
   box-shadow: none !important;

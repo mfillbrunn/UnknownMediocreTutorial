@@ -527,7 +527,6 @@
       <div class="room-code-wrap">
         <span class="room-label">Room</span>
         <span id="roomCodeLabel" class="room-code">----</span>
-        <button id="inviteBtn" class="secondary-btn small" title="Copy an invite link">Invite</button>
       </div>
     </div>
   
@@ -574,14 +573,14 @@
           <button
             class="add-opponent-btn hidden"
             id="addOpponentSetterBtn"
-            aria-label="Invite a friend or add AI"
-            title="Invite a friend or add AI"
+            aria-label="Invite someone to play"
+            title="Invite someone to play"
           >
             +
           </button>
           <div class="add-opponent-menu hidden" id="addOpponentSetterMenu">
-            <button type="button" class="add-opponent-option" data-action="invite" title="Invite a friend">✉️ Invite</button>
-            <button type="button" class="add-opponent-option" data-action="ai" title="Add a computer opponent">🤖 AI</button>
+            <button type="button" class="add-opponent-option" data-action="friend" title="Invite one of your friends">✉️ Invite Friend</button>
+            <button type="button" class="add-opponent-option" data-action="other" title="Share an invite link with anyone">🔗 Invite Other</button>
           </div>
         </div>
       </div>
@@ -625,14 +624,14 @@
           <button
             class="add-opponent-btn hidden"
             id="addOpponentGuesserBtn"
-            aria-label="Invite a friend or add AI"
-            title="Invite a friend or add AI"
+            aria-label="Invite someone to play"
+            title="Invite someone to play"
           >
             +
           </button>
           <div class="add-opponent-menu hidden" id="addOpponentGuesserMenu">
-            <button type="button" class="add-opponent-option" data-action="invite" title="Invite a friend">✉️ Invite</button>
-            <button type="button" class="add-opponent-option" data-action="ai" title="Add a computer opponent">🤖 AI</button>
+            <button type="button" class="add-opponent-option" data-action="friend" title="Invite one of your friends">✉️ Invite Friend</button>
+            <button type="button" class="add-opponent-option" data-action="other" title="Share an invite link with anyone">🔗 Invite Other</button>
           </div>
         </div>
       </div>
@@ -1028,6 +1027,21 @@
       style="margin-top: var(--sp-12);"
     >
       Cancel
+    </button>
+  </div>
+</div>
+
+<!-- Invite Friend Modal (lobby's "+" -> Invite Friend, see client/friends.js) -->
+<div id="inviteFriendModal" class="modal">
+  <div class="modal-content invite-friend-content">
+    <h3>Invite a Friend</h3>
+    <div id="inviteFriendList" class="friends-content">Loading…</div>
+    <button
+      id="inviteFriendCloseBtn"
+      class="secondary-btn"
+      style="margin-top: var(--sp-12);"
+    >
+      Close
     </button>
   </div>
 </div>

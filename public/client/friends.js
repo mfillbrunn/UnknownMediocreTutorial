@@ -115,6 +115,57 @@
   // without re-implementing the friendships query.
   window._fetchFriends = fetchFriends;
 
+  // ── Invite Friend modal (lobby's "+" -> Invite Friend) ─────────────────
+  // Sends a trackable invite (game_invites row, shows up in the friend's My
+  // Games) for the CURRENT room, unlike _handleInvite below which creates a
+  // fresh room first -- the lobby already has one by the time this opens.
+  window.showInviteFriendModal = async function () {
+    if (!window.currentUser) return toast("Please log in first");
+    if (!window.roomId) return toast("No game to invite to yet");
+
+    const modal = document.getElementById("inviteFriendModal");
+    const list = document.getElementById("inviteFriendList");
+    if (!modal || !list) return;
+
+    modal.classList.add("active");
+    list.innerHTML = `<p class="friends-empty">Loading…</p>`;
+
+    const friends = await fetchFriends(window.currentUser.id);
+    if (!friends.length) {
+      list.innerHTML = `
+        <p class="friends-empty">No friends yet.</p>
+        <button class="secondary-btn small" id="inviteFriendGoToFriendsBtn">Add Friends</button>`;
+      document.getElementById("inviteFriendGoToFriendsBtn")?.addEventListener("click", () => {
+        modal.classList.remove("active");
+        window.showFriendsScreen?.();
+      });
+      return;
+    }
+
+    const targetRoomId = window.roomId;
+    list.innerHTML = friends.map(f => `
+      <div class="friends-row">
+        <span class="friends-name">${f.username || "—"}</span>
+        <button class="secondary-btn small" data-invite-uid="${f.id}" data-invite-name="${f.username}">
+          Invite
+        </button>
+      </div>`).join("");
+
+    list.querySelectorAll("[data-invite-uid]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        btn.textContent = "Sending…";
+        await sendInvite(window.currentUser.id, btn.dataset.inviteUid, targetRoomId);
+        btn.textContent = "Sent ✓";
+        toast(`Invite sent to ${btn.dataset.inviteName}`);
+      });
+    });
+  };
+
+  document.getElementById("inviteFriendCloseBtn")?.addEventListener("click", () => {
+    document.getElementById("inviteFriendModal")?.classList.remove("active");
+  });
+
   // ── State ────────────────────────────────────────────────────────────
   let _tab = "friends";
   let _searchTimer = null;

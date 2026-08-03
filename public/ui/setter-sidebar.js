@@ -15,11 +15,13 @@
   // IDLE AUTO-EXPAND
   //
   // While it isn't the setter's turn, float the Notes section over the
-  // draft row so the setter can use the dead time to jot candidate
-  // words -- keystrokes only reach Notes while it's active (see
-  // notes.js's window.notesInput, gated on _isMyTurnToType, and
-  // ensureNotesOpen above which keeps it active throughout). It snaps
-  // back to its normal in-flow spot the instant the turn returns.
+  // board/draft-row column (.center-col -- same width/left position as
+  // that column, just taller) so the setter can use the dead time to jot
+  // candidate words, without covering the sidebar (powers, on the left)
+  // -- keystrokes only reach Notes while it's active (see notes.js's
+  // window.notesInput, gated on _isMyTurnToType, and ensureNotesOpen
+  // above which keeps it active throughout). It snaps back to its
+  // normal in-flow spot in the sidebar the instant the turn returns.
   // ------------------------------------------------------------------
 
   let idleExpanded = false;
@@ -52,17 +54,21 @@
     // row, vertically centered inside that stretch.
     const draftStack = document.querySelector("#setterScreen .draft-stack");
     const centerCol = document.querySelector("#setterScreen .center-col");
-    const sidebar = document.querySelector("#setterScreen .setter-sidebar");
     const keyboard = document.getElementById("keyboardSetter");
-    if (!draftStack || !centerCol || !sidebar) return null;
+    if (!draftStack || !centerCol) return null;
 
     const draftRect = draftStack.getBoundingClientRect();
     const centerRect = centerCol.getBoundingClientRect();
-    const sidebarRect = sidebar.getBoundingClientRect();
     const keyboardRect = keyboard?.getBoundingClientRect();
 
-    const left = Math.min(centerRect.left, sidebarRect.left);
-    const right = Math.max(centerRect.right, sidebarRect.right);
+    // Only as wide as .center-col (the board/history/draft-row column,
+    // which renders on the right -- .theme-setter .powers-col carries
+    // order:1 and .center-col order:2, see layout.css) -- it used to also
+    // span the sidebar column, which just made it wider than it needed to
+    // be. Keeping it center-col-width and -aligned leaves the sidebar
+    // (powers, on the left) fully visible throughout.
+    const left = centerRect.left;
+    const width = centerRect.width;
     const top = draftRect.top;
     // Target MAX_IDLE_NOTES_HEIGHT, but never past the keyboard; never
     // shrink below the draft row's own natural height even if that means
@@ -71,7 +77,7 @@
     const keyboardLimit = keyboardRect ? keyboardRect.top - KEYBOARD_GAP - top : Infinity;
     const height = Math.max(draftRect.height, Math.min(MAX_IDLE_NOTES_HEIGHT, keyboardLimit));
 
-    return { top, left, width: right - left, height };
+    return { top, left, width, height };
   }
 
   // el.style.top/left need to be relative to el's actual CSS containing

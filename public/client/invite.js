@@ -62,11 +62,6 @@ async function shareOrCopyInviteLink(roomId, copiedMessage = "Invite link copied
   }
 }
 
-document.getElementById("inviteBtn")?.addEventListener("click", () => {
-  if (!window.roomId) return;
-  shareOrCopyInviteLink(window.roomId);
-});
-
 // "Invite a Friend" on the Play screen — a no-time-limit, casual, shuffled
 // game the host doesn't need to stick around for: mark themselves ready
 // up front, hand over the invite link, and let the friend pick it up
