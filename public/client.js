@@ -586,6 +586,7 @@ function updateUI() {
   updateSetterDraftInvalidOverlay();
   window.renderActionLog?.(state, myRole);
   window.renderNotesPanel?.(state);
+  if (myRole === "setter") window.updateSetterIdleExpand?.(state);
 }
 
 // Live version of submitSetterNew()'s rejection checks (dictionary +

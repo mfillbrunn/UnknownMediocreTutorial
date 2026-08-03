@@ -10,6 +10,11 @@
     button.setAttribute("aria-selected", String(selected));
   }
 
+  // Tracks which of Log/Notes is currently open (null = neither), at
+  // module scope so the idle-expand logic below can read/restore it
+  // alongside the tab click handlers.
+  let activeSetterPanel = "log";
+
   /*
     panelName is "log" or "notes" -- Log starts open by default (see
     initialiseSetterSidebar), and clicking the currently-open tab closes
@@ -52,14 +57,161 @@
     }
   }
 
+  // ------------------------------------------------------------------
+  // IDLE AUTO-EXPAND
+  //
+  // While it isn't the setter's turn, float the Log/Notes section over
+  // the draft row, forced onto the Notes tab, so the setter can use the
+  // dead time to jot candidate words -- keystrokes only reach Notes
+  // while that tab is the active one (see notes.js's window.notesInput,
+  // gated on _isMyTurnToType). It snaps back to its normal in-flow spot
+  // the instant the turn returns, restoring whichever tab was open
+  // before -- unless the setter actually typed a still-viable word while
+  // idle, in which case it stays on Notes so they can see it.
+  // ------------------------------------------------------------------
+
+  let idleExpanded = false;
+  let idlePriorPanel = "log";
+  let flipToken = 0;
+
+  function shouldIdleExpand(state) {
+    const setterScreen = byId("setterScreen");
+    if (!setterScreen?.classList.contains("active")) return false;
+    if (!setterScreen.classList.contains("is-not-your-turn")) return false;
+    if (state?.isTutorial) return false;
+    if (state?.phase === "gameOver") return false;
+    return true;
+  }
+
+  function computeExpandedRect() {
+    const centerCol = document.querySelector("#setterScreen .center-col");
+    const sidebar = document.querySelector("#setterScreen .setter-sidebar");
+    if (!centerCol || !sidebar) return null;
+    const centerRect = centerCol.getBoundingClientRect();
+    const sidebarRect = sidebar.getBoundingClientRect();
+    const top = Math.min(centerRect.top, sidebarRect.top);
+    const bottom = Math.max(centerRect.bottom, sidebarRect.bottom);
+    const left = Math.min(centerRect.left, sidebarRect.left);
+    const right = Math.max(centerRect.right, sidebarRect.right);
+    return { top, left, width: right - left, height: bottom - top };
+  }
+
+  // FLIP: el is assumed already pinned at startRect (position: fixed,
+  // inline top/left/width/height) when this runs. Animates it to
+  // endRect, then hands off to onSettle for any final cleanup.
+  function flip(el, startRect, endRect, onSettle) {
+    const reduceMotion =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const myToken = ++flipToken;
+
+    if (reduceMotion || (startRect.width === 0 && startRect.height === 0)) {
+      el.style.top = `${endRect.top}px`;
+      el.style.left = `${endRect.left}px`;
+      el.style.width = `${endRect.width}px`;
+      el.style.height = `${endRect.height}px`;
+      onSettle?.();
+      return;
+    }
+
+    el.style.top = `${startRect.top}px`;
+    el.style.left = `${startRect.left}px`;
+    el.style.width = `${startRect.width}px`;
+    el.style.height = `${startRect.height}px`;
+    void el.offsetWidth; // force layout so the start rect is registered
+    el.classList.add("idle-flip-animating");
+    requestAnimationFrame(() => {
+      if (myToken !== flipToken) return;
+      el.style.top = `${endRect.top}px`;
+      el.style.left = `${endRect.left}px`;
+      el.style.width = `${endRect.width}px`;
+      el.style.height = `${endRect.height}px`;
+    });
+
+    const finish = () => {
+      if (myToken !== flipToken) return;
+      el.classList.remove("idle-flip-animating");
+      onSettle?.();
+    };
+    el.addEventListener("transitionend", finish, { once: true });
+    setTimeout(finish, 400);
+  }
+
+  function enterIdleExpand() {
+    const activitySection = document.querySelector(
+      "#setterScreen .setter-sidebar-activity"
+    );
+    const hint = byId("setterNotesIdleHint");
+    if (!activitySection || idleExpanded) return;
+    const targetRect = computeExpandedRect();
+    if (!targetRect) return;
+
+    const startRect = activitySection.getBoundingClientRect();
+
+    idleExpanded = true;
+    idlePriorPanel = activeSetterPanel || "log";
+
+    activitySection.classList.add("idle-floating");
+    activeSetterPanel = "notes";
+    showSetterSidebarPanel("notes");
+    hint?.classList.remove("hidden");
+
+    flip(activitySection, startRect, targetRect);
+  }
+
+  function exitIdleExpand() {
+    const activitySection = document.querySelector(
+      "#setterScreen .setter-sidebar-activity"
+    );
+    const hint = byId("setterNotesIdleHint");
+    if (!activitySection || !idleExpanded) return;
+
+    const startRect = activitySection.getBoundingClientRect();
+    const restoreTab = window.setterNotesHasFeasible?.()
+      ? "notes"
+      : idlePriorPanel || "log";
+
+    idleExpanded = false;
+    hint?.classList.add("hidden");
+    activeSetterPanel = restoreTab;
+    showSetterSidebarPanel(restoreTab);
+
+    // Measure the true natural in-flow rect by briefly reverting to
+    // normal layout, then immediately re-pinning at the old fixed spot
+    // before the next paint -- avoids a visible flicker while still
+    // telling us exactly where the collapse should animate to.
+    activitySection.classList.remove("idle-floating");
+    activitySection.style.position = "";
+    activitySection.style.top = "";
+    activitySection.style.left = "";
+    activitySection.style.width = "";
+    activitySection.style.height = "";
+    const endRect = activitySection.getBoundingClientRect();
+    activitySection.classList.add("idle-floating");
+
+    flip(activitySection, startRect, endRect, () => {
+      activitySection.classList.remove("idle-floating");
+      activitySection.style.position = "";
+      activitySection.style.top = "";
+      activitySection.style.left = "";
+      activitySection.style.width = "";
+      activitySection.style.height = "";
+    });
+  }
+
+  // Called from client.js's updateUI() after every state update -- turn
+  // classes on #setterScreen are already current by then (updateScreens
+  // runs first), so this just reacts to whatever they say.
+  window.updateSetterIdleExpand = function (state) {
+    if (shouldIdleExpand(state)) {
+      enterIdleExpand();
+    } else if (idleExpanded) {
+      exitIdleExpand();
+    }
+  };
+
   function initialiseSetterSidebar() {
     const logButton = byId("actionLogBtnSetter");
     const notesButton = byId("notesBtnSetter");
-
-    // Tracks which of Log/Notes is currently open (null = neither) so a
-    // click on the already-open tab can close it instead of re-opening
-    // the same panel.
-    let activeSetterPanel = "log";
 
     logButton?.addEventListener("click", () => {
       activeSetterPanel = activeSetterPanel === "log" ? null : "log";
@@ -89,6 +241,25 @@
           showSetterSidebarPanel("log");
         }
 
+        if (!isActive && idleExpanded) {
+          // Left the setter screen mid-idle-expand -- snap back instantly
+          // (no animation) so nothing stays floating over a hidden screen.
+          idleExpanded = false;
+          flipToken++;
+          const activitySection = document.querySelector(
+            "#setterScreen .setter-sidebar-activity"
+          );
+          activitySection?.classList.remove("idle-floating", "idle-flip-animating");
+          if (activitySection) {
+            activitySection.style.position = "";
+            activitySection.style.top = "";
+            activitySection.style.left = "";
+            activitySection.style.width = "";
+            activitySection.style.height = "";
+          }
+          byId("setterNotesIdleHint")?.classList.add("hidden");
+        }
+
         wasActive = isActive;
       });
 
@@ -97,6 +268,22 @@
         attributeFilter: ["class"]
       });
     }
+
+    // Keep the floating rect glued to the draft row / sidebar area across
+    // viewport size changes (device rotation, resizing a desktop window).
+    window.addEventListener("resize", () => {
+      if (!idleExpanded) return;
+      const activitySection = document.querySelector(
+        "#setterScreen .setter-sidebar-activity"
+      );
+      const targetRect = computeExpandedRect();
+      if (!activitySection || !targetRect) return;
+      activitySection.classList.remove("idle-flip-animating");
+      activitySection.style.top = `${targetRect.top}px`;
+      activitySection.style.left = `${targetRect.left}px`;
+      activitySection.style.width = `${targetRect.width}px`;
+      activitySection.style.height = `${targetRect.height}px`;
+    });
   }
 
   /*

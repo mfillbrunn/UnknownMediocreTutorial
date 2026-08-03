@@ -354,6 +354,17 @@ list.querySelectorAll(
 
   window.isNotesActive = function () { return _active; };
 
+  // Used by ui/setter-sidebar.js's idle-expand collapse: whether the
+  // setter has actually typed a still-viable candidate word (not just
+  // their own auto-added secret, see _renderPanel) worth showing them
+  // once their turn comes back.
+  window.setterNotesHasFeasible = function () {
+    if (_role !== "setter") return false;
+    const history = window.state?.history || [];
+    const secret = (window.state?.secret || "").toUpperCase();
+    return _entries.some(e => e.word !== secret && _viable(history, e.word));
+  };
+
   // Called when a secret submission gets rejected (bad word, inconsistent
   // with history, etc.) so the setter doesn't have to backspace through a
   // dead draft by hand -- clears the notes scratchpad's own in-progress

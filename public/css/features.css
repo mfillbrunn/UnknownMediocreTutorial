@@ -2652,6 +2652,50 @@ body:has(#guesserScreen.active) #appMain {
   min-height: 60px;
 }
 
+/*
+  Idle-expand: while it's not the setter's turn, ui/setter-sidebar.js
+  pins this section to a fixed rect covering roughly the draft row + the
+  sidebar column (via a FLIP animation from its normal in-flow rect), so
+  the setter can use the dead time to jot notes. It snaps back to normal
+  in-flow layout the moment the turn returns.
+*/
+#setterScreen .setter-sidebar-activity.idle-floating {
+  position: fixed;
+  z-index: 600;
+  background: rgba(16, 17, 24, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--r-14, 14px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  padding: var(--sp-8, 8px);
+}
+
+#setterScreen .setter-sidebar-activity.idle-flip-animating {
+  transition: top 0.32s ease, left 0.32s ease, width 0.32s ease, height 0.32s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #setterScreen .setter-sidebar-activity.idle-flip-animating {
+    transition: none;
+  }
+}
+
+.setter-notes-idle-hint {
+  flex: 0 0 auto;
+  margin-bottom: var(--sp-6, 6px);
+  padding: 4px 8px;
+  border-radius: var(--r-6, 6px);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+.setter-notes-idle-hint.hidden {
+  display: none;
+}
+
 #setterScreen .setter-sidebar-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
