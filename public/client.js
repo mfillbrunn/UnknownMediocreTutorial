@@ -735,7 +735,7 @@ function updateScreens() {
       // start flipping): 420ms slide + 1400ms stagger to the last tile's
       // cover-flip + 650ms for that tile's own flip = 2470ms, rounded up
       // for a small buffer.
-      const FLIP_TOTAL_MS = 1800;
+      const FLIP_TOTAL_MS = 2000;
       const POPUP_DURATION_MS = 3200;
 
       const iAmGuesser = myUserId() === state.guesser;
@@ -1297,14 +1297,20 @@ function applyPreviewFeedback(fbArray, isIncomplete = false) {
     // A keystroke just pushed this tile's color UP — give it a little
     // jump (yellow) or a bigger jump + shake (green) so typing a hit
     // *feels* like something, not just a color swap noticed after the
-    // fact. Skip on the tile's very first-ever color assignment
-    // (current.length === 0 — right after a fresh pending guess appears
-    // and clearSetterPreview() wiped every class): that's the row
-    // settling into its baseline against the still-unedited secret, not
-    // something the setter just caused by typing.
-    if (current.length > 0) {
+    // fact. A tile's very first-ever color assignment (current.length
+    // === 0 -- right after a fresh pending guess appears and
+    // clearSetterPreview() wiped every class) only skips the jump when it
+    // settles on gray -- that's just the row settling into an
+    // uninteresting baseline, not something worth celebrating. But if a
+    // tile is *already* green/yellow the instant the row appears (the
+    // current secret happens to already match there), that's a genuinely
+    // informative baseline and deserves the same jump any other tile gets
+    // when it turns that color later -- otherwise whichever tile(s)
+    // happen to start pre-solved silently never get to play the
+    // animation at all, while every other tile does.
+    {
       const oldColor = current.find(c => c !== "preview-incomplete");
-      const oldRank = PREVIEW_COLOR_RANK[oldColor] ?? 0;
+      const oldRank = current.length > 0 ? (PREVIEW_COLOR_RANK[oldColor] ?? 0) : -1;
       const newRank = PREVIEW_COLOR_RANK[colorClass] ?? 0;
 
       if (newRank > oldRank) {
