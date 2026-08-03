@@ -357,6 +357,22 @@ list.querySelectorAll(
 
   window.isNotesActive = function () { return _active; };
 
+  // Called whenever the player's role stops being "setter" (round swap,
+  // leaving the game, etc. -- see client.js's newMyRole handling). Notes
+  // is only ever opened for the setter (ensureNotesOpen in
+  // ui/setter-sidebar.js), and _active/_role otherwise just sit stale --
+  // nothing used to close it on a role swap, so a guesser's very first
+  // keystroke of the new round would still hit notesInput below. There,
+  // _isMyTurnToType("setter") checks state.setter against a userId that's
+  // no longer the setter, always comes back false, and the keystroke gets
+  // silently swallowed as a "not my turn" notes entry instead of ever
+  // reaching handleGuesserInput -- the guesser's keyboard looked
+  // permanently dead until reload.
+  window.closeNotes = function () {
+    _active = false;
+    _draft = "";
+  };
+
   // Called when a secret submission gets rejected (bad word, inconsistent
   // with history, etc.) so the setter doesn't have to backspace through a
   // dead draft by hand -- clears the notes scratchpad's own in-progress

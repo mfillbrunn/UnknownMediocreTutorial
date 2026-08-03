@@ -504,6 +504,11 @@ onStateUpdate(newState => {
     // roles are actually determined.
     window.myRole = newMyRole;
     updateRoleLabels();
+    // Notes is a setter-only feature (see ui/setter-sidebar.js's
+    // ensureNotesOpen) that nothing used to close -- left active across a
+    // round-swap into guesser, it silently ate every keystroke meant for
+    // the real guesser keyboard (see notes.js's closeNotes comment).
+    if (newMyRole !== "setter") window.closeNotes?.();
   }
   const setterCanEdit =
   myUserId() === state.setter &&
