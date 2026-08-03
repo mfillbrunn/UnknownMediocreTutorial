@@ -58,10 +58,17 @@ function isConsistentWithHistory(history, proposedSecret, state, opts = {}) {
     // 5 — final comparison
     for (let i = 0; i < 5; i++) {
       // Confuse Colors only makes the ORIGINALLY green/yellow positions of
-      // a guess unreliable (see confuseColorsServer.js) -- a gray position
-      // in that same guess is untouched and still a hard constraint, so it
-      // must not be skipped along with the recolored ones.
-      if (entry.confuseIgnoreIndices?.includes(i)) continue;
+      // a guess unreliable to the GUESSER's own reasoning about what's
+      // plausible (see confuseColorsServer.js) -- a gray position in that
+      // same guess is untouched and still a hard constraint, so it must
+      // not be skipped along with the recolored ones. And per this
+      // function's own contract above, this relaxation must only ever
+      // apply on the fbGuesser (guesser-view) path -- the default/true-fb
+      // path is the hard rule that actually gates which secrets the
+      // setter is allowed to switch to, and must never be fooled by any
+      // mask: the setter still truly knows an original yellow/green was
+      // real, even though the guesser can no longer tell which it was.
+      if (useFbGuesser && entry.confuseIgnoreIndices?.includes(i)) continue;
       if ((expected[i] !== actual[i]) && actual[i] !=="") return false;
     }
   }
