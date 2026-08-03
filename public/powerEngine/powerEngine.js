@@ -141,10 +141,16 @@ window.PowerEngine = {
 
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
+      // A power can optionally compute its own popup content right at
+      // click time (e.g. Vowel Refresh previewing exactly which vowels
+      // it would reset, or disabling Use when it would do nothing) --
+      // see vowelRefresh.js's getActionPopup for the shape it returns.
+      const override = this.powers[id]?.getActionPopup?.(window.state, window.myRole) || {};
       window.showPowerActionPopup?.({
         emoji: window.POWER_METADATA?.[id]?.emoji,
         title: meta?.title || window.POWER_METADATA?.[id]?.label || label,
         desc: meta?.desc || window.POWER_METADATA?.[id]?.desc || "",
+        ...override,
         onUse: () => useHandler?.()
       });
     });

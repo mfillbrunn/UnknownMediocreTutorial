@@ -15,6 +15,28 @@ tooltip: {
       sendGameAction({ type: "USE_VOWEL_REFRESH" });
     };
   },
+
+  // Previews exactly which vowels would actually get reset, using the same
+  // eligibility rule the server enforces (a vowel in the last guess not
+  // already confirmed present by an earlier guess) -- and refuses to let
+  // the setter burn the power for nothing when there's nothing eligible.
+  getActionPopup(state, role) {
+    if (role !== "setter") return {};
+
+    const eligible = getRefreshableVowelIndices(state);
+    if (eligible.size === 0) {
+      return {
+        desc: "No vowels to reset — the last guess has no unconfirmed vowels right now.",
+        useEnabled: false
+      };
+    }
+
+    const guess = state.history?.[state.history.length - 1]?.guess?.toUpperCase() || "";
+    const letters = [...new Set([...eligible].map(i => guess[i]))];
+    return {
+      desc: `${window.POWER_METADATA.vowelRefresh.desc} This will reset: ${letters.join(", ")}.`
+    };
+  },
  uiEffects(state, role) {
     if (!this.buttonEl) return;
 
