@@ -56,9 +56,15 @@ window.showStartup = function () {
   window.refreshMyGamesNotification?.();
 };
 
+// role is whoever just submitted ("spy" = setter's secret, "inspector" =
+// guesser's guess) -- only the OPPONENT should see this banner. The
+// player who just submitted already knows they did; showing it to them
+// too was just noise on top of their own action.
 function showSubmitBanner(role, text) {
   const banner = document.getElementById("submit-banner");
   if (!banner) return;
+  if (role === "spy" && window.myRole === "setter") return;
+  if (role === "inspector" && window.myRole === "guesser") return;
 
   banner.classList.remove("spy", "inspector", "show");
   void banner.offsetWidth; // restart animation

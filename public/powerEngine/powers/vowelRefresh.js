@@ -17,16 +17,16 @@ tooltip: {
   },
 
   // Previews exactly which vowels would actually get reset, using the same
-  // eligibility rule the server enforces (a vowel in the last guess not
-  // already confirmed present by an earlier guess) -- and refuses to let
-  // the setter burn the power for nothing when there's nothing eligible.
+  // eligibility rule the server enforces (every vowel in the last guess) --
+  // and refuses to let the setter burn the power for nothing when the last
+  // guess had no vowels at all.
   getActionPopup(state, role) {
     if (role !== "setter") return {};
 
     const eligible = getRefreshableVowelIndices(state);
     if (eligible.size === 0) {
       return {
-        desc: "No vowels to reset — the last guess has no unconfirmed vowels right now.",
+        desc: "No vowels to reset — the last guess had no vowels in it.",
         useEnabled: false
       };
     }
@@ -65,8 +65,8 @@ tooltip: {
     // Preview: shine whichever vowels in the LAST guess would actually get
     // reset if the power were used right now, so the setter can judge
     // whether it's worth spending before committing -- same eligibility
-    // rule the server enforces (vowelRefreshServer.js): a vowel in the
-    // last guess not already confirmed present by an earlier guess.
+    // rule the server enforces (vowelRefreshServer.js): every vowel in the
+    // last guess, even a repeat of one confirmed by an earlier guess.
     //
     // A guess earlier in the match was once "the last row" and got shined
     // then -- once a newer guess comes in it's no longer the last row, but
@@ -94,8 +94,9 @@ tooltip: {
 });
 
 // Shared by uiEffects above -- mirrors vowelRefreshServer.js's apply()
-// exactly (same "known present before this round" exclusion), just
-// read-only and index-based instead of mutating feedback.
+// exactly (every vowel in the last guess is eligible, even a repeat of one
+// already confirmed by an earlier guess), just read-only and index-based
+// instead of mutating feedback.
 function getRefreshableVowelIndices(state) {
   const history = state.history || [];
   const lastIndex = history.length - 1;
@@ -104,23 +105,11 @@ function getRefreshableVowelIndices(state) {
 
   const vowels = new Set(["A", "E", "I", "O", "U"]);
   const guess = entry.guess.toUpperCase();
-  const knownPresent = new Set();
-
-  for (let r = 0; r < lastIndex; r++) {
-    const h = history[r];
-    const fb = h.fb ?? h.fbGuesser;
-    if (!Array.isArray(fb)) continue;
-    const g = h.guess.toUpperCase();
-    for (let i = 0; i < 5; i++) {
-      if (fb[i] === "🟩" || fb[i] === "🟨") knownPresent.add(g[i]);
-    }
-  }
 
   const indices = new Set();
   for (let i = 0; i < 5; i++) {
     const letter = guess[i];
     if (!vowels.has(letter)) continue;
-    if (knownPresent.has(letter)) continue;
     indices.add(i);
   }
   return indices;

@@ -18,29 +18,15 @@ engine.registerPower("vowelRefresh", {
     // tiles as "reset to unknown" (distinct from Hide Evidence's "redacted"
     // look), even though both end up as an empty "" feedback.
     const resetIndices = [];
-    // Collect letters known to be present BEFORE this round
-    const knownPresent = new Set();
 
-    for (let r = 0; r < lastIndex; r++) {
-      const h = state.history[r];
-      const fb = h.fb ?? h.fbGuesser;
-      if (!Array.isArray(fb)) continue;
-
-      const g = h.guess.toUpperCase();
-      for (let i = 0; i < 5; i++) {
-        if (fb[i] === "🟩" || fb[i] === "🟨") {
-          knownPresent.add(g[i]);
-        }
-      }
-    }
-
-    // Rewrite feedback for the last round
+    // Rewrite feedback for the last round -- every vowel in it gets reset,
+    // regardless of whether an earlier guess already confirmed that letter
+    // (clearing feedback only erases info the Inspector was shown, it can't
+    // create a contradiction, so there's no reason to hold back on repeats).
     for (let i = 0; i < 5; i++) {
       const letter = guess[i];
       if (!vowels.has(letter)) continue;
 
-      // Do NOT erase if this vowel was previously confirmed
-      if (knownPresent.has(letter)) continue;
       resetVowels.add(letter);
       resetIndices.push(i);
       if (Array.isArray(entry.fb)) {

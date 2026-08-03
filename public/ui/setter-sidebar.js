@@ -83,17 +83,66 @@
     return true;
   }
 
+  // Anchored on the draft row specifically (not the whole center column)
+  // so the history/constraint-row feedback above it stays visible, and
+  // capped well above the keyboard's top edge so the keyboard stays fully
+  // usable -- the earlier version spanned the entire center column plus
+  // the whole sidebar top-to-bottom, which was both way oversized and, on
+  // short viewports, actually ran off the bottom of the screen.
+  const MAX_IDLE_NOTES_HEIGHT = 220;
+  const KEYBOARD_GAP = 10;
+
   function computeExpandedRect() {
+    // .draft-row-wrap itself is a flex:1 spacer (see layout.css's
+    // ".theme-setter .draft-row-wrap") that stretches to soak up whatever
+    // vertical room history isn't using, so its own rect can be huge --
+    // .draft-stack (its child, holding the actual tile row + overlays) is
+    // the piece that's actually intrinsically sized around the visible
+    // row, vertically centered inside that stretch.
+    const draftStack = document.querySelector("#setterScreen .draft-stack");
     const centerCol = document.querySelector("#setterScreen .center-col");
     const sidebar = document.querySelector("#setterScreen .setter-sidebar");
-    if (!centerCol || !sidebar) return null;
+    const keyboard = document.getElementById("keyboardSetter");
+    if (!draftStack || !centerCol || !sidebar) return null;
+
+    const draftRect = draftStack.getBoundingClientRect();
     const centerRect = centerCol.getBoundingClientRect();
     const sidebarRect = sidebar.getBoundingClientRect();
-    const top = Math.min(centerRect.top, sidebarRect.top);
-    const bottom = Math.max(centerRect.bottom, sidebarRect.bottom);
+    const keyboardRect = keyboard?.getBoundingClientRect();
+
     const left = Math.min(centerRect.left, sidebarRect.left);
     const right = Math.max(centerRect.right, sidebarRect.right);
-    return { top, left, width: right - left, height: bottom - top };
+    const top = draftRect.top;
+    // Target MAX_IDLE_NOTES_HEIGHT, but never past the keyboard; never
+    // shrink below the draft row's own natural height even if that means
+    // getting closer to the keyboard than the target gap (an already-tight
+    // layout has nowhere else for it to go).
+    const keyboardLimit = keyboardRect ? keyboardRect.top - KEYBOARD_GAP - top : Infinity;
+    const height = Math.max(draftRect.height, Math.min(MAX_IDLE_NOTES_HEIGHT, keyboardLimit));
+
+    return { top, left, width: right - left, height };
+  }
+
+  // el.style.top/left need to be relative to el's actual CSS containing
+  // block, not the viewport -- getBoundingClientRect() is always
+  // viewport-relative, but #setterScreen carries `transform:
+  // translateY(0)` while `.screen.active` (see layout.css), and ANY
+  // non-`none` transform on an ancestor makes IT the containing block for
+  // a `position: fixed` descendant instead of the viewport (per the CSS
+  // spec) -- so viewport coordinates written directly into top/left
+  // landed dozens of pixels off. el.offsetParent reflects this correctly
+  // for fixed-position elements (browsers resolve it to that transformed
+  // ancestor instead of null), so it's used here rather than hardcoding
+  // #setterScreen.
+  function applyFixedRect(el, rect) {
+    const parent = el.offsetParent;
+    const parentRect = parent?.getBoundingClientRect();
+    const offX = parentRect?.left || 0;
+    const offY = parentRect?.top || 0;
+    el.style.top = `${rect.top - offY}px`;
+    el.style.left = `${rect.left - offX}px`;
+    el.style.width = `${rect.width}px`;
+    el.style.height = `${rect.height}px`;
   }
 
   // FLIP: el is assumed already pinned at startRect (position: fixed,
@@ -105,26 +154,17 @@
     const myToken = ++flipToken;
 
     if (reduceMotion || (startRect.width === 0 && startRect.height === 0)) {
-      el.style.top = `${endRect.top}px`;
-      el.style.left = `${endRect.left}px`;
-      el.style.width = `${endRect.width}px`;
-      el.style.height = `${endRect.height}px`;
+      applyFixedRect(el, endRect);
       onSettle?.();
       return;
     }
 
-    el.style.top = `${startRect.top}px`;
-    el.style.left = `${startRect.left}px`;
-    el.style.width = `${startRect.width}px`;
-    el.style.height = `${startRect.height}px`;
+    applyFixedRect(el, startRect);
     void el.offsetWidth; // force layout so the start rect is registered
     el.classList.add("idle-flip-animating");
     requestAnimationFrame(() => {
       if (myToken !== flipToken) return;
-      el.style.top = `${endRect.top}px`;
-      el.style.left = `${endRect.left}px`;
-      el.style.width = `${endRect.width}px`;
-      el.style.height = `${endRect.height}px`;
+      applyFixedRect(el, endRect);
     });
 
     const finish = () => {
@@ -142,18 +182,28 @@
     );
     const hint = byId("setterNotesIdleHint");
     if (!activitySection || idleExpanded) return;
-    const targetRect = computeExpandedRect();
-    if (!targetRect) return;
 
     const startRect = activitySection.getBoundingClientRect();
 
     idleExpanded = true;
     idlePriorPanel = activeSetterPanel || "log";
 
+    // Pin at the old in-flow spot the instant this leaves flow, before
+    // measuring anything else -- .setter-sidebar shrinking by this
+    // section's height can nudge the whole .play-row (and the keyboard
+    // below it) up (see the ".theme-setter .play-row" stretch comment in
+    // layout.css), so computeExpandedRect has to run AFTER that reflow
+    // has already happened, or its keyboard-avoidance math would be
+    // clamping against a keyboard position that's about to move.
     activitySection.classList.add("idle-floating");
+    applyFixedRect(activitySection, startRect);
+
     activeSetterPanel = "notes";
     showSetterSidebarPanel("notes");
     hint?.classList.remove("hidden");
+
+    const targetRect = computeExpandedRect();
+    if (!targetRect) return;
 
     flip(activitySection, startRect, targetRect);
   }
@@ -279,10 +329,7 @@
       const targetRect = computeExpandedRect();
       if (!activitySection || !targetRect) return;
       activitySection.classList.remove("idle-flip-animating");
-      activitySection.style.top = `${targetRect.top}px`;
-      activitySection.style.left = `${targetRect.left}px`;
-      activitySection.style.width = `${targetRect.width}px`;
-      activitySection.style.height = `${targetRect.height}px`;
+      applyFixedRect(activitySection, targetRect);
     });
   }
 

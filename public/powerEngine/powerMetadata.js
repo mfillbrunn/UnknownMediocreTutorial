@@ -193,8 +193,8 @@ window.POWER_METADATA = {
 
   vowelRefresh: {
     label: "Vowel Reset",
-    desc: "Un-marks the vowels from your last guess, but only the ones you hadn't used before.",
-    short: "Resets last round's previously-unused vowels.",
+    desc: "Un-marks every vowel from your last guess, even ones the Inspector already knew about.",
+    short: "Resets every vowel from last round's guess.",
     icon: "vowel-cycle",
     emoji: "🔁",
     color: "#0EA5E9"
