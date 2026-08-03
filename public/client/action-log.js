@@ -168,7 +168,18 @@
     rounds.forEach((round, idx) => {
       appendRound(round.history, round.setter, idx, false);
     });
-    const liveViewerRole = appendRound(state.history, state.setter, rounds.length, true);
+
+    // endGame() archives the just-finished round into state.matchRounds
+    // (the loop above) but doesn't clear state.history until the player
+    // actually advances past the summary screen -- for that whole window
+    // the round that just ended is sitting in both places. Appending
+    // state.history here too, unconditionally, duplicated every line of
+    // the round the player just finished for as long as the summary
+    // screen was up.
+    const liveViewerRole =
+      state.phase === "gameOver"
+        ? (myId != null && state.setter === myId ? "setter" : "guesser")
+        : appendRound(state.history, state.setter, rounds.length, true);
 
     // Powers used mid-turn are only attached to a history entry once that
     // guess/decision resolves. Surface them the moment they're used instead
