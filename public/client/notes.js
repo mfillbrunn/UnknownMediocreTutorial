@@ -6,7 +6,6 @@
   let _active   = false;
   let _role     = null;
   let _lastRoom = null;
-  let _lastPrunedHistoryLen = -1;
   let _wasMyTurn = false; // tracks the last _isMyTurnToType result, so
                           // _renderPanel can detect the false->true edge
 
@@ -78,22 +77,33 @@
     }
   }
 
-  function _viable(history, word) {
+  // state defaults to window.state for call sites that don't have a
+  // render-pass state handy (e.g. notesInput's ENTER handler, which runs
+  // from a raw keyboard event, not a state broadcast) -- everywhere that
+  // DOES have one in scope (_pruneInfeasible, _renderList) passes it
+  // explicitly instead, so this always checks against the same state the
+  // history array itself came from.
+  function _viable(history, word, state = window.state) {
     if (!history?.length) return true;
     if (typeof window.isConsistentWithHistory === "function") {
-      return window.isConsistentWithHistory(history, word, window.state);
+      return window.isConsistentWithHistory(history, word, state);
     }
     return true;
   }
 
   // Drop entries that are no longer consistent with history, in real time,
-  // rather than just greying them out.
+  // rather than just greying them out. Re-checks every render (not just
+  // when history.length grows) -- viability can also change from
+  // state.extraConstraints picking up a new hard constraint (e.g. the
+  // guesser's Reveal Letter power firing) without history itself growing,
+  // and history-length-only invalidation missed that: an entry that just
+  // became impossible stayed in _entries, unpruned, until the next real
+  // guess happened to come in. _entries is always small (a handful of
+  // candidate words), so re-filtering every render is cheap.
   function _pruneInfeasible(state) {
     const history = state?.history || [];
-    if (history.length === _lastPrunedHistoryLen) return;
-    _lastPrunedHistoryLen = history.length;
     if (!_entries.length) return;
-    _entries = _entries.filter(e => _viable(history, e.word));
+    _entries = _entries.filter(e => _viable(history, e.word, state));
   }
 
   function _guessedLetters(history) {
@@ -169,8 +179,8 @@
     let html = "";
 
     if (isSetter) {
-      const viable = _entries.filter(e => _viable(history, e.word));
-      const elim   = _entries.filter(e => !_viable(history, e.word));
+      const viable = _entries.filter(e => _viable(history, e.word, state));
+      const elim   = _entries.filter(e => !_viable(history, e.word, state));
       viable.forEach(e => {
         const count = _remainingCountFor(e.word, state);
         html += `<div class="notes-entry notes-viable" data-word="${e.word}">
@@ -189,7 +199,7 @@
       const guessed = _guessedLetters(history);
       _entries.forEach(e => {
         let cls;
-        if (_viable(history, e.word)) {
+        if (_viable(history, e.word, state)) {
           cls = "notes-viable";
         } else {
           const allNew = e.word.split("").every(l => !guessed.has(l));
