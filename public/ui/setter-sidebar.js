@@ -3,26 +3,71 @@
 
   const byId = id => document.getElementById(id);
 
-  // Notes is the sidebar's only view now -- no Log tab, nothing to
-  // switch between -- so it just stays continuously active (keyboard
-  // capture, draft row, entry list -- see client/notes.js) whenever the
-  // setter screen is up, instead of needing an explicit open/close step.
-  function ensureNotesOpen() {
-    if (!window.isNotesActive?.()) window.toggleNotes?.("setter");
+  function setTabState(button, selected) {
+    if (!button) return;
+    button.classList.toggle("is-active", selected);
+    button.setAttribute("aria-selected", String(selected));
+  }
+
+  // Which of Log/Notes is showing in the single in-flow panel slot while
+  // it's the setter's own turn (module scope so the idle-expand logic
+  // below can read/restore it). Log by default -- matches the tab always
+  // being available even before the setter has any reason to reach for
+  // Notes yet.
+  let activeSetterPanel = "log";
+
+  // Only meaningful while NOT idle-expanded -- during idle, Log and Notes
+  // are both visible at once (Log docked here, Notes floating, see
+  // enterIdleExpand), so there's nothing to switch between and this
+  // isn't called.
+  function showSetterSidebarPanel(panelName) {
+    const logPanel = byId("actionLogSetter");
+    const notesPanel = byId("notesPanelSetter");
+    const logButton = byId("actionLogBtnSetter");
+    const notesButton = byId("notesBtnSetter");
+
+    const showLog = panelName === "log";
+    const showNotes = panelName === "notes";
+
+    logPanel?.classList.toggle("hidden", !showLog);
+    notesPanel?.classList.toggle("hidden", !showNotes);
+
+    setTabState(logButton, showLog);
+    setTabState(notesButton, showNotes);
+
+    // Notes tracks its own active/inactive state separately (keyboard
+    // capture, in-progress draft, entry list -- see client/notes.js), on
+    // top of this tab's own hidden/visible class above. Only one of these
+    // two calls actually does anything: toggleNotes no-ops via its own
+    // guard when already active, closeNotes no-ops when already inactive.
+    // Without this, switching to Log wouldn't release Notes' keyboard
+    // capture, so real typing would keep getting swallowed by the (now
+    // hidden) notes scratchpad instead of reaching the real guess/secret.
+    if (showNotes) {
+      if (!window.isNotesActive?.()) window.toggleNotes?.("setter");
+    } else {
+      window.closeNotes?.();
+    }
   }
 
   // ------------------------------------------------------------------
   // IDLE AUTO-EXPAND
   //
-  // While it isn't the setter's turn, float the Notes section over the
-  // board/draft-row column (.center-col -- same width/left position as
-  // that column, just taller) so the setter can use the dead time to jot
-  // candidate words, without covering the sidebar (powers, on the left)
-  // -- keystrokes only reach Notes while it's active (see notes.js's
-  // window.notesInput, gated on _isMyTurnToType, and ensureNotesOpen
-  // above which keeps it active throughout). It snaps back to its
-  // normal in-flow spot in the sidebar the instant the turn returns.
+  // While it isn't the setter's turn, there's nothing left to toggle
+  // between: Log stays docked in its normal spot (still visible, on the
+  // left with the rest of the sidebar) and Notes alone pops out, floating
+  // over the board/draft-row column (.center-col -- same width/left
+  // position as that column, just taller) so the setter can use the dead
+  // time to jot candidate words. Keystrokes only reach Notes while it's
+  // active (see notes.js's window.notesInput, gated on _isMyTurnToType,
+  // and ensureNotesOpen below which keeps it active throughout). Notes
+  // snaps back to its normal in-flow spot (replacing Log as the active
+  // tab) the instant the turn returns.
   // ------------------------------------------------------------------
+
+  function ensureNotesOpen() {
+    if (!window.isNotesActive?.()) window.toggleNotes?.("setter");
+  }
 
   let idleExpanded = false;
   let flipToken = 0;
@@ -66,7 +111,7 @@
     // order:1 and .center-col order:2, see layout.css) -- it used to also
     // span the sidebar column, which just made it wider than it needed to
     // be. Keeping it center-col-width and -aligned leaves the sidebar
-    // (powers, on the left) fully visible throughout.
+    // (powers + Log, on the left) fully visible throughout.
     const left = centerRect.left;
     const width = centerRect.width;
     const top = draftRect.top;
@@ -133,26 +178,47 @@
     setTimeout(finish, 400);
   }
 
+  function clearFixedStyles(el) {
+    el.style.position = "";
+    el.style.top = "";
+    el.style.left = "";
+    el.style.width = "";
+    el.style.height = "";
+  }
+
   function enterIdleExpand() {
     const activitySection = document.querySelector(
       "#setterScreen .setter-sidebar-activity"
     );
+    const notesPanel = byId("notesPanelSetter");
+    const logPanel = byId("actionLogSetter");
     const hint = byId("setterNotesIdleHint");
-    if (!activitySection || idleExpanded) return;
-
-    const startRect = activitySection.getBoundingClientRect();
+    if (!activitySection || !notesPanel || idleExpanded) return;
 
     idleExpanded = true;
 
-    // Pin at the old in-flow spot the instant this leaves flow, before
-    // measuring anything else -- .setter-sidebar shrinking by this
-    // section's height can nudge the whole .play-row (and the keyboard
-    // below it) up (see the ".theme-setter .play-row" stretch comment in
+    // Tabs have nothing to do during idle (see the CSS comment on
+    // .idle-mode) -- hide them, and force Log visible in its normal spot
+    // regardless of whatever tab was selected before idle started.
+    activitySection.classList.add("idle-mode");
+    logPanel?.classList.remove("hidden");
+
+    // Measure Notes' natural in-flow rect (unhidden, still in its normal
+    // single-panel slot, Log not yet forced open) BEFORE anything else
+    // moves -- .setter-sidebar shrinking/growing as Log's visibility
+    // changes can nudge the whole .play-row (and the keyboard below it)
+    // up or down (see the ".theme-setter .play-row" stretch comment in
     // layout.css), so computeExpandedRect has to run AFTER that reflow
     // has already happened, or its keyboard-avoidance math would be
     // clamping against a keyboard position that's about to move.
-    activitySection.classList.add("idle-floating");
-    applyFixedRect(activitySection, startRect);
+    notesPanel.classList.remove("hidden");
+    const startRect = notesPanel.getBoundingClientRect();
+
+    // Pin Notes at that spot the instant it leaves flow -- taking it out
+    // of flow (position:fixed) is what lets Log immediately reclaim the
+    // panel slot right after.
+    notesPanel.classList.add("idle-floating");
+    applyFixedRect(notesPanel, startRect);
 
     ensureNotesOpen();
     hint?.classList.remove("hidden");
@@ -160,41 +226,45 @@
     const targetRect = computeExpandedRect();
     if (!targetRect) return;
 
-    flip(activitySection, startRect, targetRect);
+    flip(notesPanel, startRect, targetRect);
   }
 
   function exitIdleExpand() {
     const activitySection = document.querySelector(
       "#setterScreen .setter-sidebar-activity"
     );
+    const notesPanel = byId("notesPanelSetter");
+    const logPanel = byId("actionLogSetter");
     const hint = byId("setterNotesIdleHint");
-    if (!activitySection || !idleExpanded) return;
+    if (!activitySection || !notesPanel || !idleExpanded) return;
 
-    const startRect = activitySection.getBoundingClientRect();
+    const startRect = notesPanel.getBoundingClientRect();
 
     idleExpanded = false;
     hint?.classList.add("hidden");
+    activitySection.classList.remove("idle-mode");
+
+    // The turn's return always resurfaces Notes (not whatever tab was
+    // selected before idle started) -- it's what the setter was just
+    // actively using, and it avoids an otherwise-awkward case: animating
+    // Notes back into a spot it would then immediately vanish from if
+    // Log were the one to win instead.
+    activeSetterPanel = "notes";
+    logPanel?.classList.add("hidden");
 
     // Measure the true natural in-flow rect by briefly reverting to
     // normal layout, then immediately re-pinning at the old fixed spot
     // before the next paint -- avoids a visible flicker while still
     // telling us exactly where the collapse should animate to.
-    activitySection.classList.remove("idle-floating");
-    activitySection.style.position = "";
-    activitySection.style.top = "";
-    activitySection.style.left = "";
-    activitySection.style.width = "";
-    activitySection.style.height = "";
-    const endRect = activitySection.getBoundingClientRect();
-    activitySection.classList.add("idle-floating");
+    notesPanel.classList.remove("idle-floating");
+    clearFixedStyles(notesPanel);
+    const endRect = notesPanel.getBoundingClientRect();
+    notesPanel.classList.add("idle-floating");
 
-    flip(activitySection, startRect, endRect, () => {
-      activitySection.classList.remove("idle-floating");
-      activitySection.style.position = "";
-      activitySection.style.top = "";
-      activitySection.style.left = "";
-      activitySection.style.width = "";
-      activitySection.style.height = "";
+    flip(notesPanel, startRect, endRect, () => {
+      notesPanel.classList.remove("idle-floating");
+      clearFixedStyles(notesPanel);
+      showSetterSidebarPanel("notes");
     });
   }
 
@@ -210,10 +280,26 @@
   };
 
   function initialiseSetterSidebar() {
-    ensureNotesOpen();
+    const logButton = byId("actionLogBtnSetter");
+    const notesButton = byId("notesBtnSetter");
 
-    // Whenever the player returns to the setter screen, make sure Notes
-    // is (still) active again.
+    logButton?.addEventListener("click", () => {
+      if (idleExpanded) return; // no-op, tabs are hidden during idle anyway
+      activeSetterPanel = "log";
+      showSetterSidebarPanel("log");
+    });
+
+    notesButton?.addEventListener("click", () => {
+      if (idleExpanded) return;
+      activeSetterPanel = "notes";
+      showSetterSidebarPanel("notes");
+    });
+
+    // Required initial state: Log open.
+    showSetterSidebarPanel("log");
+
+    // Whenever the player returns to the setter screen, reopen Log by
+    // default again.
     const setterScreen = byId("setterScreen");
 
     if (setterScreen) {
@@ -223,7 +309,8 @@
         const isActive = setterScreen.classList.contains("active");
 
         if (isActive && !wasActive) {
-          ensureNotesOpen();
+          activeSetterPanel = "log";
+          showSetterSidebarPanel("log");
         }
 
         if (!isActive && idleExpanded) {
@@ -234,14 +321,10 @@
           const activitySection = document.querySelector(
             "#setterScreen .setter-sidebar-activity"
           );
-          activitySection?.classList.remove("idle-floating", "idle-flip-animating");
-          if (activitySection) {
-            activitySection.style.position = "";
-            activitySection.style.top = "";
-            activitySection.style.left = "";
-            activitySection.style.width = "";
-            activitySection.style.height = "";
-          }
+          const notesPanel = byId("notesPanelSetter");
+          activitySection?.classList.remove("idle-mode");
+          notesPanel?.classList.remove("idle-floating", "idle-flip-animating");
+          if (notesPanel) clearFixedStyles(notesPanel);
           byId("setterNotesIdleHint")?.classList.add("hidden");
         }
 
@@ -258,13 +341,11 @@
     // viewport size changes (device rotation, resizing a desktop window).
     window.addEventListener("resize", () => {
       if (!idleExpanded) return;
-      const activitySection = document.querySelector(
-        "#setterScreen .setter-sidebar-activity"
-      );
+      const notesPanel = byId("notesPanelSetter");
       const targetRect = computeExpandedRect();
-      if (!activitySection || !targetRect) return;
-      activitySection.classList.remove("idle-flip-animating");
-      applyFixedRect(activitySection, targetRect);
+      if (!notesPanel || !targetRect) return;
+      notesPanel.classList.remove("idle-flip-animating");
+      applyFixedRect(notesPanel, targetRect);
     });
   }
 

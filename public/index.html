@@ -790,8 +790,10 @@
     hidden
   ></div>
 
-  <!-- NOTES: last element in the column, always showing (no Log tab --
-       see ui/setter-sidebar.js). -->
+  <!-- LOG / NOTES: last element in the column. Togglable via tabs while
+       it's the setter's own turn; during the opponent's turn the tabs
+       hide, Log stays docked here (visible), and Notes pops out floating
+       over the board instead (see ui/setter-sidebar.js). -->
   <section class="setter-sidebar-activity">
     <!-- Shown only while auto-expanded during the opponent's turn (see
          ui/setter-sidebar.js) -- makes it clear why keystrokes are
@@ -800,10 +802,47 @@
       ⏳ Jotting notes while you wait
     </div>
 
+    <div
+      class="setter-sidebar-tabs"
+      role="tablist"
+      aria-label="Game information"
+    >
+      <button
+        type="button"
+        id="actionLogBtnSetter"
+        class="header-sm-btn setter-sidebar-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="actionLogSetter"
+      >
+        Log
+      </button>
+
+      <button
+        type="button"
+        id="notesBtnSetter"
+        class="header-sm-btn setter-sidebar-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="notesPanelSetter"
+      >
+        Notes
+      </button>
+    </div>
+
     <div class="setter-sidebar-panels">
       <div
+        id="actionLogSetter"
+        class="game-side-panel action-log-panel setter-sidebar-panel hidden"
+        role="tabpanel"
+        aria-labelledby="actionLogBtnSetter"
+      ></div>
+
+      <div
         id="notesPanelSetter"
-        class="game-side-panel notes-panel setter-sidebar-panel"
+        class="game-side-panel notes-panel setter-sidebar-panel hidden"
+        role="tabpanel"
+        aria-labelledby="notesBtnSetter"
       >
         <div class="notes-panel-title">Notes</div>
         <div id="notesDraftSetter" class="notes-draft-row"></div>
