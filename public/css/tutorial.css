@@ -46,6 +46,18 @@ transition:
   visibility 0s linear 230ms;
 }
 
+/* A bubble reappearing for a new step needs a layout pass to find its
+   correct spot before anyone should see it -- otherwise it flashes at
+   whatever position it last happened to have (or the CSS default) and
+   visibly slides to the right one once that pass finishes a frame later,
+   via the `top` transition below. Kept separate from .hidden (which also
+   suppresses the entrance opacity/transform animation) so that animation
+   still plays normally once this is lifted, immediately after the correct
+   `top` is already in place. */
+.tutorial-bubble.positioning {
+  visibility: hidden;
+}
+
 .tutorial-header {
   display: flex;
   align-items: center;

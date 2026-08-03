@@ -158,6 +158,18 @@ function getVisibleTutorialKeyboard() {
   }) || null;
 }
 
+// Set by showTutorial() when a freshly re-shown bubble needs one layout
+// pass to find its correct spot before it's allowed to become visible.
+// A plain variable rather than a per-call callback argument to
+// scheduleTutorialLayout -- that function coalesces rapid repeat calls by
+// cancelling and re-scheduling a single rAF, which would silently drop a
+// callback tied to an earlier call if any other (argument-less) call
+// pre-empted it before that frame fired, permanently leaving the bubble
+// invisible. This instead just needs *some* layout pass to run before
+// firing, however many scheduleTutorialLayout calls got coalesced along
+// the way.
+let tutorialPendingReveal = null;
+
 function scheduleTutorialLayout() {
   if (tutorialLayoutFrame) {
     cancelAnimationFrame(tutorialLayoutFrame);
@@ -169,6 +181,12 @@ function scheduleTutorialLayout() {
 
       repositionTutorialBubble();
       positionTutorialFocusRing();
+
+      if (tutorialPendingReveal) {
+        const reveal = tutorialPendingReveal;
+        tutorialPendingReveal = null;
+        reveal();
+      }
     });
 }
 
@@ -269,18 +287,27 @@ function repositionTutorialBubble() {
       keyboardTop - edge
     );
 
-  /*
-    Clear the last calculated position before
-    measuring the bubble at its current size.
-  */
-  bubble.style.top = "";
-  bubble.style.bottom = "";
-  bubble.style.removeProperty(
-    "--tutorial-bottom"
-  );
+  // Measure once, before touching `top`/`bottom` at all -- height and
+  // left/right don't depend on the bubble's own vertical position, so
+  // there's no need to clear/re-measure between candidate positions. That
+  // used to write `top` twice (an initial guess, then the adjusted final
+  // value) with a getBoundingClientRect() read in between, and that read
+  // forces the browser to commit the intermediate guess as an observed
+  // style -- which the `top` transition then visibly animated through
+  // before continuing on to the real final value, on every reposition.
+  // Computing the final value algebraically first and writing `top`
+  // exactly once avoids that entirely.
+  const measuredRect =
+    bubble.getBoundingClientRect();
 
   const bubbleHeight =
-    bubble.offsetHeight;
+    measuredRect.height;
+
+  const bubbleLeft =
+    measuredRect.left;
+
+  const bubbleRight =
+    measuredRect.right;
 
   const minTop =
     viewportTop + edge;
@@ -297,23 +324,22 @@ function repositionTutorialBubble() {
   */
   let top = maxTop;
 
-  bubble.style.top =
-    `${Math.round(top)}px`;
-
-  bubble.style.bottom = "auto";
-
   const avoidRects =
     tutorialAvoidElements().map(el =>
       el.getBoundingClientRect()
     );
 
-  let bubbleRect =
-    bubble.getBoundingClientRect();
+  const rectAtTop = t => ({
+    top: t,
+    bottom: t + bubbleHeight,
+    left: bubbleLeft,
+    right: bubbleRight
+  });
 
   for (const avoidRect of avoidRects) {
     if (
       !tutorialRectsOverlap(
-        bubbleRect,
+        rectAtTop(top),
         avoidRect,
         gap
       )
@@ -343,13 +369,16 @@ function repositionTutorialBubble() {
       */
       top = minTop;
     }
-
-    bubble.style.top =
-      `${Math.round(top)}px`;
-
-    bubbleRect =
-      bubble.getBoundingClientRect();
   }
+
+  bubble.style.top =
+    `${Math.round(top)}px`;
+
+  bubble.style.bottom = "auto";
+
+  bubble.style.removeProperty(
+    "--tutorial-bottom"
+  );
 }
 function tutorialStepKey(opts = {}) {
   if (opts.key) {
@@ -413,6 +442,19 @@ function showTutorial(text, opts = {}) {
 
   bubble.classList.remove("hidden");
 
+  // A bubble coming back from fully hidden doesn't know where it belongs
+  // yet -- that requires a layout pass (below) that reads the freshly
+  // highlighted targets for this step, which haven't necessarily settled
+  // into the DOM yet either (highlightEl() calls after this in the same
+  // render function commit via a queued microtask). Keep it invisible
+  // (but still measurable -- see .positioning in tutorial.css) through
+  // that pass instead of revealing it at whatever position it last had
+  // and visibly animating over to the right one a frame later.
+  if (wasHidden) {
+    bubble.classList.add("positioning");
+    tutorialPendingReveal = () => bubble.classList.remove("positioning");
+  }
+
   if (textEl.textContent !== text) {
     textEl.textContent = text;
 
@@ -441,7 +483,8 @@ function pauseTutorial() {
   tutorialLastStepKey = "";
 
   bubble.classList.add("hidden");
-  bubble.classList.remove("collapsed");
+  bubble.classList.remove("collapsed", "positioning");
+  tutorialPendingReveal = null;
 
   clearHighlights();
 }
