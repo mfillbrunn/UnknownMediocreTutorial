@@ -542,7 +542,10 @@ function showTutorial(text, opts = {}) {
     tutorialPendingReveal = () => bubble.classList.remove("positioning");
   }
 
-  if (textEl.textContent !== text) {
+  const textChanged =
+    textEl.textContent !== text;
+
+  if (textChanged) {
     textEl.textContent = text;
 
     if (isNewStep || wasHidden) {
@@ -558,7 +561,22 @@ function showTutorial(text, opts = {}) {
 
   updateActionBadge();
   updateTutorialToggleState();
-  scheduleTutorialLayout();
+
+  // tutorialSteps() re-runs on every server stateUpdate, including plenty
+  // that have nothing to do with the tutorial (the opponent's move, a
+  // timer tick) -- showTutorial() gets called again on every one of those
+  // with the exact same step. Repositioning unconditionally re-measured
+  // live rects and rewrote the bubble's `top` every single time, and any
+  // stray sub-pixel difference between renders (font/layout rounding, an
+  // unrelated element resizing) then visibly nudged the bubble via its
+  // `top` transition -- reading as constant tiny jitter. Only bother when
+  // something that could actually move it changed: a new step, a fresh
+  // reveal, or the text itself (which usually means a new highlight
+  // target too, e.g. a "waiting…" placeholder swapping to the real
+  // message once its data arrives).
+  if (isNewStep || wasHidden || textChanged) {
+    scheduleTutorialLayout();
+  }
 }
 
 function pauseTutorial() {
@@ -676,9 +694,31 @@ function queueHighlightCommit() {
   queueMicrotask(() => {
     tutorialHighlightCommitQueued = false;
 
-    tutorialHighlightTargets = [
+    const nextTargets = [
       ...new Set(tutorialHighlightDraft)
     ].filter(Boolean);
+
+    // tutorialSteps() re-runs on every server stateUpdate, and every run
+    // re-highlights whatever the current step already has highlighted --
+    // clearHighlights() at the top empties the draft, then the step's own
+    // highlight*() calls immediately refill it with the same elements.
+    // Without this check, that redundant refill still restarted the
+    // 360ms settle timer and a fresh reposition pass below every single
+    // time, which read as the ring/bubble nudging by a stray pixel every
+    // few seconds even though the highlighted target hadn't changed.
+    const unchanged =
+      nextTargets.length ===
+        tutorialHighlightTargets.length &&
+      nextTargets.every(
+        (el, i) =>
+          el === tutorialHighlightTargets[i]
+      );
+
+    tutorialHighlightTargets = nextTargets;
+
+    if (unchanged) {
+      return;
+    }
 
     document
       .querySelectorAll(
@@ -2456,7 +2496,7 @@ function runSetterTutorial(
 
       if (tutorialSubStep === 1) {
         showTutorial(
-          `Nice — now let's lock in a new secret. Enter "${word}"! After this, finish the round on your own.`,
+          `Nice — now let's lock in a new secret. Enter "${word}"!`,
           {
             enabled: true,
             mode: "hide"
@@ -2496,22 +2536,8 @@ function runSetterTutorial(
             e.extraInfo
           );
 
-      if (tutorialSubStep === 0) {
-        showTutorial(
-          `From here on, play strategically and try to outsmart your opponent.`,
-          {
-            enabled: true
-          }
-        );
-
-        tutorialContinueMode =
-          "advance";
-
-        return;
-      }
-
       if (
-        tutorialSubStep === 1 &&
+        tutorialSubStep === 0 &&
         countEntry
       ) {
         const {
@@ -2522,20 +2548,25 @@ function runSetterTutorial(
         showTutorial(
           `Counts Only hid the exact tile colors on "${countEntry.guess}" — the Inspector only learned ${greens} letter${greens === 1 ? " was" : "s were"} green and ${yellows} ${yellows === 1 ? "was" : "were"} yellow, not which. The small "?" marks in the bottom-right corner of those tiles show which ones the Inspector saw that way instead of a real color — other powers can leave a similar mark to show what color the Inspector actually saw there.`,
           {
-            enabled: true,
-            mode: "hide"
+            enabled: true
           }
         );
 
         highlightSetterHistory();
 
         tutorialContinueMode =
-          "hide";
+          "advance";
 
         return;
       }
 
-      hideTutorial();
+      showTutorial(
+        `From here on, play strategically and try to outsmart your opponent.`,
+        {
+          mode: "hide"
+        }
+      );
+
       return;
     }
 
