@@ -30,23 +30,54 @@ function buildPowerInfoPanel(state, role) {
   for (const id in PowerEngine.powers) {
     if (!activePowers.has(id)) continue;
 
-    const mod  = PowerEngine.powers[id];
-    const variant = state.powers?.[id]?.mode || null;
-    const meta = getPowerMeta(id, variant);
-    if (!meta) continue;
+  const mod =
+  PowerEngine.powers[id];
 
-    const row = document.createElement("div");
-    row.className = "power-info-row power-info-active";
-    row.innerHTML = `
-      <span class="power-info-emoji">${meta.emoji || "⚡"}</span>
-      <div class="power-info-body">
-        <div class="power-info-title">${meta.label}</div>
-        <div class="power-info-desc">${meta.desc}</div>
-      </div>
-    `;
+const powerRole =
+  mod.role || "guesser";
 
-    const powerRole = mod.role || "guesser";
-    sections[powerRole]?.push(row);
+const variant =
+  state.powers?.[id]?.mode || null;
+
+const meta =
+  getPowerMeta(id, variant);
+
+if (!meta) {
+  continue;
+}
+
+const description =
+  powerRole === role
+    ? meta.desc
+    : (
+        meta.opponentDesc ||
+        meta.short ||
+        meta.desc
+      );
+
+const row =
+  document.createElement("div");
+
+row.className =
+  "power-info-row power-info-active";
+
+row.innerHTML = `
+  <span class="power-info-emoji">
+    ${meta.emoji || "⚡"}
+  </span>
+
+  <div class="power-info-body">
+    <div class="power-info-title">
+      ${meta.label}
+    </div>
+
+    <div class="power-info-desc">
+      ${description}
+    </div>
+  </div>
+`;
+
+sections[powerRole]?.push(row);
   }
 
   // Quest isn't a registered PowerEngine power (it piggybacks on the power
@@ -140,14 +171,36 @@ function hideTooltip() {
 
 
 // powerEngine.js (or a shared client helper)
-window.getPowerMeta = function (id, variant) {
-  const base = window.POWER_METADATA[id];
-  if (!base) return null;
+window.getPowerMeta = function (
+  id,
+  variant
+) {
+  const base =
+    window.POWER_METADATA?.[id];
 
-  if (variant && base.variants?.[variant]) {
-    return base.variants[variant];
+  if (!base) {
+    return null;
   }
-  return base;
+
+  const variantMeta =
+    variant &&
+    base.variants?.[variant]
+      ? base.variants[variant]
+      : null;
+
+  return {
+    ...base,
+    ...(variantMeta || {}),
+
+    opponentDesc:
+      variantMeta?.opponentDesc ||
+      base.opponentDesc ||
+      window
+        .OPPONENT_POWER_DESCRIPTIONS
+        ?.[id] ||
+      base.short ||
+      base.desc
+  };
 };
 
 document.addEventListener("mousemove", (e) => {
