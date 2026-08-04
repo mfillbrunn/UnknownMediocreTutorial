@@ -98,6 +98,7 @@ async function fetchAndRenderPastGames(container, sourceFilter = "all") {
       .from("matches")
       .select(`
         id,
+        match_id,
         created_at,
         ranked,
         time_control,
@@ -124,7 +125,20 @@ async function fetchAndRenderPastGames(container, sourceFilter = "all") {
 
     if (error) throw error;
 
-    renderPastGames(data, container);
+    const uniqueMatches = [
+  ...new Map(
+    (data || []).map(match => [
+      match.match_id ||
+      match.id,
+      match
+    ])
+  ).values()
+];
+
+renderPastGames(
+  uniqueMatches,
+  container
+);
     container.dataset.loaded = "1";
 
   } catch (err) {
