@@ -534,59 +534,175 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
     });
 
     /* ---------- GAME ACTION ---------- */
-    socket.on("gameAction", ({ action }) => {
-      const roomId = socket.data.roomId;
-      if (!roomId || !rooms[roomId]) {
-        console.warn("[gameAction] socket not in valid room", socket.id);
-        socket.emit("roomInvalid", { reason: "desync" });
-        return;
+    socket.on(
+      "gameAction",
+      ({ action } = {}, cb) => {
+        const roomId =
+          socket.data.roomId;
+
+        if (
+          !roomId ||
+          !rooms[roomId]
+        ) {
+          console.warn(
+            "[gameAction] socket not in valid room",
+            socket.id
+          );
+
+          cb?.({
+            ok: false,
+            code: "ROOM_DESYNC",
+            error:
+              "Socket is not attached to the room"
+          });
+
+          socket.emit("roomInvalid", {
+            reason: "desync"
+          });
+
+          return;
+        }
+
+        const room =
+          rooms[roomId];
+
+        const userId =
+          room.socketToUserId?.[
+            socket.id
+          ];
+
+        if (!userId) {
+          console.warn(
+            "[gameAction] no userId for socket",
+            socket.id
+          );
+
+          cb?.({
+            ok: false,
+            code: "SESSION_DESYNC",
+            error:
+              "Socket is not attached to a player"
+          });
+
+          return;
+        }
+
+        const connPlayer =
+          room.playersByUserId?.[
+            userId
+          ];
+
+        const statePlayer =
+          room.state.players?.[
+            userId
+          ];
+
+        if (
+          !connPlayer ||
+          !connPlayer.connected ||
+          !statePlayer
+        ) {
+          console.warn(
+            "[gameAction] player not active",
+            userId
+          );
+
+          cb?.({
+            ok: false,
+            code: "PLAYER_INACTIVE",
+            error:
+              "Player session is inactive"
+          });
+
+          return;
+        }
+
+        if (
+          !action ||
+          typeof action.type !==
+            "string"
+        ) {
+          cb?.({
+            ok: false,
+            code: "BAD_ACTION",
+            error: "Invalid action"
+          });
+
+          return;
+        }
+
+        action.userId = userId;
+
+        try {
+          context.applyAction(
+            room,
+            room.state,
+            action,
+            roomId,
+            context
+          );
+        } catch (err) {
+          console.error(
+            "[gameAction] applyAction error",
+            err
+          );
+
+          cb?.({
+            ok: false,
+            code: "ACTION_ERROR",
+            error: "Action failed"
+          });
+
+          return;
+        }
+
+        emitRoomState(
+          roomId,
+          room,
+          io
+        );
+
+        /*
+         * Confirm to the sending browser that its socket was
+         * correctly attached and the action reached the server.
+         */
+        cb?.({
+          ok: true
+        });
+
+        if (
+          !action.ai &&
+          (
+            !action.type.startsWith(
+              "USE_"
+            ) ||
+            action.type ===
+              "USE_DOUBLE_GUESS"
+          ) &&
+          (
+            room.state.phase ===
+              "normal" ||
+            room.state.phase ===
+              "simultaneous"
+          )
+        ) {
+          setTimeout(() => {
+            try {
+              maybeRunAI(
+                room,
+                roomId,
+                context
+              );
+            } catch (err) {
+              console.error(
+                "maybeRunAI crashed:",
+                err
+              );
+            }
+          }, 1000);
+        }
       }
-
-      const room = rooms[roomId];
-      const userId = room.socketToUserId?.[socket.id];
-
-      if (!userId) {
-        console.warn("[gameAction] no userId for socket", socket.id);
-        return;
-      }
-
-      const connPlayer = room.playersByUserId?.[userId];
-      const statePlayer = room.state.players?.[userId];
-
-      if (!connPlayer || !connPlayer.connected || !statePlayer) {
-        console.warn("[gameAction] player not active", userId);
-        return;
-      }
-
-      action.userId = userId;
-
-      try {
-        context.applyAction(room, room.state, action, roomId, context);
-      } catch (err) {
-        console.error("[gameAction] applyAction error", err);
-      }
-
-      emitRoomState(roomId, room, io);
-
-      if (
-        !action.ai &&
-        // Most powers keep the same player's turn, so there's nothing for the
-        // AI to do afterwards. Double Tap is the exception: it consumes the
-        // guesser's turn and hands the pending (visible) guess to the setter,
-        // so the AI setter must be given a chance to respond just like a
-        // normal guess.
-        (!action.type.startsWith("USE_") || action.type === "USE_DOUBLE_GUESS") &&
-        (room.state.phase === "normal" || room.state.phase === "simultaneous")
-      ) {
-        setTimeout(() => {
-          try {
-            maybeRunAI(room, roomId, context);
-          } catch (err) {
-            console.error("maybeRunAI crashed:", err);
-          }
-        }, 1000);
-      }
-    });
+    );
 
     /* ---------- DISCONNECT ---------- */
     socket.on("disconnect", () => {
