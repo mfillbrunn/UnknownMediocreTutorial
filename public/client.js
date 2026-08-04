@@ -1587,12 +1587,25 @@ function handleSetterInput(event) {
         // to make the screen look like a normal successful submit even
         // though nothing was sent, with no way to tell the two apart until
         // the next action mysteriously failed.
-        if (!sendGameAction({ type: "SET_SECRET_SAME" })) {
-          toast("Not connected — try again");
+        if (
+          !sendGameAction(
+            {
+              type:
+                "SET_SECRET_SAME"
+            },
+            result => {
+              if (!result?.ok) {
+                return;
+              }
+
+              resetEphemeralUIState();
+              updateUI();
+            }
+          )
+        ) {
           return;
         }
-        resetEphemeralUIState();
-        updateUI();
+
         return;
       }
     }
@@ -1681,14 +1694,28 @@ function submitSetterNew() {
   }
   // Same reasoning as the SET_SECRET_SAME branch above: don't wipe the
   // draft the player just typed unless it actually reached the server.
-  if (!sendGameAction({type: "SET_SECRET_NEW",secret: w})) {
-    toast("Not connected — try again");
+  if (
+    !sendGameAction(
+      {
+        type: "SET_SECRET_NEW",
+        secret: w
+      },
+      result => {
+        if (!result?.ok) {
+          return;
+        }
+
+        stopSecretRoulette();
+
+        state.setterDraft = "";
+
+        resetEphemeralUIState();
+        updateUI();
+      }
+    )
+  ) {
     return;
   }
-  stopSecretRoulette();
-  state.setterDraft = "";
-  resetEphemeralUIState();
-  updateUI();
 }
 
 
@@ -1819,13 +1846,27 @@ function handleGuesserInput(event) {
     // after any real successful submit -- while the server never got
     // anything and still expected the original guess. The next real
     // attempt hit the plain length check on an already-emptied draft.
-    if (!sendGameAction({type: "SUBMIT_GUESS",guess: g})) {
-      toast("Not connected — try again");
+    if (
+      !sendGameAction(
+        {
+          type: "SUBMIT_GUESS",
+          guess: g
+        },
+        result => {
+          if (!result?.ok) {
+            return;
+          }
+
+          localGuesserDraft = "";
+
+          guesserDraftLocks.clear();
+
+          resetEphemeralUIState();
+        }
+      )
+    ) {
       return;
     }
-    localGuesserDraft = "";
-    guesserDraftLocks.clear();
-    resetEphemeralUIState();
   }
 }
 
