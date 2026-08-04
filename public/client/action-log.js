@@ -53,7 +53,14 @@
           ? conditions.map(window.formatFieldReportCondition).join(" • ")
           : "";
         if (conditionList) {
-          entries.push({ type: "power", cssClass: "", text: `Quest: Field Report — ${conditionList}` });
+          // The conditions are the actionable part of the line (what to
+          // actually aim the next guess at) -- bolded so they stand out
+          // from the surrounding log chatter at a glance.
+          entries.push({
+            type: "power",
+            cssClass: "",
+            text: `Quest: Field Report — <strong>${conditionList}</strong>`
+          });
         }
       }
       // Roles can swap between rounds, so "you"/"the setter" has to be
@@ -113,14 +120,6 @@
         }
       });
 
-      // The not-yet-consumed conditions for the guesser's NEXT guess --
-      // shown once at the end of the live round's entries so there's
-      // always a current answer to "what am I aiming for right now"
-      // without needing the removed on-screen badge.
-      if (isLiveFieldReport && !quest.used) {
-        pushConditionsLine(quest.conditions);
-      }
-
       // Recon Sweep result, shown the instant it's used rather than
       // waiting for the setter's Keep/New decision to finalize this
       // round's guess entry (see letterProbeServer.js's postScore --
@@ -165,6 +164,14 @@
             text: `Quest: ${status.meta.label} — One guess away!`
           });
         }
+      }
+
+      // The not-yet-consumed conditions for the guesser's NEXT guess --
+      // shown once at the very end of the live round's entries, below the
+      // quest status line above, so the last thing the log says is what to
+      // aim the next guess at.
+      if (isLiveFieldReport && !quest.used) {
+        pushConditionsLine(quest.conditions);
       }
 
       return viewerRole;

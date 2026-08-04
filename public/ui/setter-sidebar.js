@@ -81,14 +81,21 @@
     return true;
   }
 
-  // Anchored on the draft row specifically (not the whole center column)
-  // so the history/constraint-row feedback above it stays visible, and
-  // capped well above the keyboard's top edge so the keyboard stays fully
-  // usable -- the earlier version spanned the entire center column plus
-  // the whole sidebar top-to-bottom, which was both way oversized and, on
-  // short viewports, actually ran off the bottom of the screen.
+  // Anchored to the keyboard's top edge (not the draft row) so the panel
+  // keeps the same usable size no matter how much feedback has piled up
+  // above it, and capped so a slice of that feedback always stays on
+  // screen -- the earlier version pinned its TOP to the draft row, which
+  // drifts steadily downward as history fills the column, so by ~8 guesses
+  // the keyboard clamp below had squeezed the panel down to a ~28px sliver
+  // wedged against the keyboard. The feedback rows scroll instead now (see
+  // setIdleHistoryCap), which is how the in-flow draft row already behaves.
   const MAX_IDLE_NOTES_HEIGHT = 220;
   const KEYBOARD_GAP = 10;
+  // Smallest slice of the feedback list worth keeping visible above the
+  // panel; it scrolls internally within whatever's left (.history-scroll
+  // is already overflow-y:auto, see history.css).
+  const MIN_HISTORY_HEIGHT = 72;
+  const HISTORY_GAP = 6;
 
   function computeExpandedRect() {
     // .draft-row-wrap itself is a flex:1 spacer (see layout.css's
@@ -100,6 +107,7 @@
     const draftStack = document.querySelector("#setterScreen .draft-stack");
     const centerCol = document.querySelector("#setterScreen .center-col");
     const keyboard = document.getElementById("keyboardSetter");
+    const historyScroll = document.getElementById("setterGuesserSubmitted");
     if (!draftStack || !centerCol) return null;
 
     const draftRect = draftStack.getBoundingClientRect();
@@ -114,15 +122,46 @@
     // (powers + Log, on the left) fully visible throughout.
     const left = centerRect.left;
     const width = centerRect.width;
-    const top = draftRect.top;
-    // Target MAX_IDLE_NOTES_HEIGHT, but never past the keyboard; never
-    // shrink below the draft row's own natural height even if that means
-    // getting closer to the keyboard than the target gap (an already-tight
-    // layout has nowhere else for it to go).
-    const keyboardLimit = keyboardRect ? keyboardRect.top - KEYBOARD_GAP - top : Infinity;
-    const height = Math.max(draftRect.height, Math.min(MAX_IDLE_NOTES_HEIGHT, keyboardLimit));
 
-    return { top, left, width, height };
+    // The bottom edge is the fixed anchor: parked just above the keyboard,
+    // which never moves as history grows (.play-row is the one flexible
+    // link in the column chain, see layout.css). The panel then grows
+    // UPWARD from there.
+    const bottom = keyboardRect
+      ? keyboardRect.top - KEYBOARD_GAP
+      : centerRect.bottom;
+
+    // The history list's own top is fixed by the constraint row above it
+    // and doesn't move when its height is capped, so this can't feed back
+    // into itself the way anchoring to the draft row did.
+    const historyTop = (historyScroll || draftStack).getBoundingClientRect().top;
+    const roomAbove = bottom - historyTop - MIN_HISTORY_HEIGHT - HISTORY_GAP;
+    const height = Math.max(
+      draftRect.height,
+      Math.min(MAX_IDLE_NOTES_HEIGHT, roomAbove)
+    );
+
+    return { top: bottom - height, left, width, height };
+  }
+
+  // The floating panel is position:fixed, so it can't push the feedback
+  // list out of its way on its own -- cap that list to the room left above
+  // the panel and let it scroll there instead, same as the in-flow layout
+  // already does for the draft row.
+  function setIdleHistoryCap(rect) {
+    const historyScroll = document.getElementById("setterGuesserSubmitted");
+    if (!historyScroll || !rect) return;
+    const historyTop = historyScroll.getBoundingClientRect().top;
+    const cap = Math.max(MIN_HISTORY_HEIGHT, rect.top - HISTORY_GAP - historyTop);
+    historyScroll.style.maxHeight = `${cap}px`;
+    // Newest guess is the one that matters -- keep it in view now that the
+    // box it lives in is shorter than the rows it holds.
+    historyScroll.scrollTop = historyScroll.scrollHeight;
+  }
+
+  function clearIdleHistoryCap() {
+    const historyScroll = document.getElementById("setterGuesserSubmitted");
+    if (historyScroll) historyScroll.style.maxHeight = "";
   }
 
   // el.style.top/left need to be relative to el's actual CSS containing
@@ -226,6 +265,8 @@
     const targetRect = computeExpandedRect();
     if (!targetRect) return;
 
+    setIdleHistoryCap(targetRect);
+
     flip(notesPanel, startRect, targetRect);
   }
 
@@ -243,6 +284,7 @@
     idleExpanded = false;
     hint?.classList.add("hidden");
     activitySection.classList.remove("idle-mode");
+    clearIdleHistoryCap();
 
     // The turn's return always resurfaces Notes (not whatever tab was
     // selected before idle started) -- it's what the setter was just
@@ -273,11 +315,31 @@
   // runs first), so this just reacts to whatever they say.
   window.updateSetterIdleExpand = function (state) {
     if (shouldIdleExpand(state)) {
-      enterIdleExpand();
+      if (idleExpanded) {
+        // Already floating -- re-anchor against the current layout. Powers
+        // and badges appearing in the sidebar mid-turn can shift the
+        // column around underneath it, and the panel has to stay parked
+        // above the keyboard through all of it.
+        reanchorIdleExpand();
+      } else {
+        enterIdleExpand();
+      }
     } else if (idleExpanded) {
       exitIdleExpand();
     }
   };
+
+  // Snap the floating panel (and the feedback list's cap) to the current
+  // layout with no animation. Skipped mid-FLIP so it can't fight the
+  // enter/exit transition that's still running.
+  function reanchorIdleExpand() {
+    const notesPanel = byId("notesPanelSetter");
+    if (!notesPanel || notesPanel.classList.contains("idle-flip-animating")) return;
+    const targetRect = computeExpandedRect();
+    if (!targetRect) return;
+    applyFixedRect(notesPanel, targetRect);
+    setIdleHistoryCap(targetRect);
+  }
 
   function initialiseSetterSidebar() {
     const logButton = byId("actionLogBtnSetter");
@@ -325,6 +387,7 @@
           activitySection?.classList.remove("idle-mode");
           notesPanel?.classList.remove("idle-floating", "idle-flip-animating");
           if (notesPanel) clearFixedStyles(notesPanel);
+          clearIdleHistoryCap();
           byId("setterNotesIdleHint")?.classList.add("hidden");
         }
 
@@ -346,6 +409,7 @@
       if (!notesPanel || !targetRect) return;
       notesPanel.classList.remove("idle-flip-animating");
       applyFixedRect(notesPanel, targetRect);
+      setIdleHistoryCap(targetRect);
     });
   }
 
