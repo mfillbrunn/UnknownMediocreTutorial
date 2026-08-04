@@ -14,7 +14,12 @@
     return {
       type: "power",
       cssClass: roleClass,
-      text: `${who}${formatted.text}`
+      text:
+  `${who}${
+    formatted.actorRole === viewerRole
+      ? formatted.ownText
+      : formatted.opponentText
+  }`
     };
   }
 
