@@ -2133,7 +2133,7 @@ function getGuideInfo(state, role) {
     return {
       phase: "Simultaneous Round",
       task: done
-        ? "Guess submitted — waiting for the setter's secret."
+        ? "Guess submitted — waiting for the Spy's secret."
         : "Submit your opening guess. You don't know the secret yet."
     };
   }
@@ -2145,7 +2145,7 @@ function getGuideInfo(state, role) {
         phase: "Guessing Round",
         task: isDecisionStep
           ? "Your turn: keep your secret, or switch to a new word consistent with all feedback so far."
-          : "Waiting for the guesser to submit a guess."
+          : "Waiting for the Inspector to submit a guess."
       };
     }
     const isGuessTurn = state.turn === state.guesser;
@@ -2153,7 +2153,7 @@ function getGuideInfo(state, role) {
       phase: "Guessing Round",
       task: isGuessTurn
         ? "Your turn: submit a guess."
-        : "Waiting for the setter to decide whether to keep or change the secret."
+        : "Waiting for the Spy to decide whether to keep or change the secret."
     };
   }
 
