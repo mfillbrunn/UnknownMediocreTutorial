@@ -190,6 +190,190 @@ module.exports = function registerSocketHandlers(io, context) {
       emitRoomState(roomId, room, io);
     });
 
+    /* ---------- SYNC ROOM / FOREGROUND RESUME ---------- */
+    socket.on("syncRoom", ({ roomId, userId } = {}, cb) => {
+      const room = rooms[roomId];
+
+      if (!room || room.status !== "alive") {
+        cb?.({
+          ok: false,
+          code: "ROOM_NOT_FOUND",
+          error: "Room not found"
+        });
+
+        return;
+      }
+
+      const connPlayer =
+        room.playersByUserId?.[userId];
+
+      const statePlayer =
+        room.state?.players?.[userId];
+
+      if (!connPlayer || !statePlayer) {
+        cb?.({
+          ok: false,
+          code: "PLAYER_NOT_FOUND",
+          error: "You are no longer in this game"
+        });
+
+        return;
+      }
+
+      const oldSocketId =
+        connPlayer.socketId;
+
+      const wasDisconnected =
+        !connPlayer.connected;
+
+      /*
+       * Remove the old socket mapping. The old socket may still
+       * technically exist after a phone wakes from suspension.
+       */
+      if (
+        oldSocketId &&
+        oldSocketId !== socket.id
+      ) {
+        if (
+          room.socketToUserId?.[
+            oldSocketId
+          ] === userId
+        ) {
+          delete room.socketToUserId[
+            oldSocketId
+          ];
+        }
+
+        const oldSocket =
+          io.sockets.sockets.get(
+            oldSocketId
+          );
+
+        if (oldSocket) {
+          oldSocket.leave(roomId);
+
+          if (
+            oldSocket.data.roomId ===
+            roomId
+          ) {
+            oldSocket.data.roomId =
+              null;
+          }
+
+          oldSocket.data.userId =
+            null;
+        }
+      }
+
+      /*
+       * A socket should only belong to its current game room.
+       */
+      if (
+        socket.data.roomId &&
+        socket.data.roomId !== roomId
+      ) {
+        socket.leave(
+          socket.data.roomId
+        );
+      }
+
+      room.socketToUserId ||= {};
+
+      room.socketToUserId[
+        socket.id
+      ] = userId;
+
+      room.aiOnlySince = null;
+
+      connPlayer.socketId =
+        socket.id;
+
+      connPlayer.connected = true;
+      connPlayer.disconnectedAt = null;
+
+      socket.data.roomId = roomId;
+      socket.data.userId = userId;
+
+      socket.join(roomId);
+
+      /*
+       * Resume only when this was a genuine reconnect and all
+       * human players are connected again.
+       *
+       * This avoids resetting the timer every time someone merely
+       * returns to the tab while their connection was still healthy.
+       */
+      const allHumansConnected =
+        Object.values(
+          room.playersByUserId || {}
+        )
+          .filter(
+            player => !player.isAI
+          )
+          .every(
+            player => player.connected
+          );
+
+      if (
+        wasDisconnected &&
+        allHumansConnected &&
+        room.state.paused &&
+        !room.state.gameOver &&
+        room.state.phase !== "lobby"
+      ) {
+        room.state.paused = false;
+        room.state.roundStartTime =
+          Date.now();
+
+        if (
+          room.state.timeControl?.enabled
+        ) {
+          startGameTimer(
+            room,
+            room.state,
+            roomId,
+            context
+          );
+        }
+      }
+
+      socket.emit("roleAssigned", {
+        role: statePlayer.role
+      });
+
+      if (wasDisconnected) {
+        socket.to(roomId).emit(
+          "lobbyEvent",
+          {
+            type: "playerRejoined",
+            userId
+          }
+        );
+      }
+
+      /*
+       * Send only this player their own safe copy of the state.
+       */
+      const safeState =
+        buildSafeStateForPlayer(
+          room.state,
+          userId,
+          context.ALLOWED_SECRETS
+        );
+
+      socket.emit(
+        "stateUpdate",
+        safeState
+      );
+
+      cb?.({
+        ok: true,
+        roomId,
+        role: statePlayer.role,
+        wasDisconnected
+      });
+    });
+
     /* ---------- QUICK JOIN ---------- */
     // "Play Human" from the Quick Play menu: join whatever open room is
     // waiting, or -- if none is -- create a fresh one instead of just
