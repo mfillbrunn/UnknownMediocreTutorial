@@ -426,9 +426,9 @@ function renderStats(matches, container) {
       ${wordCard("Most Common Opening Guess", "No guesses yet", stats.mostCommonOpeningGuess)}
       ${wordCard("Most Winning Secret", "No wins yet", stats.mostWinningSecret)}
       ${wordCard("Most Winning Opening Guess", "No wins yet", stats.mostWinningOpeningGuess)}
-      ${numCard("Avg Guesses to Find Secret", fmtNum(stats.avgGuessesToFindSecret), "as guesser, per round")}
-      ${numCard("Avg Guesses When You Win", fmtNum(stats.avgGuessesWhenYouWin), "as guesser, in won matches")}
-      ${numCard("Avg Secret Changes", fmtNum(stats.avgSecretChanges), "per round as setter")}
+      ${numCard("Avg Guesses to Find Secret", fmtNum(stats.avgGuessesToFindSecret), "as Inspector, per round")}
+      ${numCard("Avg Guesses When You Win", fmtNum(stats.avgGuessesWhenYouWin), "as Inspector, in won matches")}
+      ${numCard("Avg Secret Changes", fmtNum(stats.avgSecretChanges), "per round as Spy")}
     </div>
     <div class="stats-footnote">Based on your last ${stats.gamesPlayed} game${stats.gamesPlayed === 1 ? "" : "s"}.</div>
   `;
