@@ -1099,27 +1099,6 @@ function highlightLogEntryByText(text, role) {
     });
 }
 
-// Count Only's G/Y tally renders as a `.count-only-badge` pinned beside
-// the scored history row itself (history.js's createCountOnlyBadge) --
-// present on both the guesser's own board (#historyGuesser) and the
-// setter's view of that same row (#setterGuesserSubmitted). NOT the
-// (unrendered/dead) InfoBadgeEngine badge -- that engine's $("Setter
-// InfoBadge")/$("GuesserInfoBadge") targets don't exist anywhere in the
-// DOM, so InfoBadgeEngine.render() always no-ops. Highlights the most
-// recent badge in the container, matching whichever guess the tutorial
-// just discussed.
-function highlightCountOnlyBadge(role) {
-  const containerId =
-    role === "setter" ? "setterGuesserSubmitted" : "historyGuesser";
-
-  const badges =
-    byId(containerId)?.querySelectorAll(".count-only-badge");
-
-  if (badges?.length) {
-    highlightEl(badges[badges.length - 1]);
-  }
-}
-
 function highlightRoundSummary() {
   highlightEl(
     byId("roundSummary")
@@ -2517,24 +2496,12 @@ function runSetterTutorial(
             e.extraInfo
           );
 
-      if (
-        tutorialSubStep === 0 &&
-        countEntry
-      ) {
-        const {
-          greens,
-          yellows
-        } = countEntry.extraInfo;
-
+      if (tutorialSubStep === 0) {
         showTutorial(
-          `Counts Only hid the exact tile colors on "${countEntry.guess}" — the Inspector only learned ${greens} letter${greens === 1 ? " was" : "s were"} green and ${yellows} ${yellows === 1 ? "was" : "were"} yellow, not which. See the G/Y tally badge next to their guess below.`,
+          `From here on, play strategically and try to outsmart your opponent.`,
           {
             enabled: true
           }
-        );
-
-        highlightCountOnlyBadge(
-          "setter"
         );
 
         tutorialContinueMode =
@@ -2543,13 +2510,32 @@ function runSetterTutorial(
         return;
       }
 
-      showTutorial(
-        `From here on, play strategically and try to outsmart your opponent.`,
-        {
-          mode: "hide"
-        }
-      );
+      if (
+        tutorialSubStep === 1 &&
+        countEntry
+      ) {
+        const {
+          greens,
+          yellows
+        } = countEntry.extraInfo;
 
+        showTutorial(
+          `Counts Only hid the exact tile colors on "${countEntry.guess}" — the Inspector only learned ${greens} letter${greens === 1 ? " was" : "s were"} green and ${yellows} ${yellows === 1 ? "was" : "were"} yellow, not which. The small "?" marks in the bottom-right corner of those tiles show which ones the Inspector saw that way instead of a real color — other powers can leave a similar mark to show what color the Inspector actually saw there.`,
+          {
+            enabled: true,
+            mode: "hide"
+          }
+        );
+
+        highlightSetterHistory();
+
+        tutorialContinueMode =
+          "hide";
+
+        return;
+      }
+
+      hideTutorial();
       return;
     }
 
