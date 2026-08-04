@@ -40,7 +40,20 @@ window.showMyGames = async function () {
     window._fetchGameInvites ? window._fetchGameInvites(window.currentUser.id) : []
   ]);
 
-  const gameList = Array.isArray(games) ? games : [];
+  const rawGameList =
+  Array.isArray(games)
+    ? games
+    : [];
+
+const gameList = [
+  ...new Map(
+    rawGameList.map(game => [
+      game.matchId ||
+      game.roomId,
+      game
+    ])
+  ).values()
+];
 
   const pending = gameList.filter(g => g.isPending);
   const active = gameList.filter(g => !g.isPending);
