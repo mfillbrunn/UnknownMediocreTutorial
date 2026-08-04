@@ -44,7 +44,7 @@ module.exports = function registerSocketHandlers(io, context) {
     socket.on("getMyActiveGames", ({ userId }, cb) => {
       if (!userId) return cb?.([]);
 
-      const results = [];
+      const resultsByMatch =   new Map();
 
       for (const [roomId, room] of Object.entries(rooms)) {
         if (!room || room.status !== "alive") continue;
@@ -75,18 +75,82 @@ module.exports = function registerSocketHandlers(io, context) {
               : !state.simultaneousGuessSubmitted;
         }
 
-        results.push({
-          roomId,
-          opponentName: opponent?.name || (opponent?.isAI ? "AI" : isPending ? null : "Opponent"),
-          myRole: me.role,
-          isMyTurn,
-          isPending,
-          phase: state.phase,
-          ranked: !!state.ranked,
-          startedAt: state.matchStartedAt || null
-        });
-      }
+const participants =
+  Object.keys(state.players || {})
+    .filter(id => id !== "AI")
+    .sort()
+    .join("|");
 
+const matchKey =
+  state.matchId ||
+  `${participants}:${
+    state.matchStartedAt ||
+    roomId
+  }`;
+
+const candidate = {
+  roomId,
+  matchId: state.matchId || null,
+
+  opponentName:
+    opponent?.name ||
+    (
+      opponent?.isAI
+        ? "AI"
+        : isPending
+          ? null
+          : "Opponent"
+    ),
+
+  myRole: me.role,
+  isMyTurn,
+  isPending,
+  phase: state.phase,
+  ranked: !!state.ranked,
+
+  startedAt:
+    state.matchStartedAt ||
+    null,
+
+  /*
+   * Used only to decide which copy is newer when a
+   * duplicate room exists.
+   */
+  _progress:
+    (
+      state.matchRounds?.length ||
+      0
+    ) * 1000 +
+    (
+      state.history?.length ||
+      0
+    )
+};
+
+const existing =
+  resultsByMatch.get(matchKey);
+
+if (
+  !existing ||
+  candidate._progress >
+    existing._progress
+) {
+  resultsByMatch.set(
+    matchKey,
+    candidate
+  );
+}
+      }
+const results = [
+  ...resultsByMatch.values()
+].map(game => {
+  const {
+    _progress,
+    ...publicGame
+  } = game;
+
+  return publicGame;
+});
       // Games where it's your turn first, pending invites last.
       results.sort((a, b) => {
         if (a.isPending !== b.isPending) return a.isPending ? 1 : -1;
