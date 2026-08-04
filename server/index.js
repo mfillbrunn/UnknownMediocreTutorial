@@ -110,7 +110,14 @@ const io = new Server(server, {
   // actually wrong. A more generous timeout rides out those transients;
   // genuinely-gone connections still get cleaned up, just a bit later.
   pingInterval: 25000,
-  pingTimeout: 60000
+  pingTimeout: 60000,
+
+  connectionStateRecovery: {
+    maxDisconnectionDuration:
+      60_000,
+
+    skipMiddlewares: false
+  }
 });
 
 // Attach global engine objects so modules can use them
@@ -170,7 +177,7 @@ setInterval(() => cleanupEmptyRooms(), 10 * 60 * 1000);
 // Cleanup disconnected players after a 30-second grace window (matches the
 // client's rejoin-or-leave prompt, which offers to reconnect within the
 // same window).
-setInterval(() => cleanupDisconnectedPlayers(io, 30_000), 5_000);
+setInterval(() => cleanupDisconnectedPlayers(io, 60_000), 5_000);
 
 // AI turn watchdog: maybeRunAI's own try/catch (runAI.js) already stops a
 // single bad AI move from crashing the server, but a move that throws
