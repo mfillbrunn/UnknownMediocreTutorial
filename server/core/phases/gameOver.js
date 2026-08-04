@@ -121,58 +121,74 @@ clearRoundPowerActivity(state);
   state.gameOverView = res.view || "match";
   state.canNextRound = !!res.canNextRound;
 
-  if (state.isDaily && !state.canNextRound) {
-    const aiPlayer = Object.values(state.players || {}).find((p) => p.isAI);
-    for (const player of Object.values(state.players || {})) {
-      if (!player.isAI) {
-        const { points, time, didWin, tie } = computeMatchResult(state, player.userId);
-        markDailyCompleted(player.userId, state.dailyDate, {
-          score: points[player.userId] || 0,
-          // Both rounds' points combined already live in `points` (each
-          // round credits its setter, and the human/AI are setter in
-          // exactly one round each) -- opponentScore is just the AI's
-          // half of the same totals, so the completed-daily UI can show
-          // "you : AI" as one total-score readout instead of just your
-          // own number.
-          opponentScore: (aiPlayer && points[aiPlayer.userId]) || 0,
-          time: time[player.userId] || 0,
-          won: didWin,
-          tie,
-          // Which AI strength the player chose for this run (1 Easy / 2
-          // Medium / 3 Hard) -- surfaced on the completed-daily screen and
-          // in the shared result, since the same score is a very different
-          // achievement against Hard than against Easy.
-          difficulty: state.aiDifficulty || null
-        });
+  if (
+  state.isDaily &&
+  !state.canNextRound
+) {
+  const aiPlayer =
+    Object.values(
+      state.players || {}
+    ).find(player => player.isAI);
 
-        // Persist to Supabase so the daily-challenge Rankings tab can show
-        // everyone's results (dailyTracking is in-memory only). Best-effort:
-        // if the daily_results table doesn't exist yet the error is logged
-        // and swallowed, and the rest of game-over is unaffected. One row per
-        // user per day (upsert on user_id,date).
-        if (supabase) {
-          supabase
-            .from("daily_results")
-            .upsert(
-              {
-                user_id: player.userId,
-                date: state.dailyDate,
-                score: points[player.userId] || 0,
-                opponent_score: (aiPlayer && points[aiPlayer.userId]) || 0,
-                time_seconds: Math.round(time[player.userId] || 0),
-                won: didWin,
-                tie,
-                difficulty: state.aiDifficulty || null
-              },
-              { onConflict: "user_id,date" }
-            )
-            .then(({ error }) => {
-              if (error) console.error("[daily_results] upsert failed:", error.message);
-            });
-        }
-      }
+  for (
+    const player of Object.values(
+      state.players || {}
+    )
+  ) {
+    if (player.isAI) {
+      continue;
     }
+
+    const {
+      points,
+      time,
+      didWin,
+      tie
+    } = computeMatchResult(
+      state,
+      player.userId
+    );
+
+    void markDailyCompleted({
+      supabase,
+
+      userId:
+        player.userId,
+
+      date:
+        state.dailyDate,
+
+      result: {
+        score:
+          points[player.userId] ||
+          0,
+
+        opponentScore:
+          aiPlayer
+            ? points[
+                aiPlayer.userId
+              ] || 0
+            : 0,
+
+        time:
+          time[player.userId] ||
+          0,
+
+        won: didWin,
+        tie,
+
+        difficulty:
+          state.aiDifficulty ||
+          null
+      }
+    }).catch(error => {
+      console.error(
+        "[daily] completion failed:",
+        error
+      );
+    });
   }
+}
 
   const isAIMatch = Object.values(room.playersByUserId || {}).some((p) => p.isAI);
 
@@ -182,7 +198,7 @@ clearRoundPowerActivity(state);
   // would just double it up) or the tutorial (scripted secrets/words would
   // pollute the stats screen, and writeMatchHistory's humans.length===2
   // guard already excludes tutorial's single-player room shape anyway).
-  if (!state.isDaily && !state.isTutorial && !state.canNextRound) {
+  if (!state.isTutorial && !state.canNextRound) {
     const { winner, tie } = computeMatchResult(state, null);
 
     if (state.ranked && !isAIMatch) {
