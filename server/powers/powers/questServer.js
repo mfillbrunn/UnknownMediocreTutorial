@@ -58,7 +58,7 @@ const QUEST_THRESHOLDS = {
   ROW: 1, // "complete any one row" -- see rowsCompleted() below, not a plain count
   ALPHA: 3,
   DOUBLES: 3,
-  CHAIN: 3,
+  CHAIN: 2, // links between adjacent guesses, not guesses themselves -- 2 links is a 3-word chain (W1->W2->W3), matching QUEST_METADATA.CHAIN's "submit 3 guesses" and quest.js's client-side "x/2" label
   HARDMODE: 4,
   FIELDREPORT: 8,
   ALTERNATING: 3,
