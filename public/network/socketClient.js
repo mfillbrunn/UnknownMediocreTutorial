@@ -349,194 +349,575 @@ function onRejoinUI() {
   // Show lobby or game based on state (stateUpdate will follow)
   show("lobby");
 }
+// ------------------------------
+// CONNECTION + STATE SYNC
+// ------------------------------
 
-// Tracks whether the socket has ever *dropped* during this page load, and
-// when the most recent drop happened. The very first connection just
-// resumes any in-progress game silently (that's "continuing where you left
-// off" after opening/reloading the app).
 window._everDisconnected = false;
 window._disconnectedAt = 0;
+window._skipNextGameOverReveal =
+  false;
 
-// Set on every drop, consumed (and cleared) by the very next screens
-// update in client.js — see the matching comment there. Distinct from
-// _everDisconnected (which stays true for the rest of the page's life,
-// too coarse for this: a blip in round 1 shouldn't suppress a real live
-// win's reveal in round 5) — this only affects whichever state update
-// happens to be the first one processed after reconnecting.
-window._skipNextGameOverReveal = false;
+/*
+ * When a stored room exists, the session is not considered usable
+ * until a new authoritative stateUpdate arrives.
+ */
+window.gameSessionReady =
+  !localStorage.getItem("roomId");
 
-// How long a gap counts as "brief". socket.io reconnects on its own after a
-// transient hiccup (a momentary network blip, a server event-loop stall
-// during AI computation, a proxy timeout), and the server keeps the
-// player's seat for a 30s reattach grace. A reconnect that lands inside
-// that window can just resume silently — throwing the disruptive "rejoin"
-// modal for a blip the user never even caused is exactly the annoyance
-// being reported. Only a genuinely long absence (tab backgrounded for
-// minutes, laptop asleep), where the seat may already be gone, still asks.
-const BRIEF_RECONNECT_MS = 20000;
+let roomSyncInFlight = false;
+let roomSyncTimeout = null;
+let roomSyncGeneration = 0;
+let lastRoomSyncStartedAt = 0;
+let pageHiddenAt = 0;
 
-function maybeAutoRejoin() {
-  if (window.autoRejoinAttempted) return;
-  if (!window.socketReady) return;
-  if (!window.authReady) return;
-
-  const roomId = localStorage.getItem("roomId");
-  if (!roomId || !window.currentUser) return;
-
-  window.autoRejoinAttempted = true;
-
-  // First connection of this page load — silent resume.
-  if (!window._everDisconnected) {
-    tryAutoRejoin();
-    return;
-  }
-
-  // Reconnection after a drop: resume silently if it was brief (still
-  // within the server's reattach grace), otherwise ask.
-  const gap = window._disconnectedAt
-    ? Date.now() - window._disconnectedAt
-    : Infinity;
-
-  if (gap < BRIEF_RECONNECT_MS) {
-    tryAutoRejoin();
-    return;
-  }
-
-  showRejoinPrompt();
-}
-
-function showRejoinPrompt() {
-  const modal = $("rejoinModal");
-  if (!modal) {
-    // Markup missing for some reason — fall back to the old silent path
-    // rather than stranding the player with no way back in.
-    tryAutoRejoin();
-    return;
-  }
-  if (modal.classList.contains("active")) return; // already showing
-  modal.classList.add("active");
-}
-
-function tryAutoRejoin() {
-  const storedRoomId = localStorage.getItem("roomId");
-  const user = window.currentUser;
-
-  if (!storedRoomId || !user) return;
-  if (!socket.connected) return;
-
-  const username =
-    window.myProfile?.username || user.email || "Player";
-  window.isRejoining = true;
-
-  // sendGameAction drops every action while isRejoining is true (so a
-  // guess/secret submitted mid-rejoin can't race the room state). If this
-  // ack never arrives — connection drops again right after the emit, or a
-  // slow server tick (e.g. mid AI turn) loses it — isRejoining stayed
-  // stuck true forever, silently swallowing all future input until the
-  // player reloaded the page. Force it back open after a timeout so a lost
-  // ack degrades to "one rejoin attempt didn't land" instead of "the game
-  // is now permanently unresponsive."
-  const rejoinTimeout = setTimeout(() => {
-    window.isRejoining = false;
-    window.autoRejoinAttempted = false;
-  }, 8000);
-
-  socket.emit(
-    "joinRoom",
-    { roomId: storedRoomId, userId: user.id, name: username },
-    res => {
-      clearTimeout(rejoinTimeout);
-      if (!res?.ok) {
-        window.isRejoining = false;
-        if (res.error === "Room not found") {
-          window.autoRejoinAttempted = true;
-          localStorage.removeItem("roomId");
-          clearRoom?.();
-          showStartup?.();
-        } else {
-          // allow one retry on next reconnect
-          window.autoRejoinAttempted = false;
-        }
-        return;
-      }
-      window.isRejoining = false;
-      // Not just window.roomId — client.js's own `roomId` (declared with
-      // `let`, a separate global binding, not a window property) gates
-      // PowerEngine's one-time button-render call. Leaving it unset here
-      // is why rejoining left the power buttons (and anything else keyed
-      // off it) missing until a full reload re-derived it from
-      // localStorage.
-      roomId = res.roomId || storedRoomId;
-      window.roomId = res.roomId || storedRoomId;
-      onRejoinUI();
-    }
+function hasStoredRoom() {
+  return !!(
+    window.roomId ||
+    localStorage.getItem("roomId")
   );
 }
 
-// ------------------------------
-// CONNECTION LOGS
-// ------------------------------
-// A small, persistent banner (distinct from the transient "Connection
-// lost" toast, and from the disruptive rejoinModal reserved for long
-// absences) -- stays up for as long as the socket is actually down, so a
-// player mid-blip has a standing signal that something's off rather than
-// a message that already scrolled away. Shown on the same deferred timer
-// as the toast (a sub-second blip shows neither), hidden the instant the
-// socket reconnects.
-function setConnectionBannerVisible(visible) {
-  const el = document.getElementById("connectionBanner");
-  if (!el) return;
-  el.hidden = !visible;
+function setConnectionStatus(
+  status,
+  message = ""
+) {
+  const banner =
+    document.getElementById(
+      "connectionBanner"
+    );
+
+  if (!banner) return;
+
+  banner.dataset.state = status;
+
+  if (
+    status === "ready" ||
+    !hasStoredRoom()
+  ) {
+    banner.hidden = true;
+    return;
+  }
+
+  banner.textContent =
+    message ||
+    (
+      status === "syncing"
+        ? "Syncing game…"
+        : "Reconnecting…"
+    );
+
+  banner.hidden = false;
 }
+
+function cancelRoomSync() {
+  roomSyncGeneration++;
+
+  clearTimeout(roomSyncTimeout);
+  roomSyncTimeout = null;
+
+  roomSyncInFlight = false;
+}
+
+window.cancelRoomSync =
+  cancelRoomSync;
+
+function markFreshGameState() {
+  clearTimeout(roomSyncTimeout);
+  roomSyncTimeout = null;
+
+  roomSyncInFlight = false;
+
+  window.isRejoining = false;
+  window.gameSessionReady = true;
+  window.autoRejoinAttempted =
+    true;
+
+  document
+    .getElementById(
+      "rejoinModal"
+    )
+    ?.classList.remove("active");
+
+  setConnectionStatus("ready");
+}
+
+function failRoomSync(message) {
+  clearTimeout(roomSyncTimeout);
+  roomSyncTimeout = null;
+
+  roomSyncInFlight = false;
+
+  window.isRejoining = false;
+  window.gameSessionReady = false;
+  window.autoRejoinAttempted =
+    false;
+
+  setConnectionStatus(
+    "offline",
+    message
+  );
+}
+
+function expireLocalRoom(message) {
+  cancelRoomSync();
+
+  window.isRejoining = false;
+  window.gameSessionReady = true;
+  window.autoRejoinAttempted =
+    true;
+
+  localStorage.removeItem(
+    "roomId"
+  );
+
+  window.roomId = null;
+
+  if (
+    typeof clearRoom ===
+    "function"
+  ) {
+    clearRoom();
+  }
+
+  setConnectionStatus("ready");
+
+  if (
+    message &&
+    typeof toast === "function"
+  ) {
+    toast(message);
+  }
+}
+
+function requestRoomSync(
+  reason = "manual"
+) {
+  const currentRoomId =
+    window.roomId ||
+    localStorage.getItem(
+      "roomId"
+    );
+
+  const userId =
+    window.getUserId?.() ||
+    window.currentUser?.id;
+
+  if (
+    !currentRoomId ||
+    !userId ||
+    !window.authReady
+  ) {
+    return false;
+  }
+
+  if (roomSyncInFlight) {
+    return true;
+  }
+
+  const now = Date.now();
+
+  /*
+   * visibilitychange, focus, pageshow, and Supabase SIGNED_IN can
+   * all fire almost together when a phone returns to the app.
+   */
+  if (
+    now - lastRoomSyncStartedAt <
+    500
+  ) {
+    return true;
+  }
+
+  if (
+    navigator.onLine === false ||
+    !socket.connected
+  ) {
+    window.isRejoining = true;
+    window.gameSessionReady = false;
+
+    setConnectionStatus(
+      "offline",
+      navigator.onLine === false
+        ? "Offline — waiting for internet…"
+        : "Reconnecting…"
+    );
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    return false;
+  }
+
+  roomSyncInFlight = true;
+  lastRoomSyncStartedAt = now;
+
+  const generation =
+    ++roomSyncGeneration;
+
+  window.isRejoining = true;
+  window.gameSessionReady = false;
+
+  setConnectionStatus(
+    "syncing",
+    "Syncing game…"
+  );
+
+  clearTimeout(roomSyncTimeout);
+
+  roomSyncTimeout =
+    setTimeout(() => {
+      if (
+        generation !==
+        roomSyncGeneration
+      ) {
+        return;
+      }
+
+      failRoomSync(
+        "Could not refresh the game. Tap to retry."
+      );
+    }, 9000);
+
+  socket.timeout(7000).emit(
+    "syncRoom",
+    {
+      roomId: currentRoomId,
+      userId
+    },
+    (err, response) => {
+      if (
+        generation !==
+        roomSyncGeneration
+      ) {
+        return;
+      }
+
+      if (
+        err ||
+        !response?.ok
+      ) {
+        const code =
+          response?.code ||
+          "SYNC_TIMEOUT";
+
+        if (
+          code ===
+            "ROOM_NOT_FOUND" ||
+          code ===
+            "PLAYER_NOT_FOUND"
+        ) {
+          expireLocalRoom(
+            response?.error ||
+            "This game is no longer available."
+          );
+
+          return;
+        }
+
+        failRoomSync(
+          "Could not sync the game. Tap to retry."
+        );
+
+        return;
+      }
+
+      const resolvedRoomId =
+        response.roomId ||
+        currentRoomId;
+
+      window.roomId =
+        resolvedRoomId;
+
+      localStorage.setItem(
+        "roomId",
+        resolvedRoomId
+      );
+
+      /*
+       * Do not hide the banner here.
+       *
+       * The server sends stateUpdate before acknowledging syncRoom.
+       * markFreshGameState() hides the banner only when that fresh
+       * authoritative state actually reaches this browser.
+       */
+    }
+  );
+
+  return true;
+}
+
+window.requestRoomSync =
+  requestRoomSync;
+
+function maybeAutoRejoin() {
+  if (!window.socketReady) return;
+  if (!window.authReady) return;
+
+  requestRoomSync(
+    "auto-rejoin"
+  );
+}
+
+function tryAutoRejoin() {
+  requestRoomSync(
+    "manual-rejoin"
+  );
+}
+
+window.maybeAutoRejoin =
+  maybeAutoRejoin;
+
+window.tryAutoRejoin =
+  tryAutoRejoin;
+
+/*
+ * This listener is separate from client.js's normal state listener.
+ * Every fresh state, including one requested after returning to the
+ * app, marks the room session as usable.
+ */
+socket.on(
+  "stateUpdate",
+  markFreshGameState
+);
+
+socket.on(
+  "roomInvalid",
+  () => {
+    window.gameSessionReady =
+      false;
+
+    setConnectionStatus(
+      "syncing",
+      "Game out of sync — reconnecting…"
+    );
+
+    requestRoomSync(
+      "room-invalid"
+    );
+  }
+);
 
 socket.on("connect", () => {
   console.log("🔌 Connected");
+
   window.socketReady = true;
-  // A blip that recovered before the deferred "connection lost" toast
-  // fired — cancel it so a sub-second hiccup shows the player nothing.
-  clearTimeout(window._disconnectToastTimer);
-  setConnectionBannerVisible(false);
+
+  clearTimeout(
+    window._disconnectToastTimer
+  );
+
+  if (hasStoredRoom()) {
+    window.gameSessionReady =
+      false;
+
+    window.isRejoining = true;
+
+    setConnectionStatus(
+      "syncing",
+      "Syncing game…"
+    );
+  } else {
+    setConnectionStatus("ready");
+  }
+
   maybeAutoRejoin();
 });
-socket.on("connect_error", err =>
-  console.warn("❌ Connection error:", err.message)
+
+socket.on(
+  "connect_error",
+  err => {
+    console.warn(
+      "❌ Connection error:",
+      err.message
+    );
+
+    if (hasStoredRoom()) {
+      window.gameSessionReady =
+        false;
+
+      setConnectionStatus(
+        "offline",
+        "Reconnecting…"
+      );
+    }
+  }
 );
 
-socket.on("reconnect", () => {
-  // The Socket "connect" event above already fires (and reacts to) every
-  // reconnection too, so this is just a log line, not a second attempt.
-  console.log("🔁 Reconnected");
-  window.socketReady = true;
-});
+/*
+ * Reconnection lifecycle events belong to the Socket.IO Manager.
+ */
+socket.io.on(
+  "reconnect_attempt",
+  () => {
+    if (!hasStoredRoom()) {
+      return;
+    }
 
-socket.on("disconnect", reason => {
-  console.warn("🔌 Disconnected:", reason);
-  // Allow the next successful "connect" to react again (show the rejoin
-  // prompt, or resolve a stale room) instead of staying stuck from a
-  // previous cycle's flag.
-  window.autoRejoinAttempted = false;
-  window._everDisconnected = true;
-  // Stamp the drop so the next reconnect can tell a brief blip (resume
-  // silently) from a long absence (ask before rejoining) — see
-  // maybeAutoRejoin / BRIEF_RECONNECT_MS.
-  window._disconnectedAt = Date.now();
-  // Whatever the reconnect eventually reveals (round already over while
-  // we were gone, mid-round, etc.), the player didn't watch it happen
-  // live -- see client.js's updateScreens() for where this gets used.
-  window._skipNextGameOverReveal = true;
-  // Don't flash a "connection lost" toast the instant the socket drops —
-  // socket.io reconnects on its own, and a sub-second transport blip
-  // (the common "transport close" hiccup during normal play) recovers
-  // before the player would even register the message. Defer it, and let
-  // the connect handler cancel it if we're back in time; only a drop that
-  // actually persists past this delay is worth telling the player about.
-  if (window.roomId) {
-    clearTimeout(window._disconnectToastTimer);
-    window._disconnectToastTimer = setTimeout(() => {
-      if (!socket.connected) {
-        toast("Connection lost — reconnecting…");
-        setConnectionBannerVisible(true);
-      }
-    }, 2500);
+    window.gameSessionReady =
+      false;
+
+    setConnectionStatus(
+      "offline",
+      "Reconnecting…"
+    );
   }
-});
+);
+
+socket.on(
+  "disconnect",
+  reason => {
+    console.warn(
+      "🔌 Disconnected:",
+      reason
+    );
+
+    window.socketReady = false;
+    window.autoRejoinAttempted =
+      false;
+
+    window._everDisconnected =
+      true;
+
+    window._disconnectedAt =
+      Date.now();
+
+    window
+      ._skipNextGameOverReveal =
+      true;
+
+    window.isRejoining = true;
+    window.gameSessionReady =
+      false;
+
+    if (!hasStoredRoom()) {
+      return;
+    }
+
+    clearTimeout(
+      window._disconnectToastTimer
+    );
+
+    window._disconnectToastTimer =
+      setTimeout(() => {
+        if (!socket.connected) {
+          if (
+            typeof toast ===
+            "function"
+          ) {
+            toast(
+              "Connection lost — reconnecting…"
+            );
+          }
+
+          setConnectionStatus(
+            "offline",
+            "Reconnecting…"
+          );
+        }
+      }, 700);
+  }
+);
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+    if (
+      document.visibilityState ===
+      "hidden"
+    ) {
+      pageHiddenAt = Date.now();
+      return;
+    }
+
+    if (!hasStoredRoom()) {
+      return;
+    }
+
+    const awayMs =
+      pageHiddenAt
+        ? Date.now() -
+          pageHiddenAt
+        : 0;
+
+    pageHiddenAt = 0;
+
+    window.gameSessionReady =
+      false;
+
+    setConnectionStatus(
+      "syncing",
+      "Syncing game…"
+    );
+
+    requestRoomSync(
+      `visible-${awayMs}`
+    );
+  }
+);
+
+window.addEventListener(
+  "focus",
+  () => {
+    if (
+      document.visibilityState !==
+      "visible"
+    ) {
+      return;
+    }
+
+    requestRoomSync("focus");
+  }
+);
+
+window.addEventListener(
+  "online",
+  () => {
+    requestRoomSync("online");
+  }
+);
+
+window.addEventListener(
+  "offline",
+  () => {
+    if (!hasStoredRoom()) {
+      return;
+    }
+
+    window.isRejoining = true;
+    window.gameSessionReady =
+      false;
+
+    setConnectionStatus(
+      "offline",
+      "Offline — waiting for internet…"
+    );
+  }
+);
+
+window.addEventListener(
+  "pageshow",
+  event => {
+    if (
+      event.persisted ||
+      hasStoredRoom()
+    ) {
+      requestRoomSync(
+        "pageshow"
+      );
+    }
+  }
+);
+
+document
+  .getElementById(
+    "connectionBanner"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      requestRoomSync(
+        "banner-click"
+      );
+    }
+  );
