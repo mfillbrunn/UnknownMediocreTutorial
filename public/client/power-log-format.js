@@ -56,42 +56,97 @@
       return p?.letter ? `reset letter ${p.letter}` : null;
     }
   };
-
   function formatPowerEvent(evt) {
-    // USE_QUEST isn't a power in POWER_METADATA (it's the guesser's
-    // standing quest badge, not a drafted power) -- questServer.js pushes
-    // this shape directly on completion, so it's formatted here instead
-    // of falling through to the metadata lookup below.
-    if (evt.id === "quest") {
-      // Always the guesser's own quest regardless of what the emitted
-      // payload's actorRole says (there's no other role it could ever
-      // belong to) -- hard-coded rather than trusting evt.actorRole so
-      // this can't ever fall back to the default/unstyled color.
-      return { id: "quest", emoji: "", label: "Quest", desc: "", detail: null, text: "Quest completed", actorRole: "guesser" };
-    }
-
-    const variant = window.state?.powers?.[evt.id]?.mode || null;
-    const meta = window.getPowerMeta ? window.getPowerMeta(evt.id, variant) : window.POWER_METADATA?.[evt.id];
-    const label = meta?.label || evt.id;
-    const emoji = meta?.emoji || "";
-    const desc = meta?.desc || "";
-    // DETAIL_FORMATTERS carry a genuinely dynamic result (which letter got
-    // revealed, which one got banned) worth stating -- prefer those. Most
-    // server-side toasts, though, just restate that the power fired (e.g.
-    // "Nonsense power activated - this round, the guess does not have to
-    // make sense.", right after a label that already says "Silly Word"),
-    // which read as saying the same thing twice. The power's own static
-    // desc already explains what it does without that redundancy, so it's
-    // a better fallback than the toast text -- the toast is now only used
-    // as a last resort, for the rare power with neither.
-    const detail =
-      DETAIL_FORMATTERS[evt.id]?.(evt.emissions) ||
-      desc ||
-      lastToastText(evt.emissions) ||
-      null;
-    const text = detail ? `${label}: ${detail}` : label;
-    return { id: evt.id, emoji, label, desc, detail, text, actorRole: evt.actorRole || null };
+  if (evt.id === "quest") {
+    return {
+      id: "quest",
+      emoji: "",
+      label: "Quest",
+      desc: "",
+      opponentDesc:
+        "The Inspector completed their Quest.",
+      detail: null,
+      ownText: "Quest completed",
+      opponentText:
+        "Inspector completed their Quest",
+      text: "Quest completed",
+      actorRole: "guesser"
+    };
   }
+
+  const variant =
+    window.state
+      ?.powers
+      ?.[evt.id]
+      ?.mode || null;
+
+  const meta =
+    window.getPowerMeta
+      ? window.getPowerMeta(
+          evt.id,
+          variant
+        )
+      : window.POWER_METADATA
+          ?.[evt.id];
+
+  const label =
+    meta?.label || evt.id;
+
+  const emoji =
+    meta?.emoji || "";
+
+  const desc =
+    meta?.desc || "";
+
+  const opponentDesc =
+    meta?.opponentDesc ||
+    meta?.short ||
+    desc;
+
+  const dynamicDetail =
+    DETAIL_FORMATTERS[evt.id]
+      ?.(evt.emissions) ||
+    null;
+
+  const fallbackDetail =
+    lastToastText(evt.emissions);
+
+  const ownDetail =
+    dynamicDetail ||
+    desc ||
+    fallbackDetail ||
+    null;
+
+  const ownText =
+    ownDetail
+      ? `${label}: ${ownDetail}`
+      : label;
+
+const opponentText =
+  dynamicDetail
+    ? `${label}: ${opponentDesc} — ${dynamicDetail}`
+    : `${label}: ${opponentDesc}`;
+    .filter(Boolean)
+    .join(": ")
+    .replace(
+      `: ${dynamicDetail}:`,
+      ":"
+    );
+
+  return {
+    id: evt.id,
+    emoji,
+    label,
+    desc,
+    opponentDesc,
+    detail: dynamicDetail,
+    ownText,
+    opponentText,
+    text: ownText,
+    actorRole:
+      evt.actorRole || null
+  };
+}
 
   window.formatPowerEvent = formatPowerEvent;
 })();
