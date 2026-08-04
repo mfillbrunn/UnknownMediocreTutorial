@@ -53,6 +53,10 @@ engine.registerPower("revealGreen", {
     pos,
     letter
   });
+  // Same green-letter-reveal popup every other reveal-a-green-letter power
+  // uses (Reveal Letter, Bet Power, Field Report), instead of the plain
+  // toast this used to show only to the guesser.
+  io.to(roomId).emit("greenLetterRevealed", { index: pos, letter, source: "revealGreen" });
 }
 ,
 

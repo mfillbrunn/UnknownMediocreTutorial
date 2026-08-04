@@ -115,18 +115,25 @@ function handleNormalPhase(room, state, action, roomId, context) {
     if (g1 === secretNow || g2 === secretNow) {
       const fb1 = scoreGuess(secretNow, g1);
       const fb2 = scoreGuess(secretNow, g2);
-      const mk = (guess, fb) => ({
+      // Drain power-use events queued this turn (mirrors finalizeFeedback.js)
+      // onto the first entry -- otherwise a power used earlier this turn
+      // would vanish from the log the instant Double Tap wins immediately.
+      const powerEvents = Array.isArray(state._pendingPowerEvents)
+        ? [...state._pendingPowerEvents]
+        : [];
+      state._pendingPowerEvents = [];
+      const mk = (guess, fb, events) => ({
         guess,
         fb,
         fbGuesser: [...fb],
         extraInfo: null,
         finalSecret: secretNow,
         roundIndex: state.history.length,
-        powerEvents: [],
+        powerEvents: events,
         doubleGuessApplied: true,
         doubleGuessHidden: false
       });
-      state.history.push(mk(g1, fb1), mk(g2, fb2));
+      state.history.push(mk(g1, fb1, powerEvents), mk(g2, fb2, []));
       // Both guesses are recorded and scored, but Double Tap is spending a
       // single turn — only the first (as if it were a normal guess) counts
       // toward the score, or the power would just be a strictly worse way
@@ -395,20 +402,29 @@ function resolveDoubleGuess({ room, state, secret, roomId, context, io }) {
   state.secret = finalSecret;
   state.simultaneousAllWrong = false;
 
-  const mkEntry = (guess, fb, isHidden) => ({
+  const mkEntry = (guess, fb, isHidden, events) => ({
     guess,
     fb,
     fbGuesser: [...fb],
     extraInfo: null,
     finalSecret,
     roundIndex: state.history.length,
-    powerEvents: [],
+    powerEvents: events,
     doubleGuessApplied: true,
     doubleGuessHidden: isHidden
   });
 
-  const eShown = mkEntry(shown, fbShown, false);
-  const eHidden = mkEntry(hidden, fbHidden, true);
+  // Drain power-use events queued since the last entry (mirrors
+  // finalizeFeedback.js) onto whichever entry lands first in history order,
+  // so a power used earlier this turn doesn't vanish from the log once
+  // Double Tap resolves.
+  const powerEvents = Array.isArray(state._pendingPowerEvents)
+    ? [...state._pendingPowerEvents]
+    : [];
+  state._pendingPowerEvents = [];
+
+  const eShown = mkEntry(shown, fbShown, false, shownFirst ? powerEvents : []);
+  const eHidden = mkEntry(hidden, fbHidden, true, shownFirst ? [] : powerEvents);
   if (shownFirst) state.history.push(eShown, eHidden);
   else state.history.push(eHidden, eShown);
 

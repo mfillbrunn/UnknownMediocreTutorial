@@ -278,11 +278,13 @@ function showPowerActionPopup({ emoji, title, desc, useLabel = "Use", showUse = 
   };
 
   modal.classList.add("active");
+  window.tutorialOnPowerActionModalOpen?.();
 }
 window.showPowerActionPopup = showPowerActionPopup;
 
 function hidePowerActionPopup() {
   document.getElementById("powerActionModal")?.classList.remove("active");
+  window.tutorialOnPowerActionModalClose?.();
 }
 window.hidePowerActionPopup = hidePowerActionPopup;
 

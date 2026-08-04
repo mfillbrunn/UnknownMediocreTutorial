@@ -1083,6 +1083,43 @@ function highlightPowerButtonByText(
     });
 }
 
+// Log entries carry no power-id attribute (see action-log.js), only a
+// `.log-power` class and free text built from formatPowerEvent -- same
+// text-matching approach as highlightPowerButtonByText above.
+function highlightLogEntryByText(text, role) {
+  const containerId =
+    role === "setter" ? "actionLogSetter" : "actionLogGuesser";
+
+  byId(containerId)
+    ?.querySelectorAll(".log-power")
+    .forEach(entry => {
+      if (entry.textContent.includes(text)) {
+        highlightEl(entry);
+      }
+    });
+}
+
+// Count Only's G/Y tally renders as a `.count-only-badge` pinned beside
+// the scored history row itself (history.js's createCountOnlyBadge) --
+// present on both the guesser's own board (#historyGuesser) and the
+// setter's view of that same row (#setterGuesserSubmitted). NOT the
+// (unrendered/dead) InfoBadgeEngine badge -- that engine's $("Setter
+// InfoBadge")/$("GuesserInfoBadge") targets don't exist anywhere in the
+// DOM, so InfoBadgeEngine.render() always no-ops. Highlights the most
+// recent badge in the container, matching whichever guess the tutorial
+// just discussed.
+function highlightCountOnlyBadge(role) {
+  const containerId =
+    role === "setter" ? "setterGuesserSubmitted" : "historyGuesser";
+
+  const badges =
+    byId(containerId)?.querySelectorAll(".count-only-badge");
+
+  if (badges?.length) {
+    highlightEl(badges[badges.length - 1]);
+  }
+}
+
 function highlightRoundSummary() {
   highlightEl(
     byId("roundSummary")
@@ -1477,6 +1514,44 @@ function waitForPowerUse(powerId) {
 
   updateActionBadge();
 }
+
+// Clicking a power button doesn't fire the power directly -- it opens the
+// power-action confirmation modal (showPowerActionPopup in tooltips.js),
+// which sits above the tutorial focus ring (z-index 100000 vs 9998) and
+// completely covers whichever power button was highlighted. Without this,
+// the player has no highlighted target at all for the actual "Use" tap
+// that fires the power. Called from showPowerActionPopup/
+// hidePowerActionPopup so the ring follows the modal open/close, only
+// while a tutorial step is actually waiting on this specific power.
+function tutorialOnPowerActionModalOpen() {
+  if (
+    !tutorialWaitingFor ||
+    tutorialWaitingFor.type !== "power"
+  ) {
+    return;
+  }
+
+  clearHighlights();
+  highlightEl(byId("powerActionUseBtn"));
+}
+window.tutorialOnPowerActionModalOpen =
+  tutorialOnPowerActionModalOpen;
+
+function tutorialOnPowerActionModalClose() {
+  if (
+    !tutorialWaitingFor ||
+    tutorialWaitingFor.type !== "power"
+  ) {
+    return;
+  }
+
+  if (window.state && window.myRole) {
+    tutorialSteps(window.state, window.myRole);
+  }
+}
+window.tutorialOnPowerActionModalClose =
+  tutorialOnPowerActionModalClose;
+
 function waitForNoteAdded(word) {
   tutorialWaitingFor = {
     type: "noteAdded",
@@ -1929,6 +2004,16 @@ function runGuesserTutorial(
               mode: "hide"
             }
           );
+
+          startKeyDemo(
+            `guesser-stage2-round0-${word}`,
+            () =>
+              tutorialWordKeyEls(
+                "guesser",
+                word,
+                localGuesserDraft
+              )
+          );
         }
 
         tutorialContinueMode =
@@ -1972,6 +2057,43 @@ function runGuesserTutorial(
           state.tutorialGuesses?.[1] ||
           "CUMIN";
 
+        const info =
+          state.revealGreenInfo;
+
+        if (!info) {
+          showTutorial(
+            `Revealing your letter…`,
+            {
+              enabled: false
+            }
+          );
+
+          return;
+        }
+
+        showTutorial(
+          `Letter Peek revealed "${info.letter}" in position ${info.pos + 1} — see it appear in your action log below. Try a guess that uses it, like "${word}".`,
+          {
+            enabled: true
+          }
+        );
+
+        highlightLogEntryByText(
+          "Letter Peek",
+          "guesser"
+        );
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (tutorialSubStep === 2) {
+        const word =
+          state.tutorialGuesses?.[1] ||
+          "CUMIN";
+
         if (state.pendingGuess) {
           showTutorial(
             `Waiting for the Spy to react to "${word}"…`,
@@ -1981,11 +2103,21 @@ function runGuesserTutorial(
           );
         } else {
           showTutorial(
-            `Nice — that's a free hint toward the secret. Now enter your second guess: "${word}".`,
+            `Now enter your second guess: "${word}".`,
             {
               enabled: true,
               mode: "hide"
             }
+          );
+
+          startKeyDemo(
+            `guesser-stage2-round1-${word}`,
+            () =>
+              tutorialWordKeyEls(
+                "guesser",
+                word,
+                localGuesserDraft
+              )
           );
         }
 
@@ -2291,6 +2423,16 @@ function runSetterTutorial(
               enabled: false
             }
           );
+
+          startKeyDemo(
+            `setter-stage2-round0-${word}`,
+            () =>
+              tutorialWordKeyEls(
+                "setter",
+                word,
+                window.state?.setterDraft
+              )
+          );
         }
 
         highlightKeyboardSetter();
@@ -2342,6 +2484,16 @@ function runSetterTutorial(
           }
         );
 
+        startKeyDemo(
+          `setter-stage2-round1-${word}`,
+          () =>
+            tutorialWordKeyEls(
+              "setter",
+              word,
+              window.state?.setterDraft
+            )
+        );
+
         highlightKeyboardSetter();
 
         tutorialContinueMode =
@@ -2357,6 +2509,40 @@ function runSetterTutorial(
     }
 
     if (round === 2) {
+      const countEntry =
+        [...state.history]
+          .reverse()
+          .find(e =>
+            e.countOnlyApplied &&
+            e.extraInfo
+          );
+
+      if (
+        tutorialSubStep === 0 &&
+        countEntry
+      ) {
+        const {
+          greens,
+          yellows
+        } = countEntry.extraInfo;
+
+        showTutorial(
+          `Counts Only hid the exact tile colors on "${countEntry.guess}" — the Inspector only learned ${greens} letter${greens === 1 ? " was" : "s were"} green and ${yellows} ${yellows === 1 ? "was" : "were"} yellow, not which. See the G/Y tally badge next to their guess below.`,
+          {
+            enabled: true
+          }
+        );
+
+        highlightCountOnlyBadge(
+          "setter"
+        );
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
       showTutorial(
         `From here on, play strategically and try to outsmart your opponent.`,
         {

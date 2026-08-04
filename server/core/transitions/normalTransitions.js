@@ -201,12 +201,23 @@ function startForceTimer(roomId, room, state, io, context) {
 }
 
 function pushWinEntry(state, word) {
+  // Drain power-use events queued since the last entry (mirrors
+  // finalizeFeedback.js) -- without this, a power used on the same turn
+  // as the winning guess/secret would flash into the live log during the
+  // turn but vanish permanently once the round ends, since the archived
+  // entry never carried it.
+  const powerEvents = Array.isArray(state._pendingPowerEvents)
+    ? [...state._pendingPowerEvents]
+    : [];
+  state._pendingPowerEvents = [];
+
   state.history.push({
     guess: word,
     fb: ["🟩", "🟩", "🟩", "🟩", "🟩"],
     fbGuesser: ["🟩", "🟩", "🟩", "🟩", "🟩"],
     extraInfo: null,
-    finalSecret: word
+    finalSecret: word,
+    powerEvents
   });
 }
 

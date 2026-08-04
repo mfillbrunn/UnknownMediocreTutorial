@@ -305,8 +305,10 @@ window._livePowerEvents = [];
 // has. magicMode is the same shape: the generic "you used Inside Job"
 // popup fires on activation, then its real result (magicModeRevealed in
 // magicMode.js) fires later once the next guess scores -- showing both
-// reads as the power popping up twice for one use.
-const POWERS_WITH_OWN_POPUP = new Set(["fieldReport", "quest", "magicMode"]);
+// reads as the power popping up twice for one use. revealGreen is the
+// same shape: its own greenLetterRevealed popup (power-functions.js)
+// already tells both players the letter/position, room-wide.
+const POWERS_WITH_OWN_POPUP = new Set(["fieldReport", "quest", "magicMode", "revealGreen"]);
 
 socket.on("powerActivity", payload => {
   if (!payload?.id) return;

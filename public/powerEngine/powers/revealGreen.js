@@ -19,8 +19,9 @@ tooltip: {
 
   effects: {
   onPowerUsed({ pos, letter }) {
-    toast(`Green revealed: Position ${pos + 1} = ${letter}`);
-
+    // Result popup comes from the greenLetterRevealed socket event
+    // (power-functions.js), same as every other reveal-a-green-letter
+    // power -- just the keyboard highlight belongs here.
     const key = document.querySelector(`[data-key="${letter}"]`);
     if (key) key.classList.add("power-green-highlight");
   }
