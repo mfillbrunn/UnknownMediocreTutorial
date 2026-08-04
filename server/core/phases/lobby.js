@@ -26,7 +26,6 @@ const {
   emitRoomState,
   syncTurnOwners
 } = require("../rooms");
-const { markDailyStarted } = require("../dailyTracking");
 const { getDailyConfig } = require("../../utils/dailyConfig");
 const POWER_METADATA = require("../../powers/powerMetadata");
 
@@ -283,9 +282,6 @@ if (action.type === "SET_DAILY_POWERS") {
     state._dailySecret = daily.secretWord;
     state._dailyOpeningGuess = daily.openingGuess;
     state._dailyQuestType = daily.questType;
-  }
-  if (action.userId && action.date) {
-    markDailyStarted(action.userId, action.date, roomId);
   }
   return;
 }
