@@ -83,26 +83,126 @@ function actionTypeToPowerId(type) {
     .toLowerCase()
     .replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
+// Returns true when an action was queued for sending.
+// The optional callback receives the server acknowledgement.
+window.sendGameAction = function (
+  action,
+  cb
+) {
+  const showMessage = message => {
+    if (
+      typeof toast === "function"
+    ) {
+      toast(message);
+    }
+  };
 
-// Returns whether the action was actually emitted -- callers that
-// optimistically clear local UI state right after sending (a submitted
-// guess/secret draft, most notably) need to know this failed silently
-// rather than assuming it reached the server. Before this returned
-// nothing, a guess typed and submitted during a brief disconnect would
-// get its local draft wiped anyway even though sendGameAction bailed out
-// on the `!socket.connected` check below, so the guess was just lost:
-// the screen looked normal (empty, ready-to-type draft, same as after a
-// real successful submit) but the server never received anything, and
-// the next real submission attempt would fail with a generic "5 letters"
-// error since the "draft" backing it had already been cleared out from
-// under it.
-window.sendGameAction = function (action) {
-  if (!socket.connected) return false;
-  if (!window.roomId) return false;
-  if (window.isRejoining) return false;
-  const tutorialPowerId = actionTypeToPowerId(action.type);
-  if (tutorialPowerId) window.notifyTutorialPowerUsed?.(tutorialPowerId);
-  socket.emit("gameAction", { action });
+  const rejectBeforeSend = (
+    message,
+    code
+  ) => {
+    showMessage(message);
+
+    cb?.({
+      ok: false,
+      code,
+      error: message
+    });
+
+    window.requestRoomSync?.(
+      "action-blocked"
+    );
+
+    return false;
+  };
+
+  if (!socket.connected) {
+    return rejectBeforeSend(
+      "Reconnecting — your move was not sent.",
+      "SOCKET_DISCONNECTED"
+    );
+  }
+
+  if (!window.roomId) {
+    return rejectBeforeSend(
+      "No active game.",
+      "NO_ROOM"
+    );
+  }
+
+  if (
+    window.isRejoining ||
+    window.gameSessionReady === false
+  ) {
+    return rejectBeforeSend(
+      "Syncing game — try again in a moment.",
+      "SYNCING"
+    );
+  }
+
+  socket.timeout(6000).emit(
+    "gameAction",
+    {
+      action
+    },
+    (err, result) => {
+      if (
+        err ||
+        !result?.ok
+      ) {
+        const code =
+          result?.code ||
+          "ACTION_TIMEOUT";
+
+        const desyncCodes =
+          new Set([
+            "ROOM_DESYNC",
+            "SESSION_DESYNC",
+            "PLAYER_INACTIVE"
+          ]);
+
+        const message =
+          desyncCodes.has(code)
+            ? "Game was out of sync. Reconnecting…"
+            : "Move was not confirmed. Reconnecting…";
+
+        showMessage(message);
+
+        window.requestRoomSync?.(
+          "action-failed"
+        );
+
+        cb?.({
+          ok: false,
+          code,
+          error:
+            result?.error ||
+            err?.message ||
+            message
+        });
+
+        return;
+      }
+
+      /*
+       * Advance a power tutorial only after the server confirms
+       * that the action actually reached it.
+       */
+      const tutorialPowerId =
+        actionTypeToPowerId(
+          action.type
+        );
+
+      if (tutorialPowerId) {
+        window
+          .notifyTutorialPowerUsed
+          ?.(tutorialPowerId);
+      }
+
+      cb?.(result);
+    }
+  );
+
   return true;
 };
 
