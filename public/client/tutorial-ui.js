@@ -2062,7 +2062,7 @@ function runGuesserTutorial(
 
     if (tutorialSubStep === 4) {
       showTutorial(
-        `One more thing: your guess doesn't have to use only letters that could still be in the secret. Sometimes you won't have a good word using just those — a guess with other letters is still useful, since it rules more letters out.`,
+        `One more thing: your guess doesn't have to use only letters that could still be in the secret. Sometimes you won't have a good word using just those.`,
         {
           mode: "advance"
         }
