@@ -73,12 +73,23 @@ function persistRoom(roomId) {
 }
 
 function clearRoom() {
-  localStorage.removeItem("roomId");
+  window.cancelRoomSync?.();
+
+  localStorage.removeItem(
+    "roomId"
+  );
+
   window.roomId = null;
   window.state = null;
   state = null;
-  window.autoRejoinAttempted = true;
+
+  window.isRejoining = false;
+  window.gameSessionReady = true;
+  window.autoRejoinAttempted =
+    true;
+
   window.resetTransientGameUI?.();
+
   hide?.("game");
   hide?.("lobby");
   showStartup?.();
