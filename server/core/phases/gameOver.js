@@ -8,6 +8,8 @@ const { computeMatchResult, writeMatchHistory } = require("../../utils/writeMatc
 const { computeRemainingAfterIndexFromState } = require("../../utils/remainingWords");
 const { markDailyCompleted } = require("../dailyTracking");
 const { advanceToNextRound } = require("../transitions/nextRoundTransition");
+const {  clearForceTimer} = require("../../utils/forceTimer");
+const {  clearRoundPowerActivity} = require("../../utils/clearRoundPowerActivity");
 
 function buildArchivedRoundHistory(state, allowedSecrets) {
   const history = Array.isArray(state.history) ? state.history : [];
@@ -96,7 +98,13 @@ state.matchRounds.push({
       )
     : [],
 });
-
+/*
+ * The archived round above keeps the original power state
+ * for the summary and log. The live game state must no
+ * longer carry any active round effect.
+ */
+clearForceTimer(roomId, state);
+clearRoundPowerActivity(state);
   const res = state.mode?.onRoundEnd?.(state) || {
     view: "match",
     canNextRound: false
