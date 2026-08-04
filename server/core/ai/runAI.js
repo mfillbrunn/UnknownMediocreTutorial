@@ -300,6 +300,15 @@ function maybeUsePower(room, state, aiUserId, roomId, context, isTutorial) {
     }
   }
 
+  // Stage 2 teaches the human exactly two specific powers (Letter Peek,
+  // Counts Only) through a scripted demonstration -- isTutorial above only
+  // covers the scripted turns, so once free play starts afterward (the
+  // "finish this round on your own" stretch) the AI would otherwise start
+  // rolling the dice on the very same two powers against the human,
+  // showing an interaction they were never taught and muddying the
+  // lesson. Keep the AI power-free for all of stage 2, scripted or not.
+  if (state.isTutorial && state.tutorialStage === 2) return false;
+
   // No powers are active during the tutorial — nothing to do.
   if (isTutorial) return false;
 

@@ -139,8 +139,13 @@ function updateActionBadge() {
   badge.textContent = label;
   badge.classList.toggle("hidden", !waitingType);
 
+  // "end" is the very last step of a tutorial (see endTutorial()) --
+  // relabel the one button this bubble has so it reads as the exit it
+  // actually is, instead of the usual "Next"/"Hide".
   continueBtn.textContent =
-    waitingType ? "Hide" : "Next";
+    tutorialContinueMode === "end"
+      ? "End Tutorial"
+      : waitingType ? "Hide" : "Next";
 }
 
 function getVisibleTutorialKeyboard() {
@@ -1624,8 +1629,31 @@ function waitForDraftCleared() {
   updateActionBadge();
 }
 
+// Leaves the room and returns to the menu, exactly like the match
+// summary screen's own Leave button (summary.js's leaveSummaryBtn) --
+// the last step of a tutorial reaches this same "done, head back" point
+// without requiring the player to actually finish playing out the match.
+function endTutorial() {
+  byId("tutorialBubble")?.classList.add("hidden");
+
+  socket.emit("leaveRoom", {}, () => {
+    roomId = null;
+    clearRoom();
+    state = null;
+    window.state = null;
+    resetKeyboards();
+    showStartup();
+  });
+}
+window.endTutorial = endTutorial;
+
 byId("tutorialContinueBtn")?.addEventListener("click", event => {
   event.stopPropagation();
+
+  if (tutorialContinueMode === "end") {
+    endTutorial();
+    return;
+  }
 
   if (tutorialContinueMode === "hide") {
     toggleTutorial(true);
@@ -2546,7 +2574,26 @@ function runSetterTutorial(
         } = countEntry.extraInfo;
 
         showTutorial(
-          `Counts Only hid the exact tile colors on "${countEntry.guess}" — the Inspector only learned ${greens} letter${greens === 1 ? " was" : "s were"} green and ${yellows} ${yellows === 1 ? "was" : "were"} yellow, not which. The small "?" marks in the bottom-right corner of those tiles show which ones the Inspector saw that way instead of a real color — other powers can leave a similar mark to show what color the Inspector actually saw there.`,
+          `Counts Only hid the exact tile colors on "${countEntry.guess}" — the Inspector only learned ${greens} letter${greens === 1 ? " was" : "s were"} green and ${yellows} ${yellows === 1 ? "was" : "were"} yellow, not which.`,
+          {
+            enabled: true
+          }
+        );
+
+        highlightSetterHistory();
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (
+        tutorialSubStep === 1 &&
+        countEntry
+      ) {
+        showTutorial(
+          `The small "?" marks in the corner of those tiles show which ones the Inspector saw that way instead of a real color. Other powers can leave a similar mark to show what color they actually saw.`,
           {
             enabled: true
           }
@@ -2561,9 +2608,9 @@ function runSetterTutorial(
       }
 
       showTutorial(
-        `From here on, play strategically and try to outsmart your opponent.`,
+        `From here on, play strategically and try to outsmart your opponent. Tap "End Tutorial" whenever you're ready — no need to finish playing this match.`,
         {
-          mode: "hide"
+          mode: "end"
         }
       );
 
