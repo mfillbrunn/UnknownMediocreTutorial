@@ -161,6 +161,27 @@ function getVisibleTutorialKeyboard() {
   }) || null;
 }
 
+// #roundSummary is reused for both the round summary and the match
+// summary (summary.js's updateSummary()); empty/hidden outside gameOver,
+// so this naturally returns null the rest of the time.
+function getVisibleTutorialSummaryPanel() {
+  const el = byId("roundSummary");
+  if (!el) return null;
+
+  const style = getComputedStyle(el);
+  const rect = el.getBoundingClientRect();
+
+  if (
+    style.display === "none" ||
+    style.visibility === "hidden" ||
+    rect.height <= 0
+  ) {
+    return null;
+  }
+
+  return el;
+}
+
 // Set by showTutorial() when a freshly re-shown bubble needs one layout
 // pass to find its correct spot before it's allowed to become visible.
 // A plain variable rather than a per-call callback argument to
@@ -347,6 +368,30 @@ function repositionTutorialBubble() {
     above the keyboard.
   */
   let top = maxTop;
+
+  // A short round/match summary (e.g. the round-1 recap, just a few lines
+  // of text and a small table) ends well above the viewport bottom, but
+  // `top` above still bottom-anchors the bubble against the *viewport*
+  // regardless -- leaving a large dead gap between the actual content and
+  // the bubble discussing it. Prefer sitting just below the summary panel
+  // instead, as long as there's room; a tall summary (the match summary,
+  // once its round breakdowns/secret history are showing) already reaches
+  // near the bottom on its own, so this is a no-op then.
+  const summaryPanel =
+    getVisibleTutorialSummaryPanel();
+
+  if (summaryPanel) {
+    const belowSummary =
+      summaryPanel.getBoundingClientRect().bottom +
+      gap;
+
+    if (belowSummary >= minTop) {
+      top = Math.min(
+        belowSummary,
+        maxTop
+      );
+    }
+  }
 
   const avoidRects =
     tutorialAvoidElements().map(el =>
