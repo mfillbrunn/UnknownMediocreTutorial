@@ -210,6 +210,7 @@ function createInitialState() {
     gameOverView: "match",
     canNextRound: false,
     conceded: false,
+         matchId: null,
     matchRounds: [],
     ///TIMER
     timeControl: {
