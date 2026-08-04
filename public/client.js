@@ -1719,6 +1719,7 @@ function handleSetterInput(event) {
       state.setterDraft = next.trim() === "" ? "" : next;
       updateUI();
       emitSetterDraftPreview(state.setterDraft);
+      if (!state.setterDraft) window.notifyTutorialDraftCleared?.();
       return;
     }
 
@@ -1851,7 +1852,14 @@ function submitSetterNew() {
       duration: 2200,
       compact: true
     });
-    clearSetterDraft();
+    // The PICKY tutorial demo leaves the rejected word in place on purpose,
+    // so the very next step can walk the player through clearing it by
+    // hand with Backspace instead of finding it already gone.
+    if (window.tutorialKeepRejectedDraft) {
+      window.tutorialKeepRejectedDraft = false;
+    } else {
+      clearSetterDraft();
+    }
     window.notifyTutorialRejectedSecret?.();
     return;
   }

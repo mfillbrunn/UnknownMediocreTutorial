@@ -20,6 +20,7 @@ let tutorialHighlightDraft = [];
 let tutorialHighlightTargets = [];
 let tutorialHighlightCommitQueued = false;
 let tutorialBodyAnimationTimer = null;
+let tutorialHighlightSettleTimer = null;
 
 function qs(sel) {
   return document.querySelector(sel);
@@ -336,38 +337,56 @@ function repositionTutorialBubble() {
     right: bubbleRight
   });
 
-  for (const avoidRect of avoidRects) {
-    if (
-      !tutorialRectsOverlap(
-        rectAtTop(top),
-        avoidRect,
-        gap
-      )
-    ) {
-      continue;
+  /*
+    A single pass over avoidRects can leave a residual overlap: nudging
+    `top` to clear one rect (e.g. the pending-guess row) can land it back
+    on top of another (e.g. the setter's own secret row right below it),
+    and a plain single-pass loop never re-checks the earlier rects against
+    that new position. Repeat the whole pass until nothing moves `top`
+    anymore (or the small iteration cap is hit) so it actually converges
+    on a spot clear of every avoid rect at once, not just the last one
+    checked.
+  */
+  for (let pass = 0; pass < 4; pass++) {
+    const topBeforePass = top;
+
+    for (const avoidRect of avoidRects) {
+      if (
+        !tutorialRectsOverlap(
+          rectAtTop(top),
+          avoidRect,
+          gap
+        )
+      ) {
+        continue;
+      }
+
+      const aboveTop =
+        avoidRect.top -
+        gap -
+        bubbleHeight;
+
+      const belowTop =
+        avoidRect.bottom + gap;
+
+      if (aboveTop >= minTop) {
+        top = Math.min(
+          aboveTop,
+          maxTop
+        );
+      } else if (belowTop <= maxTop) {
+        top = belowTop;
+      } else {
+        /*
+          There is not enough room directly above
+          or below, so use the top of the viewport.
+        */
+        top = minTop;
+      }
     }
 
-    const aboveTop =
-      avoidRect.top -
-      gap -
-      bubbleHeight;
-
-    const belowTop =
-      avoidRect.bottom + gap;
-
-    if (aboveTop >= minTop) {
-      top = Math.min(
-        aboveTop,
-        maxTop
-      );
-    } else if (belowTop <= maxTop) {
-      top = belowTop;
-    } else {
-      /*
-        There is not enough room directly above
-        or below, so use the top of the viewport.
-      */
-      top = minTop;
+    if (top === topBeforePass) {
+      break;
     }
   }
 
@@ -487,6 +506,7 @@ function pauseTutorial() {
   tutorialPendingReveal = null;
 
   clearHighlights();
+  stopTapDemo();
 }
 
 function hideTutorial() {
@@ -604,6 +624,28 @@ function queueHighlightCommit() {
       });
 
     scheduleTutorialLayout();
+
+    /*
+     * A freshly highlighted target (e.g. the pending-guess row, which
+     * enters via .row-slide-in) can still be mid-flight through its own
+     * 340ms CSS transform animation right now -- getBoundingClientRect()
+     * reflects wherever that animation currently is, not its settled
+     * resting spot, so the immediate scheduleTutorialLayout() above can
+     * plant the ring around a transient, wrong-looking box (e.g. still
+     * shifted off-screen by translateX) that then never gets corrected,
+     * since nothing else re-measures it later. Re-measure once more after
+     * the longest entrance/exit animation in play (draft-row-slide-in/
+     * -down/-out, all 340ms) has had time to finish.
+     */
+    clearTimeout(
+      tutorialHighlightSettleTimer
+    );
+
+    tutorialHighlightSettleTimer =
+      setTimeout(
+        scheduleTutorialLayout,
+        360
+      );
   });
 }
 
@@ -812,6 +854,90 @@ function highlightPendingGuessRow() {
   highlightEl(pendingRow);
 }
 
+// ------------------------
+// Demo taps: a brief press-and-ripple (see .tutorial-tap-pulse in
+// tutorial.css) played on a specific keyboard key or button to show the
+// player exactly what to tap next, looped until the step advances.
+// ------------------------
+let tutorialTapKey = null;
+let tutorialTapTimer = null;
+
+function stopTapDemo() {
+  clearTimeout(tutorialTapTimer);
+  tutorialTapTimer = null;
+  tutorialTapKey = null;
+}
+
+function playTapOnce(el) {
+  if (!el) return;
+
+  el.classList.remove("tutorial-tap-pulse");
+  void el.offsetWidth; // restart the animation if it's already playing
+  el.classList.add("tutorial-tap-pulse");
+}
+
+function tutorialKeyEl(role, symbol) {
+  const container = byId(
+    role === "setter" ? "keyboardSetter" : "keyboardGuesser"
+  );
+
+  const dataKey =
+    symbol === "BACKSPACE" ? "⌫" : symbol;
+
+  return (
+    container?.querySelector(
+      `.key[data-key="${dataKey}"]`
+    ) || null
+  );
+}
+
+// `key` identifies this specific demo (e.g. a step key) -- repeated calls
+// with the same `key` from every re-render of the same tutorial substep
+// are no-ops, so the loop already in flight keeps running instead of
+// restarting from the first element on every keystroke/state update.
+// `getEls` is called fresh at the start of each cycle (not once up front)
+// since keyboard keys can be rebuilt between cycles.
+function playTapDemoLoop(
+  key,
+  getEls,
+  { stepDelay = 420, pauseDelay = 1000 } = {}
+) {
+  if (key === tutorialTapKey) {
+    return;
+  }
+
+  stopTapDemo();
+  tutorialTapKey = key;
+
+  const runCycle = () => {
+    const els = (getEls() || []).filter(Boolean);
+    let i = 0;
+
+    const step = () => {
+      if (i >= els.length) {
+        tutorialTapTimer = setTimeout(
+          runCycle,
+          pauseDelay
+        );
+
+        return;
+      }
+
+      playTapOnce(els[i]);
+      i++;
+
+      tutorialTapTimer = setTimeout(
+        step,
+        stepDelay
+      );
+    };
+
+    step();
+  };
+
+  runCycle();
+}
+
 function highlightNotesPanel() {
   highlightEl(byId("notesPanelSetter"));
 }
@@ -851,6 +977,152 @@ function highlightRoundSummary() {
   highlightEl(
     byId("roundSummary")
   );
+}
+
+function highlightRoundSummaryNames() {
+  highlightEl(
+    qs("#roundSummary .summary-players")
+  );
+}
+
+function highlightRoundSummaryGuessCount() {
+  highlightEl(
+    qs("#roundSummary .summary-guess-count")
+  );
+}
+
+function highlightRoundSummaryColumn(cellClass) {
+  document
+    .querySelectorAll(
+      `#roundSummary .summary-table--round td.${cellClass}`
+    )
+    .forEach(highlightEl);
+}
+
+function highlightNextRoundBtn() {
+  highlightEl(byId("nextRoundBtn"));
+}
+
+function highlightMatchScore() {
+  highlightEl(
+    qs("#roundSummary .match-score-line")
+  );
+}
+
+function highlightStoredRound(index) {
+  highlightEl(
+    qs(
+      `#roundSummary .stored-round[data-round-index="${index}"]`
+    )
+  );
+}
+
+function highlightSummaryActions() {
+  highlightEl(
+    qs("#roundSummary .summary-actions")
+  );
+}
+
+function highlightStoredRoundSecretSegment(
+  roundIndex,
+  segment
+) {
+  [
+    ...document.querySelectorAll(
+      `#roundSummary .stored-round[data-round-index="${roundIndex}"] tbody tr`
+    )
+  ]
+    .slice(
+      segment.startTurn - 1,
+      segment.endTurn
+    )
+    .map(row =>
+      row.querySelector(
+        "td.secret-cell"
+      )
+    )
+    .forEach(highlightEl);
+}
+
+// Collapses a round's per-guess finalSecret list into runs of consecutive
+// guesses that faced the same secret -- e.g. secret X for guesses 1-2,
+// then Y for guess 3 -- so the match summary can narrate exactly when (and
+// to what) the Spy changed their secret, instead of just listing words.
+function computeSecretSegments(round) {
+  const segments = [];
+
+  (round?.history || []).forEach(
+    (h, i) => {
+      const secret = (
+        h.finalSecret || ""
+      ).toUpperCase();
+
+      const last =
+        segments[segments.length - 1];
+
+      if (last && last.secret === secret) {
+        last.endTurn = i + 1;
+      } else {
+        segments.push({
+          secret,
+          startTurn: i + 1,
+          endTurn: i + 1
+        });
+      }
+    }
+  );
+
+  return segments;
+}
+
+function describeSecretSegment(
+  segment,
+  isFirst
+) {
+  const span =
+    segment.startTurn === segment.endTurn
+      ? `guess ${segment.startTurn}`
+      : `guesses ${segment.startTurn}–${segment.endTurn}`;
+
+  return isFirst
+    ? `The Spy's secret was "${segment.secret}" for ${span}.`
+    : `Then they switched to "${segment.secret}" for ${span}.`;
+}
+
+function buildMatchSecretNarrationSteps(
+  state
+) {
+  const rounds =
+    state.matchRounds || [];
+
+  const steps = [];
+
+  rounds.forEach(
+    (round, roundIndex) => {
+      const segments =
+        computeSecretSegments(round);
+
+      segments.forEach(
+        (segment, i) => {
+          steps.push({
+            text: `Round ${
+              roundIndex + 1
+            }: ${describeSecretSegment(
+              segment,
+              i === 0
+            )}`,
+            highlight: () =>
+              highlightStoredRoundSecretSegment(
+                roundIndex,
+                segment
+              )
+          });
+        }
+      );
+    }
+  );
+
+  return steps;
 }
 
 window.addEventListener(
@@ -1114,6 +1386,19 @@ function waitForRejectedSecret() {
   updateActionBadge();
 }
 
+function waitForDraftCleared() {
+  tutorialWaitingFor = {
+    type: "draftCleared"
+  };
+
+  setContinue({
+    show: true,
+    mode: "hide"
+  });
+
+  updateActionBadge();
+}
+
 byId("tutorialContinueBtn")?.addEventListener("click", event => {
   event.stopPropagation();
 
@@ -1291,6 +1576,41 @@ function notifyTutorialRejectedSecret() {
 
 window.notifyTutorialRejectedSecret =
   notifyTutorialRejectedSecret;
+
+// Backspacing is purely local (nothing round-trips to the server until the
+// next Enter), so nothing else re-invokes tutorialSteps() while the player
+// is erasing a rejected draft -- called directly from client.js's setter
+// BACKSPACE handler instead, same shape as the other notifyTutorial*
+// hooks above.
+function notifyTutorialDraftCleared() {
+  if (!tutorialWaitingFor) {
+    return;
+  }
+
+  if (
+    tutorialWaitingFor.type ===
+    "draftCleared"
+  ) {
+    tutorialWaitingFor = null;
+
+    updateActionBadge();
+
+    tutorialSubStep++;
+
+    if (
+      window.state &&
+      window.myRole
+    ) {
+      tutorialSteps(
+        window.state,
+        window.myRole
+      );
+    }
+  }
+}
+
+window.notifyTutorialDraftCleared =
+  notifyTutorialDraftCleared;
 
 // ------------------------
 // Main tutorial logic
@@ -1612,12 +1932,32 @@ function runGuesserTutorial(
             mode: "hide"
           }
         );
+
+        stopTapDemo();
       } else {
         showTutorial(
           `Let's make your first guess. Type "${word}" on the keyboard below, then press Enter.`,
           {
             mode: "hide"
           }
+        );
+
+        playTapDemoLoop(
+          `guesser-round0-${word}`,
+          () => [
+            ...word
+              .split("")
+              .map(letter =>
+                tutorialKeyEl(
+                  "guesser",
+                  letter
+                )
+              ),
+            tutorialKeyEl(
+              "guesser",
+              "ENTER"
+            )
+          ]
         );
       }
 
@@ -1685,6 +2025,19 @@ function runGuesserTutorial(
     }
 
     if (tutorialSubStep === 4) {
+      showTutorial(
+        `One more thing: your guess doesn't have to use only letters that could still be in the secret. Sometimes you won't have a good word using just those — a guess with other letters is still useful, since it rules more letters out.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightKeyboardGuesser();
+
+      return;
+    }
+
+    if (tutorialSubStep === 5) {
       const word =
         state.tutorialGuesses?.[1] ||
         "CAIRN";
@@ -1696,12 +2049,32 @@ function runGuesserTutorial(
             mode: "hide"
           }
         );
+
+        stopTapDemo();
       } else {
         showTutorial(
           `Now use those clues for your next guess. Try "${word}" — new letters can teach you even more.`,
           {
             mode: "hide"
           }
+        );
+
+        playTapDemoLoop(
+          `guesser-round1-${word}`,
+          () => [
+            ...word
+              .split("")
+              .map(letter =>
+                tutorialKeyEl(
+                  "guesser",
+                  letter
+                )
+              ),
+            tutorialKeyEl(
+              "guesser",
+              "ENTER"
+            )
+          ]
         );
       }
 
@@ -1718,7 +2091,7 @@ function runGuesserTutorial(
   if (round === 2) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `You've got the hang of it! Finish this round on your own now.`,
+        `From here on, keep going the same way: enter a 5-letter guess, check the colored feedback, and use it to narrow down the secret.`,
         {
           mode: "advance"
         }
@@ -1728,6 +2101,17 @@ function runGuesserTutorial(
     }
 
     if (tutorialSubStep === 1) {
+      showTutorial(
+        `You've got the hang of it! Finish this round on your own now.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
       showTutorial(
         `Here's a little hint: the Spy likes well-spiced food. 🌶️`,
         {
@@ -1953,21 +2337,79 @@ function runSetterTutorial(
 
     if (tutorialSubStep === 2) {
       showTutorial(
-        `Let's see that rule in action. Type PICKY and press Enter — watch what happens.`,
+        `The simplest choice is keeping your secret. The row above already shows it — no need to type anything, just tap Submit to lock it back in.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightKeyboardSetter();
+
+      playTapDemoLoop(
+        "setter-round1-keep-demo",
+        () => [
+          tutorialKeyEl(
+            "setter",
+            "ENTER"
+          )
+        ]
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 3) {
+      stopTapDemo();
+
+      showTutorial(
+        `Let's see the other choice — and its one rule — in action. Type PICKY and press Enter — watch what happens.`,
         {
           mode: "hide"
         }
       );
 
       highlightKeyboardSetter();
+
+      // Normally a rejected secret clears itself automatically -- suppressed
+      // just for this one demo (see submitSetterNew() in client.js) so the
+      // next step can walk through erasing PICKY by hand instead of
+      // finding an already-empty draft.
+      window.tutorialKeepRejectedDraft = true;
+
       waitForRejectedSecret();
 
       return;
     }
 
-    if (tutorialSubStep === 3) {
+    if (tutorialSubStep === 4) {
       showTutorial(
-        `Right — PICKY got rejected because it breaks a clue you already gave. Now try a word that's actually allowed: "${word}".`,
+        `Right — PICKY got rejected because it breaks a clue you already gave. Let's clear it out — tap Backspace to erase it.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightKeyboardSetter();
+      waitForDraftCleared();
+
+      playTapDemoLoop(
+        "setter-round1-backspace-demo",
+        () => [
+          tutorialKeyEl(
+            "setter",
+            "BACKSPACE"
+          )
+        ]
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 5) {
+      stopTapDemo();
+
+      showTutorial(
+        `Now try a word that's actually allowed: "${word}".`,
         {
           mode: "hide"
         }
@@ -1985,36 +2427,6 @@ function runSetterTutorial(
 
   if (round === 2) {
     if (tutorialSubStep === 0) {
-      showTutorial(
-        `One more useful tool before you're on your own: this box shows how many secret words are still possible.`,
-        {
-          mode: "advance"
-        }
-      );
-
-      highlightEl(
-        byId("SetterRemainingBox")
-      );
-
-      return;
-    }
-
-    if (tutorialSubStep === 1) {
-      showTutorial(
-        `Old / Keep / New each show a count. An X means that option is no longer legal. More remaining words means more places to hide!`,
-        {
-          mode: "advance"
-        }
-      );
-
-      highlightEl(
-        byId("SetterRemainingBox")
-      );
-
-      return;
-    }
-
-    if (tutorialSubStep === 2) {
       showTutorial(
         `That's the core Spy strategy — stay flexible, stay legal. Finish this round on your own now. You've got this!`,
         {
@@ -2695,13 +3107,13 @@ function runSummaryTutorial(state) {
 
   if (tutorialSubStep === 0) {
     showTutorial(
-      `Nice, you found the secret! Here's a quick summary of the round.`,
+      `Nice, you found the secret! Here's a quick summary of the round, starting with who played which role.`,
       {
         enabled: true
       }
     );
 
-    highlightRoundSummary();
+    highlightRoundSummaryNames();
 
     tutorialContinueMode =
       "advance";
@@ -2717,6 +3129,8 @@ function runSummaryTutorial(state) {
       }
     );
 
+    highlightRoundSummaryGuessCount();
+
     tutorialContinueMode =
       "advance";
 
@@ -2725,7 +3139,43 @@ function runSummaryTutorial(state) {
 
   if (tutorialSubStep === 2) {
     showTutorial(
-      `It also shows every guess you made, and what the secret word was.`,
+      `Here's every guess you made this round.`,
+      {
+        enabled: true
+      }
+    );
+
+    highlightRoundSummaryColumn(
+      "guess-cell"
+    );
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  if (tutorialSubStep === 3) {
+    showTutorial(
+      `And here's the feedback you got back for each one.`,
+      {
+        enabled: true
+      }
+    );
+
+    highlightRoundSummaryColumn(
+      "feedback-cell"
+    );
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  if (tutorialSubStep === 4) {
+    showTutorial(
+      `We'll explain the rest once we've gone through the Spy's side.`,
       {
         enabled: true
       }
@@ -2737,13 +3187,20 @@ function runSummaryTutorial(state) {
     return;
   }
 
-  if (tutorialSubStep === 3) {
+  if (tutorialSubStep === 5) {
     showTutorial(
-      `Let's continue — click Next Round.`,
+      `Let's continue — tap Next Round.`,
       {
         enabled: true,
         mode: "hide"
       }
+    );
+
+    highlightNextRoundBtn();
+
+    playTapDemoLoop(
+      "round-summary-next-round",
+      () => [byId("nextRoundBtn")]
     );
 
     tutorialContinueMode =
@@ -2886,7 +3343,7 @@ if (stageAdvanced) {
       }
     );
 
-    highlightRoundSummary();
+    highlightMatchScore();
 
     tutorialContinueMode =
       "advance";
@@ -2896,11 +3353,13 @@ if (stageAdvanced) {
 
   if (tutorialSubStep === 2) {
     showTutorial(
-      `Below: every guess, each round's secret, who played which role, and how many words remained.`,
+      `Here's Round 1's summary — every guess, the feedback, and the secret used.`,
       {
         enabled: true
       }
     );
+
+    highlightStoredRound(0);
 
     tutorialContinueMode =
       "advance";
@@ -2909,6 +3368,71 @@ if (stageAdvanced) {
   }
 
   if (tutorialSubStep === 3) {
+    showTutorial(
+      `And here's Round 2's.`,
+      {
+        enabled: true
+      }
+    );
+
+    highlightStoredRound(1);
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  const secretSteps =
+    buildMatchSecretNarrationSteps(
+      state
+    );
+
+  const secretStepIndex =
+    tutorialSubStep - 4;
+
+  if (
+    secretStepIndex >= 0 &&
+    secretStepIndex < secretSteps.length
+  ) {
+    const step =
+      secretSteps[secretStepIndex];
+
+    showTutorial(step.text, {
+      enabled: true
+    });
+
+    step.highlight();
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  const buttonsStep =
+    4 + secretSteps.length;
+
+  if (tutorialSubStep === buttonsStep) {
+    showTutorial(
+      `Down here: New Match starts a fresh game, Replay repeats this exact setup, and Leave takes you back to the menu.`,
+      {
+        enabled: true
+      }
+    );
+
+    highlightSummaryActions();
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  if (
+    tutorialSubStep ===
+    buttonsStep + 1
+  ) {
     showTutorial(
       `That's the base game — there's more to learn next. Have fun!`,
       {

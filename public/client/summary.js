@@ -510,7 +510,7 @@ html += `
   }
     html += formatRevealPenaltySummary(state.powers);
 
-  html += `<p><b>Total guesses:</b> ${state.guessCount}</p>`;
+  html += `<p class="summary-guess-count"><b>Total guesses:</b> ${state.guessCount}</p>`;
 
   html += `
   <div class="summary-table-wrap">
@@ -613,7 +613,7 @@ html += `
 function renderStoredRoundSummary(round, index) {
 
   let html = `
-    <div class="stored-round">
+    <div class="stored-round" data-round-index="${index}">
       <h4>Round ${index + 1} – ${getPlayerName(round.setter)} was Spy</h4>
 
       <div class="summary-table-wrap">
@@ -657,9 +657,9 @@ function renderStoredRoundSummary(round, index) {
     html += `
       <tr>
         <td>${i + 1}</td>
-        <td>${h.finalSecret?.toUpperCase() || "???"}</td>
-        <td>${h.guess?.toUpperCase() || ""}</td>
-        <td>${Array.isArray(h.fb) ? h.fb.join("") : ""}</td>
+        <td class="secret-cell">${h.finalSecret?.toUpperCase() || "???"}</td>
+        <td class="guess-cell">${h.guess?.toUpperCase() || ""}</td>
+        <td class="feedback-cell">${Array.isArray(h.fb) ? h.fb.join("") : ""}</td>
         <td class="powers-cell">${powersCell}</td>
         <td>${remaining}</td>
       </tr>
