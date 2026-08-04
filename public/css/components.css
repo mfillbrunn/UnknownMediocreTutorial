@@ -567,14 +567,7 @@
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
-
-/* Connection banner — persistent (not a toast that scrolls away, not the
-   disruptive rejoinModal) indicator that stays up for as long as the
-   socket is actually disconnected. Shown on the same deferred timer the
-   "Connection lost" toast already uses, so a sub-second blip still shows
-   nothing; unlike the toast, this doesn't auto-dismiss on its own, since
-   its whole point is telling the player "actions may not be reaching the
-   server right now" for exactly as long as that's still true. */
+/* Connection and synchronization banner */
 .connection-banner {
   position: fixed;
   top: 0;
@@ -582,24 +575,61 @@
   right: 0;
   z-index: 99998;
 
-  padding: var(--sp-8, 8px) var(--sp-14, 14px);
+  padding:
+    var(--sp-8, 8px)
+    var(--sp-14, 14px);
+
   text-align: center;
   font-size: var(--fs-13, 13px);
   font-weight: 700;
   letter-spacing: 0.2px;
 
-  background: rgba(120, 53, 15, 0.95);
-  color: #fed7aa;
-  border-bottom: 1px solid rgba(253, 186, 116, 0.4);
+  background:
+    rgba(120, 53, 15, 0.96);
 
-  animation: connection-banner-pulse 1.6s ease-in-out infinite;
+  color: #fed7aa;
+
+  border-bottom:
+    1px solid
+    rgba(253, 186, 116, 0.4);
+
+  cursor: pointer;
+  user-select: none;
+
+  animation:
+    connection-banner-pulse
+    1.8s
+    ease-in-out
+    infinite;
+}
+
+.connection-banner[data-state="syncing"] {
+  background:
+    rgba(30, 64, 175, 0.96);
+
+  color: #dbeafe;
+
+  border-bottom-color:
+    rgba(147, 197, 253, 0.5);
+}
+
+.connection-banner[data-state="offline"] {
+  background:
+    rgba(120, 53, 15, 0.96);
+
+  color: #fed7aa;
 }
 
 @keyframes connection-banner-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
+  0%,
+  100% {
+    opacity: 1;
+  }
 
+  50% {
+    opacity: 0.72;
+  }
+}
 /* POWER USE POPUP (centered, opaque, lingers) */
 .power-popup {
   position: fixed;
