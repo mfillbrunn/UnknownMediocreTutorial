@@ -506,7 +506,6 @@ function pauseTutorial() {
   tutorialPendingReveal = null;
 
   clearHighlights();
-  stopTapDemo();
 }
 
 function hideTutorial() {
@@ -652,6 +651,7 @@ function queueHighlightCommit() {
 function clearHighlights() {
   tutorialHighlightDraft = [];
   queueHighlightCommit();
+  stopKeyDemo();
 }
 
 function highlightEl(el) {
@@ -855,25 +855,57 @@ function highlightPendingGuessRow() {
 }
 
 // ------------------------
-// Demo taps: a brief press-and-ripple (see .tutorial-tap-pulse in
-// tutorial.css) played on a specific keyboard key or button to show the
-// player exactly what to tap next, looped until the step advances.
+// Key demos: a persistent glow (see .tutorial-key-highlight in
+// tutorial.css) applied to every key or button the player still needs to
+// press for the current step. `getEls` is re-evaluated live -- once a
+// letter's been typed (or the button pressed), it drops out of the
+// returned list and its highlight is removed immediately. Typing on the
+// on-screen keyboard is local-only (it never round-trips through the
+// server, so tutorialSteps() never re-runs on its own mid-keystroke) --
+// refreshTutorialKeyDemo() below is called directly from the guesser and
+// setter input handlers in client.js on every keystroke to keep this live.
 // ------------------------
-let tutorialTapKey = null;
-let tutorialTapTimer = null;
+let tutorialKeyDemoKey = null;
+let tutorialKeyDemoGetEls = null;
+let tutorialHighlightedKeyEls = [];
 
-function stopTapDemo() {
-  clearTimeout(tutorialTapTimer);
-  tutorialTapTimer = null;
-  tutorialTapKey = null;
+function stopKeyDemo() {
+  tutorialHighlightedKeyEls.forEach(el =>
+    el?.classList.remove("tutorial-key-highlight")
+  );
+  tutorialHighlightedKeyEls = [];
+  tutorialKeyDemoKey = null;
+  tutorialKeyDemoGetEls = null;
 }
 
-function playTapOnce(el) {
-  if (!el) return;
+function applyKeyDemoHighlight() {
+  if (!tutorialKeyDemoGetEls) return;
 
-  el.classList.remove("tutorial-tap-pulse");
-  void el.offsetWidth; // restart the animation if it's already playing
-  el.classList.add("tutorial-tap-pulse");
+  const nextEls = (tutorialKeyDemoGetEls() || []).filter(Boolean);
+
+  tutorialHighlightedKeyEls
+    .filter(el => !nextEls.includes(el))
+    .forEach(el => el.classList.remove("tutorial-key-highlight"));
+
+  nextEls.forEach(el => el.classList.add("tutorial-key-highlight"));
+
+  tutorialHighlightedKeyEls = nextEls;
+}
+
+// `key` identifies this specific demo (e.g. a step key) -- repeated calls
+// with the same `key` from every re-render of the same tutorial substep
+// just refresh the highlight set instead of restarting the demo.
+function startKeyDemo(key, getEls) {
+  if (key === tutorialKeyDemoKey) {
+    tutorialKeyDemoGetEls = getEls;
+    applyKeyDemoHighlight();
+    return;
+  }
+
+  stopKeyDemo();
+  tutorialKeyDemoKey = key;
+  tutorialKeyDemoGetEls = getEls;
+  applyKeyDemoHighlight();
 }
 
 function tutorialKeyEl(role, symbol) {
@@ -891,52 +923,27 @@ function tutorialKeyEl(role, symbol) {
   );
 }
 
-// `key` identifies this specific demo (e.g. a step key) -- repeated calls
-// with the same `key` from every re-render of the same tutorial substep
-// are no-ops, so the loop already in flight keeps running instead of
-// restarting from the first element on every keystroke/state update.
-// `getEls` is called fresh at the start of each cycle (not once up front)
-// since keyboard keys can be rebuilt between cycles.
-function playTapDemoLoop(
-  key,
-  getEls,
-  { stepDelay = 420, pauseDelay = 1000 } = {}
-) {
-  if (key === tutorialTapKey) {
-    return;
+// Highlights whichever letters of `word` haven't been typed into `draft`
+// yet, or the Enter key once every letter's in place. Shared by every
+// "type this word" tutorial step (guesser guesses, setter secrets).
+function tutorialWordKeyEls(role, word, draft) {
+  const typed = (draft || "").toUpperCase();
+  const remaining = [
+    ...new Set(
+      word
+        .split("")
+        .filter(letter => !typed.includes(letter))
+    )
+  ];
+
+  if (remaining.length) {
+    return remaining.map(letter => tutorialKeyEl(role, letter));
   }
 
-  stopTapDemo();
-  tutorialTapKey = key;
-
-  const runCycle = () => {
-    const els = (getEls() || []).filter(Boolean);
-    let i = 0;
-
-    const step = () => {
-      if (i >= els.length) {
-        tutorialTapTimer = setTimeout(
-          runCycle,
-          pauseDelay
-        );
-
-        return;
-      }
-
-      playTapOnce(els[i]);
-      i++;
-
-      tutorialTapTimer = setTimeout(
-        step,
-        stepDelay
-      );
-    };
-
-    step();
-  };
-
-  runCycle();
+  return [tutorialKeyEl(role, "ENTER")];
 }
+
+window.refreshTutorialKeyDemo = applyKeyDemoHighlight;
 
 function highlightNotesPanel() {
   highlightEl(byId("notesPanelSetter"));
@@ -1933,7 +1940,7 @@ function runGuesserTutorial(
           }
         );
 
-        stopTapDemo();
+        stopKeyDemo();
       } else {
         showTutorial(
           `Let's make your first guess. Type "${word}" on the keyboard below, then press Enter.`,
@@ -1942,22 +1949,14 @@ function runGuesserTutorial(
           }
         );
 
-        playTapDemoLoop(
+        startKeyDemo(
           `guesser-round0-${word}`,
-          () => [
-            ...word
-              .split("")
-              .map(letter =>
-                tutorialKeyEl(
-                  "guesser",
-                  letter
-                )
-              ),
-            tutorialKeyEl(
+          () =>
+            tutorialWordKeyEls(
               "guesser",
-              "ENTER"
+              word,
+              localGuesserDraft
             )
-          ]
         );
       }
 
@@ -2050,7 +2049,7 @@ function runGuesserTutorial(
           }
         );
 
-        stopTapDemo();
+        stopKeyDemo();
       } else {
         showTutorial(
           `Now use those clues for your next guess. Try "${word}" — new letters can teach you even more.`,
@@ -2059,22 +2058,14 @@ function runGuesserTutorial(
           }
         );
 
-        playTapDemoLoop(
+        startKeyDemo(
           `guesser-round1-${word}`,
-          () => [
-            ...word
-              .split("")
-              .map(letter =>
-                tutorialKeyEl(
-                  "guesser",
-                  letter
-                )
-              ),
-            tutorialKeyEl(
+          () =>
+            tutorialWordKeyEls(
               "guesser",
-              "ENTER"
+              word,
+              localGuesserDraft
             )
-          ]
         );
       }
 
@@ -2290,12 +2281,24 @@ function runSetterTutorial(
           mode: "hide"
         }
       );
+
+      stopKeyDemo();
     } else {
       showTutorial(
         `Let's pick your secret. Type "${word}" on the keyboard below, then press Enter.`,
         {
           mode: "hide"
         }
+      );
+
+      startKeyDemo(
+        `setter-round0-${word}`,
+        () =>
+          tutorialWordKeyEls(
+            "setter",
+            word,
+            window.state?.setterDraft
+          )
       );
     }
 
@@ -2345,22 +2348,15 @@ function runSetterTutorial(
 
       highlightKeyboardSetter();
 
-      playTapDemoLoop(
+      startKeyDemo(
         "setter-round1-keep-demo",
-        () => [
-          tutorialKeyEl(
-            "setter",
-            "ENTER"
-          )
-        ]
+        () => [tutorialKeyEl("setter", "ENTER")]
       );
 
       return;
     }
 
     if (tutorialSubStep === 3) {
-      stopTapDemo();
-
       showTutorial(
         `Let's see the other choice — and its one rule — in action. Type PICKY and press Enter — watch what happens.`,
         {
@@ -2369,6 +2365,16 @@ function runSetterTutorial(
       );
 
       highlightKeyboardSetter();
+
+      startKeyDemo(
+        "setter-round1-picky-demo",
+        () =>
+          tutorialWordKeyEls(
+            "setter",
+            "PICKY",
+            window.state?.setterDraft
+          )
+      );
 
       // Normally a rejected secret clears itself automatically -- suppressed
       // just for this one demo (see submitSetterNew() in client.js) so the
@@ -2392,22 +2398,15 @@ function runSetterTutorial(
       highlightKeyboardSetter();
       waitForDraftCleared();
 
-      playTapDemoLoop(
+      startKeyDemo(
         "setter-round1-backspace-demo",
-        () => [
-          tutorialKeyEl(
-            "setter",
-            "BACKSPACE"
-          )
-        ]
+        () => [tutorialKeyEl("setter", "BACKSPACE")]
       );
 
       return;
     }
 
     if (tutorialSubStep === 5) {
-      stopTapDemo();
-
       showTutorial(
         `Now try a word that's actually allowed: "${word}".`,
         {
@@ -2417,6 +2416,16 @@ function runSetterTutorial(
 
       highlightKeyboardSetter();
       waitForSecretSubmission(round);
+
+      startKeyDemo(
+        `setter-round1-${word}`,
+        () =>
+          tutorialWordKeyEls(
+            "setter",
+            word,
+            window.state?.setterDraft
+          )
+      );
 
       return;
     }
@@ -3123,7 +3132,7 @@ function runSummaryTutorial(state) {
 
   if (tutorialSubStep === 1) {
     showTutorial(
-      `It shows how many guesses you took — that's your opponent's score. Lower is better for them.`,
+      `It shows how many guesses you took to find the secret — that's the count. Lower is better for you as the Inspector; it also becomes the Spy's score for the round, so higher is better for them.`,
       {
         enabled: true
       }
@@ -3198,7 +3207,7 @@ function runSummaryTutorial(state) {
 
     highlightNextRoundBtn();
 
-    playTapDemoLoop(
+    startKeyDemo(
       "round-summary-next-round",
       () => [byId("nextRoundBtn")]
     );

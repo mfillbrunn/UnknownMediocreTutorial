@@ -90,6 +90,12 @@ function clearRoom() {
 
   window.resetTransientGameUI?.();
 
+  // Leaving the room this way (forced out by the server, rejoin declined,
+  // or an unlimited-time "Leave") never fires a fresh tutorialSteps() call
+  // for the room we just left, so a tutorial bubble left on screen would
+  // otherwise sit there forever with no game underneath it.
+  window.hideTutorial?.();
+
   hide?.("game");
   hide?.("lobby");
   showStartup?.();

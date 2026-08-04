@@ -1727,6 +1727,7 @@ function handleSetterInput(event) {
       state.setterDraft = next.trim() === "" ? "" : next;
       updateUI();
       emitSetterDraftPreview(state.setterDraft);
+      window.refreshTutorialKeyDemo?.();
       if (!state.setterDraft) window.notifyTutorialDraftCleared?.();
       return;
     }
@@ -1739,6 +1740,7 @@ function handleSetterInput(event) {
         state.setterDraft = chars.join("");
         updateUI();
         emitSetterDraftPreview(state.setterDraft);
+        window.refreshTutorialKeyDemo?.();
       }
       return;
     }
@@ -2491,6 +2493,8 @@ function renderGuesserDraftOnly() {
     isGuesser: true,
     onInput: handleGuesserInput
   });
+
+  window.refreshTutorialKeyDemo?.();
 
   // Wiretap live tap: while active, feed the current draft to the server so
   // it can report how many secrets would remain if this guess were made.

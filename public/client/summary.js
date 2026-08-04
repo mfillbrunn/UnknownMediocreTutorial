@@ -105,6 +105,7 @@ function computeMatchResult(state, viewerUserId) {
 }
 
 function getPlayerName(userId) {
+  if (userId === "AI" && state?.isTutorial) return "AI Tutorial";
   return (userId && state.players?.[userId]?.name) || "—";
 }
 

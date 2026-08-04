@@ -62,6 +62,16 @@ class TutorialMode {
       state.tutorialGuessesAI = ["SMALL", "LEMUR"];
     }
 
+    // Base tutorial only: a couple more scripted AI guesses right after the
+    // SMALL/BLIND scripted pair, before the AI goes fully organic in round
+    // 2 (the setter round) -- deliberately unhelpful words (they don't
+    // reuse any letter the earlier guesses already placed) so the human
+    // sees a few more scored turns play out before free-form guessing
+    // starts. See runAI.js's tutorialGuessesAIExtra handling.
+    if (state.tutorialStage === 1) {
+      state.tutorialGuessesAIExtra = ["BRIEF", "GHOST"];
+    }
+
     // Stage "power": a single power (launched from a "Try it" button next
     // to that power in the Power Library, see lobby.js's PLAYER_READY
     // tutorialPower branch, which sets tutorialPowerId) taught in BOTH

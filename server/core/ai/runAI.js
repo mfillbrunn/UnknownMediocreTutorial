@@ -399,6 +399,14 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
 
         if (isTutorial) {
           guess = state.tutorialGuessesAI[state.history.length];
+        } else if (state.isTutorial && Array.isArray(state.tutorialGuessesAIExtra)) {
+          // A few more scripted guesses right after the scriptedTurns
+          // window closes (see tutorialMode.js) -- indexed relative to
+          // where that window left off, not from history.length directly.
+          const extraIndex = state.history.length - state.scriptedTurns;
+          if (extraIndex >= 0 && extraIndex < state.tutorialGuessesAIExtra.length) {
+            guess = state.tutorialGuessesAIExtra[extraIndex];
+          }
         }
 
         applyAIAction(
