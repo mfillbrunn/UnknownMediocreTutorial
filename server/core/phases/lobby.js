@@ -1,5 +1,5 @@
 // core/phases/lobby.js
-
+const {  randomUUID} = require("crypto");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const CompetitiveMode = require("../modes/competitiveMode");
 const TutorialMode = require("../modes/tutorialMode");
@@ -388,6 +388,7 @@ if (action.type === "SET_DAILY_POWERS") {
     freshState.hostUserId = state.hostUserId;
     freshState.ranked = state.ranked;
     freshState.matchStartedAt = Date.now();
+    freshState.matchId =  randomUUID();
     freshState.shuffle = state.shuffle;
     freshState.draftMode = !!state.draftMode;
     freshState.customPowersMode = !!state.customPowersMode;
