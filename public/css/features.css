@@ -1302,6 +1302,20 @@
   margin: var(--sp-12) 0;
 }
 
+/* scrollIntoView({block:"nearest"}) (tutorial-ui.js's highlightSummaryActions)
+   otherwise lands this flush against the exact bottom viewport pixel with
+   zero breathing room -- on real devices, browser chrome/dynamic toolbars
+   eat into that nominal viewport, so the "in view" buttons can still read
+   as clipped/offscreen. scroll-margin-bottom is a native scrollIntoView
+   input, not just a layout property, so it forces real space below the
+   target. Scoped to the id (the real match-summary button row) rather than
+   the shared .summary-actions class, which is also reused by the tutorial's
+   unrelated handoff CTA div.
+   */
+#matchSummaryActions {
+  scroll-margin-bottom: 24px;
+}
+
 .summary-actions .primary-btn,
 .summary-actions .secondary-btn {
   flex: 1;

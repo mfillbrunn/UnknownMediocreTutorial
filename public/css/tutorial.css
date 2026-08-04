@@ -372,19 +372,30 @@ transition:
    secret -- on the setter's own keyboard, a demo letter (e.g. PICKY's
    "I") can also happen to be one of those letters, showing both rings
    at once and muddying which one the player should actually look at.
-   The gold demo glow should win outright. */
+   The gold demo glow should win outright. !important: states.css's
+   .theme-setter .key.key-current selector alone already beats this file's
+   plain .key.key-current.tutorial-key-highlight on specificity (3 classes
+   vs 3, decided by source order without it), so without it the white
+   ring could still win back on the setter's own keyboard specifically. */
 .key.key-current.tutorial-key-highlight {
-  box-shadow: none;
+  box-shadow: none !important;
 }
 
+/* !important on content/position/animation, not just box-shadow: this
+   and states.css's .theme-setter .key.key-current::after both render on
+   the SAME ::after pseudo-element of the same key, and that rule's
+   3-class selector otherwise wins outright over this one's single class
+   -- silently replacing this entire pseudo-element (including which
+   animation actually runs) rather than just its color, so the setter's
+   own red "current" glow-pulse would keep playing here instead of gold. */
 .tutorial-key-highlight::after {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 2;
-  animation: tutorial-key-glow 1.1s ease-in-out infinite;
+  content: "" !important;
+  position: absolute !important;
+  inset: -3px !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+  animation: tutorial-key-glow 1.1s ease-in-out infinite !important;
 }
 
 @keyframes tutorial-key-glow {
@@ -409,10 +420,13 @@ transition:
   }
 
   .tutorial-body.tutorial-step-in,
-  .tutorial-focus-ring::after,
-  .tutorial-key-highlight::after {
+  .tutorial-focus-ring::after {
     animation: none;
+  }
+
+  .tutorial-key-highlight::after {
+    animation: none !important;
     box-shadow:
       0 0 0 3px rgba(255, 213, 79, 0.85),
-      0 0 12px 3px rgba(255, 213, 79, 0.5);
+      0 0 12px 3px rgba(255, 213, 79, 0.5) !important;
   }
