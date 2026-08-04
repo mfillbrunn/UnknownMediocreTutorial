@@ -3324,6 +3324,49 @@ body:has(#guesserScreen.active) #appMain {
     gap: 3px;
   }
 
+  /* Notes: keep input fixed; scroll saved words only */
+#notesPanelSetter,
+#notesPanelGuesser {
+  display: flex;
+  flex-direction: column;
+
+  height: min(
+    420px,
+    calc(100dvh - 112px)
+  );
+
+  max-height:
+    calc(100dvh - 112px);
+
+  min-height: 0;
+
+  overflow: hidden !important;
+}
+
+#notesPanelSetter .notes-panel-title,
+#notesPanelGuesser .notes-panel-title {
+  flex: 0 0 auto;
+}
+
+#notesPanelSetter .notes-draft-row,
+#notesPanelGuesser .notes-draft-row {
+  flex: 0 0 auto;
+}
+
+#notesPanelSetter .notes-list,
+#notesPanelGuesser .notes-list {
+  flex: 1 1 0;
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+
+  padding-right: 3px;
+  scrollbar-gutter: stable;
+}
   #setterScreen .setter-power-view .power-btn {
     padding-left: 2px;
     padding-right: 2px;
