@@ -239,7 +239,17 @@ function handleNormalPhase(room, state, action, roomId, context) {
       action.type === "SET_SECRET_NEW" &&
       !state.powers?.rouletteSecretActive
     ) {
-      io.to(action.playerId).emit("errorMessage", "All feedback was wrong — you must keep the same secret this round.");
+      const setterSocketId =
+  room.playersByUserId
+    ?.[userId]
+    ?.socketId;
+
+if (setterSocketId) {
+  io.to(setterSocketId).emit(
+    "errorMessage",
+    "The opening guess missed every letter, so your secret is locked for this round."
+  );
+}
       return;
     }
     const secret =
