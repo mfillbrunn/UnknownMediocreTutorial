@@ -419,24 +419,86 @@ onStateUpdate(newState => {
   const prevSetterDraft = state?.setterDraft || "";
   const prevHistoryLen = state?.history?.length ?? -1;
   const prevPendingGuess = state?.pendingGuess || "";
-  // The guess I (the setter) was just looking at is about to resolve into
-  // a scored history row this tick (finalizeFeedback.js pushes the entry
-  // and clears pendingGuess together, same broadcast) -- grab the pending
-  // row's current on-screen position now, while the DOM still reflects the
-  // OLD state, so resolvePendingGuessFlight() can fly a clone of it there
-  // once the re-render below lands the real row.
+  const wasOpeningMissLocked =
+    !!state?.simultaneousAllWrong;
+
   if (
     prevPendingGuess &&
     state &&
     myUserId() === state.setter &&
     (newState.history?.length ?? 0) > prevHistoryLen
   ) {
-    const pendingEl = document.querySelector("#draftSetter .draft-row.pending-guess");
-    if (pendingEl && pendingEl.offsetParent !== null) {
-      pendingGuessFlight = { rect: pendingEl.getBoundingClientRect(), guess: prevPendingGuess.toUpperCase() };
+    const pendingEl = document.querySelector(
+      "#draftSetter .draft-row.pending-guess"
+    );
+
+    if (
+      pendingEl &&
+      pendingEl.offsetParent !== null
+    ) {
+      pendingGuessFlight = {
+        rect: pendingEl.getBoundingClientRect(),
+        guess: prevPendingGuess.toUpperCase()
+      };
     }
   }
-  state = JSON.parse(JSON.stringify(newState));
+
+  state = JSON.parse(
+    JSON.stringify(newState)
+  );
+
+  /*
+   * Both players submitted during the opening simultaneous
+   * phase. Neither opening draft should remain in the input row.
+   */
+  const leftSimultaneous =
+    prevPhase === "simultaneous" &&
+    state.phase !== "simultaneous";
+
+  if (leftSimultaneous) {
+    localGuesserDraft = "";
+    state.setterDraft = "";
+
+    guesserDraftLocks.clear();
+    setterDraftLocks.clear();
+
+    const guesserDraftContainer =
+      $("draftGuesser");
+
+    const guesserDraftRow =
+      guesserDraftContainer
+        ?.__draftRows
+        ?.draft;
+
+    if (guesserDraftRow) {
+      guesserDraftRow.__slidingOut = false;
+
+      guesserDraftRow.classList.remove(
+        "row-slide-out",
+        "row-slide-down",
+        "row-slide-in"
+      );
+
+      guesserDraftRow.style.display = "none";
+    }
+
+    if (guesserDraftContainer) {
+      guesserDraftContainer
+        .__guesserSubmitSlideDone = true;
+    }
+  }
+
+  /*
+   * Used by fix 9 below.
+   */
+  if (
+    !wasOpeningMissLocked &&
+    state.simultaneousAllWrong
+  ) {
+    requestAnimationFrame(() => {
+      showOpeningMissLockNotice();
+    });
+  }
   window.powerKbSyncTurn?.();
   if ((state.history?.length ?? 0) !== prevHistoryLen) {
     // A guess/decision just finalized (or a new round started) — any
@@ -1852,17 +1914,17 @@ function handleGuesserInput(event) {
           type: "SUBMIT_GUESS",
           guess: g
         },
-        result => {
-          if (!result?.ok) {
-            return;
-          }
+result => {
+  if (!result?.ok) {
+    return;
+  }
 
-          localGuesserDraft = "";
+  localGuesserDraft = "";
+  guesserDraftLocks.clear();
 
-          guesserDraftLocks.clear();
-
-          resetEphemeralUIState();
-        }
+  resetEphemeralUIState();
+  updateUI();
+}
       )
     ) {
       return;
