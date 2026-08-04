@@ -21,7 +21,6 @@ function renderSetterRemainingBox(boxState) {
   // recent full state broadcast happened to carry (that can be stale
   // relative to a live-typed draft, which arrives via a separate event
   // that never touches window.state).
-  window._lastRemainingBoxState = boxState;
 
   // Simultaneous round-start: the setter is still choosing their secret,
   // so there's no guess/feedback yet to compute real numbers from. Show
@@ -51,11 +50,6 @@ function renderSetterRemainingBox(boxState) {
   const newStyle = boxState.highlightNew ? "color: var(--tile-green)" : "";
   const current = boxState.current.toLocaleString();
 
-  const guideOn = document.body.classList.contains("guide-on");
-  const hint = guideOn
-    ? `<div class="line remaining-hint">How many possible secrets would still fit the clues so far — if you keep this secret vs. switch to your typed word.</div>`
-    : "";
-
   const keepValue = boxState.old != null ? boxState.old.toLocaleString() : "?";
   const newValue =
     boxState.isConsistent === false
@@ -79,7 +73,6 @@ function renderSetterRemainingBox(boxState) {
         <span class="remaining-stat-value" style="${newStyle}">${newValue}</span>
       </div>
     </div>
-    ${hint}
   `;
 }
 
