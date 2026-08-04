@@ -83,8 +83,12 @@ function resetKeyboards() {
 window.resetTransientGameUI = function () {
   localGuesserDraft = "";
   guesserDraftLocks.clear();
+  document.body.classList.remove(
+  "blind-guess"
+);
   window.clearHighlights?.();
   window.hideTileKbReset?.();
+  
 };
 (() => {
   const periodMs = 4500;
