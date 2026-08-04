@@ -25,18 +25,16 @@ tooltip: {
     }
   },
 
-  uiEffects(state, role) {
-    // Blind Guess affects guesser UI only. `role` here is the viewer's own
-    // role string ("setter"/"guesser"), not a userId — comparing it against
-    // state.guesser (a userId) was always false, so this never applied.
-    if (role !== "guesser") return;
+uiEffects(state, role) {
+  const shouldBeBlackout =
+    role === "guesser" &&
+    !!state?.powers?.blindGuessActive;
 
-    if (state.powers?.blindGuessActive) {
-      document.body.classList.add("blind-guess");
-    } else {
-      document.body.classList.remove("blind-guess");
-    }
-  }
+  document.body.classList.toggle(
+    "blind-guess",
+    shouldBeBlackout
+  );
+}
 });
 
 InfoBadgeEngine.register((state, role) => {
