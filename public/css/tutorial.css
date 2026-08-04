@@ -282,6 +282,17 @@ transition:
   opacity: 1;
 }
 
+/* Applied for exactly one reposition when the ring is jumping to a brand
+   new highlight target (see tutorial-ui.js's tutorialRingSnapNext) --
+   without this, moving from one highlighted subject to a completely
+   different one (e.g. the whole keyboard to the pending-guess row) would
+   visibly slide the ring across the screen between them instead of just
+   appearing on the new subject. Opacity keeps transitioning normally so a
+   genuine show/hide fade is unaffected; only the geometry snaps. */
+.tutorial-focus-ring.no-transition {
+  transition-property: opacity;
+}
+
 .tutorial-focus-ring::after {
   content: "";
   position: absolute;
@@ -345,9 +356,23 @@ transition:
    outline around a whole row/panel. Stays on until that specific key/
    button is no longer needed (typed, pressed, or the step moves on),
    at which point the class is removed outright -- no fixed-duration
-   animation to time against real input. */
+   animation to time against real input.
+   Rendered on a pseudo-element rather than the key's own box-shadow/
+   animation: .key-green/-yellow/-blue/-purple all set box-shadow: none
+   !important (components.css), and .key[data-key="ENTER"]/"⌫" separately
+   set animation: none !important -- animating the key's own properties
+   directly would silently never show on a solved (colored) key or on
+   Enter/Backspace at all. A separate glow layer sidesteps both. */
 .tutorial-key-highlight {
   position: relative;
+}
+
+.tutorial-key-highlight::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  pointer-events: none;
   z-index: 2;
   animation: tutorial-key-glow 1.1s ease-in-out infinite;
 }
@@ -375,7 +400,7 @@ transition:
 
   .tutorial-body.tutorial-step-in,
   .tutorial-focus-ring::after,
-  .tutorial-key-highlight {
+  .tutorial-key-highlight::after {
     animation: none;
     box-shadow:
       0 0 0 3px rgba(255, 213, 79, 0.85),

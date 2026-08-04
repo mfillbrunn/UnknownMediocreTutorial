@@ -21,6 +21,8 @@ let tutorialHighlightTargets = [];
 let tutorialHighlightCommitQueued = false;
 let tutorialBodyAnimationTimer = null;
 let tutorialHighlightSettleTimer = null;
+let tutorialRingSettling = false;
+let tutorialRingSnapNext = false;
 
 function qs(sel) {
   return document.querySelector(sel);
@@ -622,29 +624,45 @@ function queueHighlightCommit() {
         );
       });
 
-    scheduleTutorialLayout();
-
     /*
      * A freshly highlighted target (e.g. the pending-guess row, which
      * enters via .row-slide-in) can still be mid-flight through its own
      * 340ms CSS transform animation right now -- getBoundingClientRect()
      * reflects wherever that animation currently is, not its settled
-     * resting spot, so the immediate scheduleTutorialLayout() above can
-     * plant the ring around a transient, wrong-looking box (e.g. still
-     * shifted off-screen by translateX) that then never gets corrected,
-     * since nothing else re-measures it later. Re-measure once more after
-     * the longest entrance/exit animation in play (draft-row-slide-in/
-     * -down/-out, all 340ms) has had time to finish.
+     * resting spot. Positioning the ring there immediately used to plant
+     * it at a transient, wrong-looking box (e.g. still shifted off-screen
+     * by translateX), then visibly slide it over to the correct spot once
+     * a later re-measure corrected it -- exactly the "appears on the left,
+     * then jumps right" glitch this flag exists to avoid. Suppress ring
+     * repositioning (from *any* caller of scheduleTutorialLayout, not just
+     * this one -- the bubble's own reveal pass runs the same function)
+     * until the longest entrance/exit animation in play (draft-row-slide-
+     * in/-down/-out, all 340ms) has had time to finish, so the ring only
+     * ever appears already in its settled, correct spot.
      */
+    tutorialRingSettling =
+      !!tutorialHighlightTargets.length;
+
+    scheduleTutorialLayout();
+
     clearTimeout(
       tutorialHighlightSettleTimer
     );
 
     tutorialHighlightSettleTimer =
-      setTimeout(
-        scheduleTutorialLayout,
-        360
-      );
+      setTimeout(() => {
+        tutorialRingSettling = false;
+        // The ring may still be visibly showing wherever the *previous*
+        // highlight left it (e.g. the whole keyboard) right up until this
+        // fires -- transitioning smoothly from there to this step's target
+        // would visibly slide the ring across the screen instead of just
+        // appearing on the new subject. Snap this one reposition instead;
+        // positionTutorialFocusRing() clears the flag itself once applied,
+        // so any *later* reflow of the same settled target (e.g. a resize)
+        // still transitions normally.
+        tutorialRingSnapNext = true;
+        scheduleTutorialLayout();
+      }, 360);
   });
 }
 
@@ -662,6 +680,10 @@ function highlightEl(el) {
 }
 
 function positionTutorialFocusRing() {
+  if (tutorialRingSettling) {
+    return;
+  }
+
   const ring =
     getTutorialFocusRing();
 
@@ -696,6 +718,7 @@ function positionTutorialFocusRing() {
       .filter(Boolean);
 
   if (!rects.length) {
+    tutorialRingSnapNext = false;
     ring.classList.remove("show");
     return;
   }
@@ -738,6 +761,14 @@ function positionTutorialFocusRing() {
     ) + pad
   );
 
+  const snapping = tutorialRingSnapNext;
+  tutorialRingSnapNext = false;
+
+  if (snapping) {
+    ring.classList.add("no-transition");
+    void ring.offsetWidth;
+  }
+
   ring.style.width =
     `${Math.max(0, right - left)}px`;
 
@@ -770,6 +801,12 @@ ring.style.borderRadius =
     ? `calc(${targetRadius} + 4px)`
     : "10px";
   ring.classList.add("show");
+
+  if (snapping) {
+    requestAnimationFrame(() => {
+      ring.classList.remove("no-transition");
+    });
+  }
 }
 
 function highlightKeyboardGuesser() {
