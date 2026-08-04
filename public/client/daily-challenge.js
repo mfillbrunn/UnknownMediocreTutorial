@@ -288,7 +288,7 @@ async function _showDailyRankings(config) {
   try {
     const { data, error } = await sb
       .from("daily_results")
-      .select("user_id, date, score, opponent_score, time_seconds, won, tie, difficulty")
+      .select("user_id, date, status, score, opponent_score, time_seconds, won, tie, difficulty")
       .eq("date", config.date);
     if (error) throw error;
     // Belt-and-suspenders re-check on top of the .eq() above -- a stale
@@ -296,6 +296,7 @@ async function _showDailyRankings(config) {
     // doesn't compare the way .eq() assumes) should never be able to slip
     // a previous day's score into today's board.
     rows = (data || []).filter(r => r.date === config.date);
+    rows = rows.filter ( row => row.status !== "in_progress");
   } catch (e) {
     console.error("[daily rankings] read failed:", e?.message || e);
     listEl.innerHTML = `<p class="daily-rank-msg">Rankings aren't available yet.</p>`;
@@ -339,11 +340,36 @@ async function _showDailyRankings(config) {
 
   // Points desc, then harder-difficulty-first (beating a tougher AI at the
   // same point total is the better result), then faster time.
-  rows.sort((a, b) =>
-    (pointsOf(b) - pointsOf(a)) ||
-    ((b.difficulty ?? 0) - (a.difficulty ?? 0)) ||
-    ((a.time_seconds ?? 1e9) - (b.time_seconds ?? 1e9))
+  rows.sort((a, b) => {
+  const aDnf =
+    a.status === "abandoned";
+
+  const bDnf =
+    b.status === "abandoned";
+
+  if (aDnf !== bDnf) {
+    return aDnf ? 1 : -1;
+  }
+
+  return (
+    pointsOf(b) -
+      pointsOf(a) ||
+
+    (
+      b.difficulty ?? 0
+    ) -
+      (
+        a.difficulty ?? 0
+      ) ||
+
+    (
+      a.time_seconds ?? 1e9
+    ) -
+      (
+        b.time_seconds ?? 1e9
+      )
   );
+});
 
   const myId = window.currentUser?.id;
   const header = `
@@ -356,6 +382,7 @@ async function _showDailyRankings(config) {
     </div>`;
   listEl.innerHTML = header + rows.map((r, i) => {
     const diff = dailyDifficultyMeta(r.difficulty);
+    const isDnf =  r.status === "abandoned";
     const name = names[r.user_id] || (r.user_id === myId ? "You" : "Player");
     const isMe = r.user_id === myId;
     const points = pointsOf(r);
@@ -363,11 +390,29 @@ async function _showDailyRankings(config) {
       <div class="daily-rank-row ${isMe ? "me" : ""}">
         <span class="daily-rank-pos">${i + 1}</span>
         <span class="daily-rank-name">${name}${isMe ? " (you)" : ""}</span>
-        <span class="daily-rank-points">${points > 0 ? "+" : ""}${points}</span>
+        <span class="daily-rank-points">
+  ${
+    isDnf
+      ? "DNF"
+      : `${
+          points > 0
+            ? "+"
+            : ""
+        }${points}`
+  }
+</span>
         <span class="daily-rank-diff">
           <span class="daily-diff-dot" style="background:${diff.color}" title="${diff.label} AI"></span>
         </span>
-        <span class="daily-rank-time">${formatDailyTime(r.time_seconds)}</span>
+        <span class="daily-rank-time">
+  ${
+    isDnf
+      ? "—"
+      : formatDailyTime(
+          r.time_seconds
+        )
+  }
+</span>
       </div>`;
   }).join("");
 }
