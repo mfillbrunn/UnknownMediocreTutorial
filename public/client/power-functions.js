@@ -125,6 +125,23 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
   }
 
   const label = GREEN_REVEAL_SOURCE_LABELS[source] || "A power";
+
+  // Letter Peek's reveal isn't a real green tile -- the Spy can still
+  // change their secret afterward, unlike every other source here (Reveal
+  // Letter, Bet Power, Field Report, Quest), which permanently lock the
+  // position in as known-green. Calling it "green" implies a permanence
+  // it doesn't have, so it gets its own, more accurate wording.
+  if (source === "revealGreen") {
+    window.showBigAnnounce?.({
+      icon: "👁️",
+      title: "Letter revealed!",
+      sub: `${label} revealed ${letter.toUpperCase()} in position ${index + 1}.`,
+      roleClass: "outcome-win",
+      duration: 4200
+    });
+    return;
+  }
+
   window.showBigAnnounce?.({
     icon: "🟩",
     title: "Green letter revealed!",

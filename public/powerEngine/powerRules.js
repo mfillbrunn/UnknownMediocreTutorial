@@ -266,12 +266,12 @@ delayedIntel: {
 
   // Guesser powers
   revealGreen: {
-    once: true,
     allowed(state, role) {
       return (
         state.phase === "normal" &&
         role === "guesser" &&
-        !state.powerUsedThisTurn 
+        !state.powerUsedThisTurn &&
+        (state.powers?.revealGreenUses || 0) < 2
       );
     }
   },

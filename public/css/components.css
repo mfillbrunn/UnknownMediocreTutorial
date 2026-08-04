@@ -219,6 +219,27 @@
     0 0 0 2px color-mix(in srgb, var(--role-accent) 25%, transparent);
 }
 
+/* "Uses left / total" chip for multi-charge powers (Letter Peek, Hide
+   Evidence) -- top-right corner of the badge card so it doesn't compete
+   with the icon/label for center space. Text is refreshed every render in
+   updateButtonStates from state.powers[id+"Uses"]. */
+.power-uses-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  border: 2px solid var(--role-accent);
+  background: #14151b;
+  color: var(--role-accent);
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.3;
+  pointer-events: none;
+}
+
 .power-icon {
   width: 80%;
   max-width: 34px;

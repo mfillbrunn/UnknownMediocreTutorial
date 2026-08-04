@@ -3,7 +3,7 @@ const engine = require("../powerEngineServer.js");
 
 engine.registerPower("revealGreen", {
   apply(state, action, roomId, io) {
-  // Two charges per round — can be activated on two separate turns
+  // Two charges per match — can be activated on two separate turns
   // (never the same turn, powerUsedThisTurn already prevents that).
   if ((state.powers.revealGreenUses || 0) >= 2) return false;
   if (!state.secret) return false;
@@ -41,8 +41,8 @@ engine.registerPower("revealGreen", {
   const letter = secret[pos];
 
   state.powers.revealLetterRound = state.history.length;
-  state.powers.revealGreenUsed = true;
   state.powers.revealGreenUses = (state.powers.revealGreenUses || 0) + 1;
+  state.powers.revealGreenUsed = state.powers.revealGreenUses >= 2;
   state.powers.revealGreenPos = pos;
   state.powers.revealGreenLetter = letter;
   state.powers.revealGreenActive = true;

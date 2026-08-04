@@ -139,12 +139,12 @@ function updateActionBadge() {
   badge.textContent = label;
   badge.classList.toggle("hidden", !waitingType);
 
-  // "end" is the very last step of a tutorial (see endTutorial()) --
-  // relabel the one button this bubble has so it reads as the exit it
+  // "end" is the very last step of a tutorial (see showTutorialDoneModal())
+  // -- relabel the one button this bubble has so it reads as the exit it
   // actually is, instead of the usual "Next"/"Hide".
   continueBtn.textContent =
     tutorialContinueMode === "end"
-      ? "End Tutorial"
+      ? "Finish Tutorial"
       : waitingType ? "Hide" : "Next";
 }
 
@@ -1634,6 +1634,7 @@ function waitForDraftCleared() {
 // the last step of a tutorial reaches this same "done, head back" point
 // without requiring the player to actually finish playing out the match.
 function endTutorial() {
+  byId("tutorialDoneModal")?.classList.remove("active");
   byId("tutorialBubble")?.classList.add("hidden");
 
   socket.emit("leaveRoom", {}, () => {
@@ -1647,11 +1648,42 @@ function endTutorial() {
 }
 window.endTutorial = endTutorial;
 
+// Shown once the powers tutorial's last tooltip is dismissed -- gives the
+// player an explicit choice instead of silently dropping them back at the
+// menu, since the Advanced Tutorial (UI features) is a natural next step
+// from here.
+function showTutorialDoneModal() {
+  byId("tutorialBubble")?.classList.add("hidden");
+  byId("tutorialDoneModal")?.classList.add("active");
+}
+
+byId("tutorialDoneLeaveBtn")?.addEventListener("click", () => {
+  endTutorial();
+});
+
+byId("tutorialDoneNextBtn")?.addEventListener("click", () => {
+  byId("tutorialDoneModal")?.classList.remove("active");
+  byId("tutorialBubble")?.classList.add("hidden");
+
+  // startFreshTutorial() just creates a new room -- it never leaves the
+  // one this tutorial is still sitting in, so without an explicit leave
+  // first the old room's socket membership (and its stateUpdate
+  // broadcasts) would keep leaking into the new one.
+  socket.emit("leaveRoom", {}, () => {
+    roomId = null;
+    clearRoom();
+    state = null;
+    window.state = null;
+    resetKeyboards();
+    startFreshTutorial("advanced");
+  });
+});
+
 byId("tutorialContinueBtn")?.addEventListener("click", event => {
   event.stopPropagation();
 
   if (tutorialContinueMode === "end") {
-    endTutorial();
+    showTutorialDoneModal();
     return;
   }
 
@@ -1869,6 +1901,14 @@ window.notifyTutorialDraftCleared =
 // Main tutorial logic
 // ------------------------
 function tutorialSteps(state, role) {
+  // Once the "Tutorial Complete!" choice is up, nothing else should
+  // touch the bubble -- every later stateUpdate (AI activity, timers,
+  // whatever) would otherwise call back into showTutorial() below, which
+  // unconditionally un-hides it and pulls it back on top of the modal.
+  if (byId("tutorialDoneModal")?.classList.contains("active")) {
+    return;
+  }
+
   updateActionBadge();
 
   if (!state?.isTutorial) {
@@ -2019,6 +2059,20 @@ function runGuesserTutorial(
 
       if (tutorialSubStep === 1) {
         showTutorial(
+          `Quick rule: powers can only be used once per turn, and most are limited to once per match. Letter Peek and a couple others are the exceptions — you get two uses each.`,
+          {
+            enabled: true
+          }
+        );
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (tutorialSubStep === 2) {
+        showTutorial(
           `You're the Inspector again, and this time you have a power available: Letter Peek — it reveals one correct letter and its position.`,
           {
             enabled: true
@@ -2033,7 +2087,7 @@ function runGuesserTutorial(
         return;
       }
 
-      if (tutorialSubStep === 2) {
+      if (tutorialSubStep === 3) {
         if (
           state.simultaneousGuessSubmitted
         ) {
@@ -2100,10 +2154,6 @@ function runGuesserTutorial(
       }
 
       if (tutorialSubStep === 1) {
-        const word =
-          state.tutorialGuesses?.[1] ||
-          "CUMIN";
-
         const info =
           state.revealGreenInfo;
 
@@ -2119,7 +2169,7 @@ function runGuesserTutorial(
         }
 
         showTutorial(
-          `Letter Peek revealed "${info.letter}" in position ${info.pos + 1} — see it appear in your action log below. Try a guess that uses it, like "${word}".`,
+          `Letter Peek revealed "${info.letter}" in position ${info.pos + 1} — see it appear in your action log below. Try a guess that uses it.`,
           {
             enabled: true
           }
@@ -2137,6 +2187,20 @@ function runGuesserTutorial(
       }
 
       if (tutorialSubStep === 2) {
+        showTutorial(
+          `That's how powers work — your opponent's log shows that you activated Letter Peek, even though the letter itself stays hidden from them. Once you find the secret, we'll switch to the Spy side.`,
+          {
+            enabled: true
+          }
+        );
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (tutorialSubStep === 3) {
         const word =
           state.tutorialGuesses?.[1] ||
           "CUMIN";
@@ -2185,7 +2249,7 @@ function runGuesserTutorial(
     if (round === 2) {
       if (tutorialSubStep === 0) {
         showTutorial(
-          `From here on, finish this round on your own. Once you find the secret, you'll switch roles and try the Spy's power. Good luck!`,
+          `From here on, finish this round on your own. Once you find the secret, you'll switch roles. Good luck!`,
           {
             enabled: true,
             mode: "hide"
@@ -2608,7 +2672,7 @@ function runSetterTutorial(
       }
 
       showTutorial(
-        `From here on, play strategically and try to outsmart your opponent. Tap "End Tutorial" whenever you're ready — no need to finish playing this match.`,
+        `That's the powers tutorial! Tap "Finish Tutorial" whenever you're ready — no need to finish playing this match.`,
         {
           mode: "end"
         }

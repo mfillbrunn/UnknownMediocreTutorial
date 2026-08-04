@@ -28,6 +28,15 @@ const POWER_ICON_IDS = {
   letterProfile: "icon-letter-profile"
 };
 
+// Powers with more than one charge per match show a small "uses left /
+// total" chip on their button (e.g. "2/2", dropping to "1/2" after the
+// first activation) so it's clear another use is still available instead
+// of reading as a normal one-shot power.
+const POWER_MAX_USES = {
+  hideTile: 2,
+  revealGreen: 2
+};
+
 // Shared by power buttons (below) and quest.js's badge tile. .power-btn-label
 // reserves a fixed-height 2-line box in CSS (components.css) so every badge
 // card ends up the same overall size regardless of label length -- this
@@ -113,6 +122,14 @@ window.PowerEngine = {
     labelEl.textContent = label;
     btn.appendChild(labelEl);
     fitBadgeLabel(labelEl);
+
+    const maxUses = POWER_MAX_USES[id];
+    if (maxUses) {
+      const usesEl = document.createElement("span");
+      usesEl.className = "power-uses-badge";
+      usesEl.textContent = `${maxUses}/${maxUses}`;
+      btn.appendChild(usesEl);
+    }
 
     const meta = this.powers[id]?.tooltip;
     if (meta) {
@@ -206,6 +223,15 @@ window.PowerEngine = {
     const wrongRole =
       (mod.role === "setter" && !isSetter) ||
       (mod.role === "guesser" && !isGuesser);
+
+    const maxUses = POWER_MAX_USES[id];
+    if (maxUses) {
+      const usesEl = btn.querySelector(".power-uses-badge");
+      if (usesEl) {
+        const spent = state.powers?.[id + "Uses"] || 0;
+        usesEl.textContent = `${Math.max(maxUses - spent, 0)}/${maxUses}`;
+      }
+    }
 
     const isPermanentlyUsed = state.powers?.[id + "Used"] === true;
     const powerUsedThisTurn = state.powerUsedThisTurn === true;
