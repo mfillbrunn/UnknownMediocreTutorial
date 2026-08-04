@@ -19,10 +19,10 @@ const { buildSetterRemainingBoxState, computeRemainingAfterGuess } = require("..
 const { computeLetterProfileStats } = require("../utils/letterProfile");
 const { guesserVisibleHistoryCount } = require("../utils/delayedFeedback");
 const {
+  claimDailyAttempt,
   getDailyStatus,
   markDailyAbandoned
 } = require("../core/dailyTracking");
-
 const {
   runPowerSimulation,
   runAllPowerSimulations,
@@ -36,9 +36,115 @@ const {
 module.exports = function registerSocketHandlers(io, context) {
   io.on("connection", (socket) => {
     /* ---------- DAILY CHALLENGE STATUS ---------- */
-    socket.on("getDailyStatus", ({ userId, date }, cb) => {
-      cb?.(getDailyStatus(userId, date));
-    });
+socket.on(
+  "getDailyStatus",
+  async (
+    {
+      userId,
+      date
+    },
+    cb
+  ) => {
+    try {
+      const result =
+        await getDailyStatus({
+          supabase:
+            context.supabase,
+
+          rooms,
+          userId,
+          date
+        });
+
+      cb?.(result);
+    } catch (error) {
+      console.error(
+        "[daily] status failed:",
+        error
+      );
+
+      cb?.({
+        status: "error",
+        error:
+          "Could not check today's challenge"
+      });
+    }
+  }
+);
+    socket.on(
+  "claimDailyAttempt",
+  async (
+    {
+      roomId,
+      userId,
+      date,
+      difficulty
+    },
+    cb
+  ) => {
+    const room =
+      rooms[roomId];
+
+    if (
+      !room ||
+      room.status !== "alive" ||
+      !room.playersByUserId
+        ?.[userId]
+    ) {
+      cb?.({
+        ok: false,
+        error:
+          "Daily Challenge room not found"
+      });
+
+      return;
+    }
+
+    try {
+      const result =
+        await claimDailyAttempt({
+          supabase:
+            context.supabase,
+
+          userId,
+          date,
+          roomId,
+          difficulty
+        });
+
+      if (!result.ok) {
+        /*
+         * The temporary room was created before the durable
+         * daily claim. Remove it when the claim is rejected.
+         */
+        forceCloseRoom(
+          roomId,
+          room,
+          io
+        );
+      }
+
+      cb?.(result);
+    } catch (error) {
+      console.error(
+        "[daily] claim failed:",
+        error
+      );
+
+      forceCloseRoom(
+        roomId,
+        room,
+        io
+      );
+
+      cb?.({
+        ok: false,
+        error:
+          "Could not start today's challenge"
+      });
+    }
+  }
+);
 
     /* ---------- MY GAMES (unlimited-time games in progress) ---------- */
     socket.on("getMyActiveGames", ({ userId }, cb) => {
@@ -161,7 +267,15 @@ const results = [
     });
 
     /* ---------- ABANDON GAME (unlimited-time, non-ranked only) ---------- */
-    socket.on("abandonGame", ({ roomId, userId }, cb) => {
+    socket.on(
+  "abandonGame",
+  async (
+    {
+      roomId,
+      userId
+    },
+    cb
+  ) => {
       const room = rooms[roomId];
       if (!room || room.status !== "alive") {
         return cb?.({ ok: false, error: "Game not found" });
@@ -174,7 +288,15 @@ const results = [
       }
 
       if (room.state?.isDaily && room.state?.dailyDate) {
-        markDailyAbandoned(userId, room.state.dailyDate);
+        await markDailyAbandoned({
+  supabase:
+    context.supabase,
+
+  userId,
+
+  date:
+    room.state.dailyDate
+});
       }
 
       forceCloseRoom(roomId, room, io);
@@ -830,7 +952,12 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
     });
 
     /* ---------- LEAVE ROOM ---------- */
-    socket.on("leaveRoom", (_payload, cb) => {
+    socket.on(
+  "leaveRoom",
+  async (
+    _payload,
+    cb
+  ) => {
       const roomId = socket.data.roomId;
       if (!roomId) return cb?.({ ok: false, error: "Not in a room" });
 
@@ -839,7 +966,21 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
 
       const userId = room.socketToUserId?.[socket.id];
       if (!userId) return cb?.({ ok: false, error: "Not in a room" });
+      if (
+  room.state?.isDaily &&
+  room.state?.dailyDate &&
+  !room.state?.gameOver
+) {
+  await markDailyAbandoned({
+    supabase:
+      context.supabase,
 
+    userId,
+
+    date:
+      room.state.dailyDate
+  });
+}
       removePlayer({
         roomId,
         userId,
