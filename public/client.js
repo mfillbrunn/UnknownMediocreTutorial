@@ -148,7 +148,50 @@ function shakeDraftRow(role) {
     setTimeout(() => keyboard.classList.remove("shake"), 220);
   }
 }
+let lastOpeningMissLockNoticeAt = 0;
 
+function isOpeningMissSecretLocked() {
+  return (
+    !!state?.simultaneousAllWrong &&
+    !state?.powers
+      ?.rouletteSecretActive
+  );
+}
+
+function showOpeningMissLockNotice() {
+  const now = Date.now();
+
+  /*
+   * Prevent a held keyboard key from opening several
+   * overlapping notices.
+   */
+  if (
+    now -
+    lastOpeningMissLockNoticeAt <
+    900
+  ) {
+    return;
+  }
+
+  lastOpeningMissLockNoticeAt =
+    now;
+
+  window.showBigAnnounce?.({
+    icon: "🔒",
+
+    title:
+      "Your secret is locked",
+
+    sub:
+      "The Inspector missed every letter in the opening guess. You must keep the same secret for this round.",
+
+    roleClass:
+      "role-setter",
+
+    duration: 2400,
+    compact: true
+  });
+}
 ///Simplified turn indicator
 function setTurn(screenId, isYourTurn) {
   const screen = document.getElementById(screenId);
@@ -1456,7 +1499,13 @@ function clearSetterDraft() {
 // Mode) -- both need to know whether the setter actually has a live draft
 // to edit right now.
 function canSetterEditDraftNow() {
-  if (state.powers?.freezeActive || state.powers?.rouletteSecretActive) return false;
+  if (
+  state.powers?.freezeActive ||
+  state.powers?.rouletteSecretActive ||
+  isOpeningMissSecretLocked()
+) {
+  return false;
+}
   const isNormalSetterTurn =
     myUserId() === state.setter &&
     state.phase === "normal" &&
@@ -1478,7 +1527,13 @@ function setSetterDraftLetterAt(index, letter) {
   if (!Number.isInteger(index) || index < 0 || index > 4) return;
   if (!/^[A-Z]$/.test(letter)) return;
   if (!canSetterEditDraftNow()) return;
-
+  if (
+  isOpeningMissSecretLocked()
+) {
+  shakeDraftRow("setter");
+  showOpeningMissLockNotice();
+  return;
+}
   const chars = (state.setterDraft || "").padEnd(5, " ").split("");
   chars[index] = letter;
   state.setterDraft = chars.join("");
@@ -1500,7 +1555,13 @@ function moveSetterDraftLetter(from, to) {
   if (!Number.isInteger(to) || to < 0 || to > 4) return;
   if (from === to) return;
   if (!canSetterEditDraftNow()) return;
-
+    if (
+    isOpeningMissSecretLocked()
+  ) {
+    shakeDraftRow("setter");
+    showOpeningMissLockNotice();
+    return;
+}
   const chars = (state.setterDraft || "").padEnd(5, " ").split("");
   const letter = chars[from];
   if (letter === " ") return; // nothing to move
@@ -1576,6 +1637,41 @@ function handleSetterInput(event) {
   // armed, same interception shape power-keyboard.js uses for the
   // guesser's Recon Sweep / Double Tap.
   if (window.hideTileKbActive?.() && window.hideTileKbInput?.(event)) return;
+  if (
+  isOpeningMissSecretLocked()
+) {
+  if (
+    event.type === "LETTER" ||
+    event.type === "BACKSPACE"
+  ) {
+    shakeDraftRow("setter");
+    showOpeningMissLockNotice();
+    return;
+  }
+
+  /*
+   * If stale letters somehow remain, clear them. A blank
+   * Enter can continue through to SET_SECRET_SAME.
+   */
+  if (
+    event.type === "ENTER" &&
+    (
+      state.setterDraft ||
+      ""
+    ).trim()
+  ) {
+    state.setterDraft = "";
+    setterDraftLocks.clear();
+
+    emitSetterDraftPreview("");
+    updateUI();
+
+    shakeDraftRow("setter");
+    showOpeningMissLockNotice();
+
+    return;
+  }
+}
   // Freeze/roulette deliberately skip only the typing block below and
   // fall through to the ENTER handling further down (e.g. so "keep same
   // secret" still works while frozen) -- canSetterEditDraftNow() can't be
