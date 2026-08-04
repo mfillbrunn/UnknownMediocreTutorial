@@ -2327,7 +2327,7 @@ function runSetterTutorial(
 
     if (tutorialSubStep === 1) {
       showTutorial(
-        `You get to choose: keep your current secret, or swap in a new one. There's just one rule — any new secret must still match every clue you've already given.`,
+        `Changing your secret is one of the most important things you can do as the Spy — swap in a new word if your current one's getting risky, or just to throw the Inspector off. There's just one rule: any new secret must still match every clue you've already given.`,
         {
           mode: "advance"
         }
@@ -2340,25 +2340,7 @@ function runSetterTutorial(
 
     if (tutorialSubStep === 2) {
       showTutorial(
-        `The simplest choice is keeping your secret. The row above already shows it — no need to type anything, just tap Submit to lock it back in.`,
-        {
-          mode: "advance"
-        }
-      );
-
-      highlightKeyboardSetter();
-
-      startKeyDemo(
-        "setter-round1-keep-demo",
-        () => [tutorialKeyEl("setter", "ENTER")]
-      );
-
-      return;
-    }
-
-    if (tutorialSubStep === 3) {
-      showTutorial(
-        `Let's see the other choice — and its one rule — in action. Type PICKY and press Enter — watch what happens.`,
+        `Let's see that one rule in action. Type PICKY and press Enter — watch what happens.`,
         {
           mode: "hide"
         }
@@ -2387,7 +2369,7 @@ function runSetterTutorial(
       return;
     }
 
-    if (tutorialSubStep === 4) {
+    if (tutorialSubStep === 3) {
       showTutorial(
         `Right — PICKY got rejected because it breaks a clue you already gave. Let's clear it out — tap Backspace to erase it.`,
         {
@@ -2406,7 +2388,7 @@ function runSetterTutorial(
       return;
     }
 
-    if (tutorialSubStep === 5) {
+    if (tutorialSubStep === 4) {
       showTutorial(
         `Now try a word that's actually allowed: "${word}".`,
         {
@@ -2435,6 +2417,30 @@ function runSetterTutorial(
   }
 
   if (round === 2) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `You won't always need to change it, though — if your secret still fits every clue, the simplest move is keeping it exactly as is. Your draft row is empty on purpose: just tap Submit with nothing typed to lock the same secret back in.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightKeyboardSetter();
+      waitForSecretSubmission(round);
+
+      startKeyDemo(
+        "setter-round2-keep-demo",
+        () => [tutorialKeyEl("setter", "ENTER")]
+      );
+
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  if (round === 3) {
     if (tutorialSubStep === 0) {
       showTutorial(
         `That's the core Spy strategy — stay flexible, stay legal. Finish this round on your own now. You've got this!`,
