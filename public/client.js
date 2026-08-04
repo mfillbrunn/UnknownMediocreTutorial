@@ -176,19 +176,24 @@ function showOpeningMissLockNotice() {
   lastOpeningMissLockNoticeAt =
     now;
 
+  const iAmSetter = myUserId() === state?.setter;
+
   window.showBigAnnounce?.({
     icon: "🔒",
 
-    title:
-      "Your secret is locked",
+    title: iAmSetter
+      ? "Your secret is locked"
+      : "The Spy's secret is locked",
 
-    sub:
-      "The Inspector missed every letter in the opening guess. You must keep the same secret for this round.",
+    sub: iAmSetter
+      ? "The Inspector missed every letter in the opening guess. You must keep the same secret for this round."
+      : "You missed every letter in your opening guess. The Spy must keep the same secret for this round.",
 
-    roleClass:
-      "role-setter",
+    roleClass: iAmSetter
+      ? "role-setter"
+      : "role-guesser",
 
-    duration: 2400,
+    duration: 4200,
     compact: true
   });
 }

@@ -126,12 +126,6 @@ const opponentText =
   dynamicDetail
     ? `${label}: ${opponentDesc} — ${dynamicDetail}`
     : `${label}: ${opponentDesc}`;
-    .filter(Boolean)
-    .join(": ")
-    .replace(
-      `: ${dynamicDetail}:`,
-      ":"
-    );
 
   return {
     id: evt.id,
