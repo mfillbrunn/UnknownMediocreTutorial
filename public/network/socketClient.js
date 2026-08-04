@@ -328,13 +328,23 @@ socket.on("powerActivity", payload => {
   // formatPowerEvent falls back detail to the same static desc when a power
   // has no dynamic result to report, so only append it when it says something
   // desc doesn't -- otherwise the popup repeats the description twice.
-  const detailSuffix = formatted.detail && formatted.detail !== formatted.desc ? ` — ${formatted.detail}` : "";
+const opponentDescription =
+  formatted.detail
+    ? `${
+        formatted.opponentDesc || ""
+      } — ${formatted.detail}`
+    : formatted.opponentDesc;
 
-  window.showPowerPopup({
-    emoji: formatted.emoji,
-    title: `${who}: ${formatted.label}`,
-    desc: `${formatted.desc || ""}${detailSuffix}`
-  });
+window.showPowerPopup({
+  emoji: formatted.emoji,
+
+  title:
+    `${who}: ${formatted.label}`,
+
+  desc:
+    opponentDescription ||
+    "Your opponent used a power."
+});
 });
 
 
