@@ -378,61 +378,188 @@ window._showDailyRankings = _showDailyRankings;
 // picked (see dailyConfig.js). Only the AI's strength is left up to the
 // player; the day's powers/quest/starting secret stay whatever the seed
 // picked, so the challenge itself is still the same for everyone today.
-function _startDailyGame(config, difficulty) {
-  const username = window.myProfile?.username || window.currentUser?.email || "Player";
+function _startDailyGame(
+  config,
+  difficulty
+) {
+  const username =
+    window.myProfile?.username ||
+    window.currentUser?.email ||
+    "Player";
 
-  // The whole setup (adding the AI, swapping to Inspector, applying the
-  // day's powers, disabling the timer, marking ready) is a scripted
-  // sequence with no real "waiting for another player" step — showing the
-  // normal multiplayer lobby for the ~150ms it takes to land would just
-  // flash it on screen for no reason. Suppress it; updateScreens() skips
-  // the lobby UI while this is set, until the round actually starts.
+  const chosenDifficulty =
+    difficulty ||
+    config.aiDifficulty;
+
   window._dailyStarting = true;
 
-  socket.emit("createRoom", { userId: window.currentUser.id, name: username }, resp => {
-    if (!resp?.ok) {
-      window._dailyStarting = false;
-      return toast(resp?.error || "Could not create room");
+  socket.emit(
+    "createRoom",
+    {
+      userId:
+        window.currentUser.id,
+
+      name: username
+    },
+    resp => {
+      if (!resp?.ok) {
+        window._dailyStarting =
+          false;
+
+        toast(
+          resp?.error ||
+          "Could not create room"
+        );
+
+        return;
+      }
+
+      /*
+       * The room exists, but do not persist it until the
+       * server grants today's one allowed attempt.
+       */
+      roomId = resp.roomId;
+      window.roomId = resp.roomId;
+
+      socket
+        .timeout(8000)
+        .emit(
+          "claimDailyAttempt",
+          {
+            roomId: resp.roomId,
+
+            userId:
+              window.currentUser.id,
+
+            date:
+              config.date,
+
+            difficulty:
+              chosenDifficulty
+          },
+          (
+            error,
+            claim
+          ) => {
+            if (
+              error ||
+              !claim?.ok
+            ) {
+              window._dailyStarting =
+                false;
+
+              localStorage.removeItem(
+                "roomId"
+              );
+
+              roomId = null;
+              window.roomId = null;
+
+              toast(
+                claim?.code ===
+                  "DAILY_ALREADY_STARTED"
+                  ? "You have already used today's Daily Challenge attempt."
+                  : (
+                      claim?.error ||
+                      "Could not start today's challenge"
+                    )
+              );
+
+              window
+                .showDailyChallenge
+                ?.();
+
+              return;
+            }
+
+            persistRoom(
+              resp.roomId
+            );
+
+            sendGameAction({
+              type: "ADD_AI",
+
+              difficulty:
+                chosenDifficulty,
+
+              userId:
+                window.currentUser.id
+            });
+
+            setTimeout(() => {
+              sendGameAction({
+                type:
+                  "SWITCH_ROLES",
+
+                userId:
+                  window.currentUser.id
+              });
+            }, 40);
+
+            setTimeout(() => {
+              sendGameAction({
+                type:
+                  "SET_DAILY_POWERS",
+
+                setterPowers:
+                  config.setterPowers,
+
+                guesserPowers:
+                  config.guesserPowers,
+
+                date:
+                  config.date,
+
+                userId:
+                  window.currentUser.id
+              });
+            }, 80);
+
+            setTimeout(() => {
+              sendGameAction({
+                type:
+                  "SET_TIME_CONTROL",
+
+                enabled: false,
+
+                userId:
+                  window.currentUser.id
+              });
+            }, 110);
+
+            setTimeout(() => {
+              sendGameAction({
+                type:
+                  "PLAYER_READY",
+
+                userId:
+                  window.currentUser.id,
+
+                mode: "daily"
+              });
+            }, 150);
+
+            window.isRejoining =
+              false;
+
+            const screenEl =
+              document.getElementById(
+                "dailyScreen"
+              );
+
+            if (screenEl) {
+              screenEl.innerHTML = `
+                <div class="menu-center">
+                  <p class="daily-date">
+                    Starting today's challenge…
+                  </p>
+                </div>
+              `;
+            }
+          }
+        );
     }
-
-    window.roomId = resp.roomId;
-    persistRoom(resp.roomId);
-
-    sendGameAction({ type: "ADD_AI", difficulty: difficulty || config.aiDifficulty, userId: window.currentUser.id });
-
-    setTimeout(() => {
-      sendGameAction({ type: "SWITCH_ROLES", userId: window.currentUser.id });
-    }, 40);
-
-    setTimeout(() => {
-      sendGameAction({
-        type: "SET_DAILY_POWERS",
-        setterPowers: config.setterPowers,
-        guesserPowers: config.guesserPowers,
-        date: config.date,
-        userId: window.currentUser.id
-      });
-    }, 80);
-
-    // Daily Challenge always runs with no time limit.
-    setTimeout(() => {
-      sendGameAction({ type: "SET_TIME_CONTROL", enabled: false, userId: window.currentUser.id });
-    }, 110);
-
-    setTimeout(() => {
-      sendGameAction({ type: "PLAYER_READY", userId: window.currentUser.id, mode: "daily" });
-    }, 150);
-
-    // Not enterLobbyAfterJoin() — that shows the multiplayer lobby screen,
-    // which is exactly the flash this is avoiding. Stay on dailyScreen
-    // (with a loading message) until the round starts; updateScreens()
-    // picks up the transition once the server state moves off "lobby".
-    window.isRejoining = false;
-    const screenEl = document.getElementById("dailyScreen");
-    if (screenEl) {
-      screenEl.innerHTML = `<div class="menu-center"><p class="daily-date">Starting today's challenge…</p></div>`;
-    }
-  });
+  );
 }
 
 // Rejoin an in-progress daily-challenge room instead of starting a new one
