@@ -909,6 +909,14 @@ setTimeout(() => {
     else return;
   }
 
+  // Tutorial setup (add AI, switch roles, ready up) goes through the same
+  // scripted "briefly leaves state.phase === lobby" window as the two
+  // cases above -- same fix, so the lobby UI never flashes on the way in.
+  if (window._tutorialStarting) {
+    if (state.phase !== "lobby") window._tutorialStarting = false;
+    else return;
+  }
+
   hideAllScreens();
   if (state.phase === "lobby") {
     // Ranked matchmaking briefly puts the freshly-created room through the

@@ -467,10 +467,12 @@ function startFreshTutorial(mode) {
     window.currentUser?.email ||
     "Player";
 
+  window._tutorialStarting = true;
+
   createRoom(
     { name: username},
     resp => {
-      if (!resp?.ok) return toast(resp?.error);
+      if (!resp?.ok) { window._tutorialStarting = false; return toast(resp?.error); }
 
       // Not `const roomId` — that would shadow the shared global `roomId`
       // (declared in client.js) with a callback-local copy, leaving the
