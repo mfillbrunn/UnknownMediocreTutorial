@@ -18,8 +18,20 @@ const { maybeRunAI } = require("../core/ai/runAI");
 const { buildSetterRemainingBoxState, computeRemainingAfterGuess } = require("../utils/remainingWords");
 const { computeLetterProfileStats } = require("../utils/letterProfile");
 const { guesserVisibleHistoryCount } = require("../utils/delayedFeedback");
-const { getDailyStatus, markDailyAbandoned } = require("../core/dailyTracking");
-const { runPowerSimulation, runAllPowerSimulations, savePowerSimulation } = require("../core/simulation/runPowerSimulation");
+const {
+  getDailyStatus,
+  markDailyAbandoned
+} = require("../core/dailyTracking");
+
+const {
+  runPowerSimulation,
+  runAllPowerSimulations,
+  savePowerSimulation
+} = require("../core/simulation/runPowerSimulation");
+
+const {
+  buildSafeStateForPlayer
+} = require("../utils/safeState");
 
 module.exports = function registerSocketHandlers(io, context) {
   io.on("connection", (socket) => {
