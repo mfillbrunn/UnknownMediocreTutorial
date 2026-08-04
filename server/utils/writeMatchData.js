@@ -109,39 +109,104 @@ async function writeMatchHistory({ state, room, supabase, ratingChange }) {
     winnerUserId === playerB.userId ? winnerPoints :
     loserPoints;
 
-  const { error } = await supabase.from("matches").insert({
-    mode: state.rankMode,
-    ranked: state.ranked,
+ const matchRow = {
+  match_id:
+    state.matchId || null,
 
-    player_a: userA,
-    player_b: userB,
+  mode:
+    state.isDaily
+      ? "daily"
+      : state.rankMode,
 
-    is_ai: isAIMatch,
-    ai_difficulty: isAIMatch ? (state.aiDifficulty || null) : null,
-    winner_is_ai: winnerIsAI,
+  ranked: state.ranked,
 
-    winner: dbWinner,
-    win_reason: winReason,
+  player_a: userA,
+  player_b: userB,
 
-    score_a: scoreA,
-    score_b: scoreB,
+  is_ai: isAIMatch,
 
-    rating_a_before: ratingChange?.rating_a_before ?? null,
-    rating_b_before: ratingChange?.rating_b_before ?? null,
-    rating_a_after: ratingChange?.rating_a_after ?? null,
-    rating_b_after: ratingChange?.rating_b_after ?? null,
+  ai_difficulty:
+    isAIMatch
+      ? state.aiDifficulty || null
+      : null,
 
-    time_control: {
-      enabled: state.timeControl?.enabled,
-      mode: state.timeControl?.mode,
-      roundSeconds: state.timeControl?.roundSeconds,
-      initialSeconds: state.timeControl?.initialSeconds,
-      incrementSeconds: state.timeControl?.incrementSeconds,
-      rankMode: state.rankMode
-    },
+  winner_is_ai: winnerIsAI,
 
-    rounds: JSON.parse(JSON.stringify(state.matchRounds))
-  });
+  winner: dbWinner,
+  win_reason: winReason,
+
+  score_a: scoreA,
+  score_b: scoreB,
+
+  rating_a_before:
+    ratingChange?.rating_a_before ??
+    null,
+
+  rating_b_before:
+    ratingChange?.rating_b_before ??
+    null,
+
+  rating_a_after:
+    ratingChange?.rating_a_after ??
+    null,
+
+  rating_b_after:
+    ratingChange?.rating_b_after ??
+    null,
+
+  time_control: {
+    enabled:
+      state.timeControl?.enabled,
+
+    mode:
+      state.timeControl?.mode,
+
+    roundSeconds:
+      state.timeControl?.roundSeconds,
+
+    initialSeconds:
+      state.timeControl?.initialSeconds,
+
+    incrementSeconds:
+      state.timeControl
+        ?.incrementSeconds,
+
+    rankMode:
+      state.rankMode
+  },
+
+  rounds:
+    JSON.parse(
+      JSON.stringify(
+        state.matchRounds
+      )
+    )
+};
+
+let result;
+
+if (state.matchId) {
+  result =
+    await supabase
+      .from("matches")
+      .upsert(
+        matchRow,
+        {
+          onConflict: "match_id"
+        }
+      );
+} else {
+  /*
+   * Compatibility for any old state created before
+   * matchId was added.
+   */
+  result =
+    await supabase
+      .from("matches")
+      .insert(matchRow);
+}
+
+const { error } = result;
 
   if (error) {
     console.error("Match history insert failed:", error);
