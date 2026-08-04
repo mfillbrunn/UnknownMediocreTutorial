@@ -36,15 +36,72 @@
   };
 
   // Called from handleSetterInput. Returns true if the event was consumed.
-  window.hideTileKbInput = function (event) {
-    if (!armed) return false;
-    if (event.type !== "LETTER") return true; // swallow backspace/enter while armed
-    const letter = String(event.value || "").toUpperCase();
-    armed = false;
-    sendGameAction({ type: "USE_HIDE_TILE", letter });
-    window.updateUI?.();
+window.hideTileKbInput = function (event) {
+  if (!armed) {
+    return false;
+  }
+
+  /*
+   * Backspace and Enter are swallowed while letter
+   * selection is armed.
+   */
+  if (event.type !== "LETTER") {
     return true;
+  }
+
+  const letter =
+    String(event.value || "")
+      .toUpperCase();
+
+  armed = false;
+
+  PowerEngine
+    .powers
+    .hideTile
+    ?.uiEffects?.(
+      window.state,
+      window.myRole
+    );
+
+  const submitChoice = () => {
+    sendGameAction({
+      type: "USE_HIDE_TILE",
+      letter
+    });
   };
+
+  if (
+    typeof window.showPowerActionPopup ===
+    "function"
+  ) {
+    window.showPowerActionPopup({
+      emoji:
+        window.POWER_METADATA
+          ?.hideTile
+          ?.emoji || "⬛",
+
+      title: `Erase ${letter}?`,
+
+      desc:
+        `This removes the clue for ${letter} ` +
+        `from every guess so far this round. ` +
+        `This cannot be undone.`,
+
+      useLabel: `Erase ${letter}`,
+      showUse: true,
+      useEnabled: true,
+      onUse: submitChoice
+    });
+  } else if (
+    window.confirm(
+      `Erase every clue for ${letter}?`
+    )
+  ) {
+    submitChoice();
+  }
+
+  return true;
+};
 
   PowerEngine.register("hideTile", {
     role: "setter",
