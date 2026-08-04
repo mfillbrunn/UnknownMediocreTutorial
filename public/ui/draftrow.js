@@ -238,7 +238,19 @@ window.renderDraftRows = function ({
         state.turn === state.setter &&
         !!state.pendingGuess)
     );
-
+  const shouldShowBlankSecretRow =
+  !setterCanEdit &&
+  (
+    (
+      state.phase === "simultaneous" &&
+      state.simultaneousSecretSubmitted
+    ) ||
+    (
+      state.phase === "normal" &&
+      state.turn === state.guesser &&
+      !state.pendingGuess
+    )
+  );
   // Always show pending guess if it exists — slides in when it first
   // appears (the guesser just submitted a guess). updateRow() overwrites
   // the row's className wholesale, so it has to run *before* showRow()
@@ -252,11 +264,41 @@ window.renderDraftRows = function ({
   // The overlaid current secret shows its known-green letters in green
   // too (same as the setter's own typed draft): green means that position
   // is confirmed, so the secret's letter there is worth highlighting.
-  if (!setterCanEdit) {
-    updateRow(draftRow, upperSecret, "draft-row ghost-secret", null, greenPattern);
-    showRow(draftRow, draftWasVisible, "row-slide-down");
-    return;
-  }
+if (shouldShowBlankSecretRow) {
+  updateRow(
+    draftRow,
+    "",
+    "draft-row ghost-secret",
+    null,
+    greenPattern
+  );
+
+  showRow(
+    draftRow,
+    draftWasVisible,
+    "row-slide-down"
+  );
+
+  return;
+}
+
+if (!setterCanEdit) {
+  updateRow(
+    draftRow,
+    upperSecret,
+    "draft-row ghost-secret",
+    null,
+    greenPattern
+  );
+
+  showRow(
+    draftRow,
+    draftWasVisible,
+    "row-slide-down"
+  );
+
+  return;
+}
 
   if (state.phase === "simultaneous") {
     updateRow(
