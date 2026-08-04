@@ -185,7 +185,17 @@ function scheduleTutorialLayout() {
       repositionTutorialBubble();
       positionTutorialFocusRing();
 
-      if (tutorialPendingReveal) {
+      // Don't reveal a freshly-hidden bubble mid-settle -- its avoid-rect
+      // math (tutorialAvoidElements(), same targets the ring waits on)
+      // would be based on a highlight target still mid-animation, and it
+      // would visibly slide to the corrected spot moments later once
+      // repositionTutorialBubble() re-runs after settling. Left pending;
+      // the settle timer's own scheduleTutorialLayout() call fires this
+      // same rAF path again once tutorialRingSettling clears.
+      if (
+        tutorialPendingReveal &&
+        !tutorialRingSettling
+      ) {
         const reveal = tutorialPendingReveal;
         tutorialPendingReveal = null;
         reveal();
@@ -255,6 +265,17 @@ function repositionTutorialBubble() {
     !bubble ||
     bubble.classList.contains("hidden")
   ) {
+    return;
+  }
+
+  // Same reasoning as positionTutorialFocusRing()'s settling guard --
+  // tutorialAvoidElements() reads the same tutorialHighlightTargets/draft
+  // rows, which can still be mid-flight through their own entrance
+  // animation right now. Repositioning around a transient rect here would
+  // visibly slide the bubble to its corrected spot once the settle timer
+  // re-runs this a moment later, instead of it just staying put in the
+  // meantime and moving once, directly to the right place.
+  if (tutorialRingSettling) {
     return;
   }
 
@@ -1062,9 +1083,30 @@ function highlightStoredRound(index) {
 }
 
 function highlightSummaryActions() {
-  highlightEl(
-    qs("#roundSummary .summary-actions")
-  );
+  // Not "#roundSummary .summary-actions" -- the tutorial-2 handoff CTA
+  // (see summary.js's tutorial2Cta) reuses that same class on an earlier
+  // div for the "Continue to Tutorial 2" button, and a plain class
+  // selector would silently match that one instead of the real New
+  // Match/Replay/Leave row this step is actually describing.
+  const el = byId("matchSummaryActions");
+
+  // By this step the player has scrolled through round summaries and
+  // secret-change narration above it -- the buttons row sits at the very
+  // bottom of a tall scrollable panel and is routinely below the fold
+  // (positionTutorialFocusRing() clips the ring to the viewport, so an
+  // off-screen target draws as a squashed sliver instead of a full ring
+  // around nothing the player can even see). "nearest" is a no-op when
+  // it's already visible.
+  // Instant, not smooth -- the ring's settle timer only waits for CSS
+  // entrance animations already in flight (see tutorialRingSettling), not
+  // for a scroll that's still gliding, so a smooth scroll here would just
+  // reintroduce the same "measured mid-flight" race for a different reason.
+  el?.scrollIntoView({
+    behavior: "auto",
+    block: "nearest"
+  });
+
+  highlightEl(el);
 }
 
 function highlightStoredRoundSecretSegment(
@@ -2350,6 +2392,22 @@ function runSetterTutorial(
       state.tutorialSecrets?.[1];
 
     if (tutorialSubStep === 0) {
+      // The Inspector's next guess doesn't land as a real pendingGuess the
+      // instant this round begins -- it still has to be computed and
+      // submitted. Pointing highlightPendingGuessRow() at nothing (and
+      // announcing "it's sitting right above your secret" over an empty
+      // row) until that arrives is confusing, so wait for it first.
+      if (!state.pendingGuess) {
+        showTutorial(
+          `Waiting for the Inspector's next guess...`,
+          {
+            mode: "hide"
+          }
+        );
+
+        return;
+      }
+
       showTutorial(
         `Here's something new: you can see the Inspector's next guess before it's scored — it's sitting right above your secret.`,
         {

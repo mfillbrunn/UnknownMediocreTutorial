@@ -367,6 +367,16 @@ transition:
   position: relative;
 }
 
+/* .key-current (components.css) puts a subtle white inset ring on any
+   key that's part of the pending guess sitting above the setter's
+   secret -- on the setter's own keyboard, a demo letter (e.g. PICKY's
+   "I") can also happen to be one of those letters, showing both rings
+   at once and muddying which one the player should actually look at.
+   The gold demo glow should win outright. */
+.key.key-current.tutorial-key-highlight {
+  box-shadow: none;
+}
+
 .tutorial-key-highlight::after {
   content: "";
   position: absolute;

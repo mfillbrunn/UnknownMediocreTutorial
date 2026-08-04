@@ -390,7 +390,7 @@ if (guesserEntries.length) {
   const isDaily = !!state.isDaily;
   html += `
     ${tutorial2Cta}
-    <div class="summary-actions">
+    <div id="matchSummaryActions" class="summary-actions">
       ${isDaily ? "" : `<button id="newMatchBtn" class="primary-btn">
         New Match
       </button>
