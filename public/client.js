@@ -2021,16 +2021,7 @@ function updateTimerAccess() {
     localStorage.setItem("guideActive", isOn);
     btns.forEach(b => b.classList.toggle("active", isOn));
     updateGuideBanner();
-    // The remaining-words box's guide hint is baked into its innerHTML at
-    // render time, so without this it wouldn't reflect the new guide state
-    // until the next natural render (next keystroke or state update).
-    // Reuse the last real boxState (which may be more current than
-    // window.state.setterRemainingBox if the setter is mid-draft) so this
-    // purely-cosmetic re-render doesn't reset the counts to "?".
-    const lastBoxState = window._lastRemainingBoxState || window.state?.setterRemainingBox;
-    if (typeof renderSetterRemainingBox === "function" && lastBoxState) {
-      renderSetterRemainingBox(lastBoxState);
-    }
+
     // The must-contain box is guide-mode-only (hidden entirely when guide
     // is off) — without an explicit re-render here it wouldn't appear/
     // disappear until the next natural render (next keystroke or state
