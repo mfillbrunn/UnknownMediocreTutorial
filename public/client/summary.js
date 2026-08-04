@@ -748,17 +748,65 @@ if (setter.length || guesser.length) {
   // -----------------------
   // Per-round lines
   // -----------------------
-  const roundLines = rounds.map((r, i) => {
-     const secret =
-      r.history?.[r.history.length - 1]?.finalSecret?.toUpperCase() || "?????";
-    const guesses = r.guessCount;
-     if (finalWinReason === "timeout") {
-        return `R${i + 1}: ${secret} (${guesses}) ⏱`;
-      }
-    const roundWinner = getPlayerName(r.guesser);
-    const timeoutMark = r.timeoutLoser ? " ⏱" : "";
+const hideWords =
+  !!state.isDaily;
 
-    return `R${i + 1}: ${roundWinner} guessed ${secret} (${guesses})${timeoutMark}`;
+const roundLines =
+  rounds.map((r, i) => {
+    const guesses =
+      r.guessCount;
+
+    const roundWinner =
+      getPlayerName(
+        r.guesser
+      );
+
+    const timeoutMark =
+      r.timeoutLoser
+        ? " ⏱"
+        : "";
+
+    /*
+     * Daily Challenge results must not reveal either
+     * secret, even after the match ends.
+     */
+    if (hideWords) {
+      const guessLabel =
+        guesses === 1
+          ? "guess"
+          : "guesses";
+
+      return (
+        `R${i + 1}: ` +
+        `${roundWinner} — ` +
+        `${guesses} ${guessLabel}` +
+        `${timeoutMark}`
+      );
+    }
+
+    const secret =
+      r.history?.[
+        r.history.length - 1
+      ]?.finalSecret
+        ?.toUpperCase() ||
+      "?????";
+
+    if (
+      finalWinReason ===
+      "timeout"
+    ) {
+      return (
+        `R${i + 1}: ` +
+        `${secret} (${guesses}) ⏱`
+      );
+    }
+
+    return (
+      `R${i + 1}: ` +
+      `${roundWinner} guessed ` +
+      `${secret} (${guesses})` +
+      `${timeoutMark}`
+    );
   });
 
   // -----------------------
