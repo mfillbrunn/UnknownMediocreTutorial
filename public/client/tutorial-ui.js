@@ -30,6 +30,7 @@ let tutorialBodyAnimationTimer = null;
 let tutorialHighlightSettleTimer = null;
 let tutorialRingSettling = false;
 let tutorialRingSnapNext = false;
+let advancedTutorialReservePx = -1;
 
 function qs(sel) {
   return document.querySelector(sel);
@@ -200,6 +201,186 @@ function getVisibleTutorialSummaryPanel() {
   return el;
 }
 
+function getActiveTutorialGameScreen() {
+  return [
+    byId("setterScreen"),
+    byId("guesserScreen")
+  ].find(screen =>
+    screen?.classList.contains("active")
+  ) || null;
+}
+
+function shouldDockAdvancedTutorial() {
+  const currentState = window.state;
+
+  return (
+    currentState?.isTutorial &&
+    currentState.tutorialStage === "advanced" &&
+    !!getActiveTutorialGameScreen()
+  );
+}
+
+function clearAdvancedTutorialDock() {
+  const bubble = byId("tutorialBubble");
+
+  const wasDocked =
+    bubble?.classList.contains("tutorial-docked") ||
+    document.body.classList.contains(
+      "advanced-tutorial-docked"
+    );
+
+  bubble?.classList.remove("tutorial-docked");
+
+  document.body.classList.remove(
+    "advanced-tutorial-docked"
+  );
+
+  document.documentElement.style.removeProperty(
+    "--advanced-tutorial-reserve"
+  );
+
+  advancedTutorialReservePx = -1;
+
+  if (!bubble || !wasDocked) {
+    return;
+  }
+
+  bubble.style.left = "";
+  bubble.style.right = "";
+  bubble.style.top = "";
+  bubble.style.bottom = "";
+  bubble.style.width = "";
+}
+
+function positionAdvancedTutorialDock(bubble) {
+  const screen =
+    getActiveTutorialGameScreen();
+
+  if (!screen) {
+    clearAdvancedTutorialDock();
+    return false;
+  }
+
+  const viewport =
+    window.visualViewport;
+
+  const viewportLeft =
+    viewport?.offsetLeft || 0;
+
+  const viewportTop =
+    viewport?.offsetTop || 0;
+
+  const viewportWidth =
+    viewport?.width ||
+    window.innerWidth;
+
+  const viewportRight =
+    viewportLeft + viewportWidth;
+
+  const screenRect =
+    screen.getBoundingClientRect();
+
+  const headerRect =
+    screen
+      .querySelector(".role-header")
+      ?.getBoundingClientRect();
+
+  const edge = 8;
+
+  const usableLeft =
+    Math.max(
+      viewportLeft + edge,
+      screenRect.left + edge
+    );
+
+  const usableRight =
+    Math.min(
+      viewportRight - edge,
+      screenRect.right - edge
+    );
+
+  const usableWidth =
+    Math.max(
+      40,
+      usableRight - usableLeft
+    );
+
+  const collapsed =
+    bubble.classList.contains("collapsed");
+
+  const width =
+    collapsed
+      ? 40
+      : Math.min(520, usableWidth);
+
+  const left =
+    collapsed
+      ? usableRight - width
+      : usableLeft +
+        (usableWidth - width) / 2;
+
+  const top =
+    Math.max(
+      viewportTop + edge,
+      (
+        headerRect?.bottom ??
+        screenRect.top
+      ) + 6
+    );
+
+  bubble.classList.add(
+    "tutorial-docked"
+  );
+
+  document.body.classList.add(
+    "advanced-tutorial-docked"
+  );
+
+  bubble.style.left =
+    `${Math.round(left)}px`;
+
+  bubble.style.right = "auto";
+
+  bubble.style.top =
+    `${Math.round(top)}px`;
+
+  bubble.style.bottom = "auto";
+
+  bubble.style.width =
+    `${Math.round(width)}px`;
+
+  const bubbleHeight =
+    bubble.getBoundingClientRect().height;
+
+  const reserve =
+    Math.ceil(bubbleHeight + 12);
+
+  if (
+    Math.abs(
+      reserve -
+      advancedTutorialReservePx
+    ) <= 1
+  ) {
+    return true;
+  }
+
+  advancedTutorialReservePx =
+    reserve;
+
+  document.documentElement.style.setProperty(
+    "--advanced-tutorial-reserve",
+    `${reserve}px`
+  );
+
+  requestAnimationFrame(() => {
+    window
+      .reanchorSetterIdleNotes
+      ?.();
+  });
+
+  return true;
+}
+
 // Set by showTutorial() when a freshly re-shown bubble needs one layout
 // pass to find its correct spot before it's allowed to become visible.
 // A plain variable rather than a per-call callback argument to
@@ -332,6 +513,16 @@ function repositionTutorialBubble() {
   ) {
     return;
   }
+
+  if (shouldDockAdvancedTutorial()) {
+    positionAdvancedTutorialDock(
+      bubble
+    );
+
+    return;
+  }
+
+  clearAdvancedTutorialDock();
 
   // Same reasoning as positionTutorialFocusRing()'s settling guard --
   // tutorialAvoidElements() reads the same tutorialHighlightTargets/draft
@@ -641,6 +832,7 @@ function pauseTutorial() {
 
 function hideTutorial() {
   pauseTutorial();
+  clearAdvancedTutorialDock();
 
   tutorialWaitingFor = null;
 
@@ -1319,11 +1511,21 @@ function startDragDemo(word) {
 }
 
 function highlightNotesPanel() {
-  highlightEl(byId("notesPanelSetter"));
+  highlightEl(
+    byId("notesPanelSetter")
+  );
+}
+
+function highlightNotesDraft() {
+  highlightEl(
+    byId("notesDraftSetter")
+  );
 }
 
 function highlightNotesList() {
-  highlightEl(byId("notesListSetter"));
+  highlightEl(
+    byId("notesListSetter")
+  );
 }
 
 // Precise tap target for "tap this specific word in Notes" steps -- the
@@ -1331,11 +1533,26 @@ function highlightNotesList() {
 // a remaining-box row), and unioning both into one bounding ring would
 // stretch it across everything in between (see
 // highlightConstraintRowAndToggle's comment for the same lesson).
-function highlightNotesEntry(word) {
-  const target =
-    qs(`#notesListSetter [data-fill="${word}"]`);
+function highlightSavedNote(word) {
+  const target = [
+    ...document.querySelectorAll(
+      "#notesListSetter " +
+      ".notes-fillable"
+    )
+  ].find(
+    element =>
+      element.dataset.fill === word
+  );
 
-  highlightEl(target || byId("notesListSetter"));
+  target?.scrollIntoView({
+    block: "nearest",
+    behavior: "smooth"
+  });
+
+  highlightEl(
+    target ||
+    byId("notesListSetter")
+  );
 }
 function highlightPowersCol() {
   highlightEl(
@@ -3938,7 +4155,7 @@ function runAdvancedTutorialSetter(state) {
         }
       );
 
-      highlightNotesPanel();
+      highlightNotesDraft();
       waitForNoteAdded(candidate);
       return;
     }
@@ -4019,7 +4236,7 @@ function runAdvancedTutorialSetter(state) {
         }
       );
 
-      highlightNotesEntry(oldSecret);
+      highlightSavedNote(oldSecret);
       waitForNoteSelected(oldSecret);
       return;
     }
@@ -4032,7 +4249,7 @@ function runAdvancedTutorialSetter(state) {
         }
       );
 
-      highlightNotesEntry(candidate);
+      highlightSavedNote(candidate);
       waitForNoteSelected(candidate);
       return;
     }
@@ -4058,7 +4275,7 @@ function runAdvancedTutorialSetter(state) {
         }
       );
 
-      highlightNotesEntry(candidate);
+      highlightSavedNote(candidate);
       waitForNoteSelected(candidate);
       return;
     }
