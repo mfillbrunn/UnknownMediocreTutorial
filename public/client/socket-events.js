@@ -514,13 +514,23 @@ document.getElementById("startTutorialBtn")?.addEventListener("click", () => {
   startFreshTutorial("tutorial");
 });
 
-document.getElementById("startTutorial2Btn")?.addEventListener("click", () => {
-  startFreshTutorial("tutorial2");
-});
+document
+  .getElementById("startTutorial2Btn")
+  ?.addEventListener("click", () => {
+    startFreshTutorial("tutorial2");
+  });
 
-document.getElementById("showAdvancedTutorialBtn")?.addEventListener("click", () => {
-  startFreshTutorial("advanced");
-});
+document
+  .getElementById("startQuestTutorialBtn")
+  ?.addEventListener("click", () => {
+    startFreshTutorial("quest");
+  });
+
+document
+  .getElementById("showAdvancedTutorialBtn")
+  ?.addEventListener("click", () => {
+    startFreshTutorial("advanced");
+  });
 
 // Per-power "Try it" tutorial (Power Library "?" buttons). Unlike
 // startFreshTutorial above, whether the human starts as guesser or setter
