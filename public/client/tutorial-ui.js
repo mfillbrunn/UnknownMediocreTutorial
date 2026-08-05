@@ -1522,6 +1522,20 @@ function highlightNotesDraft() {
   );
 }
 
+// Notes' own typed-so-far draft (notes.js's private `_draft`) isn't
+// exposed on window -- read it straight from the cell text it already
+// renders into, the same shape tutorialWordKeyEls expects from
+// localGuesserDraft/state.setterDraft elsewhere.
+function notesDraftText() {
+  return [
+    ...document.querySelectorAll(
+      "#notesDraftSetter .notes-draft-cell"
+    )
+  ]
+    .map(cell => cell.textContent || "")
+    .join("");
+}
+
 function highlightNotesList() {
   highlightEl(
     byId("notesListSetter")
@@ -3914,7 +3928,7 @@ function runAdvancedTutorialGuesser(state) {
   if (round === 0) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `This tutorial covers three extra tools: Guide, Drag & Lock, and Notes.`,
+        `This tutorial covers four extra tools: Guide, Drag & Lock, Notes, and the remaining-words box — plus a few other UI elements along the way.`,
         {
           mode: "advance"
         }
@@ -3959,6 +3973,17 @@ function runAdvancedTutorialGuesser(state) {
       }
 
       highlightKeyboardGuesser();
+
+      startKeyDemo(
+        `guesser-advanced-round0-${word}`,
+        () =>
+          tutorialWordKeyEls(
+            "guesser",
+            word,
+            localGuesserDraft
+          )
+      );
+
       waitForGuessSubmission(round);
       return;
     }
@@ -4116,6 +4141,17 @@ function runAdvancedTutorialSetter(state) {
       }
 
       highlightDraftRow("setter");
+
+      startKeyDemo(
+        `setter-advanced-round0-${word}`,
+        () =>
+          tutorialWordKeyEls(
+            "setter",
+            word,
+            window.state?.setterDraft
+          )
+      );
+
       waitForSecretSubmission(round);
       return;
     }
@@ -4156,11 +4192,24 @@ function runAdvancedTutorialSetter(state) {
       );
 
       highlightNotesDraft();
+
+      startKeyDemo(
+        `setter-advanced-notes-${candidate}`,
+        () =>
+          tutorialWordKeyEls(
+            "setter",
+            candidate,
+            notesDraftText()
+          )
+      );
+
       waitForNoteAdded(candidate);
       return;
     }
 
     if (tutorialSubStep === 2) {
+      stopKeyDemo();
+
       showTutorial(
         `Saved words that still match every clue stay green. After a new guess arrives, a small number can show how many secrets would remain if you used that word. Bigger is usually safer.`,
         {
@@ -4230,7 +4279,19 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 6) {
       showTutorial(
-        `New is how many would be possible if you switched to whatever's in your draft right now — it updates live as you type. Tap "${oldSecret}" in Notes first — it copies straight into your secret row, without submitting anything yet.`,
+        `New is how many would be possible if you switched to whatever's in your draft right now — it updates live as you type.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterRemainingBoxRow(2);
+      return;
+    }
+
+    if (tutorialSubStep === 7) {
+      showTutorial(
+        `Tap "${oldSecret}" in Notes — it copies straight into your secret row, without submitting anything yet.`,
         {
           mode: "hide"
         }
@@ -4241,7 +4302,7 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 7) {
+    if (tutorialSubStep === 8) {
       showTutorial(
         `Now tap "${candidate}" instead and watch New change again. Notice the small number next to each word in Notes too — that is this same New count for that word.`,
         {
@@ -4254,20 +4315,33 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 8) {
+    if (tutorialSubStep === 9) {
       showTutorial(
-        `Now try typing something that isn't a real word — like "ZZZZZ" — directly into your secret row. Don't press Enter. Watch New turn into a ✕, since that word could never actually be planted.`,
+        `Now try typing something that isn't a real word — like "ABCDE" — directly into your secret row. Don't press Enter. Watch New turn into a ✕, since that word could never actually be planted.`,
         {
           mode: "hide"
         }
       );
 
       highlightDraftRow("setter");
+
+      startKeyDemo(
+        "setter-advanced-invalid-draft",
+        () =>
+          tutorialWordKeyEls(
+            "setter",
+            "ABCDE",
+            window.state?.setterDraft
+          )
+      );
+
       waitForInvalidDraft();
       return;
     }
 
-    if (tutorialSubStep === 9) {
+    if (tutorialSubStep === 10) {
+      stopKeyDemo();
+
       showTutorial(
         `That ✕ means the draft isn't a legal secret — you can't submit it. Tap "${candidate}" in Notes again to bring back a real word before we move on.`,
         {
@@ -4280,7 +4354,7 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 10) {
+    if (tutorialSubStep === 11) {
       showTutorial(
         `That's the remaining-words box! A few more things you'll see on this screen:`,
         {
@@ -4291,9 +4365,9 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 11) {
+    if (tutorialSubStep === 12) {
       showTutorial(
-        `Up in the corner, that's your score. It counts how many guesses your opponent needs each round — fewer is better for them, more is better for you.`,
+        `The first number, in green, is your score. It goes up every time your opponent needs another guess to find your secret — the more guesses they need, the higher it climbs. The dimmer number next to it works the same way for your opponent's score, based on how many guesses you need. Whoever ends up with the higher score wins the match.`,
         {
           mode: "advance"
         }
@@ -4303,7 +4377,7 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 12) {
+    if (tutorialSubStep === 13) {
       showTutorial(
         `Above your secret, the constraint row gives a compact rundown of every clue collected so far. Tap the ⧉ button any time to fold it away or bring it back.`,
         {
@@ -4315,7 +4389,7 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 13) {
+    if (tutorialSubStep === 14) {
       showTutorial(
         `The ? button always shows your active powers, and whether each one has been used yet.`,
         {
