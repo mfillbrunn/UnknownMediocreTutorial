@@ -373,10 +373,7 @@
     if (step === 1) {
       show(
         "That green clue stays useful " +
-        "for the rest of the round. " +
-        "Future guesses should keep " +
-        "that letter in its known " +
-        "position.",
+        "for the rest of the round.",
 
         phase,
         step,

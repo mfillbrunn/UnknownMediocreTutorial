@@ -139,6 +139,14 @@ function shakeDraftRow(role) {
     row.classList.remove("draft-shake");
     void row.offsetWidth; // force reflow
     row.classList.add("draft-shake");
+    // Same cleanup as the keyboard's shake below -- without this,
+    // draft-shake sat on the row forever (see draftrow.js's updateRow,
+    // which now carries it through re-renders same as the slide classes).
+    // A keystroke landing before this fires still needs the class gone
+    // by the time it settles, so a later re-render's animation-name
+    // reverts cleanly to row-slide-down's resting state instead of
+    // re-triggering it.
+    setTimeout(() => row.classList.remove("draft-shake"), 220);
   }
 
   if (keyboard) {

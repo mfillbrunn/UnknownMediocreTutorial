@@ -504,8 +504,15 @@ function updateQuestBadge(state, role) {
     // status.desc already states the outcome once done or ready (e.g.
     // "Complete! X is green..." / "Revealing your green letter…") --
     // the raw progress label would just be a redundant, more cryptic
-    // restatement of that alongside it.
-    const descText = (status.done || q.ready) ? status.desc : `${status.desc} (Progress: ${status.label})`;
+    // restatement of that alongside it. The one-away state gets its own
+    // extra sentence, since that's the one point where Use doesn't just
+    // claim the quest's normal reward -- it trades the eventual green for
+    // an early yellow, and that trade isn't obvious from the progress
+    // label alone.
+    const oneAwayHint = !status.done && !q.ready && q.oneAway
+      ? " Use now for an early yellow letter (present, position unknown) — completing the quest instead gives a full green letter."
+      : "";
+    const descText = (status.done || q.ready) ? status.desc : `${status.desc} (Progress: ${status.label})${oneAwayHint}`;
 
     window.showPowerActionPopup?.({
       emoji: status.meta.emoji || "🎯",

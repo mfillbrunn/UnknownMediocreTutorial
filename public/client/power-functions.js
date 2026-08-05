@@ -105,9 +105,10 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
   // already reflects completion.
   if (source === "quest") {
     // The guesser who earned it gets a short celebratory popup naming the
-    // reward (letter, color, and position for a green); the setter gets a
-    // quiet toast instead, so a big splash doesn't hijack their turn every
-    // time the (always-on, AI-chased) quest completes.
+    // reward (letter, color, and position for a green); the setter gets
+    // the same power-used-style popup other powers show their opponent,
+    // not just a quiet toast, since a real green letter just got revealed
+    // against their secret.
     const iAmGuesser = window.currentUser?.id && window.currentUser.id === window.state?.guesser;
     if (iAmGuesser) {
       window.showBigAnnounce?.({
@@ -118,7 +119,11 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
         duration: 3200
       });
     } else {
-      toast(`Opponent's quest complete: ${letter.toUpperCase()} in position ${index + 1}.`);
+      window.showPowerPopup?.({
+        emoji: "🟩",
+        title: "Opponent's quest complete!",
+        desc: `${letter.toUpperCase()} is green in position ${index + 1}.`
+      });
     }
     window.shake?.(document.querySelector(".quest-badge-tile"));
     return;

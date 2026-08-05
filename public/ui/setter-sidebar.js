@@ -363,6 +363,8 @@
     }
   }
 
+  window.reanchorSetterIdleNotes = reanchorIdleExpand;
+
   function initialiseSetterSidebar() {
     const logButton = byId("actionLogBtnSetter");
     const notesButton = byId("notesBtnSetter");
