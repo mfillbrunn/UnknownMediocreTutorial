@@ -165,6 +165,32 @@
     return count;
   }
 
+  // The setter's Notes list is squeezed into a narrow sidebar column (see
+  // features.css's --notes-word-size/--notes-count-size), so its default
+  // font is already smaller than the guesser's floating-panel version --
+  // start larger than that default and only step down through this ladder
+  // when an entry actually doesn't fit at the current size, instead of
+  // always rendering at the smallest size just to cover the worst case.
+  const NOTES_SIDEBAR_SIZES = [
+    { word: 12.5, count: 11 },
+    { word: 11.5, count: 10 },
+    { word: 10.5, count: 9.5 },
+    { word: 9.5, count: 8.5 }
+  ];
+
+  function _fitSetterNotesList(list) {
+    requestAnimationFrame(() => {
+      if (!list.isConnected || list.offsetParent === null) return;
+      for (const { word, count } of NOTES_SIDEBAR_SIZES) {
+        list.style.setProperty("--notes-word-size", word + "px");
+        list.style.setProperty("--notes-count-size", count + "px");
+        const fits = [...list.querySelectorAll(".notes-entry")]
+          .every(row => row.scrollWidth <= row.clientWidth + 1);
+        if (fits) return;
+      }
+    });
+  }
+
   function _renderList(roleId, state) {
     const list = document.getElementById(`notesList${roleId}`);
     if (!list) return;
@@ -239,6 +265,8 @@ list.querySelectorAll(
     }
   );
 });
+
+    if (isSetter) _fitSetterNotesList(list);
   }
 
   function _renderPanel(state) {

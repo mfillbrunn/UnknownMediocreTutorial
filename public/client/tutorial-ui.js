@@ -288,10 +288,23 @@ function tutorialAvoidElements() {
       "#draftGuesser .history-row"
     );
 
+  // The remaining-words box sits in the sidebar for the entire round, not
+  // just while a step is actively pointing at it -- without listing it
+  // here too, only the one step that highlights it (as its own target)
+  // avoided covering it, and every other step in the same sequence (score,
+  // constraint row, power info, ...) freely parked the bubble right on top
+  // of it since it wasn't the *current* highlight.
+  const remainingBoxes =
+    document.querySelectorAll(
+      "#setterScreen.active #SetterRemainingBox, " +
+      "#guesserScreen.active #GuesserRemainingBox"
+    );
+
   return [
     ...new Set([
       ...highlighted,
-      ...draftRows
+      ...draftRows,
+      ...remainingBoxes
     ])
   ].filter(isTutorialElementVisible);
 }
@@ -1347,6 +1360,12 @@ function highlightHeaderScore(role) {
   );
 }
 
+// Only highlights the row itself -- the focus ring is a single rect that
+// bounds every highlighted element at once, so also highlighting the
+// toggle button (which sits up in the header, well above the row) used to
+// stretch the ring into one big box spanning the gap between them instead
+// of tracing the row being explained. The button is called out by name in
+// the accompanying text instead.
 function highlightConstraintRowAndToggle(role) {
   highlightEl(
     byId(
@@ -1354,13 +1373,6 @@ function highlightConstraintRowAndToggle(role) {
         ? "constraintRowSetter"
         : "constraintRowGuesser"
     )
-  );
-
-  const screenId =
-    role === "setter" ? "setterScreen" : "guesserScreen";
-
-  highlightEl(
-    qs(`#${screenId} .constraint-toggle-btn`)
   );
 }
 

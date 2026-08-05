@@ -377,7 +377,7 @@
   font-family: var(--font-mono, monospace);
   font-size: 11px;
   font-weight: 700;
-  opacity: 0.6;
+  opacity: 0.8;
   padding: 0 4px;
   flex-shrink: 0;
 }
@@ -2856,19 +2856,24 @@ body:has(#guesserScreen.active) #appMain {
 
 /*
   The sidebar's Notes is embedded in a ~120-170px column instead of the
-  floating panel's original sizes it was sized for -- shrink it to
-  actually fit without wrapping every entry onto three lines.
-  .notes-word is the main readable line, the rest are secondary/label
-  text.
+  floating panel's original sizes it was sized for. --notes-word-size/
+  --notes-count-size default to the largest, most readable size in
+  notes.js's _fitSetterNotesList() ladder; that function only steps them
+  down (via inline custom properties on #notesListSetter) when an entry
+  actually doesn't fit at the current size, instead of always rendering at
+  the smallest size just to cover the worst case.
 */
 #setterScreen .setter-sidebar .notes-word {
-  font-size: 9.5px;
+  font-size: var(--notes-word-size, 12.5px);
 }
 
 #setterScreen .setter-sidebar .notes-panel-title,
-#setterScreen .setter-sidebar .notes-remaining-count-inline,
 #setterScreen .setter-sidebar .notes-empty {
   font-size: 8.5px;
+}
+
+#setterScreen .setter-sidebar .notes-remaining-count-inline {
+  font-size: var(--notes-count-size, 11px);
 }
 
 
