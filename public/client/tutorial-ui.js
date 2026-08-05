@@ -30,7 +30,6 @@ let tutorialBodyAnimationTimer = null;
 let tutorialHighlightSettleTimer = null;
 let tutorialRingSettling = false;
 let tutorialRingSnapNext = false;
-let advancedTutorialReservePx = -1;
 
 function qs(sel) {
   return document.querySelector(sel);
@@ -235,12 +234,6 @@ function clearAdvancedTutorialDock() {
     "advanced-tutorial-docked"
   );
 
-  document.documentElement.style.removeProperty(
-    "--advanced-tutorial-reserve"
-  );
-
-  advancedTutorialReservePx = -1;
-
   if (!bubble || !wasDocked) {
     return;
   }
@@ -348,35 +341,6 @@ function positionAdvancedTutorialDock(bubble) {
 
   bubble.style.width =
     `${Math.round(width)}px`;
-
-  const bubbleHeight =
-    bubble.getBoundingClientRect().height;
-
-  const reserve =
-    Math.ceil(bubbleHeight + 12);
-
-  if (
-    Math.abs(
-      reserve -
-      advancedTutorialReservePx
-    ) <= 1
-  ) {
-    return true;
-  }
-
-  advancedTutorialReservePx =
-    reserve;
-
-  document.documentElement.style.setProperty(
-    "--advanced-tutorial-reserve",
-    `${reserve}px`
-  );
-
-  requestAnimationFrame(() => {
-    window
-      .reanchorSetterIdleNotes
-      ?.();
-  });
 
   return true;
 }
