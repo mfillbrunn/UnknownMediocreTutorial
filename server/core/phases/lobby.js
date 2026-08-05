@@ -306,23 +306,29 @@ if (action.type === "SET_DAILY_POWERS") {
       state.tutorialStage = 1;
     }
     if (action.mode === "tutorial2") {
-      state.isTutorial = true;
-      state.tutorialStage = 2;
-    }
-    if (action.mode === "tutorialPower" && POWER_METADATA[action.powerId]) {
-      state.isTutorial = true;
-      state.tutorialStage = "power";
-      state.tutorialPowerId = action.powerId;
-    }
-    // "advanced" is the UI-features walkthrough (Notes, Guide, Drag & Lock,
-    // Power UI) launched from the "Advanced Tutorial" menu button -- reuses
-    // stage 2's exact scripted words/powers (see TutorialMode.initMatch),
-    // just with different narration in tutorial-ui.js.
-    if (action.mode === "advanced") {
-      state.isTutorial = true;
-      state.tutorialStage = "advanced";
-    }
+  state.isTutorial = true;
+  state.tutorialStage = 2;
+}
 
+if (action.mode === "quest") {
+  state.isTutorial = true;
+  state.tutorialStage = "quest";
+}
+
+if (
+  action.mode === "tutorialPower" &&
+  POWER_METADATA[action.powerId]
+) {
+  state.isTutorial = true;
+  state.tutorialStage = "power";
+  state.tutorialPowerId =
+    action.powerId;
+}
+
+if (action.mode === "advanced") {
+  state.isTutorial = true;
+  state.tutorialStage = "advanced";
+}
     const nowReady = !state.players[userId]?.ready;
     setPlayerReady(room, userId, nowReady);
 
@@ -573,8 +579,11 @@ if (action.type === "SET_DAILY_POWERS") {
     // The per-power "Try it" tutorial's onLobbyReady above already seeded a
     // mid-match scenario (state.phase = "normal", a turn already assigned)
     // via TutorialMode.seedPowerTutorialRound -- don't stomp that back to
-    // the fresh-game default below.
-    if (state.tutorialStage !== "power") {
+        // the fresh-game default below.
+    if (
+      state.tutorialStage !== "power" &&
+      state.tutorialStage !== "quest"
+    ) {
       state.phase = "simultaneous";
     }
 
