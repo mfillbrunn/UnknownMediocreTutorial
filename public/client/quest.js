@@ -158,6 +158,18 @@ function computeQuestStatus(state) {
   const meta = window.QUEST_METADATA?.[q.type];
   if (!meta) return null;
 
+  const history = state.history || [];
+
+  // Computed up front (RARE only) so every branch below -- claimed, ready,
+  // still in progress -- can attach which of the 7 rare letters have been
+  // used. The quest badge popup uses this to strike through used letters
+  // and bold whichever are still missing, regardless of how far along the
+  // quest is.
+  const rareUsedLetters =
+    q.type === "RARE"
+      ? QUEST_RARE_LETTERS.filter(l => history.some(h => (h.guess || "").toUpperCase().includes(l)))
+      : null;
+
   if (q.used) {
     const resultLetter = q.resultLetter ? q.resultLetter.toUpperCase() : null;
     if (q.claimedEarly) {
@@ -170,7 +182,8 @@ function computeQuestStatus(state) {
         done: true,
         claimedEarly: true,
         resultLetter,
-        resultColor: "yellow"
+        resultColor: "yellow",
+        usedLetters: rareUsedLetters
       };
     }
     return {
@@ -182,23 +195,16 @@ function computeQuestStatus(state) {
       done: true,
       resultLetter,
       resultColor: "green",
-      resultIndex: q.resultIndex
+      resultIndex: q.resultIndex,
+      usedLetters: rareUsedLetters
     };
   }
   if (q.ready) {
-    return { meta, label: "Ready!", desc: "Revealing your green letter…", done: false };
+    return { meta, label: "Ready!", desc: "Revealing your green letter…", done: false, usedLetters: rareUsedLetters };
   }
 
-  const history = state.history || [];
-
   if (q.type === "RARE") {
-    const seen = new Set();
-    for (const h of history) {
-      for (const c of (h.guess || "").toUpperCase()) {
-        if (QUEST_RARE_LETTERS.includes(c)) seen.add(c);
-      }
-    }
-    return { meta, label: `${seen.size}/5`, desc: meta.desc, done: false };
+    return { meta, label: `${rareUsedLetters.length}/5`, desc: meta.desc, done: false, usedLetters: rareUsedLetters };
   }
 
   if (q.type === "ROW") {
@@ -395,6 +401,24 @@ function questCardProgressText(status, q) {
   return status.label; // "n/m" for every in-progress quest type
 }
 
+// Rare Letters' popup gets its own letter-by-letter breakdown instead of
+// just the "n/5" count -- struck-through letters have already been used
+// in a guess, bold ones are still missing, so it's immediately clear
+// which are left without doing the counting by hand.
+function buildRareLettersDescHtml(descText, usedLetters) {
+  const used = new Set(usedLetters || []);
+
+  const letters = QUEST_RARE_LETTERS.map(l => {
+    const isUsed = used.has(l);
+    return `<span class="quest-rare-letter${isUsed ? " quest-rare-letter-used" : ""}">${l}</span>`;
+  }).join("");
+
+  return `
+    <div>${descText}</div>
+    <div class="quest-rare-letters-grid">${letters}</div>
+  `;
+}
+
 // Called from client.js's updateUI(), right next to
 // maybeShowQuestProgressPop. Lazily creates the tile on first call for
 // whichever screen we're on. Guesser: pinned as the first card among
@@ -477,14 +501,17 @@ function updateQuestBadge(state, role) {
   // explanation (e.g. Field Report's current 3 conditions) rather than
   // just the static blurb.
   btn.onclick = () => {
+    // status.desc already states the outcome once done or ready (e.g.
+    // "Complete! X is green..." / "Revealing your green letter…") --
+    // the raw progress label would just be a redundant, more cryptic
+    // restatement of that alongside it.
+    const descText = (status.done || q.ready) ? status.desc : `${status.desc} (Progress: ${status.label})`;
+
     window.showPowerActionPopup?.({
       emoji: status.meta.emoji || "🎯",
       title: status.meta.label,
-      // status.desc already states the outcome once done or ready (e.g.
-      // "Complete! X is green..." / "Revealing your green letter…") --
-      // the raw progress label would just be a redundant, more cryptic
-      // restatement of that alongside it.
-      desc: (status.done || q.ready) ? status.desc : `${status.desc} (Progress: ${status.label})`,
+      desc: descText,
+      descHtml: q.type === "RARE" ? buildRareLettersDescHtml(descText, status.usedLetters) : undefined,
       showUse: canClaim,
       useEnabled: canClaim,
       onUse: canClaim

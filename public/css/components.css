@@ -741,6 +741,26 @@
   line-height: 1.4;
   margin-bottom: var(--sp-16, 16px);
 }
+
+/* Rare Letters quest popup: at a glance, struck-through = already used in
+   a guess, bold/solid = still needed. */
+.quest-rare-letters-grid {
+  display: flex;
+  justify-content: center;
+  gap: 0.5em;
+  margin-top: 0.6em;
+  font-size: 1.15rem;
+  font-family: var(--font-mono, monospace);
+}
+.quest-rare-letter {
+  font-weight: 800;
+  opacity: 1;
+}
+.quest-rare-letter-used {
+  text-decoration: line-through;
+  font-weight: 500;
+  opacity: 0.4;
+}
 #powerActionUseBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;

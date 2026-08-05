@@ -286,13 +286,22 @@ document.addEventListener("DOMContentLoaded", () => {
 // button (hidden/disabled when there's nothing to use right now). See
 // powerEngine.js's createPowerButton (powers) and quest.js's
 // updateQuestBadge (the guesser's quest) for the two callers.
-function showPowerActionPopup({ emoji, title, desc, useLabel = "Use", showUse = true, useEnabled = true, onUse }) {
+function showPowerActionPopup({ emoji, title, desc, descHtml, useLabel = "Use", showUse = true, useEnabled = true, onUse }) {
   const modal = document.getElementById("powerActionModal");
   if (!modal) return;
 
   modal.querySelector(".power-action-emoji").textContent = emoji || "";
   modal.querySelector(".power-action-title").textContent = title || "";
-  modal.querySelector(".power-action-desc").textContent = desc || "";
+
+  // descHtml (e.g. the Rare Letters quest's used/missing letter grid) opts
+  // into markup; plain callers keep going through textContent so nothing
+  // else has to worry about escaping.
+  const descEl = modal.querySelector(".power-action-desc");
+  if (descHtml) {
+    descEl.innerHTML = descHtml;
+  } else {
+    descEl.textContent = desc || "";
+  }
 
   const useBtn = document.getElementById("powerActionUseBtn");
   useBtn.style.display = showUse ? "" : "none";
