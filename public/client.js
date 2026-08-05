@@ -2166,6 +2166,15 @@ function updateTimerAccess() {
     if (typeof renderGuesserLetterProfileBox === "function" && window.state) {
       renderGuesserLetterProfileBox(window.state.powers?.letterProfileGuesserStat || null);
     }
+
+    // The guide banner toggling on/off pushes everything below it
+    // (including this very button, and the Advanced Tutorial's own
+    // highlight target when it points at the Guide toggle) up or down --
+    // a purely local click like this never goes through tutorialSteps(),
+    // so nothing else re-measures the tutorial focus ring afterward.
+    if (typeof scheduleTutorialLayout === "function") {
+      scheduleTutorialLayout();
+    }
   }; });
 })();
 

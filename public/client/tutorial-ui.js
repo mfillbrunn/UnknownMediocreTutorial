@@ -7,6 +7,13 @@ let tutorialWaitingFor = null;
 let tutorialCollapsed = false;
 let tutorialContinueMode = "advance";
 
+// Which tutorial "Next Tutorial" launches from the done-modal (see
+// showTutorialDoneModal()) -- each tutorial's own ending branch sets this
+// right before switching tutorialContinueMode to "end", so the modal can
+// point at whatever naturally comes next instead of always relaunching
+// the same tutorial that just finished.
+let tutorialEndNextMode = "advanced";
+
 let powerTutorialDraftPrefilled = false;
 let powerTutorialSkipSent = false;
 
@@ -1648,12 +1655,27 @@ function endTutorial() {
 }
 window.endTutorial = endTutorial;
 
-// Shown once the powers tutorial's last tooltip is dismissed -- gives the
-// player an explicit choice instead of silently dropping them back at the
-// menu, since the Advanced Tutorial (UI features) is a natural next step
-// from here.
+// Shown once a tutorial's last tooltip is dismissed -- gives the player
+// an explicit choice instead of silently dropping them back at the menu.
+// "Next Tutorial" (see tutorialEndNextMode) points at whatever tutorial
+// makes sense to try next: the Advanced Tutorial after the powers
+// tutorial, or back around to the base Tutorial after the Advanced one,
+// since it's the last stage in the How to Play list.
+const TUTORIAL_DONE_COPY = {
+  advanced: `Nice work — you've learned the powers tutorial. Keep going with the Advanced Tutorial, or head back to the menu.`,
+  tutorial: `Nice work — you've learned the advanced UI. Replay any tutorial any time from How to Play, or head back to the menu.`
+};
+
 function showTutorialDoneModal() {
   byId("tutorialBubble")?.classList.add("hidden");
+
+  const textEl = byId("tutorialDoneText");
+  if (textEl) {
+    textEl.textContent =
+      TUTORIAL_DONE_COPY[tutorialEndNextMode] ||
+      TUTORIAL_DONE_COPY.advanced;
+  }
+
   byId("tutorialDoneModal")?.classList.add("active");
 }
 
@@ -1665,6 +1687,8 @@ byId("tutorialDoneNextBtn")?.addEventListener("click", () => {
   byId("tutorialDoneModal")?.classList.remove("active");
   byId("tutorialBubble")?.classList.add("hidden");
 
+  const nextMode = tutorialEndNextMode;
+
   // startFreshTutorial() just creates a new room -- it never leaves the
   // one this tutorial is still sitting in, so without an explicit leave
   // first the old room's socket membership (and its stateUpdate
@@ -1675,7 +1699,7 @@ byId("tutorialDoneNextBtn")?.addEventListener("click", () => {
     state = null;
     window.state = null;
     resetKeyboards();
-    startFreshTutorial("advanced");
+    startFreshTutorial(nextMode);
   });
 });
 
@@ -2678,6 +2702,8 @@ function runSetterTutorial(
         }
       );
 
+      tutorialEndNextMode = "advanced";
+
       return;
     }
 
@@ -3491,11 +3517,13 @@ function runAdvancedTutorialSetter(state) {
 
   if (round === 2) {
     showTutorial(
-      `That is the advanced UI: Guide explains things, Drag & Lock helps you place letters, and Notes saves possible secrets while the other player thinks.`,
+      `That is the advanced UI: Guide explains things, Drag & Lock helps you place letters, and Notes saves possible secrets while the other player thinks. Tap "Finish Tutorial" whenever you're ready — no need to finish playing this match.`,
       {
-        mode: "hide"
+        mode: "end"
       }
     );
+
+    tutorialEndNextMode = "tutorial";
 
     return;
   }

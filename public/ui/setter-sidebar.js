@@ -76,7 +76,12 @@
     const setterScreen = byId("setterScreen");
     if (!setterScreen?.classList.contains("active")) return false;
     if (!setterScreen.classList.contains("is-not-your-turn")) return false;
-    if (state?.isTutorial) return false;
+    // The Advanced Tutorial's setter round exists specifically to teach
+    // this behavior ("Notes has opened automatically as a scratchpad
+    // while you wait" -- see runAdvancedTutorialSetter in tutorial-ui.js),
+    // so it's the one tutorial stage that needs idle-expand actually
+    // running instead of suppressed like every other scripted tutorial.
+    if (state?.isTutorial && state.tutorialStage !== "advanced") return false;
     if (state?.phase === "gameOver") return false;
     return true;
   }
@@ -267,7 +272,16 @@
 
     setIdleHistoryCap(targetRect);
 
-    flip(notesPanel, startRect, targetRect);
+    // If the tutorial has Notes highlighted (see highlightNotesPanel() in
+    // tutorial-ui.js), its focus ring measured the panel's rect BEFORE
+    // this flip started -- once the panel settles at its new floating
+    // spot, nudge the ring to catch up. Same element, so the ring's own
+    // "target unchanged" fast path never re-measures it on its own.
+    flip(notesPanel, startRect, targetRect, () => {
+      if (typeof scheduleTutorialLayout === "function") {
+        scheduleTutorialLayout();
+      }
+    });
   }
 
   function exitIdleExpand() {
@@ -307,6 +321,10 @@
       notesPanel.classList.remove("idle-floating");
       clearFixedStyles(notesPanel);
       showSetterSidebarPanel("notes");
+
+      if (typeof scheduleTutorialLayout === "function") {
+        scheduleTutorialLayout();
+      }
     });
   }
 
@@ -339,6 +357,10 @@
     if (!targetRect) return;
     applyFixedRect(notesPanel, targetRect);
     setIdleHistoryCap(targetRect);
+
+    if (typeof scheduleTutorialLayout === "function") {
+      scheduleTutorialLayout();
+    }
   }
 
   function initialiseSetterSidebar() {
