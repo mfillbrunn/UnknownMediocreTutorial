@@ -2117,7 +2117,7 @@ function runGuesserTutorial(
 
       if (tutorialSubStep === 0) {
         showTutorial(
-          `Welcome back! This short follow-up teaches you two powers — one for the Inspector, one for the Spy.`,
+          `Welcome back! This short follow-up teaches you about powers — an essential part of Vowel play! We'll show you one for the Inspector, one for the Spy.`,
           {
             enabled: true
           }
@@ -2131,7 +2131,7 @@ function runGuesserTutorial(
 
       if (tutorialSubStep === 1) {
         showTutorial(
-          `Quick rule: powers can only be used once per turn, and most are limited to once per match. Letter Peek and a couple others are the exceptions — you get two uses each.`,
+          `Quick rule: powers can only be used once per turn, and most are limited to once per match. Letter Peek and a couple others are the exceptions — you get two uses each. And they can only be used after the first round.`,
           {
             enabled: true
           }
@@ -2491,7 +2491,7 @@ function runGuesserTutorial(
         stopKeyDemo();
       } else {
         showTutorial(
-          `Now use those clues for your next guess. Try "${word}" — new letters can teach you even more.`,
+          `Now use those clues for your next guess. Try "${word}".`,
           {
             mode: "hide"
           }
@@ -2532,7 +2532,7 @@ function runGuesserTutorial(
 
     if (tutorialSubStep === 1) {
       showTutorial(
-        `You've got the hang of it! Finish this round on your own now.`,
+        `Finish this round on your own now.`,
         {
           mode: "advance"
         }
@@ -2543,7 +2543,7 @@ function runGuesserTutorial(
 
     if (tutorialSubStep === 2) {
       showTutorial(
-        `Here's a little hint: the Spy likes well-spiced food. 🌶️`,
+        `Here's a little hint: the Spy likes well-spiced food.`,
         {
           mode: "hide"
         }
@@ -2842,7 +2842,7 @@ function runSetterTutorial(
       }
 
       showTutorial(
-        `Here's something new: you can see the Inspector's next guess before it's scored — it's sitting right above your secret.`,
+        `Here's the kicker: you can see the Inspector's next guess before it's scored — it's sitting right above your secret.`,
         {
           mode: "advance"
         }
@@ -2947,7 +2947,7 @@ function runSetterTutorial(
   if (round === 2) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `You won't always need to change it, though — if your secret still fits every clue, the simplest move is keeping it exactly as is. Your draft row is empty on purpose: just tap Submit with nothing typed to lock the same secret back in.`,
+        `You won't always need to change it, though — if you can't think of a better secret, the simplest move is keeping it exactly as is. Just tap Submit with nothing typed to lock the same secret back in.`,
         {
           mode: "hide"
         }
@@ -3330,7 +3330,7 @@ function runAdvancedTutorialGuesser(state) {
   if (round === 0) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `This tutorial covers three extra tools: Guide, Drag & Lock, and Notes. Powers have their own tutorial.`,
+        `This tutorial covers three extra tools: Guide, Drag & Lock, and Notes.`,
         {
           mode: "advance"
         }
@@ -3341,7 +3341,7 @@ function runAdvancedTutorialGuesser(state) {
 
     if (tutorialSubStep === 1) {
       showTutorial(
-        `Guide is a little helper. Turn it on when you want the game to explain what a box or number means.`,
+        `Guide is a little helper. Turn it on when you want the game to explain just a little more in the beginning.`,
         {
           mode: "advance"
         }
@@ -3492,7 +3492,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 1) {
       showTutorial(
-        `Your current secret is saved here automatically. Now type "${candidate}" in the five small Notes boxes and press Enter to save another possible secret.`,
+        `Your current secret is saved here automatically. Now type "${candidate}" in the five small Notes boxes using the regular keyboard and press Enter to save another possible secret.`,
         {
           mode: "hide"
         }
@@ -3668,7 +3668,7 @@ function runSummaryTutorial(state) {
 
   if (tutorialSubStep === 1) {
     showTutorial(
-      `It shows how many guesses you took to find the secret — that's the count. Lower is better for you as the Inspector; it also becomes the Spy's score for the round, so higher is better for them.`,
+      `It shows how many guesses you took to find the secret — that's the count. Lower is better for you as the Inspector; and worse for your opponent.`,
       {
         enabled: true
       }
