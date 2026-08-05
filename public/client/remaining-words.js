@@ -8,6 +8,12 @@ function renderSetterRemainingBox(boxState) {
   const box = document.getElementById("SetterRemainingBox");
   if (!box) return;
 
+  // This box's live updates arrive over their own socket event (see
+  // socket-events.js), never through window.state -- the advanced
+  // tutorial's invalid-draft demo hooks in here for the same reason
+  // window.refreshTutorialKeyDemo hooks into the draft renderers.
+  window.refreshTutorialRemainingBox?.(boxState);
+
   if (!boxState || !boxState.visible) {
     box.innerHTML = "";
     box.hidden = true;

@@ -300,10 +300,23 @@ function tutorialAvoidElements() {
       "#guesserScreen.active #GuesserRemainingBox"
     );
 
+  // Same reasoning as remainingBoxes above: Notes and the Log both stay
+  // open/visible across several consecutive teaching steps in the setter
+  // sidebar, not just the one step that names them as its own highlight
+  // target -- isTutorialElementVisible() below still filters these out on
+  // every step where the panel is actually closed (display:none via its
+  // own "hidden" class).
+  const sidebarPanels =
+    document.querySelectorAll(
+      "#setterScreen.active #notesPanelSetter, " +
+      "#setterScreen.active #actionLogSetter"
+    );
+
   return [
     ...new Set([
       ...highlighted,
       ...draftRows,
+      ...sidebarPanels,
       ...remainingBoxes
     ])
   ].filter(isTutorialElementVisible);
@@ -1166,6 +1179,49 @@ window.refreshTutorialKeyDemo = function () {
   checkTutorialDragLockWait();
 };
 
+function waitForInvalidDraft() {
+  tutorialWaitingFor = {
+    type: "invalidDraft"
+  };
+
+  setContinue({
+    show: true,
+    mode: "hide"
+  });
+
+  updateActionBadge();
+}
+
+// The setter's live remaining-words box arrives over its own socket event
+// (see socket-events.js's "setterRemainingBox" handler / renderSetterRemainingBox()
+// in remaining-words.js) rather than through window.state, so -- like the
+// drag/lock wait above -- it needs its own dedicated hook instead of
+// piggybacking on the normal tutorialSteps() re-run that follows a full
+// state broadcast.
+function checkTutorialRemainingBoxWait(boxState) {
+  if (
+    !tutorialWaitingFor ||
+    tutorialWaitingFor.type !== "invalidDraft"
+  ) {
+    return;
+  }
+
+  if (boxState?.isConsistent !== false) {
+    return;
+  }
+
+  tutorialWaitingFor = null;
+  updateActionBadge();
+  tutorialSubStep++;
+
+  if (window.state && window.myRole) {
+    tutorialSteps(window.state, window.myRole);
+  }
+}
+
+window.refreshTutorialRemainingBox =
+  checkTutorialRemainingBoxWait;
+
 // ------------------------
 // Drag demo: an auto-playing ghost letter that flies from a keyboard key
 // to its draft tile, illustrating the drag gesture itself (the wait
@@ -1268,6 +1324,18 @@ function highlightNotesPanel() {
 
 function highlightNotesList() {
   highlightEl(byId("notesListSetter"));
+}
+
+// Precise tap target for "tap this specific word in Notes" steps -- the
+// whole list can be far from whatever else a step also highlights (e.g.
+// a remaining-box row), and unioning both into one bounding ring would
+// stretch it across everything in between (see
+// highlightConstraintRowAndToggle's comment for the same lesson).
+function highlightNotesEntry(word) {
+  const target =
+    qs(`#notesListSetter [data-fill="${word}"]`);
+
+  highlightEl(target || byId("notesListSetter"));
 }
 function highlightPowersCol() {
   highlightEl(
@@ -1388,6 +1456,18 @@ function highlightPowerInfoBtn(role) {
 
 function highlightSetterRemainingBox() {
   highlightEl(byId("SetterRemainingBox"));
+}
+
+// index: 0 = Old, 1 = Keep, 2 = New -- the box has no per-row id, only the
+// repeated .remaining-stat class (see remaining-words.js), so the row is
+// picked out by its fixed rendering position instead.
+function highlightSetterRemainingBoxRow(index) {
+  const box = byId("SetterRemainingBox");
+
+  const row =
+    box?.querySelectorAll(".remaining-stat")[index];
+
+  highlightEl(row || box);
 }
 
 function highlightSetterLog() {
@@ -1859,6 +1939,20 @@ function tutorialOnPowerActionModalClose() {
     return;
   }
 
+  // waitForModalDismissed() waits, on its own, for the popup to be opened
+  // and closed at all -- unlike "power"/other modalTargetId waits, which
+  // stay on the same step until some SERVER-side change confirms the
+  // action actually happened (e.g. the quest's `used` flag), and simply
+  // re-render if the player cancelled instead.
+  if (
+    tutorialWaitingFor.type ===
+    "modalDismissed"
+  ) {
+    tutorialWaitingFor = null;
+    tutorialSubStep++;
+    updateActionBadge();
+  }
+
   if (
     window.state &&
     window.myRole
@@ -1871,6 +1965,26 @@ function tutorialOnPowerActionModalClose() {
 }
 window.tutorialOnPowerActionModalClose =
   tutorialOnPowerActionModalClose;
+
+// Waits for the power/quest action popup to be opened and then dismissed
+// (closed via the X or backdrop) at all, regardless of whether anything
+// was actually claimed -- for steps that just want the player to look at
+// the popup's info, not use it. See tutorialOnPowerActionModalOpen()'s
+// modalTargetId branch for the highlight this puts on the close button
+// while the popup is open.
+function waitForModalDismissed(modalTargetId) {
+  tutorialWaitingFor = {
+    type: "modalDismissed",
+    modalTargetId
+  };
+
+  setContinue({
+    show: true,
+    mode: "hide"
+  });
+
+  updateActionBadge();
+}
 
 function waitForNoteAdded(word) {
   tutorialWaitingFor = {
@@ -3652,12 +3766,24 @@ function runAdvancedTutorialGuesser(state) {
       highlightDraftRow("guesser");
       highlightKeyboardGuesser();
       startDragDemo(word);
+
+      startKeyDemo(
+        `guesser-advanced-round1-${word}`,
+        () =>
+          tutorialWordKeyEls(
+            "guesser",
+            word,
+            localGuesserDraft
+          )
+      );
+
       waitForDraftFilled();
       return;
     }
 
     if (tutorialSubStep === 1) {
       stopDragDemo();
+      stopKeyDemo();
 
       showTutorial(
         `Nice! Now tap — don't drag — one of the filled tiles to lock it in. A locked letter can't be erased by Backspace.`,
@@ -3693,7 +3819,7 @@ function runAdvancedTutorialGuesser(state) {
       );
     } else {
       showTutorial(
-        `Great — now press Enter to submit "${word}".`,
+        `Great — now press Enter to submit "${word}". Right after this, you will switch to playing as the Spy to see a few more features.`,
         {
           mode: "hide"
         }
@@ -3701,11 +3827,24 @@ function runAdvancedTutorialGuesser(state) {
     }
 
     highlightKeyboardGuesser();
+
+    startKeyDemo(
+      `guesser-advanced-round1-submit-${word}`,
+      () =>
+        tutorialWordKeyEls(
+          "guesser",
+          word,
+          localGuesserDraft
+        )
+    );
+
     waitForGuessSubmission(round);
     return;
   }
 
   if (round === 2) {
+    stopKeyDemo();
+
     showTutorial(
       `Good. You used Guide and Drag & Lock. Next you will be the Spy and learn Notes.`,
       {
@@ -3838,44 +3977,7 @@ function runAdvancedTutorialSetter(state) {
       }
 
       showTutorial(
-        `The new guess is here. Tap "${oldSecret}" in Notes first — it copies straight into your secret row, without submitting anything yet.`,
-        {
-          mode: "hide"
-        }
-      );
-
-      highlightNotesList();
-      waitForNoteSelected(oldSecret);
-      return;
-    }
-
-    if (tutorialSubStep === 4) {
-      showTutorial(
-        `Now tap "${candidate}" instead. Notice the small number next to each word in Notes — that is how many secrets would still be possible if you used it.`,
-        {
-          enabled: true
-        }
-      );
-
-      highlightNotesList();
-      waitForNoteSelected(candidate);
-      return;
-    }
-
-    if (tutorialSubStep === 5) {
-      showTutorial(
-        `Before you switch, let's look at a few more things you'll see on this screen.`,
-        {
-          mode: "advance"
-        }
-      );
-
-      return;
-    }
-
-    if (tutorialSubStep === 6) {
-      showTutorial(
-        `This box has three counts: Old is how many secrets were possible before this guess, Keep is how many stay possible if you keep your current secret, and New is how many would if you switch to whatever's in your draft — that's the number that just changed when you tapped ${oldSecret} and ${candidate}.`,
+        `The new guess is here! This box tracks how many secrets are still possible — let's go through it one row at a time.`,
         {
           mode: "advance"
         }
@@ -3885,7 +3987,94 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
+    if (tutorialSubStep === 4) {
+      showTutorial(
+        `Old is how many secrets were still possible right before this guess.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterRemainingBoxRow(0);
+      return;
+    }
+
+    if (tutorialSubStep === 5) {
+      showTutorial(
+        `Keep is how many would still be possible if you kept your current secret, "${oldSecret}".`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterRemainingBoxRow(1);
+      return;
+    }
+
+    if (tutorialSubStep === 6) {
+      showTutorial(
+        `New is how many would be possible if you switched to whatever's in your draft right now — it updates live as you type. Tap "${oldSecret}" in Notes first — it copies straight into your secret row, without submitting anything yet.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightNotesEntry(oldSecret);
+      waitForNoteSelected(oldSecret);
+      return;
+    }
+
     if (tutorialSubStep === 7) {
+      showTutorial(
+        `Now tap "${candidate}" instead and watch New change again. Notice the small number next to each word in Notes too — that is this same New count for that word.`,
+        {
+          enabled: true
+        }
+      );
+
+      highlightNotesEntry(candidate);
+      waitForNoteSelected(candidate);
+      return;
+    }
+
+    if (tutorialSubStep === 8) {
+      showTutorial(
+        `Now try typing something that isn't a real word — like "ZZZZZ" — directly into your secret row. Don't press Enter. Watch New turn into a ✕, since that word could never actually be planted.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightDraftRow("setter");
+      waitForInvalidDraft();
+      return;
+    }
+
+    if (tutorialSubStep === 9) {
+      showTutorial(
+        `That ✕ means the draft isn't a legal secret — you can't submit it. Tap "${candidate}" in Notes again to bring back a real word before we move on.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightNotesEntry(candidate);
+      waitForNoteSelected(candidate);
+      return;
+    }
+
+    if (tutorialSubStep === 10) {
+      showTutorial(
+        `That's the remaining-words box! A few more things you'll see on this screen:`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 11) {
       showTutorial(
         `Up in the corner, that's your score. It counts how many guesses your opponent needs each round — fewer is better for them, more is better for you.`,
         {
@@ -3897,7 +4086,7 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 8) {
+    if (tutorialSubStep === 12) {
       showTutorial(
         `Above your secret, the constraint row gives a compact rundown of every clue collected so far. Tap the ⧉ button any time to fold it away or bring it back.`,
         {
@@ -3909,7 +4098,7 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 9) {
+    if (tutorialSubStep === 13) {
       showTutorial(
         `The ? button always shows your active powers, and whether each one has been used yet.`,
         {
@@ -4405,6 +4594,8 @@ window.TutorialCore = {
 
   waitForGuess:
     waitForGuessSubmission,
+
+  waitForModalDismissed,
 
   startKeyDemo,
   stopKeyDemo,

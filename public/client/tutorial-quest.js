@@ -180,6 +180,35 @@
       return;
     }
 
+    if (step === 3) {
+      show(
+        "Tap the Quest card to see " +
+        "exactly what's needed and " +
+        "your current progress. When " +
+        "you're done looking, tap the " +
+        "X to close it — we'll finish " +
+        "the Quest the normal way " +
+        "instead of claiming early.",
+
+        phase,
+        step,
+
+        {
+          mode: "hide"
+        }
+      );
+
+      api.highlight(
+        questBadge()
+      );
+
+      api.waitForModalDismissed(
+        "powerActionCloseBtn"
+      );
+
+      return;
+    }
+
     if (state.pendingGuess) {
       show(
         "Your guess is submitted. " +
@@ -320,9 +349,10 @@
 
       show(
         `${result} The green clue ` +
-        "appears in the row above " +
-        "your history. It tells you " +
-        "the exact letter and exact " +
+        "appears in the constraint " +
+        "row, right above your " +
+        "history. It tells you the " +
+        "exact letter and exact " +
         "position.",
 
         phase,
@@ -400,7 +430,8 @@
           ? (
               "You claimed early, so " +
               `${letter} was added as ` +
-              "a yellow clue. It is in " +
+              "a yellow clue in the " +
+              "constraint row. It is in " +
               "the secret, but its " +
               "position is still " +
               "unknown."
