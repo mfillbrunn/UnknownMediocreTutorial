@@ -2262,7 +2262,7 @@ function getGuideInfo(state, role) {
       phase: "Simultaneous Round",
       task: done
         ? "Guess submitted — waiting for the Spy's secret."
-        : "Submit your opening guess. You don't know the secret yet."
+        : "Submit your opening guess — you're guessing blind this round."
     };
   }
 
