@@ -95,8 +95,17 @@ window.renderDraftRows = function ({
     // entrance animation (340ms) takes to finish. Overwriting className
     // wholesale each time stripped the animation class mid-flight, so it
     // visually never got to play. Carry over any slide class already in
-    // progress instead of dropping it.
-    const inFlightAnim = ["row-slide-in", "row-slide-down"].filter(c =>
+    // progress instead of dropping it. draft-shake needs the same
+    // treatment for a different reason: it overrides row-slide-down's
+    // `animation` property via !important while it's on the row (see
+    // states.css), so dropping it mid-shake made the reset+re-add below
+    // hand animation-name back to row-slide-down -- a real, observable
+    // change the browser plays from 0%, i.e. the settled row visibly
+    // hops back up before sliding down again. shakeDraftRow (client.js)
+    // removes draft-shake itself once the shake's 220ms is up, so by the
+    // time it's carried here past that point it's inert (resting at its
+    // neutral end keyframe) and safe to keep around.
+    const inFlightAnim = ["row-slide-in", "row-slide-down", "draft-shake"].filter(c =>
       row.classList.contains(c)
     );
 
@@ -155,12 +164,30 @@ window.renderDraftRows = function ({
 
   // Reveals a row, replaying `animClass` only on an actual hidden->visible
   // transition (per the wasVisible snapshot taken above this render).
+  const ENTRANCE_KEYFRAME_NAMES = {
+    "row-slide-down": "draft-row-slide-down",
+    "row-slide-in": "draft-row-slide-in"
+  };
   function showRow(row, wasVisible, animClass) {
     row.style.display = "";
     if (!wasVisible && animClass) {
       row.classList.remove(animClass);
       void row.offsetWidth; // restart animation
       row.classList.add(animClass);
+
+      // Drop the class once the entrance genuinely finishes instead of
+      // leaving it attached forever -- `both` fill-mode already holds the
+      // same resting transform either way, but leaving the class on meant
+      // any later removal of an overriding !important animation (e.g.
+      // draft-shake ending, see states.css) handed animation-name back to
+      // this one and the browser replayed it from 0%, visibly yanking the
+      // row back up before sliding it back down.
+      const keyframeName = ENTRANCE_KEYFRAME_NAMES[animClass];
+      row.addEventListener("animationend", function onEntranceEnd(e) {
+        if (e.target !== row || e.animationName !== keyframeName) return;
+        row.removeEventListener("animationend", onEntranceEnd);
+        row.classList.remove(animClass);
+      });
     }
   }
 
