@@ -96,14 +96,48 @@ class TutorialMode {
       state.tutorialPowerSetter = role === "setter" ? state.tutorialPowerId : null;
       state.scriptedTurns = 0;
     }
+    if (state.tutorialStage === "quest") {
+  state.roundsTotal = 1;
+  state.scriptedTurns = 3;
 
+  state.tutorialGuesses = [
+    "QUACK",
+    "VIXEN",
+    "WACKY"
+  ];
+
+  state.tutorialSecretsAI = [
+    "BLIMP",
+    "BLIMP",
+    "BLIMP"
+  ];
+}
     state.timeControl.enabled = false;
     // No randomness
     state.shuffle = false;
     state.ranked = false;
   }
-  onLobbyReady(state, setterPowers, guesserPowers) {
-    if (state.tutorialStage === 2 || state.tutorialStage === "advanced") {
+  onLobbyReady(
+  state,
+  setterPowers,
+  guesserPowers
+) {
+  if (state.tutorialStage === "quest") {
+    state.initialPowers = {
+      setter: [],
+      guesser: []
+    };
+
+    state.activePowers = [];
+
+    this.seedQuestTutorialRound(state);
+    return;
+  }
+
+  if (
+    state.tutorialStage === 2 ||
+    state.tutorialStage === "advanced"
+  ) {
       const sP = [state.tutorialPowerSetter];
       const gP = [state.tutorialPowerGuesser];
       state.initialPowers = { setter: sP, guesser: gP };
@@ -130,7 +164,73 @@ class TutorialMode {
     };
     state.activePowers = [];
   }
+  seedQuestTutorialRound(state) {
+  if (
+    state.tutorialStage !== "quest"
+  ) {
+    return;
+  }
 
+  const secret = "BLIMP";
+
+  state.secret = secret;
+
+  state.history = [
+    "QUACK",
+    "VIXEN"
+  ].map((guess, index) => {
+    const fb =
+      scoreGuess(secret, guess);
+
+    return {
+      guess,
+      fb,
+      fbGuesser: [...fb],
+      extraInfo: null,
+      finalSecret: secret,
+      roundIndex: index,
+      powerEvents: [],
+      fakeFeedback: null
+    };
+  });
+
+  state.guessCount =
+    state.history.length;
+
+  state.phase = "normal";
+  state.turn = state.guesser;
+
+  state.pendingGuess = "";
+  state.setterDraft = "";
+
+  state.simultaneousGuessSubmitted =
+    false;
+
+  state.simultaneousSecretSubmitted =
+    false;
+
+  state.gameOver = false;
+  state.canNextRound = false;
+
+  state.powers.quest = {
+    ...(state.powers.quest || {}),
+
+    type: "RARE",
+    ready: false,
+    used: false,
+    oneAway: true,
+    claimedEarly: false,
+
+    conditions: null,
+    conditionsHistory: [],
+
+    resultColor: null,
+    resultLetter: null,
+    resultIndex: null
+  };
+
+  state.powers.questActive = false;
+}
   // Drops the "Try it" power tutorial straight into a mid-match scenario
   // -- two already-scored rounds already sitting in state.history, one
   // live turn ready to go -- instead of scripting an entire match from
