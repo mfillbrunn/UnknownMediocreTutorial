@@ -139,10 +139,16 @@ function updateActionBadge() {
     label = tutorialWaitingFor.word
       ? `TAP ${tutorialWaitingFor.word}`
       : "PICK A WORD";
-  } else if (waitingType === "rejectedSecret") {
-    label = "TRY PICKY";
-  }
-
+} else if (
+  waitingType === "rejectedSecret"
+) {
+  label = "TRY PICKY";
+} else if (
+  tutorialWaitingFor?.label
+) {
+  label =
+    tutorialWaitingFor.label;
+}
   badge.textContent = label;
   badge.classList.toggle("hidden", !waitingType);
 
@@ -1555,15 +1561,37 @@ function waitForPowerUse(powerId) {
 // hidePowerActionPopup so the ring follows the modal open/close, only
 // while a tutorial step is actually waiting on this specific power.
 function tutorialOnPowerActionModalOpen() {
+  if (!tutorialWaitingFor) {
+    return;
+  }
+
   if (
-    !tutorialWaitingFor ||
-    tutorialWaitingFor.type !== "power"
+    tutorialWaitingFor.modalTargetId
+  ) {
+    clearHighlights();
+
+    highlightEl(
+      byId(
+        tutorialWaitingFor
+          .modalTargetId
+      )
+    );
+
+    return;
+  }
+
+  if (
+    tutorialWaitingFor.type !==
+    "power"
   ) {
     return;
   }
 
   clearHighlights();
-  highlightEl(byId("powerActionUseBtn"));
+
+  highlightEl(
+    byId("powerActionUseBtn")
+  );
 }
 window.tutorialOnPowerActionModalOpen =
   tutorialOnPowerActionModalOpen;
@@ -1571,13 +1599,24 @@ window.tutorialOnPowerActionModalOpen =
 function tutorialOnPowerActionModalClose() {
   if (
     !tutorialWaitingFor ||
-    tutorialWaitingFor.type !== "power"
+    (
+      tutorialWaitingFor.type !==
+        "power" &&
+      !tutorialWaitingFor
+        .modalTargetId
+    )
   ) {
     return;
   }
 
-  if (window.state && window.myRole) {
-    tutorialSteps(window.state, window.myRole);
+  if (
+    window.state &&
+    window.myRole
+  ) {
+    tutorialSteps(
+      window.state,
+      window.myRole
+    );
   }
 }
 window.tutorialOnPowerActionModalClose =
@@ -1945,16 +1984,25 @@ function tutorialSteps(state, role) {
 
     return;
   }
+if (
+  window._gameOverRevealInFlight
+) {
+  return;
+}
 
-  if (
-    window._gameOverRevealInFlight
-  ) {
-    return;
-  }
+if (
+  state.tutorialStage === "quest"
+) {
+  window.runQuestTutorial?.(
+    state,
+    role
+  );
 
-  const round =
-    state.history?.length ?? 0;
+  return;
+}
 
+const round =
+  state.history?.length ?? 0;
   if (round !== lastTutorialRound) {
     const prevRound =
       lastTutorialRound;
@@ -3941,5 +3989,52 @@ if (stageAdvanced) {
       "hide";
   }
 }
+window.TutorialCore = {
+  show: showTutorial,
+  hide: hideTutorial,
 
-window.tutorialSteps = tutorialSteps;
+  clearHighlights,
+  highlight: highlightEl,
+
+  highlightKeyboardGuesser,
+
+  setContinue,
+
+  getStep() {
+    return tutorialSubStep;
+  },
+
+  setStep(value) {
+    tutorialSubStep =
+      Number(value) || 0;
+  },
+
+  setMode(mode) {
+    tutorialContinueMode = mode;
+    updateActionBadge();
+  },
+
+  setWaiting(value) {
+    tutorialWaitingFor = value;
+    updateActionBadge();
+  },
+
+  clearWaiting() {
+    tutorialWaitingFor = null;
+    updateActionBadge();
+  },
+
+  waitForGuess:
+    waitForGuessSubmission,
+
+  startKeyDemo,
+  stopKeyDemo,
+
+  wordKeyEls:
+    tutorialWordKeyEls,
+
+  end: endTutorial
+};
+
+window.tutorialSteps =
+  tutorialSteps;
