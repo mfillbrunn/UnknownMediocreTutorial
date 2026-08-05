@@ -10,6 +10,19 @@ window.updatePowerInfoState = function (state) {
   }
 };
 
+// A single-use power (no entry in POWER_MAX_USES) is either "Available" or
+// "Used"; a multi-charge one (hideTile, revealGreen) counts down charges
+// instead, matching the "x/y" the power badge itself already shows.
+function powerInfoStatusLabel(state, id) {
+  const maxUses = POWER_MAX_USES[id];
+  if (maxUses) {
+    const spent = state.powers?.[id + "Uses"] || 0;
+    const left = Math.max(maxUses - spent, 0);
+    return left <= 0 ? "Fully used" : `${left}/${maxUses} left`;
+  }
+  return state.powers?.[id + "Used"] === true ? "Used" : "Available";
+}
+
 function buildPowerInfoPanel(state, role) {
   const panel = document.getElementById(
     role === "setter"
@@ -61,6 +74,9 @@ const row =
 row.className =
   "power-info-row power-info-active";
 
+const statusLabel = powerInfoStatusLabel(state, id);
+const statusUsed = statusLabel === "Used" || statusLabel === "Fully used";
+
 row.innerHTML = `
   <span class="power-info-emoji">
     ${meta.emoji || "⚡"}
@@ -69,6 +85,7 @@ row.innerHTML = `
   <div class="power-info-body">
     <div class="power-info-title">
       ${meta.label}
+      <span class="power-info-status${statusUsed ? " power-info-status-used" : ""}">${statusLabel}</span>
     </div>
 
     <div class="power-info-desc">
@@ -89,12 +106,21 @@ sections[powerRole]?.push(row);
   const questType = state.powers?.quest?.type;
   const questMeta = questType && window.QUEST_METADATA?.[questType];
   if (questMeta) {
+    // computeQuestStatus already tracks progress/ready/done (and the
+    // claimed-early vs full-green split) for the quest badge tile -- reuse
+    // its label ("n/m", "Ready!", "🟩 X", "Claimed early", ...) instead of
+    // recomputing quest progress here.
+    const questStatus = window.computeQuestStatus?.(state);
+    const statusLabel = questStatus?.label || "In progress";
     const row = document.createElement("div");
     row.className = "power-info-row power-info-active";
     row.innerHTML = `
       <span class="power-info-emoji">${questMeta.emoji || "🎯"}</span>
       <div class="power-info-body">
-        <div class="power-info-title">Quest: ${questMeta.label}</div>
+        <div class="power-info-title">
+          Quest: ${questMeta.label}
+          <span class="power-info-status${questStatus?.done ? " power-info-status-used" : ""}">${statusLabel}</span>
+        </div>
         <div class="power-info-desc">${questMeta.desc}</div>
       </div>
     `;

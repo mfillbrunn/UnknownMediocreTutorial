@@ -73,6 +73,14 @@
   opacity: 0.95;
 }
 
+/* Auto-playing drag demo (Advanced Tutorial) -- unlike a real drag, which
+   tracks the pointer 1:1 with no transition, this one tweens smoothly
+   between a fixed start and end point, so it needs its own transition on
+   top of the plain .drag-letter-ghost look. */
+.tutorial-drag-demo {
+  transition: left 700ms cubic-bezier(0.3, 0.7, 0.4, 1), top 700ms cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
 /* ── Guide toggle (header, top-right) ─────────────────────────────── */
 .guide-toggle-btn {
   height: 28px;
@@ -492,6 +500,24 @@
   font-size: 12px;
   font-weight: 700;
   margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.power-info-status {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+  white-space: nowrap;
+}
+.power-info-status-used {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.45);
 }
 .power-info-desc {
   font-size: 11px;

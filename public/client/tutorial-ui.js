@@ -610,6 +610,7 @@ function pauseTutorial() {
   tutorialPendingReveal = null;
 
   clearHighlights();
+  stopDragDemo();
 }
 
 function hideTutorial() {
@@ -1104,7 +1105,149 @@ function tutorialWordKeyEls(role, word, draft) {
   return [tutorialKeyEl(role, "ENTER")];
 }
 
-window.refreshTutorialKeyDemo = applyKeyDemoHighlight;
+// Drag & Lock wait resolution: localGuesserDraft / guesserDraftLocks
+// (both plain `let`s at the top of client.js) are pure local UI state --
+// dragging a letter, tapping a tile to lock/unlock it, none of that
+// round-trips through the server, so tutorialSteps() never re-runs on its
+// own for any of it. window.refreshTutorialKeyDemo already fires on
+// every one of those local renders (see renderGuesserDraftOnly /
+// toggleGuesserDraftLock in client.js), so it's the natural hook to also
+// resolve these waits from, the same way notifyTutorialPowerUsed etc.
+// resolve server-driven ones.
+function checkTutorialDragLockWait() {
+  if (!tutorialWaitingFor) {
+    return;
+  }
+
+  const type = tutorialWaitingFor.type;
+
+  if (type !== "draftFilled" && type !== "tileLocked" && type !== "tileUnlocked") {
+    return;
+  }
+
+  const filled =
+    (localGuesserDraft || "").trim().length >= 5;
+  const locked =
+    (typeof guesserDraftLocks !== "undefined" && guesserDraftLocks.size > 0);
+
+  const satisfied =
+    (type === "draftFilled" && filled) ||
+    (type === "tileLocked" && locked) ||
+    (type === "tileUnlocked" && !locked);
+
+  if (!satisfied) {
+    return;
+  }
+
+  tutorialWaitingFor = null;
+  updateActionBadge();
+  tutorialSubStep++;
+
+  if (window.state && window.myRole) {
+    tutorialSteps(window.state, window.myRole);
+  }
+}
+
+window.refreshTutorialKeyDemo = function () {
+  applyKeyDemoHighlight();
+  checkTutorialDragLockWait();
+};
+
+// ------------------------
+// Drag demo: an auto-playing ghost letter that flies from a keyboard key
+// to its draft tile, illustrating the drag gesture itself (the wait
+// condition above is satisfied by typing too -- this is purely a visual
+// nudge toward trying the drag). Self-terminates once the draft actually
+// fills. tutorialDragDemoToken guards against a stale, already-superseded
+// loop iteration writing to the DOM after stopDragDemo() -- the same
+// generation-counter shape as setter-sidebar.js's flipToken.
+// ------------------------
+let tutorialDragDemoToken = 0;
+let tutorialDragDemoRunning = false;
+let tutorialDragDemoTimer = null;
+let tutorialDragDemoEl = null;
+
+function stopDragDemo() {
+  tutorialDragDemoToken++;
+  tutorialDragDemoRunning = false;
+  clearTimeout(tutorialDragDemoTimer);
+  tutorialDragDemoTimer = null;
+  tutorialDragDemoEl?.remove();
+  tutorialDragDemoEl = null;
+}
+
+function guesserDraftTileEl(index) {
+  const row = visibleDraftRows("guesser").find(r =>
+    r.classList.contains("guesser-draft")
+  );
+
+  return row?.querySelectorAll(".history-tile")[index] || null;
+}
+
+function stepDragDemo(token, word, i) {
+  if (token !== tutorialDragDemoToken) {
+    return;
+  }
+
+  if ((localGuesserDraft || "").trim().length >= 5) {
+    stopDragDemo();
+    return;
+  }
+
+  const letter = word[i % word.length].toUpperCase();
+  const keyEl = tutorialKeyEl("guesser", letter);
+  const tileEl = guesserDraftTileEl(i % word.length);
+
+  if (!keyEl || !tileEl) {
+    tutorialDragDemoTimer = setTimeout(
+      () => stepDragDemo(token, word, i + 1),
+      900
+    );
+    return;
+  }
+
+  const keyRect = keyEl.getBoundingClientRect();
+  const tileRect = tileEl.getBoundingClientRect();
+
+  const ghost = document.createElement("div");
+  ghost.className = "drag-letter-ghost tutorial-drag-demo";
+  ghost.textContent = letter;
+  ghost.style.left = `${keyRect.left + keyRect.width / 2}px`;
+  ghost.style.top = `${keyRect.top + keyRect.height / 2}px`;
+  document.body.appendChild(ghost);
+  tutorialDragDemoEl = ghost;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (token !== tutorialDragDemoToken) return;
+      ghost.style.left = `${tileRect.left + tileRect.width / 2}px`;
+      ghost.style.top = `${tileRect.top + tileRect.height / 2}px`;
+    });
+  });
+
+  tutorialDragDemoTimer = setTimeout(() => {
+    if (token !== tutorialDragDemoToken) return;
+    ghost.remove();
+    if (tutorialDragDemoEl === ghost) tutorialDragDemoEl = null;
+    tutorialDragDemoTimer = setTimeout(
+      () => stepDragDemo(token, word, i + 1),
+      350
+    );
+  }, 750);
+}
+
+// Idempotent across redundant re-renders of the same step (every
+// unrelated stateUpdate re-runs the tutorial script) -- only actually
+// (re)starts the loop the first time this step is shown.
+function startDragDemo(word) {
+  if (tutorialDragDemoRunning) {
+    return;
+  }
+
+  stopDragDemo();
+  tutorialDragDemoRunning = true;
+  stepDragDemo(tutorialDragDemoToken, word, 0);
+}
 
 function highlightNotesPanel() {
   highlightEl(byId("notesPanelSetter"));
@@ -1191,6 +1334,53 @@ function highlightMatchScore() {
   highlightEl(
     qs("#roundSummary .match-score-line")
   );
+}
+
+// Advanced Tutorial's UI-tour steps (round1 of the setter side) -- each
+// targets the live in-game header/sidebar chrome, not the summary screen.
+function highlightHeaderScore(role) {
+  const screenId =
+    role === "setter" ? "setterScreen" : "guesserScreen";
+
+  highlightEl(
+    qs(`#${screenId} .header-role-badge`)
+  );
+}
+
+function highlightConstraintRowAndToggle(role) {
+  highlightEl(
+    byId(
+      role === "setter"
+        ? "constraintRowSetter"
+        : "constraintRowGuesser"
+    )
+  );
+
+  const screenId =
+    role === "setter" ? "setterScreen" : "guesserScreen";
+
+  highlightEl(
+    qs(`#${screenId} .constraint-toggle-btn`)
+  );
+}
+
+function highlightPowerInfoBtn(role) {
+  highlightEl(
+    byId(
+      role === "setter"
+        ? "powerInfoBtnSetter"
+        : "powerInfoBtnGuesser"
+    )
+  );
+}
+
+function highlightSetterRemainingBox() {
+  highlightEl(byId("SetterRemainingBox"));
+}
+
+function highlightSetterLog() {
+  highlightEl(byId("actionLogBtnSetter"));
+  highlightEl(byId("actionLogSetter"));
 }
 
 function highlightStoredRound(index) {
@@ -1538,6 +1728,54 @@ function waitForSecretSubmission(round) {
   updateActionBadge();
 }
 
+// Drag & Lock demo (guesser round1 of the Advanced Tutorial): all three
+// of these are pure local UI state (localGuesserDraft / guesserDraftLocks
+// in client.js, never round-tripped through the server), so they're
+// resolved from window.refreshTutorialKeyDemo's hook -- see
+// checkTutorialDragLockWait() below -- the same way notifyTutorial*
+// resolves server-driven waits.
+function waitForDraftFilled() {
+  tutorialWaitingFor = {
+    type: "draftFilled",
+    label: "DRAG 5 LETTERS"
+  };
+
+  setContinue({
+    show: true,
+    mode: "hide"
+  });
+
+  updateActionBadge();
+}
+
+function waitForTileLocked() {
+  tutorialWaitingFor = {
+    type: "tileLocked",
+    label: "LOCK A LETTER"
+  };
+
+  setContinue({
+    show: true,
+    mode: "hide"
+  });
+
+  updateActionBadge();
+}
+
+function waitForTileUnlocked() {
+  tutorialWaitingFor = {
+    type: "tileUnlocked",
+    label: "UNLOCK IT"
+  };
+
+  setContinue({
+    show: true,
+    mode: "hide"
+  });
+
+  updateActionBadge();
+}
+
 function waitForPowerUse(powerId) {
   tutorialWaitingFor = {
     type: "power",
@@ -1697,11 +1935,14 @@ window.endTutorial = endTutorial;
 // Shown once a tutorial's last tooltip is dismissed -- gives the player
 // an explicit choice instead of silently dropping them back at the menu.
 // "Next Tutorial" (see tutorialEndNextMode) points at whatever tutorial
-// makes sense to try next: the Advanced Tutorial after the powers
-// tutorial, or back around to the base Tutorial after the Advanced one,
-// since it's the last stage in the How to Play list.
+// makes sense to try next, following the How to Play list's own order:
+// base Tutorial -> Powers -> Quest -> Advanced -> back around to base.
+// Keyed by the startFreshTutorial() mode that's next, not the one that
+// just finished.
 const TUTORIAL_DONE_COPY = {
-  advanced: `Nice work — you've learned the powers tutorial. Keep going with the Advanced Tutorial, or head back to the menu.`,
+  tutorial2: `Nice work — you've learned the base game. Keep going with the Powers Tutorial, or head back to the menu.`,
+  quest: `Nice work — you've learned the powers tutorial. Keep going with the Quest Tutorial, or head back to the menu.`,
+  advanced: `Nice work — you've learned the Quest tutorial. Keep going with the Advanced Tutorial, or head back to the menu.`,
   tutorial: `Nice work — you've learned the advanced UI. Replay any tutorial any time from How to Play, or head back to the menu.`
 };
 
@@ -2750,7 +2991,7 @@ function runSetterTutorial(
         }
       );
 
-      tutorialEndNextMode = "advanced";
+      tutorialEndNextMode = "quest";
 
       return;
     }
@@ -3388,6 +3629,49 @@ function runAdvancedTutorialGuesser(state) {
       state.tutorialGuesses?.[1] ||
       "CUMIN";
 
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `Try dragging letters onto the tiles instead of tapping them. Drag each letter of "${word}" from the keyboard onto its tile — watch the demo, then try it yourself.`,
+        {
+          enabled: true
+        }
+      );
+
+      highlightDraftRow("guesser");
+      highlightKeyboardGuesser();
+      startDragDemo(word);
+      waitForDraftFilled();
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      stopDragDemo();
+
+      showTutorial(
+        `Nice! Now tap — don't drag — one of the filled tiles to lock it in. A locked letter can't be erased by Backspace.`,
+        {
+          enabled: true
+        }
+      );
+
+      highlightDraftRow("guesser");
+      waitForTileLocked();
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `Locked! Now tap that same tile again to unlock it.`,
+        {
+          enabled: true
+        }
+      );
+
+      highlightDraftRow("guesser");
+      waitForTileUnlocked();
+      return;
+    }
+
     if (state.pendingGuess) {
       showTutorial(
         `Your guess is ready. Waiting for the Spy to answer...`,
@@ -3397,14 +3681,14 @@ function runAdvancedTutorialGuesser(state) {
       );
     } else {
       showTutorial(
-        `Try Drag & Lock with "${word}". Drag a keyboard letter onto any tile. Tap a filled tile to lock it, so Backspace cannot erase it.`,
+        `Great — now press Enter to submit "${word}".`,
         {
           mode: "hide"
         }
       );
     }
 
-    highlightDraftRow("guesser");
+    highlightKeyboardGuesser();
     waitForGuessSubmission(round);
     return;
   }
@@ -3473,6 +3757,11 @@ function runAdvancedTutorialSetter(state) {
   }
 
   if (round === 1) {
+    const oldSecret = (
+      state.tutorialSecrets?.[0] ||
+      "BLIMP"
+    ).toUpperCase();
+
     const candidate = (
       state.tutorialSecrets?.[1] ||
       "LEMUR"
@@ -3521,23 +3810,38 @@ function runAdvancedTutorialSetter(state) {
           `Your backup word is saved. The Inspector is still thinking...`,
           {
             key:
-              `advanced-notes-wait-${round}`
+              `advanced-notes-wait-${round}`,
+            mode: "hide"
           }
         );
 
         highlightNotesList();
 
         setContinue({
-          show: false
+          show: false,
+          mode: "hide"
         });
 
         return;
       }
 
       showTutorial(
-        `The new guess is here. Tap "${candidate}" in Notes. It will copy straight into your real secret row.`,
+        `The new guess is here. Tap "${oldSecret}" in Notes first — it copies straight into your secret row, without submitting anything yet.`,
         {
           mode: "hide"
+        }
+      );
+
+      highlightNotesList();
+      waitForNoteSelected(oldSecret);
+      return;
+    }
+
+    if (tutorialSubStep === 4) {
+      showTutorial(
+        `Now tap "${candidate}" instead. Notice the small number next to each word in Notes — that is how many secrets would still be possible if you used it.`,
+        {
+          enabled: true
         }
       );
 
@@ -3546,20 +3850,75 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 4) {
+    if (tutorialSubStep === 5) {
       showTutorial(
-        `"${candidate}" is now in your secret row. Check it, then press Enter to switch. Notes saves typing, but the new secret must still follow every clue.`,
+        `Before you switch, let's look at a few more things you'll see on this screen.`,
         {
-          mode: "hide"
+          mode: "advance"
         }
       );
 
-      highlightDraftRow("setter");
-      waitForSecretSubmission(round);
       return;
     }
 
-    hideTutorial();
+    if (tutorialSubStep === 6) {
+      showTutorial(
+        `This box has three counts: Old is how many secrets were possible before this guess, Keep is how many stay possible if you keep your current secret, and New is how many would if you switch to whatever's in your draft — that's the number that just changed when you tapped ${oldSecret} and ${candidate}.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterRemainingBox();
+      return;
+    }
+
+    if (tutorialSubStep === 7) {
+      showTutorial(
+        `Up in the corner, that's your score. It counts how many guesses your opponent needs each round — fewer is better for them, more is better for you.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightHeaderScore("setter");
+      return;
+    }
+
+    if (tutorialSubStep === 8) {
+      showTutorial(
+        `Above your secret, the constraint row gives a compact rundown of every clue collected so far. Tap the ⧉ button any time to fold it away or bring it back.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightConstraintRowAndToggle("setter");
+      return;
+    }
+
+    if (tutorialSubStep === 9) {
+      showTutorial(
+        `The ? button always shows your active powers, and whether each one has been used yet.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightPowerInfoBtn("setter");
+      return;
+    }
+
+    showTutorial(
+      `Finally, the Log tab keeps a running history of every action this match — powers used, secrets switched, all of it. That's the advanced UI! Tap "Finish Tutorial" whenever you're ready — no need to finish playing this match.`,
+      {
+        mode: "end"
+      }
+    );
+
+    tutorialEndNextMode = "tutorial";
+
+    highlightSetterLog();
     return;
   }
 
@@ -3979,14 +4338,14 @@ if (stageAdvanced) {
     buttonsStep + 1
   ) {
     showTutorial(
-      `That's the base game — there's more to learn next. Have fun!`,
+      `That's the base game! Tap "Finish Tutorial" whenever you're ready — no need to finish playing this match.`,
       {
-        enabled: true
+        enabled: true,
+        mode: "end"
       }
     );
 
-    tutorialContinueMode =
-      "hide";
+    tutorialEndNextMode = "tutorial2";
   }
 }
 window.TutorialCore = {
@@ -4012,6 +4371,14 @@ window.TutorialCore = {
   setMode(mode) {
     tutorialContinueMode = mode;
     updateActionBadge();
+  },
+
+  // Called right alongside setMode("end") -- picks which tutorial the
+  // done-modal's "Next Tutorial" button launches (see tutorialEndNextMode
+  // above showTutorialDoneModal()). Tutorials outside tutorial-ui.js
+  // (e.g. tutorial-quest.js) have no other way to reach that variable.
+  setNextTutorial(mode) {
+    tutorialEndNextMode = mode || "advanced";
   },
 
   setWaiting(value) {

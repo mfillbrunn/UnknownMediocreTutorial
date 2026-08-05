@@ -363,6 +363,8 @@
       return;
     }
 
+    api.setNextTutorial("advanced");
+
     show(
       "That is the Quest system: " +
       "make progress with normal " +
@@ -448,6 +450,8 @@
       return;
     }
 
+    api.setNextTutorial("advanced");
+
     show(
       "That is the Quest system. " +
       "In most rounds, you will " +
@@ -478,6 +482,8 @@
     api.clearHighlights();
 
     if (role !== "guesser") {
+      api.setNextTutorial("advanced");
+
       show(
         "This tutorial needs you to " +
         "be the Inspector. Leave and " +
@@ -499,6 +505,8 @@
       state.powers?.quest;
 
     if (!quest?.type) {
+      api.setNextTutorial("advanced");
+
       show(
         "The Quest did not load " +
         "correctly. End the tutorial " +
