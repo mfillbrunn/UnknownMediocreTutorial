@@ -79,6 +79,13 @@
     const btn = document.createElement("button");
     btn.className = "power-btn power-badge quest-badge-tile setter-quest-badge-tile";
 
+    // No text label -- the card is small and "Setter Quest" ate most of
+    // it, crowding out the letter/progress that actually matter turn to
+    // turn. "Setter Quest" lives on as the accessible name/tooltip instead
+    // of visible text (see btn.title/aria-label below).
+    btn.title = "Setter Quest";
+    btn.setAttribute("aria-label", "Setter Quest");
+
     // Takes the card's icon spot -- the hint letter is the actionable
     // piece of info, so it's shown big and up front instead of sitting
     // behind a tap (see components.css for the icon-spot layout this
@@ -87,17 +94,12 @@
     letterEl.className = "setter-quest-hint-letter";
     btn.appendChild(letterEl);
 
-    const labelEl = document.createElement("span");
-    labelEl.className = "power-btn-label";
-    labelEl.textContent = "Setter Quest";
-    btn.appendChild(labelEl);
-
     const chip = document.createElement("span");
     chip.className = "quest-progress-chip";
     btn.appendChild(chip);
 
     wrapper.appendChild(btn);
-    return { wrapper, btn, labelEl, chip, letterEl };
+    return { wrapper, btn, chip, letterEl };
   }
 
   // Called from client.js's updateUI(), right next to updateQuestBadge.
