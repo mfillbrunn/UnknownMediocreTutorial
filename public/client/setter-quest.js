@@ -86,18 +86,22 @@
     btn.title = "Setter Quest";
     btn.setAttribute("aria-label", "Setter Quest");
 
-    // Takes the card's icon spot -- the hint letter is the actionable
-    // piece of info, so it's shown big and up front instead of sitting
-    // behind a tap (see components.css for the icon-spot layout this
-    // reuses/overrides).
+    // Letter and progress sit side by side in one row filling the card
+    // (see features.css's .setter-quest-row) -- stacking them (letter big
+    // in the icon spot, chip floating as a corner pill above it) is what
+    // was causing the overflow.
+    const row = document.createElement("div");
+    row.className = "setter-quest-row";
+
     const letterEl = document.createElement("span");
     letterEl.className = "setter-quest-hint-letter";
-    btn.appendChild(letterEl);
+    row.appendChild(letterEl);
 
     const chip = document.createElement("span");
-    chip.className = "quest-progress-chip";
-    btn.appendChild(chip);
+    chip.className = "quest-progress-chip setter-quest-progress-chip";
+    row.appendChild(chip);
 
+    btn.appendChild(row);
     wrapper.appendChild(btn);
     return { wrapper, btn, chip, letterEl };
   }
