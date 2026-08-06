@@ -4,15 +4,19 @@
 // that replaces the setter's second regular power slot -- see lobby.js/
 // draft.js, where the setter's regular power pool was cut from 2 down to
 // 1 pick. Every time the setter gets a fresh Keep/New decision,
-// state.powers.setterQuest.hintLetter holds a letter that would advance
-// progress if their NEXT secret contains it -- redacted from the guesser
-// entirely (safeState.js), so this whole file only ever renders on the
-// setter's own screen. At 2/2 the badge's tap arms the setter's own
-// keyboard for a letter pick, the exact same interaction as Hide Evidence
-// (public/powerEngine/powers/hideTile.js) -- same interception shape,
-// chained into the same handleSetterInput check in client.js -- because
-// the reward IS that power's mechanic, just earned through the quest
-// instead of drafted/randomed.
+// state.powers.setterQuest.hintLetters holds up to 2 letters (picked
+// independently -- they don't have to share a word) that would each
+// advance progress by 1 if their NEXT secret contains them -- redacted
+// from the guesser entirely (safeState.js), so this whole file only ever
+// renders on the setter's own screen. Progress isn't capped at the 2-point
+// reward threshold -- overflow carries into the next cycle (see
+// setterQuestServer.js's applyReward) -- so the badge keeps showing real
+// letters and the true progress count even once ready. At 2+ the badge's
+// tap arms the setter's own keyboard for a letter pick, the exact same
+// interaction as Hide Evidence (public/powerEngine/powers/hideTile.js) --
+// same interception shape, chained into the same handleSetterInput check
+// in client.js -- because the reward IS that power's mechanic, just
+// earned through the quest instead of drafted/randomed.
 (function () {
   let armed = false;
 
@@ -80,36 +84,39 @@
     btn.className = "power-btn power-badge quest-badge-tile setter-quest-badge-tile";
 
     // No text label -- the card is small and "Setter Quest" ate most of
-    // it, crowding out the letter/progress that actually matter turn to
+    // it, crowding out the letters/progress that actually matter turn to
     // turn. "Setter Quest" lives on as the accessible name/tooltip instead
-    // of visible text (see btn.title/aria-label below).
+    // of visible text.
     btn.title = "Setter Quest";
     btn.setAttribute("aria-label", "Setter Quest");
 
-    // Letter and progress sit side by side in one row filling the card
-    // (see features.css's .setter-quest-row) -- stacking them (letter big
-    // in the icon spot, chip floating as a corner pill above it) is what
-    // was causing the overflow.
+    // Progress floats as a small pill above the two letters (see
+    // features.css) -- the letters get the card's main body, one on the
+    // left and one on the right.
+    const chip = document.createElement("span");
+    chip.className = "quest-progress-chip setter-quest-progress-chip";
+    btn.appendChild(chip);
+
     const row = document.createElement("div");
     row.className = "setter-quest-row";
 
-    const letterEl = document.createElement("span");
-    letterEl.className = "setter-quest-hint-letter";
-    row.appendChild(letterEl);
+    const letterLeftEl = document.createElement("span");
+    letterLeftEl.className = "setter-quest-hint-letter";
+    row.appendChild(letterLeftEl);
 
-    const chip = document.createElement("span");
-    chip.className = "quest-progress-chip setter-quest-progress-chip";
-    row.appendChild(chip);
+    const letterRightEl = document.createElement("span");
+    letterRightEl.className = "setter-quest-hint-letter";
+    row.appendChild(letterRightEl);
 
     btn.appendChild(row);
     wrapper.appendChild(btn);
-    return { wrapper, btn, chip, letterEl };
+    return { wrapper, btn, chip, letterLeftEl, letterRightEl };
   }
 
   // Called from client.js's updateUI(), right next to updateQuestBadge.
   // Setter-only -- there's nothing for the guesser's screen to show here
   // at all, unlike the guesser quest's read-only mirror on the setter's
-  // screen (this one's hint letter has to stay secret from the guesser,
+  // screen (this one's hint letters have to stay secret from the guesser,
   // so there's no safe partial view to give them).
   function updateSetterQuestBadge(state, role) {
     const container = role === "setter" ? document.getElementById("setterPowerContainer") : null;
@@ -124,18 +131,21 @@
     if (!_badge) _badge = createBadge();
     if (container.lastChild !== _badge.wrapper) container.appendChild(_badge.wrapper);
 
-    const { btn, chip, letterEl } = _badge;
-    const progress = Math.min(2, q.progress || 0);
+    const { btn, chip, letterLeftEl, letterRightEl } = _badge;
+    const progress = q.progress || 0;
     const ready = progress >= 2;
-    const hint = q.hintLetter ? q.hintLetter.toUpperCase() : null;
+    const hints = Array.isArray(q.hintLetters) ? q.hintLetters.map(l => l.toUpperCase()) : [];
 
-    // Letter and progress are both shown right on the card face -- no tap
-    // needed to see either. "?" once the reward is ready (progress no
-    // longer applies, and there's nothing left to switch toward), a dash
-    // when no hint is available yet.
-    letterEl.textContent = ready ? "🎯" : (hint || "–");
-    letterEl.classList.toggle("setter-quest-hint-letter-empty", !ready && !hint);
-    chip.textContent = ready ? "Ready" : `${progress}/2`;
+    // Both letters and progress are shown right on the card face -- no
+    // tap needed to see either. Progress isn't capped at 2/2 (overflow
+    // carries into the next cycle -- see setterQuestServer.js), so the
+    // raw count keeps showing past ready too, and so do the letters
+    // themselves since matching more still keeps banking progress.
+    letterLeftEl.textContent = hints[0] || "–";
+    letterLeftEl.classList.toggle("setter-quest-hint-letter-empty", !hints[0]);
+    letterRightEl.textContent = hints[1] || "–";
+    letterRightEl.classList.toggle("setter-quest-hint-letter-empty", !hints[1]);
+    chip.textContent = `${progress}/2`;
     btn.classList.toggle("quest-ready", ready);
     btn.classList.toggle("quest-oneaway", progress === 1);
     applyUiEffects(state);
@@ -148,15 +158,16 @@
         return;
       }
 
-      const hintText = hint
-        ? `This round's hint letter is <strong>${hint}</strong> — switch your secret to a feasible word containing ${hint} to make progress.`
-        : "No hint letter is available right now — wait for the guesser's next guess.";
+      const describeLetter = l => l ? `<strong>${l}</strong>` : "(none available)";
+      const hintText = hints.length
+        ? `This round's hint letters are ${describeLetter(hints[0])} and ${describeLetter(hints[1])} — switch your secret to a feasible word containing either one to make progress. Matching both letters in one switch is worth 2.`
+        : "No hint letters are available right now — wait for the guesser's next guess.";
 
       window.showPowerActionPopup?.({
         emoji: "🎯",
         title: `Setter Quest: ${progress}/2`,
-        desc: `Switch your secret to a feasible word containing this round's hint letter to advance. At 2/2, erase a letter's feedback for the whole round — just like Hide Evidence.`,
-        descHtml: `<div>Switch your secret to a feasible word containing this round's hint letter to advance. At 2/2, erase a letter's feedback for the whole round — just like Hide Evidence.</div><div style="margin-top:8px">${hintText}</div>`,
+        desc: `Switch your secret to a feasible word containing this round's hint letters to advance -- matching both at once is worth 2. Progress beyond 2 carries over. At 2+, erase a letter's feedback for the whole round — just like Hide Evidence.`,
+        descHtml: `<div>Switch your secret to a feasible word containing this round's hint letters to advance -- matching both at once is worth 2. Progress beyond 2 carries over. At 2+, erase a letter's feedback for the whole round — just like Hide Evidence.</div><div style="margin-top:8px">${hintText}</div>`,
         showUse: false
       });
     };

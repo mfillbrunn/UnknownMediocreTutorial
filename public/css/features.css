@@ -3018,13 +3018,25 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 /*
-  Letter and progress side by side in one row (not stacked -- a big
-  letter in the icon spot with the chip floating as a corner pill above
-  it was overflowing the card) -- reset the chip out of the icon-spot/
-  corner-pill treatments above (components.css's .quest-badge-tile
-  .quest-progress-chip, and the earlier stacked layout) into a plain
-  inline flex item next to the letter.
+  Two hint letters side by side (one left, one right), with progress back
+  to a small floating corner pill above them -- three items (letter,
+  letter, progress) all crammed into one row was the previous overflow;
+  splitting progress out to its own pill and giving the row just the two
+  letters fixes that while still showing everything without a tap.
 */
+#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-progress-chip {
+  position: absolute;
+  order: 0;
+  inset: auto;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 28px;
+  padding: 3px 7px;
+  font-size: 12px;
+}
 .setter-quest-row {
   order: -1;
   flex: 1 1 auto;
@@ -3032,33 +3044,28 @@ body:has(#guesserScreen.active) #appMain {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
   min-width: 0;
-}
-#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-progress-chip {
-  position: static;
-  order: 0;
-  inset: auto;
-  transform: none;
-  flex: 0 0 auto;
-  width: auto;
-  min-width: 26px;
-  padding: 3px 6px;
-  font-size: 12px;
 }
 /* No text label anymore (see setter-quest.js -- "Setter Quest" lives on
    as the card's title/aria-label only) -- the row above is the card's
    whole body now, so it gets the full height instead of sharing it with
-   a label row. min-width:0 + no white-space handling lets the letter
-   shrink with clamp() instead of forcing the row (and the card) wider. */
+   a label row. min-width:0 + flex:1 1 0 lets each letter shrink evenly
+   with clamp() instead of forcing the row (and the card) wider. A thin
+   divider between the two slots (border-left on the second) makes the
+   "two separate letters" reading obvious even when one side is a dash. */
 .setter-quest-hint-letter {
-  flex: 0 1 auto;
+  flex: 1 1 0;
   min-width: 0;
-  font-size: clamp(18px, 7vw, 28px);
+  text-align: center;
+  font-size: clamp(16px, 6vw, 24px);
   font-weight: 900;
   color: var(--role-accent);
   line-height: 1;
+}
+.setter-quest-hint-letter + .setter-quest-hint-letter {
+  border-left: 1px solid color-mix(in srgb, var(--role-accent) 35%, transparent);
 }
 .setter-quest-hint-letter.setter-quest-hint-letter-empty {
   font-size: 14px;
