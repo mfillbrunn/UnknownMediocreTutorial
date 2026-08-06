@@ -180,15 +180,15 @@ const powers = {
       // SETTER QUEST (always-on setter mechanic, see setterQuestServer.js).
       // Replaces the setter's second power slot -- see lobby.js/draft.js,
       // where the setter's regular power pool was cut from 2 down to 1.
-      // hintLetter is recomputed every time the setter gets a fresh
-      // Keep/New decision (never shown to the guesser -- redacted in
-      // safeState.js); progress advances when the setter actually switches
-      // their secret to a word containing that letter. Unlike the guesser
-      // quest, progress is NOT capped at one reward for the match -- it
-      // resets to 0 once the reward is claimed and keeps counting for the
-      // rest of the setter's round.
+      // hintLetters (0-2 entries) is recomputed every time the setter gets
+      // a fresh Keep/New decision (never shown to the guesser -- redacted
+      // in safeState.js); progress advances by 1 per hint letter the
+      // setter's new secret contains (so matching both in one switch is
+      // worth 2). Progress is NOT capped at the 2-point reward threshold
+      // -- claiming the reward subtracts 2 rather than resetting to 0, so
+      // overflow carries into the next cycle instead of being wasted.
       setterQuest: {
-        hintLetter: null,
+        hintLetters: [],
         progress: 0
       },
       setterQuestActive: false,

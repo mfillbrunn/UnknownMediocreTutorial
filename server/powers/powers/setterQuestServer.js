@@ -6,39 +6,38 @@
 // candidates-worth down to 1 pick specifically to make room for this).
 //
 // Every time the setter gets a fresh Keep/New decision (a new pending
-// guess lands and it becomes their turn to react), they're shown one hint
-// letter -- a letter that ISN'T in their current secret but IS somewhere
-// in another word still consistent with all feedback so far (i.e. a word
-// they could plausibly switch their secret to without contradicting
-// anything already revealed). The guesser never sees this letter --
-// safeState.js redacts state.powers.setterQuest.hintLetter same as it
-// does state.powers.doubleGuessHidden.
+// guess lands and it becomes their turn to react), they're shown up to TWO
+// hint letters -- each independently a letter that ISN'T in their current
+// secret but IS somewhere in another word still consistent with all
+// feedback so far (i.e. a word they could plausibly switch their secret
+// to without contradicting anything already revealed). The two letters
+// don't need to come from the same alternate word -- each is picked on
+// its own. If only one qualifying letter exists, the second slot is left
+// empty (null) -- the client renders that as a dash. The guesser never
+// sees either letter -- safeState.js redacts state.powers.setterQuest.
+// hintLetters same as it does state.powers.doubleGuessHidden.
 //
-// If the setter actually commits a NEW secret containing that letter,
-// progress advances by one (capped at 2). At 2/2 they can spend the quest
-// on a one-time "reset a letter" action -- mechanically identical to the
-// Hide Evidence power (hideTileServer.js): erase all feedback for one
-// chosen letter across every guess so far this round. Unlike hideTile's
-// own 2-uses-per-match cap, claiming this resets progress back to 0
-// (not "used forever") so it can be earned again for the rest of the
-// setter's round. resetRoundState.js's createInitialPowers() call wipes
-// hintLetter/progress back to their defaults at every round boundary
-// (a different player holds the setter role each round in the standard
-// 2-round match, so there's nothing to preserve across that swap -- unlike
-// state.powers.quest.type, which nextRoundTransition.js explicitly saves
-// and restores because it has to follow the same player).
+// If the setter actually commits a NEW secret containing one or both
+// hint letters, progress advances by 1 per letter matched (so matching
+// both in one switch is worth 2). Progress is NOT capped at the 2-point
+// reward threshold -- overflow (e.g. going from 1 to 3 in one switch)
+// carries forward: claiming the reward only ever subtracts 2, it doesn't
+// reset to 0, so a setter who banks extra progress gets a head start on
+// the next one. At 2+ they can spend the quest on a one-time "reset a
+// letter" action -- mechanically identical to the Hide Evidence power
+// (hideTileServer.js): erase all feedback for one chosen letter across
+// every guess so far this round. resetRoundState.js's createInitialPowers()
+// call wipes hintLetters/progress back to their defaults at every round
+// boundary (a different player holds the setter role each round in the
+// standard 2-round match, so there's nothing to preserve across that swap
+// -- unlike state.powers.quest.type, which nextRoundTransition.js
+// explicitly saves and restores because it has to follow the same player).
 const { isConsistentWithHistory } = require("../../game-engine/history");
 
-// Finds a letter that's (a) NOT in the given secret and (b) IS somewhere
-// in at least one other word still consistent with the given history --
-// i.e. a letter the setter could plausibly reveal by switching to a
-// different, still-legal secret. Returns null if no such letter exists.
-// pendingGuess (optional): among qualifying letters, prefer one that
-// ISN'T also in the guesser's current pending guess, so switching toward
-// the hint doesn't simultaneously light up a tile in the guess that's
-// about to be scored -- falls back to any qualifying letter if none of
-// them avoid the pending guess.
-function computeHintLetter(secret, history, state, allowedSecrets, pendingGuess) {
+// Every letter that's (a) NOT in the given secret and (b) IS somewhere in
+// at least one other word still consistent with the given history -- the
+// full candidate pool computeHintLetters draws its two picks from.
+function candidateHintLetters(secret, history, state, allowedSecrets) {
   const upperSecret = (secret || "").toUpperCase();
   const secretLetters = new Set(upperSecret.split(""));
   const candidates = new Set();
@@ -52,45 +51,66 @@ function computeHintLetter(secret, history, state, allowedSecrets, pendingGuess)
     }
   }
 
-  if (!candidates.size) return null;
-  const options = [...candidates];
+  return candidates;
+}
+
+// Picks up to 2 hint letters, each independently -- they don't need to
+// both appear in the same alternate word. Each pick prefers a letter
+// that's ALSO not in the pending guess (so switching toward it doesn't
+// simultaneously light up a tile in the guess about to be scored),
+// falling back to any remaining candidate if every option is in the
+// guess. The second pick never repeats the first. Returns an array of
+// length 0, 1, or 2 (never null entries -- an unavailable second letter
+// just means the array has length 1; the client renders that slot as a
+// dash).
+function computeHintLetters(secret, history, state, allowedSecrets, pendingGuess) {
+  const candidates = candidateHintLetters(secret, history, state, allowedSecrets);
+  if (!candidates.size) return [];
 
   const guessLetters = new Set((pendingGuess || "").toUpperCase().split(""));
-  if (guessLetters.size) {
-    const avoidingGuess = options.filter(l => !guessLetters.has(l));
-    if (avoidingGuess.length) {
-      return avoidingGuess[Math.floor(Math.random() * avoidingGuess.length)];
-    }
+
+  function pickFrom(pool) {
+    if (!pool.length) return null;
+    const avoidingGuess = pool.filter(l => !guessLetters.has(l));
+    const finalPool = avoidingGuess.length ? avoidingGuess : pool;
+    return finalPool[Math.floor(Math.random() * finalPool.length)];
   }
 
-  return options[Math.floor(Math.random() * options.length)];
+  const pool = [...candidates];
+  const first = pickFrom(pool);
+  if (!first) return [];
+
+  const second = pickFrom(pool.filter(l => l !== first));
+  return second ? [first, second] : [first];
 }
 
 // Called from transitionAfterGuess (normalTransitions.js) right as a fresh
 // pending guess lands and turn passes to the setter -- state.secret is
 // still whatever it currently is (the setter hasn't reacted yet) and
 // state.history holds every guess already scored, exactly the inputs
-// computeHintLetter needs. pendingGuess is the guess that just landed
-// (not yet in state.history -- see computeHintLetter's own comment).
+// computeHintLetters needs. pendingGuess is the guess that just landed
+// (not yet in state.history -- see computeHintLetters' own comment).
 function rollHintLetterForTurn(state, allowedSecrets, pendingGuess) {
   if (!state.secret) return;
-  state.powers.setterQuest ??= { hintLetter: null, progress: 0 };
-  state.powers.setterQuest.hintLetter =
-    computeHintLetter(state.secret, state.history, state, allowedSecrets, pendingGuess);
+  state.powers.setterQuest ??= { hintLetters: [], progress: 0 };
+  state.powers.setterQuest.hintLetters =
+    computeHintLetters(state.secret, state.history, state, allowedSecrets, pendingGuess);
 }
 
 // Called from normal.js whenever the setter commits an actual secret
 // CHANGE (Keep/New reaction where the new secret differs from the old
-// one) -- if it contains this turn's hint letter, advance progress by one
-// (capped at 2, the reward threshold).
+// one) -- advances progress by 1 for each of this turn's hint letters the
+// new secret contains (so matching both is worth 2 in one switch). No cap
+// here -- see the file header on how overflow carries into the reward.
 function creditSecretChange(state, newSecret) {
   const q = state.powers.setterQuest;
-  if (!q || !q.hintLetter) return;
+  if (!q || !Array.isArray(q.hintLetters) || !q.hintLetters.length) return;
 
   const upper = (newSecret || "").toUpperCase();
-  if (!upper.includes(q.hintLetter)) return;
+  const matched = q.hintLetters.filter(l => upper.includes(l)).length;
+  if (!matched) return;
 
-  q.progress = Math.min(2, (q.progress || 0) + 1);
+  q.progress = (q.progress || 0) + matched;
 }
 
 // Does this letter have any erasable feedback in the round so far? Shared
@@ -112,9 +132,10 @@ function letterHasFeedback(state, letter) {
 }
 
 // The reward: identical erase-feedback mechanic to hideTileServer.js's
-// apply(), just gated on quest progress instead of a use counter, and
-// resets progress back to 0 (not "used forever") instead of permanently
-// disabling anything.
+// apply(), just gated on quest progress instead of a use counter.
+// Claiming subtracts 2 (the reward's cost) rather than resetting to 0 --
+// see the file header: overflow progress beyond 2 isn't wasted, it
+// carries straight into the next cycle.
 function applyReward(state, letter, roomId, io) {
   const q = state.powers.setterQuest;
   if (!q || (q.progress || 0) < 2) return false;
@@ -133,8 +154,7 @@ function applyReward(state, letter, roomId, io) {
     }
   }
 
-  q.progress = 0;
-  q.hintLetter = null;
+  q.progress = Math.max(0, (q.progress || 0) - 2);
   state.powers.setterQuestActive = true;
   state.powers.setterQuestLetters = [...(state.powers.setterQuestLetters || []), L];
 
@@ -167,7 +187,7 @@ function attemptReward(state, userId, letter, roomId, io) {
 }
 
 module.exports = {
-  computeHintLetter,
+  computeHintLetters,
   rollHintLetterForTurn,
   creditSecretChange,
   letterHasFeedback,

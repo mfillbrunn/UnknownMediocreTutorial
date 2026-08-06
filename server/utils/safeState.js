@@ -89,10 +89,11 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
     delete safe.powers.doubleGuessShownFirst;
   }
 
-  // Setter Quest: the hint letter is private to the setter -- the guesser
-  // must never learn which letter would advance their opponent's quest.
+  // Setter Quest: the hint letters are private to the setter -- the
+  // guesser must never learn which letters would advance their
+  // opponent's quest.
   if (viewerRole !== "setter" && safe.powers?.setterQuest) {
-    safe.powers.setterQuest.hintLetter = null;
+    safe.powers.setterQuest.hintLetters = [];
   }
 
   // Delayed Intel (setter power): how many of the TRUE history entries the
