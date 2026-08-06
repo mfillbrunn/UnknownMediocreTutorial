@@ -1,13 +1,14 @@
 // core/phases/draft.js
 //
-// Pre-round power draft (Draft Mode). The setter's player is shown 3
-// random setter powers and picks 2, same as always. The guesser's player
-// gets two independent picks instead: 2 candidate powers (pick 1) AND 2
-// candidate Quests (pick 1) -- see lobby.js's draftEligible block for how
-// the candidate lists are built. CompetitiveMode already keeps each
-// role's power set (and the guesser's quest) fixed across both rounds
-// regardless of who's holding the role, so nothing downstream needs to
-// know a draft happened.
+// Pre-round power draft (Draft Mode). Both roles now draft the same
+// shape: shown 2 candidate powers, picks 1. The guesser's player gets a
+// second, independent draft on top of that: 2 candidate Quests, picks 1
+// -- see lobby.js's draftEligible block for how the candidate lists are
+// built. The setter has no second draft; their other "slot" is the
+// always-on Setter Quest (setterQuestServer.js), not a drafted power.
+// CompetitiveMode already keeps each role's power set (and the guesser's
+// quest) fixed across both rounds regardless of who's holding the role,
+// so nothing downstream needs to know a draft happened.
 
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const { resetRoundTimer } = require("../../utils/Timer");
@@ -35,22 +36,15 @@ function handleDraftPhase(room, state, action, roomId, context) {
     const candidates = state.draftCandidates?.[userId] || [];
     if (!candidates.includes(action.power)) return;
 
-    // room.playersByUserId is transport/session data only (socketId,
-    // connected, isAI) -- it has no .role. Roles live on state.players.
-    const role = state.players?.[userId]?.role;
-    const maxPicks = role === "setter" ? 2 : 1;
-
     state.draftPicks ??= {};
     const picks = state.draftPicks[userId] || [];
 
+    // Single-pick for both roles now: clicking a different candidate just
+    // swaps the selection instead of requiring a manual deselect first.
     if (picks.includes(action.power)) {
       state.draftPicks[userId] = picks.filter(p => p !== action.power);
-    } else if (maxPicks === 1) {
-      // Single-pick (guesser): clicking a different candidate just swaps
-      // the selection instead of requiring a manual deselect first.
+    } else {
       state.draftPicks[userId] = [action.power];
-    } else if (picks.length < maxPicks) {
-      state.draftPicks[userId] = [...picks, action.power];
     }
 
     emitRoomState(roomId, room, io);
@@ -87,9 +81,8 @@ function handleDraftPhase(room, state, action, roomId, context) {
     if (state.draftDone?.[userId]) return;
 
     const role = state.players?.[userId]?.role;
-    const requiredPowerPicks = role === "setter" ? 2 : 1;
     const picks = state.draftPicks?.[userId] || [];
-    if (picks.length !== requiredPowerPicks) return;
+    if (picks.length !== 1) return;
 
     if (role !== "setter") {
       const questPicks = state.draftQuestPicks?.[userId] || [];
@@ -128,13 +121,12 @@ function finalizeDraft(room, state, roomId, context) {
   // the 30s timeout path — DRAFT_DONE itself requires the full set).
   for (const player of Object.values(state.players || {})) {
     const uid = player.userId;
-    const maxPicks = player.role === "setter" ? 2 : 1;
     const picks = state.draftPicks?.[uid] || [];
-    if (picks.length < maxPicks) {
+    if (picks.length < 1) {
       const candidates = state.draftCandidates?.[uid] || [];
       const remaining = shuffle(candidates.filter(p => !picks.includes(p)));
       state.draftPicks ??= {};
-      state.draftPicks[uid] = [...picks, ...remaining.slice(0, maxPicks - picks.length)];
+      state.draftPicks[uid] = [...picks, ...remaining.slice(0, 1 - picks.length)];
     }
 
     if (player.role !== "setter") {

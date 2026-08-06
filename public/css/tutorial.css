@@ -432,7 +432,14 @@ transition:
   }
 }
 
-/* Advanced tutorial: reserve a real lane for the tutorial. */
+/* Advanced tutorial: docked under the header, but as a plain overlay --
+   it sits on top of the board instead of pushing it down. Reserving
+   space for it instead used to squeeze the setter sidebar unusably
+   short on phones (the sidebar's own overflow-y:auto column has nowhere
+   left to shrink to), which read as worse than the original floating
+   bubble covering things. An opaque overlay is a simpler, more
+   predictable tradeoff: it briefly covers whatever's directly under it,
+   but never distorts the rest of the layout. */
 
 .tutorial-bubble.tutorial-docked {
   right: auto;
@@ -448,39 +455,8 @@ transition:
   transform-origin: top right;
 }
 
-body.advanced-tutorial-docked
-  #setterScreen.active
-  .play-area,
-body.advanced-tutorial-docked
-  #guesserScreen.active
-  .play-area {
-  box-sizing: border-box;
-
-  padding-top:
-    var(
-      --advanced-tutorial-reserve,
-      0px
-    );
-
-  transition:
-    padding-top
-    220ms
-    cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
 @media (max-height: 700px) {
   .tutorial-bubble.tutorial-docked {
     max-height: min(23dvh, 150px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body.advanced-tutorial-docked
-    #setterScreen.active
-    .play-area,
-  body.advanced-tutorial-docked
-    #guesserScreen.active
-    .play-area {
-    transition: none;
   }
 }

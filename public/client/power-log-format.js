@@ -74,6 +74,27 @@
     };
   }
 
+  // Setter Quest reward -- not a real drafted power (no POWER_METADATA
+  // entry), same reasoning as the guesser "quest" branch above.
+  if (evt.id === "setterQuest") {
+    const p = findEmission(evt.emissions, "powerUsed")?.payload;
+    const letter = p?.letter || null;
+    return {
+      id: "setterQuest",
+      emoji: "🎯",
+      label: "Setter Quest",
+      desc: "",
+      opponentDesc: "The Spy used their Setter Quest reward.",
+      detail: letter ? `reset letter ${letter}` : null,
+      ownText: letter ? `Setter Quest: reset letter ${letter}` : "Setter Quest reward used",
+      opponentText: letter
+        ? `Setter Quest: Spy reset letter ${letter}`
+        : "Spy used their Setter Quest reward",
+      text: letter ? `Setter Quest: reset letter ${letter}` : "Setter Quest reward used",
+      actorRole: "setter"
+    };
+  }
+
   const variant =
     window.state
       ?.powers

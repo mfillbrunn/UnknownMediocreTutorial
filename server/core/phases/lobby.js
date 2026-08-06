@@ -509,16 +509,18 @@ if (action.mode === "advanced") {
       for (const player of Object.values(state.players || {})) {
         const isGuesser = player.role !== "setter";
         const pool = isGuesser ? GUESSER_POWERS : SETTER_POWERS;
-        state.draftCandidates[player.userId] = shuffle(pool).slice(0, isGuesser ? 2 : 3);
+        // Setter picks 1-of-2 now (not 2-of-3) -- same shape as the
+        // guesser's own power draft. Their second slot is the always-on
+        // Setter Quest badge instead, not a second drafted power.
+        state.draftCandidates[player.userId] = shuffle(pool).slice(0, 2);
 
         if (isGuesser) {
           state.draftQuestCandidates[player.userId] = shuffle(QUEST_TYPES).slice(0, 2);
         }
 
         if (player.isAI) {
-          const maxPowerPicks = isGuesser ? 1 : 2;
           state.draftPicks[player.userId] =
-            shuffle(state.draftCandidates[player.userId]).slice(0, maxPowerPicks);
+            shuffle(state.draftCandidates[player.userId]).slice(0, 1);
           if (isGuesser) {
             state.draftQuestPicks[player.userId] =
               shuffle(state.draftQuestCandidates[player.userId]).slice(0, 1);
@@ -567,7 +569,10 @@ if (action.mode === "advanced") {
       sP = Array.isArray(state._devSetterPowers) ? state._devSetterPowers : SETTER_POWERS.slice();
       gP = Array.isArray(state._devGuesserPowers) ? state._devGuesserPowers : GUESSER_POWERS.slice();
     } else {
-      sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
+      // Setter gets exactly 1 regular power -- the second slot their power
+      // row used to show is now the always-on Setter Quest badge instead
+      // (see setterQuestServer.js). Guesser is unaffected, still N.
+      sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, 1);
       gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
     }
 

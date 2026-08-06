@@ -1,7 +1,9 @@
 // client/draft.js — pre-round power draft screen (Draft Mode, always on)
 //
-// Setter: offered 3 powers, picks 2 (unchanged). Guesser: offered 2
-// powers (picks 1) AND, independently, 2 Quests (picks 1) -- two separate
+// Both roles now draft the same shape: offered 2 powers, picks 1 -- the
+// setter's other "slot" is the always-on Setter Quest (setter-quest.js),
+// not a drafted power. Guesser additionally has a second, independent
+// draft on top of that: 2 candidate Quests, picks 1 -- two separate
 // candidate/pick lists (state.draftCandidates/draftPicks for powers,
 // state.draftQuestCandidates/draftQuestPicks for quests), rendered as two
 // sections on the same screen. See server/core/phases/draft.js for the
@@ -66,9 +68,7 @@ window.renderDraftScreen = function (s) {
 
   const instruction = $("draftInstruction");
   if (instruction) {
-    instruction.textContent = isGuesser
-      ? "Pick 1 of the 2 powers below for your side."
-      : "Pick 2 of the 3 powers below for your side.";
+    instruction.textContent = "Pick 1 of the 2 powers below for your side.";
   }
 
   const list = $("draftCandidates");
@@ -107,8 +107,7 @@ window.renderDraftScreen = function (s) {
     }
   }
 
-  const requiredPowerPicks = isGuesser ? 1 : 2;
-  const powerReady = myPicks.length === requiredPowerPicks;
+  const powerReady = myPicks.length === 1;
   const questReady = !isGuesser || myQuestPicks.length === 1;
   const allReady = powerReady && questReady;
 

@@ -30,7 +30,6 @@ let tutorialBodyAnimationTimer = null;
 let tutorialHighlightSettleTimer = null;
 let tutorialRingSettling = false;
 let tutorialRingSnapNext = false;
-let advancedTutorialReservePx = -1;
 
 function qs(sel) {
   return document.querySelector(sel);
@@ -235,12 +234,6 @@ function clearAdvancedTutorialDock() {
     "advanced-tutorial-docked"
   );
 
-  document.documentElement.style.removeProperty(
-    "--advanced-tutorial-reserve"
-  );
-
-  advancedTutorialReservePx = -1;
-
   if (!bubble || !wasDocked) {
     return;
   }
@@ -348,35 +341,6 @@ function positionAdvancedTutorialDock(bubble) {
 
   bubble.style.width =
     `${Math.round(width)}px`;
-
-  const bubbleHeight =
-    bubble.getBoundingClientRect().height;
-
-  const reserve =
-    Math.ceil(bubbleHeight + 12);
-
-  if (
-    Math.abs(
-      reserve -
-      advancedTutorialReservePx
-    ) <= 1
-  ) {
-    return true;
-  }
-
-  advancedTutorialReservePx =
-    reserve;
-
-  document.documentElement.style.setProperty(
-    "--advanced-tutorial-reserve",
-    `${reserve}px`
-  );
-
-  requestAnimationFrame(() => {
-    window
-      .reanchorSetterIdleNotes
-      ?.();
-  });
 
   return true;
 }
@@ -1699,6 +1663,10 @@ function highlightSetterRemainingBoxRow(index) {
     box?.querySelectorAll(".remaining-stat")[index];
 
   highlightEl(row || box);
+}
+
+function highlightSetterMustContainBox() {
+  highlightEl(byId("SetterMustContainBox"));
 }
 
 function highlightSetterLog() {
@@ -3382,6 +3350,17 @@ function runSetterTutorial(
       return;
     }
 
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `While you're choosing your secret, the Inspector is doing the same thing on their side — picking their opening guess blind. Neither of you sees the other's move until you've both submitted.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
     if (
       state.simultaneousSecretSubmitted
     ) {
@@ -3440,7 +3419,7 @@ function runSetterTutorial(
       }
 
       showTutorial(
-        `Here's the kicker: you can see the Inspector's next guess before it's scored — it's sitting right above your secret.`,
+        `Now it's your turn again as the Spy — this is the guess the Inspector just made for their second round, sitting right above your secret, before it's scored.`,
         {
           mode: "advance"
         }
@@ -3453,7 +3432,7 @@ function runSetterTutorial(
 
     if (tutorialSubStep === 1) {
       showTutorial(
-        `Changing your secret is one of the most important things you can do as the Spy — swap in a new word if your current one's getting risky, or just to throw the Inspector off. There's just one rule: any new secret must still match every clue you've already given.`,
+        `You've got two options here: keep your current secret, or switch to a new one. That row's tile colors are a live preview — they show what feedback the Inspector would get right now if you kept your secret exactly as it is.`,
         {
           mode: "advance"
         }
@@ -3465,6 +3444,32 @@ function runSetterTutorial(
     }
 
     if (tutorialSubStep === 2) {
+      showTutorial(
+        `Switching to a different secret is the other option — useful if your current one is getting risky, or just to throw the Inspector off by giving away less than your current secret would.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightPendingGuessRow();
+
+      return;
+    }
+
+    if (tutorialSubStep === 3) {
+      showTutorial(
+        `There's just one rule: any new secret must still match every clue you've already given. The Must Include box spells out exactly what that means — green letters have to stay in that exact position, yellow letters just have to be somewhere in the word.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterMustContainBox();
+
+      return;
+    }
+
+    if (tutorialSubStep === 4) {
       showTutorial(
         `Let's see that one rule in action. Type PICKY and press Enter — watch what happens.`,
         {
@@ -3495,7 +3500,7 @@ function runSetterTutorial(
       return;
     }
 
-    if (tutorialSubStep === 3) {
+    if (tutorialSubStep === 5) {
       showTutorial(
         `Right — PICKY got rejected because it breaks a clue you already gave. Let's clear it out — tap Backspace to erase it.`,
         {
@@ -3514,9 +3519,9 @@ function runSetterTutorial(
       return;
     }
 
-    if (tutorialSubStep === 4) {
+    if (tutorialSubStep === 6) {
       showTutorial(
-        `Now try a word that's actually allowed: "${word}".`,
+        `Now try a word that's actually allowed: "${word}". Notice it satisfies the Must Include box but still gives the Inspector less to go on than your first secret did.`,
         {
           mode: "hide"
         }

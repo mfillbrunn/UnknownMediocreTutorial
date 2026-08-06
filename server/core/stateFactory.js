@@ -176,7 +176,23 @@ const powers = {
         claimedEarly: false,
         conditions: null
       },
-      questActive: false
+      questActive: false,
+      // SETTER QUEST (always-on setter mechanic, see setterQuestServer.js).
+      // Replaces the setter's second power slot -- see lobby.js/draft.js,
+      // where the setter's regular power pool was cut from 2 down to 1.
+      // hintLetter is recomputed every time the setter gets a fresh
+      // Keep/New decision (never shown to the guesser -- redacted in
+      // safeState.js); progress advances when the setter actually switches
+      // their secret to a word containing that letter. Unlike the guesser
+      // quest, progress is NOT capped at one reward for the match -- it
+      // resets to 0 once the reward is claimed and keeps counting for the
+      // rest of the setter's round.
+      setterQuest: {
+        hintLetter: null,
+        progress: 0
+      },
+      setterQuestActive: false,
+      setterQuestLetters: [] // letters picked so far, for the Info badge
 };
       return powers;
 }
