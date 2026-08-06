@@ -79,6 +79,14 @@
     const btn = document.createElement("button");
     btn.className = "power-btn power-badge quest-badge-tile setter-quest-badge-tile";
 
+    // Takes the card's icon spot -- the hint letter is the actionable
+    // piece of info, so it's shown big and up front instead of sitting
+    // behind a tap (see components.css for the icon-spot layout this
+    // reuses/overrides).
+    const letterEl = document.createElement("span");
+    letterEl.className = "setter-quest-hint-letter";
+    btn.appendChild(letterEl);
+
     const labelEl = document.createElement("span");
     labelEl.className = "power-btn-label";
     labelEl.textContent = "Setter Quest";
@@ -89,7 +97,7 @@
     btn.appendChild(chip);
 
     wrapper.appendChild(btn);
-    return { wrapper, btn, labelEl, chip };
+    return { wrapper, btn, labelEl, chip, letterEl };
   }
 
   // Called from client.js's updateUI(), right next to updateQuestBadge.
@@ -110,11 +118,17 @@
     if (!_badge) _badge = createBadge();
     if (container.lastChild !== _badge.wrapper) container.appendChild(_badge.wrapper);
 
-    const { btn, chip } = _badge;
+    const { btn, chip, letterEl } = _badge;
     const progress = Math.min(2, q.progress || 0);
     const ready = progress >= 2;
     const hint = q.hintLetter ? q.hintLetter.toUpperCase() : null;
 
+    // Letter and progress are both shown right on the card face -- no tap
+    // needed to see either. "?" once the reward is ready (progress no
+    // longer applies, and there's nothing left to switch toward), a dash
+    // when no hint is available yet.
+    letterEl.textContent = ready ? "🎯" : (hint || "–");
+    letterEl.classList.toggle("setter-quest-hint-letter-empty", !ready && !hint);
     chip.textContent = ready ? "Ready" : `${progress}/2`;
     btn.classList.toggle("quest-ready", ready);
     btn.classList.toggle("quest-oneaway", progress === 1);

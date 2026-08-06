@@ -33,7 +33,12 @@ const { isConsistentWithHistory } = require("../../game-engine/history");
 // in at least one other word still consistent with the given history --
 // i.e. a letter the setter could plausibly reveal by switching to a
 // different, still-legal secret. Returns null if no such letter exists.
-function computeHintLetter(secret, history, state, allowedSecrets) {
+// pendingGuess (optional): among qualifying letters, prefer one that
+// ISN'T also in the guesser's current pending guess, so switching toward
+// the hint doesn't simultaneously light up a tile in the guess that's
+// about to be scored -- falls back to any qualifying letter if none of
+// them avoid the pending guess.
+function computeHintLetter(secret, history, state, allowedSecrets, pendingGuess) {
   const upperSecret = (secret || "").toUpperCase();
   const secretLetters = new Set(upperSecret.split(""));
   const candidates = new Set();
@@ -49,6 +54,15 @@ function computeHintLetter(secret, history, state, allowedSecrets) {
 
   if (!candidates.size) return null;
   const options = [...candidates];
+
+  const guessLetters = new Set((pendingGuess || "").toUpperCase().split(""));
+  if (guessLetters.size) {
+    const avoidingGuess = options.filter(l => !guessLetters.has(l));
+    if (avoidingGuess.length) {
+      return avoidingGuess[Math.floor(Math.random() * avoidingGuess.length)];
+    }
+  }
+
   return options[Math.floor(Math.random() * options.length)];
 }
 
@@ -56,12 +70,13 @@ function computeHintLetter(secret, history, state, allowedSecrets) {
 // pending guess lands and turn passes to the setter -- state.secret is
 // still whatever it currently is (the setter hasn't reacted yet) and
 // state.history holds every guess already scored, exactly the inputs
-// computeHintLetter needs.
-function rollHintLetterForTurn(state, allowedSecrets) {
+// computeHintLetter needs. pendingGuess is the guess that just landed
+// (not yet in state.history -- see computeHintLetter's own comment).
+function rollHintLetterForTurn(state, allowedSecrets, pendingGuess) {
   if (!state.secret) return;
   state.powers.setterQuest ??= { hintLetter: null, progress: 0 };
   state.powers.setterQuest.hintLetter =
-    computeHintLetter(state.secret, state.history, state, allowedSecrets);
+    computeHintLetter(state.secret, state.history, state, allowedSecrets, pendingGuess);
 }
 
 // Called from normal.js whenever the setter commits an actual secret

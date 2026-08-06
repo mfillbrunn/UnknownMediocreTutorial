@@ -2993,6 +2993,59 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 /*
+  The blanket hide above also matches DESCENDANTS whose own class happens
+  to contain "quest" -- .quest-progress-chip AND .setter-quest-hint-letter
+  both do -- so exempting the card itself isn't enough, its children need
+  their normal `display` back too, or the progress chip and hint letter
+  silently render invisible even though the card wrapper shows.
+*/
+#setterScreen #setterPowerContainer .setter-quest-badge-tile .quest-progress-chip {
+  display: flex !important;
+}
+#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-hint-letter {
+  display: flex !important;
+}
+
+/*
+  Setter Quest's card shows the hint LETTER in the icon spot (big,
+  readable, the actionable piece of info -- no tap needed) instead of the
+  guesser-quest-tile's progress-chip-in-the-icon-spot treatment above
+  (components.css's .quest-badge-tile .quest-progress-chip) -- reset the
+  chip back to its original small floating corner pill for this specific
+  card, and give the letter the icon-spot treatment instead.
+*/
+#setterScreen #setterPowerContainer .setter-quest-badge-tile .quest-progress-chip {
+  position: absolute;
+  order: 0;
+  inset: auto;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 24px;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+.setter-quest-hint-letter {
+  order: -1;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-size: clamp(20px, 7vw, 32px);
+  font-weight: 900;
+  color: var(--role-accent);
+  line-height: 1;
+}
+.setter-quest-hint-letter.setter-quest-hint-letter-empty {
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0.45;
+}
+
+/*
   The Old/Keep/New remaining-words count sits below the power cards as
   a direct child of the sidebar (see index.html), not nested inside
   .setter-sidebar-powers.

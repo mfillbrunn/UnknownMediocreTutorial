@@ -39,7 +39,9 @@ function transitionAfterGuess({ room, state, guess, roomId, context, io }) {
   // is about to face -- computed against the CURRENT secret and history
   // so far (the secret hasn't been reacted to yet, so this exactly mirrors
   // what "switching to a different feasible word" would mean right now).
-  setterQuestServer.rollHintLetterForTurn(state, context.ALLOWED_SECRETS);
+  // Passing `guess` lets it prefer a letter that isn't already in this
+  // pending guess, when there's a choice.
+  setterQuestServer.rollHintLetterForTurn(state, context.ALLOWED_SECRETS, guess);
 
   // The guesser just acted, resolving any Force Timer that was pressuring
   // them -- stop its ticking interval before the setter's turn begins.
