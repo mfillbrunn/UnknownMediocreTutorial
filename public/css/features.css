@@ -2972,18 +2972,24 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 
-/* NEVER SHOW A QUEST CARD IN THE SETTER'S OWN POWER VIEW */
+/* NEVER SHOW THE GUESSER'S QUEST CARD IN THE SETTER'S OWN POWER VIEW */
 
 /*
-  The setter has no quest of their own -- quest.js still pins a read-only
-  mirror onto setterPowerContainer for older callers, so it stays hidden
-  here.
+  The setter has no view of the GUESSER's quest -- quest.js still pins a
+  read-only mirror onto setterPowerContainer for older callers, so it
+  stays hidden here. The setter's OWN quest (setter-quest.js) is exempted
+  right below -- it reuses this same .quest-badge-tile card look, but it's
+  a real, clickable card, not a read-only mirror of the opponent's quest.
 */
 #setterScreen #setterPowerContainer [id*="quest" i],
 #setterScreen #setterPowerContainer [class*="quest" i],
 #setterScreen #setterPowerContainer [data-quest],
 #setterScreen #setterPowerContainer [data-quest-id] {
   display: none !important;
+}
+
+#setterScreen #setterPowerContainer .setter-quest-badge-tile {
+  display: flex !important;
 }
 
 /*

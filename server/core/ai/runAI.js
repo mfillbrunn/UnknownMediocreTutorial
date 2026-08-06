@@ -6,6 +6,7 @@ const powerMetadata = require("../../powers/powerMetadata");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
 const { pickLetterLockoutLetter, pickReconSweepLetters, feasibleSecretsFor } = require("./genericAI");
 const questServer = require("../../powers/powers/questServer");
+const setterQuestServer = require("../../powers/powers/setterQuestServer");
 
 // assassinWord is excluded from the game's randomized power pools
 // entirely (see task #106) — kept out of the AI pool too for the same
@@ -379,6 +380,7 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
 
   maybeClaimQuest(room, roomId, context, aiUserId);
   maybeRespondToClaim(room, roomId, context, aiUserId);
+  maybeUseSetterQuestReward(room, roomId, context, aiUserId);
 
   let actionFn = null;
 
@@ -468,6 +470,8 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
 
           if (isTutorial) {
             secret = state.tutorialSecretsAI[state.history.length];
+          } else {
+            secret = maybeBiasSecretTowardQuestHint(state, secret, context.WORDS.secrets);
           }
 
           applyAIAction(
@@ -542,6 +546,54 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
   }
 
   return actionFn;
+}
+
+// Setter Quest: the AI setter chases its own quest progress the same way a
+// human optimizing for it would -- 75% of the time, if there's a feasible
+// secret containing this turn's hint letter, switch to one of those
+// instead of whatever pickSecret would have otherwise chosen. Only ever
+// called from the branch that's already decided to submit SET_SECRET_NEW
+// (the simultaneousAllWrong/freeze/stealth locks route through
+// SET_SECRET_SAME before this is reached), and only chooses among secrets
+// already consistent with history -- the same feasible set pickSecret
+// itself draws from -- so it can never plant an inconsistent secret.
+function maybeBiasSecretTowardQuestHint(state, secret, secretRows) {
+  const hint = state.powers?.setterQuest?.hintLetter;
+  if (!hint) return secret;
+  if (Math.random() >= 0.75) return secret;
+
+  const feasible = feasibleSecretsFor(state, secretRows)
+    .map(r => r.word)
+    .filter(w => w.toUpperCase().includes(hint));
+  if (!feasible.length) return secret;
+
+  return feasible[Math.floor(Math.random() * feasible.length)];
+}
+
+// Setter Quest reward: once progress hits 2/2, the AI activates it right
+// away -- same "no real decision to model" reasoning as maybeClaimQuest --
+// choosing a random letter from its OWN secret (the guesser never learns
+// which letter was picked either way, see safeState.js). Prefers a letter
+// that actually has feedback to erase over one that was never guessed, so
+// the activation isn't wasted as a silent no-op the moment progress hits 2.
+function maybeUseSetterQuestReward(room, roomId, context, aiUserId) {
+  const state = room.state;
+  const aiRole = getAIRole(state, aiUserId);
+  if (aiRole !== "setter") return;
+  if (state.turn !== aiUserId) return;
+
+  const q = state.powers?.setterQuest;
+  if (!q || (q.progress || 0) < 2) return;
+  if (!state.secret) return;
+
+  const letters = [...new Set(state.secret.toUpperCase().split(""))];
+  if (!letters.length) return;
+
+  const withFeedback = letters.filter(L => setterQuestServer.letterHasFeedback(state, L));
+  const pool = withFeedback.length ? withFeedback : letters;
+  const letter = pool[Math.floor(Math.random() * pool.length)];
+
+  applyAIAction(room, { type: "USE_SETTER_QUEST_RESET", letter }, aiUserId, roomId, context);
 }
 
 // The quest badge now requires an explicit click to claim either reward

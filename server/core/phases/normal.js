@@ -9,6 +9,7 @@ const { scoreGuess } = require("../../game-engine/scoring");
 const { clearForceTimer } = require("../../utils/forceTimer");
 const { computeRemainingNew } = require("../../utils/remainingWords");
 const questServer = require("../../powers/powers/questServer");
+const setterQuestServer = require("../../powers/powers/setterQuestServer");
 const revealPenaltyServer = require("../../powers/powers/revealPenaltyServer");
 
 function handleNormalPhase(room, state, action, roomId, context) {
@@ -51,6 +52,19 @@ function handleNormalPhase(room, state, action, roomId, context) {
   // badge, not a normal power activation.
   if (action.type === "USE_QUEST") {
     if (questServer.attemptQuestClaim(state, userId, roomId, io)) {
+      emitRoomState(roomId, room, io);
+    }
+    return;
+  }
+
+  // Setter Quest reward: tapping the setter's quest badge once progress
+  // hits 2/2 -- resets the feedback for one chosen letter across the whole
+  // round, exactly like Hide Evidence, then resets progress back to 0.
+  // Same standing-option shape as USE_QUEST above -- not gated by
+  // state.powerUsedThisTurn, so it never competes with the setter's other,
+  // separately-drafted power for the same turn's budget.
+  if (action.type === "USE_SETTER_QUEST_RESET") {
+    if (setterQuestServer.attemptReward(state, userId, action.letter, roomId, io)) {
       emitRoomState(roomId, room, io);
     }
     return;
@@ -319,6 +333,7 @@ if (setterSocketId) {
     }
     if (action.type === "SET_SECRET_NEW" && secret !== state.secret) {
       state.secretChangeCount = (state.secretChangeCount || 0) + 1;
+      setterQuestServer.creditSecretChange(state, secret);
     }
 
     if (state.roundStartTime && state.timeUsed?.[state.setter] != null) {

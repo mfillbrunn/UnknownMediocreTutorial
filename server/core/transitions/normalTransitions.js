@@ -3,6 +3,7 @@ const { emitRoomState } = require("../rooms");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
 const { clearForceTimer, registerForceTimer } = require("../../utils/forceTimer");
+const setterQuestServer = require("../../powers/powers/setterQuestServer");
 
 function transitionAfterGuess({ room, state, guess, roomId, context, io }) {
   const assassin = state.powers.assassinWord;
@@ -33,6 +34,12 @@ function transitionAfterGuess({ room, state, guess, roomId, context, io }) {
   // setter's upcoming Keep/New decision, so any GREEN extraConstraint
   // granted here already binds their choice via isConsistentWithHistory.
   context.powerEngine.onGuessSubmitted(state, guess, roomId, io);
+
+  // Setter Quest: fresh hint letter for the Keep/New decision the setter
+  // is about to face -- computed against the CURRENT secret and history
+  // so far (the secret hasn't been reacted to yet, so this exactly mirrors
+  // what "switching to a different feasible word" would mean right now).
+  setterQuestServer.rollHintLetterForTurn(state, context.ALLOWED_SECRETS);
 
   // The guesser just acted, resolving any Force Timer that was pressuring
   // them -- stop its ticking interval before the setter's turn begins.
