@@ -58,6 +58,14 @@ function getDailyConfig(dateStr, allowedSecrets, allowedGuesses) {
   // seeded rng through that path just for one quest type in thirteen.
   const questType = QUEST_TYPES[Math.floor(rng() * QUEST_TYPES.length)];
 
+  // Round 2's guesser (the previous round's setter) no longer just
+  // inherits round 1's quest -- see nextRoundTransition.js -- they get an
+  // actual choice between 2 options instead. Still fully deterministic
+  // (continues the same seeded stream) so every player attempting today's
+  // puzzle is offered the exact same two options, keeping the daily
+  // challenge comparable across players.
+  const questTypeRound2Choices = seededShuffle(QUEST_TYPES, rng).slice(0, 2);
+
   // Continuing the SAME rng stream keeps everything deterministic from one
   // seed. These two are server-only -- never returned by the public
   // /api/daily route (see server/index.js, which whitelists fields before
@@ -72,7 +80,7 @@ function getDailyConfig(dateStr, allowedSecrets, allowedGuesses) {
     ? allowedGuesses[Math.floor(rng() * allowedGuesses.length)]
     : null;
 
-  return { date: dateStr, aiDifficulty, setterPowers, guesserPowers, questType, secretWord, openingGuess };
+  return { date: dateStr, aiDifficulty, setterPowers, guesserPowers, questType, questTypeRound2Choices, secretWord, openingGuess };
 }
 
 module.exports = { getDailyConfig };

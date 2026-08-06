@@ -1097,6 +1097,19 @@
   </div>
 </div>
 
+<!-- Quest Choice Modal: shown to the guesser at the start of any round where
+     they didn't already have a quest.type going in (round 2+ of a normal
+     match -- see nextRoundTransition.js / client/quest-choice.js) -->
+<div id="questChoiceModal" class="modal">
+  <div class="modal-content quest-choice-content">
+    <h3>🎯 Choose Your Quest</h3>
+    <p class="modal-instruction">
+      Pick 1 of the 2 Quests below for this round as Inspector.
+    </p>
+    <div class="draft-candidates" id="questChoiceCandidates"></div>
+  </div>
+</div>
+
 <!-- Invite Friend Modal (lobby's "+" -> Invite Friend, see client/friends.js) -->
 <div id="inviteFriendModal" class="modal">
   <div class="modal-content invite-friend-content">
@@ -1252,6 +1265,7 @@
   <script src="powerEngine/powers/revealPenalty.js"></script>
   <script src="powerEngine/powers/fieldReport.js"></script>
   <script src="client/quest.js"></script>
+  <script src="client/quest-choice.js"></script>
   <script src="client/setter-quest.js"></script>
   <script src="client/tutorial-quest.js"></script>
   <script src="powerEngine/powers/wiretap.js"></script>

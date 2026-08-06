@@ -164,12 +164,19 @@ const powers = {
       },
       revealLetterActive: false,
       // QUEST (always-on guesser mechanic, see questServer.js). type is
-      // chosen once per match by CompetitiveMode and preserved across the
-      // round-2 role swap by postGame.js -- ready/used/conditions reset
-      // every round like the rest of state.powers. conditions is only
-      // used by the FIELDREPORT quest type, regenerated fresh each round.
+      // chosen once per match by CompetitiveMode for round 1's guesser.
+      // Round 2's guesser is always a DIFFERENT player (the standard
+      // 2-round match swaps setter/guesser every round) -- rather than
+      // inheriting round 1's quest, nextRoundTransition.js instead offers
+      // them pendingChoice: 2 freshly-randomized candidate types to pick
+      // between (see questServer.js's chooseQuestType / CHOOSE_QUEST
+      // action), null once resolved. type stays null while a choice is
+      // outstanding. ready/used/conditions reset every round like the
+      // rest of state.powers. conditions is only used by the FIELDREPORT
+      // quest type, regenerated fresh each round.
       quest: {
         type: null,
+        pendingChoice: null,
         ready: false,
         used: false,
         oneAway: false,

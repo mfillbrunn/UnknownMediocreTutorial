@@ -791,6 +791,17 @@ body.menu-mode .app-header {
   margin-bottom: 16px;
 }
 
+/* Quest Choice modal (client/quest-choice.js): reuses the draft screen's
+   candidate-card look inside a slightly wider modal so the 2 quest cards
+   -- each with a full label + description -- don't feel as cramped as the
+   default 340px modal width. */
+.quest-choice-content {
+  max-width: 420px;
+}
+.quest-choice-content .draft-candidates {
+  margin-bottom: 0;
+}
+
 /* Guesser only: a second, independent draft section for their Quest pick,
    below the power candidates. Same instruction/candidate styling, just a
    divider above it to visually separate the two picks. */

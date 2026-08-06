@@ -15,13 +15,19 @@
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const resetRoundState = require("../../utils/resetRoundState");
 const { emitRoomState } = require("../rooms");
-const { ensureQuestConditions } = require("../../powers/powers/questServer");
+const { ensureQuestConditions, pickTwoRandomQuestTypes } = require("../../powers/powers/questServer");
 
 // Performs the round-to-round transition (role swap via mode.onNextRound,
 // round-scoped state reset, timer restart).
 function advanceToNextRound(room, state, roomId, context) {
   const { startGameTimer } = require("../timeouts/timeoutController");
   const io = context.io;
+
+  // Captured BEFORE mode.onNextRound (below) performs the actual role
+  // swap, so it still reads as the OLD guesser -- compared against
+  // state.guesser afterward to tell whether this round's guesser is
+  // actually a different player (see the quest-choice block below).
+  const prevGuesser = state.guesser;
 
   const res = state.mode?.onNextRound?.(state) || {
     phase: "simultaneous",
@@ -48,11 +54,15 @@ function advanceToNextRound(room, state, roomId, context) {
     savedLetterLockoutUsedLetters = state.powers.letterLockoutUsedLetters;
   }
 
-  // Quest type is match-scoped like revealLetter.mode used to be --
-  // always present now (every guesser has one), not gated on
-  // activePowers. Conditions (FIELDREPORT quest only) are NOT saved
-  // here on purpose: they're regenerated fresh each round below.
+  // Quest type used to just carry straight over like revealLetter.mode
+  // still does (see below) -- but round 2's guesser is a DIFFERENT player
+  // (the standard 2-round match always swaps setter/guesser), so simply
+  // restoring round 1's quest meant both guessers played the exact same
+  // one all match. Saved here anyway for the tutorial/no-swap fallback
+  // below. Conditions (FIELDREPORT quest only) are NOT saved here on
+  // purpose: they're regenerated fresh each round below.
   const savedQuestType = state.powers.quest?.type;
+  const guesserChanged = state.guesser !== prevGuesser;
 
   resetRoundState(room, state, roomId, context);
 
@@ -68,8 +78,38 @@ function advanceToNextRound(room, state, roomId, context) {
     state.powers.letterLockoutUsedLetters = savedLetterLockoutUsedLetters;
   }
 
-  state.powers.quest.type = savedQuestType || null;
-  ensureQuestConditions(state);
+  // Tutorial rounds are scripted (e.g. the Quest tutorial hard-codes RARE
+  // via TutorialMode.seedQuestTutorialRound) -- a random pick-between-two
+  // would just clobber the lesson, so tutorials (and the theoretical case
+  // of a mode whose guesser DOESN'T change round to round) keep the old
+  // straight carry-over. Every other match offers the new guesser an
+  // actual choice instead of inheriting round 1's quest.
+  if (state.isTutorial || !guesserChanged) {
+    state.powers.quest.type = savedQuestType || null;
+    state.powers.quest.pendingChoice = null;
+    ensureQuestConditions(state);
+  } else {
+    // Daily Challenge: same two options for every player attempting
+    // today's puzzle (deterministically seeded, see dailyConfig.js) --
+    // everyone else gets a fresh random pair.
+    const choices = Array.isArray(state._dailyQuestRound2Choices) && state._dailyQuestRound2Choices.length === 2
+      ? state._dailyQuestRound2Choices
+      : pickTwoRandomQuestTypes();
+
+    if (state.players?.[state.guesser]?.isAI) {
+      // No real decision to model for the AI -- just take one at random,
+      // same "nothing to deliberate" reasoning as every other AI pick in
+      // this codebase (draft.js's AI auto-pick, runAI.js's
+      // maybeClaimQuest) -- resolved immediately rather than waiting on
+      // an action the AI would never send.
+      state.powers.quest.type = choices[Math.floor(Math.random() * choices.length)];
+      state.powers.quest.pendingChoice = null;
+      ensureQuestConditions(state);
+    } else {
+      state.powers.quest.type = null;
+      state.powers.quest.pendingChoice = choices;
+    }
+  }
 
   state.phase = res.phase || "simultaneous";
   state.gameOver = false;

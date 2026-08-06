@@ -152,6 +152,37 @@ function pickRandomQuestType() {
   return QUEST_TYPES[Math.floor(Math.random() * QUEST_TYPES.length)];
 }
 
+// Two DISTINCT quest types, for offering the guesser a choice (see
+// nextRoundTransition.js and CHOOSE_QUEST below) -- mirrors lobby.js's
+// draft-mode candidate generation (shuffle(QUEST_TYPES).slice(0, 2)) but
+// lives here so every caller shares one implementation.
+function pickTwoRandomQuestTypes() {
+  const pool = [...QUEST_TYPES];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, 2);
+}
+
+// Resolves a guesser's mid-match quest choice (see state.powers.quest.
+// pendingChoice's header comment in stateFactory.js) -- validates the pick
+// against the actual offered candidates, same shape as draft.js's
+// DRAFT_PICK_QUEST validation, just applied directly instead of staged in
+// a picks array (there's only ever one final choice here, no toggle-to-
+// deselect step). Returns false (no-op, caller skips the broadcast) on any
+// invalid attempt: wrong player, no choice pending, or an unoffered type.
+function chooseQuestType(state, userId, type) {
+  if (userId !== state.guesser) return false;
+  const q = state.powers?.quest;
+  if (!q || !Array.isArray(q.pendingChoice) || !q.pendingChoice.includes(type)) return false;
+
+  q.type = type;
+  q.pendingChoice = null;
+  ensureQuestConditions(state);
+  return true;
+}
+
 // ---- Shared progress helpers (used by the turnStart switch below AND by
 // genericAI.js's quest-aware guess picker AND the early-claim feature) ----
 
@@ -644,6 +675,8 @@ module.exports = {
   QUEST_RARE_LETTERS,
   QUEST_KEYBOARD_ROWS,
   pickRandomQuestType,
+  pickTwoRandomQuestTypes,
+  chooseQuestType,
   ensureQuestConditions,
   ensureFieldReportProgress,
   computeHardModeCount,

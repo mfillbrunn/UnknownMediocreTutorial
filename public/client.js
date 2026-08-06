@@ -716,6 +716,7 @@ function updateUI() {
   // meaningful to the guesser actually working toward it -- the setter's
   // copy stays the read-only text badge.
   window.updateQuestBadge?.(state, myRole);
+  window.updateQuestChoiceModal?.(state, myRole);
   if (myRole === "guesser") window.maybeShowQuestProgressPop?.(state);
   window.updateSetterQuestBadge?.(state, myRole);
   if (state.phase !== "lobby") hide("lobby");

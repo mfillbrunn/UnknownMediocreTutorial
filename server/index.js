@@ -86,7 +86,8 @@ app.get("/api/daily", (req, res) => {
     aiDifficulty: cfg.aiDifficulty,
     setterPowers: cfg.setterPowers,
     guesserPowers: cfg.guesserPowers,
-    questType: cfg.questType
+    questType: cfg.questType,
+    questTypeRound2Choices: cfg.questTypeRound2Choices
   });
 });
 app.use(express.static(path.join(__dirname, "..", "public")));
