@@ -221,19 +221,21 @@
 
 /* "Uses left / total" chip for multi-charge powers (Letter Peek, Hide
    Evidence) -- top-right corner of the badge card so it doesn't compete
-   with the icon/label for center space. Text is refreshed every render in
-   updateButtonStates from state.powers[id+"Uses"]. */
+   with the icon/label for center space. Inset fully inside the card's own
+   border (not straddling/poking past it) so the whole chip stays within
+   the badge. Text is refreshed every render in updateButtonStates from
+   state.powers[id+"Uses"]. */
 .power-uses-badge {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  min-width: 20px;
-  padding: 1px 5px;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  padding: 1px 4px;
   border-radius: 999px;
   border: 2px solid var(--role-accent);
   background: #14151b;
   color: var(--role-accent);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   text-align: center;
   line-height: 1.3;

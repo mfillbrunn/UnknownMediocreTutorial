@@ -2994,13 +2994,15 @@ body:has(#guesserScreen.active) #appMain {
 
 /*
   The blanket hide above also matches DESCENDANTS whose own class happens
-  to contain "quest" -- .setter-quest-hint-letter, .setter-quest-row, and
-  .setter-quest-progress-text all do -- so exempting the card itself
-  isn't enough, its children need their normal `display` back too, or the
-  row silently renders invisible even though the card wrapper shows.
+  to contain "quest" -- .setter-quest-hint-letter, .setter-quest-row,
+  .setter-quest-letters-row, and .setter-quest-progress-text all do -- so
+  exempting the card itself isn't enough, its children need their normal
+  `display` back too, or the stack silently renders invisible even though
+  the card wrapper shows.
 */
 #setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-hint-letter,
-#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-row {
+#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-row,
+#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-letters-row {
   display: flex !important;
 }
 #setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-progress-text {
@@ -3020,26 +3022,35 @@ body:has(#guesserScreen.active) #appMain {
 }
 
 /*
-  One plain row: letter, progress, letter. No pill/box/chip treatment on
-  the progress text -- it's just "0/2"-style digits sitting between the
-  two letters, same weight/color as the letters themselves. clamp() on
-  the shared font-size shrinks all three together so three items never
-  overflow the card -- min-width:0 on both the row and its children is
-  required for that shrinking to actually take effect in a flex layout.
+  Stacked: progress ("0/2" etc, plain text, no pill/box/chip treatment --
+  same weight/color as the letters, just dimmer) on its own line up top,
+  the two hint letters side by side (with some space between them) on the
+  line below. clamp() on the shared font-size shrinks everything together
+  so it never overflows the card -- min-width:0 throughout is required
+  for that shrinking to actually take effect in a flex layout.
 */
 .setter-quest-row {
   order: -1;
   flex: 1 1 auto;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+.setter-quest-letters-row {
+  display: flex;
   flex-direction: row;
   align-items: baseline;
   justify-content: center;
-  gap: 3px;
+  gap: 10px;
   width: 100%;
   min-width: 0;
 }
 /* No text label anymore (see setter-quest.js -- "Setter Quest" lives on
-   as the card's title/aria-label only) -- the row above is the card's
+   as the card's title/aria-label only) -- the stack above is the card's
    whole body now, so it gets the full height instead of sharing it with
    a label row. */
 .setter-quest-hint-letter,
