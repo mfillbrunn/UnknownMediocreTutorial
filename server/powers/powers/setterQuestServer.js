@@ -19,11 +19,14 @@
 //
 // If the setter actually commits a NEW secret containing one or both
 // hint letters, progress advances by 1 per letter matched (so matching
-// both in one switch is worth 2). Progress is NOT capped at the 2-point
-// reward threshold -- overflow (e.g. going from 1 to 3 in one switch)
-// carries forward: claiming the reward only ever subtracts 2, it doesn't
-// reset to 0, so a setter who banks extra progress gets a head start on
-// the next one. At 2+ they can spend the quest on a one-time "reset a
+// both in one switch is worth 2). A single switch CAN push progress past
+// the 2-point reward threshold (e.g. 1 -> 3 by matching both at once) --
+// that overflow point carries forward, since claiming the reward only
+// ever subtracts 2, it doesn't reset to 0. But once progress has already
+// reached 2+, no FURTHER crediting happens on later turns -- the setter
+// has to actually claim the reward before banking any more, so progress
+// can't just keep climbing turn after turn while sitting unclaimed. At
+// 2+ they can spend the quest on a one-time "reset a
 // letter" action -- mechanically identical to the Hide Evidence power
 // (hideTileServer.js): erase all feedback for one chosen letter across
 // every guess so far this round. resetRoundState.js's createInitialPowers()
@@ -100,11 +103,19 @@ function rollHintLetterForTurn(state, allowedSecrets, pendingGuess) {
 // Called from normal.js whenever the setter commits an actual secret
 // CHANGE (Keep/New reaction where the new secret differs from the old
 // one) -- advances progress by 1 for each of this turn's hint letters the
-// new secret contains (so matching both is worth 2 in one switch). No cap
-// here -- see the file header on how overflow carries into the reward.
+// new secret contains (so matching both is worth 2 in one switch). Once
+// progress has already reached the 2-point reward threshold, no further
+// crediting happens -- the setter has to actually claim the reward
+// (applyReward subtracts 2, not resets to 0) before progress can climb
+// again. This still lets ONE switch push progress past 2 in a single
+// shot (e.g. 1 -> 3 by matching both letters at once) -- that overflow
+// point carries into the reward same as before -- it just stops the
+// setter from banking MORE on top of that across later turns while
+// sitting on an unclaimed reward.
 function creditSecretChange(state, newSecret) {
   const q = state.powers.setterQuest;
   if (!q || !Array.isArray(q.hintLetters) || !q.hintLetters.length) return;
+  if ((q.progress || 0) >= 2) return;
 
   const upper = (newSecret || "").toUpperCase();
   const matched = q.hintLetters.filter(l => upper.includes(l)).length;
