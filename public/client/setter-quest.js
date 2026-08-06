@@ -91,26 +91,30 @@
     btn.title = "Setter Quest";
     btn.setAttribute("aria-label", "Setter Quest");
 
-    // One plain row: letter, progress, letter -- no pill/chip styling on
-    // the progress text, it's just digits like "0/2" sitting between the
-    // two letters. features.css scales all three down together (clamp())
-    // so the row never overflows the card.
-    const row = document.createElement("div");
-    row.className = "setter-quest-row";
-
-    const letterLeftEl = document.createElement("span");
-    letterLeftEl.className = "setter-quest-hint-letter";
-    row.appendChild(letterLeftEl);
+    // Stacked: progress ("0/2" etc, plain text, no pill/chip styling) on
+    // its own line up top, the two hint letters side by side (with some
+    // space between them) on the line below.
+    const stack = document.createElement("div");
+    stack.className = "setter-quest-row";
 
     const progressEl = document.createElement("span");
     progressEl.className = "setter-quest-progress-text";
-    row.appendChild(progressEl);
+    stack.appendChild(progressEl);
+
+    const lettersRow = document.createElement("div");
+    lettersRow.className = "setter-quest-letters-row";
+
+    const letterLeftEl = document.createElement("span");
+    letterLeftEl.className = "setter-quest-hint-letter";
+    lettersRow.appendChild(letterLeftEl);
 
     const letterRightEl = document.createElement("span");
     letterRightEl.className = "setter-quest-hint-letter";
-    row.appendChild(letterRightEl);
+    lettersRow.appendChild(letterRightEl);
 
-    btn.appendChild(row);
+    stack.appendChild(lettersRow);
+
+    btn.appendChild(stack);
     wrapper.appendChild(btn);
     return { wrapper, btn, progressEl, letterLeftEl, letterRightEl };
   }
