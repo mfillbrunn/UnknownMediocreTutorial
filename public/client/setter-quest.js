@@ -8,10 +8,11 @@
 // independently -- they don't have to share a word) that would each
 // advance progress by 1 if their NEXT secret contains them -- redacted
 // from the guesser entirely (safeState.js), so this whole file only ever
-// renders on the setter's own screen. Progress isn't capped at the 2-point
-// reward threshold -- overflow carries into the next cycle (see
-// setterQuestServer.js's applyReward) -- so the badge keeps showing real
-// letters and the true progress count even once ready. At 2+ the badge's
+// renders on the setter's own screen. A single switch can push progress
+// past the 2-point reward threshold (e.g. "3/2"), and that overflow
+// carries into the claim (see setterQuestServer.js's applyReward) -- but
+// once already at 2+, no further progress accrues until claimed, so the
+// badge's number won't just keep climbing turn after turn. At 2+ the badge's
 // tap arms the setter's own keyboard for a letter pick, the exact same
 // interaction as Hide Evidence (public/powerEngine/powers/hideTile.js) --
 // same interception shape, chained into the same handleSetterInput check
@@ -90,13 +91,10 @@
     btn.title = "Setter Quest";
     btn.setAttribute("aria-label", "Setter Quest");
 
-    // Progress floats as a small pill above the two letters (see
-    // features.css) -- the letters get the card's main body, one on the
-    // left and one on the right.
-    const chip = document.createElement("span");
-    chip.className = "quest-progress-chip setter-quest-progress-chip";
-    btn.appendChild(chip);
-
+    // One plain row: letter, progress, letter -- no pill/chip styling on
+    // the progress text, it's just digits like "0/2" sitting between the
+    // two letters. features.css scales all three down together (clamp())
+    // so the row never overflows the card.
     const row = document.createElement("div");
     row.className = "setter-quest-row";
 
@@ -104,13 +102,17 @@
     letterLeftEl.className = "setter-quest-hint-letter";
     row.appendChild(letterLeftEl);
 
+    const progressEl = document.createElement("span");
+    progressEl.className = "setter-quest-progress-text";
+    row.appendChild(progressEl);
+
     const letterRightEl = document.createElement("span");
     letterRightEl.className = "setter-quest-hint-letter";
     row.appendChild(letterRightEl);
 
     btn.appendChild(row);
     wrapper.appendChild(btn);
-    return { wrapper, btn, chip, letterLeftEl, letterRightEl };
+    return { wrapper, btn, progressEl, letterLeftEl, letterRightEl };
   }
 
   // Called from client.js's updateUI(), right next to updateQuestBadge.
@@ -131,21 +133,22 @@
     if (!_badge) _badge = createBadge();
     if (container.lastChild !== _badge.wrapper) container.appendChild(_badge.wrapper);
 
-    const { btn, chip, letterLeftEl, letterRightEl } = _badge;
+    const { btn, progressEl, letterLeftEl, letterRightEl } = _badge;
     const progress = q.progress || 0;
     const ready = progress >= 2;
     const hints = Array.isArray(q.hintLetters) ? q.hintLetters.map(l => l.toUpperCase()) : [];
 
     // Both letters and progress are shown right on the card face -- no
-    // tap needed to see either. Progress isn't capped at 2/2 (overflow
-    // carries into the next cycle -- see setterQuestServer.js), so the
-    // raw count keeps showing past ready too, and so do the letters
-    // themselves since matching more still keeps banking progress.
+    // tap needed to see either. Once ready, no more progress accrues
+    // until the reward is claimed (see setterQuestServer.js), but a
+    // single switch can still land above 2/2 (e.g. "3/2") -- that
+    // overflow carries into the claim, so the raw count keeps showing
+    // as-is rather than being clamped for display.
     letterLeftEl.textContent = hints[0] || "–";
     letterLeftEl.classList.toggle("setter-quest-hint-letter-empty", !hints[0]);
     letterRightEl.textContent = hints[1] || "–";
     letterRightEl.classList.toggle("setter-quest-hint-letter-empty", !hints[1]);
-    chip.textContent = `${progress}/2`;
+    progressEl.textContent = `${progress}/2`;
     btn.classList.toggle("quest-ready", ready);
     btn.classList.toggle("quest-oneaway", progress === 1);
     applyUiEffects(state);
