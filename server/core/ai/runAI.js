@@ -550,37 +550,24 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
 
 // Setter Quest: the AI setter chases its own quest progress the same way a
 // human optimizing for it would -- 75% of the time, prefers a feasible
-// secret over whatever pickSecret would have otherwise chosen. Matching
-// BOTH of this turn's hint letters is worth 2 progress in one switch (see
-// setterQuestServer.js), so that's tried first; only falls back to
-// matching just one if no feasible secret has both. Only ever called from
-// the branch that's already decided to submit SET_SECRET_NEW (the
-// simultaneousAllWrong/freeze/stealth locks route through SET_SECRET_SAME
-// before this is reached), and only chooses among secrets already
-// consistent with history -- the same feasible set pickSecret itself
-// draws from -- so it can never plant an inconsistent secret.
+// secret that has this turn's hint letter in the exact hinted position
+// (see setterQuestServer.js) over whatever pickSecret would have
+// otherwise chosen. Only ever called from the branch that's already
+// decided to submit SET_SECRET_NEW (the simultaneousAllWrong/freeze/
+// stealth locks route through SET_SECRET_SAME before this is reached),
+// and only chooses among secrets already consistent with history -- the
+// same feasible set pickSecret itself draws from -- so it can never plant
+// an inconsistent secret.
 function maybeBiasSecretTowardQuestHint(state, secret, secretRows) {
-  const hints = state.powers?.setterQuest?.hintLetters;
-  if (!Array.isArray(hints) || !hints.length) return secret;
+  const hint = state.powers?.setterQuest?.hint;
+  if (!hint || !hint.letter) return secret;
   if (Math.random() >= 0.75) return secret;
 
   const feasible = feasibleSecretsFor(state, secretRows).map(r => r.word);
   if (!feasible.length) return secret;
 
-  if (hints.length >= 2) {
-    const [a, b] = hints;
-    const both = feasible.filter(w => {
-      const upper = w.toUpperCase();
-      return upper.includes(a) && upper.includes(b);
-    });
-    if (both.length) return both[Math.floor(Math.random() * both.length)];
-  }
-
-  const any = feasible.filter(w => {
-    const upper = w.toUpperCase();
-    return hints.some(l => upper.includes(l));
-  });
-  if (any.length) return any[Math.floor(Math.random() * any.length)];
+  const matching = feasible.filter(w => w.toUpperCase()[hint.position] === hint.letter);
+  if (matching.length) return matching[Math.floor(Math.random() * matching.length)];
 
   return secret;
 }

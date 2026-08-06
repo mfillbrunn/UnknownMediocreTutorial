@@ -168,7 +168,13 @@ const POWER_RULES = {
       return (
         state.turn === state.setter &&
         !state.powers?.freezeActive &&
-        !state.powers?.suggestSecretUsed
+        !state.powers?.suggestSecretUsed &&
+        // Mirrors the opening-miss lock every other route to a secret
+        // change already respects (normal.js's SET_SECRET_NEW handler,
+        // client.js's isOpeningMissSecretLocked) -- suggesting a word the
+        // setter isn't even allowed to plant this round would just burn
+        // the one-time power for nothing.
+        (!state.simultaneousAllWrong || state.powers?.rouletteSecretActive)
       );
     }
   },

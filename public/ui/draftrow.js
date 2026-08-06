@@ -341,17 +341,22 @@ if (!setterCanEdit) {
   }
 
   if (state.phase === "normal") {
+    // The ghost-secret placeholder is only for the untouched start of a
+    // turn -- once the setter has typed and deleted back to empty this
+    // turn (setterDraftTouched), the row must stay genuinely empty instead
+    // of silently snapping back to showing the current secret.
+    const showGhost = !upperSetterDraft && !state.setterDraftTouched;
     updateRow(
       draftRow,
-      upperSetterDraft || upperSecret,
-      upperSetterDraft
-        ? "draft-row setter-draft"
-        : "draft-row ghost-secret",
+      showGhost ? upperSecret : upperSetterDraft,
+      showGhost
+        ? "draft-row ghost-secret"
+        : "draft-row setter-draft",
       null,
       // Green-match applies to both: the setter's typed draft AND the
       // overlaid current secret when they haven't typed anything yet.
       greenPattern,
-      upperSetterDraft ? "setter" : null
+      showGhost ? null : "setter"
     );
     showRow(draftRow, draftWasVisible, "row-slide-down");
   }

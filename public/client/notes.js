@@ -137,6 +137,16 @@
   function _fillDraft(word) {
     if (!word || word.length !== 5) return;
     if (_role === "setter") {
+      // The opening-miss lock (isOpeningMissSecretLocked, client.js) bars
+      // the setter from typing a new secret this round -- tapping a saved
+      // Notes word to fill the draft is just another way of changing it,
+      // so it needs the exact same block + shake + notice, not a silent
+      // bypass straight into state.setterDraft.
+      if (window.isOpeningMissSecretLocked?.()) {
+        window.shakeDraftRow?.("setter");
+        window.showOpeningMissLockNotice?.();
+        return;
+      }
       if (window.state) window.state.setterDraft = word;
       window.updateUI?.();
       window.emitSetterDraftPreview?.(word);

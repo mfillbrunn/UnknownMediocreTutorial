@@ -189,7 +189,14 @@ suggestSecret: {
       state.phase === "normal" &&
       role === "setter" &&
       !state.powerUsedThisTurn &&
-      !state.powers?.freezeActive       // cannot be used while frozen
+      !state.powers?.freezeActive &&      // cannot be used while frozen
+      // Nor while the opening-miss lock forces the setter to keep their
+      // current secret this round (mirrors isOpeningMissSecretLocked in
+      // client.js) -- suggesting a DIFFERENT secret would be pointless at
+      // best and misleading at worst, since it could never actually be
+      // planted. rouletteSecretActive overrides the lock the same way it
+      // does for the setter's own typing.
+      (!state.simultaneousAllWrong || state.powers?.rouletteSecretActive)
     );
   }
 },
