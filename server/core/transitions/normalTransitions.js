@@ -3,7 +3,9 @@ const { emitRoomState } = require("../rooms");
 const { finalizeFeedback } = require("../../game-engine/finalizeFeedback");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
 const { clearForceTimer, registerForceTimer } = require("../../utils/forceTimer");
-const setterQuestServer = require("../../powers/powers/setterQuestServer");
+const spyChargeServer = require(
+  "../../powers/powers/spyChargeServer"
+);
 
 function transitionAfterGuess({ room, state, guess, roomId, context, io }) {
   const assassin = state.powers.assassinWord;
@@ -35,26 +37,33 @@ function transitionAfterGuess({ room, state, guess, roomId, context, io }) {
   // granted here already binds their choice via isConsistentWithHistory.
   context.powerEngine.onGuessSubmitted(state, guess, roomId, io);
 
-  // Setter Quest: fresh hint letter for the Keep/New decision the setter
-  // is about to face -- computed against the CURRENT secret and history
-  // so far (the secret hasn't been reacted to yet, so this exactly mirrors
-  // what "switching to a different feasible word" would mean right now).
-  // Passing `guess` lets it prefer a letter that isn't already in this
-  // pending guess, when there's a choice.
-  setterQuestServer.rollHintLetterForTurn(state, context.ALLOWED_SECRETS, guess);
-
   // The guesser just acted, resolving any Force Timer that was pressuring
   // them -- stop its ticking interval before the setter's turn begins.
   clearForceTimer(roomId, state);
 
   clearRoundState(state, "guesser");
 
+  // clearRoundState hands the turn to the Spy. Generate the private
+  // bonus-star target only after that turn switch.
+  spyChargeServer.rollHintForTurn(
+    state,
+    context.ALLOWED_SECRETS
+  );
+
   context.powerEngine.turnStart(state, state.turn, roomId, io);
   emitRoomState(roomId, room, io);
   return "continue";
 }
 
-function transitionAfterSecret({ room, state, secret, roomId, context, io }) {
+function transitionAfterSecret({
+  room,
+  state,
+  secret,
+  roomId,
+  context,
+  io,
+  spyChargeAward = null
+}) {
   state.secret = secret;
   state.simultaneousAllWrong = false;
   if (state.pendingGuess === secret) {
@@ -64,8 +73,20 @@ function transitionAfterSecret({ room, state, secret, roomId, context, io }) {
     return "gameOver";
   }
 
-  io.to(roomId).emit("secretPlanted");
+ io.to(roomId).emit("secretPlanted");
   finalizeFeedback(state, context.powerEngine, roomId, room, io);
+
+  // The pending guess is now a scored history row. Update the private
+  // charge total and tell only the Spy client how many stars to animate.
+  if (spyChargeAward) {
+    spyChargeServer.commitAward(
+      state,
+      spyChargeAward,
+      room,
+      io
+    );
+  }
+
   clearRoundState(state, "setter");
 
   if (state.powers.forceTimerArmed) {
