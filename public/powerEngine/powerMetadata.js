@@ -15,6 +15,13 @@ window.POWER_METADATA = {
     emoji: "🎯",
     color: "#F59E0B"
   },
+    spyChargeReset: {
+    label: "Cover Reset",
+    desc: "Erase one letter's feedback from every guess this round.",
+    short: "The Spy erased one letter's feedback from the round.",
+    emoji: "↺",
+    color: "#22d3ee"
+  }
   fieldReport: {
     label: "Field Report",
     desc: "Shows 3 secret rules for your next guess. Follow 2 of them for a free yellow letter, or all 3 for a free green letter!",
