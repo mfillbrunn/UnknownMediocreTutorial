@@ -600,14 +600,11 @@ function buildCoverStrengthState(
         )
       : null;
 
-  let gapPct = null;
-  let improvementPct = null;
+let gapPct = null;
   let stars = 0;
   let status = "available";
 
-  if (!hasUpgrade) {
-    status = "keep-best";
-  } else if (!draftComplete) {
+  if (!draftComplete) {
     status = "available";
   } else if (!draftValid) {
     status = "invalid";
@@ -616,54 +613,53 @@ function buildCoverStrengthState(
   } else if (draftIsPending) {
     status = "loses";
   } else if (
-    draftCount <=
-    analysis.keepCount
+    analysis.bestCount == null ||
+    analysis.bestCount <= 0
   ) {
-    /*
-     * Even a draft close to the best
-     * gets zero stars if it does not
-     * beat KEEP.
-     */
-    status = "weaker";
+    status = "unrated";
   } else {
     status = "rated";
 
-    const rawGapPct =
-      analysis.bestCount > 0
-        ? (
-            (
-              analysis.bestCount -
-              draftCount
-            ) /
-            analysis.bestCount
-          ) * 100
-        : 100;
-
-    gapPct = Math.max(
+    const rawGapPct = Math.max(
       0,
-      Math.round(
-        rawGapPct
-      )
+      (
+        (
+          analysis.bestCount -
+          draftCount
+        ) /
+        analysis.bestCount
+      ) * 100
     );
 
-    improvementPct =
-      analysis.keepCount > 0
-        ? Math.round(
-            (
-              (
-                draftCount -
-                analysis.keepCount
-              ) /
-              analysis.keepCount
-            ) * 100
-          )
-        : null;
+    gapPct = Math.round(
+      rawGapPct
+    );
 
-    stars =
-      starsForGap(
-        rawGapPct
-      );
+    stars = starsForGap(
+      rawGapPct,
+      draftCount
+    );
   }
+
+  const chargeHint =
+    state.powers?.spyCharge?.hint;
+
+  const bonusAvailable = !!(
+    chargeHint?.letter &&
+    Number.isInteger(
+      chargeHint.position
+    )
+  );
+
+  const bonusStar = !!(
+    bonusAvailable &&
+    draftValid &&
+    !draftIsCurrent &&
+    !draftIsPending &&
+    draft[
+      chargeHint.position
+    ] === chargeHint.letter
+  );
 
   return {
     visible: true,
@@ -690,8 +686,8 @@ function buildCoverStrengthState(
     draftIsPending,
     draftCount,
     draftGapPct: gapPct,
-    draftImprovementPct:
-      improvementPct
+    bonusAvailable,
+    bonusStar
   };
 }
 
