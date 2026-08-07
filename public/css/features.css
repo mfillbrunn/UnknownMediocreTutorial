@@ -2994,18 +2994,17 @@ body:has(#guesserScreen.active) #appMain {
 
 /*
   The blanket hide above also matches DESCENDANTS whose own class happens
-  to contain "quest" -- .setter-quest-hint-letter, .setter-quest-row,
-  .setter-quest-letters-row, and .setter-quest-progress-text all do -- so
-  exempting the card itself isn't enough, its children need their normal
-  `display` back too, or the stack silently renders invisible even though
-  the card wrapper shows.
+  to contain "quest" -- .setter-quest-hint-letter, .setter-quest-row, and
+  .setter-quest-progress-text all do -- so exempting the card itself isn't
+  enough, its children need their normal `display` back too, or the stack
+  silently renders invisible even though the card wrapper shows.
 */
-#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-hint-letter,
-#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-row,
-#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-letters-row {
+#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-row {
   display: flex !important;
 }
-#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-progress-text {
+#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-hint-letter,
+#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-progress-text,
+#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-hint-pos {
   display: inline !important;
 }
 
@@ -3023,11 +3022,10 @@ body:has(#guesserScreen.active) #appMain {
 
 /*
   Stacked: progress ("0/2" etc, plain text, no pill/box/chip treatment --
-  same weight/color as the letters, just dimmer) on its own line up top,
-  the two hint letters side by side (with some space between them) on the
-  line below. clamp() on the shared font-size shrinks everything together
-  so it never overflows the card -- min-width:0 throughout is required
-  for that shrinking to actually take effect in a flex layout.
+  same weight/color as the hint, just dimmer) on its own line up top, the
+  single hint (a letter with its required position as a small superscript,
+  e.g. "L" + superscript "2") on the line below. clamp() on the shared
+  font-size shrinks everything together so it never overflows the card.
 */
 .setter-quest-row {
   order: -1;
@@ -3037,15 +3035,6 @@ body:has(#guesserScreen.active) #appMain {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  width: 100%;
-  min-width: 0;
-}
-.setter-quest-letters-row {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  justify-content: center;
-  gap: 10px;
   width: 100%;
   min-width: 0;
 }
@@ -3068,6 +3057,12 @@ body:has(#guesserScreen.active) #appMain {
 }
 .setter-quest-hint-letter.setter-quest-hint-letter-empty {
   opacity: 0.45;
+}
+.setter-quest-hint-pos {
+  font-size: 0.55em;
+  font-weight: 800;
+  opacity: 0.8;
+  margin-left: 1px;
 }
 
 /*

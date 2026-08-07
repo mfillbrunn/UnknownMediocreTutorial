@@ -4,6 +4,13 @@ const { resetRoundTimer } = require("./Timer");
 function resetRoundState(room, state, roomId, context) {
   state.secret = "";
   state.pendingGuess = "";
+  // A leftover draft (typed, or filled by Secret Word Helper) from the
+  // round that just ended must not survive into the next one -- without
+  // this it's still sitting on `state` when the next round's setter role
+  // gets assigned, e.g. via a role swap, and safeState.js doesn't redact
+  // setterDraft, so the new setter (last round's guesser) would see the
+  // previous setter's leftover word pre-filled as their own.
+  state.setterDraft = "";
   state.gameOver = false;
   state.guessCount = 0;
   state.history = [];

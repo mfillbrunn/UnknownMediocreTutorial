@@ -475,7 +475,7 @@ function questWordAdvances(word, quest, state) {
       );
     }
     case "ALPHA":
-      return questServer.isAscendingWord(w);
+      return questServer.isAlphaOrderedWord(w);
     case "DOUBLES": {
       const d = questServer.doubledLetterOf(w);
       return !!d && !questServer.doublesSeen(history).has(d);
@@ -500,8 +500,6 @@ function questWordAdvances(word, quest, state) {
       return questServer.isAlternatingWord(w);
     case "BOOKENDS":
       return questServer.isBookendWord(w);
-    case "REVERSEALPHA":
-      return questServer.isReverseAlphaWord(w);
     case "HALF_AM":
       return questServer.isInLetterRange(w, "A", "P");
     case "HALF_NZ":

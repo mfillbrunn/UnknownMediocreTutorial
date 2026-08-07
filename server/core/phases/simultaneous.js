@@ -5,6 +5,7 @@ const { endGame } = require("./gameOver");
 const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
 const { emitRoomState } = require("../rooms");
+const questServer = require("../../powers/powers/questServer");
 
 function handleSimultaneousPhase(room, state, action, roomId, context) {
   const io = context.io;
@@ -22,6 +23,20 @@ function handleSimultaneousPhase(room, state, action, roomId, context) {
       state.guessCount += CONCEDE_PENALTY;
     }
     endGame(state, roomId, io, room, context);
+    return;
+  }
+
+  // Guesser picks their Quest for this round -- only ever pending right
+  // after a round transition left them without one (see
+  // nextRoundTransition.js), never during round 1 (round 1's guesser
+  // already has a quest.type by the time this phase even starts, chosen
+  // pre-match via the draft screen or picked at random -- see
+  // competitiveMode.js's onLobbyReady). Must resolve before they can
+  // submit their opening guess (see the SUBMIT_GUESS guard below).
+  if (action.type === "CHOOSE_QUEST" && userId === state.guesser) {
+    if (questServer.chooseQuestType(state, userId, action.quest)) {
+      emitRoomState(roomId, room, io);
+    }
     return;
   }
 
@@ -61,6 +76,11 @@ function handleSimultaneousPhase(room, state, action, roomId, context) {
 
   // Guesser submits initial guess
   if (action.type === "SUBMIT_GUESS" && userId === state.guesser) {
+    if (state.powers?.quest?.pendingChoice) {
+      if (socketId) io.to(socketId).emit("errorMessage", "Choose your Quest for this round first.");
+      return;
+    }
+
     const res = checkGuess({
       guess: action.guess,
       state,

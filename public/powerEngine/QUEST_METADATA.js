@@ -29,11 +29,11 @@ window.QUEST_METADATA = {
     examples: ["QUACK", "VIXEN", "WACKY"]
   },
   ALPHA: {
-    label: "In Order",
-    desc: "Submit 3 guesses whose letters are in strict alphabetical order: A -> Z.",
+    label: "Alphabetical Order",
+    desc: "Submit 3 guesses whose letters are in strict alphabetical order, either direction: ascending A -> Z (e.g. ABHOR) or descending Z -> A (e.g. POLKA).",
     emoji: "🔤",
     color: "#16A34A",
-    examples: ["ABHOR", "CHOPS", "DIRTY"]
+    examples: ["ABHOR", "POLKA", "CHOPS"]
   },
   DOUBLES: {
     label: "Double Trouble",
@@ -74,13 +74,6 @@ window.QUEST_METADATA = {
     emoji: "📚",
     color: "#16A34A",
     examples: ["SEEDS", "LEVEL", "STATS"]
-  },
-  REVERSEALPHA: {
-    label: "Reverse Order",
-    desc: "Submit 3 guesses whose letters are in strict descending alphabetical order: Z -> A.",
-    emoji: "🔃",
-    color: "#16A34A",
-    examples: ["TRIED", "PLIED", "TONED"]
   },
   HALF_AM: {
     label: "A to P",

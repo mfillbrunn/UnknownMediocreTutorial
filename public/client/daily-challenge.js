@@ -178,6 +178,17 @@ window.showDailyChallenge = async function () {
     ? `<span class="daily-power-pill quest daily-pill-info" data-quest="${config.questType}">${questMeta.emoji || "🎯"} ${questMeta.label} <span class="daily-pill-info-icon">ⓘ</span></span>`
     : "";
 
+  // Round 2's Inspector doesn't just inherit round 1's quest anymore --
+  // they pick between 2 fresh options mid-match (see
+  // nextRoundTransition.js / client/quest-choice.js). Same two options for
+  // everyone attempting today's puzzle (deterministically seeded, see
+  // dailyConfig.js), previewed here so the round-1-only pill above doesn't
+  // read as the whole day's Quest story.
+  const round2Pills = (config.questTypeRound2Choices || []).map(t => {
+    const m = window.QUEST_METADATA?.[t];
+    return `<span class="daily-power-pill quest daily-pill-info" data-quest="${t}">${m?.emoji || "🎯"} ${m?.label || t} <span class="daily-pill-info-icon">ⓘ</span></span>`;
+  }).join("");
+
   screen.innerHTML = `
     <div class="menu-center">
       <div class="screen-back-header">
@@ -199,6 +210,11 @@ window.showDailyChallenge = async function () {
         <div class="daily-powers-row">
           <span class="daily-role-label quest">Quest</span>
           <div class="daily-powers">${questPill}</div>
+        </div>` : ""}
+        ${round2Pills ? `
+        <div class="daily-powers-row">
+          <span class="daily-role-label quest">Round 2</span>
+          <div class="daily-powers">${round2Pills}</div>
         </div>` : ""}
       </div>
 

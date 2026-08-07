@@ -282,6 +282,7 @@ if (action.type === "SET_DAILY_POWERS") {
     state._dailySecret = daily.secretWord;
     state._dailyOpeningGuess = daily.openingGuess;
     state._dailyQuestType = daily.questType;
+    state._dailyQuestRound2Choices = daily.questTypeRound2Choices || null;
   }
   return;
 }
@@ -410,6 +411,7 @@ if (action.mode === "advanced") {
      freshState._dailySecret = state._dailySecret || null;
      freshState._dailyOpeningGuess = state._dailyOpeningGuess || null;
      freshState._dailyQuestType = state._dailyQuestType || null;
+     freshState._dailyQuestRound2Choices = state._dailyQuestRound2Choices || null;
      freshState._devSetterPowers = state._devSetterPowers || null;
      freshState._devGuesserPowers = state._devGuesserPowers || null;
      freshState._replaySetterPowers = state._replaySetterPowers || null;

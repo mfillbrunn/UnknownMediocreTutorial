@@ -105,6 +105,14 @@ state.matchRounds.push({
  */
 clearForceTimer(roomId, state);
 clearRoundPowerActivity(state);
+// A win can land here straight from an early-return branch (assassin hit,
+// correct guess, or a just-submitted secret matching the pending guess)
+// that never went through clearRoundState's own setterDraft reset --
+// without this, a leftover typed/Secret-Word-Helper draft would keep
+// broadcasting to every viewer (safeState.js doesn't redact setterDraft)
+// for as long as the summary screen is up, and resetRoundState only
+// clears it once "Next Round" is actually clicked.
+state.setterDraft = "";
   const res = state.mode?.onRoundEnd?.(state) || {
     view: "match",
     canNextRound: false

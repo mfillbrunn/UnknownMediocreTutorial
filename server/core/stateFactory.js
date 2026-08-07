@@ -164,12 +164,19 @@ const powers = {
       },
       revealLetterActive: false,
       // QUEST (always-on guesser mechanic, see questServer.js). type is
-      // chosen once per match by CompetitiveMode and preserved across the
-      // round-2 role swap by postGame.js -- ready/used/conditions reset
-      // every round like the rest of state.powers. conditions is only
-      // used by the FIELDREPORT quest type, regenerated fresh each round.
+      // chosen once per match by CompetitiveMode for round 1's guesser.
+      // Round 2's guesser is always a DIFFERENT player (the standard
+      // 2-round match swaps setter/guesser every round) -- rather than
+      // inheriting round 1's quest, nextRoundTransition.js instead offers
+      // them pendingChoice: 2 freshly-randomized candidate types to pick
+      // between (see questServer.js's chooseQuestType / CHOOSE_QUEST
+      // action), null once resolved. type stays null while a choice is
+      // outstanding. ready/used/conditions reset every round like the
+      // rest of state.powers. conditions is only used by the FIELDREPORT
+      // quest type, regenerated fresh each round.
       quest: {
         type: null,
+        pendingChoice: null,
         ready: false,
         used: false,
         oneAway: false,
@@ -180,15 +187,13 @@ const powers = {
       // SETTER QUEST (always-on setter mechanic, see setterQuestServer.js).
       // Replaces the setter's second power slot -- see lobby.js/draft.js,
       // where the setter's regular power pool was cut from 2 down to 1.
-      // hintLetters (0-2 entries) is recomputed every time the setter gets
-      // a fresh Keep/New decision (never shown to the guesser -- redacted
-      // in safeState.js); progress advances by 1 per hint letter the
-      // setter's new secret contains (so matching both in one switch is
-      // worth 2). Progress is NOT capped at the 2-point reward threshold
-      // -- claiming the reward subtracts 2 rather than resetting to 0, so
-      // overflow carries into the next cycle instead of being wasted.
+      // hint ({letter, position} or null) is recomputed every time the
+      // setter gets a fresh Keep/New decision (never shown to the guesser
+      // -- redacted in safeState.js); progress advances by 1 when the
+      // setter's new secret has that exact letter in that exact position.
+      // At the 2-point reward threshold, claiming resets progress to 0.
       setterQuest: {
-        hintLetters: [],
+        hint: null,
         progress: 0
       },
       setterQuestActive: false,

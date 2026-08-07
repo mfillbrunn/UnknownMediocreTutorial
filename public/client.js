@@ -478,6 +478,11 @@ case "gameOverShowMenu":
 onStateUpdate(newState => {
   const prevPhase = state?.phase;
   const prevSetterDraft = state?.setterDraft || "";
+  // Whether the setter has actually typed/deleted anything this turn --
+  // distinct from prevSetterDraft itself being empty, since "never touched"
+  // and "typed then cleared back to empty" both collapse to the same "" and
+  // draftrow.js needs to tell them apart (see setterDraftTouched below).
+  const prevSetterDraftTouched = !!state?.setterDraftTouched;
   const prevHistoryLen = state?.history?.length ?? -1;
   const prevPendingGuess = state?.pendingGuess || "";
   const wasOpeningMissLocked =
@@ -519,6 +524,7 @@ onStateUpdate(newState => {
   if (leftSimultaneous) {
     localGuesserDraft = "";
     state.setterDraft = "";
+    state.setterDraftTouched = false;
 
     guesserDraftLocks.clear();
     setterDraftLocks.clear();
@@ -648,8 +654,10 @@ onStateUpdate(newState => {
   const stillSameDecision = (state.history?.length ?? 0) === prevHistoryLen;
   if (setterCanEdit && stillSameDecision) {
     state.setterDraft = prevSetterDraft;
+    state.setterDraftTouched = prevSetterDraftTouched;
   } else if (!setterCanEdit) {
     state.setterDraft = "";
+    state.setterDraftTouched = false;
     // Locks are only meant to survive repeated rejections within the same
     // decision turn -- once that turn actually ends, stale locks from it
     // shouldn't silently carry into whatever comes next.
@@ -708,6 +716,7 @@ function updateUI() {
   // meaningful to the guesser actually working toward it -- the setter's
   // copy stays the read-only text badge.
   window.updateQuestBadge?.(state, myRole);
+  window.updateQuestChoiceModal?.(state, myRole);
   if (myRole === "guesser") window.maybeShowQuestProgressPop?.(state);
   window.updateSetterQuestBadge?.(state, myRole);
   if (state.phase !== "lobby") hide("lobby");
@@ -1719,6 +1728,13 @@ function handleSetterInput(event) {
 
     if (isEditing && !state.setterDraft) {
       state.setterDraft = "";
+    }
+    // Any actual typing/deleting this turn means the draft row should
+    // render whatever's really in state.setterDraft from here on --
+    // including empty -- instead of draftrow.js falling back to showing
+    // the current secret as a ghost placeholder.
+    if (isEditing) {
+      state.setterDraftTouched = true;
     }
 
     const draft = state.setterDraft || "";
