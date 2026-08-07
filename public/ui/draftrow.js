@@ -40,6 +40,54 @@ window.renderDraftRows = function ({
         row.__tiles.push(tile);
         row.appendChild(tile);
       }
+
+      if (
+        isEditableDraft &&
+        role === "setter"
+      ) {
+        const strength =
+          document.createElement(
+            "div"
+          );
+
+        strength.id =
+          "setterCoverStrength";
+
+        strength.className =
+          "cover-strength hidden";
+
+        strength.setAttribute(
+          "aria-live",
+          "polite"
+        );
+
+        strength.innerHTML = `
+          <span
+            class="cover-strength-stars"
+            aria-hidden="true"
+          >
+            <span
+              class="cover-strength-star"
+              data-cover-star
+            >★</span>
+            <span
+              class="cover-strength-star"
+              data-cover-star
+            >★</span>
+            <span
+              class="cover-strength-star"
+              data-cover-star
+            >★</span>
+          </span>
+
+          <span
+            class="cover-strength-text"
+          ></span>
+        `;
+
+        row.appendChild(strength);
+      }
+
       return row;
     }
 
