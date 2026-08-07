@@ -163,6 +163,15 @@ const powers = {
       mode : null
       },
       revealLetterActive: false,
+            // SPY COVER-STRENGTH CHARGE
+      spyCharge: {
+        enabled: false,
+        total: 0,
+        hint: null,
+        lockedPowerId: null,
+        resetsUsed: 0,
+        resetLetters: []
+      },
       // QUEST (always-on guesser mechanic, see questServer.js). type is
       // chosen once per match by CompetitiveMode for round 1's guesser.
       // Round 2's guesser is always a DIFFERENT player (the standard
