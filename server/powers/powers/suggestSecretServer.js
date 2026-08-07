@@ -35,9 +35,19 @@ engine.registerPower("suggestSecret", {
 
     let candidates = feasible;
 
-    if (feasible.length > 1 && state.pendingGuess) {
+    if (candidates.length > 1 && state.secret) {
+      const upperSecret = state.secret.toUpperCase();
+      const filtered = candidates.filter(
+        (w) => w.toUpperCase() !== upperSecret
+      );
+      if (filtered.length > 0) {
+        candidates = filtered;
+      }
+    }
+
+    if (candidates.length > 1 && state.pendingGuess) {
       const upperPending = state.pendingGuess.toUpperCase();
-      const filtered = feasible.filter(
+      const filtered = candidates.filter(
         (w) => w.toUpperCase() !== upperPending
       );
       if (filtered.length > 0) {

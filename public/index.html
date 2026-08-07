@@ -879,6 +879,10 @@
             </div>
             <!-- KEYBOARD AREA-->
              <div id="SetterMustContainBox" class="must-contain-box" hidden></div>
+             <!-- Shown while a "tap a letter key to pick it" flow is armed
+                  (Hide Evidence, Setter Quest reward) -- see client.js's
+                  setKeyboardPickHint. -->
+             <div id="setterKeyboardPickHint" class="keyboard-pick-hint hidden"></div>
            <div id="keyboardSetter" class="keyboard"></div>
          </main>
          <!---Modals--->
@@ -1263,6 +1267,7 @@
   <script src="powerEngine/powers/revealPenalty.js"></script>
   <script src="powerEngine/powers/fieldReport.js"></script>
   <script src="client/quest.js"></script>
+  <script src="client/quest-guide.js"></script>
   <script src="client/quest-choice.js"></script>
   <script src="client/setter-quest.js"></script>
   <script src="client/tutorial-quest.js"></script>

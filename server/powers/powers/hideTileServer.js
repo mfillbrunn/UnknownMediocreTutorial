@@ -6,6 +6,7 @@
 // (entry.fb / entry.fbGuesser set to "" — same erase-not-mask treatment as
 // Vowel Refresh), not just redacted for one side. Usable twice per match.
 const engine = require("../powerEngineServer.js");
+const { isConsistentWithHistory } = require("../../game-engine/history");
 
 engine.registerPower("hideTile", {
   apply(state, action, roomId, io) {
@@ -42,6 +43,16 @@ engine.registerPower("hideTile", {
     state.powers.hideTileUsed = state.powers.hideTileUses >= 2;
     state.powers.hideTileActive = true;
     state.powers.hideTileLetters = [...(state.powers.hideTileLetters || []), letter];
+
+    // Erasing feedback shrinks/changes the set of words consistent with
+    // history -- if the guesser has an active Break Cover (rouletteSecret)
+    // spin running off the pre-erase feasible list, it's now stale (see
+    // vowelRefreshServer.js, which does the same recompute).
+    if (state.powers?.rouletteSecretActive) {
+      state.powers.rouletteSecretFeasible = global.ALLOWED_SECRETS.filter(secret =>
+        isConsistentWithHistory(state.history, secret, state)
+      );
+    }
 
     io.to(roomId).emit("powerUsed", { type: "hideTile", letter });
   }

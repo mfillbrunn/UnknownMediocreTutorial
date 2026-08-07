@@ -157,6 +157,26 @@ function shakeDraftRow(role) {
     setTimeout(() => keyboard.classList.remove("shake"), 220);
   }
 }
+
+// Small transparent hint bubble shown above the setter's keyboard whenever
+// a "tap a letter key to pick it" flow is armed (Hide Evidence, Setter
+// Quest's reward) -- the keyboard's own pulsing outline (see
+// #keyboardSetter.keyboard-picking-hide in powers.css) wasn't obvious
+// enough on its own for what tapping a key was actually about to do.
+// Shared by both callers since only one of them is ever meaningfully armed
+// at a time in normal play.
+function setKeyboardPickHint(active, text) {
+  const el = $("setterKeyboardPickHint");
+  if (!el) return;
+  if (active) {
+    el.textContent = text || "Pick a letter from the keyboard";
+    el.classList.remove("hidden");
+  } else {
+    el.classList.add("hidden");
+  }
+}
+window.setKeyboardPickHint = setKeyboardPickHint;
+
 let lastOpeningMissLockNoticeAt = 0;
 
 function isOpeningMissSecretLocked() {
@@ -381,6 +401,16 @@ let powerQueue = [];
 // every guess.
 const AMBIENT_POWER_FX_SKIP = new Set(["revealLocation"]);
 
+// Powers that erase already-scored feedback (see vowelRefreshServer.js,
+// hideTileServer.js, setterQuestServer.js's applyReward): each recomputes
+// state.powers.rouletteSecretFeasible server-side when a Break Cover
+// (rouletteSecret) spin is active, since the erase can change which words
+// are still consistent with history. Gate the client's restart on the
+// power that actually just fired, not just "has ever fired", so an
+// unrelated power use later in the match doesn't needlessly restart the
+// spin.
+const FEEDBACK_ERASING_POWERS = new Set(["vowelRefresh", "hideTile", "setterQuest"]);
+
 onPowerUsed(data => {
   if (!PowerEngine._initialized) {
     powerQueue.push(data);
@@ -392,10 +422,10 @@ onPowerUsed(data => {
   const mod = PowerEngine.powers[data.type];
   mod?.effects?.onPowerUsed?.(data);
   PowerEngine.updateButtonStates(state, myRole, myUserId());
-  if (state.powers?.vowelRefreshActive && state.powers?.rouletteSecretActive){
+  if (FEEDBACK_ERASING_POWERS.has(data.type) && state.powers?.rouletteSecretActive) {
     stopSecretRoulette();
     startSecretRoulette(state.powers.rouletteSecretFeasible);
-    }
+  }
 });
 
 
@@ -1394,6 +1424,18 @@ function updateSetterPreview() {
   if (filledCount === 5 && !typed.includes(" ")) {
     fb = predictFeedback(typed, guess);
   } else if (filledCount === 0) {
+    // Falling back to the CURRENT secret here only makes sense before the
+    // setter has touched their draft this turn (the implicit "keep as-is"
+    // default -- matches draftrow.js's own ghost-secret fallback). Once
+    // they've typed something and deliberately cleared it back to empty
+    // (setterDraftTouched, see the #285 fix), nothing is decided anymore --
+    // showing colors derived from the secret they just moved away from
+    // would misleadingly look like a live prediction of a plan that no
+    // longer exists.
+    if (state.setterDraftTouched) {
+      clearSetterPreview();
+      return;
+    }
     fb = predictFeedback(state.secret, guess);
   } else {
     fb = predictFeedbackIncomplete(typed, guess);
@@ -1978,6 +2020,7 @@ if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserS
     isGuesser: true,
     onInput: handleGuesserInput
   });
+  window.applyQuestGuideHighlight?.($("keyboardGuesser"), localGuesserDraft, state.powers?.quest?.type);
 }
 }
 

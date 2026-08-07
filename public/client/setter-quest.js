@@ -26,6 +26,7 @@
     _badge?.btn.classList.toggle("power-armed", armed);
     const kb = document.getElementById("keyboardSetter");
     kb?.classList.toggle("keyboard-picking-hide", armed);
+    window.setKeyboardPickHint?.(armed, "Pick a letter from the keyboard to erase its clues");
   }
 
   window.setterQuestKbActive = function () {
