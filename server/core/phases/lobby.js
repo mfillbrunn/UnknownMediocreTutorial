@@ -502,8 +502,9 @@ if (action.mode === "advanced") {
       state.draftCandidates = {};
       state.draftPicks = {};
       // Guesser-only: a separate offer/pick pair for Quests, alongside
-      // (not instead of) their power draft -- setter is untouched (still
-      // offered 3 powers, picks 2).
+      // (not instead of) their power draft -- setter picks powers only
+      // (offered 2, picks 1 -- see below), their second slot is the
+      // always-on Setter Quest badge instead.
       state.draftQuestCandidates = {};
       state.draftQuestPicks = {};
       state.draftDone = {};
