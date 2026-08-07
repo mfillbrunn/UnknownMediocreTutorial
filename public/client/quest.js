@@ -58,6 +58,12 @@ function questIsReverseAlphaWord(word) {
   return true;
 }
 
+// ALPHA counts either direction -- ascending (ABHOR) or descending
+// (POLKA) -- mirrors questServer.js's isAlphaOrderedWord.
+function questIsAlphaOrderedWord(word) {
+  return questIsAscendingWord(word) || questIsReverseAlphaWord(word);
+}
+
 function questIsInLetterRange(word, minLetter, maxLetter) {
   const min = minLetter.charCodeAt(0);
   const max = maxLetter.charCodeAt(0);
@@ -225,7 +231,7 @@ function computeQuestStatus(state) {
   }
 
   if (q.type === "ALPHA") {
-    const count = history.filter(h => questIsAscendingWord((h.guess || "").toUpperCase())).length;
+    const count = history.filter(h => questIsAlphaOrderedWord((h.guess || "").toUpperCase())).length;
     return { meta, label: `${count}/3`, desc: meta.desc, done: false };
   }
 
@@ -281,11 +287,6 @@ function computeQuestStatus(state) {
       const w = (h.guess || "").toUpperCase();
       return w.length === 5 && w[0] === w[4];
     }).length;
-    return { meta, label: `${count}/3`, desc: meta.desc, done: false };
-  }
-
-  if (q.type === "REVERSEALPHA") {
-    const count = history.filter(h => questIsReverseAlphaWord((h.guess || "").toUpperCase())).length;
     return { meta, label: `${count}/3`, desc: meta.desc, done: false };
   }
 
@@ -349,7 +350,6 @@ const QUEST_ICON_IDS = {
   FIELDREPORT: "quest-field-report",
   ALTERNATING: "quest-zigzag",
   BOOKENDS: "quest-bookends",
-  REVERSEALPHA: "quest-reverse-order",
   HALF_AM: "quest-a-to-p",
   HALF_NZ: "quest-k-to-z",
   VOWELSHORTAGE: "quest-vowel-shortage"

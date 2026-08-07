@@ -31,8 +31,10 @@
 //     direction counts).
 //   - BOOKENDS: 3 guesses whose first and last letter are identical
 //     (SEEDS, LEVEL).
-//   - REVERSEALPHA: ALPHA's mirror image -- 3 guesses whose letters are
-//     in strict *descending* alphabetical order.
+//   - ALPHA: 3 guesses whose letters are in strict alphabetical order --
+//     either ascending (ABHOR) or descending (POLKA) both count, checked
+//     independently per guess (a 5-letter word can never satisfy both at
+//     once, so there's no double-counting risk).
 //   - HALF_AM / HALF_NZ: 3 guesses using only letters from the first or
 //     second half of the alphabet respectively.
 //   - VOWELSHORTAGE: 4 guesses (not necessarily consecutive) that each
@@ -43,7 +45,7 @@ const { generateConditions } = require("./fieldReportServer.js");
 
 const QUEST_TYPES = [
   "ROW", "RARE", "ALPHA", "DOUBLES", "CHAIN", "HARDMODE", "FIELDREPORT",
-  "ALTERNATING", "BOOKENDS", "REVERSEALPHA", "HALF_AM", "HALF_NZ", "VOWELSHORTAGE"
+  "ALTERNATING", "BOOKENDS", "HALF_AM", "HALF_NZ", "VOWELSHORTAGE"
 ];
 
 // Per-type "how many qualifying guesses does this quest need" -- shared by
@@ -63,7 +65,6 @@ const QUEST_THRESHOLDS = {
   FIELDREPORT: 8,
   ALTERNATING: 3,
   BOOKENDS: 3,
-  REVERSEALPHA: 3,
   HALF_AM: 3,
   HALF_NZ: 3,
   VOWELSHORTAGE: 4
@@ -113,6 +114,15 @@ function isAscendingWord(word) {
     if (word.charCodeAt(i) <= word.charCodeAt(i - 1)) return false;
   }
   return true;
+}
+
+// ALPHA counts a guess whose letters are in strict alphabetical order in
+// EITHER direction -- ascending (ABHOR) or descending (POLKA). A word can
+// never satisfy both at once (that would require every adjacent pair to be
+// both strictly increasing and strictly decreasing), so there's no risk of
+// double-counting a single guess.
+function isAlphaOrderedWord(word) {
+  return isAscendingWord(word) || isReverseAlphaWord(word);
 }
 
 // BOOKENDS' condition (first letter === last letter, e.g. SEEDS).
@@ -234,7 +244,7 @@ function isQuestOneAway(quest, state) {
     case "ROW":
       return rowCoverage(history).some(({ row, used }) => row.size - used.size === 1);
     case "ALPHA":
-      return history.filter(h => isAscendingWord(h.guess.toUpperCase())).length
+      return history.filter(h => isAlphaOrderedWord(h.guess.toUpperCase())).length
         === QUEST_THRESHOLDS.ALPHA - 1;
     case "DOUBLES":
       return doublesSeen(history).size === QUEST_THRESHOLDS.DOUBLES - 1;
@@ -257,9 +267,6 @@ function isQuestOneAway(quest, state) {
     case "BOOKENDS":
       return history.filter(h => isBookendWord(h.guess.toUpperCase())).length
         === QUEST_THRESHOLDS.BOOKENDS - 1;
-    case "REVERSEALPHA":
-      return history.filter(h => isReverseAlphaWord(h.guess.toUpperCase())).length
-        === QUEST_THRESHOLDS.REVERSEALPHA - 1;
     case "HALF_AM":
       return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "A", "P")).length
         === QUEST_THRESHOLDS.HALF_AM - 1;
@@ -403,7 +410,7 @@ function isQuestReady(quest, history) {
     case "ROW":
       return rowCoverage(history).some(({ row, used }) => used.size >= row.size);
     case "ALPHA":
-      return history.filter(h => isAscendingWord(h.guess.toUpperCase())).length
+      return history.filter(h => isAlphaOrderedWord(h.guess.toUpperCase())).length
         >= QUEST_THRESHOLDS.ALPHA;
     case "DOUBLES":
       return doublesSeen(history).size >= QUEST_THRESHOLDS.DOUBLES;
@@ -426,9 +433,6 @@ function isQuestReady(quest, history) {
     case "BOOKENDS":
       return history.filter(h => isBookendWord(h.guess.toUpperCase())).length
         >= QUEST_THRESHOLDS.BOOKENDS;
-    case "REVERSEALPHA":
-      return history.filter(h => isReverseAlphaWord(h.guess.toUpperCase())).length
-        >= QUEST_THRESHOLDS.REVERSEALPHA;
     case "HALF_AM":
       return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "A", "P")).length
         >= QUEST_THRESHOLDS.HALF_AM;
@@ -687,6 +691,7 @@ module.exports = {
   isReverseAlphaWord,
   isInLetterRange,
   isAscendingWord,
+  isAlphaOrderedWord,
   isBookendWord,
   doubledLetterOf,
   computeVowelShortageCount,
