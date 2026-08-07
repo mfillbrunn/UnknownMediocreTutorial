@@ -7,9 +7,8 @@ const { advanceToNextRound } = require("../transitions/nextRoundTransition");
 const { emitRoomState } = require("../rooms");
 const { scoreGuess } = require("../../game-engine/scoring");
 const { clearForceTimer } = require("../../utils/forceTimer");
-const { computeRemainingNew } = require("../../utils/remainingWords");
 const questServer = require("../../powers/powers/questServer");
-const setterQuestServer = require("../../powers/powers/setterQuestServer");
+const spyChargeServer = require(  "../../powers/powers/spyChargeServer");
 const revealPenaltyServer = require("../../powers/powers/revealPenaltyServer");
 
 function handleNormalPhase(room, state, action, roomId, context) {
@@ -63,10 +62,27 @@ function handleNormalPhase(room, state, action, roomId, context) {
   // Same standing-option shape as USE_QUEST above -- not gated by
   // state.powerUsedThisTurn, so it never competes with the setter's other,
   // separately-drafted power for the same turn's budget.
-  if (action.type === "USE_SETTER_QUEST_RESET") {
-    if (setterQuestServer.attemptReward(state, userId, action.letter, roomId, io)) {
-      emitRoomState(roomId, room, io);
+if (
+    action.type ===
+    "USE_SPY_CHARGE_RESET"
+  ) {
+    if (
+      spyChargeServer.attemptReset(
+        state,
+        userId,
+        action.letter,
+        roomId,
+        io,
+        context.ALLOWED_SECRETS
+      )
+    ) {
+      emitRoomState(
+        roomId,
+        room,
+        io
+      );
     }
+
     return;
   }
 
@@ -301,27 +317,15 @@ if (setterSocketId) {
       );
       return;
     }
+    const spyChargeAward =
+      !state.powers.doubleGuessPending
+        ? spyChargeServer.evaluateSecretChange(
+            state,
+            secret,
+            context.ALLOWED_SECRETS
+          )
+        : null;
 
-    // Reward nudge: when the setter actually changes their secret (as
-    // opposed to keeping it), show them privately how much more (or less)
-    // ambiguous the new pick leaves things vs. what keeping the old secret
-    // would have, both evaluated against this same pending guess. This is
-    // the exact old/new pair already live in their remaining-words box
-    // (getRemainingWordInfo in remainingWords.js) -- just captured at the
-    // moment of commit rather than continuously while typing. Only fires
-    // on an actual improvement (more remaining secrets = harder for the
-    // guesser), and only to the setter's own socket -- never broadcast, so
-    // it can't leak anything to the guesser.
-    if (action.type === "SET_SECRET_NEW") {
-      const oldCount = computeRemainingNew(state.secret, state, context.ALLOWED_SECRETS);
-      const newCount = computeRemainingNew(secret, state, context.ALLOWED_SECRETS);
-      if (oldCount != null && newCount != null && newCount > oldCount) {
-        const setterSocketId = room.playersByUserId?.[state.setter]?.socketId;
-        if (setterSocketId) {
-          io.to(setterSocketId).emit("secretChangeReward", { diff: newCount - oldCount });
-        }
-      }
-    }
 
     // Stats bookkeeping (My Games stats screen): capture the very first
     // secret this round regardless of action type -- that's the round's
@@ -331,10 +335,13 @@ if (setterSocketId) {
     if (state.initialSecretThisRound == null) {
       state.initialSecretThisRound = secret;
     }
-    if (action.type === "SET_SECRET_NEW" && secret !== state.secret) {
-      state.secretChangeCount = (state.secretChangeCount || 0) + 1;
-      setterQuestServer.creditSecretChange(state, secret);
-    }
+  if (
+        action.type === "SET_SECRET_NEW" &&
+        secret !== state.secret
+      ) {
+        state.secretChangeCount =
+          (state.secretChangeCount || 0) + 1;
+      }
 
     if (state.roundStartTime && state.timeUsed?.[state.setter] != null) {
       state.timeUsed[state.setter] += Math.floor((Date.now() - state.roundStartTime) / 1000);
@@ -355,7 +362,8 @@ if (setterSocketId) {
       secret,
       roomId,
       context,
-      io
+      io,
+      spyChargeAward
     });
     return;
   }
@@ -384,6 +392,10 @@ if (setterSocketId) {
     if (
       callerOwnsThisPower &&
       callerHasThisPowerInLoadout &&
+      !spyChargeServer.isPowerLocked(
+        state,
+        powerId
+      ) &&
       !state.powerUsedThisTurn &&
       isPowerAllowed(powerId, state)
     ) {
