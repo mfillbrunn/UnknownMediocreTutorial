@@ -174,17 +174,12 @@ function ordinal(n) {
   return n + (suffixes[(rem100 - 20) % 10] || suffixes[rem100] || suffixes[0]);
 }
 
-function renderSetterRemainingBox(
-  boxState
-) {
-  renderSetterCoverStrength(
+function renderSetterRemainingBox(boxState) {
+  window.renderSetterCoverStars?.(
     boxState?.coverStrength
   );
 
-  const box =
-    document.getElementById(
-      "SetterRemainingBox"
-    );
+  const box = document.getElementById("SetterRemainingBox");
   if (!box) return;
 
   // This box's live updates arrive over their own socket event (see
