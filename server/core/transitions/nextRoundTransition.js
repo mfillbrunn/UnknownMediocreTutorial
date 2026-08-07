@@ -16,7 +16,7 @@ const { emitLobbyEvent } = require("../../utils/emitLobby");
 const resetRoundState = require("../../utils/resetRoundState");
 const { emitRoomState } = require("../rooms");
 const { ensureQuestConditions, pickTwoRandomQuestTypes } = require("../../powers/powers/questServer");
-
+const spyChargeServer = require(  "../../powers/powers/spyChargeServer");
 // Performs the round-to-round transition (role swap via mode.onNextRound,
 // round-scoped state reset, timer restart).
 function advanceToNextRound(room, state, roomId, context) {
@@ -86,8 +86,11 @@ function advanceToNextRound(room, state, roomId, context) {
   // actual choice instead of inheriting round 1's quest.
   if (state.isTutorial || !guesserChanged) {
     state.powers.quest.type = savedQuestType || null;
+  ensureQuestConditions(state);
+    spyChargeServer.initializeForRound(
+      state
+    );
     state.powers.quest.pendingChoice = null;
-    ensureQuestConditions(state);
   } else {
     // Daily Challenge: same two options for every player attempting
     // today's puzzle (deterministically seeded, see dailyConfig.js) --
