@@ -45,47 +45,42 @@ window.renderDraftRows = function ({
         isEditableDraft &&
         role === "setter"
       ) {
-        const strength =
+        const stars =
           document.createElement(
             "div"
           );
 
-        strength.id =
-          "setterCoverStrength";
+        stars.id =
+          "setterCoverStars";
 
-        strength.className =
-          "cover-strength hidden";
+        stars.className =
+          "setter-cover-stars hidden";
 
-        strength.setAttribute(
+        stars.setAttribute(
           "aria-live",
           "polite"
         );
 
-        strength.innerHTML = `
+        stars.innerHTML = `
           <span
-            class="cover-strength-stars"
-            aria-hidden="true"
-          >
-            <span
-              class="cover-strength-star"
-              data-cover-star
-            >★</span>
-            <span
-              class="cover-strength-star"
-              data-cover-star
-            >★</span>
-            <span
-              class="cover-strength-star"
-              data-cover-star
-            >★</span>
-          </span>
-
+            class="setter-cover-star"
+            data-cover-star
+          >★</span>
           <span
-            class="cover-strength-text"
-          ></span>
+            class="setter-cover-star"
+            data-cover-star
+          >★</span>
+          <span
+            class="setter-cover-star"
+            data-cover-star
+          >★</span>
+          <span
+            class="setter-cover-bonus-star"
+            data-cover-bonus-star
+          >★</span>
         `;
 
-        row.appendChild(strength);
+        row.appendChild(stars);
       }
 
       return row;
