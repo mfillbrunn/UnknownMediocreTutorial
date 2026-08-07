@@ -3589,6 +3589,14 @@ body:has(#guesserScreen.active) #appMain {
 
   pointer-events: none;
   white-space: nowrap;
+
+  /* Idle motion while this sits above the setter's still-editable draft
+     row, i.e. the whole time before that secret gets submitted -- once
+     submitted the draft row (and this element along with it) goes away,
+     so there's no "stop floating on submit" case to handle separately.
+     .zero-award-pulse below has higher specificity (id + class) and
+     fully replaces this animation for its one-shot burst. */
+  animation: cover-star-float 2600ms ease-in-out infinite;
 }
 
 #setterCoverStars.hidden {
@@ -3642,6 +3650,11 @@ body:has(#guesserScreen.active) #appMain {
   0% { transform: translateX(-50%) scale(1); opacity: 1; }
   45% { transform: translateX(-50%) scale(1.1); opacity: 0.55; }
   100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+@keyframes cover-star-float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-3px); }
 }
 
 .spy-charge-hud {
@@ -3919,6 +3932,7 @@ body.spy-charge-reset-armed #keyboardSetter .key[data-key]:not([data-key="ENTER"
 @media (prefers-reduced-motion: reduce) {
   .spy-charge-segment.is-next,
   .spy-charge-reset-btn.is-ready,
+  #setterCoverStars,
   #setterCoverStars.zero-award-pulse {
     animation: none;
   }

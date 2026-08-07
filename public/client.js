@@ -1618,10 +1618,39 @@ function setSetterDraftLetterAt(index, letter) {
   // misleading, and re-locking the new letter is a deliberate action the
   // user can take again if they want it protected.
   setterDraftLocks.delete(index);
+  // Mirrors handleSetterInput's own typing path (see the #285/#291 fix) --
+  // a Drag Mode edit is just as deliberate a touch as typing, and skipping
+  // this left updateSetterPreview falling back to the OLD secret's colors
+  // if a drag-only edit ever emptied the draft back out.
+  state.setterDraftTouched = true;
   updateUI();
   emitSetterDraftPreview(state.setterDraft);
 }
 window.setSetterDraftLetterAt = setSetterDraftLetterAt;
+
+// Drag Mode: dragging a tile's letter out and releasing it somewhere that
+// isn't another draft tile (see drag-mode.js's onUp) removes it instead of
+// leaving it in place -- a deliberate "throw it away" gesture, same
+// editability/lock gating as setSetterDraftLetterAt.
+function clearSetterDraftLetterAt(index) {
+  if (!Number.isInteger(index) || index < 0 || index > 4) return;
+  if (!canSetterEditDraftNow()) return;
+  if (isOpeningMissSecretLocked()) {
+    shakeDraftRow("setter");
+    showOpeningMissLockNotice();
+    return;
+  }
+  const chars = (state.setterDraft || "").padEnd(5, " ").split("");
+  if (chars[index] === " ") return; // nothing there to clear
+  chars[index] = " ";
+  const next = chars.join("");
+  state.setterDraft = next.trim() === "" ? "" : next;
+  setterDraftLocks.delete(index);
+  state.setterDraftTouched = true;
+  updateUI();
+  emitSetterDraftPreview(state.setterDraft);
+}
+window.clearSetterDraftLetterAt = clearSetterDraftLetterAt;
 
 // Drag Mode tile-to-tile: relocates the letter at `from` to `to`,
 // overwriting whatever was at `to` and leaving `from` blank -- a move, not
@@ -1648,6 +1677,7 @@ function moveSetterDraftLetter(from, to) {
   state.setterDraft = chars.join("");
   setterDraftLocks.delete(from);
   setterDraftLocks.delete(to);
+  state.setterDraftTouched = true;
   updateUI();
   emitSetterDraftPreview(state.setterDraft);
 }
@@ -1689,6 +1719,19 @@ function setGuesserDraftLetterAt(index, letter) {
   window.setGuesserDraft(chars.join(""));
 }
 window.setGuesserDraftLetterAt = setGuesserDraftLetterAt;
+
+// Guesser counterpart to clearSetterDraftLetterAt -- see its comment.
+function clearGuesserDraftLetterAt(index) {
+  if (!Number.isInteger(index) || index < 0 || index > 4) return;
+  if (!canGuesserEditDraftNow()) return;
+
+  const chars = (localGuesserDraft || "").padEnd(5, " ").split("");
+  if (chars[index] === " ") return; // nothing there to clear
+  chars[index] = " ";
+  guesserDraftLocks.delete(index);
+  window.setGuesserDraft(chars.join(""));
+}
+window.clearGuesserDraftLetterAt = clearGuesserDraftLetterAt;
 
 function moveGuesserDraftLetter(from, to) {
   if (!Number.isInteger(from) || from < 0 || from > 4) return;

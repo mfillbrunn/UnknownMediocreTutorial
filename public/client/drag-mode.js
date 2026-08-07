@@ -73,6 +73,7 @@
     const toggleLock = role === "guesser" ? window.toggleGuesserDraftLock : window.toggleSetterDraftLock;
     const moveLetter = role === "guesser" ? window.moveGuesserDraftLetter : window.moveSetterDraftLetter;
     const setLetterAt = role === "guesser" ? window.setGuesserDraftLetterAt : window.setSetterDraftLetterAt;
+    const clearLetterAt = role === "guesser" ? window.clearGuesserDraftLetterAt : window.clearSetterDraftLetterAt;
 
     if (!wasDragging) {
       // Plain tap, no real drag. A key-sourced tap needs no action here --
@@ -84,7 +85,19 @@
       return;
     }
 
-    if (!tile || !letter) return;
+    if (!letter) return;
+
+    if (!tile) {
+      // Dragged out of the row entirely and released somewhere that isn't
+      // a draft tile -- a key-sourced drag just never placed a letter (no
+      // action needed), but a tile-sourced drag is the player physically
+      // pulling an already-placed letter out, so delete it.
+      if (sourceIndex !== null) {
+        clearLetterAt?.(sourceIndex);
+      }
+      return;
+    }
+
     const targetIndex = Number(tile.dataset.dragIndex);
     if (sourceIndex !== null) {
       moveLetter?.(sourceIndex, targetIndex);
