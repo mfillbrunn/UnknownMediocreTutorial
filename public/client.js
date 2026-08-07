@@ -88,7 +88,7 @@ window.resetTransientGameUI = function () {
 );
   window.clearHighlights?.();
   window.hideTileKbReset?.();
-  window.setterQuestKbReset?.();
+  window.spyChargeResetKbReset?.();
 
 };
 (() => {
@@ -748,7 +748,10 @@ function updateUI() {
   window.updateQuestBadge?.(state, myRole);
   window.updateQuestChoiceModal?.(state, myRole);
   if (myRole === "guesser") window.maybeShowQuestProgressPop?.(state);
-  window.updateSetterQuestBadge?.(state, myRole);
+  window.updateSpyChargeUI?.(
+    state,
+    myRole
+  );
   if (state.phase !== "lobby") hide("lobby");
   updateSecretLock();
   updateSetterDraftInvalidOverlay();
@@ -1711,7 +1714,14 @@ function handleSetterInput(event) {
   // armed, same interception shape power-keyboard.js uses for the
   // guesser's Recon Sweep / Double Tap.
   if (window.hideTileKbActive?.() && window.hideTileKbInput?.(event)) return;
-  if (window.setterQuestKbActive?.() && window.setterQuestKbInput?.(event)) return;
+  if (
+    window.spyChargeResetKbActive?.() &&
+    window.spyChargeResetKbInput?.(
+      event
+    )
+  ) {
+    return;
+  }
   if (
   isOpeningMissSecretLocked()
 ) {
