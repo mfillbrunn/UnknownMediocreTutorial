@@ -1,7 +1,7 @@
 const { scoreGuess } = require("../game-engine/scoring");
 const { isConsistentWithHistory } = require("../game-engine/history");
 const { guesserVisibleHistoryCount } = require("./delayedFeedback");
-
+const {  getFeasibleSecrets,  getCoverAnalysis,  getCandidateRemainingCount,  buildCoverStrengthState} = require("./coverStrength");
 
 function computeRemainingAfterIndexFromState(idx, state, allowedSecrets) {
   if (!state || !Array.isArray(state.history)) return 0;
@@ -20,33 +20,25 @@ function computeRemainingAfterIndexFromState(idx, state, allowedSecrets) {
   return count;
 }
 
-function computeRemainingNew(secretWord, state, allowedSecrets) {
-  if (!state || !Array.isArray(state.history)) return null;
-  if (!Array.isArray(allowedSecrets) || allowedSecrets.length === 0) return null;
-  if (!secretWord || typeof secretWord !== "string") return null;
+function computeRemainingNew(
+  secretWord,
+  state,
+  allowedSecrets
+) {
+  const analysis =
+    getCoverAnalysis(
+      state,
+      allowedSecrets
+    );
 
-  const guess = state.pendingGuess;
-  if (!guess || guess.includes("?")) return null;
-
-  const fb = scoreGuess(secretWord.toUpperCase(), guess.toUpperCase());
-
-  const newHistoryEntry = {
-    guess,
-    fb,
-    ignoreConstraints: false
-  };
-
-  const testHistory = [...state.history, newHistoryEntry];
-
-  let count = 0;
-  for (const word of allowedSecrets) {
-    if (isConsistentWithHistory(testHistory, word, state)) {
-      
-      count++;
-    }
+  if (!analysis) {
+    return null;
   }
 
-  return count;
+  return getCandidateRemainingCount(
+    analysis,
+    secretWord
+  );
 }
 
 // Wiretap live tap: how many secrets would still fit if the guesser
@@ -113,27 +105,55 @@ function getRemainingWordInfo(state, allowedSecrets, draftSecret) {
   }
 
   // Compute current remaining — full list if no history yet
-  let current;
-  if (history.length === 0) {
-    current = allowedSecrets.length;
-  } else {
-    current = computeRemainingAfterIndexFromState(history.length - 1, state, allowedSecrets);
-  }
+  const feasible =
+    getFeasibleSecrets(
+      state,
+      allowedSecrets
+    );
+
+  const current =
+    feasible.words.length;
 
   let oldCount = -1;
   let newCount = -1;
 
-  const guess = pendingGuess;
-  const guessIsComplete = !!guess && !guess.includes("?");
+  const guess =
+    pendingGuess;
+
+  const guessIsComplete =
+    !!guess &&
+    !guess.includes("?");
 
   if (guessIsComplete) {
-    oldCount = computeRemainingNew(state.secret, state, allowedSecrets);
-    if (typeof draftSecret === "string" && draftSecret.length === 5) {
-      newCount = computeRemainingNew(draftSecret, state, allowedSecrets);
+    const analysis =
+      getCoverAnalysis(
+        state,
+        allowedSecrets
+      );
+
+    if (analysis) {
+      oldCount =
+        analysis.keepCount;
+
+      if (
+        typeof draftSecret ===
+          "string" &&
+        draftSecret.length === 5
+      ) {
+        newCount =
+          getCandidateRemainingCount(
+            analysis,
+            draftSecret
+          );
+      }
     }
   }
 
-  return { current, old: oldCount, new: newCount };
+  return {
+    current,
+    old: oldCount,
+    new: newCount
+  }; 
 }
 
 function buildSetterRemainingBoxState(state, viewerId, allowedSecrets, draftSecret = null) {
@@ -159,7 +179,11 @@ function buildSetterRemainingBoxState(state, viewerId, allowedSecrets, draftSecr
       new: null,
       isConsistent: true,
       highlightOld: false,
-      highlightNew: false
+      highlightNew: false,
+
+      coverStrength: {
+        visible: false
+      }
     };
   }
 
@@ -178,7 +202,11 @@ function buildSetterRemainingBoxState(state, viewerId, allowedSecrets, draftSecr
       new: null,
       isConsistent: true,
       highlightOld: false,
-      highlightNew: false
+      highlightNew: false,
+
+      coverStrength: {
+        visible: false
+      }
     };
   }
 
@@ -203,14 +231,55 @@ function buildSetterRemainingBoxState(state, viewerId, allowedSecrets, draftSecr
   const hasOld = info.old > -1;
   const hasNew = info.new > -1;
 
+  const coverStrength =
+    buildCoverStrengthState(
+      state,
+      allowedSecrets,
+      draftSecret
+    );
+
+  /*
+   * The cover analysis also applies
+   * the Assassin Word distance rule.
+   */
+  if (
+    hasDraft &&
+    coverStrength.visible &&
+    coverStrength.draftComplete &&
+    !coverStrength.draftValid
+  ) {
+    isConsistent = false;
+  }
+
   return {
     visible: true,
-    current: info.current,
-    old: hasOld ? info.old : null,
-    new: hasNew ? info.new : null,
+
+    current:
+      info.current,
+
+    old:
+      hasOld
+        ? info.old
+        : null,
+
+    new:
+      hasNew
+        ? info.new
+        : null,
+
     isConsistent,
-    highlightOld: hasOld && hasNew && info.old > info.new,
-    highlightNew: hasOld && hasNew && info.new > info.old
+
+    highlightOld:
+      hasOld &&
+      hasNew &&
+      info.old > info.new,
+
+    highlightNew:
+      hasOld &&
+      hasNew &&
+      info.new > info.old,
+
+    coverStrength
   };
 }
 
