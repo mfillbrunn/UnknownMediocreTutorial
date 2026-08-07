@@ -130,7 +130,7 @@ window.renderDraftScreen = function (s) {
     } else if (isGuesser) {
       status.textContent = `Power ${myPicks.length}/1 · Quest ${myQuestPicks.length}/1`;
     } else {
-      status.textContent = `Pick 2 (${myPicks.length}/2 selected)`;
+      status.textContent = `Power ${myPicks.length}/1`;
     }
   }
 };
