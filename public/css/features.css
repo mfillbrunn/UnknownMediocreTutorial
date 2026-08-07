@@ -2988,82 +2988,7 @@ body:has(#guesserScreen.active) #appMain {
   display: none !important;
 }
 
-#setterScreen #setterPowerContainer .setter-quest-badge-tile {
-  display: flex !important;
-}
 
-/*
-  The blanket hide above also matches DESCENDANTS whose own class happens
-  to contain "quest" -- .setter-quest-hint-letter, .setter-quest-row, and
-  .setter-quest-progress-text all do -- so exempting the card itself isn't
-  enough, its children need their normal `display` back too, or the stack
-  silently renders invisible even though the card wrapper shows.
-*/
-#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-row {
-  display: flex !important;
-}
-#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-hint-letter,
-#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-progress-text,
-#setterScreen #setterPowerContainer .setter-quest-badge-tile .setter-quest-hint-pos {
-  display: inline !important;
-}
-
-/*
-  This is the SETTER's own quest, not a mirror of the guesser's (that
-  read-only copy stays blue via .quest-badge-tile's default --role-accent
-  above) -- recolor it to the setter's own red so it reads as "mine",
-  matching every other card in this row. Ready/one-away still swap in
-  green/yellow via components.css's more specific .quest-ready/
-  .quest-oneaway rules, same signal every quest badge uses.
-*/
-.setter-quest-badge-tile {
-  --role-accent: #ff4b5c;
-}
-
-/*
-  Stacked: progress ("0/2" etc, plain text, no pill/box/chip treatment --
-  same weight/color as the hint, just dimmer) on its own line up top, the
-  single hint (a letter with its required position as a small superscript,
-  e.g. "L" + superscript "2") on the line below. clamp() on the shared
-  font-size shrinks everything together so it never overflows the card.
-*/
-.setter-quest-row {
-  order: -1;
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  width: 100%;
-  min-width: 0;
-}
-/* No text label anymore (see setter-quest.js -- "Setter Quest" lives on
-   as the card's title/aria-label only) -- the stack above is the card's
-   whole body now, so it gets the full height instead of sharing it with
-   a label row. */
-.setter-quest-hint-letter,
-.setter-quest-progress-text {
-  flex: 0 1 auto;
-  min-width: 0;
-  white-space: nowrap;
-  font-size: clamp(11px, 4.5vw, 18px);
-  font-weight: 900;
-  color: var(--role-accent);
-  line-height: 1;
-}
-.setter-quest-progress-text {
-  opacity: 0.8;
-}
-.setter-quest-hint-letter.setter-quest-hint-letter-empty {
-  opacity: 0.45;
-}
-.setter-quest-hint-pos {
-  font-size: 0.55em;
-  font-weight: 800;
-  opacity: 0.8;
-  margin-left: 1px;
-}
 
 /*
   The Old/Keep/New remaining-words count sits below the power cards as
@@ -3637,5 +3562,364 @@ body:has(#guesserScreen.active) #appMain {
       #setterCoverStrength:not(.hidden)
     ) {
     margin-top: 13px;
+  }
+}
+/* =====================================================
+   SPY COVER STARS + CHARGE METER
+   ===================================================== */
+
+#setterCoverStars {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  z-index: 8;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+
+  transform: translateX(-50%);
+  padding: 2px 7px 3px;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(12, 13, 18, 0.9);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+#setterCoverStars.hidden {
+  display: none;
+}
+
+#draftSetter
+  .history-row:has(#setterCoverStars:not(.hidden)) {
+  margin-top: 23px;
+}
+
+.setter-cover-star {
+  color: rgba(255, 255, 255, 0.22);
+  font-size: 18px;
+  line-height: 1;
+  text-shadow: none;
+  transition:
+    color 160ms ease,
+    transform 160ms ease,
+    text-shadow 160ms ease;
+}
+
+.setter-cover-star.is-filled {
+  color: #facc15;
+  transform: translateY(-1px) scale(1.06);
+  text-shadow: 0 0 7px rgba(250, 204, 21, 0.58);
+}
+
+.setter-cover-bonus-star {
+  display: none;
+  margin-left: 2px;
+  color: rgba(34, 211, 238, 0.28);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.setter-cover-bonus-star.is-visible {
+  display: inline-block;
+}
+
+.setter-cover-bonus-star.is-filled {
+  color: #22d3ee;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.7);
+}
+
+#setterCoverStars.zero-award-pulse {
+  animation: cover-zero-pulse 520ms ease-out;
+}
+
+@keyframes cover-zero-pulse {
+  0% { transform: translateX(-50%) scale(1); opacity: 1; }
+  45% { transform: translateX(-50%) scale(1.1); opacity: 0.55; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+.spy-charge-hud {
+  flex: 0 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 5px 4px;
+  margin-bottom: var(--sp-6, 6px);
+
+  border: 1px solid color-mix(in srgb, var(--setter-color) 42%, transparent);
+  border-radius: var(--r-10, 10px);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--setter-color) 11%, #15161c),
+      rgba(9, 10, 14, 0.94)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 5px 14px rgba(0, 0, 0, 0.35);
+}
+
+.spy-charge-hud.hidden {
+  display: none;
+}
+
+.spy-charge-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 25px;
+  margin-bottom: 4px;
+}
+
+.spy-charge-hint {
+  min-width: 30px;
+  height: 23px;
+  padding: 0 7px;
+  box-sizing: border-box;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  border-radius: 999px;
+  background: rgba(34, 211, 238, 0.11);
+  color: #67e8f9;
+
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.18);
+}
+
+.spy-charge-hint.hidden {
+  visibility: hidden;
+}
+
+.spy-charge-hint sup {
+  margin-left: 1px;
+  font-size: 0.58em;
+  transform: translateY(-0.35em);
+}
+
+.spy-charge-reset-btn {
+  position: relative;
+  width: 27px;
+  height: 23px;
+  padding: 0;
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.34);
+
+  font-size: 15px;
+  font-weight: 900;
+  cursor: not-allowed;
+}
+
+.spy-charge-reset-btn.is-ready {
+  border-color: rgba(34, 211, 238, 0.62);
+  background: rgba(34, 211, 238, 0.13);
+  color: #67e8f9;
+  cursor: pointer;
+  animation: spy-reset-ready 1.7s ease-in-out infinite;
+}
+
+.spy-charge-reset-btn.is-armed {
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.3);
+}
+
+.spy-charge-reset-count {
+  position: absolute;
+  right: -4px;
+  top: -6px;
+
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+  background: #11141a;
+  border: 1px solid currentColor;
+  font-size: 8px;
+  line-height: 1;
+}
+
+@keyframes spy-reset-ready {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.28); }
+  50% { box-shadow: 0 0 0 4px rgba(34, 211, 238, 0); }
+}
+
+.spy-charge-meter {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1px;
+  width: 100%;
+  height: 12px;
+  padding: 2px;
+  box-sizing: border-box;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.62);
+  overflow: hidden;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.spy-charge-segment {
+  min-width: 0;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  transition:
+    background 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.spy-charge-segment.is-filled {
+  background:
+    linear-gradient(180deg, #fef08a, #f59e0b 58%, #ea580c);
+  box-shadow: 0 0 5px rgba(245, 158, 11, 0.62);
+}
+
+.spy-charge-segment.is-next {
+  animation: spy-charge-next 1.35s ease-in-out infinite;
+}
+
+.spy-charge-segment.just-charged {
+  transform: scaleY(1.45);
+  background: #fff7b2;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.95);
+}
+
+.spy-charge-segment.milestone-power,
+.spy-charge-segment.milestone-reset {
+  outline: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+@keyframes spy-charge-next {
+  0%, 100% { background: rgba(255, 255, 255, 0.1); }
+  50% { background: rgba(250, 204, 21, 0.28); }
+}
+
+.spy-charge-milestones {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding: 0 1px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 7px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.spy-charge-power-locked {
+  position: relative;
+}
+
+.spy-charge-power-locked .power-btn {
+  opacity: 0.38 !important;
+  filter: grayscale(0.8) brightness(0.7);
+  pointer-events: none;
+}
+
+.spy-charge-power-locked::after {
+  content: "🔒 5★";
+  position: absolute;
+  inset: 4px;
+  z-index: 8;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: calc(var(--r-12, 12px) - 2px);
+  background: rgba(7, 8, 12, 0.76);
+  border: 1px solid rgba(250, 204, 21, 0.38);
+  color: #fde68a;
+
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  pointer-events: none;
+}
+
+.spy-charge-flight-star {
+  position: fixed;
+  z-index: 100005;
+  transform: translate(-50%, -50%);
+  color: #facc15;
+  font-size: 24px;
+  line-height: 1;
+  text-shadow:
+    0 0 5px rgba(250, 204, 21, 0.9),
+    0 0 14px rgba(245, 158, 11, 0.65);
+  pointer-events: none;
+}
+
+.spy-charge-flight-star.is-bonus {
+  color: #22d3ee;
+  text-shadow:
+    0 0 5px rgba(34, 211, 238, 0.95),
+    0 0 14px rgba(34, 211, 238, 0.7);
+}
+
+body.spy-charge-reset-armed #keyboardSetter .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]) {
+  box-shadow:
+    inset 0 0 0 1.5px rgba(34, 211, 238, 0.55),
+    0 0 5px rgba(34, 211, 238, 0.22);
+}
+
+.draft-candidate-btn {
+  position: relative;
+}
+
+.draft-pick-slot {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  z-index: 2;
+
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+@media (max-width: 430px) {
+  .setter-cover-star {
+    font-size: 17px;
+  }
+
+  .setter-cover-bonus-star {
+    font-size: 16px;
+  }
+
+  #draftSetter
+    .history-row:has(#setterCoverStars:not(.hidden)) {
+    margin-top: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spy-charge-segment.is-next,
+  .spy-charge-reset-btn.is-ready,
+  #setterCoverStars.zero-award-pulse {
+    animation: none;
   }
 }
