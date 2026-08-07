@@ -476,20 +476,36 @@ function getCandidateRemainingCount(
   );
 }
 
-function starsForGap(gapPct) {
+function starsForGap(
+  gapPct,
+  draftCount
+) {
+  let stars = 0;
+
   if (gapPct < 10) {
-    return 3;
+    stars = 3;
+  } else if (gapPct < 25) {
+    stars = 2;
+  } else if (gapPct < 50) {
+    stars = 1;
   }
 
-  if (gapPct < 25) {
-    return 2;
+  const count =
+    Number(draftCount) || 0;
+
+  if (count <= 0) {
+    return 0;
   }
 
-  if (gapPct < 50) {
-    return 1;
+  if (count <= 4) {
+    return Math.min(stars, 1);
   }
 
-  return 0;
+  if (count <= 9) {
+    return Math.min(stars, 2);
+  }
+
+  return stars;
 }
 
 function buildCoverStrengthState(
