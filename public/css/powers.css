@@ -22,6 +22,33 @@
   50% { box-shadow: 0 0 10px 2px color-mix(in srgb, var(--setter-color, #f87171) 65%, transparent); }
 }
 
+/* Small transparent hint bubble above the keyboard, shown for the
+   duration of the same "tap a letter key to pick it" flows the outline
+   above marks -- the outline alone wasn't obvious enough on its own about
+   what tapping a key would actually do. See client.js's
+   setKeyboardPickHint. */
+.keyboard-pick-hint {
+  width: fit-content;
+  max-width: 90%;
+  margin: 0 auto var(--sp-8, 8px);
+  padding: 6px 14px;
+  text-align: center;
+  font-size: var(--fs-13, 13px);
+  font-weight: 700;
+  color: var(--text);
+  background: color-mix(in srgb, var(--setter-color, #f87171) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--setter-color, #f87171) 55%, transparent);
+  border-radius: var(--r-10, 10px);
+  animation: keyboard-pick-hint-in 0.2s ease-out;
+}
+.keyboard-pick-hint.hidden {
+  display: none;
+}
+@keyframes keyboard-pick-hint-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* Delayed Intel (setter power): a round the guesser hasn't "unlocked" yet
    — a gray tile with a faint "?" watermark sitting behind the letter
    ("you don't know the color yet", not "you don't know what you typed" —
