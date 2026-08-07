@@ -6,7 +6,9 @@ const powerMetadata = require("../../powers/powerMetadata");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
 const { pickLetterLockoutLetter, pickReconSweepLetters, feasibleSecretsFor } = require("./genericAI");
 const questServer = require("../../powers/powers/questServer");
-const setterQuestServer = require("../../powers/powers/setterQuestServer");
+const spyChargeServer = require(
+  "../../powers/powers/spyChargeServer"
+);
 
 // assassinWord is excluded from the game's randomized power pools
 // entirely (see task #106) — kept out of the AI pool too for the same
@@ -106,7 +108,14 @@ function isPowerContextuallyUsable(powerId, state, aiRole, aiUserId) {
   if (!aiOwnsPowerInCustomMode(state, aiUserId, aiRole, powerId)) return false;
 
   if (!isPowerAllowed(powerId, state)) return false;
-
+  if (
+    spyChargeServer.isPowerLocked(
+      state,
+      powerId
+    )
+  ) {
+    return false;
+  }
   const extra = EXTRA_ELIGIBILITY[powerId];
   if (extra && !extra(state)) return false;
 
@@ -380,7 +389,12 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
 
   maybeClaimQuest(room, roomId, context, aiUserId);
   maybeRespondToClaim(room, roomId, context, aiUserId);
-  maybeUseSetterQuestReward(room, roomId, context, aiUserId);
+  maybeUseSpyChargeReset(
+    room,
+    roomId,
+    context,
+    aiUserId
+  );
 
   let actionFn = null;
 
@@ -471,7 +485,13 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
           if (isTutorial) {
             secret = state.tutorialSecretsAI[state.history.length];
           } else {
-            secret = maybeBiasSecretTowardQuestHint(state, secret, context.WORDS.secrets);
+            secret =
+              spyChargeServer
+                .chooseHintedBestSecret(
+                  state,
+                  context.WORDS.secrets,
+                  secret
+                );
           }
 
           applyAIAction(
@@ -548,56 +568,6 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
   return actionFn;
 }
 
-// Setter Quest: the AI setter chases its own quest progress the same way a
-// human optimizing for it would -- 75% of the time, prefers a feasible
-// secret that has this turn's hint letter in the exact hinted position
-// (see setterQuestServer.js) over whatever pickSecret would have
-// otherwise chosen. Only ever called from the branch that's already
-// decided to submit SET_SECRET_NEW (the simultaneousAllWrong/freeze/
-// stealth locks route through SET_SECRET_SAME before this is reached),
-// and only chooses among secrets already consistent with history -- the
-// same feasible set pickSecret itself draws from -- so it can never plant
-// an inconsistent secret.
-function maybeBiasSecretTowardQuestHint(state, secret, secretRows) {
-  const hint = state.powers?.setterQuest?.hint;
-  if (!hint || !hint.letter) return secret;
-  if (Math.random() >= 0.75) return secret;
-
-  const feasible = feasibleSecretsFor(state, secretRows).map(r => r.word);
-  if (!feasible.length) return secret;
-
-  const matching = feasible.filter(w => w.toUpperCase()[hint.position] === hint.letter);
-  if (matching.length) return matching[Math.floor(Math.random() * matching.length)];
-
-  return secret;
-}
-
-// Setter Quest reward: once progress hits 2/2, the AI activates it right
-// away -- same "no real decision to model" reasoning as maybeClaimQuest --
-// choosing a random letter from its OWN secret (the guesser never learns
-// which letter was picked either way, see safeState.js). Prefers a letter
-// that actually has feedback to erase over one that was never guessed, so
-// the activation isn't wasted as a silent no-op the moment progress hits 2.
-function maybeUseSetterQuestReward(room, roomId, context, aiUserId) {
-  const state = room.state;
-  const aiRole = getAIRole(state, aiUserId);
-  if (aiRole !== "setter") return;
-  if (state.turn !== aiUserId) return;
-
-  const q = state.powers?.setterQuest;
-  if (!q || (q.progress || 0) < 2) return;
-  if (!state.secret) return;
-
-  const letters = [...new Set(state.secret.toUpperCase().split(""))];
-  if (!letters.length) return;
-
-  const withFeedback = letters.filter(L => setterQuestServer.letterHasFeedback(state, L));
-  const pool = withFeedback.length ? withFeedback : letters;
-  const letter = pool[Math.floor(Math.random() * pool.length)];
-
-  applyAIAction(room, { type: "USE_SETTER_QUEST_RESET", letter }, aiUserId, roomId, context);
-}
-
 // The quest badge now requires an explicit click to claim either reward
 // (see questServer.js's attemptQuestClaim) -- a real human just taps it,
 // so give the AI the equivalent: as soon as its quest is ready, claim the
@@ -608,6 +578,73 @@ function maybeUseSetterQuestReward(room, roomId, context, aiUserId) {
 // feature existed either. Lives in computeAIActionForUser (rather than
 // maybeRunAI) so the power-simulation runner, which calls that directly
 // for both simulated seats, gets it too.
+function maybeUseSpyChargeReset(
+  room,
+  roomId,
+  context,
+  aiUserId
+) {
+  const state = room.state;
+
+  if (
+    getAIRole(state, aiUserId) !==
+    "setter"
+  ) {
+    return;
+  }
+
+  if (
+    state.turn !== aiUserId ||
+    !state.pendingGuess ||
+    spyChargeServer
+      .getAvailableResetCount(state) <= 0
+  ) {
+    return;
+  }
+
+  const letters = [
+    ...new Set(
+      (state.history || [])
+        .flatMap(entry =>
+          String(
+            entry.guess || ""
+          )
+            .toUpperCase()
+            .split("")
+        )
+    )
+  ].filter(letter =>
+    spyChargeServer
+      .letterHasFeedback(
+        state,
+        letter
+      )
+  );
+
+  if (!letters.length) {
+    return;
+  }
+
+  const letter =
+    letters[
+      Math.floor(
+        Math.random() *
+        letters.length
+      )
+    ];
+
+  applyAIAction(
+    room,
+    {
+      type:
+        "USE_SPY_CHARGE_RESET",
+      letter
+    },
+    aiUserId,
+    roomId,
+    context
+  );
+}
 function maybeClaimQuest(room, roomId, context, aiUserId) {
   const state = room.state;
   const aiRole = getAIRole(state, aiUserId);
