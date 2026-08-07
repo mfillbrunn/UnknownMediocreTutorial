@@ -92,8 +92,11 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
   // Setter Quest: the hint (letter + required position) is private to the
   // setter -- the guesser must never learn what would advance their
   // opponent's quest.
-  if (viewerRole !== "setter" && safe.powers?.setterQuest) {
-    safe.powers.setterQuest.hint = null;
+if (
+    viewerRole !== "setter" &&
+    safe.powers
+  ) {
+    delete safe.powers.spyCharge;
   }
 
   // Delayed Intel (setter power): how many of the TRUE history entries the
