@@ -1,7 +1,7 @@
 const BaseMode = require("./baseMode");
 const { pickLetterProfileMode } = require("../../utils/letterProfile");
 const { pickRandomQuestType, ensureQuestConditions } = require("../../powers/powers/questServer");
-
+const spyChargeServer = require( "../../powers/powers/spyChargeServer");
 // "custom" mode's per-round active pool: whichever powers the CURRENT
 // setter chose as their setter powers, plus whichever powers the CURRENT
 // guesser chose as their guesser powers -- each player's loadout follows
@@ -48,6 +48,11 @@ class CompetitiveMode extends BaseMode {
     // to be, preserved across the round-2 role swap by postGame.js.
     state.powers.quest.type = guesserQuest || pickRandomQuestType();
     ensureQuestConditions(state);
+
+    spyChargeServer.initializeForRound(
+      state,
+      setterPowers
+    );
   }
 
   // "custom" mode: playerPowers is { [userId]: { setterPowers, guesserPowers } },
@@ -72,8 +77,14 @@ class CompetitiveMode extends BaseMode {
     }
 
     // Same as onLobbyReady -- every guesser always has a Quest.
-    state.powers.quest.type = pickRandomQuestType();
+state.powers.quest.type = pickRandomQuestType();
     ensureQuestConditions(state);
+
+    spyChargeServer.initializeForRound(
+      state,
+      playerPowers?.[state.setter]
+        ?.setterPowers || []
+    );
   }
 
   onRoundEnd(state) {
