@@ -401,6 +401,16 @@ let powerQueue = [];
 // every guess.
 const AMBIENT_POWER_FX_SKIP = new Set(["revealLocation"]);
 
+// Powers that erase already-scored feedback (see vowelRefreshServer.js,
+// hideTileServer.js, setterQuestServer.js's applyReward): each recomputes
+// state.powers.rouletteSecretFeasible server-side when a Break Cover
+// (rouletteSecret) spin is active, since the erase can change which words
+// are still consistent with history. Gate the client's restart on the
+// power that actually just fired, not just "has ever fired", so an
+// unrelated power use later in the match doesn't needlessly restart the
+// spin.
+const FEEDBACK_ERASING_POWERS = new Set(["vowelRefresh", "hideTile", "setterQuest"]);
+
 onPowerUsed(data => {
   if (!PowerEngine._initialized) {
     powerQueue.push(data);
@@ -412,10 +422,10 @@ onPowerUsed(data => {
   const mod = PowerEngine.powers[data.type];
   mod?.effects?.onPowerUsed?.(data);
   PowerEngine.updateButtonStates(state, myRole, myUserId());
-  if (state.powers?.vowelRefreshActive && state.powers?.rouletteSecretActive){
+  if (FEEDBACK_ERASING_POWERS.has(data.type) && state.powers?.rouletteSecretActive) {
     stopSecretRoulette();
     startSecretRoulette(state.powers.rouletteSecretFeasible);
-    }
+  }
 });
 
 

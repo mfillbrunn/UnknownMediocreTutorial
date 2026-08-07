@@ -142,6 +142,17 @@ function applyReward(state, letter, roomId, io) {
   state.powers.setterQuestActive = true;
   state.powers.setterQuestLetters = [...(state.powers.setterQuestLetters || []), L];
 
+  // Same stale-feasible-list fix as hideTileServer.js/vowelRefreshServer.js
+  // -- this reward erases feedback exactly like Hide Evidence does, so any
+  // running Break Cover (rouletteSecret) spin needs to be recomputed off
+  // the post-erase history, not left spinning through words the erase just
+  // invalidated.
+  if (state.powers?.rouletteSecretActive) {
+    state.powers.rouletteSecretFeasible = global.ALLOWED_SECRETS.filter(secret =>
+      isConsistentWithHistory(state.history, secret, state)
+    );
+  }
+
   const payload = { type: "setterQuest", letter: L };
   io.to(roomId).emit("powerUsed", payload);
 
