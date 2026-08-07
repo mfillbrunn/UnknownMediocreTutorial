@@ -223,7 +223,11 @@ window.PowerEngine = {
     const wrongRole =
       (mod.role === "setter" && !isSetter) ||
       (mod.role === "guesser" && !isGuesser);
-
+    const lockedBySpyCharge =
+      window.isSpyPowerChargeLocked?.(
+        id,
+        state
+      ) === true;
     const maxUses = POWER_MAX_USES[id];
     if (maxUses) {
       const usesEl = btn.querySelector(".power-uses-badge");
@@ -238,6 +242,7 @@ window.PowerEngine = {
     const notNormalPhase = state.phase !== "normal";
     const shouldBeDisabled =
       wrongRole ||
+      lockedBySpyCharge ||
       notNormalPhase ||
       !isMyTurn ||
       notAllowedByRule;
