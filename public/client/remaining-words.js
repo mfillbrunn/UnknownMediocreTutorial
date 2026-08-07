@@ -1,11 +1,190 @@
+function renderSetterCoverStrength(
+  strength
+) {
+  const el =
+    document.getElementById(
+      "setterCoverStrength"
+    );
+
+  if (!el) {
+    return;
+  }
+
+  if (!strength?.visible) {
+    el.classList.add("hidden");
+    el.removeAttribute(
+      "data-status"
+    );
+    el.removeAttribute("title");
+    return;
+  }
+
+  el.classList.remove("hidden");
+
+  el.dataset.status =
+    strength.status ||
+    "available";
+
+  const starCount = Math.max(
+    0,
+    Math.min(
+      3,
+      Number(
+        strength.stars
+      ) || 0
+    )
+  );
+
+  el
+    .querySelectorAll(
+      "[data-cover-star]"
+    )
+    .forEach(
+      (star, index) => {
+        star.classList.toggle(
+          "is-filled",
+          index < starCount
+        );
+      }
+    );
+
+  const textEl =
+    el.querySelector(
+      ".cover-strength-text"
+    );
+
+  let shortText = "";
+  let description = "";
+
+  switch (strength.status) {
+    case "keep-best":
+      shortText = "KEEP BEST";
+
+      description =
+        "No legal switch leaves more possible secrets than keeping the current word.";
+
+      break;
+
+    case "invalid":
+      shortText = "INVALID";
+
+      description =
+        "This draft is not a legal secret under the current clues.";
+
+      break;
+
+    case "same":
+      shortText = "SAME";
+
+      description =
+        "This is the current secret, so it is not rated as a switch.";
+
+      break;
+
+    case "loses":
+      shortText = "LOSES";
+
+      description =
+        "This draft matches the Inspector's pending guess and would end the round.";
+
+      break;
+
+    case "weaker":
+      shortText = "BELOW KEEP";
+
+      description =
+        `This draft leaves ${
+          strength.draftCount ?? 0
+        } possible secrets; ` +
+        `keeping leaves ${
+          strength.keepCount ?? 0
+        }.`;
+
+      break;
+
+    case "rated":
+      shortText =
+        `${strength.draftCount}/` +
+        `${strength.bestCount}`;
+
+      description =
+        `${starCount} of 3 stars. ` +
+        `This draft leaves ` +
+        `${strength.draftCount} ` +
+        `possible secrets; the best ` +
+        `legal switch leaves ` +
+        `${strength.bestCount}. ` +
+        `It is ` +
+        `${strength.draftGapPct}% ` +
+        `below the best available ` +
+        `switch.`;
+
+      break;
+
+    default:
+      shortText =
+        strength.hasUpgrade
+          ? (
+              `BEST +` +
+              `${strength.bestImprovementPct}%`
+            )
+          : "KEEP BEST";
+
+      description =
+        strength.hasUpgrade
+          ? (
+              `A best available switch ` +
+              `leaves ` +
+              `${strength.bestCount} ` +
+              `possible secrets, ` +
+              `${strength.bestImprovementPct}% ` +
+              `more than keeping. ` +
+              `${strength.betterCount} ` +
+              `stronger switch` +
+              (
+                strength.betterCount === 1
+                  ? ""
+                  : "es"
+              ) +
+              ` are available.`
+            )
+          : (
+              "No stronger legal " +
+              "switch is available."
+            );
+
+      break;
+  }
+
+  if (textEl) {
+    textEl.textContent =
+      shortText;
+  }
+
+  el.title = description;
+
+  el.setAttribute(
+    "aria-label",
+    description
+  );
+}
 function ordinal(n) {
   const suffixes = ["th", "st", "nd", "rd"];
   const rem100 = n % 100;
   return n + (suffixes[(rem100 - 20) % 10] || suffixes[rem100] || suffixes[0]);
 }
 
-function renderSetterRemainingBox(boxState) {
-  const box = document.getElementById("SetterRemainingBox");
+function renderSetterRemainingBox(
+  boxState
+) {
+  renderSetterCoverStrength(
+    boxState?.coverStrength
+  );
+
+  const box =
+    document.getElementById(
+      "SetterRemainingBox"
+    );
   if (!box) return;
 
   // This box's live updates arrive over their own socket event (see
