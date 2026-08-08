@@ -393,6 +393,12 @@ body.menu-mode .app-header {
   transform: rotate(-6deg);
 }
 
+/* Not on the front/landing screen -- higher specificity (ID) wins over
+   the shared .menu-center rule above regardless of source order. */
+#startupScreen .menu-center::after {
+  content: none;
+}
+
 /* LOBBY — SPY / BRIEFING ROOM STYLE Drop-in override */
 
 .screen-lobby {
