@@ -360,7 +360,7 @@
             }
           ],
           {
-            duration: 660,
+            duration: 420,
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
             fill: "forwards"
           }
@@ -389,6 +389,17 @@
     if (!sourceRect) return;
   }
 
+  // Multiple stars in one award used to fly fully sequentially (each one
+  // awaited to completion before the next even started), so 2-3 stars
+  // read as a slow single-file line. They're now launched close together
+  // instead -- each star's target segment and before/after charge value
+  // are fixed up front from its index (not read off the shared mutable
+  // visualTotal at landing time), so landing order stays correct
+  // regardless of exact animation timing as long as later-launched stars
+  // don't finish before earlier ones (guaranteed here: same flight
+  // duration, strictly increasing launch stagger).
+  const STAR_LAUNCH_STAGGER = 70;
+
   async function animateAward(entry) {
     const payload = entry.payload;
     const appliedBase = Math.max(0, Number(payload.appliedBaseStars) || 0);
@@ -398,7 +409,8 @@
       ...Array.from({ length: appliedBonus }, () => true)
     ];
 
-    visualTotal = Math.max(0, Math.min(MAX_CHARGE, Number(payload.before) || 0));
+    const startTotal = Math.max(0, Math.min(MAX_CHARGE, Number(payload.before) || 0));
+    visualTotal = startTotal;
     renderHud(window.state, window.myRole);
 
     if (!stars.length) {
@@ -407,54 +419,63 @@
       return;
     }
 
-    for (let index = 0; index < stars.length; index++) {
-      const targetIndex = Math.min(MAX_CHARGE - 1, visualTotal);
+    const landings = stars.map((isBonus, index) => {
+      const beforeLanding = Math.min(MAX_CHARGE, startTotal + index);
+      const afterLanding = Math.min(MAX_CHARGE, startTotal + index + 1);
+      const targetIndex = Math.min(MAX_CHARGE - 1, beforeLanding);
       const target = document.querySelector(
         `[data-charge-index="${targetIndex}"]`
       );
+      if (!target) return Promise.resolve();
 
-      if (!target) break;
-
-      await createFlightStar(
+      return createFlightStar(
         entry.sourceRect,
         target.getBoundingClientRect(),
-        stars[index],
-        index === 0 ? 0 : 40
-      );
+        isBonus,
+        index * STAR_LAUNCH_STAGGER
+      ).then(() => {
+        visualTotal = afterLanding;
+        target.classList.add("just-charged");
+        setTimeout(() => target.classList.remove("just-charged"), 420);
 
-      const beforeLanding = visualTotal;
-      visualTotal = Math.min(MAX_CHARGE, visualTotal + 1);
-      target.classList.add("just-charged");
-      setTimeout(() => target.classList.remove("just-charged"), 420);
+        renderHud(window.state, window.myRole);
 
-      renderHud(window.state, window.myRole);
-
-      if (beforeLanding < POWER_UNLOCK_AT && visualTotal >= POWER_UNLOCK_AT) {
-        const powerId = getCharge(window.state)?.lockedPowerId;
-        window.showBigAnnounce?.({
-          icon: "⚡",
-          title: "Second power unlocked",
-          sub: window.POWER_METADATA?.[powerId]?.label || "Your locked Spy power is ready.",
-          roleClass: "role-setter",
-          duration: 1900,
-          compact: true
-        });
-      }
-
-      for (const threshold of RESET_THRESHOLDS) {
-        if (beforeLanding < threshold && visualTotal >= threshold) {
+        if (beforeLanding < POWER_UNLOCK_AT && afterLanding >= POWER_UNLOCK_AT) {
+          const powerId = getCharge(window.state)?.lockedPowerId;
           window.showBigAnnounce?.({
-            icon: "↺",
-            title: "Letter reset unlocked",
-            sub: "Tap the reset button beside the charge meter, then choose a letter.",
+            icon: "⚡",
+            title: "Second power unlocked",
+            sub: window.POWER_METADATA?.[powerId]?.label || "Your locked Spy power is ready.",
             roleClass: "role-setter",
             duration: 1900,
             compact: true
           });
         }
-      }
-    }
+
+        for (const threshold of RESET_THRESHOLDS) {
+          if (beforeLanding < threshold && afterLanding >= threshold) {
+            window.showBigAnnounce?.({
+              icon: "↺",
+              title: "Letter reset unlocked",
+              sub: "Tap the reset button beside the charge meter, then choose a letter.",
+              roleClass: "role-setter",
+              duration: 1900,
+              compact: true
+            });
+          }
+        }
+      });
+    });
+
+    await Promise.all(landings);
   }
+
+  // Exposed so ui/setter-sidebar.js's idle auto-expand can hold off popping
+  // Notes out until this finishes -- it used to trigger the instant the
+  // setter's turn ended, which is the exact same moment this animation
+  // starts, so Notes floating out would visually clash with the stars
+  // still flying to the charge meter.
+  window.isSpyChargeAwardAnimating = () => awardRunning || awardQueue.length > 0;
 
   function drainAwardQueue() {
     if (awardRunning || !awardQueue.length) return;
@@ -480,6 +501,8 @@
               window.myRole,
               window.currentUser?.id
             );
+            // Now safe for Notes to pop out, if the turn is still idle.
+            window.updateSetterIdleExpand?.(window.state);
           }, 160);
         }
       }
