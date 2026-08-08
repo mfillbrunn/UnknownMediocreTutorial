@@ -1276,10 +1276,13 @@
   margin-top: var(--sp-6);
 }
 
-/* Remaining words box (setter only) -- each number below is its own bordered card (same
-   two-tone gradient-surface/accent-border language as .power-btn.power-
-   badge), not the box itself, so the three numbers read as a trio of
-   small stat cards under the power buttons rather than one plain panel. */
+/* Remaining words box (setter only) -- Keep/New share ONE bordered card
+   (same two-tone gradient-surface/accent-border language as .power-btn.
+   power-badge) split into two cells by a thin divider, instead of each
+   number getting its own stacked card -- a single compact row instead of
+   a 2-3-row tower. The "Old" (current-possible-count) stat that used to
+   sit above these was dropped entirely; Keep/New is the comparison that
+   actually matters for the setter's decision. */
 .remaining-box {
   min-width: 0;
   max-width: 150px;
@@ -1290,18 +1293,7 @@
 }
 .remaining-stats {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-/* Old / Keep / New (renderSetterRemainingBox in remaining-words.js) --
-   label left, the actual number prominent and large on the right, same
-   gradient-card look as the power badges above it. */
-.remaining-stat {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-6);
-  padding: 3px var(--sp-8);
+  flex-direction: row;
   border-radius: var(--r-8);
   border: 1.5px solid color-mix(in srgb, var(--role-accent) 45%, transparent);
   background:
@@ -1310,16 +1302,33 @@
       color-mix(in srgb, var(--role-accent) 10%, #14151b),
       color-mix(in srgb, var(--role-accent) 4%, #0d0e12)
     );
+  overflow: hidden;
+}
+/* Keep / New (renderSetterRemainingBox in remaining-words.js) -- label on
+   top, the actual number prominent and large below it, centered in each
+   half-width cell. */
+.remaining-stat {
+  flex: 1 1 50%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 2px var(--sp-6);
+}
+.remaining-stat + .remaining-stat {
+  border-left: 1px solid color-mix(in srgb, var(--role-accent) 30%, transparent);
 }
 .remaining-stat-label {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   opacity: 0.7;
 }
 .remaining-stat-value {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   color: var(--text);

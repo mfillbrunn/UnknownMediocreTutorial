@@ -101,12 +101,19 @@
   // the keyboard clamp below had squeezed the panel down to a ~28px sliver
   // wedged against the keyboard. The feedback rows scroll instead now (see
   // setIdleHistoryCap), which is how the in-flow draft row already behaves.
-  const MAX_IDLE_NOTES_HEIGHT = 220;
+  // Bumped up from 220 so there's real room to jot several candidate
+  // words during the setter's idle wait, not just a couple -- the
+  // MIN_HISTORY_HEIGHT floor below still guarantees a slice of feedback
+  // stays visible above it, and the keyboard-anchored bottom edge still
+  // guarantees it can never reach the keyboard, so growing this can never
+  // cause an overlap with either.
+  const MAX_IDLE_NOTES_HEIGHT = 320;
   const KEYBOARD_GAP = 10;
   // Smallest slice of the feedback list worth keeping visible above the
   // panel; it scrolls internally within whatever's left (.history-scroll
-  // is already overflow-y:auto, see history.css).
-  const MIN_HISTORY_HEIGHT = 72;
+  // is already overflow-y:auto, see history.css). Trimmed from 72 to free
+  // up more of that room for Notes now that it can grow taller.
+  const MIN_HISTORY_HEIGHT = 56;
   const HISTORY_GAP = 6;
 
   function computeExpandedRect() {
@@ -340,6 +347,21 @@
   // runs first), so this just reacts to whatever they say.
   window.updateSetterIdleExpand = function (state) {
     if (shouldIdleExpand(state)) {
+      // Idle-expand is about to claim Notes' floating spot for itself --
+      // release any manual drag-expand (or in-flight drag) first,
+      // instantly and without its own flip, so the two systems don't
+      // fight over the same rect.
+      if (dragSession) {
+        cancelDragHold();
+        dragSession = null;
+        document.body.classList.remove("activity-drag-active");
+      }
+      if (manuallyExpandedPanel) {
+        const panel = manuallyExpandedPanel;
+        manuallyExpandedPanel = null;
+        panel.classList.remove("idle-floating", "drag-expanding");
+        clearFixedStyles(panel);
+      }
       if (idleExpanded) {
         // Already floating -- re-anchor against the current layout. Powers
         // and badges appearing in the sidebar mid-turn can shift the
@@ -370,7 +392,189 @@
     }
   }
 
+  // ------------------------------------------------------------------
+  // PRESS-AND-HOLD DRAG-TO-EXPAND
+  //
+  // A small grip handle at the top of the Log/Notes section: press and
+  // hold it, then drag to pull whichever panel is currently docked (Log
+  // or Notes) up into the same floating rect idle-expand computes for
+  // Notes -- gives the setter a bigger view on demand during their OWN
+  // turn too, not just while idle (idle-expand already handles Notes
+  // automatically the rest of the time, so this only arms while
+  // !idleExpanded to avoid the two systems fighting over the same rect).
+  // Dragging it back down (or releasing short of the snap threshold)
+  // collapses it again. A single lerp formula handles both expand and
+  // collapse: progress is measured toward whichever rect is the target
+  // for this drag (natural or expanded), so the sign works out the same
+  // whichever direction the target happens to be.
+  // ------------------------------------------------------------------
+
+  const DRAG_HOLD_MS = 160;
+  const DRAG_OPEN_THRESHOLD = 0.35;
+  // Movement past this before the hold timer fires cancels the hold --
+  // it was a scroll/flick, not a deliberate press-and-hold.
+  const DRAG_MOVE_CANCEL_PX = 10;
+
+  let manuallyExpandedPanel = null;
+  let dragSession = null; // { panel, pointerId, startY, armed, holdTimer, startRect, targetRect, collapsing, progress }
+
+  function currentDockedPanel() {
+    const notesPanel = byId("notesPanelSetter");
+    const logPanel = byId("actionLogSetter");
+    if (notesPanel && !notesPanel.classList.contains("hidden")) return notesPanel;
+    if (logPanel && !logPanel.classList.contains("hidden")) return logPanel;
+    return null;
+  }
+
+  function lerpRect(a, b, t) {
+    return {
+      top: a.top + (b.top - a.top) * t,
+      left: a.left + (b.left - a.left) * t,
+      width: a.width + (b.width - a.width) * t,
+      height: a.height + (b.height - a.height) * t
+    };
+  }
+
+  // Same measure-then-restore trick exitIdleExpand uses -- briefly drops
+  // out of fixed positioning to read where this panel would sit in
+  // normal flow, with no visible flicker since it's read synchronously
+  // before the next paint.
+  function computeNaturalRect(panel) {
+    const wasFloating = panel.classList.contains("idle-floating");
+    panel.classList.remove("idle-floating");
+    clearFixedStyles(panel);
+    const rect = panel.getBoundingClientRect();
+    if (wasFloating) panel.classList.add("idle-floating");
+    return rect;
+  }
+
+  function cancelDragHold() {
+    if (dragSession?.holdTimer) clearTimeout(dragSession.holdTimer);
+  }
+
+  function armDrag() {
+    if (!dragSession) return;
+    const { panel } = dragSession;
+    const alreadyExpanded = panel === manuallyExpandedPanel;
+
+    const startRect = panel.getBoundingClientRect();
+    const targetRect = alreadyExpanded
+      ? computeNaturalRect(panel)
+      : computeExpandedRect();
+    if (!targetRect) {
+      dragSession = null;
+      return;
+    }
+
+    dragSession.armed = true;
+    dragSession.startRect = startRect;
+    dragSession.targetRect = targetRect;
+    dragSession.collapsing = alreadyExpanded;
+
+    if (!alreadyExpanded) panel.classList.add("idle-floating");
+    panel.classList.add("drag-expanding");
+    applyFixedRect(panel, startRect);
+    document.body.classList.add("activity-drag-active");
+  }
+
+  function onDragPointerMove(event) {
+    if (!dragSession || dragSession.pointerId !== event.pointerId) return;
+
+    if (!dragSession.armed) {
+      if (Math.abs(event.clientY - dragSession.startY) > DRAG_MOVE_CANCEL_PX) {
+        cancelDragHold();
+        dragSession = null;
+      }
+      return;
+    }
+
+    event.preventDefault();
+    const span = dragSession.targetRect.top - dragSession.startRect.top;
+    const progress = span !== 0
+      ? Math.max(0, Math.min(1, (event.clientY - dragSession.startY) / span))
+      : 1;
+    dragSession.progress = progress;
+
+    const rect = lerpRect(dragSession.startRect, dragSession.targetRect, progress);
+    applyFixedRect(dragSession.panel, rect);
+    setIdleHistoryCap(rect);
+  }
+
+  function onDragPointerUp(event) {
+    if (!dragSession || dragSession.pointerId !== event.pointerId) return;
+    cancelDragHold();
+    document.body.classList.remove("activity-drag-active");
+
+    const { panel, armed, progress = 0, startRect, targetRect, collapsing } = dragSession;
+    dragSession = null;
+    if (!armed) return;
+
+    const currentRect = panel.getBoundingClientRect();
+    const shouldComplete = progress >= DRAG_OPEN_THRESHOLD;
+    const finalRect = shouldComplete ? targetRect : startRect;
+    const endsExpanded = shouldComplete ? !collapsing : collapsing;
+
+    flip(panel, currentRect, finalRect, () => {
+      panel.classList.remove("drag-expanding");
+      if (endsExpanded) {
+        manuallyExpandedPanel = panel;
+        setIdleHistoryCap(finalRect);
+      } else {
+        panel.classList.remove("idle-floating");
+        clearFixedStyles(panel);
+        clearIdleHistoryCap();
+        manuallyExpandedPanel = null;
+      }
+    });
+  }
+
+  function onDragHandlePointerDown(event) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (idleExpanded || dragSession) return;
+
+    const panel = manuallyExpandedPanel || currentDockedPanel();
+    if (!panel) return;
+
+    dragSession = {
+      panel,
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      armed: false,
+      holdTimer: null
+    };
+    dragSession.holdTimer = setTimeout(() => {
+      if (dragSession) armDrag();
+    }, DRAG_HOLD_MS);
+  }
+
+  function ensureDragHandle() {
+    const activitySection = document.querySelector(
+      "#setterScreen .setter-sidebar-activity"
+    );
+    if (!activitySection || byId("setterActivityDragHandle")) return;
+
+    const handle = document.createElement("div");
+    handle.id = "setterActivityDragHandle";
+    handle.className = "activity-drag-handle";
+    handle.title = "Hold and drag to resize";
+    handle.setAttribute("role", "presentation");
+    handle.innerHTML = `<span class="activity-drag-grip"></span>`;
+
+    handle.addEventListener("pointerdown", onDragHandlePointerDown);
+    // move/up listen on window (not the handle) -- the pointer is almost
+    // always outside the handle's own small bounds for most of a real
+    // drag, and tracking on window is the standard robust pattern for
+    // this instead of relying on setPointerCapture quirks.
+    window.addEventListener("pointermove", onDragPointerMove);
+    window.addEventListener("pointerup", onDragPointerUp);
+    window.addEventListener("pointercancel", onDragPointerUp);
+
+    activitySection.prepend(handle);
+  }
+
   function initialiseSetterSidebar() {
+    ensureDragHandle();
+
     const logButton = byId("actionLogBtnSetter");
     const notesButton = byId("notesBtnSetter");
 

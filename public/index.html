@@ -772,6 +772,14 @@
               </div>
             </div>
           </header>
+          <!-- Turn indicator: driven purely by the is-your-turn/is-not-
+               your-turn classes client.js's setTurn() already toggles on
+               #setterScreen -- see features.css's .turn-banner rules.
+               Neither class present (lobby/gameOver) hides it entirely. -->
+          <div class="turn-banner" aria-hidden="true">
+            <span class="turn-banner-mine">Your turn</span>
+            <span class="turn-banner-theirs">Inspector's turn</span>
+          </div>
          <!-- PLAY AREA -->
          <main class="play-area setter-play">
             <div class="play-row">
@@ -986,6 +994,13 @@
             </div>
           </div>
         </header>
+        <!-- Turn indicator: see #setterScreen's copy above for how this is
+             driven -- same setTurn()/CSS mechanism, just the guesser's
+             own role-facing copy. -->
+        <div class="turn-banner" aria-hidden="true">
+          <span class="turn-banner-mine">Your turn</span>
+          <span class="turn-banner-theirs">Spy's turn</span>
+        </div>
        <!--- PLAY AREA--->
        <main class="play-area guesser-play">
           <div class="play-row">

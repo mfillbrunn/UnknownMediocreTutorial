@@ -225,6 +225,81 @@
   align-self: stretch;
 }
 
+/* Turn indicator banner (index.html, one copy per screen right after
+   <header>) -- purely CSS-driven off the is-your-turn/is-not-your-turn
+   classes client.js's setTurn() already toggles on #setterScreen/
+   #guesserScreen for the keyboard-dimming behavior in states.css. Neither
+   class present (lobby/gameOver, see setTurn's null case) hides it
+   entirely via the selector below. position:sticky lets it visually
+   overlap whatever scrolls underneath it instead of just sitting inertly
+   in flow, without the layout risk of position:fixed/absolute. */
+.turn-banner {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0 0 var(--sp-8);
+  padding: 5px 10px;
+  border-radius: var(--r-8);
+
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  text-align: center;
+
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.turn-banner-mine,
+.turn-banner-theirs {
+  display: none;
+}
+
+.screen:not(.is-your-turn):not(.is-not-your-turn) .turn-banner {
+  display: none;
+}
+
+.screen.is-your-turn .turn-banner {
+  background: color-mix(in srgb, var(--role-accent) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--role-accent) 60%, transparent);
+  color: var(--role-accent);
+  animation: turn-banner-pulse 1.7s ease-in-out infinite;
+}
+
+.screen.is-your-turn .turn-banner-mine {
+  display: block;
+}
+
+.screen.is-not-your-turn .turn-banner {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.screen.is-not-your-turn .turn-banner-theirs {
+  display: block;
+}
+
+@keyframes turn-banner-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px color-mix(in srgb, var(--role-accent) 28%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 16px color-mix(in srgb, var(--role-accent) 55%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen.is-your-turn .turn-banner {
+    animation: none;
+  }
+}
+
 /* Shared role header layout */
 .header-role-badge {
   font-size: var(--fs-11);
