@@ -3661,8 +3661,8 @@ body:has(#guesserScreen.active) #appMain {
   flex: 0 0 auto;
   width: 100%;
   box-sizing: border-box;
-  padding: 5px 5px 4px;
-  margin-bottom: var(--sp-6, 6px);
+  padding: 4px 5px 3px;
+  margin-bottom: var(--sp-4, 4px);
 
   border: 1px solid color-mix(in srgb, var(--setter-color) 42%, transparent);
   border-radius: var(--r-10, 10px);
@@ -3681,18 +3681,21 @@ body:has(#guesserScreen.active) #appMain {
   display: none;
 }
 
+/* Head row (hint bubble + reset button) is trimmed down from its old
+   25px/23px sizing so the meter below can grow taller without the HUD's
+   total height growing along with it -- see .spy-charge-meter. */
 .spy-charge-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 25px;
-  margin-bottom: 4px;
+  min-height: 19px;
+  margin-bottom: 2px;
 }
 
 .spy-charge-hint {
-  min-width: 30px;
-  height: 23px;
-  padding: 0 7px;
+  min-width: 28px;
+  height: 19px;
+  padding: 0 6px;
   box-sizing: border-box;
 
   display: inline-flex;
@@ -3704,7 +3707,7 @@ body:has(#guesserScreen.active) #appMain {
   background: rgba(34, 211, 238, 0.11);
   color: #67e8f9;
 
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 900;
   line-height: 1;
   box-shadow: 0 0 8px rgba(34, 211, 238, 0.18);
@@ -3722,8 +3725,8 @@ body:has(#guesserScreen.active) #appMain {
 
 .spy-charge-reset-btn {
   position: relative;
-  width: 27px;
-  height: 23px;
+  width: 25px;
+  height: 19px;
   padding: 0;
 
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -3731,7 +3734,7 @@ body:has(#guesserScreen.active) #appMain {
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.34);
 
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 900;
   cursor: not-allowed;
 }
@@ -3751,7 +3754,7 @@ body:has(#guesserScreen.active) #appMain {
 .spy-charge-reset-count {
   position: absolute;
   right: -4px;
-  top: -6px;
+  top: -5px;
 
   min-width: 14px;
   height: 14px;
@@ -3774,17 +3777,21 @@ body:has(#guesserScreen.active) #appMain {
   50% { box-shadow: 0 0 0 4px rgba(34, 211, 238, 0); }
 }
 
+/* Grown from 12px to read as a chunkier, more legible bar -- the head row
+   and milestone labels above/below were trimmed down to offset this, so
+   the HUD's total height doesn't grow along with it (net effect is a
+   slightly SHORTER hud overall despite this being taller). */
 .spy-charge-meter {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 1px;
   width: 100%;
-  height: 12px;
+  height: 20px;
   padding: 2px;
   box-sizing: border-box;
 
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 5px;
+  border-radius: 6px;
   background: rgba(0, 0, 0, 0.62);
   overflow: hidden;
   box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.9);
@@ -3792,7 +3799,7 @@ body:has(#guesserScreen.active) #appMain {
 
 .spy-charge-segment {
   min-width: 0;
-  border-radius: 2px;
+  border-radius: 3px;
   background: rgba(255, 255, 255, 0.1);
   transition:
     background 150ms ease,
@@ -3829,7 +3836,7 @@ body:has(#guesserScreen.active) #appMain {
 .spy-charge-milestones {
   display: flex;
   justify-content: space-between;
-  margin-top: 2px;
+  margin-top: 1px;
   padding: 0 1px;
   color: rgba(255, 255, 255, 0.45);
   font-size: 7px;
