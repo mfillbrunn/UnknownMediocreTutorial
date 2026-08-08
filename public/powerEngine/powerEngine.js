@@ -36,7 +36,76 @@ const POWER_MAX_USES = {
   hideTile: 2,
   revealGreen: 2
 };
+function applyPowerPalette(
+  element,
+  powerId
+) {
+  if (!element || !powerId) {
+    return;
+  }
 
+  const fallbackColor =
+    window.POWER_METADATA?.[
+      powerId
+    ]?.color;
+
+  const configured =
+    window.POWER_PALETTES?.[
+      powerId
+    ];
+
+  const colors = (
+    Array.isArray(configured)
+      ? configured
+      : [fallbackColor]
+  )
+    .filter(
+      color =>
+        typeof color === "string" &&
+        color.trim()
+    )
+    .slice(0, 3);
+
+  if (!colors.length) {
+    return;
+  }
+
+  const first = colors[0];
+
+  const second =
+    colors[1] || first;
+
+  const third =
+    colors[2] || second;
+
+  element.classList.add(
+    "power-themed"
+  );
+
+  element.dataset.powerId =
+    powerId;
+
+  element.dataset.paletteSize =
+    String(colors.length);
+
+  element.style.setProperty(
+    "--power-color-1",
+    first
+  );
+
+  element.style.setProperty(
+    "--power-color-2",
+    second
+  );
+
+  element.style.setProperty(
+    "--power-color-3",
+    third
+  );
+}
+
+window.applyPowerPalette =
+  applyPowerPalette;
 // Shared by power buttons (below) and quest.js's badge tile. .power-btn-label
 // reserves a fixed-height 2-line box in CSS (components.css) so every badge
 // card ends up the same overall size regardless of label length -- this
