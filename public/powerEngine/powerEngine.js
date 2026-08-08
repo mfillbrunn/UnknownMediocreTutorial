@@ -165,10 +165,21 @@ window.PowerEngine = {
   createPowerButton(id, label) {
     const wrapper = document.createElement("div");
     wrapper.className = "power-btn-wrapper";
+const btn =
+  document.createElement(
+    "button"
+  );
 
-    const btn = document.createElement("button");
-    btn.className = "power-btn power-badge";
-    btn.title = label;
+btn.className =
+  "power-btn power-badge";
+
+btn.title = label;
+
+applyPowerPalette(
+  btn,
+  id
+);
+
 
     // Vector icon from the inline <symbol> library, recolored via
     // currentColor (--role-accent) -- one icon works for both roles.
