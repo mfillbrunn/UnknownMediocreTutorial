@@ -538,12 +538,46 @@ function buildCoverStrengthState(
     !!state.powers
       ?.rouletteSecretActive ||
     !!state.powers
-      ?.doubleGuessPending ||
-    !!state.simultaneousAllWrong;
+      ?.doubleGuessPending;
 
   if (blocked) {
     return {
       visible: false
+    };
+  }
+
+  /*
+   * The secret can't be changed at all this turn -- an all-wrong
+   * simultaneous opening forces the setter to keep what they had
+   * (see client.js's isOpeningMissSecretLocked). There's no legal
+   * switch to rate against, so skip the analysis and show a flat
+   * locked rating instead of hiding the stars outright for the
+   * whole locked turn. Lockdown (freezeActive) is a deliberately
+   * drafted/random power activation, not this same "stuck with
+   * whatever you had" case, so it stays fully hidden above with
+   * the other blocked reasons.
+   */
+  const secretLocked =
+    !!state.simultaneousAllWrong;
+
+  if (secretLocked) {
+    return {
+      visible: true,
+      status: "locked",
+      stars: 2,
+      hasUpgrade: false,
+      keepCount: null,
+      bestCount: null,
+      betterCount: null,
+      bestImprovementPct: null,
+      draftComplete: false,
+      draftValid: false,
+      draftIsCurrent: false,
+      draftIsPending: false,
+      draftCount: null,
+      draftGapPct: null,
+      bonusAvailable: false,
+      bonusStar: false
     };
   }
 
