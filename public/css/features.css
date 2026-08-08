@@ -2647,7 +2647,7 @@ body:has(#guesserScreen.active) #appMain {
 
   box-sizing: border-box;
   min-height: 0;
-  gap: var(--sp-6);
+  gap: var(--sp-4);
 
   overflow: hidden;
   scrollbar-gutter: stable;
@@ -2764,6 +2764,63 @@ body:has(#guesserScreen.active) #appMain {
   #setterScreen .setter-sidebar .game-side-panel.idle-flip-animating {
     transition: none;
   }
+}
+
+/* Press-and-hold drag handle (ui/setter-sidebar.js) -- sits above the
+   Log/Notes tabs, always in-flow (never itself floats), so it stays put
+   as a fixed grab point regardless of which panel is currently docked or
+   mid-drag. touch-action:none stops the browser treating a vertical drag
+   here as a page/list scroll. Hidden during idle-mode -- Notes is already
+   auto-floating then, so there's nothing for the handle to arm. */
+#setterScreen .setter-sidebar-activity.idle-mode .activity-drag-handle {
+  display: none;
+}
+
+.activity-drag-handle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  margin-bottom: 2px;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.activity-drag-handle:active {
+  cursor: grabbing;
+}
+
+.activity-drag-grip {
+  width: 34px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  transition: background 150ms ease;
+}
+
+.activity-drag-handle:hover .activity-drag-grip {
+  background: color-mix(in srgb, var(--role-accent) 55%, rgba(255, 255, 255, 0.22));
+}
+
+/* While an actual drag is in progress (not just hovering), suppress text
+   selection / touch scrolling anywhere else on the page so a fast finger
+   movement can't select page text or scroll the body underneath. */
+body.activity-drag-active {
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
+}
+
+/* The panel being live-dragged follows the pointer 1:1 every frame
+   (ui/setter-sidebar.js's applyFixedRect calls) -- it deliberately does
+   NOT carry .idle-flip-animating's transition during that phase (would
+   lag behind the finger); only the final snap (a real flip() call once
+   the pointer lifts) gets the animated transition. */
+.game-side-panel.drag-expanding {
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
 }
 
 .setter-notes-idle-hint {
@@ -2919,7 +2976,15 @@ body:has(#guesserScreen.active) #appMain {
   display: grid !important;
   grid-template-columns: 1fr;
   align-items: start;
-  gap: var(--sp-6);
+  /* align-items:start only stops an item stretching WITHIN its own row --
+     without this, the grid container's default align-content:stretch
+     still stretches the row TRACKS themselves to fill whatever height
+     .setter-sidebar-powers (a flex ancestor) happens to have, ballooning
+     every button (1 active power = 1 row = the whole column's height)
+     far past its actual content size. This is most of where "empty
+     space" in the sidebar was coming from. */
+  align-content: start;
+  gap: var(--sp-4);
 
   width: 100%;
   min-width: 0;
@@ -2956,19 +3021,28 @@ body:has(#guesserScreen.active) #appMain {
   the original icon-over-label vertical card shape -- see the guesser
   rule below for why its own (much wider) column needed a different
   shape instead.
+
+  min-height is a vw-based clamp() (not a fixed px) so the card actually
+  shrinks on a narrow/short phone instead of just eating more of the
+  sidebar's already-tight vertical space -- same "responsive, not fixed"
+  approach as .theme-setter .play-row's --setter-sidebar-width, and
+  scaled down a bit from that fixed 64px baseline to leave more room for
+  Log/Notes below (see #296).
 */
 #setterScreen .setter-power-view .power-btn.power-badge {
   height: auto;
-  min-height: 64px;
+  min-height: clamp(46px, 14vw, 60px);
+  padding: 6px 5px 8px;
+  gap: 4px;
 }
 
 #setterScreen .setter-power-view .power-icon {
-  max-width: 46px;
+  max-width: clamp(26px, 9vw, 38px);
 }
 
 #setterScreen .setter-power-view .power-btn-label {
-  height: 26px;
-  font-size: 10px;
+  height: clamp(18px, 5.5vw, 22px);
+  font-size: clamp(8.5px, 2.4vw, 10px);
 }
 
 

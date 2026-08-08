@@ -227,9 +227,17 @@ function showOpeningMissLockNotice() {
   });
 }
 ///Simplified turn indicator
+// isYourTurn === null means "no active turn to report" (lobby/gameOver) --
+// clears both classes so the turn-banner CSS (features.css) hides itself
+// instead of defaulting to a stale/misleading "opponent's turn".
 function setTurn(screenId, isYourTurn) {
   const screen = document.getElementById(screenId);
   if (!screen) return;
+
+  if (isYourTurn === null) {
+    screen.classList.remove("is-your-turn", "is-not-your-turn");
+    return;
+  }
 
   screen.classList.toggle("is-your-turn", isYourTurn);
   screen.classList.toggle("is-not-your-turn", !isYourTurn);
@@ -1059,7 +1067,7 @@ function updateSetterScreen() {
   // PHASE-SPECIFIC BUTTON / INPUT LOGIC
   // -------------------------------------------------------
   // SIMULTANEOUS PHASE — only initial secret allowed, once
-  setTurn("setterScreen", false); 
+  setTurn("setterScreen", null);
   if (state.phase === "simultaneous") {
     const secretSubmitted =!!state.secret || state.simultaneousSecretSubmitted;
     setterInputEnabled = !secretSubmitted;    
@@ -1529,8 +1537,17 @@ function applyPreviewFeedback(fbArray, isIncomplete = false) {
 }
 ///SETTER INPUT
 function emitSetterDraftPreview(draft) {
-  if (!socket || !roomId || myUserId() !== state.setter) return;
-  socket.emit("setterDraftSecret", {roomId, draft});
+  // window.roomId, not the bare roomId -- see the comment above the
+  // PowerEngine.renderButtons gate further up this file. The bare module-
+  // scoped roomId is only ever set once, from localStorage at
+  // DOMContentLoaded, so any room created/joined afterward without a page
+  // reload (a brand new session's first game, New Match, a fresh invite
+  // join, etc.) leaves it stale -- every setterDraftSecret emit silently
+  // targeted the wrong (or no) room, so the setter's "New" remaining-count
+  // never updated no matter how the draft was changed (typed OR filled
+  // from a saved Notes word).
+  if (!socket || !window.roomId || myUserId() !== state.setter) return;
+  socket.emit("setterDraftSecret", {roomId: window.roomId, draft});
 }
 
 // Draft tile locks (Drag Mode: click a filled tile to lock it) -- indices
@@ -2060,7 +2077,7 @@ if (state?.powers?.wiretapActive) {
   
   $("guesserScreen").querySelector(".screen-title").textContent = guesserName;
   //$("guesserRoleBadge").textContent = "Inspector";
-setTurn("guesserScreen", false);
+setTurn("guesserScreen", null);
 if (state.phase === "simultaneous") {setTurn("guesserScreen", !state.pendingGuess);}
 if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserScreen", true);} 
 

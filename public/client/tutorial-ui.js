@@ -1653,7 +1653,7 @@ function highlightSetterRemainingBox() {
   highlightEl(byId("SetterRemainingBox"));
 }
 
-// index: 0 = Old, 1 = Keep, 2 = New -- the box has no per-row id, only the
+// index: 0 = Keep, 1 = New -- the box has no per-row id, only the
 // repeated .remaining-stat class (see remaining-words.js), so the row is
 // picked out by its fixed rendering position instead.
 function highlightSetterRemainingBoxRow(index) {
@@ -4260,25 +4260,25 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 4) {
       showTutorial(
-        `Old is how many secrets were still possible right before this guess.`,
+        `Keep vs. New compares your two options for this turn.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterRemainingBox();
+      return;
+    }
+
+    if (tutorialSubStep === 5) {
+      showTutorial(
+        `Keep is how many secrets would still be possible if you kept your current secret, "${oldSecret}".`,
         {
           mode: "advance"
         }
       );
 
       highlightSetterRemainingBoxRow(0);
-      return;
-    }
-
-    if (tutorialSubStep === 5) {
-      showTutorial(
-        `Keep is how many would still be possible if you kept your current secret, "${oldSecret}".`,
-        {
-          mode: "advance"
-        }
-      );
-
-      highlightSetterRemainingBoxRow(1);
       return;
     }
 
@@ -4290,7 +4290,7 @@ function runAdvancedTutorialSetter(state) {
         }
       );
 
-      highlightSetterRemainingBoxRow(2);
+      highlightSetterRemainingBoxRow(1);
       return;
     }
 

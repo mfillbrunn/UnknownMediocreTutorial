@@ -210,10 +210,6 @@ function renderSetterRemainingBox(boxState) {
     box.innerHTML = `
       <div class="remaining-stats">
         <div class="remaining-stat">
-          <span class="remaining-stat-label">Old</span>
-          <span class="remaining-stat-value">–</span>
-        </div>
-        <div class="remaining-stat">
           <span class="remaining-stat-label">Keep</span>
           <span class="remaining-stat-value">–</span>
         </div>
@@ -228,7 +224,6 @@ function renderSetterRemainingBox(boxState) {
 
   const oldStyle = boxState.highlightOld ? "color: var(--tile-green)" : "";
   const newStyle = boxState.highlightNew ? "color: var(--tile-green)" : "";
-  const current = boxState.current.toLocaleString();
 
   const keepValue = boxState.old != null ? boxState.old.toLocaleString() : "?";
   const newValue =
@@ -240,10 +235,6 @@ function renderSetterRemainingBox(boxState) {
 
   box.innerHTML = `
     <div class="remaining-stats">
-      <div class="remaining-stat">
-        <span class="remaining-stat-label">Old</span>
-        <span class="remaining-stat-value">${current}</span>
-      </div>
       <div class="remaining-stat">
         <span class="remaining-stat-label">Keep</span>
         <span class="remaining-stat-value" style="${oldStyle}">${keepValue}</span>
