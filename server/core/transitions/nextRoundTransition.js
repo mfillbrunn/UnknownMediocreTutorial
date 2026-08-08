@@ -87,9 +87,6 @@ function advanceToNextRound(room, state, roomId, context) {
   if (state.isTutorial || !guesserChanged) {
     state.powers.quest.type = savedQuestType || null;
   ensureQuestConditions(state);
-    spyChargeServer.initializeForRound(
-      state
-    );
     state.powers.quest.pendingChoice = null;
   } else {
     // Daily Challenge: same two options for every player attempting
@@ -113,6 +110,18 @@ function advanceToNextRound(room, state, roomId, context) {
       state.powers.quest.pendingChoice = choices;
     }
   }
+
+  // Unconditional (moved out of the quest-type branching above) -- this
+  // has to (re)run for every round transition, not just the
+  // tutorial/no-swap case, since it's keyed off state.setter, which
+  // mode.onNextRound already swapped by this point. Round 2's setter is
+  // normally a DIFFERENT player than round 1's (the standard 2-round
+  // match always swaps), and this was previously only reached on the
+  // no-swap branch -- leaving the new setter's spyCharge state stuck at
+  // resetRoundState's default { enabled: false, ... } for the entire
+  // round, so the charge meter and hint letter never showed up for
+  // whichever player started the match as the guesser.
+  spyChargeServer.initializeForRound(state);
 
   state.phase = res.phase || "simultaneous";
   state.gameOver = false;
