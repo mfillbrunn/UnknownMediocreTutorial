@@ -477,8 +477,14 @@ function updateQuestBadge(state, role) {
   // read-only mirror (its blue border already marks it as "theirs, not
   // mine", see .quest-badge-tile's default --role-accent; the extra
   // transparency from quest-badge-readonly below reinforces "look, don't
-  // touch" further).
-  const canClaim = role === "guesser" && !status.done && (q.ready || q.oneAway);
+  // touch" further). Also only claimable on the guesser's OWN turn: the
+  // reward reveals a real letter straight off state.secret at the moment
+  // of the claim (see questServer.js's grantQuestReward/
+  // grantQuestYellowEarly) -- claiming mid-setter-turn would lock in info
+  // about whatever secret happened to still be sitting there while the
+  // setter was still deciding whether to keep or change it.
+  const isMyTurn = state.turn === state.guesser;
+  const canClaim = role === "guesser" && isMyTurn && !status.done && (q.ready || q.oneAway);
   btn.classList.toggle("quest-badge-readonly", role !== "guesser");
 
   btn.classList.toggle("quest-ready", !status.done && !!q.ready);
@@ -512,7 +518,10 @@ function updateQuestBadge(state, role) {
     const oneAwayHint = !status.done && !q.ready && q.oneAway
       ? " Use now for an early yellow letter (present, position unknown) — completing the quest instead gives a full green letter."
       : "";
-    const descText = (status.done || q.ready) ? status.desc : `${status.desc} (Progress: ${status.label})${oneAwayHint}`;
+    const waitForTurnHint = role === "guesser" && !isMyTurn && !status.done && (q.ready || q.oneAway)
+      ? " Claim it on your next turn."
+      : "";
+    const descText = (status.done || q.ready) ? `${status.desc}${waitForTurnHint}` : `${status.desc} (Progress: ${status.label})${oneAwayHint}${waitForTurnHint}`;
 
     // Only the guesser can toggle their OWN keyboard's guide -- the
     // setter's copy of this badge is a read-only mirror (see canClaim's

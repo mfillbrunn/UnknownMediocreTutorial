@@ -69,45 +69,40 @@
     hud.id = "spyChargeHud";
     hud.className = "spy-charge-hud hidden";
     hud.innerHTML = `
-      <div class="spy-charge-head">
+      <div class="spy-charge-bar-wrap">
         <div
-          id="spyChargeHint"
-          class="spy-charge-hint hidden"
-          aria-label="Bonus-star target"
-        ></div>
+          id="spyChargeMeter"
+          class="spy-charge-meter"
+          role="meter"
+          aria-valuemin="0"
+          aria-valuemax="12"
+          aria-valuenow="0"
+          aria-label="Spy charge: 0 of 12 stars"
+        >
+          ${Array.from({ length: MAX_CHARGE }, (_, index) => {
+            const value = index + 1;
+            const milestone =
+              value === 5 ? "power" :
+              value === 8 || value === 12 ? "reset" : "";
+
+            return `<span
+              class="spy-charge-segment${milestone ? ` milestone-${milestone}` : ""}"
+              data-charge-index="${index}"
+              data-charge-value="${value}"
+            ></span>`;
+          }).join("")}
+        </div>
         <button
           type="button"
-          id="spyChargeResetBtn"
-          class="spy-charge-reset-btn"
+          id="spyChargeActionBtn"
+          class="spy-charge-action-btn"
           aria-label="Reset one letter's feedback"
           title="Reset one letter's feedback"
           disabled
         >
-          ↺
-          <span id="spyChargeResetCount" class="spy-charge-reset-count">0</span>
+          <span id="spyChargeHintLetter">↺</span>
+          <span id="spyChargeResetCount" class="spy-charge-reset-count hidden">0</span>
         </button>
-      </div>
-      <div
-        id="spyChargeMeter"
-        class="spy-charge-meter"
-        role="meter"
-        aria-valuemin="0"
-        aria-valuemax="12"
-        aria-valuenow="0"
-        aria-label="Spy charge: 0 of 12 stars"
-      >
-        ${Array.from({ length: MAX_CHARGE }, (_, index) => {
-          const value = index + 1;
-          const milestone =
-            value === 5 ? "power" :
-            value === 8 || value === 12 ? "reset" : "";
-
-          return `<span
-            class="spy-charge-segment${milestone ? ` milestone-${milestone}` : ""}"
-            data-charge-index="${index}"
-            data-charge-value="${value}"
-          ></span>`;
-        }).join("")}
       </div>
       <div class="spy-charge-milestones" aria-hidden="true">
         <span>5⚡</span>
@@ -118,30 +113,12 @@
 
     section.prepend(hud);
 
-    byId("spyChargeResetBtn")?.addEventListener("click", event => {
+    byId("spyChargeActionBtn")?.addEventListener("click", event => {
       event.stopPropagation();
       armResetLetter();
     });
 
     return hud;
-  }
-
-  function renderHint(charge) {
-    const el = byId("spyChargeHint");
-    if (!el) return;
-
-    const hint = charge?.hint;
-    if (!hint?.letter || !Number.isInteger(hint.position)) {
-      el.classList.add("hidden");
-      el.textContent = "";
-      return;
-    }
-
-    const position = hint.position + 1;
-    el.classList.remove("hidden");
-    el.innerHTML = `${String(hint.letter).toUpperCase()}<sup>${position}</sup>`;
-    el.title = `Bonus star: change to a legal secret with ${String(hint.letter).toUpperCase()} in position ${position}`;
-    el.setAttribute("aria-label", el.title);
   }
 
   function renderMeter(state) {
@@ -159,16 +136,38 @@
     meter.setAttribute("aria-label", `Spy charge: ${total} of ${MAX_CHARGE} stars`);
   }
 
-  function renderResetButton(state) {
-    const button = byId("spyChargeResetBtn");
+  // One overlaid button on top of the meter now does both jobs the old
+  // separate hint bubble + reset button used to: it always shows the
+  // bonus-star target letter (falling back to the ↺ glyph when there's no
+  // active hint), and it flashes once a letter-reset is actually available
+  // to use, same trigger (armResetLetter) as before.
+  function renderActionButton(charge, state) {
+    const button = byId("spyChargeActionBtn");
+    const letterEl = byId("spyChargeHintLetter");
     const countEl = byId("spyChargeResetCount");
-    if (!button || !countEl) return;
+    if (!button || !letterEl || !countEl) return;
+
+    const hint = charge?.hint;
+    const hasHint = !!hint?.letter && Number.isInteger(hint.position);
+    const position = hasHint ? hint.position + 1 : null;
+
+    letterEl.innerHTML = hasHint
+      ? `${String(hint.letter).toUpperCase()}<sup>${position}</sup>`
+      : "↺";
 
     const available = availableResetCount(state);
     countEl.textContent = String(available);
+    countEl.classList.toggle("hidden", available <= 0);
     button.disabled = available <= 0;
     button.classList.toggle("is-ready", available > 0);
     button.classList.toggle("is-armed", resetArmed);
+
+    const hintText = hasHint
+      ? `Bonus star: change to a legal secret with ${String(hint.letter).toUpperCase()} in position ${position}. `
+      : "";
+    const title = `${hintText}${available > 0 ? "Tap to reset a letter's feedback." : "Reset a letter's feedback (unlocks at 8 stars)."}`;
+    button.title = title;
+    button.setAttribute("aria-label", title);
   }
 
   function updateLockedPowerCard(state) {
@@ -218,9 +217,8 @@
       return;
     }
 
-    renderHint(charge);
     renderMeter(state);
-    renderResetButton(state);
+    renderActionButton(charge, state);
     updateLockedPowerCard(state);
   }
 
@@ -540,7 +538,7 @@
   function disarmResetLetter() {
     resetArmed = false;
     document.body.classList.remove("spy-charge-reset-armed");
-    renderResetButton(window.state);
+    renderActionButton(getCharge(window.state), window.state);
   }
 
   function armResetLetter() {
@@ -548,7 +546,7 @@
 
     resetArmed = true;
     document.body.classList.add("spy-charge-reset-armed");
-    renderResetButton(window.state);
+    renderActionButton(getCharge(window.state), window.state);
     window.toast?.("Choose a keyboard letter to reset");
   }
 

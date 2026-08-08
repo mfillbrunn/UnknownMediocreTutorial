@@ -3684,21 +3684,27 @@ body:has(#guesserScreen.active) #appMain {
   display: none;
 }
 
-/* Head row (hint bubble + reset button) is trimmed down from its old
-   25px/23px sizing so the meter below can grow taller without the HUD's
-   total height growing along with it -- see .spy-charge-meter. */
-.spy-charge-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 19px;
+/* The old separate head row (hint bubble + reset button) sitting above the
+   meter is gone -- .spy-charge-bar-wrap now overlays a single button
+   directly on top of the meter instead, see .spy-charge-action-btn. */
+.spy-charge-bar-wrap {
+  position: relative;
   margin-bottom: 2px;
 }
 
-.spy-charge-hint {
-  min-width: 28px;
-  height: 19px;
-  padding: 0 6px;
+/* Overlaid on the meter (not beside it) so the bar charging up stays
+   visible behind it -- semi-transparent background + a flash animation
+   when a reset is actually available to use. */
+.spy-charge-action-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+
+  min-width: 32px;
+  height: 17px;
+  padding: 0 7px;
   box-sizing: border-box;
 
   display: inline-flex;
@@ -3707,57 +3713,37 @@ body:has(#guesserScreen.active) #appMain {
 
   border: 1px solid rgba(34, 211, 238, 0.5);
   border-radius: 999px;
-  background: rgba(34, 211, 238, 0.11);
+  background: rgba(9, 10, 14, 0.45);
   color: #67e8f9;
 
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
   line-height: 1;
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.18);
+  cursor: not-allowed;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.16);
+  transition: background 150ms ease, border-color 150ms ease;
 }
 
-.spy-charge-hint.hidden {
-  visibility: hidden;
-}
-
-.spy-charge-hint sup {
+.spy-charge-action-btn sup {
   margin-left: 1px;
   font-size: 0.58em;
   transform: translateY(-0.35em);
 }
 
-.spy-charge-reset-btn {
-  position: relative;
-  width: 25px;
-  height: 19px;
-  padding: 0;
-
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.34);
-
-  font-size: 13px;
-  font-weight: 900;
-  cursor: not-allowed;
-}
-
-.spy-charge-reset-btn.is-ready {
-  border-color: rgba(34, 211, 238, 0.62);
-  background: rgba(34, 211, 238, 0.13);
-  color: #67e8f9;
+.spy-charge-action-btn.is-ready {
   cursor: pointer;
-  animation: spy-reset-ready 1.7s ease-in-out infinite;
+  border-color: rgba(34, 211, 238, 0.8);
+  animation: spy-charge-action-flash 1.3s ease-in-out infinite;
 }
 
-.spy-charge-reset-btn.is-armed {
-  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.3);
+.spy-charge-action-btn.is-armed {
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.35);
 }
 
 .spy-charge-reset-count {
   position: absolute;
-  right: -4px;
-  top: -5px;
+  right: -5px;
+  top: -6px;
 
   min-width: 14px;
   height: 14px;
@@ -3775,9 +3761,13 @@ body:has(#guesserScreen.active) #appMain {
   line-height: 1;
 }
 
-@keyframes spy-reset-ready {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.28); }
-  50% { box-shadow: 0 0 0 4px rgba(34, 211, 238, 0); }
+.spy-charge-reset-count.hidden {
+  display: none;
+}
+
+@keyframes spy-charge-action-flash {
+  0%, 100% { background: rgba(9, 10, 14, 0.45); }
+  50% { background: rgba(34, 211, 238, 0.45); }
 }
 
 /* Grown from 12px to read as a chunkier, more legible bar -- the head row
@@ -3941,7 +3931,7 @@ body.spy-charge-reset-armed #keyboardSetter .key[data-key]:not([data-key="ENTER"
 
 @media (prefers-reduced-motion: reduce) {
   .spy-charge-segment.is-next,
-  .spy-charge-reset-btn.is-ready,
+  .spy-charge-action-btn.is-ready,
   #setterCoverStars.zero-award-pulse {
     animation: none;
   }

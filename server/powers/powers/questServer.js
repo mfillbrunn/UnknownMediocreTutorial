@@ -603,6 +603,13 @@ function grantQuestYellowEarly(state, roomId, io) {
 // click.
 function attemptQuestClaim(state, userId, roomId, io) {
   if (userId !== state.guesser) return false;
+  // Only claimable on the guesser's OWN turn -- the reward reads
+  // state.secret directly at the moment of the claim (see
+  // grantQuestReward/grantQuestYellowEarly below), so claiming while the
+  // setter is still mid-Keep/New would lock in info about whatever
+  // secret happened to still be sitting there, not necessarily what the
+  // setter ends up committing to.
+  if (state.turn !== state.guesser) return false;
   const q = state.powers?.quest;
   if (!q || !q.type || q.used) return false;
   ensureFieldReportProgress(state);

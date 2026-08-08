@@ -46,9 +46,10 @@ function handleNormalPhase(room, state, action, roomId, context) {
   // Quest claim: tapping the guesser's quest badge. Covers both reward
   // states -- the real green letter once the quest is ready, or (one
   // guess earlier) the early-yellow trade that forfeits it -- questServer
-  // decides which applies from state.powers.quest itself. Not tied to
-  // whose turn it is or a pending guess; it's a standing option on the
-  // badge, not a normal power activation.
+  // decides which applies from state.powers.quest itself. Not gated on a
+  // pending guess (it's a standing option on the badge, not a normal
+  // power activation), but IS gated on whose turn it is -- see
+  // attemptQuestClaim's own comment.
   if (action.type === "USE_QUEST") {
     if (questServer.attemptQuestClaim(state, userId, roomId, io)) {
       emitRoomState(roomId, room, io);
