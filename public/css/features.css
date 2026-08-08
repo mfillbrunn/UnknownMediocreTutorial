@@ -3295,9 +3295,19 @@ body:has(#guesserScreen.active) #appMain {
 .letter-profile-tile-lines .label {
   opacity: 0.75;
   font-weight: 700;
-  font-size: 9px;
+  font-size: 6.5px;
   text-transform: uppercase;
-  letter-spacing: 0.2px;
+  letter-spacing: 0;
+
+  /* "Consonants" (the longest of this card's possible labels) was
+     overflowing the 90px card's ~76px content width -- the font-size
+     drop above closes most of that gap, and these three keep it from
+     ever visibly spilling past the edge again (flex children don't
+     shrink below their own content width by default, hence min-width). */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .letter-profile-tile-lines .value {
