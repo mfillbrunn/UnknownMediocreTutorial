@@ -5,6 +5,16 @@
 // across every guess made so far this round has its feedback ERASED
 // (entry.fb / entry.fbGuesser set to "" — same erase-not-mask treatment as
 // Vowel Refresh), not just redacted for one side. Usable twice per match.
+//
+// A letter's info isn't only carried by entry.fb/fbGuesser -- powers like
+// Field Report, Reveal Letter, Reveal Penalty, Bet Miss, Magic Mode, and
+// the guesser quest rewards can also bind a letter via state.extraConstraints
+// (a GREEN "must be at this exact position" or YELLOW "must be somewhere in
+// the word" rule -- see history.js's isConsistentWithHistory and
+// constraintData.js's Must Contain box, both of which read straight from
+// this array). Erasing only the history rows and leaving a matching
+// extraConstraint in place would still fully reveal/bind that letter, so
+// this power clears both.
 const engine = require("../powerEngineServer.js");
 const { isConsistentWithHistory } = require("../../game-engine/history");
 
@@ -16,8 +26,7 @@ engine.registerPower("hideTile", {
     const letter = String(action.letter || "").toUpperCase();
     if (!/^[A-Z]$/.test(letter)) return false;
 
-    // Nothing to reset (letter hasn't appeared in a scored guess this
-    // round yet) -- reject instead of silently burning a use.
+    // Nothing to reset -- reject instead of silently burning a use.
     let hasFeedback = false;
     for (const entry of state.history) {
       const guess = (entry.guess || "").toUpperCase();
@@ -28,7 +37,10 @@ engine.registerPower("hideTile", {
         }
       }
     }
-    if (!hasFeedback) return false;
+    const hasExtraConstraint = (state.extraConstraints || []).some(
+      c => c.letter?.toUpperCase() === letter
+    );
+    if (!hasFeedback && !hasExtraConstraint) return false;
 
     for (const entry of state.history) {
       const guess = (entry.guess || "").toUpperCase();
@@ -37,6 +49,12 @@ engine.registerPower("hideTile", {
         if (Array.isArray(entry.fb)) entry.fb[i] = "";
         if (Array.isArray(entry.fbGuesser)) entry.fbGuesser[i] = "";
       }
+    }
+
+    if (state.extraConstraints?.length) {
+      state.extraConstraints = state.extraConstraints.filter(
+        c => c.letter?.toUpperCase() !== letter
+      );
     }
 
     state.powers.hideTileUses = uses + 1;
