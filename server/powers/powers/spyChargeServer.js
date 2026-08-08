@@ -323,7 +323,26 @@ function evaluateSecretChange(
     bestCount: null
   };
 
-  if (!charge?.enabled || !isDecisionEligible(state)) {
+  if (!charge?.enabled) {
+    return empty;
+  }
+
+  // Mirrors coverStrength.js's buildCoverStrengthState -- an all-wrong
+  // simultaneous opening forces the setter to keep whatever secret they
+  // had, so there's no legal alternative to rate a switch against. Award
+  // the same flat 2 stars the UI already shows for this turn instead of
+  // silently earning nothing just because "keeping" is normally a
+  // zero-reward no-op switch (see the word === currentSecret check
+  // below, which this intentionally bypasses).
+  if (state.simultaneousAllWrong) {
+    return {
+      ...empty,
+      baseStars: 2,
+      earnedStars: 2
+    };
+  }
+
+  if (!isDecisionEligible(state)) {
     return empty;
   }
 
