@@ -21,9 +21,33 @@ function renderDraftCandidateList(
     const selected = selectedIndex >= 0;
     const label = selected ? pickLabel?.(selectedIndex) : "";
 
-    const btn = document.createElement("button");
-    btn.className = "draft-candidate-btn";
-    btn.disabled = done;
+const btn =
+  document.createElement(
+    "button"
+  );
+
+btn.className =
+  "draft-candidate-btn";
+
+btn.disabled = done;
+
+/*
+ * This candidate renderer is also used
+ * for Quests. Apply a power palette only
+ * when this ID belongs to a power.
+ */
+if (
+  window.POWER_METADATA?.[id]
+) {
+  window.applyPowerPalette?.(
+    btn,
+    id
+  );
+}
+    if (window.QUEST_METADATA?.[id]) {
+      btn.classList.add("quest-themed");
+      btn.dataset.questType = id;
+    }
     btn.classList.toggle("selected", selected);
 
     btn.innerHTML = `

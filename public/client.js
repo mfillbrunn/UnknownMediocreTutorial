@@ -540,10 +540,22 @@ onStateUpdate(newState => {
       pendingEl &&
       pendingEl.offsetParent !== null
     ) {
+      const heldVisual =
+        window.captureSetterPendingGuessVisual?.(
+          pendingEl
+        ) || null;
+
       pendingGuessFlight = {
         rect: pendingEl.getBoundingClientRect(),
-        guess: prevPendingGuess.toUpperCase()
+        guess: prevPendingGuess.toUpperCase(),
+        holdClone: heldVisual?.holdClone || null,
+        starRect: heldVisual?.starRect || null
       };
+
+      if (pendingGuessFlight.starRect) {
+        window._pendingSpyChargeSourceRect =
+          pendingGuessFlight.starRect;
+      }
     }
   }
 
@@ -1148,6 +1160,12 @@ renderDraftRows({
     onInput: handleSetterInput
   });
   }
+  window.updateSetterDecisionControls?.({
+    state,
+    inputEnabled: setterInputEnabled,
+    keepEnabled: KeepEnabled,
+    newEnabled: NewEnabled
+  });
   updateSetterPreview();
  resolvePendingGuessFlight(
   historyRender?.addedElements || []
@@ -1207,6 +1225,7 @@ function resolvePendingGuessFlight(
   );
 
   if (!container || !target) {
+    capture.holdClone?.remove();
     container
       ?.querySelectorAll(".reveal-waiting")
       .forEach(startHistoryRowReveal);
@@ -1219,15 +1238,32 @@ function resolvePendingGuessFlight(
     return;
   }
 
-  slideRowIntoPlace(
-    target,
-    capture.rect
-  );
+  target.style.visibility = "hidden";
+  target.classList.remove("row-enter");
+
+  const beginHistoryFlight = () => {
+    slideRowIntoPlace(
+      target,
+      capture.rect,
+      capture.holdClone
+    );
+  };
+
+  if (
+    window.deferSetterHistoryUntilSpyCharge?.(
+      beginHistoryFlight
+    )
+  ) {
+    return;
+  }
+
+  beginHistoryFlight();
 }
 
 function slideRowIntoPlace(
   newRow,
-  startRect
+  startRect,
+  existingFlight = null
 ) {
   const scrollBox =
     newRow.closest(".history-scroll");
@@ -1235,43 +1271,42 @@ function slideRowIntoPlace(
   const visualRow =
     newRow.querySelector(".history-row");
 
+  const finishWithoutFlight = () => {
+    existingFlight?.remove();
+    startHistoryRowReveal(newRow);
+  };
+
   if (
     !scrollBox ||
     !visualRow ||
     !startRect?.width ||
     !startRect?.height
   ) {
-    startHistoryRowReveal(newRow);
+    finishWithoutFlight();
     return;
   }
 
   newRow.classList.remove("row-enter");
-
   scrollBox.scrollTop =
     scrollBox.scrollHeight;
 
-  const endRect =
-    visualRow.getBoundingClientRect();
+  const runFlight = () => {
+    const endRect =
+      visualRow.getBoundingClientRect();
 
-  if (!endRect.width || !endRect.height) {
-    startHistoryRowReveal(newRow);
-    return;
-  }
+    if (!endRect.width || !endRect.height) {
+      finishWithoutFlight();
+      return;
+    }
 
-  if (
-    window.matchMedia?.(
-      "(prefers-reduced-motion: reduce)"
-    ).matches
-  ) {
-    startHistoryRowReveal(newRow);
-    return;
-  }
-
-  document
-    .querySelectorAll(
-      ".history-flight-clone"
-    )
-    .forEach(el => el.remove());
+    if (
+      window.matchMedia?.(
+        "(prefers-reduced-motion: reduce)"
+      ).matches
+    ) {
+      finishWithoutFlight();
+      return;
+    }
 
   // See components.css's body.row-flight-active rule -- fades out the
   // sidebar's Keep/New divider for the flight's duration so it doesn't
@@ -1284,111 +1319,151 @@ function slideRowIntoPlace(
   const flight =
     visualRow.cloneNode(true);
 
-  flight.classList.add(
-    "history-flight-clone"
-  );
-
-  flight.setAttribute(
-    "aria-hidden",
-    "true"
-  );
-
-  flight.querySelectorAll(
-    ".history-tile-cover"
-  ).forEach(el => el.remove());
-
-  const sourceTiles =
-    visualRow.querySelectorAll(
-      ":scope > .history-tile"
+    const usingHeldPending = !!(
+      existingFlight?.isConnected
     );
 
-  const flightTiles =
-    flight.querySelectorAll(
-      ":scope > .history-tile"
+    const flight = usingHeldPending
+      ? existingFlight
+      : visualRow.cloneNode(true);
+
+    flight.classList.add(
+      "history-flight-clone",
+      "setter-source-flight"
     );
 
-  sourceTiles.forEach(
-    (source, index) => {
-      const clone = flightTiles[index];
-      if (!clone) return;
+    flight.classList.remove(
+      "row-slide-in",
+      "row-slide-down",
+      "row-enter",
+      "reveal-tiles"
+    );
 
-      const rect =
-        source.getBoundingClientRect();
+    flight.setAttribute(
+      "aria-hidden",
+      "true"
+    );
 
-      const style =
-        getComputedStyle(source);
+    flight
+      .querySelectorAll(
+        ".history-tile-cover, " +
+        ".setter-row-caption, " +
+        "#setterCoverStars"
+      )
+      .forEach(element => element.remove());
 
-      Object.assign(clone.style, {
-        width: `${rect.width}px`,
-        height: `${rect.height}px`,
-        flex: `0 0 ${rect.width}px`,
-        fontSize: style.fontSize,
-        fontFamily: style.fontFamily,
-        fontWeight: style.fontWeight,
-        lineHeight: style.lineHeight,
-        borderRadius: style.borderRadius,
-        letterSpacing: style.letterSpacing
+    flight
+      .querySelectorAll("[id]")
+      .forEach(element => {
+        element.removeAttribute("id");
       });
+
+    if (!usingHeldPending) {
+      const sourceTiles =
+        visualRow.querySelectorAll(
+          ":scope > .history-tile"
+        );
+
+      const flightTiles =
+        flight.querySelectorAll(
+          ":scope > .history-tile"
+        );
+
+      sourceTiles.forEach(
+        (source, index) => {
+          const clone = flightTiles[index];
+          if (!clone) return;
+
+          const rect =
+            source.getBoundingClientRect();
+
+          const style =
+            getComputedStyle(source);
+
+          Object.assign(clone.style, {
+            width: `${rect.width}px`,
+            height: `${rect.height}px`,
+            flex: `0 0 ${rect.width}px`,
+            fontSize: style.fontSize,
+            fontFamily: style.fontFamily,
+            fontWeight: style.fontWeight,
+            lineHeight: style.lineHeight,
+            borderRadius: style.borderRadius,
+            letterSpacing: style.letterSpacing
+          });
+        }
+      );
     }
-  );
 
-  const rowStyle =
-    getComputedStyle(visualRow);
+    const rowStyle =
+      getComputedStyle(
+        usingHeldPending
+          ? flight
+          : visualRow
+      );
 
-  Object.assign(flight.style, {
-    position: "fixed",
-    left: `${endRect.left}px`,
-    top: `${endRect.top}px`,
-    width: `${endRect.width}px`,
-    height: `${endRect.height}px`,
-    gap: rowStyle.gap,
-    margin: "0",
-    zIndex: "100000",
-    pointerEvents: "none",
-    transformOrigin: "center center",
-    willChange: "transform"
-  });
+    Object.assign(flight.style, {
+      position: "fixed",
+      left: `${startRect.left}px`,
+      top: `${startRect.top}px`,
+      width: `${startRect.width}px`,
+      height: `${startRect.height}px`,
+      display: "flex",
+      alignItems: rowStyle.alignItems,
+      justifyContent: rowStyle.justifyContent,
+      gap: rowStyle.gap,
+      margin: "0",
+      zIndex: "100000",
+      pointerEvents: "none",
+      transformOrigin: "center center",
+      transform: "translate3d(0, 0, 0) scale(1)",
+      transition: "none",
+      willChange: "transform",
+      opacity: "1"
+    });
 
-  document.body.appendChild(flight);
+    if (!flight.isConnected) {
+      document.body.appendChild(flight);
+    }
 
-  newRow.style.visibility = "hidden";
+    newRow.style.visibility = "hidden";
 
-  const dx =
-    startRect.left +
-    startRect.width / 2 -
-    (
+    const dx =
       endRect.left +
-      endRect.width / 2
-    );
+      endRect.width / 2 -
+      (
+        startRect.left +
+        startRect.width / 2
+      );
 
-  const dy =
-    startRect.top +
-    startRect.height / 2 -
-    (
+    const dy =
       endRect.top +
-      endRect.height / 2
-    );
+      endRect.height / 2 -
+      (
+        startRect.top +
+        startRect.height / 2
+      );
 
-  const scaleX =
-    startRect.width / endRect.width;
+    const scaleX =
+      endRect.width / startRect.width;
 
-  const scaleY =
-    startRect.height / endRect.height;
+    const scaleY =
+      endRect.height / startRect.height;
 
-  flight.style.transform =
-    `translate3d(${dx}px, ${dy}px, 0) ` +
-    `scale(${scaleX}, ${scaleY})`;
+    void flight.offsetWidth;
 
-  void flight.offsetWidth;
+    let finished = false;
+    let safetyTimer = null;
 
-  let finished = false;
-  let safetyTimer = null;
+    const land = () => {
+      if (finished) return;
 
-  const land = () => {
-    if (finished) return;
+      finished = true;
+      clearTimeout(safetyTimer);
 
-    finished = true;
-    clearTimeout(safetyTimer);
+      flight.remove();
+      startHistoryRowReveal(newRow);
+    };
 
     flight.remove();
     document.body.classList.remove(
@@ -1397,33 +1472,14 @@ function slideRowIntoPlace(
     startHistoryRowReveal(newRow);
   };
 
+  /*
+   * The history container has just scrolled to its final resting place.
+   * Two frames make the destination stable before measuring it on Safari.
+   */
   requestAnimationFrame(() => {
-    flight.style.transition =
-      "transform 460ms " +
-      "cubic-bezier(0.22, 1, 0.36, 1)";
-
-    flight.style.transform =
-      "translate3d(0, 0, 0) " +
-      "scale(1, 1)";
-
-    flight.addEventListener(
-      "transitionend",
-      event => {
-        if (
-          event.propertyName ===
-          "transform"
-        ) {
-          land();
-        }
-      },
-      { once: true }
-    );
-
-    safetyTimer =
-      setTimeout(land, 650);
+    requestAnimationFrame(runFlight);
   });
 }
-
 ///SETTER FEEDBACK PREVIEW FUNCTION
 function updateSetterPreview() {
   if (state.powers?.rouletteSecretActive || state.powers?.stealthGuessActive){
@@ -1622,6 +1678,22 @@ function canSetterEditDraftNow() {
     !state.simultaneousSecretSubmitted;
   return isNormalSetterTurn || isSimultaneousSecretEntry;
 }
+
+window.clearSetterDraftFromButton = function () {
+  if (!canSetterEditDraftNow()) {
+    shakeDraftRow("setter");
+    return false;
+  }
+
+  state.setterDraftTouched = true;
+  clearSetterDraft();
+  return true;
+};
+
+window.submitSetterSecretFromButton = function () {
+  handleSetterInput({ type: "ENTER" });
+};
+
 // Drag Mode (see drag-mode.js): drops a letter at a specific tile
 // position instead of appending it to the end like typing does. Unfilled
 // positions to its left are padded with a space -- draftrow.js already

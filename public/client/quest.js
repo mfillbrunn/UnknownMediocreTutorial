@@ -364,6 +364,7 @@ function createQuestBadgeTile(type) {
 
   const btn = document.createElement("button");
   btn.className = "power-btn power-badge quest-badge-tile";
+  btn.dataset.questType = type;
 
   const iconId = QUEST_ICON_IDS[type];
   if (iconId) {
@@ -516,13 +517,12 @@ function updateQuestBadge(state, role) {
     // an early yellow, and that trade isn't obvious from the progress
     // label alone.
     const oneAwayHint = !status.done && !q.ready && q.oneAway
-      ? " Use now for an early yellow letter (present, position unknown) — completing the quest instead gives a full green letter."
+      ? " Claim now for a yellow, or finish for a green."
       : "";
     const waitForTurnHint = role === "guesser" && !isMyTurn && !status.done && (q.ready || q.oneAway)
-      ? " Claim it on your next turn."
+      ? " Claim it on your turn."
       : "";
-    const descText = (status.done || q.ready) ? `${status.desc}${waitForTurnHint}` : `${status.desc} (Progress: ${status.label})${oneAwayHint}${waitForTurnHint}`;
-
+    const descText = `${status.desc}${oneAwayHint}${waitForTurnHint}`;
     // Only the guesser can toggle their OWN keyboard's guide -- the
     // setter's copy of this badge is a read-only mirror (see canClaim's
     // comment above), and there's no keyboard of theirs to highlight for
