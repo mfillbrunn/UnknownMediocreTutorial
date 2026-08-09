@@ -44,10 +44,6 @@ if (
     id
   );
 }
-    if (window.QUEST_METADATA?.[id]) {
-      btn.classList.add("quest-themed");
-      btn.dataset.questType = id;
-    }
     btn.classList.toggle("selected", selected);
 
     btn.innerHTML = `
