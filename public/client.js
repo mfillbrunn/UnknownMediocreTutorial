@@ -2090,7 +2090,7 @@ if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserS
     isGuesser: true,
     onInput: handleGuesserInput
   });
-  window.applyQuestGuideHighlight?.($("keyboardGuesser"), localGuesserDraft, state.powers?.quest?.type);
+  window.applyQuestGuideHighlight?.($("keyboardGuesser"), localGuesserDraft, state.powers?.quest?.type, !!state.powers?.quest?.used);
 }
 }
 
