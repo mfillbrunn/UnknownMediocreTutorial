@@ -40,7 +40,6 @@
   <link rel="stylesheet" href="css/setter-board-fixes-v6.css?setter-fixes=2">
 
   <link rel="stylesheet" href="css/guesser-polish-v7.css?guesser-polish=7">
-  <link rel="stylesheet" href="css/gameplay-polish-v8.css?gameplay-polish=8">
 </head>
 <body>
   <script>
@@ -1042,7 +1041,13 @@
             </div>
           </div>
         </header>
-
+        <!-- Turn indicator: see #setterScreen's copy above for how this is
+             driven -- same setTurn()/CSS mechanism, just the guesser's
+             own role-facing copy. -->
+        <div class="turn-banner" aria-hidden="true">
+          <span class="turn-banner-mine">Your turn</span>
+          <span class="turn-banner-theirs">Spy's turn</span>
+        </div>
        <!--- PLAY AREA--->
        <main class="play-area guesser-play">
           <div class="play-row">
@@ -1276,7 +1281,7 @@
     
   <script src="ui/flashViolations.js"></script>
   <script src="ui/constraints.js"></script>
-  <script src="ui/draftrow.js?gameplay-polish=8"></script>
+  <script src="ui/draftrow.js?setter-board=1"></script>
   <script src="ui/keyboard.js?setter-fixes=2"></script>
   <script src="ui/history.js?setter-fixes=2"></script>
   <script src="ui/timers.js"></script>
@@ -1358,9 +1363,8 @@
   <script src="client/dev-simulation.js"></script>
   <script src="client/invite.js"></script>
   <script src="client/big-announce.js"></script>
-  <script src="client.js?gameplay-polish=8"></script>
-  <script src="ui/guesser-flow-v7.js?gameplay-polish=8"></script>
-  <script src="ui/gameplay-polish-v8.js?gameplay-polish=8"></script>
+  <script src="client.js?setter-polish=1"></script>
+  <script src="ui/guesser-flow-v7.js?guesser-polish=7"></script>
   <script src="client/play-menu.js"></script>
   <script src="client/roomid.js"></script>
   <div id="powerInfoPanelSetter" class="power-info-panel" hidden></div>

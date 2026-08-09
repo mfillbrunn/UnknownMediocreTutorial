@@ -44,7 +44,19 @@ window.renderDraftRows = function ({
         row.appendChild(tile);
       }
 
-
+      if (role === "setter") {
+        const caption = document.createElement("span");
+        caption.className =
+          "setter-row-caption " +
+          (isEditableDraft
+            ? "setter-row-caption-draft"
+            : "setter-row-caption-pending");
+        caption.textContent = isEditableDraft
+          ? "Your secret draft"
+          : "Inspector’s pending guess";
+        caption.setAttribute("aria-hidden", "true");
+        row.appendChild(caption);
+      }
 
       if (isEditableDraft && role === "setter") {
         const stars = document.createElement("div");

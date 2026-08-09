@@ -1242,10 +1242,11 @@ function resolvePendingGuessFlight(
   target.classList.remove("row-enter");
 
   const beginHistoryFlight = () => {
+    capture.holdClone?.remove();
+
     slideRowIntoPlace(
       target,
-      capture.rect,
-      capture.holdClone
+      capture.rect
     );
   };
 
@@ -1262,8 +1263,7 @@ function resolvePendingGuessFlight(
 
 function slideRowIntoPlace(
   newRow,
-  startRect,
-  existingFlight = null
+  startRect
 ) {
   const scrollBox =
     newRow.closest(".history-scroll");
@@ -1271,234 +1271,184 @@ function slideRowIntoPlace(
   const visualRow =
     newRow.querySelector(".history-row");
 
-  const finishWithoutFlight = () => {
-    existingFlight?.remove();
-    startHistoryRowReveal(newRow);
-  };
-
   if (
     !scrollBox ||
     !visualRow ||
     !startRect?.width ||
     !startRect?.height
   ) {
-    finishWithoutFlight();
+    startHistoryRowReveal(newRow);
     return;
   }
 
   newRow.classList.remove("row-enter");
+
   scrollBox.scrollTop =
     scrollBox.scrollHeight;
 
-  const runFlight = () => {
-    const endRect =
-      visualRow.getBoundingClientRect();
+  const endRect =
+    visualRow.getBoundingClientRect();
 
-    if (!endRect.width || !endRect.height) {
-      finishWithoutFlight();
-      return;
-    }
+  if (!endRect.width || !endRect.height) {
+    startHistoryRowReveal(newRow);
+    return;
+  }
 
-    if (
-      window.matchMedia?.(
-        "(prefers-reduced-motion: reduce)"
-      ).matches
-    ) {
-      finishWithoutFlight();
-      return;
-    }
+  if (
+    window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    ).matches
+  ) {
+    startHistoryRowReveal(newRow);
+    return;
+  }
 
-    document
-      .querySelectorAll(
-        ".history-flight-clone"
-      )
-      .forEach(element => {
-        if (element !== existingFlight) {
-          element.remove();
-        }
+  document
+    .querySelectorAll(
+      ".history-flight-clone"
+    )
+    .forEach(el => el.remove());
+
+  const flight =
+    visualRow.cloneNode(true);
+
+  flight.classList.add(
+    "history-flight-clone"
+  );
+
+  flight.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  flight.querySelectorAll(
+    ".history-tile-cover"
+  ).forEach(el => el.remove());
+
+  const sourceTiles =
+    visualRow.querySelectorAll(
+      ":scope > .history-tile"
+    );
+
+  const flightTiles =
+    flight.querySelectorAll(
+      ":scope > .history-tile"
+    );
+
+  sourceTiles.forEach(
+    (source, index) => {
+      const clone = flightTiles[index];
+      if (!clone) return;
+
+      const rect =
+        source.getBoundingClientRect();
+
+      const style =
+        getComputedStyle(source);
+
+      Object.assign(clone.style, {
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+        flex: `0 0 ${rect.width}px`,
+        fontSize: style.fontSize,
+        fontFamily: style.fontFamily,
+        fontWeight: style.fontWeight,
+        lineHeight: style.lineHeight,
+        borderRadius: style.borderRadius,
+        letterSpacing: style.letterSpacing
       });
-
-    const usingHeldPending = !!(
-      existingFlight?.isConnected
-    );
-
-    const flight = usingHeldPending
-      ? existingFlight
-      : visualRow.cloneNode(true);
-
-    flight.classList.add(
-      "history-flight-clone",
-      "setter-source-flight"
-    );
-
-    flight.classList.remove(
-      "row-slide-in",
-      "row-slide-down",
-      "row-enter",
-      "reveal-tiles"
-    );
-
-    flight.setAttribute(
-      "aria-hidden",
-      "true"
-    );
-
-    flight
-      .querySelectorAll(
-        ".history-tile-cover, " +
-        ".setter-row-caption, " +
-        "#setterCoverStars"
-      )
-      .forEach(element => element.remove());
-
-    flight
-      .querySelectorAll("[id]")
-      .forEach(element => {
-        element.removeAttribute("id");
-      });
-
-    if (!usingHeldPending) {
-      const sourceTiles =
-        visualRow.querySelectorAll(
-          ":scope > .history-tile"
-        );
-
-      const flightTiles =
-        flight.querySelectorAll(
-          ":scope > .history-tile"
-        );
-
-      sourceTiles.forEach(
-        (source, index) => {
-          const clone = flightTiles[index];
-          if (!clone) return;
-
-          const rect =
-            source.getBoundingClientRect();
-
-          const style =
-            getComputedStyle(source);
-
-          Object.assign(clone.style, {
-            width: `${rect.width}px`,
-            height: `${rect.height}px`,
-            flex: `0 0 ${rect.width}px`,
-            fontSize: style.fontSize,
-            fontFamily: style.fontFamily,
-            fontWeight: style.fontWeight,
-            lineHeight: style.lineHeight,
-            borderRadius: style.borderRadius,
-            letterSpacing: style.letterSpacing
-          });
-        }
-      );
     }
+  );
 
-    const rowStyle =
-      getComputedStyle(
-        usingHeldPending
-          ? flight
-          : visualRow
-      );
+  const rowStyle =
+    getComputedStyle(visualRow);
 
-    Object.assign(flight.style, {
-      position: "fixed",
-      left: `${startRect.left}px`,
-      top: `${startRect.top}px`,
-      width: `${startRect.width}px`,
-      height: `${startRect.height}px`,
-      display: "flex",
-      alignItems: rowStyle.alignItems,
-      justifyContent: rowStyle.justifyContent,
-      gap: rowStyle.gap,
-      margin: "0",
-      zIndex: "100000",
-      pointerEvents: "none",
-      transformOrigin: "center center",
-      transform: "translate3d(0, 0, 0) scale(1)",
-      transition: "none",
-      willChange: "transform",
-      opacity: "1"
-    });
+  Object.assign(flight.style, {
+    position: "fixed",
+    left: `${endRect.left}px`,
+    top: `${endRect.top}px`,
+    width: `${endRect.width}px`,
+    height: `${endRect.height}px`,
+    gap: rowStyle.gap,
+    margin: "0",
+    zIndex: "100000",
+    pointerEvents: "none",
+    transformOrigin: "center center",
+    willChange: "transform"
+  });
 
-    if (!flight.isConnected) {
-      document.body.appendChild(flight);
-    }
+  document.body.appendChild(flight);
 
-    newRow.style.visibility = "hidden";
+  newRow.style.visibility = "hidden";
 
-    const dx =
+  const dx =
+    startRect.left +
+    startRect.width / 2 -
+    (
       endRect.left +
-      endRect.width / 2 -
-      (
-        startRect.left +
-        startRect.width / 2
-      );
+      endRect.width / 2
+    );
 
-    const dy =
+  const dy =
+    startRect.top +
+    startRect.height / 2 -
+    (
       endRect.top +
-      endRect.height / 2 -
-      (
-        startRect.top +
-        startRect.height / 2
-      );
+      endRect.height / 2
+    );
 
-    const scaleX =
-      endRect.width / startRect.width;
+  const scaleX =
+    startRect.width / endRect.width;
 
-    const scaleY =
-      endRect.height / startRect.height;
+  const scaleY =
+    startRect.height / endRect.height;
 
-    void flight.offsetWidth;
+  flight.style.transform =
+    `translate3d(${dx}px, ${dy}px, 0) ` +
+    `scale(${scaleX}, ${scaleY})`;
 
-    let finished = false;
-    let safetyTimer = null;
+  void flight.offsetWidth;
 
-    const land = () => {
-      if (finished) return;
+  let finished = false;
+  let safetyTimer = null;
 
-      finished = true;
-      clearTimeout(safetyTimer);
+  const land = () => {
+    if (finished) return;
 
-      flight.remove();
-      startHistoryRowReveal(newRow);
-    };
+    finished = true;
+    clearTimeout(safetyTimer);
 
-    requestAnimationFrame(() => {
-      flight.style.transition =
-        "transform 460ms " +
-        "cubic-bezier(0.22, 1, 0.36, 1)";
-
-      flight.style.transform =
-        `translate3d(${dx}px, ${dy}px, 0) ` +
-        `scale(${scaleX}, ${scaleY})`;
-
-      flight.addEventListener(
-        "transitionend",
-        event => {
-          if (
-            event.target === flight &&
-            event.propertyName === "transform"
-          ) {
-            land();
-          }
-        },
-        { once: true }
-      );
-
-      safetyTimer =
-        setTimeout(land, 680);
-    });
+    flight.remove();
+    startHistoryRowReveal(newRow);
   };
 
-  /*
-   * The history container has just scrolled to its final resting place.
-   * Two frames make the destination stable before measuring it on Safari.
-   */
   requestAnimationFrame(() => {
-    requestAnimationFrame(runFlight);
+    flight.style.transition =
+      "transform 460ms " +
+      "cubic-bezier(0.22, 1, 0.36, 1)";
+
+    flight.style.transform =
+      "translate3d(0, 0, 0) " +
+      "scale(1, 1)";
+
+    flight.addEventListener(
+      "transitionend",
+      event => {
+        if (
+          event.propertyName ===
+          "transform"
+        ) {
+          land();
+        }
+      },
+      { once: true }
+    );
+
+    safetyTimer =
+      setTimeout(land, 650);
   });
 }
+
 ///SETTER FEEDBACK PREVIEW FUNCTION
 function updateSetterPreview() {
   if (state.powers?.rouletteSecretActive || state.powers?.stealthGuessActive){

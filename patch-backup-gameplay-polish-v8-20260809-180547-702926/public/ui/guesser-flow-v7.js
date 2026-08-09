@@ -326,18 +326,6 @@
     history.scrollTop =
       history.scrollHeight;
 
-    /*
-     * Let the scroll position and the newly appended pending row settle
-     * before measuring its destination. On iPhone, measuring in the same
-     * frame can leave the target a few pixels to the right of where it
-     * finally paints.
-     */
-    await new Promise(resolve => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(resolve);
-      });
-    });
-
     const endRect =
       targetRow.getBoundingClientRect();
 
@@ -389,26 +377,11 @@
     sourceRow.style.display = "none";
     sourceRow.style.visibility = "hidden";
 
-    /*
-     * Move center-to-center rather than left-edge-to-left-edge. The rows
-     * can differ slightly in width, so edge math shifts the visual center
-     * to the right when the clone is scaled.
-     */
     const dx =
-      endRect.left +
-      endRect.width / 2 -
-      (
-        startRect.left +
-        startRect.width / 2
-      );
+      endRect.left - startRect.left;
 
     const dy =
-      endRect.top +
-      endRect.height / 2 -
-      (
-        startRect.top +
-        startRect.height / 2
-      );
+      endRect.top - startRect.top;
 
     const scaleX =
       endRect.width / startRect.width;
