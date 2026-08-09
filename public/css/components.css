@@ -442,33 +442,26 @@
 .key.key-blue   { background: var(--tile-blue) !important;            color: var(--tile-blue-text) !important; box-shadow: none !important;}
 .key.key-purple { background: var(--tile-purple) !important;  color: var(--tile-purple-text) !important; box-shadow: none !important;}
 
-/* “Gray” state has custom styling */
+/* "Gray" (absent/used, not allowed) state -- was a subtle two-tone
+   diagonal stripe barely darker than the unused key's own --kb-neutral
+   fill, plus near-white text (var(--tile-gray-text)) almost identical to
+   an unused key's own white text, and a whole-element opacity fade that
+   (against the page's already-near-black background) worked AGAINST
+   contrast instead of for it. Solid near-black fill + visibly dimmed
+   (not just slightly darker) letter color reads unmistakably as "spent"
+   at a glance, independent of screen brightness or key size. */
 .key.key-gray {
-  background:
-    repeating-linear-gradient(
-      135deg,
-      #121417,
-      #121417 6px,
-      #0e1013 6px,
-      #0e1013 12px
-    ) !important;
-  color: var(--tile-gray-text) !important;
+  background: #0a0b0d !important;
+  color: #565b63 !important;
   border-color: #000000aa !important;
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,.03),
     inset 0 -2px 4px rgba(0,0,0,.6);
-  opacity: 0.75;
+  opacity: 1;
 }
 
 .theme-guesser .key.key-gray:hover {
-  background:
-    repeating-linear-gradient(
-      135deg,
-      #181c22,
-      #181c22 6px,
-      #12161c 6px,
-      #12161c 12px
-    );
+  background: #14161a;
   transform: translateY(-1px);
 }
 /* Optional: highlight current draft keys without overriding solved colors */
