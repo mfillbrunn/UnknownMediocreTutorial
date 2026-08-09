@@ -643,7 +643,7 @@
   function clientLetterHasFeedback(letter) {
     const target = String(letter || "").toUpperCase();
 
-    const hasHistoryFeedback = (window.state?.history || []).some(entry => {
+    return (window.state?.history || []).some(entry => {
       const guess = String(entry?.guess || "").toUpperCase();
 
       return [...guess].some((value, index) => {
@@ -655,22 +655,6 @@
         );
       });
     });
-
-    const hasConstraint = (window.state?.extraConstraints || []).some(
-      constraint => {
-        const type = String(constraint?.type || "").toUpperCase();
-        const constraintLetter = String(
-          constraint?.letter || ""
-        ).toUpperCase();
-
-        return (
-          (type === "GREEN" || type === "YELLOW") &&
-          constraintLetter === target
-        );
-      }
-    );
-
-    return hasHistoryFeedback || hasConstraint;
   }
 
   function disarmResetLetter() {
@@ -698,7 +682,7 @@
     const letter = String(event.value || "").toUpperCase();
 
     if (!clientLetterHasFeedback(letter)) {
-      window.toast?.(`${letter} has no feedback or constraint to reset`);
+      window.toast?.(`${letter} has no feedback to reset`);
       return true;
     }
 
@@ -715,7 +699,7 @@
       window.showPowerActionPopup({
         emoji: "↺",
         title: `Reset ${letter}?`,
-        desc: `Erase every feedback result and green/yellow constraint for ${letter} from this round.`,
+        desc: `Erase every feedback result for ${letter} from this round.`,
         useLabel: `Reset ${letter}`,
         showUse: true,
         useEnabled: true,

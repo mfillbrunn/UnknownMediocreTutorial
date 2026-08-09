@@ -88,19 +88,8 @@ window.renderKeyboard = function ({
         keyEl.classList.add("key-purple");
       }
 
-      // On the Spy keyboard, a letter that already has a known
-      // green/yellow/gray/blue/purple/uncertain status keeps that status
-      // without also receiving the red current-secret glow.
-      const hasKnownFeedback = !!(
-        status ||
-        state.keyboardUncertain?.[symbol] ||
-        state.keyboardBlindSpot?.[symbol]
-      );
-
-      if (
-        guess.includes(symbol) &&
-        (isGuesser || !hasKnownFeedback)
-      ) {
+      // highlight letters currently typed
+      if (guess.includes(symbol)) {
         keyEl.classList.add("key-current");
       }
 

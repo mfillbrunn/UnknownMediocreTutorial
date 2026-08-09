@@ -6,10 +6,6 @@ const {
 const {
   isConsistentWithHistory
 } = require("../../game-engine/history");
-const {
-  hasLetterKnowledge,
-  eraseLetterKnowledge
-} = require("../../utils/resetLetterKnowledge");
 
 const POWER_METADATA = require("../powerMetadata");
 
@@ -484,11 +480,46 @@ function commitAward(
 }
 
 function letterHasFeedback(state, letter) {
-  return hasLetterKnowledge(state, letter);
+  const target = String(letter || "").toUpperCase();
+  if (!/^[A-Z]$/.test(target)) return false;
+
+  for (const entry of state.history || []) {
+    const guess = normalizeWord(entry?.guess);
+
+    for (let index = 0; index < guess.length; index++) {
+      if (guess[index] !== target) continue;
+
+      if (
+        (Array.isArray(entry.fb) && entry.fb[index]) ||
+        (
+          Array.isArray(entry.fbGuesser) &&
+          entry.fbGuesser[index]
+        )
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 function eraseLetterFeedback(state, letter) {
-  return eraseLetterKnowledge(state, [letter]);
+  for (const entry of state.history || []) {
+    const guess = normalizeWord(entry?.guess);
+
+    for (let index = 0; index < guess.length; index++) {
+      if (guess[index] !== letter) continue;
+
+      if (Array.isArray(entry.fb)) {
+        entry.fb[index] = "";
+      }
+
+      if (Array.isArray(entry.fbGuesser)) {
+        entry.fbGuesser[index] = "";
+      }
+    }
+  }
 }
 
 function attemptReset(
