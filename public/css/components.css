@@ -220,22 +220,23 @@
 }
 
 /* "Uses left / total" chip for multi-charge powers (Letter Peek, Hide
-   Evidence) -- top-right corner of the badge card so it doesn't compete
-   with the icon/label for center space. Inset fully inside the card's own
-   border (not straddling/poking past it) so the whole chip stays within
-   the badge. Text is refreshed every render in updateButtonStates from
-   state.powers[id+"Uses"]. */
+   Evidence) -- same poking-above-the-top-edge chip .quest-progress-chip
+   (below) uses for the quest's progress count, so the two badges read as
+   one consistent "count attached to a card" language instead of two
+   different treatments. Text is refreshed every render in
+   updateButtonStates from state.powers[id+"Uses"]. */
 .power-uses-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  min-width: 18px;
-  padding: 1px 4px;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 24px;
+  padding: 2px 6px;
   border-radius: 999px;
   border: 2px solid var(--role-accent);
   background: #14151b;
   color: var(--role-accent);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
   text-align: center;
   line-height: 1.3;
@@ -1312,6 +1313,16 @@
 }
 .remaining-stat + .remaining-stat {
   border-left: 1px solid color-mix(in srgb, var(--role-accent) 30%, transparent);
+  transition: border-left-color 200ms ease;
+}
+/* The setter's pending-guess row FLIPs (client.js's slideRowIntoPlace) from
+   the draft area up into history whenever this Keep/New box is also about
+   to update (a guess just got answered) -- without this, the divider could
+   redraw mid-flight and read as a stray flicker next to the moving row.
+   Fading it out for the flight's duration and back in once it lands keeps
+   the sidebar quiet while the motion is the only thing drawing the eye. */
+body.row-flight-active .remaining-stat + .remaining-stat {
+  border-left-color: transparent;
 }
 .remaining-stat-label {
   font-size: 8px;

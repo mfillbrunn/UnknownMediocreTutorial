@@ -1273,6 +1273,14 @@ function slideRowIntoPlace(
     )
     .forEach(el => el.remove());
 
+  // See components.css's body.row-flight-active rule -- fades out the
+  // sidebar's Keep/New divider for the flight's duration so it doesn't
+  // redraw mid-motion right as this same guess resolution updates those
+  // numbers. Cleared in land() below once the row actually settles.
+  document.body.classList.add(
+    "row-flight-active"
+  );
+
   const flight =
     visualRow.cloneNode(true);
 
@@ -1383,6 +1391,9 @@ function slideRowIntoPlace(
     clearTimeout(safetyTimer);
 
     flight.remove();
+    document.body.classList.remove(
+      "row-flight-active"
+    );
     startHistoryRowReveal(newRow);
   };
 
