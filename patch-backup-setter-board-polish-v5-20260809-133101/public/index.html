@@ -36,7 +36,6 @@
   <!-- New features -->
   <link rel="stylesheet" href="css/features.css?setter-board=1">
   <link rel="stylesheet" href="css/setter-board.css?setter-board=1">
-  <link rel="stylesheet" href="css/setter-board-polish.css?setter-polish=1">
 
 </head>
 <body>
@@ -774,6 +773,14 @@
               </div>
             </div>
           </header>
+          <!-- Turn indicator: driven purely by the is-your-turn/is-not-
+               your-turn classes client.js's setTurn() already toggles on
+               #setterScreen -- see features.css's .turn-banner rules.
+               Neither class present (lobby/gameOver) hides it entirely. -->
+          <div class="turn-banner" aria-hidden="true">
+            <span class="turn-banner-mine">Your turn</span>
+            <span class="turn-banner-theirs">Inspector's turn</span>
+          </div>
          <!-- PLAY AREA -->
          <main class="play-area setter-play">
             <div class="play-row setter-workspace">
@@ -881,6 +888,7 @@
       class="setter-feedback-stage"
       aria-label="Inspector feedback"
     >
+      <div class="setter-stage-heading">Inspector’s feedback</div>
       <div id="constraintRowSetter" class="history-row constraint-row"></div>
       <div id="setterGuesserSubmitted" class="history-tiles history-scroll"></div>
       <div id="setterPreview" class="preview-box" hidden></div>
@@ -1332,7 +1340,7 @@
   <script src="client/quest.js"></script>
   <script src="client/quest-guide.js"></script>
   <script src="client/quest-choice.js"></script>
-  <script src="client/spy-charge.js?setter-polish=1"></script>
+  <script src="client/spy-charge.js?setter-board=1"></script>
   <script src="client/tutorial-quest.js"></script>
   <script src="powerEngine/powers/wiretap.js"></script>
   <script src="powerEngine/powers/letterProbe.js"></script>
@@ -1346,7 +1354,6 @@
   <script src="client/action-log-colors.js?setter-board=1"></script>
   <script src="ui/setter-sidebar.js?setter-board=1"></script>
   <script src="ui/setter-board.js?setter-board=1"></script>
-  <script src="ui/setter-board-polish.js?setter-polish=1"></script>
   <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
   <script src="client/drag-mode.js"></script>
@@ -1359,7 +1366,7 @@
   <script src="client/dev-simulation.js"></script>
   <script src="client/invite.js"></script>
   <script src="client/big-announce.js"></script>
-  <script src="client.js?setter-polish=1"></script>
+  <script src="client.js?setter-board=1"></script>
   <script src="client/play-menu.js"></script>
   <script src="client/roomid.js"></script>
   <div id="powerInfoPanelSetter" class="power-info-panel" hidden></div>

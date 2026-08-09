@@ -540,22 +540,10 @@ onStateUpdate(newState => {
       pendingEl &&
       pendingEl.offsetParent !== null
     ) {
-      const heldVisual =
-        window.captureSetterPendingGuessVisual?.(
-          pendingEl
-        ) || null;
-
       pendingGuessFlight = {
         rect: pendingEl.getBoundingClientRect(),
-        guess: prevPendingGuess.toUpperCase(),
-        holdClone: heldVisual?.holdClone || null,
-        starRect: heldVisual?.starRect || null
+        guess: prevPendingGuess.toUpperCase()
       };
-
-      if (pendingGuessFlight.starRect) {
-        window._pendingSpyChargeSourceRect =
-          pendingGuessFlight.starRect;
-      }
     }
   }
 
@@ -1225,7 +1213,6 @@ function resolvePendingGuessFlight(
   );
 
   if (!container || !target) {
-    capture.holdClone?.remove();
     container
       ?.querySelectorAll(".reveal-waiting")
       .forEach(startHistoryRowReveal);
@@ -1238,27 +1225,10 @@ function resolvePendingGuessFlight(
     return;
   }
 
-  target.style.visibility = "hidden";
-  target.classList.remove("row-enter");
-
-  const beginHistoryFlight = () => {
-    capture.holdClone?.remove();
-
-    slideRowIntoPlace(
-      target,
-      capture.rect
-    );
-  };
-
-  if (
-    window.deferSetterHistoryUntilSpyCharge?.(
-      beginHistoryFlight
-    )
-  ) {
-    return;
-  }
-
-  beginHistoryFlight();
+  slideRowIntoPlace(
+    target,
+    capture.rect
+  );
 }
 
 function slideRowIntoPlace(

@@ -268,11 +268,6 @@
       if (rect.width && rect.height) return rect;
     }
 
-    const pendingSource = window._pendingSpyChargeSourceRect;
-    if (pendingSource?.width && pendingSource?.height) {
-      return pendingSource;
-    }
-
     const draft = document.querySelector(
       "#draftSetter .history-row.setter-draft, " +
       "#draftSetter .history-row.ghost-secret"
@@ -316,75 +311,8 @@
     });
   }
 
-  const deferredHistoryReleases = [];
-  let deferredHistoryTimer = null;
-  let lastAwardFinishedAt = 0;
-
-  function flushDeferredHistory() {
-    clearTimeout(deferredHistoryTimer);
-    deferredHistoryTimer = null;
-    window._pendingSpyChargeSourceRect = null;
-
-    const releases = deferredHistoryReleases.splice(0);
-
-    for (const release of releases) {
-      requestAnimationFrame(() => {
-        try {
-          release();
-        } catch (error) {
-          console.error("Deferred setter history flight failed:", error);
-        }
-      });
-    }
-  }
-
-  window.deferSetterHistoryUntilSpyCharge = function (release) {
-    if (typeof release !== "function") return false;
-
-    const charge = getCharge(window.state);
-
-    if (
-      window.myRole !== "setter" ||
-      !charge?.enabled
-    ) {
-      return false;
-    }
-
-    /* The award event can arrive just before or just after stateUpdate.
-       If it already finished, the row may move immediately. */
-    if (
-      !awardRunning &&
-      awardQueue.length === 0 &&
-      Date.now() - lastAwardFinishedAt < 1600
-    ) {
-      requestAnimationFrame(release);
-      return true;
-    }
-
-    deferredHistoryReleases.push(release);
-
-    clearTimeout(deferredHistoryTimer);
-    deferredHistoryTimer = setTimeout(() => {
-      if (!awardRunning && awardQueue.length === 0) {
-        flushDeferredHistory();
-      }
-    }, 1100);
-
-    if (awardQueue.length) {
-      drainAwardQueue();
-    }
-
-    return true;
-  };
-
-
   function createFlightStar(sourceRect, targetRect, bonus, delayMs) {
     return new Promise(resolve => {
-      if (!targetRect?.width || !targetRect?.height) {
-        resolve();
-        return;
-      }
-
       const star = document.createElement("div");
       star.className = `spy-charge-flight-star${bonus ? " is-bonus" : ""}`;
       star.textContent = "★";
@@ -392,28 +320,13 @@
       const startX = sourceRect
         ? sourceRect.left + sourceRect.width / 2
         : window.innerWidth / 2;
-
       const startY = sourceRect
         ? sourceRect.top + sourceRect.height / 2
         : window.innerHeight / 2;
-
       const endX = targetRect.left + targetRect.width / 2;
       const endY = targetRect.top + targetRect.height / 2;
       const dx = endX - startX;
       const dy = endY - startY;
-      const distance = Math.max(1, Math.hypot(dx, dy));
-
-      /* Bend the path away from the straight line, then pull it into the
-         meter quickly at the end. This reads more like a fighting-game
-         resource pickup than a plain DOM translation. */
-      const normalX = -dy / distance;
-      const normalY = dx / distance;
-      const arc = Math.min(96, Math.max(38, distance * 0.22));
-
-      const p1x = dx * 0.30 + normalX * arc;
-      const p1y = dy * 0.30 + normalY * arc - 18;
-      const p2x = dx * 0.72 + normalX * arc * 0.42;
-      const p2y = dy * 0.72 + normalY * arc * 0.42 - 8;
 
       Object.assign(star.style, {
         left: `${startX}px`,
@@ -427,31 +340,26 @@
           [
             {
               opacity: 0,
-              transform: "translate(-50%, -50%) scale(0.45) rotate(-45deg)"
+              transform: "translate(-50%, -50%) scale(0.65) rotate(-18deg)"
             },
             {
               opacity: 1,
-              offset: 0.14,
-              transform: "translate(-50%, calc(-50% - 13px)) scale(1.35) rotate(18deg)"
+              offset: 0.16,
+              transform: "translate(-50%, -58%) scale(1.2) rotate(0deg)"
             },
             {
               opacity: 1,
-              offset: 0.46,
-              transform: `translate(calc(-50% + ${p1x}px), calc(-50% + ${p1y}px)) scale(1.08) rotate(230deg)`
-            },
-            {
-              opacity: 1,
-              offset: 0.78,
-              transform: `translate(calc(-50% + ${p2x}px), calc(-50% + ${p2y}px)) scale(0.78) rotate(510deg)`
+              offset: 0.72,
+              transform: `translate(calc(-50% + ${dx * 0.82}px), calc(-50% + ${dy * 0.82 - 12}px)) scale(0.82) rotate(14deg)`
             },
             {
               opacity: 0,
-              transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.24) rotate(760deg)`
+              transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.38) rotate(28deg)`
             }
           ],
           {
-            duration: 720,
-            easing: "cubic-bezier(0.18, 0.82, 0.22, 1)",
+            duration: 420,
+            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
             fill: "forwards"
           }
         );
@@ -459,11 +367,6 @@
         animation.finished
           .catch(() => {})
           .finally(() => {
-            window.spawnSpyChargeLandingBurst?.(
-              targetRect,
-              bonus
-            );
-
             star.remove();
             resolve();
           });
@@ -493,7 +396,7 @@
   // regardless of exact animation timing as long as later-launched stars
   // don't finish before earlier ones (guaranteed here: same flight
   // duration, strictly increasing launch stagger).
-  const STAR_LAUNCH_STAGGER = 115;
+  const STAR_LAUNCH_STAGGER = 70;
 
   async function animateAward(entry) {
     const payload = entry.payload;
@@ -582,48 +485,38 @@
   // setter's turn ended, which is the exact same moment this animation
   // starts, so Notes floating out would visually clash with the stars
   // still flying to the charge meter.
-  window.isSpyChargeAwardAnimating = () =>
-    awardRunning ||
-    awardQueue.length > 0 ||
-    deferredHistoryReleases.length > 0;
+  window.isSpyChargeAwardAnimating = () => awardRunning || awardQueue.length > 0;
 
-  async function drainAwardQueue() {
+  function drainAwardQueue() {
     if (awardRunning || !awardQueue.length) return;
     if (window.myRole !== "setter") return;
 
     awardRunning = true;
     const entry = awardQueue.shift();
 
-    try {
-      await animateAward(entry);
-    } finally {
-      awardRunning = false;
+    waitForLatestReveal(async () => {
+      try {
+        await animateAward(entry);
+      } finally {
+        awardRunning = false;
 
-      if (awardQueue.length) {
-        drainAwardQueue();
-        return;
+        if (awardQueue.length) {
+          drainAwardQueue();
+        } else {
+          setTimeout(() => {
+            visualTotal = null;
+            renderHud(window.state, window.myRole);
+            window.PowerEngine?.updateButtonStates?.(
+              window.state,
+              window.myRole,
+              window.currentUser?.id
+            );
+            // Now safe for Notes to pop out, if the turn is still idle.
+            window.updateSetterIdleExpand?.(window.state);
+          }, 160);
+        }
       }
-
-      lastAwardFinishedAt = Date.now();
-
-      /* Let the final landing burst breathe for a fraction of a second,
-         then move the submitted pending row into history. */
-      setTimeout(() => {
-        if (awardRunning || awardQueue.length) return;
-
-        flushDeferredHistory();
-        visualTotal = null;
-        renderHud(window.state, window.myRole);
-
-        window.PowerEngine?.updateButtonStates?.(
-          window.state,
-          window.myRole,
-          window.currentUser?.id
-        );
-
-        window.updateSetterIdleExpand?.(window.state);
-      }, 150);
-    }
+    });
   }
 
   socket.on("spyChargeAward", payload => {
@@ -635,9 +528,6 @@
     });
 
     renderHud(window.state, window.myRole);
-
-    window._pendingSpyChargeSourceRect = null;
-    drainAwardQueue();
   });
 
   function clientLetterHasFeedback(letter) {
