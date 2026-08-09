@@ -44,10 +44,22 @@
     return guideState;
   };
 
-  window.applyQuestGuideHighlight = function (container, draft, questType) {
+  window.applyQuestGuideHighlight = function (container, draft, questType, questDone) {
     if (!container?.__keys) return;
     for (const keyEl of container.__keys) {
       keyEl.classList.remove("key-guide-hint");
+    }
+
+    // Nothing left to guide toward once the quest is claimed -- the popup
+    // already stops offering the toggle at that point (see quest.js's
+    // guideHtml), but a guide switched on BEFORE the claim would otherwise
+    // keep highlighting keys indefinitely since nothing else ever turned
+    // it back off. Clear the stored state too, not just this render, so a
+    // fresh quest of the same type next round doesn't inherit a stale
+    // "on" from before this one was claimed.
+    if (questDone) {
+      guideState = null;
+      return;
     }
 
     const active = window.getQuestGuideState(questType);
