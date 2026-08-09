@@ -34,8 +34,7 @@
   <!-- Last. Mobile phone adjustments-->
   <link rel="stylesheet" href="css/mobile.css">
   <!-- New features -->
-  <link rel="stylesheet" href="css/features.css?setter-board=1">
-  <link rel="stylesheet" href="css/setter-board.css?setter-board=1">
+  <link rel="stylesheet" href="css/features.css">
 
 </head>
 <body>
@@ -783,161 +782,109 @@
           </div>
          <!-- PLAY AREA -->
          <main class="play-area setter-play">
-            <div class="play-row setter-workspace">
-  <aside
-    id="setterSidebar"
-    class="play-col powers-col setter-sidebar"
-    aria-label="Spy side panel"
-  >
-    <section class="setter-sidebar-powers">
-      <div
-        id="setterPowerContainer"
-        class="power-container laser-scope setter-power-view"
-        role="region"
-        aria-label="Your powers"
-      ></div>
-    </section>
-
-    <section class="setter-sidebar-activity">
-      <div
-        id="setterNotesIdleHint"
-        class="setter-notes-idle-hint hidden"
-      >
-        ⏳ Jotting notes while you wait
-      </div>
-
-      <div
-        class="setter-sidebar-tabs"
-        role="tablist"
-        aria-label="Game information"
-      >
-        <button
-          type="button"
-          id="actionLogBtnSetter"
-          class="header-sm-btn setter-sidebar-tab"
-          role="tab"
-          aria-selected="false"
-          aria-controls="actionLogSetter"
-        >
-          Log
-        </button>
-
-        <button
-          type="button"
-          id="notesBtnSetter"
-          class="header-sm-btn setter-sidebar-tab"
-          role="tab"
-          aria-selected="false"
-          aria-controls="notesPanelSetter"
-        >
-          Notes
-        </button>
-      </div>
-
-      <div class="setter-sidebar-panels">
-        <div
-          id="actionLogSetter"
-          class="game-side-panel action-log-panel setter-sidebar-panel hidden"
-          role="tabpanel"
-          aria-labelledby="actionLogBtnSetter"
-        ></div>
-
-        <div
-          id="notesPanelSetter"
-          class="game-side-panel notes-panel setter-sidebar-panel hidden"
-          role="tabpanel"
-          aria-labelledby="notesBtnSetter"
-        >
-          <div class="notes-panel-title">Notes</div>
-          <div id="notesDraftSetter" class="notes-draft-row"></div>
-          <div id="notesListSetter" class="notes-list"></div>
-        </div>
-      </div>
-    </section>
-  </aside>
-
-  <button
-    type="button"
-    id="setterSidebarToggle"
-    class="setter-sidebar-toggle"
-    aria-controls="setterSidebar"
-    aria-expanded="true"
-    aria-label="Hide Spy side panel"
-    title="Hide side panel"
-  >
-    <span
-      class="setter-sidebar-toggle-icon"
-      aria-hidden="true"
-    >‹</span>
-
-    <span
-      id="setterSidebarChargeMini"
-      class="setter-sidebar-charge-mini hidden"
-      aria-hidden="true"
-    >0</span>
-  </button>
+            <div class="play-row">
+               <!-- CENTER: history + drafts (tiles on top) -->
+               <div class="play-col center-col">
+                  <div id="constraintRowSetter" class="history-row constraint-row"></div>
+                  <div id="setterGuesserSubmitted" class="history-tiles history-scroll"></div>
+                  <div id="setterPreview" class="preview-box" hidden></div>
+                  <!-- draftrow.js appends the pending-guess row before the
+                       draft row, so the guesser's pending guess renders
+                       above the setter's own secret row here with no JS
+                       change. Same .history-tile sizing as the rows above
+                       -- no special enlarging. -->
+                  <div class="draft-row-wrap">
+                     <div class="draft-stack">
+                        <div id="draftSetter" class="history-tiles draft-layer"></div>
+                        <div id="secretLockOverlay" class="secret-lock-overlay hidden">🔒</div>
+                        <div id="setterDraftInvalidOverlay" class="secret-invalid-overlay hidden">✕</div>
+                     </div>
+                  </div>
+               </div>
+               <!-- BELOW TILES: powers, stacked horizontally --><aside
+  class="play-col powers-col setter-sidebar"
+  aria-label="Game sidebar"
+>
+  <!-- POWER VIEW: just the setter's own powers -- there's no opponent
+       toggle anymore, so this is a single container, not a tabbed
+       stack. -->
+  <section class="setter-sidebar-powers">
+    <div
+      id="setterPowerContainer"
+      class="power-container laser-scope setter-power-view"
+      role="region"
+      aria-label="Your powers"
+    ></div>
+  </section>
 
   <div
-    id="setterSidebarSwipeEdge"
-    class="setter-sidebar-swipe-edge"
-    aria-hidden="true"
+    id="SetterRemainingBox"
+    class="remaining-box"
+    hidden
   ></div>
 
-  <div class="play-col center-col setter-board">
-    <section
-      class="setter-feedback-stage"
-      aria-label="Inspector feedback"
-    >
-      <div class="setter-stage-heading">Inspector’s feedback</div>
-      <div id="constraintRowSetter" class="history-row constraint-row"></div>
-      <div id="setterGuesserSubmitted" class="history-tiles history-scroll"></div>
-      <div id="setterPreview" class="preview-box" hidden></div>
-    </section>
-
-    <div class="setter-board-divider" aria-hidden="true">
-      <span></span>
-      <b>⌄</b>
-      <span></span>
+  <!-- LOG / NOTES: last element in the column. Togglable via tabs while
+       it's the setter's own turn; during the opponent's turn the tabs
+       hide, Log stays docked here (visible), and Notes pops out floating
+       over the board instead (see ui/setter-sidebar.js). -->
+  <section class="setter-sidebar-activity">
+    <!-- Shown only while auto-expanded during the opponent's turn (see
+         ui/setter-sidebar.js) -- makes it clear why keystrokes are
+         landing in Notes instead of the usual sidebar-sized panel. -->
+    <div id="setterNotesIdleHint" class="setter-notes-idle-hint hidden">
+      ⏳ Jotting notes while you wait
     </div>
 
-    <section class="setter-decision-stage">
-      <div class="draft-row-wrap">
-        <div class="draft-stack">
-          <div id="draftSetter" class="history-tiles draft-layer"></div>
-          <div id="secretLockOverlay" class="secret-lock-overlay hidden">🔒</div>
-          <div id="setterDraftInvalidOverlay" class="secret-invalid-overlay hidden">✕</div>
-        </div>
-      </div>
+    <div
+      class="setter-sidebar-tabs"
+      role="tablist"
+      aria-label="Game information"
+    >
+      <button
+        type="button"
+        id="actionLogBtnSetter"
+        class="header-sm-btn setter-sidebar-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="actionLogSetter"
+      >
+        Log
+      </button>
 
+      <button
+        type="button"
+        id="notesBtnSetter"
+        class="header-sm-btn setter-sidebar-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="notesPanelSetter"
+      >
+        Notes
+      </button>
+    </div>
+
+    <div class="setter-sidebar-panels">
       <div
-        id="SetterRemainingBox"
-        class="remaining-box setter-decision-remaining"
-        hidden
+        id="actionLogSetter"
+        class="game-side-panel action-log-panel setter-sidebar-panel hidden"
+        role="tabpanel"
+        aria-labelledby="actionLogBtnSetter"
       ></div>
 
-      <div class="setter-decision-actions">
-        <button
-          type="button"
-          id="setterClearDraftBtn"
-          class="setter-decision-btn setter-clear-btn"
-          disabled
-        >
-          <span aria-hidden="true">⌫</span>
-          Clear
-        </button>
-
-        <button
-          type="button"
-          id="setterSubmitSecretBtn"
-          class="setter-decision-btn setter-submit-btn"
-          disabled
-        >
-          Submit Secret
-        </button>
+      <div
+        id="notesPanelSetter"
+        class="game-side-panel notes-panel setter-sidebar-panel hidden"
+        role="tabpanel"
+        aria-labelledby="notesBtnSetter"
+      >
+        <div class="notes-panel-title">Notes</div>
+        <div id="notesDraftSetter" class="notes-draft-row"></div>
+        <div id="notesListSetter" class="notes-list"></div>
       </div>
-    </section>
-  </div>
-</div>
+    </div>
+  </section>
+</aside>
+            </div>
             <!-- KEYBOARD AREA-->
              <div id="SetterMustContainBox" class="must-contain-box" hidden></div>
              <!-- Shown while a "tap a letter key to pick it" flow is armed
@@ -1287,7 +1234,7 @@
     
   <script src="ui/flashViolations.js"></script>
   <script src="ui/constraints.js"></script>
-  <script src="ui/draftrow.js?setter-board=1"></script>
+  <script src="ui/draftrow.js"></script>
   <script src="ui/keyboard.js"></script>
   <script src="ui/history.js"></script>
   <script src="ui/timers.js"></script>
@@ -1307,7 +1254,7 @@
   <script src="powerEngine/POWER_POINTS.js"></script>
   <script src="client/power-log-format.js"></script>
   <script src="client/InfoBadgeEngine.js"></script>
-  <script src="client/remaining-words.js?setter-board=1"></script>
+  <script src="client/remaining-words.js"></script>
   <script src="client/letterProfile.js"></script>
   <script src="client/must-contain-box.js"></script>
   <script src="client/power-keyboard.js"></script>
@@ -1340,7 +1287,7 @@
   <script src="client/quest.js"></script>
   <script src="client/quest-guide.js"></script>
   <script src="client/quest-choice.js"></script>
-  <script src="client/spy-charge.js?setter-board=1"></script>
+  <script src="client/spy-charge.js"></script>
   <script src="client/tutorial-quest.js"></script>
   <script src="powerEngine/powers/wiretap.js"></script>
   <script src="powerEngine/powers/letterProbe.js"></script>
@@ -1351,9 +1298,7 @@
   <script src="powerEngine/powers/letterLockout.js"></script>
   <script src="client/summary.js"></script>
   <script src="client/action-log.js"></script>
-  <script src="client/action-log-colors.js?setter-board=1"></script>
-  <script src="ui/setter-sidebar.js?setter-board=1"></script>
-  <script src="ui/setter-board.js?setter-board=1"></script>
+  <script src="ui/setter-sidebar.js"></script>
   <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
   <script src="client/drag-mode.js"></script>
@@ -1366,7 +1311,7 @@
   <script src="client/dev-simulation.js"></script>
   <script src="client/invite.js"></script>
   <script src="client/big-announce.js"></script>
-  <script src="client.js?setter-board=1"></script>
+  <script src="client.js"></script>
   <script src="client/play-menu.js"></script>
   <script src="client/roomid.js"></script>
   <div id="powerInfoPanelSetter" class="power-info-panel" hidden></div>

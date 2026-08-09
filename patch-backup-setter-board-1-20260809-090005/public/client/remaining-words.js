@@ -208,15 +208,12 @@ function renderSetterRemainingBox(boxState) {
   // round) with placeholder dashes instead of the real stats.
   if (boxState.empty) {
     box.innerHTML = `
-      <div class="remaining-stats setter-remaining-decision">
-        <div class="remaining-stat remaining-keep">
+      <div class="remaining-stats">
+        <div class="remaining-stat">
           <span class="remaining-stat-label">Keep</span>
           <span class="remaining-stat-value">–</span>
         </div>
-
-        <span class="remaining-decision-arrow" aria-hidden="true">→</span>
-
-        <div class="remaining-stat remaining-new">
+        <div class="remaining-stat">
           <span class="remaining-stat-label">New</span>
           <span class="remaining-stat-value">–</span>
         </div>
@@ -237,15 +234,12 @@ function renderSetterRemainingBox(boxState) {
         : "?";
 
   box.innerHTML = `
-    <div class="remaining-stats setter-remaining-decision">
-      <div class="remaining-stat remaining-keep">
+    <div class="remaining-stats">
+      <div class="remaining-stat">
         <span class="remaining-stat-label">Keep</span>
         <span class="remaining-stat-value" style="${oldStyle}">${keepValue}</span>
       </div>
-
-      <span class="remaining-decision-arrow" aria-hidden="true">→</span>
-
-      <div class="remaining-stat remaining-new">
+      <div class="remaining-stat">
         <span class="remaining-stat-label">New</span>
         <span class="remaining-stat-value" style="${newStyle}">${newValue}</span>
       </div>

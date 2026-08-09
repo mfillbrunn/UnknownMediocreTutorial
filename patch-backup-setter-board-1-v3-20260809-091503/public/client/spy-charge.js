@@ -424,29 +424,17 @@
       const target = document.querySelector(
         `[data-charge-index="${targetIndex}"]`
       );
-      const drawerClosed = document
-        .getElementById("setterScreen")
-        ?.classList.contains("setter-sidebar-collapsed");
-      const flightTarget = drawerClosed
-        ? document.getElementById("setterSidebarToggle")
-        : target;
-
-      if (!target || !flightTarget) return Promise.resolve();
+      if (!target) return Promise.resolve();
 
       return createFlightStar(
         entry.sourceRect,
-        flightTarget.getBoundingClientRect(),
+        target.getBoundingClientRect(),
         isBonus,
         index * STAR_LAUNCH_STAGGER
       ).then(() => {
         visualTotal = afterLanding;
         target.classList.add("just-charged");
         setTimeout(() => target.classList.remove("just-charged"), 420);
-
-        if (drawerClosed) {
-          flightTarget.classList.add("just-charged");
-          setTimeout(() => flightTarget.classList.remove("just-charged"), 420);
-        }
 
         renderHud(window.state, window.myRole);
 

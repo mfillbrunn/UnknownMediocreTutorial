@@ -1148,12 +1148,6 @@ renderDraftRows({
     onInput: handleSetterInput
   });
   }
-  window.updateSetterDecisionControls?.({
-    state,
-    inputEnabled: setterInputEnabled,
-    keepEnabled: KeepEnabled,
-    newEnabled: NewEnabled
-  });
   updateSetterPreview();
  resolvePendingGuessFlight(
   historyRender?.addedElements || []
@@ -1617,22 +1611,6 @@ function canSetterEditDraftNow() {
     !state.simultaneousSecretSubmitted;
   return isNormalSetterTurn || isSimultaneousSecretEntry;
 }
-
-window.clearSetterDraftFromButton = function () {
-  if (!canSetterEditDraftNow()) {
-    shakeDraftRow("setter");
-    return false;
-  }
-
-  state.setterDraftTouched = true;
-  clearSetterDraft();
-  return true;
-};
-
-window.submitSetterSecretFromButton = function () {
-  handleSetterInput({ type: "ENTER" });
-};
-
 // Drag Mode (see drag-mode.js): drops a letter at a specific tile
 // position instead of appending it to the end like typing does. Unfilled
 // positions to its left are padded with a space -- draftrow.js already

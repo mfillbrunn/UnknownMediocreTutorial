@@ -75,7 +75,6 @@
   function shouldIdleExpand(state) {
     const setterScreen = byId("setterScreen");
     if (!setterScreen?.classList.contains("active")) return false;
-    if (setterScreen.classList.contains("setter-sidebar-collapsed")) return false;
     if (!setterScreen.classList.contains("is-not-your-turn")) return false;
     // The Advanced Tutorial's setter round exists specifically to teach
     // this behavior ("Notes has opened automatically as a scratchpad
@@ -347,23 +346,6 @@
   // classes on #setterScreen are already current by then (updateScreens
   // runs first), so this just reacts to whatever they say.
   window.updateSetterIdleExpand = function (state) {
-    const setterScreen = byId("setterScreen");
-    if (setterScreen?.classList.contains("setter-sidebar-collapsed")) {
-      if (dragSession) {
-        cancelDragHold();
-        dragSession = null;
-        document.body.classList.remove("activity-drag-active");
-      }
-      if (manuallyExpandedPanel) {
-        const panel = manuallyExpandedPanel;
-        manuallyExpandedPanel = null;
-        panel.classList.remove("idle-floating", "drag-expanding");
-        clearFixedStyles(panel);
-      }
-      if (idleExpanded) exitIdleExpand();
-      window.closeNotes?.();
-      return;
-    }
     if (shouldIdleExpand(state)) {
       // Idle-expand is about to claim Notes' floating spot for itself --
       // release any manual drag-expand (or in-flight drag) first,
@@ -410,7 +392,6 @@
     }
   }
 
-  window.reanchorSetterIdleNotes = reanchorIdleExpand;
   // ------------------------------------------------------------------
   // PRESS-AND-HOLD DRAG-TO-EXPAND
   //
