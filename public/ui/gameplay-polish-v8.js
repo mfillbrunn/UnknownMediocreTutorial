@@ -144,13 +144,41 @@
     const available = Math.max(118, bottomLimit - topLimit);
     const height = Math.min(238, available);
     const top = Math.max(topLimit, bottomLimit - height);
-    const left = Math.max(edge, boardRect.left + edge);
+
+    let left = Math.max(edge, boardRect.left + edge);
+    // The 180 floor guarantees a usable minimum width, but it was applied
+    // without re-checking against `left` -- on any layout where the board
+    // sits far enough right that less than 180px remains to the viewport
+    // edge (e.g. the sidebar is open, or a narrower phone), the floor won
+    // over the fit constraint and pushed the panel's right edge straight
+    // off screen. Pull `left` back afterward so the actual on-screen
+    // width always fits, instead of only constraining width and trusting
+    // left was already small enough.
     const width = Math.max(180, Math.min(boardRect.width - edge * 2, window.innerWidth - left - edge));
+    left = Math.max(edge, Math.min(left, window.innerWidth - edge - width));
+
+    // `left`/`top` above are computed in viewport coordinates (everything
+    // feeding them comes from getBoundingClientRect()), but `.screen.active`
+    // (layout.css) sets `transform: translateY(0)` on the active screen,
+    // which makes that screen -- not the viewport -- the containing block
+    // for this panel's `position: fixed` (any transformed ancestor takes
+    // over as the containing block). Without re-basing onto that ancestor's
+    // own viewport offset, the panel renders shifted down-and-right by the
+    // screen's offset, which is what pushed it off the right edge and let
+    // it drop low enough to cover the keyboard. offsetParent reliably
+    // resolves to that ancestor for a fixed element in this situation.
+    const origin = panel.offsetParent;
+    const originRect = origin
+      ? origin.getBoundingClientRect()
+      : { left: 0, top: 0 };
+    const originStyle = origin ? getComputedStyle(origin) : null;
+    const originBorderLeft = originStyle ? parseFloat(originStyle.borderLeftWidth) || 0 : 0;
+    const originBorderTop = originStyle ? parseFloat(originStyle.borderTopWidth) || 0 : 0;
 
     setImportant(panel, "position", "fixed");
-    setImportant(panel, "left", `${Math.round(left)}px`);
+    setImportant(panel, "left", `${Math.round(left - originRect.left - originBorderLeft)}px`);
     setImportant(panel, "right", "auto");
-    setImportant(panel, "top", `${Math.round(top)}px`);
+    setImportant(panel, "top", `${Math.round(top - originRect.top - originBorderTop)}px`);
     setImportant(panel, "bottom", "auto");
     setImportant(panel, "width", `${Math.round(width)}px`);
     setImportant(panel, "height", `${Math.round(height)}px`);

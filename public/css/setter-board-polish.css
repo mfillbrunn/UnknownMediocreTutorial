@@ -55,6 +55,24 @@
   filter: saturate(0.9);
 }
 
+/* client.js's slideRowIntoPlace (the guesser's simultaneous guess flying
+   up into the setter's own history right after the setter submits their
+   secret) toggles body.row-flight-active for its duration -- see
+   components.css. The collapsed sidebar toggle sits right on top of this
+   card's left border at that same x position (both ~1px, one red, one
+   white), and the overlap of the two reads as a stray seam distinct from
+   the clean border everywhere else on the card. Fading just that edge
+   (not the other three sides, which stay exactly as-is) removes the seam
+   for the flight's duration without touching the turn-color border the
+   rest of the time. */
+body.row-flight-active #setterScreen .setter-board {
+  border-left-color: transparent;
+}
+
+body.row-flight-active #setterScreen .setter-sidebar-toggle {
+  opacity: 0;
+}
+
 @keyframes setter-turn-edge-pulse {
   0%, 100% {
     opacity: 0.55;
