@@ -17,69 +17,53 @@ window.renderDraftRows = function ({
       const row = document.createElement("div");
       row.className = "history-row draft-row";
       row.__tiles = [];
+
       for (let i = 0; i < 5; i++) {
         const tile = document.createElement("div");
         tile.className = "history-tile draft-tile";
-        // Drag Mode drop target + drag source (setter's own secret draft,
-        // and the guesser's own in-progress guess) -- see drag-mode.js.
-        // The pending-guess row is a role's already-submitted/received
-        // guess awaiting scoring, not editable, so it never gets this.
+
         if (isEditableDraft && (role === "setter" || role === "guesser")) {
           tile.dataset.dragIndex = i;
           tile.dataset.dragRole = role;
-          // A tile with a letter can itself be dragged onto another tile
-          // (moves it, overwriting the target) or just tapped in place
-          // (toggles its lock) -- beginTileDrag tells the two apart the
-          // same way beginKeyDrag tells a tap from a drag.
-          tile.addEventListener("pointerdown", (e) => {
+
+          tile.addEventListener("pointerdown", event => {
             const letter = tile.textContent?.trim();
             if (!letter) return;
-            window.beginTileDrag?.(i, letter, e.clientX, e.clientY, role);
+
+            window.beginTileDrag?.(
+              i,
+              letter,
+              event.clientX,
+              event.clientY,
+              role
+            );
           });
         }
+
         row.__tiles.push(tile);
         row.appendChild(tile);
       }
 
-      if (
-        isEditableDraft &&
-        role === "setter"
-      ) {
-        const stars =
-          document.createElement(
-            "div"
-          );
 
-        stars.id =
-          "setterCoverStars";
 
-        stars.className =
-          "setter-cover-stars hidden";
-
-        stars.setAttribute(
-          "aria-live",
-          "polite"
-        );
-
+      if (isEditableDraft && role === "setter") {
+        const stars = document.createElement("div");
+        stars.id = "setterCoverStars";
+        stars.className = "setter-cover-stars hidden";
+        stars.setAttribute("aria-live", "polite");
         stars.innerHTML = `
-          <span
-            class="setter-cover-star"
-            data-cover-star
-          >★</span>
-          <span
-            class="setter-cover-star"
-            data-cover-star
-          >★</span>
-          <span
-            class="setter-cover-star"
-            data-cover-star
-          >★</span>
-          <span
-            class="setter-cover-bonus-star"
-            data-cover-bonus-star
-          >★</span>
-        `;
+          <span class="setter-cover-stars-core">
+            <span class="setter-cover-star" data-cover-star>★</span>
+            <span class="setter-cover-star" data-cover-star>★</span>
+            <span class="setter-cover-star" data-cover-star>★</span>
+          </span>
 
+          <span id="setterCoverTarget" class="setter-cover-target hidden">
+            <span class="setter-cover-target-plus" aria-hidden="true">+</span>
+            <span class="setter-cover-bonus-star" data-cover-bonus-star>★</span>
+            <span id="setterCoverTargetChip" class="setter-cover-target-chip"></span>
+          </span>
+        `;
         row.appendChild(stars);
       }
 
