@@ -1267,8 +1267,20 @@ function tutorialKeyEl(role, symbol) {
   );
 }
 
+// The actual submit action lives here now, not the keyboard's own Enter
+// key (see gameplay-polish-v8.js's guesserSubmitGuessBtn / setter-board.js's
+// setterSubmitSecretBtn) -- both only enable once all 5 letters are in,
+// the same moment tutorialWordKeyEls below switches to pointing at them.
+function tutorialSubmitBtnEl(role) {
+  return byId(
+    role === "setter"
+      ? "setterSubmitSecretBtn"
+      : "guesserSubmitGuessBtn"
+  );
+}
+
 // Highlights whichever letters of `word` haven't been typed into `draft`
-// yet, or the Enter key once every letter's in place. Shared by every
+// yet, or the Submit button once every letter's in place. Shared by every
 // "type this word" tutorial step (guesser guesses, setter secrets).
 function tutorialWordKeyEls(role, word, draft) {
   const typed = (draft || "").toUpperCase();
@@ -1284,7 +1296,7 @@ function tutorialWordKeyEls(role, word, draft) {
     return remaining.map(letter => tutorialKeyEl(role, letter));
   }
 
-  return [tutorialKeyEl(role, "ENTER")];
+  return [tutorialSubmitBtnEl(role)];
 }
 
 // Drag & Lock wait resolution: localGuesserDraft / guesserDraftLocks
@@ -2754,7 +2766,7 @@ function runGuesserTutorial(
           );
         } else {
           showTutorial(
-            `First, enter your opening guess. Enter "${word}" and click ENTER.`,
+            `First, enter your opening guess. Type "${word}", then tap Submit Guess.`,
             {
               enabled: true,
               mode: "hide"
@@ -2965,7 +2977,7 @@ function runGuesserTutorial(
         stopKeyDemo();
       } else {
         showTutorial(
-          `Let's make your first guess. Type "${word}" on the keyboard below, then press Enter.`,
+          `Let's make your first guess. Type "${word}" on the keyboard below, then tap Submit Guess.`,
           {
             mode: "hide"
           }
@@ -3391,7 +3403,7 @@ function runSetterTutorial(
       stopKeyDemo();
     } else {
       showTutorial(
-        `Let's pick your secret. Type "${word}" on the keyboard below, then press Enter.`,
+        `Let's pick your secret. Type "${word}" on the keyboard below, then tap Submit Secret.`,
         {
           mode: "hide"
         }
@@ -3488,7 +3500,7 @@ function runSetterTutorial(
 
     if (tutorialSubStep === 4) {
       showTutorial(
-        `Let's see that one rule in action. Type PICKY and press Enter — watch what happens.`,
+        `Let's see that one rule in action. Type PICKY and tap Submit Secret — watch what happens.`,
         {
           mode: "hide"
         }
@@ -3567,7 +3579,7 @@ function runSetterTutorial(
   if (round === 2) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `You won't always need to change it, though — if you can't think of a better secret, the simplest move is keeping it exactly as is. Just tap Submit with nothing typed to lock the same secret back in.`,
+        `You won't always need to change it, though — if you can't think of a better secret, the simplest move is keeping it exactly as is. Just tap Submit Secret with nothing typed to lock the same secret back in.`,
         {
           mode: "hide"
         }
@@ -3578,7 +3590,7 @@ function runSetterTutorial(
 
       startKeyDemo(
         "setter-round2-keep-demo",
-        () => [tutorialKeyEl("setter", "ENTER")]
+        () => [tutorialSubmitBtnEl("setter")]
       );
 
       return;
@@ -3987,7 +3999,7 @@ function runAdvancedTutorialGuesser(state) {
         );
       } else {
         showTutorial(
-          `Enter "${word}" and press Enter.`,
+          `Type "${word}" and tap Submit Guess.`,
           {
             mode: "hide"
           }
@@ -4083,7 +4095,7 @@ function runAdvancedTutorialGuesser(state) {
       );
     } else {
       showTutorial(
-        `Great — now press Enter to submit "${word}". Right after this, you will switch to playing as the Spy to see a few more features.`,
+        `Great — now tap Submit Guess to submit "${word}". Right after this, you will switch to playing as the Spy to see a few more features.`,
         {
           mode: "hide"
         }
@@ -4339,7 +4351,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 9) {
       showTutorial(
-        `Now try typing something that isn't a real word — like "ABCDE" — directly into your secret row. Don't press Enter. Watch New turn into a ✕, since that word could never actually be planted.`,
+        `Now try typing something that isn't a real word — like "ABCDE" — directly into your secret row. Don't tap Submit Secret. Watch New turn into a ✕, since that word could never actually be planted.`,
         {
           mode: "hide"
         }
