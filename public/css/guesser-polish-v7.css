@@ -220,31 +220,30 @@
   align-items: center !important;
   padding: 7px 5px 8px !important;
 
-  color: var(--quest-c1);
-  border-color: color-mix(in srgb, var(--quest-c1) 65%, var(--quest-c2));
+  /* Two muted tones, matching how power cards are treated in
+     features.css. Each quest type still declares three saturated colours
+     above (kept as its identity), but the card only ever spends two of
+     them and blends both toward a neutral slate first -- three vivid
+     stops per card, across a row of cards, was the single biggest source
+     of colour noise on this screen. */
+  --quest-tone-1: color-mix(in srgb, var(--quest-c1) 52%, #8b90a0);
+  --quest-tone-2: color-mix(in srgb, var(--quest-c2) 52%, #8b90a0);
 
-  background:
-    radial-gradient(
-      circle at 18% 12%,
-      color-mix(in srgb, var(--quest-c1) 26%, transparent),
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 88% 15%,
-      color-mix(in srgb, var(--quest-c3) 18%, transparent),
-      transparent 45%
-    ),
-    linear-gradient(
-      155deg,
-      color-mix(in srgb, var(--quest-c1) 15%, #151720),
-      color-mix(in srgb, var(--quest-c2) 10%, #10121a) 54%,
-      color-mix(in srgb, var(--quest-c3) 11%, #0c0e14)
-    );
+  color: var(--quest-tone-1);
+
+  /* Neutral body + border so the whole row shares one surface and the
+     hue only appears where it identifies the quest (strip and icon). */
+  border-color: rgba(255, 255, 255, 0.12);
+
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--quest-tone-1) 5%, #151720),
+    #0e1016
+  );
 
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 7px 18px rgba(0, 0, 0, 0.3),
-    0 0 12px color-mix(in srgb, var(--quest-c1) 12%, transparent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 7px 18px rgba(0, 0, 0, 0.3);
 }
 
 #guesserScreen
@@ -256,16 +255,15 @@
   inset: 0 0 auto 0;
   z-index: 4;
 
-  height: 4px;
+  height: 3px;
   border: 0;
   border-radius: 0;
-  opacity: 0.95;
+  opacity: 0.7;
 
   background: linear-gradient(
     90deg,
-    var(--quest-c1) 0 33.333%,
-    var(--quest-c2) 33.333% 66.666%,
-    var(--quest-c3) 66.666% 100%
+    var(--quest-tone-1) 0%,
+    var(--quest-tone-2) 100%
   );
 }
 
@@ -284,11 +282,9 @@
   max-width: none !important;
 
   transform: translate(-50%, -50%);
-  color: var(--quest-c1);
+  color: var(--quest-tone-1);
   opacity: 0.28;
-  filter: drop-shadow(
-    0 0 7px color-mix(in srgb, var(--quest-c2) 42%, transparent)
-  );
+  filter: none;
 }
 
 #guesserScreen
@@ -302,9 +298,9 @@
   height: 29px !important;
   margin-top: auto;
 
-  color: color-mix(in srgb, var(--quest-c2) 55%, white);
+  color: #d7dae2;
   font-size: 11px !important;
-  text-shadow: 0 0 6px color-mix(in srgb, var(--quest-c2) 24%, transparent);
+  text-shadow: none;
 }
 
 #guesserScreen
@@ -322,25 +318,22 @@
   height: 23px !important;
   padding: 0 5px !important;
 
-  border: 1.5px solid color-mix(in srgb, var(--quest-c1) 68%, white) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
   border-radius: 999px !important;
 
   background: rgba(12, 14, 21, 0.88) !important;
-  color: color-mix(in srgb, var(--quest-c1) 68%, white) !important;
+  color: #d7dae2 !important;
 
   font-size: 10px !important;
   line-height: 1 !important;
-  box-shadow: 0 0 8px color-mix(in srgb, var(--quest-c1) 22%, transparent);
+  box-shadow: none;
 }
 
-#guesserScreen
-  .guesser-power-view
-  .quest-badge-tile.quest-oneaway
-  .quest-progress-chip {
-  border-color: var(--tile-yellow) !important;
-  color: var(--tile-yellow) !important;
-}
-
+/* Green is the one colour change worth spending here: it marks the
+   moment the quest actually becomes claimable. "One away" used to get
+   its own yellow, making the chip a three-state traffic light on top of
+   an already colourful card -- it now stays neutral and relies on the
+   card's pulse to signal "nearly there". */
 #guesserScreen
   .guesser-power-view
   .quest-badge-tile.quest-ready
@@ -349,8 +342,8 @@
   .guesser-power-view
   .quest-badge-tile.quest-done
   .quest-progress-chip {
-  border-color: var(--tile-green) !important;
-  color: var(--tile-green) !important;
+  border-color: #5aa06d !important;
+  color: #7cbf90 !important;
 }
 
 /* Quest choices now use the same palette language as powers. */

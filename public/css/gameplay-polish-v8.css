@@ -41,13 +41,24 @@
   transform: translateY(1px) scale(0.97);
 }
 
+/* Leave + Concede used to be pinned to a fixed red here regardless of
+   role. Every other control in this header is already driven by
+   --role-accent, so on the Inspector's blue screen these two were the
+   only red things in the row and the header read as two themes mixed
+   together. Drive them off --role-accent like everything else -- the
+   Spy's screen still comes out red (that IS their role color), and the
+   Inspector's now matches their own blue. */
 #setterScreen .role-header .leave-game-btn,
 #setterScreen .role-header .danger-btn,
 #guesserScreen .role-header .leave-game-btn,
 #guesserScreen .role-header .danger-btn {
-  border-color: rgba(248,113,113,0.45);
-  background: linear-gradient(180deg, rgba(127,29,29,0.34), rgba(69,10,10,0.26));
-  color: #fda4af;
+  border-color: color-mix(in srgb, var(--role-accent) 45%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--role-accent) 24%, #0b0d13),
+    color-mix(in srgb, var(--role-accent) 12%, #07090e)
+  );
+  color: color-mix(in srgb, var(--role-accent) 62%, white);
 }
 
 #setterScreen .role-header :is(.constraint-toggle-btn, .power-info-btn, .guide-toggle-btn),

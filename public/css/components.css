@@ -311,15 +311,19 @@
    blue-outlined card reads immediately as "not mine". Ready/one-away swap
    it for the same --tile-green/--tile-yellow used by the text-only badge
    so both read as the same signal. */
+/* Two hues only, on purpose: a muted blue for "in progress" and green
+   for "claimable / done". "One away" used to introduce a third (yellow)
+   colour, which -- next to a row of already-tinted power cards -- made
+   this corner of the screen read as a traffic light. It keeps the blue
+   and leans on the pulse animation below to say "nearly there" instead,
+   so the only colour change in the whole quest lifecycle is the single
+   blue-to-green flip that actually matters. */
 .quest-badge-tile {
-  --role-accent: #4da3ff;
-}
-.quest-badge-tile.quest-oneaway {
-  --role-accent: var(--tile-yellow);
+  --role-accent: #6b8fb5;
 }
 .quest-badge-tile.quest-ready,
 .quest-badge-tile.quest-done {
-  --role-accent: var(--tile-green);
+  --role-accent: #5aa06d;
 }
 .quest-badge-tile.quest-oneaway,
 .quest-badge-tile.quest-ready {

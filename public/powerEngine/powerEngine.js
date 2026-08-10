@@ -54,6 +54,12 @@ function applyPowerPalette(
       powerId
     ];
 
+  // Two colors max per card, deliberately. The palettes below still list
+  // three for some powers, but a row of cards each showing three
+  // saturated stops read as visual noise -- the eye had nowhere to rest.
+  // Capping here (rather than editing every palette) keeps the data as
+  // documentation of a power's "theme" while the UI only ever spends two
+  // of them; --power-color-3 just mirrors the second one.
   const colors = (
     Array.isArray(configured)
       ? configured
@@ -64,7 +70,7 @@ function applyPowerPalette(
         typeof color === "string" &&
         color.trim()
     )
-    .slice(0, 3);
+    .slice(0, 2);
 
   if (!colors.length) {
     return;
