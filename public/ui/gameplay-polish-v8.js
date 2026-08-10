@@ -145,17 +145,22 @@
     const height = Math.min(238, available);
     const top = Math.max(topLimit, bottomLimit - height);
 
-    let left = Math.max(edge, boardRect.left + edge);
-    // The 180 floor guarantees a usable minimum width, but it was applied
-    // without re-checking against `left` -- on any layout where the board
-    // sits far enough right that less than 180px remains to the viewport
-    // edge (e.g. the sidebar is open, or a narrower phone), the floor won
-    // over the fit constraint and pushed the panel's right edge straight
-    // off screen. Pull `left` back afterward so the actual on-screen
-    // width always fits, instead of only constraining width and trusting
-    // left was already small enough.
-    const width = Math.max(180, Math.min(boardRect.width - edge * 2, window.innerWidth - left - edge));
-    left = Math.max(edge, Math.min(left, window.innerWidth - edge - width));
+    // Width still roughly matches the board's own width (so it reads as
+    // "covering the board" rather than some arbitrary size), but is
+    // computed against the viewport rather than boardRect.left below --
+    // the board itself sits in the right-hand portion of the screen
+    // whenever the sidebar is open (it shares the row with it), so
+    // deriving width from a left-edge anchored to the board carried that
+    // same rightward shift into the panel.
+    const width = Math.max(180, Math.min(boardRect.width - edge * 2, window.innerWidth - edge * 2));
+
+    // Center horizontally in the full screen, not just within the board's
+    // own column -- anchoring to boardRect.left (the previous approach)
+    // put the panel flush against whichever side of the screen the board
+    // happened to occupy (typically the right, next to the sidebar),
+    // which read as "stuck to the right" instead of centered.
+    let left = Math.max(edge, (window.innerWidth - width) / 2);
+    left = Math.min(left, window.innerWidth - edge - width);
 
     // `left`/`top` above are computed in viewport coordinates (everything
     // feeding them comes from getBoundingClientRect()), but `.screen.active`

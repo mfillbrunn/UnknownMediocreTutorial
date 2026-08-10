@@ -235,7 +235,7 @@
 
     show(
       `Type ${TUTORIAL_WORD} and ` +
-      "press Enter. Its W is the " +
+      "tap Submit Guess. Its W is the " +
       "fifth rare letter you need.",
 
       phase,
