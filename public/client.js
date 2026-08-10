@@ -931,7 +931,8 @@ function updateScreens() {
       const POPUP_DURATION_MS = 3200;
 
       const iAmGuesser = myUserId() === state.guesser;
-      setTimeout(() => {
+
+      function announceWin() {
         window.showBigAnnounce?.({
           icon: iAmGuesser ? "🎉" : "💀",
           title: iAmGuesser ? "You found the secret!" : "Your secret was found!",
@@ -939,22 +940,45 @@ function updateScreens() {
           roleClass: iAmGuesser ? "outcome-win" : "outcome-lose",
           duration: POPUP_DURATION_MS
         });
-      }, FLIP_TOTAL_MS);
 
-setTimeout(() => {
-  _gameOverRevealInFlight = false;
-  window._gameOverRevealInFlight = false;
+        setTimeout(() => {
+          _gameOverRevealInFlight = false;
+          window._gameOverRevealInFlight = false;
 
-  updateSummary();
-  updateScreens();
+          updateSummary();
+          updateScreens();
 
-  if (window.state && window.myRole) {
-    tutorialSteps(
-      window.state,
-      window.myRole
-    );
-  }
-}, FLIP_TOTAL_MS + POPUP_DURATION_MS + 200);
+          if (window.state && window.myRole) {
+            tutorialSteps(
+              window.state,
+              window.myRole
+            );
+          }
+        }, POPUP_DURATION_MS + 200);
+      }
+
+      if (iAmGuesser) {
+        // The guesser's own winning row now plays the same flight-then-flip
+        // choreography as any other submission (guesser-flow-v7.js's
+        // "wonDirectly" handling) instead of snapping straight into place,
+        // so FLIP_TOTAL_MS's fixed setter-only estimate no longer covers
+        // it -- wait for that animation's actual completion signal instead
+        // of guessing at a duration, with FLIP_TOTAL_MS's own timing kept
+        // only as a safety-net fallback in case the event never fires
+        // (reduced motion, a mid-animation error, etc).
+        let announced = false;
+        const onDone = () => {
+          if (announced) return;
+          announced = true;
+          window.removeEventListener("guesserWinRevealDone", onDone);
+          announceWin();
+        };
+        window.addEventListener("guesserWinRevealDone", onDone);
+        setTimeout(onDone, FLIP_TOTAL_MS + 1500);
+      } else {
+        setTimeout(announceWin, FLIP_TOTAL_MS);
+      }
+
       return;
     }
   }

@@ -194,7 +194,11 @@
   min-height: 84px;
   padding: 8px 5px 11px;
   border: 2px solid color-mix(in srgb, var(--role-accent) 55%, transparent);
-  border-radius: var(--r-16, 16px);
+  /* Matches .constraint-row's radius (history.css) -- the round-feedback
+     box these cards sit right below -- instead of the rounder var(--r-16)
+     every other card on the page uses, so the two bordered/glowing boxes
+     read as one consistent, less-rounded outline language. */
+  border-radius: var(--r-10);
   background:
     linear-gradient(
       180deg,

@@ -877,6 +877,27 @@
       next.historyLength >
         previous.historyLength;
 
+    // A guess that exactly matches the already-committed secret ends the
+    // round immediately server-side (transitionAfterGuess/simultaneous.js's
+    // isWin branches) -- there's no setter reaction to wait on, so the
+    // guess never passes through the normal pendingGuess intermediate step
+    // both "submitted" and "resolved" above key off. Left alone, that means
+    // this state update is the ONLY one the guesser ever sees for their
+    // winning guess: renderHistory (called synchronously just before this
+    // handler, via client.js's own stateUpdate listener) has already
+    // appended the real row and queued its reveal, so the word appears to
+    // snap straight into history instead of flying up from the draft like
+    // every other submission. Exclude the assassin-word instant-loss path
+    // (also skips pendingGuess via pushWinEntry) -- it archives state.secret
+    // rather than what the guesser actually typed, so flying that word in
+    // would visibly not match their draft.
+    const wonDirectly =
+      !previous.pendingGuess &&
+      !next.pendingGuess &&
+      next.historyLength >
+        previous.historyLength &&
+      !state.powers?.assassinWordassassinated;
+
     if (submitted) {
       const word = next.pendingGuess;
 
@@ -898,13 +919,91 @@
       const heldWrap =
         holdNewestHistoryRow(word);
 
-      queue(() =>
-        animateResolution(
+      // A win on the opening simultaneous guess still passes through this
+      // normal submitted->resolved pendingGuess pair (unlike a win on a
+      // later normal-phase guess -- see the wonDirectly comment below), so
+      // it already gets the standard flight+reveal for free here. It still
+      // needs to signal completion the same way wonDirectly does, so
+      // client.js's wonByGuess popup timing (which only fires this event's
+      // listener when a win is in play) waits for the real animation
+      // instead of falling back to its blind safety-net timer every time.
+      const isWinResolve =
+        state.phase === "gameOver";
+
+      queue(async () => {
+        await animateResolution(
           word,
           heldWrap,
           state
-        )
-      );
+        );
+
+        if (isWinResolve) {
+          window.dispatchEvent(
+            new CustomEvent(
+              "guesserWinRevealDone"
+            )
+          );
+        }
+      });
+    } else if (wonDirectly) {
+      resolutionInFlight = true;
+      hideNewDraft();
+
+      const winningEntry =
+        state.history?.[
+          state.history.length - 1
+        ];
+
+      const word = (
+        winningEntry?.guess || ""
+      ).toUpperCase();
+
+      // Grab the just-rendered real row and hide it synchronously, same as
+      // the "resolved" branch above -- renderHistory already scheduled its
+      // reveal via requestAnimationFrame, and that has to be stopped before
+      // the browser paints a frame or the flip plays with no flight first.
+      const heldWrap = word
+        ? holdNewestHistoryRow(word)
+        : null;
+
+      // captureSubmitFlight reads the draft row's current on-screen
+      // position -- still valid here since this whole handler runs
+      // synchronously, in the same tick client.js used to render the final
+      // state (including hiding the draft), right after that render.
+      const captured = word
+        ? captureSubmitFlight()
+        : null;
+
+      if (word) {
+        queue(async () => {
+          await animateSubmission(
+            word,
+            captured
+          );
+
+          await animateResolution(
+            word,
+            heldWrap,
+            state
+          );
+
+          // client.js's wonByGuess handling waits on this instead of a
+          // fixed timer, since the flight this branch adds means the
+          // setter-only FLIP_TOTAL_MS estimate no longer covers how long
+          // the guesser's own reveal actually takes.
+          window.dispatchEvent(
+            new CustomEvent(
+              "guesserWinRevealDone"
+            )
+          );
+        });
+      } else {
+        window.dispatchEvent(
+          new CustomEvent(
+            "guesserWinRevealDone"
+          )
+        );
+      }
     } else if (next.pendingGuess) {
       const word = next.pendingGuess;
 
