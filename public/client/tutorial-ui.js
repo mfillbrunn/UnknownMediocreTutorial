@@ -3403,7 +3403,7 @@ function runSetterTutorial(
       stopKeyDemo();
     } else {
       showTutorial(
-        `Let's pick your secret. Type "${word}" on the keyboard below, then tap Submit Secret.`,
+        `Let's pick your secret. Type "${word}" on the keyboard below, then tap Submit New Secret.`,
         {
           mode: "hide"
         }
@@ -3500,7 +3500,7 @@ function runSetterTutorial(
 
     if (tutorialSubStep === 4) {
       showTutorial(
-        `Let's see that one rule in action. Type PICKY and tap Submit Secret — watch what happens.`,
+        `Let's see that one rule in action. Type PICKY and tap the button below it — watch what happens.`,
         {
           mode: "hide"
         }
@@ -3518,12 +3518,10 @@ function runSetterTutorial(
           )
       );
 
-      // Normally a rejected secret clears itself automatically -- suppressed
-      // just for this one demo (see submitSetterNew() in client.js) so the
-      // next step can walk through erasing PICKY by hand instead of
-      // finding an already-empty draft.
-      window.tutorialKeepRejectedDraft = true;
-
+      // A rejected secret is left in place (see submitSetterNew()/
+      // reportSetterSecretRejection() in client.js -- rejected drafts are
+      // never auto-cleared), so the next step can walk through erasing
+      // PICKY by hand instead of finding an already-empty draft.
       waitForRejectedSecret();
 
       return;
@@ -3579,7 +3577,7 @@ function runSetterTutorial(
   if (round === 2) {
     if (tutorialSubStep === 0) {
       showTutorial(
-        `You won't always need to change it, though — if you can't think of a better secret, the simplest move is keeping it exactly as is. Just tap Submit Secret with nothing typed to lock the same secret back in.`,
+        `You won't always need to change it, though — if you can't think of a better secret, the simplest move is keeping it exactly as is. Just tap Keep Current Secret with nothing typed to lock the same secret back in.`,
         {
           mode: "hide"
         }
@@ -4351,7 +4349,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 9) {
       showTutorial(
-        `Now try typing something that isn't a real word — like "ABCDE" — directly into your secret row. Don't tap Submit Secret. Watch New turn into a ✕, since that word could never actually be planted.`,
+        `Now try typing something that isn't a real word — like "ABCDE" — directly into your secret row. Don't submit it. Watch New turn into a ✕, since that word could never actually be planted.`,
         {
           mode: "hide"
         }

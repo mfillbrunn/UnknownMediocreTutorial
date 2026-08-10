@@ -9,8 +9,6 @@ let localGuesserDraft = "";
 let roleAssigned = false;
 let lastSimulSecret = false;
 let lastSimulGuess = false;
-let KeepEnabled = true;
-let NewEnabled = true;
 let rouletteInterval = null;
 let rouletteWords = null;
 // Captured just before a state update that resolves the setter's pending
@@ -805,11 +803,12 @@ function updateSetterDraftInvalidOverlay() {
     !state?.isTutorial &&
     (!state?.simultaneousAllWrong || state?.powers?.rouletteSecretActive)
   ) {
-    const notInDictionary = window.ALLOWED_SECRETS && !window.ALLOWED_SECRETS.has(draft);
-    const inconsistent =
-      typeof window.isConsistentWithHistory === "function" &&
-      !window.isConsistentWithHistory(state.history, draft, state);
-    invalid = notInDictionary || inconsistent;
+    // Shares its dictionary/consistency (and now assassin-word) check with
+    // computeSetterSecretStatus/submitSetterNew via validateSetterSecretWord
+    // -- see that function's own comment. Tutorial mode never reaches here
+    // (guarded above), so its scripted-word check inside
+    // validateSetterSecretWord never fires for this overlay.
+    invalid = !validateSetterSecretWord(draft).valid;
   }
 
   overlay.classList.toggle("hidden", !invalid);
@@ -821,8 +820,9 @@ function updateSecretLock() {
   // Break Cover (rouletteSecret) forces the setter's next secret to be a
   // random new one -- it explicitly overrides this lock server-side (see
   // normal.js) rather than colliding with it, so the client shouldn't show
-  // the "locked, can't submit new" state (or actually disable NewEnabled)
-  // while it's in effect either.
+  // the "locked, can't submit new" state while it's in effect either.
+  // (Whether a NEW secret is actually submittable right now is decided by
+  // computeSetterSecretStatus -- this overlay is purely the visual 🔒.)
   const overridden = !!state?.powers?.rouletteSecretActive;
   const locked = !!state?.simultaneousAllWrong && !overridden;
   overlay.classList.toggle("hidden", !locked);
@@ -832,10 +832,6 @@ function updateSecretLock() {
   // DOM child-count CSS selector that can't distinguish visible rows from
   // ones hidden via style.display.
   overlay.classList.toggle("split-bottom", !!state?.pendingGuess);
-  if (locked && myRole === "setter") {
-    // Prevent new secret entry
-    NewEnabled = false;
-  }
 }
 
 // -----------------------------------------------------
@@ -1091,40 +1087,25 @@ function updateRoleLabels() {
 // -----------------------------------------------------
 function updateSetterScreen() {
   const setterName = getPlayerByUserId(state.setter)?.name || "—";
-  KeepEnabled=true;
-  NewEnabled=true;  
   $("setterScreen").querySelector(".screen-title").textContent = setterName;
   //$("setterRoleBadge")?.textContent = "Spy";
   const displayGuess =state.powers?.stealthGuessActive? "?????": state.pendingGuess;
   const isSetterTurn = state.turn === state.setter;
   const isDecisionStep =isSetterTurn &&!!displayGuess &&state.phase === "normal";
-  let setterInputEnabled = false;
   // -------------------------------------------------------
-  // PHASE-SPECIFIC BUTTON / INPUT LOGIC
+  // PHASE-SPECIFIC TURN INDICATOR
   // -------------------------------------------------------
-  // SIMULTANEOUS PHASE — only initial secret allowed, once
+  // Whether Keep/New are actually available right now, and what the
+  // primary decision button should say/do, is fully owned by
+  // computeSetterSecretStatus() (called once below, right before it's
+  // handed to updateSetterDecisionControls) -- this block now only drives
+  // the turn-indicator dot, via the exact same phase/turn conditions
+  // isSetterDecisionTurnActive() uses internally.
   setTurn("setterScreen", null);
   if (state.phase === "simultaneous") {
-    const secretSubmitted =!!state.secret || state.simultaneousSecretSubmitted;
-    setterInputEnabled = !secretSubmitted;    
-    KeepEnabled=false;
-    NewEnabled=setterInputEnabled;
-    setTurn("setterScreen", !state.secret); 
-  }
-  // NORMAL PHASE — decision step (respond to the pending guess by keeping the
-  // current secret or switching to a new consistent word).
-  else if (state.phase === "normal") {
-    const canDecide = isDecisionStep;
-    setterInputEnabled = canDecide;
-    KeepEnabled=canDecide;
-    NewEnabled=canDecide;
-    setTurn("setterScreen", canDecide);
-  }
-  // LOBBY / GAMEOVER — everything off
-  else {
-    setterInputEnabled = false;
-    KeepEnabled=false;
-    NewEnabled=false;
+    setTurn("setterScreen", !state.secret);
+  } else if (state.phase === "normal") {
+    setTurn("setterScreen", isDecisionStep);
   }
 
   // ----------------------------------------
@@ -1184,12 +1165,7 @@ renderDraftRows({
     onInput: handleSetterInput
   });
   }
-  window.updateSetterDecisionControls?.({
-    state,
-    inputEnabled: setterInputEnabled,
-    keepEnabled: KeepEnabled,
-    newEnabled: NewEnabled
-  });
+  window.updateSetterDecisionControls?.(computeSetterSecretStatus());
   updateSetterPreview();
  resolvePendingGuessFlight(
   historyRender?.addedElements || []
@@ -1700,17 +1676,14 @@ function clearSetterDraft() {
   window.clearNotesDraft?.();
   updateUI();
 }
-// Shared by handleSetterInput (typing) and setSetterDraftLetterAt (Drag
-// Mode) -- both need to know whether the setter actually has a live draft
-// to edit right now.
-function canSetterEditDraftNow() {
-  if (
-  state.powers?.freezeActive ||
-  state.powers?.rouletteSecretActive ||
-  isOpeningMissSecretLocked()
-) {
-  return false;
-}
+// Single source of truth for "is this the setter's live turn to act on
+// their secret" -- submitting a decision in `normal` (Keep/New in reaction
+// to a pending guess), or planting the very first secret in `simultaneous`
+// -- independent of any power/lock that might ADDITIONALLY be blocking
+// editing right now (see isSetterEditingBlockedByPower below). Extracted
+// out of canSetterEditDraftNow/handleSetterInput's own former inline copy
+// so there's exactly one place this turn/phase check lives.
+function isSetterDecisionTurnActive() {
   const isNormalSetterTurn =
     myUserId() === state.setter &&
     state.phase === "normal" &&
@@ -1721,6 +1694,235 @@ function canSetterEditDraftNow() {
     !state.secret &&
     !state.simultaneousSecretSubmitted;
   return isNormalSetterTurn || isSimultaneousSecretEntry;
+}
+
+// Powers/locks that block hand-editing the draft even though it's still
+// the setter's turn to act -- Freeze and Break Cover (rouletteSecretActive)
+// both leave the decision itself available (Keep, or -- for Break Cover --
+// whichever word is currently spinning), just not typing/dragging letters
+// by hand, and the opening-miss lock blocks editing entirely (Keep only).
+function isSetterEditingBlockedByPower() {
+  return !!(
+    state.powers?.freezeActive ||
+    state.powers?.rouletteSecretActive ||
+    isOpeningMissSecretLocked()
+  );
+}
+
+// Shared by handleSetterInput (typing) and setSetterDraftLetterAt (Drag
+// Mode) -- both need to know whether the setter actually has a live draft
+// to edit right now.
+function canSetterEditDraftNow() {
+  return isSetterDecisionTurnActive() && !isSetterEditingBlockedByPower();
+}
+
+// Single source of truth for "is this complete 5-letter word actually a
+// legal secret to submit right now" -- assassin-word distance, dictionary
+// membership, the tutorial's scripted-word requirement, and consistency
+// with the round's feedback so far. Used by both computeSetterSecretStatus
+// (to decide the primary button's label/enabled state) and submitSetterNew
+// (to decide which rejection message to show), so the two can never
+// disagree about what counts as valid. `word` is expected already
+// upper-cased and exactly 5 letters -- callers check length separately.
+function validateSetterSecretWord(word) {
+  const w = (word || "").toUpperCase();
+
+  const assassin = state.powers?.assassinWord
+    ? state.powers.assassinWord.toUpperCase()
+    : null;
+  if (assassin && countPositionalDifferences(w, assassin) < 2) {
+    return { valid: false, reason: "assassin" };
+  }
+
+  if (!window.ALLOWED_SECRETS?.has(w)) {
+    return {
+      valid: false,
+      reason: window.ALLOWED_GUESSES?.has(w) ? "not-a-secret" : "not-a-word"
+    };
+  }
+
+  if (state.isTutorial && state.history.length < state.scriptedTurns) {
+    const expected = state.tutorialSecrets?.[state.history.length];
+    if (expected && w !== expected) {
+      return { valid: false, reason: "tutorial-script", expected };
+    }
+  }
+
+  if (
+    typeof window.isConsistentWithHistory === "function" &&
+    !window.isConsistentWithHistory(state.history, w, state)
+  ) {
+    return { valid: false, reason: "inconsistent" };
+  }
+
+  return { valid: true, reason: null };
+}
+
+// THE shared status computation the task asks for -- everything about the
+// setter's draft/decision controls (primary label, whether Clear shows,
+// whether the primary button is enabled, and which server action pressing
+// it should trigger) is decided here and nowhere else. Both the button's
+// rendering (setter-board.js's updateSetterDecisionControls) and the
+// actual submit dispatch (submitSetterDecision below) read this same
+// object, so the two can never drift apart.
+function computeSetterSecretStatus() {
+  if (!isSetterDecisionTurnActive()) {
+    return {
+      mode: "blocked",
+      primaryLabel: "KEEP CURRENT SECRET",
+      primaryEnabled: false,
+      clearVisible: false,
+      clearEnabled: false,
+      action: null
+    };
+  }
+
+  const rawDraft = String(state.setterDraft || "");
+  const draftLetters = rawDraft.replace(/\s/g, "");
+  const filledCount = draftLetters.length;
+  const draftComplete = filledCount === 5 && !rawDraft.includes(" ");
+  const draftUpper = draftLetters.toUpperCase();
+  const hasCurrentSecret = !!(state.secret && state.secret.length === 5);
+  const currentSecret = hasCurrentSecret ? state.secret.toUpperCase() : null;
+  const editingBlocked = isSetterEditingBlockedByPower();
+
+  // Empty draft: nothing typed. Only a real "keep the current secret" if
+  // there IS a current secret yet (there isn't one during the very first,
+  // simultaneous-phase secret entry) -- reuses "FINISH NEW SECRET"'s own
+  // disabled treatment there since there's nothing to keep OR submit yet.
+  if (filledCount === 0) {
+    if (hasCurrentSecret) {
+      return {
+        mode: "keep",
+        primaryLabel: "KEEP CURRENT SECRET",
+        primaryEnabled: true,
+        clearVisible: false,
+        clearEnabled: false,
+        action: "keep"
+      };
+    }
+    return {
+      mode: "partial",
+      primaryLabel: "FINISH NEW SECRET",
+      primaryEnabled: false,
+      clearVisible: false,
+      clearEnabled: false,
+      action: null
+    };
+  }
+
+  // 1-4 letters typed -- still finishing.
+  if (!draftComplete) {
+    return {
+      mode: "partial",
+      primaryLabel: "FINISH NEW SECRET",
+      primaryEnabled: false,
+      clearVisible: true,
+      clearEnabled: !editingBlocked,
+      action: null
+    };
+  }
+
+  // Complete draft that types out to exactly the current secret -- Keep,
+  // not New (routes through SET_SECRET_SAME even though 5 letters are
+  // sitting in the draft, per the "typed the same word" requirement --
+  // also the only way this is submittable at all while the opening-miss
+  // lock or Freeze is blocking a genuine NEW secret this turn).
+  if (hasCurrentSecret && draftUpper === currentSecret) {
+    return {
+      mode: "same",
+      primaryLabel: "KEEP CURRENT SECRET",
+      primaryEnabled: true,
+      clearVisible: true,
+      clearEnabled: !editingBlocked,
+      action: "keep"
+    };
+  }
+
+  // Complete, different word -- validate it exactly like submitSetterNew()
+  // does today, plus the round locks that forbid a NEW secret specifically
+  // (opening-miss lock, Freeze) even when the word itself would otherwise
+  // be perfectly legal.
+  const newBlockedByLock =
+    isOpeningMissSecretLocked() || !!state.powers?.freezeActive;
+  const wordValid = validateSetterSecretWord(draftUpper).valid;
+
+  if (!wordValid || newBlockedByLock) {
+    return {
+      mode: "invalid",
+      primaryLabel: "SECRET NOT ALLOWED",
+      primaryEnabled: false,
+      clearVisible: true,
+      clearEnabled: !editingBlocked,
+      action: null
+    };
+  }
+
+  return {
+    mode: "new",
+    primaryLabel: "SUBMIT NEW SECRET",
+    primaryEnabled: true,
+    clearVisible: true,
+    clearEnabled: !editingBlocked,
+    action: "submit-new"
+  };
+}
+window.computeSetterSecretStatus = computeSetterSecretStatus;
+
+// Keep action -- shared by the empty-draft "KEEP CURRENT SECRET" case and
+// the "typed the current secret back" case (see computeSetterSecretStatus's
+// "keep"/"same" modes). Only clears the draft on server confirmation, same
+// "preserve on failure" pattern submitSetterNew() already uses below --
+// never optimistically before the round-trip resolves.
+function submitSetterKeep() {
+  if (window.isRejoining) {
+    toast("Reconnecting...");
+    return;
+  }
+
+  if (
+    !sendGameAction(
+      { type: "SET_SECRET_SAME" },
+      result => {
+        if (!result?.ok) return;
+        state.setterDraft = "";
+        emitSetterDraftPreview("");
+        resetEphemeralUIState();
+        updateUI();
+      }
+    )
+  ) {
+    return;
+  }
+}
+
+// Single dispatcher for "the setter pressed Enter or tapped the primary
+// decision button" -- handleSetterInput's ENTER branch and
+// submitSetterSecretFromButton both funnel here, so there is exactly one
+// place that turns the current draft into a real server action, driven by
+// the exact same status computeSetterSecretStatus already used to decide
+// what the button looks like.
+function submitSetterDecision() {
+  const status = computeSetterSecretStatus();
+
+  if (status.action === "keep") {
+    submitSetterKeep();
+    return;
+  }
+
+  if (status.mode === "blocked") {
+    shakeDraftRow("setter");
+    toast("Can't submit new secret");
+    return;
+  }
+
+  // "partial", "invalid", and "new" all funnel into submitSetterNew() --
+  // it already knows how to explain a length/assassin/dictionary/
+  // consistency rejection with the right toast or popup (see
+  // validateSetterSecretWord), and no longer clears the draft on
+  // rejection (see the "don't auto-clear an invalid draft" requirement).
+  emitSetterDraftPreview((state.setterDraft || "").toUpperCase());
+  submitSetterNew();
 }
 
 window.clearSetterDraftFromButton = function () {
@@ -1950,18 +2152,7 @@ function handleSetterInput(event) {
   // reused for this outer guard since it also folds in that same
   // freeze/roulette check.
   if (!(state.powers?.freezeActive || state.powers?.rouletteSecretActive)) {
-    const isNormalSetterTurn =
-      myUserId() === state.setter &&
-      state.phase === "normal" &&
-      state.turn === state.setter &&
-      !!state.pendingGuess;
-
-    const isSimultaneousSecretEntry =
-      state.phase === "simultaneous" &&
-      !state.secret &&
-      !state.simultaneousSecretSubmitted;
-
-    if (!(isNormalSetterTurn || isSimultaneousSecretEntry)) return;
+    if (!isSetterDecisionTurnActive()) return;
 
     const isEditing = event.type === "LETTER" || event.type === "BACKSPACE";
 
@@ -2013,105 +2204,29 @@ function handleSetterInput(event) {
   }
 
   if (event.type === "ENTER") {
-    const draft = (state.setterDraft || "").trim().toUpperCase();
-
-    if (draft.length === 0) {
-      if (KeepEnabled) {
-        state.setterDraft = "";
-        emitSetterDraftPreview("");
-
-        if (window.isRejoining) {
-          toast("Reconnecting...");
-          return;
-        }
-
-        // Only clear the ephemeral submit-flow UI if this actually reached
-        // the server -- sendGameAction silently no-ops (returns false)
-        // while genuinely disconnected, and clearing here regardless used
-        // to make the screen look like a normal successful submit even
-        // though nothing was sent, with no way to tell the two apart until
-        // the next action mysteriously failed.
-        if (
-          !sendGameAction(
-            {
-              type:
-                "SET_SECRET_SAME"
-            },
-            result => {
-              if (!result?.ok) {
-                return;
-              }
-
-              resetEphemeralUIState();
-              updateUI();
-            }
-          )
-        ) {
-          return;
-        }
-
-        return;
-      }
-    }
-
-    if (NewEnabled) {
-      emitSetterDraftPreview(draft);
-      submitSetterNew();
-      return;
-    }
-
-    shakeDraftRow("setter");
-    toast("Can't submit new secret");
+    submitSetterDecision();
     return;
   }
 }
 
-/// SUBMIT NEW SECRET FUNCTION
-function submitSetterNew() {
+// Rejection feedback for submitSetterNew()'s per-reason messaging --
+// separated out purely so the reason->message mapping reads as one table
+// instead of a chain of ifs. Never touches state.setterDraft: per the
+// "don't auto-clear an invalid draft" requirement, a rejected secret now
+// stays on screen for the player to edit rather than being wiped.
+function reportSetterSecretRejection(result) {
   const w = (state.setterDraft || "").toUpperCase();
-  // A space is Drag Mode's "not filled at this position yet" placeholder
-  // (see setSetterDraftLetterAt) -- a draft still holding one is exactly
-  // as incomplete as a too-short typed draft.
-  if (w.length !== 5 || w.includes(" ")) {
-    shakeDraftRow("setter");
-    toast("5 letters!");
-    return;
-  }
-  if (state?.powers?.assassinWord) {
-    const assassin = state.powers.assassinWord.toUpperCase();
-    if (countPositionalDifferences(w, assassin) < 2) {
-      shakeDraftRow("setter");
-      toast("Too similar to assassin word (needs 2 or more different letters)");
-      clearSetterDraft();
-      window.notifyTutorialRejectedSecret?.();
-      return;
-    }
-  }
-  if (!window.ALLOWED_SECRETS.has(w)) {
-    shakeDraftRow("setter");
-    if (window.ALLOWED_GUESSES.has(w)){
-      shakeDraftRow("setter");
-      toast("Word not allowed as secret");
-    }else{
-      shakeDraftRow("setter");
-      toast("Word not in dictionary");
-    }
-    clearSetterDraft();
-    window.notifyTutorialRejectedSecret?.();
-    return;
-  }
-  if (state.isTutorial && state.history.length < state.scriptedTurns) {
-    const expected = state.tutorialSecrets[state.history.length];
-    if (w !== expected) {
-      shakeDraftRow("setter");
-      toast(`Type in ${expected}`);
-      window.notifyTutorialRejectedSecret?.();
-      return;
-    }
-  }
-  if (typeof window.isConsistentWithHistory === "function" && !window.isConsistentWithHistory(state.history, w, state)) {
-    shakeDraftRow("setter");
-    //Check violations
+  shakeDraftRow("setter");
+
+  if (result.reason === "assassin") {
+    toast("Too similar to assassin word (needs 2 or more different letters)");
+  } else if (result.reason === "not-a-secret") {
+    toast("Word not allowed as secret");
+  } else if (result.reason === "not-a-word") {
+    toast("Word not in dictionary");
+  } else if (result.reason === "tutorial-script") {
+    toast(`Type in ${result.expected}`);
+  } else if (result.reason === "inconsistent") {
     const violations = findConsistencyViolations(state.history, w);
     const { secretIndices } = violations;
     if (secretIndices.size > 0) {
@@ -2128,23 +2243,35 @@ function submitSetterNew() {
       duration: 2200,
       compact: true
     });
-    // The PICKY tutorial demo leaves the rejected word in place on purpose,
-    // so the very next step can walk the player through clearing it by
-    // hand with Backspace instead of finding it already gone.
-    if (window.tutorialKeepRejectedDraft) {
-      window.tutorialKeepRejectedDraft = false;
-    } else {
-      clearSetterDraft();
-    }
-    window.notifyTutorialRejectedSecret?.();
+  }
+
+  window.notifyTutorialRejectedSecret?.();
+}
+
+/// SUBMIT NEW SECRET FUNCTION
+function submitSetterNew() {
+  const w = (state.setterDraft || "").toUpperCase();
+  // A space is Drag Mode's "not filled at this position yet" placeholder
+  // (see setSetterDraftLetterAt) -- a draft still holding one is exactly
+  // as incomplete as a too-short typed draft.
+  if (w.length !== 5 || w.includes(" ")) {
+    shakeDraftRow("setter");
+    toast("5 letters!");
     return;
   }
+
+  const result = validateSetterSecretWord(w);
+  if (!result.valid) {
+    reportSetterSecretRejection(result);
+    return;
+  }
+
   if (window.isRejoining) {
     toast("Reconnecting...");
     return;
   }
-  // Same reasoning as the SET_SECRET_SAME branch above: don't wipe the
-  // draft the player just typed unless it actually reached the server.
+  // Same reasoning as submitSetterKeep(): don't wipe the draft the player
+  // just typed unless it actually reached the server.
   if (
     !sendGameAction(
       {

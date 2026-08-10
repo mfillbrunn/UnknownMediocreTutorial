@@ -255,24 +255,62 @@
     window.renderSetterCoverStars = renderCoverStars;
   }
 
-  window.updateSetterDecisionControls = function ({
-    state,
-    inputEnabled,
-    keepEnabled,
-    newEnabled
-  } = {}) {
+  // One primary button whose label/color/enabled-state is driven entirely
+  // by computeSetterSecretStatus() (client.js) -- see that function for
+  // what each mode means. No separate permanent "Keep" button: the
+  // primary button itself IS the keep action whenever the draft is empty
+  // or matches the current secret.
+  const MODE_CLASS = {
+    keep: "setter-keep-btn",
+    same: "setter-keep-btn",
+    new: "setter-submit-btn",
+    partial: "setter-submit-btn",
+    invalid: "setter-invalid-btn",
+    blocked: "setter-keep-btn"
+  };
+  const PRIMARY_MODE_CLASSES = [
+    "setter-keep-btn",
+    "setter-submit-btn",
+    "setter-invalid-btn"
+  ];
+
+  window.updateSetterDecisionControls = function (status) {
+    const actions = document.querySelector(
+      "#setterScreen .setter-decision-actions"
+    );
     const clearButton = byId("setterClearDraftBtn");
     const submitButton = byId("setterSubmitSecretBtn");
-    if (!clearButton || !submitButton) return;
+    if (!actions || !clearButton || !submitButton) return;
 
-    const rawDraft = String(state?.setterDraft || "");
-    const draftLetters = rawDraft.replace(/\s/g, "");
-    const draftComplete = draftLetters.length === 5 && !rawDraft.includes(" ");
-    const canKeep = !!keepEnabled && draftLetters.length === 0;
-    const canSubmitNew = !!newEnabled && draftComplete;
+    const {
+      mode = "blocked",
+      primaryLabel = "KEEP CURRENT SECRET",
+      primaryEnabled = false,
+      clearVisible = false,
+      clearEnabled = false
+    } = status || {};
 
-    clearButton.disabled = !inputEnabled || !draftLetters.length;
-    submitButton.disabled = !(canKeep || canSubmitNew);
+    // Deliberately NOT disabled (native `disabled`, or `aria-disabled` --
+    // the latter makes assistive tech, and Playwright's own actionability
+    // checks, treat it as unclickable too) on either button -- a real
+    // invalid/partial/blocked draft still needs a tap to produce its
+    // rejection feedback (shake + toast/popup, see submitSetterNew's
+    // reportSetterSecretRejection and clearSetterDraftFromButton's own
+    // shake-on-blocked), and the tutorial's own "type PICKY, tap Submit"
+    // demo relies on that tap actually reaching the click handler even
+    // while the word is rejected. `.is-disabled` gets the exact same dim
+    // look via CSS (see setter-board.css) without blocking the click.
+    clearButton.classList.toggle("hidden", !clearVisible);
+    clearButton.classList.toggle("is-disabled", !clearEnabled);
+
+    // Draft empty (Clear hidden) -- the primary button spans the full row
+    // instead of sharing it with an empty/hidden Clear slot.
+    actions.classList.toggle("setter-decision-single", !clearVisible);
+
+    submitButton.textContent = primaryLabel;
+    submitButton.classList.toggle("is-disabled", !primaryEnabled);
+    submitButton.classList.remove(...PRIMARY_MODE_CLASSES);
+    submitButton.classList.add(MODE_CLASS[mode] || "setter-keep-btn");
   };
 
   function initDecisionButtons() {
