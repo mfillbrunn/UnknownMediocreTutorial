@@ -1308,15 +1308,13 @@ function slideRowIntoPlace(
       return;
     }
 
-    document
-      .querySelectorAll(
-        ".history-flight-clone"
-      )
-      .forEach(element => {
-        if (element !== existingFlight) {
-          element.remove();
-        }
-      });
+    // See components.css's body.row-flight-active rule -- fades out the
+    // sidebar's Keep/New chrome for the flight's duration so it doesn't
+    // redraw mid-motion right as this same guess resolution updates it.
+    // Cleared in land() below once the row actually settles.
+    document.body.classList.add(
+      "row-flight-active"
+    );
 
     const usingHeldPending = !!(
       existingFlight?.isConnected
@@ -1461,6 +1459,9 @@ function slideRowIntoPlace(
       clearTimeout(safetyTimer);
 
       flight.remove();
+      document.body.classList.remove(
+        "row-flight-active"
+      );
       startHistoryRowReveal(newRow);
     };
 
@@ -1477,8 +1478,8 @@ function slideRowIntoPlace(
         "transitionend",
         event => {
           if (
-            event.target === flight &&
-            event.propertyName === "transform"
+            event.propertyName ===
+            "transform"
           ) {
             land();
           }
@@ -1487,7 +1488,7 @@ function slideRowIntoPlace(
       );
 
       safetyTimer =
-        setTimeout(land, 680);
+        setTimeout(land, 650);
     });
   };
 
