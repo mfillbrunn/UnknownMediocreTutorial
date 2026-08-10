@@ -84,7 +84,18 @@
     if (icon) icon.textContent = collapsed ? "›" : "‹";
     if (persist) saveCollapsed(collapsed);
 
-    if (collapsed) {
+    // Collapsing while the Inspector-turn Notes popout is showing
+    // (gameplay-polish-v8.js's openInspectorTurnNotes, flagged here via
+    // this class it adds/removes in lockstep with its own notesPopped
+    // state) used to call closeNotes() regardless, which tore down that
+    // popout entirely -- it wasn't opened through the ordinary sidebar
+    // Notes tab this is meant to close, and reanchorSetterIdleNotes below
+    // already repositions it correctly for the new (collapsed) layout, so
+    // there's nothing here that needs closing in that case.
+    if (
+      collapsed &&
+      !setterScreen.classList.contains("setter-inspector-turn-notes-open")
+    ) {
       window.closeNotes?.();
     }
 
