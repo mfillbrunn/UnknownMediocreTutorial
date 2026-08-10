@@ -502,9 +502,10 @@ if (action.mode === "advanced") {
       state.draftCandidates = {};
       state.draftPicks = {};
       // Guesser-only: a separate offer/pick pair for Quests, alongside
-      // (not instead of) their power draft -- setter picks powers only
-      // (offered 2, picks 1 -- see below), their second slot is the
-      // always-on Setter Quest badge instead.
+      // (not instead of) their power draft. Setter drafts powers only
+      // (offered 3, picks 2 -- see below); the always-on Setter Quest
+      // badge is a separate, additional thing, not a replacement for
+      // their second power.
       state.draftQuestCandidates = {};
       state.draftQuestPicks = {};
       state.draftDone = {};
@@ -512,10 +513,12 @@ if (action.mode === "advanced") {
       for (const player of Object.values(state.players || {})) {
         const isGuesser = player.role !== "setter";
         const pool = isGuesser ? GUESSER_POWERS : SETTER_POWERS;
-        // Setter picks 1-of-2 now (not 2-of-3) -- same shape as the
-        // guesser's own power draft. Their second slot is the always-on
-        // Setter Quest badge instead, not a second drafted power.
-        state.draftCandidates[player.userId] = shuffle(pool).slice(0, 2);
+        // Setter drafts 2-of-3 (requiredPowerPicks in draft.js already
+        // expects 2 picks, and the client's draft screen already says
+        // "Pick 2 of 3 powers" and labels the 2nd pick's 5-star unlock --
+        // this pool just needs to actually offer 3 candidates to match,
+        // not the 2 it was trimmed to. Guesser stays 1-of-2.
+        state.draftCandidates[player.userId] = shuffle(pool).slice(0, isGuesser ? 2 : 3);
 
         if (isGuesser) {
           state.draftQuestCandidates[player.userId] = shuffle(QUEST_TYPES).slice(0, 2);
@@ -523,7 +526,7 @@ if (action.mode === "advanced") {
 
         if (player.isAI) {
           state.draftPicks[player.userId] =
-            shuffle(state.draftCandidates[player.userId]).slice(0, 1);
+            shuffle(state.draftCandidates[player.userId]).slice(0, isGuesser ? 1 : 2);
           if (isGuesser) {
             state.draftQuestPicks[player.userId] =
               shuffle(state.draftQuestCandidates[player.userId]).slice(0, 1);
@@ -572,10 +575,15 @@ if (action.mode === "advanced") {
       sP = Array.isArray(state._devSetterPowers) ? state._devSetterPowers : SETTER_POWERS.slice();
       gP = Array.isArray(state._devGuesserPowers) ? state._devGuesserPowers : GUESSER_POWERS.slice();
     } else {
-      // Setter gets exactly 1 regular power -- the second slot their power
-      // row used to show is now the always-on Setter Quest badge instead
-      // (see setterQuestServer.js). Guesser is unaffected, still N.
-      sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, 1);
+      // Setter gets 2 regular powers (matching Draft Mode's 2-of-3 and the
+      // Daily Challenge's own pick of 2 -- see dailyConfig.js), on top of
+      // the always-on Setter Quest badge (see setterQuestServer.js), not
+      // instead of a second power. The second entry here is also what
+      // spyChargeServer.js locks until the Spy Charge meter reaches 5
+      // stars (createSpyChargeState's lockedPowerId), so a single-power
+      // setter had nothing left for that unlock to ever apply to. Guesser
+      // is unaffected, still N.
+      sP = SETTER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, 2);
       gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
     }
 

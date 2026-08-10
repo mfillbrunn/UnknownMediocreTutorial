@@ -9,6 +9,8 @@
   let latestState = null;
   let resizeFrame = 0;
   let notesRetryTimer = null;
+  let notesOriginalParent = null;
+  let notesOriginalNextSibling = null;
 
   function setImportant(element, property, value) {
     element?.style.setProperty(property, value, "important");
@@ -241,6 +243,18 @@
       panel.classList.add("inspector-turn-notes-popout");
       ensureInspectorTurnBanner(panel);
 
+      // Move out of the sidebar and onto the screen directly. The sidebar
+      // can collapse to width:0 with overflow:hidden while this is
+      // showing (setter-board.js's collapse toggle no longer closes
+      // Notes for this case -- see its own comment), and an ancestor's
+      // overflow clipping still applies to a position:fixed descendant's
+      // paint even though fixed positioning exempts it from that
+      // ancestor's own layout/sizing. Restored to its original spot on
+      // the way back out below.
+      notesOriginalParent = panel.parentElement;
+      notesOriginalNextSibling = panel.nextSibling;
+      screen.appendChild(panel);
+
       // Keep the Log in the ordinary left slot while Notes floats over the board.
       logPanel?.classList.remove("hidden");
       setTabState(logButton, true);
@@ -267,6 +281,12 @@
     panel?.classList.remove("inspector-turn-notes-popout");
     removeInlineLayout(panel);
     banner?.remove();
+
+    if (panel && notesOriginalParent) {
+      notesOriginalParent.insertBefore(panel, notesOriginalNextSibling);
+    }
+    notesOriginalParent = null;
+    notesOriginalNextSibling = null;
 
     if (notesAutoOpened) {
       window.closeNotes?.();

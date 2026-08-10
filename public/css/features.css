@@ -3973,7 +3973,7 @@ body.activity-drag-active {
   border: 1px solid rgba(250, 204, 21, 0.38);
   color: #fde68a;
 
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 900;
   letter-spacing: 0.2px;
   pointer-events: none;
@@ -4015,12 +4015,12 @@ body.spy-charge-reset-armed #keyboardSetter .key[data-key]:not([data-key="ENTER"
   right: 6px;
   z-index: 2;
 
-  padding: 2px 5px;
+  padding: 3px 7px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.58);
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: rgba(255, 255, 255, 0.82);
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 900;
   line-height: 1;
 }
