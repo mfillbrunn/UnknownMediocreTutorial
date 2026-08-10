@@ -323,11 +323,11 @@
    so the only colour change in the whole quest lifecycle is the single
    blue-to-green flip that actually matters. */
 .quest-badge-tile {
-  --role-accent: #6b8fb5;
+  --role-accent: #6e89a6;
 }
 .quest-badge-tile.quest-ready,
 .quest-badge-tile.quest-done {
-  --role-accent: #5aa06d;
+  --role-accent: #629670;
 }
 .quest-badge-tile.quest-oneaway,
 .quest-badge-tile.quest-ready {

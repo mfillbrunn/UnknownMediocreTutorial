@@ -157,38 +157,6 @@ window.showDailyChallenge = async function () {
     return;
   }
 
-  // Each pill doubles as a tap target for its own description -- same
-  // popup used for "power used" announcements elsewhere (showPowerPopup),
-  // so a player can check what a power/quest actually does before ever
-  // starting the match, without needing to visit the separate Powers
-  // screen. Looked up by id on click rather than baking the description
-  // into a data-attribute, so there's no HTML-escaping to get wrong.
-  const spyPills = (config.setterPowers || []).map(p => {
-    const m = window.POWER_METADATA?.[p];
-    return `<span class="daily-power-pill spy daily-pill-info" data-power="${p}">${m?.emoji || ""} ${m?.label || p} <span class="daily-pill-info-icon">ⓘ</span></span>`;
-  }).join("");
-
-  const insPills = (config.guesserPowers || []).map(p => {
-    const m = window.POWER_METADATA?.[p];
-    return `<span class="daily-power-pill inspector daily-pill-info" data-power="${p}">${m?.emoji || ""} ${m?.label || p} <span class="daily-pill-info-icon">ⓘ</span></span>`;
-  }).join("");
-
-  const questMeta = config.questType ? window.QUEST_METADATA?.[config.questType] : null;
-  const questPill = questMeta
-    ? `<span class="daily-power-pill quest daily-pill-info" data-quest="${config.questType}">${questMeta.emoji || "🎯"} ${questMeta.label} <span class="daily-pill-info-icon">ⓘ</span></span>`
-    : "";
-
-  // Round 2's Inspector doesn't just inherit round 1's quest anymore --
-  // they pick between 2 fresh options mid-match (see
-  // nextRoundTransition.js / client/quest-choice.js). Same two options for
-  // everyone attempting today's puzzle (deterministically seeded, see
-  // dailyConfig.js), previewed here so the round-1-only pill above doesn't
-  // read as the whole day's Quest story.
-  const round2Pills = (config.questTypeRound2Choices || []).map(t => {
-    const m = window.QUEST_METADATA?.[t];
-    return `<span class="daily-power-pill quest daily-pill-info" data-quest="${t}">${m?.emoji || "🎯"} ${m?.label || t} <span class="daily-pill-info-icon">ⓘ</span></span>`;
-  }).join("");
-
   screen.innerHTML = `
     <div class="menu-center">
       <div class="screen-back-header">
@@ -196,27 +164,6 @@ window.showDailyChallenge = async function () {
         <h2 class="menu-title" style="flex:1;text-align:center">Daily Challenge</h2>
       </div>
       <p class="daily-date">☀️ ${config.date}</p>
-
-      <div class="daily-powers-block">
-        <div class="daily-powers-row">
-          <span class="daily-role-label spy">Spy</span>
-          <div class="daily-powers">${spyPills || "<span style='opacity:.4'>—</span>"}</div>
-        </div>
-        <div class="daily-powers-row">
-          <span class="daily-role-label inspector">Inspector</span>
-          <div class="daily-powers">${insPills || "<span style='opacity:.4'>—</span>"}</div>
-        </div>
-        ${questPill ? `
-        <div class="daily-powers-row">
-          <span class="daily-role-label quest">Quest</span>
-          <div class="daily-powers">${questPill}</div>
-        </div>` : ""}
-        ${round2Pills ? `
-        <div class="daily-powers-row">
-          <span class="daily-role-label quest">Round 2</span>
-          <div class="daily-powers">${round2Pills}</div>
-        </div>` : ""}
-      </div>
 
       <p class="daily-ai-label">Choose your opponent</p>
       <div class="daily-difficulty-row">
@@ -235,21 +182,6 @@ window.showDailyChallenge = async function () {
   });
   document.getElementById("dailyRankingsBtn")?.addEventListener("click", () => {
     _showDailyRankings(config);
-  });
-
-  screen.querySelectorAll(".daily-pill-info").forEach(pill => {
-    pill.addEventListener("click", () => {
-      const powerId = pill.dataset.power;
-      const meta = powerId
-        ? window.POWER_METADATA?.[powerId]
-        : window.QUEST_METADATA?.[pill.dataset.quest];
-      if (!meta) return;
-      window.showPowerPopup?.({
-        emoji: meta.emoji || (powerId ? "⚡" : "🎯"),
-        title: powerId ? meta.label : `Quest: ${meta.label}`,
-        desc: meta.desc
-      });
-    });
   });
 };
 

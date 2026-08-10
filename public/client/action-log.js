@@ -7,19 +7,25 @@
   function powerEntry(evt, viewerRole) {
     const formatted = window.formatPowerEvent?.(evt);
     if (!formatted) return null;
+    const isMine = formatted.actorRole === viewerRole;
     const who =
-      formatted.actorRole == null ? "" :
-      formatted.actorRole === viewerRole ? "You: " : "Opp: ";
+      formatted.actorRole == null ? "" : isMine ? "You used " : "Opp used ";
     const roleClass = formatted.actorRole ? ` log-power-${formatted.actorRole}` : "";
+    const detailText = isMine ? formatted.ownText : formatted.opponentText;
+    // "X used <Power Name>" by default -- the full result (ownText/
+    // opponentText, which already reads "<label>: <what happened>") only
+    // shows once the power name is tapped, via the delegated click
+    // handler installed in renderActionLog below. Skipped entirely when
+    // there's nothing beyond the bare label to expand into.
+    const hasDetail = !!detailText && detailText !== formatted.label;
+    const text = hasDetail
+      ? `${who}<span class="log-power-name" role="button" tabindex="0">${formatted.label}</span>` +
+        `<div class="log-power-detail hidden">${detailText}</div>`
+      : `${who}${formatted.label}`;
     return {
       type: "power",
       cssClass: roleClass,
-      text:
-  `${who}${
-    formatted.actorRole === viewerRole
-      ? formatted.ownText
-      : formatted.opponentText
-  }`
+      text
     };
   }
 
@@ -217,6 +223,26 @@
     const container = document.getElementById(`actionLog${roleId}`);
     if (!container) return;
 
+    // Toggles a power entry's collapsed "You used <Power Name>" line open
+    // to show its full result (see powerEntry's .log-power-detail above) --
+    // delegated once per container rather than re-bound on every rebuild,
+    // since innerHTML below replaces the actual elements each time.
+    if (!container.dataset.expandBound) {
+      container.dataset.expandBound = "1";
+      container.addEventListener("click", event => {
+        const nameEl = event.target.closest(".log-power-name");
+        if (!nameEl) return;
+        nameEl.nextElementSibling?.classList.toggle("hidden");
+      });
+      container.addEventListener("keydown", event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        const nameEl = event.target.closest(".log-power-name");
+        if (!nameEl) return;
+        event.preventDefault();
+        nameEl.nextElementSibling?.classList.toggle("hidden");
+      });
+    }
+
     const entries = buildLog(state, myRole);
 
     // updateUI() calls this on every keystroke/tick, not just when a new
@@ -239,8 +265,14 @@
     // Only autoscroll when a line was actually added -- an edit to an
     // existing line (e.g. a power result filling in) shouldn't yank the
     // view back down if the player had scrolled up to read earlier lines.
+    // block: "end" (not the default "start") -- "start" aligns the
+    // anchor's (zero-height) top edge with the container's top edge,
+    // which scrolls straight past the last real entry instead of settling
+    // on it, leaving empty container background visible where the last
+    // line should be. "end" aligns its bottom edge with the container's
+    // bottom edge instead, landing exactly at the true bottom.
     if (grew) {
-      container.querySelector(".log-scroll-anchor")?.scrollIntoView({ behavior: "smooth" });
+      container.querySelector(".log-scroll-anchor")?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }
 
