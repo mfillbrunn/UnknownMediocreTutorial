@@ -1653,6 +1653,23 @@ function highlightSetterRemainingBox() {
   highlightEl(byId("SetterRemainingBox"));
 }
 
+// spy-charge.js disables the whole charge system for any tutorial state
+// (createSpyChargeState's enabled flag is !state.isTutorial), so this stays
+// hidden throughout every tutorial round -- highlightEl is a no-op on a
+// hidden/disconnected element, which is fine here: the accompanying text is
+// written to stand on its own without a live visual anchor, and this still
+// starts working automatically if that ever changes.
+function highlightSpyChargeMeter() {
+  highlightEl(byId("spyChargeHud"));
+}
+
+// Same reasoning as highlightSpyChargeMeter -- the star preview lives right
+// on the setter's own draft row (see draftrow.js), but only ever renders
+// real content when spy charge is enabled, which the tutorial turns off.
+function highlightSetterCoverStars() {
+  highlightEl(byId("setterCoverStars"));
+}
+
 // index: 0 = Keep, 1 = New -- the box has no per-row id, only the
 // repeated .remaining-stat class (see remaining-words.js), so the row is
 // picked out by its fixed rendering position instead.
@@ -4372,6 +4389,30 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 12) {
       showTutorial(
+        `Every time you switch to a brand-new secret instead of keeping the old one, you earn stars — the tighter that new secret narrows down what's still possible, the more you get. They build up in a 12-star meter above your powers (turned off during this tutorial, so you won't see it fill up here).`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSpyChargeMeter();
+      return;
+    }
+
+    if (tutorialSubStep === 13) {
+      showTutorial(
+        `Each turn also has one hidden bonus letter, shown as a small target chip next to your secret row — put that exact letter in that exact position in your new secret for +1 star. At 5 stars you unlock your second power, at 8 you can reset one letter's feedback, and at 12 you get a second reset. Switching secrets is almost always worth it.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterCoverStars();
+      return;
+    }
+
+    if (tutorialSubStep === 14) {
+      showTutorial(
         `The first number, in green, is your score. It goes up every time your opponent needs another guess to find your secret — the more guesses they need, the higher it climbs. The dimmer number next to it works the same way for your opponent's score, based on how many guesses you need. Whoever ends up with the higher score wins the match.`,
         {
           mode: "advance"
@@ -4382,7 +4423,7 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 13) {
+    if (tutorialSubStep === 15) {
       showTutorial(
         `Above your secret, the constraint row gives a compact rundown of every clue collected so far. Tap the ⧉ button any time to fold it away or bring it back.`,
         {
@@ -4394,7 +4435,7 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 14) {
+    if (tutorialSubStep === 16) {
       showTutorial(
         `The ? button always shows your active powers, and whether each one has been used yet.`,
         {

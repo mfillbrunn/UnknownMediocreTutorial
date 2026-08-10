@@ -321,6 +321,11 @@ if (guesserEntries.length) {
   // ----------------------------
   const resultClass = didWin ? "win" : winReason === "tie" ? "tie" : "loss";
 
+  // Daily Challenge is a once-a-day, fixed-setup event -- New Match and
+  // Replay don't apply (there's nothing to re-roll or replay into), so only
+  // offer Leave (back to the menu, where the day's result/rankings live).
+  const isDaily = !!state.isDaily;
+
   let html = `
     <div class="match-header match-header--${resultClass}">
       <h2>${resultText}</h2>
@@ -340,6 +345,18 @@ if (guesserEntries.length) {
              </p>`
           : ""
       }
+    </div>
+
+    <div id="matchSummaryActions" class="summary-actions">
+      ${isDaily ? "" : `<button id="newMatchBtn" class="primary-btn">
+        New Match
+      </button>
+      <button id="replayMatchBtn" class="secondary-btn">
+        Replay
+      </button>`}
+      <button id="leaveSummaryBtn" class="secondary-btn danger">
+        Leave
+      </button>
     </div>
 
     <div class="match-meta-row">
@@ -381,27 +398,7 @@ if (guesserEntries.length) {
     `
     : "";
 
-  // ----------------------------
-  // Actions (bottom, below the round details)
-  // ----------------------------
-  // Daily Challenge is a once-a-day, fixed-setup event -- New Match and
-  // Replay don't apply (there's nothing to re-roll or replay into), so only
-  // offer Leave (back to the menu, where the day's result/rankings live).
-  const isDaily = !!state.isDaily;
-  html += `
-    ${tutorial2Cta}
-    <div id="matchSummaryActions" class="summary-actions">
-      ${isDaily ? "" : `<button id="newMatchBtn" class="primary-btn">
-        New Match
-      </button>
-      <button id="replayMatchBtn" class="secondary-btn">
-        Replay
-      </button>`}
-      <button id="leaveSummaryBtn" class="secondary-btn danger">
-        Leave
-      </button>
-    </div>
-  `;
+  html += tutorial2Cta;
 
   container.innerHTML = html;
   positionShareButton();
