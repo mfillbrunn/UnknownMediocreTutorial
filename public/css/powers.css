@@ -212,8 +212,13 @@
 }
 /* BLIND GUESS (UI-only power) */
 
-body.blind-guess .constraint-row,
-body.blind-guess .history-scroll {
+/* .history-scroll itself stays in the layout (it's the flex:1 1 0 element
+   that claims its normal share of .center-col's height regardless of
+   content -- see history.css) so the board doesn't visibly collapse/
+   reflow around it. ui/history.js's buildHistoryRenderState already
+   returns [] for the guesser while this power is active, so the scroll
+   area is simply empty rather than removed outright. */
+body.blind-guess .constraint-row {
   display: none !important;
 }
 

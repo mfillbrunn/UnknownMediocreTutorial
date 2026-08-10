@@ -2824,11 +2824,19 @@ body:has(#guesserScreen.active) #appMain {
   height: 4px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.22);
-  transition: background 150ms ease;
+  transition: background 150ms ease, opacity 150ms ease;
 }
 
 .activity-drag-handle:hover .activity-drag-grip {
   background: color-mix(in srgb, var(--role-accent) 55%, rgba(255, 255, 255, 0.22));
+}
+
+/* Same reasoning as components.css's body.row-flight-active
+   #SetterRemainingBox -- this grip sits directly under that box, so it
+   read as part of the same distracting "stray sidebar chrome behind the
+   moving row" during the setter's row flight. */
+body.row-flight-active .activity-drag-grip {
+  opacity: 0;
 }
 
 /* While an actual drag is in progress (not just hovering), suppress text

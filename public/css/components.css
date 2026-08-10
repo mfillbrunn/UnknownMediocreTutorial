@@ -1313,16 +1313,21 @@
 }
 .remaining-stat + .remaining-stat {
   border-left: 1px solid color-mix(in srgb, var(--role-accent) 30%, transparent);
-  transition: border-left-color 200ms ease;
 }
 /* The setter's pending-guess row FLIPs (client.js's slideRowIntoPlace) from
    the draft area up into history whenever this Keep/New box is also about
-   to update (a guess just got answered) -- without this, the divider could
-   redraw mid-flight and read as a stray flicker next to the moving row.
-   Fading it out for the flight's duration and back in once it lands keeps
-   the sidebar quiet while the motion is the only thing drawing the eye. */
-body.row-flight-active .remaining-stat + .remaining-stat {
-  border-left-color: transparent;
+   to update (a guess just got answered) -- without hiding it, the whole
+   box (labels, values, divider) could redraw mid-flight and read as a
+   stray flicker in the sidebar behind the moving row. Fading the entire
+   box out for the flight's duration and back in once it lands keeps the
+   sidebar quiet while the motion is the only thing drawing the eye --
+   see components.css's #SetterRemainingBox rule below for the box itself,
+   and features.css's .activity-drag-grip for the handle just under it. */
+#SetterRemainingBox {
+  transition: opacity 150ms ease;
+}
+body.row-flight-active #SetterRemainingBox {
+  opacity: 0;
 }
 .remaining-stat-label {
   font-size: 8px;

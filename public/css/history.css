@@ -119,15 +119,16 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
    gone (slid out to the right on submission, possibly a full opponent
    turn earlier) by the time this fires, so there's no source position to
    fly from. This keeps the same *character* as that flight -- a plain
-   upward float, no scale-in -- so both roles read the same, just without
-   the setter's element-to-element travel. */
+   upward float, staying fully visible the whole time (no fade-in, no
+   scale-in) -- so both roles read as one continuous "the row moves into
+   place" motion, not the row vanishing and a new one fading in after it. */
 .history-row-wrap.row-enter {
   animation: history-row-enter 320ms var(--ease-ui, ease-out) both;
 }
 
 @keyframes history-row-enter {
-  0%   { opacity: 0; transform: translateY(22px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0%   { transform: translateY(22px); }
+  100% { transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
