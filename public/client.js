@@ -1308,16 +1308,13 @@ function slideRowIntoPlace(
       return;
     }
 
-  // See components.css's body.row-flight-active rule -- fades out the
-  // sidebar's Keep/New divider for the flight's duration so it doesn't
-  // redraw mid-motion right as this same guess resolution updates those
-  // numbers. Cleared in land() below once the row actually settles.
-  document.body.classList.add(
-    "row-flight-active"
-  );
-
-  const flight =
-    visualRow.cloneNode(true);
+    // See components.css's body.row-flight-active rule -- fades out the
+    // sidebar's Keep/New chrome for the flight's duration so it doesn't
+    // redraw mid-motion right as this same guess resolution updates it.
+    // Cleared in land() below once the row actually settles.
+    document.body.classList.add(
+      "row-flight-active"
+    );
 
     const usingHeldPending = !!(
       existingFlight?.isConnected
@@ -1462,14 +1459,37 @@ function slideRowIntoPlace(
       clearTimeout(safetyTimer);
 
       flight.remove();
+      document.body.classList.remove(
+        "row-flight-active"
+      );
       startHistoryRowReveal(newRow);
     };
 
-    flight.remove();
-    document.body.classList.remove(
-      "row-flight-active"
-    );
-    startHistoryRowReveal(newRow);
+    requestAnimationFrame(() => {
+      flight.style.transition =
+        "transform 460ms " +
+        "cubic-bezier(0.22, 1, 0.36, 1)";
+
+      flight.style.transform =
+        `translate3d(${dx}px, ${dy}px, 0) ` +
+        `scale(${scaleX}, ${scaleY})`;
+
+      flight.addEventListener(
+        "transitionend",
+        event => {
+          if (
+            event.propertyName ===
+            "transform"
+          ) {
+            land();
+          }
+        },
+        { once: true }
+      );
+
+      safetyTimer =
+        setTimeout(land, 650);
+    });
   };
 
   /*
