@@ -301,27 +301,124 @@
     );
   }
 
-  async function animateSubmission(word) {
-    const history = historyContainer();
+  function buildFlightFrom(sourceRow, startRect) {
+    const flight = sourceRow.cloneNode(true);
+
+    flight.className =
+      "history-row " +
+      "guesser-guess-flight";
+
+    copyRowDimensions(sourceRow, flight);
+
+    const sourceStyle =
+      getComputedStyle(sourceRow);
+
+    Object.assign(flight.style, {
+      left: `${startRect.left}px`,
+      top: `${startRect.top}px`,
+      width: `${startRect.width}px`,
+      height: `${startRect.height}px`,
+      gap: sourceStyle.gap,
+      transformOrigin: "center center"
+    });
+
+    document.body.appendChild(flight);
+
+    sourceRow.style.display = "none";
+    sourceRow.style.visibility = "hidden";
+
+    return flight;
+  }
+
+  /*
+   * Clone the draft row in the SAME tick the submission is detected.
+   *
+   * client.js registers its own stateUpdate handler before this module's,
+   * so by the time we get here it has already re-rendered the guesser
+   * board and hidden the draft row -- and animateSubmission only runs
+   * later, off the promise queue. Measured live, that gap ran ~150ms, and
+   * for every one of those frames the submitted word existed nowhere on
+   * screen. Building the clone synchronously here means it takes over the
+   * draft row's exact position before the browser can paint a single
+   * frame without the word in it.
+   */
+  function captureSubmitFlight() {
     const sourceRow = draftRow();
 
-    if (!history || !word) return;
+    if (!sourceRow || reducedMotion()) {
+      return null;
+    }
 
     cancelCoreDraftOutro(sourceRow);
 
-    if (sourceRow) {
-      sourceRow.style.display = "";
-      sourceRow.style.visibility = "";
-    }
+    sourceRow.style.display = "";
+    sourceRow.style.visibility = "";
 
     const startRect =
-      sourceRow?.getBoundingClientRect();
+      sourceRow.getBoundingClientRect();
+
+    if (
+      !startRect.width ||
+      !startRect.height
+    ) {
+      return null;
+    }
+
+    return {
+      startRect,
+      flight: buildFlightFrom(
+        sourceRow,
+        startRect
+      )
+    };
+  }
+
+  async function animateSubmission(
+    word,
+    captured
+  ) {
+    const history = historyContainer();
+    const sourceRow = draftRow();
+
+    if (!history || !word) {
+      captured?.flight.remove();
+      return;
+    }
+
+    let flight = captured?.flight || null;
+    let startRect = captured?.startRect || null;
+
+    // No pre-made clone (reduced motion, or the row was already gone by
+    // the time the state landed) -- fall back to measuring here.
+    if (!flight) {
+      cancelCoreDraftOutro(sourceRow);
+
+      if (sourceRow) {
+        sourceRow.style.display = "";
+        sourceRow.style.visibility = "";
+      }
+
+      startRect =
+        sourceRow?.getBoundingClientRect();
+    }
 
     const wrap = ensurePending(word);
     const targetRow =
       wrap?.querySelector(".history-row");
 
-    if (!wrap || !targetRow) return;
+    if (!wrap || !targetRow) {
+      flight?.remove();
+      return;
+    }
+
+    /*
+     * Hidden from the moment it exists, not after the two measuring
+     * frames below. It still occupies layout while hidden, so the
+     * destination measures just as accurately -- but it can no longer
+     * paint alongside the flight clone, which is what briefly showed the
+     * same word in two places right after submitting.
+     */
+    wrap.style.visibility = "hidden";
 
     history.scrollTop =
       history.scrollHeight;
@@ -343,10 +440,12 @@
 
     if (
       reducedMotion() ||
-      !sourceRow ||
+      (!flight && !sourceRow) ||
       !startRect?.width ||
       !endRect?.width
     ) {
+      flight?.remove();
+
       if (sourceRow) {
         sourceRow.style.display = "none";
         sourceRow.style.visibility =
@@ -358,36 +457,12 @@
       return;
     }
 
-    wrap.style.visibility = "hidden";
-
-    const flight =
-      sourceRow.cloneNode(true);
-
-    flight.className =
-      "history-row " +
-      "guesser-guess-flight";
-
-    copyRowDimensions(
-      sourceRow,
-      flight
-    );
-
-    const sourceStyle =
-      getComputedStyle(sourceRow);
-
-    Object.assign(flight.style, {
-      left: `${startRect.left}px`,
-      top: `${startRect.top}px`,
-      width: `${startRect.width}px`,
-      height: `${startRect.height}px`,
-      gap: sourceStyle.gap,
-      transformOrigin: "center center"
-    });
-
-    document.body.appendChild(flight);
-
-    sourceRow.style.display = "none";
-    sourceRow.style.visibility = "hidden";
+    if (!flight) {
+      flight = buildFlightFrom(
+        sourceRow,
+        startRect
+      );
+    }
 
     /*
      * Move center-to-center rather than left-edge-to-left-edge. The rows
@@ -805,8 +880,13 @@
     if (submitted) {
       const word = next.pendingGuess;
 
+      // Synchronously, before this tick can paint -- see
+      // captureSubmitFlight. The queued work below may not start for
+      // several frames, and the word must stay on screen throughout.
+      const captured = captureSubmitFlight();
+
       queue(() =>
-        animateSubmission(word)
+        animateSubmission(word, captured)
       );
     } else if (resolved) {
       resolutionInFlight = true;
