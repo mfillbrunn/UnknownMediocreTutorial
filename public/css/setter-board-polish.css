@@ -73,6 +73,15 @@ body.row-flight-active #setterScreen .setter-sidebar-toggle {
   opacity: 0;
 }
 
+/* The divider sits right where the flight passes through on its way from
+   the decision stage up into the feedback stage above it -- same
+   row-flight-active window as the rest of this block, hidden for the
+   flight's duration and back once the row settles and land() clears the
+   class (see client.js's slideRowIntoPlace). */
+body.row-flight-active #setterScreen .setter-board-divider {
+  opacity: 0;
+}
+
 @keyframes setter-turn-edge-pulse {
   0%, 100% {
     opacity: 0.55;
