@@ -285,12 +285,23 @@
 
 #setterScreen .setter-decision-actions {
   display: grid;
-  grid-template-columns: minmax(94px, 0.8fr) minmax(135px, 1.3fr);
-  gap: 10px;
+  /* Clear sizes to its own (short) content; the primary button takes
+     whatever's left. Fixed px minimums here used to force an overflow
+     on narrow phones where the setter board column is ~190px wide --
+     two hard-coded minimums (94px + 135px) don't both fit. */
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
   width: 100%;
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.11);
+}
+
+/* Empty draft: Clear is hidden (see updateSetterDecisionControls), so the
+   primary button gets the whole row instead of sitting alone in the
+   second of two fixed grid tracks. */
+#setterScreen .setter-decision-actions.setter-decision-single {
+  grid-template-columns: 1fr;
 }
 
 #setterScreen .setter-decision-btn {
@@ -299,8 +310,10 @@
   font: inherit;
   font-size: 11px;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
+  white-space: nowrap;
+  padding: 1px 8px;
   cursor: pointer;
   transition:
     transform 120ms ease,
@@ -313,8 +326,12 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.035);
   color: rgba(255, 255, 255, 0.88);
+  padding: 1px 10px;
 }
 
+/* SUBMIT NEW SECRET -- the existing Spy/red primary treatment. Also used
+   (disabled) for FINISH NEW SECRET, so an in-progress new secret reads as
+   "this red button, not ready yet" rather than a different color. */
 #setterScreen .setter-submit-btn {
   border: 1px solid rgba(248, 113, 113, 0.85);
   background: linear-gradient(180deg, rgba(127, 29, 29, 0.5), rgba(69, 10, 10, 0.5));
@@ -322,11 +339,39 @@
   box-shadow: 0 0 12px rgba(248, 113, 113, 0.12);
 }
 
-#setterScreen .setter-decision-btn:active:not(:disabled) {
+/* KEEP CURRENT SECRET -- dark neutral with a subtle amber outline, kept
+   deliberately calm (not green/red) since it's a no-op-ish default action,
+   not "the good choice" -- green stays reserved for the remaining-words
+   comparison box's own "New is better than Keep" signal (see
+   setter-board-polish.js's syncRemainingComparison). */
+#setterScreen .setter-keep-btn {
+  border: 1px solid rgba(217, 164, 65, 0.5);
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(250, 204, 21, 0.88);
+  box-shadow: none;
+}
+
+/* SECRET NOT ALLOWED -- muted red text on a near-transparent surface, so a
+   rejected draft reads as "not currently an active button" even before
+   the shared :disabled rule below dims it further. */
+#setterScreen .setter-invalid-btn {
+  border: 1px solid rgba(248, 113, 113, 0.22);
+  background: transparent;
+  color: rgba(248, 113, 113, 0.6);
+  box-shadow: none;
+}
+
+#setterScreen .setter-decision-btn:active:not(:disabled):not(.is-disabled) {
   transform: scale(0.98);
 }
 
-#setterScreen .setter-decision-btn:disabled {
+/* .is-disabled is the usual case -- see updateSetterDecisionControls'
+   own comment for why these buttons stay natively clickable (a rejected/
+   incomplete draft still needs a tap to shake and explain itself) instead
+   of using the real `disabled` attribute, which the :disabled rule below
+   is only kept around for as a defensive fallback. */
+#setterScreen .setter-decision-btn:disabled,
+#setterScreen .setter-decision-btn.is-disabled {
   opacity: 0.3;
   cursor: not-allowed;
   box-shadow: none;
@@ -521,12 +566,18 @@
   }
 
   #setterScreen .setter-decision-actions {
-    gap: 7px;
+    gap: 6px;
   }
 
   #setterScreen .setter-decision-btn {
     min-height: 36px;
-    font-size: 10px;
+    font-size: 9px;
+    letter-spacing: 0.01em;
+    padding: 1px 5px;
+  }
+
+  #setterScreen .setter-clear-btn {
+    padding: 1px 7px;
   }
 }
 

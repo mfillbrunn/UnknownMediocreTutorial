@@ -16,7 +16,19 @@
 // guesser is working toward. Only the guesser's badge is ever clickable
 // (see the `role === "guesser"` check below) -- the setter's copy is
 // read-only.
+// Legacy fixed fallback -- matches questServer.js's own fallback for any
+// quest instance that never got a rareLetters draw (the tutorial's
+// scripted RARE round, or an old in-flight quest from before this pool
+// existed).
 const QUEST_RARE_LETTERS = "QJXZWKV".split("");
+
+// This match's actual RARE quest letters -- the 7-of-12 draw the server
+// assigned (see questServer.js's pickRareLetterSet/ensureQuestConditions),
+// surfaced as-is on state.powers.quest since safeState never redacts it.
+function questRareLetters(q) {
+  return q?.rareLetters?.length ? q.rareLetters : QUEST_RARE_LETTERS;
+}
+
 const QUEST_KEYBOARD_ROWS = [
   { name: "Top row (QWERTYUIOP)", letters: "QWERTYUIOP".split("") },
   { name: "Home row (ASDFGHJKL)", letters: "ASDFGHJKL".split("") },
@@ -173,7 +185,7 @@ function computeQuestStatus(state) {
   // quest is.
   const rareUsedLetters =
     q.type === "RARE"
-      ? QUEST_RARE_LETTERS.filter(l => history.some(h => (h.guess || "").toUpperCase().includes(l)))
+      ? questRareLetters(q).filter(l => history.some(h => (h.guess || "").toUpperCase().includes(l)))
       : null;
 
   if (q.used) {
@@ -325,7 +337,11 @@ InfoBadgeEngine.register((state, role) => {
   return {
     id: "questStatus",
     text: `Quest: ${status.meta.label} — ${status.label}`,
-    color: "#4da3ff",
+    // Muted slate-blue instead of the full-saturation guesser blue --
+    // matches .quest-badge-tile's own toned-down --role-accent
+    // (components.css) so every quest-related color reads consistently
+    // subdued, not just the card.
+    color: "#6e89a6",
     screen: "setter"
   };
 });
@@ -406,10 +422,10 @@ function questCardProgressText(status, q) {
 // just the "n/5" count -- struck-through letters have already been used
 // in a guess, bold ones are still missing, so it's immediately clear
 // which are left without doing the counting by hand.
-function buildRareLettersDescHtml(descText, usedLetters) {
+function buildRareLettersDescHtml(descText, usedLetters, q) {
   const used = new Set(usedLetters || []);
 
-  const letters = QUEST_RARE_LETTERS.map(l => {
+  const letters = questRareLetters(q).map(l => {
     const isUsed = used.has(l);
     return `<span class="quest-rare-letter${isUsed ? " quest-rare-letter-used" : ""}">${l}</span>`;
   }).join("");
@@ -534,7 +550,7 @@ function updateQuestBadge(state, role) {
 
     let descHtml;
     if (q.type === "RARE") {
-      descHtml = buildRareLettersDescHtml(descText, status.usedLetters);
+      descHtml = buildRareLettersDescHtml(descText, status.usedLetters, q) + guideHtml;
     } else if (guideHtml) {
       descHtml = `<div>${descText}</div>${guideHtml}`;
     }
@@ -584,6 +600,16 @@ function buildQuestGuideHtml(questType) {
         <button type="button" class="secondary-btn small" onclick="window.setQuestGuideAlpha('DESC');window.hidePowerActionPopup();">Z → A guide</button>
       </div>
     </div>`;
+  }
+
+  // RARE: highlights whichever of this match's 7 drawn rare letters
+  // haven't shown up in a guess yet -- recomputed live off state each
+  // render (see quest-guide.js's applyQuestGuideHighlight), not fixed at
+  // toggle time, since which letters remain changes guess to guess.
+  if (questType === "RARE") {
+    return active
+      ? `<div class="quest-guide-controls"><button type="button" class="secondary-btn small" onclick="window.clearQuestGuide();window.hidePowerActionPopup();">Turn off keyboard guide</button></div>`
+      : `<div class="quest-guide-controls"><button type="button" class="secondary-btn small" onclick="window.setQuestGuideRare();window.hidePowerActionPopup();">Highlight remaining rare letters on keyboard</button></div>`;
   }
 
   return "";

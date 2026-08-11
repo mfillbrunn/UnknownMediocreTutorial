@@ -359,19 +359,21 @@ if (guesserEntries.length) {
       </button>
     </div>
 
-    <div class="match-meta-row">
-      <span class="match-meta-chip">
-        ⏱ ${
-          state.timeControl?.enabled
-            ? state.timeControl.mode === "round"
-              ? `${formatDuration(state.timeControl.roundSeconds)} / round`
-              : `${formatDuration(state.timeControl.initialSeconds)} +${formatDuration(state.timeControl.incrementSeconds)}`
-            : "No time"
-        }
-      </span>
-    </div>
+    <div class="match-info-block">
+      <div class="match-meta-row">
+        <span class="match-meta-chip">
+          ⏱ ${
+            state.timeControl?.enabled
+              ? state.timeControl.mode === "round"
+                ? `${formatDuration(state.timeControl.roundSeconds)} / round`
+                : `${formatDuration(state.timeControl.initialSeconds)} +${formatDuration(state.timeControl.incrementSeconds)}`
+              : "No time"
+          }
+        </span>
+      </div>
 
-    ${powersBlock}
+      ${powersBlock}
+    </div>
   `;
 
   // ----------------------------

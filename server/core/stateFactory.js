@@ -190,7 +190,11 @@ const powers = {
         used: false,
         oneAway: false,
         claimedEarly: false,
-        conditions: null
+        conditions: null,
+        // RARE only: this match's random 7-of-12 rare-letter draw (see
+        // questServer.js's pickRareLetterSet), assigned lazily by
+        // ensureQuestConditions the same way conditions is above.
+        rareLetters: null
       },
       questActive: false,
       // SETTER QUEST (always-on setter mechanic, see setterQuestServer.js).

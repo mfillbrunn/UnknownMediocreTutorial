@@ -465,8 +465,9 @@ function questWordAdvances(word, quest, state) {
 
   switch (quest.type) {
     case "RARE": {
-      const seen = questServer.rareLettersSeen(history);
-      return [...w].some(c => questServer.QUEST_RARE_LETTERS.has(c) && !seen.has(c));
+      const letters = questServer.questRareLetterSet(quest);
+      const seen = questServer.rareLettersSeen(history, letters);
+      return [...w].some(c => letters.has(c) && !seen.has(c));
     }
     case "ROW": {
       const coverage = questServer.rowCoverage(history);

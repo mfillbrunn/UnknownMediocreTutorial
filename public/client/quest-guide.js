@@ -1,9 +1,10 @@
 // client/quest-guide.js — optional keyboard highlighting aid for the
-// letter-range/order guesser quests (HALF_AM "A to P", HALF_NZ "K to Z",
-// ALPHA "Alphabetical Order"). Purely a local, opt-in rendering overlay --
-// never touches game state or the server, just adds a highlight class to
-// keys on the guesser's own real keyboard. Toggled from the quest badge's
-// info popup (see quest.js's btn.onclick).
+// letter-range/order/rare-letter guesser quests (HALF_AM "A to P", HALF_NZ
+// "K to Z", ALPHA "Alphabetical Order", RARE "Rare Letters"). Purely a
+// local, opt-in rendering overlay -- never touches game state or the
+// server, just adds a highlight class to keys on the guesser's own real
+// keyboard. Toggled from the quest badge's info popup (see quest.js's
+// btn.onclick).
 //
 // RANGE mode (HALF_AM/HALF_NZ): static -- highlights every key inside the
 // quest's valid letter range (A-P or K-Z), matching questServer.js's
@@ -16,8 +17,18 @@
 // on every keyboard render off the live draft (see client.js's call into
 // applyQuestGuideHighlight right after renderKeyboard) -- never
 // intercepts a keystroke, so normal typing is completely unaffected.
+//
+// RARE mode: highlights whichever of this match's 7 drawn rare letters
+// (state.powers.quest.rareLetters, see questServer.js's pickRareLetterSet)
+// haven't appeared in a guess yet -- also recomputed live, since which
+// ones remain shrinks as the guesser types.
 (function () {
-  let guideState = null; // null | {questType, type:"RANGE", min, max} | {questType:"ALPHA", type:"ALPHA", direction:"ASC"|"DESC"}
+  let guideState = null; // null | {questType, type:"RANGE", min, max} | {questType:"ALPHA", type:"ALPHA", direction:"ASC"|"DESC"} | {questType:"RARE", type:"RARE"}
+
+  // Matches quest.js's own legacy fallback -- used only if a live quest
+  // somehow has no rareLetters draw yet (shouldn't happen outside the
+  // tutorial, which never enables this guide's power/quest UI anyway).
+  const DEFAULT_RARE_LETTERS = "QJXZWKV".split("");
 
   window.setQuestGuideRange = function (questType, min, max) {
     guideState = { questType, type: "RANGE", min, max };
@@ -26,6 +37,11 @@
 
   window.setQuestGuideAlpha = function (direction) {
     guideState = { questType: "ALPHA", type: "ALPHA", direction };
+    window.updateUI?.();
+  };
+
+  window.setQuestGuideRare = function () {
+    guideState = { questType: "RARE", type: "RARE" };
     window.updateUI?.();
   };
 
@@ -44,7 +60,7 @@
     return guideState;
   };
 
-  window.applyQuestGuideHighlight = function (container, draft, questType, questDone) {
+  window.applyQuestGuideHighlight = function (container, draft, questType, questDone, state) {
     if (!container?.__keys) return;
     for (const keyEl of container.__keys) {
       keyEl.classList.remove("key-guide-hint");
@@ -87,6 +103,25 @@
         const code = symbol.charCodeAt(0);
         const valid = active.direction === "ASC" ? code < ref : code > ref;
         if (valid) keyEl.classList.add("key-guide-hint");
+      }
+      return;
+    }
+
+    if (active.type === "RARE") {
+      const q = state?.powers?.quest;
+      const pool = q?.rareLetters?.length ? q.rareLetters : DEFAULT_RARE_LETTERS;
+      const history = state?.history || [];
+      const used = new Set();
+      for (const h of history) {
+        for (const c of (h.guess || "").toUpperCase()) {
+          if (pool.includes(c)) used.add(c);
+        }
+      }
+      for (const keyEl of container.__keys) {
+        const symbol = keyEl.dataset.key;
+        if (pool.includes(symbol) && !used.has(symbol)) {
+          keyEl.classList.add("key-guide-hint");
+        }
       }
     }
   };

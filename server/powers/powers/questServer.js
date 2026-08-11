@@ -140,7 +140,38 @@ function doubledLetterOf(word) {
   return null;
 }
 
+// Legacy fixed set, kept as the fallback for any quest instance that never
+// got a rareLetters draw (the tutorial's scripted RARE round -- see
+// tutorialMode.js, which sets state.powers.quest directly rather than
+// through ensureQuestConditions below -- and old in-flight quests from
+// before this pool existed).
 const QUEST_RARE_LETTERS = new Set("QJXZWKV");
+
+// The 12 rarest English letters a match can draw its 7 from (superset of
+// the legacy 7 above). Drawing a random 7-of-12 each match instead of
+// always the same fixed 7 keeps the RARE quest's target letters from
+// being memorized/identical every game, while the "use 5" threshold
+// (QUEST_THRESHOLDS.RARE) stays unchanged.
+const QUEST_RARE_LETTER_POOL = "QJXZWKVFYBHG".split("");
+const QUEST_RARE_DRAW_SIZE = 7;
+
+function pickRareLetterSet() {
+  const pool = [...QUEST_RARE_LETTER_POOL];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, QUEST_RARE_DRAW_SIZE);
+}
+
+// The Set a given quest's RARE checks should actually run against -- this
+// match's own 7-letter draw once ensureQuestConditions has assigned one,
+// falling back to the legacy fixed 7 otherwise (see QUEST_RARE_LETTERS's
+// comment above).
+function questRareLetterSet(quest) {
+  return quest?.rareLetters?.length ? new Set(quest.rareLetters) : QUEST_RARE_LETTERS;
+}
+
 const QUEST_KEYBOARD_ROWS = [
   new Set("QWERTYUIOP"),
   new Set("ASDFGHJKL"),
@@ -196,11 +227,12 @@ function chooseQuestType(state, userId, type) {
 // ---- Shared progress helpers (used by the turnStart switch below AND by
 // genericAI.js's quest-aware guess picker AND the early-claim feature) ----
 
-function rareLettersSeen(history) {
+function rareLettersSeen(history, letters) {
+  const set = letters || QUEST_RARE_LETTERS;
   const seen = new Set();
   for (const h of history) {
     for (const c of h.guess.toUpperCase()) {
-      if (QUEST_RARE_LETTERS.has(c)) seen.add(c);
+      if (set.has(c)) seen.add(c);
     }
   }
   return seen;
@@ -240,7 +272,7 @@ function isQuestOneAway(quest, state) {
   const history = state.history || [];
   switch (quest.type) {
     case "RARE":
-      return rareLettersSeen(history).size === QUEST_THRESHOLDS.RARE - 1;
+      return rareLettersSeen(history, questRareLetterSet(quest)).size === QUEST_THRESHOLDS.RARE - 1;
     case "ROW":
       return rowCoverage(history).some(({ row, used }) => row.size - used.size === 1);
     case "ALPHA":
@@ -283,11 +315,19 @@ function isQuestOneAway(quest, state) {
 // FIELDREPORT's conditions are generated once per round (not once per
 // match -- they're tied to a random word, there's no reason to keep the
 // same 3 across a role swap into a brand new secret) and lazily, the
-// first time they're needed after a fresh state.powers.quest.
+// first time they're needed after a fresh state.powers.quest. RARE's
+// 7-letter draw (see QUEST_RARE_LETTER_POOL above) is set up the same
+// lazy way, off the same call -- every site that assigns q.type already
+// calls this right after, so it's the one shared place to hook both.
 function ensureQuestConditions(state) {
   const q = state.powers?.quest;
-  if (!q || q.type !== "FIELDREPORT" || q.conditions) return;
-  q.conditions = generateConditions();
+  if (!q) return;
+  if (q.type === "FIELDREPORT" && !q.conditions) {
+    q.conditions = generateConditions();
+  }
+  if (q.type === "RARE" && !q.rareLetters?.length) {
+    q.rareLetters = pickRareLetterSet();
+  }
 }
 
 // Requirements accumulate guess-by-guess (green letters lock their
@@ -406,7 +446,7 @@ function ensureFieldReportProgress(state) {
 function isQuestReady(quest, history) {
   switch (quest.type) {
     case "RARE":
-      return rareLettersSeen(history).size >= QUEST_THRESHOLDS.RARE;
+      return rareLettersSeen(history, questRareLetterSet(quest)).size >= QUEST_THRESHOLDS.RARE;
     case "ROW":
       return rowCoverage(history).some(({ row, used }) => used.size >= row.size);
     case "ALPHA":
@@ -684,6 +724,10 @@ module.exports = {
   QUEST_THRESHOLDS,
   FIELDREPORT_YELLOW_AT,
   QUEST_RARE_LETTERS,
+  QUEST_RARE_LETTER_POOL,
+  QUEST_RARE_DRAW_SIZE,
+  pickRareLetterSet,
+  questRareLetterSet,
   QUEST_KEYBOARD_ROWS,
   pickRandomQuestType,
   pickTwoRandomQuestTypes,

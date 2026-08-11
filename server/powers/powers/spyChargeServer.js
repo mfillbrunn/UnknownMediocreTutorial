@@ -286,25 +286,19 @@ function starsForCandidate(candidateCount, bestCount) {
     ((bestCount - candidateCount) / bestCount) * 100
   );
 
-  let stars = 0;
-
   if (gapPct < 10) {
-    stars = 3;
-  } else if (gapPct < 25) {
-    stars = 2;
-  } else if (gapPct < 50) {
-    stars = 1;
+    return 3;
   }
 
-  if (candidateCount <= 4) {
-    return Math.min(stars, 1);
+  if (gapPct < 25) {
+    return 2;
   }
 
-  if (candidateCount <= 9) {
-    return Math.min(stars, 2);
+  if (gapPct < 50) {
+    return 1;
   }
 
-  return stars;
+  return 0;
 }
 
 function evaluateSecretChange(

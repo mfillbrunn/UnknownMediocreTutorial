@@ -280,6 +280,18 @@
 .log-power.log-power-guesser {
   color: var(--guesser-color);
 }
+/* Tappable power name -- expands the collapsed "You used <name>" line
+   into its full result (see action-log.js's powerEntry). Underline marks
+   it as interactive without needing a whole separate button style. */
+.log-power-name {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.log-power-detail {
+  margin-top: 2px;
+  opacity: 0.85;
+}
 .log-lock {
   color: #f87171;
   font-weight: 700;
@@ -1268,60 +1280,70 @@
   text-align: center;
 }
 
-/* Meta chips (time control, etc.) */
+/* Small subdued info card wrapping the time/power/quest summary -- matches
+   .stored-round's muted card look below (padding/radius/background/border)
+   instead of the bright colored pills this used to be, so it reads as one
+   more small info portion in line with the round summaries, not a
+   separately-styled highlight. */
+.match-info-block {
+  padding: var(--sp-10);
+  border-radius: var(--r-10);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin: 0 0 var(--sp-10);
+}
+
+/* Meta chips (time control, etc.) -- plain muted text, no pill background. */
 .match-meta-row {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: var(--sp-8);
-  margin: 0 0 var(--sp-10);
+  margin: 0 0 var(--sp-6);
 }
 
 .match-meta-chip {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.14);
   font-size: var(--fs-12);
-  font-weight: 700;
-  opacity: 0.9;
+  font-weight: 600;
+  opacity: 0.75;
   white-space: nowrap;
 }
 
-/* Powers used, as chip rows colored by owning role */
+/* Powers used -- plain text colored by owning role, same restrained
+   treatment as .summary-powers-setter/-guesser in the round tables below
+   (colored text only, no pill background/border). */
 .match-power-line {
   display: flex;
   justify-content: center;
-  margin: 0 0 var(--sp-6);
-  font-weight: 700;
-  font-size: var(--fs-13);
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--fs-12);
+  opacity: 0.85;
+}
+
+.match-power-line + .match-power-line {
+  margin-top: var(--sp-4);
 }
 
 .power-label {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-6);
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid currentColor;
 }
 
 .power-label.setter {
   color: var(--setter-color);
-  border-color: color-mix(in srgb, var(--setter-color) 45%, transparent);
 }
 
 .power-label.guesser {
   color: var(--guesser-color);
-  border-color: color-mix(in srgb, var(--guesser-color) 45%, transparent);
 }
 
 .power-label span {
   color: var(--text);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* Inline alert-style notes */
