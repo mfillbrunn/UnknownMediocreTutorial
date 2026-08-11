@@ -220,14 +220,15 @@
   align-items: center !important;
   padding: 7px 5px 8px !important;
 
-  /* Two muted tones, matching how power cards are treated in
-     features.css. Each quest type still declares three saturated colours
-     above (kept as its identity), but the card only ever spends two of
-     them and blends both toward a neutral slate first -- three vivid
-     stops per card, across a row of cards, was the single biggest source
-     of colour noise on this screen. */
-  --quest-tone-1: color-mix(in srgb, var(--quest-c1) 52%, #8b90a0);
-  --quest-tone-2: color-mix(in srgb, var(--quest-c2) 52%, #8b90a0);
+  /* Two tones, matching how power cards are treated in features.css.
+     Each quest type still declares three saturated colours above (kept
+     as its identity), but the card only ever spends two of them, blended
+     toward a neutral slate so a row of cards doesn't turn into a wall of
+     competing hues -- kept fairly light on the blend (mostly the real
+     colour) so the strip/icon still read at a glance instead of washing
+     out to grey. */
+  --quest-tone-1: color-mix(in srgb, var(--quest-c1) 78%, #8b90a0);
+  --quest-tone-2: color-mix(in srgb, var(--quest-c2) 78%, #8b90a0);
 
   color: var(--quest-tone-1);
 
@@ -283,7 +284,7 @@
 
   transform: translate(-50%, -50%);
   color: var(--quest-tone-1);
-  opacity: 0.28;
+  opacity: 0.55;
   filter: none;
 }
 
@@ -346,23 +347,33 @@
   color: #7cbf90 !important;
 }
 
-/* Quest choices now use the same palette language as powers. */
+/* Quest choices now use the same palette language as powers. This is the
+   picker banner shown when choosing a quest (Draft Mode / mid-match Quest
+   Choice modal), not the in-game quest button above -- it stays a bit
+   toned down (a light grey blend on the identity colours, --quest-banner-*
+   below) but keeps full opacity everywhere that blend lands, so the
+   border/stripe/label stay just as crisp and legible, only slightly less
+   saturated. */
 .draft-candidate-btn.quest-themed {
   position: relative;
   overflow: hidden;
 
-  border-color: color-mix(in srgb, var(--quest-c1) 55%, rgba(255, 255, 255, 0.12));
+  --quest-banner-1: color-mix(in srgb, var(--quest-c1) 85%, #8b90a0);
+  --quest-banner-2: color-mix(in srgb, var(--quest-c2) 85%, #8b90a0);
+  --quest-banner-3: color-mix(in srgb, var(--quest-c3) 85%, #8b90a0);
+
+  border-color: color-mix(in srgb, var(--quest-banner-1) 55%, rgba(255, 255, 255, 0.12));
   background:
     radial-gradient(
       circle at 92% 12%,
-      color-mix(in srgb, var(--quest-c3) 16%, transparent),
+      color-mix(in srgb, var(--quest-banner-3) 16%, transparent),
       transparent 46%
     ),
     linear-gradient(
       135deg,
-      color-mix(in srgb, var(--quest-c1) 15%, #171922),
-      color-mix(in srgb, var(--quest-c2) 9%, #11131a) 58%,
-      color-mix(in srgb, var(--quest-c3) 11%, #0e1016)
+      color-mix(in srgb, var(--quest-banner-1) 15%, #171922),
+      color-mix(in srgb, var(--quest-banner-2) 9%, #11131a) 58%,
+      color-mix(in srgb, var(--quest-banner-3) 11%, #0e1016)
     );
 }
 
@@ -373,25 +384,25 @@
   width: 4px;
   background: linear-gradient(
     180deg,
-    var(--quest-c1) 0 33.333%,
-    var(--quest-c2) 33.333% 66.666%,
-    var(--quest-c3) 66.666% 100%
+    var(--quest-banner-1) 0 33.333%,
+    var(--quest-banner-2) 33.333% 66.666%,
+    var(--quest-banner-3) 66.666% 100%
   );
 }
 
 .draft-candidate-btn.quest-themed .draft-candidate-emoji {
-  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--quest-c1) 42%, transparent));
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--quest-banner-1) 42%, transparent));
 }
 
 .draft-candidate-btn.quest-themed .draft-candidate-label {
-  color: color-mix(in srgb, var(--quest-c2) 52%, white);
+  color: color-mix(in srgb, var(--quest-banner-2) 52%, white);
 }
 
 .draft-candidate-btn.quest-themed.selected {
-  border-color: color-mix(in srgb, var(--quest-c1) 42%, var(--quest-c2));
+  border-color: color-mix(in srgb, var(--quest-banner-1) 42%, var(--quest-banner-2));
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--quest-c2) 30%, transparent),
-    0 0 18px color-mix(in srgb, var(--quest-c3) 16%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--quest-banner-2) 30%, transparent),
+    0 0 18px color-mix(in srgb, var(--quest-banner-3) 16%, transparent);
 }
 
 /* --------------------------------------------------
