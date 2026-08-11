@@ -28,7 +28,7 @@
   <!-- 11. Leaderboard-->
   <link rel="stylesheet" href="css/leaderboard.css">
   <!-- 12. Tutorial--->
-  <link rel="stylesheet" href="css/tutorial.css?tutorial-v2=2">
+  <link rel="stylesheet" href="css/tutorial.css">
   <!-- 13. Special effects--->
   <link rel="stylesheet" href="css/special-effects.css">
   <!-- Last. Mobile phone adjustments-->
@@ -1231,36 +1231,30 @@
     </div>
   </div>
 </div>
-<div id="tutorialBubble" class="tutorial-bubble hidden" role="dialog" aria-live="polite" aria-expanded="true">
-  <div class="tutorial-header">
-    <div class="tutorial-heading">
-      <div class="tutorial-title-row">
-        <span id="tutorialStepLabel" class="tutorial-step-label">Tutorial</span>
-        <span id="tutorialActionBadge" class="tutorial-action hidden">ACTION</span>
-      </div>
-      <div id="tutorialProgress" class="tutorial-progress hidden" aria-label=""></div>
-    </div>
-
-    <button
-      id="tutorialToggleBtn"
-      class="tutorial-close"
-      type="button"
-      aria-label="Minimize tutorial"
-      title="Minimize tutorial"
-    >×</button>
+<div id="tutorialBubble" class="tutorial-bubble hidden">
+<div class="tutorial-header">
+  <div class="tutorial-title">
+    <span>Tutorial</span>
+    <span id="tutorialActionBadge" class="tutorial-action hidden">
+      ACTION
+    </span>
   </div>
 
+  <button id="tutorialToggleBtn" class="tutorial-close">×</button>
+</div>
+
+
   <div id="tutorialBody" class="tutorial-body">
-    <div id="tutorialVisual" class="tutorial-visual hidden"></div>
-    <div id="tutorialText" class="tutorial-text"></div>
+    <span id="tutorialText"></span>
 
     <div class="tutorial-controls">
-      <button id="tutorialContinueBtn" class="primary-btn small" type="button">
-        Next
+      <button id="tutorialContinueBtn" class="primary-btn small">
+        Continue
       </button>
     </div>
   </div>
 </div>
+
 
     </main>
   </div>
@@ -1270,10 +1264,7 @@
   <script src="authentication/supabaseClient.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="client/helpers.js"></script>  
-  <script src="client/tutorial-ui.js?tutorial-v2=2"></script>
-<script src="client/tutorial-basic.js?tutorial-v2=2"></script>
-<script src="client/tutorial-powers.js?tutorial-v2=2"></script>
-<script src="client/tutorial-advanced.js?tutorial-v2=2"></script>  
+  <script src="client/tutorial-ui.js"></script>  
   <script src="client/statistics.js"></script>  
   <script src="network/socketClient.js"></script>
 

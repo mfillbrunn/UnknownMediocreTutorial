@@ -59,28 +59,37 @@ function setContinue({
 function updateActionBadge() {
   const badge = byId("tutorialActionBadge");
   const continueBtn = byId("tutorialContinueBtn");
-  const bubble = byId("tutorialBubble");
 
   if (!badge || !continueBtn) return;
 
   const currentState = window.state || {};
   const waitingType = tutorialWaitingFor?.type;
   const round = currentState.history?.length ?? 0;
+
   let word = null;
 
   if (waitingType === "guess") {
     word = currentState.tutorialGuesses?.[round];
   } else if (waitingType === "setSecret") {
     word = currentState.tutorialSecrets?.[round];
-    if (currentState.secret === word) word = "";
+
+    if (currentState.secret === word) {
+      word = "";
+    }
   }
 
   const alreadyWaiting =
     (
       waitingType === "guess" &&
       (
-        (currentState.phase === "normal" && !!currentState.pendingGuess) ||
-        (currentState.phase === "simultaneous" && !!currentState.simultaneousGuessSubmitted)
+        (
+          currentState.phase === "normal" &&
+          !!currentState.pendingGuess
+        ) ||
+        (
+          currentState.phase === "simultaneous" &&
+          !!currentState.simultaneousGuessSubmitted
+        )
       )
     ) ||
     (
@@ -92,38 +101,64 @@ function updateActionBadge() {
   let label = "ACTION";
 
   if (alreadyWaiting) {
-    label = "WAITING";
-  } else if (tutorialWaitingFor?.label) {
-    label = tutorialWaitingFor.label;
-  } else if ((waitingType === "guess" || waitingType === "setSecret") && word) {
-    label = `TYPE ${word}`;
-  } else if (waitingType === "guess" || waitingType === "setSecret") {
+    label = "WAITING...";
+  } else if (
+    (
+      waitingType === "guess" ||
+      waitingType === "setSecret"
+    ) &&
+    word
+  ) {
+    label = `ENTER ${word}`;
+  } else if (
+    waitingType === "guess" ||
+    waitingType === "setSecret"
+  ) {
     label = "SUBMIT";
   } else if (waitingType === "power") {
-    const meta = window.POWER_METADATA?.[tutorialWaitingFor.powerId];
-    label = `USE ${(meta?.label || tutorialWaitingFor.powerId || "").toUpperCase()}`;
+    const meta =
+      window.POWER_METADATA?.[
+        tutorialWaitingFor.powerId
+      ];
+
+    label =
+      `USE ${
+        (
+          meta?.label ||
+          tutorialWaitingFor.powerId ||
+          ""
+        ).toUpperCase()
+      }`;
   } else if (waitingType === "notes") {
     label = "OPEN NOTES";
   } else if (waitingType === "noteAdded") {
-    label = tutorialWaitingFor.word ? `SAVE ${tutorialWaitingFor.word}` : "SAVE A WORD";
+    label = tutorialWaitingFor.word
+      ? `SAVE ${tutorialWaitingFor.word}`
+      : "SAVE A WORD";
   } else if (waitingType === "noteSelected") {
-    label = tutorialWaitingFor.word ? `TAP ${tutorialWaitingFor.word}` : "PICK A WORD";
-  } else if (waitingType === "rejectedSecret") {
-    label = "TRY PICKY";
-  } else if (waitingType === "draftCleared") {
-    label = "CLEAR THE DRAFT";
-  }
-
+    label = tutorialWaitingFor.word
+      ? `TAP ${tutorialWaitingFor.word}`
+      : "PICK A WORD";
+} else if (
+  waitingType === "rejectedSecret"
+) {
+  label = "TRY PICKY";
+} else if (
+  tutorialWaitingFor?.label
+) {
+  label =
+    tutorialWaitingFor.label;
+}
   badge.textContent = label;
   badge.classList.toggle("hidden", !waitingType);
-  bubble?.classList.toggle("tutorial-is-waiting", !!waitingType);
 
+  // "end" is the very last step of a tutorial (see showTutorialDoneModal())
+  // -- relabel the one button this bubble has so it reads as the exit it
+  // actually is, instead of the usual "Next"/"Hide".
   continueBtn.textContent =
     tutorialContinueMode === "end"
       ? "Finish Tutorial"
-      : waitingType
-        ? "Minimize"
-        : "Next";
+      : waitingType ? "Hide" : "Next";
 }
 
 function getVisibleTutorialKeyboard() {
@@ -669,73 +704,20 @@ function animateTutorialBody() {
     }, 380);
 }
 
-
-function defaultTutorialTitle() {
-  const stage = window.state?.tutorialStage;
-
-  if (stage === "advanced") return "Advanced UI";
-  if (stage === "power" || stage === 2) return "Powers";
-  if (stage === "quest") return "Quest";
-  return window.myRole === "setter" ? "Spy basics" : "Inspector basics";
-}
-
-function tutorialToneColor(tone) {
-  if (tone === "setter") return "#fb7185";
-  if (tone === "guesser") return "#60a5fa";
-  return "#ffd54f";
-}
-
-function updateTutorialChrome(opts = {}) {
-  const bubble = byId("tutorialBubble");
-  if (!bubble) return;
-
-  const titleEl = byId("tutorialStepLabel");
-  const progressEl = byId("tutorialProgress");
-  const visualEl = byId("tutorialVisual");
-
-  const title = opts.title || defaultTutorialTitle();
-  if (titleEl) titleEl.textContent = title;
-
-  const current = Number(opts.progressCurrent);
-  const total = Number(opts.progressTotal);
-  const hasProgress = Number.isFinite(current) && Number.isFinite(total) && total > 0;
-
-  if (progressEl) {
-    progressEl.classList.toggle("hidden", !hasProgress);
-    progressEl.innerHTML = hasProgress
-      ? `<span class="tutorial-progress-count">${current}/${total}</span>` +
-        Array.from({ length: total }, (_, index) =>
-          `<span class="tutorial-progress-dot${index < current ? " is-done" : ""}${index === current - 1 ? " is-current" : ""}"></span>`
-        ).join("")
-      : "";
-    progressEl.setAttribute("aria-label", hasProgress ? `Step ${current} of ${total}` : "");
-  }
-
-  if (visualEl) {
-    visualEl.classList.toggle("hidden", !opts.visualHtml);
-    visualEl.innerHTML = opts.visualHtml || "";
-  }
-
-  const tone = opts.tone || (window.myRole === "setter" ? "setter" : "guesser");
-  const accent = tutorialToneColor(tone);
-  bubble.dataset.tone = tone;
-  bubble.dataset.placement = opts.placement || "auto";
-  bubble.classList.toggle("tutorial-compact", !!opts.compact);
-  bubble.style.setProperty("--tutorial-accent", accent);
-
-  const ring = byId("tutorialFocusRing");
-  ring?.style.setProperty("--tutorial-accent", accent);
-}
-
 function showTutorial(text, opts = {}) {
   const bubble = byId("tutorialBubble");
   const textEl = byId("tutorialText");
 
   if (!bubble || !textEl) return;
 
-  const nextKey = tutorialStepKey(opts);
-  const isNewStep = nextKey !== tutorialLastStepKey;
-  const wasHidden = bubble.classList.contains("hidden");
+  const nextKey =
+    tutorialStepKey(opts);
+
+  const isNewStep =
+    nextKey !== tutorialLastStepKey;
+
+  const wasHidden =
+    bubble.classList.contains("hidden");
 
   tutorialLastStepKey = nextKey;
 
@@ -745,18 +727,29 @@ function showTutorial(text, opts = {}) {
   }
 
   bubble.classList.remove("hidden");
-  updateTutorialChrome(opts);
 
+  // A bubble coming back from fully hidden doesn't know where it belongs
+  // yet -- that requires a layout pass (below) that reads the freshly
+  // highlighted targets for this step, which haven't necessarily settled
+  // into the DOM yet either (highlightEl() calls after this in the same
+  // render function commit via a queued microtask). Keep it invisible
+  // (but still measurable -- see .positioning in tutorial.css) through
+  // that pass instead of revealing it at whatever position it last had
+  // and visibly animating over to the right one a frame later.
   if (wasHidden) {
     bubble.classList.add("positioning");
     tutorialPendingReveal = () => bubble.classList.remove("positioning");
   }
 
-  const textChanged = textEl.textContent !== text;
+  const textChanged =
+    textEl.textContent !== text;
 
   if (textChanged) {
     textEl.textContent = text;
-    if (isNewStep || wasHidden) animateTutorialBody();
+
+    if (isNewStep || wasHidden) {
+      animateTutorialBody();
+    }
   }
 
   setContinue({
@@ -768,6 +761,18 @@ function showTutorial(text, opts = {}) {
   updateActionBadge();
   updateTutorialToggleState();
 
+  // tutorialSteps() re-runs on every server stateUpdate, including plenty
+  // that have nothing to do with the tutorial (the opponent's move, a
+  // timer tick) -- showTutorial() gets called again on every one of those
+  // with the exact same step. Repositioning unconditionally re-measured
+  // live rects and rewrote the bubble's `top` every single time, and any
+  // stray sub-pixel difference between renders (font/layout rounding, an
+  // unrelated element resizing) then visibly nudged the bubble via its
+  // `top` transition -- reading as constant tiny jitter. Only bother when
+  // something that could actually move it changed: a new step, a fresh
+  // reveal, or the text itself (which usually means a new highlight
+  // target too, e.g. a "waiting…" placeholder swapping to the real
+  // message once its data arrives).
   if (isNewStep || wasHidden || textChanged) {
     scheduleTutorialLayout();
   }
@@ -2015,11 +2020,10 @@ function startTutorialRevealGate(
     setTimeout(finish, 2800);
 }
 
-function waitForGuessSubmission(round, label = null) {
+function waitForGuessSubmission(round) {
   tutorialWaitingFor = {
     type: "guess",
-    round,
-    ...(label ? { label } : {})
+    round
   };
 
   setContinue({
@@ -2030,11 +2034,10 @@ function waitForGuessSubmission(round, label = null) {
   updateActionBadge();
 }
 
-function waitForSecretSubmission(round, label = null) {
+function waitForSecretSubmission(round) {
   tutorialWaitingFor = {
     type: "setSecret",
-    round,
-    ...(label ? { label } : {})
+    round
   };
 
   setContinue({
@@ -2556,6 +2559,10 @@ window.notifyTutorialDraftCleared =
 // Main tutorial logic
 // ------------------------
 function tutorialSteps(state, role) {
+  // Once the "Tutorial Complete!" choice is up, nothing else should
+  // touch the bubble -- every later stateUpdate (AI activity, timers,
+  // whatever) would otherwise call back into showTutorial() below, which
+  // unconditionally un-hides it and pulls it back on top of the modal.
   if (byId("tutorialDoneModal")?.classList.contains("active")) {
     return;
   }
@@ -2566,29 +2573,44 @@ function tutorialSteps(state, role) {
     lastTutorialRound = null;
     tutorialSubStep = 0;
     tutorialWaitingFor = null;
+
     cancelTutorialRevealGate();
     hideTutorial();
+
     return;
   }
+if (
+  window._gameOverRevealInFlight
+) {
+  return;
+}
 
-  if (window._gameOverRevealInFlight) {
-    return;
-  }
+if (
+  state.tutorialStage === "quest"
+) {
+  window.runQuestTutorial?.(
+    state,
+    role
+  );
 
-  if (state.tutorialStage === "quest") {
-    window.runQuestTutorial?.(state, role);
-    return;
-  }
+  return;
+}
 
-  const round = state.history?.length ?? 0;
-
+const round =
+  state.history?.length ?? 0;
   if (round !== lastTutorialRound) {
-    const prevRound = lastTutorialRound;
+    const prevRound =
+      lastTutorialRound;
+
     lastTutorialRound = round;
     tutorialSubStep = 0;
     tutorialWaitingFor = null;
-    powerTutorialDraftPrefilled = false;
+
+    powerTutorialDraftPrefilled =
+      false;
+
     powerTutorialSkipSent = false;
+
     clearHighlights();
 
     if (
@@ -2596,11 +2618,16 @@ function tutorialSteps(state, role) {
       round > prevRound &&
       state.phase !== "gameOver"
     ) {
-      startTutorialRevealGate(round, role);
+      startTutorialRevealGate(
+        round,
+        role
+      );
     }
   }
 
-  if (tutorialRevealGateRound === round) {
+  if (
+    tutorialRevealGateRound === round
+  ) {
     return;
   }
 
@@ -2608,16 +2635,7 @@ function tutorialSteps(state, role) {
     state.gameOverView === "round" &&
     state.phase === "gameOver"
   ) {
-    if (state.tutorialStage === "advanced") {
-      runAdvancedSummaryTutorial(state);
-    } else if (
-      state.tutorialStage === 2 ||
-      state.tutorialStage === "power"
-    ) {
-      runPowerSummaryTutorial(state);
-    } else {
-      runBasicSummaryTutorial(state);
-    }
+    runSummaryTutorial(state);
     return;
   }
 
@@ -2625,38 +2643,2259 @@ function tutorialSteps(state, role) {
     state.gameOverView === "match" &&
     state.phase === "gameOver"
   ) {
-    if (state.tutorialStage === "advanced") {
-      runAdvancedMatchTutorial(state);
-    } else if (
-      state.tutorialStage === 2 ||
-      state.tutorialStage === "power"
-    ) {
-      runPowerMatchTutorial(state);
-    } else {
-      runBasicMatchTutorial(state);
-    }
+    runMatchTutorial(state);
     return;
   }
 
-  if (state.tutorialStage === "power") {
+  if (
+    state.tutorialStage === "power"
+  ) {
     runPowerTutorial(state, role);
     return;
   }
 
-  if (state.tutorialStage === 2) {
-    runPowerFollowupTutorial(state, role);
+  if (
+    state.tutorialStage ===
+    "advanced"
+  ) {
+    runAdvancedTutorial(
+      state,
+      role
+    );
+
     return;
   }
 
-  if (state.tutorialStage === "advanced") {
-    runAdvancedTutorial(state, role);
+  const aiPlayer =
+    Object.values(
+      state.players || {}
+    ).find(player => player.isAI);
+
+  if (
+    aiPlayer?.role === "setter"
+  ) {
+    runGuesserTutorial(
+      state,
+      role
+    );
+
     return;
   }
 
-  runBasicTutorial(state, role);
+  if (
+    aiPlayer?.role === "guesser"
+  ) {
+    runSetterTutorial(
+      state,
+      role
+    );
+  }
 }
 
+function runGuesserTutorial(
+  state,
+  role
+) {
+  const round =
+    state.history?.length ?? 0;
 
+  clearHighlights();
+
+  const stage2 =
+    state.tutorialStage === 2;
+
+  if (stage2) {
+    if (round === 0) {
+      const word =
+        state.tutorialGuesses?.[0] ||
+        "CHAMP";
+
+      if (tutorialSubStep === 0) {
+        showTutorial(
+          `Welcome back! This short follow-up teaches you about powers — an essential part of Vowel play! We'll show you one for the Inspector, one for the Spy.`,
+          {
+            enabled: true
+          }
+        );
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (tutorialSubStep === 1) {
+        showTutorial(
+          `Quick rule: powers can only be used once per turn, and most are limited to once per match. Letter Peek and a couple others are the exceptions — you get two uses each. And they can only be used after the first round.`,
+          {
+            enabled: true
+          }
+        );
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (tutorialSubStep === 2) {
+        showTutorial(
+          `You're the Inspector again, and this time you have a power available: Letter Peek — it reveals one correct letter and its position.`,
+          {
+            enabled: true
+          }
+        );
+
+        highlightPowersCol();
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (tutorialSubStep === 3) {
+        if (
+          state.simultaneousGuessSubmitted
+        ) {
+          showTutorial(
+            `Waiting for the Spy to finish picking their secret…`,
+            {
+              enabled: false
+            }
+          );
+        } else {
+          showTutorial(
+            `First, enter your opening guess. Type "${word}", then tap Submit Guess.`,
+            {
+              enabled: true,
+              mode: "hide"
+            }
+          );
+
+          startKeyDemo(
+            `guesser-stage2-round0-${word}`,
+            () =>
+              tutorialWordKeyEls(
+                "guesser",
+                word,
+                localGuesserDraft
+              )
+          );
+        }
+
+        tutorialContinueMode =
+          "hide";
+
+        highlightKeyboardGuesser();
+        waitForGuessSubmission(round);
+
+        return;
+      }
+
+      hideTutorial();
+      return;
+    }
+
+    if (round === 1) {
+      if (tutorialSubStep === 0) {
+        showTutorial(
+          `Now let's use your power. Click "Letter Peek" to reveal one correct letter and where it goes.`,
+          {
+            enabled: false
+          }
+        );
+
+        highlightPowerButtonByText(
+          "Letter Peek"
+        );
+
+        tutorialContinueMode =
+          "hide";
+
+        waitForPowerUse(
+          "revealGreen"
+        );
+
+        return;
+      }
+
+      if (tutorialSubStep === 1) {
+        const info =
+          state.revealGreenInfo;
+
+        if (!info) {
+          showTutorial(
+            `Revealing your letter…`,
+            {
+              enabled: false
+            }
+          );
+
+          return;
+        }
+
+        showTutorial(
+          `Letter Peek revealed "${info.letter}" in position ${info.pos + 1} — see it appear in your action log below. Try a guess that uses it.`,
+          {
+            enabled: true
+          }
+        );
+
+        highlightLogEntryByText(
+          "Letter Peek",
+          "guesser"
+        );
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (tutorialSubStep === 2) {
+        showTutorial(
+          `That's how powers work — your opponent's log shows that you activated Letter Peek, even though the letter itself stays hidden from them. Once you find the secret, we'll switch to the Spy side.`,
+          {
+            enabled: true
+          }
+        );
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (tutorialSubStep === 3) {
+        const word =
+          state.tutorialGuesses?.[1] ||
+          "CUMIN";
+
+        if (state.pendingGuess) {
+          showTutorial(
+            `Waiting for the Spy to react to "${word}"…`,
+            {
+              enabled: false
+            }
+          );
+        } else {
+          showTutorial(
+            `Now enter your second guess: "${word}".`,
+            {
+              enabled: true,
+              mode: "hide"
+            }
+          );
+
+          startKeyDemo(
+            `guesser-stage2-round1-${word}`,
+            () =>
+              tutorialWordKeyEls(
+                "guesser",
+                word,
+                localGuesserDraft
+              )
+          );
+        }
+
+        highlightKeyboardGuesser();
+
+        tutorialContinueMode =
+          "hide";
+
+        waitForGuessSubmission(round);
+
+        return;
+      }
+
+      hideTutorial();
+      return;
+    }
+
+    if (round === 2) {
+      if (tutorialSubStep === 0) {
+        showTutorial(
+          `From here on, finish this round on your own. Once you find the secret, you'll switch roles. Good luck!`,
+          {
+            enabled: true,
+            mode: "hide"
+          }
+        );
+
+        tutorialContinueMode =
+          "hide";
+
+        return;
+      }
+
+      hideTutorial();
+      return;
+    }
+
+    return;
+  }
+
+  if (round === 0) {
+    const word =
+      state.tutorialGuesses?.[0] ||
+      "CHAMP";
+
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `Welcome! You're the Inspector 🕵️. The Spy just hid a secret 5-letter word somewhere in their head.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `Your job: figure out the secret word. Try to do it in as few guesses as you can.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      if (
+        state.simultaneousGuessSubmitted
+      ) {
+        showTutorial(
+          `Guess submitted! Now we wait for the Spy to lock in their secret word...`,
+          {
+            mode: "hide"
+          }
+        );
+
+        stopKeyDemo();
+      } else {
+        showTutorial(
+          `Let's make your first guess. Type "${word}" on the keyboard below, then tap Submit Guess.`,
+          {
+            mode: "hide"
+          }
+        );
+
+        startKeyDemo(
+          `guesser-round0-${word}`,
+          () =>
+            tutorialWordKeyEls(
+              "guesser",
+              word,
+              localGuesserDraft
+            )
+        );
+      }
+
+      highlightKeyboardGuesser();
+      waitForGuessSubmission(round);
+
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  if (round === 1) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `Nice, you guessed! Now look up at your guess — each letter's tile changed color. Those colors are clues.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightHistoryGuesser();
+
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `🟩 Green means that letter is correct AND in the right spot. You found a piece of the secret!`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightHistoryGuesser();
+
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `🟨 Yellow means that letter IS in the secret word, just in a different spot. Keep it, but try moving it.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightHistoryGuesser();
+
+      return;
+    }
+
+    if (tutorialSubStep === 3) {
+      showTutorial(
+        `⬜ Grey means that letter isn't in the secret word at all. You can rule it out completely.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightHistoryGuesser();
+
+      return;
+    }
+
+    if (tutorialSubStep === 4) {
+      showTutorial(
+        `One more thing: your guess doesn't have to use only letters that could still be in the secret. Sometimes you won't have a good word using just those.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightKeyboardGuesser();
+
+      return;
+    }
+
+    if (tutorialSubStep === 5) {
+      const word =
+        state.tutorialGuesses?.[1] ||
+        "CAIRN";
+
+      if (state.pendingGuess) {
+        showTutorial(
+          `Guess submitted! Waiting for the Spy to respond...`,
+          {
+            mode: "hide"
+          }
+        );
+
+        stopKeyDemo();
+      } else {
+        showTutorial(
+          `Now use those clues for your next guess. Try "${word}".`,
+          {
+            mode: "hide"
+          }
+        );
+
+        startKeyDemo(
+          `guesser-round1-${word}`,
+          () =>
+            tutorialWordKeyEls(
+              "guesser",
+              word,
+              localGuesserDraft
+            )
+        );
+      }
+
+      highlightKeyboardGuesser();
+      waitForGuessSubmission(round);
+
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  if (round === 2) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `From here on, keep going the same way: enter a 5-letter guess, check the colored feedback, and use it to narrow down the secret.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `Finish this round on your own now.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `Here's a little hint: the Spy likes well-spiced food.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      return;
+    }
+
+    hideTutorial();
+  }
+}
+
+function runSetterTutorial(
+  state,
+  role
+) {
+  const round =
+    state.history?.length ?? 0;
+
+  clearHighlights();
+
+  const stage2 =
+    state.tutorialStage === 2;
+
+  if (stage2) {
+    if (round === 0) {
+      const word =
+        state.tutorialSecrets?.[0];
+
+      if (tutorialSubStep === 0) {
+        showTutorial(
+          `Now you're the Spy, with a power of your own available this time: Counts Only.`,
+          {
+            enabled: false
+          }
+        );
+
+        highlightPowersCol();
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (tutorialSubStep === 1) {
+        if (
+          state.simultaneousSecretSubmitted
+        ) {
+          showTutorial(
+            `Waiting for the Inspector to finish their opening guess…`,
+            {
+              enabled: false
+            }
+          );
+        } else {
+          showTutorial(
+            `In the first round, you enter a secret word — your opponent won't see it. Enter "${word}".`,
+            {
+              enabled: false
+            }
+          );
+
+          startKeyDemo(
+            `setter-stage2-round0-${word}`,
+            () =>
+              tutorialWordKeyEls(
+                "setter",
+                word,
+                window.state?.setterDraft
+              )
+          );
+        }
+
+        highlightKeyboardSetter();
+
+        tutorialContinueMode =
+          "hide";
+
+        waitForSecretSubmission(round);
+
+        return;
+      }
+
+      hideTutorial();
+      return;
+    }
+
+    if (round === 1) {
+      const word =
+        state.tutorialSecrets?.[1];
+
+      if (tutorialSubStep === 0) {
+        showTutorial(
+          `Let's use your power this turn. Click "Counts Only" — it hides exact tile positions from the Inspector and shows them only how many letters are green or yellow in total.`,
+          {
+            enabled: true
+          }
+        );
+
+        highlightPowerButtonByText(
+          "Counts Only"
+        );
+
+        tutorialContinueMode =
+          "hide";
+
+        waitForPowerUse(
+          "countOnly"
+        );
+
+        return;
+      }
+
+      if (tutorialSubStep === 1) {
+        showTutorial(
+          `Nice — now let's lock in a new secret. Enter "${word}"!`,
+          {
+            enabled: true,
+            mode: "hide"
+          }
+        );
+
+        startKeyDemo(
+          `setter-stage2-round1-${word}`,
+          () =>
+            tutorialWordKeyEls(
+              "setter",
+              word,
+              window.state?.setterDraft
+            )
+        );
+
+        highlightKeyboardSetter();
+
+        tutorialContinueMode =
+          "hide";
+
+        waitForSecretSubmission(round);
+
+        return;
+      }
+
+      hideTutorial();
+      return;
+    }
+
+    if (round === 2) {
+      const countEntry =
+        [...state.history]
+          .reverse()
+          .find(e =>
+            e.countOnlyApplied &&
+            e.extraInfo
+          );
+
+      if (
+        tutorialSubStep === 0 &&
+        countEntry
+      ) {
+        const {
+          greens,
+          yellows
+        } = countEntry.extraInfo;
+
+        showTutorial(
+          `Counts Only hid the exact tile colors on "${countEntry.guess}" — the Inspector only learned ${greens} letter${greens === 1 ? " was" : "s were"} green and ${yellows} ${yellows === 1 ? "was" : "were"} yellow, not which.`,
+          {
+            enabled: true
+          }
+        );
+
+        highlightSetterHistory();
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (
+        tutorialSubStep === 1 &&
+        countEntry
+      ) {
+        showTutorial(
+          `The small "?" marks in the corner of those tiles show which ones the Inspector saw that way instead of a real color. Other powers can leave a similar mark to show what color they actually saw.`,
+          {
+            enabled: true
+          }
+        );
+
+        highlightSetterHistory();
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      showTutorial(
+        `That's the powers tutorial! Tap "Finish Tutorial" whenever you're ready — no need to finish playing this match.`,
+        {
+          mode: "end"
+        }
+      );
+
+      tutorialEndNextMode = "quest";
+
+      return;
+    }
+
+    return;
+  }
+
+  if (round === 0) {
+    const word =
+      state.tutorialSecrets?.[0];
+
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `Now it's your turn to be the Spy 🕵️‍♂️. This time, you're the one hiding a secret word.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `Your goal: keep a valid 5-letter secret alive for as many guesses as you can.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `While you're choosing your secret, the Inspector is doing the same thing on their side — picking their opening guess blind. Neither of you sees the other's move until you've both submitted.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (
+      state.simultaneousSecretSubmitted
+    ) {
+      showTutorial(
+        `Secret locked in! Now we wait for the Inspector's opening guess...`,
+        {
+          mode: "hide"
+        }
+      );
+
+      stopKeyDemo();
+    } else {
+      showTutorial(
+        `Let's pick your secret. Type "${word}" on the keyboard below, then tap Submit New Secret.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      startKeyDemo(
+        `setter-round0-${word}`,
+        () =>
+          tutorialWordKeyEls(
+            "setter",
+            word,
+            window.state?.setterDraft
+          )
+      );
+    }
+
+    highlightKeyboardSetter();
+    waitForSecretSubmission(round);
+
+    return;
+  }
+
+  if (round === 1) {
+    const word =
+      state.tutorialSecrets?.[1];
+
+    if (tutorialSubStep === 0) {
+      // The Inspector's next guess doesn't land as a real pendingGuess the
+      // instant this round begins -- it still has to be computed and
+      // submitted. Pointing highlightPendingGuessRow() at nothing (and
+      // announcing "it's sitting right above your secret" over an empty
+      // row) until that arrives is confusing, so wait for it first.
+      if (!state.pendingGuess) {
+        showTutorial(
+          `Waiting for the Inspector's next guess...`,
+          {
+            mode: "hide"
+          }
+        );
+
+        return;
+      }
+
+      showTutorial(
+        `Now it's your turn again as the Spy — this is the guess the Inspector just made for their second round, sitting right above your secret, before it's scored.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightPendingGuessRow();
+
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `You've got two options here: keep your current secret, or switch to a new one. That row's tile colors are a live preview — they show what feedback the Inspector would get right now if you kept your secret exactly as it is.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightPendingGuessRow();
+
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `Switching to a different secret is the other option — useful if your current one is getting risky, or just to throw the Inspector off by giving away less than your current secret would.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightPendingGuessRow();
+
+      return;
+    }
+
+    if (tutorialSubStep === 3) {
+      showTutorial(
+        `There's just one rule: any new secret must still match every clue you've already given. The Must Include box spells out exactly what that means — green letters have to stay in that exact position, yellow letters just have to be somewhere in the word.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterMustContainBox();
+
+      return;
+    }
+
+    if (tutorialSubStep === 4) {
+      showTutorial(
+        `Let's see that one rule in action. Type PICKY and tap the button below it — watch what happens.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightKeyboardSetter();
+
+      startKeyDemo(
+        "setter-round1-picky-demo",
+        () =>
+          tutorialWordKeyEls(
+            "setter",
+            "PICKY",
+            window.state?.setterDraft
+          )
+      );
+
+      // A rejected secret is left in place (see submitSetterNew()/
+      // reportSetterSecretRejection() in client.js -- rejected drafts are
+      // never auto-cleared), so the next step can walk through erasing
+      // PICKY by hand instead of finding an already-empty draft.
+      waitForRejectedSecret();
+
+      return;
+    }
+
+    if (tutorialSubStep === 5) {
+      showTutorial(
+        `Right — PICKY got rejected because it breaks a clue you already gave. Let's clear it out — tap Backspace to erase it.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightKeyboardSetter();
+      waitForDraftCleared();
+
+      startKeyDemo(
+        "setter-round1-backspace-demo",
+        () => [tutorialKeyEl("setter", "BACKSPACE")]
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 6) {
+      showTutorial(
+        `Now try a word that's actually allowed: "${word}". Notice it satisfies the Must Include box but still gives the Inspector less to go on than your first secret did.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightKeyboardSetter();
+      waitForSecretSubmission(round);
+
+      startKeyDemo(
+        `setter-round1-${word}`,
+        () =>
+          tutorialWordKeyEls(
+            "setter",
+            word,
+            window.state?.setterDraft
+          )
+      );
+
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  if (round === 2) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `You won't always need to change it, though — if you can't think of a better secret, the simplest move is keeping it exactly as is. Just tap Keep Current Secret with nothing typed to lock the same secret back in.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightKeyboardSetter();
+      waitForSecretSubmission(round);
+
+      startKeyDemo(
+        "setter-round2-keep-demo",
+        () => [tutorialSubmitBtnEl("setter")]
+      );
+
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  if (round === 3) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `That's the core Spy strategy — stay flexible, stay legal. Finish this round on your own now. You've got this!`,
+        {
+          mode: "hide"
+        }
+      );
+
+      return;
+    }
+
+    hideTutorial();
+  }
+}
+
+const POWER_TUTORIAL_SEED_ROUND = 2;
+const POWER_TUTORIAL_GUESSER_DRAFT =
+  "SNORE";
+
+function prefillPowerTutorialGuesserDraft() {
+  if (powerTutorialDraftPrefilled) {
+    return;
+  }
+
+  powerTutorialDraftPrefilled = true;
+
+  window.setGuesserDraft?.(
+    POWER_TUTORIAL_GUESSER_DRAFT
+  );
+}
+
+function runPowerTutorial(
+  state,
+  role
+) {
+  const round =
+    state.history?.length ?? 0;
+
+  clearHighlights();
+
+  const powerId =
+    state.tutorialPowerId;
+
+  const meta =
+    window.POWER_METADATA?.[powerId];
+
+  if (!powerId || !meta) {
+    hideTutorial();
+    return;
+  }
+
+  const powerRole =
+    meta.role === "setter"
+      ? "setter"
+      : "guesser";
+
+  if (role === powerRole) {
+    runPowerTutorialTeaching(
+      state,
+      role,
+      meta,
+      powerId,
+      round
+    );
+  } else {
+    runPowerTutorialReceiving(
+      state,
+      role,
+      meta,
+      powerId,
+      round
+    );
+  }
+}
+
+function runPowerTutorialTeaching(
+  state,
+  role,
+  meta,
+  powerId,
+  round
+) {
+  const isGuesser =
+    role === "guesser";
+
+  if (
+    round ===
+    POWER_TUTORIAL_SEED_ROUND
+  ) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `Let's try out ${meta.label}. ${meta.desc}`,
+        {
+          enabled: true
+        }
+      );
+
+      tutorialContinueMode =
+        "advance";
+
+      return;
+    }
+
+    if (
+      isGuesser &&
+      tutorialSubStep === 1
+    ) {
+      showTutorial(
+        `One more thing: as the Inspector, you also always have a Quest active — a visible challenge shown next to your powers that rewards a free green letter when completed. Check the Powers screen any time for the full list and example words.`,
+        {
+          enabled: true
+        }
+      );
+
+      tutorialContinueMode =
+        "advance";
+
+      return;
+    }
+
+    if (
+      tutorialSubStep ===
+      (isGuesser ? 2 : 1)
+    ) {
+      if (isGuesser) {
+        prefillPowerTutorialGuesserDraft();
+      }
+
+      showTutorial(
+        `Tap "${meta.label}" to activate it.`,
+        {
+          enabled: false
+        }
+      );
+
+      highlightPowerButtonByText(
+        meta.label
+      );
+
+      tutorialContinueMode =
+        "hide";
+
+      waitForPowerUse(powerId);
+
+      return;
+    }
+
+    if (
+      tutorialSubStep ===
+      (isGuesser ? 3 : 2)
+    ) {
+      if (
+        isGuesser &&
+        state.pendingGuess
+      ) {
+        showTutorial(
+          `Waiting for the Spy to react…`,
+          {
+            enabled: false
+          }
+        );
+      } else {
+        showTutorial(
+          isGuesser
+            ? "Now submit your guess."
+            : "Now submit to lock it in.",
+          {
+            enabled: false
+          }
+        );
+      }
+
+      tutorialContinueMode =
+        "hide";
+
+      if (isGuesser) {
+        highlightKeyboardGuesser();
+        waitForGuessSubmission(round);
+      } else {
+        highlightKeyboardSetter();
+        waitForSecretSubmission(round);
+      }
+
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  if (
+    round ===
+    POWER_TUTORIAL_SEED_ROUND + 1
+  ) {
+    if (!powerTutorialSkipSent) {
+      powerTutorialSkipSent = true;
+
+      showTutorial(
+        `That's ${meta.label} from your side! Switching to the RECEIVING end now, so you can see what it looks like from there.`,
+        {
+          enabled: false
+        }
+      );
+
+      tutorialContinueMode =
+        "hide";
+
+      sendGameAction({
+        type:
+          "TUTORIAL_SKIP_TO_RECEIVING"
+      });
+
+      return;
+    }
+
+    return;
+  }
+
+  hideTutorial();
+}
+
+function runPowerTutorialReceiving(
+  state,
+  role,
+  meta,
+  powerId,
+  round
+) {
+  const isGuesser =
+    role === "guesser";
+
+  if (
+    round ===
+    POWER_TUTORIAL_SEED_ROUND
+  ) {
+    if (isGuesser) {
+      if (tutorialSubStep === 0) {
+        showTutorial(
+          `Roles just swapped! Now watch what it's like when your opponent uses ${meta.label} against YOU.`,
+          {
+            enabled: true
+          }
+        );
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (tutorialSubStep === 1) {
+        showTutorial(
+          `One more thing: as the Inspector, you also always have a Quest active — a visible challenge shown next to your powers that rewards a free green letter when completed. Check the Powers screen any time for the full list and example words.`,
+          {
+            enabled: true
+          }
+        );
+
+        tutorialContinueMode =
+          "advance";
+
+        return;
+      }
+
+      if (tutorialSubStep === 2) {
+        prefillPowerTutorialGuesserDraft();
+
+        showTutorial(
+          state.pendingGuess
+            ? `Waiting for the Spy to react…`
+            : `Submit your guess.`,
+          {
+            enabled: false
+          }
+        );
+
+        highlightKeyboardGuesser();
+
+        tutorialContinueMode =
+          "hide";
+
+        waitForGuessSubmission(round);
+
+        return;
+      }
+
+      hideTutorial();
+      return;
+    }
+
+    if (!state.pendingGuess) {
+      showTutorial(
+        `Roles just swapped! Watch what happens when your opponent uses ${meta.label} against you...`,
+        {
+          enabled: false
+        }
+      );
+
+      tutorialContinueMode =
+        "hide";
+
+      return;
+    }
+
+    showTutorial(
+      `Your opponent just used ${meta.label}! React normally to finish the round.`,
+      {
+        enabled: false
+      }
+    );
+
+    tutorialContinueMode =
+      "hide";
+
+    highlightDraftRow("setter");
+
+    return;
+  }
+
+  if (
+    round ===
+    POWER_TUTORIAL_SEED_ROUND + 1
+  ) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `That's ${meta.label} in action! You've now seen it from both sides.`,
+        {
+          enabled: true
+        }
+      );
+
+      tutorialContinueMode =
+        "advance";
+
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  hideTutorial();
+}
+// STAGE "advanced": Guide, Drag & Lock, and Notes.
+function runAdvancedTutorial(state, role) {
+  clearHighlights();
+
+  if (role === "guesser") {
+    runAdvancedTutorialGuesser(state);
+  } else {
+    runAdvancedTutorialSetter(state);
+  }
+}
+
+function runAdvancedTutorialGuesser(state) {
+  const round =
+    state.history?.length ?? 0;
+
+  if (round === 0) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `This tutorial covers four extra tools: Guide, Drag & Lock, Notes, and the remaining-words box — plus a few other UI elements along the way.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `Guide is a little helper. Turn it on when you want the game to explain just a little more in the beginning.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightGuideToggle("guesser");
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      const word =
+        state.tutorialGuesses?.[0] ||
+        "CHAMP";
+
+      if (
+        state.simultaneousGuessSubmitted
+      ) {
+        showTutorial(
+          `Your guess is ready. Waiting for the Spy to choose a secret...`,
+          {
+            mode: "hide"
+          }
+        );
+      } else {
+        showTutorial(
+          `Type "${word}" and tap Submit Guess.`,
+          {
+            mode: "hide"
+          }
+        );
+      }
+
+      highlightKeyboardGuesser();
+
+      startKeyDemo(
+        `guesser-advanced-round0-${word}`,
+        () =>
+          tutorialWordKeyEls(
+            "guesser",
+            word,
+            localGuesserDraft
+          )
+      );
+
+      waitForGuessSubmission(round);
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  if (round === 1) {
+    const word =
+      state.tutorialGuesses?.[1] ||
+      "CUMIN";
+
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `Try dragging letters onto the tiles instead of tapping them. Drag each letter of "${word}" from the keyboard onto its tile — watch the demo, then try it yourself.`,
+        {
+          enabled: true
+        }
+      );
+
+      highlightDraftRow("guesser");
+      highlightKeyboardGuesser();
+      startDragDemo(word);
+
+      startKeyDemo(
+        `guesser-advanced-round1-${word}`,
+        () =>
+          tutorialWordKeyEls(
+            "guesser",
+            word,
+            localGuesserDraft
+          )
+      );
+
+      waitForDraftFilled();
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      stopDragDemo();
+      stopKeyDemo();
+
+      showTutorial(
+        `Nice! Now tap — don't drag — one of the filled tiles to lock it in. A locked letter can't be erased by Backspace.`,
+        {
+          enabled: true
+        }
+      );
+
+      highlightDraftRow("guesser");
+      waitForTileLocked();
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      showTutorial(
+        `Locked! Now tap that same tile again to unlock it.`,
+        {
+          enabled: true
+        }
+      );
+
+      highlightDraftRow("guesser");
+      waitForTileUnlocked();
+      return;
+    }
+
+    if (state.pendingGuess) {
+      showTutorial(
+        `Your guess is ready. Waiting for the Spy to answer...`,
+        {
+          mode: "hide"
+        }
+      );
+    } else {
+      showTutorial(
+        `Great — now tap Submit Guess to submit "${word}". Right after this, you will switch to playing as the Spy to see a few more features.`,
+        {
+          mode: "hide"
+        }
+      );
+    }
+
+    highlightKeyboardGuesser();
+
+    startKeyDemo(
+      `guesser-advanced-round1-submit-${word}`,
+      () =>
+        tutorialWordKeyEls(
+          "guesser",
+          word,
+          localGuesserDraft
+        )
+    );
+
+    waitForGuessSubmission(round);
+    return;
+  }
+
+  if (round === 2) {
+    stopKeyDemo();
+
+    showTutorial(
+      `Good. You used Guide and Drag & Lock. Next you will be the Spy and learn Notes.`,
+      {
+        mode: "hide"
+      }
+    );
+
+    return;
+  }
+
+  hideTutorial();
+}
+
+function runAdvancedTutorialSetter(state) {
+  const round =
+    state.history?.length ?? 0;
+
+  if (round === 0) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `Now you are the Spy. Drag & Lock works on your secret row too. We will use Notes after the first guess.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightDraftRow("setter");
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      const word =
+        state.tutorialSecrets?.[0] ||
+        "BLIMP";
+
+      if (
+        state.simultaneousSecretSubmitted
+      ) {
+        showTutorial(
+          `Your secret is ready. Waiting for the Inspector's first guess...`,
+          {
+            mode: "hide"
+          }
+        );
+      } else {
+        showTutorial(
+          `Enter "${word}". You can drag letters into tiles and tap a filled tile to lock it.`,
+          {
+            mode: "hide"
+          }
+        );
+      }
+
+      highlightDraftRow("setter");
+
+      startKeyDemo(
+        `setter-advanced-round0-${word}`,
+        () =>
+          tutorialWordKeyEls(
+            "setter",
+            word,
+            window.state?.setterDraft
+          )
+      );
+
+      waitForSecretSubmission(round);
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  if (round === 1) {
+    const oldSecret = (
+      state.tutorialSecrets?.[0] ||
+      "BLIMP"
+    ).toUpperCase();
+
+    const candidate = (
+      state.tutorialSecrets?.[1] ||
+      "LEMUR"
+    ).toUpperCase();
+
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `It is the Inspector's turn, so your secret keyboard is free. Notes has opened automatically as a scratchpad while you wait.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightNotesPanel();
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `Your current secret is saved here automatically. Now type "${candidate}" in the five small Notes boxes using the regular keyboard and press Enter to save another possible secret.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightNotesDraft();
+
+      startKeyDemo(
+        `setter-advanced-notes-${candidate}`,
+        () =>
+          tutorialWordKeyEls(
+            "setter",
+            candidate,
+            notesDraftText()
+          )
+      );
+
+      waitForNoteAdded(candidate);
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      stopKeyDemo();
+
+      showTutorial(
+        `Saved words that still match every clue stay green. After a new guess arrives, a small number can show how many secrets would remain if you used that word. Bigger is usually safer.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightNotesList();
+      return;
+    }
+
+    if (tutorialSubStep === 3) {
+      if (!state.pendingGuess) {
+        showTutorial(
+          `Your backup word is saved. The Inspector is still thinking...`,
+          {
+            key:
+              `advanced-notes-wait-${round}`,
+            mode: "hide"
+          }
+        );
+
+        highlightNotesList();
+
+        setContinue({
+          show: false,
+          mode: "hide"
+        });
+
+        return;
+      }
+
+      showTutorial(
+        `The new guess is here! This box tracks how many secrets are still possible — let's go through it one row at a time.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterRemainingBox();
+      return;
+    }
+
+    if (tutorialSubStep === 4) {
+      showTutorial(
+        `Keep vs. New compares your two options for this turn.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterRemainingBox();
+      return;
+    }
+
+    if (tutorialSubStep === 5) {
+      showTutorial(
+        `Keep is how many secrets would still be possible if you kept your current secret, "${oldSecret}".`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterRemainingBoxRow(0);
+      return;
+    }
+
+    if (tutorialSubStep === 6) {
+      showTutorial(
+        `New is how many would be possible if you switched to whatever's in your draft right now — it updates live as you type.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterRemainingBoxRow(1);
+      return;
+    }
+
+    if (tutorialSubStep === 7) {
+      showTutorial(
+        `Tap "${oldSecret}" in Notes — it copies straight into your secret row, without submitting anything yet.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightSavedNote(oldSecret);
+      waitForNoteSelected(oldSecret);
+      return;
+    }
+
+    if (tutorialSubStep === 8) {
+      showTutorial(
+        `Now tap "${candidate}" instead and watch New change again. Notice the small number next to each word in Notes too — that is this same New count for that word.`,
+        {
+          enabled: true
+        }
+      );
+
+      highlightSavedNote(candidate);
+      waitForNoteSelected(candidate);
+      return;
+    }
+
+    if (tutorialSubStep === 9) {
+      showTutorial(
+        `Now try typing something that isn't a real word — like "ABCDE" — directly into your secret row. Don't submit it. Watch New turn into a ✕, since that word could never actually be planted.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightDraftRow("setter");
+
+      startKeyDemo(
+        "setter-advanced-invalid-draft",
+        () =>
+          tutorialWordKeyEls(
+            "setter",
+            "ABCDE",
+            window.state?.setterDraft
+          )
+      );
+
+      waitForInvalidDraft();
+      return;
+    }
+
+    if (tutorialSubStep === 10) {
+      stopKeyDemo();
+
+      showTutorial(
+        `That ✕ means the draft isn't a legal secret — you can't submit it. Tap "${candidate}" in Notes again to bring back a real word before we move on.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      highlightSavedNote(candidate);
+      waitForNoteSelected(candidate);
+      return;
+    }
+
+    if (tutorialSubStep === 11) {
+      showTutorial(
+        `That's the remaining-words box! A few more things you'll see on this screen:`,
+        {
+          mode: "advance"
+        }
+      );
+
+      return;
+    }
+
+    if (tutorialSubStep === 12) {
+      showTutorial(
+        `Every time you switch to a brand-new secret instead of keeping the old one, you earn stars — the tighter that new secret narrows down what's still possible, the more you get. They build up in a 12-star meter above your powers (turned off during this tutorial, so you won't see it fill up here).`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSpyChargeMeter();
+      return;
+    }
+
+    if (tutorialSubStep === 13) {
+      showTutorial(
+        `Each turn also has one hidden bonus letter, shown as a small target chip next to your secret row — put that exact letter in that exact position in your new secret for +1 star. At 5 stars you unlock your second power, at 8 you can reset one letter's feedback, and at 12 you get a second reset. Switching secrets is almost always worth it.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightSetterCoverStars();
+      return;
+    }
+
+    if (tutorialSubStep === 14) {
+      showTutorial(
+        `The first number, in green, is your score. It goes up every time your opponent needs another guess to find your secret — the more guesses they need, the higher it climbs. The dimmer number next to it works the same way for your opponent's score, based on how many guesses you need. Whoever ends up with the higher score wins the match.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightHeaderScore("setter");
+      return;
+    }
+
+    if (tutorialSubStep === 15) {
+      showTutorial(
+        `Above your secret, the constraint row gives a compact rundown of every clue collected so far. Tap the ⧉ button any time to fold it away or bring it back.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightConstraintRowAndToggle("setter");
+      return;
+    }
+
+    if (tutorialSubStep === 16) {
+      showTutorial(
+        `The ? button always shows your active powers, and whether each one has been used yet.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightPowerInfoBtn("setter");
+      return;
+    }
+
+    showTutorial(
+      `Finally, the Log tab keeps a running history of every action this match — powers used, secrets switched, all of it. That's the advanced UI! Tap "Finish Tutorial" whenever you're ready — no need to finish playing this match.`,
+      {
+        mode: "end"
+      }
+    );
+
+    tutorialEndNextMode = "tutorial";
+
+    highlightSetterLog();
+    return;
+  }
+
+  if (round === 2) {
+    showTutorial(
+      `That is the advanced UI: Guide explains things, Drag & Lock helps you place letters, and Notes saves possible secrets while the other player thinks. Tap "Finish Tutorial" whenever you're ready — no need to finish playing this match.`,
+      {
+        mode: "end"
+      }
+    );
+
+    tutorialEndNextMode = "tutorial";
+
+    return;
+  }
+
+  hideTutorial();
+}
+
+function runSummaryTutorial(state) {
+  clearHighlights();
+
+  const stage2 =
+    state.tutorialStage === 2;
+
+  const stageAdvanced =
+    state.tutorialStage === "advanced";
+
+  if (stageAdvanced) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `Round done. Next you will be the Spy. That is where Notes is most useful.`,
+        {
+          mode: "advance"
+        }
+      );
+
+      highlightRoundSummary();
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `Tap Next Round when you are ready.`,
+        {
+          mode: "hide"
+        }
+      );
+
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  if (stage2) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `Round 1 done — you just used Letter Peek as the Inspector. This recap shows each secret, guess, and the feedback given.`,
+        {
+          enabled: true
+        }
+      );
+
+      highlightRoundSummary();
+
+      tutorialContinueMode =
+        "advance";
+
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `Next you'll play the Spy and get to try Counts Only. Whoever needs fewer guesses in their round wins the match — good luck!`,
+        {
+          enabled: true
+        }
+      );
+
+      tutorialContinueMode =
+        "hide";
+
+      return;
+    }
+
+    return;
+  }
+
+  if (tutorialSubStep === 0) {
+    showTutorial(
+      `Nice, you found the secret! Here's a quick summary of the round, starting with who played which role.`,
+      {
+        enabled: true
+      }
+    );
+
+    highlightRoundSummaryNames();
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  if (tutorialSubStep === 1) {
+    showTutorial(
+      `It shows how many guesses you took to find the secret — that's the count. Lower is better for you as the Inspector; and worse for your opponent.`,
+      {
+        enabled: true
+      }
+    );
+
+    highlightRoundSummaryGuessCount();
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  if (tutorialSubStep === 2) {
+    showTutorial(
+      `Here's every guess you made this round.`,
+      {
+        enabled: true
+      }
+    );
+
+    highlightRoundSummaryColumn(
+      "guess-cell"
+    );
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  if (tutorialSubStep === 3) {
+    showTutorial(
+      `And here's the feedback you got back for each one.`,
+      {
+        enabled: true
+      }
+    );
+
+    highlightRoundSummaryColumn(
+      "feedback-cell"
+    );
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  if (tutorialSubStep === 4) {
+    showTutorial(
+      `We'll explain the rest once we've gone through the Spy's side.`,
+      {
+        enabled: true
+      }
+    );
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  if (tutorialSubStep === 5) {
+    showTutorial(
+      `Let's continue — tap Next Round.`,
+      {
+        enabled: true,
+        mode: "hide"
+      }
+    );
+
+    highlightNextRoundBtn();
+
+    startKeyDemo(
+      "round-summary-next-round",
+      () => [byId("nextRoundBtn")]
+    );
+
+    tutorialContinueMode =
+      "hide";
+  }
+}
+
+function runMatchTutorial(state) {
+  clearHighlights();
+
+  const stage2 =
+    state.tutorialStage === 2;
+
+  const stagePower =
+    state.tutorialStage === "power";
+
+  const stageAdvanced =
+    state.tutorialStage ===
+    "advanced";
+
+if (stageAdvanced) {
+  if (tutorialSubStep === 0) {
+    showTutorial(
+      `Advanced UI complete. You practiced Guide, Drag & Lock, and Notes.`,
+      {
+        mode: "advance"
+      }
+    );
+
+    return;
+  }
+
+  if (tutorialSubStep === 1) {
+    showTutorial(
+      `Powers are taught in the separate Power Tutorial.`,
+      {
+        mode: "hide"
+      }
+    );
+
+    return;
+  }
+
+  hideTutorial();
+  return;
+}
+  if (stagePower) {
+    const meta =
+      window.POWER_METADATA?.[
+        state.tutorialPowerId
+      ];
+
+    const label =
+      meta?.label || "that power";
+
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `That's ${label} from both sides — how you'd use it, and what it looks like when your opponent uses it on you.`,
+        {
+          enabled: true
+        }
+      );
+
+      tutorialContinueMode =
+        "advance";
+
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `Head back to the Powers screen any time to try another one, or check the full list on both sides.`,
+        {
+          enabled: true
+        }
+      );
+
+      tutorialContinueMode =
+        "hide";
+
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  if (stage2) {
+    if (tutorialSubStep === 0) {
+      showTutorial(
+        `That's both powers tried — one from each side! Letter Peek and Counts Only are just two of many.`,
+        {
+          enabled: true
+        }
+      );
+
+      tutorialContinueMode =
+        "advance";
+
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      showTutorial(
+        `Check the Powers screen any time from How to Play to see the full list on both sides. That's the tutorial — good luck out there!`,
+        {
+          enabled: true
+        }
+      );
+
+      tutorialContinueMode =
+        "hide";
+
+      return;
+    }
+
+    hideTutorial();
+    return;
+  }
+
+  if (tutorialSubStep === 0) {
+    showTutorial(
+      `The game's ended — you've finished your first match of Vowel Play!`,
+      {
+        enabled: true
+      }
+    );
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  if (tutorialSubStep === 1) {
+    showTutorial(
+      `This is the final score. If your opponent needed more guesses than you did, you win!`,
+      {
+        enabled: true
+      }
+    );
+
+    highlightMatchScore();
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  if (tutorialSubStep === 2) {
+    showTutorial(
+      `Here's Round 1's summary — every guess, the feedback, and the secret used.`,
+      {
+        enabled: true
+      }
+    );
+
+    highlightStoredRound(0);
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  if (tutorialSubStep === 3) {
+    showTutorial(
+      `And here's Round 2's.`,
+      {
+        enabled: true
+      }
+    );
+
+    highlightStoredRound(1);
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  const secretSteps =
+    buildMatchSecretNarrationSteps(
+      state
+    );
+
+  const secretStepIndex =
+    tutorialSubStep - 4;
+
+  if (
+    secretStepIndex >= 0 &&
+    secretStepIndex < secretSteps.length
+  ) {
+    const step =
+      secretSteps[secretStepIndex];
+
+    showTutorial(step.text, {
+      enabled: true
+    });
+
+    step.highlight();
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  const buttonsStep =
+    4 + secretSteps.length;
+
+  if (tutorialSubStep === buttonsStep) {
+    showTutorial(
+      `Down here: New Match starts a fresh game, Replay repeats this exact setup, and Leave takes you back to the menu.`,
+      {
+        enabled: true
+      }
+    );
+
+    highlightSummaryActions();
+
+    tutorialContinueMode =
+      "advance";
+
+    return;
+  }
+
+  if (
+    tutorialSubStep ===
+    buttonsStep + 1
+  ) {
+    showTutorial(
+      `That's the base game! Tap "Finish Tutorial" whenever you're ready — no need to finish playing this match.`,
+      {
+        enabled: true,
+        mode: "end"
+      }
+    );
+
+    tutorialEndNextMode = "tutorial2";
+  }
+}
 window.TutorialCore = {
   show: showTutorial,
   hide: hideTutorial,
