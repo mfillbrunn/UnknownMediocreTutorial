@@ -476,36 +476,20 @@ function getCandidateRemainingCount(
   );
 }
 
-function starsForGap(
-  gapPct,
-  draftCount
-) {
-  let stars = 0;
-
+function starsForGap(gapPct) {
   if (gapPct < 10) {
-    stars = 3;
-  } else if (gapPct < 25) {
-    stars = 2;
-  } else if (gapPct < 50) {
-    stars = 1;
+    return 3;
   }
 
-  const count =
-    Number(draftCount) || 0;
-
-  if (count <= 0) {
-    return 0;
+  if (gapPct < 25) {
+    return 2;
   }
 
-  if (count <= 4) {
-    return Math.min(stars, 1);
+  if (gapPct < 50) {
+    return 1;
   }
 
-  if (count <= 9) {
-    return Math.min(stars, 2);
-  }
-
-  return stars;
+  return 0;
 }
 
 function buildCoverStrengthState(
@@ -670,8 +654,7 @@ let gapPct = null;
     );
 
     stars = starsForGap(
-      rawGapPct,
-      draftCount
+      rawGapPct
     );
   }
 
