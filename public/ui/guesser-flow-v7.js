@@ -549,8 +549,22 @@
 
     wrap.__revealStarted = true;
 
+    // client.js's own stateUpdate listener runs first (see the big comment
+    // on captureSubmitFlight) and its renderHistory has already created
+    // this row with "row-enter" -- a plain 22px upward slide meant as a
+    // fallback for screens with no custom flight (see history.css's own
+    // comment on that class). This module always replaces/discards that
+    // row via morphPendingIntoHistory or its own flight, but row-enter's
+    // animation starts the instant the class exists, and it was never
+    // being cancelled here -- just hidden -- so a still-running 22px
+    // offset could survive into this row's eventual real position and
+    // very briefly render it riding up over the row above before settling,
+    // right as the tile flip kicked in. Removing it alongside reveal-tiles
+    // (same guard this function already applies) stops that offset dead
+    // instead of leaving it to decay on its own.
     wrap.classList.remove(
-      "reveal-tiles"
+      "reveal-tiles",
+      "row-enter"
     );
 
     wrap.classList.add(

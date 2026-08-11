@@ -121,14 +121,15 @@ window.showDailyChallenge = async function () {
           </div>
           ${difficultyRow}
           <div class="daily-result-actions">
-            <button id="dailyRankingsBtn" class="menu-btn small">🏆 Rankings</button>
             <button id="shareDailyBtn" class="menu-btn primary small">Share Result 📤</button>
           </div>
         </div>`
-      : `<div class="daily-result-actions">
-          <button id="dailyRankingsBtn" class="menu-btn small">🏆 Rankings</button>
-        </div>`;
+      : "";
 
+    // Same standalone button (markup, class, position at the end of the
+    // screen) as the pre-completion screen below -- it used to be squeezed
+    // into a flex row inside the (narrower, 260px-capped) result block
+    // alongside Share, which shrank it to half-width there but not here.
     screen.innerHTML = `<div class="menu-center">
       <div class="screen-back-header">
         <button class="menu-btn screen-back-btn" onclick="showStartup()">← Back</button>
@@ -139,6 +140,7 @@ window.showDailyChallenge = async function () {
         You've already played today's challenge. Come back tomorrow!
       </p>
       ${resultBlock}
+      <button id="dailyRankingsBtn" class="menu-btn small" style="margin-top:14px">🏆 Rankings</button>
     </div>`;
 
     if (r) {
