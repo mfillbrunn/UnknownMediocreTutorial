@@ -542,6 +542,28 @@
 
     <h3 class="sim-subtitle">Past Runs</h3>
     <div id="simPastRuns" class="sim-past-runs">Loading…</div>
+
+    <h3 class="sim-subtitle sim-subtitle-wide">Quest Completion Chart</h3>
+    <p class="sim-explainer">
+      Forces each guesser quest type onto an AI guesser (no other powers
+      active) across many single-round trials, and measures how often the
+      quest is actually completed for its full green reward before the
+      round ends. Uses the same runs/AI difficulty settings above.
+    </p>
+    <div class="sim-batch-controls">
+      <button id="simQuestTestAllBtn" class="menu-btn">Test All Quests</button>
+      <span id="simQuestTestAllEstimate" class="sim-estimate"></span>
+    </div>
+
+    <div id="simQuestBatchProgress" class="sim-progress hidden">
+      <div class="sim-progress-bar"><div id="simQuestBatchProgressFill" class="sim-progress-fill"></div></div>
+      <span id="simQuestBatchProgressText"></span>
+    </div>
+
+    <div id="simQuestChartWrap" class="sim-chart-wrap"></div>
+
+    <h3 class="sim-subtitle">Past Quest Runs</h3>
+    <div id="simQuestPastRuns" class="sim-past-runs">Loading…</div>
   </div>
 </section>
 

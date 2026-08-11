@@ -28,6 +28,11 @@ const {
   runAllPowerSimulations,
   savePowerSimulation
 } = require("../core/simulation/runPowerSimulation");
+const {
+  runQuestSimulation,
+  runAllQuestSimulations,
+  saveQuestSimulation
+} = require("../core/simulation/runQuestSimulation");
 
 const {
   buildSafeStateForPlayer
@@ -1084,6 +1089,56 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
         cb?.({ ok: true, results });
       } catch (err) {
         console.error("Power simulation batch failed:", err);
+        cb?.({ ok: false, error: "Simulation batch failed" });
+      }
+    });
+
+    /* ---------- DEV: QUEST COMPLETION SIMULATION ---------- */
+    socket.on("runQuestSimulation", async ({ userId, questType, runs, aiDifficulty }, cb) => {
+      if (!userId) return cb?.({ ok: false, error: "Not logged in" });
+      if (!questType) return cb?.({ ok: false, error: "Pick a quest first" });
+
+      const safeRuns = Math.max(1, Math.min(1000, Math.floor(Number(runs)) || 100));
+      const safeDifficulty = Math.max(1, Math.min(3, Math.floor(Number(aiDifficulty)) || 2));
+
+      try {
+        const stats = await runQuestSimulation(
+          { questType, runs: safeRuns, aiDifficulty: safeDifficulty },
+          context,
+          (progress) => socket.emit("questSimulationProgress", progress)
+        );
+
+        let saved = null;
+        try {
+          saved = await saveQuestSimulation(stats, context, userId);
+        } catch (saveErr) {
+          console.error("Quest simulation save failed:", saveErr);
+        }
+
+        cb?.({ ok: true, stats, saved });
+      } catch (err) {
+        console.error("Quest simulation failed:", err);
+        cb?.({ ok: false, error: "Simulation failed" });
+      }
+    });
+
+    socket.on("runAllQuestSimulations", async ({ userId, runs, aiDifficulty }, cb) => {
+      if (!userId) return cb?.({ ok: false, error: "Not logged in" });
+
+      const safeRuns = Math.max(1, Math.min(1000, Math.floor(Number(runs)) || 100));
+      const safeDifficulty = Math.max(1, Math.min(3, Math.floor(Number(aiDifficulty)) || 2));
+
+      try {
+        const results = await runAllQuestSimulations(
+          { runs: safeRuns, aiDifficulty: safeDifficulty },
+          context,
+          userId,
+          (progress) => socket.emit("questSimulationBatchProgress", progress)
+        );
+
+        cb?.({ ok: true, results });
+      } catch (err) {
+        console.error("Quest simulation batch failed:", err);
         cb?.({ ok: false, error: "Simulation batch failed" });
       }
     });

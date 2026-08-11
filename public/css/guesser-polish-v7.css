@@ -377,18 +377,9 @@
     );
 }
 
-.draft-candidate-btn.quest-themed::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: linear-gradient(
-    180deg,
-    var(--quest-banner-1) 0 33.333%,
-    var(--quest-banner-2) 33.333% 66.666%,
-    var(--quest-banner-3) 66.666% 100%
-  );
-}
+/* No left-side colour stripe here (unlike .power-themed::before) --
+   quest cards are meant to read as visually distinct from power cards at
+   a glance, not just another themed variant of the same card shape. */
 
 .draft-candidate-btn.quest-themed .draft-candidate-emoji {
   filter: drop-shadow(0 0 7px color-mix(in srgb, var(--quest-banner-1) 42%, transparent));

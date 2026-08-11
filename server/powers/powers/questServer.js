@@ -56,7 +56,7 @@ const QUEST_TYPES = [
 // (summed across every guess), not qualifying guesses -- every other type
 // counts one point per qualifying guess.
 const QUEST_THRESHOLDS = {
-  RARE: 5,
+  RARE: 6,
   ROW: 1, // "complete any one row" -- see rowsCompleted() below, not a plain count
   ALPHA: 3,
   DOUBLES: 3,
@@ -150,8 +150,8 @@ const QUEST_RARE_LETTERS = new Set("QJXZWKV");
 // The 12 rarest English letters a match can draw its 7 from (superset of
 // the legacy 7 above). Drawing a random 7-of-12 each match instead of
 // always the same fixed 7 keeps the RARE quest's target letters from
-// being memorized/identical every game, while the "use 5" threshold
-// (QUEST_THRESHOLDS.RARE) stays unchanged.
+// being memorized/identical every game. The "use 6" threshold
+// (QUEST_THRESHOLDS.RARE) still leaves exactly one drawn letter spare.
 const QUEST_RARE_LETTER_POOL = "QJXZWKVFYBHG".split("");
 const QUEST_RARE_DRAW_SIZE = 7;
 

@@ -2127,6 +2127,13 @@
   padding: 14px 10px 10px;
   margin-bottom: 20px;
   overflow-x: auto;
+  /* .menu-center's align-items:center sizes flex children to their own
+     content (shrink-to-fit) instead of stretching them to the column's
+     width -- without an explicit width here, a wide chart (many powers or
+     quest types) grows this wrapper past .sim-center's own max-width
+     instead of triggering the overflow-x:auto scrollbar above. */
+  width: 100%;
+  min-width: 0;
 }
 
 .sim-chart-empty {
@@ -2202,8 +2209,9 @@
 
 .sim-bar-x-label {
   fill: rgba(255,255,255,0.8);
-  font-size: 13px;
-  text-anchor: middle;
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  text-anchor: end;
 }
 
 /* ── Lobby time control: analog watch ─────────────────────────────────

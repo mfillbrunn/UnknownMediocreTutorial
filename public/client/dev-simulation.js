@@ -26,6 +26,9 @@ document.getElementById("devSimulationBtn")?.addEventListener("click", () => {
   loadPastSimulations(true);
   loadChartData(true);
   updateSimTestAllEstimate();
+  loadPastQuestSimulations(true);
+  loadQuestChartData(true);
+  updateSimQuestTestAllEstimate();
 });
 
 function populateSimPowerSelect() {
@@ -232,7 +235,10 @@ function updateSimTestAllEstimate() {
   estimateEl.textContent = `Tests ${counts[simRoleFilter]} power${counts[simRoleFilter] === 1 ? "" : "s"} (${simRoleFilter}) — ${label}`;
 }
 
-document.getElementById("simRunsInput")?.addEventListener("input", updateSimTestAllEstimate);
+document.getElementById("simRunsInput")?.addEventListener("input", () => {
+  updateSimTestAllEstimate();
+  updateSimQuestTestAllEstimate();
+});
 
 document.querySelectorAll("#simRoleFilter .sim-role-btn").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -472,13 +478,20 @@ function renderCharts() {
   }
 }
 
-// Hand-rolled SVG bar chart — power on the x axis, effectiveness (see
-// computeEffectiveness) on the y axis, error bars showing standard error.
-// Bars are zero-centered: a power that backfires for its own holder (rare,
-// but possible with a noisy or genuinely counterproductive power) plots
-// below the zero line instead of being clamped to it. No charting library
-// in this codebase yet, and a plain bar+error chart doesn't need one.
-function renderBarChart(container, data) {
+// Hand-rolled SVG bar chart — power (or quest, see renderQuestChart below)
+// on the x axis, some measured value on the y axis, error bars showing
+// standard error. No charting library in this codebase yet, and a plain
+// bar+error chart doesn't need one.
+//
+// opts lets a caller other than the default power-effectiveness chart
+// reuse the same renderer without forking it:
+//   - colorFor(d): bar fill color, defaults to the setter/guesser role color
+//   - tooltipFor(d): <title> hover text, defaults to the effectiveness wording
+//   - zeroBased: plot [0, max] instead of the default zero-centered
+//     [-max, max] -- power effectiveness can legitimately go negative
+//     (a power backfiring), but a completion rate or count never can, so
+//     centering it on zero would waste the whole lower half of the chart.
+function renderBarChart(container, data, opts = {}) {
   if (!container) return;
 
   if (!data.length) {
@@ -487,9 +500,9 @@ function renderBarChart(container, data) {
   }
 
   const barW = 28;
-  const gap = 16;
+  const gap = 22;
   const marginTop = 14;
-  const marginBottom = 40;
+  const marginBottom = 68;
   const marginLeft = 34;
   const marginRight = 14;
   const plotH = 200;
@@ -497,13 +510,23 @@ function renderBarChart(container, data) {
   const width = marginLeft + marginRight + data.length * (barW + gap);
   const height = marginTop + plotH + marginBottom;
 
+  const zeroBased = !!opts.zeroBased;
   const maxAbs = Math.max(...data.map(d => Math.abs(d.value) + d.sem), 0.5) * 1.15;
-  const yScale = v => marginTop + plotH - ((v + maxAbs) / (maxAbs * 2)) * plotH;
+  const yMin = zeroBased ? 0 : -maxAbs;
+  const yMax = zeroBased ? Math.max(...data.map(d => d.value + d.sem), 1) * 1.15 : maxAbs;
+  const yScale = v => marginTop + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
   const zeroY = yScale(0);
 
   const roleColor = role => (role === "setter" ? "var(--setter-color, #f87171)" : "var(--guesser-color, #60a5fa)");
+  const colorFor = opts.colorFor || (d => roleColor(d.role));
+  const tooltipFor = opts.tooltipFor || (d => {
+    const sign = d.value >= 0 ? "+" : "";
+    return `${d.emoji} ${d.label} (${d.role}) — effectiveness ${sign}${d.value.toFixed(2)} ± ${d.sem.toFixed(2)} guesses (n=${d.n})`;
+  });
 
-  const gridVals = [-maxAbs, -maxAbs / 2, 0, maxAbs / 2, maxAbs];
+  const gridVals = zeroBased
+    ? [0, yMax / 4, yMax / 2, (yMax * 3) / 4, yMax]
+    : [-maxAbs, -maxAbs / 2, 0, maxAbs / 2, maxAbs];
   const gridlines = gridVals.map(val => {
     const y = yScale(val);
     const zero = val === 0;
@@ -522,16 +545,15 @@ function renderBarChart(container, data) {
     const barH = Math.abs(zeroY - barEdge);
     const errTop = yScale(d.value + d.sem);
     const errBottom = yScale(d.value - d.sem);
-    const sign = d.value >= 0 ? "+" : "";
 
     bars += `
       <g class="sim-bar-group">
-        <title>${d.emoji} ${d.label} (${d.role}) — effectiveness ${sign}${d.value.toFixed(2)} ± ${d.sem.toFixed(2)} guesses (n=${d.n})</title>
-        <rect class="sim-bar-fill" x="${x.toFixed(1)}" y="${barTop.toFixed(1)}" width="${barW}" height="${Math.max(0, barH).toFixed(1)}" fill="${roleColor(d.role)}" rx="3"></rect>
+        <title>${tooltipFor(d)}</title>
+        <rect class="sim-bar-fill" x="${x.toFixed(1)}" y="${barTop.toFixed(1)}" width="${barW}" height="${Math.max(0, barH).toFixed(1)}" fill="${colorFor(d)}" rx="3"></rect>
         <line class="sim-bar-errbar" x1="${cx.toFixed(1)}" y1="${errTop.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${errBottom.toFixed(1)}"></line>
         <line class="sim-bar-errbar" x1="${(cx - 5).toFixed(1)}" y1="${errTop.toFixed(1)}" x2="${(cx + 5).toFixed(1)}" y2="${errTop.toFixed(1)}"></line>
         <line class="sim-bar-errbar" x1="${(cx - 5).toFixed(1)}" y1="${errBottom.toFixed(1)}" x2="${(cx + 5).toFixed(1)}" y2="${errBottom.toFixed(1)}"></line>
-        <text class="sim-bar-x-label" x="${cx.toFixed(1)}" y="${(marginTop + plotH + 20).toFixed(1)}">${d.emoji}</text>
+        <text class="sim-bar-x-label" x="${cx.toFixed(1)}" y="${(marginTop + plotH + 14).toFixed(1)}" transform="rotate(-40 ${cx.toFixed(1)} ${(marginTop + plotH + 14).toFixed(1)})">${d.id}</text>
       </g>
     `;
   });
@@ -542,4 +564,217 @@ function renderBarChart(container, data) {
       ${bars}
     </svg>
   `;
+}
+
+// ------------------------------------------------------------------
+// Quest Completion Chart: forces each guesser quest type onto an AI
+// guesser (see server/core/simulation/runQuestSimulation.js) across many
+// single-round trials with no other powers active, and measures how often
+// the quest is actually completed for its full green reward before the
+// round ends. Unlike powers there's no with/without baseline to diff
+// against -- every guesser always has exactly one quest -- so the chart's
+// y-axis is a completion rate (0-100%) per type instead of an
+// effectiveness delta.
+// ------------------------------------------------------------------
+
+function questCountsTotal() {
+  return window.QUEST_METADATA ? Object.keys(window.QUEST_METADATA).length : 12;
+}
+
+function updateSimQuestTestAllEstimate() {
+  const estimateEl = document.getElementById("simQuestTestAllEstimate");
+  if (!estimateEl) return;
+
+  const runsInput = document.getElementById("simRunsInput");
+  const runs = Math.max(1, Math.min(1000, parseInt(runsInput?.value, 10) || 100));
+  const total = questCountsTotal();
+  // Same rough ~100ms/trial estimate as updateSimTestAllEstimate, no shared
+  // baseline batch here since every quest type's trials are independent.
+  const estSeconds = runs * total * 0.1;
+  const label = estSeconds < 60
+    ? `~${Math.round(estSeconds)}s`
+    : `~${(estSeconds / 60).toFixed(1)} min`;
+
+  estimateEl.textContent = `Tests ${total} quests — ${label}`;
+}
+
+document.getElementById("simQuestTestAllBtn")?.addEventListener("click", () => {
+  const userId = window.currentUser?.id;
+  if (!userId) {
+    window.toast?.("Log in first to run a simulation.");
+    return;
+  }
+
+  const runsInput = document.getElementById("simRunsInput");
+  const runs = Math.max(1, Math.min(1000, parseInt(runsInput?.value, 10) || 100));
+  runsInput.value = runs;
+  const aiDifficulty = parseInt(document.getElementById("simDifficultySelect")?.value, 10) || 2;
+
+  const testAllBtn = document.getElementById("simQuestTestAllBtn");
+  const progress = document.getElementById("simQuestBatchProgress");
+  const progressFill = document.getElementById("simQuestBatchProgressFill");
+  const progressText = document.getElementById("simQuestBatchProgressText");
+
+  testAllBtn.disabled = true;
+  progress.classList.remove("hidden");
+  progressFill.style.width = "0%";
+  progressText.textContent = "Starting…";
+
+  socket.emit(
+    "runAllQuestSimulations",
+    { userId, runs, aiDifficulty },
+    (res) => {
+      testAllBtn.disabled = false;
+      progress.classList.add("hidden");
+
+      if (!res?.ok) {
+        window.toast?.(res?.error || "Batch simulation failed");
+        return;
+      }
+
+      const failedSaves = res.results.filter(r => !r.saved).length;
+      window.toast?.(
+        failedSaves
+          ? `Tested ${res.results.length} quests — ${failedSaves} failed to save, see console.`
+          : `Tested ${res.results.length} quests.`
+      );
+
+      loadPastQuestSimulations(true);
+      loadQuestChartData(true);
+    }
+  );
+});
+
+socket.on("questSimulationBatchProgress", (p) => {
+  const progress = document.getElementById("simQuestBatchProgress");
+  const fill = document.getElementById("simQuestBatchProgressFill");
+  const text = document.getElementById("simQuestBatchProgressText");
+  if (!progress || progress.classList.contains("hidden")) return;
+
+  const pct = Math.min(100, Math.round(((p.questIndex + p.completed / p.total) / p.totalQuests) * 100));
+  fill.style.width = `${pct}%`;
+  const label = window.QUEST_METADATA?.[p.questType]?.label || p.questType;
+  text.textContent = `Testing ${label} (${p.questIndex + 1}/${p.totalQuests}): ${p.completed}/${p.total}`;
+});
+
+let questPastSimulationsLoaded = false;
+
+async function loadPastQuestSimulations(forceReload) {
+  const container = document.getElementById("simQuestPastRuns");
+  if (!container) return;
+  if (questPastSimulationsLoaded && !forceReload) return;
+
+  container.textContent = "Loading…";
+
+  try {
+    const { data, error } = await window.supabaseClient
+      .from("quest_simulations")
+      .select("quest_type, runs, ai_difficulty, completed_trials, completed, claimed_early, never_completed, completion_rate, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (error) throw error;
+
+    renderPastQuestSimulations(data);
+    questPastSimulationsLoaded = true;
+  } catch (err) {
+    console.error("Failed to load past quest simulations:", err);
+    container.textContent = "Failed to load past runs";
+  }
+}
+
+function renderPastQuestSimulations(rows) {
+  const container = document.getElementById("simQuestPastRuns");
+  if (!container) return;
+
+  if (!rows.length) {
+    container.textContent = "No quest simulations run yet";
+    return;
+  }
+
+  container.innerHTML = rows.map(r => {
+    const meta = window.QUEST_METADATA?.[r.quest_type];
+    const pct = r.completion_rate == null ? "—" : `${(Number(r.completion_rate) * 100).toFixed(0)}%`;
+    return `
+      <div class="sim-past-run-row">
+        <span class="sim-past-run-power">${meta?.emoji || ""} ${meta?.label || r.quest_type}</span>
+        <span class="sim-past-run-meta">${r.runs} runs · lvl ${r.ai_difficulty} · n=${r.completed_trials}</span>
+        <span class="sim-past-run-delta">${pct}</span>
+        <span class="sim-past-run-date">${new Date(r.created_at).toLocaleDateString()}</span>
+      </div>
+    `;
+  }).join("");
+}
+
+let questChartRowsCache = null;
+
+async function loadQuestChartData(forceReload) {
+  if (questChartRowsCache && !forceReload) {
+    renderQuestChart();
+    return;
+  }
+
+  const wrap = document.getElementById("simQuestChartWrap");
+  if (wrap) wrap.innerHTML = `<div class="sim-chart-empty">Loading…</div>`;
+
+  try {
+    const { data, error } = await window.supabaseClient
+      .from("quest_simulations")
+      .select("quest_type, runs, ai_difficulty, completed_trials, completed, completion_rate, created_at")
+      .order("created_at", { ascending: false })
+      .limit(300);
+
+    if (error) throw error;
+
+    const latestByQuest = new Map();
+    for (const row of data) {
+      if (!latestByQuest.has(row.quest_type)) latestByQuest.set(row.quest_type, row);
+    }
+    questChartRowsCache = [...latestByQuest.values()];
+
+    renderQuestChart();
+  } catch (err) {
+    console.error("Failed to load quest chart data:", err);
+    if (wrap) wrap.innerHTML = `<div class="sim-chart-empty">Failed to load chart data</div>`;
+  }
+}
+
+// Standard error of a Bernoulli proportion (completion rate), as a
+// percentage to match the chart's 0-100 y-axis.
+function completionRateSem(rate, n) {
+  if (!n || rate == null) return 0;
+  return Math.sqrt((rate * (1 - rate)) / n) * 100;
+}
+
+function buildQuestChartDataset(rows) {
+  return rows
+    .map(r => {
+      const meta = window.QUEST_METADATA?.[r.quest_type];
+      const rate = r.completion_rate == null ? 0 : Number(r.completion_rate);
+      return {
+        id: r.quest_type,
+        label: meta?.label || r.quest_type,
+        emoji: meta?.emoji || "",
+        value: rate * 100,
+        sem: completionRateSem(rate, r.completed_trials),
+        n: r.completed_trials || r.runs || 0
+      };
+    })
+    .sort((a, b) => a.value - b.value);
+}
+
+function renderQuestChart() {
+  const wrap = document.getElementById("simQuestChartWrap");
+  if (!wrap || !questChartRowsCache) return;
+
+  if (!questChartRowsCache.length) {
+    wrap.innerHTML = `<div class="sim-chart-empty">No quest simulation results yet — run one above.</div>`;
+    return;
+  }
+
+  renderBarChart(wrap, buildQuestChartDataset(questChartRowsCache), {
+    zeroBased: true,
+    colorFor: () => "#8b5cf6",
+    tooltipFor: d => `${d.emoji} ${d.label} — completed ${d.value.toFixed(0)}% ± ${d.sem.toFixed(1)}% (n=${d.n})`
+  });
 }

@@ -222,7 +222,7 @@ function computeQuestStatus(state) {
   }
 
   if (q.type === "RARE") {
-    return { meta, label: `${rareUsedLetters.length}/5`, desc: meta.desc, done: false, usedLetters: rareUsedLetters };
+    return { meta, label: `${rareUsedLetters.length}/6`, desc: meta.desc, done: false, usedLetters: rareUsedLetters };
   }
 
   if (q.type === "ROW") {
