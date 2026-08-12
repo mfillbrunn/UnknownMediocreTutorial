@@ -452,6 +452,7 @@ function repositionTutorialBubble() {
   }
 
   if (tutorialUserPositioned) {
+    repositionUserPositionedBubble(bubble);
     return;
   }
 
@@ -643,6 +644,70 @@ function repositionTutorialBubble() {
     "--tutorial-bottom"
   );
 }
+
+// Once the player has dragged the bubble (tutorialUserPositioned), it no
+// longer gets auto-placed from scratch -- but it should still duck out of
+// the way of whatever's currently highlighted if the player's own spot
+// happens to land on top of it. Nudges `top` only far enough to clear an
+// actual overlap and leaves the bubble exactly where it was dragged
+// otherwise; never touches `left`, so the player's horizontal choice is
+// never overridden.
+function repositionUserPositionedBubble(bubble) {
+  if (tutorialRingSettling) return;
+  if (bubble.classList.contains("tutorial-dragging")) return;
+
+  const viewport = window.visualViewport;
+  const viewportTop = viewport?.offsetTop || 0;
+  const viewportHeight = viewport?.height || window.innerHeight;
+  const viewportBottom = viewportTop + viewportHeight;
+  const edge = 8;
+  const gap = 10;
+
+  const keyboard = getVisibleTutorialKeyboard();
+  const keyboardTop = keyboard ? keyboard.getBoundingClientRect().top : viewportBottom;
+  const availableBottom = Math.min(viewportBottom - edge, keyboardTop - edge);
+
+  const measuredRect = bubble.getBoundingClientRect();
+  const bubbleHeight = measuredRect.height;
+  const bubbleLeft = measuredRect.left;
+  const bubbleRight = measuredRect.right;
+
+  const minTop = viewportTop + edge;
+  const maxTop = Math.max(minTop, availableBottom - bubbleHeight);
+
+  let top = Math.max(minTop, Math.min(maxTop, measuredRect.top));
+
+  const avoidRects = tutorialAvoidElements().map(el => el.getBoundingClientRect());
+  const rectAtTop = t => ({ top: t, bottom: t + bubbleHeight, left: bubbleLeft, right: bubbleRight });
+
+  let moved = false;
+  for (let pass = 0; pass < 4; pass++) {
+    const topBeforePass = top;
+
+    for (const avoidRect of avoidRects) {
+      if (!tutorialRectsOverlap(rectAtTop(top), avoidRect, gap)) continue;
+
+      moved = true;
+      const aboveTop = avoidRect.top - gap - bubbleHeight;
+      const belowTop = avoidRect.bottom + gap;
+
+      if (aboveTop >= minTop) top = Math.min(aboveTop, maxTop);
+      else if (belowTop <= maxTop) top = belowTop;
+      else top = minTop;
+    }
+
+    if (top === topBeforePass) break;
+  }
+
+  // Nothing overlapped -- leave the player's exact placement alone rather
+  // than snapping it to a "corrected" value it never actually needed.
+  if (!moved) return;
+
+  bubble.style.top = `${Math.round(top)}px`;
+  bubble.style.bottom = "auto";
+  bubble.style.setProperty("--tutorial-drag-top", `${Math.round(top)}px`);
+}
+
 function tutorialStepKey(opts = {}) {
   if (opts.key) {
     return opts.key;

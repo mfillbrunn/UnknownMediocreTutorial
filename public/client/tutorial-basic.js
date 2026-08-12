@@ -31,15 +31,15 @@ function basicFeedbackLegend() {
     <div class="tutorial-feedback-legend" aria-label="What the colors mean">
       <div class="tutorial-feedback-item">
         <span class="tutorial-mini-tile tile-green">A</span>
-        <span><strong>Green</strong><small>You got it! Right letter, right spot.</small></span>
+        <span><strong>Green</strong><small>Right letter, right spot.</small></span>
       </div>
       <div class="tutorial-feedback-item">
         <span class="tutorial-mini-tile tile-yellow">A</span>
-        <span><strong>Yellow</strong><small>Close! That letter is in the word, just not in that spot.</small></span>
+        <span><strong>Yellow</strong><small>In the word, wrong spot.</small></span>
       </div>
       <div class="tutorial-feedback-item">
         <span class="tutorial-mini-tile tile-gray">A</span>
-        <span><strong>Grey</strong><small>That letter isn't in the word anywhere. Cross it off in your head.</small></span>
+        <span><strong>Grey</strong><small>Not in the word at all.</small></span>
       </div>
     </div>
   `;
@@ -64,7 +64,7 @@ function basicTurnOrderGraphic() {
       <span class="tutorial-turn-arrow">…</span>
     </div>
     <div class="tutorial-note-strip">
-      Step 1 only happens once, right at the start of the round -- the Inspector's first guess and the Spy's first secret both get locked in before either player has seen anything. After that, steps 2 and 3 just repeat, back and forth, until the Inspector finds the word.
+      Step 1 happens only once, at the very start. After that, steps 2 and 3 just repeat until the Inspector finds the word.
     </div>
   `;
 }
@@ -74,15 +74,15 @@ function basicSpyChoices() {
     <div class="tutorial-choice-grid">
       <div class="tutorial-choice-card">
         <strong>KEEP</strong>
-        <span>Leave your secret exactly the way it is. Nothing to type.</span>
+        <span>Leave your secret as-is.</span>
       </div>
       <div class="tutorial-choice-card">
         <strong>CHANGE</strong>
-        <span>Erase it and type a brand new 5-letter word instead.</span>
+        <span>Type a new secret instead.</span>
       </div>
     </div>
     <div class="tutorial-note-strip">
-      One rule either way: any word you use from now on -- kept or changed -- has to still match every color you've already shown. You can't take back a green or yellow you already gave away.
+      Either way, the word has to still match every color you've already shown -- you can't take back a green or yellow.
     </div>
   `;
 }
@@ -113,7 +113,7 @@ function runBasicInspectorTutorial(state) {
           visualHtml: `
             <div class="tutorial-role-goal">
               <span class="tutorial-role-icon">🔍</span>
-              <span><strong>Find the hidden word</strong><small>Every guess you make gives you clues. Try to find it in as few guesses as you can.</small></span>
+              <span><strong>Find the hidden word</strong><small>Try to find it in as few guesses as you can.</small></span>
             </div>
           `
         }
@@ -184,7 +184,11 @@ function runBasicInspectorTutorial(state) {
           current: 4,
           total: 6,
           placement: "bottom",
-          visualHtml: basicFeedbackLegend()
+          visualHtml: basicFeedbackLegend() + `
+            <div class="tutorial-note-strip">
+              Tip: grey letters aren't banned -- you can still type one if it helps you test a different letter. And you don't have to reuse a known green or yellow every time either; sometimes a totally different word teaches you more.
+            </div>
+          `
         }
       );
       highlightHistoryGuesser();
@@ -288,7 +292,7 @@ function runBasicSpyTutorial(state) {
           visualHtml: `
             <div class="tutorial-role-goal">
               <span class="tutorial-role-icon">🕵️</span>
-              <span><strong>Protect your word</strong><small>Every guess the Inspector makes, you'll get a chance to react. The longer it takes them to find your word, the better you're doing.</small></span>
+              <span><strong>Protect your word</strong><small>The longer it takes the Inspector to find it, the better you're doing.</small></span>
             </div>
           `
         }
@@ -377,7 +381,7 @@ function runBasicSpyTutorial(state) {
           placement: "bottom",
           visualHtml: `
             <div class="tutorial-note-strip">
-              Nothing happens to it automatically. YOU decide what your secret word is going to be while looking at that guess -- and only after you decide does the game finally add the colors and show them to both players.
+              Nothing happens to it automatically -- YOU decide your secret while looking at that guess, and only then does the game add the colors for both players.
             </div>
           `
         }
@@ -389,7 +393,7 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 1) {
       basicTutorialShow(
-        "Here's the part that trips people up, so let's slow down: that pending guess row isn't just sitting there uncolored. As you type letters into your OWN secret below, this exact row will light up with colors, live -- one keystroke at a time.",
+        "Here's the part that trips people up, so let's slow down: that pending guess row actually updates live as you type your own secret below, one letter at a time.",
         {
           role: "setter",
           current: 5,
@@ -397,10 +401,7 @@ function runBasicSpyTutorial(state) {
           placement: "bottom",
           visualHtml: `
             <div class="tutorial-note-strip">
-              Here's exactly what those colors mean while you're typing: <strong>green</strong> shows up on a letter if the word you're currently typing would put that exact letter in that exact spot. <strong>Yellow</strong> shows up if your typed word has that letter somewhere else. <strong>Grey</strong> means your typed word doesn't have that letter at all. In other words, every color on that row is a live preview of "if I locked in the word I'm typing right now, this is the feedback the Inspector would get."
-            </div>
-            <div class="tutorial-note-strip">
-              This is a sandbox, not a commitment. Type a word, watch the colors, don't like what you see? Erase it and try a completely different word -- the preview just updates again. Nothing is final, and the Inspector can't see any of this experimenting, until the moment you actually tap Submit.
+              This is important: those colors are just a preview of what would happen IF you submitted the word you're typing right now. You don't have to -- you can keep changing your mind. It's only showing you what would be, not deciding anything for you.
             </div>
           `
         }
@@ -436,7 +437,7 @@ function runBasicSpyTutorial(state) {
         mode: "hide",
         visualHtml: `
           <div class="tutorial-note-strip">
-            You'll notice two numbers labeled KEEP and NEW nearby -- they count how many secret words would still be legal to use for each choice. A bigger number is usually the safer pick, since it means there are more words the Inspector still has to consider. The Advanced tutorial covers this in more detail.
+            The KEEP and NEW numbers nearby count legal secret words left for each choice -- bigger is usually safer. More on this in the Advanced tutorial.
           </div>
         `
       }
@@ -482,10 +483,10 @@ function runBasicSpyTutorial(state) {
         mode: "end",
         visualHtml: `
           <div class="tutorial-finish-checks">
-            <span>✓ Inspector: find the word in as few guesses as possible</span>
-            <span>✓ Spy: keep the word hidden as long as possible</span>
-            <span>✓ Spy: any change must still fit every clue given so far</span>
-            <span>✓ A round opens together, then alternates guess → react</span>
+            <span>✓ Inspector: fewer guesses is better</span>
+            <span>✓ Spy: keep the word hidden longer</span>
+            <span>✓ Changes must still fit old clues</span>
+            <span>✓ Open together, then guess → react</span>
           </div>
         `
       }
