@@ -543,20 +543,29 @@ function grantQuestReward(state, roomId, io) {
   q.ready = false;
 
   const greenPositions = new Set();
+  const yellowLetters = new Set();
   for (const entry of state.history) {
     if (!entry?.fb) continue;
     for (let i = 0; i < 5; i++) {
       if (entry.fb[i] === "🟩") greenPositions.add(i);
+      else if (entry.fb[i] === "🟨") yellowLetters.add(entry.guess[i].toUpperCase());
     }
   }
   for (const c of state.extraConstraints ?? []) {
     if (c.type === "GREEN") greenPositions.add(c.index);
+    else if (c.type === "YELLOW") yellowLetters.add(c.letter.toUpperCase());
   }
 
   const options = [0, 1, 2, 3, 4].filter(i => !greenPositions.has(i));
   if (!options.length) return;
 
-  const index = options[Math.floor(Math.random() * options.length)];
+  // Prefer a genuinely fresh letter (never seen as green or yellow) over
+  // one that's already known yellow -- only fall back to a stale letter
+  // if every remaining position's letter has already been given away.
+  const freshOptions = options.filter(i => !yellowLetters.has(state.secret[i].toUpperCase()));
+  const pool = freshOptions.length ? freshOptions : options;
+
+  const index = pool[Math.floor(Math.random() * pool.length)];
   const letter = state.secret[index].toUpperCase();
 
   state.extraConstraints ??= [];
