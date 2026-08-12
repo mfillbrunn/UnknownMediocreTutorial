@@ -31,6 +31,14 @@ let tutorialHighlightSettleTimer = null;
 let tutorialRingSettling = false;
 let tutorialRingSnapNext = false;
 
+// Set once the player drags the tutorial bubble by hand (see
+// setupTutorialBubbleDrag below) -- while true, repositionTutorialBubble's
+// automatic avoid-the-highlighted-target placement backs off entirely
+// instead of fighting the player's own placement on the next layout pass.
+// Cleared on the next real tutorial transition (hideTutorial/endTutorial)
+// so a fresh tutorial still opens in its normal spot.
+let tutorialUserPositioned = false;
+
 function qs(sel) {
   return document.querySelector(sel);
 }
@@ -443,6 +451,10 @@ function repositionTutorialBubble() {
     return;
   }
 
+  if (tutorialUserPositioned) {
+    return;
+  }
+
   if (shouldDockAdvancedTutorial()) {
     positionAdvancedTutorialDock(
       bubble
@@ -792,10 +804,27 @@ function pauseTutorial() {
 function hideTutorial() {
   pauseTutorial();
   clearAdvancedTutorialDock();
+  clearTutorialUserPosition();
 
   tutorialWaitingFor = null;
 
   updateActionBadge();
+}
+
+// Drops any manual drag placement (see setupTutorialBubbleDrag) so the
+// bubble reopens in its normal auto-placed spot on the next tutorial,
+// instead of carrying a stale left/top from whatever the player last
+// dragged it to.
+function clearTutorialUserPosition() {
+  tutorialUserPositioned = false;
+
+  const bubble = byId("tutorialBubble");
+  if (!bubble) return;
+
+  bubble.classList.remove("tutorial-user-positioned");
+  bubble.style.left = "";
+  bubble.style.top = "";
+  bubble.style.removeProperty("--tutorial-drag-top");
 }
 
 function updateTutorialToggleState() {
@@ -857,6 +886,93 @@ byId("tutorialText")
     "aria-live",
     "polite"
   );
+
+// Lets the player drag the tutorial bubble by its header to wherever it's
+// blocking less. The header (not the whole bubble) is the drag handle, so
+// a plain tap still reaches the minimize button and still re-expands a
+// collapsed bubble via the click listener above -- only a real pointer
+// move past DRAG_MOVE_ARM_PX arms the drag, so a stationary tap/click
+// never gets swallowed as a zero-distance drag.
+(function setupTutorialBubbleDrag() {
+  const bubble = byId("tutorialBubble");
+  const header = bubble?.querySelector(".tutorial-header");
+  if (!bubble || !header) return;
+
+  const DRAG_MOVE_ARM_PX = 4;
+  let drag = null;
+
+  header.addEventListener("pointerdown", event => {
+    if (event.button != null && event.button !== 0) return;
+    if (event.target.closest("button")) return;
+    if (tutorialCollapsed) return;
+
+    const rect = bubble.getBoundingClientRect();
+    drag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startLeft: rect.left,
+      startTop: rect.top,
+      armed: false
+    };
+  });
+
+  window.addEventListener("pointermove", event => {
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+
+    if (!drag.armed) {
+      if (
+        Math.abs(dx) < DRAG_MOVE_ARM_PX &&
+        Math.abs(dy) < DRAG_MOVE_ARM_PX
+      ) {
+        return;
+      }
+      drag.armed = true;
+      tutorialUserPositioned = true;
+      bubble.classList.add("tutorial-dragging", "tutorial-user-positioned");
+      header.setPointerCapture(drag.pointerId);
+    }
+
+    const rect = bubble.getBoundingClientRect();
+    const maxLeft = window.innerWidth - rect.width - 4;
+    const maxTop = window.innerHeight - rect.height - 4;
+
+    const left =
+      Math.round(Math.max(4, Math.min(maxLeft, drag.startLeft + dx)));
+    const top =
+      Math.round(Math.max(4, Math.min(maxTop, drag.startTop + dy)));
+
+    bubble.style.left = `${left}px`;
+    bubble.style.right = "auto";
+    bubble.style.top = `${top}px`;
+    bubble.style.bottom = "auto";
+
+    // Below 600px width, a step whose data-placement is "top" pins the
+    // bubble via an !important rule that plain inline `top` can't beat --
+    // tutorial.css's .tutorial-user-positioned override reads this custom
+    // property instead, at the same !important tier, to win that fight.
+    bubble.style.setProperty("--tutorial-drag-top", `${top}px`);
+  });
+
+  function endDrag(event) {
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    if (drag.armed) {
+      bubble.classList.remove("tutorial-dragging");
+      try {
+        header.releasePointerCapture(drag.pointerId);
+      } catch {}
+    }
+
+    drag = null;
+  }
+
+  window.addEventListener("pointerup", endDrag);
+  window.addEventListener("pointercancel", endDrag);
+})();
 
 function getTutorialFocusRing() {
   let ring =
@@ -2271,6 +2387,7 @@ function waitForDraftCleared() {
 function endTutorial() {
   byId("tutorialDoneModal")?.classList.remove("active");
   byId("tutorialBubble")?.classList.add("hidden");
+  clearTutorialUserPosition();
 
   socket.emit("leaveRoom", {}, () => {
     roomId = null;

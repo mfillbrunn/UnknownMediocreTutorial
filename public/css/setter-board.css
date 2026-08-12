@@ -306,6 +306,9 @@
 }
 
 #setterScreen .setter-decision-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 39px;
   border-radius: 10px;
   font: inherit;
@@ -313,8 +316,10 @@
   font-weight: 900;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  white-space: nowrap;
-  padding: 1px 8px;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.15;
+  padding: 4px 8px;
   cursor: pointer;
   transition:
     transform 120ms ease,
@@ -574,7 +579,7 @@
     min-height: 36px;
     font-size: 9px;
     letter-spacing: 0.01em;
-    padding: 1px 5px;
+    padding: 3px 5px;
   }
 
   #setterScreen .setter-clear-btn {

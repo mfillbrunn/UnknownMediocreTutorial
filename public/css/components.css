@@ -256,6 +256,16 @@
   pointer-events: none;
 }
 
+/* Letter Peek's icon/uses-badge sit a touch lower than every other power
+   card's -- nudged down on this one power only, via the data-power-id
+   applyPowerPalette already stamps onto the button. */
+.power-btn[data-power-id="revealGreen"] .power-icon {
+  margin-top: 6px;
+}
+.power-btn[data-power-id="revealGreen"] .power-uses-badge {
+  top: -3px;
+}
+
 /* A fixed-height box (not just a fixed font-size) -- reserving the same
    2-line slot for every label, regardless of how many words it actually
    has, is what makes every badge card end up the same overall size.
@@ -323,7 +333,7 @@
    so the only colour change in the whole quest lifecycle is the single
    blue-to-green flip that actually matters. */
 .quest-badge-tile {
-  --role-accent: #6e89a6;
+  --role-accent: #6088b4;
 }
 .quest-badge-tile.quest-ready,
 .quest-badge-tile.quest-done {
