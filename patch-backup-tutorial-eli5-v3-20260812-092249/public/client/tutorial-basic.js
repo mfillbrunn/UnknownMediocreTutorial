@@ -1,4 +1,4 @@
-// Basic tutorial: the smallest set of rules needed to play both roles.
+// Basic tutorial only: core Inspector + Spy rules.
 
 function basicTutorialShow(text, {
   role = window.myRole,
@@ -26,18 +26,18 @@ function basicTutorialShow(text, {
 
 function basicFeedbackLegend() {
   return `
-    <div class="tutorial-feedback-legend" aria-label="What the colors mean">
+    <div class="tutorial-feedback-legend" aria-label="Feedback colors">
       <div class="tutorial-feedback-item">
         <span class="tutorial-mini-tile tile-green">A</span>
-        <span><strong>Green</strong><small>Right letter. Right box.</small></span>
+        <span><strong>Green</strong><small>right letter, right spot</small></span>
       </div>
       <div class="tutorial-feedback-item">
         <span class="tutorial-mini-tile tile-yellow">A</span>
-        <span><strong>Yellow</strong><small>Right letter. Wrong box.</small></span>
+        <span><strong>Yellow</strong><small>right letter, different spot</small></span>
       </div>
       <div class="tutorial-feedback-item">
         <span class="tutorial-mini-tile tile-gray">A</span>
-        <span><strong>Grey</strong><small>This letter is not in the word.</small></span>
+        <span><strong>Grey</strong><small>not in the secret</small></span>
       </div>
     </div>
   `;
@@ -52,11 +52,8 @@ function basicSpyChoices() {
       </div>
       <div class="tutorial-choice-card">
         <strong>CHANGE</strong>
-        <span>Type a different secret.</span>
+        <span>Enter a different legal secret.</span>
       </div>
-    </div>
-    <div class="tutorial-note-strip">
-      A changed secret must still match every color already shown.
     </div>
   `;
 }
@@ -78,7 +75,7 @@ function runBasicInspectorTutorial(state) {
 
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "The Spy hides one 5-letter word. You are the Inspector. Your job is to find it.",
+        "Find the Spy's hidden 5-letter word. Fewer guesses means a better Inspector score.",
         {
           role: "guesser",
           current: 1,
@@ -87,7 +84,7 @@ function runBasicInspectorTutorial(state) {
           visualHtml: `
             <div class="tutorial-role-goal">
               <span class="tutorial-role-icon">🔍</span>
-              <span><strong>Find the hidden word</strong><small>Try to use as few guesses as you can.</small></span>
+              <span><strong>Inspector goal</strong><small>Find the secret quickly.</small></span>
             </div>
           `
         }
@@ -98,7 +95,7 @@ function runBasicInspectorTutorial(state) {
 
     if (state.simultaneousGuessSubmitted) {
       basicTutorialShow(
-        "Your guess is sent. The Spy is picking a secret now.",
+        "Guess sent. The Spy is choosing their opening secret at the same time.",
         {
           role: "guesser",
           current: 2,
@@ -112,7 +109,7 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Type ${word}. Then tap Submit Guess.`,
+        `Type ${word}, then tap Submit Guess.`,
         {
           role: "guesser",
           current: 2,
@@ -137,7 +134,7 @@ function runBasicInspectorTutorial(state) {
 
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "The colors tell you how close your guess was.",
+        "Each tile is a clue. Read the colors, then use them in your next guess.",
         {
           role: "guesser",
           current: 3,
@@ -153,7 +150,7 @@ function runBasicInspectorTutorial(state) {
 
     if (state.pendingGuess) {
       basicTutorialShow(
-        "Your guess is sent. The Spy is choosing what to do.",
+        "Guess sent. The Spy is deciding whether to keep or change their secret.",
         {
           role: "guesser",
           current: 4,
@@ -167,7 +164,7 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Use the colors. Now type ${word}.`,
+        `Use the clues and try ${word}.`,
         {
           role: "guesser",
           current: 4,
@@ -192,7 +189,7 @@ function runBasicInspectorTutorial(state) {
 
     if (state.pendingGuess) {
       basicTutorialShow(
-        "Your guess is sent. Wait for the Spy.",
+        "One last wait—the Spy is answering your guess.",
         {
           role: "guesser",
           current: 4,
@@ -206,7 +203,7 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Good. One more guess: type ${word}.`,
+        `You have enough information now. Finish the round with ${word}.`,
         {
           role: "guesser",
           current: 4,
@@ -238,16 +235,16 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "Now you are the Spy. You choose the hidden word. Try to make the Inspector guess many times.",
+        "Now you are the Spy. Your job is to keep a legal secret hidden for as many Inspector guesses as possible.",
         {
           role: "setter",
           current: 1,
-          total: 4,
+          total: 5,
           placement: "top",
           visualHtml: `
             <div class="tutorial-role-goal">
               <span class="tutorial-role-icon">🕵️</span>
-              <span><strong>Hide the word</strong><small>The longer it stays hidden, the better.</small></span>
+              <span><strong>Spy goal</strong><small>Make the Inspector need more guesses.</small></span>
             </div>
           `
         }
@@ -258,11 +255,11 @@ function runBasicSpyTutorial(state) {
 
     if (state.simultaneousSecretSubmitted) {
       basicTutorialShow(
-        "Your secret is saved. The Inspector is making the first guess.",
+        "Secret submitted. The Inspector is entering their opening guess at the same time.",
         {
           role: "setter",
           current: 2,
-          total: 4,
+          total: 5,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -272,11 +269,11 @@ function runBasicSpyTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Type ${word}. Then tap Submit New Secret.`,
+        `Type ${word}, then tap Submit New Secret.`,
         {
           role: "setter",
           current: 2,
-          total: 4,
+          total: 5,
           placement: "top",
           mode: "hide"
         }
@@ -297,11 +294,11 @@ function runBasicSpyTutorial(state) {
 
     if (!state.pendingGuess) {
       basicTutorialShow(
-        "The Inspector is still thinking. Wait for the guess to appear.",
+        "The Inspector is choosing a guess. Wait for it to appear before making your decision.",
         {
           role: "setter",
           current: 3,
-          total: 4,
+          total: 5,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -313,33 +310,34 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "You can see the Inspector's guess before it gets colors. Now choose: keep your secret, or change it.",
+        "You see the Inspector's guess before it is scored. You may keep your current secret or enter a different legal one. A new secret must still match every earlier clue.",
         {
           role: "setter",
           current: 3,
-          total: 4,
+          total: 5,
           placement: "bottom",
-          visualHtml: basicSpyChoices()
+          visualHtml: `
+            ${basicSpyChoices()}
+            <div class="tutorial-note-strip">
+              KEEP and NEW compare how many secrets remain possible. Higher is usually safer. The Advanced UI tutorial explains this in detail.
+            </div>
+          `
         }
       );
       highlightPendingGuessRow();
+      highlightSetterMustContainBox();
       tutorialContinueMode = "advance";
       return;
     }
 
     basicTutorialShow(
-      `Let's change it. Type ${word}.`,
+      `Practice changing your secret: enter ${word}. It is legal and still fits the earlier clues.`,
       {
         role: "setter",
         current: 4,
-        total: 4,
+        total: 5,
         placement: "top",
-        mode: "hide",
-        visualHtml: `
-          <div class="tutorial-note-strip">
-            KEEP and NEW show how many secret words would still be possible. Bigger is usually safer. The Advanced tutorial explains this later.
-          </div>
-        `
+        mode: "hide"
       }
     );
     highlightKeyboardSetter();
@@ -353,11 +351,11 @@ function runBasicSpyTutorial(state) {
 
   if (round === 2) {
     basicTutorialShow(
-      "This time, keep the same secret. Leave the five boxes empty and tap Keep Current Secret.",
+      "You do not have to change every turn. Leave the draft empty and tap Keep Current Secret.",
       {
         role: "setter",
-        current: 4,
-        total: 4,
+        current: 5,
+        total: 5,
         placement: "top",
         mode: "hide"
       }
@@ -374,18 +372,18 @@ function runBasicSpyTutorial(state) {
 
   if (round >= 3) {
     basicTutorialShow(
-      "You know the main game now. The Inspector guesses. The Spy keeps or changes the secret. Every change must still fit the old colors.",
+      "That is the core game: the Inspector narrows the word down, while the Spy decides when to keep the secret and when to change it.",
       {
         role: "setter",
-        current: 4,
-        total: 4,
+        current: 5,
+        total: 5,
         placement: "top",
         mode: "end",
         visualHtml: `
           <div class="tutorial-finish-checks">
-            <span>✓ Inspector: find the word</span>
-            <span>✓ Spy: keep it hidden</span>
-            <span>✓ Changes must fit old clues</span>
+            <span>✓ Read the clues</span>
+            <span>✓ Keep or change</span>
+            <span>✓ Stay consistent</span>
           </div>
         `
       }
@@ -403,10 +401,10 @@ function runBasicSummaryTutorial(state) {
   if (tutorialSubStep === 0) {
     const guesses = state.history?.length || state.guessCount || 0;
     basicTutorialShow(
-      `You found the word in ${guesses} guess${guesses === 1 ? "" : "es"}. For the Inspector, fewer guesses is better.`,
+      `Round complete. You found the secret in ${guesses} guess${guesses === 1 ? "" : "es"}. Lower is better for the Inspector.`,
       {
         role: "guesser",
-        section: "Round finished",
+        section: "Round result",
         current: 1,
         total: 2,
         placement: "bottom"
@@ -418,10 +416,10 @@ function runBasicSummaryTutorial(state) {
   }
 
   basicTutorialShow(
-    "Tap Next Round. You will swap jobs and play as the Spy.",
+    "Tap Next Round. The roles will swap, and you'll learn the Spy side.",
     {
       role: "guesser",
-      section: "Swap jobs",
+      section: "Role swap",
       current: 2,
       total: 2,
       placement: "bottom",
@@ -441,9 +439,9 @@ function runBasicMatchTutorial(state) {
 
   if (tutorialSubStep === 0) {
     basicTutorialShow(
-      "Both players have been the Spy once. The winner is the player whose secret took more guesses to find.",
+      "Both roles are finished. The player whose secret took more guesses to find wins the match.",
       {
-        section: "Match finished",
+        section: "Match complete",
         current: 1,
         total: 2,
         placement: "bottom"
@@ -455,9 +453,9 @@ function runBasicMatchTutorial(state) {
   }
 
   basicTutorialShow(
-    "That is the whole basic game. Powers, Quests, and extra tools each have their own short tutorial.",
+    "You now know the core game. Powers, Quests, and advanced tools each have their own short tutorial.",
     {
-      section: "Basics done",
+      section: "Basics complete",
       current: 2,
       total: 2,
       placement: "bottom",

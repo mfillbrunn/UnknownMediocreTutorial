@@ -1,4 +1,67 @@
-// Advanced UI tutorial: Guide, Drag & Lock, Notes, Log, and remaining-word tools.
+// Advanced tutorial: extra buttons and shortcuts, explained one at a time.
+
+function advancedTutorialShow(text, {
+  role = window.myRole,
+  title = "Extra tools",
+  current = null,
+  total = null,
+  placement = "auto",
+  compact = false,
+  mode = "advance",
+  visualHtml = "",
+  key = null
+} = {}) {
+  showTutorial(text, {
+    title,
+    progressCurrent: current,
+    progressTotal: total,
+    tone: role === "setter" ? "setter" : "guesser",
+    placement,
+    compact,
+    mode,
+    visualHtml,
+    key: key || undefined
+  });
+}
+
+function advancedRemainingVisual() {
+  return `
+    <div class="tutorial-choice-grid">
+      <div class="tutorial-choice-card tutorial-keep-card">
+        <strong>KEEP</strong>
+        <span>How many secret words can still work if you keep your current secret.</span>
+      </div>
+      <div class="tutorial-choice-card tutorial-new-card">
+        <strong>NEW</strong>
+        <span>How many can still work if you use the word in your draft.</span>
+      </div>
+    </div>
+    <div class="tutorial-note-strip">
+      Bigger is usually safer. An X means the draft cannot be used.
+    </div>
+  `;
+}
+
+function advancedChargeVisual() {
+  return `
+    <div class="tutorial-eli5-mini-list">
+      <span><b>0–3 ★</b> for a strong new secret</span>
+      <span><b>+1 ★</b> for matching the small letter target</span>
+      <span><b>5 ★</b> unlocks your second power</span>
+      <span><b>8 and 12 ★</b> give letter resets</span>
+    </div>
+  `;
+}
+
+function advancedToolsVisual() {
+  return `
+    <div class="tutorial-eli5-mini-list">
+      <span><b>Clue row</b> = a small summary of what is known</span>
+      <span><b>Log</b> = a list of what happened</span>
+      <span><b>?</b> = help for your powers</span>
+    </div>
+  `;
+}
 
 function runAdvancedTutorial(state, role) {
   clearHighlights();
@@ -11,103 +74,101 @@ function runAdvancedTutorial(state, role) {
 }
 
 function runAdvancedTutorialGuesser(state) {
-  const round =
-    state.history?.length ?? 0;
+  const round = state.history?.length ?? 0;
 
   if (round === 0) {
     if (tutorialSubStep === 0) {
-      showTutorial(
-        `This tutorial covers four extra tools: Guide, Drag & Lock, Notes, and the remaining-words box — plus a few other UI elements along the way.`,
+      advancedTutorialShow(
+        "You already know how to play. This tutorial shows a few extra buttons that make the game easier to use.",
         {
-          mode: "advance"
+          role: "guesser",
+          current: 1,
+          total: 3,
+          placement: "top"
         }
       );
-
+      tutorialContinueMode = "advance";
       return;
     }
 
     if (tutorialSubStep === 1) {
-      showTutorial(
-        `Guide is a little helper. Turn it on when you want the game to explain just a little more in the beginning.`,
+      advancedTutorialShow(
+        "Guide adds little hints on the screen. Turn it on whenever you forget what something means.",
         {
-          mode: "advance"
+          role: "guesser",
+          title: "Guide",
+          current: 2,
+          total: 3,
+          placement: "top"
         }
       );
-
       highlightGuideToggle("guesser");
+      tutorialContinueMode = "advance";
       return;
     }
 
-    if (tutorialSubStep === 2) {
-      const word =
-        state.tutorialGuesses?.[0] ||
-        "CHAMP";
+    const word = state.tutorialGuesses?.[0] || "CHAMP";
 
-      if (
-        state.simultaneousGuessSubmitted
-      ) {
-        showTutorial(
-          `Your guess is ready. Waiting for the Spy to choose a secret...`,
-          {
-            mode: "hide"
-          }
-        );
-      } else {
-        showTutorial(
-          `Type "${word}" and tap Submit Guess.`,
-          {
-            mode: "hide"
-          }
-        );
-      }
-
-      highlightKeyboardGuesser();
-
-      startKeyDemo(
-        `guesser-advanced-round0-${word}`,
-        () =>
-          tutorialWordKeyEls(
-            "guesser",
-            word,
-            localGuesserDraft
-          )
+    if (state.simultaneousGuessSubmitted) {
+      advancedTutorialShow(
+        "Your guess is sent. Wait for the Spy.",
+        {
+          role: "guesser",
+          title: "Start the round",
+          current: 3,
+          total: 3,
+          compact: true,
+          placement: "top",
+          mode: "hide",
+          key: "advanced-inspector-opening-wait"
+        }
       );
-
-      waitForGuessSubmission(round);
-      return;
+      stopKeyDemo();
+    } else {
+      advancedTutorialShow(
+        `Type ${word}. Then tap Submit Guess.`,
+        {
+          role: "guesser",
+          title: "Start the round",
+          current: 3,
+          total: 3,
+          placement: "top",
+          mode: "hide"
+        }
+      );
+      startKeyDemo(
+        `advanced-inspector-${word}`,
+        () => tutorialWordKeyEls("guesser", word, localGuesserDraft)
+      );
     }
 
-    hideTutorial();
+    highlightKeyboardGuesser();
+    waitForGuessSubmission(round, `TYPE ${word}`);
     return;
   }
 
   if (round === 1) {
-    const word =
-      state.tutorialGuesses?.[1] ||
-      "CUMIN";
+    const word = state.tutorialGuesses?.[1] || "CUMIN";
 
     if (tutorialSubStep === 0) {
-      showTutorial(
-        `Try dragging letters onto the tiles instead of tapping them. Drag each letter of "${word}" from the keyboard onto its tile — watch the demo, then try it yourself.`,
+      advancedTutorialShow(
+        `You can drag a keyboard letter straight onto a box. Drag the letters of ${word} into the five boxes.`,
         {
-          enabled: true
+          role: "guesser",
+          title: "Drag letters",
+          current: 1,
+          total: 4,
+          placement: "top",
+          mode: "hide"
         }
       );
-
       highlightDraftRow("guesser");
       highlightKeyboardGuesser();
       startDragDemo(word);
-
       startKeyDemo(
-        `guesser-advanced-round1-${word}`,
-        () =>
-          tutorialWordKeyEls(
-            "guesser",
-            word,
-            localGuesserDraft
-          )
+        `advanced-drag-${word}`,
+        () => tutorialWordKeyEls("guesser", word, localGuesserDraft)
       );
-
       waitForDraftFilled();
       return;
     }
@@ -115,74 +176,82 @@ function runAdvancedTutorialGuesser(state) {
     if (tutorialSubStep === 1) {
       stopDragDemo();
       stopKeyDemo();
-
-      showTutorial(
-        `Nice! Now tap — don't drag — one of the filled tiles to lock it in. A locked letter can't be erased by Backspace.`,
+      advancedTutorialShow(
+        "Tap one filled box. A small lock appears. Backspace cannot erase a locked letter.",
         {
-          enabled: true
+          role: "guesser",
+          title: "Lock a letter",
+          current: 2,
+          total: 4,
+          placement: "top",
+          mode: "hide"
         }
       );
-
       highlightDraftRow("guesser");
       waitForTileLocked();
       return;
     }
 
     if (tutorialSubStep === 2) {
-      showTutorial(
-        `Locked! Now tap that same tile again to unlock it.`,
+      advancedTutorialShow(
+        "Tap the locked box again. The lock goes away.",
         {
-          enabled: true
+          role: "guesser",
+          title: "Unlock a letter",
+          current: 3,
+          total: 4,
+          placement: "top",
+          mode: "hide"
         }
       );
-
       highlightDraftRow("guesser");
       waitForTileUnlocked();
       return;
     }
 
     if (state.pendingGuess) {
-      showTutorial(
-        `Your guess is ready. Waiting for the Spy to answer...`,
+      advancedTutorialShow(
+        "Your guess is sent. Wait for the Spy.",
         {
+          role: "guesser",
+          title: "Drag and Lock done",
+          current: 4,
+          total: 4,
+          compact: true,
+          placement: "top",
           mode: "hide"
         }
       );
     } else {
-      showTutorial(
-        `Great — now tap Submit Guess to submit "${word}". Right after this, you will switch to playing as the Spy to see a few more features.`,
+      advancedTutorialShow(
+        `Now submit ${word}.`,
         {
+          role: "guesser",
+          title: "Drag and Lock done",
+          current: 4,
+          total: 4,
+          placement: "top",
           mode: "hide"
         }
       );
     }
 
     highlightKeyboardGuesser();
-
-    startKeyDemo(
-      `guesser-advanced-round1-submit-${word}`,
-      () =>
-        tutorialWordKeyEls(
-          "guesser",
-          word,
-          localGuesserDraft
-        )
-    );
-
     waitForGuessSubmission(round);
     return;
   }
 
-  if (round === 2) {
+  if (round >= 2) {
     stopKeyDemo();
-
-    showTutorial(
-      `Good. You used Guide and Drag & Lock. Next you will be the Spy and learn Notes.`,
+    advancedTutorialShow(
+      "Good. Next you will be the Spy. That is where Notes and the secret numbers are most useful.",
       {
+        role: "guesser",
+        title: "Inspector tools done",
+        compact: true,
         mode: "hide"
       }
     );
-
     return;
   }
 
@@ -190,353 +259,266 @@ function runAdvancedTutorialGuesser(state) {
 }
 
 function runAdvancedTutorialSetter(state) {
-  const round =
-    state.history?.length ?? 0;
+  const round = state.history?.length ?? 0;
 
   if (round === 0) {
     if (tutorialSubStep === 0) {
-      showTutorial(
-        `Now you are the Spy. Drag & Lock works on your secret row too. We will use Notes after the first guess.`,
+      advancedTutorialShow(
+        "Now you are the Spy. Drag and Lock works on the secret boxes too.",
         {
-          mode: "advance"
+          role: "setter",
+          title: "Spy tools",
+          current: 1,
+          total: 2,
+          placement: "top"
         }
       );
-
       highlightDraftRow("setter");
+      tutorialContinueMode = "advance";
       return;
     }
 
-    if (tutorialSubStep === 1) {
-      const word =
-        state.tutorialSecrets?.[0] ||
-        "BLIMP";
+    const word = state.tutorialSecrets?.[0] || "BLIMP";
 
-      if (
-        state.simultaneousSecretSubmitted
-      ) {
-        showTutorial(
-          `Your secret is ready. Waiting for the Inspector's first guess...`,
-          {
-            mode: "hide"
-          }
-        );
-      } else {
-        showTutorial(
-          `Enter "${word}". You can drag letters into tiles and tap a filled tile to lock it.`,
-          {
-            mode: "hide"
-          }
-        );
-      }
-
-      highlightDraftRow("setter");
-
-      startKeyDemo(
-        `setter-advanced-round0-${word}`,
-        () =>
-          tutorialWordKeyEls(
-            "setter",
-            word,
-            window.state?.setterDraft
-          )
+    if (state.simultaneousSecretSubmitted) {
+      advancedTutorialShow(
+        "Your secret is saved. Wait for the Inspector.",
+        {
+          role: "setter",
+          title: "Spy tools",
+          current: 2,
+          total: 2,
+          compact: true,
+          placement: "top",
+          mode: "hide",
+          key: "advanced-spy-opening-wait"
+        }
       );
-
-      waitForSecretSubmission(round);
-      return;
+      stopKeyDemo();
+    } else {
+      advancedTutorialShow(
+        `Type ${word}. Then tap Submit New Secret.`,
+        {
+          role: "setter",
+          title: "Spy tools",
+          current: 2,
+          total: 2,
+          placement: "top",
+          mode: "hide"
+        }
+      );
+      startKeyDemo(
+        `advanced-spy-${word}`,
+        () => tutorialWordKeyEls("setter", word, window.state?.setterDraft)
+      );
     }
 
-    hideTutorial();
+    highlightDraftRow("setter");
+    waitForSecretSubmission(round, `TYPE ${word}`);
     return;
   }
 
   if (round === 1) {
-    const oldSecret = (
-      state.tutorialSecrets?.[0] ||
-      "BLIMP"
-    ).toUpperCase();
-
-    const candidate = (
-      state.tutorialSecrets?.[1] ||
-      "LEMUR"
-    ).toUpperCase();
+    const candidate = (state.tutorialSecrets?.[1] || "LEMUR").toUpperCase();
 
     if (tutorialSubStep === 0) {
-      showTutorial(
-        `It is the Inspector's turn, so your secret keyboard is free. Notes has opened automatically as a scratchpad while you wait.`,
+      advancedTutorialShow(
+        "Notes is a scratchpad. Words in Notes are not submitted. Use it while the Inspector is thinking.",
         {
-          mode: "advance"
+          role: "setter",
+          title: "Notes",
+          current: 1,
+          total: 9,
+          placement: "bottom",
+          visualHtml: `
+            <div class="tutorial-note-strip">
+              Think of Notes like a little list of secret ideas.
+            </div>
+          `
         }
       );
-
       highlightNotesPanel();
+      tutorialContinueMode = "advance";
       return;
     }
 
     if (tutorialSubStep === 1) {
-      showTutorial(
-        `Your current secret is saved here automatically. Now type "${candidate}" in the five small Notes boxes using the regular keyboard and press Enter to save another possible secret.`,
+      advancedTutorialShow(
+        `Type ${candidate} in the five small Notes boxes. Press Enter to save it.`,
         {
+          role: "setter",
+          title: "Save a note",
+          current: 2,
+          total: 9,
+          placement: "bottom",
           mode: "hide"
         }
       );
-
       highlightNotesDraft();
-
       startKeyDemo(
-        `setter-advanced-notes-${candidate}`,
-        () =>
-          tutorialWordKeyEls(
-            "setter",
-            candidate,
-            notesDraftText()
-          )
+        `advanced-note-${candidate}`,
+        () => tutorialWordKeyEls("setter", candidate, notesDraftText())
       );
-
       waitForNoteAdded(candidate);
       return;
     }
 
     if (tutorialSubStep === 2) {
       stopKeyDemo();
-
-      showTutorial(
-        `Saved words that still match every clue stay green. After a new guess arrives, a small number can show how many secrets would remain if you used that word. Bigger is usually safer.`,
+      advancedTutorialShow(
+        "A green word still fits all old clues. The small number shows how many secret words would stay possible if you used it. Bigger is usually safer.",
         {
-          mode: "advance"
+          role: "setter",
+          title: "Read your notes",
+          current: 3,
+          total: 9,
+          placement: "bottom"
         }
       );
-
       highlightNotesList();
+      tutorialContinueMode = "advance";
       return;
     }
 
     if (tutorialSubStep === 3) {
       if (!state.pendingGuess) {
-        showTutorial(
-          `Your backup word is saved. The Inspector is still thinking...`,
+        advancedTutorialShow(
+          "The Inspector is still thinking. You can keep adding ideas to Notes while you wait.",
           {
-            key:
-              `advanced-notes-wait-${round}`,
-            mode: "hide"
+            role: "setter",
+            title: "Wait and plan",
+            current: 4,
+            total: 9,
+            placement: "bottom",
+            compact: true,
+            mode: "hide",
+            key: `advanced-note-wait-${round}`
           }
         );
-
         highlightNotesList();
-
-        setContinue({
-          show: false,
-          mode: "hide"
-        });
-
+        setContinue({ show: false, mode: "hide" });
         return;
       }
 
-      showTutorial(
-        `The new guess is here! This box tracks how many secrets are still possible — let's go through it one row at a time.`,
+      advancedTutorialShow(
+        "The guess is here. KEEP and NEW help you compare your two choices.",
         {
-          mode: "advance"
+          role: "setter",
+          title: "Keep or change?",
+          current: 4,
+          total: 9,
+          placement: "bottom",
+          visualHtml: advancedRemainingVisual()
         }
       );
-
       highlightSetterRemainingBox();
+      tutorialContinueMode = "advance";
       return;
     }
 
     if (tutorialSubStep === 4) {
-      showTutorial(
-        `Keep vs. New compares your two options for this turn.`,
+      advancedTutorialShow(
+        `Tap ${candidate} in Notes. It will copy into your secret boxes. It will not submit yet.`,
         {
-          mode: "advance"
+          role: "setter",
+          title: "Use a saved word",
+          current: 5,
+          total: 9,
+          placement: "bottom",
+          mode: "hide"
         }
       );
-
-      highlightSetterRemainingBox();
+      highlightSavedNote(candidate);
+      waitForNoteSelected(candidate);
       return;
     }
 
     if (tutorialSubStep === 5) {
-      showTutorial(
-        `Keep is how many secrets would still be possible if you kept your current secret, "${oldSecret}".`,
+      advancedTutorialShow(
+        "The word is now in your draft. You can still change it or clear it before you submit.",
         {
-          mode: "advance"
+          role: "setter",
+          title: "Check the draft",
+          current: 6,
+          total: 9,
+          placement: "top"
         }
       );
-
-      highlightSetterRemainingBoxRow(0);
+      highlightDraftRow("setter");
+      tutorialContinueMode = "advance";
       return;
     }
 
     if (tutorialSubStep === 6) {
-      showTutorial(
-        `New is how many would be possible if you switched to whatever's in your draft right now — it updates live as you type.`,
+      advancedTutorialShow(
+        "A strong new secret earns stars. The small letter target can give one bonus star. Stars fill the meter and unlock rewards.",
         {
-          mode: "advance"
+          role: "setter",
+          title: "Stars and charge",
+          current: 7,
+          total: 9,
+          placement: "bottom",
+          visualHtml: advancedChargeVisual()
         }
       );
-
-      highlightSetterRemainingBoxRow(1);
+      highlightSpyChargeMeter();
+      highlightSetterCoverStars();
+      tutorialContinueMode = "advance";
       return;
     }
 
     if (tutorialSubStep === 7) {
-      showTutorial(
-        `Tap "${oldSecret}" in Notes — it copies straight into your secret row, without submitting anything yet.`,
+      advancedTutorialShow(
+        "These three helpers are always nearby.",
         {
-          mode: "hide"
+          role: "setter",
+          title: "Small helpers",
+          current: 8,
+          total: 9,
+          placement: "bottom",
+          visualHtml: advancedToolsVisual()
         }
       );
-
-      highlightSavedNote(oldSecret);
-      waitForNoteSelected(oldSecret);
-      return;
-    }
-
-    if (tutorialSubStep === 8) {
-      showTutorial(
-        `Now tap "${candidate}" instead and watch New change again. Notice the small number next to each word in Notes too — that is this same New count for that word.`,
-        {
-          enabled: true
-        }
-      );
-
-      highlightSavedNote(candidate);
-      waitForNoteSelected(candidate);
-      return;
-    }
-
-    if (tutorialSubStep === 9) {
-      showTutorial(
-        `Now try typing something that isn't a real word — like "ABCDE" — directly into your secret row. Don't submit it. Watch New turn into a ✕, since that word could never actually be planted.`,
-        {
-          mode: "hide"
-        }
-      );
-
-      highlightDraftRow("setter");
-
-      startKeyDemo(
-        "setter-advanced-invalid-draft",
-        () =>
-          tutorialWordKeyEls(
-            "setter",
-            "ABCDE",
-            window.state?.setterDraft
-          )
-      );
-
-      waitForInvalidDraft();
-      return;
-    }
-
-    if (tutorialSubStep === 10) {
-      stopKeyDemo();
-
-      showTutorial(
-        `That ✕ means the draft isn't a legal secret — you can't submit it. Tap "${candidate}" in Notes again to bring back a real word before we move on.`,
-        {
-          mode: "hide"
-        }
-      );
-
-      highlightSavedNote(candidate);
-      waitForNoteSelected(candidate);
-      return;
-    }
-
-    if (tutorialSubStep === 11) {
-      showTutorial(
-        `That's the remaining-words box! A few more things you'll see on this screen:`,
-        {
-          mode: "advance"
-        }
-      );
-
-      return;
-    }
-
-    if (tutorialSubStep === 12) {
-      showTutorial(
-        `Every time you switch to a brand-new secret instead of keeping the old one, you earn stars — the tighter that new secret narrows down what's still possible, the more you get. They build up in a 12-star meter above your powers (turned off during this tutorial, so you won't see it fill up here).`,
-        {
-          mode: "advance"
-        }
-      );
-
-      highlightSpyChargeMeter();
-      return;
-    }
-
-    if (tutorialSubStep === 13) {
-      showTutorial(
-        `Each turn also has one hidden bonus letter, shown as a small target chip next to your secret row — put that exact letter in that exact position in your new secret for +1 star. At 5 stars you unlock your second power, at 8 you can reset one letter's feedback, and at 12 you get a second reset. Switching secrets is almost always worth it.`,
-        {
-          mode: "advance"
-        }
-      );
-
-      highlightSetterCoverStars();
-      return;
-    }
-
-    if (tutorialSubStep === 14) {
-      showTutorial(
-        `The first number, in green, is your score. It goes up every time your opponent needs another guess to find your secret — the more guesses they need, the higher it climbs. The dimmer number next to it works the same way for your opponent's score, based on how many guesses you need. Whoever ends up with the higher score wins the match.`,
-        {
-          mode: "advance"
-        }
-      );
-
-      highlightHeaderScore("setter");
-      return;
-    }
-
-    if (tutorialSubStep === 15) {
-      showTutorial(
-        `Above your secret, the constraint row gives a compact rundown of every clue collected so far. Tap the ⧉ button any time to fold it away or bring it back.`,
-        {
-          mode: "advance"
-        }
-      );
-
       highlightConstraintRowAndToggle("setter");
-      return;
-    }
-
-    if (tutorialSubStep === 16) {
-      showTutorial(
-        `The ? button always shows your active powers, and whether each one has been used yet.`,
-        {
-          mode: "advance"
-        }
-      );
-
+      highlightSetterLog();
       highlightPowerInfoBtn("setter");
+      tutorialContinueMode = "advance";
       return;
     }
 
-    showTutorial(
-      `Finally, the Log tab keeps a running history of every action this match — powers used, secrets switched, all of it. That's the advanced UI! Tap "Finish Tutorial" whenever you're ready — no need to finish playing this match.`,
+    advancedTutorialShow(
+      `Now submit ${candidate}.`,
       {
-        mode: "end"
+        role: "setter",
+        title: "Finish the turn",
+        current: 9,
+        total: 9,
+        placement: "top",
+        mode: "hide"
       }
     );
-
-    tutorialEndNextMode = "tutorial";
-
-    highlightSetterLog();
+    highlightDraftRow("setter");
+    waitForSecretSubmission(round, `SUBMIT ${candidate}`);
     return;
   }
 
-  if (round === 2) {
-    showTutorial(
-      `That is the advanced UI: Guide explains things, Drag & Lock helps you place letters, and Notes saves possible secrets while the other player thinks. Tap "Finish Tutorial" whenever you're ready — no need to finish playing this match.`,
+  if (round >= 2) {
+    advancedTutorialShow(
+      "You used the extra tools: Guide, Drag and Lock, Notes, KEEP and NEW, stars, the clue row, the Log, and power help.",
       {
-        mode: "end"
+        role: "setter",
+        title: "Extra tools done",
+        mode: "end",
+        visualHtml: `
+          <div class="tutorial-finish-checks">
+            <span>✓ Guide when you need help</span>
+            <span>✓ Notes while the Inspector thinks</span>
+            <span>✓ KEEP and NEW to compare choices</span>
+          </div>
+        `
       }
     );
-
     tutorialEndNextMode = "tutorial";
-
     return;
   }
 
@@ -547,18 +529,31 @@ function runAdvancedSummaryTutorial(state) {
   clearHighlights();
 
   if (tutorialSubStep === 0) {
-    showTutorial(
-      "Round complete. Next you'll be the Spy, where Notes and the secret-comparison tools matter most.",
-      { title: "Advanced UI", progressCurrent: 1, progressTotal: 2, tone: "guesser", placement: "bottom" }
+    advancedTutorialShow(
+      "This round is done. Next you will be the Spy, where Notes and KEEP versus NEW are most useful.",
+      {
+        role: "guesser",
+        title: "Round finished",
+        current: 1,
+        total: 2,
+        placement: "bottom"
+      }
     );
     highlightRoundSummary();
     tutorialContinueMode = "advance";
     return;
   }
 
-  showTutorial(
-    "Tap Next Round when you're ready.",
-    { title: "Advanced UI", progressCurrent: 2, progressTotal: 2, tone: "setter", placement: "bottom", mode: "hide" }
+  advancedTutorialShow(
+    "Tap Next Round.",
+    {
+      role: "setter",
+      title: "Swap jobs",
+      current: 2,
+      total: 2,
+      placement: "bottom",
+      mode: "hide"
+    }
   );
   highlightNextRoundBtn();
   tutorialContinueMode = "hide";
@@ -566,9 +561,14 @@ function runAdvancedSummaryTutorial(state) {
 
 function runAdvancedMatchTutorial(state) {
   clearHighlights();
-  showTutorial(
-    "Advanced UI complete. You practiced Guide, Drag & Lock, Notes, Log, and the Spy's comparison tools.",
-    { title: "Advanced UI complete", tone: "setter", placement: "bottom", mode: "end" }
+  advancedTutorialShow(
+    "Extra tools done. You can use these helpers whenever you want, but the main game still works the same way.",
+    {
+      role: "setter",
+      title: "Advanced tutorial done",
+      placement: "bottom",
+      mode: "end"
+    }
   );
   tutorialEndNextMode = "tutorial";
 }
