@@ -212,7 +212,7 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Now use what those colors taught you. A green letter belongs exactly where it landed -- keep it there. A yellow letter belongs somewhere else in the word -- move it around. A grey letter shouldn't show up again at all. With that in mind, type ${word}.`,
+        `Now use what those colors taught you: keep a green letter right where it landed, and move a yellow letter somewhere else in the word. With that in mind, type ${word}.`,
         {
           role: "guesser",
           current: 5,
@@ -274,6 +274,24 @@ function runBasicInspectorTutorial(state) {
   hideTutorial();
 }
 
+function basicSubmitButtonStates() {
+  return `
+    <div class="tutorial-choice-grid">
+      <div class="tutorial-choice-card">
+        <strong>NOTHING TYPED</strong>
+        <span>Button says KEEP CURRENT SECRET.</span>
+      </div>
+      <div class="tutorial-choice-card">
+        <strong>5 LETTERS TYPED</strong>
+        <span>Button says SUBMIT NEW SECRET.</span>
+      </div>
+    </div>
+    <div class="tutorial-note-strip">
+      Typed 1-4 letters? The button is disabled until you finish the word or clear it back to empty.
+    </div>
+  `;
+}
+
 function runBasicSpyTutorial(state) {
   const round = state.history?.length ?? 0;
   clearHighlights();
@@ -301,27 +319,12 @@ function runBasicSpyTutorial(state) {
       return;
     }
 
-    if (tutorialSubStep === 1) {
-      basicTutorialShow(
-        "Here's the shape of a round, from the Spy's side of the table:",
-        {
-          role: "setter",
-          current: 2,
-          total: 9,
-          placement: "top",
-          visualHtml: basicTurnOrderGraphic()
-        }
-      );
-      tutorialContinueMode = "advance";
-      return;
-    }
-
     if (state.simultaneousSecretSubmitted) {
       basicTutorialShow(
         "Your secret is locked in and hidden from the Inspector. They picked their very first guess at the exact same moment you picked your secret -- nobody knew anything about the other side yet. Now they're about to see how close that first guess was.",
         {
           role: "setter",
-          current: 3,
+          current: 2,
           total: 9,
           placement: "top",
           compact: true,
@@ -335,7 +338,7 @@ function runBasicSpyTutorial(state) {
         `Pick your secret word now. It has to be a real 5-letter word, just like the Inspector's guesses. Type ${word} one letter at a time, then tap the Submit New Secret button to lock it in.`,
         {
           role: "setter",
-          current: 3,
+          current: 2,
           total: 9,
           placement: "top",
           mode: "hide"
@@ -360,7 +363,7 @@ function runBasicSpyTutorial(state) {
         "The Inspector is still deciding on their next guess. As soon as they submit it, it'll show up right here on your screen -- keep an eye out.",
         {
           role: "setter",
-          current: 4,
+          current: 3,
           total: 9,
           placement: "top",
           compact: true,
@@ -373,17 +376,12 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "See that row above with the Inspector's guess in it? That's the pending guess row, and it's one of the most important things to understand as the Spy. The letters are showing, but there are no colors on them yet -- nobody has scored this guess. You are looking at it before anyone else, including the Inspector, sees what it scores.",
+        "See that row above with the Inspector's guess in it? That's the pending guess row. It's already showing colors right now -- for your OLD secret, since that's what you're keeping by default at the start of the round. The moment you start typing a new secret, this row updates live to match, letter by letter.",
         {
           role: "setter",
-          current: 4,
+          current: 3,
           total: 9,
-          placement: "bottom",
-          visualHtml: `
-            <div class="tutorial-note-strip">
-              Nothing happens to it automatically -- YOU decide your secret while looking at that guess, and only then does the game add the colors for both players.
-            </div>
-          `
+          placement: "bottom"
         }
       );
       highlightPendingGuessRow();
@@ -393,17 +391,12 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 1) {
       basicTutorialShow(
-        "Here's the part that trips people up, so let's slow down: that pending guess row actually updates live as you type your own secret below, one letter at a time.",
+        "Those colors are only a preview -- they show what WOULD happen if you submitted exactly what you've typed so far. Nothing is decided until you actually tap Submit, so feel free to keep changing your mind.",
         {
           role: "setter",
-          current: 5,
+          current: 4,
           total: 9,
-          placement: "bottom",
-          visualHtml: `
-            <div class="tutorial-note-strip">
-              This is important: those colors are just a preview of what would happen IF you submitted the word you're typing right now. You don't have to -- you can keep changing your mind. It's only showing you what would be, not deciding anything for you.
-            </div>
-          `
+          placement: "bottom"
         }
       );
       highlightPendingGuessRow();
@@ -413,10 +406,10 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 2) {
       basicTutorialShow(
-        "So here's your move: you can either keep your current secret exactly as it is, or erase it and swap in a different word. Do this while you can still see their guess without colors -- it's your chance to react before the round moves on.",
+        "So here's your move: you can either keep your current secret exactly as it is, or type a new word instead. Do this while you can still see their guess without colors -- it's your chance to react before the round moves on.",
         {
           role: "setter",
-          current: 6,
+          current: 5,
           total: 9,
           placement: "bottom",
           visualHtml: basicSpyChoices()
@@ -427,8 +420,23 @@ function runBasicSpyTutorial(state) {
       return;
     }
 
+    if (tutorialSubStep === 3) {
+      basicTutorialShow(
+        "One more thing before you try it: the Submit button's label changes depending on what you've typed.",
+        {
+          role: "setter",
+          current: 6,
+          total: 9,
+          placement: "bottom",
+          visualHtml: basicSubmitButtonStates()
+        }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+
     basicTutorialShow(
-      `Let's practice changing it. Erase your old secret and type ${word} instead -- and watch the pending guess row light up as you go.`,
+      `Let's practice changing it. There's nothing to erase -- just start typing ${word}, and your old secret disappears the moment you do.`,
       {
         role: "setter",
         current: 7,
@@ -546,7 +554,7 @@ function runBasicMatchTutorial(state) {
       {
         section: "Match finished",
         current: 1,
-        total: 2,
+        total: 3,
         placement: "bottom"
       }
     );
@@ -555,12 +563,27 @@ function runBasicMatchTutorial(state) {
     return;
   }
 
+  if (tutorialSubStep === 1) {
+    basicTutorialShow(
+      "Down here are your options for what's next: New Match starts a fresh one, Replay rematches the same opponent, and Leave heads back to the menu.",
+      {
+        section: "What's next",
+        current: 2,
+        total: 3,
+        placement: "bottom"
+      }
+    );
+    highlightSummaryActions();
+    tutorialContinueMode = "advance";
+    return;
+  }
+
   basicTutorialShow(
     "And that's the whole basic game, start to finish! There's more to learn when you're ready -- Powers, Quests, and other tools each get their own short, separate tutorial.",
     {
       section: "Basics done",
-      current: 2,
-      total: 2,
+      current: 3,
+      total: 3,
       placement: "bottom",
       mode: "end"
     }

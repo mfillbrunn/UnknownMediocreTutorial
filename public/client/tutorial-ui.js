@@ -1292,11 +1292,13 @@ ring.style.borderRadius =
   }
 }
 
-function highlightKeyboardGuesser() {
-  highlightEl(
-    byId("keyboardGuesser")
-  );
-}
+// No-op on purpose: every call site that highlights the keyboard also
+// highlights the specific key(s) to press via startKeyDemo, and a ring
+// around the whole keyboard on top of that just adds visual noise --
+// the per-key glow is enough on its own. Kept as a function (rather than
+// deleted) since every tutorial file still calls it as part of the
+// "type here" step shape.
+function highlightKeyboardGuesser() {}
 
 function lastHistoryRow(containerId) {
   return byId(containerId)
@@ -1324,11 +1326,8 @@ function highlightHistoryGuesser() {
   );
 }
 
-function highlightKeyboardSetter() {
-  highlightEl(
-    byId("keyboardSetter")
-  );
-}
+// See highlightKeyboardGuesser above -- same reasoning, setter side.
+function highlightKeyboardSetter() {}
 
 function highlightSetterHistory() {
   highlightEl(
