@@ -283,7 +283,7 @@ function runBasicSpyTutorial(state) {
         {
           role: "setter",
           current: 1,
-          total: 8,
+          total: 9,
           placement: "top",
           visualHtml: `
             <div class="tutorial-role-goal">
@@ -303,7 +303,7 @@ function runBasicSpyTutorial(state) {
         {
           role: "setter",
           current: 2,
-          total: 8,
+          total: 9,
           placement: "top",
           visualHtml: basicTurnOrderGraphic()
         }
@@ -318,7 +318,7 @@ function runBasicSpyTutorial(state) {
         {
           role: "setter",
           current: 3,
-          total: 8,
+          total: 9,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -332,7 +332,7 @@ function runBasicSpyTutorial(state) {
         {
           role: "setter",
           current: 3,
-          total: 8,
+          total: 9,
           placement: "top",
           mode: "hide"
         }
@@ -357,7 +357,7 @@ function runBasicSpyTutorial(state) {
         {
           role: "setter",
           current: 4,
-          total: 8,
+          total: 9,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -372,8 +372,8 @@ function runBasicSpyTutorial(state) {
         "See that row above with the Inspector's guess in it? That's the pending guess row, and it's one of the most important things to understand as the Spy. The letters are showing, but there are no colors on them yet -- nobody has scored this guess. You are looking at it before anyone else, including the Inspector, sees what it scores.",
         {
           role: "setter",
-          current: 5,
-          total: 8,
+          current: 4,
+          total: 9,
           placement: "bottom",
           visualHtml: `
             <div class="tutorial-note-strip">
@@ -389,11 +389,34 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 1) {
       basicTutorialShow(
+        "Here's the part that trips people up, so let's slow down: that pending guess row isn't just sitting there uncolored. As you type letters into your OWN secret below, this exact row will light up with colors, live -- one keystroke at a time.",
+        {
+          role: "setter",
+          current: 5,
+          total: 9,
+          placement: "bottom",
+          visualHtml: `
+            <div class="tutorial-note-strip">
+              Here's exactly what those colors mean while you're typing: <strong>green</strong> shows up on a letter if the word you're currently typing would put that exact letter in that exact spot. <strong>Yellow</strong> shows up if your typed word has that letter somewhere else. <strong>Grey</strong> means your typed word doesn't have that letter at all. In other words, every color on that row is a live preview of "if I locked in the word I'm typing right now, this is the feedback the Inspector would get."
+            </div>
+            <div class="tutorial-note-strip">
+              This is a sandbox, not a commitment. Type a word, watch the colors, don't like what you see? Erase it and try a completely different word -- the preview just updates again. Nothing is final, and the Inspector can't see any of this experimenting, until the moment you actually tap Submit.
+            </div>
+          `
+        }
+      );
+      highlightPendingGuessRow();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      basicTutorialShow(
         "So here's your move: you can either keep your current secret exactly as it is, or erase it and swap in a different word. Do this while you can still see their guess without colors -- it's your chance to react before the round moves on.",
         {
           role: "setter",
           current: 6,
-          total: 8,
+          total: 9,
           placement: "bottom",
           visualHtml: basicSpyChoices()
         }
@@ -404,11 +427,11 @@ function runBasicSpyTutorial(state) {
     }
 
     basicTutorialShow(
-      `Let's practice changing it. Erase your old secret and type ${word} instead.`,
+      `Let's practice changing it. Erase your old secret and type ${word} instead -- and watch the pending guess row light up as you go.`,
       {
         role: "setter",
         current: 7,
-        total: 8,
+        total: 9,
         placement: "top",
         mode: "hide",
         visualHtml: `
@@ -433,7 +456,7 @@ function runBasicSpyTutorial(state) {
       {
         role: "setter",
         current: 8,
-        total: 8,
+        total: 9,
         placement: "top",
         mode: "hide"
       }
@@ -453,8 +476,8 @@ function runBasicSpyTutorial(state) {
       "That's the whole basic game! Let's recap: the Inspector guesses over and over, reading the colors each time to guess smarter. The Spy watches every guess before it's scored and decides, each time, to keep the secret or change it -- as long as any change still matches every color already shown. Simple rules, but lots of room for strategy.",
       {
         role: "setter",
-        current: 8,
-        total: 8,
+        current: 9,
+        total: 9,
         placement: "top",
         mode: "end",
         visualHtml: `
