@@ -1896,6 +1896,18 @@ function highlightSetterLog() {
   highlightEl(byId("actionLogSetter"));
 }
 
+// Just the Log tab button on its own -- used by the "tap the Log tab" step,
+// which wants a tight ring around the one thing it's asking the player to
+// tap rather than the whole panel below it too (same "don't union unrelated
+// targets" reasoning as highlightConstraintRowAndToggle above).
+function highlightLogTabButton() {
+  highlightEl(byId("actionLogBtnSetter"));
+}
+
+function highlightSidebarToggleBtn() {
+  highlightEl(byId("setterSidebarToggle"));
+}
+
 function highlightStoredRound(index) {
   highlightEl(
     qs(
@@ -2438,6 +2450,34 @@ function waitForNoteSelected(word) {
 
   updateActionBadge();
 }
+function waitForSidebarToggled() {
+  tutorialWaitingFor = {
+    type: "sidebarToggled",
+    label: "TAP THE PANEL BUTTON"
+  };
+
+  setContinue({
+    show: true,
+    mode: "hide"
+  });
+
+  updateActionBadge();
+}
+
+function waitForLogTabOpened() {
+  tutorialWaitingFor = {
+    type: "logTabOpened",
+    label: "TAP LOG"
+  };
+
+  setContinue({
+    show: true,
+    mode: "hide"
+  });
+
+  updateActionBadge();
+}
+
 function waitForRejectedSecret() {
   tutorialWaitingFor = {
     type: "rejectedSecret"
@@ -2494,8 +2534,13 @@ window.endTutorial = endTutorial;
 const TUTORIAL_DONE_COPY = {
   tutorial2: `Nice work — you've learned the base game. Keep going with the Powers Tutorial, or head back to the menu.`,
   quest: `Nice work — you've learned the powers tutorial. Keep going with the Quest Tutorial, or head back to the menu.`,
-  advanced: `Nice work — you've learned the Quest tutorial. Keep going with the Advanced Tutorial, or head back to the menu.`,
-  tutorial: `Nice work — you've learned the advanced UI. Replay any tutorial any time from How to Play, or head back to the menu.`
+  // Kept source-agnostic (no "you've learned the Quest tutorial" clause) --
+  // this key is reused both by Quest's own chain into Advanced and by the
+  // Modes Tutorial's chain into Advanced (see tutorial-modes.js), and the
+  // two don't share what was just learned.
+  advanced: `Nice work! Keep going with the Advanced Tutorial, or head back to the menu.`,
+  tutorial: `Nice work — you've learned the advanced UI. Replay any tutorial any time from How to Play, or head back to the menu.`,
+  modes: `Nice work — you've learned about Stars. Keep going with the Modes Tutorial to see how the whole power draft fits together, or head back to the menu.`
 };
 
 function showTutorialDoneModal() {
@@ -2688,6 +2733,54 @@ function notifyTutorialNoteSelected(word) {
 window.notifyTutorialNoteSelected =
   notifyTutorialNoteSelected;
 
+// Fires on either direction of the tap (open or close) -- the step just
+// wants to confirm the player found and pressed the button, not that they
+// left the panel in one particular state. Forced back open immediately
+// after, since later steps in this same walkthrough (Log, the constraint
+// row, power info) all live inside this panel and would have nothing to
+// highlight if the player's tap happened to be the closing one.
+function notifyTutorialSidebarToggled() {
+  if (
+    !tutorialWaitingFor ||
+    tutorialWaitingFor.type !== "sidebarToggled"
+  ) {
+    return;
+  }
+
+  tutorialWaitingFor = null;
+  updateActionBadge();
+  tutorialSubStep++;
+
+  window.setSetterSidebarCollapsed?.(false);
+
+  if (window.state && window.myRole) {
+    tutorialSteps(window.state, window.myRole);
+  }
+}
+
+window.notifyTutorialSidebarToggled =
+  notifyTutorialSidebarToggled;
+
+function notifyTutorialLogTabOpened() {
+  if (
+    !tutorialWaitingFor ||
+    tutorialWaitingFor.type !== "logTabOpened"
+  ) {
+    return;
+  }
+
+  tutorialWaitingFor = null;
+  updateActionBadge();
+  tutorialSubStep++;
+
+  if (window.state && window.myRole) {
+    tutorialSteps(window.state, window.myRole);
+  }
+}
+
+window.notifyTutorialLogTabOpened =
+  notifyTutorialLogTabOpened;
+
 function notifyTutorialRejectedSecret() {
   if (!tutorialWaitingFor) {
     return;
@@ -2778,6 +2871,16 @@ function tutorialSteps(state, role) {
 
   if (state.tutorialStage === "quest") {
     window.runQuestTutorial?.(state, role);
+    return;
+  }
+
+  if (state.tutorialStage === "star") {
+    window.runStarTutorial?.(state, role);
+    return;
+  }
+
+  if (state.tutorialStage === "modes") {
+    window.runModesTutorial?.(state, role);
     return;
   }
 

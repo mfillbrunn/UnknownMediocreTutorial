@@ -330,6 +330,16 @@ if (action.mode === "advanced") {
   state.isTutorial = true;
   state.tutorialStage = "advanced";
 }
+
+if (action.mode === "star") {
+  state.isTutorial = true;
+  state.tutorialStage = "star";
+}
+
+if (action.mode === "modes") {
+  state.isTutorial = true;
+  state.tutorialStage = "modes";
+}
     const nowReady = !state.players[userId]?.ready;
     setPlayerReady(room, userId, nowReady);
 

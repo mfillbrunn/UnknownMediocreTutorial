@@ -112,6 +112,28 @@ class TutorialMode {
     "BLIMP"
   ];
 }
+
+    // Stage "star": a standalone, entirely narrative deep dive on the
+    // Spy's star/charge system (see client/tutorial-star.js). Single
+    // round, no scripted opening -- seedStarTutorialRound (called from
+    // onLobbyReady below) drops the player straight into a mid-decision
+    // scenario for the board to look realistic while the narration plays,
+    // the same "seed a snapshot instead of scripting from scratch"
+    // approach seedPowerTutorialRound uses.
+    if (state.tutorialStage === "star") {
+      state.roundsTotal = 1;
+      state.scriptedTurns = 0;
+    }
+
+    // Stage "modes": explains the power/quest draft and what carries over
+    // at the round-2 swap (see client/tutorial-modes.js). Also entirely
+    // narrative -- nothing here is about a specific live action, so it
+    // doesn't matter which role the human starts as.
+    if (state.tutorialStage === "modes") {
+      state.roundsTotal = 1;
+      state.scriptedTurns = 0;
+    }
+
     state.timeControl.enabled = false;
     // No randomness
     state.shuffle = false;
@@ -131,6 +153,36 @@ class TutorialMode {
     state.activePowers = [];
 
     this.seedQuestTutorialRound(state);
+    return;
+  }
+
+  if (state.tutorialStage === "star") {
+    // No real powers needed -- spy-charge itself stays disabled for the
+    // whole tutorial (createSpyChargeState's `enabled: !state.isTutorial`),
+    // so this tutorial is pure narration over a realistic-looking board.
+    state.initialPowers = {
+      setter: [],
+      guesser: []
+    };
+
+    state.activePowers = [];
+
+    this.seedStarTutorialRound(state);
+    return;
+  }
+
+  if (state.tutorialStage === "modes") {
+    // Purely narrative (see client/tutorial-modes.js) -- no real powers
+    // or board state needed, just enough of a valid secret for the rest
+    // of the game engine not to choke on an empty one.
+    state.initialPowers = {
+      setter: [],
+      guesser: []
+    };
+
+    state.activePowers = [];
+    state.secret = "BLIMP";
+    state.phase = "normal";
     return;
   }
 
@@ -237,6 +289,38 @@ class TutorialMode {
 
   state.powers.questActive = false;
 }
+  // Drops the Star Tutorial straight into a mid-decision scenario -- two
+  // already-scored rounds, one live guess sitting in front of the setter
+  // -- purely so the board looks like a real match while tutorial-star.js's
+  // narration plays over it. Nothing here is actually scored against for
+  // real (spy-charge stays disabled the whole time), so unlike
+  // seedPowerTutorialRound below there's no "teaching vs receiving" split
+  // and nothing to re-seed after a round transition -- this is a single
+  // round with no swap.
+  seedStarTutorialRound(state) {
+    if (state.tutorialStage !== "star") return;
+
+    const secret = "BLIMP";
+    state.secret = secret;
+    state.history = ["CHAMP", "CAIRN"].map((guess, i) => {
+      const fb = scoreGuess(secret, guess);
+      return {
+        guess,
+        fb,
+        fbGuesser: [...fb],
+        extraInfo: null,
+        finalSecret: secret,
+        roundIndex: i,
+        powerEvents: [],
+        fakeFeedback: null
+      };
+    });
+
+    state.phase = "normal";
+    state.turn = state.setter;
+    state.pendingGuess = "CRANE";
+    state.setterDraft = "";
+  }
   // Drops the "Try it" power tutorial straight into a mid-match scenario
   // -- two already-scored rounds already sitting in state.history, one
   // live turn ready to go -- instead of scripting an entire match from
