@@ -1,6 +1,7 @@
 const powerMetadata = require("../../powers/powerMetadata");
 const { scoreGuess } = require("../../game-engine/scoring");
 const spyChargeServer = require("../../powers/powers/spyChargeServer");
+const { pickRandomQuestType, ensureQuestConditions } = require("../../powers/powers/questServer");
 
 class TutorialMode {
   constructor() {
@@ -143,7 +144,8 @@ class TutorialMode {
   onLobbyReady(
   state,
   setterPowers,
-  guesserPowers
+  guesserPowers,
+  guesserQuest
 ) {
   if (state.tutorialStage === "quest") {
     state.initialPowers = {
@@ -182,17 +184,22 @@ class TutorialMode {
   }
 
   if (state.tutorialStage === "modes") {
-    // Purely narrative (see client/tutorial-modes.js) -- no real powers
-    // or board state needed, just enough of a valid secret for the rest
-    // of the game engine not to choke on an empty one.
+    // Unlike every other tutorial stage, this one goes through the REAL
+    // draft screen for real (see lobby.js's draftEligible) -- setterPowers/
+    // guesserPowers/guesserQuest here are the player's own actual picks
+    // (plus whatever the AI auto-picked for itself), not a scripted
+    // loadout. From here on this plays out exactly like a normal match;
+    // draft.js's finalizeDraft (which called this) sets state.phase to
+    // "simultaneous" right after, same as it does for every other match.
     state.initialPowers = {
-      setter: [],
-      guesser: []
+      setter: setterPowers,
+      guesser: guesserPowers
     };
 
-    state.activePowers = [];
-    state.secret = "BLIMP";
-    state.phase = "normal";
+    state.activePowers = [...setterPowers, ...guesserPowers];
+
+    state.powers.quest.type = guesserQuest || pickRandomQuestType();
+    ensureQuestConditions(state);
     return;
   }
 
