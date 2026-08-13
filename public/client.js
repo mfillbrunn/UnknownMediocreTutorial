@@ -1869,7 +1869,10 @@ function computeSetterSecretStatus() {
 
   return {
     mode: "new",
-    primaryLabel: "SUBMIT NEW SECRET",
+    // Same treatment as the Keep button above -- spell out the actual
+    // word once it's a real, submittable secret instead of the generic
+    // "SUBMIT NEW SECRET".
+    primaryLabel: `SUBMIT ${draftUpper}`,
     primaryEnabled: true,
     clearVisible: true,
     clearEnabled: !editingBlocked,

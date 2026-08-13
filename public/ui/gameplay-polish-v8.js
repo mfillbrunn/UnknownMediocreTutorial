@@ -452,7 +452,16 @@
     const submitButton = byId("guesserSubmitGuessBtn");
 
     if (clearButton) clearButton.disabled = !canEdit || draft.length === 0;
-    if (submitButton) submitButton.disabled = !canEdit || draft.length !== 5;
+
+    if (submitButton) {
+      submitButton.disabled = !canEdit || draft.length !== 5;
+      // Spelled out once there's a real 5-letter word to submit -- "Submit
+      // Guess" only while it's still a placeholder with nothing typed yet
+      // (same "actual word once it's actionable" treatment as the Spy's
+      // Keep/Submit buttons -- see client.js's computeSetterSecretStatus).
+      submitButton.textContent =
+        draft.length === 5 ? `Submit ${draft}` : "Submit Guess";
+    }
   }
 
   function copyExactTileVisual(sourceRow, cloneRow) {
