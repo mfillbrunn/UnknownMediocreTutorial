@@ -152,10 +152,12 @@
     if (current.direction === "close" && dx <= -SWIPE_THRESHOLD) {
       suppressSidebarClickUntil = Date.now() + 350;
       setCollapsed(true);
+      window.notifyTutorialSidebarToggled?.();
     }
 
     if (current.direction === "open" && dx >= SWIPE_THRESHOLD) {
       setCollapsed(false);
+      window.notifyTutorialSidebarToggled?.();
     }
   }
 
@@ -172,6 +174,7 @@
     toggle.addEventListener("click", event => {
       event.stopPropagation();
       setCollapsed(!isCollapsed());
+      window.notifyTutorialSidebarToggled?.();
     });
 
     sidebar.addEventListener("pointerdown", event => {

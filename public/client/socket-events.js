@@ -524,6 +524,18 @@ document
     startFreshTutorial("advanced");
   });
 
+document
+  .getElementById("startStarTutorialBtn")
+  ?.addEventListener("click", () => {
+    window.startStarTutorial();
+  });
+
+document
+  .getElementById("startModesTutorialBtn")
+  ?.addEventListener("click", () => {
+    startFreshTutorial("modes");
+  });
+
 // Per-power "Try it" tutorial (Power Library "?" buttons). Unlike
 // startFreshTutorial above, whether the human starts as guesser or setter
 // depends on the power being taught -- a new room's host is setter by
@@ -570,6 +582,46 @@ window.startPowerTutorial = function startPowerTutorial(powerId) {
           userId: window.currentUser.id,
           mode: "tutorialPower",
           powerId
+        });
+      }, 1);
+    }
+  );
+  hide("startupScreen");
+  hide("menu");
+};
+
+// Star Tutorial (setter-only, single round, purely narrative -- see
+// client/tutorial-star.js). Unlike startFreshTutorial above, no
+// SWITCH_ROLES step: a new room's host is setter by default, which is
+// exactly where this tutorial needs the human to start.
+window.startStarTutorial = function startStarTutorial() {
+  if (!requireAuth("start tutorial")) return;
+
+  const username =
+    window.myProfile?.username ||
+    window.currentUser?.email ||
+    "Player";
+
+  createRoom(
+    { name: username },
+    resp => {
+      if (!resp?.ok) return toast(resp?.error);
+
+      roomId = resp.roomId;
+      persistRoom(roomId);
+      window.roomId = roomId;
+
+      sendGameAction({
+        type: "ADD_AI",
+        difficulty: 1,
+        userId: window.currentUser.id
+      });
+
+      setTimeout(() => {
+        sendGameAction({
+          type: "PLAYER_READY",
+          userId: window.currentUser.id,
+          mode: "star"
         });
       }, 1);
     }
