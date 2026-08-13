@@ -157,6 +157,16 @@
       </div>
     </div>
   </div>
+  <!-- Inspector-only: hold a keyboard key to mark it green/yellow/gray for
+       your own planning (e.g. after a power leaves the real color
+       ambiguous) -- see client/key-color-picker.js. Positioned above
+       whichever key was held via inline style, not CSS layout. -->
+  <div id="keyColorPicker" class="key-color-picker hidden" role="menu" aria-label="Set letter color">
+    <button type="button" class="key-color-option key-color-option-green" data-color="green" role="menuitem">Green</button>
+    <button type="button" class="key-color-option key-color-option-yellow" data-color="yellow" role="menuitem">Yellow</button>
+    <button type="button" class="key-color-option key-color-option-gray" data-color="gray" role="menuitem">Not in word</button>
+    <button type="button" class="key-color-option key-color-option-clear" data-color="" role="menuitem">Unused</button>
+  </div>
     <div id="appContainer">
       <!-- ========== HEADER ========== -->
 <header class="app-header">
@@ -1412,6 +1422,7 @@
   <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
   <script src="client/drag-mode.js"></script>
+  <script src="client/key-color-picker.js"></script>
   <script src="client/friends.js"></script>
   <script src="client/daily-challenge.js"></script>
   <script src="client/my-games.js"></script>
