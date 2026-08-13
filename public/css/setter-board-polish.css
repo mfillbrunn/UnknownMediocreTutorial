@@ -592,6 +592,77 @@ body.row-flight-active #setterScreen .setter-board-divider {
   }
 }
 
+/* Star-count congratulation (client/spy-charge.js's showSpyChargeCongrats)
+   -- one small popup per switch, "Nice!" through "Amazing!" scaling up in
+   size/color/glow with how many stars just landed. Dynamically created
+   and removed, same as .spy-charge-landing-burst above, so it needs no
+   static markup of its own. */
+.spy-charge-congrats {
+  position: fixed;
+  z-index: 100122;
+  transform: translate(-50%, -100%) translateY(-6px) scale(0.6);
+  opacity: 0;
+  pointer-events: none;
+
+  font-weight: 900;
+  white-space: nowrap;
+  color: #e5e7eb;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
+
+  transition:
+    opacity 220ms ease,
+    transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.spy-charge-congrats.show {
+  opacity: 1;
+  transform: translate(-50%, -100%) translateY(-16px) scale(1);
+}
+
+.spy-charge-congrats.tier-1 {
+  font-size: 15px;
+}
+
+.spy-charge-congrats.tier-2 {
+  font-size: 18px;
+  color: #86efac;
+  text-shadow:
+    0 0 8px rgba(134, 239, 172, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.55);
+}
+
+.spy-charge-congrats.tier-3 {
+  font-size: 21px;
+  color: #fbbf24;
+  text-shadow:
+    0 0 10px rgba(251, 191, 36, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.55);
+}
+
+.spy-charge-congrats.tier-4 {
+  font-size: 25px;
+  background: linear-gradient(90deg, #fbbf24, #22d3ee);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.55));
+}
+
+.spy-charge-congrats.tier-4.show {
+  transform: translate(-50%, -100%) translateY(-18px) scale(1.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spy-charge-congrats {
+    transition: opacity 220ms ease;
+    animation: none !important;
+  }
+
+  .spy-charge-congrats.show {
+    transform: translate(-50%, -100%);
+  }
+}
+
 @media (max-width: 430px) {
   #setterScreen .setter-decision-meta {
     gap: 6px;
