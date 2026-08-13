@@ -536,6 +536,12 @@ document
     startFreshTutorial("modes");
   });
 
+document
+  .getElementById("startMenuTutorialBtn")
+  ?.addEventListener("click", () => {
+    window.startMainMenuTutorial();
+  });
+
 // Per-power "Try it" tutorial (Power Library "?" buttons). Unlike
 // startFreshTutorial above, whether the human starts as guesser or setter
 // depends on the power being taught -- a new room's host is setter by

@@ -4041,18 +4041,95 @@ body.spy-charge-reset-armed #keyboardSetter .key[data-key]:not([data-key="ENTER"
 
 .draft-pick-slot {
   position: absolute;
-  top: 5px;
+  top: 6px;
   right: 6px;
   z-index: 2;
 
-  padding: 3px 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: none;
+}
+
+/* Spy's first pick -- starts active immediately, no meter to watch. A
+   plain, confident pill rather than a shape of its own (there's nothing
+   to illustrate beyond the word itself). */
+.draft-pick-start {
+  padding: 5px 10px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.58);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: rgba(255, 255, 255, 0.82);
+
+  background: linear-gradient(135deg, #34d399, #059669);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+
   font-size: 12px;
   font-weight: 900;
+  letter-spacing: 0.4px;
   line-height: 1;
+
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.5);
+}
+
+/* Spy's second pick -- locked until 5 stars. A star shape big enough to
+   read as its own icon (not just a tinted number), with the threshold
+   layered on top of it instead of beside it, so "star" and "5" read as
+   one badge instead of two things to parse. */
+.draft-pick-five {
+  position: relative;
+  width: 34px;
+  height: 34px;
+}
+
+.draft-pick-five-star {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 34px;
+  line-height: 1;
+  color: #fbbf24;
+
+  filter:
+    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 4px rgba(251, 191, 36, 0.55));
+}
+
+.draft-pick-five-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The ★ glyph's own visual weight sits slightly above center in its em
+     box -- nudge the number down a touch so it reads as centered inside
+     the star instead of centered in the box and looking too high. */
+  padding-top: 3px;
+
+  font-size: 14px;
+  font-weight: 900;
+  color: #451a03;
+}
+
+/* Inspector's pick -- power or Quest, same badge either way. There's only
+   ever one meaningful state for their single pick ("this is it"), so one
+   icon covers both instead of needing a second shape. */
+.draft-pick-selected {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+
+  background: linear-gradient(135deg, #e6d27a, #c9a83e);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  color: #2b2308;
+
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+
+  box-shadow: 0 2px 6px rgba(201, 168, 62, 0.5);
 }
 
 @media (max-width: 430px) {

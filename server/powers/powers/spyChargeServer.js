@@ -69,8 +69,15 @@ function createSpyChargeState(state, setterPowerIds) {
     ? setterPowerIds
     : getSetterPowerIds(state);
 
+  // Disabled for every tutorial EXCEPT the Star Tutorial itself (see
+  // client/tutorial-star.js), which is specifically about walking the
+  // player through this live -- real secret changes, real stars, a real
+  // second-power unlock and letter reset -- rather than narrating it.
+  const isStarTutorial =
+    state?.isTutorial && state?.tutorialStage === "star";
+
   return {
-    enabled: !state?.isTutorial && !state?.devMode,
+    enabled: (!state?.isTutorial || isStarTutorial) && !state?.devMode,
     total: 0,
     hint: null,
     lockedPowerId: powers[1] || null,

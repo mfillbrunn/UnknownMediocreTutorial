@@ -1,5 +1,7 @@
 const powerMetadata = require("../../powers/powerMetadata");
 const { scoreGuess } = require("../../game-engine/scoring");
+const spyChargeServer = require("../../powers/powers/spyChargeServer");
+const { pickRandomQuestType, ensureQuestConditions } = require("../../powers/powers/questServer");
 
 class TutorialMode {
   constructor() {
@@ -142,7 +144,8 @@ class TutorialMode {
   onLobbyReady(
   state,
   setterPowers,
-  guesserPowers
+  guesserPowers,
+  guesserQuest
 ) {
   if (state.tutorialStage === "quest") {
     state.initialPowers = {
@@ -157,32 +160,46 @@ class TutorialMode {
   }
 
   if (state.tutorialStage === "star") {
-    // No real powers needed -- spy-charge itself stays disabled for the
-    // whole tutorial (createSpyChargeState's `enabled: !state.isTutorial`),
-    // so this tutorial is pure narration over a realistic-looking board.
+    // Real powers this time -- spy-charge is specifically ENABLED for
+    // this stage (see spyChargeServer.js's createSpyChargeState), so the
+    // player needs a genuine locked second power to watch unlock at 5
+    // stars. countOnly (index 0) starts active; hideTile (index 1) is
+    // the one that stays locked.
+    const sP = ["countOnly", "hideTile"];
     state.initialPowers = {
-      setter: [],
+      setter: sP,
       guesser: []
     };
 
-    state.activePowers = [];
+    state.activePowers = [...sP];
 
     this.seedStarTutorialRound(state);
+
+    spyChargeServer.initializeForRound(state, sP);
+    // Start the meter partway full (see tutorial-star.js) so the player
+    // reaches both the 5-star and 8-star milestones with just one or two
+    // real secret changes instead of needing a long grind from zero.
+    state.powers.spyCharge.total = 4;
     return;
   }
 
   if (state.tutorialStage === "modes") {
-    // Purely narrative (see client/tutorial-modes.js) -- no real powers
-    // or board state needed, just enough of a valid secret for the rest
-    // of the game engine not to choke on an empty one.
+    // Unlike every other tutorial stage, this one goes through the REAL
+    // draft screen for real (see lobby.js's draftEligible) -- setterPowers/
+    // guesserPowers/guesserQuest here are the player's own actual picks
+    // (plus whatever the AI auto-picked for itself), not a scripted
+    // loadout. From here on this plays out exactly like a normal match;
+    // draft.js's finalizeDraft (which called this) sets state.phase to
+    // "simultaneous" right after, same as it does for every other match.
     state.initialPowers = {
-      setter: [],
-      guesser: []
+      setter: setterPowers,
+      guesser: guesserPowers
     };
 
-    state.activePowers = [];
-    state.secret = "BLIMP";
-    state.phase = "normal";
+    state.activePowers = [...setterPowers, ...guesserPowers];
+
+    state.powers.quest.type = guesserQuest || pickRandomQuestType();
+    ensureQuestConditions(state);
     return;
   }
 
@@ -289,20 +306,25 @@ class TutorialMode {
 
   state.powers.questActive = false;
 }
-  // Drops the Star Tutorial straight into a mid-decision scenario -- two
-  // already-scored rounds, one live guess sitting in front of the setter
-  // -- purely so the board looks like a real match while tutorial-star.js's
-  // narration plays over it. Nothing here is actually scored against for
-  // real (spy-charge stays disabled the whole time), so unlike
-  // seedPowerTutorialRound below there's no "teaching vs receiving" split
-  // and nothing to re-seed after a round transition -- this is a single
-  // round with no swap.
+  // Drops the Star Tutorial straight into a mid-decision scenario -- one
+  // already-scored guess, one live guess sitting in front of the setter --
+  // so the board looks like a real match. Unlike seedPowerTutorialRound
+  // below, the star ratings here are REAL (spy-charge is specifically
+  // enabled for this stage), which makes the seed's own constraints
+  // matter in a way they don't elsewhere: ROUND shares zero letters with
+  // BLIMP, so it only rules out R/O/U/N/D and pins nothing to an exact
+  // position -- the feasible-secret pool stays wide open, and the player
+  // can find a genuinely different, genuinely legal switch to submit.
+  // (An earlier version reused seedPowerTutorialRound's CHAMP/CAIRN pair,
+  // which pins 3 of the 5 letters exactly and left BLIMP as close to the
+  // ONLY legal secret -- fine when nothing was actually being scored, but
+  // it meant there was nothing left to switch to once scoring went live.)
   seedStarTutorialRound(state) {
     if (state.tutorialStage !== "star") return;
 
     const secret = "BLIMP";
     state.secret = secret;
-    state.history = ["CHAMP", "CAIRN"].map((guess, i) => {
+    state.history = ["ROUND"].map((guess, i) => {
       const fb = scoreGuess(secret, guess);
       return {
         guess,

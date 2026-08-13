@@ -506,10 +506,13 @@ function buildCoverStrengthState(
    * Hide the rating when changing is
    * unavailable or the calculation
    * would reveal hidden information.
+   * The Star Tutorial (client/tutorial-star.js) is the one exception --
+   * it walks the player through this live, so the preview needs to
+   * actually show up for it same as a real match.
    */
   const blocked =
     !state ||
-    state.isTutorial ||
+    (state.isTutorial && state.tutorialStage !== "star") ||
     state.phase !== "normal" ||
     state.turn !== state.setter ||
     !/^[A-Z]{5}$/.test(

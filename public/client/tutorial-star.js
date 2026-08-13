@@ -1,10 +1,12 @@
-// Star Tutorial: a deep dive on the Spy's star/charge system, split out of
-// the Advanced Tutorial's old single "Stars and charge" step. Setter-only,
-// single round, entirely narrative -- spy-charge itself is disabled for
-// every tutorial state (see spyChargeServer.js's createSpyChargeState:
-// `enabled: !state.isTutorial`), so there's nothing live to earn stars
-// against here. The examples below are illustrative words, not something
-// the player's own draft actually gets scored on.
+// Star Tutorial: a live, hands-on walk through the Spy's star/charge
+// system. Setter-only, single round. Unlike every other tutorial,
+// spy-charge is actually ENABLED here (see spyChargeServer.js's
+// createSpyChargeState and coverStrength.js's buildCoverStrengthState,
+// both of which special-case tutorialStage === "star") -- the player
+// types and submits real secrets, earns real stars, watches their real
+// second power unlock at 5, and uses a real letter reset at 8.
+// tutorialMode.js seeds the meter at 4 stars so one or two genuine
+// switches are enough to reach both milestones instead of a long grind.
 
 function starTutorialShow(text, {
   role = "setter",
@@ -30,29 +32,32 @@ function starTutorialShow(text, {
   });
 }
 
-function starExampleVisual(word, stars, reason) {
-  return `
-    <div class="tutorial-choice-grid">
-      <div class="tutorial-choice-card">
-        <strong>${word}</strong>
-        <span>${"★".repeat(stars)}${"☆".repeat(3 - stars)}</span>
-      </div>
-    </div>
-    <div class="tutorial-note-strip">
-      ${reason}
-    </div>
-  `;
-}
+// This file has no other module-scoped state, so plain top-level `let`s
+// (same pattern tutorial-ui.js itself uses for tutorialSubStep etc.) are
+// enough -- no IIFE needed to keep them off the global object.
+let starSessionKey = null;
+let starLastSeenHistoryLen = null;
+let starPowerMilestoneAnnounced = false;
+let starResetsUsedAtEntry = 0;
+let starAwaitingAck = false;
+let starAckStepThreshold = null;
+let starLastResultText = "";
 
-function starMeterVisual() {
-  return `
-    <div class="tutorial-eli5-mini-list">
-      <span><b>5 ★</b> unlocks your second power</span>
-      <span><b>8 ★</b> gives a letter reset</span>
-      <span><b>12 ★</b> gives a second letter reset</span>
-      <span><b>+1 ★</b> for matching the small hint letter on your draft row</span>
-    </div>
-  `;
+// A fresh room (new roomId) means a fresh meter -- reset every tracker
+// exactly once per session instead of carrying stale state from a
+// previous run of this same tutorial into the new one.
+function resetStarSession(state) {
+  const key = window.roomId || "star";
+  if (key === starSessionKey) return;
+
+  starSessionKey = key;
+  starLastSeenHistoryLen = state.history?.length ?? 0;
+  starPowerMilestoneAnnounced = (Number(state.powers?.spyCharge?.total) || 0) >= 5;
+  starResetsUsedAtEntry = Number(state.powers?.spyCharge?.resetsUsed) || 0;
+  starAwaitingAck = false;
+  starAckStepThreshold = null;
+  starLastResultText = "";
+  window.TutorialCore?.setStep(0);
 }
 
 function runStarTutorial(state, role) {
@@ -62,7 +67,7 @@ function runStarTutorial(state, role) {
   api.clearHighlights();
 
   if (role !== "setter") {
-    api.setNextTutorial("advanced");
+    api.setNextTutorial("modes");
     starTutorialShow(
       "This tutorial needs the Spy screen. End it and start the Star Tutorial again.",
       { title: "Wrong role", mode: "end" }
@@ -70,105 +75,131 @@ function runStarTutorial(state, role) {
     return;
   }
 
+  resetStarSession(state);
+
+  // Cleared unconditionally up front, not just in the branches that no
+  // longer need it -- the Continue button's own click handler silently
+  // no-ops whenever tutorialWaitingFor is still set (it's built to assume
+  // a "waiting" step always ends via a notifyTutorial* hook, never via a
+  // plain click), so a value left over from the *previous* render (e.g.
+  // "make a switch"'s SUBMIT NEW SECRET wait) would otherwise permanently
+  // block every later mode:"advance" step's Continue button, including
+  // the very next one below. Re-armed below in the one branch that still
+  // needs it.
+  api.clearWaiting();
+
+  // A real AI opponent is playing along (this isn't scripted), so the
+  // round could in principle end before the player reaches every
+  // milestone -- wrap up gracefully instead of getting stuck.
+  if (state.phase === "gameOver") {
+    api.setNextTutorial("modes");
+    starTutorialShow(
+      "The round wrapped up there, but you already saw the star system do its thing live -- nice work.",
+      { title: "Star Tutorial done", mode: "end" }
+    );
+    return;
+  }
+
   const step = api.getStep();
+  const charge = state.powers?.spyCharge || {};
+  const total = Math.max(0, Math.min(12, Number(charge.total) || 0));
+  const resetsUsed = Number(charge.resetsUsed) || 0;
+  const historyLen = state.history?.length ?? 0;
 
   if (step === 0) {
     starTutorialShow(
-      "Every time you choose a new secret, the game quietly rates how good that choice was -- from 0 to 3 stars.",
-      { current: 1, total: 7 }
-    );
-    api.highlight(byId("setterCoverStars"));
-    api.setMode("advance");
-    return;
-  }
-
-  if (step === 1) {
-    starTutorialShow(
-      "Say the Inspector just guessed CRANE, and you're picking your next secret. Switching to STOVE is a fine, legal choice -- but plenty of other secret words would have looked exactly the same to the Inspector too. That usually earns just 1 star.",
-      {
-        title: "Example: 1 star",
-        current: 2,
-        total: 7,
-        visualHtml: starExampleVisual(
-          "STOVE",
-          1,
-          "Legal, but not very safe -- it narrows things down a lot."
-        )
-      }
-    );
-    api.setMode("advance");
-    return;
-  }
-
-  if (step === 2) {
-    starTutorialShow(
-      "Switching to PLUMB instead might earn all 3 stars. It's just as legal, but it happens to keep far more secret words still possible -- so the Inspector learns much less from it than they would from STOVE.",
-      {
-        title: "Example: 3 stars",
-        current: 3,
-        total: 7,
-        visualHtml: starExampleVisual(
-          "PLUMB",
-          3,
-          "Just as legal, but keeps far more secret words alive."
-        )
-      }
-    );
-    api.setMode("advance");
-    return;
-  }
-
-  if (step === 3) {
-    starTutorialShow(
-      "Here's how it's judged: out of every switch you could legally make, the game checks which one keeps the MOST secret words possible. The closer your pick is to that safest possible switch, the more stars you earn.",
-      {
-        title: "How stars are judged",
-        current: 4,
-        total: 7
-      }
-    );
-    api.setMode("advance");
-    return;
-  }
-
-  if (step === 4) {
-    starTutorialShow(
-      "Stars pile up in a meter across the round. You pick 2 powers at the start of a match -- your first pick starts active right away. Reach 5 total stars and your second pick unlocks too, for the rest of the round.",
-      {
-        title: "5 stars: your second power",
-        current: 5,
-        total: 7
-      }
+      `The meter is already partway full -- ${total} of 12 stars from earlier this round. From here, every real secret change you make adds to it live.`,
+      { current: 1, total: 4 }
     );
     api.highlight(byId("spyChargeHud"));
     api.setMode("advance");
     return;
   }
 
-  if (step === 5) {
-    starTutorialShow(
-      "You may remember this from the very first tutorial: 8 stars refreshes one letter's feedback, and 12 gives you a second refresh. There's also a hidden hint letter shown right on your draft row -- match it and you earn one bonus star on top of whatever your word already earned.",
-      {
-        title: "8, 12, and the bonus star",
-        current: 6,
-        total: 7,
-        visualHtml: starMeterVisual()
-      }
-    );
-    api.setMode("advance");
+  // Whatever the last "a submission just landed" message said, hold it on
+  // screen until the player actively acknowledges it, so a stray state
+  // push (the AI's next guess arriving, for instance) can't yank it away
+  // before they've read it.
+  if (starAwaitingAck) {
+    if (step >= starAckStepThreshold) {
+      starAwaitingAck = false;
+      starAckStepThreshold = null;
+    } else {
+      starTutorialShow(starLastResultText, { mode: "advance" });
+      api.highlight(byId("spyChargeHud"));
+      return;
+    }
+  }
+
+  // A submission just landed -- report on it regardless of where the
+  // total ended up, INCLUDING when it jumped straight past 8 in one go
+  // (a good switch plus the bonus-star hint can easily do that from a
+  // seeded 4) -- otherwise a big jump would skip straight to the reset
+  // instructions with no acknowledgment of what just happened at all.
+  if (historyLen > starLastSeenHistoryLen) {
+    starLastSeenHistoryLen = historyLen;
+
+    let text = `That switch landed. The meter is now at ${total} of 12 stars.`;
+
+    if (total >= 5 && !starPowerMilestoneAnnounced) {
+      starPowerMilestoneAnnounced = true;
+      text += " Your second power, Hide Tile, just unlocked for the rest of the round -- look for it in your powers row.";
+    }
+
+    text += total >= 8
+      ? " You've also unlocked a letter reset -- more on that next."
+      : " Keep going.";
+
+    starLastResultText = text;
+    starAwaitingAck = true;
+    starAckStepThreshold = step + 1;
+
+    starTutorialShow(text, { mode: "advance" });
+    api.highlight(byId("spyChargeHud"));
+    if (total >= 5) window.highlightPowerButtonByText?.("Hide Tile");
     return;
   }
 
-  api.setNextTutorial("modes");
-  starTutorialShow(
-    "That's the whole Star system: pick sharp secrets, and the rewards take care of themselves.",
-    {
-      title: "Star Tutorial done",
-      current: 7,
-      total: 7,
-      mode: "end"
+  if (total < 8) {
+    if (!state.pendingGuess) {
+      starTutorialShow(
+        "Waiting for the Inspector's next guess...",
+        { compact: true, mode: "hide", key: `star-wait-${historyLen}` }
+      );
+      api.setContinue({ show: false, mode: "hide" });
+      return;
     }
+
+    const hint = charge.hint;
+    const hintText = hint?.letter && Number.isInteger(hint.position)
+      ? ` Try to include ${String(hint.letter).toUpperCase()} at position ${hint.position + 1} too, for a bonus star.`
+      : "";
+
+    starTutorialShow(
+      `Type a brand new secret -- as different as you can from the letters you now know are wrong -- and submit it.${hintText}`,
+      { title: "Make a switch", mode: "hide" }
+    );
+    api.highlight(byId("spyChargeHud"));
+    api.setWaiting({ label: "SUBMIT NEW SECRET" });
+    return;
+  }
+
+  // total >= 8 from here on.
+  if (resetsUsed > starResetsUsedAtEntry) {
+    api.setNextTutorial("modes");
+    starTutorialShow(
+      "That's a real letter reset used. You've now seen the whole Star system live: switches earning stars, your second power unlocking, and a letter refresh spent.",
+      { title: "Star Tutorial done", current: 4, total: 4, mode: "end" }
+    );
+    return;
+  }
+
+  starTutorialShow(
+    "You're at 8 stars or more -- a letter reset just unlocked. Tap the button, choose any keyboard letter you've already gotten feedback for, and confirm to erase it.",
+    { title: "Use a letter reset", current: 3, total: 4, mode: "hide" }
   );
+  api.highlight(byId("spyChargeActionBtn"));
+  api.setWaiting({ label: "USE THE RESET" });
 }
 
 window.runStarTutorial = runStarTutorial;
