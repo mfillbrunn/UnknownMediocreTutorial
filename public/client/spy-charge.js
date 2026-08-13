@@ -136,11 +136,13 @@
     meter.setAttribute("aria-label", `Spy charge: ${total} of ${MAX_CHARGE} stars`);
   }
 
-  // One overlaid button on top of the meter now does both jobs the old
-  // separate hint bubble + reset button used to: it always shows the
-  // bonus-star target letter (falling back to the ↺ glyph when there's no
-  // active hint), and it flashes once a letter-reset is actually available
-  // to use, same trigger (armResetLetter) as before.
+  // This button still does the reset job the old separate reset button
+  // used to (flashes once a letter-reset is actually available, same
+  // trigger, armResetLetter, as before). The bonus-star hint itself no
+  // longer shows here -- it's a star badge directly on the targeted
+  // draft tile now (see ui/draftrow.js's updateDraftHintStars), so this
+  // stays the plain ↺ glyph; the hint text is still in the title/
+  // aria-label below for anyone hovering/using a screen reader.
   function renderActionButton(charge, state) {
     const button = byId("spyChargeActionBtn");
     const letterEl = byId("spyChargeHintLetter");
@@ -151,9 +153,7 @@
     const hasHint = !!hint?.letter && Number.isInteger(hint.position);
     const position = hasHint ? hint.position + 1 : null;
 
-    letterEl.innerHTML = hasHint
-      ? `${String(hint.letter).toUpperCase()}<sup>${position}</sup>`
-      : "↺";
+    letterEl.textContent = "↺";
 
     const available = availableResetCount(state);
     countEl.textContent = String(available);
