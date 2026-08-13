@@ -163,11 +163,11 @@ function createCountOnlyBadge({ greens, yellows }) {
   badge.className = "count-only-badge";
   badge.innerHTML = `
     <span class="count-only-chip count-only-green">
-      <span class="count-only-chip-dot"></span>
+      <span class="count-only-chip-dot">G</span>
       <span class="count-only-value">${greens}</span>
     </span>
     <span class="count-only-chip count-only-yellow">
-      <span class="count-only-chip-dot"></span>
+      <span class="count-only-chip-dot">Y</span>
       <span class="count-only-value">${yellows}</span>
     </span>
   `;

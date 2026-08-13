@@ -99,14 +99,19 @@ body.row-flight-active #setterScreen .setter-board-divider {
   padding-top: 7px;
 }
 
+/* Right side gets extra room beyond the left's 15px: Count Only's G/Y
+   tally (.count-only-badge, history.css) sits just past a row's right
+   edge via absolute positioning, and this element clips overflow-x --
+   without the extra space reserved here, that badge rendered mostly
+   outside this box and got clipped almost to invisible. */
 #setterScreen .setter-feedback-stage #setterGuesserSubmitted {
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
   padding-left: 15px;
-  padding-right: 15px;
+  padding-right: 92px;
   scroll-padding-left: 15px;
-  scroll-padding-right: 15px;
+  scroll-padding-right: 92px;
 }
 
 /* Open sidebar: leave breathing room for tile borders and glow. */
@@ -152,7 +157,9 @@ body.row-flight-active #setterScreen .setter-board-divider {
   .setter-feedback-stage
   #setterGuesserSubmitted {
   padding-left: 22px;
-  padding-right: 22px;
+  /* Same Count Only badge accommodation as the expanded-sidebar rule
+     above, on top of this state's own wider 22px base gutter. */
+  padding-right: 87px;
 }
 
 /* ---------------- Stars + Keep/New on one line ---------------- */

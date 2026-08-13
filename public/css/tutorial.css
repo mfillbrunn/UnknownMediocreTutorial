@@ -35,6 +35,21 @@ transition:
   visibility 0s linear 0s;
 }
 
+/* A step can request the bubble stay pinned low on screen regardless of
+   what repositionTutorialBubble()'s avoid-overlap math would otherwise
+   pick (e.g. "tap the power button in the sidebar" steps, where the
+   button being highlighted sits high enough that the normal algorithm
+   can land the bubble awkwardly mid-screen). !important is required
+   because that JS writes `top`/`bottom` as inline styles every
+   reposition pass -- only an !important CSS rule can consistently win
+   against those. Unlike the [data-placement="top"] pin below, this one
+   isn't limited to narrow viewports: the sidebar-power-button case it
+   exists for happens at any width. */
+.tutorial-bubble[data-placement="bottom-forced"] {
+  top: auto !important;
+  bottom: max(var(--tutorial-bottom), env(safe-area-inset-bottom)) !important;
+}
+
 .tutorial-bubble.hidden {
   opacity: 0;
   visibility: hidden;
