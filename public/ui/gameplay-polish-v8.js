@@ -455,12 +455,13 @@
 
     if (submitButton) {
       submitButton.disabled = !canEdit || draft.length !== 5;
-      // Spelled out once there's a real 5-letter word to submit -- "Submit
-      // Guess" only while it's still a placeholder with nothing typed yet
-      // (same "actual word once it's actionable" treatment as the Spy's
-      // Keep/Submit buttons -- see client.js's computeSetterSecretStatus).
+      // "Finish New Guess" while still typing (mirrors the Spy's own
+      // "FINISH NEW SECRET" for an incomplete draft -- see client.js's
+      // computeSetterSecretStatus), then spelled out as the actual word
+      // once there's a real 5-letter guess to submit -- same "actual word
+      // once it's actionable" treatment as the Spy's Keep/Submit buttons.
       submitButton.textContent =
-        draft.length === 5 ? `Submit ${draft}` : "Submit Guess";
+        draft.length === 5 ? `Submit ${draft}` : "Finish New Guess";
     }
   }
 
