@@ -58,6 +58,38 @@
   };
   function formatPowerEvent(evt) {
   if (evt.id === "quest") {
+    // Two different rewards share this one power id (see questServer.js's
+    // pushQuestLogEvent) -- an early claim (yellow, quest not actually
+    // finished) reads very differently from a real completion (green), so
+    // the emitted event name decides which text this line gets instead of
+    // both collapsing into one generic "Quest completed" regardless of
+    // which one actually happened.
+    const earlyClaim = findEmission(evt.emissions, "questEarlyClaim")?.payload;
+    if (earlyClaim) {
+      const letter = earlyClaim.letter ? earlyClaim.letter.toUpperCase() : null;
+      const detail = letter
+        ? `claimed early — ${letter} is somewhere in the secret`
+        : "claimed early — nothing new was left to reveal";
+      return {
+        id: "quest",
+        emoji: "",
+        label: "Quest",
+        desc: "",
+        opponentDesc: "The Inspector claimed their Quest early.",
+        detail,
+        ownText: `Quest ${detail}`,
+        opponentText: `Inspector's Quest ${detail}`,
+        text: `Quest ${detail}`,
+        actorRole: "guesser"
+      };
+    }
+
+    const completed = findEmission(evt.emissions, "questCompleted")?.payload;
+    const letter = completed?.letter ? completed.letter.toUpperCase() : null;
+    const detail = letter && Number.isInteger(completed.index)
+      ? `revealed ${letter} in position ${completed.index + 1}`
+      : null;
+
     return {
       id: "quest",
       emoji: "",
@@ -65,11 +97,12 @@
       desc: "",
       opponentDesc:
         "The Inspector completed their Quest.",
-      detail: null,
-      ownText: "Quest completed",
-      opponentText:
-        "Inspector completed their Quest",
-      text: "Quest completed",
+      detail,
+      ownText: detail ? `Quest completed — ${detail}` : "Quest completed",
+      opponentText: detail
+        ? `Inspector completed their Quest — ${detail}`
+        : "Inspector completed their Quest",
+      text: detail ? `Quest completed — ${detail}` : "Quest completed",
       actorRole: "guesser"
     };
   }
