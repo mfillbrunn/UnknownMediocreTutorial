@@ -1766,10 +1766,21 @@ function validateSetterSecretWord(word) {
 // actual submit dispatch (submitSetterDecision below) read this same
 // object, so the two can never drift apart.
 function computeSetterSecretStatus() {
+  // Only the setter ever sees the real state.secret (safeState.js blanks
+  // it for the guesser), so spelling it out on the button itself -- "KEEP
+  // PORES" instead of the generic "KEEP CURRENT SECRET" -- can't leak
+  // anything; it's just telling the Spy exactly what they're about to
+  // keep instead of making them recall or re-check their own draft row.
+  const hasCurrentSecret = !!(state.secret && state.secret.length === 5);
+  const currentSecret = hasCurrentSecret ? state.secret.toUpperCase() : null;
+  const keepLabel = currentSecret
+    ? `KEEP ${currentSecret}`
+    : "KEEP CURRENT SECRET";
+
   if (!isSetterDecisionTurnActive()) {
     return {
       mode: "blocked",
-      primaryLabel: "KEEP CURRENT SECRET",
+      primaryLabel: keepLabel,
       primaryEnabled: false,
       clearVisible: false,
       clearEnabled: false,
@@ -1782,8 +1793,6 @@ function computeSetterSecretStatus() {
   const filledCount = draftLetters.length;
   const draftComplete = filledCount === 5 && !rawDraft.includes(" ");
   const draftUpper = draftLetters.toUpperCase();
-  const hasCurrentSecret = !!(state.secret && state.secret.length === 5);
-  const currentSecret = hasCurrentSecret ? state.secret.toUpperCase() : null;
   const editingBlocked = isSetterEditingBlockedByPower();
 
   // Empty draft: nothing typed. Only a real "keep the current secret" if
@@ -1794,7 +1803,7 @@ function computeSetterSecretStatus() {
     if (hasCurrentSecret) {
       return {
         mode: "keep",
-        primaryLabel: "KEEP CURRENT SECRET",
+        primaryLabel: keepLabel,
         primaryEnabled: true,
         clearVisible: false,
         clearEnabled: false,
@@ -1831,7 +1840,7 @@ function computeSetterSecretStatus() {
   if (hasCurrentSecret && draftUpper === currentSecret) {
     return {
       mode: "same",
-      primaryLabel: "KEEP CURRENT SECRET",
+      primaryLabel: keepLabel,
       primaryEnabled: true,
       clearVisible: true,
       clearEnabled: !editingBlocked,
