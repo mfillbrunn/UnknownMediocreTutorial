@@ -162,8 +162,14 @@ function createCountOnlyBadge({ greens, yellows }) {
   const badge = document.createElement("div");
   badge.className = "count-only-badge";
   badge.innerHTML = `
-    <span class="count-only-green">G:${greens}</span>
-    <span class="count-only-yellow">Y:${yellows}</span>
+    <span class="count-only-chip count-only-green">
+      <span class="count-only-chip-dot"></span>
+      <span class="count-only-value">${greens}</span>
+    </span>
+    <span class="count-only-chip count-only-yellow">
+      <span class="count-only-chip-dot"></span>
+      <span class="count-only-value">${yellows}</span>
+    </span>
   `;
   return badge;
 }
@@ -273,14 +279,14 @@ function patchHistoryRow(wrap, row) {
       );
     } else {
       badge.querySelector(
-        ".count-only-green"
+        ".count-only-green .count-only-value"
       ).textContent =
-        `G:${row.countOnlyInfo.greens}`;
+        row.countOnlyInfo.greens;
 
       badge.querySelector(
-        ".count-only-yellow"
+        ".count-only-yellow .count-only-value"
       ).textContent =
-        `Y:${row.countOnlyInfo.yellows}`;
+        row.countOnlyInfo.yellows;
     }
   } else {
     badge?.remove();

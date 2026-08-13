@@ -175,9 +175,15 @@ class TutorialMode {
 
   state.secret = secret;
 
+  // Seeded so exactly 4 of the RARE quest's 6 needed letters (V, X, Q, J)
+  // are already in hand before the tutorial's own scripted WACKY guess --
+  // W and K are deliberately left untouched here so both still read as
+  // "needed" right up through the highlight-button demo step, and WACKY
+  // (which contains both) is what completes the quest.
   state.history = [
-    "QUACK",
-    "VIXEN"
+    "VIXEN",
+    "QUERY",
+    "JUMPY"
   ].map((guess, index) => {
     const fb =
       scoreGuess(secret, guess);

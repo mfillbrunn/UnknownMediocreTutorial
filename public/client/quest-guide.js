@@ -11,9 +11,10 @@
 // isInLetterRange bounds exactly.
 //
 // ALPHA mode: highlights, relative to the LAST letter in the guesser's
-// current draft, which other keys would be valid to place BEFORE it in
-// the word -- alphabetically earlier keys for the ascending (A->Z)
-// direction, alphabetically later keys for descending (Z->A). Recomputed
+// current draft, which keys would be valid to type NEXT (the word is
+// built left to right, so the new letter always lands after the current
+// last one) -- alphabetically later keys for the ascending (A->Z)
+// direction, alphabetically earlier keys for descending (Z->A). Recomputed
 // on every keyboard render off the live draft (see client.js's call into
 // applyQuestGuideHighlight right after renderKeyboard) -- never
 // intercepts a keystroke, so normal typing is completely unaffected.
@@ -101,7 +102,7 @@
         const symbol = keyEl.dataset.key;
         if (!/^[A-Z]$/.test(symbol)) continue;
         const code = symbol.charCodeAt(0);
-        const valid = active.direction === "ASC" ? code < ref : code > ref;
+        const valid = active.direction === "ASC" ? code > ref : code < ref;
         if (valid) keyEl.classList.add("key-guide-hint");
       }
       return;

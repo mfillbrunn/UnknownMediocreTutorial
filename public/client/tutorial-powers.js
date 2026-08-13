@@ -50,7 +50,7 @@ const POWER_TUTORIAL_SIMPLE_COPY = Object.freeze({
   },
   countOnly: {
     owner: "The Inspector sees only how many green and yellow tiles they got. They do not see where they are.",
-    receiver: "You will see the number of green and yellow tiles, but not which tiles they are."
+    receiver: "You will see the number of green and yellow tiles, but not which ones. Letters and tiles marked with a small ? are the ones whose real color is hidden from you. Different powers show their effects in different ways like this, so keep an eye on the tiles and keyboard."
   },
   forceGuess: {
     owner: "This gives the Inspector one small rule their next guess must follow.",
@@ -247,7 +247,7 @@ function runPowerFollowupInspector(state) {
 
     if (tutorialSubStep === 1) {
       powerTutorialShow(
-        "Your power is Letter Peek. It shows one secret letter and the exact box where it goes.",
+        "Your power is Letter Peek. It shows one secret letter and the exact box where it goes. Most powers can only be used once, but Letter Peek is an exception -- you get two uses.",
         {
           role: "guesser",
           current: 2,
@@ -366,7 +366,7 @@ function runPowerFollowupInspector(state) {
       stopKeyDemo();
     } else {
       powerTutorialShow(
-        `Now type ${word} and submit it.`,
+        `Now type ${word} and submit it. After that, we'll switch over and explain the Spy's powers.`,
         {
           role: "guesser",
           title: "Letter Peek worked",
@@ -412,7 +412,7 @@ function runPowerFollowupSpy(state) {
 
     if (tutorialSubStep === 0) {
       powerTutorialShow(
-        "Now you are the Spy. Your power is Counts Only.",
+        "Now you are the Spy. Your power is Counts Only. One thing to know: your powers live in the side panel, so if it's collapsed, tap it open first or you won't be able to see or use them.",
         {
           role: "setter",
           current: 1,
