@@ -3989,7 +3989,10 @@ body.activity-drag-active {
 }
 
 .spy-charge-power-locked::after {
-  content: "🔒 5★";
+  /* Reads the real threshold off wrapper.dataset.unlockAt (set in
+     spy-charge.js from POWER_UNLOCK_AT) instead of a hardcoded number, so
+     this can't drift out of sync with the real unlock threshold again. */
+  content: "🔒 " attr(data-unlock-at) "★";
   position: absolute;
   inset: 4px;
   z-index: 8;
@@ -4071,9 +4074,10 @@ body.spy-charge-reset-armed #keyboardSetter .key[data-key]:not([data-key="ENTER"
   box-shadow: 0 2px 6px rgba(5, 150, 105, 0.5);
 }
 
-/* Spy's second pick -- locked until 5 stars. A star shape big enough to
-   read as its own icon (not just a tinted number), with the threshold
-   layered on top of it instead of beside it, so "star" and "5" read as
+/* Spy's second pick -- locked until the power threshold (see draft.js's
+   buildDraftPickBadge). A star shape big enough to read as its own icon
+   (not just a tinted number), with the threshold layered on top of it
+   instead of beside it, so "star" and the number read as
    one badge instead of two things to parse. No position of its own here
    -- it stays on the absolute/top/right corner positioning it shares
    with every other .draft-pick-slot badge (a same-specificity

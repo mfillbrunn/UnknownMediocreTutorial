@@ -3,10 +3,15 @@
 // Big corner badges for a picked candidate, instead of the old small text
 // pill -- "kind" is a semantic key (not display text) so each one gets its
 // own shape: "start" for the Spy's first (immediately-active) pick, "five"
-// for their second (locked-until-5-stars) pick, and "selected" for
-// anything the Inspector picks -- power or Quest alike share the exact
+// for their second (locked-until-the-power-threshold) pick, and "selected"
+// for anything the Inspector picks -- power or Quest alike share the exact
 // same checkmark icon, since for them there's only ever one meaningful
 // state ("this is my pick"), not two different ones to tell apart.
+//
+// "five" is a legacy name from when the power threshold was 5 stars (see
+// spyChargeServer.js's POWER_UNLOCK_AT) -- kept as-is since renaming it
+// everywhere it's threaded through is a bigger diff than the badge itself,
+// but the displayed number below always reflects the real threshold.
 function buildDraftPickBadge(kind) {
   if (kind === "start") {
     return `<span class="draft-pick-slot draft-pick-start" aria-label="Starts active">START</span>`;
@@ -14,9 +19,9 @@ function buildDraftPickBadge(kind) {
 
   if (kind === "five") {
     return `
-      <span class="draft-pick-slot draft-pick-five" aria-label="Unlocks at 5 stars">
+      <span class="draft-pick-slot draft-pick-five" aria-label="Unlocks at 8 stars">
         <span class="draft-pick-five-star" aria-hidden="true">★</span>
-        <span class="draft-pick-five-num" aria-hidden="true">5</span>
+        <span class="draft-pick-five-num" aria-hidden="true">8</span>
       </span>
     `;
   }
@@ -140,7 +145,7 @@ window.renderDraftScreen = function (state) {
   if (instruction) {
     instruction.textContent = isGuesser
       ? "Pick 1 of the 2 powers below for your side."
-      : "Pick 2 of 3 powers. Your first pick starts active; your second unlocks when the charge meter reaches 5 stars.";
+      : "Pick 2 of 3 powers. Your first pick starts active; your second unlocks when the charge meter reaches 8 stars.";
   }
 
   const list = $("draftCandidates");

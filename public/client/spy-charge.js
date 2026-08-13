@@ -2,8 +2,8 @@
   "use strict";
 
   const MAX_CHARGE = 12;
-  const POWER_UNLOCK_AT = 5;
-  const RESET_THRESHOLDS = [8, 12];
+  const POWER_UNLOCK_AT = 8;
+  const RESET_THRESHOLDS = [5, 12];
 
   let visualTotal = null;
   let awardQueue = [];
@@ -82,8 +82,8 @@
           ${Array.from({ length: MAX_CHARGE }, (_, index) => {
             const value = index + 1;
             const milestone =
-              value === 5 ? "power" :
-              value === 8 || value === 12 ? "reset" : "";
+              value === 8 ? "power" :
+              value === 5 || value === 12 ? "reset" : "";
 
             return `<span
               class="spy-charge-segment${milestone ? ` milestone-${milestone}` : ""}"
@@ -105,8 +105,8 @@
         </button>
       </div>
       <div class="spy-charge-milestones" aria-hidden="true">
-        <span>5⚡</span>
-        <span>8↺</span>
+        <span>5↺</span>
+        <span>8⚡</span>
         <span>12↺</span>
       </div>
     `;
@@ -165,7 +165,7 @@
     const hintText = hasHint
       ? `Bonus star: change to a legal secret with ${String(hint.letter).toUpperCase()} in position ${position}. `
       : "";
-    const title = `${hintText}${available > 0 ? "Tap to reset a letter's feedback." : "Reset a letter's feedback (unlocks at 8 stars)."}`;
+    const title = `${hintText}${available > 0 ? "Tap to reset a letter's feedback." : "Reset a letter's feedback (unlocks at 5 stars)."}`;
     button.title = title;
     button.setAttribute("aria-label", title);
   }

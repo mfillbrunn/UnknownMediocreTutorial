@@ -3,8 +3,8 @@
 // spy-charge is actually ENABLED here (see spyChargeServer.js's
 // createSpyChargeState and coverStrength.js's buildCoverStrengthState,
 // both of which special-case tutorialStage === "star") -- the player
-// types and submits real secrets, earns real stars, watches their real
-// second power unlock at 5, and uses a real letter reset at 8.
+// types and submits real secrets, earns real stars, uses a real letter
+// reset at 5, and watches their real second power unlock at 8.
 // tutorialMode.js seeds the meter at 4 stars so one or two genuine
 // switches are enough to reach both milestones instead of a long grind.
 
@@ -37,6 +37,7 @@ function starTutorialShow(text, {
 // enough -- no IIFE needed to keep them off the global object.
 let starSessionKey = null;
 let starLastSeenHistoryLen = null;
+let starResetMilestoneAnnounced = false;
 let starPowerMilestoneAnnounced = false;
 let starResetsUsedAtEntry = 0;
 let starAwaitingAck = false;
@@ -52,12 +53,30 @@ function resetStarSession(state) {
 
   starSessionKey = key;
   starLastSeenHistoryLen = state.history?.length ?? 0;
-  starPowerMilestoneAnnounced = (Number(state.powers?.spyCharge?.total) || 0) >= 5;
+  starResetMilestoneAnnounced = (Number(state.powers?.spyCharge?.total) || 0) >= 5;
+  starPowerMilestoneAnnounced = (Number(state.powers?.spyCharge?.total) || 0) >= 8;
   starResetsUsedAtEntry = Number(state.powers?.spyCharge?.resetsUsed) || 0;
   starAwaitingAck = false;
   starAckStepThreshold = null;
   starLastResultText = "";
   window.TutorialCore?.setStep(0);
+}
+
+// Shared by both "keep submitting" spots below (before the 5-star reset
+// unlocks, and again between 5 and 8 once it's been used) -- same prompt
+// either way, just reached from two different places in the flow.
+function starPromptForSwitch(state, api, charge) {
+  const hint = charge.hint;
+  const hintText = hint?.letter && Number.isInteger(hint.position)
+    ? ` Try to include ${String(hint.letter).toUpperCase()} at position ${hint.position + 1} too, for a bonus star.`
+    : "";
+
+  starTutorialShow(
+    `Type a brand new secret -- as different as you can from the letters you now know are wrong -- and submit it.${hintText}`,
+    { title: "Make a switch", mode: "hide" }
+  );
+  api.highlight(byId("spyChargeHud"));
+  api.setWaiting({ label: "SUBMIT NEW SECRET" });
 }
 
 function runStarTutorial(state, role) {
@@ -141,14 +160,17 @@ function runStarTutorial(state, role) {
 
     let text = `That switch landed. The meter is now at ${total} of 12 stars.`;
 
-    if (total >= 5 && !starPowerMilestoneAnnounced) {
-      starPowerMilestoneAnnounced = true;
-      text += " Your second power, Hide Tile, just unlocked for the rest of the round -- look for it in your powers row.";
+    if (total >= 5 && !starResetMilestoneAnnounced) {
+      starResetMilestoneAnnounced = true;
+      text += " A letter reset just unlocked -- more on that next.";
     }
 
-    text += total >= 8
-      ? " You've also unlocked a letter reset -- more on that next."
-      : " Keep going.";
+    if (total >= 8 && !starPowerMilestoneAnnounced) {
+      starPowerMilestoneAnnounced = true;
+      text += " Your second power, Hide Tile, also just unlocked for the rest of the round -- look for it in your powers row.";
+    }
+
+    if (total < 5) text += " Keep going.";
 
     starLastResultText = text;
     starAwaitingAck = true;
@@ -156,7 +178,33 @@ function runStarTutorial(state, role) {
 
     starTutorialShow(text, { mode: "advance" });
     api.highlight(byId("spyChargeHud"));
-    if (total >= 5) window.highlightPowerButtonByText?.("Hide Tile");
+    if (total >= 8) window.highlightPowerButtonByText?.("Hide Tile");
+    return;
+  }
+
+  if (total < 5) {
+    if (!state.pendingGuess) {
+      starTutorialShow(
+        "Waiting for the Inspector's next guess...",
+        { compact: true, mode: "hide", key: `star-wait-${historyLen}` }
+      );
+      api.setContinue({ show: false, mode: "hide" });
+      return;
+    }
+
+    starPromptForSwitch(state, api, charge);
+    return;
+  }
+
+  // total >= 5 from here on -- the reset is unlocked, so walk through
+  // using it before moving on to the (later, automatic) power unlock.
+  if (resetsUsed === starResetsUsedAtEntry) {
+    starTutorialShow(
+      "You're at 5 stars or more -- a letter reset just unlocked. Tap the button, choose any keyboard letter you've already gotten feedback for, and confirm to erase it.",
+      { title: "Use a letter reset", current: 3, total: 4, mode: "hide" }
+    );
+    api.highlight(byId("spyChargeActionBtn"));
+    api.setWaiting({ label: "USE THE RESET" });
     return;
   }
 
@@ -170,36 +218,16 @@ function runStarTutorial(state, role) {
       return;
     }
 
-    const hint = charge.hint;
-    const hintText = hint?.letter && Number.isInteger(hint.position)
-      ? ` Try to include ${String(hint.letter).toUpperCase()} at position ${hint.position + 1} too, for a bonus star.`
-      : "";
-
-    starTutorialShow(
-      `Type a brand new secret -- as different as you can from the letters you now know are wrong -- and submit it.${hintText}`,
-      { title: "Make a switch", mode: "hide" }
-    );
-    api.highlight(byId("spyChargeHud"));
-    api.setWaiting({ label: "SUBMIT NEW SECRET" });
+    starPromptForSwitch(state, api, charge);
     return;
   }
 
-  // total >= 8 from here on.
-  if (resetsUsed > starResetsUsedAtEntry) {
-    api.setNextTutorial("modes");
-    starTutorialShow(
-      "That's a real letter reset used. You've now seen the whole Star system live: switches earning stars, your second power unlocking, and a letter refresh spent.",
-      { title: "Star Tutorial done", current: 4, total: 4, mode: "end" }
-    );
-    return;
-  }
-
+  // total >= 8 and the reset's already been used -- done.
+  api.setNextTutorial("modes");
   starTutorialShow(
-    "You're at 8 stars or more -- a letter reset just unlocked. Tap the button, choose any keyboard letter you've already gotten feedback for, and confirm to erase it.",
-    { title: "Use a letter reset", current: 3, total: 4, mode: "hide" }
+    "That's a real letter reset used and your second power unlocked. You've now seen the whole Star system live.",
+    { title: "Star Tutorial done", current: 4, total: 4, mode: "end" }
   );
-  api.highlight(byId("spyChargeActionBtn"));
-  api.setWaiting({ label: "USE THE RESET" });
 }
 
 window.runStarTutorial = runStarTutorial;
