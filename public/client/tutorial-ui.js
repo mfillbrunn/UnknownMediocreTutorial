@@ -1724,6 +1724,12 @@ function highlightPowersCol() {
     byId("guesserPowerContainer")
   );
 
+  // Same collapse issue as highlightPowerButtonByText -- force the
+  // sidebar open so the ring lands on a real, visible rect.
+  if (window.isSetterSidebarCollapsed?.()) {
+    window.setSetterSidebarCollapsed?.(false);
+  }
+
   highlightEl(
     byId("setterPowerContainer")
   );
@@ -1742,6 +1748,18 @@ function highlightPowerButtonByText(
         btn.textContent;
 
       if (text.trim() === label) {
+        // The Spy's power cards live inside the collapsible setter
+        // sidebar (see setter-board.js) -- collapsed, the button is
+        // zero-size, which sends the focus ring to a broken position.
+        // Force it open before highlighting so the ring always lands on
+        // a real, visible target.
+        if (
+          btn.closest("#setterPowerContainer") &&
+          window.isSetterSidebarCollapsed?.()
+        ) {
+          window.setSetterSidebarCollapsed?.(false);
+        }
+
         highlightEl(btn);
       }
     });
