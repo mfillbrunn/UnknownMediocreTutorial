@@ -591,10 +591,10 @@ function buildQuestGuideHtml(questType) {
   if (questType === "ALPHA") {
     if (active) {
       const dirLabel = active.direction === "ASC" ? "A → Z" : "Z → A";
-      return `<div class="quest-guide-controls"><p class="quest-guide-note">Keyboard guide: ${dirLabel} — as you type, keys that could come before your last letter light up.</p><button type="button" class="secondary-btn small" onclick="window.clearQuestGuide();window.hidePowerActionPopup();">Turn off keyboard guide</button></div>`;
+      return `<div class="quest-guide-controls"><p class="quest-guide-note">Keyboard guide: ${dirLabel} — as you type, keys valid for the NEXT letter light up.</p><button type="button" class="secondary-btn small" onclick="window.clearQuestGuide();window.hidePowerActionPopup();">Turn off keyboard guide</button></div>`;
     }
     return `<div class="quest-guide-controls">
-      <p class="quest-guide-note">Pick a direction to highlight valid earlier letters on the keyboard as you type:</p>
+      <p class="quest-guide-note">Pick a direction to highlight which letters are valid to type next:</p>
       <div class="quest-guide-btn-row">
         <button type="button" class="secondary-btn small" onclick="window.setQuestGuideAlpha('ASC');window.hidePowerActionPopup();">A → Z guide</button>
         <button type="button" class="secondary-btn small" onclick="window.setQuestGuideAlpha('DESC');window.hidePowerActionPopup();">Z → A guide</button>

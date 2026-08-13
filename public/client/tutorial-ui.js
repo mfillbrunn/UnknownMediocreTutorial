@@ -2355,6 +2355,8 @@ function tutorialOnPowerActionModalClose() {
     (
       tutorialWaitingFor.type !==
         "power" &&
+      tutorialWaitingFor.type !==
+        "modalDismissed" &&
       !tutorialWaitingFor
         .modalTargetId
     )
