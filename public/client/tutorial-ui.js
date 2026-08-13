@@ -2512,6 +2512,7 @@ function endTutorial() {
   byId("tutorialDoneModal")?.classList.remove("active");
   byId("tutorialBubble")?.classList.add("hidden");
   clearTutorialUserPosition();
+  window._menuTutorialActive = false;
 
   socket.emit("leaveRoom", {}, () => {
     roomId = null;
@@ -2563,6 +2564,7 @@ byId("tutorialDoneLeaveBtn")?.addEventListener("click", () => {
 byId("tutorialDoneNextBtn")?.addEventListener("click", () => {
   byId("tutorialDoneModal")?.classList.remove("active");
   byId("tutorialBubble")?.classList.add("hidden");
+  window._menuTutorialActive = false;
 
   const nextMode = tutorialEndNextMode;
 
@@ -2597,7 +2599,12 @@ byId("tutorialContinueBtn")?.addEventListener("click", event => {
 
   tutorialSubStep++;
 
-  if (window.state && window.myRole) {
+  // The Main Menu Tutorial (client/tutorial-menu.js) runs before any room
+  // exists -- window.state is null then, so the normal state-driven
+  // tutorialSteps() dispatch below would never fire for it at all.
+  if (window._menuTutorialActive) {
+    window.runMainMenuTutorial?.();
+  } else if (window.state && window.myRole) {
     tutorialSteps(
       window.state,
       window.myRole
