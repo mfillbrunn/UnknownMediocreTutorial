@@ -162,7 +162,7 @@ class TutorialMode {
   if (state.tutorialStage === "star") {
     // Real powers this time -- spy-charge is specifically ENABLED for
     // this stage (see spyChargeServer.js's createSpyChargeState), so the
-    // player needs a genuine locked second power to watch unlock at 5
+    // player needs a genuine locked second power to watch unlock at 8
     // stars. countOnly (index 0) starts active; hideTile (index 1) is
     // the one that stays locked.
     const sP = ["countOnly", "hideTile"];

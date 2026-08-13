@@ -35,7 +35,7 @@ function modesSetterDraftVisual() {
   return `
     <div class="tutorial-eli5-mini-list">
       <span><b>1st pick</b> = active from the start</span>
-      <span><b>2nd pick</b> = locked until 5 ★</span>
+      <span><b>2nd pick</b> = locked until 8 ★</span>
     </div>
   `;
 }
@@ -154,7 +154,7 @@ function runModesTutorial(state, role) {
 
   if (step === 4) {
     modesTutorialShow(
-      "While you were picking, the Spy locked in their own draft too: 2 of 3 powers. Whichever one they pick first starts active right away; their second pick stays locked until they earn 5 stars that round.",
+      "While you were picking, the Spy locked in their own draft too: 2 of 3 powers. Whichever one they pick first starts active right away; their second pick stays locked until they earn 8 stars that round.",
       {
         role: "setter",
         title: "The Spy's draft",
