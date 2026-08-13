@@ -282,16 +282,6 @@ body.menu-mode .app-header {
   opacity: 0.92;
 }
 
-/* Classified sublabel */
-.menu-title::after {
-  content: "CLASSIFIED PROGRAM";
-  display: block;
-  margin-top: 6px;
-  font-size: 11px;
-  letter-spacing: 1.8px;
-  opacity: 0.55;
-}
-
 /* Button stack */
 .menu-buttons {
   display: flex;
@@ -431,27 +421,6 @@ body.menu-mode .app-header {
   .notify-badge {
     animation: none;
   }
-}
-
-/* Optional stamped accent */
-.menu-center::after {
-  content: "AUTHORIZED ACCESS";
-  position: absolute;
-  top: 14px;
-  right: 18px;
-
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  opacity: 0.25;
-
-  transform: rotate(-6deg);
-}
-
-/* Not on the front/landing screen -- higher specificity (ID) wins over
-   the shared .menu-center rule above regardless of source order. */
-#startupScreen .menu-center::after {
-  content: none;
 }
 
 /* LOBBY — SPY / BRIEFING ROOM STYLE Drop-in override */
