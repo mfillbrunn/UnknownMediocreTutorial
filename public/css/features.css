@@ -4113,10 +4113,14 @@ body.spy-charge-reset-armed #keyboardSetter .key[data-key]:not([data-key="ENTER"
   display: flex;
   align-items: center;
   justify-content: center;
-  /* The ★ glyph's own visual weight sits slightly above center in its em
-     box -- nudge the number down a touch so it reads as centered inside
-     the star instead of centered in the box and looking too high. */
-  padding-top: 3px;
+  /* The ★ glyph's own visual ink sits slightly above center in its em box,
+     and the digit's own ink sits slightly above center in its own (much
+     smaller) em box too -- transform instead of padding since the needed
+     nudge is UP, and padding can't go negative. Value measured pixel-by-
+     pixel (ink bounding-box centers of the rendered ★ and digit glyphs at
+     8x scale) rather than eyeballed, so it holds for any single digit here
+     (5, 8, ...), not just whichever one it was tuned against. */
+  transform: translateY(-1.375px);
 
   font-size: 14px;
   font-weight: 900;
