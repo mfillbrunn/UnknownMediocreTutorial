@@ -2548,6 +2548,36 @@ body:has(#guesserScreen.active) #appMain {
   min-height: clamp(33px, 14cqw, 62px);
 }
 
+/* Desktop: the Inspector's board has no sidebar competing for width
+   (single stacked column, unlike the Spy's side-by-side layout), so
+   once the viewport is wide enough for #appContainer to sit at its own
+   600px cap (layout.css), .center-col stops growing but is already wide
+   enough that the cqw ratios above are pinned at their ceiling -- the
+   exact same 56px/62px tiles no matter how much wider the actual
+   window/monitor gets past that point, sized for a cramped phone
+   column that desktop never actually has. Same selectors, later in the
+   cascade (equal specificity, so source order decides) -- smaller
+   ceilings, and smaller cqw ratios so it still keeps scaling down
+   through the in-between tablet widths instead of jumping straight to
+   a fixed number. */
+@media (min-width: 640px) {
+  #guesserScreen .history-tile {
+    width: clamp(30px, 9cqw, 44px);
+    height: clamp(30px, 9cqw, 44px);
+    font-size: clamp(16px, 4.5cqw, 22px);
+  }
+
+  #guesserScreen #draftGuesser .history-tile {
+    width: clamp(32px, 10cqw, 48px);
+    height: clamp(32px, 10cqw, 48px);
+    font-size: clamp(17px, 5cqw, 24px);
+  }
+
+  #guesserScreen .draft-row-wrap {
+    min-height: clamp(32px, 10cqw, 48px);
+  }
+}
+
 /*
   The setter's board gets the rest of the row once the fixed sidebar
   (above) takes its share -- cqw here is relative to .center-col, which is
