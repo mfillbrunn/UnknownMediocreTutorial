@@ -127,8 +127,13 @@ function runMainMenuTutorial() {
   }
 
   window._menuTutorialActive = false;
+  // Explicit rather than left to whatever tutorialEndNextMode happened to
+  // still be set to from a previous tutorial run this session -- chains
+  // straight into the Basics Tutorial, matching How to Play's own #1 -> #2
+  // order and the guided first-time sequence (see tutorial-progress.js).
+  api.setNextTutorial("tutorial");
   menuTutorialShow(
-    "That's the whole main menu. Jump into Quick Play whenever you're ready, or explore the tutorials under How to Play.",
+    "That's the whole main menu. Let's keep going with the Tutorial to learn the basics, or explore the rest under How to Play.",
     { title: "Main Menu Tutorial done", current: 9, total, mode: "end" }
   );
 }

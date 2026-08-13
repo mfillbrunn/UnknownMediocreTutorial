@@ -354,58 +354,80 @@
 
     <div class="menu-buttons">
 <button
-  id="startTutorialBtn"
-  class="menu-btn primary"
+  id="startMenuTutorialBtn"
+  class="menu-btn tutorial-menu-btn primary"
+  data-tutorial-key="menu"
+  title="A quick tour of the main menu's own buttons -- start here"
 >
-  ▶ Tutorial
+  <span class="tutorial-btn-num">1</span>
+  <span class="tutorial-btn-label">Tutorial: Main Menu</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
+</button>
+
+<button
+  id="startTutorialBtn"
+  class="menu-btn tutorial-menu-btn"
+  data-tutorial-key="tutorial"
+  title="The core game: guessing, feedback colors, and the Spy's keep/switch decision"
+>
+  <span class="tutorial-btn-num">2</span>
+  <span class="tutorial-btn-label">Tutorial</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
 </button>
 
 <button
   id="startTutorial2Btn"
-  class="menu-btn"
+  class="menu-btn tutorial-menu-btn"
+  data-tutorial-key="tutorial2"
   title="A short follow-up: one power for the Inspector, one for the Spy"
 >
-  ▶ Tutorial: Powers
+  <span class="tutorial-btn-num">3</span>
+  <span class="tutorial-btn-label">Tutorial: Powers</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
 </button>
 
 <button
   id="startQuestTutorialBtn"
-  class="menu-btn"
+  class="menu-btn tutorial-menu-btn"
+  data-tutorial-key="quest"
   title="Learn how Inspector Quests, early claims, and rewards work"
 >
-  ▶ Tutorial: Quest
-</button>
-
-<button
-  id="showAdvancedTutorialBtn"
-  class="menu-btn"
-  title="A scripted match covering Notes, Guide, and drag & lock"
->
-  ▶ Advanced Tutorial
+  <span class="tutorial-btn-num">4</span>
+  <span class="tutorial-btn-label">Tutorial: Quest</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
 </button>
 
 <button
   id="startStarTutorialBtn"
-  class="menu-btn"
+  class="menu-btn tutorial-menu-btn"
+  data-tutorial-key="star"
   title="A deep dive on the Spy's star/charge system"
 >
-  ▶ Tutorial: Stars
+  <span class="tutorial-btn-num">5</span>
+  <span class="tutorial-btn-label">Tutorial: Stars</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
 </button>
 
 <button
   id="startModesTutorialBtn"
-  class="menu-btn"
+  class="menu-btn tutorial-menu-btn"
+  data-tutorial-key="modes"
   title="How the power draft, quests, and the round-2 role swap fit together"
 >
-  ▶ Tutorial: Modes
+  <span class="tutorial-btn-num">6</span>
+  <span class="tutorial-btn-label">Tutorial: Modes</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
 </button>
 
 <button
-  id="startMenuTutorialBtn"
-  class="menu-btn"
-  title="A quick tour of the main menu's own buttons"
+  id="showAdvancedTutorialBtn"
+  class="menu-btn tutorial-menu-btn"
+  data-tutorial-key="advanced"
+  title="A scripted match covering Notes, Guide, and drag & lock"
 >
-  ▶ Tutorial: Main Menu
+  <span class="tutorial-btn-num">7</span>
+  <span class="tutorial-btn-label">Advanced Tutorial</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
 </button>
       <button id="showRulesBtn" class="menu-btn">Rules</button>
       <button id="showPowersBtn" class="menu-btn">Powers</button>
@@ -1294,6 +1316,22 @@
     </div>
   </div>
 </div>
+<!-- First-time-only offer (see client/tutorial-progress.js), shown once
+     a fresh sign-in lands on a plain startup screen with nothing else
+     going on. Declining just dismisses it for good -- every tutorial
+     stays one tap away under How to Play regardless. -->
+<div id="onboardingPromptModal" class="modal">
+  <div class="panel rejoin-modal-panel">
+    <h2 class="screen-title">Welcome to Vowel Play!</h2>
+    <p class="modal-instruction">
+      New here? A quick, hands-on tour covers the main menu and the basics of a real match. You can stop any time, and every tutorial is always available later under How to Play.
+    </p>
+    <div class="rejoin-modal-actions">
+      <button id="onboardingStartBtn" class="primary-btn">Show Me Around</button>
+      <button id="onboardingSkipBtn" class="secondary-btn">Skip</button>
+    </div>
+  </div>
+</div>
 <div id="tutorialBubble" class="tutorial-bubble hidden" role="dialog" aria-live="polite" aria-expanded="true">
   <div class="tutorial-header">
     <div class="tutorial-heading">
@@ -1402,6 +1440,7 @@
 <script src="client/tutorial-star.js?tutorial-eli5=3"></script>
 <script src="client/tutorial-modes.js?tutorial-eli5=3"></script>
 <script src="client/tutorial-menu.js?tutorial-eli5=3"></script>
+<script src="client/tutorial-progress.js"></script>
   <script src="client/quest-guide.js"></script>
   <script src="client/quest-choice.js"></script>
   <script src="client/spy-charge.js?setter-fixes=2"></script>

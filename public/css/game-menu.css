@@ -336,6 +336,61 @@ body.menu-mode .app-header {
   background: #ffffff;
 }
 
+/* How to Play's numbered tutorial buttons -- a plain .menu-btn centers
+   its text with no room for a leading number or trailing checkmark, so
+   these get their own flex layout instead (see index.html's How to Play
+   section / client/tutorial-progress.js for the completion checkmark). */
+.tutorial-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-10);
+  padding: 0 var(--sp-14);
+  text-align: left;
+}
+
+.tutorial-btn-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.tutorial-menu-btn.primary .tutorial-btn-num {
+  background: rgba(0, 0, 0, 0.16);
+  color: #111;
+}
+
+.tutorial-btn-label {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+/* Hidden until client/tutorial-progress.js toggles .tutorial-completed
+   on based on localStorage -- a completed tutorial keeps its number (so
+   the list still reads as an ordered sequence) and just gains a check
+   alongside it, rather than the number being replaced. */
+.tutorial-btn-check {
+  display: none;
+  flex: 0 0 auto;
+
+  color: var(--tile-green);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.tutorial-menu-btn.tutorial-completed .tutorial-btn-check {
+  display: inline-flex;
+}
+
 #myGamesBtn {
   position: relative;
 }

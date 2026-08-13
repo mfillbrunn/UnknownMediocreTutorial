@@ -249,6 +249,11 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
       // 🔁 retry loaders
       if (pendingLeaderboardMode) loadLeaderboard(pendingLeaderboardMode);
 
+      // First-time onboarding offer (see tutorial-progress.js) -- no-ops
+      // instantly if already dismissed, or if there's an invite/game to
+      // return to instead of a plain landing on the startup screen.
+      window.maybeOfferOnboarding?.();
+
     }, 0);
 
     return;
@@ -272,6 +277,10 @@ window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
     // into a game that exists.
     if (!window._pendingInviteCode && !window.roomId && !localStorage.getItem("roomId")) {
       showStartup();
+      // First-time onboarding offer (see tutorial-progress.js) -- same
+      // "nothing else going on" guard this branch already used to decide
+      // to show the plain startup screen in the first place.
+      window.maybeOfferOnboarding?.();
     }
 
     await loadMyProfile();
