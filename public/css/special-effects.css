@@ -229,13 +229,18 @@
   opacity: 0.75;
 }
 
+/* Side by side (YOU left, OPPONENT right -- see client.js's round-start
+   powerGroups, always built in that viewer-relative order) instead of the
+   old single stacked list, so the two are easy to tell apart at a glance
+   instead of reading "which one of these two labeled-by-role lists is
+   mine again?" every round. */
 .big-announce-powers {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
   margin-top: 4px;
   width: 100%;
-  max-width: 34ch;
+  max-width: 52ch;
   max-height: 42vh;
   overflow-y: auto;
 }
@@ -267,6 +272,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  text-align: left;
 }
 
 .big-announce-power-group-label {
