@@ -212,20 +212,31 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 
 /* Count Only tally — pinned to the row it belongs to via absolute
    positioning so it never affects that row's centered alignment with
-   every other row in the same column. Two small pill "chips" (tinted
-   background + colored border + a filled dot, echoing the game's own
-   tile colors) instead of plain "G:3"/"Y:1" text -- reads as part of the
-   same tile-color visual language as everything else on the board. */
+   every other row in the same column. Two small "labels" (tinted
+   background + colored border + a filled "G"/"Y" letter badge, echoing
+   the game's own tile colors) instead of plain "G:3"/"Y:1" text -- reads
+   as part of the same tile-color visual language as everything else on
+   the board. The letter (not just a colored dot) is what actually carries
+   the green/yellow meaning for colorblind players -- color alone would
+   leave the two chips indistinguishable to them.
+   No gap to the row (margin-left removed) and a flat left edge on each
+   label (border-radius/border only on the right side, below) -- reads as
+   a tab physically attached to the row's own right edge rather than a
+   separate floating badge sitting near it.
+   z-index above the row's own tiles (and the constraint row's glow, which
+   can bleed a few px past its own edge) so this never reads as tucked
+   *under* something else on the board -- it's meant to float clear of
+   everything near it, not just avoid being literally invisible. */
 .count-only-badge {
   position: absolute;
   left: 100%;
   top: 50%;
   transform: translateY(-50%);
-  margin-left: var(--sp-8, 8px);
+  z-index: 30;
 
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 
   pointer-events: none;
 }
@@ -234,8 +245,9 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 1px 7px 1px 5px;
-  border-radius: 999px;
+  padding: 2px 8px 2px 5px;
+  border-radius: 0 7px 7px 0;
+  border-left: none;
 
   font-family: var(--font-mono);
   font-size: 11px;
@@ -246,20 +258,29 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
 }
 
 .count-only-chip-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
   flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .count-only-green {
   color: var(--tile-green);
   background: color-mix(in srgb, var(--tile-green) 16%, transparent);
   border: 1px solid color-mix(in srgb, var(--tile-green) 45%, transparent);
+  border-left: none;
 }
 
 .count-only-green .count-only-chip-dot {
   background: var(--tile-green);
+  color: var(--tile-green-text);
   box-shadow: 0 0 4px color-mix(in srgb, var(--tile-green) 65%, transparent);
 }
 
@@ -267,10 +288,12 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   color: var(--tile-yellow);
   background: color-mix(in srgb, var(--tile-yellow) 16%, transparent);
   border: 1px solid color-mix(in srgb, var(--tile-yellow) 45%, transparent);
+  border-left: none;
 }
 
 .count-only-yellow .count-only-chip-dot {
   background: var(--tile-yellow);
+  color: var(--tile-yellow-text);
   box-shadow: 0 0 4px color-mix(in srgb, var(--tile-yellow) 65%, transparent);
 }
 .history-row .history-tile {
@@ -783,11 +806,11 @@ body.hide-constraints .constraint-row {
    area either way, so every row's tiles still land at the same X
    position regardless of whether this particular row has a badge. */
 #guesserScreen .history-scroll {
-  width: calc(5 * clamp(30px, 12.5cqw, 56px) + 4 * var(--sp-4) + 100px);
+  width: calc(5 * clamp(30px, 12.5cqw, 56px) + 4 * var(--sp-4) + 120px);
   max-width: 100%;
   margin: 0 auto;
-  padding-left: 50px;
-  padding-right: 50px;
+  padding-left: 60px;
+  padding-right: 60px;
   background: color-mix(in srgb, black 16%, transparent);
   border-radius: var(--r-10);
 }

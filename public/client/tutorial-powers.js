@@ -487,7 +487,7 @@ function runPowerFollowupSpy(state) {
           title: "Use Counts Only",
           current: 1,
           total: 2,
-          placement: "bottom",
+          placement: "bottom-forced",
           mode: "hide"
         }
       );
@@ -623,7 +623,11 @@ function runPowerTutorialTeaching(state, role, meta, powerId, round) {
           title: `Use ${meta.label}`,
           current: 2,
           total: 3,
-          placement: "bottom",
+          // The setter's powers live in the collapsible side panel, low
+          // enough on screen that the normal avoid-overlap placement can
+          // otherwise land the bubble awkwardly mid-screen -- pin it low
+          // instead so it never competes with the panel for space.
+          placement: isGuesser ? "bottom" : "bottom-forced",
           mode: "hide"
         }
       );
