@@ -608,7 +608,8 @@ if (action.mode === "modes") {
         // the fresh-game default below.
     if (
       state.tutorialStage !== "power" &&
-      state.tutorialStage !== "quest"
+      state.tutorialStage !== "quest" &&
+      state.tutorialStage !== "star"
     ) {
       state.phase = "simultaneous";
     }
