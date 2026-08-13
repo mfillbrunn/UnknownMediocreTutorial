@@ -77,28 +77,35 @@ function getRemainingWordInfo(state, allowedSecrets, draftSecret) {
     return null;
   }
 
-  const history = Array.isArray(state.history) ? state.history : [];
+  const pendingGuess = state.pendingGuess;
+
+  const guessIsComplete =
+    !!pendingGuess &&
+    !pendingGuess.includes("?");
+
+  // Nothing for the setter to react to right now — they already Kept/New'd
+  // the last guess and the Inspector hasn't submitted the next one yet.
+  // Signal "nothing to show" (buildSetterRemainingBoxState below turns
+  // this into visible:false) so the box disappears for the whole window
+  // it isn't actually their decision to make, instead of sitting there
+  // showing "Keep: ? / New: ?" placeholders the entire time. This also
+  // folds away what used to be a separate stealth-carryover branch here
+  // (checking history[last].stealthApplied while pendingGuess was empty)
+  // — hiding the box uniformly for every between-turns window, stealth
+  // round or not, keeps its mere visibility from ever being a tell either
+  // way, same as it was before (both cases showed "?" placeholders then).
+  if (!guessIsComplete) {
+    return null;
+  }
 
   // Stealth Guess hides the guess/feedback text from the setter for the
   // ONE guess it was used on — the remaining-word count derived from that
   // guess's real feedback would otherwise leak the same information right
-  // back through the numbers. "The guess it was used on" has to be judged
-  // against whatever's actually pending right now, not just "the last
-  // entry in history": a history entry only gets created once the setter
-  // reacts (see finalizeFeedback.js), so while a guess is still pending,
-  // the last entry in history is always the PREVIOUS guess's — checking
-  // its stealthApplied flag here kept the count hidden all the way
-  // through the guesser's entirely next, unrelated guess too, since that
-  // guess doesn't get its own entry until the setter reacts to it either.
-  // state.powers.stealthGuessActive is the live signal for a still-
-  // pending stealth guess; entry.stealthApplied only exists retroactively
-  // on the entry finalizeFeedback creates once it resolves (clearing
-  // stealthGuessActive in that same step) — so check whichever one
-  // actually corresponds to what's being evaluated right now.
-  const pendingGuess = state.pendingGuess;
-  const stealthHidden = pendingGuess
-    ? !!state.powers?.stealthGuessActive
-    : !!history[history.length - 1]?.stealthApplied;
+  // back through the numbers. state.powers.stealthGuessActive is the live
+  // signal for it, cleared the instant this guess resolves (see
+  // stealthGuessServer.js), so it only ever masks the actual guess it was
+  // used on, never a later, unrelated one.
+  const stealthHidden = !!state.powers?.stealthGuessActive;
 
   if (stealthHidden) {
     return { current: null, old: -1, new: -1, hiddenByStealth: true };
@@ -117,35 +124,26 @@ function getRemainingWordInfo(state, allowedSecrets, draftSecret) {
   let oldCount = -1;
   let newCount = -1;
 
-  const guess =
-    pendingGuess;
+  const analysis =
+    getCoverAnalysis(
+      state,
+      allowedSecrets
+    );
 
-  const guessIsComplete =
-    !!guess &&
-    !guess.includes("?");
+  if (analysis) {
+    oldCount =
+      analysis.keepCount;
 
-  if (guessIsComplete) {
-    const analysis =
-      getCoverAnalysis(
-        state,
-        allowedSecrets
-      );
-
-    if (analysis) {
-      oldCount =
-        analysis.keepCount;
-
-      if (
-        typeof draftSecret ===
-          "string" &&
-        draftSecret.length === 5
-      ) {
-        newCount =
-          getCandidateRemainingCount(
-            analysis,
-            draftSecret
-          );
-      }
+    if (
+      typeof draftSecret ===
+        "string" &&
+      draftSecret.length === 5
+    ) {
+      newCount =
+        getCandidateRemainingCount(
+          analysis,
+          draftSecret
+        );
     }
   }
 
@@ -153,7 +151,7 @@ function getRemainingWordInfo(state, allowedSecrets, draftSecret) {
     current,
     old: oldCount,
     new: newCount
-  }; 
+  };
 }
 
 function buildSetterRemainingBoxState(state, viewerId, allowedSecrets, draftSecret = null) {

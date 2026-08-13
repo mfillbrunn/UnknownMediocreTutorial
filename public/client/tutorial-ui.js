@@ -2540,12 +2540,44 @@ const TUTORIAL_DONE_COPY = {
   // Modes Tutorial's chain into Advanced (see tutorial-modes.js), and the
   // two don't share what was just learned.
   advanced: `Nice work! Keep going with the Advanced Tutorial, or head back to the menu.`,
-  tutorial: `Nice work — you've learned the advanced UI. Replay any tutorial any time from How to Play, or head back to the menu.`,
+  // Also source-agnostic -- reached both by Advanced's own loop back to
+  // the start AND by the Main Menu Tutorial chaining into this one for a
+  // first-time player (see tutorial-menu.js), which hasn't "learned the
+  // advanced UI" at all.
+  tutorial: `Nice work! Continue with the Tutorial to learn the basics, or head back to the menu.`,
   modes: `Nice work — you've learned about Stars. Keep going with the Modes Tutorial to see how the whole power draft fits together, or head back to the menu.`
 };
 
+// Maps state.tutorialStage (or its absence) to the same key each
+// tutorial's own How to Play button/start function uses -- read at the
+// moment a tutorial reaches its real "done" screen so that single choke
+// point (below) can mark it completed, without every individual tutorial
+// file needing its own call to markTutorialCompleted. "power" (the
+// Power Library's per-power "Try it" tutorials) is intentionally absent:
+// those aren't part of How to Play's numbered list, so they're not
+// tracked here.
+const TUTORIAL_STAGE_TO_KEY = {
+  1: "tutorial",
+  2: "tutorial2",
+  quest: "quest",
+  advanced: "advanced",
+  star: "star",
+  modes: "modes"
+};
+
+function currentTutorialCompletionKey() {
+  // The Main Menu Tutorial is the only one that never creates a room, so
+  // no window.state at all uniquely identifies it (by the time this runs,
+  // window._menuTutorialActive has already been reset -- see
+  // tutorial-menu.js's final step).
+  if (!window.state) return "menu";
+  return TUTORIAL_STAGE_TO_KEY[window.state.tutorialStage] || null;
+}
+
 function showTutorialDoneModal() {
   byId("tutorialBubble")?.classList.add("hidden");
+
+  window.markTutorialCompleted?.(currentTutorialCompletionKey());
 
   const textEl = byId("tutorialDoneText");
   if (textEl) {

@@ -535,6 +535,31 @@ function evaluateQuestProgress(quest, state, pendingGuess) {
   };
 }
 
+// Persisted action-log entry for a quest reward -- shared by both
+// grantQuestReward (green, below) and grantQuestYellowEarly (yellow, further
+// down) so an early claim isn't lost once the round archives (action-log.js's
+// "Quest: <type> — <result>" status line only covers the round currently in
+// progress -- state._pendingPowerEvents/entry.powerEvents is what carries
+// the actual result forward into history/matchRounds). The event name
+// ("questCompleted" vs "questEarlyClaim") lets power-log-format.js tell the
+// two apart instead of both collapsing into one generic "Quest completed"
+// line regardless of which reward was actually granted.
+//
+// USE_QUEST is a standing-option click (see attemptQuestClaim below), not a
+// normal apply()/postScore() power activation, so it isn't wrapped by
+// logPowerUse.js's automatic emit capture -- push the log line directly in
+// the same shape that capture would have produced.
+function pushQuestLogEvent(state, roomId, io, event, payload) {
+  if (!Array.isArray(state._pendingPowerEvents)) state._pendingPowerEvents = [];
+  const logPayload = {
+    id: "quest",
+    actorRole: "guesser",
+    emissions: [{ event, payload }]
+  };
+  state._pendingPowerEvents.push(logPayload);
+  io.to(roomId).emit("powerActivity", logPayload);
+}
+
 // Same random-unrevealed-position mechanic revealLetter/fieldReport both
 // used for their green reveal.
 function grantQuestReward(state, roomId, io) {
@@ -584,14 +609,7 @@ function grantQuestReward(state, roomId, io) {
   io.to(roomId).emit("questCompleted", { questType: q.type, index, letter });
   io.to(roomId).emit("toast", `Quest complete! Revealed letter ${letter} in position ${index + 1}!`);
 
-  // USE_QUEST is a standing-option click (see attemptQuestClaim below),
-  // not a normal apply()/postScore() power activation, so it isn't
-  // wrapped by logPowerUse.js's automatic emit capture -- push the log
-  // line directly the same shape that capture would have produced.
-  if (!Array.isArray(state._pendingPowerEvents)) state._pendingPowerEvents = [];
-  const logPayload = { id: "quest", actorRole: "guesser", emissions: [] };
-  state._pendingPowerEvents.push(logPayload);
-  io.to(roomId).emit("powerActivity", logPayload);
+  pushQuestLogEvent(state, roomId, io, "questCompleted", { questType: q.type, index, letter });
 }
 
 // Early-claim trade: once a quest is exactly one qualifying guess away
@@ -629,6 +647,7 @@ function grantQuestYellowEarly(state, roomId, io) {
     q.resultLetter = null;
     io.to(roomId).emit("questEarlyClaim", { questType: q.type, letter: null });
     io.to(roomId).emit("toast", "Quest claimed early, but there was nothing new left to reveal.");
+    pushQuestLogEvent(state, roomId, io, "questEarlyClaim", { questType: q.type, letter: null });
     return;
   }
 
@@ -640,6 +659,7 @@ function grantQuestYellowEarly(state, roomId, io) {
   q.resultLetter = letter;
   io.to(roomId).emit("questEarlyClaim", { questType: q.type, letter });
   io.to(roomId).emit("toast", `Quest claimed early! ${letter} is somewhere in the secret.`);
+  pushQuestLogEvent(state, roomId, io, "questEarlyClaim", { questType: q.type, letter });
 }
 
 // Entry point for the guesser's own click on the quest badge -- covers
