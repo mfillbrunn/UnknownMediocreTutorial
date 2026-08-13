@@ -710,6 +710,37 @@ body.power-revealGreen #power-fx {
   mix-blend-mode: screen;
   animation: fx-flash 650ms ease-out;
 }
+
+/* Quest activation (client/power-functions.js's greenLetterRevealed
+   handler / quest.js's questEarlyClaim handler) -- quests never emit
+   "powerUsed" (they're always-on, not drafted like a real power), so
+   these are triggered directly instead of going through onPowerUsed.
+   Green for a full completion (same green as revealGreen above, since
+   it's the same kind of reward -- a real green letter), yellow for the
+   lesser early-claim trade, so the two read as different-sized wins at
+   a glance instead of identical shakes with different toast text. */
+body.power-questGreen #power-fx {
+  opacity: 1;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(34,197,94,0.4),
+      transparent 70%
+    );
+  mix-blend-mode: screen;
+  animation: fx-flash 650ms ease-out;
+}
+body.power-questYellow #power-fx {
+  opacity: 1;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(242,200,84,0.35),
+      transparent 65%
+    );
+  mix-blend-mode: screen;
+  animation: fx-flash 550ms ease-out;
+}
 body.power-revealHistory #power-fx {
   opacity: 1;
   background:

@@ -691,4 +691,10 @@ socket.on("questEarlyClaim", ({ questType, letter }) => {
       ? `${label} claimed early! ${letter.toUpperCase()} is somewhere in the secret.`
       : `${label} claimed early, but nothing new was left to reveal.`
   );
+  // Same "quest activation gets a real power-style shake" treatment as a
+  // full completion (see power-functions.js's greenLetterRevealed
+  // handler) -- yellow-toned here since this is the lesser, early-claim
+  // reward rather than the full green one.
+  window.shake?.(document.querySelector(".quest-badge-tile"));
+  window.triggerPowerFX?.("questYellow");
 });
