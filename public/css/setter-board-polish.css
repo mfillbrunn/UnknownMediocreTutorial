@@ -99,18 +99,29 @@ body.row-flight-active #setterScreen .setter-board-divider {
   padding-top: 7px;
 }
 
-/* Right side gets extra room beyond the left's 15px: Count Only's G/Y
-   tally (.count-only-badge, history.css) sits just past a row's right
-   edge via absolute positioning, and this element clips overflow-x --
-   without the extra space reserved here, that badge rendered mostly
-   outside this box and got clipped almost to invisible. */
+/* Matched left/right, not just widened on the right: an earlier version
+   only widened the right side to make room for Count Only's G/Y tally
+   (.count-only-badge, history.css, sits just past a row's right edge via
+   absolute positioning, and this element clips overflow-x) -- but padding
+   only on the right shifts this box's own centered content-box axis
+   rightward, which visibly pushed every tile row off toward the left
+   edge instead of sitting centered. Matching it on the left fixes that.
+   Centering and the badge's own clipping are in real tension on a
+   column this narrow, though: with the padding forced symmetric, the row
+   still bleeds evenly past both edges (it's wider than the padded
+   content box either way), and the badge -- anchored past the row's own
+   right edge -- can still clip on the narrowest screens. There's no
+   padding value that fixes both at once here; centering wins since a
+   crooked board reads as broken on every row, every match, while the
+   badge only clips on the tightest widths and only for however long
+   Count Only happens to be active. */
 #setterScreen .setter-feedback-stage #setterGuesserSubmitted {
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  padding-left: 15px;
+  padding-left: 92px;
   padding-right: 92px;
-  scroll-padding-left: 15px;
+  scroll-padding-left: 92px;
   scroll-padding-right: 92px;
 }
 
@@ -156,9 +167,10 @@ body.row-flight-active #setterScreen .setter-board-divider {
 #setterScreen.setter-sidebar-collapsed
   .setter-feedback-stage
   #setterGuesserSubmitted {
-  padding-left: 22px;
-  /* Same Count Only badge accommodation as the expanded-sidebar rule
-     above, on top of this state's own wider 22px base gutter. */
+  /* Matched left/right, same centering reasoning as the expanded-sidebar
+     rule above -- an asymmetric pair here visibly pushed every row
+     off-center the same way. */
+  padding-left: 87px;
   padding-right: 87px;
 }
 

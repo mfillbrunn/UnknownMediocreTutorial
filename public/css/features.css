@@ -4074,9 +4074,15 @@ body.spy-charge-reset-armed #keyboardSetter .key[data-key]:not([data-key="ENTER"
 /* Spy's second pick -- locked until 5 stars. A star shape big enough to
    read as its own icon (not just a tinted number), with the threshold
    layered on top of it instead of beside it, so "star" and "5" read as
-   one badge instead of two things to parse. */
+   one badge instead of two things to parse. No position of its own here
+   -- it stays on the absolute/top/right corner positioning it shares
+   with every other .draft-pick-slot badge (a same-specificity
+   position:relative here would win the cascade tie against that shared
+   rule purely by appearing later in the file, dropping it into normal
+   flow instead of the corner -- .draft-pick-slot's own position:absolute
+   already gives its children a containing block, so this doesn't need
+   one of its own anyway). */
 .draft-pick-five {
-  position: relative;
   width: 34px;
   height: 34px;
 }
