@@ -126,16 +126,8 @@ socket.on("roleAssigned", ({ role }) => {
     opponentName: window.opponentName ?? null,
     startedAt: Date.now()
   });
-    if (typeof window.updateUI === "function") {
-      window.updateUI();
-    } else {
-      window._pendingRoleAssignedRefresh = true;
-    }
-  if (typeof window.updateRoleLabels === "function") {
-    window.updateRoleLabels();
-  } else {
-    window._pendingRoleAssignedRefresh = true;
-  }
+    updateUI();
+  updateRoleLabels();
 });
 function persistLastGameInfo(info) {
   localStorage.setItem("lastGameInfo", JSON.stringify(info));

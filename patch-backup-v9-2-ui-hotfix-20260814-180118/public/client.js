@@ -3162,19 +3162,3 @@ document.querySelectorAll(".leave-game-btn").forEach(btn => {
     socket.connect();
   });
 });
-
-/* V9.2: expose the UI functions used by early socket events. */
-if (typeof updateUI === "function") {
-  window.updateUI = updateUI;
-}
-if (typeof updateRoleLabels === "function") {
-  window.updateRoleLabels = updateRoleLabels;
-}
-if (window._pendingRoleAssignedRefresh) {
-  window._pendingRoleAssignedRefresh = false;
-  queueMicrotask(() => {
-    window.updateRoleLabels?.();
-    window.updateUI?.();
-  });
-}
-
