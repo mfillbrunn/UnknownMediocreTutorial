@@ -2934,6 +2934,40 @@ body.activity-drag-active {
   display: none;
 }
 
+/* Shown instead of the auto-floating panel during the Inspector's turn
+   (see ui/gameplay-polish-v8.js's notesShouldPop/openNotesFromButton) --
+   a deliberate tap opens Notes floating over the board rather than it
+   popping out on its own. */
+.setter-notes-idle-open-btn {
+  flex: 0 0 auto;
+  width: 100%;
+  margin-bottom: var(--sp-6, 6px);
+  padding: 6px 8px;
+
+  border: 1px solid color-mix(in srgb, var(--role-accent) 55%, rgba(255, 255, 255, 0.18));
+  border-radius: var(--r-6, 6px);
+
+  background: color-mix(in srgb, var(--role-accent) 16%, var(--panel-bg));
+  color: var(--text);
+
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  text-align: center;
+
+  cursor: pointer;
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+
+.setter-notes-idle-open-btn:hover {
+  background: color-mix(in srgb, var(--role-accent) 28%, var(--panel-bg));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent);
+}
+
+.setter-notes-idle-open-btn.hidden {
+  display: none;
+}
+
 #setterScreen .setter-sidebar-panels {
   position: relative;
 

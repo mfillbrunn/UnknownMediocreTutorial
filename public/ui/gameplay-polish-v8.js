@@ -85,14 +85,29 @@
     );
   }
 
+  // Popping the notes panel out over the board is now a deliberate tap
+  // (see openNotesFromButton) instead of automatic -- this just keeps the
+  // small "Open Notes" button's visibility in sync with eligibility, and
+  // still auto-repositions/auto-closes an already-open popout as the
+  // board/turn changes underneath it (there's nothing left for it to
+  // float over once the setter has to act again).
+  function updateNotesOpenButton(available) {
+    const btn = byId("setterNotesIdleOpenBtn");
+    if (!btn) return;
+    btn.classList.toggle("hidden", !available || notesPopped);
+  }
+
   function syncInspectorTurnNotes(state) {
     latestState = state;
 
     clearTimeout(notesRetryTimer);
     notesRetryTimer = null;
 
-    if (notesShouldPop(state)) {
-      openInspectorTurnNotes(state);
+    const available = notesShouldPop(state);
+    updateNotesOpenButton(available);
+
+    if (available) {
+      if (notesPopped) positionNotesPopout();
       return;
     }
 
@@ -305,6 +320,13 @@
     notesPreviousState = null;
   }
 
+  function openNotesFromButton() {
+    const state = latestState || window.state;
+    if (!notesShouldPop(state)) return;
+    openInspectorTurnNotes(state);
+    updateNotesOpenButton(false);
+  }
+
   function installNotesTurnController() {
     const screen = byId("setterScreen");
 
@@ -314,6 +336,12 @@
     if (screen) screen.__polishObserver = null;
 
     byId("setterActivityDragHandle")?.remove();
+
+    const openBtn = byId("setterNotesIdleOpenBtn");
+    if (openBtn && !openBtn.__v8WiredUp) {
+      openBtn.__v8WiredUp = true;
+      openBtn.addEventListener("click", openNotesFromButton);
+    }
 
     window.updateSetterIdleExpand = function (state) {
       syncInspectorTurnNotes(state);
