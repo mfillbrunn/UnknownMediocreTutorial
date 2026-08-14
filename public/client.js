@@ -2795,7 +2795,13 @@ function updateGuideBanner() {
 
 
 function isHost() {
-  return state && state.hostUserId === window.currentUser.id;
+  // window.currentUser starts out null and only resolves once Supabase's
+  // async getSession() finishes (see auth.js) -- a stateUpdate can arrive
+  // before that resolves (e.g. rejoining a game right after page load), so
+  // this has to optional-chain the same way myUserId() below already does,
+  // or updateHostControls() throws uncaught and aborts every state render
+  // still queued after it in the same onStateUpdate pass.
+  return !!(state && window.currentUser?.id && state.hostUserId === window.currentUser.id);
 }
 
 // Analog-watch time control: hour position + legend text for each pickable
