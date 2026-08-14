@@ -42,23 +42,27 @@ function advancedRemainingVisual() {
   `;
 }
 
-function advancedChargeVisual() {
+function advancedLogVisual() {
   return `
-    <div class="tutorial-eli5-mini-list">
-      <span><b>0–3 ★</b> for a strong new secret</span>
-      <span><b>+1 ★</b> for matching the small letter target</span>
-      <span><b>5 ★</b> unlocks your second power</span>
-      <span><b>8 and 12 ★</b> give letter resets</span>
+    <div class="tutorial-note-strip">
+      A power's name in the Log has a dotted underline. Tap it to expand the full result underneath.
     </div>
   `;
 }
 
-function advancedToolsVisual() {
+function advancedConstraintVisual() {
   return `
     <div class="tutorial-eli5-mini-list">
-      <span><b>Clue row</b> = a small summary of what is known</span>
-      <span><b>Log</b> = a list of what happened</span>
-      <span><b>?</b> = help for your powers</span>
+      <span><b>Green box</b> = that exact spot is solved</span>
+      <span><b>Red squares</b> = that letter is somewhere in the word, just not in this spot</span>
+    </div>
+  `;
+}
+
+function advancedPowerInfoVisual() {
+  return `
+    <div class="tutorial-note-strip">
+      Both sides are listed, so you can check the Inspector's powers as easily as your own.
     </div>
   `;
 }
@@ -328,7 +332,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Notes",
           current: 1,
-          total: 9,
+          total: 12,
           placement: "bottom",
           visualHtml: `
             <div class="tutorial-note-strip">
@@ -349,7 +353,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Save a note",
           current: 2,
-          total: 9,
+          total: 12,
           placement: "bottom",
           mode: "hide"
         }
@@ -371,7 +375,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Read your notes",
           current: 3,
-          total: 9,
+          total: 12,
           placement: "bottom"
         }
       );
@@ -388,7 +392,7 @@ function runAdvancedTutorialSetter(state) {
             role: "setter",
             title: "Wait and plan",
             current: 4,
-            total: 9,
+            total: 12,
             placement: "bottom",
             compact: true,
             mode: "hide",
@@ -406,7 +410,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Keep or change?",
           current: 4,
-          total: 9,
+          total: 12,
           placement: "bottom",
           visualHtml: advancedRemainingVisual()
         }
@@ -423,7 +427,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Use a saved word",
           current: 5,
-          total: 9,
+          total: 12,
           placement: "bottom",
           mode: "hide"
         }
@@ -440,7 +444,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Check the draft",
           current: 6,
-          total: 9,
+          total: 12,
           placement: "top"
         }
       );
@@ -451,36 +455,84 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 6) {
       advancedTutorialShow(
-        "A strong new secret earns stars. The small letter target can give one bonus star. Stars fill the meter and unlock rewards.",
+        "Notes, the Log, and everything else on this side all live in one panel. Tap this button now to open or close it.",
         {
           role: "setter",
-          title: "Stars and charge",
+          title: "Side panel",
           current: 7,
-          total: 9,
+          total: 12,
           placement: "bottom",
-          visualHtml: advancedChargeVisual()
+          mode: "hide"
         }
       );
-      highlightSpyChargeMeter();
-      highlightSetterCoverStars();
-      tutorialContinueMode = "advance";
+      highlightSidebarToggleBtn();
+      waitForSidebarToggled();
       return;
     }
 
     if (tutorialSubStep === 7) {
       advancedTutorialShow(
-        "These three helpers are always nearby.",
+        "Tap Log now.",
         {
           role: "setter",
-          title: "Small helpers",
+          title: "Open the Log",
           current: 8,
-          total: 9,
+          total: 12,
           placement: "bottom",
-          visualHtml: advancedToolsVisual()
+          mode: "hide"
+        }
+      );
+      highlightLogTabButton();
+      waitForLogTabOpened();
+      return;
+    }
+
+    if (tutorialSubStep === 8) {
+      advancedTutorialShow(
+        "The Log lists everything that happened this match: every guess, every secret change, every power used.",
+        {
+          role: "setter",
+          title: "Read the Log",
+          current: 9,
+          total: 12,
+          placement: "bottom",
+          visualHtml: advancedLogVisual()
+        }
+      );
+      highlightSetterLog();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 9) {
+      advancedTutorialShow(
+        "Tap the ⧉ button to show or hide the clue row above your board. It shows what both of you already know about the secret so far.",
+        {
+          role: "setter",
+          title: "The clue row",
+          current: 10,
+          total: 12,
+          placement: "bottom",
+          visualHtml: advancedConstraintVisual()
         }
       );
       highlightConstraintRowAndToggle("setter");
-      highlightSetterLog();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 10) {
+      advancedTutorialShow(
+        "Tap the ? any time to see every power in this match and its status: Available, Used, or how many charges are left.",
+        {
+          role: "setter",
+          title: "Power info",
+          current: 11,
+          total: 12,
+          placement: "bottom",
+          visualHtml: advancedPowerInfoVisual()
+        }
+      );
       highlightPowerInfoBtn("setter");
       tutorialContinueMode = "advance";
       return;
@@ -491,8 +543,8 @@ function runAdvancedTutorialSetter(state) {
       {
         role: "setter",
         title: "Finish the turn",
-        current: 9,
-        total: 9,
+        current: 12,
+        total: 12,
         placement: "top",
         mode: "hide"
       }
@@ -504,7 +556,7 @@ function runAdvancedTutorialSetter(state) {
 
   if (round >= 2) {
     advancedTutorialShow(
-      "You used the extra tools: Guide, Drag and Lock, Notes, KEEP and NEW, stars, the clue row, the Log, and power help.",
+      "You used the extra tools: Guide, Drag and Lock, Notes, KEEP and NEW, the side panel, the clue row, the Log, and power info.",
       {
         role: "setter",
         title: "Extra tools done",

@@ -133,18 +133,20 @@ if (
           }
         }
 
-        // Stealth guess masking
-        if (
-          viewerRole === "setter" &&
-          state.powers.stealthGuessActive &&
-          e.stealthApplied
-        ) {
-          e.guess = "?????";
-          if (Array.isArray(e.fb)) {
-            e.fb = ["?", "?", "?", "?", "?"];
-          }
-        }
-
+        // Stealth guess: e.stealthApplied entries are never masked here.
+        // The only window this power actually protects is the setter's
+        // Keep/New decision that immediately follows the hidden guess --
+        // and that's covered separately, above, by masking the LIVE
+        // safe.pendingGuess while state.powers.stealthGuessActive is still
+        // true. This history entry doesn't even exist yet at that point:
+        // finalizeFeedback() (which creates it, and is what sets
+        // stealthApplied via postScore) only runs once the setter has
+        // already submitted that secret, so by the time this entry can
+        // ever reach a client, the decision it was meant to protect is
+        // already locked in. Masking it here too used to hide it forever,
+        // which no longer protected anything and just left the setter
+        // unable to review that round's real result.
+        //
         // Double Tap: the setter sees only the SHOWN guess. The hidden one
         // is masked (word + feedback) but still occupies a row, so the
         // setter knows a second guess happened without learning what it was.

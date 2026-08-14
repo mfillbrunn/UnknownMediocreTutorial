@@ -158,6 +158,16 @@
       </div>
     </div>
   </div>
+  <!-- Inspector-only: hold a keyboard key to mark it green/yellow/gray for
+       your own planning (e.g. after a power leaves the real color
+       ambiguous) -- see client/key-color-picker.js. Positioned above
+       whichever key was held via inline style, not CSS layout. -->
+  <div id="keyColorPicker" class="key-color-picker hidden" role="menu" aria-label="Set letter color">
+    <button type="button" class="key-color-option key-color-option-green" data-color="green" role="menuitem">Green</button>
+    <button type="button" class="key-color-option key-color-option-yellow" data-color="yellow" role="menuitem">Yellow</button>
+    <button type="button" class="key-color-option key-color-option-gray" data-color="gray" role="menuitem">Not in word</button>
+    <button type="button" class="key-color-option key-color-option-clear" data-color="" role="menuitem">Unused</button>
+  </div>
     <div id="appContainer">
       <!-- ========== HEADER ========== -->
 <header class="app-header">
@@ -199,7 +209,7 @@
                 My Games ♾️
                 <span id="myGamesNotifyBadge" class="notify-badge hidden" title="It's your turn in a game">✉️</span>
               </button>
-              <button id="howToPlayBtn" class="menu-btn">How to Play</button>
+              <button id="howToPlayBtn" class="menu-btn">Tutorials</button>
             </div>
           </div>
         </section>
@@ -340,39 +350,85 @@
   <div class="menu-center">
     <div class="screen-back-header">
       <button class="menu-btn screen-back-btn" onclick="showScreen('startupScreen')">← Back</button>
-      <h2 class="menu-title" style="flex:1;text-align:center">How to Play</h2>
+      <h2 class="menu-title" style="flex:1;text-align:center">Tutorials</h2>
     </div>
 
     <div class="menu-buttons">
 <button
-  id="startTutorialBtn"
-  class="menu-btn primary"
+  id="startMenuTutorialBtn"
+  class="menu-btn tutorial-menu-btn primary"
+  data-tutorial-key="menu"
+  title="A quick tour of the main menu's own buttons -- start here"
 >
-  ▶ Tutorial
+  <span class="tutorial-btn-num">1</span>
+  <span class="tutorial-btn-label">Tutorial: Main Menu</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
+</button>
+
+<button
+  id="startTutorialBtn"
+  class="menu-btn tutorial-menu-btn"
+  data-tutorial-key="tutorial"
+  title="The core game: guessing, feedback colors, and the Spy's keep/switch decision"
+>
+  <span class="tutorial-btn-num">2</span>
+  <span class="tutorial-btn-label">Tutorial</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
 </button>
 
 <button
   id="startTutorial2Btn"
-  class="menu-btn"
+  class="menu-btn tutorial-menu-btn"
+  data-tutorial-key="tutorial2"
   title="A short follow-up: one power for the Inspector, one for the Spy"
 >
-  ▶ Tutorial: Powers
+  <span class="tutorial-btn-num">3</span>
+  <span class="tutorial-btn-label">Tutorial: Powers</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
 </button>
 
 <button
   id="startQuestTutorialBtn"
-  class="menu-btn"
+  class="menu-btn tutorial-menu-btn"
+  data-tutorial-key="quest"
   title="Learn how Inspector Quests, early claims, and rewards work"
 >
-  ▶ Tutorial: Quest
+  <span class="tutorial-btn-num">4</span>
+  <span class="tutorial-btn-label">Tutorial: Quest</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
+</button>
+
+<button
+  id="startStarTutorialBtn"
+  class="menu-btn tutorial-menu-btn"
+  data-tutorial-key="star"
+  title="A deep dive on the Spy's star/charge system"
+>
+  <span class="tutorial-btn-num">5</span>
+  <span class="tutorial-btn-label">Tutorial: Stars</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
+</button>
+
+<button
+  id="startModesTutorialBtn"
+  class="menu-btn tutorial-menu-btn"
+  data-tutorial-key="modes"
+  title="How the power draft, quests, and the round-2 role swap fit together"
+>
+  <span class="tutorial-btn-num">6</span>
+  <span class="tutorial-btn-label">Tutorial: Modes</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
 </button>
 
 <button
   id="showAdvancedTutorialBtn"
-  class="menu-btn"
+  class="menu-btn tutorial-menu-btn"
+  data-tutorial-key="advanced"
   title="A scripted match covering Notes, Guide, and drag & lock"
 >
-  ▶ Advanced Tutorial
+  <span class="tutorial-btn-num">7</span>
+  <span class="tutorial-btn-label">Advanced Tutorial</span>
+  <span class="tutorial-btn-check" aria-hidden="true">✓</span>
 </button>
       <button id="showRulesBtn" class="menu-btn">Rules</button>
       <button id="showPowersBtn" class="menu-btn">Powers</button>
@@ -399,8 +455,14 @@
       <p>The Spy scores a point for every guess it takes the Inspector to win the round. Fewer guesses is better for the Inspector; more guesses is better for the Spy. Roles swap each round; the lower total score across all rounds wins the match.</p>
       <h3>Powers</h3>
       <p>Both sides can unlock special powers that bend the rules in their favor — see the Powers screen for the full list.</p>
+      <h3>Picking your powers</h3>
+      <p>Before a match starts, the Spy drafts <b>2 of 3</b> powers: whichever you pick first is active right away, and your second pick stays locked until you earn 8 stars (see Stars below). The Inspector drafts <b>1 of 2</b> powers, plus <b>1 of 2</b> Quests.</p>
+      <h3>Stars</h3>
+      <p>Every time the Spy switches to a new secret, the game rates the choice from 0 to 3 stars — the closer it is to the safest possible switch, the more stars it earns. Matching a hidden hint letter shown on the draft row earns one bonus star. Stars fill a meter across the round: <b>5 and 12 stars</b> each give you a letter reset, and <b>8 stars</b> unlocks your second power.</p>
       <h3>Guesser Quests</h3>
       <p>Every Inspector also gets an always-on Quest: a visible challenge (like using every letter in a keyboard row, or submitting guesses in alphabetical order) that rewards a free green letter reveal when completed. See the Powers screen's Guesser Quests tab for the full list.</p>
+      <h3>Swapping sides</h3>
+      <p>When the roles swap for round 2, powers stay with the <b>role</b>, not the player: whoever plays Spy uses the same 2 powers picked for Spy at the start, and whoever plays Inspector uses the same power picked for Inspector. Quests are different — round 2's Inspector is a new player experiencing it fresh, so they get their own new choice of 1 of 2 Quests instead of inheriting round 1's.</p>
     </div>
   </div>
 </section>
@@ -543,6 +605,28 @@
 
     <h3 class="sim-subtitle">Past Runs</h3>
     <div id="simPastRuns" class="sim-past-runs">Loading…</div>
+
+    <h3 class="sim-subtitle sim-subtitle-wide">Quest Completion Chart</h3>
+    <p class="sim-explainer">
+      Forces each guesser quest type onto an AI guesser (no other powers
+      active) across many single-round trials, and measures how often the
+      quest is actually completed for its full green reward before the
+      round ends. Uses the same runs/AI difficulty settings above.
+    </p>
+    <div class="sim-batch-controls">
+      <button id="simQuestTestAllBtn" class="menu-btn">Test All Quests</button>
+      <span id="simQuestTestAllEstimate" class="sim-estimate"></span>
+    </div>
+
+    <div id="simQuestBatchProgress" class="sim-progress hidden">
+      <div class="sim-progress-bar"><div id="simQuestBatchProgressFill" class="sim-progress-fill"></div></div>
+      <span id="simQuestBatchProgressText"></span>
+    </div>
+
+    <div id="simQuestChartWrap" class="sim-chart-wrap"></div>
+
+    <h3 class="sim-subtitle">Past Quest Runs</h3>
+    <div id="simQuestPastRuns" class="sim-past-runs">Loading…</div>
   </div>
 </section>
 
@@ -797,6 +881,16 @@
     </section>
 
     <section class="setter-sidebar-activity">
+      <button
+        type="button"
+        id="setterNotesIdleOpenBtn"
+        class="setter-notes-idle-open-btn hidden"
+        title="Open notes while you wait"
+        aria-label="Open notes while you wait"
+      >
+        📝 Open Notes
+      </button>
+
       <div
         id="setterNotesIdleHint"
         class="setter-notes-idle-hint hidden"
@@ -1053,6 +1147,7 @@
                   <div class="draft-row-wrap">
                     <div class="draft-stack">
                       <div id="draftGuesser" class="history-tiles draft-layer"></div>
+                      <div id="guesserDraftInvalidOverlay" class="secret-invalid-overlay hidden">✕</div>
                     </div>
                   </div>
              </div>
@@ -1233,6 +1328,22 @@
     </div>
   </div>
 </div>
+<!-- First-time-only offer (see client/tutorial-progress.js), shown once
+     a fresh sign-in lands on a plain startup screen with nothing else
+     going on. Declining just dismisses it for good -- every tutorial
+     stays one tap away under Tutorials regardless. -->
+<div id="onboardingPromptModal" class="modal">
+  <div class="panel rejoin-modal-panel">
+    <h2 class="screen-title">Welcome to Vowel Play!</h2>
+    <p class="modal-instruction">
+      New here? A quick, hands-on tour covers the main menu and the basics of a real match. You can stop any time, and every tutorial is always available later under Tutorials.
+    </p>
+    <div class="rejoin-modal-actions">
+      <button id="onboardingStartBtn" class="primary-btn">Show Me Around</button>
+      <button id="onboardingSkipBtn" class="secondary-btn">Skip</button>
+    </div>
+  </div>
+</div>
 <div id="tutorialBubble" class="tutorial-bubble hidden" role="dialog" aria-live="polite" aria-expanded="true">
   <div class="tutorial-header">
     <div class="tutorial-heading">
@@ -1253,8 +1364,8 @@
   </div>
 
   <div id="tutorialBody" class="tutorial-body">
-    <div id="tutorialVisual" class="tutorial-visual hidden"></div>
     <div id="tutorialText" class="tutorial-text"></div>
+    <div id="tutorialVisual" class="tutorial-visual hidden"></div>
 
     <div class="tutorial-controls">
       <button id="tutorialContinueBtn" class="primary-btn small" type="button">
@@ -1339,6 +1450,10 @@
 <script src="client/tutorial-powers.js?tutorial-eli5=3"></script>
 <script src="client/tutorial-advanced.js?tutorial-eli5=3"></script>
 <script src="client/tutorial-quest.js?tutorial-eli5=3"></script>
+<script src="client/tutorial-star.js?tutorial-eli5=3"></script>
+<script src="client/tutorial-modes.js?tutorial-eli5=3"></script>
+<script src="client/tutorial-menu.js?tutorial-eli5=3"></script>
+<script src="client/tutorial-progress.js"></script>
   <script src="client/quest-guide.js"></script>
   <script src="client/quest-choice.js"></script>
   <script src="client/spy-charge.js?setter-fixes=2"></script>
@@ -1359,6 +1474,7 @@
   <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
   <script src="client/drag-mode.js"></script>
+  <script src="client/key-color-picker.js"></script>
   <script src="client/friends.js"></script>
   <script src="client/daily-challenge.js"></script>
   <script src="client/my-games.js"></script>

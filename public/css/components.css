@@ -256,6 +256,16 @@
   pointer-events: none;
 }
 
+/* Letter Peek's icon/uses-badge sit a touch lower than every other power
+   card's -- nudged down on this one power only, via the data-power-id
+   applyPowerPalette already stamps onto the button. */
+.power-btn[data-power-id="revealGreen"] .power-icon {
+  margin-top: 6px;
+}
+.power-btn[data-power-id="revealGreen"] .power-uses-badge {
+  top: -3px;
+}
+
 /* A fixed-height box (not just a fixed font-size) -- reserving the same
    2-line slot for every label, regardless of how many words it actually
    has, is what makes every badge card end up the same overall size.
@@ -323,7 +333,7 @@
    so the only colour change in the whole quest lifecycle is the single
    blue-to-green flip that actually matters. */
 .quest-badge-tile {
-  --role-accent: #6e89a6;
+  --role-accent: #6088b4;
 }
 .quest-badge-tile.quest-ready,
 .quest-badge-tile.quest-done {
@@ -505,6 +515,85 @@
   color: rgba(255, 255, 255, 0.55);
   pointer-events: none;
 }
+
+/* Inspector's own manual color pick (client/key-color-picker.js) -- a
+   personal planning note, not real feedback, so it gets a small pencil
+   mark on top of the same green/yellow/gray fill real feedback would use
+   (color parity matters: "that key should be in that color" is the whole
+   point), just enough to tell the two apart at a glance. */
+.key.key-manual {
+  position: relative;
+}
+.key.key-manual::after {
+  content: "✎";
+  position: absolute;
+  top: 1px;
+  right: 2px;
+
+  font-size: 9px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+/* Key currently showing its own color picker (see key-color-picker.js) --
+   a plain glow rather than moving/resizing it, so the popup's own
+   position math (measured from the key's real rect) never has to chase a
+   layout shift it just caused. */
+.key.key-color-picker-target {
+  box-shadow: 0 0 0 2px #fff, 0 0 10px rgba(255, 255, 255, 0.5) !important;
+}
+
+.key-color-picker {
+  position: fixed;
+  z-index: 10000;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+
+  background: rgba(18, 19, 24, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--r-10);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+
+.key-color-picker.hidden {
+  display: none;
+}
+
+.key-color-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: var(--r-6);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.key-color-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.key-color-option::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-6);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.key-color-option-green::before  { background: var(--tile-green); }
+.key-color-option-yellow::before { background: var(--tile-yellow); }
+.key-color-option-gray::before   { background: #0a0b0d; }
+.key-color-option-clear::before  { background: var(--kb-neutral); }
 
 /* Letter Lockout (setter power): the guesser's currently-banned letter —
    a clear "don't type this" marker on their own keyboard, distinct from

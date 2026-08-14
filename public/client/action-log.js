@@ -34,7 +34,7 @@
     const entries = [];
     const myId = typeof myUserId === "function" ? myUserId() : null;
 
-    entries.push({ type: "round", text: "Game start" });
+    entries.push({ type: "round", text: "Game Log" });
 
     // Completed rounds are archived (and state.history is wiped) at each
     // round boundary, so pull them from state.matchRounds too — otherwise
@@ -84,7 +84,16 @@
           pushConditionsLine(quest.conditionsHistory?.[guessNumber]);
         }
         guessNumber++;
-        const guessHidden = isLiveRound && !isSetterThisRound && state.powers?.stealthGuessActive;
+        // Sneaky Guess's own masking already comes through on entry.guess
+        // itself -- safeState.js permanently redacts the ONE entry it was
+        // used on for the setter's view (e.stealthApplied), so there's
+        // nothing left for this log to re-derive here. (A previous version
+        // of this line recomputed it client-side off the live, moment-to-
+        // moment state.powers.stealthGuessActive flag and the wrong role,
+        // which blanked every guess in the round -- not just the one
+        // actually protected -- for whichever guess happened to be
+        // pending at render time.)
+        //
         // Total Blackout hides the guesser's entire history board (see
         // history.js's buildHistoryRenderState returning [] while
         // blindGuessActive) -- the log lists the same round's guessed
@@ -94,7 +103,7 @@
         const blackedOut = isLiveRound && state.powers?.blindGuessActive;
         const guessDisplay = blackedOut
           ? `<span class="log-blackout-word">${"█".repeat(entry.guess.length)}</span>`
-          : (guessHidden ? "?????" : entry.guess.toUpperCase());
+          : entry.guess.toUpperCase();
         // Simultaneous-phase secret submission and a locked secret both
         // belong to this same turn/entry as the guess -- folded onto its
         // row as a short suffix instead of their own separate rows, so

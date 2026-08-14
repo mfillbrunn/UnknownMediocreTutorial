@@ -1,5 +1,7 @@
 const powerMetadata = require("../../powers/powerMetadata");
 const { scoreGuess } = require("../../game-engine/scoring");
+const spyChargeServer = require("../../powers/powers/spyChargeServer");
+const { pickRandomQuestType, ensureQuestConditions } = require("../../powers/powers/questServer");
 
 class TutorialMode {
   constructor() {
@@ -112,6 +114,28 @@ class TutorialMode {
     "BLIMP"
   ];
 }
+
+    // Stage "star": a standalone, entirely narrative deep dive on the
+    // Spy's star/charge system (see client/tutorial-star.js). Single
+    // round, no scripted opening -- seedStarTutorialRound (called from
+    // onLobbyReady below) drops the player straight into a mid-decision
+    // scenario for the board to look realistic while the narration plays,
+    // the same "seed a snapshot instead of scripting from scratch"
+    // approach seedPowerTutorialRound uses.
+    if (state.tutorialStage === "star") {
+      state.roundsTotal = 1;
+      state.scriptedTurns = 0;
+    }
+
+    // Stage "modes": explains the power/quest draft and what carries over
+    // at the round-2 swap (see client/tutorial-modes.js). Also entirely
+    // narrative -- nothing here is about a specific live action, so it
+    // doesn't matter which role the human starts as.
+    if (state.tutorialStage === "modes") {
+      state.roundsTotal = 1;
+      state.scriptedTurns = 0;
+    }
+
     state.timeControl.enabled = false;
     // No randomness
     state.shuffle = false;
@@ -120,7 +144,8 @@ class TutorialMode {
   onLobbyReady(
   state,
   setterPowers,
-  guesserPowers
+  guesserPowers,
+  guesserQuest
 ) {
   if (state.tutorialStage === "quest") {
     state.initialPowers = {
@@ -131,6 +156,50 @@ class TutorialMode {
     state.activePowers = [];
 
     this.seedQuestTutorialRound(state);
+    return;
+  }
+
+  if (state.tutorialStage === "star") {
+    // Real powers this time -- spy-charge is specifically ENABLED for
+    // this stage (see spyChargeServer.js's createSpyChargeState), so the
+    // player needs a genuine locked second power to watch unlock at 8
+    // stars. countOnly (index 0) starts active; hideTile (index 1) is
+    // the one that stays locked.
+    const sP = ["countOnly", "hideTile"];
+    state.initialPowers = {
+      setter: sP,
+      guesser: []
+    };
+
+    state.activePowers = [...sP];
+
+    this.seedStarTutorialRound(state);
+
+    spyChargeServer.initializeForRound(state, sP);
+    // Start the meter partway full (see tutorial-star.js) so the player
+    // reaches both the 5-star and 8-star milestones with just one or two
+    // real secret changes instead of needing a long grind from zero.
+    state.powers.spyCharge.total = 4;
+    return;
+  }
+
+  if (state.tutorialStage === "modes") {
+    // Unlike every other tutorial stage, this one goes through the REAL
+    // draft screen for real (see lobby.js's draftEligible) -- setterPowers/
+    // guesserPowers/guesserQuest here are the player's own actual picks
+    // (plus whatever the AI auto-picked for itself), not a scripted
+    // loadout. From here on this plays out exactly like a normal match;
+    // draft.js's finalizeDraft (which called this) sets state.phase to
+    // "simultaneous" right after, same as it does for every other match.
+    state.initialPowers = {
+      setter: setterPowers,
+      guesser: guesserPowers
+    };
+
+    state.activePowers = [...setterPowers, ...guesserPowers];
+
+    state.powers.quest.type = guesserQuest || pickRandomQuestType();
+    ensureQuestConditions(state);
     return;
   }
 
@@ -175,9 +244,15 @@ class TutorialMode {
 
   state.secret = secret;
 
+  // Seeded so exactly 4 of the RARE quest's 6 needed letters (V, X, Q, J)
+  // are already in hand before the tutorial's own scripted WACKY guess --
+  // W and K are deliberately left untouched here so both still read as
+  // "needed" right up through the highlight-button demo step, and WACKY
+  // (which contains both) is what completes the quest.
   state.history = [
-    "QUACK",
-    "VIXEN"
+    "VIXEN",
+    "QUERY",
+    "JUMPY"
   ].map((guess, index) => {
     const fb =
       scoreGuess(secret, guess);
@@ -231,6 +306,43 @@ class TutorialMode {
 
   state.powers.questActive = false;
 }
+  // Drops the Star Tutorial straight into a mid-decision scenario -- one
+  // already-scored guess, one live guess sitting in front of the setter --
+  // so the board looks like a real match. Unlike seedPowerTutorialRound
+  // below, the star ratings here are REAL (spy-charge is specifically
+  // enabled for this stage), which makes the seed's own constraints
+  // matter in a way they don't elsewhere: ROUND shares zero letters with
+  // BLIMP, so it only rules out R/O/U/N/D and pins nothing to an exact
+  // position -- the feasible-secret pool stays wide open, and the player
+  // can find a genuinely different, genuinely legal switch to submit.
+  // (An earlier version reused seedPowerTutorialRound's CHAMP/CAIRN pair,
+  // which pins 3 of the 5 letters exactly and left BLIMP as close to the
+  // ONLY legal secret -- fine when nothing was actually being scored, but
+  // it meant there was nothing left to switch to once scoring went live.)
+  seedStarTutorialRound(state) {
+    if (state.tutorialStage !== "star") return;
+
+    const secret = "BLIMP";
+    state.secret = secret;
+    state.history = ["ROUND"].map((guess, i) => {
+      const fb = scoreGuess(secret, guess);
+      return {
+        guess,
+        fb,
+        fbGuesser: [...fb],
+        extraInfo: null,
+        finalSecret: secret,
+        roundIndex: i,
+        powerEvents: [],
+        fakeFeedback: null
+      };
+    });
+
+    state.phase = "normal";
+    state.turn = state.setter;
+    state.pendingGuess = "CRANE";
+    state.setterDraft = "";
+  }
   // Drops the "Try it" power tutorial straight into a mid-match scenario
   // -- two already-scored rounds already sitting in state.history, one
   // live turn ready to go -- instead of scripting an entire match from

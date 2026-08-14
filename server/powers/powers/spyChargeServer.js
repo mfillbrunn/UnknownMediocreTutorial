@@ -14,8 +14,8 @@ const {
 const POWER_METADATA = require("../powerMetadata");
 
 const MAX_CHARGE = 12;
-const POWER_UNLOCK_AT = 5;
-const RESET_THRESHOLDS = [8, 12];
+const POWER_UNLOCK_AT = 8;
+const RESET_THRESHOLDS = [5, 12];
 
 function normalizeWord(value) {
   return typeof value === "string"
@@ -69,8 +69,15 @@ function createSpyChargeState(state, setterPowerIds) {
     ? setterPowerIds
     : getSetterPowerIds(state);
 
+  // Disabled for every tutorial EXCEPT the Star Tutorial itself (see
+  // client/tutorial-star.js), which is specifically about walking the
+  // player through this live -- real secret changes, real stars, a real
+  // second-power unlock and letter reset -- rather than narrating it.
+  const isStarTutorial =
+    state?.isTutorial && state?.tutorialStage === "star";
+
   return {
-    enabled: !state?.isTutorial && !state?.devMode,
+    enabled: (!state?.isTutorial || isStarTutorial) && !state?.devMode,
     total: 0,
     hint: null,
     lockedPowerId: powers[1] || null,

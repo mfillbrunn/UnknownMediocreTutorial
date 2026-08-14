@@ -330,6 +330,16 @@ if (action.mode === "advanced") {
   state.isTutorial = true;
   state.tutorialStage = "advanced";
 }
+
+if (action.mode === "star") {
+  state.isTutorial = true;
+  state.tutorialStage = "star";
+}
+
+if (action.mode === "modes") {
+  state.isTutorial = true;
+  state.tutorialStage = "modes";
+}
     const nowReady = !state.players[userId]?.ready;
     setPlayerReady(room, userId, nowReady);
 
@@ -444,13 +454,20 @@ if (action.mode === "advanced") {
     // Draft Mode: skip the random pick and let each role's player choose
     // 2 of 3 revealed powers instead. Not compatible with daily challenge
     // (fixed powers), tutorial (scripted powers), or dev mode (wants
-    // everything unlocked for testing).
+    // everything unlocked for testing). The Modes Tutorial (client/
+    // tutorial-modes.js) is the one deliberate exception to "tutorial ->
+    // scripted powers": its whole point is to walk the player through
+    // this exact screen for real, so it opts into the real draft flow
+    // instead of TutorialMode handing out a fixed loadout.
     const draftEligible =
-      state.draftMode &&
-      !state.customPowersMode &&
-      !state.isDaily &&
-      !state.isTutorial &&
-      !state.devMode;
+      state.tutorialStage === "modes" ||
+      (
+        state.draftMode &&
+        !state.customPowersMode &&
+        !state.isDaily &&
+        !state.isTutorial &&
+        !state.devMode
+      );
 
     // Custom mode: each player brings their own point-budgeted loadout
     // (picked earlier in the lobby via SET_CUSTOM_LOADOUT, or replayed from
@@ -535,7 +552,11 @@ if (action.mode === "advanced") {
         }
       }
 
-      state.draftDeadline = Date.now() + 30000;
+      // The Modes Tutorial paces the player through this screen step by
+      // step (see client/tutorial-modes.js) -- the normal 30s draft clock
+      // would auto-finalize with random picks long before a guided
+      // walkthrough gets there, so it gets a much longer window instead.
+      state.draftDeadline = Date.now() + (state.tutorialStage === "modes" ? 600000 : 30000);
       state.phase = "draft";
 
       emitLobbyEvent(io, roomId, { type: "hideLobby" });
@@ -598,7 +619,8 @@ if (action.mode === "advanced") {
         // the fresh-game default below.
     if (
       state.tutorialStage !== "power" &&
-      state.tutorialStage !== "quest"
+      state.tutorialStage !== "quest" &&
+      state.tutorialStage !== "star"
     ) {
       state.phase = "simultaneous";
     }

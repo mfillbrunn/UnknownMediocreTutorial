@@ -39,6 +39,8 @@ window.renderKeyboard = function ({
     buildKeyboard(container);
   }
 
+  if (isGuesser) window.resetManualKeyColorsForRound?.(state);
+
   const guess = (pendingGuess || "").toUpperCase();
 
   for (const keyEl of container.__keys) {
@@ -52,7 +54,8 @@ window.renderKeyboard = function ({
       "key-current",
       "key-uncertain",
       "key-purple",
-      "key-banned"
+      "key-banned",
+      "key-manual"
     );
 
     // Special keys
@@ -69,14 +72,34 @@ window.renderKeyboard = function ({
     if (/^[A-Z]$/.test(symbol)) {
       const status = state.keyboard?.[symbol];
 
-      if (status === "green") keyEl.classList.add("key-green");
-      else if (status === "yellow") keyEl.classList.add("key-yellow");
-      else if (status === "gray") keyEl.classList.add("key-gray");
-      else if (status === "blue") keyEl.classList.add("key-blue");
+      // Inspector-only planning aid (see client/key-color-picker.js): a
+      // real, known status always wins the instant it exists -- a stale
+      // manual guess about a letter the game has since actually resolved
+      // would be actively misleading left in place, so it's discarded
+      // rather than shown alongside or on top of the real color.
+      const manualColor = isGuesser
+        ? window.getManualKeyColor?.(symbol)
+        : null;
+
+      if (manualColor && status) {
+        window.clearManualKeyColor?.(symbol);
+      }
+
+      if (manualColor && !status) {
+        keyEl.classList.add(`key-${manualColor}`, "key-manual");
+      } else {
+        if (status === "green") keyEl.classList.add("key-green");
+        else if (status === "yellow") keyEl.classList.add("key-yellow");
+        else if (status === "gray") keyEl.classList.add("key-gray");
+        else if (status === "blue") keyEl.classList.add("key-blue");
+      }
 
       // Count Only power: letter was guessed but its true color is
       // unknown — looks like an untouched key, plus a small "?" mark.
-      if (!status && state.keyboardUncertain?.[symbol]) {
+      // Suppressed once a manual color is set: showing "?" next to a
+      // color the player just chose on purpose reads as a contradiction
+      // instead of the reminder it's meant to be.
+      if (!status && !manualColor && state.keyboardUncertain?.[symbol]) {
         keyEl.classList.add("key-uncertain");
       }
 
@@ -84,7 +107,7 @@ window.renderKeyboard = function ({
       // far came from the hidden tile — match the tile's own purple
       // treatment instead of leaking its real color, until an unmasked
       // guess resolves it for real.
-      if (!status && state.keyboardBlindSpot?.[symbol]) {
+      if (!status && !manualColor && state.keyboardBlindSpot?.[symbol]) {
         keyEl.classList.add("key-purple");
       }
 
@@ -125,6 +148,15 @@ window.renderKeyboard = function ({
         keyEl.addEventListener("pointerdown", (e) => {
           window.beginKeyDrag?.(symbol, e.clientX, e.clientY, isGuesser ? "guesser" : "setter");
         });
+      }
+
+      // Inspector-only: hold the key for the green/yellow/not-in-word
+      // color picker (see client/key-color-picker.js). Wired once per key
+      // element just like drag above; never wired on the Spy's own
+      // keyboard, which has no use for this.
+      if (isGuesser && !keyEl.__longPressWired) {
+        keyEl.__longPressWired = true;
+        window.attachKeyLongPress?.(keyEl, symbol);
       }
     }
   }

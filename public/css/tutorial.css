@@ -35,6 +35,21 @@ transition:
   visibility 0s linear 0s;
 }
 
+/* A step can request the bubble stay pinned low on screen regardless of
+   what repositionTutorialBubble()'s avoid-overlap math would otherwise
+   pick (e.g. "tap the power button in the sidebar" steps, where the
+   button being highlighted sits high enough that the normal algorithm
+   can land the bubble awkwardly mid-screen). !important is required
+   because that JS writes `top`/`bottom` as inline styles every
+   reposition pass -- only an !important CSS rule can consistently win
+   against those. Unlike the [data-placement="top"] pin below, this one
+   isn't limited to narrow viewports: the sidebar-power-button case it
+   exists for happens at any width. */
+.tutorial-bubble[data-placement="bottom-forced"] {
+  top: auto !important;
+  bottom: max(var(--tutorial-bottom), env(safe-area-inset-bottom)) !important;
+}
+
 .tutorial-bubble.hidden {
   opacity: 0;
   visibility: hidden;
@@ -69,6 +84,23 @@ transition:
 
   background: rgba(255, 255, 255, 0.045);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  /* Drag handle for setupTutorialBubbleDrag (tutorial-ui.js) -- grabbable
+     cursor plus touch-action:none so a touch-drag repositions the bubble
+     instead of the browser trying to scroll/zoom the page underneath it. */
+  cursor: grab;
+  touch-action: none;
+}
+
+.tutorial-header:active {
+  cursor: grabbing;
+}
+
+/* While actively being dragged, skip the bubble's normal top/left
+   transition (meant for its own auto-repositioning) so it tracks the
+   pointer directly instead of visibly lagging behind it. */
+.tutorial-bubble.tutorial-dragging {
+  transition: none;
 }
 
 .tutorial-title {
@@ -394,7 +426,13 @@ transition:
   inset: -3px !important;
   border-radius: inherit !important;
   pointer-events: none !important;
-  z-index: 2 !important;
+  /* Higher than .tutorial-focus-ring's 9998 (below), not just a local
+     z-index of 2 -- a step highlighting a single letter key WHILE the
+     ring is also drawn around the whole keyboard (e.g. "type your
+     guess") used to have the ring's fixed-position 9998 stacking
+     context paint over this key's own glow, since the key has no
+     positioned ancestor promoting it into that same high tier. */
+  z-index: 9999 !important;
   animation: tutorial-key-glow 1.1s ease-in-out infinite !important;
 }
 
@@ -654,6 +692,51 @@ transition:
   line-height: 1.35;
 }
 
+/* Turn-order graphic (runBasicTutorial's basicTurnOrderGraphic) -- a row of
+   pill "steps" plus arrows showing the simultaneous opening move followed
+   by the guesser/setter back-and-forth, so the alternating structure of a
+   round is something the player can look at, not just read about. */
+.tutorial-turn-order {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.tutorial-turn-step {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.tutorial-turn-step.tutorial-turn-both {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.tutorial-turn-step.tutorial-turn-guesser {
+  background: rgba(96, 165, 250, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(96, 165, 250, 0.4);
+}
+
+.tutorial-turn-step.tutorial-turn-setter {
+  background: rgba(251, 113, 133, 0.15);
+  color: #fda4af;
+  border: 1px solid rgba(251, 113, 133, 0.4);
+}
+
+.tutorial-turn-arrow {
+  color: rgba(255, 255, 255, 0.32);
+  font-size: 12px;
+}
+
 .tutorial-finish-checks {
   display: flex;
   flex-wrap: wrap;
@@ -742,6 +825,16 @@ transition:
 
   .tutorial-bubble[data-placement="bottom"] {
     top: auto;
+  }
+
+  /* Once the player has dragged the bubble by hand (setupTutorialBubbleDrag,
+     tutorial-ui.js), that placement pin has to stop winning -- otherwise a
+     step whose data-placement is "top" snaps straight back to the top edge
+     the instant a drag on a narrow screen tries to move it away from there.
+     Same !important tier, later in the cascade, so this wins the tie. */
+  .tutorial-bubble.tutorial-user-positioned[data-placement="top"] {
+    top: var(--tutorial-drag-top, auto) !important;
+    bottom: auto !important;
   }
 
   .tutorial-choice-grid {

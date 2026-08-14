@@ -23,7 +23,7 @@ window.QUEST_METADATA = {
   },
   RARE: {
     label: "Rare Letters",
-    desc: "Use at least 5 different rare letters across your guesses -- each match draws 7 from a pool of 12 uncommon ones.",
+    desc: "Use at least 6 different rare letters across your guesses -- each match draws 7 from a pool of 12 uncommon ones.",
     emoji: "💎",
     color: "#16A34A",
     examples: ["QUACK", "VIXEN", "WACKY"]

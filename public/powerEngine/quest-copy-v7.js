@@ -3,7 +3,7 @@
 
   const copy = {
     ROW: "Use every letter from one keyboard row across your guesses.",
-    RARE: "Use 5 different rare letters from this match's drawn set of 7.",
+    RARE: "Use 6 different rare letters from this match's drawn set of 7.",
     ALPHA: "Make 3 guesses whose letters go in alphabetical or reverse order.",
     DOUBLES: "Make 3 guesses with different doubled letters.",
     CHAIN: "Make 2 word-chain links between consecutive guesses.",

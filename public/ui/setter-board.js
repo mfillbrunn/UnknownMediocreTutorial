@@ -152,10 +152,12 @@
     if (current.direction === "close" && dx <= -SWIPE_THRESHOLD) {
       suppressSidebarClickUntil = Date.now() + 350;
       setCollapsed(true);
+      window.notifyTutorialSidebarToggled?.();
     }
 
     if (current.direction === "open" && dx >= SWIPE_THRESHOLD) {
       setCollapsed(false);
+      window.notifyTutorialSidebarToggled?.();
     }
   }
 
@@ -172,6 +174,7 @@
     toggle.addEventListener("click", event => {
       event.stopPropagation();
       setCollapsed(!isCollapsed());
+      window.notifyTutorialSidebarToggled?.();
     });
 
     sidebar.addEventListener("pointerdown", event => {
@@ -329,6 +332,13 @@
     initDecisionButtons();
     scheduleChargeObserver();
   }
+
+  // Exposed for tutorial-ui.js's highlightPowerButtonByText -- the Spy's
+  // power cards live inside this collapsible sidebar, so a tutorial step
+  // trying to highlight one has to force it open first or the highlight
+  // ring ends up positioned against a hidden (zero-size) element.
+  window.isSetterSidebarCollapsed = isCollapsed;
+  window.setSetterSidebarCollapsed = setCollapsed;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init, { once: true });

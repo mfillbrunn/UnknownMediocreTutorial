@@ -1,5 +1,38 @@
 // client/draft.js — pre-round power draft screen
 
+// Big corner badges for a picked candidate, instead of the old small text
+// pill -- "kind" is a semantic key (not display text) so each one gets its
+// own shape: "start" for the Spy's first (immediately-active) pick, "five"
+// for their second (locked-until-the-power-threshold) pick, and "selected"
+// for anything the Inspector picks -- power or Quest alike share the exact
+// same checkmark icon, since for them there's only ever one meaningful
+// state ("this is my pick"), not two different ones to tell apart.
+//
+// "five" is a legacy name from when the power threshold was 5 stars (see
+// spyChargeServer.js's POWER_UNLOCK_AT) -- kept as-is since renaming it
+// everywhere it's threaded through is a bigger diff than the badge itself,
+// but the displayed number below always reflects the real threshold.
+function buildDraftPickBadge(kind) {
+  if (kind === "start") {
+    return `<span class="draft-pick-slot draft-pick-start" aria-label="Starts active">START</span>`;
+  }
+
+  if (kind === "five") {
+    return `
+      <span class="draft-pick-slot draft-pick-five" aria-label="Unlocks at 8 stars">
+        <span class="draft-pick-five-star" aria-hidden="true">★</span>
+        <span class="draft-pick-five-num" aria-hidden="true">8</span>
+      </span>
+    `;
+  }
+
+  if (kind === "selected") {
+    return `<span class="draft-pick-slot draft-pick-selected" aria-label="Selected">✓</span>`;
+  }
+
+  return "";
+}
+
 function renderDraftCandidateList(
   container,
   {
@@ -19,7 +52,7 @@ function renderDraftCandidateList(
     const shortDesc = meta?.short || fullDesc;
     const selectedIndex = picks.indexOf(id);
     const selected = selectedIndex >= 0;
-    const label = selected ? pickLabel?.(selectedIndex) : "";
+    const pickKind = selected ? pickLabel?.(selectedIndex) : "";
 
 const btn =
   document.createElement(
@@ -51,7 +84,7 @@ if (
     btn.classList.toggle("selected", selected);
 
     btn.innerHTML = `
-      ${label ? `<span class="draft-pick-slot">${label}</span>` : ""}
+      ${buildDraftPickBadge(pickKind)}
       <span class="draft-candidate-emoji">${meta?.emoji || ""}</span>
       <span class="draft-candidate-label">
         ${meta?.label || id}
@@ -112,7 +145,7 @@ window.renderDraftScreen = function (state) {
   if (instruction) {
     instruction.textContent = isGuesser
       ? "Pick 1 of the 2 powers below for your side."
-      : "Pick 2 of 3 powers. Your first pick starts active; your second unlocks when the charge meter reaches 5 stars.";
+      : "Pick 2 of 3 powers. Your first pick starts active; your second unlocks when the charge meter reaches 8 stars.";
   }
 
   const list = $("draftCandidates");
@@ -123,8 +156,8 @@ window.renderDraftScreen = function (state) {
       done: iAmDone,
       metaFor: id => window.POWER_METADATA?.[id],
       pickLabel: index => {
-        if (isGuesser) return "SELECTED";
-        return index === 0 ? "START" : "5★";
+        if (isGuesser) return "selected";
+        return index === 0 ? "start" : "five";
       },
       onPick: powerId => sendGameAction({
         type: "DRAFT_PICK",
@@ -146,7 +179,7 @@ window.renderDraftScreen = function (state) {
         picks: myQuestPicks,
         done: iAmDone,
         metaFor: id => window.QUEST_METADATA?.[id],
-        pickLabel: () => "SELECTED",
+        pickLabel: () => "selected",
         onPick: questId => sendGameAction({
           type: "DRAFT_PICK_QUEST",
           quest: questId,

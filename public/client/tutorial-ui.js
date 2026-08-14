@@ -31,6 +31,14 @@ let tutorialHighlightSettleTimer = null;
 let tutorialRingSettling = false;
 let tutorialRingSnapNext = false;
 
+// Set once the player drags the tutorial bubble by hand (see
+// setupTutorialBubbleDrag below) -- while true, repositionTutorialBubble's
+// automatic avoid-the-highlighted-target placement backs off entirely
+// instead of fighting the player's own placement on the next layout pass.
+// Cleared on the next real tutorial transition (hideTutorial/endTutorial)
+// so a fresh tutorial still opens in its normal spot.
+let tutorialUserPositioned = false;
+
 function qs(sel) {
   return document.querySelector(sel);
 }
@@ -443,6 +451,11 @@ function repositionTutorialBubble() {
     return;
   }
 
+  if (tutorialUserPositioned) {
+    repositionUserPositionedBubble(bubble);
+    return;
+  }
+
   if (shouldDockAdvancedTutorial()) {
     positionAdvancedTutorialDock(
       bubble
@@ -631,6 +644,70 @@ function repositionTutorialBubble() {
     "--tutorial-bottom"
   );
 }
+
+// Once the player has dragged the bubble (tutorialUserPositioned), it no
+// longer gets auto-placed from scratch -- but it should still duck out of
+// the way of whatever's currently highlighted if the player's own spot
+// happens to land on top of it. Nudges `top` only far enough to clear an
+// actual overlap and leaves the bubble exactly where it was dragged
+// otherwise; never touches `left`, so the player's horizontal choice is
+// never overridden.
+function repositionUserPositionedBubble(bubble) {
+  if (tutorialRingSettling) return;
+  if (bubble.classList.contains("tutorial-dragging")) return;
+
+  const viewport = window.visualViewport;
+  const viewportTop = viewport?.offsetTop || 0;
+  const viewportHeight = viewport?.height || window.innerHeight;
+  const viewportBottom = viewportTop + viewportHeight;
+  const edge = 8;
+  const gap = 10;
+
+  const keyboard = getVisibleTutorialKeyboard();
+  const keyboardTop = keyboard ? keyboard.getBoundingClientRect().top : viewportBottom;
+  const availableBottom = Math.min(viewportBottom - edge, keyboardTop - edge);
+
+  const measuredRect = bubble.getBoundingClientRect();
+  const bubbleHeight = measuredRect.height;
+  const bubbleLeft = measuredRect.left;
+  const bubbleRight = measuredRect.right;
+
+  const minTop = viewportTop + edge;
+  const maxTop = Math.max(minTop, availableBottom - bubbleHeight);
+
+  let top = Math.max(minTop, Math.min(maxTop, measuredRect.top));
+
+  const avoidRects = tutorialAvoidElements().map(el => el.getBoundingClientRect());
+  const rectAtTop = t => ({ top: t, bottom: t + bubbleHeight, left: bubbleLeft, right: bubbleRight });
+
+  let moved = false;
+  for (let pass = 0; pass < 4; pass++) {
+    const topBeforePass = top;
+
+    for (const avoidRect of avoidRects) {
+      if (!tutorialRectsOverlap(rectAtTop(top), avoidRect, gap)) continue;
+
+      moved = true;
+      const aboveTop = avoidRect.top - gap - bubbleHeight;
+      const belowTop = avoidRect.bottom + gap;
+
+      if (aboveTop >= minTop) top = Math.min(aboveTop, maxTop);
+      else if (belowTop <= maxTop) top = belowTop;
+      else top = minTop;
+    }
+
+    if (top === topBeforePass) break;
+  }
+
+  // Nothing overlapped -- leave the player's exact placement alone rather
+  // than snapping it to a "corrected" value it never actually needed.
+  if (!moved) return;
+
+  bubble.style.top = `${Math.round(top)}px`;
+  bubble.style.bottom = "auto";
+  bubble.style.setProperty("--tutorial-drag-top", `${Math.round(top)}px`);
+}
+
 function tutorialStepKey(opts = {}) {
   if (opts.key) {
     return opts.key;
@@ -792,10 +869,27 @@ function pauseTutorial() {
 function hideTutorial() {
   pauseTutorial();
   clearAdvancedTutorialDock();
+  clearTutorialUserPosition();
 
   tutorialWaitingFor = null;
 
   updateActionBadge();
+}
+
+// Drops any manual drag placement (see setupTutorialBubbleDrag) so the
+// bubble reopens in its normal auto-placed spot on the next tutorial,
+// instead of carrying a stale left/top from whatever the player last
+// dragged it to.
+function clearTutorialUserPosition() {
+  tutorialUserPositioned = false;
+
+  const bubble = byId("tutorialBubble");
+  if (!bubble) return;
+
+  bubble.classList.remove("tutorial-user-positioned");
+  bubble.style.left = "";
+  bubble.style.top = "";
+  bubble.style.removeProperty("--tutorial-drag-top");
 }
 
 function updateTutorialToggleState() {
@@ -857,6 +951,93 @@ byId("tutorialText")
     "aria-live",
     "polite"
   );
+
+// Lets the player drag the tutorial bubble by its header to wherever it's
+// blocking less. The header (not the whole bubble) is the drag handle, so
+// a plain tap still reaches the minimize button and still re-expands a
+// collapsed bubble via the click listener above -- only a real pointer
+// move past DRAG_MOVE_ARM_PX arms the drag, so a stationary tap/click
+// never gets swallowed as a zero-distance drag.
+(function setupTutorialBubbleDrag() {
+  const bubble = byId("tutorialBubble");
+  const header = bubble?.querySelector(".tutorial-header");
+  if (!bubble || !header) return;
+
+  const DRAG_MOVE_ARM_PX = 4;
+  let drag = null;
+
+  header.addEventListener("pointerdown", event => {
+    if (event.button != null && event.button !== 0) return;
+    if (event.target.closest("button")) return;
+    if (tutorialCollapsed) return;
+
+    const rect = bubble.getBoundingClientRect();
+    drag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startLeft: rect.left,
+      startTop: rect.top,
+      armed: false
+    };
+  });
+
+  window.addEventListener("pointermove", event => {
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+
+    if (!drag.armed) {
+      if (
+        Math.abs(dx) < DRAG_MOVE_ARM_PX &&
+        Math.abs(dy) < DRAG_MOVE_ARM_PX
+      ) {
+        return;
+      }
+      drag.armed = true;
+      tutorialUserPositioned = true;
+      bubble.classList.add("tutorial-dragging", "tutorial-user-positioned");
+      header.setPointerCapture(drag.pointerId);
+    }
+
+    const rect = bubble.getBoundingClientRect();
+    const maxLeft = window.innerWidth - rect.width - 4;
+    const maxTop = window.innerHeight - rect.height - 4;
+
+    const left =
+      Math.round(Math.max(4, Math.min(maxLeft, drag.startLeft + dx)));
+    const top =
+      Math.round(Math.max(4, Math.min(maxTop, drag.startTop + dy)));
+
+    bubble.style.left = `${left}px`;
+    bubble.style.right = "auto";
+    bubble.style.top = `${top}px`;
+    bubble.style.bottom = "auto";
+
+    // Below 600px width, a step whose data-placement is "top" pins the
+    // bubble via an !important rule that plain inline `top` can't beat --
+    // tutorial.css's .tutorial-user-positioned override reads this custom
+    // property instead, at the same !important tier, to win that fight.
+    bubble.style.setProperty("--tutorial-drag-top", `${top}px`);
+  });
+
+  function endDrag(event) {
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    if (drag.armed) {
+      bubble.classList.remove("tutorial-dragging");
+      try {
+        header.releasePointerCapture(drag.pointerId);
+      } catch {}
+    }
+
+    drag = null;
+  }
+
+  window.addEventListener("pointerup", endDrag);
+  window.addEventListener("pointercancel", endDrag);
+})();
 
 function getTutorialFocusRing() {
   let ring =
@@ -1111,11 +1292,13 @@ ring.style.borderRadius =
   }
 }
 
-function highlightKeyboardGuesser() {
-  highlightEl(
-    byId("keyboardGuesser")
-  );
-}
+// No-op on purpose: every call site that highlights the keyboard also
+// highlights the specific key(s) to press via startKeyDemo, and a ring
+// around the whole keyboard on top of that just adds visual noise --
+// the per-key glow is enough on its own. Kept as a function (rather than
+// deleted) since every tutorial file still calls it as part of the
+// "type here" step shape.
+function highlightKeyboardGuesser() {}
 
 function lastHistoryRow(containerId) {
   return byId(containerId)
@@ -1143,11 +1326,8 @@ function highlightHistoryGuesser() {
   );
 }
 
-function highlightKeyboardSetter() {
-  highlightEl(
-    byId("keyboardSetter")
-  );
-}
+// See highlightKeyboardGuesser above -- same reasoning, setter side.
+function highlightKeyboardSetter() {}
 
 function highlightSetterHistory() {
   highlightEl(
@@ -1544,6 +1724,12 @@ function highlightPowersCol() {
     byId("guesserPowerContainer")
   );
 
+  // Same collapse issue as highlightPowerButtonByText -- force the
+  // sidebar open so the ring lands on a real, visible rect.
+  if (window.isSetterSidebarCollapsed?.()) {
+    window.setSetterSidebarCollapsed?.(false);
+  }
+
   highlightEl(
     byId("setterPowerContainer")
   );
@@ -1562,6 +1748,18 @@ function highlightPowerButtonByText(
         btn.textContent;
 
       if (text.trim() === label) {
+        // The Spy's power cards live inside the collapsible setter
+        // sidebar (see setter-board.js) -- collapsed, the button is
+        // zero-size, which sends the focus ring to a broken position.
+        // Force it open before highlighting so the ring always lands on
+        // a real, visible target.
+        if (
+          btn.closest("#setterPowerContainer") &&
+          window.isSetterSidebarCollapsed?.()
+        ) {
+          window.setSetterSidebarCollapsed?.(false);
+        }
+
         highlightEl(btn);
       }
     });
@@ -1696,6 +1894,18 @@ function highlightSetterMustContainBox() {
 function highlightSetterLog() {
   highlightEl(byId("actionLogBtnSetter"));
   highlightEl(byId("actionLogSetter"));
+}
+
+// Just the Log tab button on its own -- used by the "tap the Log tab" step,
+// which wants a tight ring around the one thing it's asking the player to
+// tap rather than the whole panel below it too (same "don't union unrelated
+// targets" reasoning as highlightConstraintRowAndToggle above).
+function highlightLogTabButton() {
+  highlightEl(byId("actionLogBtnSetter"));
+}
+
+function highlightSidebarToggleBtn() {
+  highlightEl(byId("setterSidebarToggle"));
 }
 
 function highlightStoredRound(index) {
@@ -2157,6 +2367,8 @@ function tutorialOnPowerActionModalClose() {
     (
       tutorialWaitingFor.type !==
         "power" &&
+      tutorialWaitingFor.type !==
+        "modalDismissed" &&
       !tutorialWaitingFor
         .modalTargetId
     )
@@ -2238,6 +2450,34 @@ function waitForNoteSelected(word) {
 
   updateActionBadge();
 }
+function waitForSidebarToggled() {
+  tutorialWaitingFor = {
+    type: "sidebarToggled",
+    label: "TAP THE PANEL BUTTON"
+  };
+
+  setContinue({
+    show: true,
+    mode: "hide"
+  });
+
+  updateActionBadge();
+}
+
+function waitForLogTabOpened() {
+  tutorialWaitingFor = {
+    type: "logTabOpened",
+    label: "TAP LOG"
+  };
+
+  setContinue({
+    show: true,
+    mode: "hide"
+  });
+
+  updateActionBadge();
+}
+
 function waitForRejectedSecret() {
   tutorialWaitingFor = {
     type: "rejectedSecret"
@@ -2271,6 +2511,8 @@ function waitForDraftCleared() {
 function endTutorial() {
   byId("tutorialDoneModal")?.classList.remove("active");
   byId("tutorialBubble")?.classList.add("hidden");
+  clearTutorialUserPosition();
+  window._menuTutorialActive = false;
 
   socket.emit("leaveRoom", {}, () => {
     roomId = null;
@@ -2293,12 +2535,49 @@ window.endTutorial = endTutorial;
 const TUTORIAL_DONE_COPY = {
   tutorial2: `Nice work — you've learned the base game. Keep going with the Powers Tutorial, or head back to the menu.`,
   quest: `Nice work — you've learned the powers tutorial. Keep going with the Quest Tutorial, or head back to the menu.`,
-  advanced: `Nice work — you've learned the Quest tutorial. Keep going with the Advanced Tutorial, or head back to the menu.`,
-  tutorial: `Nice work — you've learned the advanced UI. Replay any tutorial any time from How to Play, or head back to the menu.`
+  // Kept source-agnostic (no "you've learned the Quest tutorial" clause) --
+  // this key is reused both by Quest's own chain into Advanced and by the
+  // Modes Tutorial's chain into Advanced (see tutorial-modes.js), and the
+  // two don't share what was just learned.
+  advanced: `Nice work! Keep going with the Advanced Tutorial, or head back to the menu.`,
+  // Also source-agnostic -- reached both by Advanced's own loop back to
+  // the start AND by the Main Menu Tutorial chaining into this one for a
+  // first-time player (see tutorial-menu.js), which hasn't "learned the
+  // advanced UI" at all.
+  tutorial: `Nice work! Continue with the Tutorial to learn the basics, or head back to the menu.`,
+  modes: `Nice work — you've learned about Stars. Keep going with the Modes Tutorial to see how the whole power draft fits together, or head back to the menu.`
 };
+
+// Maps state.tutorialStage (or its absence) to the same key each
+// tutorial's own How to Play button/start function uses -- read at the
+// moment a tutorial reaches its real "done" screen so that single choke
+// point (below) can mark it completed, without every individual tutorial
+// file needing its own call to markTutorialCompleted. "power" (the
+// Power Library's per-power "Try it" tutorials) is intentionally absent:
+// those aren't part of How to Play's numbered list, so they're not
+// tracked here.
+const TUTORIAL_STAGE_TO_KEY = {
+  1: "tutorial",
+  2: "tutorial2",
+  quest: "quest",
+  advanced: "advanced",
+  star: "star",
+  modes: "modes"
+};
+
+function currentTutorialCompletionKey() {
+  // The Main Menu Tutorial is the only one that never creates a room, so
+  // no window.state at all uniquely identifies it (by the time this runs,
+  // window._menuTutorialActive has already been reset -- see
+  // tutorial-menu.js's final step).
+  if (!window.state) return "menu";
+  return TUTORIAL_STAGE_TO_KEY[window.state.tutorialStage] || null;
+}
 
 function showTutorialDoneModal() {
   byId("tutorialBubble")?.classList.add("hidden");
+
+  window.markTutorialCompleted?.(currentTutorialCompletionKey());
 
   const textEl = byId("tutorialDoneText");
   if (textEl) {
@@ -2317,6 +2596,7 @@ byId("tutorialDoneLeaveBtn")?.addEventListener("click", () => {
 byId("tutorialDoneNextBtn")?.addEventListener("click", () => {
   byId("tutorialDoneModal")?.classList.remove("active");
   byId("tutorialBubble")?.classList.add("hidden");
+  window._menuTutorialActive = false;
 
   const nextMode = tutorialEndNextMode;
 
@@ -2351,7 +2631,12 @@ byId("tutorialContinueBtn")?.addEventListener("click", event => {
 
   tutorialSubStep++;
 
-  if (window.state && window.myRole) {
+  // The Main Menu Tutorial (client/tutorial-menu.js) runs before any room
+  // exists -- window.state is null then, so the normal state-driven
+  // tutorialSteps() dispatch below would never fire for it at all.
+  if (window._menuTutorialActive) {
+    window.runMainMenuTutorial?.();
+  } else if (window.state && window.myRole) {
     tutorialSteps(
       window.state,
       window.myRole
@@ -2487,6 +2772,54 @@ function notifyTutorialNoteSelected(word) {
 window.notifyTutorialNoteSelected =
   notifyTutorialNoteSelected;
 
+// Fires on either direction of the tap (open or close) -- the step just
+// wants to confirm the player found and pressed the button, not that they
+// left the panel in one particular state. Forced back open immediately
+// after, since later steps in this same walkthrough (Log, the constraint
+// row, power info) all live inside this panel and would have nothing to
+// highlight if the player's tap happened to be the closing one.
+function notifyTutorialSidebarToggled() {
+  if (
+    !tutorialWaitingFor ||
+    tutorialWaitingFor.type !== "sidebarToggled"
+  ) {
+    return;
+  }
+
+  tutorialWaitingFor = null;
+  updateActionBadge();
+  tutorialSubStep++;
+
+  window.setSetterSidebarCollapsed?.(false);
+
+  if (window.state && window.myRole) {
+    tutorialSteps(window.state, window.myRole);
+  }
+}
+
+window.notifyTutorialSidebarToggled =
+  notifyTutorialSidebarToggled;
+
+function notifyTutorialLogTabOpened() {
+  if (
+    !tutorialWaitingFor ||
+    tutorialWaitingFor.type !== "logTabOpened"
+  ) {
+    return;
+  }
+
+  tutorialWaitingFor = null;
+  updateActionBadge();
+  tutorialSubStep++;
+
+  if (window.state && window.myRole) {
+    tutorialSteps(window.state, window.myRole);
+  }
+}
+
+window.notifyTutorialLogTabOpened =
+  notifyTutorialLogTabOpened;
+
 function notifyTutorialRejectedSecret() {
   if (!tutorialWaitingFor) {
     return;
@@ -2577,6 +2910,16 @@ function tutorialSteps(state, role) {
 
   if (state.tutorialStage === "quest") {
     window.runQuestTutorial?.(state, role);
+    return;
+  }
+
+  if (state.tutorialStage === "star") {
+    window.runStarTutorial?.(state, role);
+    return;
+  }
+
+  if (state.tutorialStage === "modes") {
+    window.runModesTutorial?.(state, role);
     return;
   }
 

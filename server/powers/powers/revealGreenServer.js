@@ -10,6 +10,17 @@ engine.registerPower("revealGreen", {
 
   const secret = state.secret.toUpperCase();
   const unknownPositions = [];
+  const yellowLetters = new Set();
+
+  for (const entry of state.history) {
+    if (!Array.isArray(entry.fbGuesser)) continue;
+    for (let i = 0; i < 5; i++) {
+      if (entry.fbGuesser[i] === "🟨") yellowLetters.add(entry.guess[i].toUpperCase());
+    }
+  }
+  for (const c of state.extraConstraints ?? []) {
+    if (c.type === "YELLOW") yellowLetters.add(c.letter.toUpperCase());
+  }
 
   for (let i = 0; i < 5; i++) {
     const letter = secret[i];
@@ -20,11 +31,16 @@ engine.registerPower("revealGreen", {
       entry.fbGuesser[i] === "🟩"
     );
 
+    // Was it revealed green by another power/quest's extra constraint?
+    const greenByConstraint = (state.extraConstraints ?? []).some(c =>
+      c.type === "GREEN" && c.index === i
+    );
+
     // Was it already revealed by this power?
     const alreadyRevealedByPower =
       state.powers.revealGreenPos === i;
 
-    if (!greenKnown && !alreadyRevealedByPower) {
+    if (!greenKnown && !greenByConstraint && !alreadyRevealedByPower) {
       unknownPositions.push(i);
     }
   }
@@ -34,8 +50,14 @@ engine.registerPower("revealGreen", {
     return false;
   }
 
-  const pos = unknownPositions[
-    Math.floor(Math.random() * unknownPositions.length)
+  // Prefer a position whose letter hasn't already been given away as
+  // yellow (a genuinely fresh letter) -- fall back to any remaining
+  // unknown position if every one of them is already known yellow.
+  const freshPositions = unknownPositions.filter(i => !yellowLetters.has(secret[i]));
+  const pool = freshPositions.length ? freshPositions : unknownPositions;
+
+  const pos = pool[
+    Math.floor(Math.random() * pool.length)
   ];
 
   const letter = secret[pos];

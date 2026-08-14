@@ -601,6 +601,7 @@
       if (idleExpanded) return; // no-op, tabs are hidden during idle anyway
       activeSetterPanel = "log";
       showSetterSidebarPanel("log");
+      window.notifyTutorialLogTabOpened?.();
     });
 
     notesButton?.addEventListener("click", () => {

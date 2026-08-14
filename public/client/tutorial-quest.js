@@ -55,8 +55,8 @@
   function phaseProgress(phase, step) {
     if (phase === "build") {
       return {
-        current: Math.min(step + 1, 4),
-        total: 4
+        current: Math.min(step + 1, 5),
+        total: 5
       };
     }
 
@@ -117,7 +117,7 @@
 
     if (step === 0) {
       show(
-        "A Quest is a small bonus job for the Inspector. It watches your guesses by itself.",
+        "In this tutorial, we'll explain quests. Quests are only available to the Inspector. They give you extra conditions on your guesses, and if you satisfy those conditions, you get a bonus. You don't have to do them -- you can guess normally. But if you do, you get rewarded.",
         phase,
         step,
         {
@@ -132,7 +132,7 @@
 
     if (step === 1) {
       show(
-        `This Quest wants 5 different rare letters: Q, J, X, Z, W, K, or V. You already have ${status?.label || "4/5"}.`,
+        `This Quest wants 6 different rare letters: Q, J, X, Z, W, K, or V. You already have ${status?.label || "4/6"}.`,
         phase,
         step,
         {
@@ -146,16 +146,31 @@
 
     if (step === 2) {
       show(
-        "A yellow Quest card means you are almost done. You may take a yellow clue now, or wait for the better green clue. We will wait.",
+        "Before you finish, tap the Quest card. It'll show you exactly which rare letters you still need.",
         phase,
         step,
         {
           placement: "bottom",
-          visualHtml: questChoiceVisual()
+          mode: "hide"
         }
       );
       api.highlight(questBadge());
-      api.setMode("advance");
+      api.waitForModalDismissed();
+      return;
+    }
+
+    if (step === 3) {
+      show(
+        `Some quests also have a Highlight button inside that popup. Tap the Quest card again, then tap "Highlight remaining rare letters on keyboard" -- it'll light up W and K for you right on the keyboard.`,
+        phase,
+        step,
+        {
+          placement: "bottom",
+          mode: "hide"
+        }
+      );
+      api.highlight(questBadge());
+      api.waitForModalDismissed();
       return;
     }
 
@@ -177,7 +192,7 @@
     }
 
     show(
-      `Type ${TUTORIAL_WORD}. Its W is the last rare letter you need. Then tap Submit Guess.`,
+      `Type ${TUTORIAL_WORD}. It has both W and K, the last two rare letters you need. Then tap Submit Guess.`,
       phase,
       step,
       {

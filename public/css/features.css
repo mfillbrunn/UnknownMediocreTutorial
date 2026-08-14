@@ -2127,6 +2127,13 @@
   padding: 14px 10px 10px;
   margin-bottom: 20px;
   overflow-x: auto;
+  /* .menu-center's align-items:center sizes flex children to their own
+     content (shrink-to-fit) instead of stretching them to the column's
+     width -- without an explicit width here, a wide chart (many powers or
+     quest types) grows this wrapper past .sim-center's own max-width
+     instead of triggering the overflow-x:auto scrollbar above. */
+  width: 100%;
+  min-width: 0;
 }
 
 .sim-chart-empty {
@@ -2202,8 +2209,9 @@
 
 .sim-bar-x-label {
   fill: rgba(255,255,255,0.8);
-  font-size: 13px;
-  text-anchor: middle;
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  text-anchor: end;
 }
 
 /* ── Lobby time control: analog watch ─────────────────────────────────
@@ -2538,6 +2546,36 @@ body:has(#guesserScreen.active) #appMain {
 */
 #guesserScreen .draft-row-wrap {
   min-height: clamp(33px, 14cqw, 62px);
+}
+
+/* Desktop: the Inspector's board has no sidebar competing for width
+   (single stacked column, unlike the Spy's side-by-side layout), so
+   once the viewport is wide enough for #appContainer to sit at its own
+   600px cap (layout.css), .center-col stops growing but is already wide
+   enough that the cqw ratios above are pinned at their ceiling -- the
+   exact same 56px/62px tiles no matter how much wider the actual
+   window/monitor gets past that point, sized for a cramped phone
+   column that desktop never actually has. Same selectors, later in the
+   cascade (equal specificity, so source order decides) -- smaller
+   ceilings, and smaller cqw ratios so it still keeps scaling down
+   through the in-between tablet widths instead of jumping straight to
+   a fixed number. */
+@media (min-width: 640px) {
+  #guesserScreen .history-tile {
+    width: clamp(30px, 9cqw, 44px);
+    height: clamp(30px, 9cqw, 44px);
+    font-size: clamp(16px, 4.5cqw, 22px);
+  }
+
+  #guesserScreen #draftGuesser .history-tile {
+    width: clamp(32px, 10cqw, 48px);
+    height: clamp(32px, 10cqw, 48px);
+    font-size: clamp(17px, 5cqw, 24px);
+  }
+
+  #guesserScreen .draft-row-wrap {
+    min-height: clamp(32px, 10cqw, 48px);
+  }
 }
 
 /*
@@ -2893,6 +2931,40 @@ body.activity-drag-active {
 }
 
 .setter-notes-idle-hint.hidden {
+  display: none;
+}
+
+/* Shown instead of the auto-floating panel during the Inspector's turn
+   (see ui/gameplay-polish-v8.js's notesShouldPop/openNotesFromButton) --
+   a deliberate tap opens Notes floating over the board rather than it
+   popping out on its own. */
+.setter-notes-idle-open-btn {
+  flex: 0 0 auto;
+  width: 100%;
+  margin-bottom: var(--sp-6, 6px);
+  padding: 6px 8px;
+
+  border: 1px solid color-mix(in srgb, var(--role-accent) 55%, rgba(255, 255, 255, 0.18));
+  border-radius: var(--r-6, 6px);
+
+  background: color-mix(in srgb, var(--role-accent) 16%, var(--panel-bg));
+  color: var(--text);
+
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  text-align: center;
+
+  cursor: pointer;
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+
+.setter-notes-idle-open-btn:hover {
+  background: color-mix(in srgb, var(--role-accent) 28%, var(--panel-bg));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent);
+}
+
+.setter-notes-idle-open-btn.hidden {
   display: none;
 }
 
@@ -3981,7 +4053,10 @@ body.activity-drag-active {
 }
 
 .spy-charge-power-locked::after {
-  content: "🔒 5★";
+  /* Reads the real threshold off wrapper.dataset.unlockAt (set in
+     spy-charge.js from POWER_UNLOCK_AT) instead of a hardcoded number, so
+     this can't drift out of sync with the real unlock threshold again. */
+  content: "🔒 " attr(data-unlock-at) "★";
   position: absolute;
   inset: 4px;
   z-index: 8;
@@ -4033,18 +4108,106 @@ body.spy-charge-reset-armed #keyboardSetter .key[data-key]:not([data-key="ENTER"
 
 .draft-pick-slot {
   position: absolute;
-  top: 5px;
+  top: 6px;
   right: 6px;
   z-index: 2;
 
-  padding: 3px 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: none;
+}
+
+/* Spy's first pick -- starts active immediately, no meter to watch. A
+   plain, confident pill rather than a shape of its own (there's nothing
+   to illustrate beyond the word itself). */
+.draft-pick-start {
+  padding: 5px 10px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.58);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: rgba(255, 255, 255, 0.82);
+
+  background: linear-gradient(135deg, #34d399, #059669);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+
   font-size: 12px;
   font-weight: 900;
+  letter-spacing: 0.4px;
   line-height: 1;
+
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.5);
+}
+
+/* Spy's second pick -- locked until the power threshold (see draft.js's
+   buildDraftPickBadge). A star shape big enough to read as its own icon
+   (not just a tinted number), with the threshold layered on top of it
+   instead of beside it, so "star" and the number read as
+   one badge instead of two things to parse. No position of its own here
+   -- it stays on the absolute/top/right corner positioning it shares
+   with every other .draft-pick-slot badge (a same-specificity
+   position:relative here would win the cascade tie against that shared
+   rule purely by appearing later in the file, dropping it into normal
+   flow instead of the corner -- .draft-pick-slot's own position:absolute
+   already gives its children a containing block, so this doesn't need
+   one of its own anyway). */
+.draft-pick-five {
+  width: 34px;
+  height: 34px;
+}
+
+.draft-pick-five-star {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 34px;
+  line-height: 1;
+  color: #fbbf24;
+
+  filter:
+    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 4px rgba(251, 191, 36, 0.55));
+}
+
+.draft-pick-five-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The ★ glyph's own visual ink sits slightly above center in its em box,
+     and the digit's own ink sits slightly above center in its own (much
+     smaller) em box too -- transform instead of padding since the needed
+     nudge is UP, and padding can't go negative. Value measured pixel-by-
+     pixel (ink bounding-box centers of the rendered ★ and digit glyphs at
+     8x scale) rather than eyeballed, so it holds for any single digit here
+     (5, 8, ...), not just whichever one it was tuned against. */
+  transform: translateY(-1.375px);
+
+  font-size: 14px;
+  font-weight: 900;
+  color: #451a03;
+}
+
+/* Inspector's pick -- power or Quest, same badge either way. There's only
+   ever one meaningful state for their single pick ("this is it"), so one
+   icon covers both instead of needing a second shape. */
+.draft-pick-selected {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+
+  background: linear-gradient(135deg, #e6d27a, #c9a83e);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  color: #2b2308;
+
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+
+  box-shadow: 0 2px 6px rgba(201, 168, 62, 0.5);
 }
 
 @media (max-width: 430px) {

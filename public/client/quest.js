@@ -222,7 +222,7 @@ function computeQuestStatus(state) {
   }
 
   if (q.type === "RARE") {
-    return { meta, label: `${rareUsedLetters.length}/5`, desc: meta.desc, done: false, usedLetters: rareUsedLetters };
+    return { meta, label: `${rareUsedLetters.length}/6`, desc: meta.desc, done: false, usedLetters: rareUsedLetters };
   }
 
   if (q.type === "ROW") {
@@ -591,10 +591,10 @@ function buildQuestGuideHtml(questType) {
   if (questType === "ALPHA") {
     if (active) {
       const dirLabel = active.direction === "ASC" ? "A → Z" : "Z → A";
-      return `<div class="quest-guide-controls"><p class="quest-guide-note">Keyboard guide: ${dirLabel} — as you type, keys that could come before your last letter light up.</p><button type="button" class="secondary-btn small" onclick="window.clearQuestGuide();window.hidePowerActionPopup();">Turn off keyboard guide</button></div>`;
+      return `<div class="quest-guide-controls"><p class="quest-guide-note">Keyboard guide: ${dirLabel} — as you type, keys valid for the NEXT letter light up.</p><button type="button" class="secondary-btn small" onclick="window.clearQuestGuide();window.hidePowerActionPopup();">Turn off keyboard guide</button></div>`;
     }
     return `<div class="quest-guide-controls">
-      <p class="quest-guide-note">Pick a direction to highlight valid earlier letters on the keyboard as you type:</p>
+      <p class="quest-guide-note">Pick a direction to highlight which letters are valid to type next:</p>
       <div class="quest-guide-btn-row">
         <button type="button" class="secondary-btn small" onclick="window.setQuestGuideAlpha('ASC');window.hidePowerActionPopup();">A → Z guide</button>
         <button type="button" class="secondary-btn small" onclick="window.setQuestGuideAlpha('DESC');window.hidePowerActionPopup();">Z → A guide</button>
@@ -691,4 +691,10 @@ socket.on("questEarlyClaim", ({ questType, letter }) => {
       ? `${label} claimed early! ${letter.toUpperCase()} is somewhere in the secret.`
       : `${label} claimed early, but nothing new was left to reveal.`
   );
+  // Same "quest activation gets a real power-style shake" treatment as a
+  // full completion (see power-functions.js's greenLetterRevealed
+  // handler) -- yellow-toned here since this is the lesser, early-claim
+  // reward rather than the full green one.
+  window.shake?.(document.querySelector(".quest-badge-tile"));
+  window.triggerPowerFX?.("questYellow");
 });
