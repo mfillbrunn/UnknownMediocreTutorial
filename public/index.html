@@ -208,7 +208,7 @@
                 My Games ♾️
                 <span id="myGamesNotifyBadge" class="notify-badge hidden" title="It's your turn in a game">✉️</span>
               </button>
-              <button id="howToPlayBtn" class="menu-btn">How to Play</button>
+              <button id="howToPlayBtn" class="menu-btn">Tutorials</button>
             </div>
           </div>
         </section>
@@ -349,7 +349,7 @@
   <div class="menu-center">
     <div class="screen-back-header">
       <button class="menu-btn screen-back-btn" onclick="showScreen('startupScreen')">← Back</button>
-      <h2 class="menu-title" style="flex:1;text-align:center">How to Play</h2>
+      <h2 class="menu-title" style="flex:1;text-align:center">Tutorials</h2>
     </div>
 
     <div class="menu-buttons">
@@ -880,6 +880,16 @@
     </section>
 
     <section class="setter-sidebar-activity">
+      <button
+        type="button"
+        id="setterNotesIdleOpenBtn"
+        class="setter-notes-idle-open-btn hidden"
+        title="Open notes while you wait"
+        aria-label="Open notes while you wait"
+      >
+        📝 Open Notes
+      </button>
+
       <div
         id="setterNotesIdleHint"
         class="setter-notes-idle-hint hidden"
@@ -1136,6 +1146,7 @@
                   <div class="draft-row-wrap">
                     <div class="draft-stack">
                       <div id="draftGuesser" class="history-tiles draft-layer"></div>
+                      <div id="guesserDraftInvalidOverlay" class="secret-invalid-overlay hidden">✕</div>
                     </div>
                   </div>
              </div>
@@ -1319,12 +1330,12 @@
 <!-- First-time-only offer (see client/tutorial-progress.js), shown once
      a fresh sign-in lands on a plain startup screen with nothing else
      going on. Declining just dismisses it for good -- every tutorial
-     stays one tap away under How to Play regardless. -->
+     stays one tap away under Tutorials regardless. -->
 <div id="onboardingPromptModal" class="modal">
   <div class="panel rejoin-modal-panel">
     <h2 class="screen-title">Welcome to Vowel Play!</h2>
     <p class="modal-instruction">
-      New here? A quick, hands-on tour covers the main menu and the basics of a real match. You can stop any time, and every tutorial is always available later under How to Play.
+      New here? A quick, hands-on tour covers the main menu and the basics of a real match. You can stop any time, and every tutorial is always available later under Tutorials.
     </p>
     <div class="rejoin-modal-actions">
       <button id="onboardingStartBtn" class="primary-btn">Show Me Around</button>

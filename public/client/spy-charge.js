@@ -136,11 +136,13 @@
     meter.setAttribute("aria-label", `Spy charge: ${total} of ${MAX_CHARGE} stars`);
   }
 
-  // One overlaid button on top of the meter now does both jobs the old
-  // separate hint bubble + reset button used to: it always shows the
-  // bonus-star target letter (falling back to the ↺ glyph when there's no
-  // active hint), and it flashes once a letter-reset is actually available
-  // to use, same trigger (armResetLetter) as before.
+  // This button still does the reset job the old separate reset button
+  // used to (flashes once a letter-reset is actually available, same
+  // trigger, armResetLetter, as before). The bonus-star hint itself no
+  // longer shows here -- it's a star badge directly on the targeted
+  // draft tile now (see ui/draftrow.js's updateDraftHintStars), so this
+  // stays the plain ↺ glyph; the hint text is still in the title/
+  // aria-label below for anyone hovering/using a screen reader.
   function renderActionButton(charge, state) {
     const button = byId("spyChargeActionBtn");
     const letterEl = byId("spyChargeHintLetter");
@@ -151,9 +153,7 @@
     const hasHint = !!hint?.letter && Number.isInteger(hint.position);
     const position = hasHint ? hint.position + 1 : null;
 
-    letterEl.innerHTML = hasHint
-      ? `${String(hint.letter).toUpperCase()}<sup>${position}</sup>`
-      : "↺";
+    letterEl.textContent = "↺";
 
     const available = availableResetCount(state);
     countEl.textContent = String(available);
@@ -495,6 +495,55 @@
   // duration, strictly increasing launch stagger).
   const STAR_LAUNCH_STAGGER = 115;
 
+  // A small, escalating congratulation for the switch that was JUST
+  // scored (1-4 stars: base 0-3 plus the bonus star) -- separate from
+  // the compact big-announce banners above (those fire for a METER
+  // MILESTONE being crossed, a different thing that can coincide with
+  // this on the same submission), so the two never fight over that
+  // shared #bigAnnouncePopup singleton. Purely a self-contained,
+  // dynamically-created element in the same spirit as
+  // setter-board-polish.js's spawnSpyChargeLandingBurst -- no static
+  // markup needed, it just removes itself when the animation ends.
+  const STAR_CONGRATS_TEXT = {
+    1: "Nice!",
+    2: "Great!",
+    3: "Super!",
+    4: "Amazing!"
+  };
+
+  function showSpyChargeCongrats(totalStars) {
+    const text = STAR_CONGRATS_TEXT[totalStars];
+    if (!text) return;
+
+    const anchor = byId("spyChargeHud");
+    const rect = anchor?.getBoundingClientRect();
+    if (!rect) return;
+
+    const el = document.createElement("div");
+    el.className = `spy-charge-congrats tier-${totalStars}`;
+    el.textContent = text;
+
+    // Centers on this x/y via the .show transform's translate(-50%, -100%)
+    // below -- both clamped a fixed, generous distance from the nearest
+    // edge (rather than measuring the popup's own rendered size first)
+    // since it's short-lived text that's never wide enough to need an
+    // exact fit, same tradeoff-for-simplicity as the reduced-motion
+    // fallback above.
+    el.style.left = `${Math.min(Math.max(rect.left + rect.width / 2, 100), window.innerWidth - 100)}px`;
+    el.style.top = `${Math.max(64, rect.top)}px`;
+
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add("show"));
+
+    // Held on screen a little longer at higher tiers -- the bigger the
+    // moment, the more time it deserves before it fades.
+    const holdMs = 700 + totalStars * 150;
+    setTimeout(() => {
+      el.classList.remove("show");
+      setTimeout(() => el.remove(), 260);
+    }, holdMs);
+  }
+
   async function animateAward(entry) {
     const payload = entry.payload;
     const appliedBase = Math.max(0, Number(payload.appliedBaseStars) || 0);
@@ -575,6 +624,8 @@
     });
 
     await Promise.all(landings);
+
+    showSpyChargeCongrats(stars.length);
   }
 
   // Exposed so ui/setter-sidebar.js's idle auto-expand can hold off popping

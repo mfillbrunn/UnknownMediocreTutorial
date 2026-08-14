@@ -436,39 +436,50 @@
   left: calc(var(--setter-sidebar-width) + 3px);
   top: 50%;
   z-index: 80;
-  width: 27px;
-  height: 54px;
+  width: 38px;
+  height: 76px;
   padding: 0;
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 0 12px 12px 0;
-  background: rgba(13, 15, 21, 0.94);
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 22px;
+  border: 1.5px solid color-mix(in srgb, var(--setter-color, #ff4b5c) 55%, rgba(255, 255, 255, 0.14));
+  border-radius: 0 16px 16px 0;
+  background: rgba(13, 15, 21, 0.96);
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 30px;
+  font-weight: 900;
   cursor: pointer;
-  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.28);
+  box-shadow:
+    5px 0 16px rgba(0, 0, 0, 0.35),
+    0 0 12px color-mix(in srgb, var(--setter-color, #ff4b5c) 35%, transparent);
   transition:
     left 240ms cubic-bezier(0.2, 0.8, 0.2, 1),
     background 160ms ease,
     transform 160ms ease,
-    opacity 150ms ease;
+    opacity 150ms ease,
+    box-shadow 160ms ease;
+}
+
+#setterScreen .setter-sidebar-toggle:hover {
+  background: rgba(20, 23, 31, 0.98);
+  box-shadow:
+    5px 0 16px rgba(0, 0, 0, 0.4),
+    0 0 18px color-mix(in srgb, var(--setter-color, #ff4b5c) 55%, transparent);
 }
 
 #setterScreen .setter-sidebar-toggle.just-charged {
   background: rgba(180, 83, 9, 0.92);
-  box-shadow: 0 0 16px rgba(250, 204, 21, 0.6);
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.65);
 }
 
 #setterScreen .setter-sidebar-charge-mini {
   position: absolute;
-  right: -5px;
-  top: -6px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 3px;
+  right: -6px;
+  top: -7px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -476,7 +487,7 @@
   background: #11141a;
   border: 1px solid #facc15;
   color: #fde68a;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 900;
 }
 

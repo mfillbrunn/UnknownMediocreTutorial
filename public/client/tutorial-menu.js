@@ -118,8 +118,8 @@ function runMainMenuTutorial() {
 
   if (step === 7) {
     menuTutorialShow(
-      "How to Play is this whole hub: Rules, the Powers library, and every tutorial -- including this one.",
-      { title: "How to Play", current: 8, total }
+      "Tutorials is this whole hub: Rules, the Powers library, and every tutorial -- including this one.",
+      { title: "Tutorials", current: 8, total }
     );
     api.highlight(byId("howToPlayBtn"));
     api.setMode("advance");
@@ -129,11 +129,11 @@ function runMainMenuTutorial() {
   window._menuTutorialActive = false;
   // Explicit rather than left to whatever tutorialEndNextMode happened to
   // still be set to from a previous tutorial run this session -- chains
-  // straight into the Basics Tutorial, matching How to Play's own #1 -> #2
+  // straight into the Basics Tutorial, matching Tutorials' own #1 -> #2
   // order and the guided first-time sequence (see tutorial-progress.js).
   api.setNextTutorial("tutorial");
   menuTutorialShow(
-    "That's the whole main menu. Let's keep going with the Tutorial to learn the basics, or explore the rest under How to Play.",
+    "That's the whole main menu. Let's keep going with the Tutorial to learn the basics, or explore the rest under Tutorials.",
     { title: "Main Menu Tutorial done", current: 9, total, mode: "end" }
   );
 }

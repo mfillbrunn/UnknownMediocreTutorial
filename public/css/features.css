@@ -2548,6 +2548,36 @@ body:has(#guesserScreen.active) #appMain {
   min-height: clamp(33px, 14cqw, 62px);
 }
 
+/* Desktop: the Inspector's board has no sidebar competing for width
+   (single stacked column, unlike the Spy's side-by-side layout), so
+   once the viewport is wide enough for #appContainer to sit at its own
+   600px cap (layout.css), .center-col stops growing but is already wide
+   enough that the cqw ratios above are pinned at their ceiling -- the
+   exact same 56px/62px tiles no matter how much wider the actual
+   window/monitor gets past that point, sized for a cramped phone
+   column that desktop never actually has. Same selectors, later in the
+   cascade (equal specificity, so source order decides) -- smaller
+   ceilings, and smaller cqw ratios so it still keeps scaling down
+   through the in-between tablet widths instead of jumping straight to
+   a fixed number. */
+@media (min-width: 640px) {
+  #guesserScreen .history-tile {
+    width: clamp(30px, 9cqw, 44px);
+    height: clamp(30px, 9cqw, 44px);
+    font-size: clamp(16px, 4.5cqw, 22px);
+  }
+
+  #guesserScreen #draftGuesser .history-tile {
+    width: clamp(32px, 10cqw, 48px);
+    height: clamp(32px, 10cqw, 48px);
+    font-size: clamp(17px, 5cqw, 24px);
+  }
+
+  #guesserScreen .draft-row-wrap {
+    min-height: clamp(32px, 10cqw, 48px);
+  }
+}
+
 /*
   The setter's board gets the rest of the row once the fixed sidebar
   (above) takes its share -- cqw here is relative to .center-col, which is
@@ -2901,6 +2931,40 @@ body.activity-drag-active {
 }
 
 .setter-notes-idle-hint.hidden {
+  display: none;
+}
+
+/* Shown instead of the auto-floating panel during the Inspector's turn
+   (see ui/gameplay-polish-v8.js's notesShouldPop/openNotesFromButton) --
+   a deliberate tap opens Notes floating over the board rather than it
+   popping out on its own. */
+.setter-notes-idle-open-btn {
+  flex: 0 0 auto;
+  width: 100%;
+  margin-bottom: var(--sp-6, 6px);
+  padding: 6px 8px;
+
+  border: 1px solid color-mix(in srgb, var(--role-accent) 55%, rgba(255, 255, 255, 0.18));
+  border-radius: var(--r-6, 6px);
+
+  background: color-mix(in srgb, var(--role-accent) 16%, var(--panel-bg));
+  color: var(--text);
+
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  text-align: center;
+
+  cursor: pointer;
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+
+.setter-notes-idle-open-btn:hover {
+  background: color-mix(in srgb, var(--role-accent) 28%, var(--panel-bg));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent);
+}
+
+.setter-notes-idle-open-btn.hidden {
   display: none;
 }
 

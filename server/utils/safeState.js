@@ -133,10 +133,18 @@ if (
           }
         }
 
-        // Stealth guess masking
+        // Stealth guess masking -- permanent for the one entry it was
+        // used on (e.stealthApplied), not gated on state.powers.
+        // stealthGuessActive still being true: that flag is cleared in
+        // the very same postScore step that sets stealthApplied (see
+        // stealthGuessServer.js), so requiring both here meant this
+        // branch could never actually fire -- the setter would see the
+        // real word again the instant they reacted to it, the opposite
+        // of "hides the guess ... for the ONE guess it was used on"
+        // (see remainingWords.js's getRemainingWordInfo for the same
+        // one-guess-forever intent stated explicitly).
         if (
           viewerRole === "setter" &&
-          state.powers.stealthGuessActive &&
           e.stealthApplied
         ) {
           e.guess = "?????";

@@ -655,9 +655,16 @@ onStateUpdate(newState => {
         desc: questMeta.desc
       });
     }
+    // Always YOU first (left column) / OPPONENT second (right column) --
+    // see .big-announce-powers's grid in special-effects.css -- rather
+    // than a fixed Spy-then-Inspector order, so the viewer doesn't have
+    // to work out which of two role-labeled lists is theirs every round.
+    const setterGroup = { label: "Spy", roleClass: "role-setter", powers: describePowers(state.initialPowers?.setter) };
+    const guesserGroup = { label: "Inspector", roleClass: "role-guesser", powers: guesserPowers };
+    const [myGroup, opponentGroup] = iAmSetter ? [setterGroup, guesserGroup] : [guesserGroup, setterGroup];
     const powerGroups = [
-      { label: "Spy", roleClass: "role-setter", powers: describePowers(state.initialPowers?.setter) },
-      { label: "Inspector", roleClass: "role-guesser", powers: guesserPowers }
+      { ...myGroup, label: "You" },
+      { ...opponentGroup, label: "Opponent" }
     ];
     window.showBigAnnounce?.({
       icon: iAmSetter ? "🕵️" : "🔍",
@@ -773,6 +780,7 @@ function updateUI() {
   if (state.phase !== "lobby") hide("lobby");
   updateSecretLock();
   updateSetterDraftInvalidOverlay();
+  updateGuesserDraftInvalidOverlay();
   window.renderActionLog?.(state, myRole);
   window.renderNotesPanel?.(state);
   if (myRole === "setter") window.updateSetterIdleExpand?.(state);
@@ -809,6 +817,43 @@ function updateSetterDraftInvalidOverlay() {
     // (guarded above), so its scripted-word check inside
     // validateSetterSecretWord never fires for this overlay.
     invalid = !validateSetterSecretWord(draft).valid;
+  }
+
+  overlay.classList.toggle("hidden", !invalid);
+}
+
+// Same live-flagging treatment as updateSetterDraftInvalidOverlay above,
+// mirroring the exact checks handleGuesserInput's own ENTER handler runs
+// before it would ever try to submit (dictionary membership, unless
+// Nonsense Word is active; then any Force Guess constraint) -- so a guess
+// that would just get rejected on submit is visibly flagged the instant
+// it's fully typed instead of only after a failed attempt. Called from
+// both the shared render cycle above (state.setterDraft is server-synced,
+// so that alone is enough for the Spy's overlay) and renderGuesserDraftOnly
+// below -- the guesser's draft is local-only (localGuesserDraft) until
+// actually submitted, so it needs its own per-keystroke hook too.
+function updateGuesserDraftInvalidOverlay() {
+  const overlay = $("guesserDraftInvalidOverlay");
+  if (!overlay) return;
+
+  const draft = (localGuesserDraft || "").toUpperCase();
+  const complete = draft.length === 5 && !draft.includes(" ");
+
+  let invalid = false;
+  if (
+    complete &&
+    myRole === "guesser" &&
+    !state?.isTutorial
+  ) {
+    const makesSense =
+      state?.powers?.nonsenseActive ||
+      window.ALLOWED_GUESSES?.has(draft);
+    const passesForce = validateGuesserGuess(
+      draft,
+      state?.powers?.forceGuessOptions,
+      window.ALLOWED_GUESSES
+    ).ok;
+    invalid = !makesSense || !passesForce;
   }
 
   overlay.classList.toggle("hidden", !invalid);
@@ -2909,6 +2954,7 @@ function renderGuesserDraftOnly() {
     onInput: handleGuesserInput
   });
 
+  updateGuesserDraftInvalidOverlay();
   window.refreshTutorialKeyDemo?.();
 
   // Wiretap live tap: while active, feed the current draft to the server so

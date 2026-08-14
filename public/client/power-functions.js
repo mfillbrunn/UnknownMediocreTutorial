@@ -126,6 +126,13 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
       });
     }
     window.shake?.(document.querySelector(".quest-badge-tile"));
+    // Same full-screen shake/flash every real power activation gets (see
+    // client.js's onPowerUsed) -- quests never emit "powerUsed" (they're
+    // always-on, not drafted/activated the same way), so without this a
+    // completed quest was the one power-shaped moment in the game with no
+    // shake at all. Green here, yellow for the early-claim trade below --
+    // same treatment either way, just color-coded by which reward landed.
+    window.triggerPowerFX?.("questGreen");
     return;
   }
 

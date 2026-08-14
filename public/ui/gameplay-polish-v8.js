@@ -85,14 +85,29 @@
     );
   }
 
+  // Popping the notes panel out over the board is now a deliberate tap
+  // (see openNotesFromButton) instead of automatic -- this just keeps the
+  // small "Open Notes" button's visibility in sync with eligibility, and
+  // still auto-repositions/auto-closes an already-open popout as the
+  // board/turn changes underneath it (there's nothing left for it to
+  // float over once the setter has to act again).
+  function updateNotesOpenButton(available) {
+    const btn = byId("setterNotesIdleOpenBtn");
+    if (!btn) return;
+    btn.classList.toggle("hidden", !available || notesPopped);
+  }
+
   function syncInspectorTurnNotes(state) {
     latestState = state;
 
     clearTimeout(notesRetryTimer);
     notesRetryTimer = null;
 
-    if (notesShouldPop(state)) {
-      openInspectorTurnNotes(state);
+    const available = notesShouldPop(state);
+    updateNotesOpenButton(available);
+
+    if (available) {
+      if (notesPopped) positionNotesPopout();
       return;
     }
 
@@ -305,6 +320,13 @@
     notesPreviousState = null;
   }
 
+  function openNotesFromButton() {
+    const state = latestState || window.state;
+    if (!notesShouldPop(state)) return;
+    openInspectorTurnNotes(state);
+    updateNotesOpenButton(false);
+  }
+
   function installNotesTurnController() {
     const screen = byId("setterScreen");
 
@@ -314,6 +336,12 @@
     if (screen) screen.__polishObserver = null;
 
     byId("setterActivityDragHandle")?.remove();
+
+    const openBtn = byId("setterNotesIdleOpenBtn");
+    if (openBtn && !openBtn.__v8WiredUp) {
+      openBtn.__v8WiredUp = true;
+      openBtn.addEventListener("click", openNotesFromButton);
+    }
 
     window.updateSetterIdleExpand = function (state) {
       syncInspectorTurnNotes(state);
@@ -455,12 +483,13 @@
 
     if (submitButton) {
       submitButton.disabled = !canEdit || draft.length !== 5;
-      // Spelled out once there's a real 5-letter word to submit -- "Submit
-      // Guess" only while it's still a placeholder with nothing typed yet
-      // (same "actual word once it's actionable" treatment as the Spy's
-      // Keep/Submit buttons -- see client.js's computeSetterSecretStatus).
+      // "Finish New Guess" while still typing (mirrors the Spy's own
+      // "FINISH NEW SECRET" for an incomplete draft -- see client.js's
+      // computeSetterSecretStatus), then spelled out as the actual word
+      // once there's a real 5-letter guess to submit -- same "actual word
+      // once it's actionable" treatment as the Spy's Keep/Submit buttons.
       submitButton.textContent =
-        draft.length === 5 ? `Submit ${draft}` : "Submit Guess";
+        draft.length === 5 ? `Submit ${draft}` : "Finish New Guess";
     }
   }
 
