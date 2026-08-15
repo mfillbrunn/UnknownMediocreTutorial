@@ -378,6 +378,31 @@
   };
 
 
+  // Full-screen solid backdrop, up for exactly as long as stars are
+  // actually flying/landing -- without it the board keeps changing
+  // (feedback tiles resolving, turn handing off) visibly behind the
+  // flight, which reads as distracting clutter rather than "the reward
+  // for that switch is now flying to the meter". Lazily created, same
+  // pattern as every other one-off overlay in this file.
+  function ensureAwardBackdrop() {
+    let backdrop = byId("spyChargeAwardBackdrop");
+    if (backdrop) return backdrop;
+
+    backdrop = document.createElement("div");
+    backdrop.id = "spyChargeAwardBackdrop";
+    backdrop.className = "spy-charge-award-backdrop";
+    document.body.appendChild(backdrop);
+    return backdrop;
+  }
+
+  function showAwardBackdrop() {
+    ensureAwardBackdrop().classList.add("show");
+  }
+
+  function hideAwardBackdrop() {
+    byId("spyChargeAwardBackdrop")?.classList.remove("show");
+  }
+
   function createFlightStar(sourceRect, targetRect, bonus, delayMs) {
     return new Promise(resolve => {
       if (!targetRect?.width || !targetRect?.height) {
@@ -563,6 +588,8 @@
       return;
     }
 
+    showAwardBackdrop();
+
     const landings = stars.map((isBonus, index) => {
       const beforeLanding = Math.min(MAX_CHARGE, startTotal + index);
       const afterLanding = Math.min(MAX_CHARGE, startTotal + index + 1);
@@ -624,6 +651,7 @@
     });
 
     await Promise.all(landings);
+    hideAwardBackdrop();
 
     showSpyChargeCongrats(stars.length);
   }

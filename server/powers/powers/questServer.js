@@ -147,12 +147,16 @@ function doubledLetterOf(word) {
 // before this pool existed).
 const QUEST_RARE_LETTERS = new Set("QJXZWKV");
 
-// The 12 rarest English letters a match can draw its 7 from (superset of
-// the legacy 7 above). Drawing a random 7-of-12 each match instead of
+// The 16 rarest English letters a match can draw its 7 from (superset of
+// the legacy 7 above). Drawing a random 7-of-16 each match instead of
 // always the same fixed 7 keeps the RARE quest's target letters from
 // being memorized/identical every game. The "use 6" threshold
 // (QUEST_THRESHOLDS.RARE) still leaves exactly one drawn letter spare.
-const QUEST_RARE_LETTER_POOL = "QJXZWKVFYBHG".split("");
+// C/M/P/D were added on top of the original 12 (QJXZWKVFYBHG) -- common
+// enough to actually show up in guesses without much effort, so a draw
+// that happens to land on several of them doesn't leave the quest
+// nearly impossible for the rest of the match.
+const QUEST_RARE_LETTER_POOL = "QJXZWKVFYBHGCMPD".split("");
 const QUEST_RARE_DRAW_SIZE = 7;
 
 function pickRareLetterSet() {

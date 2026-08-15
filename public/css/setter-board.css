@@ -188,41 +188,24 @@
   display: none;
 }
 
-/* Plain "S4"-style letter+position readout -- same size as ordinary UI
-   text, no superscript, so which letter goes where is legible at a
-   glance instead of squinting at a tiny raised digit. */
+/* Plain "P 3rd"-style letter+position readout -- no separate letter tile
+   alongside it anymore (that's now the draft tile itself, see
+   .draft-tile-hint-slot below), just this one line of ordinary-sized
+   text so which letter goes where is legible at a glance. */
 #setterScreen .setter-cover-target-label {
   color: #67e8f9;
   font-size: 15px;
   font-weight: 900;
   letter-spacing: 0.2px;
-}
-
-#setterScreen .setter-cover-target-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 34px;
-  height: 34px;
-  padding: 0 8px;
-  box-sizing: border-box;
-  border: 1px solid rgba(34, 211, 238, 0.6);
-  border-radius: 8px;
-  background: rgba(8, 39, 50, 0.72);
-  color: #67e8f9;
-  font-size: 20px;
-  font-weight: 900;
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.15);
-  transition: background 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+  transition: color 150ms ease, text-shadow 150ms ease;
 }
 
 /* The current draft's letter at the hint's position actually matches --
    the same "earned" state the extra bonus star used to signal, now shown
-   by lighting up the tile itself instead of a separate icon. */
-#setterScreen .setter-cover-target.is-earned .setter-cover-target-chip {
-  border-color: #22d3ee;
-  background: rgba(34, 211, 238, 0.22);
-  box-shadow: 0 0 14px rgba(34, 211, 238, 0.5);
+   by lighting up this label instead of a separate tile/icon. */
+#setterScreen .setter-cover-target.is-earned .setter-cover-target-label {
+  color: #a5f3fc;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.65);
 }
 
 /* ---------------- Keep / New ---------------- */

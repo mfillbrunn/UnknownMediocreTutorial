@@ -220,21 +220,16 @@
     const hasHint = !!hint?.letter && Number.isInteger(hint.position);
     const target = byId("setterCoverTarget");
     const targetLabel = byId("setterCoverTargetLabel");
-    const targetChip = byId("setterCoverTargetChip");
     const hintLetter = hasHint ? String(hint.letter).toUpperCase() : "";
-    const hintPosition = hasHint ? hint.position + 1 : null;
 
     target?.classList.toggle("hidden", !hasHint);
 
-    // Plain "S4"-style label (letter then 1-indexed position, no
-    // superscript) so which letter goes where reads clearly at a glance,
-    // with the tile beside it showing just the letter itself, large
-    // enough to actually read.
+    // Plain "P 3rd"-style label (letter, then the 1-indexed position
+    // spelled out as an ordinal) -- no separate letter tile alongside it
+    // (see updateHintSlotTile below for where the letter now actually
+    // shows: the draft tile itself, once typed).
     if (targetLabel) {
-      targetLabel.textContent = hasHint ? `${hintLetter}${hintPosition}` : "";
-    }
-    if (targetChip) {
-      targetChip.textContent = hintLetter;
+      targetLabel.textContent = hasHint ? `${hintLetter} ${ordinal(hint.position + 1)}` : "";
     }
 
     const draft = String(window.state?.setterDraft || "")
@@ -251,11 +246,49 @@
     );
 
     target?.classList.toggle("is-earned", bonusEarned);
+    updateHintSlotTile(hint, hasHint, bonusEarned);
 
     el.setAttribute(
       "aria-label",
       `${count} of 3 cover-strength stars${bonusEarned ? " plus one bonus star" : ""}`
     );
+  }
+
+  // The draft tile at the hint's own position: no letter or star drawn on
+  // it anymore (that info lives in the label above, see renderCoverStars)
+  // -- just an outline marking which tile it is, so the setter isn't
+  // hunting for a corner icon while they type. Shakes once, the instant
+  // typing that position produces a real match (not on every render while
+  // it stays matched) -- same off->on transition pattern the old tile
+  // badge used before it was removed.
+  let _hintSlotMatched = false;
+
+  function updateHintSlotTile(hint, hasHint, matched) {
+    const draftRow = byId("draftSetter")?.__draftRows?.draft;
+    if (!draftRow?.__tiles) return;
+
+    draftRow.__tiles.forEach((tile, i) => {
+      const isSlot = hasHint && i === hint.position;
+      tile.classList.toggle("draft-tile-hint-slot", isSlot);
+      if (!isSlot) tile.classList.remove("draft-tile-hint-slot-matched");
+    });
+
+    if (!hasHint) {
+      _hintSlotMatched = false;
+      return;
+    }
+
+    const tile = draftRow.__tiles[hint.position];
+    if (!tile) return;
+
+    tile.classList.toggle("draft-tile-hint-slot-matched", matched);
+
+    if (matched && !_hintSlotMatched) {
+      tile.classList.remove("draft-tile-hint-slot-shake");
+      void tile.offsetWidth;
+      tile.classList.add("draft-tile-hint-slot-shake");
+    }
+    _hintSlotMatched = matched;
   }
 
   function installStarRenderer() {

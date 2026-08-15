@@ -60,7 +60,6 @@ window.renderDraftRows = function ({
 
           <span id="setterCoverTarget" class="setter-cover-target hidden">
             <span id="setterCoverTargetLabel" class="setter-cover-target-label"></span>
-            <span id="setterCoverTargetChip" class="setter-cover-target-chip"></span>
           </span>
         `;
         row.appendChild(stars);
