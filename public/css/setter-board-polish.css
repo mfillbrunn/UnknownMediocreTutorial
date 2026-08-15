@@ -246,14 +246,6 @@ body.row-flight-active #setterScreen .setter-board-divider {
   font-size: 13px;
 }
 
-#setterScreen .setter-cover-target-chip {
-  min-width: 30px;
-  height: 30px;
-  padding: 0 6px;
-  border-radius: 7px;
-  font-size: 17px;
-}
-
 #setterScreen #SetterRemainingBox {
   flex: 0 1 auto;
   width: auto;
@@ -471,32 +463,34 @@ body.row-flight-active #setterScreen .setter-board-divider {
 
 #spyChargeMeter .spy-charge-segment[data-charge-value="5"] {
   --charge-milestone-color: #facc15;
-  border-color: color-mix(in srgb, #facc15 72%, transparent);
-  background: color-mix(in srgb, #facc15 22%, #20242d);
-  box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.16);
 }
 
 #spyChargeMeter .spy-charge-segment[data-charge-value="8"] {
   --charge-milestone-color: #22d3ee;
-  border-color: color-mix(in srgb, #22d3ee 72%, transparent);
-  background: color-mix(in srgb, #22d3ee 22%, #20242d);
-  box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.16);
 }
 
 #spyChargeMeter .spy-charge-segment[data-charge-value="12"] {
   --charge-milestone-color: #c084fc;
-  border-color: color-mix(in srgb, #c084fc 75%, transparent);
-  background: color-mix(in srgb, #c084fc 22%, #20242d);
-  box-shadow: inset 0 0 0 1px rgba(192, 132, 252, 0.16);
+}
+
+/* Not filled yet -- tint the star's outline color toward its milestone
+   color instead of the plain dim white every other segment gets, so
+   which positions are the milestones still reads before they're reached
+   (used to be a tinted box background; there's no box left to tint now
+   that segments are star glyphs, see .spy-charge-segment above). */
+#spyChargeMeter .spy-charge-segment[data-charge-value="5"]:not(.is-filled),
+#spyChargeMeter .spy-charge-segment[data-charge-value="8"]:not(.is-filled),
+#spyChargeMeter .spy-charge-segment[data-charge-value="12"]:not(.is-filled) {
+  color: color-mix(in srgb, var(--charge-milestone-color) 55%, rgba(255, 255, 255, 0.22));
 }
 
 #spyChargeMeter .spy-charge-segment.is-filled[data-charge-value="5"],
 #spyChargeMeter .spy-charge-segment.is-filled[data-charge-value="8"],
 #spyChargeMeter .spy-charge-segment.is-filled[data-charge-value="12"] {
-  background: var(--charge-milestone-color) !important;
-  box-shadow:
-    0 0 7px color-mix(in srgb, var(--charge-milestone-color) 58%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: var(--charge-milestone-color) !important;
+  filter:
+    drop-shadow(0 0 5px color-mix(in srgb, var(--charge-milestone-color) 70%, transparent))
+    !important;
 }
 
 /* ---------------- Star flight / held pending row ---------------- */
@@ -509,6 +503,34 @@ body.row-flight-active #setterScreen .setter-board-divider {
 .setter-pending-hold-clone .history-tile {
   animation: none !important;
   transform: none !important;
+}
+
+/* Solid backdrop for the star-flight/landing sequence (see spy-charge.js's
+   showAwardBackdrop/hideAwardBackdrop) -- opaque, not the usual
+   translucent dimming overlay, so nothing behind it (the board mid-
+   update, feedback tiles resolving) shows or distracts through while the
+   stars are actually flying. Sits just under the flight star/landing
+   burst/congrats layers (100120+) so those still read on top of it. */
+.spy-charge-award-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100119;
+
+  background: var(--bg, #0c0c0e);
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity 180ms ease;
+}
+
+.spy-charge-award-backdrop.show {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spy-charge-award-backdrop {
+    transition: none;
+  }
 }
 
 .spy-charge-flight-star {
@@ -659,6 +681,38 @@ body.row-flight-active #setterScreen .setter-board-divider {
   }
 }
 
+/* Bonus-star hint, on the draft tile itself (see ui/setter-board.js's
+   updateHintSlotTile) -- just an outline marking which one position the
+   hint targets, no letter or icon drawn on it (that's the label above the
+   draft row now, see .setter-cover-target-label). Persists for as long as
+   the typed letter here keeps matching the hint, going dark again the
+   instant it's changed away from. */
+#setterScreen #draftSetter .history-tile.draft-tile-hint-slot {
+  box-shadow: inset 0 0 0 2px rgba(251, 191, 36, 0.55);
+}
+
+#setterScreen #draftSetter .history-tile.draft-tile-hint-slot.draft-tile-hint-slot-matched {
+  box-shadow: inset 0 0 0 2px #fbbf24, 0 0 10px rgba(251, 191, 36, 0.45);
+}
+
+@keyframes draft-tile-hint-slot-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+#setterScreen .history-tile.draft-tile-hint-slot-shake {
+  animation: draft-tile-hint-slot-shake 260ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #setterScreen .history-tile.draft-tile-hint-slot-shake {
+    animation: none !important;
+  }
+}
+
 @media (max-width: 430px) {
   #setterScreen .setter-decision-meta {
     gap: 6px;
@@ -671,12 +725,6 @@ body.row-flight-active #setterScreen .setter-board-divider {
 
   #setterScreen .setter-cover-target-label {
     font-size: 12px;
-  }
-
-  #setterScreen .setter-cover-target-chip {
-    min-width: 26px;
-    height: 26px;
-    font-size: 15px;
   }
 
   #setterScreen #SetterRemainingBox {

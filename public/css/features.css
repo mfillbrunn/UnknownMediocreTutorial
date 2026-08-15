@@ -4059,20 +4059,33 @@ body.activity-drag-active {
   box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
+/* Each segment is a small ★ glyph now, not a plain bar chunk -- the same
+   star shape/gold glow the flight/landing animation (spy-charge.js,
+   setter-board-polish.css) uses when a star actually flies in and lands
+   here, so the meter reads as "12 of these already landed" instead of a
+   generic progress bar in an unrelated visual language. */
 .spy-charge-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 0;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.22);
+  font-size: 11px;
+  line-height: 1;
   transition:
-    background 150ms ease,
-    box-shadow 150ms ease,
+    color 150ms ease,
+    filter 150ms ease,
     transform 150ms ease;
 }
 
+.spy-charge-segment::before {
+  content: "★";
+}
+
 .spy-charge-segment.is-filled {
-  background:
-    linear-gradient(180deg, #fef08a, #f59e0b 58%, #ea580c);
-  box-shadow: 0 0 5px rgba(245, 158, 11, 0.62);
+  color: #fbbf24;
+  filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.85));
 }
 
 .spy-charge-segment.is-next {
@@ -4080,9 +4093,9 @@ body.activity-drag-active {
 }
 
 .spy-charge-segment.just-charged {
-  transform: scaleY(1.45);
-  background: #fff7b2;
-  box-shadow: 0 0 10px rgba(250, 204, 21, 0.95);
+  transform: scale(1.4);
+  color: #fff7b2;
+  filter: drop-shadow(0 0 7px rgba(250, 204, 21, 0.95));
 }
 
 .spy-charge-segment.milestone-power,
@@ -4091,8 +4104,8 @@ body.activity-drag-active {
 }
 
 @keyframes spy-charge-next {
-  0%, 100% { background: rgba(255, 255, 255, 0.1); }
-  50% { background: rgba(250, 204, 21, 0.28); }
+  0%, 100% { color: rgba(255, 255, 255, 0.22); }
+  50% { color: rgba(250, 204, 21, 0.75); }
 }
 
 .spy-charge-milestones {
