@@ -229,19 +229,20 @@
   opacity: 0.75;
 }
 
-/* Side by side (YOU left, OPPONENT right -- see client.js's round-start
-   powerGroups, always built in that viewer-relative order) instead of the
-   old single stacked list, so the two are easy to tell apart at a glance
-   instead of reading "which one of these two labeled-by-role lists is
-   mine again?" every round. */
+/* Stacked, full-width: YOU first, OPPONENT below -- see client.js's
+   round-start powerGroups, always built in that viewer-relative order.
+   Each entry gets the full popup width to actually show its explanation
+   instead of being squeezed into a half-width column, and the two
+   sections get their own tinted/bordered card (below) so which list is
+   whose reads at a glance without following a header back up top. */
 .big-announce-powers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   margin-top: 4px;
   width: 100%;
   max-width: 52ch;
-  max-height: 42vh;
+  max-height: 48vh;
   overflow-y: auto;
 }
 
@@ -268,19 +269,34 @@
   50% { opacity: 0.85; }
 }
 
+/* Each section is its own tinted/bordered card, colored to match its
+   role, so YOU vs OPPONENT is legible from the card alone -- not just
+   the small text label at its top. */
 .big-announce-power-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   text-align: left;
+  padding: 10px 12px;
+  border-radius: var(--r-10, 10px);
+  border-left: 3px solid transparent;
+}
+
+.big-announce-power-group.role-setter {
+  border-left-color: var(--setter-color, #f87171);
+  background: color-mix(in srgb, var(--setter-color, #f87171) 10%, transparent);
+}
+
+.big-announce-power-group.role-guesser {
+  border-left-color: var(--guesser-color, #60a5fa);
+  background: color-mix(in srgb, var(--guesser-color, #60a5fa) 10%, transparent);
 }
 
 .big-announce-power-group-label {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 900;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
-  opacity: 0.9;
 }
 
 .big-announce-power-group-label.role-setter { color: var(--setter-color, #f87171); }

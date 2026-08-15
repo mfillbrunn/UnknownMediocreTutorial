@@ -50,8 +50,8 @@ window.showBigAnnounce = function ({
       ? powerGroups
           .filter(group => Array.isArray(group.powers) && group.powers.length)
           .map(group => `
-            <div class="big-announce-power-group">
-              <div class="big-announce-power-group-label ${group.roleClass || ""}">${group.label}</div>
+            <div class="big-announce-power-group ${group.roleClass || ""}">
+              <div class="big-announce-power-group-label ${group.roleClass || ""}">${group.icon || ""} ${group.label}</div>
               ${group.powers.map(p => `
                 <div class="big-announce-power-row">
                   <span class="big-announce-power-emoji">${p.emoji || ""}</span>

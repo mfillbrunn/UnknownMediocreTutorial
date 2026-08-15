@@ -138,11 +138,11 @@
 
   // This button still does the reset job the old separate reset button
   // used to (flashes once a letter-reset is actually available, same
-  // trigger, armResetLetter, as before). The bonus-star hint itself no
-  // longer shows here -- it's a star badge directly on the targeted
-  // draft tile now (see ui/draftrow.js's updateDraftHintStars), so this
-  // stays the plain ↺ glyph; the hint text is still in the title/
-  // aria-label below for anyone hovering/using a screen reader.
+  // trigger, armResetLetter, as before). The bonus-star hint itself shows
+  // in the letter/position label above the draft row instead (see
+  // ui/setter-board.js's renderCoverStars), so this stays the plain ↺
+  // glyph; the hint text is still in the title/aria-label below for
+  // anyone hovering/using a screen reader.
   function renderActionButton(charge, state) {
     const button = byId("spyChargeActionBtn");
     const letterEl = byId("spyChargeHintLetter");

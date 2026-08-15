@@ -238,24 +238,20 @@ body.row-flight-active #setterScreen .setter-board-divider {
 }
 
 #setterScreen .setter-cover-target {
-  gap: 3px;
-  margin-left: 1px;
+  gap: 5px;
+  margin-left: 4px;
 }
 
-#setterScreen .setter-cover-target-plus {
-  font-size: 14px;
-}
-
-#setterScreen .setter-cover-bonus-star {
-  font-size: 18px;
+#setterScreen .setter-cover-target-label {
+  font-size: 13px;
 }
 
 #setterScreen .setter-cover-target-chip {
-  min-width: 23px;
-  height: 22px;
-  padding: 0 5px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
   border-radius: 7px;
-  font-size: 13px;
+  font-size: 17px;
 }
 
 #setterScreen #SetterRemainingBox {
@@ -663,100 +659,6 @@ body.row-flight-active #setterScreen .setter-board-divider {
   }
 }
 
-/* Bonus-star hint (ui/draftrow.js's updateDraftHintStars) -- a star badge
-   inside the top-right corner of whichever draft tile the hint targets,
-   the letter it wants clearly legible right inside it. Same "star glyph
-   as a full-box background layer, smaller letter layer centered on top"
-   construction as the draft screen's own star badge (features.css's
-   .draft-pick-five / -star / -num), just anchored to a single small
-   tile's corner instead of a dedicated badge slot -- and sized off the
-   same cqw units .history-tile itself uses (it's a descendant of one,
-   inside the same .center-col container-query context), so it scales
-   the same way the tile it's pinned to does. Positioned WITHIN the
-   tile's own box (small positive inset, not a hanging negative one) so
-   it can't get clipped by the active-row focus ring drawn just outside
-   the tile's own edges. */
-.draft-tile-hint-star {
-  position: absolute;
-  top: 1px;
-  right: 1px;
-  width: clamp(18px, 7.5cqw, 32px);
-  height: clamp(18px, 7.5cqw, 32px);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 6;
-}
-
-.draft-tile-hint-star.hidden {
-  display: none;
-}
-
-.draft-tile-hint-star-icon {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: clamp(18px, 7.5cqw, 32px);
-  line-height: 1;
-  color: #fbbf24;
-
-  filter:
-    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7))
-    drop-shadow(0 0 4px rgba(251, 191, 36, 0.65));
-}
-
-.draft-tile-hint-star-letter {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Same nudge reasoning as the draft screen's own star badge (features.css's
-     .draft-pick-five-num): the ★ glyph's ink sits slightly above center in
-     its own box, so the letter needs a small downward push to read as
-     centered inside the star rather than centered in the (taller) box. */
-  padding-top: clamp(1px, 0.6cqw, 2px);
-
-  font-size: clamp(9px, 3.4cqw, 15px);
-  font-weight: 900;
-  line-height: 1;
-  color: #451a03;
-}
-
-/* Persistent (not one-shot) -- stays lit for as long as the typed letter
-   here keeps matching the hint, going dark again the instant it's
-   changed away from (typing over it, Clear, ...). The twinkle below is
-   the one-shot moment; this is the steady "yes, this is still right"
-   state it settles into. */
-.history-tile.draft-tile-hint-lit {
-  box-shadow:
-    0 0 0 2px rgba(251, 191, 36, 0.65),
-    0 0 10px rgba(251, 191, 36, 0.45);
-}
-
-@keyframes draft-tile-hint-twinkle {
-  0%   { transform: scale(1) rotate(0deg); filter: brightness(1); }
-  22%  { transform: scale(1.55) rotate(-14deg); filter: brightness(1.7); }
-  48%  { transform: scale(1.05) rotate(10deg); filter: brightness(1.15); }
-  74%  { transform: scale(1.35) rotate(-7deg); filter: brightness(1.5); }
-  100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
-}
-
-.draft-tile-hint-star.draft-tile-hint-twinkle {
-  animation: draft-tile-hint-twinkle 620ms ease-out;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .draft-tile-hint-star.draft-tile-hint-twinkle {
-    animation: none !important;
-  }
-}
-
 @media (max-width: 430px) {
   #setterScreen .setter-decision-meta {
     gap: 6px;
@@ -767,14 +669,14 @@ body.row-flight-active #setterScreen .setter-board-divider {
     font-size: 17px;
   }
 
-  #setterScreen .setter-cover-bonus-star {
-    font-size: 16px;
+  #setterScreen .setter-cover-target-label {
+    font-size: 12px;
   }
 
   #setterScreen .setter-cover-target-chip {
-    min-width: 21px;
-    height: 20px;
-    font-size: 12px;
+    min-width: 26px;
+    height: 26px;
+    font-size: 15px;
   }
 
   #setterScreen #SetterRemainingBox {

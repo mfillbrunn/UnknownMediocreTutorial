@@ -180,53 +180,49 @@
 }
 
 #setterScreen .setter-cover-target {
-  gap: 4px;
-  margin-left: 3px;
+  gap: 6px;
+  margin-left: 6px;
 }
 
 #setterScreen .setter-cover-target.hidden {
   display: none;
 }
 
-#setterScreen .setter-cover-target-plus {
-  color: rgba(255, 255, 255, 0.38);
-  font-size: 18px;
-  font-weight: 700;
-}
-
-#setterScreen .setter-cover-bonus-star {
-  display: inline-block;
-  margin: 0;
-  color: rgba(34, 211, 238, 0.3);
-  font-size: 21px;
-}
-
-#setterScreen .setter-cover-bonus-star.is-filled {
-  color: #22d3ee;
-  text-shadow: 0 0 8px rgba(34, 211, 238, 0.72);
+/* Plain "S4"-style letter+position readout -- same size as ordinary UI
+   text, no superscript, so which letter goes where is legible at a
+   glance instead of squinting at a tiny raised digit. */
+#setterScreen .setter-cover-target-label {
+  color: #67e8f9;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
 }
 
 #setterScreen .setter-cover-target-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 27px;
-  height: 25px;
-  padding: 0 6px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
   box-sizing: border-box;
   border: 1px solid rgba(34, 211, 238, 0.6);
   border-radius: 8px;
   background: rgba(8, 39, 50, 0.72);
   color: #67e8f9;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 900;
   box-shadow: 0 0 8px rgba(34, 211, 238, 0.15);
+  transition: background 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
 }
 
-#setterScreen .setter-cover-target-chip sup {
-  margin-left: 1px;
-  font-size: 0.58em;
-  transform: translateY(-0.35em);
+/* The current draft's letter at the hint's position actually matches --
+   the same "earned" state the extra bonus star used to signal, now shown
+   by lighting up the tile itself instead of a separate icon. */
+#setterScreen .setter-cover-target.is-earned .setter-cover-target-chip {
+  border-color: #22d3ee;
+  background: rgba(34, 211, 238, 0.22);
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.5);
 }
 
 /* ---------------- Keep / New ---------------- */

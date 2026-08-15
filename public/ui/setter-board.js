@@ -219,15 +219,22 @@
     const hint = charge?.hint;
     const hasHint = !!hint?.letter && Number.isInteger(hint.position);
     const target = byId("setterCoverTarget");
+    const targetLabel = byId("setterCoverTargetLabel");
     const targetChip = byId("setterCoverTargetChip");
-    const bonus = el.querySelector("[data-cover-bonus-star]");
+    const hintLetter = hasHint ? String(hint.letter).toUpperCase() : "";
+    const hintPosition = hasHint ? hint.position + 1 : null;
 
     target?.classList.toggle("hidden", !hasHint);
 
+    // Plain "S4"-style label (letter then 1-indexed position, no
+    // superscript) so which letter goes where reads clearly at a glance,
+    // with the tile beside it showing just the letter itself, large
+    // enough to actually read.
+    if (targetLabel) {
+      targetLabel.textContent = hasHint ? `${hintLetter}${hintPosition}` : "";
+    }
     if (targetChip) {
-      targetChip.innerHTML = hasHint
-        ? `${String(hint.letter).toUpperCase()}<sup>${hint.position + 1}</sup>`
-        : "";
+      targetChip.textContent = hintLetter;
     }
 
     const draft = String(window.state?.setterDraft || "")
@@ -240,13 +247,10 @@
       !strength.draftIsCurrent &&
       !strength.draftIsPending &&
       draft.length === 5 &&
-      draft[hint.position] === String(hint.letter).toUpperCase()
+      draft[hint.position] === hintLetter
     );
 
-    if (bonus) {
-      bonus.classList.toggle("is-visible", hasHint);
-      bonus.classList.toggle("is-filled", bonusEarned);
-    }
+    target?.classList.toggle("is-earned", bonusEarned);
 
     el.setAttribute(
       "aria-label",
