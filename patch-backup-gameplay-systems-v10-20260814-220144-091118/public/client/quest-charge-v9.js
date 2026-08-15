@@ -335,16 +335,12 @@
       };
     }
 
-    // V10_QUEST_CHARGE_VOWEL_TARGET
-    const vowelTarget = Number(q?.vowelTarget) >= 1 && Number(q?.vowelTarget) <= 3
-      ? Number(q.vowelTarget)
-      : 1;
     const predicates = {
       ALTERNATING: word => isAlternating(word),
       BOOKENDS: word => word.length === 5 && word[0] === word[4],
       HALF_AM: word => inRange(word, "A", "P"),
       HALF_NZ: word => inRange(word, "K", "Z"),
-      VOWELSHORTAGE: word => word.length === 5 && countVowels(word) === vowelTarget
+      VOWELSHORTAGE: word => word.length === 5 && countVowels(word) === 1
     };
 
     const predicate = predicates[type];
@@ -522,7 +518,7 @@
       BOOKENDS: "Use the same first and last letter",
       HALF_AM: "Use only letters A through P",
       HALF_NZ: "Use only letters K through Z",
-      VOWELSHORTAGE: `Use exactly ${Number(q?.vowelTarget) >= 1 && Number(q?.vowelTarget) <= 3 ? Number(q.vowelTarget) : 1} vowel${Number(q?.vowelTarget) === 1 ? "" : "s"}`
+      VOWELSHORTAGE: "Use exactly 1 vowel"
     };
 
     return `

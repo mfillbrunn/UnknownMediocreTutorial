@@ -87,15 +87,11 @@ function questIsInLetterRange(word, minLetter, maxLetter) {
 }
 
 // Mirrors questServer.js's computeVowelShortageCount exactly.
-// V10_CLIENT_VOWEL_TARGET
-function computeVowelShortageCount(history, target = 1) {
-  const wanted = Number(target) >= 1 && Number(target) <= 3
-    ? Number(target)
-    : 1;
+function computeVowelShortageCount(history) {
   let count = 0;
   for (const entry of history) {
     if (!entry?.guess) continue;
-    if (questCountVowels(entry.guess.toUpperCase()) === wanted) count++;
+    if (questCountVowels(entry.guess.toUpperCase()) === 1) count++;
   }
   return count;
 }
@@ -317,12 +313,8 @@ function computeQuestStatus(state) {
   }
 
   if (q.type === "VOWELSHORTAGE") {
-    const target = Number(q.vowelTarget) >= 1 && Number(q.vowelTarget) <= 3
-      ? Number(q.vowelTarget)
-      : 1;
-    const count = computeVowelShortageCount(history, target);
-    const desc = `Submit 4 guesses with exactly ${target} vowel${target === 1 ? "" : "s"}.`;
-    return { meta, label: `${count}/4`, desc, done: false };
+    const count = computeVowelShortageCount(history);
+    return { meta, label: `${count}/4`, desc: meta.desc, done: false };
   }
 
   return null;

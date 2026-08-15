@@ -180,18 +180,11 @@ const QUEST_KEYBOARD_ROWS = [
 
 // Number of guesses (any order, not necessarily consecutive) with exactly
 // 1 vowel -- ready once 4 of them have been submitted.
-// V10_DYNAMIC_VOWEL_TARGET
-function questVowelTarget(quest) {
-  const value = Number(quest?.vowelTarget);
-  return value >= 1 && value <= 3 ? value : 1;
-}
-
-function computeVowelShortageCount(history, quest) {
-  const target = questVowelTarget(quest);
+function computeVowelShortageCount(history) {
   let count = 0;
   for (const entry of history) {
     if (!entry?.guess) continue;
-    if (questCountVowels(entry.guess.toUpperCase()) === target) count++;
+    if (questCountVowels(entry.guess.toUpperCase()) === 1) count++;
   }
   return count;
 }
@@ -313,7 +306,7 @@ function isQuestOneAway(quest, state) {
       return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "K", "Z")).length
         === QUEST_THRESHOLDS.HALF_NZ - 1;
     case "VOWELSHORTAGE":
-      return computeVowelShortageCount(history, quest) === QUEST_THRESHOLDS.VOWELSHORTAGE - 1;
+      return computeVowelShortageCount(history) === QUEST_THRESHOLDS.VOWELSHORTAGE - 1;
     default:
       return false;
   }
@@ -329,22 +322,11 @@ function isQuestOneAway(quest, state) {
 function ensureQuestConditions(state) {
   const q = state.powers?.quest;
   if (!q) return;
-
   if (q.type === "FIELDREPORT" && !q.conditions) {
     q.conditions = generateConditions();
   }
-
   if (q.type === "RARE" && !q.rareLetters?.length) {
     q.rareLetters = pickRareLetterSet();
-  }
-
-  if (q.type === "VOWELSHORTAGE") {
-    const current = Number(q.vowelTarget);
-    if (current < 1 || current > 3) {
-      q.vowelTarget = 1 + Math.floor(Math.random() * 3);
-    }
-  } else {
-    q.vowelTarget = null;
   }
 }
 
@@ -498,7 +480,7 @@ function isQuestReady(quest, history) {
       return history.filter(h => isInLetterRange(h.guess.toUpperCase(), "K", "Z")).length
         >= QUEST_THRESHOLDS.HALF_NZ;
     case "VOWELSHORTAGE":
-      return computeVowelShortageCount(history, quest) >= QUEST_THRESHOLDS.VOWELSHORTAGE;
+      return computeVowelShortageCount(history) >= QUEST_THRESHOLDS.VOWELSHORTAGE;
     default:
       return false;
   }
@@ -792,7 +774,6 @@ module.exports = {
   isAlphaOrderedWord,
   isBookendWord,
   doubledLetterOf,
-  questVowelTarget,
   computeVowelShortageCount,
   rareLettersSeen,
   rowCoverage,

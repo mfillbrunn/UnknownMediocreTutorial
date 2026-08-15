@@ -507,8 +507,7 @@ function questWordAdvances(word, quest, state) {
       return questServer.isInLetterRange(w, "K", "Z");
     case "VOWELSHORTAGE": {
       const vowelCount = [...w].filter(c => "AEIOU".includes(c)).length;
-      // V10_AI_VOWEL_TARGET
-      return vowelCount === questServer.questVowelTarget(quest);
+      return vowelCount === 1;
     }
     default:
       return false;

@@ -1,0 +1,739 @@
+/* =========================================================
+   V10 — quest, charge, theme, and readability refinements
+   ========================================================= */
+
+/* Inspector draft uses the exact same tile dimensions as feedback rows. */
+#guesserScreen .guesser-board-v9,
+#guesserScreen .guesser-board {
+  --inspector-board-tile: clamp(31px, 16.2cqw, 62px);
+  --inspector-board-font: clamp(16px, 8.1cqw, 31px);
+}
+
+#guesserScreen #historyGuesser .history-tile,
+#guesserScreen #draftGuesser .history-tile {
+  width: var(--inspector-board-tile) !important;
+  min-width: var(--inspector-board-tile) !important;
+  max-width: var(--inspector-board-tile) !important;
+  height: var(--inspector-board-tile) !important;
+  min-height: var(--inspector-board-tile) !important;
+  max-height: var(--inspector-board-tile) !important;
+  flex: 0 0 var(--inspector-board-tile) !important;
+  font-size: var(--inspector-board-font) !important;
+  box-sizing: border-box;
+}
+
+#guesserScreen.guesser-sidebar-collapsed .guesser-board-v9,
+#guesserScreen.guesser-sidebar-collapsed .guesser-board {
+  --inspector-board-tile: clamp(32px, 15.5cqw, 62px);
+  --inspector-board-font: clamp(16px, 7.8cqw, 31px);
+}
+
+/* ---------------------------------------------------------
+   Quest badge merged into the charge meter
+   --------------------------------------------------------- */
+
+#guesserPowerContainer .quest-card-merged-v10,
+#guesserPowerContainer .power-btn-wrapper.quest-card-merged-v10 {
+  display: none !important;
+}
+
+#guesserQuestChargeHud.quest-meter-merged-v10 {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 7px;
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(77, 163, 255, 0.10), rgba(10, 14, 22, 0.88));
+  border: 1px solid rgba(77, 163, 255, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 6px 18px rgba(0, 0, 0, 0.24);
+}
+
+#guesserQuestChargeHud.quest-meter-merged-v10.hidden {
+  display: none !important;
+}
+
+#guesserQuestChargeHud.quest-meter-merged-v10 .guesser-quest-charge-head {
+  display: none !important;
+}
+
+#guesserQuestChargeHud.quest-meter-merged-v10 #guesserQuestChargeMeter {
+  min-width: 0;
+  margin: 0;
+}
+
+.quest-meter-action-v10 {
+  width: 38px;
+  height: 38px;
+  padding: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1.5px solid rgba(77, 163, 255, 0.55);
+  background: rgba(77, 163, 255, 0.10);
+  color: #60a5fa;
+  box-shadow: 0 0 10px rgba(77, 163, 255, 0.12);
+  cursor: pointer;
+  transition: transform 140ms ease, color 180ms ease, border-color 180ms ease,
+    background 180ms ease, box-shadow 180ms ease;
+}
+
+.quest-meter-action-v10:active {
+  transform: scale(0.94);
+}
+
+.quest-meter-icon-v10 {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: currentColor;
+  pointer-events: none;
+}
+
+.quest-meter-action-v10.is-yellow,
+.quest-collapsed-action-v10.is-yellow {
+  color: var(--tile-yellow, #facc15) !important;
+  border-color: color-mix(in srgb, var(--tile-yellow, #facc15) 75%, white 10%) !important;
+  background: color-mix(in srgb, var(--tile-yellow, #facc15) 18%, #11151d) !important;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--tile-yellow, #facc15) 42%, transparent) !important;
+  animation: quest-action-ready-v10 1.8s ease-in-out infinite;
+}
+
+.quest-meter-action-v10.is-green,
+.quest-collapsed-action-v10.is-green {
+  color: var(--tile-green, #22c55e) !important;
+  border-color: color-mix(in srgb, var(--tile-green, #22c55e) 75%, white 10%) !important;
+  background: color-mix(in srgb, var(--tile-green, #22c55e) 18%, #11151d) !important;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--tile-green, #22c55e) 45%, transparent) !important;
+  animation: quest-action-ready-v10 1.45s ease-in-out infinite;
+}
+
+.quest-meter-action-v10.is-done {
+  opacity: 0.55;
+  color: var(--tile-green, #22c55e);
+}
+
+@keyframes quest-action-ready-v10 {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  45% { transform: translateY(-1px) rotate(-2deg); }
+  55% { transform: translateY(-1px) rotate(2deg); }
+}
+
+.quest-collapsed-action-v10 {
+  order: -10;
+}
+
+.quest-collapsed-action-v10 .collapsed-action-quest-icon-v10 {
+  width: 24px;
+  height: 24px;
+  color: currentColor;
+}
+
+/* One readable Quest instruction line; progress remains in the meter. */
+#guesserQuestRequirement {
+  width: min(100%, 390px);
+  min-height: 25px;
+  margin: 2px auto 6px;
+  padding: 4px 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid rgba(96, 165, 250, 0.20);
+  background: rgba(96, 165, 250, 0.055);
+  color: rgba(235, 242, 252, 0.92);
+  font-size: clamp(11px, 2.8vw, 13px);
+  font-weight: 720;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+}
+
+#guesserQuestRequirement.hidden {
+  display: none !important;
+}
+
+#guesserQuestRequirement .quest-requirement-line-v10 {
+  min-width: 0;
+}
+
+#guesserQuestRequirement .quest-requirement-top,
+#guesserQuestRequirement .quest-requirement-copy,
+#guesserQuestRequirement .quest-requirement-progress,
+#guesserQuestRequirement .quest-requirement-letters,
+#guesserQuestRequirement .quest-condition-list,
+#guesserQuestRequirement .quest-requirement-gain {
+  display: none !important;
+}
+
+/* Electric outline only — no printed lightning symbols. */
+#draftGuesser .history-row.quest-ready-electric-v10 {
+  animation: quest-word-jolt-v10 560ms cubic-bezier(.36, 1.5, .55, 1) both;
+}
+
+#draftGuesser .history-row.quest-ready-electric-v10 .history-tile {
+  border-color: rgba(103, 232, 249, 0.9) !important;
+  box-shadow:
+    0 0 0 1px rgba(103, 232, 249, 0.28),
+    0 0 9px rgba(34, 211, 238, 0.48),
+    inset 0 0 8px rgba(34, 211, 238, 0.10) !important;
+  animation: quest-tile-electric-v10 980ms ease-in-out infinite alternate;
+}
+
+@keyframes quest-word-jolt-v10 {
+  0% { transform: translateX(0); }
+  24% { transform: translateX(-3px); }
+  43% { transform: translateX(3px); }
+  61% { transform: translateX(-2px); }
+  80% { transform: translateX(1px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes quest-tile-electric-v10 {
+  0% { filter: brightness(1); }
+  45% { filter: brightness(1.14); }
+  52% { filter: brightness(1.35); }
+  60% { filter: brightness(1.08); }
+  100% { filter: brightness(1.2); }
+}
+
+.quest-charge-flight-bolt {
+  color: transparent !important;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, white 0 16%, #67e8f9 18% 38%, rgba(34, 211, 238, .65) 40% 57%, transparent 60%);
+  box-shadow: 0 0 12px #22d3ee, 0 0 22px rgba(96, 165, 250, .75);
+}
+
+/* ---------------------------------------------------------
+   Spy bonus target: no draft star/corner letter, larger boxes
+   --------------------------------------------------------- */
+
+#setterBonusTargetV9 {
+  min-height: 0;
+  padding: 0 !important;
+  margin: 3px 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#setterBonusTargetV9.hidden,
+#setterBonusTargetV9:empty {
+  display: none !important;
+}
+
+#setterBonusTargetV9 .setter-bonus-star-v9,
+#setterBonusTargetV9 .setter-bonus-copy-v9,
+#setterBonusTargetV9 .setter-bonus-copy-v9 strong,
+#setterBonusTargetV9 .setter-bonus-copy-v9 span {
+  display: none !important;
+}
+
+.setter-bonus-plus-v10 {
+  color: #67e8f9;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0 7px rgba(34, 211, 238, .55);
+}
+
+.setter-bonus-boxes-v10 {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.setter-bonus-box-v10 {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border-radius: 5px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.setter-bonus-box-v10.is-target {
+  border-color: #38bdf8;
+  color: #7dd3fc;
+  background: rgba(14, 116, 144, 0.14);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.30);
+}
+
+#draftSetter .setter-cover-bonus-star,
+#draftSetter .setter-cover-target,
+#draftSetter .draft-hint-star,
+#draftSetter .setter-draft-target-letter,
+#draftSetter .setter-target-corner-letter,
+#draftSetter [data-cover-bonus-star] {
+  display: none !important;
+}
+
+#draftSetter .history-tile.setter-bonus-target-tile-v10 {
+  outline: 2px solid rgba(56, 189, 248, 0.78);
+  outline-offset: 2px;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.24) !important;
+}
+
+#draftSetter .history-tile.setter-bonus-target-tile-v10::before,
+#draftSetter .history-tile.setter-bonus-target-tile-v10::after {
+  content: none !important;
+}
+
+#draftSetter .history-tile.setter-bonus-target-tile-v10.is-correct {
+  animation: setter-target-correct-v10 520ms cubic-bezier(.34, 1.56, .64, 1) both;
+}
+
+@keyframes setter-target-correct-v10 {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-1px); }
+}
+
+/* ---------------------------------------------------------
+   Expanded Spy charge meter matches the temporary meter language
+   --------------------------------------------------------- */
+
+#spyChargeHud.spy-charge-hud-v10 {
+  width: 100%;
+  padding: 7px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  background:
+    radial-gradient(circle at 18% 0, rgba(250, 204, 21, 0.13), transparent 45%),
+    linear-gradient(145deg, rgba(28, 24, 11, 0.94), rgba(10, 13, 19, 0.92));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 7px 18px rgba(0, 0, 0, 0.25);
+}
+
+#spyChargeMeter.spy-charge-meter-v10,
+#spyChargeHud .spy-charge-meter {
+  min-height: 16px;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.34);
+}
+
+#spyChargeMeter .spy-charge-segment {
+  border-radius: 3px;
+}
+
+#spyChargeMeter .spy-charge-segment[data-charge-value="5"] {
+  outline: 1px solid rgba(34, 211, 238, 0.75);
+}
+
+#spyChargeMeter .spy-charge-segment[data-charge-value="8"] {
+  outline: 1px solid rgba(250, 204, 21, 0.82);
+}
+
+#spyChargeMeter .spy-charge-segment[data-charge-value="12"] {
+  outline: 1px solid rgba(192, 132, 252, 0.82);
+}
+
+/* ---------------------------------------------------------
+   Inspector power-card overflow fixes
+   --------------------------------------------------------- */
+
+#guesserScreen .guesser-sidebar .power-btn.power-badge,
+#guesserScreen #guesserPowerContainer .power-btn.power-badge {
+  height: 78px !important;
+  min-height: 78px !important;
+  max-height: 78px !important;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+
+#guesserScreen .guesser-sidebar .power-btn-label,
+#guesserScreen #guesserPowerContainer .power-btn-label {
+  width: 100%;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  flex: 0 0 22px !important;
+  padding: 0 1px;
+  box-sizing: border-box;
+  font-size: 8px !important;
+  line-height: 1.03 !important;
+  white-space: normal;
+  overflow: hidden;
+}
+
+#guesserScreen .letter-scan-card-v10 .power-btn-label {
+  font-size: 7.5px !important;
+  letter-spacing: 0 !important;
+}
+
+#guesserScreen .letter-profile-card-v10 {
+  position: relative;
+}
+
+#guesserScreen .letter-profile-card-v10 .power-icon {
+  position: absolute;
+  inset: 5px;
+  width: auto !important;
+  max-width: none !important;
+  height: auto !important;
+  opacity: 0.10;
+  pointer-events: none;
+}
+
+#guesserScreen .letter-profile-card-v10 :is(.letter-profile-tile-lines, .letter-profile-lines) {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-height: 56px;
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  font-size: 7px;
+  line-height: 1.02;
+}
+
+@media (max-width: 430px) {
+  #guesserScreen .guesser-sidebar .power-btn.power-badge,
+  #guesserScreen #guesserPowerContainer .power-btn.power-badge {
+    height: 72px !important;
+    min-height: 72px !important;
+    max-height: 72px !important;
+  }
+}
+
+/* ---------------------------------------------------------
+   Round-start power/Quest popup: full-width, viewer-relative columns
+   --------------------------------------------------------- */
+
+.big-announce.has-power-groups-v10 .big-announce-card {
+  width: min(94vw, 880px);
+  max-width: 94vw;
+  max-height: 90dvh;
+  box-sizing: border-box;
+  padding: clamp(18px, 3vw, 30px);
+}
+
+.big-announce.has-power-groups-v10 .big-announce-powers {
+  width: 100%;
+  max-width: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-height: 54dvh;
+  overflow: auto;
+}
+
+.big-announce.has-power-groups-v10 .big-announce-power-group {
+  min-width: 0;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.025);
+  gap: 7px;
+}
+
+.big-announce.has-power-groups-v10 .big-announce-power-group-label {
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+  font-size: 12px;
+}
+
+.big-announce.has-power-groups-v10 .big-announce-power-group.is-you-v10 {
+  border-color: color-mix(in srgb, var(--tile-green) 38%, rgba(255, 255, 255, 0.11));
+  background: color-mix(in srgb, var(--tile-green) 5%, rgba(255, 255, 255, 0.025));
+}
+
+.big-announce.has-power-groups-v10 .big-announce-power-group.is-opponent-v10 {
+  border-color: rgba(255, 255, 255, 0.13);
+}
+
+.big-announce.has-power-groups-v10 .big-announce-power-group.is-you-v10
+  .big-announce-power-group-label {
+  color: var(--tile-green);
+}
+
+.big-announce.has-power-groups-v10 .big-announce-power-row {
+  align-items: flex-start;
+  padding: 7px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.big-announce.has-power-groups-v10 .big-announce-power-row.is-quest-v10 {
+  border-top: 2px solid rgba(74, 222, 128, 0.45);
+  background: rgba(34, 197, 94, 0.07);
+}
+
+.big-announce.has-power-groups-v10 .big-announce-power-text {
+  font-size: clamp(11px, 2.2vw, 13px);
+  line-height: 1.38;
+}
+
+@media (max-width: 520px) {
+  .big-announce.has-power-groups-v10 .big-announce-card {
+    width: 96vw;
+    max-width: 96vw;
+    padding: 14px 10px;
+  }
+  .big-announce.has-power-groups-v10 .big-announce-powers {
+    gap: 7px;
+  }
+  .big-announce.has-power-groups-v10 .big-announce-power-group {
+    padding: 7px 5px;
+  }
+  .big-announce.has-power-groups-v10 .big-announce-power-row {
+    padding: 5px 3px;
+    gap: 4px;
+  }
+  .big-announce.has-power-groups-v10 .big-announce-power-emoji {
+    font-size: 13px;
+  }
+}
+
+/* Guide now indicates only whose turn it is. */
+.guide-banner .guide-sep,
+.guide-banner .guide-task {
+  display: none !important;
+}
+
+.guide-banner {
+  min-height: 24px;
+  padding: 4px 10px !important;
+  margin-bottom: 5px !important;
+}
+
+/* Subtle feedback words beside the relevant indicators. */
+.quest-praise-v10,
+.spy-charge-congrats.meter-praise-v10 {
+  position: static !important;
+  transform: none !important;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.65);
+  box-shadow: none !important;
+  font-size: 8px !important;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.quest-praise-v10.show,
+.spy-charge-congrats.meter-praise-v10.show {
+  opacity: 0.82;
+  animation: praise-subtle-v10 900ms ease both !important;
+}
+
+.spy-charge-congrats.meter-praise-v10 .spy-charge-congrats-icon,
+.spy-charge-congrats.meter-praise-v10 .spy-charge-congrats-sub {
+  display: none !important;
+}
+
+.spy-charge-congrats.meter-praise-v10 .spy-charge-congrats-title {
+  font: inherit !important;
+  color: inherit !important;
+  text-shadow: none !important;
+}
+
+@keyframes praise-subtle-v10 {
+  0% { opacity: 0; transform: translateY(2px); }
+  20%, 75% { opacity: 0.82; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-2px); }
+}
+
+/* ---------------------------------------------------------
+   Theme switch: fixed bottom-right, not part of the menu
+   --------------------------------------------------------- */
+
+#themeModeToggleV9.theme-toggle-fab-v10 {
+  position: fixed !important;
+  right: max(12px, env(safe-area-inset-right)) !important;
+  bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  left: auto !important;
+  top: auto !important;
+  z-index: 100020;
+  width: 52px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(13, 16, 23, 0.88);
+  color: #fff;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.30);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#themeModeToggleV9.theme-toggle-fab-v10 .theme-toggle-label-v9 {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------
+   Light mode readability
+   --------------------------------------------------------- */
+
+html[data-theme-mode="light"] {
+  color-scheme: light;
+  --screen-bg: #faf8f2;
+  --panel-bg: #fffdf8;
+  --panel-text: #20242b;
+  --text: #20242b;
+  --muted: #69717c;
+  --history-bg: #f0eee8;
+  --kb-neutral: #e7e4dc;
+  --kb-hover: #dcd8cf;
+  --btn-secondary: #e9e6de;
+  --btn-secondary-hover: #dedad1;
+  --btn-secondary-text: #262a31;
+}
+
+html[data-theme-mode="light"] body {
+  background: #f3f0e8 !important;
+  color: #20242b !important;
+}
+
+html[data-theme-mode="light"] :is(
+  .screen,
+  .panel,
+  .setter-board,
+  .guesser-board-v9,
+  .game-side-panel,
+  .power-info-panel,
+  .modal-content,
+  .summary-box,
+  .daily-result-block
+) {
+  color: #20242b;
+  background-color: rgba(255, 253, 248, 0.97);
+  border-color: rgba(43, 49, 59, 0.14);
+}
+
+html[data-theme-mode="light"] :is(
+  .header-role-badge,
+  .header-room-code,
+  .room-meta,
+  .guide-banner,
+  .setter-stage-heading,
+  .notes-panel-title,
+  .log-entry,
+  .power-info-title,
+  .power-info-desc,
+  .tutorial-text,
+  .modal-instruction,
+  .big-announce-power-text,
+  .big-announce-title,
+  .big-announce-sub
+) {
+  color: #242932 !important;
+}
+
+html[data-theme-mode="light"] :is(
+  .setter-stage-heading,
+  .notes-panel-title,
+  .power-info-desc,
+  .big-announce-sub
+) {
+  opacity: 0.72;
+}
+
+html[data-theme-mode="light"] :is(.key, .secondary-btn, .header-sm-btn, .guide-toggle-btn) {
+  background: #e7e4dc;
+  color: #20242b;
+  border-color: rgba(39, 45, 54, 0.18);
+}
+
+html[data-theme-mode="light"] :is(.draft-tile, .history-tile:not(.tile-green):not(.tile-yellow):not(.tile-blue):not(.tile-purple):not(.tile-gray)) {
+  color: #20242b;
+  border-color: rgba(39, 45, 54, 0.24);
+}
+
+html[data-theme-mode="light"] :is(.action-log-panel, .notes-panel, .setter-sidebar, .guesser-sidebar) {
+  background: rgba(250, 248, 242, 0.97) !important;
+  color: #20242b !important;
+}
+
+html[data-theme-mode="light"] .notes-entry {
+  background: rgba(39, 45, 54, 0.045);
+  border-color: rgba(39, 45, 54, 0.11);
+}
+
+html[data-theme-mode="light"] .notes-empty,
+html[data-theme-mode="light"] .notes-remove {
+  color: #5d6570;
+}
+
+html[data-theme-mode="light"] .power-btn.power-badge,
+html[data-theme-mode="light"] .draft-candidate-btn.power-themed {
+  filter: saturate(0.94) brightness(1.06);
+}
+
+html[data-theme-mode="light"] .big-announce {
+  background: rgba(41, 45, 52, 0.30);
+}
+
+html[data-theme-mode="light"] .big-announce-card {
+  background: #fffdf8;
+  color: #20242b;
+  border-color: rgba(39, 45, 54, 0.18);
+}
+
+html[data-theme-mode="light"] .big-announce.has-power-groups-v10 .big-announce-power-group,
+html[data-theme-mode="light"] .big-announce.has-power-groups-v10 .big-announce-power-row {
+  background: rgba(39, 45, 54, 0.04);
+  border-color: rgba(39, 45, 54, 0.12);
+}
+
+html[data-theme-mode="light"] #themeModeToggleV9.theme-toggle-fab-v10 {
+  background: rgba(255, 253, 248, 0.94);
+  border-color: rgba(39, 45, 54, 0.20);
+  color: #20242b;
+}
+
+html[data-theme-mode="light"] #guesserQuestRequirement {
+  color: #213044;
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(37, 99, 235, 0.23);
+}
+
+html[data-theme-mode="light"] .quest-praise-v10,
+html[data-theme-mode="light"] .spy-charge-congrats.meter-praise-v10 {
+  color: #424a56;
+  background: rgba(39, 45, 54, 0.06);
+  border-color: rgba(39, 45, 54, 0.13);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quest-meter-action-v10.is-yellow,
+  .quest-meter-action-v10.is-green,
+  .quest-collapsed-action-v10,
+  #draftGuesser .history-row.quest-ready-electric-v10,
+  #draftGuesser .history-row.quest-ready-electric-v10 .history-tile,
+  #draftSetter .history-tile.setter-bonus-target-tile-v10.is-correct {
+    animation: none !important;
+  }
+}
