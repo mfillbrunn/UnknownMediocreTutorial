@@ -376,25 +376,17 @@ let _questBadgeType = null;
 
 function createQuestBadgeTile(type) {
   const wrapper = document.createElement("div");
-  wrapper.className = "power-btn-wrapper";
+  wrapper.className = "power-btn-wrapper quest-badge-wrapper";
 
   const btn = document.createElement("button");
   btn.className = "power-btn power-badge quest-badge-tile";
   btn.dataset.questType = type;
 
-  const iconId = QUEST_ICON_IDS[type];
-  if (iconId) {
-    const svgNS = "http://www.w3.org/2000/svg";
-    const xlinkNS = "http://www.w3.org/1999/xlink";
-    const icon = document.createElementNS(svgNS, "svg");
-    icon.setAttribute("class", "power-icon");
-    icon.setAttribute("viewBox", "0 0 120 120");
-    const use = document.createElementNS(svgNS, "use");
-    use.setAttributeNS(xlinkNS, "xlink:href", `#${iconId}`);
-    use.setAttribute("href", `#${iconId}`);
-    icon.appendChild(use);
-    btn.appendChild(icon);
-  }
+  // No icon here anymore -- the quest card runs the full width of the
+  // power row (see .quest-badge-wrapper in features.css) instead of
+  // sharing a small square slot with the power cards, so the label/chip
+  // below have plenty of room to read on their own without an icon
+  // competing for space.
 
   const labelEl = document.createElement("span");
   labelEl.className = "power-btn-label";
@@ -459,6 +451,7 @@ function updateQuestBadge(state, role) {
       _questBadge = null;
       _questBadgeType = null;
     }
+    document.getElementById("questInfoBar")?.classList.add("hidden");
     return;
   }
 
@@ -567,6 +560,22 @@ function updateQuestBadge(state, role) {
         : undefined
     });
   };
+
+  // A second, plainer entry point to the exact same info+Use popup as the
+  // card above -- sits right above the guesser's own draft row, where
+  // it's already in view while actually playing, instead of requiring a
+  // scroll/glance down to the power row below the board. Guesser-only:
+  // there's no draft row of theirs to sit above on the setter's screen,
+  // and their copy of the quest is read-only anyway (see canClaim above).
+  const infoBar = role === "guesser" ? document.getElementById("questInfoBar") : null;
+  if (infoBar) {
+    infoBar.textContent = `🎯 ${status.meta.label} — ${questCardProgressText(status, q)}`;
+    infoBar.classList.remove("hidden");
+    infoBar.classList.toggle("quest-ready", !status.done && !!q.ready);
+    infoBar.classList.toggle("quest-oneaway", !status.done && !q.ready && !!q.oneAway);
+    infoBar.classList.toggle("quest-done", !!status.done);
+    infoBar.onclick = () => btn.click();
+  }
 }
 window.updateQuestBadge = updateQuestBadge;
 

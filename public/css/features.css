@@ -3199,6 +3199,46 @@ body.activity-drag-active {
 */
 
 
+/* Quest info bar: a plain clickable strip directly above the guesser's
+   own draft row (see client/quest.js's updateQuestBadge, which keeps this
+   in sync with the full quest card down in the power row) -- opens the
+   exact same info+Use popup, but sits where it's already in view while
+   actually typing a guess, instead of requiring a glance down past the
+   whole board. */
+#guesserScreen .quest-info-bar {
+  display: block;
+  width: 100%;
+  margin: 0 0 var(--sp-6, 6px);
+  padding: 7px 10px;
+
+  border: 1px solid color-mix(in srgb, var(--role-accent) 45%, rgba(255, 255, 255, 0.14));
+  border-radius: var(--r-8, 8px);
+  background: color-mix(in srgb, var(--role-accent) 12%, rgba(10, 12, 18, 0.6));
+
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+
+  cursor: pointer;
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+
+#guesserScreen .quest-info-bar:hover {
+  background: color-mix(in srgb, var(--role-accent) 20%, rgba(10, 12, 18, 0.6));
+}
+
+#guesserScreen .quest-info-bar.hidden {
+  display: none;
+}
+
+/* Same "claimable" pulse the full quest card gets (guesser-polish-v7.css),
+   kept in sync so a player scanning either one gets the same signal. */
+#guesserScreen .quest-info-bar.quest-ready {
+  border-color: #5aa06d;
+  background: color-mix(in srgb, #5aa06d 20%, rgba(10, 12, 18, 0.6));
+}
+
 /* GUESSER: OWN POWERS + LOG ROW */
 
 /*
@@ -3459,6 +3499,20 @@ body.activity-drag-active {
     height: 26px;
     font-size: 10px;
   }
+
+  /* At this card size there's no room left for an icon plus a two-part
+     readout -- drop the icon and read the letter and position as one
+     plain line ("D 4th") instead. row-reverse (not touching the DOM
+     order, which stays ordinal-then-tile for the default/larger card
+     above) puts the letter first, matching how it reads out loud. */
+  #guesserScreen .guesser-power-view .informant-power-tile .power-icon {
+    display: none !important;
+  }
+
+  #guesserScreen .guesser-power-view .informant-power-tile-peek {
+    flex-direction: row-reverse;
+    gap: 4px;
+  }
 }
 
 /* Letter Profile shows a variable 2-3 line stat readout instead of the
@@ -3536,11 +3590,21 @@ body.activity-drag-active {
   cursor: default;
 }
 
+/* Smaller than the shared .power-icon default (below) -- the icon was
+   eating most of the card's vertical room, leaving barely anything for
+   the actual position+letter readout underneath it. */
+.informant-power-tile .power-icon {
+  max-width: 22px !important;
+}
+
+/* Position and letter read as one row ("3rd [H]") instead of stacked --
+   with the icon shrunk above, there's room for both side by side without
+   either feeling cramped. */
 .informant-power-tile-peek {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 3px;
+  gap: 5px;
 }
 
 /* .informant-tile (components.css) sizes itself at 1.7em off the
@@ -3549,13 +3613,13 @@ body.activity-drag-active {
    large enough to blow the tile past the card's own edges. Pin it down
    explicitly instead of relying on inheritance. */
 .informant-power-tile-peek .informant-tile {
-  width: 16px;
-  height: 16px;
-  font-size: 10px;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
 }
 
 .informant-power-tile-ordinal {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.2px;

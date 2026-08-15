@@ -347,6 +347,46 @@
   color: #7cbf90 !important;
 }
 
+/* The quest always runs the match, unlike the powers beside it -- give it
+   its own full-width row instead of squeezing it into the same 90px
+   square slot the power cards use (flex-wrap above pushes every power
+   card onto the row(s) below it once this one claims the full line). No
+   longer needs the square's height either, now that the icon is gone
+   (see quest.js's createQuestBadgeTile) -- a short banner is enough room
+   for the name and its corner progress chip. */
+#guesserScreen
+  .guesser-power-view
+  .quest-badge-wrapper {
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  order: -1;
+}
+
+#guesserScreen
+  .guesser-power-view
+  .power-btn.power-badge.quest-badge-tile {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+
+  flex-direction: row !important;
+  justify-content: center !important;
+  padding: 0 44px 0 12px !important;
+}
+
+#guesserScreen
+  .guesser-power-view
+  .quest-badge-tile
+  .power-btn-label {
+  height: auto !important;
+  margin-top: 0;
+  text-align: left;
+  font-size: 13px !important;
+}
+
 /* Quest choices now use the same palette language as powers. This is the
    picker banner shown when choosing a quest (Draft Mode / mid-match Quest
    Choice modal), not the in-game quest button above -- it stays a bit
