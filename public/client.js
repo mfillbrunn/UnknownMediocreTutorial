@@ -655,16 +655,16 @@ onStateUpdate(newState => {
         desc: questMeta.desc
       });
     }
-    // Always YOU first (left column) / OPPONENT second (right column) --
-    // see .big-announce-powers's grid in special-effects.css -- rather
-    // than a fixed Spy-then-Inspector order, so the viewer doesn't have
-    // to work out which of two role-labeled lists is theirs every round.
-    const setterGroup = { label: "Spy", roleClass: "role-setter", powers: describePowers(state.initialPowers?.setter) };
-    const guesserGroup = { label: "Inspector", roleClass: "role-guesser", powers: guesserPowers };
+    // Always YOU first, full width / OPPONENT second, full width below it
+    // -- see .big-announce-powers in special-effects.css -- rather than a
+    // fixed Spy-then-Inspector order, so the viewer doesn't have to work
+    // out which of two role-labeled lists is theirs every round.
+    const setterGroup = { icon: "🕵️", label: "Spy", roleClass: "role-setter", powers: describePowers(state.initialPowers?.setter) };
+    const guesserGroup = { icon: "🔍", label: "Inspector", roleClass: "role-guesser", powers: guesserPowers };
     const [myGroup, opponentGroup] = iAmSetter ? [setterGroup, guesserGroup] : [guesserGroup, setterGroup];
     const powerGroups = [
-      { ...myGroup, label: "You" },
-      { ...opponentGroup, label: "Opponent" }
+      { ...myGroup, label: `You — ${myGroup.label}` },
+      { ...opponentGroup, label: `Opponent — ${opponentGroup.label}` }
     ];
     window.showBigAnnounce?.({
       icon: iAmSetter ? "🕵️" : "🔍",

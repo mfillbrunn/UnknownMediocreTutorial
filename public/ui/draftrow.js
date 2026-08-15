@@ -40,23 +40,6 @@ window.renderDraftRows = function ({
           });
         }
 
-        // Bonus-star hint (spyChargeServer.js's rollHintForTurn): a small
-        // star badge in this tile's corner, shown only on whichever one
-        // position the hint actually targets -- see updateDraftHintStars
-        // below. Built once per tile here, same as every other overlay in
-        // this file, and toggled/filled in on every render instead of
-        // being recreated.
-        if (isEditableDraft && role === "setter") {
-          const hintStar = document.createElement("span");
-          hintStar.className = "draft-tile-hint-star hidden";
-          hintStar.innerHTML = `
-            <span class="draft-tile-hint-star-icon" aria-hidden="true">★</span>
-            <span class="draft-tile-hint-star-letter"></span>
-          `;
-          tile.appendChild(hintStar);
-          tile.__hintStar = hintStar;
-        }
-
         row.__tiles.push(tile);
         row.appendChild(tile);
       }
@@ -76,8 +59,7 @@ window.renderDraftRows = function ({
           </span>
 
           <span id="setterCoverTarget" class="setter-cover-target hidden">
-            <span class="setter-cover-target-plus" aria-hidden="true">+</span>
-            <span class="setter-cover-bonus-star" data-cover-bonus-star>★</span>
+            <span id="setterCoverTargetLabel" class="setter-cover-target-label"></span>
             <span id="setterCoverTargetChip" class="setter-cover-target-chip"></span>
           </span>
         `;
@@ -103,15 +85,6 @@ window.renderDraftRows = function ({
 
   const pendingRow = container.__draftRows.pending;
   const draftRow = container.__draftRows.draft;
-
-  // Bonus-star hint stars don't depend on which of the branches below
-  // ends up rendering the row (ghost secret, setter's own in-progress
-  // draft, ...) -- state.powers.spyCharge.hint is only ever populated by
-  // the server while it's actually the setter's live decision (see
-  // rollHintForTurn's isDecisionEligible check), so it's already null in
-  // every case where this shouldn't show anything. Safe to just run it
-  // once, up front, instead of threading a call into every branch below.
-  updateDraftHintStars(draftRow, state, role);
 
   // ----------------------------
   // Helpers
@@ -188,13 +161,6 @@ window.renderDraftRows = function ({
       const isGreenMatch = !!(real && greenMatchPattern && greenMatchPattern[i] === real);
 
       tile.textContent = real || ghost || "";
-      // tile.textContent above just wiped every child node, including the
-      // hint-star badge appended once in makeRow (it's a genuine element,
-      // not text, so it can't be set alongside the letter via textContent)
-      // -- move it back in. appendChild on a node already in the document
-      // relocates it rather than cloning, so this is a no-op cost-wise
-      // once it's already the tile's only other child.
-      if (tile.__hintStar) tile.appendChild(tile.__hintStar);
       tile.classList.toggle("tile-ghost-letter", !!ghost);
       tile.classList.toggle("tile-filled", !!real);
       tile.classList.toggle("tile-green-match", isGreenMatch);
@@ -421,58 +387,6 @@ if (!setterCanEdit) {
     showRow(draftRow, draftWasVisible, "row-slide-down");
   }
 };
-
-// Bonus-star hint: a small star badge in the corner of whichever draft
-// tile the hint actually targets, with the target letter inside it --
-// replaces the old "S⁴" superscript that used to live in the charge
-// meter's own action button (spy-charge.js keeps a plain ↺ there now).
-// Twinkles once the moment the setter's own typed letter at that
-// position starts matching the hint.
-function updateDraftHintStars(row, state, role) {
-  if (role !== "setter" || !row?.__tiles) return;
-
-  const hint = state.powers?.spyCharge?.hint;
-  const hasHint =
-    !!hint?.letter &&
-    Number.isInteger(hint.position) &&
-    hint.position >= 0 &&
-    hint.position < 5;
-
-  const hintLetter = hasHint ? String(hint.letter).toUpperCase() : null;
-  const draft = (state.setterDraft || "").toUpperCase();
-
-  row.__tiles.forEach((tile, i) => {
-    const star = tile.__hintStar;
-    if (!star) return;
-
-    const isHintTile = hasHint && i === hint.position;
-    star.classList.toggle("hidden", !isHintTile);
-
-    if (!isHintTile) {
-      tile.classList.remove("draft-tile-hint-lit");
-      tile.__hintMatched = false;
-      return;
-    }
-
-    const letterEl = star.querySelector(".draft-tile-hint-star-letter");
-    if (letterEl) letterEl.textContent = hintLetter;
-
-    // Only re-trigger the twinkle on a genuine off->on transition (not
-    // every render while the letter stays put), same "was it different
-    // last render" pattern used for every other one-shot FX class here.
-    const matched = draft[i] === hintLetter;
-    const wasMatched = tile.__hintMatched;
-    tile.__hintMatched = matched;
-
-    tile.classList.toggle("draft-tile-hint-lit", matched);
-
-    if (matched && !wasMatched) {
-      star.classList.remove("draft-tile-hint-twinkle");
-      void star.offsetWidth;
-      star.classList.add("draft-tile-hint-twinkle");
-    }
-  });
-}
 
 function updateDraftRow(row, word, className, state) {
   const frozen =
