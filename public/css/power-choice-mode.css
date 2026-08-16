@@ -112,23 +112,33 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
   color: rgba(220, 239, 255, .72);
 }
 
+/* Positioned over the meter bar itself (see .pc-meter-wrap) instead of
+   taking its own row above it, so the count and the bar read as one
+   element instead of two things a reader has to reconcile separately. */
 .pc-charge-value {
-  grid-column: 1 / -1;
-  display: inline-flex;
-  align-items: baseline;
-  justify-self: end;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 3px;
-  margin-top: -3px;
-  color: rgba(222, 239, 255, .62);
-  font-size: 9px;
+  color: rgba(255, 255, 255, .88);
+  font-size: 8px;
   font-weight: 800;
   letter-spacing: .05em;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 0 5px rgba(0, 0, 0, .85);
 }
 
 .pc-charge-value strong {
-  color: #f5fbff;
-  font-size: 17px;
+  color: #fff;
+  font-size: 11px;
   line-height: 1;
+}
+
+.pc-meter-wrap {
+  position: relative;
+  grid-column: 1 / -1;
 }
 
 /* minmax()'s floor is a hard minimum a grid track never shrinks below --
@@ -534,24 +544,18 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
   pointer-events: none;
 }
 
+/* Same look as a normal "not in secret" key (.key-gray in components.css) --
+   an eliminated letter is just a letter the player now knows is absent, so
+   it shouldn't read as a visually distinct/special state on the keyboard. */
 .pc-key-eliminated {
-  position: relative;
-  opacity: .30 !important;
-  filter: grayscale(1) !important;
+  background: #0a0b0d !important;
+  color: #565b63 !important;
+  border-color: #000000aa !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    inset 0 -2px 4px rgba(0,0,0,.6) !important;
+  opacity: 1 !important;
   cursor: not-allowed !important;
-}
-
-.pc-key-eliminated::after {
-  content: "×";
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: #ff7380;
-  font-size: 23px;
-  font-weight: 950;
-  text-shadow: 0 1px 3px #000;
-  pointer-events: none;
 }
 
 /* One connected bonus target: blue star + position inside a shared outline. */
@@ -587,13 +591,37 @@ body.power-choice-mode #setterBonusTargetV9.pc-bonus-target-unified {
   gap: 4px !important;
   width: max-content !important;
   max-width: calc(100% - 12px);
-  margin: 0 auto 6px !important;
+  /* This now lives inline in the #setterDecisionMeta flex row alongside the
+     stars and Keep/New box (see ensureBonusTarget() in power-choice-mode.js)
+     -- the auto side margins this rule used to need for self-centering as a
+     standalone block above the draft row would otherwise eat the row's free
+     space and shove this away from SetterRemainingBox instead of sitting
+     right next to it. */
+  margin: 0 !important;
   padding: 0 !important;
   overflow: hidden;
   border: 0 !important;
   border-radius: 8px !important;
   background: linear-gradient(180deg, rgba(17, 29, 43, .98), rgba(7, 13, 21, .98)) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, .22) !important;
+}
+
+/* The current draft already has the hinted letter in the hinted spot --
+   the pill visibly celebrates so the setter notices the bonus is locked
+   in without having to re-read the letter/position text. */
+body.power-choice-mode #setterBonusTargetV9.pc-bonus-target-unified.pc-bonus-satisfied {
+  animation: pcBonusDance .5s ease-in-out;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, .22) !important,
+    0 0 14px rgba(97, 220, 255, .55);
+}
+
+@keyframes pcBonusDance {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  20% { transform: translateY(-3px) rotate(-6deg); }
+  40% { transform: translateY(0) rotate(5deg); }
+  60% { transform: translateY(-2px) rotate(-4deg); }
+  80% { transform: translateY(0) rotate(2deg); }
 }
 
 body.power-choice-mode #setterBonusTargetV9.pc-bonus-target-unified.hidden {
@@ -842,8 +870,8 @@ body.power-choice-mode #draftSetter .history-tile.pc-bonus-hint-tile {
 }
 
 .pc-modal-card {
-  width: min(920px, 96vw);
-  padding: 25px;
+  width: min(760px, 96vw);
+  padding: 22px;
   border: 1px solid rgba(255, 255, 255, .17);
   border-radius: 22px;
   background: linear-gradient(145deg, #151d2a, #090d14);
@@ -875,7 +903,7 @@ body.power-choice-mode #draftSetter .history-tile.pc-bonus-hint-tile {
 .pc-card-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
 }
 
 .pc-choice-card {
@@ -883,10 +911,10 @@ body.power-choice-mode #draftSetter .history-tile.pc-bonus-hint-tile {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 280px;
-  padding: 20px 16px 16px;
+  min-height: 200px;
+  padding: 14px 12px 12px;
   border: 1px solid rgba(255, 255, 255, .16);
-  border-radius: 17px;
+  border-radius: 15px;
   background: linear-gradient(180deg, rgba(255, 255, 255, .075), rgba(255, 255, 255, .025));
   color: #fff;
   cursor: pointer;
@@ -906,17 +934,37 @@ body.power-choice-mode #draftSetter .history-tile.pc-bonus-hint-tile {
   opacity: .55;
 }
 
+.pc-choice-card.pc-choice-picked {
+  opacity: 1;
+  border-color: #ffe278;
+  box-shadow: 0 0 0 2px rgba(255, 226, 120, .55), 0 14px 34px rgba(0, 0, 0, .36);
+  animation: pcChoicePicked .2s ease-out;
+}
+
+@keyframes pcChoicePicked {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
 .pc-card-icon {
   display: grid;
   place-items: center;
-  width: 72px;
-  height: 72px;
-  margin-bottom: 15px;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 10px;
   border: 1px solid rgba(255, 255, 255, .18);
-  border-radius: 20px;
+  border-radius: 15px;
   background: rgba(255, 255, 255, .08);
-  font-size: 30px;
+  font-size: 22px;
   font-weight: 950;
+}
+
+.pc-card-icon svg {
+  width: 26px;
+  height: 26px;
+  color: #ffe278;
+  overflow: visible;
 }
 
 .pc-tier {
@@ -933,23 +981,23 @@ body.power-choice-mode #draftSetter .history-tile.pc-bonus-hint-tile {
 }
 
 .pc-choice-card strong {
-  font-size: 17px;
+  font-size: 14px;
   text-align: center;
 }
 
 .pc-card-desc {
-  margin-top: 9px;
+  margin-top: 6px;
   color: rgba(255, 255, 255, .67);
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 11px;
+  line-height: 1.4;
   text-align: center;
 }
 
 .pc-card-pick {
   margin-top: auto;
-  padding-top: 18px;
+  padding-top: 12px;
   color: #ffe278;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 950;
   letter-spacing: .14em;
 }
@@ -1043,8 +1091,19 @@ html[data-theme-mode="light"] .pc-charge-details p {
   }
 
   .pc-current-main {
-    display: grid;
-    gap: 3px;
+    flex-wrap: nowrap;
+    gap: 5px 8px;
+  }
+
+  .pc-current-main strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pc-current-expand {
+    flex: none;
   }
 
   .pc-spy-award-capsule {
@@ -1076,14 +1135,19 @@ html[data-theme-mode="light"] .pc-charge-details p {
   }
 
   .pc-choice-card {
-    min-height: 170px;
+    min-height: 140px;
   }
 
   .pc-card-icon {
-    width: 54px;
-    height: 54px;
-    margin-bottom: 9px;
-    font-size: 23px;
+    width: 46px;
+    height: 46px;
+    margin-bottom: 8px;
+    font-size: 19px;
+  }
+
+  .pc-card-icon svg {
+    width: 22px;
+    height: 22px;
   }
 
   .pc-reward-popup {

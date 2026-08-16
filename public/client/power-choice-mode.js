@@ -124,8 +124,10 @@
     container.innerHTML = `<section class="pc-side-panel pc-spy-panel">
       <button type="button" id="pcSpyChargeCard" class="pc-charge-card" aria-expanded="${detailsOpen}">
         <span class="pc-charge-label">SPYOMETER</span>
-        <span class="pc-charge-value"><strong>${total}</strong><span>/ ${SPY_MAX}</span></span>
-        ${meterMarkup(total, SPY_MAX, [5, 8, 15], "pcSpyMeter", "pc-spy-meter")}
+        <div class="pc-meter-wrap">
+          ${meterMarkup(total, SPY_MAX, [5, 8, 15], "pcSpyMeter", "pc-spy-meter")}
+          <span class="pc-charge-value"><strong>${total}</strong><span>/ ${SPY_MAX}</span></span>
+        </div>
         <span class="pc-charge-click-copy">Click for rules</span>
       </button>
       <div class="pc-charge-details${detailsOpen ? " is-open" : ""}">
@@ -320,14 +322,24 @@
     return container?.__draftRows?.draft || container?.querySelector(".history-row.guesser-draft");
   }
 
-  function currentDraftWord() {
-    const row = currentDraftRow();
+  function draftWordFromRow(row) {
     const tiles = row?.__tiles || [...(row?.querySelectorAll(".history-tile") || [])];
     if (!tiles?.length) return "";
     return tiles.slice(0, 5).map(tile => {
       const text = String(tile?.textContent || "").trim().toUpperCase();
       return /^[A-Z]$/.test(text) ? text : " ";
     }).join("");
+  }
+
+  function currentDraftWord() {
+    return draftWordFromRow(currentDraftRow());
+  }
+
+  function currentSetterDraftWord() {
+    const draft = byId("draftSetter");
+    const row = draft?.__draftRows?.draft ||
+      draft?.querySelector(".history-row.setter-draft, .history-row.ghost-secret");
+    return draftWordFromRow(row);
   }
 
   function hintSpecForQuest(quest, draftWord = currentDraftWord()) {
@@ -643,7 +655,13 @@
     );
 
     target.classList.toggle("hidden", !show);
-    if (!show) return;
+    if (!show) {
+      target.classList.remove("pc-bonus-satisfied");
+      return;
+    }
+
+    const satisfied = currentSetterDraftWord()[positionIndex] === letter;
+    target.classList.toggle("pc-bonus-satisfied", satisfied);
 
     const positionLabel = ordinal(positionIndex + 1);
     const signature = `${letter}:${positionIndex}`;
@@ -711,11 +729,16 @@
     return modal;
   }
 
-  function optionIcon(option) {
+  function optionIconMarkup(option) {
+    const icons = window.PC_REWARD_ICONS;
     if (option?.kind === "power") {
-      return window.POWER_METADATA?.[option.powerId]?.emoji || option.icon || "⚡";
+      const svg = icons?.power?.[option.powerId];
+      if (svg) return svg;
+      return esc(window.POWER_METADATA?.[option.powerId]?.emoji || option.icon || "⚡");
     }
-    return option?.icon || "◆";
+    const svg = icons?.fixed?.[option?.id];
+    if (svg) return svg;
+    return esc(option?.icon || "◆");
   }
 
   function showChoice() {
@@ -724,8 +747,16 @@
     if (!isMode() || !pending || pending.ownerUserId !== me()) {
       modal.classList.remove("is-open");
       modal.dataset.choiceId = "";
+      modal.dataset.choosing = "";
       return;
     }
+    // Set the instant the card is clicked, below -- while it's set, this
+    // skips rebuilding/reopening the modal for the SAME still-pending
+    // choice while the server round trip that clears it is in flight, so
+    // the card the player picked doesn't flash back to an enabled,
+    // unpicked-looking state before the modal closes.
+    if (modal.dataset.choosing === "true" && modal.dataset.choiceId === pending.id) return;
+    modal.dataset.choosing = "";
     if (modal.dataset.choiceId === pending.id && modal.classList.contains("is-open")) return;
     modal.dataset.choiceId = pending.id;
     modal.querySelector("h2").textContent = pending.title || "Choose a reward";
@@ -736,7 +767,7 @@
         ? `<span class="pc-tier">TIER ${option.tier || window.POWER_TIERS?.[option.powerId]?.tier || 1}</span>`
         : "";
       return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}">
-        <span class="pc-card-icon">${esc(optionIcon(option))}</span>
+        <span class="pc-card-icon">${optionIconMarkup(option)}</span>
         ${tier}
         <strong>${esc(option.title)}</strong>
         <span class="pc-card-desc">${esc(option.description)}</span>
@@ -747,12 +778,22 @@
       button.addEventListener("click", () => {
         if (button.disabled) return;
         grid.querySelectorAll("button").forEach(item => { item.disabled = true; });
+        button.classList.add("pc-choice-picked");
+        // The server already applies the effect synchronously (see
+        // applyChoice() in powerChoiceServer.js), but closing the modal
+        // only once its state update round-trips back reads as a lag
+        // between clicking and anything happening. Closing right away
+        // instead makes the choice itself read as the activation.
+        modal.dataset.choosing = "true";
         window.sendGameAction?.({
           type: "POWER_CHOICE_SELECT",
           userId: me(),
           choiceId: pending.id,
           optionId: button.dataset.optionId
         });
+        setTimeout(() => {
+          if (modal.dataset.choiceId === pending.id) modal.classList.remove("is-open");
+        }, 200);
       });
     });
     modal.classList.add("is-open");

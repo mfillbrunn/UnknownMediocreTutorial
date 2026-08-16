@@ -413,12 +413,19 @@
 #setterScreen .setter-sidebar-toggle {
   position: absolute;
   left: calc(var(--setter-sidebar-width) + 3px);
-  top: 50%;
+  /* A fixed offset from the top instead of vertically centered on the
+     whole workspace -- centering put it wherever the midpoint of history
+     + decision area happened to land, which on a short viewport (or
+     early in a round, before much feedback history exists) could be low
+     enough to sit right on top of the Keep/New row instead of clear of
+     it. A fixed distance from the top always lands in the feedback
+     history area above that, regardless of viewport height. */
+  top: 76px;
   z-index: 80;
   width: 38px;
   height: 76px;
   padding: 0;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, 0);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -503,7 +510,7 @@
 
 #setterScreen.setter-sidebar-collapsed .setter-sidebar-toggle {
   left: 1px;
-  transform: translate(0, -50%);
+  transform: translate(0, 0);
 }
 
 #setterScreen.setter-sidebar-collapsed .setter-sidebar-swipe-edge {
