@@ -1,0 +1,357 @@
+/* competitive-wordle-fixes-v2
+   Final UI/layer overrides. Loaded after gameplay-systems-v10.css. */
+
+/* ------------------------------------------------------------------
+   Spy bonus hint: gold +star, one cohesive blue-gray position pill.
+   ------------------------------------------------------------------ */
+#setterBonusTargetV9 {
+  gap: 8px !important;
+}
+
+#setterBonusTargetV9 .setter-bonus-copy-v9,
+#setterBonusTargetV9 .setter-bonus-boxes-v9,
+#setterBonusTargetV9 .setter-bonus-box-v9,
+#setterBonusTargetV9 .setter-bonus-boxes-v10,
+#setterBonusTargetV9 .setter-bonus-box-v10 {
+  display: none !important;
+}
+
+#setterBonusTargetV9 .setter-bonus-plus-v10 {
+  min-width: 31px;
+  height: 28px;
+  padding: 0 6px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1px solid rgba(250, 204, 21, 0.62);
+  border-radius: 9px;
+  background: linear-gradient(145deg, rgba(113, 63, 18, 0.42), rgba(24, 20, 8, 0.94));
+  color: #fde047 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 0 11px rgba(250, 204, 21, 0.18);
+  font-size: 16px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  text-shadow: 0 0 7px rgba(250, 204, 21, 0.34) !important;
+}
+
+#setterBonusTargetV9 .setter-bonus-position-v10 {
+  min-height: 28px;
+  padding: 3px 10px 3px 4px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  box-sizing: border-box;
+  border: 1px solid rgba(125, 211, 252, 0.50);
+  border-radius: 10px;
+  background:
+    linear-gradient(145deg, rgba(30, 41, 59, 0.98), rgba(12, 74, 110, 0.54));
+  color: #e2e8f0 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 11px rgba(56, 189, 248, 0.14);
+  font-size: 11px !important;
+  font-weight: 820 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.015em !important;
+  white-space: nowrap;
+  text-shadow: none !important;
+}
+
+#setterBonusTargetV9 .setter-bonus-position-v10 strong,
+#setterBonusTargetV9 .setter-bonus-letter-chip-v2 {
+  width: 21px;
+  min-width: 21px;
+  height: 21px;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1.5px solid #7dd3fc;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #f0f9ff, #bae6fd);
+  color: #083344 !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.74),
+    0 1px 4px rgba(2, 6, 23, 0.38);
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  text-shadow: none !important;
+}
+
+#setterBonusTargetV9 .setter-bonus-position-copy-v2 {
+  color: #dbeafe;
+  font-size: 11px;
+  font-weight: 820;
+  line-height: 1;
+}
+
+/* Readable target letter inside the outlined draft tile. The span itself
+   contains no text, so tile.textContent remains the player's actual letter. */
+#draftSetter .history-tile.setter-bonus-target-tile-v10,
+#draftSetter .history-tile.setter-bonus-target-tile-v2 {
+  position: relative !important;
+  overflow: visible !important;
+  outline: 2px solid rgba(56, 189, 248, 0.88) !important;
+  outline-offset: 2px !important;
+  box-shadow:
+    0 0 0 1px rgba(125, 211, 252, 0.18),
+    0 0 11px rgba(56, 189, 248, 0.32) !important;
+}
+
+#draftSetter .setter-target-corner-letter-v2 {
+  position: absolute;
+  z-index: 14;
+  top: 7px;
+  right: 7px;
+  width: 20px;
+  height: 20px;
+  display: grid !important;
+  place-items: center;
+  box-sizing: border-box;
+  border: 2px solid #38bdf8;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #f0f9ff, #bae6fd);
+  box-shadow:
+    0 0 0 2px rgba(8, 47, 73, 0.92),
+    0 2px 7px rgba(2, 6, 23, 0.48),
+    0 0 9px rgba(56, 189, 248, 0.50);
+  pointer-events: none;
+}
+
+#draftSetter .setter-target-corner-letter-v2::before {
+  content: attr(data-letter);
+  display: block;
+  color: #083344;
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+/* ------------------------------------------------------------------
+   Inspector Quest: hide only the direct Field Report bar above the draft.
+   The instruction panel remains visible and becomes the rules action.
+   ------------------------------------------------------------------ */
+#questInfoBar.quest-info-hidden-v2 {
+  display: none !important;
+}
+
+#guesserQuestRequirement.quest-rules-trigger-v2:not(.hidden) {
+  position: relative;
+  min-height: 38px;
+  padding: 8px 58px 8px 10px !important;
+  box-sizing: border-box;
+  border: 1px solid rgba(96, 165, 250, 0.40);
+  border-radius: 10px;
+  background:
+    linear-gradient(145deg, rgba(37, 99, 235, 0.13), rgba(15, 23, 42, 0.70));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 13px rgba(0, 0, 0, 0.16);
+  text-align: left !important;
+  cursor: pointer;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 130ms ease,
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+
+#guesserQuestRequirement.quest-rules-trigger-v2:not(.hidden):hover {
+  border-color: rgba(125, 211, 252, 0.70);
+  background:
+    linear-gradient(145deg, rgba(37, 99, 235, 0.20), rgba(15, 23, 42, 0.76));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 0 14px rgba(56, 189, 248, 0.14);
+}
+
+#guesserQuestRequirement.quest-rules-trigger-v2:not(.hidden):active {
+  transform: translateY(1px);
+}
+
+#guesserQuestRequirement.quest-rules-trigger-v2:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 2px;
+}
+
+#guesserQuestRequirement.quest-rules-trigger-v2.is-qualified {
+  border-color: rgba(52, 211, 153, 0.70);
+  background:
+    linear-gradient(145deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.72));
+}
+
+#guesserQuestRequirement.quest-rules-field-report-v2 .quest-requirement-line-v10 {
+  display: block;
+  min-width: 0;
+  color: inherit;
+  font-size: 0 !important;
+  line-height: 1.4;
+}
+
+#guesserQuestRequirement.quest-rules-field-report-v2
+  .quest-requirement-line-v10[data-rule-copy-v2]::before {
+  content: attr(data-rule-copy-v2);
+  display: inline;
+  color: inherit;
+  font-size: clamp(10px, 2.5vw, 12px);
+  font-weight: 720;
+  line-height: 1.4;
+}
+
+#guesserQuestRequirement .quest-rules-affordance-v2 {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: 8px;
+  min-width: 40px;
+  padding: 4px 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1px solid rgba(125, 211, 252, 0.44);
+  border-radius: 999px;
+  background: rgba(14, 116, 144, 0.22);
+  color: #bae6fd;
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+#guesserQuestRequirement .quest-rules-affordance-v2::after {
+  content: "›";
+  margin-left: 3px;
+  font-size: 12px;
+  line-height: 0.7;
+}
+
+#guesserQuestRequirement .quest-praise-v10 {
+  margin-left: 0 !important;
+}
+
+/* ------------------------------------------------------------------
+   Animation safety and stacking.
+   ------------------------------------------------------------------ */
+#spyChargeAwardBackdrop,
+.spy-charge-award-backdrop,
+#spyChargeAwardBackdrop.show,
+.spy-charge-award-backdrop.show {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  pointer-events: none !important;
+}
+
+/* Keep the secret-lock announcement above Quest flight particles. */
+#bigAnnouncePopup.big-announce,
+.big-announce {
+  z-index: 100050 !important;
+}
+
+#bigAnnouncePopup .big-announce-card {
+  position: relative;
+  z-index: 2;
+}
+
+.quest-charge-flight-bolt {
+  z-index: 100000 !important;
+}
+
+html[data-theme-mode="light"] #setterBonusTargetV9 .setter-bonus-position-v10 {
+  border-color: rgba(2, 132, 199, 0.38);
+  background: linear-gradient(145deg, #f8fafc, #e0f2fe);
+  color: #334155 !important;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.10);
+}
+
+html[data-theme-mode="light"] #setterBonusTargetV9 .setter-bonus-position-copy-v2 {
+  color: #334155;
+}
+
+html[data-theme-mode="light"] #guesserQuestRequirement.quest-rules-trigger-v2:not(.hidden) {
+  border-color: rgba(37, 99, 235, 0.32);
+  background: linear-gradient(145deg, rgba(219, 234, 254, 0.96), rgba(248, 250, 252, 0.98));
+  color: #1e3a5f;
+  box-shadow: 0 3px 11px rgba(15, 23, 42, 0.10);
+}
+
+html[data-theme-mode="light"] #guesserQuestRequirement .quest-rules-affordance-v2 {
+  border-color: rgba(2, 132, 199, 0.40);
+  background: rgba(186, 230, 253, 0.62);
+  color: #075985;
+}
+
+@media (max-width: 600px) {
+  #setterBonusTargetV9 {
+    gap: 6px !important;
+  }
+
+  #setterBonusTargetV9 .setter-bonus-plus-v10 {
+    min-width: 28px;
+    height: 25px;
+    padding: 0 5px;
+    font-size: 14px !important;
+  }
+
+  #setterBonusTargetV9 .setter-bonus-position-v10 {
+    min-height: 25px;
+    padding: 2px 8px 2px 3px !important;
+    gap: 5px !important;
+    font-size: 10px !important;
+  }
+
+  #setterBonusTargetV9 .setter-bonus-position-v10 strong,
+  #setterBonusTargetV9 .setter-bonus-letter-chip-v2 {
+    width: 19px;
+    min-width: 19px;
+    height: 19px;
+    font-size: 11px !important;
+  }
+
+  #setterBonusTargetV9 .setter-bonus-position-copy-v2 {
+    font-size: 10px;
+  }
+
+  #draftSetter .setter-target-corner-letter-v2 {
+    top: 5px;
+    right: 5px;
+    width: 17px;
+    height: 17px;
+    border-width: 1.5px;
+  }
+
+  #draftSetter .setter-target-corner-letter-v2::before {
+    font-size: 8px;
+  }
+
+  #guesserQuestRequirement.quest-rules-trigger-v2:not(.hidden) {
+    min-height: 36px;
+    padding: 7px 50px 7px 8px !important;
+  }
+
+  #guesserQuestRequirement .quest-rules-affordance-v2 {
+    right: 6px;
+    min-width: 35px;
+    padding: 4px 6px;
+    font-size: 7px;
+  }
+}

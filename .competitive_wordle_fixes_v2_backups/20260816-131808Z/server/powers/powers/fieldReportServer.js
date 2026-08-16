@@ -123,15 +123,6 @@ function generateConditions() {
     if (!c) continue;
     const key = optionKey(c);
     if (seen.has(key)) continue;
-    // competitive-wordle-fixes-v2: firstLastSame may overlap with either endpoint rule,
-    // but not with startsWith and endsWith in the same three-rule set.
-    const selectedTypes = new Set(conditions.map(condition => condition.type));
-    selectedTypes.add(c.type);
-    if (
-      selectedTypes.has("firstLastSame") &&
-      selectedTypes.has("startsWith") &&
-      selectedTypes.has("endsWith")
-    ) continue;
     seen.add(key);
     conditions.push(c);
   }
