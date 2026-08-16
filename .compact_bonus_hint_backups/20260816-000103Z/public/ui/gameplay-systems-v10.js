@@ -336,13 +336,7 @@
 
     const row = draft?.__draftRows?.draft || draft?.querySelector(".history-row.setter-draft, .history-row.ghost-secret");
     row?.querySelectorAll(".history-tile").forEach(tile => {
-      tile.classList.remove(
-        "setter-bonus-target-tile-v10",
-        "is-correct",
-        "draft-tile-hint-slot",
-        "draft-tile-hint-slot-matched",
-        "draft-tile-hint-slot-shake"
-      );
+      tile.classList.remove("setter-bonus-target-tile-v10", "is-correct");
       tile.removeAttribute("data-bonus-letter");
       tile.removeAttribute("data-target-letter");
     });
@@ -394,21 +388,16 @@
     }
 
     const letter = cleanWord(hint.letter).slice(0, 1);
-    const position = hint.position + 1;
-    const positionLabel =
-      ["1st", "2nd", "3rd", "4th", "5th"][hint.position] || `${position}th`;
+    const boxes = Array.from({ length: 5 }, (_, index) => {
+      const active = index === hint.position;
+      return `<span class="setter-bonus-box-v10${active ? " is-target" : ""}">${active ? letter : ""}</span>`;
+    }).join("");
     const signature = `${letter}:${hint.position}`;
-    if (
-      target.dataset.signature !== signature ||
-      !target.querySelector(".setter-bonus-position-v10")
-    ) {
+    if (target.dataset.signature !== signature) {
       target.dataset.signature = signature;
-      target.innerHTML =
-        `<span class="setter-bonus-plus-v10" aria-hidden="true">+★</span>` +
-        `<span class="setter-bonus-position-v10"><strong>${letter}</strong> in ${positionLabel}</span>`;
+      target.innerHTML = `<span class="setter-bonus-plus-v10" aria-hidden="true">+★</span><span class="setter-bonus-boxes-v10" aria-hidden="true">${boxes}</span>`;
     }
-    target.setAttribute("aria-label", `Bonus star: ${letter} in ${positionLabel}`);
-    // compact-bonus-hint-v1
+    target.setAttribute("aria-label", `Bonus star: put ${letter} in box ${hint.position + 1}`);
 
     const row = byId("draftSetter")?.__draftRows?.draft ||
       document.querySelector("#draftSetter .history-row.setter-draft, #draftSetter .history-row.ghost-secret");

@@ -229,7 +229,7 @@
     // (see updateHintSlotTile below for where the letter now actually
     // shows: the draft tile itself, once typed).
     if (targetLabel) {
-      targetLabel.textContent = hasHint ? `${hintLetter} in ${ordinal(hint.position + 1)}` : ""; // compact-bonus-hint-v1
+      targetLabel.textContent = hasHint ? `${hintLetter} ${ordinal(hint.position + 1)}` : "";
     }
 
     const draft = String(window.state?.setterDraft || "")

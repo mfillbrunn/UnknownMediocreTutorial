@@ -131,16 +131,22 @@
 
     if (!show) return;
 
-    const letter = String(hint.letter).toUpperCase().slice(0, 1);
+    const letter = String(hint.letter).toUpperCase();
     const position = hint.position + 1;
-    const positionLabel =
-      ["1st", "2nd", "3rd", "4th", "5th"][hint.position] || `${position}th`;
+    const boxes = Array.from({ length: 5 }, (_, index) => {
+      const active = index === hint.position;
+      return `<span class="setter-bonus-box-v9${active ? " is-target" : ""}">${active ? letter : ""}</span>`;
+    }).join("");
+
     target.innerHTML = `
-      <span class="setter-bonus-plus-v10" aria-hidden="true">+★</span>
-      <span class="setter-bonus-position-v10"><strong>${letter}</strong> in ${positionLabel}</span>
+      <span class="setter-bonus-star-v9" aria-hidden="true">+★</span>
+      <span class="setter-bonus-copy-v9">
+        <strong>Bonus star</strong>
+        <span>Put <b>${letter}</b> in box <b>${position}</b></span>
+      </span>
+      <span class="setter-bonus-boxes-v9" aria-hidden="true">${boxes}</span>
     `;
-    target.setAttribute("aria-label", `Bonus star: ${letter} in ${positionLabel}`);
-    // compact-bonus-hint-v1
+    target.setAttribute("aria-label", `Bonus star: put ${letter} in box ${position}`);
 
     const action = byId("spyChargeActionBtn");
     const actionLetter = byId("spyChargeHintLetter");
