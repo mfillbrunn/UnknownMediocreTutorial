@@ -17,7 +17,11 @@ const { randomPool, tierFor } = require("./powerTiers");
 
 const MODE = "powerChoice";
 const SPY_THRESHOLDS = [5, 8, 15];
-const INSPECTOR_THRESHOLDS = [2, 3, 5];
+// Quests no longer build toward a shared points meter -- each quest met
+// grants a reward immediately, cycling through these same three tiers
+// (fixedOptions/threePowerOptions below dispatch on these threshold
+// numbers, unchanged from when they were meter milestones).
+const INSPECTOR_REWARD_SEQUENCE = [2, 3, 5];
 const VOWELS = new Set("AEIOU");
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const QUEST_TYPES = [
@@ -133,12 +137,12 @@ function freshPowerChoice(roundIndex) {
       usedPowerIds: []
     },
     inspector: {
-      points: 0,
       queuedMilestones: [],
       claimedMilestones: [],
       usedPowerIds: [],
       currentQuest: null,
-      nextQuest: null,
+      questTurnsElapsed: 0,
+      questCompletions: 0,
       attempts: 0,
       successes: 0,
       lastResult: null
@@ -413,18 +417,17 @@ function initializeRound(state) {
   pc.version = 2;
   pc.spy ||= { queuedMilestones: [], claimedMilestones: [], usedPowerIds: [] };
   pc.inspector ||= {
-    points: 0,
     queuedMilestones: [],
     claimedMilestones: [],
     usedPowerIds: [],
     currentQuest: null,
-    nextQuest: null,
+    questTurnsElapsed: 0,
+    questCompletions: 0,
     attempts: 0,
     successes: 0,
     lastResult: null
   };
   pc.inspector.currentQuest ||= makeQuest();
-  pc.inspector.nextQuest ||= makeQuest(pc.inspector.currentQuest.type);
   pc.eliminatedLetters ||= [];
   pc.bonusTimeTurnKeys ||= [];
 
@@ -630,7 +633,7 @@ function buildChoice(state, role, threshold, owner) {
     title:
       role === "setter"
         ? `Spy reward · ${threshold} stars`
-        : `Inspector reward · ${threshold} quest points`,
+        : "Inspector reward · Quest complete",
     subtitle: "Choose one card. It activates immediately and cannot be saved.",
     options
   };
@@ -1043,33 +1046,42 @@ function evaluateInspectorGuess(state, guess, roomId, io) {
     quest?.type === "FIELDREPORT"
       ? evaluateFieldReportConditions(quest, guess)
       : [];
-  const before = inspector.points;
   inspector.attempts += 1;
-  if (success) {
-    inspector.points = Math.min(5, inspector.points + 1);
-    inspector.successes += 1;
-  }
-  const after = inspector.points;
+  if (success) inspector.successes += 1;
+
   inspector.lastResult = {
     questId: quest?.id,
     title: quest?.title,
     description: quest?.description,
     success,
-    before,
-    after,
     conditions,
     guess: normalizeWord(guess),
     at: Date.now()
   };
-  queueCrossed(
-    before,
-    after,
-    INSPECTOR_THRESHOLDS,
-    inspector.queuedMilestones,
-    inspector.claimedMilestones
-  );
-  inspector.currentQuest = inspector.nextQuest || makeQuest();
-  inspector.nextQuest = makeQuest(inspector.currentQuest.type);
+
+  // A quest no longer builds toward a shared points meter -- meeting it
+  // grants a reward immediately, cycling through the same three reward
+  // tiers the old meter unlocked at 2/3/5 points (fixedOptions/
+  // threePowerOptions below dispatch on these same threshold numbers, so
+  // reusing them here keeps every existing reward card as-is).
+  if (success) {
+    inspector.questCompletions += 1;
+    const tier = INSPECTOR_REWARD_SEQUENCE[
+      (inspector.questCompletions - 1) % INSPECTOR_REWARD_SEQUENCE.length
+    ];
+    inspector.queuedMilestones.push(tier);
+  }
+
+  // A fresh quest replaces the current one the moment it's met (holding a
+  // completed quest around for its remaining turns would just be dead
+  // weight), or after 2 full Spy-secret+Inspector-guess turns elapse,
+  // whichever comes first.
+  inspector.questTurnsElapsed += 1;
+  if (success || inspector.questTurnsElapsed >= 2) {
+    inspector.currentQuest = makeQuest(quest?.type);
+    inspector.questTurnsElapsed = 0;
+  }
+
   if (io && roomId) {
     io.to(roomId).emit("powerChoiceQuestResult", inspector.lastResult);
   }

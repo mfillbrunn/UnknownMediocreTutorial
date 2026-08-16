@@ -52,8 +52,7 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
   color: #f4f8ff;
 }
 
-.pc-charge-card,
-.pc-inspector-charge {
+.pc-charge-card {
   width: 100%;
   box-sizing: border-box;
   padding: 12px 13px 11px;
@@ -69,13 +68,23 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
 
 .pc-charge-card {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 7px 10px;
   appearance: none;
   text-align: left;
   cursor: pointer;
   transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+/* A grid track defaults to never shrinking below its content's own
+   minimum size -- "SPYOMETER"/"QUESTOMETER" is one unbreakable word, so
+   without this the label alone could force the whole card (and anything
+   right-aligned across it, like .pc-charge-click-copy) wider than the
+   card's own box, the actual cause of the card looking squeezed/clipped
+   in a narrow sidebar. */
+.pc-charge-card > * {
+  min-width: 0;
 }
 
 .pc-charge-card:hover,
@@ -88,18 +97,28 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
   outline: none;
 }
 
+/* Full width of its own row rather than sharing one with .pc-charge-value
+   -- "SPYOMETER"/"QUESTOMETER" is one unbreakable word that needed more
+   room than a 2-column split left it in a sidebar this narrow, forcing
+   it to wrap across 2-3 lines and push the card taller than the space
+   available for it (see .pc-charge-card > * min-width:0 above for the
+   matching horizontal-overflow half of this same fix). */
 .pc-charge-label {
-  font-size: 10px;
+  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
+  font-size: 9px;
   font-weight: 900;
-  letter-spacing: .14em;
+  letter-spacing: .06em;
   color: rgba(220, 239, 255, .72);
 }
 
 .pc-charge-value {
+  grid-column: 1 / -1;
   display: inline-flex;
   align-items: baseline;
-  justify-content: flex-end;
+  justify-self: end;
   gap: 3px;
+  margin-top: -3px;
   color: rgba(222, 239, 255, .62);
   font-size: 9px;
   font-weight: 800;
@@ -112,11 +131,21 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
   line-height: 1;
 }
 
+/* minmax()'s floor is a hard minimum a grid track never shrinks below --
+   at 15 segments, the previous 6px floor + 3px gaps demanded ~132px
+   before this box has any padding, well past what the setter sidebar
+   actually has (as little as ~90px at the narrowest widths this app
+   supports). The grid doesn't clip that overflow, it just pushes the
+   whole card wider than its own visible box, which was cutting off
+   .pc-charge-click-copy (grid-column:1/-1, justify-self:end -- it was
+   rendering past the card's right edge). A 2px floor and 1px gaps keep
+   15 segments comfortably under the narrowest real sidebar width; 1fr
+   still grows each segment to fill whatever's actually available. */
 .pc-segment-meter {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(var(--pc-segment-count, 15), minmax(6px, 1fr));
-  gap: 3px;
+  grid-template-columns: repeat(var(--pc-segment-count, 15), minmax(2px, 1fr));
+  gap: 1px;
   width: 100%;
   min-height: 20px;
   padding: 5px;
@@ -133,16 +162,12 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
   --pc-segment-count: 15;
 }
 
-.pc-inspector-meter {
-  --pc-segment-count: 5;
-}
-
 /* Color, not a line, marks a milestone segment now (see .is-milestone
    rules below) -- the old design drew a 1px tick beside it instead. */
 .pc-meter-segment {
   position: relative;
   height: 16px;
-  min-width: 6px;
+  min-width: 2px;
   border: 0;
   border-radius: 5px;
   background: rgba(215, 236, 248, .07);
@@ -153,10 +178,6 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
 .pc-meter-segment.is-filled {
   background: linear-gradient(180deg, #d9f4ff, #69c9ff);
   box-shadow: 0 0 8px rgba(90, 197, 255, .62);
-}
-
-.pc-inspector-meter .pc-meter-segment.is-filled {
-  background: linear-gradient(180deg, #effcff, #8ce3ff);
 }
 
 .pc-meter-segment.is-milestone {
@@ -241,44 +262,6 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
   border-radius: 999px;
   color: #8edcff;
   background: rgba(78, 177, 238, .10);
-}
-
-.pc-inspector-charge {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 7px 10px;
-}
-
-.pc-next-quest {
-  margin-top: 10px;
-  padding: 10px 11px;
-  border: 1px dashed rgba(161, 201, 226, .25);
-  border-radius: 11px;
-  background: rgba(255, 255, 255, .025);
-  color: rgba(230, 241, 248, .68);
-}
-
-.pc-next-kicker {
-  display: block;
-  margin-bottom: 5px;
-  color: rgba(122, 208, 255, .75);
-  font-size: 8px;
-  font-weight: 900;
-  letter-spacing: .15em;
-}
-
-.pc-next-quest p {
-  margin: 0;
-  font-size: 10px;
-  line-height: 1.42;
-}
-
-.pc-next-quest ul {
-  margin: 7px 0 0;
-  padding-left: 15px;
-  font-size: 9px;
-  line-height: 1.42;
 }
 
 .pc-choice-ready {
@@ -571,35 +554,6 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
   pointer-events: none;
 }
 
-.pc-quest-flight-orb {
-  position: fixed;
-  z-index: 2147482600;
-  display: grid;
-  place-items: center;
-  width: 35px;
-  height: 35px;
-  border: 1px solid rgba(177, 240, 255, .88);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 38% 28%, #eaffff, #55d7ff 34%, #123751 68%, #050b12 100%);
-  box-shadow:
-    0 0 0 5px rgba(75, 207, 255, .08),
-    0 0 25px rgba(62, 211, 255, .78);
-  color: #fff;
-  font-size: 16px;
-  pointer-events: none;
-}
-
-.pc-quest-flight-orb::after {
-  content: "";
-  position: absolute;
-  width: 90px;
-  height: 2px;
-  right: 26px;
-  background: linear-gradient(90deg, transparent, rgba(89, 218, 255, .68));
-  filter: blur(.5px);
-}
-
 /* One connected bonus target: blue star + position inside a shared outline. */
 body.power-choice-mode #setterBonusTargetV9 .setter-bonus-copy-v9,
 body.power-choice-mode #setterBonusTargetV9 .setter-bonus-boxes-v9,
@@ -700,13 +654,24 @@ body.power-choice-mode #setterBonusTargetV9 .setter-bonus-position-copy-v2 {
   letter-spacing: .02em !important;
 }
 
-/* The draft tile itself no longer carries any bonus-hint decoration --
-   the letter/position readout above the row (see .pc-bonus-target-unified)
-   is the only place this hint shows now. */
+/* Older tile-decoration mechanisms never draw a letter here anymore (the
+   letter/position readout, .pc-bonus-target-unified, is the only place
+   that shows) -- just make sure none of them can still draw an outline
+   either, since the one outline this tile gets is .pc-bonus-hint-tile
+   below, applied fresh by power-choice-mode.js's applyBonusHintTileOutline. */
 body.power-choice-mode #draftSetter .history-tile.setter-bonus-target-tile-v10,
 body.power-choice-mode #draftSetter .history-tile.setter-bonus-target-tile-v2 {
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* The draft tile at the hint's position -- same light blue as the star
+   readout above the row (.setter-bonus-plus-v10's #64c9ff), so the two
+   read as one hint. */
+body.power-choice-mode #draftSetter .history-tile.pc-bonus-hint-tile {
+  outline: 2px solid #64c9ff !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 10px rgba(100, 201, 255, .55) !important;
 }
 
 /* Small badge next to the collapsed sidebar's toggle button -- must stay
@@ -1056,8 +1021,6 @@ body.power-choice-mode #draftSetter .history-tile.setter-bonus-target-tile-v2 {
 
 html[data-theme-mode="light"] .pc-current-quest-card,
 html[data-theme-mode="light"] .pc-charge-card,
-html[data-theme-mode="light"] .pc-inspector-charge,
-html[data-theme-mode="light"] .pc-next-quest,
 html[data-theme-mode="light"] .pc-quest-guide {
   color: #10202e;
   background: linear-gradient(180deg, rgba(247, 252, 255, .98), rgba(225, 239, 248, .98));
@@ -1065,7 +1028,6 @@ html[data-theme-mode="light"] .pc-quest-guide {
 
 html[data-theme-mode="light"] .pc-current-main > span,
 html[data-theme-mode="light"] .pc-quest-guide p,
-html[data-theme-mode="light"] .pc-next-quest,
 html[data-theme-mode="light"] .pc-charge-details p {
   color: rgba(16, 32, 46, .72);
 }
