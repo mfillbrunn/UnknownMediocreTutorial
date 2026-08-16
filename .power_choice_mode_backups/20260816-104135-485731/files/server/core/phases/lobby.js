@@ -405,7 +405,6 @@ if (action.mode === "modes") {
     freshState.shuffle = state.shuffle;
     freshState.draftMode = !!state.draftMode;
     freshState.customPowersMode = !!state.customPowersMode;
-    freshState.gameMode = state.gameMode || "powerChoice"; // power-choice-mode-v1
     freshState._customPlayerLoadouts = state._customPlayerLoadouts || null;
     freshState._replayCustomPlayerPowers = state._replayCustomPlayerPowers || null;
     freshState.timeControl = { ...state.timeControl };

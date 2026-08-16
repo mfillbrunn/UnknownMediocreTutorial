@@ -99,22 +99,6 @@ if (
     delete safe.powers.spyCharge;
   }
 
-  // power-choice-mode-v1: keep each charge private and hide unselected cards.
-  if (safe.powerChoice) {
-    if (userId !== state.setter) delete safe.powerChoice.spy;
-    if (userId !== state.guesser) delete safe.powerChoice.inspector;
-    const pending = safe.powerChoice.pendingChoice;
-    if (pending && pending.ownerUserId !== userId) {
-      safe.powerChoice.pendingChoice = {
-        id: pending.id,
-        ownerUserId: pending.ownerUserId,
-        role: pending.role,
-        threshold: pending.threshold,
-        title: pending.title,
-        choosing: true
-      };
-    }
-  }
   // Delayed Intel (setter power): how many of the TRUE history entries the
   // guesser currently has real information about — computed once here
   // (not per-entry) since it depends only on state.history.length /
