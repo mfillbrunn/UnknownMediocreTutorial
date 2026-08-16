@@ -1,4 +1,4 @@
-const powerChoiceServer = require("../power-choice/powerChoiceServer"); // power-choice-mode-v2.2
+const powerChoiceServer = require("../power-choice/powerChoiceServer"); // power-choice-mode-v1
 const handleLobbyPhase = require("./phases/lobby");
 const { handleDraftPhase } = require("./phases/draft");
 const handleSimultaneousPhase = require("./phases/simultaneous");
@@ -6,8 +6,7 @@ const { handleNormalPhase } = require("./phases/normal");
 const { handleGameOverPhase } = require("./phases/postGame");
 
 function applyAction(room, state, action, roomId, context) {
-  // power-choice-mode-v2.2: mode actions and reward cards run before phases.
-  if (powerChoiceServer.handleAction(room, state, action, roomId, context)) return;
+  if (powerChoiceServer.handleAction(room, state, action, roomId, context)) return; // power-choice-mode-v1
   switch (state.phase) {
     case "lobby":
       handleLobbyPhase(room, state, action, roomId, context);

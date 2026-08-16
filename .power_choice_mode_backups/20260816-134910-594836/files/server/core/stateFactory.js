@@ -237,7 +237,7 @@ function createInitialState() {
     matchMeta: {},       // owned entirely by the mode
     ranked : false,
     shuffle: false,
-    gameMode: "powerChoice", // power-choice-mode-v2.2
+    gameMode: "powerChoice", // power-choice-mode-v1
     draftMode: false,
     customPowersMode: false, // NEW: "custom" power-selection mode (per-player loadouts)
     customPlayerPowers: null, // NEW: { [userId]: { setterPowers, guesserPowers } }, durable for the match
@@ -273,7 +273,7 @@ function createInitialState() {
     simultaneousSecretSubmitted: false,
     powerUsedThisTurn: false,
          simultaneousAllWrong: false,
-    powerChoice: null, // power-choice-mode-v2.2
+    powerChoice: null, // power-choice-mode-v1
     _pendingPowerEvents: [],
     powers: createInitialPowers()
   };

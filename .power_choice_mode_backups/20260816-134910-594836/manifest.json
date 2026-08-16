@@ -1,0 +1,53 @@
+{
+  "patch": "power-choice-mode-v2.2.1",
+  "files": [
+    {
+      "path": "server/core/stateFactory.js",
+      "existed": true
+    },
+    {
+      "path": "server/core/phases/lobby.js",
+      "existed": true
+    },
+    {
+      "path": "server/core/applyAction.js",
+      "existed": true
+    },
+    {
+      "path": "server/utils/safeState.js",
+      "existed": true
+    },
+    {
+      "path": "server/core/ai/runAI.js",
+      "existed": true
+    },
+    {
+      "path": "public/client/spy-charge.js",
+      "existed": true
+    },
+    {
+      "path": "public/index.html",
+      "existed": true
+    },
+    {
+      "path": "server/power-choice/powerChoiceServer.js",
+      "existed": true
+    },
+    {
+      "path": "server/power-choice/powerTiers.js",
+      "existed": true
+    },
+    {
+      "path": "public/client/power-choice-mode.js",
+      "existed": true
+    },
+    {
+      "path": "public/css/power-choice-mode.css",
+      "existed": true
+    },
+    {
+      "path": "public/powerEngine/power-tiers.js",
+      "existed": true
+    }
+  ]
+}

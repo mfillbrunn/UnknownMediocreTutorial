@@ -99,7 +99,7 @@ if (
     delete safe.powers.spyCharge;
   }
 
-  // power-choice-mode-v2.2: keep each charge private and hide unselected cards.
+  // power-choice-mode-v1: keep each charge private and hide unselected cards.
   if (safe.powerChoice) {
     if (userId !== state.setter) delete safe.powerChoice.spy;
     if (userId !== state.guesser) delete safe.powerChoice.inspector;

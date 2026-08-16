@@ -9,7 +9,6 @@ const questServer = require("../../powers/powers/questServer");
 const spyChargeServer = require(
   "../../powers/powers/spyChargeServer"
 );
-const powerChoiceServer = require("../../power-choice/powerChoiceServer"); // power-choice-mode-v2.2
 
 // assassinWord is excluded from the game's randomized power pools
 // entirely (see task #106) — kept out of the AI pool too for the same
@@ -387,20 +386,6 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
   const aiLogic = getAI(state);
   const aiRole = getAIRole(state, aiUserId);
   if (!aiRole) return null;
-  // power-choice-mode-v2.2: only choose a reward when a real card choice is pending.
-  const powerChoiceRewardAction =
-    powerChoiceServer.buildAIChoiceAction(state, aiUserId);
-  if (powerChoiceRewardAction) {
-    return () =>
-      applyAIAction(
-        room,
-        powerChoiceRewardAction,
-        aiUserId,
-        roomId,
-        context
-      );
-  }
-
 
   maybeClaimQuest(room, roomId, context, aiUserId);
   maybeRespondToClaim(room, roomId, context, aiUserId);
@@ -449,13 +434,6 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
           }
         }
 
-        // power-choice-mode-v2.2: difficulty controls whether the AI chases this quest.
-        guess = powerChoiceServer.chooseAIGuess(
-          state,
-          context.WORDS.guesses,
-          context.WORDS.secrets,
-          guess
-        );
         applyAIAction(
           room,
           { type: "SUBMIT_GUESS", guess },
@@ -516,22 +494,6 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
                 );
           }
 
-          // power-choice-mode-v2.2: choose top hint, keep, or a weaker switch by difficulty.
-          if (!isTutorial && powerChoiceServer.isPowerChoice(state)) {
-            const secretAction = powerChoiceServer.chooseAISecretAction(
-              state,
-              context.WORDS.secrets,
-              secret
-            );
-            applyAIAction(
-              room,
-              secretAction,
-              aiUserId,
-              roomId,
-              context
-            );
-            return;
-          }
           applyAIAction(
             room,
             { type: "SET_SECRET_NEW", secret },

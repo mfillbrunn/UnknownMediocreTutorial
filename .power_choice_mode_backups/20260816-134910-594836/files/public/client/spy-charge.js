@@ -706,7 +706,6 @@
   }
 
   socket.on("spyChargeAward", payload => {
-  if (window.state?.gameMode === "powerChoice") return; // power-choice-mode-v2.2
     visualTotal = Math.max(0, Math.min(MAX_CHARGE, Number(payload?.before) || 0));
 
     awardQueue.push({
