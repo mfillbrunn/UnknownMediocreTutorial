@@ -6,7 +6,6 @@
 
   const MODE = "powerChoice";
   const SPY_MAX = 15;
-  const INSPECTOR_MAX = 5;
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
   const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   const byId = id => document.getElementById(id);
@@ -24,9 +23,7 @@
 
   let questGuideOpen = false;
   let questHintsActive = false;
-  let questVisualOverride = null;
   let lastQuestId = "";
-  let lastDraftRect = null;
   let renderQueued = false;
   let spyVisualOverride = null;
   let spyAwardRunning = false;
@@ -117,11 +114,6 @@
     return clamp(window.state?.powers?.spyCharge?.total, 0, SPY_MAX);
   }
 
-  function inspectorDisplayPoints() {
-    if (questVisualOverride != null) return clamp(questVisualOverride, 0, INSPECTOR_MAX);
-    return clamp(window.state?.powerChoice?.inspector?.points, 0, INSPECTOR_MAX);
-  }
-
   function renderSpyPanel(container) {
     const total = spyDisplayTotal();
     const pending = window.state?.powerChoice?.pendingChoice?.role === "setter";
@@ -165,26 +157,21 @@
   }
 
   function renderInspectorPanel(container) {
-    const inspector = window.state?.powerChoice?.inspector;
-    const points = inspectorDisplayPoints();
-    const next = inspector?.nextQuest;
-    const conditions = questConditionLabels(next);
-    const signature = JSON.stringify({ points, next: next?.id, conditions, pending: window.state?.powerChoice?.pendingChoice?.role === "guesser" });
+    // The Inspector's quest no longer builds toward a meter (see
+    // evaluateInspectorGuess server-side -- a quest now grants its reward
+    // the moment it's met, cycling through the same three reward tiers
+    // the meter used to unlock at 2/3/5 points), and there's no separate
+    // "next quest" anymore since the current one just gets replaced in
+    // place. This side panel now only ever needs to flag a reward choice
+    // waiting to be picked -- the quest itself is shown above the draft
+    // row instead (see renderCurrentQuest).
+    const pending = window.state?.powerChoice?.pendingChoice?.role === "guesser";
+    const signature = String(pending);
     if (container.dataset.pcSignature === signature) return;
     container.dataset.pcSignature = signature;
-    container.innerHTML = `<section class="pc-side-panel pc-inspector-panel">
-      <div class="pc-inspector-charge">
-        <span class="pc-charge-label">QUESTOMETER</span>
-        <span class="pc-charge-value"><strong>${points}</strong><span>/ ${INSPECTOR_MAX}</span></span>
-        ${meterMarkup(points, INSPECTOR_MAX, [2, 3, 5], "pcInspectorMeter", "pc-inspector-meter")}
-      </div>
-      ${next ? `<article class="pc-next-quest">
-        <span class="pc-next-kicker">NEXT QUEST</span>
-        <p>${esc(next.description || "Complete the next condition.")}</p>
-        ${conditions.length ? `<ul>${conditions.map(label => `<li>${esc(label)}</li>`).join("")}</ul>` : ""}
-      </article>` : ""}
-      ${window.state?.powerChoice?.pendingChoice?.role === "guesser" ? `<div class="pc-choice-ready">REWARD CHOICE READY</div>` : ""}
-    </section>`;
+    container.innerHTML = pending
+      ? `<section class="pc-side-panel pc-inspector-panel"><div class="pc-choice-ready">REWARD CHOICE READY</div></section>`
+      : "";
   }
 
   function setterSidebarCollapsed() {
@@ -465,7 +452,6 @@
     if (host.dataset.pcSignature === signature) {
       const row = currentDraftRow();
       row?.classList.toggle("pc-quest-draft-met", met);
-      if (row?.isConnected) lastDraftRect = row.getBoundingClientRect();
       applyQuestKeyHints();
       return;
     }
@@ -474,7 +460,7 @@
     host.innerHTML = `<button type="button" class="pc-current-quest-card${met ? " is-met" : ""}" aria-expanded="${questGuideOpen}">
       <span class="pc-current-main">
         <strong>${esc(quest.title || "Quest")}</strong>
-        <span class="pc-current-expand">${questGuideOpen ? "Close guide" : "Rules & keyboard guide"}</span>
+        <span class="pc-current-expand">${questGuideOpen ? "Close" : "Rules"}</span>
       </span>
       <span class="pc-current-status" aria-live="polite">${met ? "MET" : ""}</span>
       <span class="pc-current-desc">${esc(quest.description || "Complete the shown condition.")}</span>
@@ -510,7 +496,6 @@
 
     const row = currentDraftRow();
     row?.classList.toggle("pc-quest-draft-met", met);
-    if (row?.isConnected) lastDraftRect = row.getBoundingClientRect();
     applyQuestKeyHints();
   }
 
@@ -581,15 +566,18 @@
     ).forEach(element => element.remove());
 
     // Earlier UI revisions also wrote the bonus letter into data attributes
-    // or pseudo-elements. Remove every source from which a corner/outline
-    // letter can be rendered -- this hint now shows only in the readout
-    // above the row (see normalizeBonusTarget).
+    // or pseudo-elements. Remove every source from which a corner LETTER
+    // can be rendered (the letter itself only shows in the readout above
+    // the row, see normalizeBonusTarget) -- the outline is re-applied
+    // fresh each render by applyBonusHintTileOutline below, cleared here
+    // first so it doesn't linger on a stale tile once the hint moves.
     document.querySelectorAll("#draftSetter .history-tile").forEach(tile => {
       tile.classList.remove(
         "setter-bonus-target-tile-v10",
         "setter-bonus-target-tile-v2",
         "setter-bonus-tile-v92",
-        "bonus-target-met-v93"
+        "bonus-target-met-v93",
+        "pc-bonus-hint-tile"
       );
       [
         "data-target-letter",
@@ -606,10 +594,29 @@
     });
   }
 
+  // Several older scripts each carry their own copy of this element's
+  // creation logic (all inserting it as its own row above the draft, back
+  // when it lived there) -- rather than patch every one of them, this
+  // takes over WHERE it lives too: create it if none of them got there
+  // first, then (re)parent it into the Keep/New row (#setterDecisionMeta)
+  // every render, so it ends up on that line regardless of which script's
+  // stale insertBefore call ran first.
+  function ensureBonusTarget() {
+    let target = byId("setterBonusTargetV9");
+    if (!target) {
+      target = document.createElement("div");
+      target.id = "setterBonusTargetV9";
+      target.className = "setter-bonus-target-v9 hidden";
+    }
+    const meta = document.querySelector("#setterScreen #setterDecisionMeta");
+    if (meta && target.parentElement !== meta) meta.appendChild(target);
+    return target;
+  }
+
   function normalizeBonusTarget() {
     if (!isMode()) return;
     removeSetterTargetLetters();
-    const target = byId("setterBonusTargetV9");
+    const target = ensureBonusTarget();
     if (!target) return;
 
     target.classList.add("pc-bonus-target-unified");
@@ -668,6 +675,22 @@
       target.dataset.pcBonusSignature = signature;
     }
     target.setAttribute("aria-label", `Bonus star: ${letter} in ${positionLabel}`);
+
+    applyBonusHintTileOutline(positionIndex);
+  }
+
+  // The draft tile at the hint's position gets an outline in the same
+  // light blue as the bonus star readout above it, so the two visibly
+  // read as one hint instead of the tile looking unrelated to the pill.
+  function applyBonusHintTileOutline(positionIndex) {
+    const draft = byId("draftSetter");
+    const row = draft?.__draftRows?.draft ||
+      draft?.querySelector(".history-row.setter-draft, .history-row.ghost-secret");
+    const tiles = row?.__tiles || row?.querySelectorAll?.(":scope > .history-tile");
+    if (!tiles) return;
+    [...tiles].forEach((tile, index) => {
+      tile.classList.toggle("pc-bonus-hint-tile", index === positionIndex);
+    });
   }
 
   function ensureChoiceModal() {
@@ -776,55 +799,6 @@
     event.stopImmediatePropagation();
     window.toast?.(`${event.key.toUpperCase()} was ruled out by your reward.`);
   }, true);
-
-  function getQuestMeterRect() {
-    return byId("pcInspectorMeter")?.getBoundingClientRect() || null;
-  }
-
-  async function animateQuestCharge(payload) {
-    if (!payload?.success || myRole() !== "guesser" || !isMode()) return;
-    const source = lastDraftRect || currentDraftRow()?.getBoundingClientRect();
-    const target = getQuestMeterRect();
-    if (!source?.width || !target?.width) return;
-
-    questVisualOverride = clamp(payload.before, 0, INSPECTOR_MAX);
-    renderPanels();
-
-    const orb = document.createElement("div");
-    orb.className = "pc-quest-flight-orb";
-    orb.innerHTML = `<span>⚡</span>`;
-    const startX = source.left + source.width / 2;
-    const startY = source.top + source.height / 2;
-    const endX = target.left + target.width / 2;
-    const endY = target.top + target.height / 2;
-    Object.assign(orb.style, { left: `${startX}px`, top: `${startY}px` });
-    document.body.appendChild(orb);
-
-    const dx = endX - startX;
-    const dy = endY - startY;
-    const arcY = Math.min(startY, endY) - Math.max(70, Math.abs(dx) * 0.14);
-    const animation = orb.animate([
-      { transform: "translate(-50%, -50%) scale(.55)", opacity: 0 },
-      { transform: `translate(calc(-50% + ${dx * 0.35}px), calc(-50% + ${arcY - startY}px)) scale(1.1)`, opacity: 1, offset: 0.3 },
-      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35)`, opacity: 1 }
-    ], {
-      duration: 760,
-      easing: "cubic-bezier(.18,.78,.18,1)",
-      fill: "forwards"
-    });
-    try { await animation.finished; } catch {}
-    orb.remove();
-
-    questVisualOverride = clamp(payload.after, 0, INSPECTOR_MAX);
-    renderPanels();
-    const segment = byId("pcInspectorMeter")?.querySelector(`[data-pc-meter-value="${clamp(payload.after, 1, INSPECTOR_MAX)}"]`);
-    segment?.classList.add("just-landed");
-    setTimeout(() => segment?.classList.remove("just-landed"), 700);
-    setTimeout(() => {
-      questVisualOverride = null;
-      renderPanels();
-    }, 850);
-  }
 
   function captureSetterSourceRect() {
     const bonus = byId("setterBonusTargetV9");
@@ -1067,9 +1041,6 @@
 
   try {
     socket.on("stateUpdate", () => setTimeout(scheduleRender, 0));
-    socket.on("powerChoiceQuestResult", payload => {
-      if (payload?.success) animateQuestCharge(payload);
-    });
     socket.on("spyChargeAward", payload => {
       if (!isMode() || myRole() !== "setter") return;
       spyAwardQueue.push({
