@@ -124,6 +124,11 @@
     const target = ensureBonusTarget();
     if (!target) return;
 
+    // Power Choice mode has its own single canonical renderer for this
+    // element (power-choice-mode.js's normalizeBonusTarget) -- bail out
+    // instead of fighting it for the same DOM node every render tick.
+    if (document.body.classList.contains("power-choice-mode")) return;
+
     const charge = state?.powers?.spyCharge;
     const hint = charge?.hint;
     const show = window.myRole === "setter" && charge?.enabled && hint?.letter && Number.isInteger(hint.position);

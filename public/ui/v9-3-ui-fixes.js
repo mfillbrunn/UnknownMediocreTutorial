@@ -43,6 +43,11 @@
   }
 
   function renderInlineBonus(state = window.state) {
+    // Power Choice mode has its own single canonical renderer for this
+    // element (power-choice-mode.js's normalizeBonusTarget) -- bail out
+    // instead of fighting it for the same DOM node every render tick.
+    if (document.body.classList.contains("power-choice-mode")) return;
+
     const hint = bonusHint(state);
     const target = byId("setterBonusTargetV9");
     const meta = byId("setterDecisionMeta");
@@ -95,6 +100,10 @@
   }
 
   function syncBonusDraftTile(state = window.state) {
+    // Same reasoning as renderInlineBonus above -- Power Choice mode owns
+    // this tile decoration entirely (and removes it, see task list).
+    if (document.body.classList.contains("power-choice-mode")) return;
+
     const hint = bonusHint(state);
 
     document

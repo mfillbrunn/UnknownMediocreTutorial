@@ -1844,16 +1844,6 @@ function highlightConstraintRowAndToggle(role) {
   );
 }
 
-function highlightPowerInfoBtn(role) {
-  highlightEl(
-    byId(
-      role === "setter"
-        ? "powerInfoBtnSetter"
-        : "powerInfoBtnGuesser"
-    )
-  );
-}
-
 function highlightSetterRemainingBox() {
   highlightEl(byId("SetterRemainingBox"));
 }
