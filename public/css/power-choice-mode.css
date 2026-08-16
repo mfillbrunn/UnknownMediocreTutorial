@@ -89,9 +89,9 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
 }
 
 .pc-charge-label {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 900;
-  letter-spacing: .16em;
+  letter-spacing: .14em;
   color: rgba(220, 239, 255, .72);
 }
 
@@ -115,14 +115,14 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
 .pc-segment-meter {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(var(--pc-segment-count, 15), minmax(4px, 1fr));
+  grid-template-columns: repeat(var(--pc-segment-count, 15), minmax(6px, 1fr));
   gap: 3px;
   width: 100%;
-  min-height: 10px;
-  padding: 4px;
+  min-height: 20px;
+  padding: 5px;
   box-sizing: border-box;
-  border: 1px solid rgba(122, 194, 235, .30);
-  border-radius: 7px;
+  border: 1px solid rgba(122, 194, 235, .24);
+  border-radius: 9px;
   background: rgba(1, 6, 12, .78);
   box-shadow: inset 0 1px 6px rgba(0, 0, 0, .62);
 }
@@ -137,35 +137,35 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
   --pc-segment-count: 5;
 }
 
+/* Color, not a line, marks a milestone segment now (see .is-milestone
+   rules below) -- the old design drew a 1px tick beside it instead. */
 .pc-meter-segment {
   position: relative;
-  height: 8px;
-  min-width: 4px;
-  border: 1px solid rgba(186, 220, 240, .34);
-  border-radius: 2px;
-  background: rgba(215, 236, 248, .06);
+  height: 16px;
+  min-width: 6px;
+  border: 0;
+  border-radius: 5px;
+  background: rgba(215, 236, 248, .07);
   box-sizing: border-box;
-  transition: background .24s ease, border-color .24s ease, box-shadow .24s ease, transform .24s ease;
-}
-
-.pc-meter-segment.is-milestone::after {
-  content: "";
-  position: absolute;
-  right: -3px;
-  top: -4px;
-  bottom: -4px;
-  width: 1px;
-  background: rgba(255, 224, 118, .55);
+  transition: background .24s ease, box-shadow .24s ease, transform .24s ease;
 }
 
 .pc-meter-segment.is-filled {
-  border-color: rgba(193, 235, 255, .92);
   background: linear-gradient(180deg, #d9f4ff, #69c9ff);
   box-shadow: 0 0 8px rgba(90, 197, 255, .62);
 }
 
 .pc-inspector-meter .pc-meter-segment.is-filled {
   background: linear-gradient(180deg, #effcff, #8ce3ff);
+}
+
+.pc-meter-segment.is-milestone {
+  background: rgba(255, 200, 87, .16);
+}
+
+.pc-meter-segment.is-milestone.is-filled {
+  background: linear-gradient(180deg, #ffe9b0, #f5b83d);
+  box-shadow: 0 0 9px rgba(245, 184, 61, .68);
 }
 
 .pc-meter-segment.just-landed {
@@ -350,18 +350,11 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
     inset 0 0 22px rgba(76, 255, 181, .10);
 }
 
-.pc-current-kicker {
-  grid-column: 1 / -1;
-  color: rgba(111, 205, 255, .82);
-  font-size: 8px;
-  font-weight: 950;
-  letter-spacing: .16em;
-}
-
 .pc-current-main {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
+  justify-content: space-between;
   gap: 5px 9px;
   min-width: 0;
 }
@@ -371,7 +364,8 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
   letter-spacing: .02em;
 }
 
-.pc-current-main > span {
+.pc-current-desc {
+  grid-column: 1 / -1;
   color: rgba(231, 241, 248, .74);
   font-size: 11px;
   line-height: 1.36;
@@ -415,13 +409,14 @@ body.power-choice-mode .power-card:not(.pc-choice-card) {
 }
 
 .pc-current-expand {
-  grid-column: 1 / -1;
-  justify-self: end;
-  margin-top: 2px;
-  color: rgba(185, 218, 238, .48);
-  font-size: 8px;
+  color: rgba(147, 210, 255, .78);
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: .04em;
+  text-decoration: underline;
+  text-decoration-color: rgba(147, 210, 255, .38);
+  text-underline-offset: 2px;
+  white-space: nowrap;
 }
 
 .pc-quest-guide {
@@ -610,26 +605,41 @@ body.power-choice-mode #setterBonusTargetV9 .setter-bonus-copy-v9,
 body.power-choice-mode #setterBonusTargetV9 .setter-bonus-boxes-v9,
 body.power-choice-mode #setterBonusTargetV9 .setter-bonus-box-v9,
 body.power-choice-mode #setterBonusTargetV9 .setter-bonus-boxes-v10,
-body.power-choice-mode #setterBonusTargetV9 .setter-bonus-box-v10 {
+body.power-choice-mode #setterBonusTargetV9 .setter-bonus-box-v10,
+body.power-choice-mode #setterBonusTargetV9 .setter-bonus-code-v92 {
   display: none !important;
 }
 
+/* Defense in depth against the CSS-variable/pseudo-element corner-letter
+   mechanism (v9-2-ui-fixes.js's applyBonusTile) in case a render slips in
+   before that script's own power-choice-mode guard takes effect. */
+body.power-choice-mode #draftSetter .history-row.setter-bonus-row-v92::before,
+body.power-choice-mode #draftSetter .history-row.setter-bonus-row-v92::after,
+body.power-choice-mode #draftSetter .history-tile.setter-bonus-tile-v92::before,
+body.power-choice-mode #draftSetter .history-tile.setter-bonus-tile-v92::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Compact -- this used to be a bordered pill with a divider line between
+   the star icon and the letter/position text, both taller than the text
+   inside actually needed. No outer border/ring and no divider anymore
+   (see the plus/position rules below), just enough background to read as
+   one small inline readout, and a shorter min-height so it doesn't eat
+   vertical space above the draft row. */
 body.power-choice-mode #setterBonusTargetV9.pc-bonus-target-unified {
   display: inline-flex !important;
-  align-items: stretch !important;
-  gap: 0 !important;
+  align-items: center !important;
+  gap: 4px !important;
   width: max-content !important;
   max-width: calc(100% - 12px);
-  margin: 0 auto 9px !important;
+  margin: 0 auto 6px !important;
   padding: 0 !important;
   overflow: hidden;
-  border: 1px solid rgba(74, 185, 255, .76) !important;
-  border-radius: 11px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
   background: linear-gradient(180deg, rgba(17, 29, 43, .98), rgba(7, 13, 21, .98)) !important;
-  box-shadow:
-    0 0 0 2px rgba(70, 181, 247, .08),
-    0 8px 22px rgba(0, 0, 0, .28),
-    inset 0 0 18px rgba(65, 178, 244, .06) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .22) !important;
 }
 
 body.power-choice-mode #setterBonusTargetV9.pc-bonus-target-unified.hidden {
@@ -639,30 +649,29 @@ body.power-choice-mode #setterBonusTargetV9.pc-bonus-target-unified.hidden {
 body.power-choice-mode #setterBonusTargetV9 .setter-bonus-plus-v10 {
   display: grid !important;
   place-items: center !important;
-  min-width: 49px !important;
-  min-height: 34px !important;
-  padding: 4px 11px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 3px 0 3px 8px !important;
   border: 0 !important;
-  border-right: 1px solid rgba(74, 185, 255, .42) !important;
   border-radius: 0 !important;
-  background: rgba(49, 154, 226, .13) !important;
+  background: transparent !important;
   color: #64c9ff !important;
-  font-size: 17px !important;
+  font-size: 12px !important;
   font-weight: 950 !important;
   letter-spacing: -.04em !important;
-  text-shadow: 0 0 13px rgba(61, 189, 255, .82) !important;
+  text-shadow: 0 0 10px rgba(61, 189, 255, .7) !important;
 }
 
 body.power-choice-mode #setterBonusTargetV9 .setter-bonus-position-v10 {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 5px !important;
-  min-height: 34px !important;
+  gap: 4px !important;
+  min-height: 0 !important;
   margin: 0 !important;
-  padding: 4px 13px !important;
+  padding: 3px 9px 3px 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background: rgba(255, 255, 255, .025) !important;
+  background: transparent !important;
   color: rgba(226, 239, 248, .82) !important;
   font-size: 11px !important;
   white-space: nowrap;
@@ -670,19 +679,18 @@ body.power-choice-mode #setterBonusTargetV9 .setter-bonus-position-v10 {
 
 body.power-choice-mode #setterBonusTargetV9 .setter-bonus-position-v10 strong,
 body.power-choice-mode #setterBonusTargetV9 .setter-bonus-letter-chip-v2 {
-  display: grid !important;
-  place-items: center !important;
-  width: 24px !important;
-  height: 24px !important;
+  display: inline !important;
+  width: auto !important;
+  height: auto !important;
   margin: 0 !important;
   padding: 0 !important;
-  border: 1px solid rgba(139, 215, 255, .74) !important;
-  border-radius: 50% !important;
-  background: rgba(111, 201, 255, .13) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
   color: #eaf8ff !important;
-  font-size: 13px !important;
+  font-size: 12px !important;
   font-weight: 950 !important;
-  box-shadow: inset 0 0 8px rgba(80, 186, 247, .13) !important;
+  box-shadow: none !important;
 }
 
 body.power-choice-mode #setterBonusTargetV9 .setter-bonus-position-copy-v2 {
@@ -692,39 +700,40 @@ body.power-choice-mode #setterBonusTargetV9 .setter-bonus-position-copy-v2 {
   letter-spacing: .02em !important;
 }
 
+/* The draft tile itself no longer carries any bonus-hint decoration --
+   the letter/position readout above the row (see .pc-bonus-target-unified)
+   is the only place this hint shows now. */
 body.power-choice-mode #draftSetter .history-tile.setter-bonus-target-tile-v10,
 body.power-choice-mode #draftSetter .history-tile.setter-bonus-target-tile-v2 {
-  outline: 2px solid rgba(73, 190, 255, .96) !important;
-  outline-offset: 2px !important;
-  box-shadow:
-    0 0 0 3px rgba(72, 181, 245, .10),
-    0 0 16px rgba(62, 183, 247, .27) !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
-/* Same compact charge meter in the expanded panel and collapsed handle. */
+/* Small badge next to the collapsed sidebar's toggle button -- must stay
+   tiny (the toggle sits right at the board's own left edge once the
+   sidebar is collapsed, see setter-board.css's setter-sidebar-collapsed
+   rules), or it spills out over the board instead of reading as a badge
+   on the toggle. Shows the same number the open sidebar's meter carries;
+   see renderSpyMiniMeter in power-choice-mode.js. */
 .pc-spy-mini-host {
-  display: block !important;
-  width: 124px !important;
-  height: auto !important;
-  min-width: 124px !important;
-  padding: 5px 7px !important;
-  border: 1px solid rgba(96, 191, 244, .50) !important;
-  border-radius: 9px !important;
-  background: rgba(7, 13, 21, .96) !important;
-  box-shadow: 0 5px 16px rgba(0, 0, 0, .35), inset 0 0 12px rgba(69, 179, 243, .06) !important;
-  color: transparent !important;
-  font-size: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  height: 19px !important;
+  min-width: 19px !important;
+  padding: 0 4px !important;
+  border: 1px solid #facc15 !important;
+  border-radius: 999px !important;
+  background: #11141a !important;
+  box-shadow: none !important;
+  color: #fde68a !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
 }
 
-.pc-spy-mini-host .pc-segment-meter {
-  padding: 3px;
-  gap: 2px;
-  min-height: 8px;
-}
-
-.pc-spy-mini-host .pc-meter-segment {
-  height: 7px;
-  min-width: 3px;
+.pc-spy-mini-host.just-charged {
+  animation: pcMeterCharged .78s ease-out;
 }
 
 /* High, self-contained Spy award animation so it never sits over the pending row. */

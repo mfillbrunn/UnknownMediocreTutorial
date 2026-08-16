@@ -59,14 +59,6 @@ function advancedConstraintVisual() {
   `;
 }
 
-function advancedPowerInfoVisual() {
-  return `
-    <div class="tutorial-note-strip">
-      Both sides are listed, so you can check the Inspector's powers as easily as your own.
-    </div>
-  `;
-}
-
 function runAdvancedTutorial(state, role) {
   clearHighlights();
 
@@ -332,7 +324,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Notes",
           current: 1,
-          total: 12,
+          total: 11,
           placement: "bottom",
           visualHtml: `
             <div class="tutorial-note-strip">
@@ -353,7 +345,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Save a note",
           current: 2,
-          total: 12,
+          total: 11,
           placement: "bottom",
           mode: "hide"
         }
@@ -375,7 +367,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Read your notes",
           current: 3,
-          total: 12,
+          total: 11,
           placement: "bottom"
         }
       );
@@ -392,7 +384,7 @@ function runAdvancedTutorialSetter(state) {
             role: "setter",
             title: "Wait and plan",
             current: 4,
-            total: 12,
+            total: 11,
             placement: "bottom",
             compact: true,
             mode: "hide",
@@ -410,7 +402,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Keep or change?",
           current: 4,
-          total: 12,
+          total: 11,
           placement: "bottom",
           visualHtml: advancedRemainingVisual()
         }
@@ -427,7 +419,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Use a saved word",
           current: 5,
-          total: 12,
+          total: 11,
           placement: "bottom",
           mode: "hide"
         }
@@ -444,7 +436,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Check the draft",
           current: 6,
-          total: 12,
+          total: 11,
           placement: "top"
         }
       );
@@ -460,7 +452,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Side panel",
           current: 7,
-          total: 12,
+          total: 11,
           placement: "bottom",
           mode: "hide"
         }
@@ -477,7 +469,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Open the Log",
           current: 8,
-          total: 12,
+          total: 11,
           placement: "bottom",
           mode: "hide"
         }
@@ -494,7 +486,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "Read the Log",
           current: 9,
-          total: 12,
+          total: 11,
           placement: "bottom",
           visualHtml: advancedLogVisual()
         }
@@ -511,7 +503,7 @@ function runAdvancedTutorialSetter(state) {
           role: "setter",
           title: "The clue row",
           current: 10,
-          total: 12,
+          total: 11,
           placement: "bottom",
           visualHtml: advancedConstraintVisual()
         }
@@ -521,30 +513,13 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 10) {
-      advancedTutorialShow(
-        "Tap the ? any time to see every power in this match and its status: Available, Used, or how many charges are left.",
-        {
-          role: "setter",
-          title: "Power info",
-          current: 11,
-          total: 12,
-          placement: "bottom",
-          visualHtml: advancedPowerInfoVisual()
-        }
-      );
-      highlightPowerInfoBtn("setter");
-      tutorialContinueMode = "advance";
-      return;
-    }
-
     advancedTutorialShow(
       `Now submit ${candidate}.`,
       {
         role: "setter",
         title: "Finish the turn",
-        current: 12,
-        total: 12,
+        current: 11,
+        total: 11,
         placement: "top",
         mode: "hide"
       }
@@ -556,7 +531,7 @@ function runAdvancedTutorialSetter(state) {
 
   if (round >= 2) {
     advancedTutorialShow(
-      "You used the extra tools: Guide, Drag and Lock, Notes, KEEP and NEW, the side panel, the clue row, the Log, and power info.",
+      "You used the extra tools: Guide, Drag and Lock, Notes, KEEP and NEW, the side panel, the clue row, and the Log.",
       {
         role: "setter",
         title: "Extra tools done",

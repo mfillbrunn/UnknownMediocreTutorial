@@ -347,6 +347,12 @@
   }
 
   function updateBonusUI(state = window.state) {
+    // Power Choice mode has its own single canonical renderer for this
+    // element and tile decoration (power-choice-mode.js's
+    // normalizeBonusTarget) -- bail out instead of fighting it for the
+    // same DOM node every render tick.
+    if (document.body.classList.contains("power-choice-mode")) return;
+
     normalizeBonusPanel(state);
     applyBonusTile(state);
   }

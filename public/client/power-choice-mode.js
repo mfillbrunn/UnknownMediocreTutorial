@@ -131,7 +131,7 @@
     container.dataset.pcSignature = signature;
     container.innerHTML = `<section class="pc-side-panel pc-spy-panel">
       <button type="button" id="pcSpyChargeCard" class="pc-charge-card" aria-expanded="${detailsOpen}">
-        <span class="pc-charge-label">SPY CHARGE</span>
+        <span class="pc-charge-label">SPYOMETER</span>
         <span class="pc-charge-value"><strong>${total}</strong><span>/ ${SPY_MAX}</span></span>
         ${meterMarkup(total, SPY_MAX, [5, 8, 15], "pcSpyMeter", "pc-spy-meter")}
         <span class="pc-charge-click-copy">Click for rules</span>
@@ -174,7 +174,7 @@
     container.dataset.pcSignature = signature;
     container.innerHTML = `<section class="pc-side-panel pc-inspector-panel">
       <div class="pc-inspector-charge">
-        <span class="pc-charge-label">QUEST CHARGE</span>
+        <span class="pc-charge-label">QUESTOMETER</span>
         <span class="pc-charge-value"><strong>${points}</strong><span>/ ${INSPECTOR_MAX}</span></span>
         ${meterMarkup(points, INSPECTOR_MAX, [2, 3, 5], "pcInspectorMeter", "pc-inspector-meter")}
       </div>
@@ -205,11 +205,16 @@
     if (!show) return;
     const total = spyDisplayTotal();
     const signature = String(total);
-    if (host.dataset.pcSignature === signature && byId("pcSpyMiniMeter")) return;
+    if (host.dataset.pcSignature === signature) return;
     host.dataset.pcSignature = signature;
-    host.innerHTML = meterMarkup(total, SPY_MAX, [5, 8, 15], "pcSpyMiniMeter", "pc-spy-mini-meter");
+    // A collapsed-sidebar badge needs to stay small enough to sit next to
+    // the toggle button without spilling into the board beside it -- a
+    // full 15-segment bar (sized for the open sidebar's full width) can't
+    // fit there, so this shows the same number the open sidebar's meter
+    // carries instead.
+    host.textContent = String(total);
     host.setAttribute("aria-hidden", "false");
-    host.setAttribute("aria-label", `Spy charge ${total} of ${SPY_MAX}`);
+    host.setAttribute("aria-label", `Spyometer ${total} of ${SPY_MAX}`);
   }
 
   function renderPanels() {
@@ -467,14 +472,13 @@
     host.dataset.pcSignature = signature;
 
     host.innerHTML = `<button type="button" class="pc-current-quest-card${met ? " is-met" : ""}" aria-expanded="${questGuideOpen}">
-      <span class="pc-current-kicker">CURRENT QUEST</span>
       <span class="pc-current-main">
         <strong>${esc(quest.title || "Quest")}</strong>
-        <span>${esc(quest.description || "Complete the shown condition.")}</span>
+        <span class="pc-current-expand">${questGuideOpen ? "Close guide" : "Rules & keyboard guide"}</span>
       </span>
       <span class="pc-current-status" aria-live="polite">${met ? "MET" : ""}</span>
+      <span class="pc-current-desc">${esc(quest.description || "Complete the shown condition.")}</span>
       ${conditionLabels.length ? `<span class="pc-current-conditions">${conditionLabels.map((label, index) => `<span class="pc-condition-chip${conditionResults[index] ? " is-met" : ""}">${esc(label)}</span>`).join("")}</span>` : ""}
-      <span class="pc-current-expand">${questGuideOpen ? "Close guide" : "Rules & keyboard guide"}</span>
     </button>
     <div class="pc-quest-guide${questGuideOpen ? " is-open" : ""}">
       <p>${esc(guideCopyForQuest(quest))}</p>
@@ -572,19 +576,33 @@
       "#draftSetter .setter-draft-target-letter, " +
       "#draftSetter [class*='draft-target-letter'], " +
       "#draftSetter [data-target-letter-badge], " +
-      "#draftSetter .draft-hint-letter"
+      "#draftSetter .draft-hint-letter, " +
+      "#draftSetter .setter-bonus-corner-v92"
     ).forEach(element => element.remove());
 
     // Earlier UI revisions also wrote the bonus letter into data attributes
-    // or pseudo-elements. Keep the blue target outline, but remove every
-    // source from which a corner letter can be rendered.
+    // or pseudo-elements. Remove every source from which a corner/outline
+    // letter can be rendered -- this hint now shows only in the readout
+    // above the row (see normalizeBonusTarget).
     document.querySelectorAll("#draftSetter .history-tile").forEach(tile => {
+      tile.classList.remove(
+        "setter-bonus-target-tile-v10",
+        "setter-bonus-target-tile-v2",
+        "setter-bonus-tile-v92",
+        "bonus-target-met-v93"
+      );
       [
         "data-target-letter",
         "data-target-letter-badge",
         "data-bonus-letter",
-        "data-hint-letter"
+        "data-hint-letter",
+        "data-bonus-letter-v92"
       ].forEach(name => tile.removeAttribute(name));
+    });
+    document.querySelectorAll("#draftSetter .history-row.setter-bonus-row-v92").forEach(row => {
+      row.classList.remove("setter-bonus-row-v92");
+      row.style.removeProperty("--setter-bonus-letter-v92");
+      row.style.removeProperty("--setter-bonus-label-left-v92");
     });
   }
 
@@ -595,12 +613,30 @@
     if (!target) return;
 
     target.classList.add("pc-bonus-target-unified");
-    const hint = window.state?.powers?.spyCharge?.hint;
+
+    const state = window.state;
+    const charge = state?.powers?.spyCharge;
+    const hint = charge?.hint;
     const letter = cleanWord(hint?.letter).slice(0, 1);
     const positionIndex = Number(hint?.position);
-    if (!letter || !Number.isInteger(positionIndex) || positionIndex < 0 || positionIndex > 4) {
-      return;
-    }
+    const show = !!(
+      state &&
+      window.myRole === "setter" &&
+      charge?.enabled &&
+      state.phase === "normal" &&
+      state.turn === state.setter &&
+      state.pendingGuess &&
+      !state.powers?.freezeActive &&
+      !state.powers?.rouletteSecretActive &&
+      !state.simultaneousAllWrong &&
+      letter &&
+      Number.isInteger(positionIndex) &&
+      positionIndex >= 0 &&
+      positionIndex <= 4
+    );
+
+    target.classList.toggle("hidden", !show);
+    if (!show) return;
 
     const positionLabel = ordinal(positionIndex + 1);
     const signature = `${letter}:${positionIndex}`;
@@ -609,7 +645,7 @@
     if (
       target.dataset.pcBonusSignature !== signature ||
       currentLetter !== letter ||
-      currentCopy !== `in ${positionLabel}`
+      currentCopy !== `: ${positionLabel}`
     ) {
       const plus = document.createElement("span");
       plus.className = "setter-bonus-plus-v10";
@@ -625,7 +661,7 @@
 
       const copy = document.createElement("span");
       copy.className = "setter-bonus-position-copy-v2";
-      copy.textContent = `in ${positionLabel}`;
+      copy.textContent = `: ${positionLabel}`;
 
       position.append(chip, copy);
       target.replaceChildren(plus, position);
@@ -798,8 +834,8 @@
   }
 
   function spyAwardTarget() {
-    const id = setterSidebarCollapsed() ? "pcSpyMiniMeter" : "pcSpyMeter";
-    return byId(id) || byId("pcSpyMeter") || byId("pcSpyMiniMeter");
+    const id = setterSidebarCollapsed() ? "setterSidebarChargeMini" : "pcSpyMeter";
+    return byId(id) || byId("pcSpyMeter") || byId("setterSidebarChargeMini");
   }
 
   function capsuleMeter(capsule, value, bonusFrom = Infinity) {
