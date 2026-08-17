@@ -152,7 +152,13 @@ function freshPowerChoice(roundIndex) {
       lastResult: null
     },
     pendingChoice: null,
+    // Actually blocks the guesser from using these letters (server rejects
+    // guesses that include one, client disables + X's the key).
     eliminatedLetters: [],
+    // Informational only -- letters known to be absent, but still usable;
+    // the client just styles them like any other already-guessed absent
+    // letter instead of blocking them.
+    ruledOutLetters: [],
     bonusTimeTurnKeys: [],
     lastResolution: null
   };
@@ -457,6 +463,7 @@ function initializeRound(state) {
   };
   pc.inspector.currentQuest ||= makeQuest();
   pc.eliminatedLetters ||= [];
+  pc.ruledOutLetters ||= [];
   pc.bonusTimeTurnKeys ||= [];
 
   // Reward powers are applied immediately when selected. They are never
@@ -603,7 +610,7 @@ function fixedOptions(role, threshold) {
         kind: "fixed",
         icon: "×3",
         title: "Rule Out Three",
-        description: "Remove three random unused letters that are not in the secret."
+        description: "Learn three random unused letters that are not in the secret."
       },
       {
         id: "inspector-remove-point-1",
@@ -611,6 +618,13 @@ function fixedOptions(role, threshold) {
         icon: "−1",
         title: "Remove a Point",
         description: "Subtract 1 point from your final guess total."
+      },
+      {
+        id: "inspector-block-unused-4",
+        kind: "fixed",
+        icon: "×4",
+        title: "Lock Out Four",
+        description: "Block four random unused letters -- you won't be able to use them at all."
       }
     ];
   }
@@ -827,19 +841,33 @@ function unusedLetterCandidates(state) {
     (state.history || []).flatMap(entry => normalizeWord(entry?.guess).split(""))
   );
   const eliminated = new Set(state.powerChoice?.eliminatedLetters || []);
+  const ruledOut = new Set(state.powerChoice?.ruledOutLetters || []);
   return ALPHABET.filter(
     letter =>
       !secretLetters.has(letter) &&
       !used.has(letter) &&
-      !eliminated.has(letter)
+      !eliminated.has(letter) &&
+      !ruledOut.has(letter)
   );
 }
 
+// Actually blocks the letters from being typed (see the SUBMIT_GUESS
+// check and markEliminatedKeys() client-side).
 function removeUnusedLetters(state, count) {
   const selected = shuffle(unusedLetterCandidates(state)).slice(0, count);
   const eliminated = new Set(state.powerChoice.eliminatedLetters || []);
   for (const letter of selected) eliminated.add(letter);
   state.powerChoice.eliminatedLetters = [...eliminated];
+  return selected;
+}
+
+// Informational only -- the letters are known-absent but stay usable; the
+// client just styles them like any other already-guessed absent letter.
+function ruleOutUnusedLetters(state, count) {
+  const selected = shuffle(unusedLetterCandidates(state)).slice(0, count);
+  const ruledOut = new Set(state.powerChoice.ruledOutLetters || []);
+  for (const letter of selected) ruledOut.add(letter);
+  state.powerChoice.ruledOutLetters = [...ruledOut];
   return selected;
 }
 
@@ -878,6 +906,7 @@ function fixedOptionApplicable(state, option) {
       return [...new Set(normalizeWord(state.secret))].some(letter => !known.has(letter));
     }
     case "inspector-remove-unused-2":
+    case "inspector-block-unused-4":
       return unusedLetterCandidates(state).length > 0;
     case "inspector-remove-point-1":
     case "inspector-remove-point-2":
@@ -941,6 +970,10 @@ function effectDetailText(option, detail) {
     case "inspector-remove-unused-2":
       return letters.length
         ? `Ruled out letters: ${letters.join(", ")}.`
+        : "No unused gray letters remained.";
+    case "inspector-block-unused-4":
+      return letters.length
+        ? `Blocked letters: ${letters.join(", ")}.`
         : "No unused gray letters remained.";
     case "inspector-remove-point-1":
     case "inspector-remove-point-2":
@@ -1022,7 +1055,10 @@ function applyChoice(state, option, choice, room, roomId, io) {
         detail = { letter: addYellow(state) };
         break;
       case "inspector-remove-unused-2":
-        detail = { letters: removeUnusedLetters(state, 3) };
+        detail = { letters: ruleOutUnusedLetters(state, 3) };
+        break;
+      case "inspector-block-unused-4":
+        detail = { letters: removeUnusedLetters(state, 4) };
         break;
       case "inspector-remove-point-1": {
         const before = Math.max(0, Number(state.guessCount) || 0);

@@ -338,6 +338,13 @@
 
   function currentDraftWord() {
     const row = currentDraftRow();
+    // Between submitting a guess and the guesser's next turn, draftrow.js
+    // hides this row (display:none) rather than clearing its tiles --
+    // reading it while hidden would return last round's already-submitted
+    // guess instead of the blank draft it visually reads as, which is
+    // exactly what let a fresh quest flash "MET" against a leftover word
+    // the instant it appeared.
+    if (row && row.offsetParent === null) return "";
     const tiles = row?.__tiles || [...(row?.querySelectorAll(".history-tile") || [])];
     if (!tiles?.length) return "";
     return tiles.slice(0, 5).map(tile => {
@@ -841,12 +848,19 @@
 
   function markEliminatedKeys() {
     const eliminated = new Set(window.state?.powerChoice?.eliminatedLetters || []);
+    const ruledOut = new Set(window.state?.powerChoice?.ruledOutLetters || []);
     keyboardKeys().forEach(key => {
       const letter = keyboardLetter(key);
       const blocked = !!letter && eliminated.has(letter);
+      // Ruled-out (but not blocked) letters just read as a normal
+      // already-guessed absent key -- .pc-key-ruled-out matches
+      // .key-gray's own look instead of anything distinct.
+      const known = !blocked && !!letter && ruledOut.has(letter);
       key.classList.toggle("pc-key-eliminated", blocked);
+      key.classList.toggle("pc-key-ruled-out", known);
       key.setAttribute("aria-disabled", blocked ? "true" : "false");
       if (blocked) key.title = `${letter} was ruled out`;
+      else if (known) key.title = `${letter} was ruled out (still usable)`;
     });
   }
 

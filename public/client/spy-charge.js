@@ -208,7 +208,17 @@
     if (!hud) return;
 
     const charge = getCharge(state);
-    const shouldShow = role === "setter" && !!charge?.enabled;
+    // Power Choice mode has its own Spyometer + reward-choice modal (see
+    // power-choice-mode.js) built on the same underlying spyCharge state --
+    // this older standalone meter/reset-button HUD was never suppressed
+    // for that mode, so both rendered at once: the reward modal already
+    // applies a reward's effect (including letter resets) immediately, but
+    // this HUD's own "is-ready" reset button kept showing alongside it as
+    // a redundant, confusing extra "power button".
+    const shouldShow =
+      role === "setter" &&
+      !!charge?.enabled &&
+      state?.gameMode !== "powerChoice";
 
     hud.classList.toggle("hidden", !shouldShow);
 
