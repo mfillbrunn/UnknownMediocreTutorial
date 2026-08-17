@@ -119,7 +119,11 @@
 
 /* Log-only now -- no quest/reward badge card sharing the row, and no
    panel header, just the action log itself. */
-#guesserScreen .guesser-powers-row #guesserPowerContainer {
+/* Log-only sidebar: the power/quest cards and the quest charge meter both
+   have their own homes in Power Choice mode (the quest card sits above the
+   draft row), so nothing but the action log belongs in here. */
+#guesserScreen .guesser-powers-row #guesserPowerContainer,
+#guesserScreen .guesser-powers-row #guesserQuestChargeHud {
   display: none !important;
 }
 
@@ -129,6 +133,51 @@
 
 #guesserScreen .guesser-info-col {
   flex: 1 1 auto;
+}
+
+/* The log is the whole panel now, so it gets real room and readable type
+   instead of the cramped 8-9px it used while sharing the row. */
+#guesserScreen .guesser-info-col #actionLogGuesser {
+  flex: 1 1 auto;
+  min-height: 150px;
+  max-height: none;
+  padding: 8px 9px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+#guesserScreen #actionLogGuesser .log-entry {
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(233, 243, 250, 0.9);
+}
+
+#guesserScreen #actionLogGuesser .log-entry.log-round {
+  margin-top: 6px;
+  color: var(--game-blue);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Icon + "Log" stacked in the narrow vertical toggle. Extra `button`
+   qualifier so this beats the shared :is(...) toggle rule further down
+   (same specificity otherwise, and that one comes later in the file). */
+#guesserScreen button.guesser-sidebar-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 84px;
+}
+
+#guesserScreen .guesser-sidebar-toggle-text {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  line-height: 1;
 }
 
 #setterScreen .setter-board,
@@ -251,6 +300,21 @@
   font-size: clamp(16px, 7.2cqw, 33px);
 }
 
+/* Desktop: past #appContainer's own width cap the cqw ratio above is
+   pinned at its ceiling, so the Inspector's tiles stay phone-sized-for-a
+   -cramped-column (i.e. far too big) no matter how wide the monitor is.
+   Same selector shape as the rule above (equal specificity, later in the
+   file, so it wins) narrowed to the guesser -- history and draft tiles
+   deliberately share one size here. */
+@media (min-width: 640px) {
+  :is(#guesserScreen .guesser-board, #guesserScreen .guesser-board-v9)
+    .history-row:not(.constraint-row) .history-tile {
+    width: clamp(24px, 9cqw, 34px);
+    height: clamp(24px, 9cqw, 34px);
+    font-size: clamp(13px, 4.5cqw, 18px);
+  }
+}
+
 :is(#setterScreen .setter-board, #guesserScreen .guesser-board, #guesserScreen .guesser-board-v9)
   .constraint-row .history-tile {
   width: clamp(28px, 13.5cqw, 60px);
@@ -319,6 +383,40 @@
   inset: 0 auto 0 0;
   width: 24px;
   touch-action: none;
+}
+
+/* Legacy charge toast (collapsed-actions-v9 / v9-2 / v9-3 all publish the
+   same showCollapsedChargeToast entry point). Its original styling was
+   lost in the stylesheet consolidation, leaving an unstyled block that
+   got appended straight into the screen's flex column -- so every time it
+   appeared or expired it resized the column and shifted the sidebar
+   toggle out from under the cursor mid-click. Power Choice removes it
+   outright (see suppressLegacyChargeToasts in power-choice-mode.js); this
+   keeps it a harmless non-interactive overlay anywhere else it still
+   fires, so it can never move the layout again. */
+.collapsed-charge-toast {
+  position: fixed;
+  z-index: 2147482600;
+  top: clamp(60px, 9vh, 104px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 1px solid rgba(110, 205, 255, 0.7);
+  border-radius: 11px;
+  background: rgba(7, 13, 21, 0.97);
+  color: #edf9ff;
+  font-size: 11px;
+  font-weight: 800;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+
+.collapsed-charge-toast.show {
+  opacity: 1;
 }
 
 #setterScreen.setter-sidebar-collapsed .setter-workspace,
@@ -771,6 +869,23 @@
 
 .guesser-pending-history.is-working .history-tile {
   animation: game-pending 1.1s ease-in-out infinite;
+}
+
+/* The submitted guess's flight clone (buildFlightFrom in
+   guesser-flow-v7.js). It is appended to <body> and driven purely by
+   inline left/top/width/height plus a transform -- so it MUST be
+   positioned, or those offsets are ignored, it lands in normal document
+   flow at the foot of the page, and the transform then drags that
+   stray copy sideways across the screen instead of lifting the guess
+   into the history list. (These rules existed before the stylesheet
+   consolidation and were dropped with it.) */
+.guesser-guess-flight {
+  position: fixed;
+  z-index: 2147482500;
+  margin: 0;
+  min-height: 0;
+  pointer-events: none;
+  will-change: transform;
 }
 
 #guesserScreen #draftGuesser .history-row.guesser-draft-enter-left {
@@ -1392,14 +1507,77 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   display: flex;
 }
 
+/* Peeked away: the choice is still pending (and still blocks the turn),
+   the panel is just out of the way so the board underneath can be read.
+   Kept in the DOM/open state so returning is instant -- see the peek bar,
+   which is the only way back. */
+.pc-modal.is-peeking {
+  display: none;
+}
+
+.pc-reward-peek-bar {
+  position: fixed;
+  z-index: 2147483001;
+  bottom: max(14px, 4vh);
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 17px;
+  border: 1px solid rgba(255, 226, 120, 0.75);
+  border-radius: 999px;
+  background: rgba(20, 16, 6, 0.97);
+  color: #ffe278;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  /* Glow (not transform) -- this element is centred with a translateX,
+     and the shared game-ready pulse animates transform, which would
+     replace that translate and knock it off-centre. */
+  animation: pc-peek-glow 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes pc-peek-glow {
+  from { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+  to { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 226, 120, 0.45); }
+}
+
+.pc-reward-peek-bar.is-visible {
+  display: flex;
+}
+
 .pc-modal-card {
-  width: min(900px, 96vw);
-  padding: 23px;
+  position: relative;
+  width: min(720px, 94vw);
+  padding: 18px;
   border: 1px solid var(--game-line-strong);
   border-radius: 20px;
   background: linear-gradient(145deg, #151d2a, #090d14);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.64);
   color: var(--game-text);
+}
+
+.pc-modal-peek {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 5px 10px;
+  border: 1px solid var(--game-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--game-muted);
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pc-modal-peek:hover,
+.pc-modal-peek:focus-visible {
+  border-color: #75d6ff;
+  color: var(--game-text);
+  outline: none;
 }
 
 .pc-modal-kicker {
@@ -1437,8 +1615,8 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 235px;
-  padding: 18px 15px 15px;
+  min-height: 190px;
+  padding: 13px 11px 11px;
   border: 1px solid var(--game-line);
   border-radius: 15px;
   background: rgba(255, 255, 255, 0.045);
@@ -1463,13 +1641,22 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 .pc-card-icon {
   display: grid;
   place-items: center;
-  width: 62px;
-  height: 62px;
-  margin-bottom: 13px;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 9px;
   border: 1px solid var(--game-line);
-  border-radius: 17px;
+  border-radius: 13px;
   background: rgba(255, 255, 255, 0.07);
-  font-size: 28px;
+  font-size: 22px;
+}
+
+/* Same <symbol> artwork the power buttons use, tinted to the role accent
+   like everywhere else it appears. */
+.pc-card-icon .pc-card-svg {
+  width: 30px;
+  height: 30px;
+  color: var(--role-accent, var(--game-blue));
+  fill: currentColor;
 }
 
 .pc-tier {
@@ -1485,15 +1672,15 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 .pc-choice-card strong {
-  font-size: 16px;
+  font-size: 17px;
   text-align: center;
 }
 
 .pc-card-desc {
-  margin-top: 8px;
-  color: var(--game-muted);
-  font-size: 11px;
-  line-height: 1.45;
+  margin-top: 7px;
+  color: rgba(226, 238, 247, 0.82);
+  font-size: 13px;
+  line-height: 1.4;
   text-align: center;
 }
 
