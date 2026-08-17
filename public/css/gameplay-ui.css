@@ -10,7 +10,24 @@
    Tokens and shared controls
    -------------------------------------------------------------------------- */
 
-:is(#setterScreen, #guesserScreen) {
+/*
+ * These tokens are scoped to the two game screens, but several Power
+ * Choice surfaces (the reward modal, the peek bar, the quest-met
+ * flourish, the award capsule) are appended to <body> and therefore sit
+ * OUTSIDE that scope -- every var(--game-*) in their rules resolved to
+ * nothing, which silently invalidated whole declarations (a color-mix()
+ * with an empty argument just drops to the initial value, which is how
+ * the reward cards ended up with plain white borders). Declaring the same
+ * tokens on those roots too keeps one source of values while making them
+ * reachable from both places.
+ */
+:is(#setterScreen, #guesserScreen),
+.pc-modal,
+.pc-reward-peek-bar,
+.pc-quest-met-flourish,
+.pc-spy-award-capsule,
+.pc-reward-popup,
+.collapsed-charge-toast {
   --game-panel: #0b1119;
   --game-panel-2: #111a25;
   --game-soft: rgba(255, 255, 255, 0.045);
@@ -361,6 +378,18 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
+  /* Vertical drags scroll this list. The tiles inside sit under the
+     drag-to-reorder system's touch-action rules, and without an explicit
+     pan-y here a touch that happens to land on a tile (rather than the
+     gap between them) had its scroll swallowed -- which is why the Spy's
+     history only "sometimes" refused to scroll. */
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+#setterScreen #setterGuesserSubmitted :is(.history-row-wrap, .history-row, .history-tile),
+#guesserScreen #historyGuesser :is(.history-row-wrap, .history-row, .history-tile) {
+  touch-action: pan-y;
 }
 
 #setterScreen #setterGuesserSubmitted {
@@ -1834,33 +1863,29 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   color: var(--game-text);
 }
 
+/* Bold and clearly coloured -- this is the one way out of the modal
+   without picking, so it has to read as a real, available action. */
 .pc-modal-peek {
   position: absolute;
   top: 12px;
   left: 12px;
-  padding: 5px 10px;
-  border: 1px solid var(--game-line);
+  padding: 6px 14px;
+  border: 1px solid rgba(117, 214, 255, 0.7);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--game-muted);
-  font-size: 10px;
-  font-weight: 800;
+  background: rgba(117, 214, 255, 0.14);
+  color: #75d6ff;
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
   cursor: pointer;
 }
 
 .pc-modal-peek:hover,
 .pc-modal-peek:focus-visible {
-  border-color: #75d6ff;
-  color: var(--game-text);
+  border-color: #9fe4ff;
+  background: rgba(117, 214, 255, 0.24);
+  color: #d6f3ff;
   outline: none;
-}
-
-.pc-modal-kicker {
-  color: #ffe278;
-  font-size: 9px;
-  font-weight: 950;
-  letter-spacing: 0.15em;
-  text-align: center;
 }
 
 .pc-modal h2 {
@@ -1885,26 +1910,58 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   gap: 12px;
 }
 
+/* Each card carries its own accent (--pc-card-accent, set inline from the
+   power's palette colour; the fixed rewards fall back to the role blue).
+   The tint is layered over the panel rather than replacing it so the text
+   keeps its contrast. */
 .pc-choice-card {
+  --pc-card-accent: var(--game-blue);
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   min-height: 190px;
   padding: 13px 11px 11px;
-  border: 1px solid var(--game-line);
+  border: 1px solid color-mix(in srgb, var(--pc-card-accent) 55%, var(--game-line));
   border-radius: 15px;
-  background: rgba(255, 255, 255, 0.045);
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      color-mix(in srgb, var(--pc-card-accent) 26%, transparent),
+      transparent 68%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--pc-card-accent) 12%, rgba(255, 255, 255, 0.05)),
+      rgba(255, 255, 255, 0.03)
+    );
   color: #fff;
   cursor: pointer;
   transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
 }
 
+/* The icon plate and title pick up the accent too, so the colour reads as
+   the card's identity rather than a stray background wash. */
+.pc-choice-card .pc-card-icon {
+  border-color: color-mix(in srgb, var(--pc-card-accent) 60%, transparent);
+  background: color-mix(in srgb, var(--pc-card-accent) 20%, rgba(255, 255, 255, 0.06));
+}
+
+.pc-choice-card .pc-card-icon .pc-card-svg {
+  color: color-mix(in srgb, var(--pc-card-accent) 72%, white);
+}
+
+.pc-choice-card strong {
+  color: color-mix(in srgb, var(--pc-card-accent) 45%, white);
+}
+
 .pc-choice-card:hover,
 .pc-choice-card:focus-visible {
   transform: translateY(-4px);
-  border-color: #75d6ff;
-  box-shadow: 0 13px 30px rgba(0, 0, 0, 0.34);
+  border-color: color-mix(in srgb, var(--pc-card-accent) 85%, white);
+  box-shadow:
+    0 13px 30px rgba(0, 0, 0, 0.4),
+    0 0 22px color-mix(in srgb, var(--pc-card-accent) 40%, transparent);
   outline: none;
 }
 
@@ -1947,25 +2004,18 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 .pc-choice-card strong {
-  font-size: 17px;
+  font-size: 20px;
+  line-height: 1.15;
   text-align: center;
 }
 
 .pc-card-desc {
-  margin-top: 7px;
-  color: rgba(226, 238, 247, 0.82);
-  font-size: 13px;
-  line-height: 1.4;
+  margin-top: 8px;
+  padding-bottom: 4px;
+  color: rgba(232, 242, 250, 0.92);
+  font-size: 15px;
+  line-height: 1.38;
   text-align: center;
-}
-
-.pc-card-pick {
-  margin-top: auto;
-  padding-top: 16px;
-  color: #75d6ff;
-  font-size: 9px;
-  font-weight: 950;
-  letter-spacing: 0.13em;
 }
 
 /* Reward result popup shown to both players. */

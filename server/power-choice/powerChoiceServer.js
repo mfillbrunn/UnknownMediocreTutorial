@@ -625,7 +625,7 @@ function fixedOptions(role, threshold) {
         kind: "fixed",
         icon: "×4",
         title: "Lock Out Four",
-        description: "Block four random unused letters -- you won't be able to use them at all."
+        description: "Locks four random unused letters for BOTH players: neither you nor the Spy can use them for the rest of the round."
       }
     ];
   }

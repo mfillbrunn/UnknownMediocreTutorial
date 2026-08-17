@@ -205,15 +205,47 @@
   // Only rendered for a rated draft (not while idle/invalid), and only
   // re-inserted when the wording actually changes so its pop-in animation
   // fires once per achievement rather than on every render tick.
-  const STAR_PRAISE = { 2: "Nice", 3: "Amazing" };
+  const STAR_PRAISE = {
+    2: ["Nice", "Solid", "Good one", "Sharp"],
+    3: ["Amazing", "Perfect!", "Superb", "Flawless", "Brilliant"]
+  };
+  const BONUS_PRAISE = ["Well done", "Great", "Spot on", "Excellent"];
+
+  // The wording is picked once per achievement and held until the
+  // achievement itself changes, so it doesn't reshuffle on every render.
+  let _praiseKey = "";
+  let _praiseText = "";
+
+  function pickPraise(list) {
+    return list[Math.floor(Math.random() * list.length)] || "";
+  }
 
   function renderStarPraise(mount, count, strength) {
     const rated = strength?.status === "rated" || strength?.status === "same";
     const bonus = !!strength?.bonusStar;
-    let text = rated ? STAR_PRAISE[count] || "" : "";
-    if (rated && bonus) text = count >= 3 ? "Perfect!" : "Well done";
+    // Praise belongs to the decision being *considered*. Once the secret
+    // is submitted the draft is no longer live (draftIsPending), and on
+    // the guesser's turn there's nothing being decided at all -- in both
+    // cases the celebration has to stop rather than sit there cheering a
+    // choice that's already made.
+    const live = rated && !strength?.draftIsPending && !!strength?.draftValid;
+    const key = live ? `${count}|${bonus ? "b" : ""}` : "";
 
     let praise = mount.parentElement?.querySelector(".setter-star-praise");
+    if (!key || (!bonus && !STAR_PRAISE[count])) {
+      _praiseKey = "";
+      _praiseText = "";
+      praise?.remove();
+      return;
+    }
+
+    if (key !== _praiseKey) {
+      _praiseKey = key;
+      _praiseText = bonus
+        ? (count >= 3 ? pickPraise(STAR_PRAISE[3]) : pickPraise(BONUS_PRAISE))
+        : pickPraise(STAR_PRAISE[count] || []);
+    }
+    const text = _praiseText;
     if (!text) {
       praise?.remove();
       return;
@@ -246,9 +278,16 @@
     });
 
     // Drives the escalating glow/animation in gameplay-ui.css: nothing at
-    // one star, a gentle lift at two, a full celebration at three.
-    el.classList.toggle("stars-2", count === 2);
-    el.classList.toggle("stars-3", count >= 3);
+    // one star, a gentle lift at two, a full celebration at three. Gated
+    // on the decision still being live -- once the secret is submitted
+    // (draftIsPending) or it's the guesser's turn, the stars go quiet
+    // instead of animating on over a choice already made.
+    const celebrating =
+      (strength?.status === "rated" || strength?.status === "same") &&
+      !strength?.draftIsPending &&
+      !!strength?.draftValid;
+    el.classList.toggle("stars-2", celebrating && count === 2);
+    el.classList.toggle("stars-3", celebrating && count >= 3);
     renderStarPraise(el, count, strength);
 
     const charge = window.state?.powers?.spyCharge;
