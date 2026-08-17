@@ -201,6 +201,36 @@
     window.addEventListener("pointercancel", finishGesture, { passive: true });
   }
 
+  // Short bit of praise beside the stars for a genuinely good decision.
+  // Only rendered for a rated draft (not while idle/invalid), and only
+  // re-inserted when the wording actually changes so its pop-in animation
+  // fires once per achievement rather than on every render tick.
+  const STAR_PRAISE = { 2: "Nice", 3: "Amazing" };
+
+  function renderStarPraise(mount, count, strength) {
+    const rated = strength?.status === "rated" || strength?.status === "same";
+    const bonus = !!strength?.bonusStar;
+    let text = rated ? STAR_PRAISE[count] || "" : "";
+    if (rated && bonus) text = count >= 3 ? "Perfect!" : "Well done";
+
+    let praise = mount.parentElement?.querySelector(".setter-star-praise");
+    if (!text) {
+      praise?.remove();
+      return;
+    }
+    if (praise && praise.textContent === text) return;
+    if (!praise) {
+      praise = document.createElement("span");
+      praise.className = "setter-star-praise";
+      praise.setAttribute("aria-live", "polite");
+      mount.insertAdjacentElement("afterend", praise);
+    }
+    praise.textContent = text;
+    praise.style.animation = "none";
+    void praise.offsetWidth;
+    praise.style.animation = "";
+  }
+
   function renderCoverStars(strength) {
     const el = byId("setterCoverStars");
     if (!el) return;
@@ -214,6 +244,12 @@
     el.querySelectorAll("[data-cover-star]").forEach((star, index) => {
       star.classList.toggle("is-filled", index < count);
     });
+
+    // Drives the escalating glow/animation in gameplay-ui.css: nothing at
+    // one star, a gentle lift at two, a full celebration at three.
+    el.classList.toggle("stars-2", count === 2);
+    el.classList.toggle("stars-3", count >= 3);
+    renderStarPraise(el, count, strength);
 
     const charge = window.state?.powers?.spyCharge;
     const hint = charge?.hint;

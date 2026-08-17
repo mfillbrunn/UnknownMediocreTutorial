@@ -160,7 +160,8 @@ function freshPowerChoice(roundIndex) {
     // letter instead of blocking them.
     ruledOutLetters: [],
     bonusTimeTurnKeys: [],
-    lastResolution: null
+    lastResolution: null,
+    resolutionLog: []
   };
 }
 
@@ -1120,6 +1121,17 @@ function applyChoice(state, option, choice, room, roomId, io) {
     at: Date.now()
   };
   state.powerChoice.lastResolution = resolution;
+  // Durable record so BOTH players' action logs can show which reward was
+  // taken and what it did. The transient powerChoiceResolved emit only
+  // drives the popup, and a power-backed reward's own power event says
+  // nothing about the reward that granted it.
+  state.powerChoice.resolutionLog ||= [];
+  state.powerChoice.resolutionLog.push({
+    role: resolution.role,
+    title: resolution.title,
+    detailText: resolution.detailText,
+    at: resolution.at
+  });
   emitEffect(io, roomId, resolution);
   return true;
 }

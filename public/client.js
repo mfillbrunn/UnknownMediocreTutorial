@@ -782,7 +782,6 @@ function updateUI() {
   updateSetterDraftInvalidOverlay();
   updateGuesserDraftInvalidOverlay();
   window.renderActionLog?.(state, myRole);
-  window.renderNotesPanel?.(state);
   if (myRole === "setter") window.updateSetterIdleExpand?.(state);
 }
 

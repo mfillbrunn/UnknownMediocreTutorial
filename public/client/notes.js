@@ -326,6 +326,16 @@ list.querySelectorAll(
   // ── Public API ──────────────────────────────────────────────────────
 
   window.toggleNotes = function (role) {
+    // Notes has no panel for either role any more (both side columns are
+    // the action log). Several older sidebar scripts still call this on
+    // their own schedule -- without this guard they'd flip _active true
+    // with nothing on screen, and notesInput below would then swallow
+    // keystrokes that belong to the real guess/secret draft.
+    const roleId = role === "setter" ? "Setter" : "Guesser";
+    if (!document.getElementById(`notesPanel${roleId}`)) {
+      _active = false;
+      return;
+    }
     _resetIfRoomChanged();
     if (_active && _role !== role) {
       // switching roles — just swap

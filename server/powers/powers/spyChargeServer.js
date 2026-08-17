@@ -301,11 +301,11 @@ function starsForCandidate(candidateCount, bestCount) {
     return 2;
   }
 
-  if (gapPct < 50) {
-    return 1;
-  }
-
-  return 0;
+  // Baseline: any legal decision (including simply keeping the current
+  // secret) is worth one star. Only an invalid/non-decision earns nothing,
+  // and those never reach this function -- see the callers, which gate on
+  // a complete, valid, non-pending draft first.
+  return 1;
 }
 
 function evaluateSecretChange(

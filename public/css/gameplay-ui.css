@@ -137,13 +137,73 @@
 
 /* The log is the whole panel now, so it gets real room and readable type
    instead of the cramped 8-9px it used while sharing the row. */
+/* The Inspector's side column is the action log outright -- no notes, no
+   tabs. Borderless and flush so every pixel goes to the log. */
 #guesserScreen .guesser-info-col #actionLogGuesser {
+  display: flex !important;
   flex: 1 1 auto;
-  min-height: 150px;
+  min-height: 0;
   max-height: none;
-  padding: 8px 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
   font-size: 11px;
   line-height: 1.45;
+}
+
+#guesserScreen .guesser-sidebar {
+  padding: 6px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* Spy side column: Spyometer on top, log filling the rest. The Log/Notes
+   tab strip is gone, so the log can never be toggled hidden -- force it
+   visible regardless of any stale .hidden left by the old tab scripts. */
+#setterScreen #actionLogSetter {
+  display: flex !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+#setterScreen .setter-sidebar,
+#setterScreen .setter-sidebar-panels,
+#setterScreen .setter-sidebar-activity {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+#setterScreen .setter-sidebar {
+  padding: 6px;
+  gap: 6px;
+}
+
+#setterScreen #actionLogSetter .log-entry {
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(233, 243, 250, 0.9);
+}
+
+#setterScreen #actionLogSetter .log-entry.log-round {
+  margin-top: 5px;
+  color: var(--game-blue);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
 #guesserScreen #actionLogGuesser .log-entry {
@@ -204,6 +264,56 @@
   flex-direction: column;
   align-items: center;
   padding: 10px;
+}
+
+/* --- Tighten the vertical stack for both roles ---------------------------
+   The board, the quest card, the draft row and the keyboard each carried
+   their own generous margins, which stacked into large dead bands between
+   the header and the board, around the quest card, and above the keyboard.
+   Trim them at the source rather than negative-margining them away. */
+:is(#setterScreen, #guesserScreen).active .play-area {
+  margin-top: 0;
+}
+
+:is(#setterScreen, #guesserScreen) .center-col {
+  margin-top: 2px;
+  row-gap: 2px;
+}
+
+:is(#setterScreen, #guesserScreen) .play-row {
+  gap: 6px;
+}
+
+#guesserScreen :is(.guesser-board, .guesser-board-v9) {
+  padding: 5px 6px 6px;
+}
+
+#setterScreen .setter-board {
+  padding-top: 4px;
+}
+
+.pc-current-quest-host {
+  margin: 1px auto 3px;
+}
+
+#guesserScreen .draft-row-wrap {
+  margin-block: 2px;
+}
+
+#guesserScreen #keyboardGuesser,
+#setterScreen #keyboardSetter {
+  margin-top: 4px;
+}
+
+#setterScreen .setter-decision-stage {
+  padding-top: 3px;
+  padding-bottom: 6px;
+}
+
+#setterScreen .setter-decision-meta {
+  min-height: 0;
+  margin-bottom: 3px;
+  padding-block: 1px 2px;
 }
 
 #setterScreen .setter-board::before,
@@ -600,9 +710,73 @@
   transform: none !important;
 }
 
+/* Empty by default -- hollow and dim, so an unearned star can never be
+   mistaken for an earned one. (These fill/empty styles were lost in the
+   stylesheet consolidation, which left every star looking identical
+   regardless of how many were actually earned.) */
 #setterScreen .setter-cover-star {
   font-size: 18px;
   line-height: 1;
+  color: rgba(150, 168, 186, 0.34);
+  text-shadow: none;
+  transition: color 180ms ease, text-shadow 180ms ease, transform 180ms ease;
+}
+
+#setterScreen .setter-cover-star.is-filled {
+  color: #ffd75e;
+  text-shadow: 0 0 8px rgba(255, 200, 70, 0.55);
+}
+
+/* Escalating celebration: two stars gets a gentle lift, three goes
+   properly excited. */
+#setterScreen #setterCoverStars.stars-2 .setter-cover-star.is-filled {
+  color: #ffdf7a;
+  text-shadow: 0 0 12px rgba(255, 210, 90, 0.8);
+  animation: pc-star-bump 1.5s ease-in-out infinite;
+}
+
+#setterScreen #setterCoverStars.stars-3 .setter-cover-star.is-filled {
+  color: #fff0a8;
+  text-shadow:
+    0 0 10px rgba(255, 220, 110, 0.95),
+    0 0 22px rgba(255, 190, 60, 0.7);
+  animation: pc-star-party 0.9s ease-in-out infinite;
+}
+
+#setterScreen #setterCoverStars.stars-3 .setter-cover-star.is-filled:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+#setterScreen #setterCoverStars.stars-3 .setter-cover-star.is-filled:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+@keyframes pc-star-bump {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-1px) scale(1.06); }
+}
+
+@keyframes pc-star-party {
+  0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+  30% { transform: translateY(-3px) scale(1.2) rotate(-8deg); }
+  60% { transform: translateY(-1px) scale(1.1) rotate(7deg); }
+}
+
+/* Short bit of praise once the decision is genuinely good. */
+.setter-star-praise {
+  margin-left: 5px;
+  color: #ffdf7a;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgba(255, 205, 85, 0.6);
+  animation: pc-praise-pop 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+}
+
+@keyframes pc-praise-pop {
+  from { opacity: 0; transform: translateY(3px) scale(0.8); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 #setterScreen .setter-cover-target {
@@ -867,8 +1041,56 @@
    Pending and reset states
    -------------------------------------------------------------------------- */
 
+/* Waiting on the Spy: the tiles themselves hold still (bobbing them read
+   as the guess being unstable rather than as progress). Instead each tile
+   carries a small blue loading bar underneath that sweeps left to right,
+   staggered across the row so it scans like a progress indicator. */
 .guesser-pending-history.is-working .history-tile {
-  animation: game-pending 1.1s ease-in-out infinite;
+  position: relative;
+  opacity: 0.86;
+}
+
+.guesser-pending-history.is-working .history-tile::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: -5px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(88, 201, 255, 0.16);
+  overflow: hidden;
+}
+
+.guesser-pending-history.is-working .history-tile::before {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 10%;
+  z-index: 1;
+  width: 34%;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(88, 201, 255, 0) 0%,
+    var(--game-blue) 50%,
+    rgba(88, 201, 255, 0) 100%
+  );
+  box-shadow: 0 0 8px rgba(88, 201, 255, 0.75);
+  animation: pc-wait-scan 1.25s linear infinite;
+}
+
+.guesser-pending-history.is-working .history-tile:nth-child(2)::before { animation-delay: 0.1s; }
+.guesser-pending-history.is-working .history-tile:nth-child(3)::before { animation-delay: 0.2s; }
+.guesser-pending-history.is-working .history-tile:nth-child(4)::before { animation-delay: 0.3s; }
+.guesser-pending-history.is-working .history-tile:nth-child(5)::before { animation-delay: 0.4s; }
+
+@keyframes pc-wait-scan {
+  0% { transform: translateX(-45%); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateX(200%); opacity: 0; }
 }
 
 /* The submitted guess's flight clone (buildFlightFrom in
@@ -1062,7 +1284,33 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 :is(.pc-meter-segment, .pc-award-capsule-segment).just-landed {
-  animation: game-segment 420ms ease-out;
+  animation: pc-segment-impact 560ms cubic-bezier(0.18, 0.9, 0.24, 1);
+  z-index: 2;
+}
+
+/* Impact flash: the cell overshoots and blooms white-hot before settling,
+   so you can see exactly which notch the star just filled. */
+@keyframes pc-segment-impact {
+  0% {
+    transform: scale(0.35);
+    filter: brightness(3.4) saturate(1.6);
+    box-shadow: 0 0 0 rgba(150, 226, 255, 0);
+  }
+  35% {
+    transform: scale(1.85);
+    filter: brightness(2.4) saturate(1.4);
+    box-shadow: 0 0 20px 5px rgba(150, 226, 255, 0.85);
+  }
+  70% {
+    transform: scale(0.94);
+    filter: brightness(1.3);
+    box-shadow: 0 0 12px 2px rgba(150, 226, 255, 0.45);
+  }
+  100% {
+    transform: scale(1);
+    filter: none;
+    box-shadow: 0 0 0 rgba(150, 226, 255, 0);
+  }
 }
 
 .pc-charge-details {
@@ -1468,12 +1716,39 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   text-align: right;
 }
 
+/* Bigger, hotter core with a layered halo and a comet trail streaming
+   back along the flight path, so a star landing reads as an event rather
+   than a small glyph sliding across. */
 .pc-award-falling-star {
   position: absolute;
   z-index: 3;
-  color: #edfaff;
-  font-size: 18px;
-  text-shadow: 0 0 13px rgba(109, 213, 255, 0.95);
+  color: #ffffff;
+  font-size: 26px;
+  text-shadow:
+    0 0 6px #ffffff,
+    0 0 16px rgba(140, 226, 255, 1),
+    0 0 34px rgba(60, 178, 255, 0.9),
+    0 0 60px rgba(40, 150, 255, 0.55);
+  filter: drop-shadow(0 0 10px rgba(120, 215, 255, 0.9));
+  pointer-events: none;
+}
+
+.pc-award-falling-star::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 40px;
+  transform: translate(-50%, -96%);
+  border-radius: 999px;
+  background: linear-gradient(
+    to top,
+    rgba(150, 226, 255, 0) 0%,
+    rgba(150, 226, 255, 0.75) 45%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
+  opacity: 0.9;
   pointer-events: none;
 }
 
@@ -1910,8 +2185,12 @@ html[data-theme-mode="light"] .pc-current-quest-card.is-met {
       #draftGuesser .history-row.pc-quest-draft-met::after,
       #draftGuesser .history-row.pc-quest-draft-met .history-tile,
       .guesser-pending-history.is-working .history-tile,
+      .guesser-pending-history.is-working .history-tile::before,
       .pc-quest-met-flourish,
-      #setterBonusTargetV9.pc-bonus-satisfied
+      #setterBonusTargetV9.pc-bonus-satisfied,
+      #setterScreen #setterCoverStars.stars-2 .setter-cover-star.is-filled,
+      #setterScreen #setterCoverStars.stars-3 .setter-cover-star.is-filled,
+      .setter-star-praise
     ) {
     animation: none !important;
   }

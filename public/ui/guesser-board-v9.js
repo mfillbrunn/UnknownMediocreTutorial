@@ -100,7 +100,7 @@
     toggle.setAttribute("aria-expanded", String(!collapsed));
     toggle.setAttribute(
       "aria-label",
-      collapsed ? "Show Inspector side panel" : "Hide Inspector side panel"
+      collapsed ? "Show game log" : "Hide game log"
     );
     toggle.title = collapsed ? "Show side panel" : "Hide side panel";
 
