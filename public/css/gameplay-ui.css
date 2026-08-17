@@ -109,6 +109,26 @@
    that content instead of the content sizing its own box. */
 #guesserScreen .guesser-sidebar {
   align-self: flex-start;
+  /* Sits on the left of the board, same side as the setter's sidebar
+     (the toggle button's own positioning already assumes a left-side
+     sidebar -- see .guesser-sidebar-toggle below). DOM order keeps the
+     board first for markup/reading order; this only reorders the
+     rendered layout. */
+  order: -1;
+}
+
+/* Log-only now -- no quest/reward badge card sharing the row, and no
+   panel header, just the action log itself. */
+#guesserScreen .guesser-powers-row #guesserPowerContainer {
+  display: none !important;
+}
+
+#guesserScreen .guesser-powers-row {
+  min-height: 0;
+}
+
+#guesserScreen .guesser-info-col {
+  flex: 1 1 auto;
 }
 
 #setterScreen .setter-board,
@@ -190,13 +210,7 @@
 }
 
 #setterScreen .setter-board-divider {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 8px;
-  width: calc(100% - 24px);
-  margin: 0 auto;
-  color: rgba(255, 255, 255, 0.3);
+  display: none;
 }
 
 #setterScreen .setter-board-divider span {
@@ -351,9 +365,7 @@
 
 #setterScreen .setter-sidebar-tabs {
   display: grid;
-  /* Notes gets the larger share and sits further right in the row than
-     an even 1fr/1fr split would put it. */
-  grid-template-columns: 0.8fr 1.2fr;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
 
@@ -365,11 +377,6 @@
   color: var(--game-muted);
   font-size: 9px;
   font-weight: 800;
-}
-
-#setterScreen #notesBtnSetter {
-  min-height: 36px;
-  font-size: 12px;
 }
 
 #setterScreen .setter-sidebar-tab[aria-selected="true"] {
@@ -614,10 +621,16 @@
   color: #f9d66e;
 }
 
-:is(#setterScreen .setter-submit-btn, #guesserDecisionActions .guesser-submit-btn) {
+#setterScreen .setter-submit-btn {
   border: 1px solid rgba(251, 113, 133, 0.72);
   background: rgba(127, 29, 29, 0.38);
   color: #fb7185;
+}
+
+#guesserDecisionActions .guesser-submit-btn {
+  border: 1px solid rgba(88, 201, 255, 0.72);
+  background: rgba(15, 45, 74, 0.42);
+  color: var(--game-blue);
 }
 
 /* Bonus target: one readout plus one outlined tile. */
@@ -893,42 +906,44 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 .pc-award-capsule-meter {
   display: grid;
   grid-template-columns: repeat(15, minmax(3px, 1fr));
-  gap: 2px;
+  gap: 0;
   width: 100%;
   padding: 3px;
   border: 1px solid rgba(122, 194, 235, 0.27);
   border-radius: 6px;
   background: rgba(1, 6, 12, 0.76);
+  overflow: hidden;
 }
 
 .pc-segment-meter {
   grid-column: 1 / -1;
 }
 
+/* No per-cell dividers -- cells sit flush against each other and read
+   purely off their own fill color instead of a grid of lines. */
 .pc-meter-segment,
 .pc-award-capsule-segment {
   position: relative;
   height: 8px;
   min-width: 3px;
-  border: 1px solid rgba(186, 220, 240, 0.27);
-  border-radius: 2px;
+  border: 0;
   background: rgba(215, 236, 248, 0.05);
 }
 
 :is(.pc-meter-segment, .pc-award-capsule-segment).is-filled {
-  border-color: rgba(205, 239, 255, 0.92);
   background: #70ceff;
-  box-shadow: 0 0 7px rgba(88, 201, 255, 0.58);
+  box-shadow: inset 0 0 0 1px rgba(205, 239, 255, 0.5);
 }
 
-:is(.pc-meter-segment, .pc-award-capsule-segment).is-milestone::after {
-  content: "";
-  position: absolute;
-  top: -4px;
-  right: -3px;
-  bottom: -4px;
-  width: 1px;
-  background: rgba(255, 224, 118, 0.48);
+/* Milestones read as a distinct color instead of a tick line -- amber
+   whether or not they're filled yet. */
+:is(.pc-meter-segment, .pc-award-capsule-segment).is-milestone {
+  background: rgba(255, 200, 87, 0.22);
+}
+
+:is(.pc-meter-segment, .pc-award-capsule-segment).is-milestone.is-filled {
+  background: #f5b83d;
+  box-shadow: inset 0 0 0 1px rgba(255, 226, 158, 0.6);
 }
 
 :is(.pc-meter-segment, .pc-award-capsule-segment).just-landed {
@@ -1277,6 +1292,19 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   text-shadow: 0 1px 3px #000;
 }
 
+/* Ruled-out-but-still-usable letters (the informational reward) read as a
+   normal already-guessed absent key -- same look as .key-gray, no X
+   overlay, no disabled cursor, since these can still be typed. */
+.pc-key-ruled-out {
+  background: #0a0b0d !important;
+  color: #565b63 !important;
+  border-color: #000000aa !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.6);
+  opacity: 1;
+}
+
 /* Compact Spy charge animation. */
 .pc-spy-award-capsule {
   position: fixed;
@@ -1395,9 +1423,12 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   text-align: center;
 }
 
+/* auto-fit instead of a fixed 3 columns -- most reward groups have 3
+   cards, but at least one now has 4, and this wraps either gracefully
+   instead of forcing a 4th card into a cramped 4th column. */
 .pc-card-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
 }
 

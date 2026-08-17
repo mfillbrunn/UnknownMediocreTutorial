@@ -465,17 +465,14 @@
     }
 
     /*
-     * Move center-to-center rather than left-edge-to-left-edge. The rows
-     * can differ slightly in width, so edge math shifts the visual center
-     * to the right when the clone is scaled.
+     * Vertical only -- the draft row and the history row it's landing in
+     * both span the same full-width column, so any horizontal drift
+     * between their measured rects is incidental (e.g. a mid-transition
+     * layout shift, not a real difference in where the row belongs) and
+     * read as the guess floating sideways before correcting itself
+     * upward instead of one clean move straight up.
      */
-    const dx =
-      endRect.left +
-      endRect.width / 2 -
-      (
-        startRect.left +
-        startRect.width / 2
-      );
+    const dx = 0;
 
     const dy =
       endRect.top +

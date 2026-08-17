@@ -159,6 +159,33 @@ function fitBadgeLabel(labelEl, attemptsLeft) {
 }
 window.fitBadgeLabel = fitBadgeLabel;
 
+// Finds the most recent server power-event for a given power id, so a used
+// power's button can show its concrete result (e.g. "position 3 = R" for
+// Sneak Letter) instead of just sitting there marked used. Checks the
+// still-pending live events first (this turn's guess hasn't resolved into
+// history yet), then walks history newest-first, including archived
+// rounds (state.history is wiped at each round boundary).
+function findLatestPowerEvent(state, powerId) {
+  const live = Array.isArray(window._livePowerEvents) ? window._livePowerEvents : [];
+  for (let i = live.length - 1; i >= 0; i--) {
+    if (live[i]?.id === powerId) return live[i];
+  }
+  const rounds = [
+    ...(Array.isArray(state?.matchRounds) ? state.matchRounds : []),
+    { history: state?.history }
+  ];
+  for (let r = rounds.length - 1; r >= 0; r--) {
+    const history = rounds[r]?.history || [];
+    for (let i = history.length - 1; i >= 0; i--) {
+      const events = history[i]?.powerEvents || [];
+      for (let j = events.length - 1; j >= 0; j--) {
+        if (events[j]?.id === powerId) return events[j];
+      }
+    }
+  }
+  return null;
+}
+
 window.PowerEngine = {
   powers: {},
   _initialized: false,
@@ -337,6 +364,24 @@ applyPowerPalette(
       btn.disabled = true;
       btn.classList.add("power-used");
       btn.classList.remove("disabled-btn");
+
+      const labelEl = btn.querySelector(".power-btn-label");
+      if (labelEl) {
+        const evt = findLatestPowerEvent(state, id);
+        const formatted = evt && window.formatPowerEvent?.(evt);
+        const resultText =
+          formatted?.ownText && formatted.ownText !== formatted.label
+            ? formatted.ownText
+            : null;
+        const cacheKey = resultText || "";
+        if (labelEl.dataset.resultShown !== cacheKey) {
+          labelEl.dataset.resultShown = cacheKey;
+          if (resultText) {
+            labelEl.textContent = resultText;
+            fitBadgeLabel(labelEl);
+          }
+        }
+      }
       continue;
     }
 
