@@ -961,6 +961,23 @@ function updateScreens() {
         updateGuesserScreen();
       }
 
+      // The winning row is the LAST row in the history list, so after a
+      // long round it sits below the fold and its flip played entirely
+      // off-screen -- the reveal this whole branch exists to show went
+      // unseen exactly when the round had been most worth watching. Pin
+      // both lists to the bottom before the flip starts. Two frames, so
+      // the row just added has been laid out and scrollHeight is final.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          [
+            $("historyGuesser"),
+            $("setterGuesserSubmitted")
+          ].forEach(list => {
+            if (list) list.scrollTop = list.scrollHeight;
+          });
+        });
+      });
+
       // The tile flip has to actually finish playing before the popup
       // shows — worst case (setter's view, where the winning row also
       // slides up into place via slideRowIntoPlace before any tile can
@@ -1936,6 +1953,10 @@ function submitSetterKeep() {
     return;
   }
 
+  // Stars, praise and the Keep -> New counts all belong to the decision
+  // being made; the moment it is sent they go together (setter-board.js).
+  window.onSetterDecisionSubmitted?.();
+
   if (
     !sendGameAction(
       { type: "SET_SECRET_SAME" },
@@ -2326,6 +2347,9 @@ function submitSetterNew() {
     toast("Reconnecting...");
     return;
   }
+
+  window.onSetterDecisionSubmitted?.();
+
   // Same reasoning as submitSetterKeep(): don't wipe the draft the player
   // just typed unless it actually reached the server.
   if (

@@ -283,6 +283,75 @@
     _praiseText = "";
   }
 
+  // The Spy's decision for the guess currently on the board has been sent.
+  // Held as the pending guess itself rather than a bare boolean so it
+  // clears itself the moment the next guess arrives, with no separate
+  // reset path to keep in step.
+  let _decidedForPending = null;
+
+  function decisionAlreadyMade() {
+    const pending = String(window.state?.pendingGuess || "").toUpperCase();
+    return !!_decidedForPending && _decidedForPending === pending;
+  }
+
+  // Shared with remaining-words.js so the Keep -> New counts disappear on
+  // exactly the same signal the stars do.
+  window.setterDecisionCommitted = decisionAlreadyMade;
+
+  // Floats the praise word up over the board for a moment after the Spy
+  // commits. Beside the stars it was only ever visible while the decision
+  // was still being made -- the point of the congratulation is to land ON
+  // the commit, which is also when the stars themselves go away.
+  function floatPraise(text, anchor) {
+    if (!text) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+    const rect = anchor?.getBoundingClientRect?.();
+    const el = document.createElement("div");
+    el.className = "setter-praise-float";
+    el.setAttribute("role", "status");
+    el.textContent = text;
+
+    const x = rect?.width
+      ? rect.left + rect.width / 2
+      : window.innerWidth / 2;
+    const y = rect?.height ? rect.top : window.innerHeight * 0.3;
+
+    el.style.left = `${Math.min(Math.max(x, 90), window.innerWidth - 90)}px`;
+    el.style.top = `${Math.max(56, y)}px`;
+
+    document.body.appendChild(el);
+    el.addEventListener("animationend", () => el.remove(), { once: true });
+    setTimeout(() => el.remove(), 2200);
+  }
+
+  // Called by client.js the instant a Keep/New secret is actually sent, so
+  // the stars, the praise, and the Keep -> New counts all disappear
+  // together on the commit -- rather than lingering under the submitted
+  // row's outline as it flies to history while the server round-trip and
+  // the star-award animation play out.
+  window.onSetterDecisionSubmitted = function () {
+    if (window.myRole !== "setter") return;
+    _decidedForPending = String(window.state?.pendingGuess || "").toUpperCase() || null;
+
+    const stars = byId("setterCoverStars");
+    const praiseText =
+      stars?.parentElement?.querySelector(".setter-star-praise")?.textContent || "";
+
+    if (stars) {
+      floatPraise(praiseText, stars);
+      stars.classList.add("hidden");
+      clearCoverStars(stars);
+    }
+
+    // The Keep -> New readout is the other half of the same decision.
+    const box = byId("SetterRemainingBox");
+    if (box) {
+      box.hidden = true;
+      box.innerHTML = "";
+    }
+  };
+
   function renderCoverStars(strength) {
     const el = byId("setterCoverStars");
     if (!el) return;
@@ -335,7 +404,12 @@
       strength?.status === "same" ||
       strength?.status === "locked";
 
-    const show = !!strength?.visible && isSetter && rated && count > 0;
+    const show =
+      !!strength?.visible &&
+      isSetter &&
+      rated &&
+      count > 0 &&
+      !decisionAlreadyMade();
 
     el.classList.toggle("hidden", !show);
     if (!show) {
