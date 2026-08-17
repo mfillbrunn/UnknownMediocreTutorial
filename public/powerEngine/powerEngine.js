@@ -36,6 +36,11 @@ const POWER_MAX_USES = {
   hideTile: 2,
   revealGreen: 2
 };
+
+// Published so other surfaces that show a power outside the normal button
+// tray (e.g. Power Choice's reward cards) can render the same icon rather
+// than falling back to an emoji stand-in.
+window.POWER_ICON_IDS = POWER_ICON_IDS;
 function applyPowerPalette(
   element,
   powerId

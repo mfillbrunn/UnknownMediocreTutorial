@@ -54,6 +54,29 @@ function eraseLetterKnowledge(state, letters) {
 
   if (!state || !targets.size) return result;
 
+  /*
+   * Power Choice's locked-out / ruled-out letters are just another kind of
+   * knowledge about a letter, so any power that wipes a letter's feedback
+   * has to lift its block too -- otherwise a "reset" left the Inspector
+   * still barred from typing a letter nobody knows anything about anymore.
+   * Done here rather than at each reset power's call site so every path
+   * through this helper (Vowel Refresh, Hide Evidence, the Spy's charge
+   * reset, and the Power Choice reward resets) picks it up automatically.
+   */
+  const pc = state.powerChoice;
+  if (pc) {
+    if (Array.isArray(pc.eliminatedLetters)) {
+      pc.eliminatedLetters = pc.eliminatedLetters.filter(
+        letter => !targets.has(letter)
+      );
+    }
+    if (Array.isArray(pc.ruledOutLetters)) {
+      pc.ruledOutLetters = pc.ruledOutLetters.filter(
+        letter => !targets.has(letter)
+      );
+    }
+  }
+
   for (const entry of state.history || []) {
     const guess = String(entry?.guess || "").toUpperCase();
     const erasedIndices = new Set();

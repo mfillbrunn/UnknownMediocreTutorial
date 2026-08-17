@@ -577,6 +577,12 @@
     )];
   }
 
+  function setterKeyboardKeys() {
+    return [...document.querySelectorAll(
+      "#keyboardSetter button, #keyboardSetter [data-key], #keyboardSetter [data-letter], #keyboardSetter .key"
+    )];
+  }
+
   function clearQuestKeyHints() {
     keyboardKeys().forEach(key => key.classList.remove("pc-quest-key-hint"));
   }
@@ -750,6 +756,7 @@
     modal.setAttribute("role", "dialog");
     modal.setAttribute("aria-modal", "true");
     modal.innerHTML = `<div class="pc-modal-card">
+      <button type="button" class="pc-modal-peek" title="Look at the board -- your reward stays waiting">Hide &amp; check board</button>
       <div class="pc-modal-kicker">REWARD READY · +30 SECONDS</div>
       <h2></h2>
       <p class="pc-modal-sub"></p>
@@ -759,11 +766,54 @@
     return modal;
   }
 
-  function optionIcon(option) {
-    if (option?.kind === "power") {
-      return window.POWER_METADATA?.[option.powerId]?.emoji || option.icon || "⚡";
+  // Shown while the modal is peeked away, so the reward is never lost --
+  // it is the only way back, and the turn stays blocked until a card is
+  // picked (the server rejects guesses/secrets while a choice is pending).
+  function ensurePeekBar() {
+    let bar = byId("pcRewardPeekBar");
+    if (bar) return bar;
+    bar = document.createElement("button");
+    bar.type = "button";
+    bar.id = "pcRewardPeekBar";
+    bar.className = "pc-reward-peek-bar";
+    bar.innerHTML = `<span aria-hidden="true">★</span> Reward waiting — tap to choose`;
+    bar.addEventListener("click", () => {
+      const modal = byId("powerChoiceModal");
+      if (!modal) return;
+      modal.classList.remove("is-peeking");
+      bar.classList.remove("is-visible");
+      modal.querySelector(".pc-choice-card")?.focus();
+    });
+    document.body.appendChild(bar);
+    return bar;
+  }
+
+  // The real in-game icon for a power (same <symbol> library the power
+  // buttons use), falling back to the option's own glyph for the fixed
+  // (non-power) rewards that have no icon of their own.
+  function optionIconMarkup(option) {
+    const iconId = option?.kind === "power"
+      ? window.POWER_ICON_IDS?.[option.powerId]
+      : null;
+    if (iconId) {
+      return `<svg class="power-icon pc-card-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <use href="#${esc(iconId)}" xlink:href="#${esc(iconId)}"></use>
+      </svg>`;
     }
-    return option?.icon || "◆";
+    if (option?.kind === "power") {
+      return esc(window.POWER_METADATA?.[option.powerId]?.emoji || option.icon || "⚡");
+    }
+    return esc(option?.icon || "◆");
+  }
+
+  // Reward cards have room for the full explanation, so prefer a power's
+  // long description over the terse one the compact badges use.
+  function optionDescription(option) {
+    if (option?.kind === "power") {
+      const meta = window.POWER_METADATA?.[option.powerId];
+      return meta?.desc || meta?.short || option.description || "";
+    }
+    return option?.description || "";
   }
 
   function showQuestMetFlourish() {
@@ -791,10 +841,10 @@
         ? `<span class="pc-tier">TIER ${option.tier || window.POWER_TIERS?.[option.powerId]?.tier || 1}</span>`
         : "";
       return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}">
-        <span class="pc-card-icon">${esc(optionIcon(option))}</span>
+        <span class="pc-card-icon">${optionIconMarkup(option)}</span>
         ${tier}
         <strong>${esc(option.title)}</strong>
-        <span class="pc-card-desc">${esc(option.description)}</span>
+        <span class="pc-card-desc">${esc(optionDescription(option))}</span>
         <span class="pc-card-pick">CHOOSE</span>
       </button>`;
     }).join("");
@@ -810,6 +860,19 @@
         });
       });
     });
+    const peekBar = ensurePeekBar();
+    const peekBtn = modal.querySelector(".pc-modal-peek");
+    if (peekBtn && !peekBtn.dataset.wired) {
+      peekBtn.dataset.wired = "1";
+      peekBtn.addEventListener("click", event => {
+        event.stopPropagation();
+        modal.classList.add("is-peeking");
+        byId("pcRewardPeekBar")?.classList.add("is-visible");
+      });
+    }
+
+    modal.classList.remove("is-peeking");
+    peekBar.classList.remove("is-visible");
     modal.classList.add("is-open");
     grid.querySelector("button")?.focus();
   }
@@ -818,7 +881,8 @@
     const modal = ensureChoiceModal();
     const pending = window.state?.powerChoice?.pendingChoice;
     if (!isMode() || !pending || pending.ownerUserId !== me()) {
-      modal.classList.remove("is-open");
+      modal.classList.remove("is-open", "is-peeking");
+      byId("pcRewardPeekBar")?.classList.remove("is-visible");
       modal.dataset.choiceId = "";
       if (rewardModalTimer) {
         clearTimeout(rewardModalTimer);
@@ -861,6 +925,17 @@
       key.setAttribute("aria-disabled", blocked ? "true" : "false");
       if (blocked) key.title = `${letter} was ruled out`;
       else if (known) key.title = `${letter} was ruled out (still usable)`;
+    });
+
+    // Locked-out letters bind the Spy's secret too (server rejects a
+    // secret containing one), so they show on the Spy's keyboard as spent
+    // -- the same gray "already used" treatment the Spy already reads as
+    // "not available", rather than the Inspector's louder blocked styling.
+    setterKeyboardKeys().forEach(key => {
+      const letter = keyboardLetter(key);
+      const blocked = !!letter && eliminated.has(letter);
+      key.classList.toggle("pc-key-ruled-out", blocked);
+      if (blocked) key.title = `${letter} is locked out this round`;
     });
   }
 
@@ -1102,6 +1177,28 @@
     rewardPopupRunning = false;
   }
 
+  // Several pre-Power-Choice scripts (collapsed-actions-v9.js,
+  // v9-2-ui-fixes.js, v9-3-ui-fixes.js) each build their own floating
+  // "collapsed charge toast" -- a 12-segment meter + "N/12" + "+N" delta,
+  // and sometimes a power glyph -- off the same spyCharge state this mode
+  // drives. Power Choice has its own Spyometer and award capsule for that,
+  // so the toast is pure duplicate chrome here. Neutralize the shared
+  // entry point they all publish and drop anything already on screen.
+  function suppressLegacyChargeToasts() {
+    if (!window.__pcChargeToastSuppressed) {
+      window.__pcChargeToastSuppressed = true;
+      const original = window.showCollapsedChargeToast;
+      window.showCollapsedChargeToast = function (...args) {
+        if (isMode()) return;
+        return original?.apply(this, args);
+      };
+    }
+    if (!isMode()) return;
+    document
+      .querySelectorAll(".collapsed-charge-toast")
+      .forEach(node => node.remove());
+  }
+
   function renderAll() {
     installModeUiWrapper();
     installSetterHistoryDeferral();
@@ -1112,6 +1209,7 @@
     markEliminatedKeys();
     applyQuestKeyHints();
     normalizeBonusTarget();
+    suppressLegacyChargeToasts();
   }
 
   function installObservers() {

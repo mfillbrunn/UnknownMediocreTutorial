@@ -656,15 +656,30 @@ function fixedOptions(role, threshold) {
   return [];
 }
 
+// Trims a fixed-reward group down to three cards. Options that would do
+// nothing right now (fixedOptionApplicable === false) are dropped first,
+// so a random trim can't leave the player staring at three dead cards
+// while a usable one was silently cut.
+function pickThree(state, options) {
+  const list = Array.isArray(options) ? options : [];
+  if (list.length <= 3) return list;
+  const usable = list.filter(option => fixedOptionApplicable(state, option));
+  const rest = list.filter(option => !usable.includes(option));
+  return shuffle(usable).concat(shuffle(rest)).slice(0, 3);
+}
+
 function buildChoice(state, role, threshold, owner) {
   const side =
     role === "setter" ? state.powerChoice.spy : state.powerChoice.inspector;
   const randomMilestone =
     (role === "setter" && threshold === 8) ||
     (role === "guesser" && threshold === 3);
+  // Always exactly three cards to pick from. Some fixed groups define
+  // more than three candidates (so the pool can vary between rewards) --
+  // narrow those down to a random three rather than widening the row.
   const options = randomMilestone
     ? threePowerOptions(state, role, side.usedPowerIds)
-    : fixedOptions(role, threshold);
+    : pickThree(state, fixedOptions(role, threshold));
   return {
     id: `${role}-${threshold}-${Date.now()}-${Math.random()
       .toString(36)
@@ -859,6 +874,15 @@ function removeUnusedLetters(state, count) {
   for (const letter of selected) eliminated.add(letter);
   state.powerChoice.eliminatedLetters = [...eliminated];
   return selected;
+}
+
+// First locked-out letter appearing in `word`, or null. Locked-out letters
+// bind BOTH roles: the Inspector can't guess them and the Spy can't hide
+// behind them in the secret.
+function blockedLetterIn(state, word) {
+  const blocked = state.powerChoice?.eliminatedLetters || [];
+  if (!blocked.length || !word) return null;
+  return blocked.find(letter => word.includes(letter)) || null;
 }
 
 // Informational only -- the letters are known-absent but stay usable; the
@@ -1546,9 +1570,7 @@ function handleAction(room, state, action, roomId, context) {
 
   if (action.type === "SUBMIT_GUESS" && action.userId === state.guesser) {
     const word = normalizeWord(action.guess);
-    const blocked = (state.powerChoice.eliminatedLetters || []).find(letter =>
-      word.includes(letter)
-    );
+    const blocked = blockedLetterIn(state, word);
     if (blocked) {
       sendError(
         room,
@@ -1556,6 +1578,27 @@ function handleAction(room, state, action, roomId, context) {
         action.userId,
         io,
         `${blocked} was ruled out and cannot be used.`
+      );
+      return true;
+    }
+  }
+
+  // The same locked-out letters bind the Spy's secret too -- otherwise the
+  // Spy could simply hide the word behind letters the Inspector is barred
+  // from ever typing, which turns the reward into a self-inflicted trap.
+  if (
+    action.userId === state.setter &&
+    ["SET_SECRET", "SET_SECRET_NEW"].includes(action.type)
+  ) {
+    const secret = normalizeWord(action.secret ?? action.word ?? action.guess);
+    const blocked = secret && blockedLetterIn(state, secret);
+    if (blocked) {
+      sendError(
+        room,
+        state,
+        action.userId,
+        io,
+        `${blocked} is locked out this round and cannot be used in the secret.`
       );
       return true;
     }

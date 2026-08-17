@@ -69,6 +69,7 @@
       toggle.setAttribute("aria-controls", "guesserSidebar");
       toggle.innerHTML = `
         <span class="guesser-sidebar-toggle-icon" aria-hidden="true">‹</span>
+        <span class="guesser-sidebar-toggle-text" aria-hidden="true">Log</span>
         <span id="guesserSidebarChargeMini" class="guesser-sidebar-charge-mini hidden" aria-hidden="true">0</span>
       `;
       workspace.appendChild(toggle);

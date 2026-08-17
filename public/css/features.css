@@ -2516,18 +2516,16 @@ body:has(#guesserScreen.active) #appMain {
 
 /* Smaller game tiles */
 
+/* NOTE: the Inspector's tiles inside .guesser-board are actually sized by
+   the higher-specificity `.history-row:not(.constraint-row) .history-tile`
+   rule in gameplay-ui.css (plus its min-width:640px desktop override) --
+   change sizes there. This rule only still reaches stray tiles rendered
+   outside that board. The draft row deliberately has no size rule of its
+   own anymore, so it always matches the history tiles. */
 #guesserScreen .history-tile {
   width: clamp(28px, 11.5cqw, 50px);
   height: clamp(28px, 11.5cqw, 50px);
   font-size: clamp(15px, 5.5cqw, 25px);
-}
-
-/* Larger than the regular history/feedback tiles -- this is the row the
-   guesser is actively typing into, so it should read as the "live" one. */
-#guesserScreen #draftGuesser .history-tile {
-  width: clamp(34px, 15cqw, 64px);
-  height: clamp(34px, 15cqw, 64px);
-  font-size: clamp(19px, 7cqw, 32px);
 }
 
 /*
@@ -2561,19 +2559,13 @@ body:has(#guesserScreen.active) #appMain {
    a fixed number. */
 @media (min-width: 640px) {
   #guesserScreen .history-tile {
-    width: clamp(26px, 7cqw, 36px);
-    height: clamp(26px, 7cqw, 36px);
-    font-size: clamp(14px, 3.6cqw, 19px);
-  }
-
-  #guesserScreen #draftGuesser .history-tile {
-    width: clamp(30px, 8.5cqw, 44px);
-    height: clamp(30px, 8.5cqw, 44px);
-    font-size: clamp(16px, 4.5cqw, 23px);
+    width: clamp(24px, 9cqw, 34px);
+    height: clamp(24px, 9cqw, 34px);
+    font-size: clamp(13px, 4.5cqw, 18px);
   }
 
   #guesserScreen .draft-row-wrap {
-    min-height: clamp(30px, 8.5cqw, 44px);
+    min-height: clamp(24px, 9cqw, 34px);
   }
 }
 
