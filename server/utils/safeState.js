@@ -57,6 +57,7 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
 
   // Clean internal power state
   delete safe._pendingPowerEvents;
+  delete safe._turnClock;
 
   if (viewerRole === "guesser") {
     delete safe.powers.assassinWord;

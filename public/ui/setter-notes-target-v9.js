@@ -20,6 +20,14 @@
   }
 
   function ensureNotesButton() {
+    // Notes were removed for both roles -- the panel this button opens no
+    // longer exists, so the button must not exist either. Without this it
+    // kept appearing on the Inspector's turn (that's when notes used to be
+    // "available") and opened nothing.
+    if (!byId("notesPanelSetter")) {
+      byId("setterNotesQuickBtnV9")?.remove();
+      return null;
+    }
     const stage = document.querySelector("#setterScreen .setter-decision-stage") ||
       document.querySelector("#setterScreen .draft-stack");
     if (!stage) return null;

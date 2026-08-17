@@ -510,8 +510,9 @@
     <div class="pc-quest-guide${questGuideOpen ? " is-open" : ""}">
       <p>${esc(guideCopyForQuest(quest))}</p>
       ${hintSpec ? `<div class="pc-guide-actions">
-        <button type="button" class="pc-guide-highlight-btn">${questHintsActive ? "Refresh" : "Highlight"} ${esc(hintSpec.label)}</button>
-        ${questHintsActive ? `<button type="button" class="pc-guide-clear-btn">Clear highlights</button>` : ""}
+        ${questHintsActive
+          ? `<button type="button" class="pc-guide-clear-btn">Clear highlights</button>`
+          : `<button type="button" class="pc-guide-highlight-btn">Highlight ${esc(hintSpec.label)}</button>`}
       </div>` : `<span class="pc-guide-no-keys">This quest is based on word structure, so no fixed keyboard range is needed.</span>`}
     </div>`;
 
@@ -756,8 +757,7 @@
     modal.setAttribute("role", "dialog");
     modal.setAttribute("aria-modal", "true");
     modal.innerHTML = `<div class="pc-modal-card">
-      <button type="button" class="pc-modal-peek" title="Look at the board -- your reward stays waiting">Hide &amp; check board</button>
-      <div class="pc-modal-kicker">REWARD READY · +30 SECONDS</div>
+      <button type="button" class="pc-modal-peek" title="Look at the board -- your reward stays waiting">Hide</button>
       <h2></h2>
       <p class="pc-modal-sub"></p>
       <div class="pc-card-grid"></div>
@@ -840,12 +840,17 @@
       const tier = option.kind === "power"
         ? `<span class="pc-tier">TIER ${option.tier || window.POWER_TIERS?.[option.powerId]?.tier || 1}</span>`
         : "";
-      return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}">
+      // Each card gets its own accent so the row reads as a set of
+      // distinct choices rather than three identical grey slabs.
+      const accent = option.kind === "power"
+        ? (window.POWER_METADATA?.[option.powerId]?.color || "")
+        : "";
+      const style = accent ? ` style="--pc-card-accent:${esc(accent)}"` : "";
+      return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}"${style}>
         <span class="pc-card-icon">${optionIconMarkup(option)}</span>
         ${tier}
         <strong>${esc(option.title)}</strong>
         <span class="pc-card-desc">${esc(optionDescription(option))}</span>
-        <span class="pc-card-pick">CHOOSE</span>
       </button>`;
     }).join("");
     grid.querySelectorAll(".pc-choice-card").forEach(button => {

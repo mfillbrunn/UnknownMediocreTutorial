@@ -443,6 +443,33 @@ if (guesserEntries.length) {
 }
 
 
+// Total time each player spent on their own turns this match, banked
+// server-side in state.timeSpentMs (see bankTurnTime in core/rooms.js).
+function formatDuration(ms) {
+  const total = Math.max(0, Math.round((Number(ms) || 0) / 1000));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return minutes
+    ? `${minutes}m ${String(seconds).padStart(2, "0")}s`
+    : `${seconds}s`;
+}
+
+function formatTimeSpent(state, setterName, guesserName) {
+  const spent = state?.timeSpentMs;
+  if (!spent) return "";
+  const setterMs = Number(spent[state.setter]) || 0;
+  const guesserMs = Number(spent[state.guesser]) || 0;
+  if (!setterMs && !guesserMs) return "";
+  return `
+    <p class="summary-time-spent">
+      <b>Time taken:</b>
+      ${setterName} ${formatDuration(setterMs)}
+      &middot;
+      ${guesserName} ${formatDuration(guesserMs)}
+    </p>
+  `;
+}
+
 /////////////////////////////////
 /////////COMPETITIVE  ROUND SUMMARY
 ////////////////////////////
@@ -511,6 +538,8 @@ html += `
     html += formatRevealPenaltySummary(state.powers);
 
   html += `<p class="summary-guess-count"><b>Total guesses:</b> ${state.guessCount}</p>`;
+
+  html += formatTimeSpent(state, setterName, guesserName);
 
   html += `
   <div class="summary-table-wrap">

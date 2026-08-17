@@ -136,8 +136,48 @@ function removePlayerState(room, userId) {
   syncTurnOwners(room);
 }
 
+// Who is actually on the clock right now. During the simultaneous opening
+// both players are, so neither is billed -- only clearly-one-sided waits
+// count toward a player's total.
+function activeClockUser(state) {
+  if (!state || state.phase !== "normal") return null;
+  return state.turn || null;
+}
+
+/*
+ * Running total of how long each player has spent on their own turns,
+ * banked whenever the active player changes. There was no per-player
+ * timing before this: state.timeRemaining only exists when the optional
+ * chess clock is switched on, so most matches had nothing to report on
+ * the summary screen. Accumulating here (rather than in each phase
+ * transition) means every path that changes whose turn it is gets counted,
+ * since they all end by emitting state.
+ */
+function bankTurnTime(state) {
+  if (!state) return;
+  const now = Date.now();
+  const current = activeClockUser(state);
+  const clock = state._turnClock;
+
+  if (clock && clock.userId && clock.userId !== current) {
+    const spent = Math.max(0, now - (Number(clock.at) || now));
+    // Ignore absurd gaps (server restart, a room left idle overnight) so a
+    // single stale timestamp can't dominate the total.
+    if (spent < 30 * 60 * 1000) {
+      state.timeSpentMs ||= {};
+      state.timeSpentMs[clock.userId] =
+        (Number(state.timeSpentMs[clock.userId]) || 0) + spent;
+    }
+  }
+
+  if (!clock || clock.userId !== current) {
+    state._turnClock = current ? { userId: current, at: now } : null;
+  }
+}
+
 function emitRoomState(roomId, room, io) {
   syncTurnOwners(room);
+  bankTurnTime(room.state);
   emitStateForAllPlayers(roomId, room, io);
 }
 
