@@ -703,7 +703,7 @@ body.power-choice-mode #setterBonusTargetV9.pc-bonus-target-unified {
   gap: 0 !important;
   width: max-content !important;
   max-width: calc(100% - 12px);
-  margin: 0 auto 9px !important;
+  margin: 0 auto 0px !important;
   padding: 0 !important;
   overflow: hidden;
   border: 1px solid rgba(74, 185, 255, 0.76) !important;
