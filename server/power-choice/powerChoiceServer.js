@@ -24,8 +24,12 @@ const SPY_THRESHOLDS = [5, 8, 15];
 const INSPECTOR_REWARD_SEQUENCE = [2, 3, 5];
 const VOWELS = new Set("AEIOU");
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+
 const QUEST_TYPES = [
-  "ROW",
+  "ROW_LIMIT",
+  "ROW_ONLY",
+  "ROW_AVOID",
   "RARE",
   "ALPHA",
   "DOUBLES",
@@ -202,15 +206,33 @@ function makeQuest(excludeType = null) {
     .toString(36)
     .slice(2, 8)}`;
 
-  if (type === "ROW") {
-    const row = pick(["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]);
+  if (type === "ROW_LIMIT") {
     return {
       id,
       type,
       icon: "⌨",
-      title: "Keyboard Row",
-      description: `Use only letters from ${row}.`,
-      row
+      title: "Spread Out",
+      description: "Use at most 2 letters from any single keyboard row."
+    };
+  }
+  if (type === "ROW_ONLY") {
+    return {
+      id,
+      type,
+      icon: "⌨",
+      title: "One Row",
+      description: "Use letters from only one keyboard row -- any row."
+    };
+  }
+  if (type === "ROW_AVOID") {
+    const avoidRow = pick(KEYBOARD_ROWS);
+    return {
+      id,
+      type,
+      icon: "⌨",
+      title: "Skip a Row",
+      description: `Avoid every letter in ${avoidRow}.`,
+      avoidRow
     };
   }
   if (type === "RARE") {
@@ -368,8 +390,14 @@ function evaluateQuest(state, quest, guess) {
   const word = normalizeWord(guess);
   if (!/^[A-Z]{5}$/.test(word) || !quest) return false;
   switch (quest.type) {
-    case "ROW":
-      return [...word].every(letter => quest.row.includes(letter));
+    case "ROW_LIMIT":
+      return KEYBOARD_ROWS.every(
+        row => [...word].filter(letter => row.includes(letter)).length <= 2
+      );
+    case "ROW_ONLY":
+      return KEYBOARD_ROWS.some(row => [...word].every(letter => row.includes(letter)));
+    case "ROW_AVOID":
+      return [...word].every(letter => !String(quest.avoidRow || "").includes(letter));
     case "RARE":
       return quest.letters.some(letter => word.includes(letter));
     case "ALPHA": {
@@ -573,9 +601,9 @@ function fixedOptions(role, threshold) {
       {
         id: "inspector-remove-unused-2",
         kind: "fixed",
-        icon: "×2",
-        title: "Rule Out Two",
-        description: "Remove two random unused letters that are not in the secret."
+        icon: "×3",
+        title: "Rule Out Three",
+        description: "Remove three random unused letters that are not in the secret."
       },
       {
         id: "inspector-remove-point-1",
@@ -994,7 +1022,7 @@ function applyChoice(state, option, choice, room, roomId, io) {
         detail = { letter: addYellow(state) };
         break;
       case "inspector-remove-unused-2":
-        detail = { letters: removeUnusedLetters(state, 2) };
+        detail = { letters: removeUnusedLetters(state, 3) };
         break;
       case "inspector-remove-point-1": {
         const before = Math.max(0, Number(state.guessCount) || 0);
@@ -1041,9 +1069,18 @@ function evaluateInspectorGuess(state, guess, roomId, io) {
   initializeRound(state);
   const inspector = state.powerChoice.inspector;
   const quest = inspector.currentQuest;
-  const success = evaluateQuest(state, quest, guess);
+
+  // The quest is only actually attemptable on every other guess -- the
+  // 2nd, 4th, 6th, etc. (inspector.attempts is the count BEFORE this
+  // guess, so attempts===1 means this is the 2nd guess). On the guesses
+  // in between, the client shows a "quest coming next round" placeholder
+  // instead (see the matching questLive check in renderCurrentQuest(),
+  // public/client/power-choice-mode.js) and this guess can't complete or
+  // rotate it.
+  const questLive = inspector.attempts % 2 === 1;
+  const success = questLive && evaluateQuest(state, quest, guess);
   const conditions =
-    quest?.type === "FIELDREPORT"
+    questLive && quest?.type === "FIELDREPORT"
       ? evaluateFieldReportConditions(quest, guess)
       : [];
   inspector.attempts += 1;
@@ -1072,12 +1109,10 @@ function evaluateInspectorGuess(state, guess, roomId, io) {
     inspector.queuedMilestones.push(tier);
   }
 
-  // A fresh quest replaces the current one the moment it's met (holding a
-  // completed quest around for its remaining turns would just be dead
-  // weight), or after 2 full Spy-secret+Inspector-guess turns elapse,
-  // whichever comes first.
-  inspector.questTurnsElapsed += 1;
-  if (success || inspector.questTurnsElapsed >= 2) {
+  // A fresh quest replaces the current one after each live attempt at it
+  // (win or lose) -- it's only ever attempted once every other guess, so
+  // there's no reason to hold a missed one around for a second try.
+  if (questLive) {
     inspector.currentQuest = makeQuest(quest?.type);
     inspector.questTurnsElapsed = 0;
   }

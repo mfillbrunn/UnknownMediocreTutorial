@@ -2517,18 +2517,18 @@ body:has(#guesserScreen.active) #appMain {
 /* Smaller game tiles */
 
 #guesserScreen .history-tile {
-  width: clamp(30px, 12.5cqw, 56px);
-  height: clamp(30px, 12.5cqw, 56px);
-  font-size: clamp(16px, 6cqw, 28px);
+  width: clamp(28px, 11.5cqw, 50px);
+  height: clamp(28px, 11.5cqw, 50px);
+  font-size: clamp(15px, 5.5cqw, 25px);
 }
 
-/* A little larger than the regular history/feedback tiles -- this is
-   the row the guesser is actively typing into, so it should read as
-   the "live" one. */
+/* Same size as the regular history/feedback tiles -- the draft row used
+   to run noticeably larger to read as the "live" row, but that just made
+   it a mismatched outlier next to the tiles right above it. */
 #guesserScreen #draftGuesser .history-tile {
-  width: clamp(33px, 14cqw, 62px);
-  height: clamp(33px, 14cqw, 62px);
-  font-size: clamp(18px, 6.8cqw, 31px);
+  width: clamp(28px, 11.5cqw, 50px);
+  height: clamp(28px, 11.5cqw, 50px);
+  font-size: clamp(15px, 5.5cqw, 25px);
 }
 
 /*
@@ -2545,7 +2545,7 @@ body:has(#guesserScreen.active) #appMain {
   regardless of whether the row is currently shown.
 */
 #guesserScreen .draft-row-wrap {
-  min-height: clamp(33px, 14cqw, 62px);
+  min-height: clamp(28px, 11.5cqw, 50px);
 }
 
 /* Desktop: the Inspector's board has no sidebar competing for width
@@ -2561,20 +2561,15 @@ body:has(#guesserScreen.active) #appMain {
    through the in-between tablet widths instead of jumping straight to
    a fixed number. */
 @media (min-width: 640px) {
-  #guesserScreen .history-tile {
-    width: clamp(30px, 9cqw, 44px);
-    height: clamp(30px, 9cqw, 44px);
-    font-size: clamp(16px, 4.5cqw, 22px);
-  }
-
+  #guesserScreen .history-tile,
   #guesserScreen #draftGuesser .history-tile {
-    width: clamp(32px, 10cqw, 48px);
-    height: clamp(32px, 10cqw, 48px);
-    font-size: clamp(17px, 5cqw, 24px);
+    width: clamp(26px, 7cqw, 36px);
+    height: clamp(26px, 7cqw, 36px);
+    font-size: clamp(14px, 3.6cqw, 19px);
   }
 
   #guesserScreen .draft-row-wrap {
-    min-height: clamp(32px, 10cqw, 48px);
+    min-height: clamp(26px, 7cqw, 36px);
   }
 }
 
