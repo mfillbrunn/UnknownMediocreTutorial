@@ -1,87 +1,55 @@
-/* features.css — new features ported from mobile-frontend */
-
-/* ── Setter + Guesser drag-and-drop (always on, see drag-mode.js) ────── */
-#keyboardSetter .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]),
-#keyboardGuesser .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]) {
+/* Feature UI — lean current build. Requires the consolidated gameplay-ui.css to load after this file. */
+/* Input and guidance */
+#keyboardSetter .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]), #keyboardGuesser .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]) {
   cursor: grab;
-  /* Without this, a touch browser claims the gesture for page
-     scroll/pan the instant the finger moves, so pointermove/pointerup
-     never reach drag-mode.js -- the drag silently does nothing. This has
-     to be set before the touch starts (it can't be applied reactively
-     from JS once the gesture is already underway). */
   touch-action: none;
 }
-
 .draft-tile[data-drag-index] {
-  transition: outline-color 0.12s ease, background 0.12s ease;
-  /* Same reasoning as the keys above -- tiles are themselves drag sources
-     too (tile-to-tile relocation), so a touch browser needs to hand the
-     whole gesture to JS from the first touch rather than trying to
-     scroll. */
+  transition: outline-color 0.12s ease,background 0.12s ease;
   touch-action: none;
 }
-
 .draft-tile[data-drag-index].drag-hover {
-  outline: 2px dashed var(--setter-color, #f87171);
+  outline: 2px dashed var(--setter-color,#f87171);
   outline-offset: 2px;
-  background: color-mix(in srgb, var(--setter-color, #f87171) 18%, transparent);
+  background: color-mix(in srgb,var(--setter-color,#f87171) 18%,transparent);
 }
-
-/* Locked draft tile (tap a filled tile to lock it) -- a small badge,
-   same corner/sizing language as the "didn't know this" marker
-   powers.css uses for tile-guesser-hidden, so it reads as part of the
-   same visual vocabulary. */
 .draft-tile.tile-locked {
-  outline: 1.5px solid color-mix(in srgb, var(--setter-color, #f87171) 70%, transparent);
+  outline: 1.5px solid color-mix(in srgb,var(--setter-color,#f87171) 70%,transparent);
   outline-offset: 2px;
 }
-
 .draft-tile.tile-locked::after {
   content: "🔒";
   position: absolute;
   bottom: 2px;
   right: 3px;
-
   font-size: 11px;
   line-height: 1;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
-
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));
   pointer-events: none;
   z-index: 3;
 }
-
 .drag-letter-ghost {
   position: fixed;
   z-index: 100002;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%,-50%);
   pointer-events: none;
-
   width: 44px;
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  border-radius: var(--r-8, 8px);
-  background: var(--setter-color, #f87171);
+  border-radius: var(--r-8,8px);
+  background: var(--setter-color,#f87171);
   color: #000;
   font-weight: 900;
   font-size: 20px;
   letter-spacing: 0.5px;
-
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.45);
   opacity: 0.95;
 }
-
-/* Auto-playing drag demo (Advanced Tutorial) -- unlike a real drag, which
-   tracks the pointer 1:1 with no transition, this one tweens smoothly
-   between a fixed start and end point, so it needs its own transition on
-   top of the plain .drag-letter-ghost look. */
 .tutorial-drag-demo {
-  transition: left 700ms cubic-bezier(0.3, 0.7, 0.4, 1), top 700ms cubic-bezier(0.3, 0.7, 0.4, 1);
+  transition: left 700ms cubic-bezier(0.3,0.7,0.4,1),top 700ms cubic-bezier(0.3,0.7,0.4,1);
 }
-
-/* ── Guide toggle (header, top-right) ─────────────────────────────── */
 .guide-toggle-btn {
   height: 28px;
   padding: 0 10px;
@@ -96,49 +64,32 @@
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background 0.15s,color 0.15s,border-color 0.15s;
 }
 .guide-toggle-btn:hover {
   background: rgba(255,255,255,0.12);
   color: rgba(255,255,255,0.9);
 }
 .guide-toggle-btn.active {
-  background: color-mix(in srgb, var(--tile-blue) 22%, transparent);
-  border-color: color-mix(in srgb, var(--tile-blue) 55%, transparent);
+  background: color-mix(in srgb,var(--tile-blue) 22%,transparent);
+  border-color: color-mix(in srgb,var(--tile-blue) 55%,transparent);
   color: var(--tile-blue);
 }
-
-/* Inside an active game screen, these header toggles should read as this
-   player's role color (matching every other role-accented control --
-   power buttons, concede, power-info) instead of the neutral/fixed-blue
-   look above, which stays as-is for the menu-screen app-header copy
-   (no .theme-setter/.theme-guesser ancestor there). Two-class selectors
-   so this reliably wins over the base rules above regardless of source
-   order, same pattern as layout.css's .header-left button.secondary-btn. */
-.theme-setter .guide-toggle-btn,
-.theme-guesser .guide-toggle-btn {
+.theme-setter .guide-toggle-btn, .theme-guesser .guide-toggle-btn {
   background: rgba(255,255,255,0.06);
-  border-color: color-mix(in srgb, var(--role-accent) 45%, transparent);
-  color: color-mix(in srgb, var(--role-accent) 85%, white 15%);
+  border-color: color-mix(in srgb,var(--role-accent) 45%,transparent);
+  color: color-mix(in srgb,var(--role-accent) 85%,white 15%);
 }
-.theme-setter .guide-toggle-btn:hover,
-.theme-guesser .guide-toggle-btn:hover {
-  background: color-mix(in srgb, var(--role-accent) 14%, transparent);
-  border-color: color-mix(in srgb, var(--role-accent) 65%, transparent);
+.theme-setter .guide-toggle-btn:hover, .theme-guesser .guide-toggle-btn:hover {
+  background: color-mix(in srgb,var(--role-accent) 14%,transparent);
+  border-color: color-mix(in srgb,var(--role-accent) 65%,transparent);
   color: #fff;
 }
-.theme-setter .guide-toggle-btn.active,
-.theme-guesser .guide-toggle-btn.active {
-  background: color-mix(in srgb, var(--role-accent) 22%, transparent);
-  border-color: color-mix(in srgb, var(--role-accent) 55%, transparent);
+.theme-setter .guide-toggle-btn.active, .theme-guesser .guide-toggle-btn.active {
+  background: color-mix(in srgb,var(--role-accent) 22%,transparent);
+  border-color: color-mix(in srgb,var(--role-accent) 55%,transparent);
   color: var(--role-accent);
 }
-
-/* ── Physical keyboard toggle (header, next to Guide) ─────────────────
-   Only meaningful on a device with an actual keyboard -- hidden on
-   touch-only screens (no physical keys to toggle), shown wherever a
-   mouse/trackpad is the primary pointer (a reasonable desktop proxy
-   without user-agent sniffing). */
 .keyboard-toggle-btn {
   padding: 0 8px;
 }
@@ -147,14 +98,12 @@
     display: none;
   }
 }
-
-/* ── Guide banner (below header, shows phase + current task) ─────────── */
 .guide-banner {
   margin-bottom: var(--sp-10);
   padding: var(--sp-8) var(--sp-14);
   border-radius: var(--r-10);
-  background: color-mix(in srgb, var(--tile-blue) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tile-blue) 30%, transparent);
+  background: color-mix(in srgb,var(--tile-blue) 10%,transparent);
+  border: 1px solid color-mix(in srgb,var(--tile-blue) 30%,transparent);
   color: rgba(255,255,255,0.92);
   font-size: var(--fs-13);
   font-weight: 600;
@@ -164,9 +113,6 @@
   justify-content: center;
   gap: var(--sp-8);
   flex-wrap: wrap;
-}
-.guide-banner.hidden {
-  display: none;
 }
 .guide-phase {
   font-weight: 800;
@@ -182,14 +128,9 @@
 .guide-task {
   opacity: 0.92;
 }
-
-/* ── Header small buttons ─────────────────────────────────────────── */
 .header-sm-btn {
   height: 28px;
   padding: 0 9px;
-  /* Pill, not rounded-rect -- matches Guide/keyboard-toggle and the
-     Leave/Concede buttons in the same header row (see layout.css's
-     .header-left button.secondary-btn). */
   border-radius: 999px;
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.15);
@@ -199,7 +140,7 @@
   letter-spacing: 0.5px;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background 0.15s,color 0.15s,border-color 0.15s;
   flex-shrink: 0;
 }
 .header-sm-btn:hover {
@@ -211,46 +152,12 @@
   border-color: rgba(255,255,255,0.35);
   color: #fff;
 }
-
-/* ── Game side panels (Notes + Log) ────────────────────────────────── */
-.game-side-panel {
-  position: fixed;
-  top: 52px;          /* below app-header */
-  right: 0;
-  width: min(280px, 85vw);
-  max-height: calc(100dvh - 52px - 60px); /* leave room for keyboard area */
-  overflow-y: auto;
-  /* Translucent floating window (not a near-opaque panel) -- blur keeps the
-     log/notes text legible over whatever board/tiles show through. */
-  background: rgba(14, 15, 22, 0.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-left: 1px solid rgba(255,255,255,0.12);
-  border-bottom: 1px solid rgba(255,255,255,0.12);
-  border-radius: 0 0 0 12px;
-  z-index: 200;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 0;
-  transition: opacity 0.15s ease;
-}
-.game-side-panel.hidden {
-  display: none;
-}
-
-/* ── Action Log ─────────────────────────────────────────────────────── */
+/* Action log and notes */
 .action-log-panel {
   padding: 10px;
   gap: 2px;
   display: flex;
   flex-direction: column;
-}
-.log-entry {
-  font-size: 12px;
-  line-height: 1.5;
-  padding: 3px 6px;
-  border-radius: 4px;
 }
 .log-round {
   font-weight: 800;
@@ -264,25 +171,15 @@
   color: rgba(255,255,255,0.75);
 }
 .log-power {
-  color: var(--role-accent, rgba(255,180,50,0.85));
+  color: var(--role-accent,rgba(255,180,50,0.85));
   font-size: 11px;
 }
-/* Colored by the role that actually owns the power, not the viewer's own
-   screen — so an opponent's power reads distinctly from your own. The
-   compound selector (not just .log-power-setter/-guesser alone) is
-   deliberate: those alone tie with .log-power above on specificity and
-   would only win by sitting later in this file, which is easy to break
-   by accident later -- this way it always wins regardless of source
-   order. */
 .log-power.log-power-setter {
   color: var(--setter-color);
 }
 .log-power.log-power-guesser {
   color: var(--guesser-color);
 }
-/* Tappable power name -- expands the collapsed "You used <name>" line
-   into its full result (see action-log.js's powerEntry). Underline marks
-   it as interactive without needing a whole separate button style. */
 .log-power-name {
   text-decoration: underline dotted;
   text-underline-offset: 2px;
@@ -303,11 +200,8 @@
   padding: 0 2px;
   letter-spacing: 1px;
 }
-.log-scroll-anchor { height: 4px; }
-
-/* ── Notes Panel ────────────────────────────────────────────────────── */
-.notes-panel {
-  padding: 10px;
+.log-scroll-anchor {
+  height: 4px;
 }
 .notes-panel-title {
   font-size: 11px;
@@ -346,8 +240,12 @@
   animation: cursor-blink 1s step-end infinite;
 }
 @keyframes cursor-blink {
-  0%, 100% { border-color: rgba(255,255,255,0.7); }
-  50%       { border-color: rgba(255,255,255,0.2); }
+  0%, 100% {
+    border-color: rgba(255,255,255,0.7);
+  }
+  50% {
+    border-color: rgba(255,255,255,0.2);
+  }
 }
 .notes-list {
   display: flex;
@@ -370,9 +268,6 @@
   border: 1px solid rgba(255,255,255,0.07);
 }
 .notes-word {
-  /* Was monospace -- Log's entries (same sidebar, one tab-switch away)
-     use the page's default sans font, so the two panels read as
-     visually different typefaces sitting right next to each other. */
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 700;
@@ -390,100 +285,76 @@
   line-height: 1;
   flex-shrink: 0;
 }
-.notes-remove:hover { color: rgba(255,255,255,0.7); }
-
-/* viable = consistent with all feedback */
-.notes-viable .notes-word { color: #4ade80; }
-.notes-viable { border-color: rgba(74, 222, 128, 0.2); }
-
-/* clean = no bad letters (guesser only) */
-.notes-clean .notes-word { color: #60a5fa; }
-.notes-clean { border-color: rgba(96, 165, 250, 0.2); }
-
-/* eliminated = incompatible (setter: invalid candidate secret) */
+.notes-remove:hover {
+  color: rgba(255,255,255,0.7);
+}
+.notes-viable .notes-word {
+  color: #4ade80;
+}
+.notes-viable {
+  border-color: rgba(74,222,128,0.2);
+}
+.notes-clean .notes-word {
+  color: #60a5fa;
+}
+.notes-clean {
+  border-color: rgba(96,165,250,0.2);
+}
 .notes-elim .notes-word {
   color: rgba(255,255,255,0.3);
   text-decoration: line-through;
 }
-
-/* grey = inconsistent but not struck through (guesser: tested letters used) */
-.notes-grey .notes-word { color: rgba(255,255,255,0.3); }
-.notes-grey { border-color: rgba(255,255,255,0.07); }
-
-/* ── Notes: per-word remaining-count badge (setter only) ───────────── */
+.notes-grey .notes-word {
+  color: rgba(255,255,255,0.3);
+}
+.notes-grey {
+  border-color: rgba(255,255,255,0.07);
+}
 .notes-remaining-count-inline {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono,monospace);
   font-size: 11px;
   font-weight: 700;
   opacity: 0.8;
   padding: 0 4px;
   flex-shrink: 0;
 }
-
-/* ── Secret lock overlay ─────────────────────────────────────────────── */
+/* Draft overlays */
 .secret-lock-overlay {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  border-radius: var(--r-6, 6px);
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: var(--r-6,6px);
   font-size: 1.4rem;
   pointer-events: none;
-  /* #draftSetter (the .draft-layer sibling this overlay sits next to) is
-     z-index: 20 — without going higher than that, the draft tiles paint
-     over this whenever their rows actually occupy the same pixels, hiding
-     the lock icon entirely instead of showing it on top of the secret. */
   z-index: 25;
 }
-.secret-lock-overlay.hidden { display: none; }
-
-/* draftSetter's pending-guess and secret rows are both always present in
-   the DOM (built once, then shown/hidden via inline style — see
-   ui/draftrow.js) — a `:has(.history-row:nth-child(2))` child-count check
-   can't tell visible rows from display:none ones and was always true,
-   permanently cutting the overlay down to the bottom half even when the
-   pending-guess row above it was hidden and the secret row alone filled
-   the whole stack. updateSecretLock() sets this class explicitly instead,
-   from the same state.pendingGuess check that actually drives that row's
-   visibility. */
 .secret-lock-overlay.split-bottom {
   top: 50%;
   height: 50%;
 }
-
-/* Live "this 5-letter secret would be rejected" warning -- same overlay
-   pattern as .secret-lock-overlay (a sibling in .draft-stack), shown the
-   instant a complete draft stops being consistent with prior feedback or
-   isn't a real secret word, instead of only after the setter tries to
-   submit it. Mutually exclusive with the lock overlay (that state means
-   editing is moot anyway), so no split-bottom variant is needed here. */
 .secret-invalid-overlay {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(239, 68, 68, 0.12);
-  color: rgba(239, 68, 68, 0.55);
+  background: rgba(239,68,68,0.12);
+  color: rgba(239,68,68,0.55);
   font-size: 4.5rem;
   font-weight: 900;
   line-height: 1;
   pointer-events: none;
   z-index: 25;
 }
-.secret-invalid-overlay.hidden { display: none; }
-
-/* Ensure draft-stack is a positioning context */
-.draft-stack { position: relative; }
-
-/* ── Lobby ready state ───────────────────────────────────────────────── */
+/* Lobby, power library, and Daily Challenge */
 .role-card.is-ready {
-  background: rgba(74, 222, 128, 0.09);
-  border-color: rgba(74, 222, 128, 0.55) !important;
-  transition: background 0.25s ease, border-color 0.25s ease;
+  background: rgba(74,222,128,0.09);
+  border-color: rgba(74,222,128,0.55) !important;
+  transition: background 0.25s ease,border-color 0.25s ease;
 }
 .role-card.is-ready::after {
   content: "✓";
@@ -492,26 +363,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(32px, 10vw, 60px);
+  font-size: clamp(32px,10vw,60px);
   font-weight: 900;
-  color: rgba(74, 222, 128, 0.10);
+  color: rgba(74,222,128,0.10);
   pointer-events: none;
   user-select: none;
 }
-
-/* lobby ready button: keep it green & enabled */
 #readyBtn.lobby-ready-btn {
-  background: rgba(74, 222, 128, 0.18);
-  border-color: rgba(74, 222, 128, 0.6);
+  background: rgba(74,222,128,0.18);
+  border-color: rgba(74,222,128,0.6);
   color: #4ade80;
 }
 #readyBtn.lobby-ready-btn:hover {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239,68,68,0.15);
+  border-color: rgba(239,68,68,0.5);
   color: #f87171;
 }
-
-/* ── Powers Library panel (upgrade of ? button) ─────────────────────── */
 .power-info-panel {
   max-height: 65vh;
   overflow-y: auto;
@@ -532,8 +399,14 @@
   padding: 8px 12px;
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
-.power-info-emoji { font-size: 18px; flex-shrink: 0; }
-.power-info-body { flex: 1; min-width: 0; }
+.power-info-emoji {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.power-info-body {
+  flex: 1;
+  min-width: 0;
+}
 .power-info-title {
   font-size: 12px;
   font-weight: 700;
@@ -549,7 +422,7 @@
   text-transform: uppercase;
   padding: 1px 6px;
   border-radius: 999px;
-  background: rgba(74, 222, 128, 0.15);
+  background: rgba(74,222,128,0.15);
   color: #4ade80;
   white-space: nowrap;
 }
@@ -565,7 +438,7 @@
 .power-lib-quest-examples {
   margin-top: 4px;
   font-size: 10px;
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono,monospace);
   letter-spacing: 0.4px;
   color: #4ade80;
   opacity: 0.8;
@@ -582,21 +455,16 @@
   color: inherit;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition: background 0.15s ease,transform 0.15s ease;
 }
 .power-lib-try-btn:hover {
   background: rgba(255,255,255,0.12);
   transform: translateY(-1px);
 }
 .power-info-row.power-info-active {
-  background: rgba(74, 222, 128, 0.07);
-  border-left: 2px solid rgba(74, 222, 128, 0.5);
+  background: rgba(74,222,128,0.07);
+  border-left: 2px solid rgba(74,222,128,0.5);
 }
-
-/* ── Daily Challenge screen ──────────────────────────────────────────── */
-/* Uniform, larger, centered text throughout -- the old version mixed
-   11-16px sizes with mostly left-aligned rows, which read as cluttered
-   next to the rest of the app's menu screens. */
 #dailyScreen .menu-center {
   text-align: center;
 }
@@ -626,9 +494,15 @@
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
-.daily-role-label.spy { color: var(--setter-color, #f87171); }
-.daily-role-label.inspector { color: var(--guesser-color, #60a5fa); }
-.daily-role-label.quest { color: #4ade80; }
+.daily-role-label.spy {
+  color: var(--setter-color,#f87171);
+}
+.daily-role-label.inspector {
+  color: var(--guesser-color,#60a5fa);
+}
+.daily-role-label.quest {
+  color: #4ade80;
+}
 .daily-powers {
   display: flex;
   flex-direction: row;
@@ -658,12 +532,9 @@
   border: 1px solid rgba(22,163,74,0.3);
   color: #4ade80;
 }
-/* Tappable pill -- opens the same description popup as an in-game power
-   activation (showPowerPopup), so a player can check what a power/quest
-   does before the match starts. */
 .daily-pill-info {
   cursor: pointer;
-  transition: filter 0.15s ease, transform 0.1s ease;
+  transition: filter 0.15s ease,transform 0.1s ease;
 }
 .daily-pill-info:hover {
   filter: brightness(1.25);
@@ -680,11 +551,6 @@
   opacity: 0.6;
   margin: 0 0 4px;
 }
-
-/* Difficulty picker, side by side (unlike the stacked quickPlayAiScreen /
-   aiDifficultyModal pickers) -- reuses .difficulty-easy/medium/hard's
-   colors, just laid out as a row of 3 equal-width buttons instead of a
-   column. */
 .daily-difficulty-row {
   display: flex;
   flex-direction: row;
@@ -721,9 +587,6 @@
   align-items: baseline;
   padding: 4px 0;
 }
-/* Difficulty dot shown next to the opponent label on the completed-daily
-   screen and beside each entry in the ranking subtab. Color is set inline
-   from dailyDifficultyMeta() (green/amber/red for Easy/Medium/Hard). */
 .daily-diff-dot {
   display: inline-block;
   width: 9px;
@@ -732,8 +595,6 @@
   margin-right: 6px;
   vertical-align: middle;
 }
-
-/* ── Daily Rankings subtab ─────────────────────────────────────────── */
 .daily-rank-tabs {
   display: flex;
   gap: 8px;
@@ -743,15 +604,15 @@
 .daily-rank-tab {
   padding: 6px 18px;
   border-radius: 999px;
-  border: 1px solid var(--border, rgba(255,255,255,0.15));
+  border: 1px solid var(--border,rgba(255,255,255,0.15));
   background: transparent;
   color: inherit;
   font-weight: 600;
   cursor: pointer;
 }
 .daily-rank-tab.active {
-  background: var(--accent, #6366f1);
-  border-color: var(--accent, #6366f1);
+  background: var(--accent,#6366f1);
+  border-color: var(--accent,#6366f1);
   color: #fff;
 }
 .daily-rank-legend {
@@ -792,18 +653,11 @@
   opacity: 0.55;
   border-bottom: 1px solid rgba(255,255,255,0.15);
 }
-.daily-rank-header .daily-rank-points,
-.daily-rank-header .daily-rank-diff,
-.daily-rank-header .daily-rank-time {
+.daily-rank-header .daily-rank-points, .daily-rank-header .daily-rank-diff, .daily-rank-header .daily-rank-time {
   font-family: inherit;
   font-weight: 800;
 }
-/* Position, points, difficulty, and time are all centered; name is the
-   only left-oriented column. */
-.daily-rank-pos,
-.daily-rank-points,
-.daily-rank-diff,
-.daily-rank-time {
+.daily-rank-pos, .daily-rank-points, .daily-rank-diff, .daily-rank-time {
   text-align: center;
 }
 .daily-rank-pos {
@@ -818,7 +672,7 @@
   white-space: nowrap;
 }
 .daily-rank-points {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono,monospace);
   font-weight: 700;
   min-width: 32px;
 }
@@ -829,12 +683,12 @@
   margin-right: 0;
 }
 .daily-rank-time {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono,monospace);
   opacity: 0.7;
   min-width: 44px;
 }
 .daily-result-row + .daily-result-row {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 .daily-result-label {
   font-size: 15px;
@@ -854,15 +708,12 @@
   font-weight: 700;
   text-align: center;
 }
-/* Result headline sitting above the score, made prominent (the outcome is
-   the thing you care about at a glance). */
 .daily-result-outcome.big {
   margin: 0 0 12px;
-  font-size: clamp(24px, 6vw, 34px);
+  font-size: clamp(24px,6vw,34px);
   font-weight: 900;
   line-height: 1.1;
 }
-/* Rankings + Share sit side by side, equal width, with Rankings first. */
 .daily-result-actions {
   display: flex;
   gap: 8px;
@@ -872,13 +723,11 @@
   flex: 1 1 0;
   margin: 0;
 }
-
-/* ── My Games (unlimited-time games in progress) ─────────────────────── */
+/* Saved games and friends */
 .my-games-section {
   width: 280px;
   margin: 4px 0;
 }
-
 .my-games-section-title {
   font-size: 11px;
   font-weight: 800;
@@ -888,19 +737,16 @@
   margin: 0 0 var(--sp-8) 2px;
   text-align: left;
 }
-
 .my-games-list {
   display: flex;
   flex-direction: column;
   gap: var(--sp-10);
 }
-
 .my-game-row-wrap {
   display: flex;
   align-items: stretch;
   gap: var(--sp-8);
 }
-
 .my-game-row {
   flex: 1;
   display: flex;
@@ -915,37 +761,30 @@
   cursor: pointer;
   font-weight: 700;
   text-align: left;
-  transition: background 0.15s var(--ease-ui), border-color 0.15s var(--ease-ui);
+  transition: background 0.15s var(--ease-ui),border-color 0.15s var(--ease-ui);
 }
-
 .my-game-row:hover {
   background: var(--btn-secondary-hover);
 }
-
 .my-game-row.your-turn {
-  border-color: color-mix(in srgb, var(--tile-green) 55%, transparent);
+  border-color: color-mix(in srgb,var(--tile-green) 55%,transparent);
 }
-
 .my-game-row.pending {
   border-style: dashed;
-  border-color: color-mix(in srgb, var(--tile-yellow) 55%, transparent);
+  border-color: color-mix(in srgb,var(--tile-yellow) 55%,transparent);
 }
-
 .my-game-row.pending .my-game-turn-badge {
   color: var(--tile-yellow);
   opacity: 1;
 }
-
 .my-game-main {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-
 .my-game-opponent {
   font-size: var(--fs-14);
 }
-
 .my-game-date {
   font-size: 11px;
   font-weight: 600;
@@ -953,7 +792,6 @@
   text-transform: none;
   letter-spacing: 0;
 }
-
 .my-game-turn-badge {
   font-size: 11px;
   font-weight: 800;
@@ -961,18 +799,16 @@
   text-transform: uppercase;
   opacity: 0.7;
 }
-
 .my-game-row.your-turn .my-game-turn-badge {
   color: var(--tile-green);
   opacity: 1;
 }
-
 .my-game-abandon-btn {
   flex-shrink: 0;
   padding: 0 var(--sp-10);
   border-radius: var(--r-8);
   background: transparent;
-  border: 1px solid color-mix(in srgb, #f87171 45%, transparent);
+  border: 1px solid color-mix(in srgb,#f87171 45%,transparent);
   color: #f87171;
   font-size: 11px;
   font-weight: 800;
@@ -981,16 +817,9 @@
   cursor: pointer;
   transition: background 0.15s var(--ease-ui);
 }
-
 .my-game-abandon-btn:hover {
-  background: color-mix(in srgb, #f87171 12%, transparent);
+  background: color-mix(in srgb,#f87171 12%,transparent);
 }
-
-/* ── Screen back header: puts the Back button at the TOP of a screen,
-   next to the title, instead of below all its content -- so it's always
-   visible without scrolling on tall/scrollable screens (Rules, Powers,
-   Leaderboard, Simulation, My Games, etc). Shares layout with the
-   friends-header/friends-back pattern below. ─────────────────────────── */
 .screen-back-header {
   display: flex;
   align-items: center;
@@ -1003,8 +832,6 @@
   height: 32px;
   padding: 0 10px;
 }
-
-/* ── Friends screen ──────────────────────────────────────────────────── */
 .friends-center {
   width: 100%;
   max-width: 400px;
@@ -1039,10 +866,10 @@
   letter-spacing: 0.4px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: var(--r-8, 8px);
+  border-radius: var(--r-8,8px);
   color: rgba(255,255,255,0.55);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s,color 0.15s;
 }
 .friends-tab.active {
   background: rgba(255,255,255,0.12);
@@ -1065,8 +892,15 @@
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 8px;
 }
-.friends-name { flex: 1; font-size: 14px; font-weight: 600; }
-.friends-status { font-size: 11px; opacity: 0.4; }
+.friends-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+}
+.friends-status {
+  font-size: 11px;
+  opacity: 0.4;
+}
 .friends-section-label {
   font-size: 10px;
   font-weight: 800;
@@ -1097,14 +931,12 @@
   flex-direction: column;
   gap: 4px;
 }
-
-/* ── My Games: Stats subtab ──────────────────────────────────────────── */
 .my-games-source-tabs {
   margin-top: 8px;
 }
 .my-games-stats {
   width: 100%;
-  margin-top: var(--sp-10, 10px);
+  margin-top: var(--sp-10,10px);
 }
 .stats-grid {
   display: grid;
@@ -1114,10 +946,8 @@
 }
 .stat-card {
   padding: 12px 14px;
-  border-radius: var(--r-10, 10px);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.18)),
-    var(--panel-bg, rgba(255,255,255,0.03));
+  border-radius: var(--r-10,10px);
+  background: linear-gradient(180deg,rgba(255,255,255,0.03),rgba(0,0,0,0.18)),var(--panel-bg,rgba(255,255,255,0.03));
   border: 1px solid rgba(255,255,255,0.08);
   display: flex;
   flex-direction: column;
@@ -1133,7 +963,7 @@
 .stat-value {
   font-size: 1.15rem;
   font-weight: 700;
-  font-family: var(--font-mono, inherit);
+  font-family: var(--font-mono,inherit);
 }
 .stat-sub {
   font-size: 0.8rem;
@@ -1145,64 +975,40 @@
   opacity: 0.5;
   text-align: center;
 }
-
 @media (max-width: 480px) {
   .stats-grid {
     grid-template-columns: 1fr;
   }
 }
-
-/* ── VS AI screen ────────────────────────────────────────────────────── */
 .vsai-center {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
   width: 100%;
-  /* No max-width cap — match the width of sibling .menu-center screens
-     (startup, play, etc.) instead of rendering narrower than them. */
   padding: 24px 16px;
 }
-
-/* ── Summary screen ───────────────────────────────────────────────────── */
+/* Match summary */
 #menu.screen {
   max-width: 480px;
   margin: 0 auto;
 }
-
-/* This screen leads with its own result card instead of a generic title,
-   so it doesn't need the usual screen's top margin on top of the card's
-   own padding. */
 #menu.screen.active {
   margin-top: var(--sp-8);
 }
-
-/* #roundSummary is a .summary-box nested inside .panel, both of which pick
-   up the shared card background/padding/margin-top from components.css —
-   stacking three layers of top spacing before any real content. Collapse
-   that down to a single outer frame (the .screen itself already provides
-   one). */
 #menu .panel {
   background: none;
   padding: var(--sp-10) 0 0;
   margin-top: 0;
   box-shadow: none;
+  position: relative;
 }
-
 #menu #roundSummary {
   background: none;
   padding: 0;
   margin-top: 0;
   box-shadow: none;
 }
-
-#menu .panel {
-  position: relative;
-}
-
-/* top is set from JS (positionShareButton()) to line up with whatever
-   heading is currently showing (the win/loss line, or "Round Summary")
-   instead of sitting on its own row above everything. */
 #menu .share-btn {
   position: absolute;
   right: 0;
@@ -1213,38 +1019,31 @@
   font-size: 12px;
   z-index: 2;
 }
-
 .match-header {
   text-align: center;
   padding: var(--sp-16);
   margin: 0 calc(var(--sp-10) * -1) var(--sp-12);
   border-radius: var(--r-12);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.12)),
-    var(--screen-bg);
+  background: linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.12)),var(--screen-bg);
 }
-
 .match-header h2 {
   margin: 0;
   font-size: 34px;
   font-weight: 900;
   letter-spacing: 0.3px;
 }
-
 .match-score-line {
   margin: var(--sp-4) 0 0;
   font-size: 30px;
   font-weight: 900;
   letter-spacing: 0.3px;
 }
-
 .match-players-line {
   margin: var(--sp-8) 0 0;
   font-size: var(--fs-14);
   font-weight: 700;
   opacity: 0.85;
 }
-
 .match-players-line .vs {
   margin: 0 var(--sp-6);
   opacity: 0.5;
@@ -1252,26 +1051,33 @@
   text-transform: uppercase;
   font-size: var(--fs-11);
 }
-
 .match-players-line .me-winner {
   color: #4ade80;
 }
-
-.match-header--win h2, .match-header--win .match-score-line { color: #4ade80; }
-.match-header--loss h2, .match-header--loss .match-score-line { color: #f87171; }
-.match-header--tie h2, .match-header--tie .match-score-line { color: rgba(255,255,255,0.85); }
-
+.match-header--win h2, .match-header--win .match-score-line {
+  color: #4ade80;
+}
+.match-header--loss h2, .match-header--loss .match-score-line {
+  color: #f87171;
+}
+.match-header--tie h2, .match-header--tie .match-score-line {
+  color: rgba(255,255,255,0.85);
+}
 .match-elo-change {
   margin: var(--sp-4) 0 0;
   font-size: var(--fs-14);
   font-weight: 800;
   letter-spacing: 0.2px;
 }
-
-.match-elo-change.elo-gain { color: #4ade80; }
-.match-elo-change.elo-loss { color: #f87171; }
-.match-elo-change.elo-even { opacity: 0.7; }
-
+.match-elo-change.elo-gain {
+  color: #4ade80;
+}
+.match-elo-change.elo-loss {
+  color: #f87171;
+}
+.match-elo-change.elo-even {
+  opacity: 0.7;
+}
 .summary-heading {
   font-size: var(--fs-16);
   font-weight: 800;
@@ -1279,12 +1085,6 @@
   margin: 0 0 var(--sp-10);
   text-align: center;
 }
-
-/* Small subdued info card wrapping the time/power/quest summary -- matches
-   .stored-round's muted card look below (padding/radius/background/border)
-   instead of the bright colored pills this used to be, so it reads as one
-   more small info portion in line with the round summaries, not a
-   separately-styled highlight. */
 .match-info-block {
   padding: var(--sp-10);
   border-radius: var(--r-10);
@@ -1292,8 +1092,6 @@
   border: 1px solid rgba(255,255,255,0.08);
   margin: 0 0 var(--sp-10);
 }
-
-/* Meta chips (time control, etc.) -- plain muted text, no pill background. */
 .match-meta-row {
   display: flex;
   justify-content: center;
@@ -1301,7 +1099,6 @@
   gap: var(--sp-8);
   margin: 0 0 var(--sp-6);
 }
-
 .match-meta-chip {
   display: inline-flex;
   align-items: center;
@@ -1310,10 +1107,6 @@
   opacity: 0.75;
   white-space: nowrap;
 }
-
-/* Powers used -- plain text colored by owning role, same restrained
-   treatment as .summary-powers-setter/-guesser in the round tables below
-   (colored text only, no pill background/border). */
 .match-power-line {
   display: flex;
   justify-content: center;
@@ -1322,141 +1115,97 @@
   font-size: var(--fs-12);
   opacity: 0.85;
 }
-
 .match-power-line + .match-power-line {
   margin-top: var(--sp-4);
 }
-
 .power-label {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-6);
 }
-
 .power-label.setter {
   color: var(--setter-color);
 }
-
 .power-label.guesser {
   color: var(--guesser-color);
 }
-
 .power-label span {
   color: var(--text);
   font-weight: 500;
 }
-
-/* Inline alert-style notes */
-.timeout-note,
-.timeout-summary,
-.assassination-note,
-.assassin-summary,
-.reveal-penalty-summary,
-.tie-breaker {
+.timeout-note, .timeout-summary, .assassination-note, .assassin-summary, .reveal-penalty-summary, .tie-breaker {
   text-align: center;
   font-size: var(--fs-13);
   margin: var(--sp-6) 0 0;
 }
-
 .summary-players {
   text-align: center;
   margin: 0 0 var(--sp-8);
 }
-
 .round-time-summary {
   text-align: center;
   font-size: var(--fs-13);
   margin: 0 0 var(--sp-10);
 }
-
-/* Actions */
 .summary-actions {
   display: flex;
   gap: var(--sp-10);
   margin: var(--sp-12) 0;
 }
-
-/* scrollIntoView({block:"nearest"}) (tutorial-ui.js's highlightSummaryActions)
-   otherwise lands this flush against the exact bottom viewport pixel with
-   zero breathing room -- on real devices, browser chrome/dynamic toolbars
-   eat into that nominal viewport, so the "in view" buttons can still read
-   as clipped/offscreen. scroll-margin-bottom is a native scrollIntoView
-   input, not just a layout property, so it forces real space below the
-   target. Scoped to the id (the real match-summary button row) rather than
-   the shared .summary-actions class, which is also reused by the tutorial's
-   unrelated handoff CTA div.
-   */
 #matchSummaryActions {
   scroll-margin-bottom: 24px;
 }
-
-.summary-actions .primary-btn,
-.summary-actions .secondary-btn {
+.summary-actions .primary-btn, .summary-actions .secondary-btn {
   flex: 1;
 }
-
-/* Quick-repeat "play again" CTA (start menu) — the gold treatment moved
-   here from New Match, which is a plain action among plain actions on
-   the summary screen and shouldn't stand out as the special one. */
 #playQuickBtn {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  background: linear-gradient(135deg,#fbbf24,#f59e0b);
   color: #241a02;
   border: none;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
-  transition: transform 0.15s var(--ease-ui), box-shadow 0.15s var(--ease-ui);
+  box-shadow: 0 4px 14px rgba(245,158,11,0.35);
+  transition: transform 0.15s var(--ease-ui),box-shadow 0.15s var(--ease-ui);
 }
-
 #playQuickBtn:hover {
-  background: linear-gradient(135deg, #fcd34d, #f59e0b);
+  background: linear-gradient(135deg,#fcd34d,#f59e0b);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
+  box-shadow: 0 6px 18px rgba(245,158,11,0.45);
 }
-
 #playQuickBtn:active {
   transform: translateY(0) scale(0.97);
 }
-
 .secondary-btn.danger {
   color: #f87171;
-  border: 1px solid color-mix(in srgb, #f87171 45%, transparent);
-  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid color-mix(in srgb,#f87171 45%,transparent);
+  background: rgba(248,113,113,0.08);
 }
-
 .secondary-btn.danger:hover {
-  background: rgba(248, 113, 113, 0.16);
+  background: rgba(248,113,113,0.16);
 }
-
-/* Round-by-round tables */
 #roundDetails {
   display: flex;
   flex-direction: column;
   gap: var(--sp-12);
 }
-
 .stored-round {
   padding: var(--sp-10);
   border-radius: var(--r-10);
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.08);
 }
-
 .stored-round h4 {
   margin: 0 0 var(--sp-8);
   font-size: var(--fs-13);
   font-weight: 800;
   opacity: 0.85;
 }
-
 .summary-table-wrap {
   overflow-x: auto;
 }
-
 .summary-table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--fs-12);
 }
-
 .summary-table th {
   padding: 6px 4px;
   font-size: 10px;
@@ -1466,142 +1215,121 @@
   opacity: 0.55;
   border-bottom: 1px solid rgba(255,255,255,0.12);
 }
-
 .summary-table td {
   padding: 6px 4px;
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono,monospace);
   font-weight: 700;
 }
-
 .summary-table tbody tr:nth-child(odd) {
   background: rgba(255,255,255,0.02);
 }
-
 .summary-table tr.final-row {
-  background: rgba(74, 222, 128, 0.08);
+  background: rgba(74,222,128,0.08);
 }
-
-/* ── Marked Weakness (revealPenalty) letter-picker modal ─────────────── */
 .reveal-penalty-panel {
   max-width: 340px;
   text-align: center;
 }
-
 .reveal-penalty-instruction {
   margin: var(--sp-8) 0 var(--sp-16);
   font-size: var(--fs-14);
   opacity: 0.85;
   line-height: 1.4;
 }
-
 .letter-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7,1fr);
   gap: var(--sp-6);
   margin: 0 0 var(--sp-16);
 }
-
 .letter-grid button {
   width: 100%;
   aspect-ratio: 1;
   min-width: 0;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: var(--r-6);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255,255,255,0.12);
   background: var(--kb-neutral);
   color: #fff;
   font-weight: 800;
   font-size: var(--fs-14);
-
   cursor: pointer;
-  transition: background .15s var(--ease-ui), transform .1s var(--ease-ui), box-shadow .15s var(--ease-ui);
+  transition: background .15s var(--ease-ui),transform .1s var(--ease-ui),box-shadow .15s var(--ease-ui);
 }
-
 .letter-grid button:hover:not(:disabled) {
   background: var(--kb-hover);
   transform: translateY(-1px);
 }
-
-/* Letter-picker color coding (Letter Lockout's ban-letter grid): mirror the
-   real keyboard's key colors so it's obvious at a glance which letters are
-   already known/eliminated before picking one to ban. .picker-unused is
-   the plain default look above and needs no override. */
-.letter-grid button.picker-green  { background: var(--tile-green);  color: var(--tile-green-text); }
-.letter-grid button.picker-yellow { background: var(--tile-yellow); color: var(--tile-yellow-text); }
-.letter-grid button.picker-gray   { background: var(--tile-gray);   color: var(--tile-gray-text); }
-.letter-grid button.picker-blue   { background: var(--tile-blue);   color: var(--tile-blue-text); }
-
+.letter-grid button.picker-green {
+  background: var(--tile-green);
+  color: var(--tile-green-text);
+}
+.letter-grid button.picker-yellow {
+  background: var(--tile-yellow);
+  color: var(--tile-yellow-text);
+}
+.letter-grid button.picker-gray {
+  background: var(--tile-gray);
+  color: var(--tile-gray-text);
+}
+.letter-grid button.picker-blue {
+  background: var(--tile-blue);
+  color: var(--tile-blue-text);
+}
 .letter-grid button.selected {
   background: var(--setter-color) !important;
   color: #000 !important;
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.5);
 }
-
 .letter-grid button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
-
-/* ── Rejoin-after-disconnect modal ───────────────────────────────────── */
+/* Dialogs and play menu */
 .rejoin-modal-panel {
   max-width: 320px;
   text-align: center;
 }
-
 .rejoin-modal-panel .modal-instruction {
   margin: var(--sp-8) 0 var(--sp-16);
   font-size: var(--fs-14);
   opacity: 0.85;
   line-height: 1.4;
 }
-
 .rejoin-modal-actions {
   display: flex;
   flex-direction: column;
   gap: var(--sp-10);
 }
-
-/* ── Account screen: sub-navigation (Friends / Leaderboard / Past Games) ── */
 #accountScreen .account-actions {
   display: flex;
   flex-direction: column;
   gap: var(--sp-10);
   width: 260px;
 }
-
-/* ── Play split button ────────────────────────────────────────────────── */
 .split-btn {
   display: flex;
   gap: 2px;
 }
-
 .split-btn-main {
   flex: 1;
 }
-
 .split-btn-quick {
   flex: 0 0 auto;
   width: var(--h-control);
   padding: 0;
   font-size: var(--fs-18);
 }
-
-/* ── Play submenu ─────────────────────────────────────────────────────── */
 .play-menu-buttons {
   width: 280px;
 }
-
-/* ── Join a room by code, plus a circular Quick Join shortcut ──────────── */
 .join-room-row {
   display: flex;
   gap: var(--sp-8);
   align-items: center;
 }
-
 .join-room-input {
   flex: 1;
   min-width: 0;
@@ -1616,18 +1344,15 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-
 .join-room-input:focus {
   outline: none;
-  border-color: var(--role-accent, #60a5fa);
+  border-color: var(--role-accent,#60a5fa);
 }
-
 .join-room-submit-btn {
   flex: 0 0 auto;
   width: auto;
   padding: 0 var(--sp-14);
 }
-
 .quick-join-circle-btn {
   flex: 0 0 auto;
   width: var(--h-control);
@@ -1639,26 +1364,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--btn-secondary, #23242b);
+  background: var(--btn-secondary,#23242b);
   color: var(--text);
   border: 1px solid #2a2c34;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition: background 0.15s ease,transform 0.15s ease;
 }
-
 .quick-join-circle-btn:hover {
   background: var(--btn-secondary-hover);
   transform: translateY(-1px);
 }
-
 .quick-join-circle-btn:active {
   transform: translateY(0) scale(0.95);
 }
-
-/* ── Developer tools icon (top-right corner of the main menu) ──────────
-   Replaces the old full-width "Developer 🛠️" menu button -- same 🛠️
-   glyph, same #developerBtn id/handler (dev-simulation.js), just a small
-   corner icon instead of another row in the button stack. */
 #startupScreen .menu-center {
   position: relative;
 }
@@ -1676,12 +1394,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--btn-secondary, #23242b);
+  background: var(--btn-secondary,#23242b);
   color: var(--text);
   border: 1px solid #2a2c34;
   opacity: 0.7;
   cursor: pointer;
-  transition: background 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+  transition: background 0.15s ease,opacity 0.15s ease,transform 0.15s ease;
 }
 .dev-tools-icon-btn:hover {
   background: var(--btn-secondary-hover);
@@ -1691,9 +1409,7 @@
 .dev-tools-icon-btn:active {
   transform: translateY(0) scale(0.95);
 }
-
-
-/* ── Ranked matchmaking waiting screen ───────────────────────────────── */
+/* Ranked, rules, and developer tools */
 .ranked-waiting-body {
   display: flex;
   flex-direction: column;
@@ -1701,94 +1417,67 @@
   gap: var(--sp-14);
   padding: var(--sp-20) 0;
 }
-
 .ranked-search-spinner {
   width: 46px;
   height: 46px;
   border-radius: 50%;
   border: 4px solid rgba(255,255,255,0.12);
-  border-top-color: var(--role-accent, #4da3ff);
+  border-top-color: var(--role-accent,#4da3ff);
   animation: ranked-spin 900ms linear infinite;
 }
-
-.ranked-search-spinner.hidden {
-  display: none;
-}
-
 @keyframes ranked-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
-
 .ranked-waiting-text {
   font-size: var(--fs-15);
   font-weight: 700;
   opacity: 0.9;
   text-align: center;
 }
-
 .ranked-countdown-text {
-  font-size: var(--fs-22, 22px);
+  font-size: var(--fs-22,22px);
   font-weight: 900;
   color: #4ade80;
 }
-
-.ranked-countdown-text.hidden,
-.ranked-waiting-text.hidden {
-  display: none;
-}
-
-/* ── Rules screen ─────────────────────────────────────────────────────── */
-.rules-center {
-  /* No max-width cap — match the width of sibling .menu-center screens
-     (startup, play, etc.) instead of rendering narrower than them. */
-}
-
 .rules-content {
   text-align: left;
   width: 100%;
   margin-top: var(--sp-14);
 }
-
 .rules-content h3 {
   margin: var(--sp-14) 0 var(--sp-4);
   font-size: var(--fs-14);
   font-weight: 800;
   letter-spacing: 0.4px;
-  color: var(--role-accent, #4da3ff);
+  color: var(--role-accent,#4da3ff);
 }
-
 .rules-content h3:first-child {
   margin-top: 0;
 }
-
 .rules-content p {
   margin: 0;
   font-size: var(--fs-13);
   line-height: 1.5;
   opacity: 0.9;
 }
-
-/* ── Power library screen ────────────────────────────────────────────── */
 .power-library-center {
   max-width: 420px;
 }
-
 .power-library-list {
   width: 100%;
   margin-top: var(--sp-14);
   text-align: left;
 }
-
 .power-lib-tabs {
   margin-top: var(--sp-14);
 }
-
 #startTutorialBtn {
   width: 100%;
   margin-bottom: var(--sp-4);
 }
-
-/* ── Force Timer power: big transparent countdown ────────────────────── */
+/* Power utilities */
 .force-timer-overlay {
   position: absolute;
   inset: 0;
@@ -1800,56 +1489,42 @@
   pointer-events: none;
   z-index: 5;
 }
-
-.force-timer-overlay.hidden {
-  display: none;
-}
-
 .force-timer-overlay span {
-  font-size: min(42vw, 320px);
+  font-size: min(42vw,320px);
   font-weight: 900;
   line-height: 1;
-  color: rgba(255, 75, 92, 0.22);
-  text-shadow: 0 0 40px rgba(255, 75, 92, 0.18);
+  color: rgba(255,75,92,0.22);
+  text-shadow: 0 0 40px rgba(255,75,92,0.18);
   font-variant-numeric: tabular-nums;
   user-select: none;
   transition: color 0.2s ease;
 }
-
 .force-timer-overlay.force-timer-urgent span {
-  color: rgba(255, 60, 60, 0.4);
-  text-shadow: 0 0 50px rgba(255, 60, 60, 0.3);
+  color: rgba(255,60,60,0.4);
+  text-shadow: 0 0 50px rgba(255,60,60,0.3);
   animation: force-timer-pulse 1s ease-in-out infinite;
 }
-
 @keyframes force-timer-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
 }
-
 .power-lib-row-setter {
   border-left: 2px solid var(--setter-color);
 }
-
 .power-lib-row-guesser {
   border-left: 2px solid var(--guesser-color);
 }
-
-/* ── AI difficulty buttons: green/yellow/red at a glance ──────────────
-   Reuses the same tile colors the board already uses for green/yellow
-   feedback (and their paired dark text) so "Easy/Medium" reads as the
-   same familiar color language, plus the app's existing red accent
-   (--setter-color) for Hard rather than inventing a new color. Applied
-   on top of .menu-btn/.ai-option's own base classes (features.css loads
-   last, so these override .menu-btn.primary/.primary-btn/.secondary-btn
-   without needing !important). */
 .difficulty-easy {
   background: var(--tile-green);
   color: var(--tile-green-text);
   border-color: var(--tile-green);
 }
 .difficulty-easy:hover {
-  background: color-mix(in srgb, var(--tile-green) 85%, white);
+  background: color-mix(in srgb,var(--tile-green) 85%,white);
 }
 .difficulty-medium {
   background: var(--tile-yellow);
@@ -1857,7 +1532,7 @@
   border-color: var(--tile-yellow);
 }
 .difficulty-medium:hover {
-  background: color-mix(in srgb, var(--tile-yellow) 85%, white);
+  background: color-mix(in srgb,var(--tile-yellow) 85%,white);
 }
 .difficulty-hard {
   background: var(--setter-color);
@@ -1865,34 +1540,25 @@
   border-color: var(--setter-color);
 }
 .difficulty-hard:hover {
-  background: color-mix(in srgb, var(--setter-color) 85%, white);
+  background: color-mix(in srgb,var(--setter-color) 85%,white);
 }
-.difficulty-easy small,
-.difficulty-medium small,
-.difficulty-hard small {
+.difficulty-easy small, .difficulty-medium small, .difficulty-hard small {
   display: block;
   font-weight: 400;
   opacity: 0.7;
 }
-
-/* ── Developer: Simulation screen ─────────────────────────────────── */
+/* Simulation tools */
 .sim-center {
-  /* Wide enough for the all-powers bar chart; the form controls below
-     stay visually narrow via their own max-width so this doesn't make
-     the single-power run form look sparse. */
   max-width: 900px;
 }
-
 .sim-explainer {
   font-size: 13px;
   opacity: 0.7;
   line-height: 1.5;
   margin: 0 0 16px;
   max-width: 420px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline: auto;
 }
-
 .sim-controls {
   display: flex;
   flex-direction: column;
@@ -1900,10 +1566,8 @@
   margin-bottom: 16px;
   text-align: left;
   max-width: 420px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline: auto;
 }
-
 .sim-field {
   display: flex;
   flex-direction: column;
@@ -1911,9 +1575,7 @@
   font-size: 12px;
   opacity: 0.85;
 }
-
-.sim-field select,
-.sim-field input {
+.sim-field select, .sim-field input {
   padding: 8px 10px;
   border-radius: var(--r-10);
   border: 1px solid rgba(255,255,255,0.15);
@@ -1921,24 +1583,16 @@
   color: inherit;
   font-size: 14px;
 }
-
 .sim-power-role {
   font-size: 12px;
   opacity: 0.6;
   margin-top: -4px;
 }
-
 .sim-progress {
   margin-bottom: 16px;
   max-width: 420px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline: auto;
 }
-
-.sim-progress.hidden {
-  display: none;
-}
-
 .sim-progress-bar {
   width: 100%;
   height: 8px;
@@ -1947,18 +1601,15 @@
   overflow: hidden;
   margin-bottom: 6px;
 }
-
 .sim-progress-fill {
   height: 100%;
   background: #4cafef;
   transition: width 0.2s ease;
 }
-
 .sim-progress span {
   font-size: 12px;
   opacity: 0.7;
 }
-
 .sim-results {
   text-align: left;
   border-radius: var(--r-10);
@@ -1967,19 +1618,12 @@
   padding: 12px 14px;
   margin-bottom: 20px;
   max-width: 420px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline: auto;
 }
-
-.sim-results.hidden {
-  display: none;
-}
-
 .sim-result-header {
   font-weight: 700;
   margin-bottom: 8px;
 }
-
 .sim-result-row {
   display: flex;
   justify-content: space-between;
@@ -1988,15 +1632,12 @@
   border-bottom: 1px solid rgba(255,255,255,0.08);
   font-size: 13px;
 }
-
 .sim-result-row:last-child {
   border-bottom: none;
 }
-
 .sim-result-delta {
   font-weight: 700;
 }
-
 .sim-subtitle {
   font-size: 14px;
   opacity: 0.8;
@@ -2004,11 +1645,9 @@
   text-align: left;
   max-width: 420px;
 }
-
 .sim-subtitle-wide {
   max-width: none;
 }
-
 .sim-past-runs {
   text-align: left;
   border-radius: var(--r-10);
@@ -2019,10 +1658,8 @@
   max-height: 260px;
   overflow-y: auto;
   max-width: 420px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline: auto;
 }
-
 .sim-past-run-row {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -2031,31 +1668,24 @@
   border-bottom: 1px solid rgba(255,255,255,0.08);
   font-size: 12px;
 }
-
 .sim-past-run-row:last-child {
   border-bottom: none;
 }
-
 .sim-past-run-power {
   font-weight: 700;
 }
-
 .sim-past-run-delta {
   text-align: right;
   font-weight: 700;
   font-family: var(--font-mono);
 }
-
 .sim-past-run-meta {
   opacity: 0.6;
 }
-
 .sim-past-run-date {
   text-align: right;
   opacity: 0.5;
 }
-
-/* ── Test All Powers + chart ─────────────────────────────────────── */
 .sim-batch-controls {
   display: flex;
   flex-direction: column;
@@ -2063,15 +1693,12 @@
   gap: 6px;
   margin-bottom: 16px;
   max-width: 420px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline: auto;
 }
-
 .sim-estimate {
   font-size: 11px;
   opacity: 0.55;
 }
-
 .sim-chart-toolbar {
   display: flex;
   align-items: center;
@@ -2080,7 +1707,6 @@
   gap: 10px;
   margin-bottom: 10px;
 }
-
 .sim-role-filter {
   display: flex;
   gap: 4px;
@@ -2088,7 +1714,6 @@
   background: rgba(255,255,255,0.05);
   padding: 3px;
 }
-
 .sim-role-btn {
   border: none;
   background: transparent;
@@ -2098,18 +1723,15 @@
   padding: 5px 12px;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s,color 0.15s;
 }
-
 .sim-role-btn:hover {
   color: rgba(255,255,255,0.9);
 }
-
 .sim-role-btn.active {
   background: #4cafef;
   color: #0a0b0f;
 }
-
 .sim-split-toggle {
   display: flex;
   align-items: center;
@@ -2119,7 +1741,6 @@
   cursor: pointer;
   user-select: none;
 }
-
 .sim-chart-wrap {
   border-radius: var(--r-10);
   background: var(--panel-bg);
@@ -2127,32 +1748,23 @@
   padding: 14px 10px 10px;
   margin-bottom: 20px;
   overflow-x: auto;
-  /* .menu-center's align-items:center sizes flex children to their own
-     content (shrink-to-fit) instead of stretching them to the column's
-     width -- without an explicit width here, a wide chart (many powers or
-     quest types) grows this wrapper past .sim-center's own max-width
-     instead of triggering the overflow-x:auto scrollbar above. */
   width: 100%;
   min-width: 0;
 }
-
 .sim-chart-empty {
   text-align: center;
   font-size: 12px;
   opacity: 0.5;
   padding: 20px 0;
 }
-
 .sim-chart-pair {
   display: flex;
   gap: 14px;
 }
-
 .sim-chart-pair > .sim-chart-single {
   flex: 1;
   min-width: 0;
 }
-
 .sim-chart-title {
   font-size: 12px;
   font-weight: 700;
@@ -2160,67 +1772,50 @@
   opacity: 0.7;
   margin-bottom: 4px;
 }
-
 .sim-chart-baseline {
   font-weight: 400;
   opacity: 0.7;
 }
-
 .sim-chart-note {
   font-size: 11px;
   text-align: center;
   opacity: 0.55;
   margin-bottom: 8px;
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono,monospace);
 }
-
 .sim-chart-svg-wrap {
   overflow-x: auto;
 }
-
 .sim-bar-fill {
   transition: opacity 0.15s ease;
 }
-
 .sim-bar-group:hover .sim-bar-fill {
   opacity: 0.75;
 }
-
 .sim-bar-errbar {
   stroke: rgba(255,255,255,0.55);
   stroke-width: 1.5;
 }
-
 .sim-bar-axis {
   stroke: rgba(255,255,255,0.15);
   stroke-width: 1;
 }
-
 .sim-bar-zero-line {
   stroke: rgba(255,255,255,0.4);
   stroke-width: 1.5;
 }
-
 .sim-bar-axis-label {
   fill: rgba(255,255,255,0.45);
   font-size: 9px;
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono,monospace);
 }
-
 .sim-bar-x-label {
   fill: rgba(255,255,255,0.8);
   font-size: 10px;
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono,monospace);
   text-anchor: end;
 }
-
-/* ── Lobby time control: analog watch ─────────────────────────────────
-   Three markers sit at fixed clock positions (2 o'clock = Bullet,
-   6 o'clock = Blitz, 9 o'clock = Unlimited); the hand rotates to point
-   at whichever is selected. Each marker still wraps a real
-   input[name="timePreset"] radio (see index.html), so the existing
-   .timer-option-based JS (updateTimerAccess/updateTimerPresetUI in
-   client.js) keeps working unchanged -- this only replaces the visuals. */
+/* Timer picker */
 .timer-clock {
   margin-top: var(--sp-20);
   display: flex;
@@ -2228,32 +1823,25 @@
   align-items: center;
   gap: var(--sp-10);
 }
-
 .timer-clock-face {
   position: relative;
   width: 200px;
   height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #24262e, #16171c 70%);
+  background: radial-gradient(circle at 35% 30%,#24262e,#16171c 70%);
   border: 3px solid #2a2c34;
-  box-shadow: 0 8px 22px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.03);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.4),inset 0 0 0 1px rgba(255,255,255,0.03);
 }
-
-/* Hour tick marks around the rim, like a real watch face */
 .timer-clock-face::before {
   content: "";
   position: absolute;
   inset: 10px;
   border-radius: 50%;
-  background: repeating-conic-gradient(
-    rgba(255,255,255,0.3) 0deg 1.5deg,
-    transparent 1.5deg 30deg
-  );
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 7px));
-          mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 7px));
+  background: repeating-conic-gradient(rgba(255,255,255,0.3) 0deg 1.5deg,transparent 1.5deg 30deg);
+  -webkit-mask: radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 7px));
+  mask: radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 7px));
   pointer-events: none;
 }
-
 .timer-clock-hand {
   position: absolute;
   left: 50%;
@@ -2262,13 +1850,12 @@
   height: 68px;
   margin-left: -2px;
   border-radius: 3px;
-  background: var(--role-accent, #e6e6e6);
+  background: var(--role-accent,#e6e6e6);
   transform-origin: 50% 100%;
-  transform: translateY(-100%) rotate(var(--hand-angle, 60deg));
+  transform: translateY(-100%) rotate(var(--hand-angle,60deg));
   transition: transform 0.3s ease;
-  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent, #e6e6e6) 50%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb,var(--role-accent,#e6e6e6) 50%,transparent);
 }
-
 .timer-clock-center {
   position: absolute;
   left: 50%;
@@ -2277,10 +1864,9 @@
   height: 12px;
   margin: -6px 0 0 -6px;
   border-radius: 50%;
-  background: var(--role-accent, #e6e6e6);
+  background: var(--role-accent,#e6e6e6);
   box-shadow: 0 0 0 3px #16171c;
 }
-
 .timer-clock-marker {
   position: absolute;
   left: 50%;
@@ -2288,7 +1874,7 @@
   width: 44px;
   height: 44px;
   margin: -22px 0 0 -22px;
-  transform: rotate(var(--angle)) translate(0, -76px) rotate(calc(-1 * var(--angle)));
+  transform: rotate(var(--angle)) translate(0,-76px) rotate(calc(-1 * var(--angle)));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2297,74 +1883,54 @@
   border: 1px solid #2a2c34;
   font-size: 20px;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  transition: background 0.15s ease,border-color 0.15s ease,transform 0.15s ease;
   padding: 0;
 }
-
 .timer-clock-marker:hover {
   background: #20222a;
 }
-
 .timer-clock-marker:has(input:checked) {
   background: #20222a;
   border-color: var(--role-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--role-accent) 45%, transparent);
-  transform: rotate(var(--angle)) translate(0, -76px) rotate(calc(-1 * var(--angle))) scale(1.1);
+  box-shadow: 0 0 0 2px color-mix(in srgb,var(--role-accent) 45%,transparent);
+  transform: rotate(var(--angle)) translate(0,-76px) rotate(calc(-1 * var(--angle))) scale(1.1);
 }
-
 .timer-clock-marker.disabled {
   opacity: 0.4;
   pointer-events: none;
 }
-
-/* Undo the plain .timer-option list styling (checkmark badge + text
-   indent) that game-menu.css applies -- the round marker already shows
-   selection via background/border/scale, and the hand pointing at it.
-   Selectors are written to match/exceed that rule's specificity so this
-   wins without !important. */
 .timer-clock-marker:has(input:checked)::before {
   content: none;
 }
-
 .timer-clock-marker .timer-clock-icon {
   line-height: 1;
   margin-left: 0;
 }
-
 .timer-clock-legend {
-  font-size: var(--fs-13, 13px);
+  font-size: var(--fs-13,13px);
   opacity: 0.75;
   font-weight: 700;
   min-height: 1.2em;
 }
-
-/* ── Vowel Refresh: shine the last guess's refreshable vowels ─────────
-   Preview highlight (setter only) showing which vowel tiles in the most
-   recent guess would actually get reset if the power were used right
-   now (see uiEffects in public/powerEngine/powers/vowelRefresh.js). */
+/* Vowel Refresh effect */
 .vowel-refresh-shine {
   animation: vowel-refresh-pulse 1.6s ease-in-out infinite;
 }
 @keyframes vowel-refresh-pulse {
-  0%, 100% { box-shadow: 0 0 0 rgba(255, 214, 92, 0); }
-  50% { box-shadow: 0 0 14px 3px rgba(255, 214, 92, 0.7); }
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(255,214,92,0);
+  }
+  50% {
+    box-shadow: 0 0 14px 3px rgba(255,214,92,0.7);
+  }
 }
-
-/* Twinkling star glints on top of the glow -- two 8-point stars at
-   opposite corners of the tile (.history-tile is already
-   position:relative), staggered so they never twinkle in sync. This is
-   the actual "sparkle" -- the pulse above is just the ambient glow. */
-.vowel-refresh-shine::before,
-.vowel-refresh-shine::after {
+.vowel-refresh-shine::before, .vowel-refresh-shine::after {
   content: "";
   position: absolute;
   width: 34%;
   height: 34%;
   background: #fff6d6;
-  clip-path: polygon(
-    50% 0%, 61% 38%, 100% 50%, 61% 62%,
-    50% 100%, 39% 62%, 0% 50%, 39% 38%
-  );
+  clip-path: polygon(50% 0%,61% 38%,100% 50%,61% 62%,50% 100%,39% 62%,0% 50%,39% 38%);
   pointer-events: none;
   opacity: 0;
   animation: vowel-refresh-sparkle 1.6s ease-in-out infinite;
@@ -2381,2314 +1947,111 @@
   animation-delay: 0.55s;
 }
 @keyframes vowel-refresh-sparkle {
-  0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
-  50% { opacity: 1; transform: scale(1) rotate(20deg); }
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.2) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(20deg);
+  }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .vowel-refresh-shine,
-  .vowel-refresh-shine::before,
-  .vowel-refresh-shine::after {
+  .vowel-refresh-shine, .vowel-refresh-shine::before, .vowel-refresh-shine::after {
     animation: none;
   }
 }
-/* GAME VIEWPORT — keyboard always remains on-screen Put this at the END of features.css */
-
-body:has(#setterScreen.active),
-body:has(#guesserScreen.active) {
-  margin: 0;
-
-  height: 100vh;
-  height: 100dvh;
-
-  min-height: 0;
-  overflow: hidden;
-}
-
-/*
-  The padding must be included inside the viewport height.
-  Otherwise height:100% + padding makes this taller than the screen.
-*/
-body:has(#setterScreen.active) #appContainer,
-body:has(#guesserScreen.active) #appContainer {
-  box-sizing: border-box;
-
-  height: 100vh;
-  height: 100dvh;
-  max-height: 100dvh;
-
-  display: flex;
-  flex-direction: column;
-
-  min-height: 0;
-  overflow: hidden;
-}
-
-/*
-  Missing link in the current flex-height chain:
-  #appContainer -> #appMain -> active game screen.
-*/
-body:has(#setterScreen.active) #appMain,
-body:has(#guesserScreen.active) #appMain {
-  display: flex;
-  flex-direction: column;
-
-  flex: 1 1 0;
-  min-height: 0;
+/* Gameplay shell */
+#setterScreen.active, #guesserScreen.active {
   min-width: 0;
-
-  overflow: hidden;
-}
-
-/*
-  Remove the generic .screen.active top margin during a game.
-  Keep all screen padding inside the screen's allocated height.
-*/
-#setterScreen.active,
-#guesserScreen.active {
-  box-sizing: border-box;
-
-  display: flex;
-  flex-direction: column;
-
-  flex: 1 1 0;
-  min-height: 0;
-  min-width: 0;
-
   margin-top: 0;
 }
-
-/* Pass the available height down toward the history list. */
-#setterScreen.active .play-area,
-#guesserScreen.active .play-area {
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-#setterScreen.active .play-row,
-#guesserScreen.active .play-row {
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-#setterScreen.active .center-col,
-#guesserScreen.active .center-col {
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-/*
-  Only old submitted guesses shrink and scroll.
-  Removing the old 100px minimum is important on shorter screens.
-*/
-#setterScreen.active .history-scroll,
-#guesserScreen.active .history-scroll {
-  flex: 1 1 0;
-  min-height: 0;
-  max-height: 100%;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-}
-
-/* Setter only: flex-grow:0 (overriding the shared flex:1 1 0 above, hence
-   the extra #setterScreen.active for specificity) so the history box
-   stops force-filling 100% of the column regardless of how few rows it
-   holds -- see .theme-setter .center-col's justify-content:center
-   (layout.css) for the other half of this, which is what actually
-   centers the now-natural-sized history+draft group in the leftover
-   space. flex-shrink stays on, so once the group's real content height
-   exceeds the column, this still shrinks to fit and scrolls internally
-   exactly like before, just not forced there from round 1. */
-#setterScreen.active #setterGuesserSubmitted.history-scroll {
-  flex: 0 1 auto;
-}
-
-/* Keyboard always keeps its natural height. */
-#keyboardSetter,
-#keyboardGuesser {
+#keyboardSetter, #keyboardGuesser {
   flex: 0 0 auto;
   min-height: 0;
 }
-
-/* SMALLER TILES + FIXED SETTER SIDEBAR */
-
-/* Smaller game tiles */
-
-#guesserScreen .history-tile {
-  width: clamp(30px, 12.5cqw, 56px);
-  height: clamp(30px, 12.5cqw, 56px);
-  font-size: clamp(16px, 6cqw, 28px);
-}
-
-/* A little larger than the regular history/feedback tiles -- this is
-   the row the guesser is actively typing into, so it should read as
-   the "live" one. */
-#guesserScreen #draftGuesser .history-tile {
-  width: clamp(33px, 14cqw, 62px);
-  height: clamp(33px, 14cqw, 62px);
-  font-size: clamp(18px, 6.8cqw, 31px);
-}
-
-/*
-  The guesser's draft row hides entirely (display:none, see
-  draftrow.js's GUESSER branch) between submitting a guess and their
-  next turn. .draft-row-wrap is flex-shrink:0 (layout.css), sized purely
-  by its own content -- with nothing visible inside it that content
-  collapses to 0 height, and the history-scroll backdrop right above it
-  (flex:1, absorbs whatever's left in .center-col) visibly grows to fill
-  that freed space, then shrinks back once the draft row reappears --
-  the whole feedback backdrop reading as jumping up and down. Floor this
-  wrapper to the draft row's own (enlarged) tile height, matching the
-  clamp() just above, so that space is never actually there to reclaim
-  regardless of whether the row is currently shown.
-*/
-#guesserScreen .draft-row-wrap {
-  min-height: clamp(33px, 14cqw, 62px);
-}
-
-/* Desktop: the Inspector's board has no sidebar competing for width
-   (single stacked column, unlike the Spy's side-by-side layout), so
-   once the viewport is wide enough for #appContainer to sit at its own
-   600px cap (layout.css), .center-col stops growing but is already wide
-   enough that the cqw ratios above are pinned at their ceiling -- the
-   exact same 56px/62px tiles no matter how much wider the actual
-   window/monitor gets past that point, sized for a cramped phone
-   column that desktop never actually has. Same selectors, later in the
-   cascade (equal specificity, so source order decides) -- smaller
-   ceilings, and smaller cqw ratios so it still keeps scaling down
-   through the in-between tablet widths instead of jumping straight to
-   a fixed number. */
-@media (min-width: 640px) {
-  #guesserScreen .history-tile {
-    width: clamp(30px, 9cqw, 44px);
-    height: clamp(30px, 9cqw, 44px);
-    font-size: clamp(16px, 4.5cqw, 22px);
-  }
-
-  #guesserScreen #draftGuesser .history-tile {
-    width: clamp(32px, 10cqw, 48px);
-    height: clamp(32px, 10cqw, 48px);
-    font-size: clamp(17px, 5cqw, 24px);
-  }
-
-  #guesserScreen .draft-row-wrap {
-    min-height: clamp(32px, 10cqw, 48px);
-  }
-}
-
-/*
-  The setter's board gets the rest of the row once the fixed sidebar
-  (above) takes its share -- cqw here is relative to .center-col, which is
-  narrower than the full row, so this needs a bigger cqw factor than the
-  guesser's single-column layout to end up with comparably large tiles.
-*/
-#setterScreen .history-tile {
-  width: clamp(34px, 18.5cqw, 88px);
-  height: clamp(34px, 18.5cqw, 88px);
-  font-size: clamp(18px, 9.5cqw, 42px);
-}
-
-/*
-  The existing history row has min-height: 48px.
-  Remove that floor so smaller tiles actually save vertical space.
-*/
-#setterScreen .history-row,
-#guesserScreen .history-row {
-  min-height: 0;
-}
-
-/* Slightly reduce vertical spacing between rows. */
-#setterScreen .history-tiles,
-#guesserScreen .history-tiles {
-  gap: 4px;
-}
-
-
-/* Fixed setter left column */
-
-.theme-setter .play-row {
-  --setter-sidebar-width: 92px;
-}
-
-/*
-  Give the sidebar one permanent width.
-  Its contents can appear/disappear without changing the board width.
-*/
-.theme-setter .powers-col {
-  flex: 0 0 var(--setter-sidebar-width);
-
-  width: var(--setter-sidebar-width);
-  min-width: var(--setter-sidebar-width);
-  max-width: var(--setter-sidebar-width);
-
-  box-sizing: border-box;
-  align-self: stretch;
-  min-height: 0;
-
-  overflow-x: hidden;
-  overflow-y: auto;
-
-  /*
-    Prevent the column's inner width from changing when its
-    vertical scrollbar appears.
-  */
-  scrollbar-gutter: stable;
-}
-
-/*
-  The board always receives the remaining width instead of sizing
-  itself according to its tile contents.
-*/
-.theme-setter .center-col {
-  flex: 1 1 0;
-  width: auto;
-  min-width: 0;
-}
-
-/* Keep every optional sidebar section inside the fixed column. */
-.theme-setter .powers-col > *,
-.theme-setter .powers-col .power-container,
-.theme-setter .powers-col .remaining-box,
-.theme-setter .powers-col .letter-profile-box {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-/* IPHONE HISTORY SCROLLING */
-
-#setterScreen .history-scroll,
-#guesserScreen .history-scroll {
-  flex: 1 1 0;
-  min-height: 0;
-
-  overflow-y: auto !important;
-  overflow-x: hidden;
-
-  /*
-    Important because several ancestors currently use
-    pointer-events:none.
-  */
-  pointer-events: auto !important;
-
-  /*
-    Allow a touch beginning on a row or tile to become a
-    native vertical scrolling gesture.
-  */
-  touch-action: pan-y !important;
-  -webkit-overflow-scrolling: touch;
-
-  overscroll-behavior-x: none;
-  overscroll-behavior-y: contain;
-}
-
-/*
-  Override any touch-action:none rule applied to tiles by another
-  stylesheet. Taps still work; vertical dragging scrolls the history.
-*/
-#setterScreen .history-scroll .history-row-wrap,
-#setterScreen .history-scroll .history-row,
-#setterScreen .history-scroll .history-tile,
-#guesserScreen .history-scroll .history-row-wrap,
-#guesserScreen .history-scroll .history-row,
-#guesserScreen .history-scroll .history-tile {
-  touch-action: pan-y !important;
-}
-
-/* Do not retain history.css's old 100px minimum. */
-#setterScreen .history-scroll,
-#guesserScreen .history-scroll {
-  min-height: 0;
-}
-
-
-/* FIXED SETTER SIDEBAR */
-
-.theme-setter .play-row {
-  /*
-    Fixed width means Log, Notes, remaining-word counts, and power
-    changes cannot move the board horizontally. Trimmed down slightly
-    from clamp(116px, 30vw, 168px) -- at the old width, the Log/Notes
-    text and the "?" power-info button crowded right up against the
-    board's edge on the right.
-  */
-  --setter-sidebar-width: clamp(106px, 27vw, 154px);
-
-  gap: var(--sp-6);
-}
-
-#setterScreen .setter-sidebar {
-  order: 1;
-
-  flex: 0 0 var(--setter-sidebar-width);
-  width: var(--setter-sidebar-width);
-  min-width: var(--setter-sidebar-width);
-  max-width: var(--setter-sidebar-width);
-
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-
-  box-sizing: border-box;
-  min-height: 0;
-  gap: var(--sp-4);
-
+/* Power palettes */
+.power-btn.power-badge.power-themed:not(.quest-badge-tile) {
+  --power-color-1: var(--role-accent);
+  --power-color-2: var(--power-color-1);
+  --power-color-3: var(--power-color-2);
+  --power-tone-1: color-mix(in srgb,var(--power-color-1) 52%,#8b90a0);
+  --power-tone-2: color-mix(in srgb,var(--power-color-2) 52%,#8b90a0);
   overflow: hidden;
-  scrollbar-gutter: stable;
-  pointer-events: auto;
-}
-
-#setterScreen .center-col {
-  order: 2;
-
-  flex: 1 1 0;
-  width: auto;
-  min-width: 0;
-}
-
-
-/* LOG / NOTES SIDEBAR SECTION */
-#setterScreen .setter-sidebar-activity {
-  display: flex;
-  flex-direction: column;
-
-  /*
-    flex-grow:1 -- the powers section above only claims exactly what its
-    cards need (flex-grow:0, see .setter-sidebar-powers), so this is the
-    element that actually stretches to fill whatever room the column has
-    left over, and shrinks back down (to the min-height floor) as that
-    room shrinks. It already scrolls internally for its own overflow
-    past that.
-  */
-  flex: 1 1 auto;
-  min-height: 60px;
-  overflow: hidden;
-}
-
-/* While it's not the setter's turn (idle-mode, see ui/setter-sidebar.js),
-   there's nothing to toggle between -- Log stays forced visible here and
-   Notes pops out floating elsewhere (below), so the tabs would just be
-   two buttons with nothing left for them to do. */
-#setterScreen .setter-sidebar-activity.idle-mode .setter-sidebar-tabs {
-  display: none;
-}
-
-#setterScreen .setter-sidebar-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-4);
-
-  flex: 0 0 auto;
-  margin-bottom: var(--sp-4);
-}
-
-#setterScreen .setter-sidebar-tab {
-  width: 100%;
-  min-width: 0;
-  min-height: 28px;
-
-  padding: 3px 4px;
-
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--r-6);
-
-  background: var(--panel-bg);
-  color: var(--text);
-
-  font-size: var(--fs-10, 10px);
-  font-weight: 800;
-  line-height: 1;
-  text-transform: uppercase;
-
-  cursor: pointer;
-}
-
-#setterScreen .setter-sidebar-tab.is-active {
-  border-color: var(--role-accent);
-
-  background: color-mix(
-    in srgb,
-    var(--role-accent) 20%,
-    var(--panel-bg)
-  );
-
-  box-shadow:
-    0 0 6px
-    color-mix(in srgb, var(--role-accent) 35%, transparent);
-}
-
-/*
-  Idle-expand: while it's not the setter's turn, ui/setter-sidebar.js
-  pins Notes specifically (not this whole Log/Notes section -- Log stays
-  docked in its normal spot right above, see idle-mode above) to a fixed
-  rect the same width as .center-col (the board/draft-row column, on the
-  right), taller than usual, over the draft row's vertical position (via
-  a FLIP animation from its normal in-flow rect in the sidebar) -- so the
-  setter can use the dead time to jot notes without covering the sidebar
-  (powers/Log, on the left). It snaps back to normal in-flow layout the
-  moment the turn returns. The extra .game-side-panel qualifier gives
-  this the specificity to beat that selector's own position:static
-  !important (components.css) while idle-floating is active.
-*/
-#setterScreen .setter-sidebar .game-side-panel.idle-floating {
-  position: fixed !important;
-  z-index: 600;
-  background: rgba(16, 17, 24, 0.97);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: var(--r-14, 14px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
-  padding: var(--sp-8, 8px);
-}
-
-#setterScreen .setter-sidebar .game-side-panel.idle-flip-animating {
-  transition: top 0.32s ease, left 0.32s ease, width 0.32s ease, height 0.32s ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #setterScreen .setter-sidebar .game-side-panel.idle-flip-animating {
-    transition: none;
-  }
-}
-
-/* Press-and-hold drag handle (ui/setter-sidebar.js) -- sits above the
-   Log/Notes tabs, always in-flow (never itself floats), so it stays put
-   as a fixed grab point regardless of which panel is currently docked or
-   mid-drag. touch-action:none stops the browser treating a vertical drag
-   here as a page/list scroll. Hidden during idle-mode -- Notes is already
-   auto-floating then, so there's nothing for the handle to arm. */
-#setterScreen .setter-sidebar-activity.idle-mode .activity-drag-handle {
-  display: none;
-}
-
-.activity-drag-handle {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 16px;
-  margin-bottom: 2px;
-  cursor: grab;
-  touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.activity-drag-handle:active {
-  cursor: grabbing;
-}
-
-.activity-drag-grip {
-  width: 34px;
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
-  transition: background 150ms ease, opacity 150ms ease;
-}
-
-.activity-drag-handle:hover .activity-drag-grip {
-  background: color-mix(in srgb, var(--role-accent) 55%, rgba(255, 255, 255, 0.22));
-}
-
-/* Same reasoning as components.css's body.row-flight-active
-   #SetterRemainingBox -- this grip sits directly under that box, so it
-   read as part of the same distracting "stray sidebar chrome behind the
-   moving row" during the setter's row flight. */
-body.row-flight-active .activity-drag-grip {
-  opacity: 0;
-}
-
-/* While an actual drag is in progress (not just hovering), suppress text
-   selection / touch scrolling anywhere else on the page so a fast finger
-   movement can't select page text or scroll the body underneath. */
-body.activity-drag-active {
-  -webkit-user-select: none;
-  user-select: none;
-  overscroll-behavior: none;
-}
-
-/* The panel being live-dragged follows the pointer 1:1 every frame
-   (ui/setter-sidebar.js's applyFixedRect calls) -- it deliberately does
-   NOT carry .idle-flip-animating's transition during that phase (would
-   lag behind the finger); only the final snap (a real flip() call once
-   the pointer lifts) gets the animated transition. */
-.game-side-panel.drag-expanding {
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
-}
-
-.setter-notes-idle-hint {
-  flex: 0 0 auto;
-  margin-bottom: var(--sp-6, 6px);
-  padding: 4px 8px;
-  border-radius: var(--r-6, 6px);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  text-align: center;
-}
-
-.setter-notes-idle-hint.hidden {
-  display: none;
-}
-
-/* Shown instead of the auto-floating panel during the Inspector's turn
-   (see ui/gameplay-polish-v8.js's notesShouldPop/openNotesFromButton) --
-   a deliberate tap opens Notes floating over the board rather than it
-   popping out on its own. */
-.setter-notes-idle-open-btn {
-  flex: 0 0 auto;
-  width: 100%;
-  margin-bottom: var(--sp-6, 6px);
-  padding: 6px 8px;
-
-  border: 1px solid color-mix(in srgb, var(--role-accent) 55%, rgba(255, 255, 255, 0.18));
-  border-radius: var(--r-6, 6px);
-
-  background: color-mix(in srgb, var(--role-accent) 16%, var(--panel-bg));
-  color: var(--text);
-
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  text-align: center;
-
-  cursor: pointer;
-  transition: background 150ms ease, box-shadow 150ms ease;
-}
-
-.setter-notes-idle-open-btn:hover {
-  background: color-mix(in srgb, var(--role-accent) 28%, var(--panel-bg));
-  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent);
-}
-
-.setter-notes-idle-open-btn.hidden {
-  display: none;
-}
-
-#setterScreen .setter-sidebar-panels {
-  position: relative;
-
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/*
-  The old panels may currently have absolute/fixed positioning.
-  Inside the sidebar, they become ordinary contained panels.
-*/
-#setterScreen .setter-sidebar .game-side-panel {
-  display: block;
-
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  max-width: none;
-  max-height: none;
-
-  box-sizing: border-box;
-  margin: 0;
-  padding: var(--sp-6);
-
-  overflow-x: hidden;
-  overflow-y: auto;
-
-  pointer-events: auto;
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-
-/* Excludes .idle-floating (Notes popped out over the board while it's not
-   the setter's turn, see ui/setter-sidebar.js) -- that state needs a real
-   position:fixed plus the JS-computed inline top/left to actually float
-   there, and an !important inset:auto here would silently null those
-   inline styles right back out. */
-#setterScreen .setter-sidebar .game-side-panel:not(.idle-floating) {
-  position: static !important;
-  inset: auto !important;
-  transform: none !important;
-  z-index: auto !important;
-}
-
-#setterScreen .setter-sidebar .game-side-panel.hidden {
-  display: none !important;
-}
-
-/*
-  The sidebar's Log is embedded in a ~120-170px column instead of the
-  floating panel's .log-entry 12px was sized for -- shrink it to actually
-  fit without wrapping every entry onto three lines.
-*/
-#setterScreen .setter-sidebar .log-entry {
-  font-size: 9.5px;
-  line-height: 1.3;
-  padding: 2px 4px;
-}
-
-#setterScreen .setter-sidebar .log-round {
-  font-size: 8.5px;
-  margin-top: 2px;
-}
-
-#setterScreen .setter-sidebar .log-power {
-  font-size: 8.5px;
-}
-
-/*
-  The sidebar's Notes is embedded in a ~120-170px column instead of the
-  floating panel's original sizes it was sized for. --notes-word-size/
-  --notes-count-size default to the largest, most readable size in
-  notes.js's _fitSetterNotesList() ladder; that function only steps them
-  down (via inline custom properties on #notesListSetter) when an entry
-  actually doesn't fit at the current size, instead of always rendering at
-  the smallest size just to cover the worst case.
-*/
-#setterScreen .setter-sidebar .notes-word {
-  font-size: var(--notes-word-size, 12.5px);
-}
-
-#setterScreen .setter-sidebar .notes-panel-title,
-#setterScreen .setter-sidebar .notes-empty {
-  font-size: 8.5px;
-}
-
-#setterScreen .setter-sidebar .notes-remaining-count-inline {
-  font-size: var(--notes-count-size, 11px);
-}
-
-
-/* SETTER'S OWN POWERS */
-
-#setterScreen .setter-sidebar-powers {
-  /* flex-grow:0 -- claims exactly what its actual cards need (1 card some
-     rounds, up to 3 others) and never more, so it doesn't reserve blank
-     space sized for the worst case the way a fixed min-height did (that
-     used to leave a dead gap below a single card, since every round
-     reserved room for 3).
-
-     flex-shrink was originally 0 (intended: cards can never clip, Notes
-     below is the one that gives) -- but with enough active power cards,
-     this section's own natural height alone could already exceed the
-     column's available space, and since it never shrank, Notes (after
-     it, in flex order) got laid out starting past the column's own
-     visible bottom edge, landing behind/below the keyboard instead of
-     where it belongs. Each CARD still always renders at its full,
-     unclipped size (nothing here changes that) -- flex-shrink:1 + the
-     max-height/overflow-y below just cap how much of the CARD LIST is
-     visible without scrolling, so this section gives ground first,
-     leaving Notes its guaranteed space every time. */
-  flex: 0 1 auto;
-  min-height: 0;
-  /* Leaves at least ~70px below for Notes (its own 60px min-height, see
-     .setter-sidebar-activity, plus a little breathing room) no matter
-     how many cards are active. */
-  max-height: calc(100% - 70px);
-
-  overflow-x: hidden;
-  overflow-y: auto;
-
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-
-
-/* ONE POWER BUTTON PER ROW, FULL COLUMN WIDTH */
-
-#setterScreen .setter-power-view {
-  display: grid !important;
-  grid-template-columns: 1fr;
-  align-items: start;
-  /* align-items:start only stops an item stretching WITHIN its own row --
-     without this, the grid container's default align-content:stretch
-     still stretches the row TRACKS themselves to fill whatever height
-     .setter-sidebar-powers (a flex ancestor) happens to have, ballooning
-     every button (1 active power = 1 row = the whole column's height)
-     far past its actual content size. This is most of where "empty
-     space" in the sidebar was coming from. */
-  align-content: start;
-  gap: var(--sp-4);
-
-  width: 100%;
-  min-width: 0;
-}
-
-/*
-  Override fixed badge widths from mobile.css/powers.css so a single
-  button spans the whole sidebar column instead of the small fixed
-  63x66px card that layout assumed two-per-row.
-*/
-#setterScreen .setter-power-view > *,
-#setterScreen .setter-power-view .power-btn-wrapper,
-#setterScreen .setter-power-view .power-btn {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-
-  box-sizing: border-box;
-  margin: 0 !important;
-}
-
-#setterScreen .setter-power-view .power-btn {
-  padding-left: 3px;
-  padding-right: 3px;
-  overflow: hidden;
-}
-
-/*
-  mobile.css's .powers-col .power-btn.power-badge fixes a small
-  height:66px meant for a half-width two-per-row card -- reset that to
-  auto/min-height so the now full-width card can actually grow into the
-  extra room, and give the icon/label more space to match. The setter's
-  sidebar column stays narrow (~104px) even at full width, so this keeps
-  the original icon-over-label vertical card shape -- see the guesser
-  rule below for why its own (much wider) column needed a different
-  shape instead.
-
-  min-height is a vw-based clamp() (not a fixed px) so the card actually
-  shrinks on a narrow/short phone instead of just eating more of the
-  sidebar's already-tight vertical space -- same "responsive, not fixed"
-  approach as .theme-setter .play-row's --setter-sidebar-width, and
-  scaled down a bit from that fixed 64px baseline to leave more room for
-  Log/Notes below (see #296).
-*/
-#setterScreen .setter-power-view .power-btn.power-badge {
-  height: auto;
-  min-height: clamp(46px, 14vw, 60px);
-  padding: 6px 5px 8px;
-  gap: 4px;
-}
-
-#setterScreen .setter-power-view .power-icon {
-  max-width: clamp(26px, 9vw, 38px);
-}
-
-#setterScreen .setter-power-view .power-btn-label {
-  height: clamp(18px, 5.5vw, 22px);
-  font-size: clamp(8.5px, 2.4vw, 10px);
-}
-
-
-/* NEVER SHOW THE GUESSER'S QUEST CARD IN THE SETTER'S OWN POWER VIEW */
-
-/*
-  The setter has no view of the GUESSER's quest -- quest.js still pins a
-  read-only mirror onto setterPowerContainer for older callers, so it
-  stays hidden here. The setter's OWN quest (setter-quest.js) is exempted
-  right below -- it reuses this same .quest-badge-tile card look, but it's
-  a real, clickable card, not a read-only mirror of the opponent's quest.
-*/
-#setterScreen #setterPowerContainer [id*="quest" i],
-#setterScreen #setterPowerContainer [class*="quest" i],
-#setterScreen #setterPowerContainer [data-quest],
-#setterScreen #setterPowerContainer [data-quest-id] {
-  display: none !important;
-}
-
-
-
-/*
-  The Old/Keep/New remaining-words count sits below the power cards as
-  a direct child of the sidebar (see index.html), not nested inside
-  .setter-sidebar-powers.
-*/
-
-
-/* Quest info bar: a plain clickable strip directly above the guesser's
-   own draft row (see client/quest.js's updateQuestBadge, which keeps this
-   in sync with the full quest card down in the power row) -- opens the
-   exact same info+Use popup, but sits where it's already in view while
-   actually typing a guess, instead of requiring a glance down past the
-   whole board. */
-#guesserScreen .quest-info-bar {
-  display: block;
-  width: 100%;
-  margin: 0 0 var(--sp-6, 6px);
-  padding: 7px 10px;
-
-  border: 1px solid color-mix(in srgb, var(--role-accent) 45%, rgba(255, 255, 255, 0.14));
-  border-radius: var(--r-8, 8px);
-  background: color-mix(in srgb, var(--role-accent) 12%, rgba(10, 12, 18, 0.6));
-
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 700;
-  text-align: left;
-
-  cursor: pointer;
-  transition: background 150ms ease, box-shadow 150ms ease;
-}
-
-#guesserScreen .quest-info-bar:hover {
-  background: color-mix(in srgb, var(--role-accent) 20%, rgba(10, 12, 18, 0.6));
-}
-
-#guesserScreen .quest-info-bar.hidden {
-  display: none;
-}
-
-/* Same "claimable" pulse the full quest card gets (guesser-polish-v7.css),
-   kept in sync so a player scanning either one gets the same signal. */
-#guesserScreen .quest-info-bar.quest-ready {
-  border-color: #5aa06d;
-  background: color-mix(in srgb, #5aa06d 20%, rgba(10, 12, 18, 0.6));
-}
-
-/* GUESSER: OWN POWERS + LOG ROW */
-
-/*
-  Own power/quest cards on the left, the info badge on the right -- they
-  share this row (full board width) instead of the badge sitting in its
-  own band below the whole play area. The info column takes whatever
-  width the power cards don't use, and stretches to the row's full
-  height so the badge's text is vertically centered against the cards
-  beside it rather than only claiming its own natural (much shorter)
-  height.
-*/
-#guesserScreen .guesser-powers-row {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  gap: var(--sp-8);
-
-  width: 100%;
-  /* Now that the Log/Info box (below) needs real vertical room for its
-     own content, not just to match whatever height the power cards
-     happen to need, this row can't rely purely on align-items:stretch
-     to size itself -- with no powers/quest yet (e.g. the very first
-     render), the power side has 0 natural height and, with nothing else
-     in the chain giving this row a concrete height either, the whole
-     row (and the log/info content inside it) would collapse to nothing.
-     Floor it to one power card's height. */
-  min-height: 84px;
-}
-
-#guesserScreen .guesser-powers-row #guesserPowerContainer {
-  /* .guesser-power-view (below) sets width:100% for the single-column
-     layout this row used to be part of -- now that the info badge
-     shares the row, that would claim the whole thing and squeeze the
-     badge down to nothing. This selector's extra #id beats it on
-     specificity so the power cards go back to shrink-to-fit. */
-  flex: 0 1 auto;
-  width: auto;
-}
-
-/*
-  Just the action log now -- no tab switcher (see ui/guesser-sidebar.js).
-  This box shares a short, fixed-height row with the power cards
-  (align-items:stretch above), and the log scrolls internally for its own
-  overflow within that fixed height.
-*/
-#guesserScreen .guesser-info-col {
-  flex: 1 1 0;
-  min-width: 0;
-
-  position: relative;
-  display: flex;
-  flex-direction: column;
-
-  padding: var(--sp-6);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--r-10);
-  background: rgba(14, 15, 22, 0.35);
-
-  overflow: hidden;
-}
-
-/* The old panel may currently have absolute/fixed positioning (base
-   .game-side-panel, components.css). Inside this box, it becomes an
-   ordinary contained/scrolling panel, same treatment as the setter's
-   sidebar (#setterScreen .setter-sidebar .game-side-panel above). */
-#guesserScreen .guesser-sidebar-panel {
-  position: static !important;
-  inset: auto !important;
-  transform: none !important;
-  z-index: auto !important;
-
-  display: block;
-
-  flex: 1 1 0;
-  width: 100%;
-  min-width: 0;
-  min-height: 0;
-  max-width: none;
-  max-height: none;
-
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-
-  overflow-x: hidden;
-  overflow-y: auto;
-
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-
-  pointer-events: auto;
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-
-/* The log is embedded in a short, narrow box instead of the floating
-   panel's original size -- unlike the setter sidebar's log (which stays
-   at the small 9.5px shared default), this one now has the whole info
-   column to itself (no info-badge panel above it any more) so it can
-   afford a larger, more readable size instead of shrinking to fit. */
-#guesserScreen .guesser-sidebar-panel.action-log-panel .log-entry {
-  font-size: 13px;
-  line-height: 1.35;
-  padding: 3px 4px;
-}
-
-#guesserScreen .guesser-sidebar-panel.action-log-panel .log-round {
-  font-size: 11px;
-  margin-top: 2px;
-}
-
-#guesserScreen .guesser-sidebar-panel.action-log-panel .log-power {
-  font-size: 11px;
-}
-
-/* Guesser powers: compact cards next to each other */
-#guesserScreen .guesser-power-view {
-  display: flex !important;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-
-  gap: var(--sp-4);
-
-  width: 100%;
-  min-width: 0;
-}
-
-/* Each power occupies only its own card width. */
-#guesserScreen .guesser-power-view > *,
-#guesserScreen .guesser-power-view .power-btn-wrapper {
-  flex: 0 0 auto !important;
-
-  width: auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
-
-  box-sizing: border-box;
-  margin: 0 !important;
-}
-
-/* Power-card size -- matched to roughly the setter's own card height
-   (~90px, that column's cards run full sidebar width instead of a
-   square so it doesn't hit the same fixed number, but the visual scale
-   should read the same across both screens). Fixed (not min-) height,
-   so icon + label + padding + gap must not exceed 90px or the label
-   clips/overlaps the icon instead of the card growing to fit it. */
-#guesserScreen .guesser-power-view .power-btn.power-badge {
-  flex: 0 0 90px !important;
-
-  width: 90px !important;
-  min-width: 90px !important;
-  max-width: 90px !important;
-
-  height: 90px !important;
-  min-height: 90px !important;
-  max-height: 90px !important;
-
-  flex-direction: column !important;
-  align-items: center;
-  justify-content: center;
-
-  gap: 4px;
-  padding: 8px 5px 8px !important;
-}
-
-/* The icon takes up noticeably more of the card than mobile.css's
-   shared .powers-col .power-icon default -- this is guesser-specific
-   (setter's own #setterScreen .power-icon rule already overrides that
-   shared default too) and wins on specificity over it. */
-#guesserScreen .guesser-power-view .power-icon {
-  max-width: 46px;
-}
-
-/* Quest tile, guesser only: the progress count used to fill the whole
-   icon spot (components.css's shared .quest-badge-tile .quest-progress-
-   chip, flex:1 1 auto, centered) -- pin it into a small square flush
-   against the card's top edge instead, so it reads as a distinct
-   "progress corner" rather than as the card's icon, and give it a
-   bigger, more legible number. justify-content:flex-start overrides the
-   card's own centering (base .power-btn) so the chip+label group hugs
-   the top instead of sitting in the vertical middle of the fixed-height
-   card. The card itself (features.css's 90x90 rule above) is untouched. */
-#guesserScreen .guesser-power-view .power-btn.power-badge.quest-badge-tile {
-  justify-content: flex-start;
-}
-
-#guesserScreen .guesser-power-view .quest-badge-tile .quest-progress-chip {
-  flex: 0 0 auto;
-  width: 36px;
-  height: 36px;
-  min-width: 0;
-  padding: 0;
-  border-radius: var(--r-8, 8px);
-  /* A double-digit count (e.g. Field Report's running total, which keeps
-     accumulating past its own 8 target) crowded right up against a bare
-     1-2px border at 15px -- drop the font size a notch so two digits
-     actually have room to sit inside it instead of nearly touching the
-     border on both sides. Kept the border itself thin (not the earlier
-     thicker frame) so it reads as a light outline rather than a heavy
-     ring competing with the digits for attention. */
-  border-width: 2px;
-  font-size: 13px;
-  line-height: 1;
-}
-
-/* The quest name label (below the chip) was shrinking down to 8px --
-   fitBadgeLabel (powerEngine.js) only shrinks a label to fit its box, it
-   never grows one, and the base 24px box was too tight for a two-word
-   name like "Field Report" at anything larger. justify-content:flex-start
-   above (this card doesn't fill its full 90px height) leaves genuine
-   slack below the chip+label group -- give the label box more of it so
-   the fit algorithm can settle on a bigger, more legible size instead of
-   shrinking all the way down. Applied to every card in this row (not just
-   the quest tile) so a regular power's name reads at the same size/weight
-   as the quest's -- they used to diverge (11px base vs this 12px) since
-   only the quest tile had ever gotten this larger label box. */
-#guesserScreen .guesser-power-view .power-btn.power-badge .power-btn-label {
-  height: 32px;
-  font-size: 12px;
-}
-
-/* Smaller power cards on phones -- same icon/label budget as above, just
-   in a slightly smaller box. */
-@media (max-width: 430px) {
-  #guesserScreen .guesser-power-view .power-btn.power-badge {
-    flex-basis: 72px !important;
-
-    width: 72px !important;
-    min-width: 72px !important;
-    max-width: 72px !important;
-
-    height: 72px !important;
-    min-height: 72px !important;
-    max-height: 72px !important;
-
-    gap: 3px;
-    padding: 6px 4px 6px !important;
-  }
-
-  #guesserScreen .guesser-power-view .power-icon {
-    max-width: 38px;
-  }
-
-  #guesserScreen .guesser-power-view .quest-badge-tile .quest-progress-chip {
-    width: 31px;
-    height: 31px;
-    border-width: 1.5px;
-    font-size: 11px;
-  }
-
-  #guesserScreen .guesser-power-view .power-btn.power-badge .power-btn-label {
-    height: 26px;
-    font-size: 10px;
-  }
-
-  /* At this card size there's no room left for an icon plus a two-part
-     readout -- drop the icon and read the letter and position as one
-     plain line ("D 4th") instead. row-reverse (not touching the DOM
-     order, which stays ordinal-then-tile for the default/larger card
-     above) puts the letter first, matching how it reads out loud. */
-  #guesserScreen .guesser-power-view .informant-power-tile .power-icon {
-    display: none !important;
-  }
-
-  #guesserScreen .guesser-power-view .informant-power-tile-peek {
-    flex-direction: row-reverse;
-    gap: 4px;
-  }
-}
-
-/* Letter Profile shows a variable 2-3 line stat readout instead of the
-   short fixed-height name label every other power card has -- at this
-   card's compact fixed size (above) a 3-line profile mode (e.g. "rows")
-   doesn't fit and clips past the bottom edge. Let just this one grow
-   taller than the shared fixed height instead, rather than enlarging
-   every plain button card to cover its worst case. Informant's own
-   peek content is a fixed shape (one ordinal line + one letter tile,
-   never more), so it stays at the shared fixed size below instead of
-   also growing -- it used to visibly resize every time the peeked
-   letter/position changed. */
-#guesserScreen .guesser-power-view .power-btn.power-badge.letter-profile-tile {
-  height: auto !important;
-  max-height: none !important;
-}
-
-/* Letter Profile: a passive card in the guesser's own power row, same slot
-   an active power's button would occupy (see
-   powerEngine/powers/letterProfile.js) -- shows the live category
-   breakdown instead of a name label, since there's nothing to click. */
-.letter-profile-tile {
-  cursor: default;
-}
-
-.letter-profile-tile-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  width: 100%;
-}
-
-.letter-profile-tile-lines .line {
-  display: flex;
-  justify-content: space-between;
-  gap: 4px;
-}
-
-.letter-profile-tile-lines .label {
-  opacity: 0.75;
-  font-weight: 700;
-  font-size: 6.5px;
-  text-transform: uppercase;
-  letter-spacing: 0;
-
-  /* "Consonants" (the longest of this card's possible labels) was
-     overflowing the 90px card's ~76px content width -- the font-size
-     drop above closes most of that gap, and these three keep it from
-     ever visibly spilling past the edge again (flex children don't
-     shrink below their own content width by default, hence min-width). */
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.letter-profile-tile-lines .value {
-  font-variant-numeric: tabular-nums;
-  font-weight: 900;
-  font-size: 11px;
-  color: var(--text);
-}
-
-.letter-profile-tile-lines .letter-profile-tile-pending {
-  justify-content: center;
-  opacity: 0.5;
-  font-weight: 700;
-}
-
-/* Informant: same passive-card treatment as Letter Profile above (see
-   powerEngine/powers/revealLocation.js) -- the peeked position + letter
-   instead of a name label. Used to live inside the remaining-words box;
-   .informant-tile is that same green letter tile, reused here. */
-.informant-power-tile {
-  cursor: default;
-}
-
-/* Smaller than the shared .power-icon default (below) -- the icon was
-   eating most of the card's vertical room, leaving barely anything for
-   the actual position+letter readout underneath it. */
-.informant-power-tile .power-icon {
-  max-width: 22px !important;
-}
-
-/* Position and letter read as one row ("3rd [H]") instead of stacked --
-   with the icon shrunk above, there's room for both side by side without
-   either feeling cramped. */
-.informant-power-tile-peek {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 5px;
-}
-
-/* .informant-tile (components.css) sizes itself at 1.7em off the
-   inherited font-size, tuned for its original home in the remaining-words
-   box -- inside this much smaller power card it inherited a font-size
-   large enough to blow the tile past the card's own edges. Pin it down
-   explicitly instead of relying on inheritance. */
-.informant-power-tile-peek .informant-tile {
-  width: 20px;
-  height: 20px;
-  font-size: 12px;
-}
-
-.informant-power-tile-ordinal {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.2px;
-  opacity: 0.75;
-}
-
-.informant-power-tile-pending {
-  font-weight: 700;
-  opacity: 0.5;
-}
-
-/* SMALL IPHONE ADJUSTMENTS */
-
-@media (max-width: 430px) {
-  .theme-setter .play-row {
-    gap: 5px;
-  }
-
-  #setterScreen .setter-sidebar {
-    gap: 4px;
-  }
-
-  #setterScreen .setter-sidebar-tab {
-    min-height: 26px;
-    padding: 2px;
-    font-size: 9px;
-  }
-
-  #setterScreen .setter-power-view {
-    gap: 3px;
-  }
-
-  /* Notes: keep input fixed; scroll saved words only */
-#notesPanelSetter,
-#notesPanelGuesser {
-  display: flex;
-  flex-direction: column;
-
-  height: min(
-    420px,
-    calc(100dvh - 112px)
-  );
-
-  max-height:
-    calc(100dvh - 112px);
-
-  min-height: 0;
-
-  overflow: hidden !important;
-}
-
-#notesPanelSetter .notes-panel-title,
-#notesPanelGuesser .notes-panel-title {
-  flex: 0 0 auto;
-}
-
-#notesPanelSetter .notes-draft-row,
-#notesPanelGuesser .notes-draft-row {
-  flex: 0 0 auto;
-}
-
-#notesPanelSetter .notes-list,
-#notesPanelGuesser .notes-list {
-  flex: 1 1 0;
-  min-height: 0;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-
-  padding-right: 3px;
-  scrollbar-gutter: stable;
-}
-  #setterScreen .setter-power-view .power-btn {
-    padding-left: 2px;
-    padding-right: 2px;
-  }
-}
-/* Spy cover-strength stars */
-
-#setterCoverStrength {
-  position: absolute;
-
-  left: 50%;
-  bottom: calc(100% + 1px);
-
-  transform: translateX(-50%);
-
-  z-index: 4;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 4px;
-
-  min-height: 13px;
-
-  padding: 1px 5px;
-
-  border-radius: 999px;
-
-  background:
-    rgba(12, 13, 18, 0.82);
-
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.1);
-
-  box-shadow:
-    0 2px 7px
-    rgba(0, 0, 0, 0.28);
-
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-#setterCoverStrength.hidden {
-  display: none;
-}
-
-/*
-  Reserve only the small amount of room
-  occupied by the absolutely-positioned
-  indicator.
-*/
-#draftSetter
-  .history-row:has(
-    #setterCoverStrength:not(.hidden)
-  ) {
-  margin-top: 14px;
-}
-
-.cover-strength-stars {
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-}
-
-.cover-strength-star {
-  color:
-    rgba(255, 255, 255, 0.18);
-
-  font-size: 11px;
-  line-height: 1;
-
-  transition:
-    color 140ms ease,
-    transform 140ms ease,
-    text-shadow 140ms ease;
-}
-
-.cover-strength-star.is-filled {
-  color: #facc15;
-
-  text-shadow:
-    0 0 5px
-    rgba(250, 204, 21, 0.45);
-}
-
-.cover-strength-text {
-  color:
-    rgba(255, 255, 255, 0.62);
-
-  font-size: 7px;
-  font-weight: 900;
-  line-height: 1;
-
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-#setterCoverStrength[
-  data-status="rated"
-] .cover-strength-text {
-  color:
-    rgba(255, 255, 255, 0.82);
-}
-
-#setterCoverStrength[
-  data-status="weaker"
-] .cover-strength-text,
-#setterCoverStrength[
-  data-status="invalid"
-] .cover-strength-text,
-#setterCoverStrength[
-  data-status="loses"
-] .cover-strength-text {
-  color:
-    rgba(248, 113, 113, 0.82);
-}
-
-#setterCoverStrength[
-  data-status="keep-best"
-] .cover-strength-text {
-  color:
-    rgba(255, 255, 255, 0.48);
-}
-
-@media (max-width: 430px) {
-  #setterCoverStrength {
-    min-height: 12px;
-    padding: 1px 4px;
-    gap: 3px;
-  }
-
-  .cover-strength-star {
-    font-size: 10px;
-  }
-
-  .cover-strength-text {
-    font-size: 6.5px;
-  }
-
-  #draftSetter
-    .history-row:has(
-      #setterCoverStrength:not(.hidden)
-    ) {
-    margin-top: 13px;
-  }
-}
-/* =====================================================
-   SPY COVER STARS + CHARGE METER
-   ===================================================== */
-
-#setterCoverStars {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 4px);
-  z-index: 8;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-
-  transform: translateX(-50%);
-  padding: 2px 7px 3px;
-
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  background: rgba(12, 13, 18, 0.9);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
-
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-#setterCoverStars.hidden {
-  display: none;
-}
-
-/* Extra headroom above the draft row so this badge (floating above it,
-   see #setterCoverStars' own position/bottom rules) doesn't overlap the
-   pending-guess row sitting above that -- the badge's own height plus its
-   4px offset needs to fit inside this gap (was tuned to 23px with
-   ~zero slack, which any small change to either row could eat into; bumped
-   for a couple of pixels of real breathing room). */
-#draftSetter
-  .history-row:has(#setterCoverStars:not(.hidden)) {
-  margin-top: 25px;
-}
-
-.setter-cover-star {
-  color: rgba(255, 255, 255, 0.22);
-  font-size: 18px;
-  line-height: 1;
-  text-shadow: none;
-  transition:
-    color 160ms ease,
-    transform 160ms ease,
-    text-shadow 160ms ease;
-}
-
-.setter-cover-star.is-filled {
-  color: #facc15;
-  transform: translateY(-1px) scale(1.06);
-  text-shadow: 0 0 7px rgba(250, 204, 21, 0.58);
-}
-
-.setter-cover-bonus-star {
-  display: none;
-  margin-left: 2px;
-  color: rgba(34, 211, 238, 0.28);
-  font-size: 17px;
-  line-height: 1;
-}
-
-.setter-cover-bonus-star.is-visible {
-  display: inline-block;
-}
-
-.setter-cover-bonus-star.is-filled {
-  color: #22d3ee;
-  text-shadow: 0 0 8px rgba(34, 211, 238, 0.7);
-}
-
-#setterCoverStars.zero-award-pulse {
-  animation: cover-zero-pulse 520ms ease-out;
-}
-
-@keyframes cover-zero-pulse {
-  0% { transform: translateX(-50%) scale(1); opacity: 1; }
-  45% { transform: translateX(-50%) scale(1.1); opacity: 0.55; }
-  100% { transform: translateX(-50%) scale(1); opacity: 1; }
-}
-
-.spy-charge-hud {
-  flex: 0 0 auto;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 4px 5px 3px;
-  margin-bottom: var(--sp-4, 4px);
-
-  border: 1px solid color-mix(in srgb, var(--setter-color) 42%, transparent);
-  border-radius: var(--r-10, 10px);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--setter-color) 11%, #15161c),
-      rgba(9, 10, 14, 0.94)
-    );
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 5px 14px rgba(0, 0, 0, 0.35);
-}
-
-.spy-charge-hud.hidden {
-  display: none;
-}
-
-/* The old separate head row (hint bubble + reset button) sitting above the
-   meter is gone -- .spy-charge-bar-wrap now overlays a single button
-   directly on top of the meter instead, see .spy-charge-action-btn. */
-.spy-charge-bar-wrap {
-  position: relative;
-  margin-bottom: 2px;
-}
-
-/* Overlaid on the meter (not beside it) so the bar charging up stays
-   visible behind it -- semi-transparent background + a flash animation
-   when a reset is actually available to use. */
-.spy-charge-action-btn {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 2;
-
-  min-width: 32px;
-  height: 17px;
-  padding: 0 7px;
-  box-sizing: border-box;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border: 1px solid rgba(34, 211, 238, 0.5);
-  border-radius: 999px;
-  background: rgba(9, 10, 14, 0.45);
-  color: #67e8f9;
-
-  font-size: 12px;
-  font-weight: 900;
-  line-height: 1;
-  cursor: not-allowed;
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.16);
-  transition: background 150ms ease, border-color 150ms ease;
-}
-
-.spy-charge-action-btn sup {
-  margin-left: 1px;
-  font-size: 0.58em;
-  transform: translateY(-0.35em);
-}
-
-.spy-charge-action-btn.is-ready {
-  cursor: pointer;
-  border-color: rgba(34, 211, 238, 0.8);
-  animation: spy-charge-action-flash 1.3s ease-in-out infinite;
-}
-
-.spy-charge-action-btn.is-armed {
-  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.35);
-}
-
-.spy-charge-reset-count {
-  position: absolute;
-  right: -5px;
-  top: -6px;
-
-  min-width: 14px;
-  height: 14px;
-  padding: 0 3px;
-  box-sizing: border-box;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 999px;
-  background: #11141a;
-  border: 1px solid currentColor;
-  font-size: 8px;
-  line-height: 1;
-}
-
-.spy-charge-reset-count.hidden {
-  display: none;
-}
-
-@keyframes spy-charge-action-flash {
-  0%, 100% { background: rgba(9, 10, 14, 0.45); }
-  50% { background: rgba(34, 211, 238, 0.45); }
-}
-
-/* Grown from 12px to read as a chunkier, more legible bar -- the head row
-   and milestone labels above/below were trimmed down to offset this, so
-   the HUD's total height doesn't grow along with it (net effect is a
-   slightly SHORTER hud overall despite this being taller). */
-.spy-charge-meter {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 1px;
-  width: 100%;
-  height: 20px;
-  padding: 2px;
-  box-sizing: border-box;
-
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.62);
-  overflow: hidden;
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.9);
-}
-
-/* Each segment is a small ★ glyph now, not a plain bar chunk -- the same
-   star shape/gold glow the flight/landing animation (spy-charge.js,
-   setter-board-polish.css) uses when a star actually flies in and lands
-   here, so the meter reads as "12 of these already landed" instead of a
-   generic progress bar in an unrelated visual language. */
-.spy-charge-segment {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  border-radius: 3px;
-  color: rgba(255, 255, 255, 0.22);
-  font-size: 11px;
-  line-height: 1;
-  transition:
-    color 150ms ease,
-    filter 150ms ease,
-    transform 150ms ease;
-}
-
-.spy-charge-segment::before {
-  content: "★";
-}
-
-.spy-charge-segment.is-filled {
-  color: #fbbf24;
-  filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.85));
-}
-
-.spy-charge-segment.is-next {
-  animation: spy-charge-next 1.35s ease-in-out infinite;
-}
-
-.spy-charge-segment.just-charged {
-  transform: scale(1.4);
-  color: #fff7b2;
-  filter: drop-shadow(0 0 7px rgba(250, 204, 21, 0.95));
-}
-
-.spy-charge-segment.milestone-power,
-.spy-charge-segment.milestone-reset {
-  outline: 1px solid rgba(255, 255, 255, 0.22);
-}
-
-@keyframes spy-charge-next {
-  0%, 100% { color: rgba(255, 255, 255, 0.22); }
-  50% { color: rgba(250, 204, 21, 0.75); }
-}
-
-.spy-charge-milestones {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 1px;
-  padding: 0 1px;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 7px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.spy-charge-power-locked {
-  position: relative;
-}
-
-.spy-charge-power-locked .power-btn {
-  opacity: 0.38 !important;
-  filter: grayscale(0.8) brightness(0.7);
-  pointer-events: none;
-}
-
-.spy-charge-power-locked::after {
-  /* Reads the real threshold off wrapper.dataset.unlockAt (set in
-     spy-charge.js from POWER_UNLOCK_AT) instead of a hardcoded number, so
-     this can't drift out of sync with the real unlock threshold again. */
-  content: "🔒 " attr(data-unlock-at) "★";
-  position: absolute;
-  inset: 4px;
-  z-index: 8;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: calc(var(--r-12, 12px) - 2px);
-  background: rgba(7, 8, 12, 0.76);
-  border: 1px solid rgba(250, 204, 21, 0.38);
-  color: #fde68a;
-
-  font-size: 15px;
-  font-weight: 900;
-  letter-spacing: 0.2px;
-  pointer-events: none;
-}
-
-.spy-charge-flight-star {
-  position: fixed;
-  z-index: 100005;
-  transform: translate(-50%, -50%);
-  color: #facc15;
-  font-size: 24px;
-  line-height: 1;
-  text-shadow:
-    0 0 5px rgba(250, 204, 21, 0.9),
-    0 0 14px rgba(245, 158, 11, 0.65);
-  pointer-events: none;
-}
-
-.spy-charge-flight-star.is-bonus {
-  color: #22d3ee;
-  text-shadow:
-    0 0 5px rgba(34, 211, 238, 0.95),
-    0 0 14px rgba(34, 211, 238, 0.7);
-}
-
-body.spy-charge-reset-armed #keyboardSetter .key[data-key]:not([data-key="ENTER"]):not([data-key="⌫"]) {
-  box-shadow:
-    inset 0 0 0 1.5px rgba(34, 211, 238, 0.55),
-    0 0 5px rgba(34, 211, 238, 0.22);
-}
-
-.draft-candidate-btn {
-  position: relative;
-}
-
-.draft-pick-slot {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 2;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  pointer-events: none;
-}
-
-/* Spy's first pick -- starts active immediately, no meter to watch. A
-   plain, confident pill rather than a shape of its own (there's nothing
-   to illustrate beyond the word itself). */
-.draft-pick-start {
-  padding: 5px 10px;
-  border-radius: 999px;
-
-  background: linear-gradient(135deg, #34d399, #059669);
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  color: #fff;
-
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.4px;
-  line-height: 1;
-
-  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.5);
-}
-
-/* Spy's second pick -- locked until the power threshold (see draft.js's
-   buildDraftPickBadge). A star shape big enough to read as its own icon
-   (not just a tinted number), with the threshold layered on top of it
-   instead of beside it, so "star" and the number read as
-   one badge instead of two things to parse. No position of its own here
-   -- it stays on the absolute/top/right corner positioning it shares
-   with every other .draft-pick-slot badge (a same-specificity
-   position:relative here would win the cascade tie against that shared
-   rule purely by appearing later in the file, dropping it into normal
-   flow instead of the corner -- .draft-pick-slot's own position:absolute
-   already gives its children a containing block, so this doesn't need
-   one of its own anyway). */
-.draft-pick-five {
-  width: 34px;
-  height: 34px;
-}
-
-.draft-pick-five-star {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 34px;
-  line-height: 1;
-  color: #fbbf24;
-
-  filter:
-    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5))
-    drop-shadow(0 0 4px rgba(251, 191, 36, 0.55));
-}
-
-.draft-pick-five-num {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* The ★ glyph's own visual ink sits slightly above center in its em box,
-     and the digit's own ink sits slightly above center in its own (much
-     smaller) em box too -- transform instead of padding since the needed
-     nudge is UP, and padding can't go negative. Value measured pixel-by-
-     pixel (ink bounding-box centers of the rendered ★ and digit glyphs at
-     8x scale) rather than eyeballed, so it holds for any single digit here
-     (5, 8, ...), not just whichever one it was tuned against. */
-  transform: translateY(-1.375px);
-
-  font-size: 14px;
-  font-weight: 900;
-  color: #451a03;
-}
-
-/* Inspector's pick -- power or Quest, same badge either way. There's only
-   ever one meaningful state for their single pick ("this is it"), so one
-   icon covers both instead of needing a second shape. */
-.draft-pick-selected {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-
-  background: linear-gradient(135deg, #e6d27a, #c9a83e);
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
-  color: #2b2308;
-
-  font-size: 16px;
-  font-weight: 900;
-  line-height: 1;
-
-  box-shadow: 0 2px 6px rgba(201, 168, 62, 0.5);
-}
-
-@media (max-width: 430px) {
-  .setter-cover-star {
-    font-size: 17px;
-  }
-
-  .setter-cover-bonus-star {
-    font-size: 16px;
-  }
-
-  #draftSetter
-    .history-row:has(#setterCoverStars:not(.hidden)) {
-    margin-top: 24px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .spy-charge-segment.is-next,
-  .spy-charge-action-btn.is-ready,
-  #setterCoverStars.zero-award-pulse {
-    animation: none;
-  }
-}
-/* =========================================
-   MULTI-COLOR POWER CARDS
-   ========================================= */
-
-.power-btn.power-badge.power-themed:not(
-  .quest-badge-tile
-) {
-  --power-color-1:
-    var(--role-accent);
-
-  --power-color-2:
-    var(--power-color-1);
-
-  --power-color-3:
-    var(--power-color-2);
-
-  /* Muted working tones. The raw palette entries are chosen for identity
-     (each power's "theme"), but at full saturation a row of these cards
-     fights for attention all at once. Blending each toward a neutral
-     slate keeps the hue readable while dropping the intensity, so the
-     row reads as one calm surface with tinted cards on it rather than a
-     set of competing swatches. Everything below paints with these, not
-     with the raw --power-color-* values. */
-  --power-tone-1:
-    color-mix(
-      in srgb,
-      var(--power-color-1) 52%,
-      #8b90a0
-    );
-
-  --power-tone-2:
-    color-mix(
-      in srgb,
-      var(--power-color-2) 52%,
-      #8b90a0
-    );
-
-  overflow: hidden;
-
-  color:
-    var(--power-tone-1);
-
-  /* The card body stays neutral and the hue is spent only where it
-     actually identifies the power -- the top strip and the icon. Tinting
-     the border and background too meant every card was a solid block of
-     its own colour, and a row of them had no common surface to sit on. */
-  border-color:
-    rgba(255, 255, 255, 0.12);
-
-  background:
-    linear-gradient(
-      150deg,
-      color-mix(
-        in srgb,
-        var(--power-tone-1) 5%,
-        #151720
-      ) 0%,
-      #0e1016 100%
-    );
-
-  --icon-surface:
-    color-mix(
-      in srgb,
-      var(--power-color-3) 8%,
-      #121317
-    );
-
-  box-shadow:
-    inset 0 1px 0
-      rgba(255, 255, 255, 0.06),
-    0 7px 18px
-      rgba(0, 0, 0, 0.3);
-
-  transition:
-    transform 160ms
-      var(--ease-ui, ease),
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    filter 180ms ease,
-    opacity 180ms ease;
-}
-
-
-/* Accent strip -- one soft blend between the card's two tones rather
-   than hard-edged colour bands. The old version split the strip into
-   two or three equal blocks with visible seams, which is what made a
-   row of cards look like a stack of flags. */
-.power-btn.power-badge.power-themed:not(
-  .quest-badge-tile
-)::before {
+  color: var(--power-tone-1);
+  border-color: rgba(255,255,255,0.12);
+  background: linear-gradient(150deg,color-mix(in srgb,var(--power-tone-1) 5%,#151720) 0%,#0e1016 100%);
+  --icon-surface: color-mix(in srgb,var(--power-color-3) 8%,#121317);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),0 7px 18px rgba(0,0,0,0.3);
+  transition: transform 160ms var(--ease-ui,ease),border-color 180ms ease,box-shadow 180ms ease,filter 180ms ease,opacity 180ms ease;
+}
+.power-btn.power-badge.power-themed:not(.quest-badge-tile)::before {
   content: "";
-
   display: block;
-
   position: absolute;
   inset: 0 0 auto 0;
-
   height: 3px;
-
   border: 0;
   border-radius: 0;
-
   opacity: 0.7;
-
-  background:
-    linear-gradient(
-      90deg,
-      var(--power-tone-1) 0%,
-      var(--power-tone-2) 100%
-    );
-
+  background: linear-gradient(90deg,var(--power-tone-1) 0%,var(--power-tone-2) 100%);
   pointer-events: none;
 }
-
-
-/* A single-colour palette has nothing to blend toward. */
-.power-btn.power-badge.power-themed[
-  data-palette-size="1"
-]:not(.quest-badge-tile)::before {
-  background:
-    var(--power-tone-1);
+.power-btn.power-badge.power-themed[data-palette-size="1"]:not(.quest-badge-tile)::before {
+  background: var(--power-tone-1);
 }
-
-
-/* Primary tone on the icon -- no coloured glow, which was doubling the
-   amount of colour each card threw off. */
-.power-btn.power-badge.power-themed:not(
-  .quest-badge-tile
-) .power-icon {
-  color:
-    var(--power-tone-1);
-
+.power-btn.power-badge.power-themed:not(.quest-badge-tile) .power-icon {
+  color: var(--power-tone-1);
   filter: none;
 }
-
-
-/* The name sits close to plain text on purpose: the strip and icon
-   already carry the card's identity, so tinting the label too made
-   every card read as a solid block of its own colour. */
-.power-btn.power-badge.power-themed:not(
-  .quest-badge-tile
-) .power-btn-label {
+.power-btn.power-badge.power-themed:not(.quest-badge-tile) .power-btn-label {
   color: #d7dae2;
-
   text-shadow: none;
 }
-
-
-/* Uses chip -- same second tone as the strip's far end, no third
-   colour. */
-.power-btn.power-badge.power-themed:not(
-  .quest-badge-tile
-) .power-uses-badge {
-  border-color:
-    color-mix(
-      in srgb,
-      var(--power-tone-2) 55%,
-      transparent
-    );
-
-  color:
-    color-mix(
-      in srgb,
-      var(--power-tone-2) 45%,
-      #e8eaf0
-    );
-
-  background:
-    color-mix(
-      in srgb,
-      var(--power-tone-2) 10%,
-      #14151b
-    );
+.power-btn.power-badge.power-themed:not(.quest-badge-tile) .power-uses-badge {
+  border-color: color-mix(in srgb,var(--power-tone-2) 55%,transparent);
+  color: color-mix(in srgb,var(--power-tone-2) 45%,#e8eaf0);
+  background: color-mix(in srgb,var(--power-tone-2) 10%,#14151b);
 }
-
-
-/* Slightly brighter on hover */
-.power-btn.power-badge.power-themed:not(
-  .quest-badge-tile
-):not(.power-used):not(
-  .disabled-btn
-):hover {
-  transform:
-    translateY(-2px);
-
-  border-color:
-    color-mix(
-      in srgb,
-      var(--power-tone-1) 68%,
-      transparent
-    );
-
-  box-shadow:
-    inset 0 1px 0
-      rgba(255, 255, 255, 0.1),
-    0 10px 24px
-      rgba(0, 0, 0, 0.35),
-    0 0 0 2px
-      color-mix(
-        in srgb,
-        var(--power-tone-1) 16%,
-        transparent
-      );
+.power-btn.power-badge.power-themed:not(.quest-badge-tile):not(.power-used):not(.disabled-btn):hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb,var(--power-tone-1) 68%,transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1),0 10px 24px rgba(0,0,0,0.35),0 0 0 2px color-mix(in srgb,var(--power-tone-1) 16%,transparent);
 }
-
-
-/* =========================================
-   POWER DRAFT CHOICES
-   ========================================= */
-
 .draft-candidate-btn.power-themed {
-  --power-color-1:
-    var(--role-accent);
-
-  --power-color-2:
-    var(--power-color-1);
-
-  --power-color-3:
-    var(--power-color-2);
-
+  --power-color-1: var(--role-accent);
+  --power-color-2: var(--power-color-1);
+  --power-color-3: var(--power-color-2);
   position: relative;
   overflow: hidden;
-
-  border-color:
-    color-mix(
-      in srgb,
-      var(--power-color-1) 48%,
-      rgba(255, 255, 255, 0.12)
-    );
-
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(
-        in srgb,
-        var(--power-color-1) 12%,
-        #171922
-      ),
-      color-mix(
-        in srgb,
-        var(--power-color-2) 8%,
-        #11131a
-      ) 55%,
-      color-mix(
-        in srgb,
-        var(--power-color-3) 10%,
-        #0e1016
-      )
-    );
+  border-color: color-mix(in srgb,var(--power-color-1) 48%,rgba(255,255,255,0.12));
+  background: linear-gradient(135deg,color-mix(in srgb,var(--power-color-1) 12%,#171922),color-mix(in srgb,var(--power-color-2) 8%,#11131a) 55%,color-mix(in srgb,var(--power-color-3) 10%,#0e1016));
 }
-
-
-/* Colored line on the left */
 .draft-candidate-btn.power-themed::before {
   content: "";
-
   position: absolute;
   inset: 0 auto 0 0;
-
   width: 4px;
-
-  background:
-    linear-gradient(
-      180deg,
-      var(--power-color-1)
-        0% 33.333%,
-      var(--power-color-2)
-        33.333% 66.666%,
-      var(--power-color-3)
-        66.666% 100%
-    );
+  background: linear-gradient(180deg,var(--power-color-1) 0% 33.333%,var(--power-color-2) 33.333% 66.666%,var(--power-color-3) 66.666% 100%);
 }
-
-
-.draft-candidate-btn.power-themed[
-  data-palette-size="2"
-]::before {
-  background:
-    linear-gradient(
-      180deg,
-      var(--power-color-1)
-        0% 50%,
-      var(--power-color-2)
-        50% 100%
-    );
+.draft-candidate-btn.power-themed[data-palette-size="2"]::before {
+  background: linear-gradient(180deg,var(--power-color-1) 0% 50%,var(--power-color-2) 50% 100%);
 }
-
-
-.draft-candidate-btn.power-themed[
-  data-palette-size="1"
-]::before {
-  background:
-    var(--power-color-1);
+.draft-candidate-btn.power-themed[data-palette-size="1"]::before {
+  background: var(--power-color-1);
 }
-
-
-.draft-candidate-btn.power-themed
-  .draft-candidate-emoji {
-  filter:
-    drop-shadow(
-      0 0 6px
-      color-mix(
-        in srgb,
-        var(--power-color-1) 45%,
-        transparent
-      )
-    );
+.draft-candidate-btn.power-themed .draft-candidate-emoji {
+  filter: drop-shadow(0 0 6px color-mix(in srgb,var(--power-color-1) 45%,transparent));
 }
-
-
-.draft-candidate-btn.power-themed
-  .draft-candidate-label {
-  color:
-    color-mix(
-      in srgb,
-      var(--power-color-2) 52%,
-      white
-    );
+.draft-candidate-btn.power-themed .draft-candidate-label {
+  color: color-mix(in srgb,var(--power-color-2) 52%,white);
 }
-
-
-.draft-candidate-btn.power-themed:hover:not(
-  :disabled
-) {
-  border-color:
-    color-mix(
-      in srgb,
-      var(--power-color-1) 55%,
-      var(--power-color-2)
-    );
-
-  box-shadow:
-    0 0 14px
-    color-mix(
-      in srgb,
-      var(--power-color-1) 14%,
-      transparent
-    );
+.draft-candidate-btn.power-themed:hover:not(:disabled) {
+  border-color: color-mix(in srgb,var(--power-color-1) 55%,var(--power-color-2));
+  box-shadow: 0 0 14px color-mix(in srgb,var(--power-color-1) 14%,transparent);
 }
-
-
 .draft-candidate-btn.power-themed.selected {
-  border-color:
-    color-mix(
-      in srgb,
-      var(--power-color-1) 42%,
-      var(--power-color-2)
-    );
-
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(
-        in srgb,
-        var(--power-color-1) 22%,
-        #171922
-      ),
-      color-mix(
-        in srgb,
-        var(--power-color-2) 15%,
-        #11131a
-      ) 55%,
-      color-mix(
-        in srgb,
-        var(--power-color-3) 17%,
-        #0e1016
-      )
-    );
-
-  box-shadow:
-    0 0 0 1px
-      color-mix(
-        in srgb,
-        var(--power-color-2) 32%,
-        transparent
-      ),
-    0 0 18px
-      color-mix(
-        in srgb,
-        var(--power-color-3) 14%,
-        transparent
-      );
+  border-color: color-mix(in srgb,var(--power-color-1) 42%,var(--power-color-2));
+  background: linear-gradient(135deg,color-mix(in srgb,var(--power-color-1) 22%,#171922),color-mix(in srgb,var(--power-color-2) 15%,#11131a) 55%,color-mix(in srgb,var(--power-color-3) 17%,#0e1016));
+  box-shadow: 0 0 0 1px color-mix(in srgb,var(--power-color-2) 32%,transparent),0 0 18px color-mix(in srgb,var(--power-color-3) 14%,transparent);
 }
