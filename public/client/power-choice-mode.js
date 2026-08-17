@@ -8,6 +8,7 @@
   const SPY_MAX = 15;
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
   const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
   const byId = id => document.getElementById(id);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({
     "&": "&amp;",
@@ -32,6 +33,14 @@
   let lastSpyAwardFinishedAt = 0;
   const rewardPopupQueue = [];
   let rewardPopupRunning = false;
+  // How long the reward-choice modal waits before opening once a choice
+  // goes pending -- outlasts the guess "flying off" to the setter
+  // (draft-row-slide-out, 340ms) plus the feedback tiles flipping in
+  // (history-wordle-flip, staggered up to ~1360ms), so the cards don't
+  // pop up on top of those animations still playing.
+  const REWARD_MODAL_SETTLE_MS = 1500;
+  let rewardModalTimer = null;
+  let rewardModalPendingId = "";
 
   function me() {
     return window.currentUser?.id || window.getUserId?.() || null;
@@ -123,9 +132,11 @@
     container.dataset.pcSignature = signature;
     container.innerHTML = `<section class="pc-side-panel pc-spy-panel">
       <button type="button" id="pcSpyChargeCard" class="pc-charge-card" aria-expanded="${detailsOpen}">
-        <span class="pc-charge-label">SPYOMETER</span>
-        <span class="pc-charge-value"><strong>${total}</strong><span>/ ${SPY_MAX}</span></span>
-        ${meterMarkup(total, SPY_MAX, [5, 8, 15], "pcSpyMeter", "pc-spy-meter")}
+        <span class="pc-charge-label"><span class="pc-charge-star" aria-hidden="true">&#9733;</span>SPYOMETER</span>
+        <div class="pc-meter-wrap">
+          ${meterMarkup(total, SPY_MAX, [5, 8, 15], "pcSpyMeter", "pc-spy-meter")}
+          <span class="pc-charge-value"><strong>${total}</strong><span>/ ${SPY_MAX}</span></span>
+        </div>
         <span class="pc-charge-click-copy">Click for rules</span>
       </button>
       <div class="pc-charge-details${detailsOpen ? " is-open" : ""}">
@@ -293,7 +304,12 @@
     const clean = cleanWord(word);
     if (!quest || !/^[A-Z]{5}$/.test(clean)) return false;
     switch (quest.type) {
-      case "ROW": return [...clean].every(letter => String(quest.row || "").includes(letter));
+      case "ROW_LIMIT":
+        return KEYBOARD_ROWS.every(row => [...clean].filter(letter => row.includes(letter)).length <= 2);
+      case "ROW_ONLY":
+        return KEYBOARD_ROWS.some(row => [...clean].every(letter => row.includes(letter)));
+      case "ROW_AVOID":
+        return [...clean].every(letter => !String(quest.avoidRow || "").includes(letter));
       case "RARE": return (quest.letters || []).some(letter => clean.includes(cleanWord(letter).slice(0, 1)));
       case "ALPHA": {
         const codes = [...clean].map(letter => letter.charCodeAt(0));
@@ -336,9 +352,9 @@
     let label = "";
     const clean = cleanWord(draftWord);
     switch (quest.type) {
-      case "ROW":
-        letters = [...String(quest.row || "")];
-        label = String(quest.row || "keyboard row");
+      case "ROW_AVOID":
+        letters = [...String(quest.avoidRow || "")];
+        label = `avoid ${quest.avoidRow || "that row"}`;
         break;
       case "RARE":
         letters = (quest.letters || []).map(letter => cleanWord(letter).slice(0, 1));
@@ -418,11 +434,29 @@
   function renderCurrentQuest() {
     const host = ensureCurrentQuestHost();
     const state = window.state;
-    const quest = state?.powerChoice?.inspector?.currentQuest;
+    const inspector = state?.powerChoice?.inspector;
+    const quest = inspector?.currentQuest;
     const show = isMode(state) && myRole(state) === "guesser" && !!quest;
     if (!host) return;
     host.classList.toggle("hidden", !show);
     if (!show) return;
+
+    // The quest is only actually attemptable on every other guess (the
+    // 2nd, 4th, 6th, ...) -- see the matching questLive gate in
+    // evaluateInspectorGuess() server-side. On the guesses in between,
+    // show a placeholder instead of a quest that can't be completed yet.
+    const attempts = Number(inspector?.attempts) || 0;
+    const questLive = attempts % 2 === 1;
+    if (!questLive) {
+      currentDraftRow()?.classList.remove("pc-quest-draft-met");
+      if (host.dataset.pcSignature !== "pc-quest-placeholder") {
+        host.dataset.pcSignature = "pc-quest-placeholder";
+        host.innerHTML = `<div class="pc-current-quest-card pc-quest-placeholder">
+          <span class="pc-current-main"><strong>Quest coming next round</strong></span>
+        </div>`;
+      }
+      return;
+    }
 
     if (quest.id !== lastQuestId) {
       lastQuestId = quest.id || "";
@@ -501,7 +535,9 @@
 
   function guideCopyForQuest(quest) {
     switch (quest?.type) {
-      case "ROW": return `Every letter must come from the ${quest.row} keyboard row.`;
+      case "ROW_LIMIT": return "No single keyboard row (top, home, or bottom) may supply more than 2 of your 5 letters.";
+      case "ROW_ONLY": return "Every letter must come from the same keyboard row -- top, home, or bottom, whichever you pick.";
+      case "ROW_AVOID": return `No letter may come from the ${quest.avoidRow || ""} row.`;
       case "RARE": return `Include at least one of ${quest.letters?.join(", ") || "the listed letters"}.`;
       case "ALPHA": return "All five letters must move strictly forward or strictly backward through the alphabet.";
       case "DOUBLES": return "Place the same letter twice in adjacent positions, such as LL or EE.";
@@ -674,7 +710,12 @@
       target.replaceChildren(plus, position);
       target.dataset.pcBonusSignature = signature;
     }
-    target.setAttribute("aria-label", `Bonus star: ${letter} in ${positionLabel}`);
+    const satisfied = !!window.__setterBonusEarned;
+    target.classList.toggle("pc-bonus-satisfied", satisfied);
+    target.setAttribute(
+      "aria-label",
+      `Bonus star: ${letter} in ${positionLabel}${satisfied ? " -- earned" : ""}`
+    );
 
     applyBonusHintTileOutline(positionIndex);
   }
@@ -718,15 +759,22 @@
     return option?.icon || "◆";
   }
 
-  function showChoice() {
-    const modal = ensureChoiceModal();
-    const pending = window.state?.powerChoice?.pendingChoice;
-    if (!isMode() || !pending || pending.ownerUserId !== me()) {
-      modal.classList.remove("is-open");
-      modal.dataset.choiceId = "";
-      return;
+  function showQuestMetFlourish() {
+    let el = byId("pcQuestMetFlourish");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "pcQuestMetFlourish";
+      el.className = "pc-quest-met-flourish";
+      el.innerHTML = `<span class="pc-quest-met-star" aria-hidden="true">&#9733;</span><span>QUEST MET</span>`;
+      document.body.appendChild(el);
     }
-    if (modal.dataset.choiceId === pending.id && modal.classList.contains("is-open")) return;
+    el.classList.remove("is-visible");
+    void el.offsetWidth;
+    el.classList.add("is-visible");
+  }
+
+  function openRewardModal(pending) {
+    const modal = ensureChoiceModal();
     modal.dataset.choiceId = pending.id;
     modal.querySelector("h2").textContent = pending.title || "Choose a reward";
     modal.querySelector(".pc-modal-sub").textContent = pending.subtitle || "Choose one card. It activates immediately.";
@@ -757,6 +805,38 @@
     });
     modal.classList.add("is-open");
     grid.querySelector("button")?.focus();
+  }
+
+  function showChoice() {
+    const modal = ensureChoiceModal();
+    const pending = window.state?.powerChoice?.pendingChoice;
+    if (!isMode() || !pending || pending.ownerUserId !== me()) {
+      modal.classList.remove("is-open");
+      modal.dataset.choiceId = "";
+      if (rewardModalTimer) {
+        clearTimeout(rewardModalTimer);
+        rewardModalTimer = null;
+      }
+      rewardModalPendingId = "";
+      return;
+    }
+    if (modal.dataset.choiceId === pending.id && modal.classList.contains("is-open")) return;
+    // Already counting down to open this same choice -- don't restart the
+    // timer (renderAll() calls this on every tick while it's pending).
+    if (rewardModalPendingId === pending.id) return;
+    rewardModalPendingId = pending.id;
+
+    // A completed quest gets its own small success beat before the reward
+    // cards show; a spy milestone already has the star-award capsule
+    // animation covering that moment, so it just gets the settle delay.
+    if (pending.role === "guesser") showQuestMetFlourish();
+
+    rewardModalTimer = setTimeout(() => {
+      rewardModalTimer = null;
+      if (window.state?.powerChoice?.pendingChoice?.id === pending.id) {
+        openRewardModal(pending);
+      }
+    }, REWARD_MODAL_SETTLE_MS);
   }
 
   function markEliminatedKeys() {
