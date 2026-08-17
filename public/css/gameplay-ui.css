@@ -215,12 +215,16 @@
 }
 
 #setterScreen #actionLogSetter .log-entry.log-round {
-  margin-top: 5px;
+  margin-top: 4px;
   color: var(--game-blue);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.07em;
   text-transform: uppercase;
+}
+
+#setterScreen #actionLogSetter .log-entry.log-round:first-child {
+  margin-top: 0;
 }
 
 #guesserScreen #actionLogGuesser .log-entry {
@@ -230,12 +234,16 @@
 }
 
 #guesserScreen #actionLogGuesser .log-entry.log-round {
-  margin-top: 6px;
+  margin-top: 4px;
   color: var(--game-blue);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+#guesserScreen #actionLogGuesser .log-entry.log-round:first-child {
+  margin-top: 0;
 }
 
 /* Icon + "Log" stacked in the narrow vertical toggle. Extra `button`
@@ -630,7 +638,29 @@
   background: rgba(255, 255, 255, 0.025);
 }
 
-:is(#setterScreen, #guesserScreen) .log-entry,
+/* One log line renders as one line of text, not a card. Every entry used
+   to get its own filled, rounded, padded box plus a 5px gap, so a handful
+   of turns filled the whole panel and the log read as a stack of chips
+   rather than a list. The round headers are the only structural break the
+   log actually needs; spacing between lines comes from .action-log-panel's
+   own `gap` instead of per-entry margins. */
+:is(#setterScreen, #guesserScreen) .log-entry {
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  line-height: 1.4;
+}
+
+/* Power/reward lines still have to read as a different kind of line than
+   a plain guess -- a thin rule in the role's own color (currentColor, set
+   by .log-power-setter/.log-power-guesser) does that in a fraction of the
+   space a filled card took. */
+:is(#setterScreen, #guesserScreen) .log-entry.log-power {
+  padding-left: 5px;
+  border-left: 2px solid currentColor;
+}
+
 #setterScreen .notes-entry {
   margin-bottom: 5px;
   padding: 6px 7px;

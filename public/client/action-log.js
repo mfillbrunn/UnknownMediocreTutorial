@@ -44,6 +44,39 @@
     // the log only ever shows the round currently in progress.
     const rounds = Array.isArray(state.matchRounds) ? state.matchRounds : [];
 
+    // Power Choice rewards: which card each player took and what it did.
+    // Recorded server-side (powerChoice.resolutionLog) so both players see
+    // the same entries -- a power-backed reward's own power event says
+    // nothing about the reward that granted it. Bucketed by the guess
+    // number that was on the board when the card was taken, so each one
+    // can be emitted in its real place in the run of play rather than in
+    // one block after everything else. powerChoice is per-round state, so
+    // these only ever belong to the live round.
+    const rewardsByGuess = new Map();
+    (state.powerChoice?.resolutionLog || []).forEach(entry => {
+      const at = Math.max(0, Number(entry?.guessNumber) || 0);
+      if (!rewardsByGuess.has(at)) rewardsByGuess.set(at, []);
+      rewardsByGuess.get(at).push(entry);
+    });
+
+    function pushRewards(guessNumber, viewerRole) {
+      (rewardsByGuess.get(guessNumber) || []).forEach(entry => {
+        const mine = entry?.role === viewerRole;
+        const who = mine ? "You took " : "Opp took ";
+        const detail = entry?.detailText;
+        const label = entry?.title || "a reward";
+        entries.push({
+          type: "power",
+          cssClass: entry?.role ? ` log-power-${entry.role}` : "",
+          text: detail
+            ? `${who}<span class="log-power-name" role="button" tabindex="0">${label}</span>` +
+              `<div class="log-power-detail hidden">${detail}</div>`
+            : `${who}${label}`
+        });
+      });
+      rewardsByGuess.delete(guessNumber);
+    }
+
     function appendRound(history, setterIdThisRound, roundNumber, isLiveRound) {
       if (roundNumber > 0) {
         entries.push({ type: "round", text: `Round ${roundNumber + 1}` });
@@ -77,6 +110,9 @@
       const isSetterThisRound = myId != null && setterIdThisRound === myId;
       const viewerRole = isSetterThisRound ? "setter" : "guesser";
       let guessNumber = 0;
+
+      // A reward taken before this round's first guess landed.
+      if (isLiveRound) pushRewards(0, viewerRole);
 
       (history || []).forEach(entry => {
         if (!entry?.guess) return;
@@ -136,6 +172,9 @@
             text: `${meta?.label || "Letter Scan"}: ${count}/${distinctTested} (${letters})`
           });
         }
+
+        // Any reward card taken while this many guesses were on the board.
+        if (isLiveRound) pushRewards(guessNumber, viewerRole);
       });
 
       // Recon Sweep result, shown the instant it's used rather than
@@ -211,30 +250,20 @@
         ? (myId != null && state.setter === myId ? "setter" : "guesser")
         : appendRound(state.history, state.setter, rounds.length, true);
 
+    // Anything left over: taken after the most recent guess resolved (or,
+    // on the gameOver screen, where appendRound never ran for the live
+    // round). Chronologically these really do belong last, so the tail
+    // append is correct here -- it was only wrong as the treatment for
+    // every reward regardless of when it happened.
+    [...rewardsByGuess.keys()]
+      .sort((a, b) => a - b)
+      .forEach(key => pushRewards(key, liveViewerRole));
+
     // Powers used mid-turn are only attached to a history entry once that
     // guess/decision resolves. Surface them the moment they're used instead
     // of making the player wait for the turn to finish — once the entry
     // finalizes, this live buffer is cleared and the authoritative version
     // (with any result learned since) takes its place.
-    // Power Choice rewards: which card each player took and what it did.
-    // Recorded server-side (powerChoice.resolutionLog) so both players see
-    // the same entries -- a power-backed reward's own power event says
-    // nothing about the reward that granted it.
-    (state.powerChoice?.resolutionLog || []).forEach(entry => {
-      const mine = entry?.role === liveViewerRole;
-      const who = mine ? "You took " : "Opp took ";
-      const detail = entry?.detailText;
-      const label = entry?.title || "a reward";
-      entries.push({
-        type: "power",
-        cssClass: entry?.role ? ` log-power-${entry.role}` : "",
-        text: detail
-          ? `${who}<span class="log-power-name" role="button" tabindex="0">${label}</span>` +
-            `<div class="log-power-detail hidden">${detail}</div>`
-          : `${who}${label}`
-      });
-    });
-
     // A live event is the same use as its history copy once the enclosing
     // turn resolves. client.js clears this buffer when history grows, but
     // a reward-granted power is applied outside the normal guess cycle, so

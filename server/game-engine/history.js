@@ -31,9 +31,18 @@ function isConsistentWithHistory(history, proposedSecret, state, opts = {}) {
   const extra = state?.extraConstraints ?? [];
   const forcedGreens = extra.filter(c => c.type === "GREEN");
   const forcedYellows = extra.filter(c => c.type === "YELLOW");
+  const forcedAbsent = extra.filter(c => c.type === "ABSENT");
   proposedSecret = proposedSecret.toUpperCase();
   for (const c of forcedGreens) {
     if (proposedSecret[c.index] !== c.letter) {
+      return false;
+    }
+  }
+  // An ABSENT extraConstraint (Power Choice's Rule Out Three / Lock Out
+  // Four rewards) promises the letter is nowhere in the secret -- any
+  // secret the setter picks afterward has to actually honor that.
+  for (const c of forcedAbsent) {
+    if (proposedSecret.includes(c.letter)) {
       return false;
     }
   }

@@ -32,6 +32,10 @@ function isConsistentWithHistory(history, proposedSecret, state) {
         if (!proposedSecret.includes(c.letter)) {
           return false;
         }
+      } else if (c.type === "ABSENT") {
+        if (proposedSecret.includes(c.letter)) {
+          return false;
+        }
       }
     }
   }

@@ -22,9 +22,23 @@ function getLetterStatusFromHistory(letter, state) {
     ?.filter(c => c.type === "YELLOW")
     .map(c => c.letter);
 
+  // Letters a Power Choice reward proved absent (Rule Out Three / Lock Out
+  // Four -- see powerChoiceServer.js's addAbsentConstraints). This is real
+  // knowledge about the secret, so it belongs in the same keyboard feedback
+  // an ordinary gray guess produces rather than only in the mode's own
+  // cosmetic key styling: without it the Spy read a ruled-out letter as
+  // still untried and kept hiding the secret behind it.
+  const extraAbsent = state.extraConstraints
+    ?.filter(c => c.type === "ABSENT")
+    .map(c => c.letter);
+
   // A floor, not a lock — a later guess revealing this letter as green
   // (a real position match) should still upgrade past it.
-  let strongest = extraYellows?.includes(letter) ? "yellow" : null;
+  let strongest = extraYellows?.includes(letter)
+    ? "yellow"
+    : extraAbsent?.includes(letter)
+      ? "gray"
+      : null;
   let uncertain = false;
   let blind = false;
 

@@ -149,6 +149,9 @@ function explainSecretInconsistency(history, extraConstraints, proposedSecret) {
       }
     }
   });
+  (extraConstraints || []).forEach(c => {
+    if (c.type === "ABSENT") excluded.add(c.letter);
+  });
   const wronglyIncluded = [...excluded].filter(l => secretLetterSet.has(l));
   if (wronglyIncluded.length) {
     reasons.push(`${wronglyIncluded.join(", ")} shouldn't be in the word (already ruled out)`);
