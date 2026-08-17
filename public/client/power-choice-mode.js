@@ -30,7 +30,19 @@
   let spyAwardRunning = false;
   const spyAwardQueue = [];
   const deferredSetterHistory = [];
+  let deferredHistoryTimer = null;
   let lastSpyAwardFinishedAt = 0;
+  // Breathing room between the last star landing in the meter and the row
+  // starting its own flight, so the two read as one sequence rather than a
+  // hard cut.
+  const AWARD_SETTLE_MS = 160;
+  // spyChargeAward and stateUpdate are two independent socket events with
+  // no ordering guarantee between them. When stateUpdate won the race the
+  // award queue was still empty at the moment the history row asked to be
+  // released, so the row flew off WHILE the stars were still shooting into
+  // the meter. This is how long the row waits for an award that is about
+  // to arrive before giving up and flying on its own.
+  const AWARD_ARRIVAL_GRACE_MS = 300;
   const rewardPopupQueue = [];
   let rewardPopupRunning = false;
   // How long the reward-choice modal waits before opening once a choice
@@ -446,7 +458,19 @@
     const show = isMode(state) && myRole(state) === "guesser" && !!quest;
     if (!host) return;
     host.classList.toggle("hidden", !show);
-    if (!show) return;
+    if (!show) {
+      // No quest to guide anymore -- roles just switched, the match ended,
+      // or a new one started. The guide-open/highlight flags are sticky
+      // module state, so without this they survived into the next match and
+      // the keyboard came back still wearing the old quest's highlights.
+      lastQuestId = "";
+      questGuideOpen = false;
+      questHintsActive = false;
+      clearQuestKeyHints();
+      currentDraftRow()?.classList.remove("pc-quest-draft-met");
+      host.dataset.pcSignature = "";
+      return;
+    }
 
     // The quest is only actually attemptable on every other guess (the
     // 2nd, 4th, 6th, ...) -- see the matching questLive gate in
@@ -928,19 +952,23 @@
       key.classList.toggle("pc-key-eliminated", blocked);
       key.classList.toggle("pc-key-ruled-out", known);
       key.setAttribute("aria-disabled", blocked ? "true" : "false");
-      if (blocked) key.title = `${letter} was ruled out`;
-      else if (known) key.title = `${letter} was ruled out (still usable)`;
+      if (blocked) key.title = `${letter} was locked out -- you can't use it`;
+      else if (known) key.title = `${letter} is not in the secret (still usable)`;
     });
 
-    // Locked-out letters bind the Spy's secret too (server rejects a
-    // secret containing one), so they show on the Spy's keyboard as spent
-    // -- the same gray "already used" treatment the Spy already reads as
-    // "not available", rather than the Inspector's louder blocked styling.
+    // BOTH reward kinds bind the Spy's secret -- each one records the
+    // letter as a hard "not in the secret" constraint server-side (see
+    // powerChoiceServer.js's addAbsentConstraints), so checkSecret rejects
+    // any secret containing one. Ruled-out letters used to be missing from
+    // this list, which is what let the Spy keep hiding the secret behind a
+    // letter the Inspector had already been told was out. They show as
+    // spent -- the same gray "already used" treatment the Spy already reads
+    // as "not available", rather than the Inspector's louder blocked style.
     setterKeyboardKeys().forEach(key => {
       const letter = keyboardLetter(key);
-      const blocked = !!letter && eliminated.has(letter);
-      key.classList.toggle("pc-key-ruled-out", blocked);
-      if (blocked) key.title = `${letter} is locked out this round`;
+      const barred = !!letter && (eliminated.has(letter) || ruledOut.has(letter));
+      key.classList.toggle("pc-key-ruled-out", barred);
+      if (barred) key.title = `${letter} is ruled out of the secret this round`;
     });
   }
 
@@ -1096,10 +1124,47 @@
   }
 
   function flushDeferredSetterHistory() {
+    clearTimeout(deferredHistoryTimer);
+    deferredHistoryTimer = null;
     const releases = deferredSetterHistory.splice(0);
     releases.forEach(release => {
       try { requestAnimationFrame(release); } catch {}
     });
+  }
+
+  // Holds the submitted row until the star sequence is genuinely over, so
+  // the two never play at once: while an award is queued or running this
+  // keeps re-checking (drainSpyAwardQueue's own flush normally wins), and
+  // if no award ever shows up it releases the row once the grace window
+  // for a late-arriving spyChargeAward has passed.
+  function scheduleDeferredHistoryFlush() {
+    clearTimeout(deferredHistoryTimer);
+    const waitingSince = Date.now();
+
+    const tick = () => {
+      if (!deferredSetterHistory.length) {
+        deferredHistoryTimer = null;
+        return;
+      }
+      if (spyAwardRunning || spyAwardQueue.length) {
+        deferredHistoryTimer = setTimeout(tick, 120);
+        return;
+      }
+      // An award just finished -- let its last landing settle before the
+      // row moves, instead of cutting straight from one to the other.
+      const sinceAward = Date.now() - lastSpyAwardFinishedAt;
+      if (lastSpyAwardFinishedAt && sinceAward < AWARD_SETTLE_MS) {
+        deferredHistoryTimer = setTimeout(tick, AWARD_SETTLE_MS - sinceAward);
+        return;
+      }
+      if (Date.now() - waitingSince < AWARD_ARRIVAL_GRACE_MS) {
+        deferredHistoryTimer = setTimeout(tick, 40);
+        return;
+      }
+      flushDeferredSetterHistory();
+    };
+
+    deferredHistoryTimer = setTimeout(tick, 40);
   }
 
   async function drainSpyAwardQueue() {
@@ -1114,7 +1179,10 @@
       lastSpyAwardFinishedAt = Date.now();
       spyVisualOverride = null;
       renderPanels();
-      setTimeout(flushDeferredSetterHistory, 120);
+      // scheduleDeferredHistoryFlush's tick is what actually releases the
+      // row (it applies AWARD_SETTLE_MS); this just makes sure a tick is
+      // pending even if the row was handed over before any award arrived.
+      scheduleDeferredHistoryFlush();
     }
   }
 
@@ -1127,18 +1195,14 @@
         return typeof previous === "function" ? previous(release) : false;
       }
       if (typeof release !== "function") return false;
-      if (
-        spyAwardRunning ||
-        spyAwardQueue.length ||
-        Date.now() - lastSpyAwardFinishedAt < 850
-      ) {
-        deferredSetterHistory.push(release);
-        setTimeout(() => {
-          if (!spyAwardRunning && !spyAwardQueue.length) flushDeferredSetterHistory();
-        }, 1700);
-        return true;
-      }
-      return false;
+      // Always take the row, never release it inline. Deciding here off
+      // "is an award running right now" was the bug: on the stateUpdate-
+      // first ordering nothing was running yet, the row was handed straight
+      // back, and it flew while the stars were still in the air.
+      // scheduleDeferredHistoryFlush owns the timing from here.
+      deferredSetterHistory.push(release);
+      scheduleDeferredHistoryFlush();
+      return true;
     };
     wrapped.__powerChoiceV2Wrapped = true;
     window.deferSetterHistoryUntilSpyCharge = wrapped;

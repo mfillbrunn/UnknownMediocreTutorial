@@ -611,7 +611,7 @@ function fixedOptions(role, threshold) {
         kind: "fixed",
         icon: "×3",
         title: "Rule Out Three",
-        description: "Learn three random unused letters that are not in the secret."
+        description: "Learn three random unused letters that are not in the secret. They gray out on the keyboard and the Spy can no longer hide the secret behind them."
       },
       {
         id: "inspector-remove-point-1",
@@ -867,6 +867,30 @@ function unusedLetterCandidates(state) {
   );
 }
 
+// Registers each letter as a hard "cannot be in the secret" constraint --
+// the same GREEN/YELLOW machinery isConsistentWithHistory already enforces
+// (see game-engine/history.js both client and server copies), so a secret
+// containing one is rejected up front by the setter's own draft validation
+// (computeSetterSecretStatus -> validateSetterSecretWord) instead of only
+// being caught after the fact by blockedLetterIn's SET_SECRET check --
+// which fixes the setter's ack still coming back {ok:true} on a rejected
+// SET_SECRET_NEW (see socketHandlers.js) making the draft look accepted.
+// It also makes legalSecretCandidates/chooseWorseSecret treat the letter
+// as unavailable, so the AI setter stops proposing secrets that contain it.
+function addAbsentConstraints(state, letters) {
+  state.extraConstraints ||= [];
+  const existing = new Set(
+    state.extraConstraints
+      .filter(c => c.type === "ABSENT")
+      .map(c => c.letter)
+  );
+  for (const letter of letters) {
+    if (existing.has(letter)) continue;
+    state.extraConstraints.push({ type: "ABSENT", letter });
+    existing.add(letter);
+  }
+}
+
 // Actually blocks the letters from being typed (see the SUBMIT_GUESS
 // check and markEliminatedKeys() client-side).
 function removeUnusedLetters(state, count) {
@@ -874,6 +898,7 @@ function removeUnusedLetters(state, count) {
   const eliminated = new Set(state.powerChoice.eliminatedLetters || []);
   for (const letter of selected) eliminated.add(letter);
   state.powerChoice.eliminatedLetters = [...eliminated];
+  addAbsentConstraints(state, selected);
   return selected;
 }
 
@@ -886,13 +911,17 @@ function blockedLetterIn(state, word) {
   return blocked.find(letter => word.includes(letter)) || null;
 }
 
-// Informational only -- the letters are known-absent but stay usable; the
-// client just styles them like any other already-guessed absent letter.
+// Non-blocking for guesses -- the Inspector can still type these (the
+// client styles them like any other already-guessed absent letter, no
+// SUBMIT_GUESS check exists for ruledOutLetters). But they ARE confirmed
+// absent from the secret, so addAbsentConstraints below still binds the
+// Spy the same way removeUnusedLetters' eliminated letters do.
 function ruleOutUnusedLetters(state, count) {
   const selected = shuffle(unusedLetterCandidates(state)).slice(0, count);
   const ruledOut = new Set(state.powerChoice.ruledOutLetters || []);
   for (const letter of selected) ruledOut.add(letter);
   state.powerChoice.ruledOutLetters = [...ruledOut];
+  addAbsentConstraints(state, selected);
   return selected;
 }
 
@@ -1130,7 +1159,14 @@ function applyChoice(state, option, choice, room, roomId, io) {
     role: resolution.role,
     title: resolution.title,
     detailText: resolution.detailText,
-    at: resolution.at
+    at: resolution.at,
+    // How many guesses were already on the board when this reward was
+    // taken. Without it the client had no way to place these entries in
+    // the run of play and appended them all in one block at the bottom of
+    // the log, so a reward taken on turn 2 read as if it happened last.
+    // action-log.js slots each one in right after the guess row it shares
+    // a number with.
+    guessNumber: Array.isArray(state.history) ? state.history.length : 0
   });
   emitEffect(io, roomId, resolution);
   return true;

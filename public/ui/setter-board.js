@@ -263,15 +263,85 @@
     praise.style.animation = "";
   }
 
+  // Wipes every trace of the last rating: the filled pips, the escalating
+  // glow classes, and the praise word. Called whenever the stars go away
+  // (submitted, roles switched, new match) -- renderCoverStars used to just
+  // add .hidden and return, which left all of that stale underneath. The
+  // praise word is the visible half of that bug: it's a SIBLING of this
+  // element (see renderStarPraise's insertAdjacentElement("afterend")), so
+  // hiding the stars never hid it and it sat on the board into the next
+  // match. The charge-hint tile outline is deliberately NOT reset here --
+  // it marks which tile the bonus star is on, which is still worth showing
+  // on an untouched draft that has no rating to display yet.
+  function clearCoverStars(el) {
+    el.classList.remove("stars-2", "stars-3");
+    el.querySelectorAll("[data-cover-star]").forEach(star => {
+      star.classList.remove("is-filled");
+    });
+    el.parentElement?.querySelector(".setter-star-praise")?.remove();
+    _praiseKey = "";
+    _praiseText = "";
+  }
+
   function renderCoverStars(strength) {
     const el = byId("setterCoverStars");
     if (!el) return;
 
-    const show = !!strength?.visible && window.myRole === "setter";
-    el.classList.toggle("hidden", !show);
-    if (!show) return;
+    const count = Math.max(0, Math.min(3, Number(strength?.stars) || 0));
+    const isSetter = window.myRole === "setter";
 
-    const count = Math.max(0, Math.min(3, Number(strength.stars) || 0));
+    // The charge hint's own tile outline tracks the hint, not the rating,
+    // so it's resolved before the visibility gate below -- an untouched
+    // draft shows no stars but should still mark the bonus tile.
+    const charge = window.state?.powers?.spyCharge;
+    const hint = charge?.hint;
+    const hasHint = isSetter && !!hint?.letter && Number.isInteger(hint.position);
+    const hintLetter = hasHint ? String(hint.letter).toUpperCase() : "";
+
+    const draft = String(window.state?.setterDraft || "")
+      .replace(/\s/g, "")
+      .toUpperCase();
+
+    const bonusEarned = !!(
+      hasHint &&
+      strength?.draftValid &&
+      !strength?.draftIsCurrent &&
+      !strength?.draftIsPending &&
+      draft.length === 5 &&
+      draft[hint.position] === hintLetter
+    );
+
+    // Exposed for power-choice-mode.js's bonus-star pill so both places
+    // that reflect this state (the pill and the draft-tile outline) stay
+    // in sync off one computation instead of two separately-derived ones.
+    window.__setterBonusEarned = bonusEarned;
+    updateHintSlotTile(hint, hasHint, bonusEarned);
+
+    // The letter/position readout used to also live here as a "P in 3rd"
+    // text label next to the stars -- that's now shown once, in the
+    // bonus-star pill on the Keep/New row (see normalizeBonusTarget in
+    // power-choice-mode.js), so #setterCoverTarget stays hidden here to
+    // avoid showing the same information twice.
+    byId("setterCoverTarget")?.classList.add("hidden");
+
+    // The stars themselves are only ever on screen for a rating that has
+    // actually been earned on a decision still being made. Everything else
+    // -- an untouched or half-typed draft ("available"), an illegal one
+    // ("invalid"), the guesser's turn, and the moment the secret is
+    // submitted (the server drops visible the same turn) -- shows nothing
+    // at all rather than a row of empty outlines.
+    const rated =
+      strength?.status === "rated" ||
+      strength?.status === "same" ||
+      strength?.status === "locked";
+
+    const show = !!strength?.visible && isSetter && rated && count > 0;
+
+    el.classList.toggle("hidden", !show);
+    if (!show) {
+      clearCoverStars(el);
+      return;
+    }
 
     el.querySelectorAll("[data-cover-star]").forEach((star, index) => {
       star.classList.toggle("is-filled", index < count);
@@ -289,37 +359,6 @@
     el.classList.toggle("stars-2", celebrating && count === 2);
     el.classList.toggle("stars-3", celebrating && count >= 3);
     renderStarPraise(el, count, strength);
-
-    const charge = window.state?.powers?.spyCharge;
-    const hint = charge?.hint;
-    const hasHint = !!hint?.letter && Number.isInteger(hint.position);
-    const hintLetter = hasHint ? String(hint.letter).toUpperCase() : "";
-
-    // The letter/position readout used to also live here as a "P in 3rd"
-    // text label next to the stars -- that's now shown once, in the
-    // bonus-star pill on the Keep/New row (see normalizeBonusTarget in
-    // power-choice-mode.js), so #setterCoverTarget stays hidden here to
-    // avoid showing the same information twice.
-    byId("setterCoverTarget")?.classList.add("hidden");
-
-    const draft = String(window.state?.setterDraft || "")
-      .replace(/\s/g, "")
-      .toUpperCase();
-
-    const bonusEarned = !!(
-      hasHint &&
-      strength.draftValid &&
-      !strength.draftIsCurrent &&
-      !strength.draftIsPending &&
-      draft.length === 5 &&
-      draft[hint.position] === hintLetter
-    );
-
-    // Exposed for power-choice-mode.js's bonus-star pill so both places
-    // that reflect this state (the pill and the draft-tile outline) stay
-    // in sync off one computation instead of two separately-derived ones.
-    window.__setterBonusEarned = bonusEarned;
-    updateHintSlotTile(hint, hasHint, bonusEarned);
 
     el.setAttribute(
       "aria-label",

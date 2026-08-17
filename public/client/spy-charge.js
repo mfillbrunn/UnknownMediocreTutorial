@@ -753,8 +753,12 @@
           constraint?.letter || ""
         ).toUpperCase();
 
+        // ABSENT included to stay in step with the server's
+        // hasLetterKnowledge/eraseLetterKnowledge (resetLetterKnowledge.js):
+        // a Power Choice reward that ruled a letter out is knowledge about
+        // it, so it's a legal reset target and the reset lifts the block.
         return (
-          (type === "GREEN" || type === "YELLOW") &&
+          (type === "GREEN" || type === "YELLOW" || type === "ABSENT") &&
           constraintLetter === target
         );
       }

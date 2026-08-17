@@ -37,7 +37,7 @@ function hasLetterKnowledge(state, letter) {
     const constraintLetter = String(constraint?.letter || "").toUpperCase();
 
     return (
-      (type === "GREEN" || type === "YELLOW") &&
+      (type === "GREEN" || type === "YELLOW" || type === "ABSENT") &&
       targets.has(constraintLetter)
     );
   });
@@ -126,7 +126,7 @@ function eraseLetterKnowledge(state, letters) {
       const constraintLetter = String(constraint?.letter || "").toUpperCase();
 
       return !(
-        (type === "GREEN" || type === "YELLOW") &&
+        (type === "GREEN" || type === "YELLOW" || type === "ABSENT") &&
         targets.has(constraintLetter)
       );
     });
