@@ -23,7 +23,16 @@ const engine = {
       actorUserId === state.setter ? "setter" :
       FALLBACK_ROLE[id] || POWER_METADATA[id]?.role || null;
 
-    pushPendingEvent(state, id, actorRole, roomId, io, capture);
+    // A Power Choice reward that hands out a power already writes its own
+    // action-log line naming the reward card and what it did (see
+    // powerChoiceServer's resolutionLog) -- adding the power's activation
+    // line on top logged the same single event twice, once as the reward
+    // and once as the power. Only the log entry is skipped: the power's
+    // real broadcasts went out through wrappedIo above, so popups and
+    // game effects are untouched.
+    if (action?.source !== "powerChoice") {
+      pushPendingEvent(state, id, actorRole, roomId, io, capture);
+    }
   },
 
   beforeSetterSecretChange(state, action) {

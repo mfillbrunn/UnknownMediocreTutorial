@@ -445,7 +445,15 @@ if (guesserEntries.length) {
 
 // Total time each player spent on their own turns this match, banked
 // server-side in state.timeSpentMs (see bankTurnTime in core/rooms.js).
-function formatDuration(ms) {
+// Total time each player spent on their own turns this match, banked
+// server-side in state.timeSpentMs (see bankTurnTime in core/rooms.js).
+// Deliberately NOT named formatDuration: this file already declares one
+// of those further down (taking SECONDS, for the time-control readouts).
+// Two hoisted declarations of the same name in one script scope means the
+// last one wins for every call site, so an ms-based twin silently sent
+// these millisecond values through the seconds formatter and reported a
+// 7-second turn as "2h".
+function formatSpentMs(ms) {
   const total = Math.max(0, Math.round((Number(ms) || 0) / 1000));
   const minutes = Math.floor(total / 60);
   const seconds = total % 60;
@@ -463,9 +471,9 @@ function formatTimeSpent(state, setterName, guesserName) {
   return `
     <p class="summary-time-spent">
       <b>Time taken:</b>
-      ${setterName} ${formatDuration(setterMs)}
+      ${setterName} ${formatSpentMs(setterMs)}
       &middot;
-      ${guesserName} ${formatDuration(guesserMs)}
+      ${guesserName} ${formatSpentMs(guesserMs)}
     </p>
   `;
 }

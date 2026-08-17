@@ -9,7 +9,7 @@ module.exports = {
   hideTile: { label: "Hide Tile", role: "setter" },
   rouletteSecret: { label: "Roulette Secret" , role: "guesser"},
   magicMode: { label: "Magic Mode", role: "guesser" },
-  revealGreen: { label: "Sneak Letter" , role: "guesser"},
+  revealGreen: { label: "Letter Peek" , role: "guesser"},
   revealHistory: { label: "Reveal History", role: "guesser" },
   revealLetter: {
     label: "Reveal Letter", role: "guesser",

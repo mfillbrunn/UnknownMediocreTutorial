@@ -45,19 +45,25 @@
     const rounds = Array.isArray(state.matchRounds) ? state.matchRounds : [];
 
     // Power Choice rewards: which card each player took and what it did.
-    // Recorded server-side (powerChoice.resolutionLog) so both players see
-    // the same entries -- a power-backed reward's own power event says
-    // nothing about the reward that granted it. Bucketed by the guess
-    // number that was on the board when the card was taken, so each one
-    // can be emitted in its real place in the run of play rather than in
-    // one block after everything else. powerChoice is per-round state, so
-    // these only ever belong to the live round.
-    const rewardsByGuess = new Map();
-    (state.powerChoice?.resolutionLog || []).forEach(entry => {
-      const at = Math.max(0, Number(entry?.guessNumber) || 0);
-      if (!rewardsByGuess.has(at)) rewardsByGuess.set(at, []);
-      rewardsByGuess.get(at).push(entry);
-    });
+    // BOTH roles' picks are recorded server-side and neither is redacted,
+    // so each player's log shows their own and their opponent's — a
+    // power-backed reward's own power event says nothing about the reward
+    // card that granted it. The live round reads powerChoice.resolutionLog;
+    // completed rounds read the copy archived onto the round record
+    // (gameOver.js), since powerChoice itself is replaced wholesale at each
+    // round boundary and used to take every earlier reward with it.
+    // Bucketed by the guess number that was on the board when the card was
+    // taken, so each lands in its real place in the run of play.
+    let rewardsByGuess = new Map();
+
+    function loadRewards(list) {
+      rewardsByGuess = new Map();
+      (Array.isArray(list) ? list : []).forEach(entry => {
+        const at = Math.max(0, Number(entry?.guessNumber) || 0);
+        if (!rewardsByGuess.has(at)) rewardsByGuess.set(at, []);
+        rewardsByGuess.get(at).push(entry);
+      });
+    }
 
     function pushRewards(guessNumber, viewerRole) {
       (rewardsByGuess.get(guessNumber) || []).forEach(entry => {
@@ -75,6 +81,16 @@
         });
       });
       rewardsByGuess.delete(guessNumber);
+    }
+
+    // Whatever is left in the current round's bucket map: taken after the
+    // last guess resolved, or keyed to a guess this viewer can't see (the
+    // guesser's history is filtered by safeState for masking powers, so a
+    // server-side guess number need not line up with a rendered row).
+    function flushRemainingRewards(viewerRole) {
+      [...rewardsByGuess.keys()]
+        .sort((a, b) => a - b)
+        .forEach(key => pushRewards(key, viewerRole));
     }
 
     function appendRound(history, setterIdThisRound, roundNumber, isLiveRound) {
@@ -112,7 +128,7 @@
       let guessNumber = 0;
 
       // A reward taken before this round's first guess landed.
-      if (isLiveRound) pushRewards(0, viewerRole);
+      pushRewards(0, viewerRole);
 
       (history || []).forEach(entry => {
         if (!entry?.guess) return;
@@ -174,7 +190,7 @@
         }
 
         // Any reward card taken while this many guesses were on the board.
-        if (isLiveRound) pushRewards(guessNumber, viewerRole);
+        pushRewards(guessNumber, viewerRole);
       });
 
       // Recon Sweep result, shown the instant it's used rather than
@@ -231,12 +247,16 @@
         pushConditionsLine(quest.conditions);
       }
 
+      flushRemainingRewards(viewerRole);
       return viewerRole;
     }
 
     rounds.forEach((round, idx) => {
+      loadRewards(round.rewards);
       appendRound(round.history, round.setter, idx, false);
     });
+
+    loadRewards(state.powerChoice?.resolutionLog);
 
     // endGame() archives the just-finished round into state.matchRounds
     // (the loop above) but doesn't clear state.history until the player
@@ -250,14 +270,9 @@
         ? (myId != null && state.setter === myId ? "setter" : "guesser")
         : appendRound(state.history, state.setter, rounds.length, true);
 
-    // Anything left over: taken after the most recent guess resolved (or,
-    // on the gameOver screen, where appendRound never ran for the live
-    // round). Chronologically these really do belong last, so the tail
-    // append is correct here -- it was only wrong as the treatment for
-    // every reward regardless of when it happened.
-    [...rewardsByGuess.keys()]
-      .sort((a, b) => a - b)
-      .forEach(key => pushRewards(key, liveViewerRole));
+    // gameOver skips appendRound for the live round entirely, so its
+    // rewards have had no chance to flush yet.
+    flushRemainingRewards(liveViewerRole);
 
     // Powers used mid-turn are only attached to a history entry once that
     // guess/decision resolves. Surface them the moment they're used instead

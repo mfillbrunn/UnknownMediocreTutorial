@@ -97,6 +97,15 @@ state.matchRounds.push({
         x && typeof x === "object" ? { ...x } : x
       )
     : [],
+  // Which Power Choice reward card each player took this round, and what
+  // it did. state.powerChoice is per-round and gets replaced wholesale at
+  // the next round boundary (freshPowerChoice), so without archiving it
+  // here the log lost every reward the moment round 2 began. Archived for
+  // BOTH roles -- action-log.js renders them from the round record, so
+  // each player sees their own and their opponent's picks.
+  rewards: Array.isArray(state.powerChoice?.resolutionLog)
+    ? JSON.parse(JSON.stringify(state.powerChoice.resolutionLog))
+    : [],
 });
 /*
  * The archived round above keeps the original power state

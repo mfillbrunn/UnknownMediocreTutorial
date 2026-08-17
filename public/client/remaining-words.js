@@ -188,7 +188,11 @@ function renderSetterRemainingBox(boxState) {
   // window.refreshTutorialKeyDemo hooks into the draft renderers.
   window.refreshTutorialRemainingBox?.(boxState);
 
-  if (!boxState || !boxState.visible) {
+  // Once the Spy has sent their Keep/New decision for the guess on the
+  // board there is nothing left to decide about it, so the counts go away
+  // with the stars instead of sitting under the submitted row's outline
+  // while it flies to history (see onSetterDecisionSubmitted).
+  if (!boxState || !boxState.visible || window.setterDecisionCommitted?.()) {
     box.innerHTML = "";
     box.hidden = true;
     return;

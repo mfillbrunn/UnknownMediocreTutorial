@@ -9,7 +9,20 @@ window.renderDraftRows = function ({
   // ----------------------------
   // Build rows ONCE
   // ----------------------------
-  if (!container.__draftRows) {
+  // ...but rebuild if the cached rows are no longer actually in this
+  // container. __draftRows is a property on the container element, so it
+  // outlives its own children: anything that replaces the container's
+  // contents (the board restructuring that runs on a rejoin is the way
+  // this shows up in practice) leaves the property pointing at detached
+  // nodes, and every later render then wrote the draft into orphans that
+  // are not on the page. That is the "my draft row is gone after
+  // reconnecting" case -- the state was right, the row just wasn't in the
+  // document any more.
+  const cachedRowsAttached =
+    container.__draftRows?.pending?.parentElement === container &&
+    container.__draftRows?.draft?.parentElement === container;
+
+  if (!container.__draftRows || !cachedRowsAttached) {
     container.innerHTML = "";
     container.__draftRows = {};
 

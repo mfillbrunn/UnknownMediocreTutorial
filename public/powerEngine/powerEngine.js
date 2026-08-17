@@ -166,7 +166,7 @@ window.fitBadgeLabel = fitBadgeLabel;
 
 // Finds the most recent server power-event for a given power id, so a used
 // power's button can show its concrete result (e.g. "position 3 = R" for
-// Sneak Letter) instead of just sitting there marked used. Checks the
+// Letter Peek) instead of just sitting there marked used. Checks the
 // still-pending live events first (this turn's guess hasn't resolved into
 // history yet), then walks history newest-first, including archived
 // rounds (state.history is wiped at each round boundary).

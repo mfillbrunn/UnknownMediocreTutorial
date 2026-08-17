@@ -22,6 +22,12 @@ const SPY_THRESHOLDS = [5, 8, 15];
 // (fixedOptions/threePowerOptions below dispatch on these threshold
 // numbers, unchanged from when they were meter milestones).
 const INSPECTOR_REWARD_SEQUENCE = [2, 3, 5];
+// The Inspector gets exactly this many quests per round -- one per entry in
+// the reward sequence above. Once the third has been attempted the quest
+// system is finished for the round: no new quest is issued and the card
+// disappears, rather than cycling a fourth quest back around to the first
+// reward tier.
+const INSPECTOR_MAX_QUESTS = INSPECTOR_REWARD_SEQUENCE.length;
 const VOWELS = new Set("AEIOU");
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
@@ -66,7 +72,7 @@ const POWER_COPY = {
   blindGuess: ["🙈", "Blind Guess", "Hide the Inspector's draft while they make this guess."],
   forceTimer: ["⏱", "Force Timer", "Put immediate time pressure on the Inspector's turn."],
   delayedIntel: ["📡", "Delayed Intel", "Delay the Inspector's feedback for this turn."],
-  revealGreen: ["🟩", "Sneak Letter", "Reveal a random correct letter in its exact position."],
+  revealGreen: ["🟩", "Letter Peek", "Reveal a random correct letter in its exact position."],
   freezeSecret: ["🧊", "Freeze Secret", "The Spy cannot change the secret after this guess."],
   rouletteSecret: ["🎰", "Roulette Secret", "Force the Spy onto a legal random secret."],
   stealthGuess: ["🥷", "Stealth Guess", "Hide this guess during the Spy's Keep/New decision."],
@@ -147,6 +153,7 @@ function freshPowerChoice(roundIndex) {
       currentQuest: null,
       questTurnsElapsed: 0,
       questCompletions: 0,
+      questsResolved: 0,
       attempts: 0,
       successes: 0,
       lastResult: null
@@ -458,11 +465,18 @@ function initializeRound(state) {
     currentQuest: null,
     questTurnsElapsed: 0,
     questCompletions: 0,
+    questsResolved: 0,
     attempts: 0,
     successes: 0,
     lastResult: null
   };
-  pc.inspector.currentQuest ||= makeQuest();
+  pc.inspector.questsResolved ||= 0;
+  // Plain ||= would hand out a fourth quest the moment the third one was
+  // cleared, since a null currentQuest is exactly what "finished" looks
+  // like -- this runs on every action, not just at round start.
+  if (pc.inspector.questsResolved < INSPECTOR_MAX_QUESTS) {
+    pc.inspector.currentQuest ||= makeQuest();
+  }
   pc.eliminatedLetters ||= [];
   pc.ruledOutLetters ||= [];
   pc.bonusTimeTurnKeys ||= [];
@@ -559,9 +573,9 @@ function fixedOptions(role, threshold) {
       {
         id: "spy-reset-known-2",
         kind: "fixed",
-        icon: "◇◇",
-        title: "Erase Two Clues",
-        description: "Reset two random known letters, including gray letters."
+        icon: "◇◇◇",
+        title: "Erase Three Clues",
+        description: "Reset three random known letters, including gray letters."
       },
       {
         id: "spy-add-point-1",
@@ -691,7 +705,7 @@ function buildChoice(state, role, threshold, owner) {
     title:
       role === "setter"
         ? `Spy reward · ${threshold} stars`
-        : "Inspector reward · Quest complete",
+        : "Inspector reward",
     subtitle: "Choose one card. It activates immediately and cannot be saved.",
     options
   };
@@ -1054,7 +1068,39 @@ function emitEffect(io, roomId, payload) {
   if (io && roomId) io.to(roomId).emit("powerChoiceResolved", payload);
 }
 
-function applyChoice(state, option, choice, room, roomId, io) {
+// Rewards that erase letter knowledge change which secrets are still
+// feasible, which is exactly what the Spy's bonus-star hint and the
+// best/keep counts behind the star rating are computed from. Those are
+// rolled once at the start of the Spy's turn (rollHintForTurn, called from
+// normalTransitions.js) and a reward lands mid-turn, so without this the
+// Spy kept being shown a target letter/position derived from the board as
+// it was BEFORE their own reward wiped part of it -- pointing at a word
+// that was no longer the best switch, and sometimes no longer legal.
+const KNOWLEDGE_RESET_OPTIONS = new Set([
+  "spy-reset-positive-1",
+  "spy-reset-known-2",
+  "spy-reset-positive-2",
+  "spy-reset-vowels"
+]);
+
+function rerollSpyHintAfterReset(state, option, context) {
+  if (!KNOWLEDGE_RESET_OPTIONS.has(option?.id)) return;
+  const allowedSecrets = context?.ALLOWED_SECRETS;
+  if (!allowedSecrets) return;
+  // rollHintForTurn clears the hint before deciding whether it can produce
+  // a new one, so calling it outside the Spy's own decision step would
+  // wipe a perfectly good hint and put nothing back. A reward is always
+  // taken on the owner's turn, so this simply confirms that.
+  if (state.phase !== "normal" || state.turn !== state.setter) return;
+  // Recomputed from the post-reset board, so the readout above the draft
+  // row and the star rating agree with what the Spy can now actually do.
+  // coverStrength.js keys its own caches on the history feedback plus
+  // extraConstraints, both of which eraseLetterKnowledge just mutated, so
+  // the analysis behind this re-roll is already rebuilt rather than stale.
+  spyChargeServer.rollHintForTurn(state, allowedSecrets);
+}
+
+function applyChoice(state, option, choice, room, roomId, io, context) {
   if (!optionApplicable(state, option)) return false;
   let detail = null;
 
@@ -1089,7 +1135,7 @@ function applyChoice(state, option, choice, room, roomId, io) {
         detail = { letters: resetRandom(state, 1, true) };
         break;
       case "spy-reset-known-2":
-        detail = { letters: resetRandom(state, 2, false) };
+        detail = { letters: resetRandom(state, 3, false) };
         break;
       case "spy-add-point-1":
         state.guessCount = Math.max(0, Number(state.guessCount) || 0) + 1;
@@ -1149,6 +1195,7 @@ function applyChoice(state, option, choice, room, roomId, io) {
     detailText: effectDetailText(option, detail),
     at: Date.now()
   };
+  rerollSpyHintAfterReset(state, option, context);
   state.powerChoice.lastResolution = resolution;
   // Durable record so BOTH players' action logs can show which reward was
   // taken and what it did. The transient powerChoiceResolved emit only
@@ -1185,7 +1232,10 @@ function evaluateInspectorGuess(state, guess, roomId, io) {
   // instead (see the matching questLive check in renderCurrentQuest(),
   // public/client/power-choice-mode.js) and this guess can't complete or
   // rotate it.
-  const questLive = inspector.attempts % 2 === 1;
+  // ...and only while there is still a quest to attempt at all: the run
+  // ends after INSPECTOR_MAX_QUESTS, at which point currentQuest is null
+  // for the rest of the round and every guess is just a guess.
+  const questLive = !!quest && inspector.attempts % 2 === 1;
   const success = questLive && evaluateQuest(state, quest, guess);
   const conditions =
     questLive && quest?.type === "FIELDREPORT"
@@ -1212,16 +1262,26 @@ function evaluateInspectorGuess(state, guess, roomId, io) {
   if (success) {
     inspector.questCompletions += 1;
     const tier = INSPECTOR_REWARD_SEQUENCE[
-      (inspector.questCompletions - 1) % INSPECTOR_REWARD_SEQUENCE.length
+      Math.min(
+        inspector.questCompletions - 1,
+        INSPECTOR_REWARD_SEQUENCE.length - 1
+      )
     ];
     inspector.queuedMilestones.push(tier);
   }
 
   // A fresh quest replaces the current one after each live attempt at it
   // (win or lose) -- it's only ever attempted once every other guess, so
-  // there's no reason to hold a missed one around for a second try.
+  // there's no reason to hold a missed one around for a second try. After
+  // the third attempt the run is over: currentQuest is cleared and stays
+  // cleared (see initializeRound's matching questsResolved guard), so the
+  // quest card disappears instead of dealing a fourth.
   if (questLive) {
-    inspector.currentQuest = makeQuest(quest?.type);
+    inspector.questsResolved = (Number(inspector.questsResolved) || 0) + 1;
+    inspector.currentQuest =
+      inspector.questsResolved >= INSPECTOR_MAX_QUESTS
+        ? null
+        : makeQuest(quest?.type);
     inspector.questTurnsElapsed = 0;
   }
 
@@ -1585,7 +1645,7 @@ function handleAction(room, state, action, roomId, context) {
       );
       return true;
     }
-    if (!applyChoice(state, option, pending, room, roomId, io)) {
+    if (!applyChoice(state, option, pending, room, roomId, io, context)) {
       sendError(room, state, action.userId, io, "That reward could not be activated.");
       return true;
     }
