@@ -875,69 +875,12 @@
     </section>
 
     <section class="setter-sidebar-activity">
-      <button
-        type="button"
-        id="setterNotesIdleOpenBtn"
-        class="setter-notes-idle-open-btn hidden"
-        title="Open notes while you wait"
-        aria-label="Open notes while you wait"
-      >
-        📝 Open Notes
-      </button>
-
-      <div
-        id="setterNotesIdleHint"
-        class="setter-notes-idle-hint hidden"
-      >
-        ⏳ Jotting notes while you wait
-      </div>
-
-      <div
-        class="setter-sidebar-tabs"
-        role="tablist"
-        aria-label="Game information"
-      >
-        <button
-          type="button"
-          id="actionLogBtnSetter"
-          class="header-sm-btn setter-sidebar-tab"
-          role="tab"
-          aria-selected="false"
-          aria-controls="actionLogSetter"
-        >
-          Log
-        </button>
-
-        <button
-          type="button"
-          id="notesBtnSetter"
-          class="header-sm-btn setter-sidebar-tab"
-          role="tab"
-          aria-selected="false"
-          aria-controls="notesPanelSetter"
-        >
-          Notes
-        </button>
-      </div>
-
       <div class="setter-sidebar-panels">
         <div
           id="actionLogSetter"
-          class="game-side-panel action-log-panel setter-sidebar-panel hidden"
-          role="tabpanel"
-          aria-labelledby="actionLogBtnSetter"
+          class="game-side-panel action-log-panel setter-sidebar-panel"
+          aria-label="Game log"
         ></div>
-
-        <div
-          id="notesPanelSetter"
-          class="game-side-panel notes-panel setter-sidebar-panel hidden"
-          role="tabpanel"
-          aria-labelledby="notesBtnSetter"
-        >
-          <div class="notes-panel-title">Notes</div>
-          <div id="notesDraftSetter" class="notes-draft-row"></div>
-          <div id="notesListSetter" class="notes-list"></div>
-        </div>
       </div>
     </section>
   </aside>
@@ -1161,8 +1104,16 @@
                   </div>
                   <section class="guesser-info-col">
                     <div
+                      id="notesPanelGuesser"
+                      class="game-side-panel notes-panel guesser-sidebar-panel"
+                      aria-label="Notes"
+                    >
+                      <div id="notesDraftGuesser" class="notes-draft-row"></div>
+                      <div id="notesListGuesser" class="notes-list"></div>
+                    </div>
+                    <div
                       id="actionLogGuesser"
-                      class="game-side-panel action-log-panel guesser-sidebar-panel"
+                      class="game-side-panel action-log-panel guesser-sidebar-panel hidden"
                     ></div>
                   </section>
                 </div>

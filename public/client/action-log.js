@@ -25,7 +25,10 @@
     return {
       type: "power",
       cssClass: roleClass,
-      text
+      text,
+      // Identifies this specific use so the same event arriving from both
+      // the live buffer and history isn't logged twice (see buildLog).
+      dedupeKey: `${formatted.actorRole || ""}|${evt?.id || ""}|${JSON.stringify(evt?.emissions || [])}`
     };
   }
 
@@ -213,10 +216,39 @@
     // of making the player wait for the turn to finish — once the entry
     // finalizes, this live buffer is cleared and the authoritative version
     // (with any result learned since) takes its place.
+    // Power Choice rewards: which card each player took and what it did.
+    // Recorded server-side (powerChoice.resolutionLog) so both players see
+    // the same entries -- a power-backed reward's own power event says
+    // nothing about the reward that granted it.
+    (state.powerChoice?.resolutionLog || []).forEach(entry => {
+      const mine = entry?.role === liveViewerRole;
+      const who = mine ? "You took " : "Opp took ";
+      const detail = entry?.detailText;
+      const label = entry?.title || "a reward";
+      entries.push({
+        type: "power",
+        cssClass: entry?.role ? ` log-power-${entry.role}` : "",
+        text: detail
+          ? `${who}<span class="log-power-name" role="button" tabindex="0">${label}</span>` +
+            `<div class="log-power-detail hidden">${detail}</div>`
+          : `${who}${label}`
+      });
+    });
+
+    // A live event is the same use as its history copy once the enclosing
+    // turn resolves. client.js clears this buffer when history grows, but
+    // a reward-granted power is applied outside the normal guess cycle, so
+    // that clear can land a beat late and briefly show the use twice.
+    // Keying on the event's own content makes the de-dupe order-independent
+    // rather than dependent on when the buffer happens to be cleared.
+    const seen = new Set(entries.map(entry => entry.dedupeKey).filter(Boolean));
     const live = Array.isArray(window._livePowerEvents) ? window._livePowerEvents : [];
     live.forEach(evt => {
       const pe = powerEntry(evt, liveViewerRole);
-      if (pe) entries.push(pe);
+      if (!pe) return;
+      if (pe.dedupeKey && seen.has(pe.dedupeKey)) return;
+      if (pe.dedupeKey) seen.add(pe.dedupeKey);
+      entries.push(pe);
     });
 
     return entries;

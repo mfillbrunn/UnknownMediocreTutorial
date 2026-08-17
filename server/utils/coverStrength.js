@@ -485,11 +485,10 @@ function starsForGap(gapPct) {
     return 2;
   }
 
-  if (gapPct < 50) {
-    return 1;
-  }
-
-  return 0;
+  // Baseline one star for any legal decision -- mirrors starsForCandidate
+  // in powers/powers/spyChargeServer.js, which is what actually awards
+  // them. These two must agree or the preview lies about the payout.
+  return 1;
 }
 
 function buildCoverStrengthState(
@@ -630,7 +629,11 @@ let gapPct = null;
   } else if (!draftValid) {
     status = "invalid";
   } else if (draftIsCurrent) {
+    // Keeping the current secret is still a legal decision, so it earns
+    // the same baseline star any other legal choice does (see
+    // starsForGap) rather than reading as nothing gained.
     status = "same";
+    stars = 1;
   } else if (draftIsPending) {
     status = "loses";
   } else if (

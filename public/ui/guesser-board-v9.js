@@ -69,7 +69,7 @@
       toggle.setAttribute("aria-controls", "guesserSidebar");
       toggle.innerHTML = `
         <span class="guesser-sidebar-toggle-icon" aria-hidden="true">‹</span>
-        <span class="guesser-sidebar-toggle-text" aria-hidden="true">Log</span>
+        <span class="guesser-sidebar-toggle-text" aria-hidden="true">Notes</span>
         <span id="guesserSidebarChargeMini" class="guesser-sidebar-charge-mini hidden" aria-hidden="true">0</span>
       `;
       workspace.appendChild(toggle);
@@ -100,7 +100,7 @@
     toggle.setAttribute("aria-expanded", String(!collapsed));
     toggle.setAttribute(
       "aria-label",
-      collapsed ? "Show Inspector side panel" : "Hide Inspector side panel"
+      collapsed ? "Show Notes" : "Hide Notes"
     );
     toggle.title = collapsed ? "Show side panel" : "Hide side panel";
 

@@ -341,6 +341,17 @@ list.querySelectorAll(
     _renderPanel(state);
   };
 
+  // The Inspector's whole side column IS the notes panel now -- there's no
+  // tab or button to open it, so it binds itself to that role and stays
+  // open rather than waiting for a toggle that no longer exists.
+  window.ensureNotesOpenFor = function (role) {
+    _resetIfRoomChanged();
+    if (_active && _role === role) return;
+    _active = true;
+    _role = role;
+    _renderPanel(window.state);
+  };
+
   // Called from handleSetterInput / handleGuesserInput when notes is active.
   // Returns true to consume the event.
   window.notesInput = function (event) {
