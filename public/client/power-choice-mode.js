@@ -146,7 +146,7 @@
       <button type="button" id="pcSpyChargeCard" class="pc-charge-card" aria-expanded="${detailsOpen}">
         <span class="pc-charge-label"><span class="pc-charge-star" aria-hidden="true">&#9733;</span>SPYOMETER</span>
         <div class="pc-meter-wrap">
-          ${meterMarkup(total, SPY_MAX, [5, 8, 15], "pcSpyMeter", "pc-spy-meter")}
+          ${meterMarkup(total, SPY_MAX, [5, 9, 15], "pcSpyMeter", "pc-spy-meter")}
           <span class="pc-charge-value"><strong>${total}</strong><span>/ ${SPY_MAX}</span></span>
         </div>
         <span class="pc-charge-click-copy">Click for rules</span>
@@ -480,10 +480,18 @@
     const questLive = attempts % 2 === 1;
     if (!questLive) {
       currentDraftRow()?.classList.remove("pc-quest-draft-met");
-      if (host.dataset.pcSignature !== "pc-quest-placeholder") {
-        host.dataset.pcSignature = "pc-quest-placeholder";
-        host.innerHTML = `<div class="pc-current-quest-card pc-quest-placeholder">
-          <span class="pc-current-main"><strong>Quest coming next round</strong></span>
+      // The most recent LIVE attempt (2nd/4th/6th guess) is what this
+      // "waiting" turn's card should reflect -- inspector.lastResult itself
+      // gets overwritten every guess including this non-live one, so it
+      // can't tell a genuinely-met quest apart from one that wasn't; the
+      // server tracks the live outcome separately for exactly this reason
+      // (see lastLiveSuccess in powerChoiceServer.js).
+      const met = inspector?.lastLiveSuccess === true;
+      const placeholderKey = met ? "met" : "pending";
+      if (host.dataset.pcSignature !== `pc-quest-placeholder-${placeholderKey}`) {
+        host.dataset.pcSignature = `pc-quest-placeholder-${placeholderKey}`;
+        host.innerHTML = `<div class="pc-current-quest-card pc-quest-placeholder${met ? " is-met" : ""}">
+          <span class="pc-current-main"><strong>${met ? "Quest reward incoming" : "Quest incoming next round"}</strong></span>
         </div>`;
       }
       return;
@@ -527,6 +535,7 @@
         <strong>${esc(quest.title || "Quest")}</strong>
         <span class="pc-current-expand">${questGuideOpen ? "Close" : "Rules"}</span>
       </span>
+      <span class="pc-quest-optional-note">Complete for a reward</span>
       <span class="pc-current-status" aria-live="polite">${met ? "MET" : ""}</span>
       <span class="pc-current-desc">${esc(quest.description || "Complete the shown condition.")}</span>
       ${conditionLabels.length ? `<span class="pc-current-conditions">${conditionLabels.map((label, index) => `<span class="pc-condition-chip${conditionResults[index] ? " is-met" : ""}">${esc(label)}</span>`).join("")}</span>` : ""}
@@ -1022,7 +1031,7 @@
       const classes = ["pc-award-capsule-segment"];
       if (number <= value) classes.push("is-filled");
       if (number >= bonusFrom && number <= value) classes.push("is-bonus");
-      if ([5, 8, 15].includes(number)) classes.push("is-milestone");
+      if ([5, 9, 15].includes(number)) classes.push("is-milestone");
       return `<span class="${classes.join(" ")}" data-value="${number}"></span>`;
     }).join("");
   }
