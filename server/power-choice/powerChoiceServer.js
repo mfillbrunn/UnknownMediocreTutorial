@@ -16,7 +16,7 @@ const {
 const { randomPool, tierFor } = require("./powerTiers");
 
 const MODE = "powerChoice";
-const SPY_THRESHOLDS = [5, 8, 15];
+const SPY_THRESHOLDS = [5, 9, 15];
 // Quests no longer build toward a shared points meter -- each quest met
 // grants a reward immediately, cycling through these same three tiers
 // (fixedOptions/threePowerOptions below dispatch on these threshold
@@ -156,7 +156,14 @@ function freshPowerChoice(roundIndex) {
       questsResolved: 0,
       attempts: 0,
       successes: 0,
-      lastResult: null
+      lastResult: null,
+      // Whether the most recent LIVE quest attempt (the 2nd/4th/6th guess)
+      // was met -- unlike lastResult, only ever written on a live guess, so
+      // it survives the "waiting" guess right after it. lastResult itself
+      // gets overwritten by every guess (live or not) with that guess's own
+      // evaluation, which is meaningless on a non-live turn, so it can't be
+      // used to tell the placeholder card which message to show.
+      lastLiveSuccess: null
     },
     pendingChoice: null,
     // Actually blocks the guesser from using these letters (server rejects
@@ -468,7 +475,8 @@ function initializeRound(state) {
     questsResolved: 0,
     attempts: 0,
     successes: 0,
-    lastResult: null
+    lastResult: null,
+    lastLiveSuccess: null
   };
   pc.inspector.questsResolved ||= 0;
   // Plain ||= would hand out a fourth quest the moment the third one was
@@ -621,11 +629,11 @@ function fixedOptions(role, threshold) {
         description: "Reveal one random letter that is in the secret."
       },
       {
-        id: "inspector-remove-unused-2",
+        id: "inspector-block-unused-3",
         kind: "fixed",
         icon: "×3",
-        title: "Rule Out Three",
-        description: "Learn three random unused letters that are not in the secret. They gray out on the keyboard and the Spy can no longer hide the secret behind them."
+        title: "Lock Out Three",
+        description: "Locks three random unused letters for BOTH players: neither you nor the Spy can use them for the rest of the round."
       },
       {
         id: "inspector-remove-point-1",
@@ -633,13 +641,6 @@ function fixedOptions(role, threshold) {
         icon: "−1",
         title: "Remove a Point",
         description: "Subtract 1 point from your final guess total."
-      },
-      {
-        id: "inspector-block-unused-4",
-        kind: "fixed",
-        icon: "×4",
-        title: "Lock Out Four",
-        description: "Locks four random unused letters for BOTH players: neither you nor the Spy can use them for the rest of the round."
       }
     ];
   }
@@ -687,7 +688,7 @@ function buildChoice(state, role, threshold, owner) {
   const side =
     role === "setter" ? state.powerChoice.spy : state.powerChoice.inspector;
   const randomMilestone =
-    (role === "setter" && threshold === 8) ||
+    (role === "setter" && threshold === 9) ||
     (role === "guesser" && threshold === 3);
   // Always exactly three cards to pick from. Some fixed groups define
   // more than three candidates (so the pool can vary between rewards) --
@@ -925,20 +926,6 @@ function blockedLetterIn(state, word) {
   return blocked.find(letter => word.includes(letter)) || null;
 }
 
-// Non-blocking for guesses -- the Inspector can still type these (the
-// client styles them like any other already-guessed absent letter, no
-// SUBMIT_GUESS check exists for ruledOutLetters). But they ARE confirmed
-// absent from the secret, so addAbsentConstraints below still binds the
-// Spy the same way removeUnusedLetters' eliminated letters do.
-function ruleOutUnusedLetters(state, count) {
-  const selected = shuffle(unusedLetterCandidates(state)).slice(0, count);
-  const ruledOut = new Set(state.powerChoice.ruledOutLetters || []);
-  for (const letter of selected) ruledOut.add(letter);
-  state.powerChoice.ruledOutLetters = [...ruledOut];
-  addAbsentConstraints(state, selected);
-  return selected;
-}
-
 function powerOptionApplicable(state, option) {
   if (!option || option.kind !== "power") return false;
   if (!engine.powers?.[option.powerId]?.apply) return false;
@@ -973,8 +960,7 @@ function fixedOptionApplicable(state, option) {
       const known = new Set(feedbackLetters(state, true));
       return [...new Set(normalizeWord(state.secret))].some(letter => !known.has(letter));
     }
-    case "inspector-remove-unused-2":
-    case "inspector-block-unused-4":
+    case "inspector-block-unused-3":
       return unusedLetterCandidates(state).length > 0;
     case "inspector-remove-point-1":
     case "inspector-remove-point-2":
@@ -1035,11 +1021,7 @@ function effectDetailText(option, detail) {
       return detail?.letter
         ? `Yellow clue received: ${detail.letter}.`
         : "No unrevealed secret letter remained.";
-    case "inspector-remove-unused-2":
-      return letters.length
-        ? `Ruled out letters: ${letters.join(", ")}.`
-        : "No unused gray letters remained.";
-    case "inspector-block-unused-4":
+    case "inspector-block-unused-3":
       return letters.length
         ? `Blocked letters: ${letters.join(", ")}.`
         : "No unused gray letters remained.";
@@ -1154,11 +1136,8 @@ function applyChoice(state, option, choice, room, roomId, io, context) {
       case "inspector-yellow-1":
         detail = { letter: addYellow(state) };
         break;
-      case "inspector-remove-unused-2":
-        detail = { letters: ruleOutUnusedLetters(state, 3) };
-        break;
-      case "inspector-block-unused-4":
-        detail = { letters: removeUnusedLetters(state, 4) };
+      case "inspector-block-unused-3":
+        detail = { letters: removeUnusedLetters(state, 3) };
         break;
       case "inspector-remove-point-1": {
         const before = Math.max(0, Number(state.guessCount) || 0);
@@ -1243,6 +1222,11 @@ function evaluateInspectorGuess(state, guess, roomId, io) {
       : [];
   inspector.attempts += 1;
   if (success) inspector.successes += 1;
+  // Only written on the live guess itself -- lastResult below is
+  // overwritten by every guess, including the very next (non-live) one,
+  // which would otherwise erase the real result before the "waiting" turn
+  // ever gets a chance to show it (see renderCurrentQuest()).
+  if (questLive) inspector.lastLiveSuccess = success;
 
   inspector.lastResult = {
     questId: quest?.id,

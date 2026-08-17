@@ -762,6 +762,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Stars, the bonus-star pill, and the Keep/New counts are three
+     independent blocks sharing this one row. With no wrap, a narrower
+     board (e.g. once the side column is expanded and eats into the
+     board's width) squished all three down instead of giving any of them
+     room -- letters and numbers started clipping/overlapping. Wrapping
+     drops a whole block to its own line instead, so everything stays
+     fully readable regardless of how little width is left. `gap` already
+     covers the row spacing that appears once it wraps. */
+  flex-wrap: wrap;
+  row-gap: 4px;
   gap: 8px;
   width: 100%;
   min-height: 31px;
@@ -839,28 +849,10 @@
   60% { transform: translateY(-1px) scale(1.1) rotate(7deg); }
 }
 
-/* Short bit of praise once the decision is genuinely good. */
-.setter-star-praise {
-  margin-left: 5px;
-  color: #ffdf7a;
-  font-size: 10px;
-  font-weight: 950;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-  text-shadow: 0 0 10px rgba(255, 205, 85, 0.6);
-  animation: pc-praise-pop 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.4);
-}
-
-@keyframes pc-praise-pop {
-  from { opacity: 0; transform: translateY(3px) scale(0.8); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-/* The same praise word, floated over the board on the commit itself --
-   beside the stars it was only ever readable while the decision was still
-   being weighed, and it vanished at the exact moment it was earned.
-   Positioned in JS (setter-board.js's floatPraise) and self-removing when
-   the animation ends. */
+/* The praise word, floated over the board on the commit itself -- shown
+   ONLY here, never inline beside the stars while the decision is still
+   being weighed (see setter-board.js's updateStarPraise/floatPraise).
+   Positioned in JS and self-removing when the animation ends. */
 .setter-praise-float {
   position: fixed;
   z-index: 100002;
@@ -1601,6 +1593,21 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   font-weight: 800;
 }
 
+/* The placeholder shown between the live (2nd/4th/6th) guesses -- "Quest
+   incoming next round" is a neutral wait, but once the last live attempt
+   actually landed, "Quest reward incoming" is good news and should read
+   like it, not like the same dim gray filler text. Reuses .is-met's own
+   green treatment rather than duplicating it. */
+.pc-current-quest-card.pc-quest-placeholder.is-met {
+  border-color: rgba(112, 255, 194, 0.86);
+  background: linear-gradient(180deg, rgba(17, 42, 39, 0.99), rgba(6, 20, 20, 0.99));
+  box-shadow: 0 0 20px rgba(78, 255, 183, 0.18);
+}
+
+.pc-quest-placeholder.is-met .pc-current-main strong {
+  color: #7dffc2;
+}
+
 .pc-current-main {
   display: flex;
   flex-wrap: wrap;
@@ -1629,8 +1636,19 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 .pc-current-desc,
-.pc-current-conditions {
+.pc-current-conditions,
+.pc-quest-optional-note {
   grid-column: 1 / -1;
+}
+
+/* Sits right under the quest name, above the description and the
+   collapsible Rules panel -- a plain reminder that the quest is a bonus
+   attempt, not a requirement, so missing it costs nothing. */
+.pc-quest-optional-note {
+  color: rgba(185, 218, 238, 0.5);
+  font-size: 9px;
+  font-style: italic;
+  letter-spacing: 0.02em;
 }
 
 .pc-current-desc {
@@ -2345,8 +2363,7 @@ html[data-theme-mode="light"] .pc-current-quest-card.is-met {
       .pc-quest-met-flourish,
       #setterBonusTargetV9.pc-bonus-satisfied,
       #setterScreen #setterCoverStars.stars-2 .setter-cover-star.is-filled,
-      #setterScreen #setterCoverStars.stars-3 .setter-cover-star.is-filled,
-      .setter-star-praise
+      #setterScreen #setterCoverStars.stars-3 .setter-cover-star.is-filled
     ) {
     animation: none !important;
   }

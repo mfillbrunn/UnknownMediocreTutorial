@@ -201,10 +201,13 @@
     window.addEventListener("pointercancel", finishGesture, { passive: true });
   }
 
-  // Short bit of praise beside the stars for a genuinely good decision.
-  // Only rendered for a rated draft (not while idle/invalid), and only
-  // re-inserted when the wording actually changes so its pop-in animation
-  // fires once per achievement rather than on every render tick.
+  // Congratulation text for a genuinely good decision -- shown ONLY as the
+  // floating popup once the Spy actually commits (see floatPraise /
+  // onSetterDecisionSubmitted below), never inline beside the stars while
+  // the decision is still being weighed. It used to render inline too, but
+  // "Perfect!"/"Flawless" sitting next to a draft that hasn't been sent yet
+  // reads as praise for a choice that isn't final -- the congratulation
+  // belongs on the commit, not the consideration.
   const STAR_PRAISE = {
     2: ["Nice", "Solid", "Good one", "Sharp"],
     3: ["Amazing", "Perfect!", "Superb", "Flawless", "Brilliant"]
@@ -212,7 +215,9 @@
   const BONUS_PRAISE = ["Well done", "Great", "Spot on", "Excellent"];
 
   // The wording is picked once per achievement and held until the
-  // achievement itself changes, so it doesn't reshuffle on every render.
+  // achievement itself changes, so it doesn't reshuffle on every render --
+  // and so the float popup shown on submit says the same thing the player
+  // would have seen had they kept looking at the (now-removed) inline text.
   let _praiseKey = "";
   let _praiseText = "";
 
@@ -220,7 +225,8 @@
     return list[Math.floor(Math.random() * list.length)] || "";
   }
 
-  function renderStarPraise(mount, count, strength) {
+  // Recomputes _praiseText for the current rating without touching the DOM.
+  function updateStarPraise(count, strength) {
     const rated = strength?.status === "rated" || strength?.status === "same";
     const bonus = !!strength?.bonusStar;
     // Praise belongs to the decision being *considered*. Once the secret
@@ -231,11 +237,9 @@
     const live = rated && !strength?.draftIsPending && !!strength?.draftValid;
     const key = live ? `${count}|${bonus ? "b" : ""}` : "";
 
-    let praise = mount.parentElement?.querySelector(".setter-star-praise");
     if (!key || (!bonus && !STAR_PRAISE[count])) {
       _praiseKey = "";
       _praiseText = "";
-      praise?.remove();
       return;
     }
 
@@ -245,40 +249,20 @@
         ? (count >= 3 ? pickPraise(STAR_PRAISE[3]) : pickPraise(BONUS_PRAISE))
         : pickPraise(STAR_PRAISE[count] || []);
     }
-    const text = _praiseText;
-    if (!text) {
-      praise?.remove();
-      return;
-    }
-    if (praise && praise.textContent === text) return;
-    if (!praise) {
-      praise = document.createElement("span");
-      praise.className = "setter-star-praise";
-      praise.setAttribute("aria-live", "polite");
-      mount.insertAdjacentElement("afterend", praise);
-    }
-    praise.textContent = text;
-    praise.style.animation = "none";
-    void praise.offsetWidth;
-    praise.style.animation = "";
   }
 
-  // Wipes every trace of the last rating: the filled pips, the escalating
-  // glow classes, and the praise word. Called whenever the stars go away
-  // (submitted, roles switched, new match) -- renderCoverStars used to just
-  // add .hidden and return, which left all of that stale underneath. The
-  // praise word is the visible half of that bug: it's a SIBLING of this
-  // element (see renderStarPraise's insertAdjacentElement("afterend")), so
-  // hiding the stars never hid it and it sat on the board into the next
-  // match. The charge-hint tile outline is deliberately NOT reset here --
-  // it marks which tile the bonus star is on, which is still worth showing
-  // on an untouched draft that has no rating to display yet.
+  // Wipes every trace of the last rating: the filled pips and the
+  // escalating glow classes. Called whenever the stars go away (submitted,
+  // roles switched, new match) -- renderCoverStars used to just add
+  // .hidden and return, which left all of that stale underneath. The
+  // charge-hint tile outline is deliberately NOT reset here -- it marks
+  // which tile the bonus star is on, which is still worth showing on an
+  // untouched draft that has no rating to display yet.
   function clearCoverStars(el) {
     el.classList.remove("stars-2", "stars-3");
     el.querySelectorAll("[data-cover-star]").forEach(star => {
       star.classList.remove("is-filled");
     });
-    el.parentElement?.querySelector(".setter-star-praise")?.remove();
     _praiseKey = "";
     _praiseText = "";
   }
@@ -335,8 +319,7 @@
     _decidedForPending = String(window.state?.pendingGuess || "").toUpperCase() || null;
 
     const stars = byId("setterCoverStars");
-    const praiseText =
-      stars?.parentElement?.querySelector(".setter-star-praise")?.textContent || "";
+    const praiseText = _praiseText;
 
     if (stars) {
       floatPraise(praiseText, stars);
@@ -432,7 +415,7 @@
       !!strength?.draftValid;
     el.classList.toggle("stars-2", celebrating && count === 2);
     el.classList.toggle("stars-3", celebrating && count >= 3);
-    renderStarPraise(el, count, strength);
+    updateStarPraise(count, strength);
 
     el.setAttribute(
       "aria-label",
