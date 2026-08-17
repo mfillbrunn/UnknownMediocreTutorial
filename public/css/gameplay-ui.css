@@ -137,9 +137,10 @@
 
 /* The log is the whole panel now, so it gets real room and readable type
    instead of the cramped 8-9px it used while sharing the row. */
-/* The Inspector's side column is the Notes panel outright -- no log, no
-   tabs. Borderless and flush so every pixel goes to the notes list. */
-#guesserScreen .guesser-info-col #notesPanelGuesser {
+/* The Inspector's side column is the action log outright -- no notes, no
+   tabs. Borderless and flush so every pixel goes to the log. */
+#guesserScreen .guesser-info-col #actionLogGuesser {
+  display: flex !important;
   flex: 1 1 auto;
   min-height: 0;
   max-height: none;
@@ -148,6 +149,8 @@
   border-radius: 0;
   background: none;
   box-shadow: none;
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 #guesserScreen .guesser-sidebar {
@@ -156,10 +159,6 @@
   border-radius: 0;
   background: none;
   box-shadow: none;
-}
-
-#guesserScreen .guesser-info-col #actionLogGuesser {
-  display: none !important;
 }
 
 /* Spy side column: Spyometer on top, log filling the rest. The Log/Notes

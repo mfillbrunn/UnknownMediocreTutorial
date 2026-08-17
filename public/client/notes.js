@@ -326,6 +326,16 @@ list.querySelectorAll(
   // ── Public API ──────────────────────────────────────────────────────
 
   window.toggleNotes = function (role) {
+    // Notes has no panel for either role any more (both side columns are
+    // the action log). Several older sidebar scripts still call this on
+    // their own schedule -- without this guard they'd flip _active true
+    // with nothing on screen, and notesInput below would then swallow
+    // keystrokes that belong to the real guess/secret draft.
+    const roleId = role === "setter" ? "Setter" : "Guesser";
+    if (!document.getElementById(`notesPanel${roleId}`)) {
+      _active = false;
+      return;
+    }
     _resetIfRoomChanged();
     if (_active && _role !== role) {
       // switching roles — just swap
@@ -339,17 +349,6 @@ list.querySelectorAll(
 
   window.renderNotesPanel = function (state) {
     _renderPanel(state);
-  };
-
-  // The Inspector's whole side column IS the notes panel now -- there's no
-  // tab or button to open it, so it binds itself to that role and stays
-  // open rather than waiting for a toggle that no longer exists.
-  window.ensureNotesOpenFor = function (role) {
-    _resetIfRoomChanged();
-    if (_active && _role === role) return;
-    _active = true;
-    _role = role;
-    _renderPanel(window.state);
   };
 
   // Called from handleSetterInput / handleGuesserInput when notes is active.

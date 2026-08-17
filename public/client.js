@@ -782,10 +782,6 @@ function updateUI() {
   updateSetterDraftInvalidOverlay();
   updateGuesserDraftInvalidOverlay();
   window.renderActionLog?.(state, myRole);
-  // Notes is the Inspector's side column outright (no tab to open it), so
-  // it binds to that role on its own; the Spy has no notes panel at all.
-  if (myRole === "guesser") window.ensureNotesOpenFor?.("guesser");
-  window.renderNotesPanel?.(state);
   if (myRole === "setter") window.updateSetterIdleExpand?.(state);
 }
 
