@@ -218,19 +218,14 @@
     const charge = window.state?.powers?.spyCharge;
     const hint = charge?.hint;
     const hasHint = !!hint?.letter && Number.isInteger(hint.position);
-    const target = byId("setterCoverTarget");
-    const targetLabel = byId("setterCoverTargetLabel");
     const hintLetter = hasHint ? String(hint.letter).toUpperCase() : "";
 
-    target?.classList.toggle("hidden", !hasHint);
-
-    // Plain "P 3rd"-style label (letter, then the 1-indexed position
-    // spelled out as an ordinal) -- no separate letter tile alongside it
-    // (see updateHintSlotTile below for where the letter now actually
-    // shows: the draft tile itself, once typed).
-    if (targetLabel) {
-      targetLabel.textContent = hasHint ? `${hintLetter} in ${ordinal(hint.position + 1)}` : ""; // compact-bonus-hint-v1
-    }
+    // The letter/position readout used to also live here as a "P in 3rd"
+    // text label next to the stars -- that's now shown once, in the
+    // bonus-star pill on the Keep/New row (see normalizeBonusTarget in
+    // power-choice-mode.js), so #setterCoverTarget stays hidden here to
+    // avoid showing the same information twice.
+    byId("setterCoverTarget")?.classList.add("hidden");
 
     const draft = String(window.state?.setterDraft || "")
       .replace(/\s/g, "")
@@ -245,7 +240,10 @@
       draft[hint.position] === hintLetter
     );
 
-    target?.classList.toggle("is-earned", bonusEarned);
+    // Exposed for power-choice-mode.js's bonus-star pill so both places
+    // that reflect this state (the pill and the draft-tile outline) stay
+    // in sync off one computation instead of two separately-derived ones.
+    window.__setterBonusEarned = bonusEarned;
     updateHintSlotTile(hint, hasHint, bonusEarned);
 
     el.setAttribute(

@@ -24,8 +24,12 @@ const SPY_THRESHOLDS = [5, 8, 15];
 const INSPECTOR_REWARD_SEQUENCE = [2, 3, 5];
 const VOWELS = new Set("AEIOU");
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+
 const QUEST_TYPES = [
-  "ROW",
+  "ROW_LIMIT",
+  "ROW_ONLY",
+  "ROW_AVOID",
   "RARE",
   "ALPHA",
   "DOUBLES",
@@ -148,7 +152,13 @@ function freshPowerChoice(roundIndex) {
       lastResult: null
     },
     pendingChoice: null,
+    // Actually blocks the guesser from using these letters (server rejects
+    // guesses that include one, client disables + X's the key).
     eliminatedLetters: [],
+    // Informational only -- letters known to be absent, but still usable;
+    // the client just styles them like any other already-guessed absent
+    // letter instead of blocking them.
+    ruledOutLetters: [],
     bonusTimeTurnKeys: [],
     lastResolution: null
   };
@@ -202,15 +212,33 @@ function makeQuest(excludeType = null) {
     .toString(36)
     .slice(2, 8)}`;
 
-  if (type === "ROW") {
-    const row = pick(["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]);
+  if (type === "ROW_LIMIT") {
     return {
       id,
       type,
       icon: "⌨",
-      title: "Keyboard Row",
-      description: `Use only letters from ${row}.`,
-      row
+      title: "Spread Out",
+      description: "Use at most 2 letters from any single keyboard row."
+    };
+  }
+  if (type === "ROW_ONLY") {
+    return {
+      id,
+      type,
+      icon: "⌨",
+      title: "One Row",
+      description: "Use letters from only one keyboard row -- any row."
+    };
+  }
+  if (type === "ROW_AVOID") {
+    const avoidRow = pick(KEYBOARD_ROWS);
+    return {
+      id,
+      type,
+      icon: "⌨",
+      title: "Skip a Row",
+      description: `Avoid every letter in ${avoidRow}.`,
+      avoidRow
     };
   }
   if (type === "RARE") {
@@ -368,8 +396,14 @@ function evaluateQuest(state, quest, guess) {
   const word = normalizeWord(guess);
   if (!/^[A-Z]{5}$/.test(word) || !quest) return false;
   switch (quest.type) {
-    case "ROW":
-      return [...word].every(letter => quest.row.includes(letter));
+    case "ROW_LIMIT":
+      return KEYBOARD_ROWS.every(
+        row => [...word].filter(letter => row.includes(letter)).length <= 2
+      );
+    case "ROW_ONLY":
+      return KEYBOARD_ROWS.some(row => [...word].every(letter => row.includes(letter)));
+    case "ROW_AVOID":
+      return [...word].every(letter => !String(quest.avoidRow || "").includes(letter));
     case "RARE":
       return quest.letters.some(letter => word.includes(letter));
     case "ALPHA": {
@@ -429,6 +463,7 @@ function initializeRound(state) {
   };
   pc.inspector.currentQuest ||= makeQuest();
   pc.eliminatedLetters ||= [];
+  pc.ruledOutLetters ||= [];
   pc.bonusTimeTurnKeys ||= [];
 
   // Reward powers are applied immediately when selected. They are never
@@ -573,9 +608,9 @@ function fixedOptions(role, threshold) {
       {
         id: "inspector-remove-unused-2",
         kind: "fixed",
-        icon: "×2",
-        title: "Rule Out Two",
-        description: "Remove two random unused letters that are not in the secret."
+        icon: "×3",
+        title: "Rule Out Three",
+        description: "Learn three random unused letters that are not in the secret."
       },
       {
         id: "inspector-remove-point-1",
@@ -583,6 +618,13 @@ function fixedOptions(role, threshold) {
         icon: "−1",
         title: "Remove a Point",
         description: "Subtract 1 point from your final guess total."
+      },
+      {
+        id: "inspector-block-unused-4",
+        kind: "fixed",
+        icon: "×4",
+        title: "Lock Out Four",
+        description: "Block four random unused letters -- you won't be able to use them at all."
       }
     ];
   }
@@ -614,15 +656,30 @@ function fixedOptions(role, threshold) {
   return [];
 }
 
+// Trims a fixed-reward group down to three cards. Options that would do
+// nothing right now (fixedOptionApplicable === false) are dropped first,
+// so a random trim can't leave the player staring at three dead cards
+// while a usable one was silently cut.
+function pickThree(state, options) {
+  const list = Array.isArray(options) ? options : [];
+  if (list.length <= 3) return list;
+  const usable = list.filter(option => fixedOptionApplicable(state, option));
+  const rest = list.filter(option => !usable.includes(option));
+  return shuffle(usable).concat(shuffle(rest)).slice(0, 3);
+}
+
 function buildChoice(state, role, threshold, owner) {
   const side =
     role === "setter" ? state.powerChoice.spy : state.powerChoice.inspector;
   const randomMilestone =
     (role === "setter" && threshold === 8) ||
     (role === "guesser" && threshold === 3);
+  // Always exactly three cards to pick from. Some fixed groups define
+  // more than three candidates (so the pool can vary between rewards) --
+  // narrow those down to a random three rather than widening the row.
   const options = randomMilestone
     ? threePowerOptions(state, role, side.usedPowerIds)
-    : fixedOptions(role, threshold);
+    : pickThree(state, fixedOptions(role, threshold));
   return {
     id: `${role}-${threshold}-${Date.now()}-${Math.random()
       .toString(36)
@@ -799,19 +856,42 @@ function unusedLetterCandidates(state) {
     (state.history || []).flatMap(entry => normalizeWord(entry?.guess).split(""))
   );
   const eliminated = new Set(state.powerChoice?.eliminatedLetters || []);
+  const ruledOut = new Set(state.powerChoice?.ruledOutLetters || []);
   return ALPHABET.filter(
     letter =>
       !secretLetters.has(letter) &&
       !used.has(letter) &&
-      !eliminated.has(letter)
+      !eliminated.has(letter) &&
+      !ruledOut.has(letter)
   );
 }
 
+// Actually blocks the letters from being typed (see the SUBMIT_GUESS
+// check and markEliminatedKeys() client-side).
 function removeUnusedLetters(state, count) {
   const selected = shuffle(unusedLetterCandidates(state)).slice(0, count);
   const eliminated = new Set(state.powerChoice.eliminatedLetters || []);
   for (const letter of selected) eliminated.add(letter);
   state.powerChoice.eliminatedLetters = [...eliminated];
+  return selected;
+}
+
+// First locked-out letter appearing in `word`, or null. Locked-out letters
+// bind BOTH roles: the Inspector can't guess them and the Spy can't hide
+// behind them in the secret.
+function blockedLetterIn(state, word) {
+  const blocked = state.powerChoice?.eliminatedLetters || [];
+  if (!blocked.length || !word) return null;
+  return blocked.find(letter => word.includes(letter)) || null;
+}
+
+// Informational only -- the letters are known-absent but stay usable; the
+// client just styles them like any other already-guessed absent letter.
+function ruleOutUnusedLetters(state, count) {
+  const selected = shuffle(unusedLetterCandidates(state)).slice(0, count);
+  const ruledOut = new Set(state.powerChoice.ruledOutLetters || []);
+  for (const letter of selected) ruledOut.add(letter);
+  state.powerChoice.ruledOutLetters = [...ruledOut];
   return selected;
 }
 
@@ -850,6 +930,7 @@ function fixedOptionApplicable(state, option) {
       return [...new Set(normalizeWord(state.secret))].some(letter => !known.has(letter));
     }
     case "inspector-remove-unused-2":
+    case "inspector-block-unused-4":
       return unusedLetterCandidates(state).length > 0;
     case "inspector-remove-point-1":
     case "inspector-remove-point-2":
@@ -913,6 +994,10 @@ function effectDetailText(option, detail) {
     case "inspector-remove-unused-2":
       return letters.length
         ? `Ruled out letters: ${letters.join(", ")}.`
+        : "No unused gray letters remained.";
+    case "inspector-block-unused-4":
+      return letters.length
+        ? `Blocked letters: ${letters.join(", ")}.`
         : "No unused gray letters remained.";
     case "inspector-remove-point-1":
     case "inspector-remove-point-2":
@@ -994,7 +1079,10 @@ function applyChoice(state, option, choice, room, roomId, io) {
         detail = { letter: addYellow(state) };
         break;
       case "inspector-remove-unused-2":
-        detail = { letters: removeUnusedLetters(state, 2) };
+        detail = { letters: ruleOutUnusedLetters(state, 3) };
+        break;
+      case "inspector-block-unused-4":
+        detail = { letters: removeUnusedLetters(state, 4) };
         break;
       case "inspector-remove-point-1": {
         const before = Math.max(0, Number(state.guessCount) || 0);
@@ -1041,9 +1129,18 @@ function evaluateInspectorGuess(state, guess, roomId, io) {
   initializeRound(state);
   const inspector = state.powerChoice.inspector;
   const quest = inspector.currentQuest;
-  const success = evaluateQuest(state, quest, guess);
+
+  // The quest is only actually attemptable on every other guess -- the
+  // 2nd, 4th, 6th, etc. (inspector.attempts is the count BEFORE this
+  // guess, so attempts===1 means this is the 2nd guess). On the guesses
+  // in between, the client shows a "quest coming next round" placeholder
+  // instead (see the matching questLive check in renderCurrentQuest(),
+  // public/client/power-choice-mode.js) and this guess can't complete or
+  // rotate it.
+  const questLive = inspector.attempts % 2 === 1;
+  const success = questLive && evaluateQuest(state, quest, guess);
   const conditions =
-    quest?.type === "FIELDREPORT"
+    questLive && quest?.type === "FIELDREPORT"
       ? evaluateFieldReportConditions(quest, guess)
       : [];
   inspector.attempts += 1;
@@ -1072,12 +1169,10 @@ function evaluateInspectorGuess(state, guess, roomId, io) {
     inspector.queuedMilestones.push(tier);
   }
 
-  // A fresh quest replaces the current one the moment it's met (holding a
-  // completed quest around for its remaining turns would just be dead
-  // weight), or after 2 full Spy-secret+Inspector-guess turns elapse,
-  // whichever comes first.
-  inspector.questTurnsElapsed += 1;
-  if (success || inspector.questTurnsElapsed >= 2) {
+  // A fresh quest replaces the current one after each live attempt at it
+  // (win or lose) -- it's only ever attempted once every other guess, so
+  // there's no reason to hold a missed one around for a second try.
+  if (questLive) {
     inspector.currentQuest = makeQuest(quest?.type);
     inspector.questTurnsElapsed = 0;
   }
@@ -1475,9 +1570,7 @@ function handleAction(room, state, action, roomId, context) {
 
   if (action.type === "SUBMIT_GUESS" && action.userId === state.guesser) {
     const word = normalizeWord(action.guess);
-    const blocked = (state.powerChoice.eliminatedLetters || []).find(letter =>
-      word.includes(letter)
-    );
+    const blocked = blockedLetterIn(state, word);
     if (blocked) {
       sendError(
         room,
@@ -1485,6 +1578,27 @@ function handleAction(room, state, action, roomId, context) {
         action.userId,
         io,
         `${blocked} was ruled out and cannot be used.`
+      );
+      return true;
+    }
+  }
+
+  // The same locked-out letters bind the Spy's secret too -- otherwise the
+  // Spy could simply hide the word behind letters the Inspector is barred
+  // from ever typing, which turns the reward into a self-inflicted trap.
+  if (
+    action.userId === state.setter &&
+    ["SET_SECRET", "SET_SECRET_NEW"].includes(action.type)
+  ) {
+    const secret = normalizeWord(action.secret ?? action.word ?? action.guess);
+    const blocked = secret && blockedLetterIn(state, secret);
+    if (blocked) {
+      sendError(
+        room,
+        state,
+        action.userId,
+        io,
+        `${blocked} is locked out this round and cannot be used in the secret.`
       );
       return true;
     }
