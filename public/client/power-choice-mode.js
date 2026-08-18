@@ -1320,14 +1320,47 @@
     const target = spyAwardTarget();
     const targetRect = target?.getBoundingClientRect();
     if (targetRect?.width) {
+      // A single star actually making the trip from the capsule to the
+      // real meter -- the capsule itself used to be what flew over
+      // (shrinking down into the target), which read as a card sliding
+      // and shrinking rather than "a star shooting into the bar." The
+      // capsule now just fades in place while a dedicated comet-styled
+      // star (same look pc-award-falling-star already uses for the stars
+      // landing in the capsule's own mini-meter) makes that final leg,
+      // with a slight upward bow at the midpoint so it reads as a
+      // trajectory landing in the bar rather than a straight slide.
       const capsuleRect = capsule.getBoundingClientRect();
-      const dx = targetRect.left + targetRect.width / 2 - (capsuleRect.left + capsuleRect.width / 2);
-      const dy = targetRect.top + targetRect.height / 2 - (capsuleRect.top + capsuleRect.height / 2);
-      const flight = capsule.animate([
-        { transform: "translate(-50%, 0) scale(1)", opacity: 1 },
-        { transform: `translate(calc(-50% + ${dx}px), ${dy}px) scale(.42)`, opacity: .9 }
+      const startX = capsuleRect.left + capsuleRect.width / 2;
+      const startY = capsuleRect.top + capsuleRect.height / 2;
+      const endX = targetRect.left + targetRect.width / 2;
+      const endY = targetRect.top + targetRect.height / 2;
+      const dx = endX - startX;
+      const dy = endY - startY;
+
+      const shootingStar = document.createElement("span");
+      shootingStar.className = "pc-award-shooting-star";
+      shootingStar.textContent = "★";
+      shootingStar.style.left = `${startX}px`;
+      shootingStar.style.top = `${startY}px`;
+      document.body.appendChild(shootingStar);
+
+      const capsuleFade = capsule.animate(
+        [{ opacity: 1 }, { opacity: 0 }],
+        { duration: 200, easing: "ease-out", fill: "forwards" }
+      );
+
+      const flight = shootingStar.animate([
+        { transform: "translate(-50%,-50%) scale(1)", opacity: 1 },
+        {
+          transform: `translate(calc(-50% + ${dx * 0.5}px), calc(-50% + ${dy * 0.5 - 46}px)) scale(.85)`,
+          opacity: 1,
+          offset: 0.55
+        },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.3)`, opacity: 0.9 }
       ], { duration: 520, easing: "cubic-bezier(.2,.75,.25,1)", fill: "forwards" });
-      try { await flight.finished; } catch {}
+
+      try { await Promise.all([flight.finished, capsuleFade.finished]); } catch {}
+      shootingStar.remove();
     }
     capsule.remove();
     spyVisualOverride = after;

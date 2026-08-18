@@ -2146,6 +2146,42 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   color: var(--game-blue);
 }
 
+/* The capsule-to-meter award flight (animateSpyAward in power-choice-mode.js)
+   -- same comet look as .pc-award-falling-star, positioned/sized for a
+   fixed, viewport-wide flight rather than one confined inside the capsule. */
+.pc-award-shooting-star {
+  position: fixed;
+  z-index: 2147482750;
+  color: #ffffff;
+  font-size: 28px;
+  text-shadow:
+    0 0 6px #ffffff,
+    0 0 16px rgba(140, 226, 255, 1),
+    0 0 34px rgba(60, 178, 255, 0.9),
+    0 0 60px rgba(40, 150, 255, 0.55);
+  filter: drop-shadow(0 0 10px rgba(120, 215, 255, 0.9));
+  pointer-events: none;
+}
+
+.pc-award-shooting-star::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 46px;
+  transform: translate(-50%, -96%);
+  border-radius: 999px;
+  background: linear-gradient(
+    to top,
+    rgba(150, 226, 255, 0) 0%,
+    rgba(150, 226, 255, 0.75) 45%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
+  opacity: 0.9;
+  pointer-events: none;
+}
+
 .pc-spy-source-pulse {
   position: fixed;
   z-index: 2147482650;

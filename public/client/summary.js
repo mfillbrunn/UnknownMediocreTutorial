@@ -243,6 +243,29 @@ function renderMatchSummary(container) {
       : `${loserPoints} – ${winnerPoints}`;
   }
 
+  // Total time each player spent across the WHOLE match, by player identity
+  // rather than by role -- state.timeSpentMs is keyed by user id and roles
+  // swap between round 1 and round 2, so a role-colored line (like
+  // formatTimeSpent's, used on the single-round summary right after a round
+  // ends) would tint each player a different color from round to round.
+  // Neutral styling here instead.
+  let totalTimeHtml = "";
+  const totalTimeSpent = state.timeSpentMs;
+  if (totalTimeSpent) {
+    const myMs = Number(totalTimeSpent[myUserId()]) || 0;
+    const opponentMs = Number(totalTimeSpent[opponentId]) || 0;
+    if (myMs || opponentMs) {
+      totalTimeHtml = `
+        <p class="match-total-time">
+          ⏱ Total time:
+          ${myName} <span class="time-value">${formatSpentMs(myMs)}</span>
+          &nbsp;|&nbsp;
+          ${opponentName} <span class="time-value">${formatSpentMs(opponentMs)}</span>
+        </p>
+      `;
+    }
+  }
+
   // Ranked matches get an Elo delta computed async (after the match's
   // profile rows are read/updated) and pushed in a follow-up broadcast —
   // may not have landed yet on the very first gameOver render, in which
@@ -335,6 +358,7 @@ if (guesserEntries.length) {
         <span class="vs">vs</span>
         <span class="${!didWin && winner ? "me-winner" : ""}">${opponentName}</span>
       </p>
+      ${totalTimeHtml}
       ${eloHtml}
       ${timeoutNote}
       ${assassinationNote}
@@ -462,6 +486,12 @@ function formatSpentMs(ms) {
     : `${seconds}s`;
 }
 
+// Mirrors round-time-summary's own markup (icon, role-colored names, a
+// dedicated value span) instead of a plain "<b>Time taken:</b> A x · B y"
+// line -- that plain version had no CSS of its own at all (nothing in
+// features.css ever targeted .summary-time-spent), so it fell back to
+// default paragraph styling right next to a sibling block that's actually
+// designed to match the rest of the summary screen.
 function formatTimeSpent(state, setterName, guesserName) {
   const spent = state?.timeSpentMs;
   if (!spent) return "";
@@ -470,10 +500,20 @@ function formatTimeSpent(state, setterName, guesserName) {
   if (!setterMs && !guesserMs) return "";
   return `
     <p class="summary-time-spent">
-      <b>Time taken:</b>
-      ${setterName} ${formatSpentMs(setterMs)}
-      &middot;
-      ${guesserName} ${formatSpentMs(guesserMs)}
+      ⏱ Time taken:
+      <span style="color: var(--setter-color); font-weight: 600;">
+        ${setterName}
+      </span>
+      : <span class="time-value">
+        ${formatSpentMs(setterMs)}
+      </span>
+      &nbsp;|&nbsp;
+      <span style="color: var(--guesser-color); font-weight: 600;">
+        ${guesserName}
+      </span>
+      : <span class="time-value">
+        ${formatSpentMs(guesserMs)}
+      </span>
     </p>
   `;
 }
@@ -648,10 +688,22 @@ html += `
 ///////////STORED ROUND DETAILS
 /////////////////
 function renderStoredRoundSummary(round, index) {
+  // Combined (both players') time for that one round -- round.time is
+  // archived once per round (gameOver.js snapshots state.timeUsed, which
+  // resetRoundState.js zeroes out for the next one), the same source
+  // round-time-summary already shows a per-player breakdown of right when
+  // the round itself just ended. A single total reads better squeezed into
+  // a header than a second "Setter Xs | Guesser Ys" line duplicating that.
+  const roundSeconds =
+    (Number(round.time?.[round.setter]) || 0) +
+    (Number(round.time?.[round.guesser]) || 0);
+  const roundTimeHtml = roundSeconds
+    ? ` <span class="stored-round-time">· ⏱ ${formatDuration(roundSeconds)}</span>`
+    : "";
 
   let html = `
     <div class="stored-round" data-round-index="${index}">
-      <h4>Round ${index + 1} – ${getPlayerName(round.setter)} was Spy</h4>
+      <h4>Round ${index + 1} – ${getPlayerName(round.setter)} was Spy${roundTimeHtml}</h4>
 
       <div class="summary-table-wrap">
       <table class="summary-table">

@@ -1054,6 +1054,11 @@
 .match-players-line .me-winner {
   color: #4ade80;
 }
+.match-total-time {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--fs-13);
+  opacity: 0.75;
+}
 .match-header--win h2, .match-header--win .match-score-line {
   color: #4ade80;
 }
@@ -1142,7 +1147,8 @@
   text-align: center;
   margin: 0 0 var(--sp-8);
 }
-.round-time-summary {
+.round-time-summary,
+.summary-time-spent {
   text-align: center;
   font-size: var(--fs-13);
   margin: 0 0 var(--sp-10);
@@ -1197,6 +1203,10 @@
   font-size: var(--fs-13);
   font-weight: 800;
   opacity: 0.85;
+}
+.stored-round-time {
+  font-weight: 600;
+  opacity: 0.7;
 }
 .summary-table-wrap {
   overflow-x: auto;
