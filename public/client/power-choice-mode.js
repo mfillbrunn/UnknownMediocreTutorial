@@ -135,13 +135,113 @@
     return clamp(window.state?.powers?.spyCharge?.total, 0, SPY_MAX);
   }
 
+  // Letter Lockout, once unlocked as a persistent Power Choice reward (see
+  // PERSISTENT_POWER_IDS server-side): a compact "Lock a letter" button
+  // that arms letter-picking on the Spy's own keyboard, same
+  // arm-then-tap-a-letter shape as Hide Evidence (powerEngine/powers/
+  // hideTile.js) -- handleSetterInput (client.js) checks
+  // letterLockoutKbActive()/letterLockoutKbInput() the same way it already
+  // checks hideTile's pair. The server side (letterLockoutServer.js) was
+  // already fully built for the classic draft/custom loadout; this is
+  // only the missing client trigger for Power Choice's own path to it.
+  let letterLockoutArmed = false;
+
+  function letterLockoutGranted() {
+    return (window.state?.powers?.powerChoicePersistentGrants?.setter || [])
+      .includes("letterLockout");
+  }
+
+  function canArmLetterLockout() {
+    const state = window.state;
+    // Mirrors POWER_RULES.js's own letterLockout.allowed() exactly -- the
+    // server rejects the USE_LETTER_LOCKOUT action outright without a
+    // pending guess (there's a live line of the guesser's next attempt for
+    // the ban to actually take effect against, see the server module's own
+    // header comment).
+    return !!(
+      letterLockoutGranted() &&
+      myRole() === "setter" &&
+      state?.phase === "normal" &&
+      state?.turn === state?.setter &&
+      state?.pendingGuess &&
+      !state?.powers?.letterLockoutBanned
+    );
+  }
+
+  function syncLetterLockoutKeyboardVisual() {
+    document.getElementById("keyboardSetter")?.classList.toggle("keyboard-picking-hide", letterLockoutArmed);
+    window.setKeyboardPickHint?.(letterLockoutArmed, "Pick a letter from the keyboard to ban it");
+  }
+
+  window.letterLockoutKbActive = () => letterLockoutArmed;
+
+  window.letterLockoutKbReset = () => {
+    letterLockoutArmed = false;
+    syncLetterLockoutKeyboardVisual();
+  };
+
+  window.letterLockoutKbInput = function (event) {
+    if (!letterLockoutArmed) return false;
+    if (event.type !== "LETTER") return true; // swallow backspace/enter while armed
+
+    const letter = String(event.value || "").toUpperCase();
+    letterLockoutArmed = false;
+    syncLetterLockoutKeyboardVisual();
+
+    const submit = () => {
+      // Must match the action type powerEngine/powers/letterLockout.js's
+      // own modal sends -- normal.js's generic USE_ handler derives the
+      // powerId straight from action.type (normalizePowerId), it isn't
+      // read from a separate field.
+      window.sendGameAction?.({ type: "USE_LETTER_LOCKOUT", letter, role: "setter" });
+    };
+
+    if (typeof window.showPowerActionPopup === "function") {
+      window.showPowerActionPopup({
+        emoji: window.POWER_METADATA?.letterLockout?.emoji || "🚫",
+        title: `Ban ${letter}?`,
+        desc: `The Inspector's next guess cannot use ${letter}. Once picked, ${letter} can never be banned again this match.`,
+        useLabel: `Ban ${letter}`,
+        showUse: true,
+        useEnabled: true,
+        onUse: submit
+      });
+    } else if (window.confirm(`Ban ${letter} from the Inspector's next guess?`)) {
+      submit();
+    }
+    return true;
+  };
+
   function renderSpyPanel(container) {
     const total = spyDisplayTotal();
     const pending = window.state?.powerChoice?.pendingChoice?.role === "setter";
     const detailsOpen = container.dataset.pcDetailsOpen === "true";
-    const signature = [total, pending, detailsOpen].join("|");
+    const lockoutGranted = letterLockoutGranted();
+    const lockoutArmable = canArmLetterLockout();
+    // Disarms itself the moment arming is no longer valid (the Spy's turn
+    // ended, a letter got banned through some other path, etc.) instead
+    // of leaving the keyboard outlined for a pick that can no longer go
+    // through -- same self-correcting check hideTile.js's uiEffects does.
+    if (letterLockoutArmed && !lockoutArmable) {
+      letterLockoutArmed = false;
+      syncLetterLockoutKeyboardVisual();
+    }
+    const bannedLetter = window.state?.powers?.letterLockoutBanned || "";
+    const signature = [total, pending, detailsOpen, lockoutGranted, lockoutArmable, letterLockoutArmed, bannedLetter].join("|");
     if (container.dataset.pcSignature === signature) return;
     container.dataset.pcSignature = signature;
+    const lockoutMarkup = lockoutGranted
+      ? `<button type="button" id="pcLetterLockoutBtn"
+          class="pc-letter-lockout-btn${letterLockoutArmed ? " is-armed" : ""}"
+          ${lockoutArmable ? "" : "disabled"}>
+          <span aria-hidden="true">🚫</span>
+          ${bannedLetter
+            ? `${esc(bannedLetter)} banned this guess`
+            : letterLockoutArmed
+              ? "Tap a keyboard letter…"
+              : "Lock a letter"}
+        </button>`
+      : "";
     container.innerHTML = `<section class="pc-side-panel pc-spy-panel">
       <button type="button" id="pcSpyChargeCard" class="pc-charge-card" aria-expanded="${detailsOpen}">
         <span class="pc-charge-label"><span class="pc-charge-star" aria-hidden="true">&#9733;</span>SPYOMETER</span>
@@ -155,16 +255,31 @@
         <p>Earn at least 1 star after each eligible Keep/New decision. The forced all-gray opening begins with at least 2 stars.</p>
         <div class="pc-reward-milestones">
           <span><b>5</b> fixed reward choice</span>
-          <span><b>8</b> three random powers</span>
+          <span><b>9</b> three random powers</span>
           <span><b>15</b> advanced reward choice</span>
         </div>
       </div>
+      ${lockoutMarkup}
       ${pending ? `<div class="pc-choice-ready">REWARD CHOICE READY</div>` : ""}
     </section>`;
     byId("pcSpyChargeCard")?.addEventListener("click", () => {
       container.dataset.pcDetailsOpen = detailsOpen ? "false" : "true";
       container.dataset.pcSignature = "";
       renderSpyPanel(container);
+    });
+    byId("pcLetterLockoutBtn")?.addEventListener("click", () => {
+      if (!canArmLetterLockout()) {
+        if (letterLockoutArmed) {
+          letterLockoutArmed = false;
+          container.dataset.pcSignature = "";
+          renderSpyPanel(container);
+        }
+        return;
+      }
+      letterLockoutArmed = !letterLockoutArmed;
+      container.dataset.pcSignature = "";
+      renderSpyPanel(container);
+      syncLetterLockoutKeyboardVisual();
     });
   }
 
@@ -179,6 +294,47 @@
     return [];
   }
 
+  // Informant (revealLocation) and Letter Profile are both "always on, no
+  // button to click" powers -- their whole classic UI (PowerEngine.
+  // register's renderButton) mounts into #guesserPowerContainer, which is
+  // permanently display:none in the current layout (the sidebar redesign
+  // gave the power/quest cards their own homes instead, see index.html's
+  // comment on that container). Once Power Choice can actually grant
+  // these as persistent rewards (see PERSISTENT_POWER_IDS server-side)
+  // that dead-end stops being harmless, so they get their own compact
+  // readout here instead of relying on that hidden legacy tray.
+  function persistentPowerMarkup() {
+    const grants = window.state?.powers?.powerChoicePersistentGrants?.guesser || [];
+    if (!grants.length) return "";
+    const lines = [];
+    if (grants.includes("revealLocation")) {
+      const peek = window.state?.powers?.revealLocationPeek;
+      const value = peek && Number.isInteger(peek.index) && peek.letter
+        ? `<strong>${esc(ordinal(peek.index + 1))}</strong> is <strong>${esc(peek.letter)}</strong>`
+        : `<span class="pc-persistent-power-pending">watching…</span>`;
+      lines.push(`<div class="pc-persistent-power-line">
+        <span class="pc-persistent-power-icon" aria-hidden="true">🕵️</span>
+        <span class="pc-persistent-power-label">Informant</span>
+        <span class="pc-persistent-power-value">${value}</span>
+      </div>`);
+    }
+    if (grants.includes("letterProfile")) {
+      const stat = window.state?.powers?.letterProfileGuesserStat;
+      const statLines = stat && typeof letterProfileLines === "function" ? letterProfileLines(stat) : "";
+      lines.push(`<div class="pc-persistent-power-line pc-letter-profile-line">
+        <span class="pc-persistent-power-icon" aria-hidden="true">🔤</span>
+        <span class="pc-persistent-power-label">Letter Profile</span>
+        ${statLines
+          ? `<span class="pc-letter-profile-lines">${statLines}</span>`
+          : `<span class="pc-persistent-power-pending">—</span>`}
+      </div>`);
+    }
+    return `<article class="pc-persistent-powers">
+      <span class="pc-next-kicker">YOUR POWERS</span>
+      ${lines.join("")}
+    </article>`;
+  }
+
   function renderInspectorPanel(container) {
     const pc = window.state?.powerChoice;
     const inspector = pc?.inspector;
@@ -190,12 +346,16 @@
     const next = fogged ? null : inspector?.nextQuest;
     const conditions = questConditionLabels(next);
     const intel = (pc?.inspectorIntel || []).slice(-6);
+    const grants = window.state?.powers?.powerChoicePersistentGrants?.guesser || [];
     const signature = JSON.stringify({
       next: next?.id,
       fogged,
       conditions,
       intel: intel.map(item => `${item?.key}:${item?.text}`),
-      pending
+      pending,
+      grants,
+      peek: window.state?.powers?.revealLocationPeek,
+      profileStat: window.state?.powers?.letterProfileGuesserStat
     });
     if (container.dataset.pcSignature === signature) return;
     container.dataset.pcSignature = signature;
@@ -217,7 +377,7 @@
           <ul>${intel.map(item => `<li>${esc(item?.text || "")}</li>`).join("")}</ul>
         </article>`
       : "";
-    const body = `${nextMarkup}${intelMarkup}${pending ? `<div class="pc-choice-ready">REWARD CHOICE READY</div>` : ""}`;
+    const body = `${persistentPowerMarkup()}${nextMarkup}${intelMarkup}${pending ? `<div class="pc-choice-ready">REWARD CHOICE READY</div>` : ""}`;
     container.innerHTML = body
       ? `<section class="pc-side-panel pc-inspector-panel">${body}</section>`
       : "";
@@ -253,15 +413,45 @@
     host.setAttribute("aria-label", `Spyometer ${total} of ${SPY_MAX}`);
   }
 
+  // #guesserPowerContainer (the container renderInspectorPanel used to
+  // target) is permanently display:none in the current layout -- see
+  // persistentPowerMarkup's comment above. This gives the Inspector's
+  // panel (next-quest preview, reward intel, and now the persistent-power
+  // readouts) an actually-visible home, positioned the same way the quest
+  // card's own host is: repositioned every render rather than inserted
+  // once, so it stays correctly placed even though renderPanels() (which
+  // calls this) runs BEFORE renderCurrentQuest() does in renderAll().
+  function ensureInspectorPanelHost() {
+    const draftWrap = document.querySelector("#guesserScreen .draft-row-wrap");
+    if (!draftWrap) return null;
+    let host = byId("pcInspectorPanelHost");
+    if (!host) {
+      host = document.createElement("section");
+      host.id = "pcInspectorPanelHost";
+      host.className = "pc-inspector-panel-host";
+    }
+    const questHost = byId("pcCurrentQuestHost");
+    if (questHost && questHost.parentElement) {
+      if (questHost.nextElementSibling !== host) {
+        questHost.parentElement.insertBefore(host, questHost.nextSibling);
+      }
+    } else if (host.nextElementSibling !== draftWrap || host.parentElement !== draftWrap.parentElement) {
+      draftWrap.parentElement?.insertBefore(host, draftWrap);
+    }
+    return host;
+  }
+
   function renderPanels() {
     const active = isMode();
     document.body.classList.toggle("power-choice-mode", active);
     if (!active) return;
     const role = myRole();
     const setter = byId("setterPowerContainer");
-    const guesser = byId("guesserPowerContainer");
     if (role === "setter" && setter) renderSpyPanel(setter);
-    if (role === "guesser" && guesser) renderInspectorPanel(guesser);
+    if (role === "guesser") {
+      const guesser = ensureInspectorPanelHost();
+      if (guesser) renderInspectorPanel(guesser);
+    }
     renderSpyMiniMeter();
   }
 
