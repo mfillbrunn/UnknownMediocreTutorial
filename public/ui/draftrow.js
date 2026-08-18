@@ -208,6 +208,18 @@ window.renderDraftRows = function ({
   };
   function showRow(row, wasVisible, animClass) {
     row.style.display = "";
+    // Clear visibility too, not just display. This is the authoritative
+    // "the row belongs on screen now" path, but it isn't the only thing
+    // that hides it: guesser-flow-v7.js's hideNewDraft() (and the
+    // pendingGuess branch of its state handler) park the row with BOTH
+    // display:none AND visibility:hidden while a submit/resolve animation
+    // plays. Restoring only display left the row laid out but invisible --
+    // it took up its full space with nothing drawn in it, which is what
+    // made the guesser's draft row intermittently fail to appear at the
+    // start of a round: whether it came back at all depended on whether
+    // one of that module's own show paths (which do clear visibility)
+    // happened to run afterwards.
+    row.style.visibility = "";
     if (!wasVisible && animClass) {
       row.classList.remove(animClass);
       void row.offsetWidth; // restart animation
