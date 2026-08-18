@@ -2737,3 +2737,175 @@ html[data-theme-mode="light"] .pc-card-explanation {
     0 0 0 1px rgba(255, 75, 92, 0.14),
     0 0 10px rgba(255, 75, 92, 0.45) !important;
 }
+
+/* POWER CHOICE CARD CAROUSEL V1: STYLES START */
+.pc-modal {
+  padding: 12px;
+}
+
+.pc-modal-card {
+  width: min(590px, calc(100vw - 24px));
+  max-height: min(500px, calc(100dvh - 24px));
+  padding: 14px;
+  overflow-y: auto;
+  border-radius: 17px;
+}
+
+.pc-modal h2 {
+  margin: 7px 52px 3px;
+  font-size: clamp(19px, 3vw, 26px);
+}
+
+.pc-modal-sub {
+  margin: 0 34px 11px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.pc-card-grid {
+  display: flex !important;
+  grid-template-columns: none !important;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 30px 11px 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-padding-inline: 2px;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--role-accent, #75d6ff) 62%, transparent) transparent;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pc-card-grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.pc-card-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pc-card-grid::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--role-accent, #75d6ff) 58%, transparent);
+}
+
+.pc-choice-card {
+  flex: 0 0 220px !important;
+  width: 220px;
+  min-width: 0;
+  min-height: 174px !important;
+  padding: 11px 10px 9px;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+  border-radius: 14px;
+}
+
+.pc-choice-card:hover,
+.pc-choice-card:focus-visible {
+  transform: translateY(-2px);
+}
+
+.pc-card-icon {
+  width: 54px;
+  height: 54px;
+  margin-bottom: 6px;
+  border-radius: 15px;
+}
+
+.pc-card-icon .pc-card-svg {
+  width: 36px;
+  height: 36px;
+}
+
+.pc-card-icon .pc-fixed-reward-svg {
+  width: 50px;
+  height: 50px;
+  overflow: visible;
+  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.3));
+}
+
+.pc-choice-card strong {
+  font-size: 16px;
+  line-height: 1.16;
+}
+
+.pc-card-desc {
+  margin-top: 6px;
+  padding-bottom: 2px;
+  font-size: 12px;
+  line-height: 1.32;
+}
+
+.pc-card-pick {
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+
+.pc-tier {
+  top: 9px;
+  right: 9px;
+  padding: 3px 6px;
+  font-size: 7px;
+}
+
+.pc-card-explanation {
+  display: none !important;
+}
+
+@media (max-width: 520px) {
+  .pc-modal {
+    align-items: center !important;
+    overflow: hidden !important;
+    padding: 9px;
+  }
+
+  .pc-modal-card {
+    width: calc(100vw - 18px);
+    max-height: calc(100dvh - 18px);
+    padding: 12px 10px 10px;
+  }
+
+  .pc-modal h2 {
+    margin-inline: 48px;
+    font-size: 19px;
+  }
+
+  .pc-modal-sub {
+    margin: 0 20px 9px;
+    font-size: 10px;
+  }
+
+  .pc-card-grid {
+    grid-template-columns: none !important;
+    gap: 9px;
+    padding-right: 38px;
+  }
+
+  .pc-choice-card {
+    flex-basis: min(220px, 60vw) !important;
+    width: min(220px, 60vw);
+    min-height: 170px !important;
+  }
+
+  .pc-card-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .pc-card-icon .pc-fixed-reward-svg {
+    width: 47px;
+    height: 47px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-card-grid {
+    scroll-behavior: auto;
+  }
+}
+/* POWER CHOICE CARD CAROUSEL V1: STYLES END */

@@ -74,17 +74,17 @@ const AI_BEHAVIOR = Object.freeze({
 });
 
 const POWER_COPY = {
-  confuseColors: ["🎨", "Blue Mode", "Scramble the Inspector's feedback colors this turn."],
-  countOnly: ["🔢", "Count Only", "Show only the number of matching letters this turn."],
+  confuseColors: ["🎨", "Blue Mode", "Turn all feedback tiles blue for this turn, hiding which matches are green or yellow."],
+  countOnly: ["🔢", "Count Only", "Show only how many letters match, without revealing their colors or positions."],
   fakeFeedback: ["🎭", "Fake Feedback", "Distort the feedback from the next resolved guess."],
   blindGuess: ["🙈", "Blind Guess", "Hide the Inspector's draft while they make this guess."],
   forceTimer: ["⏱", "Force Timer", "Put immediate time pressure on the Inspector's turn."],
-  delayedIntel: ["📡", "Delayed Intel", "Delay the Inspector's feedback for this turn."],
-  revealGreen: ["🟩", "Letter Peek", "Reveal a random correct letter in its exact position."],
-  freezeSecret: ["🧊", "Freeze Secret", "The Spy cannot change the secret after this guess."],
+  delayedIntel: ["📡", "Delayed Feedback", "Hold back the Inspector's feedback until after their following guess."],
+  revealGreen: ["👁️", "Peek Letter", "Reveal one correct letter in its exact position."],
+  freezeSecret: ["❄️", "Freeze Secret", "Prevent the Spy from changing the secret after this guess."],
   rouletteSecret: ["🎰", "Roulette Secret", "Force the Spy onto a legal random secret."],
   stealthGuess: ["🥷", "Stealth Guess", "Hide this guess during the Spy's Keep/New decision."],
-  nonsense: ["🌀", "Signal Scramble", "Scramble the Spy's information for this turn."],
+  nonsense: ["🌀", "Silly Word", "Let the Inspector submit any five letters this turn, even when they do not form a real word."],
   magicMode: ["✨", "Magic Mode", "Activate the Inspector's special feedback mode this turn."],
   // PERSISTENT_POWER_IDS -- permanent unlocks, not one-turn effects, so
   // the copy says "from now on" instead of "this turn".
@@ -597,7 +597,9 @@ function threePowerOptions(state, role, usedPowerIds) {
           "revealLocation",
           "letterProfile"
         ];
-  const tiered = randomPool(role).filter(id => immediate.includes(id));
+  const tiered = randomPool(role).filter(
+    id => id !== "hideTile" && immediate.includes(id)
+  );
   const applicable = tiered.filter(id => powerOptionApplicable(state, powerOption(id)));
   let candidates = applicable.filter(id => !usedPowerIds.includes(id));
   if (candidates.length < 3) candidates = applicable;

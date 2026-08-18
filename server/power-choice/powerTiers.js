@@ -8,7 +8,7 @@ const POWER_TIERS = Object.freeze({
   fakeFeedback: { role: "setter", tier: 3 },
   blindGuess: { role: "setter", tier: 2 },
   forceTimer: { role: "setter", tier: 2 },
-  delayedIntel: { role: "setter", tier: 2 },
+  delayedIntel: { role: "setter", tier: 1 },
   hideTile: { role: "setter", tier: 2 },
   blindSpot: { role: "setter", tier: 2 },
   suggestSecret: { role: "setter", tier: 2 },
@@ -18,8 +18,8 @@ const POWER_TIERS = Object.freeze({
   letterLockout: { role: "setter", tier: 3 },
   assassinWord: { role: "setter", tier: 3 },
 
-  revealGreen: { role: "guesser", tier: 2 },
-  freezeSecret: { role: "guesser", tier: 2 },
+  revealGreen: { role: "guesser", tier: 1 },
+  freezeSecret: { role: "guesser", tier: 1 },
   rouletteSecret: { role: "guesser", tier: 3 },
   stealthGuess: { role: "guesser", tier: 1 },
   nonsense: { role: "guesser", tier: 1 },
@@ -45,7 +45,7 @@ const ALLOWED_RANDOM_TIERS = Object.freeze({
 const RANDOM_POWER_POOLS = Object.freeze({
   setter: [
     "confuseColors", "countOnly", "fakeFeedback", "blindGuess",
-    "forceTimer", "delayedIntel", "hideTile", "blindSpot",
+    "forceTimer", "delayedIntel", "blindSpot",
     "suggestSecret", "vowelRefresh", "forceGuess", "revealPenalty",
     "letterLockout"
   ],
