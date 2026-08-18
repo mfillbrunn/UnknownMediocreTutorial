@@ -544,7 +544,6 @@
         return codes.every((value, index) => index === 0 || value > codes[index - 1]) ||
           codes.every((value, index) => index === 0 || value < codes[index - 1]);
       }
-      case "DOUBLES": return /(.)\1/.test(clean);
       case "HARDMODE": return hardModeMet(clean);
       case "FIELDREPORT": {
         const results = (quest.conditions || []).map(condition => evaluateCondition(condition, clean));
@@ -608,14 +607,6 @@
         letters = [...VOWELS];
         label = "vowels";
         break;
-      case "DOUBLES": {
-        const final = clean.at(-1);
-        if (final) {
-          letters = [final];
-          label = `double ${final}`;
-        }
-        break;
-      }
       case "BOOKENDS": {
         const first = clean[0];
         if (first) {
@@ -789,7 +780,6 @@
       case "ROW_AVOID": return `No letter may come from the ${quest.avoidRow || ""} row.`;
       case "RARE": return `Include at least one of ${quest.letters?.join(", ") || "the listed letters"}.`;
       case "ALPHA": return "All five letters must move strictly forward or strictly backward through the alphabet.";
-      case "DOUBLES": return "Place the same letter twice in adjacent positions, such as LL or EE.";
       case "HARDMODE": return "Keep every known green in place and include every known yellow letter.";
       case "FIELDREPORT": return "All three conditions must be satisfied by the same submitted word.";
       case "ALTERNATING": return "Alternate vowel and consonant status at every position.";

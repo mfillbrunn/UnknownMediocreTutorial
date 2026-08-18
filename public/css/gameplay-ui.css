@@ -1285,7 +1285,18 @@
    consolidation and were dropped with it.) */
 .guesser-guess-flight {
   position: fixed;
-  z-index: 2147482500;
+  /* Below the app-wide announce/modal band (.big-announce is 100001,
+     #powerActionModal/.power-popup are 100000 -- see components.css's own
+     comment on why 100001 is meant to stay topmost app-wide) but still
+     above ordinary board chrome. This is a purely cosmetic, pointer-events:
+     none animation with nothing for the player to act on, so it has no
+     business beating a modal that needs their attention -- an opening-miss
+     "secret is locked" announce landing mid-flight (both fire off the same
+     guess resolution) used to paint the flying word on top of that popup
+     instead of behind it, since this used to share the Power-Choice-only
+     near-INT32_MAX band those overlays deliberately reserve for staying
+     above even the announce modal. */
+  z-index: 40000;
   margin: 0;
   min-height: 0;
   pointer-events: none;

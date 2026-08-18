@@ -84,6 +84,46 @@
       workspace.appendChild(edge);
     }
 
+    // Wired here, not only from init()'s one-time call, and guarded per
+    // NODE (not per call) via __guesserV9Wired -- ensureStructure() is also
+    // called on its own, later, from other modules (quest-charge-v9.js's
+    // ensureHud among them) any time they need the sidebar/toggle to exist.
+    // If something upstream ever replaces this subtree (the exact failure
+    // draftrow.js's own cachedRowsAttached comment documents for the
+    // sibling draft row: "anything that replaces the container's contents
+    // leaves the property pointing at detached nodes"), byId() above
+    // stops finding the old toggle and this function happily creates a
+    // fresh one -- but a fresh DOM node has no listeners on it. Wiring
+    // only inside init() left a freshly-recreated toggle permanently
+    // inert: present, visible, and clickable-looking, but doing nothing,
+    // since init() itself never runs a second time to notice the
+    // replacement. Wiring every node ensureStructure() itself produces or
+    // finds closes that gap regardless of which caller triggered it.
+    if (!toggle.__guesserV9Wired) {
+      toggle.__guesserV9Wired = true;
+      toggle.addEventListener("click", event => {
+        event.stopPropagation();
+        setCollapsed(!isCollapsed());
+      });
+    }
+
+    if (!sidebar.__guesserV9Wired) {
+      sidebar.__guesserV9Wired = true;
+      sidebar.addEventListener("pointerdown", event => beginGesture(event, "close"));
+    }
+
+    if (!edge.__guesserV9Wired) {
+      edge.__guesserV9Wired = true;
+      edge.addEventListener("pointerdown", event => beginGesture(event, "open"));
+    }
+
+    if (!window.__guesserDrawerPointerV9) {
+      window.__guesserDrawerPointerV9 = true;
+      window.addEventListener("pointermove", onPointerMove, { passive: false });
+      window.addEventListener("pointerup", finishGesture, { passive: true });
+      window.addEventListener("pointercancel", finishGesture, { passive: true });
+    }
+
     return { guesserScreen, workspace, board, sidebar, toggle, edge };
   }
 
@@ -161,33 +201,10 @@
     const parts = ensureStructure();
     if (!parts) return;
 
-    const { sidebar, toggle, edge } = parts;
+    // ensureStructure() itself now wires the toggle/sidebar/edge (and the
+    // window-level pointer listeners) as soon as it creates or finds them,
+    // so this only needs to seed the initial collapsed/expanded state.
     setCollapsed(readStored(), false);
-
-    if (!toggle.__guesserV9Wired) {
-      toggle.__guesserV9Wired = true;
-      toggle.addEventListener("click", event => {
-        event.stopPropagation();
-        setCollapsed(!isCollapsed());
-      });
-    }
-
-    if (!sidebar.__guesserV9Wired) {
-      sidebar.__guesserV9Wired = true;
-      sidebar.addEventListener("pointerdown", event => beginGesture(event, "close"));
-    }
-
-    if (!edge.__guesserV9Wired) {
-      edge.__guesserV9Wired = true;
-      edge.addEventListener("pointerdown", event => beginGesture(event, "open"));
-    }
-
-    if (!window.__guesserDrawerPointerV9) {
-      window.__guesserDrawerPointerV9 = true;
-      window.addEventListener("pointermove", onPointerMove, { passive: false });
-      window.addEventListener("pointerup", finishGesture, { passive: true });
-      window.addEventListener("pointercancel", finishGesture, { passive: true });
-    }
   }
 
   window.setGuesserSidebarCollapsed = setCollapsed;
