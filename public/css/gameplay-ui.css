@@ -2717,3 +2717,39 @@ html[data-theme-mode="light"] .pc-card-explanation {
   color: rgba(23, 55, 74, 0.76);
 }
 /* POWER CHOICE REWARD TIERS V1: STYLES END */
+#setterScreen {
+  --setter-wait-accent:
+    var(--role-accent, var(--setter-color, #ff4b5c));
+}
+
+#setterScreen.is-not-your-turn
+  #draftSetter
+  .ghost-secret
+  .history-tile {
+  opacity: 0.92;
+  filter: none;
+  border-color: var(--setter-wait-accent);
+  box-shadow:
+    0 0 0 1px rgba(255, 75, 92, 0.18),
+    0 0 11px rgba(255, 75, 92, 0.55);
+}
+
+#setterScreen.is-not-your-turn
+  #draftSetter
+  .ghost-secret
+  .history-tile::after {
+  background: rgba(255, 75, 92, 0.2);
+}
+
+#setterScreen.is-not-your-turn
+  #draftSetter
+  .ghost-secret
+  .history-tile::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--setter-wait-accent),
+    transparent
+  );
+  box-shadow: 0 0 10px rgba(255, 75, 92, 0.9);
+}
