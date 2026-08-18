@@ -260,7 +260,7 @@
         </div>
       </div>
       ${lockoutMarkup}
-      ${pending ? `<div class="pc-choice-ready">REWARD CHOICE READY</div>` : ""}
+      
     </section>`;
     byId("pcSpyChargeCard")?.addEventListener("click", () => {
       container.dataset.pcDetailsOpen = detailsOpen ? "false" : "true";
@@ -377,7 +377,7 @@
           <ul>${intel.map(item => `<li>${esc(item?.text || "")}</li>`).join("")}</ul>
         </article>`
       : "";
-    const body = `${persistentPowerMarkup()}${nextMarkup}${intelMarkup}${pending ? `<div class="pc-choice-ready">REWARD CHOICE READY</div>` : ""}`;
+    const body = `${persistentPowerMarkup()}${nextMarkup}${intelMarkup}`;
     container.innerHTML = body
       ? `<section class="pc-side-panel pc-inspector-panel">${body}</section>`
       : "";
@@ -696,18 +696,11 @@
     const questLive = attempts % 2 === 1;
     if (!questLive) {
       currentDraftRow()?.classList.remove("pc-quest-draft-met");
-      // The most recent LIVE attempt (2nd/4th/6th guess) is what this
-      // "waiting" turn's card should reflect -- inspector.lastResult itself
-      // gets overwritten every guess including this non-live one, so it
-      // can't tell a genuinely-met quest apart from one that wasn't; the
-      // server tracks the live outcome separately for exactly this reason
-      // (see lastLiveSuccess in powerChoiceServer.js).
-      const met = inspector?.lastLiveSuccess === true;
-      const placeholderKey = met ? "met" : "pending";
+      const placeholderKey = "pending";
       if (host.dataset.pcSignature !== `pc-quest-placeholder-${placeholderKey}`) {
         host.dataset.pcSignature = `pc-quest-placeholder-${placeholderKey}`;
-        host.innerHTML = `<div class="pc-current-quest-card pc-quest-placeholder${met ? " is-met" : ""}">
-          <span class="pc-current-main"><strong>${met ? "Quest reward incoming" : "Quest incoming next round"}</strong></span>
+        host.innerHTML = `<div class="pc-current-quest-card pc-quest-placeholder">
+          <span class="pc-current-main"><strong>Quest incoming next round</strong></span>
         </div>`;
       }
       return;
