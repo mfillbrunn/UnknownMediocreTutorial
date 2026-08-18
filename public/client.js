@@ -2180,6 +2180,9 @@ function handleSetterInput(event) {
   // armed, same interception shape power-keyboard.js uses for the
   // guesser's Recon Sweep / Double Tap.
   if (window.hideTileKbActive?.() && window.hideTileKbInput?.(event)) return;
+  // Letter Lockout, once unlocked as a Power Choice reward -- same
+  // arm-then-tap-a-letter shape as Hide Evidence above.
+  if (window.letterLockoutKbActive?.() && window.letterLockoutKbInput?.(event)) return;
   if (
     window.spyChargeResetKbActive?.() &&
     window.spyChargeResetKbInput?.(

@@ -46,7 +46,8 @@ const RANDOM_POWER_POOLS = Object.freeze({
   setter: [
     "confuseColors", "countOnly", "fakeFeedback", "blindGuess",
     "forceTimer", "delayedIntel", "hideTile", "blindSpot",
-    "suggestSecret", "vowelRefresh", "forceGuess", "revealPenalty"
+    "suggestSecret", "vowelRefresh", "forceGuess", "revealPenalty",
+    "letterLockout"
   ],
   guesser: [
     "revealGreen", "freezeSecret", "rouletteSecret", "stealthGuess",

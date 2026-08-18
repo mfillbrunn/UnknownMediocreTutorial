@@ -1594,6 +1594,38 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   animation: game-ready 1.1s ease-in-out infinite alternate;
 }
 
+/* Letter Lockout's "Lock a letter" trigger, shown once the persistent
+   reward is granted (see power-choice-mode.js's renderSpyPanel). Arms
+   letter-picking on #keyboardSetter the same way Hide Evidence's own
+   power-tray button used to (see powers.css's .keyboard-picking-hide). */
+.pc-letter-lockout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 9px;
+  padding: 8px 10px;
+  border: 1px solid rgba(251, 113, 133, 0.45);
+  border-radius: 10px;
+  background: rgba(251, 113, 133, 0.08);
+  color: #ffd3da;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pc-letter-lockout-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pc-letter-lockout-btn.is-armed {
+  border-color: rgba(251, 113, 133, 0.85);
+  background: rgba(251, 113, 133, 0.16);
+  animation: hide-evidence-pulse 1.4s ease-in-out infinite;
+}
+
 /* The collapsed Spy meter is intentionally a compact numeric badge. */
 .pc-spy-mini-host {
   min-width: 24px !important;
@@ -1616,6 +1648,138 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 .pc-current-quest-host.hidden {
   display: none !important;
+}
+
+/* Inspector's own panel (next-quest preview, reward intel, and the
+   persistent-power readouts below) -- same width/centering treatment as
+   the quest host above, and always positioned directly under it (see
+   ensureInspectorPanelHost in power-choice-mode.js). Empty and thus
+   invisible (renderInspectorPanel leaves it with no innerHTML) whenever
+   there is genuinely nothing to show. */
+.pc-inspector-panel-host {
+  width: min(100%, 520px);
+  margin: 0 auto 9px;
+}
+
+.pc-inspector-panel-host:empty {
+  display: none;
+}
+
+.pc-inspector-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pc-next-kicker {
+  display: block;
+  margin-bottom: 4px;
+  color: rgba(185, 218, 238, 0.55);
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pc-next-quest {
+  padding: 9px 11px;
+  border: 1px solid rgba(88, 201, 255, 0.3);
+  border-radius: 11px;
+  background: rgba(88, 201, 255, 0.06);
+}
+
+.pc-next-quest p {
+  margin: 0;
+  color: rgba(232, 242, 250, 0.9);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.pc-next-quest ul {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0 0;
+  padding-left: 15px;
+}
+
+.pc-next-quest li {
+  color: rgba(220, 237, 247, 0.8);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+/* Informant/Letter Profile: permanently-unlocked reward powers (see
+   PERSISTENT_POWER_IDS server-side) with no button to press -- just a
+   live readout, styled like the intel panel below it. */
+.pc-persistent-powers {
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 226, 120, 0.28);
+  border-radius: 11px;
+  background: rgba(255, 226, 120, 0.05);
+}
+
+.pc-persistent-power-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 7px;
+  margin-top: 6px;
+  font-size: 11px;
+}
+
+.pc-persistent-power-line:first-of-type {
+  margin-top: 0;
+}
+
+.pc-persistent-power-icon {
+  font-size: 12px;
+}
+
+.pc-persistent-power-label {
+  color: rgba(255, 226, 120, 0.85);
+  font-weight: 800;
+}
+
+.pc-persistent-power-value {
+  color: rgba(232, 242, 250, 0.92);
+}
+
+.pc-persistent-power-value strong {
+  color: #ffe278;
+}
+
+.pc-persistent-power-pending {
+  color: rgba(220, 237, 247, 0.5);
+  font-style: italic;
+}
+
+.pc-letter-profile-line {
+  align-items: flex-start;
+}
+
+/* letterProfileLines() (client/letterProfile.js) outputs plain .line /
+   .label / .value markup shared with the classic standalone box -- laid
+   out as a compact inline row here instead of that box's own stacked
+   layout. */
+.pc-letter-profile-lines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+}
+
+.pc-letter-profile-lines .line {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.pc-letter-profile-lines .label {
+  color: rgba(220, 237, 247, 0.7);
+}
+
+.pc-letter-profile-lines .value {
+  color: #ffe278;
+  font-weight: 800;
 }
 
 .pc-current-quest-card {

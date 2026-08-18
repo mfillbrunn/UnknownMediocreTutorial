@@ -30,6 +30,14 @@ const INSPECTOR_REWARD_SEQUENCE = [2, 3, 5];
 const INSPECTOR_MAX_QUESTS = INSPECTOR_REWARD_SEQUENCE.length;
 const VOWELS = new Set("AEIOU");
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+// Powers with no one-shot apply() at all -- their effect is entirely
+// "always on" for as long as they're in activePowers (revealLocation/
+// letterProfile's own turnStart hooks, letterLockout's per-turn button --
+// see each one's own server module). A Power Choice reward that grants
+// one of these isn't a single action to fire, it's a permanent unlock:
+// see grantPersistentPower and state.powers.powerChoicePersistentGrants.
+const PERSISTENT_POWER_IDS = new Set(["revealLocation", "letterProfile", "letterLockout"]);
 const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
 const QUEST_TYPES = [
@@ -77,7 +85,12 @@ const POWER_COPY = {
   rouletteSecret: ["🎰", "Roulette Secret", "Force the Spy onto a legal random secret."],
   stealthGuess: ["🥷", "Stealth Guess", "Hide this guess during the Spy's Keep/New decision."],
   nonsense: ["🌀", "Signal Scramble", "Scramble the Spy's information for this turn."],
-  magicMode: ["✨", "Magic Mode", "Activate the Inspector's special feedback mode this turn."]
+  magicMode: ["✨", "Magic Mode", "Activate the Inspector's special feedback mode this turn."],
+  // PERSISTENT_POWER_IDS -- permanent unlocks, not one-turn effects, so
+  // the copy says "from now on" instead of "this turn".
+  revealLocation: ["🕵️", "Informant", "From now on, peek at one still-unknown position in the secret each of your turns."],
+  letterProfile: ["🔤", "Letter Profile", "From now on, see how many vowels and consonants are in the secret, each of your turns."],
+  letterLockout: ["🚫", "Letter Lockout", "From now on, ban one new letter from the Inspector's next guess on each of your turns."]
 };
 
 function normalizeWord(value) {
@@ -491,11 +504,25 @@ function initializeRound(state) {
   pc.ruledOutLetters ||= [];
   pc.bonusTimeTurnKeys ||= [];
 
-  // Reward powers are applied immediately when selected. They are never
-  // added to the normal loadout, so neither a human nor the generic AI can
-  // save or fire the same reward again on a later turn.
-  state.activePowers = [];
-  state.initialPowers = { setter: [], guesser: [] };
+  // Most reward powers are applied immediately when selected and are
+  // never added to the normal loadout, so neither a human nor the generic
+  // AI can save or fire the same reward again on a later turn -- hence
+  // rebuilding activePowers fresh (not preserving whatever it held before
+  // this call) on every action. The exception is PERSISTENT_POWER_IDS:
+  // Informant/Letter Profile/Letter Lockout are "always on" unlocks, not
+  // one-shot actions, and their whole effect lives behind
+  // `state.activePowers.includes(id)` (their own turnStart/button-gating
+  // checks it directly) -- rebuilding from
+  // state.powers.powerChoicePersistentGrants (survives round transitions,
+  // see nextRoundTransition.js) instead of wiping to [] every time is
+  // what makes "for the rest of the game" actually true instead of a
+  // grant that a plain reset would silently undo on the very next action.
+  const persistentGrants =
+    state.powers.powerChoicePersistentGrants || { setter: [], guesser: [] };
+  const spyPersistentPowers = [...(persistentGrants.setter || [])];
+  const inspectorPersistentPowers = [...(persistentGrants.guesser || [])];
+  state.activePowers = [...spyPersistentPowers, ...inspectorPersistentPowers];
+  state.initialPowers = { setter: spyPersistentPowers, guesser: inspectorPersistentPowers };
   state.customPlayerPowers = null;
   if (freshRound || !state.powers.spyCharge?.enabled) {
     state.powers.spyCharge = freshSpyCharge();
@@ -553,7 +580,11 @@ function threePowerOptions(state, role, usedPowerIds) {
           "fakeFeedback",
           "blindGuess",
           "forceTimer",
-          "delayedIntel"
+          "delayedIntel",
+          // Persistent grant (see PERSISTENT_POWER_IDS): "immediate" here
+          // just means the card needs no extra payload to resolve, which
+          // is just as true of a permanent unlock as a one-turn effect.
+          "letterLockout"
         ]
       : [
           "revealGreen",
@@ -561,7 +592,10 @@ function threePowerOptions(state, role, usedPowerIds) {
           "rouletteSecret",
           "stealthGuess",
           "nonsense",
-          "magicMode"
+          "magicMode",
+          // Persistent grants -- see the setter's letterLockout above.
+          "revealLocation",
+          "letterProfile"
         ];
   const tiered = randomPool(role).filter(id => immediate.includes(id));
   const applicable = tiered.filter(id => powerOptionApplicable(state, powerOption(id)));
@@ -1123,6 +1157,23 @@ function addAbsentConstraints(state, letters) {
     if (existing.has(letter)) continue;
     state.extraConstraints.push({ type: "ABSENT", letter });
     existing.add(letter);
+  }
+}
+
+// Unlocks a PERSISTENT_POWER_IDS power for `role`, for the rest of the
+// game -- not just applied once, and not undone by initializeRound's
+// normal per-action activePowers rebuild (which now reads this same
+// field back out, see initializeRound above). Idempotent: choosing the
+// same persistent reward twice (fixedOptionApplicable/powerOptionApplicable
+// should already prevent the card from being offered again, but this
+// stays safe either way) doesn't duplicate the grant.
+function grantPersistentPower(state, role, powerId) {
+  state.powers.powerChoicePersistentGrants ||= { setter: [], guesser: [] };
+  const key = role === "setter" ? "setter" : "guesser";
+  const list = (state.powers.powerChoicePersistentGrants[key] ||= []);
+  if (!list.includes(powerId)) list.push(powerId);
+  if (!state.activePowers.includes(powerId)) {
+    state.activePowers = [...state.activePowers, powerId];
   }
 }
 
@@ -1752,7 +1803,13 @@ function rewardPickAIOption(options) {
 
 function powerOptionApplicable(state, option) {
   if (!option || option.kind !== "power") return false;
-  if (!engine.powers?.[option.powerId]?.apply) return false;
+  // Persistent-grant powers (see PERSISTENT_POWER_IDS) have no apply() at
+  // all -- their whole effect is "always on" once activePowers includes
+  // them, nothing to fire once. Every other power-kind card still needs
+  // a real apply() to actually do anything when chosen.
+  if (!PERSISTENT_POWER_IDS.has(option.powerId) && !engine.powers?.[option.powerId]?.apply) {
+    return false;
+  }
   switch (option.powerId) {
     case "revealGreen":
       return knownGreenIndexes(state).size < 5;
@@ -1763,6 +1820,13 @@ function powerOptionApplicable(state, option) {
       // Magic Mode affects feedback from the upcoming guess, so it remains
       // useful even when no yellow was known before this turn.
       return true;
+    case "revealLocation":
+    case "letterProfile":
+      // Already unlocked -- offering the same permanent grant again would
+      // just waste a reward slot on a no-op.
+      return !(state.powers?.powerChoicePersistentGrants?.guesser || []).includes(option.powerId);
+    case "letterLockout":
+      return !(state.powers?.powerChoicePersistentGrants?.setter || []).includes(option.powerId);
     default:
       return true;
   }
@@ -1911,7 +1975,16 @@ function effectDetailText(option, detail) {
         ? `${detail.letter} appears exactly ${detail.count} time${detail.count === 1 ? "" : "s"}.`
         : "No known-present letter remained to count.";
     default:
-      if (option.kind === "power") return `${option.title} activated for this turn.`;
+      if (option.kind === "power") {
+        // PERSISTENT_POWER_IDS grants (Informant/Letter Profile/Letter
+        // Lockout) are permanent unlocks, not a one-turn effect -- saying
+        // "for this turn" here would flatly contradict the "from now on"
+        // wording POWER_COPY already gives these same three in the card
+        // itself.
+        return PERSISTENT_POWER_IDS.has(option.powerId)
+          ? `${option.title} unlocked for the rest of the game.`
+          : `${option.title} activated for this turn.`;
+      }
       return option.description || "Reward activated.";
   }
 }
@@ -1928,11 +2001,27 @@ function emitEffect(io, roomId, payload) {
 // Spy kept being shown a target letter/position derived from the board as
 // it was BEFORE their own reward wiped part of it -- pointing at a word
 // that was no longer the best switch, and sometimes no longer legal.
+// Every setter fixed-reward card that erases or alters letter knowledge
+// (extraConstraints, history feedback, gray/absent letters) rather than
+// just moving points around or fogging the next-quest preview -- all of
+// these change which secrets are still legal, so all of them need the
+// Spy's hint/star-rating re-rolled against the post-reward board.
 const KNOWLEDGE_RESET_OPTIONS = new Set([
   "spy-reset-positive-1",
   "spy-reset-known-2",
+  "spy-yellow-smudge",
+  "spy-blur-position",
+  "spy-reopen-two",
+  "spy-loosen-yellow",
+  "spy-mixed-static",
   "spy-reset-positive-2",
-  "spy-reset-vowels"
+  "spy-reset-vowels",
+  "spy-break-lock",
+  "spy-double-smudge",
+  "spy-mixed-reset",
+  "spy-reopen-four",
+  "spy-letter-reset",
+  "spy-double-blur"
 ]);
 
 function rerollSpyHintAfterReset(state, option, context) {
@@ -1952,39 +2041,58 @@ function rerollSpyHintAfterReset(state, option, context) {
   spyChargeServer.rollHintForTurn(state, allowedSecrets);
 }
 
-function applyChoice(state, option, choice, room, roomId, io) {
+function applyChoice(state, option, choice, room, roomId, io, context) {
   if (!rewardOptionApplicable(state, option)) return false;
   let detail = null;
 
   if (option.kind === "power") {
-    const action = {
-      type: "USE_POWER",
-      userId: choice.ownerUserId,
-      powerId: option.powerId,
-      source: "powerChoice"
-    };
-    const applied = engine.applyPower(
-      option.powerId,
-      state,
-      action,
-      roomId,
-      io,
-      room
-    );
-    if (applied === false) return false;
-    state.powerUsedThisTurn = true;
-    const side =
-      choice.role === "setter"
-        ? state.powerChoice.spy
-        : state.powerChoice.inspector;
-    if (!side.usedPowerIds.includes(option.powerId)) side.usedPowerIds.push(option.powerId);
-    state.powerChoice.temporaryPowerIds ||= [];
-    if (!state.powerChoice.temporaryPowerIds.includes(option.powerId)) {
-      state.powerChoice.temporaryPowerIds.push(option.powerId);
+    if (PERSISTENT_POWER_IDS.has(option.powerId)) {
+      // These have no apply() to call at all -- engine.applyPower would
+      // either silently no-op (revealLocation/letterProfile, pure
+      // turnStart hooks with nothing to fire once) or fail outright
+      // (letterLockout requires a letter action.letter this card never
+      // supplies). The reward IS the unlock itself: from now on the role
+      // simply has access to a power that was already fully built and
+      // already worked when a human/classic draft granted it the normal
+      // way -- there's no second activation step to perform here.
+      grantPersistentPower(state, choice.role, option.powerId);
+      state.powerUsedThisTurn = true;
+      const side =
+        choice.role === "setter"
+          ? state.powerChoice.spy
+          : state.powerChoice.inspector;
+      if (!side.usedPowerIds.includes(option.powerId)) side.usedPowerIds.push(option.powerId);
+      detail = { powerId: option.powerId, persistent: true };
+    } else {
+      const action = {
+        type: "USE_POWER",
+        userId: choice.ownerUserId,
+        powerId: option.powerId,
+        source: "powerChoice"
+      };
+      const applied = engine.applyPower(
+        option.powerId,
+        state,
+        action,
+        roomId,
+        io,
+        room
+      );
+      if (applied === false) return false;
+      state.powerUsedThisTurn = true;
+      const side =
+        choice.role === "setter"
+          ? state.powerChoice.spy
+          : state.powerChoice.inspector;
+      if (!side.usedPowerIds.includes(option.powerId)) side.usedPowerIds.push(option.powerId);
+      state.powerChoice.temporaryPowerIds ||= [];
+      if (!state.powerChoice.temporaryPowerIds.includes(option.powerId)) {
+        state.powerChoice.temporaryPowerIds.push(option.powerId);
+      }
+      state.activePowers ||= [];
+      if (!state.activePowers.includes(option.powerId)) state.activePowers.push(option.powerId);
+      detail = { powerId: option.powerId };
     }
-    state.activePowers ||= [];
-    if (!state.activePowers.includes(option.powerId)) state.activePowers.push(option.powerId);
-    detail = { powerId: option.powerId };
   } else {
     switch (option.id) {
       case "spy-reset-positive-1":
@@ -2132,6 +2240,8 @@ function applyChoice(state, option, choice, room, roomId, io) {
     }
   }
 
+  rerollSpyHintAfterReset(state, option, context);
+
   const resolution = {
     ownerUserId: choice.ownerUserId,
     role: choice.role,
@@ -2147,6 +2257,19 @@ function applyChoice(state, option, choice, room, roomId, io) {
     at: Date.now()
   };
   state.powerChoice.lastResolution = resolution;
+  // Durable record so BOTH players' action logs can show which reward was
+  // taken and what it did, in the correct chronological turn order (see
+  // action-log.js's buildLog) -- the transient powerChoiceResolved emit
+  // only drives the popup, and a power-backed reward's own power event
+  // says nothing about the reward card that granted it.
+  state.powerChoice.resolutionLog ||= [];
+  state.powerChoice.resolutionLog.push({
+    role: resolution.role,
+    title: resolution.title,
+    detailText: resolution.detailText,
+    at: resolution.at,
+    guessNumber: Array.isArray(state.history) ? state.history.length : 0
+  });
   emitEffect(io, roomId, resolution);
   return true;
 }

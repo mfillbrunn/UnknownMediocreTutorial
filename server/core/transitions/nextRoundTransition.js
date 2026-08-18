@@ -54,6 +54,16 @@ function advanceToNextRound(room, state, roomId, context) {
     savedLetterLockoutUsedLetters = state.powers.letterLockoutUsedLetters;
   }
 
+  // Power Choice: which "always-on" powers (Informant, Letter Profile,
+  // Letter Lockout) either role has permanently unlocked via a reward
+  // card. This is the actual source of truth Power Choice's own
+  // initializeRound rebuilds state.activePowers from every action, so
+  // unlike the three saves above (each gated on the power already being
+  // in this round's activePowers) this one is unconditional -- resetting
+  // it to empty here would silently take the reward away the moment the
+  // next round started.
+  const savedPowerChoicePersistentGrants = state.powers.powerChoicePersistentGrants;
+
   // Quest type used to just carry straight over like revealLetter.mode
   // still does (see below) -- but round 2's guesser is a DIFFERENT player
   // (the standard 2-round match always swaps setter/guesser), so simply
@@ -76,6 +86,10 @@ function advanceToNextRound(room, state, roomId, context) {
 
   if (state.activePowers.includes("letterLockout")) {
     state.powers.letterLockoutUsedLetters = savedLetterLockoutUsedLetters;
+  }
+
+  if (savedPowerChoicePersistentGrants) {
+    state.powers.powerChoicePersistentGrants = savedPowerChoicePersistentGrants;
   }
 
   // Tutorial rounds are scripted (e.g. the Quest tutorial hard-codes RARE
