@@ -807,24 +807,6 @@ function fixedOptions(role, threshold) {
         explanation: "This improves the Inspector's score without revealing any letter information."
       },
       {
-        id: "inspector-narrow-yellow",
-        kind: "fixed",
-        tier: 1,
-        icon: "🟨⌖",
-        title: "Narrow a Yellow",
-        description: "Reveal one additional position where a yellow cannot go.",
-        explanation: "The letter remains yellow, but one more incorrect position is permanently ruled out."
-      },
-      {
-        id: "inspector-position-read",
-        kind: "fixed",
-        tier: 1,
-        icon: "V/C",
-        title: "Position Read",
-        description: "Learn whether one unknown position is a vowel or consonant.",
-        explanation: "The result becomes a lasting constraint on any secret the Spy chooses later."
-      },
-      {
         id: "inspector-duplicate-scan",
         kind: "fixed",
         tier: 1,
@@ -1508,41 +1490,6 @@ function rewardKnownYellowLetters(state) {
   return [...letters].filter(Boolean);
 }
 
-function rewardNarrowYellowCandidates(state) {
-  const secret = normalizeWord(state.secret);
-  const knownGreen = knownGreenIndexes(state);
-  const forbidden = new Map();
-  for (const letter of rewardKnownYellowLetters(state)) forbidden.set(letter, new Set());
-  for (const entry of state.history || []) {
-    const word = normalizeWord(entry?.guess);
-    const feedback = rewardVisibleFeedback(entry);
-    if (!Array.isArray(feedback)) continue;
-    for (let index = 0; index < Math.min(5, feedback.length); index++) {
-      if (rewardMarkKind(feedback[index]) !== "yellow" || !word[index]) continue;
-      forbidden.get(word[index])?.add(index);
-    }
-  }
-  for (const constraint of state.extraConstraints || []) {
-    if (String(constraint?.type || "").toUpperCase() !== "YELLOW_NOT_AT") continue;
-    const letter = normalizeWord(constraint?.letter)[0];
-    if (letter && Number.isInteger(constraint.index)) forbidden.get(letter)?.add(constraint.index);
-  }
-  const candidates = [];
-  for (const [letter, blocked] of forbidden) {
-    for (let index = 0; index < 5; index++) {
-      if (
-        secret[index] &&
-        secret[index] !== letter &&
-        !blocked.has(index) &&
-        !knownGreen.has(index)
-      ) {
-        candidates.push({ letter, index });
-      }
-    }
-  }
-  return candidates;
-}
-
 function rewardRecordIntel(state, key, text, kind = "intel", letters = []) {
   state.powerChoice ||= {};
   state.powerChoice.inspectorIntel ||= [];
@@ -1551,50 +1498,6 @@ function rewardRecordIntel(state, key, text, kind = "intel", letters = []) {
   );
   state.powerChoice.inspectorIntel.push({ key, text, kind, letters: [...letters], at: Date.now() });
   state.powerChoice.inspectorIntel = state.powerChoice.inspectorIntel.slice(-8);
-}
-
-function rewardNarrowYellow(state) {
-  const target = pick(shuffle(rewardNarrowYellowCandidates(state)));
-  if (!target) return null;
-  state.extraConstraints ||= [];
-  state.extraConstraints.push({
-    type: "YELLOW_NOT_AT",
-    letter: target.letter,
-    index: target.index
-  });
-  rewardRecordIntel(
-    state,
-    `yellow-not-at:${target.letter}:${target.index}`,
-    `${target.letter} cannot be in position ${target.index + 1}.`,
-    "yellow",
-    [target.letter]
-  );
-  return target;
-}
-
-function rewardPositionClassCandidates(state, indexes = [0, 1, 2, 3, 4]) {
-  const knownGreen = knownGreenIndexes(state);
-  const classified = new Set(
-    (state.extraConstraints || [])
-      .filter(constraint => String(constraint?.type || "").toUpperCase() === "POSITION_CLASS")
-      .map(constraint => constraint.index)
-  );
-  return indexes.filter(
-    index => Number.isInteger(index) && !knownGreen.has(index) && !classified.has(index)
-  );
-}
-
-function rewardAddPositionClass(state, indexes = [0, 1, 2, 3, 4]) {
-  const index = pick(shuffle(rewardPositionClassCandidates(state, indexes)));
-  if (index == null) return null;
-  const letter = normalizeWord(state.secret)[index];
-  if (!letter) return null;
-  const letterClass = VOWELS.has(letter) ? "VOWEL" : "CONSONANT";
-  state.extraConstraints ||= [];
-  state.extraConstraints.push({ type: "POSITION_CLASS", index, letterClass });
-  const text = `Position ${index + 1} is a ${letterClass.toLowerCase()}.`;
-  rewardRecordIntel(state, `position-class:${index}`, text, "structure");
-  return { index, letterClass };
 }
 
 function rewardHasDuplicate(word) {
@@ -1728,10 +1631,6 @@ function rewardFixedOptionApplicable(state, option) {
       return unusedCount >= 2;
     case "inspector-remove-point-1":
       return (Number(state.guessCount) || 0) >= 1;
-    case "inspector-narrow-yellow":
-      return rewardNarrowYellowCandidates(state).length >= 1;
-    case "inspector-position-read":
-      return rewardPositionClassCandidates(state).length >= 1;
     case "inspector-duplicate-scan":
       return rewardDuplicateScanAvailable(state) && unusedCount >= 1;
     case "inspector-green-1":
@@ -1945,14 +1844,6 @@ function effectDetailText(option, detail) {
     case "inspector-remove-point-1":
     case "inspector-remove-point-2":
       return `Inspector final guess total ${detail?.points || 0}.`;
-    case "inspector-narrow-yellow":
-      return detail?.letter
-        ? `${detail.letter} cannot be in position ${detail.index + 1}.`
-        : "No yellow clue could be narrowed.";
-    case "inspector-position-read":
-      return Number.isInteger(detail?.index)
-        ? `Position ${detail.index + 1} is a ${String(detail.letterClass).toLowerCase()}.`
-        : "Every position's class was already known.";
     case "inspector-duplicate-scan":
       return `${detail?.hasDuplicate ? "The secret contains a repeated letter" : "The secret contains no repeated letters"}${detail?.letters?.length ? `; locked absent letter ${detail.letters.join(", ")}` : ""}.`;
     case "inspector-green-1":
@@ -2194,12 +2085,6 @@ function applyChoice(state, option, choice, room, roomId, io, context) {
         detail = { points: state.guessCount - before };
         break;
       }
-      case "inspector-narrow-yellow":
-        detail = rewardNarrowYellow(state);
-        break;
-      case "inspector-position-read":
-        detail = rewardAddPositionClass(state);
-        break;
       case "inspector-duplicate-scan": {
         const scan = rewardAddDuplicateScan(state);
         detail = { ...scan, letters: removeUnusedLetters(state, 1) };
