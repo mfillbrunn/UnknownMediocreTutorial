@@ -359,6 +359,17 @@
   padding-block: 1px 2px;
 }
 
+/* Collapses the whole row -- border-bottom divider included -- rather
+   than just hiding its contents. Toggled in setter-board.js's
+   updateDecisionMetaVisibility: outside the Spy's own normal-phase
+   decision turn (the simultaneous opening, the Inspector's turn, or once
+   this turn's Keep/New choice has already been sent) there is nothing
+   left to show here, and an empty bordered bar sitting on the board is
+   exactly what this is meant to prevent. */
+#setterScreen .setter-decision-meta.pc-decision-meta-hidden {
+  display: none;
+}
+
 #setterScreen .setter-board::before,
 #guesserScreen :is(.guesser-board, .guesser-board-v9)::before {
   content: "";
@@ -1209,6 +1220,57 @@
   80% { opacity: 1; }
   100% { transform: translateX(200%); opacity: 0; }
 }
+
+/* Waiting on the Inspector: the Spy's mirror of the scan above. Their own
+   locked-in secret renders read-only as .ghost-secret while it's the
+   Inspector's turn (see draftrow.js's !setterCanEdit branch) -- the exact
+   same "nothing to do but wait" moment the guesser's pending-guess row
+   represents, just the other direction of the same round-trip. Scoped to
+   .is-not-your-turn specifically so this never fires during the OTHER
+   moment .ghost-secret covers (the Spy's own turn, before they've typed
+   anything yet) -- that one is an active decision waiting to happen, not
+   a wait on the opponent. Recolored to the Setter's own theme accent
+   (var(--role-accent), the setter red) instead of the guesser's blue. */
+#setterScreen.is-not-your-turn .ghost-secret .history-tile {
+  position: relative;
+  opacity: 0.86;
+}
+
+#setterScreen.is-not-your-turn .ghost-secret .history-tile::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: -5px;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--role-accent) 16%, transparent);
+  overflow: hidden;
+}
+
+#setterScreen.is-not-your-turn .ghost-secret .history-tile::before {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 10%;
+  z-index: 1;
+  width: 34%;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--role-accent) 0%, transparent) 0%,
+    var(--role-accent) 50%,
+    color-mix(in srgb, var(--role-accent) 0%, transparent) 100%
+  );
+  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 75%, transparent);
+  animation: pc-wait-scan 1.25s linear infinite;
+}
+
+#setterScreen.is-not-your-turn .ghost-secret .history-tile:nth-child(2)::before { animation-delay: 0.1s; }
+#setterScreen.is-not-your-turn .ghost-secret .history-tile:nth-child(3)::before { animation-delay: 0.2s; }
+#setterScreen.is-not-your-turn .ghost-secret .history-tile:nth-child(4)::before { animation-delay: 0.3s; }
+#setterScreen.is-not-your-turn .ghost-secret .history-tile:nth-child(5)::before { animation-delay: 0.4s; }
 
 /* The submitted guess's flight clone (buildFlightFrom in
    guesser-flow-v7.js). It is appended to <body> and driven purely by
@@ -2097,20 +2159,20 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 .pc-card-icon {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
-  margin-bottom: 9px;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 8px;
   border: 1px solid var(--game-line);
-  border-radius: 13px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.07);
-  font-size: 22px;
+  font-size: 19px;
 }
 
 /* Same <symbol> artwork the power buttons use, tinted to the role accent
    like everywhere else it appears. */
 .pc-card-icon .pc-card-svg {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   color: var(--role-accent, var(--game-blue));
   fill: currentColor;
 }
@@ -2289,10 +2351,10 @@ html[data-theme-mode="light"] .pc-current-quest-card.is-met {
   }
 
   .pc-card-icon {
-    width: 50px;
-    height: 50px;
+    width: 46px;
+    height: 46px;
     margin-bottom: 8px;
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .pc-reward-popup {
@@ -2360,6 +2422,8 @@ html[data-theme-mode="light"] .pc-current-quest-card.is-met {
       #draftGuesser .history-row.pc-quest-draft-met .history-tile,
       .guesser-pending-history.is-working .history-tile,
       .guesser-pending-history.is-working .history-tile::before,
+      #setterScreen.is-not-your-turn .ghost-secret .history-tile,
+      #setterScreen.is-not-your-turn .ghost-secret .history-tile::before,
       .pc-quest-met-flourish,
       #setterBonusTargetV9.pc-bonus-satisfied,
       #setterScreen #setterCoverStars.stars-2 .setter-cover-star.is-filled,

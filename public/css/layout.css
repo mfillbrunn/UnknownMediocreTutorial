@@ -25,6 +25,23 @@
   margin: 0 auto;
   padding: var(--sp-20);
 }
+
+/* The 600px cap above is deliberately narrow for menus/lobby/settings --
+   a mobile-derived reading width that shouldn't stretch just because the
+   viewport is huge. The two gameplay screens are different: their tiles
+   size themselves off #center-col's own cqw width (history.css), so on
+   a real desktop monitor they were hitting their max clamp cap while
+   most of the screen sat empty around a 600px-wide board. Widening the
+   container only while a gameplay screen is actually active gives the
+   tile clamp real extra room to grow into on wide viewports instead of
+   pinning both roles to a width picked for phones. Scoped with :has()
+   (already used elsewhere in this file, e.g. the body:has(...) rules
+   below) so every other screen keeps its existing 600px reading width. */
+@media (min-width: 900px) {
+  #appContainer:has(#setterScreen.active, #guesserScreen.active) {
+    max-width: 860px;
+  }
+}
 /* Play area */
 
 .play-area {

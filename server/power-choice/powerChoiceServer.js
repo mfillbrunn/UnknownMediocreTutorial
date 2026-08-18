@@ -798,15 +798,6 @@ function fixedOptions(role, threshold) {
         title: "Duplicate Scan",
         description: "Learn whether the secret repeats a letter and lock one absent letter.",
         explanation: "You receive structural information plus one small gray-letter reward."
-      },
-      {
-        id: "inspector-edge-read",
-        kind: "fixed",
-        tier: 1,
-        icon: "|V/C|",
-        title: "Edge Read",
-        description: "Read the first or fifth position as vowel/consonant and lock one absent letter.",
-        explanation: "This gives a targeted edge clue plus one confirmed absent letter."
       }
     ];
   }
@@ -1692,8 +1683,6 @@ function rewardFixedOptionApplicable(state, option) {
       return rewardPositionClassCandidates(state).length >= 1;
     case "inspector-duplicate-scan":
       return rewardDuplicateScanAvailable(state) && unusedCount >= 1;
-    case "inspector-edge-read":
-      return rewardPositionClassCandidates(state, [0, 4]).length >= 1 && unusedCount >= 1;
     case "inspector-green-1":
       return knownGreenIndexes(state).size < 5;
     case "inspector-yellow-to-green-2":
@@ -1902,10 +1891,6 @@ function effectDetailText(option, detail) {
         : "Every position's class was already known.";
     case "inspector-duplicate-scan":
       return `${detail?.hasDuplicate ? "The secret contains a repeated letter" : "The secret contains no repeated letters"}${detail?.letters?.length ? `; locked absent letter ${detail.letters.join(", ")}` : ""}.`;
-    case "inspector-edge-read":
-      return Number.isInteger(detail?.position?.index)
-        ? `Position ${detail.position.index + 1} is a ${String(detail.position.letterClass).toLowerCase()}; locked absent letter ${detail.letters?.join(", ")}.`
-        : "No unread edge and absent letter combination remained.";
     case "inspector-green-1":
     case "inspector-edge-green":
       return detail?.letter && Number.isInteger(detail.index)
@@ -2112,12 +2097,6 @@ function applyChoice(state, option, choice, room, roomId, io) {
         detail = { ...scan, letters: removeUnusedLetters(state, 1) };
         break;
       }
-      case "inspector-edge-read":
-        detail = {
-          position: rewardAddPositionClass(state, [0, 4]),
-          letters: removeUnusedLetters(state, 1)
-        };
-        break;
       case "inspector-green-1":
         detail = addGreen(state);
         break;

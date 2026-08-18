@@ -333,7 +333,36 @@
       box.hidden = true;
       box.innerHTML = "";
     }
+
+    // Hides the wrapper itself immediately rather than waiting for the
+    // next render tick -- decisionAlreadyMade() already reads true by
+    // this point, so this and the next natural render agree either way,
+    // but there is no reason to let an empty bordered bar sit visible for
+    // even one extra frame after the decision is genuinely done.
+    updateDecisionMetaVisibility(true);
   };
+
+  // The stars/bonus-pill/Keep-New row as a whole -- separate from the
+  // stars' own narrower gate below (which additionally requires an actual
+  // rating). This one is just "is there a live Keep/New decision to show
+  // ANYTHING about right now": not during the simultaneous opening (no
+  // prior secret to compare against yet), not on the Inspector's turn,
+  // and not once this turn's decision has already been sent. Previously
+  // the wrapper itself had no visibility gate at all -- its border-bottom
+  // divider and min-height sat there as an empty bar even while every
+  // child inside correctly hid itself.
+  function updateDecisionMetaVisibility(isSetter) {
+    const meta = byId("setterDecisionMeta");
+    if (!meta) return;
+    const state = window.state;
+    const show =
+      isSetter &&
+      state?.phase === "normal" &&
+      state?.turn === state?.setter &&
+      !decisionAlreadyMade();
+    meta.classList.toggle("pc-decision-meta-hidden", !show);
+  }
+  window.updateSetterDecisionMetaVisibility = updateDecisionMetaVisibility;
 
   function renderCoverStars(strength) {
     const el = byId("setterCoverStars");
@@ -341,6 +370,7 @@
 
     const count = Math.max(0, Math.min(3, Number(strength?.stars) || 0));
     const isSetter = window.myRole === "setter";
+    updateDecisionMetaVisibility(isSetter);
 
     // The charge hint's own tile outline tracks the hint, not the rating,
     // so it's resolved before the visibility gate below -- an untouched

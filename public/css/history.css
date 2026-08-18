@@ -15,15 +15,22 @@
 
 .history-tile {
 /* Sized against the board column's own width (see .center-col's
-   container-type in layout.css), not the raw viewport. 5 tiles + 4 gaps
-   (var(--sp-4) = 4px) must fit within that width: 5*T + 16 <= W, i.e.
-   T <= 0.2W - 3.2px -- 16cqw stays under that ratio across the
-   ~300-370px container widths a phone actually produces here (checked via
+   container-type in layout.css), not the raw viewport, and shared by
+   both roles -- the Setter and Inspector boards used to run two
+   different clamp formulas (a lower cap for the guesser, a higher one
+   for .theme-setter), which is exactly why the same tile read as
+   noticeably smaller on one screen than the other. One shared formula
+   now drives both; on a real desktop-width #appContainer (widened for
+   gameplay screens below) that's actual room to grow into rather than a
+   phone-derived ceiling. 5 tiles + 4 gaps (var(--sp-4) = 4px) must fit
+   within the column's width: 5*T + 16 <= W, i.e. T <= 0.2W - 3.2px --
+   17cqw stays under that ratio across the narrowest realistic column
+   this shares with a sidebar (the Setter's), checked via
    getBoundingClientRect, not just how it looks in a screenshot -- a
-   too-high cqw overflows the row past its own column). */
-width: clamp(30px, 16cqw, 78px);
-height: clamp(30px, 16cqw, 78px);
-font-size: clamp(16px, 8cqw, 39px);
+   too-high cqw overflows the row past its own column. */
+width: clamp(30px, 17cqw, 92px);
+height: clamp(30px, 17cqw, 92px);
+font-size: clamp(16px, 8.5cqw, 44px);
   border-radius: var(--r-6);
   font-weight: 800;
   letter-spacing: 1px;
@@ -38,20 +45,6 @@ font-size: clamp(16px, 8cqw, 39px);
   transform-style: preserve-3d;
   position: relative;
 
-}
-
-/* Setter's board (.center-col) is narrower than the guesser's -- it
-   shares the row with the sidebar -- but the powers row is no longer a
-   second horizontal band competing for vertical space below it (it's
-   beside it now, not under it), so a bigger share of that narrower
-   column's own width can still go to each tile without overflowing it.
-   18.3cqw (0.183W) stays under the same T <= 0.2W - 3.2px ceiling even
-   at the narrowest realistic width for this column (~220-230px on a
-   small phone). */
-.theme-setter .history-tile {
-  width: clamp(31px, 17.8cqw, 82px);
-  height: clamp(31px, 17.8cqw, 82px);
-  font-size: clamp(16px, 9cqw, 41px);
 }
 
 /* Red flash overlay that sits above existing tile colors */
@@ -786,11 +779,12 @@ body.hide-constraints .constraint-row {
    around) the backdrop collapsed to near-nothing instead of already
    reading as the board's contained area. This way it's always exactly
    the feedback's width, before the first guess and after. The clamp()
-   here has to match the tile size features.css's "#guesserScreen
-   .history-tile" rule actually ends up applying (it overrides this
-   file's own base .history-tile clamp with a smaller one, and wins on
-   specificity) -- not the base clamp above, or this backdrop wouldn't
-   actually hug the tiles it's sized against.
+   here has to match .history-tile's own clamp above, or this backdrop
+   wouldn't actually hug the tiles it's sized against -- it was left
+   pointing at a smaller clamp a stylesheet consolidation had dropped
+   the actual overriding rule for, which is exactly why the guesser's
+   history box (and, via flex-shrink, the tiles forced to fit inside it)
+   came out visibly smaller than the tile clamp itself allowed for.
 
    padding is symmetric (50px each side) even though only the right side
    actually needs the room: Count Only's G/Y tally (.count-only-badge
@@ -806,7 +800,7 @@ body.hide-constraints .constraint-row {
    area either way, so every row's tiles still land at the same X
    position regardless of whether this particular row has a badge. */
 #guesserScreen .history-scroll {
-  width: calc(5 * clamp(30px, 12.5cqw, 56px) + 4 * var(--sp-4) + 120px);
+  width: calc(5 * clamp(30px, 17cqw, 92px) + 4 * var(--sp-4) + 120px);
   max-width: 100%;
   margin: 0 auto;
   padding-left: 60px;
