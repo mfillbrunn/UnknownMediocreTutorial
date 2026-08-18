@@ -2753,3 +2753,14 @@ html[data-theme-mode="light"] .pc-card-explanation {
   );
   box-shadow: 0 0 10px rgba(255, 75, 92, 0.9);
 }
+#setterScreen
+  #draftSetter
+  .draft-row.pending-guess
+  .history-tile:not(.preview-green):not(.preview-yellow) {
+  background: rgba(255, 75, 92, 0.1) !important;
+  border-color: var(--setter-wait-accent) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 75, 92, 0.14),
+    0 0 10px rgba(255, 75, 92, 0.45) !important;
+}
