@@ -560,8 +560,7 @@
       <span class="pc-current-main">
         <strong>${esc(quest.title || "Quest")}</strong>
         <span class="pc-current-expand">${questGuideOpen ? "Close" : "Rules"}</span>
-      </span>
-      <span class="pc-quest-optional-note">Complete for a reward</span>
+      <span class="pc-quest-optional-note">Complete for a reward</span></span>
       <span class="pc-current-status" aria-live="polite">${met ? "MET" : ""}</span>
       <span class="pc-current-desc">${esc(quest.description || "Complete the shown condition.")}</span>
       ${conditionLabels.length ? `<span class="pc-current-conditions">${conditionLabels.map((label, index) => `<span class="pc-condition-chip${conditionResults[index] ? " is-met" : ""}">${esc(label)}</span>`).join("")}</span>` : ""}
