@@ -180,20 +180,46 @@
   }
 
   function renderInspectorPanel(container) {
-    // The Inspector's quest no longer builds toward a meter (see
-    // evaluateInspectorGuess server-side -- a quest now grants its reward
-    // the moment it's met, cycling through the same three reward tiers
-    // the meter used to unlock at 2/3/5 points), and there's no separate
-    // "next quest" anymore since the current one just gets replaced in
-    // place. This side panel now only ever needs to flag a reward choice
-    // waiting to be picked -- the quest itself is shown above the draft
-    // row instead (see renderCurrentQuest).
-    const pending = window.state?.powerChoice?.pendingChoice?.role === "guesser";
-    const signature = String(pending);
+    const pc = window.state?.powerChoice;
+    const inspector = pc?.inspector;
+    const pending = pc?.pendingChoice?.role === "guesser";
+    const attempts = Number(inspector?.attempts) || 0;
+    const hasPreview = !!inspector?.nextQuest;
+    const fogged = hasPreview &&
+      (Number(pc?.questFogUntilAttempt) || 0) > attempts;
+    const next = fogged ? null : inspector?.nextQuest;
+    const conditions = questConditionLabels(next);
+    const intel = (pc?.inspectorIntel || []).slice(-6);
+    const signature = JSON.stringify({
+      next: next?.id,
+      fogged,
+      conditions,
+      intel: intel.map(item => `${item?.key}:${item?.text}`),
+      pending
+    });
     if (container.dataset.pcSignature === signature) return;
     container.dataset.pcSignature = signature;
-    container.innerHTML = pending
-      ? `<section class="pc-side-panel pc-inspector-panel"><div class="pc-choice-ready">REWARD CHOICE READY</div></section>`
+    const nextMarkup = fogged
+      ? `<article class="pc-next-quest pc-next-quest-fogged">
+          <span class="pc-next-kicker">NEXT QUEST</span>
+          <p>Preview obscured by Quest Fog until this quest is submitted.</p>
+        </article>`
+      : next
+        ? `<article class="pc-next-quest">
+            <span class="pc-next-kicker">NEXT QUEST</span>
+            <p>${esc(next.description || "Complete the next condition.")}</p>
+            ${conditions.length ? `<ul>${conditions.map(label => `<li>${esc(label)}</li>`).join("")}</ul>` : ""}
+          </article>`
+        : "";
+    const intelMarkup = intel.length
+      ? `<article class="pc-intel-panel">
+          <span class="pc-next-kicker">REWARD INTEL</span>
+          <ul>${intel.map(item => `<li>${esc(item?.text || "")}</li>`).join("")}</ul>
+        </article>`
+      : "";
+    const body = `${nextMarkup}${intelMarkup}${pending ? `<div class="pc-choice-ready">REWARD CHOICE READY</div>` : ""}`;
+    container.innerHTML = body
+      ? `<section class="pc-side-panel pc-inspector-panel">${body}</section>`
       : "";
   }
 
@@ -919,33 +945,51 @@
     const modal = ensureChoiceModal();
     const pending = window.state?.powerChoice?.pendingChoice;
     if (!isMode() || !pending || pending.ownerUserId !== me()) {
-      modal.classList.remove("is-open", "is-peeking");
-      byId("pcRewardPeekBar")?.classList.remove("is-visible");
+      modal.classList.remove("is-open");
       modal.dataset.choiceId = "";
-      if (rewardModalTimer) {
-        clearTimeout(rewardModalTimer);
-        rewardModalTimer = null;
-      }
-      rewardModalPendingId = "";
       return;
     }
     if (modal.dataset.choiceId === pending.id && modal.classList.contains("is-open")) return;
-    // Already counting down to open this same choice -- don't restart the
-    // timer (renderAll() calls this on every tick while it's pending).
-    if (rewardModalPendingId === pending.id) return;
-    rewardModalPendingId = pending.id;
-
-    // A completed quest gets its own small success beat before the reward
-    // cards show; a spy milestone already has the star-award capsule
-    // animation covering that moment, so it just gets the settle delay.
-    if (pending.role === "guesser") showQuestMetFlourish();
-
-    rewardModalTimer = setTimeout(() => {
-      rewardModalTimer = null;
-      if (window.state?.powerChoice?.pendingChoice?.id === pending.id) {
-        openRewardModal(pending);
-      }
-    }, REWARD_MODAL_SETTLE_MS);
+    modal.dataset.choiceId = pending.id;
+    modal.querySelector("h2").textContent = pending.title || "Choose a reward";
+    modal.querySelector(".pc-modal-sub").textContent =
+      pending.subtitle || "Choose one card. It activates immediately.";
+    const grid = modal.querySelector(".pc-card-grid");
+    grid.innerHTML = (pending.options || []).map(option => {
+      const tierNumber =
+        option.tier ||
+        (option.kind === "power"
+          ? window.POWER_TIERS?.[option.powerId]?.tier || 1
+          : pending.tier || null);
+      const tier = tierNumber
+        ? `<span class="pc-tier" data-tier="${esc(tierNumber)}">TIER ${esc(tierNumber)}</span>`
+        : "";
+      const explanation = option.explanation
+        ? `<span class="pc-card-explanation">${esc(option.explanation)}</span>`
+        : "";
+      return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}">
+        <span class="pc-card-icon">${esc(optionIcon(option))}</span>
+        ${tier}
+        <strong>${esc(option.title)}</strong>
+        <span class="pc-card-desc">${esc(option.description)}</span>
+        ${explanation}
+        <span class="pc-card-pick">CHOOSE</span>
+      </button>`;
+    }).join("");
+    grid.querySelectorAll(".pc-choice-card").forEach(button => {
+      button.addEventListener("click", () => {
+        if (button.disabled) return;
+        grid.querySelectorAll("button").forEach(item => { item.disabled = true; });
+        window.sendGameAction?.({
+          type: "POWER_CHOICE_SELECT",
+          userId: me(),
+          choiceId: pending.id,
+          optionId: button.dataset.optionId
+        });
+      });
+    });
+    modal.classList.add("is-open");
+    grid.querySelector("button")?.focus();
   }
 
   function markEliminatedKeys() {
@@ -954,30 +998,13 @@
     keyboardKeys().forEach(key => {
       const letter = keyboardLetter(key);
       const blocked = !!letter && eliminated.has(letter);
-      // Ruled-out (but not blocked) letters just read as a normal
-      // already-guessed absent key -- .pc-key-ruled-out matches
-      // .key-gray's own look instead of anything distinct.
-      const known = !blocked && !!letter && ruledOut.has(letter);
+      const informational = !!letter && !blocked && ruledOut.has(letter);
       key.classList.toggle("pc-key-eliminated", blocked);
-      key.classList.toggle("pc-key-ruled-out", known);
+      key.classList.toggle("pc-key-ruled-out", informational);
       key.setAttribute("aria-disabled", blocked ? "true" : "false");
-      if (blocked) key.title = `${letter} was locked out -- you can't use it`;
-      else if (known) key.title = `${letter} is not in the secret (still usable)`;
-    });
-
-    // BOTH reward kinds bind the Spy's secret -- each one records the
-    // letter as a hard "not in the secret" constraint server-side (see
-    // powerChoiceServer.js's addAbsentConstraints), so checkSecret rejects
-    // any secret containing one. Ruled-out letters used to be missing from
-    // this list, which is what let the Spy keep hiding the secret behind a
-    // letter the Inspector had already been told was out. They show as
-    // spent -- the same gray "already used" treatment the Spy already reads
-    // as "not available", rather than the Inspector's louder blocked style.
-    setterKeyboardKeys().forEach(key => {
-      const letter = keyboardLetter(key);
-      const barred = !!letter && (eliminated.has(letter) || ruledOut.has(letter));
-      key.classList.toggle("pc-key-ruled-out", barred);
-      if (barred) key.title = `${letter} is ruled out of the secret this round`;
+      if (blocked) key.title = `${letter} was ruled out and locked`;
+      else if (informational) key.title = `${letter} is confirmed absent`;
+      else if (key.title?.includes("confirmed absent") || key.title?.includes("ruled out and locked")) key.removeAttribute("title");
     });
   }
 

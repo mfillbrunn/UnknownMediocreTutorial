@@ -33,6 +33,30 @@ function isConsistentWithHistory(history, proposedSecret, state, opts = {}) {
   const forcedYellows = extra.filter(c => c.type === "YELLOW");
   const forcedAbsent = extra.filter(c => c.type === "ABSENT");
   proposedSecret = proposedSecret.toUpperCase();
+
+  // POWER CHOICE REWARD TIERS V1: CONSTRAINTS START
+  const rewardVowels = new Set("AEIOU");
+  const rewardHasDuplicate = new Set(proposedSecret).size < proposedSecret.length;
+  for (const constraint of extra) {
+    const type = String(constraint?.type || "").toUpperCase();
+    const letter = String(constraint?.letter || "").toUpperCase();
+    if (type === "ABSENT" && letter && proposedSecret.includes(letter)) return false;
+    if (type === "YELLOW_NOT_AT") {
+      if (!letter || !proposedSecret.includes(letter)) return false;
+      if (Number.isInteger(constraint.index) && proposedSecret[constraint.index] === letter) return false;
+    }
+    if (type === "POSITION_CLASS" && Number.isInteger(constraint.index)) {
+      const isVowel = rewardVowels.has(proposedSecret[constraint.index]);
+      if (String(constraint.letterClass || "").toUpperCase() === "VOWEL" && !isVowel) return false;
+      if (String(constraint.letterClass || "").toUpperCase() === "CONSONANT" && isVowel) return false;
+    }
+    if (type === "DUPLICATE_STATUS" && rewardHasDuplicate !== !!constraint.hasDuplicate) return false;
+    if (type === "LETTER_COUNT" && letter) {
+      const count = [...proposedSecret].filter(value => value === letter).length;
+      if (count !== Number(constraint.count)) return false;
+    }
+  }
+  // POWER CHOICE REWARD TIERS V1: CONSTRAINTS END
   for (const c of forcedGreens) {
     if (proposedSecret[c.index] !== c.letter) {
       return false;

@@ -2414,3 +2414,78 @@ html[data-theme-mode="light"] .pc-current-quest-card.is-met {
   25% { transform: translateX(-3px); }
   75% { transform: translateX(3px); }
 }
+
+/* POWER CHOICE REWARD TIERS V1: STYLES START */
+.pc-tier[data-tier="1"] {
+  border-color: rgba(121, 204, 255, 0.42);
+  background: rgba(65, 160, 216, 0.11);
+  color: #9edfff;
+}
+
+.pc-tier[data-tier="2"] {
+  border-color: rgba(255, 218, 105, 0.5);
+  background: rgba(255, 196, 62, 0.12);
+  color: #ffe278;
+}
+
+.pc-card-explanation {
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 8px;
+  border: 1px solid rgba(151, 211, 242, 0.16);
+  border-radius: 9px;
+  background: rgba(5, 12, 20, 0.38);
+  color: rgba(214, 233, 244, 0.76);
+  font-size: 10px;
+  line-height: 1.38;
+  text-align: left;
+}
+
+.pc-key-ruled-out:not(.pc-key-eliminated) {
+  opacity: 0.72;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    rgba(117, 214, 255, 0.2) 5px 7px
+  );
+  box-shadow: inset 0 0 0 1px rgba(117, 214, 255, 0.55);
+}
+
+.pc-next-quest-fogged {
+  border-style: dashed;
+  background:
+    linear-gradient(rgba(7, 14, 23, 0.8), rgba(7, 14, 23, 0.8)),
+    repeating-linear-gradient(135deg, rgba(132, 184, 214, 0.18) 0 8px, transparent 8px 16px);
+}
+
+.pc-next-quest-fogged p {
+  color: rgba(211, 226, 236, 0.72);
+  font-style: italic;
+}
+
+.pc-intel-panel {
+  margin-top: 10px;
+  padding: 10px 11px;
+  border: 1px solid rgba(117, 214, 255, 0.2);
+  border-radius: 11px;
+  background: rgba(117, 214, 255, 0.055);
+}
+
+.pc-intel-panel ul {
+  display: grid;
+  gap: 5px;
+  margin: 7px 0 0;
+  padding-left: 16px;
+}
+
+.pc-intel-panel li {
+  color: rgba(220, 237, 247, 0.84);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+html[data-theme-mode="light"] .pc-card-explanation {
+  background: rgba(20, 56, 78, 0.06);
+  color: rgba(23, 55, 74, 0.76);
+}
+/* POWER CHOICE REWARD TIERS V1: STYLES END */

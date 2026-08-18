@@ -16,13 +16,10 @@ function normalizeLetterSet(letters) {
 function hasLetterKnowledge(state, letter) {
   const targets = normalizeLetterSet(letter);
   if (!targets.size) return false;
-
   for (const entry of state?.history || []) {
     const guess = String(entry?.guess || "").toUpperCase();
-
     for (let index = 0; index < guess.length; index++) {
       if (!targets.has(guess[index])) continue;
-
       if (
         (Array.isArray(entry.fb) && entry.fb[index]) ||
         (Array.isArray(entry.fbGuesser) && entry.fbGuesser[index])
@@ -31,13 +28,11 @@ function hasLetterKnowledge(state, letter) {
       }
     }
   }
-
   return (state?.extraConstraints || []).some(constraint => {
     const type = String(constraint?.type || "").toUpperCase();
     const constraintLetter = String(constraint?.letter || "").toUpperCase();
-
     return (
-      (type === "GREEN" || type === "YELLOW" || type === "ABSENT") &&
+      ["GREEN", "YELLOW", "ABSENT", "YELLOW_NOT_AT", "LETTER_COUNT"].includes(type) &&
       targets.has(constraintLetter)
     );
   });
@@ -134,6 +129,37 @@ function eraseLetterKnowledge(state, letters) {
     result.removedConstraints = before - state.extraConstraints.length;
   }
 
+  // POWER CHOICE REWARD TIERS V1: RESET CLEANUP START
+  if (Array.isArray(state.extraConstraints)) {
+    const before = state.extraConstraints.length;
+    state.extraConstraints = state.extraConstraints.filter(constraint => {
+      const type = String(constraint?.type || "").toUpperCase();
+      const constraintLetter = String(constraint?.letter || "").toUpperCase();
+      return !(
+        ["ABSENT", "YELLOW_NOT_AT", "LETTER_COUNT"].includes(type) &&
+        targets.has(constraintLetter)
+      );
+    });
+    result.removedConstraints += before - state.extraConstraints.length;
+  }
+  if (state.powerChoice) {
+    for (const field of ["eliminatedLetters", "ruledOutLetters"]) {
+      if (Array.isArray(state.powerChoice[field])) {
+        state.powerChoice[field] = state.powerChoice[field].filter(
+          value => !targets.has(String(value || "").toUpperCase())
+        );
+      }
+    }
+    if (Array.isArray(state.powerChoice.inspectorIntel)) {
+      state.powerChoice.inspectorIntel = state.powerChoice.inspectorIntel.filter(item => {
+        const itemLetters = new Set(
+          (item?.letters || []).map(value => String(value || "").toUpperCase())
+        );
+        return ![...targets].some(target => itemLetters.has(target));
+      });
+    }
+  }
+  // POWER CHOICE REWARD TIERS V1: RESET CLEANUP END
   return result;
 }
 
