@@ -129,6 +129,20 @@ function buildHistoryRenderState(state, role) {
 }
 
 ///Strict diffing algorithm
+// How far off the bottom still counts as "reading the newest guess".
+// Roughly one tile row, so nudging the list a little -- or the sub-pixel
+// drift a smooth scroll can leave behind -- doesn't read as "scrolled away"
+// and quietly strand the reader away from incoming guesses.
+const HISTORY_NEWEST_SLOP_PX = 56;
+
+function isScrolledToNewest(container) {
+  if (!container) return true;
+  const distanceFromBottom =
+    container.scrollHeight - container.scrollTop - container.clientHeight;
+  // Not overflowing yet -> there is nowhere to have scrolled away to.
+  return distanceFromBottom <= HISTORY_NEWEST_SLOP_PX;
+}
+
 function diffHistory(prev, next) {
   const prevMap = new Map(prev.map(r => [r.key, r]));
   const nextMap = new Map(next.map(r => [r.key, r]));
@@ -388,6 +402,15 @@ window.renderHistory = function ({
 
   let deferredMatchUsed = false;
 
+  // Whether the list was already parked at the newest row BEFORE this
+  // render appends anything. Captured up here on purpose: appending grows
+  // scrollHeight, so measuring after the fact would make an at-the-bottom
+  // reader look scrolled-away every single time.
+  //
+  // A list that doesn't overflow yet counts as pinned, so the opening
+  // guesses of a round still follow along as they come in.
+  const wasPinnedToNewest = isScrolledToNewest(container);
+
   for (const row of diff.removed) {
     container
       .querySelector(`[data-key="${row.key}"]`)
@@ -433,9 +456,15 @@ window.renderHistory = function ({
     });
   }
 
+  // Follow the newest row only for a reader who was already sitting at the
+  // bottom. Someone who deliberately scrolled up to re-read earlier guesses
+  // gets left exactly where they are -- an opponent's guess landing used to
+  // yank them straight back down mid-read, since this fired on every append
+  // regardless of where they were looking.
   if (
     addedElements.length > 0 &&
-    autoScroll
+    autoScroll &&
+    wasPinnedToNewest
   ) {
     requestAnimationFrame(() => {
       container.scrollTo({

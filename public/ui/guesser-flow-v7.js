@@ -758,10 +758,18 @@
     return waitingWrap;
   }
 
+  // Deliberately does NOT take the state as a parameter. This runs off the
+  // animation queue and awaits a reveal that lasts roughly a second, so a
+  // snapshot taken when it was queued is routinely out of date by the time
+  // it finishes -- often by a whole round. Since it hides the draft row up
+  // front, deciding from that stale snapshot whether to bring the row back
+  // could leave it hidden after the next round had already begun (the
+  // render that would normally show it ran BEFORE this hide, so nothing
+  // else was left to correct it). Reading the live global here means the
+  // re-show decision always reflects the round the player is actually in.
   async function animateResolution(
     word,
-    heldWrap,
-    state
+    heldWrap
   ) {
     hideNewDraft();
 
@@ -944,8 +952,7 @@
       queue(async () => {
         await animateResolution(
           word,
-          heldWrap,
-          state
+          heldWrap
         );
 
         if (isWinResolve) {
@@ -994,8 +1001,7 @@
 
           await animateResolution(
             word,
-            heldWrap,
-            state
+            heldWrap
           );
 
           // client.js's wonByGuess handling waits on this instead of a

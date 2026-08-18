@@ -913,17 +913,22 @@ function pickThree(state, options) {
 function buildChoice(state, role, threshold, owner) {
   const side =
     role === "setter" ? state.powerChoice.spy : state.powerChoice.inspector;
-  const randomMilestone =
-    (role === "setter" && threshold === 8) ||
-    (role === "guesser" && threshold === 3);
+  // Each role's three milestones follow the same shape: the FIRST is the
+  // tier 1 fixed pool, the MIDDLE is the three-random-powers card, and the
+  // LAST is the tier 2 fixed pool (see fixedOptions' own branches, which
+  // only define the first and last). Read straight off the sequences
+  // rather than hardcoded, because these numbers have already drifted
+  // apart once: the Spy's middle milestone moved 5/8/15 -> 5/9/15 and this
+  // check kept testing for 8, so crossing 9 stars fell through to
+  // fixedOptions("setter", 9) -- a threshold with no branch at all -- and
+  // handed the Spy an empty, uncardable reward instead of three powers.
+  const sequence = role === "setter" ? SPY_THRESHOLDS : INSPECTOR_REWARD_SEQUENCE;
+  const randomMilestone = threshold === sequence[1];
   const pool = randomMilestone
     ? threePowerOptions(state, role, side.usedPowerIds)
     : fixedOptions(role, threshold);
   const options = rewardPickAvailableOptions(state, pool, 3);
-  const tier = randomMilestone
-    ? null
-    : ((role === "setter" && threshold === 5) ||
-       (role === "guesser" && threshold === 2) ? 1 : 2);
+  const tier = randomMilestone ? null : (threshold === sequence[0] ? 1 : 2);
   return {
     id: `${role}-${threshold}-${Date.now()}-${Math.random()
       .toString(36)
