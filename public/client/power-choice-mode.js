@@ -893,68 +893,25 @@
     const modal = ensureChoiceModal();
     modal.dataset.choiceId = pending.id;
     modal.querySelector("h2").textContent = pending.title || "Choose a reward";
-    modal.querySelector(".pc-modal-sub").textContent = pending.subtitle || "Choose one card. It activates immediately.";
-    const grid = modal.querySelector(".pc-card-grid");
-    grid.innerHTML = (pending.options || []).map(option => {
-      const tier = option.kind === "power"
-        ? `<span class="pc-tier">TIER ${option.tier || window.POWER_TIERS?.[option.powerId]?.tier || 1}</span>`
-        : "";
-      // Each card gets its own accent so the row reads as a set of
-      // distinct choices rather than three identical grey slabs.
-      const accent = option.kind === "power"
-        ? (window.POWER_METADATA?.[option.powerId]?.color || "")
-        : "";
-      const style = accent ? ` style="--pc-card-accent:${esc(accent)}"` : "";
-      return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}"${style}>
-        <span class="pc-card-icon">${optionIconMarkup(option)}</span>
-        ${tier}
-        <strong>${esc(option.title)}</strong>
-        <span class="pc-card-desc">${esc(optionDescription(option))}</span>
-      </button>`;
-    }).join("");
-    grid.querySelectorAll(".pc-choice-card").forEach(button => {
-      button.addEventListener("click", () => {
-        if (button.disabled) return;
-        grid.querySelectorAll("button").forEach(item => { item.disabled = true; });
-        window.sendGameAction?.({
-          type: "POWER_CHOICE_SELECT",
-          userId: me(),
-          choiceId: pending.id,
-          optionId: button.dataset.optionId
-        });
-      });
-    });
-    const peekBar = ensurePeekBar();
-    const peekBtn = modal.querySelector(".pc-modal-peek");
-    if (peekBtn && !peekBtn.dataset.wired) {
-      peekBtn.dataset.wired = "1";
-      peekBtn.addEventListener("click", event => {
-        event.stopPropagation();
-        modal.classList.add("is-peeking");
-        byId("pcRewardPeekBar")?.classList.add("is-visible");
-      });
-    }
-
-    modal.classList.remove("is-peeking");
-    peekBar.classList.remove("is-visible");
-    modal.classList.add("is-open");
-    grid.querySelector("button")?.focus();
-  }
-
-  function showChoice() {
-    const modal = ensureChoiceModal();
-    const pending = window.state?.powerChoice?.pendingChoice;
-    if (!isMode() || !pending || pending.ownerUserId !== me()) {
-      modal.classList.remove("is-open");
-      modal.dataset.choiceId = "";
-      return;
-    }
-    if (modal.dataset.choiceId === pending.id && modal.classList.contains("is-open")) return;
-    modal.dataset.choiceId = pending.id;
-    modal.querySelector("h2").textContent = pending.title || "Choose a reward";
     modal.querySelector(".pc-modal-sub").textContent =
       pending.subtitle || "Choose one card. It activates immediately.";
     const grid = modal.querySelector(".pc-card-grid");
+    const rewardCardIconMarkup = option => {
+      if (typeof optionIconMarkup === "function") return optionIconMarkup(option);
+      if (typeof optionIcon === "function") return esc(optionIcon(option));
+      if (option?.kind === "power") {
+        return esc(window.POWER_METADATA?.[option.powerId]?.emoji || option.icon || "⚡");
+      }
+      return esc(option?.icon || "◆");
+    };
+    const rewardCardDescription = option => {
+      if (typeof optionDescription === "function") return optionDescription(option);
+      if (option?.kind === "power") {
+        const meta = window.POWER_METADATA?.[option.powerId];
+        return meta?.desc || meta?.short || option.description || "";
+      }
+      return option?.description || "";
+    };
     grid.innerHTML = (pending.options || []).map(option => {
       const tierNumber =
         option.tier ||
@@ -967,11 +924,15 @@
       const explanation = option.explanation
         ? `<span class="pc-card-explanation">${esc(option.explanation)}</span>`
         : "";
-      return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}">
-        <span class="pc-card-icon">${esc(optionIcon(option))}</span>
+      const accent = option.kind === "power"
+        ? (window.POWER_METADATA?.[option.powerId]?.color || "")
+        : "";
+      const style = accent ? ` style="--pc-card-accent:${esc(accent)}"` : "";
+      return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}"${style}>
+        <span class="pc-card-icon">${rewardCardIconMarkup(option)}</span>
         ${tier}
         <strong>${esc(option.title)}</strong>
-        <span class="pc-card-desc">${esc(option.description)}</span>
+        <span class="pc-card-desc">${esc(rewardCardDescription(option))}</span>
         ${explanation}
         <span class="pc-card-pick">CHOOSE</span>
       </button>`;
@@ -988,8 +949,47 @@
         });
       });
     });
+    const peekBar = typeof ensurePeekBar === "function" ? ensurePeekBar() : null;
+    const peekBtn = modal.querySelector(".pc-modal-peek");
+    if (peekBtn && !peekBtn.dataset.wired) {
+      peekBtn.dataset.wired = "1";
+      peekBtn.addEventListener("click", event => {
+        event.stopPropagation();
+        modal.classList.add("is-peeking");
+        byId("pcRewardPeekBar")?.classList.add("is-visible");
+      });
+    }
+    modal.classList.remove("is-peeking");
+    peekBar?.classList.remove("is-visible");
     modal.classList.add("is-open");
     grid.querySelector("button")?.focus();
+  }
+
+  function showChoice() {
+    const modal = ensureChoiceModal();
+    const pending = window.state?.powerChoice?.pendingChoice;
+    if (!isMode() || !pending || pending.ownerUserId !== me()) {
+      modal.classList.remove("is-open", "is-peeking");
+      byId("pcRewardPeekBar")?.classList.remove("is-visible");
+      modal.dataset.choiceId = "";
+      if (rewardModalTimer) {
+        clearTimeout(rewardModalTimer);
+        rewardModalTimer = null;
+      }
+      rewardModalPendingId = "";
+      return;
+    }
+    if (modal.dataset.choiceId === pending.id && modal.classList.contains("is-open")) return;
+    if (rewardModalPendingId === pending.id) return;
+    rewardModalPendingId = pending.id;
+    if (pending.role === "guesser") showQuestMetFlourish();
+
+    rewardModalTimer = setTimeout(() => {
+      rewardModalTimer = null;
+      if (window.state?.powerChoice?.pendingChoice?.id === pending.id) {
+        openRewardModal(pending);
+      }
+    }, REWARD_MODAL_SETTLE_MS);
   }
 
   function markEliminatedKeys() {
