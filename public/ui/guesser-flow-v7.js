@@ -144,7 +144,17 @@
       });
   }
 
-  function ensurePending(word) {
+  // showWorking=false is for a guess that's already known to resolve the
+  // instant this flight lands (see animateSubmission's own use of it) --
+  // the scanning "is-working" animation on the tiles keeps running on its
+  // own CSS timeline even while the wrap sits at visibility:hidden during
+  // the flight, so turning visibility back on partway through that cycle
+  // exposed it already mid-motion for one frame before the reveal cut it
+  // off, reading as a stutter between the float-up and the green flip.
+  // There's no actual waiting to represent in that case, so it's skipped
+  // outright instead of playing (and then instantly interrupting) a
+  // "waiting for the Spy" animation that was never true here.
+  function ensurePending(word, showWorking = true) {
     const history = historyContainer();
 
     if (!history || !word) {
@@ -155,8 +165,9 @@
       pendingWrap?.isConnected &&
       pendingWord === word
     ) {
-      pendingWrap.classList.add(
-        "is-working"
+      pendingWrap.classList.toggle(
+        "is-working",
+        showWorking
       );
 
       return pendingWrap;
@@ -173,8 +184,9 @@
     history.scrollTop =
       history.scrollHeight;
 
-    pendingWrap.classList.add(
-      "is-working"
+    pendingWrap.classList.toggle(
+      "is-working",
+      showWorking
     );
 
     return pendingWrap;
@@ -375,7 +387,8 @@
 
   async function animateSubmission(
     word,
-    captured
+    captured,
+    showWorking = true
   ) {
     const history = historyContainer();
     const sourceRow = draftRow();
@@ -402,7 +415,7 @@
         sourceRow?.getBoundingClientRect();
     }
 
-    const wrap = ensurePending(word);
+    const wrap = ensurePending(word, showWorking);
     const targetRow =
       wrap?.querySelector(".history-row");
 
@@ -453,7 +466,7 @@
       }
 
       wrap.style.visibility = "";
-      wrap.classList.add("is-working");
+      wrap.classList.toggle("is-working", showWorking);
       return;
     }
 
@@ -509,7 +522,7 @@
     flight.remove();
 
     wrap.style.visibility = "";
-    wrap.classList.add("is-working");
+    wrap.classList.toggle("is-working", showWorking);
   }
 
   function findNewestHistoryRow(word) {
@@ -994,9 +1007,19 @@
 
       if (word) {
         queue(async () => {
+          // false: this is the direct-win path -- the outcome is already
+          // known and animateResolution below runs the instant this
+          // returns, with no real waiting in between. Showing the
+          // "waiting for the Spy" scan animation here (even briefly) was
+          // never true and, since it keeps animating on its own CSS
+          // timeline under visibility:hidden during the flight, surfaced
+          // as a stray flash of motion the moment visibility came back --
+          // reading as a stutter wedged between the float-up landing and
+          // the green flip starting.
           await animateSubmission(
             word,
-            captured
+            captured,
+            false
           );
 
           await animateResolution(

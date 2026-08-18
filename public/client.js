@@ -981,10 +981,16 @@ function updateScreens() {
       // The tile flip has to actually finish playing before the popup
       // shows — worst case (setter's view, where the winning row also
       // slides up into place via slideRowIntoPlace before any tile can
-      // start flipping): 420ms slide + 1400ms stagger to the last tile's
-      // cover-flip + 650ms for that tile's own flip = 2470ms, rounded up
-      // for a small buffer.
-      const FLIP_TOTAL_MS = 2000;
+      // start flipping): slideRowIntoPlace's own 650ms safety timer (land())
+      // plus history.js's revealHistoryRow 1400ms safety timer (already
+      // covers the full 5-tile stagger through the last tile's own flip)
+      // = 2050ms, rounded up for a small buffer. This used to read 2000ms,
+      // under that 2050ms worst case by just enough that a slow transitionend
+      // (the kind slideRowIntoPlace's own safety timer exists to catch)
+      // let the "Your secret was found" popup fire while the row was still
+      // visibly sliding/flipping -- the announcement beating its own reveal
+      // to the punch.
+      const FLIP_TOTAL_MS = 2200;
       const POPUP_DURATION_MS = 3200;
 
       const iAmGuesser = myUserId() === state.guesser;

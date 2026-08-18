@@ -46,7 +46,6 @@ const QUEST_TYPES = [
   "ROW_AVOID",
   "RARE",
   "ALPHA",
-  "DOUBLES",
   "HARDMODE",
   "FIELDREPORT",
   "ALTERNATING",
@@ -291,15 +290,6 @@ function makeQuest(excludeType = null) {
       description: "Letters must be strictly alphabetical, forward or backward."
     };
   }
-  if (type === "DOUBLES") {
-    return {
-      id,
-      type,
-      icon: "Ⅱ",
-      title: "Double Trouble",
-      description: "Use the same letter twice in a row."
-    };
-  }
   if (type === "HARDMODE") {
     return {
       id,
@@ -443,8 +433,6 @@ function evaluateQuest(state, quest, guess) {
         codes.every((value, index) => index === 0 || value < codes[index - 1])
       );
     }
-    case "DOUBLES":
-      return /(.)\1/.test(word);
     case "HARDMODE":
       return hardModeCompliant(state, word);
     case "FIELDREPORT": {
