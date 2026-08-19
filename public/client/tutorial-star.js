@@ -1,12 +1,14 @@
 // Star Tutorial: a live, hands-on walk through the Spy's star/charge
 // system. Setter-only, single round. Unlike every other tutorial,
-// spy-charge is actually ENABLED here (see spyChargeServer.js's
-// createSpyChargeState and coverStrength.js's buildCoverStrengthState,
-// both of which special-case tutorialStage === "star") -- the player
-// types and submits real secrets, earns real stars, uses a real letter
-// reset at 5, and watches their real second power unlock at 8.
-// tutorialMode.js seeds the meter at 4 stars so one or two genuine
-// switches are enough to reach both milestones instead of a long grind.
+// Power Choice is actually ENABLED here (see isPowerChoice() in
+// powerChoiceServer.js, which special-cases tutorialStage === "star")
+// -- the player types and submits real secrets, earns real stars off
+// the real Spyometer, and picks a real reward off the real
+// reward-choice modal when they cross a milestone. tutorialMode.js
+// seeds the meter at 3 stars (of 15) so one good switch is enough to
+// reach the first milestone (5) instead of a long grind.
+
+const STAR_TUTORIAL_MAX = 15;
 
 function starTutorialShow(text, {
   role = "setter",
@@ -37,12 +39,14 @@ function starTutorialShow(text, {
 // enough -- no IIFE needed to keep them off the global object.
 let starSessionKey = null;
 let starLastSeenHistoryLen = null;
-let starResetMilestoneAnnounced = false;
-let starPowerMilestoneAnnounced = false;
-let starResetsUsedAtEntry = 0;
+let starMilestone5Announced = false;
+let starMilestone9Announced = false;
+let starMilestone15Announced = false;
 let starAwaitingAck = false;
 let starAckStepThreshold = null;
 let starLastResultText = "";
+let starLastPendingChoiceId = null;
+let starTutorialFinished = false;
 
 // A fresh room (new roomId) means a fresh meter -- reset every tracker
 // exactly once per session instead of carrying stale state from a
@@ -53,29 +57,51 @@ function resetStarSession(state) {
 
   starSessionKey = key;
   starLastSeenHistoryLen = state.history?.length ?? 0;
-  starResetMilestoneAnnounced = (Number(state.powers?.spyCharge?.total) || 0) >= 5;
-  starPowerMilestoneAnnounced = (Number(state.powers?.spyCharge?.total) || 0) >= 8;
-  starResetsUsedAtEntry = Number(state.powers?.spyCharge?.resetsUsed) || 0;
+  const total = Number(state.powers?.spyCharge?.total) || 0;
+  starMilestone5Announced = total >= 5;
+  starMilestone9Announced = total >= 9;
+  starMilestone15Announced = total >= 15;
   starAwaitingAck = false;
   starAckStepThreshold = null;
   starLastResultText = "";
+  starLastPendingChoiceId = state.powerChoice?.pendingChoice?.id || null;
+  starTutorialFinished = false;
   window.TutorialCore?.setStep(0);
 }
 
-// Shared by both "keep submitting" spots below (before the 5-star reset
-// unlocks, and again between 5 and 8 once it's been used) -- same prompt
-// either way, just reached from two different places in the flow.
+// The Spyometer card lives in the setter sidebar, which can be collapsed
+// (see power-choice-mode.js's setterSidebarCollapsed/spyAwardTarget) --
+// mirror that same fallback here so the ring lands on whichever of the
+// full card or the collapsed mini-badge is actually visible right now.
+function spyMeterHighlightTarget() {
+  const screen = byId("setterScreen");
+  const toggle = byId("setterSidebarToggle");
+  const collapsed = !!(
+    screen?.classList.contains("setter-sidebar-collapsed") ||
+    toggle?.getAttribute("aria-expanded") === "false"
+  );
+  const id = collapsed ? "setterSidebarChargeMini" : "pcSpyChargeCard";
+  return byId(id) || byId("pcSpyChargeCard") || byId("setterSidebarChargeMini");
+}
+
+// Shared by both "keep submitting" spots below (before the first reward
+// milestone, and again if the round somehow keeps going after it) --
+// same prompt either way, just reached from two different places in the
+// flow.
 function starPromptForSwitch(state, api, charge) {
   const hint = charge.hint;
-  const hintText = hint?.letter && Number.isInteger(hint.position)
-    ? ` Try to include ${String(hint.letter).toUpperCase()} at position ${hint.position + 1} too, for a bonus star.`
-    : "";
+  const hasHintPos = hint?.letter && Number.isInteger(hint.position);
+  const hintText = hint?.word
+    ? ` The hint also points to a strong word to switch to -- try ${String(hint.word).toUpperCase()} for an easy bonus star.`
+    : hasHintPos
+      ? ` Try to work ${String(hint.letter).toUpperCase()} into position ${hint.position + 1} too, for a bonus star.`
+      : "";
 
   starTutorialShow(
-    `Type a brand new secret -- as different as you can from the letters you now know are wrong -- and submit it.${hintText}`,
+    `Type a brand new secret and submit it -- TELLS is a fine one to try if you don't want to think one up.${hintText} (You can drag a letter to move it, or tap a tile to lock it in place first.)`,
     { title: "Make a switch", mode: "hide" }
   );
-  api.highlight(byId("spyChargeHud"));
+  api.highlight(spyMeterHighlightTarget());
   api.setWaiting({ label: "SUBMIT NEW SECRET" });
 }
 
@@ -86,7 +112,7 @@ function runStarTutorial(state, role) {
   api.clearHighlights();
 
   if (role !== "setter") {
-    api.setNextTutorial("modes");
+    api.setNextTutorial("advanced");
     starTutorialShow(
       "This tutorial needs the Spy screen. End it and start the Star Tutorial again.",
       { title: "Wrong role", mode: "end" }
@@ -108,10 +134,10 @@ function runStarTutorial(state, role) {
   api.clearWaiting();
 
   // A real AI opponent is playing along (this isn't scripted), so the
-  // round could in principle end before the player reaches every
+  // round could in principle end before the player reaches a reward
   // milestone -- wrap up gracefully instead of getting stuck.
   if (state.phase === "gameOver") {
-    api.setNextTutorial("modes");
+    api.setNextTutorial("advanced");
     starTutorialShow(
       "The round wrapped up there, but you already saw the star system do its thing live -- nice work.",
       { title: "Star Tutorial done", mode: "end" }
@@ -119,18 +145,36 @@ function runStarTutorial(state, role) {
     return;
   }
 
+  // Once a reward has been picked, keep showing the done message on every
+  // later render (an AI guess landing, a stray re-render, etc.) instead of
+  // just once -- otherwise the very next unrelated state push falls
+  // straight through to the switch-prompt branch below and silently
+  // un-shows it, since nothing else about this step is "waiting" on
+  // anything (mode:"end" doesn't hold the message the way the
+  // starAwaitingAck mechanism holds an advance-mode one).
+  if (starTutorialFinished) {
+    api.setNextTutorial("advanced");
+    starTutorialShow(
+      "Nice -- you picked a reward and it's already active. That's the whole loop: switch, earn stars, pick a reward, and every milestone after this one offers even better options. You've now seen the Star system live.",
+      { title: "Star Tutorial done", current: 3, total: 3, mode: "end" }
+    );
+    api.highlight(spyMeterHighlightTarget());
+    return;
+  }
+
   const step = api.getStep();
   const charge = state.powers?.spyCharge || {};
-  const total = Math.max(0, Math.min(12, Number(charge.total) || 0));
-  const resetsUsed = Number(charge.resetsUsed) || 0;
+  const total = Math.max(0, Math.min(STAR_TUTORIAL_MAX, Number(charge.total) || 0));
   const historyLen = state.history?.length ?? 0;
+  const pendingChoice = state.powerChoice?.pendingChoice;
+  const pendingIsMine = pendingChoice && pendingChoice.role === "setter";
 
   if (step === 0) {
     starTutorialShow(
-      `The meter is already partway full -- ${total} of 12 stars from earlier this round. From here, every real secret change you make adds to it live.`,
-      { current: 1, total: 4 }
+      `That's your Spyometer -- ${total} of ${STAR_TUTORIAL_MAX} stars already, from earlier this round. Every real secret change earns at least 1 star by default, more for a sharp switch. Cross 5, 9, and 15 stars and you'll get to pick a reward each time -- and the choices get better every time: 5 is a themed reward, 9 is three random powers, 15 is the advanced tier. Three stars on a single switch means you found a really good one.`,
+      { current: 1, total: 3 }
     );
-    api.highlight(byId("spyChargeHud"));
+    api.highlight(spyMeterHighlightTarget());
     api.setMode("advance");
     return;
   }
@@ -145,31 +189,33 @@ function runStarTutorial(state, role) {
       starAckStepThreshold = null;
     } else {
       starTutorialShow(starLastResultText, { mode: "advance" });
-      api.highlight(byId("spyChargeHud"));
+      api.highlight(spyMeterHighlightTarget());
       return;
     }
   }
 
   // A submission just landed -- report on it regardless of where the
-  // total ended up, INCLUDING when it jumped straight past 8 in one go
-  // (a good switch plus the bonus-star hint can easily do that from a
-  // seeded 4) -- otherwise a big jump would skip straight to the reset
-  // instructions with no acknowledgment of what just happened at all.
+  // total ended up, INCLUDING when it jumped straight past 9 in one go
+  // (a good switch plus the bonus-star hint can easily do that) --
+  // otherwise a big jump would skip straight past milestones with no
+  // acknowledgment of what just happened at all.
   if (historyLen > starLastSeenHistoryLen) {
     starLastSeenHistoryLen = historyLen;
 
-    let text = `That switch landed. The meter is now at ${total} of 12 stars.`;
+    let text = `That switch landed. The meter is now at ${total} of ${STAR_TUTORIAL_MAX} stars.`;
 
-    if (total >= 5 && !starResetMilestoneAnnounced) {
-      starResetMilestoneAnnounced = true;
-      text += " A letter reset just unlocked -- more on that next.";
+    if (total >= 5 && !starMilestone5Announced) {
+      starMilestone5Announced = true;
+      text += " You just crossed the first reward milestone -- a reward choice is on its way.";
     }
-
-    if (total >= 8 && !starPowerMilestoneAnnounced) {
-      starPowerMilestoneAnnounced = true;
-      text += " Your second power, Hide Tile, also just unlocked for the rest of the round -- look for it in your powers row.";
+    if (total >= 9 && !starMilestone9Announced) {
+      starMilestone9Announced = true;
+      text += " That also crossed 9 -- three random powers to choose from next time.";
     }
-
+    if (total >= 15 && !starMilestone15Announced) {
+      starMilestone15Announced = true;
+      text += " And that's 15, the advanced reward tier.";
+    }
     if (total < 5) text += " Keep going.";
 
     starLastResultText = text;
@@ -177,57 +223,52 @@ function runStarTutorial(state, role) {
     starAckStepThreshold = step + 1;
 
     starTutorialShow(text, { mode: "advance" });
-    api.highlight(byId("spyChargeHud"));
-    if (total >= 8) window.highlightPowerButtonByText?.("Hide Tile");
+    api.highlight(spyMeterHighlightTarget());
     return;
   }
 
-  if (total < 5) {
-    if (!state.pendingGuess) {
-      starTutorialShow(
-        "Waiting for the Inspector's next guess...",
-        { compact: true, mode: "hide", key: `star-wait-${historyLen}` }
-      );
-      api.setContinue({ show: false, mode: "hide" });
-      return;
-    }
-
-    starPromptForSwitch(state, api, charge);
-    return;
-  }
-
-  // total >= 5 from here on -- the reset is unlocked, so walk through
-  // using it before moving on to the (later, automatic) power unlock.
-  if (resetsUsed === starResetsUsedAtEntry) {
+  // A reward choice that was pending has now cleared -- the player picked
+  // a card. Wrap up here: they've seen the whole loop (switch, earn
+  // stars, pick a reward) live, and in a real match it just keeps
+  // repeating with better options at 9 and 15.
+  if (starLastPendingChoiceId && !pendingChoice) {
+    starLastPendingChoiceId = null;
+    starTutorialFinished = true;
+    api.setNextTutorial("advanced");
     starTutorialShow(
-      "You're at 5 stars or more -- a letter reset just unlocked. Tap the button, choose any keyboard letter you've already gotten feedback for, and confirm to erase it.",
-      { title: "Use a letter reset", current: 3, total: 4, mode: "hide" }
+      "Nice -- you picked a reward and it's already active. That's the whole loop: switch, earn stars, pick a reward, and every milestone after this one offers even better options. You've now seen the Star system live.",
+      { title: "Star Tutorial done", current: 3, total: 3, mode: "end" }
     );
-    api.highlight(byId("spyChargeActionBtn"));
-    api.setWaiting({ label: "USE THE RESET" });
+    api.highlight(spyMeterHighlightTarget());
     return;
   }
 
-  if (total < 8) {
-    if (!state.pendingGuess) {
-      starTutorialShow(
-        "Waiting for the Inspector's next guess...",
-        { compact: true, mode: "hide", key: `star-wait-${historyLen}` }
-      );
-      api.setContinue({ show: false, mode: "hide" });
-      return;
-    }
-
-    starPromptForSwitch(state, api, charge);
+  // A reward choice just opened -- the real modal handles showing and
+  // resolving it, so just point at the Spyometer and explain what's
+  // about to happen. Nothing to wait on except the player actually
+  // picking a card, which clears pendingChoice and lands in the branch
+  // above on the next render.
+  if (pendingIsMine) {
+    starLastPendingChoiceId = pendingChoice.id;
+    starTutorialShow(
+      "Your reward choice is opening -- give it a second, then read the three cards and tap CHOOSE on whichever one looks best. It activates right away.",
+      { title: "Pick a reward", current: 2, total: 3, mode: "hide" }
+    );
+    api.highlight(spyMeterHighlightTarget());
+    api.setContinue({ show: false, mode: "hide" });
     return;
   }
 
-  // total >= 8 and the reset's already been used -- done.
-  api.setNextTutorial("modes");
-  starTutorialShow(
-    "That's a real letter reset used and your second power unlocked. You've now seen the whole Star system live.",
-    { title: "Star Tutorial done", current: 4, total: 4, mode: "end" }
-  );
+  if (!state.pendingGuess) {
+    starTutorialShow(
+      "Waiting for the Inspector's next guess...",
+      { compact: true, mode: "hide", key: `star-wait-${historyLen}` }
+    );
+    api.setContinue({ show: false, mode: "hide" });
+    return;
+  }
+
+  starPromptForSwitch(state, api, charge);
 }
 
 window.runStarTutorial = runStarTutorial;

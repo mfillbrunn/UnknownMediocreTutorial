@@ -2,6 +2,7 @@ const powerMetadata = require("../../powers/powerMetadata");
 const { scoreGuess } = require("../../game-engine/scoring");
 const spyChargeServer = require("../../powers/powers/spyChargeServer");
 const { pickRandomQuestType, ensureQuestConditions } = require("../../powers/powers/questServer");
+const powerChoiceServer = require("../../power-choice/powerChoiceServer");
 
 class TutorialMode {
   constructor() {
@@ -98,22 +99,19 @@ class TutorialMode {
       state.tutorialPowerSetter = role === "setter" ? state.tutorialPowerId : null;
       state.scriptedTurns = 0;
     }
+    // Stage "quest": a standalone, live walkthrough of Power Choice's real
+    // Inspector quest system (see client/tutorial-quest.js and
+    // onLobbyReady's quest branch below). Single round, no scripted
+    // opening -- seedQuestTutorialRound drops the player straight into a
+    // live decision with a forced example quest already active, the same
+    // "seed a snapshot instead of scripting from scratch" approach the
+    // Star Tutorial uses. Free typing throughout, same reasoning as
+    // "star": a forced tutorialGuesses match would fight with wanting the
+    // player to type their own quest-satisfying guess.
     if (state.tutorialStage === "quest") {
-  state.roundsTotal = 1;
-  state.scriptedTurns = 3;
-
-  state.tutorialGuesses = [
-    "QUACK",
-    "VIXEN",
-    "WACKY"
-  ];
-
-  state.tutorialSecretsAI = [
-    "BLIMP",
-    "BLIMP",
-    "BLIMP"
-  ];
-}
+      state.roundsTotal = 1;
+      state.scriptedTurns = 0;
+    }
 
     // Stage "star": a standalone, entirely narrative deep dive on the
     // Spy's star/charge system (see client/tutorial-star.js). Single
@@ -148,6 +146,10 @@ class TutorialMode {
   guesserQuest
 ) {
   if (state.tutorialStage === "quest") {
+    // Real Power Choice this time, not the classic single-quest system --
+    // see isPowerChoice() in powerChoiceServer.js, which special-cases
+    // this stage (alongside "star") to actually run live. No fixed
+    // loadout to seed, same reasoning as "star" below.
     state.initialPowers = {
       setter: [],
       guesser: []
@@ -155,31 +157,51 @@ class TutorialMode {
 
     state.activePowers = [];
 
-    this.seedQuestTutorialRound(state);
+    this.seedQuestPowerChoiceRound(state);
+
+    powerChoiceServer.initializeRound(state);
+    // Force the very first quest to one concrete, easy-to-explain example
+    // (see client/tutorial-quest.js) instead of whatever makeQuest() would
+    // have picked at random, and make it live for the player's very next
+    // guess -- normally only every OTHER guess is live (see
+    // evaluateInspectorGuess's questLive gate) -- so they can fulfill it
+    // right away instead of needing a throwaway guess first.
+    state.powerChoice.inspector.currentQuest = {
+      id: "tutorial-quest-half-am",
+      type: "HALF_AM",
+      icon: "A–P",
+      title: "First Half",
+      description: "Use only letters A through P."
+    };
+    state.powerChoice.inspector.attempts = 1;
     return;
   }
 
   if (state.tutorialStage === "star") {
-    // Real powers this time -- spy-charge is specifically ENABLED for
-    // this stage (see spyChargeServer.js's createSpyChargeState), so the
-    // player needs a genuine locked second power to watch unlock at 8
-    // stars. countOnly (index 0) starts active; hideTile (index 1) is
-    // the one that stays locked.
-    const sP = ["countOnly", "hideTile"];
+    // Real Power Choice this time, not the classic power draft -- see
+    // isPowerChoice() in powerChoiceServer.js, which special-cases this
+    // one stage to actually run live. No fixed setter loadout to seed
+    // (initialPowers/activePowers below start empty, same as any normal
+    // Power Choice match): initializeForRound's own patched branch (see
+    // powerChoiceServer.js's spyChargeServer.initializeForRound override)
+    // rebuilds state.activePowers from state.powers.powerChoicePersistentGrants
+    // on every call regardless of what's passed in here, so seeding a
+    // fixed two-power loadout would just get silently overwritten the
+    // instant the round actually starts.
     state.initialPowers = {
-      setter: sP,
+      setter: [],
       guesser: []
     };
 
-    state.activePowers = [...sP];
+    state.activePowers = [];
 
     this.seedStarTutorialRound(state);
 
-    spyChargeServer.initializeForRound(state, sP);
+    spyChargeServer.initializeForRound(state, []);
     // Start the meter partway full (see tutorial-star.js) so the player
-    // reaches both the 5-star and 8-star milestones with just one or two
-    // real secret changes instead of needing a long grind from zero.
-    state.powers.spyCharge.total = 4;
+    // reaches the first Power Choice reward milestone (5 stars) with just
+    // one real secret change instead of needing a long grind from zero.
+    state.powers.spyCharge.total = 3;
     return;
   }
 
@@ -233,6 +255,40 @@ class TutorialMode {
     };
     state.activePowers = [];
   }
+  // Drops the Quest Tutorial straight into a live decision -- one
+  // already-scored guess sitting in state.history for the board to look
+  // realistic, then the player's own next guess is what actually attempts
+  // the forced example quest set up in onLobbyReady above. Same "seed a
+  // snapshot instead of scripting from scratch" approach seedStarTutorialRound
+  // uses.
+  seedQuestPowerChoiceRound(state) {
+    if (state.tutorialStage !== "quest") return;
+
+    const secret = "BLIMP";
+    state.secret = secret;
+    state.history = ["CRANE"].map((guess, i) => {
+      const fb = scoreGuess(secret, guess);
+      return {
+        guess,
+        fb,
+        fbGuesser: [...fb],
+        extraInfo: null,
+        finalSecret: secret,
+        roundIndex: i,
+        powerEvents: [],
+        fakeFeedback: null
+      };
+    });
+
+    state.phase = "normal";
+    state.turn = state.guesser;
+    state.pendingGuess = "";
+    state.setterDraft = "";
+  }
+
+  // Superseded by seedQuestPowerChoiceRound above (kept, not deleted --
+  // the Quest Tutorial now runs Power Choice's real multi-quest system
+  // live instead of this scripted single RARE-quest walkthrough).
   seedQuestTutorialRound(state) {
   if (
     state.tutorialStage !== "quest"

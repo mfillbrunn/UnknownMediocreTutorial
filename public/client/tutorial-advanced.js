@@ -240,7 +240,7 @@ function runAdvancedTutorialGuesser(state) {
   if (round >= 2) {
     stopKeyDemo();
     advancedTutorialShow(
-      "Good. Next you will be the Spy. That is where Notes and the secret numbers are most useful.",
+      "Good. Next you will be the Spy. That is where the Log, the clue row, and the secret numbers are most useful.",
       {
         role: "guesser",
         title: "Inspector tools done",
@@ -316,93 +316,34 @@ function runAdvancedTutorialSetter(state) {
 
   if (round === 1) {
     const candidate = (state.tutorialSecrets?.[1] || "LEMUR").toUpperCase();
+    const TOTAL_STEPS = 9;
 
     if (tutorialSubStep === 0) {
-      advancedTutorialShow(
-        "Notes is a scratchpad. Words in Notes are not submitted. Use it while the Inspector is thinking.",
-        {
-          role: "setter",
-          title: "Notes",
-          current: 1,
-          total: 11,
-          placement: "bottom",
-          visualHtml: `
-            <div class="tutorial-note-strip">
-              Think of Notes like a little list of secret ideas.
-            </div>
-          `
-        }
-      );
-      highlightNotesPanel();
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 1) {
-      advancedTutorialShow(
-        `Type ${candidate} in the five small Notes boxes. Press Enter to save it.`,
-        {
-          role: "setter",
-          title: "Save a note",
-          current: 2,
-          total: 11,
-          placement: "bottom",
-          mode: "hide"
-        }
-      );
-      highlightNotesDraft();
-      startKeyDemo(
-        `advanced-note-${candidate}`,
-        () => tutorialWordKeyEls("setter", candidate, notesDraftText())
-      );
-      waitForNoteAdded(candidate);
-      return;
-    }
-
-    if (tutorialSubStep === 2) {
-      stopKeyDemo();
-      advancedTutorialShow(
-        "A green word still fits all old clues. The small number shows how many secret words would stay possible if you used it. Bigger is usually safer.",
-        {
-          role: "setter",
-          title: "Read your notes",
-          current: 3,
-          total: 11,
-          placement: "bottom"
-        }
-      );
-      highlightNotesList();
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 3) {
       if (!state.pendingGuess) {
         advancedTutorialShow(
-          "The Inspector is still thinking. You can keep adding ideas to Notes while you wait.",
+          "The Inspector is still thinking.",
           {
             role: "setter",
             title: "Wait and plan",
-            current: 4,
-            total: 11,
+            current: 1,
+            total: TOTAL_STEPS,
             placement: "bottom",
             compact: true,
             mode: "hide",
-            key: `advanced-note-wait-${round}`
+            key: `advanced-wait-${round}`
           }
         );
-        highlightNotesList();
         setContinue({ show: false, mode: "hide" });
         return;
       }
 
       advancedTutorialShow(
-        "The guess is here. KEEP and NEW help you compare your two choices.",
+        "The guess is here. KEEP and NEW compare two options: keeping your current secret as-is, or switching to whatever you type in the draft below.",
         {
           role: "setter",
           title: "Keep or change?",
-          current: 4,
-          total: 11,
+          current: 1,
+          total: TOTAL_STEPS,
           placement: "bottom",
           visualHtml: advancedRemainingVisual()
         }
@@ -412,47 +353,14 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 4) {
+    if (tutorialSubStep === 1) {
       advancedTutorialShow(
-        `Tap ${candidate} in Notes. It will copy into your secret boxes. It will not submit yet.`,
-        {
-          role: "setter",
-          title: "Use a saved word",
-          current: 5,
-          total: 11,
-          placement: "bottom",
-          mode: "hide"
-        }
-      );
-      highlightSavedNote(candidate);
-      waitForNoteSelected(candidate);
-      return;
-    }
-
-    if (tutorialSubStep === 5) {
-      advancedTutorialShow(
-        "The word is now in your draft. You can still change it or clear it before you submit.",
-        {
-          role: "setter",
-          title: "Check the draft",
-          current: 6,
-          total: 11,
-          placement: "top"
-        }
-      );
-      highlightDraftRow("setter");
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 6) {
-      advancedTutorialShow(
-        "Notes, the Log, and everything else on this side all live in one panel. Tap this button now to open or close it.",
+        "Everything on this side of the screen -- the Log and more -- lives in one panel. Tap this button now to open or close it.",
         {
           role: "setter",
           title: "Side panel",
-          current: 7,
-          total: 11,
+          current: 2,
+          total: TOTAL_STEPS,
           placement: "bottom",
           mode: "hide"
         }
@@ -462,14 +370,14 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 7) {
+    if (tutorialSubStep === 2) {
       advancedTutorialShow(
         "Tap Log now.",
         {
           role: "setter",
           title: "Open the Log",
-          current: 8,
-          total: 11,
+          current: 3,
+          total: TOTAL_STEPS,
           placement: "bottom",
           mode: "hide"
         }
@@ -479,14 +387,14 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 8) {
+    if (tutorialSubStep === 3) {
       advancedTutorialShow(
         "The Log lists everything that happened this match: every guess, every secret change, every power used.",
         {
           role: "setter",
           title: "Read the Log",
-          current: 9,
-          total: 11,
+          current: 4,
+          total: TOTAL_STEPS,
           placement: "bottom",
           visualHtml: advancedLogVisual()
         }
@@ -496,14 +404,14 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
-    if (tutorialSubStep === 9) {
+    if (tutorialSubStep === 4) {
       advancedTutorialShow(
         "Tap the ⧉ button to show or hide the clue row above your board. It shows what both of you already know about the secret so far.",
         {
           role: "setter",
           title: "The clue row",
-          current: 10,
-          total: 11,
+          current: 5,
+          total: TOTAL_STEPS,
           placement: "bottom",
           visualHtml: advancedConstraintVisual()
         }
@@ -513,13 +421,61 @@ function runAdvancedTutorialSetter(state) {
       return;
     }
 
+    if (tutorialSubStep === 5) {
+      advancedTutorialShow(
+        "That flag button concedes the round right now. As Inspector, conceding costs a 10-point penalty on top. As Spy, there's no extra penalty -- you're just giving up. Either way, the round ends immediately.",
+        {
+          role: "setter",
+          title: "Concede",
+          current: 6,
+          total: TOTAL_STEPS,
+          placement: "bottom"
+        }
+      );
+      highlightEl(document.querySelector('#setterScreen .concedeBtn'));
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 6) {
+      advancedTutorialShow(
+        "Leave shows up whenever this game has no time limit, or you're facing the AI -- tap it to step away safely. The room stays alive, so you can pick the match back up later from My Games.",
+        {
+          role: "setter",
+          title: "Leave",
+          current: 7,
+          total: TOTAL_STEPS,
+          placement: "bottom"
+        }
+      );
+      highlightEl(byId("leaveGameBtnSetter"));
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 7) {
+      clearHighlights();
+      advancedTutorialShow(
+        "One more thing about timed matches: if you ever run out of time, your last submitted guess or secret is used automatically and the round continues. Do that three times in one round, though, and it's an instant loss.",
+        {
+          role: "setter",
+          title: "Running out of time",
+          current: 8,
+          total: TOTAL_STEPS,
+          placement: "bottom"
+        }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+
     advancedTutorialShow(
       `Now submit ${candidate}.`,
       {
         role: "setter",
         title: "Finish the turn",
-        current: 11,
-        total: 11,
+        current: 9,
+        total: TOTAL_STEPS,
         placement: "top",
         mode: "hide"
       }
@@ -531,7 +487,7 @@ function runAdvancedTutorialSetter(state) {
 
   if (round >= 2) {
     advancedTutorialShow(
-      "You used the extra tools: Guide, Drag and Lock, Notes, KEEP and NEW, the side panel, the clue row, and the Log.",
+      "You used the extra tools: Guide, Drag and Lock, KEEP and NEW, the side panel, the clue row, the Log, and Concede/Leave.",
       {
         role: "setter",
         title: "Extra tools done",
@@ -539,8 +495,8 @@ function runAdvancedTutorialSetter(state) {
         visualHtml: `
           <div class="tutorial-finish-checks">
             <span>✓ Guide when you need help</span>
-            <span>✓ Notes while the Inspector thinks</span>
             <span>✓ KEEP and NEW to compare choices</span>
+            <span>✓ Concede or Leave when you need to step away</span>
           </div>
         `
       }
@@ -557,7 +513,7 @@ function runAdvancedSummaryTutorial(state) {
 
   if (tutorialSubStep === 0) {
     advancedTutorialShow(
-      "This round is done. Next you will be the Spy, where Notes and KEEP versus NEW are most useful.",
+      "This round is done. Next you will be the Spy, where KEEP versus NEW and the Log are most useful.",
       {
         role: "guesser",
         title: "Round finished",
