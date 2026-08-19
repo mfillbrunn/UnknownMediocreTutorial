@@ -131,13 +131,14 @@ function isPowerChoice(state) {
   return !!(
     state &&
     state.gameMode === MODE &&
-    // The Star Tutorial is the one tutorial stage that runs the real
-    // spy-charge/reward-choice system live (see client/tutorial-star.js
-    // and tutorialMode.js's onLobbyReady star branch) instead of a purely
-    // scripted/narrated walkthrough -- every other stage stays excluded so
-    // it keeps its own scripted secrets/guesses undisturbed by Power
-    // Choice's reward milestones and turn-flow changes.
-    (!state.isTutorial || state.tutorialStage === "star") &&
+    // The Star and Quest Tutorials are the two tutorial stages that run
+    // the real spy-charge/quest/reward-choice system live (see
+    // client/tutorial-star.js, client/tutorial-quest.js, and
+    // tutorialMode.js's onLobbyReady star/quest branches) instead of a
+    // purely scripted/narrated walkthrough -- every other stage stays
+    // excluded so it keeps its own scripted secrets/guesses undisturbed by
+    // Power Choice's reward milestones and turn-flow changes.
+    (!state.isTutorial || state.tutorialStage === "star" || state.tutorialStage === "quest") &&
     !state.isDaily &&
     !state.devMode
   );
