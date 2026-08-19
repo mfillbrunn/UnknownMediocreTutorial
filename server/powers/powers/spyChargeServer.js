@@ -274,6 +274,27 @@ function rollHintForTurn(state, allowedSecrets) {
 
   if (!hint) return null;
 
+  // Star Tutorial only (see client/tutorial-star.js): the letter+position
+  // hint alone still asks a brand-new player to invent a whole secret
+  // that uses it, on top of everything else the tutorial is already
+  // asking them to absorb. Attaching one real best-scoring word that
+  // actually satisfies the hint -- reusing the same candidates/bestCount
+  // this call already computed, same selection chooseHintedBestSecret
+  // does independently for the AI -- lets the tutorial just say "try
+  // this word" instead. Left off outside the tutorial: real matches only
+  // ever show letter+position today, and there's no UI yet for a full
+  // word suggestion there.
+  if (state.tutorialStage === "star") {
+    const matching = candidates.filter(
+      candidate =>
+        candidate.count === analysis.bestCount &&
+        candidate.word[hint.position] === hint.letter
+    );
+    if (matching.length) {
+      hint.word = matching[Math.floor(Math.random() * matching.length)].word;
+    }
+  }
+
   charge.hint = hint;
   return hint;
 }

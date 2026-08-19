@@ -160,26 +160,30 @@ class TutorialMode {
   }
 
   if (state.tutorialStage === "star") {
-    // Real powers this time -- spy-charge is specifically ENABLED for
-    // this stage (see spyChargeServer.js's createSpyChargeState), so the
-    // player needs a genuine locked second power to watch unlock at 8
-    // stars. countOnly (index 0) starts active; hideTile (index 1) is
-    // the one that stays locked.
-    const sP = ["countOnly", "hideTile"];
+    // Real Power Choice this time, not the classic power draft -- see
+    // isPowerChoice() in powerChoiceServer.js, which special-cases this
+    // one stage to actually run live. No fixed setter loadout to seed
+    // (initialPowers/activePowers below start empty, same as any normal
+    // Power Choice match): initializeForRound's own patched branch (see
+    // powerChoiceServer.js's spyChargeServer.initializeForRound override)
+    // rebuilds state.activePowers from state.powers.powerChoicePersistentGrants
+    // on every call regardless of what's passed in here, so seeding a
+    // fixed two-power loadout would just get silently overwritten the
+    // instant the round actually starts.
     state.initialPowers = {
-      setter: sP,
+      setter: [],
       guesser: []
     };
 
-    state.activePowers = [...sP];
+    state.activePowers = [];
 
     this.seedStarTutorialRound(state);
 
-    spyChargeServer.initializeForRound(state, sP);
+    spyChargeServer.initializeForRound(state, []);
     // Start the meter partway full (see tutorial-star.js) so the player
-    // reaches both the 5-star and 8-star milestones with just one or two
-    // real secret changes instead of needing a long grind from zero.
-    state.powers.spyCharge.total = 4;
+    // reaches the first Power Choice reward milestone (5 stars) with just
+    // one real secret change instead of needing a long grind from zero.
+    state.powers.spyCharge.total = 3;
     return;
   }
 
