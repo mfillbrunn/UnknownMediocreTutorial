@@ -2607,6 +2607,15 @@ byId("tutorialDoneNextBtn")?.addEventListener("click", () => {
 byId("tutorialContinueBtn")?.addEventListener("click", event => {
   event.stopPropagation();
 
+  // A step's own content (a lower keyboard row, a far-down highlight) can
+  // leave the page scrolled well past the top by the time the player taps
+  // Next -- without this, the very next step's tooltip can land off-screen
+  // above the current scroll position instead of where the player is
+  // actually looking. Any step that genuinely needs to scroll back down to
+  // its own highlight (e.g. highlightSavedNote/highlightSummaryActions)
+  // does so itself afterward, so this only ever fights steps that don't.
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
   if (tutorialContinueMode === "end") {
     showTutorialDoneModal();
     return;
