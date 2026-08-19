@@ -601,10 +601,10 @@ function fixedOptions(role, threshold) {
         id: "spy-reset-positive-1",
         kind: "fixed",
         tier: 1,
-        icon: "↶",
-        title: "Erase One Clue",
-        description: "Reset one random yellow or green letter.",
-        explanation: "This keeps the original reward: one known colored letter is returned to an unknown state."
+        icon: "🟩⇢🟨",
+        title: "Fade a Green",
+        description: "Turn one green tile into yellow.",
+        explanation: "The letter stays known to be present, but its exact position is no longer locked."
       },
       {
         id: "spy-reset-known-2",
@@ -886,18 +886,6 @@ function fixedOptions(role, threshold) {
   }
 
   return [];
-}
-
-// Trims a fixed-reward group down to three cards. Options that would do
-// nothing right now (fixedOptionApplicable === false) are dropped first,
-// so a random trim can't leave the player staring at three dead cards
-// while a usable one was silently cut.
-function pickThree(state, options) {
-  const list = Array.isArray(options) ? options : [];
-  if (list.length <= 3) return list;
-  const usable = list.filter(option => fixedOptionApplicable(state, option));
-  const rest = list.filter(option => !usable.includes(option));
-  return shuffle(usable).concat(shuffle(rest)).slice(0, 3);
 }
 
 function buildChoice(state, role, threshold, owner) {
@@ -1581,7 +1569,7 @@ function rewardFixedOptionApplicable(state, option) {
   const unknownPresentCount = rewardUnknownSecretLetters(state).length;
   switch (id) {
     case "spy-reset-positive-1":
-      return feedbackLetters(state, true).length >= 1;
+      return greenCount >= 1;
     case "spy-reset-known-2":
       return feedbackLetters(state, false).length >= 2;
     case "spy-add-point-1":
@@ -1668,9 +1656,19 @@ function rewardOptionApplicable(state, option) {
   return rewardFixedOptionApplicable(state, option);
 }
 
+// Options that would do nothing right now (rewardOptionApplicable ===
+// false, e.g. no green tile left to fade, no yellow tile left to smudge)
+// are preferred, but never at the cost of showing fewer than `limit`
+// cards -- if a whole pool narrows to 1-2 applicable options (easy to hit
+// now that more of the fixed rewards are gated on real board state), the
+// remaining slots are padded from the rest of the pool instead of just
+// leaving the player with a two- or one-card draft.
 function rewardPickAvailableOptions(state, options, limit = 3) {
-  return shuffle((options || []).filter(option => rewardOptionApplicable(state, option)))
-    .slice(0, limit);
+  const list = Array.isArray(options) ? options : [];
+  if (list.length <= limit) return shuffle(list);
+  const usable = list.filter(option => rewardOptionApplicable(state, option));
+  const rest = list.filter(option => !usable.includes(option));
+  return shuffle(usable).concat(shuffle(rest)).slice(0, limit);
 }
 
 function rewardWeightedPick(items, weightFor) {
@@ -1773,7 +1771,6 @@ function effectDetailText(option, detail) {
       .join(", ");
 
   switch (option.id) {
-    case "spy-reset-positive-1":
     case "spy-reset-known-2":
     case "spy-reset-positive-2":
       return letters.length
@@ -1796,6 +1793,7 @@ function effectDetailText(option, detail) {
       return detail?.clues?.length
         ? `Erased yellow clue${detail.clues.length === 1 ? "" : "s"}: ${clueText(detail.clues)}.`
         : "No eligible yellow tile remained.";
+    case "spy-reset-positive-1":
     case "spy-blur-position":
       return detail?.demoted?.length
         ? `Blurred green position: ${clueText(detail.demoted)} is now yellow.`
@@ -1982,7 +1980,7 @@ function applyChoice(state, option, choice, room, roomId, io, context) {
   } else {
     switch (option.id) {
       case "spy-reset-positive-1":
-        detail = { letters: resetRandom(state, 1, true) };
+        detail = { demoted: rewardDemoteGreens(state, 1) };
         break;
       case "spy-reset-known-2":
         detail = { letters: resetRandom(state, 2, false) };
