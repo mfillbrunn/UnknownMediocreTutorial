@@ -33,6 +33,11 @@ const {
   runAllQuestSimulations,
   saveQuestSimulation
 } = require("../core/simulation/runQuestSimulation");
+const {
+  getRewardCatalog,
+  runRewardSimulation,
+  runAllRewardSimulations
+} = require("../core/simulation/runRewardSimulation");
 
 const {
   buildSafeStateForPlayer
@@ -1139,6 +1144,65 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
         cb?.({ ok: true, results });
       } catch (err) {
         console.error("Quest simulation batch failed:", err);
+        cb?.({ ok: false, error: "Simulation batch failed" });
+      }
+    });
+
+    /* ---------- DEV: POWER CHOICE REWARD SIMULATION ---------- */
+    socket.on("getRewardCatalog", ({ role, tier }, cb) => {
+      const safeRole = role === "setter" || role === "guesser" ? role : null;
+      const safeTier = [1, 2, 3].includes(Number(tier)) ? Number(tier) : null;
+      if (!safeRole || !safeTier) return cb?.({ ok: false, error: "role and tier are required" });
+
+      try {
+        cb?.({ ok: true, rewards: getRewardCatalog(safeRole, safeTier) });
+      } catch (err) {
+        console.error("Reward catalog lookup failed:", err);
+        cb?.({ ok: false, error: "Lookup failed" });
+      }
+    });
+
+    socket.on("runRewardSimulation", async ({ userId, role, tier, rewardId, runs, aiDifficulty }, cb) => {
+      if (!userId) return cb?.({ ok: false, error: "Not logged in" });
+      if (!rewardId || (role !== "setter" && role !== "guesser") || ![1, 2, 3].includes(Number(tier))) {
+        return cb?.({ ok: false, error: "Pick a role, tier, and reward first" });
+      }
+
+      const safeRuns = Math.max(1, Math.min(1000, Math.floor(Number(runs)) || 100));
+      const safeDifficulty = Math.max(1, Math.min(3, Math.floor(Number(aiDifficulty)) || 2));
+
+      try {
+        const stats = await runRewardSimulation(
+          { role, tier, rewardId, runs: safeRuns, aiDifficulty: safeDifficulty },
+          context,
+          (progress) => socket.emit("rewardSimulationProgress", progress)
+        );
+
+        cb?.({ ok: true, stats });
+      } catch (err) {
+        console.error("Reward simulation failed:", err);
+        cb?.({ ok: false, error: "Simulation failed" });
+      }
+    });
+
+    socket.on("runAllRewardSimulations", async ({ userId, runs, aiDifficulty, roleFilter, tierFilter }, cb) => {
+      if (!userId) return cb?.({ ok: false, error: "Not logged in" });
+
+      const safeRuns = Math.max(1, Math.min(1000, Math.floor(Number(runs)) || 100));
+      const safeDifficulty = Math.max(1, Math.min(3, Math.floor(Number(aiDifficulty)) || 2));
+      const safeRoleFilter = ["all", "setter", "guesser"].includes(roleFilter) ? roleFilter : "all";
+      const safeTierFilter = ["all", "1", "2", "3", 1, 2, 3].includes(tierFilter) ? tierFilter : "all";
+
+      try {
+        const results = await runAllRewardSimulations(
+          { runs: safeRuns, aiDifficulty: safeDifficulty, roleFilter: safeRoleFilter, tierFilter: safeTierFilter },
+          context,
+          (progress) => socket.emit("rewardSimulationBatchProgress", progress)
+        );
+
+        cb?.({ ok: true, results });
+      } catch (err) {
+        console.error("Reward simulation batch failed:", err);
         cb?.({ ok: false, error: "Simulation batch failed" });
       }
     });

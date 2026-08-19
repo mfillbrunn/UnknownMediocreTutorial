@@ -529,6 +529,7 @@
     <div class="menu-buttons">
       <button id="devPlayBtn" class="menu-btn primary">Play</button>
       <button id="devSimulationBtn" class="menu-btn">Simulation</button>
+      <button id="devRewardSimulationBtn" class="menu-btn">Reward Simulator</button>
     </div>
   </div>
 </section>
@@ -625,6 +626,104 @@
   </div>
 </section>
 
+<!-- ========== REWARD SIMULATION (Power Choice Spyometer/quest reward benchmark) ========== -->
+<section id="rewardSimulationScreen" class="screen game-menu">
+  <div class="menu-center sim-center">
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('developerScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Reward Simulator</h2>
+    </div>
+    <p class="sim-explainer">
+      Forces one specific Power Choice reward onto one seat at a fixed
+      point in the round (turn 3 for a Spy tier-1 reward / turn 2 for an
+      Inspector tier-1 reward, turn 5 / turn 4 for tier 2 -- the "3 random
+      powers" milestone, turn 7 / turn 6 for the advanced tier 3), with the
+      other side getting nothing extra, and compares against a baseline
+      batch with no reward at all. Everything else about the reward
+      threshold system is switched off for the trial so only the one
+      reward under test can affect the outcome. Tier 3 rewards need the
+      round to run quite deep (turn 6-7) to ever fire -- most rounds finish
+      before then, so tier-3 sample sizes are often small.
+    </p>
+
+    <div class="sim-controls">
+      <label class="sim-field">
+        <span>Role</span>
+        <select id="rsRoleSelect">
+          <option value="setter">Spy (setter)</option>
+          <option value="guesser">Inspector (guesser)</option>
+        </select>
+      </label>
+      <label class="sim-field">
+        <span>Tier</span>
+        <select id="rsTierSelect">
+          <option value="1">Tier 1 (turn 3 / turn 2)</option>
+          <option value="2">Tier 2 -- 3 random powers (turn 5 / turn 4)</option>
+          <option value="3">Tier 3 -- advanced (turn 7 / turn 6)</option>
+        </select>
+      </label>
+      <label class="sim-field">
+        <span>Reward</span>
+        <select id="rsRewardSelect"></select>
+      </label>
+      <label class="sim-field">
+        <span>Runs per batch</span>
+        <input id="rsRunsInput" type="number" min="1" max="1000" value="100" />
+      </label>
+      <label class="sim-field">
+        <span>AI difficulty</span>
+        <select id="rsDifficultySelect">
+          <option value="1">Easy</option>
+          <option value="2" selected>Medium</option>
+          <option value="3">Hard</option>
+        </select>
+      </label>
+      <button id="rsRunBtn" class="menu-btn primary">Run Simulation</button>
+    </div>
+
+    <div id="rsProgress" class="sim-progress hidden">
+      <div class="sim-progress-bar"><div id="rsProgressFill" class="sim-progress-fill"></div></div>
+      <span id="rsProgressText"></span>
+    </div>
+
+    <div id="rsResults" class="sim-results hidden"></div>
+
+    <h3 class="sim-subtitle sim-subtitle-wide">Test All Rewards</h3>
+    <div class="sim-chart-toolbar">
+      <div id="rsRoleFilter" class="sim-role-filter">
+        <button class="sim-role-btn active" data-role="all">All</button>
+        <button class="sim-role-btn" data-role="guesser">Guesser</button>
+        <button class="sim-role-btn" data-role="setter">Setter</button>
+      </div>
+      <div id="rsTierFilter" class="sim-role-filter">
+        <button class="sim-role-btn active" data-tier="all">All Tiers</button>
+        <button class="sim-role-btn" data-tier="1">Tier 1</button>
+        <button class="sim-role-btn" data-tier="2">Tier 2</button>
+        <button class="sim-role-btn" data-tier="3">Tier 3</button>
+      </div>
+    </div>
+    <div class="sim-batch-controls">
+      <button id="rsTestAllBtn" class="menu-btn">Test All Rewards</button>
+      <span id="rsTestAllEstimate" class="sim-estimate"></span>
+    </div>
+
+    <div id="rsBatchProgress" class="sim-progress hidden">
+      <div class="sim-progress-bar"><div id="rsBatchProgressFill" class="sim-progress-fill"></div></div>
+      <span id="rsBatchProgressText"></span>
+    </div>
+
+    <h3 class="sim-subtitle sim-subtitle-wide">Reward Effectiveness Chart</h3>
+    <div class="sim-chart-toolbar">
+      <label class="sim-split-toggle">
+        <input type="checkbox" id="rsSplitViewToggle" />
+        Split guesser / setter
+      </label>
+    </div>
+    <div id="rsChartWrap" class="sim-chart-wrap">
+      <div class="sim-chart-empty">Run "Test All Rewards" above to see a chart.</div>
+    </div>
+  </div>
+</section>
 
 
 <!-- ========== LOBBY ========== -->
@@ -1425,6 +1524,7 @@
   <script src="client/dev-powers.js"></script>
   <script src="client/power-loadouts.js"></script>
   <script src="client/dev-simulation.js"></script>
+  <script src="client/dev-reward-simulation.js"></script>
   <script src="client/invite.js"></script>
   <script src="client/big-announce.js"></script>
   <script src="client.js?v=9-2"></script>
