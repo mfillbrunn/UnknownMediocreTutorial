@@ -1019,6 +1019,85 @@
     return bar;
   }
 
+  function fixedRewardAccent(option) {
+    const id = String(option?.id || "");
+    const exact = {
+      "spy-reset-positive-1": "#60a5fa",
+      "spy-reset-positive-2": "#60a5fa",
+      "spy-add-point-1": "#fb7185",
+      "spy-add-point-2": "#fb7185",
+      "inspector-yellow-1": "#fbbf24",
+      "inspector-green-1": "#34d399",
+      "inspector-remove-point-1": "#2dd4bf",
+      "inspector-remove-point-2": "#2dd4bf"
+    };
+    if (exact[id]) return exact[id];
+    if (id.startsWith("spy-")) return "#fb7185";
+    if (id.includes("yellow")) return "#fbbf24";
+    if (id.includes("green")) return "#34d399";
+    return "#38bdf8";
+  }
+
+  function fixedRewardIconMarkup(option) {
+    const id = String(option?.id || "");
+    if (id === "spy-reset-positive-1" || id === "spy-reset-positive-2") {
+      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <rect x="13" y="25" width="36" height="42" rx="9" fill="#facc15" stroke="#fef3c7" stroke-width="4"/>
+        <rect x="56" y="25" width="36" height="42" rx="9" fill="#34d399" stroke="#d1fae5" stroke-width="4"/>
+        <path d="M92 75c-7 18-32 27-51 15" fill="none" stroke="#60a5fa" stroke-width="9" stroke-linecap="round"/>
+        <path d="M33 78l3 18 17-6" fill="#60a5fa"/>
+        <circle cx="96" cy="25" r="9" fill="#f472b6"/>
+        <path d="M96 19v12M90 25h12" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+      </svg>`;
+    }
+    if (id === "spy-add-point-1" || id === "spy-add-point-2") {
+      const amount = id.endsWith("-2") ? "+2" : "+1";
+      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <circle cx="60" cy="61" r="43" fill="#4c1d3f" stroke="#fb7185" stroke-width="6"/>
+        <path d="M88 39l8-16 8 16-8-4z" fill="#fbbf24"/>
+        <text x="60" y="73" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="39" font-weight="900">${amount}</text>
+        <path d="M28 34l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#60a5fa"/>
+      </svg>`;
+    }
+    if (id === "inspector-yellow-1" || id === "inspector-green-1") {
+      const green = id === "inspector-green-1";
+      const tile = green ? "#22c55e" : "#facc15";
+      const rim = green ? "#bbf7d0" : "#fef3c7";
+      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <rect x="24" y="19" width="72" height="82" rx="16" fill="${tile}" stroke="${rim}" stroke-width="6"/>
+        <path d="M39 60c12-18 30-18 42 0-12 18-30 18-42 0z" fill="#0f172a" opacity=".9"/>
+        <circle cx="60" cy="60" r="10" fill="#e0f2fe"/>
+        <circle cx="60" cy="60" r="4" fill="#2563eb"/>
+        <path d="M91 18v16M83 26h16" stroke="#f472b6" stroke-width="5" stroke-linecap="round"/>
+      </svg>`;
+    }
+    if (id === "inspector-remove-point-1" || id === "inspector-remove-point-2") {
+      const amount = id.endsWith("-2") ? "−2" : "−1";
+      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <path d="M60 13l39 15v27c0 25-15 43-39 54C36 98 21 80 21 55V28z" fill="#0f766e" stroke="#5eead4" stroke-width="6"/>
+        <circle cx="60" cy="58" r="28" fill="#082f49" stroke="#7dd3fc" stroke-width="4"/>
+        <text x="60" y="69" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="30" font-weight="900">${amount}</text>
+        <path d="M84 23l5 9 10 2-7 7 2 10-10-5-9 5 2-10-7-7 10-2z" fill="#fbbf24"/>
+      </svg>`;
+    }
+    if (option?.kind === "fixed") {
+      const spy = id.startsWith("spy-");
+      const outer = spy ? "#fb7185" : "#38bdf8";
+      const inner = spy ? "#4c1d3f" : "#0c4a6e";
+      // No wavy accent line across the badge (used to run stroke="#fbbf24"
+      // through the middle here) -- it cut straight across the option's
+      // own glyph/text at this size and made the icon harder to read than
+      // the plain background alone.
+      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <circle cx="60" cy="60" r="45" fill="${inner}" stroke="${outer}" stroke-width="6"/>
+        <circle cx="25" cy="30" r="7" fill="#34d399"/>
+        <circle cx="96" cy="28" r="8" fill="#a78bfa"/>
+        <text x="60" y="67" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="25" font-weight="900">${esc(option.icon || "◆")}</text>
+      </svg>`;
+    }
+    return "";
+  }
+
   // The real in-game icon for a power (same <symbol> library the power
   // buttons use), falling back to the option's own glyph for the fixed
   // (non-power) rewards that have no icon of their own.
@@ -1424,14 +1503,47 @@
     const target = spyAwardTarget();
     const targetRect = target?.getBoundingClientRect();
     if (targetRect?.width) {
+      // A single star actually making the trip from the capsule to the
+      // real meter -- the capsule itself used to be what flew over
+      // (shrinking down into the target), which read as a card sliding
+      // and shrinking rather than "a star shooting into the bar." The
+      // capsule now just fades in place while a dedicated comet-styled
+      // star (same look pc-award-falling-star already uses for the stars
+      // landing in the capsule's own mini-meter) makes that final leg,
+      // with a slight upward bow at the midpoint so it reads as a
+      // trajectory landing in the bar rather than a straight slide.
       const capsuleRect = capsule.getBoundingClientRect();
-      const dx = targetRect.left + targetRect.width / 2 - (capsuleRect.left + capsuleRect.width / 2);
-      const dy = targetRect.top + targetRect.height / 2 - (capsuleRect.top + capsuleRect.height / 2);
-      const flight = capsule.animate([
-        { transform: "translate(-50%, 0) scale(1)", opacity: 1 },
-        { transform: `translate(calc(-50% + ${dx}px), ${dy}px) scale(.42)`, opacity: .9 }
+      const startX = capsuleRect.left + capsuleRect.width / 2;
+      const startY = capsuleRect.top + capsuleRect.height / 2;
+      const endX = targetRect.left + targetRect.width / 2;
+      const endY = targetRect.top + targetRect.height / 2;
+      const dx = endX - startX;
+      const dy = endY - startY;
+
+      const shootingStar = document.createElement("span");
+      shootingStar.className = "pc-award-shooting-star";
+      shootingStar.textContent = "★";
+      shootingStar.style.left = `${startX}px`;
+      shootingStar.style.top = `${startY}px`;
+      document.body.appendChild(shootingStar);
+
+      const capsuleFade = capsule.animate(
+        [{ opacity: 1 }, { opacity: 0 }],
+        { duration: 200, easing: "ease-out", fill: "forwards" }
+      );
+
+      const flight = shootingStar.animate([
+        { transform: "translate(-50%,-50%) scale(1)", opacity: 1 },
+        {
+          transform: `translate(calc(-50% + ${dx * 0.5}px), calc(-50% + ${dy * 0.5 - 46}px)) scale(.85)`,
+          opacity: 1,
+          offset: 0.55
+        },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.3)`, opacity: 0.9 }
       ], { duration: 520, easing: "cubic-bezier(.2,.75,.25,1)", fill: "forwards" });
-      try { await flight.finished; } catch {}
+
+      try { await Promise.all([flight.finished, capsuleFade.finished]); } catch {}
+      shootingStar.remove();
     }
     capsule.remove();
     spyVisualOverride = after;

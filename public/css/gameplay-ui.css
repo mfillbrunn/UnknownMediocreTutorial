@@ -2120,6 +2120,42 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   color: var(--game-blue);
 }
 
+/* The capsule-to-meter award flight (animateSpyAward in power-choice-mode.js)
+   -- same comet look as .pc-award-falling-star, positioned/sized for a
+   fixed, viewport-wide flight rather than one confined inside the capsule. */
+.pc-award-shooting-star {
+  position: fixed;
+  z-index: 2147482750;
+  color: #ffffff;
+  font-size: 28px;
+  text-shadow:
+    0 0 6px #ffffff,
+    0 0 16px rgba(140, 226, 255, 1),
+    0 0 34px rgba(60, 178, 255, 0.9),
+    0 0 60px rgba(40, 150, 255, 0.55);
+  filter: drop-shadow(0 0 10px rgba(120, 215, 255, 0.9));
+  pointer-events: none;
+}
+
+.pc-award-shooting-star::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 46px;
+  transform: translate(-50%, -96%);
+  border-radius: 999px;
+  background: linear-gradient(
+    to top,
+    rgba(150, 226, 255, 0) 0%,
+    rgba(150, 226, 255, 0.75) 45%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
+  opacity: 0.9;
+  pointer-events: none;
+}
+
 .pc-spy-source-pulse {
   position: fixed;
   z-index: 2147482650;
@@ -2326,6 +2362,19 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   fill: currentColor;
 }
 
+/* fixedRewardIconMarkup's own hand-drawn badges (power-choice-mode.js) --
+   every shape inside sets its own explicit fill, so unlike .pc-card-svg
+   above these ignore the role-accent tint entirely. Sized up a bit past
+   the card's own 40px box (overflow: visible lets it spill slightly)
+   since these are bolder compositions than the single-color power
+   symbols and read as cramped at the same 26px. */
+.pc-card-icon .pc-fixed-reward-svg {
+  width: 34px;
+  height: 34px;
+  overflow: visible;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
+}
+
 .pc-tier {
   position: absolute;
   top: 11px;
@@ -2416,36 +2465,8 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 /* --------------------------------------------------------------------------
-   Light theme and responsive behavior
+   Responsive behavior
    -------------------------------------------------------------------------- */
-
-html[data-theme-mode="light"] :is(#setterScreen, #guesserScreen) {
-  --game-panel: #f4f8fb;
-  --game-panel-2: #ffffff;
-  --game-soft: rgba(15, 23, 42, 0.04);
-  --game-line: rgba(15, 23, 42, 0.13);
-  --game-line-strong: rgba(15, 23, 42, 0.22);
-  --game-text: #172230;
-  --game-muted: rgba(23, 34, 48, 0.6);
-  --game-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
-}
-
-html[data-theme-mode="light"] :is(#setterScreen .setter-board, #guesserScreen .guesser-board) {
-  background: #f7fafc;
-}
-
-html[data-theme-mode="light"] :is(#setterScreen .setter-sidebar, #guesserScreen .guesser-sidebar) {
-  background: #fff;
-}
-
-html[data-theme-mode="light"] :is(.pc-current-quest-card, .pc-charge-card, .pc-quest-guide) {
-  background: #f8fbfd;
-  color: #172230;
-}
-
-html[data-theme-mode="light"] .pc-current-quest-card.is-met {
-  background: #effcf6;
-}
 
 @media (max-width: 760px) {
   :is(#setterScreen, #guesserScreen) {
@@ -2696,10 +2717,6 @@ html[data-theme-mode="light"] .pc-current-quest-card.is-met {
   line-height: 1.35;
 }
 
-html[data-theme-mode="light"] .pc-card-explanation {
-  background: rgba(20, 56, 78, 0.06);
-  color: rgba(23, 55, 74, 0.76);
-}
 /* POWER CHOICE REWARD TIERS V1: STYLES END */
 #setterScreen {
   --setter-wait-accent:

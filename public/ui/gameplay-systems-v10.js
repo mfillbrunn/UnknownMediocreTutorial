@@ -458,31 +458,6 @@
     }
   }
 
-  function ensureThemeToggle() {
-    let button = byId("themeModeToggleV9");
-    if (!button) {
-      button = document.createElement("button");
-      button.type = "button";
-      button.id = "themeModeToggleV9";
-      button.className = "theme-mode-toggle-v9";
-      button.addEventListener("click", () => {
-        const root = document.documentElement;
-        const mode = root.dataset.themeMode === "light" ? "dark" : "light";
-        root.dataset.themeMode = mode;
-        root.style.colorScheme = mode;
-        try { localStorage.setItem("vowelPlayThemeMode", mode); } catch {}
-        scheduleUpdate();
-      });
-    }
-    if (button.parentElement !== document.body) document.body.appendChild(button);
-    button.classList.add("theme-toggle-fab-v10");
-    const light = document.documentElement.dataset.themeMode === "light";
-    button.innerHTML = `<span class="theme-toggle-track-v9" aria-hidden="true"><span class="theme-toggle-sun-v9">☀</span><span class="theme-toggle-moon-v9">☾</span><span class="theme-toggle-thumb-v9"></span></span>`;
-    button.title = light ? "Switch to dark mode" : "Switch to light mode";
-    button.setAttribute("aria-label", button.title);
-    button.setAttribute("aria-pressed", String(light));
-  }
-
   function isMyTurn(state) {
     if (!state || !window.myRole) return false;
     if (state.phase === "simultaneous") {
@@ -565,7 +540,6 @@
     updating = true;
     try {
       const state = stateNow();
-      ensureThemeToggle();
       wrapBigAnnounce();
       if (state) {
         updateQuestRequirement(state);
