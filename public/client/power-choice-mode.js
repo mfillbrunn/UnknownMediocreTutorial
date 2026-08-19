@@ -1271,11 +1271,28 @@
       rewardModalPendingId = "";
       return;
     }
+    // Already showing (or peeked away, which keeps is-open -- see
+    // ensurePeekBar/openRewardModal's own peek button, only .is-peeking
+    // toggles) this exact choice. Nothing to do.
     if (modal.dataset.choiceId === pending.id && modal.classList.contains("is-open")) return;
-    if (rewardModalPendingId === pending.id) return;
+    // A settle-timer for this same id is already ticking -- don't restart
+    // it and don't re-trigger the flourish every render tick. This used
+    // to be `if (rewardModalPendingId === pending.id) return;` alone,
+    // treating "I've started opening this once" as permanent -- so if the
+    // modal ever ended up closed while the same reward was still pending
+    // (a reconnect/resync landing between the settle-timer firing and the
+    // player actually seeing it, for one) nothing would ever reopen it:
+    // the id still matched, so every later render silently no-opped
+    // forever, and the player was left staring at the board with a turn
+    // the server was still blocking on a choice they had no way back to.
+    // Requiring the timer to still be live narrows the guard to its
+    // actual purpose -- don't double-schedule -- without also suppressing
+    // a legitimate re-open once nothing is actually in flight.
+    if (rewardModalTimer && rewardModalPendingId === pending.id) return;
     rewardModalPendingId = pending.id;
     if (pending.role === "guesser") showQuestMetFlourish();
 
+    clearTimeout(rewardModalTimer);
     rewardModalTimer = setTimeout(() => {
       rewardModalTimer = null;
       if (window.state?.powerChoice?.pendingChoice?.id === pending.id) {
