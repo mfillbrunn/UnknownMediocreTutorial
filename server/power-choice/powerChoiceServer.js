@@ -564,7 +564,13 @@ function powerOption(powerId) {
   };
 }
 
-function threePowerOptions(state, role, usedPowerIds) {
+// The pool of power IDs eligible for the middle ("3 random powers")
+// milestone, before any per-trial applicability/used filtering -- the
+// static catalog a role can ever draw from at that tier. Extracted out of
+// threePowerOptions so the reward simulator (runRewardSimulation.js) can
+// enumerate "every testable tier-2 reward for this role" without
+// duplicating this list.
+function tierTwoPowerIds(role) {
   // These powers can be applied immediately without asking for a second
   // payload (letter, word, position, bet amount, and so on).
   const immediate =
@@ -592,9 +598,13 @@ function threePowerOptions(state, role, usedPowerIds) {
           "revealLocation",
           "letterProfile"
         ];
-  const tiered = randomPool(role).filter(
+  return randomPool(role).filter(
     id => id !== "hideTile" && immediate.includes(id)
   );
+}
+
+function threePowerOptions(state, role, usedPowerIds) {
+  const tiered = tierTwoPowerIds(role);
   const applicable = tiered.filter(id => powerOptionApplicable(state, powerOption(id)));
   let candidates = applicable.filter(id => !usedPowerIds.includes(id));
   if (candidates.length < 3) candidates = applicable;
@@ -2662,6 +2672,8 @@ function handleAction(room, state, action, roomId, context) {
 module.exports = {
   MODE,
   AI_BEHAVIOR,
+  SPY_THRESHOLDS,
+  INSPECTOR_REWARD_SEQUENCE,
   isPowerChoice,
   initializeRound,
   handleAction,
@@ -2671,5 +2683,13 @@ module.exports = {
   buildAIChoiceAction,
   chooseAISecretAction,
   chooseAIGuess,
-  optionApplicable
+  optionApplicable,
+  // Exported for server/core/simulation/runRewardSimulation.js -- lets it
+  // enumerate and directly apply one specific reward option (bypassing the
+  // normal star/quest-threshold queueing) to isolate that one reward's
+  // effect on a trial.
+  applyChoice,
+  fixedOptions,
+  powerOption,
+  tierTwoPowerIds
 };
