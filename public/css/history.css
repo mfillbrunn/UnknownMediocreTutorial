@@ -317,10 +317,13 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   border-color: var(--role-accent);
 }
 
-/* Draft tiles when unusable */
-/* Draft tiles inactive when NOT your turn */
-#setterScreen.is-not-your-turn #draftSetter .history-tile,
-#guesserScreen.is-not-your-turn #draftGuesser .history-tile {
+#setterScreen.is-not-your-turn
+  #draftSetter
+  .history-row:not(.ghost-secret)
+  .history-tile,
+#guesserScreen.is-not-your-turn
+  #draftGuesser
+  .history-tile {
   opacity: 0.28;
   filter: grayscale(1);
   box-shadow: none;

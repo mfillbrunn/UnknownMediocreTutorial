@@ -260,7 +260,7 @@
         </div>
       </div>
       ${lockoutMarkup}
-      ${pending ? `<div class="pc-choice-ready">REWARD CHOICE READY</div>` : ""}
+      
     </section>`;
     byId("pcSpyChargeCard")?.addEventListener("click", () => {
       container.dataset.pcDetailsOpen = detailsOpen ? "false" : "true";
@@ -377,7 +377,7 @@
           <ul>${intel.map(item => `<li>${esc(item?.text || "")}</li>`).join("")}</ul>
         </article>`
       : "";
-    const body = `${persistentPowerMarkup()}${nextMarkup}${intelMarkup}${pending ? `<div class="pc-choice-ready">REWARD CHOICE READY</div>` : ""}`;
+    const body = `${persistentPowerMarkup()}${nextMarkup}${intelMarkup}`;
     container.innerHTML = body
       ? `<section class="pc-side-panel pc-inspector-panel">${body}</section>`
       : "";
@@ -687,18 +687,11 @@
     const questLive = attempts % 2 === 1;
     if (!questLive) {
       currentDraftRow()?.classList.remove("pc-quest-draft-met");
-      // The most recent LIVE attempt (2nd/4th/6th guess) is what this
-      // "waiting" turn's card should reflect -- inspector.lastResult itself
-      // gets overwritten every guess including this non-live one, so it
-      // can't tell a genuinely-met quest apart from one that wasn't; the
-      // server tracks the live outcome separately for exactly this reason
-      // (see lastLiveSuccess in powerChoiceServer.js).
-      const met = inspector?.lastLiveSuccess === true;
-      const placeholderKey = met ? "met" : "pending";
+      const placeholderKey = "pending";
       if (host.dataset.pcSignature !== `pc-quest-placeholder-${placeholderKey}`) {
         host.dataset.pcSignature = `pc-quest-placeholder-${placeholderKey}`;
-        host.innerHTML = `<div class="pc-current-quest-card pc-quest-placeholder${met ? " is-met" : ""}">
-          <span class="pc-current-main"><strong>${met ? "Quest reward incoming" : "Quest incoming next round"}</strong></span>
+        host.innerHTML = `<div class="pc-current-quest-card pc-quest-placeholder">
+          <span class="pc-current-main"><strong>Quest incoming next round</strong></span>
         </div>`;
       }
       return;
@@ -1108,6 +1101,83 @@
   // The real in-game icon for a power (same <symbol> library the power
   // buttons use), falling back to the option's own glyph for the fixed
   // (non-power) rewards that have no icon of their own.
+  // POWER CHOICE CARD CAROUSEL V1: CLIENT START
+  function fixedRewardAccent(option) {
+    const id = String(option?.id || "");
+    const exact = {
+      "spy-reset-positive-1": "#60a5fa",
+      "spy-reset-positive-2": "#60a5fa",
+      "spy-add-point-1": "#fb7185",
+      "spy-add-point-2": "#fb7185",
+      "inspector-yellow-1": "#fbbf24",
+      "inspector-green-1": "#34d399",
+      "inspector-remove-point-1": "#2dd4bf",
+      "inspector-remove-point-2": "#2dd4bf"
+    };
+    if (exact[id]) return exact[id];
+    if (id.startsWith("spy-")) return "#fb7185";
+    if (id.includes("yellow")) return "#fbbf24";
+    if (id.includes("green")) return "#34d399";
+    return "#38bdf8";
+  }
+
+  function fixedRewardIconMarkup(option) {
+    const id = String(option?.id || "");
+    if (id === "spy-reset-positive-1" || id === "spy-reset-positive-2") {
+      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <rect x="13" y="25" width="36" height="42" rx="9" fill="#facc15" stroke="#fef3c7" stroke-width="4"/>
+        <rect x="56" y="25" width="36" height="42" rx="9" fill="#34d399" stroke="#d1fae5" stroke-width="4"/>
+        <path d="M92 75c-7 18-32 27-51 15" fill="none" stroke="#60a5fa" stroke-width="9" stroke-linecap="round"/>
+        <path d="M33 78l3 18 17-6" fill="#60a5fa"/>
+        <circle cx="96" cy="25" r="9" fill="#f472b6"/>
+        <path d="M96 19v12M90 25h12" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+      </svg>`;
+    }
+    if (id === "spy-add-point-1" || id === "spy-add-point-2") {
+      const amount = id.endsWith("-2") ? "+2" : "+1";
+      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <circle cx="60" cy="61" r="43" fill="#4c1d3f" stroke="#fb7185" stroke-width="6"/>
+        <path d="M88 39l8-16 8 16-8-4z" fill="#fbbf24"/>
+        <text x="60" y="73" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="39" font-weight="900">${amount}</text>
+        <path d="M28 34l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#60a5fa"/>
+      </svg>`;
+    }
+    if (id === "inspector-yellow-1" || id === "inspector-green-1") {
+      const green = id === "inspector-green-1";
+      const tile = green ? "#22c55e" : "#facc15";
+      const rim = green ? "#bbf7d0" : "#fef3c7";
+      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <rect x="24" y="19" width="72" height="82" rx="16" fill="${tile}" stroke="${rim}" stroke-width="6"/>
+        <path d="M39 60c12-18 30-18 42 0-12 18-30 18-42 0z" fill="#0f172a" opacity=".9"/>
+        <circle cx="60" cy="60" r="10" fill="#e0f2fe"/>
+        <circle cx="60" cy="60" r="4" fill="#2563eb"/>
+        <path d="M91 18v16M83 26h16" stroke="#f472b6" stroke-width="5" stroke-linecap="round"/>
+      </svg>`;
+    }
+    if (id === "inspector-remove-point-1" || id === "inspector-remove-point-2") {
+      const amount = id.endsWith("-2") ? "−2" : "−1";
+      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <path d="M60 13l39 15v27c0 25-15 43-39 54C36 98 21 80 21 55V28z" fill="#0f766e" stroke="#5eead4" stroke-width="6"/>
+        <circle cx="60" cy="58" r="28" fill="#082f49" stroke="#7dd3fc" stroke-width="4"/>
+        <text x="60" y="69" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="30" font-weight="900">${amount}</text>
+        <path d="M84 23l5 9 10 2-7 7 2 10-10-5-9 5 2-10-7-7 10-2z" fill="#fbbf24"/>
+      </svg>`;
+    }
+    if (option?.kind === "fixed") {
+      const spy = id.startsWith("spy-");
+      const outer = spy ? "#fb7185" : "#38bdf8";
+      const inner = spy ? "#4c1d3f" : "#0c4a6e";
+      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <circle cx="60" cy="60" r="45" fill="${inner}" stroke="${outer}" stroke-width="6"/>
+        <path d="M20 69c14-9 26-7 40 2 15 10 26 11 40 0" fill="none" stroke="#fbbf24" stroke-width="6" stroke-linecap="round" opacity=".9"/>
+        <circle cx="25" cy="30" r="7" fill="#34d399"/>
+        <circle cx="96" cy="28" r="8" fill="#a78bfa"/>
+        <text x="60" y="67" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="25" font-weight="900">${esc(option.icon || "◆")}</text>
+      </svg>`;
+    }
+    return "";
+  }
+
   function optionIconMarkup(option) {
     const fixed = fixedRewardIconMarkup(option);
     if (fixed) return fixed;
@@ -1124,6 +1194,79 @@
     }
     return esc(option?.icon || "◆");
   }
+
+  function wireRewardCarousel(grid) {
+    if (!grid || grid.dataset.pcCarouselWired === "1") return;
+    grid.dataset.pcCarouselWired = "1";
+    grid.addEventListener("wheel", event => {
+      if (grid.scrollWidth <= grid.clientWidth + 1) return;
+      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+        ? event.deltaX
+        : event.deltaY;
+      if (!delta) return;
+      const atStart = grid.scrollLeft <= 1;
+      const atEnd = grid.scrollLeft + grid.clientWidth >= grid.scrollWidth - 1;
+      if ((delta < 0 && atStart) || (delta > 0 && atEnd)) return;
+      event.preventDefault();
+      grid.scrollLeft += delta;
+    }, { passive: false });
+    grid.addEventListener("keydown", event => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      const cards = [...grid.querySelectorAll(".pc-choice-card")];
+      const current = Math.max(0, cards.indexOf(document.activeElement));
+      const direction = event.key === "ArrowRight" ? 1 : -1;
+      const next = cards[Math.max(0, Math.min(cards.length - 1, current + direction))];
+      if (!next || next === document.activeElement) return;
+      event.preventDefault();
+      next.focus({ preventScroll: true });
+      next.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    });
+  }
+
+  function renderRewardChoiceCards(pending, grid) {
+    const options = Array.isArray(pending?.options) ? pending.options : [];
+    grid.setAttribute("role", "group");
+    grid.setAttribute("aria-label", "Reward choices. Swipe horizontally to see more cards.");
+    grid.innerHTML = options.map(option => {
+      const tierNumber =
+        option.tier ||
+        (option.kind === "power"
+          ? window.POWER_TIERS?.[option.powerId]?.tier || 1
+          : pending.tier || null);
+      const tier = tierNumber
+        ? `<span class="pc-tier" data-tier="${esc(tierNumber)}">TIER ${esc(tierNumber)}</span>`
+        : "";
+      const description = typeof optionDescription === "function"
+        ? optionDescription(option)
+        : option?.description || "";
+      const accent = option.kind === "power"
+        ? (window.POWER_METADATA?.[option.powerId]?.color || "")
+        : fixedRewardAccent(option);
+      const style = accent ? ` style="--pc-card-accent:${esc(accent)}"` : "";
+      return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}"${style}>
+        <span class="pc-card-icon">${optionIconMarkup(option)}</span>
+        ${tier}
+        <strong>${esc(option.title)}</strong>
+        <span class="pc-card-desc">${esc(description)}</span>
+        <span class="pc-card-pick">CHOOSE</span>
+      </button>`;
+    }).join("");
+    grid.querySelectorAll(".pc-choice-card").forEach(button => {
+      button.addEventListener("click", () => {
+        if (button.disabled) return;
+        grid.querySelectorAll("button").forEach(item => { item.disabled = true; });
+        window.sendGameAction?.({
+          type: "POWER_CHOICE_SELECT",
+          userId: me(),
+          choiceId: pending.id,
+          optionId: button.dataset.optionId
+        });
+      });
+    });
+    wireRewardCarousel(grid);
+    grid.scrollLeft = 0;
+  }
+  // POWER CHOICE CARD CAROUSEL V1: CLIENT END
 
   // Reward cards have room for the full explanation, so prefer a power's
   // long description over the terse one the compact badges use.
@@ -1152,63 +1295,14 @@
   function openRewardModal(pending) {
     const modal = ensureChoiceModal();
     modal.dataset.choiceId = pending.id;
+    modal.dataset.rewardRole = pending.role || "";
     modal.querySelector("h2").textContent = pending.title || "Choose a reward";
-    modal.querySelector(".pc-modal-sub").textContent =
-      pending.subtitle || "Choose one card. It activates immediately.";
+    const baseSubtitle = pending.subtitle || "Choose one card. It activates immediately.";
+    modal.querySelector(".pc-modal-sub").textContent = /swipe/i.test(baseSubtitle)
+      ? baseSubtitle
+      : `${baseSubtitle} Swipe to see more.`;
     const grid = modal.querySelector(".pc-card-grid");
-    const rewardCardIconMarkup = option => {
-      if (typeof optionIconMarkup === "function") return optionIconMarkup(option);
-      if (typeof optionIcon === "function") return esc(optionIcon(option));
-      if (option?.kind === "power") {
-        return esc(window.POWER_METADATA?.[option.powerId]?.emoji || option.icon || "⚡");
-      }
-      return esc(option?.icon || "◆");
-    };
-    const rewardCardDescription = option => {
-      if (typeof optionDescription === "function") return optionDescription(option);
-      if (option?.kind === "power") {
-        const meta = window.POWER_METADATA?.[option.powerId];
-        return meta?.desc || meta?.short || option.description || "";
-      }
-      return option?.description || "";
-    };
-    grid.innerHTML = (pending.options || []).map(option => {
-      const tierNumber =
-        option.tier ||
-        (option.kind === "power"
-          ? window.POWER_TIERS?.[option.powerId]?.tier || 1
-          : pending.tier || null);
-      const tier = tierNumber
-        ? `<span class="pc-tier" data-tier="${esc(tierNumber)}">TIER ${esc(tierNumber)}</span>`
-        : "";
-      const explanation = option.explanation
-        ? `<span class="pc-card-explanation">${esc(option.explanation)}</span>`
-        : "";
-      const accent = option.kind === "power"
-        ? (window.POWER_METADATA?.[option.powerId]?.color || "")
-        : fixedRewardAccent(option);
-      const style = accent ? ` style="--pc-card-accent:${esc(accent)}"` : "";
-      return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}"${style}>
-        <span class="pc-card-icon">${rewardCardIconMarkup(option)}</span>
-        ${tier}
-        <strong>${esc(option.title)}</strong>
-        <span class="pc-card-desc">${esc(rewardCardDescription(option))}</span>
-        ${explanation}
-        <span class="pc-card-pick">CHOOSE</span>
-      </button>`;
-    }).join("");
-    grid.querySelectorAll(".pc-choice-card").forEach(button => {
-      button.addEventListener("click", () => {
-        if (button.disabled) return;
-        grid.querySelectorAll("button").forEach(item => { item.disabled = true; });
-        window.sendGameAction?.({
-          type: "POWER_CHOICE_SELECT",
-          userId: me(),
-          choiceId: pending.id,
-          optionId: button.dataset.optionId
-        });
-      });
-    });
+    renderRewardChoiceCards(pending, grid);
     const peekBar = typeof ensurePeekBar === "function" ? ensurePeekBar() : null;
     const peekBtn = modal.querySelector(".pc-modal-peek");
     if (peekBtn && !peekBtn.dataset.wired) {
@@ -1222,7 +1316,15 @@
     modal.classList.remove("is-peeking");
     peekBar?.classList.remove("is-visible");
     modal.classList.add("is-open");
-    grid.querySelector("button")?.focus();
+    const first = grid.querySelector("button");
+    requestAnimationFrame(() => {
+      grid.scrollLeft = 0;
+      try {
+        first?.focus({ preventScroll: true });
+      } catch (_) {
+        first?.focus();
+      }
+    });
   }
 
   function showChoice() {
