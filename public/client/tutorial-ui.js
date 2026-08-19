@@ -2525,10 +2525,11 @@ window.endTutorial = endTutorial;
 const TUTORIAL_DONE_COPY = {
   tutorial2: `Nice work — you've learned the base game. Keep going with the Powers Tutorial, or head back to the menu.`,
   quest: `Nice work — you've learned the powers tutorial. Keep going with the Quest Tutorial, or head back to the menu.`,
-  // Kept source-agnostic (no "you've learned the Quest tutorial" clause) --
-  // this key is reused both by Quest's own chain into Advanced and by the
-  // Modes Tutorial's chain into Advanced (see tutorial-modes.js), and the
-  // two don't share what was just learned.
+  star: `Nice work — you've learned quests. Keep going with the Star Tutorial to see how the Spyometer works, or head back to the menu.`,
+  // Kept source-agnostic (no "you've learned the Quest/Star tutorial"
+  // clause) -- this key is reached both by Star's own chain into Advanced
+  // and by the Modes Tutorial's chain into Advanced (see
+  // tutorial-modes.js), and those don't share what was just learned.
   advanced: `Nice work! Keep going with the Advanced Tutorial, or head back to the menu.`,
   // Also source-agnostic -- reached both by Advanced's own loop back to
   // the start AND by the Main Menu Tutorial chaining into this one for a
@@ -2600,7 +2601,15 @@ byId("tutorialDoneNextBtn")?.addEventListener("click", () => {
     state = null;
     window.state = null;
     resetKeyboards();
-    startFreshTutorial(nextMode);
+    // Every other mode wants the human starting as guesser (startFreshTutorial's
+    // own unconditional SWITCH_ROLES step), but the Star Tutorial specifically
+    // needs the host left as setter -- see window.startStarTutorial's own
+    // comment for why it skips that step entirely instead of switching twice.
+    if (nextMode === "star" && typeof window.startStarTutorial === "function") {
+      window.startStarTutorial();
+    } else {
+      startFreshTutorial(nextMode);
+    }
   });
 });
 

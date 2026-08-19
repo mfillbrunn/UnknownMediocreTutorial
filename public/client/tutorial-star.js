@@ -112,7 +112,7 @@ function runStarTutorial(state, role) {
   api.clearHighlights();
 
   if (role !== "setter") {
-    api.setNextTutorial("modes");
+    api.setNextTutorial("advanced");
     starTutorialShow(
       "This tutorial needs the Spy screen. End it and start the Star Tutorial again.",
       { title: "Wrong role", mode: "end" }
@@ -137,7 +137,7 @@ function runStarTutorial(state, role) {
   // round could in principle end before the player reaches a reward
   // milestone -- wrap up gracefully instead of getting stuck.
   if (state.phase === "gameOver") {
-    api.setNextTutorial("modes");
+    api.setNextTutorial("advanced");
     starTutorialShow(
       "The round wrapped up there, but you already saw the star system do its thing live -- nice work.",
       { title: "Star Tutorial done", mode: "end" }
@@ -153,7 +153,7 @@ function runStarTutorial(state, role) {
   // anything (mode:"end" doesn't hold the message the way the
   // starAwaitingAck mechanism holds an advance-mode one).
   if (starTutorialFinished) {
-    api.setNextTutorial("modes");
+    api.setNextTutorial("advanced");
     starTutorialShow(
       "Nice -- you picked a reward and it's already active. That's the whole loop: switch, earn stars, pick a reward, and every milestone after this one offers even better options. You've now seen the Star system live.",
       { title: "Star Tutorial done", current: 3, total: 3, mode: "end" }
@@ -234,7 +234,7 @@ function runStarTutorial(state, role) {
   if (starLastPendingChoiceId && !pendingChoice) {
     starLastPendingChoiceId = null;
     starTutorialFinished = true;
-    api.setNextTutorial("modes");
+    api.setNextTutorial("advanced");
     starTutorialShow(
       "Nice -- you picked a reward and it's already active. That's the whole loop: switch, earn stars, pick a reward, and every milestone after this one offers even better options. You've now seen the Star system live.",
       { title: "Star Tutorial done", current: 3, total: 3, mode: "end" }
