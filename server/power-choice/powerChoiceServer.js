@@ -189,7 +189,6 @@ function freshPowerChoice(roundIndex) {
     // guesses that include one, client disables + X's the key).
     eliminatedLetters: [],
     inspectorIntel: [],
-    questFogUntilAttempt: 0,
     // Informational only -- letters known to be absent, but still usable;
     // the client just styles them like any other already-guessed absent
     // letter instead of blocking them.
@@ -611,179 +610,69 @@ function threePowerOptions(state, role, usedPowerIds) {
   return shuffle(candidates).slice(0, 3).map(powerOption);
 }
 
+// The Spy's own reward pool -- unlike the Inspector, the Spy sees the
+// SAME pool at every one of their three milestones (5/9/15 stars)
+// instead of a different fixed catalog per tier plus a separate
+// "3 random powers" middle stage. Built once as a plain list (mixing
+// "fixed" effect cards and one "power" card) rather than per-threshold,
+// since there's no longer a threshold-dependent branch to take -- see
+// buildChoice, which now calls this directly for every Spy threshold.
+function setterRewardPool() {
+  return [
+    {
+      id: "spy-reset-positive-1",
+      kind: "fixed",
+      icon: "🟩⇢🟨",
+      title: "Fade a Green",
+      description: "Turn one green tile into yellow.",
+      explanation: "The letter stays known to be present, but its exact position is no longer locked."
+    },
+    {
+      id: "spy-reset-known-2",
+      kind: "fixed",
+      icon: "⬛↶2",
+      title: "Erase Two Clues",
+      description: "Reset two random gray letters.",
+      explanation: "Two absent-letter restrictions are erased, giving the Spy more legal secret words."
+    },
+    {
+      id: "spy-add-point-1",
+      kind: "fixed",
+      icon: "+1",
+      title: "Add a Point",
+      description: "Add 1 point to the Inspector's final guess total.",
+      explanation: "This does not change letter information; it directly worsens the Inspector's final score."
+    },
+    {
+      id: "spy-yellow-smudge",
+      kind: "fixed",
+      icon: "🟨⇢⇢",
+      title: "Yellow Smudge",
+      description: "Remove every positional restriction from every yellow letter.",
+      explanation: "Each yellow letter stays known to be present, but every 'not in this spot' mark on it is forgotten."
+    },
+    {
+      id: "spy-trade-yellow",
+      kind: "fixed",
+      icon: "🟨⇄⬛4",
+      title: "Trade a Yellow",
+      description: "Give the Inspector one new yellow, but reset four of your gray letters.",
+      explanation: "A calculated risk: one present-letter clue handed over, four absent-letter restrictions erased in return."
+    },
+    {
+      id: "spy-trade-green",
+      kind: "fixed",
+      icon: "🟩⇄🟨🟨",
+      title: "Trade a Green",
+      description: "Give the Inspector one new green, but erase two yellow clues.",
+      explanation: "A bigger risk for a bigger reward: one exact-position reveal in exchange for two present-letter clues forgotten."
+    },
+    powerOption("blindSpot"),
+    powerOption("letterLockout")
+  ];
+}
+
 function fixedOptions(role, threshold) {
-  if (role === "setter" && threshold === 5) {
-    return [
-      {
-        id: "spy-reset-positive-1",
-        kind: "fixed",
-        tier: 1,
-        icon: "🟩⇢🟨",
-        title: "Fade a Green",
-        description: "Turn one green tile into yellow.",
-        explanation: "The letter stays known to be present, but its exact position is no longer locked."
-      },
-      {
-        id: "spy-reset-known-2",
-        kind: "fixed",
-        tier: 1,
-        icon: "◇◇",
-        title: "Erase Two Clues",
-        description: "Reset two random known letters, including gray letters.",
-        explanation: "Two known letters are forgotten, giving the Spy more legal secret words."
-      },
-      {
-        id: "spy-add-point-1",
-        kind: "fixed",
-        tier: 1,
-        icon: "+1",
-        title: "Add a Point",
-        description: "Add 1 point to the Inspector's final guess total.",
-        explanation: "This does not change letter information; it directly worsens the Inspector's final score."
-      },
-      {
-        id: "spy-yellow-smudge",
-        kind: "fixed",
-        tier: 1,
-        icon: "🟨↶",
-        title: "Yellow Smudge",
-        description: "Erase one yellow tile.",
-        explanation: "The Inspector forgets one confirmed-present clue, but no green position is removed."
-      },
-      {
-        id: "spy-blur-position",
-        kind: "fixed",
-        tier: 1,
-        icon: "🟩→🟨",
-        title: "Blur Position",
-        description: "Turn one green tile into yellow.",
-        explanation: "The letter stays known to be present, but its exact position is no longer locked."
-      },
-      {
-        id: "spy-reopen-two",
-        kind: "fixed",
-        tier: 1,
-        icon: "⬛↶2",
-        title: "Reopen Two",
-        description: "Return two gray letters to unknown.",
-        explanation: "Two absent-letter restrictions are erased and those letters may appear in a future secret."
-      },
-      {
-        id: "spy-loosen-yellow",
-        kind: "fixed",
-        tier: 1,
-        icon: "🟨⇢",
-        title: "Loosen the Clue",
-        description: "Remove one yellow position restriction.",
-        explanation: "The letter remains known to be present, but one position where it was known not to belong is forgotten."
-      },
-      {
-        id: "spy-mixed-static",
-        kind: "fixed",
-        tier: 1,
-        icon: "🟨+⬛",
-        title: "Mixed Static",
-        description: "Loosen one yellow and erase one gray letter.",
-        explanation: "This weakens one present-letter clue and one absent-letter clue at the same time."
-      },
-      {
-        id: "spy-quest-fog",
-        kind: "fixed",
-        tier: 1,
-        icon: "🌫",
-        title: "Quest Fog",
-        description: "Hide the Inspector's next-quest preview for one attempt.",
-        explanation: "The current quest remains visible, but the Inspector cannot plan around the following quest until after submitting."
-      }
-    ];
-  }
-
-  if (role === "setter" && threshold === 15) {
-    return [
-      {
-        id: "spy-reset-positive-2",
-        kind: "fixed",
-        tier: 2,
-        icon: "↶↶",
-        title: "Erase Two Colors",
-        description: "Reset two random yellow or green letters.",
-        explanation: "This keeps the original stronger reward and removes two colored letter clues."
-      },
-      {
-        id: "spy-reset-vowels",
-        kind: "fixed",
-        tier: 2,
-        icon: "AEIOU",
-        title: "Erase Vowels",
-        description: "Reset all learned information about vowels.",
-        explanation: "Every known vowel clue and vowel/consonant position read is forgotten at once."
-      },
-      {
-        id: "spy-add-point-2",
-        kind: "fixed",
-        tier: 2,
-        icon: "+2",
-        title: "Add Two Points",
-        description: "Add 2 points to the Inspector's final guess total.",
-        explanation: "This is the stronger score reward and directly adds two guesses to the Inspector's result."
-      },
-      {
-        id: "spy-break-lock",
-        kind: "fixed",
-        tier: 2,
-        icon: "🟩✕",
-        title: "Break a Lock",
-        description: "Erase one green tile; if none exists, erase two yellows.",
-        explanation: "A precise position is forgotten. The two-yellow fallback prevents the card from becoming useless."
-      },
-      {
-        id: "spy-double-smudge",
-        kind: "fixed",
-        tier: 2,
-        icon: "🟨↶2",
-        title: "Double Smudge",
-        description: "Erase two yellow tiles.",
-        explanation: "Two confirmed-present clues are removed without targeting gray information."
-      },
-      {
-        id: "spy-mixed-reset",
-        kind: "fixed",
-        tier: 2,
-        icon: "◆+⬛⬛",
-        title: "Mixed Reset",
-        description: "Erase one colored tile and two gray letters.",
-        explanation: "This combines one high-value clue reset with two smaller absent-letter resets."
-      },
-      {
-        id: "spy-reopen-four",
-        kind: "fixed",
-        tier: 2,
-        icon: "⬛↶4",
-        title: "Reopen Four",
-        description: "Return four gray letters to unknown.",
-        explanation: "Four absent-letter restrictions are removed, greatly widening the Spy's legal word pool."
-      },
-      {
-        id: "spy-letter-reset",
-        kind: "fixed",
-        tier: 2,
-        icon: "A↶",
-        title: "Letter Reset",
-        description: "Erase all knowledge for one letter with up to two clues.",
-        explanation: "All green, yellow, gray, count, and position information tied to that letter is removed."
-      },
-      {
-        id: "spy-double-blur",
-        kind: "fixed",
-        tier: 2,
-        icon: "🟩🟩→🟨",
-        title: "Double Blur",
-        description: "Turn two greens into yellows; with one green, also erase one yellow.",
-        explanation: "Exact positions are weakened while keeping the affected letters present in the clue set."
-      }
-    ];
-  }
-
   if (role === "guesser" && threshold === 2) {
     return [
       {
@@ -906,18 +795,28 @@ function fixedOptions(role, threshold) {
 }
 
 function buildChoice(state, role, threshold, owner) {
-  const side =
-    role === "setter" ? state.powerChoice.spy : state.powerChoice.inspector;
-  // Each role's three milestones follow the same shape: the FIRST is the
-  // tier 1 fixed pool, the MIDDLE is the three-random-powers card, and the
-  // LAST is the tier 2 fixed pool (see fixedOptions' own branches, which
-  // only define the first and last). Read straight off the sequences
-  // rather than hardcoded, because these numbers have already drifted
-  // apart once: the Spy's middle milestone moved 5/8/15 -> 5/9/15 and this
-  // check kept testing for 8, so crossing 9 stars fell through to
-  // fixedOptions("setter", 9) -- a threshold with no branch at all -- and
-  // handed the Spy an empty, uncardable reward instead of three powers.
-  const sequence = role === "setter" ? SPY_THRESHOLDS : INSPECTOR_REWARD_SEQUENCE;
+  // The Spy draws from ONE shared pool at all three of their milestones
+  // (5/9/15 stars) -- unlike the Inspector, there's no per-threshold
+  // catalog switch or "3 random powers" middle stage to special-case, so
+  // this branches on role up front instead of asking fixedOptions to
+  // dispatch on threshold the way it still does for the Inspector.
+  if (role === "setter") {
+    const tier = SPY_THRESHOLDS.indexOf(threshold) + 1;
+    const options = rewardPickAvailableOptions(state, setterRewardPool(), 3);
+    return {
+      id: `setter-${threshold}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      ownerUserId: owner,
+      role,
+      threshold,
+      tier,
+      title: `Spy reward · Tier ${tier}`,
+      subtitle: "Choose one available reward. It activates immediately.",
+      options
+    };
+  }
+
+  const side = state.powerChoice.inspector;
+  const sequence = INSPECTOR_REWARD_SEQUENCE;
   const randomMilestone = threshold === sequence[1];
   const pool = randomMilestone
     ? threePowerOptions(state, role, side.usedPowerIds)
@@ -932,10 +831,7 @@ function buildChoice(state, role, threshold, owner) {
     role,
     threshold,
     tier,
-    title:
-      role === "setter"
-        ? `Spy reward · ${randomMilestone ? `${threshold} stars` : `Tier ${tier}`}`
-        : `Inspector reward · ${randomMilestone ? `${threshold} quest points` : `Tier ${tier}`}`,
+    title: `Inspector reward · ${randomMilestone ? `${threshold} quest points` : `Tier ${tier}`}`,
     subtitle: randomMilestone
       ? "Choose one of the available valid powers. It activates immediately."
       : "Choose one available reward from this tier. It activates immediately.",
@@ -1007,12 +903,6 @@ function feedbackLetters(state, positiveOnly) {
     }
   }
   return [...letters].filter(Boolean);
-}
-
-function resetRandom(state, count, positiveOnly) {
-  const selected = shuffle(feedbackLetters(state, positiveOnly)).slice(0, count);
-  if (selected.length) eraseLetterKnowledge(state, selected);
-  return selected;
 }
 
 function resetKnownVowels(state) {
@@ -1364,67 +1254,35 @@ function rewardEnsureYellowConstraint(state, letter) {
   }
 }
 
-function rewardLoosenYellowCandidates(state) {
-  return rewardClueTargets(state, "yellow").filter(target => target.source === "history");
-}
-
-function rewardLoosenYellow(state, suppliedTarget = null) {
-  const target = suppliedTarget || pick(shuffle(rewardLoosenYellowCandidates(state)));
-  if (!target) return null;
-  const detail = rewardEraseClueTarget(state, target);
-  if (!detail) return null;
-  rewardEnsureYellowConstraint(state, detail.letter);
-  return detail;
-}
-
-function rewardResetKnownVowels(state) {
-  const selected = feedbackLetters(state, false).filter(letter => VOWELS.has(letter));
-  if (selected.length) eraseLetterKnowledge(state, selected);
-  const before = (state.extraConstraints || []).length;
-  state.extraConstraints = (state.extraConstraints || []).filter(
-    constraint => String(constraint?.type || "").toUpperCase() !== "POSITION_CLASS"
+// "Yellow Smudge" (spy-yellow-smudge): every currently-known yellow
+// letter stays known to be present, but every "not in this spot" mark on
+// it -- both the raw history tile (each surviving yellow tile in
+// state.history IS itself a "not here" data point, see
+// isConsistentWithHistory) and any explicit YELLOW_NOT_AT constraint
+// (added by rewardDemoteGreens when a constraint-sourced green gets
+// demoted to yellow, see there) -- is forgotten. rewardEraseClues/
+// rewardLoosenYellow only ever touched ONE yellow at a time and never
+// looked at YELLOW_NOT_AT at all; this covers every known yellow letter
+// and both storage forms in one pass.
+function rewardLoosenAllYellows(state) {
+  const letters = rewardKnownYellowLetters(state);
+  const historyTargets = rewardClueTargets(state, "yellow").filter(
+    target => target.source === "history"
   );
-  const removedPositionReads = before - state.extraConstraints.length;
-  if (Array.isArray(state.powerChoice?.inspectorIntel)) {
-    state.powerChoice.inspectorIntel = state.powerChoice.inspectorIntel.filter(
-      item => !String(item?.key || "").startsWith("position-class:")
+  for (const letter of letters) {
+    for (const target of historyTargets) {
+      if (target.letter === letter) rewardEraseClueTarget(state, target);
+    }
+    state.extraConstraints = (state.extraConstraints || []).filter(
+      constraint =>
+        !(
+          String(constraint?.type || "").toUpperCase() === "YELLOW_NOT_AT" &&
+          normalizeWord(constraint.letter)[0] === letter
+        )
     );
+    rewardEnsureYellowConstraint(state, letter);
   }
-  return { letters: selected, removedPositionReads };
-}
-
-function rewardLetterResetCandidates(state) {
-  const counts = new Map();
-  for (const entry of state.history || []) {
-    const word = normalizeWord(entry?.guess);
-    const feedback = rewardVisibleFeedback(entry);
-    if (!Array.isArray(feedback)) continue;
-    for (let index = 0; index < Math.min(5, feedback.length); index++) {
-      if (!rewardMarkKind(feedback[index]) || !word[index]) continue;
-      counts.set(word[index], (counts.get(word[index]) || 0) + 1);
-    }
-  }
-  for (const constraint of state.extraConstraints || []) {
-    const type = String(constraint?.type || "").toUpperCase();
-    if (
-      !["GREEN", "YELLOW", "ABSENT", "YELLOW_NOT_AT", "LETTER_COUNT"].includes(type) ||
-      !constraint?.letter
-    ) {
-      continue;
-    }
-    const letter = normalizeWord(constraint.letter)[0];
-    counts.set(letter, (counts.get(letter) || 0) + 1);
-  }
-  return [...counts.entries()]
-    .filter(([, count]) => count >= 1 && count <= 2)
-    .map(([letter, count]) => ({ letter, count }));
-}
-
-function rewardResetOneLetter(state) {
-  const target = pick(shuffle(rewardLetterResetCandidates(state)));
-  if (!target) return null;
-  eraseLetterKnowledge(state, [target.letter]);
-  return target;
+  return letters;
 }
 
 function rewardUnknownSecretLetters(state) {
@@ -1588,43 +1446,15 @@ function rewardFixedOptionApplicable(state, option) {
     case "spy-reset-positive-1":
       return greenCount >= 1;
     case "spy-reset-known-2":
-      return feedbackLetters(state, false).length >= 2;
+      return grayCount >= 2;
     case "spy-add-point-1":
-    case "spy-add-point-2":
       return true;
     case "spy-yellow-smudge":
       return yellowCount >= 1;
-    case "spy-blur-position":
-      return greenCount >= 1;
-    case "spy-reopen-two":
-      return grayCount >= 2;
-    case "spy-loosen-yellow":
-      return rewardLoosenYellowCandidates(state).length >= 1;
-    case "spy-mixed-static":
-      return rewardLoosenYellowCandidates(state).length >= 1 && grayCount >= 1;
-    case "spy-quest-fog":
-      return !!state.powerChoice?.inspector?.nextQuest &&
-        (Number(state.powerChoice?.questFogUntilAttempt) || 0) <=
-          (Number(state.powerChoice?.inspector?.attempts) || 0);
-    case "spy-reset-positive-2":
-      return feedbackLetters(state, true).length >= 2;
-    case "spy-reset-vowels":
-      return feedbackLetters(state, false).some(letter => VOWELS.has(letter)) ||
-        (state.extraConstraints || []).some(
-          constraint => String(constraint?.type || "").toUpperCase() === "POSITION_CLASS"
-        );
-    case "spy-break-lock":
-      return greenCount >= 1 || yellowCount >= 2;
-    case "spy-double-smudge":
-      return yellowCount >= 2;
-    case "spy-mixed-reset":
-      return greenCount + yellowCount >= 1 && grayCount >= 2;
-    case "spy-reopen-four":
-      return grayCount >= 4;
-    case "spy-letter-reset":
-      return rewardLetterResetCandidates(state).length >= 1;
-    case "spy-double-blur":
-      return greenCount >= 2 || (greenCount >= 1 && yellowCount >= 1);
+    case "spy-trade-yellow":
+      return unknownPresentCount >= 1;
+    case "spy-trade-green":
+      return knownGreenIndexes(state).size < 5;
     case "inspector-yellow-1":
       return unknownPresentCount >= 1;
     case "inspector-remove-unused-2":
@@ -1736,6 +1566,12 @@ function powerOptionApplicable(state, option) {
       return !(state.powers?.powerChoicePersistentGrants?.guesser || []).includes(option.powerId);
     case "letterLockout":
       return !(state.powers?.powerChoicePersistentGrants?.setter || []).includes(option.powerId);
+    case "blindSpot":
+      // One-shot for the whole round (state.powers.blindSpotUsed) -- once
+      // used, offering the card again would just fail silently when
+      // picked (blindSpotServer.js's apply() itself returns false/no-ops
+      // on a second use).
+      return !state.powers?.blindSpotUsed;
     default:
       return true;
   }
@@ -1789,59 +1625,27 @@ function effectDetailText(option, detail) {
 
   switch (option.id) {
     case "spy-reset-known-2":
-    case "spy-reset-positive-2":
       return letters.length
-        ? `Reset clue information for ${letters.join(", ")}.`
-        : "No eligible clue letters remained.";
-    case "spy-reset-vowels": {
-      const letterText = letters.length
-        ? `Reset vowel clues for ${letters.join(", ")}.`
-        : "No letter-specific vowel clues remained.";
-      const positionText = Number(detail?.removedPositionReads) > 0
-        ? ` Removed ${detail.removedPositionReads} vowel/consonant position read${detail.removedPositionReads === 1 ? "" : "s"}.`
-        : "";
-      return letterText + positionText;
-    }
+        ? `Reset gray letters: ${letters.join(", ")}.`
+        : "No eligible gray letters remained.";
     case "spy-add-point-1":
-    case "spy-add-point-2":
       return `Inspector final guess total +${detail?.points || 0}.`;
     case "spy-yellow-smudge":
-    case "spy-double-smudge":
-      return detail?.clues?.length
-        ? `Erased yellow clue${detail.clues.length === 1 ? "" : "s"}: ${clueText(detail.clues)}.`
-        : "No eligible yellow tile remained.";
+      return detail?.letters?.length
+        ? `Removed position restrictions from: ${detail.letters.join(", ")}.`
+        : "No yellow letters remained.";
     case "spy-reset-positive-1":
-    case "spy-blur-position":
       return detail?.demoted?.length
         ? `Blurred green position: ${clueText(detail.demoted)} is now yellow.`
         : "No eligible green tile remained.";
-    case "spy-reopen-two":
-    case "spy-reopen-four":
-      return letters.length
-        ? `Returned gray letters to unknown: ${letters.join(", ")}.`
-        : "No eligible gray letters remained.";
-    case "spy-loosen-yellow":
-      return detail?.letter
-        ? `${detail.letter} remains yellow, but position ${detail.index + 1} is no longer ruled out by that clue.`
-        : "No yellow position restriction remained.";
-    case "spy-mixed-static":
-      return detail?.yellow?.letter
-        ? `Loosened ${detail.yellow.letter} at position ${detail.yellow.index + 1}; reopened ${detail.gray?.join(", ")}.`
-        : "The mixed reset had no valid targets.";
-    case "spy-quest-fog":
-      return "The Inspector's next-quest preview is hidden until the next quest attempt is submitted.";
-    case "spy-break-lock":
-      return detail?.mode === "green"
-        ? `Broke green lock: ${clueText(detail.clues)}.`
-        : `No green was available; erased yellows: ${clueText(detail.clues)}.`;
-    case "spy-mixed-reset":
-      return `Erased colored clue ${clueText(detail?.colored)} and reopened ${detail?.gray?.join(", ") || "no gray letters"}.`;
-    case "spy-letter-reset":
-      return detail?.letter
-        ? `Erased all ${detail.count} known clue${detail.count === 1 ? "" : "s"} for ${detail.letter}.`
-        : "No letter with one or two clues remained.";
-    case "spy-double-blur":
-      return `${detail?.demoted?.length ? `Blurred ${clueText(detail.demoted)}` : "No green was blurred"}${detail?.erased?.length ? `; erased yellow ${clueText(detail.erased)}` : ""}.`;
+    case "spy-trade-yellow":
+      return detail?.yellow
+        ? `Gave the Inspector ${detail.yellow} as a yellow clue; reset gray letters: ${detail.grays?.join(", ") || "none available"}.`
+        : "No unrevealed secret letter remained -- nothing to trade.";
+    case "spy-trade-green":
+      return detail?.green
+        ? `Gave the Inspector ${detail.green.letter} at position ${detail.green.index + 1} as a green clue; erased yellow clue${detail.erasedYellows?.length === 1 ? "" : "s"}: ${clueText(detail.erasedYellows) || "none available"}.`
+        : "No unrevealed position remained -- nothing to trade.";
     case "inspector-yellow-1":
       return detail?.letter
         ? `Yellow clue received: ${detail.letter}.`
@@ -1911,18 +1715,8 @@ const KNOWLEDGE_RESET_OPTIONS = new Set([
   "spy-reset-positive-1",
   "spy-reset-known-2",
   "spy-yellow-smudge",
-  "spy-blur-position",
-  "spy-reopen-two",
-  "spy-loosen-yellow",
-  "spy-mixed-static",
-  "spy-reset-positive-2",
-  "spy-reset-vowels",
-  "spy-break-lock",
-  "spy-double-smudge",
-  "spy-mixed-reset",
-  "spy-reopen-four",
-  "spy-letter-reset",
-  "spy-double-blur"
+  "spy-trade-yellow",
+  "spy-trade-green"
 ]);
 
 function rerollSpyHintAfterReset(state, option, context) {
@@ -2000,89 +1794,27 @@ function applyChoice(state, option, choice, room, roomId, io, context) {
         detail = { demoted: rewardDemoteGreens(state, 1) };
         break;
       case "spy-reset-known-2":
-        detail = { letters: resetRandom(state, 2, false) };
+        detail = { letters: rewardResetGrayLetters(state, 2) };
         break;
       case "spy-add-point-1":
         state.guessCount = Math.max(0, Number(state.guessCount) || 0) + 1;
         detail = { points: 1 };
         break;
       case "spy-yellow-smudge":
-        detail = { clues: rewardEraseClues(state, "yellow", 1) };
+        detail = { letters: rewardLoosenAllYellows(state) };
         break;
-      case "spy-blur-position":
-        detail = { demoted: rewardDemoteGreens(state, 1) };
-        break;
-      case "spy-reopen-two":
-        detail = { letters: rewardResetGrayLetters(state, 2) };
-        break;
-      case "spy-loosen-yellow":
-        detail = rewardLoosenYellow(state);
-        break;
-      case "spy-mixed-static": {
-        const yellowTarget = pick(shuffle(rewardLoosenYellowCandidates(state)));
+      case "spy-trade-yellow":
         detail = {
-          yellow: rewardLoosenYellow(state, yellowTarget),
-          gray: rewardResetGrayLetters(state, 1)
+          yellow: addYellow(state),
+          grays: rewardResetGrayLetters(state, 4)
         };
         break;
-      }
-      case "spy-quest-fog":
-        state.powerChoice.questFogUntilAttempt =
-          (Number(state.powerChoice.inspector?.attempts) || 0) + 1;
-        detail = { untilAttempt: state.powerChoice.questFogUntilAttempt };
-        break;
-      case "spy-reset-positive-2":
-        detail = { letters: resetRandom(state, 2, true) };
-        break;
-      case "spy-reset-vowels":
-        detail = rewardResetKnownVowels(state);
-        break;
-      case "spy-add-point-2":
-        state.guessCount = Math.max(0, Number(state.guessCount) || 0) + 2;
-        detail = { points: 2 };
-        break;
-      case "spy-break-lock": {
-        const hasGreen = rewardClueTargets(state, "green").length >= 1;
+      case "spy-trade-green":
         detail = {
-          mode: hasGreen ? "green" : "yellow",
-          clues: rewardEraseClues(state, hasGreen ? "green" : "yellow", hasGreen ? 1 : 2)
+          green: addGreen(state),
+          erasedYellows: rewardEraseClues(state, "yellow", 2)
         };
         break;
-      }
-      case "spy-double-smudge":
-        detail = { clues: rewardEraseClues(state, "yellow", 2) };
-        break;
-      case "spy-mixed-reset": {
-        const coloredTarget = pick(shuffle(rewardColoredTargets(state)));
-        const coloredDetail = coloredTarget
-          ? rewardEraseClueTarget(state, coloredTarget)
-          : null;
-        detail = {
-          colored: coloredDetail ? [coloredDetail] : [],
-          gray: rewardResetGrayLetters(
-            state,
-            2,
-            coloredDetail?.letter ? [coloredDetail.letter] : []
-          )
-        };
-        break;
-      }
-      case "spy-reopen-four":
-        detail = { letters: rewardResetGrayLetters(state, 4) };
-        break;
-      case "spy-letter-reset":
-        detail = rewardResetOneLetter(state);
-        break;
-      case "spy-double-blur": {
-        const originalYellows = shuffle(rewardClueTargets(state, "yellow"));
-        const greenCount = rewardClueTargets(state, "green").length;
-        const demoteCount = greenCount >= 2 ? 2 : 1;
-        detail = { demoted: rewardDemoteGreens(state, demoteCount), erased: [] };
-        if (demoteCount === 1 && originalYellows.length) {
-          detail.erased = [rewardEraseClueTarget(state, originalYellows[0])].filter(Boolean);
-        }
-        break;
-      }
       case "inspector-yellow-1":
         detail = { letter: addYellow(state) };
         break;
@@ -2512,6 +2244,16 @@ if (!spyChargeServer.__powerChoicePatchedV2) {
       state.powerChoice.spy.queuedMilestones,
       state.powerChoice.spy.claimedMilestones
     );
+    // The Spy's third and final milestone (15 stars) grants two reward
+    // picks in a row instead of one -- queue the same threshold a second
+    // time so maybeOpenChoice naturally opens a second choice-of-3 the
+    // instant the first one resolves. queueCrossed's own dedup only
+    // exists to stop the SAME crossing from being queued twice on repeat
+    // calls; it doesn't guard against this deliberate second push.
+    if (before < 15 && after >= 15) {
+      state.powerChoice.spy.queuedMilestones.push(15);
+      state.powerChoice.spy.queuedMilestones.sort((a, b) => a - b);
+    }
     const payload = {
       before,
       after,
@@ -2691,5 +2433,6 @@ module.exports = {
   applyChoice,
   fixedOptions,
   powerOption,
-  tierTwoPowerIds
+  tierTwoPowerIds,
+  setterRewardPool
 };

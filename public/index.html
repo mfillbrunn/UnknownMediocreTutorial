@@ -1104,15 +1104,13 @@
             <div class="panel reveal-penalty-panel">
               <h2 class="screen-title">🚫 Ban a Letter</h2>
               <p class="reveal-penalty-instruction">
-                Choose one letter you haven't banned before this match. The
-                Inspector's next guess cannot contain it.
+                Bans a random letter the Inspector hasn't tried yet -- never
+                one you've banned before this match. Their next guess cannot
+                contain it.
               </p>
-              <div class="letter-grid">
-                <!-- A–Z buttons generated in JS -->
-              </div>
               <div class="decision-row">
-                <button id="letterLockoutConfirm" class="primary-btn small" disabled>
-                  Confirm
+                <button id="letterLockoutConfirm" class="primary-btn small">
+                  Lock a letter
                 </button>
                 <button id="letterLockoutCancel" class="secondary-btn small">
                   Cancel

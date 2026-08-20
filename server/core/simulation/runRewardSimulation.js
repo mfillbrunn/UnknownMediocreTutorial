@@ -61,10 +61,17 @@ function thresholdForTier(role, tier) {
 }
 
 // Every testable reward for one role+tier, as plain {id, label, icon}
-// descriptors -- tier 1/3 read straight off fixedOptions' own catalog,
-// tier 2 is built from tierTwoPowerIds (the same static power-ID list
-// threePowerOptions draws its random 3 from) via powerOption().
+// descriptors. The setter draws from the SAME shared pool at all three
+// thresholds now (see setterRewardPool in powerChoiceServer.js), so "tier"
+// only affects which star threshold the reward is forced at for the
+// setter, not which catalog it's drawn from -- unlike the Inspector,
+// which still has a real per-tier catalog switch (tier 1/3 read straight
+// off fixedOptions' own catalog, tier 2 is built from tierTwoPowerIds, the
+// same static power-ID list threePowerOptions draws its random 3 from).
 function getRewardCatalog(role, tier) {
+  if (role === "setter") {
+    return powerChoice.setterRewardPool().map((o) => ({ id: o.id, label: o.title, icon: o.icon }));
+  }
   if (tier === 2) {
     return powerChoice.tierTwoPowerIds(role).map((id) => {
       const opt = powerChoice.powerOption(id);
@@ -76,6 +83,9 @@ function getRewardCatalog(role, tier) {
 }
 
 function buildOptionForReward(role, tier, rewardId) {
+  if (role === "setter") {
+    return powerChoice.setterRewardPool().find((o) => o.id === rewardId) || null;
+  }
   if (tier === 2) {
     const powerId = rewardId.startsWith("power:") ? rewardId.slice(6) : rewardId;
     return powerChoice.powerOption(powerId);

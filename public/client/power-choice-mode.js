@@ -136,16 +136,12 @@
   }
 
   // Letter Lockout, once unlocked as a persistent Power Choice reward (see
-  // PERSISTENT_POWER_IDS server-side): a compact "Lock a letter" button
-  // that arms letter-picking on the Spy's own keyboard, same
-  // arm-then-tap-a-letter shape as Hide Evidence (powerEngine/powers/
-  // hideTile.js) -- handleSetterInput (client.js) checks
-  // letterLockoutKbActive()/letterLockoutKbInput() the same way it already
-  // checks hideTile's pair. The server side (letterLockoutServer.js) was
-  // already fully built for the classic draft/custom loadout; this is
-  // only the missing client trigger for Power Choice's own path to it.
-  let letterLockoutArmed = false;
-
+  // PERSISTENT_POWER_IDS server-side): a compact "Lock a letter" button.
+  // The server now picks the banned letter itself (see pickLockoutLetter
+  // in letterLockoutServer.js -- random, never repeats, prefers a letter
+  // that's never been guessed at all), so there's no letter for the
+  // player to choose here -- just a direct fire-with-confirmation, unlike
+  // the arm-then-tap-a-keyboard-letter flow Hide Evidence uses.
   function letterLockoutGranted() {
     return (window.state?.powers?.powerChoicePersistentGrants?.setter || [])
       .includes("letterLockout");
@@ -168,49 +164,32 @@
     );
   }
 
-  function syncLetterLockoutKeyboardVisual() {
-    document.getElementById("keyboardSetter")?.classList.toggle("keyboard-picking-hide", letterLockoutArmed);
-    window.setKeyboardPickHint?.(letterLockoutArmed, "Pick a letter from the keyboard to ban it");
-  }
-
-  window.letterLockoutKbActive = () => letterLockoutArmed;
-
-  window.letterLockoutKbReset = () => {
-    letterLockoutArmed = false;
-    syncLetterLockoutKeyboardVisual();
-  };
-
-  window.letterLockoutKbInput = function (event) {
-    if (!letterLockoutArmed) return false;
-    if (event.type !== "LETTER") return true; // swallow backspace/enter while armed
-
-    const letter = String(event.value || "").toUpperCase();
-    letterLockoutArmed = false;
-    syncLetterLockoutKeyboardVisual();
+  function fireLetterLockout() {
+    if (!canArmLetterLockout()) return;
 
     const submit = () => {
       // Must match the action type powerEngine/powers/letterLockout.js's
       // own modal sends -- normal.js's generic USE_ handler derives the
       // powerId straight from action.type (normalizePowerId), it isn't
-      // read from a separate field.
-      window.sendGameAction?.({ type: "USE_LETTER_LOCKOUT", letter, role: "setter" });
+      // read from a separate field. No letter is sent -- the server picks
+      // it (see letterLockoutServer.js's apply()).
+      window.sendGameAction?.({ type: "USE_LETTER_LOCKOUT", role: "setter" });
     };
 
     if (typeof window.showPowerActionPopup === "function") {
       window.showPowerActionPopup({
         emoji: window.POWER_METADATA?.letterLockout?.emoji || "🚫",
-        title: `Ban ${letter}?`,
-        desc: `The Inspector's next guess cannot use ${letter}. Once picked, ${letter} can never be banned again this match.`,
-        useLabel: `Ban ${letter}`,
+        title: "Lock a letter?",
+        desc: "Bans a random letter the Inspector hasn't tried yet from their next guess. Once picked, that letter can never be banned again this match.",
+        useLabel: "Lock a letter",
         showUse: true,
         useEnabled: true,
         onUse: submit
       });
-    } else if (window.confirm(`Ban ${letter} from the Inspector's next guess?`)) {
+    } else if (window.confirm("Ban a random untried letter from the Inspector's next guess?")) {
       submit();
     }
-    return true;
-  };
+  }
 
   function renderSpyPanel(container) {
     const total = spyDisplayTotal();
@@ -218,28 +197,16 @@
     const detailsOpen = container.dataset.pcDetailsOpen === "true";
     const lockoutGranted = letterLockoutGranted();
     const lockoutArmable = canArmLetterLockout();
-    // Disarms itself the moment arming is no longer valid (the Spy's turn
-    // ended, a letter got banned through some other path, etc.) instead
-    // of leaving the keyboard outlined for a pick that can no longer go
-    // through -- same self-correcting check hideTile.js's uiEffects does.
-    if (letterLockoutArmed && !lockoutArmable) {
-      letterLockoutArmed = false;
-      syncLetterLockoutKeyboardVisual();
-    }
     const bannedLetter = window.state?.powers?.letterLockoutBanned || "";
-    const signature = [total, pending, detailsOpen, lockoutGranted, lockoutArmable, letterLockoutArmed, bannedLetter].join("|");
+    const signature = [total, pending, detailsOpen, lockoutGranted, lockoutArmable, bannedLetter].join("|");
     if (container.dataset.pcSignature === signature) return;
     container.dataset.pcSignature = signature;
     const lockoutMarkup = lockoutGranted
       ? `<button type="button" id="pcLetterLockoutBtn"
-          class="pc-letter-lockout-btn${letterLockoutArmed ? " is-armed" : ""}"
+          class="pc-letter-lockout-btn"
           ${lockoutArmable ? "" : "disabled"}>
           <span aria-hidden="true">🚫</span>
-          ${bannedLetter
-            ? `${esc(bannedLetter)} banned this guess`
-            : letterLockoutArmed
-              ? "Tap a keyboard letter…"
-              : "Lock a letter"}
+          ${bannedLetter ? `${esc(bannedLetter)} banned this guess` : "Lock a letter"}
         </button>`
       : "";
     container.innerHTML = `<section class="pc-side-panel pc-spy-panel">
@@ -254,33 +221,19 @@
       <div class="pc-charge-details${detailsOpen ? " is-open" : ""}">
         <p>Earn at least 1 star after each eligible Keep/New decision. The forced all-gray opening begins with at least 2 stars.</p>
         <div class="pc-reward-milestones">
-          <span><b>5</b> fixed reward choice</span>
-          <span><b>9</b> three random powers</span>
-          <span><b>15</b> advanced reward choice</span>
+          <span><b>5</b>, <b>9</b>, and <b>15</b> stars: pick a reward from the same pool</span>
+          <span>At <b>15</b>: two picks in a row</span>
         </div>
       </div>
       ${lockoutMarkup}
-      
+
     </section>`;
     byId("pcSpyChargeCard")?.addEventListener("click", () => {
       container.dataset.pcDetailsOpen = detailsOpen ? "false" : "true";
       container.dataset.pcSignature = "";
       renderSpyPanel(container);
     });
-    byId("pcLetterLockoutBtn")?.addEventListener("click", () => {
-      if (!canArmLetterLockout()) {
-        if (letterLockoutArmed) {
-          letterLockoutArmed = false;
-          container.dataset.pcSignature = "";
-          renderSpyPanel(container);
-        }
-        return;
-      }
-      letterLockoutArmed = !letterLockoutArmed;
-      container.dataset.pcSignature = "";
-      renderSpyPanel(container);
-      syncLetterLockoutKeyboardVisual();
-    });
+    byId("pcLetterLockoutBtn")?.addEventListener("click", fireLetterLockout);
   }
 
   function questConditionLabels(quest) {
@@ -339,17 +292,12 @@
     const pc = window.state?.powerChoice;
     const inspector = pc?.inspector;
     const pending = pc?.pendingChoice?.role === "guesser";
-    const attempts = Number(inspector?.attempts) || 0;
-    const hasPreview = !!inspector?.nextQuest;
-    const fogged = hasPreview &&
-      (Number(pc?.questFogUntilAttempt) || 0) > attempts;
-    const next = fogged ? null : inspector?.nextQuest;
+    const next = inspector?.nextQuest;
     const conditions = questConditionLabels(next);
     const intel = (pc?.inspectorIntel || []).slice(-6);
     const grants = window.state?.powers?.powerChoicePersistentGrants?.guesser || [];
     const signature = JSON.stringify({
       next: next?.id,
-      fogged,
       conditions,
       intel: intel.map(item => `${item?.key}:${item?.text}`),
       pending,
@@ -359,18 +307,13 @@
     });
     if (container.dataset.pcSignature === signature) return;
     container.dataset.pcSignature = signature;
-    const nextMarkup = fogged
-      ? `<article class="pc-next-quest pc-next-quest-fogged">
+    const nextMarkup = next
+      ? `<article class="pc-next-quest">
           <span class="pc-next-kicker">NEXT QUEST</span>
-          <p>Preview obscured by Quest Fog until this quest is submitted.</p>
+          <p>${esc(next.description || "Complete the next condition.")}</p>
+          ${conditions.length ? `<ul>${conditions.map(label => `<li>${esc(label)}</li>`).join("")}</ul>` : ""}
         </article>`
-      : next
-        ? `<article class="pc-next-quest">
-            <span class="pc-next-kicker">NEXT QUEST</span>
-            <p>${esc(next.description || "Complete the next condition.")}</p>
-            ${conditions.length ? `<ul>${conditions.map(label => `<li>${esc(label)}</li>`).join("")}</ul>` : ""}
-          </article>`
-        : "";
+      : "";
     const intelMarkup = intel.length
       ? `<article class="pc-intel-panel">
           <span class="pc-next-kicker">REWARD INTEL</span>
@@ -1027,9 +970,7 @@
     const id = String(option?.id || "");
     const exact = {
       "spy-reset-positive-1": "#60a5fa",
-      "spy-reset-positive-2": "#60a5fa",
       "spy-add-point-1": "#fb7185",
-      "spy-add-point-2": "#fb7185",
       "inspector-yellow-1": "#fbbf24",
       "inspector-green-1": "#34d399",
       "inspector-remove-point-1": "#2dd4bf",
@@ -1044,28 +985,11 @@
 
   function fixedRewardIconMarkup(option) {
     const id = String(option?.id || "");
-    // spy-reset-positive-1 used to share this "reset either color" icon
-    // with -2, but it no longer resets a random yellow-or-green letter --
-    // it demotes one green to yellow now, same mechanic as spy-blur-position,
-    // so it falls through to the generic badge below (which shows its own
-    // "🟩⇢🟨" glyph) instead of keeping a two-tile refresh icon that no
-    // longer matches what it does.
-    if (id === "spy-reset-positive-2") {
-      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
-        <rect x="13" y="25" width="36" height="42" rx="9" fill="#facc15" stroke="#fef3c7" stroke-width="4"/>
-        <rect x="56" y="25" width="36" height="42" rx="9" fill="#34d399" stroke="#d1fae5" stroke-width="4"/>
-        <path d="M92 75c-7 18-32 27-51 15" fill="none" stroke="#60a5fa" stroke-width="9" stroke-linecap="round"/>
-        <path d="M33 78l3 18 17-6" fill="#60a5fa"/>
-        <circle cx="96" cy="25" r="9" fill="#f472b6"/>
-        <path d="M96 19v12M90 25h12" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-      </svg>`;
-    }
-    if (id === "spy-add-point-1" || id === "spy-add-point-2") {
-      const amount = id.endsWith("-2") ? "+2" : "+1";
+    if (id === "spy-add-point-1") {
       return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
         <circle cx="60" cy="61" r="43" fill="#4c1d3f" stroke="#fb7185" stroke-width="6"/>
         <path d="M88 39l8-16 8 16-8-4z" fill="#fbbf24"/>
-        <text x="60" y="73" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="39" font-weight="900">${amount}</text>
+        <text x="60" y="73" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="39" font-weight="900">+1</text>
         <path d="M28 34l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#60a5fa"/>
       </svg>`;
     }

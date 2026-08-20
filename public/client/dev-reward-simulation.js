@@ -160,8 +160,12 @@ let rsRoleFilter = "all";
 let rsTierFilter = "all";
 let rsResultsCache = null;
 
+// The setter now draws from the SAME 8-item pool at all three thresholds
+// (see setterRewardPool in powerChoiceServer.js) instead of a different
+// catalog per tier -- "tier" here only picks which star threshold (and
+// so which forced turn) the reward is tested at, not a different list.
 const RS_CATALOG_COUNTS = {
-  setter: { 1: 9, 2: 7, 3: 9 },
+  setter: { 1: 8, 2: 8, 3: 8 },
   guesser: { 1: 4, 2: 8, 3: 8 }
 };
 
