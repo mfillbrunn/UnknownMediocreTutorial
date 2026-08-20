@@ -150,14 +150,6 @@ function eraseLetterKnowledge(state, letters) {
         );
       }
     }
-    if (Array.isArray(state.powerChoice.inspectorIntel)) {
-      state.powerChoice.inspectorIntel = state.powerChoice.inspectorIntel.filter(item => {
-        const itemLetters = new Set(
-          (item?.letters || []).map(value => String(value || "").toUpperCase())
-        );
-        return ![...targets].some(target => itemLetters.has(target));
-      });
-    }
   }
   // POWER CHOICE REWARD TIERS V1: RESET CLEANUP END
   return result;

@@ -18,9 +18,10 @@ const { randomPool, tierFor } = require("./powerTiers");
 const MODE = "powerChoice";
 const SPY_THRESHOLDS = [5, 9, 15];
 // Quests no longer build toward a shared points meter -- each quest met
-// grants a reward immediately, cycling through these same three tiers
-// (fixedOptions/threePowerOptions below dispatch on these threshold
-// numbers, unchanged from when they were meter milestones).
+// grants a reward immediately (one reward per completion, drawn from the
+// same shared pool at all three -- see guesserRewardPool/buildChoice),
+// cycling through these same three thresholds unchanged from when they
+// were meter milestones.
 const INSPECTOR_REWARD_SEQUENCE = [2, 3, 5];
 // The Inspector gets exactly this many quests per round -- one per entry in
 // the reward sequence above. Once the third has been attempted the quest
@@ -189,7 +190,6 @@ function freshPowerChoice(roundIndex) {
     // Actually blocks the guesser from using these letters (server rejects
     // guesses that include one, client disables + X's the key).
     eliminatedLetters: [],
-    inspectorIntel: [],
     // Informational only -- letters known to be absent, but still usable;
     // the client just styles them like any other already-guessed absent
     // letter instead of blocking them.
@@ -564,12 +564,12 @@ function powerOption(powerId) {
   };
 }
 
-// The pool of power IDs eligible for the middle ("3 random powers")
-// milestone, before any per-trial applicability/used filtering -- the
-// static catalog a role can ever draw from at that tier. Extracted out of
-// threePowerOptions so the reward simulator (runRewardSimulation.js) can
-// enumerate "every testable tier-2 reward for this role" without
-// duplicating this list.
+// The static list of power IDs that can be applied immediately with no
+// extra payload (letter, word, position, bet amount, and so on) --
+// guesserRewardPool merges these into the Inspector's shared pool as
+// their own always-offered cards. The setter's own equivalent
+// (setterRewardPool) lists its immediate powers directly instead of
+// going through this helper.
 function tierTwoPowerIds(role) {
   // These powers can be applied immediately without asking for a second
   // payload (letter, word, position, bet amount, and so on).
@@ -601,14 +601,6 @@ function tierTwoPowerIds(role) {
   return randomPool(role).filter(
     id => id !== "hideTile" && immediate.includes(id)
   );
-}
-
-function threePowerOptions(state, role, usedPowerIds) {
-  const tiered = tierTwoPowerIds(role);
-  const applicable = tiered.filter(id => powerOptionApplicable(state, powerOption(id)));
-  let candidates = applicable.filter(id => !usedPowerIds.includes(id));
-  if (candidates.length < 3) candidates = applicable;
-  return shuffle(candidates).slice(0, 3).map(powerOption);
 }
 
 // The Spy's own reward pool -- unlike the Inspector, the Spy sees the
@@ -716,92 +708,30 @@ function fixedOptions(role, threshold) {
     ];
   }
 
-  if (role === "guesser" && threshold === 5) {
-    return [
-      {
-        id: "inspector-green-1",
-        kind: "fixed",
-        tier: 2,
-        icon: "🟩",
-        title: "Green Intel",
-        description: "Reveal one random letter in its exact position.",
-        explanation: "A full green tile is added and remains binding if the Spy changes the secret."
-      },
-      {
-        id: "inspector-yellow-to-green-2",
-        kind: "fixed",
-        tier: 2,
-        icon: "🟨🟨→🟩",
-        title: "Promote Two",
-        description: "Turn two known yellow letters into green positions.",
-        explanation: "This card appears only when two distinct yellow clues can both be promoted."
-      },
-      {
-        id: "inspector-remove-point-2",
-        kind: "fixed",
-        tier: 2,
-        icon: "−2",
-        title: "Remove Two Points",
-        description: "Subtract 2 points from your final guess total.",
-        explanation: "This is the stronger score reward and removes exactly two guesses from the result."
-      },
-      {
-        id: "inspector-yellow-2",
-        kind: "fixed",
-        tier: 2,
-        icon: "🟨🟨",
-        title: "Double Ping",
-        description: "Reveal two different letters that are in the secret.",
-        explanation: "Both letters are confirmed present, but neither position is disclosed."
-      },
-      {
-        id: "inspector-deep-sweep",
-        kind: "fixed",
-        tier: 2,
-        icon: "×4",
-        title: "Deep Sweep",
-        description: "Rule out and lock four unused absent letters.",
-        explanation: "Four letters are confirmed absent and cannot appear in future legal secrets or Inspector guesses."
-      },
-      {
-        id: "inspector-mixed-read",
-        kind: "fixed",
-        tier: 2,
-        icon: "🟨+×2",
-        title: "Mixed Read",
-        description: "Reveal one present letter and rule out two absent letters.",
-        explanation: "This combines one yellow-level clue with two gray-level clues."
-      },
-      {
-        id: "inspector-count-scan",
-        kind: "fixed",
-        tier: 2,
-        icon: "A×?",
-        title: "Count Scan",
-        description: "Reveal exactly how many times one known-present letter occurs.",
-        explanation: "A random known letter is selected and its exact multiplicity becomes binding."
-      },
-      {
-        id: "inspector-edge-green",
-        kind: "fixed",
-        tier: 2,
-        icon: "|🟩|",
-        title: "Edge Lock",
-        description: "Reveal either the first or fifth tile as green.",
-        explanation: "One unknown edge position is fixed to its exact letter."
-      }
-    ];
-  }
-
   return [];
 }
 
+// The Inspector's own reward pool -- same shared-pool treatment as the
+// Spy's setterRewardPool: ONE pool drawn from at all three quest
+// milestones (2/3/5 completions) instead of a fixed tier-1 catalog, a
+// separate "3 random powers" middle stage, and a fixed tier-3 catalog.
+// Reuses the tier-1 fixed cards from fixedOptions(guesser, 2) as-is and
+// merges in every power that used to live in the middle tier's random
+// draw (see tierTwoPowerIds) as its own always-offered card instead of a
+// 3-of-N random subset.
+function guesserRewardPool() {
+  return [
+    ...fixedOptions("guesser", 2),
+    ...tierTwoPowerIds("guesser").map(powerOption)
+  ];
+}
+
 function buildChoice(state, role, threshold, owner) {
-  // The Spy draws from ONE shared pool at all three of their milestones
-  // (5/9/15 stars) -- unlike the Inspector, there's no per-threshold
-  // catalog switch or "3 random powers" middle stage to special-case, so
-  // this branches on role up front instead of asking fixedOptions to
-  // dispatch on threshold the way it still does for the Inspector.
+  // Both roles now draw from ONE shared pool at every one of their three
+  // milestones (Spy: 5/9/15 stars, Inspector: 2/3/5 quest completions)
+  // instead of a threshold-dependent catalog switch -- see setterRewardPool/
+  // guesserRewardPool, which buildChoice calls directly for every
+  // threshold instead of asking fixedOptions to dispatch per-threshold.
   if (role === "setter") {
     const tier = SPY_THRESHOLDS.indexOf(threshold) + 1;
     const options = rewardPickAvailableOptions(state, setterRewardPool(), 3);
@@ -817,14 +747,8 @@ function buildChoice(state, role, threshold, owner) {
     };
   }
 
-  const side = state.powerChoice.inspector;
-  const sequence = INSPECTOR_REWARD_SEQUENCE;
-  const randomMilestone = threshold === sequence[1];
-  const pool = randomMilestone
-    ? threePowerOptions(state, role, side.usedPowerIds)
-    : fixedOptions(role, threshold);
-  const options = rewardPickAvailableOptions(state, pool, 3);
-  const tier = randomMilestone ? null : (threshold === sequence[0] ? 1 : 2);
+  const tier = INSPECTOR_REWARD_SEQUENCE.indexOf(threshold) + 1;
+  const options = rewardPickAvailableOptions(state, guesserRewardPool(), 3);
   return {
     id: `${role}-${threshold}-${Date.now()}-${Math.random()
       .toString(36)
@@ -833,10 +757,8 @@ function buildChoice(state, role, threshold, owner) {
     role,
     threshold,
     tier,
-    title: `Inspector reward · ${randomMilestone ? `${threshold} quest points` : `Tier ${tier}`}`,
-    subtitle: randomMilestone
-      ? "Choose one of the available valid powers. It activates immediately."
-      : "Choose one available reward from this tier. It activates immediately.",
+    title: `Inspector reward · Tier ${tier}`,
+    subtitle: "Choose one available reward. It activates immediately.",
     options
   };
 }
@@ -947,45 +869,6 @@ function addGreen(state) {
   state.extraConstraints ||= [];
   state.extraConstraints.push({ type: "GREEN", index, letter: secret[index] });
   return { index, letter: secret[index] };
-}
-
-function promotableYellows(state) {
-  const secret = normalizeWord(state.secret);
-  const { yellowLetters } = knownClues(state);
-  const knownGreen = knownGreenIndexes(state);
-  return [...yellowLetters]
-    .map(letter => ({
-      letter,
-      index: [...secret].findIndex(
-        (candidate, position) => candidate === letter && !knownGreen.has(position)
-      )
-    }))
-    .filter(item => item.index >= 0);
-}
-
-function promoteYellows(state, count) {
-  const promoted = [];
-  const knownGreen = knownGreenIndexes(state);
-  for (const item of shuffle(promotableYellows(state))) {
-    if (knownGreen.has(item.index)) continue;
-    state.extraConstraints ||= [];
-    state.extraConstraints = state.extraConstraints.filter(
-      constraint =>
-        !(
-          String(constraint.type).toUpperCase() === "YELLOW" &&
-          normalizeWord(constraint.letter)[0] === item.letter
-        )
-    );
-    state.extraConstraints.push({
-      type: "GREEN",
-      index: item.index,
-      letter: item.letter
-    });
-    knownGreen.add(item.index);
-    promoted.push(item);
-    if (promoted.length >= count) break;
-  }
-  return promoted;
 }
 
 function unusedLetterCandidates(state) {
@@ -1350,71 +1233,6 @@ function rewardKnownYellowLetters(state) {
   return [...letters].filter(Boolean);
 }
 
-function rewardRecordIntel(state, key, text, kind = "intel", letters = []) {
-  state.powerChoice ||= {};
-  state.powerChoice.inspectorIntel ||= [];
-  state.powerChoice.inspectorIntel = state.powerChoice.inspectorIntel.filter(
-    item => item?.key !== key
-  );
-  state.powerChoice.inspectorIntel.push({ key, text, kind, letters: [...letters], at: Date.now() });
-  state.powerChoice.inspectorIntel = state.powerChoice.inspectorIntel.slice(-8);
-}
-
-function rewardCountScanCandidates(state) {
-  const known = new Set(rewardColoredTargets(state).map(target => target.letter));
-  const counted = new Set(
-    (state.extraConstraints || [])
-      .filter(constraint => String(constraint?.type || "").toUpperCase() === "LETTER_COUNT")
-      .map(constraint => normalizeWord(constraint?.letter)[0])
-  );
-  return [...known].filter(letter => letter && !counted.has(letter));
-}
-
-function rewardAddCountScan(state) {
-  const letter = pick(shuffle(rewardCountScanCandidates(state)));
-  if (!letter) return null;
-  const count = normalizeWord(state.secret).split("").filter(value => value === letter).length;
-  state.extraConstraints ||= [];
-  state.extraConstraints.push({ type: "LETTER_COUNT", letter, count });
-  rewardRecordIntel(
-    state,
-    `letter-count:${letter}`,
-    `${letter} appears exactly ${count} time${count === 1 ? "" : "s"}.`,
-    "count",
-    [letter]
-  );
-  return { letter, count };
-}
-
-function rewardEdgeGreenCandidates(state) {
-  const known = knownGreenIndexes(state);
-  return [0, 4].filter(index => !known.has(index) && normalizeWord(state.secret)[index]);
-}
-
-function rewardAddEdgeGreen(state) {
-  const index = pick(shuffle(rewardEdgeGreenCandidates(state)));
-  if (index == null) return null;
-  const letter = normalizeWord(state.secret)[index];
-  state.extraConstraints ||= [];
-  state.extraConstraints.push({ type: "GREEN", index, letter });
-  return { index, letter };
-}
-
-function rewardPromotableYellows(state) {
-  if (typeof promotableYellows === "function") return promotableYellows(state);
-  const secret = normalizeWord(state.secret);
-  const knownGreen = knownGreenIndexes(state);
-  const letters = rewardKnownYellowLetters(state);
-  return letters
-    .map(letter => ({
-      letter,
-      index: [...secret].findIndex(
-        (candidate, position) => candidate === letter && !knownGreen.has(position)
-      )
-    }))
-    .filter(item => item.index >= 0);
-}
-
 function rewardFixedOptionApplicable(state, option) {
   const id = option?.id;
   const greenCount = rewardClueTargets(state, "green").length;
@@ -1441,22 +1259,6 @@ function rewardFixedOptionApplicable(state, option) {
       return unusedCount >= 2;
     case "inspector-remove-point-1":
       return (Number(state.guessCount) || 0) >= 1;
-    case "inspector-green-1":
-      return knownGreenIndexes(state).size < 5;
-    case "inspector-yellow-to-green-2":
-      return rewardPromotableYellows(state).length >= 2;
-    case "inspector-remove-point-2":
-      return (Number(state.guessCount) || 0) >= 2;
-    case "inspector-yellow-2":
-      return unknownPresentCount >= 2;
-    case "inspector-deep-sweep":
-      return unusedCount >= 4;
-    case "inspector-mixed-read":
-      return unknownPresentCount >= 1 && unusedCount >= 2;
-    case "inspector-count-scan":
-      return rewardCountScanCandidates(state).length >= 1;
-    case "inspector-edge-green":
-      return rewardEdgeGreenCandidates(state).length >= 1;
     default:
       return false;
   }
@@ -1533,6 +1335,10 @@ function powerOptionApplicable(state, option) {
     case "freezeSecret":
     case "rouletteSecret":
       return !state.simultaneousAllWrong;
+    case "stealthGuess":
+      return !state.powers?.stealthGuessUsed;
+    case "nonsense":
+      return !state.powers?.nonsenseUsed;
     case "magicMode":
       // Magic Mode affects feedback from the upcoming guess, so it remains
       // useful even when no yellow was known before this turn.
@@ -1655,32 +1461,11 @@ function effectDetailText(option, detail) {
         ? `Yellow clue received: ${detail.letter}.`
         : "No unrevealed secret letter remained.";
     case "inspector-remove-unused-2":
-    case "inspector-deep-sweep":
       return letters.length
         ? `Locked absent letters: ${letters.join(", ")}.`
         : "No eligible absent letters remained.";
     case "inspector-remove-point-1":
-    case "inspector-remove-point-2":
       return `Inspector final guess total ${detail?.points || 0}.`;
-    case "inspector-green-1":
-    case "inspector-edge-green":
-      return detail?.letter && Number.isInteger(detail.index)
-        ? `Green clue received: ${detail.letter} in position ${detail.index + 1}.`
-        : "Every eligible position was already known.";
-    case "inspector-yellow-to-green-2":
-      return detail?.promoted?.length
-        ? `Promoted to green: ${clueText(detail.promoted)}.`
-        : "Two promotable yellow clues were not available.";
-    case "inspector-yellow-2":
-      return letters.length
-        ? `Present letters revealed: ${letters.join(", ")}.`
-        : "Two unrevealed present letters were not available.";
-    case "inspector-mixed-read":
-      return `Present letter: ${detail?.present?.join(", ")}; absent letters: ${detail?.absent?.join(", ")}.`;
-    case "inspector-count-scan":
-      return detail?.letter
-        ? `${detail.letter} appears exactly ${detail.count} time${detail.count === 1 ? "" : "s"}.`
-        : "No known-present letter remained to count.";
     default:
       if (option.kind === "power") {
         // PERSISTENT_POWER_IDS grants (Informant/Letter Profile/Letter
@@ -1835,36 +1620,6 @@ function applyChoice(state, option, choice, room, roomId, io, context) {
         detail = { points: state.guessCount - before };
         break;
       }
-      case "inspector-green-1":
-        detail = addGreen(state);
-        break;
-      case "inspector-yellow-to-green-2":
-        detail = { promoted: promoteYellows(state, 2) };
-        break;
-      case "inspector-remove-point-2": {
-        const before = Math.max(0, Number(state.guessCount) || 0);
-        state.guessCount = Math.max(0, before - 2);
-        detail = { points: state.guessCount - before };
-        break;
-      }
-      case "inspector-yellow-2":
-        detail = { letters: rewardAddYellows(state, 2) };
-        break;
-      case "inspector-deep-sweep":
-        detail = { letters: removeUnusedLetters(state, 4) };
-        break;
-      case "inspector-mixed-read":
-        detail = {
-          present: rewardAddYellows(state, 1),
-          absent: removeUnusedLetters(state, 2)
-        };
-        break;
-      case "inspector-count-scan":
-        detail = rewardAddCountScan(state);
-        break;
-      case "inspector-edge-green":
-        detail = rewardAddEdgeGreen(state);
-        break;
       default:
         return false;
     }
@@ -1945,10 +1700,9 @@ function evaluateInspectorGuess(state, guess, roomId, io) {
   };
 
   // A quest no longer builds toward a shared points meter -- meeting it
-  // grants a reward immediately, cycling through the same three reward
-  // tiers the old meter unlocked at 2/3/5 points (fixedOptions/
-  // threePowerOptions below dispatch on these same threshold numbers, so
-  // reusing them here keeps every existing reward card as-is).
+  // grants a reward immediately, cycling through the same three
+  // thresholds the old meter unlocked at 2/3/5 points, each now opening
+  // one pick from the Inspector's own shared pool (guesserRewardPool).
   if (success) {
     inspector.questCompletions += 1;
     const tier = INSPECTOR_REWARD_SEQUENCE[
@@ -2437,5 +2191,6 @@ module.exports = {
   fixedOptions,
   powerOption,
   tierTwoPowerIds,
-  setterRewardPool
+  setterRewardPool,
+  guesserRewardPool
 };

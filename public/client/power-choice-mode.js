@@ -294,12 +294,10 @@
     const pending = pc?.pendingChoice?.role === "guesser";
     const next = inspector?.nextQuest;
     const conditions = questConditionLabels(next);
-    const intel = (pc?.inspectorIntel || []).slice(-6);
     const grants = window.state?.powers?.powerChoicePersistentGrants?.guesser || [];
     const signature = JSON.stringify({
       next: next?.id,
       conditions,
-      intel: intel.map(item => `${item?.key}:${item?.text}`),
       pending,
       grants,
       peek: window.state?.powers?.revealLocationPeek,
@@ -314,13 +312,7 @@
           ${conditions.length ? `<ul>${conditions.map(label => `<li>${esc(label)}</li>`).join("")}</ul>` : ""}
         </article>`
       : "";
-    const intelMarkup = intel.length
-      ? `<article class="pc-intel-panel">
-          <span class="pc-next-kicker">REWARD INTEL</span>
-          <ul>${intel.map(item => `<li>${esc(item?.text || "")}</li>`).join("")}</ul>
-        </article>`
-      : "";
-    const body = `${persistentPowerMarkup()}${nextMarkup}${intelMarkup}`;
+    const body = `${persistentPowerMarkup()}${nextMarkup}`;
     container.innerHTML = body
       ? `<section class="pc-side-panel pc-inspector-panel">${body}</section>`
       : "";
@@ -972,9 +964,7 @@
       "spy-reset-positive-1": "#60a5fa",
       "spy-add-point-1": "#fb7185",
       "inspector-yellow-1": "#fbbf24",
-      "inspector-green-1": "#34d399",
-      "inspector-remove-point-1": "#2dd4bf",
-      "inspector-remove-point-2": "#2dd4bf"
+      "inspector-remove-point-1": "#2dd4bf"
     };
     if (exact[id]) return exact[id];
     if (id.startsWith("spy-")) return "#fb7185";
@@ -993,24 +983,20 @@
         <path d="M28 34l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#60a5fa"/>
       </svg>`;
     }
-    if (id === "inspector-yellow-1" || id === "inspector-green-1") {
-      const green = id === "inspector-green-1";
-      const tile = green ? "#22c55e" : "#facc15";
-      const rim = green ? "#bbf7d0" : "#fef3c7";
+    if (id === "inspector-yellow-1") {
       return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
-        <rect x="24" y="19" width="72" height="82" rx="16" fill="${tile}" stroke="${rim}" stroke-width="6"/>
+        <rect x="24" y="19" width="72" height="82" rx="16" fill="#facc15" stroke="#fef3c7" stroke-width="6"/>
         <path d="M39 60c12-18 30-18 42 0-12 18-30 18-42 0z" fill="#0f172a" opacity=".9"/>
         <circle cx="60" cy="60" r="10" fill="#e0f2fe"/>
         <circle cx="60" cy="60" r="4" fill="#2563eb"/>
         <path d="M91 18v16M83 26h16" stroke="#f472b6" stroke-width="5" stroke-linecap="round"/>
       </svg>`;
     }
-    if (id === "inspector-remove-point-1" || id === "inspector-remove-point-2") {
-      const amount = id.endsWith("-2") ? "−2" : "−1";
+    if (id === "inspector-remove-point-1") {
       return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
         <path d="M60 13l39 15v27c0 25-15 43-39 54C36 98 21 80 21 55V28z" fill="#0f766e" stroke="#5eead4" stroke-width="6"/>
         <circle cx="60" cy="58" r="28" fill="#082f49" stroke="#7dd3fc" stroke-width="4"/>
-        <text x="60" y="69" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="30" font-weight="900">${amount}</text>
+        <text x="60" y="69" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="30" font-weight="900">−1</text>
         <path d="M84 23l5 9 10 2-7 7 2 10-10-5-9 5 2-10-7-7 10-2z" fill="#fbbf24"/>
       </svg>`;
     }
