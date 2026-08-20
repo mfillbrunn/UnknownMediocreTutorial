@@ -288,6 +288,67 @@
     </article>`;
   }
 
+  // Recon Sweep / Miss Bet / Double Tap, once unlocked as persistent
+  // Power Choice rewards (see PERSISTENT_POWER_IDS server-side): each is
+  // still a one-shot power underneath (its own *Used flag), fired later
+  // through its existing classic-mode UI -- armPowerKeyboard for the two
+  // keyboard-capture powers (power-keyboard.js, already mode-agnostic),
+  // the pre-existing betMissModal for the bet. This is only the missing
+  // client trigger for Power Choice's own path to that same UI, same
+  // shape as the Spy's pcLetterLockoutBtn above.
+  const GUESSER_ONE_SHOT_POWERS = [
+    { id: "letterProbe", icon: "🔎", label: "Recon Sweep", armMode: "letterProbe" },
+    { id: "betMiss", icon: "🎯", label: "Miss Bet" },
+    { id: "doubleGuess", icon: "🔫", label: "Double Tap", armMode: "doubleGuess" }
+  ];
+
+  function guesserOneShotGranted(id) {
+    return (window.state?.powers?.powerChoicePersistentGrants?.guesser || []).includes(id);
+  }
+
+  function canFireGuesserOneShot(id) {
+    const state = window.state;
+    // Mirrors power-keyboard.js's own canArm()/POWER_RULES.js's allowed()
+    // for these three -- the server rejects the underlying USE_ action
+    // outright without a live guesser turn to actually fire into.
+    return !!(
+      guesserOneShotGranted(id) &&
+      myRole() === "guesser" &&
+      state?.phase === "normal" &&
+      state?.turn === state?.guesser &&
+      !state?.pendingGuess &&
+      !state?.powerUsedThisTurn &&
+      !state?.powers?.[`${id}Used`]
+    );
+  }
+
+  function fireBetMiss() {
+    if (!canFireGuesserOneShot("betMiss")) return;
+    const input = byId("betMissInput");
+    if (input) input.value = "";
+    byId("betMissModal")?.classList.add("active");
+    input?.focus();
+  }
+
+  function guesserOneShotButtonsMarkup() {
+    const cards = GUESSER_ONE_SHOT_POWERS.filter(power => guesserOneShotGranted(power.id));
+    if (!cards.length) return "";
+    const buttons = cards.map(power => {
+      const armed = power.armMode && window.powerKbActive?.() && window.powerKbMode?.() === power.armMode;
+      const usable = canFireGuesserOneShot(power.id);
+      const used = !!window.state?.powers?.[`${power.id}Used`];
+      return `<button type="button" data-pc-one-shot="${esc(power.id)}"
+          class="pc-one-shot-btn${armed ? " is-armed" : ""}"
+          ${usable ? "" : "disabled"}>
+          <span aria-hidden="true">${power.icon}</span>
+          ${used ? `${esc(power.label)} used` : armed ? "Tap keyboard…" : power.label}
+        </button>`;
+    });
+    return `<article class="pc-one-shot-powers">
+      ${buttons.join("")}
+    </article>`;
+  }
+
   function renderInspectorPanel(container) {
     const pc = window.state?.powerChoice;
     const inspector = pc?.inspector;
@@ -295,11 +356,18 @@
     const next = inspector?.nextQuest;
     const conditions = questConditionLabels(next);
     const grants = window.state?.powers?.powerChoicePersistentGrants?.guesser || [];
+    const oneShotState = GUESSER_ONE_SHOT_POWERS.map(power => [
+      power.id,
+      canFireGuesserOneShot(power.id),
+      window.state?.powers?.[`${power.id}Used`],
+      power.armMode && window.powerKbActive?.() && window.powerKbMode?.() === power.armMode
+    ]);
     const signature = JSON.stringify({
       next: next?.id,
       conditions,
       pending,
       grants,
+      oneShotState,
       peek: window.state?.powers?.revealLocationPeek,
       profileStat: window.state?.powers?.letterProfileGuesserStat
     });
@@ -312,10 +380,23 @@
           ${conditions.length ? `<ul>${conditions.map(label => `<li>${esc(label)}</li>`).join("")}</ul>` : ""}
         </article>`
       : "";
-    const body = `${persistentPowerMarkup()}${nextMarkup}`;
+    const body = `${persistentPowerMarkup()}${guesserOneShotButtonsMarkup()}${nextMarkup}`;
     container.innerHTML = body
       ? `<section class="pc-side-panel pc-inspector-panel">${body}</section>`
       : "";
+    container.querySelectorAll("[data-pc-one-shot]").forEach(btn => {
+      const id = btn.dataset.pcOneShot;
+      btn.addEventListener("click", () => {
+        if (id === "betMiss") {
+          fireBetMiss();
+          return;
+        }
+        const power = GUESSER_ONE_SHOT_POWERS.find(item => item.id === id);
+        if (power?.armMode) window.armPowerKeyboard?.(power.armMode);
+        container.dataset.pcSignature = "";
+        renderInspectorPanel(container);
+      });
+    });
   }
 
   function setterSidebarCollapsed() {

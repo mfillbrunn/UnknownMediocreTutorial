@@ -164,10 +164,12 @@ let rsResultsCache = null;
 // thresholds (see setterRewardPool/guesserRewardPool in
 // powerChoiceServer.js) instead of a different catalog per tier --
 // "tier" here only picks which threshold (and so which forced turn) the
-// reward is tested at, not a different list.
+// reward is tested at, not a different list. The one exception is the
+// Inspector's Time Rewind card, which only enters the pool from tier 2
+// onward -- hence 15/16/16 instead of a flat count.
 const RS_CATALOG_COUNTS = {
   setter: { 1: 15, 2: 15, 3: 15 },
-  guesser: { 1: 11, 2: 11, 3: 11 }
+  guesser: { 1: 15, 2: 16, 3: 16 }
 };
 
 function rsCountsByFilter() {

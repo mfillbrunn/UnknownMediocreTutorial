@@ -64,17 +64,19 @@ function thresholdForTier(role, tier) {
 // descriptors. Both roles now draw from the SAME shared pool at all
 // three of their thresholds (see setterRewardPool/guesserRewardPool in
 // powerChoiceServer.js), so "tier" only picks which threshold the reward
-// is forced at, not which catalog it's drawn from.
-function rewardPool(role) {
-  return role === "setter" ? powerChoice.setterRewardPool() : powerChoice.guesserRewardPool();
+// is forced at -- except for the Inspector's Time Rewind card, which
+// guesserRewardPool itself only includes from tier 2 onward, so this
+// still has to pass tier through rather than ignoring it outright.
+function rewardPool(role, tier) {
+  return role === "setter" ? powerChoice.setterRewardPool() : powerChoice.guesserRewardPool(tier);
 }
 
 function getRewardCatalog(role, tier) {
-  return rewardPool(role).map((o) => ({ id: o.id, label: o.title, icon: o.icon }));
+  return rewardPool(role, tier).map((o) => ({ id: o.id, label: o.title, icon: o.icon }));
 }
 
 function buildOptionForReward(role, tier, rewardId) {
-  return rewardPool(role).find((o) => o.id === rewardId) || null;
+  return rewardPool(role, tier).find((o) => o.id === rewardId) || null;
 }
 
 // role -> {id, tier} list for every role+tier combination matching the

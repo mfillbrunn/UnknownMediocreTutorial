@@ -13,7 +13,7 @@ const {
   getCoverAnalysis,
   getCandidateRemainingCount
 } = require("../utils/coverStrength");
-const { randomPool, tierFor } = require("./powerTiers");
+const { tierFor } = require("./powerTiers");
 
 const MODE = "powerChoice";
 const SPY_THRESHOLDS = [5, 9, 15];
@@ -32,13 +32,26 @@ const INSPECTOR_MAX_QUESTS = INSPECTOR_REWARD_SEQUENCE.length;
 const VOWELS = new Set("AEIOU");
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-// Powers with no one-shot apply() at all -- their effect is entirely
-// "always on" for as long as they're in activePowers (revealLocation/
-// letterProfile's own turnStart hooks, letterLockout's per-turn button --
-// see each one's own server module). A Power Choice reward that grants
-// one of these isn't a single action to fire, it's a permanent unlock:
-// see grantPersistentPower and state.powers.powerChoicePersistentGrants.
-const PERSISTENT_POWER_IDS = new Set(["revealLocation", "letterProfile", "letterLockout"]);
+// Powers that need a real payload (a letter, a bet number, a second word)
+// the bare {type:"USE_POWER", powerId, userId} action applyChoice builds
+// below can't supply -- revealLocation/letterProfile/letterLockout have no
+// one-shot apply() at all (their effect is "always on" while in
+// activePowers), while letterProbe/betMiss/doubleGuess DO have a real
+// one-shot apply(), just one that needs input only the player can give.
+// Either way, a Power Choice reward that grants one of these isn't a
+// single action to fire immediately -- it's unlocking access, same as a
+// classic draft pick: the player then uses the power on their own later
+// turn through its normal client UI (armPowerKeyboard/betMissModal),
+// which fires the real USE_* action with the real payload. See
+// grantPersistentPower and state.powers.powerChoicePersistentGrants.
+const PERSISTENT_POWER_IDS = new Set([
+  "revealLocation",
+  "letterProfile",
+  "letterLockout",
+  "letterProbe",
+  "betMiss",
+  "doubleGuess"
+]);
 const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
 const QUEST_TYPES = [
@@ -87,11 +100,20 @@ const POWER_COPY = {
   stealthGuess: ["🥷", "Stealth Guess", "Hide this guess during the Spy's Keep/New decision."],
   nonsense: ["🌀", "Silly Word", "Let the Inspector submit any five letters this turn, even when they do not form a real word."],
   magicMode: ["✨", "Magic Mode", "Activate the Inspector's special feedback mode this turn."],
+  suggestGuess: ["💡", "Guess Tip", "Immediately suggests a random guess that still fits everything learned so far."],
+  revealHistory: ["⏪", "Time Rewind", "Reveal the exact secret from three rounds ago."],
   // PERSISTENT_POWER_IDS -- permanent unlocks, not one-turn effects, so
-  // the copy says "from now on" instead of "this turn".
+  // the copy says "from now on" instead of "this turn". letterProbe/
+  // betMiss/doubleGuess are one-shot powers underneath (each has its own
+  // Used flag), but the unlock itself is still a permanent grant -- same
+  // as a classic draft pick -- so they get the same "from now on" wording
+  // plus "usable once" to flag the one-shot cap.
   revealLocation: ["🕵️", "Informant", "From now on, peek at one still-unknown position in the secret each of your turns."],
   letterProfile: ["🔤", "Letter Profile", "From now on, see how many vowels and consonants are in the secret, each of your turns."],
-  letterLockout: ["🚫", "Letter Lockout", "From now on, ban one new letter from the Inspector's next guess on each of your turns."]
+  letterLockout: ["🚫", "Letter Lockout", "From now on, ban one new letter from the Inspector's next guess on each of your turns."],
+  letterProbe: ["🔎", "Recon Sweep", "From now on, you may test any 5 letters and learn how many are in the secret -- usable once, whenever you choose."],
+  betMiss: ["🎯", "Miss Bet", "From now on, you may bet how many misses your next guess will have -- guess right and win a free green letter. Usable once, whenever you choose."],
+  doubleGuess: ["🔫", "Double Tap", "From now on, you may submit two guesses at once and get feedback on both -- usable once, whenever you choose."]
 };
 
 function normalizeWord(value) {
@@ -564,45 +586,6 @@ function powerOption(powerId) {
   };
 }
 
-// The static list of power IDs that can be applied immediately with no
-// extra payload (letter, word, position, bet amount, and so on) --
-// guesserRewardPool merges these into the Inspector's shared pool as
-// their own always-offered cards. The setter's own equivalent
-// (setterRewardPool) lists its immediate powers directly instead of
-// going through this helper.
-function tierTwoPowerIds(role) {
-  // These powers can be applied immediately without asking for a second
-  // payload (letter, word, position, bet amount, and so on).
-  const immediate =
-    role === "setter"
-      ? [
-          "confuseColors",
-          "countOnly",
-          "fakeFeedback",
-          "blindGuess",
-          "forceTimer",
-          "delayedIntel",
-          // Persistent grant (see PERSISTENT_POWER_IDS): "immediate" here
-          // just means the card needs no extra payload to resolve, which
-          // is just as true of a permanent unlock as a one-turn effect.
-          "letterLockout"
-        ]
-      : [
-          "revealGreen",
-          "freezeSecret",
-          "rouletteSecret",
-          "stealthGuess",
-          "nonsense",
-          "magicMode",
-          // Persistent grants -- see the setter's letterLockout above.
-          "revealLocation",
-          "letterProfile"
-        ];
-  return randomPool(role).filter(
-    id => id !== "hideTile" && immediate.includes(id)
-  );
-}
-
 // The Spy's own reward pool -- unlike the Inspector, the Spy sees the
 // SAME pool at every one of their three milestones (5/9/15 stars)
 // instead of a different fixed catalog per tier plus a separate
@@ -716,14 +699,38 @@ function fixedOptions(role, threshold) {
 // milestones (2/3/5 completions) instead of a fixed tier-1 catalog, a
 // separate "3 random powers" middle stage, and a fixed tier-3 catalog.
 // Reuses the tier-1 fixed cards from fixedOptions(guesser, 2) as-is and
-// merges in every power that used to live in the middle tier's random
-// draw (see tierTwoPowerIds) as its own always-offered card instead of a
-// 3-of-N random subset.
-function guesserRewardPool() {
-  return [
+// lists every guesser power directly, same style as setterRewardPool,
+// since Time Rewind needs tier-conditional inclusion a flat static list
+// can't express.
+//
+// `tier` is the 1/2/3 buildChoice already computes from
+// INSPECTOR_REWARD_SEQUENCE -- Time Rewind (revealHistory) only enters
+// the pool from the 2nd quest reward onward, never the 1st, since a match
+// that young essentially never has the 3 completed rounds its own
+// apply() requires anyway (see the "revealHistory" case in
+// powerOptionApplicable for the belt-and-suspenders runtime check).
+function guesserRewardPool(tier) {
+  const pool = [
     ...fixedOptions("guesser", 2),
-    ...tierTwoPowerIds("guesser").map(powerOption)
+    powerOption("revealGreen"),
+    powerOption("freezeSecret"),
+    powerOption("rouletteSecret"),
+    powerOption("stealthGuess"),
+    powerOption("nonsense"),
+    powerOption("magicMode"),
+    powerOption("revealLocation"),
+    powerOption("letterProfile"),
+    // One-off effects, activated immediately on pick.
+    powerOption("suggestGuess"),
+    // Persistent-style grants -- see PERSISTENT_POWER_IDS: unlocked
+    // immediately, then fired later through their own client UI
+    // (armPowerKeyboard/betMissModal) once, whenever the player chooses.
+    powerOption("letterProbe"),
+    powerOption("betMiss"),
+    powerOption("doubleGuess")
   ];
+  if (tier >= 2) pool.push(powerOption("revealHistory"));
+  return pool;
 }
 
 function buildChoice(state, role, threshold, owner) {
@@ -748,7 +755,7 @@ function buildChoice(state, role, threshold, owner) {
   }
 
   const tier = INSPECTOR_REWARD_SEQUENCE.indexOf(threshold) + 1;
-  const options = rewardPickAvailableOptions(state, guesserRewardPool(), 3);
+  const options = rewardPickAvailableOptions(state, guesserRewardPool(tier), 3);
   return {
     id: `${role}-${threshold}-${Date.now()}-${Math.random()
       .toString(36)
@@ -1322,10 +1329,13 @@ function rewardPickAIOption(options) {
 
 function powerOptionApplicable(state, option) {
   if (!option || option.kind !== "power") return false;
-  // Persistent-grant powers (see PERSISTENT_POWER_IDS) have no apply() at
-  // all -- their whole effect is "always on" once activePowers includes
-  // them, nothing to fire once. Every other power-kind card still needs
-  // a real apply() to actually do anything when chosen.
+  // Persistent-grant powers (see PERSISTENT_POWER_IDS) are exempt from
+  // this check regardless of whether they have a real apply() -- some
+  // (revealLocation/letterProfile) genuinely don't, others (letterProbe/
+  // betMiss/doubleGuess/letterLockout) do but need a payload this reward
+  // system can't supply at pick time, so the card being applicable is
+  // about the GRANT, not about calling apply() directly. Every other
+  // power-kind card still needs a real apply() to do anything when chosen.
   if (!PERSISTENT_POWER_IDS.has(option.powerId) && !engine.powers?.[option.powerId]?.apply) {
     return false;
   }
@@ -1345,8 +1355,13 @@ function powerOptionApplicable(state, option) {
       return true;
     case "revealLocation":
     case "letterProfile":
+    case "letterProbe":
+    case "betMiss":
+    case "doubleGuess":
       // Already unlocked -- offering the same permanent grant again would
-      // just waste a reward slot on a no-op.
+      // just waste a reward slot on a no-op. Applies just as much to the
+      // one-shot powers (letterProbe/betMiss/doubleGuess) as the truly
+      // always-on ones: the GRANT is what's one-time, not just the use.
       return !(state.powers?.powerChoicePersistentGrants?.guesser || []).includes(option.powerId);
     case "letterLockout":
       return !(state.powers?.powerChoicePersistentGrants?.setter || []).includes(option.powerId);
@@ -1382,6 +1397,15 @@ function powerOptionApplicable(state, option) {
         !state.powers?.vowelRefreshUsed &&
         /[AEIOU]/.test(String(state.history?.[state.history.length - 1]?.guess || "").toUpperCase())
       );
+    // Same one-off treatment for the Inspector's own immediate powers.
+    case "suggestGuess":
+      return (state.powers?.suggestGuessUses || 0) < 2;
+    case "revealHistory":
+      // guesserRewardPool only ever includes this card from the 2nd quest
+      // reward onward, but a match can still be young enough at that
+      // point that fewer than 3 rounds have happened yet -- checked here
+      // too so that case doesn't get offered as a guaranteed-fail card.
+      return !state.powers?.revealHistoryUsed && (state.history || []).length >= 3;
     default:
       return true;
   }
@@ -1535,14 +1559,16 @@ function applyChoice(state, option, choice, room, roomId, io, context) {
 
   if (option.kind === "power") {
     if (PERSISTENT_POWER_IDS.has(option.powerId)) {
-      // These have no apply() to call at all -- engine.applyPower would
-      // either silently no-op (revealLocation/letterProfile, pure
+      // Calling engine.applyPower with the bare fabricated action below
+      // would either silently no-op (revealLocation/letterProfile, pure
       // turnStart hooks with nothing to fire once) or fail outright
-      // (letterLockout requires a letter action.letter this card never
-      // supplies). The reward IS the unlock itself: from now on the role
-      // simply has access to a power that was already fully built and
-      // already worked when a human/classic draft granted it the normal
-      // way -- there's no second activation step to perform here.
+      // (letterLockout/letterProbe/betMiss/doubleGuess all need a real
+      // payload -- a letter, a bet number, a second word -- this card
+      // never supplies). The reward IS the unlock itself: from now on the
+      // role simply has access to a power that was already fully built
+      // and already worked when a human/classic draft granted it the
+      // normal way -- there's no second activation step to perform here,
+      // the player fires the real thing later through its own UI.
       grantPersistentPower(state, choice.role, option.powerId);
       state.powerUsedThisTurn = true;
       const side =
@@ -2190,7 +2216,6 @@ module.exports = {
   applyChoice,
   fixedOptions,
   powerOption,
-  tierTwoPowerIds,
   setterRewardPool,
   guesserRewardPool
 };

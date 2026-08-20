@@ -1782,6 +1782,44 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   font-weight: 800;
 }
 
+/* Recon Sweep / Miss Bet / Double Tap once unlocked (see PERSISTENT_
+   POWER_IDS server-side): a row of small trigger buttons, one-shot each
+   -- same idea as the Spy's pc-letter-lockout-btn, blue Inspector accent
+   instead of the Spy's pink/red to match pc-next-quest above. */
+.pc-one-shot-powers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pc-one-shot-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: 1 1 auto;
+  padding: 7px 9px;
+  border: 1px solid rgba(88, 201, 255, 0.4);
+  border-radius: 10px;
+  background: rgba(88, 201, 255, 0.08);
+  color: #cdeeff;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pc-one-shot-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pc-one-shot-btn.is-armed {
+  border-color: rgba(88, 201, 255, 0.85);
+  background: rgba(88, 201, 255, 0.16);
+  animation: hide-evidence-pulse 1.4s ease-in-out infinite;
+}
+
 .pc-current-quest-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
