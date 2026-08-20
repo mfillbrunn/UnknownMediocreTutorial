@@ -9,6 +9,7 @@ const { satisfiesForceGuess } = require("../game-engine/validation");
 const { generateConditions } = require("../powers/powers/fieldReportServer");
 const { emitRoomState } = require("../core/rooms");
 const { isConsistentWithHistory } = require("../game-engine/history");
+const { applyDoubleGuess } = require("../core/phases/normal");
 const {
   getCoverAnalysis,
   getCandidateRemainingCount
@@ -32,25 +33,23 @@ const INSPECTOR_MAX_QUESTS = INSPECTOR_REWARD_SEQUENCE.length;
 const VOWELS = new Set("AEIOU");
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-// Powers that need a real payload (a letter, a bet number, a second word)
-// the bare {type:"USE_POWER", powerId, userId} action applyChoice builds
-// below can't supply -- revealLocation/letterProfile/letterLockout have no
-// one-shot apply() at all (their effect is "always on" while in
-// activePowers), while letterProbe/betMiss/doubleGuess DO have a real
-// one-shot apply(), just one that needs input only the player can give.
-// Either way, a Power Choice reward that grants one of these isn't a
-// single action to fire immediately -- it's unlocking access, same as a
-// classic draft pick: the player then uses the power on their own later
-// turn through its normal client UI (armPowerKeyboard/betMissModal),
-// which fires the real USE_* action with the real payload. See
-// grantPersistentPower and state.powers.powerChoicePersistentGrants.
+// Powers with no one-shot apply() at all -- their effect is entirely
+// "always on" for as long as they're in activePowers (revealLocation/
+// letterProfile's own turnStart hooks, letterLockout's per-turn button --
+// see each one's own server module). A Power Choice reward that grants
+// one of these isn't a single action to fire, it's a permanent unlock:
+// see grantPersistentPower and state.powers.powerChoicePersistentGrants.
+//
+// letterProbe/betMiss/doubleGuess used to live here too (granted as a
+// standing unlock, fired later through the player's own choice of
+// moment), but they're immediate-fire cards now like every other power
+// in the pool: the reward pick itself carries the real payload -- 5
+// letters, a bet number, or a second word -- typed in on the spot, with
+// no way to bank the power for later. See applyChoice's payload param.
 const PERSISTENT_POWER_IDS = new Set([
   "revealLocation",
   "letterProfile",
-  "letterLockout",
-  "letterProbe",
-  "betMiss",
-  "doubleGuess"
+  "letterLockout"
 ]);
 const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
@@ -102,18 +101,18 @@ const POWER_COPY = {
   magicMode: ["✨", "Magic Mode", "Activate the Inspector's special feedback mode this turn."],
   suggestGuess: ["💡", "Guess Tip", "Immediately suggests a random guess that still fits everything learned so far."],
   revealHistory: ["⏪", "Time Rewind", "Reveal the exact secret from three rounds ago."],
+  // Immediate, payload-carrying cards: picking one prompts for its input
+  // (5 letters / a bet number / two words) right then, and fires on the
+  // spot -- there's no unlock to bank for later, see applyChoice's
+  // payload param.
+  letterProbe: ["🔎", "Recon Sweep", "Test 5 letters right now and learn how many are in the secret."],
+  betMiss: ["🎯", "Miss Bet", "Bet right now how many misses your next guess will have -- guess right and win a free green letter."],
+  doubleGuess: ["🔫", "Double Tap", "Submit two guesses at once right now and get feedback on both."],
   // PERSISTENT_POWER_IDS -- permanent unlocks, not one-turn effects, so
-  // the copy says "from now on" instead of "this turn". letterProbe/
-  // betMiss/doubleGuess are one-shot powers underneath (each has its own
-  // Used flag), but the unlock itself is still a permanent grant -- same
-  // as a classic draft pick -- so they get the same "from now on" wording
-  // plus "usable once" to flag the one-shot cap.
+  // the copy says "from now on" instead of "this turn".
   revealLocation: ["🕵️", "Informant", "From now on, peek at one still-unknown position in the secret each of your turns."],
   letterProfile: ["🔤", "Letter Profile", "From now on, see how many vowels and consonants are in the secret, each of your turns."],
-  letterLockout: ["🚫", "Letter Lockout", "From now on, ban one new letter from the Inspector's next guess on each of your turns."],
-  letterProbe: ["🔎", "Recon Sweep", "From now on, you may test any 5 letters and learn how many are in the secret -- usable once, whenever you choose."],
-  betMiss: ["🎯", "Miss Bet", "From now on, you may bet how many misses your next guess will have -- guess right and win a free green letter. Usable once, whenever you choose."],
-  doubleGuess: ["🔫", "Double Tap", "From now on, you may submit two guesses at once and get feedback on both -- usable once, whenever you choose."]
+  letterLockout: ["🚫", "Letter Lockout", "From now on, ban one new letter from the Inspector's next guess on each of your turns."]
 };
 
 function normalizeWord(value) {
@@ -720,11 +719,12 @@ function guesserRewardPool(tier) {
     powerOption("magicMode"),
     powerOption("revealLocation"),
     powerOption("letterProfile"),
-    // One-off effects, activated immediately on pick.
+    // One-off effects, activated immediately on pick. Recon Sweep/Miss
+    // Bet/Double Tap each need a real payload (5 letters, a bet number,
+    // two words) -- the reward card itself collects it and fires on the
+    // spot, see applyChoice's payload param -- there's no way to bank
+    // the power for later.
     powerOption("suggestGuess"),
-    // Persistent-style grants -- see PERSISTENT_POWER_IDS: unlocked
-    // immediately, then fired later through their own client UI
-    // (armPowerKeyboard/betMissModal) once, whenever the player chooses.
     powerOption("letterProbe"),
     powerOption("betMiss"),
     powerOption("doubleGuess")
@@ -1331,12 +1331,20 @@ function powerOptionApplicable(state, option) {
   if (!option || option.kind !== "power") return false;
   // Persistent-grant powers (see PERSISTENT_POWER_IDS) are exempt from
   // this check regardless of whether they have a real apply() -- some
-  // (revealLocation/letterProfile) genuinely don't, others (letterProbe/
-  // betMiss/doubleGuess/letterLockout) do but need a payload this reward
-  // system can't supply at pick time, so the card being applicable is
-  // about the GRANT, not about calling apply() directly. Every other
-  // power-kind card still needs a real apply() to do anything when chosen.
-  if (!PERSISTENT_POWER_IDS.has(option.powerId) && !engine.powers?.[option.powerId]?.apply) {
+  // (revealLocation/letterProfile) genuinely don't, letterLockout does
+  // but needs a payload this reward system can't supply at pick time, so
+  // the card being applicable is about the GRANT, not about calling
+  // apply() directly. doubleGuess is also exempt for a different reason:
+  // it isn't reachable through engine.applyPower at all -- its real logic
+  // lives in normal.js's applyDoubleGuess (see applyChoice), not a
+  // registered power, so this generic "has apply()" probe would always
+  // read as missing for it. Every other power-kind card still needs a
+  // real apply() to do anything when chosen.
+  if (
+    !PERSISTENT_POWER_IDS.has(option.powerId) &&
+    option.powerId !== "doubleGuess" &&
+    !engine.powers?.[option.powerId]?.apply
+  ) {
     return false;
   }
   switch (option.powerId) {
@@ -1355,16 +1363,21 @@ function powerOptionApplicable(state, option) {
       return true;
     case "revealLocation":
     case "letterProfile":
-    case "letterProbe":
-    case "betMiss":
-    case "doubleGuess":
       // Already unlocked -- offering the same permanent grant again would
-      // just waste a reward slot on a no-op. Applies just as much to the
-      // one-shot powers (letterProbe/betMiss/doubleGuess) as the truly
-      // always-on ones: the GRANT is what's one-time, not just the use.
+      // just waste a reward slot on a no-op.
       return !(state.powers?.powerChoicePersistentGrants?.guesser || []).includes(option.powerId);
     case "letterLockout":
       return !(state.powers?.powerChoicePersistentGrants?.setter || []).includes(option.powerId);
+    // Immediate-fire, payload-carrying cards -- mirrors each power's own
+    // POWER_RULES.js/applyDoubleGuess precondition (minus the redundant
+    // turn===guesser check, since a reward choice only ever opens on the
+    // owner's own turn), so a card that would fail on pick isn't offered.
+    case "letterProbe":
+      return !state.powers?.letterProbeUsed;
+    case "betMiss":
+      return !state.powers?.betMissUsed;
+    case "doubleGuess":
+      return !state.powers?.doubleGuessUsed && !state.pendingGuess;
     case "blindSpot":
       // One-shot for the whole round (state.powers.blindSpotUsed) -- once
       // used, offering the card again would just fail silently when
@@ -1553,7 +1566,11 @@ function rerollSpyHintAfterReset(state, option, context) {
   spyChargeServer.rollHintForTurn(state, allowedSecrets);
 }
 
-function applyChoice(state, option, choice, room, roomId, io, context) {
+// `payload` carries whatever extra input the player typed alongside their
+// card pick -- letters for Recon Sweep, a number for Miss Bet, two words
+// for Double Tap -- straight from the incoming POWER_CHOICE_SELECT
+// action (see handleAction below). Every other reward ignores it.
+function applyChoice(state, option, choice, room, roomId, io, context, payload) {
   if (!rewardOptionApplicable(state, option)) return false;
   let detail = null;
 
@@ -1562,13 +1579,11 @@ function applyChoice(state, option, choice, room, roomId, io, context) {
       // Calling engine.applyPower with the bare fabricated action below
       // would either silently no-op (revealLocation/letterProfile, pure
       // turnStart hooks with nothing to fire once) or fail outright
-      // (letterLockout/letterProbe/betMiss/doubleGuess all need a real
-      // payload -- a letter, a bet number, a second word -- this card
-      // never supplies). The reward IS the unlock itself: from now on the
-      // role simply has access to a power that was already fully built
-      // and already worked when a human/classic draft granted it the
-      // normal way -- there's no second activation step to perform here,
-      // the player fires the real thing later through its own UI.
+      // (letterLockout needs a letter action.letter this card never
+      // supplies). The reward IS the unlock itself: from now on the role
+      // simply has access to a power that was already fully built and
+      // already worked when a human/classic draft granted it the normal
+      // way -- there's no second activation step to perform here.
       grantPersistentPower(state, choice.role, option.powerId);
       state.powerUsedThisTurn = true;
       const side =
@@ -1577,12 +1592,46 @@ function applyChoice(state, option, choice, room, roomId, io, context) {
           : state.powerChoice.inspector;
       if (!side.usedPowerIds.includes(option.powerId)) side.usedPowerIds.push(option.powerId);
       detail = { powerId: option.powerId, persistent: true };
+    } else if (option.powerId === "doubleGuess") {
+      // Not reachable through engine.applyPower at all -- Double Tap's
+      // real logic lives in normal.js's own USE_DOUBLE_GUESS handling
+      // (immediate-win check, handing a hidden guess off to the setter,
+      // and so on), extracted there as applyDoubleGuess so both the
+      // per-turn path and this one call the exact same code. Its own
+      // internal gate checks activePowers up front, so that has to be
+      // set before calling it rather than after like every other card.
+      state.activePowers ||= [];
+      if (!state.activePowers.includes("doubleGuess")) state.activePowers.push("doubleGuess");
+      const fired = applyDoubleGuess(
+        state,
+        { type: "USE_DOUBLE_GUESS", userId: choice.ownerUserId, guess1: payload?.guess1, guess2: payload?.guess2 },
+        roomId,
+        io,
+        room,
+        context
+      );
+      if (!fired) return false;
+      const side =
+        choice.role === "setter"
+          ? state.powerChoice.spy
+          : state.powerChoice.inspector;
+      if (!side.usedPowerIds.includes("doubleGuess")) side.usedPowerIds.push("doubleGuess");
+      state.powerChoice.temporaryPowerIds ||= [];
+      if (!state.powerChoice.temporaryPowerIds.includes("doubleGuess")) {
+        state.powerChoice.temporaryPowerIds.push("doubleGuess");
+      }
+      detail = { powerId: "doubleGuess" };
     } else {
       const action = {
         type: "USE_POWER",
         userId: choice.ownerUserId,
         powerId: option.powerId,
-        source: "powerChoice"
+        source: "powerChoice",
+        // Recon Sweep (letterProbe) and Miss Bet (betMiss) both need a
+        // real payload their own apply() reads straight off the action --
+        // every other power here just ignores these extra fields.
+        letters: payload?.letters,
+        betMissNumber: payload?.betMissNumber
       };
       const applied = engine.applyPower(
         option.powerId,
@@ -2125,7 +2174,9 @@ function handleAction(room, state, action, roomId, context) {
       );
       return true;
     }
-    if (!applyChoice(state, option, pending, room, roomId, io, context)) {
+    // Payload for the handful of cards that need real input typed in on
+    // the spot (letters/betMissNumber/guess1+guess2) -- see applyChoice.
+    if (!applyChoice(state, option, pending, room, roomId, io, context, action)) {
       sendError(room, state, action.userId, io, "That reward could not be activated.");
       return true;
     }

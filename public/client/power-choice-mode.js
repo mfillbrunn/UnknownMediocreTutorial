@@ -53,6 +53,14 @@
   const REWARD_MODAL_SETTLE_MS = 1500;
   let rewardModalTimer = null;
   let rewardModalPendingId = "";
+  // Recon Sweep / Miss Bet / Double Tap fire immediately on pick, but need
+  // real input (5 letters / a bet number / two words) the reward system
+  // has no other way to collect -- picking one of these three cards swaps
+  // that one card's own content for a small input form instead of sending
+  // POWER_CHOICE_SELECT right away (see renderRewardChoiceCards). There's
+  // no way to bank the power for later: cancelling or picking a different
+  // card just discards whatever was typed.
+  let rewardInputArmed = null; // {choiceId, optionId, powerId} | null
 
   function me() {
     return window.currentUser?.id || window.getUserId?.() || null;
@@ -289,66 +297,6 @@
   }
 
   // Recon Sweep / Miss Bet / Double Tap, once unlocked as persistent
-  // Power Choice rewards (see PERSISTENT_POWER_IDS server-side): each is
-  // still a one-shot power underneath (its own *Used flag), fired later
-  // through its existing classic-mode UI -- armPowerKeyboard for the two
-  // keyboard-capture powers (power-keyboard.js, already mode-agnostic),
-  // the pre-existing betMissModal for the bet. This is only the missing
-  // client trigger for Power Choice's own path to that same UI, same
-  // shape as the Spy's pcLetterLockoutBtn above.
-  const GUESSER_ONE_SHOT_POWERS = [
-    { id: "letterProbe", icon: "🔎", label: "Recon Sweep", armMode: "letterProbe" },
-    { id: "betMiss", icon: "🎯", label: "Miss Bet" },
-    { id: "doubleGuess", icon: "🔫", label: "Double Tap", armMode: "doubleGuess" }
-  ];
-
-  function guesserOneShotGranted(id) {
-    return (window.state?.powers?.powerChoicePersistentGrants?.guesser || []).includes(id);
-  }
-
-  function canFireGuesserOneShot(id) {
-    const state = window.state;
-    // Mirrors power-keyboard.js's own canArm()/POWER_RULES.js's allowed()
-    // for these three -- the server rejects the underlying USE_ action
-    // outright without a live guesser turn to actually fire into.
-    return !!(
-      guesserOneShotGranted(id) &&
-      myRole() === "guesser" &&
-      state?.phase === "normal" &&
-      state?.turn === state?.guesser &&
-      !state?.pendingGuess &&
-      !state?.powerUsedThisTurn &&
-      !state?.powers?.[`${id}Used`]
-    );
-  }
-
-  function fireBetMiss() {
-    if (!canFireGuesserOneShot("betMiss")) return;
-    const input = byId("betMissInput");
-    if (input) input.value = "";
-    byId("betMissModal")?.classList.add("active");
-    input?.focus();
-  }
-
-  function guesserOneShotButtonsMarkup() {
-    const cards = GUESSER_ONE_SHOT_POWERS.filter(power => guesserOneShotGranted(power.id));
-    if (!cards.length) return "";
-    const buttons = cards.map(power => {
-      const armed = power.armMode && window.powerKbActive?.() && window.powerKbMode?.() === power.armMode;
-      const usable = canFireGuesserOneShot(power.id);
-      const used = !!window.state?.powers?.[`${power.id}Used`];
-      return `<button type="button" data-pc-one-shot="${esc(power.id)}"
-          class="pc-one-shot-btn${armed ? " is-armed" : ""}"
-          ${usable ? "" : "disabled"}>
-          <span aria-hidden="true">${power.icon}</span>
-          ${used ? `${esc(power.label)} used` : armed ? "Tap keyboard…" : power.label}
-        </button>`;
-    });
-    return `<article class="pc-one-shot-powers">
-      ${buttons.join("")}
-    </article>`;
-  }
-
   function renderInspectorPanel(container) {
     const pc = window.state?.powerChoice;
     const inspector = pc?.inspector;
@@ -356,18 +304,11 @@
     const next = inspector?.nextQuest;
     const conditions = questConditionLabels(next);
     const grants = window.state?.powers?.powerChoicePersistentGrants?.guesser || [];
-    const oneShotState = GUESSER_ONE_SHOT_POWERS.map(power => [
-      power.id,
-      canFireGuesserOneShot(power.id),
-      window.state?.powers?.[`${power.id}Used`],
-      power.armMode && window.powerKbActive?.() && window.powerKbMode?.() === power.armMode
-    ]);
     const signature = JSON.stringify({
       next: next?.id,
       conditions,
       pending,
       grants,
-      oneShotState,
       peek: window.state?.powers?.revealLocationPeek,
       profileStat: window.state?.powers?.letterProfileGuesserStat
     });
@@ -380,23 +321,10 @@
           ${conditions.length ? `<ul>${conditions.map(label => `<li>${esc(label)}</li>`).join("")}</ul>` : ""}
         </article>`
       : "";
-    const body = `${persistentPowerMarkup()}${guesserOneShotButtonsMarkup()}${nextMarkup}`;
+    const body = `${persistentPowerMarkup()}${nextMarkup}`;
     container.innerHTML = body
       ? `<section class="pc-side-panel pc-inspector-panel">${body}</section>`
       : "";
-    container.querySelectorAll("[data-pc-one-shot]").forEach(btn => {
-      const id = btn.dataset.pcOneShot;
-      btn.addEventListener("click", () => {
-        if (id === "betMiss") {
-          fireBetMiss();
-          return;
-        }
-        const power = GUESSER_ONE_SHOT_POWERS.find(item => item.id === id);
-        if (power?.armMode) window.armPowerKeyboard?.(power.armMode);
-        container.dataset.pcSignature = "";
-        renderInspectorPanel(container);
-      });
-    });
   }
 
   function setterSidebarCollapsed() {
@@ -1133,6 +1061,9 @@
     }, { passive: false });
     grid.addEventListener("keydown", event => {
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      // Don't hijack cursor movement while the player is typing into one
+      // of the reward-input cards' own text fields (see rewardInputArmed).
+      if (event.target?.tagName === "INPUT") return;
       const cards = [...grid.querySelectorAll(".pc-choice-card")];
       const current = Math.max(0, cards.indexOf(document.activeElement));
       const direction = event.key === "ArrowRight" ? 1 : -1;
@@ -1144,11 +1075,56 @@
     });
   }
 
+  // Cards whose reward fires with real player-typed input instead of
+  // immediately on click -- see rewardInputArmed above.
+  const REWARD_INPUT_POWER_IDS = new Set(["letterProbe", "betMiss", "doubleGuess"]);
+
+  // The armed card's own content, swapped in for its normal icon/title/
+  // description while the player is entering input. cleanWord() (top of
+  // file) already restricts typing to A-Z and caps length at 5.
+  function rewardInputFormMarkup(option) {
+    if (option.powerId === "betMiss") {
+      const buttons = [0, 1, 2, 3, 4, 5]
+        .map(n => `<button type="button" class="pc-reward-bet-btn" data-value="${n}">${n}</button>`)
+        .join("");
+      return `<div class="pc-reward-input-form">
+        <span class="pc-reward-input-label">Bet how many misses:</span>
+        <div class="pc-reward-bet-row">${buttons}</div>
+        <div class="pc-reward-input-actions">
+          <button type="button" class="pc-reward-fire-btn" disabled>Bet</button>
+          <button type="button" class="pc-reward-cancel-btn">Cancel</button>
+        </div>
+      </div>`;
+    }
+    if (option.powerId === "doubleGuess") {
+      return `<div class="pc-reward-input-form">
+        <span class="pc-reward-input-label">Type both guesses:</span>
+        <input type="text" class="pc-reward-word-input" data-slot="0" maxlength="5" placeholder="GUESS 1" autocomplete="off" autocapitalize="characters">
+        <input type="text" class="pc-reward-word-input" data-slot="1" maxlength="5" placeholder="GUESS 2" autocomplete="off" autocapitalize="characters">
+        <div class="pc-reward-input-actions">
+          <button type="button" class="pc-reward-fire-btn" disabled>Fire</button>
+          <button type="button" class="pc-reward-cancel-btn">Cancel</button>
+        </div>
+      </div>`;
+    }
+    // letterProbe
+    return `<div class="pc-reward-input-form">
+      <span class="pc-reward-input-label">Type 5 letters to test:</span>
+      <input type="text" class="pc-reward-word-input" data-slot="0" maxlength="5" placeholder="5 LETTERS" autocomplete="off" autocapitalize="characters">
+      <div class="pc-reward-input-actions">
+        <button type="button" class="pc-reward-fire-btn" disabled>Sweep</button>
+        <button type="button" class="pc-reward-cancel-btn">Cancel</button>
+      </div>
+    </div>`;
+  }
+
   function renderRewardChoiceCards(pending, grid) {
     const options = Array.isArray(pending?.options) ? pending.options : [];
+    if (rewardInputArmed && rewardInputArmed.choiceId !== pending.id) rewardInputArmed = null;
     grid.setAttribute("role", "group");
     grid.setAttribute("aria-label", "Reward choices. Swipe horizontally to see more cards.");
     grid.innerHTML = options.map(option => {
+      const armed = rewardInputArmed?.optionId === option.id;
       const tierNumber =
         option.tier ||
         (option.kind === "power"
@@ -1164,6 +1140,12 @@
         ? (window.POWER_METADATA?.[option.powerId]?.color || "")
         : fixedRewardAccent(option);
       const style = accent ? ` style="--pc-card-accent:${esc(accent)}"` : "";
+      if (armed) {
+        return `<div class="pc-choice-card pc-choice-card-armed" data-option-id="${esc(option.id)}"${style}>
+          <strong>${esc(option.title)}</strong>
+          ${rewardInputFormMarkup(option)}
+        </div>`;
+      }
       return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}"${style}>
         <span class="pc-card-icon">${optionIconMarkup(option)}</span>
         ${tier}
@@ -1172,18 +1154,87 @@
         <span class="pc-card-pick">CHOOSE</span>
       </button>`;
     }).join("");
-    grid.querySelectorAll(".pc-choice-card").forEach(button => {
+
+    function fireChoice(optionId, payload) {
+      rewardInputArmed = null;
+      grid.querySelectorAll("button").forEach(item => { item.disabled = true; });
+      window.sendGameAction?.({
+        type: "POWER_CHOICE_SELECT",
+        userId: me(),
+        choiceId: pending.id,
+        optionId,
+        ...payload
+      });
+    }
+
+    grid.querySelectorAll(".pc-choice-card:not(.pc-choice-card-armed)").forEach(button => {
       button.addEventListener("click", () => {
         if (button.disabled) return;
-        grid.querySelectorAll("button").forEach(item => { item.disabled = true; });
-        window.sendGameAction?.({
-          type: "POWER_CHOICE_SELECT",
-          userId: me(),
-          choiceId: pending.id,
-          optionId: button.dataset.optionId
-        });
+        const option = options.find(item => item.id === button.dataset.optionId);
+        if (option && REWARD_INPUT_POWER_IDS.has(option.powerId)) {
+          rewardInputArmed = { choiceId: pending.id, optionId: option.id, powerId: option.powerId };
+          renderRewardChoiceCards(pending, grid);
+          return;
+        }
+        fireChoice(button.dataset.optionId);
       });
     });
+
+    const armedCard = grid.querySelector(".pc-choice-card-armed");
+    if (armedCard) {
+      const optionId = armedCard.dataset.optionId;
+      const wordInputs = [...armedCard.querySelectorAll(".pc-reward-word-input")];
+      const fireBtn = armedCard.querySelector(".pc-reward-fire-btn");
+      const cancelBtn = armedCard.querySelector(".pc-reward-cancel-btn");
+      let betValue = null;
+
+      const updateFireEnabled = () => {
+        if (!fireBtn) return;
+        if (rewardInputArmed?.powerId === "betMiss") {
+          fireBtn.disabled = betValue == null;
+        } else {
+          fireBtn.disabled = wordInputs.some(input => cleanWord(input.value).length !== 5);
+        }
+      };
+
+      wordInputs.forEach(input => {
+        input.addEventListener("input", () => {
+          const clean = cleanWord(input.value);
+          if (input.value !== clean) input.value = clean;
+          updateFireEnabled();
+        });
+      });
+      if (wordInputs[0]) wordInputs[0].focus();
+
+      armedCard.querySelectorAll(".pc-reward-bet-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          betValue = Number(btn.dataset.value);
+          armedCard.querySelectorAll(".pc-reward-bet-btn").forEach(item => {
+            item.classList.toggle("is-selected", item === btn);
+          });
+          updateFireEnabled();
+        });
+      });
+
+      cancelBtn?.addEventListener("click", () => {
+        rewardInputArmed = null;
+        renderRewardChoiceCards(pending, grid);
+      });
+
+      fireBtn?.addEventListener("click", () => {
+        if (fireBtn.disabled) return;
+        if (rewardInputArmed?.powerId === "betMiss") {
+          fireChoice(optionId, { betMissNumber: betValue });
+        } else if (rewardInputArmed?.powerId === "doubleGuess") {
+          fireChoice(optionId, { guess1: wordInputs[0].value, guess2: wordInputs[1].value });
+        } else {
+          fireChoice(optionId, { letters: wordInputs[0].value });
+        }
+      });
+
+      updateFireEnabled();
+    }
+
     wireRewardCarousel(grid);
     grid.scrollLeft = 0;
   }
