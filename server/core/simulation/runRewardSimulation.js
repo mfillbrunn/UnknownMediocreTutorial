@@ -61,27 +61,22 @@ function thresholdForTier(role, tier) {
 }
 
 // Every testable reward for one role+tier, as plain {id, label, icon}
-// descriptors -- tier 1/3 read straight off fixedOptions' own catalog,
-// tier 2 is built from tierTwoPowerIds (the same static power-ID list
-// threePowerOptions draws its random 3 from) via powerOption().
+// descriptors. Both roles now draw from the SAME shared pool at all
+// three of their thresholds (see setterRewardPool/guesserRewardPool in
+// powerChoiceServer.js), so "tier" only picks which threshold the reward
+// is forced at -- except for the Inspector's Time Rewind card, which
+// guesserRewardPool itself only includes from tier 2 onward, so this
+// still has to pass tier through rather than ignoring it outright.
+function rewardPool(role, tier) {
+  return role === "setter" ? powerChoice.setterRewardPool() : powerChoice.guesserRewardPool(tier);
+}
+
 function getRewardCatalog(role, tier) {
-  if (tier === 2) {
-    return powerChoice.tierTwoPowerIds(role).map((id) => {
-      const opt = powerChoice.powerOption(id);
-      return { id: opt.id, label: opt.title, icon: opt.icon };
-    });
-  }
-  const threshold = thresholdForTier(role, tier);
-  return powerChoice.fixedOptions(role, threshold).map((o) => ({ id: o.id, label: o.title, icon: o.icon }));
+  return rewardPool(role, tier).map((o) => ({ id: o.id, label: o.title, icon: o.icon }));
 }
 
 function buildOptionForReward(role, tier, rewardId) {
-  if (tier === 2) {
-    const powerId = rewardId.startsWith("power:") ? rewardId.slice(6) : rewardId;
-    return powerChoice.powerOption(powerId);
-  }
-  const threshold = thresholdForTier(role, tier);
-  return powerChoice.fixedOptions(role, threshold).find((o) => o.id === rewardId) || null;
+  return rewardPool(role, tier).find((o) => o.id === rewardId) || null;
 }
 
 // role -> {id, tier} list for every role+tier combination matching the

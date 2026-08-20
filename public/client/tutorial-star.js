@@ -7,8 +7,19 @@
 // reward-choice modal when they cross a milestone. tutorialMode.js
 // seeds the meter at 3 stars (of 15) so one good switch is enough to
 // reach the first milestone (5) instead of a long grind.
+//
+// Kept deliberately ELI5: one short idea per bubble instead of one big
+// paragraph covering the whole system. Milestones beyond the first
+// (9, 15) are only explained once the player actually reaches them,
+// not front-loaded in the intro -- see MILESTONE_TEXT below.
 
 const STAR_TUTORIAL_MAX = 15;
+
+const MILESTONE_TEXT = {
+  5: "You hit 5 stars! Time to pick a prize.",
+  9: "Wow, 9 stars! Pick from 3 powers this time.",
+  15: "15 stars -- the best prizes! Pick your favorite."
+};
 
 function starTutorialShow(text, {
   role = "setter",
@@ -87,18 +98,21 @@ function spyMeterHighlightTarget() {
 // Shared by both "keep submitting" spots below (before the first reward
 // milestone, and again if the round somehow keeps going after it) --
 // same prompt either way, just reached from two different places in the
-// flow.
+// flow. The hint tip is a single short sentence, not a mechanic
+// explainer -- and drag/lock isn't mentioned at all here, since the
+// Advanced Tutorial already covers it in depth and this tutorial stays
+// focused on one thing: stars.
 function starPromptForSwitch(state, api, charge) {
   const hint = charge.hint;
   const hasHintPos = hint?.letter && Number.isInteger(hint.position);
-  const hintText = hint?.word
-    ? ` The hint also points to a strong word to switch to -- try ${String(hint.word).toUpperCase()} for an easy bonus star.`
+  const tip = hint?.word
+    ? ` Tip: try ${String(hint.word).toUpperCase()}!`
     : hasHintPos
-      ? ` Try to work ${String(hint.letter).toUpperCase()} into position ${hint.position + 1} too, for a bonus star.`
+      ? ` Tip: try putting ${String(hint.letter).toUpperCase()} in spot ${hint.position + 1}!`
       : "";
 
   starTutorialShow(
-    `Type a brand new secret and submit it -- TELLS is a fine one to try if you don't want to think one up.${hintText} (You can drag a letter to move it, or tap a tile to lock it in place first.)`,
+    `Now you try! Type a brand new secret word and submit it.${tip}`,
     { title: "Make a switch", mode: "hide" }
   );
   api.highlight(spyMeterHighlightTarget());
@@ -139,7 +153,7 @@ function runStarTutorial(state, role) {
   if (state.phase === "gameOver") {
     api.setNextTutorial("advanced");
     starTutorialShow(
-      "The round wrapped up there, but you already saw the star system do its thing live -- nice work.",
+      "The round ended, but you already saw how stars and prizes work. Nice job!",
       { title: "Star Tutorial done", mode: "end" }
     );
     return;
@@ -155,8 +169,8 @@ function runStarTutorial(state, role) {
   if (starTutorialFinished) {
     api.setNextTutorial("advanced");
     starTutorialShow(
-      "Nice -- you picked a reward and it's already active. That's the whole loop: switch, earn stars, pick a reward, and every milestone after this one offers even better options. You've now seen the Star system live.",
-      { title: "Star Tutorial done", current: 3, total: 3, mode: "end" }
+      "You did it! You swapped a word, earned stars, and picked a prize. Next time, earn even more stars for even better prizes.",
+      { title: "Star Tutorial done", current: 6, total: 6, mode: "end" }
     );
     api.highlight(spyMeterHighlightTarget());
     return;
@@ -169,10 +183,33 @@ function runStarTutorial(state, role) {
   const pendingChoice = state.powerChoice?.pendingChoice;
   const pendingIsMine = pendingChoice && pendingChoice.role === "setter";
 
+  // Steps 0-2 are pure narration, one short idea each -- see the file
+  // comment for why this replaced a single paragraph covering the whole
+  // system at once.
   if (step === 0) {
     starTutorialShow(
-      `That's your Spyometer -- ${total} of ${STAR_TUTORIAL_MAX} stars already, from earlier this round. Every real secret change earns at least 1 star by default, more for a sharp switch. Cross 5, 9, and 15 stars and you'll get to pick a reward each time -- and the choices get better every time: 5 is a themed reward, 9 is three random powers, 15 is the advanced tier. Three stars on a single switch means you found a really good one.`,
-      { current: 1, total: 3 }
+      `See this Star Meter? ⭐ It shows how many stars you've earned this round. You already have ${total} of ${STAR_TUTORIAL_MAX}!`,
+      { current: 1, total: 6 }
+    );
+    api.highlight(spyMeterHighlightTarget());
+    api.setMode("advance");
+    return;
+  }
+
+  if (step === 1) {
+    starTutorialShow(
+      "Here's how you earn stars: every time you swap your secret for a brand new word, you get at least 1 star -- sometimes more!",
+      { current: 2, total: 6 }
+    );
+    api.highlight(spyMeterHighlightTarget());
+    api.setMode("advance");
+    return;
+  }
+
+  if (step === 2) {
+    starTutorialShow(
+      "Fill the meter to 5 stars and you get to pick a prize!",
+      { current: 3, total: 6 }
     );
     api.highlight(spyMeterHighlightTarget());
     api.setMode("advance");
@@ -194,29 +231,28 @@ function runStarTutorial(state, role) {
     }
   }
 
-  // A submission just landed -- report on it regardless of where the
-  // total ended up, INCLUDING when it jumped straight past 9 in one go
-  // (a good switch plus the bonus-star hint can easily do that) --
-  // otherwise a big jump would skip straight past milestones with no
-  // acknowledgment of what just happened at all.
+  // A submission just landed -- report on it. If more than one milestone
+  // got crossed in one jump (a good switch plus the bonus-star tip can
+  // do that), only announce the HIGHEST one reached -- one clear idea per
+  // message, not a paragraph listing every tier's own text.
   if (historyLen > starLastSeenHistoryLen) {
     starLastSeenHistoryLen = historyLen;
 
-    let text = `That switch landed. The meter is now at ${total} of ${STAR_TUTORIAL_MAX} stars.`;
-
-    if (total >= 5 && !starMilestone5Announced) {
-      starMilestone5Announced = true;
-      text += " You just crossed the first reward milestone -- a reward choice is on its way.";
-    }
-    if (total >= 9 && !starMilestone9Announced) {
-      starMilestone9Announced = true;
-      text += " That also crossed 9 -- three random powers to choose from next time.";
-    }
+    let text;
     if (total >= 15 && !starMilestone15Announced) {
-      starMilestone15Announced = true;
-      text += " And that's 15, the advanced reward tier.";
+      text = MILESTONE_TEXT[15];
+    } else if (total >= 9 && !starMilestone9Announced) {
+      text = MILESTONE_TEXT[9];
+    } else if (total >= 5 && !starMilestone5Announced) {
+      text = MILESTONE_TEXT[5];
+    } else if (total < 5) {
+      text = `That switch landed! ${total} of ${STAR_TUTORIAL_MAX} stars now. Keep going!`;
+    } else {
+      text = `That switch landed! ${total} of ${STAR_TUTORIAL_MAX} stars now.`;
     }
-    if (total < 5) text += " Keep going.";
+    starMilestone5Announced = starMilestone5Announced || total >= 5;
+    starMilestone9Announced = starMilestone9Announced || total >= 9;
+    starMilestone15Announced = starMilestone15Announced || total >= 15;
 
     starLastResultText = text;
     starAwaitingAck = true;
@@ -236,8 +272,8 @@ function runStarTutorial(state, role) {
     starTutorialFinished = true;
     api.setNextTutorial("advanced");
     starTutorialShow(
-      "Nice -- you picked a reward and it's already active. That's the whole loop: switch, earn stars, pick a reward, and every milestone after this one offers even better options. You've now seen the Star system live.",
-      { title: "Star Tutorial done", current: 3, total: 3, mode: "end" }
+      "You did it! You swapped a word, earned stars, and picked a prize. Next time, earn even more stars for even better prizes.",
+      { title: "Star Tutorial done", current: 6, total: 6, mode: "end" }
     );
     api.highlight(spyMeterHighlightTarget());
     return;
@@ -251,8 +287,8 @@ function runStarTutorial(state, role) {
   if (pendingIsMine) {
     starLastPendingChoiceId = pendingChoice.id;
     starTutorialShow(
-      "Your reward choice is opening -- give it a second, then read the three cards and tap CHOOSE on whichever one looks best. It activates right away.",
-      { title: "Pick a reward", current: 2, total: 3, mode: "hide" }
+      "Your prize is ready! Wait a second, then tap CHOOSE on your favorite card.",
+      { title: "Pick a prize", current: 5, total: 6, mode: "hide" }
     );
     api.highlight(spyMeterHighlightTarget());
     api.setContinue({ show: false, mode: "hide" });

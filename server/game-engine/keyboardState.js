@@ -129,5 +129,6 @@ function buildKeyboardState(state) {
 }
 
 module.exports = {
-  buildKeyboardState
+  buildKeyboardState,
+  getLetterStatusFromHistory
 };

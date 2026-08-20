@@ -1,56 +1,10 @@
 // --------------------------------------------------
-// Letter Lockout — shared renderer (MUST be global)
-// --------------------------------------------------
-// Scoped to #letterLockoutModal specifically — revealPenalty.js's own
-// renderer queries the bare ".letter-grid" class globally, which would
-// grab whichever grid appears first in the DOM if this one used the same
-// unscoped selector.
-function renderLetterLockoutLetters(state) {
-  const grid = document.querySelector("#letterLockoutModal .letter-grid");
-  const confirm = $("letterLockoutConfirm");
-
-  if (!grid || !confirm) return;
-
-  grid.innerHTML = "";
-  confirm.disabled = true;
-  delete confirm.dataset.letter;
-
-  const used = new Set(state.powers?.letterLockoutUsedLetters || []);
-  // Already confirmed green/yellow -- the guesser is entitled to use it,
-  // so it can't be banned (mirrors the server-side guard in
-  // letterLockoutServer.js).
-  const known = new Set(state.constraintData?.mustContain || []);
-
-  for (let c = 65; c <= 90; c++) {
-    const letter = String.fromCharCode(c);
-    const btn = document.createElement("button");
-    btn.textContent = letter;
-    btn.disabled = used.has(letter) || known.has(letter);
-    if (known.has(letter) && !used.has(letter)) {
-      btn.title = "Already confirmed green/yellow -- can't be banned";
-      btn.classList.add("letter-lockout-known");
-    }
-    // Same colors the real keyboard shows for this letter, so the setter
-    // can see at a glance which letters are still worth banning.
-    btn.classList.add("picker-" + (state.keyboard?.[letter] || "unused"));
-
-    btn.onclick = () => {
-      document
-        .querySelectorAll("#letterLockoutModal .letter-grid button")
-        .forEach(b => b.classList.remove("selected"));
-
-      btn.classList.add("selected");
-      confirm.dataset.letter = letter;
-      confirm.disabled = false;
-    };
-
-    grid.appendChild(btn);
-  }
-}
-
-// --------------------------------------------------
 // Power registration (setter)
 // --------------------------------------------------
+// The letter itself is picked server-side (see pickLockoutLetter in
+// letterLockoutServer.js -- random, never repeats, prefers a letter
+// that's never been guessed at all), so there's no grid to pick from
+// here anymore, just a direct confirm-and-fire.
 PowerEngine.register("letterLockout", {
   role: "setter",
   tooltip: {
@@ -70,7 +24,6 @@ PowerEngine.register("letterLockout", {
     $("setterPowerContainer").appendChild(wrapper);
 
     btn.onclick = () => {
-      renderLetterLockoutLetters(state);
       $("letterLockoutModal").classList.add("active");
     };
   }
@@ -90,12 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const confirm = $("letterLockoutConfirm");
 
   confirm.onclick = () => {
-    const letter = confirm.dataset.letter;
-    if (!letter) return;
-
     sendGameAction({
       type: "USE_LETTER_LOCKOUT",
-      letter,
       role: "setter"
     });
 
@@ -104,8 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("letterLockoutCancel").onclick = () => {
     $("letterLockoutModal").classList.remove("active");
-    confirm.disabled = true;
-    delete confirm.dataset.letter;
   };
 });
 

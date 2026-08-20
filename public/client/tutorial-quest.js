@@ -7,6 +7,11 @@
 // modal. tutorialMode.js forces the very first quest to "First Half"
 // (HALF_AM: only letters A-P) and seeds it live for the player's first
 // guess, instead of the normal every-other-guess cadence.
+//
+// Kept deliberately ELI5: one short idea per bubble instead of one big
+// paragraph covering the whole system (quest count, cadence, reward
+// tiers, and the optional disclaimer all at once) -- see tutorial-star.js
+// for the same treatment applied there.
 
 function questTutorialShow(text, {
   title = "Quest Tutorial",
@@ -70,7 +75,7 @@ function questCardHighlightTarget() {
 
 function questPromptForGuess() {
   questTutorialShow(
-    "This quest is live for your very next guess. Type a 5-letter guess using only letters A through P and submit it -- APPLE is a good one to try, every letter in it (A, P, P, L, E) is within A-P.",
+    "Now you try! Type a 5-letter guess using only letters A through P and submit it. Try APPLE!",
     { title: "Fulfill the quest", mode: "hide" }
   );
   window.TutorialCore.highlight(questCardHighlightTarget());
@@ -106,7 +111,7 @@ function runQuestTutorial(state, role) {
   if (state.phase === "gameOver") {
     api.setNextTutorial("star");
     questTutorialShow(
-      "The round wrapped up there, but you already saw the quest system do its thing live -- nice work.",
+      "The round ended, but you already saw how quests and prizes work. Nice job!",
       { title: "Quest Tutorial done", mode: "end" }
     );
     return;
@@ -121,8 +126,8 @@ function runQuestTutorial(state, role) {
     api.setNextTutorial("star");
     questTutorialShow(questFinishedText, {
       title: "Quest Tutorial done",
-      current: 4,
-      total: 4,
+      current: 7,
+      total: 7,
       mode: "end"
     });
     api.highlight(questCardHighlightTarget());
@@ -135,10 +140,13 @@ function runQuestTutorial(state, role) {
   const pendingChoice = state.powerChoice?.pendingChoice;
   const pendingIsMine = pendingChoice && pendingChoice.role === "guesser";
 
+  // Steps 0-4 are pure narration, one short idea each -- see the file
+  // comment for why this replaced a single paragraph covering the whole
+  // system at once.
   if (step === 0) {
     questTutorialShow(
-      "As Inspector, you'll get 3 quests this match. Every other guess, the current quest becomes attemptable -- complete it and you get to pick a reward, and the rewards get better every time: your 1st is a themed reward, 2nd is three random powers, 3rd is the advanced tier. Quests are entirely optional, though -- if you'd rather just guess normally, ignore them completely. No penalty either way.",
-      { current: 1, total: 4 }
+      "As Inspector, you'll sometimes get a Quest -- a fun little challenge.",
+      { current: 1, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
     api.setMode("advance");
@@ -147,8 +155,8 @@ function runQuestTutorial(state, role) {
 
   if (step === 1) {
     questTutorialShow(
-      `Here's an example: "${quest?.title || "First Half"}" -- ${quest?.description || "Use only letters A through P."} Tap the card below to open its Rules.`,
-      { current: 2, total: 4 }
+      "Finish it and you get to pick a prize!",
+      { current: 2, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
     api.setMode("advance");
@@ -157,8 +165,28 @@ function runQuestTutorial(state, role) {
 
   if (step === 2) {
     questTutorialShow(
-      `See the "Highlight A–P" button inside? Tap it and the keyboard lights up every letter you're allowed to use for this one.`,
-      { current: 3, total: 4 }
+      "Quests are optional. Don't want to bother? Just skip it and guess normally -- no penalty!",
+      { current: 3, total: 7 }
+    );
+    api.highlight(questCardHighlightTarget());
+    api.setMode("advance");
+    return;
+  }
+
+  if (step === 3) {
+    questTutorialShow(
+      `Here's an example: "${quest?.title || "First Half"}" -- ${quest?.description || "Use only letters A through P."} Tap the card below to see the rules.`,
+      { current: 4, total: 7 }
+    );
+    api.highlight(questCardHighlightTarget());
+    api.setMode("advance");
+    return;
+  }
+
+  if (step === 4) {
+    questTutorialShow(
+      `See "Highlight A–P"? Tap it and the keyboard lights up which letters you can use.`,
+      { current: 5, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
     api.setMode("advance");
@@ -194,8 +222,8 @@ function runQuestTutorial(state, role) {
     questOutcome = success ? "success" : "fail";
 
     const text = success
-      ? "Quest complete! A reward choice is on its way -- it'll open once it's your turn again."
-      : `That guess didn't satisfy "${result?.title || "the quest"}" -- no reward this time. That's completely fine, quests are optional, and a new one is already queued for your next live check. You've still seen exactly how the system works.`;
+      ? "Quest done! A prize is coming -- it'll show up on your next turn."
+      : "No prize this time -- that's okay, quests are optional! You've seen how it works.";
 
     questLastResultText = text;
     questAwaitingAck = true;
@@ -203,7 +231,7 @@ function runQuestTutorial(state, role) {
 
     if (!success) {
       questTutorialFinished = true;
-      questFinishedText = "That's the whole quest loop: a condition, a live guess every other turn, and a reward choice on success. You've now seen it live.";
+      questFinishedText = "You did it! You tried a quest and saw how it works. Next time, finish one for a real prize.";
     }
 
     questTutorialShow(text, { mode: "advance" });
@@ -218,12 +246,12 @@ function runQuestTutorial(state, role) {
   if (questLastPendingChoiceId && !pendingChoice) {
     questLastPendingChoiceId = null;
     questTutorialFinished = true;
-    questFinishedText = "Nice -- you picked a reward and it's already active. That's the whole loop: fulfill a quest, pick a reward, and every completion after this one offers even better options. Remember, quests are always optional -- skip them any time you'd rather just guess.";
+    questFinishedText = "You did it! You finished a quest and picked a prize. Next time, try more quests for even better prizes.";
     api.setNextTutorial("star");
     questTutorialShow(questFinishedText, {
       title: "Quest Tutorial done",
-      current: 4,
-      total: 4,
+      current: 7,
+      total: 7,
       mode: "end"
     });
     api.highlight(questCardHighlightTarget());
@@ -236,8 +264,8 @@ function runQuestTutorial(state, role) {
   if (pendingIsMine) {
     questLastPendingChoiceId = pendingChoice.id;
     questTutorialShow(
-      "Your reward choice is opening -- give it a second, then read the three cards and tap CHOOSE on whichever one looks best. It activates right away.",
-      { title: "Pick a reward", current: 4, total: 4, mode: "hide" }
+      "Your prize is ready! Wait a second, then tap CHOOSE on your favorite card.",
+      { title: "Pick a prize", current: 6, total: 7, mode: "hide" }
     );
     api.highlight(questCardHighlightTarget());
     api.setContinue({ show: false, mode: "hide" });
