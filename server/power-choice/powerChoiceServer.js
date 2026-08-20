@@ -79,6 +79,7 @@ const POWER_COPY = {
   blindGuess: ["🙈", "Blind Guess", "Hide the Inspector's draft while they make this guess."],
   forceTimer: ["⏱", "Force Timer", "Put immediate time pressure on the Inspector's turn."],
   delayedIntel: ["📡", "Delayed Feedback", "Hold back the Inspector's feedback until after their following guess."],
+  vowelRefresh: ["🔁", "Vowel Refresh", "Erase every clue on the vowels in the Inspector's last guess."],
   revealGreen: ["👁️", "Peek Letter", "Reveal one correct letter in its exact position."],
   freezeSecret: ["❄️", "Freeze Secret", "Prevent the Spy from changing the secret after this guess."],
   rouletteSecret: ["🎰", "Roulette Secret", "Force the Spy onto a legal random secret."],
@@ -668,7 +669,17 @@ function setterRewardPool() {
       explanation: "A bigger risk for a bigger reward: one exact-position reveal in exchange for two present-letter clues forgotten."
     },
     powerOption("blindSpot"),
-    powerOption("letterLockout")
+    powerOption("letterLockout"),
+    // One-off effects, activated immediately on pick (not persistent
+    // grants like letterLockout above) -- same non-PERSISTENT_POWER_IDS
+    // branch of applyChoice that blindSpot already goes through.
+    powerOption("confuseColors"),
+    powerOption("countOnly"),
+    powerOption("fakeFeedback"),
+    powerOption("blindGuess"),
+    powerOption("forceTimer"),
+    powerOption("delayedIntel"),
+    powerOption("vowelRefresh")
   ];
 }
 
@@ -1572,6 +1583,32 @@ function powerOptionApplicable(state, option) {
       // picked (blindSpotServer.js's apply() itself returns false/no-ops
       // on a second use).
       return !state.powers?.blindSpotUsed;
+    // One-off effects below, all one-shot per round (their own Used flag
+    // resets fresh with the rest of state.powers each round -- see
+    // stateFactory.js) -- same "don't offer a card that would silently
+    // fail" reasoning as blindSpot above. Mirrors each power's own
+    // POWER_RULES.js allowed() gate, minus the redundant turn===setter
+    // check (a Spy reward choice only ever opens on the Spy's own turn).
+    case "confuseColors":
+      return !state.powers?.confuseColorsUsed;
+    case "countOnly":
+      return !state.powers?.countOnlyUsed;
+    case "fakeFeedback":
+      return !state.powers?.fakeFeedbackUsed;
+    case "blindGuess":
+      return !state.powers?.blindGuessUsed;
+    case "forceTimer":
+      return !state.powers?.forceTimerUsed && (state.history || []).length >= 1;
+    case "delayedIntel":
+      return !state.powers?.delayedIntelUsed && !!state.pendingGuess;
+    case "vowelRefresh":
+      // apply() itself no-ops when the last guess had no vowel to refresh
+      // (see vowelRefreshServer.js) -- checked here too so that case
+      // doesn't get offered as a card either.
+      return (
+        !state.powers?.vowelRefreshUsed &&
+        /[AEIOU]/.test(String(state.history?.[state.history.length - 1]?.guess || "").toUpperCase())
+      );
     default:
       return true;
   }
@@ -1716,7 +1753,13 @@ const KNOWLEDGE_RESET_OPTIONS = new Set([
   "spy-reset-known-2",
   "spy-yellow-smudge",
   "spy-trade-yellow",
-  "spy-trade-green"
+  "spy-trade-green",
+  // Power-kind cards use "power:<id>" as their option id (see
+  // powerOption()) -- vowelRefresh is the only one of the setter's
+  // one-off power picks that erases existing letter knowledge
+  // (eraseLetterKnowledge on the last guess's vowels) rather than just
+  // affecting an upcoming guess's feedback delivery.
+  "power:vowelRefresh"
 ]);
 
 function rerollSpyHintAfterReset(state, option, context) {
