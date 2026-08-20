@@ -539,12 +539,6 @@ document
   });
 
 document
-  .getElementById("startModesTutorialBtn")
-  ?.addEventListener("click", () => {
-    startFreshTutorial("modes");
-  });
-
-document
   .getElementById("startMenuTutorialBtn")
   ?.addEventListener("click", () => {
     window.startMainMenuTutorial();

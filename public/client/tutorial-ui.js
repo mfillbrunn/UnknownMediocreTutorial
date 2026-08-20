@@ -2526,17 +2526,16 @@ const TUTORIAL_DONE_COPY = {
   tutorial2: `Nice work — you've learned the base game. Keep going with the Powers Tutorial, or head back to the menu.`,
   quest: `Nice work — you've learned the powers tutorial. Keep going with the Quest Tutorial, or head back to the menu.`,
   star: `Nice work — you've learned quests. Keep going with the Star Tutorial to see how the Spyometer works, or head back to the menu.`,
-  // Kept source-agnostic (no "you've learned the Quest/Star tutorial"
-  // clause) -- this key is reached both by Star's own chain into Advanced
-  // and by the Modes Tutorial's chain into Advanced (see
-  // tutorial-modes.js), and those don't share what was just learned.
+  // Kept source-agnostic (no "you've learned the Quest Tutorial" clause)
+  // -- this key is reached both by Star's own chain into Advanced and by
+  // the Main Menu Tutorial chaining into this one for a first-time
+  // player (see tutorial-menu.js), which hasn't "learned Quests" at all.
   advanced: `Nice work! Keep going with the Advanced Tutorial, or head back to the menu.`,
   // Also source-agnostic -- reached both by Advanced's own loop back to
   // the start AND by the Main Menu Tutorial chaining into this one for a
   // first-time player (see tutorial-menu.js), which hasn't "learned the
   // advanced UI" at all.
-  tutorial: `Nice work! Continue with the Tutorial to learn the basics, or head back to the menu.`,
-  modes: `Nice work — you've learned about Stars. Keep going with the Modes Tutorial to see how the whole power draft fits together, or head back to the menu.`
+  tutorial: `Nice work! Continue with the Tutorial to learn the basics, or head back to the menu.`
 };
 
 // Maps state.tutorialStage (or its absence) to the same key each
@@ -2552,8 +2551,7 @@ const TUTORIAL_STAGE_TO_KEY = {
   2: "tutorial2",
   quest: "quest",
   advanced: "advanced",
-  star: "star",
-  modes: "modes"
+  star: "star"
 };
 
 function currentTutorialCompletionKey() {
@@ -2923,11 +2921,6 @@ function tutorialSteps(state, role) {
 
   if (state.tutorialStage === "star") {
     window.runStarTutorial?.(state, role);
-    return;
-  }
-
-  if (state.tutorialStage === "modes") {
-    window.runModesTutorial?.(state, role);
     return;
   }
 

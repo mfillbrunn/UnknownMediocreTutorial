@@ -1,7 +1,6 @@
 const powerMetadata = require("../../powers/powerMetadata");
 const { scoreGuess } = require("../../game-engine/scoring");
 const spyChargeServer = require("../../powers/powers/spyChargeServer");
-const { pickRandomQuestType, ensureQuestConditions } = require("../../powers/powers/questServer");
 const powerChoiceServer = require("../../power-choice/powerChoiceServer");
 
 class TutorialMode {
@@ -125,15 +124,6 @@ class TutorialMode {
       state.scriptedTurns = 0;
     }
 
-    // Stage "modes": explains the power/quest draft and what carries over
-    // at the round-2 swap (see client/tutorial-modes.js). Also entirely
-    // narrative -- nothing here is about a specific live action, so it
-    // doesn't matter which role the human starts as.
-    if (state.tutorialStage === "modes") {
-      state.roundsTotal = 1;
-      state.scriptedTurns = 0;
-    }
-
     state.timeControl.enabled = false;
     // No randomness
     state.shuffle = false;
@@ -202,26 +192,6 @@ class TutorialMode {
     // reaches the first Power Choice reward milestone (5 stars) with just
     // one real secret change instead of needing a long grind from zero.
     state.powers.spyCharge.total = 3;
-    return;
-  }
-
-  if (state.tutorialStage === "modes") {
-    // Unlike every other tutorial stage, this one goes through the REAL
-    // draft screen for real (see lobby.js's draftEligible) -- setterPowers/
-    // guesserPowers/guesserQuest here are the player's own actual picks
-    // (plus whatever the AI auto-picked for itself), not a scripted
-    // loadout. From here on this plays out exactly like a normal match;
-    // draft.js's finalizeDraft (which called this) sets state.phase to
-    // "simultaneous" right after, same as it does for every other match.
-    state.initialPowers = {
-      setter: setterPowers,
-      guesser: guesserPowers
-    };
-
-    state.activePowers = [...setterPowers, ...guesserPowers];
-
-    state.powers.quest.type = guesserQuest || pickRandomQuestType();
-    ensureQuestConditions(state);
     return;
   }
 
