@@ -105,121 +105,16 @@ if (
     return;
   }
 
-  // Double Tap: the guesser fires two guesses at once. The setter is shown
-  // only ONE of them (random) as a normal pending guess and reacts with their
-  // usual Keep/New decision — they know the power fired, but not the hidden
-  // word. Scoring happens AFTER the setter commits: both guesses are scored
-  // against the setter's FINAL secret (see resolveDoubleGuess in the setter
-  // block below), then the combined feedback goes back to the guesser.
+  // Double Tap: the guesser fires two guesses at once. See applyDoubleGuess
+  // below for what it actually does -- extracted so Power Choice's reward
+  // system can fire it immediately with a real payload too (see
+  // powerChoiceServer.js's applyChoice), not just from this per-turn path.
   if (
     action.type === "USE_DOUBLE_GUESS" &&
     userId === state.guesser &&
     !state.pendingGuess
   ) {
-    const socketId = room.playersByUserId?.[userId]?.socketId ?? null;
-    if (
-      !state.activePowers?.includes("doubleGuess") ||
-      state.powers.doubleGuessUsed ||
-      state.powerUsedThisTurn ||
-      state.turn !== state.guesser
-    ) {
-      return;
-    }
-
-    const g1 = (action.guess1 || "").toUpperCase();
-    const g2 = (action.guess2 || "").toUpperCase();
-    for (const g of [g1, g2]) {
-      const chk = checkGuess({ guess: g, state, allowedGuesses: context.ALLOWED_GUESSES });
-      if (!chk.ok) {
-        if (socketId) io.to(socketId).emit("errorMessage", chk.error);
-        return;
-      }
-    }
-
-    state.powers.doubleGuessUsed = true;
-    state.powerUsedThisTurn = true;
-
-    // Immediate win: if either word already matches the current secret, the
-    // game ends now — the setter never gets to react, exactly as a normal
-    // correct guess ends the round before the Keep/New decision.
-    const secretNow = (state.secret || "").toUpperCase();
-    if (g1 === secretNow || g2 === secretNow) {
-      const fb1 = scoreGuess(secretNow, g1);
-      const fb2 = scoreGuess(secretNow, g2);
-      // Drain power-use events queued this turn (mirrors finalizeFeedback.js)
-      // onto the first entry -- otherwise a power used earlier this turn
-      // would vanish from the log the instant Double Tap wins immediately.
-      const powerEvents = Array.isArray(state._pendingPowerEvents)
-        ? [...state._pendingPowerEvents]
-        : [];
-      state._pendingPowerEvents = [];
-      const mk = (guess, fb, events) => ({
-        guess,
-        fb,
-        fbGuesser: [...fb],
-        extraInfo: null,
-        finalSecret: secretNow,
-        roundIndex: state.history.length,
-        powerEvents: events,
-        doubleGuessApplied: true,
-        doubleGuessHidden: false
-      });
-      state.history.push(mk(g1, fb1, powerEvents), mk(g2, fb2, []));
-      // Both guesses are recorded and scored, but Double Tap is spending a
-      // single turn — only the first (as if it were a normal guess) counts
-      // toward the score, or the power would just be a strictly worse way
-      // to guess than never using it.
-      state.guessCount += 1;
-
-      io.to(roomId).emit("powerUsed", { type: "doubleGuess" });
-      if (socketId) {
-        io.to(socketId).emit("doubleGuessResult", {
-          guesses: [
-            { guess: g1, fb: [...fb1] },
-            { guess: g2, fb: [...fb2] }
-          ]
-        });
-      }
-      io.to(roomId).emit("secretFound");
-      endGame(state, roomId, io, room, context);
-      return;
-    }
-
-    // Random which one the setter gets to see. The shown word becomes the
-    // pending guess; the other is stashed until resolution.
-    const shownIsFirst = Math.random() < 0.5;
-    const shown = shownIsFirst ? g1 : g2;
-    const hidden = shownIsFirst ? g2 : g1;
-
-    state.powers.doubleGuessPending = true;
-    state.powers.doubleGuessHidden = hidden;
-    state.powers.doubleGuessShownFirst = shownIsFirst;
-
-    state.pendingGuess = shown;
-    // Only the first (as if it were a normal guess) counts toward the
-    // score — see the immediate-win branch above for why.
-    state.guessCount += 1;
-
-    if (state.roundStartTime && state.timeUsed?.[state.guesser] != null) {
-      state.timeUsed[state.guesser] += Math.floor((Date.now() - state.roundStartTime) / 1000);
-    }
-    state.roundStartTime = Date.now();
-
-    io.to(roomId).emit("powerUsed", { type: "doubleGuess" });
-    io.to(roomId).emit("guessSubmitted");
-
-    // The guesser just acted, resolving any Force Timer that was pressuring
-    // them -- same as the normal SUBMIT_GUESS path (transitionAfterGuess).
-    clearForceTimer(roomId, state);
-
-    // Hand the turn to the setter for their Keep/New decision. Reuse the
-    // normal post-guess transition bookkeeping (clears round-scoped powers,
-    // flips the turn, advances the timer) — but skip the win-check, since
-    // nothing is scored until the setter commits their secret.
-    clearRoundState(state, "guesser");
-
-    context.powerEngine.turnStart(state, state.turn, roomId, io);
-    emitRoomState(roomId, room, io);
+    applyDoubleGuess(state, action, roomId, io, room, context);
     return;
   }
 
@@ -411,6 +306,133 @@ if (setterSocketId) {
   }
 }
 
+// Double Tap: the guesser fires two guesses at once. The setter is shown
+// only ONE of them (random) as a normal pending guess and reacts with their
+// usual Keep/New decision — they know the power fired, but not the hidden
+// word. Scoring happens AFTER the setter commits: both guesses are scored
+// against the setter's FINAL secret (see resolveDoubleGuess below), then
+// the combined feedback goes back to the guesser.
+//
+// Extracted out of handleNormalPhase's own USE_DOUBLE_GUESS branch so
+// Power Choice's reward system can call this directly with a real
+// {guess1, guess2} payload the instant the Double Tap card is picked (see
+// powerChoiceServer.js's applyChoice) -- Power Choice fires it immediately
+// rather than granting standing access to fire it later, so this is the
+// single source of truth both paths share. Returns true if it actually
+// fired (immediate win or handed off to the setter), false if rejected
+// (already used, invalid guess, wrong turn, etc.) -- the per-turn caller
+// in handleNormalPhase ignores the return value since either way nothing
+// else should run for this action; applyChoice uses it the same way
+// engine.applyPower's own `false` return already signals "didn't apply".
+function applyDoubleGuess(state, action, roomId, io, room, context) {
+  const userId = action.userId;
+  const socketId = room.playersByUserId?.[userId]?.socketId ?? null;
+  if (
+    !state.activePowers?.includes("doubleGuess") ||
+    state.powers.doubleGuessUsed ||
+    state.powerUsedThisTurn ||
+    state.turn !== state.guesser
+  ) {
+    return false;
+  }
+
+  const g1 = (action.guess1 || "").toUpperCase();
+  const g2 = (action.guess2 || "").toUpperCase();
+  for (const g of [g1, g2]) {
+    const chk = checkGuess({ guess: g, state, allowedGuesses: context.ALLOWED_GUESSES });
+    if (!chk.ok) {
+      if (socketId) io.to(socketId).emit("errorMessage", chk.error);
+      return false;
+    }
+  }
+
+  state.powers.doubleGuessUsed = true;
+  state.powerUsedThisTurn = true;
+
+  // Immediate win: if either word already matches the current secret, the
+  // game ends now — the setter never gets to react, exactly as a normal
+  // correct guess ends the round before the Keep/New decision.
+  const secretNow = (state.secret || "").toUpperCase();
+  if (g1 === secretNow || g2 === secretNow) {
+    const fb1 = scoreGuess(secretNow, g1);
+    const fb2 = scoreGuess(secretNow, g2);
+    // Drain power-use events queued this turn (mirrors finalizeFeedback.js)
+    // onto the first entry -- otherwise a power used earlier this turn
+    // would vanish from the log the instant Double Tap wins immediately.
+    const powerEvents = Array.isArray(state._pendingPowerEvents)
+      ? [...state._pendingPowerEvents]
+      : [];
+    state._pendingPowerEvents = [];
+    const mk = (guess, fb, events) => ({
+      guess,
+      fb,
+      fbGuesser: [...fb],
+      extraInfo: null,
+      finalSecret: secretNow,
+      roundIndex: state.history.length,
+      powerEvents: events,
+      doubleGuessApplied: true,
+      doubleGuessHidden: false
+    });
+    state.history.push(mk(g1, fb1, powerEvents), mk(g2, fb2, []));
+    // Both guesses are recorded and scored, but Double Tap is spending a
+    // single turn — only the first (as if it were a normal guess) counts
+    // toward the score, or the power would just be a strictly worse way
+    // to guess than never using it.
+    state.guessCount += 1;
+
+    io.to(roomId).emit("powerUsed", { type: "doubleGuess" });
+    if (socketId) {
+      io.to(socketId).emit("doubleGuessResult", {
+        guesses: [
+          { guess: g1, fb: [...fb1] },
+          { guess: g2, fb: [...fb2] }
+        ]
+      });
+    }
+    io.to(roomId).emit("secretFound");
+    endGame(state, roomId, io, room, context);
+    return true;
+  }
+
+  // Random which one the setter gets to see. The shown word becomes the
+  // pending guess; the other is stashed until resolution.
+  const shownIsFirst = Math.random() < 0.5;
+  const shown = shownIsFirst ? g1 : g2;
+  const hidden = shownIsFirst ? g2 : g1;
+
+  state.powers.doubleGuessPending = true;
+  state.powers.doubleGuessHidden = hidden;
+  state.powers.doubleGuessShownFirst = shownIsFirst;
+
+  state.pendingGuess = shown;
+  // Only the first (as if it were a normal guess) counts toward the
+  // score — see the immediate-win branch above for why.
+  state.guessCount += 1;
+
+  if (state.roundStartTime && state.timeUsed?.[state.guesser] != null) {
+    state.timeUsed[state.guesser] += Math.floor((Date.now() - state.roundStartTime) / 1000);
+  }
+  state.roundStartTime = Date.now();
+
+  io.to(roomId).emit("powerUsed", { type: "doubleGuess" });
+  io.to(roomId).emit("guessSubmitted");
+
+  // The guesser just acted, resolving any Force Timer that was pressuring
+  // them -- same as the normal SUBMIT_GUESS path (transitionAfterGuess).
+  clearForceTimer(roomId, state);
+
+  // Hand the turn to the setter for their Keep/New decision. Reuse the
+  // normal post-guess transition bookkeeping (clears round-scoped powers,
+  // flips the turn, advances the timer) — but skip the win-check, since
+  // nothing is scored until the setter commits their secret.
+  clearRoundState(state, "guesser");
+
+  context.powerEngine.turnStart(state, state.turn, roomId, io);
+  emitRoomState(roomId, room, io);
+  return true;
+}
+
 // Double Tap resolution. Called from the setter's SET_SECRET handler once
 // doubleGuessPending is set: the setter has committed their final secret, so
 // both the shown (pendingGuess) and hidden guesses are now scored against it.
@@ -497,5 +519,10 @@ function normalizePowerId(type) {
 }
 
 module.exports = {
-  handleNormalPhase
+  handleNormalPhase,
+  // Exported for server/power-choice/powerChoiceServer.js -- lets the
+  // Double Tap reward card fire the exact same logic immediately with a
+  // real {guess1, guess2} payload instead of just granting standing
+  // access to this per-turn action type.
+  applyDoubleGuess
 };

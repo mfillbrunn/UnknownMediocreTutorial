@@ -110,6 +110,25 @@ function suppressNaturalRewards(state) {
 // Runs ONE trial round. SEAT_A always holds the role under test (switched
 // into it if it's the guesser -- room creation defaults the host to
 // setter). Applies the target reward directly via powerChoiceServer's
+// Recon Sweep, Miss Bet, and Double Tap fire immediately with real player
+// input now (see powerChoiceServer.js's applyChoice payload param) --
+// there's no test-relevant "right" input for a synthetic trial to supply,
+// so this just needs something valid enough that the card actually fires
+// instead of being silently excluded every run. STARE/CRANE are both
+// confirmed-valid guesses in this project's own wordlist.
+function syntheticPayloadFor(option) {
+  switch (option?.powerId) {
+    case "letterProbe":
+      return { letters: "STARE" };
+    case "betMiss":
+      return { betMissNumber: 2 };
+    case "doubleGuess":
+      return { guess1: "STARE", guess2: "CRANE" };
+    default:
+      return undefined;
+  }
+}
+
 // applyChoice, the instant SEAT_A is about to take their Nth action (see
 // TARGET_TURN) -- not via the normal pendingChoice/AI-pick flow, so the
 // reward is unconditionally the one under test, not whatever the AI's own
@@ -171,7 +190,7 @@ function runSingleRewardTrial({ role, tier, rewardId, aiDifficulty, withReward }
         const choice = { ownerUserId: SEAT_A, role, threshold: thresholdForTier(role, tier), tier };
         if (
           powerChoice.optionApplicable(room.state, option) &&
-          powerChoice.applyChoice(room.state, option, choice, room, roomId, context.io, context)
+          powerChoice.applyChoice(room.state, option, choice, room, roomId, context.io, context, syntheticPayloadFor(option))
         ) {
           applied = true;
         }
