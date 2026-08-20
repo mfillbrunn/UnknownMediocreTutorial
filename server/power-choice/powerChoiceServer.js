@@ -712,15 +712,6 @@ function fixedOptions(role, threshold) {
         title: "Remove a Point",
         description: "Subtract 1 point from your final guess total.",
         explanation: "This improves the Inspector's score without revealing any letter information."
-      },
-      {
-        id: "inspector-duplicate-scan",
-        kind: "fixed",
-        tier: 1,
-        icon: "AA?",
-        title: "Duplicate Scan",
-        description: "Learn whether the secret repeats a letter and lock one absent letter.",
-        explanation: "You receive structural information plus one small gray-letter reward."
       }
     ];
   }
@@ -1369,28 +1360,6 @@ function rewardRecordIntel(state, key, text, kind = "intel", letters = []) {
   state.powerChoice.inspectorIntel = state.powerChoice.inspectorIntel.slice(-8);
 }
 
-function rewardHasDuplicate(word) {
-  const letters = normalizeWord(word).split("");
-  return new Set(letters).size < letters.length;
-}
-
-function rewardDuplicateScanAvailable(state) {
-  return !(state.extraConstraints || []).some(
-    constraint => String(constraint?.type || "").toUpperCase() === "DUPLICATE_STATUS"
-  );
-}
-
-function rewardAddDuplicateScan(state) {
-  const hasDuplicate = rewardHasDuplicate(state.secret);
-  state.extraConstraints ||= [];
-  state.extraConstraints.push({ type: "DUPLICATE_STATUS", hasDuplicate });
-  const text = hasDuplicate
-    ? "The secret contains a repeated letter."
-    : "The secret contains no repeated letters.";
-  rewardRecordIntel(state, "duplicate-status", text, "structure");
-  return { hasDuplicate };
-}
-
 function rewardCountScanCandidates(state) {
   const known = new Set(rewardColoredTargets(state).map(target => target.letter));
   const counted = new Set(
@@ -1472,8 +1441,6 @@ function rewardFixedOptionApplicable(state, option) {
       return unusedCount >= 2;
     case "inspector-remove-point-1":
       return (Number(state.guessCount) || 0) >= 1;
-    case "inspector-duplicate-scan":
-      return rewardDuplicateScanAvailable(state) && unusedCount >= 1;
     case "inspector-green-1":
       return knownGreenIndexes(state).size < 5;
     case "inspector-yellow-to-green-2":
@@ -1695,8 +1662,6 @@ function effectDetailText(option, detail) {
     case "inspector-remove-point-1":
     case "inspector-remove-point-2":
       return `Inspector final guess total ${detail?.points || 0}.`;
-    case "inspector-duplicate-scan":
-      return `${detail?.hasDuplicate ? "The secret contains a repeated letter" : "The secret contains no repeated letters"}${detail?.letters?.length ? `; locked absent letter ${detail.letters.join(", ")}` : ""}.`;
     case "inspector-green-1":
     case "inspector-edge-green":
       return detail?.letter && Number.isInteger(detail.index)
@@ -1868,11 +1833,6 @@ function applyChoice(state, option, choice, room, roomId, io, context) {
         const before = Math.max(0, Number(state.guessCount) || 0);
         state.guessCount = Math.max(0, before - 1);
         detail = { points: state.guessCount - before };
-        break;
-      }
-      case "inspector-duplicate-scan": {
-        const scan = rewardAddDuplicateScan(state);
-        detail = { ...scan, letters: removeUnusedLetters(state, 1) };
         break;
       }
       case "inspector-green-1":

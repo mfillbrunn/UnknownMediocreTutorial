@@ -166,7 +166,7 @@ let rsResultsCache = null;
 // so which forced turn) the reward is tested at, not a different list.
 const RS_CATALOG_COUNTS = {
   setter: { 1: 15, 2: 15, 3: 15 },
-  guesser: { 1: 4, 2: 8, 3: 8 }
+  guesser: { 1: 3, 2: 8, 3: 8 }
 };
 
 function rsCountsByFilter() {
