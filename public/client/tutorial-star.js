@@ -105,18 +105,17 @@ function spyMeterHighlightTarget() {
 function starPromptForSwitch(state, api, charge) {
   const hint = charge.hint;
   const hasHintPos = hint?.letter && Number.isInteger(hint.position);
-  const tip = hint?.word
-    ? ` Tip: try ${String(hint.word).toUpperCase()}!`
-    : hasHintPos
-      ? ` Tip: try putting ${String(hint.letter).toUpperCase()} in spot ${hint.position + 1}!`
-      : "";
+  const word = hint?.word ? String(hint.word).toUpperCase() : null;
 
-  starTutorialShow(
-    `Now you try! Type a brand new secret word and submit it.${tip}`,
-    { title: "Make a switch", mode: "hide" }
-  );
+  const text = word
+    ? `Now you try! Type ${word}, then submit it -- that's a real switch, still consistent with every clue so far.`
+    : hasHintPos
+      ? `Now you try! Type a brand new secret word and submit it. Tip: try putting ${String(hint.letter).toUpperCase()} in spot ${hint.position + 1}!`
+      : `Now you try! Type a brand new secret word and submit it.`;
+
+  starTutorialShow(text, { title: "Make a switch", mode: "hide" });
   api.highlight(spyMeterHighlightTarget());
-  api.setWaiting({ label: "SUBMIT NEW SECRET" });
+  api.setWaiting({ label: word ? `SUBMIT ${word}` : "SUBMIT NEW SECRET" });
 }
 
 function runStarTutorial(state, role) {
@@ -173,6 +172,24 @@ function runStarTutorial(state, role) {
       { title: "Star Tutorial done", current: 6, total: 6, mode: "end" }
     );
     api.highlight(spyMeterHighlightTarget());
+    return;
+  }
+
+  // The whole tutorial revolves around the Spyometer, which lives inside
+  // the collapsible side panel -- if it starts (or gets left) collapsed,
+  // start by having the player open it, same wait-for-tap mechanism the
+  // Advanced Tutorial's own side-panel step already uses (see
+  // notifyTutorialSidebarToggled in tutorial-ui.js).
+  const sidebarCollapsed = byId("setterScreen")
+    ?.classList.contains("setter-sidebar-collapsed");
+
+  if (sidebarCollapsed) {
+    starTutorialShow(
+      "First, tap the arrow to open the side panel -- that's where your Star Meter lives.",
+      { title: "Open the side panel", mode: "hide" }
+    );
+    api.highlight(byId("setterSidebarToggle"));
+    api.setWaiting({ label: "OPEN THE SIDE PANEL" });
     return;
   }
 

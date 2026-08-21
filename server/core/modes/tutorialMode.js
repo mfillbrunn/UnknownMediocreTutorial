@@ -188,6 +188,15 @@ class TutorialMode {
     // reaches the first Power Choice reward milestone (5 stars) with just
     // one real secret change instead of needing a long grind from zero.
     state.powers.spyCharge.total = 3;
+
+    // Normally rolled by powerChoiceServer.js's turnStart hook at the
+    // start of a real turn -- this seed drops the player straight into a
+    // decision instead of reaching it through a real turn transition, so
+    // roll one explicitly here too (after initializeForRound, which
+    // would otherwise wipe it by replacing state.powers.spyCharge
+    // wholesale). Without it the tutorial's very first "make a switch"
+    // step would have no hint.word to hand the player a concrete word.
+    spyChargeServer.rollHintForTurn(state);
     return;
   }
 
