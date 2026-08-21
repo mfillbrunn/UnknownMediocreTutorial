@@ -58,27 +58,20 @@ document.getElementById("rsTierSelect")?.addEventListener("change", () => {
 });
 
 function formatRsStats(stats) {
-  const delta = stats.avgWithReward - stats.avgBaseline;
+  const hasReward = stats.avgWithReward != null;
+  const delta = hasReward ? stats.avgWithReward - stats.avgBaseline : null;
   const sign = delta > 0 ? "+" : "";
-  const roleLabel = stats.role === "setter" ? "Spy (setter)" : "Inspector (guesser)";
-  const withText = stats.avgWithReward == null
-    ? `no completed trials (${stats.excludedWithReward} excluded — the round never reached turn ${stats.tier === 1 ? (stats.role === "setter" ? 3 : 2) : stats.tier === 2 ? (stats.role === "setter" ? 5 : 4) : (stats.role === "setter" ? 7 : 6)})`
-    : `${stats.avgWithReward.toFixed(2)} avg (min ${stats.minWithReward}, max ${stats.maxWithReward}, n=${stats.completedWithReward}, excluded=${stats.excludedWithReward})`;
+  const roleLabel = stats.role === "setter" ? "Spy" : "Inspector";
+  const used = Number(stats.usedWithReward || 0);
+  const useRate = Number.isFinite(Number(stats.useRate)) ? Number(stats.useRate) : 0;
   return `
     <div class="sim-result-header">${stats.icon || ""} ${stats.label} — Tier ${stats.tier}, ${roleLabel}</div>
-    <div class="sim-result-row">
-      <span>With reward</span>
-      <span>${withText}</span>
-    </div>
-    <div class="sim-result-row">
-      <span>Baseline (no reward)</span>
-      <span>${stats.avgBaseline.toFixed(2)} avg (min ${stats.minBaseline}, max ${stats.maxBaseline}, n=${stats.completedBaseline})</span>
-    </div>
-    ${stats.avgWithReward == null ? "" : `
-    <div class="sim-result-row sim-result-delta">
-      <span>Delta</span>
-      <span>${sign}${delta.toFixed(2)} guesses</span>
-    </div>`}
+    <div class="sim-result-row"><span>Measured round</span><span>Round ${stats.measuredRound || 2}</span></div>
+    <div class="sim-result-row"><span>With reward</span><span>${hasReward ? `${stats.avgWithReward.toFixed(2)} avg (n=${stats.completedWithReward})` : "No usable trials"}</span></div>
+    <div class="sim-result-row"><span>Baseline</span><span>${stats.avgBaseline == null ? "—" : `${stats.avgBaseline.toFixed(2)} avg (n=${stats.completedBaseline})`}</span></div>
+    <div class="sim-result-row"><span>Reward used</span><span>${used}/${stats.runs} (${(useRate * 100).toFixed(0)}%)</span></div>
+    <div class="sim-result-row"><span>Excluded</span><span>${stats.excludedWithReward || 0}</span></div>
+    ${delta == null ? "" : `<div class="sim-result-row sim-result-delta"><span>Raw delta</span><span>${sign}${delta.toFixed(2)} guesses</span></div>`}
   `;
 }
 
@@ -313,22 +306,27 @@ function rsComputeEffectiveness(row) {
 
 function rsBuildChartDataset(rows, roleFilter, tierFilter) {
   return rows
-    .filter((r) => (roleFilter === "all" || r.role === roleFilter) && (tierFilter === "all" || r.tier === Number(tierFilter)))
-    .filter((r) => r.avgWithReward != null) // exclude rewards that never got a chance to fire
-    .map((r) => {
-      const { value, sem } = rsComputeEffectiveness(r);
+    .filter(row => (roleFilter === "all" || row.role === roleFilter) && (tierFilter === "all" || row.tier === Number(tierFilter)))
+    .map(row => {
+      const { value, sem } = row.avgWithReward == null ? { value: NaN, sem: 0 } : rsComputeEffectiveness(row);
       return {
-        id: r.rewardId.replace(/^power:/, ""),
-        role: r.role,
-        tier: r.tier,
-        label: r.label,
-        emoji: r.icon || "",
+        id: row.rewardId.replace(/^power:/, ""),
+        role: row.role,
+        tier: row.tier,
+        label: row.label,
+        emoji: row.icon || "",
         value,
         sem,
-        n: r.completedWithReward || 0
+        avgWith: row.avgWithReward == null ? null : Number(row.avgWithReward),
+        avgBaseline: row.avgBaseline == null ? null : Number(row.avgBaseline),
+        used: Number(row.usedWithReward || 0),
+        useRate: Number(row.useRate || 0),
+        excluded: Number(row.excludedWithReward || 0),
+        n: row.completedWithReward || 0,
+        ai: row.aiDifficulty ?? "—"
       };
     })
-    .sort((a, b) => a.value - b.value);
+    .sort((a, b) => (Number.isFinite(b.value) ? b.value : -Infinity) - (Number.isFinite(a.value) ? a.value : -Infinity));
 }
 
 function rsBaselineLabel(rows, role) {
@@ -338,45 +336,43 @@ function rsBaselineLabel(rows, role) {
   return `baseline ${avg.toFixed(2)} avg guesses`;
 }
 
+function rsRenderTable(container, title, rows, includeRole) {
+  const renderer = window.renderSimulationTable;
+  if (typeof renderer !== "function") {
+    container.innerHTML = `<div class="sim-table-empty">Simulation table renderer is unavailable.</div>`;
+    return;
+  }
+  renderer(container, {
+    title,
+    note: "Every reward is granted at its first valid moment in round 2. Positive effect helps the reward owner.",
+    columns: [
+      { label: "Reward", name: true, render: row => `${simTableEscape(row.emoji)} ${simTableEscape(row.label)}` },
+      ...(includeRole ? [{ label: "Role", render: row => row.role === "setter" ? "Spy" : "Inspector" }] : []),
+      { label: "Tier", numeric: true, key: "tier" },
+      { label: "With", numeric: true, render: row => row.avgWith == null ? "—" : row.avgWith.toFixed(2) },
+      { label: "Baseline", numeric: true, render: row => row.avgBaseline == null ? "—" : row.avgBaseline.toFixed(2) },
+      { label: "Effect", numeric: true, render: row => simEffectCell(row.value) },
+      { label: "Used", numeric: true, render: row => `${row.used}/${row.used + row.excluded}` },
+      { label: "Trials", numeric: true, key: "n" },
+      { label: "AI", numeric: true, key: "ai" }
+    ],
+    rows
+  });
+}
+
 function renderRsChart() {
   const wrap = document.getElementById("rsChartWrap");
   if (!wrap) return;
-
   if (!rsResultsCache || !rsResultsCache.length) {
-    wrap.innerHTML = `<div class="sim-chart-empty">Run "Test All Rewards" above to see a chart.</div>`;
+    wrap.innerHTML = `<div class="sim-table-empty">Run “Test All Rewards” above to see a table.</div>`;
     return;
   }
-
   const splitOn = document.getElementById("rsSplitViewToggle")?.checked;
-
   if (splitOn) {
-    wrap.innerHTML = `
-      <div class="sim-chart-pair">
-        <div class="sim-chart-single">
-          <div class="sim-chart-title">Inspector Rewards <span class="sim-chart-baseline">(${rsBaselineLabel(rsResultsCache, "guesser")})</span></div>
-          <div class="sim-chart-svg-wrap" id="rsChartGuesser"></div>
-        </div>
-        <div class="sim-chart-single">
-          <div class="sim-chart-title">Spy Rewards <span class="sim-chart-baseline">(${rsBaselineLabel(rsResultsCache, "setter")})</span></div>
-          <div class="sim-chart-svg-wrap" id="rsChartSetter"></div>
-        </div>
-      </div>
-    `;
-    renderBarChart(document.getElementById("rsChartGuesser"), rsBuildChartDataset(rsResultsCache, "guesser", rsTierFilter));
-    renderBarChart(document.getElementById("rsChartSetter"), rsBuildChartDataset(rsResultsCache, "setter", rsTierFilter));
-  } else {
-    const note = rsRoleFilter === "all"
-      ? `Baseline (no reward) avg guesses — guesser ${(() => { const l = rsBaselineLabel(rsResultsCache, "guesser"); return l ? l.replace("baseline ", "").replace(" avg guesses", "") : "—"; })()} · setter ${(() => { const l = rsBaselineLabel(rsResultsCache, "setter"); return l ? l.replace("baseline ", "").replace(" avg guesses", "") : "—"; })()}`
-      : rsBaselineLabel(rsResultsCache, rsRoleFilter) || "";
-    wrap.innerHTML = `
-      <div class="sim-chart-note">${note}</div>
-      <div class="sim-chart-svg-wrap" id="rsChartSingle"></div>
-    `;
-    renderBarChart(document.getElementById("rsChartSingle"), rsBuildChartDataset(rsResultsCache, rsRoleFilter, rsTierFilter), {
-      tooltipFor: (d) => {
-        const sign = d.value >= 0 ? "+" : "";
-        return `${d.emoji} ${d.label} (tier ${d.tier}, ${d.role}) — effectiveness ${sign}${d.value.toFixed(2)} ± ${d.sem.toFixed(2)} guesses (n=${d.n})`;
-      }
-    });
+    wrap.innerHTML = `<div class="sim-table-pair"><div id="rsTableGuesser"></div><div id="rsTableSetter"></div></div>`;
+    rsRenderTable(document.getElementById("rsTableGuesser"), "Inspector rewards", rsBuildChartDataset(rsResultsCache, "guesser", rsTierFilter), false);
+    rsRenderTable(document.getElementById("rsTableSetter"), "Spy rewards", rsBuildChartDataset(rsResultsCache, "setter", rsTierFilter), false);
+    return;
   }
+  rsRenderTable(wrap, "Reward strength", rsBuildChartDataset(rsResultsCache, rsRoleFilter, rsTierFilter), rsRoleFilter === "all");
 }

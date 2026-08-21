@@ -2065,3 +2065,55 @@
   background: linear-gradient(135deg,color-mix(in srgb,var(--power-color-1) 22%,#171922),color-mix(in srgb,var(--power-color-2) 15%,#11131a) 55%,color-mix(in srgb,var(--power-color-3) 17%,#0e1016));
   box-shadow: 0 0 0 1px color-mix(in srgb,var(--power-color-2) 32%,transparent),0 0 18px color-mix(in srgb,var(--power-color-3) 14%,transparent);
 }
+
+/* SIMULATION_TABLE_PATCH v1: START */
+.sim-table-shell {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border-color, #5a626e) 78%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panel-bg, #30353c) 94%, black);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .18);
+}
+.sim-table-head { padding: 14px 16px 8px; }
+.sim-table-title { margin: 0; font-size: 1rem; font-weight: 800; }
+.sim-table-note { margin-top: 4px; color: var(--text-muted, #aeb6c2); font-size: .78rem; line-height: 1.4; }
+.sim-table-scroll { overflow-x: auto; overscroll-behavior-inline: contain; }
+.sim-table { width: 100%; min-width: 680px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.sim-table th,
+.sim-table td { padding: 10px 12px; border-top: 1px solid rgba(255, 255, 255, .07); text-align: left; vertical-align: middle; }
+.sim-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--panel-bg, #30353c) 86%, white 4%);
+  color: var(--text-muted, #b5bdc8);
+  font-size: .7rem;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.sim-table tbody tr:nth-child(even) { background: rgba(255, 255, 255, .025); }
+.sim-table tbody tr:hover { background: rgba(96, 165, 250, .075); }
+.sim-table .is-number { text-align: right; white-space: nowrap; }
+.sim-table .is-name { min-width: 180px; font-weight: 700; }
+.sim-effect-pill {
+  display: inline-flex;
+  min-width: 64px;
+  justify-content: center;
+  padding: 3px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: .76rem;
+  font-weight: 800;
+}
+.sim-effect-pill.is-positive { color: #75dda0; background: rgba(62, 196, 113, .1); }
+.sim-effect-pill.is-negative { color: #ff8b94; background: rgba(255, 75, 92, .1); }
+.sim-effect-pill.is-neutral { color: #c4cad3; background: rgba(255, 255, 255, .045); }
+.sim-table-pair { display: grid; gap: 16px; }
+.sim-table-empty { padding: 20px; color: var(--text-muted, #aeb6c2); text-align: center; }
+@media (max-width: 680px) {
+  .sim-table-head { padding: 12px 12px 7px; }
+  .sim-table th,
+  .sim-table td { padding: 8px 9px; font-size: .76rem; }
+}
+/* SIMULATION_TABLE_PATCH v1: END */

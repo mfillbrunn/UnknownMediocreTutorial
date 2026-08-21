@@ -1,7 +1,7 @@
 /* Default = Esports */
 :root {
   /* Core colors */
-  --bg:#16181d;
+  --bg:#202328;
   --text:#e5e5e5;
   --title:#fff;
      --ff-period: 4.5s;
@@ -10,32 +10,32 @@
   --pv-phase: 0s; /* set once via JS for hard sync */
 
   /* Semantic surfaces */
-  --screen-bg:#111216;
-  --panel-bg:#16171c;
+  --screen-bg:#282c32;
+  --panel-bg:#30353c;
   --panel-text:#e4e4e4;
-  --history-bg:#1c1d22;
+  --history-bg:#25292f;
 
   /* Controls */
   --btn-primary:#0f5fff;
   --btn-primary-hover:#2f74ff;
   --btn-primary-glow:rgba(15,95,255,.5);
 
-  --btn-secondary:#2b2c30;
+  --btn-secondary:#383d45;
   --btn-secondary-text:#ccc;
-  --btn-secondary-hover:#3a3c42;
+  --btn-secondary-hover:#474d57;
    --kick-btn: #ff4b5c;
   /* Keyboard */
-  --kb-neutral:#1f232a;
-  --kb-border:#2b303a;
-  --kb-hover:#2f3036;
-  --kb-used:#2a2a2c;
+  --kb-neutral:#343a43;
+  --kb-border:#49515d;
+  --kb-hover:#414853;
+  --kb-used:#2f343b;
 
   /* Tiles */
   --tile-green:#2ECC71;
   --tile-green-text:#000;
   --tile-yellow:#F2C854;
   --tile-yellow-text:#000;
-  --tile-gray:#3a3d44;
+  --tile-gray:#4b525c;
   --tile-gray-text:#eee;
   --tile-purple:#58355e;
   --tile-purple-text:#fff;

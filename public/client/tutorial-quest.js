@@ -75,7 +75,7 @@ function questCardHighlightTarget() {
 
 function questPromptForGuess() {
   questTutorialShow(
-    "Now you try! Type a 5-letter guess using only letters A through P and submit it. Try APPLE!",
+    "Enter APPLE, then tap Submit.",
     { title: "Fulfill the quest", mode: "hide" }
   );
   window.TutorialCore.highlight(questCardHighlightTarget());
@@ -91,7 +91,7 @@ function runQuestTutorial(state, role) {
   if (role !== "guesser") {
     api.setNextTutorial("star");
     questTutorialShow(
-      "This tutorial needs the Inspector screen. End it and start the Quest Tutorial again.",
+      "Open this tutorial on the Inspector screen.",
       { title: "Wrong role", mode: "end" }
     );
     return;
@@ -111,7 +111,7 @@ function runQuestTutorial(state, role) {
   if (state.phase === "gameOver") {
     api.setNextTutorial("star");
     questTutorialShow(
-      "The round ended, but you already saw how quests and prizes work. Nice job!",
+      "The round ended, but you saw how quests and rewards work.",
       { title: "Quest Tutorial done", mode: "end" }
     );
     return;
@@ -145,7 +145,7 @@ function runQuestTutorial(state, role) {
   // system at once.
   if (step === 0) {
     questTutorialShow(
-      "As Inspector, you'll sometimes get a Quest -- a fun little challenge.",
+      "This is your Quest. It gives your next guess a small rule.",
       { current: 1, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
@@ -155,7 +155,7 @@ function runQuestTutorial(state, role) {
 
   if (step === 1) {
     questTutorialShow(
-      "Finish it and you get to pick a prize!",
+      "Meet the rule to earn a reward.",
       { current: 2, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
@@ -165,7 +165,7 @@ function runQuestTutorial(state, role) {
 
   if (step === 2) {
     questTutorialShow(
-      "Quests are optional. Don't want to bother? Just skip it and guess normally -- no penalty!",
+      "Quests are optional. A normal guess is always allowed.",
       { current: 3, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
@@ -175,7 +175,7 @@ function runQuestTutorial(state, role) {
 
   if (step === 3) {
     questTutorialShow(
-      `Here's an example: "${quest?.title || "First Half"}" -- ${quest?.description || "Use only letters A through P."} Tap the card below to see the rules.`,
+      `This rule says: ${quest?.description || "Use only letters A through P."}`,
       { current: 4, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
@@ -185,7 +185,7 @@ function runQuestTutorial(state, role) {
 
   if (step === 4) {
     questTutorialShow(
-      `See "Highlight A–P"? Tap it and the keyboard lights up which letters you can use.`,
+      `Tap Highlight A–P to light up useful keys.`,
       { current: 5, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
@@ -222,8 +222,8 @@ function runQuestTutorial(state, role) {
     questOutcome = success ? "success" : "fail";
 
     const text = success
-      ? "Quest done! A prize is coming -- it'll show up on your next turn."
-      : "No prize this time -- that's okay, quests are optional! You've seen how it works.";
+      ? "Quest complete! Your reward opens next turn."
+      : "Quest missed. The game still continues.";
 
     questLastResultText = text;
     questAwaitingAck = true;
@@ -231,7 +231,7 @@ function runQuestTutorial(state, role) {
 
     if (!success) {
       questTutorialFinished = true;
-      questFinishedText = "You did it! You tried a quest and saw how it works. Next time, finish one for a real prize.";
+      questFinishedText = "Done! You tried a quest. Meet the rule next time to earn a reward.";
     }
 
     questTutorialShow(text, { mode: "advance" });
@@ -246,7 +246,7 @@ function runQuestTutorial(state, role) {
   if (questLastPendingChoiceId && !pendingChoice) {
     questLastPendingChoiceId = null;
     questTutorialFinished = true;
-    questFinishedText = "You did it! You finished a quest and picked a prize. Next time, try more quests for even better prizes.";
+    questFinishedText = "Done! You met a quest and picked a reward.";
     api.setNextTutorial("star");
     questTutorialShow(questFinishedText, {
       title: "Quest Tutorial done",
@@ -264,8 +264,8 @@ function runQuestTutorial(state, role) {
   if (pendingIsMine) {
     questLastPendingChoiceId = pendingChoice.id;
     questTutorialShow(
-      "Your prize is ready! Wait a second, then tap CHOOSE on your favorite card.",
-      { title: "Pick a prize", current: 6, total: 7, mode: "hide" }
+      "Pick one reward card. It is used right away.",
+      { title: "Pick a reward", current: 6, total: 7, mode: "hide" }
     );
     api.highlight(questCardHighlightTarget());
     api.setContinue({ show: false, mode: "hide" });
@@ -277,7 +277,7 @@ function runQuestTutorial(state, role) {
   // maybeOpenChoice's turn-owner check in powerChoiceServer.js).
   if (questOutcome === "success") {
     questTutorialShow(
-      "Waiting for the Spy's next move...",
+      "Waiting for the Spy...",
       { compact: true, mode: "hide", key: `quest-wait-${attempts}` }
     );
     api.setContinue({ show: false, mode: "hide" });

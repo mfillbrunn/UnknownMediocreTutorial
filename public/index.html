@@ -6,9 +6,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- 1. Themes & variables -->
-  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/themes.css?v=tutorial-motion-sim-2">
   <!-- 2. Global defaults -->
-  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/base.css?v=tutorial-motion-sim-2">
   <!-- 3. Structural layout -->
   <link rel="stylesheet" href="css/layout.css?v=history-scroll-quest-note-1">
   <!-- 4. Reusable UI components -->
@@ -35,8 +35,8 @@
   <!-- Last. Mobile phone adjustments-->
   <link rel="stylesheet" href="css/mobile.css">
   <!-- New features -->
-  <link rel="stylesheet" href="css/features.css?setter-board=1">
-  <link rel="stylesheet" href="css/gameplay-ui.css?v=2.3-card-carousel">
+  <link rel="stylesheet" href="css/features.css?v=tutorial-motion-sim-2">
+  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2">
 
 </head>
 <body>
@@ -563,7 +563,7 @@
       <span id="simBatchProgressText"></span>
     </div>
 
-    <h3 class="sim-subtitle sim-subtitle-wide">Power Strength Chart</h3>
+    <h3 class="sim-subtitle sim-subtitle-wide">Power Strength Table</h3>
     <div class="sim-chart-toolbar">
       <div id="simRoleFilter" class="sim-role-filter">
         <button class="sim-role-btn active" data-role="all">All</button>
@@ -580,7 +580,7 @@
     <h3 class="sim-subtitle">Past Runs</h3>
     <div id="simPastRuns" class="sim-past-runs">Loading…</div>
 
-    <h3 class="sim-subtitle sim-subtitle-wide">Quest Completion Chart</h3>
+    <h3 class="sim-subtitle sim-subtitle-wide">Quest Completion Table</h3>
     <p class="sim-explainer">
       Forces each guesser quest type onto an AI guesser (no other powers
       active) across many single-round trials, and measures how often the
@@ -612,16 +612,7 @@
       <h2 class="menu-title" style="flex:1;text-align:center">Reward Simulator</h2>
     </div>
     <p class="sim-explainer">
-      Forces one specific Power Choice reward onto one seat at a fixed
-      point in the round (turn 3 for a Spy tier-1 reward / turn 2 for an
-      Inspector tier-1 reward, turn 5 / turn 4 for tier 2 -- the "3 random
-      powers" milestone, turn 7 / turn 6 for the advanced tier 3), with the
-      other side getting nothing extra, and compares against a baseline
-      batch with no reward at all. Everything else about the reward
-      threshold system is switched off for the trial so only the one
-      reward under test can affect the outcome. Tier 3 rewards need the
-      round to run quite deep (turn 6-7) to ever fire -- most rounds finish
-      before then, so tier-3 sample sizes are often small.
+      Runs a normal first round, then gives one chosen reward to the test seat at the first valid moment in round 2. The AI supplies any required power input it knows how to build. Trials where the reward never has a valid target are excluded. Results compare round 2 with a no-reward round-2 baseline.
     </p>
 
     <div class="sim-controls">
@@ -635,9 +626,9 @@
       <label class="sim-field">
         <span>Tier</span>
         <select id="rsTierSelect">
-          <option value="1">Tier 1 (turn 3 / turn 2)</option>
-          <option value="2">Tier 2 -- 3 random powers (turn 5 / turn 4)</option>
-          <option value="3">Tier 3 -- advanced (turn 7 / turn 6)</option>
+          <option value="1">Tier 1 (round 2)</option>
+          <option value="2">Tier 2 — 3 random powers (round 2)</option>
+          <option value="3">Tier 3 — advanced (round 2)</option>
         </select>
       </label>
       <label class="sim-field">
@@ -690,7 +681,7 @@
       <span id="rsBatchProgressText"></span>
     </div>
 
-    <h3 class="sim-subtitle sim-subtitle-wide">Reward Effectiveness Chart</h3>
+    <h3 class="sim-subtitle sim-subtitle-wide">Reward Effectiveness Table</h3>
     <div class="sim-chart-toolbar">
       <label class="sim-split-toggle">
         <input type="checkbox" id="rsSplitViewToggle" />
@@ -698,7 +689,7 @@
       </label>
     </div>
     <div id="rsChartWrap" class="sim-chart-wrap">
-      <div class="sim-chart-empty">Run "Test All Rewards" above to see a chart.</div>
+      <div class="sim-chart-empty">Run "Test All Rewards" above to see a table.</div>
     </div>
   </div>
 </section>
@@ -1466,9 +1457,9 @@
 <script src="client/tutorial-ui.js?tutorial-eli5=3"></script>
 <script src="client/tutorial-basic.js?tutorial-eli5=3"></script>
 <script src="client/tutorial-powers.js?tutorial-eli5=3"></script>
-<script src="client/tutorial-advanced.js?tutorial-eli5=3"></script>
-<script src="client/tutorial-quest.js?tutorial-eli5=3"></script>
-<script src="client/tutorial-star.js?tutorial-eli5=3"></script>
+<script src="client/tutorial-advanced.js?v=tutorial-motion-sim-2"></script>
+<script src="client/tutorial-quest.js?v=tutorial-motion-sim-2"></script>
+<script src="client/tutorial-star.js?v=tutorial-motion-sim-2"></script>
 <script src="client/tutorial-menu.js?tutorial-eli5=3"></script>
 <script src="client/tutorial-progress.js"></script>
   <script src="client/quest-guide.js"></script>
@@ -1498,12 +1489,12 @@
   <script src="client/draft.js?guesser-polish=7"></script>
   <script src="client/dev-powers.js"></script>
   <script src="client/power-loadouts.js"></script>
-  <script src="client/dev-simulation.js"></script>
-  <script src="client/dev-reward-simulation.js"></script>
+  <script src="client/dev-simulation.js?v=tutorial-motion-sim-2"></script>
+  <script src="client/dev-reward-simulation.js?v=tutorial-motion-sim-2"></script>
   <script src="client/invite.js"></script>
   <script src="client/big-announce.js"></script>
   <script src="client.js?v=9-2"></script>
-  <script src="ui/guesser-flow-v7.js?gameplay-polish=8"></script>
+  <script src="ui/guesser-flow-v7.js?v=tutorial-motion-sim-2"></script>
   <script src="ui/gameplay-polish-v8.js?gameplay-polish=8"></script>
   <!-- V9: matching Inspector drawer, ready-action docks, Notes shortcut, and theme toggle -->
   <script src="ui/guesser-board-v9.js?v=9"></script>
@@ -1528,6 +1519,6 @@
   <script src="ui/gameplay-systems-v10.js?v=10&compact-bonus=1"></script>
   <script src="ui/competitive-fixes-v2.js?competitive-fixes=2.2"></script>
   <script src="powerEngine/power-tiers.js?v=2.3-card-carousel"></script> <!-- power-choice-mode-v2.2 -->
-  <script src="client/power-choice-mode.js?v=2.3-card-carousel"></script> <!-- power-choice-mode-v2.2 -->
+  <script src="client/power-choice-mode.js?v=tutorial-motion-sim-2"></script> <!-- power-choice-mode-v2.2 -->
 </body>
 </html>

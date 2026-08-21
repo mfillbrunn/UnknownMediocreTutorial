@@ -388,7 +388,8 @@
   async function animateSubmission(
     word,
     captured,
-    showWorking = true
+    showWorking = true,
+  keepFlightForReveal = false
   ) {
     const history = historyContainer();
     const sourceRow = draftRow();
@@ -519,10 +520,15 @@
       SUBMIT_MS + 180
     );
 
+    if (keepFlightForReveal) {
+      flight.classList.add("guesser-win-flight-handoff");
+      return { flight, wrap };
+    }
     flight.remove();
 
     wrap.style.visibility = "";
     wrap.classList.toggle("is-working", showWorking);
+    return null;
   }
 
   function findNewestHistoryRow(word) {
@@ -782,15 +788,18 @@
   // re-show decision always reflects the round the player is actually in.
   async function animateResolution(
     word,
-    heldWrap
+    heldWrap,
+  handoff = null
   ) {
     hideNewDraft();
+    const handoffFlight = handoff?.flight?.isConnected ? handoff.flight : null;
 
     const realWrap =
       heldWrap ||
       findNewestHistoryRow(word);
 
     if (!realWrap) {
+      handoffFlight?.remove();
       cleanupPending();
       resolutionInFlight = false;
       showNewDraftFromLeft(state);
@@ -841,9 +850,24 @@
     revealWrap.style.visibility = "";
     revealWrap.__revealStarted = false;
 
+    if (handoffFlight) revealWrap.style.opacity = "0";
     window.revealHistoryRow?.(
       revealWrap
     );
+
+    if (handoffFlight) {
+      const revealFade = revealWrap.animate(
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: 170, easing: "ease-out", fill: "forwards" }
+      );
+      const flightFade = handoffFlight.animate(
+        [{ opacity: 1, filter: "blur(0)" }, { opacity: 0, filter: "blur(2px)" }],
+        { duration: 170, easing: "ease-in", fill: "forwards" }
+      );
+      await Promise.allSettled([revealFade.finished, flightFade.finished]);
+      handoffFlight.remove();
+      revealWrap.style.opacity = "";
+    }
 
     await waitForHistoryReveal(
       revealWrap
@@ -1016,15 +1040,16 @@
           // as a stray flash of motion the moment visibility came back --
           // reading as a stutter wedged between the float-up landing and
           // the green flip starting.
-          await animateSubmission(
+          const handoff = await animateSubmission(
             word,
             captured,
-            false
+            false,
+            true
           );
-
           await animateResolution(
             word,
-            heldWrap
+            heldWrap,
+            handoff
           );
 
           // client.js's wonByGuess handling waits on this instead of a

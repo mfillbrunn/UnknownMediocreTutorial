@@ -1623,15 +1623,11 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
       detail = { powerId: "doubleGuess" };
     } else {
       const action = {
+        ...(payload && typeof payload === "object" ? payload : {}),
         type: "USE_POWER",
         userId: choice.ownerUserId,
         powerId: option.powerId,
-        source: "powerChoice",
-        // Recon Sweep (letterProbe) and Miss Bet (betMiss) both need a
-        // real payload their own apply() reads straight off the action --
-        // every other power here just ignores these extra fields.
-        letters: payload?.letters,
-        betMissNumber: payload?.betMissNumber
+        source: "powerChoice"
       };
       const applied = engine.applyPower(
         option.powerId,
