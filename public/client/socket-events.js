@@ -454,11 +454,11 @@ socket.on("rouletteSecretStart", ({ feasible }) => {
   startSecretRoulette(feasible);
 });
 
-// Shared by both the base-rules tutorial and the powers follow-up: create a
-// fresh room, add the tutorial AI, make sure the human starts as guesser,
-// then ready up tagged with the given mode ("tutorial" | "tutorial2") —
-// lobby.js's PLAYER_READY handler reads that tag to set isTutorial/
-// tutorialStage before TutorialMode.initMatch runs.
+// Shared by the scripted tutorials that ready up from a fresh room: create
+// a fresh room, add the tutorial AI, make sure the human starts as guesser,
+// then ready up tagged with the given mode ("tutorial", "quest",
+// "advanced") — lobby.js's PLAYER_READY handler reads that tag to set
+// isTutorial/tutorialStage before TutorialMode.initMatch runs.
 function startFreshTutorial(mode) {
   if (!requireAuth("start tutorial")) return;
 
@@ -513,12 +513,6 @@ function startFreshTutorial(mode) {
 document.getElementById("startTutorialBtn")?.addEventListener("click", () => {
   startFreshTutorial("tutorial");
 });
-
-document
-  .getElementById("startTutorial2Btn")
-  ?.addEventListener("click", () => {
-    startFreshTutorial("tutorial2");
-  });
 
 document
   .getElementById("startQuestTutorialBtn")
@@ -637,31 +631,5 @@ window.startStarTutorial = function startStarTutorial() {
   hide("startupScreen");
   hide("menu");
 };
-
-// "Continue to Tutorial 2" from tutorial 1's match-summary screen: reuse
-// the SAME room/players (NEW_MATCH resets state but keeps the room and its
-// players, including the AI) instead of leaving and recreating one. The
-// human's role at that point is whatever tutorial 1's last round left them
-// as (setter, after round 2's swap) — switch back to guesser so tutorial 2
-// starts from the same role tutorial 1 did. Exposed as a function (rather
-// than wired here) since the button is created dynamically by
-// summary.js's renderMatchSummary(), which doesn't exist yet at page load.
-window.continueToTutorial2 = function () {
-  const userId = window.currentUser?.id;
-  if (!userId) return;
-
-  sendGameAction({ type: "NEW_MATCH", userId });
-
-  setTimeout(() => {
-    sendGameAction({ type: "SWITCH_ROLES", userId });
-  }, 1);
-
-  setTimeout(() => {
-    sendGameAction({ type: "PLAYER_READY", userId, mode: "tutorial2" });
-  }, 1);
-};
-
-
-
 
 

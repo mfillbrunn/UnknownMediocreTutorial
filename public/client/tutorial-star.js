@@ -105,18 +105,17 @@ function spyMeterHighlightTarget() {
 function starPromptForSwitch(state, api, charge) {
   const hint = charge.hint;
   const hasHintPos = hint?.letter && Number.isInteger(hint.position);
-  const tip = hint?.word
-    ? ` Try ${String(hint.word).toUpperCase()}.`
-    : hasHintPos
-      ? ` Put ${String(hint.letter).toUpperCase()} in spot ${hint.position + 1}.`
-      : "";
+  const word = hint?.word ? String(hint.word).toUpperCase() : null;
 
-  starTutorialShow(
-    `Enter a new secret, then tap Submit.${tip}`,
-    { title: "Make a switch", mode: "hide" }
-  );
+  const text = word
+    ? `Enter ${word}, then tap Submit.`
+    : hasHintPos
+      ? `Enter a new secret, then tap Submit. Put ${String(hint.letter).toUpperCase()} in spot ${hint.position + 1}.`
+      : `Enter a new secret, then tap Submit.`;
+
+  starTutorialShow(text, { title: "Make a switch", mode: "hide" });
   api.highlight(spyMeterHighlightTarget());
-  api.setWaiting({ label: "SUBMIT NEW SECRET" });
+  api.setWaiting({ label: word ? `SUBMIT ${word}` : "SUBMIT NEW SECRET" });
 }
 
 function runStarTutorial(state, role) {
@@ -173,6 +172,24 @@ function runStarTutorial(state, role) {
       { title: "Star Tutorial done", current: 6, total: 6, mode: "end" }
     );
     api.highlight(spyMeterHighlightTarget());
+    return;
+  }
+
+  // The whole tutorial revolves around the Spyometer, which lives inside
+  // the collapsible side panel -- if it starts (or gets left) collapsed,
+  // start by having the player open it, same wait-for-tap mechanism the
+  // Advanced Tutorial's own side-panel step already uses (see
+  // notifyTutorialSidebarToggled in tutorial-ui.js).
+  const sidebarCollapsed = byId("setterScreen")
+    ?.classList.contains("setter-sidebar-collapsed");
+
+  if (sidebarCollapsed) {
+    starTutorialShow(
+      "First, tap the arrow to open the side panel -- that's where your Star Meter lives.",
+      { title: "Open the side panel", mode: "hide" }
+    );
+    api.highlight(byId("setterSidebarToggle"));
+    api.setWaiting({ label: "OPEN THE SIDE PANEL" });
     return;
   }
 

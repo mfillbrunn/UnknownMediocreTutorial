@@ -42,7 +42,7 @@
 
   function promptFor() {
     if (st.mode === "letterProbe") {
-      return "🔎 Recon Sweep — type any 5 letters, then Enter · (backspace to edit)";
+      return "🔎 Letter Scan — type any 5 letters, then Enter · (backspace to edit)";
     }
     if (st.mode === "doubleGuess") {
       const n = st.slot + 1;

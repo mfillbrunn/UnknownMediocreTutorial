@@ -81,14 +81,15 @@ function highlightRareBonusTile(i, letter) {
 
 //--------------------------------------------------
 // FREE GREEN LETTER — any power that grants a guaranteed green letter
-// (Reveal Letter, Magic Mode, Bet Power, ...) fires this. The constraint
-// row already flashes the tile itself; this adds a same-moment popup on
-// BOTH screens so the reveal doesn't go unnoticed if you're not looking
-// at the constraint row right then.
+// (Reveal Letter, Magic Mode, ...) fires this. The constraint row already
+// flashes the tile itself; this adds a same-moment popup on BOTH screens
+// so the reveal doesn't go unnoticed if you're not looking at the
+// constraint row right then. Bet Power has its own richer result popup
+// (betMissResult below) instead, since it also needs to report whether
+// the bet itself was correct.
 //--------------------------------------------------
 const GREEN_REVEAL_SOURCE_LABELS = {
   revealLetter: "Reveal Letter",
-  betMiss: "Bet Power",
   fieldReport: "Field Report",
   quest: "Quest",
   revealGreen: "Letter Peek"
@@ -160,6 +161,41 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
     sub: `${label} revealed ${letter.toUpperCase()} in position ${index + 1}.`,
     roleClass: "outcome-win",
     duration: 4200
+  });
+});
+
+//--------------------------------------------------
+// BET POWER — reports whether the guesser's miss-count bet was correct,
+// then (on a correct bet) the free green letter it earned, as two lines
+// of the same popup so "predicted right" reads before "here's the
+// reward" instead of the two facts competing for attention separately.
+//--------------------------------------------------
+socket.on("betMissResult", ({ correct, misses, betMissNumber, letter, index, noLetterLeft }) => {
+  const missWord = misses === 1 ? "miss" : "misses";
+
+  if (!correct) {
+    window.showBigAnnounce?.({
+      icon: "🎲",
+      title: "Bet Power: wrong guess",
+      sub: `You bet ${betMissNumber}, but the guess had ${misses} ${missWord}.`,
+      duration: 4200
+    });
+    return;
+  }
+
+  const sub = [`Correctly predicted ${misses} ${missWord}!`];
+  sub.push(
+    noLetterLeft
+      ? "No new letter left to reveal -- every position is already known."
+      : `Gained a free green letter: ${letter.toUpperCase()} in position ${index + 1}.`
+  );
+
+  window.showBigAnnounce?.({
+    icon: "🟩",
+    title: "Bet Power: correct!",
+    sub,
+    roleClass: "outcome-win",
+    duration: 4600
   });
 });
 

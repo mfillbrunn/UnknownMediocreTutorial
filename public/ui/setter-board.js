@@ -102,6 +102,19 @@
     window.updateSetterIdleExpand?.(window.state);
     syncMiniCharge();
 
+    // The Star Tutorial gates its own opening steps on this panel being
+    // open (the Spyometer lives inside it) and re-checks that on every
+    // render -- but a plain toggle click has no server round-trip of its
+    // own to trigger one. notifyTutorialSidebarToggled (called right
+    // after this by every caller) only re-renders when a step was
+    // already waiting specifically on this tap, which can't be true the
+    // very first time the panel gets collapsed -- so nudge it here too,
+    // scoped to this one tutorial to avoid changing render timing for
+    // anything else.
+    if (window.state?.tutorialStage === "star") {
+      window.tutorialSteps?.(window.state, window.myRole);
+    }
+
     requestAnimationFrame(() => {
       window.reanchorSetterIdleNotes?.();
       window.scheduleTutorialLayout?.();

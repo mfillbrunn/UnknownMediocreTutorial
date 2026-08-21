@@ -555,6 +555,30 @@
   display: none !important;
 }
 
+/* Each star landing toggles .just-charged on the whole toggle button (see
+   spy-charge.js); bump the little count badge along with it so the
+   number reads as counting up star-by-star instead of a flat digit swap
+   once the award animation is over. */
+.setter-sidebar-toggle.just-charged .setter-sidebar-charge-mini {
+  animation: charge-mini-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes charge-mini-pop {
+  0% { transform: scale(1); }
+  35% {
+    transform: scale(1.45);
+    color: #fff7d6;
+    border-color: #fff29b;
+  }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .setter-sidebar-toggle.just-charged .setter-sidebar-charge-mini {
+    animation: none;
+  }
+}
+
 :is(.setter-sidebar-swipe-edge, .guesser-sidebar-swipe-edge) {
   display: none;
   position: absolute;

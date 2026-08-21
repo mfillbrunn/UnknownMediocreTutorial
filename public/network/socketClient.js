@@ -308,7 +308,10 @@ window._livePowerEvents = [];
 // reads as the power popping up twice for one use. revealGreen is the
 // same shape: its own greenLetterRevealed popup (power-functions.js)
 // already tells both players the letter/position, room-wide.
-const POWERS_WITH_OWN_POPUP = new Set(["fieldReport", "quest", "magicMode", "revealGreen"]);
+// betMiss is the same shape too: its own betMissResult popup
+// (power-functions.js) fires once the bet resolves and already tells
+// both players whether it was correct.
+const POWERS_WITH_OWN_POPUP = new Set(["fieldReport", "quest", "magicMode", "revealGreen", "betMiss"]);
 
 socket.on("powerActivity", payload => {
   if (!payload?.id) return;

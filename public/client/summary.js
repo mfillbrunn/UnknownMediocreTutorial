@@ -409,33 +409,8 @@ if (guesserEntries.length) {
     </div>
   `;
 
-  // ----------------------------
-  // Tutorial 1 → Tutorial 2 handoff: offer the powers follow-up right
-  // here instead of making the player find it again from How to Play.
-  // ----------------------------
-  const offerTutorial2 = state.isTutorial && state.tutorialStage !== 2;
-  const tutorial2Cta = offerTutorial2
-    ? `
-      <div class="summary-actions">
-        <button id="continueToTutorial2Btn" class="primary-btn">
-          Continue to Tutorial 2: Powers ▶
-        </button>
-      </div>
-    `
-    : "";
-
-  html += tutorial2Cta;
-
   container.innerHTML = html;
   positionShareButton();
-
-  const continueTutorial2Btn = $("continueToTutorial2Btn");
-  if (continueTutorial2Btn) {
-    continueTutorial2Btn.onclick = () => {
-      resetKeyboards();
-      window.continueToTutorial2?.();
-    };
-  }
 
   const replayBtn = $("replayMatchBtn");
   if (replayBtn) {

@@ -13,10 +13,9 @@ class TutorialMode {
     state.roundsTotal = 2;
     state.matchOver = false;
 
-    // Stage 1 (default): the base-rules tutorial, no powers. Stage 2: a
-    // short follow-up teaching exactly one guesser power and one setter
-    // power. Set by lobby.js's PLAYER_READY handler from action.mode
-    // ("tutorial" vs "tutorial2") before initMatch runs.
+    // Stage 1 (default): the base-rules tutorial, no powers. Set by
+    // lobby.js's PLAYER_READY handler from action.mode before initMatch
+    // runs.
     state.tutorialStage = state.tutorialStage || 1;
 
     // Tutorial metadata — two forced turns per round, then the AI falls
@@ -35,15 +34,12 @@ class TutorialMode {
     state.tutorialSecretsAI = ["CUMIN", "CUMIN"];
     state.tutorialGuessesAI = ["SMALL", "BLIND"];
 
-    // Stage 2 and stage "advanced" share the exact same scripted words and
-    // power pair — stage "advanced" is the UI-features walkthrough (Notes,
-    // Guide, Drag & Lock, Power UI) launched standalone from the "Advanced
-    // Tutorial" menu button, reusing stage 2's already-verified word
-    // sequence rather than inventing a new one; only the narration in
-    // tutorial-ui.js differs. Round 1 (human as guesser) teaches
-    // revealGreen; round 2 (human as setter, after the role swap) teaches
-    // countOnly — see onLobbyReady/onNextRound below.
-    if (state.tutorialStage === 2 || state.tutorialStage === "advanced") {
+    // Stage "advanced" is the UI-features walkthrough (Notes, Guide, Drag
+    // & Lock, Power UI) launched standalone from the "Advanced Tutorial"
+    // menu button. Round 1 (human as guesser) teaches revealGreen; round 2
+    // (human as setter, after the role swap) teaches countOnly — see
+    // onLobbyReady/onNextRound below.
+    if (state.tutorialStage === "advanced") {
       state.tutorialPowerGuesser = "revealGreen";
       state.tutorialPowerSetter = "countOnly";
 
@@ -192,13 +188,19 @@ class TutorialMode {
     // reaches the first Power Choice reward milestone (5 stars) with just
     // one real secret change instead of needing a long grind from zero.
     state.powers.spyCharge.total = 3;
+
+    // Normally rolled by powerChoiceServer.js's turnStart hook at the
+    // start of a real turn -- this seed drops the player straight into a
+    // decision instead of reaching it through a real turn transition, so
+    // roll one explicitly here too (after initializeForRound, which
+    // would otherwise wipe it by replacing state.powers.spyCharge
+    // wholesale). Without it the tutorial's very first "make a switch"
+    // step would have no hint.word to hand the player a concrete word.
+    spyChargeServer.rollHintForTurn(state);
     return;
   }
 
-  if (
-    state.tutorialStage === 2 ||
-    state.tutorialStage === "advanced"
-  ) {
+  if (state.tutorialStage === "advanced") {
       const sP = [state.tutorialPowerSetter];
       const gP = [state.tutorialPowerGuesser];
       state.initialPowers = { setter: sP, guesser: gP };
@@ -433,14 +435,14 @@ class TutorialMode {
   }
 
     onRoundEnd(state) {
-    // Stage 2 (the "Tutorial: Powers" follow-up) and stage "power" (the
-    // per-power "Try it" tutorial): the round-summary screen was already
-    // taught in stage 1 -- showing it again between round 1 and round 2
-    // here is pure duplication, so skip straight into round 2 instead of
-    // pausing on it. gameOver.js's endGame() checks this flag and calls
+    // Stage "power" (the per-power "Try it" tutorial) and stage
+    // "advanced": the round-summary screen was already taught in stage 1
+    // -- showing it again between round 1 and round 2 here is pure
+    // duplication, so skip straight into round 2 instead of pausing on
+    // it. gameOver.js's endGame() checks this flag and calls
     // nextRoundTransition.js's advanceToNextRound() directly.
     if (
-      (state.tutorialStage === 2 || state.tutorialStage === "power" || state.tutorialStage === "advanced") &&
+      (state.tutorialStage === "power" || state.tutorialStage === "advanced") &&
       state.roundIndex < state.roundsTotal - 1
     ) {
       return { skipSummary: true };

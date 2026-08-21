@@ -21,15 +21,21 @@ engine.registerPower("betMiss", {
       return;
   }
   const betMissNumber = state.powers.betMissNumber;
-  if (typeof betMissNumber !== "number" ||betMissNumber < 0 ||betMissNumber > 5) 
+  if (typeof betMissNumber !== "number" ||betMissNumber < 0 ||betMissNumber > 5)
   {console.log("[betMiss] postScore exit: invalid betMissNumber", betMissNumber);return;}
   let misses = 0;
-  const feedback = entry.fb;   
+  const feedback = entry.fb;
    for (let i = 0; i < 5; i++) {
         if (feedback[i] === "⬛") misses=misses+1;
-      }    
+      }
   if (betMissNumber === misses){
     const greenPositions = new Set();
+    // Exclude squares already green -- including this exact guess's own
+    // feedback, not just past turns -- so the bonus reveal never lands on
+    // a letter the player just saw turn green from scoring alone.
+    for (let i = 0; i < 5; i++) {
+      if (feedback[i] === "🟩") greenPositions.add(i);
+    }
     for (const past of state.history) {
       if (!past?.fb) continue;
       for (let i = 0; i < 5; i++) {
@@ -42,22 +48,22 @@ engine.registerPower("betMiss", {
       }
     }
     const options = [0,1,2,3,4].filter(i => !greenPositions.has(i));
-    if (!options.length) {console.log("[betMiss] no options left to reveal"); return ;}
-    const index = options[Math.floor(Math.random() * options.length)];
-    const letter = state.secret[index].toUpperCase();
-    // Ensure constraints container exists
-    state.extraConstraints ??= [];
-    // Prevent duplicate reveals
-    if (!state.extraConstraints.some(c => c.type === "GREEN" && c.index === index)) {
-      state.extraConstraints.push({type: "GREEN",index,letter});
-      io.to(roomId).emit("greenLetterRevealed", { index, letter, source: "betMiss" });
+    if (!options.length) {
+      console.log("[betMiss] no options left to reveal");
+      io.to(roomId).emit("betMissResult", { correct: true, misses, betMissNumber, noLetterLeft: true });
+    } else {
+      const index = options[Math.floor(Math.random() * options.length)];
+      const letter = state.secret[index].toUpperCase();
+      // Ensure constraints container exists
+      state.extraConstraints ??= [];
+      // Prevent duplicate reveals
+      if (!state.extraConstraints.some(c => c.type === "GREEN" && c.index === index)) {
+        state.extraConstraints.push({type: "GREEN",index,letter});
+      }
+      io.to(roomId).emit("betMissResult", { correct: true, misses, betMissNumber, letter, index });
     }
-
-  io.to(roomId).emit("betMiss", { betMissNumber: state.powers.betMissNumber});
-    io.to(roomId).emit("toast", `Revealed letter ${letter} in position ${index + 1}!`);
-  io.to(roomId).emit("toast", `Bet was ${state.powers.betMissNumber}!`);
   } else{
-      io.to(roomId).emit("toast", `Incorrect bet!`);
+      io.to(roomId).emit("betMissResult", { correct: false, misses, betMissNumber });
   }
   state.powers.betMissNumber = null;
   state.powers.betMissActive= false;

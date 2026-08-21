@@ -499,7 +499,7 @@ function runBasicSpyTutorial(state) {
         `
       }
     );
-    tutorialEndNextMode = "tutorial2";
+    tutorialEndNextMode = "quest";
     return;
   }
 
@@ -579,7 +579,7 @@ function runBasicMatchTutorial(state) {
   }
 
   basicTutorialShow(
-    "And that's the whole basic game, start to finish! There's more to learn when you're ready -- Powers, Quests, and other tools each get their own short, separate tutorial.",
+    "And that's the whole basic game, start to finish! There's more to learn when you're ready -- Quests and other tools each get their own short, separate tutorial.",
     {
       section: "Basics done",
       current: 3,
@@ -588,5 +588,5 @@ function runBasicMatchTutorial(state) {
       mode: "end"
     }
   );
-  tutorialEndNextMode = "tutorial2";
+  tutorialEndNextMode = "quest";
 }
