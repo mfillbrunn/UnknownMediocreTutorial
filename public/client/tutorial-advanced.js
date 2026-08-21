@@ -29,15 +29,15 @@ function advancedRemainingVisual() {
     <div class="tutorial-choice-grid">
       <div class="tutorial-choice-card tutorial-keep-card">
         <strong>KEEP</strong>
-        <span>How many secret words can still work if you keep your current secret.</span>
+        <span>Uses your current secret.</span>
       </div>
       <div class="tutorial-choice-card tutorial-new-card">
         <strong>NEW</strong>
-        <span>How many can still work if you use the word in your draft.</span>
+        <span>Uses the word in your draft.</span>
       </div>
     </div>
     <div class="tutorial-note-strip">
-      Bigger is usually safer. An X means the draft cannot be used.
+      A bigger number is usually safer. X means NEW cannot be used.
     </div>
   `;
 }
@@ -45,7 +45,7 @@ function advancedRemainingVisual() {
 function advancedLogVisual() {
   return `
     <div class="tutorial-note-strip">
-      A power's name in the Log has a dotted underline. Tap it to expand the full result underneath.
+      Tap a dotted power name to see what it did.
     </div>
   `;
 }
@@ -53,8 +53,8 @@ function advancedLogVisual() {
 function advancedConstraintVisual() {
   return `
     <div class="tutorial-eli5-mini-list">
-      <span><b>Green box</b> = that exact spot is solved</span>
-      <span><b>Red squares</b> = that letter is somewhere in the word, just not in this spot</span>
+      <span><b>Green</b> = correct letter and spot</span>
+      <span><b>Yellow</b> = letter is in the word, but not here</span>
     </div>
   `;
 }
@@ -75,7 +75,7 @@ function runAdvancedTutorialGuesser(state) {
   if (round === 0) {
     if (tutorialSubStep === 0) {
       advancedTutorialShow(
-        "You already know how to play. This tutorial shows a few extra buttons that make the game easier to use.",
+        "You know the game. Now learn the handy tools.",
         {
           role: "guesser",
           current: 1,
@@ -89,7 +89,7 @@ function runAdvancedTutorialGuesser(state) {
 
     if (tutorialSubStep === 1) {
       advancedTutorialShow(
-        "Guide adds little hints on the screen. Turn it on whenever you forget what something means.",
+        "Guide puts small hints next to buttons.",
         {
           role: "guesser",
           title: "Guide",
@@ -107,7 +107,7 @@ function runAdvancedTutorialGuesser(state) {
 
     if (state.simultaneousGuessSubmitted) {
       advancedTutorialShow(
-        "Your guess is sent. Wait for the Spy.",
+        "Guess sent. Wait for the Spy.",
         {
           role: "guesser",
           title: "Start the round",
@@ -122,7 +122,7 @@ function runAdvancedTutorialGuesser(state) {
       stopKeyDemo();
     } else {
       advancedTutorialShow(
-        `Type ${word}. Then tap Submit Guess.`,
+        `Type ${word}, then tap Submit.`,
         {
           role: "guesser",
           title: "Start the round",
@@ -148,7 +148,7 @@ function runAdvancedTutorialGuesser(state) {
 
     if (tutorialSubStep === 0) {
       advancedTutorialShow(
-        `You can drag a keyboard letter straight onto a box. Drag the letters of ${word} into the five boxes.`,
+        `Drag each letter of ${word} into a box.`,
         {
           role: "guesser",
           title: "Drag letters",
@@ -173,7 +173,7 @@ function runAdvancedTutorialGuesser(state) {
       stopDragDemo();
       stopKeyDemo();
       advancedTutorialShow(
-        "Tap one filled box. A small lock appears. Backspace cannot erase a locked letter.",
+        "Tap a filled box to lock it. Backspace skips locked boxes.",
         {
           role: "guesser",
           title: "Lock a letter",
@@ -190,7 +190,7 @@ function runAdvancedTutorialGuesser(state) {
 
     if (tutorialSubStep === 2) {
       advancedTutorialShow(
-        "Tap the locked box again. The lock goes away.",
+        "Tap it again to unlock it.",
         {
           role: "guesser",
           title: "Unlock a letter",
@@ -207,7 +207,7 @@ function runAdvancedTutorialGuesser(state) {
 
     if (state.pendingGuess) {
       advancedTutorialShow(
-        "Your guess is sent. Wait for the Spy.",
+        "Guess sent. Wait for the Spy.",
         {
           role: "guesser",
           title: "Drag and Lock done",
@@ -240,7 +240,7 @@ function runAdvancedTutorialGuesser(state) {
   if (round >= 2) {
     stopKeyDemo();
     advancedTutorialShow(
-      "Good. Next you will be the Spy. That is where the Log, the clue row, and the secret numbers are most useful.",
+      "Next, try the Spy tools.",
       {
         role: "guesser",
         title: "Inspector tools done",
@@ -260,7 +260,7 @@ function runAdvancedTutorialSetter(state) {
   if (round === 0) {
     if (tutorialSubStep === 0) {
       advancedTutorialShow(
-        "Now you are the Spy. Drag and Lock works on the secret boxes too.",
+        "The same Drag and Lock tools work for secrets.",
         {
           role: "setter",
           title: "Spy tools",
@@ -278,7 +278,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (state.simultaneousSecretSubmitted) {
       advancedTutorialShow(
-        "Your secret is saved. Wait for the Inspector.",
+        "Secret saved. Wait for the Inspector.",
         {
           role: "setter",
           title: "Spy tools",
@@ -293,7 +293,7 @@ function runAdvancedTutorialSetter(state) {
       stopKeyDemo();
     } else {
       advancedTutorialShow(
-        `Type ${word}. Then tap Submit New Secret.`,
+        `Type ${word}, then tap Submit.`,
         {
           role: "setter",
           title: "Spy tools",
@@ -321,7 +321,7 @@ function runAdvancedTutorialSetter(state) {
     if (tutorialSubStep === 0) {
       if (!state.pendingGuess) {
         advancedTutorialShow(
-          "The Inspector is still thinking.",
+          "The Inspector is thinking.",
           {
             role: "setter",
             title: "Wait and plan",
@@ -338,7 +338,7 @@ function runAdvancedTutorialSetter(state) {
       }
 
       advancedTutorialShow(
-        "The guess is here. KEEP and NEW compare two options: keeping your current secret as-is, or switching to whatever you type in the draft below.",
+        "KEEP uses your current secret. NEW uses the word in the draft row.",
         {
           role: "setter",
           title: "Keep or change?",
@@ -355,7 +355,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 1) {
       advancedTutorialShow(
-        "Everything on this side of the screen -- the Log and more -- lives in one panel. Tap this button now to open or close it.",
+        "Tap this arrow to open or close the side panel.",
         {
           role: "setter",
           title: "Side panel",
@@ -372,7 +372,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 2) {
       advancedTutorialShow(
-        "Tap Log now.",
+        "Tap Log.",
         {
           role: "setter",
           title: "Open the Log",
@@ -389,7 +389,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 3) {
       advancedTutorialShow(
-        "The Log lists everything that happened this match: every guess, every secret change, every power used.",
+        "Log shows guesses, secret changes, and powers.",
         {
           role: "setter",
           title: "Read the Log",
@@ -406,7 +406,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 4) {
       advancedTutorialShow(
-        "Tap the ⧉ button to show or hide the clue row above your board. It shows what both of you already know about the secret so far.",
+        "Tap ⧉ to show or hide the shared clue row.",
         {
           role: "setter",
           title: "The clue row",
@@ -423,7 +423,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 5) {
       advancedTutorialShow(
-        "That flag button concedes the round right now. As Inspector, conceding costs a 10-point penalty on top. As Spy, there's no extra penalty -- you're just giving up. Either way, the round ends immediately.",
+        "Concede ends the round now. An Inspector also gets a 10-point penalty.",
         {
           role: "setter",
           title: "Concede",
@@ -439,7 +439,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 6) {
       advancedTutorialShow(
-        "Leave shows up whenever this game has no time limit, or you're facing the AI -- tap it to step away safely. The room stays alive, so you can pick the match back up later from My Games.",
+        "Leave saves an untimed or AI match so you can return later.",
         {
           role: "setter",
           title: "Leave",
@@ -456,7 +456,7 @@ function runAdvancedTutorialSetter(state) {
     if (tutorialSubStep === 7) {
       clearHighlights();
       advancedTutorialShow(
-        "One more thing about timed matches: if you ever run out of time, your last submitted guess or secret is used automatically and the round continues. Do that three times in one round, though, and it's an instant loss.",
+        "Run out of time: the last word is used. Three timeouts lose the round.",
         {
           role: "setter",
           title: "Running out of time",
@@ -487,7 +487,7 @@ function runAdvancedTutorialSetter(state) {
 
   if (round >= 2) {
     advancedTutorialShow(
-      "You used the extra tools: Guide, Drag and Lock, KEEP and NEW, the side panel, the clue row, the Log, and Concede/Leave.",
+      "Done! You used Guide, Drag, Lock, KEEP/NEW, Log, and the clue row.",
       {
         role: "setter",
         title: "Extra tools done",
@@ -513,7 +513,7 @@ function runAdvancedSummaryTutorial(state) {
 
   if (tutorialSubStep === 0) {
     advancedTutorialShow(
-      "This round is done. Next you will be the Spy, where KEEP versus NEW and the Log are most useful.",
+      "Round done. Next, you play as the Spy.",
       {
         role: "guesser",
         title: "Round finished",
@@ -545,7 +545,7 @@ function runAdvancedSummaryTutorial(state) {
 function runAdvancedMatchTutorial(state) {
   clearHighlights();
   advancedTutorialShow(
-    "Extra tools done. You can use these helpers whenever you want, but the main game still works the same way.",
+    "Advanced tools done. Use them when they help.",
     {
       role: "setter",
       title: "Advanced tutorial done",

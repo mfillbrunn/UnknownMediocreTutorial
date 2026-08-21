@@ -229,8 +229,9 @@
       <div class="pc-charge-details${detailsOpen ? " is-open" : ""}">
         <p>Earn at least 1 star after each eligible Keep/New decision. The forced all-gray opening begins with at least 2 stars.</p>
         <div class="pc-reward-milestones">
-          <span><b>5</b>, <b>9</b>, and <b>15</b> stars: pick a reward from the same pool</span>
-          <span>At <b>15</b>: two picks in a row</span>
+          <span><b>5</b> choose 1 reward</span>
+          <span><b>9</b> choose 1 reward</span>
+          <span><b>15</b> choose 2 rewards</span>
         </div>
       </div>
       ${lockoutMarkup}
@@ -1431,116 +1432,140 @@
     const appliedBonus = Math.max(0, Number(payload.appliedBonusStars ?? payload.bonusStars) || 0);
     const totalStars = Math.max(0, Number(payload.appliedStars) || appliedBase + appliedBonus);
     const after = clamp(payload.after ?? before + totalStars, 0, SPY_MAX);
+
+    spyVisualOverride = before;
+    renderPanels();
+
     if (!totalStars) {
       spyVisualOverride = after;
       renderPanels();
       return;
     }
 
-    spyVisualOverride = before;
-    renderPanels();
-    const capsule = createAwardCapsule(before);
-    const sourceRect = entry.sourceRect;
-    if (sourceRect?.width) {
-      const pulse = document.createElement("span");
-      pulse.className = "pc-spy-source-pulse";
-      pulse.textContent = "★";
-      Object.assign(pulse.style, {
-        left: `${sourceRect.left + sourceRect.width / 2}px`,
-        top: `${sourceRect.top + sourceRect.height / 2}px`
-      });
-      document.body.appendChild(pulse);
-      pulse.animate([
-        { transform: "translate(-50%,-50%) scale(.4)", opacity: 0 },
-        { transform: "translate(-50%,-50%) scale(1.15)", opacity: 1 },
-        { transform: "translate(-50%,-50%) scale(1.7)", opacity: 0 }
-      ], { duration: 520, easing: "ease-out" }).finished.finally(() => pulse.remove());
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    if (reduceMotion) {
+      spyVisualOverride = after;
+      renderPanels();
+      spyAwardTarget()?.classList.add("pc-star-landed");
+      setTimeout(() => spyAwardTarget()?.classList.remove("pc-star-landed"), 450);
+      return;
     }
 
-    await sleep(180);
-    const bonusStartValue = before + appliedBase + 1;
+    const sourceRect = entry?.sourceRect;
+    const sourceX = sourceRect?.width
+      ? sourceRect.left + sourceRect.width / 2
+      : Math.max(48, window.innerWidth * 0.52);
+    const sourceY = sourceRect?.height
+      ? sourceRect.top + sourceRect.height / 2
+      : Math.max(90, window.innerHeight * 0.66);
+
+    const sourcePulse = document.createElement("span");
+    sourcePulse.className = "pc-spy-source-pulse";
+    sourcePulse.textContent = "★";
+    Object.assign(sourcePulse.style, { left: `${sourceX}px`, top: `${sourceY}px` });
+    document.body.appendChild(sourcePulse);
+    sourcePulse.animate([
+      { transform: "translate(-50%,-50%) scale(.35)", opacity: 0 },
+      { transform: "translate(-50%,-50%) scale(1.25)", opacity: 1, offset: .45 },
+      { transform: "translate(-50%,-50%) scale(1.8)", opacity: 0 }
+    ], { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)" }).finished.finally(() => sourcePulse.remove());
+
+    await sleep(90);
+
     for (let index = 0; index < totalStars; index++) {
       const value = Math.min(after, before + index + 1);
       const bonus = index >= appliedBase;
-      const star = document.createElement("span");
-      star.className = `pc-award-falling-star${bonus ? " is-bonus" : ""}`;
-      star.textContent = "★";
-      capsule.appendChild(star);
-      const targetSegment = capsule.querySelector(`[data-value="${value}"]`);
-      const capsuleRect = capsule.getBoundingClientRect();
-      const segmentRect = targetSegment?.getBoundingClientRect();
-      const startX = capsuleRect.width * 0.12;
-      const endX = segmentRect ? segmentRect.left + segmentRect.width / 2 - capsuleRect.left : capsuleRect.width * .5;
-      star.style.left = `${startX}px`;
-      star.style.top = "-8px";
-      const anim = star.animate([
-        { transform: "translate(-50%,-130%) scale(.55) rotate(-25deg)", opacity: 0 },
-        { transform: `translate(${(endX - startX) * .45}px,-28px) scale(1.15) rotate(8deg)`, opacity: 1, offset: .45 },
-        { transform: `translate(${endX - startX}px,25px) scale(.42) rotate(0deg)`, opacity: 1 }
-      ], { duration: 430, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" });
-      try { await anim.finished; } catch {}
-      star.remove();
-      spyVisualOverride = value;
-      capsuleMeter(capsule, value, appliedBonus > 0 ? bonusStartValue : Infinity);
-      capsule.querySelector(".pc-award-count").textContent = `${value}/${SPY_MAX}`;
-      const landed = capsule.querySelector(`[data-value="${value}"]`);
-      landed?.classList.add("just-landed");
-      await sleep(95);
-    }
+      const meter = spyAwardTarget();
+      const target = meter?.id === "pcSpyMeter"
+        ? meter.querySelector(`[data-pc-meter-value="${value}"]`) || meter
+        : meter;
+      const targetRect = target?.getBoundingClientRect();
 
-    await sleep(260);
-    const target = spyAwardTarget();
-    const targetRect = target?.getBoundingClientRect();
-    if (targetRect?.width) {
-      // A single star actually making the trip from the capsule to the
-      // real meter -- the capsule itself used to be what flew over
-      // (shrinking down into the target), which read as a card sliding
-      // and shrinking rather than "a star shooting into the bar." The
-      // capsule now just fades in place while a dedicated comet-styled
-      // star (same look pc-award-falling-star already uses for the stars
-      // landing in the capsule's own mini-meter) makes that final leg,
-      // with a slight upward bow at the midpoint so it reads as a
-      // trajectory landing in the bar rather than a straight slide.
-      const capsuleRect = capsule.getBoundingClientRect();
-      const startX = capsuleRect.left + capsuleRect.width / 2;
-      const startY = capsuleRect.top + capsuleRect.height / 2;
+      if (!targetRect?.width) {
+        spyVisualOverride = value;
+        renderPanels();
+        continue;
+      }
+
+      const startX = sourceX + (index - (totalStars - 1) / 2) * 12;
+      const startY = sourceY - (index % 2) * 8;
       const endX = targetRect.left + targetRect.width / 2;
       const endY = targetRect.top + targetRect.height / 2;
       const dx = endX - startX;
       const dy = endY - startY;
+      const arc = Math.min(180, Math.max(82, Math.abs(dx) * .18 + Math.abs(dy) * .1));
+      const duration = Math.min(1050, Math.max(680, Math.hypot(dx, dy) * 1.2));
 
-      const shootingStar = document.createElement("span");
-      shootingStar.className = "pc-award-shooting-star";
-      shootingStar.textContent = "★";
-      shootingStar.style.left = `${startX}px`;
-      shootingStar.style.top = `${startY}px`;
-      document.body.appendChild(shootingStar);
+      const star = document.createElement("span");
+      star.className = `pc-direct-star-flight${bonus ? " is-bonus" : ""}`;
+      star.textContent = "★";
+      Object.assign(star.style, { left: `${startX}px`, top: `${startY}px` });
+      document.body.appendChild(star);
 
-      const capsuleFade = capsule.animate(
-        [{ opacity: 1 }, { opacity: 0 }],
-        { duration: 200, easing: "ease-out", fill: "forwards" }
-      );
-
-      const flight = shootingStar.animate([
-        { transform: "translate(-50%,-50%) scale(1)", opacity: 1 },
+      const flight = star.animate([
+        { transform: "translate(-50%,-50%) scale(.55) rotate(-28deg)", opacity: 0 },
         {
-          transform: `translate(calc(-50% + ${dx * 0.5}px), calc(-50% + ${dy * 0.5 - 46}px)) scale(.85)`,
+          transform: `translate(calc(-50% + ${dx * .5}px), calc(-50% + ${dy * .42 - arc}px)) scale(1.32) rotate(12deg)`,
           opacity: 1,
-          offset: 0.55
+          offset: .5
         },
-        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.3)`, opacity: 0.9 }
-      ], { duration: 520, easing: "cubic-bezier(.2,.75,.25,1)", fill: "forwards" });
+        {
+          transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35) rotate(0deg)`,
+          opacity: 1
+        }
+      ], {
+        duration,
+        easing: "cubic-bezier(.18,.76,.2,1)",
+        fill: "forwards"
+      });
+      try { await flight.finished; } catch {}
+      star.remove();
 
-      try { await Promise.all([flight.finished, capsuleFade.finished]); } catch {}
-      shootingStar.remove();
+      spyVisualOverride = value;
+      renderPanels();
+      await new Promise(resolve => requestAnimationFrame(resolve));
+
+      const freshMeter = spyAwardTarget();
+      const landed = freshMeter?.id === "pcSpyMeter"
+        ? freshMeter.querySelector(`[data-pc-meter-value="${value}"]`) || freshMeter
+        : freshMeter;
+      const landedRect = landed?.getBoundingClientRect() || targetRect;
+      landed?.classList.add("pc-star-landed");
+      setTimeout(() => landed?.classList.remove("pc-star-landed"), 520);
+
+      const impact = document.createElement("span");
+      impact.className = `pc-star-impact${bonus ? " is-bonus" : ""}`;
+      Object.assign(impact.style, {
+        left: `${landedRect.left + landedRect.width / 2}px`,
+        top: `${landedRect.top + landedRect.height / 2}px`
+      });
+      document.body.appendChild(impact);
+      impact.addEventListener("animationend", () => impact.remove(), { once: true });
+
+      for (let sparkIndex = 0; sparkIndex < 5; sparkIndex++) {
+        const spark = document.createElement("span");
+        spark.className = `pc-star-spark${bonus ? " is-bonus" : ""}`;
+        const angle = (Math.PI * 2 * sparkIndex) / 5 - Math.PI / 2;
+        const distance = 18 + (sparkIndex % 2) * 8;
+        Object.assign(spark.style, {
+          left: `${landedRect.left + landedRect.width / 2}px`,
+          top: `${landedRect.top + landedRect.height / 2}px`,
+          "--pc-spark-x": `${Math.cos(angle) * distance}px`,
+          "--pc-spark-y": `${Math.sin(angle) * distance}px`
+        });
+        document.body.appendChild(spark);
+        spark.addEventListener("animationend", () => spark.remove(), { once: true });
+      }
+
+      await sleep(85);
     }
-    capsule.remove();
+
     spyVisualOverride = after;
     renderPanels();
-    const targetMeter = spyAwardTarget();
-    targetMeter?.classList.add("just-charged");
-    setTimeout(() => targetMeter?.classList.remove("just-charged"), 850);
-    await sleep(180);
+    const finalTarget = spyAwardTarget();
+    finalTarget?.classList.add("just-charged");
+    setTimeout(() => finalTarget?.classList.remove("just-charged"), 720);
+    await sleep(220);
   }
 
   function flushDeferredSetterHistory() {

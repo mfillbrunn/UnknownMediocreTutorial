@@ -362,8 +362,8 @@ async function loadChartData(forceReload) {
 
     renderCharts();
   } catch (err) {
-    console.error("Failed to load chart data:", err);
-    if (wrap) wrap.innerHTML = `<div class="sim-chart-empty">Failed to load chart data</div>`;
+    console.error("Failed to load table data:", err);
+    if (wrap) wrap.innerHTML = `<div class="sim-chart-empty">Failed to load table data</div>`;
   }
 }
 
@@ -417,65 +417,102 @@ function computeBaselineAvg(rows, role) {
 // weakest (or backfiring) powers first, strongest last.
 function buildChartDataset(rows, roleFilter) {
   return rows
-    .filter(r => roleFilter === "all" || r.power_role === roleFilter)
-    .map(r => {
-      const meta = window.POWER_METADATA?.[r.power_id];
-      const { value, sem } = computeEffectiveness(r);
-      const raw = Array.isArray(r.raw_with_power) ? r.raw_with_power : [];
+    .filter(row => roleFilter === "all" || row.power_role === roleFilter)
+    .map(row => {
+      const meta = window.POWER_METADATA?.[row.power_id];
+      const { value, sem } = computeEffectiveness(row);
+      const raw = Array.isArray(row.raw_with_power) ? row.raw_with_power : [];
       return {
-        id: r.power_id,
-        role: r.power_role,
-        label: meta?.label || r.power_id,
+        id: row.power_id,
+        role: row.power_role,
+        label: meta?.label || row.power_id,
         emoji: meta?.emoji || "",
         value,
         sem,
-        n: raw.length || r.runs || 0
+        avgWith: Number(row.avg_guesses_with_power),
+        avgWithout: Number(row.avg_guesses_without_power),
+        n: raw.length || row.runs || 0,
+        aiDifficulty: row.ai_difficulty ?? row.aiDifficulty ?? "—"
       };
     })
-    .sort((a, b) => a.value - b.value);
+    .sort((a, b) => b.value - a.value);
 }
+
+// SIMULATION_TABLE_PATCH v1
+function simTableEscape(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[char]));
+}
+function simEffectCell(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return `<span class="sim-effect-pill is-neutral">—</span>`;
+  const tone = number > .005 ? "is-positive" : number < -.005 ? "is-negative" : "is-neutral";
+  const sign = number > 0 ? "+" : "";
+  return `<span class="sim-effect-pill ${tone}">${sign}${number.toFixed(2)}</span>`;
+}
+function renderSimulationTable(container, { title = "", note = "", columns = [], rows = [] } = {}) {
+  if (!container) return;
+  if (!rows.length) {
+    container.innerHTML = `<div class="sim-table-empty">No data for this filter yet.</div>`;
+    return;
+  }
+  const head = columns.map((column) => `<th class="${column.numeric ? "is-number" : ""}">${simTableEscape(column.label)}</th>`).join("");
+  const body = rows.map((row) => `<tr>${columns.map((column) => {
+    const rendered = typeof column.render === "function" ? column.render(row) : simTableEscape(row[column.key]);
+    const className = [column.numeric ? "is-number" : "", column.name ? "is-name" : ""].filter(Boolean).join(" ");
+    return `<td class="${className}">${rendered ?? "—"}</td>`;
+  }).join("")}</tr>`).join("");
+  container.innerHTML = `<section class="sim-table-shell">
+    <header class="sim-table-head">
+      ${title ? `<h4 class="sim-table-title">${simTableEscape(title)}</h4>` : ""}
+      ${note ? `<div class="sim-table-note">${simTableEscape(note)}</div>` : ""}
+    </header>
+    <div class="sim-table-scroll"><table class="sim-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+  </section>`;
+}
+window.renderSimulationTable = renderSimulationTable;
 
 function renderCharts() {
   const wrap = document.getElementById("simChartWrap");
   if (!wrap || !chartRowsCache) return;
-
   if (!chartRowsCache.length) {
-    wrap.innerHTML = `<div class="sim-chart-empty">No simulation results yet — run one above.</div>`;
+    wrap.innerHTML = `<div class="sim-table-empty">No simulation results yet — run one above.</div>`;
     return;
   }
-
+  const columns = (includeRole) => [
+    { label: "Power", name: true, render: row => `${simTableEscape(row.emoji)} ${simTableEscape(row.label)}` },
+    ...(includeRole ? [{ label: "Role", render: row => row.role === "setter" ? "Spy" : "Inspector" }] : []),
+    { label: "With", numeric: true, render: row => Number.isFinite(row.avgWith) ? row.avgWith.toFixed(2) : "—" },
+    { label: "Baseline", numeric: true, render: row => Number.isFinite(row.avgWithout) ? row.avgWithout.toFixed(2) : "—" },
+    { label: "Effect", numeric: true, render: row => simEffectCell(row.value) },
+    { label: "±", numeric: true, render: row => Number(row.sem || 0).toFixed(2) },
+    { label: "Trials", numeric: true, key: "n" },
+    { label: "AI", numeric: true, key: "aiDifficulty" }
+  ];
   const splitOn = document.getElementById("simSplitViewToggle")?.checked;
-
-  const baselineLabel = (role) => {
-    const avg = computeBaselineAvg(chartRowsCache, role);
-    return avg == null ? "" : `baseline ${avg.toFixed(2)} avg guesses`;
-  };
-
   if (splitOn) {
-    wrap.innerHTML = `
-      <div class="sim-chart-pair">
-        <div class="sim-chart-single">
-          <div class="sim-chart-title">Guesser Powers <span class="sim-chart-baseline">(${baselineLabel("guesser")})</span></div>
-          <div class="sim-chart-svg-wrap" id="simChartGuesser"></div>
-        </div>
-        <div class="sim-chart-single">
-          <div class="sim-chart-title">Setter Powers <span class="sim-chart-baseline">(${baselineLabel("setter")})</span></div>
-          <div class="sim-chart-svg-wrap" id="simChartSetter"></div>
-        </div>
-      </div>
-    `;
-    renderBarChart(document.getElementById("simChartGuesser"), buildChartDataset(chartRowsCache, "guesser"));
-    renderBarChart(document.getElementById("simChartSetter"), buildChartDataset(chartRowsCache, "setter"));
-  } else {
-    const note = simRoleFilter === "all"
-      ? `Baseline (no power) avg guesses — guesser ${computeBaselineAvg(chartRowsCache, "guesser")?.toFixed(2) ?? "—"} · setter ${computeBaselineAvg(chartRowsCache, "setter")?.toFixed(2) ?? "—"}`
-      : `Baseline (no power) avg guesses: ${computeBaselineAvg(chartRowsCache, simRoleFilter)?.toFixed(2) ?? "—"}`;
-    wrap.innerHTML = `
-      <div class="sim-chart-note">${note}</div>
-      <div class="sim-chart-svg-wrap" id="simChartSingle"></div>
-    `;
-    renderBarChart(document.getElementById("simChartSingle"), buildChartDataset(chartRowsCache, simRoleFilter));
+    wrap.innerHTML = `<div class="sim-table-pair"><div id="simTableGuesser"></div><div id="simTableSetter"></div></div>`;
+    renderSimulationTable(document.getElementById("simTableGuesser"), {
+      title: "Inspector powers",
+      note: "Positive effect means the Inspector needed fewer guesses.",
+      columns: columns(false),
+      rows: buildChartDataset(chartRowsCache, "guesser")
+    });
+    renderSimulationTable(document.getElementById("simTableSetter"), {
+      title: "Spy powers",
+      note: "Positive effect means the Spy forced more guesses.",
+      columns: columns(false),
+      rows: buildChartDataset(chartRowsCache, "setter")
+    });
+    return;
   }
+  renderSimulationTable(wrap, {
+    title: "Power strength",
+    note: "Effect is normalized so positive always helps the role that owns the power.",
+    columns: columns(simRoleFilter === "all"),
+    rows: buildChartDataset(chartRowsCache, simRoleFilter)
+  });
 }
 
 // Hand-rolled SVG bar chart — power (or quest, see renderQuestChart below)
@@ -735,7 +772,7 @@ async function loadQuestChartData(forceReload) {
     renderQuestChart();
   } catch (err) {
     console.error("Failed to load quest chart data:", err);
-    if (wrap) wrap.innerHTML = `<div class="sim-chart-empty">Failed to load chart data</div>`;
+    if (wrap) wrap.innerHTML = `<div class="sim-chart-empty">Failed to load table data</div>`;
   }
 }
 
@@ -748,33 +785,39 @@ function completionRateSem(rate, n) {
 
 function buildQuestChartDataset(rows) {
   return rows
-    .map(r => {
-      const meta = window.QUEST_METADATA?.[r.quest_type];
-      const rate = r.completion_rate == null ? 0 : Number(r.completion_rate);
+    .map(row => {
+      const meta = window.QUEST_METADATA?.[row.quest_type];
+      const rate = row.completion_rate == null ? 0 : Number(row.completion_rate);
       return {
-        id: r.quest_type,
-        label: meta?.label || r.quest_type,
+        id: row.quest_type,
+        label: meta?.label || row.quest_type,
         emoji: meta?.emoji || "",
         value: rate * 100,
-        sem: completionRateSem(rate, r.completed_trials),
-        n: r.completed_trials || r.runs || 0
+        completed: row.completed ?? Math.round(rate * Number(row.completed_trials || row.runs || 0)),
+        n: row.completed_trials || row.runs || 0,
+        aiDifficulty: row.ai_difficulty ?? "—"
       };
     })
-    .sort((a, b) => a.value - b.value);
+    .sort((a, b) => b.value - a.value);
 }
 
 function renderQuestChart() {
   const wrap = document.getElementById("simQuestChartWrap");
   if (!wrap || !questChartRowsCache) return;
-
   if (!questChartRowsCache.length) {
-    wrap.innerHTML = `<div class="sim-chart-empty">No quest simulation results yet — run one above.</div>`;
+    wrap.innerHTML = `<div class="sim-table-empty">No quest simulation results yet — run one above.</div>`;
     return;
   }
-
-  renderBarChart(wrap, buildQuestChartDataset(questChartRowsCache), {
-    zeroBased: true,
-    colorFor: () => "#8b5cf6",
-    tooltipFor: d => `${d.emoji} ${d.label} — completed ${d.value.toFixed(0)}% ± ${d.sem.toFixed(1)}% (n=${d.n})`
+  renderSimulationTable(wrap, {
+    title: "Quest completion",
+    note: "Higher completion means the AI can meet the quest more often.",
+    columns: [
+      { label: "Quest", name: true, render: row => `${simTableEscape(row.emoji)} ${simTableEscape(row.label)}` },
+      { label: "Completion", numeric: true, render: row => `${row.value.toFixed(1)}%` },
+      { label: "Completed", numeric: true, key: "completed" },
+      { label: "Trials", numeric: true, key: "n" },
+      { label: "AI", numeric: true, key: "aiDifficulty" }
+    ],
+    rows: buildQuestChartDataset(questChartRowsCache)
   });
 }

@@ -16,9 +16,9 @@
 const STAR_TUTORIAL_MAX = 15;
 
 const MILESTONE_TEXT = {
-  5: "You hit 5 stars! Time to pick a prize.",
-  9: "Wow, 9 stars! Pick from 3 powers this time.",
-  15: "15 stars -- the best prizes! Pick your favorite."
+  5: "5 stars! Pick a reward.",
+  9: "9 stars! Pick one of 3 powers.",
+  15: "15 stars! Pick two rewards."
 };
 
 function starTutorialShow(text, {
@@ -106,13 +106,13 @@ function starPromptForSwitch(state, api, charge) {
   const hint = charge.hint;
   const hasHintPos = hint?.letter && Number.isInteger(hint.position);
   const tip = hint?.word
-    ? ` Tip: try ${String(hint.word).toUpperCase()}!`
+    ? ` Try ${String(hint.word).toUpperCase()}.`
     : hasHintPos
-      ? ` Tip: try putting ${String(hint.letter).toUpperCase()} in spot ${hint.position + 1}!`
+      ? ` Put ${String(hint.letter).toUpperCase()} in spot ${hint.position + 1}.`
       : "";
 
   starTutorialShow(
-    `Now you try! Type a brand new secret word and submit it.${tip}`,
+    `Enter a new secret, then tap Submit.${tip}`,
     { title: "Make a switch", mode: "hide" }
   );
   api.highlight(spyMeterHighlightTarget());
@@ -128,7 +128,7 @@ function runStarTutorial(state, role) {
   if (role !== "setter") {
     api.setNextTutorial("advanced");
     starTutorialShow(
-      "This tutorial needs the Spy screen. End it and start the Star Tutorial again.",
+      "Open this tutorial on the Spy screen.",
       { title: "Wrong role", mode: "end" }
     );
     return;
@@ -153,7 +153,7 @@ function runStarTutorial(state, role) {
   if (state.phase === "gameOver") {
     api.setNextTutorial("advanced");
     starTutorialShow(
-      "The round ended, but you already saw how stars and prizes work. Nice job!",
+      "The round ended, but you saw how stars and rewards work.",
       { title: "Star Tutorial done", mode: "end" }
     );
     return;
@@ -169,7 +169,7 @@ function runStarTutorial(state, role) {
   if (starTutorialFinished) {
     api.setNextTutorial("advanced");
     starTutorialShow(
-      "You did it! You swapped a word, earned stars, and picked a prize. Next time, earn even more stars for even better prizes.",
+      "Done! You changed a secret, earned stars, and picked a reward.",
       { title: "Star Tutorial done", current: 6, total: 6, mode: "end" }
     );
     api.highlight(spyMeterHighlightTarget());
@@ -188,7 +188,7 @@ function runStarTutorial(state, role) {
   // system at once.
   if (step === 0) {
     starTutorialShow(
-      `See this Star Meter? ⭐ It shows how many stars you've earned this round. You already have ${total} of ${STAR_TUTORIAL_MAX}!`,
+      `This is your Star Meter. You have ${total} of ${STAR_TUTORIAL_MAX} stars.`,
       { current: 1, total: 6 }
     );
     api.highlight(spyMeterHighlightTarget());
@@ -198,7 +198,7 @@ function runStarTutorial(state, role) {
 
   if (step === 1) {
     starTutorialShow(
-      "Here's how you earn stars: every time you swap your secret for a brand new word, you get at least 1 star -- sometimes more!",
+      "After each Keep or New choice, you earn at least 1 star.",
       { current: 2, total: 6 }
     );
     api.highlight(spyMeterHighlightTarget());
@@ -208,7 +208,7 @@ function runStarTutorial(state, role) {
 
   if (step === 2) {
     starTutorialShow(
-      "Fill the meter to 5 stars and you get to pick a prize!",
+      "Reach 5 stars to choose a reward.",
       { current: 3, total: 6 }
     );
     api.highlight(spyMeterHighlightTarget());
@@ -246,9 +246,9 @@ function runStarTutorial(state, role) {
     } else if (total >= 5 && !starMilestone5Announced) {
       text = MILESTONE_TEXT[5];
     } else if (total < 5) {
-      text = `That switch landed! ${total} of ${STAR_TUTORIAL_MAX} stars now. Keep going!`;
+      text = `${total} of ${STAR_TUTORIAL_MAX} stars. Keep going.`;
     } else {
-      text = `That switch landed! ${total} of ${STAR_TUTORIAL_MAX} stars now.`;
+      text = `${total} of ${STAR_TUTORIAL_MAX} stars.`;
     }
     starMilestone5Announced = starMilestone5Announced || total >= 5;
     starMilestone9Announced = starMilestone9Announced || total >= 9;
@@ -272,7 +272,7 @@ function runStarTutorial(state, role) {
     starTutorialFinished = true;
     api.setNextTutorial("advanced");
     starTutorialShow(
-      "You did it! You swapped a word, earned stars, and picked a prize. Next time, earn even more stars for even better prizes.",
+      "Done! You changed a secret, earned stars, and picked a reward.",
       { title: "Star Tutorial done", current: 6, total: 6, mode: "end" }
     );
     api.highlight(spyMeterHighlightTarget());
@@ -287,8 +287,8 @@ function runStarTutorial(state, role) {
   if (pendingIsMine) {
     starLastPendingChoiceId = pendingChoice.id;
     starTutorialShow(
-      "Your prize is ready! Wait a second, then tap CHOOSE on your favorite card.",
-      { title: "Pick a prize", current: 5, total: 6, mode: "hide" }
+      "Pick one reward card. It is used right away.",
+      { title: "Pick a reward", current: 5, total: 6, mode: "hide" }
     );
     api.highlight(spyMeterHighlightTarget());
     api.setContinue({ show: false, mode: "hide" });
@@ -297,7 +297,7 @@ function runStarTutorial(state, role) {
 
   if (!state.pendingGuess) {
     starTutorialShow(
-      "Waiting for the Inspector's next guess...",
+      "Waiting for the Inspector...",
       { compact: true, mode: "hide", key: `star-wait-${historyLen}` }
     );
     api.setContinue({ show: false, mode: "hide" });
