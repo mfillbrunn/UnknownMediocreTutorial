@@ -1907,11 +1907,10 @@ function highlightStoredRound(index) {
 }
 
 function highlightSummaryActions() {
-  // Not "#roundSummary .summary-actions" -- the tutorial-2 handoff CTA
-  // (see summary.js's tutorial2Cta) reuses that same class on an earlier
-  // div for the "Continue to Tutorial 2" button, and a plain class
-  // selector would silently match that one instead of the real New
-  // Match/Replay/Leave row this step is actually describing.
+  // Not "#roundSummary .summary-actions" -- that class is reused by other
+  // action rows (e.g. the round summary's own "Next Round" button), and a
+  // plain class selector would risk matching one of those instead of the
+  // real New Match/Replay/Leave row this step is actually describing.
   const el = byId("matchSummaryActions");
 
   // By this step the player has scrolled through round summaries and
@@ -2519,12 +2518,14 @@ window.endTutorial = endTutorial;
 // an explicit choice instead of silently dropping them back at the menu.
 // "Next Tutorial" (see tutorialEndNextMode) points at whatever tutorial
 // makes sense to try next, following the How to Play list's own order:
-// base Tutorial -> Powers -> Quest -> Advanced -> back around to base.
+// base Tutorial -> Quest -> Star -> Advanced -> back around to base.
 // Keyed by the startFreshTutorial() mode that's next, not the one that
 // just finished.
 const TUTORIAL_DONE_COPY = {
-  tutorial2: `Nice work — you've learned the base game. Keep going with the Powers Tutorial, or head back to the menu.`,
-  quest: `Nice work — you've learned the powers tutorial. Keep going with the Quest Tutorial, or head back to the menu.`,
+  // Source-agnostic (no "you've learned the base game" clause) -- reached
+  // both by the base Tutorial's own chain here and by anything else that
+  // points at Quest next.
+  quest: `Nice work! Keep going with the Quest Tutorial, or head back to the menu.`,
   star: `Nice work — you've learned quests. Keep going with the Star Tutorial to see how the Spyometer works, or head back to the menu.`,
   // Kept source-agnostic (no "you've learned the Quest Tutorial" clause)
   // -- this key is reached both by Star's own chain into Advanced and by
@@ -2548,7 +2549,6 @@ const TUTORIAL_DONE_COPY = {
 // tracked here.
 const TUTORIAL_STAGE_TO_KEY = {
   1: "tutorial",
-  2: "tutorial2",
   quest: "quest",
   advanced: "advanced",
   star: "star"
@@ -2954,10 +2954,7 @@ function tutorialSteps(state, role) {
   ) {
     if (state.tutorialStage === "advanced") {
       runAdvancedSummaryTutorial(state);
-    } else if (
-      state.tutorialStage === 2 ||
-      state.tutorialStage === "power"
-    ) {
+    } else if (state.tutorialStage === "power") {
       runPowerSummaryTutorial(state);
     } else {
       runBasicSummaryTutorial(state);
@@ -2971,10 +2968,7 @@ function tutorialSteps(state, role) {
   ) {
     if (state.tutorialStage === "advanced") {
       runAdvancedMatchTutorial(state);
-    } else if (
-      state.tutorialStage === 2 ||
-      state.tutorialStage === "power"
-    ) {
+    } else if (state.tutorialStage === "power") {
       runPowerMatchTutorial(state);
     } else {
       runBasicMatchTutorial(state);
@@ -2984,11 +2978,6 @@ function tutorialSteps(state, role) {
 
   if (state.tutorialStage === "power") {
     runPowerTutorial(state, role);
-    return;
-  }
-
-  if (state.tutorialStage === 2) {
-    runPowerFollowupTutorial(state, role);
     return;
   }
 

@@ -295,21 +295,14 @@ if (action.type === "SET_DAILY_POWERS") {
     // with mode: "tutorial" — nothing else ever sets isTutorial, so
     // without this the lobby->game transition below always carries
     // forward isTutorial: false and TutorialMode never actually engages.
-    // "tutorial2" is the follow-up powers tutorial (one guesser power, one
-    // setter power) — same mechanism, tutorialStage picked up by
-    // TutorialMode.initMatch below via freshState. "tutorialPower" is the
-    // per-power "Try it" tutorial launched from the Power Library --
-    // action.powerId names which single power to teach, validated against
-    // powerMetadata so an untrusted client can't smuggle in an arbitrary
-    // string.
+    // "tutorialPower" is the per-power "Try it" tutorial launched from the
+    // Power Library -- action.powerId names which single power to teach,
+    // validated against powerMetadata so an untrusted client can't
+    // smuggle in an arbitrary string.
     if (action.mode === "tutorial") {
       state.isTutorial = true;
       state.tutorialStage = 1;
     }
-    if (action.mode === "tutorial2") {
-  state.isTutorial = true;
-  state.tutorialStage = 2;
-}
 
 if (action.mode === "quest") {
   state.isTutorial = true;
