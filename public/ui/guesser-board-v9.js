@@ -133,6 +133,7 @@
 
     const { guesserScreen, toggle } = parts;
     guesserScreen.classList.toggle("guesser-sidebar-collapsed", !!collapsed);
+    guesserScreen.dataset.sidebarCollapsed = collapsed ? "true" : "false";
 
     const icon = toggle.querySelector(".guesser-sidebar-toggle-icon");
     if (icon) icon.textContent = collapsed ? "›" : "‹";

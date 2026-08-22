@@ -84,6 +84,7 @@
 #setterScreen .setter-workspace,
 #guesserScreen .guesser-workspace {
   position: relative;
+  isolation: isolate;
   display: flex;
   /* The base .play-row rule in layout.css sets flex-direction:column and
      is never overridden for the guesser the way .theme-setter .play-row
@@ -109,12 +110,12 @@
   max-width: var(--game-sidebar);
   min-width: 0;
   min-height: 0;
-  padding: 10px;
+  padding: 6px;
   overflow: hidden;
-  border: 1px solid var(--game-line);
-  border-radius: var(--game-radius);
-  background: linear-gradient(180deg, var(--game-panel-2), var(--game-panel));
-  box-shadow: var(--game-shadow);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
   transition: width 200ms ease, flex-basis 200ms ease, padding 200ms ease,
     opacity 150ms ease, transform 200ms ease;
 }
@@ -170,13 +171,6 @@
   line-height: 1.45;
 }
 
-#guesserScreen .guesser-sidebar {
-  padding: 6px;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
 
 /* Secretkeeper side column: Spyometer on top, log filling the rest. The Log/Notes
    tab strip is gone, so the log can never be toggled hidden -- force it
@@ -194,7 +188,6 @@
   line-height: 1.4;
 }
 
-#setterScreen .setter-sidebar,
 #setterScreen .setter-sidebar-panels,
 #setterScreen .setter-sidebar-activity {
   border: 0;
@@ -204,7 +197,6 @@
 }
 
 #setterScreen .setter-sidebar {
-  padding: 6px;
   gap: 6px;
 }
 
@@ -507,7 +499,9 @@
 
 :is(#setterScreen .setter-sidebar-toggle, #guesserScreen .guesser-sidebar-toggle) {
   position: absolute;
-  z-index: 80;
+  z-index: 1000;
+  pointer-events: auto !important;
+  touch-action: manipulation;
   /* A fixed offset from the top instead of centering on the whole
      workspace height -- centering put it wherever the midpoint of
      history + draft/decision area happened to land, which on a short
@@ -1196,16 +1190,46 @@
    Pending and reset states
    -------------------------------------------------------------------------- */
 
-/* Waiting on the Secretkeeper: the tiles themselves hold still (bobbing them read
-   as the guess being unstable rather than as progress). Instead each tile
-   carries a small blue loading bar underneath that sweeps left to right,
-   staggered across the row so it scans like a progress indicator. */
-.guesser-pending-history.is-working .history-tile {
+/* Waiting indicator shared by both roles.
+   All five tile bars use one animation period and fixed phase slots, so the
+   highlight travels across the word as one left-to-right wave instead of five
+   independent scanners. */
+.guesser-pending-history.is-working {
+  --pc-wait-accent: var(--game-blue);
+  --pc-wait-track: rgba(88, 201, 255, 0.16);
+}
+#setterScreen.is-not-your-turn .ghost-secret {
+  --pc-wait-accent: var(--role-accent);
+  --pc-wait-track: color-mix(in srgb, var(--role-accent) 16%, transparent);
+}
+:is(
+    .guesser-pending-history.is-working,
+    #setterScreen.is-not-your-turn .ghost-secret
+  ) .history-tile {
+  --pc-wait-index: 0;
   position: relative;
   opacity: 0.86;
 }
-
-.guesser-pending-history.is-working .history-tile::after {
+:is(
+    .guesser-pending-history.is-working,
+    #setterScreen.is-not-your-turn .ghost-secret
+  ) .history-tile:nth-child(2) { --pc-wait-index: 1; }
+:is(
+    .guesser-pending-history.is-working,
+    #setterScreen.is-not-your-turn .ghost-secret
+  ) .history-tile:nth-child(3) { --pc-wait-index: 2; }
+:is(
+    .guesser-pending-history.is-working,
+    #setterScreen.is-not-your-turn .ghost-secret
+  ) .history-tile:nth-child(4) { --pc-wait-index: 3; }
+:is(
+    .guesser-pending-history.is-working,
+    #setterScreen.is-not-your-turn .ghost-secret
+  ) .history-tile:nth-child(5) { --pc-wait-index: 4; }
+:is(
+    .guesser-pending-history.is-working,
+    #setterScreen.is-not-your-turn .ghost-secret
+  ) .history-tile::after {
   content: "";
   position: absolute;
   left: 10%;
@@ -1213,11 +1237,13 @@
   bottom: -5px;
   height: 3px;
   border-radius: 999px;
-  background: rgba(88, 201, 255, 0.16);
-  overflow: hidden;
+  background: var(--pc-wait-track);
+  pointer-events: none;
 }
-
-.guesser-pending-history.is-working .history-tile::before {
+:is(
+    .guesser-pending-history.is-working,
+    #setterScreen.is-not-your-turn .ghost-secret
+  ) .history-tile::before {
   content: "";
   position: absolute;
   bottom: -5px;
@@ -1228,77 +1254,22 @@
   border-radius: 999px;
   background: linear-gradient(
     90deg,
-    rgba(88, 201, 255, 0) 0%,
-    var(--game-blue) 50%,
-    rgba(88, 201, 255, 0) 100%
+    transparent,
+    var(--pc-wait-accent),
+    transparent
   );
-  box-shadow: 0 0 8px rgba(88, 201, 255, 0.75);
-  animation: pc-wait-scan 1.25s linear infinite;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--pc-wait-accent) 75%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  animation: pc-wait-flow 2s linear infinite;
+  animation-delay: calc(var(--pc-wait-index) * 0.32s);
 }
-
-.guesser-pending-history.is-working .history-tile:nth-child(2)::before { animation-delay: 0.1s; }
-.guesser-pending-history.is-working .history-tile:nth-child(3)::before { animation-delay: 0.2s; }
-.guesser-pending-history.is-working .history-tile:nth-child(4)::before { animation-delay: 0.3s; }
-.guesser-pending-history.is-working .history-tile:nth-child(5)::before { animation-delay: 0.4s; }
-
-@keyframes pc-wait-scan {
-  0% { transform: translateX(-45%); opacity: 0; }
-  20% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { transform: translateX(200%); opacity: 0; }
+@keyframes pc-wait-flow {
+  0%   { transform: translateX(-45%); opacity: 0; }
+  2%   { opacity: 1; }
+  14%  { transform: translateX(200%); opacity: 1; }
+  16%, 100% { transform: translateX(200%); opacity: 0; }
 }
-
-/* Waiting on the Guesser: the Secretkeeper's mirror of the scan above. Their own
-   locked-in secret renders read-only as .ghost-secret while it's the
-   Guesser's turn (see draftrow.js's !setterCanEdit branch) -- the exact
-   same "nothing to do but wait" moment the guesser's pending-guess row
-   represents, just the other direction of the same round-trip. Scoped to
-   .is-not-your-turn specifically so this never fires during the OTHER
-   moment .ghost-secret covers (the Secretkeeper's own turn, before they've typed
-   anything yet) -- that one is an active decision waiting to happen, not
-   a wait on the opponent. Recolored to the Setter's own theme accent
-   (var(--role-accent), the setter red) instead of the guesser's blue. */
-#setterScreen.is-not-your-turn .ghost-secret .history-tile {
-  position: relative;
-  opacity: 0.86;
-}
-
-#setterScreen.is-not-your-turn .ghost-secret .history-tile::after {
-  content: "";
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  bottom: -5px;
-  height: 3px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--role-accent) 16%, transparent);
-  overflow: hidden;
-}
-
-#setterScreen.is-not-your-turn .ghost-secret .history-tile::before {
-  content: "";
-  position: absolute;
-  bottom: -5px;
-  left: 10%;
-  z-index: 1;
-  width: 34%;
-  height: 3px;
-  border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--role-accent) 0%, transparent) 0%,
-    var(--role-accent) 50%,
-    color-mix(in srgb, var(--role-accent) 0%, transparent) 100%
-  );
-  box-shadow: 0 0 8px color-mix(in srgb, var(--role-accent) 75%, transparent);
-  animation: pc-wait-scan 1.25s linear infinite;
-}
-
-#setterScreen.is-not-your-turn .ghost-secret .history-tile:nth-child(2)::before { animation-delay: 0.1s; }
-#setterScreen.is-not-your-turn .ghost-secret .history-tile:nth-child(3)::before { animation-delay: 0.2s; }
-#setterScreen.is-not-your-turn .ghost-secret .history-tile:nth-child(4)::before { animation-delay: 0.3s; }
-#setterScreen.is-not-your-turn .ghost-secret .history-tile:nth-child(5)::before { animation-delay: 0.4s; }
-
 /* The submitted guess's flight clone (buildFlightFrom in
    guesser-flow-v7.js). It is appended to <body> and driven purely by
    inline left/top/width/height plus a transform -- so it MUST be
@@ -3230,35 +3201,3 @@ body:not(.light-theme) {
   .pc-star-mini { display: none !important; }
 }
 /* TUTORIAL_MOTION_SIM_PATCH v1: END */
-
-/* -------------------------------------------------------------------------
-   Secretkeeper drawer interaction hardening
-   Persistent navigation must remain usable through announcements, secret
-   locks, charge flights, and late v8/v9/v10 UI updates.
-   ------------------------------------------------------------------------- */
-#setterScreen .setter-workspace {
-  isolation: isolate;
-}
-
-#setterScreen #setterSidebarToggle {
-  pointer-events: auto !important;
-  touch-action: manipulation;
-  z-index: 2147483001 !important;
-}
-
-#setterScreen[data-sidebar-collapsed="true"] .setter-sidebar {
-  flex-basis: 0 !important;
-  width: 0 !important;
-  max-width: 0 !important;
-  padding-inline: 0 !important;
-  border-width: 0 !important;
-  opacity: 0 !important;
-  transform: translateX(-105%) !important;
-  pointer-events: none !important;
-}
-
-#setterScreen[data-sidebar-collapsed="true"] #setterSidebarToggle {
-  left: 1px !important;
-  transform: translate(0, 0) !important;
-  pointer-events: auto !important;
-}
