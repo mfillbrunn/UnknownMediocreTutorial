@@ -99,7 +99,7 @@ function handleSimultaneousPhase(room, state, action, roomId, context) {
     state.guessCount += 1;
     state.simultaneousGuessSubmitted = true;
 
-    // Quest progress is knowable as soon as the Inspector submits.
+    // Quest progress is knowable as soon as the Guesser submits.
     powerEngine.onGuessSubmitted(state, guess, roomId, io);
 
     if (state.timeControl.mode === "chess") {

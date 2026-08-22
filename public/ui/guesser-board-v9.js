@@ -52,7 +52,7 @@
 
     sidebar.id ||= "guesserSidebar";
     sidebar.classList.add("guesser-sidebar");
-    sidebar.setAttribute("aria-label", "Inspector side panel");
+    sidebar.setAttribute("aria-label", "Guesser side panel");
 
     const powersRow = sidebar.querySelector(".guesser-powers-row");
     powersRow?.classList.add("guesser-sidebar-content");

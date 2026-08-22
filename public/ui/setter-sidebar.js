@@ -85,7 +85,7 @@
     if (state?.isTutorial && state.tutorialStage !== "advanced") return false;
     if (state?.phase === "gameOver") return false;
     // Turn-end (which is exactly when this first becomes eligible) is the
-    // same moment a Spy Charge award animation can start (see
+    // same moment a Secretkeeper Charge award animation can start (see
     // client/spy-charge.js) -- Notes popping out over the board would
     // visually clash with the stars still flying to the charge meter, so
     // hold off until that finishes. spy-charge.js re-checks this itself

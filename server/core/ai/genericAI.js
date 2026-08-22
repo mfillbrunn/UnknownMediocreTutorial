@@ -177,30 +177,6 @@ function pickSignalScrambleGuess(state, secretRows) {
   return letters.slice(0, 5).join("");
 }
 
-// Recon Sweep (letterProbe, guesser): test the 5 most common untested
-// letters among the remaining feasible secrets. If none of the remaining
-// candidates share any untested letter (nothing left to learn this way),
-// returns null so the caller skips using the power this turn rather than
-// burning it on a probe that can't teach it anything.
-function pickReconSweepLetters(state, secretRows) {
-  const usedLetters = getUsedLetters(state);
-  const feasible = feasibleSecretsFor(state, secretRows);
-  const counts = letterFrequencyAmong(feasible);
-
-  const top = topLettersByFrequency(counts, usedLetters, 5);
-  if (!top.length) return null;
-
-  if (top.length < 5) {
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-    for (const l of alphabet) {
-      if (top.length >= 5) break;
-      if (!usedLetters.has(l) && !top.includes(l)) top.push(l);
-    }
-  }
-
-  return top.slice(0, 5).join("");
-}
-
 // Caps the pool used for the AI's expensive "how many secrets would this
 // leave" estimates (see pickAISecret below) — a fixed-size random sample
 // instead of the full feasible set, so per-turn cost stops growing with
@@ -335,7 +311,7 @@ function pickAISecret(
   }
 
   // ---------- Path 1: stall (maximize the guesser's remaining ambiguity) ----------
-  // A good Spy wants THIS candidate secret to leave the guesser with as
+  // A good Secretkeeper wants THIS candidate secret to leave the guesser with as
   // many still-plausible words as possible after their next guess — the
   // opposite of "reduction." (This used to weight toward LOWER remaining
   // counts, i.e. deliberately picking secrets that narrowed the guesser's
@@ -784,7 +760,6 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyParams) {
 module.exports = {
   createAI,
   pickLetterLockoutLetter,
-  pickReconSweepLetters,
   feasibleSecretsFor,
   COMMON_LETTER_ORDER
 };

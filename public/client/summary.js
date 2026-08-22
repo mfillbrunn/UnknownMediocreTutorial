@@ -11,14 +11,14 @@ function formatRevealPenaltySummary(powers, noteClass = "reveal-penalty-summary"
   const letter = powers.revealPenaltyLetter;
 
   if (powers.revealPenaltyResult === "accepted") {
-    return `<p class="${noteClass}">⚠️ The Spy claimed <b>${letter}</b> was in the secret — the Inspector accepted, adding <b>+1</b> guess.</p>`;
+    return `<p class="${noteClass}">⚠️ The Secretkeeper claimed <b>${letter}</b> was in the secret — the Guesser accepted, adding <b>+1</b> guess.</p>`;
   }
 
   if (powers.revealPenaltyResult === "wrongCall") {
-    return `<p class="${noteClass}">⚠️ The Spy claimed <b>${letter}</b> was in the secret — the Inspector called it, but it was true. <b>+2</b> guesses for the Spy.</p>`;
+    return `<p class="${noteClass}">⚠️ The Secretkeeper claimed <b>${letter}</b> was in the secret — the Guesser called it, but it was true. <b>+2</b> guesses for the Secretkeeper.</p>`;
   }
 
-  return `<p class="${noteClass}">⚠️ The Spy claimed <b>${letter}</b> was in the secret — the Inspector called the bluff, and caught it.</p>`;
+  return `<p class="${noteClass}">⚠️ The Secretkeeper claimed <b>${letter}</b> was in the secret — the Guesser called the bluff, and caught it.</p>`;
 }
 
 ///CALCULATE WINNER
@@ -37,8 +37,8 @@ function computeMatchResult(state, viewerUserId) {
   const addTime = (id, n) => { if (id) time[id] = (time[id] || 0) + (n || 0); };
 
   rounds.forEach(r => {
-    // The Spy (that round's setter) is credited with a point per guess it
-    // took the Inspector to win.
+    // The Secretkeeper (that round's setter) is credited with a point per guess it
+    // took the Guesser to win.
     addPoints(r.setter, r.guessCount);
     for (const [uid, secs] of Object.entries(r.time || {})) {
       addTime(uid, secs);
@@ -518,8 +518,8 @@ if (state.timeoutLoser)  {
 
   html += `
     <p class="summary-players">
-      <b>${setterName}</b> (Spy) vs
-      <b>${guesserName}</b> (Inspector)
+      <b>${setterName}</b> (Secretkeeper) vs
+      <b>${guesserName}</b> (Guesser)
     </p>
   `;
 // ---- Round time used ----
@@ -678,7 +678,7 @@ function renderStoredRoundSummary(round, index) {
 
   let html = `
     <div class="stored-round" data-round-index="${index}">
-      <h4>Round ${index + 1} – ${getPlayerName(round.setter)} was Spy${roundTimeHtml}</h4>
+      <h4>Round ${index + 1} – ${getPlayerName(round.setter)} was Secretkeeper${roundTimeHtml}</h4>
 
       <div class="summary-table-wrap">
       <table class="summary-table">

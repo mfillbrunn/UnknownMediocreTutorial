@@ -95,7 +95,7 @@ class TutorialMode {
       state.scriptedTurns = 0;
     }
     // Stage "quest": a standalone, live walkthrough of Power Choice's real
-    // Inspector quest system (see client/tutorial-quest.js and
+    // Guesser quest system (see client/tutorial-quest.js and
     // onLobbyReady's quest branch below). Single round, no scripted
     // opening -- seedQuestTutorialRound drops the player straight into a
     // live decision with a forced example quest already active, the same
@@ -109,7 +109,7 @@ class TutorialMode {
     }
 
     // Stage "star": a standalone, entirely narrative deep dive on the
-    // Spy's star/charge system (see client/tutorial-star.js). Single
+    // Secretkeeper's star/charge system (see client/tutorial-star.js). Single
     // round, no scripted opening -- seedStarTutorialRound (called from
     // onLobbyReady below) drops the player straight into a mid-decision
     // scenario for the board to look realistic while the narration plays,

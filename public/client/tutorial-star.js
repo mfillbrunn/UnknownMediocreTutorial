@@ -1,4 +1,4 @@
-// Star Tutorial: a live, hands-on walk through the Spy's star/charge
+// Star Tutorial: a live, hands-on walk through the Secretkeeper's star/charge
 // system. Setter-only, single round. Unlike every other tutorial,
 // Power Choice is actually ENABLED here (see isPowerChoice() in
 // powerChoiceServer.js, which special-cases tutorialStage === "star")
@@ -127,7 +127,7 @@ function runStarTutorial(state, role) {
   if (role !== "setter") {
     api.setNextTutorial("advanced");
     starTutorialShow(
-      "Open this tutorial on the Spy screen.",
+      "Open this tutorial on the Secretkeeper screen.",
       { title: "Wrong role", mode: "end" }
     );
     return;
@@ -314,7 +314,7 @@ function runStarTutorial(state, role) {
 
   if (!state.pendingGuess) {
     starTutorialShow(
-      "Waiting for the Inspector...",
+      "Waiting for the Guesser...",
       { compact: true, mode: "hide", key: `star-wait-${historyLen}` }
     );
     api.setContinue({ show: false, mode: "hide" });

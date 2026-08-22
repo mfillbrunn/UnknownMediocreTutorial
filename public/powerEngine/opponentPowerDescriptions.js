@@ -70,10 +70,10 @@ window.OPPONENT_POWER_DESCRIPTIONS =
       "Your opponent blacked out all feedback and keyboard colors for your next guess.",
 
     wiretap:
-      "Your opponent can see the same remaining-secret count that the Spy sees.",
+      "Your opponent can see the same remaining-secret count that the Secretkeeper sees.",
 
     letterProbe:
-      "Your opponent tested five letters and learned how many of them are in the current secret.",
+      "Your opponent tested five random letters and learned how many of them are in the current secret.",
 
     revealLocation:
       "Your opponent is watching one secret position and can see its current letter.",
@@ -82,7 +82,7 @@ window.OPPONENT_POWER_DESCRIPTIONS =
       "Your opponent submitted two guesses. You see only one, but they receive feedback for both.",
 
     letterProfile:
-      "Your opponent can see a category breakdown of the secret's letters.",
+      "Your opponent can see how many of the secret's letters are vowels.",
 
     delayedIntel:
       "Your opponent delayed this round's feedback until after your next guess.",

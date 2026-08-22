@@ -28,7 +28,7 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 // blocking it would effectively erase real information the feedback
 // already gave away). Among what's left, prefers a letter that hasn't
 // appeared in any guess at all yet: banning one already confirmed absent
-// (gray) is a wasted pick, since the Inspector already knows not to type
+// (gray) is a wasted pick, since the Guesser already knows not to type
 // it.
 function pickLockoutLetter(state) {
   const used = state.powers.letterLockoutUsedLetters || [];
@@ -54,7 +54,7 @@ engine.registerPower("letterLockout", {
     state.powers.letterLockoutUsedLetters = [...used, letter];
     state.powers.letterLockoutBanned = letter;
 
-    io.to(roomId).emit("toast", `The Spy locked out the letter ${letter}.`);
+    io.to(roomId).emit("toast", `The Secretkeeper locked out the letter ${letter}.`);
     io.to(roomId).emit("powerUsed", { type: "letterLockout", letter });
   }
 });

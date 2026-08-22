@@ -3,7 +3,7 @@
 // no entry here just shows its label alone in the same badge card --
 // intentional, not a bug, until that power gets an icon drawn for it.
 const POWER_ICON_IDS = {
-  // Spy (setter)
+  // Secretkeeper (setter)
   hideTile: "icon-hide-evidence",
   suggestSecret: "icon-secret-word-helper",
   confuseColors: "icon-color-swap",
@@ -15,7 +15,7 @@ const POWER_ICON_IDS = {
   delayedIntel: "icon-delayed-clue",
   forceTimer: "icon-time-pressure",
 
-  // Inspector (guesser)
+  // Guesser (guesser)
   suggestGuess: "icon-smart-guess-tip",
   rouletteSecret: "icon-secret-spin",
   revealHistory: "icon-time-rewind",

@@ -1,20 +1,16 @@
 // powers/powers/letterProfileServer.js
 //
-// Always-on guesser power (no activation) — "Letter Profile".
+// Always-on guesser power (no activation) — "Secret Vowel Count" (internal
+// id stays letterProfile). Always shows how many of the secret's 5 letters
+// are vowels -- a single number, recomputed fresh every turn start rather
+// than kept fixed, matching Informant's re-derive pattern.
 //
-// A category (alphabet half / keyboard row / vowel-consonant) is chosen
-// once for the whole match (competitiveMode.js's onLobbyReady, preserved
-// across the round-2 role swap by postGame.js — see state.powers
-// .letterProfileMode) and is not sensitive, so it's visible to both sides
-// unredacted.
-//
-// The actual breakdown of the SECRET's letters across that category is
-// only safe to show the guesser once it's genuinely their turn (state.turn
-// updates and state.secret gets finalized atomically before the broadcast
-// that follows — see transitionAfterSecret/simultaneous.js's early
-// turnStart call — so gating on state.guesser here can't leak a
-// secret the guesser hasn't "earned" yet). Recomputed fresh every turn
-// start rather than kept fixed, matching Informant's re-derive pattern.
+// The actual count is only safe to show the guesser once it's genuinely
+// their turn (state.turn updates and state.secret gets finalized
+// atomically before the broadcast that follows — see
+// transitionAfterSecret/simultaneous.js's early turnStart call — so gating
+// on state.guesser here can't leak a secret the guesser hasn't "earned"
+// yet).
 //
 // state.powers.letterProfileGuesserStat is redacted from the setter in
 // safeState.js (the setter has their own live equivalent computed from
@@ -33,7 +29,7 @@ engine.registerPower("letterProfile", {
 
     state.powers.letterProfileGuesserStat = computeLetterProfileStats(
       state.secret,
-      state.powers.letterProfileMode
+      "vowels"
     );
   }
 });

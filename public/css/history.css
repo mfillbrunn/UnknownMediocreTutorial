@@ -16,7 +16,7 @@
 .history-tile {
 /* Sized against the board column's own width (see .center-col's
    container-type in layout.css), not the raw viewport, and shared by
-   both roles -- the Setter and Inspector boards used to run two
+   both roles -- the Setter and Guesser boards used to run two
    different clamp formulas (a lower cap for the guesser, a higher one
    for .theme-setter), which is exactly why the same tile read as
    noticeably smaller on one screen than the other. One shared formula

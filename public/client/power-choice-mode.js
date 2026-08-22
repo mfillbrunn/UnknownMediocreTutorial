@@ -188,13 +188,13 @@
       window.showPowerActionPopup({
         emoji: window.POWER_METADATA?.letterLockout?.emoji || "🚫",
         title: "Lock a letter?",
-        desc: "Bans a random letter the Inspector hasn't tried yet from their next guess. Once picked, that letter can never be banned again this match.",
+        desc: "Bans a random letter the Guesser hasn't tried yet from their next guess. Once picked, that letter can never be banned again this match.",
         useLabel: "Lock a letter",
         showUse: true,
         useEnabled: true,
         onUse: submit
       });
-    } else if (window.confirm("Ban a random untried letter from the Inspector's next guess?")) {
+    } else if (window.confirm("Ban a random untried letter from the Guesser's next guess?")) {
       submit();
     }
   }
@@ -282,12 +282,12 @@
     }
     if (grants.includes("letterProfile")) {
       const stat = window.state?.powers?.letterProfileGuesserStat;
-      const statLines = stat && typeof letterProfileLines === "function" ? letterProfileLines(stat) : "";
+      const value = Number.isInteger(stat?.vowels) ? String(stat.vowels) : null;
       lines.push(`<div class="pc-persistent-power-line pc-letter-profile-line">
         <span class="pc-persistent-power-icon" aria-hidden="true">🔤</span>
-        <span class="pc-persistent-power-label">Letter Profile</span>
-        ${statLines
-          ? `<span class="pc-letter-profile-lines">${statLines}</span>`
+        <span class="pc-persistent-power-label">Secret Vowel Count</span>
+        ${value !== null
+          ? `<span class="pc-persistent-power-value">${esc(value)}</span>`
           : `<span class="pc-persistent-power-pending">—</span>`}
       </div>`);
     }
@@ -360,7 +360,7 @@
 
   // #guesserPowerContainer (the container renderInspectorPanel used to
   // target) is permanently display:none in the current layout -- see
-  // persistentPowerMarkup's comment above. This gives the Inspector's
+  // persistentPowerMarkup's comment above. This gives the Guesser's
   // panel (next-quest preview, reward intel, and now the persistent-power
   // readouts) an actually-visible home, positioned the same way the quest
   // card's own host is: repositioned every render rather than inserted
@@ -1087,7 +1087,7 @@
 
   // Cards whose reward fires with real player-typed input instead of
   // immediately on click -- see rewardInputArmed above.
-  const REWARD_INPUT_POWER_IDS = new Set(["letterProbe", "betMiss", "doubleGuess"]);
+  const REWARD_INPUT_POWER_IDS = new Set(["betMiss", "doubleGuess"]);
 
   // The armed card's own content, swapped in for its normal icon/title/
   // description while the player is entering input. cleanWord() (top of
@@ -1106,23 +1106,13 @@
         </div>
       </div>`;
     }
-    if (option.powerId === "doubleGuess") {
-      return `<div class="pc-reward-input-form">
-        <span class="pc-reward-input-label">Type both guesses:</span>
-        <input type="text" class="pc-reward-word-input" data-slot="0" maxlength="5" placeholder="GUESS 1" autocomplete="off" autocapitalize="characters">
-        <input type="text" class="pc-reward-word-input" data-slot="1" maxlength="5" placeholder="GUESS 2" autocomplete="off" autocapitalize="characters">
-        <div class="pc-reward-input-actions">
-          <button type="button" class="pc-reward-fire-btn" disabled>Fire</button>
-          <button type="button" class="pc-reward-cancel-btn">Cancel</button>
-        </div>
-      </div>`;
-    }
-    // letterProbe
+    // doubleGuess
     return `<div class="pc-reward-input-form">
-      <span class="pc-reward-input-label">Type 5 letters to test:</span>
-      <input type="text" class="pc-reward-word-input" data-slot="0" maxlength="5" placeholder="5 LETTERS" autocomplete="off" autocapitalize="characters">
+      <span class="pc-reward-input-label">Type both guesses:</span>
+      <input type="text" class="pc-reward-word-input" data-slot="0" maxlength="5" placeholder="GUESS 1" autocomplete="off" autocapitalize="characters">
+      <input type="text" class="pc-reward-word-input" data-slot="1" maxlength="5" placeholder="GUESS 2" autocomplete="off" autocapitalize="characters">
       <div class="pc-reward-input-actions">
-        <button type="button" class="pc-reward-fire-btn" disabled>Sweep</button>
+        <button type="button" class="pc-reward-fire-btn" disabled>Fire</button>
         <button type="button" class="pc-reward-cancel-btn">Cancel</button>
       </div>
     </div>`;
@@ -1239,8 +1229,6 @@
           fireChoice(optionId, { betMissNumber: betValue });
         } else if (rewardInputArmed?.powerId === "doubleGuess") {
           fireChoice(optionId, { guess1: wordInputs[0].value, guess2: wordInputs[1].value });
-        } else {
-          fireChoice(optionId, { letters: wordInputs[0].value });
         }
       });
 

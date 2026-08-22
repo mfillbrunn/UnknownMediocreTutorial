@@ -2,9 +2,9 @@
 
 // Big corner badges for a picked candidate, instead of the old small text
 // pill -- "kind" is a semantic key (not display text) so each one gets its
-// own shape: "start" for the Spy's first (immediately-active) pick, "five"
+// own shape: "start" for the Secretkeeper's first (immediately-active) pick, "five"
 // for their second (locked-until-the-power-threshold) pick, and "selected"
-// for anything the Inspector picks -- power or Quest alike share the exact
+// for anything the Guesser picks -- power or Quest alike share the exact
 // same checkmark icon, since for them there's only ever one meaningful
 // state ("this is my pick"), not two different ones to tell apart.
 //
@@ -134,8 +134,8 @@ window.renderDraftScreen = function (state) {
   const roleLabel = $("draftRoleLabel");
   if (roleLabel) {
     roleLabel.textContent = isGuesser
-      ? "Drafting for: Inspector"
-      : "Drafting for: Spy";
+      ? "Drafting for: Guesser"
+      : "Drafting for: Secretkeeper";
 
     roleLabel.classList.toggle("role-setter", !isGuesser);
     roleLabel.classList.toggle("role-guesser", isGuesser);

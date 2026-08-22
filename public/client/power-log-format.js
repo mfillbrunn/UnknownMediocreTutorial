@@ -75,10 +75,10 @@
         emoji: "",
         label: "Quest",
         desc: "",
-        opponentDesc: "The Inspector claimed their Quest early.",
+        opponentDesc: "The Guesser claimed their Quest early.",
         detail,
         ownText: `Quest ${detail}`,
-        opponentText: `Inspector's Quest ${detail}`,
+        opponentText: `Guesser's Quest ${detail}`,
         text: `Quest ${detail}`,
         actorRole: "guesser"
       };
@@ -96,12 +96,12 @@
       label: "Quest",
       desc: "",
       opponentDesc:
-        "The Inspector completed their Quest.",
+        "The Guesser completed their Quest.",
       detail,
       ownText: detail ? `Quest completed — ${detail}` : "Quest completed",
       opponentText: detail
-        ? `Inspector completed their Quest — ${detail}`
-        : "Inspector completed their Quest",
+        ? `Guesser completed their Quest — ${detail}`
+        : "Guesser completed their Quest",
       text: detail ? `Quest completed — ${detail}` : "Quest completed",
       actorRole: "guesser"
     };
@@ -117,12 +117,12 @@
       emoji: "🎯",
       label: "Setter Quest",
       desc: "",
-      opponentDesc: "The Spy used their Setter Quest reward.",
+      opponentDesc: "The Secretkeeper used their Setter Quest reward.",
       detail: letter ? `reset letter ${letter}` : null,
       ownText: letter ? `Setter Quest: reset letter ${letter}` : "Setter Quest reward used",
       opponentText: letter
-        ? `Setter Quest: Spy reset letter ${letter}`
-        : "Spy used their Setter Quest reward",
+        ? `Setter Quest: Secretkeeper reset letter ${letter}`
+        : "Secretkeeper used their Setter Quest reward",
       text: letter ? `Setter Quest: reset letter ${letter}` : "Setter Quest reward used",
       actorRole: "setter"
     };

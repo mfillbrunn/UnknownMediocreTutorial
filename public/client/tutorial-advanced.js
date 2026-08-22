@@ -107,7 +107,7 @@ function runAdvancedTutorialGuesser(state) {
 
     if (state.simultaneousGuessSubmitted) {
       advancedTutorialShow(
-        "Guess sent. Wait for the Spy.",
+        "Guess sent. Wait for the Secretkeeper.",
         {
           role: "guesser",
           title: "Start the round",
@@ -207,7 +207,7 @@ function runAdvancedTutorialGuesser(state) {
 
     if (state.pendingGuess) {
       advancedTutorialShow(
-        "Guess sent. Wait for the Spy.",
+        "Guess sent. Wait for the Secretkeeper.",
         {
           role: "guesser",
           title: "Drag and Lock done",
@@ -240,10 +240,10 @@ function runAdvancedTutorialGuesser(state) {
   if (round >= 2) {
     stopKeyDemo();
     advancedTutorialShow(
-      "Next, try the Spy tools.",
+      "Next, try the Secretkeeper tools.",
       {
         role: "guesser",
-        title: "Inspector tools done",
+        title: "Guesser tools done",
         compact: true,
         mode: "hide"
       }
@@ -263,7 +263,7 @@ function runAdvancedTutorialSetter(state) {
         "The same Drag and Lock tools work for secrets.",
         {
           role: "setter",
-          title: "Spy tools",
+          title: "Secretkeeper tools",
           current: 1,
           total: 2,
           placement: "top"
@@ -278,10 +278,10 @@ function runAdvancedTutorialSetter(state) {
 
     if (state.simultaneousSecretSubmitted) {
       advancedTutorialShow(
-        "Secret saved. Wait for the Inspector.",
+        "Secret saved. Wait for the Guesser.",
         {
           role: "setter",
-          title: "Spy tools",
+          title: "Secretkeeper tools",
           current: 2,
           total: 2,
           compact: true,
@@ -296,7 +296,7 @@ function runAdvancedTutorialSetter(state) {
         `Type ${word}, then tap Submit.`,
         {
           role: "setter",
-          title: "Spy tools",
+          title: "Secretkeeper tools",
           current: 2,
           total: 2,
           placement: "top",
@@ -321,7 +321,7 @@ function runAdvancedTutorialSetter(state) {
     if (tutorialSubStep === 0) {
       if (!state.pendingGuess) {
         advancedTutorialShow(
-          "The Inspector is thinking.",
+          "The Guesser is thinking.",
           {
             role: "setter",
             title: "Wait and plan",
@@ -423,7 +423,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 5) {
       advancedTutorialShow(
-        "Concede ends the round now. An Inspector also gets a 10-point penalty.",
+        "Concede ends the round now. An Guesser also gets a 10-point penalty.",
         {
           role: "setter",
           title: "Concede",
@@ -513,7 +513,7 @@ function runAdvancedSummaryTutorial(state) {
 
   if (tutorialSubStep === 0) {
     advancedTutorialShow(
-      "Round done. Next, you play as the Spy.",
+      "Round done. Next, you play as the Secretkeeper.",
       {
         role: "guesser",
         title: "Round finished",

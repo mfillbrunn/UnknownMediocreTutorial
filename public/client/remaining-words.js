@@ -85,7 +85,7 @@ function renderSetterCoverStrength(
       shortText = "LOSES";
 
       description =
-        "This draft matches the Inspector's pending guess and would end the round.";
+        "This draft matches the Guesser's pending guess and would end the round.";
 
       break;
 
@@ -188,7 +188,7 @@ function renderSetterRemainingBox(boxState) {
   // window.refreshTutorialKeyDemo hooks into the draft renderers.
   window.refreshTutorialRemainingBox?.(boxState);
 
-  // Once the Spy has sent their Keep/New decision for the guess on the
+  // Once the Secretkeeper has sent their Keep/New decision for the guess on the
   // board there is nothing left to decide about it, so the counts go away
   // with the stars instead of sitting under the submitted row's outline
   // while it flies to history (see onSetterDecisionSubmitted).
@@ -279,7 +279,7 @@ function renderGuesserRemainingBox(boxState) {
 
   const guideOn = document.body.classList.contains("guide-on");
   const hint = guideOn
-    ? `<div class="line remaining-hint">How many possible secrets still fit every clue so far — the same number the Spy sees.</div>`
+    ? `<div class="line remaining-hint">How many possible secrets still fit every clue so far — the same number the Secretkeeper sees.</div>`
     : "";
 
   const currentLine =

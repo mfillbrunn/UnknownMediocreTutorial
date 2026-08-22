@@ -1,5 +1,5 @@
 // Quest Tutorial: a live, hands-on walk through Power Choice's real
-// Inspector quest system. Guesser-only, single round. Power Choice is
+// Guesser quest system. Guesser-only, single round. Power Choice is
 // actually ENABLED here (see isPowerChoice() in powerChoiceServer.js,
 // which special-cases tutorialStage === "quest") -- the player submits a
 // real guess against a real forced example quest, earns a real reward
@@ -91,7 +91,7 @@ function runQuestTutorial(state, role) {
   if (role !== "guesser") {
     api.setNextTutorial("star");
     questTutorialShow(
-      "Open this tutorial on the Inspector screen.",
+      "Open this tutorial on the Guesser screen.",
       { title: "Wrong role", mode: "end" }
     );
     return;
@@ -273,11 +273,11 @@ function runQuestTutorial(state, role) {
   }
 
   // Quest succeeded but the reward hasn't opened yet -- it only opens once
-  // the setter's next decision hands the turn back to the Inspector (see
+  // the setter's next decision hands the turn back to the Guesser (see
   // maybeOpenChoice's turn-owner check in powerChoiceServer.js).
   if (questOutcome === "success") {
     questTutorialShow(
-      "Waiting for the Spy...",
+      "Waiting for the Secretkeeper...",
       { compact: true, mode: "hide", key: `quest-wait-${attempts}` }
     );
     api.setContinue({ show: false, mode: "hide" });

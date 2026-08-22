@@ -204,11 +204,11 @@
           <input id="loadoutNameInput" class="menu-input" placeholder="Loadout name" maxlength="40" autocomplete="off" />
           <div class="dev-powers-columns">
             <div class="dev-powers-col">
-              <div class="dev-powers-col-label role-setter">Spy (max 3)</div>
+              <div class="dev-powers-col-label role-setter">Secretkeeper (max 3)</div>
               <div class="dev-powers-list" id="loadoutSetterList"></div>
             </div>
             <div class="dev-powers-col">
-              <div class="dev-powers-col-label role-guesser">Inspector (max 3)</div>
+              <div class="dev-powers-col-label role-guesser">Guesser (max 3)</div>
               <div class="dev-powers-list" id="loadoutGuesserList"></div>
             </div>
           </div>

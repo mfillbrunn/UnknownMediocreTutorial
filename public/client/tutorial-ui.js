@@ -753,7 +753,7 @@ function defaultTutorialTitle() {
   if (stage === "advanced") return "Advanced UI";
   if (stage === "power" || stage === 2) return "Powers";
   if (stage === "quest") return "Quest";
-  return window.myRole === "setter" ? "Spy basics" : "Inspector basics";
+  return window.myRole === "setter" ? "Secretkeeper basics" : "Guesser basics";
 }
 
 function tutorialToneColor(tone) {
@@ -1748,7 +1748,7 @@ function highlightPowerButtonByText(
         btn.textContent;
 
       if (text.trim() === label) {
-        // The Spy's power cards live inside the collapsible setter
+        // The Secretkeeper's power cards live inside the collapsible setter
         // sidebar (see setter-board.js) -- collapsed, the button is
         // zero-size, which sends the focus ring to a broken position.
         // Force it open before highlighting so the ring always lands on
@@ -1956,7 +1956,7 @@ function highlightStoredRoundSecretSegment(
 // Collapses a round's per-guess finalSecret list into runs of consecutive
 // guesses that faced the same secret -- e.g. secret X for guesses 1-2,
 // then Y for guess 3 -- so the match summary can narrate exactly when (and
-// to what) the Spy changed their secret, instead of just listing words.
+// to what) the Secretkeeper changed their secret, instead of just listing words.
 function computeSecretSegments(round) {
   const segments = [];
 
@@ -1994,7 +1994,7 @@ function describeSecretSegment(
       : `guesses ${segment.startTurn}–${segment.endTurn}`;
 
   return isFirst
-    ? `The Spy's secret was "${segment.secret}" for ${span}.`
+    ? `The Secretkeeper's secret was "${segment.secret}" for ${span}.`
     : `Then they switched to "${segment.secret}" for ${span}.`;
 }
 

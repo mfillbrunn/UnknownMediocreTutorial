@@ -22,7 +22,7 @@
   function ensureNotesButton() {
     // Notes were removed for both roles -- the panel this button opens no
     // longer exists, so the button must not exist either. Without this it
-    // kept appearing on the Inspector's turn (that's when notes used to be
+    // kept appearing on the Guesser's turn (that's when notes used to be
     // "available") and opened nothing.
     if (!byId("notesPanelSetter")) {
       byId("setterNotesQuickBtnV9")?.remove();
@@ -38,7 +38,7 @@
       button.type = "button";
       button.id = "setterNotesQuickBtnV9";
       button.className = "setter-notes-quick-btn-v9 hidden";
-      button.title = "Open Notes while the Inspector thinks";
+      button.title = "Open Notes while the Guesser thinks";
       button.setAttribute("aria-label", button.title);
       button.setAttribute("aria-expanded", "false");
       button.innerHTML = `

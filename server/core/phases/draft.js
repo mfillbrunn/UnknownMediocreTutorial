@@ -46,7 +46,7 @@ function handleDraftPhase(room, state, action, roomId, context) {
     } else if (target === 1) {
       picks.splice(0, picks.length, action.power);
     } else {
-      // The first Spy pick is the starting power. Once both slots are full,
+      // The first Secretkeeper pick is the starting power. Once both slots are full,
       // clicking a third candidate replaces only the locked second slot.
       picks.splice(target - 1, 1, action.power);
     }

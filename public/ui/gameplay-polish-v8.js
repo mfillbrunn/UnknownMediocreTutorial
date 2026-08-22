@@ -50,7 +50,7 @@
     banner.className = "setter-inspector-turn-notes-banner";
     banner.innerHTML = `
       <span aria-hidden="true">✎</span>
-      <span>Inspector turn — use the time to jot down notes</span>
+      <span>Guesser turn — use the time to jot down notes</span>
     `;
 
     panel.prepend(banner);
@@ -331,7 +331,7 @@
     const screen = byId("setterScreen");
 
     // v5 deliberately disabled the old maximize system. Disconnect its
-    // observer so it cannot strip the new, intentional Inspector-turn panel.
+    // observer so it cannot strip the new, intentional Guesser-turn panel.
     screen?.__polishObserver?.disconnect?.();
     if (screen) screen.__polishObserver = null;
 
@@ -483,11 +483,11 @@
 
     if (submitButton) {
       submitButton.disabled = !canEdit || draft.length !== 5;
-      // "Finish New Guess" while still typing (mirrors the Spy's own
+      // "Finish New Guess" while still typing (mirrors the Secretkeeper's own
       // "FINISH NEW SECRET" for an incomplete draft -- see client.js's
       // computeSetterSecretStatus), then spelled out as the actual word
       // once there's a real 5-letter guess to submit -- same "actual word
-      // once it's actionable" treatment as the Spy's Keep/Submit buttons.
+      // once it's actionable" treatment as the Secretkeeper's Keep/Submit buttons.
       submitButton.textContent =
         draft.length === 5 ? `Submit ${draft}` : "Finish New Guess";
     }

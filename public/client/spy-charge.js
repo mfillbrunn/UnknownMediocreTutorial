@@ -77,7 +77,7 @@
           aria-valuemin="0"
           aria-valuemax="12"
           aria-valuenow="0"
-          aria-label="Spy charge: 0 of 12 stars"
+          aria-label="Secretkeeper charge: 0 of 12 stars"
         >
           ${Array.from({ length: MAX_CHARGE }, (_, index) => {
             const value = index + 1;
@@ -133,7 +133,7 @@
     });
 
     meter.setAttribute("aria-valuenow", String(total));
-    meter.setAttribute("aria-label", `Spy charge: ${total} of ${MAX_CHARGE} stars`);
+    meter.setAttribute("aria-label", `Secretkeeper charge: ${total} of ${MAX_CHARGE} stars`);
   }
 
   // This button still does the reset job the old separate reset button
@@ -638,7 +638,7 @@
           window.showBigAnnounce?.({
             icon: "⚡",
             title: "Second power unlocked",
-            sub: window.POWER_METADATA?.[powerId]?.label || "Your locked Spy power is ready.",
+            sub: window.POWER_METADATA?.[powerId]?.label || "Your locked Secretkeeper power is ready.",
             roleClass: "role-setter",
             duration: 1900,
             compact: true

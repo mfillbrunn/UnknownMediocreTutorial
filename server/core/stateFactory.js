@@ -177,7 +177,7 @@ const powers = {
       mode : null
       },
       revealLetterActive: false,
-            // SPY COVER-STRENGTH CHARGE
+            // SECRETKEEPER COVER-STRENGTH CHARGE
       spyCharge: {
         enabled: false,
         total: 0,

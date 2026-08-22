@@ -74,17 +74,18 @@
     if (!setterScreen || !toggle) return;
 
     setterScreen.classList.toggle("setter-sidebar-collapsed", collapsed);
+    setterScreen.dataset.sidebarCollapsed = collapsed ? "true" : "false";
     toggle.setAttribute("aria-expanded", String(!collapsed));
     toggle.setAttribute(
       "aria-label",
-      collapsed ? "Show Spy side panel" : "Hide Spy side panel"
+      collapsed ? "Show Secretkeeper side panel" : "Hide Secretkeeper side panel"
     );
     toggle.title = collapsed ? "Show side panel" : "Hide side panel";
 
     if (icon) icon.textContent = collapsed ? "›" : "‹";
     if (persist) saveCollapsed(collapsed);
 
-    // Collapsing while the Inspector-turn Notes popout is showing
+    // Collapsing while the Guesser-turn Notes popout is showing
     // (gameplay-polish-v8.js's openInspectorTurnNotes, flagged here via
     // this class it adds/removes in lockstep with its own notesPopped
     // state) used to call closeNotes() regardless, which tore down that
@@ -182,6 +183,15 @@
 
     if (!setterScreen || !sidebar || !toggle || !edge) return;
 
+    // Reconnect/polish code may invoke initializers more than once -- bind
+    // the listeners below exactly once regardless, and still resync visual
+    // state (class, dataset, aria) every call.
+    if (toggle.dataset.drawerBound === "true") {
+      setCollapsed(readCollapsed(), false);
+      return;
+    }
+    toggle.dataset.drawerBound = "true";
+
     setCollapsed(readCollapsed(), false);
 
     toggle.addEventListener("click", event => {
@@ -215,7 +225,7 @@
   }
 
   // Congratulation text for a genuinely good decision -- shown ONLY as the
-  // floating popup once the Spy actually commits (see floatPraise /
+  // floating popup once the Secretkeeper actually commits (see floatPraise /
   // onSetterDecisionSubmitted below), never inline beside the stars while
   // the decision is still being weighed. It used to render inline too, but
   // "Perfect!"/"Flawless" sitting next to a draft that hasn't been sent yet
@@ -280,7 +290,7 @@
     _praiseText = "";
   }
 
-  // The Spy's decision for the guess currently on the board has been sent.
+  // The Secretkeeper's decision for the guess currently on the board has been sent.
   // Held as the pending guess itself rather than a bare boolean so it
   // clears itself the moment the next guess arrives, with no separate
   // reset path to keep in step.
@@ -295,7 +305,7 @@
   // exactly the same signal the stars do.
   window.setterDecisionCommitted = decisionAlreadyMade;
 
-  // Floats the praise word up over the board for a moment after the Spy
+  // Floats the praise word up over the board for a moment after the Secretkeeper
   // commits. Beside the stars it was only ever visible while the decision
   // was still being made -- the point of the congratulation is to land ON
   // the commit, which is also when the stars themselves go away.
@@ -359,7 +369,7 @@
   // stars' own narrower gate below (which additionally requires an actual
   // rating). This one is just "is there a live Keep/New decision to show
   // ANYTHING about right now": not during the simultaneous opening (no
-  // prior secret to compare against yet), not on the Inspector's turn,
+  // prior secret to compare against yet), not on the Guesser's turn,
   // and not once this turn's decision has already been sent. Previously
   // the wrapper itself had no visibility gate at all -- its border-bottom
   // divider and min-height sat there as an empty bar even while every
@@ -582,7 +592,7 @@
     scheduleChargeObserver();
   }
 
-  // Exposed for tutorial-ui.js's highlightPowerButtonByText -- the Spy's
+  // Exposed for tutorial-ui.js's highlightPowerButtonByText -- the Secretkeeper's
   // power cards live inside this collapsible sidebar, so a tutorial step
   // trying to highlight one has to force it open first or the highlight
   // ring ends up positioned against a hidden (zero-size) element.

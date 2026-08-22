@@ -8,21 +8,14 @@ const {
 engine.registerPower("vowelRefresh", {
   apply(state, action, roomId, io) {
     if (state.powers.vowelRefreshUsed) return false;
+    if (!state.history?.length) return false;
 
-    const lastEntry = state.history[state.history.length - 1];
-    if (!lastEntry) return false;
-
-    const vowels = new Set(["A", "E", "I", "O", "U"]);
-    const lastGuess = String(lastEntry.guess || "").toUpperCase();
-    const resetVowels = new Set();
-
-    for (const letter of lastGuess) {
-      if (vowels.has(letter)) {
-        resetVowels.add(letter);
-      }
-    }
-
-    if (!resetVowels.size) return false;
+    // All 5 vowels, every time -- not just whichever happened to appear in
+    // the most recent guess. eraseLetterKnowledge already scans the WHOLE
+    // history (every past guess's feedback, plus extraConstraints) for the
+    // given letters, so this wipes every vowel's accumulated info from the
+    // entire match, not just this one guess.
+    const resetVowels = new Set(["A", "E", "I", "O", "U"]);
 
     state.powers.vowelRefreshUsed = true;
     state.powers.vowelRefreshActive = true;
