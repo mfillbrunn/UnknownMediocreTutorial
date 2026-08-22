@@ -943,6 +943,10 @@
       <button type="button" class="pc-modal-peek" title="Look at the board -- your reward stays waiting">Hide</button>
       <h2></h2>
       <p class="pc-modal-sub"></p>
+      <div class="pc-reward-toolbar">
+        <button type="button" class="pc-refresh-choice-btn" title="Refresh this reward offer once per game">&#8635; REFRESH CHOICES</button>
+        <span class="pc-rarity-odds" aria-live="polite"></span>
+      </div>
       <div class="pc-card-grid"></div>
     </div>`;
     document.body.appendChild(modal);
@@ -1118,6 +1122,20 @@
     </div>`;
   }
 
+  // POWER CHOICE RARITY + REFRESH V1: CLIENT START
+  function rewardRarityMeta(option, pending) {
+    const rawTier = Number(
+      option?.rarityTier ||
+      option?.tier ||
+      (option?.kind === "power" ? window.POWER_TIERS?.[option.powerId]?.tier : 1) ||
+      1
+    );
+    const tier = rawTier === 3 ? 3 : rawTier === 2 ? 2 : 1;
+    if (tier === 3) return { tier, key: "legendary", label: "LEGENDARY", metal: "GOLD" };
+    if (tier === 2) return { tier, key: "rare", label: "RARE", metal: "SILVER" };
+    return { tier, key: "common", label: "COMMON", metal: "BRONZE" };
+  }
+
   function renderRewardChoiceCards(pending, grid) {
     const options = Array.isArray(pending?.options) ? pending.options : [];
     if (rewardInputArmed && rewardInputArmed.choiceId !== pending.id) rewardInputArmed = null;
@@ -1125,14 +1143,8 @@
     grid.setAttribute("aria-label", "Reward choices, listed top to bottom.");
     grid.innerHTML = options.map(option => {
       const armed = rewardInputArmed?.optionId === option.id;
-      const tierNumber =
-        option.tier ||
-        (option.kind === "power"
-          ? window.POWER_TIERS?.[option.powerId]?.tier || 1
-          : pending.tier || null);
-      const tier = tierNumber
-        ? `<span class="pc-tier" data-tier="${esc(tierNumber)}">TIER ${esc(tierNumber)}</span>`
-        : "";
+      const rarity = rewardRarityMeta(option, pending);
+      const tier = `<span class="pc-tier pc-rarity-badge" data-tier="${esc(rarity.tier)}" data-rarity="${esc(rarity.key)}"><span>${esc(rarity.label)}</span><small>${esc(rarity.metal)}</small></span>`;
       const description = typeof optionDescription === "function"
         ? optionDescription(option)
         : option?.description || "";
@@ -1141,12 +1153,12 @@
         : fixedRewardAccent(option);
       const style = accent ? ` style="--pc-card-accent:${esc(accent)}"` : "";
       if (armed) {
-        return `<div class="pc-choice-card pc-choice-card-armed" data-option-id="${esc(option.id)}"${style}>
+        return `<div class="pc-choice-card pc-choice-card-armed" data-option-id="${esc(option.id)}" data-rarity="${esc(rarity.key)}"${style}>
           <strong>${esc(option.title)}</strong>
           ${rewardInputFormMarkup(option)}
         </div>`;
       }
-      return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}"${style}>
+      return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}" data-rarity="${esc(rarity.key)}"${style}>
         <span class="pc-card-icon">${optionIconMarkup(option)}</span>
         ${tier}
         <span class="pc-card-body">
@@ -1267,10 +1279,43 @@
   function openRewardModal(pending) {
     const modal = ensureChoiceModal();
     modal.dataset.choiceId = pending.id;
+    modal.dataset.choiceRevision = String(pending.revision || 0);
     modal.dataset.rewardRole = pending.role || "";
     modal.querySelector("h2").textContent = pending.title || "Choose a reward";
     modal.querySelector(".pc-modal-sub").textContent =
       pending.subtitle || "Choose one card. It activates immediately.";
+
+    const refreshBtn = modal.querySelector(".pc-refresh-choice-btn");
+    const refreshAvailable = pending.refreshAvailable !== false;
+    if (refreshBtn) {
+      refreshBtn.disabled = !refreshAvailable;
+      refreshBtn.textContent = refreshAvailable ? "↻ REFRESH CHOICES - 1/GAME" : "↻ REFRESH USED";
+      if (!refreshBtn.dataset.wired) {
+        refreshBtn.dataset.wired = "1";
+        refreshBtn.addEventListener("click", event => {
+          event.stopPropagation();
+          const current = window.state?.powerChoice?.pendingChoice;
+          if (!current || current.id !== modal.dataset.choiceId || refreshBtn.disabled) return;
+          // Disarm payload-entry cards before replacing the offer.
+          rewardInputArmed = null;
+          refreshBtn.disabled = true;
+          window.sendGameAction?.({
+            type: "POWER_CHOICE_REFRESH",
+            userId: me(),
+            choiceId: current.id
+          });
+        });
+      }
+    }
+
+    const probabilities = pending.rarityProbabilities;
+    const odds = modal.querySelector(".pc-rarity-odds");
+    if (odds) {
+      odds.textContent = probabilities
+        ? `${Math.round(probabilities.common * 100)}% Bronze / ${Math.round(probabilities.rare * 100)}% Silver / ${Math.round(probabilities.legendary * 100)}% Gold`
+        : "";
+    }
+
     const grid = modal.querySelector(".pc-card-grid");
     renderRewardChoiceCards(pending, grid);
     const peekBar = typeof ensurePeekBar === "function" ? ensurePeekBar() : null;
@@ -1305,6 +1350,7 @@
       modal.classList.remove("is-open", "is-peeking");
       byId("pcRewardPeekBar")?.classList.remove("is-visible");
       modal.dataset.choiceId = "";
+      modal.dataset.choiceRevision = "";
       if (rewardModalTimer) {
         clearTimeout(rewardModalTimer);
         rewardModalTimer = null;
@@ -1312,10 +1358,20 @@
       rewardModalPendingId = "";
       return;
     }
-    // Already showing (or peeked away, which keeps is-open -- see
-    // ensurePeekBar/openRewardModal's own peek button, only .is-peeking
-    // toggles) this exact choice. Nothing to do.
-    if (modal.dataset.choiceId === pending.id && modal.classList.contains("is-open")) return;
+    // Same choice id can receive new cards after a refresh. Revision lets us
+    // redraw immediately without re-running the reward settle delay/flourish.
+    const pendingRevision = String(pending.revision || 0);
+    if (modal.dataset.choiceId === pending.id && modal.classList.contains("is-open")) {
+      if (modal.dataset.choiceRevision !== pendingRevision) {
+        if (rewardModalTimer) {
+          clearTimeout(rewardModalTimer);
+          rewardModalTimer = null;
+        }
+        rewardModalPendingId = pending.id;
+        openRewardModal(pending);
+      }
+      return;
+    }
     // A settle-timer for this same id is already ticking -- don't restart
     // it and don't re-trigger the flourish every render tick. This used
     // to be `if (rewardModalPendingId === pending.id) return;` alone,
@@ -1342,6 +1398,7 @@
     }, REWARD_MODAL_SETTLE_MS);
   }
 
+  // POWER CHOICE RARITY + REFRESH V1: CLIENT END
   function markEliminatedKeys() {
     const eliminated = new Set(window.state?.powerChoice?.eliminatedLetters || []);
     const ruledOut = new Set(window.state?.powerChoice?.ruledOutLetters || []);

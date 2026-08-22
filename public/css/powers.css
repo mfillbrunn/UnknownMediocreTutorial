@@ -927,3 +927,94 @@ body.power-betMiss #power-fx {
   mix-blend-mode: screen;
   animation: fx-flash 650ms ease-out;
 }
+
+
+/* POWER CHOICE RARITY + REFRESH V1: CSS START */
+.pc-reward-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 8px 0 14px;
+}
+
+.pc-refresh-choice-btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  padding: 8px 13px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.pc-refresh-choice-btn:hover:not(:disabled),
+.pc-refresh-choice-btn:focus-visible:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.pc-refresh-choice-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pc-rarity-odds {
+  font-size: 11px;
+  font-weight: 750;
+  opacity: 0.72;
+}
+
+.pc-tier.pc-rarity-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  border: 1px solid var(--pc-rarity-metal);
+  background: color-mix(in srgb, var(--pc-rarity-metal) 16%, transparent);
+  color: var(--pc-rarity-metal);
+}
+
+.pc-tier.pc-rarity-badge small {
+  font-size: 0.72em;
+  letter-spacing: 0.08em;
+  opacity: 0.82;
+}
+
+.pc-choice-card[data-rarity="common"],
+.pc-rarity-badge[data-rarity="common"] {
+  --pc-rarity-metal: #cd7f32;
+}
+
+.pc-choice-card[data-rarity="rare"],
+.pc-rarity-badge[data-rarity="rare"] {
+  --pc-rarity-metal: #c0c0c0;
+}
+
+.pc-choice-card[data-rarity="legendary"],
+.pc-rarity-badge[data-rarity="legendary"] {
+  --pc-rarity-metal: #d4af37;
+}
+
+.pc-choice-card[data-rarity] {
+  outline: 1px solid color-mix(in srgb, var(--pc-rarity-metal) 38%, transparent);
+  outline-offset: -1px;
+}
+
+@media (max-width: 640px) {
+  .pc-reward-toolbar {
+    align-items: stretch;
+  }
+  .pc-refresh-choice-btn {
+    width: 100%;
+  }
+  .pc-rarity-odds {
+    width: 100%;
+    text-align: center;
+  }
+}
+/* POWER CHOICE RARITY + REFRESH V1: CSS END */

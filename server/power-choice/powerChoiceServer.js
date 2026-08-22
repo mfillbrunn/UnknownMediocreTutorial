@@ -24,6 +24,17 @@ const SPY_THRESHOLDS = [5, 9, 15];
 // cycling through these same three thresholds unchanged from when they
 // were meter milestones.
 const INSPECTOR_REWARD_SEQUENCE = [2, 3, 5];
+
+// POWER CHOICE RARITY + REFRESH V1: SERVER CONFIG START
+// Only TWO probabilities are configured for each reward milestone.
+// Legendary is deliberately derived as the remainder so the three tiers
+// can never drift away from a total probability of 100%.
+const REWARD_RARITY_PROBABILITIES = Object.freeze({
+  1: Object.freeze({ commonProbability: 0.65, rareProbability: 0.25 }),
+  2: Object.freeze({ commonProbability: 0.50, rareProbability: 0.35 }),
+  3: Object.freeze({ commonProbability: 0.30, rareProbability: 0.30 })
+});
+// POWER CHOICE RARITY + REFRESH V1: SERVER CONFIG END
 // The Guesser gets exactly this many quests per round -- one per entry in
 // the reward sequence above. Once the third has been attempted the quest
 // system is finished for the round: no new quest is issued and the card
@@ -521,6 +532,9 @@ function initializeRound(state) {
   pc.eliminatedLetters ||= [];
   pc.ruledOutLetters ||= [];
   pc.bonusTimeTurnKeys ||= [];
+  // This is game-scoped, not round-scoped. A fresh Power Choice round must
+  // not restore a player's already-spent refresh.
+  state.powerChoiceRefreshUsedUserIds ||= [];
 
   // Most reward powers are applied immediately when selected and are
   // never added to the normal loadout, so neither a human nor the generic
@@ -599,6 +613,7 @@ function setterRewardPool() {
     {
       id: "spy-reset-positive-1",
       kind: "fixed",
+      tier: 1,
       icon: "🟩⇢🟨",
       title: "Fade a Green",
       description: "Turn one green tile into yellow.",
@@ -607,6 +622,7 @@ function setterRewardPool() {
     {
       id: "spy-reset-known-2",
       kind: "fixed",
+      tier: 2,
       icon: "⬛↶2",
       title: "Erase Two Clues",
       description: "Reset two random gray letters.",
@@ -615,6 +631,7 @@ function setterRewardPool() {
     {
       id: "spy-add-point-1",
       kind: "fixed",
+      tier: 1,
       icon: "+1",
       title: "Add a Point",
       description: "Add 1 point to the Guesser's final guess total.",
@@ -623,6 +640,7 @@ function setterRewardPool() {
     {
       id: "spy-yellow-smudge",
       kind: "fixed",
+      tier: 2,
       icon: "🟨⇢⇢",
       title: "Yellow Smudge",
       description: "Remove every positional restriction from every yellow letter.",
@@ -631,6 +649,7 @@ function setterRewardPool() {
     {
       id: "spy-trade-yellow",
       kind: "fixed",
+      tier: 2,
       icon: "🟨⇄⬛4",
       title: "Trade a Yellow",
       description: "Give the Guesser one new yellow, but reset four of your gray letters.",
@@ -639,6 +658,7 @@ function setterRewardPool() {
     {
       id: "spy-trade-green",
       kind: "fixed",
+      tier: 3,
       icon: "🟩⇄🟨🟨",
       title: "Trade a Green",
       description: "Give the Guesser one new green, but erase two yellow clues.",
@@ -740,23 +760,31 @@ function buildChoice(state, role, threshold, owner) {
   // instead of a threshold-dependent catalog switch -- see setterRewardPool/
   // guesserRewardPool, which buildChoice calls directly for every
   // threshold instead of asking fixedOptions to dispatch per-threshold.
+  // `rewardNumber` is the milestone (1/2/3), kept on the returned choice as
+  // `tier` too for backwards compatibility -- each individual OPTION now
+  // carries its own `tier`, which is strictly reward RARITY (1 Common,
+  // 2 Rare, 3 Legendary) and is unrelated to this milestone number.
   if (role === "setter") {
-    const tier = SPY_THRESHOLDS.indexOf(threshold) + 1;
-    const options = rewardPickAvailableOptions(state, setterRewardPool(), 3);
+    const rewardNumber = SPY_THRESHOLDS.indexOf(threshold) + 1;
+    const options = buildRewardChoiceOptions(state, role, rewardNumber, 3);
     return {
       id: `setter-${threshold}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       ownerUserId: owner,
       role,
       threshold,
-      tier,
-      title: `Secretkeeper reward · Tier ${tier}`,
+      tier: rewardNumber,
+      rewardNumber,
+      revision: 0,
+      refreshAvailable: !state.powerChoiceRefreshUsedUserIds?.includes(owner),
+      rarityProbabilities: rewardRarityProbabilities(rewardNumber),
+      title: `Secretkeeper reward · Tier ${rewardNumber}`,
       subtitle: "Choose one available reward. It activates immediately.",
       options
     };
   }
 
-  const tier = INSPECTOR_REWARD_SEQUENCE.indexOf(threshold) + 1;
-  const options = rewardPickAvailableOptions(state, guesserRewardPool(tier), 3);
+  const rewardNumber = INSPECTOR_REWARD_SEQUENCE.indexOf(threshold) + 1;
+  const options = buildRewardChoiceOptions(state, role, rewardNumber, 3);
   return {
     id: `${role}-${threshold}-${Date.now()}-${Math.random()
       .toString(36)
@@ -764,8 +792,12 @@ function buildChoice(state, role, threshold, owner) {
     ownerUserId: owner,
     role,
     threshold,
-    tier,
-    title: `Guesser reward · Tier ${tier}`,
+    tier: rewardNumber,
+    rewardNumber,
+    revision: 0,
+    refreshAvailable: !state.powerChoiceRefreshUsedUserIds?.includes(owner),
+    rarityProbabilities: rewardRarityProbabilities(rewardNumber),
+    title: `Guesser reward · Tier ${rewardNumber}`,
     subtitle: "Choose one available reward. It activates immediately.",
     options
   };
@@ -1281,20 +1313,124 @@ function rewardOptionApplicable(state, option) {
   return rewardFixedOptionApplicable(state, option);
 }
 
+// POWER CHOICE RARITY + REFRESH V1: SERVER PICKER START
+function rewardRarityProbabilities(rewardNumber) {
+  const config =
+    REWARD_RARITY_PROBABILITIES[rewardNumber] || REWARD_RARITY_PROBABILITIES[3];
+  const common = Math.max(0, Math.min(1, Number(config.commonProbability) || 0));
+  const rare = Math.max(0, Math.min(1 - common, Number(config.rareProbability) || 0));
+  return {
+    common,
+    rare,
+    legendary: Math.max(0, 1 - common - rare)
+  };
+}
+
+function rewardRarityTier(option) {
+  const tier = Number(option?.tier);
+  return tier === 2 || tier === 3 ? tier : 1;
+}
+
+function rewardRarityMeta(tier) {
+  if (tier === 3) return { rarity: "legendary", rarityLabel: "Legendary", rarityMetal: "Gold" };
+  if (tier === 2) return { rarity: "rare", rarityLabel: "Rare", rarityMetal: "Silver" };
+  return { rarity: "common", rarityLabel: "Common", rarityMetal: "Bronze" };
+}
+
+function decorateRewardRarity(option) {
+  const rarityTier = rewardRarityTier(option);
+  return {
+    ...option,
+    tier: rarityTier,
+    rarityTier,
+    ...rewardRarityMeta(rarityTier)
+  };
+}
+
+// Select each card slot by rarity probability, without replacement. If a
+// rarity has no currently applicable cards, its probability mass is
+// automatically re-normalized across the rarities that are available.
 // Options that would do nothing right now (rewardOptionApplicable ===
 // false, e.g. no green tile left to fade, no yellow tile left to smudge)
-// are preferred, but never at the cost of showing fewer than `limit`
-// cards -- if a whole pool narrows to 1-2 applicable options (easy to hit
-// now that more of the fixed rewards are gated on real board state), the
-// remaining slots are padded from the rest of the pool instead of just
-// leaving the player with a two- or one-card draft.
-function rewardPickAvailableOptions(state, options, limit = 3) {
-  const list = Array.isArray(options) ? options : [];
-  if (list.length <= limit) return shuffle(list);
-  const usable = list.filter(option => rewardOptionApplicable(state, option));
-  const rest = list.filter(option => !usable.includes(option));
-  return shuffle(usable).concat(shuffle(rest)).slice(0, limit);
+// are excluded entirely rather than padded in, since they're not just
+// deprioritized here -- see buildRewardChoiceOptions's own fallback for
+// what happens if that leaves too few cards.
+function rewardPickRarityOptions(
+  state,
+  options,
+  rewardNumber,
+  limit = 3,
+  excludedOptionIds = []
+) {
+  const excluded = new Set(excludedOptionIds || []);
+  let remaining = (Array.isArray(options) ? options : []).filter(
+    option => !excluded.has(option?.id) && rewardOptionApplicable(state, option)
+  );
+  const selected = [];
+  const probabilities = rewardRarityProbabilities(rewardNumber);
+  const tierWeights = {
+    1: probabilities.common,
+    2: probabilities.rare,
+    3: probabilities.legendary
+  };
+
+  while (selected.length < limit && remaining.length) {
+    const availableTiers = [1, 2, 3].filter(tier =>
+      remaining.some(option => rewardRarityTier(option) === tier)
+    );
+    const selectedTier = rewardWeightedPick(
+      availableTiers,
+      tier => tierWeights[tier]
+    );
+    // Defensive fallback: all configured weights should be positive in the
+    // current table, but never strand a valid option if a future config uses 0.
+    const tier = selectedTier || pick(availableTiers);
+    const bucket = remaining.filter(option => rewardRarityTier(option) === tier);
+    const chosen = pick(bucket);
+    if (!chosen) break;
+    selected.push(decorateRewardRarity(chosen));
+    remaining = remaining.filter(option => option.id !== chosen.id);
+  }
+  return selected;
 }
+
+function rewardPoolForChoice(role, rewardNumber) {
+  return role === "setter" ? setterRewardPool() : guesserRewardPool(rewardNumber);
+}
+
+function buildRewardChoiceOptions(
+  state,
+  role,
+  rewardNumber,
+  limit = 3,
+  excludedOptionIds = []
+) {
+  const pool = rewardPoolForChoice(role, rewardNumber);
+  const fresh = rewardPickRarityOptions(
+    state,
+    pool,
+    rewardNumber,
+    limit,
+    excludedOptionIds
+  );
+
+  // During refresh, prefer completely new cards. If there are not enough
+  // applicable alternatives, fill only the missing slots from the old pool so
+  // the player still gets a full draft whenever three valid rewards exist.
+  if (fresh.length < limit && excludedOptionIds?.length) {
+    const alreadySelected = fresh.map(option => option.id);
+    const fallback = rewardPickRarityOptions(
+      state,
+      pool,
+      rewardNumber,
+      limit - fresh.length,
+      alreadySelected
+    ).filter(option => !fresh.some(existing => existing.id === option.id));
+    fresh.push(...fallback.slice(0, limit - fresh.length));
+  }
+  return fresh;
+}
+// POWER CHOICE RARITY + REFRESH V1: SERVER PICKER END
 
 function rewardWeightedPick(items, weightFor) {
   const weighted = (items || [])
@@ -1972,6 +2108,7 @@ if (!CompetitiveMode.prototype.__powerChoicePatchedV2) {
       );
     }
     originalLobbyReady.call(this, state, [], [], null);
+    state.powerChoiceRefreshUsedUserIds = [];
     initializeRound(state);
   };
   const originalNextRound = CompetitiveMode.prototype.onNextRound;
@@ -2130,6 +2267,63 @@ function handleAction(room, state, action, roomId, context) {
   if (!isPowerChoice(state)) return false;
   initializeRound(state);
   const pending = state.powerChoice.pendingChoice;
+
+  if (action.type === "POWER_CHOICE_REFRESH") {
+    if (
+      !pending ||
+      pending.ownerUserId !== action.userId ||
+      pending.id !== action.choiceId
+    ) {
+      sendError(
+        room,
+        state,
+        action.userId,
+        io,
+        "That reward choice is no longer available."
+      );
+      return true;
+    }
+
+    state.powerChoiceRefreshUsedUserIds ||= [];
+    if (state.powerChoiceRefreshUsedUserIds.includes(action.userId)) {
+      sendError(room, state, action.userId, io, "You already used your reward refresh this game.");
+      return true;
+    }
+
+    const rewardNumber = Number(pending.rewardNumber || pending.tier) || 1;
+    const previousIds = (pending.options || []).map(option => option.id).filter(Boolean);
+    const refreshedOptions = buildRewardChoiceOptions(
+      state,
+      pending.role,
+      rewardNumber,
+      3,
+      previousIds
+    );
+
+    if (!refreshedOptions.length) {
+      sendError(room, state, action.userId, io, "No valid rewards are available to refresh.");
+      return true;
+    }
+
+    const previousSignature = [...previousIds].sort().join("|");
+    const refreshedSignature = refreshedOptions.map(option => option.id).sort().join("|");
+    if (previousSignature === refreshedSignature) {
+      sendError(room, state, action.userId, io, "No different rewards are available right now.");
+      return true;
+    }
+
+    // Consume only after a meaningfully different offer was generated.
+    state.powerChoiceRefreshUsedUserIds.push(action.userId);
+    pending.options = refreshedOptions;
+    pending.revision = (Number(pending.revision) || 0) + 1;
+    pending.refreshAvailable = false;
+    pending.rarityProbabilities = rewardRarityProbabilities(rewardNumber);
+
+    // Deliberately do NOT call addChoiceTime here. Refresh changes cards; it
+    // does not grant another 30-second reward-choice time bonus.
+    emitRoomState(roomId, room, io);
+    return true;
+  }
 
   if (action.type === "POWER_CHOICE_SELECT") {
     if (
