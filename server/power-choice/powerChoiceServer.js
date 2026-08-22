@@ -1040,54 +1040,44 @@ function rewardEraseClueTarget(state, target) {
   };
 }
 
+// Picks `count` distinct LETTERS out of whichever clue-colored targets
+// exist (a letter can show up as multiple targets -- one per guess it was
+// tested in, plus a possible extraConstraint -- so target-level selection
+// keeps the odds proportional to how many clues a letter actually has,
+// while this still only ever acts on each chosen letter once).
+function rewardPickDistinctLetters(state, kind, count) {
+  const letters = [];
+  const seen = new Set();
+  for (const target of shuffle(rewardClueTargets(state, kind))) {
+    if (letters.length >= count) break;
+    if (seen.has(target.letter)) continue;
+    seen.add(target.letter);
+    letters.push(target.letter);
+  }
+  return letters;
+}
+
+// Erases EVERY trace of the given letters -- every history tile, every
+// matching extraConstraint (GREEN/YELLOW/ABSENT) -- via the same
+// eraseLetterKnowledge() every other reset power uses (Vowel Refresh,
+// rewardResetGrayLetters below), rather than touching just the one
+// randomly-picked clue instance. A letter tested green in one guess and
+// again in another (duplicate letters, or a re-test) used to only have
+// the picked instance cleared, leaving the other copy to keep silently
+// proving the same information the reward was supposed to take away.
 function rewardEraseClues(state, kind, count) {
-  const selected = shuffle(rewardClueTargets(state, kind)).slice(0, count);
-  return selected.map(target => rewardEraseClueTarget(state, target)).filter(Boolean);
+  const letters = rewardPickDistinctLetters(state, kind, count);
+  if (letters.length) eraseLetterKnowledge(state, letters);
+  return letters.map(letter => ({ letter, kind }));
 }
 
 function rewardDemoteGreens(state, count) {
-  const selected = shuffle(rewardClueTargets(state, "green")).slice(0, count);
-  const demoted = [];
-  for (const target of selected) {
-    if (target.source === "history") {
-      const entry = state.history?.[target.entryIndex];
-      if (!entry) continue;
-      for (const field of ["fb", "fbGuesser"]) {
-        if (Array.isArray(entry[field]) && entry[field][target.index]) {
-          entry[field][target.index] = "🟨";
-        }
-      }
-    } else if (target.source === "constraint") {
-      state.extraConstraints = (state.extraConstraints || []).filter(
-        constraint => constraint !== target.constraint
-      );
-      rewardEnsureYellowConstraint(state, target.letter);
-      if (Number.isInteger(target.index)) {
-        state.extraConstraints ||= [];
-        if (
-          !state.extraConstraints.some(
-            constraint =>
-              String(constraint?.type || "").toUpperCase() === "YELLOW_NOT_AT" &&
-              normalizeWord(constraint?.letter)[0] === target.letter &&
-              constraint.index === target.index
-          )
-        ) {
-          state.extraConstraints.push({
-            type: "YELLOW_NOT_AT",
-            letter: target.letter,
-            index: target.index
-          });
-        }
-      }
-    } else {
-      continue;
-    }
-    demoted.push({
-      letter: target.letter,
-      index: Number.isInteger(target.index) ? target.index : null
-    });
+  const letters = rewardPickDistinctLetters(state, "green", count);
+  for (const letter of letters) {
+    eraseLetterKnowledge(state, [letter]);
+    rewardEnsureYellowConstraint(state, letter);
   }
-  return demoted;
+  return letters.map(letter => ({ letter, index: null }));
 }
 
 function rewardGrayLetters(state) {
