@@ -43,7 +43,7 @@ function transitionAfterGuess({ room, state, guess, roomId, context, io }) {
 
   clearRoundState(state, "guesser");
 
-  // clearRoundState hands the turn to the Spy. Generate the private
+  // clearRoundState hands the turn to the Secretkeeper. Generate the private
   // bonus-star target only after that turn switch.
   spyChargeServer.rollHintForTurn(
     state,
@@ -77,7 +77,7 @@ function transitionAfterSecret({
   finalizeFeedback(state, context.powerEngine, roomId, room, io);
 
   // The pending guess is now a scored history row. Update the private
-  // charge total and tell only the Spy client how many stars to animate.
+  // charge total and tell only the Secretkeeper client how many stars to animate.
   if (spyChargeAward) {
     spyChargeServer.commitAward(
       state,

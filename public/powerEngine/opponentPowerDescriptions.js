@@ -70,7 +70,7 @@ window.OPPONENT_POWER_DESCRIPTIONS =
       "Your opponent blacked out all feedback and keyboard colors for your next guess.",
 
     wiretap:
-      "Your opponent can see the same remaining-secret count that the Spy sees.",
+      "Your opponent can see the same remaining-secret count that the Secretkeeper sees.",
 
     letterProbe:
       "Your opponent tested five letters and learned how many of them are in the current secret.",

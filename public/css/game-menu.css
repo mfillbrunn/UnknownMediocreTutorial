@@ -230,7 +230,7 @@ body.menu-mode .app-header {
   text-decoration: underline;
 }
 
-/* GAME MENU — SPY / DOSSIER STYLE Drop-in override (no HTML changes) */
+/* GAME MENU — SECRETKEEPER / DOSSIER STYLE Drop-in override (no HTML changes) */
 
 .game-menu {
   align-items: center;
@@ -423,7 +423,7 @@ body.menu-mode .app-header {
   }
 }
 
-/* LOBBY — SPY / BRIEFING ROOM STYLE Drop-in override */
+/* LOBBY — SECRETKEEPER / BRIEFING ROOM STYLE Drop-in override */
 
 .screen-lobby {
   position: relative;

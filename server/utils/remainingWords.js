@@ -84,7 +84,7 @@ function getRemainingWordInfo(state, allowedSecrets, draftSecret) {
     !pendingGuess.includes("?");
 
   // Nothing for the setter to react to right now — they already Kept/New'd
-  // the last guess and the Inspector hasn't submitted the next one yet.
+  // the last guess and the Guesser hasn't submitted the next one yet.
   // Signal "nothing to show" (buildSetterRemainingBoxState below turns
   // this into visible:false) so the box disappears for the whole window
   // it isn't actually their decision to make, instead of sitting there

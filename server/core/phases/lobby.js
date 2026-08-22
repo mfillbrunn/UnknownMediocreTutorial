@@ -369,7 +369,7 @@ if (action.mode === "star") {
     }
 
     // Shuffle roles: the lobby's "Random" toggle (state.shuffle) promises
-    // to "randomly assign who's Spy and who's Inspector when the match
+    // to "randomly assign who's Secretkeeper and who's Guesser when the match
     // starts", but nothing ever actually re-rolled the roles -- the host
     // is fixed as setter at room creation (rooms.js's createRoom) and
     // stayed that way unless someone hit Switch Roles by hand. Coin-flip
@@ -578,7 +578,7 @@ if (action.mode === "star") {
       // Daily Challenge's own pick of 2 -- see dailyConfig.js), on top of
       // the always-on Setter Quest badge (see setterQuestServer.js), not
       // instead of a second power. The second entry here is also what
-      // spyChargeServer.js locks until the Spy Charge meter reaches 5
+      // spyChargeServer.js locks until the Secretkeeper Charge meter reaches 5
       // stars (createSpyChargeState's lockedPowerId), so a single-power
       // setter had nothing left for that unlock to ever apply to. Guesser
       // is unaffected, still N.

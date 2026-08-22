@@ -1,8 +1,8 @@
-// client/key-color-picker.js — Inspector-only keyboard key coloring.
+// client/key-color-picker.js — Guesser-only keyboard key coloring.
 //
 // Hold a letter key to bring up green / yellow / not-in-word / unused
 // options, the same "hold for more choices" gesture a phone keyboard uses
-// for accented letters. Picking one recolors that key on the Inspector's
+// for accented letters. Picking one recolors that key on the Guesser's
 // own keyboard for planning purposes -- useful when a power (Count Only,
 // Fake Feedback, ...) has left the real color ambiguous and the player
 // wants to track their own guess about it. Purely a local, client-side
@@ -150,7 +150,7 @@
     cancelPressTimer();
   }
 
-  // Called once per Inspector letter key from ui/keyboard.js (guarded
+  // Called once per Guesser letter key from ui/keyboard.js (guarded
   // there the same way __dragWired is, so this only ever runs once per
   // key element even though renderKeyboard re-runs constantly).
   window.attachKeyLongPress = function (keyEl, letter) {

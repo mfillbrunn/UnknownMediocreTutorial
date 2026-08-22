@@ -55,7 +55,7 @@ function updateSimPowerRoleLabel() {
   if (!select || !label) return;
   const role = getPowerRole(select.value);
   label.textContent = role
-    ? `Held by the ${role === "setter" ? "Spy (setter)" : "Inspector (guesser)"} for the whole run`
+    ? `Held by the ${role === "setter" ? "Secretkeeper (setter)" : "Guesser (guesser)"} for the whole run`
     : "";
 }
 
@@ -482,7 +482,7 @@ function renderCharts() {
   }
   const columns = (includeRole) => [
     { label: "Power", name: true, render: row => `${simTableEscape(row.emoji)} ${simTableEscape(row.label)}` },
-    ...(includeRole ? [{ label: "Role", render: row => row.role === "setter" ? "Spy" : "Inspector" }] : []),
+    ...(includeRole ? [{ label: "Role", render: row => row.role === "setter" ? "Secretkeeper" : "Guesser" }] : []),
     { label: "With", numeric: true, render: row => Number.isFinite(row.avgWith) ? row.avgWith.toFixed(2) : "—" },
     { label: "Baseline", numeric: true, render: row => Number.isFinite(row.avgWithout) ? row.avgWithout.toFixed(2) : "—" },
     { label: "Effect", numeric: true, render: row => simEffectCell(row.value) },
@@ -494,14 +494,14 @@ function renderCharts() {
   if (splitOn) {
     wrap.innerHTML = `<div class="sim-table-pair"><div id="simTableGuesser"></div><div id="simTableSetter"></div></div>`;
     renderSimulationTable(document.getElementById("simTableGuesser"), {
-      title: "Inspector powers",
-      note: "Positive effect means the Inspector needed fewer guesses.",
+      title: "Guesser powers",
+      note: "Positive effect means the Guesser needed fewer guesses.",
       columns: columns(false),
       rows: buildChartDataset(chartRowsCache, "guesser")
     });
     renderSimulationTable(document.getElementById("simTableSetter"), {
-      title: "Spy powers",
-      note: "Positive effect means the Spy forced more guesses.",
+      title: "Secretkeeper powers",
+      note: "Positive effect means the Secretkeeper forced more guesses.",
       columns: columns(false),
       rows: buildChartDataset(chartRowsCache, "setter")
     });

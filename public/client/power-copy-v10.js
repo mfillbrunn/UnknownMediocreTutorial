@@ -3,128 +3,128 @@
 
   const benefitCopy = {
     confuseColors: {
-      short: "Helps the Spy by hiding which feedback tiles are green or yellow.",
-      desc: "Helps the Spy by turning green and yellow feedback blue, so the Inspector cannot tell those colors apart for the round."
+      short: "Helps the Secretkeeper by hiding which feedback tiles are green or yellow.",
+      desc: "Helps the Secretkeeper by turning green and yellow feedback blue, so the Guesser cannot tell those colors apart for the round."
     },
     betMiss: {
-      short: "Helps the Inspector earn a green clue by predicting the next miss count.",
-      desc: "Helps the Inspector by betting how many grey tiles the next guess will have. A correct bet earns a free green clue."
+      short: "Helps the Guesser earn a green clue by predicting the next miss count.",
+      desc: "Helps the Guesser by betting how many grey tiles the next guess will have. A correct bet earns a free green clue."
     },
     spyChargeReset: {
-      short: "Helps the Spy erase one letter's clues from the current round.",
-      desc: "Helps the Spy by resetting one letter everywhere it appears in feedback and extra constraints this round."
+      short: "Helps the Secretkeeper erase one letter's clues from the current round.",
+      desc: "Helps the Secretkeeper by resetting one letter everywhere it appears in feedback and extra constraints this round."
     },
     fieldReport: {
-      short: "Helps the Inspector earn a yellow or green clue by following shown conditions.",
-      desc: "Helps the Inspector by showing three conditions. Matching conditions builds progress toward a free yellow or green clue."
+      short: "Helps the Guesser earn a yellow or green clue by following shown conditions.",
+      desc: "Helps the Guesser by showing three conditions. Matching conditions builds progress toward a free yellow or green clue."
     },
     fakeFeedback: {
-      short: "Helps the Spy hide the real result beside a believable fake result.",
-      desc: "Helps the Spy by showing the Inspector two feedback results: one real and one fake."
+      short: "Helps the Secretkeeper hide the real result beside a believable fake result.",
+      desc: "Helps the Secretkeeper by showing the Guesser two feedback results: one real and one fake."
     },
     countOnly: {
-      short: "Helps the Spy hide the positions of green and yellow tiles.",
-      desc: "Helps the Spy by showing only the total number of green and yellow tiles, not their positions."
+      short: "Helps the Secretkeeper hide the positions of green and yellow tiles.",
+      desc: "Helps the Secretkeeper by showing only the total number of green and yellow tiles, not their positions."
     },
     rouletteSecret: {
-      short: "Helps the Inspector force the Spy's next secret to be chosen at random.",
-      desc: "Helps the Inspector by forcing the Spy's next legal secret to be selected at random."
+      short: "Helps the Guesser force the Secretkeeper's next secret to be chosen at random.",
+      desc: "Helps the Guesser by forcing the Secretkeeper's next legal secret to be selected at random."
     },
     nonsense: {
-      short: "Helps the Inspector test any five letters, even when they are not a real word.",
-      desc: "Helps the Inspector by allowing one five-letter guess that does not need to be a dictionary word."
+      short: "Helps the Guesser test any five letters, even when they are not a real word.",
+      desc: "Helps the Guesser by allowing one five-letter guess that does not need to be a dictionary word."
     },
     forceGuess: {
-      short: "Helps the Spy restrict the Inspector's next guess with an extra rule.",
-      desc: "Helps the Spy by adding a rule that the Inspector's next guess must follow."
+      short: "Helps the Secretkeeper restrict the Guesser's next guess with an extra rule.",
+      desc: "Helps the Secretkeeper by adding a rule that the Guesser's next guess must follow."
     },
     forceTimer: {
-      short: "Helps the Spy pressure the Inspector with a short guess timer.",
-      desc: "Helps the Spy by giving the Inspector only a short time to submit the next guess."
+      short: "Helps the Secretkeeper pressure the Guesser with a short guess timer.",
+      desc: "Helps the Secretkeeper by giving the Guesser only a short time to submit the next guess."
     },
     freezeSecret: {
-      short: "Helps the Inspector stop the Spy from changing the current secret.",
-      desc: "Helps the Inspector by locking the Spy's current secret for the affected decision."
+      short: "Helps the Guesser stop the Secretkeeper from changing the current secret.",
+      desc: "Helps the Guesser by locking the Secretkeeper's current secret for the affected decision."
     },
     hideTile: {
-      short: "Helps the Spy erase one chosen letter's clues from the round.",
-      desc: "Helps the Spy by choosing a letter and erasing its feedback and extra constraints everywhere this round."
+      short: "Helps the Secretkeeper erase one chosen letter's clues from the round.",
+      desc: "Helps the Secretkeeper by choosing a letter and erasing its feedback and extra constraints everywhere this round."
     },
     magicMode: {
-      short: "Helps the Inspector turn yellow feedback into exact green positions.",
-      desc: "Helps the Inspector by upgrading yellow feedback to green for the affected result."
+      short: "Helps the Guesser turn yellow feedback into exact green positions.",
+      desc: "Helps the Guesser by upgrading yellow feedback to green for the affected result."
     },
     revealGreen: {
-      short: "Helps the Inspector learn one secret letter and its exact position.",
-      desc: "Helps the Inspector by revealing one current secret letter in its exact box."
+      short: "Helps the Guesser learn one secret letter and its exact position.",
+      desc: "Helps the Guesser by revealing one current secret letter in its exact box."
     },
     revealHistory: {
-      short: "Helps the Inspector learn a secret that the Spy used earlier.",
-      desc: "Helps the Inspector by revealing the secret from three scored guesses earlier."
+      short: "Helps the Guesser learn a secret that the Secretkeeper used earlier.",
+      desc: "Helps the Guesser by revealing the secret from three scored guesses earlier."
     },
     revealLetter: {
-      short: "Helps the Inspector earn a free green clue by completing a challenge.",
-      desc: "Helps the Inspector by awarding a free exact green clue after a guess challenge is completed."
+      short: "Helps the Guesser earn a free green clue by completing a challenge.",
+      desc: "Helps the Guesser by awarding a free exact green clue after a guess challenge is completed."
     },
     stealthGuess: {
-      short: "Helps the Inspector hide the next guess from the Spy.",
-      desc: "Helps the Inspector by making the next submitted guess invisible to the Spy before scoring."
+      short: "Helps the Guesser hide the next guess from the Secretkeeper.",
+      desc: "Helps the Guesser by making the next submitted guess invisible to the Secretkeeper before scoring."
     },
     suggestGuess: {
-      short: "Helps the Inspector by suggesting a legal guess that fits known clues.",
-      desc: "Helps the Inspector by suggesting a valid guess that matches everything currently known."
+      short: "Helps the Guesser by suggesting a legal guess that fits known clues.",
+      desc: "Helps the Guesser by suggesting a valid guess that matches everything currently known."
     },
     suggestSecret: {
-      short: "Helps the Spy by suggesting a legal secret that still fits every clue.",
-      desc: "Helps the Spy by suggesting a valid secret that remains consistent with all feedback."
+      short: "Helps the Secretkeeper by suggesting a legal secret that still fits every clue.",
+      desc: "Helps the Secretkeeper by suggesting a valid secret that remains consistent with all feedback."
     },
     vowelRefresh: {
-      short: "Helps the Spy erase vowel clues from the latest scored guess.",
-      desc: "Helps the Spy by resetting the vowels from the latest feedback and matching extra constraints."
+      short: "Helps the Secretkeeper erase vowel clues from the latest scored guess.",
+      desc: "Helps the Secretkeeper by resetting the vowels from the latest feedback and matching extra constraints."
     },
     blindSpot: {
-      short: "Helps the Spy hide one feedback position for the rest of the round.",
-      desc: "Helps the Spy by concealing the clue in one tile position for the rest of the round."
+      short: "Helps the Secretkeeper hide one feedback position for the rest of the round.",
+      desc: "Helps the Secretkeeper by concealing the clue in one tile position for the rest of the round."
     },
     revealPenalty: {
-      short: "Helps the Spy score by making a letter claim the Inspector must judge.",
-      desc: "Helps the Spy by claiming a letter is in the secret. The Inspector must accept the claim or call the bluff."
+      short: "Helps the Secretkeeper score by making a letter claim the Guesser must judge.",
+      desc: "Helps the Secretkeeper by claiming a letter is in the secret. The Guesser must accept the claim or call the bluff."
     },
     assassinWord: {
-      short: "Helps the Spy win instantly if the Inspector guesses a planted trap word.",
-      desc: "Helps the Spy by planting a trap word that ends the match immediately if the Inspector guesses it."
+      short: "Helps the Secretkeeper win instantly if the Guesser guesses a planted trap word.",
+      desc: "Helps the Secretkeeper by planting a trap word that ends the match immediately if the Guesser guesses it."
     },
     blindGuess: {
-      short: "Helps the Spy hide all feedback and keyboard colors for one guess.",
-      desc: "Helps the Spy by blacking out the Inspector's feedback and keyboard colors for the next guess."
+      short: "Helps the Secretkeeper hide all feedback and keyboard colors for one guess.",
+      desc: "Helps the Secretkeeper by blacking out the Guesser's feedback and keyboard colors for the next guess."
     },
     wiretap: {
-      short: "Helps the Inspector see how many possible secrets remain.",
-      desc: "Helps the Inspector by showing the same remaining-secret count the Spy uses to compare choices."
+      short: "Helps the Guesser see how many possible secrets remain.",
+      desc: "Helps the Guesser by showing the same remaining-secret count the Secretkeeper uses to compare choices."
     },
     letterProbe: {
-      short: "Helps the Inspector test five letters and learn how many are in the secret.",
-      desc: "Helps the Inspector by testing five chosen letters. It reveals how many are present, but not which ones or where."
+      short: "Helps the Guesser test five letters and learn how many are in the secret.",
+      desc: "Helps the Guesser by testing five chosen letters. It reveals how many are present, but not which ones or where."
     },
     revealLocation: {
-      short: "Helps the Inspector watch one secret position and see its current letter.",
-      desc: "Helps the Inspector by revealing the letter currently occupying one watched position until it is solved."
+      short: "Helps the Guesser watch one secret position and see its current letter.",
+      desc: "Helps the Guesser by revealing the letter currently occupying one watched position until it is solved."
     },
     doubleGuess: {
-      short: "Helps the Inspector submit two guesses and receive feedback for both.",
-      desc: "Helps the Inspector by submitting two different guesses at once while the Spy sees only one of them."
+      short: "Helps the Guesser submit two guesses and receive feedback for both.",
+      desc: "Helps the Guesser by submitting two different guesses at once while the Secretkeeper sees only one of them."
     },
     letterProfile: {
-      short: "Helps the Inspector see a useful category breakdown of the secret's letters.",
-      desc: "Helps the Inspector by showing an always-on summary of the secret's letter categories."
+      short: "Helps the Guesser see a useful category breakdown of the secret's letters.",
+      desc: "Helps the Guesser by showing an always-on summary of the secret's letter categories."
     },
     delayedIntel: {
-      short: "Helps the Spy delay feedback until after the Inspector's following guess.",
-      desc: "Helps the Spy by holding back the current feedback until the Inspector has submitted another guess."
+      short: "Helps the Secretkeeper delay feedback until after the Guesser's following guess.",
+      desc: "Helps the Secretkeeper by holding back the current feedback until the Guesser has submitted another guess."
     },
     letterLockout: {
-      short: "Helps the Spy ban one letter from the Inspector's next guess.",
-      desc: "Helps the Spy by choosing a letter that the Inspector cannot use in the next guess."
+      short: "Helps the Secretkeeper ban one letter from the Guesser's next guess.",
+      desc: "Helps the Secretkeeper by choosing a letter that the Guesser cannot use in the next guess."
     }
   };
 
@@ -159,7 +159,7 @@
     revealPenalty: "Your opponent makes a letter claim that you must accept or challenge.",
     assassinWord: "Your opponent plants a trap word that wins immediately if it is guessed.",
     blindGuess: "Your opponent hides all feedback and keyboard colors for your next guess.",
-    wiretap: "Your opponent sees the same remaining-secret count the Spy sees.",
+    wiretap: "Your opponent sees the same remaining-secret count the Secretkeeper sees.",
     letterProbe: "Your opponent tests five letters and learns how many are in the secret.",
     revealLocation: "Your opponent watches one position and sees its current letter.",
     doubleGuess: "Your opponent submits two guesses and receives feedback for both while you see only one.",

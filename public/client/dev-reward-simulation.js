@@ -61,7 +61,7 @@ function formatRsStats(stats) {
   const hasReward = stats.avgWithReward != null;
   const delta = hasReward ? stats.avgWithReward - stats.avgBaseline : null;
   const sign = delta > 0 ? "+" : "";
-  const roleLabel = stats.role === "setter" ? "Spy" : "Inspector";
+  const roleLabel = stats.role === "setter" ? "Secretkeeper" : "Guesser";
   const used = Number(stats.usedWithReward || 0);
   const useRate = Number.isFinite(Number(stats.useRate)) ? Number(stats.useRate) : 0;
   return `
@@ -158,7 +158,7 @@ let rsResultsCache = null;
 // powerChoiceServer.js) instead of a different catalog per tier --
 // "tier" here only picks which threshold (and so which forced turn) the
 // reward is tested at, not a different list. The one exception is the
-// Inspector's Time Rewind card, which only enters the pool from tier 2
+// Guesser's Time Rewind card, which only enters the pool from tier 2
 // onward -- hence 15/16/16 instead of a flat count.
 const RS_CATALOG_COUNTS = {
   setter: { 1: 15, 2: 15, 3: 15 },
@@ -287,7 +287,7 @@ socket.on("rewardSimulationBatchProgress", (p) => {
 // Chart -- reuses renderBarChart from dev-simulation.js. Positive value
 // always means "the reward is working as intended for whoever holds it",
 // same sign convention as computeEffectiveness there: a setter reward
-// should raise the Inspector's guess count (raw delta already positive),
+// should raise the Guesser's guess count (raw delta already positive),
 // a guesser reward should lower it (negated).
 // ------------------------------------------------------------------
 
@@ -347,7 +347,7 @@ function rsRenderTable(container, title, rows, includeRole) {
     note: "Every reward is granted at its first valid moment in round 2. Positive effect helps the reward owner.",
     columns: [
       { label: "Reward", name: true, render: row => `${simTableEscape(row.emoji)} ${simTableEscape(row.label)}` },
-      ...(includeRole ? [{ label: "Role", render: row => row.role === "setter" ? "Spy" : "Inspector" }] : []),
+      ...(includeRole ? [{ label: "Role", render: row => row.role === "setter" ? "Secretkeeper" : "Guesser" }] : []),
       { label: "Tier", numeric: true, key: "tier" },
       { label: "With", numeric: true, render: row => row.avgWith == null ? "—" : row.avgWith.toFixed(2) },
       { label: "Baseline", numeric: true, render: row => row.avgBaseline == null ? "—" : row.avgBaseline.toFixed(2) },
@@ -370,8 +370,8 @@ function renderRsChart() {
   const splitOn = document.getElementById("rsSplitViewToggle")?.checked;
   if (splitOn) {
     wrap.innerHTML = `<div class="sim-table-pair"><div id="rsTableGuesser"></div><div id="rsTableSetter"></div></div>`;
-    rsRenderTable(document.getElementById("rsTableGuesser"), "Inspector rewards", rsBuildChartDataset(rsResultsCache, "guesser", rsTierFilter), false);
-    rsRenderTable(document.getElementById("rsTableSetter"), "Spy rewards", rsBuildChartDataset(rsResultsCache, "setter", rsTierFilter), false);
+    rsRenderTable(document.getElementById("rsTableGuesser"), "Guesser rewards", rsBuildChartDataset(rsResultsCache, "guesser", rsTierFilter), false);
+    rsRenderTable(document.getElementById("rsTableSetter"), "Secretkeeper rewards", rsBuildChartDataset(rsResultsCache, "setter", rsTierFilter), false);
     return;
   }
   rsRenderTable(wrap, "Reward strength", rsBuildChartDataset(rsResultsCache, rsRoleFilter, rsTierFilter), rsRoleFilter === "all");

@@ -141,9 +141,9 @@ InfoBadgeEngine.register((state, role) => {
     let color = meta.color;
 
     if (result === "accepted") {
-      text = `${letter} accepted — Spy scored +1`;
+      text = `${letter} accepted — Secretkeeper scored +1`;
     } else if (result === "wrongCall") {
-      text = `Called ${letter}, but it was true — Spy scored +2`;
+      text = `Called ${letter}, but it was true — Secretkeeper scored +2`;
       color = "var(--setter-color)";
     } else if (result === "bluffCaught") {
       text = `Called ${letter} — it was a bluff!`;
@@ -177,11 +177,11 @@ InfoBadgeEngine.register((state, role) => {
     {
       id: "revealPenaltyAccept",
       emoji: "✅",
-      text: `Accept: ${letter} is in the secret (Spy scores +1)`,
+      text: `Accept: ${letter} is in the secret (Secretkeeper scores +1)`,
       color: meta.color,
       priority: 10,
       screen: "guesser",
-      details: "Trust the claim without checking it -- the Spy scores 1 point either way.",
+      details: "Trust the claim without checking it -- the Secretkeeper scores 1 point either way.",
       clickable: true,
       onClick: () => window.sendGameAction?.({ type: "USE_REVEAL_PENALTY_ACCEPT", userId: window.currentUser?.id })
     },
@@ -192,7 +192,7 @@ InfoBadgeEngine.register((state, role) => {
       color: "var(--setter-color)",
       priority: 11,
       screen: "guesser",
-      details: "Right, and you get a free yellow letter. Wrong, and the Spy scores 2 points.",
+      details: "Right, and you get a free yellow letter. Wrong, and the Secretkeeper scores 2 points.",
       clickable: true,
       onClick: () => window.sendGameAction?.({ type: "USE_REVEAL_PENALTY_CALL", userId: window.currentUser?.id })
     }
@@ -207,7 +207,7 @@ InfoBadgeEngine.register((state, role) => {
 // --------------------------------------------------
 socket.on("revealPenaltyResolved", ({ letter, result, yellowLetter }) => {
   if (result === "accepted") {
-    toast(`${letter} accepted — the Spy scores +1.`);
+    toast(`${letter} accepted — the Secretkeeper scores +1.`);
     return;
   }
 
@@ -215,7 +215,7 @@ socket.on("revealPenaltyResolved", ({ letter, result, yellowLetter }) => {
     window.showBigAnnounce?.({
       icon: "❌",
       title: "Wrong call!",
-      sub: `${letter} really was in the secret — the Spy scores +2.`,
+      sub: `${letter} really was in the secret — the Secretkeeper scores +2.`,
       roleClass: "outcome-lose",
       duration: 4200
     });

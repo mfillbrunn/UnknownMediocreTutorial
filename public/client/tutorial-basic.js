@@ -4,7 +4,7 @@
 
 function basicTutorialShow(text, {
   role = window.myRole,
-  section = role === "setter" ? "Spy" : "Inspector",
+  section = role === "setter" ? "Secretkeeper" : "Guesser",
   current = null,
   total = null,
   visualHtml = "",
@@ -54,17 +54,17 @@ function basicTurnOrderGraphic() {
     <div class="tutorial-turn-order">
       <span class="tutorial-turn-step tutorial-turn-both">1. Both act at the same time</span>
       <span class="tutorial-turn-arrow">→</span>
-      <span class="tutorial-turn-step tutorial-turn-guesser">2. Inspector guesses</span>
+      <span class="tutorial-turn-step tutorial-turn-guesser">2. Guesser guesses</span>
       <span class="tutorial-turn-arrow">→</span>
-      <span class="tutorial-turn-step tutorial-turn-setter">3. Spy reacts</span>
+      <span class="tutorial-turn-step tutorial-turn-setter">3. Secretkeeper reacts</span>
       <span class="tutorial-turn-arrow">→</span>
-      <span class="tutorial-turn-step tutorial-turn-guesser">2. Inspector guesses</span>
+      <span class="tutorial-turn-step tutorial-turn-guesser">2. Guesser guesses</span>
       <span class="tutorial-turn-arrow">→</span>
-      <span class="tutorial-turn-step tutorial-turn-setter">3. Spy reacts</span>
+      <span class="tutorial-turn-step tutorial-turn-setter">3. Secretkeeper reacts</span>
       <span class="tutorial-turn-arrow">…</span>
     </div>
     <div class="tutorial-note-strip">
-      Step 1 happens only once, at the very start. After that, steps 2 and 3 just repeat until the Inspector finds the word.
+      Step 1 happens only once, at the very start. After that, steps 2 and 3 just repeat until the Guesser finds the word.
     </div>
   `;
 }
@@ -104,7 +104,7 @@ function runBasicInspectorTutorial(state) {
 
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "Welcome! This game is a word-guessing duel between two players. One player is the Spy -- they pick a secret 5-letter word and hide it. The other player is the Inspector -- their job is to guess that word. Right now, you are the Inspector.",
+        "Welcome! This game is a word-guessing duel between two players. One player is the Secretkeeper -- they pick a secret 5-letter word and hide it. The other player is the Guesser -- their job is to guess that word. Right now, you are the Guesser.",
         {
           role: "guesser",
           current: 1,
@@ -139,7 +139,7 @@ function runBasicInspectorTutorial(state) {
 
     if (state.simultaneousGuessSubmitted) {
       basicTutorialShow(
-        "Nice, your first guess is locked in! Right now the Spy is picking their secret word at the very same time -- that's step 1 from the graphic you just saw. You won't get any colors back until the Spy has chosen. Just sit tight for a moment.",
+        "Nice, your first guess is locked in! Right now the Secretkeeper is picking their secret word at the very same time -- that's step 1 from the graphic you just saw. You won't get any colors back until the Secretkeeper has chosen. Just sit tight for a moment.",
         {
           role: "guesser",
           current: 3,
@@ -198,7 +198,7 @@ function runBasicInspectorTutorial(state) {
 
     if (state.pendingGuess) {
       basicTutorialShow(
-        "Your guess is on its way to the Spy. They can see it too, and they get to decide what to do about it before it gets colored. Hang tight while they think.",
+        "Your guess is on its way to the Secretkeeper. They can see it too, and they get to decide what to do about it before it gets colored. Hang tight while they think.",
         {
           role: "guesser",
           current: 5,
@@ -237,7 +237,7 @@ function runBasicInspectorTutorial(state) {
 
     if (state.pendingGuess) {
       basicTutorialShow(
-        "Guess sent! Waiting on the Spy again -- this back-and-forth is exactly the pattern from the graphic earlier: you guess, then the Spy reacts, over and over.",
+        "Guess sent! Waiting on the Secretkeeper again -- this back-and-forth is exactly the pattern from the graphic earlier: you guess, then the Secretkeeper reacts, over and over.",
         {
           role: "guesser",
           current: 6,
@@ -301,7 +301,7 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "New round, new job! You just played Inspector -- now you're the Spy. As the Spy, you pick a secret 5-letter word and try to keep it hidden as long as possible. The Inspector is going to try to guess it.",
+        "New round, new job! You just played Guesser -- now you're the Secretkeeper. As the Secretkeeper, you pick a secret 5-letter word and try to keep it hidden as long as possible. The Guesser is going to try to guess it.",
         {
           role: "setter",
           current: 1,
@@ -310,7 +310,7 @@ function runBasicSpyTutorial(state) {
           visualHtml: `
             <div class="tutorial-role-goal">
               <span class="tutorial-role-icon">🕵️</span>
-              <span><strong>Protect your word</strong><small>The longer it takes the Inspector to find it, the better you're doing.</small></span>
+              <span><strong>Protect your word</strong><small>The longer it takes the Guesser to find it, the better you're doing.</small></span>
             </div>
           `
         }
@@ -321,7 +321,7 @@ function runBasicSpyTutorial(state) {
 
     if (state.simultaneousSecretSubmitted) {
       basicTutorialShow(
-        "Your secret is locked in and hidden from the Inspector. They picked their very first guess at the exact same moment you picked your secret -- nobody knew anything about the other side yet. Now they're about to see how close that first guess was.",
+        "Your secret is locked in and hidden from the Guesser. They picked their very first guess at the exact same moment you picked your secret -- nobody knew anything about the other side yet. Now they're about to see how close that first guess was.",
         {
           role: "setter",
           current: 2,
@@ -335,7 +335,7 @@ function runBasicSpyTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Pick your secret word now. It has to be a real 5-letter word, just like the Inspector's guesses. Type ${word} one letter at a time, then tap the Submit New Secret button to lock it in.`,
+        `Pick your secret word now. It has to be a real 5-letter word, just like the Guesser's guesses. Type ${word} one letter at a time, then tap the Submit New Secret button to lock it in.`,
         {
           role: "setter",
           current: 2,
@@ -360,7 +360,7 @@ function runBasicSpyTutorial(state) {
 
     if (!state.pendingGuess) {
       basicTutorialShow(
-        "The Inspector is still deciding on their next guess. As soon as they submit it, it'll show up right here on your screen -- keep an eye out.",
+        "The Guesser is still deciding on their next guess. As soon as they submit it, it'll show up right here on your screen -- keep an eye out.",
         {
           role: "setter",
           current: 3,
@@ -376,7 +376,7 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "See that row above with the Inspector's guess in it? That's the pending guess row. It's already showing colors right now -- for your OLD secret, since that's what you're keeping by default at the start of the round. The moment you start typing a new secret, this row updates live to match, letter by letter.",
+        "See that row above with the Guesser's guess in it? That's the pending guess row. It's already showing colors right now -- for your OLD secret, since that's what you're keeping by default at the start of the round. The moment you start typing a new secret, this row updates live to match, letter by letter.",
         {
           role: "setter",
           current: 3,
@@ -482,7 +482,7 @@ function runBasicSpyTutorial(state) {
 
   if (round >= 3) {
     basicTutorialShow(
-      "That's the whole basic game! Let's recap: the Inspector guesses over and over, reading the colors each time to guess smarter. The Spy watches every guess before it's scored and decides, each time, to keep the secret or change it -- as long as any change still matches every color already shown. Simple rules, but lots of room for strategy.",
+      "That's the whole basic game! Let's recap: the Guesser guesses over and over, reading the colors each time to guess smarter. The Secretkeeper watches every guess before it's scored and decides, each time, to keep the secret or change it -- as long as any change still matches every color already shown. Simple rules, but lots of room for strategy.",
       {
         role: "setter",
         current: 9,
@@ -491,8 +491,8 @@ function runBasicSpyTutorial(state) {
         mode: "end",
         visualHtml: `
           <div class="tutorial-finish-checks">
-            <span>✓ Inspector: fewer guesses is better</span>
-            <span>✓ Spy: keep the word hidden longer</span>
+            <span>✓ Guesser: fewer guesses is better</span>
+            <span>✓ Secretkeeper: keep the word hidden longer</span>
             <span>✓ Changes must still fit old clues</span>
             <span>✓ Open together, then guess → react</span>
           </div>
@@ -512,7 +512,7 @@ function runBasicSummaryTutorial(state) {
   if (tutorialSubStep === 0) {
     const guesses = state.history?.length || state.guessCount || 0;
     basicTutorialShow(
-      `Round over! You found the word in ${guesses} guess${guesses === 1 ? "" : "es"}. For the Inspector, fewer guesses is always better -- it means you read the clues well.`,
+      `Round over! You found the word in ${guesses} guess${guesses === 1 ? "" : "es"}. For the Guesser, fewer guesses is always better -- it means you read the clues well.`,
       {
         role: "guesser",
         section: "Round finished",
@@ -527,7 +527,7 @@ function runBasicSummaryTutorial(state) {
   }
 
   basicTutorialShow(
-    "Time to swap jobs -- that's how every round works in this game. Tap Next Round, and this time YOU will be the Spy while your opponent plays Inspector.",
+    "Time to swap jobs -- that's how every round works in this game. Tap Next Round, and this time YOU will be the Secretkeeper while your opponent plays Guesser.",
     {
       role: "guesser",
       section: "Swap jobs",
@@ -550,7 +550,7 @@ function runBasicMatchTutorial(state) {
 
   if (tutorialSubStep === 0) {
     basicTutorialShow(
-      "Match over! Both of you have now played the Spy once each, so it's a fair fight. Whoever's secret word took MORE guesses to find is the winner -- hiding your word well counts just as much as finding your opponent's.",
+      "Match over! Both of you have now played the Secretkeeper once each, so it's a fair fight. Whoever's secret word took MORE guesses to find is the winner -- hiding your word well counts just as much as finding your opponent's.",
       {
         section: "Match finished",
         current: 1,

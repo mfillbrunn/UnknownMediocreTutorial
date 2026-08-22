@@ -139,7 +139,7 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
 
   const label = GREEN_REVEAL_SOURCE_LABELS[source] || "A power";
 
-  // Letter Peek's reveal isn't a real green tile -- the Spy can still
+  // Letter Peek's reveal isn't a real green tile -- the Secretkeeper can still
   // change their secret afterward, unlike every other source here (Reveal
   // Letter, Bet Power, Field Report, Quest), which permanently lock the
   // position in as known-green. Calling it "green" implies a permanence

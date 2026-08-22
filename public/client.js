@@ -210,11 +210,11 @@ function showOpeningMissLockNotice() {
 
     title: iAmSetter
       ? "Your secret is locked"
-      : "The Spy's secret is locked",
+      : "The Secretkeeper's secret is locked",
 
     sub: iAmSetter
-      ? "The Inspector missed every letter in the opening guess. You must keep the same secret for this round."
-      : "You missed every letter in your opening guess. The Spy must keep the same secret for this round.",
+      ? "The Guesser missed every letter in the opening guess. You must keep the same secret for this round."
+      : "You missed every letter in your opening guess. The Secretkeeper must keep the same secret for this round.",
 
     roleClass: iAmSetter
       ? "role-setter"
@@ -676,10 +676,10 @@ onStateUpdate(newState => {
     }
     // Always YOU first, full width / OPPONENT second, full width below it
     // -- see .big-announce-powers in special-effects.css -- rather than a
-    // fixed Spy-then-Inspector order, so the viewer doesn't have to work
+    // fixed Secretkeeper-then-Guesser order, so the viewer doesn't have to work
     // out which of two role-labeled lists is theirs every round.
-    const setterGroup = { icon: "🕵️", label: "Spy", roleClass: "role-setter", powers: describePowers(state.initialPowers?.setter) };
-    const guesserGroup = { icon: "🔍", label: "Inspector", roleClass: "role-guesser", powers: guesserPowers };
+    const setterGroup = { icon: "🕵️", label: "Secretkeeper", roleClass: "role-setter", powers: describePowers(state.initialPowers?.setter) };
+    const guesserGroup = { icon: "🔍", label: "Guesser", roleClass: "role-guesser", powers: guesserPowers };
     const [myGroup, opponentGroup] = iAmSetter ? [setterGroup, guesserGroup] : [guesserGroup, setterGroup];
     const powerGroups = [
       { ...myGroup, label: `You — ${myGroup.label}` },
@@ -687,7 +687,7 @@ onStateUpdate(newState => {
     ];
     window.showBigAnnounce?.({
       icon: iAmSetter ? "🕵️" : "🔍",
-      title: iAmSetter ? "You are the Spy" : "You are the Inspector",
+      title: iAmSetter ? "You are the Secretkeeper" : "You are the Guesser",
       sub: iAmSetter ? "Keep your secret hidden." : "Find the secret word.",
       powerGroups,
       roleClass: iAmSetter ? "role-setter" : "role-guesser",
@@ -847,7 +847,7 @@ function updateSetterDraftInvalidOverlay() {
 // that would just get rejected on submit is visibly flagged the instant
 // it's fully typed instead of only after a failed attempt. Called from
 // both the shared render cycle above (state.setterDraft is server-synced,
-// so that alone is enough for the Spy's overlay) and renderGuesserDraftOnly
+// so that alone is enough for the Secretkeeper's overlay) and renderGuesserDraftOnly
 // below -- the guesser's draft is local-only (localGuesserDraft) until
 // actually submitted, so it needs its own per-keystroke hook too.
 function updateGuesserDraftInvalidOverlay() {
@@ -945,7 +945,7 @@ function updateScreens() {
     const secondLastEntry = history[history.length - 2];
     // Double Tap (resolveDoubleGuess in normal.js) pushes two entries
     // together in an order that has nothing to do with which one actually
-    // won (it's randomized to not leak which guess was shown to the Spy)
+    // won (it's randomized to not leak which guess was shown to the Secretkeeper)
     // -- checking only the literal last entry misses the win whenever the
     // winning guess happened to be pushed first, silently skipping this
     // whole reveal sequence.
@@ -1067,7 +1067,7 @@ function updateScreens() {
 
   if (_gameOverRevealInFlight) return;
 
-  // Daily Challenge's setup (add AI, swap to Inspector, apply the day's
+  // Daily Challenge's setup (add AI, swap to Guesser, apply the day's
   // powers, disable the timer, ready up) is scripted and briefly leaves
   // state.phase === "lobby" — showing the real multiplayer lobby for that
   // window would flash it pointlessly. Bail out before hideAllScreens()
@@ -1157,7 +1157,7 @@ PowerEngine.applyUI(state, myRole, myUserId());
 // -----------------------------------------------------
 function updateRoleLabels() {
   if (!myRole) return;
-  const roleLabel = myRole === "setter" ? "Spy" : "Inspector";
+  const roleLabel = myRole === "setter" ? "Secretkeeper" : "Guesser";
   const lobbyEl = $("lobbyRoleLabel");
   if (lobbyEl) {
     lobbyEl.textContent = roleLabel;
@@ -1174,7 +1174,7 @@ function updateRoleLabels() {
 function updateSetterScreen() {
   const setterName = getPlayerByUserId(state.setter)?.name || "—";
   $("setterScreen").querySelector(".screen-title").textContent = setterName;
-  //$("setterRoleBadge")?.textContent = "Spy";
+  //$("setterRoleBadge")?.textContent = "Secretkeeper";
   const displayGuess =state.powers?.stealthGuessActive? "?????": state.pendingGuess;
   const isSetterTurn = state.turn === state.setter;
   const isDecisionStep =isSetterTurn &&!!displayGuess &&state.phase === "normal";
@@ -1855,7 +1855,7 @@ function computeSetterSecretStatus() {
   // Only the setter ever sees the real state.secret (safeState.js blanks
   // it for the guesser), so spelling it out on the button itself -- "KEEP
   // PORES" instead of the generic "KEEP CURRENT SECRET" -- can't leak
-  // anything; it's just telling the Spy exactly what they're about to
+  // anything; it's just telling the Secretkeeper exactly what they're about to
   // keep instead of making them recall or re-check their own draft row.
   const hasCurrentSecret = !!(state.secret && state.secret.length === 5);
   const currentSecret = hasCurrentSecret ? state.secret.toUpperCase() : null;
@@ -2435,7 +2435,7 @@ if (state?.powers?.wiretapActive) {
  const guesserName = getPlayerByUserId(state.guesser)?.name || "—";
   
   $("guesserScreen").querySelector(".screen-title").textContent = guesserName;
-  //$("guesserRoleBadge").textContent = "Inspector";
+  //$("guesserRoleBadge").textContent = "Guesser";
 setTurn("guesserScreen", null);
 if (state.phase === "simultaneous") {setTurn("guesserScreen", !state.pendingGuess);}
 if (state.phase === "normal" && state.turn === state.guesser) {setTurn("guesserScreen", true);} 
@@ -2760,7 +2760,7 @@ function getGuideInfo(state, role) {
     return {
       phase: "Simultaneous Round",
       task: done
-        ? "Guess submitted — waiting for the Spy's secret."
+        ? "Guess submitted — waiting for the Secretkeeper's secret."
         : "Submit your opening guess — you're guessing blind this round."
     };
   }
@@ -2772,7 +2772,7 @@ function getGuideInfo(state, role) {
         phase: "Guessing Round",
         task: isDecisionStep
           ? "Your turn: keep your secret, or switch to a new word consistent with all feedback so far."
-          : "Waiting for the Inspector to submit a guess."
+          : "Waiting for the Guesser to submit a guess."
       };
     }
     const isGuessTurn = state.turn === state.guesser;
@@ -2780,7 +2780,7 @@ function getGuideInfo(state, role) {
       phase: "Guessing Round",
       task: isGuessTurn
         ? "Your turn: submit a guess."
-        : "Waiting for the Spy to decide whether to keep or change the secret."
+        : "Waiting for the Secretkeeper to decide whether to keep or change the secret."
     };
   }
 
@@ -3084,7 +3084,7 @@ function updateAppHeader(state) {
 
   if (roomCodeEl) roomCodeEl.textContent = state.roomCode || "";
 
-  // Spy/Inspector duplicated what the screen title + tile colors already
+  // Secretkeeper/Guesser duplicated what the screen title + tile colors already
   // show. A running score reads at a glance and is actually new
   // information — how many guesses each of you has needed so far.
   if (state.phase === "gameOver" || state.phase === "lobby") {
@@ -3103,7 +3103,7 @@ function updateAppHeader(state) {
 
   // computeMatchResult only tallies *completed* rounds — add the current
   // round's live guess count (resets to 0 each round, +1 per guess) to
-  // whichever player is this round's Spy, the same way a completed
+  // whichever player is this round's Secretkeeper, the same way a completed
   // round's points are scored, so the score counts up in real time.
   if (typeof state.guessCount === "number") {
     if (state.setter === myId) myPoints += state.guessCount;

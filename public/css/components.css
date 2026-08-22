@@ -537,7 +537,7 @@
   pointer-events: none;
 }
 
-/* Inspector's own manual color pick (client/key-color-picker.js) -- a
+/* Guesser's own manual color pick (client/key-color-picker.js) -- a
    personal planning note, not real feedback, so it gets a small pencil
    mark on top of the same green/yellow/gray fill real feedback would use
    (color parity matters: "that key should be in that color" is the whole

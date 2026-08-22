@@ -72,7 +72,7 @@ window.renderKeyboard = function ({
     if (/^[A-Z]$/.test(symbol)) {
       const status = state.keyboard?.[symbol];
 
-      // Inspector-only planning aid (see client/key-color-picker.js): a
+      // Guesser-only planning aid (see client/key-color-picker.js): a
       // real, known status always wins the instant it exists -- a stale
       // manual guess about a letter the game has since actually resolved
       // would be actively misleading left in place, so it's discarded
@@ -111,7 +111,7 @@ window.renderKeyboard = function ({
         keyEl.classList.add("key-purple");
       }
 
-      // On the Spy keyboard, a letter that already has a known
+      // On the Secretkeeper keyboard, a letter that already has a known
       // green/yellow/gray/blue/purple/uncertain status keeps that status
       // without also receiving the red current-secret glow.
       const hasKnownFeedback = !!(
@@ -150,9 +150,9 @@ window.renderKeyboard = function ({
         });
       }
 
-      // Inspector-only: hold the key for the green/yellow/not-in-word
+      // Guesser-only: hold the key for the green/yellow/not-in-word
       // color picker (see client/key-color-picker.js). Wired once per key
-      // element just like drag above; never wired on the Spy's own
+      // element just like drag above; never wired on the Secretkeeper's own
       // keyboard, which has no use for this.
       if (isGuesser && !keyEl.__longPressWired) {
         keyEl.__longPressWired = true;

@@ -45,75 +45,75 @@ const PASSIVE_TUTORIAL_POWERS = new Set([
 
 const POWER_TUTORIAL_SIMPLE_COPY = Object.freeze({
   confuseColors: {
-    owner: "Green and yellow tiles look blue for one round, so the Inspector cannot tell them apart.",
-    receiver: "The Spy made green and yellow look blue. You know the tile matters, but not which color it really is."
+    owner: "Green and yellow tiles look blue for one round, so the Guesser cannot tell them apart.",
+    receiver: "The Secretkeeper made green and yellow look blue. You know the tile matters, but not which color it really is."
   },
   countOnly: {
-    owner: "The Inspector sees only how many green and yellow tiles they got. They do not see where they are.",
+    owner: "The Guesser sees only how many green and yellow tiles they got. They do not see where they are.",
     receiver: "You will see the number of green and yellow tiles, but not which ones. Letters and tiles marked with a small ? are the ones whose real color is hidden from you. Different powers show their effects in different ways like this, so keep an eye on the tiles and keyboard."
   },
   forceGuess: {
-    owner: "This gives the Inspector one small rule their next guess must follow.",
+    owner: "This gives the Guesser one small rule their next guess must follow.",
     receiver: "Your next guess must follow the rule shown on screen."
   },
   fakeFeedback: {
-    owner: "The Inspector sees two sets of colors. One is real and one is fake.",
+    owner: "The Guesser sees two sets of colors. One is real and one is fake.",
     receiver: "You will see two answers. One is real. One is fake."
   },
   forceTimer: {
-    owner: "This gives the Inspector only a short time for the next guess.",
+    owner: "This gives the Guesser only a short time for the next guess.",
     receiver: "A short timer will start. Make your guess before it runs out."
   },
   freezeSecret: {
-    owner: "This stops the Spy from changing the secret on the next turn.",
+    owner: "This stops the Secretkeeper from changing the secret on the next turn.",
     receiver: "Your secret is locked for the next turn. You must keep it."
   },
   hideTile: {
     owner: "Pick one letter. Old clues for that letter are erased.",
-    receiver: "The Spy erased the old clues for one letter."
+    receiver: "The Secretkeeper erased the old clues for one letter."
   },
   rouletteSecret: {
-    owner: "The game picks the Spy's next secret for them.",
-    receiver: "The Inspector made the game choose your next secret."
+    owner: "The game picks the Secretkeeper's next secret for them.",
+    receiver: "The Guesser made the game choose your next secret."
   },
   magicMode: {
     owner: "Yellow tiles become green for the next result.",
-    receiver: "The Inspector upgraded yellow clues into exact green clues."
+    receiver: "The Guesser upgraded yellow clues into exact green clues."
   },
   revealGreen: {
     owner: "This shows one secret letter and the exact box where it goes.",
-    receiver: "The Inspector learned one letter and its exact box."
+    receiver: "The Guesser learned one letter and its exact box."
   },
   revealHistory: {
     owner: "This shows a secret word from earlier in the round.",
-    receiver: "The Inspector looked at one of your older secrets."
+    receiver: "The Guesser looked at one of your older secrets."
   },
   revealLetter: {
     owner: "Finish the small letter challenge to earn a free green clue.",
-    receiver: "The Inspector is working toward a free green clue."
+    receiver: "The Guesser is working toward a free green clue."
   },
   stealthGuess: {
-    owner: "The Spy cannot see your next guess before choosing a secret.",
-    receiver: "The Inspector's next guess is hidden from you."
+    owner: "The Secretkeeper cannot see your next guess before choosing a secret.",
+    receiver: "The Guesser's next guess is hidden from you."
   },
   suggestGuess: {
     owner: "The game gives you a guess that still fits the clues.",
-    receiver: "The Inspector received help choosing a legal guess."
+    receiver: "The Guesser received help choosing a legal guess."
   },
   suggestSecret: {
     owner: "The game gives you a secret that still fits all old clues.",
-    receiver: "The Spy received help choosing a legal secret."
+    receiver: "The Secretkeeper received help choosing a legal secret."
   },
   vowelRefresh: {
     owner: "Some vowel clues from the newest guess are erased, so those vowels look unused again.",
     receiver: "Some vowel clues were erased and must be tested again."
   },
   assassinWord: {
-    owner: "Pick a trap word. If the Inspector guesses it, the Spy wins at once.",
-    receiver: "The Spy planted a hidden trap word. Do not guess it."
+    owner: "Pick a trap word. If the Guesser guesses it, the Secretkeeper wins at once.",
+    receiver: "The Secretkeeper planted a hidden trap word. Do not guess it."
   },
   blindGuess: {
-    owner: "The Inspector's next feedback and keyboard colors are hidden.",
+    owner: "The Guesser's next feedback and keyboard colors are hidden.",
     receiver: "Your next feedback and keyboard colors are hidden."
   },
   blindSpot: {
@@ -122,47 +122,47 @@ const POWER_TUTORIAL_SIMPLE_COPY = Object.freeze({
   },
   fieldReport: {
     owner: "You get three small rules. Follow enough of them to earn a yellow or green clue.",
-    receiver: "The Inspector is following bonus rules to earn a clue."
+    receiver: "The Guesser is following bonus rules to earn a clue."
   },
   wiretap: {
     owner: "This shows how many secret words are still possible.",
-    receiver: "The Inspector can see how many secrets are still possible."
+    receiver: "The Guesser can see how many secrets are still possible."
   },
   letterProbe: {
     owner: "Pick five letters. The game tells you how many are in the secret, but not which ones.",
-    receiver: "The Inspector tested five letters and learned how many are in your secret."
+    receiver: "The Guesser tested five letters and learned how many are in your secret."
   },
   revealLocation: {
     owner: "This watches one secret position and shows the letter in that box.",
-    receiver: "The Inspector is watching one position in your secret."
+    receiver: "The Guesser is watching one position in your secret."
   },
   doubleGuess: {
-    owner: "Send two guesses at once. The Spy sees one, but you get clues for both.",
-    receiver: "The Inspector sent two guesses. You only see one of them."
+    owner: "Send two guesses at once. The Secretkeeper sees one, but you get clues for both.",
+    receiver: "The Guesser sent two guesses. You only see one of them."
   },
   letterProfile: {
     owner: "This shows a simple fact about the letters in the secret.",
-    receiver: "The Inspector can see a simple fact about your secret's letters."
+    receiver: "The Guesser can see a simple fact about your secret's letters."
   },
   delayedIntel: {
-    owner: "The Inspector does not see this clue until after the next guess.",
+    owner: "The Guesser does not see this clue until after the next guess.",
     receiver: "This clue is hidden until after your next guess."
   },
   letterLockout: {
-    owner: "Pick one letter. The Inspector cannot use it in the next guess.",
+    owner: "Pick one letter. The Guesser cannot use it in the next guess.",
     receiver: "One letter is banned from your next guess."
   },
   revealPenalty: {
-    owner: "Claim that a letter is in the secret. The Inspector can believe you or call a bluff.",
-    receiver: "The Spy claimed a letter is in the secret. Choose whether to believe it."
+    owner: "Claim that a letter is in the secret. The Guesser can believe you or call a bluff.",
+    receiver: "The Secretkeeper claimed a letter is in the secret. Choose whether to believe it."
   },
   betMiss: {
     owner: "Guess how many grey tiles your next guess will have. If you are right, you earn a green clue.",
-    receiver: "The Inspector made a bet about their next grey tiles."
+    receiver: "The Guesser made a bet about their next grey tiles."
   },
   nonsense: {
     owner: "Your next guess can be any five letters. It does not need to be a real word.",
-    receiver: "The Inspector may use any five letters for the next guess."
+    receiver: "The Guesser may use any five letters for the next guess."
   }
 });
 
@@ -295,7 +295,7 @@ function runPowerTutorialTeaching(state, role, meta, powerId, round) {
 
     if (isGuesser && state.pendingGuess) {
       powerTutorialShow(
-        "Your guess is sent. Wait for the Spy.",
+        "Your guess is sent. Wait for the Secretkeeper.",
         {
           role,
           title: `${meta.label} used`,
@@ -309,7 +309,7 @@ function runPowerTutorialTeaching(state, role, meta, powerId, round) {
       powerTutorialShow(
         isGuesser
           ? "Now submit your guess."
-          : "Now finish your normal Spy choice and submit it.",
+          : "Now finish your normal Secretkeeper choice and submit it.",
         {
           role,
           title: `${meta.label} used`,
@@ -393,7 +393,7 @@ function runPowerTutorialReceiving(state, role, meta, powerId, round) {
 
     if (!state.pendingGuess) {
       powerTutorialShow(
-        "Wait for the Inspector's guess. The power will happen during this turn.",
+        "Wait for the Guesser's guess. The power will happen during this turn.",
         {
           role,
           title: `Against ${meta.label}`,
@@ -456,7 +456,7 @@ function runPowerSummaryTutorial(state) {
   }
 
   powerTutorialShow(
-    "Tap Next Round. You will swap jobs and try a Spy power.",
+    "Tap Next Round. You will swap jobs and try a Secretkeeper power.",
     {
       role: "setter",
       title: "Swap jobs",
@@ -488,7 +488,7 @@ function runPowerMatchTutorial(state) {
   }
 
   powerTutorialShow(
-    "You tried one Inspector power and one Spy power. You can practice every other power from the Powers screen.",
+    "You tried one Guesser power and one Secretkeeper power. You can practice every other power from the Powers screen.",
     {
       title: "Powers done",
       mode: "end"

@@ -24,7 +24,7 @@ const SPY_THRESHOLDS = [5, 9, 15];
 // cycling through these same three thresholds unchanged from when they
 // were meter milestones.
 const INSPECTOR_REWARD_SEQUENCE = [2, 3, 5];
-// The Inspector gets exactly this many quests per round -- one per entry in
+// The Guesser gets exactly this many quests per round -- one per entry in
 // the reward sequence above. Once the third has been attempted the quest
 // system is finished for the round: no new quest is issued and the card
 // disappears, rather than cycling a fourth quest back around to the first
@@ -89,16 +89,16 @@ const POWER_COPY = {
   confuseColors: ["🎨", "Blue Mode", "Turn all feedback tiles blue for this turn, hiding which matches are green or yellow."],
   countOnly: ["🔢", "Count Only", "Show only how many letters match, without revealing their colors or positions."],
   fakeFeedback: ["🎭", "Fake Feedback", "Distort the feedback from the next resolved guess."],
-  blindGuess: ["🙈", "Blind Guess", "Hide the Inspector's draft while they make this guess."],
-  forceTimer: ["⏱", "Force Timer", "Put immediate time pressure on the Inspector's turn."],
-  delayedIntel: ["📡", "Delayed Feedback", "Hold back the Inspector's feedback until after their following guess."],
-  vowelRefresh: ["🔁", "Vowel Refresh", "Erase every clue on the vowels in the Inspector's last guess."],
+  blindGuess: ["🙈", "Blind Guess", "Hide the Guesser's draft while they make this guess."],
+  forceTimer: ["⏱", "Force Timer", "Put immediate time pressure on the Guesser's turn."],
+  delayedIntel: ["📡", "Delayed Feedback", "Hold back the Guesser's feedback until after their following guess."],
+  vowelRefresh: ["🔁", "Vowel Refresh", "Erase every clue on the vowels in the Guesser's last guess."],
   revealGreen: ["👁️", "Peek Letter", "Reveal one correct letter in its exact position."],
-  freezeSecret: ["❄️", "Freeze Secret", "Prevent the Spy from changing the secret after this guess."],
-  rouletteSecret: ["🎰", "Roulette Secret", "Force the Spy onto a legal random secret."],
-  stealthGuess: ["🥷", "Stealth Guess", "Hide this guess during the Spy's Keep/New decision."],
-  nonsense: ["🌀", "Silly Word", "Let the Inspector submit any five letters this turn, even when they do not form a real word."],
-  magicMode: ["✨", "Magic Mode", "Activate the Inspector's special feedback mode this turn."],
+  freezeSecret: ["❄️", "Freeze Secret", "Prevent the Secretkeeper from changing the secret after this guess."],
+  rouletteSecret: ["🎰", "Roulette Secret", "Force the Secretkeeper onto a legal random secret."],
+  stealthGuess: ["🥷", "Stealth Guess", "Hide this guess during the Secretkeeper's Keep/New decision."],
+  nonsense: ["🌀", "Silly Word", "Let the Guesser submit any five letters this turn, even when they do not form a real word."],
+  magicMode: ["✨", "Magic Mode", "Activate the Guesser's special feedback mode this turn."],
   suggestGuess: ["💡", "Guess Tip", "Immediately suggests a random guess that still fits everything learned so far."],
   revealHistory: ["⏪", "Time Rewind", "Reveal the exact secret from three rounds ago."],
   // Immediate, payload-carrying cards: picking one prompts for its input
@@ -112,7 +112,7 @@ const POWER_COPY = {
   // the copy says "from now on" instead of "this turn".
   revealLocation: ["🕵️", "Informant", "From now on, peek at one still-unknown position in the secret each of your turns."],
   letterProfile: ["🔤", "Letter Profile", "From now on, see how many vowels and consonants are in the secret, each of your turns."],
-  letterLockout: ["🚫", "Letter Lockout", "From now on, ban one new letter from the Inspector's next guess on each of your turns."]
+  letterLockout: ["🚫", "Letter Lockout", "From now on, ban one new letter from the Guesser's next guess on each of your turns."]
 };
 
 function normalizeWord(value) {
@@ -585,13 +585,13 @@ function powerOption(powerId) {
   };
 }
 
-// The Spy's own reward pool -- unlike the Inspector, the Spy sees the
+// The Secretkeeper's own reward pool -- unlike the Guesser, the Secretkeeper sees the
 // SAME pool at every one of their three milestones (5/9/15 stars)
 // instead of a different fixed catalog per tier plus a separate
 // "3 random powers" middle stage. Built once as a plain list (mixing
 // "fixed" effect cards and one "power" card) rather than per-threshold,
 // since there's no longer a threshold-dependent branch to take -- see
-// buildChoice, which now calls this directly for every Spy threshold.
+// buildChoice, which now calls this directly for every Secretkeeper threshold.
 function setterRewardPool() {
   return [
     {
@@ -608,15 +608,15 @@ function setterRewardPool() {
       icon: "⬛↶2",
       title: "Erase Two Clues",
       description: "Reset two random gray letters.",
-      explanation: "Two absent-letter restrictions are erased, giving the Spy more legal secret words."
+      explanation: "Two absent-letter restrictions are erased, giving the Secretkeeper more legal secret words."
     },
     {
       id: "spy-add-point-1",
       kind: "fixed",
       icon: "+1",
       title: "Add a Point",
-      description: "Add 1 point to the Inspector's final guess total.",
-      explanation: "This does not change letter information; it directly worsens the Inspector's final score."
+      description: "Add 1 point to the Guesser's final guess total.",
+      explanation: "This does not change letter information; it directly worsens the Guesser's final score."
     },
     {
       id: "spy-yellow-smudge",
@@ -631,7 +631,7 @@ function setterRewardPool() {
       kind: "fixed",
       icon: "🟨⇄⬛4",
       title: "Trade a Yellow",
-      description: "Give the Inspector one new yellow, but reset four of your gray letters.",
+      description: "Give the Guesser one new yellow, but reset four of your gray letters.",
       explanation: "A calculated risk: one present-letter clue handed over, four absent-letter restrictions erased in return."
     },
     {
@@ -639,7 +639,7 @@ function setterRewardPool() {
       kind: "fixed",
       icon: "🟩⇄🟨🟨",
       title: "Trade a Green",
-      description: "Give the Inspector one new green, but erase two yellow clues.",
+      description: "Give the Guesser one new green, but erase two yellow clues.",
       explanation: "A bigger risk for a bigger reward: one exact-position reveal in exchange for two present-letter clues forgotten."
     },
     powerOption("blindSpot"),
@@ -676,7 +676,7 @@ function fixedOptions(role, threshold) {
         icon: "×2",
         title: "Rule Out Two",
         description: "Rule out and lock two unused letters that are not in the secret.",
-        explanation: "Both letters are confirmed absent and cannot be used in later Inspector guesses."
+        explanation: "Both letters are confirmed absent and cannot be used in later Guesser guesses."
       },
       {
         id: "inspector-remove-point-1",
@@ -685,7 +685,7 @@ function fixedOptions(role, threshold) {
         icon: "−1",
         title: "Remove a Point",
         description: "Subtract 1 point from your final guess total.",
-        explanation: "This improves the Inspector's score without revealing any letter information."
+        explanation: "This improves the Guesser's score without revealing any letter information."
       }
     ];
   }
@@ -693,8 +693,8 @@ function fixedOptions(role, threshold) {
   return [];
 }
 
-// The Inspector's own reward pool -- same shared-pool treatment as the
-// Spy's setterRewardPool: ONE pool drawn from at all three quest
+// The Guesser's own reward pool -- same shared-pool treatment as the
+// Secretkeeper's setterRewardPool: ONE pool drawn from at all three quest
 // milestones (2/3/5 completions) instead of a fixed tier-1 catalog, a
 // separate "3 random powers" middle stage, and a fixed tier-3 catalog.
 // Reuses the tier-1 fixed cards from fixedOptions(guesser, 2) as-is and
@@ -735,7 +735,7 @@ function guesserRewardPool(tier) {
 
 function buildChoice(state, role, threshold, owner) {
   // Both roles now draw from ONE shared pool at every one of their three
-  // milestones (Spy: 5/9/15 stars, Inspector: 2/3/5 quest completions)
+  // milestones (Secretkeeper: 5/9/15 stars, Guesser: 2/3/5 quest completions)
   // instead of a threshold-dependent catalog switch -- see setterRewardPool/
   // guesserRewardPool, which buildChoice calls directly for every
   // threshold instead of asking fixedOptions to dispatch per-threshold.
@@ -748,7 +748,7 @@ function buildChoice(state, role, threshold, owner) {
       role,
       threshold,
       tier,
-      title: `Spy reward · Tier ${tier}`,
+      title: `Secretkeeper reward · Tier ${tier}`,
       subtitle: "Choose one available reward. It activates immediately.",
       options
     };
@@ -764,7 +764,7 @@ function buildChoice(state, role, threshold, owner) {
     role,
     threshold,
     tier,
-    title: `Inspector reward · Tier ${tier}`,
+    title: `Guesser reward · Tier ${tier}`,
     subtitle: "Choose one available reward. It activates immediately.",
     options
   };
@@ -954,7 +954,7 @@ function removeUnusedLetters(state, count) {
 }
 
 // First locked-out letter appearing in `word`, or null. Locked-out letters
-// bind BOTH roles: the Inspector can't guess them and the Spy can't hide
+// bind BOTH roles: the Guesser can't guess them and the Secretkeeper can't hide
 // behind them in the secret.
 function blockedLetterIn(state, word) {
   const blocked = state.powerChoice?.eliminatedLetters || [];
@@ -1389,7 +1389,7 @@ function powerOptionApplicable(state, option) {
     // stateFactory.js) -- same "don't offer a card that would silently
     // fail" reasoning as blindSpot above. Mirrors each power's own
     // POWER_RULES.js allowed() gate, minus the redundant turn===setter
-    // check (a Spy reward choice only ever opens on the Spy's own turn).
+    // check (a Secretkeeper reward choice only ever opens on the Secretkeeper's own turn).
     case "confuseColors":
       return !state.powers?.confuseColorsUsed;
     case "countOnly":
@@ -1410,7 +1410,7 @@ function powerOptionApplicable(state, option) {
         !state.powers?.vowelRefreshUsed &&
         /[AEIOU]/.test(String(state.history?.[state.history.length - 1]?.guess || "").toUpperCase())
       );
-    // Same one-off treatment for the Inspector's own immediate powers.
+    // Same one-off treatment for the Guesser's own immediate powers.
     case "suggestGuess":
       return (state.powers?.suggestGuessUses || 0) < 2;
     case "revealHistory":
@@ -1476,7 +1476,7 @@ function effectDetailText(option, detail) {
         ? `Reset gray letters: ${letters.join(", ")}.`
         : "No eligible gray letters remained.";
     case "spy-add-point-1":
-      return `Inspector final guess total +${detail?.points || 0}.`;
+      return `Guesser final guess total +${detail?.points || 0}.`;
     case "spy-yellow-smudge":
       return detail?.letters?.length
         ? `Removed position restrictions from: ${detail.letters.join(", ")}.`
@@ -1487,11 +1487,11 @@ function effectDetailText(option, detail) {
         : "No eligible green tile remained.";
     case "spy-trade-yellow":
       return detail?.yellow
-        ? `Gave the Inspector ${detail.yellow} as a yellow clue; reset gray letters: ${detail.grays?.join(", ") || "none available"}.`
+        ? `Gave the Guesser ${detail.yellow} as a yellow clue; reset gray letters: ${detail.grays?.join(", ") || "none available"}.`
         : "No unrevealed secret letter remained -- nothing to trade.";
     case "spy-trade-green":
       return detail?.green
-        ? `Gave the Inspector ${detail.green.letter} at position ${detail.green.index + 1} as a green clue; erased yellow clue${detail.erasedYellows?.length === 1 ? "" : "s"}: ${clueText(detail.erasedYellows) || "none available"}.`
+        ? `Gave the Guesser ${detail.green.letter} at position ${detail.green.index + 1} as a green clue; erased yellow clue${detail.erasedYellows?.length === 1 ? "" : "s"}: ${clueText(detail.erasedYellows) || "none available"}.`
         : "No unrevealed position remained -- nothing to trade.";
     case "inspector-yellow-1":
       return detail?.letter
@@ -1502,7 +1502,7 @@ function effectDetailText(option, detail) {
         ? `Locked absent letters: ${letters.join(", ")}.`
         : "No eligible absent letters remained.";
     case "inspector-remove-point-1":
-      return `Inspector final guess total ${detail?.points || 0}.`;
+      return `Guesser final guess total ${detail?.points || 0}.`;
     default:
       if (option.kind === "power") {
         // PERSISTENT_POWER_IDS grants (Informant/Letter Profile/Letter
@@ -1523,18 +1523,18 @@ function emitEffect(io, roomId, payload) {
 }
 
 // Rewards that erase letter knowledge change which secrets are still
-// feasible, which is exactly what the Spy's bonus-star hint and the
+// feasible, which is exactly what the Secretkeeper's bonus-star hint and the
 // best/keep counts behind the star rating are computed from. Those are
-// rolled once at the start of the Spy's turn (rollHintForTurn, called from
+// rolled once at the start of the Secretkeeper's turn (rollHintForTurn, called from
 // normalTransitions.js) and a reward lands mid-turn, so without this the
-// Spy kept being shown a target letter/position derived from the board as
+// Secretkeeper kept being shown a target letter/position derived from the board as
 // it was BEFORE their own reward wiped part of it -- pointing at a word
 // that was no longer the best switch, and sometimes no longer legal.
 // Every setter fixed-reward card that erases or alters letter knowledge
 // (extraConstraints, history feedback, gray/absent letters) rather than
 // just moving points around or fogging the next-quest preview -- all of
 // these change which secrets are still legal, so all of them need the
-// Spy's hint/star-rating re-rolled against the post-reward board.
+// Secretkeeper's hint/star-rating re-rolled against the post-reward board.
 const KNOWLEDGE_RESET_OPTIONS = new Set([
   "spy-reset-positive-1",
   "spy-reset-known-2",
@@ -1554,12 +1554,12 @@ function rerollSpyHintAfterReset(state, option, context) {
   const allowedSecrets = context?.ALLOWED_SECRETS;
   if (!allowedSecrets) return;
   // rollHintForTurn clears the hint before deciding whether it can produce
-  // a new one, so calling it outside the Spy's own decision step would
+  // a new one, so calling it outside the Secretkeeper's own decision step would
   // wipe a perfectly good hint and put nothing back. A reward is always
   // taken on the owner's turn, so this simply confirms that.
   if (state.phase !== "normal" || state.turn !== state.setter) return;
   // Recomputed from the post-reset board, so the readout above the draft
-  // row and the star rating agree with what the Spy can now actually do.
+  // row and the star rating agree with what the Secretkeeper can now actually do.
   // coverStrength.js keys its own caches on the history feedback plus
   // extraConstraints, both of which eraseLetterKnowledge just mutated, so
   // the analysis behind this re-roll is already rebuilt rather than stale.
@@ -1773,7 +1773,7 @@ function evaluateInspectorGuess(state, guess, roomId, io) {
   // A quest no longer builds toward a shared points meter -- meeting it
   // grants a reward immediately, cycling through the same three
   // thresholds the old meter unlocked at 2/3/5 points, each now opening
-  // one pick from the Inspector's own shared pool (guesserRewardPool).
+  // one pick from the Guesser's own shared pool (guesserRewardPool).
   if (success) {
     inspector.questCompletions += 1;
     const tier = INSPECTOR_REWARD_SEQUENCE[
@@ -1916,7 +1916,7 @@ function chooseAIGuess(state, wordRows, allowedSecrets, fallbackGuess) {
     deduped.push({ word, probability: Number(row?.probability) || 1 });
   }
 
-  // Only chase a quest with a word still plausible from the Inspector's
+  // Only chase a quest with a word still plausible from the Guesser's
   // visible information. If no such word exists, the normal AI guess is
   // better and is kept; this prevents blindly sacrificing every turn.
   const feasible = deduped.filter(row => {
@@ -2072,7 +2072,7 @@ if (!spyChargeServer.__powerChoicePatchedV2) {
       state.powerChoice.spy.queuedMilestones,
       state.powerChoice.spy.claimedMilestones
     );
-    // The Spy's third and final milestone (15 stars) grants two reward
+    // The Secretkeeper's third and final milestone (15 stars) grants two reward
     // picks in a row instead of one -- queue the same threshold a second
     // time so maybeOpenChoice naturally opens a second choice-of-3 the
     // instant the first one resolves. queueCrossed's own dedup only
@@ -2218,8 +2218,8 @@ function handleAction(room, state, action, roomId, context) {
     }
   }
 
-  // The same locked-out letters bind the Spy's secret too -- otherwise the
-  // Spy could simply hide the word behind letters the Inspector is barred
+  // The same locked-out letters bind the Secretkeeper's secret too -- otherwise the
+  // Secretkeeper could simply hide the word behind letters the Guesser is barred
   // from ever typing, which turns the reward into a self-inflicted trap.
   if (
     action.userId === state.setter &&

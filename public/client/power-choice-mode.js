@@ -188,13 +188,13 @@
       window.showPowerActionPopup({
         emoji: window.POWER_METADATA?.letterLockout?.emoji || "🚫",
         title: "Lock a letter?",
-        desc: "Bans a random letter the Inspector hasn't tried yet from their next guess. Once picked, that letter can never be banned again this match.",
+        desc: "Bans a random letter the Guesser hasn't tried yet from their next guess. Once picked, that letter can never be banned again this match.",
         useLabel: "Lock a letter",
         showUse: true,
         useEnabled: true,
         onUse: submit
       });
-    } else if (window.confirm("Ban a random untried letter from the Inspector's next guess?")) {
+    } else if (window.confirm("Ban a random untried letter from the Guesser's next guess?")) {
       submit();
     }
   }
@@ -360,7 +360,7 @@
 
   // #guesserPowerContainer (the container renderInspectorPanel used to
   // target) is permanently display:none in the current layout -- see
-  // persistentPowerMarkup's comment above. This gives the Inspector's
+  // persistentPowerMarkup's comment above. This gives the Guesser's
   // panel (next-quest preview, reward intel, and now the persistent-power
   // readouts) an actually-visible home, positioned the same way the quest
   // card's own host is: repositioned every render rather than inserted

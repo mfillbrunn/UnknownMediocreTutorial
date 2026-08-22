@@ -58,7 +58,7 @@
    * Replaces the old number-only popup with a real miniature meter.
    * quest-charge-v9.js uses the returned element as the animation target,
    * so energy now visibly lands in the temporary meter while the drawer is
-   * closed. The same popup is used for the Spy's star charge.
+   * closed. The same popup is used for the Secretkeeper's star charge.
    */
   window.showCollapsedChargeToast = function (role, detail = {}) {
     const toast = ensureCollapsedMeter(role);
@@ -91,7 +91,7 @@
 
     toast.setAttribute(
       "aria-label",
-      `${role === "setter" ? "Spy charge" : "Quest charge"}: ${value} of ${max}`
+      `${role === "setter" ? "Secretkeeper charge" : "Quest charge"}: ${value} of ${max}`
     );
 
     toast.classList.add("show");
@@ -484,18 +484,10 @@
         attributeFilter: ["class", "disabled", "hidden", "style"]
       });
     }
-
-    const bodyObserver = new MutationObserver(() => {
-      observeQuestRequirement();
-      scheduleDockLayout();
-      stripNotesCount();
-    });
-
-    bodyObserver.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-  }
+    // Removed the recursive document.body observer. The gameplay nodes above
+    // are static and already have targeted observers. Watching the whole body
+    // woke this module for unrelated toasts, menus, flights, and animations.
+}
 
   function init() {
     installImmediateSetterMeter();

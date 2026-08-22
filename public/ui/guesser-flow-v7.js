@@ -153,7 +153,7 @@
   // off, reading as a stutter between the float-up and the green flip.
   // There's no actual waiting to represent in that case, so it's skipped
   // outright instead of playing (and then instantly interrupting) a
-  // "waiting for the Spy" animation that was never true here.
+  // "waiting for the Secretkeeper" animation that was never true here.
   function ensurePending(word, showWorking = true) {
     const history = historyContainer();
 
@@ -1034,7 +1034,7 @@
           // false: this is the direct-win path -- the outcome is already
           // known and animateResolution below runs the instant this
           // returns, with no real waiting in between. Showing the
-          // "waiting for the Spy" scan animation here (even briefly) was
+          // "waiting for the Secretkeeper" scan animation here (even briefly) was
           // never true and, since it keeps animating on its own CSS
           // timeline under visibility:hidden during the flight, surfaced
           // as a stray flash of motion the moment visibility came back --

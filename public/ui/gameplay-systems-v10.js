@@ -487,7 +487,7 @@
     groups.forEach(group => {
       const label = group.querySelector(".big-announce-power-group-label");
       const roleId = label?.classList.contains("role-setter") ? "setter" : "guesser";
-      const roleLabel = roleId === "setter" ? "SPY" : "INSPECTOR";
+      const roleLabel = roleId === "setter" ? "SECRETKEEPER" : "GUESSER";
       const ownerLabel = roleId === window.myRole ? "YOU" : "OPPONENT";
       if (label) label.textContent = `${ownerLabel} · ${roleLabel}`;
       group.classList.toggle("is-you-v10", ownerLabel === "YOU");
@@ -603,11 +603,13 @@
       if (document.visibilityState === "visible") scheduleUpdate();
     });
     window.addEventListener("resize", scheduleUpdate, { passive: true });
-    setInterval(() => {
+    // Wrapped updater functions and targeted observers already trigger this
+    // work. Permanent 700ms polling duplicated it even while the game was idle.
+    requestAnimationFrame(() => {
       installHooks();
       scheduleUpdate();
-    }, 700);
-  }
+    });
+}
 
   window.updateGameplaySystemsV10 = scheduleUpdate;
 

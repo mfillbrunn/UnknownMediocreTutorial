@@ -38,7 +38,7 @@ socket.on("revealOldSecret", ({ secret }) => {
 // Timer begins
 socket.on("forceTimerStarted", ({ durationMs }) => {
   const seconds = Math.ceil(durationMs / 1000);
-  toast(`⏱ Spy is now timed — ${seconds} seconds to make a guess!`);
+  toast(`⏱ Secretkeeper is now timed — ${seconds} seconds to make a guess!`);
 });
 
 socket.on("forceTimerExpired", () => {

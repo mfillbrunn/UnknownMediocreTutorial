@@ -6,8 +6,6 @@
   const observed = new WeakSet();
 
   let uiFrame = 0;
-  let installTimer = null;
-
   function clamp(value, minimum, maximum) {
     return Math.max(minimum, Math.min(maximum, value));
   }
@@ -313,7 +311,7 @@
     parts.value.textContent = `${value}/${max}`;
     toast.setAttribute(
       "aria-label",
-      `${role === "setter" ? "Spy charge" : "Quest charge"}: ${value} of ${max}`
+      `${role === "setter" ? "Secretkeeper charge" : "Quest charge"}: ${value} of ${max}`
     );
   }
 
@@ -483,13 +481,21 @@
     observed.add(element);
 
     const observer = new MutationObserver(scheduleUi);
-    observer.observe(element, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ["class", "style", "hidden"]
-    });
+    const isDraft = element.id === "draftSetter" || element.id === "draftGuesser";
+    observer.observe(element, isDraft
+      ? {
+          childList: true,
+          subtree: true,
+          characterData: true,
+          attributes: true,
+          attributeFilter: ["class", "style", "hidden"]
+        }
+      : {
+          childList: true,
+          subtree: true,
+          characterData: true
+        }
+    );
   }
 
   function installObservers() {
@@ -518,15 +524,9 @@
   function init() {
     install();
 
-    let attempts = 0;
-    installTimer = setInterval(() => {
-      attempts += 1;
-      install();
-      if (attempts >= 80) {
-        clearInterval(installTimer);
-        installTimer = null;
-      }
-    }, 125);
+    // Dependencies are loaded synchronously before v9-3. One next-frame
+    // retry covers render timing without running install() 80 times / 10 sec.
+    requestAnimationFrame(install);
 
     window.addEventListener("resize", scheduleUi, { passive: true });
   }

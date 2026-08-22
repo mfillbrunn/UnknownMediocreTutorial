@@ -335,7 +335,7 @@ function pickAISecret(
   }
 
   // ---------- Path 1: stall (maximize the guesser's remaining ambiguity) ----------
-  // A good Spy wants THIS candidate secret to leave the guesser with as
+  // A good Secretkeeper wants THIS candidate secret to leave the guesser with as
   // many still-plausible words as possible after their next guess — the
   // opposite of "reduction." (This used to weight toward LOWER remaining
   // counts, i.e. deliberately picking secrets that narrowed the guesser's

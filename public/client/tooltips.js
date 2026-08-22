@@ -100,7 +100,7 @@ sections[powerRole]?.push(row);
   // Quest isn't a registered PowerEngine power (it piggybacks on the power
   // dispatch loop purely server-side, see questServer.js), so the loop above
   // never sees it. It's the guesser's own objective, so it's listed under
-  // Inspector Powers on both panels -- giving the setter equal visibility
+  // Guesser Powers on both panels -- giving the setter equal visibility
   // into what the guesser is working toward, same as the quest box/info
   // badge already do.
   const questType = state.powers?.quest?.type;
@@ -130,7 +130,7 @@ sections[powerRole]?.push(row);
   if (sections.setter.length) {
     const h = document.createElement("div");
     h.className = "power-info-section";
-    h.textContent = "Spy Powers";
+    h.textContent = "Secretkeeper Powers";
     panel.appendChild(h);
     sections.setter.forEach(r => panel.appendChild(r));
   }
@@ -138,7 +138,7 @@ sections[powerRole]?.push(row);
   if (sections.guesser.length) {
     const h = document.createElement("div");
     h.className = "power-info-section";
-    h.textContent = "Inspector Powers";
+    h.textContent = "Guesser Powers";
     panel.appendChild(h);
     sections.guesser.forEach(r => panel.appendChild(r));
   }

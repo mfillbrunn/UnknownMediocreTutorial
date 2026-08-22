@@ -52,7 +52,7 @@
   <svg aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden">
     <defs>
 
-      <!-- SPY ICONS -->
+      <!-- SECRETKEEPER ICONS -->
 
       <symbol id="icon-hide-evidence" viewBox="0 0 120 120"><path fill="#f4f5f7" d="M51 21h43a7 7 0 0 1 7 7v53H46V26a5 5 0 0 1 5-5z"/><rect fill="currentColor" x="57" y="35" width="27" height="6" rx="3"/><rect fill="currentColor" x="57" y="47" width="32" height="6" rx="3"/><path fill="currentColor" d="M16 47h36l10 10h42l-9 43H25a9 9 0 0 1-9-9z"/><rect fill="var(--icon-surface)" x="83" y="24" width="10" height="10" rx="2"/><rect fill="var(--icon-surface)" x="94" y="35" width="8" height="8" rx="2"/><rect fill="var(--icon-surface)" x="88" y="47" width="7" height="7" rx="2"/></symbol>
 
@@ -75,7 +75,7 @@
       <symbol id="icon-time-pressure" viewBox="0 0 120 120"><circle fill="currentColor" cx="60" cy="64" r="40"/><circle fill="#f4f5f7" cx="60" cy="64" r="30"/><rect fill="currentColor" x="48" y="11" width="24" height="11" rx="4"/><path fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M60 64l16-14M60 39v5M84 64h-5M60 89v-5M36 64h5"/></symbol>
 
 
-      <!-- INSPECTOR ICONS -->
+      <!-- GUESSER ICONS -->
 
       <symbol id="icon-smart-guess-tip" viewBox="0 0 120 120"><path fill="currentColor" d="M60 14c-23 0-41 17-41 39 0 15 8 27 21 34v10h40V87c13-7 21-19 21-34 0-22-18-39-41-39z"/><path fill="#f4f5f7" d="M47 53l9 9 20-24 8 7-28 32-17-17z"/><rect fill="#f4f5f7" x="43" y="97" width="34" height="8" rx="4"/></symbol>
 
@@ -153,7 +153,7 @@
       </div>
     </div>
   </div>
-  <!-- Inspector-only: hold a keyboard key to mark it green/yellow/gray for
+  <!-- Guesser-only: hold a keyboard key to mark it green/yellow/gray for
        your own planning (e.g. after a power leaves the real color
        ambiguous) -- see client/key-color-picker.js. Positioned above
        whichever key was held via inline style, not CSS layout. -->
@@ -364,7 +364,7 @@
   id="startTutorialBtn"
   class="menu-btn tutorial-menu-btn"
   data-tutorial-key="tutorial"
-  title="The core game: guessing, feedback colors, and the Spy's keep/switch decision"
+  title="The core game: guessing, feedback colors, and the Secretkeeper's keep/switch decision"
 >
   <span class="tutorial-btn-num">2</span>
   <span class="tutorial-btn-label">Tutorial</span>
@@ -375,7 +375,7 @@
   id="startQuestTutorialBtn"
   class="menu-btn tutorial-menu-btn"
   data-tutorial-key="quest"
-  title="Learn how Inspector Quests, early claims, and rewards work"
+  title="Learn how Guesser Quests, early claims, and rewards work"
 >
   <span class="tutorial-btn-num">3</span>
   <span class="tutorial-btn-label">Tutorial: Quest</span>
@@ -386,7 +386,7 @@
   id="startStarTutorialBtn"
   class="menu-btn tutorial-menu-btn"
   data-tutorial-key="star"
-  title="A deep dive on the Spy's star/charge system"
+  title="A deep dive on the Secretkeeper's star/charge system"
 >
   <span class="tutorial-btn-num">4</span>
   <span class="tutorial-btn-label">Tutorial: Stars</span>
@@ -419,23 +419,23 @@
 
     <div class="rules-content">
       <h3>The basics</h3>
-      <p>One player is the <b>Spy</b> (setter): they pick a secret 5-letter word. The other is the <b>Inspector</b> (guesser): they try to guess it, Wordle-style — green means right letter/right spot, yellow means right letter/wrong spot, gray means not in the word.</p>
+      <p>One player is the <b>Secretkeeper</b> (setter): they pick a secret 5-letter word. The other is the <b>Guesser</b> (guesser): they try to guess it, Wordle-style — green means right letter/right spot, yellow means right letter/wrong spot, gray means not in the word.</p>
       <h3>The twist</h3>
-      <p>After every guess, the Spy may <b>keep</b> their secret or <b>switch</b> to a new word — as long as the new word is still consistent with every clue given so far. A good Spy stalls; a good Inspector asks questions that narrow the field no matter which word the Spy is hiding.</p>
+      <p>After every guess, the Secretkeeper may <b>keep</b> their secret or <b>switch</b> to a new word — as long as the new word is still consistent with every clue given so far. A good Secretkeeper stalls; a good Guesser asks questions that narrow the field no matter which word the Secretkeeper is hiding.</p>
       <h3>Round 1 is simultaneous</h3>
-      <p>Neither player has any information yet, so the Spy locks in a secret and the Inspector submits an opening guess at the same time, blind.</p>
+      <p>Neither player has any information yet, so the Secretkeeper locks in a secret and the Guesser submits an opening guess at the same time, blind.</p>
       <h3>Scoring</h3>
-      <p>The Spy scores a point for every guess it takes the Inspector to win the round. Fewer guesses is better for the Inspector; more guesses is better for the Spy. Roles swap each round; the lower total score across all rounds wins the match.</p>
+      <p>The Secretkeeper scores a point for every guess it takes the Guesser to win the round. Fewer guesses is better for the Guesser; more guesses is better for the Secretkeeper. Roles swap each round; the lower total score across all rounds wins the match.</p>
       <h3>Powers</h3>
       <p>Both sides can unlock special powers that bend the rules in their favor — see the Powers screen for the full list.</p>
       <h3>Picking your powers</h3>
-      <p>Before a match starts, the Spy drafts <b>2 of 3</b> powers: whichever you pick first is active right away, and your second pick stays locked until you earn 8 stars (see Stars below). The Inspector drafts <b>1 of 2</b> powers, plus <b>1 of 2</b> Quests.</p>
+      <p>Before a match starts, the Secretkeeper drafts <b>2 of 3</b> powers: whichever you pick first is active right away, and your second pick stays locked until you earn 8 stars (see Stars below). The Guesser drafts <b>1 of 2</b> powers, plus <b>1 of 2</b> Quests.</p>
       <h3>Stars</h3>
-      <p>Every time the Spy switches to a new secret, the game rates the choice from 0 to 3 stars — the closer it is to the safest possible switch, the more stars it earns. Matching a hidden hint letter shown on the draft row earns one bonus star. Stars fill a meter across the round: <b>5 and 12 stars</b> each give you a letter reset, and <b>8 stars</b> unlocks your second power.</p>
+      <p>Every time the Secretkeeper switches to a new secret, the game rates the choice from 0 to 3 stars — the closer it is to the safest possible switch, the more stars it earns. Matching a hidden hint letter shown on the draft row earns one bonus star. Stars fill a meter across the round: <b>5 and 12 stars</b> each give you a letter reset, and <b>8 stars</b> unlocks your second power.</p>
       <h3>Guesser Quests</h3>
-      <p>Every Inspector also gets an always-on Quest: a visible challenge (like using every letter in a keyboard row, or submitting guesses in alphabetical order) that rewards a free green letter reveal when completed. See the Powers screen's Guesser Quests tab for the full list.</p>
+      <p>Every Guesser also gets an always-on Quest: a visible challenge (like using every letter in a keyboard row, or submitting guesses in alphabetical order) that rewards a free green letter reveal when completed. See the Powers screen's Guesser Quests tab for the full list.</p>
       <h3>Swapping sides</h3>
-      <p>When the roles swap for round 2, powers stay with the <b>role</b>, not the player: whoever plays Spy uses the same 2 powers picked for Spy at the start, and whoever plays Inspector uses the same power picked for Inspector. Quests are different — round 2's Inspector is a new player experiencing it fresh, so they get their own new choice of 1 of 2 Quests instead of inheriting round 1's.</p>
+      <p>When the roles swap for round 2, powers stay with the <b>role</b>, not the player: whoever plays Secretkeeper uses the same 2 powers picked for Secretkeeper at the start, and whoever plays Guesser uses the same power picked for Guesser. Quests are different — round 2's Guesser is a new player experiencing it fresh, so they get their own new choice of 1 of 2 Quests instead of inheriting round 1's.</p>
     </div>
   </div>
 </section>
@@ -619,8 +619,8 @@
       <label class="sim-field">
         <span>Role</span>
         <select id="rsRoleSelect">
-          <option value="setter">Spy (setter)</option>
-          <option value="guesser">Inspector (guesser)</option>
+          <option value="setter">Secretkeeper (setter)</option>
+          <option value="guesser">Guesser (guesser)</option>
         </select>
       </label>
       <label class="sim-field">
@@ -725,7 +725,7 @@
       <!-- SETTER -->
       <div class="role-card setter">
         <div class="lobby-role-header">
-          <span class="role-title">Spy</span>
+          <span class="role-title">Secretkeeper</span>
     
           <!-- Host badge -->
           <span
@@ -776,7 +776,7 @@
       <!-- GUESSER -->
       <div class="role-card guesser">
         <div class="lobby-role-header">
-          <span class="role-title">Inspector</span>
+          <span class="role-title">Guesser</span>
     
           <!-- Host badge -->
           <span
@@ -931,7 +931,7 @@
   <aside
     id="setterSidebar"
     class="play-col powers-col setter-sidebar"
-    aria-label="Spy side panel"
+    aria-label="Secretkeeper side panel"
   >
     <section class="setter-sidebar-powers">
       <div
@@ -959,7 +959,7 @@
     class="setter-sidebar-toggle"
     aria-controls="setterSidebar"
     aria-expanded="true"
-    aria-label="Hide Spy side panel"
+    aria-label="Hide Secretkeeper side panel"
     title="Hide side panel"
   >
     <span
@@ -983,7 +983,7 @@
   <div class="play-col center-col setter-board">
     <section
       class="setter-feedback-stage"
-      aria-label="Inspector feedback"
+      aria-label="Guesser feedback"
     >
       <div id="constraintRowSetter" class="history-row constraint-row"></div>
       <div id="setterGuesserSubmitted" class="history-tiles history-scroll"></div>
@@ -1063,7 +1063,7 @@
               <h2 class="screen-title">⚠️ Marked Weakness</h2>
               <p class="reveal-penalty-instruction">
                 Choose a letter that isn't yet known and claim it's in the
-                secret. The Inspector can accept your claim (you score 1
+                secret. The Guesser can accept your claim (you score 1
                 point) or call it a bluff (right, and they get a free
                 yellow letter; wrong, and you score 2 points).
               </p>
@@ -1084,7 +1084,7 @@
             <div class="panel reveal-penalty-panel">
               <h2 class="screen-title">🚫 Ban a Letter</h2>
               <p class="reveal-penalty-instruction">
-                Bans a random letter the Inspector hasn't tried yet -- never
+                Bans a random letter the Guesser hasn't tried yet -- never
                 one you've banned before this match. Their next guess cannot
                 contain it.
               </p>
@@ -1267,7 +1267,7 @@
   <div class="modal-content quest-choice-content">
     <h3>🎯 Choose Your Quest</h3>
     <p class="modal-instruction">
-      Pick 1 of the 2 Quests below for this round as Inspector.
+      Pick 1 of the 2 Quests below for this round as Guesser.
     </p>
     <div class="draft-candidates" id="questChoiceCandidates"></div>
   </div>
@@ -1296,11 +1296,11 @@
 
     <div class="dev-powers-columns">
       <div class="dev-powers-col">
-        <div class="dev-powers-col-label role-setter">Spy</div>
+        <div class="dev-powers-col-label role-setter">Secretkeeper</div>
         <div class="dev-powers-list" id="devSetterPowersList"></div>
       </div>
       <div class="dev-powers-col">
-        <div class="dev-powers-col-label role-guesser">Inspector</div>
+        <div class="dev-powers-col-label role-guesser">Guesser</div>
         <div class="dev-powers-list" id="devGuesserPowersList"></div>
       </div>
     </div>
@@ -1496,7 +1496,7 @@
   <script src="client.js?v=9-2"></script>
   <script src="ui/guesser-flow-v7.js?v=tutorial-motion-sim-2"></script>
   <script src="ui/gameplay-polish-v8.js?gameplay-polish=8"></script>
-  <!-- V9: matching Inspector drawer, ready-action docks, Notes shortcut, and theme toggle -->
+  <!-- V9: matching Guesser drawer, ready-action docks, Notes shortcut, and theme toggle -->
   <script src="ui/guesser-board-v9.js?v=9"></script>
   <script src="ui/collapsed-actions-v9.js?v=9-1"></script>
   <script src="ui/setter-notes-target-v9.js?v=9&compact-bonus=1"></script>

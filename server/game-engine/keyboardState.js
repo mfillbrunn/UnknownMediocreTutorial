@@ -26,7 +26,7 @@ function getLetterStatusFromHistory(letter, state) {
   // Four -- see powerChoiceServer.js's addAbsentConstraints). This is real
   // knowledge about the secret, so it belongs in the same keyboard feedback
   // an ordinary gray guess produces rather than only in the mode's own
-  // cosmetic key styling: without it the Spy read a ruled-out letter as
+  // cosmetic key styling: without it the Secretkeeper read a ruled-out letter as
   // still untried and kept hiding the secret behind it.
   const extraAbsent = state.extraConstraints
     ?.filter(c => c.type === "ABSENT")

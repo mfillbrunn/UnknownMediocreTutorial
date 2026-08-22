@@ -154,7 +154,7 @@
 
 /* The log is the whole panel now, so it gets real room and readable type
    instead of the cramped 8-9px it used while sharing the row. */
-/* The Inspector's side column is the action log outright -- no notes, no
+/* The Guesser's side column is the action log outright -- no notes, no
    tabs. Borderless and flush so every pixel goes to the log. */
 #guesserScreen .guesser-info-col #actionLogGuesser {
   display: flex !important;
@@ -178,7 +178,7 @@
   box-shadow: none;
 }
 
-/* Spy side column: Spyometer on top, log filling the rest. The Log/Notes
+/* Secretkeeper side column: Spyometer on top, log filling the rest. The Log/Notes
    tab strip is gone, so the log can never be toggled hidden -- force it
    visible regardless of any stale .hidden left by the old tab scripts. */
 #setterScreen #actionLogSetter {
@@ -306,13 +306,13 @@
      Whenever it absorbed the overflow the history never overflowed
      internally, leaving nothing to scroll inside it, and the board could
      be scrolled out of the visible band entirely. That is both why the
-     Inspector's history "couldn't be scrolled" and why the end-of-round
+     Guesser's history "couldn't be scrolled" and why the end-of-round
      animation went unseen after a long round. */
   overflow-y: hidden;
 }
 
-/* The same explicit basis the Spy's list already carries further down, so
-   the Inspector's list is the element that shrinks and scrolls rather
+/* The same explicit basis the Secretkeeper's list already carries further down, so
+   the Guesser's list is the element that shrinks and scrolls rather
    than growing to fit every row. */
 #guesserScreen #historyGuesser {
   flex: 1 1 0;
@@ -361,8 +361,8 @@
 
 /* Collapses the whole row -- border-bottom divider included -- rather
    than just hiding its contents. Toggled in setter-board.js's
-   updateDecisionMetaVisibility: outside the Spy's own normal-phase
-   decision turn (the simultaneous opening, the Inspector's turn, or once
+   updateDecisionMetaVisibility: outside the Secretkeeper's own normal-phase
+   decision turn (the simultaneous opening, the Guesser's turn, or once
    this turn's Keep/New choice has already been sent) there is nothing
    left to show here, and an empty bordered bar sitting on the board is
    exactly what this is meant to prevent. */
@@ -418,7 +418,7 @@
   /* Vertical drags scroll this list. The tiles inside sit under the
      drag-to-reorder system's touch-action rules, and without an explicit
      pan-y here a touch that happens to land on a tile (rather than the
-     gap between them) had its scroll swallowed -- which is why the Spy's
+     gap between them) had its scroll swallowed -- which is why the Secretkeeper's
      history only "sometimes" refused to scroll. */
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
@@ -480,7 +480,7 @@
 }
 
 /* Desktop: past #appContainer's own width cap the cqw ratio above is
-   pinned at its ceiling, so the Inspector's tiles stay phone-sized-for-a
+   pinned at its ceiling, so the Guesser's tiles stay phone-sized-for-a
    -cramped-column (i.e. far too big) no matter how wide the monitor is.
    Same selector shape as the rule above (equal specificity, later in the
    file, so it wins) narrowed to the guesser -- history and draft tiles
@@ -1196,7 +1196,7 @@
    Pending and reset states
    -------------------------------------------------------------------------- */
 
-/* Waiting on the Spy: the tiles themselves hold still (bobbing them read
+/* Waiting on the Secretkeeper: the tiles themselves hold still (bobbing them read
    as the guess being unstable rather than as progress). Instead each tile
    carries a small blue loading bar underneath that sweeps left to right,
    staggered across the row so it scans like a progress indicator. */
@@ -1248,13 +1248,13 @@
   100% { transform: translateX(200%); opacity: 0; }
 }
 
-/* Waiting on the Inspector: the Spy's mirror of the scan above. Their own
+/* Waiting on the Guesser: the Secretkeeper's mirror of the scan above. Their own
    locked-in secret renders read-only as .ghost-secret while it's the
-   Inspector's turn (see draftrow.js's !setterCanEdit branch) -- the exact
+   Guesser's turn (see draftrow.js's !setterCanEdit branch) -- the exact
    same "nothing to do but wait" moment the guesser's pending-guess row
    represents, just the other direction of the same round-trip. Scoped to
    .is-not-your-turn specifically so this never fires during the OTHER
-   moment .ghost-secret covers (the Spy's own turn, before they've typed
+   moment .ghost-secret covers (the Secretkeeper's own turn, before they've typed
    anything yet) -- that one is an active decision waiting to happen, not
    a wait on the opponent. Recolored to the Setter's own theme accent
    (var(--role-accent), the setter red) instead of the guesser's blue. */
@@ -1650,7 +1650,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   animation: hide-evidence-pulse 1.4s ease-in-out infinite;
 }
 
-/* The collapsed Spy meter is intentionally a compact numeric badge. */
+/* The collapsed Secretkeeper meter is intentionally a compact numeric badge. */
 .pc-spy-mini-host {
   min-width: 24px !important;
   width: auto !important;
@@ -1662,7 +1662,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   font-size: 10px !important;
 }
 
-/* Inspector quest above the draft row. */
+/* Guesser quest above the draft row. */
 .pc-current-quest-host {
   position: relative;
   z-index: 8;
@@ -1674,7 +1674,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   display: none !important;
 }
 
-/* Inspector's own panel (next-quest preview, reward intel, and the
+/* Guesser's own panel (next-quest preview, reward intel, and the
    persistent-power readouts below) -- same width/centering treatment as
    the quest host above, and always positioned directly under it (see
    ensureInspectorPanelHost in power-choice-mode.js). Empty and thus
@@ -2056,7 +2056,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   opacity: 1;
 }
 
-/* Compact Spy charge animation. */
+/* Compact Secretkeeper charge animation. */
 .pc-spy-award-capsule {
   position: fixed;
   z-index: 2147482700;
@@ -3230,3 +3230,35 @@ body:not(.light-theme) {
   .pc-star-mini { display: none !important; }
 }
 /* TUTORIAL_MOTION_SIM_PATCH v1: END */
+
+/* -------------------------------------------------------------------------
+   Secretkeeper drawer interaction hardening
+   Persistent navigation must remain usable through announcements, secret
+   locks, charge flights, and late v8/v9/v10 UI updates.
+   ------------------------------------------------------------------------- */
+#setterScreen .setter-workspace {
+  isolation: isolate;
+}
+
+#setterScreen #setterSidebarToggle {
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  z-index: 2147483001 !important;
+}
+
+#setterScreen[data-sidebar-collapsed="true"] .setter-sidebar {
+  flex-basis: 0 !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  padding-inline: 0 !important;
+  border-width: 0 !important;
+  opacity: 0 !important;
+  transform: translateX(-105%) !important;
+  pointer-events: none !important;
+}
+
+#setterScreen[data-sidebar-collapsed="true"] #setterSidebarToggle {
+  left: 1px !important;
+  transform: translate(0, 0) !important;
+  pointer-events: auto !important;
+}
