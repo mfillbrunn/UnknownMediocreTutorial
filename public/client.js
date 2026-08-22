@@ -601,6 +601,25 @@ onStateUpdate(newState => {
       guesserDraftContainer
         .__guesserSubmitSlideDone = true;
     }
+
+    // The opening secret and guess happened at the same time, so the very
+    // next real turn is the guesser's again -- not the setter's, which is
+    // what every later round trains a player to expect. A small heads-up
+    // here instead of the full ceremonial announce (state.phase === "normal"
+    // excludes the isWin case, which skips straight to gameOver and never
+    // reaches this phase at all).
+    if (state.phase === "normal" && myUserId() === state.guesser) {
+      requestAnimationFrame(() => {
+        window.showBigAnnounce?.({
+          icon: "🔁",
+          title: "You guess again",
+          sub: "The opening guess and secret landed at the same time, so it's straight back to you.",
+          roleClass: "role-guesser",
+          compact: true,
+          duration: 2600
+        });
+      });
+    }
   }
 
   /*

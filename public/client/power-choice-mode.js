@@ -624,6 +624,20 @@
       return;
     }
 
+    // A fresh quest object (even one not "live" yet, see below) means any
+    // guide the guesser left on for the PREVIOUS quest no longer applies --
+    // reset it here, before the not-live branch can return early, so a
+    // leftover "on" guide doesn't keep highlighting keys against the new
+    // quest during its placeholder window (it used to only clear once the
+    // new quest went live, which read as the guide already being active
+    // for a quest that hadn't started yet).
+    if (quest.id !== lastQuestId) {
+      lastQuestId = quest.id || "";
+      questGuideOpen = false;
+      questHintsActive = false;
+      clearQuestKeyHints();
+    }
+
     // The quest is only actually attemptable on every other guess (the
     // 2nd, 4th, 6th, ...) -- see the matching questLive gate in
     // evaluateInspectorGuess() server-side. On the guesses in between,
@@ -640,13 +654,6 @@
         </div>`;
       }
       return;
-    }
-
-    if (quest.id !== lastQuestId) {
-      lastQuestId = quest.id || "";
-      questGuideOpen = false;
-      questHintsActive = false;
-      clearQuestKeyHints();
     }
 
     const rawDraft = currentDraftWord();
