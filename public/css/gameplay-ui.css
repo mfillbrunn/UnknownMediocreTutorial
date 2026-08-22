@@ -1262,7 +1262,10 @@
   opacity: 0;
   pointer-events: none;
   animation: pc-wait-flow 2s linear infinite;
-  animation-delay: calc(var(--pc-wait-index) * 0.32s);
+  /* Each tile starts 15% of the shared 2s period after the one to its
+     left (0.3s = 15% of 2s), so the highlight reads as one wave sweeping
+     left to right rather than five independently-timed scanners. */
+  animation-delay: calc(var(--pc-wait-index) * 0.3s);
 }
 @keyframes pc-wait-flow {
   0%   { transform: translateX(-45%); opacity: 0; }
