@@ -4,7 +4,7 @@ const { getAI } = require("./aiDifficulty");
 const { applyAIAction } = require("./aiActions");
 const powerMetadata = require("../../powers/powerMetadata");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
-const { pickLetterLockoutLetter, pickReconSweepLetters, feasibleSecretsFor } = require("./genericAI");
+const { pickLetterLockoutLetter, feasibleSecretsFor } = require("./genericAI");
 const questServer = require("../../powers/powers/questServer");
 const spyChargeServer = require(
   "../../powers/powers/spyChargeServer"
@@ -216,12 +216,9 @@ function buildPowerAction(powerId, state, context) {
   }
 
   if (powerId === "letterProbe") {
-    // Recon Sweep tests any 5 letters — probe the letters most common
-    // among the remaining feasible secrets instead of reusing a normal
-    // dictionary guess (which may not even touch an untested letter).
-    const letters = pickReconSweepLetters(state, context.WORDS.secrets);
-    if (!letters || letters.length !== 5) return null;
-    return { type, letters };
+    // Recon Sweep's 5 letters are chosen server-side now (see
+    // letterProbeServer.js), so the AI just fires it -- nothing to compute.
+    return { type };
   }
 
   if (powerId === "letterLockout") {

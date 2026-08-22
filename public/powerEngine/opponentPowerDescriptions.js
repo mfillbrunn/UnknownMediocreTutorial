@@ -73,7 +73,7 @@ window.OPPONENT_POWER_DESCRIPTIONS =
       "Your opponent can see the same remaining-secret count that the Secretkeeper sees.",
 
     letterProbe:
-      "Your opponent tested five letters and learned how many of them are in the current secret.",
+      "Your opponent tested five random letters and learned how many of them are in the current secret.",
 
     revealLocation:
       "Your opponent is watching one secret position and can see its current letter.",

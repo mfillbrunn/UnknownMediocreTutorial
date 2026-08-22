@@ -102,10 +102,12 @@ const POWER_COPY = {
   suggestGuess: ["💡", "Guess Tip", "Immediately suggests a random guess that still fits everything learned so far."],
   revealHistory: ["⏪", "Time Rewind", "Reveal the exact secret from three rounds ago."],
   // Immediate, payload-carrying cards: picking one prompts for its input
-  // (5 letters / a bet number / two words) right then, and fires on the
-  // spot -- there's no unlock to bank for later, see applyChoice's
-  // payload param.
-  letterProbe: ["🔎", "Recon Sweep", "Test 5 letters right now and learn how many are in the secret."],
+  // (a bet number / two words) right then, and fires on the spot -- there's
+  // no unlock to bank for later, see applyChoice's payload param. Recon
+  // Sweep is the exception: it fires immediately with no prompt at all,
+  // since the 5 letters it tests are chosen by the server (see
+  // letterProbeServer.js), not typed in.
+  letterProbe: ["🔎", "Recon Sweep", "Test 5 random letters right now and learn how many are in the secret."],
   betMiss: ["🎯", "Miss Bet", "Bet right now how many misses your next guess will have -- guess right and win a free green letter."],
   doubleGuess: ["🔫", "Double Tap", "Submit two guesses at once right now and get feedback on both."],
   // PERSISTENT_POWER_IDS -- permanent unlocks, not one-turn effects, so

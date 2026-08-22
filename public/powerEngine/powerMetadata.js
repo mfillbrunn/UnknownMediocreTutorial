@@ -252,8 +252,8 @@ window.POWER_METADATA = {
 
   letterProbe: {
     label: "Letter Scan",
-    desc: "The Guesser tests any 5 letters at once and learns how many of them are in the secret — not which ones or where, but still a useful head start.",
-    short: "Test 5 letters at once and learn how many are in the secret.",
+    desc: "The game tests 5 random letters (weighted toward ones still unknown, including one that's in the secret) and the Guesser learns how many of them are in the secret — not which ones or where, but still a useful head start.",
+    short: "Tests 5 random letters at once and learns how many are in the secret.",
     icon: "radar",
     emoji: "🔎",
     color: "#22D3EE"

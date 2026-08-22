@@ -1087,7 +1087,7 @@
 
   // Cards whose reward fires with real player-typed input instead of
   // immediately on click -- see rewardInputArmed above.
-  const REWARD_INPUT_POWER_IDS = new Set(["letterProbe", "betMiss", "doubleGuess"]);
+  const REWARD_INPUT_POWER_IDS = new Set(["betMiss", "doubleGuess"]);
 
   // The armed card's own content, swapped in for its normal icon/title/
   // description while the player is entering input. cleanWord() (top of
@@ -1106,23 +1106,13 @@
         </div>
       </div>`;
     }
-    if (option.powerId === "doubleGuess") {
-      return `<div class="pc-reward-input-form">
-        <span class="pc-reward-input-label">Type both guesses:</span>
-        <input type="text" class="pc-reward-word-input" data-slot="0" maxlength="5" placeholder="GUESS 1" autocomplete="off" autocapitalize="characters">
-        <input type="text" class="pc-reward-word-input" data-slot="1" maxlength="5" placeholder="GUESS 2" autocomplete="off" autocapitalize="characters">
-        <div class="pc-reward-input-actions">
-          <button type="button" class="pc-reward-fire-btn" disabled>Fire</button>
-          <button type="button" class="pc-reward-cancel-btn">Cancel</button>
-        </div>
-      </div>`;
-    }
-    // letterProbe
+    // doubleGuess
     return `<div class="pc-reward-input-form">
-      <span class="pc-reward-input-label">Type 5 letters to test:</span>
-      <input type="text" class="pc-reward-word-input" data-slot="0" maxlength="5" placeholder="5 LETTERS" autocomplete="off" autocapitalize="characters">
+      <span class="pc-reward-input-label">Type both guesses:</span>
+      <input type="text" class="pc-reward-word-input" data-slot="0" maxlength="5" placeholder="GUESS 1" autocomplete="off" autocapitalize="characters">
+      <input type="text" class="pc-reward-word-input" data-slot="1" maxlength="5" placeholder="GUESS 2" autocomplete="off" autocapitalize="characters">
       <div class="pc-reward-input-actions">
-        <button type="button" class="pc-reward-fire-btn" disabled>Sweep</button>
+        <button type="button" class="pc-reward-fire-btn" disabled>Fire</button>
         <button type="button" class="pc-reward-cancel-btn">Cancel</button>
       </div>
     </div>`;
@@ -1239,8 +1229,6 @@
           fireChoice(optionId, { betMissNumber: betValue });
         } else if (rewardInputArmed?.powerId === "doubleGuess") {
           fireChoice(optionId, { guess1: wordInputs[0].value, guess2: wordInputs[1].value });
-        } else {
-          fireChoice(optionId, { letters: wordInputs[0].value });
         }
       });
 

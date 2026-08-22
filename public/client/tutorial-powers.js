@@ -129,8 +129,8 @@ const POWER_TUTORIAL_SIMPLE_COPY = Object.freeze({
     receiver: "The Guesser can see how many secrets are still possible."
   },
   letterProbe: {
-    owner: "Pick five letters. The game tells you how many are in the secret, but not which ones.",
-    receiver: "The Guesser tested five letters and learned how many are in your secret."
+    owner: "The game tests five random letters and tells you how many are in the secret, but not which ones.",
+    receiver: "The Guesser tested five random letters and learned how many are in your secret."
   },
   revealLocation: {
     owner: "This watches one secret position and shows the letter in that box.",

@@ -103,8 +103,8 @@
       desc: "Helps the Guesser by showing the same remaining-secret count the Secretkeeper uses to compare choices."
     },
     letterProbe: {
-      short: "Helps the Guesser test five letters and learn how many are in the secret.",
-      desc: "Helps the Guesser by testing five chosen letters. It reveals how many are present, but not which ones or where."
+      short: "Helps the Guesser test five random letters and learn how many are in the secret.",
+      desc: "Helps the Guesser by testing five random letters (weighted toward still-unknown ones). It reveals how many are present, but not which ones or where."
     },
     revealLocation: {
       short: "Helps the Guesser watch one secret position and see its current letter.",
@@ -160,7 +160,7 @@
     assassinWord: "Your opponent plants a trap word that wins immediately if it is guessed.",
     blindGuess: "Your opponent hides all feedback and keyboard colors for your next guess.",
     wiretap: "Your opponent sees the same remaining-secret count the Secretkeeper sees.",
-    letterProbe: "Your opponent tests five letters and learns how many are in the secret.",
+    letterProbe: "Your opponent tests five random letters and learns how many are in the secret.",
     revealLocation: "Your opponent watches one position and sees its current letter.",
     doubleGuess: "Your opponent submits two guesses and receives feedback for both while you see only one.",
     letterProfile: "Your opponent sees an always-on count of how many of the secret's letters are vowels.",
