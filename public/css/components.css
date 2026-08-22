@@ -359,6 +359,27 @@
 .quest-badge-tile .power-icon {
   display: none;
 }
+/* Small "not required" flag poking above the card -- the same spot the
+   progress chip used to occupy before it moved into the card body (see
+   above), so it's free real estate. Muted on purpose: it should read as
+   a quiet clarification, not compete with the ready/done color signal. */
+.quest-badge-tile .quest-optional-flag {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--role-accent) 55%, transparent);
+  background: #14151b;
+  color: color-mix(in srgb, var(--role-accent) 75%, #cfd9e6 25%);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
 .quest-badge-tile .quest-progress-chip {
   position: static;
   order: -1;

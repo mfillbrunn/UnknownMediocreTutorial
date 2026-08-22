@@ -679,7 +679,7 @@
       <span class="pc-current-main">
         <strong>${esc(quest.title || "Quest")}</strong>
         <span class="pc-current-expand">${questGuideOpen ? "Close" : "Rules"}</span>
-      <span class="pc-quest-optional-note">Complete for a reward</span></span>
+      <span class="pc-quest-optional-note">Optional -- complete for a reward</span></span>
       <span class="pc-current-status" aria-live="polite">${met ? "MET" : ""}</span>
       <span class="pc-current-desc">${esc(quest.description || "Complete the shown condition.")}</span>
       ${conditionLabels.length ? `<span class="pc-current-conditions">${conditionLabels.map((label, index) => `<span class="pc-condition-chip${conditionResults[index] ? " is-met" : ""}">${esc(label)}</span>`).join("")}</span>` : ""}
@@ -1061,18 +1061,20 @@
       grid.scrollLeft += delta;
     }, { passive: false });
     grid.addEventListener("keydown", event => {
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      const isNext = event.key === "ArrowRight" || event.key === "ArrowDown";
+      const isPrev = event.key === "ArrowLeft" || event.key === "ArrowUp";
+      if (!isNext && !isPrev) return;
       // Don't hijack cursor movement while the player is typing into one
       // of the reward-input cards' own text fields (see rewardInputArmed).
       if (event.target?.tagName === "INPUT") return;
       const cards = [...grid.querySelectorAll(".pc-choice-card")];
       const current = Math.max(0, cards.indexOf(document.activeElement));
-      const direction = event.key === "ArrowRight" ? 1 : -1;
+      const direction = isNext ? 1 : -1;
       const next = cards[Math.max(0, Math.min(cards.length - 1, current + direction))];
       if (!next || next === document.activeElement) return;
       event.preventDefault();
       next.focus({ preventScroll: true });
-      next.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      next.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
   }
 
@@ -1123,7 +1125,7 @@
     const options = Array.isArray(pending?.options) ? pending.options : [];
     if (rewardInputArmed && rewardInputArmed.choiceId !== pending.id) rewardInputArmed = null;
     grid.setAttribute("role", "group");
-    grid.setAttribute("aria-label", "Reward choices. Swipe horizontally to see more cards.");
+    grid.setAttribute("aria-label", "Reward choices, listed top to bottom.");
     grid.innerHTML = options.map(option => {
       const armed = rewardInputArmed?.optionId === option.id;
       const tierNumber =
@@ -1150,9 +1152,11 @@
       return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}"${style}>
         <span class="pc-card-icon">${optionIconMarkup(option)}</span>
         ${tier}
-        <strong>${esc(option.title)}</strong>
-        <span class="pc-card-desc">${esc(description)}</span>
-        <span class="pc-card-pick">CHOOSE</span>
+        <span class="pc-card-body">
+          <strong>${esc(option.title)}</strong>
+          <span class="pc-card-desc">${esc(description)}</span>
+          <span class="pc-card-pick">CHOOSE</span>
+        </span>
       </button>`;
     }).join("");
 
@@ -1270,10 +1274,8 @@
     modal.dataset.choiceId = pending.id;
     modal.dataset.rewardRole = pending.role || "";
     modal.querySelector("h2").textContent = pending.title || "Choose a reward";
-    const baseSubtitle = pending.subtitle || "Choose one card. It activates immediately.";
-    modal.querySelector(".pc-modal-sub").textContent = /swipe/i.test(baseSubtitle)
-      ? baseSubtitle
-      : `${baseSubtitle} Swipe to see more.`;
+    modal.querySelector(".pc-modal-sub").textContent =
+      pending.subtitle || "Choose one card. It activates immediately.";
     const grid = modal.querySelector(".pc-card-grid");
     renderRewardChoiceCards(pending, grid);
     const peekBar = typeof ensurePeekBar === "function" ? ensurePeekBar() : null;
@@ -1291,7 +1293,8 @@
     modal.classList.add("is-open");
     const first = grid.querySelector("button");
     requestAnimationFrame(() => {
-      grid.scrollLeft = 0;
+      const card = modal.querySelector(".pc-modal-card");
+      if (card) card.scrollTop = 0;
       try {
         first?.focus({ preventScroll: true });
       } catch (_) {
@@ -1470,7 +1473,7 @@
       { transform: "translate(-50%,-50%) scale(1.8)", opacity: 0 }
     ], { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)" }).finished.finally(() => sourcePulse.remove());
 
-    await sleep(25);
+    await sleep(80);
 
     // Resolve every star's landing target up front (instead of mid-loop)
     // so the shared bunch geometry below can be computed from real
@@ -1496,21 +1499,21 @@
       // Launched close together instead of one-at-a-time -- stagger is
       // short enough, and duration long enough, that landing order still
       // matches launch order (see the duration floor below).
-      const LAUNCH_STAGGER = 60;
+      const LAUNCH_STAGGER = 75;
 
       // One random bend for the whole bunch, picked as if it were the
       // first star's own path -- every star in the award curves the same
       // rough way (plus a small per-star wobble below) so they read as a
       // flock following a leader instead of identical geometric clones.
-      const bunchArcJitter = (Math.random() - 0.5) * 56;
+      const bunchArcJitter = (Math.random() - 0.5) * 64;
       const bunchLateralJitter = (Math.random() - 0.5) * 44;
 
       const last = plans[plans.length - 1].targetRect;
       const refDx = last.left + last.width / 2 - sourceX;
       const refDy = last.top + last.height / 2 - sourceY;
       const duration = Math.min(
-        420,
-        Math.max(230, LAUNCH_STAGGER * plans.length + 90, Math.hypot(refDx, refDy) * .42)
+        640,
+        Math.max(380, LAUNCH_STAGGER * plans.length + 160, Math.hypot(refDx, refDy) * .58)
       );
 
       const landings = plans.map(({ index, value, bonus, isFinal, targetRect }) => (async () => {
@@ -1522,7 +1525,7 @@
         const endY = targetRect.top + targetRect.height / 2;
         const dx = endX - startX;
         const dy = endY - startY;
-        const baseArc = Math.min(180, Math.max(82, Math.abs(dx) * .18 + Math.abs(dy) * .1));
+        const baseArc = Math.min(230, Math.max(112, Math.abs(dx) * .22 + Math.abs(dy) * .14));
         const arc = baseArc + bunchArcJitter;
         const lateral = bunchLateralJitter + (Math.random() - 0.5) * 16;
 
@@ -1532,12 +1535,21 @@
         Object.assign(star.style, { left: `${startX}px`, top: `${startY}px` });
         document.body.appendChild(star);
 
+        // A gentle wind-up (barely any movement through ~18% of the
+        // flight) before the star actually launches into its arc, then a
+        // wide swoop up and over on the way to the target -- reads as a
+        // beat of anticipation rather than an instant snap into motion.
         const flight = star.animate([
-          { transform: "translate(-50%,-50%) scale(.55) rotate(-28deg)", opacity: 0 },
+          { transform: "translate(-50%,-50%) scale(.5) rotate(-22deg)", opacity: 0 },
+          {
+            transform: `translate(calc(-50% + ${dx * .1 + lateral * .25}px), calc(-50% + ${dy * .1 - arc * .3}px)) scale(.82) rotate(-8deg)`,
+            opacity: 1,
+            offset: .18
+          },
           {
             transform: `translate(calc(-50% + ${dx * .5 + lateral}px), calc(-50% + ${dy * .42 - arc}px)) scale(1.32) rotate(12deg)`,
             opacity: 1,
-            offset: .5
+            offset: .56
           },
           {
             transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35) rotate(0deg)`,
@@ -1545,7 +1557,7 @@
           }
         ], {
           duration,
-          easing: "cubic-bezier(.18,.76,.2,1)",
+          easing: "cubic-bezier(.32,.04,.2,1)",
           fill: "forwards"
         });
         try { await flight.finished; } catch {}
