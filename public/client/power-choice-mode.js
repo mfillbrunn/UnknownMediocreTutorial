@@ -1470,11 +1470,12 @@
       { transform: "translate(-50%,-50%) scale(1.8)", opacity: 0 }
     ], { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)" }).finished.finally(() => sourcePulse.remove());
 
-    await sleep(90);
+    await sleep(45);
 
     for (let index = 0; index < totalStars; index++) {
       const value = Math.min(after, before + index + 1);
       const bonus = index >= appliedBase;
+      const isFinal = index === totalStars - 1;
       const meter = spyAwardTarget();
       const target = meter?.id === "pcSpyMeter"
         ? meter.querySelector(`[data-pc-meter-value="${value}"]`) || meter
@@ -1494,10 +1495,10 @@
       const dx = endX - startX;
       const dy = endY - startY;
       const arc = Math.min(180, Math.max(82, Math.abs(dx) * .18 + Math.abs(dy) * .1));
-      const duration = Math.min(1050, Math.max(680, Math.hypot(dx, dy) * 1.2));
+      const duration = Math.min(480, Math.max(280, Math.hypot(dx, dy) * .55));
 
       const star = document.createElement("span");
-      star.className = `pc-direct-star-flight${bonus ? " is-bonus" : ""}`;
+      star.className = `pc-direct-star-flight${bonus ? " is-bonus" : ""}${isFinal ? " is-final" : ""}`;
       star.textContent = "★";
       Object.assign(star.style, { left: `${startX}px`, top: `${startY}px` });
       document.body.appendChild(star);
@@ -1530,11 +1531,11 @@
         ? freshMeter.querySelector(`[data-pc-meter-value="${value}"]`) || freshMeter
         : freshMeter;
       const landedRect = landed?.getBoundingClientRect() || targetRect;
-      landed?.classList.add("pc-star-landed");
-      setTimeout(() => landed?.classList.remove("pc-star-landed"), 520);
+      landed?.classList.add("pc-star-landed", ...(isFinal ? ["is-final"] : []));
+      setTimeout(() => landed?.classList.remove("pc-star-landed", "is-final"), isFinal ? 680 : 520);
 
       const impact = document.createElement("span");
-      impact.className = `pc-star-impact${bonus ? " is-bonus" : ""}`;
+      impact.className = `pc-star-impact${bonus ? " is-bonus" : ""}${isFinal ? " is-final" : ""}`;
       Object.assign(impact.style, {
         left: `${landedRect.left + landedRect.width / 2}px`,
         top: `${landedRect.top + landedRect.height / 2}px`
@@ -1542,11 +1543,12 @@
       document.body.appendChild(impact);
       impact.addEventListener("animationend", () => impact.remove(), { once: true });
 
-      for (let sparkIndex = 0; sparkIndex < 5; sparkIndex++) {
+      const sparkCount = isFinal ? 10 : 5;
+      for (let sparkIndex = 0; sparkIndex < sparkCount; sparkIndex++) {
         const spark = document.createElement("span");
-        spark.className = `pc-star-spark${bonus ? " is-bonus" : ""}`;
-        const angle = (Math.PI * 2 * sparkIndex) / 5 - Math.PI / 2;
-        const distance = 18 + (sparkIndex % 2) * 8;
+        spark.className = `pc-star-spark${bonus ? " is-bonus" : ""}${isFinal ? " is-final" : ""}`;
+        const angle = (Math.PI * 2 * sparkIndex) / sparkCount - Math.PI / 2;
+        const distance = (isFinal ? 30 : 18) + (sparkIndex % 2) * (isFinal ? 14 : 8);
         Object.assign(spark.style, {
           left: `${landedRect.left + landedRect.width / 2}px`,
           top: `${landedRect.top + landedRect.height / 2}px`,
@@ -1557,7 +1559,7 @@
         spark.addEventListener("animationend", () => spark.remove(), { once: true });
       }
 
-      await sleep(85);
+      await sleep(isFinal ? 0 : 35);
     }
 
     spyVisualOverride = after;
@@ -1565,7 +1567,7 @@
     const finalTarget = spyAwardTarget();
     finalTarget?.classList.add("just-charged");
     setTimeout(() => finalTarget?.classList.remove("just-charged"), 720);
-    await sleep(220);
+    await sleep(120);
   }
 
   function flushDeferredSetterHistory() {

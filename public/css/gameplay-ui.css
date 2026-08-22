@@ -3144,4 +3144,51 @@ body:not(.light-theme) {
   .pc-star-impact,
   .pc-star-spark { display: none !important; }
 }
+
+/* The last star in a multi-star award gets an extra "pop" -- bigger,
+   brighter, with a stronger impact ring, more sparks, and a harder
+   overshoot on the meter segment it lands in -- so the star that
+   actually completes the sequence reads as the payoff, not just
+   another one in the row. */
+.pc-direct-star-flight.is-final {
+  font-size: clamp(38px, 6vw, 58px);
+  text-shadow:
+    0 0 12px rgba(255, 214, 90, 1),
+    0 0 34px rgba(255, 184, 46, .9),
+    0 4px 18px rgba(0, 0, 0, .6);
+}
+.pc-direct-star-flight.is-final.is-bonus {
+  text-shadow:
+    0 0 12px rgba(112, 231, 255, 1),
+    0 0 36px rgba(54, 188, 255, .9),
+    0 4px 18px rgba(0, 0, 0, .6);
+}
+.pc-star-impact.is-final {
+  width: 30px;
+  height: 30px;
+  border-width: 4px;
+  animation: pc-star-impact-final .7s ease-out forwards;
+}
+.pc-star-spark.is-final {
+  width: 7px;
+  height: 7px;
+}
+.pc-meter-segment.pc-star-landed.is-final,
+#setterSidebarChargeMini.pc-star-landed.is-final {
+  animation: pc-star-land-final .68s cubic-bezier(.2, 1.4, .3, 1);
+}
+@keyframes pc-star-impact-final {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(.2); }
+  60% { opacity: .9; transform: translate(-50%, -50%) scale(2.4); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(3.4); }
+}
+@keyframes pc-star-land-final {
+  0% { filter: brightness(1); transform: scale(1); }
+  38% { filter: brightness(2.2); transform: scale(1.9) rotate(-4deg); }
+  62% { filter: brightness(1.6); transform: scale(1.65) rotate(3deg); }
+  100% { filter: brightness(1); transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pc-star-impact.is-final { display: none !important; }
+}
 /* TUTORIAL_MOTION_SIM_PATCH v1: END */
