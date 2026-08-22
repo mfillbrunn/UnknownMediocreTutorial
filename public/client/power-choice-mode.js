@@ -1470,96 +1470,148 @@
       { transform: "translate(-50%,-50%) scale(1.8)", opacity: 0 }
     ], { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)" }).finished.finally(() => sourcePulse.remove());
 
-    await sleep(45);
+    await sleep(25);
 
+    // Resolve every star's landing target up front (instead of mid-loop)
+    // so the shared bunch geometry below can be computed from real
+    // distances before any star actually launches.
+    const plans = [];
     for (let index = 0; index < totalStars; index++) {
       const value = Math.min(after, before + index + 1);
       const bonus = index >= appliedBase;
-      const isFinal = index === totalStars - 1;
       const meter = spyAwardTarget();
       const target = meter?.id === "pcSpyMeter"
         ? meter.querySelector(`[data-pc-meter-value="${value}"]`) || meter
         : meter;
       const targetRect = target?.getBoundingClientRect();
-
       if (!targetRect?.width) {
         spyVisualOverride = value;
         renderPanels();
         continue;
       }
+      plans.push({ index, value, bonus, isFinal: index === totalStars - 1, targetRect });
+    }
 
-      const startX = sourceX + (index - (totalStars - 1) / 2) * 12;
-      const startY = sourceY - (index % 2) * 8;
-      const endX = targetRect.left + targetRect.width / 2;
-      const endY = targetRect.top + targetRect.height / 2;
-      const dx = endX - startX;
-      const dy = endY - startY;
-      const arc = Math.min(180, Math.max(82, Math.abs(dx) * .18 + Math.abs(dy) * .1));
-      const duration = Math.min(480, Math.max(280, Math.hypot(dx, dy) * .55));
+    if (plans.length) {
+      // Launched close together instead of one-at-a-time -- stagger is
+      // short enough, and duration long enough, that landing order still
+      // matches launch order (see the duration floor below).
+      const LAUNCH_STAGGER = 60;
 
-      const star = document.createElement("span");
-      star.className = `pc-direct-star-flight${bonus ? " is-bonus" : ""}${isFinal ? " is-final" : ""}`;
-      star.textContent = "★";
-      Object.assign(star.style, { left: `${startX}px`, top: `${startY}px` });
-      document.body.appendChild(star);
+      // One random bend for the whole bunch, picked as if it were the
+      // first star's own path -- every star in the award curves the same
+      // rough way (plus a small per-star wobble below) so they read as a
+      // flock following a leader instead of identical geometric clones.
+      const bunchArcJitter = (Math.random() - 0.5) * 56;
+      const bunchLateralJitter = (Math.random() - 0.5) * 44;
 
-      const flight = star.animate([
-        { transform: "translate(-50%,-50%) scale(.55) rotate(-28deg)", opacity: 0 },
-        {
-          transform: `translate(calc(-50% + ${dx * .5}px), calc(-50% + ${dy * .42 - arc}px)) scale(1.32) rotate(12deg)`,
-          opacity: 1,
-          offset: .5
-        },
-        {
-          transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35) rotate(0deg)`,
-          opacity: 1
-        }
-      ], {
-        duration,
-        easing: "cubic-bezier(.18,.76,.2,1)",
-        fill: "forwards"
-      });
-      try { await flight.finished; } catch {}
-      star.remove();
+      const last = plans[plans.length - 1].targetRect;
+      const refDx = last.left + last.width / 2 - sourceX;
+      const refDy = last.top + last.height / 2 - sourceY;
+      const duration = Math.min(
+        420,
+        Math.max(230, LAUNCH_STAGGER * plans.length + 90, Math.hypot(refDx, refDy) * .42)
+      );
 
-      spyVisualOverride = value;
-      renderPanels();
-      await new Promise(resolve => requestAnimationFrame(resolve));
+      const landings = plans.map(({ index, value, bonus, isFinal, targetRect }) => (async () => {
+        if (index) await sleep(index * LAUNCH_STAGGER);
 
-      const freshMeter = spyAwardTarget();
-      const landed = freshMeter?.id === "pcSpyMeter"
-        ? freshMeter.querySelector(`[data-pc-meter-value="${value}"]`) || freshMeter
-        : freshMeter;
-      const landedRect = landed?.getBoundingClientRect() || targetRect;
-      landed?.classList.add("pc-star-landed", ...(isFinal ? ["is-final"] : []));
-      setTimeout(() => landed?.classList.remove("pc-star-landed", "is-final"), isFinal ? 680 : 520);
+        const startX = sourceX + (index - (totalStars - 1) / 2) * 12;
+        const startY = sourceY - (index % 2) * 8;
+        const endX = targetRect.left + targetRect.width / 2;
+        const endY = targetRect.top + targetRect.height / 2;
+        const dx = endX - startX;
+        const dy = endY - startY;
+        const baseArc = Math.min(180, Math.max(82, Math.abs(dx) * .18 + Math.abs(dy) * .1));
+        const arc = baseArc + bunchArcJitter;
+        const lateral = bunchLateralJitter + (Math.random() - 0.5) * 16;
 
-      const impact = document.createElement("span");
-      impact.className = `pc-star-impact${bonus ? " is-bonus" : ""}${isFinal ? " is-final" : ""}`;
-      Object.assign(impact.style, {
-        left: `${landedRect.left + landedRect.width / 2}px`,
-        top: `${landedRect.top + landedRect.height / 2}px`
-      });
-      document.body.appendChild(impact);
-      impact.addEventListener("animationend", () => impact.remove(), { once: true });
+        const star = document.createElement("span");
+        star.className = `pc-direct-star-flight${bonus ? " is-bonus" : ""}${isFinal ? " is-final" : ""}`;
+        star.textContent = "★";
+        Object.assign(star.style, { left: `${startX}px`, top: `${startY}px` });
+        document.body.appendChild(star);
 
-      const sparkCount = isFinal ? 10 : 5;
-      for (let sparkIndex = 0; sparkIndex < sparkCount; sparkIndex++) {
-        const spark = document.createElement("span");
-        spark.className = `pc-star-spark${bonus ? " is-bonus" : ""}${isFinal ? " is-final" : ""}`;
-        const angle = (Math.PI * 2 * sparkIndex) / sparkCount - Math.PI / 2;
-        const distance = (isFinal ? 30 : 18) + (sparkIndex % 2) * (isFinal ? 14 : 8);
-        Object.assign(spark.style, {
-          left: `${landedRect.left + landedRect.width / 2}px`,
-          top: `${landedRect.top + landedRect.height / 2}px`,
-          "--pc-spark-x": `${Math.cos(angle) * distance}px`,
-          "--pc-spark-y": `${Math.sin(angle) * distance}px`
+        const flight = star.animate([
+          { transform: "translate(-50%,-50%) scale(.55) rotate(-28deg)", opacity: 0 },
+          {
+            transform: `translate(calc(-50% + ${dx * .5 + lateral}px), calc(-50% + ${dy * .42 - arc}px)) scale(1.32) rotate(12deg)`,
+            opacity: 1,
+            offset: .5
+          },
+          {
+            transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.35) rotate(0deg)`,
+            opacity: 1
+          }
+        ], {
+          duration,
+          easing: "cubic-bezier(.18,.76,.2,1)",
+          fill: "forwards"
         });
-        document.body.appendChild(spark);
-        spark.addEventListener("animationend", () => spark.remove(), { once: true });
-      }
+        try { await flight.finished; } catch {}
+        star.remove();
 
-      await sleep(isFinal ? 0 : 35);
+        spyVisualOverride = value;
+        renderPanels();
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        const freshMeter = spyAwardTarget();
+        const landed = freshMeter?.id === "pcSpyMeter"
+          ? freshMeter.querySelector(`[data-pc-meter-value="${value}"]`) || freshMeter
+          : freshMeter;
+        const landedRect = landed?.getBoundingClientRect() || targetRect;
+        landed?.classList.add("pc-star-landed", ...(isFinal ? ["is-final"] : []));
+        setTimeout(() => landed?.classList.remove("pc-star-landed", "is-final"), isFinal ? 680 : 480);
+
+        const impact = document.createElement("span");
+        impact.className = `pc-star-impact${bonus ? " is-bonus" : ""}${isFinal ? " is-final" : ""}`;
+        Object.assign(impact.style, {
+          left: `${landedRect.left + landedRect.width / 2}px`,
+          top: `${landedRect.top + landedRect.height / 2}px`
+        });
+        document.body.appendChild(impact);
+        impact.addEventListener("animationend", () => impact.remove(), { once: true });
+
+        const sparkCount = isFinal ? 10 : 5;
+        for (let sparkIndex = 0; sparkIndex < sparkCount; sparkIndex++) {
+          const spark = document.createElement("span");
+          spark.className = `pc-star-spark${bonus ? " is-bonus" : ""}${isFinal ? " is-final" : ""}`;
+          const angle = (Math.PI * 2 * sparkIndex) / sparkCount - Math.PI / 2;
+          const distance = (isFinal ? 30 : 18) + (sparkIndex % 2) * (isFinal ? 14 : 8);
+          Object.assign(spark.style, {
+            left: `${landedRect.left + landedRect.width / 2}px`,
+            top: `${landedRect.top + landedRect.height / 2}px`,
+            "--pc-spark-x": `${Math.cos(angle) * distance}px`,
+            "--pc-spark-y": `${Math.sin(angle) * distance}px`
+          });
+          document.body.appendChild(spark);
+          spark.addEventListener("animationend", () => spark.remove(), { once: true });
+        }
+
+        // The final star also shoots a burst of tiny stars outward --
+        // its own distinct payoff, separate from every star's round sparks.
+        if (isFinal) {
+          const miniCount = 8;
+          for (let miniIndex = 0; miniIndex < miniCount; miniIndex++) {
+            const mini = document.createElement("span");
+            mini.className = `pc-star-mini${bonus ? " is-bonus" : ""}`;
+            mini.textContent = "★";
+            const angle = (Math.PI * 2 * miniIndex) / miniCount - Math.PI / 2 + (Math.random() - .5) * .35;
+            const distance = 44 + Math.random() * 30;
+            Object.assign(mini.style, {
+              left: `${landedRect.left + landedRect.width / 2}px`,
+              top: `${landedRect.top + landedRect.height / 2}px`,
+              "--pc-mini-x": `${Math.cos(angle) * distance}px`,
+              "--pc-mini-y": `${Math.sin(angle) * distance}px`,
+              "--pc-mini-rot": `${(Math.random() - .5) * 420}deg`
+            });
+            document.body.appendChild(mini);
+            mini.addEventListener("animationend", () => mini.remove(), { once: true });
+          }
+        }
+      })());
+
+      await Promise.all(landings);
     }
 
     spyVisualOverride = after;

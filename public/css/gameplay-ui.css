@@ -3191,4 +3191,40 @@ body:not(.light-theme) {
 @media (prefers-reduced-motion: reduce) {
   .pc-star-impact.is-final { display: none !important; }
 }
+
+/* Tiny stars the final star of an award shoots outward on landing --
+   distinct from the round .pc-star-spark every star gets. */
+.pc-star-mini {
+  position: fixed;
+  z-index: 2147483002;
+  color: #ffd65a;
+  font-size: 13px;
+  line-height: 1;
+  pointer-events: none;
+  text-shadow: 0 0 6px rgba(255, 214, 90, .9);
+  transform: translate(-50%, -50%) scale(.4) rotate(0deg);
+  animation: pc-star-mini-shoot .62s cubic-bezier(.16, .84, .24, 1) forwards;
+}
+.pc-star-mini.is-bonus {
+  color: #70e7ff;
+  text-shadow: 0 0 6px rgba(112, 231, 255, .9);
+}
+@keyframes pc-star-mini-shoot {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(.4) rotate(0deg); }
+  35% {
+    opacity: 1;
+    transform:
+      translate(calc(-50% + var(--pc-mini-x) * .55), calc(-50% + var(--pc-mini-y) * .55))
+      scale(1.05) rotate(calc(var(--pc-mini-rot) * .5));
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--pc-mini-x)), calc(-50% + var(--pc-mini-y)))
+      scale(.3) rotate(var(--pc-mini-rot));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pc-star-mini { display: none !important; }
+}
 /* TUTORIAL_MOTION_SIM_PATCH v1: END */
