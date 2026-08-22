@@ -74,6 +74,7 @@
     if (!setterScreen || !toggle) return;
 
     setterScreen.classList.toggle("setter-sidebar-collapsed", collapsed);
+    setterScreen.dataset.sidebarCollapsed = collapsed ? "true" : "false";
     toggle.setAttribute("aria-expanded", String(!collapsed));
     toggle.setAttribute(
       "aria-label",
@@ -181,6 +182,15 @@
     const edge = byId("setterSidebarSwipeEdge");
 
     if (!setterScreen || !sidebar || !toggle || !edge) return;
+
+    // Reconnect/polish code may invoke initializers more than once -- bind
+    // the listeners below exactly once regardless, and still resync visual
+    // state (class, dataset, aria) every call.
+    if (toggle.dataset.drawerBound === "true") {
+      setCollapsed(readCollapsed(), false);
+      return;
+    }
+    toggle.dataset.drawerBound = "true";
 
     setCollapsed(readCollapsed(), false);
 
