@@ -251,7 +251,7 @@ if (
         : state.secret;
     safe.setterLetterProfile = computeLetterProfileStats(
       word,
-      state.powers?.letterProfileMode
+      "vowels"
     );
   }
 

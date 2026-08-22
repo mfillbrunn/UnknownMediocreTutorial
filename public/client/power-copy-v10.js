@@ -115,8 +115,8 @@
       desc: "Helps the Guesser by submitting two different guesses at once while the Secretkeeper sees only one of them."
     },
     letterProfile: {
-      short: "Helps the Guesser see a useful category breakdown of the secret's letters.",
-      desc: "Helps the Guesser by showing an always-on summary of the secret's letter categories."
+      short: "Helps the Guesser see how many of the secret's letters are vowels.",
+      desc: "Helps the Guesser by showing an always-on count of how many of the secret's 5 letters are vowels."
     },
     delayedIntel: {
       short: "Helps the Secretkeeper delay feedback until after the Guesser's following guess.",
@@ -163,7 +163,7 @@
     letterProbe: "Your opponent tests five letters and learns how many are in the secret.",
     revealLocation: "Your opponent watches one position and sees its current letter.",
     doubleGuess: "Your opponent submits two guesses and receives feedback for both while you see only one.",
-    letterProfile: "Your opponent sees an always-on category breakdown of the secret's letters.",
+    letterProfile: "Your opponent sees an always-on count of how many of the secret's letters are vowels.",
     delayedIntel: "Your opponent delays this feedback until after your following guess.",
     letterLockout: "Your opponent bans one letter from your next guess.",
     spyChargeReset: "Your opponent resets one letter's clues and extra constraints from the current round."

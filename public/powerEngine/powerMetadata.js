@@ -278,11 +278,11 @@ window.POWER_METADATA = {
   },
 
   letterProfile: {
-    label: "Letter Profile",
-    desc: "From the start of the match, the Guesser can always see one fact about the secret's letters — like whether they're A-M or N-Z, which keyboard row they're on, or how many are vowels.",
-    short: "Always shows one fact about the secret's letters, like their range or vowel count.",
+    label: "Secret Vowel Count",
+    desc: "From now on, the Guesser can always see how many of the secret's 5 letters are vowels.",
+    short: "Always shows how many of the secret's letters are vowels.",
     icon: "bar-chart",
-    emoji: "📊",
+    emoji: "🔤",
     color: "#818CF8"
   },
 

@@ -141,8 +141,8 @@ const POWER_TUTORIAL_SIMPLE_COPY = Object.freeze({
     receiver: "The Guesser sent two guesses. You only see one of them."
   },
   letterProfile: {
-    owner: "This shows a simple fact about the letters in the secret.",
-    receiver: "The Guesser can see a simple fact about your secret's letters."
+    owner: "This shows how many of the secret's letters are vowels.",
+    receiver: "The Guesser can see how many of your secret's letters are vowels."
   },
   delayedIntel: {
     owner: "The Guesser does not see this clue until after the next guess.",

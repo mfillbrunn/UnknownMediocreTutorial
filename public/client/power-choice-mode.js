@@ -282,12 +282,12 @@
     }
     if (grants.includes("letterProfile")) {
       const stat = window.state?.powers?.letterProfileGuesserStat;
-      const statLines = stat && typeof letterProfileLines === "function" ? letterProfileLines(stat) : "";
+      const value = Number.isInteger(stat?.vowels) ? String(stat.vowels) : null;
       lines.push(`<div class="pc-persistent-power-line pc-letter-profile-line">
         <span class="pc-persistent-power-icon" aria-hidden="true">🔤</span>
-        <span class="pc-persistent-power-label">Letter Profile</span>
-        ${statLines
-          ? `<span class="pc-letter-profile-lines">${statLines}</span>`
+        <span class="pc-persistent-power-label">Secret Vowel Count</span>
+        ${value !== null
+          ? `<span class="pc-persistent-power-value">${esc(value)}</span>`
           : `<span class="pc-persistent-power-pending">—</span>`}
       </div>`);
     }

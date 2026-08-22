@@ -111,7 +111,7 @@ const POWER_COPY = {
   // PERSISTENT_POWER_IDS -- permanent unlocks, not one-turn effects, so
   // the copy says "from now on" instead of "this turn".
   revealLocation: ["🕵️", "Informant", "From now on, peek at one still-unknown position in the secret each of your turns."],
-  letterProfile: ["🔤", "Letter Profile", "From now on, see how many vowels and consonants are in the secret, each of your turns."],
+  letterProfile: ["🔤", "Secret Vowel Count", "From now on, see how many vowels are in the secret, each of your turns."],
   letterLockout: ["🚫", "Letter Lockout", "From now on, ban one new letter from the Guesser's next guess on each of your turns."]
 };
 

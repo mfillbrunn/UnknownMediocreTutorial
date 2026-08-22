@@ -670,7 +670,7 @@ socket.on("setterDraftSecret", ({ roomId, draft }) => {
     const word = normalized.length === 5 ? normalized : room.state.secret;
     socket.emit(
       "setterLetterProfile",
-      computeLetterProfileStats(word, room.state.powers?.letterProfileMode)
+      computeLetterProfileStats(word, "vowels")
     );
   }
 });

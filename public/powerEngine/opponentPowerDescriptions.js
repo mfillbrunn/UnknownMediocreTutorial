@@ -82,7 +82,7 @@ window.OPPONENT_POWER_DESCRIPTIONS =
       "Your opponent submitted two guesses. You see only one, but they receive feedback for both.",
 
     letterProfile:
-      "Your opponent can see a category breakdown of the secret's letters.",
+      "Your opponent can see how many of the secret's letters are vowels.",
 
     delayedIntel:
       "Your opponent delayed this round's feedback until after your next guess.",
