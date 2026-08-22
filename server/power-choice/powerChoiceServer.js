@@ -722,14 +722,13 @@ function guesserRewardPool(tier) {
     powerOption("revealLocation"),
     powerOption("letterProfile"),
     // One-off effects, activated immediately on pick. Recon Sweep/Miss
-    // Bet/Double Tap each need a real payload (5 letters, a bet number,
-    // two words) -- the reward card itself collects it and fires on the
-    // spot, see applyChoice's payload param -- there's no way to bank
-    // the power for later.
+    // Bet each need a real payload (5 letters / a bet number) -- the
+    // reward card itself collects it and fires on the spot, see
+    // applyChoice's payload param -- there's no way to bank the power
+    // for later.
     powerOption("suggestGuess"),
     powerOption("letterProbe"),
-    powerOption("betMiss"),
-    powerOption("doubleGuess")
+    powerOption("betMiss")
   ];
   if (tier >= 2) pool.push(powerOption("revealHistory"));
   return pool;
