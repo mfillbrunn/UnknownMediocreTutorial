@@ -716,7 +716,6 @@ function guesserRewardPool(tier) {
     powerOption("rouletteSecret"),
     powerOption("stealthGuess"),
     powerOption("nonsense"),
-    powerOption("magicMode"),
     powerOption("revealLocation"),
     powerOption("letterProfile"),
     // One-off effects, activated immediately on pick. Recon Sweep/Miss
