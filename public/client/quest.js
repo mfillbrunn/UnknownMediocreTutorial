@@ -390,11 +390,15 @@ function createQuestBadgeTile(type) {
   btn.className = "power-btn power-badge quest-badge-tile";
   btn.dataset.questType = type;
 
-  // No icon here anymore -- the quest card runs the full width of the
-  // power row (see .quest-badge-wrapper in features.css) instead of
-  // sharing a small square slot with the power cards, so the label/chip
-  // below have plenty of room to read on their own without an icon
-  // competing for space.
+  // Sits in the same power-badge row as the actual powers, which reads
+  // as "one more thing to do" unless it's marked otherwise -- this flag
+  // is the at-a-glance signal that the quest is a bonus side objective,
+  // not a required task: skip it and the round plays out exactly the
+  // same, it's just a reward on top if it gets done.
+  const optionalFlag = document.createElement("span");
+  optionalFlag.className = "quest-optional-flag";
+  optionalFlag.textContent = "Optional";
+  btn.appendChild(optionalFlag);
 
   const labelEl = document.createElement("span");
   labelEl.className = "power-btn-label";
@@ -539,7 +543,10 @@ function updateQuestBadge(state, role) {
     const waitForTurnHint = role === "guesser" && !isMyTurn && !status.done && (q.ready || q.oneAway)
       ? " Claim it on your turn."
       : "";
-    const descText = `${status.desc}${oneAwayHint}${waitForTurnHint}`;
+    const optionalHint = !status.done
+      ? "Optional side goal -- no need to complete it, but finishing it grants a bonus reward. "
+      : "";
+    const descText = `${optionalHint}${status.desc}${oneAwayHint}${waitForTurnHint}`;
     // Only the guesser can toggle their OWN keyboard's guide -- the
     // setter's copy of this badge is a read-only mirror (see canClaim's
     // comment above), and there's no keyboard of theirs to highlight for
