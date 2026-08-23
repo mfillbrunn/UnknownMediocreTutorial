@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "server/index.js",
   "scripts": {
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "test": "node server/tests/run.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",

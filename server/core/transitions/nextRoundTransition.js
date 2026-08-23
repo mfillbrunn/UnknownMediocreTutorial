@@ -54,19 +54,19 @@ function advanceToNextRound(room, state, roomId, context) {
     savedLetterLockoutUsedLetters = state.powers.letterLockoutUsedLetters;
   }
 
-  // Power Choice: which "always-on" powers (Informant, Letter Profile,
-  // Letter Lockout) either role has permanently unlocked via a reward
-  // card. This is the actual source of truth Power Choice's own
+  // Power Choice: which "always-on" powers (Letter Profile, Letter
+  // Lockout -- both game-long) either role has permanently unlocked via a
+  // reward card. This is the actual source of truth Power Choice's own
   // initializeRound rebuilds state.activePowers from every action, so
   // unlike the three saves above (each gated on the power already being
   // in this round's activePowers) this one is unconditional -- resetting
   // it to empty here would silently take the reward away the moment the
   // next round started.
   //
-  // Informant (revealLocation) is the one exception: product decision is
-  // that it lasts only until roles change, not for the rest of the game
-  // like Letter Profile/Letter Lockout -- see the guesserChanged filter
-  // below, applied after computing that flag.
+  // Informant (revealLocation) is round-scoped, not game-long: by the time
+  // this runs, endGame() has already stripped it from this same object
+  // (see clearRoundPowerActivity.js, called from every round-ending path,
+  // not just this one) -- nothing extra to do here.
   const savedPowerChoicePersistentGrants = state.powers.powerChoicePersistentGrants;
 
   // Quest type used to just carry straight over like revealLetter.mode
@@ -94,19 +94,7 @@ function advanceToNextRound(room, state, roomId, context) {
   }
 
   if (savedPowerChoicePersistentGrants) {
-    // Informant expires the moment roles actually change -- a round that
-    // keeps the same guesser (tutorial/no-swap) leaves it untouched, but a
-    // real role swap drops it even for the player who earned it, matching
-    // the "for the rest of the round" card copy instead of the game-long
-    // grant Letter Profile/Letter Lockout still get.
-    state.powers.powerChoicePersistentGrants = guesserChanged
-      ? {
-          ...savedPowerChoicePersistentGrants,
-          guesser: (savedPowerChoicePersistentGrants.guesser || []).filter(
-            grant => grant.powerId !== "revealLocation"
-          )
-        }
-      : savedPowerChoicePersistentGrants;
+    state.powers.powerChoicePersistentGrants = savedPowerChoicePersistentGrants;
   }
 
   // Tutorial rounds are scripted (e.g. the Quest tutorial hard-codes RARE

@@ -947,22 +947,19 @@
     modal.className = "pc-modal";
     modal.setAttribute("role", "dialog");
     modal.setAttribute("aria-modal", "true");
+    // Hierarchy is exactly: heading / "Select one" / cards / one Refresh
+    // choices action below the cards -- no toolbar, no duplicate reroll,
+    // no competing top-level instruction (see REFINEMENT_SPEC section 4).
     modal.innerHTML = `<div class="pc-modal-card">
       <button type="button" class="pc-modal-peek" title="Look at the board -- your reward stays waiting">Hide</button>
       <h2></h2>
-      <p class="pc-modal-sub"></p>
-      <div class="pc-reward-toolbar">
-        <div class="pc-toolbar-copy">
-          <span class="pc-toolbar-kicker">REWARD DECK</span>
-          <span class="pc-toolbar-note">Select one reward to continue</span>
-        </div>
-        <button type="button" class="pc-refresh-choice-btn" title="Refresh reward choices" aria-label="Refresh reward choices">
-          <span class="pc-refresh-icon" aria-hidden="true">&#8635;</span>
-          <span class="pc-refresh-label">Refresh choices</span>
-          <span class="pc-refresh-state" aria-live="polite">READY</span>
-        </button>
-      </div>
+      <p class="pc-modal-sub">Select one</p>
       <div class="pc-card-grid"></div>
+      <button type="button" class="pc-refresh-choice-btn" title="Refresh reward choices" aria-label="Refresh reward choices">
+        <span class="pc-refresh-icon" aria-hidden="true">&#8635;</span>
+        <span class="pc-refresh-label">Refresh choices</span>
+        <span class="pc-refresh-state" aria-live="polite">READY</span>
+      </button>
     </div>`;
     document.body.appendChild(modal);
     return modal;
@@ -994,20 +991,6 @@
   // buttons use), falling back to the option's own glyph for the fixed
   // (non-power) rewards that have no icon of their own.
   // POWER CHOICE CARD CAROUSEL V1: CLIENT START
-  function fixedRewardAccent(option) {
-    const id = String(option?.id || "");
-    const exact = {
-      "spy-reset-positive-1": "#60a5fa",
-      "spy-add-point-1": "#fb7185",
-      "inspector-yellow-1": "#fbbf24",
-      "inspector-remove-point-1": "#2dd4bf"
-    };
-    if (exact[id]) return exact[id];
-    if (id.startsWith("spy-")) return "#fb7185";
-    if (id.includes("yellow")) return "#fbbf24";
-    if (id.includes("green")) return "#34d399";
-    return "#38bdf8";
-  }
 
   function fixedRewardIconMarkup(option) {
     const id = String(option?.id || "");
@@ -1137,6 +1120,23 @@
     </div>`;
   }
 
+  // Reward category -> icon-rail color. The category itself is computed
+  // once, server-side, in server/power-choice/rewardCategories.js and sent
+  // on every option -- this is presentation only, never a second place
+  // that infers a category from an id or display text.
+  const REWARD_CATEGORY_COLORS = {
+    information: "#60a5fa",
+    "letter-control": "#a78bfa",
+    "feedback-disruption": "#fb7185",
+    "constraint-defense": "#2dd4bf",
+    "choice-tempo": "#fbbf24",
+    utility: "#94a3b8"
+  };
+
+  function rewardCategoryColor(option) {
+    return REWARD_CATEGORY_COLORS[option?.category] || REWARD_CATEGORY_COLORS.utility;
+  }
+
   // POWER CHOICE RARITY + REFRESH V1: CLIENT START
   function rewardRarityMeta(option, pending) {
     const rawTier = Number(
@@ -1159,23 +1159,19 @@
     grid.innerHTML = options.map(option => {
       const armed = rewardInputArmed?.optionId === option.id;
       const rarity = rewardRarityMeta(option, pending);
-      const tier = `<span class="pc-tier pc-rarity-badge" data-tier="${esc(rarity.tier)}" data-rarity="${esc(rarity.key)}"><span>${esc(rarity.label)}</span><small>${esc(rarity.metal)}</small></span>`;
+      // Rarity is communicated by color only (data-rarity below); no
+      // visible COMMON/RARE/LEGEND text on the card, only in the aria-label.
       const description = typeof optionDescription === "function"
         ? optionDescription(option)
         : option?.description || "";
-      // The card body is rarity-colored in CSS. This variable is reserved
-      // for the icon rail and interactive controls, preserving each power's identity.
-      const powerAccent = option.kind === "power"
-        ? (window.POWER_METADATA?.[option.powerId]?.color || "")
-        : fixedRewardAccent(option);
-      const style = powerAccent
-        ? ` style="--pc-power-accent:${esc(powerAccent)};--pc-card-accent:${esc(powerAccent)}"`
-        : "";
+      // Left 25% icon rail = reward category color. Right 75% description
+      // area = rarity color (handled purely by the data-rarity CSS below).
+      const categoryColor = rewardCategoryColor(option);
+      const style = ` style="--pc-power-accent:${esc(categoryColor)};--pc-card-accent:${esc(categoryColor)}"`;
       const ariaLabel = `${option.title || "Reward"}. ${rarity.label} reward. ${description}`;
       if (armed) {
         return `<div class="pc-choice-card pc-choice-card-armed" role="group" aria-label="${esc(ariaLabel)}" data-option-id="${esc(option.id)}" data-rarity="${esc(rarity.key)}"${style}>
           <span class="pc-card-icon">${optionIconMarkup(option)}</span>
-          ${tier}
           <div class="pc-card-body pc-card-body-armed">
             <strong>${esc(option.title)}</strong>
             ${rewardInputFormMarkup(option)}
@@ -1184,7 +1180,6 @@
       }
       return `<button type="button" class="pc-choice-card" aria-label="${esc(ariaLabel)}" data-option-id="${esc(option.id)}" data-rarity="${esc(rarity.key)}"${style}>
         <span class="pc-card-icon">${optionIconMarkup(option)}</span>
-        ${tier}
         <span class="pc-card-body">
           <strong>${esc(option.title)}</strong>
           <span class="pc-card-desc">${esc(description)}</span>
@@ -1286,17 +1281,16 @@
   }
 
   function showQuestMetFlourish() {
-    let el = byId("pcQuestMetFlourish");
-    if (!el) {
-      el = document.createElement("div");
-      el.id = "pcQuestMetFlourish";
-      el.className = "pc-quest-met-flourish";
-      el.innerHTML = `<span class="pc-quest-met-star" aria-hidden="true">&#9733;</span><span>QUEST MET</span>`;
-      document.body.appendChild(el);
-    }
-    el.classList.remove("is-visible");
-    void el.offsetWidth;
-    el.classList.add("is-visible");
+    // Uses the app's shared announcement component (see big-announce.js)
+    // instead of a bespoke popup, so this brief pre-reward-modal beat
+    // stays consistent with every other transient notice in the app.
+    window.showBigAnnounce?.({
+      icon: "★",
+      title: "Quest met — reward incoming",
+      roleClass: "role-guesser",
+      compact: true,
+      duration: 1300
+    });
   }
 
   function openRewardModal(pending) {
@@ -1304,9 +1298,11 @@
     modal.dataset.choiceId = pending.id;
     modal.dataset.choiceRevision = String(pending.revision || 0);
     modal.dataset.rewardRole = pending.role || "";
-    modal.querySelector("h2").textContent = pending.title || "Select a reward";
-    modal.querySelector(".pc-modal-sub").textContent =
-      pending.subtitle || "Select one reward. It activates immediately.";
+    // Exact required heading per role -- Quests are the Guesser bonus,
+    // Stars are the Secretkeeper bonus (see the rules screen), so each
+    // role's reward chooser names its own source instead of a generic
+    // "Select a reward" that doesn't say where the reward came from.
+    modal.querySelector("h2").textContent = pending.role === "setter" ? "Star reward" : "Quest reward";
 
     const refreshBtn = modal.querySelector(".pc-refresh-choice-btn");
     const refreshAvailable = pending.refreshAvailable !== false;

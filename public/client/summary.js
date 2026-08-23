@@ -109,27 +109,6 @@ function getPlayerName(userId) {
   return (userId && state.players?.[userId]?.name) || "—";
 }
 
-function normalizePowerId(p) {
-  return typeof p === "string" ? p : p?.id;
-}
-
-function powerToEmojiOnly(p) {
-  const id = normalizePowerId(p);
-  const meta = window.POWER_METADATA?.[id];
-  return meta?.emoji || "";
-}
-
-// Per-turn power-use icons come from the history entry's powerEvents (each
-// tagged with the role that triggered it), not a powersGuesser/powersSetter
-// field — no such field is ever written server-side.
-function powersUsedByRole(entry, role) {
-  const events = Array.isArray(entry?.powerEvents) ? entry.powerEvents : [];
-  return events
-    .filter(e => e.actorRole === role)
-    .map(e => powerToEmojiOnly(e.id))
-    .filter(Boolean);
-}
-
 function powerToInlineIcon(powerId) {
   const meta = window.POWER_METADATA?.[powerId];
   if (!meta) return powerId;
@@ -613,8 +592,7 @@ if (state.timeoutLoser)  {
         <th>Secret</th>
         <th>Guess</th>
         <th>Feedback</th>
-        <th>Powers</th>
-        <th>Secrets</th>
+        <th>Remaining</th>
       </tr>
     </thead>
     <tbody>
@@ -636,28 +614,9 @@ for (let i = 0; i < state.history.length; i++) {
     ? h.fb.join("")
     : "";
 
-  const gp = powersUsedByRole(h, "guesser");
-  const sp = powersUsedByRole(h, "setter");
-
-  let powersCell = "";
-  if (gp.length || sp.length) {
-    powersCell = `
-      <div class="summary-powers compact">
-        ${gp.length ? `
-          <div class="powers-row guesser">
-            ${gp.join("")}
-          </div>` : ""}
-        ${sp.length ? `
-          <div class="powers-row setter">
-            ${sp.join("")}
-          </div>` : ""}
-      </div>
-    `;
-  }
-
- const archivedEntry = lastRound?.history?.[i];
-  const remaining = archivedEntry?.remainingAfter ?? (isFinal ? 0 : "?");
-  const bestWord = archivedEntry?.bestWord ? String(archivedEntry.bestWord).toUpperCase() : "—";
+  const archivedEntry = lastRound?.history?.[i];
+  const remainingValue = archivedEntry?.remainingAfter ?? (isFinal ? 0 : null);
+  const remaining = remainingValue === null ? "—" : remainingValue;
 
   html += `
     <tr class="${isFinal ? "final-row" : ""}">
@@ -665,9 +624,7 @@ for (let i = 0; i < state.history.length; i++) {
       <td class="secret-cell">${secretCell}</td>
       <td class="guess-cell">${guessCell}</td>
       <td class="feedback-cell">${fbCell}</td>
-      <td class="powers-cell">${powersCell}</td>
       <td class="remaining-cell">${remaining}</td>
-      <td class="best-word-cell">${summaryEscapeText(bestWord)}</td>
     </tr>
   `;
 }
@@ -727,37 +684,15 @@ function renderStoredRoundSummary(round, index) {
           <th>Secret</th>
           <th>Guess</th>
           <th>Feedback</th>
-          <th>Powers</th>
-          <th>Remaining words</th>
-          <th>Best word</th>
-          <!-- COMPETITIVE OVERHAUL V3: SUMMARY COLUMNS -->
+          <th>Remaining</th>
         </tr>
         </thead>
         <tbody>
   `;
 
   round.history.forEach((h, i) => {
-    const remaining = computeRemainingFromRound(round, i);
-    const bestWord = h?.bestWord ? String(h.bestWord).toUpperCase() : "—";
-
-    const gpIcons = powersUsedByRole(h, "guesser");
-    const spIcons = powersUsedByRole(h, "setter");
-
-    let powersCell = "";
-    if (gpIcons.length || spIcons.length) {
-      powersCell = `
-        <div class="summary-powers compact">
-          ${gpIcons.length ? `
-            <div class="powers-row guesser">
-              ${gpIcons.join("")}
-            </div>` : ""}
-          ${spIcons.length ? `
-            <div class="powers-row setter">
-              ${spIcons.join("")}
-            </div>` : ""}
-        </div>
-      `;
-    }
+    const remainingValue = computeRemainingFromRound(round, i);
+    const remaining = remainingValue === null || remainingValue === undefined ? "—" : remainingValue;
 
     html += `
       <tr>
@@ -765,9 +700,7 @@ function renderStoredRoundSummary(round, index) {
         <td class="secret-cell">${h.finalSecret?.toUpperCase() || "???"}</td>
         <td class="guess-cell">${h.guess?.toUpperCase() || ""}</td>
         <td class="feedback-cell">${Array.isArray(h.fb) ? h.fb.join("") : ""}</td>
-        <td class="powers-cell">${powersCell}</td>
         <td class="remaining-cell">${remaining}</td>
-        <td class="best-word-cell">${summaryEscapeText(bestWord)}</td>
       </tr>
     `;
   });
@@ -973,7 +906,7 @@ function updateMenuRoomCode() {
 }
 
 function computeRemainingFromRound(round, idx) {
-  return round?.history?.[idx]?.remainingAfter ?? "?";
+  return round?.history?.[idx]?.remainingAfter ?? null;
 }
 
 

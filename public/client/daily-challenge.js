@@ -48,6 +48,14 @@ function dailyDifficultyMeta(difficulty) {
 }
 window.dailyDifficultyMeta = dailyDifficultyMeta;
 
+// Reuses the same traffic-light classes the (selectable) Play AI
+// difficulty buttons use, so the Daily Challenge's locked readout matches
+// them visually without a second color source.
+const DAILY_DIFFICULTY_CLASS = { 1: "difficulty-easy", 2: "difficulty-medium", 3: "difficulty-hard" };
+function _dailyDifficultyClassFor(difficulty) {
+  return DAILY_DIFFICULTY_CLASS[difficulty] || "";
+}
+
 window.showDailyChallenge = async function () {
   if (!window.currentUser) return toast("Please log in first");
 
@@ -169,20 +177,17 @@ window.showDailyChallenge = async function () {
       </div>
       <p class="daily-date">☀️ ${config.date}</p>
 
-      <p class="daily-ai-label">Choose your opponent</p>
-      <div class="daily-difficulty-row">
-        <button class="menu-btn difficulty-easy" data-difficulty="1">Easy</button>
-        <button class="menu-btn difficulty-medium" data-difficulty="2">Medium</button>
-        <button class="menu-btn difficulty-hard" data-difficulty="3">Hard</button>
-      </div>
+      <p class="daily-ai-label">Today's opponent</p>
+      <p class="daily-difficulty-locked ${_dailyDifficultyClassFor(config.aiDifficulty)}">
+        ${dailyDifficultyMeta(config.aiDifficulty).label} AI
+      </p>
+      <button id="dailyStartBtn" class="menu-btn primary" style="margin-top:10px">Start Daily Challenge</button>
       <button id="dailyRankingsBtn" class="menu-btn small" style="margin-top:14px">🏆 Rankings</button>
     </div>
   `;
 
-  screen.querySelectorAll("[data-difficulty]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      _startDailyGame(config, Number(btn.dataset.difficulty));
-    });
+  document.getElementById("dailyStartBtn")?.addEventListener("click", () => {
+    _startDailyGame(config);
   });
   document.getElementById("dailyRankingsBtn")?.addEventListener("click", () => {
     _showDailyRankings(config);
@@ -370,23 +375,19 @@ async function _showDailyRankings(config) {
 }
 window._showDailyRankings = _showDailyRankings;
 
-// difficulty: player's choice from the three buttons above -- overrides
-// config.aiDifficulty, the value the daily seed would otherwise have
-// picked (see dailyConfig.js). Only the AI's strength is left up to the
-// player; the day's powers/quest/starting secret stay whatever the seed
-// picked, so the challenge itself is still the same for everyone today.
-function _startDailyGame(
-  config,
-  difficulty
-) {
+// Every field of the day's configuration -- including AI difficulty --
+// comes from the server's deterministic daily seed (see dailyConfig.js),
+// so every player gets the exact same challenge. Nothing here is a
+// player choice; the server also independently recomputes and enforces
+// this (see lobby.js's ADD_AI/SET_DAILY_POWERS handlers), so a tampered
+// client sending a different value would just be ignored.
+function _startDailyGame(config) {
   const username =
     window.myProfile?.username ||
     window.currentUser?.email ||
     "Player";
 
-  const chosenDifficulty =
-    difficulty ||
-    config.aiDifficulty;
+  const chosenDifficulty = config.aiDifficulty;
 
   window._dailyStarting = true;
 
@@ -478,6 +479,14 @@ function _startDailyGame(
 
               difficulty:
                 chosenDifficulty,
+
+              // The server ignores `difficulty` above and recomputes it
+              // from this date instead whenever dailyDate is present (see
+              // lobby.js's ADD_AI handler) -- difficulty is part of the
+              // day's shared, deterministic configuration, not something
+              // a rewritten client should be able to pick for itself.
+              dailyDate:
+                config.date,
 
               userId:
                 window.currentUser.id

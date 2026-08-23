@@ -224,7 +224,16 @@ function handleLobbyPhase(room, state, action, roomId, context) {
     const humanCount = Object.values(room.playersByUserId || {}).filter((p) => !p.isAI).length;
     if (humanCount >= 2) return;
 
-    state.aiDifficulty = action.difficulty ?? 1;
+    // Daily Challenge: the AI's difficulty is part of the day's shared,
+    // deterministic configuration -- never trust action.difficulty for it
+    // (a tampered/rewritten client could otherwise hand-pick an easier
+    // opponent than everyone else got that day). action.dailyDate is set
+    // by _startDailyGame alongside this same action, ahead of the
+    // separate SET_DAILY_POWERS call, so this doesn't depend on action
+    // ordering the way keying off state._dailyDate would.
+    state.aiDifficulty = action.dailyDate
+      ? getDailyConfig(action.dailyDate).aiDifficulty
+      : action.difficulty ?? 1;
 
     addAIPlayer(room, state.aiDifficulty);
     clearAllReady(room);
@@ -267,22 +276,27 @@ function handleLobbyPhase(room, state, action, roomId, context) {
     return;
   }
 if (action.type === "SET_DAILY_POWERS") {
-  state._dailySetterPowers = action.setterPowers || null;
-  state._dailyGuesserPowers = action.guesserPowers || null;
   state._dailyDate = action.date || null;
-  // Recomputed server-side from the date alone (never trusting anything
-  // the client could send) so the AI's opening secret (round it's setter)
-  // and opening guess (round it's guesser) are the same for every player
-  // that day -- see dailyConfig.js. Deliberately never sent back to the
-  // client: safeState.js has no field for these, so they can't leak the
-  // day's answer ahead of time the way the public /api/daily route's
-  // response is explicitly whitelisted to avoid too.
+  // Everything here is recomputed server-side from the date alone --
+  // action.setterPowers/guesserPowers are never trusted either, only used
+  // as the pre-daily-config fallback below, so a tampered client can't
+  // hand itself a stronger/weaker loadout than everyone else got that day
+  // (same reasoning that already applied to the secret/opening guess/
+  // quest). Deliberately never sent back to the client: safeState.js has
+  // no field for these, so they can't leak the day's answer ahead of time
+  // the way the public /api/daily route's response is explicitly
+  // whitelisted to avoid too.
   if (action.date) {
     const daily = getDailyConfig(action.date, context.ALLOWED_SECRETS, context.ALLOWED_GUESSES);
+    state._dailySetterPowers = daily.setterPowers || null;
+    state._dailyGuesserPowers = daily.guesserPowers || null;
     state._dailySecret = daily.secretWord;
     state._dailyOpeningGuess = daily.openingGuess;
     state._dailyQuestType = daily.questType;
     state._dailyQuestRound2Choices = daily.questTypeRound2Choices || null;
+  } else {
+    state._dailySetterPowers = null;
+    state._dailyGuesserPowers = null;
   }
   return;
 }
