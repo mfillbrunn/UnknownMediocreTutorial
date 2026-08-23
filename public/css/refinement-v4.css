@@ -66,33 +66,17 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
     max(18px, env(safe-area-inset-right))
     max(18px, env(safe-area-inset-bottom))
     max(18px, env(safe-area-inset-left)) !important;
-  overflow: hidden;
+  overflow: auto;
   border: 0 !important;
   border-radius: 0 !important;
   background-color: var(--v4-ink-950) !important;
-  background-image: none !important;
-  box-shadow: none !important;
-}
-
-/* The background art sits on its own layer, blurred and slightly
-   oversized (transform, not inset, so it never triggers scroll/overflow
-   on the screen itself) so the frosted-glass buttons above it have some
-   depth instead of sitting on a crisp photo. */
-#startupScreen.screen.active::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background-color: var(--v4-ink-950);
   background-image:
-    linear-gradient(180deg, rgba(4, 16, 29, 0.05), rgba(4, 16, 29, 0.22)),
-    url("../assets/menu/detective-office.webp");
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  filter: blur(7px);
-  transform: scale(1.06);
-  pointer-events: none;
+    linear-gradient(180deg, rgba(4, 16, 29, 0.03), rgba(4, 16, 29, 0.16)),
+    url("../assets/menu/detective-office.webp") !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  box-shadow: none !important;
 }
 
 #startupScreen.game-menu::before {
@@ -100,8 +84,6 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 }
 
 #startupScreen .menu-center {
-  position: relative;
-  z-index: 1;
   box-sizing: border-box;
   width: clamp(278px, 38vw, 420px) !important;
   max-width: calc(100vw - 42px) !important;
