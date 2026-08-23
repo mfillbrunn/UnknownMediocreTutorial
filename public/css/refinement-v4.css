@@ -52,7 +52,6 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   margin-inline: auto !important;
 }
 
-#startupScreen.screen,
 #startupScreen.screen.active {
   box-sizing: border-box;
   display: grid !important;
@@ -72,7 +71,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   background-color: var(--v4-ink-950) !important;
   background-image:
     linear-gradient(180deg, rgba(4, 16, 29, 0.03), rgba(4, 16, 29, 0.16)),
-    url("../assets/menu/moonlit-indigo-room.webp") !important;
+    url("../assets/menu/detective-office.webp") !important;
   background-position: center center !important;
   background-repeat: no-repeat !important;
   background-size: cover !important;
