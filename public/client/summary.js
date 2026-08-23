@@ -128,13 +128,29 @@ function powerToInlineLabel(powerId) {
 
 
 
+// REFINEMENT V4 SHARE VISIBILITY: sharing belongs to the completed match,
+// not the between-round decision screen.
+function setSummaryShareVisibility(visible) {
+  const btn = $("shareResultBtn");
+  if (!btn) return;
+  btn.classList.toggle("hidden", !visible);
+  if (visible) {
+    btn.removeAttribute("aria-hidden");
+    btn.tabIndex = 0;
+  } else {
+    btn.setAttribute("aria-hidden", "true");
+    btn.tabIndex = -1;
+    btn.style.removeProperty("top");
+  }
+}
+
 // Lines the Share button up with whichever heading is currently showing
 // (the win/loss line in the match summary, "Round Summary" in the round
 // summary) instead of it sitting on its own row above everything.
 function positionShareButton() {
   const btn = $("shareResultBtn");
   const panel = btn?.closest(".panel");
-  if (!btn || !panel) return;
+  if (!btn || !panel || btn.classList.contains("hidden")) return;
 
   const heading = document.querySelector(
     "#roundSummary .match-header h2, #roundSummary .summary-heading"
@@ -157,6 +173,7 @@ window.updateSummary = function updateSummary() {
   const globalNewMatchBtn = $("newMatchBtn");
 
   if (!state || state.phase !== "gameOver") {
+    setSummaryShareVisibility(false);
     container.innerHTML = "";
     if (globalNewMatchBtn) globalNewMatchBtn.classList.remove("hidden");
     return;
@@ -165,12 +182,14 @@ window.updateSummary = function updateSummary() {
   updateMenuRoomCode();
 
   if (state.gameOverView === "round") {
+    setSummaryShareVisibility(false);
     if (globalNewMatchBtn) globalNewMatchBtn.classList.add("hidden");
     renderRoundSummary(container);
     return;
   }
 
   if (state.gameOverView === "match") {
+    setSummaryShareVisibility(true);
     if (globalNewMatchBtn) globalNewMatchBtn.classList.add("hidden");
     renderMatchSummary(container);
     return;
@@ -180,6 +199,7 @@ window.updateSummary = function updateSummary() {
 
 ///MATCH SUMMARY
 function renderMatchSummary(container) {
+  setSummaryShareVisibility(true);
   const rounds = state.matchRounds || [];
 
   const {
@@ -539,6 +559,7 @@ function formatTimeSpent(state, setterName, guesserName) {
 /////////COMPETITIVE  ROUND SUMMARY
 ////////////////////////////
 function renderRoundSummary(container) {
+  setSummaryShareVisibility(false);
   let html = `<h3 class="summary-heading">Round Summary</h3>`;
   // The round that just ended is still reflected by state.setter/guesser —
   // roles swap for the *next* round only once NEXT_ROUND is sent.
@@ -558,12 +579,6 @@ if (state.timeoutLoser)  {
 }
 
 
-  html += `
-    <p class="summary-players">
-      <b>${setterName}</b> (Secretkeeper) vs
-      <b>${guesserName}</b> (Guesser)
-    </p>
-  `;
 // Use the archived round snapshot, keyed by stable player id. This avoids
   // mixing milliseconds from the match accumulator with per-round seconds.
   const lastRound = state.matchRounds[state.matchRounds.length - 1];
@@ -591,8 +606,8 @@ if (state.timeoutLoser)  {
         <th>#</th>
         <th>Secret</th>
         <th>Guess</th>
-        <th>Feedback</th>
-        <th>Remaining</th>
+        <th>Result</th>
+        <th>Left</th>
       </tr>
     </thead>
     <tbody>
@@ -683,8 +698,8 @@ function renderStoredRoundSummary(round, index) {
           <th>#</th>
           <th>Secret</th>
           <th>Guess</th>
-          <th>Feedback</th>
-          <th>Remaining</th>
+          <th>Result</th>
+          <th>Left</th>
         </tr>
         </thead>
         <tbody>
