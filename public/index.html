@@ -258,10 +258,10 @@
       <main id="appMain">
 <!-- ========== START UP ========== -->
         <section id="startupScreen" class="screen active game-menu">
+          <div id="menuAccountStatus" class="menu-account-status"></div>
           <div class="menu-center">
             <button id="developerBtn" class="dev-tools-icon-btn" title="Developer tools" aria-label="Developer tools">🛠️</button>
             <h2 class="menu-title">VOWEL PLAY</h2>
-            <div id="menuAccountStatus" class="menu-account-status"></div>
             <div class="menu-buttons">
               <div class="split-btn menu-split-btn">
                 <button id="quickPlayBtn" class="menu-btn primary split-btn-main">Quick Play</button>
@@ -282,6 +282,20 @@
             </div>
           </div>
         </section>
+
+<!-- ========== PLAY WITH A FRIEND ========== -->
+<section id="playFriendScreen" class="screen game-menu">
+  <div class="menu-center">
+    <div class="screen-back-header">
+      <button class="menu-btn screen-back-btn" onclick="showScreen('startupScreen')">← Back</button>
+      <h2 class="menu-title" style="flex:1;text-align:center">Play with a Friend</h2>
+    </div>
+    <div class="menu-buttons play-menu-buttons">
+      <button id="playFriendInviteBtn" class="menu-btn primary" title="Casual, unlimited-time, shuffled game — send a link, no need to wait around">Send Invite Link ✉️</button>
+      <button id="playFriendFriendsBtn" class="menu-btn">Friends 👥</button>
+    </div>
+  </div>
+</section>
 
 <!-- ========== QUICK PLAY ========== -->
 <section id="quickPlayScreen" class="screen game-menu">
@@ -343,6 +357,7 @@
       <button class="menu-btn screen-back-btn" onclick="showScreen('startupScreen')">← Back</button>
       <h2 class="menu-title" style="flex:1;text-align:center">Ranked</h2>
     </div>
+    <div id="rankedEloDisplay" class="ranked-elo-display"></div>
     <div class="menu-buttons play-menu-buttons">
       <button id="playRankedBtn" class="menu-btn ranked-btn">Ranked Play 🏆</button>
       <button id="rankedLeaderboardBtn" class="menu-btn">Leaderboard 📊</button>

@@ -34,42 +34,47 @@ function formatTimeMode(tc) {
 
 function renderMenuAccountStatus () {
   const el = $("menuAccountStatus");
-  if (!el) return;
+  const eloEl = $("rankedEloDisplay");
 
-  el.innerHTML = "";
+  if (el) el.innerHTML = "";
+  if (eloEl) eloEl.innerHTML = "";
 
   if (!window.currentUser) {
-    el.innerHTML = `
-      <span class="account-logged-out">
-        Not logged in —
-        <button class="link-btn menu-login-btn">Log in</button>
-      </span>
-    `;
-    el.querySelector(".menu-login-btn").onclick =
-      () => showScreen("accountScreen");
+    if (el) {
+      el.innerHTML = `
+        <span class="account-logged-out">
+          Not logged in —
+          <button class="link-btn menu-login-btn">Log in</button>
+        </span>
+      `;
+      el.querySelector(".menu-login-btn").onclick =
+        () => showScreen("accountScreen");
+    }
     return;
   }
 
   const p = window.myProfile;
   const name = p?.username || window.currentUser.email;
 
-  const elo = p
-    ? `🚀 ${p.rating_bullet}
-       ⚡ ${p.rating_blitz}
-       ♾️ ${p.rating_notime}`
-    : "Loading rating…";
+  if (el) {
+    el.innerHTML = `
+      <span class="account-logged-in">
+        <strong>${name}</strong><br/>
+        <button class="link-btn menu-logout-btn">Log out</button>
+      </span>
+    `;
+    el.querySelector(".menu-logout-btn").onclick = logout;
+  }
 
-  el.innerHTML = `
-    <span class="account-logged-in">
-      <strong>${name}</strong><br/>
-      <small>${elo}</small><br/>
-      <button class="link-btn menu-friends-btn">Friends 👥</button>
-      <button class="link-btn menu-logout-btn">Log out</button>
-    </span>
-  `;
-
-  el.querySelector(".menu-friends-btn").onclick = () => window.showFriendsScreen?.();
-  el.querySelector(".menu-logout-btn").onclick = logout;
+  if (eloEl) {
+    eloEl.innerHTML = p
+      ? `<div class="ranked-elo-row">
+           <span>🚀 ${p.rating_bullet}</span>
+           <span>⚡ ${p.rating_blitz}</span>
+           <span>♾️ ${p.rating_notime}</span>
+         </div>`
+      : `<div class="ranked-elo-row">Loading rating…</div>`;
+  }
 }
 
 // Labels for state.aiDifficulty (1/2/3) -- kept in sync with
