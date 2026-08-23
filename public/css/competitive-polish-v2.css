@@ -1827,12 +1827,18 @@
 #setterScreen.single-word-left-v3 .setter-cover-stars,
 #setterScreen.single-word-left-v3 #setterBonusTargetV9,
 #setterScreen.single-word-left-v3 #setterCoverTarget,
-#setterScreen.single-word-left-v3 .pc-bonus-hint-tile,
 #setterScreen.single-word-left-v3 .setter-bonus-target,
 #setterScreen.single-word-left-v3 [data-cover-star],
 #setterScreen.single-word-left-v3 .cover-strength-card {
   display: none !important;
 }
+
+/* .pc-bonus-hint-tile is NOT a standalone badge like the others above --
+   it's a modifier class power-choice-mode.js's applyBonusHintTileOutline
+   toggles directly on one of the setter's real #draftSetter secret-letter
+   tiles (an outline/box-shadow highlight only, see gameplay-ui.css). A
+   display:none here hid that whole tile -- the letter along with it,
+   leaving only 4 visible -- instead of just suppressing the highlight. */
 
 /* ---------- Summary ---------- */
 .summary-table-wrap {
