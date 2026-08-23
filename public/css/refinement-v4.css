@@ -1,0 +1,876 @@
+/* REFINEMENT V4 — rebased against main @ 3b16279865b383df6b9af0b4de54c50e67e3f58b
+   Moonlit menu, solid controls, compact rewards, and readable summaries. */
+
+:root {
+  --v4-ink-950: #061626;
+  --v4-ink-900: #0b1f34;
+  --v4-ink-850: #102841;
+  --v4-ink-800: #17334f;
+  --v4-line: #35516c;
+  --v4-line-soft: rgba(184, 201, 217, 0.2);
+  --v4-text: #f7f1f4;
+  --v4-muted: #b8c5d2;
+  --v4-rose: #a95372;
+  --v4-rose-hover: #b35a79;
+  --v4-easy: #397867;
+  --v4-easy-hover: #3f8270;
+  --v4-medium: #99692f;
+  --v4-medium-hover: #9f6c31;
+  --v4-hard: #9d4864;
+  --v4-hard-hover: #b35977;
+  --v4-bronze: #70442f;
+  --v4-bronze-line: #bd7b4e;
+  --v4-silver: #4a5667;
+  --v4-silver-line: #aeb9c7;
+  --v4-gold: #746020;
+  --v4-gold-line: #d7bb58;
+}
+
+/* ========================================================================== 
+   Main menu — attached moonlit room, no dossier panel, solid controls
+   ========================================================================== */
+
+body.menu-mode {
+  background: var(--v4-ink-950) !important;
+}
+
+body.menu-mode #appContainer {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100dvh !important;
+  padding: 0 !important;
+}
+
+body.menu-mode #appMain {
+  min-height: 100dvh !important;
+}
+
+/* Keep non-startup menu screens centered after the menu container becomes
+   full-viewport for the illustrated landing screen. */
+body.menu-mode .screen.game-menu:not(#startupScreen) {
+  width: min(600px, calc(100vw - 24px));
+  margin-inline: auto !important;
+}
+
+#startupScreen.screen,
+#startupScreen.screen.active {
+  box-sizing: border-box;
+  display: grid !important;
+  place-items: center;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  padding:
+    max(18px, env(safe-area-inset-top))
+    max(18px, env(safe-area-inset-right))
+    max(18px, env(safe-area-inset-bottom))
+    max(18px, env(safe-area-inset-left)) !important;
+  overflow: auto;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background-color: var(--v4-ink-950) !important;
+  background-image:
+    linear-gradient(180deg, rgba(4, 16, 29, 0.03), rgba(4, 16, 29, 0.16)),
+    url("../assets/menu/moonlit-indigo-room.webp") !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  box-shadow: none !important;
+}
+
+#startupScreen.game-menu::before {
+  display: none !important;
+}
+
+#startupScreen .menu-center {
+  box-sizing: border-box;
+  width: clamp(278px, 38vw, 420px) !important;
+  max-width: calc(100vw - 42px) !important;
+  gap: 9px !important;
+  padding: clamp(12px, 2.2vh, 22px) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: translateY(-2.5vh);
+}
+
+#startupScreen .menu-title {
+  margin: 0 0 2px !important;
+  color: var(--v4-text) !important;
+  font-size: clamp(20px, 3.4vh, 27px) !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.16em !important;
+  line-height: 1 !important;
+  text-shadow: 0 2px 12px rgba(3, 12, 23, 0.72);
+}
+
+#startupScreen .menu-account-status {
+  min-height: 0;
+  margin: 0 0 3px !important;
+  color: rgba(247, 241, 244, 0.82) !important;
+  font-size: 12px !important;
+  text-shadow: 0 1px 8px rgba(3, 12, 23, 0.75);
+}
+
+#startupScreen .menu-account-status:empty {
+  display: none;
+}
+
+#startupScreen .menu-account-status .link-btn {
+  color: #f0a4bd !important;
+}
+
+#startupScreen .menu-buttons {
+  width: 100% !important;
+  gap: 8px !important;
+}
+
+#startupScreen .menu-btn {
+  min-height: 42px !important;
+  height: clamp(42px, 5.7vh, 48px) !important;
+  padding: 0 15px !important;
+  border: 1px solid rgba(188, 207, 225, 0.24) !important;
+  border-radius: 10px !important;
+  background: #17334f !important;
+  color: var(--v4-text) !important;
+  box-shadow: 0 5px 14px rgba(3, 13, 25, 0.24) !important;
+  font-size: clamp(12px, 1.6vh, 14px) !important;
+  font-weight: 760 !important;
+  letter-spacing: 0.055em !important;
+  text-transform: uppercase;
+  transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease !important;
+}
+
+#startupScreen .menu-btn:hover:not(:disabled) {
+  border-color: rgba(224, 235, 246, 0.42) !important;
+  background: #21415f !important;
+  transform: translateY(-1px) !important;
+}
+
+#startupScreen .menu-btn:active:not(:disabled) {
+  transform: translateY(0) !important;
+}
+
+#startupScreen .menu-btn.primary,
+#startupScreen .menu-split-btn .menu-btn.primary {
+  border-color: rgba(246, 178, 202, 0.45) !important;
+  background: var(--v4-rose) !important;
+  color: #fff !important;
+}
+
+#startupScreen .menu-btn.primary:hover:not(:disabled),
+#startupScreen .menu-split-btn .menu-btn.primary:hover:not(:disabled) {
+  background: var(--v4-rose-hover) !important;
+}
+
+#startupScreen .menu-split-btn {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 46px;
+  gap: 0 !important;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 10px !important;
+  box-shadow: 0 5px 14px rgba(3, 13, 25, 0.24) !important;
+}
+
+#startupScreen .menu-split-btn .menu-btn {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+#startupScreen .menu-split-btn-main {
+  border-right-width: 0 !important;
+}
+
+#startupScreen #playQuickBtn {
+  width: 46px !important;
+  min-width: 46px !important;
+  padding: 0 !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.26) !important;
+  background: #944b67 !important;
+  color: #fff !important;
+}
+
+#startupScreen #playQuickBtn:hover:not(:disabled) {
+  background: #a95976 !important;
+}
+
+#startupScreen .dev-tools-icon-btn {
+  top: 8px !important;
+  right: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  border: 1px solid rgba(188, 207, 225, 0.2) !important;
+  border-radius: 9px !important;
+  background: rgba(9, 31, 52, 0.78) !important;
+  color: rgba(247, 241, 244, 0.84) !important;
+  box-shadow: none !important;
+  opacity: 0.72;
+}
+
+#startupScreen .notify-badge {
+  color: #fff !important;
+}
+
+@media (max-height: 690px) {
+  #startupScreen .menu-center {
+    gap: 6px !important;
+    padding-block: 8px !important;
+    transform: none;
+  }
+
+  #startupScreen .menu-title {
+    font-size: 18px !important;
+  }
+
+  #startupScreen .menu-btn {
+    min-height: 36px !important;
+    height: 36px !important;
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  #startupScreen .menu-center {
+    width: min(82vw, 344px) !important;
+    max-width: calc(100vw - 30px) !important;
+  }
+}
+
+/* ========================================================================== 
+   AI difficulty — muted traffic-light solids from the moonlit palette
+   ========================================================================== */
+
+.menu-btn.difficulty-easy,
+.ai-option.difficulty-easy,
+.daily-difficulty-locked.difficulty-easy,
+[data-difficulty="easy"] {
+  border-color: #65a795 !important;
+  background: var(--v4-easy) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.menu-btn.difficulty-medium,
+.ai-option.difficulty-medium,
+.daily-difficulty-locked.difficulty-medium,
+[data-difficulty="medium"] {
+  border-color: #d0a05e !important;
+  background: var(--v4-medium) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.menu-btn.difficulty-hard,
+.ai-option.difficulty-hard,
+.daily-difficulty-locked.difficulty-hard,
+[data-difficulty="hard"] {
+  border-color: #cf7591 !important;
+  background: var(--v4-hard) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.menu-btn.difficulty-easy:hover:not(:disabled),
+.ai-option.difficulty-easy:hover:not(:disabled) {
+  background: var(--v4-easy-hover) !important;
+}
+
+.menu-btn.difficulty-medium:hover:not(:disabled),
+.ai-option.difficulty-medium:hover:not(:disabled) {
+  background: var(--v4-medium-hover) !important;
+}
+
+.menu-btn.difficulty-hard:hover:not(:disabled),
+.ai-option.difficulty-hard:hover:not(:disabled) {
+  background: var(--v4-hard-hover) !important;
+}
+
+:is(.difficulty-easy, .difficulty-medium, .difficulty-hard) small {
+  color: rgba(255, 255, 255, 0.82) !important;
+  opacity: 1 !important;
+}
+
+:is(.difficulty-easy, .difficulty-medium, .difficulty-hard):focus-visible {
+  outline: 3px solid #fff !important;
+  outline-offset: 2px !important;
+}
+
+:is(.difficulty-easy, .difficulty-medium, .difficulty-hard):disabled {
+  opacity: 0.48 !important;
+  filter: grayscale(0.35) !important;
+}
+
+/* ========================================================================== 
+   Reward cards — large square icon at ~15%, solid rarity body
+   ========================================================================== */
+
+.pc-choice-card[data-rarity] {
+  --pc-rarity-surface: var(--v4-bronze);
+  --pc-rarity-border: var(--v4-bronze-line);
+  grid-template-columns: clamp(72px, 15%, 92px) minmax(0, 1fr) !important;
+  min-height: 92px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--pc-rarity-border) !important;
+  border-radius: 14px !important;
+  background: var(--pc-rarity-surface) !important;
+  box-shadow: 0 7px 16px rgba(0, 0, 0, 0.23) !important;
+}
+
+.pc-choice-card[data-rarity="common"] {
+  --pc-rarity-surface: var(--v4-bronze);
+  --pc-rarity-border: var(--v4-bronze-line);
+}
+
+.pc-choice-card[data-rarity="rare"] {
+  --pc-rarity-surface: var(--v4-silver);
+  --pc-rarity-border: var(--v4-silver-line);
+}
+
+.pc-choice-card[data-rarity="legend"],
+.pc-choice-card[data-rarity="legendary"] {
+  --pc-rarity-surface: var(--v4-gold);
+  --pc-rarity-border: var(--v4-gold-line);
+}
+
+.pc-choice-card[data-rarity]::before,
+.pc-choice-card[data-rarity]::after {
+  display: none !important;
+}
+
+.pc-choice-card[data-rarity]:hover:not(:disabled),
+.pc-choice-card[data-rarity]:focus-visible:not(:disabled) {
+  border-color: color-mix(in srgb, var(--pc-rarity-border) 72%, white) !important;
+  box-shadow: 0 10px 21px rgba(0, 0, 0, 0.29) !important;
+  transform: translateY(-2px) !important;
+}
+
+.pc-choice-card[data-rarity] .pc-card-icon,
+.pc-choice-card[data-rarity].pc-choice-card-armed .pc-card-icon {
+  position: relative !important;
+  isolation: isolate;
+  align-self: center !important;
+  justify-self: center !important;
+  width: calc(100% - 10px) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 1 / 1;
+  margin: 5px !important;
+  padding: 5px !important;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.32) !important;
+  border-radius: 11px !important;
+  background: var(--pc-power-accent, #397c96) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.pc-choice-card[data-rarity] .pc-card-icon::before {
+  inset: 4px !important;
+  width: auto !important;
+  height: auto !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  background: rgba(6, 18, 30, 0.14) !important;
+  box-shadow: none !important;
+}
+
+.pc-choice-card[data-rarity] .pc-card-icon .pc-card-svg,
+.pc-choice-card[data-rarity] .pc-card-icon .pc-fixed-reward-svg {
+  width: 84% !important;
+  height: 84% !important;
+  max-width: 74px !important;
+  max-height: 74px !important;
+  color: #fff !important;
+  filter: drop-shadow(0 2px 3px rgba(4, 12, 21, 0.32)) !important;
+}
+
+.pc-choice-card[data-rarity] .pc-card-body,
+.pc-choice-card[data-rarity] .pc-card-body-armed {
+  min-width: 0 !important;
+  padding: 13px 14px !important;
+  background: transparent !important;
+}
+
+.pc-choice-card[data-rarity] strong {
+  color: #fff !important;
+  font-size: clamp(15px, 2.3vw, 17px) !important;
+  line-height: 1.15 !important;
+}
+
+.pc-choice-card[data-rarity] .pc-card-desc {
+  margin-top: 5px !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: clamp(12px, 1.9vw, 13.5px) !important;
+  line-height: 1.35 !important;
+}
+
+/* A restrained moving glint on gold only; the card remains readable and the
+   effect is completely disabled for reduced motion. */
+.pc-choice-card[data-rarity="legend"]::after,
+.pc-choice-card[data-rarity="legendary"]::after {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  display: block !important;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 244, 188, 0.2) 47%,
+    rgba(255, 250, 216, 0.36) 50%,
+    rgba(255, 244, 188, 0.2) 53%,
+    transparent 65%
+  );
+  background-size: 230% 100%;
+  pointer-events: none;
+  animation: v4-gold-glint 3.8s ease-in-out infinite;
+}
+
+@keyframes v4-gold-glint {
+  0%, 68% { background-position: 140% 0; }
+  100% { background-position: -45% 0; }
+}
+
+/* Refresh is one quiet action. The state is communicated by disabled styling,
+   not READY/USED/DEALING text. */
+.pc-refresh-choice-btn {
+  display: inline-flex !important;
+  grid-template-columns: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  min-height: 38px !important;
+  margin: 13px auto 0 !important;
+  padding: 8px 13px !important;
+  overflow: visible !important;
+  border: 1px solid #3a4a5b !important;
+  border-radius: 9px !important;
+  background: #172433 !important;
+  color: #e9f0f6 !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 760 !important;
+}
+
+.pc-refresh-choice-btn::after {
+  display: none !important;
+}
+
+.pc-refresh-choice-btn:hover:not(:disabled),
+.pc-refresh-choice-btn:focus-visible:not(:disabled) {
+  border-color: #61768b !important;
+  background: #203247 !important;
+  box-shadow: none !important;
+  transform: translateY(-1px) !important;
+}
+
+.pc-refresh-icon {
+  display: block !important;
+  width: 19px !important;
+  height: 19px !important;
+  flex: 0 0 19px;
+  overflow: visible;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  color: currentColor !important;
+  font-size: 0 !important;
+}
+
+.pc-refresh-icon path {
+  vector-effect: non-scaling-stroke;
+}
+
+.pc-refresh-choice-btn:hover:not(:disabled) .pc-refresh-icon {
+  transform: rotate(-20deg) !important;
+}
+
+.pc-refresh-choice-btn.is-spent,
+.pc-refresh-choice-btn:disabled {
+  border-color: #2b333d !important;
+  background: #151b22 !important;
+  color: #69737e !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+.pc-refresh-choice-btn.is-dealing .pc-refresh-icon {
+  animation: competitive-reroll-spin 640ms linear infinite !important;
+}
+
+@media (max-width: 560px) {
+  .pc-choice-card[data-rarity] {
+    grid-template-columns: clamp(68px, 19%, 78px) minmax(0, 1fr) !important;
+    min-height: 84px !important;
+  }
+
+  .pc-choice-card[data-rarity] .pc-card-body,
+  .pc-choice-card[data-rarity] .pc-card-body-armed {
+    padding: 11px 10px !important;
+  }
+}
+
+/* ========================================================================== 
+   Summary — compact, non-scrolling, same indigo/rose visual language
+   ========================================================================== */
+
+#menu.screen,
+#menu.screen.active {
+  box-sizing: border-box;
+  width: min(720px, calc(100vw - 14px)) !important;
+  max-width: 720px !important;
+  margin: 7px auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#menu > .panel {
+  box-sizing: border-box;
+  margin: 0 !important;
+  padding: 12px !important;
+  overflow: hidden;
+  border: 1px solid var(--v4-line) !important;
+  border-radius: 16px !important;
+  background: var(--v4-ink-900) !important;
+  box-shadow: 0 12px 28px rgba(2, 10, 19, 0.28) !important;
+}
+
+#menu #roundSummary {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+#menu .share-btn {
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 0 12px !important;
+  border: 1px solid #58708a !important;
+  border-radius: 9px !important;
+  background: #294763 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+#menu .share-btn:hover:not(:disabled) {
+  background: #355a79 !important;
+  color: #fff !important;
+}
+
+#menu .share-btn.hidden {
+  display: none !important;
+}
+
+#menu .match-header {
+  margin: 0 0 10px !important;
+  padding: 18px 14px 14px !important;
+  overflow: hidden;
+  border: 1px solid #36536d !important;
+  border-radius: 13px !important;
+  background: var(--v4-ink-850) !important;
+  box-shadow: none !important;
+}
+
+#menu .match-header::before {
+  display: none !important;
+}
+
+#menu .match-header h2 {
+  color: var(--v4-text) !important;
+  font-size: clamp(25px, 5.4vw, 34px) !important;
+  text-shadow: none !important;
+}
+
+#menu .match-header--win {
+  border-top-color: #4e8d79 !important;
+}
+
+#menu .match-header--loss {
+  border-top-color: var(--v4-rose) !important;
+}
+
+#menu .match-header--tie {
+  border-top-color: #78899a !important;
+}
+
+#menu .match-score-line {
+  color: #f0b1c6 !important;
+  font-size: clamp(24px, 5vw, 31px) !important;
+}
+
+#menu .match-players-line,
+#menu .stored-round-title-block p,
+#menu .summary-clock-role,
+#menu .match-meta-chip {
+  color: var(--v4-muted) !important;
+}
+
+#menu .summary-heading {
+  margin: 4px 0 10px !important;
+  color: var(--v4-text) !important;
+  font-size: clamp(23px, 5vw, 30px) !important;
+  font-weight: 850 !important;
+  letter-spacing: -0.02em !important;
+}
+
+#menu .summary-guess-count,
+#menu .match-info-block,
+#menu .timeout-note,
+#menu .timeout-summary,
+#menu .assassination-note,
+#menu .assassin-summary,
+#menu .reveal-penalty-summary,
+#menu .tie-breaker,
+#menu .round-note {
+  border: 1px solid var(--v4-line-soft) !important;
+  background: #132a42 !important;
+  color: #dce6ef !important;
+  box-shadow: none !important;
+}
+
+#menu .summary-clock-panel,
+#menu .stored-round,
+#menu .stored-round-title-block,
+#menu .summary-clock-player {
+  border-color: var(--v4-line-soft) !important;
+  background: #10263d !important;
+  box-shadow: none !important;
+}
+
+#menu .stored-round {
+  padding: 10px !important;
+  border-radius: 13px !important;
+}
+
+#menu .stored-round-header {
+  grid-template-columns: minmax(0, 0.8fr) minmax(260px, 1.2fr) !important;
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+#menu .stored-round-title-block {
+  padding: 10px 11px !important;
+  border-radius: 10px !important;
+}
+
+#menu .stored-round-kicker {
+  color: #e298b3 !important;
+}
+
+#menu .stored-round .stored-round-title-block h4,
+#menu .summary-clock-name,
+#menu .summary-clock-value {
+  color: var(--v4-text) !important;
+}
+
+#menu .summary-clock-panel {
+  margin-block: 8px !important;
+  padding: 8px !important;
+  border-radius: 11px !important;
+}
+
+#menu .summary-clock-player {
+  padding: 8px 9px !important;
+  border-radius: 9px !important;
+}
+
+#menu .summary-clock-player::before {
+  box-shadow: none !important;
+}
+
+#menu .summary-actions {
+  gap: 8px !important;
+  margin: 10px 0 !important;
+}
+
+#menu .summary-actions :is(.primary-btn, .secondary-btn) {
+  min-height: 40px !important;
+  border-radius: 9px !important;
+  box-shadow: none !important;
+}
+
+#menu .summary-actions .primary-btn {
+  border-color: #ca7794 !important;
+  background: var(--v4-rose) !important;
+  color: #fff !important;
+}
+
+#menu .summary-actions .secondary-btn {
+  border-color: #48627b !important;
+  background: #18334f !important;
+  color: #fff !important;
+}
+
+#menu .summary-table-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  border: 1px solid var(--v4-line-soft) !important;
+  border-radius: 10px !important;
+  background: #0a1b2c !important;
+}
+
+#menu .summary-table {
+  width: 100% !important;
+  min-width: 0 !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+  color: #eef3f7 !important;
+  font-size: 10px !important;
+}
+
+#menu .summary-table th,
+#menu .summary-table td {
+  box-sizing: border-box;
+  min-width: 0 !important;
+  overflow: hidden;
+  padding: 7px 4px !important;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#menu .summary-table th {
+  position: static !important;
+  border-bottom: 1px solid #314a62 !important;
+  background: #142b43 !important;
+  color: #c5d1dc !important;
+  font-size: 8px !important;
+  letter-spacing: 0.055em !important;
+}
+
+#menu .summary-table td {
+  border-bottom: 1px solid rgba(175, 195, 213, 0.11) !important;
+  font-size: 10px !important;
+  font-variant-numeric: tabular-nums;
+}
+
+#menu .summary-table th:nth-child(1),
+#menu .summary-table td:nth-child(1) {
+  width: 7%;
+}
+
+#menu .summary-table th:nth-child(2),
+#menu .summary-table td:nth-child(2),
+#menu .summary-table th:nth-child(3),
+#menu .summary-table td:nth-child(3) {
+  width: 22%;
+}
+
+#menu .summary-table th:nth-child(4),
+#menu .summary-table td:nth-child(4) {
+  width: 31%;
+}
+
+#menu .summary-table th:nth-child(5),
+#menu .summary-table td:nth-child(5) {
+  width: 18%;
+}
+
+#menu .summary-table .secret-cell,
+#menu .summary-table .guess-cell {
+  color: #fff !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.02em !important;
+}
+
+#menu .summary-table .feedback-cell {
+  min-width: 0 !important;
+  letter-spacing: 0 !important;
+}
+
+#menu .summary-table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.025) !important;
+}
+
+#menu .summary-table tbody tr:hover {
+  background: rgba(182, 91, 124, 0.1) !important;
+}
+
+#menu .summary-table tr.final-row {
+  background: rgba(57, 120, 103, 0.18) !important;
+}
+
+@media (max-width: 720px) {
+  #menu .stored-round-header {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #menu > .panel {
+    padding: 8px !important;
+  }
+
+  #menu .share-btn {
+    top: 6px !important;
+    right: 6px !important;
+  }
+
+  #menu .summary-table th,
+  #menu .summary-table td {
+    padding: 6px 2px !important;
+  }
+
+  #menu .summary-table th {
+    font-size: 7px !important;
+    letter-spacing: 0.02em !important;
+  }
+
+  #menu .summary-table td {
+    font-size: 9px !important;
+  }
+
+  #menu .summary-table .secret-cell,
+  #menu .summary-table .guess-cell {
+    font-size: 9px !important;
+  }
+
+  #menu .summary-table th:nth-child(1),
+  #menu .summary-table td:nth-child(1) {
+    width: 8%;
+  }
+
+  #menu .summary-table th:nth-child(2),
+  #menu .summary-table td:nth-child(2),
+  #menu .summary-table th:nth-child(3),
+  #menu .summary-table td:nth-child(3) {
+    width: 21%;
+  }
+
+  #menu .summary-table th:nth-child(4),
+  #menu .summary-table td:nth-child(4) {
+    width: 32%;
+  }
+
+  #menu .summary-table th:nth-child(5),
+  #menu .summary-table td:nth-child(5) {
+    width: 18%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-choice-card[data-rarity="legend"]::after,
+  .pc-choice-card[data-rarity="legendary"]::after {
+    animation: none !important;
+    opacity: 0.22;
+  }
+
+  #startupScreen .menu-btn,
+  .pc-choice-card,
+  .pc-refresh-choice-btn,
+  .pc-refresh-icon {
+    transition: none !important;
+  }
+}

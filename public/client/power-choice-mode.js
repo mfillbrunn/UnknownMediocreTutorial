@@ -956,9 +956,11 @@
       <p class="pc-modal-sub">Select one</p>
       <div class="pc-card-grid"></div>
       <button type="button" class="pc-refresh-choice-btn" title="Refresh reward choices" aria-label="Refresh reward choices">
-        <span class="pc-refresh-icon" aria-hidden="true">&#8635;</span>
+        <svg class="pc-refresh-icon" data-refinement-v4="refresh-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M20 11a8 8 0 1 0-2.34 5.66" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
         <span class="pc-refresh-label">Refresh choices</span>
-        <span class="pc-refresh-state" aria-live="polite">READY</span>
       </button>
     </div>`;
     document.body.appendChild(modal);
@@ -1312,14 +1314,13 @@
       refreshBtn.classList.remove("is-dealing");
       refreshBtn.setAttribute("aria-busy", "false");
       const refreshLabel = refreshBtn.querySelector(".pc-refresh-label");
-      const refreshState = refreshBtn.querySelector(".pc-refresh-state");
-      if (refreshLabel) refreshLabel.textContent = refreshAvailable ? "Refresh choices" : "Refresh used";
-      if (refreshState) refreshState.textContent = refreshAvailable ? "READY" : "USED";
-      refreshBtn.title = refreshAvailable ? "Refresh reward choices" : "Refresh already used";
-      refreshBtn.setAttribute(
-        "aria-label",
-        refreshAvailable ? "Refresh reward choices" : "Refresh already used"
-      );
+      if (refreshLabel) refreshLabel.textContent = "Refresh choices";
+      const refreshHelp = refreshAvailable
+        ? "Refresh reward choices"
+        : "Refresh choices unavailable";
+      refreshBtn.title = refreshHelp;
+      refreshBtn.setAttribute("aria-label", refreshHelp);
+      refreshBtn.setAttribute("aria-disabled", String(!refreshAvailable));
       if (!refreshBtn.dataset.wired) {
         refreshBtn.dataset.wired = "1";
         refreshBtn.addEventListener("click", event => {
@@ -1331,8 +1332,7 @@
           refreshBtn.disabled = true;
           refreshBtn.classList.add("is-dealing");
           refreshBtn.setAttribute("aria-busy", "true");
-          const dealingState = refreshBtn.querySelector(".pc-refresh-state");
-          if (dealingState) dealingState.textContent = "DEALING";
+
           window.sendGameAction?.({
             type: "POWER_CHOICE_REFRESH",
             userId: me(),
