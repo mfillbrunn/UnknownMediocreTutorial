@@ -53,6 +53,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 }
 
 #startupScreen.screen.active {
+  position: relative;
   box-sizing: border-box;
   display: grid !important;
   place-items: center;
@@ -65,17 +66,33 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
     max(18px, env(safe-area-inset-right))
     max(18px, env(safe-area-inset-bottom))
     max(18px, env(safe-area-inset-left)) !important;
-  overflow: auto;
+  overflow: hidden;
   border: 0 !important;
   border-radius: 0 !important;
   background-color: var(--v4-ink-950) !important;
-  background-image:
-    linear-gradient(180deg, rgba(4, 16, 29, 0.03), rgba(4, 16, 29, 0.16)),
-    url("../assets/menu/detective-office.webp") !important;
-  background-position: center center !important;
-  background-repeat: no-repeat !important;
-  background-size: cover !important;
+  background-image: none !important;
   box-shadow: none !important;
+}
+
+/* The background art sits on its own layer, blurred and slightly
+   oversized (transform, not inset, so it never triggers scroll/overflow
+   on the screen itself) so the frosted-glass buttons above it have some
+   depth instead of sitting on a crisp photo. */
+#startupScreen.screen.active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-color: var(--v4-ink-950);
+  background-image:
+    linear-gradient(180deg, rgba(4, 16, 29, 0.05), rgba(4, 16, 29, 0.22)),
+    url("../assets/menu/detective-office.webp");
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: blur(7px);
+  transform: scale(1.06);
+  pointer-events: none;
 }
 
 #startupScreen.game-menu::before {
@@ -83,6 +100,8 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 }
 
 #startupScreen .menu-center {
+  position: relative;
+  z-index: 1;
   box-sizing: border-box;
   width: clamp(278px, 38vw, 420px) !important;
   max-width: calc(100vw - 42px) !important;
@@ -132,7 +151,9 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   padding: 0 15px !important;
   border: 1px solid rgba(188, 207, 225, 0.24) !important;
   border-radius: 10px !important;
-  background: #17334f !important;
+  background: rgba(23, 51, 79, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
   color: var(--v4-text) !important;
   box-shadow: 0 5px 14px rgba(3, 13, 25, 0.24) !important;
   font-size: clamp(12px, 1.6vh, 14px) !important;
@@ -144,7 +165,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 
 #startupScreen .menu-btn:hover:not(:disabled) {
   border-color: rgba(224, 235, 246, 0.42) !important;
-  background: #21415f !important;
+  background: rgba(33, 65, 95, 0.85) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -155,13 +176,13 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 #startupScreen .menu-btn.primary,
 #startupScreen .menu-split-btn .menu-btn.primary {
   border-color: rgba(246, 178, 202, 0.45) !important;
-  background: var(--v4-rose) !important;
+  background: rgba(169, 83, 114, 0.8) !important;
   color: #fff !important;
 }
 
 #startupScreen .menu-btn.primary:hover:not(:disabled),
 #startupScreen .menu-split-btn .menu-btn.primary:hover:not(:disabled) {
-  background: var(--v4-rose-hover) !important;
+  background: rgba(179, 90, 121, 0.85) !important;
 }
 
 #startupScreen .menu-split-btn {
@@ -184,16 +205,29 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 }
 
 #startupScreen #playQuickBtn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   width: 46px !important;
   min-width: 46px !important;
   padding: 0 !important;
   border-left: 1px solid rgba(255, 255, 255, 0.26) !important;
-  background: #944b67 !important;
+  background: rgba(148, 75, 103, 0.8) !important;
   color: #fff !important;
 }
 
 #startupScreen #playQuickBtn:hover:not(:disabled) {
-  background: #a95976 !important;
+  background: rgba(169, 89, 118, 0.85) !important;
+}
+
+/* Thin-stroke bolt matching the app's other inline-SVG icon language
+   (e.g. the reward refresh icon) instead of the previous emoji, which
+   read as a separate colored sticker sitting on top of the button. */
+#startupScreen #playQuickBtn .menu-quick-icon {
+  width: 18px;
+  height: 18px;
+  color: #fff;
+  opacity: 0.92;
 }
 
 #startupScreen .dev-tools-icon-btn {
