@@ -944,8 +944,15 @@
       <h2></h2>
       <p class="pc-modal-sub"></p>
       <div class="pc-reward-toolbar">
-        <button type="button" class="pc-refresh-choice-btn" title="Refresh this reward offer once per game">&#8635; REFRESH CHOICES</button>
-        <span class="pc-rarity-odds" aria-live="polite"></span>
+        <div class="pc-toolbar-copy">
+          <span class="pc-toolbar-kicker">REWARD DECK</span>
+          <span class="pc-toolbar-note">Choose one card to continue</span>
+        </div>
+        <button type="button" class="pc-refresh-choice-btn" title="Deal a new reward hand" aria-label="Deal a new reward hand">
+          <span class="pc-refresh-icon" aria-hidden="true">&#8635;</span>
+          <span class="pc-refresh-label">New hand</span>
+          <span class="pc-refresh-state" aria-live="polite">READY</span>
+        </button>
       </div>
       <div class="pc-card-grid"></div>
     </div>`;
@@ -1148,17 +1155,26 @@
       const description = typeof optionDescription === "function"
         ? optionDescription(option)
         : option?.description || "";
-      const accent = option.kind === "power"
+      // The card body is rarity-colored in CSS. This variable is reserved
+      // for the icon rail and interactive controls, preserving each power's identity.
+      const powerAccent = option.kind === "power"
         ? (window.POWER_METADATA?.[option.powerId]?.color || "")
         : fixedRewardAccent(option);
-      const style = accent ? ` style="--pc-card-accent:${esc(accent)}"` : "";
+      const style = powerAccent
+        ? ` style="--pc-power-accent:${esc(powerAccent)};--pc-card-accent:${esc(powerAccent)}"`
+        : "";
+      const ariaLabel = `${option.title || "Reward"}. ${rarity.label} reward. ${description}`;
       if (armed) {
-        return `<div class="pc-choice-card pc-choice-card-armed" data-option-id="${esc(option.id)}" data-rarity="${esc(rarity.key)}"${style}>
-          <strong>${esc(option.title)}</strong>
-          ${rewardInputFormMarkup(option)}
+        return `<div class="pc-choice-card pc-choice-card-armed" role="group" aria-label="${esc(ariaLabel)}" data-option-id="${esc(option.id)}" data-rarity="${esc(rarity.key)}"${style}>
+          <span class="pc-card-icon">${optionIconMarkup(option)}</span>
+          ${tier}
+          <div class="pc-card-body pc-card-body-armed">
+            <strong>${esc(option.title)}</strong>
+            ${rewardInputFormMarkup(option)}
+          </div>
         </div>`;
       }
-      return `<button type="button" class="pc-choice-card" data-option-id="${esc(option.id)}" data-rarity="${esc(rarity.key)}"${style}>
+      return `<button type="button" class="pc-choice-card" aria-label="${esc(ariaLabel)}" data-option-id="${esc(option.id)}" data-rarity="${esc(rarity.key)}"${style}>
         <span class="pc-card-icon">${optionIconMarkup(option)}</span>
         ${tier}
         <span class="pc-card-body">
@@ -1289,7 +1305,18 @@
     const refreshAvailable = pending.refreshAvailable !== false;
     if (refreshBtn) {
       refreshBtn.disabled = !refreshAvailable;
-      refreshBtn.textContent = refreshAvailable ? "↻ REFRESH CHOICES - 1/GAME" : "↻ REFRESH USED";
+      refreshBtn.classList.toggle("is-spent", !refreshAvailable);
+      refreshBtn.classList.remove("is-dealing");
+      refreshBtn.setAttribute("aria-busy", "false");
+      const refreshLabel = refreshBtn.querySelector(".pc-refresh-label");
+      const refreshState = refreshBtn.querySelector(".pc-refresh-state");
+      if (refreshLabel) refreshLabel.textContent = refreshAvailable ? "New hand" : "Reroll spent";
+      if (refreshState) refreshState.textContent = refreshAvailable ? "READY" : "USED";
+      refreshBtn.title = refreshAvailable ? "Deal a new reward hand" : "Reroll already used";
+      refreshBtn.setAttribute(
+        "aria-label",
+        refreshAvailable ? "Deal a new reward hand" : "Reroll already used"
+      );
       if (!refreshBtn.dataset.wired) {
         refreshBtn.dataset.wired = "1";
         refreshBtn.addEventListener("click", event => {
@@ -1299,6 +1326,10 @@
           // Disarm payload-entry cards before replacing the offer.
           rewardInputArmed = null;
           refreshBtn.disabled = true;
+          refreshBtn.classList.add("is-dealing");
+          refreshBtn.setAttribute("aria-busy", "true");
+          const dealingState = refreshBtn.querySelector(".pc-refresh-state");
+          if (dealingState) dealingState.textContent = "DEALING";
           window.sendGameAction?.({
             type: "POWER_CHOICE_REFRESH",
             userId: me(),
@@ -1308,14 +1339,7 @@
       }
     }
 
-    const probabilities = pending.rarityProbabilities;
-    const odds = modal.querySelector(".pc-rarity-odds");
-    if (odds) {
-      odds.textContent = probabilities
-        ? `${Math.round(probabilities.common * 100)}% Bronze / ${Math.round(probabilities.rare * 100)}% Silver / ${Math.round(probabilities.legendary * 100)}% Gold`
-        : "";
-    }
-
+    // Rarity is communicated visually by each card; numeric odds stay out of the play surface.
     const grid = modal.querySelector(".pc-card-grid");
     renderRewardChoiceCards(pending, grid);
     const peekBar = typeof ensurePeekBar === "function" ? ensurePeekBar() : null;
