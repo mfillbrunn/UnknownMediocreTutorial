@@ -549,10 +549,20 @@ function initializeRound(state) {
   // see nextRoundTransition.js) instead of wiping to [] every time is
   // what makes "for the rest of the game" actually true instead of a
   // grant that a plain reset would silently undo on the very next action.
+  // Each grant is tied to the specific player who earned it (see
+  // grantPersistentPower), not to the role slot -- a standard match swaps
+  // setter/guesser every round, so filtering by "is the current occupant
+  // of this role the player who earned the grant" is what makes the power
+  // deactivate for whoever inherits the role next and reactivate if the
+  // original player ever holds that role again.
   const persistentGrants =
     state.powers.powerChoicePersistentGrants || { setter: [], guesser: [] };
-  const spyPersistentPowers = [...(persistentGrants.setter || [])];
-  const inspectorPersistentPowers = [...(persistentGrants.guesser || [])];
+  const spyPersistentPowers = (persistentGrants.setter || [])
+    .filter(grant => grant.userId === state.setter)
+    .map(grant => grant.powerId);
+  const inspectorPersistentPowers = (persistentGrants.guesser || [])
+    .filter(grant => grant.userId === state.guesser)
+    .map(grant => grant.powerId);
   state.activePowers = [...spyPersistentPowers, ...inspectorPersistentPowers];
   state.initialPowers = { setter: spyPersistentPowers, guesser: inspectorPersistentPowers };
   state.customPlayerPowers = null;
@@ -957,18 +967,23 @@ function addAbsentConstraints(state, letters) {
   }
 }
 
-// Unlocks a PERSISTENT_POWER_IDS power for `role`, for the rest of the
+// Unlocks a PERSISTENT_POWER_IDS power for `userId`, for the rest of the
 // game -- not just applied once, and not undone by initializeRound's
 // normal per-action activePowers rebuild (which now reads this same
-// field back out, see initializeRound above). Idempotent: choosing the
-// same persistent reward twice (fixedOptionApplicable/powerOptionApplicable
-// should already prevent the card from being offered again, but this
-// stays safe either way) doesn't duplicate the grant.
-function grantPersistentPower(state, role, powerId) {
+// field back out, see initializeRound above). The grant is stored against
+// the player, not the role slot: a role swap next round must not hand the
+// power to whoever inherits the seat (see initializeRound's per-grant
+// userId filter). Idempotent: choosing the same persistent reward twice
+// (fixedOptionApplicable/powerOptionApplicable should already prevent the
+// card from being offered again, but this stays safe either way) doesn't
+// duplicate the grant.
+function grantPersistentPower(state, role, powerId, userId) {
   state.powers.powerChoicePersistentGrants ||= { setter: [], guesser: [] };
   const key = role === "setter" ? "setter" : "guesser";
   const list = (state.powers.powerChoicePersistentGrants[key] ||= []);
-  if (!list.includes(powerId)) list.push(powerId);
+  if (!list.some(grant => grant.userId === userId && grant.powerId === powerId)) {
+    list.push({ powerId, userId });
+  }
   if (!state.activePowers.includes(powerId)) {
     state.activePowers = [...state.activePowers, powerId];
   }
@@ -1490,11 +1505,16 @@ function powerOptionApplicable(state, option) {
       return true;
     case "revealLocation":
     case "letterProfile":
-      // Already unlocked -- offering the same permanent grant again would
-      // just waste a reward slot on a no-op.
-      return !(state.powers?.powerChoicePersistentGrants?.guesser || []).includes(option.powerId);
+      // Already unlocked for the CURRENT guesser -- offering the same
+      // permanent grant again would just waste a reward slot on a no-op.
+      // Checked by userId, not just powerId, since the grant follows the
+      // player rather than the role: a different player newly holding the
+      // guesser seat hasn't unlocked it and should still be offered it.
+      return !(state.powers?.powerChoicePersistentGrants?.guesser || [])
+        .some(grant => grant.userId === state.guesser && grant.powerId === option.powerId);
     case "letterLockout":
-      return !(state.powers?.powerChoicePersistentGrants?.setter || []).includes(option.powerId);
+      return !(state.powers?.powerChoicePersistentGrants?.setter || [])
+        .some(grant => grant.userId === state.setter && grant.powerId === option.powerId);
     // Immediate-fire, payload-carrying cards -- mirrors each power's own
     // POWER_RULES.js/applyDoubleGuess precondition (minus the redundant
     // turn===guesser check, since a reward choice only ever opens on the
@@ -1711,7 +1731,7 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
       // simply has access to a power that was already fully built and
       // already worked when a human/classic draft granted it the normal
       // way -- there's no second activation step to perform here.
-      grantPersistentPower(state, choice.role, option.powerId);
+      grantPersistentPower(state, choice.role, option.powerId, choice.ownerUserId);
       state.powerUsedThisTurn = true;
       const side =
         choice.role === "setter"

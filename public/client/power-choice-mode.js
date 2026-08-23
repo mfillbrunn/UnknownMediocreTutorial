@@ -151,8 +151,11 @@
   // player to choose here -- just a direct fire-with-confirmation, unlike
   // the arm-then-tap-a-keyboard-letter flow Hide Evidence uses.
   function letterLockoutGranted() {
-    return (window.state?.powers?.powerChoicePersistentGrants?.setter || [])
-      .includes("letterLockout");
+    // activePowers is already filtered server-side to whichever player
+    // currently holds the setter seat (see powerChoiceServer.js's
+    // initializeRound) -- a role swap that hands the seat to someone who
+    // never earned the grant correctly reads as not-granted here.
+    return !!window.state?.activePowers?.includes("letterLockout");
   }
 
   function canArmLetterLockout() {
@@ -266,8 +269,13 @@
   // that dead-end stops being harmless, so they get their own compact
   // readout here instead of relying on that hidden legacy tray.
   function persistentPowerMarkup() {
-    const grants = window.state?.powers?.powerChoicePersistentGrants?.guesser || [];
-    if (!grants.length) return "";
+    // activePowers is already filtered server-side to whichever player
+    // currently holds the guesser seat (see powerChoiceServer.js's
+    // initializeRound) -- a role swap that hands the seat to someone who
+    // never earned the grant correctly drops these lines for them.
+    const grants = window.state?.activePowers || [];
+    const relevant = grants.filter(id => id === "revealLocation" || id === "letterProfile");
+    if (!relevant.length) return "";
     const lines = [];
     if (grants.includes("revealLocation")) {
       const peek = window.state?.powers?.revealLocationPeek;
@@ -304,7 +312,7 @@
     const pending = pc?.pendingChoice?.role === "guesser";
     const next = inspector?.nextQuest;
     const conditions = questConditionLabels(next);
-    const grants = window.state?.powers?.powerChoicePersistentGrants?.guesser || [];
+    const grants = window.state?.activePowers || [];
     const signature = JSON.stringify({
       next: next?.id,
       conditions,
