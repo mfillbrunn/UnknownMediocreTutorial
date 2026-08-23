@@ -657,6 +657,7 @@ for (let i = 0; i < state.history.length; i++) {
 
  const archivedEntry = lastRound?.history?.[i];
   const remaining = archivedEntry?.remainingAfter ?? (isFinal ? 0 : "?");
+  const bestWord = archivedEntry?.bestWord ? String(archivedEntry.bestWord).toUpperCase() : "—";
 
   html += `
     <tr class="${isFinal ? "final-row" : ""}">
@@ -666,6 +667,7 @@ for (let i = 0; i < state.history.length; i++) {
       <td class="feedback-cell">${fbCell}</td>
       <td class="powers-cell">${powersCell}</td>
       <td class="remaining-cell">${remaining}</td>
+      <td class="best-word-cell">${summaryEscapeText(bestWord)}</td>
     </tr>
   `;
 }
@@ -726,7 +728,9 @@ function renderStoredRoundSummary(round, index) {
           <th>Guess</th>
           <th>Feedback</th>
           <th>Powers</th>
-          <th>Secrets</th>
+          <th>Remaining words</th>
+          <th>Best word</th>
+          <!-- COMPETITIVE OVERHAUL V3: SUMMARY COLUMNS -->
         </tr>
         </thead>
         <tbody>
@@ -734,6 +738,7 @@ function renderStoredRoundSummary(round, index) {
 
   round.history.forEach((h, i) => {
     const remaining = computeRemainingFromRound(round, i);
+    const bestWord = h?.bestWord ? String(h.bestWord).toUpperCase() : "—";
 
     const gpIcons = powersUsedByRole(h, "guesser");
     const spIcons = powersUsedByRole(h, "setter");
@@ -761,7 +766,8 @@ function renderStoredRoundSummary(round, index) {
         <td class="guess-cell">${h.guess?.toUpperCase() || ""}</td>
         <td class="feedback-cell">${Array.isArray(h.fb) ? h.fb.join("") : ""}</td>
         <td class="powers-cell">${powersCell}</td>
-        <td>${remaining}</td>
+        <td class="remaining-cell">${remaining}</td>
+        <td class="best-word-cell">${summaryEscapeText(bestWord)}</td>
       </tr>
     `;
   });

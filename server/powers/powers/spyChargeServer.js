@@ -652,3 +652,69 @@ module.exports = {
   attemptReset,
   chooseHintedBestSecret
 };
+
+// COMPETITIVE OVERHAUL V3: STAR FLOOR + ARCHIVE BEST WORD START
+// Keep the simultaneous all-wrong award intact, ensure a legal Keep earns one
+// star in every game mode, add decision-time best-word data, and attach the
+// final award to the just-scored history row.
+if (!module.exports.__competitiveHistoryMetricsV3) {
+  const coverStrengthV3 = require("../../utils/coverStrength");
+  const originalEvaluateSecretChangeV3 = module.exports.evaluateSecretChange;
+  const originalCommitAwardV3 = module.exports.commitAward;
+
+  module.exports.evaluateSecretChange = function evaluateSecretChangeWithHistoryData(
+    state,
+    newSecret,
+    allowedSecrets
+  ) {
+    let award = originalEvaluateSecretChangeV3.call(this, state, newSecret, allowedSecrets);
+    if (!award || typeof award !== "object") return award;
+
+    const analysis = coverStrengthV3.getCoverAnalysis(state, allowedSecrets);
+    const requested = normalizeWord(newSecret);
+    const current = normalizeWord(state?.secret);
+
+    const legalKeep =
+      !state?.simultaneousAllWrong &&
+      requested === current &&
+      state?.powers?.spyCharge?.enabled &&
+      isDecisionEligible(state) &&
+      analysis?.feasibleSet?.has(current);
+
+    if (legalKeep) {
+      const keepBaseStars = Math.max(1, Number(award.baseStars) || 0);
+      award = {
+        ...award,
+        baseStars: keepBaseStars,
+        bonusStars: 0,
+        earnedStars: keepBaseStars,
+        candidateCount: Number(analysis.keepCount) || 0,
+        bestCount: analysis.bestCount ?? analysis.keepCount ?? null
+      };
+    }
+
+    return {
+      ...award,
+      bestWord: analysis?.bestWord || null,
+      bestWords: Array.isArray(analysis?.bestWords) ? analysis.bestWords : []
+    };
+  };
+
+  module.exports.commitAward = function commitAwardWithHistoryMetrics(state, award, room, io) {
+    const result = originalCommitAwardV3.call(this, state, award, room, io);
+    const entry = Array.isArray(state?.history) ? state.history[state.history.length - 1] : null;
+    if (entry && award) {
+      entry.starsEarned = Number(result?.appliedStars ?? award.earnedStars ?? 0) || 0;
+      entry.baseStarsEarned = Number(result?.appliedBaseStars ?? award.baseStars ?? 0) || 0;
+      entry.bonusStarsEarned = Number(result?.appliedBonusStars ?? award.bonusStars ?? 0) || 0;
+      if (Number.isFinite(Number(award.candidateCount))) {
+        entry.remainingAfter = Number(award.candidateCount);
+      }
+      entry.bestWord = award.bestWord || entry.bestWord || null;
+    }
+    return result;
+  };
+
+  module.exports.__competitiveHistoryMetricsV3 = true;
+}
+// COMPETITIVE OVERHAUL V3: STAR FLOOR + ARCHIVE BEST WORD END

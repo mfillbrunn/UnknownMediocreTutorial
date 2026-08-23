@@ -123,7 +123,7 @@ const POWER_COPY = {
   doubleGuess: ["🔫", "Double Tap", "Submit two guesses at once right now and get feedback on both."],
   // PERSISTENT_POWER_IDS -- permanent unlocks, not one-turn effects, so
   // the copy says "from now on" instead of "this turn".
-  revealLocation: ["🕵️", "Informant", "From now on, peek at one still-unknown position in the secret each of your turns."],
+  revealLocation: ["🕵️", "Informant", "Starting now, reveal one still-unknown position on each of your turns for the rest of the round."],
   letterProfile: ["🔤", "Secret Vowel Count", "From now on, see how many vowels are in the secret, each of your turns."],
   letterLockout: ["🚫", "Letter Lockout", "From now on, ban one new letter from the Guesser's next guess on each of your turns."]
 };
@@ -788,7 +788,7 @@ function buildChoice(state, role, threshold, owner) {
       refreshAvailable: !state.powerChoiceRefreshUsedUserIds?.includes(owner),
       rarityProbabilities: rewardRarityProbabilities(rewardNumber),
       title: `Secretkeeper reward · Tier ${rewardNumber}`,
-      subtitle: "Choose one available reward. It activates immediately.",
+      subtitle: "Select one available reward. It activates immediately.",
       options
     };
   }
@@ -808,7 +808,7 @@ function buildChoice(state, role, threshold, owner) {
     refreshAvailable: !state.powerChoiceRefreshUsedUserIds?.includes(owner),
     rarityProbabilities: rewardRarityProbabilities(rewardNumber),
     title: `Guesser reward · Tier ${rewardNumber}`,
-    subtitle: "Choose one available reward. It activates immediately.",
+    subtitle: "Select one available reward. It activates immediately.",
     options
   };
 }
@@ -1669,50 +1669,28 @@ function emitEffect(io, roomId, payload) {
   if (io && roomId) io.to(roomId).emit("powerChoiceResolved", payload);
 }
 
-// Rewards that erase letter knowledge change which secrets are still
-// feasible, which is exactly what the Secretkeeper's bonus-star hint and the
-// best/keep counts behind the star rating are computed from. Those are
-// rolled once at the start of the Secretkeeper's turn (rollHintForTurn, called from
-// normalTransitions.js) and a reward lands mid-turn, so without this the
-// Secretkeeper kept being shown a target letter/position derived from the board as
-// it was BEFORE their own reward wiped part of it -- pointing at a word
-// that was no longer the best switch, and sometimes no longer legal.
-// Every setter fixed-reward card that erases or alters letter knowledge
-// (extraConstraints, history feedback, gray/absent letters) rather than
-// just moving points around or fogging the next-quest preview -- all of
-// these change which secrets are still legal, so all of them need the
-// Secretkeeper's hint/star-rating re-rolled against the post-reward board.
-const KNOWLEDGE_RESET_OPTIONS = new Set([
-  "spy-reset-positive-1",
-  "spy-reset-known-2",
-  "spy-yellow-smudge",
-  "spy-trade-yellow",
-  "spy-trade-green",
-  // Power-kind cards use "power:<id>" as their option id (see
-  // powerOption()) -- vowelRefresh is the only one of the setter's
-  // one-off power picks that erases existing letter knowledge
-  // (eraseLetterKnowledge on the last guess's vowels) rather than just
-  // affecting an upcoming guess's feedback delivery.
-  "power:vowelRefresh"
-]);
+// COMPETITIVE OVERHAUL V3: REWARD HINT RECALC START
+// Any reward may alter legal words directly, mutate feedback constraints,
+// grant a persistent rule, or be expanded later to do so. Refresh after every
+// successful reward instead of maintaining a fragile reward-id allow-list.
+function refreshSpyHintAfterReward(state, context) {
+  const charge = state?.powers?.spyCharge;
+  if (!charge?.enabled) return;
 
-function rerollSpyHintAfterReset(state, option, context) {
-  if (!KNOWLEDGE_RESET_OPTIONS.has(option?.id)) return;
+  // If no Secretkeeper decision is active, invalidate the cached target so
+  // normal turn-start logic computes it from the next post-reward state.
+  charge.hint = null;
   const allowedSecrets = context?.ALLOWED_SECRETS;
-  if (!allowedSecrets) return;
-  // rollHintForTurn clears the hint before deciding whether it can produce
-  // a new one, so calling it outside the Secretkeeper's own decision step would
-  // wipe a perfectly good hint and put nothing back. A reward is always
-  // taken on the owner's turn, so this simply confirms that.
-  if (state.phase !== "normal" || state.turn !== state.setter) return;
-  // Recomputed from the post-reset board, so the readout above the draft
-  // row and the star rating agree with what the Secretkeeper can now actually do.
-  // coverStrength.js keys its own caches on the history feedback plus
-  // extraConstraints, both of which eraseLetterKnowledge just mutated, so
-  // the analysis behind this re-roll is already rebuilt rather than stale.
-  spyChargeServer.rollHintForTurn(state, allowedSecrets);
-}
+  const activeSetterDecision =
+    state.phase === "normal" &&
+    state.turn === state.setter &&
+    /^[A-Z]{5}$/.test(normalizeWord(state.pendingGuess));
 
+  if (activeSetterDecision && allowedSecrets) {
+    spyChargeServer.rollHintForTurn(state, allowedSecrets);
+  }
+}
+// COMPETITIVE OVERHAUL V3: REWARD HINT RECALC END
 // `payload` carries whatever extra input the player typed alongside their
 // card pick -- letters for Recon Sweep, a number for Miss Bet, two words
 // for Double Tap -- straight from the incoming POWER_CHOICE_SELECT
@@ -1843,7 +1821,7 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
     }
   }
 
-  rerollSpyHintAfterReset(state, option, context);
+  refreshSpyHintAfterReward(state, context);
 
   const resolution = {
     ownerUserId: choice.ownerUserId,
@@ -2212,6 +2190,20 @@ if (!spyChargeServer.__powerChoicePatchedV2) {
     const appliedBonusStars = Math.max(0, appliedStars - appliedBaseStars);
     const after = before + appliedStars;
     charge.total = after;
+    // COMPETITIVE OVERHAUL V3: POWER CHOICE HISTORY METRICS START
+    const historyEntryV3 = Array.isArray(state.history)
+      ? state.history[state.history.length - 1]
+      : null;
+    if (historyEntryV3) {
+      historyEntryV3.starsEarned = appliedStars;
+      historyEntryV3.baseStarsEarned = appliedBaseStars;
+      historyEntryV3.bonusStarsEarned = appliedBonusStars;
+      if (Number.isFinite(Number(award?.candidateCount))) {
+        historyEntryV3.remainingAfter = Number(award.candidateCount);
+      }
+      historyEntryV3.bestWord = award?.bestWord || historyEntryV3.bestWord || null;
+    }
+    // COMPETITIVE OVERHAUL V3: POWER CHOICE HISTORY METRICS END
     charge.hint = null;
     queueCrossed(
       before,
@@ -2362,7 +2354,7 @@ function handleAction(room, state, action, roomId, context) {
     }
     const option = pending.options.find(item => item.id === action.optionId);
     if (!option) {
-      sendError(room, state, action.userId, io, "Choose one of the three cards.");
+      sendError(room, state, action.userId, io, "Select one of the three cards.");
       return true;
     }
     if (!optionApplicable(state, option)) {
@@ -2371,7 +2363,7 @@ function handleAction(room, state, action, roomId, context) {
         state,
         action.userId,
         io,
-        "That reward no longer has a valid target. Choose another card."
+        "That reward no longer has a valid target. Select another card."
       );
       return true;
     }
@@ -2403,7 +2395,7 @@ function handleAction(room, state, action, roomId, context) {
       state,
       action.userId,
       io,
-      "Choose a reward card before continuing your turn."
+      "Select a reward card before continuing your turn."
     );
     return true;
   }

@@ -954,11 +954,11 @@
       <div class="pc-reward-toolbar">
         <div class="pc-toolbar-copy">
           <span class="pc-toolbar-kicker">REWARD DECK</span>
-          <span class="pc-toolbar-note">Choose one card to continue</span>
+          <span class="pc-toolbar-note">Select one reward to continue</span>
         </div>
-        <button type="button" class="pc-refresh-choice-btn" title="Deal a new reward hand" aria-label="Deal a new reward hand">
+        <button type="button" class="pc-refresh-choice-btn" title="Refresh reward choices" aria-label="Refresh reward choices">
           <span class="pc-refresh-icon" aria-hidden="true">&#8635;</span>
-          <span class="pc-refresh-label">New hand</span>
+          <span class="pc-refresh-label">Refresh choices</span>
           <span class="pc-refresh-state" aria-live="polite">READY</span>
         </button>
       </div>
@@ -978,7 +978,7 @@
     bar.type = "button";
     bar.id = "pcRewardPeekBar";
     bar.className = "pc-reward-peek-bar";
-    bar.innerHTML = `<span aria-hidden="true">★</span> Reward waiting — tap to choose`;
+    bar.innerHTML = `<span aria-hidden="true">★</span> Reward waiting — tap to select`;
     bar.addEventListener("click", () => {
       const modal = byId("powerChoiceModal");
       if (!modal) return;
@@ -1146,7 +1146,7 @@
       1
     );
     const tier = rawTier === 3 ? 3 : rawTier === 2 ? 2 : 1;
-    if (tier === 3) return { tier, key: "legendary", label: "LEGENDARY", metal: "GOLD" };
+    if (tier === 3) return { tier, key: "legend", label: "LEGEND", metal: "GOLD" };
     if (tier === 2) return { tier, key: "rare", label: "RARE", metal: "SILVER" };
     return { tier, key: "common", label: "COMMON", metal: "BRONZE" };
   }
@@ -1188,7 +1188,6 @@
         <span class="pc-card-body">
           <strong>${esc(option.title)}</strong>
           <span class="pc-card-desc">${esc(description)}</span>
-          <span class="pc-card-pick">CHOOSE</span>
         </span>
       </button>`;
     }).join("");
@@ -1305,9 +1304,9 @@
     modal.dataset.choiceId = pending.id;
     modal.dataset.choiceRevision = String(pending.revision || 0);
     modal.dataset.rewardRole = pending.role || "";
-    modal.querySelector("h2").textContent = pending.title || "Choose a reward";
+    modal.querySelector("h2").textContent = pending.title || "Select a reward";
     modal.querySelector(".pc-modal-sub").textContent =
-      pending.subtitle || "Choose one card. It activates immediately.";
+      pending.subtitle || "Select one reward. It activates immediately.";
 
     const refreshBtn = modal.querySelector(".pc-refresh-choice-btn");
     const refreshAvailable = pending.refreshAvailable !== false;
@@ -1318,12 +1317,12 @@
       refreshBtn.setAttribute("aria-busy", "false");
       const refreshLabel = refreshBtn.querySelector(".pc-refresh-label");
       const refreshState = refreshBtn.querySelector(".pc-refresh-state");
-      if (refreshLabel) refreshLabel.textContent = refreshAvailable ? "New hand" : "Reroll spent";
+      if (refreshLabel) refreshLabel.textContent = refreshAvailable ? "Refresh choices" : "Refresh used";
       if (refreshState) refreshState.textContent = refreshAvailable ? "READY" : "USED";
-      refreshBtn.title = refreshAvailable ? "Deal a new reward hand" : "Reroll already used";
+      refreshBtn.title = refreshAvailable ? "Refresh reward choices" : "Refresh already used";
       refreshBtn.setAttribute(
         "aria-label",
-        refreshAvailable ? "Deal a new reward hand" : "Reroll already used"
+        refreshAvailable ? "Refresh reward choices" : "Refresh already used"
       );
       if (!refreshBtn.dataset.wired) {
         refreshBtn.dataset.wired = "1";

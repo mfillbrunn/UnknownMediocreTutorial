@@ -118,7 +118,7 @@ function runMainMenuTutorial() {
 
   if (step === 7) {
     menuTutorialShow(
-      "Tutorials is this whole hub: Rules, the Powers library, and every tutorial -- including this one.",
+      "Tutorials is this whole hub: updated Rules plus hands-on lessons for the main menu, Quests, Stars, and advanced play.",
       { title: "Tutorials", current: 8, total }
     );
     api.highlight(byId("howToPlayBtn"));

@@ -261,8 +261,8 @@ window.POWER_METADATA = {
 
   revealLocation: {
     label: "Informant",
-    desc: "A secret informant watches one unknown spot in the secret and tells the Guesser its letter right away. It keeps watching that spot until the Guesser guesses it correctly, then moves on to a new one!",
-    short: "A hidden informant reveals the letter at one unknown position, until you guess it.",
+    desc: "Starting now, reveal one still-unknown position on each of your turns for the rest of the round.",
+    short: "Reveal an unknown position on each turn for the rest of the round.",
     icon: "flashlight",
     emoji: "🔦",
     color: "#34D399"
