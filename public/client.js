@@ -611,12 +611,15 @@ onStateUpdate(newState => {
     if (state.phase === "normal" && myUserId() === state.guesser) {
       requestAnimationFrame(() => {
         window.showBigAnnounce?.({
-          icon: "🔁",
-          title: "You guess again",
-          sub: "The opening guess and secret landed at the same time, so it's straight back to you.",
-          roleClass: "role-guesser",
-          compact: true,
-          duration: 2600
+          icon: "\u21bb",
+          title: "Guess again",
+          sub: [
+            "Opening moves crossed at the same time.",
+            "You keep control. Build your next five-letter play."
+          ],
+          roleClass: "role-guesser guess-again-announce",
+          compact: false,
+          duration: 3200
         });
       });
     }

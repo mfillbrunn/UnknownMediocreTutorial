@@ -254,16 +254,7 @@ function renderMatchSummary(container) {
   if (totalTimeSpent) {
     const myMs = Number(totalTimeSpent[myUserId()]) || 0;
     const opponentMs = Number(totalTimeSpent[opponentId]) || 0;
-    if (myMs || opponentMs) {
-      totalTimeHtml = `
-        <p class="match-total-time">
-          ⏱ Total time:
-          ${myName} <span class="time-value">${formatSpentMs(myMs)}</span>
-          &nbsp;|&nbsp;
-          ${opponentName} <span class="time-value">${formatSpentMs(opponentMs)}</span>
-        </p>
-      `;
-    }
+    totalTimeHtml = renderMatchClockPanel(myName, myMs, opponentName, opponentMs);
   }
 
   // Ranked matches get an Elo delta computed async (after the match's
@@ -444,8 +435,6 @@ if (guesserEntries.length) {
 
 // Total time each player spent on their own turns this match, banked
 // server-side in state.timeSpentMs (see bankTurnTime in core/rooms.js).
-// Total time each player spent on their own turns this match, banked
-// server-side in state.timeSpentMs (see bankTurnTime in core/rooms.js).
 // Deliberately NOT named formatDuration: this file already declares one
 // of those further down (taking SECONDS, for the time-control readouts).
 // Two hoisted declarations of the same name in one script scope means the
@@ -460,6 +449,80 @@ function formatSpentMs(ms) {
     ? `${minutes}m ${String(seconds).padStart(2, "0")}s`
     : `${seconds}s`;
 }
+
+// COMPETITIVE UI POLISH V2: structured clock cards shared by round and match summaries.
+function summaryEscapeText(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+function summaryRoundSeconds(round, userId) {
+  const value = Number(round?.time?.[userId]);
+  return Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
+function renderRoundClockPanel(round, label = "ROUND CLOCK") {
+  if (!round || !round.time || typeof round.time !== "object") return "";
+  const setterId = round.setter;
+  const guesserId = round.guesser;
+  const setterName = summaryEscapeText(getPlayerName(setterId));
+  const guesserName = summaryEscapeText(getPlayerName(guesserId));
+  const setterSeconds = summaryRoundSeconds(round, setterId);
+  const guesserSeconds = summaryRoundSeconds(round, guesserId);
+  const safeLabel = summaryEscapeText(label);
+
+  return `
+    <section class="summary-clock-panel summary-clock-panel--round" aria-label="${safeLabel}">
+      <div class="summary-clock-kicker">
+        <span class="summary-clock-symbol" aria-hidden="true">&#9201;</span>
+        <span>${safeLabel}</span>
+      </div>
+      <div class="summary-clock-grid">
+        <div class="summary-clock-player is-setter">
+          <span class="summary-clock-name">${setterName}</span>
+          <span class="summary-clock-role">Secretkeeper</span>
+          <strong class="summary-clock-value">${formatDuration(setterSeconds)}</strong>
+        </div>
+        <span class="summary-clock-vs" aria-hidden="true">VS</span>
+        <div class="summary-clock-player is-guesser">
+          <span class="summary-clock-name">${guesserName}</span>
+          <span class="summary-clock-role">Guesser</span>
+          <strong class="summary-clock-value">${formatDuration(guesserSeconds)}</strong>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderMatchClockPanel(myName, myMs, opponentName, opponentMs) {
+  return `
+    <section class="match-total-time summary-clock-panel summary-clock-panel--match" aria-label="Total match time">
+      <div class="summary-clock-kicker">
+        <span class="summary-clock-symbol" aria-hidden="true">&#9201;</span>
+        <span>MATCH CLOCK</span>
+      </div>
+      <div class="summary-clock-grid">
+        <div class="summary-clock-player is-self">
+          <span class="summary-clock-name">${summaryEscapeText(myName)}</span>
+          <span class="summary-clock-role">You</span>
+          <strong class="summary-clock-value">${formatSpentMs(myMs)}</strong>
+        </div>
+        <span class="summary-clock-vs" aria-hidden="true">VS</span>
+        <div class="summary-clock-player is-opponent">
+          <span class="summary-clock-name">${summaryEscapeText(opponentName)}</span>
+          <span class="summary-clock-role">Opponent</span>
+          <strong class="summary-clock-value">${formatSpentMs(opponentMs)}</strong>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 
 // Mirrors round-time-summary's own markup (icon, role-colored names, a
 // dedicated value span) instead of a plain "<b>Time taken:</b> A x · B y"
@@ -522,33 +585,10 @@ if (state.timeoutLoser)  {
       <b>${guesserName}</b> (Guesser)
     </p>
   `;
-// ---- Round time used ----
-const lastRound =
-  state.matchRounds[state.matchRounds.length - 1];
-
-const roundTimeA = lastRound?.time?.[state.setter] ?? 0;
-const roundTimeB = lastRound?.time?.[state.guesser] ?? 0;
-
-if (state.timeControl?.enabled) {
-html += `
-  <p class="round-time-summary">
-  ⏱
-  <span style="color: var(--setter-color); font-weight: 600;">
-    ${setterName}
-  </span>
-  : <span class="time-value">
-    ${formatDuration(roundTimeA)}
-  </span>
-  &nbsp;|&nbsp;
-  <span style="color: var(--guesser-color); font-weight: 600;">
-    ${guesserName}
-  </span>
-  : <span class="time-value">
-    ${formatDuration(roundTimeB)}
-  </span>
-</p>
-`;
-}
+// Use the archived round snapshot, keyed by stable player id. This avoids
+  // mixing milliseconds from the match accumulator with per-round seconds.
+  const lastRound = state.matchRounds[state.matchRounds.length - 1];
+  html += renderRoundClockPanel(lastRound, "ROUND CLOCK");
   const lastEntry = state.history[state.history.length - 1];
   if (state.powers.assassinWordassassinated) {
     html += `
@@ -562,7 +602,7 @@ html += `
 
   html += `<p class="summary-guess-count"><b>Total guesses:</b> ${state.guessCount}</p>`;
 
-  html += formatTimeSpent(state, setterName, guesserName);
+  // Per-player timing is rendered once from lastRound.time above.
 
   html += `
   <div class="summary-table-wrap">
@@ -663,23 +703,20 @@ html += `
 ///////////STORED ROUND DETAILS
 /////////////////
 function renderStoredRoundSummary(round, index) {
-  // Combined (both players') time for that one round -- round.time is
-  // archived once per round (gameOver.js snapshots state.timeUsed, which
-  // resetRoundState.js zeroes out for the next one), the same source
-  // round-time-summary already shows a per-player breakdown of right when
-  // the round itself just ended. A single total reads better squeezed into
-  // a header than a second "Setter Xs | Guesser Ys" line duplicating that.
-  const roundSeconds =
-    (Number(round.time?.[round.setter]) || 0) +
-    (Number(round.time?.[round.guesser]) || 0);
-  const roundTimeHtml = roundSeconds
-    ? ` <span class="stored-round-time">· ⏱ ${formatDuration(roundSeconds)}</span>`
-    : "";
-
+  const setterName = summaryEscapeText(getPlayerName(round.setter));
+  const guesserName = summaryEscapeText(getPlayerName(round.guesser));
+  const roundClockHtml = renderRoundClockPanel(round, `ROUND ${index + 1} CLOCK`);
   let html = `
     <div class="stored-round" data-round-index="${index}">
-      <h4>Round ${index + 1} – ${getPlayerName(round.setter)} was Secretkeeper${roundTimeHtml}</h4>
-
+      <div class="stored-round-header">
+        <div class="stored-round-title-block">
+          <span class="stored-round-kicker">ROUND ${index + 1}</span>
+          <h4>${setterName} set the secret</h4>
+          <p>${guesserName} guessed this round</p>
+        </div>
+        ${roundClockHtml}
+      </div>
+      ${formatRevealPenaltySummary(round.powers, "round-note round-note--setter")}
       <div class="summary-table-wrap">
       <table class="summary-table">
         <thead>
@@ -694,7 +731,6 @@ function renderStoredRoundSummary(round, index) {
         </thead>
         <tbody>
   `;
-  html += formatRevealPenaltySummary(round.powers, "round-note round-note--setter");
 
   round.history.forEach((h, i) => {
     const remaining = computeRemainingFromRound(round, i);

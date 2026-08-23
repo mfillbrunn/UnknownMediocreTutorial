@@ -38,6 +38,8 @@
   <link rel="stylesheet" href="css/features.css?v=tutorial-motion-sim-2">
   <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2">
 
+<!-- Competitive reward, popup, waiting, and summary polish -->
+<link rel="stylesheet" href="css/competitive-polish-v2.css?v=2">
 </head>
 <body>
   <script>
@@ -711,8 +713,9 @@
   
     <!-- Waiting indicator -->
 <div class="lobby-status-slot">
-  <div id="waitingForPlayer" class="waiting-indicator hidden">
-    <div class="dots">
+  <div id="waitingForPlayer" class="waiting-indicator hidden" role="status" aria-live="polite">
+    <div class="dots waiting-wave" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
       <span></span><span></span><span></span>
     </div>
     <span class="waiting-text">Waiting for player</span>
