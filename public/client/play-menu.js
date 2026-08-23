@@ -108,7 +108,16 @@ $("quickPlayAiBtn")?.addEventListener("click", () => {
 });
 
 $("playFriendMainBtn")?.addEventListener("click", () => {
+  if (!requireAuth("play a friend")) return;
+  showScreen("playFriendScreen");
+});
+
+$("playFriendInviteBtn")?.addEventListener("click", () => {
   window.startAsyncInvite?.();
+});
+
+$("playFriendFriendsBtn")?.addEventListener("click", () => {
+  window.showFriendsScreen?.();
 });
 
 $("rankedMenuBtn")?.addEventListener("click", () => {

@@ -107,10 +107,17 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 }
 
 #startupScreen .menu-account-status {
+  position: absolute !important;
+  top: max(16px, env(safe-area-inset-top)) !important;
+  right: max(16px, env(safe-area-inset-right)) !important;
+  left: auto !important;
+  z-index: 2;
   min-height: 0;
-  margin: 0 0 3px !important;
+  margin: 0 !important;
+  max-width: min(58vw, 250px);
   color: rgba(247, 241, 244, 0.82) !important;
   font-size: 12px !important;
+  text-align: right !important;
   text-shadow: 0 1px 8px rgba(3, 12, 23, 0.75);
 }
 
@@ -120,6 +127,15 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 
 #startupScreen .menu-account-status .link-btn {
   color: #f0a4bd !important;
+}
+
+#startupScreen .menu-account-status .account-logged-in strong {
+  display: block;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em;
+  color: var(--v4-text) !important;
+  text-shadow: 0 1px 8px rgba(3, 12, 23, 0.85);
 }
 
 #startupScreen .menu-buttons {
@@ -133,7 +149,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   padding: 0 15px !important;
   border: 1px solid rgba(188, 207, 225, 0.24) !important;
   border-radius: 10px !important;
-  background: rgba(23, 51, 79, 0.8) !important;
+  background: rgba(23, 51, 79, 0.7) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
   color: var(--v4-text) !important;
@@ -147,7 +163,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 
 #startupScreen .menu-btn:hover:not(:disabled) {
   border-color: rgba(224, 235, 246, 0.42) !important;
-  background: rgba(33, 65, 95, 0.85) !important;
+  background: rgba(33, 65, 95, 0.75) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -158,13 +174,13 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 #startupScreen .menu-btn.primary,
 #startupScreen .menu-split-btn .menu-btn.primary {
   border-color: rgba(246, 178, 202, 0.45) !important;
-  background: rgba(169, 83, 114, 0.8) !important;
+  background: rgba(169, 83, 114, 0.7) !important;
   color: #fff !important;
 }
 
 #startupScreen .menu-btn.primary:hover:not(:disabled),
 #startupScreen .menu-split-btn .menu-btn.primary:hover:not(:disabled) {
-  background: rgba(179, 90, 121, 0.85) !important;
+  background: rgba(179, 90, 121, 0.75) !important;
 }
 
 #startupScreen .menu-split-btn {
@@ -194,12 +210,12 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   min-width: 46px !important;
   padding: 0 !important;
   border-left: 1px solid rgba(255, 255, 255, 0.26) !important;
-  background: rgba(148, 75, 103, 0.8) !important;
+  background: rgba(148, 75, 103, 0.7) !important;
   color: #fff !important;
 }
 
 #startupScreen #playQuickBtn:hover:not(:disabled) {
-  background: rgba(169, 89, 118, 0.85) !important;
+  background: rgba(169, 89, 118, 0.75) !important;
 }
 
 /* Thin-stroke bolt matching the app's other inline-SVG icon language
@@ -254,7 +270,35 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   }
 }
 
-/* ========================================================================== 
+/* ==========================================================================
+   Ranked sub-tab — player's current ratings (moved off the main menu)
+   ========================================================================== */
+
+#rankedEloDisplay {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 2px 0 4px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: var(--panel-bg, #30353c);
+  color: var(--text, #e5e5e5);
+  font-size: 13px;
+  text-align: center;
+}
+
+#rankedEloDisplay:empty {
+  display: none;
+}
+
+#rankedEloDisplay .ranked-elo-row {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
    AI difficulty — muted traffic-light solids from the moonlit palette
    ========================================================================== */
 
