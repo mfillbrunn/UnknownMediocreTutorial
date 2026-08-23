@@ -74,6 +74,23 @@ function clearRoundPowerActivity(state) {
   powers.revealLocationPeekIndex = null;
   powers.revealLocationPeek = null;
 
+  // Informant (revealLocation) is round-scoped, not game-scoped: the
+  // permanent unlock itself -- not just this round's cached peek above --
+  // must not survive past the round that earned it. This runs from
+  // endGame() (gameOver.js), which every round-ending path already calls
+  // (secret guessed, guess limit, forfeit/disconnect, AI resolution,
+  // timeout), so this is the single place Informant actually deactivates
+  // rather than duplicating the same cleanup in each of those call sites.
+  if (powers.powerChoicePersistentGrants?.guesser?.length) {
+    powers.powerChoicePersistentGrants.guesser =
+      powers.powerChoicePersistentGrants.guesser.filter(
+        grant => grant.powerId !== "revealLocation"
+      );
+  }
+  if (Array.isArray(state.activePowers) && state.activePowers.includes("revealLocation")) {
+    state.activePowers = state.activePowers.filter(id => id !== "revealLocation");
+  }
+
   powers.doubleGuessPending = false;
   powers.doubleGuessHidden = null;
   powers.doubleGuessShownFirst = null;

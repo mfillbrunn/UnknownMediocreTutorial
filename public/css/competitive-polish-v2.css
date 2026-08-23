@@ -1840,22 +1840,16 @@
 }
 
 .summary-table {
-  min-width: 790px;
+  min-width: 480px;
 }
 
 .summary-table th {
   white-space: nowrap;
 }
 
-.summary-table .remaining-cell,
-.summary-table .best-word-cell {
+.summary-table .remaining-cell {
   font-variant-numeric: tabular-nums;
   font-weight: 820;
-}
-
-.summary-table .best-word-cell {
-  color: color-mix(in srgb, var(--co-setter) 66%, white);
-  letter-spacing: .06em;
 }
 
 /* ---------- Secret locked setter popup ---------- */
@@ -1922,4 +1916,247 @@
   .game-menu [role="tab"] {
     transition: none !important;
   }
+}
+
+/* ============================================================
+   REFINEMENT V3: quest reward chooser hierarchy + 25/75 cards
+   ============================================================
+   Exact hierarchy: heading / "Select one" / cards / one Refresh choices
+   action below the cards. No toolbar, no visible rarity words, no
+   duplicate reroll. Left 25% of each card = reward category color,
+   right 75% = rarity metal color. See REFINEMENT_SPEC section 4. */
+
+.pc-modal-card {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.pc-modal h2 {
+  margin-bottom: 2px !important;
+}
+
+.pc-modal-sub {
+  margin-bottom: 14px !important;
+  font-weight: 780;
+}
+
+/* Cards always stack one per row -- guards against any earlier layer's
+   multi-column .pc-card-grid rule (see gameplay-ui.css history). */
+.pc-card-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  grid-template-columns: none !important;
+}
+
+/* The refresh action is now a single control below the cards, not a
+   toolbar above them. */
+.pc-refresh-choice-btn {
+  align-self: center !important;
+  margin: 16px auto 0 !important;
+}
+
+.pc-choice-card[data-rarity] {
+  grid-template-columns: 25% 75% !important;
+}
+
+/* The old icon rail relied on ::before/::after decorative layers sized
+   to fixed pixel widths -- replaced by the icon cell's own solid
+   category-color fill so the 25% column boundary and the color band
+   always line up exactly, at any card width. */
+.pc-choice-card[data-rarity]::before,
+.pc-choice-card[data-rarity]::after {
+  display: none !important;
+}
+
+.pc-choice-card[data-rarity] .pc-card-icon {
+  z-index: 1 !important;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--pc-power-accent) 88%, white 6%), color-mix(in srgb, var(--pc-power-accent) 62%, #05070a)) !important;
+  border-right: 1px solid color-mix(in srgb, var(--pc-power-accent) 40%, transparent);
+}
+
+.pc-choice-card[data-rarity] .pc-card-icon::before {
+  background: rgba(0, 0, 0, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.pc-choice-card[data-rarity] .pc-card-icon .pc-card-svg,
+.pc-choice-card[data-rarity] .pc-card-icon .pc-fixed-reward-svg {
+  color: #0b0d10 !important;
+}
+
+/* Larger useful text, less empty padding around it. */
+.pc-choice-card[data-rarity] .pc-card-body,
+.pc-choice-card[data-rarity] .pc-card-body-armed {
+  padding: 16px 16px 14px 14px !important;
+}
+
+.pc-choice-card[data-rarity] strong {
+  font-size: 17px !important;
+}
+
+.pc-choice-card[data-rarity] .pc-card-desc {
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+}
+
+/* Rarity is now color-only -- no visible badge is rendered in markup at
+   all (see power-choice-mode.js), so the aria-label on the card itself
+   is the only place COMMON/RARE/LEGEND text still exists, for
+   screen-reader users. Gold/legendary gets a restrained, non-flashing
+   single sheen sweep instead of a badge. */
+.pc-choice-card[data-rarity="legend"] {
+  position: relative;
+  overflow: hidden;
+}
+
+.pc-choice-card[data-rarity="legend"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  display: block !important;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 232, 160, 0.22) 46%,
+    rgba(255, 232, 160, 0.32) 50%,
+    rgba(255, 232, 160, 0.22) 54%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+  background-position: 120% 0;
+  pointer-events: none;
+  animation: pcLegendSheen 3.2s ease-in-out 1;
+  animation-delay: 0.3s;
+}
+
+@keyframes pcLegendSheen {
+  0% { background-position: 130% 0; }
+  100% { background-position: -30% 0; }
+}
+
+@media (max-width: 560px) {
+  .pc-choice-card[data-rarity] {
+    grid-template-columns: 28% 72% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-choice-card[data-rarity="legend"]::after {
+    animation: none !important;
+    background-position: 0 0;
+    opacity: 0.5;
+  }
+}
+
+/* ============================================================
+   REFINEMENT V3: main menu fits every supported viewport
+   ============================================================
+   Content -- not a forced min-height floor -- was what pushed the menu
+   past short viewports (a min-height only ever ADDS height, it can't
+   shrink anything), so this compacts title/panel/gap/control sizing with
+   clamp() instead, plus a max-height:720px query for the shortest
+   viewports. The page can still scroll as a last-resort fallback
+   (nothing here sets overflow:hidden on the menu screens) -- this just
+   keeps that fallback from being needed at the required sizes. */
+.game-menu .menu-center {
+  padding: clamp(16px, 3vh, 32px) clamp(16px, 4vw, 28px);
+}
+
+.game-menu .menu-title {
+  margin-bottom: clamp(2px, 1vh, 8px);
+  font-size: clamp(20px, 4vh, 26px);
+}
+
+.game-menu .menu-buttons {
+  gap: clamp(6px, 1.4vh, 12px);
+}
+
+.game-menu .menu-btn {
+  height: clamp(38px, 6.5vh, 44px);
+}
+
+@media (max-height: 720px) {
+  .game-menu .menu-center {
+    padding: 14px clamp(14px, 4vw, 24px);
+  }
+
+  .game-menu .menu-title {
+    margin-bottom: 2px;
+    font-size: 19px;
+    letter-spacing: 1.6px;
+  }
+
+  .game-menu .menu-account-status {
+    margin-bottom: 2px;
+  }
+
+  .game-menu .menu-buttons {
+    gap: 6px;
+  }
+
+  .game-menu .menu-btn {
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .dev-tools-icon-btn {
+    top: 6px;
+    right: 6px;
+  }
+}
+
+/* ============================================================
+   REFINEMENT V3: traffic-light AI difficulty + focus-visible
+   ============================================================
+   Easy/Medium/Hard already used solid green/amber/red fills (see
+   features.css's .difficulty-easy/-medium/-hard) -- this adds the
+   missing accessible focus ring (none of .menu-btn had one at all) and
+   a readable disabled state, without adding gradients/glow/rainbow. */
+.menu-btn:focus-visible,
+.ai-option:focus-visible,
+[data-difficulty]:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.difficulty-easy:disabled,
+.difficulty-medium:disabled,
+.difficulty-hard:disabled,
+[data-difficulty]:disabled {
+  opacity: 0.55;
+  filter: grayscale(0.3);
+  cursor: not-allowed;
+}
+
+.difficulty-easy:disabled:hover,
+.difficulty-medium:disabled:hover,
+.difficulty-hard:disabled:hover {
+  background: inherit;
+}
+
+/* Daily Challenge: difficulty is server-locked, shown as a plain readout
+   instead of three pickable buttons (see daily-challenge.js). */
+.daily-difficulty-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.daily-difficulty-locked.difficulty-easy {
+  background: var(--tile-green);
+  color: var(--tile-green-text);
+}
+
+.daily-difficulty-locked.difficulty-medium {
+  background: var(--tile-yellow);
+  color: var(--tile-yellow-text);
+}
+
+.daily-difficulty-locked.difficulty-hard {
+  background: var(--setter-color);
+  color: #fff;
 }

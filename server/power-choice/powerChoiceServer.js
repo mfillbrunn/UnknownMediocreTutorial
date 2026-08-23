@@ -15,6 +15,7 @@ const {
   getCandidateRemainingCount
 } = require("../utils/coverStrength");
 const { tierFor } = require("./powerTiers");
+const { categoryForRewardId } = require("./rewardCategories");
 
 const MODE = "powerChoice";
 const SPY_THRESHOLDS = [5, 9, 15];
@@ -607,7 +608,8 @@ function powerOption(powerId) {
     icon,
     title,
     description,
-    tier: tierFor(powerId)
+    tier: tierFor(powerId),
+    category: categoryForRewardId(powerId)
   };
 }
 
@@ -618,8 +620,15 @@ function powerOption(powerId) {
 // "fixed" effect cards and one "power" card) rather than per-threshold,
 // since there's no longer a threshold-dependent branch to take -- see
 // buildChoice, which now calls this directly for every Secretkeeper threshold.
+function withCategory(options) {
+  return options.map(option => ({
+    ...option,
+    category: option.category || categoryForRewardId(option.id)
+  }));
+}
+
 function setterRewardPool() {
-  return [
+  return withCategory([
     {
       id: "spy-reset-positive-1",
       kind: "fixed",
@@ -686,12 +695,12 @@ function setterRewardPool() {
     powerOption("forceTimer"),
     powerOption("delayedIntel"),
     powerOption("vowelRefresh")
-  ];
+  ]);
 }
 
 function fixedOptions(role, threshold) {
   if (role === "guesser" && threshold === 2) {
-    return [
+    return withCategory([
       {
         id: "inspector-yellow-1",
         kind: "fixed",
@@ -719,7 +728,7 @@ function fixedOptions(role, threshold) {
         description: "Subtract 1 point from your final guess total.",
         explanation: "This improves the Guesser's score without revealing any letter information."
       }
-    ];
+    ]);
   }
 
   return [];
