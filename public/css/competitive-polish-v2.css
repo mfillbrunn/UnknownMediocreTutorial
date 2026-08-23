@@ -191,7 +191,12 @@
   grid-template-columns: 66px minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
-  min-height: 174px;
+  /* gameplay-ui.css's older .pc-choice-card:not(.pc-choice-card-armed)
+     rule sets min-height: 0 !important for its own horizontal-row layout,
+     which beats a plain min-height here regardless of specificity -- so
+     height is intentionally left content-driven (icon rail + card-body
+     padding below) rather than declaring a min-height that would never
+     actually apply. */
   padding: 0 !important;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--pc-rarity-color) 66%, rgba(255, 255, 255, 0.14));
@@ -313,8 +318,8 @@
   content: "";
   position: absolute;
   z-index: -1;
-  width: 46px;
-  height: 46px;
+  width: 52px;
+  height: 52px;
   border: 1px solid color-mix(in srgb, var(--pc-power-accent) 67%, white 8%);
   border-radius: 15px;
   background:
@@ -326,15 +331,15 @@
 
 .pc-choice-card[data-rarity] .pc-card-icon .pc-card-svg {
   position: relative;
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   color: color-mix(in srgb, var(--pc-power-accent) 84%, white);
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.32));
 }
 
 .pc-choice-card[data-rarity] .pc-card-icon .pc-fixed-reward-svg {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
 }
 
 .pc-choice-card[data-rarity] .pc-card-body {
@@ -348,13 +353,13 @@
   align-items: flex-start;
   min-width: 0;
   gap: 5px;
-  padding: 44px 14px 13px 17px;
+  padding: 38px 14px 11px 17px;
   text-align: left;
 }
 
 .pc-choice-card[data-rarity] .pc-card-body-armed {
   justify-content: flex-start;
-  padding-top: 43px;
+  padding-top: 37px;
 }
 
 .pc-choice-card[data-rarity] strong {
@@ -1195,7 +1200,6 @@
 
   .pc-choice-card[data-rarity] {
     grid-template-columns: 56px minmax(0, 1fr);
-    min-height: 142px;
     border-radius: 14px;
   }
 
@@ -1209,23 +1213,23 @@
   }
 
   .pc-choice-card[data-rarity] .pc-card-icon::before {
-    width: 39px;
-    height: 39px;
+    width: 44px;
+    height: 44px;
     border-radius: 12px;
   }
 
   .pc-choice-card[data-rarity] .pc-card-icon .pc-card-svg {
-    width: 29px;
-    height: 29px;
+    width: 34px;
+    height: 34px;
   }
 
   .pc-choice-card[data-rarity] .pc-card-icon .pc-fixed-reward-svg {
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
   }
 
   .pc-choice-card[data-rarity] .pc-card-body {
-    padding: 40px 10px 10px 13px;
+    padding: 34px 10px 8px 13px;
   }
 
   .pc-choice-card[data-rarity] strong {
