@@ -41,6 +41,22 @@ const POWER_MAX_USES = {
 // tray (e.g. Power Choice's reward cards) can render the same icon rather
 // than falling back to an emoji stand-in.
 window.POWER_ICON_IDS = POWER_ICON_IDS;
+// COMPETITIVE OVERHAUL V3: COMPLETE POWER ICON MAP START
+Object.assign(POWER_ICON_IDS, {
+  betMiss: "icon-miss-bet",
+  spyChargeReset: "icon-cover-reset",
+  fieldReport: "icon-field-report",
+  forceGuess: "icon-force-move",
+  magicMode: "icon-color-upgrade",
+  revealLetter: "icon-letter-challenge",
+  revealPenalty: "icon-letter-bluff",
+  assassinWord: "icon-trap-word",
+  wiretap: "icon-listen-in",
+  doubleGuess: "icon-double-guess",
+  letterLockout: "icon-letter-lockout"
+});
+window.POWER_ICON_IDS = POWER_ICON_IDS;
+// COMPETITIVE OVERHAUL V3: COMPLETE POWER ICON MAP END
 function applyPowerPalette(
   element,
   powerId

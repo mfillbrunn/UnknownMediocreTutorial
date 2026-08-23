@@ -62,6 +62,11 @@ function advanceToNextRound(room, state, roomId, context) {
   // in this round's activePowers) this one is unconditional -- resetting
   // it to empty here would silently take the reward away the moment the
   // next round started.
+  //
+  // Informant (revealLocation) is the one exception: product decision is
+  // that it lasts only until roles change, not for the rest of the game
+  // like Letter Profile/Letter Lockout -- see the guesserChanged filter
+  // below, applied after computing that flag.
   const savedPowerChoicePersistentGrants = state.powers.powerChoicePersistentGrants;
 
   // Quest type used to just carry straight over like revealLetter.mode
@@ -89,7 +94,19 @@ function advanceToNextRound(room, state, roomId, context) {
   }
 
   if (savedPowerChoicePersistentGrants) {
-    state.powers.powerChoicePersistentGrants = savedPowerChoicePersistentGrants;
+    // Informant expires the moment roles actually change -- a round that
+    // keeps the same guesser (tutorial/no-swap) leaves it untouched, but a
+    // real role swap drops it even for the player who earned it, matching
+    // the "for the rest of the round" card copy instead of the game-long
+    // grant Letter Profile/Letter Lockout still get.
+    state.powers.powerChoicePersistentGrants = guesserChanged
+      ? {
+          ...savedPowerChoicePersistentGrants,
+          guesser: (savedPowerChoicePersistentGrants.guesser || []).filter(
+            grant => grant.powerId !== "revealLocation"
+          )
+        }
+      : savedPowerChoicePersistentGrants;
   }
 
   // Tutorial rounds are scripted (e.g. the Quest tutorial hard-codes RARE

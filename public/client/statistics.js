@@ -354,6 +354,8 @@ function computeMyGameStats(matches, myId) {
   let guesserRoundGuessSum = 0, guesserRoundCount = 0;
   let winRoundGuessSum = 0, winRoundCount = 0;
   let setterRoundCount = 0, secretChangeSum = 0;
+  let starSum = 0, questSum = 0;
+  // COMPETITIVE OVERHAUL V3: BONUS STATISTICS
 
   matches.forEach(m => {
     const won = m.winner === myId;
@@ -367,9 +369,15 @@ function computeMyGameStats(matches, myId) {
         }
         setterRoundCount++;
         secretChangeSum += r.secretChanges || 0;
+        const hasArchivedStars = r.starsEarned != null && Number.isFinite(Number(r.starsEarned));
+        const historyStars = Array.isArray(r.history)
+          ? r.history.reduce((sum, entry) => sum + (Number(entry?.starsEarned) || 0), 0)
+          : 0;
+        starSum += hasArchivedStars ? Number(r.starsEarned) : historyStars;
       }
 
       if (r.guesser === myId) {
+        questSum += Math.max(0, Number(r.questsFulfilled) || 0);
         const opening = r.history?.[0]?.guess?.toUpperCase();
         if (opening) {
           guessUsage.set(opening, (guessUsage.get(opening) || 0) + 1);
@@ -403,7 +411,9 @@ function computeMyGameStats(matches, myId) {
     mostWinningOpeningGuess: topByCount(guessWins),
     avgGuessesToFindSecret: guesserRoundCount ? guesserRoundGuessSum / guesserRoundCount : null,
     avgGuessesWhenYouWin: winRoundCount ? winRoundGuessSum / winRoundCount : null,
-    avgSecretChanges: setterRoundCount ? secretChangeSum / setterRoundCount : null
+    avgSecretChanges: setterRoundCount ? secretChangeSum / setterRoundCount : null,
+    avgStarsPerGame: matches.length ? starSum / matches.length : null,
+    avgQuestsPerGame: matches.length ? questSum / matches.length : null
   };
 }
 
@@ -443,6 +453,8 @@ function renderStats(matches, container) {
       ${numCard("Avg Guesses to Find Secret", fmtNum(stats.avgGuessesToFindSecret), "as Guesser, per round")}
       ${numCard("Avg Guesses When You Win", fmtNum(stats.avgGuessesWhenYouWin), "as Guesser, in won matches")}
       ${numCard("Avg Secret Changes", fmtNum(stats.avgSecretChanges), "per round as Secretkeeper")}
+      ${numCard("Avg Stars / Game", fmtNum(stats.avgStarsPerGame), "earned while Secretkeeper")}
+      ${numCard("Avg Quests / Game", fmtNum(stats.avgQuestsPerGame), "completed while Guesser")}
     </div>
     <div class="stats-footnote">Based on your last ${stats.gamesPlayed} game${stats.gamesPlayed === 1 ? "" : "s"}.</div>
   `;

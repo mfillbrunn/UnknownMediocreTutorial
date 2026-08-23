@@ -85,6 +85,23 @@ state.matchRounds.push({
   // for rounds that somehow never captured it (e.g. old archived data).
   startingSecret: state.initialSecretThisRound || state.secret || null,
   secretChanges: state.secretChangeCount || 0,
+  // COMPETITIVE OVERHAUL V3: ROUND BONUS METRICS START
+  starsEarned: archivedHistory.reduce(
+    (sum, entry) => sum + Math.max(0, Number(entry?.starsEarned) || 0),
+    0
+  ) || Math.max(0, Number(state.powers?.spyCharge?.total) || 0),
+  questsFulfilled: Math.max(
+    0,
+    Number(state.powerChoice?.inspector?.questCompletions) || 0
+  ),
+  questsAttempted: Math.max(
+    0,
+    Number(
+      state.powerChoice?.inspector?.questsResolved ??
+      state.powerChoice?.inspector?.attempts
+    ) || 0
+  ),
+  // COMPETITIVE OVERHAUL V3: ROUND BONUS METRICS END
   guessCount: state.guessCount,
   time: { ...(state.timeUsed || {}) },
   timeoutLoser: state.timeoutLoser || null,

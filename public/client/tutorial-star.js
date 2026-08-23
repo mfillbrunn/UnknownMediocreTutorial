@@ -58,6 +58,8 @@ let starAckStepThreshold = null;
 let starLastResultText = "";
 let starLastPendingChoiceId = null;
 let starTutorialFinished = false;
+let starSidebarSeenOpen = false;
+let starSidebarClosedOnce = false;
 
 // A fresh room (new roomId) means a fresh meter -- reset every tracker
 // exactly once per session instead of carrying stale state from a
@@ -77,6 +79,8 @@ function resetStarSession(state) {
   starLastResultText = "";
   starLastPendingChoiceId = state.powerChoice?.pendingChoice?.id || null;
   starTutorialFinished = false;
+  starSidebarSeenOpen = false;
+  starSidebarClosedOnce = false;
   window.TutorialCore?.setStep(0);
 }
 
@@ -175,24 +179,47 @@ function runStarTutorial(state, role) {
     return;
   }
 
-  // The whole tutorial revolves around the Spyometer, which lives inside
-  // the collapsible side panel -- if it starts (or gets left) collapsed,
-  // start by having the player open it, same wait-for-tap mechanism the
-  // Advanced Tutorial's own side-panel step already uses (see
-  // notifyTutorialSidebarToggled in tutorial-ui.js).
-  const sidebarCollapsed = byId("setterScreen")
-    ?.classList.contains("setter-sidebar-collapsed");
+  // COMPETITIVE OVERHAUL V3: SIDEBAR HANDS-ON START
+  const sidebarToggle = byId("setterSidebarToggle");
+  const sidebarCollapsed = !!(
+    byId("setterScreen")?.classList.contains("setter-sidebar-collapsed") ||
+    sidebarToggle?.getAttribute("aria-expanded") === "false"
+  );
 
-  if (sidebarCollapsed) {
+  if (!starSidebarSeenOpen) {
+    if (sidebarCollapsed) {
+      starTutorialShow(
+        "Stars are the Secretkeeper bonus. First open the side panel so you can see the Spyometer and game log.",
+        { title: "Open the Secretkeeper panel", mode: "hide" }
+      );
+      api.highlight(sidebarToggle);
+      api.setWaiting({ label: "OPEN THE SIDE PANEL" });
+      return;
+    }
+    starSidebarSeenOpen = true;
     starTutorialShow(
-      "First, tap the arrow to open the side panel -- that's where your Star Meter lives.",
-      { title: "Open the side panel", mode: "hide" }
+      "This side column holds the Spyometer and your game log. Now close it so you also know how to recover board space; the collapsed badge still shows your total.",
+      { title: "Close the side panel", mode: "hide" }
     );
-    api.highlight(byId("setterSidebarToggle"));
-    api.setWaiting({ label: "OPEN THE SIDE PANEL" });
+    api.highlight(sidebarToggle);
+    api.setWaiting({ label: "CLOSE THE SIDE PANEL" });
     return;
   }
 
+  if (!starSidebarClosedOnce) {
+    if (!sidebarCollapsed) {
+      starTutorialShow(
+        "Close the side panel with the arrow. You can reopen it whenever you need the full Spyometer or log.",
+        { title: "Close the side panel", mode: "hide" }
+      );
+      api.highlight(sidebarToggle);
+      api.setWaiting({ label: "CLOSE THE SIDE PANEL" });
+      return;
+    }
+    starSidebarClosedOnce = true;
+    api.clearWaiting();
+  }
+  // COMPETITIVE OVERHAUL V3: SIDEBAR HANDS-ON END
   const step = api.getStep();
   const charge = state.powers?.spyCharge || {};
   const total = Math.max(0, Math.min(STAR_TUTORIAL_MAX, Number(charge.total) || 0));
@@ -205,7 +232,7 @@ function runStarTutorial(state, role) {
   // system at once.
   if (step === 0) {
     starTutorialShow(
-      `This is your Star Meter. You have ${total} of ${STAR_TUTORIAL_MAX} stars.`,
+      `Stars are the Secretkeeper bonus. The collapsed badge and full Spyometer both show your total: ${total} of ${STAR_TUTORIAL_MAX}.`,
       { current: 1, total: 6 }
     );
     api.highlight(spyMeterHighlightTarget());
@@ -215,7 +242,7 @@ function runStarTutorial(state, role) {
 
   if (step === 1) {
     starTutorialShow(
-      "After each Keep or New choice, you earn at least 1 star.",
+      "Keeping the current secret or making any legal change earns at least 1 star. Changing is optional, but it can improve your word and reach rewards faster.",
       { current: 2, total: 6 }
     );
     api.highlight(spyMeterHighlightTarget());
@@ -225,7 +252,7 @@ function runStarTutorial(state, role) {
 
   if (step === 2) {
     starTutorialShow(
-      "Reach 5 stars to choose a reward.",
+      "A better legal alternative earns more stars: 3 is best, so a 3-star switch is normally good to submit. A bonus star is available when you match the shown letter and position; that target comes from a best current secret, one that leaves the Guesser the most possible words.",
       { current: 3, total: 6 }
     );
     api.highlight(spyMeterHighlightTarget());
@@ -304,7 +331,7 @@ function runStarTutorial(state, role) {
   if (pendingIsMine) {
     starLastPendingChoiceId = pendingChoice.id;
     starTutorialShow(
-      "Pick one reward card. It is used right away.",
+      "Select one of the three reward cards now. It takes effect immediately, and later milestones improve reward rarity odds.",
       { title: "Pick a reward", current: 5, total: 6, mode: "hide" }
     );
     api.highlight(spyMeterHighlightTarget());

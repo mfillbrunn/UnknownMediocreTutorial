@@ -49,6 +49,7 @@ let questOutcome = null; // null | "success" | "fail"
 let questLastPendingChoiceId = null;
 let questTutorialFinished = false;
 let questFinishedText = "";
+// COMPETITIVE OVERHAUL V3: GUESSER BONUS COPY
 
 // A fresh room (new roomId) means a fresh quest -- reset every tracker
 // exactly once per session instead of carrying stale state from a
@@ -145,7 +146,7 @@ function runQuestTutorial(state, role) {
   // system at once.
   if (step === 0) {
     questTutorialShow(
-      "This is your Quest. It gives your next guess a small rule.",
+      "Quests are the Guesser bonus. A live Quest adds a small optional rule to one of your guesses.",
       { current: 1, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
@@ -155,7 +156,7 @@ function runQuestTutorial(state, role) {
 
   if (step === 1) {
     questTutorialShow(
-      "Meet the rule to earn a reward.",
+      "They appear on guesses 2, 4, and 6. Meet the live rule to open a choice of three rewards.",
       { current: 2, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
@@ -165,7 +166,7 @@ function runQuestTutorial(state, role) {
 
   if (step === 2) {
     questTutorialShow(
-      "Quests are optional. A normal guess is always allowed.",
+      "Quests are optional: sometimes the best narrowing guess conflicts with the Quest, so choose between stronger information and earning the reward.",
       { current: 3, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
@@ -175,7 +176,7 @@ function runQuestTutorial(state, role) {
 
   if (step === 3) {
     questTutorialShow(
-      `This rule says: ${quest?.description || "Use only letters A through P."}`,
+      `Later completed Quests have better reward rarity odds. This one says: ${quest?.description || "Use only letters A through P."}`,
       { current: 4, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
@@ -185,7 +186,7 @@ function runQuestTutorial(state, role) {
 
   if (step === 4) {
     questTutorialShow(
-      `Tap Highlight A–P to light up useful keys.`,
+      `You may use Refresh choices once per game if you dislike an offer. Now tap Highlight A–P, enter APPLE, and complete this Quest.`,
       { current: 5, total: 7 }
     );
     api.highlight(questCardHighlightTarget());
@@ -231,7 +232,7 @@ function runQuestTutorial(state, role) {
 
     if (!success) {
       questTutorialFinished = true;
-      questFinishedText = "Done! You tried a quest. Meet the rule next time to earn a reward.";
+      questFinishedText = "Done! In a normal game, Quests return on guesses 2, 4, and 6. Fulfill one to select a reward, or ignore it when a stronger guess matters more.";
     }
 
     questTutorialShow(text, { mode: "advance" });
@@ -246,7 +247,10 @@ function runQuestTutorial(state, role) {
   if (questLastPendingChoiceId && !pendingChoice) {
     questLastPendingChoiceId = null;
     questTutorialFinished = true;
-    questFinishedText = "Done! You met a quest and picked a reward.";
+    const resolution = state.powerChoice?.lastResolution;
+    const selectedTitle = resolution?.title || "a reward";
+    const selectedEffect = resolution?.detailText || resolution?.description || "It took effect immediately.";
+    questFinishedText = `Done! You selected ${selectedTitle}. ${selectedEffect} In normal play, Quests appear on guesses 2, 4, and 6; later completed Quests improve rarity odds, and Refresh choices is available once per game.`;
     api.setNextTutorial("star");
     questTutorialShow(questFinishedText, {
       title: "Quest Tutorial done",
@@ -264,7 +268,7 @@ function runQuestTutorial(state, role) {
   if (pendingIsMine) {
     questLastPendingChoiceId = pendingChoice.id;
     questTutorialShow(
-      "Pick one reward card. It is used right away.",
+      "Select one of the three reward cards now. It activates immediately, so pick one and watch its effect.",
       { title: "Pick a reward", current: 6, total: 7, mode: "hide" }
     );
     api.highlight(questCardHighlightTarget());

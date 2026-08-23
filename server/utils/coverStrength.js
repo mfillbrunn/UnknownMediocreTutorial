@@ -720,3 +720,43 @@ module.exports = {
   getCandidateRemainingCount,
   buildCoverStrengthState
 };
+
+// COMPETITIVE OVERHAUL V3: BEST WORD EXPORT START
+// Add a deterministic best-word label without changing the existing cover
+// calculation. Ties are sorted so archived summaries do not depend on Set
+// insertion order.
+if (!module.exports.__competitiveBestWordV3) {
+  const originalGetCoverAnalysisV3 = module.exports.getCoverAnalysis;
+  module.exports.getCoverAnalysis = function getCoverAnalysisWithBestWord(state, allowedSecrets) {
+    const analysis = originalGetCoverAnalysisV3.call(this, state, allowedSecrets);
+    if (!analysis || typeof analysis !== "object") return analysis;
+
+    const bestCount = Number(analysis.bestCount);
+    const bestWords = Array.from(analysis.feasibleWords || [])
+      .filter(word => {
+        if (word === analysis.currentSecret || word === analysis.pendingGuess) return false;
+        const signature = analysis.signatureByWord?.get(word);
+        const count = analysis.bucketCounts?.get(signature) || 0;
+        return (
+          Number.isFinite(bestCount) &&
+          count === bestCount &&
+          passesAssassinRule(word, state)
+        );
+      })
+      .map(word => String(word || "").trim().toUpperCase())
+      .filter(word => /^[A-Z]{5}$/.test(word))
+      .sort();
+
+    if (!bestWords.length && /^[A-Z]{5}$/.test(String(analysis.currentSecret || ""))) {
+      bestWords.push(String(analysis.currentSecret).toUpperCase());
+    }
+
+    return {
+      ...analysis,
+      bestWords,
+      bestWord: bestWords[0] || null
+    };
+  };
+  module.exports.__competitiveBestWordV3 = true;
+}
+// COMPETITIVE OVERHAUL V3: BEST WORD EXPORT END

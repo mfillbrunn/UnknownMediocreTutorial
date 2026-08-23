@@ -209,7 +209,7 @@ function showOpeningMissLockNotice() {
     icon: "🔒",
 
     title: iAmSetter
-      ? "Your secret is locked"
+      ? "Secret locked for this round"
       : "The Secretkeeper's secret is locked",
 
     sub: iAmSetter
@@ -217,11 +217,11 @@ function showOpeningMissLockNotice() {
       : "You missed every letter in your opening guess. The Secretkeeper must keep the same secret for this round.",
 
     roleClass: iAmSetter
-      ? "role-setter"
+      ? "role-setter secret-locked-announce-v3"
       : "role-guesser",
 
-    duration: 4200,
-    compact: true
+    duration: iAmSetter ? 5200 : 4200,
+    compact: !iAmSetter
   });
 }
 ///Simplified turn indicator
