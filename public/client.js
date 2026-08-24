@@ -639,6 +639,24 @@ onStateUpdate(newState => {
     });
   }
 
+  // Same cue for the Secretkeeper's own turn handoff -- previously only
+  // the guesser ever got this sweep, so the setter had no equivalent
+  // signal that it was their turn again.
+  if (
+    prevPhase === "normal" &&
+    state.phase === "normal" &&
+    prevTurn !== state.turn &&
+    state.turn === state.setter &&
+    myUserId() === state.setter
+  ) {
+    requestAnimationFrame(() => {
+      window.showTurnIndicator?.({
+        label: "Your turn",
+        accentVar: "--setter-color"
+      });
+    });
+  }
+
   /*
    * Used by fix 9 below.
    */
