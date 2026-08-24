@@ -326,6 +326,7 @@ if (guesserEntries.length) {
           <span class="match-score-sep">–</span>
           <span class="match-score-theirs">${oppPoints}</span>
         </div>
+        <span class="match-meta-chip">${summaryTimeControlLabel(state)}</span>
         <div class="match-name-row">
           <div class="match-side match-side--mine">
             <span class="match-side-name">${summaryEscapeText(myName)}</span>
@@ -372,21 +373,7 @@ if (guesserEntries.length) {
       </button>
     </div>
 
-    <div class="match-info-block">
-      <div class="match-meta-row">
-        <span class="match-meta-chip">
-          ⏱ ${
-            state.timeControl?.enabled
-              ? state.timeControl.mode === "round"
-                ? `${formatDuration(state.timeControl.roundSeconds)} / round`
-                : `${formatDuration(state.timeControl.initialSeconds)} +${formatDuration(state.timeControl.incrementSeconds)}`
-              : "No time"
-          }
-        </span>
-      </div>
-
-      ${powersBlock}
-    </div>
+    ${powersBlock ? `<div class="match-info-block">${powersBlock}</div>` : ""}
   `;
 
   // ----------------------------
@@ -448,6 +435,19 @@ function formatSpentMs(ms) {
     : `${seconds}s`;
 }
 
+// A bare category word (no duration math, no emoji) -- same rankMode
+// categories statistics.js's formatTimeMode already uses for match
+// history, just without the "(90 secs / round)" detail.
+function summaryTimeControlLabel(matchState) {
+  if (!matchState.timeControl?.enabled) return "No time";
+  switch (matchState.rankMode) {
+    case "bullet": return "Bullet";
+    case "blitz": return "Blitz";
+    case "deep": return "Deep";
+    default: return "Custom";
+  }
+}
+
 // COMPETITIVE UI POLISH V2: structured clock cards shared by round and match summaries.
 function summaryEscapeText(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -465,11 +465,22 @@ function summaryEscapeText(value) {
 // already defines (global, !important) so these stay visually identical to
 // the real thing; an unrecognized/missing value gets a hollow placeholder
 // rather than silently disappearing.
+function summaryFeedbackClass(fb) {
+  // history entries store feedback as literal emoji (see game-engine/
+  // scoring.js's scoreGuess), not the color-name strings the tile classes
+  // are named after -- same mapping ui/history.js's own fbToClass uses.
+  if (fb === "🟩") return "tile-green";
+  if (fb === "🟨") return "tile-yellow";
+  if (fb === "🟦") return "tile-blue";
+  if (fb === "🟪") return "tile-purple";
+  if (fb === "⬛") return "tile-gray";
+  return "tile-blank";
+}
+
 function renderFeedbackTiles(fb) {
   if (!Array.isArray(fb)) return "";
-  const known = new Set(["green", "yellow", "gray", "blue", "purple"]);
   return `<span class="summary-feedback-tiles">${fb
-    .map(color => `<span class="summary-feedback-tile ${known.has(color) ? `tile-${color}` : "tile-blank"}"></span>`)
+    .map(entry => `<span class="summary-feedback-tile ${summaryFeedbackClass(entry)}"></span>`)
     .join("")}</span>`;
 }
 
@@ -490,10 +501,6 @@ function renderRoundClockPanel(round, label = "ROUND CLOCK") {
 
   return `
     <section class="summary-clock-panel summary-clock-panel--round" aria-label="${safeLabel}">
-      <div class="summary-clock-kicker">
-        <span class="summary-clock-symbol" aria-hidden="true">&#9201;</span>
-        <span>${safeLabel}</span>
-      </div>
       <div class="summary-clock-grid">
         <div class="summary-clock-player is-setter">
           <span class="summary-clock-name">${setterName}</span>
@@ -669,12 +676,12 @@ function renderStoredRoundSummary(round, index) {
   // Whichever of the two names is the viewer's own gets called out in
   // green (same convention as the match header above) so it's a quick
   // "was I setting or guessing this round" scan, not a re-read of names.
+  // Only the setter is named -- with just two players, the guesser is
+  // whoever it wasn't, so a second "Y guessed this round" line said
+  // nothing a reader couldn't already infer.
   const setterName = round.setter === myId
     ? `<span class="match-you-name">${summaryEscapeText(getPlayerName(round.setter))}</span>`
     : summaryEscapeText(getPlayerName(round.setter));
-  const guesserName = round.guesser === myId
-    ? `<span class="match-you-name">${summaryEscapeText(getPlayerName(round.guesser))}</span>`
-    : summaryEscapeText(getPlayerName(round.guesser));
   const roundClockHtml = renderRoundClockPanel(round, `ROUND ${index + 1} CLOCK`);
   let html = `
     <div class="stored-round" data-round-index="${index}">
@@ -682,7 +689,6 @@ function renderStoredRoundSummary(round, index) {
         <div class="stored-round-title-block">
           <span class="stored-round-kicker">ROUND ${index + 1}</span>
           <h4>${setterName} set the secret</h4>
-          <p>${guesserName} guessed this round</p>
         </div>
         ${roundClockHtml}
       </div>

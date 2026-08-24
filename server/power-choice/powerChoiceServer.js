@@ -1715,6 +1715,15 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
       // already worked when a human/classic draft granted it the normal
       // way -- there's no second activation step to perform here.
       grantPersistentPower(state, choice.role, option.powerId, choice.ownerUserId);
+      // revealLocation's own peek is computed lazily, in its turnStart hook
+      // -- normally fine (it re-picks every turn anyway), but taken here it
+      // meant the guesser saw nothing from Informant until their NEXT turn
+      // actually started, a full turn after picking the reward. Run that
+      // same hook once, right now, so the peek is already there the
+      // instant the card is taken.
+      if (option.powerId === "revealLocation") {
+        engine.powers.revealLocation?.turnStart(state, state.guesser, roomId, io);
+      }
       state.powerUsedThisTurn = true;
       const side =
         choice.role === "setter"
