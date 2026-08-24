@@ -477,17 +477,15 @@ function getCandidateRemainingCount(
 }
 
 function starsForGap(gapPct) {
-  if (gapPct < 10) {
-    return 3;
-  }
-
+  // Base stars top out at 2 -- reaching 3 requires the separate bonus star
+  // (bonusStar below), never a base switch alone. Mirrors starsForCandidate
+  // in powers/powers/spyChargeServer.js, which is what actually awards
+  // them. These two must agree or the preview lies about the payout.
   if (gapPct < 25) {
     return 2;
   }
 
-  // Baseline one star for any legal decision -- mirrors starsForCandidate
-  // in powers/powers/spyChargeServer.js, which is what actually awards
-  // them. These two must agree or the preview lies about the payout.
+  // Baseline one star for any legal decision.
   return 1;
 }
 

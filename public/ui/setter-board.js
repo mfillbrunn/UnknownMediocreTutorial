@@ -268,8 +268,11 @@
 
     if (key !== _praiseKey) {
       _praiseKey = key;
+      // Base stars top out at 2 -- a bonus star on top of a 2-star switch
+      // (3 total) is the best possible outcome now, same spot STAR_PRAISE[3]
+      // used to celebrate back when a base switch alone could hit 3.
       _praiseText = bonus
-        ? (count >= 3 ? pickPraise(STAR_PRAISE[3]) : pickPraise(BONUS_PRAISE))
+        ? (count >= 2 ? pickPraise(STAR_PRAISE[3]) : pickPraise(BONUS_PRAISE))
         : pickPraise(STAR_PRAISE[count] || []);
     }
   }
@@ -453,8 +456,13 @@
       return;
     }
 
+    // Base stars top out at 2 now -- the 3rd pip is only ever reachable
+    // through the bonus star on top of a base switch, so the row has to
+    // count both together to still show the true total (up to 3).
+    const totalCount = Math.min(3, count + (strength?.bonusStar ? 1 : 0));
+
     el.querySelectorAll("[data-cover-star]").forEach((star, index) => {
-      star.classList.toggle("is-filled", index < count);
+      star.classList.toggle("is-filled", index < totalCount);
     });
 
     // Drives the escalating glow/animation in gameplay-ui.css: nothing at
@@ -466,8 +474,8 @@
       (strength?.status === "rated" || strength?.status === "same") &&
       !strength?.draftIsPending &&
       !!strength?.draftValid;
-    el.classList.toggle("stars-2", celebrating && count === 2);
-    el.classList.toggle("stars-3", celebrating && count >= 3);
+    el.classList.toggle("stars-2", celebrating && totalCount === 2);
+    el.classList.toggle("stars-3", celebrating && totalCount >= 3);
     updateStarPraise(count, strength);
 
     el.setAttribute(
