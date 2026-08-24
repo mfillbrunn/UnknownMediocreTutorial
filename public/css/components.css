@@ -484,6 +484,7 @@
 }
 
 .key {
+  position: relative;
   width: clamp(28px, 9vw, 50px);
   height: clamp(36px, 11vw, 60px);
   font-size: clamp(12px, 3.5vw, 20px);
@@ -507,6 +508,27 @@
     background .15s var(--ease-ui),
     transform .1s var(--ease-ui),
     box-shadow .15s var(--ease-ui);
+}
+
+/* Letter Scan (letterProbe): marks which 5 letters the sweep tested this
+   turn, in the order they were typed -- the game only ever reports an
+   aggregate count, not which ones hit, so this is purely a "these were
+   checked" memory aid, not a result. Cleared on the same lifecycle as the
+   info badge (state.powers.letterProbeResult), see keyboard.js. */
+.key.key-swept::after {
+  content: attr(data-sweep-order);
+  position: absolute;
+  right: 2px;
+  bottom: 1px;
+  min-width: 10px;
+  padding: 0 2px;
+  border-radius: 4px;
+  background: color-mix(in srgb, #22d3ee 55%, transparent);
+  color: #04222a;
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1.3;
+  pointer-events: none;
 }
 
 /* Special widths */
