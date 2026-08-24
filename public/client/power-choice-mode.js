@@ -5,7 +5,8 @@
   window.__powerChoiceModeClientV2 = true;
 
   const MODE = "powerChoice";
-  const SPY_MAX = 15;
+  const SPY_MAX = 12;
+  const SPY_THRESHOLDS = [4, 8, 12];
   const VOWELS = new Set(["A", "E", "I", "O", "U"]);
   const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
@@ -230,7 +231,7 @@
       <button type="button" id="pcSpyChargeCard" class="pc-charge-card" aria-expanded="${detailsOpen}">
         <span class="pc-charge-label"><span class="pc-charge-star" aria-hidden="true">&#9733;</span>SPYOMETER</span>
         <div class="pc-meter-wrap">
-          ${meterMarkup(total, SPY_MAX, [5, 9, 15], "pcSpyMeter", "pc-spy-meter")}
+          ${meterMarkup(total, SPY_MAX, SPY_THRESHOLDS, "pcSpyMeter", "pc-spy-meter")}
           <span class="pc-charge-value"><strong>${total}</strong><span>/ ${SPY_MAX}</span></span>
         </div>
         <span class="pc-charge-click-copy">Click for rules</span>
@@ -238,9 +239,9 @@
       <div class="pc-charge-details${detailsOpen ? " is-open" : ""}">
         <p>Earn at least 1 star after each eligible Keep/New decision. The forced all-gray opening begins with at least 2 stars.</p>
         <div class="pc-reward-milestones">
-          <span><b>5</b> choose 1 reward</span>
-          <span><b>9</b> choose 1 reward</span>
-          <span><b>15</b> choose 2 rewards</span>
+          <span><b>4</b> choose 1 reward</span>
+          <span><b>8</b> choose 1 reward</span>
+          <span><b>12</b> choose 2 rewards</span>
         </div>
       </div>
       ${lockoutMarkup}
@@ -364,7 +365,7 @@
     host.dataset.pcSignature = signature;
     // A collapsed-sidebar badge needs to stay small enough to sit next to
     // the toggle button without spilling into the board beside it -- a
-    // full 15-segment bar (sized for the open sidebar's full width) can't
+    // full segment bar (sized for the open sidebar's full width) can't
     // fit there, so this shows the same number the open sidebar's meter
     // carries instead.
     host.textContent = String(total);
@@ -1522,7 +1523,7 @@
       const classes = ["pc-award-capsule-segment"];
       if (number <= value) classes.push("is-filled");
       if (number >= bonusFrom && number <= value) classes.push("is-bonus");
-      if ([5, 9, 15].includes(number)) classes.push("is-milestone");
+      if (SPY_THRESHOLDS.includes(number)) classes.push("is-milestone");
       return `<span class="${classes.join(" ")}" data-value="${number}"></span>`;
     }).join("");
   }
