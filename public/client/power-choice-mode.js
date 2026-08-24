@@ -697,28 +697,45 @@
     }
     host.dataset.pcSignature = signature;
 
-    host.innerHTML = `<button type="button" class="pc-current-quest-card${met ? " is-met" : ""}" aria-expanded="${questGuideOpen}">
+    // The highlight/clear toggle used to live inside the collapsible Rules
+    // panel below, so reaching it meant expanding the card first every
+    // time. It's now a real button sitting directly on the (collapsed)
+    // card itself -- which means the card can no longer be a <button>
+    // (a nested <button> is invalid HTML and gets hoisted out by the
+    // parser), so it's a role="button" div with its own click/keydown
+    // handling instead.
+    host.innerHTML = `<div class="pc-current-quest-card${met ? " is-met" : ""}" role="button" tabindex="0" aria-expanded="${questGuideOpen}">
       <span class="pc-current-main">
         <strong>${esc(quest.title || "Quest")}</strong>
-        <span class="pc-current-expand">${questGuideOpen ? "Close" : "Rules"}</span>
       <span class="pc-quest-optional-note">Optional -- complete for a reward</span></span>
-      <span class="pc-current-status" aria-live="polite">${met ? "MET" : ""}</span>
+      <span class="pc-current-top-right">
+        <span class="pc-current-status" aria-live="polite">${met ? "MET" : ""}</span>
+        <span class="pc-current-expand">${questGuideOpen ? "Close" : "Click for rules"}</span>
+      </span>
       <span class="pc-current-desc">${esc(quest.description || "Complete the shown condition.")}</span>
       ${conditionLabels.length ? `<span class="pc-current-conditions">${conditionLabels.map((label, index) => `<span class="pc-condition-chip${conditionResults[index] ? " is-met" : ""}">${esc(label)}</span>`).join("")}</span>` : ""}
-    </button>
-    <div class="pc-quest-guide${questGuideOpen ? " is-open" : ""}">
-      <p>${esc(guideCopyForQuest(quest))}</p>
       ${hintSpec ? `<div class="pc-guide-actions">
         ${questHintsActive
           ? `<button type="button" class="pc-guide-clear-btn">Clear highlights</button>`
           : `<button type="button" class="pc-guide-highlight-btn">Highlight ${esc(hintSpec.label)}</button>`}
-      </div>` : `<span class="pc-guide-no-keys">This quest is based on word structure, so no fixed keyboard range is needed.</span>`}
+      </div>` : ""}
+    </div>
+    <div class="pc-quest-guide${questGuideOpen ? " is-open" : ""}">
+      <p>${esc(guideCopyForQuest(quest))}</p>
+      ${hintSpec ? "" : `<span class="pc-guide-no-keys">This quest is based on word structure, so no fixed keyboard range is needed.</span>`}
     </div>`;
 
-    host.querySelector(".pc-current-quest-card")?.addEventListener("click", () => {
+    const card = host.querySelector(".pc-current-quest-card");
+    const toggleGuide = () => {
       questGuideOpen = !questGuideOpen;
       host.dataset.pcSignature = "";
       renderCurrentQuest();
+    };
+    card?.addEventListener("click", toggleGuide);
+    card?.addEventListener("keydown", event => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      toggleGuide();
     });
     host.querySelector(".pc-guide-highlight-btn")?.addEventListener("click", event => {
       event.stopPropagation();
@@ -1538,6 +1555,21 @@
     return capsule;
   }
 
+  function updateAwardCapsule(capsule, value, bonusFrom = Infinity) {
+    if (!capsule) return;
+    capsuleMeter(capsule, value, bonusFrom);
+    const count = capsule.querySelector(".pc-award-count");
+    if (count) count.textContent = `${value}/${SPY_MAX}`;
+  }
+
+  function dismissAwardCapsule(capsule, holdMs = 650) {
+    if (!capsule) return;
+    setTimeout(() => {
+      capsule.classList.remove("is-visible");
+      setTimeout(() => capsule.remove(), 200);
+    }, holdMs);
+  }
+
   async function animateSpyAward(entry) {
     const payload = entry?.payload || {};
     const before = clamp(payload.before, 0, SPY_MAX);
@@ -1545,6 +1577,7 @@
     const appliedBonus = Math.max(0, Number(payload.appliedBonusStars ?? payload.bonusStars) || 0);
     const totalStars = Math.max(0, Number(payload.appliedStars) || appliedBase + appliedBonus);
     const after = clamp(payload.after ?? before + totalStars, 0, SPY_MAX);
+    const bonusFrom = appliedBonus > 0 ? before + appliedBase + 1 : Infinity;
 
     spyVisualOverride = before;
     renderPanels();
@@ -1555,10 +1588,20 @@
       return;
     }
 
+    // A fixed, always-on-top popup mirroring the sidebar meter -- the
+    // flying stars themselves used to be the only feedback, and with the
+    // sidebar collapsed (or the meter simply off-screen) they landed on a
+    // plain number badge with no visible bar, so the "fill" itself was
+    // never actually seen happening. This shows the same segmented bar
+    // filling up regardless of where the sidebar/meter physically is.
+    const capsule = createAwardCapsule(before);
+
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     if (reduceMotion) {
       spyVisualOverride = after;
       renderPanels();
+      updateAwardCapsule(capsule, after, bonusFrom);
+      dismissAwardCapsule(capsule);
       spyAwardTarget()?.classList.add("pc-star-landed");
       setTimeout(() => spyAwardTarget()?.classList.remove("pc-star-landed"), 450);
       return;
@@ -1600,6 +1643,7 @@
       if (!targetRect?.width) {
         spyVisualOverride = value;
         renderPanels();
+        updateAwardCapsule(capsule, value, bonusFrom);
         continue;
       }
       plans.push({ index, value, bonus, isFinal: index === totalStars - 1, targetRect });
@@ -1675,6 +1719,7 @@
 
         spyVisualOverride = value;
         renderPanels();
+        updateAwardCapsule(capsule, value, bonusFrom);
         await new Promise(resolve => requestAnimationFrame(resolve));
 
         const freshMeter = spyAwardTarget();
@@ -1738,6 +1783,8 @@
 
     spyVisualOverride = after;
     renderPanels();
+    updateAwardCapsule(capsule, after, bonusFrom);
+    dismissAwardCapsule(capsule);
     const finalTarget = spyAwardTarget();
     finalTarget?.classList.add("just-charged");
     setTimeout(() => finalTarget?.classList.remove("just-charged"), 720);

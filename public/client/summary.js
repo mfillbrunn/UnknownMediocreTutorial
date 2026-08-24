@@ -566,6 +566,10 @@ function renderRoundSummary(container) {
   const setterName = getPlayerName(state.setter);
   const guesserName = getPlayerName(state.guesser);
 
+  // The headline stat for the round -- shown first, above the clock panel
+  // and any conditional notes, instead of tucked down by the table.
+  html += `<p class="summary-guess-count"><b>Total guesses:</b> ${state.guessCount}</p>`;
+
 if (state.timeoutLoser)  {
   const loserName = getPlayerName(state.timeoutLoser);
 
@@ -593,8 +597,6 @@ if (state.timeoutLoser)  {
     `;
   }
     html += formatRevealPenaltySummary(state.powers);
-
-  html += `<p class="summary-guess-count"><b>Total guesses:</b> ${state.guessCount}</p>`;
 
   // Per-player timing is rendered once from lastRound.time above.
 
