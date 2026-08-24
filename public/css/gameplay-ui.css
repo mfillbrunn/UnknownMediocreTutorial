@@ -2664,7 +2664,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   white-space: nowrap;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   .pc-refresh-choice-btn {
     width: 100%;
   }
