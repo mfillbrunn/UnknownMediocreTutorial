@@ -697,28 +697,45 @@
     }
     host.dataset.pcSignature = signature;
 
-    host.innerHTML = `<button type="button" class="pc-current-quest-card${met ? " is-met" : ""}" aria-expanded="${questGuideOpen}">
+    // The highlight/clear toggle used to live inside the collapsible Rules
+    // panel below, so reaching it meant expanding the card first every
+    // time. It's now a real button sitting directly on the (collapsed)
+    // card itself -- which means the card can no longer be a <button>
+    // (a nested <button> is invalid HTML and gets hoisted out by the
+    // parser), so it's a role="button" div with its own click/keydown
+    // handling instead.
+    host.innerHTML = `<div class="pc-current-quest-card${met ? " is-met" : ""}" role="button" tabindex="0" aria-expanded="${questGuideOpen}">
       <span class="pc-current-main">
         <strong>${esc(quest.title || "Quest")}</strong>
-        <span class="pc-current-expand">${questGuideOpen ? "Close" : "Rules"}</span>
       <span class="pc-quest-optional-note">Optional -- complete for a reward</span></span>
-      <span class="pc-current-status" aria-live="polite">${met ? "MET" : ""}</span>
+      <span class="pc-current-top-right">
+        <span class="pc-current-status" aria-live="polite">${met ? "MET" : ""}</span>
+        <span class="pc-current-expand">${questGuideOpen ? "Close" : "Click for rules"}</span>
+      </span>
       <span class="pc-current-desc">${esc(quest.description || "Complete the shown condition.")}</span>
       ${conditionLabels.length ? `<span class="pc-current-conditions">${conditionLabels.map((label, index) => `<span class="pc-condition-chip${conditionResults[index] ? " is-met" : ""}">${esc(label)}</span>`).join("")}</span>` : ""}
-    </button>
-    <div class="pc-quest-guide${questGuideOpen ? " is-open" : ""}">
-      <p>${esc(guideCopyForQuest(quest))}</p>
       ${hintSpec ? `<div class="pc-guide-actions">
         ${questHintsActive
           ? `<button type="button" class="pc-guide-clear-btn">Clear highlights</button>`
           : `<button type="button" class="pc-guide-highlight-btn">Highlight ${esc(hintSpec.label)}</button>`}
-      </div>` : `<span class="pc-guide-no-keys">This quest is based on word structure, so no fixed keyboard range is needed.</span>`}
+      </div>` : ""}
+    </div>
+    <div class="pc-quest-guide${questGuideOpen ? " is-open" : ""}">
+      <p>${esc(guideCopyForQuest(quest))}</p>
+      ${hintSpec ? "" : `<span class="pc-guide-no-keys">This quest is based on word structure, so no fixed keyboard range is needed.</span>`}
     </div>`;
 
-    host.querySelector(".pc-current-quest-card")?.addEventListener("click", () => {
+    const card = host.querySelector(".pc-current-quest-card");
+    const toggleGuide = () => {
       questGuideOpen = !questGuideOpen;
       host.dataset.pcSignature = "";
       renderCurrentQuest();
+    };
+    card?.addEventListener("click", toggleGuide);
+    card?.addEventListener("keydown", event => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      toggleGuide();
     });
     host.querySelector(".pc-guide-highlight-btn")?.addEventListener("click", event => {
       event.stopPropagation();

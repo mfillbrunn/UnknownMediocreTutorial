@@ -1893,14 +1893,21 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   font-size: 12px;
 }
 
+.pc-current-top-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
 .pc-current-expand {
   color: rgba(185, 218, 238, 0.52);
   font-size: 8px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .pc-current-status {
-  align-self: center;
   color: #9effce;
   font-size: 9px;
   font-weight: 950;
@@ -1910,8 +1917,13 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 .pc-current-desc,
 .pc-current-conditions,
-.pc-quest-optional-note {
+.pc-quest-optional-note,
+.pc-current-quest-card > .pc-guide-actions {
   grid-column: 1 / -1;
+}
+
+.pc-current-quest-card > .pc-guide-actions {
+  margin-top: 5px;
 }
 
 /* Sits right under the quest name, above the description and the
