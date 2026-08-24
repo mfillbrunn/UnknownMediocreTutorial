@@ -31,9 +31,10 @@
      color-mix(in srgb, <hue> var(--glass-alpha), transparent) against
      each control's own existing hue (--btn-primary, --setter-color,
      etc.) rather than one flat literal, so every control keeps its own
-     identity while sharing one alpha scale. Menu-screen buttons
-     (refinement-v4.css) already established this pattern at rest 0.7 /
-     hover 0.75 against a photo background; this is the same idea at a
+     identity while sharing one alpha scale. The startup screen's menu
+     buttons (game-menu.css) already established this pattern at rest
+     0.5 / hover 0.6 against a photo background; this is the same idea
+     at a
      level tuned for flatter chrome (modals, summary, tutorial, header,
      reward cards) over WCAG AA text contrast.
      Text/muted-text tokens are --text (base.css) and --text-muted below;
@@ -120,6 +121,19 @@
   --elevated-shadow: 0 22px 70px rgba(0, 0, 0, 0.44);
   --elevated-text: #f5f8fc;
   --elevated-muted: rgba(226, 236, 247, 0.76);
+
+  /* Moonlit indigo palette -- the startup screen's attached room and the
+     match/round summary panel share this one dark-blue/rose family. */
+  --ink-950: #061626;
+  --ink-900: #0b1f34;
+  --ink-850: #102841;
+  --ink-800: #17334f;
+  --ink-line: #35516c;
+  --ink-line-soft: rgba(184, 201, 217, 0.2);
+  --ink-text: #f7f1f4;
+  --ink-muted: #b8c5d2;
+  --ink-rose: #a95372;
+  --ink-rose-hover: #b35a79;
 }
 
 .theme-guesser {

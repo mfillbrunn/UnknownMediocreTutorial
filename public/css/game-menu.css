@@ -1385,7 +1385,7 @@ body.menu-mode .app-header {
    ========================================================================== */
 
 body.menu-mode {
-  background: var(--v4-ink-950);
+  background: var(--ink-950);
 }
 
 body.menu-mode #appContainer {
@@ -1423,7 +1423,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   overflow: auto;
   border: 0;
   border-radius: 0;
-  background-color: var(--v4-ink-950);
+  background-color: var(--ink-950);
   background-image:
     linear-gradient(180deg, rgba(4, 16, 29, 0.03), rgba(4, 16, 29, 0.16)),
     url("../assets/menu/detective-office.webp");
@@ -1453,7 +1453,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 
 #startupScreen .menu-title {
   margin: 0 0 2px;
-  color: var(--v4-text);
+  color: var(--ink-text);
   font-size: clamp(20px, 3.4vh, 27px);
   font-weight: 850;
   letter-spacing: 0.16em;
@@ -1489,7 +1489,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.05em;
-  color: var(--v4-text);
+  color: var(--ink-text);
   text-shadow: 0 1px 8px rgba(3, 12, 23, 0.85);
 }
 
@@ -1512,7 +1512,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   background: rgba(23, 51, 79, 0.5) !important;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: var(--v4-text) !important;
+  color: var(--ink-text) !important;
   box-shadow: 0 5px 14px rgba(3, 13, 25, 0.24);
   font-size: clamp(12px, 1.6vh, 14px);
   font-weight: 760 !important;
