@@ -149,7 +149,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   padding: 0 15px !important;
   border: 1px solid rgba(188, 207, 225, 0.24) !important;
   border-radius: 10px !important;
-  background: rgba(23, 51, 79, 0.7) !important;
+  background: rgba(23, 51, 79, 0.5) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
   color: var(--v4-text) !important;
@@ -163,7 +163,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 
 #startupScreen .menu-btn:hover:not(:disabled) {
   border-color: rgba(224, 235, 246, 0.42) !important;
-  background: rgba(33, 65, 95, 0.75) !important;
+  background: rgba(33, 65, 95, 0.6) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -174,13 +174,13 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 #startupScreen .menu-btn.primary,
 #startupScreen .menu-split-btn .menu-btn.primary {
   border-color: rgba(246, 178, 202, 0.45) !important;
-  background: rgba(169, 83, 114, 0.7) !important;
+  background: rgba(169, 83, 114, 0.5) !important;
   color: #fff !important;
 }
 
 #startupScreen .menu-btn.primary:hover:not(:disabled),
 #startupScreen .menu-split-btn .menu-btn.primary:hover:not(:disabled) {
-  background: rgba(179, 90, 121, 0.75) !important;
+  background: rgba(179, 90, 121, 0.6) !important;
 }
 
 #startupScreen .menu-split-btn {
@@ -210,12 +210,12 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   min-width: 46px !important;
   padding: 0 !important;
   border-left: 1px solid rgba(255, 255, 255, 0.26) !important;
-  background: rgba(148, 75, 103, 0.7) !important;
+  background: rgba(148, 75, 103, 0.5) !important;
   color: #fff !important;
 }
 
 #startupScreen #playQuickBtn:hover:not(:disabled) {
-  background: rgba(169, 89, 118, 0.75) !important;
+  background: rgba(169, 89, 118, 0.6) !important;
 }
 
 /* Thin-stroke bolt matching the app's other inline-SVG icon language
@@ -372,9 +372,27 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   grid-template-columns: clamp(72px, 15%, 92px) minmax(0, 1fr) !important;
   min-height: 92px !important;
   overflow: hidden !important;
+  position: relative !important;
   border: 1px solid var(--pc-rarity-border) !important;
   border-radius: 14px !important;
-  background: var(--pc-rarity-surface) !important;
+  /* A real transition from the icon's power color into a shiny metal
+     rarity tone, not one flat fill: the power accent bleeds out of the
+     icon column and fades across the card, and the rarity surface itself
+     is a light-catching gradient (surface -> its own brighter "-line"
+     tone -> surface) rather than a single flat color, so common/rare/
+     legend each read as a distinct metal, not just a different paint
+     swatch. */
+  background:
+    linear-gradient(100deg,
+      color-mix(in srgb, var(--pc-power-accent, #397c96) 55%, transparent) 0%,
+      transparent 60%
+    ),
+    linear-gradient(120deg,
+      var(--pc-rarity-surface) 0%,
+      color-mix(in srgb, var(--pc-rarity-border) 62%, var(--pc-rarity-surface)) 42%,
+      var(--pc-rarity-surface) 68%,
+      color-mix(in srgb, var(--pc-rarity-border) 25%, var(--pc-rarity-surface)) 100%
+    ) !important;
   box-shadow: 0 7px 16px rgba(0, 0, 0, 0.23) !important;
 }
 
@@ -394,9 +412,28 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   --pc-rarity-border: var(--v4-gold-line);
 }
 
-.pc-choice-card[data-rarity]::before,
-.pc-choice-card[data-rarity]::after {
+.pc-choice-card[data-rarity]::before {
   display: none !important;
+}
+
+/* Every rarity gets a static diagonal foil-glint (not just legend, which
+   keeps its own extra animated sweep below) -- the shine itself is what
+   reads as "metal" rather than "painted card". */
+.pc-choice-card[data-rarity]::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  z-index: 4 !important;
+  inset: 0 !important;
+  background: linear-gradient(
+    115deg,
+    transparent 34%,
+    color-mix(in srgb, var(--pc-rarity-border) 55%, transparent) 45%,
+    color-mix(in srgb, var(--pc-rarity-border) 75%, white 15%) 50%,
+    color-mix(in srgb, var(--pc-rarity-border) 55%, transparent) 55%,
+    transparent 66%
+  ) !important;
+  pointer-events: none !important;
 }
 
 .pc-choice-card[data-rarity]:hover:not(:disabled),
@@ -421,7 +458,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.32) !important;
   border-radius: 11px !important;
-  background: var(--pc-power-accent, #397c96) !important;
+  background: linear-gradient(165deg, var(--pc-power-accent, #397c96), color-mix(in srgb, var(--pc-power-accent, #397c96) 55%, var(--pc-rarity-border) 30%)) !important;
   color: #fff !important;
   box-shadow: none !important;
 }
@@ -448,6 +485,8 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 
 .pc-choice-card[data-rarity] .pc-card-body,
 .pc-choice-card[data-rarity] .pc-card-body-armed {
+  position: relative !important;
+  z-index: 5 !important;
   min-width: 0 !important;
   padding: 13px 14px !important;
   background: transparent !important;
@@ -596,7 +635,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 #menu > .panel {
   box-sizing: border-box;
   margin: 0 !important;
-  padding: 12px !important;
+  padding: 10px !important;
   overflow: hidden;
   border: 1px solid var(--v4-line) !important;
   border-radius: 16px !important;
@@ -607,6 +646,10 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 #menu #roundSummary {
   padding: 0 !important;
   background: transparent !important;
+}
+
+#menu #roundDetails {
+  gap: 8px !important;
 }
 
 #menu .share-btn {
@@ -632,8 +675,8 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 }
 
 #menu .match-header {
-  margin: 0 0 10px !important;
-  padding: 18px 14px 14px !important;
+  margin: 0 0 8px !important;
+  padding: 12px 14px 10px !important;
   overflow: hidden;
   border: 1px solid #36536d !important;
   border-radius: 13px !important;
@@ -698,6 +741,15 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   box-shadow: none !important;
 }
 
+#menu .match-info-block {
+  padding: 8px !important;
+  margin: 0 0 8px !important;
+}
+
+#menu .match-meta-row {
+  margin: 0 !important;
+}
+
 #menu .summary-clock-panel,
 #menu .stored-round,
 #menu .stored-round-title-block,
@@ -708,14 +760,23 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 }
 
 #menu .stored-round {
-  padding: 10px !important;
+  padding: 8px !important;
   border-radius: 13px !important;
 }
 
 #menu .stored-round-header {
   grid-template-columns: minmax(0, 0.8fr) minmax(260px, 1.2fr) !important;
   gap: 8px !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 6px !important;
+}
+
+/* A no-timer match's renderRoundClockPanel returns "" -- with no clock
+   panel to fill it, the fixed minmax(260px, ...) second column above
+   still reserved 260px+ of pure dead space next to the title block on
+   every single round card. Collapse to one column whenever there's
+   nothing in the second one. */
+#menu .stored-round-header:not(:has(.summary-clock-panel)) {
+  grid-template-columns: minmax(0, 1fr) !important;
 }
 
 #menu .stored-round-title-block {
@@ -750,7 +811,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 
 #menu .summary-actions {
   gap: 8px !important;
-  margin: 10px 0 !important;
+  margin: 8px 0 !important;
 }
 
 #menu .summary-actions :is(.primary-btn, .secondary-btn) {
