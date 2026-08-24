@@ -412,6 +412,46 @@
   pointer-events: none;
 }
 
+/* Keyboard-guide toggle(s), always visible on the quest badge itself (no
+   click-into-a-popup required) whenever this quest/role/state has one to
+   offer -- see quest.js's renderQuestGuideControls. Sits below the badge
+   button, not inside it, so its own clicks never reach the button's
+   onclick (which opens the separate info+Use popup). */
+.quest-guide-inline {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+  margin-top: 3px;
+}
+.quest-guide-inline[hidden] {
+  display: none;
+}
+.quest-guide-toggle {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 3px 4px;
+  border: 1px solid color-mix(in srgb, var(--role-accent, #6088b4) 45%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--role-accent, #6088b4) 10%, transparent);
+  color: color-mix(in srgb, var(--role-accent, #6088b4) 80%, #cfd9e6 20%);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.quest-guide-toggle:hover {
+  background: color-mix(in srgb, var(--role-accent, #6088b4) 18%, transparent);
+}
+.quest-guide-toggle.is-on {
+  border-color: color-mix(in srgb, var(--role-accent, #6088b4) 75%, white 10%);
+  background: color-mix(in srgb, var(--role-accent, #6088b4) 32%, transparent);
+  color: #fff;
+}
+
 /* KEYBOARD */
 .keyboard {
   width: 100%;
@@ -885,28 +925,6 @@
   opacity: 0.4;
 }
 
-/* A to P / K to Z / Alphabetical Order quest popups: opt-in toggle for a
-   live keyboard highlight -- see client/quest-guide.js. */
-.quest-guide-controls {
-  margin-top: 0.8em;
-  padding-top: 0.8em;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5em;
-}
-.quest-guide-note {
-  font-size: 0.82rem;
-  opacity: 0.75;
-  margin: 0;
-  text-align: center;
-}
-.quest-guide-btn-row {
-  display: flex;
-  flex-direction: row;
-  gap: 0.5em;
-}
 #powerActionUseBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
