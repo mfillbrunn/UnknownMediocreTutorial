@@ -16,13 +16,16 @@
 
 /* Shared panel chrome for every OTHER game-menu screen's centered content
    block (.menu-center's own chrome is set where it wins the cascade,
-   below, next to the rest of its "dossier style" rule). */
+   below, next to the rest of its "dossier style" rule). Narrower than
+   before (was min(94vw, 760px)) -- .rules-content/.leaderboard tables
+   don't need anywhere near that much width, and the old cap left a lot
+   of empty side padding around them. */
 .rules-center,
 .powers-center,
 .leaderboard-center,
 .my-games-center,
 .friends-center {
-  width: min(94vw, 760px);
+  width: min(92vw, 560px);
   padding: clamp(16px, 3vw, 28px);
   border: 1px solid var(--elevated-line);
   border-radius: 20px;
@@ -273,11 +276,15 @@ body.menu-mode .app-header {
 
 /* Dossier container. !important throughout: needed to reliably beat the
    plain .menu-center rule near the top of this same file regardless of
-   which one a future edit ends up placing first in source order. */
+   which one a future edit ends up placing first in source order.
+   Narrower than before (was min(94vw, 760px)) to match its actual
+   button-column content, same as the startup screen's own column --
+   background/border/shadow stay (unlike the startup screen, these
+   button-only screens have no photo behind them). */
 .menu-center {
   position: relative;
   align-items: center;
-  width: min(94vw, 760px) !important;
+  width: min(90vw, 400px) !important;
   padding: clamp(16px, 3vh, 32px) clamp(16px, 4vw, 28px) !important;
   border: 1px solid var(--elevated-line) !important;
   border-radius: 20px !important;
@@ -286,13 +293,17 @@ body.menu-mode .app-header {
 }
 
 @media (max-width: 720px) {
-  .menu-center,
   .rules-center,
   .powers-center,
   .leaderboard-center,
   .my-games-center,
   .friends-center {
-    width: min(96vw, 760px) !important;
+    width: min(96vw, 560px) !important;
+    border-radius: 16px !important;
+  }
+
+  .menu-center {
+    width: min(90vw, 400px) !important;
     border-radius: 16px !important;
   }
 }
