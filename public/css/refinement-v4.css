@@ -298,69 +298,9 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   font-variant-numeric: tabular-nums;
 }
 
-/* ==========================================================================
-   AI difficulty — muted traffic-light solids from the moonlit palette
-   ========================================================================== */
-
-.menu-btn.difficulty-easy,
-.ai-option.difficulty-easy,
-.daily-difficulty-locked.difficulty-easy,
-[data-difficulty="easy"] {
-  border-color: #65a795 !important;
-  background: var(--v4-easy) !important;
-  color: #fff !important;
-  box-shadow: none !important;
-}
-
-.menu-btn.difficulty-medium,
-.ai-option.difficulty-medium,
-.daily-difficulty-locked.difficulty-medium,
-[data-difficulty="medium"] {
-  border-color: #d0a05e !important;
-  background: var(--v4-medium) !important;
-  color: #fff !important;
-  box-shadow: none !important;
-}
-
-.menu-btn.difficulty-hard,
-.ai-option.difficulty-hard,
-.daily-difficulty-locked.difficulty-hard,
-[data-difficulty="hard"] {
-  border-color: #cf7591 !important;
-  background: var(--v4-hard) !important;
-  color: #fff !important;
-  box-shadow: none !important;
-}
-
-.menu-btn.difficulty-easy:hover:not(:disabled),
-.ai-option.difficulty-easy:hover:not(:disabled) {
-  background: var(--v4-easy-hover) !important;
-}
-
-.menu-btn.difficulty-medium:hover:not(:disabled),
-.ai-option.difficulty-medium:hover:not(:disabled) {
-  background: var(--v4-medium-hover) !important;
-}
-
-.menu-btn.difficulty-hard:hover:not(:disabled),
-.ai-option.difficulty-hard:hover:not(:disabled) {
-  background: var(--v4-hard-hover) !important;
-}
-
-:is(.difficulty-easy, .difficulty-medium, .difficulty-hard) small {
-  color: rgba(255, 255, 255, 0.82) !important;
-  opacity: 1 !important;
-}
-
-:is(.difficulty-easy, .difficulty-medium, .difficulty-hard):focus-visible {
-  outline: 3px solid #fff !important;
-  outline-offset: 2px !important;
-}
-
-:is(.difficulty-easy, .difficulty-medium, .difficulty-hard):disabled {
-  opacity: 0.48 !important;
-  filter: grayscale(0.35) !important;
-}
+/* AI difficulty (Easy/Medium/Hard) -- moved to features.css, right next
+   to the base .difficulty-easy/-medium/-hard selectors it was the sole
+   surviving override of. See that file for the consolidated version. */
 
 /* ========================================================================== 
    Reward cards — large square icon at ~15%, solid rarity body

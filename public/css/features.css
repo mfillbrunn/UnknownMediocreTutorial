@@ -1536,34 +1536,103 @@
 .power-lib-row-guesser {
   border-left: 2px solid var(--guesser-color);
 }
-.difficulty-easy {
-  background: var(--tile-green);
-  color: var(--tile-green-text);
-  border-color: var(--tile-green);
+/* AI difficulty (Easy/Medium/Hard) -- consolidated here from
+   refinement-v4.css and competitive-polish-v2.css, which each carried
+   their own successive layer for the same buttons (muted traffic-light
+   palette, then focus/disabled states). This is now the one definition;
+   .menu-btn/.ai-option/.daily-difficulty-locked compound selectors
+   already out-specify the plain .menu-btn background elsewhere, so none
+   of this needs !important. */
+/* .game-menu prefixed on the .menu-btn variants (every real .menu-btn.
+   difficulty-* button lives inside a .game-menu screen -- see
+   quickPlayAiScreen/playScreen in index.html): needed so this beats
+   competitive-polish-v2.css's ".game-menu .menu-btn" background, which
+   loads after this file at otherwise-equal two-class specificity and
+   also carries !important, so !important alone can't win the tie --
+   only higher specificity can, regardless of file order. .ai-option
+   never carries .menu-btn (it's the AI-difficulty modal's own button
+   class), so it never competes with that rule and needs no prefix. */
+.game-menu .menu-btn.difficulty-easy,
+.ai-option.difficulty-easy,
+.daily-difficulty-locked.difficulty-easy,
+[data-difficulty="easy"] {
+  border-color: #65a795 !important;
+  background: var(--v4-easy, #397867) !important;
+  color: #fff !important;
+  box-shadow: none !important;
 }
-.difficulty-easy:hover {
-  background: color-mix(in srgb,var(--tile-green) 85%,white);
+
+.game-menu .menu-btn.difficulty-medium,
+.ai-option.difficulty-medium,
+.daily-difficulty-locked.difficulty-medium,
+[data-difficulty="medium"] {
+  border-color: #d0a05e !important;
+  background: var(--v4-medium, #99692f) !important;
+  color: #fff !important;
+  box-shadow: none !important;
 }
-.difficulty-medium {
-  background: var(--tile-yellow);
-  color: var(--tile-yellow-text);
-  border-color: var(--tile-yellow);
+
+.game-menu .menu-btn.difficulty-hard,
+.ai-option.difficulty-hard,
+.daily-difficulty-locked.difficulty-hard,
+[data-difficulty="hard"] {
+  border-color: #cf7591 !important;
+  background: var(--v4-hard, #9d4864) !important;
+  color: #fff !important;
+  box-shadow: none !important;
 }
-.difficulty-medium:hover {
-  background: color-mix(in srgb,var(--tile-yellow) 85%,white);
+
+.game-menu .menu-btn.difficulty-easy:hover:not(:disabled),
+.ai-option.difficulty-easy:hover:not(:disabled) {
+  background: var(--v4-easy-hover, #3f8270) !important;
 }
-.difficulty-hard {
-  background: var(--setter-color);
-  color: #fff;
-  border-color: var(--setter-color);
+
+.game-menu .menu-btn.difficulty-medium:hover:not(:disabled),
+.ai-option.difficulty-medium:hover:not(:disabled) {
+  background: var(--v4-medium-hover, #9f6c31) !important;
 }
-.difficulty-hard:hover {
-  background: color-mix(in srgb,var(--setter-color) 85%,white);
+
+.game-menu .menu-btn.difficulty-hard:hover:not(:disabled),
+.ai-option.difficulty-hard:hover:not(:disabled) {
+  background: var(--v4-hard-hover, #b35977) !important;
 }
-.difficulty-easy small, .difficulty-medium small, .difficulty-hard small {
+
+.difficulty-easy:disabled:hover,
+.difficulty-medium:disabled:hover,
+.difficulty-hard:disabled:hover {
+  background: inherit;
+}
+
+:is(.difficulty-easy, .difficulty-medium, .difficulty-hard) small {
   display: block;
   font-weight: 400;
-  opacity: 0.7;
+  color: rgba(255, 255, 255, 0.82) !important;
+  opacity: 1 !important;
+}
+
+:is(.menu-btn, .ai-option, [data-difficulty]):focus-visible {
+  outline: 3px solid #fff !important;
+  outline-offset: 2px !important;
+}
+
+:is(.difficulty-easy, .difficulty-medium, .difficulty-hard):disabled {
+  opacity: 0.48 !important;
+  filter: grayscale(0.35) !important;
+}
+
+/* Daily Challenge: difficulty is server-locked, shown as a plain readout
+   instead of three pickable buttons (see daily-challenge.js). Falls
+   through to the muted palette above via the compound selectors there
+   (.daily-difficulty-locked.difficulty-easy etc.) -- this is just the
+   plain wrapper chrome shared by all three. */
+.daily-difficulty-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
 }
 /* Simulation tools */
 .sim-center {
