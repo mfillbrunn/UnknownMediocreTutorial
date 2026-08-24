@@ -1578,38 +1578,11 @@
   display: none !important;
 }
 
-/* ---------- Role-aware game headers ---------- */
-#setterScreen {
-  --co-role: var(--co-setter);
-}
-
-#guesserScreen {
-  --co-role: var(--co-guesser);
-}
-
-/* Same surface as the rest of the game chrome for both roles -- role color
-   is a restrained accent (border, icon/text color, focus ring) only, never
-   a background fill that makes one role's header read as a different
-   panel from the other's. */
-#setterScreen .role-header,
-#guesserScreen .role-header {
-  background: var(--screen-bg) !important;
-  border-bottom: 1px solid color-mix(in srgb, var(--co-role) 30%, transparent) !important;
-}
-
-#setterScreen .role-header button:not(.danger-btn),
-#guesserScreen .role-header button:not(.danger-btn),
-.role-action-button-v3 {
-  border: 1px solid color-mix(in srgb, var(--co-role) 45%, transparent) !important;
-  border-radius: 11px !important;
-  background: var(--screen-bg) !important;
-  color: color-mix(in srgb, var(--co-role) 74%, white) !important;
-}
-
-#setterScreen .role-header button:not(.danger-btn):hover,
-#guesserScreen .role-header button:not(.danger-btn):hover {
-  background: color-mix(in srgb, var(--co-role) 14%, var(--screen-bg)) !important;
-}
+/* Role-aware game headers -- moved to layout.css's #setterScreen/
+   #guesserScreen .role-header rule (same shared background, restrained
+   role-accent border/text). .role-action-button-v3's own DOM injection
+   (ui/competitive-overhaul-v3.js) was removed too: the layout.css
+   selector already matches these buttons directly. */
 
 /* ---------- Secretkeeper Spyometer and game log ---------- */
 #setterScreen #pcSpyChargeCard,

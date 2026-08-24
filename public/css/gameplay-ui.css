@@ -55,14 +55,14 @@
   display: none !important;
 }
 
+/* Sizing only -- role-tinted border/background/color for these buttons is
+   layout.css's #setterScreen/#guesserScreen .role-header button rule
+   (higher specificity via the real IDs, wins regardless of load order). */
 :is(#setterScreen, #guesserScreen) .role-header button {
   min-width: 31px;
   min-height: 31px;
   padding: 5px 8px;
-  border: 1px solid var(--game-line);
   border-radius: 9px;
-  background: var(--game-soft);
-  color: var(--game-text);
   box-shadow: none;
 }
 
