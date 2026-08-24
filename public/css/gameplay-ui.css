@@ -208,7 +208,7 @@
 
 #setterScreen #actionLogSetter .log-entry.log-round {
   margin-top: 4px;
-  color: var(--game-blue);
+  color: var(--setter-color);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.07em;
@@ -549,19 +549,26 @@
   display: none !important;
 }
 
-/* Spyometer and game log: setter-role-tinted border/background/title on
-   top of the shared .game-side-panel/.pc-charge-card chrome. !important
-   needed on border-color/background: the shared :is(#setterScreen,
-   #guesserScreen) :is(.game-side-panel, .notes-panel) rule below has
-   equal (ID+class) specificity and loads later in this same file. */
-#setterScreen #pcSpyChargeCard,
-#setterScreen .setter-sidebar-panel,
-#actionLogSetter,
-#setterScreen .action-log-panel {
+/* Spyometer: setter-role-tinted border/background/title on top of the
+   shared .game-side-panel/.pc-charge-card chrome. !important needed on
+   border-color/background: the shared :is(#setterScreen, #guesserScreen)
+   :is(.game-side-panel, .notes-panel) rule below has equal (ID+class)
+   specificity and loads later in this same file. The game log used to
+   get the same tinted panel chrome here too, but it now stays plain --
+   just its round-marker text (.log-round) picks up the setter color,
+   see below. */
+#setterScreen #pcSpyChargeCard {
   border-color: color-mix(in srgb, var(--setter-color) 42%, var(--elevated-line)) !important;
   background:
     radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--setter-color) 15%, transparent), transparent 52%),
     linear-gradient(145deg, #19202d, #10151e) !important;
+}
+
+#setterScreen .setter-sidebar-panel,
+#actionLogSetter,
+#setterScreen .action-log-panel {
+  border-color: transparent !important;
+  background: none !important;
 }
 
 #setterScreen #pcSpyChargeCard .pc-card-title,

@@ -37,7 +37,7 @@
     const entries = [];
     const myId = typeof myUserId === "function" ? myUserId() : null;
 
-    entries.push({ type: "round", text: "Game Log" });
+    entries.push({ type: "round", text: "Round 1" });
 
     // Completed rounds are archived (and state.history is wiped) at each
     // round boundary, so pull them from state.matchRounds too — otherwise
