@@ -453,145 +453,7 @@
   color: color-mix(in srgb, var(--pc-power-accent) 65%, white);
 }
 
-/* ========================================================================== 
-   2. Purpose-built Guess Again announcement
-   ========================================================================== */
-
-.big-announce.guess-again-announce {
-  --guess-again-accent: var(--guesser-color, #60a5fa);
-  background:
-    radial-gradient(circle at 50% 43%, color-mix(in srgb, var(--guess-again-accent) 19%, transparent), transparent 42%),
-    rgba(3, 7, 13, 0.72);
-  backdrop-filter: blur(5px);
-}
-
-.big-announce.guess-again-announce .big-announce-card {
-  position: relative;
-  isolation: isolate;
-  width: min(430px, calc(100vw - 30px));
-  padding: 34px 27px 24px;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--guess-again-accent) 62%, rgba(255, 255, 255, 0.16));
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--guess-again-accent) 22%, transparent), transparent 43%),
-    linear-gradient(160deg, #152335, #080d15 72%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 32px 90px rgba(0, 0, 0, 0.62),
-    0 0 45px color-mix(in srgb, var(--guess-again-accent) 15%, transparent);
-  color: #f5f9ff;
-  text-align: center;
-}
-
-.big-announce.guess-again-announce .big-announce-card::before {
-  content: "TURN RETAINED";
-  display: inline-flex;
-  align-items: center;
-  min-height: 22px;
-  margin-bottom: 13px;
-  padding: 4px 9px;
-  border: 1px solid color-mix(in srgb, var(--guess-again-accent) 44%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--guess-again-accent) 11%, transparent);
-  color: color-mix(in srgb, var(--guess-again-accent) 68%, white);
-  font-size: 8px;
-  font-weight: 950;
-  letter-spacing: 0.2em;
-}
-
-.big-announce.guess-again-announce .big-announce-card::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.76), transparent 82%);
-  pointer-events: none;
-}
-
-.big-announce.guess-again-announce .big-announce-icon {
-  display: grid;
-  place-items: center;
-  width: 78px;
-  height: 78px;
-  margin: 0 auto 14px;
-  border: 1px solid color-mix(in srgb, var(--guess-again-accent) 66%, white 9%);
-  border-radius: 24px;
-  background:
-    linear-gradient(145deg, color-mix(in srgb, var(--guess-again-accent) 32%, rgba(255, 255, 255, 0.08)), rgba(7, 12, 20, 0.75));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 0 28px color-mix(in srgb, var(--guess-again-accent) 29%, transparent);
-  color: color-mix(in srgb, var(--guess-again-accent) 72%, white);
-  font-size: 48px;
-  font-weight: 800;
-  line-height: 1;
-  animation: competitive-guess-again-turn 1.1s cubic-bezier(0.2, 0.75, 0.25, 1) both;
-}
-
-.big-announce.guess-again-announce .big-announce-title {
-  margin: 0;
-  color: #f7fbff;
-  font-size: clamp(30px, 8vw, 44px);
-  font-weight: 950;
-  letter-spacing: -0.035em;
-  line-height: 1;
-  text-transform: uppercase;
-  text-shadow: 0 0 24px color-mix(in srgb, var(--guess-again-accent) 23%, transparent);
-}
-
-.big-announce.guess-again-announce .big-announce-sub {
-  display: grid;
-  gap: 5px;
-  margin-top: 13px;
-  color: rgba(229, 239, 250, 0.83);
-  font-size: 13px;
-  line-height: 1.42;
-}
-
-.big-announce.guess-again-announce .big-announce-sub-line:last-child {
-  color: color-mix(in srgb, var(--guess-again-accent) 58%, white);
-  font-weight: 800;
-}
-
-.big-announce.guess-again-announce .big-announce-powers {
-  position: relative;
-  display: block !important;
-  width: 100%;
-  height: 3px;
-  margin-top: 20px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.big-announce.guess-again-announce .big-announce-powers::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--guess-again-accent), color-mix(in srgb, var(--guess-again-accent) 42%, white));
-  box-shadow: 0 0 12px color-mix(in srgb, var(--guess-again-accent) 65%, transparent);
-  transform-origin: left;
-  animation: competitive-guess-again-progress 3.2s linear both;
-}
-
-@keyframes competitive-guess-again-turn {
-  0% { opacity: 0; transform: rotate(-55deg) scale(0.62); }
-  62% { opacity: 1; transform: rotate(8deg) scale(1.06); }
-  100% { opacity: 1; transform: rotate(0) scale(1); }
-}
-
-@keyframes competitive-guess-again-progress {
-  from { transform: scaleX(1); }
-  to { transform: scaleX(0); }
-}
-
-/* ========================================================================== 
+/* ==========================================================================
    3. Full overlapping waiting wave
    ========================================================================== */
 
@@ -1251,18 +1113,6 @@
     display: none;
   }
 
-  .big-announce.guess-again-announce .big-announce-card {
-    padding: 28px 18px 20px;
-    border-radius: 20px;
-  }
-
-  .big-announce.guess-again-announce .big-announce-icon {
-    width: 68px;
-    height: 68px;
-    border-radius: 20px;
-    font-size: 41px;
-  }
-
   #menu.screen {
     max-width: calc(100vw - 12px);
   }
@@ -1332,8 +1182,6 @@
   .pc-refresh-choice-btn::after,
   .pc-refresh-icon,
   .pc-choice-card[data-rarity],
-  .big-announce.guess-again-announce .big-announce-icon,
-  .big-announce.guess-again-announce .big-announce-powers::before,
   #waitingForPlayer .dots.waiting-wave span {
     animation: none !important;
     transition: none !important;
