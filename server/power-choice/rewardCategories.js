@@ -47,8 +47,7 @@ const REWARD_CATEGORIES = Object.freeze({
   "spy-add-point-1": "choice-tempo",
   "inspector-remove-point-1": "choice-tempo",
   forceTimer: "choice-tempo",
-  nonsense: "choice-tempo",
-  betMiss: "choice-tempo"
+  nonsense: "choice-tempo"
 });
 
 const KNOWN_REWARD_CATEGORIES = Object.freeze([

@@ -120,7 +120,6 @@ const POWER_COPY = {
   // since the 5 letters it tests are chosen by the server (see
   // letterProbeServer.js), not typed in.
   letterProbe: ["🔎", "Recon Sweep", "Test 5 random letters right now and learn how many are in the secret."],
-  betMiss: ["🎯", "Miss Bet", "Bet right now how many misses your next guess will have -- guess right and win a free green letter."],
   doubleGuess: ["🔫", "Double Tap", "Submit two guesses at once right now and get feedback on both."],
   // PERSISTENT_POWER_IDS -- permanent unlocks, not one-turn effects, so
   // the copy says "from now on" instead of "this turn".
@@ -760,14 +759,12 @@ function guesserRewardPool(tier) {
     powerOption("magicMode"),
     powerOption("revealLocation"),
     powerOption("letterProfile"),
-    // One-off effects, activated immediately on pick. Recon Sweep/Miss
-    // Bet each need a real payload (5 letters / a bet number) -- the
-    // reward card itself collects it and fires on the spot, see
-    // applyChoice's payload param -- there's no way to bank the power
-    // for later.
+    // One-off effect, activated immediately on pick. Recon Sweep needs a
+    // real payload (5 letters) -- the reward card itself collects it and
+    // fires on the spot, see applyChoice's payload param -- there's no way
+    // to bank the power for later.
     powerOption("suggestGuess"),
-    powerOption("letterProbe"),
-    powerOption("betMiss")
+    powerOption("letterProbe")
   ];
   if (tier >= 2) pool.push(powerOption("revealHistory"));
   return pool;
@@ -1530,8 +1527,6 @@ function powerOptionApplicable(state, option) {
     // owner's own turn), so a card that would fail on pick isn't offered.
     case "letterProbe":
       return !state.powers?.letterProbeUsed;
-    case "betMiss":
-      return !state.powers?.betMissUsed;
     case "doubleGuess":
       return !state.powers?.doubleGuessUsed && !state.pendingGuess;
     case "blindSpot":

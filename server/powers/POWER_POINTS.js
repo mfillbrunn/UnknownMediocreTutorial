@@ -38,7 +38,6 @@ const GUESSER_POWER_POINTS = {
   magicMode: 3.5,       // Inside Job — turns every yellow green next round
   revealLetter: 2,       // Confirm Lead — guaranteed green via a hidden challenge
   nonsense: 2,           // Signal Scramble — a guess can be a non-word
-  betMiss: 1.5,          // Risky Maneuver — bet on miss count for a free green
   fieldReport: 2.5,      // Field Report — hidden conditions for a free yellow/green
   wiretap: 1.5,          // Wiretap — passive remaining-count + live tap in bullet/blitz
   letterProbe: 1.5,      // Recon Sweep — test 5 letters, learn how many are present

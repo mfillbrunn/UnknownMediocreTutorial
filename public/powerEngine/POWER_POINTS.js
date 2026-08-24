@@ -31,7 +31,6 @@ window.GUESSER_POWER_POINTS = {
   magicMode: 3.5,
   revealLetter: 2,
   nonsense: 2,
-  betMiss: 1.5,
   fieldReport: 2.5,
   wiretap: 1.5,
   letterProbe: 1.5,
