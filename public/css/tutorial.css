@@ -196,10 +196,12 @@ transition:
 #tutorialContinueBtn {
   min-height: 34px;
   padding: 0 14px;
-  border: 0;
+  border: 1px solid color-mix(in srgb, #ffd54f 55%, transparent);
   border-radius: 9px;
 
-  background: #ffd54f;
+  background: color-mix(in srgb, #ffd54f var(--glass-alpha, 60%), transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #17130a;
 
   font-size: 12px;
@@ -207,13 +209,15 @@ transition:
   letter-spacing: 0.2px;
   cursor: pointer;
   touch-action: manipulation;
- 
+
   transition:
   transform 150ms ease,
-  filter 190ms ease;
+  filter 190ms ease,
+  background-color 140ms ease;
 }
 
 #tutorialContinueBtn:hover {
+  background: color-mix(in srgb, #ffd54f var(--glass-alpha-hover, 72%), transparent);
   filter: brightness(1.06);
 }
 
@@ -765,8 +769,12 @@ transition:
 }
 
 #tutorialContinueBtn {
-  background: var(--tutorial-accent);
+  border-color: color-mix(in srgb, var(--tutorial-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--tutorial-accent) var(--glass-alpha, 60%), transparent);
   color: #101217;
+}
+#tutorialContinueBtn:hover {
+  background: color-mix(in srgb, var(--tutorial-accent) var(--glass-alpha-hover, 72%), transparent);
 }
 
 .tutorial-bubble.tutorial-compact .tutorial-body {

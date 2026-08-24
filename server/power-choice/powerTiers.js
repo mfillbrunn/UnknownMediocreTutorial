@@ -29,7 +29,6 @@ const POWER_TIERS = Object.freeze({
   letterProbe: { role: "guesser", tier: 2 },
   revealLocation: { role: "guesser", tier: 2 },
   letterProfile: { role: "guesser", tier: 2 },
-  betMiss: { role: "guesser", tier: 2 },
   wiretap: { role: "guesser", tier: 3 },
   doubleGuess: { role: "guesser", tier: 3 },
   fieldReport: { role: "guesser", tier: 3 }
@@ -52,7 +51,7 @@ const RANDOM_POWER_POOLS = Object.freeze({
   guesser: [
     "revealGreen", "freezeSecret", "rouletteSecret", "stealthGuess",
     "nonsense", "magicMode", "suggestGuess", "revealHistory",
-    "letterProbe", "revealLocation", "letterProfile", "betMiss"
+    "letterProbe", "revealLocation", "letterProfile"
   ]
 });
 

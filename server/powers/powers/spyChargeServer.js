@@ -147,6 +147,29 @@ function isDecisionEligible(state) {
   );
 }
 
+// Same as isDecisionEligible, but a Hidden Guess (doubleGuessPending) turn
+// still counts as eligible here -- it must still award exactly one star
+// (see evaluateSecretChange's doubleGuessPending branch below), just never
+// a bonus hint. isDecisionEligible itself stays untouched and keeps
+// excluding doubleGuessPending: rollHintForTurn and the hint-validity
+// check both still gate on it directly, so no bonus-star hint is ever
+// rolled or offered while a Hidden Guess decision is pending -- that's
+// what actually suppresses the bonus star, not a separate check here.
+function isScoringEligible(state) {
+  return !!(
+    getCharge(state)?.enabled &&
+    state.phase === "normal" &&
+    state.turn === state.setter &&
+    /^[A-Z]{5}$/.test(
+      normalizeWord(state.pendingGuess)
+    ) &&
+    !state.powers?.stealthGuessActive &&
+    !state.powers?.freezeActive &&
+    !state.powers?.rouletteSecretActive &&
+    !state.simultaneousAllWrong
+  );
+}
+
 function legalAlternativeCandidates(
   state,
   allowedSecrets,
@@ -314,10 +337,11 @@ function starsForCandidate(candidateCount, bestCount) {
     ((bestCount - candidateCount) / bestCount) * 100
   );
 
-  if (gapPct < 10) {
-    return 3;
-  }
-
+  // Base stars top out at 2 -- reaching 3 requires the separate bonus
+  // star (see evaluateSecretChange's bonusStars), never a base switch
+  // alone, however close to optimal it is. Old base-3 and old base-2
+  // switches (formerly gapPct < 10 and gapPct < 25 respectively) now both
+  // land here.
   if (gapPct < 25) {
     return 2;
   }
@@ -368,7 +392,7 @@ function evaluateSecretChange(
     };
   }
 
-  if (!isDecisionEligible(state)) {
+  if (!isScoringEligible(state)) {
     return empty;
   }
 
@@ -404,6 +428,21 @@ function evaluateSecretChange(
       word
     );
 
+  // Hidden Guess (doubleGuessPending): a valid change earns exactly one
+  // star, whether it's a strong switch or a weak one -- no base-star
+  // scaling, and (since rollHintForTurn never rolls a hint while this is
+  // pending, so charge.hint is always null here) no bonus star either.
+  if (state.powers?.doubleGuessPending) {
+    return {
+      before,
+      baseStars: 1,
+      bonusStars: 0,
+      earnedStars: 1,
+      candidateCount,
+      bestCount: analysis.bestCount
+    };
+  }
+
   const baseStars = starsForCandidate(
     candidateCount,
     analysis.bestCount
@@ -420,7 +459,7 @@ function evaluateSecretChange(
     before,
     baseStars,
     bonusStars,
-    earnedStars: baseStars + bonusStars,
+    earnedStars: Math.min(3, baseStars + bonusStars),
     candidateCount,
     bestCount: analysis.bestCount
   };
@@ -678,7 +717,7 @@ if (!module.exports.__competitiveHistoryMetricsV3) {
       !state?.simultaneousAllWrong &&
       requested === current &&
       state?.powers?.spyCharge?.enabled &&
-      isDecisionEligible(state) &&
+      isScoringEligible(state) &&
       analysis?.feasibleSet?.has(current);
 
     if (legalKeep) {

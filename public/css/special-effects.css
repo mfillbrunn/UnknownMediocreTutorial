@@ -150,6 +150,78 @@
   }
 }
 
+/* TURN INDICATOR — restrained, non-blocking cue for a turn handoff (e.g.
+   "Guess again" after simultaneous opening moves). Replaces a blocking
+   full-screen popup for this case: a single role-color sheen sweep plus a
+   small short-lived badge, both pointer-events:none so gameplay never
+   pauses while it plays. See client/turn-indicator.js. */
+
+#turnIndicatorSheen {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--ti-accent, var(--guesser-color)) 20%, transparent) 48%,
+    color-mix(in srgb, var(--ti-accent, var(--guesser-color)) 32%, transparent) 50%,
+    color-mix(in srgb, var(--ti-accent, var(--guesser-color)) 20%, transparent) 52%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+  background-position: 130% 0;
+}
+
+#turnIndicatorSheen.is-active {
+  animation: turnIndicatorSweep 1s ease-in-out 1;
+}
+
+@keyframes turnIndicatorSweep {
+  0% { opacity: 0; background-position: 130% 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; background-position: -30% 0; }
+}
+
+#turnIndicatorBadge {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  z-index: 9001;
+  pointer-events: none;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ti-accent, var(--guesser-color)) 55%, transparent);
+  background: color-mix(in srgb, var(--ti-accent, var(--guesser-color)) 26%, #10161f);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+#turnIndicatorBadge.is-active {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #turnIndicatorSheen.is-active {
+    animation: none;
+    opacity: 0.35;
+    background-position: 50% 0;
+    transition: opacity 900ms ease;
+  }
+  #turnIndicatorBadge.is-active {
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 /* BIG ANNOUNCE — round start (role + goal), secret found / secret lost */
 
 .big-announce {

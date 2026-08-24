@@ -252,7 +252,7 @@ function runStarTutorial(state, role) {
 
   if (step === 2) {
     starTutorialShow(
-      "A better legal alternative earns more stars: 3 is best, so a 3-star switch is normally good to submit. A bonus star is available when you match the shown letter and position; that target comes from a best current secret, one that leaves the Guesser the most possible words.",
+      "A better legal alternative earns 2 stars, the best a switch can earn on its own. A bonus star is available on top of that when you match the shown letter and position; that target comes from a best current secret, one that leaves the Guesser the most possible words -- matching it is the only way to reach 3.",
       { current: 3, total: 6 }
     );
     api.highlight(spyMeterHighlightTarget());

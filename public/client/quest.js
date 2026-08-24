@@ -409,7 +409,19 @@ function createQuestBadgeTile(type) {
   btn.appendChild(chip);
 
   wrapper.appendChild(btn);
-  return { wrapper, btn, labelEl, chip };
+
+  // Keyboard-guide toggle(s) for the quest types a live highlight can help
+  // with (see renderQuestGuideControls below) -- a SIBLING of btn, not a
+  // child, so its own clicks never bubble into btn's onclick (which opens
+  // the info+Use popup) and it needs no stopPropagation. Hidden/emptied by
+  // renderQuestGuideControls whenever this quest/role/state has no guide
+  // to offer, so it takes no space in that case.
+  const guide = document.createElement("div");
+  guide.className = "quest-guide-inline";
+  guide.hidden = true;
+  wrapper.appendChild(guide);
+
+  return { wrapper, btn, labelEl, chip, guide };
 }
 
 // Progress text for the corner chip -- "n/m" while in progress, or a
@@ -485,7 +497,7 @@ function updateQuestBadge(state, role) {
   const status = computeQuestStatus(state);
   if (!status) return;
 
-  const { btn, labelEl, chip } = _questBadge;
+  const { btn, labelEl, chip, guide } = _questBadge;
   btn.title = status.meta.label;
   // Progress ("n/m", "Ready", "Done") now lives in the small corner chip
   // instead of a "Quest: <progress>" prefix line, so the label itself is
@@ -521,6 +533,8 @@ function updateQuestBadge(state, role) {
   // explain-on-click case below before this.
   btn.disabled = false;
 
+  renderQuestGuideControls(guide, q.type, role, !!status.done);
+
   // Tapping opens the same info+Use popup as any power button -- the Use
   // button only appears/works when canClaim (ready OR one-away, i.e. a
   // green-flagged or yellow-flagged quest -- see the comment above
@@ -547,21 +561,12 @@ function updateQuestBadge(state, role) {
       ? "Optional side goal -- no need to complete it, but finishing it grants a bonus reward. "
       : "";
     const descText = `${optionalHint}${status.desc}${oneAwayHint}${waitForTurnHint}`;
-    // Only the guesser can toggle their OWN keyboard's guide -- the
-    // setter's copy of this badge is a read-only mirror (see canClaim's
-    // comment above), and there's no keyboard of theirs to highlight for
-    // someone else's quest anyway. Never offered once the quest is
-    // already claimed (status.done) -- nothing left to guide toward.
-    const guideHtml = role === "guesser" && !status.done
-      ? buildQuestGuideHtml(q.type)
-      : "";
-
-    let descHtml;
-    if (q.type === "RARE") {
-      descHtml = buildRareLettersDescHtml(descText, status.usedLetters, q) + guideHtml;
-    } else if (guideHtml) {
-      descHtml = `<div>${descText}</div>${guideHtml}`;
-    }
+    // The keyboard-guide toggle(s) now live permanently on the badge
+    // itself (see renderQuestGuideControls/the "guide" element above) --
+    // this popup is info+Use only, no controls duplicated in here.
+    const descHtml = q.type === "RARE"
+      ? buildRareLettersDescHtml(descText, status.usedLetters, q)
+      : undefined;
 
     window.showPowerActionPopup?.({
       emoji: status.meta.emoji || "🎯",
@@ -594,49 +599,86 @@ function updateQuestBadge(state, role) {
 }
 window.updateQuestBadge = updateQuestBadge;
 
-// Builds the "Guide" controls shown in the quest badge's info popup for
-// the 3 quest types a live keyboard highlight can actually help with --
-// see client/quest-guide.js for what the highlight itself does. Returns
-// "" for every other quest type (no controls injected into the popup).
+// The keyboard-guide toggle(s) for the 3 quest types a live highlight can
+// actually help with -- see client/quest-guide.js for what the highlight
+// itself does. Rendered directly on the quest badge (the "guide" element
+// from createQuestBadgeTile), visible by default rather than behind a
+// click into the info popup -- see updateQuestBadge's call site.
 const QUEST_GUIDE_RANGE = {
   HALF_AM: [65, 80], // "A".charCodeAt(0), "P".charCodeAt(0) -- matches questServer.js's isInLetterRange("A","P")
   HALF_NZ: [75, 90]  // "K".charCodeAt(0), "Z".charCodeAt(0) -- matches isInLetterRange("K","Z")
 };
-function buildQuestGuideHtml(questType) {
+
+// eligible is true only for role==="guesser" && !status.done && a quest
+// type in QUEST_GUIDE_RANGE, "ALPHA", or "RARE" -- every other power/quest
+// badge, and the setter's read-only mirror, never had a guide to offer in
+// the first place, matching the old popup's own gating.
+function renderQuestGuideControls(guideEl, questType, role, done) {
+  if (!guideEl) return;
+
+  const kind = questType in QUEST_GUIDE_RANGE ? "range"
+    : questType === "ALPHA" ? "alpha"
+    : questType === "RARE" ? "rare"
+    : null;
+  const eligible = role === "guesser" && !done && kind;
+
+  if (!eligible) {
+    guideEl.hidden = true;
+    guideEl.innerHTML = "";
+    delete guideEl.dataset.built;
+    return;
+  }
+
+  guideEl.hidden = false;
   const active = window.getQuestGuideState?.(questType);
 
-  if (questType in QUEST_GUIDE_RANGE) {
-    const [min, max] = QUEST_GUIDE_RANGE[questType];
-    return active
-      ? `<div class="quest-guide-controls"><button type="button" class="secondary-btn small" onclick="window.clearQuestGuide();window.hidePowerActionPopup();">Turn off keyboard guide</button></div>`
-      : `<div class="quest-guide-controls"><button type="button" class="secondary-btn small" onclick="window.setQuestGuideRange('${questType}',${min},${max});window.hidePowerActionPopup();">Highlight valid letters on keyboard</button></div>`;
-  }
-
-  if (questType === "ALPHA") {
-    if (active) {
-      const dirLabel = active.direction === "ASC" ? "A → Z" : "Z → A";
-      return `<div class="quest-guide-controls"><p class="quest-guide-note">Keyboard guide: ${dirLabel} — as you type, keys valid for the NEXT letter light up.</p><button type="button" class="secondary-btn small" onclick="window.clearQuestGuide();window.hidePowerActionPopup();">Turn off keyboard guide</button></div>`;
+  if (guideEl.dataset.built !== kind) {
+    guideEl.dataset.built = kind;
+    if (kind === "alpha") {
+      guideEl.innerHTML = `
+        <button type="button" class="quest-guide-toggle" data-dir="ASC" title="Highlight A to Z valid next letters" aria-label="Highlight A to Z valid next letters">A→Z</button>
+        <button type="button" class="quest-guide-toggle" data-dir="DESC" title="Highlight Z to A valid next letters" aria-label="Highlight Z to A valid next letters">Z→A</button>
+      `;
+      guideEl.querySelectorAll(".quest-guide-toggle").forEach(toggleBtn => {
+        toggleBtn.addEventListener("click", () => {
+          const dir = toggleBtn.dataset.dir;
+          const current = window.getQuestGuideState?.(questType);
+          if (current?.direction === dir) {
+            window.clearQuestGuide?.();
+          } else {
+            window.setQuestGuideAlpha?.(dir);
+          }
+          renderQuestGuideControls(guideEl, questType, role, done);
+        });
+      });
+    } else {
+      const label = kind === "rare" ? "Rare letter guide" : "Keyboard guide";
+      guideEl.innerHTML = `<button type="button" class="quest-guide-toggle" title="Highlight valid keyboard letters" aria-label="${label}">${label}</button>`;
+      guideEl.querySelector(".quest-guide-toggle").addEventListener("click", () => {
+        if (window.getQuestGuideState?.(questType)) {
+          window.clearQuestGuide?.();
+        } else if (kind === "rare") {
+          window.setQuestGuideRare?.();
+        } else {
+          const [min, max] = QUEST_GUIDE_RANGE[questType];
+          window.setQuestGuideRange?.(questType, min, max);
+        }
+        renderQuestGuideControls(guideEl, questType, role, done);
+      });
     }
-    return `<div class="quest-guide-controls">
-      <p class="quest-guide-note">Pick a direction to highlight which letters are valid to type next:</p>
-      <div class="quest-guide-btn-row">
-        <button type="button" class="secondary-btn small" onclick="window.setQuestGuideAlpha('ASC');window.hidePowerActionPopup();">A → Z guide</button>
-        <button type="button" class="secondary-btn small" onclick="window.setQuestGuideAlpha('DESC');window.hidePowerActionPopup();">Z → A guide</button>
-      </div>
-    </div>`;
   }
 
-  // RARE: highlights whichever of this match's 7 drawn rare letters
-  // haven't shown up in a guess yet -- recomputed live off state each
-  // render (see quest-guide.js's applyQuestGuideHighlight), not fixed at
-  // toggle time, since which letters remain changes guess to guess.
-  if (questType === "RARE") {
-    return active
-      ? `<div class="quest-guide-controls"><button type="button" class="secondary-btn small" onclick="window.clearQuestGuide();window.hidePowerActionPopup();">Turn off keyboard guide</button></div>`
-      : `<div class="quest-guide-controls"><button type="button" class="secondary-btn small" onclick="window.setQuestGuideRare();window.hidePowerActionPopup();">Highlight remaining rare letters on keyboard</button></div>`;
+  if (kind === "alpha") {
+    guideEl.querySelectorAll(".quest-guide-toggle").forEach(toggleBtn => {
+      const isOn = active?.direction === toggleBtn.dataset.dir;
+      toggleBtn.classList.toggle("is-on", isOn);
+      toggleBtn.setAttribute("aria-pressed", String(isOn));
+    });
+  } else {
+    const toggleBtn = guideEl.querySelector(".quest-guide-toggle");
+    toggleBtn.classList.toggle("is-on", !!active);
+    toggleBtn.setAttribute("aria-pressed", String(!!active));
   }
-
-  return "";
 }
 
 // --------------------------------------------------

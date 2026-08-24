@@ -610,16 +610,9 @@ onStateUpdate(newState => {
     // reaches this phase at all).
     if (state.phase === "normal" && myUserId() === state.guesser) {
       requestAnimationFrame(() => {
-        window.showBigAnnounce?.({
-          icon: "\u21bb",
-          title: "Guess again",
-          sub: [
-            "Opening moves crossed at the same time.",
-            "You keep control. Build your next five-letter play."
-          ],
-          roleClass: "role-guesser guess-again-announce",
-          compact: false,
-          duration: 3200
+        window.showTurnIndicator?.({
+          label: "Guess again",
+          accentVar: "--guesser-color"
         });
       });
     }
@@ -2412,7 +2405,14 @@ function updateGuesserScreen() {
   renderHistory({
   state,
   container: $("historyGuesser"),
-  role: "guesser"
+  role: "guesser",
+  // This feed only ever grows from the guesser's OWN submissions (unlike
+  // the setter's history, which needs the pendingGuessFlight animation
+  // above to smooth an opponent's guess landing) -- the reader is always
+  // already looking right at the row they just added, so auto-following
+  // to "newest" here only produced an unwanted scroll jump on every guess
+  // instead of ever actually catching someone up on missed activity.
+  autoScroll: false
 });
 renderConstraintRow({
   state,

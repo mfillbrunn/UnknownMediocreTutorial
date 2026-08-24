@@ -120,7 +120,6 @@ const POWER_COPY = {
   // since the 5 letters it tests are chosen by the server (see
   // letterProbeServer.js), not typed in.
   letterProbe: ["🔎", "Recon Sweep", "Test 5 random letters right now and learn how many are in the secret."],
-  betMiss: ["🎯", "Miss Bet", "Bet right now how many misses your next guess will have -- guess right and win a free green letter."],
   doubleGuess: ["🔫", "Double Tap", "Submit two guesses at once right now and get feedback on both."],
   // PERSISTENT_POWER_IDS -- permanent unlocks, not one-turn effects, so
   // the copy says "from now on" instead of "this turn".
@@ -760,14 +759,12 @@ function guesserRewardPool(tier) {
     powerOption("magicMode"),
     powerOption("revealLocation"),
     powerOption("letterProfile"),
-    // One-off effects, activated immediately on pick. Recon Sweep/Miss
-    // Bet each need a real payload (5 letters / a bet number) -- the
-    // reward card itself collects it and fires on the spot, see
-    // applyChoice's payload param -- there's no way to bank the power
-    // for later.
+    // One-off effect, activated immediately on pick. Recon Sweep needs a
+    // real payload (5 letters) -- the reward card itself collects it and
+    // fires on the spot, see applyChoice's payload param -- there's no way
+    // to bank the power for later.
     powerOption("suggestGuess"),
-    powerOption("letterProbe"),
-    powerOption("betMiss")
+    powerOption("letterProbe")
   ];
   if (tier >= 2) pool.push(powerOption("revealHistory"));
   return pool;
@@ -1530,8 +1527,6 @@ function powerOptionApplicable(state, option) {
     // owner's own turn), so a card that would fail on pick isn't offered.
     case "letterProbe":
       return !state.powers?.letterProbeUsed;
-    case "betMiss":
-      return !state.powers?.betMissUsed;
     case "doubleGuess":
       return !state.powers?.doubleGuessUsed && !state.pendingGuess;
     case "blindSpot":
@@ -2261,6 +2256,18 @@ function sendError(room, state, userId, io, message) {
   if (socketId && io) io.to(socketId).emit("errorMessage", message);
 }
 
+// A rejected POWER_CHOICE_SELECT still acks {ok:true} at the generic
+// gameAction layer (see socketHandlers.js -- it only reports transport
+// success, not this handler's own validation outcome), so the reward
+// chooser has no way to learn its pick was rejected from that ack alone.
+// This targeted event is the client's actual signal to re-enable the
+// card grid it disabled optimistically on click (see power-choice-mode.js's
+// fireChoice/pendingSelectAck).
+function sendSelectRejected(room, state, userId, io, choiceId, optionId) {
+  const socketId = room?.playersByUserId?.[userId]?.socketId;
+  if (socketId && io) io.to(socketId).emit("powerChoiceSelectRejected", { choiceId, optionId });
+}
+
 function handleAction(room, state, action, roomId, context) {
   if (!state || !action) return false;
   const io = context?.io;
@@ -2359,11 +2366,13 @@ function handleAction(room, state, action, roomId, context) {
         io,
         "That reward choice is no longer available."
       );
+      sendSelectRejected(room, state, action.userId, io, action.choiceId, action.optionId);
       return true;
     }
     const option = pending.options.find(item => item.id === action.optionId);
     if (!option) {
       sendError(room, state, action.userId, io, "Select one of the three cards.");
+      sendSelectRejected(room, state, action.userId, io, action.choiceId, action.optionId);
       return true;
     }
     if (!optionApplicable(state, option)) {
@@ -2374,12 +2383,14 @@ function handleAction(room, state, action, roomId, context) {
         io,
         "That reward no longer has a valid target. Select another card."
       );
+      sendSelectRejected(room, state, action.userId, io, action.choiceId, action.optionId);
       return true;
     }
     // Payload for the handful of cards that need real input typed in on
     // the spot (letters/betMissNumber/guess1+guess2) -- see applyChoice.
     if (!applyChoice(state, option, pending, room, roomId, io, context, action)) {
       sendError(room, state, action.userId, io, "That reward could not be activated.");
+      sendSelectRejected(room, state, action.userId, io, action.choiceId, action.optionId);
       return true;
     }
     state.powerChoice.pendingChoice = null;
