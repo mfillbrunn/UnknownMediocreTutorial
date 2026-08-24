@@ -2171,7 +2171,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 12px;
   background: rgba(1, 4, 9, 0.86);
   backdrop-filter: blur(7px);
 }
@@ -2223,12 +2223,18 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 .pc-modal-card {
   position: relative;
-  width: min(720px, 94vw);
-  padding: 18px;
-  border: 1px solid var(--game-line-strong);
-  border-radius: 20px;
-  background: linear-gradient(145deg, #151d2a, #090d14);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.64);
+  display: flex;
+  flex-direction: column;
+  width: min(820px, 95vw);
+  max-height: min(560px, calc(100dvh - 24px));
+  padding: clamp(16px, 3vw, 24px);
+  overflow-y: auto;
+  border: 1px solid var(--elevated-line);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% -15%, rgba(139, 92, 246, 0.18), transparent 42%),
+    linear-gradient(145deg, #172130, #090d14);
+  box-shadow: var(--elevated-shadow);
   color: var(--game-text);
 }
 
@@ -2258,146 +2264,214 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 .pc-modal h2 {
-  margin: 8px 0 5px;
-  font-size: clamp(21px, 4vw, 32px);
+  margin: 12px 46px 2px;
+  font-size: clamp(1.45rem, 4vw, 2.15rem);
+  letter-spacing: -0.025em;
   text-align: center;
 }
 
 .pc-modal-sub {
-  margin: 0 0 18px;
+  margin: 0 34px 14px;
   color: var(--game-muted);
-  font-size: 12px;
+  font-size: clamp(0.78rem, 1.8vw, 0.94rem);
+  font-weight: 780;
+  line-height: 1.45;
   text-align: center;
 }
 
-/* auto-fit instead of a fixed 3 columns -- most reward groups have 3
-   cards, but at least one now has 4, and this wraps either gracefully
-   instead of forcing a 4th card into a cramped 4th column. */
+/* One reward per row -- every option (and its "Optional" quest framing,
+   where present) stays visible at a glance instead of hiding behind a
+   swipe or a cramped multi-column grid. */
 .pc-card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-}
-
-/* Each card carries its own accent (--pc-card-accent, set inline from the
-   power's palette colour; the fixed rewards fall back to the role blue).
-   The tint is layered over the panel rather than replacing it so the text
-   keeps its contrast. */
-.pc-choice-card {
-  --pc-card-accent: var(--game-blue);
-  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  min-height: 190px;
-  padding: 13px 11px 11px;
-  border: 1px solid color-mix(in srgb, var(--pc-card-accent) 55%, var(--game-line));
-  border-radius: 15px;
+  align-items: stretch;
+  gap: clamp(10px, 2vw, 16px);
+  width: 100%;
+  padding: 2px 2px 4px;
+  overflow: visible;
+  scroll-snap-type: none;
+  touch-action: auto;
+}
+
+/* Left icon column = the reward's category color (--pc-power-accent, set
+   inline by power-choice-mode.js from server/power-choice/rewardCategories.js);
+   right body column = a metal finish keyed to rarity (bronze/silver/gold
+   below), so identity and rarity read as two distinct, deliberate color
+   cues instead of one flat card tint. */
+.pc-choice-card {
+  --pc-power-accent: var(--pc-card-accent, #38bdf8);
+  --pc-rarity-surface: #70442f;
+  --pc-rarity-border: #bd7b4e;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: clamp(72px, 15%, 92px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+  min-height: 92px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--pc-rarity-border);
+  border-radius: 14px;
+  outline: none;
   background:
-    radial-gradient(
-      circle at 50% 0%,
-      color-mix(in srgb, var(--pc-card-accent) 26%, transparent),
-      transparent 68%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--pc-card-accent) 12%, rgba(255, 255, 255, 0.05)),
-      rgba(255, 255, 255, 0.03)
-    );
-  color: #fff;
+    linear-gradient(100deg, color-mix(in srgb, var(--pc-power-accent) 55%, transparent) 0%, transparent 60%),
+    linear-gradient(120deg,
+      var(--pc-rarity-surface) 0%,
+      color-mix(in srgb, var(--pc-rarity-border) 62%, var(--pc-rarity-surface)) 42%,
+      var(--pc-rarity-surface) 68%,
+      color-mix(in srgb, var(--pc-rarity-border) 25%, var(--pc-rarity-surface)) 100%);
+  box-shadow: 0 7px 16px rgba(0, 0, 0, 0.23);
+  color: #f5f8fb;
+  text-align: left;
   cursor: pointer;
-  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, filter 180ms ease;
 }
 
-/* The icon plate and title pick up the accent too, so the colour reads as
-   the card's identity rather than a stray background wash. */
-.pc-choice-card .pc-card-icon {
-  border-color: color-mix(in srgb, var(--pc-card-accent) 60%, transparent);
-  background: color-mix(in srgb, var(--pc-card-accent) 20%, rgba(255, 255, 255, 0.06));
+.pc-choice-card[data-rarity="rare"] {
+  --pc-rarity-surface: #4a5667;
+  --pc-rarity-border: #aeb9c7;
 }
 
-.pc-choice-card .pc-card-icon .pc-card-svg {
-  color: color-mix(in srgb, var(--pc-card-accent) 72%, white);
+.pc-choice-card[data-rarity="legend"] {
+  --pc-rarity-surface: #746020;
+  --pc-rarity-border: #d7bb58;
 }
 
-.pc-choice-card strong {
-  color: color-mix(in srgb, var(--pc-card-accent) 45%, white);
+/* A static diagonal foil-glint on every rarity -- the shine itself is
+   what reads as "metal" rather than "painted card". Legend gets its own
+   slower animated sweep instead (below), replacing this one. */
+.pc-choice-card::after {
+  content: "";
+  display: block;
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 34%,
+    color-mix(in srgb, var(--pc-rarity-border) 55%, transparent) 45%,
+    color-mix(in srgb, var(--pc-rarity-border) 75%, white 15%) 50%,
+    color-mix(in srgb, var(--pc-rarity-border) 55%, transparent) 55%,
+    transparent 66%
+  );
+  pointer-events: none;
 }
 
-.pc-choice-card:hover,
-.pc-choice-card:focus-visible {
-  transform: translateY(-4px);
-  border-color: color-mix(in srgb, var(--pc-card-accent) 85%, white);
-  box-shadow:
-    0 13px 30px rgba(0, 0, 0, 0.4),
-    0 0 22px color-mix(in srgb, var(--pc-card-accent) 40%, transparent);
+.pc-choice-card:hover:not(:disabled),
+.pc-choice-card:focus-visible:not(:disabled) {
+  border-color: color-mix(in srgb, var(--pc-rarity-border) 72%, white);
+  box-shadow: 0 10px 21px rgba(0, 0, 0, 0.29);
+  transform: translateY(-2px);
   outline: none;
 }
 
+.pc-choice-card:active:not(:disabled) {
+  transform: translateY(-1px) scale(0.995);
+}
+
 .pc-choice-card:disabled {
-  opacity: 0.55;
+  opacity: 0.58;
   cursor: wait;
 }
 
-.pc-card-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  margin-bottom: 8px;
-  border: 1px solid var(--game-line);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.07);
-  font-size: 19px;
+.pc-choice-card .pc-card-icon {
+  position: relative;
+  isolation: isolate;
+  align-self: center;
+  justify-self: center;
+  width: calc(100% - 10px);
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 1 / 1;
+  margin: 5px;
+  padding: 5px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 11px;
+  background: linear-gradient(165deg, var(--pc-power-accent), color-mix(in srgb, var(--pc-power-accent) 55%, var(--pc-rarity-border) 30%));
+  color: #fff;
+  box-shadow: none;
 }
 
-/* Same <symbol> artwork the power buttons use, tinted to the role accent
-   like everywhere else it appears. */
-.pc-card-icon .pc-card-svg {
-  width: 26px;
-  height: 26px;
-  color: var(--role-accent, var(--game-blue));
-  fill: currentColor;
-}
-
-/* fixedRewardIconMarkup's own hand-drawn badges (power-choice-mode.js) --
-   every shape inside sets its own explicit fill, so unlike .pc-card-svg
-   above these ignore the role-accent tint entirely. Sized up a bit past
-   the card's own 40px box (overflow: visible lets it spill slightly)
-   since these are bolder compositions than the single-color power
-   symbols and read as cramped at the same 26px. */
-.pc-card-icon .pc-fixed-reward-svg {
-  width: 34px;
-  height: 34px;
-  overflow: visible;
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
-}
-
-.pc-tier {
+.pc-choice-card .pc-card-icon::before {
+  content: "";
   position: absolute;
-  top: 11px;
-  right: 11px;
-  padding: 4px 7px;
-  border: 1px solid rgba(255, 226, 120, 0.36);
-  border-radius: 999px;
-  color: #ffe278;
-  font-size: 8px;
-  font-weight: 950;
+  z-index: -1;
+  inset: 4px;
+  width: auto;
+  height: auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(6, 18, 30, 0.14);
+}
+
+.pc-card-icon .pc-card-svg,
+.pc-card-icon .pc-fixed-reward-svg {
+  width: 84%;
+  height: 84%;
+  max-width: 74px;
+  max-height: 74px;
+  color: #fff;
+  filter: drop-shadow(0 2px 3px rgba(4, 12, 21, 0.32));
+}
+
+.pc-card-body {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 13px 14px;
+  background: transparent;
 }
 
 .pc-choice-card strong {
-  font-size: 20px;
+  color: #fff;
+  font-size: clamp(15px, 2.3vw, 17px);
   line-height: 1.15;
-  text-align: center;
 }
 
 .pc-card-desc {
-  margin-top: 8px;
-  padding-bottom: 4px;
-  color: rgba(232, 242, 250, 0.92);
-  font-size: 15px;
-  line-height: 1.38;
-  text-align: center;
+  margin-top: 5px;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(12px, 1.9vw, 13.5px);
+  line-height: 1.35;
+}
+
+/* A restrained moving glint on gold only; disabled entirely under
+   reduced motion, see below. */
+.pc-choice-card[data-rarity="legend"]::after {
+  z-index: 5;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 244, 188, 0.2) 47%,
+    rgba(255, 250, 216, 0.36) 50%,
+    rgba(255, 244, 188, 0.2) 53%,
+    transparent 65%
+  );
+  background-size: 230% 100%;
+  animation: v4-gold-glint 3.8s ease-in-out infinite;
+}
+
+@keyframes v4-gold-glint {
+  0%, 68% { background-position: 140% 0; }
+  100% { background-position: -45% 0; }
+}
+
+@media (max-width: 560px) {
+  .pc-choice-card {
+    grid-template-columns: clamp(68px, 19%, 78px) minmax(0, 1fr);
+    min-height: 84px;
+  }
+
+  .pc-card-body {
+    padding: 11px 10px;
+  }
 }
 
 /* Recon Sweep / Miss Bet / Double Tap's own inline input, swapped in for
@@ -2406,7 +2480,12 @@ body.power-choice-mode #spyChargeAwardBackdrop {
    power for later, so the input lives right on the card being picked. */
 .pc-choice-card-armed {
   cursor: default;
-  gap: 10px;
+  gap: 14px;
+}
+
+.pc-choice-card-armed .pc-card-body {
+  justify-content: flex-start;
+  padding-top: 13px;
 }
 
 .pc-choice-card-armed:hover {
@@ -2430,7 +2509,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 .pc-reward-word-input {
   width: 100%;
   padding: 8px 9px;
-  border: 1px solid color-mix(in srgb, var(--pc-card-accent) 55%, var(--game-line));
+  border: 1px solid color-mix(in srgb, var(--pc-power-accent, var(--pc-card-accent)) 48%, rgba(255, 255, 255, 0.16));
   border-radius: 9px;
   background: rgba(0, 0, 0, 0.28);
   color: #fff;
@@ -2455,7 +2534,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 .pc-reward-bet-btn {
   width: 30px;
   height: 30px;
-  border: 1px solid color-mix(in srgb, var(--pc-card-accent) 55%, var(--game-line));
+  border: 1px solid color-mix(in srgb, var(--pc-power-accent, var(--pc-card-accent)) 48%, rgba(255, 255, 255, 0.16));
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.28);
   color: #fff;
@@ -2466,7 +2545,8 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 .pc-reward-bet-btn.is-selected {
   border-color: color-mix(in srgb, var(--pc-card-accent) 85%, white);
-  background: color-mix(in srgb, var(--pc-card-accent) 30%, rgba(255, 255, 255, 0.08));
+  background: color-mix(in srgb, var(--pc-power-accent, var(--pc-card-accent)) 26%, rgba(8, 13, 20, 0.9));
+  color: color-mix(in srgb, var(--pc-power-accent, var(--pc-card-accent)) 65%, white);
 }
 
 .pc-reward-input-actions {
@@ -2485,9 +2565,9 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 .pc-reward-fire-btn {
-  border: 1px solid color-mix(in srgb, var(--pc-card-accent) 70%, white);
-  background: color-mix(in srgb, var(--pc-card-accent) 32%, rgba(255, 255, 255, 0.06));
-  color: #fff;
+  border: 1px solid color-mix(in srgb, var(--pc-power-accent, var(--pc-card-accent)) 48%, rgba(255, 255, 255, 0.16));
+  background: color-mix(in srgb, var(--pc-power-accent, var(--pc-card-accent)) 26%, rgba(8, 13, 20, 0.9));
+  color: color-mix(in srgb, var(--pc-power-accent, var(--pc-card-accent)) 65%, white);
 }
 
 .pc-reward-fire-btn:disabled {
@@ -2496,9 +2576,111 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 .pc-reward-cancel-btn {
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid color-mix(in srgb, var(--pc-power-accent, var(--pc-card-accent)) 48%, rgba(255, 255, 255, 0.16));
   background: transparent;
   color: rgba(232, 242, 250, 0.8);
+}
+
+/* Refresh is one quiet action below the cards, communicated by disabled
+   styling rather than READY/USED/DEALING text. */
+.pc-refresh-choice-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 38px;
+  margin: 13px auto 0;
+  padding: 8px 13px;
+  overflow: visible;
+  border: 1px solid #3a4a5b;
+  border-radius: 9px;
+  background: #172433;
+  color: #e9f0f6;
+  box-shadow: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 760;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.pc-refresh-choice-btn:hover:not(:disabled),
+.pc-refresh-choice-btn:focus-visible:not(:disabled) {
+  border-color: #61768b;
+  background: #203247;
+  box-shadow: none;
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.pc-refresh-choice-btn.is-spent,
+.pc-refresh-choice-btn:disabled {
+  border-color: #2b333d;
+  background: #151b22;
+  color: #69737e;
+  box-shadow: none;
+  opacity: 1;
+  filter: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pc-refresh-icon {
+  display: block;
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: currentColor;
+  font-size: 0;
+}
+
+.pc-refresh-icon path {
+  vector-effect: non-scaling-stroke;
+}
+
+.pc-refresh-choice-btn:hover:not(:disabled) .pc-refresh-icon {
+  transform: rotate(-20deg);
+}
+
+.pc-refresh-choice-btn.is-dealing .pc-refresh-icon {
+  animation: competitive-reroll-spin 640ms linear infinite;
+}
+
+@keyframes competitive-reroll-spin {
+  to { transform: rotate(-360deg); }
+}
+
+.pc-refresh-label {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .pc-refresh-choice-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-choice-card[data-rarity="legend"]::after {
+    animation: none;
+    opacity: 0.22;
+  }
+
+  .pc-choice-card,
+  .pc-refresh-choice-btn,
+  .pc-refresh-icon {
+    transition: none;
+  }
 }
 
 /* Reward result popup shown to both players. */
@@ -2600,30 +2782,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
     top: 66px;
     grid-template-columns: auto 1fr auto;
     width: calc(100vw - 18px);
-  }
-
-  .pc-modal {
-    align-items: flex-start;
-    overflow: auto;
-  }
-
-  .pc-modal-card {
-    padding: 17px 12px;
-  }
-
-  .pc-card-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .pc-choice-card {
-    min-height: 155px;
-  }
-
-  .pc-card-icon {
-    width: 46px;
-    height: 46px;
-    margin-bottom: 8px;
-    font-size: 20px;
   }
 
   .pc-reward-popup {
@@ -2747,32 +2905,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   75% { transform: translateX(3px); }
 }
 
-/* POWER CHOICE REWARD TIERS V1: STYLES START */
-.pc-tier[data-tier="1"] {
-  border-color: rgba(121, 204, 255, 0.42);
-  background: rgba(65, 160, 216, 0.11);
-  color: #9edfff;
-}
-
-.pc-tier[data-tier="2"] {
-  border-color: rgba(255, 218, 105, 0.5);
-  background: rgba(255, 196, 62, 0.12);
-  color: #ffe278;
-}
-
-.pc-card-explanation {
-  width: 100%;
-  margin-top: 8px;
-  padding: 7px 8px;
-  border: 1px solid rgba(151, 211, 242, 0.16);
-  border-radius: 9px;
-  background: rgba(5, 12, 20, 0.38);
-  color: rgba(214, 233, 244, 0.76);
-  font-size: 10px;
-  line-height: 1.38;
-  text-align: left;
-}
-
 .pc-key-ruled-out:not(.pc-key-eliminated) {
   opacity: 0.72;
   background-image: repeating-linear-gradient(
@@ -2783,7 +2915,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   box-shadow: inset 0 0 0 1px rgba(117, 214, 255, 0.55);
 }
 
-/* POWER CHOICE REWARD TIERS V1: STYLES END */
 #setterScreen {
   --setter-wait-accent:
     var(--role-accent, var(--setter-color, #ff4b5c));
@@ -2831,180 +2962,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
     0 0 0 1px rgba(255, 75, 92, 0.14),
     0 0 10px rgba(255, 75, 92, 0.45) !important;
 }
-
-/* POWER CHOICE CARD CAROUSEL V1: STYLES START */
-.pc-modal {
-  padding: 12px;
-}
-
-.pc-modal-card {
-  width: min(590px, calc(100vw - 24px));
-  max-height: min(560px, calc(100dvh - 24px));
-  padding: 14px;
-  overflow-y: auto;
-  border-radius: 17px;
-}
-
-.pc-modal h2 {
-  margin: 7px 52px 3px;
-  font-size: clamp(19px, 3vw, 26px);
-}
-
-.pc-modal-sub {
-  margin: 0 34px 11px;
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-/* Reward cards stack vertically, one per row, instead of scrolling
-   sideways as a carousel -- the whole point is to see every option (and
-   the "Optional" quest framing on each) at a glance, without a swipe or
-   scroll hiding any of them. */
-.pc-card-grid {
-  display: flex !important;
-  flex-direction: column;
-  grid-template-columns: none !important;
-  gap: 8px;
-  width: 100%;
-  padding: 2px 2px 4px;
-  overflow: visible;
-  scroll-snap-type: none;
-  touch-action: auto;
-}
-
-/* Icon-left, text-right row -- the armed input variant (betMiss/
-   doubleGuess/letterProbe's inline entry form, see rewardInputArmed in
-   power-choice-mode.js) keeps its own vertical layout from the base
-   .pc-choice-card rule above, since a bet/guess form reads top-to-bottom
-   like everywhere else in the game, not squeezed into a row. */
-.pc-choice-card:not(.pc-choice-card-armed) {
-  flex: 0 0 auto !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  width: 100%;
-  min-width: 0;
-  min-height: 0 !important;
-  padding: 9px 14px 9px 10px;
-  gap: 12px;
-  scroll-snap-align: none;
-  border-radius: 14px;
-}
-
-.pc-choice-card:hover,
-.pc-choice-card:focus-visible {
-  transform: translateY(-2px);
-}
-
-.pc-choice-card:not(.pc-choice-card-armed) .pc-card-icon {
-  flex: 0 0 auto;
-  width: 46px;
-  height: 46px;
-  margin-bottom: 0;
-  border-radius: 13px;
-}
-
-.pc-card-icon .pc-card-svg {
-  width: 32px;
-  height: 32px;
-}
-
-.pc-card-icon .pc-fixed-reward-svg {
-  width: 42px;
-  height: 42px;
-  overflow: visible;
-  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.3));
-}
-
-/* Title/description/CHOOSE stack in their own column next to the icon,
-   left-aligned -- overrides the base block's centered column layout,
-   which suited the old square, icon-on-top card. */
-.pc-card-body {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-width: 0;
-  gap: 2px;
-  text-align: left;
-}
-
-.pc-choice-card strong {
-  font-size: 15px;
-  line-height: 1.2;
-  text-align: left;
-}
-
-.pc-card-desc {
-  margin-top: 2px;
-  padding-bottom: 0;
-  font-size: 12px;
-  line-height: 1.3;
-  text-align: left;
-}
-
-.pc-card-pick {
-  margin-top: 4px;
-  padding-top: 0;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-}
-
-.pc-tier {
-  top: 9px;
-  right: 9px;
-  padding: 3px 6px;
-  font-size: 7px;
-}
-
-.pc-card-explanation {
-  display: none !important;
-}
-
-@media (max-width: 520px) {
-  .pc-modal {
-    align-items: center !important;
-    overflow: hidden !important;
-    padding: 9px;
-  }
-
-  .pc-modal-card {
-    width: calc(100vw - 18px);
-    max-height: calc(100dvh - 18px);
-    padding: 12px 10px 10px;
-  }
-
-  .pc-modal h2 {
-    margin-inline: 48px;
-    font-size: 19px;
-  }
-
-  .pc-modal-sub {
-    margin: 0 20px 9px;
-    font-size: 10px;
-  }
-
-  .pc-card-grid {
-    grid-template-columns: none !important;
-    gap: 7px;
-    padding-right: 2px;
-  }
-
-  .pc-choice-card:not(.pc-choice-card-armed) .pc-card-icon {
-    width: 40px;
-    height: 40px;
-  }
-
-  .pc-card-icon .pc-fixed-reward-svg {
-    width: 36px;
-    height: 36px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pc-card-grid {
-    scroll-behavior: auto;
-  }
-}
-/* POWER CHOICE CARD CAROUSEL V1: STYLES END */
 
 /* TUTORIAL_MOTION_SIM_PATCH v1: START */
 body:not(.light-theme) {
