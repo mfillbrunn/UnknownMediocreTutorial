@@ -997,8 +997,8 @@
 /* Match summary */
 #menu.screen {
   box-sizing: border-box;
-  width: min(560px, calc(100vw - 14px));
-  max-width: 560px;
+  width: min(480px, calc(100vw - 14px));
+  max-width: 480px;
   margin: 7px auto;
   padding: 0;
   border: 0;
@@ -1030,16 +1030,24 @@
   top: 10px;
   right: 10px;
   z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
   min-height: 34px;
   height: 34px;
-  padding: 0 12px;
+  padding: 0;
   border: 1px solid #58708a;
   border-radius: 9px;
   background: #294763;
   color: #fff;
   box-shadow: none;
-  font-size: 11px;
-  font-weight: 800;
+}
+.share-btn-icon {
+  width: 16px;
+  height: 16px;
+  color: currentColor;
+  overflow: visible;
 }
 #menu .share-btn:hover:not(:disabled) {
   background: #355a79;
@@ -1219,13 +1227,6 @@
   border-radius: var(--r-10);
   margin: 0 0 8px;
 }
-.match-meta-row {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: var(--sp-8);
-  margin: 0;
-}
 .match-meta-chip {
   display: inline-flex;
   align-items: center;
@@ -1337,23 +1338,6 @@
 }
 .summary-clock-panel {
   margin-block: 8px;
-}
-.summary-clock-kicker {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  color: rgba(222, 232, 244, 0.56);
-  font-size: 8px;
-  font-weight: 950;
-  letter-spacing: 0.17em;
-  line-height: 1;
-}
-.summary-clock-symbol {
-  color: rgba(230, 239, 250, 0.72);
-  font-size: 11px;
-  letter-spacing: 0;
 }
 .summary-clock-grid {
   display: grid;
@@ -1510,7 +1494,7 @@
 }
 .stored-round-header {
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(260px, 1.2fr);
+  grid-template-columns: minmax(0, 1fr) minmax(235px, 1fr);
   align-items: stretch;
   gap: 8px;
   margin-bottom: 6px;
@@ -1537,30 +1521,18 @@
 }
 .stored-round-title-block h4 {
   margin: 6px 0 0;
-  overflow: hidden;
   color: var(--ink-text);
   font-size: 16px;
   font-weight: 900;
-  line-height: 1.15;
+  line-height: 1.2;
   opacity: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.stored-round-title-block p {
-  margin: 5px 0 0;
-  overflow: hidden;
-  color: var(--ink-muted);
-  font-size: 10px;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .stored-round-time {
   font-weight: 600;
   opacity: 0.7;
 }
 .summary-table-wrap {
-  width: min(460px, 100%);
+  width: min(400px, 100%);
   max-width: 100%;
   margin: 0 auto;
   overflow-x: hidden;
@@ -1631,6 +1603,7 @@
   vertical-align: middle;
 }
 .summary-feedback-tile {
+  display: inline-block;
   width: 15px;
   height: 15px;
   border-radius: 4px;

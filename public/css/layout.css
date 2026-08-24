@@ -532,10 +532,14 @@ margin:0;
    all duplicated or unnecessary there -- see index.html's per-screen
    .role-header and updateAppHeader's querySelectorAll in client.js), so
    the outer app-header would just be a redundant second header row
-   sitting above it during an actual game. Hidden only then; still shown
-   on every menu/lobby screen. */
+   sitting above it during an actual game. The round/match summary
+   (#menu) carries everything it needs in its own panel too -- score,
+   buttons, share -- so the outer header is dead weight there as well.
+   Hidden only on these three; still shown on every other menu/lobby
+   screen. */
 body:has(#setterScreen.active) .app-header,
-body:has(#guesserScreen.active) .app-header {
+body:has(#guesserScreen.active) .app-header,
+body:has(#menu.active) .app-header {
   display: none;
 }
 

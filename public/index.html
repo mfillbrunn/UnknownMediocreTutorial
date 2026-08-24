@@ -101,6 +101,10 @@
            of role, since "white flag" is the whole point of the icon. -->
       <symbol id="icon-white-flag" viewBox="0 0 120 120"><rect fill="currentColor" x="26" y="12" width="10" height="98" rx="3"/><path fill="#f4f5f7" d="M36 18h58q6 0 2 5l-16 19q-4 5 0 10l16 19q4 5-2 5H36z"/></symbol>
 
+      <!-- Standard "share" glyph -- an arrow lifting up out of an open
+           tray, the same silhouette iOS/most apps use for share. -->
+      <symbol id="icon-share" viewBox="0 0 120 120"><path fill="currentColor" d="M60 8 L84 36 L68 36 L68 66 L52 66 L52 36 L36 36 Z"/><path fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" d="M22 54 L22 100 A6 6 0 0 0 28 106 L92 106 A6 6 0 0 0 98 100 L98 54"/></symbol>
+
 
       <!-- QUEST ICONS -->
 
@@ -238,7 +242,6 @@
   <div class="header-right-cluster">
     <span class="room-code header-room-code"></span>
     <button id="keyboardToggleBtn" class="guide-toggle-btn keyboard-toggle-btn" title="Toggle physical keyboard input" aria-label="Toggle physical keyboard input">⌨️</button>
-    <button id="guideToggleBtn" class="guide-toggle-btn" title="Toggle guide" aria-label="Toggle guide">🧭 Guide</button>
   </div>
 </header>
 
@@ -976,7 +979,7 @@
         <!-- ========== MENU ========== -->
     <section id="menu" class="screen">
        <div class="panel">
-         <button id="shareResultBtn" class="secondary-btn share-btn">Share</button>
+         <button id="shareResultBtn" class="secondary-btn share-btn" title="Share" aria-label="Share"><svg class="share-btn-icon" viewBox="0 0 120 120" aria-hidden="true"><use href="#icon-share" xlink:href="#icon-share"/></svg></button>
          <div id="roundSummary" class="summary-box"></div>
        </div>
     </section>

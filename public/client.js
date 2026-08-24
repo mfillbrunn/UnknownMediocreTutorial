@@ -2644,6 +2644,18 @@ function updateTimerAccess() {
 
 
 (function setupGuideToggle() {
+  // No on-screen toggle button remains anywhere in the app anymore (see
+  // index.html), but "guide mode" itself is still a real, meaningful body
+  // class gating several gameplay features (must-contain box, Letter
+  // Profile display, remaining-words, some setter draft-row hints -- see
+  // must-contain-box.js/letterProfile.js/remaining-words.js all reading
+  // body.classList.contains("guide-on")). Apply the stored/default
+  // preference unconditionally so those features keep working; only the
+  // (now nonexistent) button-wiring below is skipped without a button.
+  const stored = localStorage.getItem("guideActive");
+  const guideOn = stored === null ? true : stored === "true";
+  document.body.classList.toggle("guide-on", guideOn);
+
   // One instance in the outer app-header (menus) plus one duplicated into
   // each of setter/guesser's own headers (see index.html) -- all three
   // share this class and stay in sync via it, rather than moving a single
@@ -2651,11 +2663,6 @@ function updateTimerAccess() {
   const btns = document.querySelectorAll(".guide-toggle-btn:not(.keyboard-toggle-btn)");
   if (!btns.length) return;
 
-  // Load saved preference (default: on)
-  const stored = localStorage.getItem("guideActive");
-  const guideOn = stored === null ? true : stored === "true";
-
-  document.body.classList.toggle("guide-on", guideOn);
   btns.forEach(b => b.classList.toggle("active", guideOn));
 
   btns.forEach(btn => { btn.onclick = () => {
