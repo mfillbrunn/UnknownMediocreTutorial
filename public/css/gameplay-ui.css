@@ -72,9 +72,19 @@
   outline: none;
 }
 
-:is(#setterScreen, #guesserScreen) .role-header :is(.leave-game-btn, .danger-btn) {
+:is(#setterScreen, #guesserScreen) .role-header .leave-game-btn {
   border-color: rgba(251, 113, 133, 0.35);
   color: #fda4af;
+}
+
+/* Concede (.danger-btn): themed per role like everything else in the
+   header, not the Leave button's fixed rose -- it used to inherit that
+   fixed rose too, which happened to read fine for the setter (whose own
+   role color is a similar red) but left the guesser's concede flag
+   showing setter-red instead of guesser-blue. */
+:is(#setterScreen, #guesserScreen) .role-header .danger-btn {
+  border-color: color-mix(in srgb, var(--role-accent) 60%, transparent);
+  color: var(--role-accent);
 }
 
 /* --------------------------------------------------------------------------
