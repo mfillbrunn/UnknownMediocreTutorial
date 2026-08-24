@@ -307,7 +307,6 @@
       </div>`);
     }
     return `<article class="pc-persistent-powers">
-      <span class="pc-next-kicker">YOUR POWERS</span>
       ${lines.join("")}
     </article>`;
   }

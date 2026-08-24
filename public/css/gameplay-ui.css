@@ -1747,7 +1747,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 .pc-inspector-panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
 }
 
 .pc-next-kicker {
