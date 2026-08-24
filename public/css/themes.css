@@ -39,8 +39,8 @@
      Text/muted-text tokens are --text (base.css) and --text-muted below;
      border is --glass-border; general/elevated surfaces are --screen-bg/
      --panel-bg above; role accents are --guesser-color/--setter-color
-     above; difficulty accents are --v4-easy/--v4-medium/--v4-hard
-     (refinement-v4.css). */
+     above; difficulty accents live inline in features.css's
+     .difficulty-easy/-medium/-hard rules. */
   --glass-alpha: 60%;
   --glass-alpha-hover: 72%;
   --glass-border: rgba(255, 255, 255, 0.18);
@@ -113,6 +113,13 @@
   --shadow-card: 0 0 12px rgba(0,0,0,.35);
 
   --banner-color: #58355e;
+
+  /* Elevated surfaces (modals, panels, popups) -- shared line/shadow/text
+     tokens for chrome that sits above the base screen background. */
+  --elevated-line: rgba(190, 211, 232, 0.2);
+  --elevated-shadow: 0 22px 70px rgba(0, 0, 0, 0.44);
+  --elevated-text: #f5f8fc;
+  --elevated-muted: rgba(226, 236, 247, 0.76);
 }
 
 .theme-guesser {

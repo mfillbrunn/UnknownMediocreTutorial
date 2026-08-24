@@ -829,6 +829,9 @@
   align-items: center;
   gap: 12px;
   width: 100%;
+  padding-bottom: 13px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--elevated-line);
 }
 .screen-back-btn {
   flex-shrink: 0;
@@ -837,7 +840,6 @@
   padding: 0 10px;
 }
 .friends-center {
-  width: 100%;
   max-width: 400px;
   display: flex;
   flex-direction: column;
@@ -1395,9 +1397,6 @@
 .quick-join-circle-btn:active {
   transform: translateY(0) scale(0.95);
 }
-#startupScreen .menu-center {
-  position: relative;
-}
 .dev-tools-icon-btn {
   position: absolute;
   top: 0;
@@ -1460,24 +1459,27 @@
   color: #4ade80;
 }
 .rules-content {
+  display: grid;
+  gap: 5px;
   text-align: left;
-  width: 100%;
+  width: min(100%, 68ch);
   margin-top: var(--sp-14);
 }
 .rules-content h3 {
-  margin: var(--sp-14) 0 var(--sp-4);
+  margin: 17px 0 2px;
   font-size: var(--fs-14);
   font-weight: 800;
   letter-spacing: 0.4px;
-  color: var(--role-accent,#4da3ff);
+  color: var(--elevated-text);
 }
 .rules-content h3:first-child {
   margin-top: 0;
 }
 .rules-content p {
   margin: 0;
+  color: var(--elevated-muted);
   font-size: var(--fs-13);
-  line-height: 1.5;
+  line-height: 1.58;
   opacity: 0.9;
 }
 .power-library-center {
@@ -1557,7 +1559,7 @@
 .daily-difficulty-locked.difficulty-easy,
 [data-difficulty="easy"] {
   border-color: #65a795 !important;
-  background: var(--v4-easy, #397867) !important;
+  background: #397867 !important;
   color: #fff !important;
   box-shadow: none !important;
 }
@@ -1567,7 +1569,7 @@
 .daily-difficulty-locked.difficulty-medium,
 [data-difficulty="medium"] {
   border-color: #d0a05e !important;
-  background: var(--v4-medium, #99692f) !important;
+  background: #99692f !important;
   color: #fff !important;
   box-shadow: none !important;
 }
@@ -1577,24 +1579,24 @@
 .daily-difficulty-locked.difficulty-hard,
 [data-difficulty="hard"] {
   border-color: #cf7591 !important;
-  background: var(--v4-hard, #9d4864) !important;
+  background: #9d4864 !important;
   color: #fff !important;
   box-shadow: none !important;
 }
 
 .game-menu .menu-btn.difficulty-easy:hover:not(:disabled),
 .ai-option.difficulty-easy:hover:not(:disabled) {
-  background: var(--v4-easy-hover, #3f8270) !important;
+  background: #3f8270 !important;
 }
 
 .game-menu .menu-btn.difficulty-medium:hover:not(:disabled),
 .ai-option.difficulty-medium:hover:not(:disabled) {
-  background: var(--v4-medium-hover, #9f6c31) !important;
+  background: #9f6c31 !important;
 }
 
 .game-menu .menu-btn.difficulty-hard:hover:not(:disabled),
 .ai-option.difficulty-hard:hover:not(:disabled) {
-  background: var(--v4-hard-hover, #b35977) !important;
+  background: #b35977 !important;
 }
 
 .difficulty-easy:disabled:hover,

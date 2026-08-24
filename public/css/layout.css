@@ -341,6 +341,33 @@
    box-shadow:none;
 }
 
+/* One shared surface for both roles -- role color is a restrained accent
+   (border, icon/text color, focus ring) only, never a background fill
+   that would make one role's header read as a different panel from the
+   other's. --role-accent is already set by .theme-setter/.theme-guesser
+   on this same #setterScreen/#guesserScreen element (themes.css). ID-
+   scoped (not a bare .role-header rule) so this reliably beats
+   gameplay-ui.css's :is(#setterScreen, #guesserScreen) .role-header
+   button, which loads after this file. */
+#setterScreen .role-header,
+#guesserScreen .role-header {
+  background: var(--screen-bg);
+  border-bottom: 1px solid color-mix(in srgb, var(--role-accent) 30%, transparent);
+}
+
+#setterScreen .role-header button:not(.danger-btn),
+#guesserScreen .role-header button:not(.danger-btn) {
+  border: 1px solid color-mix(in srgb, var(--role-accent) 45%, transparent);
+  border-radius: 11px;
+  background: var(--screen-bg);
+  color: color-mix(in srgb, var(--role-accent) 74%, white);
+}
+
+#setterScreen .role-header button:not(.danger-btn):hover,
+#guesserScreen .role-header button:not(.danger-btn):hover {
+  background: color-mix(in srgb, var(--role-accent) 14%, var(--screen-bg));
+}
+
 .theme-guesser h2 {
   color: var(--guesser-color);
 }

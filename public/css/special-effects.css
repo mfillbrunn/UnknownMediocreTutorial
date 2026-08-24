@@ -434,6 +434,34 @@
   color: var(--setter-color);
 }
 
+/* Secret-locked setter popup: a bigger, more ceremonial variant of the
+   plain .role-setter tint above for this one ritual moment. */
+#bigAnnouncePopup.secret-locked-announce-v3 .big-announce-card,
+.secret-locked-announce-v3 .big-announce-card {
+  width: min(91vw, 490px) !important;
+  padding: clamp(18px, 4vw, 30px) !important;
+  border: 1px solid color-mix(in srgb, var(--setter-color) 60%, transparent) !important;
+  border-radius: 23px !important;
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--setter-color) 25%, transparent), transparent 48%),
+    linear-gradient(145deg, #1b202c, #0d1119) !important;
+  box-shadow: 0 26px 78px rgba(0, 0, 0, 0.52) !important;
+}
+
+#bigAnnouncePopup.secret-locked-announce-v3 .big-announce-title,
+.secret-locked-announce-v3 .big-announce-title {
+  color: color-mix(in srgb, var(--setter-color) 72%, white) !important;
+  font-size: clamp(1.25rem, 4vw, 1.7rem) !important;
+  font-weight: 950 !important;
+}
+
+#bigAnnouncePopup.secret-locked-announce-v3 .big-announce-sub,
+.secret-locked-announce-v3 .big-announce-sub {
+  max-width: 40ch;
+  margin-inline: auto;
+  line-height: 1.5;
+}
+
 /* Compact: a small top-of-screen banner (rejected secret, etc.) instead of
    a full-screen ceremonial moment -- no dark backdrop blocking the board,
    card sits near the top rather than dead center, and everything is
