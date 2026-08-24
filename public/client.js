@@ -513,6 +513,7 @@ case "gameOverShowMenu":
 // State updates
 onStateUpdate(newState => {
   const prevPhase = state?.phase;
+  const prevTurn = state?.turn;
   const prevSetterDraft = state?.setterDraft || "";
   // Whether the setter has actually typed/deleted anything this turn --
   // distinct from prevSetterDraft itself being empty, since "never touched"
@@ -616,6 +617,26 @@ onStateUpdate(newState => {
         });
       });
     }
+  }
+
+  // Same light-sweep cue, but for every ordinary turn handoff back to the
+  // guesser (not just the one-time simultaneous-opening case above, which
+  // has its own "Guess again" wording and prevPhase transition) -- the
+  // guesser should get this cue each time it becomes their turn again,
+  // not only the first time.
+  if (
+    prevPhase === "normal" &&
+    state.phase === "normal" &&
+    prevTurn !== state.turn &&
+    state.turn === state.guesser &&
+    myUserId() === state.guesser
+  ) {
+    requestAnimationFrame(() => {
+      window.showTurnIndicator?.({
+        label: "Your turn",
+        accentVar: "--guesser-color"
+      });
+    });
   }
 
   /*

@@ -1437,17 +1437,21 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   display: none;
 }
 
+/* !important throughout: the generic .menu-center panel-chrome rule
+   above (shared with .rules-center etc.) carries !important of its own,
+   so beating it here for the startup screen's own "no panel, just the
+   photo" look needs more than #startupScreen's ID specificity. */
 #startupScreen .menu-center {
   position: relative;
   box-sizing: border-box;
-  width: clamp(278px, 38vw, 420px);
+  width: clamp(278px, 38vw, 420px) !important;
   max-width: calc(100vw - 42px);
   gap: 9px;
-  padding: clamp(12px, 2.2vh, 22px);
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
+  padding: clamp(12px, 2.2vh, 22px) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   transform: translateY(-2.5vh);
 }
 
@@ -1504,17 +1508,15 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
    leaderboard.css/features.css), so beating it here for the startup
    screen's own look needs more than #startupScreen's ID specificity. */
 #startupScreen .menu-btn {
-  min-height: 42px;
-  height: clamp(42px, 5.7vh, 48px);
-  padding: 0 15px;
+  min-height: 34px;
+  height: clamp(34px, 4.6vh, 40px);
+  padding: 0 14px;
   border: 1px solid rgba(188, 207, 225, 0.24) !important;
   border-radius: 10px !important;
   background: rgba(23, 51, 79, 0.5) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   color: var(--ink-text) !important;
-  box-shadow: 0 5px 14px rgba(3, 13, 25, 0.24);
-  font-size: clamp(12px, 1.6vh, 14px);
+  box-shadow: 0 4px 10px rgba(3, 13, 25, 0.2);
+  font-size: clamp(11px, 1.4vh, 13px);
   font-weight: 760 !important;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -1608,7 +1610,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 @media (max-height: 690px) {
   #startupScreen .menu-center {
     gap: 6px;
-    padding-block: 8px;
+    padding-block: 8px !important;
     transform: none;
   }
 
