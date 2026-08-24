@@ -2256,6 +2256,18 @@ function sendError(room, state, userId, io, message) {
   if (socketId && io) io.to(socketId).emit("errorMessage", message);
 }
 
+// A rejected POWER_CHOICE_SELECT still acks {ok:true} at the generic
+// gameAction layer (see socketHandlers.js -- it only reports transport
+// success, not this handler's own validation outcome), so the reward
+// chooser has no way to learn its pick was rejected from that ack alone.
+// This targeted event is the client's actual signal to re-enable the
+// card grid it disabled optimistically on click (see power-choice-mode.js's
+// fireChoice/pendingSelectAck).
+function sendSelectRejected(room, state, userId, io, choiceId, optionId) {
+  const socketId = room?.playersByUserId?.[userId]?.socketId;
+  if (socketId && io) io.to(socketId).emit("powerChoiceSelectRejected", { choiceId, optionId });
+}
+
 function handleAction(room, state, action, roomId, context) {
   if (!state || !action) return false;
   const io = context?.io;
@@ -2354,11 +2366,13 @@ function handleAction(room, state, action, roomId, context) {
         io,
         "That reward choice is no longer available."
       );
+      sendSelectRejected(room, state, action.userId, io, action.choiceId, action.optionId);
       return true;
     }
     const option = pending.options.find(item => item.id === action.optionId);
     if (!option) {
       sendError(room, state, action.userId, io, "Select one of the three cards.");
+      sendSelectRejected(room, state, action.userId, io, action.choiceId, action.optionId);
       return true;
     }
     if (!optionApplicable(state, option)) {
@@ -2369,12 +2383,14 @@ function handleAction(room, state, action, roomId, context) {
         io,
         "That reward no longer has a valid target. Select another card."
       );
+      sendSelectRejected(room, state, action.userId, io, action.choiceId, action.optionId);
       return true;
     }
     // Payload for the handful of cards that need real input typed in on
     // the spot (letters/betMissNumber/guess1+guess2) -- see applyChoice.
     if (!applyChoice(state, option, pending, room, roomId, io, context, action)) {
       sendError(room, state, action.userId, io, "That reward could not be activated.");
+      sendSelectRejected(room, state, action.userId, io, action.choiceId, action.optionId);
       return true;
     }
     state.powerChoice.pendingChoice = null;

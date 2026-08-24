@@ -62,6 +62,12 @@
   // card just discards whatever was typed.
   let rewardInputArmed = null; // {choiceId, optionId, powerId} | null
 
+  // The one in-flight POWER_CHOICE_SELECT's re-enable hook, so a rejection
+  // delivered via the "powerChoiceSelectRejected" socket event (see below)
+  // or a safety timeout can find its way back to the card grid it disabled
+  // on click. null whenever no selection is in flight.
+  let pendingSelectAck = null; // {choiceId, optionId, reenable} | null
+
   function me() {
     return window.currentUser?.id || window.getUserId?.() || null;
   }
@@ -1172,7 +1178,7 @@
       const style = ` style="--pc-power-accent:${esc(categoryColor)};--pc-card-accent:${esc(categoryColor)}"`;
       const ariaLabel = `${option.title || "Reward"}. ${rarity.label} reward. ${description}`;
       if (armed) {
-        return `<div class="pc-choice-card pc-choice-card-armed" role="group" aria-label="${esc(ariaLabel)}" data-option-id="${esc(option.id)}" data-rarity="${esc(rarity.key)}"${style}>
+        return `<div class="pc-choice-card pc-choice-card-armed" role="group" aria-label="${esc(ariaLabel)}" data-offer-id="${esc(pending.id)}" data-option-id="${esc(option.id)}" data-reward-id="${esc(option.id)}" data-rarity="${esc(rarity.key)}"${style}>
           <span class="pc-card-icon">${optionIconMarkup(option)}</span>
           <div class="pc-card-body pc-card-body-armed">
             <strong>${esc(option.title)}</strong>
@@ -1180,7 +1186,7 @@
           </div>
         </div>`;
       }
-      return `<button type="button" class="pc-choice-card" aria-label="${esc(ariaLabel)}" data-option-id="${esc(option.id)}" data-rarity="${esc(rarity.key)}"${style}>
+      return `<button type="button" class="pc-choice-card" aria-label="${esc(ariaLabel)}" data-offer-id="${esc(pending.id)}" data-option-id="${esc(option.id)}" data-reward-id="${esc(option.id)}" data-rarity="${esc(rarity.key)}"${style}>
         <span class="pc-card-icon">${optionIconMarkup(option)}</span>
         <span class="pc-card-body">
           <strong>${esc(option.title)}</strong>
@@ -1189,13 +1195,36 @@
       </button>`;
     }).join("");
 
+    // Disables the whole grid optimistically (so a doubled-click can't
+    // fire twice), but only after a real option id was extracted and
+    // matched against this render's own options -- see the click handler
+    // below. A rejection (stale offer, no-longer-valid target, etc.) has
+    // no way to reach this handler through the generic gameAction ack --
+    // that ack only reports transport success, not this handler's own
+    // validation outcome, see socketHandlers.js -- so the server sends a
+    // dedicated "powerChoiceSelectRejected" event instead (listened for
+    // once, module-level, below) plus a safety timeout re-enables the grid
+    // regardless if nothing is heard back at all.
     function fireChoice(optionId, payload) {
       rewardInputArmed = null;
-      grid.querySelectorAll("button").forEach(item => { item.disabled = true; });
+      const choiceId = pending.id;
+      const buttons = [...grid.querySelectorAll("button")];
+      buttons.forEach(item => { item.disabled = true; });
+
+      let settled = false;
+      const reenable = () => {
+        if (settled) return;
+        settled = true;
+        if (pendingSelectAck?.reenable === reenable) pendingSelectAck = null;
+        buttons.forEach(item => { item.disabled = false; });
+      };
+      pendingSelectAck = { choiceId, optionId, reenable };
+      setTimeout(reenable, 5000);
+
       window.sendGameAction?.({
         type: "POWER_CHOICE_SELECT",
         userId: me(),
-        choiceId: pending.id,
+        choiceId,
         optionId,
         ...payload
       });
@@ -1205,12 +1234,13 @@
       button.addEventListener("click", () => {
         if (button.disabled) return;
         const option = options.find(item => item.id === button.dataset.optionId);
-        if (option && REWARD_INPUT_POWER_IDS.has(option.powerId)) {
+        if (!option) return;
+        if (REWARD_INPUT_POWER_IDS.has(option.powerId)) {
           rewardInputArmed = { choiceId: pending.id, optionId: option.id, powerId: option.powerId };
           renderRewardChoiceCards(pending, grid);
           return;
         }
-        fireChoice(button.dataset.optionId);
+        fireChoice(option.id);
       });
     });
 
@@ -1904,6 +1934,15 @@
       rewardPopupQueue.push(payload || {});
       drainRewardPopups();
       scheduleRender();
+    });
+    socket.on("powerChoiceSelectRejected", payload => {
+      if (!payload || !pendingSelectAck) return;
+      if (
+        pendingSelectAck.choiceId === payload.choiceId &&
+        pendingSelectAck.optionId === payload.optionId
+      ) {
+        pendingSelectAck.reenable();
+      }
     });
   } catch {}
 
