@@ -1941,58 +1941,6 @@
   }
 }
 
-/* ============================================================
-   REFINEMENT V3: traffic-light AI difficulty + focus-visible
-   ============================================================
-   Easy/Medium/Hard already used solid green/amber/red fills (see
-   features.css's .difficulty-easy/-medium/-hard) -- this adds the
-   missing accessible focus ring (none of .menu-btn had one at all) and
-   a readable disabled state, without adding gradients/glow/rainbow. */
-.menu-btn:focus-visible,
-.ai-option:focus-visible,
-[data-difficulty]:focus-visible {
-  outline: 3px solid #ffffff;
-  outline-offset: 2px;
-}
-
-.difficulty-easy:disabled,
-.difficulty-medium:disabled,
-.difficulty-hard:disabled,
-[data-difficulty]:disabled {
-  opacity: 0.55;
-  filter: grayscale(0.3);
-  cursor: not-allowed;
-}
-
-.difficulty-easy:disabled:hover,
-.difficulty-medium:disabled:hover,
-.difficulty-hard:disabled:hover {
-  background: inherit;
-}
-
-/* Daily Challenge: difficulty is server-locked, shown as a plain readout
-   instead of three pickable buttons (see daily-challenge.js). */
-.daily-difficulty-locked {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-weight: 800;
-  letter-spacing: 0.4px;
-}
-
-.daily-difficulty-locked.difficulty-easy {
-  background: var(--tile-green);
-  color: var(--tile-green-text);
-}
-
-.daily-difficulty-locked.difficulty-medium {
-  background: var(--tile-yellow);
-  color: var(--tile-yellow-text);
-}
-
-.daily-difficulty-locked.difficulty-hard {
-  background: var(--setter-color);
-  color: #fff;
-}
+/* AI difficulty (focus-visible, disabled, daily-locked chrome) -- fully
+   consolidated into features.css alongside the muted-palette colors that
+   already won this cascade; see that file's .difficulty-easy block. */
