@@ -18,7 +18,8 @@ const { tierFor } = require("./powerTiers");
 const { categoryForRewardId } = require("./rewardCategories");
 
 const MODE = "powerChoice";
-const SPY_THRESHOLDS = [5, 9, 15];
+const SPY_THRESHOLDS = [4, 8, 12];
+const SPY_MAX = SPY_THRESHOLDS[SPY_THRESHOLDS.length - 1];
 // Quests no longer build toward a shared points meter -- each quest met
 // grants a reward immediately (one reward per completion, drawn from the
 // same shared pool at all three -- see guesserRewardPool/buildChoice),
@@ -613,7 +614,7 @@ function powerOption(powerId) {
 }
 
 // The Secretkeeper's own reward pool -- unlike the Guesser, the Secretkeeper sees the
-// SAME pool at every one of their three milestones (5/9/15 stars)
+// SAME pool at every one of their three milestones (4/8/12 stars)
 // instead of a different fixed catalog per tier plus a separate
 // "3 random powers" middle stage. Built once as a plain list (mixing
 // "fixed" effect cards and one "power" card) rather than per-threshold,
@@ -772,7 +773,7 @@ function guesserRewardPool(tier) {
 
 function buildChoice(state, role, threshold, owner) {
   // Both roles now draw from ONE shared pool at every one of their three
-  // milestones (Secretkeeper: 5/9/15 stars, Guesser: 2/3/5 quest completions)
+  // milestones (Secretkeeper: 4/8/12 stars, Guesser: 2/3/5 quest completions)
   // instead of a threshold-dependent catalog switch -- see setterRewardPool/
   // guesserRewardPool, which buildChoice calls directly for every
   // threshold instead of asking fixedOptions to dispatch per-threshold.
@@ -2185,11 +2186,11 @@ if (!spyChargeServer.__powerChoicePatchedV2) {
     const charge = state.powers.spyCharge;
     const before = Math.max(
       0,
-      Math.min(15, Number(charge.total) || Number(award?.before) || 0)
+      Math.min(SPY_MAX, Number(charge.total) || Number(award?.before) || 0)
     );
     const baseStars = Math.max(0, Number(award?.baseStars) || 0);
     const bonusStars = Math.max(0, Number(award?.bonusStars) || 0);
-    const appliedStars = Math.min(15 - before, baseStars + bonusStars);
+    const appliedStars = Math.min(SPY_MAX - before, baseStars + bonusStars);
     const appliedBaseStars = Math.min(appliedStars, baseStars);
     const appliedBonusStars = Math.max(0, appliedStars - appliedBaseStars);
     const after = before + appliedStars;
@@ -2216,14 +2217,14 @@ if (!spyChargeServer.__powerChoicePatchedV2) {
       state.powerChoice.spy.queuedMilestones,
       state.powerChoice.spy.claimedMilestones
     );
-    // The Secretkeeper's third and final milestone (15 stars) grants two reward
-    // picks in a row instead of one -- queue the same threshold a second
-    // time so maybeOpenChoice naturally opens a second choice-of-3 the
-    // instant the first one resolves. queueCrossed's own dedup only
+    // The Secretkeeper's third and final milestone (SPY_MAX stars) grants two
+    // reward picks in a row instead of one -- queue the same threshold a
+    // second time so maybeOpenChoice naturally opens a second choice-of-3
+    // the instant the first one resolves. queueCrossed's own dedup only
     // exists to stop the SAME crossing from being queued twice on repeat
     // calls; it doesn't guard against this deliberate second push.
-    if (before < 15 && after >= 15) {
-      state.powerChoice.spy.queuedMilestones.push(15);
+    if (before < SPY_MAX && after >= SPY_MAX) {
+      state.powerChoice.spy.queuedMilestones.push(SPY_MAX);
       state.powerChoice.spy.queuedMilestones.sort((a, b) => a - b);
     }
     const payload = {

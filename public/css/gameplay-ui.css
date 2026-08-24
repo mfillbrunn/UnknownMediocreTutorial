@@ -2426,40 +2426,30 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   isolation: isolate;
   align-self: center;
   justify-self: center;
-  width: calc(100% - 10px);
+  display: grid;
+  place-items: center;
+  width: 100%;
   height: auto;
   min-height: 0;
   aspect-ratio: 1 / 1;
-  margin: 5px;
-  padding: 5px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  border-radius: 11px;
-  background: linear-gradient(165deg, var(--pc-power-accent), color-mix(in srgb, var(--pc-power-accent) 55%, var(--pc-rarity-border) 30%));
-  color: #fff;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--pc-power-accent);
   box-shadow: none;
-}
-
-.pc-choice-card .pc-card-icon::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 4px;
-  width: auto;
-  height: auto;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  background: rgba(6, 18, 30, 0.14);
 }
 
 .pc-card-icon .pc-card-svg,
 .pc-card-icon .pc-fixed-reward-svg {
-  width: 84%;
-  height: 84%;
-  max-width: 74px;
-  max-height: 74px;
-  color: #fff;
-  filter: drop-shadow(0 2px 3px rgba(4, 12, 21, 0.32));
+  width: 94%;
+  height: 94%;
+  max-width: 86px;
+  max-height: 86px;
+  color: var(--pc-power-accent);
+  filter: drop-shadow(0 2px 4px rgba(4, 12, 21, 0.45));
 }
 
 .pc-card-body {

@@ -3,7 +3,7 @@
 
   const MAX_CHARGE = 12;
   const POWER_UNLOCK_AT = 8;
-  const RESET_THRESHOLDS = [5, 12];
+  const RESET_THRESHOLDS = [4, 12];
 
   let visualTotal = null;
   let awardQueue = [];
@@ -165,7 +165,7 @@
     const hintText = hasHint
       ? `Bonus star: change to a legal secret with ${String(hint.letter).toUpperCase()} in position ${position}. `
       : "";
-    const title = `${hintText}${available > 0 ? "Tap to reset a letter's feedback." : "Reset a letter's feedback (unlocks at 5 stars)."}`;
+    const title = `${hintText}${available > 0 ? "Tap to reset a letter's feedback." : "Reset a letter's feedback (unlocks at 4 stars)."}`;
     button.title = title;
     button.setAttribute("aria-label", title);
   }

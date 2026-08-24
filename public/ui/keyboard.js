@@ -55,8 +55,10 @@ window.renderKeyboard = function ({
       "key-uncertain",
       "key-purple",
       "key-banned",
-      "key-manual"
+      "key-manual",
+      "key-swept"
     );
+    delete keyEl.dataset.sweepOrder;
 
     // Special keys
     if (symbol === "⌫") {
@@ -133,6 +135,20 @@ window.renderKeyboard = function ({
       // too, when it's only a preview of what they just banned).
       if (isGuesser && state.powers?.letterLockoutBanned === symbol) {
         keyEl.classList.add("key-banned");
+      }
+
+      // Letter Scan (letterProbe): mark the letters this turn's sweep
+      // tested, in the order they were typed, so the guesser has a memory
+      // aid for which keys were already checked (the game only reports an
+      // aggregate count, never which ones hit). Guesser-only, same as the
+      // info badge/popup this result already feeds.
+      if (isGuesser) {
+        const sweepLetters = state.powers?.letterProbeResult?.letters || "";
+        const sweepIndex = sweepLetters.indexOf(symbol);
+        if (sweepIndex !== -1) {
+          keyEl.classList.add("key-swept");
+          keyEl.dataset.sweepOrder = String(sweepIndex + 1);
+        }
       }
 
       keyEl.onclick = () => onInput({ type: "LETTER", value: symbol });

@@ -15,7 +15,7 @@ const POWER_METADATA = require("../powerMetadata");
 
 const MAX_CHARGE = 12;
 const POWER_UNLOCK_AT = 8;
-const RESET_THRESHOLDS = [5, 12];
+const RESET_THRESHOLDS = [4, 12];
 
 function normalizeWord(value) {
   return typeof value === "string"
