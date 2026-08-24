@@ -1538,6 +1538,21 @@
     return capsule;
   }
 
+  function updateAwardCapsule(capsule, value, bonusFrom = Infinity) {
+    if (!capsule) return;
+    capsuleMeter(capsule, value, bonusFrom);
+    const count = capsule.querySelector(".pc-award-count");
+    if (count) count.textContent = `${value}/${SPY_MAX}`;
+  }
+
+  function dismissAwardCapsule(capsule, holdMs = 650) {
+    if (!capsule) return;
+    setTimeout(() => {
+      capsule.classList.remove("is-visible");
+      setTimeout(() => capsule.remove(), 200);
+    }, holdMs);
+  }
+
   async function animateSpyAward(entry) {
     const payload = entry?.payload || {};
     const before = clamp(payload.before, 0, SPY_MAX);
@@ -1545,6 +1560,7 @@
     const appliedBonus = Math.max(0, Number(payload.appliedBonusStars ?? payload.bonusStars) || 0);
     const totalStars = Math.max(0, Number(payload.appliedStars) || appliedBase + appliedBonus);
     const after = clamp(payload.after ?? before + totalStars, 0, SPY_MAX);
+    const bonusFrom = appliedBonus > 0 ? before + appliedBase + 1 : Infinity;
 
     spyVisualOverride = before;
     renderPanels();
@@ -1555,10 +1571,20 @@
       return;
     }
 
+    // A fixed, always-on-top popup mirroring the sidebar meter -- the
+    // flying stars themselves used to be the only feedback, and with the
+    // sidebar collapsed (or the meter simply off-screen) they landed on a
+    // plain number badge with no visible bar, so the "fill" itself was
+    // never actually seen happening. This shows the same segmented bar
+    // filling up regardless of where the sidebar/meter physically is.
+    const capsule = createAwardCapsule(before);
+
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     if (reduceMotion) {
       spyVisualOverride = after;
       renderPanels();
+      updateAwardCapsule(capsule, after, bonusFrom);
+      dismissAwardCapsule(capsule);
       spyAwardTarget()?.classList.add("pc-star-landed");
       setTimeout(() => spyAwardTarget()?.classList.remove("pc-star-landed"), 450);
       return;
@@ -1600,6 +1626,7 @@
       if (!targetRect?.width) {
         spyVisualOverride = value;
         renderPanels();
+        updateAwardCapsule(capsule, value, bonusFrom);
         continue;
       }
       plans.push({ index, value, bonus, isFinal: index === totalStars - 1, targetRect });
@@ -1675,6 +1702,7 @@
 
         spyVisualOverride = value;
         renderPanels();
+        updateAwardCapsule(capsule, value, bonusFrom);
         await new Promise(resolve => requestAnimationFrame(resolve));
 
         const freshMeter = spyAwardTarget();
@@ -1738,6 +1766,8 @@
 
     spyVisualOverride = after;
     renderPanels();
+    updateAwardCapsule(capsule, after, bonusFrom);
+    dismissAwardCapsule(capsule);
     const finalTarget = spyAwardTarget();
     finalTarget?.classList.add("just-charged");
     setTimeout(() => finalTarget?.classList.remove("just-charged"), 720);
