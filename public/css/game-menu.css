@@ -342,8 +342,11 @@ body.menu-mode .app-header {
 
 /* Dossier-style buttons, plus every other game-menu control that shares
    the same chrome: rules/leaderboard/my-games/friends/power-library tabs.
-   !important is still required here -- leaderboard.css and features.css
-   each define their own later-loading, equal-specificity base rule for
+   Matches the startup screen's own glass-button look (same translucent
+   navy fill/border/primary-rose values, same smaller height) so every
+   game-menu screen reads as one consistent button family. !important is
+   still required here -- leaderboard.css and features.css each define
+   their own later-loading, equal-specificity base rule for
    .leaderboard-tab/.friends-tab respectively. */
 .menu-btn,
 [role="tab"],
@@ -351,31 +354,24 @@ body.menu-mode .app-header {
 .leaderboard-tab,
 .my-games-tab,
 .power-lib-tab {
-  min-height: 46px;
-  height: var(--h-control);
-  border-radius: 13px !important;
+  min-height: 34px;
+  height: clamp(34px, 4.6vh, 40px);
+  border-radius: 10px !important;
   font-size: var(--fs-15);
-  font-weight: 780 !important;
-  letter-spacing: 0.8px;
+  font-weight: 760 !important;
+  letter-spacing: 0.055em;
   text-transform: uppercase;
 
-  background: rgba(255, 255, 255, 0.045) !important;
-  color: var(--elevated-text) !important;
+  background: rgba(23, 51, 79, 0.5) !important;
+  color: var(--ink-text) !important;
 
-  border: 1px solid var(--elevated-line) !important;
+  border: 1px solid rgba(188, 207, 225, 0.24) !important;
   box-shadow: none;
 
   transition:
-    transform 140ms ease,
-    background 140ms ease,
-    border-color 140ms ease;
-}
-
-/* Fits every supported viewport: a forced min-height only ever adds
-   height, so this scales the control down with clamp() instead of
-   letting the fixed --h-control push short viewports into scrolling. */
-.menu-btn {
-  height: clamp(38px, 6.5vh, 44px);
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
 }
 
 .menu-btn:hover,
@@ -384,8 +380,8 @@ body.menu-mode .app-header {
 .leaderboard-tab:hover,
 .my-games-tab:hover,
 .power-lib-tab:hover {
-  border-color: rgba(96, 165, 250, 0.48) !important;
-  background: rgba(96, 165, 250, 0.1) !important;
+  border-color: rgba(224, 235, 246, 0.42) !important;
+  background: rgba(33, 65, 95, 0.6) !important;
   transform: translateY(-1px);
 }
 
@@ -393,13 +389,13 @@ body.menu-mode .app-header {
 .menu-btn.primary,
 [role="tab"][aria-selected="true"],
 .active[role="tab"] {
-  border-color: rgba(255, 255, 255, 0.22) !important;
-  background: linear-gradient(135deg, rgba(61, 124, 207, 0.92), rgba(163, 70, 132, 0.84)) !important;
+  border-color: rgba(246, 178, 202, 0.45) !important;
+  background: rgba(169, 83, 114, 0.5) !important;
   color: #fff !important;
 }
 
 .menu-btn.primary:hover {
-  background: linear-gradient(135deg, rgba(61, 124, 207, 0.92), rgba(163, 70, 132, 0.84)) !important;
+  background: rgba(179, 90, 121, 0.6) !important;
 }
 
 /* How to Play's numbered tutorial buttons -- a plain .menu-btn centers
@@ -1385,7 +1381,7 @@ body.menu-mode .app-header {
    ========================================================================== */
 
 body.menu-mode {
-  background: var(--v4-ink-950);
+  background: var(--ink-950);
 }
 
 body.menu-mode #appContainer {
@@ -1423,7 +1419,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   overflow: auto;
   border: 0;
   border-radius: 0;
-  background-color: var(--v4-ink-950);
+  background-color: var(--ink-950);
   background-image:
     linear-gradient(180deg, rgba(4, 16, 29, 0.03), rgba(4, 16, 29, 0.16)),
     url("../assets/menu/detective-office.webp");
@@ -1437,23 +1433,27 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   display: none;
 }
 
+/* !important throughout: the generic .menu-center panel-chrome rule
+   above (shared with .rules-center etc.) carries !important of its own,
+   so beating it here for the startup screen's own "no panel, just the
+   photo" look needs more than #startupScreen's ID specificity. */
 #startupScreen .menu-center {
   position: relative;
   box-sizing: border-box;
-  width: clamp(278px, 38vw, 420px);
+  width: clamp(260px, 28vw, 340px) !important;
   max-width: calc(100vw - 42px);
   gap: 9px;
-  padding: clamp(12px, 2.2vh, 22px);
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
+  padding: clamp(12px, 2.2vh, 22px) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   transform: translateY(-2.5vh);
 }
 
 #startupScreen .menu-title {
   margin: 0 0 2px;
-  color: var(--v4-text);
+  color: var(--ink-text);
   font-size: clamp(20px, 3.4vh, 27px);
   font-weight: 850;
   letter-spacing: 0.16em;
@@ -1489,7 +1489,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.05em;
-  color: var(--v4-text);
+  color: var(--ink-text);
   text-shadow: 0 1px 8px rgba(3, 12, 23, 0.85);
 }
 
@@ -1504,17 +1504,15 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
    leaderboard.css/features.css), so beating it here for the startup
    screen's own look needs more than #startupScreen's ID specificity. */
 #startupScreen .menu-btn {
-  min-height: 42px;
-  height: clamp(42px, 5.7vh, 48px);
-  padding: 0 15px;
+  min-height: 34px;
+  height: clamp(34px, 4.6vh, 40px);
+  padding: 0 14px;
   border: 1px solid rgba(188, 207, 225, 0.24) !important;
   border-radius: 10px !important;
   background: rgba(23, 51, 79, 0.5) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: var(--v4-text) !important;
-  box-shadow: 0 5px 14px rgba(3, 13, 25, 0.24);
-  font-size: clamp(12px, 1.6vh, 14px);
+  color: var(--ink-text) !important;
+  box-shadow: 0 4px 10px rgba(3, 13, 25, 0.2);
+  font-size: clamp(11px, 1.4vh, 13px);
   font-weight: 760 !important;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -1589,8 +1587,8 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 }
 
 #startupScreen .dev-tools-icon-btn {
-  top: 8px;
-  right: 8px;
+  top: -40px;
+  right: 0;
   width: 32px;
   height: 32px;
   border: 1px solid rgba(188, 207, 225, 0.2);
@@ -1608,7 +1606,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 @media (max-height: 690px) {
   #startupScreen .menu-center {
     gap: 6px;
-    padding-block: 8px;
+    padding-block: 8px !important;
     transform: none;
   }
 
@@ -1625,7 +1623,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 
 @media (max-width: 430px) {
   #startupScreen .menu-center {
-    width: min(82vw, 344px);
+    width: min(82vw, 280px);
     max-width: calc(100vw - 30px);
   }
 }

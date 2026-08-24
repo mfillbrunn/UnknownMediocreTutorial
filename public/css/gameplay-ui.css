@@ -2403,25 +2403,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   --pc-rarity-border: #d7bb58;
 }
 
-/* A static diagonal foil-glint on every rarity -- the shine itself is
-   what reads as "metal" rather than "painted card". Legend gets its own
-   slower animated sweep instead (below), replacing this one. */
-.pc-choice-card::after {
-  content: "";
-  display: block;
-  position: absolute;
-  z-index: 4;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 34%,
-    color-mix(in srgb, var(--pc-rarity-border) 55%, transparent) 45%,
-    color-mix(in srgb, var(--pc-rarity-border) 75%, white 15%) 50%,
-    color-mix(in srgb, var(--pc-rarity-border) 55%, transparent) 55%,
-    transparent 66%
-  );
-  pointer-events: none;
-}
 
 .pc-choice-card:hover:not(:disabled),
 .pc-choice-card:focus-visible:not(:disabled) {
@@ -2504,27 +2485,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   color: rgba(255, 255, 255, 0.9);
   font-size: clamp(12px, 1.9vw, 13.5px);
   line-height: 1.35;
-}
-
-/* A restrained moving glint on gold only; disabled entirely under
-   reduced motion, see below. */
-.pc-choice-card[data-rarity="legend"]::after {
-  z-index: 5;
-  background: linear-gradient(
-    105deg,
-    transparent 35%,
-    rgba(255, 244, 188, 0.2) 47%,
-    rgba(255, 250, 216, 0.36) 50%,
-    rgba(255, 244, 188, 0.2) 53%,
-    transparent 65%
-  );
-  background-size: 230% 100%;
-  animation: v4-gold-glint 3.8s ease-in-out infinite;
-}
-
-@keyframes v4-gold-glint {
-  0%, 68% { background-position: 140% 0; }
-  100% { background-position: -45% 0; }
 }
 
 @media (max-width: 560px) {
@@ -2735,11 +2695,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pc-choice-card[data-rarity="legend"]::after {
-    animation: none;
-    opacity: 0.22;
-  }
-
   .pc-choice-card,
   .pc-refresh-choice-btn,
   .pc-refresh-icon {

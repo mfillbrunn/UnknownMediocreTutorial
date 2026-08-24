@@ -962,7 +962,7 @@
       <p class="pc-modal-sub">Select one</p>
       <div class="pc-card-grid"></div>
       <button type="button" class="pc-refresh-choice-btn" title="Refresh reward choices" aria-label="Refresh reward choices">
-        <svg class="pc-refresh-icon" data-refinement-v4="refresh-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <svg class="pc-refresh-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M20 11a8 8 0 1 0-2.34 5.66" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
           <path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>

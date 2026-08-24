@@ -143,3 +143,28 @@
   color: #cd7f32; /* bronze */
 }
 
+/* Ranked sub-tab -- player's current ratings (moved off the main menu). */
+#rankedEloDisplay {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 2px 0 4px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: var(--panel-bg, #30353c);
+  color: var(--text, #e5e5e5);
+  font-size: 13px;
+  text-align: center;
+}
+
+#rankedEloDisplay:empty {
+  display: none;
+}
+
+#rankedEloDisplay .ranked-elo-row {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
