@@ -80,31 +80,45 @@
 }
 
 .primary-btn {
-  background: var(--btn-primary);
+  background: color-mix(in srgb, var(--btn-primary) var(--glass-alpha), transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in srgb, var(--btn-primary) 55%, transparent);
   color: #fff;
   box-shadow: var(--shadow-soft);
 }
-.primary-btn:hover { 
-  background: var(--btn-primary-hover);
+.primary-btn:hover {
+  background: color-mix(in srgb, var(--btn-primary-hover) var(--glass-alpha-hover), transparent);
   box-shadow: 0 0 14px var(--btn-primary-glow);
   transform: translateY(-1px);
+}
+.primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 .primary-btn:active,
 .secondary-btn:active {
   transform: translateY(0) scale(0.98);
 }
 .secondary-btn {
-  background: var(--btn-secondary);
+  background: color-mix(in srgb, var(--btn-secondary) var(--glass-alpha), transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
   color: var(--btn-secondary-text);
   box-shadow: none;
 }
-.secondary-btn:hover { 
-  background: var(--btn-secondary-hover); 
+.secondary-btn:hover {
+  background: color-mix(in srgb, var(--btn-secondary-hover) var(--glass-alpha-hover), transparent);
   box-shadow: none;
+}
+.secondary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 /*----POWER BTNS ---*/
 .secondary-btn.active {
-  background: #4caf50;      /* or your accent color */
+  background: color-mix(in srgb, #4caf50 var(--glass-alpha-hover), transparent);
   color: white;
   border-color: #4caf50;
 }

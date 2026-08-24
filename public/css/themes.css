@@ -24,6 +24,27 @@
   --btn-secondary-text:#ccc;
   --btn-secondary-hover:#474d57;
    --kick-btn: #ff4b5c;
+
+  /* Translucent "glass" control tokens (v5 refinement) -- alpha lives in
+     the background color itself, never a whole-element opacity, so text/
+     icons/focus rings stay fully opaque. Applied via
+     color-mix(in srgb, <hue> var(--glass-alpha), transparent) against
+     each control's own existing hue (--btn-primary, --setter-color,
+     etc.) rather than one flat literal, so every control keeps its own
+     identity while sharing one alpha scale. Menu-screen buttons
+     (refinement-v4.css) already established this pattern at rest 0.7 /
+     hover 0.75 against a photo background; this is the same idea at a
+     level tuned for flatter chrome (modals, summary, tutorial, header,
+     reward cards) over WCAG AA text contrast.
+     Text/muted-text tokens are --text (base.css) and --text-muted below;
+     border is --glass-border; general/elevated surfaces are --screen-bg/
+     --panel-bg above; role accents are --guesser-color/--setter-color
+     above; difficulty accents are --v4-easy/--v4-medium/--v4-hard
+     (refinement-v4.css). */
+  --glass-alpha: 60%;
+  --glass-alpha-hover: 72%;
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --text-muted: rgba(229, 229, 229, 0.68);
   /* Keyboard */
   --kb-neutral:#343a43;
   --kb-border:#49515d;

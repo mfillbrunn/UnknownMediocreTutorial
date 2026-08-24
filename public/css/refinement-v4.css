@@ -761,14 +761,26 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 
 #menu .summary-actions .primary-btn {
   border-color: #ca7794 !important;
-  background: var(--v4-rose) !important;
+  background: color-mix(in srgb, var(--v4-rose) var(--glass-alpha), transparent) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
   color: #fff !important;
+}
+
+#menu .summary-actions .primary-btn:hover {
+  background: color-mix(in srgb, var(--v4-rose-hover) var(--glass-alpha-hover), transparent) !important;
 }
 
 #menu .summary-actions .secondary-btn {
   border-color: #48627b !important;
-  background: #18334f !important;
+  background: color-mix(in srgb, #18334f var(--glass-alpha), transparent) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
   color: #fff !important;
+}
+
+#menu .summary-actions .secondary-btn:hover {
+  background: color-mix(in srgb, #18334f var(--glass-alpha-hover), transparent) !important;
 }
 
 #menu .summary-table-wrap {

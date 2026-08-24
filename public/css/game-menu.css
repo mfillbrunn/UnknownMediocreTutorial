@@ -666,22 +666,27 @@ body.menu-mode .app-header {
 }
 
 /* Leave = secondary form */
-.leave-btn {
+.lobby-footer .leave-btn {
   border-radius: var(--r-8);
   background: #1a1b20;
   border: 1px solid #2a2c34;
 }
 
-/* Ready = authorized action */
-.primary-btn {
+/* Ready = authorized action. Scoped to .lobby-footer -- this used to be a
+   bare .primary-btn rule with no scoping selector at all, so it silently
+   overrode every other .primary-btn in the app (modals, summary, tutorial,
+   etc.) that loads earlier in the cascade, purely by source order. */
+.lobby-footer .primary-btn {
   border-radius: var(--r-8);
-  background: #e6e6e6;
+  background: color-mix(in srgb, #e6e6e6 var(--glass-alpha, 60%), transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #111;
-  border: 1px solid #f0f0f0;
+  border: 1px solid rgba(240, 240, 240, 0.55);
 }
 
-.primary-btn:hover {
-  background: #ffffff;
+.lobby-footer .primary-btn:hover {
+  background: color-mix(in srgb, #ffffff var(--glass-alpha-hover, 72%), transparent);
 }
 
 /* TIMER OPTIONS — BRIEFING CHOICES */
