@@ -1069,52 +1069,107 @@
 .match-header--tie { --summary-result-accent: #c3cad4; border-top-color: #78899a; }
 .match-header h2 {
   margin: 0;
-  color: var(--ink-text);
-  font-size: clamp(25px, 5.4vw, 34px);
+  color: var(--summary-result-accent);
+  font-size: clamp(30px, 7vw, 42px);
   font-weight: 950;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.02em;
   line-height: 1;
+  text-align: left;
+  text-transform: uppercase;
   text-shadow: none;
 }
-.match-score-line {
-  margin: 8px 0 0;
-  color: #f0b1c6;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: clamp(24px, 5vw, 31px);
-  font-weight: 950;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-}
-.match-players-line {
-  display: inline-flex;
+.match-scoreboard {
+  --match-mine: var(--tile-green);
+  --match-theirs: #f87171;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 12px;
+  margin: 16px 0 4px;
+}
+.match-score-line {
+  display: flex;
+  align-items: baseline;
   justify-content: center;
-  gap: 9px;
-  margin: 10px 0 0;
-  padding: 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.035);
-  color: var(--ink-muted);
-  font-size: 12px;
-  font-weight: 760;
-  opacity: 1;
-}
-.match-players-line .vs {
+  gap: 16px;
   margin: 0;
-  color: rgba(230, 236, 244, 0.38);
-  font-size: 8px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
 }
-.match-players-line .me-winner {
-  color: color-mix(in srgb, var(--summary-result-accent) 73%, white);
+.match-score-mine,
+.match-score-theirs {
+  font-size: clamp(46px, 11vw, 72px);
+  font-weight: 950;
+  line-height: 1;
 }
-.match-total-time {
-  margin: var(--sp-4) 0 0;
-  font-size: var(--fs-13);
-  opacity: 0.75;
+.match-score-mine { color: var(--match-mine); }
+.match-score-theirs { color: var(--match-theirs); }
+.match-score-sep {
+  color: var(--ink-muted);
+  font-size: clamp(18px, 4vw, 26px);
+  font-weight: 700;
 }
+.match-name-row,
+.match-time-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 100%;
+  max-width: 380px;
+  gap: 6px 10px;
+}
+.match-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.match-side--mine { grid-column: 1; }
+.match-side--theirs { grid-column: 3; }
+.match-side-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.match-side--mine .match-side-name { color: var(--match-mine); }
+.match-side--theirs .match-side-name { color: var(--match-theirs); }
+.match-side-label {
+  color: var(--ink-muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+/* Only the name row's You/Opponent caption picks up the role tint --
+   the time row's "Total time" caption stays neutral, same as the
+   reference this was built from. */
+.match-name-row .match-side--mine .match-side-label {
+  color: color-mix(in srgb, var(--match-mine) 70%, var(--ink-muted));
+}
+.match-name-row .match-side--theirs .match-side-label {
+  color: color-mix(in srgb, var(--match-theirs) 70%, var(--ink-muted));
+}
+.match-vs {
+  grid-column: 2;
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.match-side-time {
+  color: var(--ink-text);
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.match-you-name {
+  color: var(--tile-green);
+}
+
 .match-elo-change {
   margin: var(--sp-4) 0 0;
   font-size: var(--fs-14);
@@ -1472,14 +1527,10 @@
   flex-direction: column;
   justify-content: center;
   min-width: 0;
-  padding: 10px 11px;
-  overflow: hidden;
-  border: 1px solid var(--ink-line-soft);
-  border-radius: 10px;
-  background: #10263d;
+  padding: 0;
 }
 .stored-round-kicker {
-  color: #e298b3;
+  color: #f87171;
   font-size: 8px;
   font-weight: 950;
   letter-spacing: 0.18em;
@@ -1573,6 +1624,20 @@
 .summary-table .feedback-cell {
   min-width: 0;
   letter-spacing: 0;
+}
+.summary-feedback-tiles {
+  display: inline-flex;
+  gap: 3px;
+  vertical-align: middle;
+}
+.summary-feedback-tile {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+}
+.summary-feedback-tile.tile-blank {
+  background: transparent;
+  border: 1px solid var(--ink-line-soft);
 }
 .summary-table .remaining-cell {
   font-variant-numeric: tabular-nums;

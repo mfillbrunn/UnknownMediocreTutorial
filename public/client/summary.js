@@ -204,13 +204,9 @@ function renderMatchSummary(container) {
 
   const {
     points,
-    time,
     winner,
     winReason,
-    didWin,
-    winnerPoints,
-    loserPoints,
-    resultIcon
+    didWin
   } = computeMatchResult(state, myUserId());
 
   const playerIds = Object.keys(state.players || {});
@@ -218,43 +214,25 @@ function renderMatchSummary(container) {
   const myName = getPlayerName(myUserId());
   const opponentName = getPlayerName(opponentId);
 
-  let resultText;
-  if (winReason === "timeout") {
-    resultText = didWin
-      ? `You won by timeout`
-      : `You lost on time`;
-  } else if (winReason === "tie") {
-    resultText = `You tied`;
-  } else {
-    resultText = didWin
-      ? `You won`
-      : `You lost`;
-  }
+  // One bold word for the headline (see .match-header h2's uppercase) --
+  // any timeout-specific detail is called out separately by timeoutNote
+  // further down instead of being folded into this.
+  const resultText = winReason === "tie" ? "Tie" : didWin ? "Victory" : "Defeat";
 
-  // Just the numbers now -- shown large, right under the win/loss headline
-  // (see the html below), so a "Score:"/"Final score (before timeout):"
-  // prefix would be redundant; the timeout case is still called out
-  // separately by timeoutNote further down.
-  let scoreText = "";
-  if (winner !== null) {
-    scoreText = didWin
-      ? `${winnerPoints} – ${loserPoints}`
-      : `${loserPoints} – ${winnerPoints}`;
-  }
+  // Mine vs. theirs, not winner vs. loser -- the scoreboard always shows
+  // the viewer's own number first/green regardless of who actually won,
+  // same "you" convention as the live in-game score header.
+  const myPoints = points[myUserId()] || 0;
+  const oppPoints = points[opponentId] || 0;
 
   // Total time each player spent across the WHOLE match, by player identity
   // rather than by role -- state.timeSpentMs is keyed by user id and roles
   // swap between round 1 and round 2, so a role-colored line (like
   // formatTimeSpent's, used on the single-round summary right after a round
   // ends) would tint each player a different color from round to round.
-  // Neutral styling here instead.
-  let totalTimeHtml = "";
-  const totalTimeSpent = state.timeSpentMs;
-  if (totalTimeSpent) {
-    const myMs = Number(totalTimeSpent[myUserId()]) || 0;
-    const opponentMs = Number(totalTimeSpent[opponentId]) || 0;
-    totalTimeHtml = renderMatchClockPanel(myName, myMs, opponentName, opponentMs);
-  }
+  const totalTimeSpent = state.timeSpentMs || {};
+  const myMs = Number(totalTimeSpent[myUserId()]) || 0;
+  const opponentMs = Number(totalTimeSpent[opponentId]) || 0;
 
   // Ranked matches get an Elo delta computed async (after the match's
   // profile rows are read/updated) and pushed in a follow-up broadcast —
@@ -342,13 +320,34 @@ if (guesserEntries.length) {
   let html = `
     <div class="match-header match-header--${resultClass}">
       <h2>${resultText}</h2>
-      ${scoreText ? `<p class="match-score-line">${scoreText}</p>` : ""}
-      <p class="match-players-line">
-        <span class="${didWin ? "me-winner" : ""}">${myName}</span>
-        <span class="vs">vs</span>
-        <span class="${!didWin && winner ? "me-winner" : ""}">${opponentName}</span>
-      </p>
-      ${totalTimeHtml}
+      <div class="match-scoreboard">
+        <div class="match-score-line">
+          <span class="match-score-mine">${myPoints}</span>
+          <span class="match-score-sep">–</span>
+          <span class="match-score-theirs">${oppPoints}</span>
+        </div>
+        <div class="match-name-row">
+          <div class="match-side match-side--mine">
+            <span class="match-side-name">${summaryEscapeText(myName)}</span>
+            <span class="match-side-label">You</span>
+          </div>
+          <span class="match-vs">vs</span>
+          <div class="match-side match-side--theirs">
+            <span class="match-side-name">${summaryEscapeText(opponentName)}</span>
+            <span class="match-side-label">Opponent</span>
+          </div>
+        </div>
+        <div class="match-time-row">
+          <div class="match-side match-side--mine">
+            <strong class="match-side-time">${formatSpentMs(myMs)}</strong>
+            <span class="match-side-label">Total time</span>
+          </div>
+          <div class="match-side match-side--theirs">
+            <strong class="match-side-time">${formatSpentMs(opponentMs)}</strong>
+            <span class="match-side-label">Total time</span>
+          </div>
+        </div>
+      </div>
       ${eloHtml}
       ${timeoutNote}
       ${assassinationNote}
@@ -460,6 +459,20 @@ function summaryEscapeText(value) {
   }[char]));
 }
 
+// A round's feedback used to render as h.fb.join("") -- a run-together
+// string like "greenyellowgraygraygreen" instead of the colored tiles the
+// live board itself uses. Reuses the same .tile-<color> classes the board
+// already defines (global, !important) so these stay visually identical to
+// the real thing; an unrecognized/missing value gets a hollow placeholder
+// rather than silently disappearing.
+function renderFeedbackTiles(fb) {
+  if (!Array.isArray(fb)) return "";
+  const known = new Set(["green", "yellow", "gray", "blue", "purple"]);
+  return `<span class="summary-feedback-tiles">${fb
+    .map(color => `<span class="summary-feedback-tile ${known.has(color) ? `tile-${color}` : "tile-blank"}"></span>`)
+    .join("")}</span>`;
+}
+
 function summaryRoundSeconds(round, userId) {
   const value = Number(round?.time?.[userId]);
   return Number.isFinite(value) && value >= 0 ? value : 0;
@@ -497,31 +510,6 @@ function renderRoundClockPanel(round, label = "ROUND CLOCK") {
     </section>
   `;
 }
-
-function renderMatchClockPanel(myName, myMs, opponentName, opponentMs) {
-  return `
-    <section class="match-total-time summary-clock-panel summary-clock-panel--match" aria-label="Total match time">
-      <div class="summary-clock-kicker">
-        <span class="summary-clock-symbol" aria-hidden="true">&#9201;</span>
-        <span>MATCH CLOCK</span>
-      </div>
-      <div class="summary-clock-grid">
-        <div class="summary-clock-player is-self">
-          <span class="summary-clock-name">${summaryEscapeText(myName)}</span>
-          <span class="summary-clock-role">You</span>
-          <strong class="summary-clock-value">${formatSpentMs(myMs)}</strong>
-        </div>
-        <span class="summary-clock-vs" aria-hidden="true">VS</span>
-        <div class="summary-clock-player is-opponent">
-          <span class="summary-clock-name">${summaryEscapeText(opponentName)}</span>
-          <span class="summary-clock-role">Opponent</span>
-          <strong class="summary-clock-value">${formatSpentMs(opponentMs)}</strong>
-        </div>
-      </div>
-    </section>
-  `;
-}
-
 
 // Mirrors round-time-summary's own markup (icon, role-colored names, a
 // dedicated value span) instead of a plain "<b>Time taken:</b> A x · B y"
@@ -627,9 +615,7 @@ for (let i = 0; i < state.history.length; i++) {
     ? h.guess.toUpperCase()
     : "";
 
-  const fbCell = Array.isArray(h.fb)
-    ? h.fb.join("")
-    : "";
+  const fbCell = renderFeedbackTiles(h.fb);
 
   const archivedEntry = lastRound?.history?.[i];
   const remainingValue = archivedEntry?.remainingAfter ?? (isFinal ? 0 : null);
@@ -679,8 +665,16 @@ html += `
 ///////////STORED ROUND DETAILS
 /////////////////
 function renderStoredRoundSummary(round, index) {
-  const setterName = summaryEscapeText(getPlayerName(round.setter));
-  const guesserName = summaryEscapeText(getPlayerName(round.guesser));
+  const myId = myUserId();
+  // Whichever of the two names is the viewer's own gets called out in
+  // green (same convention as the match header above) so it's a quick
+  // "was I setting or guessing this round" scan, not a re-read of names.
+  const setterName = round.setter === myId
+    ? `<span class="match-you-name">${summaryEscapeText(getPlayerName(round.setter))}</span>`
+    : summaryEscapeText(getPlayerName(round.setter));
+  const guesserName = round.guesser === myId
+    ? `<span class="match-you-name">${summaryEscapeText(getPlayerName(round.guesser))}</span>`
+    : summaryEscapeText(getPlayerName(round.guesser));
   const roundClockHtml = renderRoundClockPanel(round, `ROUND ${index + 1} CLOCK`);
   let html = `
     <div class="stored-round" data-round-index="${index}">
@@ -716,7 +710,7 @@ function renderStoredRoundSummary(round, index) {
         <td>${i + 1}</td>
         <td class="secret-cell">${h.finalSecret?.toUpperCase() || "???"}</td>
         <td class="guess-cell">${h.guess?.toUpperCase() || ""}</td>
-        <td class="feedback-cell">${Array.isArray(h.fb) ? h.fb.join("") : ""}</td>
+        <td class="feedback-cell">${renderFeedbackTiles(h.fb)}</td>
         <td class="remaining-cell">${remaining}</td>
       </tr>
     `;
