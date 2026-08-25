@@ -333,10 +333,6 @@
   padding: 5px 6px 6px;
 }
 
-#setterScreen .setter-board {
-  padding-top: 4px;
-}
-
 .pc-current-quest-host {
   margin: 1px auto 3px;
 }
@@ -457,8 +453,10 @@
   align-items: center;
   width: 100%;
   min-height: 0;
-  padding: 8px 10px 6px;
+  padding: 5px 6px 6px;
+  row-gap: 2px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 #setterScreen #setterGuesserSubmitted,
@@ -546,13 +544,6 @@
     height: clamp(24px, 9cqw, 34px);
     font-size: clamp(13px, 4.5cqw, 18px);
   }
-}
-
-:is(#setterScreen .setter-board, #guesserScreen .guesser-board, #guesserScreen .guesser-board-v9)
-  .constraint-row .history-tile {
-  width: clamp(28px, 13.5cqw, 60px);
-  height: clamp(28px, 13.5cqw, 60px);
-  font-size: clamp(14px, 6.8cqw, 30px);
 }
 
 /* --------------------------------------------------------------------------
@@ -2858,6 +2849,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   }
 
   #setterScreen .setter-decision-stage,
+  #setterScreen .setter-feedback-stage,
   #guesserScreen :is(.guesser-board, .guesser-board-v9) {
     padding-inline: 7px;
   }
