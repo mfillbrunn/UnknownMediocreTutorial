@@ -68,8 +68,8 @@ module.exports = {
   },
 
   objectives: [
-    { id: "win", required: true, expression: { type: "completeStage" } },
-    { id: "efficient", required: false, expression: { type: "guessWithin", params: { maxGuesses: 6 } } }
+    { id: "win", required: true, label: "Find the secret word", expression: { type: "completeStage" } },
+    { id: "efficient", required: false, label: "Solve it in 6 guesses or fewer", expression: { type: "guessWithin", params: { maxGuesses: 6 } } }
   ],
 
   ranking: {

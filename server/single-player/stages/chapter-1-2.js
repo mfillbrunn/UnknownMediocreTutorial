@@ -30,7 +30,7 @@ module.exports = {
     frames: [
       {
         id: "meeting",
-        image: "/single-player/assets/stages/chapter-1-2/meeting.webp",
+        image: null,
         alt: "A figure in a long coat waiting beside a second chalkboard, already mid-puzzle.",
         beats: [
           { id: "b1", speaker: "Archivist", text: "So you're the one the Guide's been talking about.", side: "left" },
@@ -85,9 +85,9 @@ module.exports = {
   },
 
   objectives: [
-    { id: "win", required: true, expression: { type: "completeStage" } },
-    { id: "efficientGuess", required: false, expression: { type: "guessWithin", params: { maxGuesses: 8 } } },
-    { id: "questDone", required: false, expression: { type: "completeQuestsAtLeast", params: { count: 1, role: "guesser" } } }
+    { id: "win", required: true, label: "Win both rounds", expression: { type: "completeStage" } },
+    { id: "efficientGuess", required: false, label: "Solve round 1 in 8 guesses or fewer", expression: { type: "guessWithin", params: { maxGuesses: 8 } } },
+    { id: "questDone", required: false, label: "Complete your Quest as Guesser", expression: { type: "completeQuestsAtLeast", params: { count: 1, role: "guesser" } } }
   ],
 
   ranking: {

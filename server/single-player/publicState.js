@@ -40,7 +40,7 @@ function buildPublicSinglePlayerSnapshot(state, userId) {
     // never the expression internals (a player shouldn't be able to read
     // off the exact threshold from devtools mid-attempt if the stage
     // author wants it to read as a soft target).
-    objectives: (stage.objectives || []).map(o => ({ id: o.id, required: !!o.required }))
+    objectives: (stage.objectives || []).map(o => ({ id: o.id, required: !!o.required, label: o.label || o.id }))
   };
 }
 

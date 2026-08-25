@@ -159,7 +159,7 @@ class SessionService {
         difficulty: stage.game.difficulty,
         human: stage.game.human
       },
-      objectives: (stage.objectives || []).map(o => ({ id: o.id, required: !!o.required })),
+      objectives: (stage.objectives || []).map(o => ({ id: o.id, required: !!o.required, label: o.label || o.id })),
       preStory: stage.preStory || null,
       postStory: stage.postStory || null
     };
