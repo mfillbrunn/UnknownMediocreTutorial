@@ -19,6 +19,49 @@ let rouletteWords = null;
 let pendingGuessFlight = null;
 window.state = null;
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
+
+// Round-ending "secret found" popup icons (see announceWin below) --
+// animated SVGs in place of a plain emoji, styled/keyframed in
+// special-effects.css under .reward-skull / .reward-celebration.
+const REWARD_SKULL_ICON = `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Word guessed" class="reward-skull">
+  <g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M60 15 C35 15 20 31 20 52 C20 68 28 77 39 82 L39 96 C39 101 43 105 48 105 H72 C77 105 81 101 81 96 V82 C92 77 100 68 100 52 C100 31 85 15 60 15Z"/>
+    <path d="M36 53 C39 43 49 42 52 52 C49 61 40 62 36 53Z"/>
+    <path d="M68 52 C72 42 82 43 85 53 C81 62 72 61 68 52Z"/>
+    <path d="M56 68 L60 62 L64 68"/>
+    <path d="M46 83 V99"/>
+    <path d="M55 84 V103"/>
+    <path d="M65 84 V103"/>
+    <path d="M74 83 V99"/>
+    <path d="M42 86 H78"/>
+  </g>
+  <g class="skull-impact" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+    <path d="M14 28 L7 21"/>
+    <path d="M106 28 L113 21"/>
+    <path d="M60 9 V2"/>
+  </g>
+</svg>`;
+
+const REWARD_CELEBRATION_ICON = `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Word guessed successfully" class="reward-celebration">
+  <g class="celebration-core" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M60 32 C65 42 70 44 82 41 C76 50 77 56 87 63 C75 64 71 69 72 81 C63 74 57 74 48 82 C49 70 45 65 33 64 C43 56 44 50 38 40 C50 44 55 42 60 32Z"/>
+    <circle cx="60" cy="60" r="7"/>
+  </g>
+  <g class="celebration-pieces" fill="currentColor">
+    <rect x="57" y="8" width="6" height="14" rx="2"/>
+    <rect x="57" y="98" width="6" height="14" rx="2"/>
+    <rect x="8" y="57" width="14" height="6" rx="2"/>
+    <rect x="98" y="57" width="14" height="6" rx="2"/>
+    <path d="M24 24 l12 5 -7 7Z"/>
+    <path d="M96 24 l-12 5 7 7Z"/>
+    <path d="M24 96 l12-5 -7-7Z"/>
+    <path d="M96 96 l-12-5 7-7Z"/>
+    <circle cx="34" cy="15" r="3"/>
+    <circle cx="86" cy="15" r="3"/>
+    <circle cx="20" cy="82" r="3"/>
+    <circle cx="100" cy="82" r="3"/>
+  </g>
+</svg>`;
 window.lastTimeRemaining ??= { A: null, B: null };
 window.isRejoining = false;  
 // -----------------------------------------------------
@@ -602,59 +645,6 @@ onStateUpdate(newState => {
       guesserDraftContainer
         .__guesserSubmitSlideDone = true;
     }
-
-    // The opening secret and guess happened at the same time, so the very
-    // next real turn is the guesser's again -- not the setter's, which is
-    // what every later round trains a player to expect. A small heads-up
-    // here instead of the full ceremonial announce (state.phase === "normal"
-    // excludes the isWin case, which skips straight to gameOver and never
-    // reaches this phase at all).
-    if (state.phase === "normal" && myUserId() === state.guesser) {
-      requestAnimationFrame(() => {
-        window.showTurnIndicator?.({
-          label: "Guess again",
-          accentVar: "--guesser-color"
-        });
-      });
-    }
-  }
-
-  // Same light-sweep cue, but for every ordinary turn handoff back to the
-  // guesser (not just the one-time simultaneous-opening case above, which
-  // has its own "Guess again" wording and prevPhase transition) -- the
-  // guesser should get this cue each time it becomes their turn again,
-  // not only the first time.
-  if (
-    prevPhase === "normal" &&
-    state.phase === "normal" &&
-    prevTurn !== state.turn &&
-    state.turn === state.guesser &&
-    myUserId() === state.guesser
-  ) {
-    requestAnimationFrame(() => {
-      window.showTurnIndicator?.({
-        label: "Your turn",
-        accentVar: "--guesser-color"
-      });
-    });
-  }
-
-  // Same cue for the Secretkeeper's own turn handoff -- previously only
-  // the guesser ever got this sweep, so the setter had no equivalent
-  // signal that it was their turn again.
-  if (
-    prevPhase === "normal" &&
-    state.phase === "normal" &&
-    prevTurn !== state.turn &&
-    state.turn === state.setter &&
-    myUserId() === state.setter
-  ) {
-    requestAnimationFrame(() => {
-      window.showTurnIndicator?.({
-        label: "Your turn",
-        accentVar: "--setter-color"
-      });
-    });
   }
 
   /*
@@ -1051,7 +1041,7 @@ function updateScreens() {
 
       function announceWin() {
         window.showBigAnnounce?.({
-          icon: iAmGuesser ? "🎉" : "💀",
+          icon: iAmGuesser ? REWARD_CELEBRATION_ICON : REWARD_SKULL_ICON,
           title: iAmGuesser ? "You found the secret!" : "Your secret was found!",
           sub: `The word was ${(winningEntry.finalSecret || state.secret || "").toUpperCase()}.`,
           roleClass: iAmGuesser ? "outcome-win" : "outcome-lose",

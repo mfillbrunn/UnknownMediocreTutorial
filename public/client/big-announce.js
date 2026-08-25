@@ -26,7 +26,20 @@ window.showBigAnnounce = function ({
   clearTimeout(el.__dismissTimer);
 
   el.className = `big-announce ${compact ? "compact" : ""} ${roleClass}`.trim();
-  el.querySelector(".big-announce-icon").textContent = icon;
+  const iconEl = el.querySelector(".big-announce-icon");
+  // icon is almost always a plain emoji character, but a caller (e.g. the
+  // secret-found popup's animated skull/celebration SVG) can pass real
+  // markup instead -- every call site is authored by us, never user input,
+  // so sniffing for "<" is a safe way to support both without a second
+  // parameter every other caller would have to ignore. The default param
+  // above only covers an omitted/undefined icon, not an explicit falsy one
+  // (null/0), so this still normalizes to a string before checking it.
+  const iconStr = icon || "";
+  if (iconStr.includes("<")) {
+    iconEl.innerHTML = iconStr;
+  } else {
+    iconEl.textContent = iconStr;
+  }
   el.querySelector(".big-announce-title").textContent = title;
 
   const tapHintEl = el.querySelector(".big-announce-tap-hint");
