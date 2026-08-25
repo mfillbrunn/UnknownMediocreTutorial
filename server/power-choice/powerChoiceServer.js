@@ -16,6 +16,7 @@ const {
 } = require("../utils/coverStrength");
 const { tierFor } = require("./powerTiers");
 const { categoryForRewardId } = require("./rewardCategories");
+const { pickLetterProfileMode } = require("../utils/letterProfile");
 const singlePlayerHooks = require("../single-player/hooks");
 
 const MODE = "powerChoice";
@@ -1728,6 +1729,17 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
       // instant the card is taken.
       if (option.powerId === "revealLocation") {
         engine.powers.revealLocation?.turnStart(state, state.guesser, roomId, io);
+      }
+      // Same one-turn-late gap as Informant above: Letter Profile's stat is
+      // also a pure turnStart hook, so without this it wouldn't show up
+      // until the guesser's NEXT turn. A match that started without this
+      // power never ran competitiveMode.js's onLobbyReady letterProfile
+      // branch, so its category also needs picking here, not just its stat.
+      if (option.powerId === "letterProfile") {
+        if (!state.powers.letterProfileMode) {
+          state.powers.letterProfileMode = pickLetterProfileMode();
+        }
+        engine.powers.letterProfile?.turnStart(state, state.guesser, roomId, io);
       }
       state.powerUsedThisTurn = true;
       const side =

@@ -175,14 +175,26 @@
 
     cleanupPending();
 
+    // Measured before appendChild grows scrollHeight -- otherwise a reader
+    // already at the bottom looks scrolled-away the instant this row lands.
+    // This function reruns on every stateUpdate while a guess is still
+    // pending (waiting on the Secretkeeper's reaction, e.g. a power firing
+    // in the meantime), not just on the guesser's own submit -- without
+    // this check, each of those unrelated broadcasts snapped anyone
+    // reading old rows straight back down to the newest one.
+    const wasPinnedToNewest =
+      window.isHistoryScrolledToNewest?.(history) ?? true;
+
     pendingWord = word;
     pendingWrap = makePendingWrap(word);
 
     history.appendChild(pendingWrap);
     removeOtherPendingRows();
 
-    history.scrollTop =
-      history.scrollHeight;
+    if (wasPinnedToNewest) {
+      history.scrollTop =
+        history.scrollHeight;
+    }
 
     pendingWrap.classList.toggle(
       "is-working",
