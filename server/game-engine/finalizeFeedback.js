@@ -1,6 +1,7 @@
 
 const { scoreGuess } = require("../game-engine/scoring");
 const { isConsistentWithHistory } = require("../game-engine/history");
+const singlePlayerHooks = require("../single-player/hooks");
 /**
  * Applies the scoring pipeline:
  *   1. preScore power hooks
@@ -39,6 +40,10 @@ function finalizeFeedback(state, powerEngine, roomId, room, io) {
     ? [...state._pendingPowerEvents]
     : [];
   state._pendingPowerEvents = [];
+
+  // Campaign stage rules (e.g. yellow-to-green) can transform this entry's
+  // feedback; no-ops instantly outside single-player.
+  singlePlayerHooks.maybeTransformFeedback(state, entry, state.guesser);
 
   // Step 4: commit entry to history
   state.history.push(entry);

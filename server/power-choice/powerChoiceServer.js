@@ -16,6 +16,7 @@ const {
 } = require("../utils/coverStrength");
 const { tierFor } = require("./powerTiers");
 const { categoryForRewardId } = require("./rewardCategories");
+const singlePlayerHooks = require("../single-player/hooks");
 
 const MODE = "powerChoice";
 const SPY_THRESHOLDS = [4, 8, 12];
@@ -1316,8 +1317,9 @@ function rewardFixedOptionApplicable(state, option) {
   }
 }
 
-function rewardOptionApplicable(state, option) {
+function rewardOptionApplicable(state, option, role) {
   if (option?.kind === "power") {
+    if (!singlePlayerHooks.isPowerRewardAllowed(state, role, option)) return false;
     if (typeof powerOptionApplicable === "function") {
       return powerOptionApplicable(state, option);
     }
@@ -1382,11 +1384,12 @@ function rewardPickRarityOptions(
   options,
   rewardNumber,
   limit = 3,
-  excludedOptionIds = []
+  excludedOptionIds = [],
+  role
 ) {
   const excluded = new Set(excludedOptionIds || []);
   let remaining = (Array.isArray(options) ? options : []).filter(
-    option => !excluded.has(option?.id) && rewardOptionApplicable(state, option)
+    option => !excluded.has(option?.id) && rewardOptionApplicable(state, option, role)
   );
   const selected = [];
   const probabilities = rewardRarityProbabilities(rewardNumber);
@@ -1433,7 +1436,8 @@ function buildRewardChoiceOptions(
     pool,
     rewardNumber,
     limit,
-    excludedOptionIds
+    excludedOptionIds,
+    role
   );
 
   // During refresh, prefer completely new cards. If there are not enough
@@ -1446,7 +1450,8 @@ function buildRewardChoiceOptions(
       pool,
       rewardNumber,
       limit - fresh.length,
-      alreadySelected
+      alreadySelected,
+      role
     ).filter(option => !fresh.some(existing => existing.id === option.id));
     fresh.push(...fallback.slice(0, limit - fresh.length));
   }
@@ -1701,7 +1706,7 @@ function refreshSpyHintAfterReward(state, context) {
 // for Double Tap -- straight from the incoming POWER_CHOICE_SELECT
 // action (see handleAction below). Every other reward ignores it.
 function applyChoice(state, option, choice, room, roomId, io, context, payload) {
-  if (!rewardOptionApplicable(state, option)) return false;
+  if (!rewardOptionApplicable(state, option, choice?.role)) return false;
   let detail = null;
 
   if (option.kind === "power") {

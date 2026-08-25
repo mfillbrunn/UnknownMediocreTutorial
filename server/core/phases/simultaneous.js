@@ -6,6 +6,7 @@ const { addIncrement, resetRoundTimer } = require("../../utils/Timer");
 const { checkSecret, checkGuess } = require("../../game-engine/validation");
 const { emitRoomState } = require("../rooms");
 const questServer = require("../../powers/powers/questServer");
+const singlePlayerHooks = require("../../single-player/hooks");
 
 function handleSimultaneousPhase(room, state, action, roomId, context) {
   const io = context.io;
@@ -53,6 +54,12 @@ function handleSimultaneousPhase(room, state, action, roomId, context) {
       return;
     }
 
+    const spSecretCheck = singlePlayerHooks.checkForcedStartWord(state, "setter", action.secret);
+    if (!spSecretCheck.ok) {
+      if (socketId) io.to(socketId).emit("errorMessage", spSecretCheck.error);
+      return;
+    }
+
     if (state.simultaneousSecretSubmitted) return;
 
     const secret = action.secret.toUpperCase();
@@ -89,6 +96,12 @@ function handleSimultaneousPhase(room, state, action, roomId, context) {
 
     if (!res.ok) {
       if (socketId) io.to(socketId).emit("errorMessage", res.error);
+      return;
+    }
+
+    const spGuessCheck = singlePlayerHooks.checkForcedStartWord(state, "guesser", action.guess);
+    if (!spGuessCheck.ok) {
+      if (socketId) io.to(socketId).emit("errorMessage", spGuessCheck.error);
       return;
     }
 
@@ -145,7 +158,11 @@ function handleSimultaneousPhase(room, state, action, roomId, context) {
 
   state.pendingGuess = "";
 
-  const isWin = fb.every((tile) => tile === "🟩");
+  // Campaign stage rules can transform this entry's feedback before win
+  // detection; no-ops instantly outside single-player.
+  singlePlayerHooks.maybeTransformFeedback(state, entry, state.guesser);
+
+  const isWin = entry.fb.every((tile) => tile === "🟩");
   if (isWin) {
     state.history.push(entry);
     io.to(roomId).emit("secretFound");
@@ -153,7 +170,7 @@ function handleSimultaneousPhase(room, state, action, roomId, context) {
     return;
   }
 
-  state.simultaneousAllWrong = fb.every((tile) => tile === "⬛");
+  state.simultaneousAllWrong = entry.fb.every((tile) => tile === "⬛");
   entry.secretLocked = state.simultaneousAllWrong;
   state.history.push(entry);
   // Transition to normal phase with guesser turn

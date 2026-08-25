@@ -3,6 +3,7 @@ const { buildSetterRemainingBoxState, buildGuesserRemainingBoxState } = require(
 const { buildConstraintData } = require("./constraintData");
 const { computeLetterProfileStats } = require("./letterProfile");
 const { guesserVisibleHistoryCount } = require("./delayedFeedback");
+const singlePlayerHooks = require("../single-player/hooks");
 
 function buildSafeStateForPlayer(state, userId, allowedSecrets) {
   const safe = JSON.parse(JSON.stringify(state));
@@ -266,6 +267,15 @@ if (
   }
 
   safe.constraintData = buildConstraintData(safe, viewerRole);
+
+  // state.singlePlayer (when present) carries campaign internals -- the
+  // precomputed round plan, the full stage definition including future AI
+  // scripted secrets/guesses -- that the JSON clone above just copied
+  // through verbatim. Replace it with the redacted client snapshot rather
+  // than ever letting the raw object reach a client.
+  delete safe.singlePlayer;
+  const singlePlayerSnapshot = singlePlayerHooks.buildSnapshot(state, userId);
+  if (singlePlayerSnapshot) safe.singlePlayer = singlePlayerSnapshot;
 
   return safe;
 }
