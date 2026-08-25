@@ -110,10 +110,13 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
     // the same power-used-style popup other powers show their opponent,
     // not just a quiet toast, since a real green letter just got revealed
     // against their secret.
+    // The guesser's own reveal (typed "QUEST COMPLETED" + reward card) is
+    // triggered separately, off the "questCompleted" event in quest.js --
+    // that event (unlike this one) carries questType, which is what the
+    // reveal needs to pull the quest's name/description out of
+    // QUEST_METADATA. This handler still owns the opponent's reaction.
     const iAmGuesser = window.currentUser?.id && window.currentUser.id === window.state?.guesser;
-    if (iAmGuesser) {
-      window.playGuesserQuest?.();
-    } else {
+    if (!iAmGuesser) {
       window.showPowerPopup?.({
         emoji: "🟩",
         title: "Opponent's quest complete!",

@@ -297,11 +297,14 @@
 }
 
 /* GUESSER QUEST-COMPLETE REVEAL — "QUEST COMPLETED" types itself out
-   (see client/quest-complete-reveal.js's playGuesserQuest), gets sucked
-   away (.whoosh), then a reward card fades in behind it (.reveal). Both
-   layers are absolutely centered on top of each other inside the fixed
-   overlay so the reward appears to take the message's place rather than
-   sliding in from somewhere else. */
+   (see client/quest-complete-reveal.js's playQuestCompletion), gets sucked
+   away with a horizontal-compression whoosh, then a reward card fades in
+   behind it. Both layers are absolutely centered on top of each other
+   inside the fixed overlay so the reward appears to take the message's
+   place rather than sliding in from somewhere else. --quest-reward-color
+   is set inline per play (the reward's own tile color -- green for the
+   full reward, yellow for an early claim -- falling back to the guesser's
+   role color); every accented element below just reads that one variable. */
 #questReward {
   position: fixed;
   inset: 0;
@@ -315,8 +318,29 @@
   opacity: 1;
 }
 
+/* Subtle dark scrim behind the whole sequence -- not a heavy achievement-
+   modal backdrop, just enough to pull focus off the board underneath. */
+.quest-reward-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 10, 16, 0.55);
+}
+
+#questReward.fade-out {
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.quest-reward-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .quest-message,
-.reward {
+.quest-reward-card {
   position: absolute;
   inset: 0;
   display: flex;
@@ -335,18 +359,21 @@
               filter 190ms ease;
 }
 
+/* Rapid horizontal compression + a slight blur + shooting upward -- scaleX
+   squeezes much harder than scaleY so it reads as "sucked away sideways",
+   not a generic shrink-and-fade. */
 #questReward.whoosh .quest-message {
-  transform: scale(.4) translateY(-14px);
+  transform: scaleX(0.25) scaleY(0.85) translateY(-36px);
   opacity: 0;
-  filter: blur(6px);
+  filter: blur(7px);
 }
 
-.cursor {
+.quest-message-cursor {
   display: inline-block;
   width: 3px;
   height: 0.85em;
   margin-left: 2px;
-  background: var(--guesser-color);
+  background: var(--quest-reward-color, var(--guesser-color));
   animation: quest-cursor-blink 0.9s steps(1) infinite;
 }
 
@@ -355,40 +382,47 @@
   50%, 100% { opacity: 0; }
 }
 
-.reward {
+.quest-reward-card {
   flex-direction: column;
   gap: 6px;
 }
 
-.reward-icon,
-.reward-title,
-.reward-detail {
+.quest-reward-icon-wrap,
+.quest-reward-title,
+.quest-reward-description {
   opacity: 0;
 }
 
-#questReward.reveal .reward-icon,
-#questReward.reveal .reward-title,
-#questReward.reveal .reward-detail {
+.quest-reward-icon-wrap {
+  position: relative;
+}
+
+#questReward.reveal .quest-reward-icon-wrap,
+#questReward.reveal .quest-reward-title,
+#questReward.reveal .quest-reward-description {
   animation: quest-reward-in 520ms cubic-bezier(.2, .9, .25, 1) forwards;
 }
 
-#questReward.reveal .reward-title { animation-delay: 60ms; }
-#questReward.reveal .reward-detail { animation-delay: 120ms; }
+#questReward.reveal .quest-reward-title { animation-delay: 60ms; }
+#questReward.reveal .quest-reward-description { animation-delay: 120ms; }
 
+/* Starts smaller (0.7) than the old fixed 0.5, settles through a restrained
+   1.08 overshoot to 1 -- a shorter runway than a big achievement pop. */
 @keyframes quest-reward-in {
-  0%   { opacity: 0; transform: scale(.5) translateY(10px); }
+  0%   { opacity: 0; transform: scale(.7) translateY(8px); }
   60%  { opacity: 1; transform: scale(1.08) translateY(0); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.reward-icon {
+.quest-reward-icon {
   width: 64px;
   height: 64px;
-  color: var(--guesser-color);
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--guesser-color) 60%, transparent));
+  color: var(--quest-reward-color, var(--guesser-color));
+  /* Restrained -- a soft lift, not a bloom. */
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--quest-reward-color, var(--guesser-color)) 45%, transparent));
 }
 
-.reward-title {
+.quest-reward-title {
   color: #fff;
   font-size: clamp(18px, 5vw, 26px);
   font-weight: 950;
@@ -396,20 +430,20 @@
   text-align: center;
 }
 
-.reward-detail {
+.quest-reward-description {
   color: rgba(226, 234, 244, 0.75);
   font-size: 13px;
   font-weight: 700;
   text-align: center;
 }
 
-.particles {
+.quest-reward-particles {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.particles i {
+.quest-reward-particles i {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -417,20 +451,20 @@
   height: 5px;
   margin: -2.5px 0 0 -2.5px;
   border-radius: 50%;
-  background: var(--guesser-color);
+  background: var(--quest-reward-color, var(--guesser-color));
   opacity: 0;
 }
 
-.particles i:nth-child(1) { --pa: 0deg; }
-.particles i:nth-child(2) { --pa: 45deg; }
-.particles i:nth-child(3) { --pa: 90deg; }
-.particles i:nth-child(4) { --pa: 135deg; }
-.particles i:nth-child(5) { --pa: 180deg; }
-.particles i:nth-child(6) { --pa: 225deg; }
-.particles i:nth-child(7) { --pa: 270deg; }
-.particles i:nth-child(8) { --pa: 315deg; }
+.quest-reward-particles i:nth-child(1) { --pa: 0deg; }
+.quest-reward-particles i:nth-child(2) { --pa: 45deg; }
+.quest-reward-particles i:nth-child(3) { --pa: 90deg; }
+.quest-reward-particles i:nth-child(4) { --pa: 135deg; }
+.quest-reward-particles i:nth-child(5) { --pa: 180deg; }
+.quest-reward-particles i:nth-child(6) { --pa: 225deg; }
+.quest-reward-particles i:nth-child(7) { --pa: 270deg; }
+.quest-reward-particles i:nth-child(8) { --pa: 315deg; }
 
-#questReward.reveal .particles i {
+#questReward.reveal .quest-reward-particles i {
   animation: quest-particle-fly 700ms ease-out forwards;
   animation-delay: 100ms;
 }
@@ -442,11 +476,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   #questReward.whoosh .quest-message { transition-duration: 60ms; }
-  #questReward.reveal :is(.reward-icon, .reward-title, .reward-detail) {
+  #questReward.reveal :is(.quest-reward-icon-wrap, .quest-reward-title, .quest-reward-description) {
     animation-duration: 120ms;
     animation-delay: 0ms;
   }
-  #questReward.reveal .particles i {
+  #questReward.reveal .quest-reward-particles i {
     animation: none;
     opacity: 0;
   }
