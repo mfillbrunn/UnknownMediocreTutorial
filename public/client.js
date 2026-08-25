@@ -1250,6 +1250,7 @@ renderDraftRows({
   role: "setter",
   container: $("draftSetter")
 });
+window.renderSetterStartSuggestions?.(state);
 
   // Sync from the authoritative per-state snapshot (correctly hidden
   // outside the decision step, e.g. at the start of a new simultaneous
