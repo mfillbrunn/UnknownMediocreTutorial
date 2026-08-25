@@ -404,7 +404,18 @@ function makeQuest(excludeType = null) {
 
 function knownClues(state) {
   const greenByIndex = new Map();
-  const yellowLetters = new Set();
+  // letter -> Set<excludedPositions> -- a yellow letter must appear
+  // somewhere in the guess, but never back at a position it already came
+  // back yellow at (yellow means "in the word, not here"). Mirrors
+  // questServer.js's foldHardModeConstraint; previously this only tracked
+  // a bare Set<letter>, which lost the position and let a word re-place a
+  // yellow letter at its own already-ruled-out spot.
+  const yellowLetters = new Map();
+  const addYellow = (letter, position) => {
+    if (!letter) return;
+    if (!yellowLetters.has(letter)) yellowLetters.set(letter, new Set());
+    if (Number.isInteger(position)) yellowLetters.get(letter).add(position);
+  };
   for (const entry of state.history || []) {
     const guess = normalizeWord(entry?.guess);
     const fb = Array.isArray(entry?.fbGuesser) ? entry.fbGuesser : entry?.fb;
@@ -415,7 +426,7 @@ function knownClues(state) {
         greenByIndex.set(i, guess[i]);
       }
       if (mark.includes("🟨") || mark === "yellow" || mark === "y") {
-        yellowLetters.add(guess[i]);
+        addYellow(guess[i], i);
       }
     }
   }
@@ -429,7 +440,9 @@ function knownClues(state) {
       greenByIndex.set(constraint.index, normalizeWord(constraint.letter)[0]);
     }
     if (type === "YELLOW" && constraint.letter) {
-      yellowLetters.add(normalizeWord(constraint.letter)[0]);
+      // Power-granted "somewhere in the word" hints carry no position to
+      // exclude -- just the require-present half applies.
+      addYellow(normalizeWord(constraint.letter)[0], null);
     }
   }
   return { greenByIndex, yellowLetters };
@@ -440,8 +453,11 @@ function hardModeCompliant(state, word) {
   for (const [index, letter] of greenByIndex) {
     if (word[index] !== letter) return false;
   }
-  for (const letter of yellowLetters) {
-    if (letter && !word.includes(letter)) return false;
+  for (const [letter, excludedPositions] of yellowLetters) {
+    if (!word.includes(letter)) return false;
+    for (const pos of excludedPositions) {
+      if (word[pos] === letter) return false;
+    }
   }
   return true;
 }
