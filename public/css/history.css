@@ -518,53 +518,41 @@ body.guide-on .theme-setter .history-row.draft-row.pending-guess::before {
   content: none;
 }
 
-/* Constraint row uses history tile language */
+/* Constraint row uses one shared geometry for both roles. */
 .constraint-row {
   position: relative;
-  /* .center-col uses align-items:center (shrink-to-fit), so without an
-     explicit width this row was sized purely by its tiles' content --
-     tiles alone were already tuned to nearly fill .center-col, leaving no
-     room for this row's own padding/border, so the box as a whole spilled
-     ~13px past .center-col on both sides (into the sidebar and off the
-     board). Pin it to the column's actual width instead. */
-  width: fit-content;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--sp-4);
+  /*
+   * Five 60px tiles, four 4px gaps, 12px horizontal padding, and the
+   * border fit inside 328px. On narrower boards the tracks contract
+   * equally, so both roles remain responsive without separate formulas.
+   */
+  width: min(calc(100% - 8px), 328px);
   max-width: calc(100% - 8px);
-  box-sizing: border-box;
+  min-height: 0;
   align-self: center;
+  flex-shrink: 0;
   box-sizing: border-box;
   padding: var(--sp-6);
-  border-radius: var(--r-10);
-  /* A natural-size sibling of .history-scroll within .center-col's flex
-     column -- must not shrink, so .history-scroll (the one designated
-     flexible element) is what absorbs any space pressure instead. */
-  flex-shrink: 0;
   border: 1.5px solid color-mix(
     in srgb,
     var(--role-accent) 60%,
     transparent
   );
+  border-radius: var(--r-10);
   box-shadow:
-    0 0 8px color-mix(in srgb, var(--role-accent) 35%, transparent),
-    inset 0 0 var(--sp-6) color-mix(in srgb, var(--role-accent) 18%, transparent);
-}
-
-/* width:fit-content above only hugs the row's own 5 tiles -- the actual
-   feedback row below it is sized (and, for the guesser, padded) quite
-   differently, so the two boxes never lined up. Match each screen's own
-   feedback-row width/padding formula exactly instead, so the constraint
-   row and the feedback row below it are the same size. */
-#guesserScreen .constraint-row {
-  width: calc(5 * clamp(30px, 17cqw, 92px) + 4 * var(--sp-4) + 120px);
-  max-width: 100%;
-  padding-left: 60px;
-  padding-right: 60px;
-}
-
-#setterScreen .constraint-row {
-  width: 100%;
-  max-width: 100%;
-  padding-left: clamp(18px, 12cqw, 78px);
-  padding-right: clamp(18px, 12cqw, 78px);
+    0 0 8px color-mix(
+      in srgb,
+      var(--role-accent) 35%,
+      transparent
+    ),
+    inset 0 0 var(--sp-6) color-mix(
+      in srgb,
+      var(--role-accent) 18%,
+      transparent
+    );
 }
 
 .constraint-row::before {
@@ -580,40 +568,29 @@ position: absolute;
   pointer-events: none;
 }
 
-.constraint-row .history-tile {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* The setter's narrow .center-col is the tightest fit -- .history-tile's
-   17.8cqw was tuned to nearly fill that column with no row chrome at all,
-   which is what regular (unpadded) history rows are. Now that
-   .constraint-row itself claims a fixed width (above) instead of growing
-   past the column, its own padding+border need to come out of the tiles'
-   share too, or they'd overflow the row's padding internally. Scaled down
-   by the same ratio the row's interior lost to that padding+border. */
-.theme-setter .constraint-row .history-tile {
-  width: clamp(29px, 16.6cqw, 77px);
-  height: clamp(29px, 16.6cqw, 77px);
-  font-size: clamp(15px, 8.4cqw, 38px);
-}
-
 .constraint-tile {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
 
-  padding: 0;      
-  gap: 0;          
+  padding: 0;
+  gap: 0;
 }
 
-/* Constraint tiles: grid layout (NOT flex) */
+/* Constraint tiles: one shared geometry for both roles. The grid track
+   (.constraint-row's grid-template-columns) determines each tile's width;
+   aspect-ratio determines its height, so both stay equal without a
+   separate pixel/cqw formula per role. */
 .constraint-row .history-tile {
   position: relative;
-  display: grid; /* IMPORTANT */
-   animate: none;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  aspect-ratio: 1;
+  font-size: clamp(14px, 6vw, 30px);
+  animation: none;
 }
 
 .constraint-row .history-tile .quadrants {
