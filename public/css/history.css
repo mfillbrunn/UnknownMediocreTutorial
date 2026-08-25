@@ -755,7 +755,7 @@ body.hide-constraints .constraint-row {
   width: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
   box-sizing: border-box;
   /* Buffer so a tile's border/glow/reveal-mask (history.css's ::after,
      which bleeds 2px past the tile edge) never gets clipped by the
@@ -766,6 +766,55 @@ body.hide-constraints .constraint-row {
   padding: 10px 2px 4px;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--role-accent) 55%, transparent) transparent;
+  /* Canonical home for this list's touch-scrolling behavior -- both the
+     Guesser's (#historyGuesser) and Secretkeeper's (#setterGuesserSubmitted)
+     history carry this class, so the mechanics live here once instead of
+     duplicated per role in gameplay-ui.css (which keeps only genuinely
+     role-specific sizing). A native finger drag has to reach the browser's
+     own scroll handling untouched: pan-y allows a vertical drag starting
+     anywhere in this box; overflow-anchor:none stops the browser's own
+     scroll-anchoring heuristic from nudging scrollTop on a DOM mutation
+     elsewhere in the list (public/ui/history.js's shared scroll-intent
+     controller is the only thing allowed to move this list programmatically);
+     -webkit-overflow-scrolling keeps iOS's momentum/deceleration scrolling.
+     pointer-events is set explicitly since #globalOverlays and similar
+     full-screen layers elsewhere in the app rely on pointer-events:none by
+     default and this list must never inherit that. */
+  touch-action: pan-y pinch-zoom;
+  -webkit-overflow-scrolling: touch;
+  overflow-anchor: none;
+  pointer-events: auto;
+}
+
+/* Allow the same vertical pan to start on any descendant of the list --
+   without this, a touch landing on a tile (rather than the gap between
+   rows) had its scroll swallowed by whatever more specific touch-action
+   default that descendant would otherwise pick up. Split from the
+   pointer-events grant below: history-tile-cover needs the same pan-y
+   permission (so a drag starting exactly on it still scrolls the list)
+   but must NOT gain pointer-events -- it's deliberately pointer-events:none
+   (see its own rule) so touches pass straight through to what it's
+   covering, and this :is() selector is more specific than that lone-class
+   rule, so folding pointer-events in here would have silently overridden it. */
+.history-scroll :is(
+  .history-row-wrap,
+  .history-row-anchor,
+  .history-row,
+  .history-tile,
+  .tile-letter,
+  .history-tile-cover
+) {
+  touch-action: pan-y pinch-zoom;
+}
+
+.history-scroll :is(
+  .history-row-wrap,
+  .history-row-anchor,
+  .history-row,
+  .history-tile,
+  .tile-letter
+) {
+  pointer-events: auto;
 }
 /* Guesser only: sized to exactly one feedback row's own width (5 tiles +
    4 gaps, plus this element's own left/right padding) instead of

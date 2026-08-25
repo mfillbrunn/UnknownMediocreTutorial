@@ -647,7 +647,25 @@
       targetWrap.closest?.(".history-scroll");
 
     if (scrollBox) {
-      scrollBox.scrollTop = scrollBox.scrollHeight;
+      // Follow to the bottom only if the reader is actually eligible to
+      // follow right now -- otherwise the pending row landed off-screen for
+      // someone who deliberately scrolled away, and forcing the viewport
+      // (or flying a clone) to it isn't worth fighting their own gesture
+      // for. Bail out the same way this function already does for any
+      // other "can't fly" case (a bad clone, a zero-size rect) so the
+      // caller's own non-flight fallback finishes the row in place.
+      const scrollIntent =
+        window.captureHistoryScrollIntent?.(scrollBox) ?? { eligible: true, scrollTop: scrollBox.scrollTop };
+
+      if (window.restoreHistoryScrollIntent) {
+        window.restoreHistoryScrollIntent(scrollBox, scrollIntent);
+      } else if (scrollIntent.eligible) {
+        scrollBox.scrollTop = scrollBox.scrollHeight;
+      }
+
+      if (!scrollIntent.eligible) {
+        return false;
+      }
     }
 
     const startRect = clone.getBoundingClientRect();

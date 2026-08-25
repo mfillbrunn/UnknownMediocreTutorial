@@ -173,10 +173,22 @@
     if (!historyScroll || !rect) return;
     const historyTop = historyScroll.getBoundingClientRect().top;
     const cap = Math.max(MIN_HISTORY_HEIGHT, rect.top - HISTORY_GAP - historyTop);
+    // Captured before the maxHeight write below, which can itself change
+    // scrollHeight/clientHeight -- and thus the eligibility check -- out
+    // from under this.
+    const scrollIntent =
+      window.captureHistoryScrollIntent?.(historyScroll) ?? { eligible: true, scrollTop: historyScroll.scrollTop };
     historyScroll.style.maxHeight = `${cap}px`;
     // Newest guess is the one that matters -- keep it in view now that the
-    // box it lives in is shorter than the rows it holds.
-    historyScroll.scrollTop = historyScroll.scrollHeight;
+    // box it lives in is shorter than the rows it holds, but only for a
+    // Secretkeeper who was already reading the newest guess; someone
+    // reviewing an earlier row shouldn't be yanked away just because the
+    // idle panel opened.
+    if (window.restoreHistoryScrollIntent) {
+      window.restoreHistoryScrollIntent(historyScroll, scrollIntent);
+    } else if (scrollIntent.eligible) {
+      historyScroll.scrollTop = historyScroll.scrollHeight;
+    }
   }
 
   function clearIdleHistoryCap() {

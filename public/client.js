@@ -1008,16 +1008,25 @@ function updateScreens() {
       // The winning row is the LAST row in the history list, so after a
       // long round it sits below the fold and its flip played entirely
       // off-screen -- the reveal this whole branch exists to show went
-      // unseen exactly when the round had been most worth watching. Pin
-      // both lists to the bottom before the flip starts. Two frames, so
-      // the row just added has been laid out and scrollHeight is final.
+      // unseen exactly when the round had been most worth watching. Follow
+      // each list to the bottom before the flip starts, but only the ones
+      // that were actually still attached (not scrolled away, not being
+      // manipulated) -- a player who scrolled up to review an earlier row
+      // must not be yanked away from it just because the round ended. Two
+      // frames, so the row just added has been laid out and scrollHeight
+      // is final.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           [
             $("historyGuesser"),
             $("setterGuesserSubmitted")
           ].forEach(list => {
-            if (list) list.scrollTop = list.scrollHeight;
+            if (!list) return;
+            if (window.captureHistoryScrollIntent && window.restoreHistoryScrollIntent) {
+              window.restoreHistoryScrollIntent(list, window.captureHistoryScrollIntent(list));
+            } else if (window.isHistoryScrolledToNewest?.(list) ?? true) {
+              list.scrollTop = list.scrollHeight;
+            }
           });
         });
       });
@@ -1343,8 +1352,11 @@ function resolvePendingGuessFlight(
       .forEach(startHistoryRowReveal);
 
     if (container) {
-      container.scrollTop =
-        container.scrollHeight;
+      if (window.captureHistoryScrollIntent && window.restoreHistoryScrollIntent) {
+        window.restoreHistoryScrollIntent(container, window.captureHistoryScrollIntent(container));
+      } else if (window.isHistoryScrolledToNewest?.(container) ?? true) {
+        container.scrollTop = container.scrollHeight;
+      }
     }
 
     return;
@@ -1399,8 +1411,25 @@ function slideRowIntoPlace(
   }
 
   newRow.classList.remove("row-enter");
-  scrollBox.scrollTop =
-    scrollBox.scrollHeight;
+
+  // Follow to the bottom only if the Secretkeeper is actually eligible to
+  // follow right now -- if they've scrolled away to review an earlier row,
+  // the new row just landed off-screen; flying a decorative clone toward
+  // (or forcing the viewport to) something they can't see isn't worth
+  // fighting their own gesture for. Finish the real row in place instead.
+  const scrollIntent =
+    window.captureHistoryScrollIntent?.(scrollBox) ?? { eligible: true, scrollTop: scrollBox.scrollTop };
+
+  if (window.restoreHistoryScrollIntent) {
+    window.restoreHistoryScrollIntent(scrollBox, scrollIntent);
+  } else if (scrollIntent.eligible) {
+    scrollBox.scrollTop = scrollBox.scrollHeight;
+  }
+
+  if (!scrollIntent.eligible) {
+    finishWithoutFlight();
+    return;
+  }
 
   const runFlight = () => {
     const endRect =
