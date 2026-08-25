@@ -1671,48 +1671,9 @@
     <div class="big-announce-tap-hint" hidden>Tap to continue</div>
   </div>
 </div>
-<!-- Guesser quest-complete reveal: "QUEST COMPLETED" types itself out,
-     gets sucked away, then this reward card takes its place. See
-     client/quest-complete-reveal.js's playGuesserQuest. -->
-<div class="quest-complete" id="questReward" aria-hidden="true">
-  <div class="quest-message">
-    <span id="questTyped"></span><span class="cursor"></span>
-  </div>
-
-  <div class="reward">
-    <svg class="reward-icon" viewBox="0 0 100 100">
-      <circle cx="50" cy="50" r="31"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"/>
-
-      <path
-        d="M50 25
-           L57 42
-           L76 43
-           L61 55
-           L66 74
-           L50 64
-           L34 74
-           L39 55
-           L24 43
-           L43 42 Z"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="4"
-        stroke-linejoin="round"
-      />
-    </svg>
-
-    <div class="reward-title">SHARP MIND</div>
-    <div class="reward-detail">Guesser Quest completed</div>
-
-    <div class="particles">
-      <i></i><i></i><i></i><i></i>
-      <i></i><i></i><i></i><i></i>
-    </div>
-  </div>
-</div>
+<!-- Guesser quest-complete reveal (#questReward) is built dynamically by
+     client/quest-complete-reveal.js's ensureOverlay() on first use, rather
+     than hardcoded here -- see that file. -->
   <script src="client/power-copy-v10.js?v=10"></script>
   <script src="ui/gameplay-systems-v10.js?v=10&compact-bonus=1"></script>
   <script src="ui/competitive-fixes-v2.js?competitive-fixes=2.2"></script>

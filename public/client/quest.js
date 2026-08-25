@@ -749,6 +749,37 @@ function maybeShowQuestProgressPop(state) {
 }
 window.maybeShowQuestProgressPop = maybeShowQuestProgressPop;
 
+// Guesser-only "QUEST COMPLETED" reveal (quest-complete-reveal.js). Both
+// listeners below are keyed off server-emitted, one-shot completion events
+// rather than diffing state.powers.quest.used across renders -- questServer.js
+// gates attemptQuestClaim on q.used, so each of these can only ever fire once
+// per quest instance, and a reconnect re-syncs via a plain stateUpdate rather
+// than replaying past socket events. That's what guarantees this only plays on
+// the real incomplete -> complete transition, never on reconnect/reload into
+// an already-completed quest or on a later re-render.
+//
+// Neither event's payload is read against window.state: the server emits
+// these BEFORE the stateUpdate broadcast that would carry the completed
+// q.used/resultLetter/resultIndex fields (see normal.js's USE_QUEST handler),
+// so state here is still the pre-completion snapshot. QUEST_METADATA (the
+// existing per-quest-type label/desc table) plus the event's own payload is
+// enough to build the reveal without needing that broadcast to land first.
+function iAmTheGuesser() {
+  return !!(window.currentUser?.id && window.currentUser.id === window.state?.guesser);
+}
+
+socket.on("questCompleted", ({ questType, index, letter }) => {
+  if (!iAmTheGuesser()) return;
+  const meta = window.QUEST_METADATA?.[questType];
+  window.playQuestCompletion?.({
+    title: meta?.label || "Quest Complete",
+    description: letter
+      ? `Complete! ${letter.toUpperCase()} is green in position ${index + 1}.`
+      : "Free green letter revealed.",
+    color: "var(--tile-green)"
+  });
+});
+
 socket.on("questEarlyClaim", ({ questType, letter }) => {
   const meta = window.QUEST_METADATA?.[questType];
   const label = meta?.label || "Quest";
@@ -763,4 +794,14 @@ socket.on("questEarlyClaim", ({ questType, letter }) => {
   // reward rather than the full green one.
   window.shake?.(document.querySelector(".quest-badge-tile"));
   window.triggerPowerFX?.("questYellow");
+
+  if (iAmTheGuesser()) {
+    window.playQuestCompletion?.({
+      title: label,
+      description: letter
+        ? `Claimed early: ${letter.toUpperCase()} is somewhere in the secret (yellow).`
+        : "Claimed early — nothing new was left to reveal.",
+      color: "var(--tile-yellow)"
+    });
+  }
 });
