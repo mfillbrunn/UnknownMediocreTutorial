@@ -997,7 +997,12 @@
 /* Match summary */
 #menu.screen {
   box-sizing: border-box;
-  width: min(480px, calc(100vw - 14px));
+  /* 100% of this screen's own containing block (#appContainer's padded
+     content box), not 100vw -- the viewport calc ignored #appContainer's
+     own 20px side padding, so on a narrow phone this panel was sized
+     wider than the space actually available inside it and spilled past
+     the right edge of the screen instead of being centered. */
+  width: min(480px, 100%);
   max-width: 480px;
   margin: 7px auto;
   padding: 0;
@@ -1037,7 +1042,6 @@
   min-height: 34px;
   height: 34px;
   padding: 0;
-  border: 1px solid #58708a;
   border-radius: 9px;
   background: #294763;
   color: #fff;
@@ -1063,7 +1067,6 @@
   margin: 0 0 8px;
   padding: 12px 14px 10px;
   overflow: hidden;
-  border: 1px solid #36536d;
   border-radius: 13px;
   background: var(--ink-850);
   box-shadow: none;
@@ -1072,9 +1075,9 @@
 .match-header::before {
   display: none;
 }
-.match-header--win { --summary-result-accent: #4ade80; border-top-color: #4e8d79; }
-.match-header--loss { --summary-result-accent: #f87171; border-top-color: var(--ink-rose); }
-.match-header--tie { --summary-result-accent: #c3cad4; border-top-color: #78899a; }
+.match-header--win { --summary-result-accent: #4ade80; }
+.match-header--loss { --summary-result-accent: #f87171; }
+.match-header--tie { --summary-result-accent: #c3cad4; }
 .match-header h2 {
   margin: 0;
   color: var(--summary-result-accent);
@@ -1209,7 +1212,6 @@
 .reveal-penalty-summary,
 .tie-breaker,
 .round-note {
-  border: 1px solid var(--ink-line-soft);
   background: #132a42;
   color: #dce6ef;
   box-shadow: none;
@@ -1232,7 +1234,6 @@
   align-items: center;
   min-height: 27px;
   padding: 5px 9px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.035);
   color: var(--ink-muted);
@@ -1276,7 +1277,6 @@
   max-width: 100%;
   margin: 0 auto 10px;
   padding: 7px 11px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.03);
   color: rgba(228, 236, 245, 0.7);
@@ -1322,7 +1322,6 @@
   min-width: 0;
   padding: 8px;
   border-radius: 11px;
-  border: 1px solid var(--ink-line-soft);
   background: #10263d;
   box-shadow: none;
 }
@@ -1356,7 +1355,6 @@
   min-width: 0;
   padding: 8px 9px;
   overflow: hidden;
-  border: 1px solid var(--ink-line-soft);
   border-radius: 9px;
   background: #10263d;
 }
@@ -1433,7 +1431,7 @@
   letter-spacing: 0.06em;
 }
 .summary-actions .primary-btn {
-  border-color: #ca7794;
+  border: none;
   background: color-mix(in srgb, var(--ink-rose) var(--glass-alpha), transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -1443,7 +1441,7 @@
   background: color-mix(in srgb, var(--ink-rose-hover) var(--glass-alpha-hover), transparent);
 }
 .summary-actions .secondary-btn {
-  border-color: #48627b;
+  border: none;
   background: color-mix(in srgb, #18334f var(--glass-alpha), transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -1451,6 +1449,12 @@
 }
 .summary-actions .secondary-btn:hover {
   background: color-mix(in srgb, #18334f var(--glass-alpha-hover), transparent);
+}
+/* Scoped override -- the global .secondary-btn.danger (used outside the
+   summary too, e.g. the ranked-queue cancel and rejoin-leave buttons)
+   keeps its own border; only the summary's own copy goes borderless. */
+.summary-actions .secondary-btn.danger {
+  border: none;
 }
 #playQuickBtn {
   background: linear-gradient(135deg,#fbbf24,#f59e0b);
@@ -1487,7 +1491,6 @@
 .stored-round {
   padding: 8px;
   overflow: hidden;
-  border: 1px solid var(--ink-line-soft);
   border-radius: 13px;
   background: #10263d;
   box-shadow: none;
@@ -1536,7 +1539,6 @@
   max-width: 100%;
   margin: 0 auto;
   overflow-x: hidden;
-  border: 1px solid var(--ink-line-soft);
   border-radius: 10px;
   background: #0a1b2c;
   scrollbar-width: thin;
@@ -1561,7 +1563,6 @@
 }
 .summary-table th {
   position: static;
-  border-bottom: 1px solid #314a62;
   background: #142b43;
   color: #c5d1dc;
   font-size: 8px;
@@ -1570,7 +1571,6 @@
   text-transform: uppercase;
 }
 .summary-table td {
-  border-bottom: 1px solid rgba(175, 195, 213, 0.11);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 10px;
   font-weight: 720;
@@ -1624,9 +1624,6 @@
 }
 .summary-table tr.final-row {
   background: rgba(57, 120, 103, 0.18);
-}
-.summary-table tbody tr:last-child td {
-  border-bottom: 0;
 }
 .summary-powers.compact {
   justify-content: center;
