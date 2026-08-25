@@ -548,6 +548,25 @@ body.guide-on .theme-setter .history-row.draft-row.pending-guess::before {
     inset 0 0 var(--sp-6) color-mix(in srgb, var(--role-accent) 18%, transparent);
 }
 
+/* width:fit-content above only hugs the row's own 5 tiles -- the actual
+   feedback row below it is sized (and, for the guesser, padded) quite
+   differently, so the two boxes never lined up. Match each screen's own
+   feedback-row width/padding formula exactly instead, so the constraint
+   row and the feedback row below it are the same size. */
+#guesserScreen .constraint-row {
+  width: calc(5 * clamp(30px, 17cqw, 92px) + 4 * var(--sp-4) + 120px);
+  max-width: 100%;
+  padding-left: 60px;
+  padding-right: 60px;
+}
+
+#setterScreen .constraint-row {
+  width: 100%;
+  max-width: 100%;
+  padding-left: clamp(18px, 12cqw, 78px);
+  padding-right: clamp(18px, 12cqw, 78px);
+}
+
 .constraint-row::before {
   content: "";
 position: absolute;
@@ -771,23 +790,19 @@ body.hide-constraints .constraint-row {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--role-accent) 55%, transparent) transparent;
 }
-/* Guesser only: a subtly darker backdrop behind the past-guesses list so
-   it reads as its own contained/scrollable area rather than blending
-   into the rest of the screen (the setter's sidebar-based layout already
-   gives its board a visually distinct region, so this stays scoped to
-   the guesser's single-column screen). Sized to one feedback row's own
-   width (5 tiles + 4 gaps, plus this element's own left/right padding)
-   instead of width:fit-content -- fit-content shrank to whatever's
-   actually inside it, so with zero guesses yet (nothing to shrink-wrap
-   around) the backdrop collapsed to near-nothing instead of already
-   reading as the board's contained area. This way it's always exactly
-   the feedback's width, before the first guess and after. The clamp()
-   here has to match .history-tile's own clamp above, or this backdrop
-   wouldn't actually hug the tiles it's sized against -- it was left
-   pointing at a smaller clamp a stylesheet consolidation had dropped
-   the actual overriding rule for, which is exactly why the guesser's
-   history box (and, via flex-shrink, the tiles forced to fit inside it)
-   came out visibly smaller than the tile clamp itself allowed for.
+/* Guesser only: sized to exactly one feedback row's own width (5 tiles +
+   4 gaps, plus this element's own left/right padding) instead of
+   width:fit-content -- fit-content shrank to whatever's actually inside
+   it, so with zero guesses yet (nothing to shrink-wrap around) this
+   collapsed to near-nothing instead of already matching the board's real
+   width. This way it's always exactly the feedback's width, before the
+   first guess and after. The clamp() here has to match .history-tile's
+   own clamp above, or this wouldn't actually hug the tiles it's sized
+   against -- it was left pointing at a smaller clamp a stylesheet
+   consolidation had dropped the actual overriding rule for, which is
+   exactly why the guesser's history box (and, via flex-shrink, the tiles
+   forced to fit inside it) came out visibly smaller than the tile clamp
+   itself allowed for.
 
    padding is symmetric (50px each side) even though only the right side
    actually needs the room: Count Only's G/Y tally (.count-only-badge
@@ -808,8 +823,6 @@ body.hide-constraints .constraint-row {
   margin: 0 auto;
   padding-left: 60px;
   padding-right: 60px;
-  background: color-mix(in srgb, black 16%, transparent);
-  border-radius: var(--r-10);
 }
 .history-scroll::-webkit-scrollbar {
   width: 5px;

@@ -437,14 +437,6 @@
 #setterScreen #setterGuesserSubmitted {
   flex: 1 1 0;
   padding-inline: clamp(18px, 12cqw, 78px);
-  /* The guesser's equivalent list gets a subtly darker backdrop (see
-     #guesserScreen .history-scroll) so its own flex:1-grown empty space
-     still reads as a contained scroll area rather than a dead gap --
-     the setter's board never got the same treatment, which on a short
-     viewport (one guess in, most of the area still empty) looked like
-     a plain blank hole between the feedback row and the draft below. */
-  background: color-mix(in srgb, black 16%, transparent);
-  border-radius: var(--r-10);
 }
 
 #setterScreen .setter-board-divider {
