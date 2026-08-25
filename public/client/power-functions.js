@@ -112,13 +112,7 @@ socket.on("greenLetterRevealed", ({ index, letter, source }) => {
     // against their secret.
     const iAmGuesser = window.currentUser?.id && window.currentUser.id === window.state?.guesser;
     if (iAmGuesser) {
-      window.showBigAnnounce?.({
-        icon: "🟩",
-        title: "Quest complete!",
-        sub: `${letter.toUpperCase()} is green in position ${index + 1}.`,
-        roleClass: "outcome-win",
-        duration: 3200
-      });
+      window.playGuesserQuest?.();
     } else {
       window.showPowerPopup?.({
         emoji: "🟩",
