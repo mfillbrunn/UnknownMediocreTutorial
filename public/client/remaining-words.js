@@ -180,7 +180,6 @@ function renderSetterRemainingBox(boxState) {
   );
 
   const box = document.getElementById("SetterRemainingBox");
-  const setterScreen = document.getElementById("setterScreen");
   if (!box) return;
 
   // This box's live updates arrive over their own socket event (see
@@ -194,26 +193,12 @@ function renderSetterRemainingBox(boxState) {
   // with the stars instead of sitting under the submitted row's outline
   // while it flies to history (see onSetterDecisionSubmitted).
   if (!boxState || !boxState.visible || window.setterDecisionCommitted?.()) {
-    setterScreen?.classList.remove("single-word-left-v3");
     box.innerHTML = "";
     box.hidden = true;
     return;
   }
 
   box.hidden = false;
-
-  // COMPETITIVE OVERHAUL V3: ONE WORD STATE START
-  const onlyOneWordLeft = !boxState.empty && Number(boxState.old) === 1;
-  setterScreen?.classList.toggle("single-word-left-v3", onlyOneWordLeft);
-  if (onlyOneWordLeft) {
-    box.innerHTML = `
-      <div class="setter-single-word-left-v3" role="status" aria-live="polite">
-        Only one word is left
-      </div>
-    `;
-    return;
-  }
-  // COMPETITIVE OVERHAUL V3: ONE WORD STATE END
 
   // Toggling the guide re-renders this box purely to add/remove the hint
   // line — it has to reuse the last real numbers, not whatever the most

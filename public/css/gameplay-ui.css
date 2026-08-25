@@ -908,36 +908,6 @@
   border-bottom: 1px solid var(--game-line);
 }
 
-/* Exactly one legal secret left: the cover-strength meter/star UI is
-   meaningless with no real choice to cover, so it's replaced by a plain
-   status banner instead. */
-.setter-single-word-left-v3 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 52px;
-  padding: 11px 15px;
-  border: 1px solid color-mix(in srgb, var(--setter-color) 52%, transparent);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--setter-color) 12%, #121923);
-  color: color-mix(in srgb, var(--setter-color) 72%, white);
-  font-size: clamp(0.92rem, 2.2vw, 1.08rem);
-  font-weight: 870;
-  text-align: center;
-}
-
-#setterScreen.single-word-left-v3 #setterCoverStrength,
-#setterScreen.single-word-left-v3 #setterCoverStars,
-#setterScreen.single-word-left-v3 .setter-cover-stars,
-#setterScreen.single-word-left-v3 #setterBonusTargetV9,
-#setterScreen.single-word-left-v3 #setterCoverTarget,
-#setterScreen.single-word-left-v3 .setter-bonus-target,
-#setterScreen.single-word-left-v3 [data-cover-star],
-#setterScreen.single-word-left-v3 .cover-strength-card {
-  display: none !important;
-}
-
 /* .pc-bonus-hint-tile is NOT a standalone badge like the others above --
    it's a modifier class power-choice-mode.js's applyBonusHintTileOutline
    toggles directly on one of the setter's real #draftSetter secret-letter
