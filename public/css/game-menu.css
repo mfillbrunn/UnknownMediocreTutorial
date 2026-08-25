@@ -1520,7 +1520,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   padding: 0 14px;
   border: 1px solid rgba(188, 207, 225, 0.24) !important;
   border-radius: 10px !important;
-  background: rgba(23, 51, 79, 0.5) !important;
+  background: rgba(23, 51, 79, 0.64) !important;
   color: var(--ink-text) !important;
   box-shadow: 0 4px 10px rgba(3, 13, 25, 0.2);
   font-size: clamp(11px, 1.4vh, 13px);
@@ -1532,7 +1532,7 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 
 #startupScreen .menu-btn:hover:not(:disabled) {
   border-color: rgba(224, 235, 246, 0.42) !important;
-  background: rgba(33, 65, 95, 0.6) !important;
+  background: rgba(33, 65, 95, 0.74) !important;
   transform: translateY(-1px);
 }
 
@@ -1543,13 +1543,13 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
 #startupScreen .menu-btn.primary,
 #startupScreen .menu-split-btn .menu-btn.primary {
   border-color: rgba(246, 178, 202, 0.45) !important;
-  background: rgba(169, 83, 114, 0.5) !important;
+  background: rgba(169, 83, 114, 0.64) !important;
   color: #fff !important;
 }
 
 #startupScreen .menu-btn.primary:hover:not(:disabled),
 #startupScreen .menu-split-btn .menu-btn.primary:hover:not(:disabled) {
-  background: rgba(179, 90, 121, 0.6) !important;
+  background: rgba(179, 90, 121, 0.74) !important;
 }
 
 #startupScreen .menu-split-btn {

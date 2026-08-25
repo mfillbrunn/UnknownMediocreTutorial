@@ -296,6 +296,162 @@
   }
 }
 
+/* GUESSER QUEST-COMPLETE REVEAL — "QUEST COMPLETED" types itself out
+   (see client/quest-complete-reveal.js's playGuesserQuest), gets sucked
+   away (.whoosh), then a reward card fades in behind it (.reveal). Both
+   layers are absolutely centered on top of each other inside the fixed
+   overlay so the reward appears to take the message's place rather than
+   sliding in from somewhere else. */
+#questReward {
+  position: fixed;
+  inset: 0;
+  z-index: 100002;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+#questReward.is-active {
+  opacity: 1;
+}
+
+.quest-message,
+.reward {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quest-message {
+  color: #fff;
+  font-size: clamp(22px, 6vw, 34px);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+  transition: transform 190ms cubic-bezier(.4, 0, 1, 1),
+              opacity 190ms cubic-bezier(.4, 0, 1, 1),
+              filter 190ms ease;
+}
+
+#questReward.whoosh .quest-message {
+  transform: scale(.4) translateY(-14px);
+  opacity: 0;
+  filter: blur(6px);
+}
+
+.cursor {
+  display: inline-block;
+  width: 3px;
+  height: 0.85em;
+  margin-left: 2px;
+  background: var(--guesser-color);
+  animation: quest-cursor-blink 0.9s steps(1) infinite;
+}
+
+@keyframes quest-cursor-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.reward {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reward-icon,
+.reward-title,
+.reward-detail {
+  opacity: 0;
+}
+
+#questReward.reveal .reward-icon,
+#questReward.reveal .reward-title,
+#questReward.reveal .reward-detail {
+  animation: quest-reward-in 520ms cubic-bezier(.2, .9, .25, 1) forwards;
+}
+
+#questReward.reveal .reward-title { animation-delay: 60ms; }
+#questReward.reveal .reward-detail { animation-delay: 120ms; }
+
+@keyframes quest-reward-in {
+  0%   { opacity: 0; transform: scale(.5) translateY(10px); }
+  60%  { opacity: 1; transform: scale(1.08) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.reward-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--guesser-color);
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--guesser-color) 60%, transparent));
+}
+
+.reward-title {
+  color: #fff;
+  font-size: clamp(18px, 5vw, 26px);
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.reward-detail {
+  color: rgba(226, 234, 244, 0.75);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.particles i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: var(--guesser-color);
+  opacity: 0;
+}
+
+.particles i:nth-child(1) { --pa: 0deg; }
+.particles i:nth-child(2) { --pa: 45deg; }
+.particles i:nth-child(3) { --pa: 90deg; }
+.particles i:nth-child(4) { --pa: 135deg; }
+.particles i:nth-child(5) { --pa: 180deg; }
+.particles i:nth-child(6) { --pa: 225deg; }
+.particles i:nth-child(7) { --pa: 270deg; }
+.particles i:nth-child(8) { --pa: 315deg; }
+
+#questReward.reveal .particles i {
+  animation: quest-particle-fly 700ms ease-out forwards;
+  animation-delay: 100ms;
+}
+
+@keyframes quest-particle-fly {
+  0%   { opacity: 1; transform: rotate(var(--pa)) translateY(0) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--pa)) translateY(-60px) scale(.4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #questReward.whoosh .quest-message { transition-duration: 60ms; }
+  #questReward.reveal :is(.reward-icon, .reward-title, .reward-detail) {
+    animation-duration: 120ms;
+    animation-delay: 0ms;
+  }
+  #questReward.reveal .particles i {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* BIG ANNOUNCE — round start (role + goal), secret found / secret lost */
 
 .big-announce {
