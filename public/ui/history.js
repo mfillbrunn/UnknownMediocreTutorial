@@ -129,25 +129,141 @@ function buildHistoryRenderState(state, role) {
 }
 
 ///Strict diffing algorithm
-// How far off the bottom still counts as "reading the newest guess".
-// Roughly one tile row, so nudging the list a little -- or the sub-pixel
-// drift a smooth scroll can leave behind -- doesn't read as "scrolled away"
-// and quietly strand the reader away from incoming guesses.
-const HISTORY_NEWEST_SLOP_PX = 56;
+///Scroll-intent controller (shared by every history-scroll list: the
+// Guesser's and Secretkeeper's feedback history, and any animation module
+// that needs to append/move a row in one of them). A native touch drag has
+// to reach the browser's own scrolling machinery untouched -- everything
+// here only ever OBSERVES a gesture (passive listeners, never
+// preventDefault) to decide whether a DOM mutation elsewhere is allowed to
+// follow the list down to its newest row; it never drives the scrolling
+// of a live gesture itself.
+const HISTORY_SCROLL_STATE = new WeakMap();
 
-function isScrolledToNewest(container) {
+// How close to the bottom still counts as "at the newest row". Small on
+// purpose: the old one-row (56px) tolerance meant a small, deliberate
+// upward drag was still read as "pinned to the bottom" and got yanked
+// straight back down on the next update.
+const HISTORY_BOTTOM_EPSILON_PX = 4;
+
+// How long after the last touch/pointer/wheel event to still treat the
+// list as being handled by the user -- covers the momentum/deceleration
+// phase of a touch scroll, which keeps moving scrollTop well after the
+// finger actually lifts. Ending the window too early let a state update
+// arriving mid-momentum re-attach the list out from under it.
+const HISTORY_SETTLE_MS = 150;
+
+function historyDistanceFromBottom(container) {
+  return container.scrollHeight - container.scrollTop - container.clientHeight;
+}
+
+function isHistoryScrolledToNewest(container) {
   if (!container) return true;
-  const distanceFromBottom =
-    container.scrollHeight - container.scrollTop - container.clientHeight;
   // Not overflowing yet -> there is nowhere to have scrolled away to.
-  return distanceFromBottom <= HISTORY_NEWEST_SLOP_PX;
+  return historyDistanceFromBottom(container) <= HISTORY_BOTTOM_EPSILON_PX;
 }
 
 // Exposed so other guesser-history callers (guesser-flow-v7.js's own
 // pending-row scroll, outside this file's diff/render pipeline) can apply
 // the exact same "only follow if already at the bottom" rule instead of
 // each keeping its own copy of the threshold logic.
-window.isHistoryScrolledToNewest = isScrolledToNewest;
+window.isHistoryScrolledToNewest = isHistoryScrolledToNewest;
+
+function getHistoryScrollState(container) {
+  let s = HISTORY_SCROLL_STATE.get(container);
+  if (s) return s;
+
+  s = { interacting: false, detached: false, settleTimer: null };
+  HISTORY_SCROLL_STATE.set(container, s);
+
+  const beginInteraction = () => {
+    s.interacting = true;
+    if (s.settleTimer) {
+      clearTimeout(s.settleTimer);
+      s.settleTimer = null;
+    }
+  };
+
+  const endInteraction = () => {
+    if (s.settleTimer) clearTimeout(s.settleTimer);
+    s.settleTimer = setTimeout(() => {
+      s.interacting = false;
+      s.settleTimer = null;
+      // Momentum settled -- if it actually carried the reader back to the
+      // bottom on its own, resume following from here.
+      if (isHistoryScrolledToNewest(container)) s.detached = false;
+    }, HISTORY_SETTLE_MS);
+  };
+
+  // Passive throughout -- never calls preventDefault, so this can only
+  // ever observe a gesture, never interfere with the browser's own native
+  // scrolling of this element.
+  container.addEventListener("touchstart", beginInteraction, { passive: true });
+  container.addEventListener("touchend", endInteraction, { passive: true });
+  container.addEventListener("touchcancel", endInteraction, { passive: true });
+  container.addEventListener("pointerdown", beginInteraction, { passive: true });
+  container.addEventListener("pointerup", endInteraction, { passive: true });
+  container.addEventListener("pointercancel", endInteraction, { passive: true });
+  container.addEventListener("wheel", () => { beginInteraction(); endInteraction(); }, { passive: true });
+
+  // The one source of truth for "has the reader scrolled away": any scroll
+  // that leaves the list further than the epsilon from the bottom marks it
+  // detached, whether it came from a touch drag, a wheel, or dragging the
+  // scrollbar itself. A programmatic follow-to-bottom write (see
+  // restoreHistoryScrollIntent below) always lands exactly at the bottom,
+  // so it can never trip this into "detached" on its own -- nothing else
+  // needs to distinguish who caused a given scroll.
+  container.addEventListener("scroll", () => {
+    s.detached = !isHistoryScrolledToNewest(container);
+  }, { passive: true });
+
+  return s;
+}
+
+// Snapshot taken BEFORE a DOM mutation that might add/remove/patch rows --
+// records whether the list is currently allowed to follow a newly-added
+// row down to the bottom, plus its exact live scrollTop so a caller that
+// ends up not following can positively hold that position instead of
+// trusting that nothing else nudged it.
+function captureHistoryScrollIntent(container) {
+  if (!container) {
+    return { eligible: true, scrollTop: 0 };
+  }
+  const s = getHistoryScrollState(container);
+  return {
+    eligible: !s.interacting && !s.detached && isHistoryScrolledToNewest(container),
+    scrollTop: container.scrollTop
+  };
+}
+
+// Applies the follow-or-hold decision from a snapshot returned by
+// captureHistoryScrollIntent(). Re-checks the LIVE interaction/detached
+// state rather than trusting the snapshot alone, so a gesture that begins
+// after the snapshot was taken but before this runs (the next animation
+// frame, say) still correctly cancels the follow. Never uses smooth/
+// animated scrolling: a CSS/JS-driven scroll animation racing an
+// in-progress native touch scroll is exactly what made the list feel like
+// it was snapping around underneath a real gesture.
+function restoreHistoryScrollIntent(container, snapshot, options = {}) {
+  if (!container || !snapshot) return;
+  const s = getHistoryScrollState(container);
+  const shouldFollow =
+    options.follow !== false &&
+    !!snapshot.eligible &&
+    !s.interacting &&
+    !s.detached;
+
+  if (shouldFollow) {
+    container.scrollTop = container.scrollHeight;
+  } else if (options.hold !== false) {
+    // Not following: hold exactly where the reader was before this
+    // mutation ran, rather than leaving it to whatever the layout reflow
+    // happened to land on.
+    container.scrollTop = snapshot.scrollTop;
+  }
+}
+
+window.captureHistoryScrollIntent = captureHistoryScrollIntent;
+window.restoreHistoryScrollIntent = restoreHistoryScrollIntent;
 
 function diffHistory(prev, next) {
   const prevMap = new Map(prev.map(r => [r.key, r]));
@@ -408,14 +524,13 @@ window.renderHistory = function ({
 
   let deferredMatchUsed = false;
 
-  // Whether the list was already parked at the newest row BEFORE this
-  // render appends anything. Captured up here on purpose: appending grows
-  // scrollHeight, so measuring after the fact would make an at-the-bottom
-  // reader look scrolled-away every single time.
-  //
-  // A list that doesn't overflow yet counts as pinned, so the opening
-  // guesses of a round still follow along as they come in.
-  const wasPinnedToNewest = isScrolledToNewest(container);
+  // Captured before any DOM mutation below -- appending/removing rows
+  // changes scrollHeight, so measuring after the fact would make an
+  // at-the-bottom reader look scrolled-away every single time. Returned
+  // alongside the render result so an animation caller (a pending-row
+  // insert, a flight) can reuse this exact pre-mutation snapshot instead
+  // of measuring again after the DOM has already moved on.
+  const scrollIntent = captureHistoryScrollIntent(container);
 
   for (const row of diff.removed) {
     container
@@ -463,20 +578,16 @@ window.renderHistory = function ({
   }
 
   // Follow the newest row only for a reader who was already sitting at the
-  // bottom. Someone who deliberately scrolled up to re-read earlier guesses
-  // gets left exactly where they are -- an opponent's guess landing used to
-  // yank them straight back down mid-read, since this fired on every append
-  // regardless of where they were looking.
-  if (
-    addedElements.length > 0 &&
-    autoScroll &&
-    wasPinnedToNewest
-  ) {
-    requestAnimationFrame(() => {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "smooth"
-      });
+  // bottom and isn't mid-gesture right now (see restoreHistoryScrollIntent).
+  // Someone who deliberately scrolled up to re-read earlier guesses gets
+  // left exactly where they are -- an opponent's guess landing used to
+  // yank them straight back down mid-read, since this fired on every
+  // append regardless of where they were looking. Runs even when nothing
+  // was added (an update/removal only) so the held position gets
+  // positively reasserted rather than left to chance.
+  if (diff.added.length || diff.removed.length || diff.updated.length) {
+    restoreHistoryScrollIntent(container, scrollIntent, {
+      follow: addedElements.length > 0 && autoScroll
     });
   }
 
@@ -484,7 +595,8 @@ window.renderHistory = function ({
 
   return {
     diff,
-    addedElements
+    addedElements,
+    scrollIntent
   };
 };
 
@@ -544,4 +656,8 @@ function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot) {
 function resetHistoryRenderer(container) {
   container.__prevRenderState = [];
   container.innerHTML = "";
+  // A fresh round starts attached to the bottom -- an empty list can't be
+  // "scrolled away" from, and any mid-gesture flag left over from the
+  // previous round's list no longer applies to it.
+  HISTORY_SCROLL_STATE.delete(container);
 }

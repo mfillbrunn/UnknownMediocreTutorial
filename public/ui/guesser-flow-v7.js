@@ -175,15 +175,17 @@
 
     cleanupPending();
 
-    // Measured before appendChild grows scrollHeight -- otherwise a reader
+    // Captured before appendChild grows scrollHeight -- otherwise a reader
     // already at the bottom looks scrolled-away the instant this row lands.
     // This function reruns on every stateUpdate while a guess is still
     // pending (waiting on the Secretkeeper's reaction, e.g. a power firing
     // in the meantime), not just on the guesser's own submit -- without
-    // this check, each of those unrelated broadcasts snapped anyone
-    // reading old rows straight back down to the newest one.
-    const wasPinnedToNewest =
-      window.isHistoryScrolledToNewest?.(history) ?? true;
+    // going through the same shared controller renderHistory uses, each of
+    // those unrelated broadcasts snapped anyone reading old rows straight
+    // back down to the newest one, and mid-touch-drag writes fought the
+    // native scroll gesture itself.
+    const scrollIntent =
+      window.captureHistoryScrollIntent?.(history) ?? { eligible: true, scrollTop: history.scrollTop };
 
     pendingWord = word;
     pendingWrap = makePendingWrap(word);
@@ -191,9 +193,10 @@
     history.appendChild(pendingWrap);
     removeOtherPendingRows();
 
-    if (wasPinnedToNewest) {
-      history.scrollTop =
-        history.scrollHeight;
+    if (window.restoreHistoryScrollIntent) {
+      window.restoreHistoryScrollIntent(history, scrollIntent);
+    } else if (scrollIntent.eligible) {
+      history.scrollTop = history.scrollHeight;
     }
 
     pendingWrap.classList.toggle(
@@ -446,8 +449,35 @@
      */
     wrap.style.visibility = "hidden";
 
-    history.scrollTop =
-      history.scrollHeight;
+    // Follow to the bottom only if the reader is actually eligible to
+    // follow right now (ensurePending() above already applied this same
+    // decision once, but a gesture can start in the moment between that
+    // call and this one, so it's re-checked live rather than trusted from
+    // before). If they're scrolled away, the pending row just landed
+    // off-screen -- flying a decorative clone toward something they can't
+    // see, or forcing the viewport to it, isn't worth fighting their own
+    // gesture for. Finish the real row in place instead, with no scroll.
+    const flightScrollIntent =
+      window.captureHistoryScrollIntent?.(history) ?? { eligible: true, scrollTop: history.scrollTop };
+
+    if (window.restoreHistoryScrollIntent) {
+      window.restoreHistoryScrollIntent(history, flightScrollIntent);
+    } else if (flightScrollIntent.eligible) {
+      history.scrollTop = history.scrollHeight;
+    }
+
+    if (!flightScrollIntent.eligible) {
+      flight?.remove();
+
+      if (sourceRow) {
+        sourceRow.style.display = "none";
+        sourceRow.style.visibility = "hidden";
+      }
+
+      wrap.style.visibility = "";
+      wrap.classList.toggle("is-working", showWorking);
+      return;
+    }
 
     /*
      * Let the scroll position and the newly appended pending row settle

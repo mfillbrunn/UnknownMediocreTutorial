@@ -459,29 +459,14 @@
   box-sizing: border-box;
 }
 
+/* width/min-height/overflow/touch-action/pointer-events/scrollbar-width for
+   this pair now live once, generically, on .history-scroll (both elements
+   carry that class) -- see public/css/history.css. This block keeps only
+   what's actually specific to sharing screen real estate with the rest of
+   the setter/guesser layout. */
 #setterScreen #setterGuesserSubmitted,
 #guesserScreen #historyGuesser {
-  width: 100%;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  /* Vertical drags scroll this list. The tiles inside sit under the
-     drag-to-reorder system's touch-action rules, and without an explicit
-     pan-y here a touch that happens to land on a tile (rather than the
-     gap between them) had its scroll swallowed -- which is why the Secretkeeper's
-     history only "sometimes" refused to scroll. */
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
-  pointer-events: auto;
   scrollbar-gutter: stable;
-}
-
-#setterScreen #setterGuesserSubmitted :is(.history-row-wrap, .history-row, .history-tile),
-#guesserScreen #historyGuesser :is(.history-row-wrap, .history-row, .history-tile) {
-  touch-action: pan-y;
-  pointer-events: auto;
 }
 
 #setterScreen #setterGuesserSubmitted {
