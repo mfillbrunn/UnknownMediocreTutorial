@@ -46,12 +46,13 @@
   const AWARD_ARRIVAL_GRACE_MS = 300;
   const rewardPopupQueue = [];
   let rewardPopupRunning = false;
-  // How long the reward-choice modal waits before opening once a choice
-  // goes pending -- outlasts the guess "flying off" to the setter
-  // (draft-row-slide-out, 340ms) plus the feedback tiles flipping in
-  // (history-wordle-flip, staggered up to ~1360ms), so the cards don't
-  // pop up on top of those animations still playing.
-  const REWARD_MODAL_SETTLE_MS = 1500;
+  // The reward-choice modal used to wait on a fixed timer before opening
+  // once a choice went pending, so it didn't pop up on top of the guess
+  // "flying off" to the setter (draft-row-slide-out, 340ms) or the
+  // feedback tiles flipping in (history-wordle-flip, staggered up to
+  // ~1360ms) still playing. Now client/reward-reveal.js's star-burst/
+  // spinning-square effect (~1450-1550ms) fills that same role -- long
+  // enough to outlast both, with the modal opening the instant it clears.
   let rewardModalTimer = null;
   let rewardModalPendingId = "";
   // Recon Sweep / Miss Bet / Double Tap fire immediately on pick, but need
@@ -1329,19 +1330,6 @@
     return option?.description || "";
   }
 
-  function showQuestMetFlourish() {
-    // Uses the app's shared announcement component (see big-announce.js)
-    // instead of a bespoke popup, so this brief pre-reward-modal beat
-    // stays consistent with every other transient notice in the app.
-    window.showBigAnnounce?.({
-      icon: "★",
-      title: "Quest met — reward incoming",
-      roleClass: "role-guesser",
-      compact: true,
-      duration: 1300
-    });
-  }
-
   function openRewardModal(pending) {
     const modal = ensureChoiceModal();
     modal.dataset.choiceId = pending.id;
@@ -1461,15 +1449,34 @@
     // a legitimate re-open once nothing is actually in flight.
     if (rewardModalTimer && rewardModalPendingId === pending.id) return;
     rewardModalPendingId = pending.id;
-    if (pending.role === "guesser") showQuestMetFlourish();
 
+    // The settle beat used to be a fixed delay (REWARD_MODAL_SETTLE_MS)
+    // with a flourish popup for the guesser only -- now it's this reveal
+    // animation for BOTH roles (stars for the Secretkeeper's star
+    // milestones, a spinning square for the Guesser's quest milestones),
+    // and its own runtime doubles as the settle wait: the modal opens the
+    // instant the effect clears, not before.
     clearTimeout(rewardModalTimer);
-    rewardModalTimer = setTimeout(() => {
+    rewardModalTimer = "reveal-pending";
+    const openIfStillPending = () => {
       rewardModalTimer = null;
       if (window.state?.powerChoice?.pendingChoice?.id === pending.id) {
         openRewardModal(pending);
       }
-    }, REWARD_MODAL_SETTLE_MS);
+    };
+
+    if (window.showRewardReveal) {
+      window.showRewardReveal({
+        role: pending.role,
+        count: pending.threshold,
+        onDone: openIfStillPending
+      });
+    } else {
+      // reward-reveal.js failed to load -- don't let a missing script
+      // stall the reward system forever waiting on an onDone that will
+      // never fire.
+      rewardModalTimer = setTimeout(openIfStillPending, 400);
+    }
   }
 
   // POWER CHOICE RARITY + REFRESH V1: CLIENT END

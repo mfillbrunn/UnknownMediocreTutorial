@@ -1652,10 +1652,11 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   color: #8edcff;
 }
 
-/* Brief success beat shown the moment a quest is met, before the reward
-   cards themselves open (see REWARD_MODAL_SETTLE_MS in
-   power-choice-mode.js) -- gives the completion its own short moment
-   instead of the cards just appearing out of nowhere. */
+/* Unused: the quest-met beat this was built for is now client/
+   reward-reveal.js's spinning-square effect instead of a flourish banner.
+   Left in place only because other selector groups below still reference
+   this class name; nothing in JS creates a .pc-quest-met-flourish element
+   anymore. */
 .pc-quest-met-flourish {
   position: fixed;
   z-index: 2147482800;

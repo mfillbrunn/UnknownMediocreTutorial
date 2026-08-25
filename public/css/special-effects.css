@@ -150,75 +150,149 @@
   }
 }
 
-/* TURN INDICATOR — restrained, non-blocking cue for a turn handoff (e.g.
-   "Guess again" after simultaneous opening moves). Replaces a blocking
-   full-screen popup for this case: a single role-color sheen sweep plus a
-   small short-lived badge, both pointer-events:none so gameplay never
-   pauses while it plays. See client/turn-indicator.js. */
+/* REWARD REVEAL — plays once, right before a Power Choice reward modal
+   opens (see power-choice-mode.js's showChoice and client/reward-reveal.js).
+   Secretkeeper: one star per point on the current milestone (4/8/12) flies
+   out into a ring, then collapses back to the center and bursts. Guesser:
+   a single glowing square spins up to speed, then expands off screen.
+   Both are pointer-events:none overlays that clear themselves once the
+   effect finishes. */
 
-#turnIndicatorSheen {
+#rewardRevealOverlay {
   position: fixed;
   inset: 0;
-  z-index: 9000;
+  z-index: 9500;
   pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(
-    100deg,
-    transparent 30%,
-    color-mix(in srgb, var(--ti-accent, var(--guesser-color)) 20%, transparent) 48%,
-    color-mix(in srgb, var(--ti-accent, var(--guesser-color)) 32%, transparent) 50%,
-    color-mix(in srgb, var(--ti-accent, var(--guesser-color)) 20%, transparent) 52%,
-    transparent 70%
-  );
-  background-size: 220% 100%;
-  background-position: 130% 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-#turnIndicatorSheen.is-active {
-  animation: turnIndicatorSweep 1s ease-in-out 1;
-}
-
-@keyframes turnIndicatorSweep {
-  0% { opacity: 0; background-position: 130% 0; }
-  15% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { opacity: 0; background-position: -30% 0; }
-}
-
-#turnIndicatorBadge {
-  position: fixed;
-  top: max(14px, env(safe-area-inset-top));
+.reward-reveal-star {
+  position: absolute;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%) translateY(-8px);
-  z-index: 9001;
-  pointer-events: none;
-  padding: 7px 16px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ti-accent, var(--guesser-color)) 55%, transparent);
-  background: color-mix(in srgb, var(--ti-accent, var(--guesser-color)) 26%, #10161f);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  color: var(--setter-color);
   opacity: 0;
-  transition: opacity 220ms ease, transform 220ms ease;
 }
 
-#turnIndicatorBadge.is-active {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
+.reward-reveal-star svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+#rewardRevealOverlay.is-setter-active .reward-reveal-star {
+  animation: reward-star-orbit 1500ms cubic-bezier(.2, .8, .2, 1) forwards;
+  animation-delay: var(--rr-delay, 0ms);
+}
+
+@keyframes reward-star-orbit {
+  0%   { opacity: 0; transform: rotate(var(--rr-angle)) translateY(0) scale(.4); }
+  22%  { opacity: 1; }
+  55%  { opacity: 1; transform: rotate(var(--rr-angle)) translateY(var(--rr-radius)) scale(1); }
+  78%  { opacity: 1; transform: rotate(var(--rr-angle)) translateY(var(--rr-radius)) scale(1); }
+  92%  { opacity: 1; transform: rotate(var(--rr-angle)) translateY(0) scale(1.6); }
+  100% { opacity: 0; transform: rotate(var(--rr-angle)) translateY(0) scale(2.4); }
+}
+
+.reward-reveal-square {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  background: var(--guesser-color);
+  box-shadow:
+    0 0 18px 4px color-mix(in srgb, var(--guesser-color) 70%, transparent),
+    0 0 40px 10px color-mix(in srgb, var(--guesser-color) 40%, transparent);
+  opacity: 0;
+}
+
+#rewardRevealOverlay.is-guesser-active .reward-reveal-square {
+  animation: reward-square-spin 1400ms cubic-bezier(.3, .6, .2, 1) forwards;
+}
+
+@keyframes reward-square-spin {
+  0%   { opacity: 0; transform: scale(.4) rotate(0deg); }
+  10%  { opacity: 1; }
+  70%  { opacity: 1; transform: scale(1) rotate(900deg); }
+  85%  { opacity: 1; transform: scale(1.05) rotate(1080deg); }
+  100% { opacity: 0; transform: scale(3.2) rotate(1200deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #turnIndicatorSheen.is-active {
-    animation: none;
-    opacity: 0.35;
-    background-position: 50% 0;
-    transition: opacity 900ms ease;
+  #rewardRevealOverlay.is-setter-active .reward-reveal-star,
+  #rewardRevealOverlay.is-guesser-active .reward-reveal-square {
+    animation-duration: 350ms;
   }
-  #turnIndicatorBadge.is-active {
-    transform: translateX(-50%) translateY(0);
+}
+
+/* SECRET-FOUND ICONS — the Big Announce icon slot for the round-ending
+   "secret found" popup (see client.js's announceWin), swapped from a
+   plain emoji to an animated SVG for both outcomes. */
+.reward-skull {
+  width: 88px;
+  color: #e66f62;
+  animation: skull-hit 650ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.reward-skull .skull-impact {
+  transform-origin: center;
+  animation: skull-impact 650ms ease-out;
+}
+
+@keyframes skull-hit {
+  0%   { transform: scale(.55) rotate(-4deg); opacity: 0; }
+  45%  { transform: scale(1.12) rotate(3deg); opacity: 1; }
+  65%  { transform: scale(.97) rotate(-2deg); }
+  82%  { transform: scale(1.02) rotate(1deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+@keyframes skull-impact {
+  0%   { opacity: 0; transform: scale(.5); }
+  35%  { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 0; transform: scale(1.55); }
+}
+
+.reward-celebration {
+  width: 96px;
+  color: #70c98a;
+  overflow: visible;
+}
+
+.reward-celebration .celebration-core {
+  transform-origin: center;
+  animation: celebration-core 700ms cubic-bezier(.2, .9, .25, 1);
+}
+
+.reward-celebration .celebration-pieces {
+  transform-origin: center;
+  animation: celebration-burst 850ms ease-out;
+}
+
+@keyframes celebration-core {
+  0%   { transform: scale(.35) rotate(-20deg); opacity: 0; }
+  55%  { transform: scale(1.15) rotate(8deg); opacity: 1; }
+  75%  { transform: scale(.95) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+@keyframes celebration-burst {
+  0% {
+    transform: scale(.35) rotate(-10deg);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.15) rotate(4deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.35) rotate(8deg);
+    opacity: 0;
   }
 }
 
