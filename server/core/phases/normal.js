@@ -10,6 +10,7 @@ const { clearForceTimer } = require("../../utils/forceTimer");
 const questServer = require("../../powers/powers/questServer");
 const spyChargeServer = require(  "../../powers/powers/spyChargeServer");
 const revealPenaltyServer = require("../../powers/powers/revealPenaltyServer");
+const singlePlayerHooks = require("../../single-player/hooks");
 
 function handleNormalPhase(room, state, action, roomId, context) {
   const io = context.io;
@@ -298,6 +299,7 @@ if (setterSocketId) {
       const applied = powerEngine.applyPower(powerId, state, action, roomId, io, room);
       if (applied !== false) {
         state.powerUsedThisTurn = true;
+        singlePlayerHooks.recordPowerUse(state, powerId, userId);
       }
     }
 

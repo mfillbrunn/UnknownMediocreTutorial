@@ -37,6 +37,7 @@
   <!-- New features -->
   <link rel="stylesheet" href="css/features.css?v=tutorial-motion-sim-2">
   <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2">
+  <link rel="stylesheet" href="single-player/single-player.css">
 </head>
 <body>
   <script>
@@ -272,11 +273,58 @@
               <button id="playFriendMainBtn" class="menu-btn" title="Casual, unlimited-time, shuffled game — send a link, no need to wait around">Play with a Friend</button>
               <button id="rankedMenuBtn" class="menu-btn">Ranked</button>
               <button id="dailyBtn" class="menu-btn">Daily Challenge</button>
+              <button id="singlePlayerBtn" class="menu-btn">Campaign</button>
               <button id="myGamesBtn" class="menu-btn">
                 My Games
                 <span id="myGamesNotifyBadge" class="notify-badge hidden" title="It's your turn in a game">✉️</span>
               </button>
               <button id="howToPlayBtn" class="menu-btn">Tutorials</button>
+            </div>
+          </div>
+        </section>
+
+<!-- ========== SINGLE PLAYER CAMPAIGN ========== -->
+        <section id="singlePlayerScreen" class="screen game-menu sp-screen">
+          <div class="menu-center sp-shell">
+            <div class="sp-header">
+              <button id="spBackBtn" class="sp-icon-btn" aria-label="Back to menu">←</button>
+              <h2 class="menu-title sp-title">CAMPAIGN</h2>
+              <button id="spAchievementsBtn" class="sp-icon-btn" title="Achievements" aria-label="Achievements">🏆</button>
+            </div>
+
+            <div id="spMapView" class="sp-view sp-map-view">
+              <div id="spMapNodes" class="sp-map-nodes"></div>
+            </div>
+
+            <div id="spStoryView" class="sp-view sp-story-view hidden">
+              <div class="sp-story-frame">
+                <img id="spStoryImage" class="sp-story-image hidden" alt="" />
+                <div id="spStoryTextbox" class="sp-story-textbox">
+                  <div id="spStorySpeaker" class="sp-story-speaker"></div>
+                  <div id="spStoryText" class="sp-story-text"></div>
+                  <div id="spStoryChoices" class="sp-story-choices hidden"></div>
+                  <button id="spStoryNextBtn" class="sp-btn sp-story-next">Continue</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="spResultView" class="sp-view sp-result-view hidden">
+              <div class="sp-result-card">
+                <div id="spResultStars" class="sp-result-stars"></div>
+                <div id="spResultRank" class="sp-result-rank"></div>
+                <div id="spResultScore" class="sp-result-score"></div>
+                <ul id="spResultObjectives" class="sp-result-objectives"></ul>
+                <div id="spResultReward" class="sp-result-reward hidden">
+                  <div class="sp-result-reward-title">Choose a reward</div>
+                  <div id="spRewardOptions" class="sp-reward-options"></div>
+                </div>
+                <button id="spResultContinueBtn" class="sp-btn sp-result-continue">Continue</button>
+              </div>
+            </div>
+
+            <div id="spAchievementsView" class="sp-view sp-achievements-view hidden">
+              <ul id="spAchievementsList" class="sp-achievements-list"></ul>
+              <button id="spAchievementsBackBtn" class="sp-btn sp-achievements-back">Back</button>
             </div>
           </div>
         </section>
@@ -1586,6 +1634,11 @@
   <script src="client/key-color-picker.js"></script>
   <script src="client/friends.js"></script>
   <script src="client/daily-challenge.js"></script>
+  <script src="single-player/single-player.js"></script>
+  <script src="single-player/campaign-map.js"></script>
+  <script src="single-player/story-player.js"></script>
+  <script src="single-player/stage-result.js"></script>
+  <script src="single-player/achievements.js"></script>
   <script src="client/my-games.js"></script>
   <script src="client/draft.js?guesser-polish=7"></script>
   <script src="client/dev-powers.js"></script>

@@ -143,6 +143,12 @@ function isScrolledToNewest(container) {
   return distanceFromBottom <= HISTORY_NEWEST_SLOP_PX;
 }
 
+// Exposed so other guesser-history callers (guesser-flow-v7.js's own
+// pending-row scroll, outside this file's diff/render pipeline) can apply
+// the exact same "only follow if already at the bottom" rule instead of
+// each keeping its own copy of the threshold logic.
+window.isHistoryScrolledToNewest = isScrolledToNewest;
+
 function diffHistory(prev, next) {
   const prevMap = new Map(prev.map(r => [r.key, r]));
   const nextMap = new Map(next.map(r => [r.key, r]));

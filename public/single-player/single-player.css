@@ -1,0 +1,443 @@
+/* public/single-player/single-player.css
+ *
+ * Every rule here is scoped to a .sp-* class local to the campaign feature
+ * (#singlePlayerScreen and its sub-views) -- nothing here touches a
+ * global selector or an existing multiplayer class. Reuses the shared
+ * design tokens from themes.css (--panel-bg, --r-*, --sp-*, --fs-*,
+ * --btn-primary, ...) rather than redeclaring them.
+ */
+
+.sp-shell {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-16);
+}
+
+.sp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-8);
+}
+
+.sp-title {
+  flex: 1;
+  text-align: center;
+  margin: 0;
+}
+
+.sp-icon-btn {
+  background: var(--btn-secondary, #383d45);
+  color: var(--text);
+  border: none;
+  border-radius: var(--r-pill);
+  width: 40px;
+  height: 40px;
+  font-size: var(--fs-18);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sp-icon-btn:hover {
+  background: var(--btn-secondary-hover, #474d57);
+}
+
+.sp-btn {
+  background: var(--btn-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-10);
+  padding: var(--sp-12) var(--sp-20);
+  font-size: var(--fs-16);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sp-btn:hover {
+  background: var(--btn-primary-hover);
+}
+
+.sp-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sp-btn-secondary {
+  background: var(--btn-secondary, #383d45);
+  color: var(--btn-secondary-text, #ccc);
+}
+
+.sp-btn-secondary:hover {
+  background: var(--btn-secondary-hover, #474d57);
+}
+
+.sp-view.hidden {
+  display: none;
+}
+
+/* ---------- Map ---------- */
+
+.sp-map-view {
+  min-height: 320px;
+}
+
+.sp-map-nodes {
+  position: relative;
+  width: 100%;
+  height: 360px;
+  border-radius: var(--r-12);
+  background: var(--panel-bg);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.18));
+  overflow: hidden;
+}
+
+.sp-map-loading,
+.sp-map-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, rgba(229, 229, 229, 0.68));
+  font-size: var(--fs-14);
+  text-align: center;
+  padding: var(--sp-16);
+}
+
+.sp-map-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  background: var(--btn-primary);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--r-pill);
+  width: 56px;
+  height: 56px;
+  cursor: pointer;
+  font-size: var(--fs-13);
+  font-weight: 700;
+}
+
+.sp-map-node-label {
+  pointer-events: none;
+}
+
+.sp-map-node-lock,
+.sp-map-node-stars {
+  font-size: var(--fs-11);
+  pointer-events: none;
+}
+
+.sp-map-node-locked {
+  background: var(--kb-neutral, #343a43);
+  border-color: var(--kb-border, #49515d);
+  cursor: default;
+  opacity: 0.75;
+}
+
+.sp-map-node-available {
+  box-shadow: 0 0 0 4px var(--btn-primary-glow, rgba(70, 140, 255, 0.5));
+}
+
+.sp-map-node-completed {
+  background: var(--tile-green, #2ecc71);
+  color: var(--tile-green-text, #000);
+}
+
+.sp-map-node-in_progress {
+  background: var(--tile-yellow, #f2c854);
+  color: var(--tile-yellow-text, #000);
+}
+
+.sp-map-detail {
+  margin-top: var(--sp-14);
+  background: var(--panel-bg);
+  border-radius: var(--r-12);
+  padding: var(--sp-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+.sp-map-detail-title {
+  margin: 0;
+  font-size: var(--fs-18);
+}
+
+.sp-map-detail-summary {
+  margin: 0;
+  color: var(--text-muted, rgba(229, 229, 229, 0.68));
+  font-size: var(--fs-14);
+}
+
+.sp-map-detail-meta,
+.sp-map-detail-record {
+  font-size: var(--fs-13);
+  color: var(--text-muted, rgba(229, 229, 229, 0.68));
+}
+
+.sp-map-detail-actions {
+  display: flex;
+  gap: var(--sp-10);
+  margin-top: var(--sp-8);
+}
+
+.sp-map-detail-actions .sp-btn {
+  flex: 1;
+}
+
+/* ---------- Story ---------- */
+
+.sp-story-frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-14);
+  background: var(--panel-bg);
+  border-radius: var(--r-12);
+  padding: var(--sp-16);
+  min-height: 320px;
+}
+
+.sp-story-image {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--r-10);
+}
+
+.sp-story-image.hidden {
+  display: none;
+}
+
+.sp-story-textbox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+  align-items: flex-start;
+  text-align: left;
+}
+
+.sp-story-textbox.sp-story-side-right {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.sp-story-speaker {
+  font-weight: 700;
+  color: var(--role-accent, #4da3ff);
+  font-size: var(--fs-14);
+}
+
+.sp-story-text {
+  font-size: var(--fs-16);
+  line-height: var(--lh-base);
+}
+
+.sp-story-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+  width: 100%;
+}
+
+.sp-story-choices.hidden {
+  display: none;
+}
+
+.sp-story-choice {
+  background: var(--btn-secondary, #383d45);
+  color: var(--text);
+  border: none;
+  border-radius: var(--r-8);
+  padding: var(--sp-10) var(--sp-14);
+  cursor: pointer;
+  text-align: left;
+}
+
+.sp-story-choice:hover {
+  background: var(--btn-secondary-hover, #474d57);
+}
+
+.sp-story-next.hidden {
+  display: none;
+}
+
+/* ---------- Result ---------- */
+
+.sp-result-card {
+  background: var(--panel-bg);
+  border-radius: var(--r-12);
+  padding: var(--sp-20);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-12);
+  text-align: center;
+}
+
+.sp-result-stars {
+  font-size: var(--fs-24);
+  color: var(--tile-yellow, #f2c854);
+  letter-spacing: var(--sp-4);
+}
+
+.sp-result-rank {
+  font-size: var(--fs-18);
+  font-weight: 700;
+}
+
+.sp-result-score {
+  font-size: var(--fs-14);
+  color: var(--text-muted, rgba(229, 229, 229, 0.68));
+}
+
+.sp-result-objectives {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  text-align: left;
+}
+
+.sp-objective-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  font-size: var(--fs-14);
+}
+
+.sp-objective-icon {
+  width: 18px;
+  text-align: center;
+}
+
+.sp-objective-passed .sp-objective-icon {
+  color: var(--tile-green, #2ecc71);
+}
+
+.sp-objective-failed .sp-objective-icon {
+  color: var(--text-muted, rgba(229, 229, 229, 0.68));
+}
+
+.sp-result-reward {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-10);
+}
+
+.sp-result-reward.hidden {
+  display: none;
+}
+
+.sp-result-reward-title {
+  font-weight: 700;
+}
+
+.sp-reward-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+.sp-reward-option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-10);
+  background: var(--btn-secondary, #383d45);
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: var(--r-10);
+  padding: var(--sp-10);
+  cursor: pointer;
+  text-align: left;
+}
+
+.sp-reward-option:hover {
+  border-color: var(--btn-primary);
+}
+
+.sp-reward-option:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sp-reward-option-emoji {
+  font-size: var(--fs-20);
+}
+
+.sp-reward-option-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sp-reward-option-desc {
+  font-size: var(--fs-12);
+  color: var(--text-muted, rgba(229, 229, 229, 0.68));
+}
+
+/* ---------- Achievements ---------- */
+
+.sp-achievements-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-10);
+}
+
+.sp-achievement-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-12);
+  background: var(--panel-bg);
+  border-radius: var(--r-10);
+  padding: var(--sp-12);
+}
+
+.sp-achievement-locked {
+  opacity: 0.65;
+}
+
+.sp-achievement-icon {
+  font-size: var(--fs-20);
+}
+
+.sp-achievement-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2, 2px);
+}
+
+.sp-achievement-title {
+  font-weight: 700;
+  font-size: var(--fs-14);
+}
+
+.sp-achievement-desc {
+  font-size: var(--fs-13);
+  color: var(--text-muted, rgba(229, 229, 229, 0.68));
+}
+
+.sp-achievement-progress {
+  font-size: var(--fs-12);
+  font-family: var(--font-mono);
+  color: var(--text-muted, rgba(229, 229, 229, 0.68));
+}
+
+.sp-achievements-back {
+  margin-top: var(--sp-14);
+  width: 100%;
+}

@@ -16,6 +16,8 @@ const {
 } = require("../utils/coverStrength");
 const { tierFor } = require("./powerTiers");
 const { categoryForRewardId } = require("./rewardCategories");
+const { pickLetterProfileMode } = require("../utils/letterProfile");
+const singlePlayerHooks = require("../single-player/hooks");
 
 const MODE = "powerChoice";
 const SPY_THRESHOLDS = [4, 8, 12];
@@ -1316,8 +1318,9 @@ function rewardFixedOptionApplicable(state, option) {
   }
 }
 
-function rewardOptionApplicable(state, option) {
+function rewardOptionApplicable(state, option, role) {
   if (option?.kind === "power") {
+    if (!singlePlayerHooks.isPowerRewardAllowed(state, role, option)) return false;
     if (typeof powerOptionApplicable === "function") {
       return powerOptionApplicable(state, option);
     }
@@ -1382,11 +1385,12 @@ function rewardPickRarityOptions(
   options,
   rewardNumber,
   limit = 3,
-  excludedOptionIds = []
+  excludedOptionIds = [],
+  role
 ) {
   const excluded = new Set(excludedOptionIds || []);
   let remaining = (Array.isArray(options) ? options : []).filter(
-    option => !excluded.has(option?.id) && rewardOptionApplicable(state, option)
+    option => !excluded.has(option?.id) && rewardOptionApplicable(state, option, role)
   );
   const selected = [];
   const probabilities = rewardRarityProbabilities(rewardNumber);
@@ -1433,7 +1437,8 @@ function buildRewardChoiceOptions(
     pool,
     rewardNumber,
     limit,
-    excludedOptionIds
+    excludedOptionIds,
+    role
   );
 
   // During refresh, prefer completely new cards. If there are not enough
@@ -1446,7 +1451,8 @@ function buildRewardChoiceOptions(
       pool,
       rewardNumber,
       limit - fresh.length,
-      alreadySelected
+      alreadySelected,
+      role
     ).filter(option => !fresh.some(existing => existing.id === option.id));
     fresh.push(...fallback.slice(0, limit - fresh.length));
   }
@@ -1701,7 +1707,7 @@ function refreshSpyHintAfterReward(state, context) {
 // for Double Tap -- straight from the incoming POWER_CHOICE_SELECT
 // action (see handleAction below). Every other reward ignores it.
 function applyChoice(state, option, choice, room, roomId, io, context, payload) {
-  if (!rewardOptionApplicable(state, option)) return false;
+  if (!rewardOptionApplicable(state, option, choice?.role)) return false;
   let detail = null;
 
   if (option.kind === "power") {
@@ -1723,6 +1729,17 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
       // instant the card is taken.
       if (option.powerId === "revealLocation") {
         engine.powers.revealLocation?.turnStart(state, state.guesser, roomId, io);
+      }
+      // Same one-turn-late gap as Informant above: Letter Profile's stat is
+      // also a pure turnStart hook, so without this it wouldn't show up
+      // until the guesser's NEXT turn. A match that started without this
+      // power never ran competitiveMode.js's onLobbyReady letterProfile
+      // branch, so its category also needs picking here, not just its stat.
+      if (option.powerId === "letterProfile") {
+        if (!state.powers.letterProfileMode) {
+          state.powers.letterProfileMode = pickLetterProfileMode();
+        }
+        engine.powers.letterProfile?.turnStart(state, state.guesser, roomId, io);
       }
       state.powerUsedThisTurn = true;
       const side =

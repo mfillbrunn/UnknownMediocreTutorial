@@ -10,6 +10,7 @@ const spyChargeServer = require(
   "../../powers/powers/spyChargeServer"
 );
 const powerChoiceServer = require("../../power-choice/powerChoiceServer"); // power-choice-mode-v2.2
+const singlePlayerHooks = require("../../single-player/hooks");
 
 // assassinWord is excluded from the game's randomized power pools
 // entirely (see task #106) — kept out of the AI pool too for the same
@@ -557,6 +558,11 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
           guess = state.tutorialGuessesAI[0];
         }
 
+        // Campaign stages can script the AI's opening guess (see
+        // aiPolicy.js); no-ops instantly outside single-player.
+        const scriptedGuess = singlePlayerHooks.maybeOverrideAIGuess(state);
+        if (scriptedGuess) guess = scriptedGuess;
+
         // Daily Challenge: same opening guess for every player that day
         // (see dailyConfig.js/lobby.js's SET_DAILY_POWERS) -- only the
         // very first, un-informed guess is pinned; anything after reacts
@@ -582,6 +588,11 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
         if (isTutorial) {
           secret = state.tutorialSecretsAI[0];
         }
+
+        // Campaign stages can script the AI Secretkeeper's starting secret
+        // (see aiPolicy.js); no-ops instantly outside single-player.
+        const scriptedSecret = singlePlayerHooks.maybeOverrideAISecret(state);
+        if (scriptedSecret) secret = scriptedSecret;
 
         // Daily Challenge: the word every player that day has to guess is
         // the same (see the matching comment on the guesser branch above).

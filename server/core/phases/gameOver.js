@@ -10,6 +10,7 @@ const { markDailyCompleted } = require("../dailyTracking");
 const { advanceToNextRound } = require("../transitions/nextRoundTransition");
 const {  clearForceTimer} = require("../../utils/forceTimer");
 const {  clearRoundPowerActivity} = require("../../utils/clearRoundPowerActivity");
+const singlePlayerHooks = require("../../single-player/hooks");
 
 function buildArchivedRoundHistory(state, allowedSecrets) {
   const history = Array.isArray(state.history) ? state.history : [];
@@ -155,6 +156,10 @@ state.setterDraft = "";
   state.gameOverView = res.view || "match";
   state.canNextRound = !!res.canNextRound;
 
+  // Campaign stage scoring/persistence; no-ops instantly outside
+  // single-player (and internally no-ops unless the match is actually over).
+  singlePlayerHooks.onRoundEnded(state, roomId, io);
+
   if (
   state.isDaily &&
   !state.canNextRound
@@ -233,6 +238,12 @@ state.setterDraft = "";
   // pollute the stats screen, and writeMatchHistory's humans.length===2
   // guard already excludes tutorial's single-player room shape anyway).
   if (!state.isTutorial && !state.canNextRound) {
+    // Multiplayer achievement tracking; guarded the other way from every
+    // other single-player hook -- fires here for ordinary matches, and
+    // no-ops instantly for campaign play (which never reaches this branch
+    // with a real opponent worth counting anyway).
+    singlePlayerHooks.onMultiplayerMatchCompleted(state, room);
+
     const { winner, tie } = computeMatchResult(state, null);
 
     if (state.ranked && !isAIMatch) {
