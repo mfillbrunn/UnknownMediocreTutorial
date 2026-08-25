@@ -1678,6 +1678,11 @@ function effectDetailText(option, detail) {
     case "inspector-remove-point-1":
       return `Guesser final guess total ${detail?.points || 0}.`;
     default:
+      if (option.powerId === "revealHistory") {
+        return detail?.secret
+          ? `Revealed the secret from 3 rounds ago: ${detail.secret.toUpperCase()}.`
+          : "No secret from 3 rounds ago was available.";
+      }
       if (option.kind === "power") {
         // PERSISTENT_POWER_IDS grants (Informant/Letter Profile/Letter
         // Lockout) are permanent unlocks, not a one-turn effect -- saying
@@ -1823,6 +1828,15 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
       state.activePowers ||= [];
       if (!state.activePowers.includes(option.powerId)) state.activePowers.push(option.powerId);
       detail = { powerId: option.powerId };
+      // Time Rewind's actual result (the revealed secret) lives only in
+      // apply()'s own side effect on state -- the generic USE_POWER path
+      // above never returns a value, and the reveal's "revealOldSecret"
+      // emit isn't captured here the way pushPendingEvent would (that log
+      // line is deliberately skipped for source: "powerChoice", see
+      // engine.applyPower's comment) -- so read it back off state instead.
+      if (option.powerId === "revealHistory") {
+        detail.secret = state.powers.revealHistoryPending || null;
+      }
     }
   } else {
     switch (option.id) {
