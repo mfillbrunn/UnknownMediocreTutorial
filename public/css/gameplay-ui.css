@@ -372,6 +372,58 @@
   display: none;
 }
 
+/* Starter-word suggestions -- two tappable ideas shown only before the
+   Secretkeeper's very first secret of the match (see client/starter-word-
+   suggestions.js). Sits between the draft row and the Keep/New row, so it
+   reads as part of the draft area rather than a separate popup. */
+#setterScreen .setter-start-suggestions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  margin: 6px 0 2px;
+}
+
+#setterScreen .setter-start-suggestions.hidden {
+  display: none;
+}
+
+#setterScreen .setter-start-suggestions-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--game-muted);
+}
+
+#setterScreen .setter-start-suggestions-words {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#setterScreen .setter-start-suggestion-word {
+  min-height: 27px;
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 75, 92, 0.45);
+  border-radius: 999px;
+  background: rgba(255, 75, 92, 0.08);
+  color: var(--game-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+#setterScreen .setter-start-suggestion-word:hover {
+  background: rgba(255, 75, 92, 0.16);
+}
+
+#setterScreen .setter-start-suggestion-word:active {
+  transform: scale(0.96);
+}
+
 #setterScreen .setter-board::before,
 #guesserScreen :is(.guesser-board, .guesser-board-v9)::before {
   content: "";

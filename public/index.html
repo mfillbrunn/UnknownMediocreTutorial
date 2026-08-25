@@ -1097,6 +1097,15 @@
         </div>
       </div>
 
+      <!-- Two random starting-word ideas, shown only before the setter's
+           very first secret of the match -- see client/starter-word-
+           suggestions.js. Not a modal: tapping one fills the draft above. -->
+      <div
+        id="setterStartSuggestions"
+        class="setter-start-suggestions hidden"
+        aria-hidden="true"
+      ></div>
+
       <div
         id="SetterRemainingBox"
         class="remaining-box setter-decision-remaining"
@@ -1568,6 +1577,7 @@
   <script src="client/action-log-colors.js?setter-board=1"></script>
   <script src="client/action-log-dedupe-v6.js?setter-fixes=2"></script>
   <script src="ui/setter-sidebar.js?setter-board=1"></script>
+  <script src="client/starter-word-suggestions.js"></script>
   <script src="ui/setter-board.js?setter-board=1&compact-bonus=1"></script>
   <script src="ui/setter-board-polish.js?setter-polish=1"></script>
   <script src="ui/guesser-sidebar.js"></script>
