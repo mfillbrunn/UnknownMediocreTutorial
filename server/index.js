@@ -8,6 +8,7 @@ const { cleanupDisconnectedPlayers } = require("./core/rooms");
 const { createRoom, joinRoom, rooms, cleanupEmptyRooms } = require("./core/rooms");
 const registerSocketHandlers = require("./network/socketHandlers");
 const { registerMatchmaking } = require("./core/matchmaking");
+const { registerSinglePlayer } = require("./single-player");
 const { createClient } = require("@supabase/supabase-js");
 const { loadWordList } = require("./utils/wordListLoader");
 const { applyAction } = require("./core/stateMachine");
@@ -171,6 +172,7 @@ require("./powers/powers/questServer.js");
 // Register socket event handlers (create/join room, game actions)
 registerSocketHandlers(io, context);
 registerMatchmaking(io, context);
+registerSinglePlayer(io, context);
 
 // Cleanup stale rooms every 10 minutes
 setInterval(() => cleanupEmptyRooms(), 10 * 60 * 1000);
