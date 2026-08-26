@@ -219,31 +219,35 @@ if (setterSocketId) {
     // clearRoundState below and clear freezeActive/simultaneousAllWrong.
     const keptCurrentSecret =
       action.type === "SET_SECRET_SAME" ||
-      secret === String(state.secret || "").toUpperCase();
+      secret === String(
+        state.secret || ""
+      ).toUpperCase();
 
-    const wasHiddenGuessDecision = !!state.powers.doubleGuessPending;
-    const wasFrozenKeepDecision = !!state.powers?.freezeActive && keptCurrentSecret;
-    const wasOpeningLockedKeep = !!state.simultaneousAllWrong && keptCurrentSecret;
+    const wasHiddenGuessDecision =
+      !!state.powers?.doubleGuessPending;
 
-    // These accepted decisions always earn exactly one normal base star
-    // and never a bonus, regardless of switch quality:
-    //   - Hidden Guess, NEW or KEEP
-    //   - an accepted KEEP while Freeze Secret is active
-    //   - the forced/default KEEP after the all-gray opening
-    // Everything else still goes through the real cover-strength rating.
+    /*
+     * This is the authoritative accepted-action gate:
+     * - every accepted KEEP earns exactly 1 base star;
+     * - Hidden Guess earns exactly 1 base star for KEEP or NEW;
+     * - every other NEW is quality-rated by evaluateSecretChange();
+     * - only a changed NEW can earn the separate letter bonus.
+     */
     const fixedOneStarDecision =
-      wasHiddenGuessDecision ||
-      wasFrozenKeepDecision ||
-      wasOpeningLockedKeep;
+      keptCurrentSecret ||
+      wasHiddenGuessDecision;
 
-    const spyChargeAward = fixedOneStarDecision
-      ? spyChargeServer.createFlatDecisionAward(state, 1)
-      : spyChargeServer.evaluateSecretChange(
-          state,
-          secret,
-          context.ALLOWED_SECRETS
-        );
-
+    const spyChargeAward =
+      fixedOneStarDecision
+        ? spyChargeServer.createFlatDecisionAward(
+            state,
+            1
+          )
+        : spyChargeServer.evaluateSecretChange(
+            state,
+            secret,
+            context.ALLOWED_SECRETS
+          );
 
     // Stats bookkeeping (My Games stats screen): capture the very first
     // secret this round regardless of action type -- that's the round's
