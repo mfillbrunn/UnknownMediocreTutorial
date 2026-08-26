@@ -540,6 +540,11 @@ function buildCoverStrengthState(
    * drafted/random power activation, not this same "stuck with
    * whatever you had" case, so it stays fully hidden above with
    * the other blocked reasons.
+   *
+   * The forced/default opening Keep earns exactly one base star (see
+   * spyChargeServer.js's createFlatDecisionAward) -- this preview must
+   * agree with that real award, not the old flat 2 stars this used to
+   * show for this turn.
    */
   const secretLocked =
     !!state.simultaneousAllWrong;
@@ -548,7 +553,7 @@ function buildCoverStrengthState(
     return {
       visible: true,
       status: "locked",
-      stars: 2,
+      stars: 1,
       hasUpgrade: false,
       keepCount: null,
       bestCount: null,

@@ -277,6 +277,67 @@
     }
   }
 
+  // Normalizes #setterCoverStars' star markup to exactly 2 base-star slots
+  // plus 1 separate bonus-star slot, no matter what's actually there right
+  // now -- stale markup from an older build, a future accidental edit, or
+  // draftrow.js's own initial 2+1 markup should all converge on the same
+  // shape. Idempotent: a render tick that finds the markup already valid
+  // does nothing but read it back out.
+  function ensureCoverStarSlots(el) {
+    const host = el.querySelector(".setter-cover-stars-core") || el;
+
+    let baseStars = [...host.querySelectorAll("[data-cover-star]")].filter(
+      star => !star.hasAttribute("data-cover-bonus-star")
+    );
+    let bonusStars = [...host.querySelectorAll("[data-cover-bonus-star]")];
+
+    const valid =
+      baseStars.length === 2 &&
+      bonusStars.length === 1 &&
+      !bonusStars[0].hasAttribute("data-cover-star");
+
+    if (!valid) {
+      host
+        .querySelectorAll("[data-cover-star], [data-cover-bonus-star]")
+        .forEach(node => node.remove());
+
+      const fragment = document.createDocumentFragment();
+
+      for (let index = 0; index < 2; index += 1) {
+        const star = document.createElement("span");
+        star.className = "setter-cover-star setter-cover-base-star";
+        star.dataset.coverStar = "";
+        star.setAttribute("aria-hidden", "true");
+        star.textContent = "★";
+        fragment.appendChild(star);
+      }
+
+      const bonusStar = document.createElement("span");
+      bonusStar.className = "setter-cover-star setter-cover-bonus-star";
+      bonusStar.dataset.coverBonusStar = "";
+      bonusStar.setAttribute("aria-hidden", "true");
+      bonusStar.textContent = "★";
+      fragment.appendChild(bonusStar);
+
+      host.prepend(fragment);
+
+      baseStars = [...host.querySelectorAll("[data-cover-star]")].filter(
+        star => !star.hasAttribute("data-cover-bonus-star")
+      );
+      bonusStars = [...host.querySelectorAll("[data-cover-bonus-star]")];
+    }
+
+    baseStars.forEach(star => {
+      star.classList.add("setter-cover-star", "setter-cover-base-star");
+    });
+
+    const bonusStar = bonusStars[0] || null;
+    bonusStar?.classList.add("setter-cover-star", "setter-cover-bonus-star");
+
+    return { baseStars, bonusStar };
+  }
+  window.ensureSetterCoverStarSlots = ensureCoverStarSlots;
+
   // Wipes every trace of the last rating: the filled pips and the
   // escalating glow classes. Called whenever the stars go away (submitted,
   // roles switched, new match) -- renderCoverStars used to just add
@@ -286,9 +347,9 @@
   // untouched draft that has no rating to display yet.
   function clearCoverStars(el) {
     el.classList.remove("stars-2", "stars-3");
-    el.querySelectorAll("[data-cover-star]").forEach(star => {
-      star.classList.remove("is-filled");
-    });
+    const { baseStars, bonusStar } = ensureCoverStarSlots(el);
+    baseStars.forEach(star => star.classList.remove("is-filled"));
+    bonusStar?.classList.remove("is-filled", "is-available");
     _praiseKey = "";
     _praiseText = "";
   }
@@ -394,7 +455,9 @@
     const el = byId("setterCoverStars");
     if (!el) return;
 
-    const count = Math.max(0, Math.min(3, Number(strength?.stars) || 0));
+    // Base stars top out at 2 -- the separate blue bonus star (below) is
+    // the only way a turn's total ever reaches 3, never a 3rd base star.
+    const baseCount = Math.max(0, Math.min(2, Number(strength?.stars) || 0));
     const isSetter = window.myRole === "setter";
     updateDecisionMetaVisibility(isSetter);
 
@@ -410,7 +473,7 @@
       .replace(/\s/g, "")
       .toUpperCase();
 
-    const bonusEarned = !!(
+    const computedBonusEarned = !!(
       hasHint &&
       strength?.draftValid &&
       !strength?.draftIsCurrent &&
@@ -419,11 +482,17 @@
       draft[hint.position] === hintLetter
     );
 
+    // Prefer the authoritative preview field (strength.bonusStar, computed
+    // server-side by coverStrength.js off the real charge hint) -- only
+    // fall back to the local recomputation above when that field is
+    // absent, rather than inferring the bonus purely from the total.
+    const bonusFilled = Boolean(strength?.bonusStar ?? computedBonusEarned);
+
     // Exposed for power-choice-mode.js's bonus-star pill so both places
     // that reflect this state (the pill and the draft-tile outline) stay
     // in sync off one computation instead of two separately-derived ones.
-    window.__setterBonusEarned = bonusEarned;
-    updateHintSlotTile(hint, hasHint, bonusEarned);
+    window.__setterBonusEarned = bonusFilled;
+    updateHintSlotTile(hint, hasHint, bonusFilled);
 
     // The letter/position readout used to also live here as a "P in 3rd"
     // text label next to the stars -- that's now shown once, in the
@@ -447,7 +516,7 @@
       !!strength?.visible &&
       isSetter &&
       rated &&
-      count > 0 &&
+      baseCount > 0 &&
       !decisionAlreadyMade();
 
     el.classList.toggle("hidden", !show);
@@ -456,14 +525,16 @@
       return;
     }
 
-    // Base stars top out at 2 now -- the 3rd pip is only ever reachable
-    // through the bonus star on top of a base switch, so the row has to
-    // count both together to still show the true total (up to 3).
-    const totalCount = Math.min(3, count + (strength?.bonusStar ? 1 : 0));
+    const { baseStars, bonusStar } = ensureCoverStarSlots(el);
 
-    el.querySelectorAll("[data-cover-star]").forEach((star, index) => {
-      star.classList.toggle("is-filled", index < totalCount);
+    baseStars.forEach((star, index) => {
+      star.classList.toggle("is-filled", index < baseCount);
     });
+
+    bonusStar?.classList.toggle("is-available", hasHint);
+    bonusStar?.classList.toggle("is-filled", bonusFilled);
+
+    const totalCount = baseCount + (bonusFilled ? 1 : 0);
 
     // Drives the escalating glow/animation in gameplay-ui.css: nothing at
     // one star, a gentle lift at two, a full celebration at three. Gated
@@ -475,12 +546,12 @@
       !strength?.draftIsPending &&
       !!strength?.draftValid;
     el.classList.toggle("stars-2", celebrating && totalCount === 2);
-    el.classList.toggle("stars-3", celebrating && totalCount >= 3);
-    updateStarPraise(count, strength);
+    el.classList.toggle("stars-3", celebrating && totalCount === 3);
+    updateStarPraise(baseCount, { ...strength, bonusStar: bonusFilled });
 
     el.setAttribute(
       "aria-label",
-      `${count} of 3 cover-strength stars${bonusEarned ? " plus one bonus star" : ""}`
+      `${baseCount} of 2 yellow stars; blue bonus star ${bonusFilled ? "earned" : "not earned"}`
     );
   }
 

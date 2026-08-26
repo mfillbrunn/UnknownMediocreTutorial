@@ -2184,7 +2184,8 @@ if (!CompetitiveMode.prototype.__powerChoicePatchedV2) {
 
 // Preserve cover-strength star quality and the bonus target, but guarantee
 // the mode's floor: one star for every eligible Keep/New decision, including
-// keeping the same secret; two stars on the forced all-wrong opening.
+// keeping the same secret; also exactly one star on the forced all-wrong
+// opening -- never two.
 if (!spyChargeServer.__powerChoicePatchedV2) {
   spyChargeServer.__powerChoicePatchedV2 = true;
   const originalInitialize = spyChargeServer.initializeForRound;
@@ -2211,8 +2212,9 @@ if (!spyChargeServer.__powerChoicePatchedV2) {
     if (state.simultaneousAllWrong) {
       return {
         ...award,
-        baseStars: Math.max(2, Number(award?.baseStars) || 0),
-        earnedStars: Math.max(2, Number(award?.earnedStars) || 0)
+        baseStars: 1,
+        bonusStars: 0,
+        earnedStars: 1
       };
     }
     const eligible =
@@ -2244,11 +2246,21 @@ if (!spyChargeServer.__powerChoicePatchedV2) {
       0,
       Math.min(SPY_MAX, Number(charge.total) || Number(award?.before) || 0)
     );
-    const baseStars = Math.max(0, Number(award?.baseStars) || 0);
-    const bonusStars = Math.max(0, Number(award?.bonusStars) || 0);
-    const appliedStars = Math.min(SPY_MAX - before, baseStars + bonusStars);
-    const appliedBaseStars = Math.min(appliedStars, baseStars);
-    const appliedBonusStars = Math.max(0, appliedStars - appliedBaseStars);
+    // Defensive normalization, same invariant as spyChargeServer.js's own
+    // commitAward: a caller-supplied award can never request more than 2
+    // base stars or 1 bonus star, however it was computed.
+    const baseStars = Math.min(
+      2,
+      Math.max(0, Math.trunc(Number(award?.baseStars) || 0))
+    );
+    const bonusStars = Math.min(
+      1,
+      Math.max(0, Math.trunc(Number(award?.bonusStars) || 0))
+    );
+    const available = Math.max(0, SPY_MAX - before);
+    const appliedBaseStars = Math.min(available, baseStars);
+    const appliedBonusStars = Math.min(available - appliedBaseStars, bonusStars);
+    const appliedStars = appliedBaseStars + appliedBonusStars;
     const after = before + appliedStars;
     charge.total = after;
     // COMPETITIVE OVERHAUL V3: POWER CHOICE HISTORY METRICS START

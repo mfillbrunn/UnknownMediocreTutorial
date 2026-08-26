@@ -66,9 +66,9 @@ window.renderDraftRows = function ({
         stars.setAttribute("aria-live", "polite");
         stars.innerHTML = `
           <span class="setter-cover-stars-core">
-            <span class="setter-cover-star" data-cover-star>★</span>
-            <span class="setter-cover-star" data-cover-star>★</span>
-            <span class="setter-cover-star" data-cover-star>★</span>
+            <span class="setter-cover-star setter-cover-base-star" data-cover-star aria-hidden="true">★</span>
+            <span class="setter-cover-star setter-cover-base-star" data-cover-star aria-hidden="true">★</span>
+            <span class="setter-cover-star setter-cover-bonus-star" data-cover-bonus-star aria-hidden="true">★</span>
           </span>
 
           <span id="setterCoverTarget" class="setter-cover-target hidden">

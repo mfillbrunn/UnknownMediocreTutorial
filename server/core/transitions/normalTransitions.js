@@ -68,6 +68,17 @@ function transitionAfterSecret({
   state.simultaneousAllWrong = false;
   if (state.pendingGuess === secret) {
     pushWinEntry(state, secret);
+
+    // The setter still committed a valid decision -- most importantly for
+    // an accepted frozen Keep or the forced opening Keep, which otherwise
+    // used to earn nothing just because this same guess happened to end
+    // the round. Commits once, here; the non-game-over branch below has
+    // its own separate commit after finalizeFeedback, so there's never a
+    // double award for one decision.
+    if (spyChargeAward) {
+      spyChargeServer.commitAward(state, spyChargeAward, room, io);
+    }
+
     io.to(roomId).emit("secretFound");
     endGame(state, roomId, io, room, context);
     return "gameOver";

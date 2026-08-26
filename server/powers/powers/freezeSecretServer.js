@@ -1,6 +1,5 @@
 // /powers/powers/freezeSecretServer.js
 const engine = require("../powerEngineServer.js");
-const spyChargeServer = require("./spyChargeServer");
 
 engine.registerPower("freezeSecret", {
   apply(state, action, roomId, io, room) {
@@ -11,14 +10,10 @@ engine.registerPower("freezeSecret", {
     io.to(roomId).emit("toast", "Secret is frozen for a turn!");
     io.to(roomId).emit("powerUsed", { type: "freezeSecret" });
 
-    // A small consolation for the Secretkeeper: being frozen costs them their
-    // Keep/New choice for a turn, so award the same 1-star floor a
-    // normal eligible decision would have earned -- same commitAward
-    // path spyChargeServer's own decision-turn awards go through
-    // (Power Choice mode has this monkey-patched to also queue its
-    // reward-choice milestones, so a freeze that pushes the Secretkeeper across
-    // 5/9/15 opens a reward choice exactly like any other star would).
-    spyChargeServer.commitAward(state, { baseStars: 1, bonusStars: 0 }, room, io);
+    // Do not award a star here. The star is awarded only if and when the
+    // setter commits the frozen Keep -- see normal.js's setter submission
+    // handler, which awards a flat one star for an accepted Keep while
+    // freezeActive is still true (read before postScore below clears it).
   },
 
   // Block only NEW secret while frozen; SAME is allowed

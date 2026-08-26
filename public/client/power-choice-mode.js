@@ -238,7 +238,7 @@
         <span class="pc-charge-click-copy">Click for rules</span>
       </button>
       <div class="pc-charge-details${detailsOpen ? " is-open" : ""}">
-        <p>Earn at least 1 star after each eligible Keep/New decision. The forced all-gray opening begins with at least 2 stars.</p>
+        <p>Every accepted Keep or New decision earns at least 1 yellow star. A strong New secret can earn 2 yellow stars. Matching the blue letter target adds the separate blue bonus star. The forced all-gray opening Keep earns 1 yellow star.</p>
         <div class="pc-reward-milestones">
           <span><b>4</b> choose 1 reward</span>
           <span><b>8</b> choose 1 reward</span>
