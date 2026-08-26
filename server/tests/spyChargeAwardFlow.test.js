@@ -432,7 +432,67 @@ function run() {
     assert.ok(io.emissions.some(e => e.event === "errorMessage"), "test setup: the rejection must actually be reported");
   }
 
-  console.log("PASS spyChargeAwardFlow: Hidden Guess, Freeze Secret, the forced opening Keep, and normal/Power Choice commit exactly one star through the real dispatch path, with no double-awards and correctly normalized values");
+  // A larger, less symmetric pool than ALLOWED_SECRETS above -- needed to
+  // used to also get a keepCount === bestCount case, back when Keep's
+  // star count depended on that comparison. It no longer does -- Keep is
+  // always flat 1 star, full stop -- but the pool is still useful for
+  // proving that flat rule holds even for a secret objectively tied for
+  // best, not just for an arbitrary one.
+  const KEEP_VS_BEST_SECRETS = [
+    "APPLE", "AMPLY", "ANGLE", "ANKLE", "MANGO", "GRAPE", "GRACE", "TABLE",
+    "STALE", "STARE", "CRANE", "PLANE", "BLADE", "SHADE", "SPADE", "TRADE",
+    "BRAVE", "BRAKE", "SNAKE", "STAKE"
+  ];
+  // Confirmed via getCoverAnalysis against KEEP_VS_BEST_SECRETS with
+  // pendingGuess "MANGO" and no history: APPLE's keepCount (10) equals
+  // bestCount (10) -- keeping it is already objectively best. AMPLY's
+  // keepCount (1) is well below bestCount (10) -- keeping it is not.
+  // Keep is worth exactly 1 star either way.
+
+  // ---- 15. Empty draft (no new word yet) previews Keep's flat 1 star -----
+  {
+    const previewNotBest = coverStrength.buildCoverStrengthState(
+      baseState({ secret: "AMPLY", pendingGuess: "MANGO" }),
+      KEEP_VS_BEST_SECRETS,
+      "" // empty draft -- nothing typed, matches the ghost/draft state
+    );
+    assert.strictEqual(previewNotBest.status, "same", "an empty draft must preview as if Keep were chosen");
+    assert.strictEqual(previewNotBest.stars, 1, "keeping always previews as exactly 1 star");
+
+    const previewIsBest = coverStrength.buildCoverStrengthState(
+      baseState({ secret: "APPLE", pendingGuess: "MANGO" }),
+      KEEP_VS_BEST_SECRETS,
+      ""
+    );
+    assert.strictEqual(previewIsBest.status, "same");
+    assert.strictEqual(previewIsBest.stars, 1, "keeping still previews as exactly 1 star even when tied for best -- never 2");
+  }
+
+  // ---- 16. Keep always earns exactly 1 star, even when the kept secret
+  // is objectively tied for the best possible legal switch ------------------
+  {
+    const state = baseState({
+      secret: "APPLE", // tied for best against KEEP_VS_BEST_SECRETS/MANGO
+      pendingGuess: "MANGO",
+      powers: {
+        spyCharge: { enabled: true, total: 0, resetsUsed: 0, hint: null, lockedPowerId: null },
+        doubleGuessPending: false
+      }
+    });
+    const io = makeIO();
+    const room = makeRoom(state);
+    const context = { ...makeContext(io), ALLOWED_SECRETS: KEEP_VS_BEST_SECRETS };
+
+    handleNormalPhase(room, state, { type: "SET_SECRET_SAME", userId: "S" }, "room1", context);
+
+    assert.strictEqual(state.powers.spyCharge.total, 1, "Keep must earn exactly 1 star, even for a secret tied for best");
+    const awards = spyChargeAwardEmissions(io);
+    assert.strictEqual(awards.length, 1);
+    assert.strictEqual(awards[0].payload.baseStars, 1);
+    assert.strictEqual(awards[0].payload.bonusStars, 0, "keeping never earns the bonus star");
+  }
+
+  console.log("PASS spyChargeAwardFlow: Hidden Guess, Freeze Secret, the forced opening Keep, and normal/Power Choice commit exactly one star through the real dispatch path, with no double-awards and correctly normalized values; the empty-draft preview matches the real Keep award (always exactly 1 star, never 2)");
 }
 
 module.exports = { run };

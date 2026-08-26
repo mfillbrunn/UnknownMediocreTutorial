@@ -623,12 +623,23 @@ function buildCoverStrengthState(
         )
       : null;
 
-let gapPct = null;
+  let gapPct = null;
   let stars = 0;
   let status = "available";
 
   if (!draftComplete) {
-    status = "available";
+    if (draft.length === 0) {
+      // Nothing typed yet -- an empty draft submits as "keep the current
+      // secret" (see client.js's computeSetterSecretStatus), so show what
+      // that's actually worth right away instead of waiting for the
+      // setter to explicitly retype it. Keeping always earns the flat
+      // 1-star baseline, same as every other legal decision -- see
+      // starsForGap.
+      status = "same";
+      stars = 1;
+    } else {
+      status = "available";
+    }
   } else if (!draftValid) {
     status = "invalid";
   } else if (draftIsCurrent) {
