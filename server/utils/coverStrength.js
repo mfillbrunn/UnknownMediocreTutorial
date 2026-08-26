@@ -623,20 +623,6 @@ function buildCoverStrengthState(
         )
       : null;
 
-// Keeping is worth the same flat 1-star baseline every legal decision
-  // earns UNLESS the current secret is already tied for the best possible
-  // legal switch (keepCount === bestCount) -- in that case keeping isn't
-  // a lesser fallback, it's objectively as good as it gets, so it's worth
-  // the same 2 stars actually switching to that best word would earn.
-  // Mirrors spyChargeServer.js's V3 legalKeep wrapper -- the two must
-  // agree or the preview lies about the payout.
-  const keepStars =
-    Number.isFinite(analysis.bestCount) &&
-    Number.isFinite(analysis.keepCount) &&
-    analysis.keepCount === analysis.bestCount
-      ? 2
-      : 1;
-
   let gapPct = null;
   let stars = 0;
   let status = "available";
@@ -646,17 +632,22 @@ function buildCoverStrengthState(
       // Nothing typed yet -- an empty draft submits as "keep the current
       // secret" (see client.js's computeSetterSecretStatus), so show what
       // that's actually worth right away instead of waiting for the
-      // setter to explicitly retype it.
+      // setter to explicitly retype it. Keeping always earns the flat
+      // 1-star baseline, same as every other legal decision -- see
+      // starsForGap.
       status = "same";
-      stars = keepStars;
+      stars = 1;
     } else {
       status = "available";
     }
   } else if (!draftValid) {
     status = "invalid";
   } else if (draftIsCurrent) {
+    // Keeping the current secret is still a legal decision, so it earns
+    // the same baseline star any other legal choice does (see
+    // starsForGap) rather than reading as nothing gained.
     status = "same";
-    stars = keepStars;
+    stars = 1;
   } else if (draftIsPending) {
     status = "loses";
   } else if (

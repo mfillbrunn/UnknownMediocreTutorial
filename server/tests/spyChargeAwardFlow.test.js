@@ -433,10 +433,11 @@ function run() {
   }
 
   // A larger, less symmetric pool than ALLOWED_SECRETS above -- needed to
-  // get a real keepCount < bestCount case (a starting secret that is NOT
-  // tied for best) alongside a keepCount === bestCount case (one that
-  // is), for the two tests below. With the small 6-word ALLOWED_SECRETS
-  // pool every candidate happens to tie for bestCount against MANGO.
+  // used to also get a keepCount === bestCount case, back when Keep's
+  // star count depended on that comparison. It no longer does -- Keep is
+  // always flat 1 star, full stop -- but the pool is still useful for
+  // proving that flat rule holds even for a secret objectively tied for
+  // best, not just for an arbitrary one.
   const KEEP_VS_BEST_SECRETS = [
     "APPLE", "AMPLY", "ANGLE", "ANKLE", "MANGO", "GRAPE", "GRACE", "TABLE",
     "STALE", "STARE", "CRANE", "PLANE", "BLADE", "SHADE", "SPADE", "TRADE",
@@ -446,16 +447,17 @@ function run() {
   // pendingGuess "MANGO" and no history: APPLE's keepCount (10) equals
   // bestCount (10) -- keeping it is already objectively best. AMPLY's
   // keepCount (1) is well below bestCount (10) -- keeping it is not.
+  // Keep is worth exactly 1 star either way.
 
-  // ---- 15. Empty draft (no new word yet) previews what Keep is worth -----
+  // ---- 15. Empty draft (no new word yet) previews Keep's flat 1 star -----
   {
     const previewNotBest = coverStrength.buildCoverStrengthState(
       baseState({ secret: "AMPLY", pendingGuess: "MANGO" }),
       KEEP_VS_BEST_SECRETS,
-      "" // empty draft -- nothing typed, matches the ghost/ ghost-draft state
+      "" // empty draft -- nothing typed, matches the ghost/draft state
     );
     assert.strictEqual(previewNotBest.status, "same", "an empty draft must preview as if Keep were chosen");
-    assert.strictEqual(previewNotBest.stars, 1, "keeping a non-best secret previews as the flat 1-star floor");
+    assert.strictEqual(previewNotBest.stars, 1, "keeping always previews as exactly 1 star");
 
     const previewIsBest = coverStrength.buildCoverStrengthState(
       baseState({ secret: "APPLE", pendingGuess: "MANGO" }),
@@ -463,63 +465,18 @@ function run() {
       ""
     );
     assert.strictEqual(previewIsBest.status, "same");
-    assert.strictEqual(previewIsBest.stars, 2, "keeping a secret already tied for best previews as 2 stars, not the flat floor");
+    assert.strictEqual(previewIsBest.stars, 1, "keeping still previews as exactly 1 star even when tied for best -- never 2");
   }
 
-  // ---- 16. Keeping a secret tied for best earns 2 stars, for real --------
-  {
-    const state = baseState({
-      secret: "APPLE",
-      pendingGuess: "MANGO",
-      powers: {
-        spyCharge: { enabled: true, total: 0, resetsUsed: 0, hint: null, lockedPowerId: null },
-        doubleGuessPending: false
-      }
-    });
-    const io = makeIO();
-    const room = makeRoom(state);
-    const context = { ...makeContext(io), ALLOWED_SECRETS: KEEP_VS_BEST_SECRETS };
-
-    handleNormalPhase(room, state, { type: "SET_SECRET_SAME", userId: "S" }, "room1", context);
-
-    assert.strictEqual(state.powers.spyCharge.total, 2, "keeping a secret tied for best must earn 2 stars");
-    const awards = spyChargeAwardEmissions(io);
-    assert.strictEqual(awards.length, 1);
-    assert.strictEqual(awards[0].payload.baseStars, 2);
-    assert.strictEqual(awards[0].payload.bonusStars, 0, "keeping never earns the bonus star, even when it's worth 2 base stars");
-  }
-
-  // ---- 17. Keeping a secret NOT tied for best still earns only 1 ---------
-  {
-    const state = baseState({
-      secret: "AMPLY",
-      pendingGuess: "MANGO",
-      powers: {
-        spyCharge: { enabled: true, total: 0, resetsUsed: 0, hint: null, lockedPowerId: null },
-        doubleGuessPending: false
-      }
-    });
-    const io = makeIO();
-    const room = makeRoom(state);
-    const context = { ...makeContext(io), ALLOWED_SECRETS: KEEP_VS_BEST_SECRETS };
-
-    handleNormalPhase(room, state, { type: "SET_SECRET_SAME", userId: "S" }, "room1", context);
-
-    assert.strictEqual(state.powers.spyCharge.total, 1, "keeping a secret that is not tied for best must still earn only 1 star");
-  }
-
-  // ---- 18. Hidden Guess Keep stays flat 1 even when the kept secret is
-  // tied for best (the "keep is best" upgrade must not leak into Hidden
-  // Guess's own always-flat-1 rule) -----------------------------------------
+  // ---- 16. Keep always earns exactly 1 star, even when the kept secret
+  // is objectively tied for the best possible legal switch ------------------
   {
     const state = baseState({
       secret: "APPLE", // tied for best against KEEP_VS_BEST_SECRETS/MANGO
       pendingGuess: "MANGO",
       powers: {
         spyCharge: { enabled: true, total: 0, resetsUsed: 0, hint: null, lockedPowerId: null },
-        doubleGuessPending: true,
-        doubleGuessHidden: "GRAPE",
-        doubleGuessShownFirst: true
+        doubleGuessPending: false
       }
     });
     const io = makeIO();
@@ -528,10 +485,14 @@ function run() {
 
     handleNormalPhase(room, state, { type: "SET_SECRET_SAME", userId: "S" }, "room1", context);
 
-    assert.strictEqual(state.powers.spyCharge.total, 1, "Hidden Guess Keep must stay flat 1 star even for a secret tied for best");
+    assert.strictEqual(state.powers.spyCharge.total, 1, "Keep must earn exactly 1 star, even for a secret tied for best");
+    const awards = spyChargeAwardEmissions(io);
+    assert.strictEqual(awards.length, 1);
+    assert.strictEqual(awards[0].payload.baseStars, 1);
+    assert.strictEqual(awards[0].payload.bonusStars, 0, "keeping never earns the bonus star");
   }
 
-  console.log("PASS spyChargeAwardFlow: Hidden Guess, Freeze Secret, the forced opening Keep, and normal/Power Choice commit exactly one star through the real dispatch path, with no double-awards and correctly normalized values; the empty-draft/explicit Keep preview and real award agree, including the 2-star case when Keep is already tied for best");
+  console.log("PASS spyChargeAwardFlow: Hidden Guess, Freeze Secret, the forced opening Keep, and normal/Power Choice commit exactly one star through the real dispatch path, with no double-awards and correctly normalized values; the empty-draft preview matches the real Keep award (always exactly 1 star, never 2)");
 }
 
 module.exports = { run };
