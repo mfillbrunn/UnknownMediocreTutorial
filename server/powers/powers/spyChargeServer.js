@@ -353,6 +353,51 @@ function starsForCandidate(candidateCount, bestCount) {
   return 1;
 }
 
+// Special accepted decisions (see createFlatDecisionAward below) always
+// earn exactly one base star and never a bonus, regardless of switch
+// quality. Used for the forced/default all-gray-opening Keep, and (from
+// normal.js) for Hidden Guess and the accepted frozen Keep -- none of
+// those are a real quality-rated cover-strength switch, so they bypass
+// the candidate/bestCount analysis entirely rather than trying to force
+// it through starsForCandidate.
+function createFlatDecisionAward(
+  state,
+  baseStars = 1
+) {
+  const charge = getCharge(state);
+
+  const before = Math.min(
+    MAX_CHARGE,
+    Math.max(
+      0,
+      Number(charge?.total) || 0
+    )
+  );
+
+  const base = charge?.enabled
+    ? Math.min(
+        2,
+        Math.max(
+          0,
+          Math.trunc(
+            Number(baseStars) || 0
+          )
+        )
+      )
+    : 0;
+
+  return {
+    before,
+    baseStars: base,
+    bonusStars: 0,
+    earnedStars: base,
+    candidateCount: null,
+    bestCount: null,
+    bestWord: null,
+    bestWords: []
+  };
+}
+
 function evaluateSecretChange(
   state,
   newSecret,
@@ -380,16 +425,15 @@ function evaluateSecretChange(
   // Mirrors coverStrength.js's buildCoverStrengthState -- an all-wrong
   // simultaneous opening forces the setter to keep whatever secret they
   // had, so there's no legal alternative to rate a switch against. Award
-  // the same flat 2 stars the UI already shows for this turn instead of
-  // silently earning nothing just because "keeping" is normally a
-  // zero-reward no-op switch (see the word === currentSecret check
-  // below, which this intentionally bypasses).
+  // the forced/default opening Keep's flat one star instead of silently
+  // earning nothing just because "keeping" is normally a zero-reward
+  // no-op switch (see the word === currentSecret check below, which this
+  // intentionally bypasses).
   if (state.simultaneousAllWrong) {
-    return {
-      ...empty,
-      baseStars: 2,
-      earnedStars: 2
-    };
+    return createFlatDecisionAward(
+      state,
+      1
+    );
   }
 
   if (!isScoringEligible(state)) {
@@ -484,16 +528,40 @@ function commitAward(
     )
   );
 
+  // Defensive normalization: no caller-supplied award, however it was
+  // computed, can ever request more than the invariant allows (2 base, 1
+  // bonus) -- this is the last gate before the meter total and the
+  // emitted payload both get built from it.
+  const requestedBaseStars = Math.min(
+    2,
+    Math.max(
+      0,
+      Math.trunc(
+        Number(award?.baseStars) || 0
+      )
+    )
+  );
+
+  const requestedBonusStars = Math.min(
+    1,
+    Math.max(
+      0,
+      Math.trunc(
+        Number(award?.bonusStars) || 0
+      )
+    )
+  );
+
   const available = MAX_CHARGE - before;
 
   const appliedBaseStars = Math.min(
     available,
-    Math.max(0, Number(award?.baseStars) || 0)
+    requestedBaseStars
   );
 
   const appliedBonusStars = Math.min(
     available - appliedBaseStars,
-    Math.max(0, Number(award?.bonusStars) || 0)
+    requestedBonusStars
   );
 
   const appliedStars =
@@ -520,8 +588,8 @@ function commitAward(
   const payload = {
     before,
     after,
-    baseStars: Math.max(0, Number(award?.baseStars) || 0),
-    bonusStars: Math.max(0, Number(award?.bonusStars) || 0),
+    baseStars: requestedBaseStars,
+    bonusStars: requestedBonusStars,
     appliedBaseStars,
     appliedBonusStars,
     appliedStars,
@@ -686,6 +754,7 @@ module.exports = {
   rollHintForTurn,
   starsForCandidate,
   evaluateSecretChange,
+  createFlatDecisionAward,
   commitAward,
   letterHasFeedback,
   attemptReset,

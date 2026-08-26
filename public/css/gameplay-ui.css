@@ -909,31 +909,54 @@
 }
 
 /* Empty by default -- hollow and dim, so an unearned star can never be
-   mistaken for an earned one. (These fill/empty styles were lost in the
-   stylesheet consolidation, which left every star looking identical
-   regardless of how many were actually earned.) */
+   mistaken for an earned one. Two plain yellow base-star slots plus one
+   separate, always-blue bonus-star slot (see ui/draftrow.js's markup and
+   ui/setter-board.js's ensureCoverStarSlots) -- the base/bonus split is
+   what stops the 3rd slot from ever reading as just another yellow star. */
 #setterScreen .setter-cover-star {
   font-size: 18px;
   line-height: 1;
-  color: rgba(150, 168, 186, 0.34);
   text-shadow: none;
   transition: color 180ms ease, text-shadow 180ms ease, transform 180ms ease;
 }
 
-#setterScreen .setter-cover-star.is-filled {
+/* Two normal base-star slots. */
+#setterScreen .setter-cover-base-star {
+  color: rgba(255, 215, 94, 0.26);
+}
+
+#setterScreen .setter-cover-base-star.is-filled {
   color: #ffd75e;
   text-shadow: 0 0 8px rgba(255, 200, 70, 0.55);
 }
 
+/* The third slot is always visually blue, filled or not. */
+#setterScreen .setter-cover-bonus-star {
+  color: rgba(88, 201, 255, 0.30);
+  text-shadow: 0 0 5px rgba(88, 201, 255, 0.12);
+}
+
+#setterScreen .setter-cover-bonus-star.is-available:not(.is-filled) {
+  color: rgba(88, 201, 255, 0.52);
+}
+
+#setterScreen .setter-cover-bonus-star.is-filled {
+  color: var(--game-blue, #58c9ff);
+  text-shadow:
+    0 0 9px rgba(88, 201, 255, 0.82),
+    0 0 18px rgba(88, 201, 255, 0.38);
+}
+
 /* Escalating celebration: two stars gets a gentle lift, three goes
-   properly excited. */
-#setterScreen #setterCoverStars.stars-2 .setter-cover-star.is-filled {
+   properly excited. Scoped to base-star/bonus-star separately so the
+   celebration never paints the blue bonus star yellow. */
+#setterScreen #setterCoverStars.stars-2 .setter-cover-base-star.is-filled {
   color: #ffdf7a;
   text-shadow: 0 0 12px rgba(255, 210, 90, 0.8);
   animation: pc-star-bump 1.5s ease-in-out infinite;
 }
 
-#setterScreen #setterCoverStars.stars-3 .setter-cover-star.is-filled {
+#setterScreen #setterCoverStars.stars-3 .setter-cover-base-star.is-filled {
   color: #fff0a8;
   text-shadow:
     0 0 10px rgba(255, 220, 110, 0.95),
@@ -941,11 +964,12 @@
   animation: pc-star-party 0.9s ease-in-out infinite;
 }
 
-#setterScreen #setterCoverStars.stars-3 .setter-cover-star.is-filled:nth-child(2) {
-  animation-delay: 0.12s;
-}
-
-#setterScreen #setterCoverStars.stars-3 .setter-cover-star.is-filled:nth-child(3) {
+#setterScreen #setterCoverStars.stars-3 .setter-cover-bonus-star.is-filled {
+  color: var(--game-blue, #58c9ff);
+  text-shadow:
+    0 0 10px rgba(88, 201, 255, 0.95),
+    0 0 22px rgba(88, 201, 255, 0.62);
+  animation: pc-star-party 0.9s ease-in-out infinite;
   animation-delay: 0.24s;
 }
 
@@ -2890,8 +2914,9 @@ body.power-choice-mode #spyChargeAwardBackdrop {
       #setterScreen.is-not-your-turn .ghost-secret .history-tile::before,
       .pc-quest-met-flourish,
       #setterBonusTargetV9.pc-bonus-satisfied,
-      #setterScreen #setterCoverStars.stars-2 .setter-cover-star.is-filled,
-      #setterScreen #setterCoverStars.stars-3 .setter-cover-star.is-filled
+      #setterScreen #setterCoverStars.stars-2 .setter-cover-base-star.is-filled,
+      #setterScreen #setterCoverStars.stars-3 .setter-cover-base-star.is-filled,
+      #setterScreen #setterCoverStars.stars-3 .setter-cover-bonus-star.is-filled
     ) {
     animation: none !important;
   }

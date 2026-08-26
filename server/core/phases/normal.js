@@ -214,14 +214,35 @@ if (setterSocketId) {
       );
       return;
     }
-    const spyChargeAward =
-      !state.powers.doubleGuessPending
-        ? spyChargeServer.evaluateSecretChange(
-            state,
-            secret,
-            context.ALLOWED_SECRETS
-          )
-        : null;
+    // Which accepted decision this is, captured now -- before
+    // transitionAfterSecret/resolveDoubleGuess run finalizeFeedback/
+    // clearRoundState below and clear freezeActive/simultaneousAllWrong.
+    const keptCurrentSecret =
+      action.type === "SET_SECRET_SAME" ||
+      secret === String(state.secret || "").toUpperCase();
+
+    const wasHiddenGuessDecision = !!state.powers.doubleGuessPending;
+    const wasFrozenKeepDecision = !!state.powers?.freezeActive && keptCurrentSecret;
+    const wasOpeningLockedKeep = !!state.simultaneousAllWrong && keptCurrentSecret;
+
+    // These accepted decisions always earn exactly one normal base star
+    // and never a bonus, regardless of switch quality:
+    //   - Hidden Guess, NEW or KEEP
+    //   - an accepted KEEP while Freeze Secret is active
+    //   - the forced/default KEEP after the all-gray opening
+    // Everything else still goes through the real cover-strength rating.
+    const fixedOneStarDecision =
+      wasHiddenGuessDecision ||
+      wasFrozenKeepDecision ||
+      wasOpeningLockedKeep;
+
+    const spyChargeAward = fixedOneStarDecision
+      ? spyChargeServer.createFlatDecisionAward(state, 1)
+      : spyChargeServer.evaluateSecretChange(
+          state,
+          secret,
+          context.ALLOWED_SECRETS
+        );
 
 
     // Stats bookkeeping (My Games stats screen): capture the very first
@@ -249,7 +270,7 @@ if (setterSocketId) {
     // (Keep or New). Score BOTH the shown and hidden guesses against it and
     // return the combined feedback to the guesser.
     if (state.powers.doubleGuessPending) {
-      resolveDoubleGuess({ room, state, secret, roomId, context, io });
+      resolveDoubleGuess({ room, state, secret, roomId, context, io, spyChargeAward });
       return;
     }
 
@@ -442,7 +463,7 @@ function applyDoubleGuess(state, action, roomId, io, room, context) {
 // about which was shown), the hidden one is masked from the setter in
 // safeState, and the guesser receives both real feedbacks. The round ends if
 // either guess equals the final secret.
-function resolveDoubleGuess({ room, state, secret, roomId, context, io }) {
+function resolveDoubleGuess({ room, state, secret, roomId, context, io, spyChargeAward = null }) {
   const finalSecret = (secret || "").toUpperCase();
   const shown = (state.pendingGuess || "").toUpperCase();
   const hidden = (state.powers.doubleGuessHidden || "").toUpperCase();
@@ -479,6 +500,14 @@ function resolveDoubleGuess({ room, state, secret, roomId, context, io }) {
   const eHidden = mkEntry(hidden, fbHidden, true, shownFirst ? [] : powerEvents);
   if (shownFirst) state.history.push(eShown, eHidden);
   else state.history.push(eHidden, eShown);
+
+  // The setter has now committed an accepted final secret for Hidden
+  // Guess. Award exactly one normal star before any possible game-over
+  // return below -- do not call commitAward anywhere else in this
+  // resolution.
+  if (spyChargeAward) {
+    spyChargeServer.commitAward(state, spyChargeAward, room, io);
+  }
 
   // Clear the Double Tap resolution state.
   state.powers.doubleGuessPending = false;

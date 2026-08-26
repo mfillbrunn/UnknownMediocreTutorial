@@ -332,7 +332,15 @@
     draft?.querySelectorAll(
       ".setter-cover-bonus-star, .setter-cover-target, .draft-hint-star, " +
       ".setter-draft-target-letter, .setter-target-corner-letter, [data-cover-bonus-star]"
-    ).forEach(element => element.remove());
+    ).forEach(element => {
+      // The persistent blue bonus-star slot inside #setterCoverStars (see
+      // ui/draftrow.js and ui/setter-board.js's ensureCoverStarSlots)
+      // shares this class/attribute with the legacy per-render bonus-
+      // target decorations this sweep actually exists to remove -- skip it
+      // so it isn't torn out of the DOM on every render tick.
+      if (element.closest("#setterCoverStars")) return;
+      element.remove();
+    });
 
     const row = draft?.__draftRows?.draft || draft?.querySelector(".history-row.setter-draft, .history-row.ghost-secret");
     row?.querySelectorAll(".history-tile").forEach(tile => {

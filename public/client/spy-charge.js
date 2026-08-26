@@ -244,6 +244,64 @@
     );
   };
 
+  // Local fallback normalizer: identical shape to ui/setter-board.js's
+  // ensureCoverStarSlots (2 base-star slots + 1 separate bonus-star slot,
+  // idempotent). setter-board.js normally installs the real renderer over
+  // this one and exposes the same helper as window.ensureSetterCoverStarSlots
+  // -- this copy exists so a reconnect or a load-order change that leaves
+  // THIS file's renderer active can't fall back to three plain yellow
+  // stars just because the shared helper hasn't been installed yet.
+  function ensureCoverStarSlotsFallback(el) {
+    if (typeof window.ensureSetterCoverStarSlots === "function") {
+      return window.ensureSetterCoverStarSlots(el);
+    }
+
+    const host = el.querySelector(".setter-cover-stars-core") || el;
+
+    let baseStars = [...host.querySelectorAll("[data-cover-star]")].filter(
+      star => !star.hasAttribute("data-cover-bonus-star")
+    );
+    let bonusStars = [...host.querySelectorAll("[data-cover-bonus-star]")];
+
+    const valid =
+      baseStars.length === 2 &&
+      bonusStars.length === 1 &&
+      !bonusStars[0].hasAttribute("data-cover-star");
+
+    if (!valid) {
+      host
+        .querySelectorAll("[data-cover-star], [data-cover-bonus-star]")
+        .forEach(node => node.remove());
+
+      const fragment = document.createDocumentFragment();
+
+      for (let index = 0; index < 2; index += 1) {
+        const star = document.createElement("span");
+        star.className = "setter-cover-star setter-cover-base-star";
+        star.dataset.coverStar = "";
+        star.setAttribute("aria-hidden", "true");
+        star.textContent = "★";
+        fragment.appendChild(star);
+      }
+
+      const bonusStar = document.createElement("span");
+      bonusStar.className = "setter-cover-star setter-cover-bonus-star";
+      bonusStar.dataset.coverBonusStar = "";
+      bonusStar.setAttribute("aria-hidden", "true");
+      bonusStar.textContent = "★";
+      fragment.appendChild(bonusStar);
+
+      host.prepend(fragment);
+
+      baseStars = [...host.querySelectorAll("[data-cover-star]")].filter(
+        star => !star.hasAttribute("data-cover-bonus-star")
+      );
+      bonusStars = [...host.querySelectorAll("[data-cover-bonus-star]")];
+    }
+
+    return { baseStars, bonusStar: bonusStars[0] || null };
+  }
+
   window.renderSetterCoverStars = function (strength) {
     const el = byId("setterCoverStars");
     if (!el) return;
@@ -252,22 +310,20 @@
     el.classList.toggle("hidden", !show);
     if (!show) return;
 
-    const count = Math.max(0, Math.min(3, Number(strength.stars) || 0));
+    const baseCount = Math.max(0, Math.min(2, Number(strength.stars) || 0));
+    const slots = ensureCoverStarSlotsFallback(el);
 
-    el.querySelectorAll("[data-cover-star]").forEach((star, index) => {
-      star.classList.toggle("is-filled", index < count);
+    slots.baseStars.forEach((star, index) => {
+      star.classList.toggle("is-filled", index < baseCount);
     });
 
-    const bonus = el.querySelector("[data-cover-bonus-star]");
-    if (bonus) {
-      bonus.classList.toggle("is-visible", !!strength.bonusAvailable);
-      bonus.classList.toggle("is-filled", !!strength.bonusStar);
-    }
+    const bonusFilled = !!strength.bonusStar;
+    slots.bonusStar?.classList.toggle("is-available", !!strength.bonusAvailable);
+    slots.bonusStar?.classList.toggle("is-filled", bonusFilled);
 
-    const bonusText = strength.bonusStar ? " plus one bonus star" : "";
     el.setAttribute(
       "aria-label",
-      `${count} of 3 cover-strength stars${bonusText}`
+      `${baseCount} of 2 yellow stars; blue bonus star ${bonusFilled ? "earned" : "not earned"}`
     );
   };
 
