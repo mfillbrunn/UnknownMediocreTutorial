@@ -14,6 +14,33 @@
 const BaseMode = require("../core/modes/baseMode");
 const { pickRandomQuestType, ensureQuestConditions } = require("../powers/powers/questServer");
 
+
+function clearRoundQuest(state) {
+  const quest = state.powers?.quest;
+  if (!quest) return;
+  quest.type = null;
+  quest.pendingChoice = null;
+  quest.ready = false;
+  quest.used = true;
+  quest.oneAway = false;
+  quest.claimedEarly = false;
+  quest.conditions = null;
+  quest.rareLetters = null;
+  quest.vowelTarget = null;
+  state.powers.questActive = false;
+}
+
+function configureRoundQuest(state, round) {
+  const questConfig = state.singlePlayer.stage.game.quests || {};
+  if (questConfig.disabled === true) {
+    clearRoundQuest(state);
+    return;
+  }
+
+  state.powers.quest.type = round.questType || pickRandomQuestType();
+  ensureQuestConditions(state);
+}
+
 class SinglePlayerMode extends BaseMode {
   initMatch(state) {
     const plan = state.singlePlayer._plan;
@@ -29,8 +56,7 @@ class SinglePlayerMode extends BaseMode {
     state.initialPowers = { setter: round.setterPowers, guesser: round.guesserPowers };
     state.activePowers = [...round.setterPowers, ...round.guesserPowers];
 
-    state.powers.quest.type = round.questType || pickRandomQuestType();
-    ensureQuestConditions(state);
+    configureRoundQuest(state, round);
   }
 
   onRoundEnd(state) {

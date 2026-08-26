@@ -147,6 +147,18 @@ function validateStage(stage, vocabulary) {
   if (stage.prerequisites !== undefined && !Array.isArray(stage.prerequisites)) {
     errors.push(`${stageId}.prerequisites must be an array of stage ids`);
   }
+  if (stage.cast !== undefined) {
+    if (!isPlainObject(stage.cast)) {
+      errors.push(`${stageId}.cast must be an object`);
+    } else {
+      if (!isNonEmptyString(stage.cast.human)) {
+        errors.push(`${stageId}.cast.human must be a non-empty name`);
+      }
+      if (!isNonEmptyString(stage.cast.opponent)) {
+        errors.push(`${stageId}.cast.opponent must be a non-empty name`);
+      }
+    }
+  }
 
   validateStoryFrames(stage.preStory?.frames, `${stageId}.preStory`, stageId, errors);
   validateStoryFrames(stage.postStory?.frames, `${stageId}.postStory`, stageId, errors);
@@ -160,6 +172,15 @@ function validateStage(stage, vocabulary) {
       errors.push(`${stageId}.game.firstRole must be guesser or setter`);
     }
     if (!DIFFICULTIES.has(game.difficulty)) errors.push(`${stageId}.game.difficulty must be 1, 2, or 3`);
+    if (game.powerChoice !== undefined && typeof game.powerChoice !== "boolean") {
+      errors.push(`${stageId}.game.powerChoice must be a boolean`);
+    }
+    if (
+      game.completion?.requireCorrectGuess !== undefined &&
+      typeof game.completion.requireCorrectGuess !== "boolean"
+    ) {
+      errors.push(`${stageId}.game.completion.requireCorrectGuess must be a boolean`);
+    }
 
     if (game.human?.guesserStart) validateStartConfig(game.human.guesserStart, `${stageId}.game.human.guesserStart`, vocabulary.allowedGuesses, errors);
     if (game.human?.setterStart) validateStartConfig(game.human.setterStart, `${stageId}.game.human.setterStart`, vocabulary.allowedSecrets, errors);
@@ -174,6 +195,24 @@ function validateStage(stage, vocabulary) {
         errors.push(`${stageId}.game.ai.setterSecretsByAttempt[${index}]: "${word}" is not a valid secret word`);
       }
     });
+    if (
+      game.ai?.fixedSetterSecret !== undefined &&
+      !isValidWord(game.ai.fixedSetterSecret, vocabulary.allowedSecrets)
+    ) {
+      errors.push(`${stageId}.game.ai.fixedSetterSecret: "${game.ai.fixedSetterSecret}" is not a valid secret word`);
+    }
+    if (
+      game.ai?.lockSetterSecret !== undefined &&
+      typeof game.ai.lockSetterSecret !== "boolean"
+    ) {
+      errors.push(`${stageId}.game.ai.lockSetterSecret must be a boolean`);
+    }
+    if (
+      game.quests?.disabled !== undefined &&
+      typeof game.quests.disabled !== "boolean"
+    ) {
+      errors.push(`${stageId}.game.quests.disabled must be a boolean`);
+    }
 
     (game.quests?.guesserByRound || []).forEach((quest, index) => {
       if (quest && !vocabulary.questTypes.has(quest)) {
