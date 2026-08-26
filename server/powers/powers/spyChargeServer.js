@@ -790,7 +790,21 @@ if (!module.exports.__competitiveHistoryMetricsV3) {
       analysis?.feasibleSet?.has(current);
 
     if (legalKeep) {
-      const keepBaseStars = Math.max(1, Number(award.baseStars) || 0);
+      // Keeping earns the usual flat 1-star floor UNLESS the current
+      // secret is already tied for the best possible legal switch
+      // (keepCount === bestCount) -- then it's objectively as good as it
+      // gets, worth the same 2 stars switching to that best word would
+      // earn. Mirrors coverStrength.js's buildCoverStrengthState -- the
+      // two must agree or the preview lies about the payout.
+      // Excluded while Hidden Guess is pending: that decision is always
+      // flat 1 star with no quality scaling, regardless of how good the
+      // kept secret is (see normal.js's fixedOneStarDecision).
+      const keepIsBest =
+        !state?.powers?.doubleGuessPending &&
+        Number.isFinite(analysis?.bestCount) &&
+        Number.isFinite(analysis?.keepCount) &&
+        analysis.keepCount === analysis.bestCount;
+      const keepBaseStars = keepIsBest ? 2 : Math.max(1, Number(award.baseStars) || 0);
       award = {
         ...award,
         baseStars: keepBaseStars,
