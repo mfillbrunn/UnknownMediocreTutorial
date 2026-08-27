@@ -41,13 +41,22 @@ function run() {
   // alone, and recognizes true readiness from scratch too (not just
   // downgrades). ----
   {
-    const compliantEntry = () => ({
-      guess: "AXXXX",
+    // Four DISTINCT guesses, each just repeating the confirmed-green "A"
+    // plus a filler letter no earlier guess used -- reusing the exact
+    // same filler across all four would trip the (correct) absent-letter
+    // rejection once that filler grays out on the first guess.
+    const compliantEntry = filler => ({
+      guess: `A${filler.repeat(4)}`,
       fb: ["🟩", "⬛", "⬛", "⬛", "⬛"],
       fbGuesser: ["🟩", "⬛", "⬛", "⬛", "⬛"]
     });
     const state = {
-      history: [compliantEntry(), compliantEntry(), compliantEntry(), compliantEntry()],
+      history: [
+        compliantEntry("B"),
+        compliantEntry("C"),
+        compliantEntry("D"),
+        compliantEntry("E")
+      ],
       powers: {
         quest: { type: "HARDMODE", used: false, ready: false, oneAway: false }
       }

@@ -357,16 +357,26 @@ function ensureQuestConditions(state) {
 // Wordle hard mode -- a guess is checked against what was known BEFORE it
 // was made, then its own feedback folds into the requirements for the
 // next one.
-// Pure per-word check against a given green/mustInclude snapshot -- split
-// out of computeHardModeCount so genericAI.js's quest-aware guess picker
-// can ask "would THIS candidate be hard-mode legal right now" without
-// re-deriving the reduction logic itself. mustInclude is a
+// Pure per-word check against a given green/mustInclude/absent snapshot --
+// split out of computeHardModeCount so genericAI.js's quest-aware guess
+// picker can ask "would THIS candidate be hard-mode legal right now"
+// without re-deriving the reduction logic itself. mustInclude is a
 // Map<letter, Set<excludedPositions>> -- a yellow letter must appear
 // somewhere in the guess (like real Wordle hard mode) AND must not be
 // placed back at a position it already came back yellow at (yellow means
-// "in the word, not here").
-function isHardModeCompliant(word, green, mustInclude) {
+// "in the word, not here"). absent is a Set<letter> confirmed NOT in the
+// secret (grayed out with no green/yellow for that letter anywhere in the
+// same guess) -- reusing any of them is never hard-mode legal, UNLESS
+// green/mustInclude separately requires that same letter (a mid-round
+// secret change can otherwise leave a letter both "required" and
+// "absent" from two different secrets; the requirement wins rather than
+// permanently locking the quest out).
+function isHardModeCompliant(word, green, mustInclude, absent) {
   const g = word.toUpperCase();
+
+  const required = new Set(mustInclude.keys());
+  for (const letter of green) if (letter) required.add(letter);
+
   for (let i = 0; i < 5; i++) {
     if (green[i] && g[i] !== green[i]) return false;
   }
@@ -376,37 +386,59 @@ function isHardModeCompliant(word, green, mustInclude) {
       if (g[pos] === letter) return false;
     }
   }
+  if (absent) {
+    for (const letter of g) {
+      if (absent.has(letter) && !required.has(letter)) return false;
+    }
+  }
   return true;
 }
 
-// Folds one more history entry's feedback into a running green/mustInclude
-// snapshot -- the other half of the split described above.
-function foldHardModeConstraint(green, mustInclude, entry) {
+// Folds one more history entry's feedback into a running
+// green/mustInclude/absent snapshot -- the other half of the split
+// described above.
+function foldHardModeConstraint(green, mustInclude, absent, entry) {
   const fb = entry.fbGuesser || entry.fb;
   if (!Array.isArray(fb) || !entry.guess) return;
   const g = entry.guess.toUpperCase();
+
+  // A letter grayed out in THIS guess is confirmed absent from the
+  // secret -- unless this same guess ALSO turned up a green/yellow for
+  // it elsewhere. That covers the duplicate-letter case: guessing a
+  // letter more times than the secret actually contains it grays out the
+  // extra copies even though the letter itself is present, and that
+  // shouldn't ban every future use of it.
+  const positiveLettersThisGuess = new Set();
+  for (let i = 0; i < 5; i++) {
+    if (fb[i] === "🟩" || fb[i] === "🟨") positiveLettersThisGuess.add(g[i]);
+  }
+
   for (let i = 0; i < 5; i++) {
     if (fb[i] === "🟩") green[i] = g[i];
     else if (fb[i] === "🟨") {
       if (!mustInclude.has(g[i])) mustInclude.set(g[i], new Set());
       mustInclude.get(g[i]).add(i);
+    } else if (fb[i] === "⬛" && !positiveLettersThisGuess.has(g[i])) {
+      absent.add(g[i]);
     }
   }
 }
 
-// The green/mustInclude constraints implied by history SO FAR (i.e. what
-// the NEXT guess would be checked against) -- used by the AI to evaluate
-// hard-mode-legality of a not-yet-made guess.
+// The green/mustInclude/absent constraints implied by history SO FAR
+// (i.e. what the NEXT guess would be checked against) -- used by the AI
+// to evaluate hard-mode-legality of a not-yet-made guess.
 function computeHardModeConstraints(history) {
   const green = [null, null, null, null, null];
   const mustInclude = new Map();
-  for (const entry of history) foldHardModeConstraint(green, mustInclude, entry);
-  return { green, mustInclude };
+  const absent = new Set();
+  for (const entry of history) foldHardModeConstraint(green, mustInclude, absent, entry);
+  return { green, mustInclude, absent };
 }
 
 function computeHardModeCount(history) {
   const green = [null, null, null, null, null];
   const mustInclude = new Map();
+  const absent = new Set();
   let count = 0;
 
   for (const entry of history) {
@@ -414,9 +446,9 @@ function computeHardModeCount(history) {
     if (!Array.isArray(fb) || !entry.guess) continue;
     const g = entry.guess.toUpperCase();
 
-    if (isHardModeCompliant(g, green, mustInclude)) count++;
+    if (isHardModeCompliant(g, green, mustInclude, absent)) count++;
 
-    foldHardModeConstraint(green, mustInclude, entry);
+    foldHardModeConstraint(green, mustInclude, absent, entry);
   }
 
   return count;
@@ -523,9 +555,9 @@ function evaluateQuestProgress(quest, state, pendingGuess) {
   const history = state.history || [];
 
   if (quest.type === "HARDMODE") {
-    const { green, mustInclude } = computeHardModeConstraints(history);
+    const { green, mustInclude, absent } = computeHardModeConstraints(history);
     const count = computeHardModeCount(history)
-      + (isHardModeCompliant(pendingGuess, green, mustInclude) ? 1 : 0);
+      + (isHardModeCompliant(pendingGuess, green, mustInclude, absent) ? 1 : 0);
     return {
       ready: count >= QUEST_THRESHOLDS.HARDMODE,
       oneAway: count === QUEST_THRESHOLDS.HARDMODE - 1
