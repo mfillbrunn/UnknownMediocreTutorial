@@ -692,11 +692,7 @@
 .key-color-option-gray::before   { background: #0a0b0d; }
 .key-color-option-clear::before  { background: var(--kb-neutral); }
 
-/* Letter Lockout (setter power): the guesser's currently-banned letter —
-   a clear "don't type this" marker on their own keyboard, distinct from
-   any feedback color (red X wash + strikethrough-style overlay works
-   whether or not the key already has a green/yellow/gray status from
-   earlier guesses). */
+
 .key.key-banned {
   position: relative;
   box-shadow: inset 0 0 0 1.5px rgba(251, 113, 133, 0.85);

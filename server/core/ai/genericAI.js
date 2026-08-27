@@ -116,35 +116,6 @@ function topLettersByFrequency(counts, excludeLetters, n) {
     .map(([letter]) => letter);
 }
 
-// Letter Lockout (setter): three candidate categories to ban from —
-// generic common English letters, letters actually in the setter's own
-// secret (banning one denies the guesser a chance to confirm it green
-// this turn), and letters drawn from the remaining feasible words (only
-// meaningful, and only computed, once that pool has already narrowed
-// below 5 — with many candidates left almost every letter appears in some
-// of them, so the category wouldn't say anything a random letter didn't).
-// One category is picked at random each activation; if it turns out to
-// have nothing available (already banned, or category 3 not applicable
-// yet), the next category is tried.
-function pickLetterLockoutLetter(state, secretRows) {
-  const used = new Set(state.powers?.letterLockoutUsedLetters || []);
-
-  const commonAvailable = COMMON_LETTER_ORDER.filter(l => !used.has(l));
-
-  const secretLetters = [...new Set((state.secret || "").toUpperCase().split(""))]
-    .filter(l => !used.has(l));
-
-  const feasible = feasibleSecretsFor(state, secretRows);
-  const remainingWordLetters = feasible.length > 0 && feasible.length < 5
-    ? [...new Set(feasible.flatMap(r => r.word.toUpperCase().split("")))].filter(l => !used.has(l))
-    : [];
-
-  const categories = shuffleArray([commonAvailable, secretLetters, remainingWordLetters]);
-  for (const pool of categories) {
-    if (pool.length) return pool[Math.floor(Math.random() * pool.length)];
-  }
-  return null;
-}
 
 // Signal Scramble (nonsense, guesser): this round's guess doesn't need to
 // be a real word, so build one from scratch out of whichever letters are
@@ -521,32 +492,11 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyParams) {
   const usedGuesses = new Set(history.map(h => h.guess.toUpperCase()));
   const usedLetters = getUsedLetters(state);
 
-  // Letter Lockout: the setter has banned a letter from this guess.
-  // checkGuess would reject it server-side anyway, but nothing retries a
-  // rejected AI guess -- filtering it out of the candidate pool up front is
-  // what actually keeps the AI from silently stalling if its top pick
-  // happens to contain it.
-  const bannedLetter = state.powers?.letterLockoutBanned;
-  const notBanned = r => !bannedLetter || !r.word.includes(bannedLetter);
-
-  const remaining = wordRows.filter(r => !usedGuesses.has(r.word) && notBanned(r));
+  const remaining = wordRows.filter(r => !usedGuesses.has(r.word));
   if (!remaining.length) {
-    const fallback = wordRows.filter(notBanned);
-    return weightedRandom(fallback.length ? fallback : wordRows, r => r.probability || 1).word;
+    return weightedRandom(wordRows, r => r.probability || 1).word;
   }
-
-  // ----- Total Blackout power -----
-  // Hides all feedback and keyboard colors for THIS guess — a human
-  // guesser has to pick with no visible history at all. Every pool below
-  // (feasible/optimal/uninformed) is built from that same history, so
-  // using any of them would let the AI reason with information it isn't
-  // actually shown. Match the human experience: an unweighted random pick
-  // among words not yet guessed.
-  if (state.powers?.blindGuessActive) {
-    return weightedRandom(remaining, r => r.probability || 1).word;
-  }
-
-   const remaining_ideal = allowedSecrets.filter(r => !usedGuesses.has(r.word) && notBanned(r));
+  const remaining_ideal = allowedSecrets.filter(r => !usedGuesses.has(r.word));
 
   // ----- Force guess power -----
   const forceOptions = state?.powers?.forceGuessOptions;
@@ -759,7 +709,6 @@ function pickAIGuess(state, wordRows, allowedSecrets, strategyParams) {
 
 module.exports = {
   createAI,
-  pickLetterLockoutLetter,
   feasibleSecretsFor,
   COMMON_LETTER_ORDER
 };

@@ -122,10 +122,6 @@
       short: "Helps the Secretkeeper delay feedback until after the Guesser's following guess.",
       desc: "Helps the Secretkeeper by holding back the current feedback until the Guesser has submitted another guess."
     },
-    letterLockout: {
-      short: "Helps the Secretkeeper ban one letter from the Guesser's next guess.",
-      desc: "Helps the Secretkeeper by choosing a letter that the Guesser cannot use in the next guess."
-    }
   };
 
   for (const [id, copy] of Object.entries(benefitCopy)) {
@@ -165,7 +161,6 @@
     doubleGuess: "Your opponent submits two guesses and receives feedback for both while you see only one.",
     letterProfile: "Your opponent sees an always-on count of how many of the secret's letters are vowels.",
     delayedIntel: "Your opponent delays this feedback until after your following guess.",
-    letterLockout: "Your opponent bans one letter from your next guess.",
     spyChargeReset: "Your opponent resets one letter's clues and extra constraints from the current round."
   };
 

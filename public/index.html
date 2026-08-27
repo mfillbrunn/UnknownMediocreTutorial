@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="css/tutorial.css?tutorial-v2=2">
   <link rel="stylesheet" href="css/tutorial-eli5.css?tutorial-eli5=3">
   <!-- 13. Special effects--->
-  <link rel="stylesheet" href="css/special-effects.css">
+  <link rel="stylesheet" href="css/special-effects.css?v=typed-quest-2">
   <!-- Last. Mobile phone adjustments-->
   <link rel="stylesheet" href="css/mobile.css">
   <!-- New features -->
@@ -1229,24 +1229,6 @@
               </div>
             </div>
           </div>
-          <div id="letterLockoutModal" class="modal">
-            <div class="panel reveal-penalty-panel">
-              <h2 class="screen-title">🚫 Ban a Letter</h2>
-              <p class="reveal-penalty-instruction">
-                Bans a random letter the Guesser hasn't tried yet -- never
-                one you've banned before this match. Their next guess cannot
-                contain it.
-              </p>
-              <div class="decision-row">
-                <button id="letterLockoutConfirm" class="primary-btn small">
-                  Lock a letter
-                </button>
-                <button id="letterLockoutCancel" class="secondary-btn small">
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
         </section>
       </section>
       <!-- ========== GUESSER ========== -->
@@ -1619,7 +1601,6 @@
   <script src="powerEngine/powers/doubleGuess.js"></script>
   <script src="powerEngine/powers/letterProfile.js"></script>
   <script src="powerEngine/powers/delayedIntel.js"></script>
-  <script src="powerEngine/powers/letterLockout.js"></script>
   <script src="client/summary.js"></script>
   <script src="client/action-log.js?setter-fixes=2"></script>
   <script src="client/action-log-colors.js?setter-board=1"></script>
@@ -1647,8 +1628,8 @@
   <script src="client/dev-reward-simulation.js?v=tutorial-motion-sim-2"></script>
   <script src="client/invite.js"></script>
   <script src="client/big-announce.js"></script>
-  <script src="client/reward-reveal.js"></script>
-  <script src="client/quest-complete-reveal.js"></script>
+  <script src="client/reward-reveal.js?v=typed-quest-2"></script>
+  <script src="client/quest-complete-reveal.js?v=typed-quest-2"></script>
   <script src="client.js?v=9-2"></script>
   <script src="ui/guesser-flow-v7.js?v=tutorial-motion-sim-2"></script>
   <script src="ui/gameplay-polish-v8.js?gameplay-polish=8"></script>
@@ -1672,7 +1653,7 @@
   </div>
 </div>
 <!-- Guesser quest-complete reveal (#questReward) is built dynamically by
-     client/quest-complete-reveal.js's ensureOverlay() on first use, rather
+     client/quest-complete-reveal.js?v=typed-quest-2's ensureOverlay() on first use, rather
      than hardcoded here -- see that file. -->
   <script src="client/power-copy-v10.js?v=10"></script>
   <script src="ui/gameplay-systems-v10.js?v=10&compact-bonus=1&star-bonus-fix=1"></script>

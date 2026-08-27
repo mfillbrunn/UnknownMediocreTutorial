@@ -1652,8 +1652,8 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   color: #8edcff;
 }
 
-/* Unused: the quest-met beat this was built for is now client/
-   reward-reveal.js's spinning-square effect instead of a flourish banner.
+/* Unused: the quest-met beat now uses the typed quest-completion transition in
+   client/quest-complete-reveal.js instead of a separate flourish banner.
    Left in place only because other selector groups below still reference
    this class name; nothing in JS creates a .pc-quest-met-flourish element
    anymore. */
@@ -1694,38 +1694,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   25% { transform: translate(-50%, 0) scale(1); }
   80% { opacity: 1; transform: translate(-50%, 0) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -6px) scale(0.96); }
-}
-
-/* Letter Lockout's "Lock a letter" trigger, shown once the persistent
-   reward is granted (see power-choice-mode.js's renderSpyPanel). Arms
-   letter-picking on #keyboardSetter the same way Hide Evidence's own
-   power-tray button used to (see powers.css's .keyboard-picking-hide). */
-.pc-letter-lockout-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  margin-top: 9px;
-  padding: 8px 10px;
-  border: 1px solid rgba(251, 113, 133, 0.45);
-  border-radius: 10px;
-  background: rgba(251, 113, 133, 0.08);
-  color: #ffd3da;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.pc-letter-lockout-btn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.pc-letter-lockout-btn.is-armed {
-  border-color: rgba(251, 113, 133, 0.85);
-  background: rgba(251, 113, 133, 0.16);
-  animation: hide-evidence-pulse 1.4s ease-in-out infinite;
 }
 
 /* The collapsed Secretkeeper meter is intentionally a compact numeric badge. */

@@ -150,14 +150,10 @@
   }
 }
 
-/* REWARD REVEAL — plays once, right before a Power Choice reward modal
-   opens (see power-choice-mode.js's showChoice and client/reward-reveal.js).
-   Secretkeeper: one star per point on the current milestone (4/8/12) flies
-   out into a ring, then collapses back to the center and bursts. Guesser:
-   a single glowing square spins up to speed, then expands off screen.
-   Both are pointer-events:none overlays that clear themselves once the
-   effect finishes. */
-
+/* REWARD REVEAL -- transition into a Power Choice reward modal.
+   Secretkeeper milestones use large stars in the same gold as the ordinary
+   filled setter stars. Guesser milestones use the shared typed quest-complete
+   overlay; the small fallback below is used only if that script did not load. */
 #rewardRevealOverlay {
   position: fixed;
   inset: 0;
@@ -172,10 +168,10 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 22px;
-  height: 22px;
-  margin: -11px 0 0 -11px;
-  color: var(--setter-color);
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  color: #ffd75e;
   opacity: 0;
 }
 
@@ -183,7 +179,9 @@
   width: 100%;
   height: 100%;
   display: block;
-  filter: drop-shadow(0 0 6px currentColor);
+  filter:
+    drop-shadow(0 0 8px rgba(255, 215, 94, 0.85))
+    drop-shadow(0 0 18px rgba(255, 200, 70, 0.36));
 }
 
 #rewardRevealOverlay.is-setter-active .reward-reveal-star {
@@ -192,44 +190,59 @@
 }
 
 @keyframes reward-star-orbit {
-  0%   { opacity: 0; transform: rotate(var(--rr-angle)) translateY(0) scale(.4); }
+  0%   { opacity: 0; transform: rotate(var(--rr-angle)) translateY(0) scale(.35); }
   22%  { opacity: 1; }
   55%  { opacity: 1; transform: rotate(var(--rr-angle)) translateY(var(--rr-radius)) scale(1); }
   78%  { opacity: 1; transform: rotate(var(--rr-angle)) translateY(var(--rr-radius)) scale(1); }
-  92%  { opacity: 1; transform: rotate(var(--rr-angle)) translateY(0) scale(1.6); }
-  100% { opacity: 0; transform: rotate(var(--rr-angle)) translateY(0) scale(2.4); }
+  92%  { opacity: 1; transform: rotate(var(--rr-angle)) translateY(0) scale(1.45); }
+  100% { opacity: 0; transform: rotate(var(--rr-angle)) translateY(0) scale(2.15); }
 }
 
-.reward-reveal-square {
-  width: 46px;
-  height: 46px;
-  border-radius: 8px;
-  background: var(--guesser-color);
-  box-shadow:
-    0 0 18px 4px color-mix(in srgb, var(--guesser-color) 70%, transparent),
-    0 0 40px 10px color-mix(in srgb, var(--guesser-color) 40%, transparent);
+.reward-reveal-quest-fallback {
+  display: inline-flex;
+  color: var(--guesser-color, #58c9ff);
+  font-size: clamp(26px, 5vw, 42px);
+  font-weight: 900;
+  letter-spacing: 0.055em;
+  text-shadow:
+    0 0 10px rgba(88, 201, 255, 0.58),
+    0 0 28px rgba(88, 201, 255, 0.28);
+  animation: reward-quest-fallback-whoosh 1150ms cubic-bezier(.2, .8, .2, 1) forwards;
+}
+
+.reward-reveal-quest-fallback span {
   opacity: 0;
+  filter: blur(7px);
+  transform: translateY(10px) scale(.78);
+  animation: reward-quest-fallback-letter 180ms ease-out forwards;
+  animation-delay: calc(var(--rr-letter) * 32ms);
 }
 
-#rewardRevealOverlay.is-guesser-active .reward-reveal-square {
-  animation: reward-square-spin 1400ms cubic-bezier(.3, .6, .2, 1) forwards;
+@keyframes reward-quest-fallback-letter {
+  to { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
 }
 
-@keyframes reward-square-spin {
-  0%   { opacity: 0; transform: scale(.4) rotate(0deg); }
-  10%  { opacity: 1; }
-  70%  { opacity: 1; transform: scale(1) rotate(900deg); }
-  85%  { opacity: 1; transform: scale(1.05) rotate(1080deg); }
-  100% { opacity: 0; transform: scale(3.2) rotate(1200deg); }
+@keyframes reward-quest-fallback-whoosh {
+  0%, 62% { opacity: 1; transform: translateY(0) scaleX(1); filter: blur(0); }
+  100% { opacity: 0; transform: translateY(-72px) scaleX(.18) scaleY(.72); filter: blur(8px); }
+}
+
+@media (max-width: 600px) {
+  .reward-reveal-star {
+    width: 36px;
+    height: 36px;
+    margin: -18px 0 0 -18px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   #rewardRevealOverlay.is-setter-active .reward-reveal-star,
-  #rewardRevealOverlay.is-guesser-active .reward-reveal-square {
+  .reward-reveal-quest-fallback,
+  .reward-reveal-quest-fallback span {
     animation-duration: 350ms;
+    animation-delay: 0ms;
   }
 }
-
 /* SECRET-FOUND ICONS — the Big Announce icon slot for the round-ending
    "secret found" popup (see client.js's announceWin), swapped from a
    plain emoji to an animated SVG for both outcomes. */
@@ -296,42 +309,38 @@
   }
 }
 
-/* GUESSER QUEST-COMPLETE REVEAL — "QUEST COMPLETED" types itself out
-   (see client/quest-complete-reveal.js's playQuestCompletion), gets sucked
-   away with a horizontal-compression whoosh, then a reward card fades in
-   behind it. Both layers are absolutely centered on top of each other
-   inside the fixed overlay so the reward appears to take the message's
-   place rather than sliding in from somewhere else. --quest-reward-color
-   is set inline per play (the reward's own tile color -- green for the
-   full reward, yellow for an early claim -- falling back to the guesser's
-   role color); every accented element below just reads that one variable. */
+/* GUESSER QUEST-COMPLETE REVEAL -- letters materialize in the
+   Guesser color, the complete phrase compresses and whooshes upward, and the
+   quest reward appears underneath. No cursor and no geometric/square cue. */
 #questReward {
   position: fixed;
   inset: 0;
   z-index: 100002;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 220ms ease;
+  visibility: hidden;
+  transition: opacity 180ms ease, visibility 180ms ease;
 }
 
 #questReward.is-active {
   opacity: 1;
+  visibility: visible;
 }
 
-/* Subtle dark scrim behind the whole sequence -- not a heavy achievement-
-   modal backdrop, just enough to pull focus off the board underneath. */
-.quest-reward-backdrop {
+#questReward .quest-reward-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(8, 10, 16, 0.55);
+  background: rgba(7, 11, 18, 0.58);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 #questReward.fade-out {
   opacity: 0;
-  transition: opacity 300ms ease;
+  transition: opacity 280ms ease;
 }
 
-.quest-reward-stage {
+#questReward .quest-reward-stage {
   position: absolute;
   inset: 0;
   display: flex;
@@ -339,8 +348,8 @@
   justify-content: center;
 }
 
-.quest-message,
-.quest-reward-card {
+#questReward .quest-message,
+#questReward .quest-reward-card {
   position: absolute;
   inset: 0;
   display: flex;
@@ -348,52 +357,69 @@
   justify-content: center;
 }
 
-.quest-message {
-  color: #fff;
-  font-size: clamp(22px, 6vw, 34px);
+#questReward .quest-message {
+  color: var(--quest-message-color, var(--guesser-color, #58c9ff));
+  font-size: clamp(26px, 5.5vw, 42px);
   font-weight: 900;
-  letter-spacing: 0.06em;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
-  transition: transform 190ms cubic-bezier(.4, 0, 1, 1),
-              opacity 190ms cubic-bezier(.4, 0, 1, 1),
-              filter 190ms ease;
+  letter-spacing: 0.055em;
+  text-shadow:
+    0 0 10px rgba(88, 201, 255, 0.58),
+    0 0 28px rgba(88, 201, 255, 0.28),
+    0 4px 20px rgba(0, 0, 0, 0.58);
+  transform-origin: center;
+  transition:
+    transform 320ms cubic-bezier(.55, 0, .85, .25),
+    opacity 260ms ease,
+    filter 300ms ease;
 }
 
-/* Rapid horizontal compression + a slight blur + shooting upward -- scaleX
-   squeezes much harder than scaleY so it reads as "sucked away sideways",
-   not a generic shrink-and-fade. */
-#questReward.whoosh .quest-message {
-  transform: scaleX(0.25) scaleY(0.85) translateY(-36px);
-  opacity: 0;
-  filter: blur(7px);
+#questReward .quest-message-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
-.quest-message-cursor {
+#questReward .quest-typed-char {
   display: inline-block;
-  width: 3px;
-  height: 0.85em;
-  margin-left: 2px;
-  background: var(--quest-reward-color, var(--guesser-color));
-  animation: quest-cursor-blink 0.9s steps(1) infinite;
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateY(12px) scale(.76);
+  transition:
+    opacity 150ms ease-out,
+    filter 180ms ease-out,
+    transform 190ms cubic-bezier(.2, .9, .25, 1.2);
 }
 
-@keyframes quest-cursor-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
+#questReward .quest-typed-char.is-visible {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0) scale(1);
 }
 
-.quest-reward-card {
+/* Defensive: an older cached DOM instance may still contain this element. */
+#questReward .quest-message-cursor {
+  display: none !important;
+}
+
+#questReward.whoosh .quest-message {
+  transform: translateY(-72px) scaleX(.18) scaleY(.72);
+  opacity: 0;
+  filter: blur(8px);
+}
+
+#questReward .quest-reward-card {
   flex-direction: column;
   gap: 6px;
 }
 
-.quest-reward-icon-wrap,
-.quest-reward-title,
-.quest-reward-description {
+#questReward .quest-reward-icon-wrap,
+#questReward .quest-reward-title,
+#questReward .quest-reward-description {
   opacity: 0;
 }
 
-.quest-reward-icon-wrap {
+#questReward .quest-reward-icon-wrap {
   position: relative;
 }
 
@@ -406,23 +432,20 @@
 #questReward.reveal .quest-reward-title { animation-delay: 60ms; }
 #questReward.reveal .quest-reward-description { animation-delay: 120ms; }
 
-/* Starts smaller (0.7) than the old fixed 0.5, settles through a restrained
-   1.08 overshoot to 1 -- a shorter runway than a big achievement pop. */
 @keyframes quest-reward-in {
   0%   { opacity: 0; transform: scale(.7) translateY(8px); }
   60%  { opacity: 1; transform: scale(1.08) translateY(0); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.quest-reward-icon {
-  width: 64px;
-  height: 64px;
-  color: var(--quest-reward-color, var(--guesser-color));
-  /* Restrained -- a soft lift, not a bloom. */
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--quest-reward-color, var(--guesser-color)) 45%, transparent));
+#questReward .quest-reward-icon {
+  width: 68px;
+  height: 68px;
+  color: var(--quest-reward-color, var(--guesser-color, #58c9ff));
+  filter: drop-shadow(0 0 9px currentColor);
 }
 
-.quest-reward-title {
+#questReward .quest-reward-title {
   color: #fff;
   font-size: clamp(18px, 5vw, 26px);
   font-weight: 950;
@@ -430,53 +453,61 @@
   text-align: center;
 }
 
-.quest-reward-description {
+#questReward .quest-reward-description {
   color: rgba(226, 234, 244, 0.75);
   font-size: 13px;
   font-weight: 700;
   text-align: center;
 }
 
-.quest-reward-particles {
+#questReward .quest-reward-particles {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.quest-reward-particles i {
+#questReward .quest-reward-particles i {
   position: absolute;
   top: 50%;
   left: 50%;
   width: 5px;
-  height: 5px;
-  margin: -2.5px 0 0 -2.5px;
-  border-radius: 50%;
-  background: var(--quest-reward-color, var(--guesser-color));
+  height: 8px;
+  margin: -4px 0 0 -2.5px;
+  border-radius: 2px;
+  background: var(--quest-reward-color, var(--guesser-color, #58c9ff));
   opacity: 0;
 }
 
-.quest-reward-particles i:nth-child(1) { --pa: 0deg; }
-.quest-reward-particles i:nth-child(2) { --pa: 45deg; }
-.quest-reward-particles i:nth-child(3) { --pa: 90deg; }
-.quest-reward-particles i:nth-child(4) { --pa: 135deg; }
-.quest-reward-particles i:nth-child(5) { --pa: 180deg; }
-.quest-reward-particles i:nth-child(6) { --pa: 225deg; }
-.quest-reward-particles i:nth-child(7) { --pa: 270deg; }
-.quest-reward-particles i:nth-child(8) { --pa: 315deg; }
+#questReward .quest-reward-particles i:nth-child(1) { --pa: 0deg; }
+#questReward .quest-reward-particles i:nth-child(2) { --pa: 45deg; }
+#questReward .quest-reward-particles i:nth-child(3) { --pa: 90deg; }
+#questReward .quest-reward-particles i:nth-child(4) { --pa: 135deg; }
+#questReward .quest-reward-particles i:nth-child(5) { --pa: 180deg; }
+#questReward .quest-reward-particles i:nth-child(6) { --pa: 225deg; }
+#questReward .quest-reward-particles i:nth-child(7) { --pa: 270deg; }
+#questReward .quest-reward-particles i:nth-child(8) { --pa: 315deg; }
 
 #questReward.reveal .quest-reward-particles i {
-  animation: quest-particle-fly 700ms ease-out forwards;
-  animation-delay: 100ms;
+  animation: quest-particle-fly 680ms ease-out 100ms forwards;
 }
 
 @keyframes quest-particle-fly {
-  0%   { opacity: 1; transform: rotate(var(--pa)) translateY(0) scale(1); }
-  100% { opacity: 0; transform: rotate(var(--pa)) translateY(-60px) scale(.4); }
+  0%   { opacity: .9; transform: rotate(var(--pa)) translateY(0) scale(.7); }
+  100% { opacity: 0; transform: rotate(var(--pa)) translateY(-62px) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #questReward.whoosh .quest-message { transition-duration: 60ms; }
-  #questReward.reveal :is(.quest-reward-icon-wrap, .quest-reward-title, .quest-reward-description) {
+  #questReward .quest-typed-char {
+    transition-duration: 1ms;
+  }
+  #questReward.whoosh .quest-message {
+    transition-duration: 60ms;
+  }
+  #questReward.reveal :is(
+    .quest-reward-icon-wrap,
+    .quest-reward-title,
+    .quest-reward-description
+  ) {
     animation-duration: 120ms;
     animation-delay: 0ms;
   }
@@ -485,7 +516,6 @@
     opacity: 0;
   }
 }
-
 /* BIG ANNOUNCE — round start (role + goal), secret found / secret lost */
 
 .big-announce {

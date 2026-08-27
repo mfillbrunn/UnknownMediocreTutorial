@@ -68,16 +68,6 @@ const POWER_RULES = {
       );
     }
   },
-  letterLockout: {
-    allowed(state) {
-      const used = state.powers?.letterLockoutUsedLetters || [];
-      return (
-        state.turn === state.setter &&
-        !!state.pendingGuess &&
-        used.length < 26
-      );
-    }
-  },
   fakeFeedback: {
     allowed(state) {
       return (

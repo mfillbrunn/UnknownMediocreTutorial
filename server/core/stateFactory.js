@@ -138,28 +138,8 @@ const powers = {
       // draft/secret instead).
       letterProfileMode: null,
       letterProfileGuesserStat: null,
-      // LETTER LOCKOUT (setter power). letterLockoutUsedLetters is the
-      // match-scoped pool of letters the setter has already banned
-      // (persisted across the round-2 role swap by postGame.js, same
-      // pattern as revealLetter.mode — a repeat pick isn't allowed).
-      // letterLockoutBanned is the single letter currently in effect for
-      // the guesser's upcoming guess; cleared the instant that guess is
-      // validated and submitted (normalTransitions.js's clearRoundState).
-      letterLockoutUsedLetters: [],
-      letterLockoutBanned: null,
-      // POWER CHOICE: which "always-on" powers a role has permanently
-      // unlocked via a reward card (Informant, Letter Profile, Letter
-      // Lockout -- see powerChoiceServer.js's PERSISTENT_POWER_IDS).
-      // Unlike a normal activePowers grant (rebuilt fresh every round in
-      // Power Choice, see initializeRound), these are meant to last for
-      // the rest of the game once chosen, so they live here rather than
-      // on state.powerChoice (which gets replaced wholesale each round)
-      // and are carried across round transitions the same explicit way
-      // letterLockoutUsedLetters/letterProfileMode are (see
-      // nextRoundTransition.js). Tracked by ROLE POSITION, matching
-      // letterLockoutUsedLetters' own precedent: round 2's setter is
-      // normally a different player, but the position itself keeps what
-      // it already unlocked.
+      // POWER CHOICE: always-on rewards that remain unlocked for the game.
+      // These grants are tracked by role position across round transitions.
       powerChoicePersistentGrants: { setter: [], guesser: [] },
       // DELAYED INTEL (setter power). One-time use per round: activated
       // during the setter's own turn, it delays only the round about to be

@@ -151,83 +151,16 @@
     return clamp(window.state?.powers?.spyCharge?.total, 0, SPY_MAX);
   }
 
-  // Letter Lockout, once unlocked as a persistent Power Choice reward (see
-  // PERSISTENT_POWER_IDS server-side): a compact "Lock a letter" button.
-  // The server now picks the banned letter itself (see pickLockoutLetter
-  // in letterLockoutServer.js -- random, never repeats, prefers a letter
-  // that's never been guessed at all), so there's no letter for the
-  // player to choose here -- just a direct fire-with-confirmation, unlike
-  // the arm-then-tap-a-keyboard-letter flow Hide Evidence uses.
-  function letterLockoutGranted() {
-    // activePowers is already filtered server-side to whichever player
-    // currently holds the setter seat (see powerChoiceServer.js's
-    // initializeRound) -- a role swap that hands the seat to someone who
-    // never earned the grant correctly reads as not-granted here.
-    return !!window.state?.activePowers?.includes("letterLockout");
-  }
 
-  function canArmLetterLockout() {
-    const state = window.state;
-    // Mirrors POWER_RULES.js's own letterLockout.allowed() exactly -- the
-    // server rejects the USE_LETTER_LOCKOUT action outright without a
-    // pending guess (there's a live line of the guesser's next attempt for
-    // the ban to actually take effect against, see the server module's own
-    // header comment).
-    return !!(
-      letterLockoutGranted() &&
-      myRole() === "setter" &&
-      state?.phase === "normal" &&
-      state?.turn === state?.setter &&
-      state?.pendingGuess &&
-      !state?.powers?.letterLockoutBanned
-    );
-  }
 
-  function fireLetterLockout() {
-    if (!canArmLetterLockout()) return;
-
-    const submit = () => {
-      // Must match the action type powerEngine/powers/letterLockout.js's
-      // own modal sends -- normal.js's generic USE_ handler derives the
-      // powerId straight from action.type (normalizePowerId), it isn't
-      // read from a separate field. No letter is sent -- the server picks
-      // it (see letterLockoutServer.js's apply()).
-      window.sendGameAction?.({ type: "USE_LETTER_LOCKOUT", role: "setter" });
-    };
-
-    if (typeof window.showPowerActionPopup === "function") {
-      window.showPowerActionPopup({
-        emoji: window.POWER_METADATA?.letterLockout?.emoji || "🚫",
-        title: "Lock a letter?",
-        desc: "Bans a random letter the Guesser hasn't tried yet from their next guess. Once picked, that letter can never be banned again this match.",
-        useLabel: "Lock a letter",
-        showUse: true,
-        useEnabled: true,
-        onUse: submit
-      });
-    } else if (window.confirm("Ban a random untried letter from the Guesser's next guess?")) {
-      submit();
-    }
-  }
 
   function renderSpyPanel(container) {
     const total = spyDisplayTotal();
     const pending = window.state?.powerChoice?.pendingChoice?.role === "setter";
     const detailsOpen = container.dataset.pcDetailsOpen === "true";
-    const lockoutGranted = letterLockoutGranted();
-    const lockoutArmable = canArmLetterLockout();
-    const bannedLetter = window.state?.powers?.letterLockoutBanned || "";
-    const signature = [total, pending, detailsOpen, lockoutGranted, lockoutArmable, bannedLetter].join("|");
+    const signature = [total, pending, detailsOpen].join("|");
     if (container.dataset.pcSignature === signature) return;
     container.dataset.pcSignature = signature;
-    const lockoutMarkup = lockoutGranted
-      ? `<button type="button" id="pcLetterLockoutBtn"
-          class="pc-letter-lockout-btn"
-          ${lockoutArmable ? "" : "disabled"}>
-          <span aria-hidden="true">🚫</span>
-          ${bannedLetter ? `${esc(bannedLetter)} banned this guess` : "Lock a letter"}
-        </button>`
-      : "";
     container.innerHTML = `<section class="pc-side-panel pc-spy-panel">
       <button type="button" id="pcSpyChargeCard" class="pc-charge-card" aria-expanded="${detailsOpen}">
         <span class="pc-charge-label"><span class="pc-charge-star" aria-hidden="true">&#9733;</span>SPYOMETER</span>
@@ -245,7 +178,6 @@
           <span><b>12</b> choose 2 rewards</span>
         </div>
       </div>
-      ${lockoutMarkup}
 
     </section>`;
     byId("pcSpyChargeCard")?.addEventListener("click", () => {
@@ -253,7 +185,6 @@
       container.dataset.pcSignature = "";
       renderSpyPanel(container);
     });
-    byId("pcLetterLockoutBtn")?.addEventListener("click", fireLetterLockout);
   }
 
   function questConditionLabels(quest) {

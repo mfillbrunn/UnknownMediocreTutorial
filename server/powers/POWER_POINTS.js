@@ -24,7 +24,6 @@ const SETTER_POWER_POINTS = {
   fakeFeedback: 3,      // Falsify Intel — guesser sees a real + a fake feedback
   revealPenalty: 2,     // Marked Weakness — bonus points when the revealed letter is true
   delayedIntel: 1.5,    // Delayed Intel — one-time use, delays a single round's feedback
-  letterLockout: 3.5,   // Letter Lockout — bans a letter every turn, whole match
   forceTimer: 1.5       // Time Pressure — short clock on Guesser's next guess
 };
 

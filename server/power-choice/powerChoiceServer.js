@@ -48,23 +48,9 @@ const INSPECTOR_MAX_QUESTS = INSPECTOR_REWARD_SEQUENCE.length;
 const VOWELS = new Set("AEIOU");
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-// Powers with no one-shot apply() at all -- their effect is entirely
-// "always on" for as long as they're in activePowers (revealLocation/
-// letterProfile's own turnStart hooks, letterLockout's per-turn button --
-// see each one's own server module). A Power Choice reward that grants
-// one of these isn't a single action to fire, it's a permanent unlock:
-// see grantPersistentPower and state.powers.powerChoicePersistentGrants.
-//
-// letterProbe/betMiss/doubleGuess used to live here too (granted as a
-// standing unlock, fired later through the player's own choice of
-// moment), but they're immediate-fire cards now like every other power
-// in the pool: the reward pick itself carries the real payload -- 5
-// letters, a bet number, or a second word -- typed in on the spot, with
-// no way to bank the power for later. See applyChoice's payload param.
 const PERSISTENT_POWER_IDS = new Set([
   "revealLocation",
   "letterProfile",
-  "letterLockout"
 ]);
 const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
@@ -128,7 +114,6 @@ const POWER_COPY = {
   // the copy says "from now on" instead of "this turn".
   revealLocation: ["🕵️", "Informant", "Starting now, reveal one still-unknown position on each of your turns for the rest of the round."],
   letterProfile: ["🔤", "Secret Vowel Count", "From now on, see how many vowels are in the secret, each of your turns."],
-  letterLockout: ["🚫", "Letter Lockout", "From now on, ban one new letter from the Guesser's next guess on each of your turns."]
 };
 
 function normalizeWord(value) {
@@ -517,7 +502,18 @@ function evaluateQuest(state, quest, guess) {
   }
 }
 
+function filterRetiredPersistentPowers(grants) {
+  return (Array.isArray(grants) ? grants : []).filter(
+    grant => grant?.powerId !== "letterLockout"
+  );
+}
 function initializeRound(state) {
+  const persistent = state?.powers?.powerChoicePersistentGrants;
+  if (persistent) {
+    persistent.setter = filterRetiredPersistentPowers(persistent.setter);
+    persistent.guesser = filterRetiredPersistentPowers(persistent.guesser);
+  }
+
   if (!isPowerChoice(state) || !state.powers) return;
   const roundIndex = Number(state.roundIndex) || 0;
   const freshRound =
@@ -555,25 +551,6 @@ function initializeRound(state) {
   // not restore a player's already-spent refresh.
   state.powerChoiceRefreshUsedUserIds ||= [];
 
-  // Most reward powers are applied immediately when selected and are
-  // never added to the normal loadout, so neither a human nor the generic
-  // AI can save or fire the same reward again on a later turn -- hence
-  // rebuilding activePowers fresh (not preserving whatever it held before
-  // this call) on every action. The exception is PERSISTENT_POWER_IDS:
-  // Informant/Letter Profile/Letter Lockout are "always on" unlocks, not
-  // one-shot actions, and their whole effect lives behind
-  // `state.activePowers.includes(id)` (their own turnStart/button-gating
-  // checks it directly) -- rebuilding from
-  // state.powers.powerChoicePersistentGrants (survives round transitions,
-  // see nextRoundTransition.js) instead of wiping to [] every time is
-  // what makes "for the rest of the game" actually true instead of a
-  // grant that a plain reset would silently undo on the very next action.
-  // Each grant is tied to the specific player who earned it (see
-  // grantPersistentPower), not to the role slot -- a standard match swaps
-  // setter/guesser every round, so filtering by "is the current occupant
-  // of this role the player who earned the grant" is what makes the power
-  // deactivate for whoever inherits the role next and reactivate if the
-  // original player ever holds that role again.
   const persistentGrants =
     state.powers.powerChoicePersistentGrants || { setter: [], guesser: [] };
   const spyPersistentPowers = (persistentGrants.setter || [])
@@ -702,10 +679,6 @@ function setterRewardPool() {
       explanation: "A bigger risk for a bigger reward: one exact-position reveal in exchange for two present-letter clues forgotten."
     },
     powerOption("blindSpot"),
-    powerOption("letterLockout"),
-    // One-off effects, activated immediately on pick (not persistent
-    // grants like letterLockout above) -- same non-PERSISTENT_POWER_IDS
-    // branch of applyChoice that blindSpot already goes through.
     powerOption("confuseColors"),
     powerOption("countOnly"),
     powerOption("fakeFeedback"),
@@ -1500,17 +1473,6 @@ function rewardPickAIOption(options) {
 
 function powerOptionApplicable(state, option) {
   if (!option || option.kind !== "power") return false;
-  // Persistent-grant powers (see PERSISTENT_POWER_IDS) are exempt from
-  // this check regardless of whether they have a real apply() -- some
-  // (revealLocation/letterProfile) genuinely don't, letterLockout does
-  // but needs a payload this reward system can't supply at pick time, so
-  // the card being applicable is about the GRANT, not about calling
-  // apply() directly. doubleGuess is also exempt for a different reason:
-  // it isn't reachable through engine.applyPower at all -- its real logic
-  // lives in normal.js's applyDoubleGuess (see applyChoice), not a
-  // registered power, so this generic "has apply()" probe would always
-  // read as missing for it. Every other power-kind card still needs a
-  // real apply() to do anything when chosen.
   if (
     !PERSISTENT_POWER_IDS.has(option.powerId) &&
     option.powerId !== "doubleGuess" &&
@@ -1541,13 +1503,6 @@ function powerOptionApplicable(state, option) {
       // guesser seat hasn't unlocked it and should still be offered it.
       return !(state.powers?.powerChoicePersistentGrants?.guesser || [])
         .some(grant => grant.userId === state.guesser && grant.powerId === option.powerId);
-    case "letterLockout":
-      return !(state.powers?.powerChoicePersistentGrants?.setter || [])
-        .some(grant => grant.userId === state.setter && grant.powerId === option.powerId);
-    // Immediate-fire, payload-carrying cards -- mirrors each power's own
-    // POWER_RULES.js/applyDoubleGuess precondition (minus the redundant
-    // turn===guesser check, since a reward choice only ever opens on the
-    // owner's own turn), so a card that would fail on pick isn't offered.
     case "letterProbe":
       return !state.powers?.letterProbeUsed;
     case "doubleGuess":
@@ -1733,14 +1688,6 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
 
   if (option.kind === "power") {
     if (PERSISTENT_POWER_IDS.has(option.powerId)) {
-      // Calling engine.applyPower with the bare fabricated action below
-      // would either silently no-op (revealLocation/letterProfile, pure
-      // turnStart hooks with nothing to fire once) or fail outright
-      // (letterLockout needs a letter action.letter this card never
-      // supplies). The reward IS the unlock itself: from now on the role
-      // simply has access to a power that was already fully built and
-      // already worked when a human/classic draft granted it the normal
-      // way -- there's no second activation step to perform here.
       grantPersistentPower(state, choice.role, option.powerId, choice.ownerUserId);
       // revealLocation's own peek is computed lazily, in its turnStart hook
       // -- normally fine (it re-picks every turn anyway), but taken here it

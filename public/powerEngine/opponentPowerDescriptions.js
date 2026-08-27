@@ -87,6 +87,4 @@ window.OPPONENT_POWER_DESCRIPTIONS =
     delayedIntel:
       "Your opponent delayed this round's feedback until after your next guess.",
 
-    letterLockout:
-      "Your opponent banned one letter from your next guess."
   });

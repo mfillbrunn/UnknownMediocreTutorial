@@ -4,7 +4,7 @@ const { getAI } = require("./aiDifficulty");
 const { applyAIAction } = require("./aiActions");
 const powerMetadata = require("../../powers/powerMetadata");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
-const { pickLetterLockoutLetter, feasibleSecretsFor } = require("./genericAI");
+const { feasibleSecretsFor } = require("./genericAI");
 const questServer = require("../../powers/powers/questServer");
 const spyChargeServer = require(
   "../../powers/powers/spyChargeServer"
@@ -222,11 +222,6 @@ function buildPowerAction(powerId, state, context) {
     return { type };
   }
 
-  if (powerId === "letterLockout") {
-    const letter = pickLetterLockoutLetter(state, context.WORDS.secrets);
-    if (!letter) return null;
-    return { type, letter };
-  }
 
   if (powerId === "revealPenalty") {
     // revealPenaltyServer.js rejects any letter already confirmed green/

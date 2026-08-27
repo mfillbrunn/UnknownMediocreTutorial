@@ -688,17 +688,6 @@ body.power-doubleGuess #power-fx {
   mix-blend-mode: screen;
   animation: fx-flash 700ms ease-out;
 }
-body.power-letterLockout #power-fx {
-  opacity: 1;
-  background:
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(251,113,133,0.32),
-      transparent 70%
-    );
-  mix-blend-mode: screen;
-  animation: fx-flash 600ms ease-out;
-}
 body.power-revealGreen #power-fx {
   opacity: 1;
   background:

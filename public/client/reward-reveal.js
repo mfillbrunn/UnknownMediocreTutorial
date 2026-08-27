@@ -1,12 +1,7 @@
-// client/reward-reveal.js — plays once, right before a Power Choice reward
-// modal opens (see power-choice-mode.js's showChoice), replacing the old
-// per-turn showTurnIndicator sweep for this specific moment. Secretkeeper:
-// one star per point on the current milestone (4/8/12 -- pending.threshold)
-// flies out into a ring, then collapses back to the center and bursts.
-// Guesser: a single glowing square spins up to speed, then expands off
-// screen. Both are pointer-events:none and never touch focus/scroll, and
-// both call back once the effect has fully cleared so the reward modal
-// opens right as the screen does.
+// client/reward-reveal.js -- transition into a Power Choice reward picker.
+// Secretkeeper: large normal-gold stars orbit and burst. Guesser: the shared
+// quest-complete overlay types "Quest completed" from thin air and whooshes
+// away; the real reward cards open immediately afterward. No square animation.
 (() => {
   "use strict";
 
@@ -29,12 +24,25 @@
     return !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
   }
 
+  function once(fn) {
+    let called = false;
+    return () => {
+      if (called) return;
+      called = true;
+      fn();
+    };
+  }
+
   function playStars(overlay, count, done) {
     const total = Math.max(1, Number(count) || 4);
-    // Bigger rings for the higher milestones (more stars need more room
-    // to read as individual points rather than a smear) instead of one
-    // fixed radius for every stage.
-    const radius = Math.min(130, 55 + total * 5);
+    const shortViewport = Math.min(
+      Number(window.innerWidth) || 1280,
+      Number(window.innerHeight) || 720
+    );
+    const compact = shortViewport < 620;
+    const radius = compact
+      ? Math.min(118, 58 + total * 5)
+      : Math.min(190, 84 + total * 7);
 
     overlay.innerHTML = "";
     for (let i = 0; i < total; i++) {
@@ -50,36 +58,68 @@
     overlay.__timer = setTimeout(done, reducedMotion() ? 400 : 1550);
   }
 
-  function playSquare(overlay, done) {
-    overlay.innerHTML = `<div class="reward-reveal-square"></div>`;
-    overlay.className = "is-guesser-active";
-    overlay.__timer = setTimeout(done, reducedMotion() ? 400 : 1450);
+  function fallbackGuesserText(overlay, done) {
+    const text = "Quest completed";
+    overlay.innerHTML = `<div class="reward-reveal-quest-fallback" role="status">
+      ${[...text].map((character, index) =>
+        `<span style="--rr-letter:${index}">${character === " " ? "&nbsp;" : character}</span>`
+      ).join("")}
+    </div>`;
+    overlay.className = "is-guesser-text-active";
+    overlay.__timer = setTimeout(done, reducedMotion() ? 400 : 1150);
   }
 
-  // role: "setter" | "guesser". count: how many stars to draw for the
-  // setter (ignored for guesser). onDone: called once the effect has
-  // fully cleared.
+  function playGuesserQuestTransition(overlay, done) {
+    const finish = once(done);
+    overlay.innerHTML = "";
+    overlay.className = "";
+
+    // If quest.js already started the server-authoritative completion reveal,
+    // wait for that exact sequence and open the cards after it. This prevents
+    // a duplicate message when the socket event and state update arrive close
+    // together.
+    const inFlight = window.__questCompletionAnimationPromise;
+    if (inFlight && typeof inFlight.finally === "function") {
+      inFlight.finally(finish);
+      return;
+    }
+
+    if (typeof window.playQuestCompletion === "function") {
+      const sequence = window.playQuestCompletion({
+        text: "Quest completed",
+        messageColor: "var(--guesser-color, #58c9ff)",
+        showReward: false
+      });
+      if (sequence && typeof sequence.finally === "function") {
+        sequence.finally(finish);
+      } else {
+        overlay.__timer = setTimeout(finish, reducedMotion() ? 400 : 1150);
+      }
+      return;
+    }
+
+    // Load-order/network fallback: still use typed text, never the old square.
+    fallbackGuesserText(overlay, finish);
+  }
+
+  // role: "setter" | "guesser". count is used only for setter stars.
   window.showRewardReveal = function ({ role, count, onDone } = {}) {
     const overlay = ensureOverlay();
-
-    // Never stack a second reveal on top of one already mid-flight --
-    // clear it and restart clean, same "reflow between remove and re-add"
-    // pattern the old turn-indicator cue used for the same reason.
     clearTimeout(overlay.__timer);
     overlay.className = "";
     overlay.innerHTML = "";
     void overlay.offsetWidth;
 
-    const finish = () => {
+    const finish = once(() => {
       overlay.className = "";
       overlay.innerHTML = "";
       onDone?.();
-    };
+    });
 
     if (role === "setter") {
       playStars(overlay, count, finish);
     } else {
-      playSquare(overlay, finish);
+      playGuesserQuestTransition(overlay, finish);
     }
   };
 })();
