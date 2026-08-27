@@ -510,13 +510,12 @@
     box-shadow .15s var(--ease-ui);
 }
 
-/* Letter Scan (letterProbe): marks which 5 letters the sweep tested this
-   turn, in the order they were typed -- the game only ever reports an
-   aggregate count, not which ones hit, so this is purely a "these were
-   checked" memory aid, not a result. Cleared on the same lifecycle as the
-   info badge (state.powers.letterProbeResult), see keyboard.js. */
+/* Letter Scan / Letter Sweep (letterProbe): mark the five scanned keys and
+   repeat the scan's aggregate hit count on each one. Repeating the same number
+   preserves the power's intended information boundary: it shows how many of
+   the five letters hit, but never identifies which specific letters hit. */
 .key.key-swept::after {
-  content: attr(data-sweep-order);
+  content: attr(data-sweep-hits);
   position: absolute;
   right: 2px;
   bottom: 1px;

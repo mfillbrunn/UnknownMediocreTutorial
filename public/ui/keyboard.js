@@ -59,6 +59,7 @@ window.renderKeyboard = function ({
       "key-swept"
     );
     delete keyEl.dataset.sweepOrder;
+    delete keyEl.dataset.sweepHits;
 
     // Special keys
     if (symbol === "⌫") {
@@ -137,20 +138,23 @@ window.renderKeyboard = function ({
         keyEl.classList.add("key-banned");
       }
 
-      // Letter Scan (letterProbe): mark the letters this turn's sweep
-      // tested, in the order they were typed, so the guesser has a memory
-      // aid for which keys were already checked (the game only reports an
-      // aggregate count, never which ones hit). Guesser-only, same as the
-      // info badge/popup this result already feeds.
+      // Letter Scan / Letter Sweep (letterProbe): every scanned key shows
+      // the aggregate number of hits returned by the server. The same number
+      // is repeated on all five scanned keys because the power deliberately
+      // does not reveal which individual letters matched the secret.
       if (isGuesser) {
-        const sweepLetters = state.powers?.letterProbeResult?.letters || "";
-        const sweepIndex = sweepLetters.indexOf(symbol);
-        if (sweepIndex !== -1) {
+        const sweepResult = state.powers?.letterProbeResult;
+        const sweepLetters = String(sweepResult?.letters || "");
+        const sweepHitsRaw = Number(sweepResult?.count);
+        const sweepHits = Number.isFinite(sweepHitsRaw)
+          ? Math.max(0, Math.trunc(sweepHitsRaw))
+          : 0;
+
+        if (sweepLetters.includes(symbol)) {
           keyEl.classList.add("key-swept");
-          keyEl.dataset.sweepOrder = String(sweepIndex + 1);
+          keyEl.dataset.sweepHits = String(sweepHits);
         }
       }
-
       keyEl.onclick = () => onInput({ type: "LETTER", value: symbol });
 
       // Drag Mode (setter's secret draft, guesser's in-progress guess): a

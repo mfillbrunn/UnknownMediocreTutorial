@@ -59,7 +59,7 @@ function renderMenuAccountStatus () {
   if (el) {
     el.innerHTML = `
       <span class="account-logged-in">
-        <strong>${name}</strong><br/>
+        <strong>${name}</strong>
         <button class="link-btn menu-logout-btn">Log out</button>
       </span>
     `;

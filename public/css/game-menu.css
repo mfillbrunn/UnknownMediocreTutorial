@@ -243,8 +243,20 @@ body.menu-mode .app-header {
 
 .menu-account-status .menu-logout-btn {
   margin-left: 0;
-  margin-top: 8px;
-  display: inline-block;
+  margin-top: 0;
+  display: block;
+}
+
+/* PATCH: account status stacks username and Log out */
+.menu-account-status .account-logged-in {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+#startupScreen .menu-account-status .account-logged-in {
+  align-items: flex-end;
 }
 
 .menu-account-status .link-btn:hover {
