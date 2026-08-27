@@ -42,7 +42,8 @@ const GUESSER_POWER_POINTS = {
   letterProbe: 1.5,      // Recon Sweep — test 5 letters, learn how many are present
   revealLocation: 3,     // Informant — always-on passive position reveal
   doubleGuess: 3.5,      // Double Tap — two guesses at once, feedback on both
-  letterProfile: 1.5     // Letter Profile — always-on passive category breakdown
+  letterProfile: 1.5,    // Letter Profile — always-on passive category breakdown
+  firstLetterReveal: 2.5 // First Letter Reveal — one-time permanent green at position 1
 };
 
 const POWER_POINTS = { ...SETTER_POWER_POINTS, ...GUESSER_POWER_POINTS };

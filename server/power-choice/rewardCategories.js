@@ -19,6 +19,7 @@ const REWARD_CATEGORIES = Object.freeze({
   suggestGuess: "information",
   letterProbe: "information",
   revealHistory: "information",
+  firstLetterReveal: "information",
 
   // letter-control: reset/reopen/replace/restore/remove/manipulate letters or positions
   "spy-reset-positive-1": "letter-control",
@@ -40,7 +41,6 @@ const REWARD_CATEGORIES = Object.freeze({
   // constraint-defense: lock/shield/block/protect/force/ban/constrain
   freezeSecret: "constraint-defense",
   rouletteSecret: "constraint-defense",
-  stealthGuess: "constraint-defense",
 
   // choice-tempo: reroll/refresh/extra choice/extra action/skip/timing/economy
   "spy-add-point-1": "choice-tempo",

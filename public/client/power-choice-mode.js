@@ -455,10 +455,9 @@
       case "ROW_AVOID":
         return [...clean].every(letter => !String(quest.avoidRow || "").includes(letter));
       case "RARE": return (quest.letters || []).some(letter => clean.includes(cleanWord(letter).slice(0, 1)));
-      case "ALPHA": {
+      case "ADJACENT_PAIR": {
         const codes = [...clean].map(letter => letter.charCodeAt(0));
-        return codes.every((value, index) => index === 0 || value > codes[index - 1]) ||
-          codes.every((value, index) => index === 0 || value < codes[index - 1]);
+        return codes.some((value, index) => index > 0 && value === codes[index - 1] + 1);
       }
       case "HARDMODE": return hardModeMet(clean);
       case "FIELDREPORT": {

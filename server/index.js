@@ -152,6 +152,7 @@ require("./powers/powers/suggestSecretServer");
 require("./powers/powers/fakeFeedbackServer");
 require("./powers/powers/forceTimerServer");
 require("./powers/powers/revealHistoryServer");
+require("./powers/powers/firstLetterRevealServer");
 require("./powers/powers/blindSpotServer");
 require("./powers/powers/stealthGuessServer");
 require("./powers/powers/magicModeServer.js");
