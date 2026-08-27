@@ -27,6 +27,7 @@
   let questHintsActive = false;
   let lastQuestId = "";
   let renderQueued = false;
+  let modeObserver = null;
   let spyVisualOverride = null;
   let spyAwardRunning = false;
   const spyAwardQueue = [];
@@ -89,12 +90,41 @@
     return window.myRole || null;
   }
 
+  function shouldRenderPowerChoiceUi() {
+    const current = window.state;
+    if (!current || current.phase === "lobby") return true;
+    if (!isMode(current)) return false;
+    return !!document.querySelector(
+      "#setterScreen.active, #guesserScreen.active"
+    );
+  }
+
   function scheduleRender() {
-    if (renderQueued) return;
+    if (
+      renderQueued ||
+      document.hidden ||
+      !shouldRenderPowerChoiceUi()
+    ) {
+      return;
+    }
+
     renderQueued = true;
     requestAnimationFrame(() => {
       renderQueued = false;
-      renderAll();
+      if (
+        document.hidden ||
+        !shouldRenderPowerChoiceUi()
+      ) {
+        return;
+      }
+
+      // Do not let this renderer observe and reschedule its own DOM writes.
+      modeObserver?.disconnect();
+      try {
+        renderAll();
+      } finally {
+        connectModeObserver();
+      }
     });
   }
 
@@ -1874,8 +1904,6 @@
   }
 
   function renderAll() {
-    installModeUiWrapper();
-    installSetterHistoryDeferral();
     ensureModeOption();
     renderPanels();
     renderCurrentQuest();
@@ -1886,23 +1914,64 @@
     suppressLegacyChargeToasts();
   }
 
-  function installObservers() {
-    const observer = new MutationObserver(scheduleRender);
-    const targets = [
+  const MODE_OBSERVER_OPTIONS = {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: ["class", "aria-expanded"]
+  };
+
+  const MODE_SCREEN_OBSERVER_OPTIONS = {
+    attributes: true,
+    attributeFilter: ["class"]
+  };
+
+  function connectModeObserver() {
+    if (!modeObserver) return;
+    modeObserver.disconnect();
+    if (document.hidden || !isMode()) return;
+
+    // Screen activation is observed separately without watching each
+    // screen's whole subtree. This keeps local screen transitions
+    // detectable without waking on every gameplay DOM write.
+    [byId("setterScreen"), byId("guesserScreen")]
+      .filter(Boolean)
+      .forEach(screen => {
+        modeObserver.observe(
+          screen,
+          MODE_SCREEN_OBSERVER_OPTIONS
+        );
+      });
+
+    const activeScreen = document.querySelector(
+      "#setterScreen.active, #guesserScreen.active"
+    );
+    if (!activeScreen) return;
+
+    [
       byId("draftGuesser"),
       byId("keyboardGuesser"),
       byId("draftSetter"),
       byId("setterBonusTargetV9"),
-      byId("setterScreen"),
-      byId("guesserScreen")
-    ].filter(Boolean);
-    targets.forEach(target => observer.observe(target, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ["class", "aria-expanded", "style"]
-    }));
+      byId("guesserQuestChargeHud")
+    ]
+      .filter(Boolean)
+      .forEach(target => {
+        modeObserver.observe(
+          target,
+          MODE_OBSERVER_OPTIONS
+        );
+      });
+  }
+
+  function installObservers() {
+    if (!modeObserver) {
+      modeObserver = new MutationObserver(
+        scheduleRender
+      );
+    }
+    connectModeObserver();
   }
 
   try {
@@ -1932,13 +2001,28 @@
   } catch {}
 
   function init() {
+    installModeUiWrapper();
+    installSetterHistoryDeferral();
+    ensureModeOption();
     renderAll();
     installObservers();
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") scheduleRender();
-    });
-    window.addEventListener("resize", scheduleRender, { passive: true });
-    setInterval(renderAll, 350);
+
+    document.addEventListener(
+      "visibilitychange",
+      () => {
+        if (document.hidden) {
+          modeObserver?.disconnect();
+          return;
+        }
+        connectModeObserver();
+        scheduleRender();
+      }
+    );
+    window.addEventListener(
+      "resize",
+      scheduleRender,
+      { passive: true }
+    );
   }
 
   if (document.readyState === "loading") {

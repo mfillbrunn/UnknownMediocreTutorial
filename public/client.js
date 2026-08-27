@@ -1795,7 +1795,7 @@ function toggleSetterDraftLock(index) {
   if (chars[index] === " ") return; // nothing there to lock
   if (setterDraftLocks.has(index)) setterDraftLocks.delete(index);
   else setterDraftLocks.add(index);
-  updateUI();
+  renderSetterDraftOnly();
 }
 window.toggleSetterDraftLock = toggleSetterDraftLock;
 
@@ -1815,7 +1815,7 @@ function clearSetterDraft() {
   state.setterDraft = next.trim() === "" ? "" : next;
   emitSetterDraftPreview(state.setterDraft);
   window.clearNotesDraft?.();
-  updateUI();
+  renderSetterDraftOnly();
 }
 // Single source of truth for "is this the setter's live turn to act on
 // their secret" -- submitting a decision in `normal` (Keep/New in reaction
@@ -2126,7 +2126,7 @@ function setSetterDraftLetterAt(index, letter) {
   // this left updateSetterPreview falling back to the OLD secret's colors
   // if a drag-only edit ever emptied the draft back out.
   state.setterDraftTouched = true;
-  updateUI();
+  renderSetterDraftOnly();
   emitSetterDraftPreview(state.setterDraft);
 }
 window.setSetterDraftLetterAt = setSetterDraftLetterAt;
@@ -2150,7 +2150,7 @@ function clearSetterDraftLetterAt(index) {
   state.setterDraft = next.trim() === "" ? "" : next;
   setterDraftLocks.delete(index);
   state.setterDraftTouched = true;
-  updateUI();
+  renderSetterDraftOnly();
   emitSetterDraftPreview(state.setterDraft);
 }
 window.clearSetterDraftLetterAt = clearSetterDraftLetterAt;
@@ -2181,7 +2181,7 @@ function moveSetterDraftLetter(from, to) {
   setterDraftLocks.delete(from);
   setterDraftLocks.delete(to);
   state.setterDraftTouched = true;
-  updateUI();
+  renderSetterDraftOnly();
   emitSetterDraftPreview(state.setterDraft);
 }
 window.moveSetterDraftLetter = moveSetterDraftLetter;
@@ -2295,7 +2295,7 @@ function handleSetterInput(event) {
     setterDraftLocks.clear();
 
     emitSetterDraftPreview("");
-    updateUI();
+    renderSetterDraftOnly();
 
     shakeDraftRow("setter");
     showOpeningMissLockNotice();
@@ -2339,7 +2339,7 @@ function handleSetterInput(event) {
       }
       const next = chars.join("");
       state.setterDraft = next.trim() === "" ? "" : next;
-      updateUI();
+      renderSetterDraftOnly();
       emitSetterDraftPreview(state.setterDraft);
       window.refreshTutorialKeyDemo?.();
       if (!state.setterDraft) window.notifyTutorialDraftCleared?.();
@@ -2352,7 +2352,7 @@ function handleSetterInput(event) {
       if (idx !== -1) {
         chars[idx] = event.value;
         state.setterDraft = chars.join("");
-        updateUI();
+        renderSetterDraftOnly();
         emitSetterDraftPreview(state.setterDraft);
         window.refreshTutorialKeyDemo?.();
       }
@@ -3060,6 +3060,52 @@ window.setGuesserDraft = function (word) {
   renderGuesserDraftOnly();
 };
 
+function renderSetterDraftOnly() {
+  if (!state) return;
+
+  renderDraftRows({
+    state,
+    role: "setter",
+    container: $("draftSetter")
+  });
+
+  const displayGuess = state.powers?.stealthGuessActive
+    ? "?????"
+    : (state.pendingGuess || "");
+  if (myUserId() === state.setter) {
+    renderKeyboard({
+      state,
+      container: $("keyboardSetter"),
+      pendingGuess: displayGuess,
+      isGuesser: false,
+      onInput: handleSetterInput
+    });
+  }
+
+  if (typeof renderSetterMustContainBox === "function") {
+    const greenLetters = new Set(
+      (state.constraintData?.grid || [])
+        .map(cell => cell?.green)
+        .filter(Boolean)
+    );
+    renderSetterMustContainBox(
+      state.constraintData?.mustContain,
+      state.setterDraft,
+      greenLetters
+    );
+  }
+
+  updateSetterDraftInvalidOverlay();
+  updateSecretLock();
+  window.updateSetterDecisionControls?.(
+    computeSetterSecretStatus()
+  );
+  updateSetterPreview();
+  window.updateSpyChargeUI?.(state, myRole);
+  window.updateCompetitiveWordleFixesV2?.();
+  window.refreshTutorialKeyDemo?.();
+}
+
 function renderGuesserDraftOnly() {
   renderDraftRows({
     state,
@@ -3097,13 +3143,17 @@ function countPositionalDifferences(a, b) {
 function startSecretRoulette(words) {
   if (!Array.isArray(words) || words.length === 0) return;
   if (rouletteInterval) return;
-  toast("Push enter when you are ready to submit!");
-  rouletteWords = words;
 
-  let i = 0;
-  rouletteInterval = setInterval(() => {
+  toast("Push enter when you are ready to submit!");
+  rouletteWords = [...words];
+
+  let index = 0;
+  rouletteInterval = window.setInterval(() => {
     if (
       !state ||
+      myUserId() !== state.setter ||
+      state.phase !== "normal" ||
+      !state.powers?.rouletteSecretActive ||
       !Array.isArray(rouletteWords) ||
       rouletteWords.length === 0
     ) {
@@ -3111,12 +3161,20 @@ function startSecretRoulette(words) {
       return;
     }
 
-    const word = rouletteWords[i % rouletteWords.length];
-    state.setterDraft = word;
-    renderDraftRows({ state, role: "setter", container: $("draftSetter") });
-    updateUI();
-    i++;
-  }, 70);
+    if (document.hidden) return;
+    const setterScreen = $("setterScreen");
+    if (
+      setterScreen &&
+      !setterScreen.classList.contains("active")
+    ) {
+      return;
+    }
+
+    state.setterDraft =
+      rouletteWords[index % rouletteWords.length];
+    renderSetterDraftOnly();
+    index += 1;
+  }, 200);
 }
 
 function stopSecretRoulette() {

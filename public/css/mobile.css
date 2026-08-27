@@ -137,6 +137,54 @@
   }
    
 }
+/* MOBILE PERFORMANCE FIX V1 START */
+/*
+ * Coarse-pointer devices get the same layout and dimensions as before, but
+ * avoid continuous repaint/compositing work while a player is thinking.
+ * One-shot submission, reward and increment transitions remain enabled.
+ */
+@media (hover: none), (pointer: coarse) {
+  body::before {
+    display: none !important;
+  }
+
+  :where(
+    .primary-btn,
+    .secondary-btn,
+    .pc-modal,
+    .pc-modal-card
+  ) {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  :is(
+    #setterScreen.is-your-turn .setter-board::before,
+    #guesserScreen.is-your-turn .guesser-board::before,
+    #guesserScreen.is-your-turn .guesser-board-v9::before,
+    #draftGuesser .history-row.pc-quest-draft-met::before,
+    #draftGuesser .history-row.pc-quest-draft-met::after,
+    #draftGuesser .history-row.pc-quest-draft-met .history-tile,
+    .guesser-pending-history.is-working .history-tile::before,
+    #setterScreen.is-not-your-turn .ghost-secret .history-tile::before,
+    #setterScreen #setterCoverStars.stars-2 .setter-cover-base-star.is-filled,
+    #setterScreen #setterCoverStars.stars-3 .setter-cover-base-star.is-filled,
+    #setterScreen #setterCoverStars.stars-3 .setter-cover-bonus-star.is-filled,
+    .pc-reward-peek-bar,
+    .power-kb-prompt,
+    .chess-timer.active,
+    .chess-timer.warn-30,
+    .chess-timer.warn-10
+  ) {
+    animation: none !important;
+  }
+
+  #draftGuesser .history-row.pc-quest-draft-met {
+    filter: none !important;
+  }
+}
+/* MOBILE PERFORMANCE FIX V1 END */
+
 @media (max-width: 420px) {
   .header-room-code {
     display: none;
