@@ -50,8 +50,8 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 // Powers with no one-shot apply() at all -- their effect is entirely
 // "always on" for as long as they're in activePowers (revealLocation/
-// letterProfile's own turnStart hooks, letterLockout's per-turn button --
-// see each one's own server module). A Power Choice reward that grants
+// letterProfile's own turnStart hooks -- see each one's own server
+// module). A Power Choice reward that grants
 // one of these isn't a single action to fire, it's a permanent unlock:
 // see grantPersistentPower and state.powers.powerChoicePersistentGrants.
 //
@@ -63,8 +63,7 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 // no way to bank the power for later. See applyChoice's payload param.
 const PERSISTENT_POWER_IDS = new Set([
   "revealLocation",
-  "letterProfile",
-  "letterLockout"
+  "letterProfile"
 ]);
 const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
@@ -127,8 +126,7 @@ const POWER_COPY = {
   // PERSISTENT_POWER_IDS -- permanent unlocks, not one-turn effects, so
   // the copy says "from now on" instead of "this turn".
   revealLocation: ["🕵️", "Informant", "Starting now, reveal one still-unknown position on each of your turns for the rest of the round."],
-  letterProfile: ["🔤", "Secret Vowel Count", "From now on, see how many vowels are in the secret, each of your turns."],
-  letterLockout: ["🚫", "Letter Lockout", "From now on, ban one new letter from the Guesser's next guess on each of your turns."]
+  letterProfile: ["🔤", "Secret Vowel Count", "From now on, see how many vowels are in the secret, each of your turns."]
 };
 
 function normalizeWord(value) {
@@ -560,7 +558,7 @@ function initializeRound(state) {
   // AI can save or fire the same reward again on a later turn -- hence
   // rebuilding activePowers fresh (not preserving whatever it held before
   // this call) on every action. The exception is PERSISTENT_POWER_IDS:
-  // Informant/Letter Profile/Letter Lockout are "always on" unlocks, not
+  // Informant/Letter Profile are "always on" unlocks, not
   // one-shot actions, and their whole effect lives behind
   // `state.activePowers.includes(id)` (their own turnStart/button-gating
   // checks it directly) -- rebuilding from
@@ -702,9 +700,8 @@ function setterRewardPool() {
       explanation: "A bigger risk for a bigger reward: one exact-position reveal in exchange for two present-letter clues forgotten."
     },
     powerOption("blindSpot"),
-    powerOption("letterLockout"),
     // One-off effects, activated immediately on pick (not persistent
-    // grants like letterLockout above) -- same non-PERSISTENT_POWER_IDS
+    // grants like revealLocation/letterProfile) -- same non-PERSISTENT_POWER_IDS
     // branch of applyChoice that blindSpot already goes through.
     powerOption("confuseColors"),
     powerOption("countOnly"),
@@ -1501,11 +1498,10 @@ function rewardPickAIOption(options) {
 function powerOptionApplicable(state, option) {
   if (!option || option.kind !== "power") return false;
   // Persistent-grant powers (see PERSISTENT_POWER_IDS) are exempt from
-  // this check regardless of whether they have a real apply() -- some
-  // (revealLocation/letterProfile) genuinely don't, letterLockout does
-  // but needs a payload this reward system can't supply at pick time, so
-  // the card being applicable is about the GRANT, not about calling
-  // apply() directly. doubleGuess is also exempt for a different reason:
+  // this check regardless of whether they have a real apply() -- neither
+  // revealLocation nor letterProfile has one, so the card being
+  // applicable is about the GRANT, not about calling apply() directly.
+  // doubleGuess is also exempt for a different reason:
   // it isn't reachable through engine.applyPower at all -- its real logic
   // lives in normal.js's applyDoubleGuess (see applyChoice), not a
   // registered power, so this generic "has apply()" probe would always
@@ -1541,9 +1537,6 @@ function powerOptionApplicable(state, option) {
       // guesser seat hasn't unlocked it and should still be offered it.
       return !(state.powers?.powerChoicePersistentGrants?.guesser || [])
         .some(grant => grant.userId === state.guesser && grant.powerId === option.powerId);
-    case "letterLockout":
-      return !(state.powers?.powerChoicePersistentGrants?.setter || [])
-        .some(grant => grant.userId === state.setter && grant.powerId === option.powerId);
     // Immediate-fire, payload-carrying cards -- mirrors each power's own
     // POWER_RULES.js/applyDoubleGuess precondition (minus the redundant
     // turn===guesser check, since a reward choice only ever opens on the
@@ -1734,13 +1727,12 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
   if (option.kind === "power") {
     if (PERSISTENT_POWER_IDS.has(option.powerId)) {
       // Calling engine.applyPower with the bare fabricated action below
-      // would either silently no-op (revealLocation/letterProfile, pure
-      // turnStart hooks with nothing to fire once) or fail outright
-      // (letterLockout needs a letter action.letter this card never
-      // supplies). The reward IS the unlock itself: from now on the role
-      // simply has access to a power that was already fully built and
-      // already worked when a human/classic draft granted it the normal
-      // way -- there's no second activation step to perform here.
+      // would just silently no-op -- revealLocation/letterProfile are pure
+      // turnStart hooks with nothing to fire once. The reward IS the
+      // unlock itself: from now on the role simply has access to a power
+      // that was already fully built and already worked when a
+      // human/classic draft granted it the normal way -- there's no
+      // second activation step to perform here.
       grantPersistentPower(state, choice.role, option.powerId, choice.ownerUserId);
       // revealLocation's own peek is computed lazily, in its turnStart hook
       // -- normally fine (it re-picks every turn anyway), but taken here it
@@ -2083,7 +2075,6 @@ function chooseAIGuess(state, wordRows, allowedSecrets, fallbackGuess) {
     (state.history || []).map(entry => normalizeWord(entry?.guess)).filter(Boolean)
   );
   const eliminated = new Set(state.powerChoice.eliminatedLetters || []);
-  const banned = normalizeWord(state.powers?.letterLockoutBanned).slice(0, 1);
   const rows = [...(wordRows || []), ...(allowedSecrets || [])];
   const deduped = [];
   const seen = new Set();
@@ -2093,7 +2084,6 @@ function chooseAIGuess(state, wordRows, allowedSecrets, fallbackGuess) {
       !/^[A-Z]{5}$/.test(word) ||
       seen.has(word) ||
       used.has(word) ||
-      (banned && word.includes(banned)) ||
       [...eliminated].some(letter => word.includes(letter))
     ) {
       continue;

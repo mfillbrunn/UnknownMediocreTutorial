@@ -38,7 +38,6 @@ const REWARD_CATEGORIES = Object.freeze({
   delayedIntel: "feedback-disruption",
 
   // constraint-defense: lock/shield/block/protect/force/ban/constrain
-  letterLockout: "constraint-defense",
   freezeSecret: "constraint-defense",
   rouletteSecret: "constraint-defense",
   stealthGuess: "constraint-defense",

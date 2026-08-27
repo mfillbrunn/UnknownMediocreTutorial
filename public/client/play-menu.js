@@ -230,8 +230,8 @@ $("showRulesBtn")?.addEventListener("click", () => {
 // client/server power-pool duplication in this codebase (see also
 // client/dev-powers.js). Only powers actually offered by random/draft mode
 // belong in this reference screen — revealLetter and fieldReport moved to
-// the always-on Quest system, and assassinWord/letterLockout are disabled
-// from random/draft pools, so none of the four show up here anymore.
+// the always-on Quest system, and assassinWord is disabled
+// from random/draft pools, so none of the three show up here anymore.
 const POWER_LIB_SETTER_POWERS = [
   "hideTile", "suggestSecret", "confuseColors", "countOnly", "blindSpot",
   "vowelRefresh", "blindGuess", "fakeFeedback",

@@ -4,7 +4,7 @@ const { getAI } = require("./aiDifficulty");
 const { applyAIAction } = require("./aiActions");
 const powerMetadata = require("../../powers/powerMetadata");
 const { isPowerAllowed } = require("../../powers/POWER_RULES");
-const { pickLetterLockoutLetter, feasibleSecretsFor } = require("./genericAI");
+const { feasibleSecretsFor } = require("./genericAI");
 const questServer = require("../../powers/powers/questServer");
 const spyChargeServer = require(
   "../../powers/powers/spyChargeServer"
@@ -220,12 +220,6 @@ function buildPowerAction(powerId, state, context) {
     // Recon Sweep's 5 letters are chosen server-side now (see
     // letterProbeServer.js), so the AI just fires it -- nothing to compute.
     return { type };
-  }
-
-  if (powerId === "letterLockout") {
-    const letter = pickLetterLockoutLetter(state, context.WORDS.secrets);
-    if (!letter) return null;
-    return { type, letter };
   }
 
   if (powerId === "revealPenalty") {

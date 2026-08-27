@@ -52,8 +52,7 @@ Object.assign(POWER_ICON_IDS, {
   revealPenalty: "icon-letter-bluff",
   assassinWord: "icon-trap-word",
   wiretap: "icon-listen-in",
-  doubleGuess: "icon-double-guess",
-  letterLockout: "icon-letter-lockout"
+  doubleGuess: "icon-double-guess"
 });
 window.POWER_ICON_IDS = POWER_ICON_IDS;
 // COMPETITIVE OVERHAUL V3: COMPLETE POWER ICON MAP END

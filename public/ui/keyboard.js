@@ -54,7 +54,6 @@ window.renderKeyboard = function ({
       "key-current",
       "key-uncertain",
       "key-purple",
-      "key-banned",
       "key-manual",
       "key-swept"
     );
@@ -127,14 +126,6 @@ window.renderKeyboard = function ({
         (isGuesser || !hasKnownFeedback)
       ) {
         keyEl.classList.add("key-current");
-      }
-
-      // Letter Lockout (setter power): only the GUESSER's next guess is
-      // restricted — mark it on their keyboard only, not the setter's own
-      // (which would misleadingly imply the setter's typing is affected
-      // too, when it's only a preview of what they just banned).
-      if (isGuesser && state.powers?.letterLockoutBanned === symbol) {
-        keyEl.classList.add("key-banned");
       }
 
       // Letter Scan (letterProbe): mark the letters this turn's sweep

@@ -43,8 +43,6 @@ const SETTER_POWERS = [
   "fakeFeedback",
   "delayedIntel",
   "forceTimer"
-  // letterLockout ("forbid a letter") deliberately excluded -- disabled
-  // from random/draft pools, same precedent as assassinWord above.
 ];
 
 // revealLetter and fieldReport are deliberately excluded from this pool --

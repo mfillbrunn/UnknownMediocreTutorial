@@ -96,7 +96,6 @@ function clearRoundPowerActivity(state) {
   powers.doubleGuessShownFirst = null;
 
   powers.letterProfileGuesserStat = null;
-  powers.letterLockoutBanned = null;
   powers.delayedIntelRoundIndex = null;
 
   powers.revealLetterActive = false;

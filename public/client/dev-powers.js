@@ -17,7 +17,6 @@ const DEV_SETTER_POWERS = [
   "fakeFeedback",
   "revealPenalty",
   "delayedIntel",
-  "letterLockout",
   "forceTimer"
 ];
 

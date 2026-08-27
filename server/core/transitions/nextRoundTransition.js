@@ -44,21 +44,11 @@ function advanceToNextRound(room, state, roomId, context) {
     savedLetterProfileMode = state.powers.letterProfileMode;
   }
 
-  // Letter Lockout: the "not yet picked by him" pool belongs to the
-  // setter POSITION across the whole match, not to whichever specific
-  // player happens to hold it in a given round — round 2's setter (the
-  // round-1 guesser, post role-swap) must not be able to re-ban a
-  // letter round 1's setter already spent.
-  let savedLetterLockoutUsedLetters;
-  if (state.activePowers.includes("letterLockout")) {
-    savedLetterLockoutUsedLetters = state.powers.letterLockoutUsedLetters;
-  }
-
-  // Power Choice: which "always-on" powers (Letter Profile, Letter
-  // Lockout -- both game-long) either role has permanently unlocked via a
-  // reward card. This is the actual source of truth Power Choice's own
+  // Power Choice: which "always-on" powers (Letter Profile -- game-long)
+  // either role has permanently unlocked via a reward card. This is the
+  // actual source of truth Power Choice's own
   // initializeRound rebuilds state.activePowers from every action, so
-  // unlike the three saves above (each gated on the power already being
+  // unlike the two saves above (each gated on the power already being
   // in this round's activePowers) this one is unconditional -- resetting
   // it to empty here would silently take the reward away the moment the
   // next round started.
@@ -87,10 +77,6 @@ function advanceToNextRound(room, state, roomId, context) {
 
   if (state.activePowers.includes("letterProfile")) {
     state.powers.letterProfileMode = savedLetterProfileMode;
-  }
-
-  if (state.activePowers.includes("letterLockout")) {
-    state.powers.letterLockoutUsedLetters = savedLetterLockoutUsedLetters;
   }
 
   if (savedPowerChoicePersistentGrants) {

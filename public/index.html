@@ -191,13 +191,6 @@
         <text x="77" y="83" text-anchor="middle" font-size="27" font-weight="900" fill="#f4f5f7">2</text>
         <path d="M79 21h14v15h14L86 55 65 36h14z" fill="#f4f5f7"/>
       </symbol>
-      <symbol id="icon-letter-lockout" viewBox="0 0 120 120">
-        <rect x="13" y="22" width="66" height="77" rx="12" fill="currentColor"/>
-        <text x="46" y="76" text-anchor="middle" font-size="45" font-weight="900" fill="#f4f5f7">X</text>
-        <rect x="65" y="52" width="44" height="44" rx="8" fill="currentColor" stroke="#f4f5f7" stroke-width="5"/>
-        <path d="M76 54V43a12 12 0 0 1 24 0v11" fill="none" stroke="#f4f5f7" stroke-width="7"/>
-        <path d="m76 64 24 21m0-21L76 85" fill="none" stroke="#f4f5f7" stroke-linecap="round" stroke-width="6"/>
-      </symbol>
       <!-- COMPETITIVE OVERHAUL V3: SVG ICONS END -->
     </defs>
   </svg>
@@ -1229,24 +1222,6 @@
               </div>
             </div>
           </div>
-          <div id="letterLockoutModal" class="modal">
-            <div class="panel reveal-penalty-panel">
-              <h2 class="screen-title">🚫 Ban a Letter</h2>
-              <p class="reveal-penalty-instruction">
-                Bans a random letter the Guesser hasn't tried yet -- never
-                one you've banned before this match. Their next guess cannot
-                contain it.
-              </p>
-              <div class="decision-row">
-                <button id="letterLockoutConfirm" class="primary-btn small">
-                  Lock a letter
-                </button>
-                <button id="letterLockoutCancel" class="secondary-btn small">
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
         </section>
       </section>
       <!-- ========== GUESSER ========== -->
@@ -1619,7 +1594,6 @@
   <script src="powerEngine/powers/doubleGuess.js"></script>
   <script src="powerEngine/powers/letterProfile.js"></script>
   <script src="powerEngine/powers/delayedIntel.js"></script>
-  <script src="powerEngine/powers/letterLockout.js"></script>
   <script src="client/summary.js?v=ai-tie-fix-1"></script>
   <script src="client/action-log.js?setter-fixes=2"></script>
   <script src="client/action-log-colors.js?setter-board=1"></script>

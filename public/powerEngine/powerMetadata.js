@@ -293,14 +293,5 @@ window.POWER_METADATA = {
     icon: "clock-delay",
     emoji: "🕰️",
     color: "#A78BFA"
-  },
-
-  letterLockout: {
-    label: "Letter Lockout",
-    desc: "Works from the very start. On each of the Secretkeeper's turns, they can ban one more letter — the Guesser's next guess can't use any banned letter.",
-    short: "Bans one more letter from the Guesser's next guess, every turn.",
-    icon: "letter-ban",
-    emoji: "🚫",
-    color: "#FB7185"
   }
 };
