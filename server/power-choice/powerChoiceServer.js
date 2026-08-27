@@ -515,7 +515,18 @@ function evaluateQuest(state, quest, guess) {
   }
 }
 
+function filterRetiredPersistentPowers(grants) {
+  return (Array.isArray(grants) ? grants : []).filter(
+    grant => grant?.powerId !== "letterLockout"
+  );
+}
 function initializeRound(state) {
+  const persistent = state?.powers?.powerChoicePersistentGrants;
+  if (persistent) {
+    persistent.setter = filterRetiredPersistentPowers(persistent.setter);
+    persistent.guesser = filterRetiredPersistentPowers(persistent.guesser);
+  }
+
   if (!isPowerChoice(state) || !state.powers) return;
   const roundIndex = Number(state.roundIndex) || 0;
   const freshRound =

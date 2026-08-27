@@ -48,6 +48,7 @@ uiEffects(state, role) {
   const numberEl = $("forceTimerNumber");
 
   const render = () => {
+    if (document.hidden) return;
     const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
     if (numberEl) numberEl.textContent = remaining;
     overlay.classList.toggle("force-timer-urgent", remaining <= 5);
@@ -59,7 +60,7 @@ uiEffects(state, role) {
 
   render();
   if (!this._forceTimerTick) {
-    this._forceTimerTick = setInterval(render, 250);
+    this._forceTimerTick = setInterval(render, 1000);
   }
 }
 });

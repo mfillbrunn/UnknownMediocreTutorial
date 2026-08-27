@@ -18,6 +18,7 @@
   };
 
   let updateFrame = 0;
+  let systemsObserver = null;
   let updating = false;
   let lastBonusMatchKey = "";
   let lastQuestKey = "";
@@ -51,7 +52,7 @@
   }
 
   function scheduleUpdate() {
-    if (updateFrame) return;
+    if (updateFrame || document.hidden) return;
     updateFrame = requestAnimationFrame(() => {
       updateFrame = 0;
       updateAll();
@@ -546,6 +547,7 @@
   function updateAll() {
     if (updating) return;
     updating = true;
+    systemsObserver?.disconnect();
     try {
       const state = stateNow();
       wrapBigAnnounce();
@@ -564,6 +566,7 @@
       fixPowerCardSizing();
     } finally {
       updating = false;
+      connectSystemsObserver();
     }
   }
 
@@ -580,44 +583,82 @@
   }
 
   function installHooks() {
-    wrapUpdater("updateQuestChargeV9");
-    wrapUpdater("updateSpyChargeUI");
-    wrapUpdater("updateUI");
     wrapBigAnnounce();
+  }
+
+  const SYSTEMS_OBSERVER_OPTIONS = {
+    attributes: true,
+    attributeFilter: [
+      "class",
+      "aria-valuenow",
+      "data-quest-type"
+    ],
+    childList: true,
+    subtree: true
+  };
+
+  function connectSystemsObserver() {
+    if (!systemsObserver) return;
+    systemsObserver.disconnect();
+    if (document.hidden) return;
+
+    [
+      byId("draftGuesser"),
+      byId("draftSetter"),
+      byId("guesserQuestChargeHud"),
+      byId("guesserQuestRequirement"),
+      byId("setterCoverStars"),
+      byId("bigAnnouncePopup")
+    ]
+      .filter(Boolean)
+      .forEach(element => {
+        systemsObserver.observe(
+          element,
+          SYSTEMS_OBSERVER_OPTIONS
+        );
+      });
+  }
+
+  function installSystemsObserver() {
+    if (!systemsObserver) {
+      systemsObserver = new MutationObserver(
+        scheduleUpdate
+      );
+    }
+    connectSystemsObserver();
   }
 
   function init() {
     installHooks();
+    installSystemsObserver();
     updateAll();
 
-    const observer = new MutationObserver(scheduleUpdate);
-    for (const element of [
-      byId("setterScreen"),
-      byId("guesserScreen"),
-      byId("guesserQuestChargeHud"),
-      byId("setterCoverStars"),
-      byId("bigAnnouncePopup")
-    ]) {
-      if (!element) continue;
-      observer.observe(element, {
-        attributes: true,
-        attributeFilter: ["class", "aria-valuenow"],
-        childList: true,
-        subtree: true
-      });
-    }
+    try {
+      socket.on("stateUpdate", scheduleUpdate);
+    } catch {}
 
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") scheduleUpdate();
-    });
-    window.addEventListener("resize", scheduleUpdate, { passive: true });
-    // Wrapped updater functions and targeted observers already trigger this
-    // work. Permanent 700ms polling duplicated it even while the game was idle.
+    document.addEventListener(
+      "visibilitychange",
+      () => {
+        if (document.hidden) {
+          systemsObserver?.disconnect();
+          return;
+        }
+        connectSystemsObserver();
+        scheduleUpdate();
+      }
+    );
+    window.addEventListener(
+      "resize",
+      scheduleUpdate,
+      { passive: true }
+    );
+
     requestAnimationFrame(() => {
       installHooks();
       scheduleUpdate();
     });
-}
+  }
 
   window.updateGameplaySystemsV10 = scheduleUpdate;
 

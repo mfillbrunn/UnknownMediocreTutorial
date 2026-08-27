@@ -8,6 +8,7 @@
 
   const byId = id => document.getElementById(id);
   let updateFrame = 0;
+  let compatibilityObserver = null;
 
   function setAttributeIfChanged(element, name, value) {
     if (!element) return;
@@ -454,48 +455,87 @@
 
   function syncAll() {
     updateFrame = 0;
-    syncBonusTarget();
-    bindQuestRequirement();
-    disableAwardBackdrop();
+    compatibilityObserver?.disconnect();
+    try {
+      syncBonusTarget();
+      bindQuestRequirement();
+      disableAwardBackdrop();
+    } finally {
+      connectCompetitiveObserver();
+    }
   }
 
   function scheduleSync() {
-    if (updateFrame) return;
+    if (updateFrame || document.hidden) return;
     updateFrame = requestAnimationFrame(syncAll);
   }
 
-  function installObservers() {
-    const observer = new MutationObserver(scheduleSync);
-    for (const element of [
-      byId("setterScreen"),
-      byId("guesserScreen"),
+  const COMPETITIVE_OBSERVER_OPTIONS = {
+    attributes: true,
+    attributeFilter: [
+      "class",
+      "aria-valuenow",
+      "data-quest-type"
+    ],
+    childList: true,
+    subtree: true
+  };
+
+  function connectCompetitiveObserver() {
+    if (!compatibilityObserver) return;
+    compatibilityObserver.disconnect();
+    if (document.hidden) return;
+
+    [
+      byId("draftSetter"),
       byId("questInfoBar"),
       byId("guesserQuestRequirement"),
       byId("guesserQuestChargeHud"),
       byId("setterBonusTargetV9"),
       byId("spyChargeAwardBackdrop")
-    ]) {
-      if (!element) continue;
-      observer.observe(element, {
-        attributes: true,
-        attributeFilter: ["class", "aria-valuenow", "data-quest-type"],
-        childList: true,
-        subtree: true
+    ]
+      .filter(Boolean)
+      .forEach(element => {
+        compatibilityObserver.observe(
+          element,
+          COMPETITIVE_OBSERVER_OPTIONS
+        );
       });
+  }
+
+  function installObservers() {
+    if (!compatibilityObserver) {
+      compatibilityObserver = new MutationObserver(
+        scheduleSync
+      );
     }
-    if (document.body) {
-      observer.observe(document.body, { childList: true, subtree: true });
-    }
+    connectCompetitiveObserver();
   }
 
   function init() {
-    syncAll();
     installObservers();
-    setInterval(scheduleSync, 700);
-    window.addEventListener("resize", scheduleSync, { passive: true });
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") scheduleSync();
-    });
+    syncAll();
+
+    try {
+      socket.on("stateUpdate", scheduleSync);
+    } catch {}
+
+    window.addEventListener(
+      "resize",
+      scheduleSync,
+      { passive: true }
+    );
+    document.addEventListener(
+      "visibilitychange",
+      () => {
+        if (document.hidden) {
+          compatibilityObserver?.disconnect();
+          return;
+        }
+        connectCompetitiveObserver();
+        scheduleSync();
+      }
+    );
   }
 
   window.updateCompetitiveWordleFixesV2 = scheduleSync;

@@ -1652,8 +1652,8 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   color: #8edcff;
 }
 
-/* Unused: the quest-met beat this was built for is now client/
-   reward-reveal.js's spinning-square effect instead of a flourish banner.
+/* Unused: the quest-met beat now uses the typed quest-completion transition in
+   client/quest-complete-reveal.js instead of a separate flourish banner.
    Left in place only because other selector groups below still reference
    this class name; nothing in JS creates a .pc-quest-met-flourish element
    anymore. */
@@ -3158,3 +3158,152 @@ body:not(.light-theme) {
   .pc-star-mini { display: none !important; }
 }
 /* TUTORIAL_MOTION_SIM_PATCH v1: END */
+
+/* DESKTOP_GAME_SIZE_BALANCE_V2: START */
+/*
+ * Desktop-only proportional sizing.
+ *
+ * Mobile and touch layouts remain unchanged. The desktop board width, tile
+ * row, keyboard, power cards, and action buttons now scale as one system
+ * instead of using unrelated compact values. The 48px tile row is about
+ * 264px wide; the 500px keyboard keeps approximately the same keyboard-to-
+ * board ratio as the phone layout.
+ */
+@media (min-width: 761px) and (hover: hover) and (pointer: fine) {
+  #appContainer:has(#setterScreen.active, #guesserScreen.active) {
+    max-width: 740px;
+  }
+
+  :is(#setterScreen, #guesserScreen) {
+    --desktop-game-tile-size: 48px;
+    --desktop-game-tile-font-size: 24px;
+    --desktop-key-width: 45px;
+    --desktop-key-height: 52px;
+    --desktop-key-font-size: 18px;
+    --desktop-keyboard-width: 500px;
+    --game-sidebar: 168px;
+  }
+
+  :is(#setterScreen, #guesserScreen) .role-header button {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  :is(
+      #setterScreen .setter-board,
+      #guesserScreen .guesser-board,
+      #guesserScreen .guesser-board-v9
+    )
+    .history-row:not(.constraint-row)
+    .history-tile {
+    flex: 0 0 var(--desktop-game-tile-size);
+    width: var(--desktop-game-tile-size);
+    height: var(--desktop-game-tile-size);
+    font-size: var(--desktop-game-tile-font-size);
+  }
+
+  /* 264px inner row (5 x 48px tiles plus four 6px gaps) + 100px padding. */
+  #guesserScreen .history-scroll {
+    width: min(100%, 364px);
+    padding-inline: 50px;
+  }
+
+  #setterScreen #setterGuesserSubmitted {
+    padding-inline: 24px;
+  }
+
+  /* Five 48px tracks, four 4px gaps, and 12px horizontal padding. */
+  :is(#setterScreen, #guesserScreen) .constraint-row {
+    width: min(calc(100% - 8px), 268px);
+  }
+
+  :is(#setterScreen, #guesserScreen)
+    .constraint-row
+    .history-tile {
+    font-size: var(--desktop-game-tile-font-size);
+  }
+
+  :is(#keyboardSetter, #keyboardGuesser) {
+    width: 100%;
+    max-width: var(--desktop-keyboard-width);
+  }
+
+  :is(#keyboardSetter, #keyboardGuesser) .key-row {
+    gap: 5px;
+    margin-bottom: 5px;
+  }
+
+  :is(#keyboardSetter, #keyboardGuesser) .key {
+    flex: 0 0 var(--desktop-key-width);
+    width: var(--desktop-key-width);
+    height: var(--desktop-key-height);
+    border-radius: 7px;
+    font-size: var(--desktop-key-font-size);
+    letter-spacing: 0.7px;
+  }
+
+  :is(#keyboardSetter, #keyboardGuesser)
+    .key:is([data-key="ENTER"], [data-key="⌫"]) {
+    flex-basis: 55px;
+    width: 55px;
+  }
+
+  :is(#keyboardSetter, #keyboardGuesser)
+    .key[data-key="ENTER"]::before,
+  :is(#keyboardSetter, #keyboardGuesser)
+    .pc-key-eliminated::after {
+    font-size: 20px;
+  }
+
+  .pc-current-quest-host,
+  .pc-inspector-panel-host,
+  #setterScreen .setter-decision-meta,
+  #setterScreen .setter-decision-actions,
+  #guesserDecisionActions {
+    width: min(100%, var(--desktop-keyboard-width));
+    margin-inline: auto;
+  }
+
+  #setterScreen .setter-decision-actions,
+  #guesserDecisionActions {
+    margin-top: 6px;
+    padding-top: 6px;
+    gap: 7px;
+  }
+
+  :is(
+      #setterScreen .setter-decision-btn,
+      #guesserDecisionActions .guesser-decision-btn
+    ) {
+    min-height: 42px;
+    padding: 7px 11px;
+    border-radius: 10px;
+    font-size: 11px;
+  }
+
+  /* mobile.css intentionally supplies compact cards globally; restore a
+     moderate desktop size here without changing the phone rules. */
+  :is(#setterScreen, #guesserScreen)
+    .powers-col
+    .power-btn.power-badge {
+    width: 78px;
+    height: 82px;
+    padding: 7px 6px 8px;
+  }
+
+  :is(#setterScreen, #guesserScreen)
+    .powers-col
+    .power-icon {
+    max-width: 28px;
+  }
+
+  :is(#setterScreen, #guesserScreen)
+    .powers-col
+    .power-btn-label {
+    height: 20px;
+    font-size: 9px;
+  }
+}
+/* DESKTOP_GAME_SIZE_BALANCE_V2: END */

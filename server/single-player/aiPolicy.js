@@ -20,6 +20,12 @@ function scriptedStartingSecret(state) {
   const sp = state.singlePlayer;
   if (!sp?.enabled) return null;
 
+  // A fixed secret is useful for authored tutorials and story encounters.
+  // It deliberately wins over the per-attempt list so every retry can use
+  // the same answer without duplicating it an arbitrary number of times.
+  const fixedSecret = sp.stage.game.ai?.fixedSetterSecret;
+  if (fixedSecret) return String(fixedSecret).toUpperCase();
+
   const byAttempt = sp.stage.game.ai?.setterSecretsByAttempt || [];
   const scripted = byAttempt[(sp.attemptNo || 1) - 1];
   return scripted || null;

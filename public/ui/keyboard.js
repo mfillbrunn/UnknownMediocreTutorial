@@ -58,6 +58,7 @@ window.renderKeyboard = function ({
       "key-swept"
     );
     delete keyEl.dataset.sweepOrder;
+    delete keyEl.dataset.sweepHits;
 
     // Special keys
     if (symbol === "⌫") {
@@ -134,14 +135,18 @@ window.renderKeyboard = function ({
       // aggregate count, never which ones hit). Guesser-only, same as the
       // info badge/popup this result already feeds.
       if (isGuesser) {
-        const sweepLetters = state.powers?.letterProbeResult?.letters || "";
-        const sweepIndex = sweepLetters.indexOf(symbol);
-        if (sweepIndex !== -1) {
+        const sweepResult = state.powers?.letterProbeResult;
+        const sweepLetters = String(sweepResult?.letters || "");
+        const sweepHitsRaw = Number(sweepResult?.count);
+        const sweepHits = Number.isFinite(sweepHitsRaw)
+          ? Math.max(0, Math.trunc(sweepHitsRaw))
+          : 0;
+
+        if (sweepLetters.includes(symbol)) {
           keyEl.classList.add("key-swept");
-          keyEl.dataset.sweepOrder = String(sweepIndex + 1);
+          keyEl.dataset.sweepHits = String(sweepHits);
         }
       }
-
       keyEl.onclick = () => onInput({ type: "LETTER", value: symbol });
 
       // Drag Mode (setter's secret draft, guesser's in-progress guess): a

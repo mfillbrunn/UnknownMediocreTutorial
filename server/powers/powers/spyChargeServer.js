@@ -332,34 +332,28 @@ function starsForCandidate(candidateCount, bestCount) {
     return 0;
   }
 
-  const gapPct = Math.max(
-    0,
-    ((bestCount - candidateCount) / bestCount) * 100
-  );
-
-  // Base stars top out at 2 -- reaching 3 requires the separate bonus
-  // star (see evaluateSecretChange's bonusStars), never a base switch
-  // alone, however close to optimal it is. Old base-3 and old base-2
-  // switches (formerly gapPct < 10 and gapPct < 25 respectively) now both
-  // land here.
-  if (gapPct < 25) {
+  /*
+   * Higher candidateCount is better for the setter because the resulting
+   * feedback leaves more feasible secrets alive.
+   *
+   * - equal to the best: 2 base stars
+   * - less than 25% worse: 2 base stars
+   * - exactly 25% worse or more: 1 base star
+   *
+   * The blue letter bonus is separate and is never included here.
+   */
+  if (candidateCount >= bestCount) {
     return 2;
   }
 
-  // Baseline: any legal decision (including simply keeping the current
-  // secret) is worth one star. Only an invalid/non-decision earns nothing,
-  // and those never reach this function -- see the callers, which gate on
-  // a complete, valid, non-pending draft first.
-  return 1;
+  const gapPct =
+    ((bestCount - candidateCount) / bestCount) * 100;
+
+  return gapPct < 25 ? 2 : 1;
 }
 
-// Special accepted decisions (see createFlatDecisionAward below) always
-// earn exactly one base star and never a bonus, regardless of switch
-// quality. Used for the forced/default all-gray-opening Keep, and (from
-// normal.js) for Hidden Guess and the accepted frozen Keep -- none of
-// those are a real quality-rated cover-strength switch, so they bypass
-// the candidate/bestCount analysis entirely rather than trying to force
-// it through starsForCandidate.
+// Special accepted decisions use a flat base award and no bonus.
+
 function createFlatDecisionAward(
   state,
   baseStars = 1
@@ -406,7 +400,7 @@ function evaluateSecretChange(
   const charge = getCharge(state);
   const before = Math.min(
     MAX_CHARGE,
-    Math.max(0, charge?.total || 0)
+    Math.max(0, Number(charge?.total) || 0)
   );
 
   const empty = {
@@ -422,18 +416,9 @@ function evaluateSecretChange(
     return empty;
   }
 
-  // Mirrors coverStrength.js's buildCoverStrengthState -- an all-wrong
-  // simultaneous opening forces the setter to keep whatever secret they
-  // had, so there's no legal alternative to rate a switch against. Award
-  // the forced/default opening Keep's flat one star instead of silently
-  // earning nothing just because "keeping" is normally a zero-reward
-  // no-op switch (see the word === currentSecret check below, which this
-  // intentionally bypasses).
+  // The forced opening KEEP is an accepted KEEP and earns one base star.
   if (state.simultaneousAllWrong) {
-    return createFlatDecisionAward(
-      state,
-      1
-    );
+    return createFlatDecisionAward(state, 1);
   }
 
   if (!isScoringEligible(state)) {
@@ -446,7 +431,6 @@ function evaluateSecretChange(
 
   if (
     !/^[A-Z]{5}$/.test(word) ||
-    word === currentSecret ||
     word === pendingGuess ||
     !passesAssassinRule(word, state)
   ) {
@@ -460,8 +444,36 @@ function evaluateSecretChange(
 
   if (
     !analysis ||
-    analysis.bestCount == null ||
     !analysis.feasibleSet.has(word)
+  ) {
+    return empty;
+  }
+
+  const changedSecret =
+    word !== currentSecret;
+
+  /*
+   * KEEP is not quality-rated. Every accepted KEEP earns exactly one
+   * normal base star and can never earn the blue bonus star.
+   */
+  if (!changedSecret) {
+    return {
+      before,
+      baseStars: 1,
+      bonusStars: 0,
+      earnedStars: 1,
+      candidateCount:
+        Number(analysis.keepCount) || 0,
+      bestCount:
+        analysis.bestCount ??
+        analysis.keepCount ??
+        null
+    };
+  }
+
+  if (
+    analysis.bestCount == null ||
+    analysis.bestCount <= 0
   ) {
     return empty;
   }
@@ -472,10 +484,7 @@ function evaluateSecretChange(
       word
     );
 
-  // Hidden Guess (doubleGuessPending): a valid change earns exactly one
-  // star, whether it's a strong switch or a weak one -- no base-star
-  // scaling, and (since rollHintForTurn never rolls a hint while this is
-  // pending, so charge.hint is always null here) no bonus star either.
+  // Preserve the existing Hidden Guess rule: exactly one, no bonus.
   if (state.powers?.doubleGuessPending) {
     return {
       before,
@@ -492,8 +501,13 @@ function evaluateSecretChange(
     analysis.bestCount
   );
 
+  /*
+   * The blue bonus is independent of quality, but only a changed secret
+   * can earn it.
+   */
   const hint = charge.hint;
   const bonusStars =
+    changedSecret &&
     hint &&
     word[hint.position] === hint.letter
       ? 1
@@ -503,7 +517,8 @@ function evaluateSecretChange(
     before,
     baseStars,
     bonusStars,
-    earnedStars: Math.min(3, baseStars + bonusStars),
+    earnedStars:
+      Math.min(3, baseStars + bonusStars),
     candidateCount,
     bestCount: analysis.bestCount
   };
@@ -775,39 +790,38 @@ if (!module.exports.__competitiveHistoryMetricsV3) {
     newSecret,
     allowedSecrets
   ) {
-    let award = originalEvaluateSecretChangeV3.call(this, state, newSecret, allowedSecrets);
-    if (!award || typeof award !== "object") return award;
+    const award =
+      originalEvaluateSecretChangeV3.call(
+        this,
+        state,
+        newSecret,
+        allowedSecrets
+      );
 
-    const analysis = coverStrengthV3.getCoverAnalysis(state, allowedSecrets);
-    const requested = normalizeWord(newSecret);
-    const current = normalizeWord(state?.secret);
-
-    const legalKeep =
-      !state?.simultaneousAllWrong &&
-      requested === current &&
-      state?.powers?.spyCharge?.enabled &&
-      isScoringEligible(state) &&
-      analysis?.feasibleSet?.has(current);
-
-    if (legalKeep) {
-      const keepBaseStars = Math.max(1, Number(award.baseStars) || 0);
-      award = {
-        ...award,
-        baseStars: keepBaseStars,
-        bonusStars: 0,
-        earnedStars: keepBaseStars,
-        candidateCount: Number(analysis.keepCount) || 0,
-        bestCount: analysis.bestCount ?? analysis.keepCount ?? null
-      };
+    if (
+      !award ||
+      typeof award !== "object"
+    ) {
+      return award;
     }
+
+    // Star calculation now lives entirely in the core evaluator above.
+    const analysis =
+      coverStrengthV3.getCoverAnalysis(
+        state,
+        allowedSecrets
+      );
 
     return {
       ...award,
-      bestWord: analysis?.bestWord || null,
-      bestWords: Array.isArray(analysis?.bestWords) ? analysis.bestWords : []
+      bestWord:
+        analysis?.bestWord || null,
+      bestWords:
+        Array.isArray(analysis?.bestWords)
+          ? analysis.bestWords
+          : []
     };
   };
-
   module.exports.commitAward = function commitAwardWithHistoryMetrics(state, award, room, io) {
     const result = originalCommitAwardV3.call(this, state, award, room, io);
     const entry = Array.isArray(state?.history) ? state.history[state.history.length - 1] : null;

@@ -26,6 +26,73 @@ const SinglePlayerMode = require("./campaignMode");
 
 const AI_USER_ID = "AI";
 
+
+function normalizedCampaignName(value, fallback) {
+  const name = typeof value === "string" ? value.trim() : "";
+  return name || fallback;
+}
+
+function applyStageCast(room, stage, humanUserId, fallbackHumanName) {
+  const cast = stage.cast || {};
+  setPlayerName(
+    room,
+    humanUserId,
+    normalizedCampaignName(cast.human, fallbackHumanName || "Player")
+  );
+  setPlayerName(
+    room,
+    AI_USER_ID,
+    normalizedCampaignName(cast.opponent, "AI")
+  );
+}
+
+function applyStageRuntimeOptions(state, stage) {
+  if (stage.game?.powerChoice === false) {
+    // A non-Power-Choice value keeps the campaign on the shared core game
+    // engine while suppressing random reward milestones for authored stages.
+    state.gameMode = "classic";
+  }
+
+  if (stage.game?.ai?.lockSetterSecret === true) {
+    // genericAI already keeps the current secret after its configured change
+    // budget is exhausted. Reusing that behavior avoids a campaign-only fork
+    // in the shared AI runner.
+    state.aiSecretChangeCount = Number.MAX_SAFE_INTEGER;
+
+    // A cover-strength hint can otherwise replace genericAI's Keep result.
+    // This is local room state and is only changed for the authored campaign.
+    if (state.powers?.spyCharge) {
+      state.powers.spyCharge.enabled = false;
+      state.powers.spyCharge.hint = null;
+      state.powers.spyCharge.lockedPowerId = null;
+    }
+  }
+}
+
+function normalizeStageWord(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function didHumanGuesserSolve(state, singlePlayer) {
+  const rounds = Array.isArray(state.matchRounds) ? state.matchRounds : [];
+  const completedRound = [...rounds]
+    .reverse()
+    .find(round => round?.guesser === singlePlayer.humanUserId);
+  const history = Array.isArray(completedRound?.history)
+    ? completedRound.history
+    : Array.isArray(state.history)
+      ? state.history
+      : [];
+  const lastGuess = normalizeStageWord(history[history.length - 1]?.guess);
+  const target = normalizeStageWord(
+    singlePlayer.stage.game.ai?.fixedSetterSecret ||
+      completedRound?.finalSecret ||
+      completedRound?.secret ||
+      state.secret
+  );
+  return !!lastGuess && !!target && lastGuess === target;
+}
+
 class SessionService {
   constructor({ context, progressRepository, achievementService }) {
     this.context = context;
@@ -39,7 +106,8 @@ class SessionService {
   }
 
   async getCampaign(userId) {
-    await this.repo.ensureProfile(userId);
+    const profileResult = await this.repo.ensureProfile(userId);
+    if (!profileResult.ok) return profileResult;
     const snapshot = await this.repo.getCampaignSnapshot(userId);
     if (!snapshot.ok) return snapshot;
 
@@ -70,6 +138,10 @@ class SessionService {
   async startStage({ socket, userId, userName, stageId }) {
     const stage = getStage(stageId);
     if (!stage) return { ok: false, code: "UNKNOWN_STAGE" };
+    // Repair the default stage unlock before authorizing a direct Play click. This mirrors getCampaign() and closes stale-profile gaps.
+    const profileResult = await this.repo.ensureProfile(userId);
+    if (!profileResult.ok) return profileResult;
+
 
     const unlocks = await this.repo.getCampaignSnapshot(userId);
     if (!unlocks.ok) return unlocks;
@@ -84,8 +156,6 @@ class SessionService {
     const roomId = createRoom(socket, userId);
     const room = rooms[roomId];
     room.isSinglePlayer = true;
-    if (userName) setPlayerName(room, userId, userName);
-
     this.context.applyAction(
       room,
       room.state,
@@ -93,6 +163,8 @@ class SessionService {
       roomId,
       this.context
     );
+
+    applyStageCast(room, stage, userId, userName);
 
     const plan = buildRoundPlan({ stage, humanUserId: userId, aiUserId: AI_USER_ID, humanUnlockedPowers });
     const firstRound = plan.rounds[0];
@@ -119,6 +191,7 @@ class SessionService {
     state.mode = new SinglePlayerMode();
     state.mode.initMatch(state);
     state.mode.onLobbyReady(state);
+    applyStageRuntimeOptions(state, stage);
     state.phase = "simultaneous";
 
     this.sessionsByRoomId.set(roomId, {
@@ -152,6 +225,7 @@ class SessionService {
       id: stage.id,
       title: stage.title,
       summary: stage.summary,
+      cast: stage.cast || null,
       map: stage.map,
       game: {
         roles: stage.game.roles,
@@ -239,7 +313,17 @@ class SessionService {
     });
     const requiredIds = (stage.objectives || []).filter(o => o.required).map(o => o.id);
     const optionalIds = (stage.objectives || []).filter(o => !o.required).map(o => o.id);
-    const { requiredPassed, results } = evaluateObjectives(stage.objectives, facts);
+    let { requiredPassed, results } = evaluateObjectives(stage.objectives, facts);
+    if (
+      stage.game?.completion?.requireCorrectGuess === true &&
+      !didHumanGuesserSolve(state, sp)
+    ) {
+      requiredPassed = false;
+      results = Object.freeze({
+        ...results,
+        ...Object.fromEntries(requiredIds.map(id => [id, false]))
+      });
+    }
     const ranked = rankStage({
       ranking: stage.ranking,
       facts,

@@ -83,12 +83,6 @@ function formatTime(sec) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-setInterval(() => {
-  if (window.state?.powers?.forceTimerActive) {
-    updateUI(); // <-- this already triggers power uiEffects
-  }
-}, 250);
-
 function updateTimerVisibility() {
   const blocks = document.querySelectorAll(".timer-block");
   if (!blocks.length || !state?.timeControl) return;
