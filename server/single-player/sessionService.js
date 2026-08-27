@@ -106,7 +106,8 @@ class SessionService {
   }
 
   async getCampaign(userId) {
-    await this.repo.ensureProfile(userId);
+    const profileResult = await this.repo.ensureProfile(userId);
+    if (!profileResult.ok) return profileResult;
     const snapshot = await this.repo.getCampaignSnapshot(userId);
     if (!snapshot.ok) return snapshot;
 
@@ -137,6 +138,10 @@ class SessionService {
   async startStage({ socket, userId, userName, stageId }) {
     const stage = getStage(stageId);
     if (!stage) return { ok: false, code: "UNKNOWN_STAGE" };
+    // Repair the default stage unlock before authorizing a direct Play click. This mirrors getCampaign() and closes stale-profile gaps.
+    const profileResult = await this.repo.ensureProfile(userId);
+    if (!profileResult.ok) return profileResult;
+
 
     const unlocks = await this.repo.getCampaignSnapshot(userId);
     if (!unlocks.ok) return unlocks;

@@ -14,6 +14,11 @@
 "use strict";
 
 const UNAVAILABLE = { ok: false, code: "CAMPAIGN_STORAGE_UNAVAILABLE" };
+const DEFAULT_CAMPAIGN_STAGE_ID = "chapter-1-1";
+const DEFAULT_CAMPAIGN_POWER_UNLOCKS = Object.freeze([
+  { role: "guesser", powerId: "revealGreen" },
+  { role: "setter", powerId: "countOnly" }
+]);
 
 function fail(error) {
   return { ...UNAVAILABLE, error: error?.message || String(error) };
@@ -24,9 +29,36 @@ class ProgressRepository {
     this.supabase = supabase;
   }
 
-  // Idempotent: relies on the DB trigger (sp_seed_profile_defaults) to
-  // seed stage-1 unlock + starter powers the first time a profile row is
-  // actually inserted. A profile that already exists is left untouched.
+  // Repair the campaign defaults on every entry, not only when the profile is
+  // first inserted. This keeps profiles created before the seed trigger (or
+  // while it was unavailable) from seeing the opening stage as locked.
+  async ensureProfileDefaults(userId) {
+    const { error: stageError } = await this.supabase
+      .from("single_player_stage_unlocks")
+      .upsert(
+        {
+          user_id: userId,
+          stage_id: DEFAULT_CAMPAIGN_STAGE_ID,
+          source_stage_id: null
+        },
+        { onConflict: "user_id,stage_id", ignoreDuplicates: true }
+      );
+    if (stageError) throw stageError;
+
+    const { error: powerError } = await this.supabase
+      .from("single_player_power_unlocks")
+      .upsert(
+        DEFAULT_CAMPAIGN_POWER_UNLOCKS.map(({ role, powerId }) => ({
+          user_id: userId,
+          role,
+          power_id: powerId,
+          source_stage_id: DEFAULT_CAMPAIGN_STAGE_ID
+        })),
+        { onConflict: "user_id,role,power_id", ignoreDuplicates: true }
+      );
+    if (powerError) throw powerError;
+  }
+
   async ensureProfile(userId) {
     if (!this.supabase) return UNAVAILABLE;
     try {
@@ -36,17 +68,22 @@ class ProgressRepository {
         .eq("user_id", userId)
         .maybeSingle();
       if (selectError) throw selectError;
-      if (existing) return { ok: true, created: false };
 
-      const { error: insertError } = await this.supabase
-        .from("single_player_profiles")
-        .insert({ user_id: userId })
-        .select()
-        .single();
-      // A concurrent request may have inserted first -- unique violation
-      // on user_id is a success, not a failure, for an idempotent ensure.
-      if (insertError && insertError.code !== "23505") throw insertError;
-      return { ok: true, created: !insertError };
+      let created = false;
+      if (!existing) {
+        const { error: insertError } = await this.supabase
+          .from("single_player_profiles")
+          .insert({ user_id: userId })
+          .select()
+          .single();
+        // A concurrent request may have inserted first. The profile and its
+        // defaults are still ensured below, so a unique conflict is success.
+        if (insertError && insertError.code !== "23505") throw insertError;
+        created = !insertError;
+      }
+
+      await this.ensureProfileDefaults(userId);
+      return { ok: true, created };
     } catch (error) {
       return fail(error);
     }
