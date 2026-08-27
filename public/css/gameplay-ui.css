@@ -1895,13 +1895,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   background: linear-gradient(180deg, rgba(17, 27, 39, 0.99), rgba(7, 12, 19, 0.99));
   color: var(--game-text);
   text-align: left;
-  cursor: pointer;
-}
-
-.pc-current-quest-card:hover,
-.pc-current-quest-card:focus-visible {
-  border-color: rgba(128, 232, 255, 0.9);
-  outline: none;
 }
 
 .pc-current-quest-card.is-met {
@@ -1938,26 +1931,29 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   flex-direction: column;
   align-items: flex-end;
   gap: 3px;
+  max-width: 45%;
 }
 
-.pc-current-expand {
-  color: rgba(185, 218, 238, 0.52);
-  font-size: 8px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
+/* Text is always present in the markup (see renderCurrentQuest) --
+   .is-met only ever toggles opacity, never the text itself, so this
+   corner reserves the same width/height whether or not the quest is
+   currently met. Without that, the card's own layout shifted the
+   instant a draft satisfied it. */
 .pc-current-status {
   color: #9effce;
   font-size: 9px;
   font-weight: 950;
   letter-spacing: 0.12em;
   text-shadow: 0 0 10px rgba(85, 255, 180, 0.7);
+  opacity: 0;
+}
+
+.pc-current-status.is-met {
+  opacity: 1;
 }
 
 .pc-current-desc,
 .pc-current-conditions,
-.pc-quest-optional-note,
 .pc-current-quest-card > .pc-guide-actions {
   grid-column: 1 / -1;
 }
@@ -1966,14 +1962,15 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   margin-top: 5px;
 }
 
-/* Sits right under the quest name, above the description and the
-   collapsible Rules panel -- a plain reminder that the quest is a bonus
-   attempt, not a requirement, so missing it costs nothing. */
+/* Sits in the card's top-right corner, under the MET status -- a plain
+   reminder that the quest is a bonus attempt, not a requirement, so
+   missing it costs nothing. */
 .pc-quest-optional-note {
   color: rgba(185, 218, 238, 0.5);
   font-size: 9px;
   font-style: italic;
   letter-spacing: 0.02em;
+  text-align: right;
 }
 
 .pc-current-desc {
@@ -2001,33 +1998,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   border-color: rgba(112, 255, 194, 0.66);
   background: rgba(65, 231, 157, 0.12);
   color: #b8ffdd;
-}
-
-.pc-quest-guide {
-  display: none;
-  margin: -2px 8px 0;
-  padding: 10px 11px;
-  border: 1px solid rgba(88, 201, 255, 0.24);
-  border-top: 0;
-  border-radius: 0 0 10px 10px;
-  background: rgba(7, 13, 21, 0.99);
-}
-
-.pc-quest-guide.is-open {
-  display: block;
-}
-
-.pc-quest-guide p,
-.pc-guide-no-keys {
-  margin: 0;
-  color: var(--game-muted);
-  font-size: 10px;
-  line-height: 1.42;
-}
-
-.pc-guide-no-keys {
-  display: block;
-  margin-top: 7px;
 }
 
 .pc-guide-actions {
@@ -2873,10 +2843,6 @@ body.power-choice-mode #spyChargeAwardBackdrop {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .pc-current-expand {
-    flex: none;
   }
 }
 
