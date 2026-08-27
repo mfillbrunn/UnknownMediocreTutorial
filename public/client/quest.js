@@ -103,16 +103,26 @@ function computeVowelShortageCount(history, target = 1) {
 // Mirrors questServer.js's computeHardModeCount exactly. mustInclude is a
 // Map<letter, Set<excludedPositions>> -- a yellow letter must appear
 // somewhere in the guess AND must not land back at a position it already
-// came back yellow at (yellow means "in the word, not here").
+// came back yellow at (yellow means "in the word, not here"). absent is
+// a Set<letter> confirmed NOT in the secret (grayed out with no
+// green/yellow for that letter anywhere in the same guess) -- reusing
+// one of them breaks compliance too, unless green/mustInclude separately
+// requires that same letter (see questServer.js's isHardModeCompliant
+// for why the requirement has to win instead of permanently locking the
+// quest out after a mid-round secret change).
 function computeHardModeProgress(history) {
   const green = [null, null, null, null, null];
   const mustInclude = new Map();
+  const absent = new Set();
   let count = 0;
 
   for (const entry of history) {
     const fb = entry.fbGuesser || entry.fb;
     if (!Array.isArray(fb) || !entry.guess) continue;
     const g = entry.guess.toUpperCase();
+
+    const required = new Set(mustInclude.keys());
+    for (const letter of green) if (letter) required.add(letter);
 
     let compliant = true;
     for (let i = 0; i < 5; i++) {
@@ -124,13 +134,23 @@ function computeHardModeProgress(history) {
         if (g[pos] === letter) compliant = false;
       }
     }
+    for (const letter of g) {
+      if (absent.has(letter) && !required.has(letter)) compliant = false;
+    }
     if (compliant) count++;
+
+    const positiveLettersThisGuess = new Set();
+    for (let i = 0; i < 5; i++) {
+      if (fb[i] === "🟩" || fb[i] === "🟨") positiveLettersThisGuess.add(g[i]);
+    }
 
     for (let i = 0; i < 5; i++) {
       if (fb[i] === "🟩") green[i] = g[i];
       else if (fb[i] === "🟨") {
         if (!mustInclude.has(g[i])) mustInclude.set(g[i], new Set());
         mustInclude.get(g[i]).add(i);
+      } else if (fb[i] === "⬛" && !positiveLettersThisGuess.has(g[i])) {
+        absent.add(g[i]);
       }
     }
   }
