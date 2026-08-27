@@ -1,3 +1,13 @@
+// Required lazily inside eraseLetterKnowledge, not at module load, purely
+// to sidestep any require-ordering fragility -- there's no actual cycle
+// (questServer.js's own dependency chain never reaches this file), but a
+// low-level shared utility reaching up to resync a specific feature's
+// derived state is unusual enough to keep the dependency visibly scoped
+// to exactly where it's used rather than a blanket top-of-file require.
+function resyncQuestReadiness(state) {
+  require("../powers/powers/questServer").resyncQuestReadiness(state);
+}
+
 function normalizeLetterSet(letters) {
   const source =
     letters instanceof Set
@@ -152,6 +162,14 @@ function eraseLetterKnowledge(state, letters) {
     }
   }
   // POWER CHOICE REWARD TIERS V1: RESET CLEANUP END
+
+  // Any quest whose readiness was derived from the feedback just erased
+  // (e.g. HARDMODE compliance against a now-demoted green) needs to be
+  // re-checked against the real, current history -- see
+  // resyncQuestReadiness's own comment in questServer.js for why this
+  // can't just be a one-way "became ready" latch.
+  resyncQuestReadiness(state);
+
   return result;
 }
 

@@ -770,6 +770,34 @@ engine.registerPower("quest", {
   }
 });
 
+// Re-derives ready/oneAway from state.history as it stands RIGHT NOW.
+// Unlike onGuessSubmitted/turnStart above (which only ever latch ready
+// from false to true, as a one-way "the guesser just earned this"
+// signal), this can also correct ready back to false -- needed because a
+// handful of setter-side effects erase or demote PAST feedback well
+// after a quest's readiness was already latched in: a Power Choice
+// reward (Fade a Green, Erase Two Clues, Trade a Yellow, ...), the
+// classic per-turn letter reset (spyChargeServer.js's attemptReset),
+// Vowel Refresh, and Hide Evidence all funnel through
+// resetLetterKnowledge.js's eraseLetterKnowledge, which calls this after
+// every erasure. A HARDMODE guess that was compliant against the
+// green/mustInclude constraints in force when it was made can stop being
+// compliant once an earlier green gets demoted to yellow, for example --
+// without this, the badge stayed lit "ready" (or worse, claimable) even
+// though the history it was computed from no longer supports it.
+// FIELDREPORT and an already-claimed quest have nothing to correct here:
+// FIELDREPORT's own conditions/history-based check already reads
+// state.history the same way isQuestReady does, and q.used means the
+// reward is already granted.
+function resyncQuestReadiness(state) {
+  const q = state?.powers?.quest;
+  if (!q || !q.type || q.used) return;
+
+  const ready = isQuestReady(q, state.history || []);
+  q.ready = ready;
+  q.oneAway = !ready && isQuestOneAway(q, state);
+}
+
 module.exports = {
   QUEST_TYPES,
   QUEST_THRESHOLDS,
@@ -804,5 +832,6 @@ module.exports = {
   isQuestReady,
   isQuestOneAway,
   evaluateQuestProgress,
+  resyncQuestReadiness,
   attemptQuestClaim
 };
