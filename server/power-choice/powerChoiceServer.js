@@ -340,7 +340,7 @@ function makeQuest(excludeType = null) {
       type,
       icon: "◆",
       title: "Hard Mode",
-      description: "Honor every green and yellow clue already known."
+      description: "Find a word that respects all prior feedback (yellow, green, and greyed out letters)."
     };
   }
   if (type === "FIELDREPORT") {

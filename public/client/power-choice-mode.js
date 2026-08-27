@@ -566,15 +566,10 @@
         letters = [...VOWELS];
         label = "vowels";
         break;
-      // BOOKENDS deliberately has no highlight guide -- "match the first
-      // and last letter" doesn't need a keyboard hint the way a fixed
-      // letter range or a specific clue set does.
-      case "HARDMODE": {
-        const clues = knownClues();
-        letters = [...new Set([...clues.greenByIndex.values(), ...clues.yellowLetters])];
-        label = "known clue letters";
-        break;
-      }
+      // BOOKENDS and HARDMODE deliberately have no highlight guide --
+      // "match the first and last letter" and "respect every prior clue"
+      // are about the whole board's feedback, not a fixed letter range a
+      // keyboard highlight could usefully call out.
       case "FIELDREPORT": {
         const collected = new Set();
         for (const condition of quest.conditions || []) {
