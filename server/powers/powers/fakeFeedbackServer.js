@@ -175,6 +175,12 @@ engine.registerPower("fakeFeedback", {
 
   postScore(state, entry) {
     if (!state.powers.fakeFeedbackActive) return;
+    // One-shot per activation: this is the guesser's NEXT guess after the
+    // setter fired the power, not every guess for the rest of the round --
+    // fakeFeedbackUsed already blocks re-activating it, but without this
+    // the guesser's every following guess this round would keep getting
+    // faked too.
+    state.powers.fakeFeedbackActive = false;
     const guess = (state.pendingGuess || "").toUpperCase();
     // entry.fb is the real feedback finalizeFeedback just computed -- use it
     // directly ("use the existing feedback"), falling back to a fresh score

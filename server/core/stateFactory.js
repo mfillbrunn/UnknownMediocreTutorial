@@ -138,8 +138,18 @@ const powers = {
       // draft/secret instead).
       letterProfileMode: null,
       letterProfileGuesserStat: null,
-      // POWER CHOICE: always-on rewards that remain unlocked for the game.
-      // These grants are tracked by role position across round transitions.
+      // POWER CHOICE: which "always-on" powers a role has permanently
+      // unlocked via a reward card (Informant, Letter Profile -- see
+      // powerChoiceServer.js's PERSISTENT_POWER_IDS).
+      // Unlike a normal activePowers grant (rebuilt fresh every round in
+      // Power Choice, see initializeRound), these are meant to last for
+      // the rest of the game once chosen, so they live here rather than
+      // on state.powerChoice (which gets replaced wholesale each round)
+      // and are carried across round transitions the same explicit way
+      // letterProfileMode is (see nextRoundTransition.js). Tracked by
+      // ROLE POSITION, matching letterProfileMode's own precedent: round
+      // 2's setter is normally a different player, but the position
+      // itself keeps what it already unlocked.
       powerChoicePersistentGrants: { setter: [], guesser: [] },
       // DELAYED INTEL (setter power). One-time use per round: activated
       // during the setter's own turn, it delays only the round about to be

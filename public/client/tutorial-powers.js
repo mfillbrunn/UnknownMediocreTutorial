@@ -16,7 +16,6 @@ const POWER_TUTORIAL_ROLE = Object.freeze({
   blindGuess: "setter",
   blindSpot: "setter",
   delayedIntel: "setter",
-  letterLockout: "setter",
   revealPenalty: "setter",
 
   freezeSecret: "guesser",
@@ -147,10 +146,6 @@ const POWER_TUTORIAL_SIMPLE_COPY = Object.freeze({
   delayedIntel: {
     owner: "The Guesser does not see this clue until after the next guess.",
     receiver: "This clue is hidden until after your next guess."
-  },
-  letterLockout: {
-    owner: "Pick one letter. The Guesser cannot use it in the next guess.",
-    receiver: "One letter is banned from your next guess."
   },
   revealPenalty: {
     owner: "Claim that a letter is in the secret. The Guesser can believe you or call a bluff.",

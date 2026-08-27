@@ -54,7 +54,6 @@ window.renderKeyboard = function ({
       "key-current",
       "key-uncertain",
       "key-purple",
-      "key-banned",
       "key-manual",
       "key-swept"
     );
@@ -130,18 +129,11 @@ window.renderKeyboard = function ({
         keyEl.classList.add("key-current");
       }
 
-      // Letter Lockout (setter power): only the GUESSER's next guess is
-      // restricted — mark it on their keyboard only, not the setter's own
-      // (which would misleadingly imply the setter's typing is affected
-      // too, when it's only a preview of what they just banned).
-      if (isGuesser && state.powers?.letterLockoutBanned === symbol) {
-        keyEl.classList.add("key-banned");
-      }
-
-      // Letter Scan / Letter Sweep (letterProbe): every scanned key shows
-      // the aggregate number of hits returned by the server. The same number
-      // is repeated on all five scanned keys because the power deliberately
-      // does not reveal which individual letters matched the secret.
+      // Letter Scan (letterProbe): mark the letters this turn's sweep
+      // tested, in the order they were typed, so the guesser has a memory
+      // aid for which keys were already checked (the game only reports an
+      // aggregate count, never which ones hit). Guesser-only, same as the
+      // info badge/popup this result already feeds.
       if (isGuesser) {
         const sweepResult = state.powers?.letterProbeResult;
         const sweepLetters = String(sweepResult?.letters || "");

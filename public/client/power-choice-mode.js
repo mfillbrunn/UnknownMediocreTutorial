@@ -23,7 +23,6 @@
   const ordinal = value => ["1st", "2nd", "3rd", "4th", "5th"][Number(value) - 1] || `${value}th`;
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-  let questGuideOpen = false;
   let questHintsActive = false;
   let lastQuestId = "";
   let renderQueued = false;
@@ -181,9 +180,6 @@
     return clamp(window.state?.powers?.spyCharge?.total, 0, SPY_MAX);
   }
 
-
-
-
   function renderSpyPanel(container) {
     const total = spyDisplayTotal();
     const pending = window.state?.powerChoice?.pendingChoice?.role === "setter";
@@ -208,7 +204,6 @@
           <span><b>12</b> choose 2 rewards</span>
         </div>
       </div>
-
     </section>`;
     byId("pcSpyChargeCard")?.addEventListener("click", () => {
       container.dataset.pcDetailsOpen = detailsOpen ? "false" : "true";
@@ -528,20 +523,10 @@
         letters = [...VOWELS];
         label = "vowels";
         break;
-      case "BOOKENDS": {
-        const first = clean[0];
-        if (first) {
-          letters = [first];
-          label = `finish with ${first}`;
-        }
-        break;
-      }
-      case "HARDMODE": {
-        const clues = knownClues();
-        letters = [...new Set([...clues.greenByIndex.values(), ...clues.yellowLetters])];
-        label = "known clue letters";
-        break;
-      }
+      // BOOKENDS and HARDMODE deliberately have no highlight guide --
+      // "match the first and last letter" and "respect every prior clue"
+      // are about the whole board's feedback, not a fixed letter range a
+      // keyboard highlight could usefully call out.
       case "FIELDREPORT": {
         const collected = new Set();
         for (const condition of quest.conditions || []) {
@@ -588,11 +573,10 @@
     host.classList.toggle("hidden", !show);
     if (!show) {
       // No quest to guide anymore -- roles just switched, the match ended,
-      // or a new one started. The guide-open/highlight flags are sticky
-      // module state, so without this they survived into the next match and
-      // the keyboard came back still wearing the old quest's highlights.
+      // or a new one started. The highlight flag is sticky module state,
+      // so without this it survived into the next match and the keyboard
+      // came back still wearing the old quest's highlights.
       lastQuestId = "";
-      questGuideOpen = false;
       questHintsActive = false;
       clearQuestKeyHints();
       currentDraftRow()?.classList.remove("pc-quest-draft-met");
@@ -609,7 +593,6 @@
     // for a quest that hadn't started yet).
     if (quest.id !== lastQuestId) {
       lastQuestId = quest.id || "";
-      questGuideOpen = false;
       questHintsActive = false;
       clearQuestKeyHints();
     }
@@ -646,7 +629,6 @@
       word: rawDraft,
       met,
       conditions: conditionResults,
-      open: questGuideOpen,
       hints: questHintsActive,
       hintLabel: hintSpec?.label
     });
@@ -658,20 +640,21 @@
     }
     host.dataset.pcSignature = signature;
 
-    // The highlight/clear toggle used to live inside the collapsible Rules
-    // panel below, so reaching it meant expanding the card first every
-    // time. It's now a real button sitting directly on the (collapsed)
-    // card itself -- which means the card can no longer be a <button>
-    // (a nested <button> is invalid HTML and gets hoisted out by the
-    // parser), so it's a role="button" div with its own click/keydown
-    // handling instead.
-    host.innerHTML = `<div class="pc-current-quest-card${met ? " is-met" : ""}" role="button" tabindex="0" aria-expanded="${questGuideOpen}">
+    // No expandable Rules panel any more -- quest.description plus the
+    // condition chips already say what's needed, so a second, mostly
+    // redundant explanation behind a "Click for rules" tap wasn't
+    // pulling its weight. The MET status always renders its text (with
+    // .is-met controlling visibility via CSS, not the text itself) so
+    // that corner's width stays constant whether or not it's showing --
+    // otherwise the card's own width/wrap could shift the instant a
+    // draft satisfied the quest.
+    host.innerHTML = `<div class="pc-current-quest-card${met ? " is-met" : ""}">
       <span class="pc-current-main">
         <strong>${esc(quest.title || "Quest")}</strong>
-      <span class="pc-quest-optional-note">Optional -- complete for a reward</span></span>
+      </span>
       <span class="pc-current-top-right">
-        <span class="pc-current-status" aria-live="polite">${met ? "MET" : ""}</span>
-        <span class="pc-current-expand">${questGuideOpen ? "Close" : "Click for rules"}</span>
+        <span class="pc-current-status${met ? " is-met" : ""}" aria-live="polite" aria-hidden="${met ? "false" : "true"}">MET</span>
+        <span class="pc-quest-optional-note">Optional -- complete for a reward</span>
       </span>
       <span class="pc-current-desc">${esc(quest.description || "Complete the shown condition.")}</span>
       ${conditionLabels.length ? `<span class="pc-current-conditions">${conditionLabels.map((label, index) => `<span class="pc-condition-chip${conditionResults[index] ? " is-met" : ""}">${esc(label)}</span>`).join("")}</span>` : ""}
@@ -680,33 +663,15 @@
           ? `<button type="button" class="pc-guide-clear-btn">Clear highlights</button>`
           : `<button type="button" class="pc-guide-highlight-btn">Highlight ${esc(hintSpec.label)}</button>`}
       </div>` : ""}
-    </div>
-    <div class="pc-quest-guide${questGuideOpen ? " is-open" : ""}">
-      <p>${esc(guideCopyForQuest(quest))}</p>
-      ${hintSpec ? "" : `<span class="pc-guide-no-keys">This quest is based on word structure, so no fixed keyboard range is needed.</span>`}
     </div>`;
 
-    const card = host.querySelector(".pc-current-quest-card");
-    const toggleGuide = () => {
-      questGuideOpen = !questGuideOpen;
-      host.dataset.pcSignature = "";
-      renderCurrentQuest();
-    };
-    card?.addEventListener("click", toggleGuide);
-    card?.addEventListener("keydown", event => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      toggleGuide();
-    });
-    host.querySelector(".pc-guide-highlight-btn")?.addEventListener("click", event => {
-      event.stopPropagation();
+    host.querySelector(".pc-guide-highlight-btn")?.addEventListener("click", () => {
       questHintsActive = true;
       applyQuestKeyHints();
       host.dataset.pcSignature = "";
       renderCurrentQuest();
     });
-    host.querySelector(".pc-guide-clear-btn")?.addEventListener("click", event => {
-      event.stopPropagation();
+    host.querySelector(".pc-guide-clear-btn")?.addEventListener("click", () => {
       questHintsActive = false;
       clearQuestKeyHints();
       host.dataset.pcSignature = "";
@@ -718,23 +683,6 @@
     applyQuestKeyHints();
   }
 
-  function guideCopyForQuest(quest) {
-    switch (quest?.type) {
-      case "ROW_LIMIT": return "No single keyboard row (top, home, or bottom) may supply more than 2 of your 5 letters.";
-      case "ROW_ONLY": return "Every letter must come from the same keyboard row -- top, home, or bottom, whichever you pick.";
-      case "ROW_AVOID": return `No letter may come from the ${quest.avoidRow || ""} row.`;
-      case "RARE": return `Include at least one of ${quest.letters?.join(", ") || "the listed letters"}.`;
-      case "ALPHA": return "All five letters must move strictly forward or strictly backward through the alphabet.";
-      case "HARDMODE": return "Keep every known green in place and include every known yellow letter.";
-      case "FIELDREPORT": return "All three conditions must be satisfied by the same submitted word.";
-      case "ALTERNATING": return "Alternate vowel and consonant status at every position.";
-      case "BOOKENDS": return "The first and fifth letters must be identical.";
-      case "HALF_AM": return "Every letter must be from A through P, inclusive.";
-      case "HALF_NZ": return "Every letter must be from K through Z, inclusive.";
-      case "VOWELSHORTAGE": return `Use exactly ${Number(quest.vowelTarget) || 1} vowel${Number(quest.vowelTarget) === 1 ? "" : "s"}.`;
-      default: return quest?.description || "Complete the shown condition.";
-    }
-  }
 
   function keyboardLetter(key) {
     const candidate = String(

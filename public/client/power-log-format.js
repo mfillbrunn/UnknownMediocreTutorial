@@ -47,10 +47,6 @@
       if (p.reward === "none-left") return `${p.metCount}/3 met — nothing left to reveal`;
       return `${p.metCount}/3 met — no reveal`;
     },
-    letterLockout(emissions) {
-      const p = findEmission(emissions, "powerUsed")?.payload;
-      return p?.letter ? `banned letter ${p.letter}` : null;
-    },
     hideTile(emissions) {
       const p = findEmission(emissions, "powerUsed")?.payload;
       return p?.letter ? `reset letter ${p.letter}` : null;

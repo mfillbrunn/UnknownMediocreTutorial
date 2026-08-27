@@ -36,9 +36,14 @@ function computeMatchResult(state, viewerUserId) {
     } else if (pB > pA) {
       winner = idB;
     } else {
+      // The time tiebreaker only means anything between two humans -- an
+      // AI opponent replies close to instantly every turn, so it would
+      // win every equal-points match on "speed" that was never a real
+      // contest. An equal-points match against a bot is a straight tie.
+      const vsAI = !!(state.players?.[idA]?.isAI || state.players?.[idB]?.isAI);
       const tA = time[idA] || 0;
       const tB = time[idB] || 0;
-      if (tA !== tB) {
+      if (!vsAI && tA !== tB) {
         winner = tA <= tB ? idA : idB;
         winReason = "time";
       } else {

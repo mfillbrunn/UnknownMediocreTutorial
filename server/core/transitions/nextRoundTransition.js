@@ -44,11 +44,11 @@ function advanceToNextRound(room, state, roomId, context) {
     savedLetterProfileMode = state.powers.letterProfileMode;
   }
 
-  // Power Choice: which "always-on" powers (Letter Profile, Letter
-  // Lockout -- both game-long) either role has permanently unlocked via a
-  // reward card. This is the actual source of truth Power Choice's own
+  // Power Choice: which "always-on" powers (Letter Profile -- game-long)
+  // either role has permanently unlocked via a reward card. This is the
+  // actual source of truth Power Choice's own
   // initializeRound rebuilds state.activePowers from every action, so
-  // unlike the three saves above (each gated on the power already being
+  // unlike the two saves above (each gated on the power already being
   // in this round's activePowers) this one is unconditional -- resetting
   // it to empty here would silently take the reward away the moment the
   // next round started.
@@ -78,7 +78,6 @@ function advanceToNextRound(room, state, roomId, context) {
   if (state.activePowers.includes("letterProfile")) {
     state.powers.letterProfileMode = savedLetterProfileMode;
   }
-
 
   if (savedPowerChoicePersistentGrants) {
     state.powers.powerChoicePersistentGrants = savedPowerChoicePersistentGrants;

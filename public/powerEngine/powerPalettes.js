@@ -169,11 +169,5 @@ window.POWER_PALETTES = Object.freeze({
     "#A78BFA",
     "#6366F1",
     "#38BDF8"
-  ],
-
-  letterLockout: [
-    "#FB7185",
-    "#EF4444",
-    "#F97316"
   ]
 });

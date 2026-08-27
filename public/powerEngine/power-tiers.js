@@ -7,7 +7,7 @@
     hideTile:{role:"setter",tier:2}, blindSpot:{role:"setter",tier:2},
     suggestSecret:{role:"setter",tier:2}, vowelRefresh:{role:"setter",tier:2},
     forceGuess:{role:"setter",tier:2}, revealPenalty:{role:"setter",tier:2},
-    letterLockout:{role:"setter",tier:3}, assassinWord:{role:"setter",tier:3},
+    assassinWord:{role:"setter",tier:3},
     revealGreen:{role:"guesser",tier:1}, freezeSecret:{role:"guesser",tier:1},
     rouletteSecret:{role:"guesser",tier:3}, stealthGuess:{role:"guesser",tier:1},
     nonsense:{role:"guesser",tier:1}, magicMode:{role:"guesser",tier:3},

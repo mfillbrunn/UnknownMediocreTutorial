@@ -293,6 +293,5 @@ window.POWER_METADATA = {
     icon: "clock-delay",
     emoji: "🕰️",
     color: "#A78BFA"
-  },
-
+  }
 };

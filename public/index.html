@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="css/mobile.css?mobile-perf=1">
   <!-- New features -->
   <link rel="stylesheet" href="css/features.css?v=tutorial-motion-sim-2">
-  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&desktop-size-balance=2">
+  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2">
   <link rel="stylesheet" href="single-player/single-player.css">
 </head>
 <body>
@@ -190,13 +190,6 @@
         <text x="43" y="59" text-anchor="middle" font-size="27" font-weight="900" fill="#f4f5f7">1</text>
         <text x="77" y="83" text-anchor="middle" font-size="27" font-weight="900" fill="#f4f5f7">2</text>
         <path d="M79 21h14v15h14L86 55 65 36h14z" fill="#f4f5f7"/>
-      </symbol>
-      <symbol id="icon-letter-lockout" viewBox="0 0 120 120">
-        <rect x="13" y="22" width="66" height="77" rx="12" fill="currentColor"/>
-        <text x="46" y="76" text-anchor="middle" font-size="45" font-weight="900" fill="#f4f5f7">X</text>
-        <rect x="65" y="52" width="44" height="44" rx="8" fill="currentColor" stroke="#f4f5f7" stroke-width="5"/>
-        <path d="M76 54V43a12 12 0 0 1 24 0v11" fill="none" stroke="#f4f5f7" stroke-width="7"/>
-        <path d="m76 64 24 21m0-21L76 85" fill="none" stroke="#f4f5f7" stroke-linecap="round" stroke-width="6"/>
       </symbol>
       <!-- COMPETITIVE OVERHAUL V3: SVG ICONS END -->
     </defs>
@@ -1521,8 +1514,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="authentication/supabaseClient.js"></script>
   <script src="/socket.io/socket.io.js"></script>
-  <script src="client/helpers.js"></script>  
-  <script src="client/statistics.js?menu-account-spacing=1"></script>  
+  <script src="client/helpers.js"></script>
+  <script src="client/statistics.js?menu-account-spacing=1"></script>
   <script src="network/socketClient.js"></script>
 
   <script src="/game-engine/scoring.js"></script>
@@ -1601,7 +1594,7 @@
   <script src="powerEngine/powers/doubleGuess.js"></script>
   <script src="powerEngine/powers/letterProfile.js"></script>
   <script src="powerEngine/powers/delayedIntel.js"></script>
-  <script src="client/summary.js"></script>
+  <script src="client/summary.js?v=ai-tie-fix-1"></script>
   <script src="client/action-log.js?setter-fixes=2"></script>
   <script src="client/action-log-colors.js?setter-board=1"></script>
   <script src="client/action-log-dedupe-v6.js?setter-fixes=2"></script>
@@ -1659,6 +1652,6 @@
   <script src="ui/gameplay-systems-v10.js?v=10&compact-bonus=1&star-bonus-fix=1&mobile-perf=1"></script>
   <script src="ui/competitive-fixes-v2.js?competitive-fixes=2.2&mobile-perf=1"></script>
   <script src="powerEngine/power-tiers.js?v=2.3-card-carousel"></script> <!-- power-choice-mode-v2.2 -->
-  <script src="client/power-choice-mode.js?v=tutorial-motion-sim-2&star-bonus-fix=1&mobile-perf=1"></script> <!-- power-choice-mode-v2.2 -->
+  <script src="client/power-choice-mode.js?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&hardmode-copy=1&mobile-perf=1"></script> <!-- power-choice-mode-v2.2 -->
 </body>
 </html>

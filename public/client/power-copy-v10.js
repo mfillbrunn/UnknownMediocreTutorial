@@ -121,7 +121,7 @@
     delayedIntel: {
       short: "Helps the Secretkeeper delay feedback until after the Guesser's following guess.",
       desc: "Helps the Secretkeeper by holding back the current feedback until the Guesser has submitted another guess."
-    },
+    }
   };
 
   for (const [id, copy] of Object.entries(benefitCopy)) {

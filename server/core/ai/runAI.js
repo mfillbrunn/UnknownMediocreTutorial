@@ -222,7 +222,6 @@ function buildPowerAction(powerId, state, context) {
     return { type };
   }
 
-
   if (powerId === "revealPenalty") {
     // revealPenaltyServer.js rejects any letter already confirmed green/
     // yellow/gray, or already forced via another power — mirror that

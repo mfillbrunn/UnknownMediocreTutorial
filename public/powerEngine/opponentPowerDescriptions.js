@@ -85,6 +85,5 @@ window.OPPONENT_POWER_DESCRIPTIONS =
       "Your opponent can see how many of the secret's letters are vowels.",
 
     delayedIntel:
-      "Your opponent delayed this round's feedback until after your next guess.",
-
+      "Your opponent delayed this round's feedback until after your next guess."
   });
