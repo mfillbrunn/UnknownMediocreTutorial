@@ -95,22 +95,30 @@ function _dailyOpeningSetupHtml(config) {
 // invite.js's shareOrCopyInviteLink, just with a Wordle-style result
 // summary instead of a join link.
 async function _shareDailyResult(config, r) {
-  const diffLabel = r.difficulty ? ` vs ${dailyDifficultyMeta(r.difficulty).label} AI` : "";
   const modeLabel = _dailyModeLabel(config.playMode);
 
   let scoreLine;
-  if (config.playMode === "both") {
-    const outcome = r.scoreDifference > 0 ? "Won" : r.scoreDifference < 0 ? "Lost" : "Tied";
-    scoreLine = `Setter ${r.setterScore} · Guesser ${r.guesserScore} (diff ${r.scoreDifference > 0 ? "+" : ""}${r.scoreDifference}) — ${outcome}`;
+  if (r?.abandoned) {
+    // An abandoned attempt never recorded a score (see
+    // dailyTracking.js's markDailyAbandoned) -- share that honestly
+    // instead of printing a fabricated 0.
+    scoreLine = "Didn't finish this one.";
+  } else if (config.playMode === "both") {
+    const diff = r.scoreDifference ?? 0;
+    const outcome = diff > 0 ? "Won" : diff < 0 ? "Lost" : "Tied";
+    scoreLine = `Setter ${r.setterScore ?? 0} · Guesser ${r.guesserScore ?? 0} (diff ${diff > 0 ? "+" : ""}${diff}) — ${outcome}`;
   } else if (config.playMode === "setter") {
-    scoreLine = `Secretkeeper score: ${r.setterScore}`;
+    scoreLine = `Secretkeeper score: ${r.setterScore ?? 0}`;
   } else {
-    scoreLine = `Guesser score: ${r.guesserScore}`;
+    scoreLine = `Guesser score: ${r.guesserScore ?? 0}`;
   }
+
+  const diffLabel = !r?.abandoned && r?.difficulty ? ` vs ${dailyDifficultyMeta(r.difficulty).label} AI` : "";
+  const timeLine = !r?.abandoned ? ` — ${formatDailyTime(r.time)}${diffLabel}` : "";
 
   const text = [
     `Vowel Play — Daily Challenge ${config.date}`,
-    `${modeLabel} — ${formatDailyTime(r.time)}${diffLabel}`,
+    `${modeLabel}${timeLine}`,
     scoreLine,
     location.origin
   ].join("\n");
@@ -165,7 +173,10 @@ window.showDailyChallenge = async function () {
 
     // Abandoning a started daily room (My Games > Abandon) counts as
     // "already played" too -- markDailyAbandoned() records this instead
-    // of a real score, since there's no result to show or share.
+    // of a real score, so there's no score/time to show here. Rankings
+    // and Share are still offered though -- there's no reason losing your
+    // own result should also cut you off from seeing how others did or
+    // sharing that you gave today's challenge a shot.
     if (r?.abandoned) {
       screen.innerHTML = `<div class="menu-center">
         <div class="screen-back-header">
@@ -176,7 +187,17 @@ window.showDailyChallenge = async function () {
         <p class="daily-completed-msg">
           You already played today's challenge and abandoned it. Come back tomorrow!
         </p>
+        <button id="dailyRankingsBtn" class="menu-btn small">🏆 Rankings</button>
+        <div class="daily-result-actions" style="max-width:260px;margin:14px auto 0">
+          <button id="shareDailyBtn" class="menu-btn primary small">Share Result 📤</button>
+        </div>
       </div>`;
+      document.getElementById("shareDailyBtn")?.addEventListener("click", () => {
+        _shareDailyResult(config, r);
+      });
+      document.getElementById("dailyRankingsBtn")?.addEventListener("click", () => {
+        _showDailyRankings(config);
+      });
       return;
     }
 
