@@ -22,7 +22,7 @@ const POWER_TIERS = Object.freeze({
   rouletteSecret: { role: "guesser", tier: 2 },
   stealthGuess: { role: "guesser", tier: 1 },
   nonsense: { role: "guesser", tier: 1 },
-  magicMode: { role: "guesser", tier: 2 },
+  magicMode: { role: "guesser", tier: 3 },
   suggestGuess: { role: "guesser", tier: 1 },
   revealHistory: { role: "guesser", tier: 2 },
   letterProbe: { role: "guesser", tier: 2 },

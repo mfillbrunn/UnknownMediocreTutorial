@@ -10,7 +10,7 @@
     assassinWord:{role:"setter",tier:3},
     revealGreen:{role:"guesser",tier:1}, freezeSecret:{role:"guesser",tier:2},
     rouletteSecret:{role:"guesser",tier:2}, stealthGuess:{role:"guesser",tier:1},
-    nonsense:{role:"guesser",tier:1}, magicMode:{role:"guesser",tier:2},
+    nonsense:{role:"guesser",tier:1}, magicMode:{role:"guesser",tier:3},
     suggestGuess:{role:"guesser",tier:1}, revealHistory:{role:"guesser",tier:2},
     letterProbe:{role:"guesser",tier:2}, revealLocation:{role:"guesser",tier:3},
     letterProfile:{role:"guesser",tier:2}, betMiss:{role:"guesser",tier:2},

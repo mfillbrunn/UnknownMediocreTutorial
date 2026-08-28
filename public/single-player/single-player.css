@@ -7,11 +7,21 @@
  * --btn-primary, ...) rather than redeclaring them.
  */
 
+/* .menu-center's own generic panel-chrome rule (game-menu.css, shared with
+   every other menu screen) sets align-items: center -- fine for panels
+   whose content is ordinary centered buttons/text, but it also overrides
+   flex's default cross-axis "stretch" here, and single-player.css loads
+   after game-menu.css so it wins on the tied (0,1,0) specificity. Without
+   an explicit override, .sp-view (and #spMapNodes inside it, whose only
+   children are position:absolute map nodes with no intrinsic width of
+   their own) collapses to a sliver a couple pixels wide instead of
+   filling .sp-shell -- the map renders but is effectively invisible. */
 .sp-shell {
   width: 100%;
   max-width: 480px;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: var(--sp-16);
 }
 

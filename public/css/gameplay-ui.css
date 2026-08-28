@@ -908,36 +908,44 @@
   transform: none !important;
 }
 
-/* Empty by default -- hollow and dim, so an unearned star can never be
-   mistaken for an earned one. Two plain yellow base-star slots plus one
-   separate, always-blue bonus-star slot (see ui/draftrow.js's markup and
-   ui/setter-board.js's ensureCoverStarSlots) -- the base/bonus split is
-   what stops the 3rd slot from ever reading as just another yellow star. */
+/* Empty by default -- transparent interior, thick outline, so an unearned
+   star reads as clearly hollow instead of just a dim/translucent fill
+   that could pass for an earned one at a glance. Two plain yellow
+   base-star slots plus one separate, always-blue bonus-star slot (see
+   ui/draftrow.js's markup and ui/setter-board.js's ensureCoverStarSlots)
+   -- the base/bonus split is what stops the 3rd slot from ever reading
+   as just another yellow star. */
 #setterScreen .setter-cover-star {
   font-size: 18px;
   line-height: 1;
+  color: transparent;
   text-shadow: none;
-  transition: color 180ms ease, text-shadow 180ms ease, transform 180ms ease;
+  -webkit-text-stroke-width: 1.8px;
+  transition: color 180ms ease, text-shadow 180ms ease, transform 180ms ease,
+    -webkit-text-stroke-width 180ms ease, -webkit-text-stroke-color 180ms ease;
 }
 
 /* Two normal base-star slots. */
 #setterScreen .setter-cover-base-star {
-  color: rgba(255, 215, 94, 0.26);
+  -webkit-text-stroke-color: rgba(255, 215, 94, 0.9);
 }
 
 #setterScreen .setter-cover-base-star.is-filled {
   color: #ffd75e;
   text-shadow: 0 0 8px rgba(255, 200, 70, 0.55);
+  -webkit-text-stroke-width: 0;
 }
 
 /* The third slot is always visually blue, filled or not. */
 #setterScreen .setter-cover-bonus-star {
-  color: rgba(88, 201, 255, 0.30);
-  text-shadow: 0 0 5px rgba(88, 201, 255, 0.12);
+  -webkit-text-stroke-color: rgba(88, 201, 255, 0.95);
 }
 
+/* Still hollow -- just a slightly brighter outline once the bonus star is
+   actually earnable, so the player can tell it's live without it looking
+   filled before it is. */
 #setterScreen .setter-cover-bonus-star.is-available:not(.is-filled) {
-  color: rgba(88, 201, 255, 0.52);
+  -webkit-text-stroke-color: rgba(88, 201, 255, 1);
 }
 
 #setterScreen .setter-cover-bonus-star.is-filled {
@@ -945,6 +953,7 @@
   text-shadow:
     0 0 9px rgba(88, 201, 255, 0.82),
     0 0 18px rgba(88, 201, 255, 0.38);
+  -webkit-text-stroke-width: 0;
 }
 
 /* Escalating celebration: two stars gets a gentle lift, three goes
@@ -1896,10 +1905,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 .pc-current-top-right {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
-  max-width: 45%;
+  align-items: flex-start;
 }
 
 /* Text is always present in the markup (see renderCurrentQuest) --
@@ -1930,15 +1936,19 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   margin-top: 5px;
 }
 
-/* Sits in the card's top-right corner, under the MET status -- a plain
-   reminder that the quest is a bonus attempt, not a requirement, so
-   missing it costs nothing. */
+/* Sits right next to the quest name, sharing its line (.pc-current-main
+   is a wrapping flex row) -- a plain reminder that the quest is a bonus
+   attempt, not a requirement, so missing it costs nothing. Kept to one
+   short word pair and pinned to a single line -- the fuller "Optional --
+   complete for a reward" wording wrapped across 2-3 lines when this sat
+   alone in the card's narrow top-right corner and inflated the whole
+   card's height. */
 .pc-quest-optional-note {
   color: rgba(185, 218, 238, 0.5);
   font-size: 9px;
   font-style: italic;
   letter-spacing: 0.02em;
-  text-align: right;
+  white-space: nowrap;
 }
 
 .pc-current-desc {
@@ -2812,6 +2822,14 @@ body.power-choice-mode #spyChargeAwardBackdrop {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  /* The quest name truncates with an ellipsis above when space is
+     tight -- the note next to it is a short, fixed, always-identical
+     string, so it holds its own width instead of shrinking/spilling
+     alongside the name. */
+  .pc-quest-optional-note {
+    flex-shrink: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3050,11 +3068,6 @@ body:not(.light-theme) {
 .pc-meter-segment.pc-star-landed,
 #setterSidebarChargeMini.pc-star-landed {
   animation: pc-star-land .52s cubic-bezier(.16, 1, .3, 1);
-}
-.guesser-win-flight-handoff {
-  z-index: 2147482100;
-  pointer-events: none;
-  will-change: opacity, filter, transform;
 }
 @keyframes pc-star-impact {
   0% { opacity: 1; transform: translate(-50%, -50%) scale(.2); }
