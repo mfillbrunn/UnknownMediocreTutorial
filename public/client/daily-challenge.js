@@ -459,11 +459,28 @@ async function _showDailyRankings(config) {
 
   let rows;
   try {
-    const { data, error } = await sb
+    const playModeColumns = "user_id, date, status, score, opponent_score, setter_score, guesser_score, score_difference, time_seconds, won, tie, difficulty";
+    let { data, error } = await sb
       .from("daily_results")
-      .select("user_id, date, status, score, opponent_score, setter_score, guesser_score, score_difference, time_seconds, won, tie, difficulty")
+      .select(playModeColumns)
       .eq("date", config.date);
-    if (error) throw error;
+
+    if (error) {
+      // The setter_score/guesser_score/score_difference columns come from
+      // a migration that has to be applied by hand against the live
+      // database (see supabase/migrations/202608280001_daily_challenge_playmode.sql)
+      // -- until that's actually been run, selecting them fails outright
+      // and would otherwise make the WHOLE rankings list look empty
+      // ("no one has played today") instead of just missing those three
+      // fields. Retry with only the legacy columns, same fallback
+      // dailyTracking.js's server-side reads already use.
+      console.warn("[daily rankings] full-schema read failed, retrying with legacy columns only:", error);
+      const legacyColumns = "user_id, date, status, score, opponent_score, time_seconds, won, tie, difficulty";
+      const legacy = await sb.from("daily_results").select(legacyColumns).eq("date", config.date);
+      if (legacy.error) throw legacy.error;
+      data = legacy.data;
+    }
+
     // Belt-and-suspenders re-check on top of the .eq() above -- a stale
     // row (e.g. an old onConflict upsert mismatch, or a date column that
     // doesn't compare the way .eq() assumes) should never be able to slip
