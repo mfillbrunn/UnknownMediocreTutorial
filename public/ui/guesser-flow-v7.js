@@ -144,17 +144,12 @@
       });
   }
 
-  // showWorking=false is for a guess that's already known to resolve the
-  // instant this flight lands (see animateSubmission's own use of it) --
-  // the scanning "is-working" animation on the tiles keeps running on its
-  // own CSS timeline even while the wrap sits at visibility:hidden during
-  // the flight, so turning visibility back on partway through that cycle
-  // exposed it already mid-motion for one frame before the reveal cut it
-  // off, reading as a stutter between the float-up and the green flip.
-  // There's no actual waiting to represent in that case, so it's skipped
-  // outright instead of playing (and then instantly interrupting) a
-  // "waiting for the Secretkeeper" animation that was never true here.
-  function ensurePending(word, showWorking = true) {
+  // A genuinely pending guess is actually waiting on the Secretkeeper, so
+  // the "is-working" scanning animation always applies here -- the one
+  // case that used to skip it (a direct win, already known to resolve
+  // with no real waiting) no longer goes through ensurePending at all;
+  // see flyDirectlyToRealRow.
+  function ensurePending(word) {
     const history = historyContainer();
 
     if (!history || !word) {
@@ -165,9 +160,8 @@
       pendingWrap?.isConnected &&
       pendingWord === word
     ) {
-      pendingWrap.classList.toggle(
-        "is-working",
-        showWorking
+      pendingWrap.classList.add(
+        "is-working"
       );
 
       return pendingWrap;
@@ -199,9 +193,8 @@
       history.scrollTop = history.scrollHeight;
     }
 
-    pendingWrap.classList.toggle(
-      "is-working",
-      showWorking
+    pendingWrap.classList.add(
+      "is-working"
     );
 
     return pendingWrap;
@@ -402,9 +395,7 @@
 
   async function animateSubmission(
     word,
-    captured,
-    showWorking = true,
-  keepFlightForReveal = false
+    captured
   ) {
     const history = historyContainer();
     const sourceRow = draftRow();
@@ -431,7 +422,7 @@
         sourceRow?.getBoundingClientRect();
     }
 
-    const wrap = ensurePending(word, showWorking);
+    const wrap = ensurePending(word);
     const targetRow =
       wrap?.querySelector(".history-row");
 
@@ -475,7 +466,7 @@
       }
 
       wrap.style.visibility = "";
-      wrap.classList.toggle("is-working", showWorking);
+      wrap.classList.add("is-working");
       return;
     }
 
@@ -509,7 +500,7 @@
       }
 
       wrap.style.visibility = "";
-      wrap.classList.toggle("is-working", showWorking);
+      wrap.classList.add("is-working");
       return;
     }
 
@@ -562,15 +553,10 @@
       SUBMIT_MS + 180
     );
 
-    if (keepFlightForReveal) {
-      flight.classList.add("guesser-win-flight-handoff");
-      return { flight, wrap };
-    }
     flight.remove();
 
     wrap.style.visibility = "";
-    wrap.classList.toggle("is-working", showWorking);
-    return null;
+    wrap.classList.add("is-working");
   }
 
   function findNewestHistoryRow(word) {
@@ -632,6 +618,112 @@
     wrap.style.visibility = "hidden";
 
     return wrap;
+  }
+
+  // Direct-win only (see the wonDirectly branch below). Unlike
+  // animateSubmission, this never creates a .guesser-pending-history row --
+  // heldWrap is already the real winning row (from holdNewestHistoryRow),
+  // hidden but in its final DOM position, so the flight clone can fly
+  // straight to it. That's what removes the stutter a temporary pending
+  // row caused: previously the clone flew to the pending row's position,
+  // which was then morphed/crossfaded into the real row's position --
+  // two destinations for one flight, which is what read as a jump.
+  async function flyDirectlyToRealRow(
+    captured,
+    heldWrap
+  ) {
+    const settleInstantly = () => {
+      heldWrap.classList.remove(
+        "guesser-reveal-held",
+        "row-enter",
+        "reveal-tiles",
+        "reveal-waiting"
+      );
+
+      heldWrap.style.visibility = "";
+      heldWrap.__revealStarted = false;
+
+      window.revealHistoryRow?.(heldWrap);
+    };
+
+    if (!heldWrap) {
+      captured?.flight.remove();
+      return;
+    }
+
+    const destRow =
+      heldWrap.querySelector(".history-row");
+
+    let flight = captured?.flight || null;
+    const startRect = captured?.startRect || null;
+
+    if (
+      reducedMotion() ||
+      !destRow ||
+      !flight ||
+      !startRect?.width
+    ) {
+      flight?.remove();
+      settleInstantly();
+      return;
+    }
+
+    // Settle a couple of frames before measuring the destination -- same
+    // reasoning as animateSubmission's own wait: measuring immediately can
+    // catch the row a few pixels off from where it finally paints.
+    await new Promise(resolve => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(resolve);
+      });
+    });
+
+    const endRect =
+      destRow.getBoundingClientRect();
+
+    if (!endRect?.width) {
+      flight.remove();
+      settleInstantly();
+      return;
+    }
+
+    // Vertical only -- same reasoning as animateSubmission's own dx.
+    const dx = 0;
+
+    const dy =
+      endRect.top +
+      endRect.height / 2 -
+      (
+        startRect.top +
+        startRect.height / 2
+      );
+
+    const scaleX =
+      endRect.width / startRect.width;
+
+    const scaleY =
+      endRect.height / startRect.height;
+
+    void flight.offsetWidth;
+
+    requestAnimationFrame(() => {
+      flight.style.transition =
+        `transform ${SUBMIT_MS}ms ` +
+        "cubic-bezier(0.16, 1, 0.3, 1)";
+
+      flight.style.transform =
+        `translate3d(${dx}px, ${dy}px, 0) ` +
+        `scale(${scaleX}, ${scaleY})`;
+    });
+
+    await waitForTransition(
+      flight,
+      SUBMIT_MS + 180
+    );
+
+    // Same frame: show the real row, drop the flight clone, flip green --
+    // no fade, no blur, no extra wait between landing and the reveal.
+    settleInstantly();
+    flight.remove();
   }
 
   function canShowNewDraft(state) {
@@ -830,18 +922,15 @@
   // re-show decision always reflects the round the player is actually in.
   async function animateResolution(
     word,
-    heldWrap,
-  handoff = null
+    heldWrap
   ) {
     hideNewDraft();
-    const handoffFlight = handoff?.flight?.isConnected ? handoff.flight : null;
 
     const realWrap =
       heldWrap ||
       findNewestHistoryRow(word);
 
     if (!realWrap) {
-      handoffFlight?.remove();
       cleanupPending();
       resolutionInFlight = false;
       showNewDraftFromLeft(state);
@@ -892,24 +981,9 @@
     revealWrap.style.visibility = "";
     revealWrap.__revealStarted = false;
 
-    if (handoffFlight) revealWrap.style.opacity = "0";
     window.revealHistoryRow?.(
       revealWrap
     );
-
-    if (handoffFlight) {
-      const revealFade = revealWrap.animate(
-        [{ opacity: 0 }, { opacity: 1 }],
-        { duration: 170, easing: "ease-out", fill: "forwards" }
-      );
-      const flightFade = handoffFlight.animate(
-        [{ opacity: 1, filter: "blur(0)" }, { opacity: 0, filter: "blur(2px)" }],
-        { duration: 170, easing: "ease-in", fill: "forwards" }
-      );
-      await Promise.allSettled([revealFade.finished, flightFade.finished]);
-      handoffFlight.remove();
-      revealWrap.style.opacity = "";
-    }
 
     await waitForHistoryReveal(
       revealWrap
@@ -1073,26 +1147,25 @@
 
       if (word) {
         queue(async () => {
-          // false: this is the direct-win path -- the outcome is already
-          // known and animateResolution below runs the instant this
-          // returns, with no real waiting in between. Showing the
-          // "waiting for the Secretkeeper" scan animation here (even briefly) was
-          // never true and, since it keeps animating on its own CSS
-          // timeline under visibility:hidden during the flight, surfaced
-          // as a stray flash of motion the moment visibility came back --
-          // reading as a stutter wedged between the float-up landing and
-          // the green flip starting.
-          const handoff = await animateSubmission(
-            word,
+          // Flies the captured draft clone straight to the real winning
+          // row (heldWrap) and reveals it the instant landing finishes --
+          // no temporary pending row, no morph, no crossfade. See
+          // flyDirectlyToRealRow's own comment for why: a pending row's
+          // position and the real row's position are two different
+          // destinations for one flight, and reconciling them after the
+          // fact (the old morph+crossfade) was the actual source of the
+          // visible stutter, not a timing issue this could be tuned away.
+          await flyDirectlyToRealRow(
             captured,
-            false,
-            true
+            heldWrap
           );
-          await animateResolution(
-            word,
-            heldWrap,
-            handoff
+
+          await waitForHistoryReveal(
+            heldWrap
           );
+
+          resolutionInFlight = false;
+          showNewDraftFromLeft(state);
 
           // client.js's wonByGuess handling waits on this instead of a
           // fixed timer, since the flight this branch adds means the
