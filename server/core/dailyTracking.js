@@ -11,20 +11,42 @@ function resultFromRow(row) {
   }
 
   return {
+    // Legacy fields -- still populated for every row (old and new) so
+    // any surviving reader of the pre-playMode shape keeps working.
+    // score/opponentScore always mirror setterScore/guesserScore.
     score:
       row.score || 0,
 
     opponentScore:
       row.opponent_score || 0,
 
-    time:
-      row.time_seconds || 0,
-
     won:
       !!row.won,
 
     tie:
       !!row.tie,
+
+    // REFINEMENT_SPEC section 9: playMode-aware result fields. Null on any
+    // row written before this migration -- callers fall back to the
+    // legacy score/opponentScore/won/tie above for those.
+    playMode:
+      row.play_mode || null,
+
+    firstRole:
+      row.first_role || null,
+
+    setterScore:
+      row.setter_score ?? row.score ?? 0,
+
+    guesserScore:
+      row.guesser_score ?? row.opponent_score ?? 0,
+
+    scoreDifference:
+      row.score_difference ??
+      (row.setter_score ?? row.score ?? 0) - (row.guesser_score ?? row.opponent_score ?? 0),
+
+    time:
+      row.time_seconds || 0,
 
     difficulty:
       row.difficulty || null,
@@ -183,22 +205,41 @@ async function markDailyCompleted({
         status: "completed",
         room_id: null,
 
+        // Legacy columns -- kept in sync with setter/guesser score so any
+        // reader of the pre-playMode shape (including this same table's
+        // OLDER rows) still sees a sensible score/opponent_score/won/tie.
         score:
-          result?.score || 0,
+          result?.score ?? result?.setterScore ?? 0,
 
         opponent_score:
-          result?.opponentScore || 0,
-
-        time_seconds:
-          Math.round(
-            result?.time || 0
-          ),
+          result?.opponentScore ?? result?.guesserScore ?? 0,
 
         won:
           !!result?.won,
 
         tie:
           !!result?.tie,
+
+        // REFINEMENT_SPEC section 9: playMode-aware result columns.
+        play_mode:
+          result?.playMode || null,
+
+        first_role:
+          result?.firstRole || null,
+
+        setter_score:
+          result?.setterScore ?? null,
+
+        guesser_score:
+          result?.guesserScore ?? null,
+
+        score_difference:
+          result?.scoreDifference ?? null,
+
+        time_seconds:
+          Math.round(
+            result?.time || 0
+          ),
 
         difficulty:
           result?.difficulty || null,
@@ -306,7 +347,7 @@ async function getDailyStatus({
   } = await supabase
     .from("daily_results")
     .select(
-      "status,room_id,score,opponent_score,time_seconds,won,tie,difficulty"
+      "status,room_id,score,opponent_score,time_seconds,won,tie,difficulty,play_mode,first_role,setter_score,guesser_score,score_difference"
     )
     .eq("user_id", userId)
     .eq("date", date)

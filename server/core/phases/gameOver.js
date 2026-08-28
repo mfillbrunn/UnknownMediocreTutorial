@@ -169,6 +169,9 @@ state.setterDraft = "";
       state.players || {}
     ).find(player => player.isAI);
 
+  const playMode = state._dailyConfig?.playMode || "both";
+  const firstRole = state._dailyConfig?.firstRole || null;
+
   for (
     const player of Object.values(
       state.players || {}
@@ -188,6 +191,18 @@ state.setterDraft = "";
       player.userId
     );
 
+    // Rounds where this player held Secretkeeper accumulate their guessCount
+    // under this player's own id in `points`; rounds where they held
+    // Guesser accumulate it under the AI's id instead (computeMatchResult
+    // credits every round's guessCount to that round's SETTER) -- so
+    // setter/guesser score fall straight out of the same points map every
+    // other (non-daily) match summary already uses, no separate
+    // accounting needed. A "setter"-only challenge naturally leaves
+    // guesserScore at 0 (the player never held Guesser); a "guesser"-only
+    // challenge leaves setterScore at 0 the same way.
+    const setterScore = points[player.userId] || 0;
+    const guesserScore = aiPlayer ? points[aiPlayer.userId] || 0 : 0;
+
     void markDailyCompleted({
       supabase,
 
@@ -198,16 +213,11 @@ state.setterDraft = "";
         state.dailyDate,
 
       result: {
-        score:
-          points[player.userId] ||
-          0,
-
-        opponentScore:
-          aiPlayer
-            ? points[
-                aiPlayer.userId
-              ] || 0
-            : 0,
+        playMode,
+        firstRole,
+        setterScore,
+        guesserScore,
+        scoreDifference: setterScore - guesserScore,
 
         time:
           time[player.userId] ||

@@ -557,12 +557,17 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
         const scriptedGuess = singlePlayerHooks.maybeOverrideAIGuess(state);
         if (scriptedGuess) guess = scriptedGuess;
 
-        // Daily Challenge: same opening guess for every player that day
-        // (see dailyConfig.js/lobby.js's SET_DAILY_POWERS) -- only the
-        // very first, un-informed guess is pinned; anything after reacts
-        // normally to feedback like any other AI guess.
-        if (state.isDaily && state._dailyOpeningGuess && !state.history.length) {
-          guess = state._dailyOpeningGuess;
+        // Daily Challenge: the AI always opens with the SAME fixed guess
+        // for every player that day (see dailyConfig.js's aiOpeningGuess),
+        // regardless of round or of whether the human's own opening word
+        // is predefined -- only the very first, un-informed guess of each
+        // round is pinned; anything after reacts normally to feedback like
+        // any other AI guess. !state.history.length identifies "this
+        // round's opening" (history resets every round, see
+        // resetRoundState.js), so this re-applies correctly in round 2 of
+        // a "both" playMode challenge too.
+        if (state.isDaily && state._dailyConfig?.aiOpeningGuess && !state.history.length) {
+          guess = state._dailyConfig.aiOpeningGuess;
         }
 
         applyAIAction(
@@ -588,10 +593,10 @@ function computeAIActionForUser(room, roomId, context, aiUserId) {
         const scriptedSecret = singlePlayerHooks.maybeOverrideAISecret(state);
         if (scriptedSecret) secret = scriptedSecret;
 
-        // Daily Challenge: the word every player that day has to guess is
+        // Daily Challenge: the secret every player that day has to guess is
         // the same (see the matching comment on the guesser branch above).
-        if (state.isDaily && state._dailySecret && !state.history.length) {
-          secret = state._dailySecret;
+        if (state.isDaily && state._dailyConfig?.aiOpeningSecret && !state.history.length) {
+          secret = state._dailyConfig.aiOpeningSecret;
         }
 
         applyAIAction(

@@ -1,14 +1,119 @@
 // client/daily-challenge.js
 
+// AI difficulty (1 Easy / 2 Medium / 3 Hard) -> label + a color used both
+// as the completed-result chip and (see the ranking subtab) the dot next to
+// each entry. Kept in sync with index.html's difficulty-easy/-medium/-hard
+// button classes and the daily difficulty picker.
+const DAILY_DIFFICULTY = {
+  1: { label: "Easy", color: "#22c55e" },
+  2: { label: "Medium", color: "#f59e0b" },
+  3: { label: "Hard", color: "#ef4444" }
+};
+function dailyDifficultyMeta(difficulty) {
+  return DAILY_DIFFICULTY[difficulty] || { label: "AI", color: "#9ca3af" };
+}
+window.dailyDifficultyMeta = dailyDifficultyMeta;
+
+function formatDailyTime(totalSeconds) {
+  const secs = Math.round(totalSeconds || 0);
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+// playMode -> the short mode label shown throughout the screen ("Mode:
+// ..."). "both" reads as "Full game" rather than the internal id, matching
+// the spec example ("Mode: Full game").
+function _dailyModeLabel(playMode) {
+  if (playMode === "setter") return "Secretkeeper only";
+  if (playMode === "guesser") return "Guesser only";
+  return "Full game";
+}
+
+// A single-role challenge has exactly one legal role for the whole match;
+// "both" shows the actual order (round 1 -> round 2) from firstRole.
+function _dailyRoleLabel(config) {
+  if (config.playMode === "setter") return "Secretkeeper";
+  if (config.playMode === "guesser") return "Guesser";
+  return config.firstRole === "setter"
+    ? "Secretkeeper → Guesser"
+    : "Guesser → Secretkeeper";
+}
+
+function _dailySetupRow(label, valueHtml) {
+  return `<div class="daily-result-row">
+    <span class="daily-result-label">${label}</span>
+    <span class="daily-result-value">${valueHtml}</span>
+  </div>`;
+}
+
+function _dailyWordOrChoose(word) {
+  return word
+    ? `<span class="daily-setup-word">${String(word).toUpperCase()}</span>`
+    : `<span class="daily-setup-choose">You choose</span>`;
+}
+
+// Only shows the rows relevant to `config.playMode` -- a Guesser-only
+// challenge never mentions a Secretkeeper secret (the human never sets
+// one), a Secretkeeper-only challenge never mentions a guess. Never shows
+// the AI Secretkeeper's actual secret, only that it's fixed for the day
+// (the server's /api/daily response never sends that value in the first
+// place -- see server/index.js).
+function _dailyOpeningSetupHtml(config) {
+  const humanPlaysGuesser = config.playMode !== "setter";
+  const humanPlaysSetter = config.playMode !== "guesser";
+  const rows = [];
+
+  if (humanPlaysGuesser) {
+    rows.push(_dailySetupRow("Your first guess", _dailyWordOrChoose(config.humanOpeningGuess)));
+  }
+  if (humanPlaysSetter) {
+    rows.push(_dailySetupRow("Your first secret", _dailyWordOrChoose(config.humanOpeningSecret)));
+  }
+  if (humanPlaysSetter) {
+    rows.push(_dailySetupRow(
+      "AI first guess",
+      config.aiOpeningGuess ? `<span class="daily-setup-word">${config.aiOpeningGuess.toUpperCase()}</span>` : "—"
+    ));
+  }
+  if (humanPlaysGuesser) {
+    rows.push(_dailySetupRow("AI secret", `<span class="daily-setup-choose">Fixed daily secret</span>`));
+  }
+
+  const anyPredefined =
+    (humanPlaysGuesser && config.humanOpeningGuess) ||
+    (humanPlaysSetter && config.humanOpeningSecret);
+
+  return `
+    <div class="daily-setup-title">Opening setup</div>
+    ${rows.join("")}
+    ${anyPredefined
+      ? `<p class="daily-setup-note">Today's opening move is already set -- the match starts right after it resolves.</p>`
+      : ""}
+  `;
+}
+
 // Same navigator.share() -> clipboard fallback -> toast pattern as
 // invite.js's shareOrCopyInviteLink, just with a Wordle-style result
 // summary instead of a join link.
 async function _shareDailyResult(config, r) {
-  const outcome = r.tie ? "Tied" : r.won ? "Won" : "Lost";
   const diffLabel = r.difficulty ? ` vs ${dailyDifficultyMeta(r.difficulty).label} AI` : "";
+  const modeLabel = _dailyModeLabel(config.playMode);
+
+  let scoreLine;
+  if (config.playMode === "both") {
+    const outcome = r.scoreDifference > 0 ? "Won" : r.scoreDifference < 0 ? "Lost" : "Tied";
+    scoreLine = `Setter ${r.setterScore} · Guesser ${r.guesserScore} (diff ${r.scoreDifference > 0 ? "+" : ""}${r.scoreDifference}) — ${outcome}`;
+  } else if (config.playMode === "setter") {
+    scoreLine = `Secretkeeper score: ${r.setterScore}`;
+  } else {
+    scoreLine = `Guesser score: ${r.guesserScore}`;
+  }
+
   const text = [
     `Vowel Play — Daily Challenge ${config.date}`,
-    `Score: ${r.score}:${r.opponentScore ?? 0} (${formatDailyTime(r.time)}) — ${outcome}${diffLabel}`,
+    `${modeLabel} — ${formatDailyTime(r.time)}${diffLabel}`,
+    scoreLine,
     location.origin
   ].join("\n");
 
@@ -25,35 +130,6 @@ async function _shareDailyResult(config, r) {
   } catch {
     toast("Could not copy result");
   }
-}
-
-function formatDailyTime(totalSeconds) {
-  const secs = Math.round(totalSeconds || 0);
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-// AI difficulty (1 Easy / 2 Medium / 3 Hard) -> label + a color used both
-// as the completed-result chip and (see the ranking subtab) the dot next to
-// each entry. Kept in sync with index.html's difficulty-easy/-medium/-hard
-// button classes and the daily difficulty picker.
-const DAILY_DIFFICULTY = {
-  1: { label: "Easy", color: "#22c55e" },
-  2: { label: "Medium", color: "#f59e0b" },
-  3: { label: "Hard", color: "#ef4444" }
-};
-function dailyDifficultyMeta(difficulty) {
-  return DAILY_DIFFICULTY[difficulty] || { label: "AI", color: "#9ca3af" };
-}
-window.dailyDifficultyMeta = dailyDifficultyMeta;
-
-// Reuses the same traffic-light classes the (selectable) Play AI
-// difficulty buttons use, so the Daily Challenge's locked readout matches
-// them visually without a second color source.
-const DAILY_DIFFICULTY_CLASS = { 1: "difficulty-easy", 2: "difficulty-medium", 3: "difficulty-hard" };
-function _dailyDifficultyClassFor(difficulty) {
-  return DAILY_DIFFICULTY_CLASS[difficulty] || "";
 }
 
 window.showDailyChallenge = async function () {
@@ -116,13 +192,54 @@ window.showDailyChallenge = async function () {
           </div>`
       : "";
 
+    const modeLabel = _dailyModeLabel(config.playMode);
+    const roleLabel = _dailyRoleLabel(config);
+
+    // Winner/loser language only applies to the "both" full-game
+    // challenge, where a real setter-vs-guesser score comparison exists --
+    // a one-role challenge just has a raw score, and calling it a "win" or
+    // "loss" would be misleading (there's nothing on the other side of the
+    // ledger to actually beat).
+    let outcomeHtml = "";
+    let scoreRowsHtml = "";
+    if (config.playMode === "both" && r) {
+      const diff = Number(r.scoreDifference) || 0;
+      const outcome = diff > 0 ? "You won! 🎉" : diff < 0 ? "You lost this one." : "It was a tie!";
+      outcomeHtml = `<p class="daily-result-outcome big">${outcome}</p>`;
+      scoreRowsHtml = `
+        <div class="daily-result-row">
+          <span class="daily-result-label">Secretkeeper score</span>
+          <span class="daily-result-value">${r.setterScore}</span>
+        </div>
+        <div class="daily-result-row">
+          <span class="daily-result-label">Guesser score</span>
+          <span class="daily-result-value">${r.guesserScore}</span>
+        </div>
+        <div class="daily-result-row">
+          <span class="daily-result-label">Score difference</span>
+          <span class="daily-result-value">${diff > 0 ? "+" : ""}${diff}</span>
+        </div>`;
+    } else if (r) {
+      const score = config.playMode === "setter" ? r.setterScore : r.guesserScore;
+      scoreRowsHtml = `
+        <div class="daily-result-row">
+          <span class="daily-result-label">Score</span>
+          <span class="daily-result-value">${score}</span>
+        </div>`;
+    }
+
     const resultBlock = r
       ? `<div class="daily-result-block">
-          <p class="daily-result-outcome big">${r.tie ? "It was a tie!" : r.won ? "You won! 🎉" : "You lost this one."}</p>
+          ${outcomeHtml}
           <div class="daily-result-row">
-            <span class="daily-result-label">Score</span>
-            <span class="daily-result-value">${r.score}:${r.opponentScore ?? 0}</span>
+            <span class="daily-result-label">Mode</span>
+            <span class="daily-result-value">${modeLabel}</span>
           </div>
+          <div class="daily-result-row">
+            <span class="daily-result-label">Role${config.playMode === "both" ? " order" : ""}</span>
+            <span class="daily-result-value">${roleLabel}</span>
+          </div>
+          ${scoreRowsHtml}
           <div class="daily-result-row">
             <span class="daily-result-label">Time</span>
             <span class="daily-result-value">${formatDailyTime(r.time)}</span>
@@ -177,10 +294,26 @@ window.showDailyChallenge = async function () {
       </div>
       <p class="daily-date">☀️ ${config.date}</p>
 
-      <p class="daily-ai-label">Today's opponent</p>
-      <p class="daily-difficulty-locked ${_dailyDifficultyClassFor(config.aiDifficulty)}">
-        ${dailyDifficultyMeta(config.aiDifficulty).label} AI
-      </p>
+      <div class="daily-setup-block">
+        <div class="daily-setup-title">Today's challenge</div>
+        <div class="daily-result-row">
+          <span class="daily-result-label">Mode</span>
+          <span class="daily-result-value">${_dailyModeLabel(config.playMode)}</span>
+        </div>
+        <div class="daily-result-row">
+          <span class="daily-result-label">Role${config.playMode === "both" ? " order" : ""}</span>
+          <span class="daily-result-value">${_dailyRoleLabel(config)}</span>
+        </div>
+        <div class="daily-result-row">
+          <span class="daily-result-label">Opponent</span>
+          <span class="daily-result-value">
+            <span class="daily-diff-dot" style="background:${dailyDifficultyMeta(config.aiDifficulty).color}"></span>${dailyDifficultyMeta(config.aiDifficulty).label} AI
+          </span>
+        </div>
+        ${_dailyOpeningSetupHtml(config)}
+        <p class="daily-setup-note">Rewards: Fixed choices · No refresh</p>
+      </div>
+
       <button id="dailyStartBtn" class="menu-btn primary" style="margin-top:10px">Start Daily Challenge</button>
       <button id="dailyRankingsBtn" class="menu-btn small" style="margin-top:14px">🏆 Rankings</button>
     </div>
@@ -194,13 +327,61 @@ window.showDailyChallenge = async function () {
   });
 };
 
-// Daily rankings subtab: everyone who has played today, sorted best-first
-// (higher score, then faster time), each with a colored dot for the AI
-// difficulty they beat. Toggle between All and Friends. Reads the
-// daily_results Supabase table (written server-side on completion, see
-// gameOver.js); degrades to a friendly message if the table is missing or
-// nobody has played yet.
+// Daily rankings subtab: everyone who has played today, sorted by the
+// mode-appropriate metric (REFINEMENT_SPEC section 9) -- a given date only
+// ever has ONE play mode (it's part of the shared deterministic
+// configuration, see dailyConfig.js), so every row on the board is already
+// comparable; there's no mixing of setter-only and guesser-only scores to
+// guard against. Toggle between All and Friends. Reads the daily_results
+// Supabase table (written server-side on completion, see gameOver.js);
+// degrades to a friendly message if the table is missing or nobody has
+// played yet.
 let _dailyRankScope = "all";
+
+// Ranking rules per playMode (REFINEMENT_SPEC section 9):
+//   setter:  1) higher setter_score        2) faster time
+//   guesser: 1) lower guesser_score         2) faster time
+//   both:    1) higher score_difference     2) lower guesser_score
+//            3) higher setter_score         4) faster time
+function _dailyRankCompare(playMode, a, b) {
+  const aDnf = a.status === "abandoned";
+  const bDnf = b.status === "abandoned";
+  if (aDnf !== bDnf) return aDnf ? 1 : -1;
+  if (aDnf && bDnf) return 0;
+
+  const setterOf = row => row.setter_score ?? row.score ?? 0;
+  const guesserOf = row => row.guesser_score ?? row.opponent_score ?? 0;
+  const diffOf = row => row.score_difference ?? (setterOf(row) - guesserOf(row));
+  const timeOf = row => row.time_seconds ?? 1e9;
+
+  if (playMode === "setter") {
+    return setterOf(b) - setterOf(a) || timeOf(a) - timeOf(b);
+  }
+  if (playMode === "guesser") {
+    return guesserOf(a) - guesserOf(b) || timeOf(a) - timeOf(b);
+  }
+  return (
+    diffOf(b) - diffOf(a) ||
+    guesserOf(a) - guesserOf(b) ||
+    setterOf(b) - setterOf(a) ||
+    timeOf(a) - timeOf(b)
+  );
+}
+
+function _dailyRankMetricLabel(playMode) {
+  if (playMode === "setter") return "Score";
+  if (playMode === "guesser") return "Score";
+  return "Diff";
+}
+
+function _dailyRankMetricOf(playMode, row) {
+  const setterOf = r => r.setter_score ?? r.score ?? 0;
+  const guesserOf = r => r.guesser_score ?? r.opponent_score ?? 0;
+  if (playMode === "setter") return setterOf(row);
+  if (playMode === "guesser") return guesserOf(row);
+  const diff = row.score_difference ?? (setterOf(row) - guesserOf(row));
+  return diff > 0 ? `+${diff}` : `${diff}`;
+}
 
 async function _showDailyRankings(config) {
   const screen = document.getElementById("dailyScreen");
@@ -211,7 +392,7 @@ async function _showDailyRankings(config) {
       <button id="dailyRankBackBtn" class="menu-btn screen-back-btn">← Back</button>
       <h2 class="menu-title" style="flex:1;text-align:center">Daily Rankings</h2>
     </div>
-    <p class="daily-date">☀️ ${config.date}</p>
+    <p class="daily-date">☀️ ${config.date} · ${_dailyModeLabel(config.playMode)}</p>
     <div class="daily-rank-tabs">
       <button class="daily-rank-tab ${_dailyRankScope === "all" ? "active" : ""}" data-scope="all">All</button>
       <button class="daily-rank-tab ${_dailyRankScope === "friends" ? "active" : ""}" data-scope="friends">Friends</button>
@@ -245,7 +426,7 @@ async function _showDailyRankings(config) {
   try {
     const { data, error } = await sb
       .from("daily_results")
-      .select("user_id, date, status, score, opponent_score, time_seconds, won, tie, difficulty")
+      .select("user_id, date, status, score, opponent_score, setter_score, guesser_score, score_difference, time_seconds, won, tie, difficulty")
       .eq("date", config.date);
     if (error) throw error;
     // Belt-and-suspenders re-check on top of the .eq() above -- a stale
@@ -253,7 +434,7 @@ async function _showDailyRankings(config) {
     // doesn't compare the way .eq() assumes) should never be able to slip
     // a previous day's score into today's board.
     rows = (data || []).filter(r => r.date === config.date);
-    rows = rows.filter ( row => row.status !== "in_progress");
+    rows = rows.filter(row => row.status !== "in_progress");
   } catch (e) {
     console.error("[daily rankings] read failed:", e?.message || e);
     listEl.innerHTML = `<p class="daily-rank-msg">Rankings aren't available yet.</p>`;
@@ -280,6 +461,19 @@ async function _showDailyRankings(config) {
     return;
   }
 
+  rows.sort((a, b) => _dailyRankCompare(config.playMode, a, b));
+
+  const myId = window.currentUser?.id;
+  const metricLabel = _dailyRankMetricLabel(config.playMode);
+  const header = `
+    <div class="daily-rank-row daily-rank-header">
+      <span class="daily-rank-pos">#</span>
+      <span class="daily-rank-name">Player</span>
+      <span class="daily-rank-points">${metricLabel}</span>
+      <span class="daily-rank-diff">Diff</span>
+      <span class="daily-rank-time">Time</span>
+    </div>`;
+
   // Attach usernames (separate lookup so we don't depend on a FK embed).
   let names = {};
   try {
@@ -288,99 +482,35 @@ async function _showDailyRankings(config) {
     (profs || []).forEach(p => { names[p.id] = p.username; });
   } catch { /* usernames optional */ }
 
-  // Points: how many guesses the AI needed to crack your secret (r.score,
-  // credited to you as setter) minus how many guesses you needed to crack
-  // the AI's (r.opponent_score, credited to the AI as setter) -- higher
-  // means you were both a tougher setter and a sharper guesser than your
-  // opponent that day.
-  const pointsOf = r => (r.score ?? 0) - (r.opponent_score ?? 0);
-
-  // Points desc, then harder-difficulty-first (beating a tougher AI at the
-  // same point total is the better result), then faster time.
-  rows.sort((a, b) => {
-  const aDnf =
-    a.status === "abandoned";
-
-  const bDnf =
-    b.status === "abandoned";
-
-  if (aDnf !== bDnf) {
-    return aDnf ? 1 : -1;
-  }
-
-  return (
-    pointsOf(b) -
-      pointsOf(a) ||
-
-    (
-      b.difficulty ?? 0
-    ) -
-      (
-        a.difficulty ?? 0
-      ) ||
-
-    (
-      a.time_seconds ?? 1e9
-    ) -
-      (
-        b.time_seconds ?? 1e9
-      )
-  );
-});
-
-  const myId = window.currentUser?.id;
-  const header = `
-    <div class="daily-rank-row daily-rank-header">
-      <span class="daily-rank-pos">#</span>
-      <span class="daily-rank-name">Player</span>
-      <span class="daily-rank-points">Points</span>
-      <span class="daily-rank-diff">Diff</span>
-      <span class="daily-rank-time">Time</span>
-    </div>`;
   listEl.innerHTML = header + rows.map((r, i) => {
     const diff = dailyDifficultyMeta(r.difficulty);
-    const isDnf =  r.status === "abandoned";
+    const isDnf = r.status === "abandoned";
     const name = names[r.user_id] || (r.user_id === myId ? "You" : "Player");
     const isMe = r.user_id === myId;
-    const points = pointsOf(r);
+    const metric = _dailyRankMetricOf(config.playMode, r);
     return `
       <div class="daily-rank-row ${isMe ? "me" : ""}">
         <span class="daily-rank-pos">${i + 1}</span>
         <span class="daily-rank-name">${name}${isMe ? " (you)" : ""}</span>
-        <span class="daily-rank-points">
-  ${
-    isDnf
-      ? "DNF"
-      : `${
-          points > 0
-            ? "+"
-            : ""
-        }${points}`
-  }
-</span>
+        <span class="daily-rank-points">${isDnf ? "DNF" : metric}</span>
         <span class="daily-rank-diff">
           <span class="daily-diff-dot" style="background:${diff.color}" title="${diff.label} AI"></span>
         </span>
-        <span class="daily-rank-time">
-  ${
-    isDnf
-      ? "—"
-      : formatDailyTime(
-          r.time_seconds
-        )
-  }
-</span>
+        <span class="daily-rank-time">${isDnf ? "—" : formatDailyTime(r.time_seconds)}</span>
       </div>`;
   }).join("");
 }
 window._showDailyRankings = _showDailyRankings;
 
-// Every field of the day's configuration -- including AI difficulty --
-// comes from the server's deterministic daily seed (see dailyConfig.js),
-// so every player gets the exact same challenge. Nothing here is a
-// player choice; the server also independently recomputes and enforces
-// this (see lobby.js's ADD_AI/SET_DAILY_POWERS handlers), so a tampered
-// client sending a different value would just be ignored.
+// Every field of the day's configuration -- play mode, role order, AI
+// difficulty, predefined opening words -- comes from the server's
+// deterministic daily seed (see dailyConfig.js), so every player gets the
+// exact same challenge. Nothing here is a player choice; the server also
+// independently recomputes and enforces this (see lobby.js's
+// ADD_AI/SET_DAILY_POWERS handlers), so a tampered client sending
+// different values would just be ignored. The client no longer sends
+// SWITCH_ROLES either -- ADD_AI itself now assigns both seats' roles from
+// the day's config (playMode/firstRole) server-side.
 function _startDailyGame(config) {
   const username =
     window.myProfile?.username ||
@@ -481,10 +611,11 @@ function _startDailyGame(config) {
                 chosenDifficulty,
 
               // The server ignores `difficulty` above and recomputes it
-              // from this date instead whenever dailyDate is present (see
-              // lobby.js's ADD_AI handler) -- difficulty is part of the
-              // day's shared, deterministic configuration, not something
-              // a rewritten client should be able to pick for itself.
+              // (along with each side's role) from this date instead
+              // whenever dailyDate is present (see lobby.js's ADD_AI
+              // handler) -- both are part of the day's shared,
+              // deterministic configuration, not something a rewritten
+              // client should be able to pick for itself.
               dailyDate:
                 config.date,
 
@@ -495,23 +626,7 @@ function _startDailyGame(config) {
             setTimeout(() => {
               sendGameAction({
                 type:
-                  "SWITCH_ROLES",
-
-                userId:
-                  window.currentUser.id
-              });
-            }, 40);
-
-            setTimeout(() => {
-              sendGameAction({
-                type:
                   "SET_DAILY_POWERS",
-
-                setterPowers:
-                  config.setterPowers,
-
-                guesserPowers:
-                  config.guesserPowers,
 
                 date:
                   config.date,
@@ -519,7 +634,7 @@ function _startDailyGame(config) {
                 userId:
                   window.currentUser.id
               });
-            }, 80);
+            }, 60);
 
             setTimeout(() => {
               sendGameAction({
@@ -531,7 +646,7 @@ function _startDailyGame(config) {
                 userId:
                   window.currentUser.id
               });
-            }, 110);
+            }, 90);
 
             setTimeout(() => {
               sendGameAction({
@@ -543,7 +658,7 @@ function _startDailyGame(config) {
 
                 mode: "daily"
               });
-            }, 150);
+            }, 130);
 
             window.isRejoining =
               false;

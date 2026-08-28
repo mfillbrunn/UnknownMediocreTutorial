@@ -40,16 +40,24 @@ function run() {
     "Bet Miss must not have a live tier/role entry in POWER_TIERS"
   );
 
-  // Daily Challenge's deterministic starting loadout -- sample several
-  // dates since the picker is seeded per-date, not a single fixed list.
+  // Daily Challenge no longer has a fixed setterPowers/guesserPowers
+  // starting loadout -- it runs on Power Choice's own reward-choice system
+  // now (see dailyConfig.js's rewardOffers), drawn from the exact same
+  // setterRewardPool()/guesserRewardPool() checked above. Sample several
+  // dates (the schedule is seeded per-date, not a single fixed list) and
+  // confirm none of the precomputed option ids is Bet Miss.
   const sampleDates = [
     "2026-01-01", "2026-03-15", "2026-06-30", "2026-09-09", "2026-12-25"
   ];
   for (const dateStr of sampleDates) {
     const config = getDailyConfig(dateStr, null, null);
+    const offeredIds = [
+      ...config.rewardOffers.setter.flatMap(offer => offer.optionIds),
+      ...config.rewardOffers.guesser.flatMap(offer => offer.optionIds)
+    ];
     assert.ok(
-      !config.guesserPowers.includes("betMiss") && !config.setterPowers.includes("betMiss"),
-      `Bet Miss must not appear in the Daily Challenge (${dateStr}) starting loadout`
+      !offeredIds.includes("power:betMiss"),
+      `Bet Miss must not appear in the Daily Challenge (${dateStr}) reward schedule`
     );
   }
 

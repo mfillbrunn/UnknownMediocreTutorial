@@ -57,10 +57,17 @@ function isPalindrome(word) {
   return word === word.split("").reverse().join("");
 }
 
-function shuffle(arr) {
+// `rng`: optional seeded 0..1 generator -- Daily Challenge quest generation
+// (see dailyConfig.js, via powerChoiceServer.js's makeQuest) threads one
+// through so a FIELDREPORT quest's 3 conditions come out identical for
+// every player attempting that day's puzzle. Defaults to Math.random for
+// every other caller (the fieldReport power itself, ordinary Power Choice
+// quests).
+function shuffle(arr, rng) {
+  const rand = rng || Math.random;
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -110,14 +117,15 @@ function conditionForWord(type, word) {
   }
 }
 
-function generateConditions() {
+function generateConditions(rng) {
   if (!ALLOWED_GUESSES.length) return [];
 
-  const word = ALLOWED_GUESSES[Math.floor(Math.random() * ALLOWED_GUESSES.length)].toUpperCase();
+  const rand = rng || Math.random;
+  const word = ALLOWED_GUESSES[Math.floor(rand() * ALLOWED_GUESSES.length)].toUpperCase();
   const seen = new Set();
   const conditions = [];
 
-  for (const type of shuffle(CONDITION_TYPES)) {
+  for (const type of shuffle(CONDITION_TYPES, rng)) {
     if (conditions.length >= 3) break;
     const c = conditionForWord(type, word);
     if (!c) continue;
@@ -140,7 +148,7 @@ function generateConditions() {
   // only recurses in the vanishingly rare case those 4 collapse to fewer
   // than 3 distinct keys (e.g. a word whose vowel count as both min and
   // max dedupes down) — just pick a different word.
-  return conditions.length >= 3 ? conditions : generateConditions();
+  return conditions.length >= 3 ? conditions : generateConditions(rng);
 }
 
 engine.registerPower("fieldReport", {

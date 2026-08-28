@@ -1250,8 +1250,16 @@
     modal.querySelector("h2").textContent = pending.role === "setter" ? "Star reward" : "Quest reward";
 
     const refreshBtn = modal.querySelector(".pc-refresh-choice-btn");
+    // Daily Challenge: Refresh Choices is removed entirely, not just
+    // disabled -- the reward schedule is fixed for the day (see
+    // dailyConfig.js), and a greyed-out control would still invite a
+    // "why can't I use this" question a hidden one doesn't. The server
+    // independently rejects POWER_CHOICE_REFRESH for a daily room too
+    // (see powerChoiceServer.js), so this is purely the UI-visibility half.
+    const isDailyChallenge = !!window.state?.isDaily;
+    if (refreshBtn) refreshBtn.style.display = isDailyChallenge ? "none" : "";
     const refreshAvailable = pending.refreshAvailable !== false;
-    if (refreshBtn) {
+    if (refreshBtn && !isDailyChallenge) {
       refreshBtn.disabled = !refreshAvailable;
       refreshBtn.classList.toggle("is-spent", !refreshAvailable);
       refreshBtn.classList.remove("is-dealing");
