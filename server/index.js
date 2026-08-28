@@ -13,6 +13,7 @@ const { createClient } = require("@supabase/supabase-js");
 const { loadWordList } = require("./utils/wordListLoader");
 const { applyAction } = require("./core/stateMachine");
 const { getDailyConfig } = require("./utils/dailyConfig");
+const { buildPublicDailyView } = require("./utils/dailyPublicView");
 
 
 
@@ -78,18 +79,12 @@ app.get("/api/allowed-secrets", (req, res) => res.json(ALLOWED_SECRETS));
 app.get("/api/allowed-guesses", (req, res) => res.json(ALLOWED_GUESSES));
 app.get("/api/daily", (req, res) => {
   const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-  const cfg = getDailyConfig(today);
-  // Explicit whitelist -- secretWord/openingGuess (added for the AI's
-  // deterministic-per-day opening moves) must never reach the client, or
-  // the human could just read today's answer out of this response.
-  res.json({
-    date: cfg.date,
-    aiDifficulty: cfg.aiDifficulty,
-    setterPowers: cfg.setterPowers,
-    guesserPowers: cfg.guesserPowers,
-    questType: cfg.questType,
-    questTypeRound2Choices: cfg.questTypeRound2Choices
-  });
+  // Recomputed fresh from the date every time -- this route (like every
+  // other daily entry point, see lobby.js's ADD_AI/SET_DAILY_POWERS) never
+  // trusts anything from the request; there's nothing to trust, since
+  // there's no daily-specific input on a GET /api/daily at all.
+  const cfg = getDailyConfig(today, ALLOWED_SECRETS, ALLOWED_GUESSES);
+  res.json(buildPublicDailyView(cfg));
 });
 app.use(express.static(path.join(__dirname, "..", "public")));
 app.get("*", (req, res) =>

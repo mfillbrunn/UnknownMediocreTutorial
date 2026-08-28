@@ -152,6 +152,20 @@ function advanceToNextRound(room, state, roomId, context) {
   emitLobbyEvent(io, roomId, { type: "hideLobby" });
   emitRoomState(roomId, room, io);
 
+  // Daily Challenge: round 2 of a "both" playMode challenge can also have
+  // a predefined opening word for whichever role the human now holds
+  // (roles just swapped above) -- resolve it the same way round 1's does.
+  // Lazily required: core/dailyOpening.js requires core/phases/
+  // simultaneous.js, which requires core/phases/gameOver.js, which
+  // requires THIS file (for advanceToNextRound) -- a top-level require of
+  // dailyOpening.js here would complete that cycle. See this file's header
+  // comment for the identical reasoning behind timeoutController's own
+  // lazy require above.
+  if (state.isDaily) {
+    const { maybeResolveDailyOpening } = require("../dailyOpening");
+    maybeResolveDailyOpening(room, state, roomId, context);
+  }
+
   // Some seeded scenarios (a guesser-power tutorial's receiving side) put
   // the AI on the move the instant this round starts, before any human
   // action exists to trigger the usual "run the AI ~1s after a player

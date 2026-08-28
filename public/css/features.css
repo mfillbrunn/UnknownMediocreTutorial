@@ -727,6 +727,49 @@
   flex: 1 1 0;
   margin: 0;
 }
+/* Daily Challenge setup card (pre-Start screen) -- reuses
+   .daily-result-row/.daily-result-label/.daily-result-value's row layout
+   for every line ("Mode", "Role order", "Your first guess", ...) so the
+   pre-start card and the post-completion result card share one visual
+   language instead of two parallel styles. */
+.daily-setup-block {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto 16px;
+  padding: var(--sp-12) var(--sp-16);
+  background: var(--panel-bg);
+  border-radius: var(--r-10);
+  box-shadow: var(--shadow-inset-soft);
+  text-align: left;
+}
+.daily-setup-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin: 14px 0 6px;
+}
+.daily-setup-title:first-child {
+  margin-top: 0;
+}
+.daily-setup-word {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.daily-setup-choose {
+  font-style: italic;
+  opacity: 0.6;
+  font-weight: 600;
+}
+.daily-setup-note {
+  font-size: 12px;
+  opacity: 0.55;
+  text-align: center;
+  margin: 10px 0 0;
+  line-height: 1.4;
+}
 /* Saved games and friends */
 .my-games-section {
   width: 280px;
@@ -1977,9 +2020,8 @@
    refinement-v4.css and competitive-polish-v2.css, which each carried
    their own successive layer for the same buttons (muted traffic-light
    palette, then focus/disabled states). This is now the one definition;
-   .menu-btn/.ai-option/.daily-difficulty-locked compound selectors
-   already out-specify the plain .menu-btn background elsewhere, so none
-   of this needs !important. */
+   .menu-btn/.ai-option compound selectors already out-specify the plain
+   .menu-btn background elsewhere, so none of this needs !important. */
 /* .game-menu prefixed on the .menu-btn variants (every real .menu-btn.
    difficulty-* button lives inside a .game-menu screen -- see
    quickPlayAiScreen/playScreen in index.html): needed so this beats
@@ -1991,7 +2033,6 @@
    so it never competes with that rule and needs no prefix. */
 .game-menu .menu-btn.difficulty-easy,
 .ai-option.difficulty-easy,
-.daily-difficulty-locked.difficulty-easy,
 [data-difficulty="easy"] {
   border-color: #65a795 !important;
   background: #397867 !important;
@@ -2001,7 +2042,6 @@
 
 .game-menu .menu-btn.difficulty-medium,
 .ai-option.difficulty-medium,
-.daily-difficulty-locked.difficulty-medium,
 [data-difficulty="medium"] {
   border-color: #d0a05e !important;
   background: #99692f !important;
@@ -2011,7 +2051,6 @@
 
 .game-menu .menu-btn.difficulty-hard,
 .ai-option.difficulty-hard,
-.daily-difficulty-locked.difficulty-hard,
 [data-difficulty="hard"] {
   border-color: #cf7591 !important;
   background: #9d4864 !important;
@@ -2057,20 +2096,6 @@
   filter: grayscale(0.35) !important;
 }
 
-/* Daily Challenge: difficulty is server-locked, shown as a plain readout
-   instead of three pickable buttons (see daily-challenge.js). Falls
-   through to the muted palette above via the compound selectors there
-   (.daily-difficulty-locked.difficulty-easy etc.) -- this is just the
-   plain wrapper chrome shared by all three. */
-.daily-difficulty-locked {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-weight: 800;
-  letter-spacing: 0.4px;
-}
 /* Simulation tools */
 .sim-center {
   max-width: 900px;

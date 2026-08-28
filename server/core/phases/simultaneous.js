@@ -8,6 +8,75 @@ const { emitRoomState } = require("../rooms");
 const questServer = require("../../powers/powers/questServer");
 const singlePlayerHooks = require("../../single-player/hooks");
 
+// The shared "both sides have submitted" resolution tail: scores the
+// pending guess against the pending secret, appends the history entry (or
+// ends the game on a win), and transitions into the normal phase. Reused
+// verbatim by two callers: handleSimultaneousPhase below (a human/AI
+// actually submitting via SET_SECRET_NEW/SUBMIT_GUESS) and
+// core/dailyOpening.js (Daily Challenge auto-resolving a round whose
+// opening word(s) are predefined for that date -- see REFINEMENT_SPEC
+// section 3). Extracted so a predefined-opening round goes through the
+// EXACT same scoring/win-check/quest/keyboard/remaining-word machinery a
+// normally-submitted round does, rather than a second, easy-to-drift
+// reimplementation of it.
+function resolveSimultaneousRound(room, state, roomId, context) {
+  const io = context.io;
+  const { powerEngine } = context;
+
+  powerEngine.preScore(state, state.pendingGuess);
+
+  const fb = scoreGuess(state.secret, state.pendingGuess);
+  const entry = {
+    guess: state.pendingGuess,
+    fb,
+    fbGuesser: [...fb],
+    extraInfo: null,
+    finalSecret: state.secret,
+    roundIndex: state.history.length,
+    powerEvents: []
+  };
+
+  state.pendingGuess = "";
+
+  // Campaign stage rules can transform this entry's feedback before win
+  // detection; no-ops instantly outside single-player.
+  singlePlayerHooks.maybeTransformFeedback(state, entry, state.guesser);
+
+  const isWin = entry.fb.every((tile) => tile === "🟩");
+  if (isWin) {
+    state.history.push(entry);
+    io.to(roomId).emit("secretFound");
+    endGame(state, roomId, io, room, context);
+    return;
+  }
+
+  state.simultaneousAllWrong = entry.fb.every((tile) => tile === "⬛");
+  entry.secretLocked = state.simultaneousAllWrong;
+  state.history.push(entry);
+  // Transition to normal phase with guesser turn
+  state.phase = "normal";
+  state.turn = state.guesser;
+  state.powerUsedThisTurn = false;
+  state.setterDraft = "";
+
+  if (state.timeControl.mode === "round") {
+    resetRoundTimer(state);
+  }
+
+  state.activeTimer = state.guesser;
+  state.roundStartTime = Date.now();
+
+  // The simultaneous→normal handoff is the guesser's first normal-phase
+  // turn, but (unlike every later turn, which goes through
+  // transitionAfterSecret) nothing here fires the turnStart hook — so an
+  // always-on guesser power like Informant would miss the very first turn
+  // of round 1. Fire it now. All existing turnStart handlers are guarded
+  // (role/flag checks) and no-op with a 1-entry history, so this is safe.
+  powerEngine.turnStart(state, state.turn, roomId, io);
+
+  emitRoomState(roomId, room, io);
+}
+
 function handleSimultaneousPhase(room, state, action, roomId, context) {
   const io = context.io;
   const { powerEngine } = context;
@@ -143,58 +212,8 @@ function handleSimultaneousPhase(room, state, action, roomId, context) {
 
   if (!bothSubmitted) return;
 
-  powerEngine.preScore(state, state.pendingGuess);
-
-  const fb = scoreGuess(state.secret, state.pendingGuess);
-  const entry = {
-    guess: state.pendingGuess,
-    fb,
-    fbGuesser: [...fb],
-    extraInfo: null,
-    finalSecret: state.secret,
-    roundIndex: state.history.length,
-    powerEvents: []
-  };
-
-  state.pendingGuess = "";
-
-  // Campaign stage rules can transform this entry's feedback before win
-  // detection; no-ops instantly outside single-player.
-  singlePlayerHooks.maybeTransformFeedback(state, entry, state.guesser);
-
-  const isWin = entry.fb.every((tile) => tile === "🟩");
-  if (isWin) {
-    state.history.push(entry);
-    io.to(roomId).emit("secretFound");
-    endGame(state, roomId, io, room, context);
-    return;
-  }
-
-  state.simultaneousAllWrong = entry.fb.every((tile) => tile === "⬛");
-  entry.secretLocked = state.simultaneousAllWrong;
-  state.history.push(entry);
-  // Transition to normal phase with guesser turn
-  state.phase = "normal";
-  state.turn = state.guesser;
-  state.powerUsedThisTurn = false;
-  state.setterDraft = "";
-
-  if (state.timeControl.mode === "round") {
-    resetRoundTimer(state);
-  }
-
-  state.activeTimer = state.guesser;
-  state.roundStartTime = Date.now();
-
-  // The simultaneous→normal handoff is the guesser's first normal-phase
-  // turn, but (unlike every later turn, which goes through
-  // transitionAfterSecret) nothing here fires the turnStart hook — so an
-  // always-on guesser power like Informant would miss the very first turn
-  // of round 1. Fire it now. All existing turnStart handlers are guarded
-  // (role/flag checks) and no-op with a 1-entry history, so this is safe.
-  powerEngine.turnStart(state, state.turn, roomId, io);
-
-  emitRoomState(roomId, room, io);
+  resolveSimultaneousRound(room, state, roomId, context);
 }
 
 module.exports = handleSimultaneousPhase;
+module.exports.resolveSimultaneousRound = resolveSimultaneousRound;

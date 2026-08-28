@@ -141,14 +141,20 @@ function wordOf(row) {
   return normalizeWord(typeof row === "string" ? row : row?.word);
 }
 
-function pick(array) {
-  return array?.length ? array[Math.floor(Math.random() * array.length)] : null;
+// `rng` defaults to Math.random for every ordinary (non-daily) call site.
+// Daily Challenge quest generation (see dailyConfig.js) passes a seeded
+// 0..1 generator through instead so the exact same quest comes out for
+// every player attempting that day's puzzle -- see makeQuest below.
+function pick(array, rng) {
+  const rand = rng || Math.random;
+  return array?.length ? array[Math.floor(rand() * array.length)] : null;
 }
 
-function shuffle(array) {
+function shuffle(array, rng) {
+  const rand = rng || Math.random;
   const out = [...(array || [])];
   for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     [out[i], out[j]] = [out[j], out[i]];
   }
   return out;
@@ -168,6 +174,32 @@ function weightedPick(items, weightFor) {
   return weighted[weighted.length - 1]?.item || null;
 }
 
+// A Daily Challenge only ever runs through Power Choice when the server
+// recomputed a full, valid deterministic reward schedule for it (see
+// dailyConfig.js) -- state.isDaily alone is NOT enough to opt in. This is
+// deliberately narrow rather than removing the exclusion outright: a daily
+// room whose _dailyConfig failed to build (bad date, missing word lists)
+// must fall back to being excluded, never fall through to Power Choice's
+// ordinary state-dependent/random reward generation, which would silently
+// break the "every player gets the same challenge" guarantee.
+function hasValidDailyRewardSchedule(state) {
+  const offers = state?._dailyConfig?.rewardOffers;
+  const validRole = (role) => {
+    const list = offers?.[role];
+    return (
+      Array.isArray(list) &&
+      list.length === 3 &&
+      list.every(
+        (offer) =>
+          offer &&
+          Array.isArray(offer.optionIds) &&
+          offer.optionIds.length === 3
+      )
+    );
+  };
+  return !!offers && validRole("setter") && validRole("guesser");
+}
+
 function isPowerChoice(state) {
   return !!(
     state &&
@@ -180,9 +212,18 @@ function isPowerChoice(state) {
     // excluded so it keeps its own scripted secrets/guesses undisturbed by
     // Power Choice's reward milestones and turn-flow changes.
     (!state.isTutorial || state.tutorialStage === "star" || state.tutorialStage === "quest") &&
-    !state.isDaily &&
+    (!state.isDaily || hasValidDailyRewardSchedule(state)) &&
     !state.devMode
   );
+}
+
+// Daily Challenge: the exact quest object for the CURRENT round's `index`-th
+// milestone (0/1/2), precomputed by dailyConfig.js so it's identical for
+// every player and stable across reconnects/rebuilds -- reading it back out
+// is idempotent, unlike makeQuest() which mints a fresh object every call.
+function dailyQuestAt(state, index) {
+  const roundQuests = state?._dailyConfig?.questsByRound?.[state.roundIndex];
+  return (Array.isArray(roundQuests) && roundQuests[index]) || null;
 }
 
 function freshSpyCharge() {
@@ -239,9 +280,9 @@ function freshPowerChoice(roundIndex) {
   };
 }
 
-function ensureFieldReportConditions() {
+function ensureFieldReportConditions(rng) {
   for (let attempt = 0; attempt < 40; attempt++) {
-    const conditions = generateConditions() || [];
+    const conditions = generateConditions(rng) || [];
     const kinds = new Set(conditions.map(condition => condition?.type));
     const repetitive =
       kinds.has("firstLastSame") &&
@@ -250,7 +291,7 @@ function ensureFieldReportConditions() {
     if (conditions.length === 3 && !repetitive) return conditions;
   }
   return [
-    { type: "startsWith", letter: pick(ALPHABET) },
+    { type: "startsWith", letter: pick(ALPHABET, rng) },
     { type: "minVowels", count: 2 },
     { type: "doubleLetter", letter: null }
   ];
@@ -280,12 +321,18 @@ function conditionText(condition) {
   }
 }
 
-function makeQuest(excludeType = null) {
+// `rng`: optional seeded 0..1 generator. When passed (Daily Challenge --
+// see dailyConfig.js), every pick/shuffle/id byte below is drawn from it
+// instead of Math.random, so the exact same quest object comes out for
+// every player attempting that day's puzzle. Omitted, this behaves exactly
+// as before (Math.random-backed, unique id per call) for every ordinary
+// Power Choice match.
+function makeQuest(excludeType = null, rng = null) {
   const available = QUEST_TYPES.filter(type => type !== excludeType);
-  const type = pick(available) || "ADJACENT_PAIR";
-  const id = `${Date.now().toString(36)}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
+  const type = pick(available, rng) || "ADJACENT_PAIR";
+  const id = rng
+    ? `daily-${rng().toString(36).slice(2, 10)}-${rng().toString(36).slice(2, 8)}`
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
   if (type === "ROW_LIMIT") {
     return {
@@ -306,7 +353,7 @@ function makeQuest(excludeType = null) {
     };
   }
   if (type === "ROW_AVOID") {
-    const avoidRow = pick(KEYBOARD_ROWS);
+    const avoidRow = pick(KEYBOARD_ROWS, rng);
     return {
       id,
       type,
@@ -317,7 +364,7 @@ function makeQuest(excludeType = null) {
     };
   }
   if (type === "RARE") {
-    const letters = shuffle("QJXZWKVFYBHGCMPD".split("")).slice(0, 5);
+    const letters = shuffle("QJXZWKVFYBHGCMPD".split(""), rng).slice(0, 5);
     return {
       id,
       type,
@@ -346,7 +393,7 @@ function makeQuest(excludeType = null) {
     };
   }
   if (type === "FIELDREPORT") {
-    const conditions = ensureFieldReportConditions();
+    const conditions = ensureFieldReportConditions(rng);
     return {
       id,
       type,
@@ -393,7 +440,7 @@ function makeQuest(excludeType = null) {
       description: "Use only letters K through Z."
     };
   }
-  const vowelTarget = pick([1, 2, 3]);
+  const vowelTarget = pick([1, 2, 3], rng);
   return {
     id,
     type,
@@ -556,7 +603,9 @@ function initializeRound(state) {
   // cleared, since a null currentQuest is exactly what "finished" looks
   // like -- this runs on every action, not just at round start.
   if (pc.inspector.questsResolved < INSPECTOR_MAX_QUESTS) {
-    pc.inspector.currentQuest ||= makeQuest();
+    pc.inspector.currentQuest ||=
+      (state.isDaily && dailyQuestAt(state, pc.inspector.questsResolved)) ||
+      makeQuest();
   }
   pc.eliminatedLetters ||= [];
   pc.ruledOutLetters ||= [];
@@ -812,6 +861,26 @@ function guesserRewardPool(tier) {
   return pool;
 }
 
+// Daily Challenge: the exact 3 options for role/milestone `rewardNumber`
+// (1/2/3), precomputed by dailyConfig.js -- same option ids, same order,
+// for every player that day. Deliberately does NOT run these ids through
+// rewardOptionApplicable/rewardPickRarityOptions -- the whole point is to
+// bypass normal state-dependent filtering (see applyChoice's daily no-effect
+// branch for what happens if a card turns out infeasible when picked).
+// Returns null if the day's schedule doesn't have a usable 3-card offer for
+// this exact role/milestone (hasValidDailyRewardSchedule already gates
+// isPowerChoice() on the whole schedule being valid, so this should only
+// ever be null from a data bug -- callers fall back to the ordinary
+// random/eligibility-filtered picker rather than failing outright).
+function dailyRewardOptions(state, role, rewardNumber) {
+  const offer = state?._dailyConfig?.rewardOffers?.[role]?.[rewardNumber - 1];
+  if (!offer || !Array.isArray(offer.optionIds) || offer.optionIds.length !== 3) return null;
+  const pool = rewardPoolForChoice(role, rewardNumber);
+  const byId = new Map(pool.map(option => [option.id, option]));
+  const options = offer.optionIds.map(id => byId.get(id)).filter(Boolean);
+  return options.length === 3 ? options.map(decorateRewardRarity) : null;
+}
+
 function buildChoice(state, role, threshold, owner) {
   // Both roles now draw from ONE shared pool at every one of their three
   // milestones (Secretkeeper: 4/8/12 stars, Guesser: 2/3/5 quest completions)
@@ -824,7 +893,9 @@ function buildChoice(state, role, threshold, owner) {
   // 2 Rare, 3 Legendary) and is unrelated to this milestone number.
   if (role === "setter") {
     const rewardNumber = SPY_THRESHOLDS.indexOf(threshold) + 1;
-    const options = buildRewardChoiceOptions(state, role, rewardNumber, 3);
+    const options =
+      (state.isDaily && dailyRewardOptions(state, role, rewardNumber)) ||
+      buildRewardChoiceOptions(state, role, rewardNumber, 3);
     return {
       id: `setter-${threshold}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       ownerUserId: owner,
@@ -833,7 +904,11 @@ function buildChoice(state, role, threshold, owner) {
       tier: rewardNumber,
       rewardNumber,
       revision: 0,
-      refreshAvailable: !state.powerChoiceRefreshUsedUserIds?.includes(owner),
+      // Refresh Choices is disabled entirely for Daily Challenge -- see
+      // POWER_CHOICE_REFRESH's own isDaily guard below and
+      // public/client/power-choice-mode.js, which hides the control rather
+      // than merely greying it out.
+      refreshAvailable: !state.isDaily && !state.powerChoiceRefreshUsedUserIds?.includes(owner),
       rarityProbabilities: rewardRarityProbabilities(rewardNumber),
       title: `Secretkeeper reward · Tier ${rewardNumber}`,
       subtitle: "Select one available reward. It activates immediately.",
@@ -842,7 +917,9 @@ function buildChoice(state, role, threshold, owner) {
   }
 
   const rewardNumber = INSPECTOR_REWARD_SEQUENCE.indexOf(threshold) + 1;
-  const options = buildRewardChoiceOptions(state, role, rewardNumber, 3);
+  const options =
+    (state.isDaily && dailyRewardOptions(state, role, rewardNumber)) ||
+    buildRewardChoiceOptions(state, role, rewardNumber, 3);
   return {
     id: `${role}-${threshold}-${Date.now()}-${Math.random()
       .toString(36)
@@ -853,7 +930,7 @@ function buildChoice(state, role, threshold, owner) {
     tier: rewardNumber,
     rewardNumber,
     revision: 0,
-    refreshAvailable: !state.powerChoiceRefreshUsedUserIds?.includes(owner),
+    refreshAvailable: !state.isDaily && !state.powerChoiceRefreshUsedUserIds?.includes(owner),
     rarityProbabilities: rewardRarityProbabilities(rewardNumber),
     title: `Guesser reward · Tier ${rewardNumber}`,
     subtitle: "Select one available reward. It activates immediately.",
@@ -1633,6 +1710,26 @@ function buildAIChoiceAction(state, aiUserId) {
   initializeRound(state);
   const pending = state.powerChoice.pendingChoice;
   if (!pending || pending.ownerUserId !== aiUserId) return null;
+
+  if (state.isDaily) {
+    // Deterministic AI reward pick: the same option index for every
+    // player's game that day (see dailyConfig.js's aiPickIndex), not a
+    // state-dependent weighted roll. Deliberately does NOT pre-filter by
+    // optionApplicable -- if the picked card turns out infeasible when
+    // applied, applyChoice's daily no-effect branch resolves it safely
+    // rather than this function silently substituting a different card.
+    const indices = state._dailyConfig?.aiPickIndex?.[pending.role];
+    const rewardNumber = Number(pending.rewardNumber || pending.tier) || 1;
+    const index = Array.isArray(indices) ? indices[rewardNumber - 1] : null;
+    const chosen = Number.isInteger(index) ? pending.options?.[index] : null;
+    if (!chosen) return null;
+    return {
+      type: "POWER_CHOICE_SELECT",
+      choiceId: pending.id,
+      optionId: chosen.id
+    };
+  }
+
   const pool = (pending.options || []).filter(option =>
     optionApplicable(state, option)
   );
@@ -1751,8 +1848,53 @@ function refreshSpyHintAfterReward(state, context) {
 // card pick -- letters for Recon Sweep, a number for Miss Bet, two words
 // for Double Tap -- straight from the incoming POWER_CHOICE_SELECT
 // action (see handleAction below). Every other reward ignores it.
+// Daily Challenge safe no-effect resolution (see applyChoice below): the
+// card is still "spent" and the pending choice still clears, but nothing
+// on `state` changes -- the player just sees a clear, non-blocking result
+// instead of being stuck unable to activate any of their fixed 3 cards.
+function resolveDailyNoEffectChoice(state, option, choice, roomId, io) {
+  const resolution = {
+    ownerUserId: choice.ownerUserId,
+    role: choice.role,
+    threshold: choice.threshold,
+    tier: option.tier || choice.tier || null,
+    optionId: option.id,
+    icon: option.icon || "◆",
+    title: option.title,
+    description: option.description,
+    explanation: option.explanation || "",
+    detail: null,
+    detailText: "No effect in the current state.",
+    noEffect: true,
+    at: Date.now()
+  };
+  state.powerChoice.lastResolution = resolution;
+  state.powerChoice.resolutionLog ||= [];
+  state.powerChoice.resolutionLog.push({
+    role: resolution.role,
+    title: resolution.title,
+    detailText: resolution.detailText,
+    at: resolution.at,
+    guessNumber: Array.isArray(state.history) ? state.history.length : 0
+  });
+  emitEffect(io, roomId, resolution);
+  return true;
+}
+
 function applyChoice(state, option, choice, room, roomId, io, context, payload) {
-  if (!rewardOptionApplicable(state, option, choice?.role)) return false;
+  if (!rewardOptionApplicable(state, option, choice?.role)) {
+    // Daily Challenge reward offers are a fixed, precomputed schedule (see
+    // dailyRewardOptions above) that deliberately bypasses normal
+    // state-dependent eligibility filtering, so a displayed card can land
+    // on the chooser at a moment it can't actually do anything (e.g. every
+    // green tile is already revealed). Every other card in that same fixed
+    // offer could be equally infeasible, so rejecting the pick (ordinary
+    // Power Choice's behavior, below) would risk stranding the chooser --
+    // resolve safely instead. Ordinary (non-daily) matches keep the strict
+    // reject-and-pick-another-card behavior.
+    if (state.isDaily) return resolveDailyNoEffectChoice(state, option, choice, roomId, io);
+    return false;
+  }
   let detail = null;
 
   if (option.kind === "power") {
@@ -2010,7 +2152,8 @@ function evaluateInspectorGuess(state, guess, roomId, io) {
     inspector.currentQuest =
       inspector.questsResolved >= INSPECTOR_MAX_QUESTS
         ? null
-        : makeQuest(quest?.type);
+        : (state.isDaily && dailyQuestAt(state, inspector.questsResolved)) ||
+          makeQuest(quest?.type);
     inspector.questTurnsElapsed = 0;
   }
 
@@ -2392,6 +2535,18 @@ function handleAction(room, state, action, roomId, context) {
   const pending = state.powerChoice.pendingChoice;
 
   if (action.type === "POWER_CHOICE_REFRESH") {
+    // Daily Challenge: the reward schedule is fixed for the day (see
+    // dailyConfig.js) -- refreshing would let a player see cards nobody
+    // else got, so it's rejected outright rather than silently corrupting
+    // the pending offer. public/client/power-choice-mode.js hides the
+    // Refresh Choices control entirely for a daily room; this is the
+    // server-side backstop against a modified client sending the action
+    // anyway. Ordinary multiplayer's refresh is completely unaffected.
+    if (state.isDaily) {
+      sendError(room, state, action.userId, io, "Reward refresh is not available in Daily Challenge.");
+      return true;
+    }
+
     if (
       !pending ||
       pending.ownerUserId !== action.userId ||
@@ -2579,5 +2734,15 @@ module.exports = {
   // Exported for server/tests/rewardRarityLocked.test.js -- lets it drive
   // the real rarity-roll-then-draw picker directly against a synthetic
   // state/pool instead of round-tripping through a full milestone trigger.
-  rewardPickRarityOptions
+  rewardPickRarityOptions,
+  // Exported for server/utils/dailyConfig.js -- lets it roll the SAME
+  // rarity probabilities and quest type list this module uses internally,
+  // instead of duplicating (and risking drift from) these small tables.
+  QUEST_TYPES,
+  rewardRarityProbabilities,
+  rewardRarityTier,
+  decorateRewardRarity,
+  dailyQuestAt,
+  dailyRewardOptions,
+  hasValidDailyRewardSchedule
 };

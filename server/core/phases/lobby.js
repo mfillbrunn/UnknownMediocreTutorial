@@ -3,6 +3,8 @@ const {  randomUUID} = require("crypto");
 const { emitLobbyEvent } = require("../../utils/emitLobby");
 const CompetitiveMode = require("../modes/competitiveMode");
 const TutorialMode = require("../modes/tutorialMode");
+const DailyMode = require("../modes/dailyMode");
+const { maybeResolveDailyOpening } = require("../dailyOpening");
 const { resetRoundTimer } = require("../../utils/Timer");
 const { stopAllRoomIntervals } = require("../../utils/teardown");
 const { createInitialState } = require("../stateFactory");
@@ -222,18 +224,35 @@ function handleLobbyPhase(room, state, action, roomId, context) {
     const humanCount = Object.values(room.playersByUserId || {}).filter((p) => !p.isAI).length;
     if (humanCount >= 2) return;
 
-    // Daily Challenge: the AI's difficulty is part of the day's shared,
-    // deterministic configuration -- never trust action.difficulty for it
-    // (a tampered/rewritten client could otherwise hand-pick an easier
-    // opponent than everyone else got that day). action.dailyDate is set
-    // by _startDailyGame alongside this same action, ahead of the
-    // separate SET_DAILY_POWERS call, so this doesn't depend on action
-    // ordering the way keying off state._dailyDate would.
-    state.aiDifficulty = action.dailyDate
-      ? getDailyConfig(action.dailyDate).aiDifficulty
-      : action.difficulty ?? 1;
+    // Daily Challenge: the AI's difficulty AND the role each side plays are
+    // both part of the day's shared, deterministic configuration -- never
+    // trust action.difficulty (a tampered/rewritten client could otherwise
+    // hand-pick an easier opponent than everyone else got that day), and
+    // never rely on the client to call SWITCH_ROLES to get the right role
+    // order either (a "setter"/"guesser"-only challenge has exactly one
+    // legal role order; "both" has a deterministic firstRole -- see
+    // dailyConfig.js). action.dailyDate is set by _startDailyGame alongside
+    // this same action, ahead of the separate SET_DAILY_POWERS call, so
+    // this doesn't depend on action ordering the way keying off
+    // state._dailyDate would.
+    const dailyForAI = action.dailyDate
+      ? getDailyConfig(action.dailyDate, context.ALLOWED_SECRETS, context.ALLOWED_GUESSES)
+      : null;
+    state.aiDifficulty = dailyForAI ? dailyForAI.aiDifficulty : action.difficulty ?? 1;
 
     addAIPlayer(room, state.aiDifficulty);
+
+    if (dailyForAI) {
+      const humanRole =
+        dailyForAI.playMode === "setter"
+          ? "setter"
+          : dailyForAI.playMode === "guesser"
+          ? "guesser"
+          : dailyForAI.firstRole;
+      setPlayerRole(room, action.userId, humanRole);
+      setPlayerRole(room, "AI", humanRole === "setter" ? "guesser" : "setter");
+    }
+
     clearAllReady(room);
 
     emitLobbyEvent(io, roomId, {
@@ -274,28 +293,18 @@ function handleLobbyPhase(room, state, action, roomId, context) {
     return;
   }
 if (action.type === "SET_DAILY_POWERS") {
-  state._dailyDate = action.date || null;
   // Everything here is recomputed server-side from the date alone --
-  // action.setterPowers/guesserPowers are never trusted either, only used
-  // as the pre-daily-config fallback below, so a tampered client can't
-  // hand itself a stronger/weaker loadout than everyone else got that day
-  // (same reasoning that already applied to the secret/opening guess/
-  // quest). Deliberately never sent back to the client: safeState.js has
-  // no field for these, so they can't leak the day's answer ahead of time
-  // the way the public /api/daily route's response is explicitly
-  // whitelisted to avoid too.
-  if (action.date) {
-    const daily = getDailyConfig(action.date, context.ALLOWED_SECRETS, context.ALLOWED_GUESSES);
-    state._dailySetterPowers = daily.setterPowers || null;
-    state._dailyGuesserPowers = daily.guesserPowers || null;
-    state._dailySecret = daily.secretWord;
-    state._dailyOpeningGuess = daily.openingGuess;
-    state._dailyQuestType = daily.questType;
-    state._dailyQuestRound2Choices = daily.questTypeRound2Choices || null;
-  } else {
-    state._dailySetterPowers = null;
-    state._dailyGuesserPowers = null;
-  }
+  // nothing on `action` besides the date itself is ever trusted, so a
+  // tampered client can't hand itself a different mode/role/difficulty/
+  // opening word/quest/reward than everyone else got that day (same
+  // reasoning REFINEMENT_SPEC section 8 requires of the public /api/daily
+  // route). Deliberately never sent back to the client verbatim:
+  // safeState.js has no field for _dailyConfig, so it can't leak the
+  // day's AI secret ahead of time.
+  state._dailyDate = action.date || null;
+  state._dailyConfig = action.date
+    ? getDailyConfig(action.date, context.ALLOWED_SECRETS, context.ALLOWED_GUESSES)
+    : null;
   return;
 }
   if (action.type === "PLAYER_READY") {
@@ -416,22 +425,13 @@ if (action.mode === "star") {
     freshState.tutorialStage = state.tutorialStage || 1;
     freshState.tutorialPowerId = state.tutorialPowerId || null;
     freshState.rankMode = state.rankMode;
-     freshState._dailySetterPowers = state._dailySetterPowers || null;
-     freshState._dailyGuesserPowers = state._dailyGuesserPowers || null;
      freshState._dailyDate = state._dailyDate || null;
-     freshState._dailySecret = state._dailySecret || null;
-     freshState._dailyOpeningGuess = state._dailyOpeningGuess || null;
-     freshState._dailyQuestType = state._dailyQuestType || null;
-     freshState._dailyQuestRound2Choices = state._dailyQuestRound2Choices || null;
+     freshState._dailyConfig = state._dailyConfig || null;
      freshState._devSetterPowers = state._devSetterPowers || null;
      freshState._devGuesserPowers = state._devGuesserPowers || null;
      freshState._replaySetterPowers = state._replaySetterPowers || null;
      freshState._replayGuesserPowers = state._replayGuesserPowers || null;
-     freshState.isDaily = !!(
-       state._dailySetterPowers &&
-       state._dailyGuesserPowers &&
-       state._dailyDate
-     );
+     freshState.isDaily = !!(state._dailyDate && state._dailyConfig);
      freshState.dailyDate = state._dailyDate || null;
 
     room.state = freshState;
@@ -448,6 +448,8 @@ if (action.mode === "star") {
 
     state.mode = state.isTutorial
       ? new TutorialMode()
+      : state.isDaily
+      ? new DailyMode()
       : new CompetitiveMode();
 
     state.mode.initMatch(state);
@@ -571,9 +573,18 @@ if (action.mode === "star") {
       // for this path — see the REPLAY_MATCH handler in postGame.js).
       sP = state._replaySetterPowers;
       gP = state._replayGuesserPowers;
-    } else if (state._dailySetterPowers && state._dailyGuesserPowers) {
-      sP = state._dailySetterPowers;
-      gP = state._dailyGuesserPowers;
+    } else if (state.isDaily) {
+      // Daily Challenge no longer draws from a fixed setterPowers/
+      // guesserPowers pool -- it runs entirely on Power Choice (reward-
+      // choice powers), whose own patched onLobbyReady (see
+      // power-choice/powerChoiceServer.js) ignores these two arguments
+      // completely and builds its round from state._dailyConfig instead.
+      // Passed as empty arrays purely as a safe fallback shape in the
+      // (should-be-unreachable) case the day's reward schedule is somehow
+      // invalid and isPowerChoice(state) falls back to the ordinary,
+      // unpatched CompetitiveMode.onLobbyReady.
+      sP = [];
+      gP = [];
     } else if (
       state.devMode &&
       (Array.isArray(state._devSetterPowers) || Array.isArray(state._devGuesserPowers))
@@ -598,9 +609,14 @@ if (action.mode === "star") {
       gP = GUESSER_POWERS.slice().sort(() => Math.random() - 0.5).slice(0, N);
     }
 
-    // Daily challenge: pass the day's deterministic quest type through the
-    // same guesserQuest parameter Draft Mode uses, so every player gets
-    // the same quest that day too (see dailyConfig.js).
+    // Daily Challenge's own quests are deterministic through Power
+    // Choice's quest system now (state._dailyConfig.questsByRound -- see
+    // powerChoiceServer.js's dailyQuestAt), not this guesserQuest
+    // parameter -- SET_DAILY_POWERS no longer sets state._dailyQuestType.
+    // The parameter itself stays wired up for
+    // core/simulation/runQuestSimulation.js, which still uses it directly
+    // (state._dailyQuestType = questType) to force a quest type onto the
+    // OLD single-quest-per-round system for its own dev-only trials.
     state.mode.onLobbyReady(state, sP, gP, state._dailyQuestType || undefined);
 
     // The per-power "Try it" tutorial's onLobbyReady above already seeded a
@@ -626,10 +642,29 @@ if (action.mode === "star") {
     emitRoomState(roomId, room, io);
     io.to(roomId).emit("gameStart");
 
+    // Daily Challenge: if the human's opening word for round 1's role is
+    // predefined for today (see dailyConfig.js), resolve the simultaneous
+    // opening immediately instead of waiting on a submission that was
+    // never really a choice -- see core/dailyOpening.js. A complete no-op
+    // for every other game, and for a daily game whose opening word isn't
+    // predefined that day.
+    if (state.isDaily) {
+      maybeResolveDailyOpening(room, state, roomId, context);
+    }
+
     // See nextRoundTransition.js's matching comment: a seeded scenario can
     // put the AI on the move (or reacting) before any human action exists
-    // to trigger the usual post-action AI kick.
-    if (state.tutorialStage === "power" && state.turn && state.players?.[state.turn]?.isAI) {
+    // to trigger the usual post-action AI kick. An auto-resolved daily
+    // opening above can land straight on the AI's normal-phase turn the
+    // same way -- without this it would still get picked up by the
+    // periodic AI watchdog (server/index.js), just up to several seconds
+    // later, which would read as a frozen screen right after the match
+    // supposedly started.
+    if (
+      (state.tutorialStage === "power" || state.isDaily) &&
+      state.turn &&
+      state.players?.[state.turn]?.isAI
+    ) {
       setTimeout(() => {
         try {
           context.maybeRunAI?.(room, roomId, context);
