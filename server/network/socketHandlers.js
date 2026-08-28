@@ -21,8 +21,10 @@ const { guesserVisibleHistoryCount } = require("../utils/delayedFeedback");
 const {
   claimDailyAttempt,
   getDailyStatus,
-  markDailyAbandoned
+  markDailyAbandoned,
+  resetDailyResultsForDate
 } = require("../core/dailyTracking");
+const { rerollDailySeed } = require("../utils/dailySeedOverride");
 const {
   runPowerSimulation,
   runAllPowerSimulations,
@@ -155,6 +157,45 @@ socket.on(
     }
   }
 );
+
+    /* ---------- DEV: RESET & REROLL DAILY CHALLENGE ---------- */
+    // Developer screen only (no special role check beyond being logged
+    // in, matching every other dev tool here -- see runPowerSimulation's
+    // identical convention). Wipes every player's daily_results row for
+    // `date` (default: today) so everyone can claim it again, force-closes
+    // any live daily room for that date so a stale in-progress room from
+    // before the reroll can't be resumed, and rerolls the seed that
+    // determines the day's config -- so this isn't just a re-claimable
+    // copy of the SAME challenge, it's a genuinely different one.
+    socket.on("resetDailyChallenge", async ({ userId, date }, cb) => {
+      if (!userId) return cb?.({ ok: false, error: "Not logged in" });
+
+      const targetDate = date || new Date().toISOString().slice(0, 10);
+
+      try {
+        for (const [roomId, room] of Object.entries(rooms)) {
+          if (
+            room?.status === "alive" &&
+            room.state?.isDaily &&
+            room.state?.dailyDate === targetDate
+          ) {
+            forceCloseRoom(roomId, room, io);
+          }
+        }
+
+        await resetDailyResultsForDate({
+          supabase: context.supabase,
+          date: targetDate
+        });
+
+        rerollDailySeed(targetDate);
+
+        cb?.({ ok: true, date: targetDate });
+      } catch (error) {
+        console.error("[daily] reset & reroll failed:", error);
+        cb?.({ ok: false, error: "Could not reset today's Daily Challenge" });
+      }
+    });
 
     /* ---------- MY GAMES (unlimited-time games in progress) ---------- */
     socket.on("getMyActiveGames", ({ userId }, cb) => {

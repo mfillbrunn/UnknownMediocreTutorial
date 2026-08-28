@@ -26,6 +26,7 @@ const {
   setterRewardPool,
   guesserRewardPool
 } = require("../power-choice/powerChoiceServer");
+const { getDailySeedSalt } = require("./dailySeedOverride");
 
 const PLAY_MODES = ["both", "setter", "guesser"];
 const ROLES = ["setter", "guesser"];
@@ -239,7 +240,13 @@ function generateRewardOffers(date) {
 // either way (server/index.js's /api/daily route whitelists its RESPONSE
 // fields instead -- see there for what's actually safe to expose).
 function getDailyConfig(dateStr, allowedSecrets, allowedGuesses) {
-  const date = dateStr;
+  // The Developer screen's "Reset & Rerandomize" button (see
+  // dailySeedOverride.js) can salt today's date so every namespaced seed
+  // below produces a different draw without waiting for the calendar to
+  // roll over. No salt set (the default) reproduces the exact same
+  // unsalted challenge this date has always had.
+  const salt = getDailySeedSalt(dateStr);
+  const date = salt ? `${dateStr}:${salt}` : dateStr;
   const secrets = Array.isArray(allowedSecrets) ? allowedSecrets : [];
   const guesses = Array.isArray(allowedGuesses) ? allowedGuesses : [];
 
@@ -254,7 +261,7 @@ function getDailyConfig(dateStr, allowedSecrets, allowedGuesses) {
   const { rewardOffers, aiPickIndex } = generateRewardOffers(date);
 
   return {
-    date,
+    date: dateStr,
     playMode,
     firstRole,
     aiDifficulty,
