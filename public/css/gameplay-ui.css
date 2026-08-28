@@ -1932,13 +1932,17 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 /* Sits in the card's top-right corner, under the MET status -- a plain
    reminder that the quest is a bonus attempt, not a requirement, so
-   missing it costs nothing. */
+   missing it costs nothing. Kept to one short word pair and pinned to a
+   single line -- the fuller "Optional -- complete for a reward" wording
+   wrapped across 2-3 lines in this narrow corner and inflated the whole
+   card's height. */
 .pc-quest-optional-note {
   color: rgba(185, 218, 238, 0.5);
   font-size: 9px;
   font-style: italic;
   letter-spacing: 0.02em;
   text-align: right;
+  white-space: nowrap;
 }
 
 .pc-current-desc {

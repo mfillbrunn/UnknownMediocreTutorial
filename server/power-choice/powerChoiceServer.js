@@ -785,9 +785,9 @@ function fixedOptions(role, threshold) {
 function guesserRewardPool(tier) {
   // Rarity (each option's own .tier) groups these into: Common -- Yellow
   // Intel, Rule Out Two, Peek Letter, Silly Word, Guess Tip. Rare -- Freeze
-  // Secret, Time Rewind, Secret Vowel Count, Roulette Secret, Magic Mode,
-  // Recon Sweep. Legendary -- Remove a Point, Informant, First Letter
-  // Reveal. Stealth Guess is deliberately NOT in this pool -- it's still a
+  // Secret, Time Rewind, Secret Vowel Count, Roulette Secret, Recon Sweep.
+  // Legendary -- Remove a Point, Informant, First Letter Reveal, Magic
+  // Mode. Stealth Guess is deliberately NOT in this pool -- it's still a
   // real classic-mode power (see client/powerEngine/powers/stealthGuess.js
   // and its own POWER_RULES.js entry), just not currently offered as a
   // Power Choice reward.

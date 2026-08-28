@@ -117,12 +117,12 @@ function run() {
     );
     assert.deepStrictEqual(
       new Set(byTier[2]),
-      new Set(["Freeze Secret", "Time Rewind", "Secret Vowel Count", "Roulette Secret", "Magic Mode", "Recon Sweep"]),
+      new Set(["Freeze Secret", "Time Rewind", "Secret Vowel Count", "Roulette Secret", "Recon Sweep"]),
       "Rare tier membership"
     );
     assert.deepStrictEqual(
       new Set(byTier[3]),
-      new Set(["Remove a Point", "Informant", "First Letter Reveal"]),
+      new Set(["Remove a Point", "Informant", "First Letter Reveal", "Magic Mode"]),
       "Legendary tier membership"
     );
   }

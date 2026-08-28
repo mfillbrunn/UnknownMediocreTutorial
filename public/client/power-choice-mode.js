@@ -653,7 +653,7 @@
       </span>
       <span class="pc-current-top-right">
         <span class="pc-current-status${met ? " is-met" : ""}" aria-live="polite" aria-hidden="${met ? "false" : "true"}">MET</span>
-        <span class="pc-quest-optional-note">Optional -- complete for a reward</span>
+        <span class="pc-quest-optional-note">Optional bonus</span>
       </span>
       <span class="pc-current-desc">${esc(quest.description || "Complete the shown condition.")}</span>
       ${conditionLabels.length ? `<span class="pc-current-conditions">${conditionLabels.map((label, index) => `<span class="pc-condition-chip${conditionResults[index] ? " is-met" : ""}">${esc(label)}</span>`).join("")}</span>` : ""}
