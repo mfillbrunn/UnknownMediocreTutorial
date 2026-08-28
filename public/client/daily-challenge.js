@@ -56,9 +56,10 @@ function _dailyWordOrChoose(word) {
 // Only shows the rows relevant to `config.playMode` -- a Guesser-only
 // challenge never mentions a Secretkeeper secret (the human never sets
 // one), a Secretkeeper-only challenge never mentions a guess. Never shows
-// the AI Secretkeeper's actual secret, only that it's fixed for the day
-// (the server's /api/daily response never sends that value in the first
-// place -- see server/index.js).
+// the AI Secretkeeper's actual secret (the server's /api/daily response
+// never sends that value in the first place -- see server/index.js) --
+// and since it's always fixed for the day, there's no separate row
+// calling that out either.
 function _dailyOpeningSetupHtml(config) {
   const humanPlaysGuesser = config.playMode !== "setter";
   const humanPlaysSetter = config.playMode !== "guesser";
@@ -75,9 +76,6 @@ function _dailyOpeningSetupHtml(config) {
       "AI first guess",
       config.aiOpeningGuess ? `<span class="daily-setup-word">${config.aiOpeningGuess.toUpperCase()}</span>` : "—"
     ));
-  }
-  if (humanPlaysGuesser) {
-    rows.push(_dailySetupRow("AI secret", `<span class="daily-setup-choose">Fixed daily secret</span>`));
   }
 
   const anyPredefined =
@@ -300,27 +298,23 @@ window.showDailyChallenge = async function () {
           <span class="daily-result-label">Mode</span>
           <span class="daily-result-value">${_dailyModeLabel(config.playMode)}</span>
         </div>
-        <div class="daily-result-row">
-          <span class="daily-result-label">Role${config.playMode === "both" ? " order" : ""}</span>
-          <span class="daily-result-value">${_dailyRoleLabel(config)}</span>
-        </div>
-        <div class="daily-result-row">
-          <span class="daily-result-label">Opponent</span>
-          <span class="daily-result-value">
-            <span class="daily-diff-dot" style="background:${dailyDifficultyMeta(config.aiDifficulty).color}"></span>${dailyDifficultyMeta(config.aiDifficulty).label} AI
-          </span>
-        </div>
         ${_dailyOpeningSetupHtml(config)}
-        <p class="daily-setup-note">Rewards: Fixed choices · No refresh</p>
       </div>
 
-      <button id="dailyStartBtn" class="menu-btn primary" style="margin-top:10px">Start Daily Challenge</button>
+      <p class="daily-ai-label">Choose your opponent</p>
+      <div class="daily-difficulty-row">
+        <button class="menu-btn difficulty-easy" data-difficulty="1">Easy</button>
+        <button class="menu-btn difficulty-medium" data-difficulty="2">Medium</button>
+        <button class="menu-btn difficulty-hard" data-difficulty="3">Hard</button>
+      </div>
       <button id="dailyRankingsBtn" class="menu-btn small" style="margin-top:14px">🏆 Rankings</button>
     </div>
   `;
 
-  document.getElementById("dailyStartBtn")?.addEventListener("click", () => {
-    _startDailyGame(config);
+  screen.querySelectorAll("[data-difficulty]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      _startDailyGame(config, Number(btn.dataset.difficulty));
+    });
   });
   document.getElementById("dailyRankingsBtn")?.addEventListener("click", () => {
     _showDailyRankings(config);
@@ -502,22 +496,25 @@ async function _showDailyRankings(config) {
 }
 window._showDailyRankings = _showDailyRankings;
 
-// Every field of the day's configuration -- play mode, role order, AI
-// difficulty, predefined opening words -- comes from the server's
-// deterministic daily seed (see dailyConfig.js), so every player gets the
-// exact same challenge. Nothing here is a player choice; the server also
-// independently recomputes and enforces this (see lobby.js's
+// Play mode, role order, and every opening word/quest/reward still come
+// from the server's deterministic daily seed (see dailyConfig.js), so
+// every player gets the exact same challenge there -- the server
+// independently recomputes and enforces all of that (see lobby.js's
 // ADD_AI/SET_DAILY_POWERS handlers), so a tampered client sending
-// different values would just be ignored. The client no longer sends
-// SWITCH_ROLES either -- ADD_AI itself now assigns both seats' roles from
-// the day's config (playMode/firstRole) server-side.
-function _startDailyGame(config) {
+// different values for any of it would just be ignored. AI difficulty is
+// the one part of the day's setup the player actually picks (the
+// difficulty button clicked on the challenge screen); the server trusts
+// it as long as it's a real 1/2/3 level (see lobby.js's ADD_AI handler),
+// falling back to the day's own seeded difficulty otherwise. The client
+// no longer sends SWITCH_ROLES either -- ADD_AI itself now assigns both
+// seats' roles from the day's config (playMode/firstRole) server-side.
+function _startDailyGame(config, difficulty) {
   const username =
     window.myProfile?.username ||
     window.currentUser?.email ||
     "Player";
 
-  const chosenDifficulty = config.aiDifficulty;
+  const chosenDifficulty = difficulty || config.aiDifficulty;
 
   window._dailyStarting = true;
 
