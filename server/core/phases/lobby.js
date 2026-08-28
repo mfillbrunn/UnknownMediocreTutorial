@@ -224,21 +224,24 @@ function handleLobbyPhase(room, state, action, roomId, context) {
     const humanCount = Object.values(room.playersByUserId || {}).filter((p) => !p.isAI).length;
     if (humanCount >= 2) return;
 
-    // Daily Challenge: the AI's difficulty AND the role each side plays are
-    // both part of the day's shared, deterministic configuration -- never
-    // trust action.difficulty (a tampered/rewritten client could otherwise
-    // hand-pick an easier opponent than everyone else got that day), and
-    // never rely on the client to call SWITCH_ROLES to get the right role
-    // order either (a "setter"/"guesser"-only challenge has exactly one
-    // legal role order; "both" has a deterministic firstRole -- see
-    // dailyConfig.js). action.dailyDate is set by _startDailyGame alongside
-    // this same action, ahead of the separate SET_DAILY_POWERS call, so
-    // this doesn't depend on action ordering the way keying off
+    // Daily Challenge: which role each side plays is part of the day's
+    // shared, deterministic configuration -- never rely on the client to
+    // call SWITCH_ROLES to get the right role order (a "setter"/
+    // "guesser"-only challenge has exactly one legal role order; "both"
+    // has a deterministic firstRole -- see dailyConfig.js). AI difficulty
+    // is deliberately the one part the PLAYER picks (the difficulty
+    // button on the daily challenge screen) -- trusted here as long as
+    // it's a real level, falling back to the day's own seeded default
+    // otherwise (an omitted/invalid value, or a non-daily match).
+    // action.dailyDate is set by _startDailyGame alongside this same
+    // action, ahead of the separate SET_DAILY_POWERS call, so this
+    // doesn't depend on action ordering the way keying off
     // state._dailyDate would.
     const dailyForAI = action.dailyDate
       ? getDailyConfig(action.dailyDate, context.ALLOWED_SECRETS, context.ALLOWED_GUESSES)
       : null;
-    state.aiDifficulty = dailyForAI ? dailyForAI.aiDifficulty : action.difficulty ?? 1;
+    const chosenDifficulty = [1, 2, 3].includes(action.difficulty) ? action.difficulty : null;
+    state.aiDifficulty = chosenDifficulty ?? (dailyForAI ? dailyForAI.aiDifficulty : 1);
 
     addAIPlayer(room, state.aiDifficulty);
 
