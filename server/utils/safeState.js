@@ -60,6 +60,16 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
   delete safe._pendingPowerEvents;
   delete safe._turnClock;
 
+  // Daily Challenge's full deterministic config -- must never reach any
+  // client. Contains the AI Secretkeeper's actual fixed secret
+  // (aiOpeningSecret), every future round's precomputed quest objects
+  // (exact Field Report conditions, RARE letters, etc.), and the entire
+  // reward schedule (exact option ids/order for every milestone, plus the
+  // AI's deterministic picks) -- any of this leaking would let a player
+  // read ahead at today's answers. _dailyDate alone is not sensitive (it's
+  // already public via /api/daily) and is left in place.
+  delete safe._dailyConfig;
+
   if (viewerRole === "guesser") {
     delete safe.powers.assassinWord;
   }

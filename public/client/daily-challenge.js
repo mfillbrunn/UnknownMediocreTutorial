@@ -284,6 +284,26 @@ window.showDailyChallenge = async function () {
     return;
   }
 
+  // A real check failure (a DB error, a dropped connection) must never be
+  // treated the same as "you haven't played today" -- silently falling
+  // through to the fresh-start screen below would let a player who
+  // already completed today's challenge attempt to claim it again instead
+  // of seeing an honest "try again" message.
+  if (status?.status === "error" || !status) {
+    screen.innerHTML = `<div class="menu-center">
+      <div class="screen-back-header">
+        <button class="menu-btn screen-back-btn" onclick="showStartup()">← Back</button>
+        <h2 class="menu-title" style="flex:1;text-align:center">Daily Challenge</h2>
+      </div>
+      <p>${status?.error || "Could not check today's challenge status."}</p>
+      <button id="dailyRetryBtn" class="menu-btn" style="margin-top:10px">Try Again</button>
+    </div>`;
+    document.getElementById("dailyRetryBtn")?.addEventListener("click", () => {
+      window.showDailyChallenge?.();
+    });
+    return;
+  }
+
   screen.innerHTML = `
     <div class="menu-center">
       <div class="screen-back-header">

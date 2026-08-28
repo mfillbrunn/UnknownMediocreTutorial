@@ -193,68 +193,90 @@ async function markDailyCompleted({
     return;
   }
 
-  const {
-    error
-  } = await supabase
+  const legacyRow = {
+    user_id: userId,
+    date,
+
+    status: "completed",
+    room_id: null,
+
+    // Legacy columns -- kept in sync with setter/guesser score so any
+    // reader of the pre-playMode shape (including this same table's
+    // OLDER rows) still sees a sensible score/opponent_score/won/tie.
+    score:
+      result?.score ?? result?.setterScore ?? 0,
+
+    opponent_score:
+      result?.opponentScore ?? result?.guesserScore ?? 0,
+
+    won:
+      !!result?.won,
+
+    tie:
+      !!result?.tie,
+
+    time_seconds:
+      Math.round(
+        result?.time || 0
+      ),
+
+    difficulty:
+      result?.difficulty || null,
+
+    completed_at:
+      new Date().toISOString()
+  };
+
+  const playModeRow = {
+    ...legacyRow,
+
+    // REFINEMENT_SPEC section 9: playMode-aware result columns.
+    play_mode:
+      result?.playMode || null,
+
+    first_role:
+      result?.firstRole || null,
+
+    setter_score:
+      result?.setterScore ?? null,
+
+    guesser_score:
+      result?.guesserScore ?? null,
+
+    score_difference:
+      result?.scoreDifference ?? null
+  };
+
+  const { error } = await supabase
     .from("daily_results")
-    .upsert(
-      {
-        user_id: userId,
-        date,
+    .upsert(playModeRow, { onConflict: "user_id,date" });
 
-        status: "completed",
-        room_id: null,
+  if (!error) {
+    return;
+  }
 
-        // Legacy columns -- kept in sync with setter/guesser score so any
-        // reader of the pre-playMode shape (including this same table's
-        // OLDER rows) still sees a sensible score/opponent_score/won/tie.
-        score:
-          result?.score ?? result?.setterScore ?? 0,
+  // The play_mode/first_role/setter_score/guesser_score/score_difference
+  // columns come from a migration (supabase/migrations/
+  // 202608280001_daily_challenge_playmode.sql) that has to be applied by
+  // hand against the live database -- until that's actually been run,
+  // writing those columns fails outright and would otherwise lose the
+  // WHOLE completion (never marking the row "completed" at all, letting
+  // the player re-claim the same date and never showing up in rankings).
+  // Retry with just the legacy columns so a completion is still recorded
+  // even before that migration lands; the playMode-aware fields simply
+  // stay null on this row until it's rewritten by a client that isn't
+  // hitting this fallback.
+  console.warn(
+    "[daily] full-schema completion write failed, retrying with legacy columns only:",
+    error
+  );
 
-        opponent_score:
-          result?.opponentScore ?? result?.guesserScore ?? 0,
+  const { error: legacyError } = await supabase
+    .from("daily_results")
+    .upsert(legacyRow, { onConflict: "user_id,date" });
 
-        won:
-          !!result?.won,
-
-        tie:
-          !!result?.tie,
-
-        // REFINEMENT_SPEC section 9: playMode-aware result columns.
-        play_mode:
-          result?.playMode || null,
-
-        first_role:
-          result?.firstRole || null,
-
-        setter_score:
-          result?.setterScore ?? null,
-
-        guesser_score:
-          result?.guesserScore ?? null,
-
-        score_difference:
-          result?.scoreDifference ?? null,
-
-        time_seconds:
-          Math.round(
-            result?.time || 0
-          ),
-
-        difficulty:
-          result?.difficulty || null,
-
-        completed_at:
-          new Date().toISOString()
-      },
-      {
-        onConflict:
-          "user_id,date"
-      }
-    );
-
-  if (error) {
-    throw error;
+  if (legacyError) {
+    throw legacyError;
   }
 }
 
@@ -341,20 +363,43 @@ async function getDailyStatus({
         };
   }
 
-  const {
-    data,
-    error
-  } = await supabase
-    .from("daily_results")
-    .select(
-      "status,room_id,score,opponent_score,time_seconds,won,tie,difficulty,play_mode,first_role,setter_score,guesser_score,score_difference"
-    )
-    .eq("user_id", userId)
-    .eq("date", date)
-    .maybeSingle();
+  let data;
+  {
+    const legacyColumns = "status,room_id,score,opponent_score,time_seconds,won,tie,difficulty";
+    const playModeColumns = `${legacyColumns},play_mode,first_role,setter_score,guesser_score,score_difference`;
 
-  if (error) {
-    throw error;
+    const full = await supabase
+      .from("daily_results")
+      .select(playModeColumns)
+      .eq("user_id", userId)
+      .eq("date", date)
+      .maybeSingle();
+
+    if (!full.error) {
+      data = full.data;
+    } else {
+      // Same not-yet-migrated fallback as markDailyCompleted above -- a
+      // completion recorded before the playMode migration landed (or one
+      // written by this same fallback) still has to be readable, not just
+      // writable, or the player would see "you haven't played today" and
+      // be able to reclaim a date they already completed.
+      console.warn(
+        "[daily] full-schema status read failed, retrying with legacy columns only:",
+        full.error
+      );
+
+      const legacy = await supabase
+        .from("daily_results")
+        .select(legacyColumns)
+        .eq("user_id", userId)
+        .eq("date", date)
+        .maybeSingle();
+
+      if (legacy.error) {
+        throw legacy.error;
+      }
+      data = legacy.data;
+    }
   }
 
   if (!data) {
