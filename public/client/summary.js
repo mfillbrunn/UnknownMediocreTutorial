@@ -207,6 +207,15 @@ function renderMatchSummary(container) {
   setSummaryShareVisibility(true);
   const rounds = state.matchRounds || [];
 
+  // Daily Challenge is a once-a-day, fixed-setup event against an AI, not
+  // a real head-to-head match -- computeMatchResult's win/lose comparison
+  // is meaningless for a "setter"/"guesser"-only day (the AI's opposing
+  // score is always 0, since it never held the other role) and even for a
+  // "both" day it's a different question from "did you have fun/keep your
+  // streak" than "Victory"/"Defeat" implies. Declared before resultText
+  // below so both this header and the actions list further down can use it.
+  const isDaily = !!state.isDaily;
+
   const {
     points,
     winner,
@@ -221,8 +230,11 @@ function renderMatchSummary(container) {
 
   // One bold word for the headline (see .match-header h2's uppercase) --
   // any timeout-specific detail is called out separately by timeoutNote
-  // further down instead of being folded into this.
-  const resultText = winReason === "tie" ? "Tie" : didWin ? "Victory" : "Defeat";
+  // further down instead of being folded into this. Daily Challenge never
+  // gets "Defeat" (or "Victory"/"Tie") here -- see isDaily above.
+  const resultText = isDaily
+    ? "Challenge Complete"
+    : winReason === "tie" ? "Tie" : didWin ? "Victory" : "Defeat";
 
   // Mine vs. theirs, not winner vs. loser -- the scoreboard always shows
   // the viewer's own number first/green regardless of who actually won,
@@ -315,12 +327,15 @@ if (guesserEntries.length) {
   // Result header (lead with the outcome, not the actions) — room code
   // isn't repeated here, it's already shown in the app header above.
   // ----------------------------
-  const resultClass = didWin ? "win" : winReason === "tie" ? "tie" : "loss";
+  // Daily Challenge gets the neutral "tie" accent color regardless of
+  // outcome, matching resultText's neutral "Challenge Complete" above --
+  // a colored win/loss header would still read as a judgment even with
+  // neutral text.
+  const resultClass = isDaily ? "tie" : didWin ? "win" : winReason === "tie" ? "tie" : "loss";
 
   // Daily Challenge is a once-a-day, fixed-setup event -- New Match and
   // Replay don't apply (there's nothing to re-roll or replay into), so only
   // offer Leave (back to the menu, where the day's result/rankings live).
-  const isDaily = !!state.isDaily;
 
   let html = `
     <div class="match-header match-header--${resultClass}">
