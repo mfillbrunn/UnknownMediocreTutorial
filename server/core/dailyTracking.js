@@ -450,9 +450,47 @@ async function getDailyStatus({
   };
 }
 
+// Developer tool support: wipes every player's record for `date` so
+// everyone can claim it again, paired with dailySeedOverride.js's
+// rerollDailySeed to actually change what that date's challenge IS (see
+// the Developer screen's "Reset & Rerandomize" button, wired in
+// socketHandlers.js). Deliberately deletes rather than updating status --
+// an old row (in whichever status) referred to the PREVIOUS roll's
+// config and must not linger as a stale "already played"/"in progress"
+// record once the challenge underneath it has changed.
+async function resetDailyResultsForDate({ supabase, date }) {
+  if (!date) {
+    return { ok: false, error: "Missing date" };
+  }
+
+  const suffix = `:${date}`;
+  for (const k of [...activeRooms.keys()]) {
+    if (k.endsWith(suffix)) activeRooms.delete(k);
+  }
+  for (const k of [...completions.keys()]) {
+    if (k.endsWith(suffix)) completions.delete(k);
+  }
+
+  if (!supabase) {
+    return { ok: true };
+  }
+
+  const { error } = await supabase
+    .from("daily_results")
+    .delete()
+    .eq("date", date);
+
+  if (error) {
+    throw error;
+  }
+
+  return { ok: true };
+}
+
 module.exports = {
   claimDailyAttempt,
   markDailyCompleted,
   markDailyAbandoned,
-  getDailyStatus
+  getDailyStatus,
+  resetDailyResultsForDate
 };
