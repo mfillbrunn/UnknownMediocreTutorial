@@ -122,11 +122,20 @@ window.POWER_METADATA = {
 
   revealHistory: {
     label: "Time Rewind",
-    desc: "The Guesser learns what the secret word was three rounds ago — a peek into the past that can reveal patterns in how the Secretkeeper picks secrets.",
-    short: "Reveals what the secret word was three rounds ago.",
+    desc: "The Guesser learns what the secret word was two rounds ago — a peek into the past that can reveal patterns in how the Secretkeeper picks secrets.",
+    short: "Reveals what the secret word was two rounds ago.",
     icon: "rewind",
     emoji: "⏪",
     color: "#64748B"
+  },
+
+  firstLetterReveal: {
+    label: "First Letter Reveal",
+    desc: "The Guesser reveals the secret's first letter as a permanent green clue at position 1 for the rest of the round -- any secret the Secretkeeper picks later must keep that same letter there.",
+    short: "Reveals the secret's first letter as a permanent green clue for the rest of the round.",
+    icon: "first-letter",
+    emoji: "🥇",
+    color: "#4ADE80"
   },
 
   revealLetter: {
@@ -200,8 +209,8 @@ window.POWER_METADATA = {
 
   vowelRefresh: {
     label: "Vowel Reset",
-    desc: "The Secretkeeper erases what the Guesser learned about vowels from their last guess, even letters the Guesser already knew were right. Fresh cover for the secret after a strong guess.",
-    short: "Un-teaches the Guesser everything they learned about vowels from their last guess.",
+    desc: "The Secretkeeper erases everything the Guesser has learned about vowels so far this match, even letters the Guesser already knew were right. Fresh cover for the secret after a strong guess.",
+    short: "Un-teaches the Guesser everything they've learned about vowels so far this match.",
     icon: "vowel-cycle",
     emoji: "🔁",
     color: "#0EA5E9"

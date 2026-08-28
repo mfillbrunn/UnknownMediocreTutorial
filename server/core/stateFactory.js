@@ -60,6 +60,13 @@ const powers = {
       // REVEAL HISTORY
       revealHistoryUsed: false,
       revealHistoryActive: false,
+      // FIRST LETTER REVEAL (guesser power, Power Choice Legendary reward).
+      // One-time per match, like revealHistory/vowelRefresh above --
+      // firstLetterRevealedLetter is just the last-revealed value for
+      // resolution-log text, not itself load-bearing (the actual clue
+      // lives in state.extraConstraints as a GREEN entry).
+      firstLetterRevealUsed: false,
+      firstLetterRevealedLetter: null,
       // BLIND SPOT
       blindSpotUsed: false,
       blindSpotActive: false,

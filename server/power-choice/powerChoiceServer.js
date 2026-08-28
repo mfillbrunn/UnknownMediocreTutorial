@@ -72,7 +72,7 @@ const QUEST_TYPES = [
   "ROW_ONLY",
   "ROW_AVOID",
   "RARE",
-  "ALPHA",
+  "ADJACENT_PAIR",
   "HARDMODE",
   "FIELDREPORT",
   "ALTERNATING",
@@ -106,7 +106,7 @@ const POWER_COPY = {
   blindGuess: ["🙈", "Blind Guess", "Hide the Guesser's draft while they make this guess."],
   forceTimer: ["⏱", "Force Timer", "Put immediate time pressure on the Guesser's turn."],
   delayedIntel: ["📡", "Delayed Feedback", "Hold back the Guesser's feedback until after their following guess."],
-  vowelRefresh: ["🔁", "Vowel Refresh", "Erase every clue on the vowels in the Guesser's last guess."],
+  vowelRefresh: ["🔁", "Vowel Refresh", "Erase every clue accumulated on all 5 vowels so far this match."],
   revealGreen: ["👁️", "Peek Letter", "Reveal one correct letter in its exact position."],
   freezeSecret: ["❄️", "Freeze Secret", "Prevent the Secretkeeper from changing the secret after this guess."],
   rouletteSecret: ["🎰", "Roulette Secret", "Force the Secretkeeper onto a legal random secret."],
@@ -114,7 +114,11 @@ const POWER_COPY = {
   nonsense: ["🌀", "Silly Word", "Let the Guesser submit any five letters this turn, even when they do not form a real word."],
   magicMode: ["✨", "Magic Mode", "Activate the Guesser's special feedback mode this turn."],
   suggestGuess: ["💡", "Guess Tip", "Immediately suggests a random guess that still fits everything learned so far."],
-  revealHistory: ["⏪", "Time Rewind", "Reveal the exact secret from three rounds ago."],
+  revealHistory: ["⏪", "Time Rewind", "Reveal the exact secret from two rounds ago."],
+  // Immediate, no payload: fires the instant it's picked, permanently
+  // pinning position 1 as green for the rest of the round (see
+  // firstLetterRevealServer.js) -- there's no input to collect first.
+  firstLetterReveal: ["🥇", "First Letter Reveal", "Reveal the secret's first letter as a permanent green clue for the rest of the round."],
   // Immediate, payload-carrying cards: picking one prompts for its input
   // (a bet number / two words) right then, and fires on the spot -- there's
   // no unlock to bank for later, see applyChoice's payload param. Recon
@@ -278,7 +282,7 @@ function conditionText(condition) {
 
 function makeQuest(excludeType = null) {
   const available = QUEST_TYPES.filter(type => type !== excludeType);
-  const type = pick(available) || "ALPHA";
+  const type = pick(available) || "ADJACENT_PAIR";
   const id = `${Date.now().toString(36)}-${Math.random()
     .toString(36)
     .slice(2, 8)}`;
@@ -323,13 +327,13 @@ function makeQuest(excludeType = null) {
       letters
     };
   }
-  if (type === "ALPHA") {
+  if (type === "ADJACENT_PAIR") {
     return {
       id,
       type,
-      icon: "↗",
-      title: "In Order",
-      description: "Letters must be strictly alphabetical, forward or backward."
+      icon: "AB",
+      title: "Step Up",
+      description: "Use two side-by-side letters that are consecutive in the alphabet, in order (e.g. AB, CD)."
     };
   }
   if (type === "HARDMODE") {
@@ -484,12 +488,9 @@ function evaluateQuest(state, quest, guess) {
       return [...word].every(letter => !String(quest.avoidRow || "").includes(letter));
     case "RARE":
       return quest.letters.some(letter => word.includes(letter));
-    case "ALPHA": {
+    case "ADJACENT_PAIR": {
       const codes = [...word].map(letter => letter.charCodeAt(0));
-      return (
-        codes.every((value, index) => index === 0 || value > codes[index - 1]) ||
-        codes.every((value, index) => index === 0 || value < codes[index - 1])
-      );
+      return codes.some((value, index) => index > 0 && value === codes[index - 1] + 1);
     }
     case "HARDMODE":
       return hardModeCompliant(state, word);
@@ -656,10 +657,16 @@ function withCategory(options) {
 
 function setterRewardPool() {
   return withCategory([
+    // Tiers below are RARITY (1 Common, 2 Rare, 3 Legendary), rolled once
+    // per offering -- see rewardPickRarityOptions. Common: Erase Two
+    // Clues, Yellow Smudge, Trade a Yellow, Blue Mode, Count Only, Fake
+    // Feedback, Force Timer. Rare: Fade a Green, Trade a Green, Blind
+    // Guess, Delayed Feedback. Legendary: Blind Spot, Add a Point, Vowel
+    // Refresh.
     {
       id: "spy-reset-positive-1",
       kind: "fixed",
-      tier: 1,
+      tier: 2,
       icon: "🟩⇢🟨",
       title: "Fade a Green",
       description: "Turn one green tile into yellow.",
@@ -668,7 +675,7 @@ function setterRewardPool() {
     {
       id: "spy-reset-known-2",
       kind: "fixed",
-      tier: 2,
+      tier: 1,
       icon: "⬛↶2",
       title: "Erase Two Clues",
       description: "Reset two random gray letters.",
@@ -677,7 +684,7 @@ function setterRewardPool() {
     {
       id: "spy-add-point-1",
       kind: "fixed",
-      tier: 1,
+      tier: 3,
       icon: "+1",
       title: "Add a Point",
       description: "Add 1 point to the Guesser's final guess total.",
@@ -686,7 +693,7 @@ function setterRewardPool() {
     {
       id: "spy-yellow-smudge",
       kind: "fixed",
-      tier: 2,
+      tier: 1,
       icon: "🟨⇢⇢",
       title: "Yellow Smudge",
       description: "Remove every positional restriction from every yellow letter.",
@@ -695,7 +702,7 @@ function setterRewardPool() {
     {
       id: "spy-trade-yellow",
       kind: "fixed",
-      tier: 2,
+      tier: 1,
       icon: "🟨⇄⬛4",
       title: "Trade a Yellow",
       description: "Give the Guesser one new yellow, but reset four of your gray letters.",
@@ -704,11 +711,11 @@ function setterRewardPool() {
     {
       id: "spy-trade-green",
       kind: "fixed",
-      tier: 3,
-      icon: "🟩⇄🟨🟨",
+      tier: 2,
+      icon: "🟩⇄🟨🟨🟨",
       title: "Trade a Green",
-      description: "Give the Guesser one new green, but erase two yellow clues.",
-      explanation: "A bigger risk for a bigger reward: one exact-position reveal in exchange for two present-letter clues forgotten."
+      description: "Give the Guesser one new green, but erase three yellow clues.",
+      explanation: "A bigger risk for a bigger reward: one exact-position reveal in exchange for three present-letter clues forgotten."
     },
     powerOption("blindSpot"),
     // One-off effects, activated immediately on pick (not persistent
@@ -748,7 +755,7 @@ function fixedOptions(role, threshold) {
       {
         id: "inspector-remove-point-1",
         kind: "fixed",
-        tier: 1,
+        tier: 3,
         icon: "−1",
         title: "Remove a Point",
         description: "Subtract 1 point from your final guess total.",
@@ -776,12 +783,19 @@ function fixedOptions(role, threshold) {
 // apply() requires anyway (see the "revealHistory" case in
 // powerOptionApplicable for the belt-and-suspenders runtime check).
 function guesserRewardPool(tier) {
+  // Rarity (each option's own .tier) groups these into: Common -- Yellow
+  // Intel, Rule Out Two, Peek Letter, Silly Word, Guess Tip. Rare -- Freeze
+  // Secret, Time Rewind, Secret Vowel Count, Roulette Secret, Magic Mode,
+  // Recon Sweep. Legendary -- Remove a Point, Informant, First Letter
+  // Reveal. Stealth Guess is deliberately NOT in this pool -- it's still a
+  // real classic-mode power (see client/powerEngine/powers/stealthGuess.js
+  // and its own POWER_RULES.js entry), just not currently offered as a
+  // Power Choice reward.
   const pool = [
     ...fixedOptions("guesser", 2),
     powerOption("revealGreen"),
     powerOption("freezeSecret"),
     powerOption("rouletteSecret"),
-    powerOption("stealthGuess"),
     powerOption("nonsense"),
     powerOption("magicMode"),
     powerOption("revealLocation"),
@@ -791,7 +805,8 @@ function guesserRewardPool(tier) {
     // fires on the spot, see applyChoice's payload param -- there's no way
     // to bank the power for later.
     powerOption("suggestGuess"),
-    powerOption("letterProbe")
+    powerOption("letterProbe"),
+    powerOption("firstLetterReveal")
   ];
   if (tier >= 2) pool.push(powerOption("revealHistory"));
   return pool;
@@ -1396,14 +1411,18 @@ function decorateRewardRarity(option) {
   };
 }
 
-// Select each card slot by rarity probability, without replacement. If a
-// rarity has no currently applicable cards, its probability mass is
-// automatically re-normalized across the rarities that are available.
-// Options that would do nothing right now (rewardOptionApplicable ===
-// false, e.g. no green tile left to fade, no yellow tile left to smudge)
-// are excluded entirely rather than padded in, since they're not just
-// deprioritized here -- see buildRewardChoiceOptions's own fallback for
-// what happens if that leaves too few cards.
+// Rarity is rolled ONCE for the whole offering (not per card slot), then
+// every displayed card is drawn from that same rarity -- a "Common" offer
+// never mixes in a Rare or Legendary card and vice versa. Rarities with
+// fewer than `limit` currently-applicable cards are excluded from the roll
+// entirely, so a real 3-of-a-kind draft is always preferred over a
+// same-rarity-but-padded one; only if NO rarity has a full `limit` is the
+// roll widened to whichever rarities have at least one applicable card, so
+// a same-rarity (if short-handed) offer is still preferred over failing
+// outright -- see buildRewardChoiceOptions for what happens if that still
+// comes up empty. Options that would do nothing right now
+// (rewardOptionApplicable === false, e.g. no green tile left to fade, no
+// yellow tile left to smudge) never enter the roll or the draw.
 function rewardPickRarityOptions(
   state,
   options,
@@ -1413,10 +1432,13 @@ function rewardPickRarityOptions(
   role
 ) {
   const excluded = new Set(excludedOptionIds || []);
-  let remaining = (Array.isArray(options) ? options : []).filter(
+  const applicable = (Array.isArray(options) ? options : []).filter(
     option => !excluded.has(option?.id) && rewardOptionApplicable(state, option, role)
   );
-  const selected = [];
+
+  const byTier = { 1: [], 2: [], 3: [] };
+  for (const option of applicable) byTier[rewardRarityTier(option)].push(option);
+
   const probabilities = rewardRarityProbabilities(rewardNumber);
   const tierWeights = {
     1: probabilities.common,
@@ -1424,30 +1446,32 @@ function rewardPickRarityOptions(
     3: probabilities.legendary
   };
 
-  while (selected.length < limit && remaining.length) {
-    const availableTiers = [1, 2, 3].filter(tier =>
-      remaining.some(option => rewardRarityTier(option) === tier)
-    );
-    const selectedTier = rewardWeightedPick(
-      availableTiers,
-      tier => tierWeights[tier]
-    );
-    // Defensive fallback: all configured weights should be positive in the
-    // current table, but never strand a valid option if a future config uses 0.
-    const tier = selectedTier || pick(availableTiers);
-    const bucket = remaining.filter(option => rewardRarityTier(option) === tier);
-    const chosen = pick(bucket);
-    if (!chosen) break;
-    selected.push(decorateRewardRarity(chosen));
-    remaining = remaining.filter(option => option.id !== chosen.id);
-  }
-  return selected;
+  const fullTiers = [1, 2, 3].filter(tier => byTier[tier].length >= limit);
+  const candidateTiers = fullTiers.length
+    ? fullTiers
+    : [1, 2, 3].filter(tier => byTier[tier].length > 0);
+  if (!candidateTiers.length) return [];
+
+  const rolledTier =
+    rewardWeightedPick(candidateTiers, tier => tierWeights[tier]) ||
+    pick(candidateTiers);
+
+  return shuffle(byTier[rolledTier])
+    .slice(0, limit)
+    .map(decorateRewardRarity);
 }
 
 function rewardPoolForChoice(role, rewardNumber) {
   return role === "setter" ? setterRewardPool() : guesserRewardPool(rewardNumber);
 }
 
+// Thin wrapper kept mainly for the name -- but also the one place that
+// knows which pool a role draws from, so callers (the initial roll and
+// POWER_CHOICE_REFRESH) don't each have to. No "prefer new cards, pad from
+// the old pool" fallback here on purpose: padding leftover slots from a
+// second, differently-excluded pick could land on a different rarity than
+// the first pick rolled, which would silently break "all three cards share
+// one rarity" the instant the preferred rarity ran one card short.
 function buildRewardChoiceOptions(
   state,
   role,
@@ -1456,7 +1480,7 @@ function buildRewardChoiceOptions(
   excludedOptionIds = []
 ) {
   const pool = rewardPoolForChoice(role, rewardNumber);
-  const fresh = rewardPickRarityOptions(
+  return rewardPickRarityOptions(
     state,
     pool,
     rewardNumber,
@@ -1464,23 +1488,6 @@ function buildRewardChoiceOptions(
     excludedOptionIds,
     role
   );
-
-  // During refresh, prefer completely new cards. If there are not enough
-  // applicable alternatives, fill only the missing slots from the old pool so
-  // the player still gets a full draft whenever three valid rewards exist.
-  if (fresh.length < limit && excludedOptionIds?.length) {
-    const alreadySelected = fresh.map(option => option.id);
-    const fallback = rewardPickRarityOptions(
-      state,
-      pool,
-      rewardNumber,
-      limit - fresh.length,
-      alreadySelected,
-      role
-    ).filter(option => !fresh.some(existing => existing.id === option.id));
-    fresh.push(...fallback.slice(0, limit - fresh.length));
-  }
-  return fresh;
 }
 // POWER CHOICE RARITY + REFRESH V1: SERVER PICKER END
 
@@ -1594,9 +1601,18 @@ function powerOptionApplicable(state, option) {
     case "revealHistory":
       // guesserRewardPool only ever includes this card from the 2nd quest
       // reward onward, but a match can still be young enough at that
-      // point that fewer than 3 rounds have happened yet -- checked here
+      // point that fewer than 2 rounds have happened yet -- checked here
       // too so that case doesn't get offered as a guaranteed-fail card.
-      return !state.powers?.revealHistoryUsed && (state.history || []).length >= 3;
+      return !state.powers?.revealHistoryUsed && (state.history || []).length >= 2;
+    case "firstLetterReveal":
+      // Mirrors firstLetterRevealServer.js's own firstLetterAlreadyKnown()
+      // exactly -- no point offering the card once position 1 is already
+      // known green, whether from real play or an earlier forced green.
+      return (
+        !state.powers?.firstLetterRevealUsed &&
+        !(state.extraConstraints || []).some(c => c?.type === "GREEN" && c.index === 0) &&
+        !(state.history || []).some(entry => Array.isArray(entry.fb) && entry.fb[0] === "🟩")
+      );
     default:
       return true;
   }
@@ -1684,15 +1700,19 @@ function effectDetailText(option, detail) {
     default:
       if (option.powerId === "revealHistory") {
         return detail?.secret
-          ? `Revealed the secret from 3 rounds ago: ${detail.secret.toUpperCase()}.`
-          : "No secret from 3 rounds ago was available.";
+          ? `Revealed the secret from 2 rounds ago: ${detail.secret.toUpperCase()}.`
+          : "No secret from 2 rounds ago was available.";
+      }
+      if (option.powerId === "firstLetterReveal") {
+        return detail?.letter
+          ? `Revealed the secret's first letter as a permanent green clue: ${detail.letter}.`
+          : "The secret's first letter was already known -- nothing to reveal.";
       }
       if (option.kind === "power") {
-        // PERSISTENT_POWER_IDS grants (Informant/Letter Profile/Letter
-        // Lockout) are permanent unlocks, not a one-turn effect -- saying
-        // "for this turn" here would flatly contradict the "from now on"
-        // wording POWER_COPY already gives these same three in the card
-        // itself.
+        // PERSISTENT_POWER_IDS grants (Informant/Letter Profile) are
+        // permanent unlocks, not a one-turn effect -- saying "for this
+        // turn" here would flatly contradict the "from now on" wording
+        // POWER_COPY already gives these same two in the card itself.
         return PERSISTENT_POWER_IDS.has(option.powerId)
           ? `${option.title} unlocked for the rest of the game.`
           : `${option.title} activated for this turn.`;
@@ -1840,6 +1860,11 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
       if (option.powerId === "revealHistory") {
         detail.secret = state.powers.revealHistoryPending || null;
       }
+      // Same reasoning as Time Rewind above -- the revealed letter only
+      // exists as apply()'s own side effect on state.
+      if (option.powerId === "firstLetterReveal") {
+        detail.letter = state.powers.firstLetterRevealedLetter || null;
+      }
     }
   } else {
     switch (option.id) {
@@ -1865,7 +1890,7 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
       case "spy-trade-green":
         detail = {
           green: addGreen(state),
-          erasedYellows: rewardEraseClues(state, "yellow", 2)
+          erasedYellows: rewardEraseClues(state, "yellow", 3)
         };
         break;
       case "inspector-yellow-1":
@@ -2388,14 +2413,21 @@ function handleAction(room, state, action, roomId, context) {
       return true;
     }
 
+    // A full independent reroll -- rarity included, not just the three
+    // cards -- so this deliberately does NOT exclude the previous offer's
+    // card ids (that would risk padding leftover slots from a second,
+    // differently-excluded pick that could land on a different rarity than
+    // the first pick rolled, breaking "all three cards share one rarity").
+    // A reroll landing back on the same rarity and even the same cards is
+    // a legitimate outcome, not a bug -- most visibly with a 3-card-exact
+    // rarity bucket (e.g. Legendary), where there is only ever one possible
+    // 3-card combination to begin with.
     const rewardNumber = Number(pending.rewardNumber || pending.tier) || 1;
-    const previousIds = (pending.options || []).map(option => option.id).filter(Boolean);
     const refreshedOptions = buildRewardChoiceOptions(
       state,
       pending.role,
       rewardNumber,
-      3,
-      previousIds
+      3
     );
 
     if (!refreshedOptions.length) {
@@ -2403,14 +2435,6 @@ function handleAction(room, state, action, roomId, context) {
       return true;
     }
 
-    const previousSignature = [...previousIds].sort().join("|");
-    const refreshedSignature = refreshedOptions.map(option => option.id).sort().join("|");
-    if (previousSignature === refreshedSignature) {
-      sendError(room, state, action.userId, io, "No different rewards are available right now.");
-      return true;
-    }
-
-    // Consume only after a meaningfully different offer was generated.
     state.powerChoiceRefreshUsedUserIds.push(action.userId);
     pending.options = refreshedOptions;
     pending.revision = (Number(pending.revision) || 0) + 1;
@@ -2551,5 +2575,9 @@ module.exports = {
   fixedOptions,
   powerOption,
   setterRewardPool,
-  guesserRewardPool
+  guesserRewardPool,
+  // Exported for server/tests/rewardRarityLocked.test.js -- lets it drive
+  // the real rarity-roll-then-draw picker directly against a synthetic
+  // state/pool instead of round-tripping through a full milestone trigger.
+  rewardPickRarityOptions
 };

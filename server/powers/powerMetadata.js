@@ -11,6 +11,7 @@ module.exports = {
   magicMode: { label: "Magic Mode", role: "guesser" },
   revealGreen: { label: "Letter Peek" , role: "guesser"},
   revealHistory: { label: "Reveal History", role: "guesser" },
+  firstLetterReveal: { label: "First Letter Reveal", role: "guesser" },
   revealLetter: {
     label: "Reveal Letter", role: "guesser",
     variants: {

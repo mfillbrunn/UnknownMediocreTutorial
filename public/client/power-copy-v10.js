@@ -60,7 +60,7 @@
     },
     revealHistory: {
       short: "Helps the Guesser learn a secret that the Secretkeeper used earlier.",
-      desc: "Helps the Guesser by revealing the secret from three scored guesses earlier."
+      desc: "Helps the Guesser by revealing the secret from two scored guesses earlier."
     },
     revealLetter: {
       short: "Helps the Guesser earn a free green clue by completing a challenge.",
@@ -79,8 +79,8 @@
       desc: "Helps the Secretkeeper by suggesting a valid secret that remains consistent with all feedback."
     },
     vowelRefresh: {
-      short: "Helps the Secretkeeper erase vowel clues from the latest scored guess.",
-      desc: "Helps the Secretkeeper by resetting the vowels from the latest feedback and matching extra constraints."
+      short: "Helps the Secretkeeper erase every vowel clue learned so far this match.",
+      desc: "Helps the Secretkeeper by resetting every vowel clue learned so far this match, from feedback and matching extra constraints alike."
     },
     blindSpot: {
       short: "Helps the Secretkeeper hide one feedback position for the rest of the round.",
@@ -121,6 +121,10 @@
     delayedIntel: {
       short: "Helps the Secretkeeper delay feedback until after the Guesser's following guess.",
       desc: "Helps the Secretkeeper by holding back the current feedback until the Guesser has submitted another guess."
+    },
+    firstLetterReveal: {
+      short: "Helps the Guesser reveal the secret's first letter as a permanent green clue.",
+      desc: "Helps the Guesser by revealing the secret's first letter as a permanent green clue at position 1 for the rest of the round."
     }
   };
 
@@ -145,12 +149,13 @@
     hideTile: "Your opponent erases the chosen letter's clues and extra constraints from the current round.",
     magicMode: "Your opponent upgrades yellow feedback to green for the affected result.",
     revealGreen: "Your opponent learns one current secret letter and its exact position.",
-    revealHistory: "Your opponent learns a secret that was used three scored guesses earlier.",
+    revealHistory: "Your opponent learns a secret that was used two scored guesses earlier.",
+    firstLetterReveal: "Your opponent revealed the secret's first letter as a permanent green clue for the rest of the round.",
     revealLetter: "Your opponent completes a challenge to earn a free green clue.",
     stealthGuess: "Your opponent hides their next guess from you before it is scored.",
     suggestGuess: "Your opponent receives a suggested guess that fits all known clues.",
     suggestSecret: "Your opponent receives a suggested secret that still fits all feedback.",
-    vowelRefresh: "Your opponent resets vowel clues from the latest scored guess.",
+    vowelRefresh: "Your opponent resets every vowel clue you've learned so far this match.",
     blindSpot: "Your opponent hides one feedback position for the rest of the round.",
     revealPenalty: "Your opponent makes a letter claim that you must accept or challenge.",
     assassinWord: "Your opponent plants a trap word that wins immediately if it is guessed.",

@@ -40,7 +40,10 @@ window.OPPONENT_POWER_DESCRIPTIONS =
       "Your opponent learned one current secret letter and its exact position.",
 
     revealHistory:
-      "Your opponent learned what the secret was three rounds ago.",
+      "Your opponent learned what the secret was two rounds ago.",
+
+    firstLetterReveal:
+      "Your opponent revealed the secret's first letter as a permanent green clue for the rest of the round.",
 
     revealLetter:
       "Your opponent is completing a challenge that can reward a free green letter.",
@@ -55,7 +58,7 @@ window.OPPONENT_POWER_DESCRIPTIONS =
       "Your opponent received a suggested secret that still fits all previous feedback.",
 
     vowelRefresh:
-      "Your opponent reset the known status of previously unused vowels from the latest guess.",
+      "Your opponent reset everything you've learned about vowels so far this match.",
 
     blindSpot:
       "Your opponent hid one tile's feedback for the rest of the round.",

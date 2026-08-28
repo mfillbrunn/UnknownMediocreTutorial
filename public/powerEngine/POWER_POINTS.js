@@ -35,7 +35,8 @@ window.GUESSER_POWER_POINTS = {
   letterProbe: 1.5,
   revealLocation: 3,
   doubleGuess: 3.5,
-  letterProfile: 1.5
+  letterProfile: 1.5,
+  firstLetterReveal: 2.5
 };
 
 window.POWER_POINTS = { ...window.SETTER_POWER_POINTS, ...window.GUESSER_POWER_POINTS };

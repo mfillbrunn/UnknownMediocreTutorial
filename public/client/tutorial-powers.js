@@ -104,8 +104,8 @@ const POWER_TUTORIAL_SIMPLE_COPY = Object.freeze({
     receiver: "The Secretkeeper received help choosing a legal secret."
   },
   vowelRefresh: {
-    owner: "Some vowel clues from the newest guess are erased, so those vowels look unused again.",
-    receiver: "Some vowel clues were erased and must be tested again."
+    owner: "All vowel clues learned so far are erased, so vowels look unused again.",
+    receiver: "All vowel clues learned so far were erased and must be tested again."
   },
   assassinWord: {
     owner: "Pick a trap word. If the Guesser guesses it, the Secretkeeper wins at once.",

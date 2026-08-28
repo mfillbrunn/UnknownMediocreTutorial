@@ -82,6 +82,12 @@ window.POWER_PALETTES = Object.freeze({
     "#38BDF8"
   ],
 
+  firstLetterReveal: [
+    "#4ADE80",
+    "#22C55E",
+    "#FACC15"
+  ],
+
   revealLetter: [
     "#16A34A",
     "#FACC15",

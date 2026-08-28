@@ -32,7 +32,7 @@ socket.on("setterLetterProfile", (stat) => {
 });
 
 socket.on("revealOldSecret", ({ secret }) => {
-  toast(`Secret three rounds ago was: ${secret.toUpperCase()}`);
+  toast(`Secret two rounds ago was: ${secret.toUpperCase()}`);
 });
 
 // Timer begins
