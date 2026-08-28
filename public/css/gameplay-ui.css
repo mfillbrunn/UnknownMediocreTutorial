@@ -1896,10 +1896,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 .pc-current-top-right {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
-  max-width: 45%;
+  align-items: flex-start;
 }
 
 /* Text is always present in the markup (see renderCurrentQuest) --
@@ -1930,18 +1927,18 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   margin-top: 5px;
 }
 
-/* Sits in the card's top-right corner, under the MET status -- a plain
-   reminder that the quest is a bonus attempt, not a requirement, so
-   missing it costs nothing. Kept to one short word pair and pinned to a
-   single line -- the fuller "Optional -- complete for a reward" wording
-   wrapped across 2-3 lines in this narrow corner and inflated the whole
+/* Sits right next to the quest name, sharing its line (.pc-current-main
+   is a wrapping flex row) -- a plain reminder that the quest is a bonus
+   attempt, not a requirement, so missing it costs nothing. Kept to one
+   short word pair and pinned to a single line -- the fuller "Optional --
+   complete for a reward" wording wrapped across 2-3 lines when this sat
+   alone in the card's narrow top-right corner and inflated the whole
    card's height. */
 .pc-quest-optional-note {
   color: rgba(185, 218, 238, 0.5);
   font-size: 9px;
   font-style: italic;
   letter-spacing: 0.02em;
-  text-align: right;
   white-space: nowrap;
 }
 
@@ -2815,6 +2812,14 @@ body.power-choice-mode #spyChargeAwardBackdrop {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* The quest name truncates with an ellipsis above when space is
+     tight -- the note next to it is a short, fixed, always-identical
+     string, so it holds its own width instead of shrinking/spilling
+     alongside the name. */
+  .pc-quest-optional-note {
+    flex-shrink: 0;
   }
 }
 
