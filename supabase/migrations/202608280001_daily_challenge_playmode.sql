@@ -61,4 +61,28 @@ alter table public.daily_results
   add constraint daily_results_first_role_valid
     check (first_role is null or first_role in ('setter', 'guesser'));
 
+-- The daily rankings screen (public/client/daily-challenge.js's
+-- _showDailyRankings) reads this table directly with the browser's own
+-- Supabase client (window.supabaseClient, the anon/authenticated key),
+-- NOT through the server -- unlike every write here, which always goes
+-- through the server's service-role client (server/core/dailyTracking.js)
+-- and so already bypasses RLS regardless of these policies. A leaderboard
+-- is inherently public-within-the-app: every signed-in player needs to
+-- read every OTHER player's row for today, not just their own, so this
+-- is a broad "any authenticated user may read every row" policy rather
+-- than the auth.uid() = user_id pattern private per-user tables use (see
+-- 202608250001_single_player_campaign.sql). If RLS was already enabled on
+-- this table with no read policy, every client-side read was silently
+-- returning zero rows (no error) -- indistinguishable from "nobody has
+-- played today" -- which is exactly the "my result never shows up in the
+-- rankings" symptom this fixes.
+alter table public.daily_results enable row level security;
+
+drop policy if exists daily_results_select_all on public.daily_results;
+create policy daily_results_select_all
+on public.daily_results
+for select
+to authenticated
+using (true);
+
 commit;
