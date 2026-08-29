@@ -100,7 +100,7 @@
     },
     wiretap: {
       short: "Helps the Guesser see how many possible secrets remain.",
-      desc: "Helps the Guesser by showing the same remaining-secret count the Secretkeeper uses to compare choices."
+      desc: "Helps the Guesser by showing a live count of how many secrets are still possible given the feedback so far."
     },
     letterProbe: {
       short: "Helps the Guesser test five random letters and learn how many are in the secret.",
@@ -160,7 +160,7 @@
     revealPenalty: "Your opponent makes a letter claim that you must accept or challenge.",
     assassinWord: "Your opponent plants a trap word that wins immediately if it is guessed.",
     blindGuess: "Your opponent hides all feedback and keyboard colors for your next guess.",
-    wiretap: "Your opponent sees the same remaining-secret count the Secretkeeper sees.",
+    wiretap: "Your opponent sees a live count of how many secrets are still possible.",
     letterProbe: "Your opponent tests five random letters and learns how many are in the secret.",
     revealLocation: "Your opponent watches one position and sees its current letter.",
     doubleGuess: "Your opponent submits two guesses and receives feedback for both while you see only one.",

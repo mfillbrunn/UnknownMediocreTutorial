@@ -36,9 +36,6 @@ function advancedRemainingVisual() {
         <span>Uses the word in your draft.</span>
       </div>
     </div>
-    <div class="tutorial-note-strip">
-      A bigger number is usually safer. X means NEW cannot be used.
-    </div>
   `;
 }
 

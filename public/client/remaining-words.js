@@ -279,7 +279,7 @@ function renderGuesserRemainingBox(boxState) {
 
   const guideOn = document.body.classList.contains("guide-on");
   const hint = guideOn
-    ? `<div class="line remaining-hint">How many possible secrets still fit every clue so far — the same number the Secretkeeper sees.</div>`
+    ? `<div class="line remaining-hint">How many possible secrets still fit every clue so far.</div>`
     : "";
 
   const currentLine =
