@@ -153,43 +153,32 @@
             <h1>CUDDLE</h1>
           </div>
           <div class="cuddle-header-side cuddle-header-side-right">
+            <button class="cuddle-details-toggle ${detailsOpen ? "is-open" : ""}" data-action="toggle-details"
+              aria-expanded="${detailsOpen ? "true" : "false"}" aria-controls="cuddleRunDetails"
+              aria-label="${detailsOpen ? "Hide run details" : "Show run details"}">
+              ${detailsOpen ? "Hide ▲" : "Details ▼"}
+            </button>
             <button class="cuddle-icon-btn" data-action="rules" aria-label="How to play">?</button>
           </div>
         </header>
 
-        <div class="cuddle-progress" aria-label="Campaign progress">
-          ${window.CuddleEngine.THRESHOLDS.map((threshold, index) => {
-            const round = index + 1;
-            const classes = [
-              "cuddle-progress-node",
-              round < state.round ? "is-cleared" : "",
-              round === state.round ? "is-current" : ""
-            ].filter(Boolean).join(" ");
-            return `<span class="${classes}" title="Round ${round}: ${threshold} points">${round}</span>`;
-          }).join("")}
-        </div>
-
         <section class="cuddle-run-summary" aria-label="Run status">
           <div class="cuddle-primary-metrics">
-            <span><b>Round</b><strong>${state.round}/12</strong></span>
             <span><b>Total score</b><strong>${state.score}</strong></span>
           </div>
-          <button class="cuddle-btn cuddle-btn-ghost cuddle-details-toggle" data-action="toggle-details"
-            aria-expanded="${detailsOpen ? "true" : "false"}" aria-controls="cuddleRunDetails">
-            ${detailsOpen ? "Hide details ▲" : "Show details ▼"}
-          </button>
         </section>
 
         ${detailsOpen ? `
           <section id="cuddleRunDetails" class="cuddle-details-panel" aria-label="Additional run information">
             <div class="cuddle-detail-badges">
-              <span class="cuddle-detail-badge is-goal"><b>Round ${state.round}: goal</b> ${target}</span>
+              <span class="cuddle-detail-badge is-goal"><b>Round ${state.round}/12</b> Goal ${target}</span>
               <span class="cuddle-detail-badge"><b>Still needed</b> ${needed}</span>
               <span class="cuddle-detail-badge"><b>Draw / discard</b> ${drawPile} / ${recyclable}</span>
               <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> +${rules.yellowPoints}</span>
               <span class="cuddle-detail-badge is-grey"><b>Grey</b> −1</span>
               <span class="cuddle-detail-badge"><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
             </div>
+            ${renderProgress(state)}
             ${renderQuestClock(state, rules)}
           </section>` : ""}
 
@@ -197,7 +186,6 @@
           <section class="cuddle-left-column">
             ${renderActiveQuest(state)}
             ${renderBoard(state)}
-            ${renderKnowledge(state)}
           </section>
           <section class="cuddle-right-column">
             ${renderMessage(state)}
@@ -207,6 +195,21 @@
         </main>
         ${renderStateOverlay(state)}
         ${rulesOpen ? renderRulesOverlay() : ""}
+      </div>`;
+  }
+
+  function renderProgress(state) {
+    return `
+      <div class="cuddle-progress" aria-label="Campaign progress">
+        ${window.CuddleEngine.THRESHOLDS.map((threshold, index) => {
+          const round = index + 1;
+          const classes = [
+            "cuddle-progress-node",
+            round < state.round ? "is-cleared" : "",
+            round === state.round ? "is-current" : ""
+          ].filter(Boolean).join(" ");
+          return `<span class="${classes}" title="Round ${round}: ${threshold} points">${round}</span>`;
+        }).join("")}
       </div>`;
   }
 
@@ -244,17 +247,30 @@
   }
 
   function renderBoard(state) {
-    const draftLetters = game.getDraftLetters();
+    const draftTiles = game.getDraftCards().flatMap(card => (
+      card.glyph.split("").map(letter => ({ letter, cardId: card.id, glyph: card.glyph }))
+    ));
     const rows = [];
     for (let row = 0; row < state.maxGuesses; row += 1) {
       const history = state.history[row];
       const isDraft = !history && row === state.history.length && state.status === "playing";
       const tiles = [];
       for (let column = 0; column < 5; column += 1) {
-        const letter = history?.word[column] || (isDraft ? draftLetters[column] : "") || "";
+        const draftTile = isDraft ? draftTiles[column] : null;
+        const letter = history?.word[column] || draftTile?.letter || "";
         const result = history?.feedback[column] || "";
         const tileClass = result ? ` is-${result}` : letter ? " is-filled" : "";
-        tiles.push(`<span class="cuddle-tile${tileClass}">${escapeHtml(letter)}</span>`);
+        if (draftTile) {
+          tiles.push(`
+            <button type="button" class="cuddle-tile is-draft-tile${tileClass}"
+              data-draft-card-id="${escapeHtml(draftTile.cardId)}"
+              aria-label="Remove ${escapeHtml(draftTile.glyph)} from the current word"
+              title="Click to return ${escapeHtml(draftTile.glyph)} to your hand">
+              ${escapeHtml(letter)}
+            </button>`);
+        } else {
+          tiles.push(`<span class="cuddle-tile${tileClass}">${escapeHtml(letter)}</span>`);
+        }
       }
       const score = history
         ? `<span class="cuddle-row-score ${history.scoreDelta < 0 ? "is-negative" : ""}">${history.scoreDelta >= 0 ? "+" : ""}${history.scoreDelta}${history.earlyBonus ? `<small> +${history.earlyBonus}</small>` : ""}</span>`
@@ -262,20 +278,6 @@
       rows.push(`<div class="cuddle-board-row">${tiles.join("")}${score}</div>`);
     }
     return `<section class="cuddle-board" aria-label="Guess board">${rows.join("")}</section>`;
-  }
-
-  function renderKnowledge(state) {
-    const pattern = state.revealedPositions.map(letter => letter || "·");
-    return `
-      <section class="cuddle-knowledge" aria-label="Known information">
-        <div class="cuddle-pattern" title="Known green positions">
-          ${pattern.map(letter => `<span>${escapeHtml(letter)}</span>`).join("")}
-        </div>
-        <div class="cuddle-known-list">
-          <span><b>Present:</b> ${state.knownPresent.length ? escapeHtml(state.knownPresent.join(" ")) : "—"}</span>
-          <span><b>Absent:</b> ${state.knownAbsent.length ? escapeHtml(state.knownAbsent.join(" ")) : "—"}</span>
-        </div>
-      </section>`;
   }
 
   function renderMessage(state) {
@@ -293,29 +295,65 @@
       </div>`;
   }
 
+  function groupedHand(state) {
+    const groups = new Map();
+    state.hand.forEach(card => {
+      if (!groups.has(card.glyph)) groups.set(card.glyph, []);
+      groups.get(card.glyph).push(card);
+    });
+    return [...groups.entries()]
+      .map(([glyph, cards]) => ({
+        glyph,
+        cards: cards.slice().sort((a, b) => {
+          const sourceOrder = Number(a.source !== "bonus") - Number(b.source !== "bonus");
+          return sourceOrder || a.id.localeCompare(b.id);
+        })
+      }))
+      .sort((a, b) => a.glyph.localeCompare(b.glyph));
+  }
+
   function renderHand(state) {
     const draft = new Set(state.draft);
-    const cards = state.hand.map(card => {
-      const isDrafted = draft.has(card.id);
-      const isSelected = selectedCards.has(card.id);
-      const isGrey = game.cardIsKnownGrey(card);
+    const limit = actionMode === "exchange" ? game.getGreyExchangeCost() : game.getMulliganLimit();
+    const cards = groupedHand(state).map(group => {
+      const selectable = group.cards.filter(card => (
+        !draft.has(card.id) && (actionMode !== "exchange" || game.cardIsKnownGrey(card))
+      ));
+      const selectedCount = selectable.filter(card => selectedCards.has(card.id)).length;
+      const unselectedCount = selectable.length - selectedCount;
+      const draftedCount = group.cards.filter(card => draft.has(card.id)).length;
+      const temporaryCount = group.cards.filter(card => card.source === "bonus").length;
+      const status = game.getCardKnowledgeStatus(group.glyph);
       const disabled = state.status !== "playing"
-        || (actionMode === "exchange" && (!isGrey || isDrafted))
-        || (actionMode === "mulligan" && isDrafted);
+        || (actionMode === "play" && unselectedCount === 0)
+        || (actionMode !== "play" && selectable.length === 0)
+        || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
       const classes = [
         "cuddle-card",
-        card.glyph === "QU" ? "is-wide" : "",
-        card.source === "bonus" ? "is-bonus" : "",
-        isGrey ? "is-known-grey" : "",
-        isDrafted ? "is-drafted" : "",
-        isSelected ? "is-selected" : ""
+        `is-card-${status}`,
+        temporaryCount ? "has-bonus" : "",
+        draftedCount ? "has-drafted" : "",
+        selectedCount ? "is-selected" : ""
       ].filter(Boolean).join(" ");
+      const statusLabel = status === "green" ? "green"
+        : status === "yellow" ? "yellow"
+          : status === "red" ? "red · not in the secret"
+            : "grey · unused";
+      const count = group.cards.length;
+      const details = [
+        `${count} ${count === 1 ? "copy" : "copies"}`,
+        statusLabel,
+        temporaryCount ? `${temporaryCount} temporary` : "",
+        draftedCount ? `${draftedCount} in the grid` : "",
+        selectedCount ? `${selectedCount} selected` : ""
+      ].filter(Boolean).join(" · ");
       return `
-        <button class="${classes}" data-card-id="${escapeHtml(card.id)}" ${disabled ? "disabled" : ""}
-          aria-pressed="${isDrafted || isSelected ? "true" : "false"}"
-          title="${escapeHtml(card.glyph)}${card.source === "bonus" ? " · temporary bonus" : ""}${isGrey ? " · confirmed grey" : ""}">
-          <span>${escapeHtml(card.glyph)}</span>
-          ${card.source === "bonus" ? `<small>bonus</small>` : ""}
+        <button class="${classes}" data-card-glyph="${escapeHtml(group.glyph)}" ${disabled ? "disabled" : ""}
+          aria-pressed="${draftedCount > 0 || selectedCount > 0 ? "true" : "false"}"
+          aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(details)}"
+          title="${escapeHtml(details)}">
+          <span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>
+          ${count > 1 ? `<span class="cuddle-card-count" aria-hidden="true">${count}</span>` : ""}
         </button>`;
     }).join("");
     return `
@@ -359,12 +397,14 @@
     return `
       <section class="cuddle-action-panel">
         <button class="cuddle-btn cuddle-btn-primary cuddle-submit" data-action="submit" ${submit.ok ? "" : "disabled"}>Submit word</button>
-        <button class="cuddle-btn" data-action="mulligan-mode" ${state.mulligansLeft > 0 ? "" : "disabled"}>
-          Mulligan <span>${state.mulligansLeft} left · up to ${rules.mulliganSize}</span>
-        </button>
-        <button class="cuddle-btn" data-action="exchange-mode" ${greyCount >= rules.greyExchange ? "" : "disabled"}>
-          Recycle greys <span>${rules.greyExchange} → 1 · ${greyCount} available</span>
-        </button>
+        <div class="cuddle-utility-actions">
+          <button class="cuddle-btn" data-action="mulligan-mode" ${state.mulligansLeft > 0 ? "" : "disabled"}>
+            Mulligan <span>${state.mulligansLeft} left · up to ${rules.mulliganSize}</span>
+          </button>
+          <button class="cuddle-btn" data-action="exchange-mode" ${greyCount >= rules.greyExchange ? "" : "disabled"}>
+            Recycle greys <span>${rules.greyExchange} → 1 · ${greyCount} available</span>
+          </button>
+        </div>
       </section>`;
   }
 
@@ -472,7 +512,7 @@
           <h2 id="cuddleRulesTitle">Cuddle rules</h2>
           <div class="cuddle-rules-grid">
             <article><strong>1 · Build, do not type</strong><p>Tap cards in order to make a five-letter word from the existing secret list. Q is printed as QU and supplies both letters.</p></article>
-            <article><strong>2 · Read the feedback</strong><p>Each yellow adds one temporary copy of that letter; each green adds two. Temporary cards never enter the deck.</p></article>
+            <article><strong>2 · Read the feedback</strong><p>A letter gives one temporary copy the first time it turns yellow and two the first time it turns green each round. Later yellow or green results for that letter do not add more. Cards remain grey while unused and turn red when confirmed absent.</p></article>
             <article><strong>3 · Refill the hand</strong><p>Every submitted five-letter word draws five replacements. When the draw pile empties, the discard pile is shuffled back in.</p></article>
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards. Trade exactly ${rules.greyExchange} confirmed grey cards for one new draw.</p></article>
             <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints}; grey tiles score −1. Solving early adds +${rules.earlyPoint} for every unused guess. You must also meet the cumulative round target.</p></article>
@@ -493,14 +533,39 @@
     selectedCards = new Set();
   }
 
-  function chooseUtilityCard(cardId) {
+  function cardsForGlyph(glyph) {
     const state = currentState();
-    const card = game.getHandCard(cardId);
-    if (!card || state.draft.includes(cardId)) return;
-    if (actionMode === "exchange" && !game.cardIsKnownGrey(card)) return;
+    return state.hand
+      .filter(card => card.glyph === glyph)
+      .sort((a, b) => {
+        const sourceOrder = Number(a.source !== "bonus") - Number(b.source !== "bonus");
+        return sourceOrder || a.id.localeCompare(b.id);
+      });
+  }
+
+  function choosePlayCard(glyph) {
+    const state = currentState();
+    const card = cardsForGlyph(glyph).find(item => !state.draft.includes(item.id));
+    if (!card) return { ok: false, error: `No unused ${glyph} copy remains in your hand.` };
+    return game.toggleDraft(card.id);
+  }
+
+  function chooseUtilityCard(glyph) {
+    const state = currentState();
     const limit = actionMode === "exchange" ? game.getGreyExchangeCost() : game.getMulliganLimit();
-    if (selectedCards.has(cardId)) selectedCards.delete(cardId);
-    else if (selectedCards.size < limit) selectedCards.add(cardId);
+    const eligible = cardsForGlyph(glyph).filter(card => (
+      !state.draft.includes(card.id) && (actionMode !== "exchange" || game.cardIsKnownGrey(card))
+    ));
+    const unselected = eligible.filter(card => !selectedCards.has(card.id));
+    const selected = eligible.filter(card => selectedCards.has(card.id));
+    if (unselected.length && selectedCards.size < limit) {
+      selectedCards.add(unselected[0].id);
+      return;
+    }
+    // Once the group has reached its available/global selection limit, the
+    // next click clears that letter's selected copies so grouped cards remain
+    // practical without a keyboard or modifier key.
+    selected.forEach(card => selectedCards.delete(card.id));
   }
 
   function startNewRun() {
@@ -621,14 +686,22 @@
       return;
     }
 
-    const cardButton = event.target.closest("[data-card-id]");
+    const draftTile = event.target.closest("[data-draft-card-id]");
+    if (draftTile && game?.state?.status === "playing" && actionMode === "play") {
+      const result = game.toggleDraft(draftTile.dataset.draftCardId);
+      setUiMessage(result.ok ? "" : result.error);
+      render();
+      return;
+    }
+
+    const cardButton = event.target.closest("[data-card-glyph]");
     if (!cardButton || !game?.state || game.state.status !== "playing") return;
-    const cardId = cardButton.dataset.cardId;
+    const glyph = cardButton.dataset.cardGlyph;
     if (actionMode === "play") {
-      const result = game.toggleDraft(cardId);
+      const result = choosePlayCard(glyph);
       setUiMessage(result.ok ? "" : result.error);
     } else {
-      chooseUtilityCard(cardId);
+      chooseUtilityCard(glyph);
     }
     render();
   }

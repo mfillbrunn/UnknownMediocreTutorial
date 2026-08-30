@@ -172,6 +172,27 @@
       state.hand = Array.isArray(state.hand) ? state.hand : [];
       state.draft = Array.isArray(state.draft) ? state.draft : [];
       state.history = Array.isArray(state.history) ? state.history : [];
+      const savedMilestones = state.feedbackBonusMilestones;
+      const hadSavedMilestones = Boolean(savedMilestones && typeof savedMilestones === "object");
+      state.feedbackBonusMilestones = {
+        yellow: Array.isArray(savedMilestones?.yellow) ? unique(savedMilestones.yellow).sort() : [],
+        green: Array.isArray(savedMilestones?.green) ? unique(savedMilestones.green).sort() : []
+      };
+      // Older Cuddle saves did not track these milestones. Derive them from
+      // completed guesses so updating mid-round cannot award the same feedback
+      // bonus again.
+      if (!hadSavedMilestones) {
+        state.history.forEach(entry => {
+          String(entry?.word || "").split("").forEach((letter, index) => {
+            const result = entry?.feedback?.[index];
+            if (result === "yellow" || result === "green") {
+              state.feedbackBonusMilestones[result].push(letter);
+            }
+          });
+        });
+        state.feedbackBonusMilestones.yellow = unique(state.feedbackBonusMilestones.yellow).sort();
+        state.feedbackBonusMilestones.green = unique(state.feedbackBonusMilestones.green).sort();
+      }
       state.usedSecrets = Array.isArray(state.usedSecrets) ? state.usedSecrets : [];
       state.removedLetters = Array.isArray(state.removedLetters) ? state.removedLetters : [];
       state.knownAbsent = Array.isArray(state.knownAbsent) ? state.knownAbsent : [];
@@ -236,6 +257,7 @@
         mulligansLeft: BASE_MULLIGANS,
         knownAbsent: [],
         knownPresent: [],
+        feedbackBonusMilestones: { yellow: [], green: [] },
         revealedPositions: Array(5).fill(null),
         activeQuest: null,
         questRewardChoices: [],
@@ -338,6 +360,7 @@
       state.mulligansLeft = BASE_MULLIGANS + state.upgrades.extraMulligans;
       state.knownAbsent = [];
       state.knownPresent = [];
+      state.feedbackBonusMilestones = { yellow: [], green: [] };
       state.revealedPositions = Array(5).fill(null);
       state.activeQuest = null;
       state.questRewardChoices = [];
@@ -489,6 +512,27 @@
       this.state.knownPresent = [...present].sort();
     }
 
+    _awardFirstFeedbackBonuses(word, feedback) {
+      const milestones = this.state.feedbackBonusMilestones || { yellow: [], green: [] };
+      const awards = [];
+      ["yellow", "green"].forEach(result => {
+        const reached = new Set(Array.isArray(milestones[result]) ? milestones[result] : []);
+        const letters = unique(
+          word.split("").filter((letter, index) => feedback[index] === result)
+        );
+        letters.forEach(letter => {
+          if (reached.has(letter)) return;
+          reached.add(letter);
+          const copies = result === "green" ? 2 : 1;
+          for (let copy = 0; copy < copies; copy += 1) this._addBonusCard(letter);
+          awards.push({ letter, result, copies });
+        });
+        milestones[result] = [...reached].sort();
+      });
+      this.state.feedbackBonusMilestones = milestones;
+      return awards;
+    }
+
     submitDraft() {
       const validation = this.canSubmit();
       if (!validation.ok) return validation;
@@ -511,10 +555,7 @@
       // A submitted word always uses five letters, so it draws five replacements.
       // The QU card is one physical card but supplies two of those letters.
       const replacements = this.drawCards(5);
-      feedback.forEach((result, index) => {
-        const copies = result === "green" ? 2 : result === "yellow" ? 1 : 0;
-        for (let copy = 0; copy < copies; copy += 1) this._addBonusCard(word[index]);
-      });
+      const bonusAwards = this._awardFirstFeedbackBonuses(word, feedback);
 
       this._updateKnowledge(word, feedback);
       this.state.guessesUsed += 1;
@@ -532,6 +573,8 @@
         shielded,
         usedCards: draftCards.map(card => card.glyph),
         replacements: replacements.length,
+        bonusAwards,
+        bonusCardsAwarded: bonusAwards.reduce((sum, award) => sum + award.copies, 0),
         questId: activeQuest?.id || null,
         questComplete: false,
         earlyBonus: 0
@@ -584,6 +627,7 @@
       const scoreParts = [];
       if (yellowCount) scoreParts.push(`${yellowCount} yellow`);
       if (greyCount) scoreParts.push(shielded ? `${greyCount} greys shielded` : `${greyCount} grey`);
+      if (entry.bonusCardsAwarded) scoreParts.push(`${entry.bonusCardsAwarded} new feedback card${entry.bonusCardsAwarded === 1 ? "" : "s"}`);
       if (entry.earlyBonus) scoreParts.push(`+${entry.earlyBonus} early bonus`);
       this.state.lastMessage = `${word}: ${scoreDelta >= 0 ? "+" : ""}${scoreDelta} points${scoreParts.length ? ` (${scoreParts.join(", ")})` : ""}.`;
 
@@ -604,6 +648,7 @@
         feedback,
         scoreDelta,
         earlyBonus: entry.earlyBonus,
+        bonusAwards,
         solved,
         questComplete
       };
@@ -635,6 +680,27 @@
     cardIsKnownGrey(card) {
       const absent = new Set(this.state.knownAbsent);
       return card.glyph.split("").some(letter => absent.has(letter));
+    }
+
+    getCardKnowledgeStatus(cardOrGlyph) {
+      const glyph = typeof cardOrGlyph === "string" ? cardOrGlyph : cardOrGlyph?.glyph;
+      if (!glyph) return "unused";
+      // QU is a single physical card. Positive feedback follows Q; if either Q
+      // or U is globally absent, the combined card cannot fit the fixed secret.
+      const positiveLetter = glyph === "QU" ? "Q" : glyph;
+      if (this.state.revealedPositions.includes(positiveLetter)) return "green";
+      let sawYellow = false;
+      for (const entry of this.state.history) {
+        for (let index = 0; index < String(entry.word || "").length; index += 1) {
+          if (entry.word[index] !== positiveLetter) continue;
+          if (entry.feedback?.[index] === "green") return "green";
+          if (entry.feedback?.[index] === "yellow") sawYellow = true;
+        }
+      }
+      if (sawYellow || this.state.knownPresent.includes(positiveLetter)) return "yellow";
+      const absent = new Set(this.state.knownAbsent);
+      if (glyph === "QU" ? absent.has("Q") || absent.has("U") : absent.has(glyph)) return "red";
+      return "unused";
     }
 
     getGreyExchangeCost() {
