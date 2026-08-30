@@ -506,14 +506,20 @@
 }
 
 :is(#setterScreen #draftSetter, #guesserScreen #draftGuesser) {
-  gap: 6px;
+  gap: clamp(3px, 1.6cqw, 6px);
 }
 
+/* A 30px floor was too tall to actually fit: on a 320px phone with the side
+   panel open the board is ~175px wide, and five 30px tiles plus their gaps
+   overflowed it, clipping the last letter of every row. Both the floor and
+   the gap now shrink with the board so the row always fits inside it -- the
+   desktop block further down replaces these with fixed sizes anyway, so
+   this only ever governs phones and tablets. */
 :is(#setterScreen .setter-board, #guesserScreen .guesser-board, #guesserScreen .guesser-board-v9)
   .history-row:not(.constraint-row) .history-tile {
-  width: clamp(30px, 14.5cqw, 66px);
-  height: clamp(30px, 14.5cqw, 66px);
-  font-size: clamp(16px, 7.2cqw, 33px);
+  width: clamp(25px, 14.5cqw, 66px);
+  height: clamp(25px, 14.5cqw, 66px);
+  font-size: clamp(13px, 7.2cqw, 33px);
 }
 
 /* Desktop: past #appContainer's own width cap the cqw ratio above is
@@ -916,11 +922,15 @@
    -- the base/bonus split is what stops the 3rd slot from ever reading
    as just another yellow star. */
 #setterScreen .setter-cover-star {
-  font-size: 18px;
+  /* cqw resolves against .setter-board (container-type: inline-size), the
+     same basis the letter tiles use -- so the rating scales with the board
+     the player actually has, not with the raw viewport, and keeps its
+     proportions when the side panel opens and narrows the board. */
+  font-size: clamp(14px, 6cqw, 26px);
   line-height: 1;
   color: transparent;
   text-shadow: none;
-  -webkit-text-stroke-width: 1.8px;
+  -webkit-text-stroke-width: clamp(1.4px, 0.5cqw, 2.4px);
   transition: color 180ms ease, text-shadow 180ms ease, transform 180ms ease,
     -webkit-text-stroke-width 180ms ease, -webkit-text-stroke-color 180ms ease;
 }
@@ -1863,10 +1873,20 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 .pc-current-quest-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 5px 10px;
+  /* Column 2 holds the MET badge AND the Highlight/Clear guide button (see
+     renderCurrentQuest). minmax(0, auto) rather than a bare `auto` so that
+     column can shrink under pressure instead of shoving the quest name out
+     of the card -- the button sits on the title's line whenever there is
+     room for it, and only the longest labels ("useful condition letters")
+     ever force it to wrap inside itself. */
+  /* The 6.5em floor on column 1 keeps the quest name legible even when the
+     guide button is present -- without it the button's column won for the
+     whole row and the name collapsed to an empty ellipsis (the
+     .pc-current-main strong truncation rule below kicks in at <=480px). */
+  grid-template-columns: minmax(6.5em, 1fr) minmax(0, auto);
+  gap: 5px clamp(6px, 2.4vw, 12px);
   width: 100%;
-  padding: 9px 11px;
+  padding: clamp(7px, 2.4vw, 11px) clamp(8px, 2.8vw, 13px);
   border: 1px solid rgba(88, 201, 255, 0.46);
   border-radius: 11px;
   background: linear-gradient(180deg, rgba(17, 27, 39, 0.99), rgba(7, 12, 19, 0.99));
@@ -1900,12 +1920,15 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 .pc-current-main strong {
-  font-size: 12px;
+  font-size: clamp(11px, 3.4vw, 15px);
 }
 
 .pc-current-top-right {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(4px, 1.6vw, 8px);
+  min-width: 0;
 }
 
 /* Text is always present in the markup (see renderCurrentQuest) --
@@ -1915,7 +1938,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
    instant a draft satisfied it. */
 .pc-current-status {
   color: #9effce;
-  font-size: 9px;
+  font-size: clamp(8px, 2.5vw, 11px);
   font-weight: 950;
   letter-spacing: 0.12em;
   text-shadow: 0 0 10px rgba(85, 255, 180, 0.7);
@@ -1927,13 +1950,17 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 .pc-current-desc,
-.pc-current-conditions,
-.pc-current-quest-card > .pc-guide-actions {
+.pc-current-conditions {
   grid-column: 1 / -1;
 }
 
-.pc-current-quest-card > .pc-guide-actions {
-  margin-top: 5px;
+/* The guide button now rides in the card's top-right cell beside MET
+   instead of claiming a full-width row of its own underneath the
+   condition chips -- that row cost the card ~33px of height on every
+   quest that offers a keyboard guide, for one short button. */
+.pc-current-top-right .pc-guide-actions {
+  margin: 0;
+  min-width: 0;
 }
 
 /* Sits right next to the quest name, sharing its line (.pc-current-main
@@ -1945,7 +1972,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
    card's height. */
 .pc-quest-optional-note {
   color: rgba(185, 218, 238, 0.5);
-  font-size: 9px;
+  font-size: clamp(8px, 2.5vw, 11px);
   font-style: italic;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -1953,7 +1980,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 .pc-current-desc {
   color: rgba(231, 241, 248, 0.72);
-  font-size: 10px;
+  font-size: clamp(9px, 2.9vw, 13px);
   line-height: 1.35;
 }
 
@@ -1964,12 +1991,12 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 .pc-condition-chip {
-  padding: 4px 7px;
+  padding: clamp(3px, 1.2vw, 6px) clamp(6px, 2.2vw, 10px);
   border: 1px solid rgba(195, 222, 239, 0.18);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.03);
   color: rgba(232, 242, 248, 0.64);
-  font-size: 9px;
+  font-size: clamp(8px, 2.6vw, 12px);
 }
 
 .pc-condition-chip.is-met {
@@ -1981,19 +2008,28 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 .pc-guide-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: clamp(5px, 1.8vw, 8px);
   margin-top: 8px;
+  min-width: 0;
 }
 
 .pc-guide-actions button {
-  padding: 6px 8px;
+  padding: clamp(4px, 1.5vw, 7px) clamp(6px, 2.2vw, 10px);
   border: 1px solid rgba(88, 201, 255, 0.42);
-  border-radius: 8px;
+  border-radius: clamp(6px, 2vw, 9px);
   background: rgba(72, 169, 224, 0.07);
   color: #bdeaff;
   font: inherit;
-  font-size: 9px;
+  font-size: clamp(8px, 2.6vw, 12px);
   font-weight: 850;
+  line-height: 1.25;
+  /* Sitting in the card's corner now, so it has to survive a long label
+     ("Highlight useful condition letters") on a narrow phone. Wrapping the
+     text inside the button keeps it in that corner instead of forcing the
+     whole card into another row. */
+  min-width: 0;
+  text-align: center;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 
@@ -2802,7 +2838,11 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 @media (max-width: 480px) {
   :is(#setterScreen, #guesserScreen) {
-    --game-sidebar: 126px;
+    /* Was a flat 126px, which on a 320px phone left the board barely wider
+       than five minimum-size tiles -- the draft rows then overflowed and
+       clipped. Scaling it with the viewport keeps the board's share of the
+       width roughly constant across phone sizes instead. */
+    --game-sidebar: clamp(96px, 31vw, 140px);
   }
 
   #setterScreen .setter-decision-stage,
