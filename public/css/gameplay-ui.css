@@ -972,7 +972,7 @@
 #setterScreen #setterCoverStars.stars-2 .setter-cover-base-star.is-filled {
   color: #ffdf7a;
   text-shadow: 0 0 12px rgba(255, 210, 90, 0.8);
-  animation: pc-star-bump 1.5s ease-in-out infinite;
+  animation: none;
 }
 
 #setterScreen #setterCoverStars.stars-3 .setter-cover-base-star.is-filled {
@@ -980,7 +980,7 @@
   text-shadow:
     0 0 10px rgba(255, 220, 110, 0.95),
     0 0 22px rgba(255, 190, 60, 0.7);
-  animation: pc-star-party 0.9s ease-in-out infinite;
+  animation: none;
 }
 
 #setterScreen #setterCoverStars.stars-3 .setter-cover-bonus-star.is-filled {
@@ -988,7 +988,7 @@
   text-shadow:
     0 0 10px rgba(88, 201, 255, 0.95),
     0 0 22px rgba(88, 201, 255, 0.62);
-  animation: pc-star-party 0.9s ease-in-out infinite;
+  animation: none;
   animation-delay: 0.24s;
 }
 
@@ -3360,3 +3360,59 @@ body:not(.light-theme) {
   }
 }
 /* DESKTOP_GAME_SIZE_BALANCE_V2: END */
+
+/* UMT_GAMEPLAY_UI_FIX_V1: START */
+/* Shared top edge for both live role screens. */
+:is(#setterScreen, #guesserScreen) {
+  --game-content-top-gap: 4px;
+}
+
+:is(#setterScreen, #guesserScreen).active > .play-area {
+  box-sizing: border-box;
+  margin-top: 0;
+  padding-top: var(--game-content-top-gap);
+}
+
+:is(#setterScreen, #guesserScreen).active > .play-area > .play-row,
+:is(#setterScreen, #guesserScreen) .center-col {
+  margin-top: 0;
+}
+
+/* Aggregate states keep their color/glow but never move forever. */
+#setterScreen #setterCoverStars.stars-2 .setter-cover-star.is-filled,
+#setterScreen #setterCoverStars.stars-3 .setter-cover-star.is-filled {
+  animation: none;
+}
+
+@keyframes setter-star-earned {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+
+  28% {
+    transform: translateY(-3px) rotate(-5deg) scale(1.11);
+  }
+
+  52% {
+    transform: translateY(0) rotate(4deg) scale(1.05);
+  }
+
+  72% {
+    transform: translateY(-1px) rotate(-2deg) scale(1.07);
+  }
+}
+
+#setterScreen #setterCoverStars .setter-cover-star.is-filled.is-newly-earned {
+  animation: setter-star-earned 680ms cubic-bezier(.22, .9, .3, 1)
+    var(--star-dance-delay, 0ms) both;
+  transform-origin: 50% 62%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #setterScreen #setterCoverStars .setter-cover-star.is-newly-earned {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+/* UMT_GAMEPLAY_UI_FIX_V1: END */

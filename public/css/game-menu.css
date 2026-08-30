@@ -1656,3 +1656,254 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
     transition: none;
   }
 }
+
+/* UMT_MENU_WAITING_FIX_V1: START */
+/* Calm matchmaking status. The direct-child selector overrides generic dots. */
+#waitingForPlayer .dots.waiting-wave {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 30px;
+  height: 16px;
+}
+
+#waitingForPlayer .dots.waiting-wave > span {
+  width: 6px;
+  height: 6px;
+  margin: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--guesser-color, #60a5fa) 58%, #d7ecff);
+  box-shadow: none;
+  opacity: .3;
+  transform: scale(.94);
+  animation: waiting-dot-breathe 2s ease-in-out infinite;
+}
+
+#waitingForPlayer .dots.waiting-wave > span:nth-child(1) { animation-delay: 0ms; }
+#waitingForPlayer .dots.waiting-wave > span:nth-child(2) { animation-delay: 220ms; }
+#waitingForPlayer .dots.waiting-wave > span:nth-child(3) { animation-delay: 440ms; }
+
+@keyframes waiting-dot-breathe {
+  0%,
+  68%,
+  100% {
+    opacity: .3;
+    transform: scale(.94);
+  }
+
+  34% {
+    opacity: .9;
+    transform: scale(1.03);
+  }
+}
+
+/* Startup actions use one compact dossier-card language. */
+#startupScreen .menu-center {
+  width: min(360px, calc(100vw - 28px)) !important;
+}
+
+#startupScreen .menu-buttons {
+  gap: 7px !important;
+}
+
+#startupScreen .menu-buttons > .menu-btn,
+#startupScreen .menu-split-btn > #quickPlayBtn,
+#startupScreen .menu-split-btn > #playQuickBtn {
+  box-sizing: border-box;
+  min-height: 54px;
+  height: auto !important;
+  border: 1px solid rgba(184, 207, 229, .18) !important;
+  border-radius: 13px !important;
+  background: linear-gradient(145deg, rgba(18, 42, 64, .92), rgba(11, 29, 47, .88)) !important;
+  color: var(--text-color, #edf5fb) !important;
+  box-shadow: 0 8px 20px rgba(2, 11, 20, .22), inset 0 1px rgba(255, 255, 255, .025) !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease !important;
+}
+
+#startupScreen .menu-buttons > .menu-btn,
+#startupScreen .menu-split-btn > #quickPlayBtn {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px !important;
+  text-align: left !important;
+}
+
+#startupScreen .menu-split-btn {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 54px;
+  gap: 6px !important;
+  width: 100%;
+}
+
+#startupScreen .menu-split-btn > #quickPlayBtn {
+  border-radius: 13px 8px 8px 13px !important;
+  background: linear-gradient(145deg, rgba(129, 32, 58, .95), rgba(83, 20, 42, .95)) !important;
+  border-color: rgba(255, 153, 181, .34) !important;
+}
+
+#startupScreen .menu-split-btn > #playQuickBtn {
+  display: grid !important;
+  place-items: center;
+  width: 54px !important;
+  min-width: 54px !important;
+  padding: 0 !important;
+  border-radius: 8px 13px 13px 8px !important;
+  background: linear-gradient(145deg, rgba(118, 28, 53, .96), rgba(72, 18, 38, .96)) !important;
+  border-color: rgba(255, 153, 181, .3) !important;
+}
+
+#startupScreen .menu-action-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  color: rgba(205, 228, 246, .92);
+  background: rgba(116, 170, 210, .1);
+  border: 1px solid rgba(163, 203, 233, .12);
+}
+
+#startupScreen #quickPlayBtn .menu-action-icon {
+  color: #ffd2de;
+  background: rgba(255, 179, 199, .12);
+  border-color: rgba(255, 194, 211, .17);
+}
+
+#startupScreen .menu-action-icon svg,
+#startupScreen .menu-action-chevron svg,
+#startupScreen #playQuickBtn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#startupScreen .menu-action-copy {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.1;
+}
+
+#startupScreen .menu-action-title {
+  overflow: hidden;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#startupScreen .menu-action-subtitle {
+  overflow: hidden;
+  color: rgba(195, 212, 226, .66);
+  font-size: 10.5px;
+  font-weight: 550;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#startupScreen #quickPlayBtn .menu-action-subtitle {
+  color: rgba(255, 221, 230, .7);
+}
+
+#startupScreen .menu-action-chevron {
+  display: grid;
+  place-items: center;
+  flex: 0 0 18px;
+  width: 18px;
+  color: rgba(188, 209, 225, .47);
+  transition: transform 160ms ease, color 160ms ease;
+}
+
+#startupScreen .menu-action-chevron svg {
+  width: 14px;
+  height: 14px;
+}
+
+#startupScreen .menu-buttons > .menu-btn:hover:not(:disabled),
+#startupScreen .menu-split-btn > button:hover:not(:disabled) {
+  transform: translateY(-1px) !important;
+  border-color: rgba(191, 220, 242, .34) !important;
+  box-shadow: 0 10px 24px rgba(2, 11, 20, .28), inset 0 1px rgba(255, 255, 255, .035) !important;
+}
+
+#startupScreen .menu-buttons > .menu-btn:hover:not(:disabled) .menu-action-chevron {
+  color: rgba(225, 239, 249, .78);
+  transform: translateX(1px);
+}
+
+#startupScreen .menu-buttons > .menu-btn:active:not(:disabled),
+#startupScreen .menu-split-btn > button:active:not(:disabled) {
+  transform: translateY(0) !important;
+}
+
+#startupScreen .menu-buttons button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--guesser-color, #60a5fa) 65%, white) !important;
+  outline-offset: 2px;
+}
+
+#startupScreen .menu-buttons button:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+  transform: none !important;
+}
+
+#startupScreen #myGamesNotifyBadge {
+  position: absolute;
+  top: 6px;
+  right: 7px;
+}
+
+@media (max-height: 690px) {
+  #startupScreen .menu-buttons {
+    gap: 5px !important;
+  }
+
+  #startupScreen .menu-buttons > .menu-btn,
+  #startupScreen .menu-split-btn > #quickPlayBtn,
+  #startupScreen .menu-split-btn > #playQuickBtn {
+    min-height: 46px;
+  }
+
+  #startupScreen .menu-buttons > .menu-btn,
+  #startupScreen .menu-split-btn > #quickPlayBtn {
+    padding-block: 6px !important;
+  }
+
+  #startupScreen .menu-action-icon {
+    flex-basis: 29px;
+    width: 29px;
+    height: 29px;
+  }
+
+  #startupScreen .menu-action-subtitle {
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #waitingForPlayer .dots.waiting-wave > span {
+    animation: none !important;
+    opacity: .65;
+    transform: none;
+  }
+
+  #startupScreen .menu-buttons button,
+  #startupScreen .menu-action-chevron {
+    transition: none !important;
+  }
+}
+/* UMT_MENU_WAITING_FIX_V1: END */

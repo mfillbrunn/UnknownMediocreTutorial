@@ -22,7 +22,7 @@
   <!-- 8. Power-specific effects -->
   <link rel="stylesheet" href="css/powers.css">
   <!-- 9. Lobby-->
-  <link rel="stylesheet" href="css/game-menu.css?menu-account-spacing=1">
+  <link rel="stylesheet" href="css/game-menu.css?menu-account-spacing=1&umt-fix=20260830-1">
     <!-- 10. Account data-->
   <link rel="stylesheet" href="css/account.css">    
   <!-- 11. Leaderboard-->
@@ -36,8 +36,8 @@
   <link rel="stylesheet" href="css/mobile.css?mobile-perf=1">
   <!-- New features -->
   <link rel="stylesheet" href="css/features.css?v=tutorial-motion-sim-2&summary-result-center=1&daily-playmode=1">
-  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1">
-  <link rel="stylesheet" href="single-player/single-player.css?sp-shell-stretch=1">
+  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1">
+  <link rel="stylesheet" href="single-player/single-player.css?sp-shell-stretch=1&umt-fix=20260830-1">
 </head>
 <body>
   <script>
@@ -256,22 +256,94 @@
             <h2 class="menu-title">VOWEL PLAY</h2>
             <div class="menu-buttons">
               <div class="split-btn menu-split-btn">
-                <button id="quickPlayBtn" class="menu-btn primary split-btn-main">Quick Play</button>
+                <button id="quickPlayBtn" class="menu-btn primary split-btn-main">
+          <span class="menu-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M13 2 5 13h6l-1 9 9-13h-6l0-7Z"/>
+            </svg>
+          </span>
+          <span class="menu-action-copy">
+            <span class="menu-action-title">Quick Play</span>
+            <span class="menu-action-subtitle">Find a match now</span>
+          </span>
+        </button>
                 <button id="playQuickBtn" class="menu-btn primary split-btn-quick" title="Quick play: repeat last mode" aria-label="Quick play: repeat last mode">
-                  <svg class="menu-quick-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M13 2 4 14h6l-1 8 9-12h-6z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
-                  </svg>
-                </button>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13 2 5 13h6l-1 9 9-13h-6l0-7Z"/></svg>
+        </button>
               </div>
-              <button id="playFriendMainBtn" class="menu-btn" title="Casual, unlimited-time, shuffled game — send a link, no need to wait around">Play with a Friend</button>
-              <button id="rankedMenuBtn" class="menu-btn">Ranked</button>
-              <button id="dailyBtn" class="menu-btn">Daily Challenge</button>
-              <button id="singlePlayerBtn" class="menu-btn">Campaign</button>
+              <button id="playFriendMainBtn" class="menu-btn" title="Casual, unlimited-time, shuffled game — send a link, no need to wait around">
+          <span class="menu-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </span>
+          <span class="menu-action-copy">
+            <span class="menu-action-title">Play with a Friend</span>
+            <span class="menu-action-subtitle">Invite or join by link</span>
+          </span>
+          <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+        </button>
+              <button id="rankedMenuBtn" class="menu-btn">
+          <span class="menu-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 6H4v1a4 4 0 0 0 4 4M17 6h3v1a4 4 0 0 1-4 4"/>
+            </svg>
+          </span>
+          <span class="menu-action-copy">
+            <span class="menu-action-title">Ranked</span>
+            <span class="menu-action-subtitle">Climb the leaderboard</span>
+          </span>
+          <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+        </button>
+              <button id="dailyBtn" class="menu-btn">
+          <span class="menu-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 15l2 2 5-5"/>
+            </svg>
+          </span>
+          <span class="menu-action-copy">
+            <span class="menu-action-title">Daily Challenge</span>
+            <span class="menu-action-subtitle">One puzzle for everyone</span>
+          </span>
+          <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+        </button>
+              <button id="singlePlayerBtn" class="menu-btn">
+          <span class="menu-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M4 19 9 4l6 16 5-13"/><circle cx="4" cy="19" r="2"/><circle cx="9" cy="4" r="2"/><circle cx="15" cy="20" r="2"/><circle cx="20" cy="7" r="2"/>
+            </svg>
+          </span>
+          <span class="menu-action-copy">
+            <span class="menu-action-title">Campaign</span>
+            <span class="menu-action-subtitle">Story missions against AI</span>
+          </span>
+          <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+        </button>
               <button id="myGamesBtn" class="menu-btn">
-                My Games
-                <span id="myGamesNotifyBadge" class="notify-badge hidden" title="It's your turn in a game">✉️</span>
-              </button>
-              <button id="howToPlayBtn" class="menu-btn">Tutorials</button>
+          <span class="menu-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M4 5h6l2 2h8v12H4V5Z"/><path d="M8 12h8M8 15h5"/>
+            </svg>
+          </span>
+          <span class="menu-action-copy">
+            <span class="menu-action-title">My Games</span>
+            <span class="menu-action-subtitle">Resume active matches</span>
+          </span>
+          <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+          <span id="myGamesNotifyBadge" class="notify-badge hidden" title="It's your turn in a game">✉️</span>
+        </button>
+              <button id="howToPlayBtn" class="menu-btn">
+          <span class="menu-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H12v18H7.5A3.5 3.5 0 0 0 4 23V5.5Z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H12v18h4.5A3.5 3.5 0 0 1 20 23V5.5Z"/>
+            </svg>
+          </span>
+          <span class="menu-action-copy">
+            <span class="menu-action-title">Tutorials</span>
+            <span class="menu-action-subtitle">Learn the rules and powers</span>
+          </span>
+          <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+        </button>
             </div>
           </div>
         </section>
@@ -293,9 +365,11 @@
               <div class="sp-story-frame">
                 <img id="spStoryImage" class="sp-story-image hidden" alt="" />
                 <div id="spStoryTextbox" class="sp-story-textbox">
+          <div id="spStoryProgress" class="sp-story-progress" aria-live="off"></div>
                   <div id="spStorySpeaker" class="sp-story-speaker"></div>
                   <div id="spStoryText" class="sp-story-text"></div>
-                  <div id="spStoryChoices" class="sp-story-choices hidden"></div>
+                  <div id="spStoryError" class="sp-story-error hidden" role="alert"></div>
+          <div id="spStoryChoices" class="sp-story-choices hidden"></div>
                   <button id="spStoryNextBtn" class="sp-btn sp-story-next">Continue</button>
                 </div>
               </div>
@@ -847,9 +921,10 @@
 <div class="lobby-status-slot">
   <div id="waitingForPlayer" class="waiting-indicator hidden" role="status" aria-live="polite">
     <div class="dots waiting-wave" aria-hidden="true">
-      <span></span><span></span><span></span><span></span>
-      <span></span><span></span><span></span>
-    </div>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
     <span class="waiting-text">Waiting for player</span>
   </div>
 </div>
@@ -1601,7 +1676,7 @@
   <script src="client/action-log-dedupe-v6.js?setter-fixes=2"></script>
   <script src="ui/setter-sidebar.js?setter-board=1"></script>
   <script src="client/starter-word-suggestions.js"></script>
-  <script src="ui/setter-board.js?setter-board=1&compact-bonus=1&star-bonus-fix=1"></script>
+  <script src="ui/setter-board.js?setter-board=1&compact-bonus=1&star-bonus-fix=1&umt-fix=20260830-1"></script>
   <script src="ui/setter-board-polish.js?setter-polish=1"></script>
   <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
@@ -1609,9 +1684,9 @@
   <script src="client/key-color-picker.js"></script>
   <script src="client/friends.js"></script>
   <script src="client/daily-challenge.js?v=daily-playmode-1&daily-difficulty-picker=1&daily-error-state=1&daily-abandoned-actions=1&daily-rank-fallback=1&daily-no-spoilers=1"></script>
-  <script src="single-player/single-player.js"></script>
-  <script src="single-player/campaign-map.js"></script>
-  <script src="single-player/story-player.js"></script>
+  <script src="single-player/single-player.js?umt-fix=20260830-1"></script>
+  <script src="single-player/campaign-map.js?umt-fix=20260830-1"></script>
+  <script src="single-player/story-player.js?umt-fix=20260830-1"></script>
   <script src="single-player/stage-result.js"></script>
   <script src="single-player/achievements.js"></script>
   <script src="client/my-games.js"></script>

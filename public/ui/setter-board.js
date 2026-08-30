@@ -242,7 +242,19 @@
   // and so the float popup shown on submit says the same thing the player
   // would have seen had they kept looking at the (now-removed) inline text.
   let _praiseKey = "";
-  let _praiseText = "";
+let _praiseText = "";
+// UMT_STAR_DANCE_FIX_V1
+let _previousCoverStarFill = [false, false, false];
+
+function stopCoverStarDance(star) {
+  if (!star) return;
+  if (star.__coverStarDanceHandler) {
+    star.removeEventListener("animationend", star.__coverStarDanceHandler);
+    delete star.__coverStarDanceHandler;
+  }
+  star.classList.remove("is-newly-earned");
+  star.style.removeProperty("--star-dance-delay");
+}
 
   function pickPraise(list) {
     return list[Math.floor(Math.random() * list.length)] || "";
@@ -250,7 +262,7 @@
 
   // Recomputes _praiseText for the current rating without touching the DOM.
   function updateStarPraise(count, strength) {
-    const rated = strength?.status === "rated" || strength?.status === "same";
+    const rated = ["rated", "same", "locked"].includes(strength?.status);
     const bonus = !!strength?.bonusStar;
     // Praise belongs to the decision being *considered*. Once the secret
     // is submitted the draft is no longer live (draftIsPending), and on
@@ -348,8 +360,12 @@
   function clearCoverStars(el) {
     el.classList.remove("stars-2", "stars-3");
     const { baseStars, bonusStar } = ensureCoverStarSlots(el);
-    baseStars.forEach(star => star.classList.remove("is-filled"));
-    bonusStar?.classList.remove("is-filled", "is-available");
+    [...baseStars, bonusStar].filter(Boolean).forEach(star => {
+      stopCoverStarDance(star);
+      star.classList.remove("is-filled");
+    });
+    bonusStar?.classList.remove("is-available");
+    _previousCoverStarFill = [false, false, false];
     _praiseKey = "";
     _praiseText = "";
   }
@@ -455,20 +471,14 @@
     const el = byId("setterCoverStars");
     if (!el) return;
 
-    // Base stars top out at 2 -- the separate blue bonus star (below) is
-    // the only way a turn's total ever reaches 3, never a 3rd base star.
     const baseCount = Math.max(0, Math.min(2, Number(strength?.stars) || 0));
     const isSetter = window.myRole === "setter";
     updateDecisionMetaVisibility(isSetter);
 
-    // The charge hint's own tile outline tracks the hint, not the rating,
-    // so it's resolved before the visibility gate below -- an untouched
-    // draft shows no stars but should still mark the bonus tile.
     const charge = window.state?.powers?.spyCharge;
     const hint = charge?.hint;
     const hasHint = isSetter && !!hint?.letter && Number.isInteger(hint.position);
     const hintLetter = hasHint ? String(hint.letter).toUpperCase() : "";
-
     const draft = String(window.state?.setterDraft || "")
       .replace(/\s/g, "")
       .toUpperCase();
@@ -481,37 +491,12 @@
       draft.length === 5 &&
       draft[hint.position] === hintLetter
     );
-
-    // Prefer the authoritative preview field (strength.bonusStar, computed
-    // server-side by coverStrength.js off the real charge hint) -- only
-    // fall back to the local recomputation above when that field is
-    // absent, rather than inferring the bonus purely from the total.
     const bonusFilled = Boolean(strength?.bonusStar ?? computedBonusEarned);
-
-    // Exposed for power-choice-mode.js's bonus-star pill so both places
-    // that reflect this state (the pill and the draft-tile outline) stay
-    // in sync off one computation instead of two separately-derived ones.
     window.__setterBonusEarned = bonusFilled;
     updateHintSlotTile(hint, hasHint, bonusFilled);
-
-    // The letter/position readout used to also live here as a "P in 3rd"
-    // text label next to the stars -- that's now shown once, in the
-    // bonus-star pill on the Keep/New row (see normalizeBonusTarget in
-    // power-choice-mode.js), so #setterCoverTarget stays hidden here to
-    // avoid showing the same information twice.
     byId("setterCoverTarget")?.classList.add("hidden");
 
-    // The stars themselves are only ever on screen for a rating that has
-    // actually been earned on a decision still being made. Everything else
-    // -- an untouched or half-typed draft ("available"), an illegal one
-    // ("invalid"), the guesser's turn, and the moment the secret is
-    // submitted (the server drops visible the same turn) -- shows nothing
-    // at all rather than a row of empty outlines.
-    const rated =
-      strength?.status === "rated" ||
-      strength?.status === "same" ||
-      strength?.status === "locked";
-
+    const rated = ["rated", "same", "locked"].includes(strength?.status);
     const show =
       !!strength?.visible &&
       isSetter &&
@@ -526,29 +511,38 @@
     }
 
     const { baseStars, bonusStar } = ensureCoverStarSlots(el);
+    const stars = [...baseStars, bonusStar].filter(Boolean);
+    const nextFilled = [baseCount >= 1, baseCount >= 2, bonusFilled];
+    const canCelebrate =
+      show &&
+      rated &&
+      !strength?.draftIsPending &&
+      !!strength?.draftValid;
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-    baseStars.forEach((star, index) => {
-      star.classList.toggle("is-filled", index < baseCount);
+    stars.forEach((star, index) => {
+      const filled = !!nextFilled[index];
+      star.classList.toggle("is-filled", filled);
+      if (!filled || !canCelebrate) stopCoverStarDance(star);
+
+      if (canCelebrate && !reducedMotion && filled && !_previousCoverStarFill[index]) {
+        stopCoverStarDance(star);
+        star.style.setProperty("--star-dance-delay", `${index * 80}ms`);
+        void star.offsetWidth;
+        const onAnimationEnd = () => stopCoverStarDance(star);
+        star.__coverStarDanceHandler = onAnimationEnd;
+        star.classList.add("is-newly-earned");
+        star.addEventListener("animationend", onAnimationEnd, { once: true });
+      }
     });
 
     bonusStar?.classList.toggle("is-available", hasHint);
-    bonusStar?.classList.toggle("is-filled", bonusFilled);
+    _previousCoverStarFill = canCelebrate ? nextFilled : [false, false, false];
 
     const totalCount = baseCount + (bonusFilled ? 1 : 0);
-
-    // Drives the escalating glow/animation in gameplay-ui.css: nothing at
-    // one star, a gentle lift at two, a full celebration at three. Gated
-    // on the decision still being live -- once the secret is submitted
-    // (draftIsPending) or it's the guesser's turn, the stars go quiet
-    // instead of animating on over a choice already made.
-    const celebrating =
-      (strength?.status === "rated" || strength?.status === "same") &&
-      !strength?.draftIsPending &&
-      !!strength?.draftValid;
-    el.classList.toggle("stars-2", celebrating && totalCount === 2);
-    el.classList.toggle("stars-3", celebrating && totalCount === 3);
+    el.classList.toggle("stars-2", canCelebrate && totalCount === 2);
+    el.classList.toggle("stars-3", canCelebrate && totalCount === 3);
     updateStarPraise(baseCount, { ...strength, bonusStar: bonusFilled });
-
     el.setAttribute(
       "aria-label",
       `${baseCount} of 2 yellow stars; blue bonus star ${bonusFilled ? "earned" : "not earned"}`

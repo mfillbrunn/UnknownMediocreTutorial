@@ -451,3 +451,114 @@
   margin-top: var(--sp-14);
   width: 100%;
 }
+
+/* UMT_SINGLE_PLAYER_UI_FIX_V1: START */
+#spMapNodes {
+  position: relative;
+}
+
+#spMapNodes.is-refreshing {
+  opacity: .94;
+}
+
+#spMapNodes.is-refreshing::after {
+  content: "Refreshing...";
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 4;
+  padding: 4px 7px;
+  border: 1px solid rgba(176, 207, 230, .14);
+  border-radius: 999px;
+  background: rgba(9, 25, 40, .82);
+  color: rgba(211, 229, 241, .65);
+  font-size: 10px;
+  letter-spacing: .03em;
+  pointer-events: none;
+}
+
+.sp-map-loading-skeleton {
+  min-height: 140px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(176, 207, 230, .12);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(18, 42, 64, .58), rgba(10, 27, 44, .48));
+}
+
+.sp-map-refresh-warning {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 5;
+  max-width: min(310px, calc(100% - 20px));
+  padding: 7px 9px;
+  border: 1px solid rgba(236, 190, 102, .24);
+  border-radius: 9px;
+  background: rgba(48, 35, 15, .9);
+  color: rgba(255, 224, 165, .85);
+  font-size: 11px;
+}
+
+.sp-map-node.is-stage-starting,
+.sp-map-detail-play.is-stage-starting {
+  cursor: progress;
+}
+
+.sp-story-frame {
+  min-height: min(480px, calc(100vh - 160px));
+}
+
+#spStoryImage.hidden {
+  display: none !important;
+}
+
+#spStoryTextbox {
+  display: flex;
+  min-height: 230px;
+  flex-direction: column;
+}
+
+.sp-story-progress {
+  align-self: flex-end;
+  min-height: 14px;
+  margin-bottom: 4px;
+  color: rgba(188, 207, 222, .58);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .06em;
+}
+
+#spStoryText {
+  min-height: 4.8em;
+}
+
+.sp-story-error {
+  margin-top: auto;
+  padding: 7px 9px;
+  border: 1px solid rgba(240, 118, 135, .24);
+  border-radius: 8px;
+  background: rgba(72, 20, 31, .35);
+  color: rgba(255, 204, 213, .9);
+  font-size: 11px;
+}
+
+#spStoryChoices,
+#spStoryNextBtn {
+  margin-top: auto;
+}
+
+#spStoryChoices button:disabled,
+#spStoryNextBtn:disabled {
+  cursor: progress;
+  opacity: .58;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #spMapNodes,
+  #spStoryTextbox,
+  #spStoryText {
+    transition: none !important;
+  }
+}
+/* UMT_SINGLE_PLAYER_UI_FIX_V1: END */

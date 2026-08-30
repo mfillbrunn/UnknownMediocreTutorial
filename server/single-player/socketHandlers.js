@@ -61,6 +61,11 @@ module.exports = function registerSinglePlayer(io, context, { sessionService }) 
       )
     );
 
+    socket.on("singlePlayer:beginGameplay", (payload, cb) =>
+      withAuth(payload, cb, (userId) =>
+        sessionService.beginGameplay({ socket, userId, roomId: payload?.roomId })
+      )
+    );
     socket.on("singlePlayer:resumeStage", (payload, cb) =>
       withAuth(payload, cb, (userId) =>
         sessionService.resumeStage({ socket, userId, roomId: payload?.roomId })

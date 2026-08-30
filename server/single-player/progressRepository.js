@@ -33,30 +33,31 @@ class ProgressRepository {
   // first inserted. This keeps profiles created before the seed trigger (or
   // while it was unavailable) from seeing the opening stage as locked.
   async ensureProfileDefaults(userId) {
-    const { error: stageError } = await this.supabase
-      .from("single_player_stage_unlocks")
-      .upsert(
-        {
-          user_id: userId,
-          stage_id: DEFAULT_CAMPAIGN_STAGE_ID,
-          source_stage_id: null
-        },
-        { onConflict: "user_id,stage_id", ignoreDuplicates: true }
-      );
-    if (stageError) throw stageError;
-
-    const { error: powerError } = await this.supabase
-      .from("single_player_power_unlocks")
-      .upsert(
-        DEFAULT_CAMPAIGN_POWER_UNLOCKS.map(({ role, powerId }) => ({
-          user_id: userId,
-          role,
-          power_id: powerId,
-          source_stage_id: DEFAULT_CAMPAIGN_STAGE_ID
-        })),
-        { onConflict: "user_id,role,power_id", ignoreDuplicates: true }
-      );
-    if (powerError) throw powerError;
+    const [stageResult, powerResult] = await Promise.all([
+      this.supabase
+        .from("single_player_stage_unlocks")
+        .upsert(
+          {
+            user_id: userId,
+            stage_id: DEFAULT_CAMPAIGN_STAGE_ID,
+            source_stage_id: null
+          },
+          { onConflict: "user_id,stage_id", ignoreDuplicates: true }
+        ),
+      this.supabase
+        .from("single_player_power_unlocks")
+        .upsert(
+          DEFAULT_CAMPAIGN_POWER_UNLOCKS.map(({ role, powerId }) => ({
+            user_id: userId,
+            role,
+            power_id: powerId,
+            source_stage_id: DEFAULT_CAMPAIGN_STAGE_ID
+          })),
+          { onConflict: "user_id,role,power_id", ignoreDuplicates: true }
+        )
+    ]);
+    if (stageResult.error) throw stageResult.error;
+    if (powerResult.error) throw powerResult.error;
   }
 
   async ensureProfile(userId) {
@@ -112,6 +113,22 @@ class ProgressRepository {
         achievementDefinitions: achievements.data || [],
         userAchievements: counters.data || []
       };
+    } catch (error) {
+      return fail(error);
+    }
+  }
+
+  async isStageUnlocked(userId, stageId) {
+    if (!this.supabase) return UNAVAILABLE;
+    try {
+      const { data, error } = await this.supabase
+        .from("single_player_stage_unlocks")
+        .select("stage_id")
+        .eq("user_id", userId)
+        .eq("stage_id", stageId)
+        .maybeSingle();
+      if (error) throw error;
+      return { ok: true, unlocked: !!data };
     } catch (error) {
       return fail(error);
     }

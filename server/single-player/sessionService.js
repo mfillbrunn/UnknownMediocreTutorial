@@ -138,19 +138,28 @@ class SessionService {
   async startStage({ socket, userId, userName, stageId }) {
     const stage = getStage(stageId);
     if (!stage) return { ok: false, code: "UNKNOWN_STAGE" };
-    // Repair the default stage unlock before authorizing a direct Play click. This mirrors getCampaign() and closes stale-profile gaps.
+
     const profileResult = await this.repo.ensureProfile(userId);
     if (!profileResult.ok) return profileResult;
 
+    let unlockResult;
+    if (typeof this.repo.isStageUnlocked === "function") {
+      unlockResult = await this.repo.isStageUnlocked(userId, stageId);
+    } else {
+      // Compatibility for narrowly scoped test doubles. Production uses the
+      // targeted repository query above rather than a full campaign snapshot.
+      const snapshot = await this.repo.getCampaignSnapshot(userId);
+      unlockResult = snapshot.ok
+        ? { ok: true, unlocked: (snapshot.unlocks || []).some(row => row.stage_id === stageId) }
+        : snapshot;
+    }
+    if (!unlockResult.ok) return unlockResult;
+    if (!unlockResult.unlocked) return { ok: false, code: "STAGE_LOCKED" };
 
-    const unlocks = await this.repo.getCampaignSnapshot(userId);
-    if (!unlocks.ok) return unlocks;
-    const unlockedIds = new Set((unlocks.unlocks || []).map(u => u.stage_id));
-    if (!unlockedIds.has(stageId)) return { ok: false, code: "STAGE_LOCKED" };
-
-    const humanUnlockedPowers = await this.repo.getUnlockedPowersByRole(userId);
-
-    const attempt = await this.repo.beginAttempt({ userId, stageId, stageVersion: stage.version });
+    const [humanUnlockedPowers, attempt] = await Promise.all([
+      this.repo.getUnlockedPowersByRole(userId),
+      this.repo.beginAttempt({ userId, stageId, stageVersion: stage.version })
+    ]);
     if (!attempt.ok) return attempt;
 
     const roomId = createRoom(socket, userId);
@@ -168,7 +177,6 @@ class SessionService {
 
     const plan = buildRoundPlan({ stage, humanUserId: userId, aiUserId: AI_USER_ID, humanUnlockedPowers });
     const firstRound = plan.rounds[0];
-
     setPlayerRole(room, firstRound.setterUserId, "setter");
     setPlayerRole(room, firstRound.guesserUserId, "guesser");
 
@@ -183,11 +191,11 @@ class SessionService {
       stageVersion: stage.version,
       attemptNo: attempt.attemptNo,
       humanUserId: userId,
-      storyPhase: stage.preStory ? "pre_story" : "in_game",
+      storyPhase: "pre_story",
+      storyCursor: { frameIndex: 0, beatIndex: 0 },
       stage,
       _plan: plan
     };
-
     state.mode = new SinglePlayerMode();
     state.mode.initMatch(state);
     state.mode.onLobbyReady(state);
@@ -201,21 +209,81 @@ class SessionService {
       attemptNo: attempt.attemptNo
     });
 
-    await this.repo.saveCheckpoint({
+    const checkpoint = await this.repo.saveCheckpoint({
       sessionId: attempt.session.id,
-      status: state.singlePlayer.storyPhase,
-      publicResult: { storyPhase: state.singlePlayer.storyPhase, frameIndex: 0, beatIndex: 0 }
+      status: "pre_story",
+      publicResult: { storyPhase: "pre_story", frameIndex: 0, beatIndex: 0 }
     });
+    if (checkpoint?.ok === false) {
+      this.sessionsByRoomId.delete(roomId);
+      delete rooms[roomId];
+      socket.leave?.(roomId);
+      return checkpoint;
+    }
 
-    emitRoomState(roomId, room, this.context.io);
-
+    // Deliberately do not emit room state here. The client must finish (or
+    // explicitly skip) pre-story and call beginGameplay first.
     return {
       ok: true,
       roomId,
       attemptNo: attempt.attemptNo,
+      storyPhase: "pre_story",
       stage: this._sanitizeStageForClient(stage)
     };
   }
+
+_bindSocketToRoom({ socket, room, userId, roomId }) {
+  room.socketToUserId ||= {};
+  room.playersByUserId ||= {};
+  room.socketToUserId[socket.id] = userId;
+  room.playersByUserId[userId] ||= { userId, connected: true, isAI: false };
+  room.playersByUserId[userId].socketId = socket.id;
+  room.playersByUserId[userId].connected = true;
+  socket.data ||= {};
+  socket.data.roomId = roomId;
+  socket.join(roomId);
+}
+
+async beginGameplay({ socket, userId, roomId }) {
+  const room = rooms[roomId];
+  const sp = room?.state?.singlePlayer;
+  const session = this.sessionsByRoomId.get(roomId);
+  if (!room || !sp?.enabled || sp.humanUserId !== userId || session?.userId !== userId) {
+    return { ok: false, code: "SESSION_NOT_FOUND" };
+  }
+  if (!new Set(["pre_story", "in_game"]).has(sp.storyPhase)) {
+    return { ok: false, code: "INVALID_STORY_PHASE", storyPhase: sp.storyPhase };
+  }
+
+  if (session.beginGameplayPromise) return session.beginGameplayPromise;
+  session.beginGameplayPromise = (async () => {
+    if (sp.storyPhase === "pre_story") {
+      const cursor = sp.storyCursor || { frameIndex: 0, beatIndex: 0 };
+      const checkpoint = await this.repo.saveCheckpoint({
+        sessionId: sp.sessionId,
+        status: "in_game",
+        publicResult: {
+          storyPhase: "in_game",
+          frameIndex: cursor.frameIndex,
+          beatIndex: cursor.beatIndex
+        }
+      });
+      if (checkpoint?.ok === false) return checkpoint;
+      sp.storyPhase = "in_game";
+    }
+
+    this._bindSocketToRoom({ socket, room, userId, roomId });
+    if (!session.gameplayStateEmitted) {
+      emitRoomState(roomId, room, this.context.io);
+      session.gameplayStateEmitted = true;
+    }
+    return { ok: true, roomId, storyPhase: "in_game" };
+  })().finally(() => {
+    delete session.beginGameplayPromise;
+  });
+
+  return session.beginGameplayPromise;
+}
 
   // The client never receives future AI words/turn scripts, story
   // branches it hasn't reached, or objective expression internals -- only
@@ -241,43 +309,62 @@ class SessionService {
 
   async resumeStage({ socket, userId, roomId }) {
     const room = rooms[roomId];
-    if (!room || !room.state.singlePlayer?.enabled || room.state.singlePlayer.humanUserId !== userId) {
+    const sp = room?.state?.singlePlayer;
+    if (!room || !sp?.enabled || sp.humanUserId !== userId) {
       return { ok: false, code: "SESSION_NOT_FOUND" };
     }
-    room.socketToUserId[socket.id] = userId;
-    room.playersByUserId[userId] ||= { userId, connected: true, isAI: false };
-    room.playersByUserId[userId].socketId = socket.id;
-    room.playersByUserId[userId].connected = true;
-    socket.join(roomId);
-    emitRoomState(roomId, room, this.context.io);
+
+    this._bindSocketToRoom({ socket, room, userId, roomId });
+    if (sp.storyPhase === "in_game") {
+      emitRoomState(roomId, room, this.context.io);
+    }
+
     return {
       ok: true,
       roomId,
-      stage: this._sanitizeStageForClient(room.state.singlePlayer.stage),
-      storyPhase: room.state.singlePlayer.storyPhase
+      stage: this._sanitizeStageForClient(sp.stage),
+      storyPhase: sp.storyPhase,
+      storyCursor: sp.storyCursor || { frameIndex: 0, beatIndex: 0 }
     };
   }
 
   async storyStep({ userId, roomId, storyPhase, frameIndex, beatIndex }) {
     const room = rooms[roomId];
-    if (!room?.state.singlePlayer?.enabled || room.state.singlePlayer.humanUserId !== userId) {
+    const sp = room?.state?.singlePlayer;
+    if (!sp?.enabled || sp.humanUserId !== userId) {
       return { ok: false, code: "SESSION_NOT_FOUND" };
     }
-    const sp = room.state.singlePlayer;
-    if (storyPhase) sp.storyPhase = storyPhase;
 
-    await this.repo.saveCheckpoint({
+    const validPhases = new Set(["pre_story", "in_game", "reward_choice", "post_story", "completed"]);
+    const requestedPhase = storyPhase || sp.storyPhase;
+    if (!validPhases.has(requestedPhase)) {
+      return { ok: false, code: "UNKNOWN_STORY_PHASE" };
+    }
+    // storyStep checkpoints the current phase only. Phase transitions are
+    // owned by beginGameplay, match completion, reward selection, or finish.
+    if (requestedPhase !== sp.storyPhase) {
+      return { ok: false, code: "STALE_STORY_PHASE", storyPhase: sp.storyPhase };
+    }
+
+    const normalizeIndex = value => Number.isInteger(value) ? Math.max(0, value) : 0;
+    const cursor = {
+      frameIndex: normalizeIndex(frameIndex),
+      beatIndex: normalizeIndex(beatIndex)
+    };
+    const checkpoint = await this.repo.saveCheckpoint({
       sessionId: sp.sessionId,
       status: sp.storyPhase,
-      publicResult: { storyPhase: sp.storyPhase, frameIndex: frameIndex || 0, beatIndex: beatIndex || 0 }
+      publicResult: { storyPhase: sp.storyPhase, ...cursor }
     });
+    if (checkpoint?.ok === false) return checkpoint;
+    sp.storyCursor = cursor;
 
-    return { ok: true, storyPhase: sp.storyPhase };
+    return { ok: true, storyPhase: sp.storyPhase, ...cursor };
   }
 
   async storyChoice({ userId, roomId, choiceId, optionId }) {
     const room = rooms[roomId];
-    if (!room?.state.singlePlayer?.enabled) return { ok: false, code: "SESSION_NOT_FOUND" };
+    if (!room?.state.singlePlayer?.enabled || room.state.singlePlayer.humanUserId !== userId) return { ok: false, code: "SESSION_NOT_FOUND" };
     const sp = room.state.singlePlayer;
     const result = await this.repo.saveStoryChoice({
       userId,
