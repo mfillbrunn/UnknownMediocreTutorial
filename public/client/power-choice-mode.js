@@ -654,14 +654,22 @@
       </span>
       <span class="pc-current-top-right">
         <span class="pc-current-status${met ? " is-met" : ""}" aria-live="polite" aria-hidden="${met ? "false" : "true"}">MET</span>
+        ${hintSpec ? `<span class="pc-guide-actions">
+          ${questHintsActive
+            ? `<button type="button" class="pc-guide-clear-btn" title="Clear the keyboard highlights" aria-label="Clear the keyboard highlights"><span aria-hidden="true">✕</span> Clear</button>`
+            // Deliberately a short, constant label rather than
+            // "Highlight ${"${hintSpec.label}"}". This button shares the card's
+            // top line with the quest name now, and the longest label
+            // ("useful condition letters") squeezed that name down to
+            // nothing on a 320px phone. What actually gets highlighted is
+            // already spelled out by the description and condition chips
+            // directly below, so it lives in the tooltip/aria-label here
+            // instead of in the visible text.
+            : `<button type="button" class="pc-guide-highlight-btn" title="Highlight ${esc(hintSpec.label)} on the keyboard" aria-label="Highlight ${esc(hintSpec.label)} on the keyboard"><span aria-hidden="true">✨</span> Highlight</button>`}
+        </span>` : ""}
       </span>
       <span class="pc-current-desc">${esc(quest.description || "Complete the shown condition.")}</span>
       ${conditionLabels.length ? `<span class="pc-current-conditions">${conditionLabels.map((label, index) => `<span class="pc-condition-chip${conditionResults[index] ? " is-met" : ""}">${esc(label)}</span>`).join("")}</span>` : ""}
-      ${hintSpec ? `<div class="pc-guide-actions">
-        ${questHintsActive
-          ? `<button type="button" class="pc-guide-clear-btn">Clear highlights</button>`
-          : `<button type="button" class="pc-guide-highlight-btn">Highlight ${esc(hintSpec.label)}</button>`}
-      </div>` : ""}
     </div>`;
 
     host.querySelector(".pc-guide-highlight-btn")?.addEventListener("click", () => {

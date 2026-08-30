@@ -1,3 +1,64 @@
+// The Secretkeeper's cover-star rating belongs ABOVE both draft rows, on the
+// decision-meta bar -- i.e. above the pending-guess row, not beside the
+// secret. It used to be appended as a 6th child of the editable secret row,
+// which put it to the RIGHT of the five letter tiles: that widened the row
+// past the board, knocked its tiles out of alignment with the pending-guess
+// row above it, and clipped the stars off the edge on a narrow phone.
+//
+// setter-board-polish.js's ensureDecisionMeta already relocated it here, but
+// only reactively via a MutationObserver -- so every rebuild of these rows
+// re-created the stars in the wrong parent first and the correct position
+// depended on winning a race. Creating them in the right parent up front
+// removes the race: the observer then finds them already correct and the
+// move becomes a no-op. Ids/classes deliberately match the ones
+// ensureDecisionMeta builds, so whichever of the two runs first wins and the
+// other one finds its work already done.
+window.ensureSetterCoverStars = function ensureSetterCoverStars() {
+  const stage = document.querySelector("#setterScreen .setter-decision-stage");
+  if (!stage) return null;
+
+  let meta = document.getElementById("setterDecisionMeta");
+  if (!meta) {
+    meta = document.createElement("div");
+    meta.id = "setterDecisionMeta";
+    meta.className = "setter-decision-meta";
+    stage.insertBefore(
+      meta,
+      stage.querySelector(".draft-row-wrap") || stage.firstChild
+    );
+  }
+
+  let mount = document.getElementById("setterStarsMount");
+  if (!mount) {
+    mount = document.createElement("div");
+    mount.id = "setterStarsMount";
+    mount.className = "setter-stars-mount";
+    meta.prepend(mount);
+  }
+
+  let stars = document.getElementById("setterCoverStars");
+  if (!stars) {
+    stars = document.createElement("div");
+    stars.id = "setterCoverStars";
+    stars.className = "setter-cover-stars hidden";
+    stars.setAttribute("aria-live", "polite");
+    stars.innerHTML = `
+      <span class="setter-cover-stars-core">
+        <span class="setter-cover-star setter-cover-base-star" data-cover-star aria-hidden="true">★</span>
+        <span class="setter-cover-star setter-cover-base-star" data-cover-star aria-hidden="true">★</span>
+        <span class="setter-cover-star setter-cover-bonus-star" data-cover-bonus-star aria-hidden="true">★</span>
+      </span>
+
+      <span id="setterCoverTarget" class="setter-cover-target hidden">
+        <span id="setterCoverTargetLabel" class="setter-cover-target-label"></span>
+      </span>
+    `;
+  }
+
+  if (stars.parentElement !== mount) mount.appendChild(stars);
+  return stars;
+};
+
 window.renderDraftRows = function ({
   state,
   role,
@@ -59,24 +120,9 @@ window.renderDraftRows = function ({
 
 
 
-      if (isEditableDraft && role === "setter") {
-        const stars = document.createElement("div");
-        stars.id = "setterCoverStars";
-        stars.className = "setter-cover-stars hidden";
-        stars.setAttribute("aria-live", "polite");
-        stars.innerHTML = `
-          <span class="setter-cover-stars-core">
-            <span class="setter-cover-star setter-cover-base-star" data-cover-star aria-hidden="true">★</span>
-            <span class="setter-cover-star setter-cover-base-star" data-cover-star aria-hidden="true">★</span>
-            <span class="setter-cover-star setter-cover-bonus-star" data-cover-bonus-star aria-hidden="true">★</span>
-          </span>
-
-          <span id="setterCoverTarget" class="setter-cover-target hidden">
-            <span id="setterCoverTargetLabel" class="setter-cover-target-label"></span>
-          </span>
-        `;
-        row.appendChild(stars);
-      }
+      // The setter's cover stars deliberately do NOT live in this row --
+      // see ensureSetterCoverStars above for why they sit on the
+      // decision-meta bar instead.
 
       return row;
     }
@@ -97,6 +143,11 @@ window.renderDraftRows = function ({
 
   const pendingRow = container.__draftRows.pending;
   const draftRow = container.__draftRows.draft;
+
+  // Cheap and idempotent -- re-asserts the stars' correct parent on every
+  // render, so a board rebuild (rejoin) or any other script that reparents
+  // them can't leave them stranded back inside a draft row.
+  if (role === "setter") window.ensureSetterCoverStars?.();
 
   // ----------------------------
   // Helpers
