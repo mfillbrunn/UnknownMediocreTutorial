@@ -11,7 +11,7 @@ server behavior.
   thresholds, run progression, and `localStorage` persistence.
 - `public/cuddle/cuddle-quests.js` — quest conditions and Cuddle adaptations of
   the existing guesser reward IDs. `freezeSecret` is deliberately excluded.
-- `public/cuddle/cuddle-ui.js` — card-only UI and the `#cuddleBtn` menu hook.
+- `public/cuddle/cuddle-ui.js` — card-only UI, a collapsed-by-default run-details panel, and the `#cuddleBtn` menu hook.
 - `public/cuddle/cuddle.css` — isolated responsive styling.
 - `public/cuddle/allowed-secrets.txt` — a public copy derived at patch time from
   the existing server secret list. Words with a Q not immediately followed by U

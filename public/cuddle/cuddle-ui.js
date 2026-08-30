@@ -10,6 +10,7 @@
   let game = null;
   let landing = true;
   let rulesOpen = false;
+  let detailsOpen = false;
   let actionMode = "play";
   let selectedCards = new Set();
   let uiMessage = "";
@@ -61,6 +62,7 @@
       const loadedWords = await loadWords();
       game = window.CuddleEngine.CuddleGame.load(loadedWords);
       landing = true;
+      detailsOpen = false;
       actionMode = "play";
       selectedCards = new Set();
       uiMessage = "";
@@ -167,30 +169,40 @@
           }).join("")}
         </div>
 
-        <section class="cuddle-metrics" aria-label="Run status">
-          <div><span>Round</span><strong>${state.round}/12</strong></div>
-          <div><span>Total score</span><strong>${state.score}</strong></div>
-          <div><span>Target</span><strong>${target}</strong></div>
-          <div><span>Still needed</span><strong>${needed}</strong></div>
-          <div><span>Draw / discard</span><strong>${drawPile} / ${recyclable}</strong></div>
+        <section class="cuddle-run-summary" aria-label="Run status">
+          <div class="cuddle-primary-metrics">
+            <span><b>Round</b><strong>${state.round}/12</strong></span>
+            <span><b>Total score</b><strong>${state.score}</strong></span>
+          </div>
+          <button class="cuddle-btn cuddle-btn-ghost cuddle-details-toggle" data-action="toggle-details"
+            aria-expanded="${detailsOpen ? "true" : "false"}" aria-controls="cuddleRunDetails">
+            ${detailsOpen ? "Hide details ▲" : "Show details ▼"}
+          </button>
         </section>
+
+        ${detailsOpen ? `
+          <section id="cuddleRunDetails" class="cuddle-details-panel" aria-label="Additional run information">
+            <div class="cuddle-detail-badges">
+              <span class="cuddle-detail-badge is-goal"><b>Round ${state.round}: goal</b> ${target}</span>
+              <span class="cuddle-detail-badge"><b>Still needed</b> ${needed}</span>
+              <span class="cuddle-detail-badge"><b>Draw / discard</b> ${drawPile} / ${recyclable}</span>
+              <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> +${rules.yellowPoints}</span>
+              <span class="cuddle-detail-badge is-grey"><b>Grey</b> −1</span>
+              <span class="cuddle-detail-badge"><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
+            </div>
+            ${renderQuestClock(state, rules)}
+          </section>` : ""}
 
         <main class="cuddle-play-area">
           <section class="cuddle-left-column">
-            ${renderQuest(state, rules)}
+            ${renderActiveQuest(state)}
             ${renderBoard(state)}
             ${renderKnowledge(state)}
           </section>
           <section class="cuddle-right-column">
             ${renderMessage(state)}
-            ${renderDraft(state)}
             ${renderHand(state)}
             ${renderActions(state, rules)}
-            <div class="cuddle-score-key">
-              <span><b class="is-yellow">Yellow</b> +${rules.yellowPoints}</span>
-              <span><b class="is-grey">Grey</b> −1</span>
-              <span><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
-            </div>
           </section>
         </main>
         ${renderStateOverlay(state)}
@@ -198,26 +210,30 @@
       </div>`;
   }
 
-  function renderQuest(state, rules) {
-    if (state.activeQuest) {
-      return `
-        <article class="cuddle-quest is-active">
-          <div class="cuddle-quest-icon" aria-hidden="true">${escapeHtml(state.activeQuest.icon || "❗")}</div>
-          <div>
-            <span class="cuddle-eyebrow">TURN ${state.guessesUsed + 1} QUEST</span>
-            <h2>${escapeHtml(state.activeQuest.title)}</h2>
-            <p>${escapeHtml(state.activeQuest.description)}</p>
-          </div>
-        </article>`;
-    }
-    const nextGuess = state.guessesUsed + 1;
-    let trigger = nextGuess;
+  function renderActiveQuest(state) {
+    if (!state.activeQuest) return "";
+    return `
+      <article class="cuddle-quest is-active">
+        <div class="cuddle-quest-icon" aria-hidden="true">${escapeHtml(state.activeQuest.icon || "❗")}</div>
+        <div>
+          <span class="cuddle-eyebrow">TURN ${state.guessesUsed + 1} QUEST</span>
+          <h2>${escapeHtml(state.activeQuest.title)}</h2>
+          <p>${escapeHtml(state.activeQuest.description)}</p>
+        </div>
+      </article>`;
+  }
+
+  function renderQuestClock(state, rules) {
+    const currentGuess = state.guessesUsed + 1;
+    let trigger = currentGuess + (state.activeQuest ? 1 : 0);
     while (trigger <= state.maxGuesses && (trigger < rules.questCadence || trigger % rules.questCadence !== 0)) trigger += 1;
     const copy = trigger <= state.maxGuesses
-      ? `Next quest appears on guess ${trigger}.`
-      : "No more scheduled quests this round.";
+      ? `${state.activeQuest ? "Quest active now. " : ""}Next quest appears on guess ${trigger}.`
+      : state.activeQuest
+        ? "Quest active now. No more quests are scheduled this round."
+        : "No more scheduled quests this round.";
     return `
-      <article class="cuddle-quest">
+      <article class="cuddle-quest cuddle-quest-clock">
         <div class="cuddle-quest-icon" aria-hidden="true">○</div>
         <div>
           <span class="cuddle-eyebrow">QUEST CLOCK</span>
@@ -263,36 +279,18 @@
   }
 
   function renderMessage(state) {
-    const message = uiMessage || state.lastMessage || "Choose cards to build a word.";
+    const draftWord = game.getDraftWord();
+    const validation = game.canSubmit();
+    const draftError = state.status === "playing" && draftWord.length === 5 && !validation.ok
+      ? validation.error
+      : "";
+    const message = uiMessage || draftError || state.lastMessage || "Choose cards to build a word.";
     return `
       <div class="cuddle-message" role="status">
         <span>${escapeHtml(message)}</span>
         ${state.suggestedWord ? `<strong>Suggested word: ${escapeHtml(state.suggestedWord)}</strong>` : ""}
         ${state.buffs.greyShield ? `<strong>🥷 Grey shield ready (${state.buffs.greyShield})</strong>` : ""}
       </div>`;
-  }
-
-  function renderDraft(state) {
-    const cards = game.getDraftCards();
-    const word = game.getDraftWord();
-    const validation = game.canSubmit();
-    return `
-      <section class="cuddle-draft-panel">
-        <div class="cuddle-section-heading">
-          <div>
-            <span class="cuddle-eyebrow">YOUR GUESS</span>
-            <h2>${word ? escapeHtml(word) : "Choose cards"}</h2>
-          </div>
-          <span>${word.length}/5 letters</span>
-        </div>
-        <div class="cuddle-draft-cards" aria-label="Cards in current guess">
-          ${cards.length ? cards.map(card => `
-            <button class="cuddle-mini-card" data-card-id="${escapeHtml(card.id)}" data-draft-remove="true" title="Return ${escapeHtml(card.glyph)} to hand">
-              ${escapeHtml(card.glyph)}
-            </button>`).join("") : `<span class="cuddle-draft-empty">Tap hand cards in word order. QU supplies two letters.</span>`}
-        </div>
-        ${word.length === 5 && !validation.ok ? `<p class="cuddle-validation">${escapeHtml(validation.error)}</p>` : ""}
-      </section>`;
   }
 
   function renderHand(state) {
@@ -515,6 +513,7 @@
     game.startNew();
     landing = false;
     rulesOpen = false;
+    detailsOpen = false;
     resetActionMode();
     setUiMessage("");
   }
@@ -528,13 +527,18 @@
       case "run-menu":
         landing = true;
         rulesOpen = false;
+        detailsOpen = false;
         resetActionMode();
         setUiMessage("");
         return true;
       case "continue":
         landing = false;
         rulesOpen = false;
+        detailsOpen = false;
         resetActionMode();
+        return true;
+      case "toggle-details":
+        detailsOpen = !detailsOpen;
         return true;
       case "new-run":
         startNewRun();

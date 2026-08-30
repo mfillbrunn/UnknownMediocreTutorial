@@ -143,14 +143,99 @@
   box-shadow: 0 0 0 4px rgba(213, 166, 255, 0.15);
 }
 
-.cuddle-metrics {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 9px;
-  margin-bottom: 16px;
+.cuddle-run-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
-.cuddle-metrics > div,
+.cuddle-primary-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cuddle-primary-metrics > span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  min-height: 38px;
+  padding: 9px 12px;
+  border: 1px solid var(--cuddle-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.cuddle-primary-metrics b {
+  color: var(--cuddle-muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.cuddle-primary-metrics strong {
+  color: var(--cuddle-text);
+  font-size: 0.98rem;
+}
+
+.cuddle-details-toggle {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 999px;
+}
+
+.cuddle-details-panel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--cuddle-border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.cuddle-detail-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cuddle-detail-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  min-height: 31px;
+  padding: 7px 10px;
+  border: 1px solid var(--cuddle-border);
+  border-radius: 999px;
+  color: var(--cuddle-muted);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 0.72rem;
+}
+
+.cuddle-detail-badge b {
+  color: var(--cuddle-text);
+}
+
+.cuddle-detail-badge.is-goal {
+  border-color: rgba(213, 166, 255, 0.55);
+  color: var(--cuddle-accent);
+  background: rgba(213, 166, 255, 0.1);
+}
+
+.cuddle-detail-badge.is-yellow {
+  border-color: rgba(215, 173, 63, 0.55);
+  color: #f0ca5e;
+}
+
+.cuddle-detail-badge.is-grey {
+  border-color: rgba(170, 166, 178, 0.38);
+  color: #c2beca;
+}
+
 .cuddle-end-stats > div {
   min-width: 0;
   padding: 12px 13px;
@@ -159,7 +244,6 @@
   background: rgba(255, 255, 255, 0.045);
 }
 
-.cuddle-metrics span,
 .cuddle-end-stats span {
   display: block;
   margin-bottom: 4px;
@@ -170,7 +254,6 @@
   text-transform: uppercase;
 }
 
-.cuddle-metrics strong,
 .cuddle-end-stats strong {
   display: block;
   overflow: hidden;
@@ -181,7 +264,7 @@
 
 .cuddle-play-area {
   display: grid;
-  grid-template-columns: minmax(315px, 0.78fr) minmax(390px, 1.22fr);
+  grid-template-columns: minmax(350px, 0.88fr) minmax(390px, 1.12fr);
   gap: 18px;
   align-items: start;
 }
@@ -210,6 +293,12 @@
   box-shadow: inset 0 0 0 1px rgba(213, 166, 255, 0.08);
 }
 
+.cuddle-quest-clock {
+  min-height: 72px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
 .cuddle-quest-icon {
   display: grid;
   place-items: center;
@@ -235,8 +324,8 @@
 
 .cuddle-board {
   display: grid;
-  gap: 7px;
-  padding: 16px;
+  gap: 8px;
+  padding: 18px;
   border: 1px solid var(--cuddle-border);
   border-radius: 20px;
   background: var(--cuddle-surface);
@@ -245,9 +334,9 @@
 
 .cuddle-board-row {
   display: grid;
-  grid-template-columns: repeat(5, minmax(38px, 53px)) minmax(34px, auto);
+  grid-template-columns: repeat(5, minmax(40px, 59px)) minmax(36px, auto);
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
 }
 
 .cuddle-tile {
@@ -255,10 +344,10 @@
   place-items: center;
   aspect-ratio: 1;
   border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 11px;
+  border-radius: 12px;
   color: var(--cuddle-text);
   background: rgba(255, 255, 255, 0.035);
-  font-size: clamp(1.05rem, 3vw, 1.38rem);
+  font-size: clamp(1.12rem, 3.2vw, 1.5rem);
   font-weight: 900;
   text-transform: uppercase;
   transition: transform 140ms ease;
@@ -366,10 +455,8 @@
   color: var(--cuddle-accent-2);
 }
 
-.cuddle-draft-panel,
 .cuddle-hand-panel,
-.cuddle-action-panel,
-.cuddle-score-key {
+.cuddle-action-panel {
   padding: 14px;
   border: 1px solid var(--cuddle-border);
   border-radius: 18px;
@@ -390,44 +477,6 @@
   font-weight: 700;
 }
 
-.cuddle-draft-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-height: 53px;
-  align-items: center;
-}
-
-.cuddle-mini-card {
-  min-width: 46px;
-  height: 52px;
-  padding: 0 12px;
-  border: 1px solid rgba(213, 166, 255, 0.55);
-  border-radius: 11px;
-  color: var(--cuddle-text);
-  background: rgba(213, 166, 255, 0.13);
-  font: inherit;
-  font-size: 1.05rem;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.cuddle-mini-card:hover {
-  transform: translateY(-2px);
-  background: rgba(213, 166, 255, 0.2);
-}
-
-.cuddle-draft-empty,
-.cuddle-validation {
-  margin: 0;
-  color: var(--cuddle-muted);
-  font-size: 0.78rem;
-}
-
-.cuddle-validation {
-  margin-top: 8px;
-  color: var(--cuddle-danger);
-}
 
 .cuddle-hand {
   display: grid;
@@ -573,25 +622,6 @@
   opacity: 0.35;
 }
 
-.cuddle-score-key {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  color: var(--cuddle-muted);
-  font-size: 0.72rem;
-}
-
-.cuddle-score-key b {
-  color: var(--cuddle-text);
-}
-
-.cuddle-score-key b.is-yellow {
-  color: #f0ca5e;
-}
-
-.cuddle-score-key b.is-grey {
-  color: #aaa6b2;
-}
 
 .cuddle-overlay {
   position: fixed;
@@ -868,6 +898,9 @@
   }
 
   .cuddle-board {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: min(430px, 100%);
     box-shadow: none;
   }
 
@@ -913,12 +946,20 @@
     min-width: 25px;
   }
 
-  .cuddle-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .cuddle-run-summary {
+    align-items: stretch;
   }
 
-  .cuddle-metrics > div:last-child {
-    grid-column: 1 / -1;
+  .cuddle-primary-metrics {
+    flex: 1 1 auto;
+  }
+
+  .cuddle-primary-metrics > span {
+    flex: 1 1 auto;
+  }
+
+  .cuddle-details-panel {
+    padding: 10px;
   }
 
   .cuddle-left-column {
@@ -926,12 +967,12 @@
   }
 
   .cuddle-board {
-    padding: 11px 8px;
+    padding: 13px 9px;
   }
 
   .cuddle-board-row {
-    grid-template-columns: repeat(5, minmax(35px, 49px)) 30px;
-    gap: 5px;
+    grid-template-columns: repeat(5, minmax(38px, 54px)) 31px;
+    gap: 6px;
   }
 
   .cuddle-knowledge {
@@ -980,8 +1021,16 @@
 }
 
 @media (max-width: 390px) {
+  .cuddle-run-summary {
+    flex-wrap: wrap;
+  }
+
+  .cuddle-details-toggle {
+    width: 100%;
+  }
+
   .cuddle-board-row {
-    grid-template-columns: repeat(5, minmax(31px, 42px)) 26px;
+    grid-template-columns: repeat(5, minmax(33px, 46px)) 27px;
     gap: 4px;
   }
 
