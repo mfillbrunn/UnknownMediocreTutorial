@@ -150,7 +150,10 @@
           </div>
           <div class="cuddle-header-title">
             <span class="cuddle-eyebrow">SINGLE-PLAYER CAMPAIGN</span>
-            <h1>CUDDLE</h1>
+            <div class="cuddle-header-title-line">
+              <h1>CUDDLE</h1>
+              <span class="cuddle-header-score" aria-label="Total score ${state.score}">Score ${state.score}</span>
+            </div>
           </div>
           <div class="cuddle-header-side cuddle-header-side-right">
             <button class="cuddle-details-toggle ${detailsOpen ? "is-open" : ""}" data-action="toggle-details"
@@ -162,11 +165,6 @@
           </div>
         </header>
 
-        <section class="cuddle-run-summary" aria-label="Run status">
-          <div class="cuddle-primary-metrics">
-            <span><b>Total score</b><strong>${state.score}</strong></span>
-          </div>
-        </section>
 
         ${detailsOpen ? `
           <section id="cuddleRunDetails" class="cuddle-details-panel" aria-label="Additional run information">
@@ -247,8 +245,13 @@
   }
 
   function renderBoard(state) {
-    const draftTiles = game.getDraftCards().flatMap(card => (
-      card.glyph.split("").map(letter => ({ letter, cardId: card.id, glyph: card.glyph }))
+    const draftTiles = game.getDraftCards().flatMap((card, draftIndex) => (
+      card.glyph.split("").map(letter => ({
+        letter,
+        cardId: card.id,
+        draftIndex,
+        glyph: card.glyph
+      }))
     ));
     const rows = [];
     for (let row = 0; row < state.maxGuesses; row += 1) {
@@ -263,7 +266,7 @@
         if (draftTile) {
           tiles.push(`
             <button type="button" class="cuddle-tile is-draft-tile${tileClass}"
-              data-draft-card-id="${escapeHtml(draftTile.cardId)}"
+              data-draft-index="${draftTile.draftIndex}" data-draft-card-id="${escapeHtml(draftTile.cardId)}"
               aria-label="Remove ${escapeHtml(draftTile.glyph)} from the current word"
               title="Click to return ${escapeHtml(draftTile.glyph)} to your hand">
               ${escapeHtml(letter)}
@@ -301,37 +304,38 @@
       if (!groups.has(card.glyph)) groups.set(card.glyph, []);
       groups.get(card.glyph).push(card);
     });
+    const sourceRank = source => source === "infinite" ? 0 : source === "reward" ? 1 : 2;
     return [...groups.entries()]
       .map(([glyph, cards]) => ({
         glyph,
-        cards: cards.slice().sort((a, b) => {
-          const sourceOrder = Number(a.source !== "bonus") - Number(b.source !== "bonus");
-          return sourceOrder || a.id.localeCompare(b.id);
-        })
+        cards: cards.slice().sort((a, b) => (
+          sourceRank(a.source) - sourceRank(b.source) || a.id.localeCompare(b.id)
+        ))
       }))
       .sort((a, b) => a.glyph.localeCompare(b.glyph));
   }
 
   function renderHand(state) {
-    const draft = new Set(state.draft);
     const limit = actionMode === "exchange" ? game.getGreyExchangeCost() : game.getMulliganLimit();
     const cards = groupedHand(state).map(group => {
+      const infiniteCard = group.cards.find(card => game.isInfiniteCard(card));
+      const draftedCount = state.draft.filter(id => group.cards.some(card => card.id === id)).length;
       const selectable = group.cards.filter(card => (
-        !draft.has(card.id) && (actionMode !== "exchange" || game.cardIsKnownGrey(card))
+        !game.isInfiniteCard(card)
+        && !state.draft.includes(card.id)
+        && (actionMode !== "exchange" || game.cardIsKnownGrey(card))
       ));
       const selectedCount = selectable.filter(card => selectedCards.has(card.id)).length;
       const unselectedCount = selectable.length - selectedCount;
-      const draftedCount = group.cards.filter(card => draft.has(card.id)).length;
-      const temporaryCount = group.cards.filter(card => card.source === "bonus").length;
       const status = game.getCardKnowledgeStatus(group.glyph);
       const disabled = state.status !== "playing"
-        || (actionMode === "play" && unselectedCount === 0)
+        || (actionMode === "play" && !infiniteCard && unselectedCount === 0)
         || (actionMode !== "play" && selectable.length === 0)
         || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
       const classes = [
         "cuddle-card",
         `is-card-${status}`,
-        temporaryCount ? "has-bonus" : "",
+        infiniteCard ? "is-infinite" : "",
         draftedCount ? "has-drafted" : "",
         selectedCount ? "is-selected" : ""
       ].filter(Boolean).join(" ");
@@ -341,9 +345,8 @@
             : "grey · unused";
       const count = group.cards.length;
       const details = [
-        `${count} ${count === 1 ? "copy" : "copies"}`,
+        infiniteCard ? "unlimited" : `${count} ${count === 1 ? "copy" : "copies"}`,
         statusLabel,
-        temporaryCount ? `${temporaryCount} temporary` : "",
         draftedCount ? `${draftedCount} in the grid` : "",
         selectedCount ? `${selectedCount} selected` : ""
       ].filter(Boolean).join(" · ");
@@ -353,17 +356,15 @@
           aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(details)}"
           title="${escapeHtml(details)}">
           <span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>
-          ${count > 1 ? `<span class="cuddle-card-count" aria-hidden="true">${count}</span>` : ""}
+          ${infiniteCard
+            ? `<span class="cuddle-card-count is-infinite" aria-hidden="true">∞</span>`
+            : count > 1 ? `<span class="cuddle-card-count" aria-hidden="true">${count}</span>` : ""}
         </button>`;
     }).join("");
     return `
       <section class="cuddle-hand-panel">
         <div class="cuddle-section-heading">
-          <div>
-            <span class="cuddle-eyebrow">YOUR HAND</span>
-            <h2>${state.hand.length} cards</h2>
-          </div>
-          <span>${state.hand.filter(card => card.source === "bonus").length} temporary</span>
+          <span class="cuddle-eyebrow">YOUR HAND</span>
         </div>
         <div class="cuddle-hand" aria-label="Letter card hand">${cards || `<p class="cuddle-draft-empty">No cards are currently available.</p>`}</div>
       </section>`;
@@ -396,7 +397,11 @@
     const greyCount = game.getGreyCards().length;
     return `
       <section class="cuddle-action-panel">
-        <button class="cuddle-btn cuddle-btn-primary cuddle-submit" data-action="submit" ${submit.ok ? "" : "disabled"}>Submit word</button>
+        <div class="cuddle-submit-row">
+          <button class="cuddle-btn cuddle-btn-primary cuddle-submit" data-action="submit" ${submit.ok ? "" : "disabled"}>Submit word</button>
+          <button class="cuddle-btn cuddle-backspace" data-action="backspace" ${state.draft.length ? "" : "disabled"}
+            aria-label="Delete the last drafted card" title="Delete last letter">⌫</button>
+        </div>
         <div class="cuddle-utility-actions">
           <button class="cuddle-btn" data-action="mulligan-mode" ${state.mulligansLeft > 0 ? "" : "disabled"}>
             Mulligan <span>${state.mulligansLeft} left · up to ${rules.mulliganSize}</span>
@@ -496,7 +501,8 @@
   function renderRulesOverlay() {
     const state = currentState();
     const rules = state ? game.getRulesSummary() : {
-      handSize: 8,
+      handSize: 6,
+      freeVowels: 5,
       mulligans: 2,
       mulliganSize: 3,
       greyExchange: 3,
@@ -511,9 +517,9 @@
           <span class="cuddle-modal-kicker">HOW TO PLAY</span>
           <h2 id="cuddleRulesTitle">Cuddle rules</h2>
           <div class="cuddle-rules-grid">
-            <article><strong>1 · Build, do not type</strong><p>Tap cards in order to make a five-letter word from the existing secret list. Q is printed as QU and supplies both letters.</p></article>
-            <article><strong>2 · Read the feedback</strong><p>A letter gives one temporary copy the first time it turns yellow and two the first time it turns green each round. Later yellow or green results for that letter do not add more. Cards remain grey while unused and turn red when confirmed absent.</p></article>
-            <article><strong>3 · Refill the hand</strong><p>Every submitted five-letter word draws five replacements. When the draw pile empties, the discard pile is shuffled back in.</p></article>
+            <article><strong>1 · Build, do not type</strong><p>Tap cards in order to make a five-letter word from the existing secret list. Q is a normal one-letter card; U is always available with the other vowels.</p></article>
+            <article><strong>2 · Use unlimited letters</strong><p>A, E, I, O, and U are always available, do not use hand slots, and show ∞. Any consonant that turns yellow or green also becomes unlimited for the rest of the round and uses one counted slot.</p></article>
+            <article><strong>3 · Refill the hand</strong><p>You have six counted consonant slots. After a guess, finite cards that were used leave the hand and the draw pile refills only the open counted slots back toward six.</p></article>
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards. Trade exactly ${rules.greyExchange} confirmed grey cards for one new draw.</p></article>
             <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints}; grey tiles score −1. Solving early adds +${rules.earlyPoint} for every unused guess. You must also meet the cumulative round target.</p></article>
             <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}. Solve the word to choose an upgrade; every newly crossed 50-point milestone grants another.</p></article>
@@ -535,17 +541,17 @@
 
   function cardsForGlyph(glyph) {
     const state = currentState();
+    const sourceRank = source => source === "infinite" ? 0 : source === "reward" ? 1 : 2;
     return state.hand
       .filter(card => card.glyph === glyph)
-      .sort((a, b) => {
-        const sourceOrder = Number(a.source !== "bonus") - Number(b.source !== "bonus");
-        return sourceOrder || a.id.localeCompare(b.id);
-      });
+      .sort((a, b) => sourceRank(a.source) - sourceRank(b.source) || a.id.localeCompare(b.id));
   }
 
   function choosePlayCard(glyph) {
     const state = currentState();
-    const card = cardsForGlyph(glyph).find(item => !state.draft.includes(item.id));
+    const cards = cardsForGlyph(glyph);
+    const card = cards.find(item => game.isInfiniteCard(item))
+      || cards.find(item => !state.draft.includes(item.id));
     if (!card) return { ok: false, error: `No unused ${glyph} copy remains in your hand.` };
     return game.toggleDraft(card.id);
   }
@@ -554,7 +560,9 @@
     const state = currentState();
     const limit = actionMode === "exchange" ? game.getGreyExchangeCost() : game.getMulliganLimit();
     const eligible = cardsForGlyph(glyph).filter(card => (
-      !state.draft.includes(card.id) && (actionMode !== "exchange" || game.cardIsKnownGrey(card))
+      !game.isInfiniteCard(card)
+      && !state.draft.includes(card.id)
+      && (actionMode !== "exchange" || game.cardIsKnownGrey(card))
     ));
     const unselected = eligible.filter(card => !selectedCards.has(card.id));
     const selected = eligible.filter(card => selectedCards.has(card.id));
@@ -619,6 +627,11 @@
         if (!result.ok) setUiMessage(result.error);
         else setUiMessage("");
         resetActionMode();
+        return true;
+      }
+      case "backspace": {
+        const result = game.backspaceDraft();
+        setUiMessage(result.ok ? "" : result.error);
         return true;
       }
       case "mulligan-mode":
@@ -686,9 +699,9 @@
       return;
     }
 
-    const draftTile = event.target.closest("[data-draft-card-id]");
+    const draftTile = event.target.closest("[data-draft-index]");
     if (draftTile && game?.state?.status === "playing" && actionMode === "play") {
-      const result = game.toggleDraft(draftTile.dataset.draftCardId);
+      const result = game.removeDraftAt(Number(draftTile.dataset.draftIndex));
       setUiMessage(result.ok ? "" : result.error);
       render();
       return;

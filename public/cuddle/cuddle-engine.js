@@ -7,11 +7,12 @@
   const STORAGE_KEY = "vowelPlay.cuddle.v1";
   const THRESHOLDS = Object.freeze([10, 22, 35, 50, 65, 81, 100, 130, 165, 210, 250, 300]);
   const MAX_GUESSES = 6;
-  const BASE_HAND_SIZE = 8;
+  const BASE_HAND_SIZE = 6;
   const BASE_MULLIGANS = 2;
   const BASE_MULLIGAN_SIZE = 3;
   const BASE_GREY_EXCHANGE = 3;
-  const VOWELS = new Set(["A", "E", "I", "O", "U"]);
+  const ALWAYS_AVAILABLE_VOWELS = Object.freeze(["A", "E", "I", "O", "U"]);
+  const VOWELS = new Set(ALWAYS_AVAILABLE_VOWELS);
   const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
   const DEFAULT_UPGRADES = Object.freeze({
@@ -55,23 +56,16 @@
     return counts;
   }
 
-  function glyphForLetter(letter) {
-    return letter === "Q" ? "QU" : letter;
+  function glyphForLetter(value) {
+    const glyph = String(value || "").toUpperCase();
+    // Cuddle previously used a combined QU card. Normalize old saved cards to
+    // a regular Q because U is now one of the always-available vowels.
+    return glyph === "QU" ? "Q" : glyph;
   }
 
   function tokensForWord(word) {
-    const tokens = [];
-    for (let i = 0; i < word.length; i += 1) {
-      const letter = word[i];
-      if (letter === "Q") {
-        if (word[i + 1] !== "U") return null;
-        tokens.push("QU");
-        i += 1;
-      } else {
-        tokens.push(letter);
-      }
-    }
-    return tokens;
+    const normalized = String(word || "").toUpperCase();
+    return /^[A-Z]+$/.test(normalized) ? normalized.split("") : null;
   }
 
   function evaluateFeedback(secret, guess) {
@@ -167,48 +161,57 @@
     _hydrateState() {
       const state = this.state;
       state.upgrades = { ...DEFAULT_UPGRADES, ...(state.upgrades || {}) };
-      state.deck = Array.isArray(state.deck) ? state.deck : [];
-      state.discard = Array.isArray(state.discard) ? state.discard : [];
-      state.hand = Array.isArray(state.hand) ? state.hand : [];
-      state.draft = Array.isArray(state.draft) ? state.draft : [];
+      // The counted hand is now fixed at six. Keep the legacy field so older
+      // saves remain readable, but an old starting-hand upgrade has no effect.
+      state.upgrades.startingHand = 0;
+      const normalizeCards = cards => (Array.isArray(cards) ? cards : [])
+        .map(card => (card && typeof card === "object"
+          ? { ...card, glyph: glyphForLetter(card.glyph) }
+          : null))
+        .filter(card => card && /^[A-Z]$/.test(card.glyph));
+      state.deck = normalizeCards(state.deck);
+      state.discard = normalizeCards(state.discard);
+      state.hand = normalizeCards(state.hand);
       state.history = Array.isArray(state.history) ? state.history : [];
-      const savedMilestones = state.feedbackBonusMilestones;
-      const hadSavedMilestones = Boolean(savedMilestones && typeof savedMilestones === "object");
-      state.feedbackBonusMilestones = {
-        yellow: Array.isArray(savedMilestones?.yellow) ? unique(savedMilestones.yellow).sort() : [],
-        green: Array.isArray(savedMilestones?.green) ? unique(savedMilestones.green).sort() : []
-      };
-      // Older Cuddle saves did not track these milestones. Derive them from
-      // completed guesses so updating mid-round cannot award the same feedback
-      // bonus again.
-      if (!hadSavedMilestones) {
-        state.history.forEach(entry => {
-          String(entry?.word || "").split("").forEach((letter, index) => {
-            const result = entry?.feedback?.[index];
-            if (result === "yellow" || result === "green") {
-              state.feedbackBonusMilestones[result].push(letter);
-            }
-          });
-        });
-        state.feedbackBonusMilestones.yellow = unique(state.feedbackBonusMilestones.yellow).sort();
-        state.feedbackBonusMilestones.green = unique(state.feedbackBonusMilestones.green).sort();
-      }
+      state.draft = [];
       state.usedSecrets = Array.isArray(state.usedSecrets) ? state.usedSecrets : [];
       state.removedLetters = Array.isArray(state.removedLetters) ? state.removedLetters : [];
       state.knownAbsent = Array.isArray(state.knownAbsent) ? state.knownAbsent : [];
       state.knownPresent = Array.isArray(state.knownPresent) ? state.knownPresent : [];
+      state.infiniteGlyphs = unique([
+        ...ALWAYS_AVAILABLE_VOWELS,
+        ...(Array.isArray(state.infiniteGlyphs)
+          ? state.infiniteGlyphs.map(glyphForLetter)
+          : [])
+      ]).sort();
       state.revealedPositions = Array.isArray(state.revealedPositions)
         ? state.revealedPositions.slice(0, 5)
         : Array(5).fill(null);
       while (state.revealedPositions.length < 5) state.revealedPositions.push(null);
       state.questRewardChoices = Array.isArray(state.questRewardChoices) ? state.questRewardChoices : [];
-      state.upgradeChoices = Array.isArray(state.upgradeChoices) ? state.upgradeChoices : [];
+      state.upgradeChoices = Array.isArray(state.upgradeChoices)
+        ? state.upgradeChoices.filter(choice => choice?.id !== "startingHand")
+        : [];
       state.deferredRewards = Array.isArray(state.deferredRewards) ? state.deferredRewards : [];
       state.buffs = { greyShield: 0, ...(state.buffs || {}) };
       state.serial = Number.isFinite(state.serial) ? state.serial : 0;
       state.maxGuesses = MAX_GUESSES;
       state.milestonesClaimed = Number.isFinite(state.milestonesClaimed) ? state.milestonesClaimed : 0;
       state.pendingMilestones = Number.isFinite(state.pendingMilestones) ? state.pendingMilestones : 0;
+
+      // Migrate older saves by removing finite vowel copies, adding one free
+      // unlimited card for every vowel, retaining positive unlimited letters,
+      // and enforcing six counted consonant slots.
+      this._syncInfiniteCards();
+      this._trimHandToLimit();
+      if (["playing", "questReward"].includes(state.status)
+          && this.getCountedHandSize() < this.getHandLimit()) {
+        this.drawToHandLimit();
+      }
+      if (state.status === "upgrade" && state.upgradeChoices.length < 3) {
+        state.upgradeChoices = this._generateUpgradeChoices();
+      }
+      delete state.feedbackBonusMilestones;
     }
 
     _isStateUsable() {
@@ -257,7 +260,7 @@
         mulligansLeft: BASE_MULLIGANS,
         knownAbsent: [],
         knownPresent: [],
-        feedbackBonusMilestones: { yellow: [], green: [] },
+        infiniteGlyphs: [...ALWAYS_AVAILABLE_VOWELS],
         revealedPositions: Array(5).fill(null),
         activeQuest: null,
         questRewardChoices: [],
@@ -287,7 +290,8 @@
 
     getRulesSummary() {
       return {
-        handSize: BASE_HAND_SIZE + this.state.upgrades.startingHand,
+        handSize: BASE_HAND_SIZE,
+        freeVowels: ALWAYS_AVAILABLE_VOWELS.length,
         mulligans: BASE_MULLIGANS + this.state.upgrades.extraMulligans,
         mulliganSize: BASE_MULLIGAN_SIZE + this.state.upgrades.mulliganSize,
         greyExchange: Math.max(1, BASE_GREY_EXCHANGE - this.state.upgrades.exchangeReduction),
@@ -307,46 +311,56 @@
       return { id: this._nextId(source), glyph, source };
     }
 
+    getHandLimit() {
+      return BASE_HAND_SIZE;
+    }
+
+    isVowelGlyph(glyph) {
+      return VOWELS.has(String(glyph || ""));
+    }
+
+    cardCountsTowardHandLimit(card) {
+      return Boolean(card && !this.isVowelGlyph(card.glyph));
+    }
+
+    getCountedHandSize() {
+      return (this.state?.hand || []).filter(card => this.cardCountsTowardHandLimit(card)).length;
+    }
+
+    isInfiniteGlyph(glyph) {
+      return this.isVowelGlyph(glyph) || (
+        Array.isArray(this.state?.infiniteGlyphs)
+        && this.state.infiniteGlyphs.includes(glyph)
+      );
+    }
+
+    isInfiniteCard(card) {
+      return Boolean(card && card.source === "infinite");
+    }
+
     _baseDeckGlyphs() {
       const removed = new Set(this.state.removedLetters);
       const glyphs = [];
       LETTERS.forEach(letter => {
-        if (!removed.has(letter)) glyphs.push(glyphForLetter(letter));
-      });
-      ["A", "E", "I", "O", "U"].forEach(letter => {
-        if (!removed.has(letter)) glyphs.push(letter);
+        if (!VOWELS.has(letter) && !removed.has(letter)) glyphs.push(glyphForLetter(letter));
       });
       return glyphs;
     }
 
     _isVowelCard(cardOrGlyph) {
-      const glyph = typeof cardOrGlyph === "string" ? cardOrGlyph : cardOrGlyph.glyph;
-      // QU is the modified consonant card; the two-card opening guarantee is
-      // satisfied by standalone A/E/I/O/U cards.
-      return VOWELS.has(glyph);
+      const glyph = typeof cardOrGlyph === "string" ? cardOrGlyph : cardOrGlyph?.glyph;
+      return this.isVowelGlyph(glyph);
     }
 
     _prepareInitialHand() {
-      const handSize = Math.min(
-        BASE_HAND_SIZE + this.state.upgrades.startingHand,
-        this._baseDeckGlyphs().length
-      );
-      let cards = [];
-      let accepted = false;
-      for (let attempt = 0; attempt < 100; attempt += 1) {
-        cards = shuffle(this._baseDeckGlyphs(), this.random).map(glyph => this._newCard(glyph, "deck"));
-        const vowelCount = cards.slice(0, handSize).filter(card => this._isVowelCard(card)).length;
-        if (vowelCount >= 2) {
-          accepted = true;
-          break;
-        }
-      }
-      if (!accepted) {
-        cards.sort((a, b) => Number(this._isVowelCard(b)) - Number(this._isVowelCard(a)));
-      }
+      const cards = shuffle(this._baseDeckGlyphs(), this.random)
+        .map(glyph => this._newCard(glyph, "deck"));
+      const handSize = Math.min(this.getHandLimit(), cards.length);
+      this.state.infiniteGlyphs = [...ALWAYS_AVAILABLE_VOWELS];
       this.state.hand = cards.slice(0, handSize);
       this.state.deck = cards.slice(handSize);
       this.state.discard = [];
+      this._syncInfiniteCards();
     }
 
     _beginRound() {
@@ -360,7 +374,7 @@
       state.mulligansLeft = BASE_MULLIGANS + state.upgrades.extraMulligans;
       state.knownAbsent = [];
       state.knownPresent = [];
-      state.feedbackBonusMilestones = { yellow: [], green: [] };
+      state.infiniteGlyphs = [...ALWAYS_AVAILABLE_VOWELS];
       state.revealedPositions = Array(5).fill(null);
       state.activeQuest = null;
       state.questRewardChoices = [];
@@ -420,18 +434,36 @@
 
     toggleDraft(cardId) {
       if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
+      const card = this.getHandCard(cardId);
+      if (!card) return { ok: false, error: "That card is no longer in your hand." };
       const index = this.state.draft.indexOf(cardId);
-      if (index >= 0) {
+      if (!this.isInfiniteCard(card) && index >= 0) {
         this.state.draft.splice(index, 1);
         this.save();
         return { ok: true };
       }
-      const card = this.getHandCard(cardId);
-      if (!card) return { ok: false, error: "That card is no longer in your hand." };
       if (this.getDraftWord().length + card.glyph.length > 5) {
         return { ok: false, error: "That card would take the word past five letters." };
       }
+      // Green and yellow cards can be selected repeatedly because their single
+      // hand slot represents an unlimited supply for the rest of the round.
       this.state.draft.push(cardId);
+      this.save();
+      return { ok: true };
+    }
+
+    removeDraftAt(index) {
+      if (!Number.isInteger(index) || index < 0 || index >= this.state.draft.length) {
+        return { ok: false, error: "That drafted card is no longer available." };
+      }
+      this.state.draft.splice(index, 1);
+      this.save();
+      return { ok: true };
+    }
+
+    backspaceDraft() {
+      if (!this.state.draft.length) return { ok: false, error: "The current word is already empty." };
+      this.state.draft.pop();
       this.save();
       return { ok: true };
     }
@@ -452,19 +484,25 @@
     }
 
     _drawOne() {
-      if (!this.state.deck.length && this.state.discard.length) {
-        this.state.deck = shuffle(this.state.discard, this.random);
-        this.state.discard = [];
+      if (this.getCountedHandSize() >= this.getHandLimit()) return null;
+      while (true) {
+        if (!this.state.deck.length && this.state.discard.length) {
+          this.state.deck = shuffle(this.state.discard, this.random);
+          this.state.discard = [];
+        }
+        const card = this.state.deck.pop();
+        if (!card) return null;
+        // Vowels and discovered positive glyphs are represented by their one
+        // unlimited card, never by a finite draw-pile copy.
+        if (this.isInfiniteGlyph(card.glyph)) continue;
+        this.state.hand.push(card);
+        return card;
       }
-      const card = this.state.deck.pop();
-      if (!card) return null;
-      this.state.hand.push(card);
-      return card;
     }
 
     drawCards(count) {
       const drawn = [];
-      for (let i = 0; i < count; i += 1) {
+      for (let i = 0; i < count && this.getCountedHandSize() < this.getHandLimit(); i += 1) {
         const card = this._drawOne();
         if (!card) break;
         drawn.push(card);
@@ -472,18 +510,48 @@
       return drawn;
     }
 
+    drawToHandLimit() {
+      return this.drawCards(Math.max(0, this.getHandLimit() - this.getCountedHandSize()));
+    }
+
+    _makeRoomForRewardCard() {
+      if (this.getCountedHandSize() < this.getHandLimit()) return true;
+      const candidates = this.state.hand.filter(card => (
+        this.cardCountsTowardHandLimit(card)
+        && !this.isInfiniteCard(card)
+        && !this.state.draft.includes(card.id)
+      ));
+      if (!candidates.length) return false;
+      const victim = candidates[Math.floor(this.random() * candidates.length)];
+      this._discardCards([victim.id]);
+      return true;
+    }
+
     _addBonusCard(letterOrGlyph) {
-      const glyph = letterOrGlyph === "Q" ? "QU" : letterOrGlyph;
-      const card = this._newCard(glyph, "bonus");
+      const glyph = glyphForLetter(letterOrGlyph);
+      if (this.isInfiniteGlyph(glyph)) return null;
+      if (!this._makeRoomForRewardCard()) return null;
+      const card = this._newCard(glyph, "reward");
       this.state.hand.push(card);
       return card;
+    }
+
+    _drawRewardCards(count) {
+      const drawn = [];
+      for (let index = 0; index < count; index += 1) {
+        if (!this._makeRoomForRewardCard()) break;
+        const card = this._drawOne();
+        if (!card) break;
+        drawn.push(card);
+      }
+      return drawn;
     }
 
     _discardCards(cardIds) {
       const ids = new Set(cardIds);
       const removed = [];
       this.state.hand = this.state.hand.filter(card => {
-        if (!ids.has(card.id)) return true;
+        if (!ids.has(card.id) || this.isInfiniteCard(card)) return true;
         removed.push(card);
         if (card.source === "deck") this.state.discard.push(card);
         return false;
@@ -512,25 +580,51 @@
       this.state.knownPresent = [...present].sort();
     }
 
-    _awardFirstFeedbackBonuses(word, feedback) {
-      const milestones = this.state.feedbackBonusMilestones || { yellow: [], green: [] };
-      const awards = [];
-      ["yellow", "green"].forEach(result => {
-        const reached = new Set(Array.isArray(milestones[result]) ? milestones[result] : []);
-        const letters = unique(
-          word.split("").filter((letter, index) => feedback[index] === result)
-        );
-        letters.forEach(letter => {
-          if (reached.has(letter)) return;
-          reached.add(letter);
-          const copies = result === "green" ? 2 : 1;
-          for (let copy = 0; copy < copies; copy += 1) this._addBonusCard(letter);
-          awards.push({ letter, result, copies });
-        });
-        milestones[result] = [...reached].sort();
+    _trimHandToLimit() {
+      while (this.getCountedHandSize() > this.getHandLimit()) {
+        let removableIndex = -1;
+        for (let index = this.state.hand.length - 1; index >= 0; index -= 1) {
+          const card = this.state.hand[index];
+          if (this.cardCountsTowardHandLimit(card)
+              && !this.isInfiniteCard(card)
+              && !this.state.draft.includes(card.id)) {
+            removableIndex = index;
+            break;
+          }
+        }
+        if (removableIndex < 0) break;
+        const [card] = this.state.hand.splice(removableIndex, 1);
+        if (card.source === "deck") this.state.discard.push(card);
+      }
+    }
+
+    _syncInfiniteCards() {
+      const previous = new Set([
+        ...ALWAYS_AVAILABLE_VOWELS,
+        ...(Array.isArray(this.state.infiniteGlyphs) ? this.state.infiniteGlyphs : [])
+      ]);
+      const activeGlyphs = new Set([...ALWAYS_AVAILABLE_VOWELS, ...this._baseDeckGlyphs()]);
+      const unlocked = new Set(ALWAYS_AVAILABLE_VOWELS);
+      previous.forEach(glyph => {
+        if (activeGlyphs.has(glyph)) unlocked.add(glyph);
       });
-      this.state.feedbackBonusMilestones = milestones;
-      return awards;
+      activeGlyphs.forEach(glyph => {
+        const status = this.getCardKnowledgeStatus(glyph);
+        if (status === "yellow" || status === "green") unlocked.add(glyph);
+      });
+
+      const isUnlockedCard = card => Boolean(card && unlocked.has(card.glyph));
+      this.state.deck = this.state.deck.filter(card => !isUnlockedCard(card));
+      this.state.discard = this.state.discard.filter(card => !isUnlockedCard(card));
+      this.state.hand = this.state.hand.filter(card => (
+        card && card.glyph && card.source !== "infinite" && !unlocked.has(card.glyph)
+      ));
+      this.state.infiniteGlyphs = [...unlocked].sort();
+      this.state.infiniteGlyphs.forEach(glyph => {
+        this.state.hand.push({ id: `infinite-${glyph}`, glyph, source: "infinite" });
+      });
+      this._trimHandToLimit();
+      return this.state.infiniteGlyphs.filter(glyph => !previous.has(glyph));
     }
 
     submitDraft() {
@@ -551,13 +645,14 @@
       const draftIds = this.state.draft.slice();
       const draftCards = this.getDraftCards();
       this._discardCards(draftIds);
-
-      // A submitted word always uses five letters, so it draws five replacements.
-      // The QU card is one physical card but supplies two of those letters.
-      const replacements = this.drawCards(5);
-      const bonusAwards = this._awardFirstFeedbackBonuses(word, feedback);
+      this.state.draft = [];
 
       this._updateKnowledge(word, feedback);
+      const infiniteUnlocked = this._syncInfiniteCards();
+      // Finite consonant cards leave when used. Positive consonants stay
+      // unlimited in one counted slot; vowels stay unlimited outside the limit.
+      const replacements = this.drawToHandLimit();
+
       this.state.guessesUsed += 1;
       this.state.score += scoreDelta;
       this.state.roundScore += scoreDelta;
@@ -573,8 +668,7 @@
         shielded,
         usedCards: draftCards.map(card => card.glyph),
         replacements: replacements.length,
-        bonusAwards,
-        bonusCardsAwarded: bonusAwards.reduce((sum, award) => sum + award.copies, 0),
+        infiniteUnlocked,
         questId: activeQuest?.id || null,
         questComplete: false,
         earlyBonus: 0
@@ -627,7 +721,7 @@
       const scoreParts = [];
       if (yellowCount) scoreParts.push(`${yellowCount} yellow`);
       if (greyCount) scoreParts.push(shielded ? `${greyCount} greys shielded` : `${greyCount} grey`);
-      if (entry.bonusCardsAwarded) scoreParts.push(`${entry.bonusCardsAwarded} new feedback card${entry.bonusCardsAwarded === 1 ? "" : "s"}`);
+      if (entry.infiniteUnlocked.length) scoreParts.push(`${entry.infiniteUnlocked.join(", ")} now unlimited`);
       if (entry.earlyBonus) scoreParts.push(`+${entry.earlyBonus} early bonus`);
       this.state.lastMessage = `${word}: ${scoreDelta >= 0 ? "+" : ""}${scoreDelta} points${scoreParts.length ? ` (${scoreParts.join(", ")})` : ""}.`;
 
@@ -648,7 +742,7 @@
         feedback,
         scoreDelta,
         earlyBonus: entry.earlyBonus,
-        bonusAwards,
+        infiniteUnlocked,
         solved,
         questComplete
       };
@@ -669,6 +763,9 @@
         return { ok: false, error: "Return drafted cards before using a mulligan." };
       }
       if (ids.some(id => !this.getHandCard(id))) return { ok: false, error: "One selected card is unavailable." };
+      if (ids.some(id => this.isInfiniteCard(this.getHandCard(id)))) {
+        return { ok: false, error: "Unlimited cards cannot be mulliganed." };
+      }
       this._discardCards(ids);
       const replacements = this.drawCards(ids.length);
       this.state.mulligansLeft -= 1;
@@ -685,9 +782,7 @@
     getCardKnowledgeStatus(cardOrGlyph) {
       const glyph = typeof cardOrGlyph === "string" ? cardOrGlyph : cardOrGlyph?.glyph;
       if (!glyph) return "unused";
-      // QU is a single physical card. Positive feedback follows Q; if either Q
-      // or U is globally absent, the combined card cannot fit the fixed secret.
-      const positiveLetter = glyph === "QU" ? "Q" : glyph;
+      const positiveLetter = glyphForLetter(glyph);
       if (this.state.revealedPositions.includes(positiveLetter)) return "green";
       let sawYellow = false;
       for (const entry of this.state.history) {
@@ -699,7 +794,7 @@
       }
       if (sawYellow || this.state.knownPresent.includes(positiveLetter)) return "yellow";
       const absent = new Set(this.state.knownAbsent);
-      if (glyph === "QU" ? absent.has("Q") || absent.has("U") : absent.has(glyph)) return "red";
+      if (absent.has(positiveLetter)) return "red";
       return "unused";
     }
 
@@ -708,7 +803,11 @@
     }
 
     getGreyCards() {
-      return this.state.hand.filter(card => !this.state.draft.includes(card.id) && this.cardIsKnownGrey(card));
+      return this.state.hand.filter(card => (
+        !this.isInfiniteCard(card)
+        && !this.state.draft.includes(card.id)
+        && this.cardIsKnownGrey(card)
+      ));
     }
 
     exchangeGreys(cardIds) {
@@ -717,8 +816,8 @@
       const cost = this.getGreyExchangeCost();
       if (ids.length !== cost) return { ok: false, error: `Choose exactly ${cost} grey card${cost === 1 ? "" : "s"}.` };
       const cards = ids.map(id => this.getHandCard(id));
-      if (cards.some(card => !card || !this.cardIsKnownGrey(card))) {
-        return { ok: false, error: "Only confirmed grey cards can be exchanged." };
+      if (cards.some(card => !card || this.isInfiniteCard(card) || !this.cardIsKnownGrey(card))) {
+        return { ok: false, error: "Only finite confirmed-grey cards can be exchanged." };
       }
       if (ids.some(id => this.state.draft.includes(id))) {
         return { ok: false, error: "Return drafted cards before exchanging them." };
@@ -736,10 +835,13 @@
       const tokens = tokensForWord(word);
       if (!tokens) return false;
       const available = Object.create(null);
+      const unlimited = new Set();
       cards.forEach(card => {
-        available[card.glyph] = (available[card.glyph] || 0) + 1;
+        if (this.isInfiniteCard(card)) unlimited.add(card.glyph);
+        else available[card.glyph] = (available[card.glyph] || 0) + 1;
       });
       return tokens.every(token => {
+        if (unlimited.has(token)) return true;
         if ((available[token] || 0) <= 0) return false;
         available[token] -= 1;
         return true;
@@ -749,7 +851,9 @@
     getFeasibleWords(limit = 400) {
       const feasible = [];
       const draftSet = new Set(this.state.draft);
-      const cards = this.state.hand.filter(card => !draftSet.has(card.id));
+      const cards = this.state.hand.filter(card => (
+        this.isInfiniteCard(card) || !draftSet.has(card.id)
+      ));
       for (const word of this.getActiveWords()) {
         if (this.canBuildWord(word, cards)) feasible.push(word);
         if (feasible.length >= limit) break;
@@ -834,7 +938,7 @@
     _randomHandLetter() {
       if (!this.state.hand.length) return null;
       const card = this.state.hand[Math.floor(this.random() * this.state.hand.length)];
-      return card.glyph === "QU" ? "Q" : card.glyph;
+      return glyphForLetter(card.glyph);
     }
 
     _applyRewardEffect(rewardId) {
@@ -842,7 +946,11 @@
         case "suggestGuess": {
           const active = this.getActiveWords();
           const handCounts = Object.create(null);
-          this.state.hand.forEach(card => { handCounts[card.glyph] = (handCounts[card.glyph] || 0) + 1; });
+          this.state.hand.forEach(card => {
+            handCounts[card.glyph] = this.isInfiniteCard(card)
+              ? Infinity
+              : (handCounts[card.glyph] || 0) + 1;
+          });
           let best = null;
           let bestDeficit = Infinity;
           active.forEach(word => {
@@ -861,23 +969,29 @@
           });
           if (!best) return "No suggestion was available.";
           const useful = best.tokens.find(token => (handCounts[token] || 0) < (best.needs[token] || 0))
-            || best.tokens[Math.floor(this.random() * best.tokens.length)];
-          this._addBonusCard(useful);
+            || best.tokens.find(token => !this.isInfiniteGlyph(token))
+            || best.tokens[0];
+          const added = this._addBonusCard(useful);
           this.state.suggestedWord = best.word;
-          return `Suggestion: ${best.word}. Added a temporary ${useful} card.`;
+          return added
+            ? `Suggestion: ${best.word}. ${useful} replaced one finite hand card.`
+            : `Suggestion: ${best.word}. Your unlimited cards already cover its useful letters.`;
         }
         case "rouletteSecret": {
-          const drawn = this.drawCards(3);
-          return `Roulette Draw added ${drawn.length} card${drawn.length === 1 ? "" : "s"}; the secret stayed fixed.`;
+          const drawn = this._drawRewardCards(3);
+          return `Roulette Draw refreshed ${drawn.length} finite card${drawn.length === 1 ? "" : "s"}; the secret stayed fixed.`;
         }
         case "revealHistory": {
-          const pool = shuffle(this.state.discard, this.random).slice(0, 2);
+          const pool = shuffle(
+            this.state.discard.filter(card => !this.isInfiniteGlyph(card.glyph)),
+            this.random
+          ).slice(0, 2);
           if (!pool.length) {
-            const drawn = this.drawCards(2);
-            return `No discard was available, so Recover drew ${drawn.length} card${drawn.length === 1 ? "" : "s"}.`;
+            const drawn = this._drawRewardCards(2);
+            return `No discard was available, so Recover refreshed ${drawn.length} finite card${drawn.length === 1 ? "" : "s"}.`;
           }
-          pool.forEach(card => this._addBonusCard(card.glyph));
-          return `Recover copied ${pool.map(card => card.glyph).join(" and ")} into your hand.`;
+          const added = pool.map(card => this._addBonusCard(card.glyph)).filter(Boolean);
+          return `Recover copied ${added.length ? added.map(card => card.glyph).join(" and ") : "no additional cards"} into the counted hand.`;
         }
         case "stealthGuess":
           this.state.buffs.greyShield += 1;
@@ -885,47 +999,49 @@
         case "revealGreen": {
           const hidden = this._hiddenPositions();
           if (!hidden.length) {
-            const drawn = this.drawCards(2);
-            return `Every position was already known, so you drew ${drawn.length} cards instead.`;
+            const drawn = this._drawRewardCards(2);
+            return `Every position was already known, so you refreshed ${drawn.length} finite card${drawn.length === 1 ? "" : "s"}.`;
           }
           const index = hidden[Math.floor(this.random() * hidden.length)];
           const letter = this.state.secret[index];
           this.state.revealedPositions[index] = letter;
           this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
-          this._addBonusCard(letter);
-          this._addBonusCard(letter);
-          return `Position ${index + 1} is ${letter}; two temporary copies were added.`;
+          this._syncInfiniteCards();
+          return `Position ${index + 1} is ${letter}; ${glyphForLetter(letter)} is now unlimited.`;
         }
         case "nonsense": {
-          const glyphs = this._baseDeckGlyphs();
+          const glyphs = this._baseDeckGlyphs().filter(glyph => !this.isInfiniteGlyph(glyph));
           const added = [];
           for (let i = 0; i < 2 && glyphs.length; i += 1) {
             const glyph = glyphs[Math.floor(this.random() * glyphs.length)];
-            this._addBonusCard(glyph);
-            added.push(glyph);
+            const card = this._addBonusCard(glyph);
+            if (card) added.push(card.glyph);
           }
-          return `Nonsense added ${added.join(" and ")} as temporary cards.`;
+          return `Nonsense replaced finite cards with ${added.length ? added.join(" and ") : "no new letters"}.`;
         }
         case "letterProbe": {
           const letter = this._randomHandLetter();
           if (!letter) return "There was no hand card to probe.";
           const count = this.state.secret.split("").filter(value => value === letter).length;
           if (!count) this.state.knownAbsent = unique([...this.state.knownAbsent, letter]).sort();
-          else this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
-          return `Probe result: ${letter} appears ${count} time${count === 1 ? "" : "s"} in the secret.`;
+          else {
+            this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
+            this._syncInfiniteCards();
+          }
+          return `Probe result: ${letter} appears ${count} time${count === 1 ? "" : "s"} in the secret${count ? " and is now unlimited" : ""}.`;
         }
         case "revealLocation": {
           const hidden = this._hiddenPositions();
           if (!hidden.length) {
-            const drawn = this.drawCards(1);
-            return `Every position was already known, so you drew ${drawn.length} card instead.`;
+            const drawn = this._drawRewardCards(1);
+            return `Every position was already known, so you refreshed ${drawn.length} finite card instead.`;
           }
           const index = hidden[Math.floor(this.random() * hidden.length)];
           const letter = this.state.secret[index];
           this.state.revealedPositions[index] = letter;
           this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
-          this._addBonusCard(letter);
-          return `Position ${index + 1} is ${letter}; one temporary copy was added.`;
+          this._syncInfiniteCards();
+          return `Position ${index + 1} is ${letter}; ${glyphForLetter(letter)} is now unlimited.`;
         }
         case "letterProfile": {
           const letter = this._randomHandLetter();
@@ -934,9 +1050,9 @@
           if (!count) this.state.knownAbsent = unique([...this.state.knownAbsent, letter]).sort();
           else {
             this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
-            for (let i = 0; i < count; i += 1) this._addBonusCard(letter);
+            this._syncInfiniteCards();
           }
-          return `Profile: ${letter} occurs ${count} time${count === 1 ? "" : "s"}${count ? "; matching temporary copies were added" : ""}.`;
+          return `Profile: ${letter} occurs ${count} time${count === 1 ? "" : "s"}${count ? " and is now unlimited" : ""}.`;
         }
         default:
           return "Quest reward applied.";
@@ -1000,12 +1116,6 @@
 
     _upgradeCatalog() {
       const choices = [
-        {
-          id: "startingHand",
-          icon: "🖐️",
-          title: "Warmer Welcome",
-          description: "Draw one additional card at the start of every round."
-        },
         {
           id: "extraMulligans",
           icon: "🔄",
@@ -1085,7 +1195,6 @@
         case "removeLetter":
           this.state.removedLetters = unique([...this.state.removedLetters, choice.letter]).sort();
           break;
-        case "startingHand":
         case "extraMulligans":
         case "exchangeReduction":
         case "mulliganSize":
@@ -1131,7 +1240,6 @@
       const rules = this.getRulesSummary();
       const removed = this.state.removedLetters.length ? this.state.removedLetters.join(", ") : "None";
       return [
-        `Starting hand: ${rules.handSize}`,
         `Mulligans: ${rules.mulligans} × up to ${rules.mulliganSize}`,
         `Grey exchange: ${rules.greyExchange} → 1`,
         `Yellow value: ${rules.yellowPoints}`,
@@ -1154,6 +1262,7 @@
     BASE_MULLIGAN_SIZE,
     BASE_GREY_EXCHANGE,
     VOWELS,
+    ALWAYS_AVAILABLE_VOWELS,
     normalizeWords,
     evaluateFeedback,
     tokensForWord,

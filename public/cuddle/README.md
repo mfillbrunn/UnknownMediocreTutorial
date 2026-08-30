@@ -12,12 +12,11 @@ server behavior.
 - `public/cuddle/cuddle-quests.js` — quest conditions and Cuddle adaptations of
   the existing guesser reward IDs. `freezeSecret` is deliberately excluded.
 - `public/cuddle/cuddle-ui.js` — card-only UI with an alphabetized, grouped,
-  feedback-colored hand; a collapsed-by-default run-details panel; and the
+  feedback-colored six-slot consonant hand, five free unlimited vowels, and unlimited positive letters; a collapsed-by-default run-details panel; and the
   `#cuddleBtn` menu hook.
 - `public/cuddle/cuddle.css` — isolated responsive styling.
 - `public/cuddle/allowed-secrets.txt` — a public copy derived at patch time from
-  the existing server secret list. Words with a Q not immediately followed by U
-  are omitted because the physical Q card is QU.
+  the existing server secret list. Q is copied as a normal one-letter card because U is always available.
 
 Only `public/index.html` is edited. Four clearly marked blocks add the stylesheet,
 main-menu button, empty screen mount, and script references. Re-running the patch
@@ -27,18 +26,11 @@ replaces those blocks rather than duplicating them.
 
 - A mulligan replaces 1 to 3 cards by default; "Bigger Mulligan" raises that
   maximum by one, up to five cards.
-- QU is one physical card and contributes two letters. A submitted five-letter
-  word draws five replacement cards, matching the rule "for every letter used,
-  draw a new card." Using QU can therefore increase hand size by one.
+- Q is a normal one-letter card. A, E, I, O, and U are always available as unlimited cards and do not count toward the hand limit. Six consonant slots are counted; after a guess, finite used cards leave and only those counted slots refill.
 - The round thresholds are cumulative-score gates. Solving the fixed secret is
   necessary, but the run also ends if total score is below that round's gate.
-- The first yellow result for a letter in a round grants one temporary copy;
-  the first green result for that letter grants two. Each yellow and green
-  milestone can trigger only once per letter per round. Yellow tiles score
-  points; grey tiles cost one point.
-- Hand cards are grouped by letter and sorted alphabetically. Their colors show
-  the best known result: green, yellow, neutral grey when unused, or red when
-  confirmed absent. A count badge replaces duplicate card buttons.
+- A consonant becomes unlimited for the rest of the round as soon as it is yellow or green. It occupies one counted hand slot, shows an infinity badge, and may be selected repeatedly. Vowels are unlimited from the start and occupy no counted slots. Yellow tiles score points; grey tiles cost one point.
+- Hand cards are grouped by letter and sorted alphabetically. Their colors show the best known result: green, yellow, neutral grey when unused, or red when confirmed absent. Duplicate finite cards use a count badge; unlimited positive cards use an infinity badge.
 - A quest is offered on guesses 3 and 6 by default, on guesses 2, 4, and 6 after
   one cadence upgrade, and on every guess after the second cadence upgrade.
 - A quest reward earned on a successful final guess is banked and activated at
@@ -47,10 +39,9 @@ replaces those blocks rather than duplicating them.
 ## Browser smoke checklist
 
 1. Open **Cuddle** from the main menu and start a new run.
-2. Confirm the opening hand has at least two vowel-bearing cards.
+2. Confirm A, E, I, O, and U are all present with infinity badges and that six consonant cards fill the counted hand.
 3. Build words only by clicking cards; no physical keyboard input is registered.
-4. Verify first-time-only yellow/green temporary copies, five replacement
-   draws, grouped duplicate cards, mulligans, and grey-card recycling.
+4. Verify free unlimited vowels, unlimited yellow/green consonants, refill-to-six counted draws, grouped duplicate cards, mulligans, and grey-card recycling.
 5. Complete the third-guess quest, refresh its reward choices when upgraded, and
    verify `freezeSecret` is never offered.
 6. Solve a round, choose an upgrade, cross a 50-point boundary, and confirm the

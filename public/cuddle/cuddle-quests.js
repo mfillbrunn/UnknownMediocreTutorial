@@ -109,19 +109,19 @@
       id: "suggestGuess",
       icon: "💡",
       title: "Suggested Draw",
-      description: "Show a playable dictionary word and add one useful temporary card."
+      description: "Show a playable dictionary word and replace one finite hand card with a useful letter."
     },
     {
       id: "rouletteSecret",
       icon: "🎰",
       title: "Roulette Draw",
-      description: "Draw three cards without changing the fixed secret."
+      description: "Refresh up to three finite cards without changing the fixed secret."
     },
     {
       id: "revealHistory",
       icon: "↩️",
       title: "Recover",
-      description: "Copy up to two cards from your discard pile into your hand."
+      description: "Replace finite cards with up to two copies from your discard pile."
     },
     {
       id: "stealthGuess",
@@ -133,13 +133,13 @@
       id: "revealGreen",
       icon: "🟩",
       title: "Reveal Green",
-      description: "Reveal one hidden position and gain two temporary copies of its letter."
+      description: "Reveal one hidden position and make its letter unlimited."
     },
     {
       id: "nonsense",
       icon: "🎲",
       title: "Nonsense",
-      description: "Add two random temporary letter cards to your hand."
+      description: "Replace finite cards with two random letters."
     },
     {
       id: "letterProbe",
@@ -151,13 +151,13 @@
       id: "revealLocation",
       icon: "📍",
       title: "Reveal Location",
-      description: "Reveal one hidden position and gain one temporary copy of its letter."
+      description: "Reveal one hidden position and make its letter unlimited."
     },
     {
       id: "letterProfile",
       icon: "🔬",
       title: "Letter Profile",
-      description: "Profile a hand letter and gain temporary copies when it occurs."
+      description: "Profile a hand letter; matching letters become unlimited."
     }
   ];
 
