@@ -38,6 +38,9 @@
   <link rel="stylesheet" href="css/features.css?v=tutorial-motion-sim-2&summary-result-center=1&daily-playmode=1">
   <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1">
   <link rel="stylesheet" href="single-player/single-player.css?sp-shell-stretch=1&umt-fix=20260830-1">
+<!-- CUDDLE_MODE:STYLE START -->
+  <link rel="stylesheet" href="cuddle/cuddle.css?v=2">
+<!-- CUDDLE_MODE:STYLE END -->
 </head>
 <body>
   <script>
@@ -319,6 +322,9 @@
           </span>
           <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
         </button>
+<!-- CUDDLE_MODE:MENU START -->
+              <button id="cuddleBtn" class="menu-btn" title="Single-player card roguelite campaign">Cuddle</button>
+<!-- CUDDLE_MODE:MENU END -->
               <button id="myGamesBtn" class="menu-btn">
           <span class="menu-action-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" focusable="false">
@@ -395,6 +401,11 @@
             </div>
           </div>
         </section>
+<!-- CUDDLE_MODE:SCREEN START -->
+        <section id="cuddleScreen" class="screen game-menu cuddle-screen" aria-label="Cuddle single-player campaign">
+          <div id="cuddleRoot" class="cuddle-root"></div>
+        </section>
+<!-- CUDDLE_MODE:SCREEN END -->
 
 <!-- ========== PLAY WITH A FRIEND ========== -->
 <section id="playFriendScreen" class="screen game-menu">
@@ -1689,6 +1700,11 @@
   <script src="single-player/story-player.js?umt-fix=20260830-1"></script>
   <script src="single-player/stage-result.js"></script>
   <script src="single-player/achievements.js"></script>
+<!-- CUDDLE_MODE:SCRIPTS START -->
+  <script src="cuddle/cuddle-quests.js?v=2"></script>
+  <script src="cuddle/cuddle-engine.js?v=2"></script>
+  <script src="cuddle/cuddle-ui.js?v=2"></script>
+<!-- CUDDLE_MODE:SCRIPTS END -->
   <script src="client/my-games.js"></script>
   <script src="client/draft.js?guesser-polish=7"></script>
   <script src="client/dev-powers.js"></script>
