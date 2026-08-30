@@ -40,57 +40,6 @@ function _dailyRoleLabel(config) {
     : "Guesser → Secretkeeper";
 }
 
-function _dailySetupRow(label, valueHtml) {
-  return `<div class="daily-result-row">
-    <span class="daily-result-label">${label}</span>
-    <span class="daily-result-value">${valueHtml}</span>
-  </div>`;
-}
-
-function _dailyWordOrChoose(word) {
-  return word
-    ? `<span class="daily-setup-word">${String(word).toUpperCase()}</span>`
-    : `<span class="daily-setup-choose">You choose</span>`;
-}
-
-// Only shows the rows relevant to `config.playMode` -- a Guesser-only
-// challenge never mentions a Secretkeeper secret (the human never sets
-// one), a Secretkeeper-only challenge never mentions a guess. Never shows
-// the AI Secretkeeper's actual secret (the server's /api/daily response
-// never sends that value in the first place -- see server/index.js) --
-// and since it's always fixed for the day, there's no separate row
-// calling that out either.
-function _dailyOpeningSetupHtml(config) {
-  const humanPlaysGuesser = config.playMode !== "setter";
-  const humanPlaysSetter = config.playMode !== "guesser";
-  const rows = [];
-
-  if (humanPlaysGuesser) {
-    rows.push(_dailySetupRow("Your first guess", _dailyWordOrChoose(config.humanOpeningGuess)));
-  }
-  if (humanPlaysSetter) {
-    rows.push(_dailySetupRow("Your first secret", _dailyWordOrChoose(config.humanOpeningSecret)));
-  }
-  if (humanPlaysSetter) {
-    rows.push(_dailySetupRow(
-      "AI first guess",
-      config.aiOpeningGuess ? `<span class="daily-setup-word">${config.aiOpeningGuess.toUpperCase()}</span>` : "—"
-    ));
-  }
-
-  const anyPredefined =
-    (humanPlaysGuesser && config.humanOpeningGuess) ||
-    (humanPlaysSetter && config.humanOpeningSecret);
-
-  return `
-    <div class="daily-setup-title">Opening setup</div>
-    ${rows.join("")}
-    ${anyPredefined
-      ? `<p class="daily-setup-note">Today's opening move is already set -- the match starts right after it resolves.</p>`
-      : ""}
-  `;
-}
-
 // Same navigator.share() -> clipboard fallback -> toast pattern as
 // invite.js's shareOrCopyInviteLink, just with a Wordle-style result
 // summary instead of a join link.
@@ -332,15 +281,6 @@ window.showDailyChallenge = async function () {
         <h2 class="menu-title" style="flex:1;text-align:center">Daily Challenge</h2>
       </div>
       <p class="daily-date">☀️ ${config.date}</p>
-
-      <div class="daily-setup-block">
-        <div class="daily-setup-title">Today's challenge</div>
-        <div class="daily-result-row">
-          <span class="daily-result-label">Mode</span>
-          <span class="daily-result-value">${_dailyModeLabel(config.playMode)}</span>
-        </div>
-        ${_dailyOpeningSetupHtml(config)}
-      </div>
 
       <p class="daily-ai-label">Choose your opponent</p>
       <div class="daily-difficulty-row">

@@ -1,7 +1,7 @@
 const { scoreGuess } = require("../game-engine/scoring");
 const { isConsistentWithHistory } = require("../game-engine/history");
 const { guesserVisibleHistoryCount } = require("./delayedFeedback");
-const { getCoverAnalysis, getCandidateRemainingCount } = require("./coverStrength");
+const { getCoverAnalysis, getCandidateRemainingCount, buildCoverStrengthState } = require("./coverStrength");
 
 function computeRemainingAfterIndexFromState(idx, state, allowedSecrets) {
   if (!state || !Array.isArray(state.history)) return 0;
@@ -67,14 +67,32 @@ function computeRemainingAfterGuess(secret, guessWord, state, allowedSecrets) {
   return count;
 }
 
-// The Secretkeeper's Keep/New remaining-word-count comparison (formerly
-// getRemainingWordInfo + the bulk of buildSetterRemainingBoxState below)
-// has been removed on purpose -- the setter no longer sees a numeric hint
-// for how many candidate secrets Keep vs New would leave. See
-// buildSetterRemainingBoxState.
+// The Secretkeeper's Keep/New candidate-count comparison (formerly
+// getRemainingWordInfo + the bulk of this function) has been removed on
+// purpose -- this box itself always reports visible:false now, so the
+// setter never sees a numeric hint for how many candidate secrets Keep vs
+// New would leave.
+//
+// Its coverStrength payload is still computed and returned, though --
+// that's a separate feature (the 1-3 star draft-quality rating in
+// ui/setter-board.js's renderCoverStars, tied into the Spy Charge system)
+// which only ever surfaces a qualitative star count/status to the client,
+// never the raw remaining-word counts buildCoverStrengthState computes
+// internally (see coverStrength.js). It was never meant to disappear
+// along with the numbers -- returning {visible:false} with no
+// coverStrength field silently broke the star rating entirely.
+function buildSetterRemainingBoxState(state, viewerId, allowedSecrets, draftSecret = null) {
+  if (!state || state.phase === "lobby" || state.phase === "gameOver") {
+    return { visible: false };
+  }
 
-function buildSetterRemainingBoxState() {
-  return { visible: false };
+  if (viewerId !== state.setter) {
+    return { visible: false };
+  }
+
+  const coverStrength = buildCoverStrengthState(state, allowedSecrets, draftSecret);
+
+  return { visible: false, coverStrength };
 }
 
 // Wiretap power: the guesser sees the same "how many secrets are still

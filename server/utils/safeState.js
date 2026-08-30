@@ -68,6 +68,20 @@ function buildSafeStateForPlayer(state, userId, allowedSecrets) {
   // AI's deterministic picks) -- any of this leaking would let a player
   // read ahead at today's answers. _dailyDate alone is not sensitive (it's
   // already public via /api/daily) and is left in place.
+  // Public, redacted mirror of a couple of _dailyConfig fields for the
+  // round-start popup (client.js's round-start showBigAnnounce call) --
+  // the play mode is already public via /api/daily, and knowing WHETHER an
+  // opening word was predetermined for each role reveals nothing about
+  // what that word actually is, so both are safe to copy out here before
+  // the wholesale delete below strips everything else.
+  if (state._dailyConfig) {
+    safe.dailyPlayMode = state._dailyConfig.playMode;
+    safe.dailyOpeningPicked = {
+      setter: !!state._dailyConfig.humanOpeningSecret,
+      guesser: !!state._dailyConfig.humanOpeningGuess
+    };
+  }
+
   delete safe._dailyConfig;
 
   if (viewerRole === "guesser") {

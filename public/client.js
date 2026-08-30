@@ -710,10 +710,37 @@ onStateUpdate(newState => {
       { ...myGroup, label: `You — ${myGroup.label}` },
       { ...opponentGroup, label: `Opponent — ${opponentGroup.label}` }
     ];
+    // Daily Challenge: this round-start popup is the ONLY place the
+    // Challenge's own setup gets mentioned now -- the pre-game Daily
+    // Challenge menu screen deliberately stopped showing it (see
+    // daily-challenge.js). Only the mode and WHETHER an opening word was
+    // predetermined are shown, never the word itself -- state.dailyPlayMode
+    // /dailyOpeningPicked are safeState.js's redacted, boolean-only mirror
+    // of the server's private _dailyConfig. Predefined openings only ever
+    // apply to the very first move of the whole match (see
+    // dailyConfig.js's generateHumanOpeningGuess/Secret, which produce one
+    // value each, not one per round), so the "word already set" line only
+    // applies to round 1 -- state.matchRounds is still empty then (round
+    // summaries are only pushed onto it once a round actually ends).
+    const dailySub = [];
+    if (state.isDaily) {
+      dailySub.push(`Daily Challenge — ${typeof _dailyModeLabel === "function" ? _dailyModeLabel(state.dailyPlayMode) : "Full game"}`);
+      if (!state.matchRounds?.length) {
+        const wordPicked = iAmSetter
+          ? state.dailyOpeningPicked?.setter
+          : state.dailyOpeningPicked?.guesser;
+        dailySub.push(
+          wordPicked
+            ? "Your opening word is already picked for you."
+            : "You'll choose your own opening word."
+        );
+      }
+    }
+
     window.showBigAnnounce?.({
       icon: iAmSetter ? "🕵️" : "🔍",
       title: iAmSetter ? "You are the Secretkeeper" : "You are the Guesser",
-      sub: iAmSetter ? "Keep your secret hidden." : "Find the secret word.",
+      sub: [iAmSetter ? "Keep your secret hidden." : "Find the secret word.", ...dailySub],
       powerGroups,
       roleClass: iAmSetter ? "role-setter" : "role-guesser",
       duration: 15000,

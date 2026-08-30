@@ -121,6 +121,24 @@ function run() {
     assert.ok(!("_dailyConfig" in safeForSetterSeat), "safeState must strip _dailyConfig for the setter's view");
     // _dailyDate alone (already public via /api/daily) is fine to keep.
     assert.strictEqual(safeForGuesser.dailyDate, "2026-08-27", "the plain dailyDate field is not sensitive and may stay");
+
+    // The round-start popup's redacted mirror (client.js) may keep the
+    // play mode and a plain true/false for whether each role's opening was
+    // predetermined -- neither reveals the actual word -- but must never
+    // carry the real aiOpeningGuess/aiOpeningSecret/humanOpeningGuess/
+    // humanOpeningSecret values themselves.
+    assert.strictEqual(safeForGuesser.dailyPlayMode, "both", "the play mode label is not sensitive and may stay");
+    assert.deepStrictEqual(
+      safeForGuesser.dailyOpeningPicked,
+      { setter: false, guesser: false },
+      "opening-picked booleans must reflect humanOpeningSecret/humanOpeningGuess, not the AI's fixed opening words"
+    );
+    for (const safe of [safeForGuesser, safeForSetterSeat]) {
+      assert.ok(!("aiOpeningGuess" in safe), "the AI's actual opening guess must never reach the client");
+      assert.ok(!("aiOpeningSecret" in safe), "the AI's actual opening secret must never reach the client");
+      assert.ok(!("humanOpeningGuess" in safe), "the raw humanOpeningGuess word must never reach the client outside coming from /api/daily itself");
+      assert.ok(!("humanOpeningSecret" in safe), "the raw humanOpeningSecret word must never reach the client outside coming from /api/daily itself");
+    }
   }
 
   console.log("PASS dailyChallengeSafeStateAndPersistence part 1: safeState.js never leaks _dailyConfig");
