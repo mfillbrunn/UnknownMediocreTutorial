@@ -1,8 +1,8 @@
-// Advanced tutorial: extra buttons and shortcuts, explained one at a time.
-
+// Streamlined Extra Tools Tutorial: only the controls that are hard to
+// discover, with one idea or action on each screen.
 function advancedTutorialShow(text, {
   role = window.myRole,
-  title = "Extra tools",
+  title = "Extra Tools",
   current = null,
   total = null,
   placement = "auto",
@@ -29,36 +29,37 @@ function advancedRemainingVisual() {
     <div class="tutorial-choice-grid">
       <div class="tutorial-choice-card tutorial-keep-card">
         <strong>KEEP</strong>
-        <span>Uses your current secret.</span>
+        <span>Use the secret you already have.</span>
       </div>
       <div class="tutorial-choice-card tutorial-new-card">
-        <strong>NEW</strong>
-        <span>Uses the word in your draft.</span>
+        <strong>CHANGE</strong>
+        <span>Use the legal word in your draft.</span>
       </div>
     </div>
   `;
 }
 
-function advancedLogVisual() {
+function advancedPanelVisual() {
   return `
-    <div class="tutorial-note-strip">
-      Tap a dotted power name to see what it did.
+    <div class="tutorial-tiny-steps">
+      <span><b>Log:</b> guesses, secret changes, and power uses.</span>
+      <span><b>Clue row:</b> the green and yellow rules every new secret must follow.</span>
     </div>
   `;
 }
 
-function advancedConstraintVisual() {
+function advancedExitVisual() {
   return `
-    <div class="tutorial-eli5-mini-list">
-      <span><b>Green</b> = correct letter and spot</span>
-      <span><b>Yellow</b> = letter is in the word, but not here</span>
+    <div class="tutorial-tiny-steps">
+      <span><b>Concede:</b> end this round now.</span>
+      <span><b>Leave:</b> step away from an untimed or AI match and return later.</span>
+      <span><b>Clock:</b> repeated timeouts can lose the round.</span>
     </div>
   `;
 }
 
 function runAdvancedTutorial(state, role) {
   clearHighlights();
-
   if (role === "guesser") {
     runAdvancedTutorialGuesser(state);
   } else {
@@ -72,27 +73,18 @@ function runAdvancedTutorialGuesser(state) {
   if (round === 0) {
     if (tutorialSubStep === 0) {
       advancedTutorialShow(
-        "You know the game. Now learn the handy tools.",
-        {
-          role: "guesser",
-          current: 1,
-          total: 3,
-          placement: "top"
-        }
-      );
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 1) {
-      advancedTutorialShow(
-        "Guide puts small hints next to buttons.",
+        "You already know the rules. This tutorial only covers a few optional shortcuts. Guide adds small hints beside controls whenever you need a reminder.",
         {
           role: "guesser",
           title: "Guide",
-          current: 2,
-          total: 3,
-          placement: "top"
+          current: 1,
+          total: 2,
+          placement: "top",
+          visualHtml: `
+            <div class="tutorial-key-point">
+              Extra tools are optional. Normal typing and tapping still work.
+            </div>
+          `
         }
       );
       highlightGuideToggle("guesser");
@@ -101,40 +93,38 @@ function runAdvancedTutorialGuesser(state) {
     }
 
     const word = state.tutorialGuesses?.[0] || "CHAMP";
-
     if (state.simultaneousGuessSubmitted) {
       advancedTutorialShow(
         "Guess sent. Wait for the Secretkeeper.",
         {
           role: "guesser",
           title: "Start the round",
-          current: 3,
-          total: 3,
+          current: 2,
+          total: 2,
           compact: true,
           placement: "top",
           mode: "hide",
-          key: "advanced-inspector-opening-wait"
+          key: "advanced-guesser-opening-wait"
         }
       );
       stopKeyDemo();
     } else {
       advancedTutorialShow(
-        `Type ${word}, then tap Submit.`,
+        `Type ${word}, then tap Submit Guess.`,
         {
           role: "guesser",
           title: "Start the round",
-          current: 3,
-          total: 3,
+          current: 2,
+          total: 2,
           placement: "top",
           mode: "hide"
         }
       );
       startKeyDemo(
-        `advanced-inspector-${word}`,
+        `advanced-guesser-${word}`,
         () => tutorialWordKeyEls("guesser", word, localGuesserDraft)
       );
     }
-
     highlightKeyboardGuesser();
     waitForGuessSubmission(round, `TYPE ${word}`);
     return;
@@ -142,15 +132,16 @@ function runAdvancedTutorialGuesser(state) {
 
   if (round === 1) {
     const word = state.tutorialGuesses?.[1] || "CUMIN";
+    const TOTAL_STEPS = 4;
 
     if (tutorialSubStep === 0) {
       advancedTutorialShow(
-        `Drag each letter of ${word} into a box.`,
+        `Build ${word}. You may tap letters or drag them into the five boxes.`,
         {
           role: "guesser",
           title: "Drag letters",
           current: 1,
-          total: 4,
+          total: TOTAL_STEPS,
           placement: "top",
           mode: "hide"
         }
@@ -170,12 +161,12 @@ function runAdvancedTutorialGuesser(state) {
       stopDragDemo();
       stopKeyDemo();
       advancedTutorialShow(
-        "Tap a filled box to lock it. Backspace skips locked boxes.",
+        "Tap one filled box to lock that letter. Backspace skips locked boxes.",
         {
           role: "guesser",
           title: "Lock a letter",
           current: 2,
-          total: 4,
+          total: TOTAL_STEPS,
           placement: "top",
           mode: "hide"
         }
@@ -187,12 +178,12 @@ function runAdvancedTutorialGuesser(state) {
 
     if (tutorialSubStep === 2) {
       advancedTutorialShow(
-        "Tap it again to unlock it.",
+        "Tap the locked box again to unlock it.",
         {
           role: "guesser",
-          title: "Unlock a letter",
+          title: "Unlock it",
           current: 3,
-          total: 4,
+          total: TOTAL_STEPS,
           placement: "top",
           mode: "hide"
         }
@@ -209,35 +200,36 @@ function runAdvancedTutorialGuesser(state) {
           role: "guesser",
           title: "Drag and Lock done",
           current: 4,
-          total: 4,
+          total: TOTAL_STEPS,
           compact: true,
           placement: "top",
-          mode: "hide"
+          mode: "hide",
+          key: "advanced-guesser-drag-wait"
         }
       );
+      stopKeyDemo();
     } else {
       advancedTutorialShow(
         `Now submit ${word}.`,
         {
           role: "guesser",
-          title: "Drag and Lock done",
+          title: "Finish the turn",
           current: 4,
-          total: 4,
+          total: TOTAL_STEPS,
           placement: "top",
           mode: "hide"
         }
       );
     }
-
-    highlightKeyboardGuesser();
-    waitForGuessSubmission(round);
+    highlightDraftRow("guesser");
+    waitForGuessSubmission(round, `SUBMIT ${word}`);
     return;
   }
 
   if (round >= 2) {
     stopKeyDemo();
     advancedTutorialShow(
-      "Next, try the Secretkeeper tools.",
+      "Guesser tools complete. Next you will see the Secretkeeper tools.",
       {
         role: "guesser",
         title: "Guesser tools done",
@@ -257,10 +249,10 @@ function runAdvancedTutorialSetter(state) {
   if (round === 0) {
     if (tutorialSubStep === 0) {
       advancedTutorialShow(
-        "The same Drag and Lock tools work for secrets.",
+        "Drag and Lock work on secret words too. Use them only when they make editing easier.",
         {
           role: "setter",
-          title: "Secretkeeper tools",
+          title: "Secretkeeper shortcuts",
           current: 1,
           total: 2,
           placement: "top"
@@ -272,28 +264,27 @@ function runAdvancedTutorialSetter(state) {
     }
 
     const word = state.tutorialSecrets?.[0] || "BLIMP";
-
     if (state.simultaneousSecretSubmitted) {
       advancedTutorialShow(
         "Secret saved. Wait for the Guesser.",
         {
           role: "setter",
-          title: "Secretkeeper tools",
+          title: "Start the round",
           current: 2,
           total: 2,
           compact: true,
           placement: "top",
           mode: "hide",
-          key: "advanced-spy-opening-wait"
+          key: "advanced-secretkeeper-opening-wait"
         }
       );
       stopKeyDemo();
     } else {
       advancedTutorialShow(
-        `Type ${word}, then tap Submit.`,
+        `Type ${word}, then tap Submit New Secret.`,
         {
           role: "setter",
-          title: "Secretkeeper tools",
+          title: "Start the round",
           current: 2,
           total: 2,
           placement: "top",
@@ -301,11 +292,10 @@ function runAdvancedTutorialSetter(state) {
         }
       );
       startKeyDemo(
-        `advanced-spy-${word}`,
+        `advanced-secretkeeper-${word}`,
         () => tutorialWordKeyEls("setter", word, window.state?.setterDraft)
       );
     }
-
     highlightDraftRow("setter");
     waitForSecretSubmission(round, `TYPE ${word}`);
     return;
@@ -313,12 +303,12 @@ function runAdvancedTutorialSetter(state) {
 
   if (round === 1) {
     const candidate = (state.tutorialSecrets?.[1] || "LEMUR").toUpperCase();
-    const TOTAL_STEPS = 9;
+    const TOTAL_STEPS = 6;
 
     if (tutorialSubStep === 0) {
       if (!state.pendingGuess) {
         advancedTutorialShow(
-          "The Guesser is thinking.",
+          "The Guesser is choosing a word.",
           {
             role: "setter",
             title: "Wait and plan",
@@ -335,7 +325,7 @@ function runAdvancedTutorialSetter(state) {
       }
 
       advancedTutorialShow(
-        "KEEP uses your current secret. NEW uses the word in the draft row.",
+        "KEEP uses your current secret. CHANGE uses the legal word in your five draft boxes.",
         {
           role: "setter",
           title: "Keep or change?",
@@ -352,7 +342,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 1) {
       advancedTutorialShow(
-        "Tap this arrow to open or close the side panel.",
+        "Tap the arrow to open the side panel. Tap it again whenever you want more room for the board.",
         {
           role: "setter",
           title: "Side panel",
@@ -386,114 +376,72 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 3) {
       advancedTutorialShow(
-        "Log shows guesses, secret changes, and powers.",
+        "The Log remembers what happened. The shared clue row keeps the green and yellow rules in one place.",
         {
           role: "setter",
-          title: "Read the Log",
+          title: "Log and clue row",
           current: 4,
           total: TOTAL_STEPS,
           placement: "bottom",
-          visualHtml: advancedLogVisual()
+          visualHtml: advancedPanelVisual()
         }
       );
       highlightSetterLog();
+      highlightConstraintRowAndToggle("setter");
       tutorialContinueMode = "advance";
       return;
     }
 
     if (tutorialSubStep === 4) {
       advancedTutorialShow(
-        "Tap ⧉ to show or hide the shared clue row.",
+        "These controls end or pause play. You usually do not need them during a normal turn.",
         {
           role: "setter",
-          title: "The clue row",
+          title: "Concede, Leave, and clocks",
           current: 5,
           total: TOTAL_STEPS,
           placement: "bottom",
-          visualHtml: advancedConstraintVisual()
+          visualHtml: advancedExitVisual()
         }
       );
-      highlightConstraintRowAndToggle("setter");
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 5) {
-      advancedTutorialShow(
-        "Concede ends the round now. An Guesser also gets a 10-point penalty.",
-        {
-          role: "setter",
-          title: "Concede",
-          current: 6,
-          total: TOTAL_STEPS,
-          placement: "bottom"
-        }
-      );
-      highlightEl(document.querySelector('#setterScreen .concedeBtn'));
-      tutorialContinueMode = "advance";
-      return;
-    }
-
-    if (tutorialSubStep === 6) {
-      advancedTutorialShow(
-        "Leave saves an untimed or AI match so you can return later.",
-        {
-          role: "setter",
-          title: "Leave",
-          current: 7,
-          total: TOTAL_STEPS,
-          placement: "bottom"
-        }
-      );
+      highlightEl(document.querySelector("#setterScreen .concedeBtn"));
       highlightEl(byId("leaveGameBtnSetter"));
       tutorialContinueMode = "advance";
       return;
     }
 
-    if (tutorialSubStep === 7) {
-      clearHighlights();
-      advancedTutorialShow(
-        "Run out of time: the last word is used. Three timeouts lose the round.",
-        {
-          role: "setter",
-          title: "Running out of time",
-          current: 8,
-          total: TOTAL_STEPS,
-          placement: "bottom"
-        }
-      );
-      tutorialContinueMode = "advance";
-      return;
-    }
-
     advancedTutorialShow(
-      `Now submit ${candidate}.`,
+      `Finish the practice turn: enter ${candidate}, then submit the new secret.`,
       {
         role: "setter",
         title: "Finish the turn",
-        current: 9,
+        current: 6,
         total: TOTAL_STEPS,
         placement: "top",
         mode: "hide"
       }
     );
     highlightDraftRow("setter");
+    startKeyDemo(
+      `advanced-secretkeeper-${candidate}`,
+      () => tutorialWordKeyEls("setter", candidate, window.state?.setterDraft)
+    );
     waitForSecretSubmission(round, `SUBMIT ${candidate}`);
     return;
   }
 
   if (round >= 2) {
     advancedTutorialShow(
-      "Done! You used Guide, Drag, Lock, KEEP/NEW, Log, and the clue row.",
+      "Extra Tools complete. Use Guide, Drag, Lock, the side panel, and the Log only when they help.",
       {
         role: "setter",
-        title: "Extra tools done",
+        title: "Extra Tools done",
         mode: "end",
         visualHtml: `
           <div class="tutorial-finish-checks">
-            <span>✓ Guide when you need help</span>
-            <span>✓ KEEP and NEW to compare choices</span>
-            <span>✓ Concede or Leave when you need to step away</span>
+            <span>✓ Guide explains unfamiliar controls</span>
+            <span>✓ Drag and Lock make editing easier</span>
+            <span>✓ Log and clue row help you review the turn</span>
           </div>
         `
       }
@@ -505,12 +453,12 @@ function runAdvancedTutorialSetter(state) {
   hideTutorial();
 }
 
-function runAdvancedSummaryTutorial(state) {
+function runAdvancedSummaryTutorial() {
   clearHighlights();
 
   if (tutorialSubStep === 0) {
     advancedTutorialShow(
-      "Round done. Next, you play as the Secretkeeper.",
+      "Round complete. The roles now swap, so you can practice the Secretkeeper tools.",
       {
         role: "guesser",
         title: "Round finished",
@@ -528,7 +476,7 @@ function runAdvancedSummaryTutorial(state) {
     "Tap Next Round.",
     {
       role: "setter",
-      title: "Swap jobs",
+      title: "Swap roles",
       current: 2,
       total: 2,
       placement: "bottom",
@@ -539,13 +487,13 @@ function runAdvancedSummaryTutorial(state) {
   tutorialContinueMode = "hide";
 }
 
-function runAdvancedMatchTutorial(state) {
+function runAdvancedMatchTutorial() {
   clearHighlights();
   advancedTutorialShow(
-    "Advanced tools done. Use them when they help.",
+    "Extra Tools complete. Return to Basics whenever you want a refresher.",
     {
       role: "setter",
-      title: "Advanced tutorial done",
+      title: "Extra Tools done",
       placement: "bottom",
       mode: "end"
     }

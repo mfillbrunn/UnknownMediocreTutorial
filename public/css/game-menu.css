@@ -1907,3 +1907,375 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   }
 }
 /* UMT_MENU_WAITING_FIX_V1: END */
+
+/* UMT STREAMLINED MENU START */
+/* Shared card and button language for the four-choice home screen, Play hub,
+   and Tutorial hub. Values intentionally match the existing dossier menu. */
+.streamlined-menu-screen .streamlined-menu-card {
+  width: min(92vw, 520px) !important;
+  max-height: min(88vh, 780px);
+  overflow-y: auto;
+  gap: 14px !important;
+  padding: clamp(18px, 3vw, 30px) !important;
+}
+
+#startupScreen .menu-account-status {
+  margin: 0 0 10px;
+}
+
+.menu-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(246, 178, 202, 0.4);
+  border-radius: 14px;
+  background: rgba(169, 83, 114, 0.28);
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.streamlined-menu-screen .menu-title {
+  margin: 0 !important;
+  line-height: 1.05;
+}
+
+.menu-subtitle {
+  max-width: 390px;
+  margin: -4px 0 4px;
+  color: rgba(224, 235, 246, 0.72);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.streamlined-menu-buttons {
+  width: 100% !important;
+  max-width: 430px;
+  gap: 10px !important;
+}
+
+.streamlined-menu-screen .menu-action-btn {
+  display: grid !important;
+  grid-template-columns: 38px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 62px !important;
+  height: auto !important;
+  padding: 10px 14px !important;
+  border-radius: 14px !important;
+  letter-spacing: 0 !important;
+  text-align: left;
+  text-transform: none !important;
+}
+
+.streamlined-menu-screen .menu-action-btn.primary {
+  border-color: rgba(246, 178, 202, 0.5) !important;
+  background: rgba(169, 83, 114, 0.52) !important;
+}
+
+.streamlined-menu-screen .menu-action-icon,
+.streamlined-menu-screen .tutorial-btn-num {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(188, 207, 225, 0.22);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(238, 245, 251, 0.92);
+}
+
+.streamlined-menu-screen .primary .menu-action-icon,
+.streamlined-menu-screen .primary .tutorial-btn-num {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.streamlined-menu-screen .menu-action-icon svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.streamlined-menu-screen .menu-action-emoji {
+  font-size: 19px;
+}
+
+.menu-action-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.menu-action-title {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.menu-action-subtitle {
+  color: rgba(224, 235, 246, 0.68);
+  font-size: 11.5px;
+  font-weight: 550;
+  line-height: 1.3;
+}
+
+.menu-action-chevron {
+  display: grid;
+  place-items: center;
+  color: rgba(224, 235, 246, 0.55);
+}
+
+.menu-action-chevron svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.streamlined-menu-screen .screen-back-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+}
+
+.streamlined-menu-screen .screen-back-header::after {
+  content: "";
+  width: 66px;
+}
+
+.streamlined-menu-screen .screen-back-header .menu-title {
+  text-align: center;
+}
+
+.streamlined-menu-screen .screen-back-btn {
+  width: auto !important;
+  min-width: 66px;
+  min-height: 34px !important;
+  height: 36px !important;
+  padding: 0 10px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+}
+
+.menu-section-label {
+  margin: 7px 2px -2px;
+  color: rgba(224, 235, 246, 0.56);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.play-hub-card,
+.tutorial-hub-card {
+  align-items: stretch !important;
+}
+
+.play-hub-card > .menu-subtitle,
+.tutorial-hub-card > .menu-subtitle {
+  align-self: center;
+}
+
+.play-room-tools {
+  width: 100%;
+  max-width: 430px;
+  align-self: center;
+  border: 1px solid rgba(188, 207, 225, 0.18);
+  border-radius: 14px;
+  background: rgba(23, 51, 79, 0.22);
+  overflow: hidden;
+}
+
+.play-room-tools summary {
+  padding: 12px 14px;
+  color: rgba(238, 245, 251, 0.9);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.play-room-tools[open] summary {
+  border-bottom: 1px solid rgba(188, 207, 225, 0.16);
+}
+
+.play-room-tools > p {
+  margin: 12px 14px 8px;
+  color: rgba(224, 235, 246, 0.62);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.room-tool-buttons {
+  box-sizing: border-box;
+  padding: 6px 12px 14px;
+}
+
+.room-tool-buttons > .menu-btn {
+  min-height: 42px !important;
+  height: auto !important;
+  padding: 9px 12px !important;
+  border-radius: 11px !important;
+  font-size: 12px !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+}
+
+.room-tool-buttons .join-room-row {
+  width: 100%;
+}
+
+.room-tool-buttons .join-room-input {
+  min-width: 0;
+}
+
+.tutorial-hub-buttons .tutorial-menu-btn {
+  grid-template-columns: 36px minmax(0, 1fr) 18px;
+}
+
+.tutorial-hub-buttons .tutorial-btn-num {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.tutorial-hub-buttons .tutorial-btn-check {
+  justify-self: center;
+  color: var(--tile-green);
+  font-size: 16px;
+}
+
+
+/* Child screens keep the same card radius, spacing, and button treatment as
+   the new hubs, without requiring their existing markup to be rebuilt. */
+.streamlined-choice-screen .menu-center {
+  width: min(92vw, 520px) !important;
+  max-height: min(88vh, 780px);
+  overflow-y: auto;
+  gap: 12px !important;
+  padding: clamp(18px, 3vw, 28px) !important;
+  border-radius: 18px !important;
+}
+
+.streamlined-choice-screen .menu-buttons {
+  width: 100% !important;
+  max-width: 430px;
+  gap: 10px !important;
+}
+
+.streamlined-choice-screen .menu-buttons > .menu-btn,
+.streamlined-choice-screen .menu-center > .menu-btn,
+.streamlined-choice-screen .screen-back-btn {
+  min-height: 50px;
+  height: auto;
+  border-radius: 13px;
+  padding: 10px 14px;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.streamlined-choice-screen .menu-buttons > .menu-btn.primary,
+.streamlined-choice-screen .menu-center > .menu-btn.primary {
+  border-color: rgba(246, 178, 202, 0.5) !important;
+  background: rgba(169, 83, 114, 0.52) !important;
+}
+
+.streamlined-choice-screen .screen-back-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+}
+
+.streamlined-choice-screen .screen-back-header::after {
+  content: "";
+  width: 66px;
+}
+
+.streamlined-choice-screen .screen-back-header .menu-title {
+  margin: 0;
+  text-align: center;
+}
+
+.streamlined-choice-screen .screen-back-btn,
+#myGamesScreen .screen-back-btn,
+#friendsScreen .friends-back {
+  width: auto !important;
+  min-width: 66px;
+  min-height: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  padding: 0 10px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+}
+
+#myGamesScreen .menu-center,
+#friendsScreen .friends-center {
+  width: min(92vw, 620px);
+  box-sizing: border-box;
+  border-radius: 18px;
+}
+
+/* Developer UI remains in the codebase for an easy future restore, but it has
+   no visible entry point and cannot be opened through the normal interface. */
+#developerScreen,
+#simulationScreen,
+#rewardSimulationScreen,
+#devPowersModal,
+#developerBtn {
+  display: none !important;
+}
+
+@media (max-width: 560px) {
+  .streamlined-menu-screen .streamlined-menu-card {
+    width: min(94vw, 520px) !important;
+    max-height: 90vh;
+    padding: 16px !important;
+    border-radius: 17px !important;
+  }
+
+  .streamlined-menu-screen .menu-action-btn {
+    min-height: 58px !important;
+    padding: 9px 11px !important;
+  }
+
+  .menu-action-subtitle {
+    font-size: 11px;
+  }
+}
+
+@media (max-height: 720px) {
+  .streamlined-menu-screen .streamlined-menu-card {
+    max-height: 88vh;
+    gap: 10px !important;
+  }
+
+  .streamlined-menu-buttons {
+    gap: 7px !important;
+  }
+
+  .streamlined-menu-screen .menu-action-btn {
+    min-height: 54px !important;
+  }
+}
+/* UMT STREAMLINED MENU END */

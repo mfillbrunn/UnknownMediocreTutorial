@@ -617,7 +617,7 @@
     switch (action) {
       case "back":
         rulesOpen = false;
-        showScreen("startupScreen");
+        showScreen("playScreen");
         return false;
       case "run-menu":
         landing = true;

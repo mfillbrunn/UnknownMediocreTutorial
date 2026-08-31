@@ -3,7 +3,7 @@
 // per-browser preference here: guideOn, physicalKeyboardActive, ...), so
 // How to Play can show a checkmark next to ones already done. Also owns
 // the one-time "want a tour?" prompt shown the first time someone lands
-// on the main menu with nothing else going on.
+// on the home screen with nothing else going on.
 (() => {
   "use strict";
 
@@ -86,11 +86,7 @@
 
   document.getElementById("onboardingStartBtn")?.addEventListener("click", () => {
     dismissOnboardingPrompt();
-    // Main Menu Tutorial first, chained into the Basics Tutorial next (see
-    // tutorial-menu.js's final step / TUTORIAL_DONE_COPY.tutorial) --
-    // exactly the guided sequence a first-time player asked for here, and
-    // still reachable any time afterward from How to Play, numbered 1 and
-    // 2 in that same order.
-    window.startMainMenuTutorial?.();
+    // Start with the ELI5 Basics tutorial. The separate menu tour was removed.
+    document.getElementById("startTutorialBtn")?.click();
   });
 })();

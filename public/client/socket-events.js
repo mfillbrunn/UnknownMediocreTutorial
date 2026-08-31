@@ -334,31 +334,18 @@ $("playVsAiBtn")?.addEventListener("click", () => {
 });
 
 // VS AI difficulty selection (called from vsAiScreen inline onclick) --
-// Developer > Play's manual path: creates the room and AI, then drops the
-// player in the lobby to configure/ready up by hand.
+// Manual Play-hub path: create the room and AI, then open the lobby.
 window._startVsAI = function (difficulty) {
   if (!requireAuth("play vs AI")) return;
   window.rememberLastPlayMode?.({ mode: "ai", difficulty });
-  const username = window.myProfile?.username || window.currentUser?.email || "Player";
-  // Developer > Play's "Dev Mode" checkbox -- read before createRoom's
-  // callback fires, same reasoning as startPlayFriend() in play-menu.js.
-  const wantsDevMode = !!$("devModeCheckbox")?.checked;
+  const username =
+    window.myProfile?.username || window.currentUser?.email || "Player";
   socket.emit("createRoom", { userId: window.currentUser.id, name: username }, resp => {
     if (!resp?.ok) return toast(resp?.error || "Could not create room");
-    // roomId (bare) is the module-scoped variable client.js's power-button
-    // render gate actually reads -- every other room-creation flow in this
-    // file (createRoomBtn, joinRoomBtn, ranked match found) sets it too.
-    // Setting only window.roomId here left it null, so onStateUpdate's
-    // `roomId && myRole && ...` check for PowerEngine.renderButtons()
-    // never passed, and the power buttons never got created for the whole
-    // session -- reproducibly, every vs-AI game, only fixed by a reload.
     roomId = resp.roomId;
     window.roomId = resp.roomId;
     persistRoom(resp.roomId);
     sendGameAction({ type: "ADD_AI", difficulty, userId: window.currentUser.id });
-    if (wantsDevMode) {
-      sendGameAction({ type: "SET_DEV_MODE", userId: window.currentUser.id });
-    }
     enterLobbyAfterJoin();
   });
 };
@@ -532,11 +519,6 @@ document
     window.startStarTutorial();
   });
 
-document
-  .getElementById("startMenuTutorialBtn")
-  ?.addEventListener("click", () => {
-    window.startMainMenuTutorial();
-  });
 
 // Per-power "Try it" tutorial (Power Library "?" buttons). Unlike
 // startFreshTutorial above, whether the human starts as guesser or setter

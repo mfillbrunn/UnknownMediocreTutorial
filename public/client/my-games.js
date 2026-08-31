@@ -88,7 +88,7 @@ const gameList = [
   screen.innerHTML = `
     <div class="menu-center">
       <div class="screen-back-header">
-        <button class="menu-btn screen-back-btn" onclick="showStartup()">← Back</button>
+        <button class="menu-btn screen-back-btn" onclick="showScreen('playScreen')">← Back</button>
         <h2 class="menu-title" style="flex:1;text-align:center">My Games</h2>
       </div>
 
@@ -259,7 +259,7 @@ function _resumeMyGame(targetRoomId) {
     res => {
       if (!res?.ok) {
         toast(res?.error || "Could not resume that game");
-        showStartup();
+        showScreen('playScreen');
         return;
       }
       roomId = res.roomId || targetRoomId;

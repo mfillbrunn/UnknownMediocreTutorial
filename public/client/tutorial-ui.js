@@ -2501,9 +2501,7 @@ function endTutorial() {
   byId("tutorialDoneModal")?.classList.remove("active");
   byId("tutorialBubble")?.classList.add("hidden");
   clearTutorialUserPosition();
-  window._menuTutorialActive = false;
-
-  socket.emit("leaveRoom", {}, () => {
+socket.emit("leaveRoom", {}, () => {
     roomId = null;
     clearRoom();
     state = null;
@@ -2518,25 +2516,14 @@ window.endTutorial = endTutorial;
 // an explicit choice instead of silently dropping them back at the menu.
 // "Next Tutorial" (see tutorialEndNextMode) points at whatever tutorial
 // makes sense to try next, following the How to Play list's own order:
-// base Tutorial -> Quest -> Star -> Advanced -> back around to base.
+// Basics -> Quests -> Stars -> Extra Tools -> back to Basics.
 // Keyed by the startFreshTutorial() mode that's next, not the one that
 // just finished.
 const TUTORIAL_DONE_COPY = {
-  // Source-agnostic (no "you've learned the base game" clause) -- reached
-  // both by the base Tutorial's own chain here and by anything else that
-  // points at Quest next.
-  quest: `Nice work! Keep going with the Quest Tutorial, or head back to the menu.`,
-  star: `Nice work — you've learned quests. Keep going with the Star Tutorial to see how the Spyometer works, or head back to the menu.`,
-  // Kept source-agnostic (no "you've learned the Quest Tutorial" clause)
-  // -- this key is reached both by Star's own chain into Advanced and by
-  // the Main Menu Tutorial chaining into this one for a first-time
-  // player (see tutorial-menu.js), which hasn't "learned Quests" at all.
-  advanced: `Nice work! Keep going with the Advanced Tutorial, or head back to the menu.`,
-  // Also source-agnostic -- reached both by Advanced's own loop back to
-  // the start AND by the Main Menu Tutorial chaining into this one for a
-  // first-time player (see tutorial-menu.js), which hasn't "learned the
-  // advanced UI" at all.
-  tutorial: `Nice work! Continue with the Tutorial to learn the basics, or head back to the menu.`
+  quest: `Basics complete! Continue with Quests, or head back to the menu.`,
+  star: `Quest tutorial complete! Continue with Stars, or head back to the menu.`,
+  advanced: `Star tutorial complete! Continue with Extra Tools, or head back to the menu.`,
+  tutorial: `Extra Tools complete! Return to Basics, or head back to the menu.`
 };
 
 // Maps state.tutorialStage (or its absence) to the same key each
@@ -2555,11 +2542,7 @@ const TUTORIAL_STAGE_TO_KEY = {
 };
 
 function currentTutorialCompletionKey() {
-  // The Main Menu Tutorial is the only one that never creates a room, so
-  // no window.state at all uniquely identifies it (by the time this runs,
-  // window._menuTutorialActive has already been reset -- see
-  // tutorial-menu.js's final step).
-  if (!window.state) return "menu";
+  if (!window.state) return null;
   return TUTORIAL_STAGE_TO_KEY[window.state.tutorialStage] || null;
 }
 
@@ -2585,9 +2568,7 @@ byId("tutorialDoneLeaveBtn")?.addEventListener("click", () => {
 byId("tutorialDoneNextBtn")?.addEventListener("click", () => {
   byId("tutorialDoneModal")?.classList.remove("active");
   byId("tutorialBubble")?.classList.add("hidden");
-  window._menuTutorialActive = false;
-
-  const nextMode = tutorialEndNextMode;
+const nextMode = tutorialEndNextMode;
 
   // startFreshTutorial() just creates a new room -- it never leaves the
   // one this tutorial is still sitting in, so without an explicit leave
@@ -2637,12 +2618,7 @@ byId("tutorialContinueBtn")?.addEventListener("click", event => {
 
   tutorialSubStep++;
 
-  // The Main Menu Tutorial (client/tutorial-menu.js) runs before any room
-  // exists -- window.state is null then, so the normal state-driven
-  // tutorialSteps() dispatch below would never fire for it at all.
-  if (window._menuTutorialActive) {
-    window.runMainMenuTutorial?.();
-  } else if (window.state && window.myRole) {
+  if (window.state && window.myRole) {
     tutorialSteps(
       window.state,
       window.myRole

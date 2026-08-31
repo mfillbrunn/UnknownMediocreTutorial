@@ -313,7 +313,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("singlePlayerBtn")?.addEventListener("click", openCampaignScreen);
-    document.getElementById("spBackBtn")?.addEventListener("click", () => window.showStartup());
+    document.getElementById("spBackBtn")?.addEventListener("click", () => window.showScreen("playScreen"));
     document.getElementById("spAchievementsBtn")?.addEventListener("click", () => {
       showView("spAchievementsView");
       window.SinglePlayerAchievements?.render(SP.manifest);

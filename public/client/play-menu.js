@@ -1,4 +1,4 @@
-// client/play-menu.js — Play submenu, split "quick repeat" button, ranked
+// client/play-menu.js — Home/Play navigation, quick play, ranked
 // matchmaking UI, Rules screen, and Power Library screen.
 
 // -----------------------------------------------------
@@ -10,22 +10,12 @@ window.rememberLastPlayMode = function (mode) {
   } catch {}
 };
 
-function getLastPlayMode() {
-  try {
-    return JSON.parse(localStorage.getItem("lastPlayMode") || "null");
-  } catch {
-    return null;
-  }
-}
+
 
 function startPlayFriend() {
   window.rememberLastPlayMode({ mode: "friend" });
   const username =
     window.myProfile?.username || window.currentUser?.email || "Player";
-  // Developer > Play's "Dev Mode" checkbox: read it before createRoom's
-  // callback fires, since #playScreen (and the checkbox on it) may already
-  // be hidden by the time the server responds.
-  const wantsDevMode = !!$("devModeCheckbox")?.checked;
   createRoom({ userId: window.currentUser.id, name: username }, resp => {
     if (!resp.ok) {
       toast(resp.error || "Could not start game");
@@ -33,13 +23,6 @@ function startPlayFriend() {
     }
     roomId = resp.roomId;
     persistRoom(roomId);
-    // SET_DEV_MODE toggles state.devMode server-side (it starts false on a
-    // fresh room) -- updateDevUI() picks up the resulting broadcast and
-    // opens the power picker modal itself, same as manually toggling Dev
-    // used to before its lobby button was removed.
-    if (wantsDevMode) {
-      sendGameAction({ type: "SET_DEV_MODE", userId: window.currentUser.id });
-    }
     enterLobbyAfterJoin();
   });
 }
@@ -65,39 +48,16 @@ function startQuickPlayHuman() {
 }
 window.startQuickPlayHuman = startQuickPlayHuman;
 
-function runLastPlayMode(last) {
-  if (!last || !last.mode) {
-    showScreen("quickPlayScreen");
-    return;
-  }
-  if (last.mode === "quickHuman") {
-    startQuickPlayHuman();
-    return;
-  }
-  if (last.mode === "quickAi") {
-    window._startQuickAI?.(last.difficulty || 1);
-    return;
-  }
-  if (last.mode === "friend") {
-    window.startAsyncInvite?.();
-    return;
-  }
-  if (last.mode === "ai") {
-    // Legacy value from before the Quick Play split -- still replay it the
-    // same way so an existing localStorage entry doesn't just dead-end.
-    window._startVsAI?.(last.difficulty || 1);
-    return;
-  }
-  if (last.mode === "ranked") {
-    startRankedQueue(last.preset || "blitz");
-    return;
-  }
-  showScreen("quickPlayScreen");
-}
+
 
 $("quickPlayBtn")?.addEventListener("click", () => {
   if (!requireAuth("play")) return;
   showScreen("quickPlayScreen");
+});
+
+$("playMainBtn")?.addEventListener("click", () => {
+  if (!requireAuth("play")) return;
+  showScreen("playScreen");
 });
 
 $("quickPlayHumanBtn")?.addEventListener("click", startQuickPlayHuman);
@@ -125,10 +85,6 @@ $("rankedMenuBtn")?.addEventListener("click", () => {
   showScreen("rankedPlayScreen");
 });
 
-$("playQuickBtn")?.addEventListener("click", () => {
-  if (!requireAuth("play")) return;
-  runLastPlayMode(getLastPlayMode());
-});
 
 $("playFriendBtn")?.addEventListener("click", () => {
   if (!requireAuth("play a friend")) return;
