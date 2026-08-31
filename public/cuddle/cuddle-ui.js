@@ -5,6 +5,9 @@
 
   const WORDS_URL = "cuddle/allowed-secrets.txt";
   const ROOT_ID = "cuddleRoot";
+  const VOWEL_ORDER = Object.freeze(["A", "E", "I", "O", "U"]);
+  const VOWEL_SET = new Set(VOWEL_ORDER);
+  const CARD_STATUS_ORDER = Object.freeze({ green: 0, yellow: 1, unused: 2, red: 3 });
   let root = null;
   let words = null;
   let game = null;
@@ -186,7 +189,7 @@
             ${renderBoard(state)}
           </section>
           <section class="cuddle-right-column">
-            ${renderMessage(state)}
+            ${renderStatusAnnouncement(state)}
             ${renderHand(state)}
             ${renderActions(state, rules)}
           </section>
@@ -283,19 +286,14 @@
     return `<section class="cuddle-board" aria-label="Guess board">${rows.join("")}</section>`;
   }
 
-  function renderMessage(state) {
+  function renderStatusAnnouncement(state) {
     const draftWord = game.getDraftWord();
     const validation = game.canSubmit();
     const draftError = state.status === "playing" && draftWord.length === 5 && !validation.ok
       ? validation.error
       : "";
-    const message = uiMessage || draftError || state.lastMessage || "Choose cards to build a word.";
-    return `
-      <div class="cuddle-message" role="status">
-        <span>${escapeHtml(message)}</span>
-        ${state.suggestedWord ? `<strong>Suggested word: ${escapeHtml(state.suggestedWord)}</strong>` : ""}
-        ${state.buffs.greyShield ? `<strong>🥷 Grey shield ready (${state.buffs.greyShield})</strong>` : ""}
-      </div>`;
+    const message = uiMessage || draftError || state.lastMessage || "";
+    return `<div class="cuddle-sr-status" role="status" aria-live="polite">${escapeHtml(message)}</div>`;
   }
 
   function groupedHand(state) {
@@ -305,68 +303,92 @@
       groups.get(card.glyph).push(card);
     });
     const sourceRank = source => source === "infinite" ? 0 : source === "reward" ? 1 : 2;
-    return [...groups.entries()]
+    const allGroups = [...groups.entries()]
       .map(([glyph, cards]) => ({
         glyph,
         cards: cards.slice().sort((a, b) => (
           sourceRank(a.source) - sourceRank(b.source) || a.id.localeCompare(b.id)
         ))
-      }))
-      .sort((a, b) => a.glyph.localeCompare(b.glyph));
+      }));
+    const sortByColorThenLetter = (a, b) => {
+      const aStatus = game.getCardKnowledgeStatus(a.glyph);
+      const bStatus = game.getCardKnowledgeStatus(b.glyph);
+      return (CARD_STATUS_ORDER[aStatus] ?? 99) - (CARD_STATUS_ORDER[bStatus] ?? 99)
+        || a.glyph.localeCompare(b.glyph);
+    };
+    return {
+      vowels: allGroups
+        .filter(group => VOWEL_SET.has(group.glyph))
+        .sort(sortByColorThenLetter),
+      consonants: allGroups
+        .filter(group => !VOWEL_SET.has(group.glyph))
+        .sort(sortByColorThenLetter)
+    };
+  }
+
+  function renderHandCard(group, state, limit) {
+    const infiniteCard = group.cards.find(card => game.isInfiniteCard(card));
+    const draftedCount = state.draft.filter(id => group.cards.some(card => card.id === id)).length;
+    const selectable = group.cards.filter(card => (
+      !game.isInfiniteCard(card)
+      && !state.draft.includes(card.id)
+      && (actionMode !== "exchange" || game.cardIsKnownGrey(card))
+    ));
+    const selectedCount = selectable.filter(card => selectedCards.has(card.id)).length;
+    const unselectedCount = selectable.length - selectedCount;
+    const status = game.getCardKnowledgeStatus(group.glyph);
+    const disabled = state.status !== "playing"
+      || (actionMode === "play" && !infiniteCard && unselectedCount === 0)
+      || (actionMode !== "play" && selectable.length === 0)
+      || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
+    const classes = [
+      "cuddle-card",
+      `is-card-${status}`,
+      infiniteCard ? "is-infinite" : "",
+      draftedCount ? "has-drafted" : "",
+      selectedCount ? "is-selected" : ""
+    ].filter(Boolean).join(" ");
+    const statusLabel = status === "green" ? "green"
+      : status === "yellow" ? "yellow"
+        : status === "red" ? "red · not in the secret"
+          : "grey · unused";
+    const count = group.cards.length;
+    const details = [
+      infiniteCard ? "unlimited" : `${count} ${count === 1 ? "copy" : "copies"}`,
+      statusLabel,
+      draftedCount ? `${draftedCount} in the grid` : "",
+      selectedCount ? `${selectedCount} selected` : ""
+    ].filter(Boolean).join(" · ");
+    return `
+      <button class="${classes}" data-card-glyph="${escapeHtml(group.glyph)}" ${disabled ? "disabled" : ""}
+        aria-pressed="${draftedCount > 0 || selectedCount > 0 ? "true" : "false"}"
+        aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(details)}"
+        title="${escapeHtml(details)}">
+        <span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>
+        ${infiniteCard
+          ? `<span class="cuddle-card-count is-infinite" aria-hidden="true">∞</span>`
+          : count > 1 ? `<span class="cuddle-card-count" aria-hidden="true">${count}</span>` : ""}
+      </button>`;
   }
 
   function renderHand(state) {
     const limit = actionMode === "exchange" ? game.getGreyExchangeCost() : game.getMulliganLimit();
-    const cards = groupedHand(state).map(group => {
-      const infiniteCard = group.cards.find(card => game.isInfiniteCard(card));
-      const draftedCount = state.draft.filter(id => group.cards.some(card => card.id === id)).length;
-      const selectable = group.cards.filter(card => (
-        !game.isInfiniteCard(card)
-        && !state.draft.includes(card.id)
-        && (actionMode !== "exchange" || game.cardIsKnownGrey(card))
-      ));
-      const selectedCount = selectable.filter(card => selectedCards.has(card.id)).length;
-      const unselectedCount = selectable.length - selectedCount;
-      const status = game.getCardKnowledgeStatus(group.glyph);
-      const disabled = state.status !== "playing"
-        || (actionMode === "play" && !infiniteCard && unselectedCount === 0)
-        || (actionMode !== "play" && selectable.length === 0)
-        || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
-      const classes = [
-        "cuddle-card",
-        `is-card-${status}`,
-        infiniteCard ? "is-infinite" : "",
-        draftedCount ? "has-drafted" : "",
-        selectedCount ? "is-selected" : ""
-      ].filter(Boolean).join(" ");
-      const statusLabel = status === "green" ? "green"
-        : status === "yellow" ? "yellow"
-          : status === "red" ? "red · not in the secret"
-            : "grey · unused";
-      const count = group.cards.length;
-      const details = [
-        infiniteCard ? "unlimited" : `${count} ${count === 1 ? "copy" : "copies"}`,
-        statusLabel,
-        draftedCount ? `${draftedCount} in the grid` : "",
-        selectedCount ? `${selectedCount} selected` : ""
-      ].filter(Boolean).join(" · ");
-      return `
-        <button class="${classes}" data-card-glyph="${escapeHtml(group.glyph)}" ${disabled ? "disabled" : ""}
-          aria-pressed="${draftedCount > 0 || selectedCount > 0 ? "true" : "false"}"
-          aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(details)}"
-          title="${escapeHtml(details)}">
-          <span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>
-          ${infiniteCard
-            ? `<span class="cuddle-card-count is-infinite" aria-hidden="true">∞</span>`
-            : count > 1 ? `<span class="cuddle-card-count" aria-hidden="true">${count}</span>` : ""}
-        </button>`;
-    }).join("");
+    const groups = groupedHand(state);
+    const vowels = groups.vowels.map(group => renderHandCard(group, state, limit)).join("");
+    const consonants = groups.consonants.map(group => renderHandCard(group, state, limit)).join("");
     return `
       <section class="cuddle-hand-panel">
         <div class="cuddle-section-heading">
           <span class="cuddle-eyebrow">YOUR HAND</span>
+          <span class="cuddle-hand-meta">
+            ${state.suggestedWord ? `<b>Hint ${escapeHtml(state.suggestedWord)}</b>` : ""}
+            ${state.buffs.greyShield ? `<b>Grey shield ${state.buffs.greyShield}</b>` : ""}
+          </span>
         </div>
-        <div class="cuddle-hand" aria-label="Letter card hand">${cards || `<p class="cuddle-draft-empty">No cards are currently available.</p>`}</div>
+        <div class="cuddle-hand" aria-label="Letter card hand">
+          <div class="cuddle-hand-row cuddle-hand-vowels" aria-label="Always-available vowels">${vowels}</div>
+          <div class="cuddle-hand-row cuddle-hand-consonants" aria-label="Consonants">${consonants || `<p class="cuddle-draft-empty">No consonant cards are currently available.</p>`}</div>
+        </div>
       </section>`;
   }
 
@@ -517,7 +539,7 @@
           <span class="cuddle-modal-kicker">HOW TO PLAY</span>
           <h2 id="cuddleRulesTitle">Cuddle rules</h2>
           <div class="cuddle-rules-grid">
-            <article><strong>1 · Build, do not type</strong><p>Tap cards in order to make a five-letter word from the existing secret list. Q is a normal one-letter card; U is always available with the other vowels.</p></article>
+            <article><strong>1 · Build, do not type</strong><p>Tap cards in order to make a five-letter word from the existing secret list. Q is its own card; use the always-available U card separately when a word needs QU.</p></article>
             <article><strong>2 · Use unlimited letters</strong><p>A, E, I, O, and U are always available, do not use hand slots, and show ∞. Any consonant that turns yellow or green also becomes unlimited for the rest of the round and uses one counted slot.</p></article>
             <article><strong>3 · Refill the hand</strong><p>You have six counted consonant slots. After a guess, finite cards that were used leave the hand and the draw pile refills only the open counted slots back toward six.</p></article>
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards. Trade exactly ${rules.greyExchange} confirmed grey cards for one new draw.</p></article>

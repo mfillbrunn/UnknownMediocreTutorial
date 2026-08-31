@@ -2,35 +2,50 @@
 
 Cuddle is a browser-only, single-player roguelite campaign for Vowel Play.
 It reuses the app's screen router, theme variables, power/quest metadata, and
-`server/wordlists/allowed_secrets.txt`, but it does not add or change any
-server behavior.
+`server/wordlists/allowed_secrets.txt`, but it does not add or change server
+behavior.
 
 ## Generated files
 
-- `public/cuddle/cuddle-engine.js` — deck, feedback, scoring, quests, upgrades,
+- `public/cuddle/cuddle-engine.js` - deck, feedback, scoring, quests, upgrades,
   thresholds, run progression, and `localStorage` persistence.
-- `public/cuddle/cuddle-quests.js` — quest conditions and Cuddle adaptations of
+- `public/cuddle/cuddle-quests.js` - quest conditions and Cuddle adaptations of
   the existing guesser reward IDs. `freezeSecret` is deliberately excluded.
-- `public/cuddle/cuddle-ui.js` — card-only UI with an alphabetized, grouped,
-  feedback-colored six-slot consonant hand, five free unlimited vowels, and unlimited positive letters; a collapsed-by-default run-details panel; and the
-  `#cuddleBtn` menu hook.
-- `public/cuddle/cuddle.css` — isolated responsive styling.
-- `public/cuddle/allowed-secrets.txt` — a public copy derived at patch time from
-  the existing server secret list. Q is copied as a normal one-letter card because U is always available.
+- `public/cuddle/cuddle-ui.js` - card-only interface. Vowels remain in a top row,
+  consonants remain below, and each row sorts green, yellow, unused grey, then
+  absent red, with alphabetical ordering inside each color group. The visible
+  activity log is removed.
+- `public/cuddle/cuddle.css` - isolated responsive Cuddle styling.
+- `public/cuddle/site-integration.js` - moves the existing mode buttons into new
+  Multiplayer and Single Player hub screens without replacing their IDs or
+  click handlers. It also keeps tutorial highlighting and the My Games notice
+  working after the move.
+- `public/cuddle/site-integration.css` - styles the two hubs and equalizes the
+  visible size of hollow and filled Secretkeeper stars in regular play.
+- `public/cuddle/allowed-secrets.txt` - a public copy derived at patch time from
+  the existing server secret list.
 
-Only `public/index.html` is edited. Four clearly marked blocks add the stylesheet,
-main-menu button, empty screen mount, and script references. Re-running the patch
-replaces those blocks rather than duplicating them.
+Only `public/index.html` is edited. Four clearly marked blocks add stylesheet
+references, the Cuddle button, an empty Cuddle screen mount, and script
+references. All implementation code is added under `public/cuddle/`.
+Re-running the patch replaces those blocks and generated files rather than
+creating duplicates.
 
 ## Rule interpretations made explicit
 
-- A mulligan replaces 1 to 3 cards by default; "Bigger Mulligan" raises that
+- A mulligan replaces 1 to 3 cards by default; Bigger Mulligan raises that
   maximum by one, up to five cards.
-- Q is a normal one-letter card. A, E, I, O, and U are always available as unlimited cards and do not count toward the hand limit. Six consonant slots are counted; after a guess, finite used cards leave and only those counted slots refill.
+- Q is its own finite card. U is selected separately from the always-available
+  vowel row. A, E, I, O, and U do not count toward the hand limit.
+- Six consonant slots are counted. After a guess, finite used consonants leave
+  and the game draws only until those six counted slots are filled.
 - The round thresholds are cumulative-score gates. Solving the fixed secret is
   necessary, but the run also ends if total score is below that round's gate.
-- A consonant becomes unlimited for the rest of the round as soon as it is yellow or green. It occupies one counted hand slot, shows an infinity badge, and may be selected repeatedly. Vowels are unlimited from the start and occupy no counted slots. Yellow tiles score points; grey tiles cost one point.
-- Hand cards are grouped by letter and sorted alphabetically. Their colors show the best known result: green, yellow, neutral grey when unused, or red when confirmed absent. Duplicate finite cards use a count badge; unlimited positive cards use an infinity badge.
+- A consonant becomes unlimited for the rest of the round as soon as it is
+  yellow or green. It occupies one counted hand slot and displays an infinity
+  badge. Vowels are unlimited from the start and occupy no counted slots.
+- Hand cards are grouped by letter. Each row sorts green first, then yellow,
+  unused grey, and absent red; letters are alphabetical within each group.
 - A quest is offered on guesses 3 and 6 by default, on guesses 2, 4, and 6 after
   one cadence upgrade, and on every guess after the second cadence upgrade.
 - A quest reward earned on a successful final guess is banked and activated at
@@ -38,12 +53,21 @@ replaces those blocks rather than duplicating them.
 
 ## Browser smoke checklist
 
-1. Open **Cuddle** from the main menu and start a new run.
-2. Confirm A, E, I, O, and U are all present with infinity badges and that six consonant cards fill the counted hand.
-3. Build words only by clicking cards; no physical keyboard input is registered.
-4. Verify free unlimited vowels, unlimited yellow/green consonants, refill-to-six counted draws, grouped duplicate cards, mulligans, and grey-card recycling.
-5. Complete the third-guess quest, refresh its reward choices when upgraded, and
+1. On the landing menu, open Multiplayer and confirm Play with a Friend, Ranked,
+   and My Games are present. Open Single Player and confirm Campaign and Cuddle
+   are present. Confirm each child screen's top-level Back button returns to its
+   parent hub.
+2. Open Cuddle and start a new run. Confirm no visible activity log appears.
+3. Confirm A, E, I, O, and U remain in the top row and consonants remain below.
+   In each row, verify green, yellow, unused grey, then absent red ordering, with
+   alphabetical ordering within each color. Q must display as Q, not QU.
+4. Build words only by clicking cards; no physical keyboard input is registered.
+5. Verify unlimited vowels, unlimited yellow/green consonants, refill-to-six
+   counted draws, grouped duplicate cards, mulligans, and grey-card recycling.
+6. In regular Secretkeeper play, confirm hollow and filled stars have the same
+   visible outside size.
+7. Complete the third-guess quest, refresh reward choices when upgraded, and
    verify `freezeSecret` is never offered.
-6. Solve a round, choose an upgrade, cross a 50-point boundary, and confirm the
+8. Solve a round, choose an upgrade, cross a 50-point boundary, and confirm the
    extra milestone choice.
-7. Refresh the page and continue the saved run.
+9. Refresh the page and continue the saved run.

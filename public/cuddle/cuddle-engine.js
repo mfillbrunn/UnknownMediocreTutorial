@@ -58,8 +58,6 @@
 
   function glyphForLetter(value) {
     const glyph = String(value || "").toUpperCase();
-    // Cuddle previously used a combined QU card. Normalize old saved cards to
-    // a regular Q because U is now one of the always-available vowels.
     return glyph === "QU" ? "Q" : glyph;
   }
 

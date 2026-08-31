@@ -427,23 +427,16 @@
   font-size: 0.66rem;
 }
 
-.cuddle-message {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px 16px;
-  min-height: 45px;
-  padding: 12px 14px;
-  border-left: 3px solid var(--cuddle-accent-2);
-  border-radius: 4px 14px 14px 4px;
-  color: var(--cuddle-muted);
-  background: rgba(139, 232, 210, 0.07);
-  font-size: 0.82rem;
-  line-height: 1.35;
-}
-
-.cuddle-message strong {
-  color: var(--cuddle-accent-2);
+.cuddle-sr-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .cuddle-hand-panel,
@@ -471,8 +464,39 @@
 
 .cuddle-hand {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+  gap: 11px;
+}
+
+.cuddle-hand-row {
+  display: grid;
   gap: 8px;
+}
+
+.cuddle-hand-vowels {
+  grid-template-columns: repeat(5, minmax(55px, 1fr));
+}
+
+.cuddle-hand-consonants {
+  grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+  padding-top: 11px;
+  border-top: 1px solid var(--cuddle-border);
+}
+
+.cuddle-hand-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.cuddle-hand-meta b {
+  padding: 3px 7px;
+  border: 1px solid rgba(139, 232, 210, 0.22);
+  border-radius: 999px;
+  color: var(--cuddle-accent-2);
+  background: rgba(139, 232, 210, 0.07);
+  font-size: 0.68rem;
+  line-height: 1.2;
 }
 .cuddle-card {
   position: relative;
@@ -994,7 +1018,8 @@
     gap: 6px;
   }
 
-  .cuddle-hand {
+  .cuddle-hand-vowels,
+  .cuddle-hand-consonants {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
@@ -1041,7 +1066,11 @@
     border-radius: 8px;
   }
 
-  .cuddle-hand {
+  .cuddle-hand-vowels {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .cuddle-hand-consonants {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
