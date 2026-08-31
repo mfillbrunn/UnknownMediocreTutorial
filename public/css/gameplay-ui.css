@@ -925,69 +925,78 @@
   /* cqw resolves against .setter-board (container-type: inline-size), the
      same basis the letter tiles use -- so the rating scales with the board
      the player actually has, not with the raw viewport, and keeps its
-     proportions when the side panel opens and narrows the board. */
-  font-size: clamp(14px, 6cqw, 26px);
-  line-height: 1;
-  color: transparent;
-  text-shadow: none;
-  -webkit-text-stroke-width: clamp(1.4px, 0.5cqw, 2.4px);
-  transition: color 180ms ease, text-shadow 180ms ease, transform 180ms ease,
-    -webkit-text-stroke-width 180ms ease, -webkit-text-stroke-color 180ms ease;
+     proportions when the side panel opens and narrows the board. Sized in
+     width/height rather than font-size now -- see icon-cute-star in
+     index.html and the comment above buildCoverStarSvg in draftrow.js for
+     why this switched from the plain Unicode ★ glyph to an SVG shape. The
+     path's own stroke-width (a presentation attribute on the <symbol>,
+     not set here) scales together with this box, so the outline stays
+     proportional at every size without a separate clamp() of its own the
+     way -webkit-text-stroke-width used to need. */
+  width: clamp(14px, 6cqw, 26px);
+  height: clamp(14px, 6cqw, 26px);
+  fill: transparent;
+  stroke: transparent;
+  filter: none;
+  transition: fill 180ms ease, stroke 180ms ease, filter 180ms ease, transform 180ms ease;
 }
 
 /* Two normal base-star slots. */
 #setterScreen .setter-cover-base-star {
-  -webkit-text-stroke-color: rgba(255, 215, 94, 0.9);
+  stroke: rgba(255, 215, 94, 0.9);
 }
 
 #setterScreen .setter-cover-base-star.is-filled {
-  color: #ffd75e;
-  text-shadow: 0 0 8px rgba(255, 200, 70, 0.55);
-  -webkit-text-stroke-width: 0;
+  fill: #ffd75e;
+  stroke: #ffd75e;
+  filter: drop-shadow(0 0 8px rgba(255, 200, 70, 0.55));
 }
 
 /* The third slot is always visually blue, filled or not. */
 #setterScreen .setter-cover-bonus-star {
-  -webkit-text-stroke-color: rgba(88, 201, 255, 0.95);
+  stroke: rgba(88, 201, 255, 0.95);
 }
 
 /* Still hollow -- just a slightly brighter outline once the bonus star is
    actually earnable, so the player can tell it's live without it looking
    filled before it is. */
 #setterScreen .setter-cover-bonus-star.is-available:not(.is-filled) {
-  -webkit-text-stroke-color: rgba(88, 201, 255, 1);
+  stroke: rgba(88, 201, 255, 1);
 }
 
 #setterScreen .setter-cover-bonus-star.is-filled {
-  color: var(--game-blue, #58c9ff);
-  text-shadow:
-    0 0 9px rgba(88, 201, 255, 0.82),
-    0 0 18px rgba(88, 201, 255, 0.38);
-  -webkit-text-stroke-width: 0;
+  fill: var(--game-blue, #58c9ff);
+  stroke: var(--game-blue, #58c9ff);
+  filter:
+    drop-shadow(0 0 9px rgba(88, 201, 255, 0.82))
+    drop-shadow(0 0 18px rgba(88, 201, 255, 0.38));
 }
 
 /* Escalating celebration: two stars gets a gentle lift, three goes
    properly excited. Scoped to base-star/bonus-star separately so the
    celebration never paints the blue bonus star yellow. */
 #setterScreen #setterCoverStars.stars-2 .setter-cover-base-star.is-filled {
-  color: #ffdf7a;
-  text-shadow: 0 0 12px rgba(255, 210, 90, 0.8);
+  fill: #ffdf7a;
+  stroke: #ffdf7a;
+  filter: drop-shadow(0 0 12px rgba(255, 210, 90, 0.8));
   animation: none;
 }
 
 #setterScreen #setterCoverStars.stars-3 .setter-cover-base-star.is-filled {
-  color: #fff0a8;
-  text-shadow:
-    0 0 10px rgba(255, 220, 110, 0.95),
-    0 0 22px rgba(255, 190, 60, 0.7);
+  fill: #fff0a8;
+  stroke: #fff0a8;
+  filter:
+    drop-shadow(0 0 10px rgba(255, 220, 110, 0.95))
+    drop-shadow(0 0 22px rgba(255, 190, 60, 0.7));
   animation: none;
 }
 
 #setterScreen #setterCoverStars.stars-3 .setter-cover-bonus-star.is-filled {
-  color: var(--game-blue, #58c9ff);
-  text-shadow:
-    0 0 10px rgba(88, 201, 255, 0.95),
-    0 0 22px rgba(88, 201, 255, 0.62);
+  fill: var(--game-blue, #58c9ff);
+  stroke: var(--game-blue, #58c9ff);
+  filter:
+    drop-shadow(0 0 10px rgba(88, 201, 255, 0.95))
+    drop-shadow(0 0 22px rgba(88, 201, 255, 0.62));
   animation: none;
   animation-delay: 0.24s;
 }

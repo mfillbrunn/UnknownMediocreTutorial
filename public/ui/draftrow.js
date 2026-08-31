@@ -13,6 +13,34 @@
 // move becomes a no-op. Ids/classes deliberately match the ones
 // ensureDecisionMeta builds, so whichever of the two runs first wins and the
 // other one finds its work already done.
+// A rounded-corner star (see the icon-cute-star <symbol> in index.html)
+// instead of the plain Unicode ★ glyph the rating used to render as --
+// the glyph's points read as sharp/spiky at these sizes on most fonts,
+// the SVG shape doesn't depend on whatever font happens to be installed,
+// and it renders identically across platforms. fill/stroke are left for
+// CSS to set per state (.setter-cover-base-star/.setter-cover-bonus-star,
+// .is-filled) exactly the way -webkit-text-stroke-color and color used to
+// -- see gameplay-ui.css. Shared between this file's own initial markup
+// below and setter-board.js's ensureCoverStarSlots (via
+// buildCoverStarElement) so the two can never drift into different star
+// shapes for the same slot.
+function buildCoverStarSvg(extraClass, dataAttr) {
+  return `<svg class="setter-cover-star ${extraClass}" ${dataAttr} aria-hidden="true"><use href="#icon-cute-star"/></svg>`;
+}
+window.buildCoverStarSvg = buildCoverStarSvg;
+
+// DOM-element version of the above, for code (setter-board.js) that builds
+// star elements one at a time via the DOM API rather than an innerHTML
+// template -- SVG elements can't be made with document.createElement, so
+// this parses the same markup string through a throwaway wrapper instead
+// of hand-rolling createElementNS calls that could drift from the string
+// version above.
+window.buildCoverStarElement = function buildCoverStarElement(extraClass, dataAttr) {
+  const wrap = document.createElement("div");
+  wrap.innerHTML = buildCoverStarSvg(extraClass, dataAttr);
+  return wrap.firstElementChild;
+};
+
 window.ensureSetterCoverStars = function ensureSetterCoverStars() {
   const stage = document.querySelector("#setterScreen .setter-decision-stage");
   if (!stage) return null;
@@ -44,9 +72,9 @@ window.ensureSetterCoverStars = function ensureSetterCoverStars() {
     stars.setAttribute("aria-live", "polite");
     stars.innerHTML = `
       <span class="setter-cover-stars-core">
-        <span class="setter-cover-star setter-cover-base-star" data-cover-star aria-hidden="true">★</span>
-        <span class="setter-cover-star setter-cover-base-star" data-cover-star aria-hidden="true">★</span>
-        <span class="setter-cover-star setter-cover-bonus-star" data-cover-bonus-star aria-hidden="true">★</span>
+        ${buildCoverStarSvg("setter-cover-base-star", "data-cover-star")}
+        ${buildCoverStarSvg("setter-cover-base-star", "data-cover-star")}
+        ${buildCoverStarSvg("setter-cover-bonus-star", "data-cover-bonus-star")}
       </span>
 
       <span id="setterCoverTarget" class="setter-cover-target hidden">
