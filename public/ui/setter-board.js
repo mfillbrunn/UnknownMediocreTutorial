@@ -316,20 +316,14 @@ function stopCoverStarDance(star) {
       const fragment = document.createDocumentFragment();
 
       for (let index = 0; index < 2; index += 1) {
-        const star = document.createElement("span");
-        star.className = "setter-cover-star setter-cover-base-star";
-        star.dataset.coverStar = "";
-        star.setAttribute("aria-hidden", "true");
-        star.textContent = "★";
-        fragment.appendChild(star);
+        fragment.appendChild(
+          window.buildCoverStarElement("setter-cover-base-star", "data-cover-star")
+        );
       }
 
-      const bonusStar = document.createElement("span");
-      bonusStar.className = "setter-cover-star setter-cover-bonus-star";
-      bonusStar.dataset.coverBonusStar = "";
-      bonusStar.setAttribute("aria-hidden", "true");
-      bonusStar.textContent = "★";
-      fragment.appendChild(bonusStar);
+      fragment.appendChild(
+        window.buildCoverStarElement("setter-cover-bonus-star", "data-cover-bonus-star")
+      );
 
       host.prepend(fragment);
 
