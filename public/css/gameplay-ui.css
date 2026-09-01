@@ -3515,3 +3515,39 @@ body:not(.light-theme) {
   z-index: 900 !important;
 }
 /* UMT_USER_FIX_PACK_V1: GAMEPLAY END */
+
+/* UMT_REQUESTED_FIXES_20260901: CONSTRAINT ROW START */
+#setterScreen .constraint-row {
+  --umt-constraint-outline: var(--role-accent, #fb7185);
+}
+
+#guesserScreen .constraint-row {
+  --umt-constraint-outline: var(--role-accent, #58c9ff);
+}
+
+:is(#setterScreen, #guesserScreen) .constraint-row {
+  /* Outline does not alter the row's dimensions, so it remains aligned with
+     every normal feedback row. */
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: 3px solid color-mix(
+    in srgb,
+    var(--umt-constraint-outline) 88%,
+    white
+  ) !important;
+  outline-offset: 2px;
+}
+
+/* This rule deliberately comes after the older display:grid!important rule. */
+body.hide-constraints :is(#setterScreen, #guesserScreen) .constraint-row {
+  display: none !important;
+}
+
+#setterSidebarToggle,
+#guesserSidebarToggle,
+.constraint-toggle-btn {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 8;
+}
+/* UMT_REQUESTED_FIXES_20260901: CONSTRAINT ROW END */

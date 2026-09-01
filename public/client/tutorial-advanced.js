@@ -1,8 +1,9 @@
-// Streamlined Extra Tools Tutorial: only the controls that are hard to
+// UMT_REQUESTED_FIXES_20260901: ADVANCED UI LABEL
+// Streamlined Advanced UI Tutorial: only the controls that are hard to
 // discover, with one idea or action on each screen.
 function advancedTutorialShow(text, {
   role = window.myRole,
-  title = "Extra Tools",
+  title = "Advanced UI",
   current = null,
   total = null,
   placement = "auto",

@@ -16,7 +16,7 @@ const { runHook } = require("./rules/registry");
 const { scriptedStartingSecret, scriptedOpeningGuess } = require("./aiPolicy");
 const { buildPublicSinglePlayerSnapshot } = require("./publicState");
 
-let services = { sessionService: null, achievementService: null };
+let services = { sessionService: null, achievementService: null, challengeService: null };
 
 function configure(next) {
   services = { ...services, ...next };
@@ -131,6 +131,23 @@ function buildSnapshot(state, userId) {
 function onRoundEnded(state, roomId, io) {
   if (!isCampaign(state)) return;
   if (!state.mode?.isMatchOver?.(state)) return;
+  // UMT_REQUESTED_FIXES_20260901: CHALLENGE RESULT ROUTING
+  if (state.singlePlayer?.challenge?.enabled) {
+    const service = services.challengeService;
+    if (!service) return;
+    Promise.resolve(service.onMatchOver(roomId))
+      .then(result => {
+        if (result) {
+          io.to(roomId).emit("singlePlayer:challengeResult", result);
+        }
+      })
+      .catch(err => console.warn(
+        "[singlePlayer] challenge scoring failed:",
+        err?.message || err
+      ));
+    return;
+  }
+
   if (!services.sessionService) return;
 
   services.sessionService

@@ -514,3 +514,153 @@
     init();
   }
 })();
+
+/* UMT_REQUESTED_FIXES_20260901: SIDEBAR TOGGLE START */
+(() => {
+  "use strict";
+
+  // null means the player has not expressed a preference in this page load.
+  // Once a player clicks a toggle, that intent remains authoritative across
+  // reward previews, opponent powers, screen refreshes, and DOM replacement.
+  const drawerIntent = { setter: null, guesser: null };
+  const repairTimers = { setter: new Set(), guesser: new Set() };
+  let repairFrame = 0;
+
+  function screenFor(role) {
+    return document.getElementById(
+      role === "setter" ? "setterScreen" : "guesserScreen"
+    );
+  }
+
+  function classFor(role) {
+    return role === "setter"
+      ? "setter-sidebar-collapsed"
+      : "guesser-sidebar-collapsed";
+  }
+
+  function toggleFor(role) {
+    return document.getElementById(
+      role === "setter" ? "setterSidebarToggle" : "guesserSidebarToggle"
+    );
+  }
+
+  function isClosed(role) {
+    const screen = screenFor(role);
+    if (!screen) return false;
+    return screen.classList.contains(classFor(role))
+      || screen.dataset.sidebarCollapsed === "true";
+  }
+
+  function syncToggle(role, collapsed) {
+    const button = toggleFor(role);
+    if (!button) return;
+    const roleName = role === "setter" ? "Secretkeeper" : "Guesser";
+    button.disabled = false;
+    button.removeAttribute("aria-disabled");
+    button.setAttribute("aria-expanded", String(!collapsed));
+    button.setAttribute(
+      "aria-label",
+      collapsed ? `Show ${roleName} side panel` : `Hide ${roleName} side panel`
+    );
+    button.title = collapsed ? "Show side panel" : "Hide side panel";
+  }
+
+  function applyDrawer(role, collapsed) {
+    const screen = screenFor(role);
+    if (!screen) return;
+
+    screen.classList.toggle(classFor(role), collapsed);
+    screen.dataset.sidebarCollapsed = collapsed ? "true" : "false";
+    syncToggle(role, collapsed);
+  }
+
+  function repairDrawer(role) {
+    const expected = drawerIntent[role];
+    if (expected === null) {
+      syncToggle(role, isClosed(role));
+      return;
+    }
+    if (isClosed(role) !== expected) applyDrawer(role, expected);
+    else syncToggle(role, expected);
+  }
+
+  function clearRepairTimers(role) {
+    repairTimers[role].forEach(timer => window.clearTimeout(timer));
+    repairTimers[role].clear();
+  }
+
+  function requestDrawer(role, collapsed) {
+    drawerIntent[role] = Boolean(collapsed);
+    clearRepairTimers(role);
+    applyDrawer(role, drawerIntent[role]);
+
+    // Game events can render immediately, on a microtask, or after animation.
+    // Recheck at each phase without permanently polling.
+    [0, 50, 180, 600].forEach(delay => {
+      const timer = window.setTimeout(() => {
+        repairTimers[role].delete(timer);
+        repairDrawer(role);
+      }, delay);
+      repairTimers[role].add(timer);
+    });
+  }
+
+  function roleFromButton(button) {
+    if (button.id === "setterSidebarToggle") return "setter";
+    if (button.id === "guesserSidebarToggle") return "guesser";
+    if (button.closest("#setterScreen")) return "setter";
+    if (button.closest("#guesserScreen")) return "guesser";
+    return null;
+  }
+
+  document.addEventListener("click", event => {
+    const rawTarget = event.target;
+    const target = rawTarget instanceof Element
+      ? rawTarget
+      : rawTarget?.parentElement;
+    const button = target?.closest?.(
+      "#setterSidebarToggle, #guesserSidebarToggle, .sidebar-drawer-toggle"
+    );
+    if (!button) return;
+
+    const role = roleFromButton(button);
+    if (!role) return;
+
+    // Cooperate with the older capture listener if this script is ever loaded
+    // dynamically after DOMContentLoaded. In the normal parser-loaded path,
+    // this listener runs first and marks the event so the older listener exits.
+    if (event.__umtDrawerToggleHandled) {
+      if (event.cancelable) event.preventDefault();
+      event.stopImmediatePropagation();
+      requestDrawer(role, isClosed(role));
+      return;
+    }
+
+    event.__umtDrawerToggleHandled = true;
+    if (event.cancelable) event.preventDefault();
+    event.stopImmediatePropagation();
+    requestDrawer(role, !isClosed(role));
+    window.notifyTutorialSidebarToggled?.();
+    window.updateCollapsedActionDocks?.();
+  }, true);
+
+  const observer = new MutationObserver(() => {
+    if (repairFrame) return;
+    repairFrame = window.requestAnimationFrame(() => {
+      repairFrame = 0;
+      repairDrawer("setter");
+      repairDrawer("guesser");
+    });
+  });
+
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class", "data-sidebar-collapsed"],
+    childList: true,
+    subtree: true
+  });
+
+  repairDrawer("setter");
+  repairDrawer("guesser");
+})();
+/* UMT_REQUESTED_FIXES_20260901: SIDEBAR TOGGLE END */

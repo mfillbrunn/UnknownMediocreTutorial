@@ -257,6 +257,8 @@ class ChallengeService {
     const state = room?.state;
     const sp = state?.singlePlayer;
     if (!sp?.challenge?.enabled) return null;
+    // UMT_REQUESTED_FIXES_20260901: CHALLENGE RESULT GUARD
+    if (sp.storyPhase === "completed") return null;
     const result = scoreChallenge(state, sp);
     sp.storyPhase = "completed";
     return result;

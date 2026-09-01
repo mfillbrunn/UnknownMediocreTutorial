@@ -2,6 +2,8 @@
 (function () {
   "use strict";
 
+  // UMT_REQUESTED_FIXES_20260901: CHALLENGE PANEL STATE
+
   const STORAGE_KEY = "umtChallengeProgressV1";
   let catalog = null;
   let selectedChallenge = null;
@@ -119,6 +121,7 @@
 
   async function open() {
     window.showScreen("challengesScreen");
+    document.getElementById("challengeAchievementsPanel")?.classList.add("hidden");
     document.getElementById("challengeResultPanel")?.classList.add("hidden");
     document.getElementById("challengeBrowser")?.classList.remove("hidden");
     if (!catalog) {
@@ -175,6 +178,7 @@
   function showResult(payload) {
     recordResult(payload);
     window.showScreen("challengesScreen");
+    document.getElementById("challengeAchievementsPanel")?.classList.add("hidden");
     document.getElementById("challengeBrowser")?.classList.add("hidden");
     const panel = document.getElementById("challengeResultPanel");
     panel?.classList.remove("hidden");

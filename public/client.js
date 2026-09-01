@@ -3378,3 +3378,67 @@ if (window._pendingRoleAssignedRefresh) {
   });
 }
 
+/* UMT_REQUESTED_FIXES_20260901: CONSTRAINT TOGGLE START */
+(() => {
+  "use strict";
+
+  const STORAGE_KEY = "hideConstraints";
+
+  function readHidden() {
+    try {
+      return window.localStorage.getItem(STORAGE_KEY) === "true";
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function writeHidden(hidden) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, String(hidden));
+    } catch (_) {
+      // Storage can be unavailable in private/embedded contexts. The toggle
+      // still works for the current page.
+    }
+  }
+
+  function syncButtons(hidden) {
+    document.querySelectorAll(".constraint-toggle-btn").forEach(button => {
+      button.classList.toggle("off", hidden);
+      button.setAttribute("aria-pressed", String(!hidden));
+      button.setAttribute(
+        "aria-label",
+        hidden ? "Show constrained row" : "Hide constrained row"
+      );
+      button.title = hidden ? "Show constrained row" : "Hide constrained row";
+    });
+  }
+
+  function applyHidden(hidden, persist = true) {
+    document.body.classList.toggle("hide-constraints", hidden);
+    syncButtons(hidden);
+    if (persist) writeHidden(hidden);
+  }
+
+  applyHidden(readHidden(), false);
+
+  // Capture the click before older direct handlers. This keeps every header
+  // button synchronized even when a role screen is refreshed or replaced.
+  document.addEventListener("click", event => {
+    const rawTarget = event.target;
+    const target = rawTarget instanceof Element
+      ? rawTarget
+      : rawTarget?.parentElement;
+    const button = target?.closest?.(".constraint-toggle-btn");
+    if (!button) return;
+
+    if (event.cancelable) event.preventDefault();
+    event.stopImmediatePropagation();
+    applyHidden(!document.body.classList.contains("hide-constraints"));
+  }, true);
+
+  const observer = new MutationObserver(() => {
+    syncButtons(document.body.classList.contains("hide-constraints"));
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
+/* UMT_REQUESTED_FIXES_20260901: CONSTRAINT TOGGLE END */

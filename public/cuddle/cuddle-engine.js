@@ -643,8 +643,9 @@
       const yellowCount = feedback.filter(result => result === "yellow").length;
       const greyCount = feedback.filter(result => result === "grey").length;
       const shielded = this.state.buffs.greyShield > 0;
-      const scoreDelta = yellowCount * (2 + this.state.upgrades.yellowPoints)
-        - (shielded ? 0 : greyCount);
+      // UMT_REQUESTED_FIXES_20260901: NO GRAY PENALTY
+      // Gray letters are informational and never reduce the Cuddle score.
+      const scoreDelta = yellowCount * (2 + this.state.upgrades.yellowPoints);
       if (shielded) this.state.buffs.greyShield -= 1;
 
       const activeQuest = this.state.activeQuest;
@@ -726,7 +727,7 @@
 
       const scoreParts = [];
       if (yellowCount) scoreParts.push(`${yellowCount} yellow`);
-      if (greyCount) scoreParts.push(shielded ? `${greyCount} greys shielded` : `${greyCount} grey`);
+      if (greyCount) scoreParts.push(`${greyCount} grey${greyCount === 1 ? "" : "s"}, no penalty`);
       if (entry.infiniteUnlocked.length) scoreParts.push(`${entry.infiniteUnlocked.join(", ")} now stays in hand`);
       if (entry.earlyBonus) scoreParts.push(`+${entry.earlyBonus} early bonus`);
       this.state.lastMessage = `${word}: ${scoreDelta >= 0 ? "+" : ""}${scoreDelta} points${scoreParts.length ? ` (${scoreParts.join(", ")})` : ""}.`;

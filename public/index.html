@@ -38,6 +38,7 @@
   <link rel="stylesheet" href="css/features.css?v=tutorial-motion-sim-2&summary-result-center=1&daily-playmode=1">
   <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1&cute-star=1&spyometer-flat=1&star-dance-refresh=1">
   <link rel="stylesheet" href="single-player/single-player.css?sp-shell-stretch=1&umt-fix=20260830-1">
+  <link rel="stylesheet" href="single-player/challenges.css?umt-challenges=20260901">
 <!-- CUDDLE_MODE:STYLE START -->
   <link rel="stylesheet" href="cuddle/cuddle.css?v=11&cuddle-hand-layout=1">
 <!-- CUDDLE_MODE:STYLE END -->
@@ -363,6 +364,38 @@
             </div>
           </div>
         </section>
+<!-- UMT_REQUESTED_FIXES_20260901: CHALLENGE SCREEN START -->
+<section id="challengesScreen" class="screen game-menu sp-screen" aria-label="Single-player challenges">
+  <div class="menu-center sp-shell challenge-shell">
+    <div id="challengeBrowser" class="sp-view">
+      <div class="sp-header challenge-header">
+        <button id="challengesBackBtn" class="sp-icon-btn" type="button" aria-label="Back to Play">&#8592;</button>
+        <h2 class="menu-title sp-title">CHALLENGES</h2>
+        <button id="challengeAchievementsBtn" class="sp-icon-btn" type="button" title="Challenge achievements" aria-label="Challenge achievements">&#127942;</button>
+      </div>
+      <p class="challenge-intro">Face AIs with a fixed special power. Pick a difficulty and earn up to three stars.</p>
+      <div id="challengeList" class="challenge-list"></div>
+    </div>
+
+    <div id="challengeResultPanel" class="sp-view challenge-result-panel hidden">
+      <h2 id="challengeResultTitle" class="menu-title">Challenge result</h2>
+      <div id="challengeResultStars" class="challenge-result-stars" aria-label="Stars earned"></div>
+      <ul id="challengeResultDetails" class="challenge-result-details"></ul>
+      <button id="challengeResultContinueBtn" class="sp-btn" type="button">Back to challenges</button>
+    </div>
+
+    <div id="challengeAchievementsPanel" class="sp-view hidden">
+      <div class="sp-header challenge-header">
+        <button id="challengeAchievementsBackBtn" class="sp-icon-btn" type="button" aria-label="Back to challenges">&#8592;</button>
+        <h2 class="menu-title sp-title">CHALLENGE ACHIEVEMENTS</h2>
+        <button class="sp-icon-btn" type="button" disabled aria-hidden="true" tabindex="-1" style="visibility:hidden">&#127942;</button>
+      </div>
+      <ul id="challengeAchievementsList" class="challenge-achievements-list"></ul>
+    </div>
+  </div>
+</section>
+<!-- UMT_REQUESTED_FIXES_20260901: CHALLENGE SCREEN END -->
+
 <!-- CUDDLE_MODE:SCREEN START -->
         <section id="cuddleScreen" class="screen game-menu cuddle-screen" aria-label="Cuddle single-player campaign">
           <div id="cuddleRoot" class="cuddle-root"></div>
@@ -419,7 +452,7 @@
       <button class="menu-btn screen-back-btn" type="button" onclick="showScreen('startupScreen')">← Back</button>
       <h2 class="menu-title">Play</h2>
     </div>
-    <p class="menu-subtitle">Choose a mode, or open the room tools below.</p>
+    <p class="menu-subtitle">Choose how you want to play.</p>
 
     <div class="menu-buttons streamlined-menu-buttons play-hub-buttons">
       <div class="menu-section-label">Multiplayer</div>
@@ -457,6 +490,19 @@
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
 
+      <!-- UMT_REQUESTED_FIXES_20260901: CHALLENGE MENU START -->
+      <button id="challengesBtn" class="menu-btn menu-action-btn" type="button">
+        <span class="menu-action-icon menu-action-emoji" aria-hidden="true">&#127919;</span>
+        <span class="menu-action-copy">
+          <span class="menu-action-title">Challenges</span>
+          <span class="menu-action-subtitle">Battle powered AIs and earn stars</span>
+        </span>
+        <span class="menu-action-chevron" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </button>
+      <!-- UMT_REQUESTED_FIXES_20260901: CHALLENGE MENU END -->
+
       <!-- CUDDLE_MODE:MENU START -->
       <button id="cuddleBtn" class="menu-btn menu-action-btn" type="button" title="Single-player card roguelite campaign">
         <span class="menu-action-icon menu-action-emoji" aria-hidden="true">☁️</span>
@@ -481,46 +527,6 @@
       </button>
     </div>
 
-    <details id="playRoomTools" class="play-room-tools" open>
-      <summary>
-        <span class="room-tools-summary-copy">
-          <strong>Room tools</strong>
-          <small>Host, join, or find a match</small>
-        </span>
-        <span class="room-tools-summary-chevron" aria-hidden="true">⌄</span>
-      </summary>
-      <div class="menu-buttons streamlined-menu-buttons room-tool-buttons room-tools-body">
-        <section class="room-tool-card room-tool-host-card">
-          <div class="room-tool-copy">
-            <strong>Host a private room</strong>
-            <span>Create a room, then share its code with a friend.</span>
-          </div>
-          <button id="playFriendBtn" class="menu-btn room-tool-primary" type="button">Create room</button>
-        </section>
-
-        <section class="room-tool-card room-tool-join-card">
-          <label class="room-tool-label" for="joinRoomInput">Join with a room code</label>
-          <div class="join-room-row">
-            <input id="joinRoomInput" type="text" class="join-room-input" placeholder="e.g. AB12CD" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="joinRoomHint" />
-            <button id="joinRoomBtn" class="menu-btn join-room-submit-btn" type="button" title="Join a specific room by code">Join room</button>
-          </div>
-          <p id="joinRoomHint" class="room-tool-hint" aria-live="polite">Paste or type the code your friend sent you.</p>
-        </section>
-
-        <div class="room-tool-divider" role="separator"><span>Other ways to play</span></div>
-        <div class="room-tool-shortcuts">
-          <button id="quickJoinBtn" class="menu-btn room-tool-shortcut" type="button" title="Jump into the next open room">
-            <strong>Quick match</strong><span>Find the next open human room</span>
-          </button>
-          <button id="playVsAiBtn" class="menu-btn room-tool-shortcut" type="button">
-            <strong>Practice against AI</strong><span>Choose a difficulty before starting</span>
-          </button>
-          <button id="inviteAsyncBtn" class="menu-btn room-tool-shortcut" type="button" title="Create a casual invite link">
-            <strong>Async invite</strong><span>Create a link for a casual game</span>
-          </button>
-        </div>
-      </div>
-    </details>
   </div>
 </section>
 
@@ -643,14 +649,21 @@
       <button id="showAdvancedTutorialBtn" class="menu-btn menu-action-btn tutorial-menu-btn" type="button" data-tutorial-key="advanced">
         <span class="tutorial-btn-num">4</span>
         <span class="menu-action-copy">
-          <span class="menu-action-title">Extra Tools</span>
-          <span class="menu-action-subtitle">Guide, drag, lock, log, and exits</span>
+          <span class="menu-action-title">Advanced UI</span>
+          <span class="menu-action-subtitle">Panels, constraints, notes, and key controls</span>
         </span>
         <span class="tutorial-btn-check" aria-hidden="true">✓</span>
       </button>
 
-      <div class="menu-section-label">Reference</div>
-      <button id="showRulesBtn" class="menu-btn menu-action-btn" type="button">
+      <button id="startOptionsTutorialBtn" class="menu-btn menu-action-btn tutorial-menu-btn" type="button" data-tutorial-key="options">
+        <span class="tutorial-btn-num">5</span>
+        <span class="menu-action-copy">
+          <span class="menu-action-title">Options &amp; Actions</span>
+          <span class="menu-action-subtitle">Modes and the choices available during play</span>
+        </span>
+        <span class="tutorial-btn-check" aria-hidden="true">&#10003;</span>
+      </button>
+      <button id="showRulesBtn" class="menu-btn menu-action-btn" type="button" hidden aria-hidden="true" tabindex="-1">
         <span class="menu-action-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false"><path d="M6 3h12v18H6z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
         </span>
@@ -1742,6 +1755,7 @@
   <script src="single-player/story-player.js?umt-fix=20260830-1"></script>
   <script src="single-player/stage-result.js"></script>
   <script src="single-player/achievements.js"></script>
+  <script src="single-player/challenges.js?umt-challenges=20260901"></script>
 <!-- CUDDLE_MODE:SCRIPTS START -->
   <script src="cuddle/cuddle-quests.js?v=9"></script>
   <script src="cuddle/cuddle-engine.js?v=14&cuddle-thresholds-minus20=1"></script>

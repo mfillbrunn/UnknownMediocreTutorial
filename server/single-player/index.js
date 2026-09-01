@@ -28,7 +28,8 @@ function registerSinglePlayer(io, context) {
   const challengeService = new ChallengeService({ context, progressRepository, sessionService });
   sessionService.challengeService = challengeService;
 
-  hooks.configure({ sessionService, achievementService });
+  // UMT_REQUESTED_FIXES_20260901: CHALLENGE REGISTRATION
+  hooks.configure({ sessionService, achievementService, challengeService });
 
   registerSinglePlayerSocketHandlers(io, context, { sessionService });
   registerChallengeSocketHandlers(io, context, { challengeService });
