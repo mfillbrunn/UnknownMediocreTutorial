@@ -207,7 +207,7 @@
 }
 
 #setterScreen .setter-sidebar {
-  gap: 6px;
+  gap: 10px;
 }
 
 #setterScreen #actionLogSetter .log-entry {
@@ -593,19 +593,13 @@
   display: none !important;
 }
 
-/* Spyometer: setter-role-tinted border/background/title on top of the
-   shared .game-side-panel/.pc-charge-card chrome. !important needed on
-   border-color/background: the shared :is(#setterScreen, #guesserScreen)
-   :is(.game-side-panel, .notes-panel) rule below has equal (ID+class)
-   specificity and loads later in this same file. The game log used to
-   get the same tinted panel chrome here too, but it now stays plain --
-   just its round-marker text (.log-round) picks up the setter color,
-   see below. */
+/* Spyometer: no card chrome of its own -- it sits flush on the same
+   plain sidebar background as the action log right below it (that log
+   gets the identical border:transparent/background:none treatment just
+   below). !important needed to beat .pc-charge-card's own base rule. */
 #setterScreen #pcSpyChargeCard {
-  border-color: color-mix(in srgb, var(--setter-color) 42%, var(--elevated-line)) !important;
-  background:
-    radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--setter-color) 15%, transparent), transparent 52%),
-    linear-gradient(145deg, #19202d, #10151e) !important;
+  border-color: transparent !important;
+  background: none !important;
 }
 
 #setterScreen .setter-sidebar-panel,
@@ -1484,21 +1478,20 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   color: var(--game-text);
 }
 
-/* Styled to read as the same object as the .pc-spy-award-capsule popup
-   (dark near-black card, glowing blue border, star icon) instead of a
-   plain flat stat box -- the celebration popup and this persistent
-   readout show the same number, so they should look like one system. */
+/* No card chrome of its own -- it reads as part of the same surface as
+   the action log beneath it (#setterScreen #pcSpyChargeCard above strips
+   the background/border back out for the setter screen specifically).
+   The extra padding makes up the breathing room the border/shadow used
+   to provide. */
 .pc-charge-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 6px 10px;
+  gap: 8px 10px;
   width: 100%;
-  padding: 11px 12px;
-  border: 1px solid rgba(110, 205, 255, 0.76);
-  border-radius: 13px;
-  background: rgba(7, 13, 21, 0.995);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.4), 0 0 16px rgba(65, 172, 255, 0.14);
+  padding: 13px 4px 15px;
+  border: 0;
+  background: none;
   color: #edf9ff;
   text-align: left;
   cursor: pointer;
@@ -1506,8 +1499,8 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 
 .pc-charge-card:hover,
 .pc-charge-card:focus-visible {
-  border-color: rgba(128, 232, 255, 0.92);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.4), 0 0 20px rgba(65, 172, 255, 0.24);
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 10px;
   outline: none;
 }
 
@@ -1561,10 +1554,14 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   justify-self: end;
 }
 
+/* 12 columns to match SPY_MAX (power-choice-mode.js) -- both meters this
+   rule serves always render exactly 12 segments. It used to declare 15,
+   leaving 3 blank trailing grid tracks that ate about a fifth of the
+   bar's width with nothing drawn in them. */
 .pc-segment-meter,
 .pc-award-capsule-meter {
   display: grid;
-  grid-template-columns: repeat(15, minmax(3px, 1fr));
+  grid-template-columns: repeat(12, minmax(3px, 1fr));
   gap: 0;
   width: 100%;
   padding: 3px;
@@ -1644,7 +1641,7 @@ body.power-choice-mode #spyChargeAwardBackdrop {
 }
 
 .pc-charge-details.is-open {
-  max-height: 210px;
+  max-height: 130px;
   opacity: 1;
   pointer-events: auto;
 }
