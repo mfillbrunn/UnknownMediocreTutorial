@@ -318,7 +318,15 @@
     }
 
     cardCountsTowardHandLimit(card) {
-      return Boolean(card && !this.isVowelGlyph(card.glyph));
+      if (!card || this.isVowelGlyph(card.glyph)) return false;
+      // A glyph confirmed green or yellow is converted to a single permanent
+      // "infinite" card by _syncInfiniteCards -- reuse that same flag here
+      // instead of recomputing status, so this always agrees with the
+      // reuse/discard logic (isInfiniteCard, toggleDraft, _discardCards)
+      // no matter how many times the letter gets played in a guess.
+      if (this.isInfiniteCard(card)) return false;
+      const status = this.getCardKnowledgeStatus(card.glyph);
+      return status !== "green" && status !== "yellow";
     }
 
     getCountedHandSize() {
