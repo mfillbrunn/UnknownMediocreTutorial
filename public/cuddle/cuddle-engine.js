@@ -318,7 +318,12 @@
     }
 
     cardCountsTowardHandLimit(card) {
-      return Boolean(card && !this.isVowelGlyph(card.glyph));
+      if (!card || this.isVowelGlyph(card.glyph)) return false;
+      // A consonant already confirmed green or yellow is known-good info the
+      // player is holding onto, not an untested slot -- it stays in hand for
+      // free, the same way vowels do, instead of blocking a fresh draw.
+      const status = this.getCardKnowledgeStatus(card.glyph);
+      return status !== "green" && status !== "yellow";
     }
 
     getCountedHandSize() {
