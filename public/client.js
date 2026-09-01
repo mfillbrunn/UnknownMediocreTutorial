@@ -716,25 +716,23 @@ onStateUpdate(newState => {
     // daily-challenge.js). Only the mode and WHETHER an opening word was
     // predetermined are shown, never the word itself -- state.dailyPlayMode
     // /dailyOpeningPicked are safeState.js's redacted, boolean-only mirror
-    // of the server's private _dailyConfig. Predefined openings only ever
-    // apply to the very first move of the whole match (see
-    // dailyConfig.js's generateHumanOpeningGuess/Secret, which produce one
-    // value each, not one per round), so the "word already set" line only
-    // applies to round 1 -- state.matchRounds is still empty then (round
-    // summaries are only pushed onto it once a round actually ends).
+    // of the server's private _dailyConfig. Every day now predefines BOTH
+    // roles' opening word (see dailyConfig.js's generateHumanOpeningGuess/
+    // Secret), so this shows every round, not just round 1 -- round 2's
+    // popup (after the role swap) needs the same heads-up that its own
+    // opening move is already decided, or the auto-resolve would look
+    // unexplained.
     const dailySub = [];
     if (state.isDaily) {
       dailySub.push(`Daily Challenge — ${typeof _dailyModeLabel === "function" ? _dailyModeLabel(state.dailyPlayMode) : "Full game"}`);
-      if (!state.matchRounds?.length) {
-        const wordPicked = iAmSetter
-          ? state.dailyOpeningPicked?.setter
-          : state.dailyOpeningPicked?.guesser;
-        dailySub.push(
-          wordPicked
-            ? "Your opening word is already picked for you."
-            : "You'll choose your own opening word."
-        );
-      }
+      const wordPicked = iAmSetter
+        ? state.dailyOpeningPicked?.setter
+        : state.dailyOpeningPicked?.guesser;
+      dailySub.push(
+        wordPicked
+          ? "Your opening word is already picked for you."
+          : "You'll choose your own opening word."
+      );
     }
 
     window.showBigAnnounce?.({

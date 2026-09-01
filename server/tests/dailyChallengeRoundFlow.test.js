@@ -1,13 +1,12 @@
-// Regression tests for Daily Challenge round flow (REFINEMENT_SPEC
-// sections 1 and 3): playMode-driven round counts/role order, and
-// predefined-opening auto-resolution. Drives the real engine (createRoom
-// -> applyAction, exactly like a real client) rather than reimplementing
-// its logic, so these tests exercise the actual lobby/mode/simultaneous-
-// phase wiring.
+// Regression tests for Daily Challenge round flow: every day now always
+// plays both sides (2 rounds, role swap) with BOTH rounds' opening word
+// predefined for the human, matching the AI's own fixed opening every
+// time. Drives the real engine (createRoom -> applyAction, exactly like a
+// real client) rather than reimplementing its logic, so these tests
+// exercise the actual lobby/mode/simultaneous-phase wiring.
 const assert = require("assert");
 const { createRoom, rooms } = require("../core/rooms");
 const { applyAction } = require("../core/applyAction");
-const { computeAIActionForUser } = require("../core/ai/runAI");
 const { getDailyConfig } = require("../utils/dailyConfig");
 const DailyMode = require("../core/modes/dailyMode");
 
@@ -51,15 +50,6 @@ function startDailyRoom(date, userId, context) {
   return { room, roomId };
 }
 
-// Runs whatever the AI would do right now, synchronously (bypassing
-// runAI.js's real-game "feels like thinking" setTimeout) -- the same
-// direct-call pattern core/simulation/runPowerSimulation.js already uses
-// for synchronous trials.
-function runAISync(room, roomId, context, aiUserId) {
-  const actionFn = computeAIActionForUser(room, roomId, context, aiUserId);
-  if (actionFn) actionFn();
-}
-
 function findDate(dates, predicate) {
   for (const date of dates) {
     const cfg = getDailyConfig(date, S, G);
@@ -73,50 +63,21 @@ const CANDIDATE_DATES = Array.from({ length: 90 }, (_, i) =>
 );
 
 function run() {
-  // -- "setter" ends after exactly one round, no Next Round --
+  // -- Every day plays exactly two rounds and swaps roles --
   {
-    const found = findDate(CANDIDATE_DATES, cfg => cfg.playMode === "setter");
-    assert.ok(found, "test setup: need at least one 'setter' playMode date in the sample range");
-    const context = makeContext();
-    const { room, roomId } = startDailyRoom(found.date, "p-setter", context);
-    assert.strictEqual(room.state.roundsTotal, 1, "playMode=setter must have roundsTotal=1");
-    assert.strictEqual(room.state.mode instanceof DailyMode, true, "isDaily match must use DailyMode");
-    assert.strictEqual(room.state.players["p-setter"].role, "setter", "playMode=setter must put the human in the Secretkeeper seat");
-    assert.strictEqual(room.state.players.AI.role, "guesser", "playMode=setter must put the AI in the Guesser seat");
-
-    applyAction(room, room.state, { type: "CONCEDE", userId: "AI" }, roomId, context);
-    assert.strictEqual(room.state.canNextRound, false, "playMode=setter must never offer Next Round");
-    assert.strictEqual(room.state.gameOverView, "match", "playMode=setter's single round must end the whole match");
-  }
-
-  // -- "guesser" ends after exactly one round, no Next Round --
-  {
-    const found = findDate(CANDIDATE_DATES, cfg => cfg.playMode === "guesser");
-    assert.ok(found, "test setup: need at least one 'guesser' playMode date in the sample range");
-    const context = makeContext();
-    const { room, roomId } = startDailyRoom(found.date, "p-guesser", context);
-    assert.strictEqual(room.state.roundsTotal, 1, "playMode=guesser must have roundsTotal=1");
-    assert.strictEqual(room.state.players["p-guesser"].role, "guesser", "playMode=guesser must put the human in the Guesser seat");
-    assert.strictEqual(room.state.players.AI.role, "setter", "playMode=guesser must put the AI in the Secretkeeper seat");
-
-    applyAction(room, room.state, { type: "CONCEDE", userId: "p-guesser" }, roomId, context);
-    assert.strictEqual(room.state.canNextRound, false, "playMode=guesser must never offer Next Round");
-    assert.strictEqual(room.state.gameOverView, "match", "playMode=guesser's single round must end the whole match");
-  }
-
-  // -- "both" plays exactly two rounds and swaps roles --
-  {
-    const found = findDate(CANDIDATE_DATES, cfg => cfg.playMode === "both");
-    assert.ok(found, "test setup: need at least one 'both' playMode date in the sample range");
+    const found = findDate(CANDIDATE_DATES, () => true);
+    assert.ok(found, "test setup: need at least one date in the sample range");
+    assert.strictEqual(found.cfg.playMode, "both", "playMode must always be 'both' now");
     const context = makeContext();
     const { room, roomId } = startDailyRoom(found.date, "p-both", context);
-    assert.strictEqual(room.state.roundsTotal, 2, "playMode=both must have roundsTotal=2");
+    assert.strictEqual(room.state.roundsTotal, 2, "every daily challenge must have roundsTotal=2");
+    assert.strictEqual(room.state.mode instanceof DailyMode, true, "isDaily match must use DailyMode");
     const round1HumanRole = room.state.players["p-both"].role;
     assert.strictEqual(round1HumanRole, found.cfg.firstRole, "round 1's human role must match the day's firstRole");
 
     applyAction(room, room.state, { type: "CONCEDE", userId: "p-both" }, roomId, context);
-    assert.strictEqual(room.state.canNextRound, true, "playMode=both must offer Next Round after round 1");
-    assert.strictEqual(room.state.gameOverView, "round", "playMode=both's round-1 end must be a round summary, not a match summary");
+    assert.strictEqual(room.state.canNextRound, true, "round 1's end must offer Next Round");
+    assert.strictEqual(room.state.gameOverView, "round", "round 1's end must be a round summary, not a match summary");
 
     applyAction(room, room.state, { type: "NEXT_ROUND", userId: "p-both" }, roomId, context);
     assert.strictEqual(room.state.roundIndex, 1, "NEXT_ROUND must advance to round index 1");
@@ -124,14 +85,16 @@ function run() {
     assert.notStrictEqual(round2HumanRole, round1HumanRole, "round 2 must swap the human's role");
 
     applyAction(room, room.state, { type: "CONCEDE", userId: "p-both" }, roomId, context);
-    assert.strictEqual(room.state.canNextRound, false, "playMode=both must not offer a 3rd round");
-    assert.strictEqual(room.state.gameOverView, "match", "playMode=both's round-2 end must be the match summary");
+    assert.strictEqual(room.state.canNextRound, false, "round 2 must not offer a 3rd round");
+    assert.strictEqual(room.state.gameOverView, "match", "round 2's end must be the match summary");
   }
 
-  // -- Predefined human GUESS opening resolves in exactly one history row --
+  // -- Round 1's predefined opening (Guesser role) resolves in exactly one
+  // history row, straight into the normal phase, no free choice offered --
   {
-    const found = findDate(CANDIDATE_DATES, cfg => cfg.playMode !== "setter" && !!cfg.humanOpeningGuess);
-    assert.ok(found, "test setup: need a date where a Guesser role has a predefined humanOpeningGuess");
+    const found = findDate(CANDIDATE_DATES, cfg => cfg.firstRole === "guesser");
+    assert.ok(found, "test setup: need a date where the human opens round 1 as Guesser");
+    assert.ok(found.cfg.humanOpeningGuess, "every day must predefine humanOpeningGuess now");
     const context = makeContext();
     const { room } = startDailyRoom(found.date, "p-preguess", context);
     assert.strictEqual(room.state.phase, "normal", "a predefined opening guess must auto-resolve straight into the normal phase");
@@ -141,10 +104,12 @@ function run() {
     assert.strictEqual(room.state.history[0].finalSecret, found.cfg.aiOpeningSecret, "the AI must have used its fixed opening secret");
   }
 
-  // -- Predefined human SECRET opening resolves in exactly one history row --
+  // -- Round 1's predefined opening (Secretkeeper role) resolves in exactly
+  // one history row --
   {
-    const found = findDate(CANDIDATE_DATES, cfg => cfg.playMode !== "guesser" && !!cfg.humanOpeningSecret);
-    assert.ok(found, "test setup: need a date where a Secretkeeper role has a predefined humanOpeningSecret");
+    const found = findDate(CANDIDATE_DATES, cfg => cfg.firstRole === "setter");
+    assert.ok(found, "test setup: need a date where the human opens round 1 as Secretkeeper");
+    assert.ok(found.cfg.humanOpeningSecret, "every day must predefine humanOpeningSecret now");
     const context = makeContext();
     const { room } = startDailyRoom(found.date, "p-presecret", context);
     assert.strictEqual(room.state.phase, "normal", "a predefined opening secret must auto-resolve straight into the normal phase");
@@ -153,36 +118,30 @@ function run() {
     assert.strictEqual(room.state.history[0].guess, found.cfg.aiOpeningGuess, "the AI must have used its fixed opening guess");
   }
 
-  // -- Freely chosen human opening still uses the AI's fixed opening word --
+  // -- Round 2's opening (the OTHER role, after the swap) is ALSO
+  // predefined and auto-resolves -- this is the exact gap that used to
+  // leave round 2 as a free choice even on a day that pinned round 1. --
   {
-    const found = findDate(
-      CANDIDATE_DATES,
-      cfg => cfg.playMode === "both" && !cfg.humanOpeningGuess && !cfg.humanOpeningSecret
-    );
-    assert.ok(found, "test setup: need a 'both' date where neither human opening word is predefined");
+    const found = findDate(CANDIDATE_DATES, () => true);
+    assert.ok(found, "test setup: need at least one date in the sample range");
     const context = makeContext();
-    const { room, roomId } = startDailyRoom(found.date, "p-free", context);
-    assert.strictEqual(room.state.phase, "simultaneous", "an unpredefined opening must NOT auto-resolve -- the player chooses freely");
-    assert.strictEqual(room.state.history.length, 0, "no history row yet -- nothing has been submitted");
+    const { room, roomId } = startDailyRoom(found.date, "p-round2", context);
+    const round1Role = room.state.players["p-round2"].role;
 
-    const humanRole = room.state.players["p-free"].role;
-    if (humanRole === "guesser") {
-      // Human freely submits a guess; the AI Secretkeeper must still use
-      // its fixed daily secret, not a normal AI-picked one.
-      applyAction(room, room.state, { type: "SUBMIT_GUESS", userId: "p-free", guess: S[0] }, roomId, context);
-      runAISync(room, roomId, context, "AI");
-    } else {
-      applyAction(room, room.state, { type: "SET_SECRET_NEW", userId: "p-free", secret: S[0] }, roomId, context);
-      runAISync(room, roomId, context, "AI");
-    }
+    applyAction(room, room.state, { type: "CONCEDE", userId: "p-round2" }, roomId, context);
+    applyAction(room, room.state, { type: "NEXT_ROUND", userId: "p-round2" }, roomId, context);
 
-    assert.strictEqual(room.state.history.length, 1, "the freely chosen opening must still resolve to one history row");
-    const expectedAiWord = humanRole === "guesser" ? found.cfg.aiOpeningSecret : found.cfg.aiOpeningGuess;
-    const actualAiWord = humanRole === "guesser" ? room.state.history[0].finalSecret : room.state.history[0].guess;
-    assert.strictEqual(actualAiWord, expectedAiWord, "the AI's opening move must still be the day's fixed word even when the human chose freely");
+    const round2Role = room.state.players["p-round2"].role;
+    assert.notStrictEqual(round2Role, round1Role, "round 2 must swap the human's role");
+    assert.strictEqual(room.state.phase, "normal", "round 2's predefined opening must also auto-resolve straight into the normal phase");
+    assert.strictEqual(room.state.history.length, 1, "round 2 must start with exactly one resolved history row, same as round 1 did");
+
+    const expectedWord = round2Role === "guesser" ? found.cfg.humanOpeningGuess : found.cfg.humanOpeningSecret;
+    const actualWord = round2Role === "guesser" ? room.state.history[0].guess : room.state.history[0].finalSecret;
+    assert.strictEqual(actualWord, expectedWord, "round 2 must resolve using that role's own predefined word, not a free choice");
   }
 
-  console.log("PASS dailyChallengeRoundFlow: setter/guesser end after 1 round with no Next Round, both plays 2 rounds and swaps roles, predefined openings auto-resolve to exactly one history row each, a freely-chosen opening still pins the AI's fixed word");
+  console.log("PASS dailyChallengeRoundFlow: every day plays 2 rounds and swaps roles, and BOTH rounds' opening word is predefined and auto-resolves to exactly one history row");
 }
 
 module.exports = { run };

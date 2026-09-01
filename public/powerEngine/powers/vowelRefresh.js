@@ -16,25 +16,28 @@ tooltip: {
     };
   },
 
-  // Previews exactly which vowels would actually get reset, using the same
-  // eligibility rule the server enforces (every vowel in the last guess) --
-  // and refuses to let the setter burn the power for nothing when the last
-  // guess had no vowels at all.
+  // Previews exactly which vowels currently have real accumulated info
+  // (from any past guess's feedback, or a power/reward-granted GREEN/
+  // YELLOW/ABSENT constraint) -- matching vowelRefreshServer.js's apply(),
+  // which always erases all 5 vowels across the WHOLE match history, not
+  // just whichever vowel happened to appear in the most recent guess. This
+  // used to check only the last guess (getRefreshableVowelIndices below),
+  // which both blocked the button whenever the last guess had no vowel in
+  // it -- even with plenty of vowel info sitting in earlier rows -- and
+  // undersold the real effect ("This will reset: A") when it did apply.
   getActionPopup(state, role) {
     if (role !== "setter") return {};
 
-    const eligible = getRefreshableVowelIndices(state);
-    if (eligible.size === 0) {
+    const known = vowelsWithKnowledge(state);
+    if (known.size === 0) {
       return {
-        desc: "No vowels to reset — the last guess had no vowels in it.",
+        desc: "No vowel clues have been revealed yet — this would have no effect.",
         useEnabled: false
       };
     }
 
-    const guess = state.history?.[state.history.length - 1]?.guess?.toUpperCase() || "";
-    const letters = [...new Set([...eligible].map(i => guess[i]))];
     return {
-      desc: `${window.POWER_METADATA.vowelRefresh.desc} This will reset: ${letters.join(", ")}.`
+      desc: `${window.POWER_METADATA.vowelRefresh.desc} This will reset: ${[...known].sort().join(", ")}.`
     };
   },
  uiEffects(state, role) {
@@ -62,27 +65,20 @@ tooltip: {
     this.buttonEl.disabled = used || !turn || !phase;
     this.buttonEl.classList.toggle("disabled-btn", this.buttonEl.disabled);
 
-    // Preview: shine whichever vowels in the LAST guess would actually get
-    // reset if the power were used right now, so the setter can judge
-    // whether it's worth spending before committing -- same eligibility
-    // rule the server enforces (vowelRefreshServer.js): every vowel in the
-    // last guess, even a repeat of one confirmed by an earlier guess.
-    //
-    // A guess earlier in the match was once "the last row" and got shined
-    // then -- once a newer guess comes in it's no longer the last row, but
-    // nothing else ever revisits it to turn the class back off, so it kept
-    // glittering forever. Clear it off every row before reapplying it to
-    // only the current last one.
+    // Preview: shine every vowel tile, in every row, that currently carries
+    // real feedback -- the exact set vowelRefreshServer.js's apply() would
+    // blank if the power were used right now (see vowelTileFlagsByRow
+    // below). Used to only ever look at the last guess row; a vowel
+    // confirmed several guesses back kept glittering-eligible in the data
+    // but was never shown as such.
     const submittedContainer = $("setterGuesserSubmitted");
-    submittedContainer?.querySelectorAll(".vowel-refresh-shine")
-      .forEach(tile => tile.classList.remove("vowel-refresh-shine"));
+    const allTiles = submittedContainer?.querySelectorAll(".history-row .history-tile");
 
-    const lastRow = submittedContainer?.lastElementChild;
-    const tiles = lastRow?.querySelectorAll(".history-tile");
-    if (tiles?.length === 5) {
-      const eligible = this.buttonEl.disabled ? new Set() : getRefreshableVowelIndices(state);
-      tiles.forEach((tile, i) => {
-        tile.classList.toggle("vowel-refresh-shine", eligible.has(i));
+    if (allTiles?.length) {
+      const flagsByRow = this.buttonEl.disabled ? [] : vowelTileFlagsByRow(state);
+      const flatFlags = flagsByRow.flat();
+      allTiles.forEach((tile, i) => {
+        tile.classList.toggle("vowel-refresh-shine", !!flatFlags[i]);
       });
     }
   },
@@ -93,26 +89,61 @@ tooltip: {
   }
 });
 
-// Shared by uiEffects above -- mirrors vowelRefreshServer.js's apply()
-// exactly (every vowel in the last guess is eligible, even a repeat of one
-// already confirmed by an earlier guess), just read-only and index-based
-// instead of mutating feedback.
-function getRefreshableVowelIndices(state) {
-  const history = state.history || [];
-  const lastIndex = history.length - 1;
-  const entry = history[lastIndex];
-  if (!entry?.guess) return new Set();
+// Shared by getActionPopup/uiEffects above -- read-only, client-side
+// mirrors of resetLetterKnowledge.js's hasLetterKnowledge/
+// eraseLetterKnowledge on the server (same GREEN/YELLOW/ABSENT constraint
+// types, same "a truthy fb or fbGuesser at that position counts" rule for
+// history), scanning the WHOLE match rather than just the last guess --
+// matching vowelRefreshServer.js's apply(), which always erases all 5
+// vowels' entire history in one call.
+const VOWEL_REFRESH_LETTERS = ["A", "E", "I", "O", "U"];
 
-  const vowels = new Set(["A", "E", "I", "O", "U"]);
-  const guess = entry.guess.toUpperCase();
+function vowelsWithKnowledge(state) {
+  const found = new Set();
 
-  const indices = new Set();
-  for (let i = 0; i < 5; i++) {
-    const letter = guess[i];
-    if (!vowels.has(letter)) continue;
-    indices.add(i);
+  for (const entry of state?.history || []) {
+    const guess = String(entry?.guess || "").toUpperCase();
+    for (let i = 0; i < guess.length; i++) {
+      const letter = guess[i];
+      if (!VOWEL_REFRESH_LETTERS.includes(letter) || found.has(letter)) continue;
+      if (
+        (Array.isArray(entry.fb) && entry.fb[i]) ||
+        (Array.isArray(entry.fbGuesser) && entry.fbGuesser[i])
+      ) {
+        found.add(letter);
+      }
+    }
   }
-  return indices;
+
+  for (const constraint of state?.extraConstraints || []) {
+    const type = String(constraint?.type || "").toUpperCase();
+    const letter = String(constraint?.letter || "").toUpperCase();
+    if (
+      ["GREEN", "YELLOW", "ABSENT"].includes(type) &&
+      VOWEL_REFRESH_LETTERS.includes(letter)
+    ) {
+      found.add(letter);
+    }
+  }
+
+  return found;
+}
+
+// One boolean array (5 slots) per history row: which tiles are a vowel
+// with real feedback right now, in the same row order the DOM renders
+// them -- exactly the tiles that go blank if Vowel Refresh is used.
+function vowelTileFlagsByRow(state) {
+  return (state?.history || []).map(entry => {
+    const guess = String(entry?.guess || "").toUpperCase();
+    return Array.from({ length: 5 }, (_, i) => {
+      const letter = guess[i];
+      if (!VOWEL_REFRESH_LETTERS.includes(letter)) return false;
+      return !!(
+        (Array.isArray(entry.fb) && entry.fb[i]) ||
+        (Array.isArray(entry.fbGuesser) && entry.fbGuesser[i])
+      );
+    });
+  });
 }
 // --------------------------------------------------
 // Vowel Refresh — info badge (both players)

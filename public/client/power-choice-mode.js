@@ -197,7 +197,7 @@
         <span class="pc-charge-click-copy">Click for rules</span>
       </button>
       <div class="pc-charge-details${detailsOpen ? " is-open" : ""}">
-        <p>Every accepted Keep or New decision earns at least 1 yellow star. A strong New secret can earn 2 yellow stars. Matching the blue letter target adds the separate blue bonus star. The forced all-gray opening Keep earns 1 yellow star.</p>
+        <p>Every accepted Keep or New earns 1★ (a strong New can earn 2★). Matching the blue letter target adds a bonus ★.</p>
         <div class="pc-reward-milestones">
           <span><b>4</b> choose 1 reward</span>
           <span><b>8</b> choose 1 reward</span>
@@ -965,6 +965,7 @@
       const spy = id.startsWith("spy-");
       const outer = spy ? "#fb7185" : "#38bdf8";
       const inner = spy ? "#4c1d3f" : "#0c4a6e";
+      const icon = option.icon || "◆";
       // No wavy accent line across the badge (used to run stroke="#fbbf24"
       // through the middle here) -- it cut straight across the option's
       // own glyph/text at this size and made the icon harder to read than
@@ -973,10 +974,23 @@
         <circle cx="60" cy="60" r="45" fill="${inner}" stroke="${outer}" stroke-width="6"/>
         <circle cx="25" cy="30" r="7" fill="#34d399"/>
         <circle cx="96" cy="28" r="8" fill="#a78bfa"/>
-        <text x="60" y="67" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="25" font-weight="900">${esc(option.icon || "◆")}</text>
+        <text x="60" y="67" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="${fixedRewardIconFontSize(icon)}" font-weight="900">${esc(icon)}</text>
       </svg>`;
     }
     return "";
+  }
+
+  // A handful of these compound icons (e.g. "🟨⇄⬛4" for Trade a Yellow,
+  // "🟩⇄🟨🟨🟨" for Trade a Green) string together several glyphs to show
+  // what the reward actually does at a glance -- 25px was sized for the
+  // 1-2 glyph icons and let anything longer spill out past the badge's own
+  // circle on both sides. Shrinking by glyph count keeps every icon inside
+  // it instead of special-casing each long one by hand. Spread (not
+  // .length) so a multi-code-point emoji counts as one glyph, not two.
+  function fixedRewardIconFontSize(icon) {
+    const glyphCount = [...String(icon || "")].length || 1;
+    if (glyphCount <= 2) return 25;
+    return Math.max(10, Math.round(25 * Math.pow(2 / glyphCount, 0.72)));
   }
 
   function optionIconMarkup(option) {

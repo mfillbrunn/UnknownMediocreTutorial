@@ -4,7 +4,7 @@ const engine = require("../powers/powerEngineServer");
 const CompetitiveMode = require("../core/modes/competitiveMode");
 const spyChargeServer = require("../powers/powers/spyChargeServer");
 const POWER_METADATA = require("../powers/powerMetadata");
-const { eraseLetterKnowledge } = require("../utils/resetLetterKnowledge");
+const { eraseLetterKnowledge, hasLetterKnowledge } = require("../utils/resetLetterKnowledge");
 const { satisfiesForceGuess } = require("../game-engine/validation");
 const { generateConditions } = require("../powers/powers/fieldReportServer");
 const { emitRoomState } = require("../core/rooms");
@@ -1665,12 +1665,17 @@ function powerOptionApplicable(state, option) {
     case "delayedIntel":
       return !state.powers?.delayedIntelUsed && !!state.pendingGuess;
     case "vowelRefresh":
-      // apply() itself no-ops when the last guess had no vowel to refresh
-      // (see vowelRefreshServer.js) -- checked here too so that case
-      // doesn't get offered as a card either.
+      // vowelRefreshServer.js's apply() always erases all 5 vowels across
+      // the WHOLE match history, not just whichever vowel happened to be
+      // in the most recent guess -- so the only reason to withhold this
+      // card is if there's genuinely nothing to erase yet (no vowel has
+      // any real feedback or forced constraint anywhere in the match).
+      // The old /[AEIOU]/ check here only looked at the last guess, which
+      // could skip offering the card even with plenty of vowel info
+      // sitting in earlier rows.
       return (
         !state.powers?.vowelRefreshUsed &&
-        /[AEIOU]/.test(String(state.history?.[state.history.length - 1]?.guess || "").toUpperCase())
+        "AEIOU".split("").some(letter => hasLetterKnowledge(state, letter))
       );
     // Same one-off treatment for the Guesser's own immediate powers.
     case "suggestGuess":
