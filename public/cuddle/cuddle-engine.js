@@ -812,10 +812,10 @@
       if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
       const ids = unique(cardIds || []);
       const cost = this.getGreyExchangeCost();
-      if (ids.length !== cost) return { ok: false, error: `Choose exactly ${cost} grey card${cost === 1 ? "" : "s"}.` };
+      if (ids.length !== cost) return { ok: false, error: `Choose exactly ${cost} red card${cost === 1 ? "" : "s"}.` };
       const cards = ids.map(id => this.getHandCard(id));
       if (cards.some(card => !card || this.isInfiniteCard(card) || !this.cardIsKnownGrey(card))) {
-        return { ok: false, error: "Only finite confirmed-grey cards can be exchanged." };
+        return { ok: false, error: "Only finite confirmed-red cards can be exchanged." };
       }
       if (ids.some(id => this.state.draft.includes(id))) {
         return { ok: false, error: "Return drafted cards before exchanging them." };
@@ -823,7 +823,7 @@
       this._discardCards(ids);
       const drawn = this.drawCards(1);
       this.state.lastMessage = drawn.length
-        ? `Exchanged ${cost} grey card${cost === 1 ? "" : "s"} for one draw.`
+        ? `Exchanged ${cost} red card${cost === 1 ? "" : "s"} for one draw.`
         : "The piles are empty; no card could be drawn.";
       this.save();
       return { ok: true, drawn: drawn.length };
@@ -1144,7 +1144,7 @@
           id: "exchangeReduction",
           icon: "🩶",
           title: "Better Recycling",
-          description: "Exchange one fewer confirmed grey card for a new draw."
+          description: "Exchange one fewer confirmed red card for a new draw."
         });
       }
       if (this.state.upgrades.mulliganSize < 2) {
@@ -1239,7 +1239,7 @@
       const removed = this.state.removedLetters.length ? this.state.removedLetters.join(", ") : "None";
       return [
         `Mulligans: ${rules.mulligans} × up to ${rules.mulliganSize}`,
-        `Grey exchange: ${rules.greyExchange} → 1`,
+        `Red exchange: ${rules.greyExchange} → 1`,
         `Yellow value: ${rules.yellowPoints}`,
         `Early value: ${rules.earlyPoint} per unused guess`,
         `Quest cadence: every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}`,
