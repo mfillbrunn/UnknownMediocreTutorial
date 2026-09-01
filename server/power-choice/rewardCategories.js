@@ -27,6 +27,8 @@ const REWARD_CATEGORIES = Object.freeze({
   "spy-yellow-smudge": "letter-control",
   "spy-trade-yellow": "letter-control",
   "spy-trade-green": "letter-control",
+  "spy-erase-yellow-1": "letter-control",
+  "spy-erase-row": "letter-control",
   "inspector-remove-unused-2": "letter-control",
   vowelRefresh: "letter-control",
 
