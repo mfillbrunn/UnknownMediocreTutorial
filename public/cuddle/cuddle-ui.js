@@ -18,6 +18,8 @@
   let selectedCards = new Set();
   let uiMessage = "";
   let loadingPromise = null;
+  const RECONNECT_GRACE_MS = 30000;
+  const RECONNECT_RETRY_MS = 3000;
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -56,13 +58,34 @@
     return loadingPromise;
   }
 
+  // A dropped connection while fetching the secret list used to dump the
+  // player straight to a dead-end error screen with no way back in except
+  // leaving and reopening Cuddle by hand. Retry quietly for up to 30s
+  // (RECONNECT_GRACE_MS) before giving up -- the saved run itself is
+  // already safe in localStorage, only the word list needs the network.
+  async function loadWordsWithRetry(onRetrying) {
+    const deadline = Date.now() + RECONNECT_GRACE_MS;
+    for (;;) {
+      try {
+        return await loadWords();
+      } catch (error) {
+        const remainingMs = deadline - Date.now();
+        if (remainingMs <= 0) throw error;
+        onRetrying(Math.ceil(remainingMs / 1000));
+        await new Promise(resolve => setTimeout(resolve, Math.min(RECONNECT_RETRY_MS, remainingMs)));
+      }
+    }
+  }
+
   async function openCuddle() {
     showScreen("cuddleScreen");
     root = document.getElementById(ROOT_ID);
     if (!root) return;
     root.innerHTML = renderLoading();
     try {
-      const loadedWords = await loadWords();
+      const loadedWords = await loadWordsWithRetry(secondsLeft => {
+        if (root) root.innerHTML = renderReconnecting(secondsLeft);
+      });
       game = window.CuddleEngine.CuddleGame.load(loadedWords);
       landing = true;
       detailsOpen = false;
@@ -84,12 +107,22 @@
       </div>`;
   }
 
+  function renderReconnecting(secondsLeft) {
+    return `
+      <div class="cuddle-loading-card" role="status">
+        <div class="cuddle-logo" aria-hidden="true">C</div>
+        <h2>Reconnecting…</h2>
+        <p>Connection dropped while opening Cuddle. Your saved run is safe — retrying for ${secondsLeft}s.</p>
+      </div>`;
+  }
+
   function renderFatal(message) {
     return `
       <div class="cuddle-loading-card cuddle-fatal" role="alert">
         <div class="cuddle-logo" aria-hidden="true">!</div>
         <h2>Cuddle could not load</h2>
         <p>${escapeHtml(message)}</p>
+        <button class="cuddle-btn cuddle-btn-primary" data-action="retry-load">Try again</button>
         <button class="cuddle-btn" data-action="back">Back to menu</button>
       </div>`;
   }
@@ -377,6 +410,8 @@
     const groups = groupedHand(state);
     const vowels = groups.vowels.map(group => renderHandCard(group, state, limit)).join("");
     const consonants = groups.consonants.map(group => renderHandCard(group, state, limit)).join("");
+    const submit = game.canSubmit();
+    const showSubmitRow = state.status === "playing" && actionMode === "play";
     return `
       <section class="cuddle-hand-panel">
         <div class="cuddle-section-heading">
@@ -392,6 +427,12 @@
           <div class="cuddle-hand-row cuddle-hand-vowels" aria-label="Bold, always-available vowels">${vowels}</div>
           <div class="cuddle-hand-row cuddle-hand-consonants" aria-label="Consonants">${consonants || `<p class="cuddle-draft-empty">No consonant cards are currently available.</p>`}</div>
         </div>
+        ${showSubmitRow ? `
+          <div class="cuddle-submit-row">
+            <button class="cuddle-btn cuddle-btn-primary cuddle-submit" data-action="submit" ${submit.ok ? "" : "disabled"}>Submit word</button>
+            <button class="cuddle-btn cuddle-backspace" data-action="backspace" ${state.draft.length ? "" : "disabled"}
+              aria-label="Delete the last drafted card" title="Delete last letter">⌫</button>
+          </div>` : ""}
       </section>`;
   }
 
@@ -412,27 +453,21 @@
       const valid = selectedCards.size === cost;
       return `
         <section class="cuddle-action-panel is-selecting">
-          <div><strong>Select exactly ${cost} grey card${cost === 1 ? "" : "s"}</strong><span>${selectedCards.size}/${cost} selected · draw one card</span></div>
+          <div><strong>Select exactly ${cost} red card${cost === 1 ? "" : "s"}</strong><span>${selectedCards.size}/${cost} selected · draw one card</span></div>
           <button class="cuddle-btn cuddle-btn-primary" data-action="confirm-exchange" ${valid ? "" : "disabled"}>Recycle selected</button>
           <button class="cuddle-btn cuddle-btn-ghost" data-action="cancel-mode">Cancel</button>
         </section>`;
     }
 
-    const submit = game.canSubmit();
     const greyCount = game.getGreyCards().length;
     return `
       <section class="cuddle-action-panel">
-        <div class="cuddle-submit-row">
-          <button class="cuddle-btn cuddle-btn-primary cuddle-submit" data-action="submit" ${submit.ok ? "" : "disabled"}>Submit word</button>
-          <button class="cuddle-btn cuddle-backspace" data-action="backspace" ${state.draft.length ? "" : "disabled"}
-            aria-label="Delete the last drafted card" title="Delete last letter">⌫</button>
-        </div>
         <div class="cuddle-utility-actions">
           <button class="cuddle-btn" data-action="mulligan-mode" ${state.mulligansLeft > 0 ? "" : "disabled"}>
             Mulligan <span>${state.mulligansLeft} left · up to ${rules.mulliganSize}</span>
           </button>
           <button class="cuddle-btn" data-action="exchange-mode" ${greyCount >= rules.greyExchange ? "" : "disabled"}>
-            Recycle greys <span>${rules.greyExchange} → 1 · ${greyCount} available</span>
+            Recycle reds <span>${rules.greyExchange} → 1 · ${greyCount} available</span>
           </button>
         </div>
       </section>`;
@@ -545,7 +580,7 @@
             <article><strong>1 · Build, do not type</strong><p>Tap cards in order to make a five-letter word from the existing secret list. Q is its own card; use the always-available U card separately when a word needs QU.</p></article>
             <article><strong>2 · Reuse letters in hand</strong><p>Any letter currently shown in your hand can be tapped more than once while building a word. A, E, I, O, and U are bold, always available, and do not use counted hand slots. Yellow or green consonants stay in hand after a guess.</p></article>
             <article><strong>3 · Refill five slots</strong><p>You have five counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward five.</p></article>
-            <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards. Trade exactly ${rules.greyExchange} confirmed grey cards for one new draw.</p></article>
+            <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards. Trade exactly ${rules.greyExchange} confirmed red cards for one new draw.</p></article>
             <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints}; grey tiles score −1. Solving early adds +${rules.earlyPoint} for every unused guess. You must also meet the cumulative round target.</p></article>
             <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}. Solve the word to choose an upgrade; every newly crossed 50-point milestone grants another.</p></article>
           </div>
@@ -639,6 +674,9 @@
       case "new-run":
         startNewRun();
         return true;
+      case "retry-load":
+        openCuddle();
+        return false;
       case "rules":
         rulesOpen = true;
         return true;
@@ -667,7 +705,7 @@
         game.clearDraft();
         actionMode = "exchange";
         selectedCards = new Set();
-        setUiMessage("Choose confirmed grey cards to recycle.");
+        setUiMessage("Choose confirmed red cards to recycle.");
         return true;
       case "cancel-mode":
         resetActionMode();
