@@ -156,40 +156,57 @@ async function run() {
     );
   }
 
-  // -- Persistence + ranking: setter-only, guesser-only, both --
+  // -- Persistence + ranking: every day plays 'both' now --
   {
-    const setterDate = findDate(cfg => cfg.playMode === "setter");
-    const guesserDate = findDate(cfg => cfg.playMode === "guesser");
-    assert.ok(setterDate && guesserDate, "test setup: need a 'setter' and a 'guesser' playMode date");
+    const context = makeContext();
+    const userId = "p-persist-both";
+    const { room, roomId } = startDailyRoom(bothDate.date, userId, context);
 
-    for (const [found, userId] of [[setterDate, "p-persist-setter"], [guesserDate, "p-persist-guesser"], [bothDate, "p-persist-both"]]) {
-      const context = makeContext();
-      const { room, roomId } = startDailyRoom(found.date, userId, context);
+    // Play to completion.
+    const humanRole = room.state.players[userId].role;
+    applyAction(room, room.state, { type: "CONCEDE", userId: humanRole === "guesser" ? userId : "AI" }, roomId, context);
+    assert.strictEqual(room.state.canNextRound, true, "a 'both' round 1 must offer Next Round");
+    applyAction(room, room.state, { type: "NEXT_ROUND", userId }, roomId, context);
+    const humanRole2 = room.state.players[userId].role;
+    applyAction(room, room.state, { type: "CONCEDE", userId: humanRole2 === "guesser" ? userId : "AI" }, roomId, context);
 
-      // Play to completion.
-      const humanRole = room.state.players[userId].role;
-      applyAction(room, room.state, { type: "CONCEDE", userId: humanRole === "guesser" ? userId : "AI" }, roomId, context);
-      if (room.state.canNextRound) {
-        applyAction(room, room.state, { type: "NEXT_ROUND", userId }, roomId, context);
-        const humanRole2 = room.state.players[userId].role;
-        applyAction(room, room.state, { type: "CONCEDE", userId: humanRole2 === "guesser" ? userId : "AI" }, roomId, context);
-      }
+    const status = await completeAndReadDailyStatus(roomId, userId, bothDate.date, room);
+    assert.strictEqual(status.result.playMode, "both", "persisted result must record the day's playMode");
+    assert.strictEqual(
+      status.result.scoreDifference,
+      status.result.setterScore - status.result.guesserScore,
+      "'both' result must store scoreDifference = setterScore - guesserScore"
+    );
+  }
 
-      const status = await completeAndReadDailyStatus(roomId, userId, found.date, room);
-      assert.strictEqual(status.result.playMode, found.cfg.playMode, `${found.cfg.playMode}: persisted result must record the day's playMode`);
-      if (found.cfg.playMode === "setter") {
-        assert.ok(status.result.setterScore >= 0, "setter-only result must have a setterScore");
+  // -- Persistence round-trip for a HISTORICAL setter-only/guesser-only
+  // result still works, even though no day generates that playMode
+  // anymore -- getDailyStatus must keep reading old rows written before
+  // this change exactly as they were saved. --
+  for (const legacyPlayMode of ["setter", "guesser"]) {
+    const userId = `p-persist-legacy-${legacyPlayMode}`;
+    await markDailyCompleted({
+      supabase: null,
+      userId,
+      date: "2030-01-01",
+      result: {
+        playMode: legacyPlayMode,
+        firstRole: legacyPlayMode,
+        setterScore: 3,
+        guesserScore: 4,
+        scoreDifference: -1,
+        time: 60,
+        won: legacyPlayMode === "guesser",
+        tie: false,
+        difficulty: 2
       }
-      if (found.cfg.playMode === "guesser") {
-        assert.ok(status.result.guesserScore >= 0, "guesser-only result must have a guesserScore");
-      }
-      if (found.cfg.playMode === "both") {
-        assert.strictEqual(
-          status.result.scoreDifference,
-          status.result.setterScore - status.result.guesserScore,
-          "'both' result must store scoreDifference = setterScore - guesserScore"
-        );
-      }
+    });
+    const status = await getDailyStatus({ supabase: null, userId, date: "2030-01-01" });
+    assert.strictEqual(status.result.playMode, legacyPlayMode, `a historical '${legacyPlayMode}' result must still round-trip its own playMode`);
+    if (legacyPlayMode === "setter") {
+      assert.ok(status.result.setterScore >= 0, "a historical setter-only result must have a setterScore");
+    } else {
+      assert.ok(status.result.guesserScore >= 0, "a historical guesser-only result must have a guesserScore");
     }
   }
 

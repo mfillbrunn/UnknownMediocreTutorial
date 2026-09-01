@@ -23,25 +23,24 @@ function run() {
   assert.deepStrictEqual(a, b, "same date must produce a deeply identical config");
   assert.deepStrictEqual(a, c, "repeated calls must stay stable, not just the first two");
 
-  // 2. Every play mode actually gets generated across a spread of dates.
+  // 2. Every day now always plays both sides.
   const modesSeen = new Set(SAMPLE_DATES.map(date => getDailyConfig(date, S, G).playMode));
-  assert.ok(modesSeen.has("both"), "playMode 'both' must be generated for at least one sampled date");
-  assert.ok(modesSeen.has("setter"), "playMode 'setter' must be generated for at least one sampled date");
-  assert.ok(modesSeen.has("guesser"), "playMode 'guesser' must be generated for at least one sampled date");
+  assert.deepStrictEqual([...modesSeen], ["both"], "playMode must always be 'both' now -- no day rolls a single-side challenge");
 
   for (const date of SAMPLE_DATES) {
     const cfg = getDailyConfig(date, S, G);
 
-    assert.ok(["both", "setter", "guesser"].includes(cfg.playMode), `${date}: playMode must be one of the 3 valid modes`);
-    assert.ok(["setter", "guesser"].includes(cfg.firstRole), `${date}: firstRole must always be a valid role, even outside 'both'`);
+    assert.strictEqual(cfg.playMode, "both", `${date}: playMode must always be 'both'`);
+    assert.ok(["setter", "guesser"].includes(cfg.firstRole), `${date}: firstRole must always be a valid role`);
     assert.ok([1, 2, 3].includes(cfg.aiDifficulty), `${date}: aiDifficulty must be 1/2/3`);
 
-    // 3. Human opening values are always exactly one word or null, never arrays.
+    // 3. Human opening values are always predefined -- exactly one 5-letter
+    // word, never null and never an array -- for both roles, every day.
     for (const field of ["humanOpeningGuess", "humanOpeningSecret"]) {
       const value = cfg[field];
       assert.ok(
-        value === null || (typeof value === "string" && /^[A-Z]{5}$/.test(value)),
-        `${date}: ${field} must be null or a single 5-letter uppercase word, got ${JSON.stringify(value)}`
+        typeof value === "string" && /^[A-Z]{5}$/.test(value),
+        `${date}: ${field} must always be a single 5-letter uppercase word, got ${JSON.stringify(value)}`
       );
     }
 
@@ -132,7 +131,7 @@ function run() {
   assert.deepStrictEqual(withLists.aiPickIndex, withoutLists.aiPickIndex, "aiPickIndex must not depend on word lists");
   assert.deepStrictEqual(withLists.questsByRound, withoutLists.questsByRound, "questsByRound must not depend on word lists");
 
-  console.log(`PASS dailyChallengeConfig: ${SAMPLE_DATES.length} dates deterministic/valid, every play mode generated, public view whitelist enforced, namespace isolation holds`);
+  console.log(`PASS dailyChallengeConfig: ${SAMPLE_DATES.length} dates deterministic/valid, playMode always 'both' with both opening words always predefined, public view whitelist enforced, namespace isolation holds`);
 }
 
 module.exports = { run };

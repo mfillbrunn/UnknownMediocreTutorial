@@ -28,7 +28,6 @@ const {
 } = require("../power-choice/powerChoiceServer");
 const { getDailySeedSalt } = require("./dailySeedOverride");
 
-const PLAY_MODES = ["both", "setter", "guesser"];
 const ROLES = ["setter", "guesser"];
 const REWARD_MILESTONES = [1, 2, 3];
 // Mirrors powerChoiceServer.js's INSPECTOR_MAX_QUESTS -- the Guesser gets
@@ -123,8 +122,14 @@ function wordFrom(rng, words, attempts, forbid) {
   return word && word === forbid ? null : word;
 }
 
-function generatePlayMode(date) {
-  return pickFrom(namespacedRng(date, "mode"), PLAY_MODES) || "both";
+// Daily Challenge always plays both sides now -- the human plays a
+// Secretkeeper round and a Guesser round every day (in whatever order
+// firstRole picks). This used to also roll "setter"-only/"guesser"-only
+// single-round days; DailyMode (ROUNDS_BY_PLAY_MODE) and lobby.js's ADD_AI
+// still know how to run those if this ever needs to pick them again, so
+// nothing downstream had to change -- this just stopped picking them.
+function generatePlayMode() {
+  return "both";
 }
 
 function generateFirstRole(date) {
@@ -143,22 +148,18 @@ function generateAiOpeningSecret(date, allowedSecrets) {
   return pickWord(namespacedRng(date, "ai-opening-secret"), allowedSecrets);
 }
 
-// Human opening words are independent of playMode: a "setter"-only
-// challenge simply never reads humanOpeningGuess, a "guesser"-only
-// challenge never reads humanOpeningSecret, and "both" can use either or
-// both. Roughly half the days predefine the word at all (drawn from the
-// same per-field stream, so it's still fully deterministic); the other
-// half leave it null so the player picks freely (see simultaneousOpening.js).
+// Every day now predefines BOTH players' opening word -- the Secretkeeper
+// round's opening secret and the Guesser round's opening guess are always
+// fixed and identical for every player that date (see dailyOpening.js,
+// which auto-resolves the simultaneous phase the instant it sees one of
+// these set), never left for the player to pick freely the way roughly
+// half of all days used to.
 function generateHumanOpeningGuess(date, allowedGuesses, aiOpeningSecret) {
-  const rng = namespacedRng(date, "human-guesser-opening");
-  if (rng() >= 0.5) return null;
-  return wordFrom(rng, allowedGuesses, 25, aiOpeningSecret);
+  return wordFrom(namespacedRng(date, "human-guesser-opening"), allowedGuesses, 25, aiOpeningSecret);
 }
 
 function generateHumanOpeningSecret(date, allowedSecrets, aiOpeningGuess) {
-  const rng = namespacedRng(date, "human-setter-opening");
-  if (rng() >= 0.5) return null;
-  return wordFrom(rng, allowedSecrets, 25, aiOpeningGuess);
+  return wordFrom(namespacedRng(date, "human-setter-opening"), allowedSecrets, 25, aiOpeningGuess);
 }
 
 // One quest object per reward milestone (3) per round (2) -- generated with
@@ -250,7 +251,7 @@ function getDailyConfig(dateStr, allowedSecrets, allowedGuesses) {
   const secrets = Array.isArray(allowedSecrets) ? allowedSecrets : [];
   const guesses = Array.isArray(allowedGuesses) ? allowedGuesses : [];
 
-  const playMode = generatePlayMode(date);
+  const playMode = generatePlayMode();
   const firstRole = generateFirstRole(date);
   const aiDifficulty = generateAiDifficulty(date);
   const aiOpeningGuess = generateAiOpeningGuess(date, guesses);
