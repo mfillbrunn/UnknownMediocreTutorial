@@ -36,11 +36,10 @@
   <link rel="stylesheet" href="css/mobile.css?mobile-perf=1">
   <!-- New features -->
   <link rel="stylesheet" href="css/features.css?v=tutorial-motion-sim-2&summary-result-center=1&daily-playmode=1">
-  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1&cute-star=1&spyometer-flat=1">
+  <link rel="stylesheet" href="css/gameplay-ui.css?v=tutorial-motion-sim-2&star-bonus-fix=1&quest-card-layout=1&desktop-size-balance=2&optional-note-oneline=1&note-inline-title=1&win-stutter-hollow-stars=1&responsive-board=1&umt-fix=20260830-1&cute-star=1&spyometer-flat=1&star-dance-refresh=1">
   <link rel="stylesheet" href="single-player/single-player.css?sp-shell-stretch=1&umt-fix=20260830-1">
 <!-- CUDDLE_MODE:STYLE START -->
   <link rel="stylesheet" href="cuddle/cuddle.css?v=9">
-  <link rel="stylesheet" href="cuddle/site-integration.css?v=9">
 <!-- CUDDLE_MODE:STYLE END -->
 </head>
 <body>
@@ -267,7 +266,6 @@
         <section id="startupScreen" class="screen active game-menu streamlined-menu-screen">
   <div id="menuAccountStatus" class="menu-account-status"></div>
   <div class="menu-center streamlined-menu-card">
-    <div class="menu-brand-mark" aria-hidden="true">VP</div>
     <h2 class="menu-title">VOWEL PLAY</h2>
     <p class="menu-subtitle">Choose how you want to play.</p>
     <div class="menu-buttons streamlined-menu-buttons">
@@ -282,17 +280,6 @@
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
 
-      <button id="playMainBtn" class="menu-btn menu-action-btn" type="button">
-        <span class="menu-action-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/></svg>
-        </span>
-        <span class="menu-action-copy">
-          <span class="menu-action-title">Play</span>
-          <span class="menu-action-subtitle">Friends, ranked, solo, and saved games</span>
-        </span>
-        <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
-      </button>
-
       <button id="dailyBtn" class="menu-btn menu-action-btn" type="button">
         <span class="menu-action-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 15l2 2 5-5"/></svg>
@@ -300,6 +287,17 @@
         <span class="menu-action-copy">
           <span class="menu-action-title">Daily Challenge</span>
           <span class="menu-action-subtitle">One shared puzzle each day</span>
+        </span>
+        <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
+      </button>
+
+      <button id="playMainBtn" class="menu-btn menu-action-btn" type="button">
+        <span class="menu-action-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/></svg>
+        </span>
+        <span class="menu-action-copy">
+          <span class="menu-action-title">Play</span>
+          <span class="menu-action-subtitle">Friends, ranked, solo, and saved games</span>
         </span>
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
@@ -1731,7 +1729,7 @@
   <script src="client/action-log-dedupe-v6.js?setter-fixes=2"></script>
   <script src="ui/setter-sidebar.js?setter-board=1"></script>
   <script src="client/starter-word-suggestions.js"></script>
-  <script src="ui/setter-board.js?setter-board=1&compact-bonus=1&star-bonus-fix=1&umt-fix=20260830-1&cute-star=1"></script>
+  <script src="ui/setter-board.js?setter-board=1&compact-bonus=1&star-bonus-fix=1&umt-fix=20260830-1&cute-star=1&star-dance-refresh=1"></script>
   <script src="ui/setter-board-polish.js?setter-polish=1"></script>
   <script src="ui/guesser-sidebar.js"></script>
   <script src="client/notes.js"></script>
@@ -1748,7 +1746,6 @@
   <script src="cuddle/cuddle-quests.js?v=9"></script>
   <script src="cuddle/cuddle-engine.js?v=9"></script>
   <script src="cuddle/cuddle-ui.js?v=9&umt-streamlined=1.0.2"></script>
-  <script src="cuddle/site-integration.js?v=9"></script>
 <!-- CUDDLE_MODE:SCRIPTS END -->
   <script src="client/my-games.js?umt-streamlined=1.0.2"></script>
   <script src="client/draft.js?guesser-polish=7"></script>

@@ -336,44 +336,20 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   filter: none;
 }
 
-/* Setter: pending-guess row — looks normal, feels alive.
+/* Setter: pending-guess row.
    The guesser's just-submitted guess, as shown to the setter awaiting their
    Keep/New decision. Tiles default to hollow with a dashed hairline outline
    and plain text; a tile with a determined hypothetical-feedback color
    (green/yellow/gray, from the preview against whatever secret the setter
    is drafting) fills in solid at that color, just dimmed a bit below full
    saturation so it still reads as provisional rather than a finished tile.
-   The only "this is still open" motion is a gentle up/down bob, each tile
-   a little out of phase with its neighbors, so the row reads as
-   waiting/alive rather than finished, without the urgency of a pulse or a
-   loading-spinner feel. No toggled one-shot class involved (a prior
-   version used a "committing" class added on confirm and never removed,
-   which then got carried into every later render by updateRow()'s
-   in-flight-animation preservation — this is a plain always-on animation
-   instead, so there's no state to get stuck). */
+   Sits still otherwise -- the only motion is the one-shot "hit" jump below,
+   played when a keystroke actually improves a tile's color. */
 #draftSetter .draft-row.pending-guess .history-tile {
   background: transparent !important;
   border: 1.5px dashed rgba(255, 255, 255, 0.4) !important;
   color: var(--text) !important;
   box-shadow: none !important;
-  animation: pending-guess-bob 2.2s ease-in-out infinite;
-}
-
-#draftSetter .draft-row.pending-guess .history-tile:nth-child(1) { animation-delay: 0ms; }
-#draftSetter .draft-row.pending-guess .history-tile:nth-child(2) { animation-delay: 120ms; }
-#draftSetter .draft-row.pending-guess .history-tile:nth-child(3) { animation-delay: 240ms; }
-#draftSetter .draft-row.pending-guess .history-tile:nth-child(4) { animation-delay: 360ms; }
-#draftSetter .draft-row.pending-guess .history-tile:nth-child(5) { animation-delay: 480ms; }
-
-@keyframes pending-guess-bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-3px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #draftSetter .draft-row.pending-guess .history-tile {
-    animation: none;
-  }
 }
 
 /* Hypothetical feedback preview — a *guess* at what the real feedback would
@@ -399,13 +375,9 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
    UP (gray -> yellow, gray -> green, or yellow -> green — see the
    rank-comparison logic in applyPreviewFeedback), it plays a one-shot
    "hit" animation instead of just silently recoloring, so the setter
-   feels which keystroke caused the change. A higher-specificity selector
-   (one extra class beyond the base rule below) is enough to override the
-   idle bob's `animation` shorthand without !important; the explicit
-   animation-delay: 0s also overrides the :nth-child stagger rules above
-   so the hit always starts immediately rather than waiting out that
-   tile's stagger offset. Removed via JS ~animation-duration after
-   playing, so the idle bob resumes afterward. */
+   feels which keystroke caused the change -- the row's only motion,
+   since it otherwise sits still. Removed via JS ~animation-duration
+   after playing. */
 #draftSetter .draft-row.pending-guess .history-tile.tile-hit-yellow {
   animation: tile-hit-yellow-kf 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
   animation-delay: 0s;

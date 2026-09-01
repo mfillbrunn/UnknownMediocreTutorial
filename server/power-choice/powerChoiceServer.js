@@ -708,10 +708,10 @@ function setterRewardPool() {
   return withCategory([
     // Tiers below are RARITY (1 Common, 2 Rare, 3 Legendary), rolled once
     // per offering -- see rewardPickRarityOptions. Common: Erase Two
-    // Clues, Yellow Smudge, Trade a Yellow, Blue Mode, Count Only, Fake
-    // Feedback, Force Timer. Rare: Fade a Green, Trade a Green, Blind
-    // Guess, Delayed Feedback. Legendary: Blind Spot, Add a Point, Vowel
-    // Refresh.
+    // Clues, Erase a Yellow, Yellow Smudge, Trade a Yellow, Blue Mode,
+    // Count Only, Fake Feedback, Force Timer. Rare: Fade a Green, Trade a
+    // Green, Blind Guess, Delayed Feedback. Legendary: Refresh the Row,
+    // Blind Spot, Add a Point, Vowel Refresh.
     {
       id: "spy-reset-positive-1",
       kind: "fixed",
@@ -765,6 +765,24 @@ function setterRewardPool() {
       title: "Trade a Green",
       description: "Give the Guesser one new green, but erase three yellow clues.",
       explanation: "A bigger risk for a bigger reward: one exact-position reveal in exchange for three present-letter clues forgotten."
+    },
+    {
+      id: "spy-erase-yellow-1",
+      kind: "fixed",
+      tier: 1,
+      icon: "🟨↶1",
+      title: "Erase a Yellow",
+      description: "Reset one random yellow letter.",
+      explanation: "One present-letter clue is fully erased, giving the Secretkeeper more legal secret words."
+    },
+    {
+      id: "spy-erase-row",
+      kind: "fixed",
+      tier: 3,
+      icon: "🟩🟨↺",
+      title: "Refresh the Row",
+      description: "Reset every green and yellow letter on whichever keyboard row currently holds the most of them.",
+      explanation: "Finds the QWERTY row (top, home, or bottom) with the most known letters right now and erases every one of them at once."
     },
     powerOption("blindSpot"),
     // One-off effects, activated immediately on pick (not persistent
@@ -1242,6 +1260,29 @@ function rewardEraseClues(state, kind, count) {
   return letters.map(letter => ({ letter, kind }));
 }
 
+// "Refresh the Row": whichever QWERTY row (KEYBOARD_ROWS) currently holds
+// the most green+yellow known letters gets every one of them erased at
+// once, via the same full eraseLetterKnowledge() every other reset reward
+// uses. Ties go to whichever row KEYBOARD_ROWS lists first -- there's no
+// meaningful difference between two equally-loaded rows, so a fixed
+// tiebreak keeps this deterministic rather than picking a winner to fight
+// over.
+function rewardEraseKeyboardRow(state) {
+  const known = feedbackLetters(state, true);
+  let bestRow = null;
+  let bestLetters = [];
+  for (const row of KEYBOARD_ROWS) {
+    const rowSet = new Set(row.split(""));
+    const lettersInRow = known.filter(letter => rowSet.has(letter));
+    if (lettersInRow.length > bestLetters.length) {
+      bestRow = row;
+      bestLetters = lettersInRow;
+    }
+  }
+  if (bestLetters.length) eraseLetterKnowledge(state, bestLetters);
+  return { row: bestRow, letters: bestLetters };
+}
+
 function rewardDemoteGreens(state, count) {
   const letters = rewardPickDistinctLetters(state, "green", count);
   for (const letter of letters) {
@@ -1423,6 +1464,10 @@ function rewardFixedOptionApplicable(state, option) {
       return unknownPresentCount >= 1;
     case "spy-trade-green":
       return knownGreenIndexes(state).size < 5;
+    case "spy-erase-yellow-1":
+      return yellowCount >= 1;
+    case "spy-erase-row":
+      return greenCount + yellowCount >= 1;
     case "inspector-yellow-1":
       return unknownPresentCount >= 1;
     case "inspector-remove-unused-2":
@@ -1789,6 +1834,14 @@ function effectDetailText(option, detail) {
       return detail?.green
         ? `Gave the Guesser ${detail.green.letter} at position ${detail.green.index + 1} as a green clue; erased yellow clue${detail.erasedYellows?.length === 1 ? "" : "s"}: ${clueText(detail.erasedYellows) || "none available"}.`
         : "No unrevealed position remained -- nothing to trade.";
+    case "spy-erase-yellow-1":
+      return detail?.letters?.length
+        ? `Reset yellow letter: ${clueText(detail.letters)}.`
+        : "No yellow letters remained.";
+    case "spy-erase-row":
+      return detail?.letters?.length
+        ? `Reset the ${detail.row} row: ${detail.letters.join(", ")}.`
+        : "No known letters remained on any row.";
     case "inspector-yellow-1":
       return detail?.letter
         ? `Yellow clue received: ${detail.letter}.`
@@ -2034,11 +2087,27 @@ function applyChoice(state, option, choice, room, roomId, io, context, payload) 
           grays: rewardResetGrayLetters(state, 4)
         };
         break;
-      case "spy-trade-green":
+      case "spy-trade-green": {
+        // Erase the 3 yellows FIRST, then grant the green -- the other
+        // order let eraseLetterKnowledge (which wipes a letter's GREEN
+        // clues too, not just yellow ones -- see resetLetterKnowledge.js)
+        // erase the green this same reward had just handed over, whenever
+        // the randomly-picked green's letter also happened to be one of
+        // the 3 yellows picked for erasure. Erasing first means that
+        // letter's old yellow info is already gone before the green
+        // (a different, definitely-untouched piece of info) gets added.
+        const erasedYellows = rewardEraseClues(state, "yellow", 3);
         detail = {
           green: addGreen(state),
-          erasedYellows: rewardEraseClues(state, "yellow", 3)
+          erasedYellows
         };
+        break;
+      }
+      case "spy-erase-yellow-1":
+        detail = { letters: rewardEraseClues(state, "yellow", 1) };
+        break;
+      case "spy-erase-row":
+        detail = rewardEraseKeyboardRow(state);
         break;
       case "inspector-yellow-1":
         detail = { letter: addYellow(state) };
