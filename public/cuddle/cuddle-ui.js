@@ -373,7 +373,6 @@
     const selectable = group.cards.filter(card => (
       !game.isInfiniteCard(card)
       && !state.draft.includes(card.id)
-      && (actionMode !== "exchange" || game.cardIsKnownGrey(card))
     ));
     const selectedCount = selectable.filter(card => selectedCards.has(card.id)).length;
     const unselectedCount = selectable.length - selectedCount;
@@ -413,7 +412,7 @@
   }
 
   function renderHand(state) {
-    const limit = actionMode === "exchange" ? game.getGreyExchangeCost() : game.getMulliganLimit();
+    const limit = game.getMulliganLimit();
     const groups = groupedHand(state);
     const promoted = groups.promoted.map(group => renderHandCard(group, state, limit)).join("");
     const vowels = groups.vowels.map(group => renderHandCard(group, state, limit)).join("");
@@ -453,26 +452,11 @@
           <button class="cuddle-btn cuddle-btn-ghost" data-action="cancel-mode">Cancel</button>
         </section>`;
     }
-    if (actionMode === "exchange") {
-      const cost = game.getGreyExchangeCost();
-      const valid = selectedCards.size === cost;
-      return `
-        <section class="cuddle-action-panel is-selecting">
-          <div><strong>Select exactly ${cost} red card${cost === 1 ? "" : "s"}</strong><span>${selectedCards.size}/${cost} selected · draw one card</span></div>
-          <button class="cuddle-btn cuddle-btn-primary" data-action="confirm-exchange" ${valid ? "" : "disabled"}>Recycle selected</button>
-          <button class="cuddle-btn cuddle-btn-ghost" data-action="cancel-mode">Cancel</button>
-        </section>`;
-    }
-
-    const greyCount = game.getGreyCards().length;
     return `
       <section class="cuddle-action-panel">
         <div class="cuddle-utility-actions">
           <button class="cuddle-btn" data-action="mulligan-mode" ${state.mulligansLeft > 0 ? "" : "disabled"}>
             Mulligan <span>${state.mulligansLeft} left · up to ${rules.mulliganSize}</span>
-          </button>
-          <button class="cuddle-btn" data-action="exchange-mode" ${greyCount >= rules.greyExchange ? "" : "disabled"}>
-            Recycle reds <span>${rules.greyExchange} → 1 · ${greyCount} available</span>
           </button>
         </div>
       </section>`;
@@ -570,7 +554,6 @@
       freeVowels: 5,
       mulligans: 2,
       mulliganSize: 3,
-      greyExchange: 3,
       yellowPoints: 2,
       earlyPoint: 5,
       questCadence: 3
@@ -585,7 +568,7 @@
             <article><strong>1 · Build, do not type</strong><p>Tap cards in order to make a five-letter word from the existing secret list. Q is its own card; use the always-available U card separately when a word needs QU.</p></article>
             <article><strong>2 · Reuse letters in hand</strong><p>Any letter currently shown in your hand can be tapped more than once while building a word. A, E, I, O, and U are bold, always available, and do not use counted hand slots. Yellow or green consonants stay in hand after a guess.</p></article>
             <article><strong>3 · Refill five slots</strong><p>You have five counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward five.</p></article>
-            <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards. Trade exactly ${rules.greyExchange} confirmed red cards for one new draw.</p></article>
+            <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards.</p></article>
             <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints}; grey tiles score −1. Solving early adds +${rules.earlyPoint} for every unused guess. You must also meet the cumulative round target.</p></article>
             <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}. Solve the word to choose an upgrade; every newly crossed 50-point milestone grants another.</p></article>
           </div>
@@ -621,11 +604,10 @@
 
   function chooseUtilityCard(glyph) {
     const state = currentState();
-    const limit = actionMode === "exchange" ? game.getGreyExchangeCost() : game.getMulliganLimit();
+    const limit = game.getMulliganLimit();
     const eligible = cardsForGlyph(glyph).filter(card => (
       !game.isInfiniteCard(card)
       && !state.draft.includes(card.id)
-      && (actionMode !== "exchange" || game.cardIsKnownGrey(card))
     ));
     const unselected = eligible.filter(card => !selectedCards.has(card.id));
     const selected = eligible.filter(card => selectedCards.has(card.id));
@@ -706,24 +688,12 @@
         selectedCards = new Set();
         setUiMessage("Choose cards to replace, then confirm.");
         return true;
-      case "exchange-mode":
-        game.clearDraft();
-        actionMode = "exchange";
-        selectedCards = new Set();
-        setUiMessage("Choose confirmed red cards to recycle.");
-        return true;
       case "cancel-mode":
         resetActionMode();
         setUiMessage("");
         return true;
       case "confirm-mulligan": {
         const result = game.mulligan([...selectedCards]);
-        setUiMessage(result.ok ? "" : result.error);
-        resetActionMode();
-        return true;
-      }
-      case "confirm-exchange": {
-        const result = game.exchangeGreys([...selectedCards]);
         setUiMessage(result.ok ? "" : result.error);
         resetActionMode();
         return true;
