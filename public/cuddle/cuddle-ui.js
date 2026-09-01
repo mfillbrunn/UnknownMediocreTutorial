@@ -349,12 +349,19 @@
       return (CARD_STATUS_ORDER[aStatus] ?? 99) - (CARD_STATUS_ORDER[bStatus] ?? 99)
         || a.glyph.localeCompare(b.glyph);
     };
+    const isPromotedConsonant = group => (
+      !VOWEL_SET.has(group.glyph)
+      && ["green", "yellow"].includes(game.getCardKnowledgeStatus(group.glyph))
+    );
     return {
+      promoted: allGroups
+        .filter(isPromotedConsonant)
+        .sort(sortByColorThenLetter),
       vowels: allGroups
         .filter(group => VOWEL_SET.has(group.glyph))
         .sort(sortByColorThenLetter),
       consonants: allGroups
-        .filter(group => !VOWEL_SET.has(group.glyph))
+        .filter(group => !VOWEL_SET.has(group.glyph) && !isPromotedConsonant(group))
         .sort(sortByColorThenLetter)
     };
   }
@@ -408,31 +415,29 @@
   function renderHand(state) {
     const limit = actionMode === "exchange" ? game.getGreyExchangeCost() : game.getMulliganLimit();
     const groups = groupedHand(state);
+    const promoted = groups.promoted.map(group => renderHandCard(group, state, limit)).join("");
     const vowels = groups.vowels.map(group => renderHandCard(group, state, limit)).join("");
     const consonants = groups.consonants.map(group => renderHandCard(group, state, limit)).join("");
     const submit = game.canSubmit();
     const showSubmitRow = state.status === "playing" && actionMode === "play";
+    const metaBadges = [
+      state.suggestedWord ? `<b>Hint ${escapeHtml(state.suggestedWord)}</b>` : "",
+      state.buffs.greyShield ? `<b>Grey shield ${state.buffs.greyShield}</b>` : ""
+    ].filter(Boolean).join("");
     return `
       <section class="cuddle-hand-panel">
-        <div class="cuddle-section-heading">
-          <span class="cuddle-eyebrow">YOUR HAND</span>
-          <span class="cuddle-hand-meta">
-            <b>${game.getCountedHandSize()}/${game.getHandLimit()} consonants</b>
-            ${state.suggestedWord ? `<b>Hint ${escapeHtml(state.suggestedWord)}</b>` : ""}
-            ${state.buffs.greyShield ? `<b>Grey shield ${state.buffs.greyShield}</b>` : ""}
-          </span>
-        </div>
-        <p class="cuddle-hand-rule"><strong>Bold vowels</strong> are always available. Every letter shown can be reused in the current word.</p>
-        <div class="cuddle-hand" aria-label="Letter card hand">
-          <div class="cuddle-hand-row cuddle-hand-vowels" aria-label="Bold, always-available vowels">${vowels}</div>
-          <div class="cuddle-hand-row cuddle-hand-consonants" aria-label="Consonants">${consonants || `<p class="cuddle-draft-empty">No consonant cards are currently available.</p>`}</div>
-        </div>
+        ${metaBadges ? `<div class="cuddle-hand-meta">${metaBadges}</div>` : ""}
         ${showSubmitRow ? `
           <div class="cuddle-submit-row">
             <button class="cuddle-btn cuddle-btn-primary cuddle-submit" data-action="submit" ${submit.ok ? "" : "disabled"}>Submit word</button>
             <button class="cuddle-btn cuddle-backspace" data-action="backspace" ${state.draft.length ? "" : "disabled"}
               aria-label="Delete the last drafted card" title="Delete last letter">⌫</button>
           </div>` : ""}
+        <div class="cuddle-hand" aria-label="Letter card hand">
+          ${promoted ? `<div class="cuddle-hand-row cuddle-hand-promoted" aria-label="Confirmed consonants">${promoted}</div>` : ""}
+          <div class="cuddle-hand-row cuddle-hand-vowels" aria-label="Bold, always-available vowels">${vowels}</div>
+          <div class="cuddle-hand-row cuddle-hand-consonants" aria-label="Consonants">${consonants || `<p class="cuddle-draft-empty">No consonant cards are currently available.</p>`}</div>
+        </div>
       </section>`;
   }
 

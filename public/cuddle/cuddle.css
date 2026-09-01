@@ -447,21 +447,6 @@
   background: var(--cuddle-surface);
 }
 
-.cuddle-section-heading {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.cuddle-section-heading > span {
-  color: var(--cuddle-muted);
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-
 .cuddle-hand {
   display: grid;
   gap: 11px;
@@ -476,15 +461,17 @@
   grid-template-columns: repeat(5, minmax(55px, 1fr));
 }
 
-.cuddle-hand-consonants {
+.cuddle-hand-consonants,
+.cuddle-hand-promoted {
   grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
 }
 
 .cuddle-hand-meta {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 5px;
+  margin-bottom: 10px;
 }
 
 .cuddle-hand-meta b {
@@ -601,7 +588,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 52px;
   gap: 9px;
-  margin-top: 14px;
+  margin-bottom: 14px;
 }
 
 .cuddle-backspace {
@@ -1018,7 +1005,8 @@
   }
 
   .cuddle-hand-vowels,
-  .cuddle-hand-consonants {
+  .cuddle-hand-consonants,
+  .cuddle-hand-promoted {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
@@ -1069,7 +1057,8 @@
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
-  .cuddle-hand-consonants {
+  .cuddle-hand-consonants,
+  .cuddle-hand-promoted {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
@@ -1086,19 +1075,6 @@
 
 /* UMT_USER_FIX_PACK_V1: CUDDLE START */
 /* Every visible hand letter is reusable; vowels are distinguished without an infinity badge. */
-.cuddle-hand-rule {
-  margin: -2px 0 9px;
-  color: rgba(231, 238, 248, 0.7);
-  font-size: 11px;
-  line-height: 1.35;
-  text-align: left;
-}
-
-.cuddle-hand-rule strong {
-  color: #fff;
-  font-weight: 950;
-}
-
 .cuddle-card.is-vowel {
   border-width: 2px;
   border-style: double;
