@@ -5,7 +5,7 @@
 
   const VERSION = 1;
   const STORAGE_KEY = "vowelPlay.cuddle.v1";
-  const THRESHOLDS = Object.freeze([10, 22, 35, 50, 65, 81, 100, 130, 165, 210, 250, 300]);
+  const THRESHOLDS = Object.freeze([-10, 2, 15, 30, 45, 61, 80, 110, 145, 190, 230, 280]);
   const MAX_GUESSES = 6;
   const BASE_HAND_SIZE = 5;
   const BASE_MULLIGANS = 2;

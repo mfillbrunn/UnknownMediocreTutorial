@@ -589,7 +589,7 @@
             <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints}; grey tiles score −1. Solving early adds +${rules.earlyPoint} for every unused guess. You must also meet the cumulative round target.</p></article>
             <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}. Solve the word to choose an upgrade; every newly crossed 50-point milestone grants another.</p></article>
           </div>
-          <p class="cuddle-rule-note"><strong>Campaign targets:</strong> ${window.CuddleEngine.THRESHOLDS.join(" · ")}. Clear round 12 at 300 points to win.</p>
+          <p class="cuddle-rule-note"><strong>Campaign targets:</strong> ${window.CuddleEngine.THRESHOLDS.join(" · ")}. Clear round ${window.CuddleEngine.THRESHOLDS.length} at ${window.CuddleEngine.THRESHOLDS[window.CuddleEngine.THRESHOLDS.length - 1]} points to win.</p>
           <button class="cuddle-btn cuddle-btn-primary" data-action="close-rules">Got it</button>
         </section>
       </div>`;
