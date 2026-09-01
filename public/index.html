@@ -481,18 +481,44 @@
       </button>
     </div>
 
-    <details class="play-room-tools">
-      <summary>Room tools</summary>
-      <p>Create or join a specific room instead of using the guided modes above.</p>
-      <div class="menu-buttons streamlined-menu-buttons room-tool-buttons">
-        <button id="playFriendBtn" class="menu-btn" type="button">Create a Room</button>
-        <div class="join-room-row">
-          <input id="joinRoomInput" type="text" class="join-room-input" placeholder="Room code" maxlength="8" autocomplete="off" autocapitalize="characters" aria-label="Room code" />
-          <button id="joinRoomBtn" class="menu-btn join-room-submit-btn" type="button" title="Join a specific room by code">Join</button>
-          <button id="quickJoinBtn" class="quick-join-circle-btn" type="button" title="Jump into the next open room" aria-label="Quick join">🎲</button>
+    <details id="playRoomTools" class="play-room-tools" open>
+      <summary>
+        <span class="room-tools-summary-copy">
+          <strong>Room tools</strong>
+          <small>Host, join, or find a match</small>
+        </span>
+        <span class="room-tools-summary-chevron" aria-hidden="true">⌄</span>
+      </summary>
+      <div class="menu-buttons streamlined-menu-buttons room-tool-buttons room-tools-body">
+        <section class="room-tool-card room-tool-host-card">
+          <div class="room-tool-copy">
+            <strong>Host a private room</strong>
+            <span>Create a room, then share its code with a friend.</span>
+          </div>
+          <button id="playFriendBtn" class="menu-btn room-tool-primary" type="button">Create room</button>
+        </section>
+
+        <section class="room-tool-card room-tool-join-card">
+          <label class="room-tool-label" for="joinRoomInput">Join with a room code</label>
+          <div class="join-room-row">
+            <input id="joinRoomInput" type="text" class="join-room-input" placeholder="e.g. AB12CD" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="joinRoomHint" />
+            <button id="joinRoomBtn" class="menu-btn join-room-submit-btn" type="button" title="Join a specific room by code">Join room</button>
+          </div>
+          <p id="joinRoomHint" class="room-tool-hint" aria-live="polite">Paste or type the code your friend sent you.</p>
+        </section>
+
+        <div class="room-tool-divider" role="separator"><span>Other ways to play</span></div>
+        <div class="room-tool-shortcuts">
+          <button id="quickJoinBtn" class="menu-btn room-tool-shortcut" type="button" title="Jump into the next open room">
+            <strong>Quick match</strong><span>Find the next open human room</span>
+          </button>
+          <button id="playVsAiBtn" class="menu-btn room-tool-shortcut" type="button">
+            <strong>Practice against AI</strong><span>Choose a difficulty before starting</span>
+          </button>
+          <button id="inviteAsyncBtn" class="menu-btn room-tool-shortcut" type="button" title="Create a casual invite link">
+            <strong>Async invite</strong><span>Create a link for a casual game</span>
+          </button>
         </div>
-        <button id="playVsAiBtn" class="menu-btn" type="button">Choose AI Difficulty</button>
-        <button id="inviteAsyncBtn" class="menu-btn" type="button" title="Create a casual invite link">Create Invite Link</button>
       </div>
     </details>
   </div>

@@ -7,7 +7,7 @@
   const STORAGE_KEY = "vowelPlay.cuddle.v1";
   const THRESHOLDS = Object.freeze([10, 22, 35, 50, 65, 81, 100, 130, 165, 210, 250, 300]);
   const MAX_GUESSES = 6;
-  const BASE_HAND_SIZE = 6;
+  const BASE_HAND_SIZE = 5;
   const BASE_MULLIGANS = 2;
   const BASE_MULLIGAN_SIZE = 3;
   const BASE_GREY_EXCHANGE = 3;
@@ -159,7 +159,7 @@
     _hydrateState() {
       const state = this.state;
       state.upgrades = { ...DEFAULT_UPGRADES, ...(state.upgrades || {}) };
-      // The counted hand is now fixed at six. Keep the legacy field so older
+      // The counted hand is now fixed at five. Keep the legacy field so older
       // saves remain readable, but an old starting-hand upgrade has no effect.
       state.upgrades.startingHand = 0;
       const normalizeCards = cards => (Array.isArray(cards) ? cards : [])
@@ -199,7 +199,7 @@
 
       // Migrate older saves by removing finite vowel copies, adding one free
       // unlimited card for every vowel, retaining positive unlimited letters,
-      // and enforcing six counted consonant slots.
+      // and enforcing five counted consonant slots.
       this._syncInfiniteCards();
       this._trimHandToLimit();
       if (["playing", "questReward"].includes(state.status)
@@ -640,15 +640,15 @@
       if (shielded) this.state.buffs.greyShield -= 1;
 
       const activeQuest = this.state.activeQuest;
-      const draftIds = this.state.draft.slice();
+      const draftIds = unique(this.state.draft);
       const draftCards = this.getDraftCards();
       this._discardCards(draftIds);
       this.state.draft = [];
 
       this._updateKnowledge(word, feedback);
       const infiniteUnlocked = this._syncInfiniteCards();
-      // Finite consonant cards leave when used. Positive consonants stay
-      // unlimited in one counted slot; vowels stay unlimited outside the limit.
+      // A finite consonant leaves once if it appeared in the submitted word.
+      // Positive consonants stay in one counted slot; vowels remain outside the limit.
       const replacements = this.drawToHandLimit();
 
       this.state.guessesUsed += 1;
@@ -719,7 +719,7 @@
       const scoreParts = [];
       if (yellowCount) scoreParts.push(`${yellowCount} yellow`);
       if (greyCount) scoreParts.push(shielded ? `${greyCount} greys shielded` : `${greyCount} grey`);
-      if (entry.infiniteUnlocked.length) scoreParts.push(`${entry.infiniteUnlocked.join(", ")} now unlimited`);
+      if (entry.infiniteUnlocked.length) scoreParts.push(`${entry.infiniteUnlocked.join(", ")} now stays in hand`);
       if (entry.earlyBonus) scoreParts.push(`+${entry.earlyBonus} early bonus`);
       this.state.lastMessage = `${word}: ${scoreDelta >= 0 ? "+" : ""}${scoreDelta} points${scoreParts.length ? ` (${scoreParts.join(", ")})` : ""}.`;
 
@@ -973,7 +973,7 @@
           this.state.suggestedWord = best.word;
           return added
             ? `Suggestion: ${best.word}. ${useful} replaced one finite hand card.`
-            : `Suggestion: ${best.word}. Your unlimited cards already cover its useful letters.`;
+            : `Suggestion: ${best.word}. Your reusable hand already covers its useful letters.`;
         }
         case "rouletteSecret": {
           const drawn = this._drawRewardCards(3);
@@ -1005,7 +1005,7 @@
           this.state.revealedPositions[index] = letter;
           this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
           this._syncInfiniteCards();
-          return `Position ${index + 1} is ${letter}; ${glyphForLetter(letter)} is now unlimited.`;
+          return `Position ${index + 1} is ${letter}; ${glyphForLetter(letter)} now stays in hand.`;
         }
         case "nonsense": {
           const glyphs = this._baseDeckGlyphs().filter(glyph => !this.isInfiniteGlyph(glyph));
@@ -1026,7 +1026,7 @@
             this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
             this._syncInfiniteCards();
           }
-          return `Probe result: ${letter} appears ${count} time${count === 1 ? "" : "s"} in the secret${count ? " and is now unlimited" : ""}.`;
+          return `Probe result: ${letter} appears ${count} time${count === 1 ? "" : "s"} in the secret${count ? " and is now stays in hand" : ""}.`;
         }
         case "revealLocation": {
           const hidden = this._hiddenPositions();
@@ -1039,7 +1039,7 @@
           this.state.revealedPositions[index] = letter;
           this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
           this._syncInfiniteCards();
-          return `Position ${index + 1} is ${letter}; ${glyphForLetter(letter)} is now unlimited.`;
+          return `Position ${index + 1} is ${letter}; ${glyphForLetter(letter)} now stays in hand.`;
         }
         case "letterProfile": {
           const letter = this._randomHandLetter();
@@ -1050,7 +1050,7 @@
             this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
             this._syncInfiniteCards();
           }
-          return `Profile: ${letter} occurs ${count} time${count === 1 ? "" : "s"}${count ? " and is now unlimited" : ""}.`;
+          return `Profile: ${letter} occurs ${count} time${count === 1 ? "" : "s"}${count ? " and is now stays in hand" : ""}.`;
         }
         default:
           return "Quest reward applied.";
@@ -1248,6 +1248,68 @@
       ];
     }
   }
+
+  /* UMT_USER_FIX_PACK_V1: ENGINE OVERRIDES START */
+  // Every visible hand glyph may be reused while constructing the current word.
+  CuddleGame.prototype.toggleDraft = function toggleDraftReusable(cardId) {
+    if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
+    const card = this.getHandCard(cardId);
+    if (!card) return { ok: false, error: "That card is no longer in your hand." };
+    if (this.getDraftWord().length + card.glyph.length > 5) {
+      return { ok: false, error: "That card would take the word past five letters." };
+    }
+    this.state.draft.push(cardId);
+    this.save();
+    return { ok: true };
+  };
+
+  CuddleGame.prototype.canBuildWord = function canBuildWordReusable(word, cards = this.state.hand) {
+    const tokens = tokensForWord(word);
+    if (!tokens) return false;
+    const available = new Set((cards || []).map(card => card?.glyph).filter(Boolean));
+    return tokens.every(token => available.has(token));
+  };
+
+  CuddleGame.prototype.getFeasibleWords = function getFeasibleWordsReusable(limit = 400) {
+    const feasible = [];
+    for (const word of this.getActiveWords()) {
+      if (this.canBuildWord(word, this.state.hand)) feasible.push(word);
+      if (feasible.length >= limit) break;
+    }
+    return feasible;
+  };
+
+  // Keep the Suggest Guess reward consistent with reusable finite letters.
+  const originalCuddleApplyRewardEffect = CuddleGame.prototype._applyRewardEffect;
+  CuddleGame.prototype._applyRewardEffect = function applyReusableLetterReward(rewardId) {
+    if (rewardId !== "suggestGuess") {
+      return originalCuddleApplyRewardEffect.call(this, rewardId);
+    }
+
+    const active = this.getActiveWords();
+    const available = new Set(this.state.hand.map(card => card.glyph));
+    let best = null;
+    let bestDeficit = Infinity;
+    active.forEach(word => {
+      const tokens = tokensForWord(word);
+      if (!tokens) return;
+      const missing = unique(tokens.filter(token => !available.has(token)));
+      const deficit = missing.length;
+      if (deficit < bestDeficit || (deficit === bestDeficit && this.random() < 0.08)) {
+        best = { word, missing };
+        bestDeficit = deficit;
+      }
+    });
+    if (!best) return "No suggestion was available.";
+
+    const useful = best.missing[0] || null;
+    const added = useful ? this._addBonusCard(useful) : null;
+    this.state.suggestedWord = best.word;
+    return added
+      ? `Suggestion: ${best.word}. ${useful} replaced one finite hand card.`
+      : `Suggestion: ${best.word}. Your reusable hand already covers its letters.`;
+  };
+  /* UMT_USER_FIX_PACK_V1: ENGINE OVERRIDES END */
 
   window.CuddleEngine = Object.freeze({
     CuddleGame,

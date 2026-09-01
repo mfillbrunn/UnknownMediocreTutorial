@@ -3422,3 +3422,96 @@ body:not(.light-theme) {
   }
 }
 /* UMT_GAMEPLAY_UI_FIX_V1: END */
+
+/* UMT_USER_FIX_PACK_V1: GAMEPLAY START */
+/* Constraint rows use the same five-tile footprint as feedback rows. */
+#setterScreen .setter-board,
+#guesserScreen .guesser-board,
+#guesserScreen .guesser-board-v9,
+#guesserScreen .center-col {
+  --umt-feedback-tile-size: clamp(25px, 14.5cqw, 66px);
+  --umt-feedback-tile-font: clamp(13px, 7.2cqw, 33px);
+  --umt-feedback-tile-gap: clamp(3px, 1.6cqw, 6px);
+}
+
+:is(#setterScreen, #guesserScreen) .constraint-row {
+  display: grid !important;
+  grid-template-columns: repeat(5, var(--umt-feedback-tile-size)) !important;
+  gap: var(--umt-feedback-tile-gap) !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  min-height: 0 !important;
+  box-sizing: content-box !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--r-10) !important;
+  background: color-mix(in srgb, var(--role-accent) 7%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--role-accent) 42%, transparent) !important;
+}
+
+:is(#setterScreen, #guesserScreen) .constraint-row::before {
+  content: none !important;
+}
+
+:is(#setterScreen, #guesserScreen) .constraint-row .history-tile {
+  flex: 0 0 var(--umt-feedback-tile-size) !important;
+  width: var(--umt-feedback-tile-size) !important;
+  height: var(--umt-feedback-tile-size) !important;
+  min-width: var(--umt-feedback-tile-size) !important;
+  aspect-ratio: 1 !important;
+  font-size: var(--umt-feedback-tile-font) !important;
+}
+
+@media (min-width: 640px) {
+  #guesserScreen .guesser-board,
+  #guesserScreen .guesser-board-v9,
+  #guesserScreen .center-col {
+    --umt-feedback-tile-size: clamp(24px, 9cqw, 34px);
+    --umt-feedback-tile-font: clamp(13px, 4.5cqw, 18px);
+  }
+}
+
+@media (min-width: 761px) and (hover: hover) and (pointer: fine) {
+  #setterScreen .setter-board,
+  #guesserScreen .guesser-board,
+  #guesserScreen .guesser-board-v9,
+  #guesserScreen .center-col {
+    --umt-feedback-tile-size: var(--desktop-game-tile-size, 48px);
+    --umt-feedback-tile-font: var(--desktop-game-tile-font-size, 24px);
+    --umt-feedback-tile-gap: 6px;
+  }
+}
+
+/* Keep the drawer control above overlays and make its full visual hit area clickable. */
+#setterSidebarToggle,
+#guesserSidebarToggle {
+  z-index: 1200 !important;
+  isolation: isolate;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#setterSidebarToggle > *,
+#guesserSidebarToggle > * {
+  pointer-events: none !important;
+}
+
+#setterSidebarToggle::before,
+#guesserSidebarToggle::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+:is(#setterScreen.setter-sidebar-swipe-active #setterSidebarToggle,
+    #guesserScreen.guesser-sidebar-swipe-active #guesserSidebarToggle) {
+  pointer-events: auto !important;
+}
+
+#setterSidebarSwipeEdge,
+#guesserSidebarSwipeEdge {
+  z-index: 900 !important;
+}
+/* UMT_USER_FIX_PACK_V1: GAMEPLAY END */

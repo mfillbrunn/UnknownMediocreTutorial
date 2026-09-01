@@ -327,7 +327,8 @@
   }
 
   function renderHandCard(group, state, limit) {
-    const infiniteCard = group.cards.find(card => game.isInfiniteCard(card));
+    // A displayed glyph is reusable in play mode, whether its backing card is finite or persistent.
+    const persistentCard = group.cards.find(card => game.isInfiniteCard(card));
     const draftedCount = state.draft.filter(id => group.cards.some(card => card.id === id)).length;
     const selectable = group.cards.filter(card => (
       !game.isInfiniteCard(card)
@@ -338,13 +339,14 @@
     const unselectedCount = selectable.length - selectedCount;
     const status = game.getCardKnowledgeStatus(group.glyph);
     const disabled = state.status !== "playing"
-      || (actionMode === "play" && !infiniteCard && unselectedCount === 0)
+      || (actionMode === "play" && game.getDraftWord().length >= 5)
       || (actionMode !== "play" && selectable.length === 0)
       || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
     const classes = [
       "cuddle-card",
       `is-card-${status}`,
-      infiniteCard ? "is-infinite" : "",
+      persistentCard ? "is-infinite" : "",
+      VOWEL_SET.has(group.glyph) ? "is-vowel" : "",
       draftedCount ? "has-drafted" : "",
       selectedCount ? "is-selected" : ""
     ].filter(Boolean).join(" ");
@@ -354,7 +356,8 @@
           : "grey · unused";
     const count = group.cards.length;
     const details = [
-      infiniteCard ? "unlimited" : `${count} ${count === 1 ? "copy" : "copies"}`,
+      "reusable while in hand",
+      persistentCard ? "stays in hand after a guess" : `${count} ${count === 1 ? "copy" : "copies"}`,
       statusLabel,
       draftedCount ? `${draftedCount} in the grid` : "",
       selectedCount ? `${selectedCount} selected` : ""
@@ -365,9 +368,7 @@
         aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(details)}"
         title="${escapeHtml(details)}">
         <span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>
-        ${infiniteCard
-          ? `<span class="cuddle-card-count is-infinite" aria-hidden="true">∞</span>`
-          : count > 1 ? `<span class="cuddle-card-count" aria-hidden="true">${count}</span>` : ""}
+        ${count > 1 ? `<span class="cuddle-card-count" aria-hidden="true">${count}</span>` : ""}
       </button>`;
   }
 
@@ -381,12 +382,14 @@
         <div class="cuddle-section-heading">
           <span class="cuddle-eyebrow">YOUR HAND</span>
           <span class="cuddle-hand-meta">
+            <b>${game.getCountedHandSize()}/${game.getHandLimit()} consonants</b>
             ${state.suggestedWord ? `<b>Hint ${escapeHtml(state.suggestedWord)}</b>` : ""}
             ${state.buffs.greyShield ? `<b>Grey shield ${state.buffs.greyShield}</b>` : ""}
           </span>
         </div>
+        <p class="cuddle-hand-rule"><strong>Bold vowels</strong> are always available. Every letter shown can be reused in the current word.</p>
         <div class="cuddle-hand" aria-label="Letter card hand">
-          <div class="cuddle-hand-row cuddle-hand-vowels" aria-label="Always-available vowels">${vowels}</div>
+          <div class="cuddle-hand-row cuddle-hand-vowels" aria-label="Bold, always-available vowels">${vowels}</div>
           <div class="cuddle-hand-row cuddle-hand-consonants" aria-label="Consonants">${consonants || `<p class="cuddle-draft-empty">No consonant cards are currently available.</p>`}</div>
         </div>
       </section>`;
@@ -523,7 +526,7 @@
   function renderRulesOverlay() {
     const state = currentState();
     const rules = state ? game.getRulesSummary() : {
-      handSize: 6,
+      handSize: 5,
       freeVowels: 5,
       mulligans: 2,
       mulliganSize: 3,
@@ -540,8 +543,8 @@
           <h2 id="cuddleRulesTitle">Cuddle rules</h2>
           <div class="cuddle-rules-grid">
             <article><strong>1 · Build, do not type</strong><p>Tap cards in order to make a five-letter word from the existing secret list. Q is its own card; use the always-available U card separately when a word needs QU.</p></article>
-            <article><strong>2 · Use unlimited letters</strong><p>A, E, I, O, and U are always available, do not use hand slots, and show ∞. Any consonant that turns yellow or green also becomes unlimited for the rest of the round and uses one counted slot.</p></article>
-            <article><strong>3 · Refill the hand</strong><p>You have six counted consonant slots. After a guess, finite cards that were used leave the hand and the draw pile refills only the open counted slots back toward six.</p></article>
+            <article><strong>2 · Reuse letters in hand</strong><p>Any letter currently shown in your hand can be tapped more than once while building a word. A, E, I, O, and U are bold, always available, and do not use counted hand slots. Yellow or green consonants stay in hand after a guess.</p></article>
+            <article><strong>3 · Refill five slots</strong><p>You have five counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward five.</p></article>
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards. Trade exactly ${rules.greyExchange} confirmed grey cards for one new draw.</p></article>
             <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints}; grey tiles score −1. Solving early adds +${rules.earlyPoint} for every unused guess. You must also meet the cumulative round target.</p></article>
             <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}. Solve the word to choose an upgrade; every newly crossed 50-point milestone grants another.</p></article>
@@ -570,11 +573,9 @@
   }
 
   function choosePlayCard(glyph) {
-    const state = currentState();
     const cards = cardsForGlyph(glyph);
-    const card = cards.find(item => game.isInfiniteCard(item))
-      || cards.find(item => !state.draft.includes(item.id));
-    if (!card) return { ok: false, error: `No unused ${glyph} copy remains in your hand.` };
+    const card = cards.find(item => game.isInfiniteCard(item)) || cards[0];
+    if (!card) return { ok: false, error: `${glyph} is not currently in your hand.` };
     return game.toggleDraft(card.id);
   }
 

@@ -1084,3 +1084,38 @@
     animation: none !important;
   }
 }
+
+/* UMT_USER_FIX_PACK_V1: CUDDLE START */
+/* Every visible hand letter is reusable; vowels are distinguished without an infinity badge. */
+.cuddle-hand-rule {
+  margin: -2px 0 9px;
+  color: rgba(231, 238, 248, 0.7);
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.cuddle-hand-rule strong {
+  color: #fff;
+  font-weight: 950;
+}
+
+.cuddle-card.is-vowel {
+  border-width: 2px;
+  border-style: double;
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(246, 178, 202, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), 0 5px 14px rgba(0, 0, 0, 0.18);
+}
+
+.cuddle-card.is-vowel .cuddle-card-letter {
+  font-weight: 950;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.cuddle-card-count.is-infinite {
+  display: none !important;
+}
+/* UMT_USER_FIX_PACK_V1: CUDDLE END */
