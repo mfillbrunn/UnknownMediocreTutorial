@@ -14,6 +14,8 @@ const { AchievementService } = require("./achievements/service");
 const { loadRegistry } = require("./stageRegistry");
 const hooks = require("./hooks");
 const registerSinglePlayerSocketHandlers = require("./socketHandlers");
+const { ChallengeService } = require("./challenges/challengeService"); // UMT_CHALLENGES_V1
+const registerChallengeSocketHandlers = require("./challenges/socketHandlers"); // UMT_CHALLENGES_V1
 
 function registerSinglePlayer(io, context) {
   loadRegistry(context);
@@ -21,12 +23,17 @@ function registerSinglePlayer(io, context) {
   const progressRepository = new ProgressRepository(context.supabase);
   const achievementService = new AchievementService(context.supabase);
   const sessionService = new SessionService({ context, progressRepository, achievementService });
+  // UMT_CHALLENGES_V1: challenge matches reuse the single-player room/mode shell,
+  // but keep their own catalog/results rather than campaign stage persistence.
+  const challengeService = new ChallengeService({ context, progressRepository, sessionService });
+  sessionService.challengeService = challengeService;
 
   hooks.configure({ sessionService, achievementService });
 
   registerSinglePlayerSocketHandlers(io, context, { sessionService });
+  registerChallengeSocketHandlers(io, context, { challengeService });
 
-  return { sessionService, achievementService, progressRepository };
+  return { sessionService, challengeService, achievementService, progressRepository }; // UMT_CHALLENGES_V1
 }
 
 module.exports = { registerSinglePlayer };

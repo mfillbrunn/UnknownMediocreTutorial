@@ -1,0 +1,23 @@
+/* UMT_CHALLENGES_V1 */
+.challenge-shell { width:min(920px, calc(100vw - 28px)); max-height:calc(100vh - 28px); overflow:auto; }
+.challenge-header { position:sticky; top:0; z-index:4; background:var(--menu-bg, #111); }
+.challenge-intro { margin:0 0 16px; opacity:.82; text-align:center; }
+.challenge-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
+.challenge-card { border:1px solid rgba(255,255,255,.14); border-radius:18px; padding:16px; background:rgba(255,255,255,.045); }
+.challenge-card h3 { margin:0; }
+.challenge-card p { opacity:.82; line-height:1.4; }
+.challenge-card-head { display:flex; gap:12px; align-items:center; }
+.challenge-card-head small { opacity:.65; }
+.challenge-card-icon { font-size:30px; }
+.challenge-difficulties { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.challenge-difficulty-btn { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.challenge-stars { letter-spacing:1px; font-size:13px; white-space:nowrap; }
+.challenge-result-panel { text-align:center; }
+.challenge-result-stars { font-size:46px; letter-spacing:5px; margin:12px 0; }
+.challenge-result-details { list-style:none; padding:0; margin:16px auto; max-width:430px; text-align:left; line-height:1.8; }
+.challenge-achievements-list { list-style:none; padding:0; display:grid; gap:9px; }
+.challenge-achievement { display:flex; gap:10px; align-items:center; padding:11px 13px; border-radius:13px; background:rgba(255,255,255,.05); }
+.challenge-achievement small { display:block; opacity:.7; margin-top:2px; }
+.challenge-achievement.is-locked { opacity:.48; }
+.challenge-achievement-icon { width:28px; text-align:center; }
+@media (max-width:600px) { .challenge-difficulties { grid-template-columns:1fr; } }
