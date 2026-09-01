@@ -1923,19 +1923,6 @@ body.menu-mode .screen.game-menu:not(#startupScreen) {
   margin: 0 0 10px;
 }
 
-.menu-brand-mark {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid rgba(246, 178, 202, 0.4);
-  border-radius: 14px;
-  background: rgba(169, 83, 114, 0.28);
-  color: #fff;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-}
-
 .streamlined-menu-screen .menu-title {
   margin: 0 !important;
   line-height: 1.05;
