@@ -11,7 +11,7 @@
       triggerId: "cuddleMultiplayerMenuBtn",
       screenId: "cuddleMultiplayerMenuScreen",
       panelId: "cuddleMultiplayerMenuItems",
-      itemIds: ["playFriendMainBtn", "rankedMenuBtn", "myGamesBtn"],
+      itemIds: ["playFriendMainBtn", "playRoomTools", "rankedMenuBtn", "myGamesBtn"],
       childRoutes: [
         ["playFriendScreen", ".screen-back-btn"],
         ["rankedPlayScreen", ".screen-back-btn"],
@@ -92,15 +92,15 @@
 
     screen = document.createElement("section");
     screen.id = config.screenId;
-    screen.className = "screen game-menu cuddle-mode-hub";
+    screen.className = "screen game-menu streamlined-menu-screen cuddle-mode-hub";
     screen.innerHTML = `
-      <div class="menu-center cuddle-mode-hub-shell">
+      <div class="menu-center streamlined-menu-card cuddle-mode-hub-shell">
         <div class="screen-back-header cuddle-mode-hub-header">
           <button type="button" class="menu-btn screen-back-btn cuddle-mode-hub-back">\u2190 Back</button>
           <h2 class="menu-title cuddle-mode-hub-title">${config.label}</h2>
           <span class="cuddle-mode-hub-header-spacer" aria-hidden="true"></span>
         </div>
-        <div id="${config.panelId}" class="menu-buttons play-menu-buttons cuddle-mode-hub-items"></div>
+        <div id="${config.panelId}" class="menu-buttons streamlined-menu-buttons play-menu-buttons cuddle-mode-hub-items"></div>
       </div>`;
 
     const appMain = byId("appMain") || byId("startupScreen")?.parentElement || document.body;
@@ -129,6 +129,51 @@
     const record = { ...config, trigger, screen, panel, notificationObserver: null };
     records.push(record);
     return record;
+  }
+
+
+  // UMT_USER_FIX_PACK_V1: make room-code entry self-explanatory and forgiving.
+  function installRoomTools() {
+    const details = byId("playRoomTools");
+    const panel = byId("cuddleMultiplayerMenuItems");
+    const input = byId("joinRoomInput");
+    const join = byId("joinRoomBtn");
+    const hint = byId("joinRoomHint");
+
+    // Keep the tools with Multiplayer even when a locally edited GROUPS list
+    // does not yet mention playRoomTools.
+    if (details && panel && details.parentElement !== panel) panel.appendChild(details);
+    if (!input || !join || input.__umtRoomToolsBound) return;
+
+    input.__umtRoomToolsBound = true;
+    const normalize = value => String(value || "")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, Number(input.maxLength) || 8);
+
+    const sync = () => {
+      const code = normalize(input.value);
+      if (input.value !== code) input.value = code;
+      const ready = code.length > 0;
+      join.disabled = !ready;
+      join.setAttribute("aria-disabled", String(!ready));
+      if (hint) {
+        hint.textContent = ready
+          ? `Ready to join ${code}. Press Enter or choose Join room.`
+          : "Paste or type the code your friend sent you.";
+      }
+    };
+
+    input.addEventListener("input", sync);
+    input.addEventListener("paste", () => requestAnimationFrame(sync));
+    input.addEventListener("focus", () => details?.setAttribute("open", ""));
+    input.addEventListener("keydown", event => {
+      if (event.key !== "Enter" || join.disabled) return;
+      event.preventDefault();
+      join.click();
+    });
+    details?.setAttribute("open", "");
+    sync();
   }
 
   function notificationIsVisible(source) {
@@ -201,6 +246,7 @@
     if (!menu) return;
 
     GROUPS.forEach(config => createGroup(menu, config));
+    installRoomTools();
     records.forEach(connectNotification);
     preserveMenuTutorial();
     document.addEventListener("click", redirectGroupedBack, true);

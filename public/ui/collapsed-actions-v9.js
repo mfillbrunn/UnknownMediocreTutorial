@@ -443,7 +443,63 @@
     watchForLateMeter();
   }
 
+
+  // UMT_USER_FIX_PACK_V1: delegated drawer-toggle safety net.
+  // The listener remains valid even if a screen subtree is replaced.
+  function drawerToggleFromClick(event) {
+    const rawTarget = event.target;
+    const target = rawTarget instanceof Element
+      ? rawTarget
+      : rawTarget?.parentElement || null;
+    const toggle = target?.closest?.("#setterSidebarToggle, #guesserSidebarToggle");
+    if (!toggle || event.__umtDrawerToggleHandled) return;
+
+    const role = toggle.id === "setterSidebarToggle" ? "setter" : "guesser";
+    const roleScreen = screenFor(role);
+    if (!roleScreen || !roleScreen.contains(toggle)) return;
+
+    event.__umtDrawerToggleHandled = true;
+    if (event.cancelable) event.preventDefault();
+    event.stopPropagation();
+
+    const nextCollapsed = !drawerClosed(role);
+    const setter = role === "setter"
+      ? window.setSetterSidebarCollapsed
+      : window.setGuesserSidebarCollapsed;
+
+    if (typeof setter === "function") {
+      setter(nextCollapsed);
+    } else {
+      const className = role === "setter"
+        ? "setter-sidebar-collapsed"
+        : "guesser-sidebar-collapsed";
+      roleScreen.classList.toggle(className, nextCollapsed);
+      roleScreen.dataset.sidebarCollapsed = nextCollapsed ? "true" : "false";
+      toggle.setAttribute("aria-expanded", String(!nextCollapsed));
+    }
+
+    window.notifyTutorialSidebarToggled?.();
+    scheduleUpdate();
+  }
+
+  function clearDrawerSwipeVisuals() {
+    screenFor("setter")?.classList.remove("setter-sidebar-swipe-active");
+    screenFor("guesser")?.classList.remove("guesser-sidebar-swipe-active");
+  }
+
+  function installDrawerToggleFallback() {
+    if (document.documentElement.dataset.umtDrawerToggleFallback === "1") return;
+    document.documentElement.dataset.umtDrawerToggleFallback = "1";
+    document.addEventListener("click", drawerToggleFromClick, true);
+    window.addEventListener("blur", clearDrawerSwipeVisuals);
+    window.addEventListener("pointercancel", clearDrawerSwipeVisuals, true);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) clearDrawerSwipeVisuals();
+    });
+  }
+
   function init() {
+    installDrawerToggleFallback();
     ensureDock("setter");
     ensureDock("guesser");
     installObservers();

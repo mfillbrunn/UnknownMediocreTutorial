@@ -183,45 +183,50 @@
 
     if (!setterScreen || !sidebar || !toggle || !edge) return;
 
-    // Reconnect/polish code may invoke initializers more than once -- bind
-    // the listeners below exactly once regardless, and still resync visual
-    // state (class, dataset, aria) every call.
-    if (toggle.dataset.drawerBound === "true") {
-      setCollapsed(readCollapsed(), false);
-      return;
-    }
-    toggle.dataset.drawerBound = "true";
-
+    // UMT_USER_FIX_PACK_V1: data-* flags can survive cloned/replaced nodes even
+    // though their listeners do not. Bind each live node independently instead.
     setCollapsed(readCollapsed(), false);
+    delete toggle.dataset.drawerBound;
 
-    toggle.addEventListener("click", event => {
-      event.stopPropagation();
-      setCollapsed(!isCollapsed());
-      window.notifyTutorialSidebarToggled?.();
-    });
+    if (!toggle.__umtSetterDrawerBound) {
+      toggle.__umtSetterDrawerBound = true;
+      toggle.addEventListener("click", event => {
+        event.stopPropagation();
+        setCollapsed(!isCollapsed());
+        window.notifyTutorialSidebarToggled?.();
+      });
+    }
 
-    sidebar.addEventListener("pointerdown", event => {
-      beginGesture(event, "close");
-    });
+    if (!sidebar.__umtSetterDrawerBound) {
+      sidebar.__umtSetterDrawerBound = true;
+      sidebar.addEventListener("pointerdown", event => {
+        beginGesture(event, "close");
+      });
+      sidebar.addEventListener(
+        "click",
+        event => {
+          if (Date.now() < suppressSidebarClickUntil) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        },
+        true
+      );
+    }
 
-    edge.addEventListener("pointerdown", event => {
-      beginGesture(event, "open");
-    });
+    if (!edge.__umtSetterDrawerBound) {
+      edge.__umtSetterDrawerBound = true;
+      edge.addEventListener("pointerdown", event => {
+        beginGesture(event, "open");
+      });
+    }
 
-    sidebar.addEventListener(
-      "click",
-      event => {
-        if (Date.now() < suppressSidebarClickUntil) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      },
-      true
-    );
-
-    window.addEventListener("pointermove", onPointerMove, { passive: false });
-    window.addEventListener("pointerup", finishGesture, { passive: true });
-    window.addEventListener("pointercancel", finishGesture, { passive: true });
+    if (!window.__umtSetterDrawerPointerBound) {
+      window.__umtSetterDrawerPointerBound = true;
+      window.addEventListener("pointermove", onPointerMove, { passive: false });
+      window.addEventListener("pointerup", finishGesture, { passive: true });
+      window.addEventListener("pointercancel", finishGesture, { passive: true });
+    }
   }
 
   // Congratulation text for a genuinely good decision -- shown ONLY as the
