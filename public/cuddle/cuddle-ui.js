@@ -142,6 +142,12 @@
     return game?.state || null;
   }
 
+  // Rounds the player is scored on. Boss rounds sit between them and are
+  // pass/fail, so they are never part of this count.
+  function scoringRounds() {
+    return window.CuddleEngine.THRESHOLDS.length;
+  }
+
   function render() {
     if (!root) return;
     if (landing || !game?.state) root.innerHTML = renderLanding();
@@ -227,10 +233,10 @@
           <div class="cuddle-logo" aria-hidden="true">C</div>
           <p class="cuddle-eyebrow">SINGLE-PLAYER ROGUELITE</p>
           <h1>CUDDLE</h1>
-          <p class="cuddle-tagline">Build words from cards. Learn the secret. Shape the deck. Survive twelve rounds.</p>
+          <p class="cuddle-tagline">Build words from cards. Learn the secret. Shape the deck. Survive ${scoringRounds()} rounds and three bosses.</p>
           <div class="cuddle-save-summary ${hasRun ? "" : "is-empty"}">
             <span>${escapeHtml(statusLabel)}</span>
-            ${hasRun ? `<strong>Score ${state.score} · Round ${state.round}/12</strong>` : `<strong>Your run saves in this browser.</strong>`}
+            ${hasRun ? `<strong>Score ${state.score} · Round ${state.round}/${scoringRounds()}</strong>` : `<strong>Your run saves in this browser.</strong>`}
           </div>
           <div class="cuddle-landing-actions">
             ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>` : ""}
@@ -276,8 +282,10 @@
         ${detailsOpen ? `
           <section id="cuddleRunDetails" class="cuddle-details-panel" aria-label="Additional run information">
             <div class="cuddle-detail-badges">
-              <span class="cuddle-detail-badge is-goal"><b>Round ${state.round}/12</b> Goal ${target}</span>
-              <span class="cuddle-detail-badge"><b>Still needed</b> ${needed}</span>
+              ${game.isBossRound()
+                ? `<span class="cuddle-detail-badge is-goal"><b>Boss round</b> Survive it — no score needed</span>`
+                : `<span class="cuddle-detail-badge is-goal"><b>Round ${state.round}/${scoringRounds()}</b> Goal ${target}</span>
+              <span class="cuddle-detail-badge"><b>Still needed</b> ${needed}</span>`}
               <span class="cuddle-detail-badge"><b>Draw / discard</b> ${drawPile} / ${recyclable}</span>
               <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> +${rules.yellowPoints}</span>
               <span class="cuddle-detail-badge"><b>Green</b> +${rules.greenPoints}</span>
@@ -829,10 +837,10 @@
             <article><strong>3 · Refill five slots</strong><p>You have five counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward five.</p></article>
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards.</p></article>
             <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints} and green tiles +${rules.greenPoints}; grey tiles give information but never change your score. Solving early adds +${rules.earlyPoint} for every unused guess, and every mulligan you did not spend is worth +${rules.mulliganPoints}. You must also meet the cumulative round target.</p></article>
-            <article><strong>7 · Boss rounds</strong><p>Before rounds 4, 7 and 10 -- and once more at the very end -- you pick one of two bosses. A boss round is pass or fail: nothing scores and no target applies, you just have to solve it. Clear one and you keep its permanent reward on top of the usual pick.</p></article>
-            <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}. Solve the word to choose an upgrade; every newly crossed 50-point milestone grants another.</p></article>
+            <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"} and pay bonus points. Solve the word to choose an upgrade after every round.</p></article>
+            <article><strong>7 · Boss rounds</strong><p>Before rounds 4 and 7 -- and once more after the last round -- you pick one of two bosses. A boss round is pass or fail: nothing scores and no target applies, you just have to solve it. Clear one and you keep its permanent reward on top of the usual pick.</p></article>
           </div>
-          <p class="cuddle-rule-note"><strong>Campaign targets:</strong> ${window.CuddleEngine.THRESHOLDS.join(" · ")}. Clear round ${window.CuddleEngine.THRESHOLDS.length} at ${window.CuddleEngine.THRESHOLDS[window.CuddleEngine.THRESHOLDS.length - 1]} points to win.</p>
+          <p class="cuddle-rule-note"><strong>Campaign targets:</strong> ${window.CuddleEngine.THRESHOLDS.join(" · ")}. Clear round ${scoringRounds()} at ${window.CuddleEngine.THRESHOLDS[scoringRounds() - 1]} points, then beat the final boss to win.</p>
           <button class="cuddle-btn cuddle-btn-primary" data-action="close-rules">Got it</button>
         </section>
       </div>`;

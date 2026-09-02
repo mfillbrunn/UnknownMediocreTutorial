@@ -166,7 +166,9 @@
 
 .cuddle-progress {
   display: grid;
-  grid-template-columns: repeat(12, minmax(24px, 1fr));
+  /* One node per scoring round. Boss rounds are interludes between them and
+     do not get their own node. */
+  grid-template-columns: repeat(9, minmax(24px, 1fr));
   gap: 7px;
   margin: 2px 0 0;
 }

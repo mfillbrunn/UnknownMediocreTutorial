@@ -5,10 +5,10 @@
 
   const VERSION = 1;
   const STORAGE_KEY = "vowelPlay.cuddle.v1";
-  // Cumulative score gates, one per scoring round. Only nine gates were
-  // specified; rounds 10-12 hold at the final 300 rather than inventing
-  // numbers, because by then the boss rounds are carrying the difficulty.
-  const THRESHOLDS = Object.freeze([25, 50, 75, 110, 140, 170, 200, 250, 300, 300, 300, 300]);
+  // Cumulative score gates, one per SCORING round -- boss rounds sit between
+  // them and are pass/fail, so they neither score nor need a gate. Nine
+  // scoring rounds plus the three bosses below is twelve rounds played.
+  const THRESHOLDS = Object.freeze([25, 50, 75, 110, 140, 170, 200, 250, 300]);
   const MAX_GUESSES = 6;
   const BASE_HAND_SIZE = 5;
   const BASE_MULLIGANS = 2;
@@ -27,10 +27,11 @@
   // reward (+5 a pick, stacking) or the Quest Head Start boss reward is taken.
   const QUEST_POINTS_PER_PICK = 5;
 
-  // Boss rounds sit BEFORE these scoring rounds, plus one final boss after the
-  // last one. They are pass/fail: no score, no threshold, but clearing one
-  // grants an ordinary reward AND the boss's own permanent upgrade.
-  const BOSS_BEFORE_ROUNDS = Object.freeze([4, 7, 10]);
+  // Bosses break the nine scoring rounds into groups of three: scoring rounds
+  // 1-3, boss, 4-6, boss, 7-9, then the final boss. They are pass/fail -- no
+  // score, no threshold -- but clearing one grants an ordinary reward AND the
+  // boss's own permanent upgrade.
+  const BOSS_BEFORE_ROUNDS = Object.freeze([4, 7]);
 
   const DEFAULT_UPGRADES = Object.freeze({
     startingHand: 0,
@@ -1640,7 +1641,7 @@
       }
 
       this.state.round = next;
-      // Bosses gate entry to rounds 4, 7 and 10.
+      // Bosses gate entry to scoring rounds 4 and 7.
       if (this._openBossGate(next)) return;
       this._beginRound();
     }
