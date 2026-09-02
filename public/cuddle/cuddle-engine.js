@@ -8,7 +8,7 @@
   // Cumulative score gates, one per SCORING round -- boss rounds sit between
   // them and are pass/fail, so they neither score nor need a gate. Nine
   // scoring rounds plus the three bosses below is twelve rounds played.
-  const THRESHOLDS = Object.freeze([25, 50, 75, 110, 140, 170, 200, 250, 300]);
+  const THRESHOLDS = Object.freeze([15, 40, 65, 100, 130, 160, 190, 240, 290]);
   const MAX_GUESSES = 6;
   const BASE_HAND_SIZE = 5;
   const BASE_MULLIGANS = 2;
@@ -1551,6 +1551,12 @@
           icon: "♻️",
           title: "Reward Refresh",
           description: "Gain one refresh whenever you choose a quest reward."
+        },
+        {
+          id: "questPoints",
+          icon: "🏅",
+          title: "Quest Value",
+          description: "Quests are worth 5 more points. Stacks every time you take it."
         }
       ];
       if (this.state.upgrades.mulliganSize < 2) {
@@ -1611,6 +1617,9 @@
         case "questRefreshes":
         case "questCadence":
           this.state.upgrades[choice.id] += 1;
+          break;
+        case "questPoints":
+          this.state.upgrades.questPoints += QUEST_POINTS_PER_PICK;
           break;
         default:
           return { ok: false, error: "Unknown upgrade." };
@@ -1886,12 +1895,6 @@
         : "No extra letters were available to add.";
     }
 
-    // Quest Value stacks: every pick makes quests worth another 5 points.
-    if (rewardId === "questValue") {
-      this.state.upgrades.questPoints = (Number(this.state.upgrades.questPoints) || 0)
-        + QUEST_POINTS_PER_PICK;
-      return `Quests are now worth ${this.state.upgrades.questPoints} points.`;
-    }
     const originalMessage = cuddleV2OriginalRewardEffect.call(this, rewardId);
     if (typeof originalMessage !== "string") return originalMessage;
     return originalMessage.replace(/and is now stays in hand/g, "and now stays in hand");
