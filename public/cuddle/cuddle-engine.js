@@ -10,7 +10,6 @@
   const BASE_HAND_SIZE = 5;
   const BASE_MULLIGANS = 2;
   const BASE_MULLIGAN_SIZE = 3;
-  const BASE_GREY_EXCHANGE = 3;
   const ALWAYS_AVAILABLE_VOWELS = Object.freeze(["A", "E", "I", "O", "U"]);
   const VOWELS = new Set(ALWAYS_AVAILABLE_VOWELS);
   const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -18,7 +17,6 @@
   const DEFAULT_UPGRADES = Object.freeze({
     startingHand: 0,
     extraMulligans: 0,
-    exchangeReduction: 0,
     mulliganSize: 0,
     yellowPoints: 0,
     earlyRoundPoint: 0,
@@ -188,7 +186,7 @@
       while (state.revealedPositions.length < 5) state.revealedPositions.push(null);
       state.questRewardChoices = Array.isArray(state.questRewardChoices) ? state.questRewardChoices : [];
       state.upgradeChoices = Array.isArray(state.upgradeChoices)
-        ? state.upgradeChoices.filter(choice => choice?.id !== "startingHand")
+        ? state.upgradeChoices.filter(choice => choice?.id !== "startingHand" && choice?.id !== "exchangeReduction")
         : [];
       state.deferredRewards = Array.isArray(state.deferredRewards) ? state.deferredRewards : [];
       state.buffs = { greyShield: 0, ...(state.buffs || {}) };
@@ -292,7 +290,6 @@
         freeVowels: ALWAYS_AVAILABLE_VOWELS.length,
         mulligans: BASE_MULLIGANS + this.state.upgrades.extraMulligans,
         mulliganSize: BASE_MULLIGAN_SIZE + this.state.upgrades.mulliganSize,
-        greyExchange: Math.max(1, BASE_GREY_EXCHANGE - this.state.upgrades.exchangeReduction),
         yellowPoints: 2 + this.state.upgrades.yellowPoints,
         earlyPoint: 5 + this.state.upgrades.earlyRoundPoint,
         questCadence: Math.max(1, 3 - this.state.upgrades.questCadence),
@@ -781,11 +778,6 @@
       return { ok: true, replacements: replacements.length };
     }
 
-    cardIsKnownGrey(card) {
-      const absent = new Set(this.state.knownAbsent);
-      return card.glyph.split("").some(letter => absent.has(letter));
-    }
-
     getCardKnowledgeStatus(cardOrGlyph) {
       const glyph = typeof cardOrGlyph === "string" ? cardOrGlyph : cardOrGlyph?.glyph;
       if (!glyph) return "unused";
@@ -803,39 +795,6 @@
       const absent = new Set(this.state.knownAbsent);
       if (absent.has(positiveLetter)) return "red";
       return "unused";
-    }
-
-    getGreyExchangeCost() {
-      return Math.max(1, BASE_GREY_EXCHANGE - this.state.upgrades.exchangeReduction);
-    }
-
-    getGreyCards() {
-      return this.state.hand.filter(card => (
-        !this.isInfiniteCard(card)
-        && !this.state.draft.includes(card.id)
-        && this.cardIsKnownGrey(card)
-      ));
-    }
-
-    exchangeGreys(cardIds) {
-      if (this.state.status !== "playing") return { ok: false, error: "The round is paused." };
-      const ids = unique(cardIds || []);
-      const cost = this.getGreyExchangeCost();
-      if (ids.length !== cost) return { ok: false, error: `Choose exactly ${cost} red card${cost === 1 ? "" : "s"}.` };
-      const cards = ids.map(id => this.getHandCard(id));
-      if (cards.some(card => !card || this.isInfiniteCard(card) || !this.cardIsKnownGrey(card))) {
-        return { ok: false, error: "Only finite confirmed-red cards can be exchanged." };
-      }
-      if (ids.some(id => this.state.draft.includes(id))) {
-        return { ok: false, error: "Return drafted cards before exchanging them." };
-      }
-      this._discardCards(ids);
-      const drawn = this.drawCards(1);
-      this.state.lastMessage = drawn.length
-        ? `Exchanged ${cost} red card${cost === 1 ? "" : "s"} for one draw.`
-        : "The piles are empty; no card could be drawn.";
-      this.save();
-      return { ok: true, drawn: drawn.length };
     }
 
     canBuildWord(word, cards = this.state.hand) {
@@ -1121,6 +1080,26 @@
       return candidates[Math.floor(this.random() * candidates.length)].letter;
     }
 
+    // Picks up to `count` letters for the Cull upgrade, one at a time,
+    // simulating each prior pick as already removed before choosing the
+    // next -- so the "future" viability check in _removalCandidate always
+    // accounts for the combined removal, not just each letter alone.
+    _removalCandidates(count) {
+      const originalRemoved = this.state.removedLetters;
+      const picks = [];
+      try {
+        for (let i = 0; i < count; i += 1) {
+          this.state.removedLetters = [...originalRemoved, ...picks];
+          const letter = this._removalCandidate();
+          if (!letter) break;
+          picks.push(letter);
+        }
+      } finally {
+        this.state.removedLetters = originalRemoved;
+      }
+      return picks;
+    }
+
     _upgradeCatalog() {
       const choices = [
         {
@@ -1148,14 +1127,6 @@
           description: "Gain one refresh whenever you choose a quest reward."
         }
       ];
-      if (this.state.upgrades.exchangeReduction < 2) {
-        choices.push({
-          id: "exchangeReduction",
-          icon: "🩶",
-          title: "Better Recycling",
-          description: "Exchange one fewer confirmed red card for a new draw."
-        });
-      }
       if (this.state.upgrades.mulliganSize < 2) {
         choices.push({
           id: "mulliganSize",
@@ -1175,15 +1146,17 @@
             : "A quest appears every two guesses instead of every three."
         });
       }
-      const letter = this._removalCandidate();
-      if (letter) {
+      const letters = this._removalCandidates(2);
+      if (letters.length) {
+        const list = letters.join(" & ");
+        const verb = letters.length > 1 ? "They were" : "It was";
         choices.push({
           id: "removeLetter",
-          key: `removeLetter:${letter}`,
-          letter,
+          key: `removeLetter:${letters.join("")}`,
+          letters,
           icon: "✂️",
-          title: `Cull ${letter}`,
-          description: `Remove ${letter} from the deck and from every future secret. It was drawn from the ten least-common eligible consonants.`
+          title: `Cull ${list}`,
+          description: `Remove ${list} from the deck and from every future secret. ${verb} drawn from the ten least-common eligible consonants.`
         });
       }
       return choices.map(choice => ({ ...choice, key: choice.key || choice.id }));
@@ -1200,10 +1173,12 @@
 
       switch (choice.id) {
         case "removeLetter":
-          this.state.removedLetters = unique([...this.state.removedLetters, choice.letter]).sort();
+          this.state.removedLetters = unique([
+            ...this.state.removedLetters,
+            ...(choice.letters || (choice.letter ? [choice.letter] : []))
+          ]).sort();
           break;
         case "extraMulligans":
-        case "exchangeReduction":
         case "mulliganSize":
         case "yellowPoints":
         case "earlyRoundPoint":
@@ -1248,7 +1223,6 @@
       const removed = this.state.removedLetters.length ? this.state.removedLetters.join(", ") : "None";
       return [
         `Mulligans: ${rules.mulligans} × up to ${rules.mulliganSize}`,
-        `Red exchange: ${rules.greyExchange} → 1`,
         `Yellow value: ${rules.yellowPoints}`,
         `Early value: ${rules.earlyPoint} per unused guess`,
         `Quest cadence: every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}`,
@@ -1329,7 +1303,6 @@
     BASE_HAND_SIZE,
     BASE_MULLIGANS,
     BASE_MULLIGAN_SIZE,
-    BASE_GREY_EXCHANGE,
     VOWELS,
     ALWAYS_AVAILABLE_VOWELS,
     normalizeWords,

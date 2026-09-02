@@ -206,14 +206,13 @@ class ChallengeService {
     state.mode.initMatch(state);
     state.mode.onLobbyReady(state);
 
-    // Reuse the existing AI tutorial demonstration path in runAI.js. It is
-    // already designed to bypass the 50% random-use roll and fire one named
-    // power whenever that AI role can legally use it. scriptedTurns=0 means
-    // none of the scripted tutorial word behavior is activated.
-    state.isTutorial = true;
-    state.tutorialStage = "power";
-    state.tutorialPowerId = challenge.powerId;
-    state.scriptedTurns = 0;
+    // A challenge is a full, normal match (same as any other single-player
+    // stage -- see sessionService.js's startAttempt, which sets this same
+    // isTutorial: false) with exactly one AI quirk layered on top: runAI.js
+    // forces state.singlePlayer.challenge.powerId whenever the AI holds
+    // challenge.powerRole. No tutorial flags needed for that -- see
+    // maybeUsePower's "challenge" branch.
+    state.isTutorial = false;
     state.phase = "simultaneous";
 
     this.sessionService.sessionsByRoomId.set(roomId, {

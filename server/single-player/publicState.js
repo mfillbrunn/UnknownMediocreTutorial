@@ -40,7 +40,14 @@ function buildPublicSinglePlayerSnapshot(state, userId) {
     // never the expression internals (a player shouldn't be able to read
     // off the exact threshold from devtools mid-attempt if the stage
     // author wants it to read as a soft target).
-    objectives: (stage.objectives || []).map(o => ({ id: o.id, required: !!o.required, label: o.label || o.id }))
+    objectives: (stage.objectives || []).map(o => ({ id: o.id, required: !!o.required, label: o.label || o.id })),
+    // Challenge mode's one AI quirk (see runAI.js's maybeUsePower "challenge"
+    // branch) -- the player already saw the challenge's title/summary on the
+    // pre-game selection screen, so surfacing which power and role it forces
+    // isn't a spoiler; the round-start popup uses this to explain it.
+    challenge: sp.challenge?.enabled
+      ? { id: sp.challenge.id, powerId: sp.challenge.powerId, powerRole: sp.challenge.powerRole }
+      : null
   };
 }
 
