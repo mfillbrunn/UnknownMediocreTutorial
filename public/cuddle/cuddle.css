@@ -13,6 +13,9 @@
   --cuddle-yellow: #d7ad3f;
   --cuddle-green: #4ba66a;
   --cuddle-grey: #5e5b69;
+  /* Blue Mode's single colour: it stands in for green AND yellow at once, so
+     it must not read as either of them. */
+  --cuddle-blue: #3f6fd8;
   --cuddle-danger: #f1939d;
   --cuddle-red: #b6505d;
   --cuddle-shadow: 0 22px 70px rgba(0, 0, 0, 0.36);
@@ -163,7 +166,9 @@
 
 .cuddle-progress {
   display: grid;
-  grid-template-columns: repeat(12, minmax(24px, 1fr));
+  /* One node per scoring round. Boss rounds are interludes between them and
+     do not get their own node. */
+  grid-template-columns: repeat(9, minmax(24px, 1fr));
   gap: 7px;
   margin: 2px 0 0;
 }
@@ -417,6 +422,43 @@
   border-color: #777380;
   background: var(--cuddle-grey);
   color: #fff;
+}
+
+/* Blue Mode: green and yellow are deliberately indistinguishable. The letter
+   is in the secret, but the tile refuses to say whether it is in the right
+   place. */
+.cuddle-tile.is-blue {
+  border-color: #6ea8ff;
+  background: var(--cuddle-blue);
+  color: #fff;
+}
+
+/* Withheld by a boss (Count Only, Delayed Feedback, Hide Feedback): the
+   letter is still shown, the result is not. */
+.cuddle-tile.is-unknown {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.09),
+    rgba(255, 255, 255, 0.09) 6px,
+    rgba(255, 255, 255, 0.03) 6px,
+    rgba(255, 255, 255, 0.03) 12px
+  );
+  color: rgba(247, 244, 255, 0.75);
+}
+
+.cuddle-tile.is-unknown::after {
+  content: "?";
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  font-size: 0.62em;
+  font-weight: 900;
+  opacity: 0.75;
+}
+
+.cuddle-tile {
+  position: relative;
 }
 
 .cuddle-row-score {
@@ -1327,3 +1369,104 @@
   }
 }
 /* UMT_CUDDLE_SINGLEPLAYER_V2: COMPACT UI END */
+
+/* UMT_CUDDLE_BOSS_ROUNDS: START */
+
+/* The unknown pile. A letter whose result a boss is withholding stays fully
+   playable, so it must not read as disabled -- only as unresolved. */
+.cuddle-card.is-card-unknown {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(120, 118, 145, 0.95),
+    rgba(120, 118, 145, 0.95) 7px,
+    rgba(86, 84, 108, 0.95) 7px,
+    rgba(86, 84, 108, 0.95) 14px
+  );
+}
+
+.cuddle-card-unknown {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  background: #12111b;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* Extra Letters cards are a one-turn bonus sitting outside the counted hand,
+   so they get a tint that marks them as temporary. */
+.cuddle-card.is-extra {
+  box-shadow: inset 0 0 0 2px rgba(139, 232, 210, 0.75), 0 6px 13px rgba(0, 0, 0, 0.15);
+}
+
+/* Count Only replaces the row's points with the only thing it reveals. */
+.cuddle-row-score.is-counts {
+  color: var(--cuddle-text);
+  font-size: 0.66rem;
+  white-space: nowrap;
+}
+
+.cuddle-boss-banner {
+  align-items: center;
+  border-color: rgba(241, 147, 157, 0.5);
+  background: linear-gradient(160deg, rgba(182, 80, 93, 0.22), rgba(31, 29, 45, 0.94));
+}
+
+.cuddle-boss-banner.is-spent {
+  opacity: 0.72;
+}
+
+.cuddle-quick-clock {
+  margin-left: auto;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(9, 8, 15, 0.85);
+  font-size: 0.86rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.cuddle-quick-clock.is-urgent {
+  border-color: var(--cuddle-danger);
+  color: var(--cuddle-danger);
+}
+
+.cuddle-boss-choice {
+  border-color: rgba(241, 147, 157, 0.45);
+}
+
+/* The reward a boss carries, shown on its card so the pick is an informed
+   trade rather than a blind one. */
+.cuddle-boss-reward {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 9px;
+  border: 1px solid rgba(139, 232, 210, 0.34);
+  border-radius: 10px;
+  background: rgba(139, 232, 210, 0.08);
+  text-align: left;
+}
+
+.cuddle-boss-reward b {
+  color: var(--cuddle-accent-2);
+  font-size: 0.74rem;
+}
+
+.cuddle-boss-reward span {
+  color: var(--cuddle-muted);
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+/* UMT_CUDDLE_BOSS_ROUNDS: END */

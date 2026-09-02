@@ -3,13 +3,20 @@
 (function () {
   "use strict";
 
-  const WORDS_URL = "cuddle/allowed-secrets.txt";
+  // Same two lists (and same source) the main game uses: guesses is the
+  // broad dictionary a submitted word is checked against, secrets is the
+  // curated pool the actual secret is drawn from. See helpers.js's own
+  // fetches of these same endpoints into window.ALLOWED_GUESSES/SECRETS --
+  // fetched independently here rather than reused, so Cuddle doesn't
+  // depend on load order with the rest of the page.
+  const GUESSES_URL = "/api/allowed-guesses";
+  const SECRETS_URL = "/api/allowed-secrets";
   const ROOT_ID = "cuddleRoot";
   const VOWEL_ORDER = Object.freeze(["A", "E", "I", "O", "U"]);
   const VOWEL_SET = new Set(VOWEL_ORDER);
   const CARD_STATUS_ORDER = Object.freeze({ green: 0, yellow: 1, unused: 2, red: 3 });
   let root = null;
-  let words = null;
+  let wordLists = null;
   let game = null;
   let landing = true;
   let rulesOpen = false;
@@ -41,18 +48,22 @@
   }
 
   async function loadWords() {
-    if (words) return words;
+    if (wordLists) return wordLists;
     if (loadingPromise) return loadingPromise;
-    loadingPromise = fetch(WORDS_URL, { cache: "no-cache" })
-      .then(response => {
-        if (!response.ok) throw new Error(`Could not load Cuddle secrets (${response.status}).`);
-        return response.text();
-      })
-      .then(text => {
-        const parsed = window.CuddleEngine.normalizeWords(text.split(/\r?\n|\s+/));
-        if (parsed.length < 12) throw new Error("The copied secret list contains fewer than 12 usable words.");
-        words = parsed;
-        return words;
+    loadingPromise = Promise.all([
+      fetch(GUESSES_URL, { cache: "no-cache" }),
+      fetch(SECRETS_URL, { cache: "no-cache" })
+    ])
+      .then(async ([guessesResponse, secretsResponse]) => {
+        if (!guessesResponse.ok) throw new Error(`Could not load Cuddle guesses (${guessesResponse.status}).`);
+        if (!secretsResponse.ok) throw new Error(`Could not load Cuddle secrets (${secretsResponse.status}).`);
+        const [guessesRaw, secretsRaw] = await Promise.all([guessesResponse.json(), secretsResponse.json()]);
+        const guesses = window.CuddleEngine.normalizeWords(guessesRaw);
+        const secrets = window.CuddleEngine.normalizeWords(secretsRaw);
+        if (secrets.length < 12) throw new Error("The secret list contains fewer than 12 usable words.");
+        if (!guesses.length) throw new Error("The guess list is empty.");
+        wordLists = { guesses, secrets };
+        return wordLists;
       })
       .finally(() => { loadingPromise = null; });
     return loadingPromise;
@@ -131,10 +142,76 @@
     return game?.state || null;
   }
 
+  // Rounds the player is scored on. Boss rounds sit between them and are
+  // pass/fail, so they are never part of this count.
+  function scoringRounds() {
+    return window.CuddleEngine.THRESHOLDS.length;
+  }
+
   function render() {
     if (!root) return;
     if (landing || !game?.state) root.innerHTML = renderLanding();
     else root.innerHTML = renderRun();
+    syncQuickModeTimer();
+  }
+
+  // Quick Mode is the one boss that needs a real clock. The deadline lives
+  // here rather than in the engine because it is wall-clock UI state: a
+  // saved run that is reopened later should get a fresh minute, not a timer
+  // that expired while the tab was closed.
+  let quickModeTimer = null;
+  let quickModeDeadline = 0;
+  let quickModeGuessIndex = -1;
+
+  function clearQuickModeTimer() {
+    if (quickModeTimer) clearInterval(quickModeTimer);
+    quickModeTimer = null;
+    quickModeDeadline = 0;
+    quickModeGuessIndex = -1;
+  }
+
+  function syncQuickModeTimer() {
+    const state = currentState();
+    const seconds = Number(state?.boss?.secondsPerGuess) || 0;
+    const running = Boolean(
+      seconds && state.status === "playing" && !state.roundIntroPending && !state.pendingRoundEnd
+    );
+    if (!running) {
+      clearQuickModeTimer();
+      return;
+    }
+    // Restart the clock whenever a new guess begins.
+    if (quickModeGuessIndex !== state.guessesUsed) {
+      quickModeGuessIndex = state.guessesUsed;
+      quickModeDeadline = Date.now() + seconds * 1000;
+    }
+    paintQuickModeClock();
+    if (quickModeTimer) return;
+    quickModeTimer = setInterval(() => {
+      const live = currentState();
+      if (!live || live.status !== "playing" || !live.boss?.secondsPerGuess) {
+        clearQuickModeTimer();
+        return;
+      }
+      if (Date.now() >= quickModeDeadline) {
+        clearQuickModeTimer();
+        // Out of time: the guess is lost. forfeitGuess burns the turn
+        // exactly as if it had been submitted and missed.
+        const result = game.forfeitGuess();
+        setUiMessage(result?.ok ? "Out of time -- that guess was lost." : "");
+        render();
+        return;
+      }
+      paintQuickModeClock();
+    }, 250);
+  }
+
+  function paintQuickModeClock() {
+    const el = document.getElementById("cuddleQuickClock");
+    if (!el) return;
+    const left = Math.max(0, Math.ceil((quickModeDeadline - Date.now()) / 1000));
+    el.textContent = `${left}s`;
+    el.classList.toggle("is-urgent", left <= 10);
   }
 
   function renderLanding() {
@@ -156,10 +233,10 @@
           <div class="cuddle-logo" aria-hidden="true">C</div>
           <p class="cuddle-eyebrow">SINGLE-PLAYER ROGUELITE</p>
           <h1>CUDDLE</h1>
-          <p class="cuddle-tagline">Build words from cards. Learn the secret. Shape the deck. Survive twelve rounds.</p>
+          <p class="cuddle-tagline">Build words from cards. Learn the secret. Shape the deck. Survive ${scoringRounds()} rounds and three bosses.</p>
           <div class="cuddle-save-summary ${hasRun ? "" : "is-empty"}">
             <span>${escapeHtml(statusLabel)}</span>
-            ${hasRun ? `<strong>Score ${state.score} · Round ${state.round}/12</strong>` : `<strong>Your run saves in this browser.</strong>`}
+            ${hasRun ? `<strong>Score ${state.score} · Round ${state.round}/${scoringRounds()}</strong>` : `<strong>Your run saves in this browser.</strong>`}
           </div>
           <div class="cuddle-landing-actions">
             ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>` : ""}
@@ -205,12 +282,17 @@
         ${detailsOpen ? `
           <section id="cuddleRunDetails" class="cuddle-details-panel" aria-label="Additional run information">
             <div class="cuddle-detail-badges">
-              <span class="cuddle-detail-badge is-goal"><b>Round ${state.round}/12</b> Goal ${target}</span>
-              <span class="cuddle-detail-badge"><b>Still needed</b> ${needed}</span>
+              ${game.isBossRound()
+                ? `<span class="cuddle-detail-badge is-goal"><b>Boss round</b> Survive it — no score needed</span>`
+                : `<span class="cuddle-detail-badge is-goal"><b>Round ${state.round}/${scoringRounds()}</b> Goal ${target}</span>
+              <span class="cuddle-detail-badge"><b>Still needed</b> ${needed}</span>`}
               <span class="cuddle-detail-badge"><b>Draw / discard</b> ${drawPile} / ${recyclable}</span>
               <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> +${rules.yellowPoints}</span>
+              <span class="cuddle-detail-badge"><b>Green</b> +${rules.greenPoints}</span>
               <span class="cuddle-detail-badge is-grey"><b>Grey</b> 0</span>
               <span class="cuddle-detail-badge"><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
+              <span class="cuddle-detail-badge"><b>Unused mulligan</b> +${rules.mulliganPoints}</span>
+              <span class="cuddle-detail-badge"><b>Quest</b> +${rules.questPoints}</span>
             </div>
             ${renderProgress(state)}
             ${renderQuestClock(state, rules)}
@@ -218,6 +300,7 @@
 
         <main class="cuddle-play-area">
           <section class="cuddle-left-column">
+            ${renderBossBanner(state)}
             ${renderActiveQuest(state)}
             ${renderBoard(state)}
           </section>
@@ -230,6 +313,32 @@
         ${renderStateOverlay(state)}
         ${rulesOpen ? renderRulesOverlay() : ""}
       </div>`;
+  }
+
+  // Keeps the active boss constraint on screen, and counts down how many
+  // guesses are left under it -- otherwise a player who dismissed the intro
+  // has no way to tell why the board is behaving oddly.
+  function renderBossBanner(state) {
+    const boss = state.boss;
+    if (!boss) return "";
+    const turns = Number(boss.turns) || 0;
+    const remaining = Math.max(0, turns - (state.guessesUsed || 0));
+    const stillOn = remaining > 0;
+    const scope = turns >= (state.maxGuesses || 6)
+      ? "All round"
+      : stillOn
+        ? `${remaining} guess${remaining === 1 ? "" : "es"} left under this`
+        : "Constraint lifted";
+    return `
+      <article class="cuddle-quest cuddle-boss-banner ${stillOn ? "is-active" : "is-spent"}">
+        <div class="cuddle-quest-icon" aria-hidden="true">${escapeHtml(boss.icon || "💀")}</div>
+        <div>
+          <span class="cuddle-eyebrow">BOSS ROUND</span>
+          <h2>${escapeHtml(boss.title || "Boss")}</h2>
+          <p>${escapeHtml(boss.description || "")} <b>${escapeHtml(scope)}.</b></p>
+        </div>
+        ${boss.secondsPerGuess ? `<span id="cuddleQuickClock" class="cuddle-quick-clock" aria-live="off">${boss.secondsPerGuess}s</span>` : ""}
+      </article>`;
   }
 
   function renderProgress(state) {
@@ -297,7 +406,9 @@
       for (let column = 0; column < 5; column += 1) {
         const draftTile = isDraft ? draftTiles[column] : null;
         const letter = history?.word[column] || draftTile?.letter || "";
-        const result = history?.feedback[column] || "";
+        // shownFeedback is what a boss lets the board reveal; it matches
+        // feedback exactly in an ordinary round.
+        const result = (history?.shownFeedback || history?.feedback || [])[column] || "";
         const tileClass = result ? ` is-${result}` : letter ? " is-filled" : "";
         if (draftTile) {
           tiles.push(`
@@ -311,9 +422,14 @@
           tiles.push(`<span class="cuddle-tile${tileClass}">${escapeHtml(letter)}</span>`);
         }
       }
-      const score = history
-        ? `<span class="cuddle-row-score ${history.scoreDelta < 0 ? "is-negative" : ""}">${history.scoreDelta >= 0 ? "+" : ""}${history.scoreDelta}${history.earlyBonus ? `<small> +${history.earlyBonus}</small>` : ""}</span>`
-        : `<span class="cuddle-row-score">${row + 1}</span>`;
+      // Count Only replaces the row's score with the only thing it tells you:
+      // how many greens and yellows the guess actually hit.
+      const counts = history?.bossCounts;
+      const score = counts
+        ? `<span class="cuddle-row-score is-counts" title="${counts.green} green, ${counts.yellow} yellow">🟩${counts.green} 🟨${counts.yellow}</span>`
+        : history
+          ? `<span class="cuddle-row-score ${history.scoreDelta < 0 ? "is-negative" : ""}">${history.scoreDelta >= 0 ? "+" : ""}${history.scoreDelta}${history.earlyBonus ? `<small> +${history.earlyBonus}</small>` : ""}</span>`
+          : `<span class="cuddle-row-score">${row + 1}</span>`;
       rows.push(`<div class="cuddle-board-row">${tiles.join("")}${score}</div>`);
     }
     return `<section class="cuddle-board" aria-label="Guess board">${rows.join("")}</section>`;
@@ -376,7 +492,11 @@
     ));
     const selectedCount = selectable.filter(card => selectedCards.has(card.id)).length;
     const unselectedCount = selectable.length - selectedCount;
-    const status = game.getCardKnowledgeStatus(group.glyph);
+    // A boss can withhold what a played letter actually did. Those letters go
+    // to the unknown pile: still playable, but drawn with a question mark
+    // instead of a colour that would give the answer away.
+    const unknown = typeof game.isGlyphUnknown === "function" && game.isGlyphUnknown(group.glyph);
+    const status = unknown ? "unknown" : game.getCardKnowledgeStatus(group.glyph);
     const disabled = state.status !== "playing"
       || (actionMode === "play" && game.getDraftWord().length >= 5)
       || (actionMode !== "play" && selectable.length === 0)
@@ -386,13 +506,15 @@
       `is-card-${status}`,
       persistentCard ? "is-infinite" : "",
       VOWEL_SET.has(group.glyph) ? "is-vowel" : "",
+      group.cards.some(card => card.source === "extra") ? "is-extra" : "",
       draftedCount ? "has-drafted" : "",
       selectedCount ? "is-selected" : ""
     ].filter(Boolean).join(" ");
-    const statusLabel = status === "green" ? "green"
-      : status === "yellow" ? "yellow"
-        : status === "red" ? "red · not in the secret"
-          : "grey · unused";
+    const statusLabel = status === "unknown" ? "unknown · result withheld"
+      : status === "green" ? "green"
+        : status === "yellow" ? "yellow"
+          : status === "red" ? "red · not in the secret"
+            : "grey · unused";
     const count = group.cards.length;
     const details = [
       "reusable while in hand",
@@ -407,6 +529,7 @@
         aria-label="${escapeHtml(group.glyph)}: ${escapeHtml(details)}"
         title="${escapeHtml(details)}">
         <span class="cuddle-card-letter">${escapeHtml(group.glyph)}</span>
+        ${unknown ? `<span class="cuddle-card-unknown" aria-hidden="true">?</span>` : ""}
         ${count > 1 ? `<span class="cuddle-card-count" aria-hidden="true">${count}</span>` : ""}
       </button>`;
   }
@@ -491,12 +614,44 @@
   }
 
   function renderStateOverlay(state) {
+    if (state.status === "bossChoice") return renderBossChoiceOverlay(state);
     if (state.status === "playing" && state.roundIntroPending) return renderRoundIntroOverlay(state);
     if (state.status === "questReward") return renderQuestRewardOverlay(state);
     if (state.status === "upgrade") return renderUpgradeOverlay(state);
     if (state.status === "lost") return renderEndOverlay(state, false);
     if (state.status === "won") return renderEndOverlay(state, true);
     return "";
+  }
+
+  // Two bosses, each showing the permanent reward it carries, so the choice
+  // is an informed trade rather than a blind pick. The final boss has no
+  // reward: beating it simply wins the run.
+  function renderBossChoiceOverlay(state) {
+    const options = state.bossOffer || [];
+    const isFinal = options.some(option => option.gate === "final");
+    return `
+      <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleBossTitle">
+        <section class="cuddle-modal cuddle-modal-wide cuddle-boss-modal">
+          <span class="cuddle-modal-kicker">${isFinal ? "FINAL BOSS" : "BOSS ROUND"}</span>
+          <h2 id="cuddleBossTitle">${isFinal ? "One last secret" : "Choose your boss"}</h2>
+          <p>${isFinal
+            ? "Beat this round to win the run. No score is needed -- just solve it."
+            : "A boss round is pass or fail: nothing scores, you only have to solve it. Clear it and you keep the reward shown below on top of the usual one."}</p>
+          <div class="cuddle-choice-grid">
+            ${options.map(option => `
+              <button class="cuddle-choice cuddle-boss-choice" data-boss-id="${escapeHtml(option.id)}">
+                <span class="cuddle-choice-icon">${escapeHtml(option.icon || "💀")}</span>
+                <strong>${escapeHtml(option.title)}</strong>
+                <small>${escapeHtml(option.description)}</small>
+                ${option.reward && !isFinal ? `
+                  <span class="cuddle-boss-reward">
+                    <b>${escapeHtml(option.reward.icon || "🎁")} ${escapeHtml(option.reward.title)}</b>
+                    <span>${escapeHtml(option.reward.description)}</span>
+                  </span>` : ""}
+              </button>`).join("")}
+          </div>
+        </section>
+      </div>`;
   }
   /* UMT_CUDDLE_SINGLEPLAYER_V2: ROUND INTRO END */
   function renderQuestRewardOverlay(state) {
@@ -663,8 +818,11 @@
       freeVowels: 5,
       mulligans: 2,
       mulliganSize: 3,
-      yellowPoints: 2,
-      earlyPoint: 5,
+      yellowPoints: 1,
+      greenPoints: 2,
+      earlyPoint: 10,
+      mulliganPoints: 3,
+      questPoints: 0,
       questCadence: 3
     };
     return `
@@ -678,10 +836,11 @@
             <article><strong>2 · Reuse letters in hand</strong><p>Any letter currently shown in your hand can be tapped more than once while building a word. A, E, I, O, and U are bold, always available, and do not use counted hand slots. Yellow or green consonants stay in hand after a guess.</p></article>
             <article><strong>3 · Refill five slots</strong><p>You have five counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward five.</p></article>
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards.</p></article>
-            <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints}; grey tiles give information but do not change your score. Solving early adds +${rules.earlyPoint} for every unused guess. You must also meet the cumulative round target.</p></article>
-            <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}. Solve the word to choose an upgrade; every newly crossed 50-point milestone grants another.</p></article>
+            <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints} and green tiles +${rules.greenPoints}; grey tiles give information but never change your score. Solving early adds +${rules.earlyPoint} for every unused guess, and every mulligan you did not spend is worth +${rules.mulliganPoints}. You must also meet the cumulative round target.</p></article>
+            <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"} and pay bonus points. Solve the word to choose an upgrade after every round.</p></article>
+            <article><strong>7 · Boss rounds</strong><p>Before rounds 4 and 7 -- and once more after the last round -- you pick one of two bosses. A boss round is pass or fail: nothing scores and no target applies, you just have to solve it. Clear one and you keep its permanent reward on top of the usual pick.</p></article>
           </div>
-          <p class="cuddle-rule-note"><strong>Campaign targets:</strong> ${window.CuddleEngine.THRESHOLDS.join(" · ")}. Clear round ${window.CuddleEngine.THRESHOLDS.length} at ${window.CuddleEngine.THRESHOLDS[window.CuddleEngine.THRESHOLDS.length - 1]} points to win.</p>
+          <p class="cuddle-rule-note"><strong>Campaign targets:</strong> ${window.CuddleEngine.THRESHOLDS.join(" · ")}. Clear round ${scoringRounds()} at ${window.CuddleEngine.THRESHOLDS[scoringRounds() - 1]} points, then beat the final boss to win.</p>
           <button class="cuddle-btn cuddle-btn-primary" data-action="close-rules">Got it</button>
         </section>
       </div>`;
@@ -731,12 +890,12 @@
   }
 
   function startNewRun() {
-    if (!words) return;
+    if (!wordLists) return;
     if (game?.state && !["lost", "won"].includes(game.state.status)) {
       const okay = window.confirm("Start a new Cuddle run? The current saved run will be replaced.");
       if (!okay) return;
     }
-    game = new window.CuddleEngine.CuddleGame(words);
+    game = new window.CuddleEngine.CuddleGame(wordLists);
     game.startNew();
     landing = false;
     rulesOpen = false;
@@ -834,6 +993,15 @@
       event.preventDefault();
       const shouldRender = handleAction(actionButton.dataset.action);
       if (shouldRender) render();
+      return;
+    }
+
+    const bossButton = event.target.closest("[data-boss-id]");
+    if (bossButton) {
+      const result = game.chooseBoss(bossButton.dataset.bossId);
+      setUiMessage(result.ok ? "" : result.error);
+      resetActionMode();
+      render();
       return;
     }
 

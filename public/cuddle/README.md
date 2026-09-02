@@ -2,8 +2,9 @@
 
 Cuddle is a browser-only, single-player roguelite campaign for Vowel Play.
 It reuses the app's screen router, theme variables, power/quest metadata, and
-`server/wordlists/allowed_secrets.txt`, but it does not add or change server
-behavior.
+the same two word lists the main game uses (`/api/allowed-guesses` for what
+can be submitted, `/api/allowed-secrets` for what the secret can be), but it
+does not add or change server behavior.
 
 ## Generated files
 
@@ -22,8 +23,6 @@ behavior.
   working after the move.
 - `public/cuddle/site-integration.css` - styles the two hubs and equalizes the
   visible size of hollow and filled Secretkeeper stars in regular play.
-- `public/cuddle/allowed-secrets.txt` - a public copy derived at patch time from
-  the existing server secret list.
 
 Only `public/index.html` is edited. Four clearly marked blocks add stylesheet
 references, the Cuddle button, an empty Cuddle screen mount, and script
