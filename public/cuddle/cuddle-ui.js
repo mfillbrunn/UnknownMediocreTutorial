@@ -358,11 +358,12 @@
 
   function renderActiveQuest(state) {
     if (!state.activeQuest) return "";
+    const fulfilled = game.wouldDraftCompleteQuest();
     return `
-      <article class="cuddle-quest is-active">
-        <div class="cuddle-quest-icon" aria-hidden="true">${escapeHtml(state.activeQuest.icon || "❗")}</div>
+      <article class="cuddle-quest is-active ${fulfilled ? "is-fulfilled" : ""}">
+        <div class="cuddle-quest-icon" aria-hidden="true">${fulfilled ? "✅" : escapeHtml(state.activeQuest.icon || "❗")}</div>
         <div>
-          <span class="cuddle-eyebrow">TURN ${state.guessesUsed + 1} QUEST</span>
+          <span class="cuddle-eyebrow">${fulfilled ? "QUEST READY" : `TURN ${state.guessesUsed + 1} QUEST`}</span>
           <h2>${escapeHtml(state.activeQuest.title)}</h2>
           <p>${escapeHtml(state.activeQuest.description)}</p>
         </div>
