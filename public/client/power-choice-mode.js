@@ -935,49 +935,172 @@
   // POWER CHOICE CARD CAROUSEL V1: CLIENT START
 
   function fixedRewardIconMarkup(option) {
+    // UMT_FIXED_REWARD_SVG_PACK_20260901: fixed-effect cards only. Power cards deliberately return
+    // an empty string and continue through optionIconMarkup() to the game's
+    // existing dedicated power renderer.
+    if (option?.kind !== "fixed") return "";
+
     const id = String(option?.id || "");
-    if (id === "spy-add-point-1") {
-      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
-        <circle cx="60" cy="61" r="43" fill="#4c1d3f" stroke="#fb7185" stroke-width="6"/>
-        <path d="M88 39l8-16 8 16-8-4z" fill="#fbbf24"/>
-        <text x="60" y="73" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="39" font-weight="900">+1</text>
-        <path d="M28 34l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#60a5fa"/>
-      </svg>`;
+    switch (id) {
+      case "spy-reset-positive-1":
+        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <path d="M60 9 101 32v56l-41 23-41-23V32z" fill="#35152f" stroke="#fb7185" stroke-width="5" stroke-linejoin="round"/>
+          <rect x="19" y="27" width="42" height="42" rx="10" fill="#22c55e" stroke="#dcfce7" stroke-width="4"/>
+          <path d="M34 48h12M40 42v12" fill="none" stroke="#f0fdf4" stroke-width="4" stroke-linecap="round" opacity=".9"/>
+          <path d="M43 78c9 9 22 11 33 3" fill="none" stroke="#fff7ed" stroke-width="5" stroke-linecap="round"/>
+          <path d="m69 74 12 5-9 9" fill="none" stroke="#fff7ed" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="59" y="52" width="42" height="42" rx="10" fill="#facc15" stroke="#fef9c3" stroke-width="4"/>
+          <circle cx="32" cy="84" r="4" fill="#4ade80"/>
+          <circle cx="42" cy="94" r="2.5" fill="#fde047"/>
+          <path d="m89 25 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#fda4af"/>
+        </svg>`;
+      case "spy-reset-known-2":
+        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <circle cx="60" cy="60" r="50" fill="#35152f" stroke="#fb7185" stroke-width="5"/>
+          <g transform="rotate(-7 60 60)">
+            <rect x="17" y="39" width="38" height="38" rx="9" fill="#64748b" stroke="#cbd5e1" stroke-width="4"/>
+            <path d="m28 50 16 16m0-16L28 66" stroke="#f8fafc" stroke-width="5" stroke-linecap="round"/>
+            <rect x="60" y="49" width="38" height="38" rx="9" fill="#475569" stroke="#cbd5e1" stroke-width="4"/>
+            <path d="m71 60 16 16m0-16L71 76" stroke="#f8fafc" stroke-width="5" stroke-linecap="round"/>
+          </g>
+          <path d="M74 18 104 48 79 73 49 43z" fill="#fda4af" stroke="#fff1f2" stroke-width="4" stroke-linejoin="round"/>
+          <path d="m88 32 16 16-9 9-16-16z" fill="#fb7185"/>
+          <path d="M23 91c13 10 29 12 43 6" fill="none" stroke="#fde68a" stroke-width="4" stroke-linecap="round"/>
+          <path d="m60 91 10 4-8 8" fill="none" stroke="#fde68a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="28" cy="27" r="12" fill="#fff7ed" stroke="#fb7185" stroke-width="3"/>
+          <text x="28" y="33" text-anchor="middle" fill="#4c1d3f" font-family="system-ui, sans-serif" font-size="18" font-weight="900">2</text>
+        </svg>`;
+      case "spy-add-point-1":
+        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <path d="M60 8 101 26v39c0 24-16 39-41 48-25-9-41-24-41-48V26z" fill="#35152f" stroke="#fb7185" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M28 88c13-2 22-8 29-18 8-11 14-24 29-32" fill="none" stroke="#fde68a" stroke-width="6" stroke-linecap="round"/>
+          <path d="m78 32 15 2-4 15" fill="none" stroke="#fde68a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="56" cy="65" r="27" fill="#fff7ed" stroke="#fda4af" stroke-width="4"/>
+          <text x="56" y="75" text-anchor="middle" fill="#4c1d3f" font-family="system-ui, sans-serif" font-size="32" font-weight="950">+1</text>
+          <path d="m30 25 4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#60a5fa"/>
+          <path d="m92 71 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#facc15"/>
+          <circle cx="88" cy="23" r="4" fill="#4ade80"/>
+        </svg>`;
+      case "spy-yellow-smudge":
+        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <path d="M24 14h72l14 25-10 67H20L10 39z" fill="#35152f" stroke="#fb7185" stroke-width="5" stroke-linejoin="round"/>
+          <rect x="17" y="31" width="47" height="47" rx="11" fill="#facc15" stroke="#fef9c3" stroke-width="4"/>
+          <path d="M56 39c18-5 36-4 50-10M58 52c20-3 35-1 46-4M57 65c18 0 30 4 42 2" fill="none" stroke="#fde047" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="99" cy="29" r="5" fill="#facc15"/>
+          <circle cx="103" cy="48" r="3" fill="#fde68a"/>
+          <circle cx="94" cy="68" r="4" fill="#facc15"/>
+          <path d="m68 94 24-24 14 14-24 24z" fill="#f8fafc" stroke="#fda4af" stroke-width="4" stroke-linejoin="round"/>
+          <path d="m92 70 7-7 14 14-7 7z" fill="#fb7185"/>
+          <path d="m67 95-8 12 14-6z" fill="#fde047" stroke="#fff7ed" stroke-width="2" stroke-linejoin="round"/>
+        </svg>`;
+      case "spy-trade-yellow":
+        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <path d="M60 8 105 34v52l-45 26L15 86V34z" fill="#35152f" stroke="#fb7185" stroke-width="5" stroke-linejoin="round"/>
+          <rect x="15" y="43" width="36" height="36" rx="9" fill="#facc15" stroke="#fef9c3" stroke-width="4"/>
+          <g fill="#64748b" stroke="#cbd5e1" stroke-width="2.5">
+            <rect x="77" y="39" width="18" height="18" rx="4"/>
+            <rect x="97" y="39" width="18" height="18" rx="4"/>
+            <rect x="77" y="60" width="18" height="18" rx="4"/>
+            <rect x="97" y="60" width="18" height="18" rx="4"/>
+          </g>
+          <path d="M40 30h45" fill="none" stroke="#fff7ed" stroke-width="5" stroke-linecap="round"/>
+          <path d="m78 23 10 7-10 7" fill="none" stroke="#fff7ed" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M88 91H43" fill="none" stroke="#fde68a" stroke-width="5" stroke-linecap="round"/>
+          <path d="m50 84-10 7 10 7" fill="none" stroke="#fde68a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="61" cy="61" r="9" fill="#fb7185" stroke="#fff1f2" stroke-width="3"/>
+          <path d="m57 61 3 3 6-7" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+      case "spy-trade-green":
+        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <path d="m60 8 34 10 18 31-8 39-31 24-39-5L10 76l5-39 30-24z" fill="#35152f" stroke="#fb7185" stroke-width="5" stroke-linejoin="round"/>
+          <rect x="13" y="43" width="39" height="39" rx="10" fill="#22c55e" stroke="#dcfce7" stroke-width="4"/>
+          <g fill="#facc15" stroke="#fef9c3" stroke-width="3">
+            <rect x="83" y="32" width="25" height="25" rx="6"/>
+            <rect x="70" y="62" width="25" height="25" rx="6"/>
+            <rect x="96" y="62" width="18" height="25" rx="5"/>
+          </g>
+          <path d="M40 30c16-10 33-8 46 2" fill="none" stroke="#fff7ed" stroke-width="5" stroke-linecap="round"/>
+          <path d="m80 24 10 11-14 3" fill="none" stroke="#fff7ed" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M89 97c-17 9-34 6-47-5" fill="none" stroke="#fde68a" stroke-width="5" stroke-linecap="round"/>
+          <path d="m48 101-11-12 15-2" fill="none" stroke="#fde68a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="m61 50 5 8 9 2-7 7 2 9-9-4-8 4 2-9-7-7 9-2z" fill="#60a5fa" stroke="#dbeafe" stroke-width="2"/>
+        </svg>`;
+      case "spy-erase-yellow-1":
+        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <circle cx="60" cy="60" r="50" fill="#35152f" stroke="#fb7185" stroke-width="5"/>
+          <path d="M21 33h51v51H21z" fill="#facc15" stroke="#fef9c3" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M64 33h8v8h-8zM69 45h9v9h-9zM65 59h8v8h-8zM61 73h11v11H61z" fill="#35152f"/>
+          <path d="m61 65 28-28 20 20-28 28z" fill="#f8fafc" stroke="#fff1f2" stroke-width="4" stroke-linejoin="round"/>
+          <path d="m89 37 9-9 20 20-9 9z" fill="#fb7185"/>
+          <path d="M55 91c15 6 29 4 39-4" fill="none" stroke="#fde68a" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 8"/>
+          <path d="m91 18 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#60a5fa"/>
+          <circle cx="28" cy="94" r="11" fill="#fff7ed" stroke="#fb7185" stroke-width="3"/>
+          <text x="28" y="100" text-anchor="middle" fill="#4c1d3f" font-family="system-ui, sans-serif" font-size="17" font-weight="900">1</text>
+        </svg>`;
+      case "spy-erase-row":
+        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <rect x="9" y="15" width="102" height="90" rx="23" fill="#35152f" stroke="#fb7185" stroke-width="5"/>
+          <g fill="#475569" stroke="#94a3b8" stroke-width="2">
+            <rect x="23" y="32" width="13" height="12" rx="3"/><rect x="39" y="32" width="13" height="12" rx="3"/><rect x="55" y="32" width="13" height="12" rx="3"/><rect x="71" y="32" width="13" height="12" rx="3"/><rect x="87" y="32" width="13" height="12" rx="3"/>
+            <rect x="31" y="79" width="13" height="12" rx="3"/><rect x="47" y="79" width="13" height="12" rx="3"/><rect x="63" y="79" width="13" height="12" rx="3"/><rect x="79" y="79" width="13" height="12" rx="3"/>
+          </g>
+          <g stroke="#fff7ed" stroke-width="2.5">
+            <rect x="19" y="53" width="17" height="17" rx="4" fill="#22c55e"/><rect x="40" y="53" width="17" height="17" rx="4" fill="#facc15"/><rect x="61" y="53" width="17" height="17" rx="4" fill="#22c55e"/><rect x="82" y="53" width="17" height="17" rx="4" fill="#facc15"/>
+          </g>
+          <path d="M23 50c5-15 20-25 37-25 11 0 21 4 29 11" fill="none" stroke="#fde68a" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="m82 29 12 10-15 4" fill="none" stroke="#fde68a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M97 73c-5 15-20 25-37 25-12 0-23-4-31-12" fill="none" stroke="#60a5fa" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="m37 94-13-10 15-5" fill="none" stroke="#60a5fa" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+      case "inspector-yellow-1":
+        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <path d="M60 8 103 33v54l-43 25-43-25V33z" fill="#082f49" stroke="#38bdf8" stroke-width="5" stroke-linejoin="round"/>
+          <rect x="24" y="25" width="52" height="52" rx="12" fill="#facc15" stroke="#fef9c3" stroke-width="4"/>
+          <circle cx="54" cy="54" r="27" fill="none" stroke="#e0f2fe" stroke-width="6"/>
+          <path d="M73 74 99 100" stroke="#7dd3fc" stroke-width="10" stroke-linecap="round"/>
+          <path d="M38 54h32M54 38v32" stroke="#0c4a6e" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+          <circle cx="54" cy="54" r="8" fill="#0c4a6e" stroke="#fff" stroke-width="3"/>
+          <path d="M86 20c9 3 15 9 18 18M86 31c4 1 7 4 8 8" fill="none" stroke="#f472b6" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="83" cy="18" r="4" fill="#facc15"/>
+        </svg>`;
+      case "inspector-remove-unused-2":
+        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <rect x="9" y="12" width="102" height="96" rx="25" fill="#082f49" stroke="#38bdf8" stroke-width="5"/>
+          <rect x="18" y="35" width="38" height="42" rx="9" fill="#64748b" stroke="#cbd5e1" stroke-width="4"/>
+          <rect x="64" y="35" width="38" height="42" rx="9" fill="#475569" stroke="#cbd5e1" stroke-width="4"/>
+          <path d="m29 47 16 18m0-18L29 65M75 47l16 18m0-18L75 65" stroke="#f8fafc" stroke-width="5" stroke-linecap="round"/>
+          <path d="M14 29v-9h14M106 29v-9H92M14 83v9h14M106 83v9H92" fill="none" stroke="#7dd3fc" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 82h80" stroke="#22d3ee" stroke-width="4" stroke-linecap="round" stroke-dasharray="5 6"/>
+          <rect x="45" y="83" width="30" height="22" rx="11" fill="#e0f2fe" stroke="#38bdf8" stroke-width="3"/>
+          <text x="60" y="100" text-anchor="middle" fill="#0c4a6e" font-family="system-ui, sans-serif" font-size="20" font-weight="950">2</text>
+          <circle cx="99" cy="23" r="5" fill="#facc15"/>
+        </svg>`;
+      case "inspector-remove-point-1":
+        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <path d="M20 18h80l10 18-10 18 10 18-10 18H20L10 72l10-18-10-18z" fill="#082f49" stroke="#38bdf8" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M91 26v47" fill="none" stroke="#fde68a" stroke-width="6" stroke-linecap="round"/>
+          <path d="m80 65 11 13 11-13" fill="none" stroke="#fde68a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="53" cy="55" r="30" fill="#0f766e" stroke="#99f6e4" stroke-width="5"/>
+          <circle cx="53" cy="55" r="21" fill="#0c4a6e" stroke="#e0f2fe" stroke-width="3" stroke-dasharray="4 4"/>
+          <text x="53" y="65" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="31" font-weight="950">−1</text>
+          <path d="m27 91 7 7 15-17" fill="none" stroke="#4ade80" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="m91 92 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#facc15"/>
+        </svg>`;
+      default: {
+        // A future fixed reward still gets a readable role-colored fallback.
+        // The current server catalog is validated separately below, so every
+        // fixed reward that exists today uses one of the unique SVGs above.
+        const spy = id.startsWith("spy-");
+        const outer = spy ? "#fb7185" : "#38bdf8";
+        const inner = spy ? "#35152f" : "#082f49";
+        const icon = option?.icon || "◆";
+        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+          <path d="M60 8 103 33v54l-43 25-43-25V33z" fill="${inner}" stroke="${outer}" stroke-width="5" stroke-linejoin="round"/>
+          <circle cx="60" cy="60" r="31" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="4 5" opacity=".55"/>
+          <text x="60" y="68" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="${fixedRewardIconFontSize(icon)}" font-weight="900">${esc(icon)}</text>
+        </svg>`;
+      }
     }
-    if (id === "inspector-yellow-1") {
-      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
-        <rect x="24" y="19" width="72" height="82" rx="16" fill="#facc15" stroke="#fef3c7" stroke-width="6"/>
-        <path d="M39 60c12-18 30-18 42 0-12 18-30 18-42 0z" fill="#0f172a" opacity=".9"/>
-        <circle cx="60" cy="60" r="10" fill="#e0f2fe"/>
-        <circle cx="60" cy="60" r="4" fill="#2563eb"/>
-        <path d="M91 18v16M83 26h16" stroke="#f472b6" stroke-width="5" stroke-linecap="round"/>
-      </svg>`;
-    }
-    if (id === "inspector-remove-point-1") {
-      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
-        <path d="M60 13l39 15v27c0 25-15 43-39 54C36 98 21 80 21 55V28z" fill="#0f766e" stroke="#5eead4" stroke-width="6"/>
-        <circle cx="60" cy="58" r="28" fill="#082f49" stroke="#7dd3fc" stroke-width="4"/>
-        <text x="60" y="69" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="30" font-weight="900">−1</text>
-        <path d="M84 23l5 9 10 2-7 7 2 10-10-5-9 5 2-10-7-7 10-2z" fill="#fbbf24"/>
-      </svg>`;
-    }
-    if (option?.kind === "fixed") {
-      const spy = id.startsWith("spy-");
-      const outer = spy ? "#fb7185" : "#38bdf8";
-      const inner = spy ? "#4c1d3f" : "#0c4a6e";
-      const icon = option.icon || "◆";
-      // No wavy accent line across the badge (used to run stroke="#fbbf24"
-      // through the middle here) -- it cut straight across the option's
-      // own glyph/text at this size and made the icon harder to read than
-      // the plain background alone.
-      return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true">
-        <circle cx="60" cy="60" r="45" fill="${inner}" stroke="${outer}" stroke-width="6"/>
-        <circle cx="25" cy="30" r="7" fill="#34d399"/>
-        <circle cx="96" cy="28" r="8" fill="#a78bfa"/>
-        <text x="60" y="67" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="${fixedRewardIconFontSize(icon)}" font-weight="900">${esc(icon)}</text>
-      </svg>`;
-    }
-    return "";
   }
 
   // A handful of these compound icons (e.g. "🟨⇄⬛4" for Trade a Yellow,
