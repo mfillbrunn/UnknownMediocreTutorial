@@ -86,13 +86,6 @@
       test: ({ word }) => word.split("").filter(letter => VOWELS.has(letter)).length >= 3
     },
     {
-      id: "cleanHit",
-      icon: "✨",
-      title: "Clean Hit",
-      description: "Submit a guess with no grey tiles.",
-      test: ({ feedback }) => feedback.every(result => result !== "grey")
-    },
-    {
       id: "greenLight",
       icon: "🟩",
       title: "Green Light",
@@ -108,19 +101,7 @@
       id: "suggestGuess",
       icon: "💡",
       title: "Guided Letter",
-      description: "Show a playable word and replace one finite card with a useful letter for this round."
-    },
-    {
-      id: "rouletteSecret",
-      icon: "🔄",
-      title: "Hand Refresh",
-      description: "Refresh up to three finite cards this round without changing the secret."
-    },
-    {
-      id: "revealHistory",
-      icon: "↩️",
-      title: "Discard Recall",
-      description: "Bring back up to two letters from the discard pile for this round."
+      description: "Show a word you can play right now."
     },
     {
       id: "stealthGuess",
@@ -135,18 +116,153 @@
       description: "Reveal one hidden position and make that letter reusable for this round."
     },
     {
-      id: "nonsense",
-      icon: "🎲",
-      title: "Wild Pair",
-      description: "Replace finite cards with two random letters for this round."
-    },
-    {
       id: "letterProbe",
       icon: "🔎",
       title: "Letter Count",
-      description: "Check how often one hand letter occurs; a match becomes reusable this round."
+      description: "Show how many times each of your five consonants appears in the secret."
+    },
+    {
+      id: "sillyWord",
+      icon: "🤪",
+      title: "Silly Word",
+      description: "This turn only, your guess does not have to be a real word."
+    },
+    {
+      id: "extraLetters",
+      icon: "🎁",
+      title: "Extra Letters",
+      description: "Add three extra consonants to your hand for this turn."
+    },
+    {
+      id: "questValue",
+      icon: "🏅",
+      title: "Quest Value",
+      description: "Quests are worth 5 more points. Stacks every time you take it."
     }
   ];
+
+  // Boss rounds. Each one applies a feedback/timing constraint for part of
+  // the round and carries a fixed permanent reward, shown on the option card
+  // before the player commits -- so the choice is between two known
+  // difficulty/reward trades, not a blind pick. A boss round is pass/fail
+  // only: it never scores and never counts toward a threshold.
+  //
+  // `turns` is how many guesses the constraint covers (hideFeedback and
+  // quickMode run the whole round, so they leave it at MAX_GUESSES).
+  const BOSSES = [
+    {
+      id: "countOnly",
+      icon: "🔢",
+      title: "Count Only",
+      description: "For the first three guesses you only learn HOW MANY greens and yellows you hit, not which letters.",
+      turns: 3,
+      rewardId: "cullRare"
+    },
+    {
+      id: "delayedFeedback",
+      icon: "⏳",
+      title: "Delayed Feedback",
+      description: "The first three guesses give no feedback at all. Everything you missed is revealed at once on the fourth.",
+      turns: 3,
+      rewardId: "doubleMulligans"
+    },
+    {
+      id: "hideFeedback",
+      icon: "🙈",
+      title: "Hide Feedback",
+      description: "One position stays hidden for the whole round. You never learn what it was.",
+      turns: 6,
+      rewardId: "biggerMulligans"
+    },
+    {
+      id: "blueMode",
+      icon: "🔵",
+      title: "Blue Mode",
+      description: "For the first four guesses every hit shows as blue. You learn the letter is in the secret, but not whether it is in the right place.",
+      turns: 4,
+      rewardId: "richerColours"
+    },
+    {
+      id: "fakeFeedback",
+      icon: "🃏",
+      title: "Fake Feedback",
+      description: "For the first four guesses the colours lie. Trust nothing you see until the fifth.",
+      turns: 4,
+      rewardId: "freeVowelSweep"
+    },
+    {
+      id: "quickMode",
+      icon: "⚡",
+      title: "Quick Mode",
+      description: "One minute per guess. Run out of time and the guess is lost.",
+      turns: 6,
+      rewardId: "questHead"
+    }
+  ];
+
+  // Permanent run upgrades, one per boss, granted on top of the ordinary
+  // post-round reward when that boss is cleared.
+  const BOSS_REWARDS = [
+    {
+      id: "cullRare",
+      icon: "✂️",
+      title: "Deep Cull",
+      description: "Remove four rare letters from the deck and from every future secret."
+    },
+    {
+      id: "doubleMulligans",
+      icon: "🔁",
+      title: "Double Mulligans",
+      description: "Double the number of mulligans you get each round."
+    },
+    {
+      id: "biggerMulligans",
+      icon: "🖐️",
+      title: "Full Hand Mulligan",
+      description: "Every mulligan can now replace up to five cards."
+    },
+    {
+      id: "richerColours",
+      icon: "💰",
+      title: "Richer Colours",
+      description: "Every yellow and green tile is worth 2 more points."
+    },
+    {
+      id: "freeVowelSweep",
+      icon: "🅰️",
+      title: "Free Vowel Sweep",
+      description: "Each round opens with one random vowel already tested in every position, for free."
+    },
+    {
+      id: "questHead",
+      icon: "🏅",
+      title: "Quest Head Start",
+      description: "Quests are worth 10 more points for the rest of the run."
+    }
+  ];
+
+  function getBoss(id) {
+    const base = BOSSES.find(item => item.id === id);
+    return base ? { ...base } : null;
+  }
+
+  function getBossReward(id) {
+    const base = BOSS_REWARDS.find(item => item.id === id);
+    return base ? { ...base } : null;
+  }
+
+  // Two distinct bosses to choose between, each carrying its own reward.
+  function bossChoices(random = Math.random, excludeIds = []) {
+    const skip = new Set(excludeIds);
+    let pool = BOSSES.filter(boss => !skip.has(boss.id));
+    // Every boss already used -- fall back to the full list rather than
+    // offering nothing at all.
+    if (pool.length < 2) pool = BOSSES.slice();
+    return shuffle(pool, random).slice(0, 2).map(boss => ({
+      ...boss,
+      reward: getBossReward(boss.rewardId)
+    }));
+  }
 
   function shuffle(items, random = Math.random) {
     const copy = items.slice();
@@ -264,10 +380,15 @@
   window.CuddleQuestBook = Object.freeze({
     QUESTS,
     REWARDS,
+    BOSSES,
+    BOSS_REWARDS,
     createQuest,
     evaluateQuest,
     getReward,
     rewardChoices,
+    getBoss,
+    getBossReward,
+    bossChoices,
     evaluateFeedback
   });
 }());

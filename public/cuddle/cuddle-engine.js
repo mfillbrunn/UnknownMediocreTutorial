@@ -5,7 +5,10 @@
 
   const VERSION = 1;
   const STORAGE_KEY = "vowelPlay.cuddle.v1";
-  const THRESHOLDS = Object.freeze([-10, 2, 15, 30, 45, 61, 80, 110, 145, 190, 230, 280]);
+  // Cumulative score gates, one per scoring round. Only nine gates were
+  // specified; rounds 10-12 hold at the final 300 rather than inventing
+  // numbers, because by then the boss rounds are carrying the difficulty.
+  const THRESHOLDS = Object.freeze([25, 50, 75, 110, 140, 170, 200, 250, 300, 300, 300, 300]);
   const MAX_GUESSES = 6;
   const BASE_HAND_SIZE = 5;
   const BASE_MULLIGANS = 2;
@@ -14,6 +17,21 @@
   const VOWELS = new Set(ALWAYS_AVAILABLE_VOWELS);
   const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
+  // Scoring. Greys are worth nothing (not a penalty), each unused guess on a
+  // solve is worth a lot, and mulligans you never spent pay out at round end.
+  const YELLOW_POINTS = 1;
+  const GREEN_POINTS = 2;
+  const EARLY_GUESS_POINTS = 10;
+  const UNUSED_MULLIGAN_POINTS = 3;
+  // Quests start at zero and are only worth anything once the Quest Value
+  // reward (+5 a pick, stacking) or the Quest Head Start boss reward is taken.
+  const QUEST_POINTS_PER_PICK = 5;
+
+  // Boss rounds sit BEFORE these scoring rounds, plus one final boss after the
+  // last one. They are pass/fail: no score, no threshold, but clearing one
+  // grants an ordinary reward AND the boss's own permanent upgrade.
+  const BOSS_BEFORE_ROUNDS = Object.freeze([4, 7, 10]);
+
   const DEFAULT_UPGRADES = Object.freeze({
     startingHand: 0,
     extraMulligans: 0,
@@ -21,7 +39,12 @@
     yellowPoints: 0,
     earlyRoundPoint: 0,
     questRefreshes: 0,
-    questCadence: 0
+    questCadence: 0,
+    // Added by the Quest Value reward and the Quest Head Start boss reward.
+    questPoints: 0,
+    // Boss rewards.
+    doubleMulligans: 0,
+    freeVowelSweep: 0
   });
 
   function normalizeWords(words) {
@@ -210,6 +233,13 @@
       state.maxGuesses = MAX_GUESSES;
       state.milestonesClaimed = Number.isFinite(state.milestonesClaimed) ? state.milestonesClaimed : 0;
       state.pendingMilestones = Number.isFinite(state.pendingMilestones) ? state.pendingMilestones : 0;
+      state.boss = state.boss && typeof state.boss === "object" ? state.boss : null;
+      state.bossOffer = Array.isArray(state.bossOffer) ? state.bossOffer : [];
+      state.bossesCleared = Number.isFinite(state.bossesCleared) ? state.bossesCleared : 0;
+      state.bossesSeen = Array.isArray(state.bossesSeen) ? state.bossesSeen : [];
+      state.bossGatesDone = Array.isArray(state.bossGatesDone) ? state.bossGatesDone : [];
+      state.lastClearedBossGate = state.lastClearedBossGate || null;
+      state.unknownGlyphs = Array.isArray(state.unknownGlyphs) ? state.unknownGlyphs : [];
 
       // Migrate older saves by removing finite vowel copies, adding one free
       // unlimited card for every vowel, retaining positive unlimited letters,
@@ -278,6 +308,13 @@
         questRewardChoices: [],
         questRewardRefreshesLeft: 0,
         pendingRoundEnd: null,
+        boss: null,
+        bossOffer: [],
+        bossesCleared: 0,
+        bossesSeen: [],
+        bossGatesDone: [],
+        lastClearedBossGate: null,
+        unknownGlyphs: [],
         upgradeChoices: [],
         upgradePhase: null,
         upgradeMilestone: null,
@@ -304,13 +341,140 @@
       return {
         handSize: BASE_HAND_SIZE,
         freeVowels: ALWAYS_AVAILABLE_VOWELS.length,
-        mulligans: BASE_MULLIGANS + this.state.upgrades.extraMulligans,
-        mulliganSize: BASE_MULLIGAN_SIZE + this.state.upgrades.mulliganSize,
-        yellowPoints: 2 + this.state.upgrades.yellowPoints,
-        earlyPoint: 5 + this.state.upgrades.earlyRoundPoint,
+        mulligans: this.getMulliganAllowance(),
+        mulliganSize: this.getMulliganLimit(),
+        yellowPoints: YELLOW_POINTS + this.state.upgrades.yellowPoints,
+        greenPoints: GREEN_POINTS + this.state.upgrades.yellowPoints,
+        earlyPoint: EARLY_GUESS_POINTS + this.state.upgrades.earlyRoundPoint,
+        mulliganPoints: UNUSED_MULLIGAN_POINTS,
+        questPoints: Number(this.state.upgrades.questPoints) || 0,
         questCadence: Math.max(1, 3 - this.state.upgrades.questCadence),
         questRefreshes: this.state.upgrades.questRefreshes
       };
+    }
+
+    // --- Boss rounds -------------------------------------------------------
+
+    // How many mulligans a round starts with. Double Mulligans (a boss
+    // reward) doubles whatever the base plus per-round upgrades come to.
+    getMulliganAllowance() {
+      const base = BASE_MULLIGANS + (Number(this.state?.upgrades?.extraMulligans) || 0);
+      const doubles = Number(this.state?.upgrades?.doubleMulligans) || 0;
+      return doubles > 0 ? base * 2 : base;
+    }
+
+    isBossRound() {
+      return Boolean(this.state?.boss);
+    }
+
+    // The boss that gates entry to `round`, if any. Bosses sit before the
+    // rounds in BOSS_BEFORE_ROUNDS, and one final boss follows the last
+    // scoring round.
+    _bossGateFor(round) {
+      if (BOSS_BEFORE_ROUNDS.includes(round)) return `before-${round}`;
+      if (round > THRESHOLDS.length) return "final";
+      return null;
+    }
+
+    // True while the constraint of the active boss is still in force. Bosses
+    // that run the whole round (hideFeedback, quickMode) always return true.
+    _bossActive() {
+      const boss = this.state?.boss;
+      if (!boss) return false;
+      const turns = Number(boss.turns) || 0;
+      return this.state.guessesUsed < turns;
+    }
+
+    // Turns the true feedback into what the board is allowed to show, plus
+    // what the player is allowed to LEARN from it. Anything masked reads as
+    // "unknown" and teaches nothing -- otherwise the hand cards would quietly
+    // reveal exactly what the board is hiding.
+    _applyBossFeedback(word, feedback) {
+      const boss = this.state.boss;
+      if (!boss || !this._bossActive()) {
+        return { shown: feedback.slice(), learn: feedback.slice(), counts: null };
+      }
+
+      const unknown = () => feedback.map(() => "unknown");
+
+      switch (boss.id) {
+        case "countOnly":
+          // You learn the totals, never the positions.
+          return {
+            shown: unknown(),
+            learn: unknown(),
+            counts: {
+              green: feedback.filter(result => result === "green").length,
+              yellow: feedback.filter(result => result === "yellow").length
+            }
+          };
+
+        case "delayedFeedback":
+          // Withheld now, released all at once when the delay expires.
+          return { shown: unknown(), learn: unknown(), counts: null, deferred: true };
+
+        case "hideFeedback": {
+          // Exactly one position stays masked for the entire round.
+          const index = Number(boss.hiddenIndex);
+          const shown = feedback.slice();
+          const learn = feedback.slice();
+          if (Number.isInteger(index) && index >= 0 && index < shown.length) {
+            shown[index] = "unknown";
+            learn[index] = "unknown";
+          }
+          return { shown, learn, counts: null };
+        }
+
+        case "blueMode": {
+          // Green and yellow are indistinguishable: you learn the letter is
+          // in the secret, but not whether it is in the right place, so the
+          // position is never confirmed.
+          const shown = feedback.map(result => (result === "grey" ? "grey" : "blue"));
+          const learn = feedback.map(result => (result === "grey" ? "grey" : "yellow"));
+          return { shown, learn, counts: null };
+        }
+
+        case "fakeFeedback": {
+          // Reuses the multiplayer Falsify Intel idea: the colours lie, so
+          // nothing seen here can be trusted or learned from.
+          const shown = feedback.map(() => {
+            const roll = this.random();
+            return roll < 0.34 ? "green" : roll < 0.67 ? "yellow" : "grey";
+          });
+          return { shown, learn: unknown(), counts: null, fake: true };
+        }
+
+        default:
+          return { shown: feedback.slice(), learn: feedback.slice(), counts: null };
+      }
+    }
+
+    // Letters played into a masked guess go to the "unknown pile": still
+    // usable, but drawn with a question mark because their real status is
+    // being withheld.
+    _markUnknownGlyphs(word) {
+      const unknown = new Set(this.state.unknownGlyphs || []);
+      word.split("").forEach(letter => unknown.add(glyphForLetter(letter)));
+      this.state.unknownGlyphs = [...unknown].sort();
+    }
+
+    // Delayed Feedback pays out everything it withheld the moment the delay
+    // expires: past rows stop being "unknown" and their real colours land.
+    _releaseDeferredFeedback() {
+      let released = 0;
+      this.state.history.forEach(entry => {
+        if (!entry?.deferred) return;
+        entry.deferred = false;
+        entry.shownFeedback = entry.feedback.slice();
+        this._updateKnowledge(entry.word, entry.feedback);
+        released += 1;
+      });
+      if (released) this.state.unknownGlyphs = [];
+      return released;
+    }
+
+    isGlyphUnknown(glyph) {
+      return (this.state?.unknownGlyphs || []).includes(glyphForLetter(glyph));
     }
 
     _nextId(prefix = "card") {
@@ -332,6 +496,9 @@
 
     cardCountsTowardHandLimit(card) {
       if (!card || this.isVowelGlyph(card.glyph)) return false;
+      // Extra Letters cards are a deliberate one-turn bonus on top of the
+      // counted hand -- counting them would just push other cards out.
+      if (card.source === "extra") return false;
       // A glyph confirmed green or yellow is converted to a single permanent
       // "infinite" card by _syncInfiniteCards -- reuse that same flag here
       // instead of recomputing status, so this always agrees with the
@@ -390,9 +557,10 @@
       state.usedSecrets.push(state.secret);
       state.history = [];
       state.guessesUsed = 0;
-      state.mulligansLeft = BASE_MULLIGANS + state.upgrades.extraMulligans;
+      state.mulligansLeft = this.getMulliganAllowance();
       state.knownAbsent = [];
       state.knownPresent = [];
+      state.unknownGlyphs = [];
       state.infiniteGlyphs = [...ALWAYS_AVAILABLE_VOWELS];
       state.revealedPositions = Array(5).fill(null);
       state.activeQuest = null;
@@ -414,10 +582,47 @@
         const message = this._applyRewardEffect(rewardId);
         if (message) messages.push(message);
       });
+      // Free Vowel Sweep (boss reward): one random vowel is tested in every
+      // position for free before the first guess, so its greens and greys are
+      // already on the board without costing a turn.
+      const sweep = this._applyFreeVowelSweep();
+
       state.lastMessage = messages.length
         ? `Banked quest rewards activated: ${messages.join(" ")}`
-        : `Round ${state.round}: reach ${this.getTarget()} total points and solve the fixed secret.`;
+        : this.isBossRound()
+          ? `Boss round: ${state.boss.title}. Beat it to continue -- no score needed.`
+          : `Round ${state.round}: reach ${this.getTarget()} total points and solve the fixed secret.`;
+      if (sweep) state.lastMessage += ` ${sweep}`;
       this._ensureQuestForNextGuess();
+    }
+
+    // Free Vowel Sweep: pick a vowel and reveal, for free, exactly where it
+    // sits in the secret (green) or that it is absent -- without spending a
+    // guess and without creating a history row that could end the round.
+    _applyFreeVowelSweep() {
+      if (!(Number(this.state.upgrades.freeVowelSweep) > 0)) return "";
+      const pool = ALWAYS_AVAILABLE_VOWELS.filter(
+        vowel => !this.state.removedLetters.includes(vowel)
+      );
+      if (!pool.length) return "";
+      const vowel = pool[Math.floor(this.random() * pool.length)];
+      const secret = String(this.state.secret || "");
+      const hits = [];
+      secret.split("").forEach((letter, index) => {
+        if (letter !== vowel) return;
+        hits.push(index + 1);
+        this.state.revealedPositions[index] = vowel;
+      });
+      if (hits.length) {
+        this.state.knownPresent = unique([...this.state.knownPresent, vowel]).sort();
+        this.state.knownAbsent = this.state.knownAbsent.filter(letter => letter !== vowel);
+      } else {
+        this.state.knownAbsent = unique([...this.state.knownAbsent, vowel]).sort();
+      }
+      this._syncInfiniteCards();
+      return hits.length
+        ? `Free vowel sweep: ${vowel} is green at position${hits.length === 1 ? "" : "s"} ${hits.join(", ")}.`
+        : `Free vowel sweep: ${vowel} is not in the secret.`;
     }
 
     _pickSecret() {
@@ -495,7 +700,10 @@
     canSubmit() {
       const word = this.getDraftWord();
       if (word.length !== 5) return { ok: false, error: "Build exactly five letters." };
-      if (!this.guessSet.has(word)) return { ok: false, error: `${word} is not in the guess word list.` };
+      // Silly Word lifts the dictionary requirement for one submission.
+      if (!this.guessSet.has(word) && !(Number(this.state.buffs?.sillyWord) > 0)) {
+        return { ok: false, error: `${word} is not in the guess word list.` };
+      }
       if (this.state.removedLetters.some(letter => word.includes(letter))) {
         return { ok: false, error: "That word contains a letter removed from this run." };
       }
@@ -582,6 +790,9 @@
     _updateKnowledge(word, feedback) {
       const statusesByLetter = Object.create(null);
       word.split("").forEach((letter, index) => {
+        // "unknown" is a boss mask, not a result -- it must teach nothing, or
+        // the hand would reveal what the board is deliberately hiding.
+        if (feedback[index] === "unknown") return;
         (statusesByLetter[letter] ||= []).push(feedback[index]);
         if (feedback[index] === "green") this.state.revealedPositions[index] = letter;
       });
@@ -654,11 +865,15 @@
       const word = validation.word;
       const feedback = evaluateFeedback(this.state.secret, word);
       const yellowCount = feedback.filter(result => result === "yellow").length;
+      const greenCount = feedback.filter(result => result === "green").length;
       const greyCount = feedback.filter(result => result === "grey").length;
       const shielded = this.state.buffs.greyShield > 0;
-      // UMT_REQUESTED_FIXES_20260901: NO GRAY PENALTY
-      // Gray letters are informational and never reduce the Cuddle score.
-      const scoreDelta = yellowCount * (2 + this.state.upgrades.yellowPoints);
+      // Greys are informational and never reduce the Cuddle score. Boss
+      // rounds are pass/fail, so nothing scores in them at all.
+      const bonus = this.state.upgrades.yellowPoints;
+      const scoreDelta = this.isBossRound()
+        ? 0
+        : yellowCount * (YELLOW_POINTS + bonus) + greenCount * (GREEN_POINTS + bonus);
       if (shielded) this.state.buffs.greyShield -= 1;
 
       const activeQuest = this.state.activeQuest;
@@ -667,7 +882,16 @@
       this._discardCards(draftIds);
       this.state.draft = [];
 
-      this._updateKnowledge(word, feedback);
+      // Both of these are explicitly "this turn only", so they expire on the
+      // submission that used them rather than lingering into the next guess.
+      if (Number(this.state.buffs?.sillyWord) > 0) this.state.buffs.sillyWord = 0;
+      this.state.hand = this.state.hand.filter(card => card.source !== "extra");
+
+      // Boss constraints sit between the true feedback and both what the
+      // board shows and what the player is allowed to learn from it.
+      const masked = this._applyBossFeedback(word, feedback);
+      if (masked.shown.some(result => result === "unknown")) this._markUnknownGlyphs(word);
+      this._updateKnowledge(word, masked.learn);
       const infiniteUnlocked = this._syncInfiniteCards();
       // A finite consonant leaves once if it appeared in the submitted word.
       // Positive consonants stay in one counted slot; vowels remain outside the limit.
@@ -682,8 +906,15 @@
       const entry = {
         word,
         feedback,
+        // What the board is allowed to render. Identical to `feedback` in an
+        // ordinary round; a boss can mask, recolour or falsify it.
+        shownFeedback: masked.shown,
+        bossCounts: masked.counts || null,
+        deferred: Boolean(masked.deferred),
+        fakeFeedback: Boolean(masked.fake),
         scoreDelta,
         yellowCount,
+        greenCount,
         greyCount,
         shielded,
         usedCards: draftCards.map(card => card.glyph),
@@ -710,21 +941,41 @@
           rareLetters: activeQuest.rareLetters || []
         }));
         entry.questComplete = questComplete;
+        // Quests are worth nothing on their own -- the points only exist once
+        // Quest Value / Quest Head Start have been taken. Boss rounds never
+        // score, so they never pay this out either.
+        if (questComplete && !this.isBossRound()) {
+          const questBonus = Number(this.state.upgrades.questPoints) || 0;
+          if (questBonus > 0) {
+            entry.questBonus = questBonus;
+            this.state.score += questBonus;
+            this.state.roundScore += questBonus;
+          }
+        }
         this.state.activeQuest = null;
       }
 
       const solved = word === this.state.secret;
       if (solved) {
-        const earlyBonus = (MAX_GUESSES - this.state.guessesUsed)
-          * (5 + this.state.upgrades.earlyRoundPoint);
+        // Unused guesses and unspent mulligans both pay out on a solve. A
+        // boss round is pass/fail, so neither is worth anything there.
+        const earlyBonus = this.isBossRound()
+          ? 0
+          : (MAX_GUESSES - this.state.guessesUsed)
+              * (EARLY_GUESS_POINTS + this.state.upgrades.earlyRoundPoint);
+        const mulliganBonus = this.isBossRound()
+          ? 0
+          : Math.max(0, Number(this.state.mulligansLeft) || 0) * UNUSED_MULLIGAN_POINTS;
         entry.earlyBonus = earlyBonus;
-        this.state.score += earlyBonus;
-        this.state.roundScore += earlyBonus;
+        entry.mulliganBonus = mulliganBonus;
+        this.state.score += earlyBonus + mulliganBonus;
+        this.state.roundScore += earlyBonus + mulliganBonus;
         this.state.pendingRoundEnd = {
           type: "solved",
           word,
           secret: this.state.secret,
           earlyBonus,
+          mulliganBonus,
           score: this.state.score,
           target: this.getTarget()
         };
@@ -738,11 +989,20 @@
       }
       this.state.history.push(entry);
 
+      // Delayed Feedback: once the delay expires, everything it withheld
+      // lands at once and the unknown pile clears.
+      if (this.state.boss?.id === "delayedFeedback" && !this._bossActive()) {
+        const released = this._releaseDeferredFeedback();
+        if (released) this._syncInfiniteCards();
+      }
+
       const scoreParts = [];
       if (yellowCount) scoreParts.push(`${yellowCount} yellow`);
+      if (greenCount) scoreParts.push(`${greenCount} green`);
       if (greyCount) scoreParts.push(`${greyCount} grey${greyCount === 1 ? "" : "s"}, no penalty`);
       if (entry.infiniteUnlocked.length) scoreParts.push(`${entry.infiniteUnlocked.join(", ")} now stays in hand`);
       if (entry.earlyBonus) scoreParts.push(`+${entry.earlyBonus} early bonus`);
+      if (entry.mulliganBonus) scoreParts.push(`+${entry.mulliganBonus} unused mulligans`);
       this.state.lastMessage = `${word}: ${scoreDelta >= 0 ? "+" : ""}${scoreDelta} points${scoreParts.length ? ` (${scoreParts.join(", ")})` : ""}.`;
 
       if (questComplete) {
@@ -1057,25 +1317,174 @@
 
       if (pending.type === "outOfGuesses") {
         this.state.status = "lost";
-        this.state.failureReason = `You did not find ${pending.secret} in six guesses.`;
+        this.state.failureReason = this.isBossRound()
+          ? `The ${this.state.boss.title} boss kept ${pending.secret} hidden for all six guesses.`
+          : `You did not find ${pending.secret} in six guesses.`;
         return;
       }
+
+      // A boss round is pass/fail: solving it is the whole requirement, and
+      // no threshold applies because nothing scored.
+      if (this.isBossRound()) {
+        this._clearBoss();
+        return;
+      }
+
       if (this.state.score < this.getTarget()) {
         this.state.status = "lost";
         this.state.failureReason = `You solved ${pending.secret}, but needed ${this.getTarget()} total points to continue.`;
         return;
       }
-      if (this.state.round >= THRESHOLDS.length) {
+
+      this.state.status = "upgrade";
+      this.state.upgradePhase = "round";
+      this.state.upgradeMilestone = null;
+      this.state.upgradeChoices = this._generateUpgradeChoices();
+    }
+
+    // Beating a boss grants its own permanent upgrade on top of the ordinary
+    // post-round reward pick. The final boss ends the run instead.
+    _clearBoss() {
+      const boss = this.state.boss;
+      this.state.boss = null;
+      this.state.bossesCleared += 1;
+      this.state.unknownGlyphs = [];
+      // Marks the gate as resolved so _advanceRound drops into the round it
+      // was guarding instead of offering the same boss again.
+      this.state.bossGatesDone = unique([...(this.state.bossGatesDone || []), boss?.gate].filter(Boolean));
+      this.state.lastClearedBossGate = boss?.gate || null;
+
+      const rewardMessage = this._applyBossReward(boss?.rewardId);
+
+      if (boss?.gate === "final") {
         this.state.status = "won";
         this.state.failureReason = null;
+        this.state.lastMessage = `You beat the final boss: ${boss.title}.`;
         return;
       }
 
       this.state.status = "upgrade";
       this.state.upgradePhase = "round";
-      this.state.pendingMilestones = Math.max(0, Math.floor(this.state.score / 50) - this.state.milestonesClaimed);
       this.state.upgradeMilestone = null;
       this.state.upgradeChoices = this._generateUpgradeChoices();
+      this.state.lastMessage = rewardMessage
+        ? `${boss?.title || "Boss"} cleared. ${rewardMessage}`
+        : `${boss?.title || "Boss"} cleared.`;
+    }
+
+    _applyBossReward(rewardId) {
+      const reward = window.CuddleQuestBook?.getBossReward?.(rewardId);
+      if (!reward) return "";
+      switch (rewardId) {
+        case "cullRare": {
+          const letters = this._removalCandidates(4);
+          if (!letters.length) return "No letters were safe to remove.";
+          this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
+          return `Deep Cull removed ${letters.join(", ")}.`;
+        }
+        case "doubleMulligans":
+          this.state.upgrades.doubleMulligans += 1;
+          return "Mulligans per round are now doubled.";
+        case "biggerMulligans":
+          // Enough headroom that a mulligan can swap the whole counted hand.
+          this.state.upgrades.mulliganSize = Math.max(
+            this.state.upgrades.mulliganSize,
+            BASE_HAND_SIZE - BASE_MULLIGAN_SIZE
+          );
+          return "Mulligans now replace up to five cards.";
+        case "richerColours":
+          this.state.upgrades.yellowPoints += 2;
+          return "Yellow and green tiles are worth 2 more points each.";
+        case "freeVowelSweep":
+          this.state.upgrades.freeVowelSweep += 1;
+          return "Each round now opens with a free vowel sweep.";
+        case "questHead":
+          this.state.upgrades.questPoints += 10;
+          return "Quests are worth 10 more points.";
+        default:
+          return "";
+      }
+    }
+
+    // Offers two bosses before `round`, if that round is gated by one.
+    _openBossGate(round) {
+      const gate = this._bossGateFor(round);
+      if (!gate) return false;
+      if ((this.state.bossGatesDone || []).includes(gate)) return false;
+      const choices = window.CuddleQuestBook?.bossChoices?.(this.random, this.state.bossesSeen) || [];
+      if (choices.length < 2) return false;
+      this.state.status = "bossChoice";
+      this.state.bossOffer = choices.map(choice => ({ ...choice, gate }));
+      return true;
+    }
+
+    // Quick Mode: the clock ran out, so the guess is spent without a word.
+    // Burns the turn (and ends the round if it was the last one) without
+    // scoring or teaching anything.
+    forfeitGuess() {
+      if (this.state.status !== "playing") return { ok: false, error: "The round is not running." };
+      if (this.state.guessesUsed >= MAX_GUESSES) return { ok: false, error: "No guesses remain." };
+
+      this.state.draft = [];
+      this.state.guessesUsed += 1;
+      this.state.history.push({
+        word: "",
+        feedback: [],
+        shownFeedback: [],
+        timedOut: true,
+        scoreDelta: 0,
+        yellowCount: 0,
+        greenCount: 0,
+        greyCount: 0,
+        usedCards: [],
+        replacements: 0,
+        infiniteUnlocked: [],
+        questId: this.state.activeQuest?.id || null,
+        questComplete: false,
+        earlyBonus: 0
+      });
+      this.state.activeQuest = null;
+      this.state.lastMessage = "Out of time: that guess was lost.";
+
+      if (this.state.guessesUsed >= MAX_GUESSES) {
+        this.state.pendingRoundEnd = {
+          type: "outOfGuesses",
+          secret: this.state.secret,
+          score: this.state.score,
+          target: this.getTarget()
+        };
+        this._resolvePendingRoundEnd();
+      } else {
+        this._ensureQuestForNextGuess();
+      }
+      this.save();
+      return { ok: true };
+    }
+
+    chooseBoss(bossId) {
+      if (this.state.status !== "bossChoice") return { ok: false, error: "No boss choice is open." };
+      const chosen = (this.state.bossOffer || []).find(option => option.id === bossId);
+      if (!chosen) return { ok: false, error: "That boss is not on offer." };
+
+      this.state.boss = {
+        id: chosen.id,
+        title: chosen.title,
+        icon: chosen.icon,
+        description: chosen.description,
+        turns: Number(chosen.turns) || MAX_GUESSES,
+        rewardId: chosen.rewardId,
+        gate: chosen.gate,
+        // Hide Feedback picks its masked position once, up front, so it is
+        // the same one for the whole round.
+        hiddenIndex: chosen.id === "hideFeedback" ? Math.floor(this.random() * 5) : null,
+        // Quick Mode is the only boss the UI has to run a clock for.
+        secondsPerGuess: chosen.id === "quickMode" ? 60 : null
+      };
+      this.state.bossesSeen = unique([...(this.state.bossesSeen || []), chosen.id]);
+      this.state.bossOffer = [];
+      this._beginRound();
+      this.save();
+      return { ok: true };
     }
 
     _removalCandidate() {
@@ -1207,30 +1616,32 @@
       }
       this.state.lastMessage = `${choice.title} acquired.`;
 
-      if (this.state.upgradePhase === "round") {
-        if (this.state.pendingMilestones > 0) {
-          this.state.upgradePhase = "milestone";
-          this.state.upgradeMilestone = (this.state.milestonesClaimed + 1) * 50;
-          this.state.upgradeChoices = this._generateUpgradeChoices();
-        } else {
-          this._advanceRound();
-        }
-      } else {
-        this.state.milestonesClaimed += 1;
-        this.state.pendingMilestones = Math.max(0, this.state.pendingMilestones - 1);
-        if (this.state.pendingMilestones > 0) {
-          this.state.upgradeMilestone = (this.state.milestonesClaimed + 1) * 50;
-          this.state.upgradeChoices = this._generateUpgradeChoices();
-        } else {
-          this._advanceRound();
-        }
-      }
+      // Score milestones are gone -- the extra rewards now come from the boss
+      // rounds instead, so every upgrade pick simply advances the run.
+      this._advanceRound();
       this.save();
       return { ok: true };
     }
 
     _advanceRound() {
-      this.state.round += 1;
+      // A boss round is an interlude, not a numbered scoring round: clearing
+      // the boss that gates round N drops the player into round N itself
+      // rather than skipping past it.
+      const justClearedGate = this.state.lastClearedBossGate;
+      this.state.lastClearedBossGate = null;
+      const next = justClearedGate ? this.state.round : this.state.round + 1;
+
+      // Past the last scoring round the only thing left is the final boss.
+      if (next > THRESHOLDS.length) {
+        if (this._openBossGate(next)) return;
+        this.state.status = "won";
+        this.state.failureReason = null;
+        return;
+      }
+
+      this.state.round = next;
+      // Bosses gate entry to rounds 4, 7 and 10.
+      if (this._openBossGate(next)) return;
       this._beginRound();
     }
 
@@ -1278,35 +1689,39 @@
     return feasible;
   };
 
-  // Keep the Suggest Guess reward consistent with reusable finite letters.
+  // Guided Letter shows a word and nothing else -- it no longer swaps a card
+  // into the hand, so the suggestion has to be one the current hand can
+  // already build or it would be useless.
   const originalCuddleApplyRewardEffect = CuddleGame.prototype._applyRewardEffect;
   CuddleGame.prototype._applyRewardEffect = function applyReusableLetterReward(rewardId) {
     if (rewardId !== "suggestGuess") {
       return originalCuddleApplyRewardEffect.call(this, rewardId);
     }
 
-    const active = this.getActiveWords();
+    const buildable = this.getFeasibleWords(200);
+    if (buildable.length) {
+      const word = buildable[Math.floor(this.random() * buildable.length)];
+      this.state.suggestedWord = word;
+      return `Guided Letter: try ${word}.`;
+    }
+
+    // Nothing is currently buildable, so fall back to the closest candidate
+    // rather than showing nothing at all.
     const available = new Set(this.state.hand.map(card => card.glyph));
     let best = null;
     let bestDeficit = Infinity;
-    active.forEach(word => {
+    this.getActiveWords().forEach(word => {
       const tokens = tokensForWord(word);
       if (!tokens) return;
-      const missing = unique(tokens.filter(token => !available.has(token)));
-      const deficit = missing.length;
-      if (deficit < bestDeficit || (deficit === bestDeficit && this.random() < 0.08)) {
-        best = { word, missing };
+      const deficit = unique(tokens.filter(token => !available.has(token))).length;
+      if (deficit < bestDeficit) {
+        best = word;
         bestDeficit = deficit;
       }
     });
     if (!best) return "No suggestion was available.";
-
-    const useful = best.missing[0] || null;
-    const added = useful ? this._addBonusCard(useful) : null;
-    this.state.suggestedWord = best.word;
-    return added
-      ? `Suggestion: ${best.word}. ${useful} replaced one finite hand card.`
-      : `Suggestion: ${best.word}. Your reusable hand already covers its letters.`;
+    this.state.suggestedWord = best;
+    return `Guided Letter: aim for ${best}.`;
   };
   /* UMT_USER_FIX_PACK_V1: ENGINE OVERRIDES END */
 
@@ -1343,7 +1758,14 @@
     // only after the player dismisses the round summary.
     this.state.activeQuest = null;
     this.state.roundIntroPending = true;
-    this.state.lastMessage = `Round ${this.state.round}: reach ${this.getTarget()} total points and solve the fixed secret.`;
+    // Don't clobber what the base _beginRound already said: a boss round
+    // announces its own constraint, and the Free Vowel Sweep reward appends
+    // the letter it just tested for free. Only the plain round line is
+    // regenerated here.
+    const alreadySaid = String(this.state.lastMessage || "");
+    if (!this.isBossRound() && !alreadySaid.includes("Free vowel sweep")) {
+      this.state.lastMessage = `Round ${this.state.round}: reach ${this.getTarget()} total points and solve the fixed secret.`;
+    }
   };
 
   CuddleGame.prototype.dismissRoundIntro = function dismissRoundIntro() {
@@ -1373,7 +1795,19 @@
       modifications.push(`Mulligans replace up to ${BASE_MULLIGAN_SIZE + biggerMulligan} cards`);
     }
     if (strongerYellows) {
-      modifications.push(`Yellow tiles are worth +${strongerYellows} extra point${strongerYellows === 1 ? "" : "s"}`);
+      modifications.push(`Yellow and green tiles are worth +${strongerYellows} extra point${strongerYellows === 1 ? "" : "s"}`);
+    }
+    if (Number(upgrades.questPoints || 0)) {
+      modifications.push(`Quests are worth ${Number(upgrades.questPoints)} points`);
+    }
+    if (Number(upgrades.doubleMulligans || 0)) {
+      modifications.push("Mulligans per round are doubled");
+    }
+    if (Number(upgrades.freeVowelSweep || 0)) {
+      modifications.push("Each round opens with a free vowel sweep");
+    }
+    if (Number(this.state?.bossesCleared || 0)) {
+      modifications.push(`Bosses beaten: ${Number(this.state.bossesCleared)}`);
     }
     if (fasterSolve) {
       modifications.push(`Early-solve bonus is +${fasterSolve} extra per unused guess`);
@@ -1402,15 +1836,64 @@
       this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + 1;
       return "Extra Mulligan added for this round.";
     }
+
+    // Letter Count now reports the whole counted hand at once: for each of
+    // the five consonants, how many times it appears in the secret.
+    if (rewardId === "letterProbe") {
+      const secret = String(this.state.secret || "");
+      const glyphs = unique(
+        this.state.hand
+          .filter(card => this.cardCountsTowardHandLimit(card))
+          .map(card => glyphForLetter(card.glyph))
+      ).sort();
+      if (!glyphs.length) return "There were no consonants in hand to count.";
+      const parts = glyphs.map(glyph => {
+        const count = secret.split("").filter(letter => letter === glyph).length;
+        if (count > 0) {
+          this.state.knownPresent = unique([...this.state.knownPresent, glyph]).sort();
+          this.state.knownAbsent = this.state.knownAbsent.filter(letter => letter !== glyph);
+        } else {
+          this.state.knownAbsent = unique([...this.state.knownAbsent, glyph]).sort();
+        }
+        return `${glyph}×${count}`;
+      });
+      this._syncInfiniteCards();
+      return `Letter Count: ${parts.join(", ")}.`;
+    }
+
+    // Silly Word lifts the dictionary check for exactly one submission.
+    if (rewardId === "sillyWord") {
+      this.state.buffs = { ...(this.state.buffs || {}), sillyWord: 1 };
+      return "Silly Word armed: your next guess does not have to be a real word.";
+    }
+
+    // Extra Letters adds three consonants ON TOP of the counted hand rather
+    // than through the draw pile, which would just displace cards to stay at
+    // five. source "extra" keeps them outside the limit (see
+    // cardCountsTowardHandLimit) so they genuinely widen this turn.
+    if (rewardId === "extraLetters") {
+      const pool = this._baseDeckGlyphs().filter(glyph => !this.isInfiniteGlyph(glyph));
+      const added = [];
+      for (let i = 0; i < 3 && pool.length; i += 1) {
+        const glyph = pool[Math.floor(this.random() * pool.length)];
+        const card = this._newCard(glyph, "extra");
+        this.state.hand.push(card);
+        added.push(glyph);
+      }
+      return added.length
+        ? `Extra Letters: ${added.join(", ")} added for this turn.`
+        : "No extra letters were available to add.";
+    }
+
+    // Quest Value stacks: every pick makes quests worth another 5 points.
+    if (rewardId === "questValue") {
+      this.state.upgrades.questPoints = (Number(this.state.upgrades.questPoints) || 0)
+        + QUEST_POINTS_PER_PICK;
+      return `Quests are now worth ${this.state.upgrades.questPoints} points.`;
+    }
     const originalMessage = cuddleV2OriginalRewardEffect.call(this, rewardId);
     if (typeof originalMessage !== "string") return originalMessage;
-    const renamedMessage = originalMessage
-      .replace(/^Suggestion:/, "Guided Letter:")
-      .replace(/^Roulette Draw/, "Hand Refresh")
-      .replace(/\bRecover\b/g, "Discard Recall")
-      .replace(/^Nonsense/, "Wild Pair")
-      .replace(/^Probe result:/, "Letter Count:");
-    return renamedMessage.replace(/and is now stays in hand/g, "and now stays in hand");
+    return originalMessage.replace(/and is now stays in hand/g, "and now stays in hand");
   };
 
   // Rewards are applied immediately in the round where they are earned. This
@@ -1425,11 +1908,15 @@
 
     const pending = this.state.pendingRoundEnd;
     if (pending) {
+      // A reward earned on the round-ending guess has nothing left to affect,
+      // so it converts to the quest's point value instead -- which is zero
+      // until Quest Value / Quest Head Start have been taken.
       let bonus = 0;
-      if (pending.type === "solved") {
+      if (pending.type === "solved" && !this.isBossRound()) {
         const entry = this.state.history[this.state.history.length - 1];
-        if (entry && !entry.questFinalBonus) {
-          bonus = 5;
+        const questBonus = Number(this.state.upgrades.questPoints) || 0;
+        if (entry && !entry.questFinalBonus && questBonus > 0) {
+          bonus = questBonus;
           entry.questFinalBonus = bonus;
           this.state.score += bonus;
           this.state.roundScore += bonus;
@@ -1440,7 +1927,9 @@
       this.state.questRewardRefreshesLeft = 0;
       this.state.deferredRewards = [];
       this.state.lastMessage = pending.type === "solved"
-        ? `Quest completed on the solving guess: +${bonus || 5} points instead of a carried reward.`
+        ? (bonus
+          ? `Quest completed on the solving guess: +${bonus} points instead of a carried reward.`
+          : "Quest completed on the solving guess, but the round ended before a reward could be used.")
         : "The final guess ended the round, so no reward was carried forward.";
       this._resolvePendingRoundEnd();
       this.save();
@@ -1460,8 +1949,9 @@
 
   // If a quest completes on a round-ending guess, never open a reward
   // picker whose effect would spill into a later round. A solving guess earns
-  // five points before the round pass/fail check; an unsuccessful final guess
-  // simply ends the run without carrying a reward.
+  // the quest's point value instead (zero until Quest Value / Quest Head
+  // Start have been taken); an unsuccessful final guess simply ends the run
+  // without carrying a reward.
   const cuddleV2OriginalSubmitDraft = CuddleGame.prototype.submitDraft;
   CuddleGame.prototype.submitDraft = function submitCuddleV2Draft() {
     const result = cuddleV2OriginalSubmitDraft.call(this);
@@ -1469,8 +1959,9 @@
 
     const entry = this.state.history[this.state.history.length - 1];
     let bonus = 0;
-    if (result.solved && entry && !entry.questFinalBonus) {
-      bonus = 5;
+    const questBonus = this.isBossRound() ? 0 : (Number(this.state.upgrades.questPoints) || 0);
+    if (result.solved && entry && !entry.questFinalBonus && questBonus > 0) {
+      bonus = questBonus;
       entry.questFinalBonus = bonus;
       this.state.score += bonus;
       this.state.roundScore += bonus;
@@ -1481,7 +1972,9 @@
     this.state.questRewardRefreshesLeft = 0;
     this.state.deferredRewards = [];
     this.state.lastMessage += result.solved
-      ? ` Quest completed on the solving guess: +${bonus || 5} points.`
+      ? (bonus
+        ? ` Quest completed on the solving guess: +${bonus} points.`
+        : " Quest completed on the solving guess.")
       : " Quest completed on the final attempt, but no reward carries forward.";
     this._resolvePendingRoundEnd();
     this.save();
