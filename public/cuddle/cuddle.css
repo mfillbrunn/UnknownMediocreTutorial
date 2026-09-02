@@ -17,7 +17,11 @@
   --cuddle-red: #b6505d;
   --cuddle-shadow: 0 22px 70px rgba(0, 0, 0, 0.36);
   position: relative;
-  min-height: calc(100vh - var(--header-height, 0px));
+  /* dvh, not vh: on mobile Safari/Chrome 100vh is measured with the URL bar
+     hidden, so a 100vh box is taller than what you can actually see and
+     leaves dead space to scroll past at the bottom. Every other full-height
+     surface here already uses dvh (see game-menu.css). */
+  min-height: calc(100dvh - var(--header-height, 0px));
   padding: 0;
   overflow: auto;
   color: var(--cuddle-text);
@@ -25,6 +29,14 @@
     radial-gradient(circle at 10% 5%, rgba(213, 166, 255, 0.13), transparent 34rem),
     radial-gradient(circle at 92% 15%, rgba(139, 232, 210, 0.09), transparent 30rem),
     var(--cuddle-bg);
+}
+
+/* Full-bleed, exactly like #startupScreen (which zeroes its margin for the
+   same reason): .screen.active hands every screen a 16px margin-top, and on
+   a screen that is already a full 100dvh tall that margin is 16px of empty
+   scroll past the bottom with nothing in it. */
+#cuddleScreen.screen.active {
+  margin-top: 0;
 }
 
 #cuddleScreen *,
