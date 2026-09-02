@@ -446,40 +446,190 @@
 
   // UMT_USER_FIX_PACK_V1: delegated drawer-toggle safety net.
   // The listener remains valid even if a screen subtree is replaced.
+  /* UMT_SIDEBAR_CONSTRAINT_FOLLOWUP_20260901: DRAWER CONTROLLER START */
+  const drawerCommandVersion = { setter: 0, guesser: 0 };
+  let drawerControlObserver = null;
+  let drawerControlSyncFrame = 0;
+
+  function drawerClassFor(role) {
+    return role === "setter"
+      ? "setter-sidebar-collapsed"
+      : "guesser-sidebar-collapsed";
+  }
+
+  function drawerToggleFor(role, roleScreen = screenFor(role)) {
+    const id = role === "setter"
+      ? "setterSidebarToggle"
+      : "guesserSidebarToggle";
+    return roleScreen?.querySelector(`#${id}`) || byId(id);
+  }
+
+  function drawerRoleName(role) {
+    return role === "setter" ? "Secretkeeper" : "Guesser";
+  }
+
+  function syncDrawerControl(role, roleScreen = screenFor(role)) {
+    if (!roleScreen) return;
+
+    const collapsed = roleScreen.classList.contains(drawerClassFor(role));
+    roleScreen.dataset.sidebarCollapsed = collapsed ? "true" : "false";
+
+    const toggle = drawerToggleFor(role, roleScreen);
+    if (!toggle) return;
+
+    const roleName = drawerRoleName(role);
+    toggle.disabled = false;
+    toggle.removeAttribute("disabled");
+    toggle.removeAttribute("aria-disabled");
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    toggle.setAttribute(
+      "aria-label",
+      collapsed ? `Show ${roleName} side panel` : `Hide ${roleName} side panel`
+    );
+    toggle.title = collapsed ? "Show side panel" : "Hide side panel";
+
+    const icon = toggle.querySelector(
+      role === "setter"
+        ? ".setter-sidebar-toggle-icon"
+        : ".guesser-sidebar-toggle-icon"
+    );
+    if (icon) icon.textContent = collapsed ? "\u203a" : "\u2039";
+  }
+
+  function writeDrawerDomState(role, collapsed, roleScreen = screenFor(role)) {
+    if (!roleScreen) return;
+    roleScreen.classList.toggle(drawerClassFor(role), Boolean(collapsed));
+    roleScreen.dataset.sidebarCollapsed = collapsed ? "true" : "false";
+    syncDrawerControl(role, roleScreen);
+  }
+
+  function persistDrawerState(role, collapsed) {
+    const key = role === "setter"
+      ? "setterSidebarCollapsed"
+      : "guesserSidebarCollapsedV9";
+    try {
+      localStorage.setItem(key, collapsed ? "1" : "0");
+    } catch {
+      // Storage is optional.
+    }
+  }
+
+  function applyDrawerCommand(role, collapsed, roleScreen = screenFor(role)) {
+    if (!roleScreen) return;
+
+    const requested = Boolean(collapsed);
+    const commandVersion = ++drawerCommandVersion[role];
+    const canonicalSetter = role === "setter"
+      ? window.setSetterSidebarCollapsed
+      : window.setGuesserSidebarCollapsed;
+
+    if (typeof canonicalSetter === "function") {
+      try {
+        canonicalSetter(requested, true);
+      } catch (error) {
+        console.warn(`[sidebar] ${role} canonical setter failed`, error);
+      }
+    }
+
+    // Always verify the actual screen that owns the clicked control. The
+    // canonical functions use global IDs and can briefly miss a node while a
+    // reward or power render replaces part of the UI.
+    writeDrawerDomState(role, requested, roleScreen);
+    persistDrawerState(role, requested);
+
+    // Reassert only across the immediate render cycle. Versioning prevents an
+    // earlier click from undoing a newer click, and there is no long-lived
+    // observer that can keep restoring stale state later in the match.
+    [0, 60, 180].forEach(delay => {
+      window.setTimeout(() => {
+        if (drawerCommandVersion[role] !== commandVersion) return;
+        if (!roleScreen.isConnected) return;
+        writeDrawerDomState(role, requested, roleScreen);
+        scheduleUpdate();
+      }, delay);
+    });
+
+    scheduleUpdate();
+  }
+
+  function scheduleDrawerControlSync() {
+    if (drawerControlSyncFrame) return;
+    drawerControlSyncFrame = window.requestAnimationFrame(() => {
+      drawerControlSyncFrame = 0;
+      syncDrawerControl("setter");
+      syncDrawerControl("guesser");
+    });
+  }
+
+  function installDrawerControlObserver() {
+    if (drawerControlObserver || !document.body) return;
+
+    drawerControlObserver = new MutationObserver(records => {
+      const relevant = records.some(record => {
+        if (
+          record.type === "attributes" &&
+          record.target instanceof Element &&
+          record.target.matches("#setterSidebarToggle, #guesserSidebarToggle")
+        ) {
+          return true;
+        }
+
+        return [...record.addedNodes].some(node => (
+          node instanceof Element &&
+          (
+            node.matches?.(
+              "#setterScreen, #guesserScreen, #setterSidebarToggle, #guesserSidebarToggle"
+            ) ||
+            node.querySelector?.(
+              "#setterSidebarToggle, #guesserSidebarToggle"
+            )
+          )
+        ));
+      });
+
+      if (relevant) scheduleDrawerControlSync();
+    });
+
+    drawerControlObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["disabled", "aria-disabled"]
+    });
+    observers.push(drawerControlObserver);
+  }
+
   function drawerToggleFromClick(event) {
     const rawTarget = event.target;
     const target = rawTarget instanceof Element
       ? rawTarget
       : rawTarget?.parentElement || null;
-    const toggle = target?.closest?.("#setterSidebarToggle, #guesserSidebarToggle");
-    if (!toggle || event.__umtDrawerToggleHandled) return;
+    const toggle = target?.closest?.(
+      "#setterSidebarToggle, #guesserSidebarToggle"
+    );
+    if (!toggle) return;
+
+    if (event.__umtDrawerToggleHandled) {
+      if (event.cancelable) event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
 
     const role = toggle.id === "setterSidebarToggle" ? "setter" : "guesser";
-    const roleScreen = screenFor(role);
-    if (!roleScreen || !roleScreen.contains(toggle)) return;
+    const expectedScreenSelector = role === "setter"
+      ? "#setterScreen"
+      : "#guesserScreen";
+    const roleScreen = toggle.closest(expectedScreenSelector);
+    if (!roleScreen) return;
 
     event.__umtDrawerToggleHandled = true;
     if (event.cancelable) event.preventDefault();
-    event.stopPropagation();
+    event.stopImmediatePropagation();
 
-    const nextCollapsed = !drawerClosed(role);
-    const setter = role === "setter"
-      ? window.setSetterSidebarCollapsed
-      : window.setGuesserSidebarCollapsed;
-
-    if (typeof setter === "function") {
-      setter(nextCollapsed);
-    } else {
-      const className = role === "setter"
-        ? "setter-sidebar-collapsed"
-        : "guesser-sidebar-collapsed";
-      roleScreen.classList.toggle(className, nextCollapsed);
-      roleScreen.dataset.sidebarCollapsed = nextCollapsed ? "true" : "false";
-      toggle.setAttribute("aria-expanded", String(!nextCollapsed));
-    }
-
+    const nextCollapsed = !roleScreen.classList.contains(drawerClassFor(role));
+    applyDrawerCommand(role, nextCollapsed, roleScreen);
     window.notifyTutorialSidebarToggled?.();
-    scheduleUpdate();
+    window.updateCollapsedActionDocks?.();
   }
 
   function clearDrawerSwipeVisuals() {
@@ -488,15 +638,35 @@
   }
 
   function installDrawerToggleFallback() {
-    if (document.documentElement.dataset.umtDrawerToggleFallback === "1") return;
-    document.documentElement.dataset.umtDrawerToggleFallback = "1";
+    if (window.__umtDrawerControllerV2Installed) {
+      scheduleDrawerControlSync();
+      return;
+    }
+
+    window.__umtDrawerControllerV2Installed = true;
+    document.documentElement.dataset.umtDrawerToggleFallback = "2";
     document.addEventListener("click", drawerToggleFromClick, true);
     window.addEventListener("blur", clearDrawerSwipeVisuals);
     window.addEventListener("pointercancel", clearDrawerSwipeVisuals, true);
+    window.addEventListener("pageshow", scheduleDrawerControlSync);
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) clearDrawerSwipeVisuals();
+      else scheduleDrawerControlSync();
     });
+
+    installDrawerControlObserver();
+    scheduleDrawerControlSync();
   }
+
+  window.__umtSetSidebarCollapsed = function (role, collapsed) {
+    if (role !== "setter" && role !== "guesser") return false;
+    const roleScreen = screenFor(role);
+    if (!roleScreen) return false;
+    applyDrawerCommand(role, Boolean(collapsed), roleScreen);
+    return true;
+  };
+  /* UMT_SIDEBAR_CONSTRAINT_FOLLOWUP_20260901: DRAWER CONTROLLER END */
+
 
   function init() {
     installDrawerToggleFallback();
@@ -514,153 +684,3 @@
     init();
   }
 })();
-
-/* UMT_REQUESTED_FIXES_20260901: SIDEBAR TOGGLE START */
-(() => {
-  "use strict";
-
-  // null means the player has not expressed a preference in this page load.
-  // Once a player clicks a toggle, that intent remains authoritative across
-  // reward previews, opponent powers, screen refreshes, and DOM replacement.
-  const drawerIntent = { setter: null, guesser: null };
-  const repairTimers = { setter: new Set(), guesser: new Set() };
-  let repairFrame = 0;
-
-  function screenFor(role) {
-    return document.getElementById(
-      role === "setter" ? "setterScreen" : "guesserScreen"
-    );
-  }
-
-  function classFor(role) {
-    return role === "setter"
-      ? "setter-sidebar-collapsed"
-      : "guesser-sidebar-collapsed";
-  }
-
-  function toggleFor(role) {
-    return document.getElementById(
-      role === "setter" ? "setterSidebarToggle" : "guesserSidebarToggle"
-    );
-  }
-
-  function isClosed(role) {
-    const screen = screenFor(role);
-    if (!screen) return false;
-    return screen.classList.contains(classFor(role))
-      || screen.dataset.sidebarCollapsed === "true";
-  }
-
-  function syncToggle(role, collapsed) {
-    const button = toggleFor(role);
-    if (!button) return;
-    const roleName = role === "setter" ? "Secretkeeper" : "Guesser";
-    button.disabled = false;
-    button.removeAttribute("aria-disabled");
-    button.setAttribute("aria-expanded", String(!collapsed));
-    button.setAttribute(
-      "aria-label",
-      collapsed ? `Show ${roleName} side panel` : `Hide ${roleName} side panel`
-    );
-    button.title = collapsed ? "Show side panel" : "Hide side panel";
-  }
-
-  function applyDrawer(role, collapsed) {
-    const screen = screenFor(role);
-    if (!screen) return;
-
-    screen.classList.toggle(classFor(role), collapsed);
-    screen.dataset.sidebarCollapsed = collapsed ? "true" : "false";
-    syncToggle(role, collapsed);
-  }
-
-  function repairDrawer(role) {
-    const expected = drawerIntent[role];
-    if (expected === null) {
-      syncToggle(role, isClosed(role));
-      return;
-    }
-    if (isClosed(role) !== expected) applyDrawer(role, expected);
-    else syncToggle(role, expected);
-  }
-
-  function clearRepairTimers(role) {
-    repairTimers[role].forEach(timer => window.clearTimeout(timer));
-    repairTimers[role].clear();
-  }
-
-  function requestDrawer(role, collapsed) {
-    drawerIntent[role] = Boolean(collapsed);
-    clearRepairTimers(role);
-    applyDrawer(role, drawerIntent[role]);
-
-    // Game events can render immediately, on a microtask, or after animation.
-    // Recheck at each phase without permanently polling.
-    [0, 50, 180, 600].forEach(delay => {
-      const timer = window.setTimeout(() => {
-        repairTimers[role].delete(timer);
-        repairDrawer(role);
-      }, delay);
-      repairTimers[role].add(timer);
-    });
-  }
-
-  function roleFromButton(button) {
-    if (button.id === "setterSidebarToggle") return "setter";
-    if (button.id === "guesserSidebarToggle") return "guesser";
-    if (button.closest("#setterScreen")) return "setter";
-    if (button.closest("#guesserScreen")) return "guesser";
-    return null;
-  }
-
-  document.addEventListener("click", event => {
-    const rawTarget = event.target;
-    const target = rawTarget instanceof Element
-      ? rawTarget
-      : rawTarget?.parentElement;
-    const button = target?.closest?.(
-      "#setterSidebarToggle, #guesserSidebarToggle, .sidebar-drawer-toggle"
-    );
-    if (!button) return;
-
-    const role = roleFromButton(button);
-    if (!role) return;
-
-    // Cooperate with the older capture listener if this script is ever loaded
-    // dynamically after DOMContentLoaded. In the normal parser-loaded path,
-    // this listener runs first and marks the event so the older listener exits.
-    if (event.__umtDrawerToggleHandled) {
-      if (event.cancelable) event.preventDefault();
-      event.stopImmediatePropagation();
-      requestDrawer(role, isClosed(role));
-      return;
-    }
-
-    event.__umtDrawerToggleHandled = true;
-    if (event.cancelable) event.preventDefault();
-    event.stopImmediatePropagation();
-    requestDrawer(role, !isClosed(role));
-    window.notifyTutorialSidebarToggled?.();
-    window.updateCollapsedActionDocks?.();
-  }, true);
-
-  const observer = new MutationObserver(() => {
-    if (repairFrame) return;
-    repairFrame = window.requestAnimationFrame(() => {
-      repairFrame = 0;
-      repairDrawer("setter");
-      repairDrawer("guesser");
-    });
-  });
-
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class", "data-sidebar-collapsed"],
-    childList: true,
-    subtree: true
-  });
-
-  repairDrawer("setter");
-  repairDrawer("guesser");
-})();
-/* UMT_REQUESTED_FIXES_20260901: SIDEBAR TOGGLE END */

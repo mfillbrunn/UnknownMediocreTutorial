@@ -3516,38 +3516,101 @@ body:not(.light-theme) {
 }
 /* UMT_USER_FIX_PACK_V1: GAMEPLAY END */
 
-/* UMT_REQUESTED_FIXES_20260901: CONSTRAINT ROW START */
+/* UMT_SIDEBAR_CONSTRAINT_FOLLOWUP_20260901: CSS START */
+/* Keep the constrained row's five-tile dimensions unchanged, but give its
+   frame enough breathing room that it never sits on the adjacent row. */
 #setterScreen .constraint-row {
-  --umt-constraint-outline: var(--role-accent, #fb7185);
+  --umt-constraint-frame: var(--role-accent, #fb7185);
 }
 
 #guesserScreen .constraint-row {
-  --umt-constraint-outline: var(--role-accent, #58c9ff);
+  --umt-constraint-frame: var(--role-accent, #58c9ff);
 }
 
 :is(#setterScreen, #guesserScreen) .constraint-row {
-  /* Outline does not alter the row's dimensions, so it remains aligned with
-     every normal feedback row. */
+  position: relative !important;
+  isolation: isolate;
+  margin-block: 8px 10px !important;
   background: transparent !important;
   box-shadow: none !important;
-  outline: 3px solid color-mix(
-    in srgb,
-    var(--umt-constraint-outline) 88%,
-    white
-  ) !important;
-  outline-offset: 2px;
+  outline: 0 !important;
+  overflow: visible !important;
 }
 
-/* This rule deliberately comes after the older display:grid!important rule. */
+:is(#setterScreen, #guesserScreen) .constraint-row::before {
+  content: "" !important;
+  position: absolute;
+  inset: -5px -7px;
+  border: 2px solid color-mix(
+    in srgb,
+    var(--umt-constraint-frame) 72%,
+    rgba(255, 255, 255, 0.72)
+  );
+  border-radius: 13px;
+  background: transparent;
+  box-shadow:
+    0 0 0 1px color-mix(
+      in srgb,
+      var(--umt-constraint-frame) 14%,
+      transparent
+    ),
+    0 6px 16px -11px color-mix(
+      in srgb,
+      var(--umt-constraint-frame) 78%,
+      transparent
+    );
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+/* This remains after the older display:grid!important rule so the header
+   control can genuinely show and hide the row. */
 body.hide-constraints :is(#setterScreen, #guesserScreen) .constraint-row {
   display: none !important;
+  margin-block: 0 !important;
+}
+
+/* Reward and power renders occasionally leave width/flex styles behind. A
+   collapsed screen class is the source of truth, so it must win over them. */
+#setterScreen.setter-sidebar-collapsed .setter-workspace,
+#guesserScreen.guesser-sidebar-collapsed .guesser-workspace {
+  gap: 0 !important;
+}
+
+#setterScreen.setter-sidebar-collapsed #setterSidebar,
+#guesserScreen.guesser-sidebar-collapsed #guesserSidebar {
+  flex: 0 0 0 !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding-inline: 0 !important;
+  border-width: 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateX(-105%) !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
 }
 
 #setterSidebarToggle,
-#guesserSidebarToggle,
-.constraint-toggle-btn {
+#guesserSidebarToggle {
+  z-index: 1300 !important;
   pointer-events: auto !important;
-  position: relative;
-  z-index: 8;
 }
-/* UMT_REQUESTED_FIXES_20260901: CONSTRAINT ROW END */
+
+/* A hidden reward chooser must not retain an invisible click-catching layer. */
+.pc-modal:not(.is-open),
+.pc-modal.is-peeking {
+  pointer-events: none !important;
+}
+
+.pc-modal.is-peeking {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+.pc-reward-peek-bar.is-visible {
+  pointer-events: auto !important;
+}
+/* UMT_SIDEBAR_CONSTRAINT_FOLLOWUP_20260901: CSS END */
