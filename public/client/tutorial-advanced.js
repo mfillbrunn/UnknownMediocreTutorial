@@ -360,7 +360,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 2) {
       advancedTutorialShow(
-        "Tap Log.",
+        "Open Log to review guesses, secret changes, rewards, and power uses before deciding what to do next.",
         {
           role: "setter",
           title: "Open the Log",

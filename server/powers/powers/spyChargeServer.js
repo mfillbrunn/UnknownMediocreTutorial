@@ -289,6 +289,93 @@ function rollHintForTurn(state, allowedSecrets) {
 
   if (!candidates.length) return null;
 
+  // UMT_TUTORIAL_REWORK_20260901: SCRIPTED STAR HINT
+  // The Star Tutorial needs two concrete, legal words on each practice turn:
+  // one that earns two base stars and hits the bonus position, and one weaker
+  // word that misses that position. The tutorial evaluator below awards the
+  // exact scripted 3/1 totals only when the matching word is submitted.
+  if (state?.isTutorial && state?.tutorialStage === "star") {
+    const practiceStep = Math.max(
+      0,
+      Math.trunc(Number(charge.tutorialPracticeStep) || 0)
+    );
+    const currentSecret = normalizeWord(state.secret);
+    const bestFirst = candidates
+      .slice()
+      .sort((a, b) =>
+        b.count - a.count || a.word.localeCompare(b.word)
+      );
+    const worstFirst = candidates
+      .slice()
+      .sort((a, b) =>
+        a.count - b.count || a.word.localeCompare(b.word)
+      );
+    const good =
+      bestFirst.find(candidate =>
+        starsForCandidate(candidate.count, analysis.bestCount) === 2
+      ) || bestFirst[0];
+    const weak =
+      worstFirst.find(candidate =>
+        starsForCandidate(candidate.count, analysis.bestCount) === 1
+      ) || worstFirst[0];
+
+    if (good && weak && practiceStep === 0) {
+      let position = -1;
+      for (let index = 0; index < 5; index++) {
+        if (good.word[index] && good.word[index] !== currentSecret[index]) {
+          position = index;
+          break;
+        }
+      }
+      if (position < 0) position = 0;
+      const tutorialHint = {
+        letter: good.word[position],
+        position,
+        word: good.word,
+        worseWord: weak.word
+      };
+      charge.hint = tutorialHint;
+      return tutorialHint;
+    }
+
+    if (good && weak && practiceStep === 1) {
+      let target = null;
+      for (const source of bestFirst) {
+        for (let position = 0; position < 5; position++) {
+          const letter = source.word[position];
+          if (
+            letter &&
+            letter !== currentSecret[position] &&
+            weak.word[position] !== letter
+          ) {
+            target = { letter, position };
+            break;
+          }
+        }
+        if (target) break;
+      }
+
+      // Extremely small feasible pools can lack a normal best-word target
+      // that the weak word misses. A synthetic letter target is safe in this
+      // tutorial-only branch and still guarantees the requested 1-star demo.
+      if (!target) {
+        const position = 0;
+        target = {
+          letter: weak.word[position] === "A" ? "B" : "A",
+          position
+        };
+      }
+
+      const tutorialHint = {
+        ...target,
+        word: good.word,
+        worseWord: weak.word
+      };
+      charge.hint = tutorialHint;
+      return tutorialHint;
+    }
+  }
+
   const hint = chooseHintFromBestCandidates(
     state,
     candidates,
@@ -296,28 +383,6 @@ function rollHintForTurn(state, allowedSecrets) {
   );
 
   if (!hint) return null;
-
-  // Star Tutorial only (see client/tutorial-star.js): the letter+position
-  // hint alone still asks a brand-new player to invent a whole secret
-  // that uses it, on top of everything else the tutorial is already
-  // asking them to absorb. Attaching one real best-scoring word that
-  // actually satisfies the hint -- reusing the same candidates/bestCount
-  // this call already computed, same selection chooseHintedBestSecret
-  // does independently for the AI -- lets the tutorial just say "try
-  // this word" instead. Left off outside the tutorial: real matches only
-  // ever show letter+position today, and there's no UI yet for a full
-  // word suggestion there.
-  if (state.tutorialStage === "star") {
-    const matching = candidates.filter(
-      candidate =>
-        candidate.count === analysis.bestCount &&
-        candidate.word[hint.position] === hint.letter
-    );
-    if (matching.length) {
-      hint.word = matching[Math.floor(Math.random() * matching.length)].word;
-    }
-  }
-
   charge.hint = hint;
   return hint;
 }
@@ -449,6 +514,34 @@ function evaluateSecretChange(
     return empty;
   }
 
+  // UMT_TUTORIAL_REWORK_20260901: SCRIPTED STAR EVALUATION
+  const tutorialPracticeStep =
+    state?.isTutorial && state?.tutorialStage === "star"
+      ? Math.max(0, Math.trunc(Number(charge.tutorialPracticeStep) || 0))
+      : null;
+  const tutorialExpectedWord =
+    tutorialPracticeStep === 0
+      ? normalizeWord(charge.hint?.word)
+      : tutorialPracticeStep === 1
+        ? normalizeWord(charge.hint?.worseWord)
+        : "";
+
+  // A legal but different decision can still be played, but it earns zero
+  // tutorial stars and cannot advance either exercise. The exact highlighted
+  // word is therefore required before the tutorial moves on.
+  if (
+    tutorialPracticeStep != null &&
+    tutorialPracticeStep < 2 &&
+    (!tutorialExpectedWord || word !== tutorialExpectedWord)
+  ) {
+    return {
+      ...empty,
+      tutorialPracticeStep,
+      tutorialExpectedWord: tutorialExpectedWord || null,
+      tutorialPracticeAccepted: false
+    };
+  }
+
   const changedSecret =
     word !== currentSecret;
 
@@ -483,6 +576,22 @@ function evaluateSecretChange(
       analysis,
       word
     );
+
+  if (tutorialPracticeStep != null && tutorialPracticeStep < 2) {
+    const tutorialBaseStars = tutorialPracticeStep === 0 ? 2 : 1;
+    const tutorialBonusStars = tutorialPracticeStep === 0 ? 1 : 0;
+    return {
+      before,
+      baseStars: tutorialBaseStars,
+      bonusStars: tutorialBonusStars,
+      earnedStars: tutorialBaseStars + tutorialBonusStars,
+      candidateCount,
+      bestCount: analysis.bestCount,
+      tutorialPracticeStep,
+      tutorialExpectedWord,
+      tutorialPracticeAccepted: true
+    };
+  }
 
   // Preserve the existing Hidden Guess rule: exactly one, no bonus.
   if (state.powers?.doubleGuessPending) {

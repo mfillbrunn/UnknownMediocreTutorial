@@ -2452,6 +2452,16 @@ if (!spyChargeServer.__powerChoicePatchedV2) {
   ) {
     const award = originalEvaluate(state, newSecret, allowedSecrets);
     if (!isPowerChoice(state) || !state?.powers?.spyCharge?.enabled) return award;
+    // UMT_TUTORIAL_REWORK_20260901: PRESERVE SCRIPTED STAR AWARD
+    // Do not apply Power Choice's normal one-star floor to a wrong tutorial
+    // word, and do not alter the exact 3/1 scripted practice awards.
+    if (
+      state?.isTutorial &&
+      state?.tutorialStage === "star" &&
+      typeof award?.tutorialPracticeAccepted === "boolean"
+    ) {
+      return award;
+    }
     if (state.simultaneousAllWrong) {
       return {
         ...award,
@@ -2506,6 +2516,18 @@ if (!spyChargeServer.__powerChoicePatchedV2) {
     const appliedStars = appliedBaseStars + appliedBonusStars;
     const after = before + appliedStars;
     charge.total = after;
+    // UMT_TUTORIAL_REWORK_20260901: ADVANCE STAR PRACTICE
+    if (
+      state?.isTutorial &&
+      state?.tutorialStage === "star" &&
+      award?.tutorialPracticeAccepted === true &&
+      Number.isInteger(award?.tutorialPracticeStep)
+    ) {
+      charge.tutorialPracticeStep = Math.max(
+        Math.max(0, Math.trunc(Number(charge.tutorialPracticeStep) || 0)),
+        award.tutorialPracticeStep + 1
+      );
+    }
     // COMPETITIVE OVERHAUL V3: POWER CHOICE HISTORY METRICS START
     const historyEntryV3 = Array.isArray(state.history)
       ? state.history[state.history.length - 1]

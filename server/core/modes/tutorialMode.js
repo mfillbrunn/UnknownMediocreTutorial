@@ -184,10 +184,12 @@ class TutorialMode {
     this.seedStarTutorialRound(state);
 
     spyChargeServer.initializeForRound(state, []);
-    // Start the meter partway full (see tutorial-star.js) so the player
-    // reaches the first Power Choice reward milestone (5 stars) with just
-    // one real secret change instead of needing a long grind from zero.
-    state.powers.spyCharge.total = 3;
+    // UMT_TUTORIAL_REWORK_20260901: TWO STAR PRACTICE TOTALS
+    // Start at zero. The tutorial scripts a 3-star Change and then a 1-star
+    // Change, crossing only the first Power Choice milestone (4) so exactly
+    // one reward opens.
+    state.powers.spyCharge.total = 0;
+    state.powers.spyCharge.tutorialPracticeStep = 0;
 
     // Normally rolled by powerChoiceServer.js's turnStart hook at the
     // start of a real turn -- this seed drops the player straight into a

@@ -2499,6 +2499,7 @@ function waitForDraftCleared() {
 // without requiring the player to actually finish playing out the match.
 function endTutorial() {
   byId("tutorialDoneModal")?.classList.remove("active");
+  setTutorialDoneStacking(false);
   byId("tutorialBubble")?.classList.add("hidden");
   clearTutorialUserPosition();
 socket.emit("leaveRoom", {}, () => {
@@ -2546,8 +2547,24 @@ function currentTutorialCompletionKey() {
   return TUTORIAL_STAGE_TO_KEY[window.state.tutorialStage] || null;
 }
 
+// UMT_TUTORIAL_REWORK_20260901: DONE MODAL STACKING
+function setTutorialDoneStacking(active) {
+  document.body.classList.toggle("tutorial-done-open", !!active);
+  if (active) {
+    document.body.classList.remove(
+      "tutorial-reward-choice-guide",
+      "tutorial-reward-choice-locked"
+    );
+    document
+      .querySelector("#powerChoiceModal .pc-modal-card")
+      ?.removeAttribute("inert");
+  }
+}
+
 function showTutorialDoneModal() {
   byId("tutorialBubble")?.classList.add("hidden");
+  clearHighlights();
+  setTutorialDoneStacking(true);
 
   window.markTutorialCompleted?.(currentTutorialCompletionKey());
 
@@ -2567,6 +2584,7 @@ byId("tutorialDoneLeaveBtn")?.addEventListener("click", () => {
 
 byId("tutorialDoneNextBtn")?.addEventListener("click", () => {
   byId("tutorialDoneModal")?.classList.remove("active");
+  setTutorialDoneStacking(false);
   byId("tutorialBubble")?.classList.add("hidden");
 const nextMode = tutorialEndNextMode;
 
