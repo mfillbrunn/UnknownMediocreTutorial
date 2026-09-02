@@ -132,12 +132,6 @@
       icon: "🎁",
       title: "Extra Letters",
       description: "Add three extra consonants to your hand for this turn."
-    },
-    {
-      id: "questValue",
-      icon: "🏅",
-      title: "Quest Value",
-      description: "Quests are worth 5 more points. Stacks every time you take it."
     }
   ];
 
