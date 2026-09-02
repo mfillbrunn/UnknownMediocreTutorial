@@ -1412,10 +1412,24 @@ body.menu-mode #appContainer {
   max-width: none;
   min-height: 100dvh;
   padding: 0;
+  /* Zeroing the padding above removes what used to keep .screen.active's
+     margin-top (layout.css) from collapsing straight out through #appMain,
+     #appContainer and body. Once it escapes, it pushes the whole shell down
+     16px while the shell is still a full 100dvh tall -- so the document ends
+     up 100dvh + 16px and every menu screen gets 16px of dead scroll below it.
+     flow-root restores a block formatting context without bringing the
+     padding back, so the gap stays inside the shell where it belongs.
+     #startupScreen never showed this because it sets its own margin: 0. */
+  display: flow-root;
 }
 
 body.menu-mode #appMain {
   min-height: 100dvh;
+  /* Same reason as #appContainer above, one level in: #appMain is a second
+     100dvh box, so if the screen's margin-top escapes it and lands between
+     the two, the shell is 100dvh + 16px no matter what the container does.
+     Containing it here keeps the gap inside appMain's own 100dvh. */
+  display: flow-root;
 }
 
 /* Keep non-startup menu screens centered after the menu container becomes

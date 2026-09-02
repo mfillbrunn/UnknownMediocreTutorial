@@ -27,10 +27,28 @@ fetch("/api/allowed-secrets")
   }
 });
 
+// Arriving on a new screen must never inherit the previous one's scroll
+// offset. It matters most on the way into a game: the gameplay screens pin
+// the page to exactly one viewport (body overflow:hidden -- see layout.css),
+// and a browser that KEEPS its scroll offset when overflow flips to hidden
+// leaves the board shifted up with no way to scroll back, which reads as the
+// game being stuck until a reload. Chromium clamps that offset to 0 by
+// itself; iOS Safari does not.
+function resetPageScroll() {
+  const scroller = document.scrollingElement || document.documentElement;
+  if (scroller && scroller.scrollTop) scroller.scrollTop = 0;
+  if (window.scrollY) window.scrollTo(0, 0);
+}
+
 const show = id => {
   const el = $(id);
   if (!el) {console.warn(`show(): element #${id} not found`); return;}
+  // Only on a real transition. show() is re-run on every state update for a
+  // screen that's already up, and resetting there would yank the page back
+  // to the top out from under someone mid-scroll.
+  const wasActive = el.classList.contains("active");
   el.classList.add("active");
+  if (!wasActive) resetPageScroll();
 };
 const hide = id => {
   const el = $(id);
@@ -38,8 +56,11 @@ const hide = id => {
   el.classList.remove("active");
 };
 window.showScreen = (id) => {
+  const el = document.getElementById(id);
+  const wasActive = !!el?.classList.contains("active");
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+  el.classList.add("active");
+  if (!wasActive) resetPageScroll();
 };
 
 // updateScreens()/onRejoinUI() only ever hide()/show() a fixed, small set
