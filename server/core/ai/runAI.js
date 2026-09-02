@@ -279,6 +279,27 @@ function maybeUsePower(room, state, aiUserId, roomId, context, isTutorial) {
   if (!aiRole) return false;
   if (state.powerUsedThisTurn) return false;
 
+  // Challenge mode (e.g. "Count Only"): the AI is forced to use one named
+  // power on every eligible turn it holds that power's role, same idea as
+  // the power-tutorial branch below but independent of isTutorial -- a
+  // challenge is a normal, non-tutorial match (see challengeService.js),
+  // so this has to work without any tutorial flags set. The opposite role
+  // (whichever one that isn't) is untouched and falls through to the
+  // ordinary AI power logic further down, same as any other match.
+  const challenge = state.singlePlayer?.challenge;
+  if (
+    challenge?.enabled &&
+    challenge.powerId &&
+    powerMetadata[challenge.powerId]?.role === aiRole &&
+    isPowerAllowed(challenge.powerId, state)
+  ) {
+    const forcedAction = buildPowerAction(challenge.powerId, state, context);
+    if (forcedAction) {
+      applyAIAction(room, forcedAction, aiUserId, roomId, context);
+      return true;
+    }
+  }
+
   // Power tutorial (tutorialStage "power"): round 1 has the human use the
   // power being taught in its native role; round 2 swaps roles so the AI
   // now holds that same role and must actually demonstrate the power

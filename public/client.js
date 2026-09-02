@@ -735,10 +735,22 @@ onStateUpdate(newState => {
       );
     }
 
+    // Challenge mode: the round-start popup is the ONLY place this gets
+    // explained -- no separate tutorial-style walkthrough, no extra popups
+    // mid-match (see runAI.js's maybeUsePower "challenge" branch for the
+    // actual mechanic). Keep it to exactly one line stating the one AI
+    // quirk; everything else about the match is normal.
+    const challengeSub = [];
+    if (state.singlePlayer?.challenge) {
+      const powerLabel = window.POWER_METADATA?.[state.singlePlayer.challenge.powerId]?.label
+        || state.singlePlayer.challenge.powerId;
+      challengeSub.push(`You'll play a full match. The AI will use ${powerLabel} every eligible turn.`);
+    }
+
     window.showBigAnnounce?.({
       icon: iAmSetter ? "🕵️" : "🔍",
       title: iAmSetter ? "You are the Secretkeeper" : "You are the Guesser",
-      sub: [iAmSetter ? "Keep your secret hidden." : "Find the secret word.", ...dailySub],
+      sub: [iAmSetter ? "Keep your secret hidden." : "Find the secret word.", ...dailySub, ...challengeSub],
       powerGroups,
       roleClass: iAmSetter ? "role-setter" : "role-guesser",
       duration: 15000,
