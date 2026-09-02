@@ -3,13 +3,20 @@
 (function () {
   "use strict";
 
-  const WORDS_URL = "cuddle/allowed-secrets.txt";
+  // Same two lists (and same source) the main game uses: guesses is the
+  // broad dictionary a submitted word is checked against, secrets is the
+  // curated pool the actual secret is drawn from. See helpers.js's own
+  // fetches of these same endpoints into window.ALLOWED_GUESSES/SECRETS --
+  // fetched independently here rather than reused, so Cuddle doesn't
+  // depend on load order with the rest of the page.
+  const GUESSES_URL = "/api/allowed-guesses";
+  const SECRETS_URL = "/api/allowed-secrets";
   const ROOT_ID = "cuddleRoot";
   const VOWEL_ORDER = Object.freeze(["A", "E", "I", "O", "U"]);
   const VOWEL_SET = new Set(VOWEL_ORDER);
   const CARD_STATUS_ORDER = Object.freeze({ green: 0, yellow: 1, unused: 2, red: 3 });
   let root = null;
-  let words = null;
+  let wordLists = null;
   let game = null;
   let landing = true;
   let rulesOpen = false;
@@ -41,18 +48,22 @@
   }
 
   async function loadWords() {
-    if (words) return words;
+    if (wordLists) return wordLists;
     if (loadingPromise) return loadingPromise;
-    loadingPromise = fetch(WORDS_URL, { cache: "no-cache" })
-      .then(response => {
-        if (!response.ok) throw new Error(`Could not load Cuddle secrets (${response.status}).`);
-        return response.text();
-      })
-      .then(text => {
-        const parsed = window.CuddleEngine.normalizeWords(text.split(/\r?\n|\s+/));
-        if (parsed.length < 12) throw new Error("The copied secret list contains fewer than 12 usable words.");
-        words = parsed;
-        return words;
+    loadingPromise = Promise.all([
+      fetch(GUESSES_URL, { cache: "no-cache" }),
+      fetch(SECRETS_URL, { cache: "no-cache" })
+    ])
+      .then(async ([guessesResponse, secretsResponse]) => {
+        if (!guessesResponse.ok) throw new Error(`Could not load Cuddle guesses (${guessesResponse.status}).`);
+        if (!secretsResponse.ok) throw new Error(`Could not load Cuddle secrets (${secretsResponse.status}).`);
+        const [guessesRaw, secretsRaw] = await Promise.all([guessesResponse.json(), secretsResponse.json()]);
+        const guesses = window.CuddleEngine.normalizeWords(guessesRaw);
+        const secrets = window.CuddleEngine.normalizeWords(secretsRaw);
+        if (secrets.length < 12) throw new Error("The secret list contains fewer than 12 usable words.");
+        if (!guesses.length) throw new Error("The guess list is empty.");
+        wordLists = { guesses, secrets };
+        return wordLists;
       })
       .finally(() => { loadingPromise = null; });
     return loadingPromise;
@@ -731,12 +742,12 @@
   }
 
   function startNewRun() {
-    if (!words) return;
+    if (!wordLists) return;
     if (game?.state && !["lost", "won"].includes(game.state.status)) {
       const okay = window.confirm("Start a new Cuddle run? The current saved run will be replaced.");
       if (!okay) return;
     }
-    game = new window.CuddleEngine.CuddleGame(words);
+    game = new window.CuddleEngine.CuddleGame(wordLists);
     game.startNew();
     landing = false;
     rulesOpen = false;

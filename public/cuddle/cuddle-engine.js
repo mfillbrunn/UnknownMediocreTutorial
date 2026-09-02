@@ -106,14 +106,30 @@
   }
 
   class CuddleGame {
-    constructor(words, options = {}) {
-      this.words = normalizeWords(words);
-      this.wordSet = new Set(this.words);
+    // wordLists: { guesses, secrets } -- two different pools, same split the
+    // main game already uses (server/wordlists/allowed_guesses.txt vs.
+    // allowed_secrets.txt, served as /api/allowed-guesses and
+    // /api/allowed-secrets). guesses is the broad dictionary a submitted
+    // word is checked against; secrets is the curated pool _pickSecret and
+    // every "which words are still possible" query (getActiveWords,
+    // getFeasibleWords, rare-letter/removal-candidate analysis, the Suggest
+    // Guess reward) draws from. Every secrets word is already contained in
+    // guesses (verified against the real lists), so a picked secret is
+    // always itself a legal submission.
+    constructor(wordLists, options = {}) {
+      const guesses = normalizeWords(wordLists?.guesses || []);
+      const secrets = normalizeWords(wordLists?.secrets || []);
+      this.secrets = secrets;
+      this.guessSet = new Set(guesses);
+      this.secretSet = new Set(secrets);
       this.random = typeof options.random === "function" ? options.random : Math.random;
       this.storage = options.storage === undefined ? safeStorage() : options.storage;
       this.state = null;
-      if (this.words.length < 12) {
+      if (this.secrets.length < 12) {
         throw new Error("Cuddle needs at least 12 five-letter secret words.");
+      }
+      if (!this.guessSet.size) {
+        throw new Error("Cuddle needs a non-empty guess word list.");
       }
     }
 
@@ -133,8 +149,8 @@
       }
     }
 
-    static load(words, options = {}) {
-      const game = new CuddleGame(words, options);
+    static load(wordLists, options = {}) {
+      const game = new CuddleGame(wordLists, options);
       let raw = null;
       try {
         raw = game.storage?.getItem(STORAGE_KEY) || null;
@@ -213,7 +229,7 @@
     _isStateUsable() {
       const state = this.state;
       if (!state || state.round < 1 || state.round > THRESHOLDS.length) return false;
-      if (!this.wordSet.has(state.secret) && !["upgrade", "won", "lost"].includes(state.status)) return false;
+      if (!this.secretSet.has(state.secret) && !["upgrade", "won", "lost"].includes(state.status)) return false;
       return true;
     }
 
@@ -415,8 +431,8 @@
 
     getActiveWords() {
       const removed = new Set(this.state?.removedLetters || []);
-      if (!removed.size) return this.words.slice();
-      return this.words.filter(word => ![...removed].some(letter => word.includes(letter)));
+      if (!removed.size) return this.secrets.slice();
+      return this.secrets.filter(word => ![...removed].some(letter => word.includes(letter)));
     }
 
     getHandCard(cardId) {
@@ -479,7 +495,7 @@
     canSubmit() {
       const word = this.getDraftWord();
       if (word.length !== 5) return { ok: false, error: "Build exactly five letters." };
-      if (!this.wordSet.has(word)) return { ok: false, error: `${word} is not in the secret-word list.` };
+      if (!this.guessSet.has(word)) return { ok: false, error: `${word} is not in the guess word list.` };
       if (this.state.removedLetters.some(letter => word.includes(letter))) {
         return { ok: false, error: "That word contains a letter removed from this run." };
       }
