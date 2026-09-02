@@ -711,6 +711,30 @@
       return { ok: true, word };
     }
 
+    // True when the current draft, if submitted right now, would satisfy the
+    // active quest -- lets the UI light the quest card up before the guess
+    // is actually locked in.
+    wouldDraftCompleteQuest() {
+      const quest = this.state.activeQuest;
+      if (!quest) return false;
+      const word = this.getDraftWord();
+      if (word.length !== 5) return false;
+      const feedback = evaluateFeedback(this.state.secret, word);
+      const requiredLetters = [];
+      this.state.history.forEach(previous => {
+        previous.word.split("").forEach((letter, index) => {
+          if (previous.feedback[index] !== "grey") requiredLetters.push(letter);
+        });
+      });
+      return Boolean(window.CuddleQuestBook?.evaluateQuest(quest, {
+        word,
+        feedback,
+        history: this.state.history,
+        requiredLetters,
+        rareLetters: quest.rareLetters || []
+      }));
+    }
+
     _drawOne() {
       if (this.getCountedHandSize() >= this.getHandLimit()) return null;
       while (true) {
@@ -723,6 +747,9 @@
         // Vowels and discovered positive glyphs are represented by their one
         // unlimited card, never by a finite draw-pile copy.
         if (this.isInfiniteGlyph(card.glyph)) continue;
+        // A letter confirmed absent this round is dead weight -- drop it
+        // instead of drawing it back into the hand.
+        if (this.state.knownAbsent.includes(card.glyph)) continue;
         this.state.hand.push(card);
         return card;
       }
