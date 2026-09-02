@@ -209,7 +209,7 @@
               <span class="cuddle-detail-badge"><b>Still needed</b> ${needed}</span>
               <span class="cuddle-detail-badge"><b>Draw / discard</b> ${drawPile} / ${recyclable}</span>
               <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> +${rules.yellowPoints}</span>
-              <span class="cuddle-detail-badge is-grey"><b>Grey</b> 0</span>
+              <span class="cuddle-detail-badge is-grey"><b>Grey</b> −1</span>
               <span class="cuddle-detail-badge"><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
             </div>
             ${renderProgress(state)}
@@ -462,50 +462,21 @@
       </section>`;
   }
 
-  /* UMT_CUDDLE_SINGLEPLAYER_V2: ROUND INTRO START */
-  function renderRoundIntroOverlay(state) {
-    const target = game.getTarget();
-    const needed = Math.max(0, target - state.score);
-    const totalRounds = window.CuddleEngine.THRESHOLDS.length;
-    const modifications = typeof game.getCurrentModifications === "function"
-      ? game.getCurrentModifications()
-      : game.getUpgradeSummary();
-    return `
-      <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleRoundIntroTitle">
-        <section class="cuddle-modal cuddle-round-intro">
-          <span class="cuddle-modal-kicker">ROUND ${state.round} OF ${totalRounds}</span>
-          <h2 id="cuddleRoundIntroTitle">Ready for round ${state.round}</h2>
-          <p>Solve the fixed secret and finish the round at or above the next score target.</p>
-          <div class="cuddle-round-intro-stats">
-            <div><span>Current score</span><strong>${state.score}</strong></div>
-            <div><span>Next target</span><strong>${target}</strong></div>
-            <div><span>Still needed</span><strong>${needed}</strong></div>
-          </div>
-          <div class="cuddle-round-modifications">
-            <h3>Current modifications</h3>
-            <ul>${modifications.map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
-          </div>
-          <button class="cuddle-btn cuddle-btn-primary" data-action="start-round">Start round ${state.round}</button>
-        </section>
-      </div>`;
-  }
-
   function renderStateOverlay(state) {
-    if (state.status === "playing" && state.roundIntroPending) return renderRoundIntroOverlay(state);
     if (state.status === "questReward") return renderQuestRewardOverlay(state);
     if (state.status === "upgrade") return renderUpgradeOverlay(state);
     if (state.status === "lost") return renderEndOverlay(state, false);
     if (state.status === "won") return renderEndOverlay(state, true);
     return "";
   }
-  /* UMT_CUDDLE_SINGLEPLAYER_V2: ROUND INTRO END */
+
   function renderQuestRewardOverlay(state) {
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleRewardTitle">
         <section class="cuddle-modal cuddle-modal-wide">
           <span class="cuddle-modal-kicker">QUEST COMPLETE</span>
           <h2 id="cuddleRewardTitle">Choose one reward</h2>
-          <p>Choose a reward for the current round. It applies immediately and never carries into the next round.</p>
+          <p>These are Cuddle adaptations of the existing guesser rewards. Freeze Secret is excluded, and the fixed secret never changes.</p>
           <div class="cuddle-choice-grid">
             ${state.questRewardChoices.map(reward => `
               <button class="cuddle-choice" data-reward-id="${escapeHtml(reward.id)}">
@@ -548,88 +519,11 @@
       </div>`;
   }
 
-  /* UMT_CUDDLE_SINGLEPLAYER_V2: END SHARE START */
-  function buildCuddleShareText(state, won) {
-    const totalRounds = window.CuddleEngine.THRESHOLDS.length;
-    const round = state.lastRoundSummary?.round || state.round;
-    const grid = (state.history || []).map(entry => (
-      (entry.feedback || []).map(result => (
-        result === "green" ? "🟩" : result === "yellow" ? "🟨" : "⬛"
-      )).join("")
-    )).join("\n");
-    const lastEntry = state.history?.[state.history.length - 1];
-    const lines = [
-      `Cuddle ${won ? "🏆" : "🌙"} · Round ${round}/${totalRounds}`,
-      `${won ? "Campaign complete" : "Run ended"} · ${state.score} points`,
-      `Guesses: ${(state.history || []).length}/${state.maxGuesses || 6}`
-    ];
-    if (grid) lines.push(grid);
-    if (lastEntry?.questFinalBonus) lines.push(`Quest finish bonus: +${lastEntry.questFinalBonus}`);
-    return lines.join("\n");
-  }
-
-  async function copyCuddleShareText(text) {
-    if (navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(text);
-        return;
-      } catch {
-        // Fall through to the selection-based copy for browsers that expose
-        // Clipboard API support but deny it in the current context.
-      }
-    }
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.setAttribute("readonly", "");
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.select();
-    const copied = document.execCommand("copy");
-    textarea.remove();
-    if (!copied) throw new Error("Clipboard copy was not available.");
-  }
-
-  function setCuddleShareStatus(message) {
-    const status = document.getElementById("cuddleShareStatus");
-    if (status) status.textContent = message;
-  }
-
-  async function shareFinishedRun() {
-    const state = currentState();
-    if (!state || !["won", "lost"].includes(state.status)) return;
-    const won = state.status === "won";
-    const text = buildCuddleShareText(state, won);
-    try {
-      if (typeof navigator.share === "function") {
-        await navigator.share({
-          title: "Cuddle round result",
-          text,
-          url: window.location.href
-        });
-        setCuddleShareStatus("Round shared.");
-        return;
-      }
-      await copyCuddleShareText(`${text}\n${window.location.href}`);
-      setCuddleShareStatus("Round copied to the clipboard.");
-    } catch (error) {
-      if (error?.name === "AbortError") return;
-      try {
-        await copyCuddleShareText(`${text}\n${window.location.href}`);
-        setCuddleShareStatus("Round copied to the clipboard.");
-      } catch {
-        setCuddleShareStatus("Sharing was unavailable in this browser.");
-      }
-    }
-  }
-
   function renderEndOverlay(state, won) {
-    const totalRounds = window.CuddleEngine.THRESHOLDS.length;
-    const removedLetters = state.removedLetters || [];
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleEndTitle">
         <section class="cuddle-modal cuddle-end-modal">
-          <span class="cuddle-modal-kicker">${won ? `${totalRounds} ROUNDS CLEARED` : "RUN ENDED"}</span>
+          <span class="cuddle-modal-kicker">${won ? "TWELVE ROUNDS CLEARED" : "RUN ENDED"}</span>
           <div class="cuddle-end-icon" aria-hidden="true">${won ? "🏆" : "🌙"}</div>
           <h2 id="cuddleEndTitle">${won ? "Cuddle complete" : "The deck goes quiet"}</h2>
           <p>${won
@@ -637,25 +531,22 @@
             : escapeHtml(state.failureReason || "The run could not continue.")}</p>
           <div class="cuddle-end-stats">
             <div><span>Score</span><strong>${state.score}</strong></div>
-            <div><span>Rounds reached</span><strong>${state.round}/${totalRounds}</strong></div>
-            <div><span>Removed letters</span><strong>${removedLetters.length ? escapeHtml(removedLetters.join(" ")) : "—"}</strong></div>
+            <div><span>Rounds reached</span><strong>${state.round}/12</strong></div>
+            <div><span>Removed letters</span><strong>${state.removedLetters.length ? escapeHtml(state.removedLetters.join(" ")) : "—"}</strong></div>
           </div>
           <details class="cuddle-upgrade-details">
             <summary>Final upgrades</summary>
             <ul>${game.getUpgradeSummary().map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
           </details>
-          <p class="cuddle-share-help">Share the final round grid without revealing the secret word.</p>
-          <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>
           <div class="cuddle-modal-actions">
-            <button class="cuddle-btn cuddle-btn-primary" data-action="share-run">Share round</button>
-            <button class="cuddle-btn" data-action="new-run">Start another run</button>
+            <button class="cuddle-btn cuddle-btn-primary" data-action="new-run">Start another run</button>
             <button class="cuddle-btn" data-action="run-menu">Cuddle menu</button>
             <button class="cuddle-btn cuddle-btn-ghost" data-action="back">Main menu</button>
           </div>
         </section>
       </div>`;
   }
-  /* UMT_CUDDLE_SINGLEPLAYER_V2: END SHARE END */
+
   function renderRulesOverlay() {
     const state = currentState();
     const rules = state ? game.getRulesSummary() : {
@@ -678,7 +569,7 @@
             <article><strong>2 · Reuse letters in hand</strong><p>Any letter currently shown in your hand can be tapped more than once while building a word. A, E, I, O, and U are bold, always available, and do not use counted hand slots. Yellow or green consonants stay in hand after a guess.</p></article>
             <article><strong>3 · Refill five slots</strong><p>You have five counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward five.</p></article>
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards.</p></article>
-            <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints}; grey tiles give information but do not change your score. Solving early adds +${rules.earlyPoint} for every unused guess. You must also meet the cumulative round target.</p></article>
+            <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints}; grey tiles score −1. Solving early adds +${rules.earlyPoint} for every unused guess. You must also meet the cumulative round target.</p></article>
             <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}. Solve the word to choose an upgrade; every newly crossed 50-point milestone grants another.</p></article>
           </div>
           <p class="cuddle-rule-note"><strong>Campaign targets:</strong> ${window.CuddleEngine.THRESHOLDS.join(" · ")}. Clear round ${window.CuddleEngine.THRESHOLDS.length} at ${window.CuddleEngine.THRESHOLDS[window.CuddleEngine.THRESHOLDS.length - 1]} points to win.</p>
@@ -779,17 +670,6 @@
       case "close-rules":
         rulesOpen = false;
         return true;
-      /* UMT_CUDDLE_SINGLEPLAYER_V2: ACTIONS START */
-      case "start-round": {
-        const result = game.dismissRoundIntro();
-        setUiMessage(result.ok ? "" : result.error);
-        resetActionMode();
-        return true;
-      }
-      case "share-run":
-        void shareFinishedRun();
-        return false;
-      /* UMT_CUDDLE_SINGLEPLAYER_V2: ACTIONS END */
       case "submit": {
         const result = game.submitDraft();
         if (!result.ok) setUiMessage(result.error);

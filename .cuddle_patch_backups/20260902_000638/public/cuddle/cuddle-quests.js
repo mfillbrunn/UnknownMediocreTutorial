@@ -101,50 +101,63 @@
     }
   ];
 
-  // Internal IDs remain compatible with older Cuddle saves, while the names,
-  // descriptions, and effects below are owned by single-player Cuddle.
+  // These retain IDs from the main game's guesser reward pool so the mode can
+  // reuse POWER_METADATA labels when present. freezeSecret is intentionally
+  // absent. rouletteSecret is adapted to a draw effect: Cuddle's secret never changes.
   const REWARDS = [
     {
       id: "suggestGuess",
       icon: "💡",
-      title: "Guided Letter",
-      description: "Show a playable word and replace one finite card with a useful letter for this round."
+      title: "Suggested Draw",
+      description: "Show a playable dictionary word and replace one finite hand card with a useful letter."
     },
     {
       id: "rouletteSecret",
-      icon: "🔄",
-      title: "Hand Refresh",
-      description: "Refresh up to three finite cards this round without changing the secret."
+      icon: "🎰",
+      title: "Roulette Draw",
+      description: "Refresh up to three finite cards without changing the fixed secret."
     },
     {
       id: "revealHistory",
       icon: "↩️",
-      title: "Discard Recall",
-      description: "Bring back up to two letters from the discard pile for this round."
+      title: "Recover",
+      description: "Replace finite cards with up to two copies from your discard pile."
     },
     {
       id: "stealthGuess",
-      icon: "🔁",
-      title: "Extra Mulligan",
-      description: "Gain one additional mulligan for the current round."
+      icon: "🥷",
+      title: "Stealth Guess",
+      description: "Your next guess has no grey-letter score penalty."
     },
     {
       id: "revealGreen",
-      icon: "📍",
-      title: "Position Peek",
-      description: "Reveal one hidden position and make that letter reusable for this round."
+      icon: "🟩",
+      title: "Reveal Green",
+      description: "Reveal one hidden position and make its letter unlimited."
     },
     {
       id: "nonsense",
       icon: "🎲",
-      title: "Wild Pair",
-      description: "Replace finite cards with two random letters for this round."
+      title: "Nonsense",
+      description: "Replace finite cards with two random letters."
     },
     {
       id: "letterProbe",
-      icon: "🔎",
-      title: "Letter Count",
-      description: "Check how often one hand letter occurs; a match becomes reusable this round."
+      icon: "📡",
+      title: "Letter Probe",
+      description: "Probe a hand letter to learn how often it occurs in the secret."
+    },
+    {
+      id: "revealLocation",
+      icon: "📍",
+      title: "Reveal Location",
+      description: "Reveal one hidden position and make its letter unlimited."
+    },
+    {
+      id: "letterProfile",
+      icon: "🔬",
+      title: "Letter Profile",
+      description: "Profile a hand letter; matching letters become unlimited."
     }
   ];
 
@@ -253,10 +266,15 @@
 
   function getReward(id) {
     const base = REWARDS.find(item => item.id === id);
-    // Cuddle owns these names and descriptions. Do not inherit labels from the
-    // multiplayer power catalog, which may describe a different effect.
-    return base ? { ...base } : null;
+    if (!base) return null;
+    const existing = window.POWER_METADATA && window.POWER_METADATA[id];
+    return {
+      ...base,
+      icon: existing?.emoji || base.icon,
+      title: existing?.label || existing?.name || existing?.title || base.title
+    };
   }
+
   function rewardChoices(count = 3, random = Math.random) {
     return shuffle(REWARDS, random).slice(0, Math.min(count, REWARDS.length)).map(item => getReward(item.id));
   }
