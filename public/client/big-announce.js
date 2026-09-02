@@ -2,6 +2,42 @@
 // round-start (role + goal) and secret-found moments. Auto-dismisses, or
 // dismisses early on click.
 
+(() => {
+  "use strict";
+
+// This popup is position:fixed inset:0, so its backdrop also lies on top of
+// the sidebar drawer toggles parked at the screen edges -- and in a game with
+// no time limit it's persistent, sitting there until someone taps it. A tap
+// aimed at a drawer toggle was being eaten as the popup's own dismiss-tap and
+// the drawer never moved, which reads as the toggle being stuck: tap it again
+// quickly and the second tap lands before the first click has resolved, so
+// that one is swallowed too.
+//
+// So after dismissing, hand the tap on to the drawer toggle underneath. Only
+// the drawer toggles: they're safe to fire from a dismiss-tap (idempotent,
+// purely cosmetic, nothing committed). A blanket pass-through would let a tap
+// meant to clear the popup submit a guess or spend a power instead.
+const DRAWER_TOGGLE_SELECTOR = "#setterSidebarToggle, #guesserSidebarToggle";
+
+function forwardTapToDrawerToggle(overlay, event) {
+  // detail === 0 is a click with no pointer behind it (keyboard activation,
+  // .click()), so there's no position to forward to. The timer-driven
+  // dismiss passes no event at all.
+  if (!event || event.detail === 0) return;
+
+  const { clientX: x, clientY: y } = event;
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+
+  // .show is already gone by now (so the overlay is pointer-events:none),
+  // but don't depend on that having taken effect for the hit test.
+  const previousPointerEvents = overlay.style.pointerEvents;
+  overlay.style.pointerEvents = "none";
+  const under = document.elementFromPoint(x, y);
+  overlay.style.pointerEvents = previousPointerEvents;
+
+  under?.closest?.(DRAWER_TOGGLE_SELECTOR)?.click();
+}
+
 window.showBigAnnounce = function ({
   icon = "",
   title = "",
@@ -83,12 +119,24 @@ window.showBigAnnounce = function ({
   el.classList.add("show");
   el.setAttribute("aria-hidden", "false");
 
-  const dismiss = () => {
+  const dismiss = event => {
     el.classList.remove("show");
     el.setAttribute("aria-hidden", "true");
     el.removeEventListener("click", dismiss);
+    if (el.__dismissHandler === dismiss) el.__dismissHandler = null;
+    forwardTapToDrawerToggle(el, event);
   };
 
+  // Exactly one dismiss listener at a time. showBigAnnounce can fire several
+  // times before anyone taps (round start, then a power result, ...), and
+  // every call used to leave its own listener behind until it happened to
+  // run. That was harmless while dismiss only hid the popup, but it would
+  // now forward the same tap once per stacked listener -- toggling the
+  // drawer open and shut again to no visible effect.
+  if (el.__dismissHandler) el.removeEventListener("click", el.__dismissHandler);
+  el.__dismissHandler = dismiss;
   el.addEventListener("click", dismiss);
   el.__dismissTimer = persistent ? null : setTimeout(dismiss, duration);
 };
+
+})();
