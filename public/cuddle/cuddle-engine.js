@@ -228,6 +228,7 @@
         : [];
       state.deferredRewards = Array.isArray(state.deferredRewards) ? state.deferredRewards : [];
       state.pendingPositionPeek = Boolean(state.pendingPositionPeek);
+      state.pendingRewardEcho = Boolean(state.pendingRewardEcho);
       state.buffs = { greyShield: 0, ...(state.buffs || {}) };
       state.serial = Number.isFinite(state.serial) ? state.serial : 0;
       // Short Hand shortens this to 4 for its round -- a save reloaded
@@ -327,6 +328,7 @@
         milestonesClaimed: 0,
         deferredRewards: [],
         pendingPositionPeek: false,
+        pendingRewardEcho: false,
         upgrades: { ...DEFAULT_UPGRADES },
         buffs: { greyShield: 0 },
         lastMessage: "Welcome to Cuddle. Build a five-letter word from your hand.",
@@ -442,6 +444,20 @@
             shown[index] = "unknown";
             learn[index] = "unknown";
           }
+          return { shown, learn, counts: null };
+        }
+
+        case "hiddenMargins": {
+          // Two positions stay masked for the entire round instead of one.
+          const indices = Array.isArray(boss.hiddenIndices) ? boss.hiddenIndices : [];
+          const shown = feedback.slice();
+          const learn = feedback.slice();
+          indices.forEach(index => {
+            if (Number.isInteger(index) && index >= 0 && index < shown.length) {
+              shown[index] = "unknown";
+              learn[index] = "unknown";
+            }
+          });
           return { shown, learn, counts: null };
         }
 
@@ -1566,6 +1582,16 @@
         case "freeVowelSweep":
           this.state.upgrades.freeVowelSweep += 1;
           return "Each round now opens with a free vowel sweep.";
+        case "openingClue":
+          // Consumed by beginCuddleV3Round: for each stacked point here it
+          // fires one _applyRewardEffect("revealLocation") at the start of
+          // every future SCORING round (never a boss round, and never the
+          // one that just ended -- unlike Position Peek this doesn't need
+          // banking, since it's a standing multiplier rather than a
+          // one-shot reveal of the secret that was just solved).
+          this.state.cuddleBonuses = this.state.cuddleBonuses || {};
+          this.state.cuddleBonuses.openingClue = Number(this.state.cuddleBonuses.openingClue || 0) + 1;
+          return "Margin Note: every future round now opens with a revealed position.";
         // revealGreen (Position Peek) is NOT handled here: applying it at
         // boss-clear time would read the secret that was JUST solved to
         // beat this boss -- every position is already known by then, so
@@ -1652,6 +1678,9 @@
         // Hide Feedback picks its masked position once, up front, so it is
         // the same one for the whole round.
         hiddenIndex: chosen.id === "hideFeedback" ? Math.floor(this.random() * 5) : null,
+        // Hidden Margins is the same idea with two masked positions instead
+        // of one -- picked once, up front, distinct from each other.
+        hiddenIndices: chosen.id === "hiddenMargins" ? shuffle([0, 1, 2, 3, 4], this.random).slice(0, 2) : null,
         // Quick Mode is the only boss the UI has to run a clock for.
         secondsPerGuess: chosen.id === "quickMode" ? 60 : null
       };
@@ -2027,15 +2056,19 @@
       return "Extra Mulligan added for this round.";
     }
 
-    // Letter Count now reports the whole counted hand at once: for each of
-    // the five consonants, how many times it appears in the secret.
+    // Letter Count reports three random consonants from the counted hand
+    // (not the whole hand -- revealing all five at once made this reward
+    // too strong relative to the others).
     if (rewardId === "letterProbe") {
       const secret = String(this.state.secret || "");
-      const glyphs = unique(
-        this.state.hand
-          .filter(card => this.cardCountsTowardHandLimit(card))
-          .map(card => glyphForLetter(card.glyph))
-      ).sort();
+      const glyphs = shuffle(
+        unique(
+          this.state.hand
+            .filter(card => this.cardCountsTowardHandLimit(card))
+            .map(card => glyphForLetter(card.glyph))
+        ),
+        this.random
+      ).slice(0, 3).sort();
       if (!glyphs.length) return "There were no consonants in hand to count.";
       const parts = glyphs.map(glyph => {
         const count = secret.split("").filter(letter => letter === glyph).length;
@@ -2202,13 +2235,6 @@
       max: 2
     },
     {
-      id: "openingClue",
-      icon: "🔮",
-      title: "Margin Note",
-      description: "Reveal one secret position at the start of every scoring round. Stacks twice.",
-      max: 2
-    },
-    {
       id: "mulliganEcho",
       icon: "🪶",
       title: "Second Draft",
@@ -2252,9 +2278,25 @@
   function cuddleV3RewardDefinition(id) {
     return CUDDLE_V3_CUSTOM_REWARDS.find(item => item.id === id) || null;
   }
+  // Exposed on the prototype so a later layer (Reward Echo, appended at the
+  // very end of the file) can look up a custom reward's stacking cap
+  // without needing its own copy of CUDDLE_V3_CUSTOM_REWARDS -- that array
+  // is private to this closure otherwise.
+  CuddleGame.prototype._cuddleV3RewardDefinition = function lookupCuddleV3RewardDefinition(id) {
+    return cuddleV3RewardDefinition(id);
+  };
   function cuddleV3SynergyDefinition(id) {
     return CUDDLE_V3_SYNERGIES.find(item => item.id === id) || null;
   }
+  // openingClue (Margin Note) used to live in CUDDLE_V3_CUSTOM_REWARDS and
+  // get stacked by repeatedly picking it as a round reward; it's now a
+  // one-shot Hidden Margins boss reward instead, granted at most once, but
+  // still consumed the same way at the start of every scoring round (see
+  // beginCuddleV3Round). cuddleV3EnsureState rebuilds cuddleBonuses from
+  // this SAME whitelist every call, so it has to know this key survives
+  // too, or the value _applyBossReward just set gets silently wiped the
+  // moment the next round begins and re-normalizes state.
+  const CUDDLE_V3_BOSS_ONLY_BONUS_CAPS = Object.freeze({ openingClue: 1 });
   function cuddleV3EnsureState(game) {
     const state = game?.state;
     if (!state) return null;
@@ -2265,6 +2307,10 @@
     CUDDLE_V3_CUSTOM_REWARDS.forEach(definition => {
       const value = Math.max(0, Math.floor(Number(savedBonuses[definition.id]) || 0));
       state.cuddleBonuses[definition.id] = Math.min(definition.max, value);
+    });
+    Object.entries(CUDDLE_V3_BOSS_ONLY_BONUS_CAPS).forEach(([id, max]) => {
+      const value = Math.max(0, Math.floor(Number(savedBonuses[id]) || 0));
+      state.cuddleBonuses[id] = Math.min(max, value);
     });
     state.rewardSynergies = unique(
       (Array.isArray(state.rewardSynergies) ? state.rewardSynergies : [])
@@ -2320,6 +2366,8 @@
         return `The first ${guesses} reveal no feedback. When the power ends, every withheld result appears at once.`;
       case "hideFeedback":
         return `During the first ${guesses}, one board position hides its feedback. That position behaves normally afterward.`;
+      case "hiddenMargins":
+        return `During the first ${guesses}, two board positions hide their feedback. Those positions behave normally afterward.`;
       case "blueMode":
         return `During the first ${guesses}, every green or yellow result appears blue. The letter stays reusable, but its exact result remains unresolved.`;
       case "fakeFeedback":
@@ -2443,6 +2491,14 @@
         if (Number.isInteger(index) && index >= 0 && index < word.length) {
           result[glyphForLetter(word[index])] = "unknown";
         }
+        break;
+      }
+      case "hiddenMargins": {
+        (Array.isArray(boss.hiddenIndices) ? boss.hiddenIndices : []).forEach(index => {
+          if (Number.isInteger(index) && index >= 0 && index < word.length) {
+            result[glyphForLetter(word[index])] = "unknown";
+          }
+        });
         break;
       }
       case "blueMode":
@@ -3460,3 +3516,121 @@
   };
 }());
 /* UMT_CUDDLE_BALANCE_REFRESH_HARDMODE_V1: ENGINE END */
+
+/* UMT_CUDDLE_REWARD_ECHO_V1: ENGINE START */
+// Adds one special round-reward card, "Reward Echo": picking it arms a flag
+// instead of doing anything itself, and the very next round-reward pick
+// (from whichever layer actually handles it) gets replayed twice more on
+// top of its own single application. Appended last, after every other
+// engine layer, so this sees and can consume every possible pick -- an
+// earlier position would miss picks the balance-refresh layer's own new
+// cards (Grey Matters, Bigger Hand, ...) handle entirely by themselves
+// without ever calling back into an "original" chooseUpgrade.
+(function () {
+  "use strict";
+
+  const Engine = window.CuddleEngine;
+  const CuddleGame = Engine && Engine.CuddleGame;
+  if (!CuddleGame) return;
+
+  const REWARD_ECHO_DEFINITION = Object.freeze({
+    id: "rewardEcho",
+    key: "rewardEcho",
+    icon: "🔁",
+    title: "Reward Echo",
+    description: "The next round reward you pick is applied three times."
+  });
+
+  // Fields safe to diff-and-replay: pure accumulators everywhere they're
+  // touched. Deliberately excludes yellowPoints/greyPoints/zeroColourPoints
+  // -- Colour Surge and Greyscale can SET those (e.g. yellowPoints to 0)
+  // rather than increment them, and replaying a "set to 0" delta as if it
+  // were a repeatable +N would drive the real value negative instead of
+  // just leaving it at 0.
+  const UNSAFE_UPGRADE_KEYS = new Set(["yellowPoints", "greyPoints", "zeroColourPoints"]);
+
+  const originalUpgradeCatalog = CuddleGame.prototype._upgradeCatalog;
+  CuddleGame.prototype._upgradeCatalog = function getUpgradeCatalogWithEcho() {
+    const state = this.state;
+    const base = typeof originalUpgradeCatalog === "function"
+      ? originalUpgradeCatalog.call(this)
+      : [];
+    // Never offer a second Echo while one is already armed -- picking it
+    // again would just silently overwrite the first without ever doing
+    // anything extra, which reads as a wasted pick.
+    if (state?.pendingRewardEcho) return base;
+    return [...base, { ...REWARD_ECHO_DEFINITION }];
+  };
+
+  const originalChooseUpgrade = CuddleGame.prototype.chooseUpgrade;
+  CuddleGame.prototype.chooseUpgrade = function chooseUpgradeWithEcho(choiceKey) {
+    const state = this.state;
+    const callOriginal = () => (
+      typeof originalChooseUpgrade === "function"
+        ? originalChooseUpgrade.call(this, choiceKey)
+        : { ok: false, error: "No upgrade choice is open." }
+    );
+
+    if (state?.status !== "upgrade") return callOriginal();
+
+    const choice = Array.isArray(state.upgradeChoices)
+      ? state.upgradeChoices.find(item => String(item?.key || item?.id) === String(choiceKey))
+      : null;
+
+    if (choice?.id === "rewardEcho") {
+      state.pendingRewardEcho = true;
+      state.upgradeChoices = [];
+      state.upgradePhase = null;
+      state.upgradeMilestone = null;
+      state.lastMessage = "Reward Echo armed: your next round reward will be applied three times.";
+      this._advanceRound();
+      this.save();
+      return { ok: true };
+    }
+
+    if (!state?.pendingRewardEcho) return callOriginal();
+
+    state.pendingRewardEcho = false;
+    const beforeBonuses = { ...(state.cuddleBonuses || {}) };
+    const beforeUpgrades = { ...(state.upgrades || {}) };
+
+    const result = callOriginal();
+    if (!result?.ok) {
+      // Nothing was actually consumed by this failed pick -- leave Echo
+      // armed for a real attempt instead of burning it on a rejection.
+      state.pendingRewardEcho = true;
+      return result;
+    }
+
+    let echoed = false;
+    if (state.cuddleBonuses) {
+      for (const key of Object.keys(state.cuddleBonuses)) {
+        const delta = Number(state.cuddleBonuses[key] || 0) - Number(beforeBonuses[key] || 0);
+        if (!delta) continue;
+        const cap = this._cuddleV3RewardDefinition?.(key)?.max ?? Infinity;
+        const replayed = Number(state.cuddleBonuses[key] || 0) + delta * 2;
+        state.cuddleBonuses[key] = Math.min(cap, replayed);
+        echoed = true;
+      }
+    }
+    if (state.upgrades) {
+      for (const key of Object.keys(state.upgrades)) {
+        if (UNSAFE_UPGRADE_KEYS.has(key)) continue;
+        const before = Number(beforeUpgrades[key] || 0);
+        const after = Number(state.upgrades[key] || 0);
+        const delta = after - before;
+        if (!delta) continue;
+        state.upgrades[key] = after + delta * 2;
+        echoed = true;
+      }
+    }
+
+    if (echoed) {
+      state.lastMessage = `${state.lastMessage || ""} Reward Echo: ${choice?.title || "that reward"} applied three times total.`.trim();
+      this.save();
+    }
+
+    return result;
+  };
+}());
+/* UMT_CUDDLE_REWARD_ECHO_V1: ENGINE END */

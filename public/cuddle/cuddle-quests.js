@@ -268,7 +268,7 @@
       id: "letterProbe",
       icon: "🔎",
       title: "Letter Count",
-      description: "Show how many times each of your five consonants appears in the secret."
+      description: "Show how many times three of your consonants appear in the secret."
     },
     {
       id: "sillyWord",
@@ -348,6 +348,14 @@
       description: "Ten random letters are pulled from your deck before this round starts, and you only get four guesses to find the secret.",
       turns: 0,
       rewardId: "revealGreen"
+    },
+    {
+      id: "hiddenMargins",
+      icon: "🕶️",
+      title: "Hidden Margins",
+      description: "Two positions stay hidden for the whole round. You never learn what they were.",
+      turns: 6,
+      rewardId: "openingClue"
     }
   ];
 
@@ -395,6 +403,12 @@
       icon: "📍",
       title: "Position Peek",
       description: "Reveal one hidden position and make that letter reusable for this round."
+    },
+    {
+      id: "openingClue",
+      icon: "🔮",
+      title: "Margin Note",
+      description: "Reveal one secret position at the start of every future scoring round."
     }
   ];
 
