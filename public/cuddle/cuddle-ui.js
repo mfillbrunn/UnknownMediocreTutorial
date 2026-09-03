@@ -377,7 +377,6 @@
       <article class="cuddle-quest is-active ${fulfilled ? "is-fulfilled" : ""}">
         <div class="cuddle-quest-icon" aria-hidden="true">${fulfilled ? "✅" : escapeHtml(state.activeQuest.icon || "❗")}</div>
         <div>
-          <span class="cuddle-eyebrow">${fulfilled ? "QUEST READY" : `TURN ${state.guessesUsed + 1} QUEST`}</span>
           <h2>${escapeHtml(state.activeQuest.title)}</h2>
           <p>${escapeHtml(state.activeQuest.description)}</p>
         </div>
@@ -438,7 +437,11 @@
             : `<span class="cuddle-row-score">${row + 1}</span>`;
       rows.push(`<div class="cuddle-board-row">${tiles.join("")}${score}</div>`);
     }
-    return `<section class="cuddle-board" aria-label="Guess board">${rows.join("")}</section>`;
+    const removedCount = state.removedLetters?.length || 0;
+    const excluded = removedCount
+      ? `<p class="cuddle-excluded-letters">${removedCount} letter${removedCount === 1 ? "" : "s"} excluded: ${escapeHtml(state.removedLetters.join(", "))}</p>`
+      : "";
+    return `<section class="cuddle-board" aria-label="Guess board">${rows.join("")}</section>${excluded}`;
   }
 
   function renderStatusAnnouncement(state) {
@@ -579,7 +582,6 @@
           ${promoted ? `<div class="cuddle-hand-row cuddle-hand-promoted" aria-label="Confirmed consonants">${promoted}</div>` : ""}
           <div class="cuddle-hand-row cuddle-hand-vowels" aria-label="Bold, always-available vowels">${vowels}</div>
           <div class="cuddle-hand-row cuddle-hand-consonants" aria-label="Consonants">${consonants || `<p class="cuddle-draft-empty">No consonant cards are currently available.</p>`}</div>
-          ${state.removedLetters?.length ? `<p class="cuddle-excluded-letters">Excluded: ${escapeHtml(state.removedLetters.join(", "))}</p>` : ""}
         </div>
       </section>`;
   }

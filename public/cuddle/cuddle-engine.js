@@ -1243,7 +1243,9 @@
       const nextGuess = this.state.guessesUsed + 1;
       if (nextGuess > this._effectiveMaxGuesses()) return;
       const cadence = Math.max(1, 3 - this.state.upgrades.questCadence);
-      if (nextGuess < cadence || nextGuess % cadence !== 0) return;
+      // Fires one turn earlier than a plain multiple of cadence would --
+      // base cadence 3 now lands on turns 2 and 5 instead of 3 and 6.
+      if (nextGuess < cadence - 1 || (nextGuess + 1) % cadence !== 0) return;
       const feasibleWords = this.getFeasibleWords();
       this.state.activeQuest = window.CuddleQuestBook?.createQuest({
         feasibleWords,
@@ -2061,10 +2063,18 @@
     // five. source "extra" keeps them outside the limit (see
     // cardCountsTowardHandLimit) so they genuinely widen this turn.
     if (rewardId === "extraLetters") {
-      const pool = this._baseDeckGlyphs().filter(glyph => !this.isInfiniteGlyph(glyph));
+      // Draw WITHOUT replacement (splice each pick out of the pool, and
+      // start by excluding whatever's already in hand) -- picking with
+      // replacement from the full pool every time let the same consonant
+      // turn up twice, adding two cards for one letter instead of three
+      // genuinely different ones.
+      const existing = new Set(this.state.hand.map(card => card.glyph));
+      const pool = this._baseDeckGlyphs().filter(glyph => !this.isInfiniteGlyph(glyph) && !existing.has(glyph));
       const added = [];
       for (let i = 0; i < 3 && pool.length; i += 1) {
-        const glyph = pool[Math.floor(this.random() * pool.length)];
+        const pickIndex = Math.floor(this.random() * pool.length);
+        const glyph = pool[pickIndex];
+        pool.splice(pickIndex, 1);
         const card = this._newCard(glyph, "extra");
         this.state.hand.push(card);
         added.push(glyph);
