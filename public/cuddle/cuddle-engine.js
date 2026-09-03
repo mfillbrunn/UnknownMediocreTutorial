@@ -43,7 +43,8 @@
     questPoints: 0,
     // Boss rewards.
     doubleMulligans: 0,
-    freeVowelSweep: 0
+    freeVowelSweep: 0,
+    questDoublePick: 0
   });
 
   function normalizeWords(words) {
@@ -223,6 +224,13 @@
         : Array(5).fill(null);
       while (state.revealedPositions.length < 5) state.revealedPositions.push(null);
       state.questRewardChoices = Array.isArray(state.questRewardChoices) ? state.questRewardChoices : [];
+      // How many of the current questRewardChoices are still pickable --
+      // normally 1, or 2 with Double Pick (a boss reward). Defaults to 1
+      // rather than 0 so an old save mid-pick doesn't strand the player
+      // with a reward screen that refuses every choice.
+      state.questRewardPicksRemaining = Number.isFinite(state.questRewardPicksRemaining) && state.questRewardPicksRemaining > 0
+        ? Math.floor(state.questRewardPicksRemaining)
+        : 1;
       state.upgradeChoices = Array.isArray(state.upgradeChoices)
         ? state.upgradeChoices.filter(choice => choice?.id !== "startingHand" && choice?.id !== "exchangeReduction")
         : [];
@@ -312,6 +320,7 @@
         revealedPositions: Array(5).fill(null),
         activeQuest: null,
         questRewardChoices: [],
+        questRewardPicksRemaining: 1,
         questRewardRefreshesLeft: 0,
         pendingRoundEnd: null,
         boss: null,
@@ -392,8 +401,9 @@
       // Short Hand's constraint (fewer letters, fewer guesses) isn't a
       // guess-window feedback mask like the other bosses -- it applies for
       // the whole round, so it never "lifts" partway through the way a
-      // `turns`-scoped constraint does.
-      if (boss.id === "shortHand") return true;
+      // `turns`-scoped constraint does. Steady Hand (no mulligans) is the
+      // same shape of constraint for the same reason.
+      if (boss.id === "shortHand" || boss.id === "noMulligans") return true;
       const turns = Number(boss.turns) || 0;
       return this.state.guessesUsed < turns;
     }
@@ -606,6 +616,7 @@
       state.activeQuest = null;
       state.questRewardChoices = [];
       state.questRewardRefreshesLeft = 0;
+      state.questRewardPicksRemaining = 1;
       state.pendingRoundEnd = null;
       state.upgradeChoices = [];
       state.upgradePhase = null;
@@ -634,6 +645,11 @@
         state.boss.tempRemovedLetters = picked;
         state.removedLetters = unique([...state.removedLetters, ...picked]).sort();
         state.maxGuesses = 4;
+      }
+      // Steady Hand: no mulligans for this round. The Mulligan button
+      // already disables itself at 0 remaining, so nothing else to wire up.
+      if (state.boss?.id === "noMulligans") {
+        state.mulligansLeft = 0;
       }
 
       this._prepareInitialHand();
@@ -1150,6 +1166,9 @@
         this.state.status = "questReward";
         this.state.questRewardChoices = window.CuddleQuestBook?.rewardChoices(3, this.random) || [];
         this.state.questRewardRefreshesLeft = this.state.upgrades.questRefreshes;
+        // Double Pick (boss reward): pick two of the three options instead
+        // of just one.
+        this.state.questRewardPicksRemaining = this.state.upgrades.questDoublePick ? 2 : 1;
       } else {
         if (activeQuest) this.state.lastMessage += ` Quest missed: ${activeQuest.title}.`;
         if (this.state.pendingRoundEnd) this._resolvePendingRoundEnd();
@@ -1284,6 +1303,11 @@
       if (this.state.status !== "questReward") return { ok: false, error: "No quest reward is open." };
       if (this.state.questRewardRefreshesLeft <= 0) return { ok: false, error: "No reward refreshes remain." };
       this.state.questRewardRefreshesLeft -= 1;
+      // Deliberately leaves questRewardPicksRemaining untouched: a refresh
+      // swaps in a fresh set of options, it doesn't refund picks already
+      // spent -- resetting it here would let a Double Pick player refresh
+      // in between their two picks to draw from more than the intended
+      // two-of-three.
       this.state.questRewardChoices = window.CuddleQuestBook?.rewardChoices(3, this.random) || [];
       this.save();
       return { ok: true };
@@ -1602,6 +1626,12 @@
         case "questHead":
           this.state.upgrades.questPoints += 10;
           return "Quests are worth 10 more points.";
+        case "questDoublePick":
+          // Consumed at the top of the "quest completed" branch in
+          // submitDraft, where questRewardPicksRemaining is seeded from
+          // this flag for every quest reward screen from here on.
+          this.state.upgrades.questDoublePick = 1;
+          return "Double Pick: quest reward screens now let you choose two options instead of one.";
         default:
           return "";
       }
@@ -2151,6 +2181,7 @@
       }
       this.state.questRewardChoices = [];
       this.state.questRewardRefreshesLeft = 0;
+      this.state.questRewardPicksRemaining = 1;
       this.state.deferredRewards = [];
       this.state.lastMessage = pending.type === "solved"
         ? (bonus
@@ -2164,8 +2195,22 @@
 
     const message = this._applyRewardEffect(rewardId) || "Quest reward applied for this round.";
     this.state.lastMessage = message;
+
+    // Double Pick (boss reward): after the first pick, stay on the reward
+    // screen and let a second pick come from whatever's left, instead of
+    // closing it the way a single pick always does.
+    const picksRemaining = Math.max(0, Number(this.state.questRewardPicksRemaining || 1) - 1);
+    const remainingChoices = this.state.questRewardChoices.filter(reward => reward.id !== rewardId);
+    if (picksRemaining > 0 && remainingChoices.length > 0) {
+      this.state.questRewardChoices = remainingChoices;
+      this.state.questRewardPicksRemaining = picksRemaining;
+      this.save();
+      return { ok: true, message, picksRemaining };
+    }
+
     this.state.questRewardChoices = [];
     this.state.questRewardRefreshesLeft = 0;
+    this.state.questRewardPicksRemaining = 1;
     this.state.deferredRewards = [];
     this.state.status = "playing";
     this._ensureQuestForNextGuess();
@@ -2196,6 +2241,7 @@
 
     this.state.questRewardChoices = [];
     this.state.questRewardRefreshesLeft = 0;
+    this.state.questRewardPicksRemaining = 1;
     this.state.deferredRewards = [];
     this.state.lastMessage += result.solved
       ? (bonus
@@ -2379,6 +2425,10 @@
         // scaling doesn't apply here, so this ignores the passed-in `turns`
         // entirely rather than describing a window that doesn't exist.
         return "Ten random letters are pulled from your deck before this round starts, and you only get four guesses to find the secret.";
+      case "noMulligans":
+        // Same reasoning as shortHand: a standing resource denial, not a
+        // guess-window mask, so `turns` is ignored here too.
+        return "You get no mulligans this round.";
       default:
         return `This boss power lasts for the first ${guesses}.`;
     }
