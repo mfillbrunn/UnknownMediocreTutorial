@@ -14,6 +14,78 @@
     fieldReport: "FIELDREPORT"
   });
 
+  // HARDMODE_COUNT_KNOWLEDGE_FIX_2026_09
+  // Cuddle's Hold the Clues quest keeps letter-count knowledge per visible,
+  // trustworthy feedback row. Seeing one colored E on two different turns still
+  // proves only one E; seeing two colored Es together proves at least two. A
+  // grey extra copy caps how many copies later guesses may use.
+  function cuddleHardModeLetterCounts(word) {
+    const counts = new Map();
+    for (const letter of String(word || "").toUpperCase()) {
+      counts.set(letter, (counts.get(letter) || 0) + 1);
+    }
+    return counts;
+  }
+
+  function cuddleHardModeCountConstraints(history) {
+    const minCounts = new Map();
+    const maxCounts = new Map();
+
+    for (const entry of history || []) {
+      if (entry?.fakeFeedback) continue;
+      const guessedWord = String(entry?.word || entry?.guess || "").toUpperCase();
+      const feedback = Array.isArray(entry?.shownFeedback)
+        ? entry.shownFeedback
+        : entry?.feedback || entry?.fbGuesser || entry?.fb;
+      if (!guessedWord || !Array.isArray(feedback)) continue;
+
+      const guessCounts = new Map();
+      const positiveCounts = new Map();
+      const greyCounts = new Map();
+      for (let i = 0; i < guessedWord.length; i += 1) {
+        const letter = guessedWord[i];
+        const result = feedback[i];
+        guessCounts.set(letter, (guessCounts.get(letter) || 0) + 1);
+        if (result === "green" || result === "yellow" || result === "blue"
+            || result === "🟩" || result === "🟨") {
+          positiveCounts.set(letter, (positiveCounts.get(letter) || 0) + 1);
+        } else if (result === "grey" || result === "gray" || result === "⬛") {
+          greyCounts.set(letter, (greyCounts.get(letter) || 0) + 1);
+        }
+      }
+
+      for (const [letter, positiveCount] of positiveCounts) {
+        minCounts.set(letter, Math.max(minCounts.get(letter) || 0, positiveCount));
+      }
+      for (const [letter, greyCount] of greyCounts) {
+        // Cuddle's quest historically ignored wholly absent letters. Preserve
+        // that scope and only learn an upper bound from a mixed duplicate row
+        // where at least one copy was colored and an extra copy was grey.
+        if ((positiveCounts.get(letter) || 0) === 0) continue;
+        const rowMaximum = (guessCounts.get(letter) || 0) - greyCount;
+        const previousMaximum = maxCounts.get(letter);
+        if (previousMaximum === undefined || rowMaximum < previousMaximum) {
+          maxCounts.set(letter, rowMaximum);
+        }
+      }
+    }
+    return { minCounts, maxCounts };
+  }
+
+  function isCuddleHardModeCountCompliant(word, history) {
+    const actualCounts = cuddleHardModeLetterCounts(word);
+    const { minCounts, maxCounts } = cuddleHardModeCountConstraints(history);
+
+    for (const [letter, minimum] of minCounts) {
+      if ((actualCounts.get(letter) || 0) < minimum) return false;
+    }
+    for (const [letter, maximum] of maxCounts) {
+      const effectiveMaximum = Math.max(maximum, minCounts.get(letter) || 0);
+      if ((actualCounts.get(letter) || 0) > effectiveMaximum) return false;
+    }
+    return true;
+  }
+
   const QUESTS = [
     {
       id: "fullSweep",
@@ -67,16 +139,8 @@
       id: "hardModeStreak",
       icon: "🔥",
       title: "Hold the Clues",
-      description: "Reuse every green or yellow letter learned so far.",
-      test: ({ word, requiredLetters }) => {
-        const remaining = word.split("");
-        return requiredLetters.every(letter => {
-          const index = remaining.indexOf(letter);
-          if (index < 0) return false;
-          remaining.splice(index, 1);
-          return true;
-        });
-      }
+      description: "Reuse every colored letter and obey letter-count limits learned so far.",
+      test: ({ word, history }) => isCuddleHardModeCountCompliant(word, history)
     },
     {
       id: "vowelRun",

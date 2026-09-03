@@ -100,64 +100,118 @@ function computeVowelShortageCount(history, target = 1) {
   return count;
 }
 
-// Mirrors questServer.js's computeHardModeCount exactly. mustInclude is a
-// Map<letter, Set<excludedPositions>> -- a yellow letter must appear
-// somewhere in the guess AND must not land back at a position it already
-// came back yellow at (yellow means "in the word, not here"). absent is
-// a Set<letter> confirmed NOT in the secret (grayed out with no
-// green/yellow for that letter anywhere in the same guess) -- reusing
-// one of them breaks compliance too, unless green/mustInclude separately
-// requires that same letter (see questServer.js's isHardModeCompliant
-// for why the requirement has to win instead of permanently locking the
-// quest out after a mid-round secret change).
+// HARDMODE_COUNT_KNOWLEDGE_FIX_2026_09
+// Mirrors questServer.js's hard-mode count logic exactly. The multiplicity
+// learned from colored tiles is the most copies visible together in one prior
+// row, never a sum across rows; fixed green positions remain independent. A
+// black extra copy records a maximum, keeping browser progress with the server.
+function questHardModeLetterCounts(word) {
+  const counts = new Map();
+  for (const letter of word) counts.set(letter, (counts.get(letter) || 0) + 1);
+  return counts;
+}
+
+function questHardModeRequiredCounts(green, mustInclude, minCounts) {
+  const requiredCounts = new Map(minCounts || []);
+  const greenCounts = new Map();
+  for (const letter of green || []) {
+    if (!letter) continue;
+    greenCounts.set(letter, (greenCounts.get(letter) || 0) + 1);
+  }
+  for (const [letter, count] of greenCounts) {
+    requiredCounts.set(letter, Math.max(requiredCounts.get(letter) || 0, count));
+  }
+  for (const letter of (mustInclude || new Map()).keys()) {
+    requiredCounts.set(letter, Math.max(requiredCounts.get(letter) || 0, 1));
+  }
+  return requiredCounts;
+}
+
+function questIsHardModeCompliant(word, green, mustInclude, minCounts, maxCounts) {
+  const g = word.toUpperCase();
+  const actualCounts = questHardModeLetterCounts(g);
+  const requiredCounts = questHardModeRequiredCounts(green, mustInclude, minCounts);
+
+  for (let i = 0; i < green.length; i++) {
+    if (green[i] && g[i] !== green[i]) return false;
+  }
+  for (const [letter, excludedPositions] of mustInclude) {
+    if ((actualCounts.get(letter) || 0) < 1) return false;
+    for (const pos of excludedPositions) {
+      if (g[pos] === letter) return false;
+    }
+  }
+  for (const [letter, minimum] of requiredCounts) {
+    if ((actualCounts.get(letter) || 0) < minimum) return false;
+  }
+  for (const [letter, maximum] of maxCounts) {
+    const effectiveMaximum = Math.max(maximum, requiredCounts.get(letter) || 0);
+    if ((actualCounts.get(letter) || 0) > effectiveMaximum) return false;
+  }
+  return true;
+}
+
+function questFoldHardModeConstraint(
+  green, mustInclude, minCounts, maxCounts, entry
+) {
+  const fb = entry.fbGuesser || entry.fb;
+  if (!Array.isArray(fb) || !entry.guess) return;
+  const g = entry.guess.toUpperCase();
+  const guessCounts = new Map();
+  const positiveCounts = new Map();
+  const blackCounts = new Map();
+
+  for (let i = 0; i < g.length; i++) {
+    const letter = g[i];
+    const result = fb[i];
+    guessCounts.set(letter, (guessCounts.get(letter) || 0) + 1);
+    if (result === "🟩" || result === "🟨") {
+      positiveCounts.set(letter, (positiveCounts.get(letter) || 0) + 1);
+    } else if (result === "⬛") {
+      blackCounts.set(letter, (blackCounts.get(letter) || 0) + 1);
+    }
+
+    if (result === "🟩") green[i] = letter;
+    else if (result === "🟨") {
+      if (!mustInclude.has(letter)) mustInclude.set(letter, new Set());
+      mustInclude.get(letter).add(i);
+    }
+  }
+
+  for (const [letter, positiveCount] of positiveCounts) {
+    minCounts.set(letter, Math.max(minCounts.get(letter) || 0, positiveCount));
+  }
+  for (const [letter, blackCount] of blackCounts) {
+    const rowMaximum = (guessCounts.get(letter) || 0) - blackCount;
+    const previousMaximum = maxCounts.get(letter);
+    if (previousMaximum === undefined || rowMaximum < previousMaximum) {
+      maxCounts.set(letter, rowMaximum);
+    }
+  }
+}
+
 function computeHardModeProgress(history) {
   const green = [null, null, null, null, null];
   const mustInclude = new Map();
-  const absent = new Set();
+  const minCounts = new Map();
+  const maxCounts = new Map();
   let count = 0;
 
-  for (const entry of history) {
+  for (const entry of history || []) {
     const fb = entry.fbGuesser || entry.fb;
     if (!Array.isArray(fb) || !entry.guess) continue;
     const g = entry.guess.toUpperCase();
 
-    const required = new Set(mustInclude.keys());
-    for (const letter of green) if (letter) required.add(letter);
+    if (questIsHardModeCompliant(
+      g, green, mustInclude, minCounts, maxCounts
+    )) count++;
 
-    let compliant = true;
-    for (let i = 0; i < 5; i++) {
-      if (green[i] && g[i] !== green[i]) compliant = false;
-    }
-    for (const [letter, excludedPositions] of mustInclude) {
-      if (!g.includes(letter)) compliant = false;
-      for (const pos of excludedPositions) {
-        if (g[pos] === letter) compliant = false;
-      }
-    }
-    for (const letter of g) {
-      if (absent.has(letter) && !required.has(letter)) compliant = false;
-    }
-    if (compliant) count++;
-
-    const positiveLettersThisGuess = new Set();
-    for (let i = 0; i < 5; i++) {
-      if (fb[i] === "🟩" || fb[i] === "🟨") positiveLettersThisGuess.add(g[i]);
-    }
-
-    for (let i = 0; i < 5; i++) {
-      if (fb[i] === "🟩") green[i] = g[i];
-      else if (fb[i] === "🟨") {
-        if (!mustInclude.has(g[i])) mustInclude.set(g[i], new Set());
-        mustInclude.get(g[i]).add(i);
-      } else if (fb[i] === "⬛" && !positiveLettersThisGuess.has(g[i])) {
-        absent.add(g[i]);
-      }
-    }
+    questFoldHardModeConstraint(
+      green, mustInclude, minCounts, maxCounts, entry
+    );
   }
-
   return count;
 }
-
 // Mirrors questServer.js's computeFieldReportCount exactly -- sums every
 // condition each guess satisfies across the whole round, not "guesses
 // meeting at least 2 of 3". Conditions now refresh every turn (design:

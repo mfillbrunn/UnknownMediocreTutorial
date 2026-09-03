@@ -352,108 +352,160 @@ function ensureQuestConditions(state) {
   }
 }
 
+// HARDMODE_COUNT_KNOWLEDGE_FIX_2026_09
 // Requirements accumulate guess-by-guess (green letters lock their
-// position, yellow letters must appear somewhere) exactly like real
-// Wordle hard mode -- a guess is checked against what was known BEFORE it
-// was made, then its own feedback folds into the requirements for the
-// next one.
-// Pure per-word check against a given green/mustInclude/absent snapshot --
-// split out of computeHardModeCount so genericAI.js's quest-aware guess
-// picker can ask "would THIS candidate be hard-mode legal right now"
-// without re-deriving the reduction logic itself. mustInclude is a
-// Map<letter, Set<excludedPositions>> -- a yellow letter must appear
-// somewhere in the guess (like real Wordle hard mode) AND must not be
-// placed back at a position it already came back yellow at (yellow means
-// "in the word, not here"). absent is a Set<letter> confirmed NOT in the
-// secret (grayed out with no green/yellow for that letter anywhere in the
-// same guess) -- reusing any of them is never hard-mode legal, UNLESS
-// green/mustInclude separately requires that same letter (a mid-round
-// secret change can otherwise leave a letter both "required" and
-// "absent" from two different secrets; the requirement wins rather than
-// permanently locking the quest out).
-function isHardModeCompliant(word, green, mustInclude, absent) {
-  const g = word.toUpperCase();
+// position, yellow letters must appear somewhere) exactly like Wordle hard
+// mode. A guess is checked against what was known BEFORE it was made, then
+// its own feedback is folded into the requirements for the next guess.
+//
+// Duplicate counts are knowledge-based. The minimum for a letter is the
+// largest number of green/yellow copies visible together in any ONE prior
+// row; colored copies from separate rows are never added together. A black
+// copy establishes an upper bound, because it proves that at least that copy
+// was beyond the secret's count. This handles both sides of the edge case:
+// a single green E in one row plus a single yellow E in another does not by
+// itself require two Es, while one colored E plus one black E in the same row
+// limits future guesses to one E. Fixed green positions remain independent.
+function hardModeLetterCounts(word) {
+  const counts = new Map();
+  for (const letter of word) counts.set(letter, (counts.get(letter) || 0) + 1);
+  return counts;
+}
 
-  const required = new Set(mustInclude.keys());
-  for (const letter of green) if (letter) required.add(letter);
-
-  for (let i = 0; i < 5; i++) {
-    if (green[i] && g[i] !== green[i]) return false;
+function hardModeRequiredCounts(green, mustInclude, minCounts) {
+  const requiredCounts = new Map(minCounts || []);
+  const greenCounts = new Map();
+  for (const letter of green || []) {
+    if (!letter) continue;
+    greenCounts.set(letter, (greenCounts.get(letter) || 0) + 1);
   }
-  for (const [letter, excludedPositions] of mustInclude) {
-    if (!g.includes(letter)) return false;
+  for (const [letter, count] of greenCounts) {
+    requiredCounts.set(letter, Math.max(requiredCounts.get(letter) || 0, count));
+  }
+  for (const letter of (mustInclude || new Map()).keys()) {
+    requiredCounts.set(letter, Math.max(requiredCounts.get(letter) || 0, 1));
+  }
+  return requiredCounts;
+}
+
+// Pure per-word check against a constraint snapshot. minCounts/maxCounts are
+// optional so older direct callers keep working; absent is the legacy zero-
+// count representation used when maxCounts is not supplied.
+function isHardModeCompliant(word, green, mustInclude, absent, minCounts, maxCounts) {
+  if (!word) return false;
+  const g = word.toUpperCase();
+  const knownGreen = green || [];
+  const knownYellows = mustInclude || new Map();
+  const actualCounts = hardModeLetterCounts(g);
+  const requiredCounts = hardModeRequiredCounts(knownGreen, knownYellows, minCounts);
+
+  for (let i = 0; i < knownGreen.length; i++) {
+    if (knownGreen[i] && g[i] !== knownGreen[i]) return false;
+  }
+  for (const [letter, excludedPositions] of knownYellows) {
+    if ((actualCounts.get(letter) || 0) < 1) return false;
     for (const pos of excludedPositions) {
       if (g[pos] === letter) return false;
     }
   }
-  if (absent) {
+  for (const [letter, minimum] of requiredCounts) {
+    if ((actualCounts.get(letter) || 0) < minimum) return false;
+  }
+
+  if (maxCounts) {
+    for (const [letter, maximum] of maxCounts) {
+      // Requirement-wins compatibility for contradictory clues caused by a
+      // mid-round secret change: preserve the required minimum rather than
+      // making the quest impossible, but still reject copies beyond it.
+      const effectiveMaximum = Math.max(maximum, requiredCounts.get(letter) || 0);
+      if ((actualCounts.get(letter) || 0) > effectiveMaximum) return false;
+    }
+  } else if (absent) {
+    // Backward-compatible behavior for any older four-argument callers.
     for (const letter of g) {
-      if (absent.has(letter) && !required.has(letter)) return false;
+      if (absent.has(letter) && !requiredCounts.has(letter)) return false;
     }
   }
   return true;
 }
 
-// Folds one more history entry's feedback into a running
-// green/mustInclude/absent snapshot -- the other half of the split
-// described above.
-function foldHardModeConstraint(green, mustInclude, absent, entry) {
+function foldHardModeConstraint(green, mustInclude, absent, minCounts, maxCounts, entry) {
   const fb = entry.fbGuesser || entry.fb;
   if (!Array.isArray(fb) || !entry.guess) return;
   const g = entry.guess.toUpperCase();
+  const guessCounts = new Map();
+  const positiveCounts = new Map();
+  const blackCounts = new Map();
 
-  // A letter grayed out in THIS guess is confirmed absent from the
-  // secret -- unless this same guess ALSO turned up a green/yellow for
-  // it elsewhere. That covers the duplicate-letter case: guessing a
-  // letter more times than the secret actually contains it grays out the
-  // extra copies even though the letter itself is present, and that
-  // shouldn't ban every future use of it.
-  const positiveLettersThisGuess = new Set();
-  for (let i = 0; i < 5; i++) {
-    if (fb[i] === "🟩" || fb[i] === "🟨") positiveLettersThisGuess.add(g[i]);
+  for (let i = 0; i < g.length; i++) {
+    const letter = g[i];
+    const result = fb[i];
+    guessCounts.set(letter, (guessCounts.get(letter) || 0) + 1);
+    if (result === "🟩" || result === "🟨") {
+      positiveCounts.set(letter, (positiveCounts.get(letter) || 0) + 1);
+    } else if (result === "⬛") {
+      blackCounts.set(letter, (blackCounts.get(letter) || 0) + 1);
+    }
+
+    if (result === "🟩") green[i] = letter;
+    else if (result === "🟨") {
+      if (!mustInclude.has(letter)) mustInclude.set(letter, new Set());
+      mustInclude.get(letter).add(i);
+    }
   }
 
-  for (let i = 0; i < 5; i++) {
-    if (fb[i] === "🟩") green[i] = g[i];
-    else if (fb[i] === "🟨") {
-      if (!mustInclude.has(g[i])) mustInclude.set(g[i], new Set());
-      mustInclude.get(g[i]).add(i);
-    } else if (fb[i] === "⬛" && !positiveLettersThisGuess.has(g[i])) {
-      absent.add(g[i]);
+  for (const [letter, positiveCount] of positiveCounts) {
+    minCounts.set(letter, Math.max(minCounts.get(letter) || 0, positiveCount));
+  }
+  for (const [letter, blackCount] of blackCounts) {
+    // Unknown/masked copies are conservatively allowed. Each visible black
+    // copy still reduces the largest possible count by one.
+    const rowMaximum = (guessCounts.get(letter) || 0) - blackCount;
+    const previousMaximum = maxCounts.get(letter);
+    if (previousMaximum === undefined || rowMaximum < previousMaximum) {
+      maxCounts.set(letter, rowMaximum);
     }
+    if (rowMaximum === 0) absent.add(letter);
   }
 }
 
-// The green/mustInclude/absent constraints implied by history SO FAR
-// (i.e. what the NEXT guess would be checked against) -- used by the AI
-// to evaluate hard-mode-legality of a not-yet-made guess.
+// Constraints implied by history SO FAR, for checking the NEXT guess.
 function computeHardModeConstraints(history) {
   const green = [null, null, null, null, null];
   const mustInclude = new Map();
   const absent = new Set();
-  for (const entry of history) foldHardModeConstraint(green, mustInclude, absent, entry);
-  return { green, mustInclude, absent };
+  const minCounts = new Map();
+  const maxCounts = new Map();
+  for (const entry of history || []) {
+    foldHardModeConstraint(green, mustInclude, absent, minCounts, maxCounts, entry);
+  }
+  return { green, mustInclude, absent, minCounts, maxCounts };
 }
 
 function computeHardModeCount(history) {
   const green = [null, null, null, null, null];
   const mustInclude = new Map();
   const absent = new Set();
+  const minCounts = new Map();
+  const maxCounts = new Map();
   let count = 0;
 
-  for (const entry of history) {
+  for (const entry of history || []) {
     const fb = entry.fbGuesser || entry.fb;
     if (!Array.isArray(fb) || !entry.guess) continue;
     const g = entry.guess.toUpperCase();
 
-    if (isHardModeCompliant(g, green, mustInclude, absent)) count++;
+    if (isHardModeCompliant(
+      g, green, mustInclude, absent, minCounts, maxCounts
+    )) count++;
 
-    foldHardModeConstraint(green, mustInclude, absent, entry);
+    foldHardModeConstraint(
+      green, mustInclude, absent, minCounts, maxCounts, entry
+    );
   }
 
   return count;
 }
-
 // Sums how many of the 3 conditions each guess satisfies across the whole
 // round -- a guess that hits all 3 at once contributes 3, not 1, toward
 // the total of 8 (see QUEST_THRESHOLDS.FIELDREPORT above). Each guess is
@@ -555,9 +607,13 @@ function evaluateQuestProgress(quest, state, pendingGuess) {
   const history = state.history || [];
 
   if (quest.type === "HARDMODE") {
-    const { green, mustInclude, absent } = computeHardModeConstraints(history);
+    const {
+      green, mustInclude, absent, minCounts, maxCounts
+    } = computeHardModeConstraints(history);
     const count = computeHardModeCount(history)
-      + (isHardModeCompliant(pendingGuess, green, mustInclude, absent) ? 1 : 0);
+      + (isHardModeCompliant(
+        pendingGuess, green, mustInclude, absent, minCounts, maxCounts
+      ) ? 1 : 0);
     return {
       ready: count >= QUEST_THRESHOLDS.HARDMODE,
       oneAway: count === QUEST_THRESHOLDS.HARDMODE - 1
