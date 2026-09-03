@@ -1064,71 +1064,6 @@
   }
 
   /* UMT_CUDDLE_REBALANCE_V3: UI START */
-  let cuddleV3BookOpen = false;
-
-  function cuddleV3RewardBookSvg(progress, maximum) {
-    const ratio = maximum > 0 ? Math.max(0, Math.min(1, progress / maximum)) : 0;
-    const filled = Math.round(ratio * 8);
-    const scripts = Array.from({ length: 8 }, (_, index) => {
-      const y = 27 + (index % 4) * 12;
-      const left = index < 4;
-      const x1 = left ? 24 : 102;
-      const x2 = left ? 76 : 156;
-      return `<path class="cuddle-v3-book-script ${index < filled ? "is-filled" : ""}" d="M${x1} ${y} C${x1 + 12} ${y - 5}, ${x2 - 12} ${y + 5}, ${x2} ${y}" />`;
-    }).join("");
-    return `
-      <svg class="cuddle-v3-book-svg" viewBox="0 0 180 88" role="img" aria-label="Reward book ${progress} of ${maximum} filled">
-        <defs>
-          <linearGradient id="cuddleV3Ink" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stop-color="#8be8d2"></stop>
-            <stop offset="0.5" stop-color="#d5a6ff"></stop>
-            <stop offset="1" stop-color="#ffd76f"></stop>
-          </linearGradient>
-        </defs>
-        <path class="cuddle-v3-book-page" d="M8 12 Q47 2 88 16 V78 Q48 65 8 76 Z"></path>
-        <path class="cuddle-v3-book-page" d="M172 12 Q133 2 92 16 V78 Q132 65 172 76 Z"></path>
-        <path class="cuddle-v3-book-spine" d="M90 15 V79"></path>
-        ${scripts}
-        <circle class="cuddle-v3-book-spark" cx="90" cy="10" r="4"></circle>
-      </svg>`;
-  }
-  function cuddleV3RewardBookMarkup(info, expanded, placement) {
-    const history = (info?.history || []).slice(0, 6);
-    const synergies = info?.synergies || [];
-    const custom = (info?.customRewards || []).filter(item => item.count > 0);
-    const progress = Number(info?.progress || 0);
-    const maximum = Math.max(1, Number(info?.maximum || 16));
-    const recentMarkup = history.length
-      ? history.map(item => `
-          <li>
-            <span>${escapeHtml(item.icon || "✨")}</span>
-            <div><strong>${escapeHtml(item.title || "Reward")}</strong><small>${escapeHtml(item.kind === "boss" ? "Boss reward" : `Round ${item.round || ""}`)}</small></div>
-          </li>`).join("")
-      : `<li class="is-empty"><span>✦</span><div><strong>Blank first page</strong><small>Your collected rewards will appear here.</small></div></li>`;
-    const customMarkup = custom.length
-      ? `<div class="cuddle-v3-book-chips">${custom.map(item => `<span>${escapeHtml(item.icon)} ${escapeHtml(item.title)} ×${item.count}</span>`).join("")}</div>`
-      : "";
-    const synergyMarkup = synergies.map(item => `
-      <li class="${item.unlocked ? "is-unlocked" : "is-locked"}">
-        <span>${escapeHtml(item.icon)}</span>
-        <div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.unlocked ? item.description : "Discover the matching pair of rewards.")}</small></div>
-      </li>`).join("");
-    return `
-      <section class="cuddle-v3-reward-book is-${escapeHtml(placement)} ${expanded ? "is-open" : ""}" aria-label="Cuddle reward book">
-        <button type="button" class="cuddle-v3-book-toggle" data-cuddle-v3-action="toggle-book" aria-expanded="${expanded ? "true" : "false"}">
-          ${cuddleV3RewardBookSvg(progress, maximum)}
-          <span><b>Cuddle Codex</b><small>${progress}/${maximum} pages illuminated</small></span>
-          <i aria-hidden="true">${expanded ? "−" : "+"}</i>
-        </button>
-        <div class="cuddle-v3-book-body" ${expanded ? "" : "hidden"}>
-          ${customMarkup}
-          <div class="cuddle-v3-book-columns">
-            <div><h3>Collected scripts</h3><ul>${recentMarkup}</ul></div>
-            <div><h3>Combination bonuses</h3><ul>${synergyMarkup}</ul></div>
-          </div>
-        </div>
-      </section>`;
-  }
   function cuddleV3ToastStack(state) {
     const boss = state?.bossRewardNotice;
     const synergy = state?.synergyNotice;
@@ -1162,20 +1097,6 @@
       });
     }
 
-    if (typeof game.getRewardBook === "function") {
-      const forcedOpen = state.status === "upgrade" || Boolean(state.roundIntroPending);
-      const expanded = forcedOpen || cuddleV3BookOpen;
-      const overlayModal = forcedOpen ? root.querySelector(".cuddle-overlay .cuddle-modal") : null;
-      if (overlayModal) {
-        const grid = overlayModal.querySelector(".cuddle-choice-grid, .cuddle-round-intro-stats, .cuddle-round-modifications");
-        if (grid) grid.insertAdjacentHTML("beforebegin", cuddleV3RewardBookMarkup(game.getRewardBook(), expanded, "between-rounds"));
-        else overlayModal.insertAdjacentHTML("beforeend", cuddleV3RewardBookMarkup(game.getRewardBook(), expanded, "between-rounds"));
-      } else {
-        const column = root.querySelector(".cuddle-right-column");
-        if (column) column.insertAdjacentHTML("afterbegin", cuddleV3RewardBookMarkup(game.getRewardBook(), expanded, "compact"));
-      }
-    }
-
     const shell = root.querySelector(".cuddle-shell") || root;
     const toasts = cuddleV3ToastStack(state);
     if (toasts) shell.insertAdjacentHTML("beforeend", toasts);
@@ -1204,8 +1125,7 @@
     if (!button) return;
     event.preventDefault();
     const action = button.dataset.cuddleV3Action;
-    if (action === "toggle-book") cuddleV3BookOpen = !cuddleV3BookOpen;
-    else if (action === "dismiss-boss-reward") game?.dismissBossRewardNotice?.();
+    if (action === "dismiss-boss-reward") game?.dismissBossRewardNotice?.();
     else if (action === "dismiss-synergy") game?.dismissSynergyNotice?.();
     else return;
     render();
