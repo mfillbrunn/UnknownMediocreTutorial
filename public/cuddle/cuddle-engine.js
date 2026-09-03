@@ -1041,7 +1041,10 @@
       // lands at once and the unknown pile clears.
       if (this.state.boss?.id === "delayedFeedback" && !this._bossActive()) {
         const released = this._releaseDeferredFeedback();
-        if (released) this._syncInfiniteCards();
+        if (released) {
+          this._syncInfiniteCards();
+          this.drawToHandLimit();
+        }
       }
 
       const scoreParts = [];
@@ -1303,6 +1306,7 @@
           this.state.revealedPositions[index] = letter;
           this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
           this._syncInfiniteCards();
+          this.drawToHandLimit();
           return `Position ${index + 1} is ${letter}; ${glyphForLetter(letter)} now stays in hand.`;
         }
         case "nonsense": {
@@ -1323,6 +1327,7 @@
           else {
             this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
             this._syncInfiniteCards();
+            this.drawToHandLimit();
           }
           return `Probe result: ${letter} appears ${count} time${count === 1 ? "" : "s"} in the secret${count ? " and is now stays in hand" : ""}.`;
         }
@@ -1337,6 +1342,7 @@
           this.state.revealedPositions[index] = letter;
           this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
           this._syncInfiniteCards();
+          this.drawToHandLimit();
           return `Position ${index + 1} is ${letter}; ${glyphForLetter(letter)} now stays in hand.`;
         }
         case "letterProfile": {
@@ -1347,6 +1353,7 @@
           else {
             this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
             this._syncInfiniteCards();
+            this.drawToHandLimit();
           }
           return `Profile: ${letter} occurs ${count} time${count === 1 ? "" : "s"}${count ? " and is now stays in hand" : ""}.`;
         }
@@ -1921,6 +1928,7 @@
         return `${glyph}×${count}`;
       });
       this._syncInfiniteCards();
+      this.drawToHandLimit();
       return `Letter Count: ${parts.join(", ")}.`;
     }
 
@@ -2392,6 +2400,10 @@
     ]).sort();
     cuddleV3RefreshSynergies(this, false);
     this._syncInfiniteCards();
+    if (["playing", "questReward"].includes(state.status)
+        && this.getCountedHandSize() < this.getHandLimit()) {
+      this.drawToHandLimit();
+    }
   };
 
   const cuddleV3OriginalGetMulliganAllowance = CuddleGame.prototype.getMulliganAllowance;
