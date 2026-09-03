@@ -5,10 +5,9 @@
 
   const VERSION = 1;
   const STORAGE_KEY = "vowelPlay.cuddle.v1";
-  // Cumulative score gates, one per SCORING round -- boss rounds sit between
-  // them and are pass/fail, so they neither score nor need a gate. Nine
-  // scoring rounds plus the three bosses below is twelve rounds played.
-  const THRESHOLDS = Object.freeze([15, 40, 65, 100, 130, 160, 190, 240, 290]);
+  // Cumulative score gates for twelve SCORING rounds. Boss rounds sit between
+  // chapters and are pass/fail, so they neither score nor need their own gate.
+  const THRESHOLDS = Object.freeze([25, 55, 85, 120, 160, 200, 220, 285, 350, 380, 450, 520]);
   const MAX_GUESSES = 6;
   const BASE_HAND_SIZE = 5;
   const BASE_MULLIGANS = 2;
@@ -27,11 +26,10 @@
   // reward (+5 a pick, stacking) or the Quest Head Start boss reward is taken.
   const QUEST_POINTS_PER_PICK = 5;
 
-  // Bosses break the nine scoring rounds into groups of three: scoring rounds
-  // 1-3, boss, 4-6, boss, 7-9, then the final boss. They are pass/fail -- no
-  // score, no threshold -- but clearing one grants an ordinary reward AND the
-  // boss's own permanent upgrade.
-  const BOSS_BEFORE_ROUNDS = Object.freeze([4, 7]);
+  // Bosses split twelve scoring rounds into four groups of three: before rounds
+  // 4, 7, and 10, followed by a final boss. They are pass/fail and grant
+  // only the permanent boss reward shown on the choice card.
+  const BOSS_BEFORE_ROUNDS = Object.freeze([4, 7, 10]);
 
   const DEFAULT_UPGRADES = Object.freeze({
     startingHand: 0,
@@ -730,6 +728,9 @@
         word,
         feedback,
         history: this.state.history,
+        knownAbsent: this.state.knownAbsent,
+        knownPresent: this.state.knownPresent,
+        revealedPositions: this.state.revealedPositions,
         requiredLetters,
         rareLetters: quest.rareLetters || []
       }));
@@ -896,15 +897,30 @@
       const greenCount = feedback.filter(result => result === "green").length;
       const greyCount = feedback.filter(result => result === "grey").length;
       const shielded = this.state.buffs.greyShield > 0;
-      // Greys are informational and never reduce the Cuddle score. Boss
-      // rounds are pass/fail, so nothing scores in them at all.
-      const bonus = this.state.upgrades.yellowPoints;
+      // Permanent upgrades can change all three tile values. Boss rounds
+      // stay pass/fail, so no tile scores there.
+      const scoringUpgrades = this.state.upgrades || {};
+      const colourBonus = Number(scoringUpgrades.yellowPoints) || 0;
+      const greyValue = Number(scoringUpgrades.greyPoints) || 0;
+      const coloursDisabled = Number(scoringUpgrades.zeroColourPoints) > 0;
+      const yellowValue = coloursDisabled ? 0 : YELLOW_POINTS + colourBonus;
+      const greenValue = coloursDisabled ? 0 : GREEN_POINTS + colourBonus;
       const scoreDelta = this.isBossRound()
         ? 0
-        : yellowCount * (YELLOW_POINTS + bonus) + greenCount * (GREEN_POINTS + bonus);
+        : greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue;
       if (shielded) this.state.buffs.greyShield -= 1;
 
       const activeQuest = this.state.activeQuest;
+      // Capture clue knowledge before this guess updates it. Otherwise a grey
+      // in the submitted word would incorrectly make the hard-mode quest fail
+      // against the very guess currently being evaluated.
+      const questKnowledge = {
+        knownAbsent: Array.isArray(this.state.knownAbsent) ? this.state.knownAbsent.slice() : [],
+        knownPresent: Array.isArray(this.state.knownPresent) ? this.state.knownPresent.slice() : [],
+        revealedPositions: Array.isArray(this.state.revealedPositions)
+          ? this.state.revealedPositions.slice()
+          : Array(5).fill(null)
+      };
       const draftIds = unique(this.state.draft);
       const draftCards = this.getDraftCards();
       this._discardCards(draftIds);
@@ -965,6 +981,9 @@
           word,
           feedback,
           history: this.state.history,
+          knownAbsent: questKnowledge.knownAbsent,
+          knownPresent: questKnowledge.knownPresent,
+          revealedPositions: questKnowledge.revealedPositions,
           requiredLetters,
           rareLetters: activeQuest.rareLetters || []
         }));
@@ -993,7 +1012,8 @@
               * (EARLY_GUESS_POINTS + this.state.upgrades.earlyRoundPoint);
         const mulliganBonus = this.isBossRound()
           ? 0
-          : Math.max(0, Number(this.state.mulligansLeft) || 0) * UNUSED_MULLIGAN_POINTS;
+          : Math.max(0, Number(this.state.mulligansLeft) || 0)
+              * (UNUSED_MULLIGAN_POINTS + (Number(this.state.upgrades.mulliganPointBonus) || 0));
         entry.earlyBonus = earlyBonus;
         entry.mulliganBonus = mulliganBonus;
         this.state.score += earlyBonus + mulliganBonus;
@@ -1027,7 +1047,10 @@
       const scoreParts = [];
       if (yellowCount) scoreParts.push(`${yellowCount} yellow`);
       if (greenCount) scoreParts.push(`${greenCount} green`);
-      if (greyCount) scoreParts.push(`${greyCount} grey${greyCount === 1 ? "" : "s"}, no penalty`);
+      if (greyCount) {
+        const greyScore = greyCount * greyValue;
+        scoreParts.push(`${greyCount} grey${greyCount === 1 ? "" : "s"}: ${greyScore >= 0 ? "+" : ""}${greyScore}`);
+      }
       if (entry.infiniteUnlocked.length) scoreParts.push(`${entry.infiniteUnlocked.join(", ")} now stays in hand`);
       if (entry.earlyBonus) scoreParts.push(`+${entry.earlyBonus} early bonus`);
       if (entry.mulliganBonus) scoreParts.push(`+${entry.mulliganBonus} unused mulligans`);
@@ -1152,6 +1175,9 @@
         feasibleWords,
         secret: this.state.secret,
         history: this.state.history,
+        knownAbsent: this.state.knownAbsent,
+        knownPresent: this.state.knownPresent,
+        revealedPositions: this.state.revealedPositions,
         rareLetters: this.getRareLetters(),
         random: this.random
       }) || {
@@ -1677,7 +1703,7 @@
       }
 
       this.state.round = next;
-      // Bosses gate entry to scoring rounds 4 and 7.
+      // Bosses gate entry to scoring rounds 4, 7, and 10.
       if (this._openBossGate(next)) return;
       this._beginRound();
     }
@@ -2012,6 +2038,783 @@
     return bonus ? { ...result, questFinalBonus: bonus } : result;
   };
   /* UMT_CUDDLE_SINGLEPLAYER_V2: ENGINE END */
+  /* UMT_CUDDLE_REBALANCE_V3: ENGINE START */
+  // Single-player Cuddle rebalance. This block deliberately touches only the
+  // CuddleGame prototype; no multiplayer state, sockets, or shared powers are
+  // changed here.
+  const CUDDLE_V3_BOSS_TURNS = Object.freeze([2, 2, 3, 4]);
+  const CUDDLE_V3_CUSTOM_REWARDS = Object.freeze([
+    {
+      id: "storybookStart",
+      icon: "📖",
+      title: "Opening Verse",
+      description: "Start every scoring round with +5 points. Stacks up to three times.",
+      max: 3
+    },
+    {
+      id: "questSpark",
+      icon: "✨",
+      title: "Quest Ink",
+      description: "Completed quests give +5 additional points. Stacks up to three times.",
+      max: 3
+    },
+    {
+      id: "wideChoice",
+      icon: "🌈",
+      title: "Wide Margins",
+      description: "See one additional between-round upgrade choice. Stacks up to two times.",
+      max: 2
+    },
+    {
+      id: "openingClue",
+      icon: "🔮",
+      title: "Margin Note",
+      description: "Reveal one secret position at the start of every scoring round. Stacks twice.",
+      max: 2
+    },
+    {
+      id: "mulliganEcho",
+      icon: "🪶",
+      title: "Second Draft",
+      description: "Start every scoring round with one additional mulligan.",
+      max: 1
+    }
+  ]);
+  const CUDDLE_V3_SYNERGIES = Object.freeze([
+    {
+      id: "goldenTempo",
+      icon: "⚡",
+      title: "Golden Tempo",
+      description: "Golden Value + Quick Cuddle: every solved scoring round gives +5 points."
+    },
+    {
+      id: "questBinding",
+      icon: "🔗",
+      title: "Quest Binding",
+      description: "Quest Value + Quest Ink: completed quests give another +5 points."
+    },
+    {
+      id: "illustratedStart",
+      icon: "🌟",
+      title: "Illustrated Start",
+      description: "Opening Verse + Margin Note: scoring rounds open with another +5 points."
+    },
+    {
+      id: "endlessMargins",
+      icon: "🖋️",
+      title: "Endless Margins",
+      description: "Wide Margins + Reward Refresh: quest reward screens show one extra option."
+    },
+    {
+      id: "secondEdition",
+      icon: "📚",
+      title: "Second Edition",
+      description: "Second Thoughts + Second Draft: gain one more mulligan in every scoring round."
+    }
+  ]);
+
+  function cuddleV3RewardDefinition(id) {
+    return CUDDLE_V3_CUSTOM_REWARDS.find(item => item.id === id) || null;
+  }
+  function cuddleV3SynergyDefinition(id) {
+    return CUDDLE_V3_SYNERGIES.find(item => item.id === id) || null;
+  }
+  function cuddleV3EnsureState(game) {
+    const state = game?.state;
+    if (!state) return null;
+    const savedBonuses = state.cuddleBonuses && typeof state.cuddleBonuses === "object"
+      ? state.cuddleBonuses
+      : {};
+    state.cuddleBonuses = {};
+    CUDDLE_V3_CUSTOM_REWARDS.forEach(definition => {
+      const value = Math.max(0, Math.floor(Number(savedBonuses[definition.id]) || 0));
+      state.cuddleBonuses[definition.id] = Math.min(definition.max, value);
+    });
+    state.rewardSynergies = unique(
+      (Array.isArray(state.rewardSynergies) ? state.rewardSynergies : [])
+        .filter(id => Boolean(cuddleV3SynergyDefinition(id)))
+    );
+    state.rewardBookHistory = (Array.isArray(state.rewardBookHistory) ? state.rewardBookHistory : [])
+      .filter(item => item && typeof item === "object")
+      .slice(-40);
+    state.bossRewardHistory = (Array.isArray(state.bossRewardHistory) ? state.bossRewardHistory : [])
+      .filter(item => item && typeof item === "object")
+      .slice(-12);
+    state.bossRewardNotice = state.bossRewardNotice && typeof state.bossRewardNotice === "object"
+      ? state.bossRewardNotice
+      : null;
+    state.synergyNotice = state.synergyNotice && typeof state.synergyNotice === "object"
+      ? state.synergyNotice
+      : null;
+    const sourceKinds = state.mysteryGlyphKinds && typeof state.mysteryGlyphKinds === "object"
+      && !Array.isArray(state.mysteryGlyphKinds)
+      ? state.mysteryGlyphKinds
+      : {};
+    const kinds = {};
+    Object.entries(sourceKinds).forEach(([glyph, kind]) => {
+      const normalized = glyphForLetter(glyph);
+      if (!/^[A-Z]$/.test(normalized)) return;
+      kinds[normalized] = ["blue", "purple", "unknown"].includes(kind) ? kind : "unknown";
+    });
+    (Array.isArray(state.unknownGlyphs) ? state.unknownGlyphs : []).forEach(glyph => {
+      const normalized = glyphForLetter(glyph);
+      if (/^[A-Z]$/.test(normalized) && !kinds[normalized]) kinds[normalized] = "unknown";
+    });
+    state.mysteryGlyphKinds = kinds;
+    state.unknownGlyphs = Object.keys(kinds).sort();
+    return state;
+  }
+  function cuddleV3BossStage(gate, bossesCleared = 0) {
+    const explicit = {
+      "before-4": 1,
+      "before-7": 2,
+      "before-10": 3,
+      final: 4
+    }[gate];
+    if (explicit) return explicit;
+    return Math.max(1, Math.min(4, Number(bossesCleared || 0) + 1));
+  }
+  function cuddleV3BossDescription(id, turns) {
+    const count = Math.max(1, Number(turns) || 1);
+    const guesses = `${count} guess${count === 1 ? "" : "es"}`;
+    switch (id) {
+      case "countOnly":
+        return `During the first ${guesses}, you only see the total number of green and yellow tiles, not their positions. Normal feedback returns afterward.`;
+      case "delayedFeedback":
+        return `The first ${guesses} reveal no feedback. When the power ends, every withheld result appears at once.`;
+      case "hideFeedback":
+        return `During the first ${guesses}, one board position hides its feedback. That position behaves normally afterward.`;
+      case "blueMode":
+        return `During the first ${guesses}, every green or yellow result appears blue. The letter stays reusable, but its exact result remains unresolved.`;
+      case "fakeFeedback":
+        return `During the first ${guesses}, the displayed colours lie. Those purple mystery letters stay reusable until reliable feedback resolves them.`;
+      case "quickMode":
+        return `During the first ${guesses}, you have one minute per guess. The timer switches off when the power window ends.`;
+      default:
+        return `This boss power lasts for the first ${guesses}.`;
+    }
+  }
+  function cuddleV3RetimeBoss(option, stage) {
+    const turns = CUDDLE_V3_BOSS_TURNS[Math.max(0, Math.min(3, stage - 1))];
+    const reward = option?.reward ? { ...option.reward } : option?.reward;
+    if (reward?.id === "cullRare") {
+      reward.description = "Remove two rare letters from the deck and from every future secret.";
+    }
+    return {
+      ...option,
+      turns,
+      stage,
+      description: cuddleV3BossDescription(option?.id, turns),
+      reward
+    };
+  }
+  function cuddleV3HasSynergy(game, id) {
+    return Boolean(game?.state?.rewardSynergies?.includes(id));
+  }
+  function cuddleV3SynergyIsActive(game, id) {
+    const upgrades = game?.state?.upgrades || {};
+    const bonuses = game?.state?.cuddleBonuses || {};
+    switch (id) {
+      case "goldenTempo":
+        return Number(upgrades.yellowPoints || 0) > 0 && Number(upgrades.earlyRoundPoint || 0) > 0;
+      case "questBinding":
+        return Number(upgrades.questPoints || 0) >= 5 && Number(bonuses.questSpark || 0) > 0;
+      case "illustratedStart":
+        return Number(bonuses.storybookStart || 0) > 0 && Number(bonuses.openingClue || 0) > 0;
+      case "endlessMargins":
+        return Number(bonuses.wideChoice || 0) > 0 && Number(upgrades.questRefreshes || 0) > 0;
+      case "secondEdition":
+        return Number(upgrades.extraMulligans || 0) > 0 && Number(bonuses.mulliganEcho || 0) > 0;
+      default:
+        return false;
+    }
+  }
+  function cuddleV3RefreshSynergies(game, announce = false) {
+    const state = cuddleV3EnsureState(game);
+    if (!state) return [];
+    const owned = new Set(state.rewardSynergies);
+    const unlocked = CUDDLE_V3_SYNERGIES.filter(definition => (
+      !owned.has(definition.id) && cuddleV3SynergyIsActive(game, definition.id)
+    ));
+    unlocked.forEach(definition => owned.add(definition.id));
+    state.rewardSynergies = [...owned];
+    if (announce && unlocked.length) {
+      state.synergyNotice = {
+        icon: "✨",
+        title: unlocked.length === 1 ? "Bonus combination unlocked" : "Bonus combinations unlocked",
+        message: unlocked.map(item => `${item.icon} ${item.title}: ${item.description}`).join(" ")
+      };
+    }
+    return unlocked;
+  }
+  function cuddleV3RecordReward(game, choice, kind = "round") {
+    const state = cuddleV3EnsureState(game);
+    if (!state || !choice) return;
+    state.rewardBookHistory.push({
+      id: choice.id || choice.rewardId || "reward",
+      icon: choice.icon || "✨",
+      title: choice.title || "Reward",
+      description: choice.description || "",
+      kind,
+      round: Number(state.round || 1)
+    });
+    state.rewardBookHistory = state.rewardBookHistory.slice(-40);
+  }
+  function cuddleV3NormalizeUpgradeChoice(choice) {
+    if (!choice || choice.id !== "removeLetter") return choice;
+    const letter = (choice.letters || (choice.letter ? [choice.letter] : []))[0];
+    if (!letter) return choice;
+    return {
+      ...choice,
+      key: `removeLetter:${letter}`,
+      letter,
+      letters: [letter],
+      title: `Cull ${letter}`,
+      description: `Remove ${letter} from the deck and from every future secret. It was drawn from the ten least-common eligible consonants.`
+    };
+  }
+  function cuddleV3ExpandQuestChoices(game) {
+    const state = cuddleV3EnsureState(game);
+    if (!state || state.status !== "questReward" || !cuddleV3HasSynergy(game, "endlessMargins")) return;
+    const choices = Array.isArray(state.questRewardChoices) ? state.questRewardChoices.slice() : [];
+    const seen = new Set(choices.map(item => item?.id).filter(Boolean));
+    const pool = window.CuddleQuestBook?.rewardChoices?.(6, game.random) || [];
+    for (const reward of pool) {
+      if (!reward?.id || seen.has(reward.id)) continue;
+      choices.push(reward);
+      seen.add(reward.id);
+      if (choices.length >= 4) break;
+    }
+    state.questRewardChoices = choices.slice(0, 4);
+  }
+  function cuddleV3MysteriesForGuess(game, word, feedback) {
+    const result = {};
+    const boss = game?.state?.boss;
+    if (!boss || !game._bossActive()) return result;
+    const markAll = kind => word.split("").forEach(letter => { result[glyphForLetter(letter)] = kind; });
+    switch (boss.id) {
+      case "countOnly":
+      case "delayedFeedback":
+        markAll("unknown");
+        break;
+      case "hideFeedback": {
+        const index = Number(boss.hiddenIndex);
+        if (Number.isInteger(index) && index >= 0 && index < word.length) {
+          result[glyphForLetter(word[index])] = "unknown";
+        }
+        break;
+      }
+      case "blueMode":
+        word.split("").forEach((letter, index) => {
+          if (feedback[index] === "green" || feedback[index] === "yellow") {
+            result[glyphForLetter(letter)] = "blue";
+          }
+        });
+        break;
+      case "fakeFeedback":
+        markAll("purple");
+        break;
+      default:
+        break;
+    }
+    return result;
+  }
+
+  // Keep the source metadata truthful even before a stage-specific boss offer
+  // is created. The offer itself is retimed below for stages 1-4.
+  if (window.CuddleQuestBook) {
+    const deepCull = window.CuddleQuestBook.BOSS_REWARDS?.find(item => item.id === "cullRare");
+    if (deepCull) deepCull.description = "Remove two rare letters from the deck and from every future secret.";
+    (window.CuddleQuestBook.BOSSES || []).forEach(boss => {
+      boss.turns = 2;
+      boss.description = cuddleV3BossDescription(boss.id, 2);
+    });
+  }
+
+  const cuddleV3OriginalHydrateState = CuddleGame.prototype._hydrateState;
+  CuddleGame.prototype._hydrateState = function hydrateCuddleV3State() {
+    const hadMysteryMap = Boolean(
+      this.state?.mysteryGlyphKinds
+      && typeof this.state.mysteryGlyphKinds === "object"
+      && !Array.isArray(this.state.mysteryGlyphKinds)
+    );
+    cuddleV3OriginalHydrateState.call(this);
+    const state = cuddleV3EnsureState(this);
+    if (!state) return;
+
+    // A save paused at the old nine-round final gate becomes the new third
+    // gate, so existing progress continues into rounds 10-12 instead of ending
+    // early under the expanded campaign.
+    const oldFinal = Number(state.round || 0) <= 9 && Number(state.bossesCleared || 0) <= 2;
+    if (oldFinal && state.boss?.gate === "final") {
+      state.round = 10;
+      state.boss.gate = "before-10";
+      state.bossGatesDone = (state.bossGatesDone || []).filter(gate => gate !== "final");
+    }
+    if (oldFinal && state.status === "bossChoice" && (state.bossOffer || []).some(item => item.gate === "final")) {
+      state.round = 10;
+      state.bossOffer = state.bossOffer.map(item => ({ ...item, gate: "before-10" }));
+      state.bossGatesDone = (state.bossGatesDone || []).filter(gate => gate !== "final");
+    }
+    if (state.boss) {
+      const stage = cuddleV3BossStage(state.boss.gate, Math.max(0, Number(state.bossesCleared || 1) - 1));
+      state.boss = cuddleV3RetimeBoss(state.boss, stage);
+      state.boss.secondsPerGuess = state.boss.id === "quickMode" ? 60 : null;
+    }
+    if (Array.isArray(state.bossOffer)) {
+      state.bossOffer = state.bossOffer.map(item => (
+        cuddleV3RetimeBoss(item, cuddleV3BossStage(item.gate, state.bossesCleared))
+      ));
+    }
+    state.upgradeChoices = (state.upgradeChoices || []).map(cuddleV3NormalizeUpgradeChoice);
+
+    // Recover unresolved blue, purple, and question-mark cards from saves made
+    // before mystery kinds were persisted.
+    if (!hadMysteryMap && state.boss) {
+      const kinds = { ...state.mysteryGlyphKinds };
+      (state.history || []).forEach(entry => {
+        const word = String(entry?.word || "");
+        const shown = Array.isArray(entry?.shownFeedback) ? entry.shownFeedback : [];
+        word.split("").forEach((letter, index) => {
+          const glyph = glyphForLetter(letter);
+          if (entry?.fakeFeedback) kinds[glyph] = "purple";
+          else if (shown[index] === "blue") kinds[glyph] = "blue";
+          else if (shown[index] === "unknown") kinds[glyph] = "unknown";
+        });
+      });
+      state.mysteryGlyphKinds = kinds;
+      state.unknownGlyphs = Object.keys(kinds).sort();
+    }
+    state.infiniteGlyphs = unique([
+      ...ALWAYS_AVAILABLE_VOWELS,
+      ...(state.infiniteGlyphs || []),
+      ...state.unknownGlyphs
+    ]).sort();
+    cuddleV3RefreshSynergies(this, false);
+    this._syncInfiniteCards();
+  };
+
+  const cuddleV3OriginalGetMulliganAllowance = CuddleGame.prototype.getMulliganAllowance;
+  CuddleGame.prototype.getMulliganAllowance = function getCuddleV3MulliganAllowance() {
+    const base = cuddleV3OriginalGetMulliganAllowance.call(this);
+    const state = cuddleV3EnsureState(this);
+    if (!state || this.isBossRound()) return base;
+    return base
+      + Number(state.cuddleBonuses.mulliganEcho || 0)
+      + Number(cuddleV3HasSynergy(this, "secondEdition"));
+  };
+
+  const cuddleV3OriginalBeginRound = CuddleGame.prototype._beginRound;
+  CuddleGame.prototype._beginRound = function beginCuddleV3Round() {
+    cuddleV3EnsureState(this);
+    cuddleV3OriginalBeginRound.call(this);
+    const state = cuddleV3EnsureState(this);
+    state.mysteryGlyphKinds = {};
+    state.unknownGlyphs = [];
+    if (this.isBossRound()) return;
+
+    const notes = [];
+    const openingPoints = Number(state.cuddleBonuses.storybookStart || 0) * 5
+      + (cuddleV3HasSynergy(this, "illustratedStart") ? 5 : 0);
+    if (openingPoints > 0) {
+      state.score += openingPoints;
+      state.roundScore += openingPoints;
+      notes.push(`Opening scripts added +${openingPoints} points.`);
+    }
+    const clues = Number(state.cuddleBonuses.openingClue || 0);
+    for (let index = 0; index < clues; index += 1) {
+      const message = this._applyRewardEffect("revealLocation");
+      if (message) notes.push(message);
+    }
+    if (notes.length) state.lastMessage = `${state.lastMessage} ${notes.join(" ")}`.trim();
+  };
+
+  const cuddleV3OriginalOpenBossGate = CuddleGame.prototype._openBossGate;
+  CuddleGame.prototype._openBossGate = function openCuddleV3BossGate(round) {
+    const opened = cuddleV3OriginalOpenBossGate.call(this, round);
+    if (!opened) return false;
+    const stage = cuddleV3BossStage(this.state.bossOffer?.[0]?.gate, this.state.bossesCleared);
+    this.state.bossOffer = (this.state.bossOffer || []).map(option => cuddleV3RetimeBoss(option, stage));
+    return true;
+  };
+
+  const cuddleV3OriginalChooseBoss = CuddleGame.prototype.chooseBoss;
+  CuddleGame.prototype.chooseBoss = function chooseCuddleV3Boss(bossId) {
+    const result = cuddleV3OriginalChooseBoss.call(this, bossId);
+    if (result?.ok && this.state?.boss) {
+      const stage = cuddleV3BossStage(this.state.boss.gate, Math.max(0, Number(this.state.bossesCleared || 0)));
+      this.state.boss = cuddleV3RetimeBoss(this.state.boss, stage);
+      this.state.boss.secondsPerGuess = this.state.boss.id === "quickMode" ? 60 : null;
+      this.save();
+    }
+    return result;
+  };
+
+  const cuddleV3OriginalApplyBossReward = CuddleGame.prototype._applyBossReward;
+  CuddleGame.prototype._applyBossReward = function applyCuddleV3BossReward(rewardId) {
+    if (rewardId !== "cullRare") return cuddleV3OriginalApplyBossReward.call(this, rewardId);
+    const letters = this._removalCandidates(2);
+    if (!letters.length) return "No letters were safe to remove.";
+    this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
+    return `Deep Cull removed ${letters.join(", ")}.`;
+  };
+
+  // Bosses grant only their own displayed reward. The ordinary post-round
+  // upgrade screen is intentionally skipped after a boss.
+  CuddleGame.prototype._clearBoss = function clearCuddleV3Boss() {
+    const state = cuddleV3EnsureState(this);
+    const boss = state?.boss;
+    if (!boss) return;
+    const finalBoss = boss.gate === "final";
+    state.boss = null;
+    state.bossesCleared = Number(state.bossesCleared || 0) + 1;
+    state.unknownGlyphs = [];
+    state.mysteryGlyphKinds = {};
+    state.infiniteGlyphs = [...ALWAYS_AVAILABLE_VOWELS];
+    state.bossGatesDone = unique([...(state.bossGatesDone || []), boss.gate].filter(Boolean));
+    state.lastClearedBossGate = boss.gate || null;
+
+    const reward = window.CuddleQuestBook?.getBossReward?.(boss.rewardId) || {
+      id: boss.rewardId,
+      icon: "🎁",
+      title: "Boss reward",
+      description: ""
+    };
+    if (reward.id === "cullRare") {
+      reward.description = "Remove two rare letters from the deck and from every future secret.";
+    }
+    const rewardMessage = this._applyBossReward(boss.rewardId);
+    const record = {
+      ...reward,
+      bossTitle: boss.title,
+      round: Number(state.round || 1),
+      message: rewardMessage
+    };
+    state.bossRewardHistory.push(record);
+    state.bossRewardHistory = state.bossRewardHistory.slice(-12);
+    cuddleV3RecordReward(this, reward, "boss");
+    state.bossRewardNotice = {
+      icon: reward.icon || "🎁",
+      title: reward.title || "Boss reward",
+      bossTitle: boss.title || "Boss",
+      message: rewardMessage || reward.description || "Permanent boss reward received."
+    };
+    cuddleV3RefreshSynergies(this, true);
+
+    if (finalBoss) {
+      state.status = "won";
+      state.failureReason = null;
+      state.lastMessage = `You beat the final boss: ${boss.title}.${rewardMessage ? ` ${rewardMessage}` : ""}`;
+      this.save();
+      return;
+    }
+
+    this._advanceRound();
+  };
+
+  const cuddleV3OriginalUpgradeCatalog = CuddleGame.prototype._upgradeCatalog;
+  CuddleGame.prototype._upgradeCatalog = function cuddleV3UpgradeCatalog() {
+    const state = cuddleV3EnsureState(this);
+    const base = cuddleV3OriginalUpgradeCatalog.call(this)
+      .map(cuddleV3NormalizeUpgradeChoice)
+      .filter(Boolean);
+    const extras = CUDDLE_V3_CUSTOM_REWARDS
+      .filter(definition => Number(state.cuddleBonuses[definition.id] || 0) < definition.max)
+      .map(definition => ({ ...definition, key: definition.id }));
+    return [...base, ...extras];
+  };
+  CuddleGame.prototype._generateUpgradeChoices = function generateCuddleV3UpgradeChoices() {
+    const state = cuddleV3EnsureState(this);
+    const count = 3 + Math.min(2, Number(state.cuddleBonuses.wideChoice || 0));
+    return shuffle(this._upgradeCatalog(), this.random).slice(0, count);
+  };
+  CuddleGame.prototype.chooseUpgrade = function chooseCuddleV3Upgrade(choiceKey) {
+    const state = cuddleV3EnsureState(this);
+    if (state.status !== "upgrade") return { ok: false, error: "No upgrade choice is open." };
+    const choice = (state.upgradeChoices || []).find(item => item.key === choiceKey);
+    if (!choice) return { ok: false, error: "That upgrade is not available." };
+
+    const custom = cuddleV3RewardDefinition(choice.id);
+    if (custom) {
+      const current = Number(state.cuddleBonuses[custom.id] || 0);
+      if (current >= custom.max) return { ok: false, error: "That reward is already fully upgraded." };
+      state.cuddleBonuses[custom.id] = current + 1;
+    } else {
+      switch (choice.id) {
+        case "removeLetter": {
+          const letter = (choice.letters || (choice.letter ? [choice.letter] : []))[0];
+          if (!letter) return { ok: false, error: "No removable letter was attached to that reward." };
+          state.removedLetters = unique([...state.removedLetters, letter]).sort();
+          break;
+        }
+        case "extraMulligans":
+        case "mulliganSize":
+        case "yellowPoints":
+        case "earlyRoundPoint":
+        case "questRefreshes":
+        case "questCadence":
+          state.upgrades[choice.id] = Number(state.upgrades[choice.id] || 0) + 1;
+          break;
+        case "questPoints":
+          state.upgrades.questPoints = Number(state.upgrades.questPoints || 0) + 5;
+          break;
+        default:
+          return { ok: false, error: "Unknown upgrade." };
+      }
+    }
+
+    cuddleV3RecordReward(this, choice, "round");
+    const unlocked = cuddleV3RefreshSynergies(this, true);
+    state.lastMessage = `${choice.title} acquired.${unlocked.length ? ` ${unlocked.map(item => item.title).join(" + ")} unlocked.` : ""}`;
+    state.upgradeChoices = [];
+    state.upgradePhase = null;
+    state.upgradeMilestone = null;
+    this._advanceRound();
+    this.save();
+    return { ok: true, synergies: unlocked.map(item => item.id) };
+  };
+
+  // Card status must use only feedback the player was actually allowed to
+  // learn. Reading true hidden feedback here would leak boss information.
+  CuddleGame.prototype.getCardKnowledgeStatus = function getCuddleV3CardKnowledgeStatus(cardOrGlyph) {
+    const glyph = typeof cardOrGlyph === "string" ? cardOrGlyph : cardOrGlyph?.glyph;
+    if (!glyph) return "unused";
+    const letter = glyphForLetter(glyph);
+    if ((this.state.revealedPositions || []).includes(letter)) return "green";
+    let sawYellow = false;
+    for (const entry of this.state.history || []) {
+      if (entry?.fakeFeedback) continue;
+      const word = String(entry?.word || "");
+      const shown = Array.isArray(entry?.shownFeedback) ? entry.shownFeedback : entry?.feedback || [];
+      for (let index = 0; index < word.length; index += 1) {
+        if (word[index] !== letter) continue;
+        if (shown[index] === "green") return "green";
+        if (shown[index] === "yellow" || shown[index] === "blue") sawYellow = true;
+      }
+    }
+    if (sawYellow || (this.state.knownPresent || []).includes(letter)) return "yellow";
+    if ((this.state.knownAbsent || []).includes(letter)) return "red";
+    return "unused";
+  };
+
+  const cuddleV3OriginalSyncInfiniteCards = CuddleGame.prototype._syncInfiniteCards;
+  CuddleGame.prototype._syncInfiniteCards = function syncCuddleV3InfiniteCards() {
+    const state = cuddleV3EnsureState(this);
+    if (!state) return cuddleV3OriginalSyncInfiniteCards.call(this);
+    const durable = new Set([
+      ...ALWAYS_AVAILABLE_VOWELS,
+      ...(state.knownPresent || []),
+      ...(state.revealedPositions || []).filter(Boolean).map(glyphForLetter),
+      ...(state.unknownGlyphs || []),
+      ...Object.keys(state.mysteryGlyphKinds || {})
+    ]);
+    state.infiniteGlyphs = (state.infiniteGlyphs || []).filter(glyph => durable.has(glyph));
+    return cuddleV3OriginalSyncInfiniteCards.call(this);
+  };
+
+  const cuddleV3OriginalSubmitDraft = CuddleGame.prototype.submitDraft;
+  CuddleGame.prototype.submitDraft = function submitCuddleV3Draft() {
+    const state = cuddleV3EnsureState(this);
+    const validation = this.canSubmit();
+    if (!validation.ok || Number(state.guessesUsed || 0) >= MAX_GUESSES) {
+      return cuddleV3OriginalSubmitDraft.call(this);
+    }
+
+    const word = validation.word;
+    const feedback = evaluateFeedback(state.secret, word);
+    const bossBefore = state.boss ? { ...state.boss } : null;
+    const roundBefore = Number(state.round || 1);
+    const historyLengthBefore = (state.history || []).length;
+    const oldScore = Number(state.score || 0);
+    const oldRoundScore = Number(state.roundScore || 0);
+    const oldUnknown = (state.unknownGlyphs || []).slice();
+    const oldInfinite = (state.infiniteGlyphs || []).slice();
+    const oldKinds = { ...(state.mysteryGlyphKinds || {}) };
+    const newMysteries = cuddleV3MysteriesForGuess(this, word, feedback);
+
+    if (Object.keys(newMysteries).length) {
+      state.mysteryGlyphKinds = { ...oldKinds, ...newMysteries };
+      state.unknownGlyphs = Object.keys(state.mysteryGlyphKinds).sort();
+      state.knownAbsent = (state.knownAbsent || []).filter(letter => !state.unknownGlyphs.includes(letter));
+      // Do not sync yet: the draft still points at the finite card IDs. The
+      // original submit discards those IDs and then promotes these glyphs.
+      state.infiniteGlyphs = unique([...state.infiniteGlyphs, ...state.unknownGlyphs]).sort();
+    }
+
+    let questExtra = 0;
+    let solveExtra = 0;
+    if (!bossBefore) {
+      let questComplete = false;
+      if (state.activeQuest) {
+        try {
+          questComplete = Boolean(this.wouldDraftCompleteQuest());
+        } catch {
+          questComplete = false;
+        }
+      }
+      if (questComplete) {
+        questExtra = Number(state.cuddleBonuses.questSpark || 0) * 5
+          + (cuddleV3HasSynergy(this, "questBinding") ? 5 : 0);
+      }
+      if (word === state.secret && cuddleV3HasSynergy(this, "goldenTempo")) solveExtra = 5;
+      const extra = questExtra + solveExtra;
+      if (extra > 0) {
+        state.score += extra;
+        state.roundScore += extra;
+      }
+    }
+
+    const result = cuddleV3OriginalSubmitDraft.call(this);
+    if (!result?.ok) {
+      state.score = oldScore;
+      state.roundScore = oldRoundScore;
+      state.unknownGlyphs = oldUnknown;
+      state.infiniteGlyphs = oldInfinite;
+      state.mysteryGlyphKinds = oldKinds;
+      return result;
+    }
+
+    const entry = (this.state.history || []).length > historyLengthBefore
+      ? this.state.history[this.state.history.length - 1]
+      : null;
+    if (entry?.word === word) {
+      if (questExtra) entry.cuddleQuestBonus = questExtra;
+      if (solveExtra) entry.cuddleSolveBonus = solveExtra;
+    }
+
+    const sameBossRound = Boolean(
+      bossBefore
+      && this.state.boss
+      && this.state.boss.id === bossBefore.id
+      && this.state.boss.gate === bossBefore.gate
+      && Number(this.state.round || 1) === roundBefore
+    );
+    if (sameBossRound) {
+      const delayedReleased = bossBefore.id === "delayedFeedback" && !this._bossActive();
+      const nextKinds = delayedReleased ? {} : { ...oldKinds };
+      if (!delayedReleased) {
+        unique(word.split("").map(glyphForLetter)).forEach(glyph => {
+          if (newMysteries[glyph]) nextKinds[glyph] = newMysteries[glyph];
+          else delete nextKinds[glyph];
+        });
+      }
+      this.state.mysteryGlyphKinds = nextKinds;
+      this.state.unknownGlyphs = Object.keys(nextKinds).sort();
+      this.state.knownAbsent = (this.state.knownAbsent || [])
+        .filter(letter => !this.state.unknownGlyphs.includes(letter));
+      this.state.infiniteGlyphs = unique([
+        ...(this.state.infiniteGlyphs || []),
+        ...this.state.unknownGlyphs
+      ]).sort();
+      this._syncInfiniteCards();
+      // A mystery card may have been finite when drafted, then promoted to
+      // reusable for the boss guess. If that mystery resolves now, syncing can
+      // remove the promoted copy; refill the ordinary hand immediately.
+      this.drawToHandLimit();
+    }
+
+    cuddleV3ExpandQuestChoices(this);
+    const scriptBonus = questExtra + solveExtra;
+    if (scriptBonus > 0) {
+      this.state.lastMessage = `${this.state.lastMessage || ""} Reward-book bonus: +${scriptBonus} points.`.trim();
+      result.cuddleBonus = scriptBonus;
+      result.totalScoreDelta = Number(result.scoreDelta || 0) + scriptBonus;
+    }
+    this.save();
+    return result;
+  };
+
+  const cuddleV3OriginalRefreshQuestRewards = CuddleGame.prototype.refreshQuestRewards;
+  CuddleGame.prototype.refreshQuestRewards = function refreshCuddleV3QuestRewards() {
+    const result = cuddleV3OriginalRefreshQuestRewards.call(this);
+    if (result?.ok) {
+      cuddleV3ExpandQuestChoices(this);
+      this.save();
+    }
+    return result;
+  };
+
+  const cuddleV3OriginalGetRulesSummary = CuddleGame.prototype.getRulesSummary;
+  CuddleGame.prototype.getRulesSummary = function getCuddleV3RulesSummary() {
+    const summary = cuddleV3OriginalGetRulesSummary.call(this);
+    const state = cuddleV3EnsureState(this);
+    summary.questPoints += Number(state?.cuddleBonuses?.questSpark || 0) * 5
+      + (cuddleV3HasSynergy(this, "questBinding") ? 5 : 0);
+    return summary;
+  };
+
+  const cuddleV3OriginalUpgradeSummary = CuddleGame.prototype.getUpgradeSummary;
+  CuddleGame.prototype.getUpgradeSummary = function getCuddleV3UpgradeSummary() {
+    const state = cuddleV3EnsureState(this);
+    const lines = cuddleV3OriginalUpgradeSummary.call(this);
+    CUDDLE_V3_CUSTOM_REWARDS.forEach(definition => {
+      const count = Number(state.cuddleBonuses[definition.id] || 0);
+      if (count) lines.push(`${definition.icon} ${definition.title} ×${count}`);
+    });
+    state.rewardSynergies.forEach(id => {
+      const synergy = cuddleV3SynergyDefinition(id);
+      if (synergy) lines.push(`${synergy.icon} Combo: ${synergy.title}`);
+    });
+    return unique(lines);
+  };
+
+  const cuddleV3OriginalCurrentModifications = CuddleGame.prototype.getCurrentModifications;
+  CuddleGame.prototype.getCurrentModifications = function getCuddleV3CurrentModifications() {
+    const state = cuddleV3EnsureState(this);
+    const lines = cuddleV3OriginalCurrentModifications.call(this);
+    CUDDLE_V3_CUSTOM_REWARDS.forEach(definition => {
+      const count = Number(state.cuddleBonuses[definition.id] || 0);
+      if (count) lines.push(`${definition.icon} ${definition.title} ×${count}`);
+    });
+    state.rewardSynergies.forEach(id => {
+      const synergy = cuddleV3SynergyDefinition(id);
+      if (synergy) lines.push(`${synergy.icon} ${synergy.title} combination active`);
+    });
+    return unique(lines);
+  };
+
+  CuddleGame.prototype.getMysteryKind = function getCuddleV3MysteryKind(glyph) {
+    const state = cuddleV3EnsureState(this);
+    return state?.mysteryGlyphKinds?.[glyphForLetter(glyph)] || null;
+  };
+  CuddleGame.prototype.dismissBossRewardNotice = function dismissCuddleV3BossRewardNotice() {
+    const state = cuddleV3EnsureState(this);
+    if (!state?.bossRewardNotice) return { ok: false };
+    state.bossRewardNotice = null;
+    this.save();
+    return { ok: true };
+  };
+  CuddleGame.prototype.dismissSynergyNotice = function dismissCuddleV3SynergyNotice() {
+    const state = cuddleV3EnsureState(this);
+    if (!state?.synergyNotice) return { ok: false };
+    state.synergyNotice = null;
+    this.save();
+    return { ok: true };
+  };
+  CuddleGame.prototype.getRewardBook = function getCuddleV3RewardBook() {
+    const state = cuddleV3EnsureState(this);
+    const history = (state.rewardBookHistory || []).slice().reverse();
+    const synergies = CUDDLE_V3_SYNERGIES.map(definition => ({
+      id: definition.id,
+      icon: definition.icon,
+      title: definition.title,
+      description: definition.description,
+      unlocked: state.rewardSynergies.includes(definition.id)
+    }));
+    // Every collected reward fills one script; synergies add a bonus flourish.
+    const progress = Math.min(16, history.length + state.rewardSynergies.length);
+    return {
+      progress,
+      maximum: 16,
+      history,
+      synergies,
+      customRewards: CUDDLE_V3_CUSTOM_REWARDS.map(definition => ({
+        ...definition,
+        count: Number(state.cuddleBonuses[definition.id] || 0)
+      }))
+    };
+  };
+  /* UMT_CUDDLE_REBALANCE_V3: ENGINE END */
   window.CuddleEngine = Object.freeze({
     CuddleGame,
     VERSION,
@@ -2029,3 +2832,468 @@
     glyphForLetter
   });
 }());
+
+/* UMT_CUDDLE_BALANCE_REFRESH_HARDMODE_V1: ENGINE START */
+(function () {
+  "use strict";
+
+  const Engine = window.CuddleEngine;
+  const CuddleGame = Engine && Engine.CuddleGame;
+  if (!CuddleGame) return;
+
+  const prototype = CuddleGame.prototype;
+  const baseHandSize = Number(Engine.BASE_HAND_SIZE) || 5;
+  const retiredUpgradeIds = new Set(["yellowPoints", "earlyRoundPoint"]);
+  const customUpgradeDefinitions = Object.freeze([
+    {
+      id: "greyPointBoost",
+      key: "greyPointBoost",
+      icon: "G+",
+      title: "Grey Matters",
+      description: "Grey tiles are worth 1 more point. This reward stacks."
+    },
+    {
+      id: "handSizeBoost",
+      key: "handSizeBoost",
+      icon: "H+",
+      title: "Bigger Hand",
+      description: "Increase the counted hand size by 1 for future rounds."
+    },
+    {
+      id: "mulliganValueBoost",
+      key: "mulliganValueBoost",
+      icon: "M+",
+      title: "Mulligan Dividend",
+      description: "Each unused mulligan is worth 5 more points when you solve."
+    },
+    {
+      id: "earlySolveBoost",
+      key: "earlySolveBoost",
+      icon: "E+",
+      title: "Early Finish",
+      description: "Each unused guess is worth 5 more early-solve points."
+    },
+    {
+      id: "colourTrade",
+      key: "colourTrade",
+      icon: "Y/G",
+      title: "Colour Surge",
+      description: "Yellow and green gain 2 points each, but grey loses 1 point. This reward stacks."
+    },
+    {
+      id: "greyscale",
+      key: "greyscale",
+      icon: "GREY",
+      title: "Greyscale",
+      description: "Grey gains 2 points, while yellow and green are reduced to 0 for the run."
+    }
+  ]);
+  const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
+  const colourUpgradeIds = new Set(["colourTrade", "greyscale"]);
+  const goldenTempoDefinition = Object.freeze({
+    id: "goldenTempo",
+    icon: "⚡",
+    title: "Golden Tempo",
+    description: "A colour-value reward plus an early-solve reward: every solved scoring round gives +5 points."
+  });
+
+  function finiteNumber(value, fallback = 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function choiceIdentity(choice) {
+    return String(choice?.key || choice?.id || "");
+  }
+
+  function uniqueLines(lines) {
+    return [...new Set((Array.isArray(lines) ? lines : []).filter(Boolean).map(String))];
+  }
+
+  function ensureBalanceState(game) {
+    if (!game || !game.state) return null;
+    const state = game.state;
+    state.upgrades = state.upgrades || {};
+    const upgrades = state.upgrades;
+    upgrades.greyPoints = finiteNumber(upgrades.greyPoints);
+    upgrades.handSizeBonus = Math.max(0, finiteNumber(upgrades.handSizeBonus));
+    upgrades.mulliganPointBonus = finiteNumber(upgrades.mulliganPointBonus);
+    upgrades.earlyRoundPoint = finiteNumber(upgrades.earlyRoundPoint);
+    upgrades.yellowPoints = finiteNumber(upgrades.yellowPoints);
+    upgrades.zeroColourPoints = finiteNumber(upgrades.zeroColourPoints) > 0 ? 1 : 0;
+
+    state.upgradeRefreshesUsed = Math.max(
+      0,
+      Math.floor(finiteNumber(state.upgradeRefreshesUsed))
+    );
+
+    const savedCounts = state.balanceRewardCounts
+      && typeof state.balanceRewardCounts === "object"
+      && !Array.isArray(state.balanceRewardCounts)
+      ? state.balanceRewardCounts
+      : {};
+    state.balanceRewardCounts = {};
+    customUpgradeDefinitions.forEach(definition => {
+      state.balanceRewardCounts[definition.id] = Math.max(
+        0,
+        Math.floor(finiteNumber(savedCounts[definition.id]))
+      );
+    });
+
+    state.rewardBookHistory = (Array.isArray(state.rewardBookHistory)
+      ? state.rewardBookHistory
+      : [])
+      .filter(item => item && typeof item === "object")
+      .slice(-40);
+    state.rewardSynergies = [...new Set(
+      (Array.isArray(state.rewardSynergies) ? state.rewardSynergies : [])
+        .filter(id => typeof id === "string" && id)
+    )];
+    return state;
+  }
+
+  function signed(value) {
+    const number = finiteNumber(value);
+    return number > 0 ? `+${number}` : String(number);
+  }
+
+  function recordCustomReward(game, choice) {
+    const state = ensureBalanceState(game);
+    if (!state || !choice) return;
+    state.rewardBookHistory.push({
+      id: choice.id || "reward",
+      icon: choice.icon || "✨",
+      title: choice.title || "Reward",
+      description: choice.description || "",
+      kind: "round",
+      round: Number(state.round || 1)
+    });
+    state.rewardBookHistory = state.rewardBookHistory.slice(-40);
+  }
+
+  function unlockGoldenTempoIfReady(game) {
+    const state = ensureBalanceState(game);
+    if (!state || state.rewardSynergies.includes(goldenTempoDefinition.id)) return [];
+    const upgrades = state.upgrades;
+    if (!(finiteNumber(upgrades.yellowPoints) > 0 && finiteNumber(upgrades.earlyRoundPoint) > 0)) {
+      return [];
+    }
+    state.rewardSynergies.push(goldenTempoDefinition.id);
+    state.synergyNotice = {
+      icon: "✨",
+      title: "Bonus combination unlocked",
+      message: `${goldenTempoDefinition.icon} ${goldenTempoDefinition.title}: ${goldenTempoDefinition.description}`
+    };
+    return [goldenTempoDefinition];
+  }
+
+  const originalHydrateState = prototype._hydrateState;
+  prototype._hydrateState = function hydrateBalanceState() {
+    if (typeof originalHydrateState === "function") originalHydrateState.call(this);
+    const state = ensureBalanceState(this);
+    if (!state || state.status !== "upgrade" || !Array.isArray(state.upgradeChoices)) return;
+    const invalidSavedChoice = state.upgradeChoices.some(choice => (
+      retiredUpgradeIds.has(choice?.id)
+      || (state.upgrades.zeroColourPoints > 0 && colourUpgradeIds.has(choice?.id))
+    ));
+    if (invalidSavedChoice) state.upgradeChoices = this._generateUpgradeChoices();
+  };
+
+  const originalGetHandLimit = prototype.getHandLimit;
+  prototype.getHandLimit = function getUpgradedHandLimit() {
+    ensureBalanceState(this);
+    const base = typeof originalGetHandLimit === "function"
+      ? finiteNumber(originalGetHandLimit.call(this), baseHandSize)
+      : baseHandSize;
+    return Math.max(1, base + finiteNumber(this.state.upgrades.handSizeBonus));
+  };
+
+  const originalRulesSummary = prototype.getRulesSummary;
+  prototype.getRulesSummary = function getBalancedRulesSummary() {
+    const state = ensureBalanceState(this);
+    const rules = typeof originalRulesSummary === "function"
+      ? (originalRulesSummary.call(this) || {})
+      : {};
+    const upgrades = state?.upgrades || {};
+    const coloursDisabled = upgrades.zeroColourPoints > 0;
+    return {
+      ...rules,
+      handSize: this.getHandLimit(),
+      greyPoints: finiteNumber(upgrades.greyPoints),
+      yellowPoints: coloursDisabled
+        ? 0
+        : finiteNumber(rules.yellowPoints, 1 + finiteNumber(upgrades.yellowPoints)),
+      greenPoints: coloursDisabled
+        ? 0
+        : finiteNumber(rules.greenPoints, 2 + finiteNumber(upgrades.yellowPoints)),
+      earlyPoint: finiteNumber(rules.earlyPoint, 10 + finiteNumber(upgrades.earlyRoundPoint)),
+      mulliganPoints: finiteNumber(rules.mulliganPoints, 3)
+        + finiteNumber(upgrades.mulliganPointBonus)
+    };
+  };
+
+  const originalUpgradeCatalog = prototype._upgradeCatalog;
+  prototype._upgradeCatalog = function getBalancedUpgradeCatalog() {
+    const state = ensureBalanceState(this);
+    const originalChoices = typeof originalUpgradeCatalog === "function"
+      ? originalUpgradeCatalog.call(this)
+      : [];
+    const choices = (Array.isArray(originalChoices) ? originalChoices : []).filter(choice => (
+      !retiredUpgradeIds.has(choice?.id) && !customUpgradeIds.has(choice?.id)
+    ));
+    const additions = customUpgradeDefinitions.filter(definition => (
+      !(state.upgrades.zeroColourPoints > 0 && colourUpgradeIds.has(definition.id))
+    ));
+    return [...choices, ...additions].map(choice => ({
+      ...choice,
+      key: choice.key || choice.id
+    }));
+  };
+
+  const originalChooseUpgrade = prototype.chooseUpgrade;
+  prototype.chooseUpgrade = function chooseBalancedUpgrade(choiceKey) {
+    if (this.state?.status !== "upgrade") {
+      return typeof originalChooseUpgrade === "function"
+        ? originalChooseUpgrade.call(this, choiceKey)
+        : { ok: false, error: "No upgrade choice is open." };
+    }
+    const state = ensureBalanceState(this);
+    const choice = Array.isArray(state.upgradeChoices)
+      ? state.upgradeChoices.find(item => choiceIdentity(item) === String(choiceKey))
+      : null;
+    if (!choice || !customUpgradeIds.has(choice.id)) {
+      return typeof originalChooseUpgrade === "function"
+        ? originalChooseUpgrade.call(this, choiceKey)
+        : { ok: false, error: "That upgrade is not available." };
+    }
+    if (state.upgrades.zeroColourPoints > 0 && colourUpgradeIds.has(choice.id)) {
+      return { ok: false, error: "That colour reward is no longer available after Greyscale." };
+    }
+
+    const upgrades = state.upgrades;
+    switch (choice.id) {
+      case "greyPointBoost":
+        upgrades.greyPoints += 1;
+        break;
+      case "handSizeBoost":
+        upgrades.handSizeBonus += 1;
+        break;
+      case "colourTrade":
+        upgrades.yellowPoints += 2;
+        upgrades.greyPoints -= 1;
+        break;
+      case "greyscale":
+        upgrades.greyPoints += 2;
+        upgrades.yellowPoints = 0;
+        upgrades.zeroColourPoints = 1;
+        break;
+      case "mulliganValueBoost":
+        upgrades.mulliganPointBonus += 5;
+        break;
+      case "earlySolveBoost":
+        upgrades.earlyRoundPoint += 5;
+        break;
+      default:
+        return { ok: false, error: "Unknown upgrade." };
+    }
+
+    state.balanceRewardCounts[choice.id] += 1;
+    recordCustomReward(this, choice);
+    const unlocked = unlockGoldenTempoIfReady(this);
+    state.lastMessage = `${choice.title} acquired.${unlocked.length ? ` ${unlocked.map(item => item.title).join(" + ")} unlocked.` : ""}`;
+    state.upgradeChoices = [];
+    state.upgradePhase = null;
+    state.upgradeMilestone = null;
+    this._advanceRound();
+    this.save();
+    return { ok: true, synergies: unlocked.map(item => item.id) };
+  };
+
+  prototype.getUpgradeRefreshCost = function getUpgradeRefreshCost() {
+    const state = ensureBalanceState(this);
+    const used = state ? state.upgradeRefreshesUsed : 0;
+    return used === 0 ? 0 : used * 2 + 1;
+  };
+
+  prototype.refreshUpgradeChoices = function refreshUpgradeChoices() {
+    if (this.state?.status !== "upgrade") {
+      return { ok: false, error: "No between-round reward choices are open." };
+    }
+    const state = ensureBalanceState(this);
+    const cost = this.getUpgradeRefreshCost();
+    const score = finiteNumber(state.score);
+    if (cost > 0 && cost > score) {
+      return { ok: false, error: `You need ${cost} points to refresh these choices.` };
+    }
+
+    const currentChoices = (Array.isArray(state.upgradeChoices) ? state.upgradeChoices : [])
+      .filter(Boolean);
+    const choiceCount = Math.max(1, currentChoices.length || 3);
+    const currentKey = currentChoices.map(choiceIdentity).sort().join("|");
+    let nextChoices = [];
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      const generated = this._generateUpgradeChoices();
+      nextChoices = (Array.isArray(generated) ? generated : []).filter(Boolean);
+      const nextKey = nextChoices.map(choiceIdentity).sort().join("|");
+      if (nextChoices.length && nextKey !== currentKey) break;
+    }
+
+    let nextKey = nextChoices.map(choiceIdentity).sort().join("|");
+    if (!nextChoices.length || nextKey === currentKey) {
+      const currentKeys = new Set(currentChoices.map(choiceIdentity));
+      const catalogResult = this._upgradeCatalog();
+      const catalog = (Array.isArray(catalogResult) ? catalogResult : [])
+        .filter(Boolean)
+        .map(choice => ({ ...choice, key: choice.key || choice.id }));
+      nextChoices = [
+        ...catalog.filter(choice => !currentKeys.has(choiceIdentity(choice))),
+        ...catalog.filter(choice => currentKeys.has(choiceIdentity(choice)))
+      ].slice(0, choiceCount);
+      nextKey = nextChoices.map(choiceIdentity).sort().join("|");
+    }
+    if (!nextChoices.length || nextKey === currentKey) {
+      return { ok: false, error: "There are no different reward choices available right now." };
+    }
+
+    if (cost > 0) state.score = score - cost;
+    state.upgradeRefreshesUsed += 1;
+    state.upgradeChoices = nextChoices;
+    state.lastMessage = cost === 0
+      ? "Reward choices refreshed for free."
+      : `Reward choices refreshed for ${cost} points.`;
+    this.save();
+    return { ok: true, cost, message: state.lastMessage };
+  };
+
+  const originalAdvanceRound = prototype._advanceRound;
+  prototype._advanceRound = function advanceAfterBalancedUpgrade() {
+    if (this.state) this.state.upgradeRefreshesUsed = 0;
+    return typeof originalAdvanceRound === "function"
+      ? originalAdvanceRound.call(this)
+      : undefined;
+  };
+
+  const originalUpgradeSummary = prototype.getUpgradeSummary;
+  prototype.getUpgradeSummary = function getBalancedUpgradeSummary() {
+    const state = ensureBalanceState(this);
+    const rules = this.getRulesSummary();
+    const removed = state.removedLetters && state.removedLetters.length
+      ? state.removedLetters.join(", ")
+      : "None";
+    const previous = typeof originalUpgradeSummary === "function"
+      ? originalUpgradeSummary.call(this)
+      : [];
+    const replacedPrefixes = [
+      "Counted hand size:",
+      "Tile values:",
+      "Mulligans:",
+      "Yellow value:",
+      "Early value:",
+      "Early solve:",
+      "Quest value:",
+      "Quest cadence:",
+      "Quest refreshes:",
+      "Quest reward refreshes:",
+      "Removed letters:"
+    ];
+    const preserved = (Array.isArray(previous) ? previous : []).filter(line => (
+      !replacedPrefixes.some(prefix => String(line).startsWith(prefix))
+    ));
+    const customLines = customUpgradeDefinitions
+      .filter(definition => state.balanceRewardCounts[definition.id] > 0)
+      .map(definition => (
+        `${definition.icon} ${definition.title} ×${state.balanceRewardCounts[definition.id]}`
+      ));
+    return uniqueLines([
+      `Counted hand size: ${rules.handSize}`,
+      `Tile values: grey ${signed(rules.greyPoints)}, yellow ${signed(rules.yellowPoints)}, green ${signed(rules.greenPoints)}`,
+      `Mulligans: ${rules.mulligans} × up to ${rules.mulliganSize}; ${signed(rules.mulliganPoints)} per unused mulligan`,
+      `Early solve: ${signed(rules.earlyPoint)} per unused guess`,
+      `Quest value: ${signed(rules.questPoints)}`,
+      `Quest cadence: every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}`,
+      `Quest reward refreshes: ${rules.questRefreshes}`,
+      `Removed letters: ${removed}`,
+      ...preserved,
+      ...customLines
+    ]);
+  };
+
+  const originalCurrentModifications = prototype.getCurrentModifications;
+  prototype.getCurrentModifications = function getBalancedCurrentModifications() {
+    const state = ensureBalanceState(this);
+    const upgrades = state.upgrades;
+    let modifications = typeof originalCurrentModifications === "function"
+      ? originalCurrentModifications.call(this)
+      : [];
+    modifications = (Array.isArray(modifications) ? modifications : [])
+      .filter(line => !String(line).startsWith("No run upgrades yet"));
+
+    if (upgrades.handSizeBonus) {
+      modifications.push(`Counted hand size is ${this.getHandLimit()}`);
+    }
+    if (upgrades.greyPoints) {
+      modifications.push(`Grey tiles score ${signed(upgrades.greyPoints)} each`);
+    }
+    if (upgrades.zeroColourPoints) {
+      modifications.push("Yellow and green tiles score 0");
+    }
+    if (upgrades.mulliganPointBonus) {
+      modifications.push(`Unused mulligans are worth +${upgrades.mulliganPointBonus} extra each`);
+    }
+    customUpgradeDefinitions.forEach(definition => {
+      const count = state.balanceRewardCounts[definition.id];
+      if (count) modifications.push(`${definition.icon} ${definition.title} ×${count}`);
+    });
+
+    const unique = uniqueLines(modifications);
+    return unique.length
+      ? unique
+      : ["No run upgrades yet; base Cuddle rules are active."];
+  };
+
+  const originalRewardBook = prototype.getRewardBook;
+  prototype.getRewardBook = function getBalancedRewardBook() {
+    const state = ensureBalanceState(this);
+    const book = typeof originalRewardBook === "function"
+      ? (originalRewardBook.call(this) || {})
+      : {};
+    const existingCustom = Array.isArray(book.customRewards) ? book.customRewards : [];
+    const existingIds = new Set(existingCustom.map(item => item?.id).filter(Boolean));
+    const customRewards = [
+      ...existingCustom,
+      ...customUpgradeDefinitions
+        .filter(definition => !existingIds.has(definition.id))
+        .map(definition => ({
+          ...definition,
+          count: state.balanceRewardCounts[definition.id]
+        }))
+    ];
+    let synergies = (Array.isArray(book.synergies) ? book.synergies : []).map(item => (
+      item?.id === goldenTempoDefinition.id
+        ? { ...item, ...goldenTempoDefinition, unlocked: state.rewardSynergies.includes(item.id) }
+        : item
+    ));
+    if (!synergies.some(item => item?.id === goldenTempoDefinition.id)) {
+      synergies.push({
+        ...goldenTempoDefinition,
+        unlocked: state.rewardSynergies.includes(goldenTempoDefinition.id)
+      });
+    }
+    const history = Array.isArray(book.history)
+      ? book.history
+      : state.rewardBookHistory.slice().reverse();
+    const maximum = Math.max(1, finiteNumber(book.maximum, 16));
+    const progress = Number.isFinite(Number(book.progress))
+      ? Number(book.progress)
+      : Math.min(maximum, history.length + state.rewardSynergies.length);
+    return {
+      ...book,
+      progress,
+      maximum,
+      history,
+      synergies,
+      customRewards
+    };
+  };
+}());
+/* UMT_CUDDLE_BALANCE_REFRESH_HARDMODE_V1: ENGINE END */

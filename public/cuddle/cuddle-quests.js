@@ -14,6 +14,78 @@
     fieldReport: "FIELDREPORT"
   });
 
+  // HARDMODE_COUNT_KNOWLEDGE_FIX_2026_09
+  // Cuddle's Hold the Clues quest keeps letter-count knowledge per visible,
+  // trustworthy feedback row. Seeing one colored E on two different turns still
+  // proves only one E; seeing two colored Es together proves at least two. A
+  // grey extra copy caps how many copies later guesses may use.
+  function cuddleHardModeLetterCounts(word) {
+    const counts = new Map();
+    for (const letter of String(word || "").toUpperCase()) {
+      counts.set(letter, (counts.get(letter) || 0) + 1);
+    }
+    return counts;
+  }
+
+  function cuddleHardModeCountConstraints(history) {
+    const minCounts = new Map();
+    const maxCounts = new Map();
+
+    for (const entry of history || []) {
+      if (entry?.fakeFeedback) continue;
+      const guessedWord = String(entry?.word || entry?.guess || "").toUpperCase();
+      const feedback = Array.isArray(entry?.shownFeedback)
+        ? entry.shownFeedback
+        : entry?.feedback || entry?.fbGuesser || entry?.fb;
+      if (!guessedWord || !Array.isArray(feedback)) continue;
+
+      const guessCounts = new Map();
+      const positiveCounts = new Map();
+      const greyCounts = new Map();
+      for (let i = 0; i < guessedWord.length; i += 1) {
+        const letter = guessedWord[i];
+        const result = feedback[i];
+        guessCounts.set(letter, (guessCounts.get(letter) || 0) + 1);
+        if (result === "green" || result === "yellow" || result === "blue"
+            || result === "🟩" || result === "🟨") {
+          positiveCounts.set(letter, (positiveCounts.get(letter) || 0) + 1);
+        } else if (result === "grey" || result === "gray" || result === "⬛") {
+          greyCounts.set(letter, (greyCounts.get(letter) || 0) + 1);
+        }
+      }
+
+      for (const [letter, positiveCount] of positiveCounts) {
+        minCounts.set(letter, Math.max(minCounts.get(letter) || 0, positiveCount));
+      }
+      for (const [letter, greyCount] of greyCounts) {
+        // Cuddle's quest historically ignored wholly absent letters. Preserve
+        // that scope and only learn an upper bound from a mixed duplicate row
+        // where at least one copy was colored and an extra copy was grey.
+        if ((positiveCounts.get(letter) || 0) === 0) continue;
+        const rowMaximum = (guessCounts.get(letter) || 0) - greyCount;
+        const previousMaximum = maxCounts.get(letter);
+        if (previousMaximum === undefined || rowMaximum < previousMaximum) {
+          maxCounts.set(letter, rowMaximum);
+        }
+      }
+    }
+    return { minCounts, maxCounts };
+  }
+
+  function isCuddleHardModeCountCompliant(word, history) {
+    const actualCounts = cuddleHardModeLetterCounts(word);
+    const { minCounts, maxCounts } = cuddleHardModeCountConstraints(history);
+
+    for (const [letter, minimum] of minCounts) {
+      if ((actualCounts.get(letter) || 0) < minimum) return false;
+    }
+    for (const [letter, maximum] of maxCounts) {
+      const effectiveMaximum = Math.max(maximum, minCounts.get(letter) || 0);
+      if ((actualCounts.get(letter) || 0) > effectiveMaximum) return false;
+    }
+    return true;
+  }
+
   const QUESTS = [
     {
       id: "fullSweep",
@@ -67,15 +139,98 @@
       id: "hardModeStreak",
       icon: "🔥",
       title: "Hold the Clues",
-      description: "Reuse every green or yellow letter learned so far.",
-      test: ({ word, requiredLetters }) => {
-        const remaining = word.split("");
-        return requiredLetters.every(letter => {
-          const index = remaining.indexOf(letter);
-          if (index < 0) return false;
-          remaining.splice(index, 1);
-          return true;
+      description: "Keep every known green in place, move known yellows away from ruled-out positions, and avoid eliminated grey letters.",
+      test: ({
+        word,
+        history = [],
+        knownAbsent = [],
+        knownPresent = [],
+        revealedPositions = []
+      }) => {
+        const candidate = String(word || "").toUpperCase();
+        if (!/^[A-Z]{5}$/.test(candidate)) return false;
+
+        const fixed = Array(5).fill(null);
+        const forbiddenAt = Array.from({ length: 5 }, () => new Set());
+        const minimumCounts = Object.create(null);
+        const greySeen = new Set();
+        const eliminated = new Set(
+          (Array.isArray(knownAbsent) ? knownAbsent : [])
+            .map(letter => String(letter || "").toUpperCase())
+            .filter(letter => /^[A-Z]$/.test(letter))
+        );
+        const present = new Set(
+          (Array.isArray(knownPresent) ? knownPresent : [])
+            .map(letter => String(letter || "").toUpperCase())
+            .filter(letter => /^[A-Z]$/.test(letter))
+        );
+        const requireAtLeast = (letter, count = 1) => {
+          minimumCounts[letter] = Math.max(minimumCounts[letter] || 0, count);
+          present.add(letter);
+          eliminated.delete(letter);
+        };
+
+        (Array.isArray(revealedPositions) ? revealedPositions : []).forEach((rawLetter, index) => {
+          const letter = String(rawLetter || "").toUpperCase();
+          if (!/^[A-Z]$/.test(letter) || index >= fixed.length) return;
+          fixed[index] = letter;
+          requireAtLeast(letter);
         });
+
+        (Array.isArray(history) ? history : []).forEach(entry => {
+          if (!entry || entry.fakeFeedback) return;
+          const guess = String(entry.word || "").toUpperCase();
+          const shown = Array.isArray(entry.shownFeedback) ? entry.shownFeedback : [];
+          const visible = shown.length
+            ? shown
+            : (Array.isArray(entry.feedback) ? entry.feedback : []);
+          const rowPositiveCounts = Object.create(null);
+
+          for (let index = 0; index < Math.min(5, guess.length); index += 1) {
+            const letter = guess[index];
+            if (!/^[A-Z]$/.test(letter)) continue;
+            const status = visible[index];
+            if (status === "green") {
+              fixed[index] = letter;
+              rowPositiveCounts[letter] = (rowPositiveCounts[letter] || 0) + 1;
+              requireAtLeast(letter);
+            } else if (status === "yellow") {
+              forbiddenAt[index].add(letter);
+              rowPositiveCounts[letter] = (rowPositiveCounts[letter] || 0) + 1;
+              requireAtLeast(letter);
+            } else if (status === "blue") {
+              // Blue confirms presence but intentionally reveals no position.
+              rowPositiveCounts[letter] = (rowPositiveCounts[letter] || 0) + 1;
+              requireAtLeast(letter);
+            } else if (status === "grey") {
+              greySeen.add(letter);
+            }
+          }
+
+          Object.entries(rowPositiveCounts).forEach(([letter, count]) => {
+            requireAtLeast(letter, count);
+          });
+        });
+
+        present.forEach(letter => requireAtLeast(letter));
+        greySeen.forEach(letter => {
+          if (!present.has(letter)) eliminated.add(letter);
+        });
+        present.forEach(letter => eliminated.delete(letter));
+
+        for (let index = 0; index < fixed.length; index += 1) {
+          if (fixed[index] && candidate[index] !== fixed[index]) return false;
+          if (forbiddenAt[index].has(candidate[index])) return false;
+        }
+        if (candidate.split("").some(letter => eliminated.has(letter))) return false;
+
+        const candidateCounts = Object.create(null);
+        candidate.split("").forEach(letter => {
+          candidateCounts[letter] = (candidateCounts[letter] || 0) + 1;
+        });
+        return Object.entries(minimumCounts).every(([letter, count]) => (
+          (candidateCounts[letter] || 0) >= count
+        ));
       }
     },
     {
@@ -194,14 +349,14 @@
     }
   ];
 
-  // Permanent run upgrades, one per boss, granted on top of the ordinary
-  // post-round reward when that boss is cleared.
+  // Permanent run upgrades granted when a boss is cleared. A boss does not
+  // also open the ordinary post-round reward screen.
   const BOSS_REWARDS = [
     {
       id: "cullRare",
       icon: "✂️",
       title: "Deep Cull",
-      description: "Remove four rare letters from the deck and from every future secret."
+      description: "Remove two rare letters from the deck and from every future secret."
     },
     {
       id: "doubleMulligans",
@@ -282,15 +437,33 @@
     };
   }
 
-  function buildContext(word, secret, history, rareLetters, quest) {
+  function buildContext(word, secret, history, rareLetters, quest, knowledge = {}) {
     const feedback = evaluateFeedback(secret, word);
+    const safeHistory = Array.isArray(history) ? history : [];
     const requiredLetters = [];
-    history.forEach(entry => {
-      entry.word.split("").forEach((letter, index) => {
-        if (entry.feedback[index] !== "grey") requiredLetters.push(letter);
+    safeHistory.forEach(entry => {
+      if (!entry || entry.fakeFeedback) return;
+      const shown = Array.isArray(entry.shownFeedback) ? entry.shownFeedback : [];
+      const visible = shown.length
+        ? shown
+        : (Array.isArray(entry.feedback) ? entry.feedback : []);
+      String(entry.word || "").split("").forEach((letter, index) => {
+        if (["green", "yellow", "blue"].includes(visible[index])) requiredLetters.push(letter);
       });
     });
-    return { word, feedback, history, rareLetters, requiredLetters, quest };
+    return {
+      word,
+      feedback,
+      history: safeHistory,
+      rareLetters,
+      requiredLetters,
+      knownAbsent: Array.isArray(knowledge.knownAbsent) ? knowledge.knownAbsent : [],
+      knownPresent: Array.isArray(knowledge.knownPresent) ? knowledge.knownPresent : [],
+      revealedPositions: Array.isArray(knowledge.revealedPositions)
+        ? knowledge.revealedPositions
+        : [],
+      quest
+    };
   }
 
   function evaluateFeedback(secret, guess) {
@@ -320,7 +493,7 @@
     return result;
   }
 
-  function createQuest({ feasibleWords, secret, history, rareLetters, random = Math.random }) {
+  function createQuest({ feasibleWords, secret, history, rareLetters, knownAbsent = [], knownPresent = [], revealedPositions = [], random = Math.random }) {
     if (!Array.isArray(feasibleWords) || !feasibleWords.length) return null;
     const candidates = [];
 
@@ -337,7 +510,11 @@
       }
       const meta = questMeta(definition, extra);
       const possible = feasibleWords.some(word => definition.test(
-        buildContext(word, secret, history, rareLetters, meta)
+        buildContext(word, secret, history, rareLetters, meta, {
+          knownAbsent,
+          knownPresent,
+          revealedPositions
+        })
       ));
       if (possible) candidates.push(meta);
     });

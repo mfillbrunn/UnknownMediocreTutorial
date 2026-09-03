@@ -432,8 +432,12 @@ function questWordAdvances(word, quest, state) {
       return !prev || w[0] === prev[prev.length - 1];
     }
     case "HARDMODE": {
-      const { green, mustInclude, absent } = questServer.computeHardModeConstraints(history);
-      return questServer.isHardModeCompliant(w, green, mustInclude, absent);
+      const {
+        green, mustInclude, absent, minCounts, maxCounts
+      } = questServer.computeHardModeConstraints(history);
+      return questServer.isHardModeCompliant(
+        w, green, mustInclude, absent, minCounts, maxCounts
+      );
     }
     case "FIELDREPORT": {
       const conditions = quest.conditions;

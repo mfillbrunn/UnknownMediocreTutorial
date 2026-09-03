@@ -2079,12 +2079,16 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   animation: game-qualified 1.1s ease-in-out infinite;
 }
 
-#keyboardGuesser .pc-quest-key-hint {
+#keyboardGuesser .pc-quest-key-hint,
+#keyboardGuesser .pc-quest-key-avoid {
   position: relative;
+}
+
+/* Helpful quest letters keep the existing blue guide treatment. */
+#keyboardGuesser .pc-quest-key-hint {
   border-color: rgba(88, 201, 255, 0.86) !important;
   box-shadow: 0 0 10px rgba(88, 201, 255, 0.38) !important;
 }
-
 #keyboardGuesser .pc-quest-key-hint::before {
   content: "";
   position: absolute;
@@ -2094,6 +2098,21 @@ body.power-choice-mode #spyChargeAwardBackdrop {
   pointer-events: none;
 }
 
+/* UMT_ROW_AVOID_RED_20260902: a warning, not a suggestion. */
+#keyboardGuesser .pc-quest-key-avoid {
+  border-color: rgba(255, 75, 92, 0.94) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 75, 92, 0.24),
+    0 0 11px rgba(255, 75, 92, 0.46) !important;
+}
+#keyboardGuesser .pc-quest-key-avoid::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 1px solid rgba(255, 112, 125, 0.66);
+  border-radius: inherit;
+  pointer-events: none;
+}
 .pc-key-eliminated {
   position: relative;
   /* Dimmed with real colors rather than opacity/filter. Both of those also
