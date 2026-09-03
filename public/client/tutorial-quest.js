@@ -1,5 +1,5 @@
 // UMT_TUTORIAL_REWORK_20260901: QUEST REWARD WALKTHROUGH
-const QUEST_TUTORIAL_TOTAL = 8;
+const QUEST_TUTORIAL_TOTAL = 9;
 
 function questTutorialShow(text, {
   title = "Quest Tutorial",
@@ -78,18 +78,14 @@ function questRewardTarget(selector) {
 }
 
 function questPromptForGuess() {
+  // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
   questSetRewardGuide(false);
   questTutorialShow(
-    "Type APPLE, then tap Submit Guess. It follows this practice Quest's rule.",
+    "Perfect - the useful keyboard letters are highlighted. Type APPLE. When a five-letter draft satisfies the Quest, the card says MET. Then tap Submit Guess.",
     {
-      title: "Try the Quest",
-      current: 3,
-      mode: "hide",
-      visualHtml: `
-        <div class="tutorial-key-point">
-          A Quest is optional in a normal match. Your guess still works if you ignore it.
-        </div>
-      `
+      title: "Complete the Quest",
+      current: 4,
+      mode: "hide"
     }
   );
   window.TutorialCore.highlight(questCardHighlightTarget());
@@ -110,6 +106,7 @@ function finishQuestTutorial(api, text, current = QUEST_TUTORIAL_TOTAL) {
 }
 
 function runQuestTutorial(state, role) {
+  // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
   const api = window.TutorialCore;
   if (!api) return;
   api.clearHighlights();
@@ -126,7 +123,6 @@ function runQuestTutorial(state, role) {
 
   resetQuestSession(state);
   api.clearWaiting();
-
   const step = api.getStep();
   const quest = state.powerChoice?.inspector?.currentQuest;
   const attempts = Number(state.powerChoice?.inspector?.attempts) || 0;
@@ -149,7 +145,7 @@ function runQuestTutorial(state, role) {
     api.setNextTutorial("star");
     questTutorialShow(questFinishedText, {
       title: "Quest Tutorial done",
-      current: questOutcome === "fail" ? 4 : QUEST_TUTORIAL_TOTAL,
+      current: questOutcome === "fail" ? 5 : QUEST_TUTORIAL_TOTAL,
       mode: "end"
     });
     api.highlight(questCardHighlightTarget());
@@ -158,15 +154,9 @@ function runQuestTutorial(state, role) {
 
   if (step === 0) {
     questTutorialShow(
-      "A Quest is a small optional rule for one guess. Quests normally appear on guesses 2, 4, and 6. Complete one to earn a reward choice.",
+      "Quests are optional helpers for the Guesser. A Quest appears on every second guess - normally guesses 2, 4, and 6 - for at most three Quests in a round. Meet its conditions to earn a reward; ignore it when another guess is better.",
       {
-        current: 1,
-        visualHtml: `
-          <div class="tutorial-tiny-steps">
-            <span><b>Follow it:</b> earn a reward.</span>
-            <span><b>Ignore it:</b> make the guess you think is strongest.</span>
-          </div>
-        `
+        current: 1
       }
     );
     api.highlight(questCardHighlightTarget());
@@ -178,16 +168,48 @@ function runQuestTutorial(state, role) {
     questTutorialShow(
       `Read the active card before guessing. This practice Quest says: ${quest?.description || "Use only letters A through P."}`,
       {
-        current: 2,
-        visualHtml: `
-          <div class="tutorial-key-point">
-            Quests are bonuses, not requirements. Skip one when a different guess would teach you more.
-          </div>
-        `
+        title: "Read the condition",
+        current: 2
       }
     );
     api.highlight(questCardHighlightTarget());
     api.setMode("advance");
+    return;
+  }
+
+  if (step === 2) {
+    const highlightButton = document.querySelector(".pc-guide-highlight-btn");
+    questTutorialShow(
+      "Tap Highlight now. It marks the keyboard letters that matter for this Quest. This is a very useful helper, and you can turn the highlights off again whenever you like.",
+      {
+        title: "Use Highlight",
+        current: 3,
+        mode: highlightButton ? "hide" : "advance"
+      }
+    );
+    api.highlight(highlightButton || questCardHighlightTarget());
+
+    if (!highlightButton) {
+      api.setMode("advance");
+      return;
+    }
+
+    api.setWaiting({
+      type: "questHighlight",
+      label: "TAP HIGHLIGHT"
+    });
+    if (highlightButton.dataset.tutorialQuestHighlightArmed !== "true") {
+      highlightButton.dataset.tutorialQuestHighlightArmed = "true";
+      const armedStep = step;
+      highlightButton.addEventListener("click", () => {
+        if (api.getStep() !== armedStep) return;
+        api.clearWaiting();
+        api.setStep(armedStep + 1);
+        requestAnimationFrame(() => {
+          window.tutorialSteps?.(window.state, window.myRole);
+        });
+      }, { once: true });
+    }
     return;
   }
 
@@ -198,15 +220,15 @@ function runQuestTutorial(state, role) {
       if (questOutcome === "fail") {
         finishQuestTutorial(
           api,
-          "Done. Quests are optional: follow one for a reward, or skip it when another guess is better.",
-          4
+          "Done. Quests are optional: meet one for a reward, or skip it when another guess is better.",
+          5
         );
         return;
       }
     } else {
       questTutorialShow(questLastResultText, {
         title: "Quest result",
-        current: 4,
+        current: 5,
         mode: "advance"
       });
       api.highlight(questCardHighlightTarget());
@@ -220,14 +242,13 @@ function runQuestTutorial(state, role) {
     const success = !!result?.success;
     questOutcome = success ? "success" : "fail";
     questLastResultText = success
-      ? "Quest complete. The reward window opens as soon as the turn is ready."
+      ? "Quest complete. The MET label confirmed that you satisfied the conditions. Your reward choices open as soon as the turn is ready."
       : "Quest missed. That is okay - the guess still counts and the match continues.";
     questAwaitingAck = true;
     questAckStepThreshold = step + 1;
-
     questTutorialShow(questLastResultText, {
       title: "Quest result",
-      current: 4,
+      current: 5,
       mode: "advance"
     });
     api.highlight(questCardHighlightTarget());
@@ -245,7 +266,7 @@ function runQuestTutorial(state, role) {
       "It activated immediately.";
     finishQuestTutorial(
       api,
-      `Done. You completed a Quest and selected ${selectedTitle}. ${selectedEffect}`
+      `That is it. You completed a Quest and selected ${selectedTitle}. ${selectedEffect}`
     );
     return;
   }
@@ -257,33 +278,27 @@ function runQuestTutorial(state, role) {
     }
 
     const guideStep = Math.max(0, step - (questRewardGuideStartStep ?? step));
-
     if (guideStep === 0) {
       questSetRewardGuide(true, true);
       questTutorialShow(
-        "The turn pauses at this reward window. These three cards are your current offer, and you will choose exactly one.",
+        "Here are three reward options. All of them help. Read each card's title and description before choosing one.",
         {
-          title: "Reward window",
-          current: 5,
-          mode: "advance",
-          visualHtml: `
-            <div class="tutorial-key-point">
-              Read each title and description before choosing. Nothing is applied until you select a card.
-            </div>
-          `
+          title: "Three reward choices",
+          current: 6,
+          mode: "advance"
         }
       );
-      api.highlight(questRewardTarget(".pc-modal-card"));
+      api.highlight(questRewardTarget(".pc-card-grid"));
       return;
     }
 
     if (guideStep === 1) {
       questSetRewardGuide(true, true);
       questTutorialShow(
-        "You choose the card. Its named effect activates immediately. When a description says random, the game automatically picks an eligible letter, tile, or target - there is no second choice.",
+        "You choose one card. Most rewards work immediately. When a reward says that its target is random, the game chooses that letter, tile, or target for you.",
         {
           title: "Choose one effect",
-          current: 6,
+          current: 7,
           mode: "advance"
         }
       );
@@ -294,16 +309,11 @@ function runQuestTutorial(state, role) {
     if (guideStep === 2) {
       questSetRewardGuide(true, true);
       questTutorialShow(
-        "Refresh Choices replaces all three cards with one new roll, including rarity. It does not activate a reward, and each player can refresh only once for the entire game.",
+        "Do not like the offer? Refresh Choices replaces all three cards. You get only one refresh for the entire game, even after you swap roles, so save it for an offer you truly dislike.",
         {
-          title: "Refresh Choices",
-          current: 7,
-          mode: "advance",
-          visualHtml: `
-            <div class="tutorial-key-point">
-              A refresh can still roll the same rarity or even repeat a card. Use it only when the current offer is not useful.
-            </div>
-          `
+          title: "One refresh per game",
+          current: 8,
+          mode: "advance"
         }
       );
       api.highlight(questRewardTarget(".pc-refresh-choice-btn"));
@@ -312,10 +322,10 @@ function runQuestTutorial(state, role) {
 
     questSetRewardGuide(true, false);
     questTutorialShow(
-      "Now choose one reward card. The tutorial finishes after that single choice resolves.",
+      "Now click one reward card. The tutorial ends after the choice takes effect.",
       {
         title: "Pick a reward",
-        current: 8,
+        current: 9,
         mode: "hide"
       }
     );
@@ -326,10 +336,10 @@ function runQuestTutorial(state, role) {
 
   if (questOutcome === "success") {
     questTutorialShow(
-      "Waiting for the Secretkeeper to finish the turn...",
+      "The Quest is complete. Wait for the Secretkeeper to finish the turn, and then the reward choices will open.",
       {
         title: "Reward coming next",
-        current: 4,
+        current: 5,
         compact: true,
         mode: "hide",
         key: `quest-wait-${attempts}`

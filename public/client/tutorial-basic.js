@@ -114,6 +114,7 @@ function runBasicTutorial(state, role) {
 }
 
 function runBasicInspectorTutorial(state) {
+  // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
   const round = state.history?.length ?? 0;
   clearHighlights();
 
@@ -121,19 +122,13 @@ function runBasicInspectorTutorial(state) {
     const word = state.tutorialGuesses?.[0] || "CHAMP";
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "You are the Guesser. The other player has a hidden five-letter word. Your job is to find it in as few guesses as possible.",
+        "A match has two rounds, and you play both roles. As the Guesser, find a five-letter secret quickly. As the Secretkeeper, keep your secret hidden. Each role also has a special helper, which the next tutorials explain. First, let us play as the Guesser.",
         {
           role: "guesser",
+          section: "How the game works",
           current: 1,
-          total: 4,
-          placement: "top",
-          visualHtml: `
-            <div class="tutorial-role-goal">
-              <span class="tutorial-role-icon">🔍</span>
-              <span><strong>Find the hidden word</strong><small>Fewer guesses is better for you.</small></span>
-            </div>
-            ${basicTurnRhythm()}
-          `
+          total: 2,
+          placement: "top"
         }
       );
       tutorialContinueMode = "advance";
@@ -142,11 +137,12 @@ function runBasicInspectorTutorial(state) {
 
     if (state.simultaneousGuessSubmitted) {
       basicTutorialShow(
-        "Your first guess is saved. The Secretkeeper is choosing the first secret at the same time, so the colors appear after both players are ready.",
+        "Your first guess is ready. On the opening turn, both players enter a word at the same time, so the feedback appears after both are done.",
         {
           role: "guesser",
+          section: "First guess",
           current: 2,
-          total: 4,
+          total: 2,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -156,11 +152,12 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Type ${word}. Fill all five boxes, then tap Submit Guess.`,
+        `Every Guesser turn is simple: enter a word, submit it, and read the feedback. For the first guess, type ${word} now, then tap Submit Guess.`,
         {
           role: "guesser",
+          section: "First guess",
           current: 2,
-          total: 4,
+          total: 2,
           placement: "top",
           mode: "hide"
         }
@@ -177,13 +174,36 @@ function runBasicInspectorTutorial(state) {
 
   if (round === 1) {
     const word = state.tutorialGuesses?.[1] || "CAIRN";
+    const feedbackSteps = [
+      "The feedback for CHAMP is here. Let us read all five tiles, one at a time.",
+      "C is green. Green means the letter is in the secret and already in the correct position.",
+      "H is gray. Gray means that letter is not in the secret.",
+      "A is gray too, so A is not in the secret either.",
+      "M is yellow. Yellow means the letter is in the secret, but it belongs in a different position.",
+      "P is gray, so P is not in the secret. That is the full color system: green is correct place, yellow is wrong place, and gray is absent."
+    ];
+
+    if (tutorialSubStep < feedbackSteps.length) {
+      basicTutorialShow(feedbackSteps[tutorialSubStep], {
+        role: "guesser",
+        section: "Read the feedback",
+        current: tutorialSubStep + 1,
+        total: 7,
+        placement: "bottom"
+      });
+      highlightHistoryGuesser();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
     if (state.pendingGuess) {
       basicTutorialShow(
-        "Guess sent. The Secretkeeper now chooses whether to keep or change the secret.",
+        "Good. The Secretkeeper is deciding whether to keep or change the secret. Your new feedback appears after that decision.",
         {
           role: "guesser",
-          current: 3,
-          total: 4,
+          section: "Second guess",
+          current: 7,
+          total: 7,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -193,14 +213,14 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Read the colors, then type ${word}. Green stays in place. Yellow moves to another spot. Grey usually means try a different letter.`,
+        `Great - it is your turn again. You may respect every earlier clue, or use any legal word as an information guess. Sometimes that is better. Type ${word}: it deliberately reuses gray A and leaves out yellow M, and that is allowed.`,
         {
           role: "guesser",
-          current: 3,
-          total: 4,
-          placement: "bottom",
-          mode: "hide",
-          visualHtml: basicFeedbackLegend()
+          section: "Second guess",
+          current: 7,
+          total: 7,
+          placement: "top",
+          mode: "hide"
         }
       );
       startKeyDemo(
@@ -215,14 +235,15 @@ function runBasicInspectorTutorial(state) {
   }
 
   if (round === 2) {
-    const word = "CUMIN";
+    const word = state.tutorialGuesses?.[2] || "CUMIN";
     if (state.pendingGuess) {
       basicTutorialShow(
-        "Good. Wait for the Secretkeeper's decision, then the new colors will appear.",
+        "Perfect. You found the secret. The round summary is next.",
         {
           role: "guesser",
-          current: 4,
-          total: 4,
+          section: "Final guess",
+          current: 1,
+          total: 1,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -232,11 +253,12 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `One more guess. Use the colors and type ${word}.`,
+        `Now type ${word} and submit it. This is the secret, so you have got it.`,
         {
           role: "guesser",
-          current: 4,
-          total: 4,
+          section: "Final guess",
+          current: 1,
+          total: 1,
           placement: "top",
           mode: "hide"
         }
@@ -255,6 +277,7 @@ function runBasicInspectorTutorial(state) {
 }
 
 function runBasicSpyTutorial(state) {
+  // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
   const round = state.history?.length ?? 0;
   clearHighlights();
 
@@ -262,18 +285,13 @@ function runBasicSpyTutorial(state) {
     const word = state.tutorialSecrets?.[0] || "BLIMP";
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "Now you are the Secretkeeper. Pick a five-letter secret and try to keep it hidden for as many guesses as possible.",
+        "In this round you are the Secretkeeper. The Guesser must find your word, and your goal is to make that take as many guesses as possible.",
         {
           role: "setter",
+          section: "Your other role",
           current: 1,
-          total: 5,
-          placement: "top",
-          visualHtml: `
-            <div class="tutorial-role-goal">
-              <span class="tutorial-role-icon">🕵️</span>
-              <span><strong>Protect your secret</strong><small>More guesses is better for you.</small></span>
-            </div>
-          `
+          total: 2,
+          placement: "top"
         }
       );
       tutorialContinueMode = "advance";
@@ -282,11 +300,12 @@ function runBasicSpyTutorial(state) {
 
     if (state.simultaneousSecretSubmitted) {
       basicTutorialShow(
-        "Your secret is saved. The Guesser made the opening guess at the same time.",
+        "Your opening secret is ready. The Guesser entered the first guess at the same time, just as you did in the first round.",
         {
           role: "setter",
+          section: "Choose a secret",
           current: 2,
-          total: 5,
+          total: 2,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -296,11 +315,12 @@ function runBasicSpyTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Type ${word}, then tap Submit New Secret. The Guesser cannot see your word.`,
+        `On the first turn, enter a secret while the Guesser enters a guess. Type ${word}, then tap Submit New Secret. The Guesser cannot see it.`,
         {
           role: "setter",
+          section: "Choose a secret",
           current: 2,
-          total: 5,
+          total: 2,
           placement: "top",
           mode: "hide"
         }
@@ -316,14 +336,17 @@ function runBasicSpyTutorial(state) {
   }
 
   if (round === 1) {
-    const word = state.tutorialSecrets?.[1] || "LEMUR";
+    const validWord = (state.tutorialSecrets?.[1] || "LEMUR").toUpperCase();
+    const invalidWord = "CUMIN";
+
     if (!state.pendingGuess) {
       basicTutorialShow(
-        "The Guesser is choosing a word. Their guess will appear here when it is ready.",
+        "Now it is the Guesser's turn, just as it was yours before. We wait for the next guess.",
         {
           role: "setter",
-          current: 3,
-          total: 5,
+          section: "Wait for a guess",
+          current: 1,
+          total: 6,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -335,13 +358,139 @@ function runBasicSpyTutorial(state) {
 
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "Before the guess gets its final colors, choose KEEP or CHANGE. The colored pending row is only a preview, so you can safely test a new secret before submitting it.",
+        "Here it is. As the Secretkeeper, you see the opponent's guess before its final feedback. You may keep your current secret or change it.",
         {
           role: "setter",
+          section: "See the guess first",
+          current: 1,
+          total: 6,
+          placement: "bottom"
+        }
+      );
+      highlightPendingGuessRow();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      basicTutorialShow(
+        "The pending row previews what the Guesser would see if you kept your current secret. That is a lot of information, so changing the secret can make the feedback less useful.",
+        {
+          role: "setter",
+          section: "Why change?",
+          current: 2,
+          total: 6,
+          placement: "bottom"
+        }
+      );
+      highlightPendingGuessRow();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 2) {
+      basicTutorialShow(
+        "You cannot change the secret freely. A new secret must fit every clue you already gave. In other words, it must still be a word your first secret could theoretically have been.",
+        {
+          role: "setter",
+          section: "Changes must stay possible",
           current: 3,
-          total: 5,
-          placement: "bottom",
-          visualHtml: basicSecretkeeperChoices()
+          total: 6,
+          placement: "bottom"
+        }
+      );
+      highlightSetterHistory();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 3) {
+      basicTutorialShow(
+        `Try an impossible change. Type ${invalidWord}, but do not submit it. The remaining-words box will tell you that it does not fit the earlier feedback.`,
+        {
+          role: "setter",
+          section: "Try an invalid secret",
+          current: 4,
+          total: 6,
+          placement: "top",
+          mode: "hide"
+        }
+      );
+      highlightDraftRow("setter");
+      startKeyDemo(
+        `basic-secretkeeper-invalid-${invalidWord}`,
+        () => tutorialWordKeyEls("setter", invalidWord, window.state?.setterDraft)
+      );
+      waitForInvalidDraft();
+      tutorialWaitingFor.label = `TYPE ${invalidWord}`;
+      updateActionBadge();
+      return;
+    }
+
+    if (tutorialSubStep === 4) {
+      basicTutorialShow(
+        `${invalidWord} cannot work because the earlier feedback proved that L is in the secret, and ${invalidWord} has no L. You cannot submit it. Delete the draft now.`,
+        {
+          role: "setter",
+          section: "That word is impossible",
+          current: 5,
+          total: 6,
+          placement: "top",
+          mode: "hide"
+        }
+      );
+      highlightDraftRow("setter");
+      waitForDraftCleared();
+      return;
+    }
+
+    basicTutorialShow(
+      `Now type ${validWord}. This word is legal because it respects all earlier feedback. Submit it as the new secret.`,
+      {
+        role: "setter",
+        section: "Make a legal change",
+        current: 6,
+        total: 6,
+        placement: "top",
+        mode: "hide"
+      }
+    );
+    highlightDraftRow("setter");
+    startKeyDemo(
+      `basic-secretkeeper-${validWord}`,
+      () => tutorialWordKeyEls("setter", validWord, window.state?.setterDraft)
+    );
+    waitForSecretSubmission(round, `TYPE ${validWord}`);
+    return;
+  }
+
+  if (round === 2) {
+    if (!state.pendingGuess) {
+      basicTutorialShow(
+        "The Guesser is choosing another word. We wait again.",
+        {
+          role: "setter",
+          section: "Another guess",
+          current: 1,
+          total: 2,
+          placement: "top",
+          compact: true,
+          mode: "hide",
+          key: "basic-secretkeeper-second-wait"
+        }
+      );
+      return;
+    }
+
+    if (tutorialSubStep === 0) {
+      basicTutorialShow(
+        "A new guess arrived, so you could change again. There is a special advantage to daring changes, which the Star tutorial explains. For now, let us be lazy and keep the current secret.",
+        {
+          role: "setter",
+          section: "Changing is optional",
+          current: 1,
+          total: 2,
+          placement: "bottom"
         }
       );
       highlightPendingGuessRow();
@@ -350,37 +499,19 @@ function runBasicSpyTutorial(state) {
     }
 
     basicTutorialShow(
-      `Practice CHANGE: type ${word}, then submit the new secret.`,
+      "The current secret is already selected by default, so you do not need to type it again. The pending row shows the feedback the Guesser will receive if you keep it. Tap Keep Current Secret.",
       {
         role: "setter",
-        current: 4,
-        total: 5,
-        placement: "top",
-        mode: "hide"
-      }
-    );
-    highlightKeyboardSetter();
-    startKeyDemo(
-      `basic-secretkeeper-${word}`,
-      () => tutorialWordKeyEls("setter", word, window.state?.setterDraft)
-    );
-    waitForSecretSubmission(round, `TYPE ${word}`);
-    return;
-  }
-
-  if (round === 2) {
-    basicTutorialShow(
-      "Practice KEEP: leave all five boxes empty, then tap Keep Current Secret.",
-      {
-        role: "setter",
-        current: 5,
-        total: 5,
+        section: "Keep the secret",
+        current: 2,
+        total: 2,
         placement: "top",
         mode: "hide"
       }
     );
     const submitButton = tutorialSubmitBtnEl("setter");
-    highlightEl(submitButton || byId("keyboardSetter"));
+    highlightPendingGuessRow();
+    highlightEl(submitButton);
     startKeyDemo(
       "basic-secretkeeper-keep",
       () => [submitButton].filter(Boolean)
@@ -389,46 +520,23 @@ function runBasicSpyTutorial(state) {
     return;
   }
 
-  if (round >= 3) {
-    basicTutorialShow(
-      "You now know the whole basic turn: the Guesser submits a word, the Secretkeeper keeps or changes the secret, and the guess receives colors.",
-      {
-        role: "setter",
-        section: "Basics done",
-        current: 5,
-        total: 5,
-        placement: "top",
-        mode: "end",
-        visualHtml: `
-          <div class="tutorial-finish-checks">
-            <span>✓ Guesser: find the word with fewer guesses</span>
-            <span>✓ Secretkeeper: keep the word hidden longer</span>
-            <span>✓ A changed secret must still fit earlier clues</span>
-          </div>
-        `
-      }
-    );
-    tutorialEndNextMode = "quest";
-    return;
-  }
-
   hideTutorial();
 }
 
 function runBasicSummaryTutorial(state) {
+  // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
   clearHighlights();
   const guesses = state.history?.length || state.guessCount || 0;
 
   if (tutorialSubStep === 0) {
     basicTutorialShow(
-      `This big number is the round score. The word was found in ${guesses} guess${guesses === 1 ? "" : "es"}.`,
+      `This round took ${guesses} guesses. Because you were the Guesser, you want this number to be as low as possible.`,
       {
         role: "guesser",
-        section: "Round score",
+        section: "Your round score",
         current: 1,
-        total: 3,
-        placement: "bottom",
-        visualHtml: basicRoundScoreVisual(guesses)
+        total: 4,
+        placement: "bottom"
       }
     );
     highlightRoundSummaryGuessCount();
@@ -438,14 +546,29 @@ function runBasicSummaryTutorial(state) {
 
   if (tutorialSubStep === 1) {
     basicTutorialShow(
-      "The same number means different things to each role: the Guesser wants it small, while the Secretkeeper wants it large. This is only the first round's score.",
+      "Below the score, you can review every guess and the feedback it received.",
       {
         role: "guesser",
-        section: "How to read it",
+        section: "Review the round",
         current: 2,
-        total: 3,
-        placement: "bottom",
-        visualHtml: basicScoreGoalsVisual()
+        total: 4,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummary();
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 2) {
+    basicTutorialShow(
+      "In the next round you will be the Secretkeeper. Then the goal is the opposite: you want a high score because you want the Guesser to need more guesses.",
+      {
+        role: "guesser",
+        section: "The score changes meaning",
+        current: 3,
+        total: 4,
+        placement: "bottom"
       }
     );
     highlightRoundSummaryGuessCount();
@@ -454,12 +577,12 @@ function runBasicSummaryTutorial(state) {
   }
 
   basicTutorialShow(
-    "Now the roles swap. Tap Next Round. You will protect a secret, and your opponent will try to guess it.",
+    "That is enough for this screen. Tap Next Round, and we will explain the rest after you have played as the Secretkeeper.",
     {
       role: "guesser",
       section: "Swap roles",
-      current: 3,
-      total: 3,
+      current: 4,
+      total: 4,
       placement: "bottom",
       mode: "hide"
     }
@@ -472,23 +595,18 @@ function runBasicSummaryTutorial(state) {
   tutorialContinueMode = "hide";
 }
 
-function runBasicMatchTutorial() {
+function runBasicMatchTutorial(state) {
+  // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
   clearHighlights();
 
   if (tutorialSubStep === 0) {
     basicTutorialShow(
-      "A full match has two rounds. Each player is the Secretkeeper once, so both players get one chance to protect a secret.",
+      "The Guesser found your secret too, so the match is over. This tutorial is a 3-3 tie: both secrets lasted three guesses. In a match between people, equal points are broken by lower total time. Against the AI, equal points stay a tie because the AI responds almost instantly.",
       {
-        section: "Match summary",
+        section: "Match result",
         current: 1,
         total: 4,
-        placement: "bottom",
-        visualHtml: `
-          <div class="tutorial-tiny-steps">
-            <span><b>Round 1:</b> Player A protects a secret.</span>
-            <span><b>Round 2:</b> Player B protects a secret.</span>
-          </div>
-        `
+        placement: "bottom"
       }
     );
     highlightMatchScore();
@@ -498,44 +616,45 @@ function runBasicMatchTutorial() {
 
   if (tutorialSubStep === 1) {
     basicTutorialShow(
-      "Each player's score is how many guesses it took to find that player's secret. The larger secret score wins because that secret stayed hidden longer. Equal scores are a tie.",
+      "Each round summary shows the secret the Secretkeeper kept or switched to, the word that was guessed, and the feedback sent to the Guesser.",
       {
-        section: "Who wins?",
+        section: "What happened each turn",
         current: 2,
         total: 4,
-        placement: "bottom",
-        visualHtml: basicMatchScoreVisual()
+        placement: "bottom"
       }
     );
-    highlightMatchScore();
+    highlightRoundSummary();
     tutorialContinueMode = "advance";
     return;
   }
 
   if (tutorialSubStep === 2) {
     basicTutorialShow(
-      "Choose what happens next: New Match starts fresh, Replay plays the same opponent again, and Leave returns to the menu.",
+      "The Left number is how many secret words were still possible after that guess. A smaller number means the Guesser was closer; a larger number means the Secretkeeper was still hiding among many possibilities.",
       {
-        section: "Next step",
+        section: "Words left",
         current: 3,
         total: 4,
         placement: "bottom"
       }
     );
-    highlightSummaryActions();
+    highlightRoundSummaryColumn("remaining-cell");
     tutorialContinueMode = "advance";
     return;
   }
 
+  tutorialEndNextMode = "quest";
   basicTutorialShow(
-    "Basics complete. You can now play a normal match. Quests, Stars, and Extra Tools each have their own short tutorial.",
+    "That is the basic game. From here you can start another match, replay, or leave. We recommend the Quest and Star tutorials next; they explain the special help available to each role.",
     {
-      section: "Basics done",
+      section: "Basics complete",
       current: 4,
       total: 4,
       placement: "bottom",
       mode: "end"
     }
   );
-  tutorialEndNextMode = "quest";
+  highlightSummaryActions();
 }
+
