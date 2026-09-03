@@ -1243,7 +1243,9 @@
       const nextGuess = this.state.guessesUsed + 1;
       if (nextGuess > this._effectiveMaxGuesses()) return;
       const cadence = Math.max(1, 3 - this.state.upgrades.questCadence);
-      if (nextGuess < cadence || nextGuess % cadence !== 0) return;
+      // Fires one turn earlier than a plain multiple of cadence would --
+      // base cadence 3 now lands on turns 2 and 5 instead of 3 and 6.
+      if (nextGuess < cadence - 1 || (nextGuess + 1) % cadence !== 0) return;
       const feasibleWords = this.getFeasibleWords();
       this.state.activeQuest = window.CuddleQuestBook?.createQuest({
         feasibleWords,
