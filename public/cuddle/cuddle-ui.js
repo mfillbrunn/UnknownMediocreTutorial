@@ -305,12 +305,12 @@
               </div>
             </div>
 
-            ${renderActiveQuest(state)}
           </section>` : ""}
 
         <main class="cuddle-play-area">
           <section class="cuddle-left-column">
             ${renderBossBanner(state)}
+            ${renderActiveQuest(state)}
             ${renderBoard(state)}
           </section>
           <section class="cuddle-right-column">
@@ -562,6 +562,7 @@
           ${promoted ? `<div class="cuddle-hand-row cuddle-hand-promoted" aria-label="Confirmed consonants">${promoted}</div>` : ""}
           <div class="cuddle-hand-row cuddle-hand-vowels" aria-label="Bold, always-available vowels">${vowels}</div>
           <div class="cuddle-hand-row cuddle-hand-consonants" aria-label="Consonants">${consonants || `<p class="cuddle-draft-empty">No consonant cards are currently available.</p>`}</div>
+          ${state.removedLetters?.length ? `<p class="cuddle-excluded-letters">Excluded: ${escapeHtml(state.removedLetters.join(", "))}</p>` : ""}
         </div>
       </section>`;
   }

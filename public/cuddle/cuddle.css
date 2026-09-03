@@ -543,6 +543,14 @@
   grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
 }
 
+/* Plain, unstyled list of permanently removed letters -- deliberately just
+   text, not another row of cards or chips. */
+.cuddle-excluded-letters {
+  margin: 0;
+  color: var(--cuddle-muted);
+  font-size: 0.74rem;
+}
+
 .cuddle-hand-meta {
   display: flex;
   flex-wrap: wrap;
