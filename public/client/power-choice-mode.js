@@ -716,9 +716,10 @@
   }
 
   function clearQuestKeyHints() {
-    keyboardKeys().forEach(key => key.classList.remove("pc-quest-key-hint"));
+    keyboardKeys().forEach(key => {
+      key.classList.remove("pc-quest-key-hint", "pc-quest-key-avoid");
+    });
   }
-
   function applyQuestKeyHints() {
     if (!isMode() || myRole() !== "guesser" || !questHintsActive) {
       clearQuestKeyHints();
@@ -727,11 +728,13 @@
     const quest = window.state?.powerChoice?.inspector?.currentQuest;
     const spec = hintSpecForQuest(quest);
     const letters = new Set(spec?.letters || []);
+    const isAvoidQuest = quest?.type === "ROW_AVOID";
     keyboardKeys().forEach(key => {
-      key.classList.toggle("pc-quest-key-hint", letters.has(keyboardLetter(key)));
+      const highlighted = letters.has(keyboardLetter(key));
+      key.classList.toggle("pc-quest-key-hint", highlighted && !isAvoidQuest);
+      key.classList.toggle("pc-quest-key-avoid", highlighted && isAvoidQuest);
     });
   }
-
   function removeSetterTargetLetters() {
     if (!isMode()) return;
     document.querySelectorAll(
@@ -935,181 +938,143 @@
   // POWER CHOICE CARD CAROUSEL V1: CLIENT START
 
   function fixedRewardIconMarkup(option) {
-    // UMT_FIXED_REWARD_SVG_PACK_20260901: fixed-effect cards only. Power cards deliberately return
-    // an empty string and continue through optionIconMarkup() to the game's
-    // existing dedicated power renderer.
+    // UMT_CLEAN_FIXED_REWARD_SVG_PACK_20260902: fixed rewards now use the
+    // same bold, low-detail visual language as the shared power icon library.
+    // Every icon uses no more than three visible colors.
     if (option?.kind !== "fixed") return "";
-
     const id = String(option?.id || "");
+    const svg = body => `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">${body}</svg>`;
+
     switch (id) {
       case "spy-reset-positive-1":
-        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-          <path d="M60 9 101 32v56l-41 23-41-23V32z" fill="#35152f" stroke="#fb7185" stroke-width="5" stroke-linejoin="round"/>
-          <rect x="19" y="27" width="42" height="42" rx="10" fill="#22c55e" stroke="#dcfce7" stroke-width="4"/>
-          <path d="M34 48h12M40 42v12" fill="none" stroke="#f0fdf4" stroke-width="4" stroke-linecap="round" opacity=".9"/>
-          <path d="M43 78c9 9 22 11 33 3" fill="none" stroke="#fff7ed" stroke-width="5" stroke-linecap="round"/>
-          <path d="m69 74 12 5-9 9" fill="none" stroke="#fff7ed" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-          <rect x="59" y="52" width="42" height="42" rx="10" fill="#facc15" stroke="#fef9c3" stroke-width="4"/>
-          <circle cx="32" cy="84" r="4" fill="#4ade80"/>
-          <circle cx="42" cy="94" r="2.5" fill="#fde047"/>
-          <path d="m89 25 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#fda4af"/>
-        </svg>`;
+        // Fade a Green: green becomes yellow.
+        return svg(`
+          <rect x="10" y="35" width="40" height="50" rx="9" fill="var(--tile-green, #3aa76d)"/>
+          <rect x="70" y="35" width="40" height="50" rx="9" fill="var(--tile-yellow, #d6a925)"/>
+          <path d="M45 60h31" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+          <path d="m68 49 12 11-12 11" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+        `);
+
       case "spy-reset-known-2":
-        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-          <circle cx="60" cy="60" r="50" fill="#35152f" stroke="#fb7185" stroke-width="5"/>
-          <g transform="rotate(-7 60 60)">
-            <rect x="17" y="39" width="38" height="38" rx="9" fill="#64748b" stroke="#cbd5e1" stroke-width="4"/>
-            <path d="m28 50 16 16m0-16L28 66" stroke="#f8fafc" stroke-width="5" stroke-linecap="round"/>
-            <rect x="60" y="49" width="38" height="38" rx="9" fill="#475569" stroke="#cbd5e1" stroke-width="4"/>
-            <path d="m71 60 16 16m0-16L71 76" stroke="#f8fafc" stroke-width="5" stroke-linecap="round"/>
+        // Erase Two Clues: two neutral clue tiles, each reset.
+        return svg(`
+          <rect x="10" y="34" width="44" height="52" rx="9" fill="#f4f5f7"/>
+          <rect x="66" y="34" width="44" height="52" rx="9" fill="#f4f5f7"/>
+          <g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M43 55a13 13 0 1 1-6-8"/>
+            <path d="m27 45 11 1-2 11"/>
+            <path d="M99 55a13 13 0 1 1-6-8"/>
+            <path d="m83 45 11 1-2 11"/>
           </g>
-          <path d="M74 18 104 48 79 73 49 43z" fill="#fda4af" stroke="#fff1f2" stroke-width="4" stroke-linejoin="round"/>
-          <path d="m88 32 16 16-9 9-16-16z" fill="#fb7185"/>
-          <path d="M23 91c13 10 29 12 43 6" fill="none" stroke="#fde68a" stroke-width="4" stroke-linecap="round"/>
-          <path d="m60 91 10 4-8 8" fill="none" stroke="#fde68a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="28" cy="27" r="12" fill="#fff7ed" stroke="#fb7185" stroke-width="3"/>
-          <text x="28" y="33" text-anchor="middle" fill="#4c1d3f" font-family="system-ui, sans-serif" font-size="18" font-weight="900">2</text>
-        </svg>`;
+        `);
+
       case "spy-add-point-1":
-        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-          <path d="M60 8 101 26v39c0 24-16 39-41 48-25-9-41-24-41-48V26z" fill="#35152f" stroke="#fb7185" stroke-width="5" stroke-linejoin="round"/>
-          <path d="M28 88c13-2 22-8 29-18 8-11 14-24 29-32" fill="none" stroke="#fde68a" stroke-width="6" stroke-linecap="round"/>
-          <path d="m78 32 15 2-4 15" fill="none" stroke="#fde68a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="56" cy="65" r="27" fill="#fff7ed" stroke="#fda4af" stroke-width="4"/>
-          <text x="56" y="75" text-anchor="middle" fill="#4c1d3f" font-family="system-ui, sans-serif" font-size="32" font-weight="950">+1</text>
-          <path d="m30 25 4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#60a5fa"/>
-          <path d="m92 71 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#facc15"/>
-          <circle cx="88" cy="23" r="4" fill="#4ade80"/>
-        </svg>`;
+        // Add a Point.
+        return svg(`
+          <circle cx="60" cy="60" r="43" fill="currentColor"/>
+          <text x="60" y="72" text-anchor="middle" fill="#f4f5f7" font-family="system-ui, sans-serif" font-size="38" font-weight="900">+1</text>
+        `);
+
       case "spy-yellow-smudge":
-        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-          <path d="M24 14h72l14 25-10 67H20L10 39z" fill="#35152f" stroke="#fb7185" stroke-width="5" stroke-linejoin="round"/>
-          <rect x="17" y="31" width="47" height="47" rx="11" fill="#facc15" stroke="#fef9c3" stroke-width="4"/>
-          <path d="M56 39c18-5 36-4 50-10M58 52c20-3 35-1 46-4M57 65c18 0 30 4 42 2" fill="none" stroke="#fde047" stroke-width="8" stroke-linecap="round"/>
-          <circle cx="99" cy="29" r="5" fill="#facc15"/>
-          <circle cx="103" cy="48" r="3" fill="#fde68a"/>
-          <circle cx="94" cy="68" r="4" fill="#facc15"/>
-          <path d="m68 94 24-24 14 14-24 24z" fill="#f8fafc" stroke="#fda4af" stroke-width="4" stroke-linejoin="round"/>
-          <path d="m92 70 7-7 14 14-7 7z" fill="#fb7185"/>
-          <path d="m67 95-8 12 14-6z" fill="#fde047" stroke="#fff7ed" stroke-width="2" stroke-linejoin="round"/>
-        </svg>`;
+        // Yellow Smudge: the clue stays yellow while its position detail blurs.
+        return svg(`
+          <rect x="15" y="30" width="54" height="60" rx="10" fill="var(--tile-yellow, #d6a925)"/>
+          <g fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round">
+            <path d="M55 42h47"/>
+            <path d="M49 60h57"/>
+            <path d="M58 78h40"/>
+          </g>
+        `);
+
       case "spy-trade-yellow":
-        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-          <path d="M60 8 105 34v52l-45 26L15 86V34z" fill="#35152f" stroke="#fb7185" stroke-width="5" stroke-linejoin="round"/>
-          <rect x="15" y="43" width="36" height="36" rx="9" fill="#facc15" stroke="#fef9c3" stroke-width="4"/>
-          <g fill="#64748b" stroke="#cbd5e1" stroke-width="2.5">
-            <rect x="77" y="39" width="18" height="18" rx="4"/>
-            <rect x="97" y="39" width="18" height="18" rx="4"/>
-            <rect x="77" y="60" width="18" height="18" rx="4"/>
-            <rect x="97" y="60" width="18" height="18" rx="4"/>
+        // Trade a Yellow: one yellow clue for four gray resets.
+        return svg(`
+          <rect x="7" y="38" width="38" height="46" rx="8" fill="var(--tile-yellow, #d6a925)"/>
+          <g fill="var(--tile-gray, #64748b)">
+            <rect x="82" y="29" width="16" height="20" rx="4"/>
+            <rect x="101" y="29" width="16" height="20" rx="4"/>
+            <rect x="82" y="53" width="16" height="20" rx="4"/>
+            <rect x="101" y="53" width="16" height="20" rx="4"/>
           </g>
-          <path d="M40 30h45" fill="none" stroke="#fff7ed" stroke-width="5" stroke-linecap="round"/>
-          <path d="m78 23 10 7-10 7" fill="none" stroke="#fff7ed" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M88 91H43" fill="none" stroke="#fde68a" stroke-width="5" stroke-linecap="round"/>
-          <path d="m50 84-10 7 10 7" fill="none" stroke="#fde68a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="61" cy="61" r="9" fill="#fb7185" stroke="#fff1f2" stroke-width="3"/>
-          <path d="m57 61 3 3 6-7" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>`;
+          <g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M48 47h27l-7-7"/>
+            <path d="M76 72H49l7 7"/>
+          </g>
+        `);
+
       case "spy-trade-green":
-        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-          <path d="m60 8 34 10 18 31-8 39-31 24-39-5L10 76l5-39 30-24z" fill="#35152f" stroke="#fb7185" stroke-width="5" stroke-linejoin="round"/>
-          <rect x="13" y="43" width="39" height="39" rx="10" fill="#22c55e" stroke="#dcfce7" stroke-width="4"/>
-          <g fill="#facc15" stroke="#fef9c3" stroke-width="3">
-            <rect x="83" y="32" width="25" height="25" rx="6"/>
-            <rect x="70" y="62" width="25" height="25" rx="6"/>
-            <rect x="96" y="62" width="18" height="25" rx="5"/>
+        // Trade a Green: one green clue for three yellow erasures.
+        return svg(`
+          <rect x="7" y="37" width="38" height="48" rx="8" fill="var(--tile-green, #3aa76d)"/>
+          <g fill="var(--tile-yellow, #d6a925)">
+            <rect x="88" y="24" width="21" height="25" rx="5"/>
+            <rect x="75" y="58" width="21" height="25" rx="5"/>
+            <rect x="99" y="58" width="21" height="25" rx="5"/>
           </g>
-          <path d="M40 30c16-10 33-8 46 2" fill="none" stroke="#fff7ed" stroke-width="5" stroke-linecap="round"/>
-          <path d="m80 24 10 11-14 3" fill="none" stroke="#fff7ed" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M89 97c-17 9-34 6-47-5" fill="none" stroke="#fde68a" stroke-width="5" stroke-linecap="round"/>
-          <path d="m48 101-11-12 15-2" fill="none" stroke="#fde68a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="m61 50 5 8 9 2-7 7 2 9-9-4-8 4 2-9-7-7 9-2z" fill="#60a5fa" stroke="#dbeafe" stroke-width="2"/>
-        </svg>`;
+          <g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M48 46h27l-7-7"/>
+            <path d="M76 75H49l7 7"/>
+          </g>
+        `);
+
       case "spy-erase-yellow-1":
-        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-          <circle cx="60" cy="60" r="50" fill="#35152f" stroke="#fb7185" stroke-width="5"/>
-          <path d="M21 33h51v51H21z" fill="#facc15" stroke="#fef9c3" stroke-width="4" stroke-linejoin="round"/>
-          <path d="M64 33h8v8h-8zM69 45h9v9h-9zM65 59h8v8h-8zM61 73h11v11H61z" fill="#35152f"/>
-          <path d="m61 65 28-28 20 20-28 28z" fill="#f8fafc" stroke="#fff1f2" stroke-width="4" stroke-linejoin="round"/>
-          <path d="m89 37 9-9 20 20-9 9z" fill="#fb7185"/>
-          <path d="M55 91c15 6 29 4 39-4" fill="none" stroke="#fde68a" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 8"/>
-          <path d="m91 18 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#60a5fa"/>
-          <circle cx="28" cy="94" r="11" fill="#fff7ed" stroke="#fb7185" stroke-width="3"/>
-          <text x="28" y="100" text-anchor="middle" fill="#4c1d3f" font-family="system-ui, sans-serif" font-size="17" font-weight="900">1</text>
-        </svg>`;
+        // Erase a Yellow.
+        return svg(`
+          <rect x="27" y="25" width="66" height="70" rx="12" fill="var(--tile-yellow, #d6a925)"/>
+          <path d="M40 39l40 42M80 39 40 81" fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
+        `);
+
       case "spy-erase-row":
-        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-          <rect x="9" y="15" width="102" height="90" rx="23" fill="#35152f" stroke="#fb7185" stroke-width="5"/>
-          <g fill="#475569" stroke="#94a3b8" stroke-width="2">
-            <rect x="23" y="32" width="13" height="12" rx="3"/><rect x="39" y="32" width="13" height="12" rx="3"/><rect x="55" y="32" width="13" height="12" rx="3"/><rect x="71" y="32" width="13" height="12" rx="3"/><rect x="87" y="32" width="13" height="12" rx="3"/>
-            <rect x="31" y="79" width="13" height="12" rx="3"/><rect x="47" y="79" width="13" height="12" rx="3"/><rect x="63" y="79" width="13" height="12" rx="3"/><rect x="79" y="79" width="13" height="12" rx="3"/>
+        // Refresh the Row: a whole clue row resets together.
+        return svg(`
+          <g fill="#f4f5f7">
+            <rect x="7" y="49" width="18" height="28" rx="4"/>
+            <rect x="29" y="49" width="18" height="28" rx="4"/>
+            <rect x="51" y="49" width="18" height="28" rx="4"/>
+            <rect x="73" y="49" width="18" height="28" rx="4"/>
+            <rect x="95" y="49" width="18" height="28" rx="4"/>
           </g>
-          <g stroke="#fff7ed" stroke-width="2.5">
-            <rect x="19" y="53" width="17" height="17" rx="4" fill="#22c55e"/><rect x="40" y="53" width="17" height="17" rx="4" fill="#facc15"/><rect x="61" y="53" width="17" height="17" rx="4" fill="#22c55e"/><rect x="82" y="53" width="17" height="17" rx="4" fill="#facc15"/>
-          </g>
-          <path d="M23 50c5-15 20-25 37-25 11 0 21 4 29 11" fill="none" stroke="#fde68a" stroke-width="4.5" stroke-linecap="round"/>
-          <path d="m82 29 12 10-15 4" fill="none" stroke="#fde68a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M97 73c-5 15-20 25-37 25-12 0-23-4-31-12" fill="none" stroke="#60a5fa" stroke-width="4.5" stroke-linecap="round"/>
-          <path d="m37 94-13-10 15-5" fill="none" stroke="#60a5fa" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>`;
+          <path d="M22 38a47 47 0 0 1 74 4" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+          <path d="m93 25 6 19-20-3z" fill="currentColor"/>
+          <path d="M98 86a47 47 0 0 1-74-4" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+          <path d="m27 99-7-19 20 3z" fill="currentColor"/>
+        `);
+
       case "inspector-yellow-1":
-        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-          <path d="M60 8 103 33v54l-43 25-43-25V33z" fill="#082f49" stroke="#38bdf8" stroke-width="5" stroke-linejoin="round"/>
-          <rect x="24" y="25" width="52" height="52" rx="12" fill="#facc15" stroke="#fef9c3" stroke-width="4"/>
-          <circle cx="54" cy="54" r="27" fill="none" stroke="#e0f2fe" stroke-width="6"/>
-          <path d="M73 74 99 100" stroke="#7dd3fc" stroke-width="10" stroke-linecap="round"/>
-          <path d="M38 54h32M54 38v32" stroke="#0c4a6e" stroke-width="3" stroke-linecap="round" opacity=".8"/>
-          <circle cx="54" cy="54" r="8" fill="#0c4a6e" stroke="#fff" stroke-width="3"/>
-          <path d="M86 20c9 3 15 9 18 18M86 31c4 1 7 4 8 8" fill="none" stroke="#f472b6" stroke-width="4" stroke-linecap="round"/>
-          <circle cx="83" cy="18" r="4" fill="#facc15"/>
-        </svg>`;
+        // Yellow Intel: inspect and reveal one present letter.
+        return svg(`
+          <circle cx="51" cy="51" r="35" fill="currentColor"/>
+          <rect x="31" y="31" width="40" height="40" rx="8" fill="var(--tile-yellow, #d6a925)"/>
+          <path d="m76 76 27 27" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round"/>
+        `);
+
       case "inspector-remove-unused-2":
-        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-          <rect x="9" y="12" width="102" height="96" rx="25" fill="#082f49" stroke="#38bdf8" stroke-width="5"/>
-          <rect x="18" y="35" width="38" height="42" rx="9" fill="#64748b" stroke="#cbd5e1" stroke-width="4"/>
-          <rect x="64" y="35" width="38" height="42" rx="9" fill="#475569" stroke="#cbd5e1" stroke-width="4"/>
-          <path d="m29 47 16 18m0-18L29 65M75 47l16 18m0-18L75 65" stroke="#f8fafc" stroke-width="5" stroke-linecap="round"/>
-          <path d="M14 29v-9h14M106 29v-9H92M14 83v9h14M106 83v9H92" fill="none" stroke="#7dd3fc" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M20 82h80" stroke="#22d3ee" stroke-width="4" stroke-linecap="round" stroke-dasharray="5 6"/>
-          <rect x="45" y="83" width="30" height="22" rx="11" fill="#e0f2fe" stroke="#38bdf8" stroke-width="3"/>
-          <text x="60" y="100" text-anchor="middle" fill="#0c4a6e" font-family="system-ui, sans-serif" font-size="20" font-weight="950">2</text>
-          <circle cx="99" cy="23" r="5" fill="#facc15"/>
-        </svg>`;
+        // Rule Out Two: two letters are crossed out and locked away.
+        return svg(`
+          <rect x="10" y="32" width="44" height="56" rx="10" fill="currentColor"/>
+          <rect x="66" y="32" width="44" height="56" rx="10" fill="currentColor"/>
+          <g fill="none" stroke="#f4f5f7" stroke-width="8" stroke-linecap="round">
+            <path d="m23 47 18 26M41 47 23 73"/>
+            <path d="m79 47 18 26M97 47 79 73"/>
+          </g>
+        `);
+
       case "inspector-remove-point-1":
-        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-          <path d="M20 18h80l10 18-10 18 10 18-10 18H20L10 72l10-18-10-18z" fill="#082f49" stroke="#38bdf8" stroke-width="5" stroke-linejoin="round"/>
-          <path d="M91 26v47" fill="none" stroke="#fde68a" stroke-width="6" stroke-linecap="round"/>
-          <path d="m80 65 11 13 11-13" fill="none" stroke="#fde68a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="53" cy="55" r="30" fill="#0f766e" stroke="#99f6e4" stroke-width="5"/>
-          <circle cx="53" cy="55" r="21" fill="#0c4a6e" stroke="#e0f2fe" stroke-width="3" stroke-dasharray="4 4"/>
-          <text x="53" y="65" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="31" font-weight="950">−1</text>
-          <path d="m27 91 7 7 15-17" fill="none" stroke="#4ade80" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="m91 92 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#facc15"/>
-        </svg>`;
-      default: {
-        // A future fixed reward still gets a readable role-colored fallback.
-        // The current server catalog is validated separately below, so every
-        // fixed reward that exists today uses one of the unique SVGs above.
-        const spy = id.startsWith("spy-");
-        const outer = spy ? "#fb7185" : "#38bdf8";
-        const inner = spy ? "#35152f" : "#082f49";
-        const icon = option?.icon || "◆";
-        return `<svg class="pc-card-svg pc-fixed-reward-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-          <path d="M60 8 103 33v54l-43 25-43-25V33z" fill="${inner}" stroke="${outer}" stroke-width="5" stroke-linejoin="round"/>
-          <circle cx="60" cy="60" r="31" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="4 5" opacity=".55"/>
-          <text x="60" y="68" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="${fixedRewardIconFontSize(icon)}" font-weight="900">${esc(icon)}</text>
-        </svg>`;
-      }
+        // Remove a Point.
+        return svg(`
+          <circle cx="60" cy="60" r="43" fill="currentColor"/>
+          <text x="60" y="72" text-anchor="middle" fill="#f4f5f7" font-family="system-ui, sans-serif" font-size="38" font-weight="900">-1</text>
+        `);
+
+      default:
+        return svg(`
+          <circle cx="60" cy="60" r="43" fill="currentColor"/>
+          <text x="60" y="69" text-anchor="middle" fill="#f4f5f7" font-family="system-ui, sans-serif" font-size="${fixedRewardIconFontSize(option?.icon)}" font-weight="900">${esc(option?.icon || "◆")}</text>
+        `);
     }
   }
 
-  // A handful of these compound icons (e.g. "🟨⇄⬛4" for Trade a Yellow,
-  // "🟩⇄🟨🟨🟨" for Trade a Green) string together several glyphs to show
-  // what the reward actually does at a glance -- 25px was sized for the
-  // 1-2 glyph icons and let anything longer spill out past the badge's own
-  // circle on both sides. Shrinking by glyph count keeps every icon inside
-  // it instead of special-casing each long one by hand. Spread (not
-  // .length) so a multi-code-point emoji counts as one glyph, not two.
+  // Used only by the generic fixed-reward fallback above.
   function fixedRewardIconFontSize(icon) {
     const glyphCount = [...String(icon || "")].length || 1;
     if (glyphCount <= 2) return 25;
