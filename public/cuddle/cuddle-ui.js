@@ -322,8 +322,8 @@
           </section>
           <section class="cuddle-right-column">
             ${renderStatusAnnouncement(state)}
-            ${renderHand(state)}
-            ${renderActions(state, rules)}
+            ${renderHand(state, rules)}
+            ${renderActions(state)}
           </section>
         </main>
         ${renderStateOverlay(state)}
@@ -531,7 +531,7 @@
       </button>`;
   }
 
-  function renderHand(state) {
+  function renderHand(state, rules) {
     const limit = game.getMulliganLimit();
     const groups = groupedHand(state);
     const promoted = groups.promoted.map(group => renderHandCard(group, state, limit)).join("");
@@ -548,6 +548,10 @@
         ${metaBadges ? `<div class="cuddle-hand-meta">${metaBadges}</div>` : ""}
         ${showSubmitRow ? `
           <div class="cuddle-submit-row">
+            <button class="cuddle-btn cuddle-mulligan" data-action="mulligan-mode" ${state.mulligansLeft > 0 ? "" : "disabled"}
+              title="Mulligan: ${state.mulligansLeft} left, up to ${rules.mulliganSize} cards">
+              Mulligan <span>${state.mulligansLeft}</span>
+            </button>
             <button class="cuddle-btn cuddle-btn-primary cuddle-submit" data-action="submit" ${submit.ok ? "" : "disabled"}>Submit word</button>
             <button class="cuddle-btn cuddle-backspace" data-action="backspace" ${state.draft.length ? "" : "disabled"}
               aria-label="Delete the last drafted card" title="Delete last letter">⌫</button>
@@ -560,25 +564,17 @@
       </section>`;
   }
 
-  function renderActions(state, rules) {
-    if (state.status !== "playing") return "";
-    if (actionMode === "mulligan") {
-      const max = game.getMulliganLimit();
-      const valid = selectedCards.size >= 1 && selectedCards.size <= max;
-      return `
-        <section class="cuddle-action-panel is-selecting">
-          <div><strong>Select up to ${max} cards</strong><span>${selectedCards.size}/${max} selected · ${state.mulligansLeft} mulligan${state.mulligansLeft === 1 ? "" : "s"} left</span></div>
-          <button class="cuddle-btn cuddle-btn-primary" data-action="confirm-mulligan" ${valid ? "" : "disabled"}>Replace selected</button>
-          <button class="cuddle-btn cuddle-btn-ghost" data-action="cancel-mode">Cancel</button>
-        </section>`;
-    }
+  function renderActions(state) {
+    // Mulligan lives in the submit row now; this panel is only needed once
+    // the player is actively selecting cards to replace.
+    if (state.status !== "playing" || actionMode !== "mulligan") return "";
+    const max = game.getMulliganLimit();
+    const valid = selectedCards.size >= 1 && selectedCards.size <= max;
     return `
-      <section class="cuddle-action-panel">
-        <div class="cuddle-utility-actions">
-          <button class="cuddle-btn" data-action="mulligan-mode" ${state.mulligansLeft > 0 ? "" : "disabled"}>
-            Mulligan <span>${state.mulligansLeft} left · up to ${rules.mulliganSize}</span>
-          </button>
-        </div>
+      <section class="cuddle-action-panel is-selecting">
+        <div><strong>Select up to ${max} cards</strong><span>${selectedCards.size}/${max} selected · ${state.mulligansLeft} mulligan${state.mulligansLeft === 1 ? "" : "s"} left</span></div>
+        <button class="cuddle-btn cuddle-btn-primary" data-action="confirm-mulligan" ${valid ? "" : "disabled"}>Replace selected</button>
+        <button class="cuddle-btn cuddle-btn-ghost" data-action="cancel-mode">Cancel</button>
       </section>`;
   }
 

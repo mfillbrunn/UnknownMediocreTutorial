@@ -670,22 +670,27 @@
   gap: 9px;
 }
 
+/* Mulligan · Submit · Backspace, left to right, weighted 35/50/15 -- Submit
+   is the action taken almost every turn, so it gets the most thumb room. */
 .cuddle-submit-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 52px;
+  grid-template-columns: minmax(0, 35fr) minmax(0, 50fr) minmax(0, 15fr);
   gap: 9px;
   margin-bottom: 14px;
+}
+
+.cuddle-mulligan {
+  padding-inline: 4px;
+}
+
+.cuddle-mulligan span {
+  color: var(--cuddle-muted);
+  font-size: 0.72rem;
 }
 
 .cuddle-backspace {
   padding-inline: 0;
   font-size: 1.3rem;
-}
-
-.cuddle-utility-actions {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 9px;
 }
 
 .cuddle-action-panel.is-selecting {
@@ -1275,8 +1280,7 @@
   margin-bottom: 9px;
 }
 
-#cuddleScreen .cuddle-action-panel,
-#cuddleScreen .cuddle-utility-actions {
+#cuddleScreen .cuddle-action-panel {
   gap: 6px;
 }
 
