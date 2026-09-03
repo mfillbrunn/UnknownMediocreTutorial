@@ -43,6 +43,7 @@ const SETTER_POWERS = [
   "vowelRefresh",
   "blindGuess",
   "fakeFeedback",
+  "feedbackLie",
   "delayedIntel",
   "forceTimer"
 ];

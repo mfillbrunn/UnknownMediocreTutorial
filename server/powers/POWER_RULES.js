@@ -187,6 +187,15 @@ const POWER_RULES = {
     }
   },
 
+  feedbackLie: {
+    allowed(state) {
+      return (
+        state.turn === state.setter &&
+        !state.powers.feedbackLieUsed
+      );
+    }
+  },
+
   forceTimer: {
     allowed(state) {
       return (

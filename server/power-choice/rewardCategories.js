@@ -37,6 +37,7 @@ const REWARD_CATEGORIES = Object.freeze({
   confuseColors: "feedback-disruption",
   countOnly: "feedback-disruption",
   fakeFeedback: "feedback-disruption",
+  feedbackLie: "feedback-disruption",
   blindGuess: "feedback-disruption",
   delayedIntel: "feedback-disruption",
 

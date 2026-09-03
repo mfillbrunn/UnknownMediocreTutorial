@@ -2,6 +2,7 @@
 module.exports = {
   confuseColors: { label: "Blue Mode", role: "setter" },
   countOnly: { label: "Count Only" , role: "setter"},
+  feedbackLie: { label: "Feedback Lie" , role: "setter"},
   forceGuess: { label: "Force Guess" , role: "setter"},
   fakeFeedback: { label: "Fake Feedback" , role: "setter"},
   forceTimer: { label: "Force Timer" , role: "setter"},

@@ -103,6 +103,7 @@ const POWER_COPY = {
   confuseColors: ["🎨", "Blue Mode", "Turn all feedback tiles blue for this turn, hiding which matches are green or yellow."],
   countOnly: ["🔢", "Count Only", "Show only how many letters match, without revealing their colors or positions."],
   fakeFeedback: ["🎭", "Fake Feedback", "Distort the feedback from the next resolved guess."],
+  feedbackLie: ["🤥", "Feedback Lie", "Make every tile in the next resolved guess show a false result."],
   blindGuess: ["🙈", "Blind Guess", "Hide the Guesser's draft while they make this guess."],
   forceTimer: ["⏱", "Force Timer", "Put immediate time pressure on the Guesser's turn."],
   delayedIntel: ["📡", "Delayed Feedback", "Hold back the Guesser's feedback until after their following guess."],
@@ -791,6 +792,7 @@ function setterRewardPool() {
     powerOption("confuseColors"),
     powerOption("countOnly"),
     powerOption("fakeFeedback"),
+    powerOption("feedbackLie"),
     powerOption("blindGuess"),
     powerOption("forceTimer"),
     powerOption("delayedIntel"),
@@ -1703,6 +1705,8 @@ function powerOptionApplicable(state, option) {
       return !state.powers?.countOnlyUsed;
     case "fakeFeedback":
       return !state.powers?.fakeFeedbackUsed;
+    case "feedbackLie":
+      return !state.powers?.feedbackLieUsed;
     case "blindGuess":
       return !state.powers?.blindGuessUsed;
     case "forceTimer":

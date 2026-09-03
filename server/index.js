@@ -138,6 +138,7 @@ context.maybeRunAI = require("./core/ai/runAI").maybeRunAI;
 require("./powers/powers/hideTileServer");
 require("./powers/powers/confuseColorsServer");
 require("./powers/powers/countOnlyServer");
+require("./powers/powers/feedbackLieServer");
 require("./powers/powers/forceGuessServer");
 require("./powers/powers/blindGuessServer");
 require("./powers/powers/revealGreenServer");

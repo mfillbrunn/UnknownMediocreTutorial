@@ -88,7 +88,7 @@ function run() {
 
     assert.deepStrictEqual(
       new Set(byTier[1]),
-      new Set(["Erase Two Clues", "Erase a Yellow", "Yellow Smudge", "Trade a Yellow", "Blue Mode", "Count Only", "Fake Feedback", "Force Timer"]),
+      new Set(["Erase Two Clues", "Erase a Yellow", "Yellow Smudge", "Trade a Yellow", "Blue Mode", "Count Only", "Fake Feedback", "Feedback Lie", "Force Timer"]),
       "Common tier membership"
     );
     assert.deepStrictEqual(

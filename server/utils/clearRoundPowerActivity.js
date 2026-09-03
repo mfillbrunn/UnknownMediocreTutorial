@@ -21,6 +21,8 @@ function clearRoundPowerActivity(state) {
   powers.fakeFeedbackSecret = false;
   powers.fakeFeedbackScramble = false;
 
+  powers.feedbackLieActive = false;
+
   powers.betMissActive = false;
   powers.betMissNumber = null;
 

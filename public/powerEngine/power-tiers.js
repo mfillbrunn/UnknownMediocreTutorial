@@ -2,7 +2,8 @@
   "use strict";
   window.POWER_TIERS = Object.freeze({
     confuseColors:{role:"setter",tier:1}, countOnly:{role:"setter",tier:1},
-    fakeFeedback:{role:"setter",tier:1}, blindGuess:{role:"setter",tier:2},
+    fakeFeedback:{role:"setter",tier:1}, feedbackLie:{role:"setter",tier:1},
+    blindGuess:{role:"setter",tier:2},
     forceTimer:{role:"setter",tier:1}, delayedIntel:{role:"setter",tier:2},
     hideTile:{role:"setter",tier:2}, blindSpot:{role:"setter",tier:3},
     suggestSecret:{role:"setter",tier:2}, vowelRefresh:{role:"setter",tier:3},
