@@ -233,7 +233,7 @@
           <div class="cuddle-logo" aria-hidden="true">C</div>
           <p class="cuddle-eyebrow">SINGLE-PLAYER ROGUELITE</p>
           <h1>CUDDLE</h1>
-          <p class="cuddle-tagline">Build words from cards. Learn the secret. Shape the deck. Survive ${scoringRounds()} rounds and three bosses.</p>
+          <p class="cuddle-tagline">Build words from cards. Learn the secret. Shape the deck. Survive ${scoringRounds()} rounds and four bosses.</p>
           <div class="cuddle-save-summary ${hasRun ? "" : "is-empty"}">
             <span>${escapeHtml(statusLabel)}</span>
             ${hasRun ? `<strong>Score ${state.score} · Round ${state.round}/${scoringRounds()}</strong>` : `<strong>Your run saves in this browser.</strong>`}
@@ -624,9 +624,8 @@
     return "";
   }
 
-  // Two bosses, each showing the permanent reward it carries, so the choice
-  // is an informed trade rather than a blind pick. The final boss has no
-  // reward: beating it simply wins the run.
+  // Every boss choice shows its permanent reward, including the final boss.
+  // Bosses never add a second ordinary post-round reward.
   function renderBossChoiceOverlay(state) {
     const options = state.bossOffer || [];
     const isFinal = options.some(option => option.gate === "final");
@@ -636,15 +635,15 @@
           <span class="cuddle-modal-kicker">${isFinal ? "FINAL BOSS" : "BOSS ROUND"}</span>
           <h2 id="cuddleBossTitle">${isFinal ? "One last secret" : "Choose your boss"}</h2>
           <p>${isFinal
-            ? "Beat this round to win the run. No score is needed -- just solve it."
-            : "A boss round is pass or fail: nothing scores, you only have to solve it. Clear it and you keep the reward shown below on top of the usual one."}</p>
+            ? "Beat this round to win the run. Its permanent reward is shown below; no ordinary upgrade follows."
+            : "A boss round is pass or fail: nothing scores, you only have to solve it. Clear it and you keep the permanent reward shown below; there is no additional ordinary reward after a boss."}</p>
           <div class="cuddle-choice-grid">
             ${options.map(option => `
               <button class="cuddle-choice cuddle-boss-choice" data-boss-id="${escapeHtml(option.id)}">
                 <span class="cuddle-choice-icon">${escapeHtml(option.icon || "💀")}</span>
                 <strong>${escapeHtml(option.title)}</strong>
                 <small>${escapeHtml(option.description)}</small>
-                ${option.reward && !isFinal ? `
+                ${option.reward ? `
                   <span class="cuddle-boss-reward">
                     <b>${escapeHtml(option.reward.icon || "🎁")} ${escapeHtml(option.reward.title)}</b>
                     <span>${escapeHtml(option.reward.description)}</span>
@@ -839,7 +838,7 @@
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards.</p></article>
             <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints} and green tiles +${rules.greenPoints}; grey tiles give information but never change your score. Solving early adds +${rules.earlyPoint} for every unused guess, and every mulligan you did not spend is worth +${rules.mulliganPoints}. You must also meet the cumulative round target.</p></article>
             <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"} and pay bonus points. Solve the word to choose an upgrade after every round.</p></article>
-            <article><strong>7 · Boss rounds</strong><p>Before rounds 4 and 7 -- and once more after the last round -- you pick one of two bosses. A boss round is pass or fail: nothing scores and no target applies, you just have to solve it. Clear one and you keep its permanent reward on top of the usual pick.</p></article>
+            <article><strong>7 · Boss rounds</strong><p>Before rounds 4, 7, and 10 -- and once more after round 12 -- you pick one of two bosses. Their powers last for 2, 2, 3, and 4 guesses respectively. A boss round is pass or fail: nothing scores and no target applies, you just have to solve it. Clear any boss to receive its displayed permanent reward; no ordinary upgrade is added afterward.</p></article>
           </div>
           <p class="cuddle-rule-note"><strong>Campaign targets:</strong> ${window.CuddleEngine.THRESHOLDS.join(" · ")}. Clear round ${scoringRounds()} at ${window.CuddleEngine.THRESHOLDS[scoringRounds() - 1]} points, then beat the final boss to win.</p>
           <button class="cuddle-btn cuddle-btn-primary" data-action="close-rules">Got it</button>
@@ -1044,6 +1043,154 @@
     render();
   }
 
+  /* UMT_CUDDLE_REBALANCE_V3: UI START */
+  let cuddleV3BookOpen = false;
+
+  function cuddleV3RewardBookSvg(progress, maximum) {
+    const ratio = maximum > 0 ? Math.max(0, Math.min(1, progress / maximum)) : 0;
+    const filled = Math.round(ratio * 8);
+    const scripts = Array.from({ length: 8 }, (_, index) => {
+      const y = 27 + (index % 4) * 12;
+      const left = index < 4;
+      const x1 = left ? 24 : 102;
+      const x2 = left ? 76 : 156;
+      return `<path class="cuddle-v3-book-script ${index < filled ? "is-filled" : ""}" d="M${x1} ${y} C${x1 + 12} ${y - 5}, ${x2 - 12} ${y + 5}, ${x2} ${y}" />`;
+    }).join("");
+    return `
+      <svg class="cuddle-v3-book-svg" viewBox="0 0 180 88" role="img" aria-label="Reward book ${progress} of ${maximum} filled">
+        <defs>
+          <linearGradient id="cuddleV3Ink" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#8be8d2"></stop>
+            <stop offset="0.5" stop-color="#d5a6ff"></stop>
+            <stop offset="1" stop-color="#ffd76f"></stop>
+          </linearGradient>
+        </defs>
+        <path class="cuddle-v3-book-page" d="M8 12 Q47 2 88 16 V78 Q48 65 8 76 Z"></path>
+        <path class="cuddle-v3-book-page" d="M172 12 Q133 2 92 16 V78 Q132 65 172 76 Z"></path>
+        <path class="cuddle-v3-book-spine" d="M90 15 V79"></path>
+        ${scripts}
+        <circle class="cuddle-v3-book-spark" cx="90" cy="10" r="4"></circle>
+      </svg>`;
+  }
+  function cuddleV3RewardBookMarkup(info, expanded, placement) {
+    const history = (info?.history || []).slice(0, 6);
+    const synergies = info?.synergies || [];
+    const custom = (info?.customRewards || []).filter(item => item.count > 0);
+    const progress = Number(info?.progress || 0);
+    const maximum = Math.max(1, Number(info?.maximum || 16));
+    const recentMarkup = history.length
+      ? history.map(item => `
+          <li>
+            <span>${escapeHtml(item.icon || "✨")}</span>
+            <div><strong>${escapeHtml(item.title || "Reward")}</strong><small>${escapeHtml(item.kind === "boss" ? "Boss reward" : `Round ${item.round || ""}`)}</small></div>
+          </li>`).join("")
+      : `<li class="is-empty"><span>✦</span><div><strong>Blank first page</strong><small>Your collected rewards will appear here.</small></div></li>`;
+    const customMarkup = custom.length
+      ? `<div class="cuddle-v3-book-chips">${custom.map(item => `<span>${escapeHtml(item.icon)} ${escapeHtml(item.title)} ×${item.count}</span>`).join("")}</div>`
+      : "";
+    const synergyMarkup = synergies.map(item => `
+      <li class="${item.unlocked ? "is-unlocked" : "is-locked"}">
+        <span>${escapeHtml(item.icon)}</span>
+        <div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.unlocked ? item.description : "Discover the matching pair of rewards.")}</small></div>
+      </li>`).join("");
+    return `
+      <section class="cuddle-v3-reward-book is-${escapeHtml(placement)} ${expanded ? "is-open" : ""}" aria-label="Cuddle reward book">
+        <button type="button" class="cuddle-v3-book-toggle" data-cuddle-v3-action="toggle-book" aria-expanded="${expanded ? "true" : "false"}">
+          ${cuddleV3RewardBookSvg(progress, maximum)}
+          <span><b>Cuddle Codex</b><small>${progress}/${maximum} pages illuminated</small></span>
+          <i aria-hidden="true">${expanded ? "−" : "+"}</i>
+        </button>
+        <div class="cuddle-v3-book-body" ${expanded ? "" : "hidden"}>
+          ${customMarkup}
+          <div class="cuddle-v3-book-columns">
+            <div><h3>Collected scripts</h3><ul>${recentMarkup}</ul></div>
+            <div><h3>Combination bonuses</h3><ul>${synergyMarkup}</ul></div>
+          </div>
+        </div>
+      </section>`;
+  }
+  function cuddleV3ToastStack(state) {
+    const boss = state?.bossRewardNotice;
+    const synergy = state?.synergyNotice;
+    if (!boss && !synergy) return "";
+    return `
+      <div class="cuddle-v3-toast-stack" aria-live="polite">
+        ${boss ? `
+          <section class="cuddle-v3-toast is-boss" role="status">
+            <span class="cuddle-v3-toast-icon">${escapeHtml(boss.icon || "🎁")}</span>
+            <div><small>${escapeHtml(boss.bossTitle || "Boss")} cleared</small><strong>${escapeHtml(boss.title || "Boss reward received")}</strong><p>${escapeHtml(boss.message || "Permanent bonus received.")}</p></div>
+            <button type="button" data-cuddle-v3-action="dismiss-boss-reward" aria-label="Dismiss boss reward">×</button>
+          </section>` : ""}
+        ${synergy ? `
+          <section class="cuddle-v3-toast is-synergy" role="status">
+            <span class="cuddle-v3-toast-icon">${escapeHtml(synergy.icon || "✨")}</span>
+            <div><small>Reward interaction</small><strong>${escapeHtml(synergy.title || "Combination unlocked")}</strong><p>${escapeHtml(synergy.message || "A new combination bonus is active.")}</p></div>
+            <button type="button" data-cuddle-v3-action="dismiss-synergy" aria-label="Dismiss combination bonus">×</button>
+          </section>` : ""}
+      </div>`;
+  }
+  function cuddleV3EnhanceRenderedRun() {
+    const state = currentState();
+    if (!root || landing || !state || !game) return;
+
+    if (typeof game.getMysteryKind === "function") {
+      root.querySelectorAll("[data-card-glyph]").forEach(card => {
+        const kind = game.getMysteryKind(card.dataset.cardGlyph);
+        if (!kind) return;
+        card.classList.add(`is-mystery-${kind}`);
+        card.dataset.mysteryKind = kind;
+      });
+    }
+
+    if (typeof game.getRewardBook === "function") {
+      const forcedOpen = state.status === "upgrade" || Boolean(state.roundIntroPending);
+      const expanded = forcedOpen || cuddleV3BookOpen;
+      const overlayModal = forcedOpen ? root.querySelector(".cuddle-overlay .cuddle-modal") : null;
+      if (overlayModal) {
+        const grid = overlayModal.querySelector(".cuddle-choice-grid, .cuddle-round-intro-stats, .cuddle-round-modifications");
+        if (grid) grid.insertAdjacentHTML("beforebegin", cuddleV3RewardBookMarkup(game.getRewardBook(), expanded, "between-rounds"));
+        else overlayModal.insertAdjacentHTML("beforeend", cuddleV3RewardBookMarkup(game.getRewardBook(), expanded, "between-rounds"));
+      } else {
+        const column = root.querySelector(".cuddle-right-column");
+        if (column) column.insertAdjacentHTML("afterbegin", cuddleV3RewardBookMarkup(game.getRewardBook(), expanded, "compact"));
+      }
+    }
+
+    const shell = root.querySelector(".cuddle-shell") || root;
+    const toasts = cuddleV3ToastStack(state);
+    if (toasts) shell.insertAdjacentHTML("beforeend", toasts);
+  }
+
+  const cuddleV3OriginalSyncQuickModeTimer = syncQuickModeTimer;
+  syncQuickModeTimer = function syncCuddleV3QuickModeTimer() {
+    const state = currentState();
+    if (state?.boss?.secondsPerGuess
+        && typeof game?._bossActive === "function"
+        && !game._bossActive()) {
+      clearQuickModeTimer();
+      return;
+    }
+    cuddleV3OriginalSyncQuickModeTimer();
+  };
+
+  const cuddleV3OriginalRender = render;
+  render = function renderCuddleV3() {
+    cuddleV3OriginalRender();
+    cuddleV3EnhanceRenderedRun();
+  };
+
+  document.addEventListener("click", event => {
+    const button = event.target.closest("[data-cuddle-v3-action]");
+    if (!button) return;
+    event.preventDefault();
+    const action = button.dataset.cuddleV3Action;
+    if (action === "toggle-book") cuddleV3BookOpen = !cuddleV3BookOpen;
+    else if (action === "dismiss-boss-reward") game?.dismissBossRewardNotice?.();
+    else if (action === "dismiss-synergy") game?.dismissSynergyNotice?.();
+    else return;
+    render();
+  });
+  /* UMT_CUDDLE_REBALANCE_V3: UI END */
   document.addEventListener("DOMContentLoaded", () => {
     root = document.getElementById(ROOT_ID);
     document.getElementById("cuddleBtn")?.addEventListener("click", openCuddle);

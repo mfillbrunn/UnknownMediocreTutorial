@@ -194,14 +194,14 @@
     }
   ];
 
-  // Permanent run upgrades, one per boss, granted on top of the ordinary
-  // post-round reward when that boss is cleared.
+  // Permanent run upgrades granted when a boss is cleared. A boss does not
+  // also open the ordinary post-round reward screen.
   const BOSS_REWARDS = [
     {
       id: "cullRare",
       icon: "✂️",
       title: "Deep Cull",
-      description: "Remove four rare letters from the deck and from every future secret."
+      description: "Remove two rare letters from the deck and from every future secret."
     },
     {
       id: "doubleMulligans",

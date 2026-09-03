@@ -1482,3 +1482,337 @@
   line-height: 1.35;
 }
 /* UMT_CUDDLE_BOSS_ROUNDS: END */
+/* UMT_CUDDLE_REBALANCE_V3: CSS START */
+/* Twelve scoring rounds, with compact horizontal scrolling on narrow screens. */
+#cuddleScreen .cuddle-progress {
+  grid-template-columns: repeat(12, minmax(20px, 1fr));
+}
+
+/* Make unsubmitted draft letters easier to read without enlarging old rows. */
+#cuddleScreen .cuddle-tile.is-draft-tile {
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  line-height: 1;
+}
+
+/* Keep the screen viewport-sized without inheriting that full height through
+   every nested wrapper, which previously created a blank scroll tail. */
+#cuddleScreen {
+  height: calc(100dvh - var(--header-height, 0px));
+  min-height: 0 !important;
+  padding-bottom: 0 !important;
+  overflow-y: auto;
+}
+#cuddleScreen.screen.active {
+  margin-bottom: 0 !important;
+}
+#cuddleScreen .cuddle-root {
+  height: 100%;
+  min-height: 0 !important;
+}
+#cuddleScreen .cuddle-shell,
+#cuddleScreen .cuddle-landing {
+  min-height: 100%;
+  padding-bottom: 8px !important;
+}
+
+/* Mystery cards stay reusable. Their colour identifies why the information is
+   unresolved while the question mark makes the shared behaviour explicit. */
+#cuddleScreen .cuddle-card.is-card-unknown.is-mystery-blue {
+  border-color: #7db4ff;
+  background: linear-gradient(155deg, #527fdc, #3158ad);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 0 18px rgba(63, 111, 216, 0.28);
+}
+#cuddleScreen .cuddle-card.is-card-unknown.is-mystery-purple {
+  border-color: #d9a4ff;
+  background: linear-gradient(155deg, #9b62c9, #65388e);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 0 18px rgba(155, 98, 201, 0.3);
+}
+#cuddleScreen .cuddle-card.is-card-unknown.is-mystery-unknown {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 14px rgba(213, 166, 255, 0.16);
+}
+#cuddleScreen .cuddle-card[data-mystery-kind] .cuddle-card-unknown {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  color: #17151d;
+  background: #fff;
+  font-size: 0.86rem;
+  font-weight: 950;
+}
+
+/* Reward book / between-round progression interface. */
+#cuddleScreen .cuddle-v3-reward-book {
+  overflow: hidden;
+  border: 1px solid rgba(213, 166, 255, 0.34);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(213, 166, 255, 0.11), rgba(139, 232, 210, 0.055)),
+    rgba(24, 22, 36, 0.96);
+  box-shadow: 0 13px 34px rgba(0, 0, 0, 0.24);
+}
+#cuddleScreen .cuddle-v3-reward-book.is-between-rounds {
+  margin: 12px 0 15px;
+}
+#cuddleScreen .cuddle-v3-reward-book.is-compact {
+  margin-bottom: 2px;
+}
+#cuddleScreen .cuddle-v3-book-toggle {
+  display: grid;
+  grid-template-columns: 88px 1fr 24px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 66px;
+  padding: 7px 11px;
+  border: 0;
+  color: var(--cuddle-text);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+#cuddleScreen .cuddle-v3-book-toggle:hover {
+  background: rgba(213, 166, 255, 0.08);
+}
+#cuddleScreen .cuddle-v3-book-toggle > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+#cuddleScreen .cuddle-v3-book-toggle b {
+  font-size: 0.94rem;
+  letter-spacing: 0.02em;
+}
+#cuddleScreen .cuddle-v3-book-toggle small {
+  overflow: hidden;
+  color: var(--cuddle-muted);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#cuddleScreen .cuddle-v3-book-toggle i {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  color: var(--cuddle-accent-2);
+  font-style: normal;
+  font-weight: 900;
+}
+#cuddleScreen .cuddle-v3-book-svg {
+  width: 88px;
+  height: 48px;
+  overflow: visible;
+}
+#cuddleScreen .cuddle-v3-book-page {
+  fill: rgba(255, 247, 218, 0.12);
+  stroke: rgba(255, 238, 184, 0.56);
+  stroke-width: 2;
+}
+#cuddleScreen .cuddle-v3-book-spine {
+  fill: none;
+  stroke: rgba(213, 166, 255, 0.75);
+  stroke-width: 3;
+}
+#cuddleScreen .cuddle-v3-book-script {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-linecap: round;
+  stroke-width: 3;
+  transition: stroke 180ms ease, filter 180ms ease;
+}
+#cuddleScreen .cuddle-v3-book-script.is-filled {
+  stroke: url(#cuddleV3Ink);
+  filter: drop-shadow(0 0 3px rgba(213, 166, 255, 0.7));
+}
+#cuddleScreen .cuddle-v3-book-spark {
+  fill: #ffd76f;
+  filter: drop-shadow(0 0 5px rgba(255, 215, 111, 0.85));
+}
+#cuddleScreen .cuddle-v3-book-body {
+  padding: 0 12px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+#cuddleScreen .cuddle-v3-book-body[hidden] {
+  display: none;
+}
+#cuddleScreen .cuddle-v3-book-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 0 2px;
+}
+#cuddleScreen .cuddle-v3-book-chips span {
+  padding: 5px 8px;
+  border: 1px solid rgba(139, 232, 210, 0.28);
+  border-radius: 999px;
+  color: var(--cuddle-accent-2);
+  background: rgba(139, 232, 210, 0.07);
+  font-size: 0.7rem;
+  font-weight: 850;
+}
+#cuddleScreen .cuddle-v3-book-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-top: 10px;
+}
+#cuddleScreen .cuddle-v3-book-columns h3 {
+  margin: 0 0 7px;
+  color: var(--cuddle-accent);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+#cuddleScreen .cuddle-v3-book-columns ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+#cuddleScreen .cuddle-v3-book-columns li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: start;
+  gap: 7px;
+  padding: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.025);
+}
+#cuddleScreen .cuddle-v3-book-columns li > span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(213, 166, 255, 0.12);
+}
+#cuddleScreen .cuddle-v3-book-columns li div {
+  display: grid;
+  gap: 2px;
+}
+#cuddleScreen .cuddle-v3-book-columns li strong {
+  font-size: 0.76rem;
+}
+#cuddleScreen .cuddle-v3-book-columns li small {
+  color: var(--cuddle-muted);
+  font-size: 0.66rem;
+  line-height: 1.3;
+}
+#cuddleScreen .cuddle-v3-book-columns li.is-locked {
+  opacity: 0.44;
+  filter: grayscale(0.75);
+}
+#cuddleScreen .cuddle-v3-book-columns li.is-unlocked {
+  border-color: rgba(255, 215, 111, 0.32);
+  background: linear-gradient(135deg, rgba(255, 215, 111, 0.08), rgba(213, 166, 255, 0.07));
+}
+
+/* Small reward and synergy pop-ups. */
+#cuddleScreen .cuddle-v3-toast-stack {
+  position: fixed;
+  z-index: 10040;
+  right: 16px;
+  bottom: 16px;
+  display: grid;
+  gap: 9px;
+  width: min(390px, calc(100vw - 24px));
+  pointer-events: none;
+}
+#cuddleScreen .cuddle-v3-toast {
+  display: grid;
+  grid-template-columns: 42px 1fr 28px;
+  align-items: start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(139, 232, 210, 0.45);
+  border-radius: 16px;
+  color: var(--cuddle-text);
+  background: rgba(24, 22, 36, 0.98);
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.42);
+  pointer-events: auto;
+  animation: cuddleV3ToastIn 220ms ease-out both;
+}
+#cuddleScreen .cuddle-v3-toast.is-synergy {
+  border-color: rgba(255, 215, 111, 0.48);
+}
+#cuddleScreen .cuddle-v3-toast-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(139, 232, 210, 0.18), rgba(213, 166, 255, 0.18));
+  font-size: 1.35rem;
+}
+#cuddleScreen .cuddle-v3-toast div {
+  display: grid;
+  gap: 2px;
+}
+#cuddleScreen .cuddle-v3-toast small {
+  color: var(--cuddle-accent-2);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+#cuddleScreen .cuddle-v3-toast strong {
+  font-size: 0.92rem;
+}
+#cuddleScreen .cuddle-v3-toast p {
+  margin: 2px 0 0;
+  color: var(--cuddle-muted);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+#cuddleScreen .cuddle-v3-toast button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: var(--cuddle-text);
+  background: rgba(255, 255, 255, 0.04);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+@keyframes cuddleV3ToastIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 650px) {
+  #cuddleScreen {
+    height: calc(100dvh - var(--header-height, 0px));
+    min-height: 0 !important;
+  }
+  #cuddleScreen .cuddle-progress {
+    grid-template-columns: repeat(12, minmax(25px, 1fr));
+  }
+  #cuddleScreen .cuddle-tile.is-draft-tile {
+    font-size: clamp(1.85rem, 9vw, 2.35rem);
+  }
+  #cuddleScreen .cuddle-v3-book-columns {
+    grid-template-columns: 1fr;
+  }
+  #cuddleScreen .cuddle-v3-book-toggle {
+    grid-template-columns: 72px 1fr 24px;
+  }
+  #cuddleScreen .cuddle-v3-book-svg {
+    width: 72px;
+  }
+  #cuddleScreen .cuddle-v3-toast-stack {
+    right: 12px;
+    bottom: 12px;
+  }
+}
+/* UMT_CUDDLE_REBALANCE_V3: CSS END */
