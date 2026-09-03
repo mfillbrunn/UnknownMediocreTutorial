@@ -296,19 +296,41 @@
               <span class="cuddle-detail-badge"><b>Quest</b> +${rules.questPoints}</span>
             </div>
             ${renderProgress(state)}
-            ${renderQuestClock(state, rules)}
+
+            <div class="cuddle-stat-group">
+              <h3 class="cuddle-stat-group-title">Stats</h3>
+              <div class="cuddle-detail-badges">
+                <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> +${rules.yellowPoints}</span>
+                <span class="cuddle-detail-badge is-green"><b>Green</b> +${rules.greenPoints}</span>
+                <span class="cuddle-detail-badge is-grey"><b>Grey</b> 0</span>
+                <span class="cuddle-detail-badge"><b>Guesses left</b> ${Math.max(0, window.CuddleEngine.MAX_GUESSES - state.guessesUsed)}</span>
+                <span class="cuddle-detail-badge"><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
+                <span class="cuddle-detail-badge"><b>Unused mulligan</b> +${rules.mulliganPoints}</span>
+                <span class="cuddle-detail-badge"><b>Quest</b> +${rules.questPoints}</span>
+              </div>
+            </div>
+
+            <div class="cuddle-stat-group">
+              <h3 class="cuddle-stat-group-title">Loadout</h3>
+              <div class="cuddle-detail-badges">
+                <span class="cuddle-detail-badge"><b>Hand size</b> ${rules.handSize}</span>
+                <span class="cuddle-detail-badge"><b>Mulligans</b> ${state.mulligansLeft}/${rules.mulligans} · up to ${rules.mulliganSize}</span>
+                <span class="cuddle-detail-badge"><b>Quest every</b> ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}</span>
+              </div>
+            </div>
+
+            ${renderActiveQuest(state)}
           </section>` : ""}
 
         <main class="cuddle-play-area">
           <section class="cuddle-left-column">
             ${renderBossBanner(state)}
-            ${renderActiveQuest(state)}
             ${renderBoard(state)}
           </section>
           <section class="cuddle-right-column">
             ${renderStatusAnnouncement(state)}
-            ${renderHand(state)}
-            ${renderActions(state, rules)}
+            ${renderHand(state, rules)}
+            ${renderActions(state)}
           </section>
         </main>
         ${renderStateOverlay(state)}
@@ -367,26 +389,6 @@
           <span class="cuddle-eyebrow">${fulfilled ? "QUEST READY" : `TURN ${state.guessesUsed + 1} QUEST`}</span>
           <h2>${escapeHtml(state.activeQuest.title)}</h2>
           <p>${escapeHtml(state.activeQuest.description)}</p>
-        </div>
-      </article>`;
-  }
-
-  function renderQuestClock(state, rules) {
-    const currentGuess = state.guessesUsed + 1;
-    let trigger = currentGuess + (state.activeQuest ? 1 : 0);
-    while (trigger <= state.maxGuesses && (trigger < rules.questCadence || trigger % rules.questCadence !== 0)) trigger += 1;
-    const copy = trigger <= state.maxGuesses
-      ? `${state.activeQuest ? "Quest active now. " : ""}Next quest appears on guess ${trigger}.`
-      : state.activeQuest
-        ? "Quest active now. No more quests are scheduled this round."
-        : "No more scheduled quests this round.";
-    return `
-      <article class="cuddle-quest cuddle-quest-clock">
-        <div class="cuddle-quest-icon" aria-hidden="true">○</div>
-        <div>
-          <span class="cuddle-eyebrow">QUEST CLOCK</span>
-          <h2>Every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}</h2>
-          <p>${escapeHtml(copy)}</p>
         </div>
       </article>`;
   }
@@ -535,7 +537,7 @@
       </button>`;
   }
 
-  function renderHand(state) {
+  function renderHand(state, rules) {
     const limit = game.getMulliganLimit();
     const groups = groupedHand(state);
     const promoted = groups.promoted.map(group => renderHandCard(group, state, limit)).join("");
@@ -552,6 +554,10 @@
         ${metaBadges ? `<div class="cuddle-hand-meta">${metaBadges}</div>` : ""}
         ${showSubmitRow ? `
           <div class="cuddle-submit-row">
+            <button class="cuddle-btn cuddle-mulligan" data-action="mulligan-mode" ${state.mulligansLeft > 0 ? "" : "disabled"}
+              title="Mulligan: ${state.mulligansLeft} left, up to ${rules.mulliganSize} cards">
+              Mulligan <span>${state.mulligansLeft}</span>
+            </button>
             <button class="cuddle-btn cuddle-btn-primary cuddle-submit" data-action="submit" ${submit.ok ? "" : "disabled"}>Submit word</button>
             <button class="cuddle-btn cuddle-backspace" data-action="backspace" ${state.draft.length ? "" : "disabled"}
               aria-label="Delete the last drafted card" title="Delete last letter">⌫</button>
@@ -564,25 +570,17 @@
       </section>`;
   }
 
-  function renderActions(state, rules) {
-    if (state.status !== "playing") return "";
-    if (actionMode === "mulligan") {
-      const max = game.getMulliganLimit();
-      const valid = selectedCards.size >= 1 && selectedCards.size <= max;
-      return `
-        <section class="cuddle-action-panel is-selecting">
-          <div><strong>Select up to ${max} cards</strong><span>${selectedCards.size}/${max} selected · ${state.mulligansLeft} mulligan${state.mulligansLeft === 1 ? "" : "s"} left</span></div>
-          <button class="cuddle-btn cuddle-btn-primary" data-action="confirm-mulligan" ${valid ? "" : "disabled"}>Replace selected</button>
-          <button class="cuddle-btn cuddle-btn-ghost" data-action="cancel-mode">Cancel</button>
-        </section>`;
-    }
+  function renderActions(state) {
+    // Mulligan lives in the submit row now; this panel is only needed once
+    // the player is actively selecting cards to replace.
+    if (state.status !== "playing" || actionMode !== "mulligan") return "";
+    const max = game.getMulliganLimit();
+    const valid = selectedCards.size >= 1 && selectedCards.size <= max;
     return `
-      <section class="cuddle-action-panel">
-        <div class="cuddle-utility-actions">
-          <button class="cuddle-btn" data-action="mulligan-mode" ${state.mulligansLeft > 0 ? "" : "disabled"}>
-            Mulligan <span>${state.mulligansLeft} left · up to ${rules.mulliganSize}</span>
-          </button>
-        </div>
+      <section class="cuddle-action-panel is-selecting">
+        <div><strong>Select up to ${max} cards</strong><span>${selectedCards.size}/${max} selected · ${state.mulligansLeft} mulligan${state.mulligansLeft === 1 ? "" : "s"} left</span></div>
+        <button class="cuddle-btn cuddle-btn-primary" data-action="confirm-mulligan" ${valid ? "" : "disabled"}>Replace selected</button>
+        <button class="cuddle-btn cuddle-btn-ghost" data-action="cancel-mode">Cancel</button>
       </section>`;
   }
 

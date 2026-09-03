@@ -113,8 +113,8 @@ window.POWER_METADATA = {
 
   revealGreen: {
     label: "Letter Peek",
-    desc: "The Guesser instantly learns one letter and its exact position in the secret. The Secretkeeper can still change their secret later, so use the clue quickly!",
-    short: "Reveals one letter and its exact position in the current secret.",
+    desc: "The Guesser instantly learns one random letter and its exact position in the secret. The Secretkeeper can still change their secret later, so use the clue quickly!",
+    short: "Reveals one random letter and its exact position in the current secret.",
     icon: "peek-letter",
     emoji: "👁️",
     color: "#22C55E"
@@ -218,8 +218,8 @@ window.POWER_METADATA = {
 
   blindSpot: {
     label: "Foggy Tile",
-    desc: "The Secretkeeper fogs up one tile's clue for the rest of the round, keeping that one piece of information hidden from the Guesser.",
-    short: "Hides one tile's clue from the Guesser for the rest of the round.",
+    desc: "The Secretkeeper fogs up one random tile's clue for the rest of the round, keeping that one piece of information hidden from the Guesser.",
+    short: "Hides one random tile's clue from the Guesser for the rest of the round.",
     icon: "fog",
     emoji: "🌫️",
     color: "#374151"
@@ -270,8 +270,8 @@ window.POWER_METADATA = {
 
   revealLocation: {
     label: "Informant",
-    desc: "Starting now, reveal one still-unknown position on each of your turns for the rest of the round.",
-    short: "Reveal an unknown position on each turn for the rest of the round.",
+    desc: "Starting now, reveal one random still-unknown position on each of your turns for the rest of the round.",
+    short: "Reveal a random unknown position on each turn for the rest of the round.",
     icon: "flashlight",
     emoji: "🔦",
     color: "#34D399"

@@ -42,10 +42,14 @@ function _dailyRoleLabel(config) {
 
 // Same navigator.share() -> clipboard fallback -> toast pattern as
 // invite.js's shareOrCopyInviteLink, just with a Wordle-style result
-// summary instead of a join link.
-async function _shareDailyResult(config, r) {
-  const modeLabel = _dailyModeLabel(config.playMode);
+// summary instead of a join link. Deliberately terse: just the
+// difference and the AI's difficulty, not mode/time/individual scores.
+function _formatDailyDiff(n) {
+  const value = Number(n) || 0;
+  return value > 0 ? `+${value}` : `${value}`;
+}
 
+async function _shareDailyResult(config, r) {
   let scoreLine;
   if (r?.abandoned) {
     // An abandoned attempt never recorded a score (see
@@ -54,21 +58,21 @@ async function _shareDailyResult(config, r) {
     scoreLine = "Didn't finish this one.";
   } else if (config.playMode === "both") {
     const diff = r.scoreDifference ?? 0;
-    const outcome = diff > 0 ? "Won" : diff < 0 ? "Lost" : "Tied";
-    scoreLine = `Setter ${r.setterScore ?? 0} · Guesser ${r.guesserScore ?? 0} (diff ${diff > 0 ? "+" : ""}${diff}) — ${outcome}`;
+    scoreLine = diff === 0 ? "Tied" : _formatDailyDiff(diff);
   } else if (config.playMode === "setter") {
-    scoreLine = `Secretkeeper score: ${r.setterScore ?? 0}`;
+    // No AI counterpart score exists in single-role mode (see the "no
+    // winner/loser language" note on the result screen below) -- the
+    // signed number here is just the raw score, not a real difference.
+    scoreLine = _formatDailyDiff(r.setterScore ?? 0);
   } else {
-    scoreLine = `Guesser score: ${r.guesserScore ?? 0}`;
+    scoreLine = _formatDailyDiff(r.guesserScore ?? 0);
   }
 
   const diffLabel = !r?.abandoned && r?.difficulty ? ` vs ${dailyDifficultyMeta(r.difficulty).label} AI` : "";
-  const timeLine = !r?.abandoned ? ` — ${formatDailyTime(r.time)}${diffLabel}` : "";
 
   const text = [
     `Vowel Play — Daily Challenge ${config.date}`,
-    `${modeLabel}${timeLine}`,
-    scoreLine,
+    `${scoreLine}${diffLabel}`,
     location.origin
   ].join("\n");
 
