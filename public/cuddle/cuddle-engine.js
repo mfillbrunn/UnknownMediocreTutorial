@@ -435,10 +435,14 @@
 
         case "fakeFeedback": {
           // Reuses the multiplayer Falsify Intel idea: the colours lie, so
-          // nothing seen here can be trusted or learned from.
-          const shown = feedback.map(() => {
-            const roll = this.random();
-            return roll < 0.34 ? "green" : roll < 0.67 ? "yellow" : "grey";
+          // nothing seen here can be trusted or learned from. Picking
+          // independently of the truth (the old behaviour) let a "lie" land
+          // on the real colour by chance about a third of the time -- pick
+          // only from the two colours that are NOT the true one instead, so
+          // it is always actually wrong.
+          const shown = feedback.map(trueResult => {
+            const options = ["green", "yellow", "grey"].filter(colour => colour !== trueResult);
+            return options[Math.floor(this.random() * options.length)];
           });
           return { shown, learn: unknown(), counts: null, fake: true };
         }
@@ -933,6 +937,9 @@
 
       // Boss constraints sit between the true feedback and both what the
       // board shows and what the player is allowed to learn from it.
+      // Captured before guessesUsed increments below, so it reflects
+      // whether the constraint applied to THIS guess specifically.
+      const bossActiveThisGuess = this._bossActive();
       const masked = this._applyBossFeedback(word, feedback);
       if (masked.shown.some(result => result === "unknown")) this._markUnknownGlyphs(word);
       this._updateKnowledge(word, masked.learn);
@@ -956,6 +963,10 @@
         bossCounts: masked.counts || null,
         deferred: Boolean(masked.deferred),
         fakeFeedback: Boolean(masked.fake),
+        // Whether the active boss's constraint actually applied to this
+        // specific guess -- a boss's window can end mid-round, so later
+        // guesses in the same boss round are ordinary again.
+        bossActive: bossActiveThisGuess,
         scoreDelta,
         yellowCount,
         greenCount,

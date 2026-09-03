@@ -414,11 +414,22 @@
       // Count Only replaces the row's score with the only thing it tells you:
       // how many greens and yellows the guess actually hit.
       const counts = history?.bossCounts;
+      // Every other boss round never scores (scoreDelta is always 0 there),
+      // so a plain "+0" told the player nothing -- show instead whether the
+      // boss's constraint actually applied to this specific guess. Its
+      // window can end mid-round, so later guesses go back to normal.
+      const bossBadge = state.boss && history && !counts
+        ? (history.bossActive
+            ? `<span class="cuddle-row-score is-boss-active" title="${escapeHtml(state.boss.title || "Boss power")} applied to this guess">${escapeHtml(state.boss.icon || "⚡")}</span>`
+            : `<span class="cuddle-row-score is-boss-inactive" title="${escapeHtml(state.boss.title || "Boss power")} no longer applies to this guess">—</span>`)
+        : null;
       const score = counts
         ? `<span class="cuddle-row-score is-counts" title="${counts.green} green, ${counts.yellow} yellow">🟩${counts.green} 🟨${counts.yellow}</span>`
-        : history
-          ? `<span class="cuddle-row-score ${history.scoreDelta < 0 ? "is-negative" : ""}">${history.scoreDelta >= 0 ? "+" : ""}${history.scoreDelta}${history.earlyBonus ? `<small> +${history.earlyBonus}</small>` : ""}</span>`
-          : `<span class="cuddle-row-score">${row + 1}</span>`;
+        : bossBadge
+          ? bossBadge
+          : history
+            ? `<span class="cuddle-row-score ${history.scoreDelta < 0 ? "is-negative" : ""}">${history.scoreDelta >= 0 ? "+" : ""}${history.scoreDelta}${history.earlyBonus ? `<small> +${history.earlyBonus}</small>` : ""}</span>`
+            : `<span class="cuddle-row-score">${row + 1}</span>`;
       rows.push(`<div class="cuddle-board-row">${tiles.join("")}${score}</div>`);
     }
     return `<section class="cuddle-board" aria-label="Guess board">${rows.join("")}</section>`;
