@@ -287,21 +287,37 @@
                 : `<span class="cuddle-detail-badge is-goal"><b>Round ${state.round}/${scoringRounds()}</b> Goal ${target}</span>
               <span class="cuddle-detail-badge"><b>Still needed</b> ${needed}</span>`}
               <span class="cuddle-detail-badge"><b>Draw / discard</b> ${drawPile} / ${recyclable}</span>
-              <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> +${rules.yellowPoints}</span>
-              <span class="cuddle-detail-badge"><b>Green</b> +${rules.greenPoints}</span>
-              <span class="cuddle-detail-badge is-grey"><b>Grey</b> 0</span>
-              <span class="cuddle-detail-badge"><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
-              <span class="cuddle-detail-badge"><b>Unused mulligan</b> +${rules.mulliganPoints}</span>
-              <span class="cuddle-detail-badge"><b>Quest</b> +${rules.questPoints}</span>
             </div>
             ${renderProgress(state)}
-            ${renderQuestClock(state, rules)}
+
+            <div class="cuddle-stat-group">
+              <h3 class="cuddle-stat-group-title">Stats</h3>
+              <div class="cuddle-detail-badges">
+                <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> +${rules.yellowPoints}</span>
+                <span class="cuddle-detail-badge is-green"><b>Green</b> +${rules.greenPoints}</span>
+                <span class="cuddle-detail-badge is-grey"><b>Grey</b> 0</span>
+                <span class="cuddle-detail-badge"><b>Guesses left</b> ${Math.max(0, window.CuddleEngine.MAX_GUESSES - state.guessesUsed)}</span>
+                <span class="cuddle-detail-badge"><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
+                <span class="cuddle-detail-badge"><b>Unused mulligan</b> +${rules.mulliganPoints}</span>
+                <span class="cuddle-detail-badge"><b>Quest</b> +${rules.questPoints}</span>
+              </div>
+            </div>
+
+            <div class="cuddle-stat-group">
+              <h3 class="cuddle-stat-group-title">Loadout</h3>
+              <div class="cuddle-detail-badges">
+                <span class="cuddle-detail-badge"><b>Hand size</b> ${rules.handSize}</span>
+                <span class="cuddle-detail-badge"><b>Mulligans</b> ${state.mulligansLeft}/${rules.mulligans} · up to ${rules.mulliganSize}</span>
+                <span class="cuddle-detail-badge"><b>Quest every</b> ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}</span>
+              </div>
+            </div>
+
+            ${renderActiveQuest(state)}
           </section>` : ""}
 
         <main class="cuddle-play-area">
           <section class="cuddle-left-column">
             ${renderBossBanner(state)}
-            ${renderActiveQuest(state)}
             ${renderBoard(state)}
           </section>
           <section class="cuddle-right-column">
@@ -366,26 +382,6 @@
           <span class="cuddle-eyebrow">${fulfilled ? "QUEST READY" : `TURN ${state.guessesUsed + 1} QUEST`}</span>
           <h2>${escapeHtml(state.activeQuest.title)}</h2>
           <p>${escapeHtml(state.activeQuest.description)}</p>
-        </div>
-      </article>`;
-  }
-
-  function renderQuestClock(state, rules) {
-    const currentGuess = state.guessesUsed + 1;
-    let trigger = currentGuess + (state.activeQuest ? 1 : 0);
-    while (trigger <= state.maxGuesses && (trigger < rules.questCadence || trigger % rules.questCadence !== 0)) trigger += 1;
-    const copy = trigger <= state.maxGuesses
-      ? `${state.activeQuest ? "Quest active now. " : ""}Next quest appears on guess ${trigger}.`
-      : state.activeQuest
-        ? "Quest active now. No more quests are scheduled this round."
-        : "No more scheduled quests this round.";
-    return `
-      <article class="cuddle-quest cuddle-quest-clock">
-        <div class="cuddle-quest-icon" aria-hidden="true">○</div>
-        <div>
-          <span class="cuddle-eyebrow">QUEST CLOCK</span>
-          <h2>Every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}</h2>
-          <p>${escapeHtml(copy)}</p>
         </div>
       </article>`;
   }
