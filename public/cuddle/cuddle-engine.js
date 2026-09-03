@@ -2279,13 +2279,6 @@
       title: "Wide Margins",
       description: "See one additional between-round upgrade choice. Stacks up to two times.",
       max: 2
-    },
-    {
-      id: "mulliganEcho",
-      icon: "🪶",
-      title: "Second Draft",
-      description: "Start every scoring round with one additional mulligan.",
-      max: 1
     }
   ]);
   const CUDDLE_V3_SYNERGIES = Object.freeze([
@@ -2312,12 +2305,6 @@
       icon: "🖋️",
       title: "Endless Margins",
       description: "Wide Margins + Reward Refresh: quest reward screens show one extra option."
-    },
-    {
-      id: "secondEdition",
-      icon: "📚",
-      title: "Second Edition",
-      description: "Second Thoughts + Second Draft: gain one more mulligan in every scoring round."
     }
   ]);
 
@@ -2349,6 +2336,21 @@
     const savedBonuses = state.cuddleBonuses && typeof state.cuddleBonuses === "object"
       ? state.cuddleBonuses
       : {};
+    // Second Draft (mulliganEcho) and the Second Edition synergy it could
+    // unlock both just gave +1 mulligan/round -- the same effect as Second
+    // Thoughts (extraMulligans) -- so they're folded into that single
+    // reward now. Neither key is in CUDDLE_V3_CUSTOM_REWARDS/
+    // CUDDLE_V3_SYNERGIES any more, so a save that already earned them
+    // gets that value migrated into extraMulligans here, once, before the
+    // rebuild below would otherwise silently drop it.
+    const legacyMulliganEcho = Math.max(0, Math.floor(Number(savedBonuses.mulliganEcho) || 0));
+    const legacySecondEdition = Array.isArray(state.rewardSynergies)
+      && state.rewardSynergies.includes("secondEdition") ? 1 : 0;
+    if (legacyMulliganEcho || legacySecondEdition) {
+      state.upgrades = state.upgrades || {};
+      state.upgrades.extraMulligans = Number(state.upgrades.extraMulligans || 0)
+        + legacyMulliganEcho + legacySecondEdition;
+    }
     state.cuddleBonuses = {};
     CUDDLE_V3_CUSTOM_REWARDS.forEach(definition => {
       const value = Math.max(0, Math.floor(Number(savedBonuses[definition.id]) || 0));
@@ -2462,8 +2464,6 @@
         return Number(bonuses.storybookStart || 0) > 0 && Number(bonuses.openingClue || 0) > 0;
       case "endlessMargins":
         return Number(bonuses.wideChoice || 0) > 0 && Number(upgrades.questRefreshes || 0) > 0;
-      case "secondEdition":
-        return Number(upgrades.extraMulligans || 0) > 0 && Number(bonuses.mulliganEcho || 0) > 0;
       default:
         return false;
     }
@@ -2645,15 +2645,12 @@
     }
   };
 
-  const cuddleV3OriginalGetMulliganAllowance = CuddleGame.prototype.getMulliganAllowance;
-  CuddleGame.prototype.getMulliganAllowance = function getCuddleV3MulliganAllowance() {
-    const base = cuddleV3OriginalGetMulliganAllowance.call(this);
-    const state = cuddleV3EnsureState(this);
-    if (!state || this.isBossRound()) return base;
-    return base
-      + Number(state.cuddleBonuses.mulliganEcho || 0)
-      + Number(cuddleV3HasSynergy(this, "secondEdition"));
-  };
+  // Second Draft (mulliganEcho) and the Second Edition synergy it could
+  // unlock used to add on top of the base getMulliganAllowance here, but
+  // they gave the exact same +1-mulligan-per-round effect as Second
+  // Thoughts (extraMulligans) -- folded into that single reward now, so
+  // getMulliganAllowance needs no V3 override; the base implementation
+  // (which already reads extraMulligans) is the whole story.
 
   const cuddleV3OriginalBeginRound = CuddleGame.prototype._beginRound;
   CuddleGame.prototype._beginRound = function beginCuddleV3Round() {
