@@ -12,6 +12,7 @@ function opponentObscuredThisGuess(state, entry) {
     entry.confuseApplied ||    // Blue Mode / Confuse Colors
     entry.countOnlyApplied ||  // Counts Only
     entry.fakeFeedback ||      // Falsify Intel
+    entry.feedbackLieApplied ||// Feedback Lie
     entry.blindGuessApplied || // Total Blackout
     (state.powers.delayedIntelUsed &&
       state.powers.delayedIntelRoundIndex === entry.roundIndex) // Delayed Clue

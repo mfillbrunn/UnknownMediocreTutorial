@@ -48,6 +48,15 @@ window.POWER_METADATA = {
     color: "#6B7280"
   },
 
+  feedbackLie: {
+    label: "Feedback Lie",
+    desc: "The Secretkeeper makes every tile in the Guesser's next result show a false color. Nothing in the row can be trusted, and the keyboard shows only \"?\" for those letters since no real info was learned.",
+    short: "Every tile in the Guesser's next result shows a false color.",
+    icon: "mask",
+    emoji: "🤥",
+    color: "#6B7280"
+  },
+
   rouletteSecret: {
     label: "Secret Spin",
     desc: "The Guesser forces the Secretkeeper's next secret word to be picked completely at random, so the Secretkeeper can't hand-pick something extra tricky.",

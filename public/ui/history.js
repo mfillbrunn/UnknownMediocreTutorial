@@ -33,6 +33,17 @@ function computeTileClassKey({isSetter, entryRoundIndex, guessIndex, bsIdx, bsRo
     classes.push("tile-erased");
     return classes.join(" ");
   }
+  // Feedback Lie: every tile the guesser sees is a clean, fully-wrong
+  // color (see feedbackLieServer.js's entry.feedbackLie side channel) --
+  // rendered as a plain colored tile like a real result, since the whole
+  // point is that it reads as trustworthy. fbGuesser itself stays "❓"
+  // (handled by the erased/uncertain fallback below) so the keyboard and
+  // any AI reasoning never treat the lie as real evidence.
+  if (!isSetter && Array.isArray(safeEntry.feedbackLie)) {
+    const lieFb = safeEntry.feedbackLie[guessIndex];
+    classes.push(`tile-${fbToClass(lieFb) || "gray"}`);
+    return classes.join(" ");
+  }
   // Faithful fbComposite branch
 if (!isSetter && safeEntry.fakeFeedback?.entry1 && safeEntry.fakeFeedback?.entry2) {
   const fb1 = safeEntry.fakeFeedback.entry1[guessIndex];
@@ -117,11 +128,17 @@ function buildHistoryRenderState(state, role) {
         tile.classKey = `${tile.classKey} tile-guesser-hidden`;
       }
     }
+    // Feedback Lie: unlike Count Only, the tiles themselves already show
+    // real-looking (but false) colors -- nothing to hide -- so this only
+    // adds the row note that makes the deception legible instead of
+    // reading as a genuine result.
+    const feedbackLieInfo = !!safeEntry.feedbackLieApplied;
 
     rows.push({
       key: entry.__historyKey,
       evaluated: !!safeEntry.extraInfo,
       countOnlyInfo,
+      feedbackLieInfo,
       tiles
     });
   }
@@ -285,6 +302,7 @@ function rowsEqual(a, b) {
     if (a.countOnlyInfo.greens !== b.countOnlyInfo.greens) return false;
     if (a.countOnlyInfo.yellows !== b.countOnlyInfo.yellows) return false;
   }
+  if (!!a.feedbackLieInfo !== !!b.feedbackLieInfo) return false;
   for (let i = 0; i < 5; i++) {
     if (a.tiles[i].letter   !== b.tiles[i].letter || a.tiles[i].classKey !== b.tiles[i].classKey) return false;
   }
@@ -310,6 +328,20 @@ function createCountOnlyBadge({ greens, yellows }) {
   return badge;
 }
 
+// Feedback Lie note, anchored beside its row the same way the Count Only
+// tally is -- there's no count to show, just a flag that every tile in
+// this row is a false color rather than a genuine result.
+function createFeedbackLieBadge() {
+  const badge = document.createElement("div");
+  badge.className = "feedback-lie-badge";
+  badge.innerHTML = `
+    <span class="feedback-lie-chip">
+      <span class="feedback-lie-chip-dot">!</span>
+      <span class="feedback-lie-chip-label">Lie</span>
+    </span>
+  `;
+  return badge;
+}
 
 
 
@@ -352,6 +384,12 @@ function createHistoryRowDOM(row) {
   if (row.countOnlyInfo) {
     anchor.appendChild(
       createCountOnlyBadge(row.countOnlyInfo)
+    );
+  }
+
+  if (row.feedbackLieInfo) {
+    anchor.appendChild(
+      createFeedbackLieBadge()
     );
   }
 
@@ -426,6 +464,20 @@ function patchHistoryRow(wrap, row) {
     }
   } else {
     badge?.remove();
+  }
+
+  const feedbackLieBadge = anchor?.querySelector(
+    ".feedback-lie-badge"
+  );
+
+  if (row.feedbackLieInfo) {
+    if (!feedbackLieBadge) {
+      anchor?.appendChild(
+        createFeedbackLieBadge()
+      );
+    }
+  } else {
+    feedbackLieBadge?.remove();
   }
 }
 
@@ -633,6 +685,14 @@ function getSetterTileClasses(safeEntry, guessIndex, isBlindSpot) {
     if (secondaryFb) {
       secondaryClass = fbToClass(secondaryFb);
     }
+  }
+  // --- Case 1b: Feedback Lie -- show the setter what the guesser was
+  // shown, same as fakeFeedback's ambiguity hint above, since the lie is
+  // always a single clean color (never equal to the truth by construction
+  // -- see feedbackLieServer.js's buildLieFeedback). ---
+  const lieFb = safeEntry.feedbackLie?.[guessIndex];
+  if (lieFb && lieFb !== trueFb) {
+    secondaryClass = fbToClass(lieFb);
   }
   // --- Case 2: guesser sees special feedback (blue) ---
   const guesserFb = safeEntry.fbGuesser?.[guessIndex];

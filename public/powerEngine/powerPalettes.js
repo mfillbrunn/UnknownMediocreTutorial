@@ -29,6 +29,12 @@ window.POWER_PALETTES = Object.freeze({
     "#64748B"
   ],
 
+  feedbackLie: [
+    "#EF4444",
+    "#64748B",
+    "#A855F7"
+  ],
+
   rouletteSecret: [
     "#A855F7",
     "#FACC15",

@@ -288,7 +288,7 @@
                 <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}</span>
                 <span class="cuddle-detail-badge is-green"><b>Green</b> ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}</span>
                 <span class="cuddle-detail-badge is-grey"><b>Grey</b> ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}</span>
-                <span class="cuddle-detail-badge"><b>Guesses left</b> ${Math.max(0, window.CuddleEngine.MAX_GUESSES - state.guessesUsed)}</span>
+                <span class="cuddle-detail-badge"><b>Guesses left</b> ${Math.max(0, (state.maxGuesses || window.CuddleEngine.MAX_GUESSES) - state.guessesUsed)}</span>
                 <span class="cuddle-detail-badge"><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
                 <span class="cuddle-detail-badge"><b>Unused mulligan</b> +${rules.mulliganPoints}</span>
                 <span class="cuddle-detail-badge"><b>Quest</b> +${rules.questPoints}</span>
@@ -329,10 +329,16 @@
   function renderBossBanner(state) {
     const boss = state.boss;
     if (!boss) return "";
+    // Short Hand's constraint (fewer letters, fewer guesses) isn't a
+    // guess-window feedback mask -- boss.turns is meaningless for it (see
+    // _bossActive in the engine), so treat it as always "on" instead of
+    // reading a countdown out of a field that doesn't describe anything
+    // real for this boss.
+    const isWholeRound = boss.id === "shortHand";
     const turns = Number(boss.turns) || 0;
     const remaining = Math.max(0, turns - (state.guessesUsed || 0));
-    const stillOn = remaining > 0;
-    const scope = turns >= (state.maxGuesses || 6)
+    const stillOn = isWholeRound || remaining > 0;
+    const scope = isWholeRound || turns >= (state.maxGuesses || 6)
       ? "All round"
       : stillOn
         ? `${remaining} guess${remaining === 1 ? "" : "es"} left under this`
@@ -414,11 +420,22 @@
       // Count Only replaces the row's score with the only thing it tells you:
       // how many greens and yellows the guess actually hit.
       const counts = history?.bossCounts;
+      // Every other boss round never scores (scoreDelta is always 0 there),
+      // so a plain "+0" told the player nothing -- show instead whether the
+      // boss's constraint actually applied to this specific guess. Its
+      // window can end mid-round, so later guesses go back to normal.
+      const bossBadge = state.boss && history && !counts
+        ? (history.bossActive
+            ? `<span class="cuddle-row-score is-boss-active" title="${escapeHtml(state.boss.title || "Boss power")} applied to this guess">${escapeHtml(state.boss.icon || "⚡")}</span>`
+            : `<span class="cuddle-row-score is-boss-inactive" title="${escapeHtml(state.boss.title || "Boss power")} no longer applies to this guess">—</span>`)
+        : null;
       const score = counts
         ? `<span class="cuddle-row-score is-counts" title="${counts.green} green, ${counts.yellow} yellow">🟩${counts.green} 🟨${counts.yellow}</span>`
-        : history
-          ? `<span class="cuddle-row-score ${history.scoreDelta < 0 ? "is-negative" : ""}">${history.scoreDelta >= 0 ? "+" : ""}${history.scoreDelta}${history.earlyBonus ? `<small> +${history.earlyBonus}</small>` : ""}</span>`
-          : `<span class="cuddle-row-score">${row + 1}</span>`;
+        : bossBadge
+          ? bossBadge
+          : history
+            ? `<span class="cuddle-row-score ${history.scoreDelta < 0 ? "is-negative" : ""}">${history.scoreDelta >= 0 ? "+" : ""}${history.scoreDelta}${history.earlyBonus ? `<small> +${history.earlyBonus}</small>` : ""}</span>`
+            : `<span class="cuddle-row-score">${row + 1}</span>`;
       rows.push(`<div class="cuddle-board-row">${tiles.join("")}${score}</div>`);
     }
     return `<section class="cuddle-board" aria-label="Guess board">${rows.join("")}</section>`;

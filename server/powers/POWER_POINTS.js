@@ -22,6 +22,7 @@ const SETTER_POWER_POINTS = {
   forceGuess: 2,        // Force a Move — random restriction on next guess
   blindGuess: 3,        // Total Blackout — hides ALL feedback for a guess
   fakeFeedback: 3,      // Falsify Intel — guesser sees a real + a fake feedback
+  feedbackLie: 3,       // Feedback Lie — every tile in the next result is a clean lie
   revealPenalty: 2,     // Marked Weakness — bonus points when the revealed letter is true
   delayedIntel: 1.5,    // Delayed Intel — one-time use, delays a single round's feedback
   forceTimer: 1.5       // Time Pressure — short clock on Guesser's next guess

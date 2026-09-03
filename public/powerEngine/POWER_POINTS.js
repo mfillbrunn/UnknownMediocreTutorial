@@ -15,6 +15,7 @@ window.SETTER_POWER_POINTS = {
   forceGuess: 2,
   blindGuess: 3,
   fakeFeedback: 3,
+  feedbackLie: 3,
   revealPenalty: 2,
   delayedIntel: 1.5,
   forceTimer: 1.5

@@ -227,9 +227,15 @@
         ? state.upgradeChoices.filter(choice => choice?.id !== "startingHand" && choice?.id !== "exchangeReduction")
         : [];
       state.deferredRewards = Array.isArray(state.deferredRewards) ? state.deferredRewards : [];
+      state.pendingPositionPeek = Boolean(state.pendingPositionPeek);
       state.buffs = { greyShield: 0, ...(state.buffs || {}) };
       state.serial = Number.isFinite(state.serial) ? state.serial : 0;
-      state.maxGuesses = MAX_GUESSES;
+      // Short Hand shortens this to 4 for its round -- a save reloaded
+      // mid-round used to have this unconditionally reset back to 6 here,
+      // silently undoing the boss's guess cap the moment the page reopened.
+      state.maxGuesses = Number.isFinite(state.maxGuesses) && state.maxGuesses > 0
+        ? state.maxGuesses
+        : MAX_GUESSES;
       state.milestonesClaimed = Number.isFinite(state.milestonesClaimed) ? state.milestonesClaimed : 0;
       state.pendingMilestones = Number.isFinite(state.pendingMilestones) ? state.pendingMilestones : 0;
       state.boss = state.boss && typeof state.boss === "object" ? state.boss : null;
@@ -320,6 +326,7 @@
         pendingMilestones: 0,
         milestonesClaimed: 0,
         deferredRewards: [],
+        pendingPositionPeek: false,
         upgrades: { ...DEFAULT_UPGRADES },
         buffs: { greyShield: 0 },
         lastMessage: "Welcome to Cuddle. Build a five-letter word from your hand.",
@@ -380,8 +387,22 @@
     _bossActive() {
       const boss = this.state?.boss;
       if (!boss) return false;
+      // Short Hand's constraint (fewer letters, fewer guesses) isn't a
+      // guess-window feedback mask like the other bosses -- it applies for
+      // the whole round, so it never "lifts" partway through the way a
+      // `turns`-scoped constraint does.
+      if (boss.id === "shortHand") return true;
       const turns = Number(boss.turns) || 0;
       return this.state.guessesUsed < turns;
+    }
+
+    // The real guess cap for the CURRENT round -- ordinarily just
+    // MAX_GUESSES, but Short Hand shortens it to four. Centralized so every
+    // "out of guesses" check agrees with what the board actually shows
+    // (state.maxGuesses), instead of some checks quietly assuming six.
+    _effectiveMaxGuesses() {
+      const value = Number(this.state?.maxGuesses);
+      return Number.isFinite(value) && value > 0 ? value : MAX_GUESSES;
     }
 
     // Turns the true feedback into what the board is allowed to show, plus
@@ -435,10 +456,14 @@
 
         case "fakeFeedback": {
           // Reuses the multiplayer Falsify Intel idea: the colours lie, so
-          // nothing seen here can be trusted or learned from.
-          const shown = feedback.map(() => {
-            const roll = this.random();
-            return roll < 0.34 ? "green" : roll < 0.67 ? "yellow" : "grey";
+          // nothing seen here can be trusted or learned from. Picking
+          // independently of the truth (the old behaviour) let a "lie" land
+          // on the real colour by chance about a third of the time -- pick
+          // only from the two colours that are NOT the true one instead, so
+          // it is always actually wrong.
+          const shown = feedback.map(trueResult => {
+            const options = ["green", "yellow", "grey"].filter(colour => colour !== trueResult);
+            return options[Math.floor(this.random() * options.length)];
           });
           return { shown, learn: unknown(), counts: null, fake: true };
         }
@@ -572,6 +597,29 @@
       state.draft = [];
       state.failureReason = null;
       state.suggestedWord = null;
+
+      // Short Hand: ten random consonants (the secret's own letters are
+      // always protected, or the round would be unwinnable) are pulled from
+      // the deck for THIS round only, and the round itself ends after four
+      // guesses instead of six. Reuses the same removedLetters gate Deep
+      // Cull relies on, so canSubmit()/_baseDeckGlyphs() already treat these
+      // exactly like a permanent removal for as long as they're in the set.
+      state.maxGuesses = MAX_GUESSES;
+      if (state.boss?.id === "shortHand") {
+        const secretLetters = new Set(state.secret.split(""));
+        const alreadyRemoved = new Set(state.removedLetters);
+        const candidates = shuffle(
+          LETTERS.filter(letter => (
+            !VOWELS.has(letter) && !secretLetters.has(letter) && !alreadyRemoved.has(letter)
+          )),
+          this.random
+        );
+        const picked = candidates.slice(0, 10);
+        state.boss.tempRemovedLetters = picked;
+        state.removedLetters = unique([...state.removedLetters, ...picked]).sort();
+        state.maxGuesses = 4;
+      }
+
       this._prepareInitialHand();
 
       const deferred = state.deferredRewards.slice();
@@ -581,6 +629,22 @@
         const message = this._applyRewardEffect(rewardId);
         if (message) messages.push(message);
       });
+
+      // Position Peek, banked at Short Hand's boss-clear (see _clearBoss):
+      // applying it right there would read the secret that was JUST solved
+      // to beat the boss, where every position is already known -- worthless.
+      // NOTE this deliberately does NOT reuse state.deferredRewards -- the
+      // singleplayer rework (UMT_CUDDLE_SINGLEPLAYER_V2 below) repurposed
+      // "rewards apply immediately" and now aggressively clears that array
+      // on every hydrate/beginRound/chooseQuestReward specifically to
+      // guarantee nothing is ever silently banked across a round boundary,
+      // so anything pushed there before this point never survives to here.
+      if (state.pendingPositionPeek) {
+        state.pendingPositionPeek = false;
+        const message = this._revealPositionPeek();
+        if (message) messages.push(message);
+      }
+
       // Free Vowel Sweep (boss reward): one random vowel is tested in every
       // position for free before the first guess, so its greens and greys are
       // already on the board without costing a turn.
@@ -889,7 +953,7 @@
     submitDraft() {
       const validation = this.canSubmit();
       if (!validation.ok) return validation;
-      if (this.state.guessesUsed >= MAX_GUESSES) return { ok: false, error: "No guesses remain." };
+      if (this.state.guessesUsed >= this._effectiveMaxGuesses()) return { ok: false, error: "No guesses remain." };
 
       const word = validation.word;
       const feedback = evaluateFeedback(this.state.secret, word);
@@ -933,6 +997,9 @@
 
       // Boss constraints sit between the true feedback and both what the
       // board shows and what the player is allowed to learn from it.
+      // Captured before guessesUsed increments below, so it reflects
+      // whether the constraint applied to THIS guess specifically.
+      const bossActiveThisGuess = this._bossActive();
       const masked = this._applyBossFeedback(word, feedback);
       if (masked.shown.some(result => result === "unknown")) this._markUnknownGlyphs(word);
       this._updateKnowledge(word, masked.learn);
@@ -956,6 +1023,10 @@
         bossCounts: masked.counts || null,
         deferred: Boolean(masked.deferred),
         fakeFeedback: Boolean(masked.fake),
+        // Whether the active boss's constraint actually applied to this
+        // specific guess -- a boss's window can end mid-round, so later
+        // guesses in the same boss round are ordinary again.
+        bossActive: bossActiveThisGuess,
         scoreDelta,
         yellowCount,
         greenCount,
@@ -1027,7 +1098,7 @@
           score: this.state.score,
           target: this.getTarget()
         };
-      } else if (this.state.guessesUsed >= MAX_GUESSES) {
+      } else if (this.state.guessesUsed >= this._effectiveMaxGuesses()) {
         this.state.pendingRoundEnd = {
           type: "outOfGuesses",
           secret: this.state.secret,
@@ -1041,7 +1112,10 @@
       // lands at once and the unknown pile clears.
       if (this.state.boss?.id === "delayedFeedback" && !this._bossActive()) {
         const released = this._releaseDeferredFeedback();
-        if (released) this._syncInfiniteCards();
+        if (released) {
+          this._syncInfiniteCards();
+          this.drawToHandLimit();
+        }
       }
 
       const scoreParts = [];
@@ -1167,7 +1241,7 @@
     _ensureQuestForNextGuess() {
       if (this.state.status !== "playing" || this.state.activeQuest) return;
       const nextGuess = this.state.guessesUsed + 1;
-      if (nextGuess > MAX_GUESSES) return;
+      if (nextGuess > this._effectiveMaxGuesses()) return;
       const cadence = Math.max(1, 3 - this.state.upgrades.questCadence);
       if (nextGuess < cadence || nextGuess % cadence !== 0) return;
       const feasibleWords = this.getFeasibleWords();
@@ -1231,6 +1305,29 @@
         .filter(index => index !== null);
     }
 
+    // Position Peek's actual effect (reveal one hidden position, promote
+    // that letter to reusable) -- shared so it behaves identically whether
+    // it fires as a regular banked reward or as Short Hand's deferred boss
+    // reward (see _clearBoss/_beginRound: applying it AT boss-clear time
+    // would read the just-solved secret, where every position is already
+    // revealed by the winning guess itself -- worthless -- so _clearBoss
+    // banks it via state.pendingPositionPeek and _beginRound runs it once
+    // the next round's fresh secret exists).
+    _revealPositionPeek() {
+      const hidden = this._hiddenPositions();
+      if (!hidden.length) {
+        const drawn = this._drawRewardCards(2);
+        return `Every position was already known, so you refreshed ${drawn.length} finite card${drawn.length === 1 ? "" : "s"}.`;
+      }
+      const index = hidden[Math.floor(this.random() * hidden.length)];
+      const letter = this.state.secret[index];
+      this.state.revealedPositions[index] = letter;
+      this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
+      this._syncInfiniteCards();
+      this.drawToHandLimit();
+      return `Position ${index + 1} is ${letter}; ${glyphForLetter(letter)} now stays in hand.`;
+    }
+
     _randomHandLetter() {
       if (!this.state.hand.length) return null;
       const card = this.state.hand[Math.floor(this.random() * this.state.hand.length)];
@@ -1292,19 +1389,8 @@
         case "stealthGuess":
           this.state.buffs.greyShield += 1;
           return "Stealth Guess armed: the next guess ignores grey penalties.";
-        case "revealGreen": {
-          const hidden = this._hiddenPositions();
-          if (!hidden.length) {
-            const drawn = this._drawRewardCards(2);
-            return `Every position was already known, so you refreshed ${drawn.length} finite card${drawn.length === 1 ? "" : "s"}.`;
-          }
-          const index = hidden[Math.floor(this.random() * hidden.length)];
-          const letter = this.state.secret[index];
-          this.state.revealedPositions[index] = letter;
-          this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
-          this._syncInfiniteCards();
-          return `Position ${index + 1} is ${letter}; ${glyphForLetter(letter)} now stays in hand.`;
-        }
+        case "revealGreen":
+          return this._revealPositionPeek();
         case "nonsense": {
           const glyphs = this._baseDeckGlyphs().filter(glyph => !this.isInfiniteGlyph(glyph));
           const added = [];
@@ -1323,6 +1409,7 @@
           else {
             this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
             this._syncInfiniteCards();
+            this.drawToHandLimit();
           }
           return `Probe result: ${letter} appears ${count} time${count === 1 ? "" : "s"} in the secret${count ? " and is now stays in hand" : ""}.`;
         }
@@ -1337,6 +1424,7 @@
           this.state.revealedPositions[index] = letter;
           this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
           this._syncInfiniteCards();
+          this.drawToHandLimit();
           return `Position ${index + 1} is ${letter}; ${glyphForLetter(letter)} now stays in hand.`;
         }
         case "letterProfile": {
@@ -1347,6 +1435,7 @@
           else {
             this.state.knownPresent = unique([...this.state.knownPresent, letter]).sort();
             this._syncInfiniteCards();
+            this.drawToHandLimit();
           }
           return `Profile: ${letter} occurs ${count} time${count === 1 ? "" : "s"}${count ? " and is now stays in hand" : ""}.`;
         }
@@ -1371,9 +1460,13 @@
 
       if (pending.type === "outOfGuesses") {
         this.state.status = "lost";
+        // Boss rounds like Short Hand can shorten the cap below the usual
+        // six, so the message has to name the guess count that actually
+        // applied this round rather than assuming it was always six.
+        const guessLimit = this._effectiveMaxGuesses();
         this.state.failureReason = this.isBossRound()
-          ? `The ${this.state.boss.title} boss kept ${pending.secret} hidden for all six guesses.`
-          : `You did not find ${pending.secret} in six guesses.`;
+          ? `The ${this.state.boss.title} boss kept ${pending.secret} hidden for all ${guessLimit} guesses.`
+          : `You did not find ${pending.secret} in ${guessLimit} guesses.`;
         return;
       }
 
@@ -1400,6 +1493,14 @@
     // post-round reward pick. The final boss ends the run instead.
     _clearBoss() {
       const boss = this.state.boss;
+      // Short Hand's ten letters were only ever removed "for this round" --
+      // put them back now that the round is actually over, without
+      // disturbing any permanent removal (e.g. Deep Cull) sitting alongside
+      // them in the same list.
+      if (boss?.tempRemovedLetters?.length) {
+        const temp = new Set(boss.tempRemovedLetters);
+        this.state.removedLetters = (this.state.removedLetters || []).filter(letter => !temp.has(letter));
+      }
       this.state.boss = null;
       this.state.bossesCleared += 1;
       this.state.unknownGlyphs = [];
@@ -1408,7 +1509,18 @@
       this.state.bossGatesDone = unique([...(this.state.bossGatesDone || []), boss?.gate].filter(Boolean));
       this.state.lastClearedBossGate = boss?.gate || null;
 
-      const rewardMessage = this._applyBossReward(boss?.rewardId);
+      // Position Peek can't do anything useful against the secret that was
+      // JUST solved to beat this boss -- bank it instead (via its own flag,
+      // NOT state.deferredRewards -- see _beginRound's note on why that
+      // array is a dead end here), so it actually fires once the next
+      // round's fresh secret exists.
+      let rewardMessage;
+      if (boss?.rewardId === "revealGreen") {
+        this.state.pendingPositionPeek = true;
+        rewardMessage = "Position Peek will reveal a letter once your next round begins.";
+      } else {
+        rewardMessage = this._applyBossReward(boss?.rewardId);
+      }
 
       if (boss?.gate === "final") {
         this.state.status = "won";
@@ -1452,6 +1564,13 @@
         case "freeVowelSweep":
           this.state.upgrades.freeVowelSweep += 1;
           return "Each round now opens with a free vowel sweep.";
+        // revealGreen (Position Peek) is NOT handled here: applying it at
+        // boss-clear time would read the secret that was JUST solved to
+        // beat this boss -- every position is already known by then, so
+        // it's always worthless. _clearBoss banks it via
+        // state.pendingPositionPeek instead, so it actually fires (via
+        // _applyRewardEffect, from _beginRound) once the next round's
+        // fresh secret exists.
         case "questHead":
           this.state.upgrades.questPoints += 10;
           return "Quests are worth 10 more points.";
@@ -1477,7 +1596,7 @@
     // scoring or teaching anything.
     forfeitGuess() {
       if (this.state.status !== "playing") return { ok: false, error: "The round is not running." };
-      if (this.state.guessesUsed >= MAX_GUESSES) return { ok: false, error: "No guesses remain." };
+      if (this.state.guessesUsed >= this._effectiveMaxGuesses()) return { ok: false, error: "No guesses remain." };
 
       this.state.draft = [];
       this.state.guessesUsed += 1;
@@ -1500,7 +1619,7 @@
       this.state.activeQuest = null;
       this.state.lastMessage = "Out of time: that guess was lost.";
 
-      if (this.state.guessesUsed >= MAX_GUESSES) {
+      if (this.state.guessesUsed >= this._effectiveMaxGuesses()) {
         this.state.pendingRoundEnd = {
           type: "outOfGuesses",
           secret: this.state.secret,
@@ -1822,11 +1941,17 @@
     this.state.activeQuest = null;
     this.state.roundIntroPending = true;
     // Don't clobber what the base _beginRound already said: a boss round
-    // announces its own constraint, and the Free Vowel Sweep reward appends
-    // the letter it just tested for free. Only the plain round line is
-    // regenerated here.
+    // announces its own constraint, the Free Vowel Sweep reward appends the
+    // letter it just tested for free, and a banked reward (e.g. Short
+    // Hand's Position Peek, applied here once the fresh secret exists --
+    // see _beginRound) opens with "Banked quest rewards activated". Only
+    // the plain round line is regenerated here.
     const alreadySaid = String(this.state.lastMessage || "");
-    if (!this.isBossRound() && !alreadySaid.includes("Free vowel sweep")) {
+    if (
+      !this.isBossRound() &&
+      !alreadySaid.includes("Free vowel sweep") &&
+      !alreadySaid.includes("Banked quest rewards activated")
+    ) {
       this.state.lastMessage = `Round ${this.state.round}: reach ${this.getTarget()} total points and solve the fixed secret.`;
     }
   };
@@ -1921,6 +2046,7 @@
         return `${glyph}×${count}`;
       });
       this._syncInfiniteCards();
+      this.drawToHandLimit();
       return `Letter Count: ${parts.join(", ")}.`;
     }
 
@@ -2190,6 +2316,11 @@
         return `During the first ${guesses}, the displayed colours lie. Those purple mystery letters stay reusable until reliable feedback resolves them.`;
       case "quickMode":
         return `During the first ${guesses}, you have one minute per guess. The timer switches off when the power window ends.`;
+      case "shortHand":
+        // Not a guess-window constraint like the others -- turns/stage
+        // scaling doesn't apply here, so this ignores the passed-in `turns`
+        // entirely rather than describing a window that doesn't exist.
+        return "Ten random letters are pulled from your deck before this round starts, and you only get four guesses to find the secret.";
       default:
         return `This boss power lasts for the first ${guesses}.`;
     }
@@ -2392,6 +2523,10 @@
     ]).sort();
     cuddleV3RefreshSynergies(this, false);
     this._syncInfiniteCards();
+    if (["playing", "questReward"].includes(state.status)
+        && this.getCountedHandSize() < this.getHandLimit()) {
+      this.drawToHandLimit();
+    }
   };
 
   const cuddleV3OriginalGetMulliganAllowance = CuddleGame.prototype.getMulliganAllowance;
@@ -2466,6 +2601,13 @@
     const boss = state?.boss;
     if (!boss) return;
     const finalBoss = boss.gate === "final";
+    // Short Hand's ten letters were only ever removed "for this round" --
+    // put them back now that the round is actually over, without disturbing
+    // any permanent removal (e.g. Deep Cull) sitting alongside them.
+    if (boss.tempRemovedLetters?.length) {
+      const temp = new Set(boss.tempRemovedLetters);
+      state.removedLetters = (state.removedLetters || []).filter(letter => !temp.has(letter));
+    }
     state.boss = null;
     state.bossesCleared = Number(state.bossesCleared || 0) + 1;
     state.unknownGlyphs = [];
@@ -2483,7 +2625,18 @@
     if (reward.id === "cullRare") {
       reward.description = "Remove two rare letters from the deck and from every future secret.";
     }
-    const rewardMessage = this._applyBossReward(boss.rewardId);
+    // Position Peek can't do anything useful against the secret that was
+    // JUST solved to beat this boss -- bank it instead (via its own flag,
+    // NOT state.deferredRewards -- see _beginRound's note on why that array
+    // is a dead end here), so it actually fires once the next round's fresh
+    // secret exists.
+    let rewardMessage;
+    if (boss.rewardId === "revealGreen") {
+      state.pendingPositionPeek = true;
+      rewardMessage = "Position Peek will reveal a letter once your next round begins.";
+    } else {
+      rewardMessage = this._applyBossReward(boss.rewardId);
+    }
     const record = {
       ...reward,
       bossTitle: boss.title,
@@ -2616,7 +2769,7 @@
   CuddleGame.prototype.submitDraft = function submitCuddleV3Draft() {
     const state = cuddleV3EnsureState(this);
     const validation = this.canSubmit();
-    if (!validation.ok || Number(state.guessesUsed || 0) >= MAX_GUESSES) {
+    if (!validation.ok || Number(state.guessesUsed || 0) >= this._effectiveMaxGuesses()) {
       return cuddleV3OriginalSubmitDraft.call(this);
     }
 

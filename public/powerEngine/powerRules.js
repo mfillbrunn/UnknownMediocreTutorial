@@ -82,7 +82,17 @@ betMiss: {
       return (
         state.phase === "normal" &&
         role === "setter" &&
-        !state.powerUsedThisTurn 
+        !state.powerUsedThisTurn
+      );
+    }
+  },
+  feedbackLie: {
+    once: true,
+    allowed(state, role) {
+      return (
+        state.phase === "normal" &&
+        role === "setter" &&
+        !state.powerUsedThisTurn
       );
     }
   },

@@ -15,6 +15,7 @@ const DEV_SETTER_POWERS = [
   "forceGuess",
   "blindGuess",
   "fakeFeedback",
+  "feedbackLie",
   "revealPenalty",
   "delayedIntel",
   "forceTimer"

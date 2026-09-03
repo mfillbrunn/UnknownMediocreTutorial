@@ -190,7 +190,7 @@ $("showRulesBtn")?.addEventListener("click", () => {
 // from random/draft pools, so none of the three show up here anymore.
 const POWER_LIB_SETTER_POWERS = [
   "hideTile", "suggestSecret", "confuseColors", "countOnly", "blindSpot",
-  "vowelRefresh", "blindGuess", "fakeFeedback",
+  "vowelRefresh", "blindGuess", "fakeFeedback", "feedbackLie",
   "delayedIntel", "forceTimer"
 ];
 const POWER_LIB_GUESSER_POWERS = [

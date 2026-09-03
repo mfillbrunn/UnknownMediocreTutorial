@@ -6,6 +6,7 @@ const POWER_TIERS = Object.freeze({
   confuseColors: { role: "setter", tier: 1 },
   countOnly: { role: "setter", tier: 1 },
   fakeFeedback: { role: "setter", tier: 1 },
+  feedbackLie: { role: "setter", tier: 1 },
   blindGuess: { role: "setter", tier: 2 },
   forceTimer: { role: "setter", tier: 1 },
   delayedIntel: { role: "setter", tier: 2 },
@@ -43,7 +44,7 @@ const ALLOWED_RANDOM_TIERS = Object.freeze({
 // Tier filtering is applied after this list, so it is easy to narrow later.
 const RANDOM_POWER_POOLS = Object.freeze({
   setter: [
-    "confuseColors", "countOnly", "fakeFeedback", "blindGuess",
+    "confuseColors", "countOnly", "fakeFeedback", "feedbackLie", "blindGuess",
     "forceTimer", "delayedIntel", "blindSpot",
     "suggestSecret", "vowelRefresh", "forceGuess", "revealPenalty"
   ],

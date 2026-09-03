@@ -1424,6 +1424,18 @@
   white-space: nowrap;
 }
 
+/* Every other boss round never scores, so this replaces the (always "+0")
+   score with whether the constraint actually applied to this guess. */
+.cuddle-row-score.is-boss-active {
+  color: var(--cuddle-danger);
+  font-size: 1rem;
+}
+
+.cuddle-row-score.is-boss-inactive {
+  color: var(--cuddle-muted);
+  font-size: 0.9rem;
+}
+
 .cuddle-boss-banner {
   align-items: center;
   border-color: rgba(241, 147, 157, 0.5);

@@ -289,6 +289,58 @@ background: color-mix(in srgb, var(--tile-gray) 95%, var(--panel-bg));
   color: var(--tile-yellow-text);
   box-shadow: 0 0 4px color-mix(in srgb, var(--tile-yellow) 65%, transparent);
 }
+
+/* Feedback Lie note — same anchored-tab treatment as the Count Only tally
+   above, but a single chip: there's no count to show, just a flag that
+   every tile in this row is a false color, not a genuine result. */
+.feedback-lie-badge {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+
+  pointer-events: none;
+}
+
+.feedback-lie-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 5px;
+  border-radius: 0 7px 7px 0;
+  border-left: none;
+
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  line-height: 1.5;
+  white-space: nowrap;
+
+  color: var(--setter-color);
+  background: color-mix(in srgb, var(--setter-color) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--setter-color) 45%, transparent);
+}
+
+.feedback-lie-chip-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+
+  background: var(--setter-color);
+  color: #fff;
+  box-shadow: 0 0 4px color-mix(in srgb, var(--setter-color) 65%, transparent);
+}
+
 .history-row .history-tile {
   position: relative;
   display: flex;
