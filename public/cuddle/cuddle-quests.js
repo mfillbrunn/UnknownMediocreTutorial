@@ -139,8 +139,99 @@
       id: "hardModeStreak",
       icon: "🔥",
       title: "Hold the Clues",
-      description: "Reuse every colored letter and obey letter-count limits learned so far.",
-      test: ({ word, history }) => isCuddleHardModeCountCompliant(word, history)
+      description: "Keep every known green in place, move known yellows away from ruled-out positions, and avoid eliminated grey letters.",
+      test: ({
+        word,
+        history = [],
+        knownAbsent = [],
+        knownPresent = [],
+        revealedPositions = []
+      }) => {
+        const candidate = String(word || "").toUpperCase();
+        if (!/^[A-Z]{5}$/.test(candidate)) return false;
+
+        const fixed = Array(5).fill(null);
+        const forbiddenAt = Array.from({ length: 5 }, () => new Set());
+        const minimumCounts = Object.create(null);
+        const greySeen = new Set();
+        const eliminated = new Set(
+          (Array.isArray(knownAbsent) ? knownAbsent : [])
+            .map(letter => String(letter || "").toUpperCase())
+            .filter(letter => /^[A-Z]$/.test(letter))
+        );
+        const present = new Set(
+          (Array.isArray(knownPresent) ? knownPresent : [])
+            .map(letter => String(letter || "").toUpperCase())
+            .filter(letter => /^[A-Z]$/.test(letter))
+        );
+        const requireAtLeast = (letter, count = 1) => {
+          minimumCounts[letter] = Math.max(minimumCounts[letter] || 0, count);
+          present.add(letter);
+          eliminated.delete(letter);
+        };
+
+        (Array.isArray(revealedPositions) ? revealedPositions : []).forEach((rawLetter, index) => {
+          const letter = String(rawLetter || "").toUpperCase();
+          if (!/^[A-Z]$/.test(letter) || index >= fixed.length) return;
+          fixed[index] = letter;
+          requireAtLeast(letter);
+        });
+
+        (Array.isArray(history) ? history : []).forEach(entry => {
+          if (!entry || entry.fakeFeedback) return;
+          const guess = String(entry.word || "").toUpperCase();
+          const shown = Array.isArray(entry.shownFeedback) ? entry.shownFeedback : [];
+          const visible = shown.length
+            ? shown
+            : (Array.isArray(entry.feedback) ? entry.feedback : []);
+          const rowPositiveCounts = Object.create(null);
+
+          for (let index = 0; index < Math.min(5, guess.length); index += 1) {
+            const letter = guess[index];
+            if (!/^[A-Z]$/.test(letter)) continue;
+            const status = visible[index];
+            if (status === "green") {
+              fixed[index] = letter;
+              rowPositiveCounts[letter] = (rowPositiveCounts[letter] || 0) + 1;
+              requireAtLeast(letter);
+            } else if (status === "yellow") {
+              forbiddenAt[index].add(letter);
+              rowPositiveCounts[letter] = (rowPositiveCounts[letter] || 0) + 1;
+              requireAtLeast(letter);
+            } else if (status === "blue") {
+              // Blue confirms presence but intentionally reveals no position.
+              rowPositiveCounts[letter] = (rowPositiveCounts[letter] || 0) + 1;
+              requireAtLeast(letter);
+            } else if (status === "grey") {
+              greySeen.add(letter);
+            }
+          }
+
+          Object.entries(rowPositiveCounts).forEach(([letter, count]) => {
+            requireAtLeast(letter, count);
+          });
+        });
+
+        present.forEach(letter => requireAtLeast(letter));
+        greySeen.forEach(letter => {
+          if (!present.has(letter)) eliminated.add(letter);
+        });
+        present.forEach(letter => eliminated.delete(letter));
+
+        for (let index = 0; index < fixed.length; index += 1) {
+          if (fixed[index] && candidate[index] !== fixed[index]) return false;
+          if (forbiddenAt[index].has(candidate[index])) return false;
+        }
+        if (candidate.split("").some(letter => eliminated.has(letter))) return false;
+
+        const candidateCounts = Object.create(null);
+        candidate.split("").forEach(letter => {
+          candidateCounts[letter] = (candidateCounts[letter] || 0) + 1;
+        });
+        return Object.entries(minimumCounts).every(([letter, count]) => (
+          (candidateCounts[letter] || 0) >= count
+        ));
+      }
     },
     {
       id: "vowelRun",
@@ -346,15 +437,33 @@
     };
   }
 
-  function buildContext(word, secret, history, rareLetters, quest) {
+  function buildContext(word, secret, history, rareLetters, quest, knowledge = {}) {
     const feedback = evaluateFeedback(secret, word);
+    const safeHistory = Array.isArray(history) ? history : [];
     const requiredLetters = [];
-    history.forEach(entry => {
-      entry.word.split("").forEach((letter, index) => {
-        if (entry.feedback[index] !== "grey") requiredLetters.push(letter);
+    safeHistory.forEach(entry => {
+      if (!entry || entry.fakeFeedback) return;
+      const shown = Array.isArray(entry.shownFeedback) ? entry.shownFeedback : [];
+      const visible = shown.length
+        ? shown
+        : (Array.isArray(entry.feedback) ? entry.feedback : []);
+      String(entry.word || "").split("").forEach((letter, index) => {
+        if (["green", "yellow", "blue"].includes(visible[index])) requiredLetters.push(letter);
       });
     });
-    return { word, feedback, history, rareLetters, requiredLetters, quest };
+    return {
+      word,
+      feedback,
+      history: safeHistory,
+      rareLetters,
+      requiredLetters,
+      knownAbsent: Array.isArray(knowledge.knownAbsent) ? knowledge.knownAbsent : [],
+      knownPresent: Array.isArray(knowledge.knownPresent) ? knowledge.knownPresent : [],
+      revealedPositions: Array.isArray(knowledge.revealedPositions)
+        ? knowledge.revealedPositions
+        : [],
+      quest
+    };
   }
 
   function evaluateFeedback(secret, guess) {
@@ -384,7 +493,7 @@
     return result;
   }
 
-  function createQuest({ feasibleWords, secret, history, rareLetters, random = Math.random }) {
+  function createQuest({ feasibleWords, secret, history, rareLetters, knownAbsent = [], knownPresent = [], revealedPositions = [], random = Math.random }) {
     if (!Array.isArray(feasibleWords) || !feasibleWords.length) return null;
     const candidates = [];
 
@@ -401,7 +510,11 @@
       }
       const meta = questMeta(definition, extra);
       const possible = feasibleWords.some(word => definition.test(
-        buildContext(word, secret, history, rareLetters, meta)
+        buildContext(word, secret, history, rareLetters, meta, {
+          knownAbsent,
+          knownPresent,
+          revealedPositions
+        })
       ));
       if (possible) candidates.push(meta);
     });

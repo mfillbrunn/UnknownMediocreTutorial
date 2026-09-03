@@ -287,9 +287,10 @@
                 : `<span class="cuddle-detail-badge is-goal"><b>Round ${state.round}/${scoringRounds()}</b> Goal ${target}</span>
               <span class="cuddle-detail-badge"><b>Still needed</b> ${needed}</span>`}
               <span class="cuddle-detail-badge"><b>Draw / discard</b> ${drawPile} / ${recyclable}</span>
-              <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> +${rules.yellowPoints}</span>
-              <span class="cuddle-detail-badge"><b>Green</b> +${rules.greenPoints}</span>
-              <span class="cuddle-detail-badge is-grey"><b>Grey</b> 0</span>
+              <span class="cuddle-detail-badge"><b>Hand</b> ${rules.handSize} counted</span>
+              <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}</span>
+              <span class="cuddle-detail-badge"><b>Green</b> ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}</span>
+              <span class="cuddle-detail-badge is-grey"><b>Grey</b> ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}</span>
               <span class="cuddle-detail-badge"><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
               <span class="cuddle-detail-badge"><b>Unused mulligan</b> +${rules.mulliganPoints}</span>
               <span class="cuddle-detail-badge"><b>Quest</b> +${rules.questPoints}</span>
@@ -507,7 +508,6 @@
       `is-card-${status}`,
       persistentCard ? "is-infinite" : "",
       VOWEL_SET.has(group.glyph) ? "is-vowel" : "",
-      group.cards.some(card => card.source === "extra") ? "is-extra" : "",
       draftedCount ? "has-drafted" : "",
       selectedCount ? "is-selected" : ""
     ].filter(Boolean).join(" ");
@@ -599,6 +599,7 @@
         <section class="cuddle-modal cuddle-round-intro">
           <span class="cuddle-modal-kicker">ROUND ${state.round} OF ${totalRounds}</span>
           <h2 id="cuddleRoundIntroTitle">Ready for round ${state.round}</h2>
+          <button class="cuddle-btn cuddle-btn-primary cuddle-round-start" data-action="start-round">Start round ${state.round}</button>
           <p>Solve the fixed secret and finish the round at or above the next score target.</p>
           <div class="cuddle-round-intro-stats">
             <div><span>Current score</span><strong>${state.score}</strong></div>
@@ -609,7 +610,6 @@
             <h3>Current modifications</h3>
             <ul>${modifications.map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
           </div>
-          <button class="cuddle-btn cuddle-btn-primary" data-action="start-round">Start round ${state.round}</button>
         </section>
       </div>`;
   }
@@ -679,6 +679,16 @@
   function renderUpgradeOverlay(state) {
     const milestone = state.upgradePhase === "milestone";
     const summary = state.lastRoundSummary;
+    const refreshCost = typeof game.getUpgradeRefreshCost === "function"
+      ? game.getUpgradeRefreshCost()
+      : null;
+    const canRefresh = refreshCost !== null
+      && (refreshCost === 0 || Number(state.score) >= refreshCost);
+    const refreshLabel = refreshCost === 0
+      ? "Refresh choices (free)"
+      : refreshCost === null
+        ? "Refresh unavailable"
+        : `Refresh choices (${refreshCost} points)`;
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
         <section class="cuddle-modal cuddle-modal-wide">
@@ -694,6 +704,12 @@
                 <strong>${escapeHtml(choice.title)}</strong>
                 <small>${escapeHtml(choice.description)}</small>
               </button>`).join("")}
+          </div>
+          <div class="cuddle-upgrade-refresh">
+            <button class="cuddle-btn cuddle-btn-ghost" data-action="refresh-upgrades" ${canRefresh ? "" : "disabled"}>
+              ${escapeHtml(refreshLabel)}
+            </button>
+            <small>The first refresh on each between-round reward screen is free. Later refreshes cost 3, 5, 7, 9, and so on.</small>
           </div>
           <details class="cuddle-upgrade-details">
             <summary>Current run upgrades</summary>
@@ -820,6 +836,7 @@
       mulliganSize: 3,
       yellowPoints: 1,
       greenPoints: 2,
+      greyPoints: 0,
       earlyPoint: 10,
       mulliganPoints: 3,
       questPoints: 0,
@@ -834,9 +851,9 @@
           <div class="cuddle-rules-grid">
             <article><strong>1 · Build, do not type</strong><p>Tap cards in order to make a five-letter word from the existing secret list. Q is its own card; use the always-available U card separately when a word needs QU.</p></article>
             <article><strong>2 · Reuse letters in hand</strong><p>Any letter currently shown in your hand can be tapped more than once while building a word. A, E, I, O, and U are bold, always available, and do not use counted hand slots. Yellow or green consonants stay in hand after a guess.</p></article>
-            <article><strong>3 · Refill five slots</strong><p>You have five counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward five.</p></article>
+            <article><strong>3 · Refill the hand</strong><p>You have ${rules.handSize} counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward ${rules.handSize}.</p></article>
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards.</p></article>
-            <article><strong>5 · Score enough</strong><p>Yellow tiles score +${rules.yellowPoints} and green tiles +${rules.greenPoints}; grey tiles give information but never change your score. Solving early adds +${rules.earlyPoint} for every unused guess, and every mulligan you did not spend is worth +${rules.mulliganPoints}. You must also meet the cumulative round target.</p></article>
+            <article><strong>5 · Score enough</strong><p>Yellow tiles score ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}, green tiles score ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}, and grey tiles score ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}. Solving early adds +${rules.earlyPoint} for every unused guess, and every mulligan you did not spend is worth +${rules.mulliganPoints}. You must also meet the cumulative round target.</p></article>
             <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"} and pay bonus points. Solve the word to choose an upgrade after every round.</p></article>
             <article><strong>7 · Boss rounds</strong><p>Before rounds 4, 7, and 10 -- and once more after round 12 -- you pick one of two bosses. Their powers last for 2, 2, 3, and 4 guesses respectively. A boss round is pass or fail: nothing scores and no target applies, you just have to solve it. Clear any boss to receive its displayed permanent reward; no ordinary upgrade is added afterward.</p></article>
           </div>
@@ -980,6 +997,11 @@
       case "refresh-rewards": {
         const result = game.refreshQuestRewards();
         setUiMessage(result.ok ? "" : result.error);
+        return true;
+      }
+      case "refresh-upgrades": {
+        const result = game.refreshUpgradeChoices();
+        setUiMessage(result.ok ? (result.message || "") : result.error);
         return true;
       }
       default:

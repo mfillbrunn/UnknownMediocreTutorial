@@ -728,6 +728,9 @@
         word,
         feedback,
         history: this.state.history,
+        knownAbsent: this.state.knownAbsent,
+        knownPresent: this.state.knownPresent,
+        revealedPositions: this.state.revealedPositions,
         requiredLetters,
         rareLetters: quest.rareLetters || []
       }));
@@ -894,15 +897,30 @@
       const greenCount = feedback.filter(result => result === "green").length;
       const greyCount = feedback.filter(result => result === "grey").length;
       const shielded = this.state.buffs.greyShield > 0;
-      // Greys are informational and never reduce the Cuddle score. Boss
-      // rounds are pass/fail, so nothing scores in them at all.
-      const bonus = this.state.upgrades.yellowPoints;
+      // Permanent upgrades can change all three tile values. Boss rounds
+      // stay pass/fail, so no tile scores there.
+      const scoringUpgrades = this.state.upgrades || {};
+      const colourBonus = Number(scoringUpgrades.yellowPoints) || 0;
+      const greyValue = Number(scoringUpgrades.greyPoints) || 0;
+      const coloursDisabled = Number(scoringUpgrades.zeroColourPoints) > 0;
+      const yellowValue = coloursDisabled ? 0 : YELLOW_POINTS + colourBonus;
+      const greenValue = coloursDisabled ? 0 : GREEN_POINTS + colourBonus;
       const scoreDelta = this.isBossRound()
         ? 0
-        : yellowCount * (YELLOW_POINTS + bonus) + greenCount * (GREEN_POINTS + bonus);
+        : greyCount * greyValue + yellowCount * yellowValue + greenCount * greenValue;
       if (shielded) this.state.buffs.greyShield -= 1;
 
       const activeQuest = this.state.activeQuest;
+      // Capture clue knowledge before this guess updates it. Otherwise a grey
+      // in the submitted word would incorrectly make the hard-mode quest fail
+      // against the very guess currently being evaluated.
+      const questKnowledge = {
+        knownAbsent: Array.isArray(this.state.knownAbsent) ? this.state.knownAbsent.slice() : [],
+        knownPresent: Array.isArray(this.state.knownPresent) ? this.state.knownPresent.slice() : [],
+        revealedPositions: Array.isArray(this.state.revealedPositions)
+          ? this.state.revealedPositions.slice()
+          : Array(5).fill(null)
+      };
       const draftIds = unique(this.state.draft);
       const draftCards = this.getDraftCards();
       this._discardCards(draftIds);
@@ -963,6 +981,9 @@
           word,
           feedback,
           history: this.state.history,
+          knownAbsent: questKnowledge.knownAbsent,
+          knownPresent: questKnowledge.knownPresent,
+          revealedPositions: questKnowledge.revealedPositions,
           requiredLetters,
           rareLetters: activeQuest.rareLetters || []
         }));
@@ -991,7 +1012,8 @@
               * (EARLY_GUESS_POINTS + this.state.upgrades.earlyRoundPoint);
         const mulliganBonus = this.isBossRound()
           ? 0
-          : Math.max(0, Number(this.state.mulligansLeft) || 0) * UNUSED_MULLIGAN_POINTS;
+          : Math.max(0, Number(this.state.mulligansLeft) || 0)
+              * (UNUSED_MULLIGAN_POINTS + (Number(this.state.upgrades.mulliganPointBonus) || 0));
         entry.earlyBonus = earlyBonus;
         entry.mulliganBonus = mulliganBonus;
         this.state.score += earlyBonus + mulliganBonus;
@@ -1025,7 +1047,10 @@
       const scoreParts = [];
       if (yellowCount) scoreParts.push(`${yellowCount} yellow`);
       if (greenCount) scoreParts.push(`${greenCount} green`);
-      if (greyCount) scoreParts.push(`${greyCount} grey${greyCount === 1 ? "" : "s"}, no penalty`);
+      if (greyCount) {
+        const greyScore = greyCount * greyValue;
+        scoreParts.push(`${greyCount} grey${greyCount === 1 ? "" : "s"}: ${greyScore >= 0 ? "+" : ""}${greyScore}`);
+      }
       if (entry.infiniteUnlocked.length) scoreParts.push(`${entry.infiniteUnlocked.join(", ")} now stays in hand`);
       if (entry.earlyBonus) scoreParts.push(`+${entry.earlyBonus} early bonus`);
       if (entry.mulliganBonus) scoreParts.push(`+${entry.mulliganBonus} unused mulligans`);
@@ -1150,6 +1175,9 @@
         feasibleWords,
         secret: this.state.secret,
         history: this.state.history,
+        knownAbsent: this.state.knownAbsent,
+        knownPresent: this.state.knownPresent,
+        revealedPositions: this.state.revealedPositions,
         rareLetters: this.getRareLetters(),
         random: this.random
       }) || {
@@ -2804,3 +2832,468 @@
     glyphForLetter
   });
 }());
+
+/* UMT_CUDDLE_BALANCE_REFRESH_HARDMODE_V1: ENGINE START */
+(function () {
+  "use strict";
+
+  const Engine = window.CuddleEngine;
+  const CuddleGame = Engine && Engine.CuddleGame;
+  if (!CuddleGame) return;
+
+  const prototype = CuddleGame.prototype;
+  const baseHandSize = Number(Engine.BASE_HAND_SIZE) || 5;
+  const retiredUpgradeIds = new Set(["yellowPoints", "earlyRoundPoint"]);
+  const customUpgradeDefinitions = Object.freeze([
+    {
+      id: "greyPointBoost",
+      key: "greyPointBoost",
+      icon: "G+",
+      title: "Grey Matters",
+      description: "Grey tiles are worth 1 more point. This reward stacks."
+    },
+    {
+      id: "handSizeBoost",
+      key: "handSizeBoost",
+      icon: "H+",
+      title: "Bigger Hand",
+      description: "Increase the counted hand size by 1 for future rounds."
+    },
+    {
+      id: "mulliganValueBoost",
+      key: "mulliganValueBoost",
+      icon: "M+",
+      title: "Mulligan Dividend",
+      description: "Each unused mulligan is worth 5 more points when you solve."
+    },
+    {
+      id: "earlySolveBoost",
+      key: "earlySolveBoost",
+      icon: "E+",
+      title: "Early Finish",
+      description: "Each unused guess is worth 5 more early-solve points."
+    },
+    {
+      id: "colourTrade",
+      key: "colourTrade",
+      icon: "Y/G",
+      title: "Colour Surge",
+      description: "Yellow and green gain 2 points each, but grey loses 1 point. This reward stacks."
+    },
+    {
+      id: "greyscale",
+      key: "greyscale",
+      icon: "GREY",
+      title: "Greyscale",
+      description: "Grey gains 2 points, while yellow and green are reduced to 0 for the run."
+    }
+  ]);
+  const customUpgradeIds = new Set(customUpgradeDefinitions.map(item => item.id));
+  const colourUpgradeIds = new Set(["colourTrade", "greyscale"]);
+  const goldenTempoDefinition = Object.freeze({
+    id: "goldenTempo",
+    icon: "⚡",
+    title: "Golden Tempo",
+    description: "A colour-value reward plus an early-solve reward: every solved scoring round gives +5 points."
+  });
+
+  function finiteNumber(value, fallback = 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function choiceIdentity(choice) {
+    return String(choice?.key || choice?.id || "");
+  }
+
+  function uniqueLines(lines) {
+    return [...new Set((Array.isArray(lines) ? lines : []).filter(Boolean).map(String))];
+  }
+
+  function ensureBalanceState(game) {
+    if (!game || !game.state) return null;
+    const state = game.state;
+    state.upgrades = state.upgrades || {};
+    const upgrades = state.upgrades;
+    upgrades.greyPoints = finiteNumber(upgrades.greyPoints);
+    upgrades.handSizeBonus = Math.max(0, finiteNumber(upgrades.handSizeBonus));
+    upgrades.mulliganPointBonus = finiteNumber(upgrades.mulliganPointBonus);
+    upgrades.earlyRoundPoint = finiteNumber(upgrades.earlyRoundPoint);
+    upgrades.yellowPoints = finiteNumber(upgrades.yellowPoints);
+    upgrades.zeroColourPoints = finiteNumber(upgrades.zeroColourPoints) > 0 ? 1 : 0;
+
+    state.upgradeRefreshesUsed = Math.max(
+      0,
+      Math.floor(finiteNumber(state.upgradeRefreshesUsed))
+    );
+
+    const savedCounts = state.balanceRewardCounts
+      && typeof state.balanceRewardCounts === "object"
+      && !Array.isArray(state.balanceRewardCounts)
+      ? state.balanceRewardCounts
+      : {};
+    state.balanceRewardCounts = {};
+    customUpgradeDefinitions.forEach(definition => {
+      state.balanceRewardCounts[definition.id] = Math.max(
+        0,
+        Math.floor(finiteNumber(savedCounts[definition.id]))
+      );
+    });
+
+    state.rewardBookHistory = (Array.isArray(state.rewardBookHistory)
+      ? state.rewardBookHistory
+      : [])
+      .filter(item => item && typeof item === "object")
+      .slice(-40);
+    state.rewardSynergies = [...new Set(
+      (Array.isArray(state.rewardSynergies) ? state.rewardSynergies : [])
+        .filter(id => typeof id === "string" && id)
+    )];
+    return state;
+  }
+
+  function signed(value) {
+    const number = finiteNumber(value);
+    return number > 0 ? `+${number}` : String(number);
+  }
+
+  function recordCustomReward(game, choice) {
+    const state = ensureBalanceState(game);
+    if (!state || !choice) return;
+    state.rewardBookHistory.push({
+      id: choice.id || "reward",
+      icon: choice.icon || "✨",
+      title: choice.title || "Reward",
+      description: choice.description || "",
+      kind: "round",
+      round: Number(state.round || 1)
+    });
+    state.rewardBookHistory = state.rewardBookHistory.slice(-40);
+  }
+
+  function unlockGoldenTempoIfReady(game) {
+    const state = ensureBalanceState(game);
+    if (!state || state.rewardSynergies.includes(goldenTempoDefinition.id)) return [];
+    const upgrades = state.upgrades;
+    if (!(finiteNumber(upgrades.yellowPoints) > 0 && finiteNumber(upgrades.earlyRoundPoint) > 0)) {
+      return [];
+    }
+    state.rewardSynergies.push(goldenTempoDefinition.id);
+    state.synergyNotice = {
+      icon: "✨",
+      title: "Bonus combination unlocked",
+      message: `${goldenTempoDefinition.icon} ${goldenTempoDefinition.title}: ${goldenTempoDefinition.description}`
+    };
+    return [goldenTempoDefinition];
+  }
+
+  const originalHydrateState = prototype._hydrateState;
+  prototype._hydrateState = function hydrateBalanceState() {
+    if (typeof originalHydrateState === "function") originalHydrateState.call(this);
+    const state = ensureBalanceState(this);
+    if (!state || state.status !== "upgrade" || !Array.isArray(state.upgradeChoices)) return;
+    const invalidSavedChoice = state.upgradeChoices.some(choice => (
+      retiredUpgradeIds.has(choice?.id)
+      || (state.upgrades.zeroColourPoints > 0 && colourUpgradeIds.has(choice?.id))
+    ));
+    if (invalidSavedChoice) state.upgradeChoices = this._generateUpgradeChoices();
+  };
+
+  const originalGetHandLimit = prototype.getHandLimit;
+  prototype.getHandLimit = function getUpgradedHandLimit() {
+    ensureBalanceState(this);
+    const base = typeof originalGetHandLimit === "function"
+      ? finiteNumber(originalGetHandLimit.call(this), baseHandSize)
+      : baseHandSize;
+    return Math.max(1, base + finiteNumber(this.state.upgrades.handSizeBonus));
+  };
+
+  const originalRulesSummary = prototype.getRulesSummary;
+  prototype.getRulesSummary = function getBalancedRulesSummary() {
+    const state = ensureBalanceState(this);
+    const rules = typeof originalRulesSummary === "function"
+      ? (originalRulesSummary.call(this) || {})
+      : {};
+    const upgrades = state?.upgrades || {};
+    const coloursDisabled = upgrades.zeroColourPoints > 0;
+    return {
+      ...rules,
+      handSize: this.getHandLimit(),
+      greyPoints: finiteNumber(upgrades.greyPoints),
+      yellowPoints: coloursDisabled
+        ? 0
+        : finiteNumber(rules.yellowPoints, 1 + finiteNumber(upgrades.yellowPoints)),
+      greenPoints: coloursDisabled
+        ? 0
+        : finiteNumber(rules.greenPoints, 2 + finiteNumber(upgrades.yellowPoints)),
+      earlyPoint: finiteNumber(rules.earlyPoint, 10 + finiteNumber(upgrades.earlyRoundPoint)),
+      mulliganPoints: finiteNumber(rules.mulliganPoints, 3)
+        + finiteNumber(upgrades.mulliganPointBonus)
+    };
+  };
+
+  const originalUpgradeCatalog = prototype._upgradeCatalog;
+  prototype._upgradeCatalog = function getBalancedUpgradeCatalog() {
+    const state = ensureBalanceState(this);
+    const originalChoices = typeof originalUpgradeCatalog === "function"
+      ? originalUpgradeCatalog.call(this)
+      : [];
+    const choices = (Array.isArray(originalChoices) ? originalChoices : []).filter(choice => (
+      !retiredUpgradeIds.has(choice?.id) && !customUpgradeIds.has(choice?.id)
+    ));
+    const additions = customUpgradeDefinitions.filter(definition => (
+      !(state.upgrades.zeroColourPoints > 0 && colourUpgradeIds.has(definition.id))
+    ));
+    return [...choices, ...additions].map(choice => ({
+      ...choice,
+      key: choice.key || choice.id
+    }));
+  };
+
+  const originalChooseUpgrade = prototype.chooseUpgrade;
+  prototype.chooseUpgrade = function chooseBalancedUpgrade(choiceKey) {
+    if (this.state?.status !== "upgrade") {
+      return typeof originalChooseUpgrade === "function"
+        ? originalChooseUpgrade.call(this, choiceKey)
+        : { ok: false, error: "No upgrade choice is open." };
+    }
+    const state = ensureBalanceState(this);
+    const choice = Array.isArray(state.upgradeChoices)
+      ? state.upgradeChoices.find(item => choiceIdentity(item) === String(choiceKey))
+      : null;
+    if (!choice || !customUpgradeIds.has(choice.id)) {
+      return typeof originalChooseUpgrade === "function"
+        ? originalChooseUpgrade.call(this, choiceKey)
+        : { ok: false, error: "That upgrade is not available." };
+    }
+    if (state.upgrades.zeroColourPoints > 0 && colourUpgradeIds.has(choice.id)) {
+      return { ok: false, error: "That colour reward is no longer available after Greyscale." };
+    }
+
+    const upgrades = state.upgrades;
+    switch (choice.id) {
+      case "greyPointBoost":
+        upgrades.greyPoints += 1;
+        break;
+      case "handSizeBoost":
+        upgrades.handSizeBonus += 1;
+        break;
+      case "colourTrade":
+        upgrades.yellowPoints += 2;
+        upgrades.greyPoints -= 1;
+        break;
+      case "greyscale":
+        upgrades.greyPoints += 2;
+        upgrades.yellowPoints = 0;
+        upgrades.zeroColourPoints = 1;
+        break;
+      case "mulliganValueBoost":
+        upgrades.mulliganPointBonus += 5;
+        break;
+      case "earlySolveBoost":
+        upgrades.earlyRoundPoint += 5;
+        break;
+      default:
+        return { ok: false, error: "Unknown upgrade." };
+    }
+
+    state.balanceRewardCounts[choice.id] += 1;
+    recordCustomReward(this, choice);
+    const unlocked = unlockGoldenTempoIfReady(this);
+    state.lastMessage = `${choice.title} acquired.${unlocked.length ? ` ${unlocked.map(item => item.title).join(" + ")} unlocked.` : ""}`;
+    state.upgradeChoices = [];
+    state.upgradePhase = null;
+    state.upgradeMilestone = null;
+    this._advanceRound();
+    this.save();
+    return { ok: true, synergies: unlocked.map(item => item.id) };
+  };
+
+  prototype.getUpgradeRefreshCost = function getUpgradeRefreshCost() {
+    const state = ensureBalanceState(this);
+    const used = state ? state.upgradeRefreshesUsed : 0;
+    return used === 0 ? 0 : used * 2 + 1;
+  };
+
+  prototype.refreshUpgradeChoices = function refreshUpgradeChoices() {
+    if (this.state?.status !== "upgrade") {
+      return { ok: false, error: "No between-round reward choices are open." };
+    }
+    const state = ensureBalanceState(this);
+    const cost = this.getUpgradeRefreshCost();
+    const score = finiteNumber(state.score);
+    if (cost > 0 && cost > score) {
+      return { ok: false, error: `You need ${cost} points to refresh these choices.` };
+    }
+
+    const currentChoices = (Array.isArray(state.upgradeChoices) ? state.upgradeChoices : [])
+      .filter(Boolean);
+    const choiceCount = Math.max(1, currentChoices.length || 3);
+    const currentKey = currentChoices.map(choiceIdentity).sort().join("|");
+    let nextChoices = [];
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      const generated = this._generateUpgradeChoices();
+      nextChoices = (Array.isArray(generated) ? generated : []).filter(Boolean);
+      const nextKey = nextChoices.map(choiceIdentity).sort().join("|");
+      if (nextChoices.length && nextKey !== currentKey) break;
+    }
+
+    let nextKey = nextChoices.map(choiceIdentity).sort().join("|");
+    if (!nextChoices.length || nextKey === currentKey) {
+      const currentKeys = new Set(currentChoices.map(choiceIdentity));
+      const catalogResult = this._upgradeCatalog();
+      const catalog = (Array.isArray(catalogResult) ? catalogResult : [])
+        .filter(Boolean)
+        .map(choice => ({ ...choice, key: choice.key || choice.id }));
+      nextChoices = [
+        ...catalog.filter(choice => !currentKeys.has(choiceIdentity(choice))),
+        ...catalog.filter(choice => currentKeys.has(choiceIdentity(choice)))
+      ].slice(0, choiceCount);
+      nextKey = nextChoices.map(choiceIdentity).sort().join("|");
+    }
+    if (!nextChoices.length || nextKey === currentKey) {
+      return { ok: false, error: "There are no different reward choices available right now." };
+    }
+
+    if (cost > 0) state.score = score - cost;
+    state.upgradeRefreshesUsed += 1;
+    state.upgradeChoices = nextChoices;
+    state.lastMessage = cost === 0
+      ? "Reward choices refreshed for free."
+      : `Reward choices refreshed for ${cost} points.`;
+    this.save();
+    return { ok: true, cost, message: state.lastMessage };
+  };
+
+  const originalAdvanceRound = prototype._advanceRound;
+  prototype._advanceRound = function advanceAfterBalancedUpgrade() {
+    if (this.state) this.state.upgradeRefreshesUsed = 0;
+    return typeof originalAdvanceRound === "function"
+      ? originalAdvanceRound.call(this)
+      : undefined;
+  };
+
+  const originalUpgradeSummary = prototype.getUpgradeSummary;
+  prototype.getUpgradeSummary = function getBalancedUpgradeSummary() {
+    const state = ensureBalanceState(this);
+    const rules = this.getRulesSummary();
+    const removed = state.removedLetters && state.removedLetters.length
+      ? state.removedLetters.join(", ")
+      : "None";
+    const previous = typeof originalUpgradeSummary === "function"
+      ? originalUpgradeSummary.call(this)
+      : [];
+    const replacedPrefixes = [
+      "Counted hand size:",
+      "Tile values:",
+      "Mulligans:",
+      "Yellow value:",
+      "Early value:",
+      "Early solve:",
+      "Quest value:",
+      "Quest cadence:",
+      "Quest refreshes:",
+      "Quest reward refreshes:",
+      "Removed letters:"
+    ];
+    const preserved = (Array.isArray(previous) ? previous : []).filter(line => (
+      !replacedPrefixes.some(prefix => String(line).startsWith(prefix))
+    ));
+    const customLines = customUpgradeDefinitions
+      .filter(definition => state.balanceRewardCounts[definition.id] > 0)
+      .map(definition => (
+        `${definition.icon} ${definition.title} ×${state.balanceRewardCounts[definition.id]}`
+      ));
+    return uniqueLines([
+      `Counted hand size: ${rules.handSize}`,
+      `Tile values: grey ${signed(rules.greyPoints)}, yellow ${signed(rules.yellowPoints)}, green ${signed(rules.greenPoints)}`,
+      `Mulligans: ${rules.mulligans} × up to ${rules.mulliganSize}; ${signed(rules.mulliganPoints)} per unused mulligan`,
+      `Early solve: ${signed(rules.earlyPoint)} per unused guess`,
+      `Quest value: ${signed(rules.questPoints)}`,
+      `Quest cadence: every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}`,
+      `Quest reward refreshes: ${rules.questRefreshes}`,
+      `Removed letters: ${removed}`,
+      ...preserved,
+      ...customLines
+    ]);
+  };
+
+  const originalCurrentModifications = prototype.getCurrentModifications;
+  prototype.getCurrentModifications = function getBalancedCurrentModifications() {
+    const state = ensureBalanceState(this);
+    const upgrades = state.upgrades;
+    let modifications = typeof originalCurrentModifications === "function"
+      ? originalCurrentModifications.call(this)
+      : [];
+    modifications = (Array.isArray(modifications) ? modifications : [])
+      .filter(line => !String(line).startsWith("No run upgrades yet"));
+
+    if (upgrades.handSizeBonus) {
+      modifications.push(`Counted hand size is ${this.getHandLimit()}`);
+    }
+    if (upgrades.greyPoints) {
+      modifications.push(`Grey tiles score ${signed(upgrades.greyPoints)} each`);
+    }
+    if (upgrades.zeroColourPoints) {
+      modifications.push("Yellow and green tiles score 0");
+    }
+    if (upgrades.mulliganPointBonus) {
+      modifications.push(`Unused mulligans are worth +${upgrades.mulliganPointBonus} extra each`);
+    }
+    customUpgradeDefinitions.forEach(definition => {
+      const count = state.balanceRewardCounts[definition.id];
+      if (count) modifications.push(`${definition.icon} ${definition.title} ×${count}`);
+    });
+
+    const unique = uniqueLines(modifications);
+    return unique.length
+      ? unique
+      : ["No run upgrades yet; base Cuddle rules are active."];
+  };
+
+  const originalRewardBook = prototype.getRewardBook;
+  prototype.getRewardBook = function getBalancedRewardBook() {
+    const state = ensureBalanceState(this);
+    const book = typeof originalRewardBook === "function"
+      ? (originalRewardBook.call(this) || {})
+      : {};
+    const existingCustom = Array.isArray(book.customRewards) ? book.customRewards : [];
+    const existingIds = new Set(existingCustom.map(item => item?.id).filter(Boolean));
+    const customRewards = [
+      ...existingCustom,
+      ...customUpgradeDefinitions
+        .filter(definition => !existingIds.has(definition.id))
+        .map(definition => ({
+          ...definition,
+          count: state.balanceRewardCounts[definition.id]
+        }))
+    ];
+    let synergies = (Array.isArray(book.synergies) ? book.synergies : []).map(item => (
+      item?.id === goldenTempoDefinition.id
+        ? { ...item, ...goldenTempoDefinition, unlocked: state.rewardSynergies.includes(item.id) }
+        : item
+    ));
+    if (!synergies.some(item => item?.id === goldenTempoDefinition.id)) {
+      synergies.push({
+        ...goldenTempoDefinition,
+        unlocked: state.rewardSynergies.includes(goldenTempoDefinition.id)
+      });
+    }
+    const history = Array.isArray(book.history)
+      ? book.history
+      : state.rewardBookHistory.slice().reverse();
+    const maximum = Math.max(1, finiteNumber(book.maximum, 16));
+    const progress = Number.isFinite(Number(book.progress))
+      ? Number(book.progress)
+      : Math.min(maximum, history.length + state.rewardSynergies.length);
+    return {
+      ...book,
+      progress,
+      maximum,
+      history,
+      synergies,
+      customRewards
+    };
+  };
+}());
+/* UMT_CUDDLE_BALANCE_REFRESH_HARDMODE_V1: ENGINE END */

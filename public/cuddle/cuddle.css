@@ -1414,12 +1414,6 @@
   line-height: 1;
 }
 
-/* Extra Letters cards are a one-turn bonus sitting outside the counted hand,
-   so they get a tint that marks them as temporary. */
-.cuddle-card.is-extra {
-  box-shadow: inset 0 0 0 2px rgba(139, 232, 210, 0.75), 0 6px 13px rgba(0, 0, 0, 0.15);
-}
-
 /* Count Only replaces the row's points with the only thing it reveals. */
 .cuddle-row-score.is-counts {
   color: var(--cuddle-text);
@@ -1816,3 +1810,46 @@
   }
 }
 /* UMT_CUDDLE_REBALANCE_V3: CSS END */
+
+/* UMT_CUDDLE_BALANCE_REFRESH_HARDMODE_V1: CSS START */
+/* Increase only the five uncommitted board letters; submitted rows stay unchanged. */
+#cuddleScreen .cuddle-tile.is-draft-tile {
+  font-size: clamp(2.25rem, 6.8vw, 3.1rem);
+  line-height: 1;
+}
+
+/* Keep the next-round action visible before the longer round summary. */
+#cuddleScreen .cuddle-round-start {
+  width: 100%;
+  margin: 2px 0 16px;
+}
+
+#cuddleScreen .cuddle-upgrade-refresh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0 0 14px;
+}
+
+#cuddleScreen .cuddle-upgrade-refresh small {
+  flex: 1 1 260px;
+  color: var(--cuddle-muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 650px) {
+  #cuddleScreen .cuddle-tile.is-draft-tile {
+    font-size: clamp(2.1rem, 10.5vw, 2.75rem);
+  }
+
+  #cuddleScreen .cuddle-upgrade-refresh {
+    align-items: stretch;
+  }
+
+  #cuddleScreen .cuddle-upgrade-refresh .cuddle-btn {
+    width: 100%;
+  }
+}
+/* UMT_CUDDLE_BALANCE_REFRESH_HARDMODE_V1: CSS END */
