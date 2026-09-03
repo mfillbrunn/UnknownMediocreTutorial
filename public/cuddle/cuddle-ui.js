@@ -288,7 +288,7 @@
                 <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}</span>
                 <span class="cuddle-detail-badge is-green"><b>Green</b> ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}</span>
                 <span class="cuddle-detail-badge is-grey"><b>Grey</b> ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}</span>
-                <span class="cuddle-detail-badge"><b>Guesses left</b> ${Math.max(0, window.CuddleEngine.MAX_GUESSES - state.guessesUsed)}</span>
+                <span class="cuddle-detail-badge"><b>Guesses left</b> ${Math.max(0, (state.maxGuesses || window.CuddleEngine.MAX_GUESSES) - state.guessesUsed)}</span>
                 <span class="cuddle-detail-badge"><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
                 <span class="cuddle-detail-badge"><b>Unused mulligan</b> +${rules.mulliganPoints}</span>
                 <span class="cuddle-detail-badge"><b>Quest</b> +${rules.questPoints}</span>
@@ -329,10 +329,16 @@
   function renderBossBanner(state) {
     const boss = state.boss;
     if (!boss) return "";
+    // Short Hand's constraint (fewer letters, fewer guesses) isn't a
+    // guess-window feedback mask -- boss.turns is meaningless for it (see
+    // _bossActive in the engine), so treat it as always "on" instead of
+    // reading a countdown out of a field that doesn't describe anything
+    // real for this boss.
+    const isWholeRound = boss.id === "shortHand";
     const turns = Number(boss.turns) || 0;
     const remaining = Math.max(0, turns - (state.guessesUsed || 0));
-    const stillOn = remaining > 0;
-    const scope = turns >= (state.maxGuesses || 6)
+    const stillOn = isWholeRound || remaining > 0;
+    const scope = isWholeRound || turns >= (state.maxGuesses || 6)
       ? "All round"
       : stillOn
         ? `${remaining} guess${remaining === 1 ? "" : "es"} left under this`

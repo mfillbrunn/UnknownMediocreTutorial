@@ -265,12 +265,6 @@
       description: "Gain one additional mulligan for the current round."
     },
     {
-      id: "revealGreen",
-      icon: "📍",
-      title: "Position Peek",
-      description: "Reveal one hidden position and make that letter reusable for this round."
-    },
-    {
       id: "letterProbe",
       icon: "🔎",
       title: "Letter Count",
@@ -346,6 +340,14 @@
       description: "One minute per guess. Run out of time and the guess is lost.",
       turns: 6,
       rewardId: "questHead"
+    },
+    {
+      id: "shortHand",
+      icon: "🥊",
+      title: "Short Hand",
+      description: "Ten random letters are pulled from your deck before this round starts, and you only get four guesses to find the secret.",
+      turns: 0,
+      rewardId: "revealGreen"
     }
   ];
 
@@ -387,6 +389,12 @@
       icon: "🏅",
       title: "Quest Head Start",
       description: "Quests are worth 10 more points for the rest of the run."
+    },
+    {
+      id: "revealGreen",
+      icon: "📍",
+      title: "Position Peek",
+      description: "Reveal one hidden position and make that letter reusable for this round."
     }
   ];
 
