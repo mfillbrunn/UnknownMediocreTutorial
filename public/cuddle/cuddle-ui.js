@@ -252,7 +252,6 @@
     const state = currentState();
     const rules = game.getRulesSummary();
     const target = game.getTarget();
-    const needed = Math.max(0, target - state.score);
     const drawPile = state.deck.length;
     const recyclable = state.discard.length;
     return `
@@ -265,7 +264,7 @@
             <span class="cuddle-eyebrow">SINGLE-PLAYER CAMPAIGN</span>
             <div class="cuddle-header-title-line">
               <h1>CUDDLE</h1>
-              <span class="cuddle-header-score" aria-label="Total score ${state.score}">Score ${state.score}</span>
+              <span class="cuddle-header-score" aria-label="Total score ${state.score}${game.isBossRound() ? "" : `, goal ${target}`}">Score ${state.score}${game.isBossRound() ? "" : ` / ${target}`}</span>
             </div>
           </div>
           <div class="cuddle-header-side cuddle-header-side-right">
@@ -281,28 +280,14 @@
 
         ${detailsOpen ? `
           <section id="cuddleRunDetails" class="cuddle-details-panel" aria-label="Additional run information">
-            <div class="cuddle-detail-badges">
-              ${game.isBossRound()
-                ? `<span class="cuddle-detail-badge is-goal"><b>Boss round</b> Survive it — no score needed</span>`
-                : `<span class="cuddle-detail-badge is-goal"><b>Round ${state.round}/${scoringRounds()}</b> Goal ${target}</span>
-              <span class="cuddle-detail-badge"><b>Still needed</b> ${needed}</span>`}
-              <span class="cuddle-detail-badge"><b>Draw / discard</b> ${drawPile} / ${recyclable}</span>
-              <span class="cuddle-detail-badge"><b>Hand</b> ${rules.handSize} counted</span>
-              <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}</span>
-              <span class="cuddle-detail-badge"><b>Green</b> ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}</span>
-              <span class="cuddle-detail-badge is-grey"><b>Grey</b> ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}</span>
-              <span class="cuddle-detail-badge"><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
-              <span class="cuddle-detail-badge"><b>Unused mulligan</b> +${rules.mulliganPoints}</span>
-              <span class="cuddle-detail-badge"><b>Quest</b> +${rules.questPoints}</span>
-            </div>
             ${renderProgress(state)}
 
             <div class="cuddle-stat-group">
               <h3 class="cuddle-stat-group-title">Stats</h3>
               <div class="cuddle-detail-badges">
-                <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> +${rules.yellowPoints}</span>
-                <span class="cuddle-detail-badge is-green"><b>Green</b> +${rules.greenPoints}</span>
-                <span class="cuddle-detail-badge is-grey"><b>Grey</b> 0</span>
+                <span class="cuddle-detail-badge is-yellow"><b>Yellow</b> ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}</span>
+                <span class="cuddle-detail-badge is-green"><b>Green</b> ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}</span>
+                <span class="cuddle-detail-badge is-grey"><b>Grey</b> ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}</span>
                 <span class="cuddle-detail-badge"><b>Guesses left</b> ${Math.max(0, window.CuddleEngine.MAX_GUESSES - state.guessesUsed)}</span>
                 <span class="cuddle-detail-badge"><b>Early solve</b> +${rules.earlyPoint} per unused guess</span>
                 <span class="cuddle-detail-badge"><b>Unused mulligan</b> +${rules.mulliganPoints}</span>
@@ -316,6 +301,7 @@
                 <span class="cuddle-detail-badge"><b>Hand size</b> ${rules.handSize}</span>
                 <span class="cuddle-detail-badge"><b>Mulligans</b> ${state.mulligansLeft}/${rules.mulligans} · up to ${rules.mulliganSize}</span>
                 <span class="cuddle-detail-badge"><b>Quest every</b> ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}</span>
+                <span class="cuddle-detail-badge"><b>Draw / discard</b> ${drawPile} / ${recyclable}</span>
               </div>
             </div>
 

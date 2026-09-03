@@ -234,47 +234,39 @@
   background: rgba(255, 255, 255, 0.025);
 }
 
+/* Plain "Label: value" rows, RPG character-sheet style -- no pill outlines,
+   just a muted label, a colon, and a plain or colored number. */
 .cuddle-detail-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 6px 16px;
 }
 
 .cuddle-detail-badge {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  min-height: 31px;
-  padding: 7px 10px;
-  border: 1px solid var(--cuddle-border);
-  border-radius: 999px;
-  color: var(--cuddle-muted);
-  background: rgba(255, 255, 255, 0.045);
-  font-size: 0.72rem;
+  display: block;
+  color: var(--cuddle-text);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .cuddle-detail-badge b {
-  color: var(--cuddle-text);
+  color: var(--cuddle-muted);
+  font-weight: 600;
 }
 
-.cuddle-detail-badge.is-goal {
-  border-color: rgba(213, 166, 255, 0.55);
-  color: var(--cuddle-accent);
-  background: rgba(213, 166, 255, 0.1);
+.cuddle-detail-badge b::after {
+  content: ":";
 }
 
 .cuddle-detail-badge.is-yellow {
-  border-color: rgba(215, 173, 63, 0.55);
   color: #f0ca5e;
 }
 
 .cuddle-detail-badge.is-grey {
-  border-color: rgba(170, 166, 178, 0.38);
   color: #c2beca;
 }
 
 .cuddle-detail-badge.is-green {
-  border-color: rgba(75, 166, 106, 0.55);
   color: #6ec888;
 }
 
@@ -1214,12 +1206,12 @@
 }
 
 #cuddleScreen .cuddle-detail-badges {
-  gap: 5px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 4px 12px;
 }
 
 #cuddleScreen .cuddle-detail-badge {
-  min-height: 27px;
-  padding: 5px 8px;
+  font-size: 0.76rem;
 }
 
 #cuddleScreen .cuddle-quest {
