@@ -718,7 +718,7 @@ function setterRewardPool() {
       tier: 2,
       icon: "🟩⇢🟨",
       title: "Fade a Green",
-      description: "Turn one green tile into yellow.",
+      description: "Turn one random green tile into yellow.",
       explanation: "The letter stays known to be present, but its exact position is no longer locked."
     },
     {
@@ -754,7 +754,7 @@ function setterRewardPool() {
       tier: 1,
       icon: "🟨⇄⬛4",
       title: "Trade a Yellow",
-      description: "Give the Guesser one new yellow, but reset four of your gray letters.",
+      description: "Give the Guesser one random new yellow, but reset four random gray letters.",
       explanation: "A calculated risk: one present-letter clue handed over, four absent-letter restrictions erased in return."
     },
     {
@@ -763,7 +763,7 @@ function setterRewardPool() {
       tier: 2,
       icon: "🟩⇄🟨🟨🟨",
       title: "Trade a Green",
-      description: "Give the Guesser one new green, but erase three yellow clues.",
+      description: "Give the Guesser one random new green, but erase three random yellow clues.",
       explanation: "A bigger risk for a bigger reward: one exact-position reveal in exchange for three present-letter clues forgotten."
     },
     {
@@ -816,7 +816,7 @@ function fixedOptions(role, threshold) {
         tier: 1,
         icon: "×2",
         title: "Rule Out Two",
-        description: "Rule out and lock two unused letters that are not in the secret.",
+        description: "Rule out and lock two random unused letters that are not in the secret.",
         explanation: "Both letters are confirmed absent and cannot be used in later Guesser guesses."
       },
       {
