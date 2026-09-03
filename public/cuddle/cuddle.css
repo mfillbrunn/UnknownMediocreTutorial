@@ -517,8 +517,7 @@
   border: 0;
 }
 
-.cuddle-hand-panel,
-.cuddle-action-panel {
+.cuddle-hand-panel {
   padding: 14px;
   border: 1px solid var(--cuddle-border);
   border-radius: 18px;
@@ -656,12 +655,6 @@
   opacity: 0.38;
 }
 
-.cuddle-action-panel {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 9px;
-}
-
 /* Mulligan · Submit · Backspace, left to right, weighted 35/50/15 -- Submit
    is the action taken almost every turn, so it gets the most thumb room. */
 .cuddle-submit-row {
@@ -671,34 +664,33 @@
   margin-bottom: 14px;
 }
 
+/* Mid-mulligan: the Mulligan button expands into Confirm (85%), and Cancel
+   takes Backspace's old slot (15%) -- same row, no separate panel. */
+.cuddle-submit-row.is-mulligan-mode {
+  grid-template-columns: minmax(0, 85fr) minmax(0, 15fr);
+}
+
 .cuddle-mulligan {
   padding-inline: 4px;
 }
 
 .cuddle-mulligan span {
+  color: var(--cuddle-text);
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+/* The confirm button's span is a whole phrase ("2/3 selected"), not a bare
+   count, so it keeps the smaller muted sub-label treatment. */
+.cuddle-mulligan-confirm span {
   color: var(--cuddle-muted);
   font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .cuddle-backspace {
   padding-inline: 0;
   font-size: 1.3rem;
-}
-
-.cuddle-action-panel.is-selecting {
-  grid-template-columns: minmax(160px, 1fr) auto auto;
-  align-items: center;
-  border-color: rgba(213, 166, 255, 0.42);
-}
-
-.cuddle-action-panel.is-selecting > div {
-  display: grid;
-  gap: 3px;
-}
-
-.cuddle-action-panel.is-selecting span {
-  color: var(--cuddle-muted);
-  font-size: 0.72rem;
 }
 
 .cuddle-btn {
@@ -1030,10 +1022,6 @@
     width: min(430px, 100%);
     box-shadow: none;
   }
-
-  .cuddle-action-panel {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 650px) {
@@ -1099,10 +1087,6 @@
 
   .cuddle-card span {
     font-size: 1rem;
-  }
-
-  .cuddle-action-panel.is-selecting {
-    grid-template-columns: 1fr;
   }
 
   .cuddle-choice-grid,
@@ -1243,8 +1227,7 @@
   gap: 6px;
 }
 
-#cuddleScreen .cuddle-hand-panel,
-#cuddleScreen .cuddle-action-panel {
+#cuddleScreen .cuddle-hand-panel {
   padding: 10px;
   border-radius: 15px;
 }
@@ -1270,10 +1253,6 @@
 #cuddleScreen .cuddle-submit-row {
   gap: 7px;
   margin-bottom: 9px;
-}
-
-#cuddleScreen .cuddle-action-panel {
-  gap: 6px;
 }
 
 #cuddleScreen .cuddle-btn {
