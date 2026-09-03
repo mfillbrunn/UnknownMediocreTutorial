@@ -329,12 +329,12 @@
   function renderBossBanner(state) {
     const boss = state.boss;
     if (!boss) return "";
-    // Short Hand's constraint (fewer letters, fewer guesses) isn't a
-    // guess-window feedback mask -- boss.turns is meaningless for it (see
-    // _bossActive in the engine), so treat it as always "on" instead of
-    // reading a countdown out of a field that doesn't describe anything
-    // real for this boss.
-    const isWholeRound = boss.id === "shortHand";
+    // Short Hand's constraint (fewer letters, fewer guesses) and Steady
+    // Hand's (no mulligans) aren't guess-window feedback masks --
+    // boss.turns is meaningless for them (see _bossActive in the engine),
+    // so treat them as always "on" instead of reading a countdown out of a
+    // field that doesn't describe anything real for these bosses.
+    const isWholeRound = boss.id === "shortHand" || boss.id === "noMulligans";
     const turns = Number(boss.turns) || 0;
     const remaining = Math.max(0, turns - (state.guessesUsed || 0));
     const stillOn = isWholeRound || remaining > 0;
@@ -655,12 +655,24 @@
   }
   /* UMT_CUDDLE_SINGLEPLAYER_V2: ROUND INTRO END */
   function renderQuestRewardOverlay(state) {
+    // Double Pick (a boss reward) lets the player choose twice from the
+    // same offer instead of once -- questRewardPicksRemaining tracks which
+    // pick this is, so the heading/copy can say so instead of always
+    // reading "choose one" while a second pick is still pending.
+    const totalPicks = state.upgrades?.questDoublePick ? 2 : 1;
+    const picksRemaining = Math.max(1, Number(state.questRewardPicksRemaining) || 1);
+    const heading = totalPicks > 1
+      ? (picksRemaining >= totalPicks ? "Choose your first reward" : "Choose your second reward")
+      : "Choose one reward";
+    const subtext = totalPicks > 1
+      ? "Double Pick is active: choose two of these rewards. Effects apply immediately and never carry into the next round."
+      : "Choose a reward for the current round. It applies immediately and never carries into the next round.";
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleRewardTitle">
         <section class="cuddle-modal cuddle-modal-wide">
           <span class="cuddle-modal-kicker">QUEST COMPLETE</span>
-          <h2 id="cuddleRewardTitle">Choose one reward</h2>
-          <p>Choose a reward for the current round. It applies immediately and never carries into the next round.</p>
+          <h2 id="cuddleRewardTitle">${heading}</h2>
+          <p>${subtext}</p>
           <div class="cuddle-choice-grid">
             ${state.questRewardChoices.map(reward => `
               <button class="cuddle-choice" data-reward-id="${escapeHtml(reward.id)}">
