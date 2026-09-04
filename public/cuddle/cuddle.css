@@ -1707,25 +1707,6 @@
   gap: 8px;
 }
 
-.cuddle-difficulty-row .cuddle-btn {
-  height: auto;
-  padding: 12px 10px;
-  white-space: normal;
-}
-
-.cuddle-difficulty-row .cuddle-btn small {
-  display: block;
-  margin-top: 4px;
-  color: var(--cuddle-muted);
-  font-size: 0.62rem;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-.cuddle-difficulty-row .cuddle-btn-primary small {
-  color: rgba(28, 22, 35, 0.7);
-}
-
 .cuddle-utility-row {
   display: flex;
   gap: 9px;
