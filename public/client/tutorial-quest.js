@@ -1,5 +1,5 @@
 // UMT_TUTORIAL_REWORK_20260901: QUEST REWARD WALKTHROUGH
-const QUEST_TUTORIAL_TOTAL = 9;
+const QUEST_TUTORIAL_TOTAL = 10;
 
 function questTutorialShow(text, {
   title = "Quest Tutorial",
@@ -84,7 +84,7 @@ function questPromptForGuess() {
     "See the letters light up? Now type APPLE. Keep an eye on the card - the moment your word ticks the box, it flips to MET. Then tap Submit Guess.",
     {
       title: "Meet the dare",
-      current: 4,
+      current: 5,
       mode: "hide"
     }
   );
@@ -145,7 +145,7 @@ function runQuestTutorial(state, role) {
     api.setNextTutorial("star");
     questTutorialShow(questFinishedText, {
       title: "Quest Tutorial done",
-      current: questOutcome === "fail" ? 5 : QUEST_TUTORIAL_TOTAL,
+      current: questOutcome === "fail" ? 6 : QUEST_TUTORIAL_TOTAL,
       mode: "end"
     });
     api.highlight(questCardHighlightTarget());
@@ -154,7 +154,7 @@ function runQuestTutorial(state, role) {
 
   if (step === 0) {
     questTutorialShow(
-      "A Quest is a bonus goal, and only the hunter gets them. Think of it as a little dare: guess a word that does this one thing. Pull it off and you win a reward. Ignore it if you would rather just chase the secret - Quests are always optional. You get up to three a round, on guesses 2, 4 and 6.",
+      "A Quest is a bonus goal, and only the hunter gets them. Think of it as a little dare: guess a word that does this one thing. You get up to three a round, on guesses 2, 4 and 6.",
       {
         current: 1
       }
@@ -166,9 +166,9 @@ function runQuestTutorial(state, role) {
 
   if (step === 1) {
     questTutorialShow(
-      `Read the card before you type anything. Today's dare is: ${quest?.description || "Use only letters A through P."}`,
+      "Pull it off and you win a reward. Ignore it if you would rather just chase the secret - a Quest is always optional, never mandatory.",
       {
-        title: "Read the dare",
+        title: "Optional, not mandatory",
         current: 2
       }
     );
@@ -178,12 +178,25 @@ function runQuestTutorial(state, role) {
   }
 
   if (step === 2) {
+    questTutorialShow(
+      `Read the card before you type anything. Today's dare is: ${quest?.description || "Use only letters A through P."}`,
+      {
+        title: "Read the dare",
+        current: 3
+      }
+    );
+    api.highlight(questCardHighlightTarget());
+    api.setMode("advance");
+    return;
+  }
+
+  if (step === 3) {
     const highlightButton = document.querySelector(".pc-guide-highlight-btn");
     questTutorialShow(
       "Tap Highlight. It lights up the keyboard letters that count for this Quest, so you do not have to work it out in your head. Tap it again any time to switch the lights back off.",
       {
         title: "Use Highlight",
-        current: 3,
+        current: 4,
         mode: highlightButton ? "hide" : "advance"
       }
     );
@@ -221,14 +234,14 @@ function runQuestTutorial(state, role) {
         finishQuestTutorial(
           api,
           "That is a Quest. Meet the dare for a reward, or walk past it when finding the word matters more.",
-          5
+          6
         );
         return;
       }
     } else {
       questTutorialShow(questLastResultText, {
         title: "Quest result",
-        current: 5,
+        current: 6,
         mode: "advance"
       });
       api.highlight(questCardHighlightTarget());
@@ -248,7 +261,7 @@ function runQuestTutorial(state, role) {
     questAckStepThreshold = step + 1;
     questTutorialShow(questLastResultText, {
       title: "Quest result",
-      current: 5,
+      current: 6,
       mode: "advance"
     });
     api.highlight(questCardHighlightTarget());
@@ -284,7 +297,7 @@ function runQuestTutorial(state, role) {
         "Three rewards. There is no trap here - all three genuinely help you. Have a read, then take whichever you like the look of.",
         {
           title: "Three rewards",
-          current: 6,
+          current: 7,
           mode: "advance"
         }
       );
@@ -298,7 +311,7 @@ function runQuestTutorial(state, role) {
         "You keep exactly one. Most fire straight away. If a card says its target is random, the game picks the letter or tile for you - you are taking the luck along with the reward.",
         {
           title: "You keep one",
-          current: 7,
+          current: 8,
           mode: "advance"
         }
       );
@@ -312,7 +325,7 @@ function runQuestTutorial(state, role) {
         "Like none of them? Refresh Choices deals three new cards. But you only get one refresh for the whole game, and it does not come back when you swap roles - so save it for a truly bad hand.",
         {
           title: "One redeal per game",
-          current: 8,
+          current: 9,
           mode: "advance"
         }
       );
@@ -325,7 +338,7 @@ function runQuestTutorial(state, role) {
       "Go ahead and tap a card. That is the last step.",
       {
         title: "Pick a reward",
-        current: 9,
+        current: 10,
         mode: "hide"
       }
     );
@@ -339,7 +352,7 @@ function runQuestTutorial(state, role) {
       "Quest done. Once the Secretkeeper finishes their turn, your reward cards appear.",
       {
         title: "Reward coming next",
-        current: 5,
+        current: 6,
         compact: true,
         mode: "hide",
         key: `quest-wait-${attempts}`

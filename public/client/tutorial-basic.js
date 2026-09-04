@@ -122,12 +122,27 @@ function runBasicInspectorTutorial(state) {
     const word = state.tutorialGuesses?.[0] || "CHAMP";
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "Here is the whole game in one breath. There is a secret five-letter word. One player hunts for it. The other player hides it. You play both sides, one round each. Let's start with the hunting.",
+        "Here's the whole game in one breath: a secret five-letter word, one player hunting for it, one hiding it. You play both sides. Let's start with the hunting.",
         {
           role: "guesser",
           section: "How the game works",
           current: 1,
-          total: 2,
+          total: 3,
+          placement: "top"
+        }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      basicTutorialShow(
+        "Next round, you switch to hiding - same word, opposite job. Each side also gets its own bonus helper, which the later tutorials cover.",
+        {
+          role: "guesser",
+          section: "Two roles",
+          current: 2,
+          total: 3,
           placement: "top"
         }
       );
@@ -141,8 +156,8 @@ function runBasicInspectorTutorial(state) {
         {
           role: "guesser",
           section: "First guess",
-          current: 2,
-          total: 2,
+          current: 3,
+          total: 3,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -156,8 +171,8 @@ function runBasicInspectorTutorial(state) {
         {
           role: "guesser",
           section: "First guess",
-          current: 2,
-          total: 2,
+          current: 3,
+          total: 3,
           placement: "top",
           mode: "hide"
         }
@@ -183,14 +198,32 @@ function runBasicInspectorTutorial(state) {
       "P is gray, so no P. And that is the whole system: green is right spot, yellow is wrong spot, gray is not in the word."
     ];
 
+    const totalSteps = 8;
+
     if (tutorialSubStep < feedbackSteps.length) {
       basicTutorialShow(feedbackSteps[tutorialSubStep], {
         role: "guesser",
         section: "Reading the colors",
         current: tutorialSubStep + 1,
-        total: 7,
+        total: totalSteps,
         placement: "bottom"
       });
+      highlightHistoryGuesser();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === feedbackSteps.length) {
+      basicTutorialShow(
+        "Here's something people miss: you don't have to obey the clues. Any real word is allowed. Sometimes a throwaway guess that tests fresh letters teaches you more than a careful one.",
+        {
+          role: "guesser",
+          section: "An information guess",
+          current: 7,
+          total: totalSteps,
+          placement: "top"
+        }
+      );
       highlightHistoryGuesser();
       tutorialContinueMode = "advance";
       return;
@@ -202,8 +235,8 @@ function runBasicInspectorTutorial(state) {
         {
           role: "guesser",
           section: "Second guess",
-          current: 7,
-          total: 7,
+          current: 8,
+          total: totalSteps,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -213,12 +246,12 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Your turn again. Here is something people miss: you do not have to obey the clues. Any real word is allowed. Sometimes a throwaway guess that tests fresh letters teaches you more. Type ${word} - it reuses the gray A and drops the yellow M on purpose, and that is completely fine.`,
+        `Type ${word} - it reuses the gray A and drops the yellow M on purpose, and that is completely fine.`,
         {
           role: "guesser",
           section: "Second guess",
-          current: 7,
-          total: 7,
+          current: 8,
+          total: totalSteps,
           placement: "top",
           mode: "hide"
         }
@@ -524,9 +557,12 @@ function runBasicSpyTutorial(state) {
 }
 
 function runBasicSummaryTutorial(state) {
-  // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
+  // UMT_REQUESTED_FIXES_20260904: walk the round summary one piece at a
+  // time instead of rushing past a screen with a score, a clock panel,
+  // and a five-column table all showing at once.
   clearHighlights();
   const guesses = state.history?.length || state.guessCount || 0;
+  const totalSteps = 8;
 
   if (tutorialSubStep === 0) {
     basicTutorialShow(
@@ -535,7 +571,7 @@ function runBasicSummaryTutorial(state) {
         role: "guesser",
         section: "Your round score",
         current: 1,
-        total: 4,
+        total: totalSteps,
         placement: "bottom"
       }
     );
@@ -546,12 +582,12 @@ function runBasicSummaryTutorial(state) {
 
   if (tutorialSubStep === 1) {
     basicTutorialShow(
-      "Underneath, you can scroll back through every guess and the colors it earned.",
+      "Underneath, there's a table: one row for every guess this round. Let's go column by column.",
       {
         role: "guesser",
         section: "Review the round",
         current: 2,
-        total: 4,
+        total: totalSteps,
         placement: "bottom"
       }
     );
@@ -562,12 +598,76 @@ function runBasicSummaryTutorial(state) {
 
   if (tutorialSubStep === 2) {
     basicTutorialShow(
+      "Secret: the word being hidden at that exact moment. It can change from guess to guess.",
+      {
+        role: "guesser",
+        section: "Secret column",
+        current: 3,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("secret-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 3) {
+    basicTutorialShow(
+      "Guess: the word actually sent that turn.",
+      {
+        role: "guesser",
+        section: "Guess column",
+        current: 4,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("guess-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 4) {
+    basicTutorialShow(
+      "Result: the colors that guess earned - green, yellow, or gray.",
+      {
+        role: "guesser",
+        section: "Result column",
+        current: 5,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("feedback-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 5) {
+    basicTutorialShow(
+      "Left: how many words could still be the secret after that guess. Lower means the hunter closed in more.",
+      {
+        role: "guesser",
+        section: "Left column",
+        current: 6,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("remaining-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 6) {
+    basicTutorialShow(
       "Next round you are hiding instead of hunting, so the goal flips completely. Then you want this number to be as big as you can make it.",
       {
         role: "guesser",
         section: "The goal flips",
-        current: 3,
-        total: 4,
+        current: 7,
+        total: totalSteps,
         placement: "bottom"
       }
     );
@@ -581,8 +681,8 @@ function runBasicSummaryTutorial(state) {
     {
       role: "guesser",
       section: "Swap roles",
-      current: 4,
-      total: 4,
+      current: 8,
+      total: totalSteps,
       placement: "bottom",
       mode: "hide"
     }
@@ -596,16 +696,19 @@ function runBasicSummaryTutorial(state) {
 }
 
 function runBasicMatchTutorial(state) {
-  // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
+  // UMT_REQUESTED_FIXES_20260904: same fix as runBasicSummaryTutorial --
+  // one column at a time instead of naming three columns in a single
+  // sentence over a screen that stacks a full table per round.
   clearHighlights();
+  const totalSteps = 7;
 
   if (tutorialSubStep === 0) {
     basicTutorialShow(
-      "They found your word too, so that is the match. Both words survived three guesses, so it is a 3-3 tie. Between two people, a tie goes to whoever was faster overall. Against the AI it just stays a tie - the AI answers instantly, so racing it would not be fair.",
+      "They found your word too, so that is the match. Both words survived three guesses - a 3-3 tie.",
       {
         section: "Match result",
         current: 1,
-        total: 4,
+        total: totalSteps,
         placement: "bottom"
       }
     );
@@ -616,26 +719,71 @@ function runBasicMatchTutorial(state) {
 
   if (tutorialSubStep === 1) {
     basicTutorialShow(
-      "Each row replays one turn: the word being hidden, the word guessed, and the colors that went back.",
+      "Between two people, a tie goes to whoever was faster overall. Against the AI it just stays a tie - the AI answers instantly, so racing it would not be fair.",
       {
-        section: "What happened each turn",
+        section: "Breaking a tie",
         current: 2,
-        total: 4,
+        total: totalSteps,
         placement: "bottom"
       }
     );
-    highlightRoundSummary();
+    highlightMatchScore();
     tutorialContinueMode = "advance";
     return;
   }
 
   if (tutorialSubStep === 2) {
     basicTutorialShow(
+      "Each round replays as its own table. Secret: the word being hidden at that exact moment.",
+      {
+        section: "Secret column",
+        current: 3,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("secret-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 3) {
+    basicTutorialShow(
+      "Guess: the word actually sent that turn.",
+      {
+        section: "Guess column",
+        current: 4,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("guess-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 4) {
+    basicTutorialShow(
+      "Result: the colors that guess earned.",
+      {
+        section: "Result column",
+        current: 5,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("feedback-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 5) {
+    basicTutorialShow(
       "Left counts how many words could still have been the secret after that guess. A small number means the hunter was closing in. A big number means the hider still had plenty of places to hide.",
       {
-        section: "Words left",
-        current: 3,
-        total: 4,
+        section: "Left column",
+        current: 6,
+        total: totalSteps,
         placement: "bottom"
       }
     );
@@ -649,8 +797,8 @@ function runBasicMatchTutorial(state) {
     "And that is the whole game. Each side also gets a little help of its own - Quests when you hunt, Stars when you hide. Those are the next two tutorials, and both are short.",
     {
       section: "Basics complete",
-      current: 4,
-      total: 4,
+      current: 7,
+      total: totalSteps,
       placement: "bottom",
       mode: "end"
     }

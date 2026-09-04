@@ -1,7 +1,7 @@
 // UMT_TUTORIAL_REWORK_20260901: TWO-ACTION STAR WALKTHROUGH
 const STAR_TUTORIAL_MAX = 12;
 const STAR_TUTORIAL_REWARD_AT = 4;
-const STAR_TUTORIAL_TOTAL = 5;
+const STAR_TUTORIAL_TOTAL = 7;
 
 function starTutorialShow(text, {
   title = "Star Tutorial",
@@ -116,7 +116,7 @@ function starPromptForPractice(api, charge, practiceStep, total) {
       "Lining up the next practice word...",
       {
         title: "Earn stars",
-        current: practiceStep === 0 ? 3 : 4,
+        current: practiceStep === 0 ? 5 : 6,
         compact: true,
         mode: "hide",
         key: `star-hint-wait-${practiceStep}-${window.state?.history?.length || 0}`
@@ -132,7 +132,7 @@ function starPromptForPractice(api, charge, practiceStep, total) {
       `Type ${word} and send it as your new secret. It is a bold swap${letter && position ? `, and it drops ${letter} into spot ${position} to hit the blue target` : ""} - two stars for the swap plus the blue bonus. Three in one turn.`,
       {
         title: "Go bold: 3 stars",
-        current: 3,
+        current: 5,
         mode: "hide"
       }
     );
@@ -141,7 +141,7 @@ function starPromptForPractice(api, charge, practiceStep, total) {
       `Now try ${word}. Perfectly allowed, but it is a timid swap and it misses the blue target. Watch it pay out just one star.`,
       {
         title: "Play it safe: 1 star",
-        current: 4,
+        current: 6,
         mode: "hide"
       }
     );
@@ -217,7 +217,7 @@ function runStarTutorial(state, role) {
 
   if (step === 0) {
     starTutorialShow(
-      "Stars are the hider's reward track, and they come down to one choice each turn. Keeping your word is the safe move: always exactly one star. Changing is the bold move, and boldness pays. Swap to a word that leaves the hunter with lots of possibilities still open, and that is two. The counter updates as you type - if it drops to one, keeping is probably wiser.",
+      "Stars are the hider's reward track, and they come down to one choice each turn. Keeping your word is the safe move: always exactly one star. Changing is the bold move, and boldness pays.",
       {
         current: 1
       }
@@ -229,9 +229,35 @@ function runStarTutorial(state, role) {
 
   if (step === 1) {
     starTutorialShow(
-      "The blue target asks for one specific letter in one specific spot. Hit it with a changed word and that is a third star. Quiet tip: the target doubles as a hint, because there is always a strong word that matches it. Rewards land at 4, 8 and 12 stars - one reward at 4, one at 8, and two at 12.",
+      "Swap to a word that leaves the hunter with lots of possibilities still open, and that is two stars. The counter updates as you type - if it drops to one, keeping is probably wiser.",
       {
+        title: "What makes a Change strong",
         current: 2
+      }
+    );
+    api.highlight(spyMeterHighlightTarget());
+    api.setMode("advance");
+    return;
+  }
+
+  if (step === 2) {
+    starTutorialShow(
+      "The blue target asks for one specific letter in one specific spot. Hit it with a changed word and that is a third star. Quiet tip: the target doubles as a hint, because there is always a strong word that matches it.",
+      {
+        current: 3
+      }
+    );
+    api.highlight(spyMeterHighlightTarget());
+    api.setMode("advance");
+    return;
+  }
+
+  if (step === 3) {
+    starTutorialShow(
+      "Rewards land at 4, 8 and 12 stars - one reward at 4, one at 8, and two at 12.",
+      {
+        title: "Star rewards",
+        current: 4
       }
     );
     api.highlight(spyMeterHighlightTarget());
@@ -268,13 +294,13 @@ function runStarTutorial(state, role) {
 
     if (accepted && previousPracticeStep === 0) {
       starLastResultText = `Three stars: ${base || 2} for the bold swap, plus ${bonus || 1} for hitting the blue target.`;
-      starLastResultCurrent = 3;
+      starLastResultCurrent = 5;
     } else if (accepted && previousPracticeStep === 1) {
       starLastResultText = "Just one star. Legal, but timid, and it missed the blue target. That is the whole trade in a nutshell.";
-      starLastResultCurrent = 4;
+      starLastResultCurrent = 6;
     } else {
       starLastResultText = `That earned ${earned} stars, but it did not finish the exercise. Use the exact word we highlight on your next turn.`;
-      starLastResultCurrent = previousPracticeStep === 0 ? 3 : 4;
+      starLastResultCurrent = previousPracticeStep === 0 ? 5 : 6;
     }
 
     starAwaitingAck = true;
@@ -305,7 +331,7 @@ function runStarTutorial(state, role) {
       "Four stars - your first reward is ready. Same idea as the hunter's Quest rewards, except these ones are built to keep you hidden. Read the three cards and take one.",
       {
         title: "Cash it in",
-        current: 5,
+        current: 7,
         mode: "hide"
       }
     );
@@ -319,7 +345,7 @@ function runStarTutorial(state, role) {
       "Opening your first reward...",
       {
         title: "Reward ready",
-        current: 5,
+        current: 7,
         compact: true,
         mode: "hide",
         key: `star-reward-wait-${historyLen}`
@@ -333,8 +359,8 @@ function runStarTutorial(state, role) {
     starTutorialShow(
       "Waiting on the Guesser...",
       {
-        title: practiceStep === 0 ? "Try a 3-star Change" : "See a 1-star Change",
-        current: practiceStep === 0 ? 3 : 4,
+        title: practiceStep === 0 ? "Go bold: 3 stars" : "Play it safe: 1 star",
+        current: practiceStep === 0 ? 5 : 6,
         compact: true,
         mode: "hide",
         key: `star-wait-${practiceStep}-${historyLen}`

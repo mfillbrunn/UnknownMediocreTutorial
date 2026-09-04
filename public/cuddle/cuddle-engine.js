@@ -7,7 +7,9 @@
   const STORAGE_KEY = "vowelPlay.cuddle.v1";
   // Cumulative score gates for twelve SCORING rounds. Boss rounds sit between
   // chapters and are pass/fail, so they neither score nor need their own gate.
-  const THRESHOLDS = Object.freeze([25, 55, 85, 120, 160, 200, 220, 285, 350, 380, 450, 520]);
+  // Rounds 5-7 are eased by 5 points and rounds 8-12 by 10, off the original
+  // [25, 55, 85, 120, 160, 200, 220, 285, 350, 380, 450, 520] curve.
+  const THRESHOLDS = Object.freeze([25, 55, 85, 120, 155, 195, 215, 275, 340, 370, 440, 510]);
   const MAX_GUESSES = 6;
   const BASE_HAND_SIZE = 5;
   const BASE_MULLIGANS = 2;
@@ -25,6 +27,9 @@
   // Quests start at zero and are only worth anything once the Quest Value
   // reward (+5 a pick, stacking) or the Quest Head Start boss reward is taken.
   const QUEST_POINTS_PER_PICK = 5;
+  // Quest Trial boss: missing the forced quest on a guess costs this many
+  // points from the running total (never below zero).
+  const QUEST_TRIAL_PENALTY = 5;
 
   // Bosses split twelve scoring rounds into four groups of three: before rounds
   // 4, 7, and 10, followed by a final boss. They are pass/fail and grant
@@ -401,9 +406,10 @@
       // Short Hand's constraint (fewer letters, fewer guesses) isn't a
       // guess-window feedback mask like the other bosses -- it applies for
       // the whole round, so it never "lifts" partway through the way a
-      // `turns`-scoped constraint does. Steady Hand (no mulligans) is the
+      // `turns`-scoped constraint does. Steady Hand (no mulligans) and
+      // Quest Trial (a quest, and its penalty, on every guess) are the
       // same shape of constraint for the same reason.
-      if (boss.id === "shortHand" || boss.id === "noMulligans") return true;
+      if (boss.id === "shortHand" || boss.id === "noMulligans" || boss.id === "questTrial") return true;
       const turns = Number(boss.turns) || 0;
       return this.state.guessesUsed < turns;
     }
@@ -1102,6 +1108,16 @@
             this.state.roundScore += questBonus;
           }
         }
+        // Quest Trial: a quest rides on every guess of this fight, and
+        // missing one costs points instead of just the reward -- that
+        // stakes-both-ways pressure is the whole point of the boss.
+        if (!questComplete && this.state.boss?.id === "questTrial") {
+          const penalty = Math.min(QUEST_TRIAL_PENALTY, this.state.score);
+          if (penalty > 0) {
+            entry.questTrialPenalty = penalty;
+            this.state.score -= penalty;
+          }
+        }
         this.state.activeQuest = null;
       }
 
@@ -1170,7 +1186,12 @@
         // of just one.
         this.state.questRewardPicksRemaining = this.state.upgrades.questDoublePick ? 2 : 1;
       } else {
-        if (activeQuest) this.state.lastMessage += ` Quest missed: ${activeQuest.title}.`;
+        if (activeQuest) {
+          this.state.lastMessage += ` Quest missed: ${activeQuest.title}.`;
+          if (entry.questTrialPenalty) {
+            this.state.lastMessage += ` -${entry.questTrialPenalty} points.`;
+          }
+        }
         if (this.state.pendingRoundEnd) this._resolvePendingRoundEnd();
         else this._ensureQuestForNextGuess();
       }
@@ -1277,7 +1298,12 @@
       if (this.state.status !== "playing" || this.state.activeQuest) return;
       const nextGuess = this.state.guessesUsed + 1;
       if (nextGuess > this._effectiveMaxGuesses()) return;
-      const cadence = Math.max(1, 3 - this.state.upgrades.questCadence);
+      // Quest Trial forces a quest on every guess, regardless of the
+      // player's own Quest Cadence upgrades -- that constant pressure
+      // (and its penalty for missing one) is the whole fight.
+      const cadence = this.state.boss?.id === "questTrial"
+        ? 1
+        : Math.max(1, 3 - this.state.upgrades.questCadence);
       // Fires one turn earlier than a plain multiple of cadence would --
       // base cadence 3 now lands on turns 2 and 5 instead of 3 and 6.
       if (nextGuess < cadence - 1 || (nextGuess + 1) % cadence !== 0) return;
@@ -1632,6 +1658,17 @@
           // this flag for every quest reward screen from here on.
           this.state.upgrades.questDoublePick = 1;
           return "Double Pick: quest reward screens now let you choose two options instead of one.";
+        case "questCadence": {
+          // Same stackable mechanic (and the same 3-questCadence cadence
+          // formula in _ensureQuestForNextGuess) the regular Quest Cadence
+          // round reward used to grant -- retired from that pool since
+          // Quest Trial is now the only source of it.
+          const next = Math.min(2, Number(this.state.upgrades.questCadence || 0) + 1);
+          this.state.upgrades.questCadence = next;
+          return next >= 2
+            ? "Quest Cadence: a quest now appears on every guess."
+            : "Quest Cadence: quests now appear every second guess instead of every third.";
+        }
         default:
           return "";
       }
@@ -1800,17 +1837,8 @@
           description: "Each mulligan may replace one additional card."
         });
       }
-      if (this.state.upgrades.questCadence < 2) {
-        const nextCadence = Math.max(1, 2 - this.state.upgrades.questCadence);
-        choices.push({
-          id: "questCadence",
-          icon: "❗",
-          title: nextCadence === 1 ? "Quest Every Turn" : "Quests Sooner",
-          description: nextCadence === 1
-            ? "A quest appears on every guess. This is the final cadence upgrade."
-            : "A quest appears every two guesses instead of every three."
-        });
-      }
+      // Quest Cadence moved to the Quest Trial boss reward -- it is no
+      // longer offered from the regular round-end pool.
       const letters = this._removalCandidates(2);
       if (letters.length) {
         const list = letters.join(" & ");
@@ -2431,6 +2459,10 @@
         // Same reasoning as shortHand: a standing resource denial, not a
         // guess-window mask, so `turns` is ignored here too.
         return "You get no mulligans this round.";
+      case "questTrial":
+        // Same reasoning as shortHand: a standing pressure for the whole
+        // round, not a guess-window mask, so `turns` is ignored here too.
+        return `A quest rides on every guess this round. Miss one and lose ${QUEST_TRIAL_PENALTY} points from your total.`;
       default:
         return `This boss power lasts for the first ${guesses}.`;
     }
@@ -3109,7 +3141,7 @@
 
   const prototype = CuddleGame.prototype;
   const baseHandSize = Number(Engine.BASE_HAND_SIZE) || 5;
-  const retiredUpgradeIds = new Set(["yellowPoints", "earlyRoundPoint"]);
+  const retiredUpgradeIds = new Set(["yellowPoints", "earlyRoundPoint", "questCadence"]);
   const customUpgradeDefinitions = Object.freeze([
     {
       id: "greyPointBoost",

@@ -49,7 +49,7 @@ const POWER_TUTORIAL_SIMPLE_COPY = Object.freeze({
   },
   countOnly: {
     owner: "The Guesser sees only how many green and yellow tiles they got. They do not see where they are.",
-    receiver: "You will see the number of green and yellow tiles, but not which ones. Letters and tiles marked with a small ? are the ones whose real color is hidden from you. Different powers show their effects in different ways like this, so keep an eye on the tiles and keyboard."
+    receiver: "You will see the number of green and yellow tiles, but not which ones. Tiles and letters marked with a small ? have their real color hidden from you."
   },
   forceGuess: {
     owner: "This gives the Guesser one small rule their next guess must follow.",

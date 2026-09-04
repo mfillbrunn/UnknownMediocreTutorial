@@ -329,12 +329,13 @@
   function renderBossBanner(state) {
     const boss = state.boss;
     if (!boss) return "";
-    // Short Hand's constraint (fewer letters, fewer guesses) and Steady
-    // Hand's (no mulligans) aren't guess-window feedback masks --
-    // boss.turns is meaningless for them (see _bossActive in the engine),
-    // so treat them as always "on" instead of reading a countdown out of a
-    // field that doesn't describe anything real for these bosses.
-    const isWholeRound = boss.id === "shortHand" || boss.id === "noMulligans";
+    // Short Hand's constraint (fewer letters, fewer guesses), Steady
+    // Hand's (no mulligans), and Quest Trial's (a quest and its penalty on
+    // every guess) aren't guess-window feedback masks -- boss.turns is
+    // meaningless for them (see _bossActive in the engine), so treat them
+    // as always "on" instead of reading a countdown out of a field that
+    // doesn't describe anything real for these bosses.
+    const isWholeRound = boss.id === "shortHand" || boss.id === "noMulligans" || boss.id === "questTrial";
     const turns = Number(boss.turns) || 0;
     const remaining = Math.max(0, turns - (state.guessesUsed || 0));
     const stillOn = isWholeRound || remaining > 0;
