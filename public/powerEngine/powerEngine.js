@@ -12,6 +12,7 @@ const POWER_ICON_IDS = {
   vowelRefresh: "icon-vowel-reset",
   blindGuess: "icon-total-blackout",
   fakeFeedback: "icon-fake-clue",
+  feedbackLie: "icon-clean-lie",
   delayedIntel: "icon-delayed-clue",
   forceTimer: "icon-time-pressure",
 
