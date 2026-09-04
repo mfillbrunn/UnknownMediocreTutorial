@@ -3867,7 +3867,7 @@
     if (earned <= Number(mega.milestonesClaimed100 || 0)) return false;
     mega.milestonesClaimed100 = Number(mega.milestonesClaimed100 || 0) + 1;
     state.status = "upgrade";
-    state.upgradePhase = "milestone100";
+    state.upgradePhase = "milestone";
     state.upgradeMilestone = mega.milestonesClaimed100 * 100;
     state.upgradeChoices = stripUnsafeMidRoundChoices(game._generateUpgradeChoices());
     return true;
@@ -3881,7 +3881,7 @@
   CuddleGame.prototype.refreshUpgradeChoices = function refreshUpgradeChoicesMega() {
     const result = composedRefreshUpgradeChoices.call(this);
     const phase = this.state?.upgradePhase;
-    if (result?.ok && (phase === "milestone100" || phase === "difficultyStart")) {
+    if (result?.ok && (phase === "milestone" || phase === "difficultyStart")) {
       this.state.upgradeChoices = stripUnsafeMidRoundChoices(this.state.upgradeChoices);
       this.save();
     }
@@ -3905,7 +3905,7 @@
     }
 
     const phase = this.state.upgradePhase;
-    const specialPhase = phase === "difficultyStart" || phase === "milestone100";
+    const specialPhase = phase === "difficultyStart" || phase === "milestone";
     const choice = (this.state.upgradeChoices || []).find(item => item.key === choiceKey);
 
     let result;

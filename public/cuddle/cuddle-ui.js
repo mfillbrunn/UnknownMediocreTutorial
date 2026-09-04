@@ -245,15 +245,9 @@
           <div class="cuddle-difficulty-picker">
             <span class="cuddle-eyebrow">${hasRun ? "START A NEW RUN" : "CHOOSE A DIFFICULTY"}</span>
             <div class="cuddle-difficulty-row">
-              <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-easy">
-                Easy <small>+3 mulligans, bigger mulligan, pick 2 rewards</small>
-              </button>
-              <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-medium">
-                Medium <small>+2 mulligans, pick 1 reward</small>
-              </button>
-              <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-hard">
-                Hard <small>Standard rules</small>
-              </button>
+              <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-easy">Easy</button>
+              <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-medium">Medium</button>
+              <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-hard">Hard</button>
             </div>
           </div>
         </section>
@@ -749,6 +743,7 @@
 
   function renderUpgradeOverlay(state) {
     const milestone = state.upgradePhase === "milestone";
+    const startingRewards = state.upgradePhase === "difficultyStart";
     const summary = state.lastRoundSummary;
     const refreshCost = typeof game.getUpgradeRefreshCost === "function"
       ? game.getUpgradeRefreshCost()
@@ -760,14 +755,27 @@
       : refreshCost === null
         ? "Refresh unavailable"
         : `Refresh choices (${refreshCost} points)`;
+    const kicker = milestone
+      ? `SCORE MILESTONE · ${state.upgradeMilestone}`
+      : startingRewards
+        ? "STARTING REWARDS"
+        : `ROUND ${summary?.round || state.round} CLEARED`;
+    const heading = milestone
+      ? "Choose a bonus upgrade"
+      : startingRewards
+        ? "Choose a starting reward"
+        : "Improve the run";
+    const body = milestone
+      ? `Your total score reached ${state.upgradeMilestone}. This choice is in addition to the round reward.`
+      : startingRewards
+        ? "Pick a reward to begin the run with."
+        : `${escapeHtml(summary?.secret || state.secret)} solved in ${summary?.guesses || state.guessesUsed} guesses. Total score: ${state.score}.`;
     return `
       <div class="cuddle-overlay" role="dialog" aria-modal="true" aria-labelledby="cuddleUpgradeTitle">
         <section class="cuddle-modal cuddle-modal-wide">
-          <span class="cuddle-modal-kicker">${milestone ? `SCORE MILESTONE · ${state.upgradeMilestone}` : `ROUND ${summary?.round || state.round} CLEARED`}</span>
-          <h2 id="cuddleUpgradeTitle">${milestone ? "Choose a bonus upgrade" : "Improve the run"}</h2>
-          <p>${milestone
-            ? `Your total score reached ${state.upgradeMilestone}. This choice is in addition to the round reward.`
-            : `${escapeHtml(summary?.secret || state.secret)} solved in ${summary?.guesses || state.guessesUsed} guesses. Total score: ${state.score}.`}</p>
+          <span class="cuddle-modal-kicker">${kicker}</span>
+          <h2 id="cuddleUpgradeTitle">${heading}</h2>
+          <p>${body}</p>
           <div class="cuddle-choice-grid">
             ${state.upgradeChoices.map(choice => `
               <button class="cuddle-choice" data-upgrade-key="${escapeHtml(choice.key)}">
