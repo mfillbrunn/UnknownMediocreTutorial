@@ -22,7 +22,7 @@
   <!-- 8. Power-specific effects -->
   <link rel="stylesheet" href="css/powers.css">
   <!-- 9. Lobby-->
-  <link rel="stylesheet" href="css/game-menu.css?menu-account-spacing=1&umt-fix=20260830-1&umt-streamlined=1.0.2&menu-scroll-fix=1&umt-tutorial-rework=20260901">
+  <link rel="stylesheet" href="css/game-menu.css?menu-account-spacing=1&umt-fix=20260830-1&umt-streamlined=1.0.2&menu-scroll-fix=1&umt-tutorial-rework=20260901&guest-play=1">
     <!-- 10. Account data-->
   <link rel="stylesheet" href="css/account.css">    
   <!-- 11. Leaderboard-->
@@ -331,8 +331,44 @@
         <span class="menu-action-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7 4 6 6-6 6"/></svg></span>
       </button>
     </div>
+    <div class="menu-footer-links">
+      <button id="bugReportBtn" class="link-btn" type="button">🐞 Report a bug</button>
+    </div>
   </div>
 </section>
+
+<!-- ========== BUG REPORT ========== -->
+<div id="bugReportModal" class="bug-report-modal hidden" role="dialog" aria-modal="true" aria-labelledby="bugReportTitle">
+  <div class="bug-report-card">
+    <h3 id="bugReportTitle">Report a bug</h3>
+    <p class="bug-report-intro">
+      What went wrong? The screen you're on and the state of your current game
+      are sent along automatically — no need to describe those.
+    </p>
+    <label class="bug-report-label" for="bugReportMessage">What happened</label>
+    <textarea
+      id="bugReportMessage"
+      class="bug-report-textarea"
+      rows="5"
+      maxlength="4000"
+      placeholder="e.g. The Keep button did nothing after my opponent guessed."
+    ></textarea>
+    <label class="bug-report-label" for="bugReportContact">Email (optional)</label>
+    <input
+      id="bugReportContact"
+      class="bug-report-input"
+      type="email"
+      maxlength="300"
+      placeholder="Only if you'd like a reply"
+      autocomplete="email"
+    />
+    <p id="bugReportStatus" class="bug-report-status" role="status"></p>
+    <div class="bug-report-actions">
+      <button id="bugReportSubmitBtn" class="menu-btn primary small" type="button">Send report</button>
+      <button id="bugReportCancelBtn" class="menu-btn small" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <!-- ========== SINGLE PLAYER CAMPAIGN ========== -->
         <section id="singlePlayerScreen" class="screen game-menu sp-screen">
@@ -727,6 +763,16 @@
     <div class="screen-back-header">
       <button id="backBtn" class="menu-btn screen-back-btn">← Back</button>
       <h2 class="menu-title" style="flex:1;text-align:center">Account</h2>
+    </div>
+    <div id="guestAccountNotice" class="guest-account-notice hidden">
+      <p class="guest-account-line">
+        You're playing as <strong id="guestAccountName">Guest</strong>.
+        <button type="button" id="guestRerollNameBtn" class="link-btn">New name</button>
+      </p>
+      <p class="guest-account-hint">
+        No account needed to play. Sign up to unlock ranked matches, friends,
+        and stats that follow you between devices.
+      </p>
     </div>
      <div id="authInputs" class="auth-inputs">
   <input
@@ -1645,9 +1691,12 @@
   <!-- ========== JS (unchanged) ========== -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="authentication/supabaseClient.js"></script>
+  <!-- Guest identity has to exist before auth.js runs: it is the fallback
+       auth.js installs whenever there is no Supabase session. -->
+  <script src="client/guest-identity.js?guest-play=1"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="client/helpers.js?v=screen-scroll-reset-1"></script>
-  <script src="client/statistics.js?menu-account-spacing=1"></script>
+  <script src="client/statistics.js?menu-account-spacing=1&guest-play=1"></script>
   <script src="network/socketClient.js"></script>
 
   <script src="/game-engine/scoring.js"></script>
@@ -1662,10 +1711,10 @@
   <script src="ui/timers.js?mobile-perf=1"></script>
   <script src="ui/colorPicker.js"></script>
   
-  <script src="authentication/auth.js"></script>
+  <script src="authentication/auth.js?guest-play=1"></script>
   <script src="client/tooltips.js"></script>
   
-  <script src="client/socket-events.js?v=9-2&reward-overhaul=1&umt-streamlined=1.0.2"></script>
+  <script src="client/socket-events.js?v=9-2&reward-overhaul=1&umt-streamlined=1.0.2&guest-play=1"></script>
   <script src="client/power-functions.js"></script>
   <script src="powerEngine/powerMetadata.js?reward-overhaul=1&feedback-lie=1"></script>
   
@@ -1726,7 +1775,7 @@
   <script src="powerEngine/powers/doubleGuess.js"></script>
   <script src="powerEngine/powers/letterProfile.js"></script>
   <script src="powerEngine/powers/delayedIntel.js"></script>
-  <script src="client/summary.js?v=ai-tie-fix-1&daily-no-defeat=1"></script>
+  <script src="client/summary.js?v=ai-tie-fix-1&daily-no-defeat=1&untimed-no-clock=1"></script>
   <script src="client/action-log.js?setter-fixes=2"></script>
   <script src="client/action-log-colors.js?setter-board=1"></script>
   <script src="client/action-log-dedupe-v6.js?setter-fixes=2"></script>
@@ -1738,8 +1787,8 @@
   <script src="client/notes.js"></script>
   <script src="client/drag-mode.js"></script>
   <script src="client/key-color-picker.js"></script>
-  <script src="client/friends.js?umt-streamlined=1.0.2"></script>
-  <script src="client/daily-challenge.js?v=daily-playmode-1&daily-difficulty-picker=1&daily-error-state=1&daily-abandoned-actions=1&daily-rank-fallback=1&daily-no-spoilers=1"></script>
+  <script src="client/friends.js?umt-streamlined=1.0.2&guest-play=1"></script>
+  <script src="client/daily-challenge.js?v=daily-playmode-1&daily-difficulty-picker=1&daily-error-state=1&daily-abandoned-actions=1&daily-rank-fallback=1&daily-no-spoilers=1&untimed-no-clock=1"></script>
   <script src="single-player/single-player.js?umt-fix=20260830-1&umt-streamlined=1.0.2"></script>
   <script src="single-player/campaign-map.js?umt-fix=20260830-1"></script>
   <script src="single-player/story-player.js?umt-fix=20260830-1"></script>
@@ -1758,11 +1807,11 @@
   <script src="client/dev-simulation.js?v=tutorial-motion-sim-2"></script>
   <script src="client/dev-reward-simulation.js?v=tutorial-motion-sim-2"></script>
   <script src="client/dev-daily-reset.js?v=daily-reset-1"></script>
-  <script src="client/invite.js"></script>
+  <script src="client/invite.js?guest-play=1"></script>
   <script src="client/big-announce.js?v=drawer-tap-passthrough-1"></script>
   <script src="client/reward-reveal.js?v=typed-quest-2"></script>
   <script src="client/quest-complete-reveal.js?v=typed-quest-2"></script>
-  <script src="client.js?v=9-2&mobile-perf=1&daily-round-intro=1&daily-both-rounds-fixed=1&challenge-intro=1"></script>
+  <script src="client.js?v=9-2&mobile-perf=1&daily-round-intro=1&daily-both-rounds-fixed=1&challenge-intro=1&guest-play=1"></script>
   <script src="ui/guesser-flow-v7.js?v=tutorial-motion-sim-2&win-flight-direct=1"></script>
   <script src="ui/gameplay-polish-v8.js?gameplay-polish=8"></script>
   <!-- V9: matching Guesser drawer, ready-action docks, Notes shortcut, and theme toggle -->
@@ -1771,7 +1820,8 @@
   <script src="ui/setter-notes-target-v9.js?v=9&compact-bonus=1"></script>
   <script src="ui/v9-2-ui-fixes.js?v=9-2"></script>
   <script src="ui/v9-3-ui-fixes.js?v=9-3"></script>
-  <script src="client/play-menu.js?umt-streamlined=1.0.2&feedback-lie=1"></script>
+  <script src="client/play-menu.js?umt-streamlined=1.0.2&feedback-lie=1&guest-play=1"></script>
+  <script src="client/bug-report.js?bug-report=1"></script>
   <script src="client/roomid.js"></script>
 <div id="power-fx" aria-hidden="true"></div>
 <div id="submit-banner" aria-hidden="true"></div>

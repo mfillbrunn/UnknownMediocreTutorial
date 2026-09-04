@@ -33,7 +33,6 @@ function startPlayFriend() {
 // quickJoinBtn (Developer > Play), so both stay in sync with one
 // implementation instead of two copies of the same socket call.
 function startQuickPlayHuman() {
-  if (!requireAuth("quick play")) return;
   window.rememberLastPlayMode({ mode: "quickHuman" });
 
   const username =
@@ -51,24 +50,20 @@ window.startQuickPlayHuman = startQuickPlayHuman;
 
 
 $("quickPlayBtn")?.addEventListener("click", () => {
-  if (!requireAuth("play")) return;
   showScreen("quickPlayScreen");
 });
 
 $("playMainBtn")?.addEventListener("click", () => {
-  if (!requireAuth("play")) return;
   showScreen("playScreen");
 });
 
 $("quickPlayHumanBtn")?.addEventListener("click", startQuickPlayHuman);
 
 $("quickPlayAiBtn")?.addEventListener("click", () => {
-  if (!requireAuth("play vs AI")) return;
   showScreen("quickPlayAiScreen");
 });
 
 $("playFriendMainBtn")?.addEventListener("click", () => {
-  if (!requireAuth("play a friend")) return;
   showScreen("playFriendScreen");
 });
 
@@ -77,6 +72,7 @@ $("playFriendInviteBtn")?.addEventListener("click", () => {
 });
 
 $("playFriendFriendsBtn")?.addEventListener("click", () => {
+  if (!requireAuth("keep a friends list")) return;
   window.showFriendsScreen?.();
 });
 
@@ -87,7 +83,6 @@ $("rankedMenuBtn")?.addEventListener("click", () => {
 
 
 $("playFriendBtn")?.addEventListener("click", () => {
-  if (!requireAuth("play a friend")) return;
   startPlayFriend();
 });
 

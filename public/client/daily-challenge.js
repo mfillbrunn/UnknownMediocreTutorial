@@ -191,10 +191,6 @@ window.showDailyChallenge = async function () {
       ? `<div class="daily-result-block">
           ${outcomeHtml}
           ${scoreRowsHtml}
-          <div class="daily-result-row">
-            <span class="daily-result-label">Time</span>
-            <span class="daily-result-value">${formatDailyTime(r.time)}</span>
-          </div>
           ${difficultyRow}
           <div class="daily-result-actions">
             <button id="shareDailyBtn" class="menu-btn primary small">Share Result 📤</button>

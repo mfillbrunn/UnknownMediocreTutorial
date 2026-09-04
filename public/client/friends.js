@@ -4,7 +4,10 @@
   const sb = () => window.supabaseClient;
 
   // ── Supabase helpers ──────────────────────────────────────────────────
+  // A guest has no profile row, so there is nothing on the other end of
+  // any of these joins -- skip the round-trip rather than let it fail.
   async function fetchFriends(userId) {
+    if (window.isGuestPlayer?.()) return [];
     const { data } = await sb()
       .from("friendships")
       .select(`
@@ -37,6 +40,7 @@
   }
 
   async function fetchInvites(userId) {
+    if (window.isGuestPlayer?.()) return [];
     const { data } = await sb()
       .from("game_invites")
       .select(`id, room_id, sender:profiles!game_invites_from_user_fkey(id, username)`)

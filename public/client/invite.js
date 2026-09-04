@@ -21,12 +21,6 @@ window._pendingInviteCode = null;
 window.maybeJoinPendingInvite = function () {
   if (!window._pendingInviteCode) return false;
 
-  if (!window.currentUser) {
-    toast("Log in to join the game you were invited to");
-    showScreen("accountScreen");
-    return true;
-  }
-
   const code = window._pendingInviteCode;
   window._pendingInviteCode = null; // consume once, whether it succeeds or not
 
@@ -68,7 +62,6 @@ async function shareOrCopyInviteLink(roomId, copiedMessage = "Invite link copied
 // whenever. Once they join and ready up, the round starts on its own and
 // shows up in My Games for both of them.
 window.startAsyncInvite = function () {
-  if (!requireAuth("invite a friend")) return;
   window.rememberLastPlayMode?.({ mode: "friend" });
 
   const username = window.myProfile?.username || window.currentUser?.email || "Player";

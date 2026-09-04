@@ -375,13 +375,15 @@ function enterLobbyAfterJoin() {
   showLobby();
 }
 
+// Account gate for the features that genuinely need a profile row behind
+// them: ranked Elo, friends, saved stats and match history. Ordinary play
+// (Quick Play, AI, Daily, Cuddle, tutorials) runs on the guest identity
+// instead and must NOT call this -- see client/guest-identity.js.
 function requireAuth(actionName = "continue") {
-  if (!window.currentUser) {
-    toast(`Please log in to ${actionName}`);
-    showScreen("accountScreen");
-    return false;
-  }
-  return true;
+  if (window.isSignedIn?.()) return true;
+  toast(`Sign up to ${actionName} — guests can play everything else.`);
+  showScreen("accountScreen");
+  return false;
 }
 
 function triggerPowerFX(type) {
