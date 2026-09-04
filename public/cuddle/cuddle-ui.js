@@ -240,8 +240,21 @@
           </div>
           <div class="cuddle-landing-actions">
             ${hasRun ? `<button class="cuddle-btn cuddle-btn-primary" data-action="continue">${escapeHtml(continueLabel)}</button>` : ""}
-            <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run">New run</button>
             <button class="cuddle-btn cuddle-btn-ghost" data-action="rules">Rules</button>
+          </div>
+          <div class="cuddle-difficulty-picker">
+            <span class="cuddle-eyebrow">${hasRun ? "START A NEW RUN" : "CHOOSE A DIFFICULTY"}</span>
+            <div class="cuddle-difficulty-row">
+              <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-easy">
+                Easy <small>+3 mulligans, bigger mulligan, pick 2 rewards</small>
+              </button>
+              <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-medium">
+                Medium <small>+2 mulligans, pick 1 reward</small>
+              </button>
+              <button class="cuddle-btn ${hasRun ? "" : "cuddle-btn-primary"}" data-action="new-run-hard">
+                Hard <small>Standard rules</small>
+              </button>
+            </div>
           </div>
         </section>
         ${rulesOpen ? renderRulesOverlay() : ""}
@@ -300,7 +313,7 @@
               <div class="cuddle-detail-badges">
                 <span class="cuddle-detail-badge"><b>Hand size</b> ${rules.handSize}</span>
                 <span class="cuddle-detail-badge"><b>Mulligans</b> ${state.mulligansLeft}/${rules.mulligans} · up to ${rules.mulliganSize}</span>
-                <span class="cuddle-detail-badge"><b>Quest every</b> ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"}</span>
+                <span class="cuddle-detail-badge"><b>Concurrent quests</b> ${rules.questSlots || 1}</span>
                 <span class="cuddle-detail-badge"><b>Draw / discard</b> ${drawPile} / ${recyclable}</span>
               </div>
             </div>
@@ -335,7 +348,8 @@
     // meaningless for them (see _bossActive in the engine), so treat them
     // as always "on" instead of reading a countdown out of a field that
     // doesn't describe anything real for these bosses.
-    const isWholeRound = boss.id === "shortHand" || boss.id === "noMulligans" || boss.id === "questTrial";
+    const isWholeRound = boss.id === "shortHand" || boss.id === "noMulligans" || boss.id === "questTrial"
+      || boss.id === "extraGuessTrial" || boss.id === "questEndurance" || boss.id === "presetWordsTrial";
     const turns = Number(boss.turns) || 0;
     const remaining = Math.max(0, turns - (state.guessesUsed || 0));
     const stillOn = isWholeRound || remaining > 0;
@@ -344,6 +358,7 @@
       : stillOn
         ? `${remaining} guess${remaining === 1 ? "" : "es"} left under this`
         : "Constraint lifted";
+    const presetWords = boss.id === "presetWordsTrial" ? state.megaState?.presetWords : null;
     return `
       <article class="cuddle-quest cuddle-boss-banner ${stillOn ? "is-active" : "is-spent"}">
         <div class="cuddle-quest-icon" aria-hidden="true">${escapeHtml(boss.icon || "💀")}</div>
@@ -351,6 +366,10 @@
           <span class="cuddle-eyebrow">BOSS ROUND</span>
           <h2>${escapeHtml(boss.title || "Boss")}</h2>
           <p>${escapeHtml(boss.description || "")} <b>${escapeHtml(scope)}.</b></p>
+          ${presetWords?.length ? `
+            <div class="cuddle-preset-words" aria-label="Candidate words">
+              ${presetWords.map(word => `<span class="cuddle-preset-word">${escapeHtml(word)}</span>`).join("")}
+            </div>` : ""}
         </div>
         ${boss.secondsPerGuess ? `<span id="cuddleQuickClock" class="cuddle-quick-clock" aria-live="off">${boss.secondsPerGuess}s</span>` : ""}
       </article>`;
@@ -374,7 +393,7 @@
   function renderActiveQuest(state) {
     if (!state.activeQuest) return "";
     const fulfilled = game.wouldDraftCompleteQuest();
-    return `
+    const primary = `
       <article class="cuddle-quest is-active ${fulfilled ? "is-fulfilled" : ""}">
         <div class="cuddle-quest-icon" aria-hidden="true">${fulfilled ? "✅" : escapeHtml(state.activeQuest.icon || "❗")}</div>
         <div>
@@ -382,6 +401,26 @@
           <p>${escapeHtml(state.activeQuest.description)}</p>
         </div>
       </article>`;
+    // Extra concurrent quests (Quest Cadence boss reward) all ride on the
+    // same guess as the primary -- shown as smaller cards underneath it,
+    // since only the primary's own live "would this draft complete it"
+    // check is worth the cost of running on every render.
+    const extras = (Array.isArray(state.activeQuests) ? state.activeQuests : [])
+      .slice(1)
+      .filter(Boolean);
+    if (!extras.length) return primary;
+    return `
+      <div class="cuddle-quest-stack">
+        ${primary}
+        ${extras.map(quest => `
+          <article class="cuddle-quest cuddle-quest-extra">
+            <div class="cuddle-quest-icon" aria-hidden="true">${escapeHtml(quest.icon || "❗")}</div>
+            <div>
+              <h2>${escapeHtml(quest.title)}</h2>
+              <p>${escapeHtml(quest.description)}</p>
+            </div>
+          </article>`).join("")}
+      </div>`;
   }
 
   function renderBoard(state) {
@@ -511,13 +550,15 @@
       || (actionMode === "play" && game.getDraftWord().length >= 5)
       || (actionMode !== "play" && selectable.length === 0)
       || (actionMode !== "play" && selectedCount === 0 && (unselectedCount === 0 || selectedCards.size >= limit));
+    const isJoker = group.glyph === window.CuddleEngine.CUDDLE_JOKER_GLYPH;
     const classes = [
       "cuddle-card",
       `is-card-${status}`,
       persistentCard ? "is-infinite" : "",
       VOWEL_SET.has(group.glyph) ? "is-vowel" : "",
       draftedCount ? "has-drafted" : "",
-      selectedCount ? "is-selected" : ""
+      selectedCount ? "is-selected" : "",
+      isJoker ? "is-joker" : ""
     ].filter(Boolean).join(" ");
     const statusLabel = status === "unknown" ? "unknown · result withheld"
       : status === "green" ? "green"
@@ -559,9 +600,26 @@
     ].filter(Boolean).join("");
     const selectedCount = selectedCards.size;
     const mulliganValid = selectedCount >= 1 && selectedCount <= limit;
+    const mega = state.megaState || {};
+    const jokerCharges = Number(mega.jokerCharges || 0);
+    const hasJokerInHand = state.hand.some(card => card.source === "joker");
+    const questRerollCharges = Number(mega.questRerollCharges || 0);
+    const canReroll = isPlaying && !game.isBossRound() && Boolean(state.activeQuest) && questRerollCharges > 0;
     return `
       <section class="cuddle-hand-panel">
         ${metaBadges ? `<div class="cuddle-hand-meta">${metaBadges}</div>` : ""}
+        ${isPlaying && (jokerCharges > 0 || hasJokerInHand || canReroll) ? `
+          <div class="cuddle-utility-row">
+            ${jokerCharges > 0 || hasJokerInHand ? `
+              <button class="cuddle-btn cuddle-btn-joker" data-action="activate-joker" ${hasJokerInHand || game.isBossRound() ? "disabled" : ""}
+                title="${hasJokerInHand ? "A joker is already in your hand" : "Add a wildcard letter to your hand -- its real letter is chosen when you submit"}">
+                🃏 ${hasJokerInHand ? "Joker in hand" : `Use joker <span>${jokerCharges}</span>`}
+              </button>` : ""}
+            ${canReroll ? `
+              <button class="cuddle-btn" data-action="reroll-quest" title="Swap your active quest for a different one">
+                🔄 Reroll quest <span>${questRerollCharges}</span>
+              </button>` : ""}
+          </div>` : ""}
         ${showSubmitRow ? `
           <div class="cuddle-submit-row ${isMulliganMode ? "is-mulligan-mode" : ""}">
             ${isMulliganMode ? `
@@ -832,8 +890,7 @@
           <p id="cuddleShareStatus" class="cuddle-share-status" role="status" aria-live="polite"></p>
           <div class="cuddle-modal-actions">
             <button class="cuddle-btn cuddle-btn-primary" data-action="share-run">Share round</button>
-            <button class="cuddle-btn" data-action="new-run">Start another run</button>
-            <button class="cuddle-btn" data-action="run-menu">Cuddle menu</button>
+            <button class="cuddle-btn" data-action="run-menu">Start another run</button>
             <button class="cuddle-btn cuddle-btn-ghost" data-action="back">Main menu</button>
           </div>
         </section>
@@ -867,7 +924,7 @@
             <article><strong>3 · Refill the hand</strong><p>You have ${rules.handSize} counted consonant slots. A finite consonant used in a submitted word leaves once, even when it was repeated in that word, and the draw pile refills open counted slots back toward ${rules.handSize}.</p></article>
             <article><strong>4 · Fix bad hands</strong><p>You begin each round with ${rules.mulligans} mulligans of up to ${rules.mulliganSize} cards.</p></article>
             <article><strong>5 · Score enough</strong><p>Yellow tiles score ${rules.yellowPoints > 0 ? "+" : ""}${rules.yellowPoints}, green tiles score ${rules.greenPoints > 0 ? "+" : ""}${rules.greenPoints}, and grey tiles score ${rules.greyPoints > 0 ? "+" : ""}${rules.greyPoints}. Solving early adds +${rules.earlyPoint} for every unused guess, and every mulligan you did not spend is worth +${rules.mulliganPoints}. You must also meet the cumulative round target.</p></article>
-            <article><strong>6 · Grow the run</strong><p>Quests appear every ${rules.questCadence} turn${rules.questCadence === 1 ? "" : "s"} and pay bonus points. Solve the word to choose an upgrade after every round.</p></article>
+            <article><strong>6 · Grow the run</strong><p>Quests appear every few turns and pay bonus points once you own a reward that makes them worth something. Certain boss rewards add extra concurrent quests. Solve the word to choose an upgrade after every round.</p></article>
             <article><strong>7 · Boss rounds</strong><p>Before rounds 4, 7, and 10 -- and once more after round 12 -- you pick one of two bosses. Their powers last for 2, 2, 3, and 4 guesses respectively. A boss round is pass or fail: nothing scores and no target applies, you just have to solve it. Clear any boss to receive its displayed permanent reward; no ordinary upgrade is added afterward.</p></article>
           </div>
           <p class="cuddle-rule-note"><strong>Campaign targets:</strong> ${window.CuddleEngine.THRESHOLDS.join(" · ")}. Clear round ${scoringRounds()} at ${window.CuddleEngine.THRESHOLDS[scoringRounds() - 1]} points, then beat the final boss to win.</p>
@@ -919,14 +976,14 @@
     selected.forEach(card => selectedCards.delete(card.id));
   }
 
-  function startNewRun() {
+  function startNewRun(difficulty) {
     if (!wordLists) return;
     if (game?.state && !["lost", "won"].includes(game.state.status)) {
       const okay = window.confirm("Start a new Cuddle run? The current saved run will be replaced.");
       if (!okay) return;
     }
     game = new window.CuddleEngine.CuddleGame(wordLists);
-    game.startNew();
+    game.startNew(difficulty);
     landing = false;
     rulesOpen = false;
     detailsOpen = false;
@@ -957,9 +1014,25 @@
       case "toggle-details":
         detailsOpen = !detailsOpen;
         return true;
-      case "new-run":
-        startNewRun();
+      case "new-run-easy":
+        startNewRun("easy");
         return true;
+      case "new-run-medium":
+        startNewRun("medium");
+        return true;
+      case "new-run-hard":
+        startNewRun("hard");
+        return true;
+      case "activate-joker": {
+        const result = game.activateJoker();
+        setUiMessage(result.ok ? "" : result.error);
+        return true;
+      }
+      case "reroll-quest": {
+        const result = game.rerollActiveQuest();
+        setUiMessage(result.ok ? "" : result.error);
+        return true;
+      }
       case "retry-load":
         openCuddle();
         return false;

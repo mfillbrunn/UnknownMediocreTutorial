@@ -98,7 +98,7 @@ function runAdvancedTutorialGuesser(state) {
 
     if (tutorialSubStep === 0) {
       advancedTutorialShow(
-        `Let's build ${word}. Tap the letters like normal, or drag them straight into the boxes - whichever feels better to you.`,
+        `Let's build ${word}. Tap the letters like normal, or drag them straight into the boxes - whichever feels better to you. You can also drag a letter already placed to a different box to move it.`,
         {
           role: "guesser",
           title: "Drag letters",
