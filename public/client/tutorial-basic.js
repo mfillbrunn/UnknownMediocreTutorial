@@ -122,12 +122,27 @@ function runBasicInspectorTutorial(state) {
     const word = state.tutorialGuesses?.[0] || "CHAMP";
     if (tutorialSubStep === 0) {
       basicTutorialShow(
-        "A match has two rounds, and you play both roles. As the Guesser, find a five-letter secret quickly. As the Secretkeeper, keep your secret hidden. Each role also has a special helper, which the next tutorials explain. First, let us play as the Guesser.",
+        "A match has two rounds, and you play both roles. First you play the Guesser, trying to find a five-letter secret quickly.",
         {
           role: "guesser",
           section: "How the game works",
           current: 1,
-          total: 2,
+          total: 3,
+          placement: "top"
+        }
+      );
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 1) {
+      basicTutorialShow(
+        "Then you play the Secretkeeper, trying to keep your secret hidden. Each role also has a special helper, which the next tutorials explain.",
+        {
+          role: "guesser",
+          section: "Two roles",
+          current: 2,
+          total: 3,
           placement: "top"
         }
       );
@@ -141,8 +156,8 @@ function runBasicInspectorTutorial(state) {
         {
           role: "guesser",
           section: "First guess",
-          current: 2,
-          total: 2,
+          current: 3,
+          total: 3,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -156,8 +171,8 @@ function runBasicInspectorTutorial(state) {
         {
           role: "guesser",
           section: "First guess",
-          current: 2,
-          total: 2,
+          current: 3,
+          total: 3,
           placement: "top",
           mode: "hide"
         }
@@ -183,14 +198,32 @@ function runBasicInspectorTutorial(state) {
       "P is gray, so P is not in the secret. That is the full color system: green is correct place, yellow is wrong place, and gray is absent."
     ];
 
+    const totalSteps = 8;
+
     if (tutorialSubStep < feedbackSteps.length) {
       basicTutorialShow(feedbackSteps[tutorialSubStep], {
         role: "guesser",
         section: "Read the feedback",
         current: tutorialSubStep + 1,
-        total: 7,
+        total: totalSteps,
         placement: "bottom"
       });
+      highlightHistoryGuesser();
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === feedbackSteps.length) {
+      basicTutorialShow(
+        "For your second guess, you don't have to stick to confirmed clues. Any legal word works, and sometimes an unconfirmed word teaches you more.",
+        {
+          role: "guesser",
+          section: "An information guess",
+          current: 7,
+          total: totalSteps,
+          placement: "top"
+        }
+      );
       highlightHistoryGuesser();
       tutorialContinueMode = "advance";
       return;
@@ -202,8 +235,8 @@ function runBasicInspectorTutorial(state) {
         {
           role: "guesser",
           section: "Second guess",
-          current: 7,
-          total: 7,
+          current: 8,
+          total: totalSteps,
           placement: "top",
           compact: true,
           mode: "hide",
@@ -213,12 +246,12 @@ function runBasicInspectorTutorial(state) {
       stopKeyDemo();
     } else {
       basicTutorialShow(
-        `Great - it is your turn again. You may respect every earlier clue, or use any legal word as an information guess. Sometimes that is better. Type ${word}: it deliberately reuses gray A and leaves out yellow M, and that is allowed.`,
+        `Type ${word}: it deliberately reuses gray A and leaves out yellow M, and that is allowed.`,
         {
           role: "guesser",
           section: "Second guess",
-          current: 7,
-          total: 7,
+          current: 8,
+          total: totalSteps,
           placement: "top",
           mode: "hide"
         }
@@ -524,9 +557,12 @@ function runBasicSpyTutorial(state) {
 }
 
 function runBasicSummaryTutorial(state) {
-  // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
+  // UMT_REQUESTED_FIXES_20260904: walk the round summary one piece at a
+  // time instead of rushing past a screen with a score, a clock panel,
+  // and a five-column table all showing at once.
   clearHighlights();
   const guesses = state.history?.length || state.guessCount || 0;
+  const totalSteps = 8;
 
   if (tutorialSubStep === 0) {
     basicTutorialShow(
@@ -535,7 +571,7 @@ function runBasicSummaryTutorial(state) {
         role: "guesser",
         section: "Your round score",
         current: 1,
-        total: 4,
+        total: totalSteps,
         placement: "bottom"
       }
     );
@@ -546,12 +582,12 @@ function runBasicSummaryTutorial(state) {
 
   if (tutorialSubStep === 1) {
     basicTutorialShow(
-      "Below the score, you can review every guess and the feedback it received.",
+      "Below the score sits a table with one row for every guess this round. Let us look at each column.",
       {
         role: "guesser",
         section: "Review the round",
         current: 2,
-        total: 4,
+        total: totalSteps,
         placement: "bottom"
       }
     );
@@ -562,12 +598,76 @@ function runBasicSummaryTutorial(state) {
 
   if (tutorialSubStep === 2) {
     basicTutorialShow(
+      "Secret: what the Secretkeeper's word was at the moment of that guess. It can change between guesses.",
+      {
+        role: "guesser",
+        section: "Secret column",
+        current: 3,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("secret-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 3) {
+    basicTutorialShow(
+      "Guess: the word that was actually submitted that turn.",
+      {
+        role: "guesser",
+        section: "Guess column",
+        current: 4,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("guess-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 4) {
+    basicTutorialShow(
+      "Result: the feedback tiles that guess received -- green, yellow, or gray.",
+      {
+        role: "guesser",
+        section: "Result column",
+        current: 5,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("feedback-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 5) {
+    basicTutorialShow(
+      "Left: how many secret words were still possible after that guess. Lower means the Guesser narrowed things down more.",
+      {
+        role: "guesser",
+        section: "Left column",
+        current: 6,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("remaining-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 6) {
+    basicTutorialShow(
       "In the next round you will be the Secretkeeper. Then the goal is the opposite: you want a high score because you want the Guesser to need more guesses.",
       {
         role: "guesser",
         section: "The score changes meaning",
-        current: 3,
-        total: 4,
+        current: 7,
+        total: totalSteps,
         placement: "bottom"
       }
     );
@@ -581,8 +681,8 @@ function runBasicSummaryTutorial(state) {
     {
       role: "guesser",
       section: "Swap roles",
-      current: 4,
-      total: 4,
+      current: 8,
+      total: totalSteps,
       placement: "bottom",
       mode: "hide"
     }
@@ -596,16 +696,19 @@ function runBasicSummaryTutorial(state) {
 }
 
 function runBasicMatchTutorial(state) {
-  // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
+  // UMT_REQUESTED_FIXES_20260904: same fix as runBasicSummaryTutorial --
+  // one column at a time instead of naming three columns in a single
+  // sentence over a screen that stacks a full table per round.
   clearHighlights();
+  const totalSteps = 7;
 
   if (tutorialSubStep === 0) {
     basicTutorialShow(
-      "The Guesser found your secret too, so the match is over. This tutorial is a 3-3 tie: both secrets lasted three guesses. In a match between people, equal points are broken by lower total time. Against the AI, equal points stay a tie because the AI responds almost instantly.",
+      "The Guesser found your secret too, so the match is over. This tutorial is a 3-3 tie: both secrets lasted three guesses.",
       {
         section: "Match result",
         current: 1,
-        total: 4,
+        total: totalSteps,
         placement: "bottom"
       }
     );
@@ -616,26 +719,71 @@ function runBasicMatchTutorial(state) {
 
   if (tutorialSubStep === 1) {
     basicTutorialShow(
-      "Each round summary shows the secret the Secretkeeper kept or switched to, the word that was guessed, and the feedback sent to the Guesser.",
+      "In a match between people, a tie is broken by lower total time. Against the AI, a tie stays a tie, since the AI responds almost instantly.",
       {
-        section: "What happened each turn",
+        section: "Breaking a tie",
         current: 2,
-        total: 4,
+        total: totalSteps,
         placement: "bottom"
       }
     );
-    highlightRoundSummary();
+    highlightMatchScore();
     tutorialContinueMode = "advance";
     return;
   }
 
   if (tutorialSubStep === 2) {
     basicTutorialShow(
-      "The Left number is how many secret words were still possible after that guess. A smaller number means the Guesser was closer; a larger number means the Secretkeeper was still hiding among many possibilities.",
+      "Each round summary has its own table. Secret: what the Secretkeeper's word was at the moment of that guess.",
       {
-        section: "Words left",
+        section: "Secret column",
         current: 3,
-        total: 4,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("secret-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 3) {
+    basicTutorialShow(
+      "Guess: the word that was actually submitted that turn.",
+      {
+        section: "Guess column",
+        current: 4,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("guess-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 4) {
+    basicTutorialShow(
+      "Result: the feedback tiles that guess received.",
+      {
+        section: "Result column",
+        current: 5,
+        total: totalSteps,
+        placement: "bottom"
+      }
+    );
+    highlightRoundSummaryColumn("feedback-cell");
+    tutorialContinueMode = "advance";
+    return;
+  }
+
+  if (tutorialSubStep === 5) {
+    basicTutorialShow(
+      "Left: how many secret words were still possible after that guess. A smaller number means the Guesser was closer; a larger number means the Secretkeeper was still hiding among many possibilities.",
+      {
+        section: "Left column",
+        current: 6,
+        total: totalSteps,
         placement: "bottom"
       }
     );
@@ -649,8 +797,8 @@ function runBasicMatchTutorial(state) {
     "That is the basic game. From here you can start another match, replay, or leave. We recommend the Quest and Star tutorials next; they explain the special help available to each role.",
     {
       section: "Basics complete",
-      current: 4,
-      total: 4,
+      current: 7,
+      total: totalSteps,
       placement: "bottom",
       mode: "end"
     }

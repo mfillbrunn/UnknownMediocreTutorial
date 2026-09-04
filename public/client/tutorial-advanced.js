@@ -1,6 +1,7 @@
 // UMT_REQUESTED_FIXES_20260901: ADVANCED UI LABEL
 // Streamlined Advanced UI Tutorial: only the controls that are hard to
-// discover, with one idea or action on each screen.
+// discover -- dragging letters, locking a tile, the side column, and the
+// constraint row -- with one idea on each screen.
 function advancedTutorialShow(text, {
   role = window.myRole,
   title = "Advanced UI",
@@ -50,35 +51,20 @@ function runAdvancedTutorial(state, role) {
 }
 
 function runAdvancedTutorialGuesser(state) {
-  // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
+  // UMT_REQUESTED_FIXES_20260901: no more Guide-toggle step -- that button
+  // no longer exists in the real UI, so round 0 is just a warm-up guess
+  // (needed to advance the practice match into round 1, where Drag and
+  // Lock are actually taught) with no separate sub-step of its own.
   const round = state.history?.length ?? 0;
 
   if (round === 0) {
-    if (tutorialSubStep === 0) {
-      advancedTutorialShow(
-        "Extra Tools are optional shortcuts. Guide adds small labels beside unfamiliar controls. Turn it on whenever you need a reminder; normal typing and tapping still work.",
-        {
-          role: "guesser",
-          title: "Guide",
-          current: 1,
-          total: 2,
-          placement: "top"
-        }
-      );
-      highlightGuideToggle("guesser");
-      tutorialContinueMode = "advance";
-      return;
-    }
-
     const word = state.tutorialGuesses?.[0] || "CHAMP";
     if (state.simultaneousGuessSubmitted) {
       advancedTutorialShow(
         "Guess sent. Wait for the Secretkeeper.",
         {
           role: "guesser",
-          title: "Start the round",
-          current: 2,
-          total: 2,
+          title: "Warm-up guess",
           compact: true,
           placement: "top",
           mode: "hide",
@@ -88,12 +74,10 @@ function runAdvancedTutorialGuesser(state) {
       stopKeyDemo();
     } else {
       advancedTutorialShow(
-        `Type ${word}, then tap Submit Guess.`,
+        `Extra Tools are optional shortcuts. Type ${word}, then tap Submit Guess.`,
         {
           role: "guesser",
-          title: "Start the round",
-          current: 2,
-          total: 2,
+          title: "Warm-up guess",
           placement: "top",
           mode: "hide"
         }
@@ -211,7 +195,7 @@ function runAdvancedTutorialGuesser(state) {
   if (round >= 2) {
     stopKeyDemo();
     advancedTutorialShow(
-      "Guesser shortcuts complete. Next you will see the Secretkeeper tools.",
+      "Drag and Lock done. Next you will see the Secretkeeper tools.",
       {
         role: "guesser",
         title: "Guesser tools done",
@@ -226,35 +210,20 @@ function runAdvancedTutorialGuesser(state) {
 }
 
 function runAdvancedTutorialSetter(state) {
-  // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
+  // UMT_REQUESTED_FIXES_20260901: trimmed to just the side column and the
+  // constraint row -- Keep/Change, the Log tab, and the exit/clock
+  // controls are either covered in the Basics Tutorial already or rare
+  // enough not to need a dedicated stop here.
   const round = state.history?.length ?? 0;
 
   if (round === 0) {
-    if (tutorialSubStep === 0) {
-      advancedTutorialShow(
-        "Drag and Lock work on secret words too. They are optional; use them only when they make editing easier.",
-        {
-          role: "setter",
-          title: "Secretkeeper shortcuts",
-          current: 1,
-          total: 2,
-          placement: "top"
-        }
-      );
-      highlightDraftRow("setter");
-      tutorialContinueMode = "advance";
-      return;
-    }
-
     const word = state.tutorialSecrets?.[0] || "BLIMP";
     if (state.simultaneousSecretSubmitted) {
       advancedTutorialShow(
         "Secret saved. Wait for the Guesser.",
         {
           role: "setter",
-          title: "Start the round",
-          current: 2,
-          total: 2,
+          title: "Warm-up secret",
           compact: true,
           placement: "top",
           mode: "hide",
@@ -264,12 +233,10 @@ function runAdvancedTutorialSetter(state) {
       stopKeyDemo();
     } else {
       advancedTutorialShow(
-        `Type ${word}, then tap Submit New Secret.`,
+        `Drag and Lock work here too. Type ${word}, then tap Submit New Secret.`,
         {
           role: "setter",
-          title: "Start the round",
-          current: 2,
-          total: 2,
+          title: "Warm-up secret",
           placement: "top",
           mode: "hide"
         }
@@ -307,66 +274,63 @@ function runAdvancedTutorialSetter(state) {
         return;
       }
       advancedTutorialShow(
-        "Keep uses your current secret. Change uses the legal word in your five draft boxes. The nearby preview helps compare the two choices.",
+        "Tap the arrow to open or close the side column.",
         {
           role: "setter",
-          title: "Keep or change?",
+          title: "Side column",
           current: 1,
           total: totalSteps,
           placement: "bottom"
         }
       );
-      highlightSetterRemainingBox();
+      highlightSidebarToggleBtn();
       tutorialContinueMode = "advance";
       return;
     }
 
     if (tutorialSubStep === 1) {
       advancedTutorialShow(
-        "Tap the arrow to open the side panel. Tap it again whenever you want more room for the board.",
+        "It holds the Log (guesses, secret changes, rewards, and power uses), your powers, and other setter tools.",
         {
           role: "setter",
-          title: "Side panel",
+          title: "What's inside",
           current: 2,
           total: totalSteps,
-          placement: "bottom",
-          mode: "hide"
+          placement: "bottom"
         }
       );
       highlightSidebarToggleBtn();
-      waitForSidebarToggled();
+      tutorialContinueMode = "advance";
       return;
     }
 
     if (tutorialSubStep === 2) {
       advancedTutorialShow(
-        "Open Log to review guesses, secret changes, rewards, and power uses.",
+        "Below the board sits the constraint row -- one tile per letter position, showing everything learned about the secret so far.",
         {
           role: "setter",
-          title: "Open the Log",
+          title: "Constraint row",
           current: 3,
           total: totalSteps,
-          placement: "bottom",
-          mode: "hide"
+          placement: "bottom"
         }
       );
-      highlightLogTabButton();
-      waitForLogTabOpened();
+      highlightConstraintRowAndToggle("setter");
+      tutorialContinueMode = "advance";
       return;
     }
 
     if (tutorialSubStep === 3) {
       advancedTutorialShow(
-        "The Log records what happened. The clue row collects the green and yellow rules that every new secret must obey.",
+        "A position you've already solved shows that letter plainly in green, like a normal tile.",
         {
           role: "setter",
-          title: "Log and clue row",
+          title: "Solved positions",
           current: 4,
           total: totalSteps,
           placement: "bottom"
         }
       );
-      highlightSetterLog();
       highlightConstraintRowAndToggle("setter");
       tutorialContinueMode = "advance";
       return;
@@ -374,17 +338,32 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 4) {
       advancedTutorialShow(
-        "Concede ends the round. Leave exits an untimed or AI match. In timed games, repeated timeouts can lose the round. You normally do not need these controls during a turn.",
+        "An unsolved position can show small red squares instead. Each one names a letter that a yellow clue already ruled out there.",
         {
           role: "setter",
-          title: "Exit and clock controls",
+          title: "Red squares",
           current: 5,
           total: totalSteps,
           placement: "bottom"
         }
       );
-      highlightEl(document.querySelector("#setterScreen .concedeBtn"));
-      highlightEl(byId("leaveGameBtnSetter"));
+      highlightConstraintRowAndToggle("setter");
+      tutorialContinueMode = "advance";
+      return;
+    }
+
+    if (tutorialSubStep === 5) {
+      advancedTutorialShow(
+        "That's the rule a red square encodes: that letter came back yellow in that spot before, so it can never land there again.",
+        {
+          role: "setter",
+          title: "Reading a red square",
+          current: 6,
+          total: totalSteps,
+          placement: "bottom"
+        }
+      );
+      highlightConstraintRowAndToggle("setter");
       tutorialContinueMode = "advance";
       return;
     }
@@ -411,7 +390,7 @@ function runAdvancedTutorialSetter(state) {
 
   if (round >= 2) {
     advancedTutorialShow(
-      "Extra Tools complete. Guide, Drag, Lock, the side panel, and the Log are all optional - use only the ones that help you.",
+      "Extra Tools complete. Drag, Lock, the side column, and the constraint row are always there when you want them.",
       {
         role: "setter",
         title: "Extra Tools done",
@@ -474,4 +453,3 @@ function runAdvancedMatchTutorial() {
   );
   tutorialEndNextMode = "tutorial";
 }
-

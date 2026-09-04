@@ -1335,16 +1335,6 @@ function highlightSetterHistory() {
   );
 }
 
-function highlightGuideToggle(role) {
-  highlightEl(
-    byId(
-      role === "setter"
-        ? "guideToggleBtnSetter"
-        : "guideToggleBtnGuesser"
-    )
-  );
-}
-
 function highlightDraftRow(role) {
   const rows = visibleDraftRows(role);
 
@@ -1799,10 +1789,14 @@ function highlightRoundSummaryGuessCount() {
   );
 }
 
+// Matches both the live single-round summary (table.summary-table--round)
+// and the final match summary's per-round tables (table.summary-table,
+// one per .stored-round block, no --round suffix) -- dropping the
+// modifier from the selector covers both instead of only the former.
 function highlightRoundSummaryColumn(cellClass) {
   document
     .querySelectorAll(
-      `#roundSummary .summary-table--round td.${cellClass}`
+      `#roundSummary td.${cellClass}`
     )
     .forEach(highlightEl);
 }

@@ -364,6 +364,14 @@
       description: "You get no mulligans this round.",
       turns: 0,
       rewardId: "questDoublePick"
+    },
+    {
+      id: "questTrial",
+      icon: "🎯",
+      title: "Quest Trial",
+      description: "A quest rides on every guess this round. Miss one and lose 5 points from your total.",
+      turns: 0,
+      rewardId: "questCadence"
     }
   ];
 
@@ -423,6 +431,12 @@
       icon: "✌️",
       title: "Double Pick",
       description: "Quest reward screens let you choose two options instead of one, for the rest of the run."
+    },
+    {
+      id: "questCadence",
+      icon: "❗",
+      title: "Quest Cadence",
+      description: "Quests now appear every second guess instead of every third, for the rest of the run."
     }
   ];
 
