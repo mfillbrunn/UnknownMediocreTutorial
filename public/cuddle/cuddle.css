@@ -1692,3 +1692,95 @@
   }
 }
 /* UMT_CUDDLE_BALANCE_REFRESH_HARDMODE_V1: CSS END */
+
+/* UMT_CUDDLE_EXPANSION_V1: CSS START */
+.cuddle-difficulty-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.cuddle-difficulty-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cuddle-difficulty-row .cuddle-btn {
+  height: auto;
+  padding: 12px 10px;
+  white-space: normal;
+}
+
+.cuddle-difficulty-row .cuddle-btn small {
+  display: block;
+  margin-top: 4px;
+  color: var(--cuddle-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.cuddle-difficulty-row .cuddle-btn-primary small {
+  color: rgba(28, 22, 35, 0.7);
+}
+
+.cuddle-utility-row {
+  display: flex;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+
+.cuddle-utility-row .cuddle-btn {
+  flex: 1;
+}
+
+.cuddle-btn-joker {
+  border-color: #f2d36f;
+  background: linear-gradient(135deg, rgba(242, 211, 111, 0.22), rgba(213, 166, 255, 0.18));
+}
+
+.cuddle-card.is-joker {
+  border-color: #f2d36f;
+  background: linear-gradient(160deg, #7a5fb8, #4c3a86);
+  box-shadow: 0 0 0 1px rgba(242, 211, 111, 0.5), 0 6px 13px rgba(0, 0, 0, 0.15);
+}
+
+.cuddle-quest-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cuddle-quest-extra {
+  padding: 10px 12px;
+  opacity: 0.85;
+}
+
+.cuddle-quest-extra h2 {
+  font-size: 0.85rem;
+}
+
+.cuddle-quest-extra p {
+  font-size: 0.72rem;
+}
+
+.cuddle-preset-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.cuddle-preset-word {
+  padding: 4px 9px;
+  border: 1px solid var(--cuddle-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cuddle-text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+/* UMT_CUDDLE_EXPANSION_V1: CSS END */

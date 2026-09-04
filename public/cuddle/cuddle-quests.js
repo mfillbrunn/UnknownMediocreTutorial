@@ -281,6 +281,24 @@
       icon: "🎁",
       title: "Extra Letters",
       description: "Add three extra consonants to your hand for this turn."
+    },
+    {
+      id: "jokerToken",
+      icon: "🃏",
+      title: "Joker",
+      description: "Gain a joker charge. Spend it any turn to add a wildcard tile to your hand -- it becomes a real letter, chosen to keep your word legal, the moment you submit."
+    },
+    {
+      id: "greenCount",
+      icon: "🔢",
+      title: "Precise Green",
+      description: "One-time: from now on, a green tile also shows how many times that letter appears in the secret."
+    },
+    {
+      id: "questReroll",
+      icon: "🔄",
+      title: "Second Guess Quest",
+      description: "Gain one charge to reroll your active quest for a different one, any turn you like."
     }
   ];
 
@@ -372,6 +390,30 @@
       description: "A quest rides on every guess this round. Miss one and lose 5 points from your total.",
       turns: 0,
       rewardId: "questCadence"
+    },
+    {
+      id: "extraGuessTrial",
+      icon: "⌛",
+      title: "Overtime Trial",
+      description: "You have one fewer guess this round.",
+      turns: 0,
+      rewardId: "overtimeReward"
+    },
+    {
+      id: "questEndurance",
+      icon: "🏃",
+      title: "Endurance Trial",
+      description: "A quest rides on every guess this round. Miss any and lose one hand size for the round.",
+      turns: 0,
+      rewardId: "questPersistReward"
+    },
+    {
+      id: "presetWordsTrial",
+      icon: "🎴",
+      title: "Preset Trial",
+      description: "A handful of candidate words are chosen for you up front -- the secret is one of them. Only your remaining guesses are left to land it.",
+      turns: 0,
+      rewardId: "backupPlanReward"
     }
   ];
 
@@ -382,7 +424,7 @@
       id: "cullRare",
       icon: "✂️",
       title: "Deep Cull",
-      description: "Remove two rare letters from the deck and from every future secret."
+      description: "Remove three rare letters from the deck and from every future secret."
     },
     {
       id: "doubleMulligans",
@@ -436,7 +478,25 @@
       id: "questCadence",
       icon: "❗",
       title: "Quest Cadence",
-      description: "Quests now appear every second guess instead of every third, for the rest of the run."
+      description: "One additional quest is active at the same time, for the rest of the run. Stacks."
+    },
+    {
+      id: "overtimeReward",
+      icon: "➕",
+      title: "Overtime",
+      description: "Gain one additional guess every round."
+    },
+    {
+      id: "questPersistReward",
+      icon: "⏳",
+      title: "Lasting Quests",
+      description: "Quests stay active for the rest of the round instead of expiring after one guess."
+    },
+    {
+      id: "backupPlanReward",
+      icon: "🧰",
+      title: "Backup Plan",
+      description: "Gain one additional mulligan every round."
     }
   ];
 

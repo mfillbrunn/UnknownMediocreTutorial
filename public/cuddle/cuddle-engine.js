@@ -2471,7 +2471,7 @@
     const turns = CUDDLE_V3_BOSS_TURNS[Math.max(0, Math.min(3, stage - 1))];
     const reward = option?.reward ? { ...option.reward } : option?.reward;
     if (reward?.id === "cullRare") {
-      reward.description = "Remove two rare letters from the deck and from every future secret.";
+      reward.description = "Remove three rare letters from the deck and from every future secret.";
     }
     return {
       ...option,
@@ -2603,7 +2603,7 @@
   // is created. The offer itself is retimed below for stages 1-4.
   if (window.CuddleQuestBook) {
     const deepCull = window.CuddleQuestBook.BOSS_REWARDS?.find(item => item.id === "cullRare");
-    if (deepCull) deepCull.description = "Remove two rare letters from the deck and from every future secret.";
+    if (deepCull) deepCull.description = "Remove three rare letters from the deck and from every future secret.";
     (window.CuddleQuestBook.BOSSES || []).forEach(boss => {
       boss.turns = 2;
       boss.description = cuddleV3BossDescription(boss.id, 2);
@@ -2733,7 +2733,7 @@
   const cuddleV3OriginalApplyBossReward = CuddleGame.prototype._applyBossReward;
   CuddleGame.prototype._applyBossReward = function applyCuddleV3BossReward(rewardId) {
     if (rewardId !== "cullRare") return cuddleV3OriginalApplyBossReward.call(this, rewardId);
-    const letters = this._removalCandidates(2);
+    const letters = this._removalCandidates(3);
     if (!letters.length) return "No letters were safe to remove.";
     this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
     return `Deep Cull removed ${letters.join(", ")}.`;
@@ -2768,7 +2768,7 @@
       description: ""
     };
     if (reward.id === "cullRare") {
-      reward.description = "Remove two rare letters from the deck and from every future secret.";
+      reward.description = "Remove three rare letters from the deck and from every future secret.";
     }
     // Position Peek can't do anything useful against the secret that was
     // JUST solved to beat this boss -- bank it instead (via its own flag,
@@ -3719,3 +3719,979 @@
   };
 }());
 /* UMT_CUDDLE_REWARD_ECHO_V1: ENGINE END */
+
+/* UMT_CUDDLE_EXPANSION_V1: ENGINE START
+ * Difficulty tiers, a permanent post-boss "ratchet" (the boss you declined
+ * keeps costing you, forever, one guess deeper each time), score
+ * milestones, concurrent quests, a joker wildcard letter, three new
+ * bosses, and a handful of smaller reward tweaks. Appended last so it sees
+ * (and can layer on top of) every earlier engine pass -- same composition
+ * pattern as V2/V3/hardmode-refresh/reward-echo above: capture whatever is
+ * currently on the prototype, wrap it, delegate for anything this layer
+ * doesn't care about.
+ *
+ * All new persistent state lives under state.megaState rather than inside
+ * state.upgrades -- Reward Echo (just above) replays a chooseUpgrade pick
+ * by diffing every key of state.upgrades and re-applying the delta, and a
+ * new counter dropped into that object would get silently tripled by a
+ * mechanic that was never designed for it. Keeping this layer's state in
+ * its own namespace sidesteps that entirely.
+ */
+(function () {
+  "use strict";
+
+  const Engine = window.CuddleEngine;
+  const CuddleGame = Engine && Engine.CuddleGame;
+  if (!CuddleGame) return;
+
+  const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  const MAX_GUESSES = Number(Engine.MAX_GUESSES) || 6;
+  const RATCHET_QUEST_PENALTY = 5;
+
+  function shuffle(items, random = Math.random) {
+    const copy = items.slice();
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+  function unique(items) {
+    return [...new Set(items)];
+  }
+
+  function megaDefaults() {
+    return {
+      difficulty: "hard",
+      startPicksRemaining: 0,
+      suppressAdvance: false,
+      extraGuesses: 0,
+      ratchetDebuffs: [],
+      milestonesClaimed100: 0,
+      jokerCharges: 0,
+      hasJokerUnlocked: false,
+      questRerollCharges: 0,
+      activeQuests: [],
+      pendingExtraQuestRewards: [],
+      questPersistsForRound: false,
+      handSizePenaltyThisRound: 0,
+      greenCountUnlocked: false,
+      extraGuessTrialPunishPending: false,
+      questEndurancePunishPending: false,
+      ratchetForcedQuestGuessIndex: null,
+      presetWords: null,
+      unlockedSynergies: []
+    };
+  }
+
+  function ensureMega(game) {
+    const state = game && game.state;
+    if (!state) return null;
+    if (!state.megaState || typeof state.megaState !== "object") {
+      state.megaState = megaDefaults();
+    } else {
+      const defaults = megaDefaults();
+      Object.keys(defaults).forEach(key => {
+        if (!(key in state.megaState)) state.megaState[key] = defaults[key];
+      });
+      if (!Array.isArray(state.megaState.ratchetDebuffs)) state.megaState.ratchetDebuffs = [];
+      if (!Array.isArray(state.megaState.activeQuests)) state.megaState.activeQuests = [];
+      if (!Array.isArray(state.megaState.pendingExtraQuestRewards)) state.megaState.pendingExtraQuestRewards = [];
+      if (!Array.isArray(state.megaState.unlockedSynergies)) state.megaState.unlockedSynergies = [];
+    }
+    return state.megaState;
+  }
+
+  const originalHydrateState = CuddleGame.prototype._hydrateState;
+  CuddleGame.prototype._hydrateState = function hydrateMegaState() {
+    if (typeof originalHydrateState === "function") originalHydrateState.call(this);
+    ensureMega(this);
+  };
+
+  // ------------------------------------------------------------------
+  // Difficulty tiers
+  // ------------------------------------------------------------------
+  const DIFFICULTIES = new Set(["easy", "medium", "hard"]);
+
+  const originalStartNew = CuddleGame.prototype.startNew;
+  CuddleGame.prototype.startNew = function startNewMega(difficulty) {
+    const result = originalStartNew.call(this);
+    const mega = ensureMega(this);
+    const chosen = DIFFICULTIES.has(difficulty) ? difficulty : "hard";
+    mega.difficulty = chosen;
+
+    if (chosen !== "hard") {
+      const extraMulligans = chosen === "medium" ? 2 : 3;
+      this.state.upgrades.extraMulligans = Number(this.state.upgrades.extraMulligans || 0) + extraMulligans;
+      if (chosen === "easy") {
+        // "Make mulligan one larger" -- one extra card per mulligan use.
+        this.state.upgrades.mulliganSize = Number(this.state.upgrades.mulliganSize || 0) + 1;
+      }
+      this.state.mulligansLeft = this.getMulliganAllowance();
+
+      mega.startPicksRemaining = chosen === "medium" ? 1 : 2;
+      this.state.status = "upgrade";
+      this.state.upgradePhase = "difficultyStart";
+      this.state.upgradeMilestone = null;
+      // startNew() (just above) already ran round 1's _beginRound and
+      // picked its secret -- same mid-round hazard removeLetter poses to
+      // a milestone pick (see claimMilestoneIfDue) applies here too.
+      this.state.upgradeChoices = stripUnsafeMidRoundChoices(this._generateUpgradeChoices());
+    }
+    this.save();
+    return this.getSnapshot();
+  };
+
+  // ------------------------------------------------------------------
+  // Score milestones: every new multiple of 100 total score opens one
+  // extra, ordinary reward pick (the same between-round upgrade screen,
+  // just triggered by score instead of a round ending). Reuses the
+  // upgradeMilestone display the UI already has wired in for this.
+  // ------------------------------------------------------------------
+  // A milestone can fire mid-round -- including mid-BOSS-round, since a
+  // boss doesn't reset state.score, only guesses don't score there -- at
+  // which point the round's secret is already fixed. A normal between-
+  // round reward screen never has this problem (it opens before the next
+  // secret is picked), but here a removeLetter pick could strike a letter
+  // already locked into the live secret and make the round unwinnable.
+  // Strip it from the offer whenever a real round is already in flight.
+  function stripUnsafeMidRoundChoices(choices) {
+    return (choices || []).filter(choice => choice?.id !== "removeLetter");
+  }
+
+  function claimMilestoneIfDue(game) {
+    const mega = ensureMega(game);
+    const state = game.state;
+    if (!state || state.status !== "playing") return false;
+    const earned = Math.floor(Number(state.score || 0) / 100);
+    if (earned <= Number(mega.milestonesClaimed100 || 0)) return false;
+    mega.milestonesClaimed100 = Number(mega.milestonesClaimed100 || 0) + 1;
+    state.status = "upgrade";
+    state.upgradePhase = "milestone100";
+    state.upgradeMilestone = mega.milestonesClaimed100 * 100;
+    state.upgradeChoices = stripUnsafeMidRoundChoices(game._generateUpgradeChoices());
+    return true;
+  }
+
+  // The refresh button can otherwise re-introduce removeLetter into a
+  // milestone or difficulty-start offer -- same mid-round hazard as
+  // claimMilestoneIfDue above (round 1's secret is already fixed by the
+  // time difficulty-start picks run, same as any later milestone).
+  const composedRefreshUpgradeChoices = CuddleGame.prototype.refreshUpgradeChoices;
+  CuddleGame.prototype.refreshUpgradeChoices = function refreshUpgradeChoicesMega() {
+    const result = composedRefreshUpgradeChoices.call(this);
+    const phase = this.state?.upgradePhase;
+    if (result?.ok && (phase === "milestone100" || phase === "difficultyStart")) {
+      this.state.upgradeChoices = stripUnsafeMidRoundChoices(this.state.upgradeChoices);
+      this.save();
+    }
+    return result;
+  };
+
+  // ------------------------------------------------------------------
+  // chooseUpgrade: handles the difficulty-start / milestone reward loops
+  // above (which must NOT advance the round), and re-expands the
+  // removeLetter choice back out to its full letter count -- V3's own
+  // normalization (cuddleV3NormalizeUpgradeChoice) truncates it to a
+  // single letter, and the composed chooseUpgrade only ever applies
+  // choice.letters[0]. Everything else delegates straight through,
+  // including Reward Echo's replay.
+  // ------------------------------------------------------------------
+  const composedChooseUpgrade = CuddleGame.prototype.chooseUpgrade;
+  CuddleGame.prototype.chooseUpgrade = function chooseUpgradeMega(choiceKey) {
+    const mega = ensureMega(this);
+    if (this.state?.status !== "upgrade") {
+      return composedChooseUpgrade.call(this, choiceKey);
+    }
+
+    const phase = this.state.upgradePhase;
+    const specialPhase = phase === "difficultyStart" || phase === "milestone100";
+    const choice = (this.state.upgradeChoices || []).find(item => item.key === choiceKey);
+
+    let result;
+    if (choice?.id === "removeLetter" && Array.isArray(choice.letters) && choice.letters.length > 1) {
+      this.state.removedLetters = unique([...this.state.removedLetters, ...choice.letters]).sort();
+      this.state.lastMessage = `${choice.title} acquired.`;
+      this.state.upgradeChoices = [];
+      this.state.upgradePhase = null;
+      this.state.upgradeMilestone = null;
+      if (!specialPhase) this._advanceRound();
+      this.save();
+      result = { ok: true };
+    } else if (specialPhase) {
+      mega.suppressAdvance = true;
+      result = composedChooseUpgrade.call(this, choiceKey);
+      if (!result?.ok) {
+        mega.suppressAdvance = false;
+        return result;
+      }
+    } else {
+      result = composedChooseUpgrade.call(this, choiceKey);
+    }
+
+    if (result?.ok && specialPhase) {
+      if (phase === "difficultyStart") {
+        mega.startPicksRemaining = Math.max(0, Number(mega.startPicksRemaining || 0) - 1);
+        if (mega.startPicksRemaining > 0) {
+          this.state.status = "upgrade";
+          this.state.upgradePhase = "difficultyStart";
+          this.state.upgradeChoices = stripUnsafeMidRoundChoices(this._generateUpgradeChoices());
+        } else {
+          this.state.status = "playing";
+          this.state.upgradePhase = null;
+        }
+      } else {
+        this.state.status = "playing";
+        this.state.upgradePhase = null;
+        this.state.upgradeMilestone = null;
+      }
+      // Resolving straight back to "playing" here skips dismissRoundIntro,
+      // which is the only OTHER place that normally re-arms guess-one's
+      // quest (forced or ordinary cadence) after _beginRound's own attempt
+      // gets wiped by V2's "generate it only after the intro is dismissed"
+      // reset. Without this call a milestone or difficulty-start pick that
+      // resolves mid-round-one leaves that guess with no quest at all --
+      // _ensureQuestForNextGuess re-checks claimMilestoneIfDue itself, so
+      // it's also the right thing to call if picking THIS reward pushed
+      // score across yet another 100.
+      if (this.state.status === "playing") this._ensureQuestForNextGuess();
+    }
+    if (result?.ok) {
+      refreshMegaSynergies(this, true);
+      claimMilestoneIfDue(this);
+      this.save();
+    }
+    return result;
+  };
+
+  // A suppressed _advanceRound() is how chooseUpgrade above applies a pick
+  // via the FULL composed chain (hardmode customs, synergies, Reward Echo)
+  // without letting it also advance past round 1 while more start-of-run
+  // picks are still owed.
+  const composedAdvanceRound = CuddleGame.prototype._advanceRound;
+  CuddleGame.prototype._advanceRound = function advanceRoundMega() {
+    const mega = ensureMega(this);
+    if (mega.suppressAdvance) {
+      mega.suppressAdvance = false;
+      return undefined;
+    }
+    return composedAdvanceRound.call(this);
+  };
+
+  // removeLetter's catalog entry: re-request the full letter count (V3's
+  // own catalog truncates it to one via cuddleV3NormalizeUpgradeChoice).
+  const composedUpgradeCatalog = CuddleGame.prototype._upgradeCatalog;
+  CuddleGame.prototype._upgradeCatalog = function upgradeCatalogMega() {
+    const base = (composedUpgradeCatalog.call(this) || []).filter(item => item?.id !== "removeLetter");
+    const letters = this._removalCandidates(2);
+    if (letters.length) {
+      const list = letters.join(" & ");
+      const verb = letters.length > 1 ? "They were" : "It was";
+      base.push({
+        id: "removeLetter",
+        key: `removeLetter:${letters.join("")}`,
+        letters,
+        icon: "✂️",
+        title: `Cull ${list}`,
+        description: `Remove ${list} from the deck and from every future secret. ${verb} drawn from the ten least-common eligible consonants.`
+      });
+    }
+    return base;
+  };
+
+  // ------------------------------------------------------------------
+  // Boss reward tweaks + the three new boss rewards. Runs before the
+  // composed chain so it can fully own cullRare's letter count (3, not
+  // the composed chain's 2) without a second removal happening on top.
+  // ------------------------------------------------------------------
+  const composedApplyBossReward = CuddleGame.prototype._applyBossReward;
+  CuddleGame.prototype._applyBossReward = function applyBossRewardMega(rewardId) {
+    const mega = ensureMega(this);
+    let message;
+    if (rewardId === "cullRare") {
+      const letters = this._removalCandidates(3);
+      message = letters.length
+        ? (() => {
+          this.state.removedLetters = unique([...this.state.removedLetters, ...letters]).sort();
+          return `Deep Cull removed ${letters.join(", ")}.`;
+        })()
+        : "No letters were safe to remove.";
+    } else if (rewardId === "overtimeReward") {
+      mega.extraGuesses = Number(mega.extraGuesses || 0) + 1;
+      message = "Gained one additional guess every round.";
+    } else if (rewardId === "questPersistReward") {
+      mega.questPersistsForRound = true;
+      message = "Quests now stay active for the rest of the round instead of expiring after one guess.";
+    } else if (rewardId === "backupPlanReward") {
+      this.state.upgrades.extraMulligans = Number(this.state.upgrades.extraMulligans || 0) + 1;
+      this.state.mulligansLeft = Number(this.state.mulligansLeft || 0) + 1;
+      message = "Gained one additional mulligan every round.";
+    } else {
+      message = composedApplyBossReward.call(this, rewardId);
+    }
+    refreshMegaSynergies(this, true);
+    return message;
+  };
+
+  // ------------------------------------------------------------------
+  // Reward-book (chooseQuestReward) tweaks: the joker, the one-time green
+  // letter count, the quest reroll charge, and re-pointing the "feasible
+  // word" suggestion at a hard-mode-compliant candidate instead of any
+  // hand-buildable word.
+  // ------------------------------------------------------------------
+  function applyHardModeSuggestion(game) {
+    const state = game.state;
+    const active = game.getActiveWords();
+    const handCounts = Object.create(null);
+    state.hand.forEach(card => {
+      handCounts[card.glyph] = game.isInfiniteCard(card) ? Infinity : (handCounts[card.glyph] || 0) + 1;
+    });
+    const hardModeDef = window.CuddleQuestBook?.QUESTS?.find(item => item.id === "hardModeStreak");
+    const context = {
+      history: state.history,
+      knownAbsent: state.knownAbsent,
+      knownPresent: state.knownPresent,
+      revealedPositions: state.revealedPositions
+    };
+    const candidates = active.filter(word => (
+      !hardModeDef || hardModeDef.test({ word, ...context })
+    ));
+    const pool = candidates.length ? candidates : active;
+    let best = null;
+    let bestDeficit = Infinity;
+    pool.forEach(word => {
+      const tokens = word.split("");
+      const needs = Object.create(null);
+      tokens.forEach(token => { needs[token] = (needs[token] || 0) + 1; });
+      const deficit = Object.entries(needs).reduce(
+        (sum, [token, count]) => sum + Math.max(0, count - (handCounts[token] || 0)),
+        0
+      );
+      if (deficit < bestDeficit || (deficit === bestDeficit && game.random() < 0.08)) {
+        best = { word, tokens, needs };
+        bestDeficit = deficit;
+      }
+    });
+    if (!best) return "No hard-mode-compliant suggestion was available.";
+    const useful = best.tokens.find(token => (handCounts[token] || 0) < (best.needs[token] || 0))
+      || best.tokens.find(token => !game.isInfiniteGlyph(token))
+      || best.tokens[0];
+    const added = game._addBonusCard(useful);
+    state.suggestedWord = best.word;
+    return added
+      ? `Hard-mode suggestion: ${best.word}. ${useful} replaced one finite hand card.`
+      : `Hard-mode suggestion: ${best.word}. Your reusable hand already covers its useful letters.`;
+  }
+
+  const composedApplyRewardEffect = CuddleGame.prototype._applyRewardEffect;
+  CuddleGame.prototype._applyRewardEffect = function applyRewardEffectMega(rewardId) {
+    const mega = ensureMega(this);
+    let message;
+    if (rewardId === "jokerToken") {
+      mega.jokerCharges = Number(mega.jokerCharges || 0) + 1;
+      mega.hasJokerUnlocked = true;
+      message = "Gained a joker charge.";
+    } else if (rewardId === "greenCount") {
+      mega.greenCountUnlocked = true;
+      message = "Green tiles now also show how many times that letter appears in the secret.";
+    } else if (rewardId === "questReroll") {
+      mega.questRerollCharges = Number(mega.questRerollCharges || 0) + 1;
+      message = "Gained a quest reroll charge.";
+    } else if (rewardId === "suggestGuess") {
+      message = applyHardModeSuggestion(this);
+    } else {
+      message = composedApplyRewardEffect.call(this, rewardId);
+    }
+    refreshMegaSynergies(this, true);
+    return message;
+  };
+
+  // Spend a reroll charge to swap the active quest for a fresh one, any
+  // turn (not gated behind the round's normal cadence).
+  CuddleGame.prototype.rerollActiveQuest = function rerollActiveQuest() {
+    const mega = ensureMega(this);
+    if (this.state?.status !== "playing") return { ok: false, error: "The round is not running." };
+    if (!this.state.activeQuest) return { ok: false, error: "No quest is active to reroll." };
+    if (Number(mega.questRerollCharges || 0) <= 0) return { ok: false, error: "No quest reroll charges available." };
+    const feasibleWords = this.getFeasibleWords();
+    const next = window.CuddleQuestBook?.createQuest({
+      feasibleWords,
+      secret: this.state.secret,
+      history: this.state.history,
+      knownAbsent: this.state.knownAbsent,
+      knownPresent: this.state.knownPresent,
+      revealedPositions: this.state.revealedPositions,
+      rareLetters: this.getRareLetters(),
+      random: this.random
+    });
+    if (!next) return { ok: false, error: "No alternate quest is available right now." };
+    mega.questRerollCharges -= 1;
+    this.state.activeQuest = next;
+    mega.activeQuests[0] = next;
+    this.state.activeQuests = mega.activeQuests.slice();
+    this.state.lastMessage = `Quest rerolled: ${next.title}.`;
+    this.save();
+    return { ok: true };
+  };
+
+  // ------------------------------------------------------------------
+  // Joker: a wildcard hand card. Its real letter is picked only once the
+  // guess is submitted (canSubmit only checks that SOME letter would
+  // work), following this priority: a letter never tried this round,
+  // else a letter already confirmed present (yellow/green), else a
+  // letter already confirmed absent (red). Whichever tier, only a letter
+  // that completes a real dictionary word is used -- if nothing in any
+  // tier does, submission is blocked so the player can change the draft.
+  // ------------------------------------------------------------------
+  const JOKER_GLYPH = "★";
+
+  function resolveJokerWord(game, rawWord) {
+    if (!rawWord.includes(JOKER_GLYPH)) return null;
+    const removed = new Set(game.state.removedLetters || []);
+    const tried = new Set();
+    (game.state.history || []).forEach(entry => {
+      String(entry.word || "").split("").forEach(letter => tried.add(letter));
+    });
+    const tierUnchosen = [];
+    const tierKnown = [];
+    const tierExhausted = [];
+    LETTERS.forEach(letter => {
+      if (removed.has(letter)) return;
+      if (!tried.has(letter)) {
+        tierUnchosen.push(letter);
+        return;
+      }
+      const status = game.getCardKnowledgeStatus(letter);
+      if (status === "yellow" || status === "green") tierKnown.push(letter);
+      else if (status === "red") tierExhausted.push(letter);
+    });
+    for (const tier of [tierUnchosen, tierKnown, tierExhausted]) {
+      const candidates = shuffle(tier, game.random);
+      for (const letter of candidates) {
+        const candidateWord = rawWord.split("").map(ch => (ch === JOKER_GLYPH ? letter : ch)).join("");
+        if (!game.guessSet.has(candidateWord)) continue;
+        if (removed.has(letter) || [...removed].some(l => candidateWord.includes(l))) continue;
+        return { letter, word: candidateWord };
+      }
+    }
+    return null;
+  }
+
+  CuddleGame.prototype.activateJoker = function activateJoker() {
+    const mega = ensureMega(this);
+    if (this.state?.status !== "playing") return { ok: false, error: "The round is not running." };
+    if (this.isBossRound()) return { ok: false, error: "Jokers cannot be used during a boss round." };
+    if (Number(mega.jokerCharges || 0) <= 0) return { ok: false, error: "No joker charges available." };
+    if ((this.state.hand || []).some(card => card.source === "joker")) {
+      return { ok: false, error: "A joker is already in your hand." };
+    }
+    mega.jokerCharges -= 1;
+    this.state.hand.push({ id: this._nextId("joker"), glyph: JOKER_GLYPH, source: "joker" });
+    this.state.lastMessage = "Joker added to hand.";
+    this.save();
+    return { ok: true };
+  };
+
+  const composedCardCountsTowardHandLimit = CuddleGame.prototype.cardCountsTowardHandLimit;
+  CuddleGame.prototype.cardCountsTowardHandLimit = function cardCountsTowardHandLimitMega(card) {
+    if (card?.source === "joker") return false;
+    return composedCardCountsTowardHandLimit.call(this, card);
+  };
+
+  const composedCanSubmit = CuddleGame.prototype.canSubmit;
+  CuddleGame.prototype.canSubmit = function canSubmitMega() {
+    const word = this.getDraftWord();
+    if (word.length === 5 && word.includes(JOKER_GLYPH)) {
+      if (!resolveJokerWord(this, word)) {
+        return { ok: false, error: "No letter would complete that into a real word yet." };
+      }
+      if ((this.state.removedLetters || []).some(letter => word.includes(letter))) {
+        return { ok: false, error: "That word contains a letter removed from this run." };
+      }
+      return { ok: true, word };
+    }
+    return composedCanSubmit.call(this);
+  };
+
+  // ------------------------------------------------------------------
+  // Ratchet: which boss id (if any) haunts a given guess index this
+  // round, and the feedback-masking analogs it can apply. Only the six
+  // bosses whose disadvantage IS a feedback transform reuse that exact
+  // transform (via a temporary state.boss swap so _applyBossFeedback's
+  // existing switch does the work); the four structural bosses (and the
+  // two new bosses with their own explicit non-pick punishments, handled
+  // separately below) get a themed but simpler analog instead.
+  // ------------------------------------------------------------------
+  const MASK_KINDS = new Set(["countOnly", "delayedFeedback", "hideFeedback", "hiddenMargins", "blueMode", "fakeFeedback"]);
+  const SPECIAL_PUNISH_IDS = new Set(["extraGuessTrial", "questEndurance"]);
+  const RATCHET_LABEL = {
+    countOnly: "Count Only",
+    delayedFeedback: "Delayed Feedback",
+    hideFeedback: "Hide Feedback",
+    hiddenMargins: "Hidden Margins",
+    blueMode: "Blue Mode",
+    fakeFeedback: "Fake Feedback",
+    quickMode: "Quick Mode (that guess scores 0)",
+    noMulligans: "Steady Hand (no mulligan just before it)",
+    shortHand: "Short Hand (-1 hand slot going in)",
+    questTrial: "Quest Trial (forces a quest)",
+    presetWordsTrial: "Preset Trial (-1 hand slot going in)"
+  };
+
+  function getGuessRatchetDebuff(game, guessIndex) {
+    const mega = ensureMega(game);
+    return (mega.ratchetDebuffs || []).find(item => item.guessIndex === guessIndex) || null;
+  }
+
+  const composedChooseBoss = CuddleGame.prototype.chooseBoss;
+  CuddleGame.prototype.chooseBoss = function chooseBossMega(bossId) {
+    const mega = ensureMega(this);
+    const offerBefore = Array.isArray(this.state?.bossOffer) ? this.state.bossOffer.slice() : [];
+    const result = composedChooseBoss.call(this, bossId);
+    if (result?.ok && this.state?.boss) {
+      const unpicked = offerBefore.find(option => option.id !== bossId);
+      this.state.boss.ratchetSourceId = unpicked ? unpicked.id : null;
+      if (unpicked?.id === "extraGuessTrial") mega.extraGuessTrialPunishPending = true;
+      if (unpicked?.id === "questEndurance") mega.questEndurancePunishPending = true;
+      if (this.state.boss.id === "presetWordsTrial") setupPresetWordsBoss(this);
+      this.save();
+    }
+    return result;
+  };
+
+  const composedClearBoss = CuddleGame.prototype._clearBoss;
+  CuddleGame.prototype._clearBoss = function clearBossMega() {
+    const mega = ensureMega(this);
+    const bossBefore = this.state?.boss ? { ...this.state.boss } : null;
+    // Committed BEFORE the composed call, not after: clearing a non-final
+    // boss cascades straight into _advanceRound()/_beginRound() for the
+    // very next round inside that same call (see clearCuddleV3Boss), which
+    // includes that round's own opening _ensureQuestForNextGuess() -- the
+    // Quest Trial ratchet analog needs the debuff on record before that
+    // happens, or the first round right after this boss never sees it.
+    if (bossBefore?.ratchetSourceId
+        && bossBefore.gate !== "final"
+        && !SPECIAL_PUNISH_IDS.has(bossBefore.ratchetSourceId)) {
+      const ordinal = Number(this.state?.bossesCleared || 0) + 1;
+      if (!mega.ratchetDebuffs.some(item => item.guessIndex === ordinal)) {
+        const debuff = { bossId: bossBefore.ratchetSourceId, guessIndex: ordinal };
+        if (debuff.bossId === "hideFeedback") debuff.hiddenIndex = Math.floor(this.random() * 5);
+        if (debuff.bossId === "hiddenMargins") debuff.hiddenIndices = shuffle([0, 1, 2, 3, 4], this.random).slice(0, 2);
+        mega.ratchetDebuffs.push(debuff);
+      }
+    }
+    return composedClearBoss.call(this);
+  };
+
+  function setupPresetWordsBoss(game) {
+    const state = game.state;
+    const mega = ensureMega(game);
+    const stage = Number(state.boss?.stage) || 1;
+    const count = stage <= 2 ? 2 : stage === 3 ? 3 : 4;
+    const secret = state.secret;
+    const pool = game.getFeasibleWords().filter(word => word !== secret);
+    const others = shuffle(pool, game.random).slice(0, Math.max(0, count - 1));
+    const words = shuffle([secret, ...others], game.random);
+    mega.presetWords = words;
+    state.maxGuesses = Math.max(1, (Number(state.maxGuesses) || MAX_GUESSES) - words.length);
+    state.lastMessage = `${state.lastMessage || ""} Preset Trial: the secret is one of ${words.join(", ")}.`.trim();
+  }
+
+  const composedGetHandLimit = CuddleGame.prototype.getHandLimit;
+  CuddleGame.prototype.getHandLimit = function getHandLimitMega() {
+    const mega = ensureMega(this);
+    let limit = composedGetHandLimit.call(this);
+    limit = Math.max(1, limit - Number(mega.handSizePenaltyThisRound || 0));
+    if (!this.isBossRound()) {
+      const debuff = getGuessRatchetDebuff(this, Number(this.state?.guessesUsed || 0) + 1);
+      if (debuff && (debuff.bossId === "shortHand" || debuff.bossId === "presetWordsTrial")) {
+        limit = Math.max(1, limit - 1);
+      }
+    }
+    return limit;
+  };
+
+  const composedMulligan = CuddleGame.prototype.mulligan;
+  CuddleGame.prototype.mulligan = function mulliganMega(cardIds) {
+    if (!this.isBossRound()) {
+      const debuff = getGuessRatchetDebuff(this, Number(this.state?.guessesUsed || 0) + 1);
+      if (debuff && debuff.bossId === "noMulligans") {
+        return { ok: false, error: "A stacked disadvantage blocks a mulligan just before this guess." };
+      }
+    }
+    return composedMulligan.call(this, cardIds);
+  };
+
+  // ------------------------------------------------------------------
+  // _beginRound: per-round mega bookkeeping, Overtime/Overtime Trial's
+  // guess-count adjustments, and resetting the concurrent-quest list
+  // BEFORE the composed chain's own trailing _ensureQuestForNextGuess()
+  // call runs (that call already resolves to this file's override below,
+  // so the reset has to land first or it would build the new round's
+  // quests on top of last round's leftovers).
+  // ------------------------------------------------------------------
+  const composedBeginRound = CuddleGame.prototype._beginRound;
+  CuddleGame.prototype._beginRound = function beginRoundMega() {
+    const mega = ensureMega(this);
+    mega.activeQuests = [];
+    if (this.state) this.state.activeQuests = [];
+    mega.handSizePenaltyThisRound = 0;
+    mega.ratchetForcedQuestGuessIndex = null;
+
+    composedBeginRound.call(this);
+
+    if (this.state.boss?.id !== "presetWordsTrial") mega.presetWords = null;
+    const extra = Number(mega.extraGuesses || 0);
+    if (extra > 0) {
+      this.state.maxGuesses = Math.max(1, (Number(this.state.maxGuesses) || MAX_GUESSES) + extra);
+    }
+    if (this.state.boss?.id === "extraGuessTrial") {
+      this.state.maxGuesses = Math.max(1, (Number(this.state.maxGuesses) || MAX_GUESSES) - 1);
+    }
+  };
+
+  // ------------------------------------------------------------------
+  // Concurrent quests: state.activeQuest stays the single quest every
+  // earlier layer already knows how to score, message and clear. This
+  // just keeps a parallel state.megaState.activeQuests array (mirrored
+  // onto state.activeQuests for the UI) whose first slot is always that
+  // same primary quest, and fills any additional slots the Quest
+  // Cadence boss reward has bought (now "an extra concurrent quest",
+  // not a faster cadence -- see cuddle-quests.js).
+  // ------------------------------------------------------------------
+  const composedEnsureQuestForNextGuess = CuddleGame.prototype._ensureQuestForNextGuess;
+  CuddleGame.prototype._ensureQuestForNextGuess = function ensureQuestForNextGuessMega() {
+    const mega = ensureMega(this);
+    if (claimMilestoneIfDue(this)) return;
+    if (this.state.status !== "playing") return;
+
+    const nextGuess = Number(this.state.guessesUsed || 0) + 1;
+    const forced = getGuessRatchetDebuff(this, nextGuess);
+    const forceQuestNow = Boolean(forced && forced.bossId === "questTrial");
+
+    composedEnsureQuestForNextGuess.call(this);
+
+    if (!this.state.activeQuest && forceQuestNow && nextGuess <= this._effectiveMaxGuesses() && !this.isBossRound()) {
+      const feasibleWords = this.getFeasibleWords();
+      this.state.activeQuest = window.CuddleQuestBook?.createQuest({
+        feasibleWords,
+        secret: this.state.secret,
+        history: this.state.history,
+        knownAbsent: this.state.knownAbsent,
+        knownPresent: this.state.knownPresent,
+        revealedPositions: this.state.revealedPositions,
+        rareLetters: this.getRareLetters(),
+        random: this.random
+      }) || { id: "validPlay", icon: "🃏", title: "Make It Count", description: "Submit any valid five-letter word this turn." };
+      mega.ratchetForcedQuestGuessIndex = nextGuess;
+    }
+
+    if (this.state.activeQuest) mega.activeQuests[0] = this.state.activeQuest;
+
+    const slots = 1 + Math.max(0, Number(this.state.upgrades.questCadence || 0));
+    if (this.state.activeQuest && !this.isBossRound()) {
+      let guard = 0;
+      while (mega.activeQuests.filter(Boolean).length < slots && guard < 8) {
+        guard += 1;
+        const feasibleWords = this.getFeasibleWords();
+        const extra = window.CuddleQuestBook?.createQuest({
+          feasibleWords,
+          secret: this.state.secret,
+          history: this.state.history,
+          knownAbsent: this.state.knownAbsent,
+          knownPresent: this.state.knownPresent,
+          revealedPositions: this.state.revealedPositions,
+          rareLetters: this.getRareLetters(),
+          random: this.random
+        });
+        if (!extra) break;
+        mega.activeQuests.push(extra);
+      }
+    } else if (!this.state.activeQuest) {
+      mega.activeQuests = [];
+    }
+    this.state.activeQuests = mega.activeQuests.filter(Boolean).slice();
+  };
+
+  function handleExtraQuestCompletion(game, quest, entry) {
+    const mega = ensureMega(game);
+    const state = game.state;
+    entry.extraQuestsCompleted = entry.extraQuestsCompleted || [];
+    entry.extraQuestsCompleted.push(quest.title);
+
+    if (mega.unlockedSynergies.includes("jokerQuest")) mega.jokerCharges = Number(mega.jokerCharges || 0) + 1;
+
+    if (game.isBossRound() || state.status === "lost" || state.status === "won" || state.pendingRoundEnd) {
+      const questBonus = game.isBossRound() ? 0 : (Number(state.upgrades.questPoints) || 0);
+      if (questBonus > 0) {
+        state.score += questBonus;
+        state.roundScore += questBonus;
+      }
+      return;
+    }
+    if (state.status === "questReward") {
+      mega.pendingExtraQuestRewards.push(quest.id);
+      return;
+    }
+    if (state.status === "playing") {
+      state.status = "questReward";
+      state.questRewardChoices = window.CuddleQuestBook?.rewardChoices(3, game.random) || [];
+      state.questRewardRefreshesLeft = state.upgrades.questRefreshes;
+      state.questRewardPicksRemaining = state.upgrades.questDoublePick ? 2 : 1;
+    }
+  }
+
+  const composedChooseQuestReward = CuddleGame.prototype.chooseQuestReward;
+  CuddleGame.prototype.chooseQuestReward = function chooseQuestRewardMega(rewardId) {
+    const mega = ensureMega(this);
+    const result = composedChooseQuestReward.call(this, rewardId);
+    if (result?.ok && this.state.status === "playing" && mega.pendingExtraQuestRewards.length) {
+      mega.pendingExtraQuestRewards.shift();
+      this.state.status = "questReward";
+      this.state.questRewardChoices = window.CuddleQuestBook?.rewardChoices(3, this.random) || [];
+      this.state.questRewardRefreshesLeft = this.state.upgrades.questRefreshes;
+      this.state.questRewardPicksRemaining = this.state.upgrades.questDoublePick ? 2 : 1;
+      this.save();
+    }
+    return result;
+  };
+
+  // ------------------------------------------------------------------
+  // submitDraft: joker resolution, the ratchet's per-guess effects, the
+  // green-letter-count reward, the two new bosses' one-shot decline
+  // punishments, and evaluating any concurrent quests beyond the primary.
+  // ------------------------------------------------------------------
+  const composedSubmitDraft = CuddleGame.prototype.submitDraft;
+  CuddleGame.prototype.submitDraft = function submitDraftMega() {
+    const mega = ensureMega(this);
+    const rawWord = this.getDraftWord();
+
+    let jokerLetter = null;
+    if (rawWord.length === 5 && rawWord.includes(JOKER_GLYPH)) {
+      const resolution = resolveJokerWord(this, rawWord);
+      if (!resolution) return { ok: false, error: "No letter completes that into a real word." };
+      const jokerDraftCard = this.getDraftCards().find(card => card.glyph === JOKER_GLYPH);
+      const jokerHandCard = jokerDraftCard && this.state.hand.find(card => card.id === jokerDraftCard.id);
+      if (jokerHandCard) jokerHandCard.glyph = resolution.letter;
+      jokerLetter = resolution.letter;
+    }
+
+    const secretForThisGuess = this.state.secret;
+    const nextGuessIndex = Number(this.state.guessesUsed || 0) + 1;
+    const ratchet = getGuessRatchetDebuff(this, nextGuessIndex);
+
+    let ratchetBossSwap;
+    let sawMaskRatchet = false;
+    if (ratchet && MASK_KINDS.has(ratchet.bossId) && !this.isBossRound()) {
+      sawMaskRatchet = true;
+      ratchetBossSwap = this.state.boss || null;
+      this.state.boss = {
+        id: ratchet.bossId,
+        turns: 999,
+        hiddenIndex: ratchet.hiddenIndex,
+        hiddenIndices: ratchet.hiddenIndices
+      };
+    }
+
+    const extrasBefore = mega.activeQuests.slice(1).filter(Boolean);
+    const questKnowledgeSnapshot = {
+      knownAbsent: (this.state.knownAbsent || []).slice(),
+      knownPresent: (this.state.knownPresent || []).slice(),
+      revealedPositions: (this.state.revealedPositions || []).slice()
+    };
+    const historySnapshotForExtras = (this.state.history || []).slice();
+
+    const result = composedSubmitDraft.call(this);
+
+    if (sawMaskRatchet) this.state.boss = ratchetBossSwap;
+
+    if (!result?.ok) return result;
+
+    const entry = this.state.history[this.state.history.length - 1];
+
+    if (jokerLetter && entry) {
+      entry.jokerLetter = jokerLetter;
+      entry.jokerRevealed = true;
+      this.state.lastMessage = `${this.state.lastMessage || ""} Joker resolved to ${jokerLetter}.`.trim();
+    }
+
+    if (ratchet && ratchet.bossId === "quickMode" && entry && !this.isBossRound()) {
+      const delta = Number(entry.scoreDelta || 0);
+      if (delta) {
+        this.state.score -= delta;
+        this.state.roundScore -= delta;
+        entry.scoreDelta = 0;
+        entry.ratchetZeroed = true;
+        this.state.lastMessage = `${this.state.lastMessage || ""} Stacked disadvantage (Quick Mode): that guess scored 0.`.trim();
+      }
+    }
+
+    // Gated on entry.questId (real evidence a quest was actually active for
+    // THIS guess) rather than the "did I force one" bookkeeping flag alone
+    // -- _beginRound's own internal _ensureQuestForNextGuess() call (which
+    // can set that flag) always gets its result wiped by V2's "the quest
+    // for guess one is only generated after dismissRoundIntro" reset, and
+    // relying on the flag surviving that wipe intact proved fragile. This
+    // reads what actually happened on the submitted guess instead.
+    if (ratchet && ratchet.bossId === "questTrial" && entry
+        && entry.questId && !entry.questComplete && !this.isBossRound()) {
+      const penalty = Math.min(RATCHET_QUEST_PENALTY, this.state.score);
+      if (penalty > 0) {
+        this.state.score -= penalty;
+        entry.ratchetQuestPenalty = penalty;
+        this.state.lastMessage = `${this.state.lastMessage || ""} Stacked disadvantage (Quest Trial): -${penalty} points.`.trim();
+      }
+    }
+    if (mega.ratchetForcedQuestGuessIndex === nextGuessIndex) mega.ratchetForcedQuestGuessIndex = null;
+
+    if (mega.greenCountUnlocked && entry && Array.isArray(entry.feedback) && typeof entry.word === "string") {
+      const counts = {};
+      entry.feedback.forEach((tile, index) => {
+        if (tile !== "green") return;
+        const letter = entry.word[index];
+        counts[letter] = secretForThisGuess.split("").filter(l => l === letter).length;
+      });
+      if (Object.keys(counts).length) entry.greenLetterCounts = counts;
+    }
+
+    if (mega.extraGuessTrialPunishPending && entry && this.state.guessesUsed === 1 && !this.isBossRound()) {
+      const delta = Number(entry.scoreDelta || 0);
+      if (delta) {
+        this.state.score -= delta;
+        this.state.roundScore -= delta;
+        entry.scoreDelta = 0;
+        entry.overtimePunished = true;
+        this.state.lastMessage = `${this.state.lastMessage || ""} Declined Overtime Trial: your first guess this round scored 0.`.trim();
+      }
+      mega.extraGuessTrialPunishPending = false;
+    }
+
+    if (extrasBefore.length && entry) {
+      const remaining = [];
+      extrasBefore.forEach(quest => {
+        const completed = Boolean(window.CuddleQuestBook?.evaluateQuest(quest, {
+          word: entry.word,
+          feedback: entry.feedback,
+          history: historySnapshotForExtras,
+          knownAbsent: questKnowledgeSnapshot.knownAbsent,
+          knownPresent: questKnowledgeSnapshot.knownPresent,
+          revealedPositions: questKnowledgeSnapshot.revealedPositions,
+          rareLetters: quest.rareLetters || []
+        }));
+        if (completed) {
+          handleExtraQuestCompletion(this, quest, entry);
+        } else if (mega.questPersistsForRound && !this.isBossRound()) {
+          remaining.push(quest);
+        }
+      });
+      mega.activeQuests = [this.state.activeQuest || null, ...remaining].filter((quest, index) => index === 0 || quest);
+    } else {
+      mega.activeQuests[0] = this.state.activeQuest || null;
+    }
+    this.state.activeQuests = mega.activeQuests.filter(Boolean).slice();
+
+    if (result.questComplete && mega.unlockedSynergies.includes("jokerQuest")) {
+      mega.jokerCharges = Number(mega.jokerCharges || 0) + 1;
+    }
+
+    if (this.isBossRound() && this.state.boss?.id === "questEndurance"
+        && entry && entry.questId && !entry.questComplete) {
+      mega.handSizePenaltyThisRound = Number(mega.handSizePenaltyThisRound || 0) + 1;
+      this.state.lastMessage = `${this.state.lastMessage || ""} Endurance Trial: -1 hand size this round.`.trim();
+    }
+    if (mega.questEndurancePunishPending && entry && entry.questId && !this.isBossRound()) {
+      if (!entry.questComplete) {
+        mega.handSizePenaltyThisRound = Number(mega.handSizePenaltyThisRound || 0) + 1;
+        this.state.lastMessage = `${this.state.lastMessage || ""} Declined Endurance Trial: -1 hand size this round.`.trim();
+      }
+      mega.questEndurancePunishPending = false;
+    }
+
+    refreshMegaSynergies(this, true);
+    claimMilestoneIfDue(this);
+    this.save();
+    return result;
+  };
+
+  // ------------------------------------------------------------------
+  // Synergies: interactive bonuses that only exist once two specific
+  // prior picks are both owned. Surfaced through the same
+  // state.synergyNotice toast the V3 layer already renders and lets the
+  // player dismiss (dismissSynergyNotice).
+  // ------------------------------------------------------------------
+  const MEGA_SYNERGIES = [
+    {
+      id: "jokerQuest",
+      icon: "🃏",
+      title: "Joker Quest",
+      description: "Concurrent Quests + Joker: completing any quest grants a joker charge.",
+      test: game => Number(game.state.upgrades.questCadence || 0) > 0 && ensureMega(game).hasJokerUnlocked
+    },
+    {
+      id: "overtimeCull",
+      icon: "⏱️",
+      title: "Overtime Cull",
+      description: "Overtime + two removed letters: gain one permanent bonus mulligan.",
+      test: game => Number(ensureMega(game).extraGuesses || 0) > 0 && (game.state.removedLetters || []).length >= 2
+    }
+  ];
+
+  function refreshMegaSynergies(game, announce) {
+    const mega = ensureMega(game);
+    const owned = new Set(mega.unlockedSynergies);
+    const unlocked = MEGA_SYNERGIES.filter(definition => !owned.has(definition.id) && definition.test(game));
+    if (!unlocked.length) return [];
+    unlocked.forEach(definition => {
+      owned.add(definition.id);
+      if (definition.id === "overtimeCull") {
+        game.state.upgrades.extraMulligans = Number(game.state.upgrades.extraMulligans || 0) + 1;
+      }
+    });
+    mega.unlockedSynergies = [...owned];
+    if (announce) {
+      game.state.synergyNotice = {
+        icon: "✨",
+        title: unlocked.length === 1 ? "Bonus combination unlocked" : "Bonus combinations unlocked",
+        message: unlocked.map(item => `${item.icon} ${item.title}: ${item.description}`).join(" ")
+      };
+    }
+    return unlocked;
+  }
+
+  // ------------------------------------------------------------------
+  // Display: rules summary + "current modifications" (shown on the round
+  // intro screen and the upgrade-screen details).
+  // ------------------------------------------------------------------
+  const composedRulesSummary = CuddleGame.prototype.getRulesSummary;
+  CuddleGame.prototype.getRulesSummary = function getRulesSummaryMega() {
+    const summary = composedRulesSummary.call(this);
+    summary.questSlots = 1 + Math.max(0, Number(this.state.upgrades.questCadence || 0));
+    return summary;
+  };
+
+  const composedCurrentModifications = CuddleGame.prototype.getCurrentModifications;
+  CuddleGame.prototype.getCurrentModifications = function getCurrentModificationsMega() {
+    const mega = ensureMega(this);
+    const lines = composedCurrentModifications.call(this).filter(line => !String(line).startsWith("No run upgrades yet"));
+    if (mega.difficulty && mega.difficulty !== "hard") {
+      lines.push(`Difficulty: ${mega.difficulty[0].toUpperCase()}${mega.difficulty.slice(1)}`);
+    }
+    if (mega.extraGuesses) lines.push(`+${mega.extraGuesses} guess${mega.extraGuesses === 1 ? "" : "es"} every round`);
+    if (mega.questPersistsForRound) lines.push("Quests stay active for the rest of the round");
+    if (Number(mega.jokerCharges || 0) > 0) lines.push(`🃏 Joker charges: ${mega.jokerCharges}`);
+    if (Number(mega.questRerollCharges || 0) > 0) lines.push(`🔄 Quest reroll charges: ${mega.questRerollCharges}`);
+    if (mega.greenCountUnlocked) lines.push("Green tiles show letter counts");
+    const slotBonus = Number(this.state.upgrades.questCadence || 0);
+    if (slotBonus) lines.push(`+${slotBonus} concurrent quest${slotBonus === 1 ? "" : "s"}`);
+    (mega.ratchetDebuffs || []).forEach(debuff => {
+      lines.push(`Stacked disadvantage: guess ${debuff.guessIndex} carries ${RATCHET_LABEL[debuff.bossId] || debuff.bossId}`);
+    });
+    return lines.length ? lines : ["No run upgrades yet; base Cuddle rules are active."];
+  };
+
+  window.CuddleEngine = Object.freeze({
+    ...Engine,
+    CUDDLE_JOKER_GLYPH: JOKER_GLYPH
+  });
+}());
+/* UMT_CUDDLE_EXPANSION_V1: ENGINE END */
