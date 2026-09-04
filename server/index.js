@@ -16,6 +16,9 @@ const { applyAction } = require("./core/stateMachine");
 const { getDailyConfig } = require("./utils/dailyConfig");
 const { buildPublicDailyView } = require("./utils/dailyPublicView");
 const { registerBugReportRoutes } = require("./routes/bugReports");
+// UMT_CUDDLE_CAMPAIGN_THEME_ROUTE_IMPORT START
+const { registerCuddleWordThemeRoutes } = require("./cuddle/wordThemes");
+// UMT_CUDDLE_CAMPAIGN_THEME_ROUTE_IMPORT END
 
 
 
@@ -79,6 +82,10 @@ global.ALLOWED_SECRETS = ALLOWED_SECRETS;
 app.get("/api/allowed-secrets", (req, res) => res.json(ALLOWED_SECRETS));
 
 app.get("/api/allowed-guesses", (req, res) => res.json(ALLOWED_GUESSES));
+// UMT_CUDDLE_CAMPAIGN_THEME_ROUTE START
+app.use("/api/cuddle", express.json({ limit: "8kb" }));
+registerCuddleWordThemeRoutes(app, { allowedSecrets: ALLOWED_SECRETS });
+// UMT_CUDDLE_CAMPAIGN_THEME_ROUTE END
 
 // Bug reports post JSON, and nothing else on this server did before, so the
 // body parser is scoped to that route rather than applied app-wide.

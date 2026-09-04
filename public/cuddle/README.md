@@ -1,10 +1,11 @@
 # Cuddle
 
-Cuddle is a browser-only, single-player roguelite campaign for Vowel Play.
-It reuses the app's screen router, theme variables, power/quest metadata, and
-the same two word lists the main game uses (`/api/allowed-guesses` for what
-can be submitted, `/api/allowed-secrets` for what the secret can be), but it
-does not add or change server behavior.
+Cuddle is a single-player roguelite campaign for Vowel Play. Its run state
+and game rules remain in the browser, while the category-clue extension uses
+one narrow server route so the complete word-to-theme dictionary is not
+published under `/public`. It continues to use the app's screen router, theme
+variables, power/quest metadata, and the same two word lists the main game uses
+(`/api/allowed-guesses` for submissions and `/api/allowed-secrets` for secrets).
 
 ## Generated files
 
@@ -70,3 +71,24 @@ creating duplicates.
 8. Solve a round, choose an upgrade, cross a 50-point boundary, and confirm the
    extra milestone choice.
 9. Refresh the page and continue the saved run.
+
+<!-- UMT_CUDDLE_CAMPAIGN_DOCS START -->
+## Continuous campaign map, category clues, and shops
+
+`cuddle-campaign.js` extends the existing Cuddle engine without replacing it.
+It adds:
+
+- A continuous twelve-round map with the four existing boss gates and shops after rounds 2, 5, 8, and 11.
+- A server-resolved `Category Whisper` quest reward that reveals one previously unknown non-fallback category for the current secret.
+- A stacking `Theme Sense` between-round reward that automatically reveals one additional category per stack at the start of each solution.
+- Score shops containing one-use Joker, mulligan, hand-size, and known-present-letter items.
+
+The full word-to-theme dictionary lives in
+`server/wordlists/cuddle_secret_themes.json`. It is loaded by
+`server/cuddle/wordThemes.js`; the browser receives only earned category hints
+through `POST /api/cuddle/category-hint`.
+
+The map is data-driven through `MAP_NODES` and `MAP_REGIONS` in
+`cuddle-campaign.js`, so future branches or decision nodes can be added there
+without redrawing a bitmap asset.
+<!-- UMT_CUDDLE_CAMPAIGN_DOCS END -->

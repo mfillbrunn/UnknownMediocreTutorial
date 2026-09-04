@@ -1217,6 +1217,43 @@
     render();
   });
   /* UMT_CUDDLE_REBALANCE_V3: UI END */
+  /* UMT_CUDDLE_CAMPAIGN_UI START */
+  const cuddleCampaignOriginalRenderRun = renderRun;
+  renderRun = function renderRunWithCampaignMap() {
+    if (!window.CuddleCampaign || !game?.state) {
+      return cuddleCampaignOriginalRenderRun();
+    }
+    if (game.state.status === "shop") {
+      return window.CuddleCampaign.renderShop(game);
+    }
+    return window.CuddleCampaign.insertMap(cuddleCampaignOriginalRenderRun(), game);
+  };
+
+  const cuddleCampaignOriginalRender = render;
+  render = function renderWithCampaignMap() {
+    cuddleCampaignOriginalRender();
+    window.CuddleCampaign?.afterRender?.(root, game, landing);
+  };
+
+  window.addEventListener("cuddle:campaign-update", () => {
+    if (!landing && game?.state) render();
+  });
+
+  document.addEventListener("click", event => {
+    const target = event.target instanceof Element ? event.target : null;
+    const button = target?.closest("[data-cuddle-campaign-action]");
+    if (!button || !root?.contains(button)) return;
+    event.preventDefault();
+    const result = window.CuddleCampaign?.handleUiAction?.(
+      game,
+      button.dataset.cuddleCampaignAction,
+      button.dataset.shopItemId
+    ) || { ok: false, error: "Campaign action unavailable." };
+    setUiMessage(result.ok ? (result.message || "") : result.error);
+    resetActionMode();
+    render();
+  });
+  /* UMT_CUDDLE_CAMPAIGN_UI END */
   document.addEventListener("DOMContentLoaded", () => {
     root = document.getElementById(ROOT_ID);
     document.getElementById("cuddleBtn")?.addEventListener("click", openCuddle);
