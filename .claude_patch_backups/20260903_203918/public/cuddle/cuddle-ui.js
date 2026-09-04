@@ -937,8 +937,7 @@
     switch (action) {
       case "back":
         rulesOpen = false;
-        // Cuddle sits on the main menu now, not inside the Play hub.
-        showScreen("startupScreen");
+        showScreen("playScreen");
         return false;
       case "run-menu":
         landing = true;

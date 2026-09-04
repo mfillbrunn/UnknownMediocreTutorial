@@ -30,6 +30,16 @@ function _dailyModeLabel(playMode) {
   return "Full game";
 }
 
+// A single-role challenge has exactly one legal role for the whole match;
+// "both" shows the actual order (round 1 -> round 2) from firstRole.
+function _dailyRoleLabel(config) {
+  if (config.playMode === "setter") return "Secretkeeper";
+  if (config.playMode === "guesser") return "Guesser";
+  return config.firstRole === "setter"
+    ? "Secretkeeper → Guesser"
+    : "Guesser → Secretkeeper";
+}
+
 // Same navigator.share() -> clipboard fallback -> toast pattern as
 // invite.js's shareOrCopyInviteLink, just with a Wordle-style result
 // summary instead of a join link. Deliberately terse: just the
@@ -154,6 +164,9 @@ window.showDailyChallenge = async function () {
           </div>`
       : "";
 
+    const modeLabel = _dailyModeLabel(config.playMode);
+    const roleLabel = _dailyRoleLabel(config);
+
     // Winner/loser language only applies to the "both" full-game
     // challenge, where a real setter-vs-guesser score comparison exists --
     // a one-role challenge just has a raw score, and calling it a "win" or
@@ -190,6 +203,14 @@ window.showDailyChallenge = async function () {
     const resultBlock = r
       ? `<div class="daily-result-block">
           ${outcomeHtml}
+          <div class="daily-result-row">
+            <span class="daily-result-label">Mode</span>
+            <span class="daily-result-value">${modeLabel}</span>
+          </div>
+          <div class="daily-result-row">
+            <span class="daily-result-label">Role${config.playMode === "both" ? " order" : ""}</span>
+            <span class="daily-result-value">${roleLabel}</span>
+          </div>
           ${scoreRowsHtml}
           <div class="daily-result-row">
             <span class="daily-result-label">Time</span>

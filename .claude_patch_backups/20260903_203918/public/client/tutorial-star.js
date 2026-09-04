@@ -113,7 +113,7 @@ function starPromptForPractice(api, charge, practiceStep, total) {
 
   if (!word) {
     starTutorialShow(
-      "Lining up the next practice word...",
+      "Preparing the next practice word...",
       {
         title: "Earn stars",
         current: practiceStep === 0 ? 3 : 4,
@@ -129,18 +129,18 @@ function starPromptForPractice(api, charge, practiceStep, total) {
 
   if (practiceStep === 0) {
     starTutorialShow(
-      `Type ${word} and send it as your new secret. It is a bold swap${letter && position ? `, and it drops ${letter} into spot ${position} to hit the blue target` : ""} - two stars for the swap plus the blue bonus. Three in one turn.`,
+      `Type ${word} and submit it as the new secret. It is a strong Change${letter && position ? ` and puts ${letter} in position ${position}` : ""}, so it earns two base stars plus the blue bonus star: three stars total.`,
       {
-        title: "Go bold: 3 stars",
+        title: "Try a 3-star Change",
         current: 3,
         mode: "hide"
       }
     );
   } else {
     starTutorialShow(
-      `Now try ${word}. Perfectly allowed, but it is a timid swap and it misses the blue target. Watch it pay out just one star.`,
+      `Now type ${word} and submit it. This word is legal, but it is a weaker Change and misses the blue target, so it earns one star.`,
       {
-        title: "Play it safe: 1 star",
+        title: "See a 1-star Change",
         current: 4,
         mode: "hide"
       }
@@ -173,7 +173,7 @@ function runStarTutorial(state, role) {
     starSetRewardGuide(false);
     api.setNextTutorial("advanced");
     starTutorialShow(
-      "This one is hands-on, and it needs the Secretkeeper screen.",
+      "This hands-on tutorial runs on the Secretkeeper screen.",
       { title: "Secretkeeper only", mode: "end" }
     );
     return;
@@ -195,7 +195,7 @@ function runStarTutorial(state, role) {
   if (state.phase === "gameOver") {
     finishStarTutorial(
       api,
-      "The round ended early, but you saw the important part: how stars are earned and cashed in."
+      "The round ended, but you practiced the star system and its first reward."
     );
     return;
   }
@@ -204,7 +204,7 @@ function runStarTutorial(state, role) {
     starSetRewardGuide(false);
     api.setNextTutorial("advanced");
     starTutorialShow(
-      "That is the Star track. Keep for a safe single star, or swap boldly for up to three. Rewards at 4, 8 and 12.",
+      "That is the Star system: Keep for a safe one star, or Change for up to three. Rewards arrive at 4, 8, and 12 stars.",
       {
         title: "Star Tutorial done",
         current: STAR_TUTORIAL_TOTAL,
@@ -217,7 +217,7 @@ function runStarTutorial(state, role) {
 
   if (step === 0) {
     starTutorialShow(
-      "Stars are the hider's reward track, and they come down to one choice each turn. Keeping your word is the safe move: always exactly one star. Changing is the bold move, and boldness pays. Swap to a word that leaves the hunter with lots of possibilities still open, and that is two. The counter updates as you type - if it drops to one, keeping is probably wiser.",
+      "Stars help the Secretkeeper. Keeping last turn's secret always earns one star. To earn more, change the secret. A strong Change - one that leaves close to the largest number of possible secrets - earns a second star. The preview updates while you type; if it shows only one, keeping may be safer.",
       {
         current: 1
       }
@@ -229,7 +229,7 @@ function runStarTutorial(state, role) {
 
   if (step === 1) {
     starTutorialShow(
-      "The blue target asks for one specific letter in one specific spot. Hit it with a changed word and that is a third star. Quiet tip: the target doubles as a hint, because there is always a strong word that matches it. Rewards land at 4, 8 and 12 stars - one reward at 4, one at 8, and two at 12.",
+      "The blue target asks for one letter in one position. Match it with a changed secret to earn a third star. It is also a clue: one of the strongest available secrets can satisfy that target. Rewards open at 4, 8, and 12 stars; you choose one reward at 4 and 8, and two rewards at 12.",
       {
         current: 2
       }
@@ -247,7 +247,7 @@ function runStarTutorial(state, role) {
     } else {
       starSetRewardGuide(pendingIsMine, pendingIsMine);
       starTutorialShow(starLastResultText, {
-        title: "What that paid",
+        title: "Stars earned",
         current: starLastResultCurrent,
         mode: "advance"
       });
@@ -267,13 +267,13 @@ function runStarTutorial(state, role) {
     const accepted = practiceStep > previousPracticeStep;
 
     if (accepted && previousPracticeStep === 0) {
-      starLastResultText = `Three stars: ${base || 2} for the bold swap, plus ${bonus || 1} for hitting the blue target.`;
+      starLastResultText = `Exactly three stars: ${base || 2} for the strong Change, plus ${bonus || 1} blue bonus star for matching the target.`;
       starLastResultCurrent = 3;
     } else if (accepted && previousPracticeStep === 1) {
-      starLastResultText = "Just one star. Legal, but timid, and it missed the blue target. That is the whole trade in a nutshell.";
+      starLastResultText = "Exactly one star. The Change was legal, but weaker, and it missed the blue target.";
       starLastResultCurrent = 4;
     } else {
-      starLastResultText = `That earned ${earned} stars, but it did not finish the exercise. Use the exact word we highlight on your next turn.`;
+      starLastResultText = `That decision earned ${earned} tutorial stars and did not complete this exercise. Use the exact highlighted word on the next Secretkeeper turn.`;
       starLastResultCurrent = previousPracticeStep === 0 ? 3 : 4;
     }
 
@@ -281,7 +281,7 @@ function runStarTutorial(state, role) {
     starAckStepThreshold = step + 1;
     starSetRewardGuide(pendingIsMine, pendingIsMine);
     starTutorialShow(starLastResultText, {
-      title: "What that paid",
+      title: "Stars earned",
       current: starLastResultCurrent,
       mode: "advance"
     });
@@ -293,7 +293,7 @@ function runStarTutorial(state, role) {
     starLastPendingChoiceId = null;
     finishStarTutorial(
       api,
-      "That is the full loop: make bold choices, bank stars, cross a milestone, and cash it in for something that keeps you hidden longer."
+      "Reward selected. You have seen the full loop: earn stars with Secretkeeper decisions, cross a milestone, and choose a reward that helps prolong the hunt."
     );
     return;
   }
@@ -302,9 +302,9 @@ function runStarTutorial(state, role) {
     starLastPendingChoiceId = pendingChoice.id;
     starSetRewardGuide(true, false);
     starTutorialShow(
-      "Four stars - your first reward is ready. Same idea as the hunter's Quest rewards, except these ones are built to keep you hidden. Read the three cards and take one.",
+      "You reached four stars, so the first Secretkeeper reward is ready. Read the three cards and choose one. It works just like the Guesser's Quest reward, but these effects help you keep the secret hidden longer.",
       {
-        title: "Cash it in",
+        title: "Pick one reward",
         current: 5,
         mode: "hide"
       }
@@ -316,7 +316,7 @@ function runStarTutorial(state, role) {
 
   if (practiceStep >= 2) {
     starTutorialShow(
-      "Opening your first reward...",
+      "Opening your first reward choice...",
       {
         title: "Reward ready",
         current: 5,
@@ -331,7 +331,7 @@ function runStarTutorial(state, role) {
 
   if (!state.pendingGuess) {
     starTutorialShow(
-      "Waiting on the Guesser...",
+      "Waiting for the Guesser's next word...",
       {
         title: practiceStep === 0 ? "Try a 3-star Change" : "See a 1-star Change",
         current: practiceStep === 0 ? 3 : 4,

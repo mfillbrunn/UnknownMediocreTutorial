@@ -81,9 +81,9 @@ function questPromptForGuess() {
   // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
   questSetRewardGuide(false);
   questTutorialShow(
-    "See the letters light up? Now type APPLE. Keep an eye on the card - the moment your word ticks the box, it flips to MET. Then tap Submit Guess.",
+    "Perfect - the useful keyboard letters are highlighted. Type APPLE. When a five-letter draft satisfies the Quest, the card says MET. Then tap Submit Guess.",
     {
-      title: "Meet the dare",
+      title: "Complete the Quest",
       current: 4,
       mode: "hide"
     }
@@ -115,7 +115,7 @@ function runQuestTutorial(state, role) {
     questSetRewardGuide(false);
     api.setNextTutorial("star");
     questTutorialShow(
-      "This one is hands-on, and it needs the Guesser screen.",
+      "This hands-on tutorial runs on the Guesser screen.",
       { title: "Guesser only", mode: "end" }
     );
     return;
@@ -154,7 +154,7 @@ function runQuestTutorial(state, role) {
 
   if (step === 0) {
     questTutorialShow(
-      "A Quest is a bonus goal, and only the hunter gets them. Think of it as a little dare: guess a word that does this one thing. Pull it off and you win a reward. Ignore it if you would rather just chase the secret - Quests are always optional. You get up to three a round, on guesses 2, 4 and 6.",
+      "Quests are optional helpers for the Guesser. A Quest appears on every second guess - normally guesses 2, 4, and 6 - for at most three Quests in a round. Meet its conditions to earn a reward; ignore it when another guess is better.",
       {
         current: 1
       }
@@ -166,9 +166,9 @@ function runQuestTutorial(state, role) {
 
   if (step === 1) {
     questTutorialShow(
-      `Read the card before you type anything. Today's dare is: ${quest?.description || "Use only letters A through P."}`,
+      `Read the active card before guessing. This practice Quest says: ${quest?.description || "Use only letters A through P."}`,
       {
-        title: "Read the dare",
+        title: "Read the condition",
         current: 2
       }
     );
@@ -180,7 +180,7 @@ function runQuestTutorial(state, role) {
   if (step === 2) {
     const highlightButton = document.querySelector(".pc-guide-highlight-btn");
     questTutorialShow(
-      "Tap Highlight. It lights up the keyboard letters that count for this Quest, so you do not have to work it out in your head. Tap it again any time to switch the lights back off.",
+      "Tap Highlight now. It marks the keyboard letters that matter for this Quest. This is a very useful helper, and you can turn the highlights off again whenever you like.",
       {
         title: "Use Highlight",
         current: 3,
@@ -220,7 +220,7 @@ function runQuestTutorial(state, role) {
       if (questOutcome === "fail") {
         finishQuestTutorial(
           api,
-          "That is a Quest. Meet the dare for a reward, or walk past it when finding the word matters more.",
+          "Done. Quests are optional: meet one for a reward, or skip it when another guess is better.",
           5
         );
         return;
@@ -242,8 +242,8 @@ function runQuestTutorial(state, role) {
     const success = !!result?.success;
     questOutcome = success ? "success" : "fail";
     questLastResultText = success
-      ? "MET - nice work. Your reward cards open up as soon as the turn finishes."
-      : "Missed that one. No harm done: the guess still counts and the game carries on.";
+      ? "Quest complete. The MET label confirmed that you satisfied the conditions. Your reward choices open as soon as the turn is ready."
+      : "Quest missed. That is okay - the guess still counts and the match continues.";
     questAwaitingAck = true;
     questAckStepThreshold = step + 1;
     questTutorialShow(questLastResultText, {
@@ -266,7 +266,7 @@ function runQuestTutorial(state, role) {
       "It activated immediately.";
     finishQuestTutorial(
       api,
-      `And that is the whole loop: read the dare, meet it, take a reward. You picked ${selectedTitle}. ${selectedEffect}`
+      `That is it. You completed a Quest and selected ${selectedTitle}. ${selectedEffect}`
     );
     return;
   }
@@ -281,9 +281,9 @@ function runQuestTutorial(state, role) {
     if (guideStep === 0) {
       questSetRewardGuide(true, true);
       questTutorialShow(
-        "Three rewards. There is no trap here - all three genuinely help you. Have a read, then take whichever you like the look of.",
+        "Here are three reward options. All of them help. Read each card's title and description before choosing one.",
         {
-          title: "Three rewards",
+          title: "Three reward choices",
           current: 6,
           mode: "advance"
         }
@@ -295,9 +295,9 @@ function runQuestTutorial(state, role) {
     if (guideStep === 1) {
       questSetRewardGuide(true, true);
       questTutorialShow(
-        "You keep exactly one. Most fire straight away. If a card says its target is random, the game picks the letter or tile for you - you are taking the luck along with the reward.",
+        "You choose one card. Most rewards work immediately. When a reward says that its target is random, the game chooses that letter, tile, or target for you.",
         {
-          title: "You keep one",
+          title: "Choose one effect",
           current: 7,
           mode: "advance"
         }
@@ -309,9 +309,9 @@ function runQuestTutorial(state, role) {
     if (guideStep === 2) {
       questSetRewardGuide(true, true);
       questTutorialShow(
-        "Like none of them? Refresh Choices deals three new cards. But you only get one refresh for the whole game, and it does not come back when you swap roles - so save it for a truly bad hand.",
+        "Do not like the offer? Refresh Choices replaces all three cards. You get only one refresh for the entire game, even after you swap roles, so save it for an offer you truly dislike.",
         {
-          title: "One redeal per game",
+          title: "One refresh per game",
           current: 8,
           mode: "advance"
         }
@@ -322,7 +322,7 @@ function runQuestTutorial(state, role) {
 
     questSetRewardGuide(true, false);
     questTutorialShow(
-      "Go ahead and tap a card. That is the last step.",
+      "Now click one reward card. The tutorial ends after the choice takes effect.",
       {
         title: "Pick a reward",
         current: 9,
@@ -336,7 +336,7 @@ function runQuestTutorial(state, role) {
 
   if (questOutcome === "success") {
     questTutorialShow(
-      "Quest done. Once the Secretkeeper finishes their turn, your reward cards appear.",
+      "The Quest is complete. Wait for the Secretkeeper to finish the turn, and then the reward choices will open.",
       {
         title: "Reward coming next",
         current: 5,
