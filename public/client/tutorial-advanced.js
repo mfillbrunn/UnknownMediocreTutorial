@@ -61,7 +61,7 @@ function runAdvancedTutorialGuesser(state) {
     const word = state.tutorialGuesses?.[0] || "CHAMP";
     if (state.simultaneousGuessSubmitted) {
       advancedTutorialShow(
-        "Guess sent. Wait for the Secretkeeper.",
+        "Sent. Waiting on the Secretkeeper.",
         {
           role: "guesser",
           title: "Warm-up guess",
@@ -74,7 +74,7 @@ function runAdvancedTutorialGuesser(state) {
       stopKeyDemo();
     } else {
       advancedTutorialShow(
-        `Extra Tools are optional shortcuts. Type ${word}, then tap Submit Guess.`,
+        `Nothing here is a new rule - just shortcuts. Type ${word}, then tap Submit Guess.`,
         {
           role: "guesser",
           title: "Warm-up guess",
@@ -98,7 +98,7 @@ function runAdvancedTutorialGuesser(state) {
 
     if (tutorialSubStep === 0) {
       advancedTutorialShow(
-        `Build ${word}. You can tap letters as usual, or drag them into the five boxes.`,
+        `Let's build ${word}. Tap the letters like normal, or drag them straight into the boxes - whichever feels better to you.`,
         {
           role: "guesser",
           title: "Drag letters",
@@ -123,10 +123,10 @@ function runAdvancedTutorialGuesser(state) {
       stopDragDemo();
       stopKeyDemo();
       advancedTutorialShow(
-        "Tap one filled box to lock that letter. Backspace skips locked boxes.",
+        "Tap a filled box to lock that letter in place. Backspace then skips right over it, so you can rewrite the rest of the word around it.",
         {
           role: "guesser",
-          title: "Lock a letter",
+          title: "Pin a letter",
           current: 2,
           total: totalSteps,
           placement: "top",
@@ -140,10 +140,10 @@ function runAdvancedTutorialGuesser(state) {
 
     if (tutorialSubStep === 2) {
       advancedTutorialShow(
-        "Tap the locked box again to unlock it.",
+        "Tap that box again to release it.",
         {
           role: "guesser",
-          title: "Unlock it",
+          title: "Release it",
           current: 3,
           total: totalSteps,
           placement: "top",
@@ -157,10 +157,10 @@ function runAdvancedTutorialGuesser(state) {
 
     if (state.pendingGuess) {
       advancedTutorialShow(
-        "Guess sent. Wait for the Secretkeeper.",
+        "Sent. Waiting on the Secretkeeper.",
         {
           role: "guesser",
-          title: "Drag and Lock done",
+          title: "Drag and lock done",
           current: 4,
           total: totalSteps,
           compact: true,
@@ -172,7 +172,7 @@ function runAdvancedTutorialGuesser(state) {
       stopKeyDemo();
     } else {
       advancedTutorialShow(
-        `The word is ready. Tap Submit Guess to send ${word}.`,
+        `Word's ready. Tap Submit Guess to send ${word}.`,
         {
           role: "guesser",
           title: "Finish the turn",
@@ -195,10 +195,10 @@ function runAdvancedTutorialGuesser(state) {
   if (round >= 2) {
     stopKeyDemo();
     advancedTutorialShow(
-      "Drag and Lock done. Next you will see the Secretkeeper tools.",
+      "That's the hunter's toolkit: drag and lock. Next up, the tools you get while hiding.",
       {
         role: "guesser",
-        title: "Guesser tools done",
+        title: "Hunter tools done",
         compact: true,
         mode: "hide"
       }
@@ -220,7 +220,7 @@ function runAdvancedTutorialSetter(state) {
     const word = state.tutorialSecrets?.[0] || "BLIMP";
     if (state.simultaneousSecretSubmitted) {
       advancedTutorialShow(
-        "Secret saved. Wait for the Guesser.",
+        "Saved. Waiting on the Guesser.",
         {
           role: "setter",
           title: "Warm-up secret",
@@ -233,7 +233,7 @@ function runAdvancedTutorialSetter(state) {
       stopKeyDemo();
     } else {
       advancedTutorialShow(
-        `Drag and Lock work here too. Type ${word}, then tap Submit New Secret.`,
+        `Drag and Lock work over here too. Type ${word}, then tap Submit New Secret.`,
         {
           role: "setter",
           title: "Warm-up secret",
@@ -258,7 +258,7 @@ function runAdvancedTutorialSetter(state) {
     if (tutorialSubStep === 0) {
       if (!state.pendingGuess) {
         advancedTutorialShow(
-          "The Guesser is choosing a word.",
+          "The Guesser is picking a word.",
           {
             role: "setter",
             title: "Wait for a guess",
@@ -274,7 +274,7 @@ function runAdvancedTutorialSetter(state) {
         return;
       }
       advancedTutorialShow(
-        "Tap the arrow to open or close the side column.",
+        "Tap the arrow to slide the side column open or closed.",
         {
           role: "setter",
           title: "Side column",
@@ -290,7 +290,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 1) {
       advancedTutorialShow(
-        "It holds the Log (guesses, secret changes, rewards, and power uses), your powers, and other setter tools.",
+        "It holds the Log - guesses, secret swaps, rewards, powers, all in one place - plus your own powers and other setter tools.",
         {
           role: "setter",
           title: "What's inside",
@@ -306,7 +306,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 2) {
       advancedTutorialShow(
-        "Below the board sits the constraint row -- one tile per letter position, showing everything learned about the secret so far.",
+        "Below the board sits the constraint row: one tile per letter, showing everything you have learned about the secret so far.",
         {
           role: "setter",
           title: "Constraint row",
@@ -322,7 +322,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 3) {
       advancedTutorialShow(
-        "A position you've already solved shows that letter plainly in green, like a normal tile.",
+        "Solved a position? It shows that letter plainly in green, just like a normal tile.",
         {
           role: "setter",
           title: "Solved positions",
@@ -338,7 +338,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 4) {
       advancedTutorialShow(
-        "An unsolved position can show small red squares instead. Each one names a letter that a yellow clue already ruled out there.",
+        "Still unsolved? You might see small red squares instead. Each one names a letter a yellow clue has already ruled out there.",
         {
           role: "setter",
           title: "Red squares",
@@ -354,7 +354,7 @@ function runAdvancedTutorialSetter(state) {
 
     if (tutorialSubStep === 5) {
       advancedTutorialShow(
-        "That's the rule a red square encodes: that letter came back yellow in that spot before, so it can never land there again.",
+        "Here's the rule a red square is really saying: that letter showed yellow there before, so it can never land in that spot again.",
         {
           role: "setter",
           title: "Reading a red square",
@@ -369,7 +369,7 @@ function runAdvancedTutorialSetter(state) {
     }
 
     advancedTutorialShow(
-      `Finish the practice turn: enter ${candidate}, then submit the new secret.`,
+      `Last step: type ${candidate} and send it as your new secret.`,
       {
         role: "setter",
         title: "Finish the turn",
@@ -390,10 +390,10 @@ function runAdvancedTutorialSetter(state) {
 
   if (round >= 2) {
     advancedTutorialShow(
-      "Extra Tools complete. Drag, Lock, the side column, and the constraint row are always there when you want them.",
+      "That's the toolkit: drag, lock, the side column, the constraint row. All optional, none of them change the rules. Keep the ones that make the game feel easier.",
       {
         role: "setter",
-        title: "Extra Tools done",
+        title: "Toolkit done",
         mode: "end"
       }
     );
@@ -410,7 +410,7 @@ function runAdvancedSummaryTutorial() {
 
   if (tutorialSubStep === 0) {
     advancedTutorialShow(
-      "Round complete. The roles now swap so you can see the Secretkeeper tools.",
+      "Round done. Roles swap now, so you can try the hiding tools.",
       {
         role: "guesser",
         title: "Round finished",
@@ -443,10 +443,10 @@ function runAdvancedMatchTutorial() {
   // UMT_SIMPLIFIED_TUTORIAL_COPY_20260902
   clearHighlights();
   advancedTutorialShow(
-    "Extra Tools complete. They are optional shortcuts, not extra rules. Return to Basics whenever you want a refresher.",
+    "Toolkit complete. Shortcuts only, never extra rules. Pop back to Basics any time you want a refresher.",
     {
       role: "setter",
-      title: "Extra Tools done",
+      title: "Toolkit done",
       placement: "bottom",
       mode: "end"
     }
